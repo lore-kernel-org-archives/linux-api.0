@@ -1,32 +1,178 @@
-From: Michal Nazarewicz <mina86-deATy8a+UHjQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Tue, 17 Oct 2017 15:22:39 +0200
-Message-ID: <xa1tlgk9c3j4.fsf@mina86.com>
-References: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz> <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake> <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz> <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake> <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz> <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake> <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz> <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com> <20171016082456.no6ux63uy2rmj4fe@dhcp22.suse.cz> <0e238c56-c59d-f648-95fc-c8cb56c3652e@mellanox.com> <20171016123248.csntl6luxgafst6q@dhcp22.suse.cz> <AM6PR0502MB378375AF8B569DBCCFE20D7DBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide
+ self-tests
+Date: Tue, 17 Oct 2017 13:50:16 +0000 (UTC)
+Message-ID: <1618170495.42951.1508248216596.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <871sm3n6sy.fsf@concordia.ellerman.id.au> <1998166049.42520.1508179805908.JavaMail.zimbra@efficios.com> <87d15mjc1g.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <AM6PR0502MB378375AF8B569DBCCFE20D7DBD4C0-md96bDB8+JV1k1TWM4Wt8cDSnupUy6xnnBOFsp37pqbUKgpGm//BTAC/G2K4zDHf@public.gmane.org>
+In-Reply-To: <87d15mjc1g.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Guy Shattah <sguy-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Mike Kravetz <mike.kravetz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, "linux-mm@kvack.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-kernel@vger.kernel.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api@vger.kernel.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Marek Szyprowski <m.szyprowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org>, "Aneesh Kumar K . V" <aneesh.kumar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joonsoo Kim <iamjoonsoo.kim-Hm3cg6mZ9cc@public.gmane.org>, Anshuman Khandual <khandual-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+To: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm@linux>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 17 2017, Guy Shattah wrote:
-> Are you going to be OK with kernel API which implements contiguous
-> memory allocation?  Possibly with mmap style?  Many drivers could
-> utilize it instead of having their own weird and possibly non-standard
-> way to allocate contiguous memory.  Such API won't be available for
-> user space.
+----- On Oct 17, 2017, at 6:36 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
 
-What you describe sounds like CMA.  It may be far from perfect but it=E2=80=
-=99s
-there already and drivers which need contiguous memory can allocate it.
+> Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> writes:
+> 
+>> Hi Michael,
+>>
+>> With your changes integrated, both rseq and cpu-opv selftests fail to
+>> build if I pass e.g. -j32 to make.
+>>
+>> cd tools/testing/selftests/cpu-opv
+>>
+>> efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make
+>> clean; make
+>> rm -f -r
+>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>> gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c
+>> cpu-op.c cpu-op.h   -o basic_cpu_opv_test
+>>
+>> efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make
+>> clean; make -j32
+>> rm -f -r
+>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>> gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c
+>> cpu-op.c cpu-op.h   -o basic_cpu_opv_test
+>> gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c  -o
+>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>> /tmp/ccDthnqM.o: In function `test_memcpy_op':
+>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:364:
+>> undefined reference to `cpu_op_get_current_cpu'
+>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:365:
+>> undefined reference to `cpu_opv'
+> ...
+>> make: ***
+>> [/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test]
+>> Error 1
+>> make: *** Waiting for unfinished jobs....
+>>
+>> Any idea what is going on here ?
+> 
+> Ugh sorry, yes.
+> 
+> New patch below should fix it. Tested with -j:
 
---=20
-Best regards
-=E3=83=9F=E3=83=8F=E3=82=A6 =E2=80=9C=F0=9D=93=B6=F0=9D=93=B2=F0=9D=93=B7=
-=F0=9D=93=AA86=E2=80=9D =E3=83=8A=E3=82=B6=E3=83=AC=E3=83=B4=E3=82=A4=E3=83=
-=84
-=C2=ABIf at first you don=E2=80=99t succeed, give up skydiving=C2=BB
+Perfect, folding it into my series.
+
+I see that the "all" target was redundant here.
+
+Thanks,
+
+Mathieu
+
+> 
+>  ~/linux/tools/testing/selftests$ make TARGETS="rseq cpu-opv" -j
+>  make[1]: Entering directory '/home/michael/linux/tools/testing/selftests/rseq'
+>  gcc -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/    basic_test.c
+>  rseq.h rseq-ppc.h rseq-x86.h rseq-arm.h rseq.c ../cpu-opv/cpu-op.c
+>  ../cpu-opv/cpu-op.h -lpthread -o
+>  /home/michael/linux/tools/testing/selftests/rseq/basic_test
+>  gcc -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
+>  basic_percpu_ops_test.c rseq.h rseq-ppc.h rseq-x86.h rseq-arm.h rseq.c
+>  ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h -lpthread -o
+>  /home/michael/linux/tools/testing/selftests/rseq/basic_percpu_ops_test
+>  gcc -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/    param_test.c
+>  rseq.h rseq-ppc.h rseq-x86.h rseq-arm.h rseq.c ../cpu-opv/cpu-op.c
+>  ../cpu-opv/cpu-op.h -lpthread -o
+>  /home/michael/linux/tools/testing/selftests/rseq/param_test
+>  make[1]: Leaving directory '/home/michael/linux/tools/testing/selftests/rseq'
+>  make[1]: Entering directory
+>  '/home/michael/linux/tools/testing/selftests/cpu-opv'
+>  gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c
+>  cpu-op.c cpu-op.h  -o
+>  /home/michael/linux/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>  make[1]: Leaving directory '/home/michael/linux/tools/testing/selftests/cpu-opv'
+>  ~/linux/tools/testing/selftests$ make TARGETS="rseq cpu-opv" clean
+>  make[1]: Entering directory '/home/michael/linux/tools/testing/selftests/rseq'
+>  rm -f -r /home/michael/linux/tools/testing/selftests/rseq/basic_test
+>  /home/michael/linux/tools/testing/selftests/rseq/basic_percpu_ops_test
+>  /home/michael/linux/tools/testing/selftests/rseq/param_test
+>  make[1]: Leaving directory '/home/michael/linux/tools/testing/selftests/rseq'
+>  make[1]: Entering directory
+>  '/home/michael/linux/tools/testing/selftests/cpu-opv'
+>  rm -f -r /home/michael/linux/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>  make[1]: Leaving directory '/home/michael/linux/tools/testing/selftests/cpu-opv'
+>  ~/linux/tools/testing/selftests$ cd cpu-opv/
+>  ~/linux/tools/testing/selftests/cpu-opv$ make -j
+>  gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c
+>  cpu-op.c cpu-op.h  -o
+>  /home/michael/linux/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>  ~/linux/tools/testing/selftests/cpu-opv$ make clean
+>  rm -f -r /home/michael/linux/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>  ~/linux/tools/testing/selftests/cpu-opv$ cd ../rseq/
+>  ~/linux/tools/testing/selftests/rseq$ make -j
+>  gcc -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/    basic_test.c
+>  rseq.h rseq-ppc.h rseq-x86.h rseq-arm.h rseq.c ../cpu-opv/cpu-op.c
+>  ../cpu-opv/cpu-op.h -lpthread -o
+>  /home/michael/linux/tools/testing/selftests/rseq/basic_test
+>  gcc -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
+>  basic_percpu_ops_test.c rseq.h rseq-ppc.h rseq-x86.h rseq-arm.h rseq.c
+>  ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h -lpthread -o
+>  /home/michael/linux/tools/testing/selftests/rseq/basic_percpu_ops_test
+>  gcc -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/    param_test.c
+>  rseq.h rseq-ppc.h rseq-x86.h rseq-arm.h rseq.c ../cpu-opv/cpu-op.c
+>  ../cpu-opv/cpu-op.h -lpthread -o
+>  /home/michael/linux/tools/testing/selftests/rseq/param_test
+>  ~/linux/tools/testing/selftests/rseq$ make clean
+>  rm -f -r /home/michael/linux/tools/testing/selftests/rseq/basic_test
+>  /home/michael/linux/tools/testing/selftests/rseq/basic_percpu_ops_test
+>  /home/michael/linux/tools/testing/selftests/rseq/param_test
+> 
+> 
+> 
+> cheers
+> 
+> diff --git a/tools/testing/selftests/cpu-opv/Makefile
+> b/tools/testing/selftests/cpu-opv/Makefile
+> index 81d0596824ee..d27bd0f74deb 100644
+> --- a/tools/testing/selftests/cpu-opv/Makefile
+> +++ b/tools/testing/selftests/cpu-opv/Makefile
+> @@ -1,13 +1,7 @@
+> CFLAGS += -O2 -Wall -g -I./ -I../../../../usr/include/
+> -LDFLAGS += -lpthread
+> 
+> -TESTS = basic_cpu_opv_test
+> -
+> -all: $(TESTS)
+> -%: %.c cpu-op.c cpu-op.h
+> -       $(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+> +TEST_GEN_PROGS = basic_cpu_opv_test
+> 
+> include ../lib.mk
+> 
+> -clean:
+> -       $(RM) $(TESTS)
+> +$(TEST_GEN_PROGS): cpu-op.c cpu-op.h
+> diff --git a/tools/testing/selftests/rseq/Makefile
+> b/tools/testing/selftests/rseq/Makefile
+> index 7f0153556b80..7f625147b7fe 100644
+> --- a/tools/testing/selftests/rseq/Makefile
+> +++ b/tools/testing/selftests/rseq/Makefile
+> @@ -1,13 +1,8 @@
+> CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/
+> -LDFLAGS += -lpthread
+> +LDLIBS += -lpthread
+> 
+> -TESTS = basic_test basic_percpu_ops_test param_test
+> -
+> -all: $(TESTS)
+> -%: %.c rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
+> -       $(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+> +TEST_GEN_PROGS = basic_test basic_percpu_ops_test param_test
+> 
+> include ../lib.mk
+> 
+> -clean:
+> -       $(RM) $(TESTS)
+> +$(TEST_GEN_PROGS): rseq.h rseq-*.h rseq.c ../cpu-opv/cpu-op.c
+> ../cpu-opv/cpu-op.h
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
