@@ -1,44 +1,69 @@
-From: Guy Shattah <sguy@mellanox.com>
-Subject: RE: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
-Date: Tue, 17 Oct 2017 14:20:55 +0000
-Message-ID: <AM6PR0502MB3783280D15C96E5A3A831DCBBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
-References: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
- <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
- <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
- <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
- <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
- <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
- <20171016082456.no6ux63uy2rmj4fe@dhcp22.suse.cz>
- <0e238c56-c59d-f648-95fc-c8cb56c3652e@mellanox.com>
- <20171016123248.csntl6luxgafst6q@dhcp22.suse.cz>
- <AM6PR0502MB378375AF8B569DBCCFE20D7DBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
- <xa1tlgk9c3j4.fsf@mina86.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Tue, 17 Oct 2017 07:59:43 -0700
+Message-ID: <a07968f6-fef1-f49d-01f1-6c660c0ada20@schaufler-ca.com>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+ <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
+ <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
+ <2319693.5l3M4ZINGd@x2> <1508243469.6230.24.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <xa1tlgk9c3j4.fsf@mina86.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <1508243469.6230.24.camel@redhat.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Nazarewicz <mina86@mina86.com>, Michal Hocko <mhocko@kernel.org>
-Cc: Christopher Lameter <cl@linux.com>, Mike Kravetz <mike.kravetz@oracle.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Marek Szyprowski <m.szyprowski@samsung.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>, Vlastimil Babka <vbabka@suse.cz>
+Sender: netdev-owner@vger.kernel.org
+To: Simo Sorce <simo@redhat.com>, Steve Grubb <sgrubb@redhat.com>, linux-audit@redhat.com
+Cc: Richard Guy Briggs <rgb@redhat.com>, mszeredi@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Linux Network Development <netdev@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, cgroups@vger.kernel.org, "Serge E. Hallyn" <serge@hallyn.com>, trondmy@primarydata.com
 List-Id: linux-api@vger.kernel.org
 
-DQoNCj4gT24gVHVlLCBPY3QgMTcgMjAxNywgR3V5IFNoYXR0YWggd3JvdGU6DQo+ID4gQXJlIHlv
-dSBnb2luZyB0byBiZSBPSyB3aXRoIGtlcm5lbCBBUEkgd2hpY2ggaW1wbGVtZW50cyBjb250aWd1
-b3VzDQo+ID4gbWVtb3J5IGFsbG9jYXRpb24/ICBQb3NzaWJseSB3aXRoIG1tYXAgc3R5bGU/ICBN
-YW55IGRyaXZlcnMgY291bGQNCj4gPiB1dGlsaXplIGl0IGluc3RlYWQgb2YgaGF2aW5nIHRoZWly
-IG93biB3ZWlyZCBhbmQgcG9zc2libHkgbm9uLXN0YW5kYXJkDQo+ID4gd2F5IHRvIGFsbG9jYXRl
-IGNvbnRpZ3VvdXMgbWVtb3J5LiAgU3VjaCBBUEkgd29uJ3QgYmUgYXZhaWxhYmxlIGZvcg0KPiA+
-IHVzZXIgc3BhY2UuDQo+IA0KPiBXaGF0IHlvdSBkZXNjcmliZSBzb3VuZHMgbGlrZSBDTUEuICBJ
-dCBtYXkgYmUgZmFyIGZyb20gcGVyZmVjdCBidXQgaXTigJlzIHRoZXJlDQo+IGFscmVhZHkgYW5k
-IGRyaXZlcnMgd2hpY2ggbmVlZCBjb250aWd1b3VzIG1lbW9yeSBjYW4gYWxsb2NhdGUgaXQuDQo+
-IA0KDQoxLiBDTUEgaGFzIHRvIHByZWNvbmZpZ3VyZWQuIFdlJ3JlIHN1Z2dlc3RpbmcgbWVjaGFu
-aXNtIHRoYXQgd29ya3MgJ291dCBvZiB0aGUgYm94Jw0KMi4gRHVlIHRvIHRoZSBwcmUtYWxsb2Nh
-dGlvbiB0ZWNobmlxdWVzIENNQSBpbXBvc2VzIGxpbWl0YXRpb24gb24gbWF4aW11bSANCiAgIGFs
-bG9jYXRlZCBtZW1vcnkuIFJETUEgdXNlcnMgb2Z0ZW4gcmVxdWlyZSAxR2Igb3IgbW9yZSwgc29t
-ZXRpbWVzIG1vcmUuDQozLiBDTUEgcmVzZXJ2ZXMgbWVtb3J5IGluIGFkdmFuY2UsIG91ciBzdWdn
-ZXN0aW9uIGlzIHVzaW5nIGV4aXN0aW5nIGtlcm5lbCBtZW1vcnkNCiAgICAgbWVjaGFuaXNtcyAo
-VEhQIGZvciBleGFtcGxlKSB0byBhbGxvY2F0ZSBtZW1vcnkuIA0KDQpHdXkNCg0KDQo=
+On 10/17/2017 5:31 AM, Simo Sorce wrote:
+> On Mon, 2017-10-16 at 21:42 -0400, Steve Grubb wrote:
+>> On Monday, October 16, 2017 8:33:40 PM EDT Richard Guy Briggs wrote:
+>>> There is such a thing, but the kernel doesn't know about it
+>>> yet.  This same situation exists for loginuid and sessionid which
+>>> are userspace concepts that the kernel tracks for the convenience
+>>> of userspace.  As for its name, I'm not particularly picky, so if
+>>> you don't like CAP_CONTAINER_* then I'm fine with
+>>> CAP_AUDIT_CONTAINERID.  It really needs to be distinct from
+>>> CAP_AUDIT_WRITE and CAP_AUDIT_CONTROL since we don't want to give
+>>> the ability to set a containerID to any process that is able to do
+>>> audit logging (such as vsftpd) and similarly we don't want to give
+>>> the orchestrator the ability to control the setup of the audit
+>>> daemon.
+>> A long time ago, we were debating what should guard against rouge
+>> processes from setting the loginuid. Casey argued that the ability to
+>> set the loginuid means they have the ability to control the audit
+>> trail. That means that it should be guarded by CAP_AUDIT_CONTROL. I
+>> think the same logic applies today. 
+> The difference is that with loginuid you needed to give processes able
+> to audit also the ability to change it. You do not want to tie the
+> ability to change container ids to the ability to audit. You want to be
+> able to do audit stuff (within the container) without allowing it to
+> change the container id.
+
+Without a *kernel* policy on containerIDs you can't say what
+security policy is being exempted. Without that you can't say what
+capability is (or isn't) appropriate. You need a reason to have
+a capability check that makes sense in the context of the kernel
+security policy. Since we don't know what a container is in the
+kernel, that's pretty hard. We don't create "fuzzy" capabilities
+based on the trendy application behavior of the moment. If the
+behavior is not related it audit, there's no reason for it, and
+if it is, CAP_AUDIT_CONTROL works just fine. If this doesn't work
+in your application security model I suggest that is where you
+need to make changes.
+
+
+> Of course if we made container id a write-once property maybe there is
+> no need for controls at all, but I'm pretty sure there will be
+> situations where write-once may not be usable in practice.
+>
+>> The ability to arbitrarily set a container ID means the process has
+>> the ability to indirectly control the audit trail.
+> The container Id can be used also for authorization purposes (by other
+> processes on the host), not just audit, I think this is why a separate
+> control has been proposed.
+>
+> Simo.
+>
