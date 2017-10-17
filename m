@@ -1,59 +1,66 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Tue, 17 Oct 2017 17:48:04 +0000 (UTC)
-Message-ID: <1630038054.43152.1508262484464.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <135399003.40850.1507930608890.JavaMail.zimbra@efficios.com> <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com> <20171016164600.GO2482@two.firstfloor.org> <21865534.42661.1508192263844.JavaMail.zimbra@efficios.com> <CY4PR15MB168879D6220D976B04FE482CCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com> <1292309161.43101.1508258000235.JavaMail.zimbra@efficios.com> <CY4PR15MB16886FD43FB48592F3F5892FCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [RFC PATCH 3/3] mm/map_contig: Add mmap(MAP_CONTIG) support
+Date: Tue, 17 Oct 2017 19:44:44 +0200
+Message-ID: <32726f82-e044-25e3-fdbf-ba3630da5053@suse.cz>
+References: <20171013084054.me3kxhgbxzgm2lpr@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131015420.3949@nuc-kabylake>
+ <20171013152801.nbpk6nluotgbmfrs@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131040570.4247@nuc-kabylake>
+ <20171013154747.2jv7rtfqyyagiodn@dhcp22.suse.cz>
+ <alpine.DEB.2.20.1710131053450.4400@nuc-kabylake>
+ <20171013161736.htumyr4cskfrjq64@dhcp22.suse.cz>
+ <752b49eb-55c6-5a34-ab41-6e91dd93ea70@mellanox.com>
+ <20171016082456.no6ux63uy2rmj4fe@dhcp22.suse.cz>
+ <0e238c56-c59d-f648-95fc-c8cb56c3652e@mellanox.com>
+ <20171016123248.csntl6luxgafst6q@dhcp22.suse.cz>
+ <AM6PR0502MB378375AF8B569DBCCFE20D7DBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
+ <xa1tlgk9c3j4.fsf@mina86.com>
+ <AM6PR0502MB3783280D15C96E5A3A831DCBBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CY4PR15MB16886FD43FB48592F3F5892FCF4C0-ZVJ2su15u+xeX4ZvlgGe+Yd3EbNNOtPMvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, carlos <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Goldblatt <davidgoldblatt-b10kYP2dOMg@public.gmane.org>, Qi Wang <qiwang-b10kYP2dOMg@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <AM6PR0502MB3783280D15C96E5A3A831DCBBD4C0@AM6PR0502MB3783.eurprd05.prod.outlook.com>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Guy Shattah <sguy@mellanox.com>, Michal Nazarewicz <mina86@mina86.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Christopher Lameter <cl@linux.com>, Mike Kravetz <mike.kravetz@oracle.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Marek Szyprowski <m.szyprowski@samsung.com>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Laura Abbott <labbott@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 17, 2017, at 12:41 PM, Ben Maurer bmaurer-b10kYP2dOMg@public.gmane.org wrote:
-
->> I have a use-case for keeping the reference counting in place though. It's
->> use of rseq in signal handlers.
+On 10/17/2017 04:20 PM, Guy Shattah wrote:
 > 
-> Would this be solved by saying that the rseq api will return an error if you
-> register and there's already a block registered. In this case the signal
-> handler would register the rseq abi area just as the non-signal code is trying
-> to do the same. The non-signal code would see this error code and realize that
-> its job had been done for it and then go on it's way.
-
-Yes, that should work, as long as we return a specific error code, e.g. -EBUSY,
-to tell the caller that rseq has actually been registered.
-
 > 
-> It would be unsafe for signal handler code to *unregister* the area, but I don't
-> think that's necessary.
-
-Right.
-
+>> On Tue, Oct 17 2017, Guy Shattah wrote:
+>>> Are you going to be OK with kernel API which implements contiguous
+>>> memory allocation?  Possibly with mmap style?  Many drivers could
+>>> utilize it instead of having their own weird and possibly non-standard
+>>> way to allocate contiguous memory.  Such API won't be available for
+>>> user space.
+>>
+>> What you describe sounds like CMA.  It may be far from perfect but it’s there
+>> already and drivers which need contiguous memory can allocate it.
+>>
 > 
-> Basically we'd support a refcount of either 0 or 1, but nothing else.
+> 1. CMA has to preconfigured. We're suggesting mechanism that works 'out of the box'
+> 2. Due to the pre-allocation techniques CMA imposes limitation on maximum 
+>    allocated memory. RDMA users often require 1Gb or more, sometimes more.
+> 3. CMA reserves memory in advance, our suggestion is using existing kernel memory
+>      mechanisms (THP for example) to allocate memory. 
 
-Yep, I'll try this out.
+You can already use THP, right? madvise(MADV_HUGEPAGE) increases your
+chances to get the huge pages. Then you can mlock() them if you want.
+And you get the TLB benefits. There's no guarantee of course, but you
+shouldn't require a guarantee for MMAP_CONTIG anyway, because it's for
+performance reasons, not functionality. So either MMAP_CONTIG would have
+to fallback itself, or the userspace caller. Or would your scenario
+rather fail than perform suboptimally?
 
+> Guy
 > 
-> If a signal handler registers the ABI area, how will it ensure the ABI is
-> cleaned up at thread exit? I can't imagine pthread_key is signal safe.
+> 
 
-You have a very good point there. This highlights a signal-safety issue
-I have in liburcu-bp when used by lttng-ust. pthread_setspecific is
-indeed not listed as being signal-safe: it can perform on-demand memory
-allocation when a second level array is needed.
-
-I'll have to scratch my head a bit to fix this one.
-
-Thanks!
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
