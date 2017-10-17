@@ -1,51 +1,59 @@
-From: Steve Grubb <sgrubb@redhat.com>
-Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Tue, 17 Oct 2017 13:15:00 -0400
-Message-ID: <1982291.vr6V9CPzqu@x2>
-References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca> <1508255091.3129.27.camel@HansenPartnership.com> <eb96144d-4ab5-7f9f-de18-b296db35a00a@schaufler-ca.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Tue, 17 Oct 2017 17:48:04 +0000 (UTC)
+Message-ID: <1630038054.43152.1508262484464.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <135399003.40850.1507930608890.JavaMail.zimbra@efficios.com> <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com> <20171016164600.GO2482@two.firstfloor.org> <21865534.42661.1508192263844.JavaMail.zimbra@efficios.com> <CY4PR15MB168879D6220D976B04FE482CCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com> <1292309161.43101.1508258000235.JavaMail.zimbra@efficios.com> <CY4PR15MB16886FD43FB48592F3F5892FCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <eb96144d-4ab5-7f9f-de18-b296db35a00a@schaufler-ca.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, Simo Sorce <simo@redhat.com>, linux-audit@redhat.com, mszeredi@redhat.com, trondmy@primarydata.com, jlayton@redhat.com, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Carlos O'Donell <carlos@redhat.com>, cgroups@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Linux Network Development <netdev@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, Al Viro <viro@zeniv.linux.org.uk>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CY4PR15MB16886FD43FB48592F3F5892FCF4C0-ZVJ2su15u+xeX4ZvlgGe+Yd3EbNNOtPMvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, carlos <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Goldblatt <davidgoldblatt-b10kYP2dOMg@public.gmane.org>, Qi Wang <qiwang-b10kYP2dOMg@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday, October 17, 2017 12:43:18 PM EDT Casey Schaufler wrote:
-> > The idea is that processes spawned into a container would be labelled
-> > by the container orchestration system.  It's unclear what should happen
-> > to processes using nsenter after the fact, but policy for that should
-> > be up to the orchestration system.
+----- On Oct 17, 2017, at 12:41 PM, Ben Maurer bmaurer-b10kYP2dOMg@public.gmane.org wrote:
+
+>> I have a use-case for keeping the reference counting in place though. It's
+>> use of rseq in signal handlers.
 > 
-> I'm fine with that. The user space policy can be anything y'all like.
+> Would this be solved by saying that the rseq api will return an error if you
+> register and there's already a block registered. In this case the signal
+> handler would register the rseq abi area just as the non-signal code is trying
+> to do the same. The non-signal code would see this error code and realize that
+> its job had been done for it and then go on it's way.
 
-I think there should be a login event.
+Yes, that should work, as long as we return a specific error code, e.g. -EBUSY,
+to tell the caller that rseq has actually been registered.
 
-
-> > The label will be used as a tag for audit information.
 > 
-> Deep breath ...
+> It would be unsafe for signal handler code to *unregister* the area, but I don't
+> think that's necessary.
+
+Right.
+
 > 
-> Which *is* a kernel security policy mechanism. Since the "label"
-> is part of the audit information that the kernel is guaranteeing
-> changing it would be covered by CAP_AUDIT_CONTROL. If the kernel
-> does not use the "label" for any other purpose this is the only
-> capability that makes sense for it.
+> Basically we'd support a refcount of either 0 or 1, but nothing else.
 
-I agree. The ability to set the container label grants the ability to evade 
-rules or modify audit rules. CAP_AUDIT_CONTROL makes sense to me.
+Yep, I'll try this out.
 
+> 
+> If a signal handler registers the ABI area, how will it ensure the ABI is
+> cleaned up at thread exit? I can't imagine pthread_key is signal safe.
 
-> > I think you were missing label inheritance above.
-> > 
-> > The security implications are that anything that can change the label
-> > could also hide itself and its doings from the audit system and thus
-> > would be used as a means to evade detection.
+You have a very good point there. This highlights a signal-safety issue
+I have in liburcu-bp when used by lttng-ust. pthread_setspecific is
+indeed not listed as being signal-safe: it can perform on-demand memory
+allocation when a second level array is needed.
 
-Yes. We have the same problem with loginuid. There are restrictions on who can 
-change it once set. And then we made an immutable flag so that people that 
-want a hard guarantee can get that.
+I'll have to scratch my head a bit to fix this one.
 
--Steve
+Thanks!
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
