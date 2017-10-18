@@ -1,43 +1,40 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mm/mempolicy: add node_empty check in SYSC_migrate_pages
-Date: Wed, 18 Oct 2017 12:46:41 +0200
-Message-ID: <f889d39f-ca1f-9239-dc95-4e1806a6345f@suse.cz>
-References: <1508290660-60619-1-git-send-email-xieyisheng1@huawei.com>
- <7086c6ea-b721-684e-fe3d-ff59ae1d78ed@suse.cz>
- <20aac66a-7252-947c-355b-6da4be671dcf@huawei.com>
+From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [1/2,v2] fdmap(2)
+Date: Wed, 18 Oct 2017 13:35:00 +0200
+Message-ID: <CACVxJT_ZP=VAJQ_=D1JV0yt3bT_RZjtWTW61KcV5gCbhF8ixBw@mail.gmail.com>
+References: <20170924200620.GA24368@avx2> <20171010220804.GA30735@outlook.office365.com>
+ <20171011181234.GB2119@avx2> <20171012080608.GA23077@outlook.office365.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20aac66a-7252-947c-355b-6da4be671dcf-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <20171012080608.GA23077-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/18/2017 11:34 AM, Yisheng Xie wrote:
->>> For MAX_NUMNODES is 4, so 0x10 nodemask will tread as empty set which makes
->>> 	nodes_subset(*new, node_states[N_MEMORY])
->>
->> According to manpage of migrate_pages:
->>
->>         EINVAL The value specified by maxnode exceeds a kernel-imposed
->> limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
->> are greater than the maximum supported node ID.  Or, none of the node
->> IDs specified by new_nodes are on-line and allowed by the process's
->> current cpuset context, or none of the specified nodes contain memory.
->>
->> if maxnode parameter is 64, but MAX_NUMNODES ("kernel-imposed limit") is
->> 4, we should get EINVAL just because of that. I don't see such check in
->> the migrate_pages implementation though.
-> 
-> Yes, that is what manpage said, but I have a question about this: if user
-> set maxnode exceeds a kernel-imposed and try to access node without enough
-> privilege, which errors values we should return ? For I have seen that all
-> of the ltp migrate_pages01 will set maxnode to 64 in my system.
+On 10/12/17, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
 
-Hm I don't think it matters much and don't know if there's some commonly
-used priority. Personally I would do the checks resulting in EINVAL
-first, before EPERM, but if the code is structured differently, it may
-stay as it is.
+> I'm agree with your points, but I think you choose a wrong set of data
+> to make an example of a new approach.
+>
+> You are talking a lot about statx, but for me it is unclear how fdmap
+> follows the idea of statx. Let's imagine that I want to extend fdmap to
+> return mnt_id for each file descriptor?
+
+fdmap() is standalone thing.
+
+Next step is to design fdinfo(2) (?) which uses descriptors from fdmap(2).
+Extending structures is done as usual: but version, add new fields to the end.
+
+> Or it may be more complex case, when we decided to provide all data
+> from /proc/pid/fdinfo/X for each descriptor. A set of fields in fdinfo
+> depends on a type of a file descriptor, it is different for epoll,
+> signalfd, inotify, sockets, etc.
+>
+> For inotify file descriptors, there are information about all watches,
+> so it is not possible to use a fixed size struture to present this data.
+
+Now I didn't look closely at inotify watches but this is done with unions,
+zero-length trailing arrays, and other usual stuff. If OpenVZ/Virtuozzo is
+doing C/R of inotify then you already have all serializing code.
