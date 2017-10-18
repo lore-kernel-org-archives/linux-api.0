@@ -1,90 +1,87 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v5] mm, sysctl: make NUMA stats configurable
-Date: Wed, 18 Oct 2017 08:30:53 +0200
-Message-ID: <082e44ef-c5f2-ae99-8672-37a678c61edd@suse.cz>
-References: <1508290927-8518-1-git-send-email-kemi.wang@intel.com>
+From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH] mm/mempolicy: add node_empty check in SYSC_migrate_pages
+Date: Wed, 18 Oct 2017 09:54:05 +0200
+Message-ID: <7086c6ea-b721-684e-fe3d-ff59ae1d78ed@suse.cz>
+References: <1508290660-60619-1-git-send-email-xieyisheng1@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1508290927-8518-1-git-send-email-kemi.wang@intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1508290660-60619-1-git-send-email-xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Kemi Wang <kemi.wang@intel.com>, "Luis R . Rodriguez" <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, Michal Hocko <mhocko@suse.com>, Mel Gorman <mgorman@techsingularity.net>, Johannes Weiner <hannes@cmpxchg.org>, Christopher Lameter <cl@linux.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Andrey Ryabinin <aryabinin@virtuozzo.com>
-Cc: Dave <dave.hansen@linux.intel.com>, Tim Chen <tim.c.chen@intel.com>, Andi Kleen <andi.kleen@intel.com>, Jesper Dangaard Brouer <brouer@redhat.com>, Ying Huang <ying.huang@intel.com>, Aaron Lu <aaron.lu@intel.com>, Proc sysctl <linux-fsdevel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/18/2017 03:42 AM, Kemi Wang wrote:
-> This is the second step which introduces a tunable interface that allow
-> numa stats configurable for optimizing zone_statistics(), as suggested by
-> Dave Hansen and Ying Huang.
-> 
-> =========================================================================
-> When page allocation performance becomes a bottleneck and you can tolerate
-> some possible tool breakage and decreased numa counter precision, you can
-> do:
-> 	echo 0 > /proc/sys/vm/numa_stat
-> In this case, numa counter update is ignored. We can see about
-> *4.8%*(185->176) drop of cpu cycles per single page allocation and reclaim
-> on Jesper's page_bench01 (single thread) and *8.1%*(343->315) drop of cpu
-> cycles per single page allocation and reclaim on Jesper's page_bench03 (88
-> threads) running on a 2-Socket Broadwell-based server (88 threads, 126G
-> memory).
-> 
-> Benchmark link provided by Jesper D Brouer(increase loop times to
-> 10000000):
-> https://github.com/netoptimizer/prototype-kernel/tree/master/kernel/mm/
-> bench
-> 
-> =========================================================================
-> When page allocation performance is not a bottleneck and you want all
-> tooling to work, you can do:
-> 	echo 1 > /proc/sys/vm/numa_stat
-> This is system default setting.
-> 
-> Many thanks to Michal Hocko, Dave Hansen, Ying Huang and Vlastimil Babka
-> for comments to help improve the original patch.
-> 
-> ChangeLog:
->   V4->V5
->   a) Scope vm_numa_stat_lock into the sysctl handler function, as suggested
->   by Michal Hocko;
->   b) Only allow 0/1 value when setting a value to numa_stat at userspace,
->   that would keep the possibility for add auto mode in future (e.g. 2 for
->   auto mode), as suggested by Michal Hocko.
-> 
->   V3->V4
->   a) Get rid of auto mode of numa stats, and may add it back if necessary,
->   as alignment before;
->   b) Skip NUMA_INTERLEAVE_HIT counter update when numa stats is disabled,
->   as reported by Andrey Ryabinin. See commit "de55c8b2519" for details
->   c) Remove extern declaration for those clear_numa_ function, and make
->   them static in vmstat.c, as suggested by Vlastimil Babka.
-> 
->   V2->V3:
->   a) Propose a better way to use jump label to eliminate the overhead of
->   branch selection in zone_statistics(), as inspired by Ying Huang;
->   b) Add a paragraph in commit log to describe the way for branch target
->   selection;
->   c) Use a more descriptive name numa_stats_mode instead of vmstat_mode,
->   and change the description accordingly, as suggested by Michal Hocko;
->   d) Make this functionality NUMA-specific via ifdef
-> 
->   V1->V2:
->   a) Merge to one patch;
->   b) Use jump label to eliminate the overhead of branch selection;
->   c) Add a single-time log message at boot time to help tell users what
->   happened.
-> 
-> Reported-by: Jesper Dangaard Brouer <brouer@redhat.com>
-> Suggested-by: Dave Hansen <dave.hansen@intel.com>
-> Suggested-by: Ying Huang <ying.huang@intel.com>
-> Signed-off-by: Kemi Wang <kemi.wang@intel.com>
++CC linux-api
 
-Acked-by: Vlastimil Babka <vbabka@suse.cz>
+On 10/18/2017 03:37 AM, Yisheng Xie wrote:
+> As Xiaojun reported the ltp of migrate_pages01 will failed on ARCH arm64
+> system whoes has 4 nodes[0...3], all have memory and CONFIG_NODES_SHIFT=2:
+> 
+> migrate_pages01    0  TINFO  :  test_invalid_nodes
+> migrate_pages01   14  TFAIL  :  migrate_pages_common.c:45: unexpected failure - returned value = 0, expected: -1
+> migrate_pages01   15  TFAIL  :  migrate_pages_common.c:55: call succeeded unexpectedly
+> 
+> In this case the test_invalid_nodes of migrate_pages01 will call:
+> SYSC_migrate_pages as:
+> 
+> migrate_pages(0, , {0x0000000000000001}, 64, , {0x0000000000000010}, 64) = 0
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+is 64 here the maxnode parameter of migrate_pages() ?
+
+> For MAX_NUMNODES is 4, so 0x10 nodemask will tread as empty set which makes
+> 	nodes_subset(*new, node_states[N_MEMORY])
+
+According to manpage of migrate_pages:
+
+        EINVAL The value specified by maxnode exceeds a kernel-imposed
+limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
+are greater than the maximum supported node ID.  Or, none of the node
+IDs specified by new_nodes are on-line and allowed by the process's
+current cpuset context, or none of the specified nodes contain memory.
+
+if maxnode parameter is 64, but MAX_NUMNODES ("kernel-imposed limit") is
+4, we should get EINVAL just because of that. I don't see such check in
+the migrate_pages implementation though. But then at least the
+"new_nodes specifies one or more node IDs that are greater than the
+maximum supported node ID" part should trigger here, because you have
+node number 8 set in the new_nodes nodemask, right?
+get_nodes() should be checking this according to comment:
+
+        /* When the user specified more nodes than supported just check
+           if the non supported part is all zero. */
+
+Somehow that doesn't seem to work then? I think we should look into
+this. Your patch may still be needed, or not, after that is resolved.
+
+> return true, as empty set is subset of any set.
+> 
+> So this is a common issue which also can happens in X86_64 system eg. 8 nodes[0..7],
+> all with memory and CONFIG_NODES_SHIFT=3. Fix it by adding node_empty check in
+> SYSC_migrate_pages.
+> 
+> Reported-by: Tan Xiaojun <tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+> ---
+>  mm/mempolicy.c | 5 +++++
+>  1 file changed, 5 insertions(+)
+> 
+> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+> index a2af6d5..1dfd3cc 100644
+> --- a/mm/mempolicy.c
+> +++ b/mm/mempolicy.c
+> @@ -1388,6 +1388,11 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
+>  	if (err)
+>  		goto out;
+>  
+> +	if (nodes_empty(*new)) {
+> +		err = -EINVAL;
+> +		goto out;
+> +	}
+> +
+>  	/* Find the mm_struct */
+>  	rcu_read_lock();
+>  	task = pid ? find_task_by_vpid(pid) : current;
+> 
