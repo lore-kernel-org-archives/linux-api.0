@@ -1,67 +1,39 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Ben Maurer <bmaurer@fb.com>
 Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
-Date: Wed, 18 Oct 2017 16:28:12 +0000 (UTC)
-Message-ID: <505591961.43853.1508344092267.JavaMail.zimbra@efficios.com>
-References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <CA+55aFwvNS95ByZJTh1yG25QfaD0K0ZByK3iXeeRU8LafFiGFQ@mail.gmail.com> <135399003.40850.1507930608890.JavaMail.zimbra@efficios.com> <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com> <20171016164600.GO2482@two.firstfloor.org> <21865534.42661.1508192263844.JavaMail.zimbra@efficios.com> <CY4PR15MB168879D6220D976B04FE482CCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com> <20171018062226.GB18857@kroah.com>
+Date: Wed, 18 Oct 2017 16:41:44 +0000
+Message-ID: <CY4PR15MB1688286D6B1283A1C234BAE6CF4E0@CY4PR15MB1688.namprd15.prod.outlook.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com>,<20171012230326.19984-2-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171018062226.GB18857-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Goldblatt <davidgoldblatt-b10kYP2dOMg@public.gmane.org>, Qi Wang <qiwang-b10kYP2dOMg@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>Andrew
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171012230326.19984-2-mathieu.desnoyers@efficios.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Josh Triplett <josh@joshtriplett.org>, Will Deacon <will.deacon@arm.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 18, 2017, at 2:22 AM, Greg Kroah-Hartman gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org wrote:
-
-> On Tue, Oct 17, 2017 at 04:19:41PM +0000, Ben Maurer wrote:
->> Hey,
->> 
->> > So far the restrictions I see for libraries using this symbol are:
->> > - They should never be unloaded,
->> > - They should never be loaded with dlopen RTLD_LOCAL flag.
->> 
->> We talked a bit about this off-list but I wanted to state publicly
->> that I think this model works well for our use case. Specifically,
->> 
->> (1) It reduces complexity by focusing on the common case -- long term
->> we expect glibc to manage the process of using this feature and
->> registering/deregistering threads for rseq. Unloading isn't a
->> challenge in these situations, so why add the complexity for it?
-> 
-> You never install a new version of glibc on a running system, and expect
-> everything to keep running successfully?  Breaking that would not be
-> good...
-
-If we share the __rseq_abi TLS weak symbol between glibc, applications,
-and early-adopter libraries, we just need those early adopters to
-check whether the TLS is already registered (cpu_id field >= 0), and
-don't bother doing their lazy registration if it's already been done
-for them (either by glibc or by the application).
-
-If either the application or a lazy-registering library gets a EBUSY
-errno from rseq registration, it can consider that another library
-already performed the registration for them (probably glibc).
-
-As long as early adopter libraries don't expect to be sole users
-of __rseq_abi, upgrading to newer glibc should work fine.
-
-But this means we need to get all early adopters to get it right from
-the get-go, or things could break when you compose them.
-
-Thoughts ?
-
-Thanks,
-
-Mathieu
-
-> 
-> thanks,
-> 
-> greg k-h
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+PiBUaGUgbGF5b3V0IG9mIHN0cnVjdCByc2VxX2NzIGlzIGFzIGZvbGxvd3M6DQoNCj4gc3RhcnRf
+aXANCj4gSW5zdHJ1Y3Rpb24gcG9pbnRlciBhZGRyZXNzIG9mIHRoZSBmaXJzdCBpbnN0cnVjdGlv
+biBvZiB0aGUNCj4gc2VxdWVuY2Ugb2YgY29uc2VjdXRpdmUgYXNzZW1ibHkgaW5zdHJ1Y3Rpb25z
+Lg0KDQo+IHBvc3RfY29tbWl0X2lwDQo+IEluc3RydWN0aW9uIHBvaW50ZXIgYWRkcmVzcyBhZnRl
+ciB0aGUgbGFzdMKgIGluc3RydWN0aW9uwqAgb2YNCj7CoCB0aGUgc2VxdWVuY2Ugb2YgY29uc2Vj
+dXRpdmUgYXNzZW1ibHkgaW5zdHJ1Y3Rpb25zLg0KDQo+wqAgYWJvcnRfaXANCj4gSW5zdHJ1Y3Rp
+b27CoCBwb2ludGVywqAgYWRkcmVzc8KgIHdoZXJlwqAgdG8gbW92ZSB0aGUgZXhlY3V0aW9uDQo+
+wqAgZmxvdyBpbiBjYXNlIG9mIGFib3J0IG9mIHRoZSBzZXF1ZW5jZSBvZiBjb25zZWN1dGl2ZSBh
+c3NlbeKAkA0KPsKgIGJseSBpbnN0cnVjdGlvbnMuDQoNClJlYWxseSBtaW5vciBwZXJmb3JtYW5j
+ZSBwZXJmb3JtYW5jZSB0aG91Z2h0IGhlcmUuDQoNCjEpIEluIHRoZSBrZXJuZWwgYXQgY29udGV4
+dCBzd2l0Y2ggdGltZSB5b3UnZCBuZWVkIGNvZGUgbGlrZToNCg0KaWYgKGlwID49IHN0YXJ0X2lw
+ICYmIGlwIDw9IHBvc3RfY29tbWl0X2lwKQ0KDQpUaGlzIGJyYW5jaCB3b3VsZCBiZSBoYXJkIHRv
+IHByZWRpY3QgYmVjYXVzZSBtb3N0IGluc3RydWN0aW9uIHBvaW50ZXJzIHdvdWxkIGJlIGVpdGhl
+ciBiZWZvcmUgb3IgYWZ0ZXIuIElmIHBvc3RfY29tbWl0X2lwIHdlcmUgcmVsYXRpdmUgdG8gc3Rh
+cnRfaXAgeW91IGNvdWxkIGRvIHRoaXM6DQoNCmlmIChpcCAtIHN0YXJ0X2lwIDw9IHBvc3RfY29t
+bWl0X29mZnNldCkNCg0Kd2hpY2ggaXMgYSBzaW5nbGUgYnJhbmNoIHRoYXQgd291bGQgYmUgbW9y
+ZSBwcmVkaWN0YWJsZS4NCg0KMikgSW4gYSBzaGFyZWQgbGlicmFyeSBhIHJzZXFfY3Mgc3RydWN0
+dXJlIHdvdWxkIGhhdmUgdG8gYmUgcmVsb2NhdGVkIGF0IHJ1bnRpbWUgYmVjYXVzZSBhdCBjb21w
+aWxhdGlvbiB0aW1lIHRoZSBmaW5hbCBhZGRyZXNzIG9mIHRoZSBsaWJyYXJ5IHdvdWxkbid0IGJl
+IGtub3duLiBJJ20gbm90IHN1cmUgaWYgdGhpcyBpcyBpbXBvcnRhbnQgZW5vdWdoIHRvIGFkZHJl
+c3MsIGJ1dCBpdCBjb3VsZCBiZSBzb2x2ZWQgYnkgbWFraW5nIHRoZSBwb2ludGVycyByZWxhdGl2
+ZSB0byB0aGUgYWRkcmVzcyBvZiByc2VxX2NzLiBCdXQgdGhpcyB3b3VsZCBtYWtlIGZvciBhbiB1
+Z2xpZXIgQVBJLg0K
