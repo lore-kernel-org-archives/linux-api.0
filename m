@@ -1,289 +1,75 @@
-From: Kemi Wang <kemi.wang@intel.com>
-Subject: [PATCH v5] mm, sysctl: make NUMA stats configurable
-Date: Wed, 18 Oct 2017 09:42:07 +0800
-Message-ID: <1508290927-8518-1-git-send-email-kemi.wang@intel.com>
-Return-path: <owner-linux-mm@kvack.org>
-Sender: owner-linux-mm@kvack.org
-To: "Luis R . Rodriguez" <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Jonathan Corbet <corbet@lwn.net>, Michal Hocko <mhocko@suse.com>, Mel Gorman <mgorman@techsingularity.net>, Johannes Weiner <hannes@cmpxchg.org>, Christopher Lameter <cl@linux.com>, Sebastian Andrzej Siewior <bigeasy@linutronix.de>, Vlastimil Babka <vbabka@suse.cz>, Andrey Ryabinin <aryabinin@virtuozzo.com>
-Cc: Dave <dave.hansen@linux.intel.com>, Tim Chen <tim.c.chen@intel.com>, Andi Kleen <andi.kleen@intel.com>, Jesper Dangaard Brouer <brouer@redhat.com>, Ying Huang <ying.huang@intel.com>, Aaron Lu <aaron.lu@intel.com>, Kemi Wang <kemi.wang@intel.com>, Proc sysctl <linux-fsdevel@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.15 14/14] Restartable sequences: Provide self-tests
+Date: Wed, 18 Oct 2017 16:45:28 +1100
+Message-ID: <87fuahhuvb.fsf@concordia.ellerman.id.au>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <20171012230326.19984-15-mathieu.desnoyers@efficios.com> <871sm3n6sy.fsf@concordia.ellerman.id.au> <1998166049.42520.1508179805908.JavaMail.zimbra@efficios.com> <87d15mjc1g.fsf@concordia.ellerman.id.au> <1618170495.42951.1508248216596.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1618170495.42951.1508248216596.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andrew Morton <akpm@linux>
 List-Id: linux-api@vger.kernel.org
 
-This is the second step which introduces a tunable interface that allow
-numa stats configurable for optimizing zone_statistics(), as suggested by
-Dave Hansen and Ying Huang.
+Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> writes:
 
-=========================================================================
-When page allocation performance becomes a bottleneck and you can tolerate
-some possible tool breakage and decreased numa counter precision, you can
-do:
-	echo 0 > /proc/sys/vm/numa_stat
-In this case, numa counter update is ignored. We can see about
-*4.8%*(185->176) drop of cpu cycles per single page allocation and reclaim
-on Jesper's page_bench01 (single thread) and *8.1%*(343->315) drop of cpu
-cycles per single page allocation and reclaim on Jesper's page_bench03 (88
-threads) running on a 2-Socket Broadwell-based server (88 threads, 126G
-memory).
+> ----- On Oct 17, 2017, at 6:36 AM, Michael Ellerman mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org wrote:
+>
+>> Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> writes:
+>> 
+>>> Hi Michael,
+>>>
+>>> With your changes integrated, both rseq and cpu-opv selftests fail to
+>>> build if I pass e.g. -j32 to make.
+>>>
+>>> cd tools/testing/selftests/cpu-opv
+>>>
+>>> efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make
+>>> clean; make
+>>> rm -f -r
+>>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>>> gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c
+>>> cpu-op.c cpu-op.h   -o basic_cpu_opv_test
+>>>
+>>> efficios@compudjdev:~/git/linux-percpu-dev/tools/testing/selftests/cpu-opv$ make
+>>> clean; make -j32
+>>> rm -f -r
+>>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>>> gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c
+>>> cpu-op.c cpu-op.h   -o basic_cpu_opv_test
+>>> gcc -O2 -Wall -g -I./ -I../../../../usr/include/    basic_cpu_opv_test.c  -o
+>>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test
+>>> /tmp/ccDthnqM.o: In function `test_memcpy_op':
+>>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:364:
+>>> undefined reference to `cpu_op_get_current_cpu'
+>>> /home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c:365:
+>>> undefined reference to `cpu_opv'
+>> ...
+>>> make: ***
+>>> [/home/efficios/git/linux-percpu-dev/tools/testing/selftests/cpu-opv/basic_cpu_opv_test]
+>>> Error 1
+>>> make: *** Waiting for unfinished jobs....
+>>>
+>>> Any idea what is going on here ?
+>> 
+>> Ugh sorry, yes.
+>> 
+>> New patch below should fix it. Tested with -j:
+>
+> Perfect, folding it into my series.
 
-Benchmark link provided by Jesper D Brouer(increase loop times to
-10000000):
-https://github.com/netoptimizer/prototype-kernel/tree/master/kernel/mm/
-bench
+Thanks.
 
-=========================================================================
-When page allocation performance is not a bottleneck and you want all
-tooling to work, you can do:
-	echo 1 > /proc/sys/vm/numa_stat
-This is system default setting.
+> I see that the "all" target was redundant here.
 
-Many thanks to Michal Hocko, Dave Hansen, Ying Huang and Vlastimil Babka
-for comments to help improve the original patch.
+Yeah.
 
-ChangeLog:
-  V4->V5
-  a) Scope vm_numa_stat_lock into the sysctl handler function, as suggested
-  by Michal Hocko;
-  b) Only allow 0/1 value when setting a value to numa_stat at userspace,
-  that would keep the possibility for add auto mode in future (e.g. 2 for
-  auto mode), as suggested by Michal Hocko.
+Unfortunately lib.mk has grown a bit more complicated than I would like,
+including defining the all target.
 
-  V3->V4
-  a) Get rid of auto mode of numa stats, and may add it back if necessary,
-  as alignment before;
-  b) Skip NUMA_INTERLEAVE_HIT counter update when numa stats is disabled,
-  as reported by Andrey Ryabinin. See commit "de55c8b2519" for details
-  c) Remove extern declaration for those clear_numa_ function, and make
-  them static in vmstat.c, as suggested by Vlastimil Babka.
+It does make for nice short Makefiles for individual test directories,
+but it's not all that easy to use if you're not familiar with it [or
+even if you are, as I demostrated here :)]
 
-  V2->V3:
-  a) Propose a better way to use jump label to eliminate the overhead of
-  branch selection in zone_statistics(), as inspired by Ying Huang;
-  b) Add a paragraph in commit log to describe the way for branch target
-  selection;
-  c) Use a more descriptive name numa_stats_mode instead of vmstat_mode,
-  and change the description accordingly, as suggested by Michal Hocko;
-  d) Make this functionality NUMA-specific via ifdef
-
-  V1->V2:
-  a) Merge to one patch;
-  b) Use jump label to eliminate the overhead of branch selection;
-  c) Add a single-time log message at boot time to help tell users what
-  happened.
-
-Reported-by: Jesper Dangaard Brouer <brouer@redhat.com>
-Suggested-by: Dave Hansen <dave.hansen@intel.com>
-Suggested-by: Ying Huang <ying.huang@intel.com>
-Signed-off-by: Kemi Wang <kemi.wang@intel.com>
----
- Documentation/sysctl/vm.txt | 16 +++++++++++
- include/linux/vmstat.h      | 10 +++++++
- kernel/sysctl.c             |  9 ++++++
- mm/mempolicy.c              |  3 ++
- mm/page_alloc.c             |  6 ++++
- mm/vmstat.c                 | 70 +++++++++++++++++++++++++++++++++++++++++++++
- 6 files changed, 114 insertions(+)
-
-diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
-index 9baf66a..f65c5c7 100644
---- a/Documentation/sysctl/vm.txt
-+++ b/Documentation/sysctl/vm.txt
-@@ -58,6 +58,7 @@ Currently, these files are in /proc/sys/vm:
- - percpu_pagelist_fraction
- - stat_interval
- - stat_refresh
-+- numa_stat
- - swappiness
- - user_reserve_kbytes
- - vfs_cache_pressure
-@@ -792,6 +793,21 @@ with no ill effects: errors and warnings on these stats are suppressed.)
- 
- ==============================================================
- 
-+numa_stat
-+
-+This interface allows runtime configuration of numa statistics.
-+
-+When page allocation performance becomes a bottleneck and you can tolerate
-+some possible tool breakage and decreased numa counter precision, you can
-+do:
-+	echo 0 > /proc/sys/vm/numa_stat
-+
-+When page allocation performance is not a bottleneck and you want all
-+tooling to work, you can do:
-+	echo 1 > /proc/sys/vm/numa_stat
-+
-+==============================================================
-+
- swappiness
- 
- This control is used to define how aggressive the kernel will swap
-diff --git a/include/linux/vmstat.h b/include/linux/vmstat.h
-index ade7cb5..c605c94 100644
---- a/include/linux/vmstat.h
-+++ b/include/linux/vmstat.h
-@@ -6,9 +6,19 @@
- #include <linux/mmzone.h>
- #include <linux/vm_event_item.h>
- #include <linux/atomic.h>
-+#include <linux/static_key.h>
- 
- extern int sysctl_stat_interval;
- 
-+#ifdef CONFIG_NUMA
-+#define ENABLE_NUMA_STAT   1
-+#define DISABLE_NUMA_STAT   0
-+extern int sysctl_vm_numa_stat;
-+DECLARE_STATIC_KEY_TRUE(vm_numa_stat_key);
-+extern int sysctl_vm_numa_stat_handler(struct ctl_table *table,
-+		int write, void __user *buffer, size_t *length, loff_t *ppos);
-+#endif
-+
- #ifdef CONFIG_VM_EVENT_COUNTERS
- /*
-  * Light weight per cpu counter implementation.
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index d9c31bc..8f272db 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -1371,6 +1371,15 @@ static struct ctl_table vm_table[] = {
- 		.mode           = 0644,
- 		.proc_handler   = &hugetlb_mempolicy_sysctl_handler,
- 	},
-+	{
-+		.procname		= "numa_stat",
-+		.data			= &sysctl_vm_numa_stat,
-+		.maxlen			= sizeof(int),
-+		.mode			= 0644,
-+		.proc_handler	= sysctl_vm_numa_stat_handler,
-+		.extra1			= &zero,
-+		.extra2			= &one,
-+	},
- #endif
- 	 {
- 		.procname	= "hugetlb_shm_group",
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index a2af6d5..78344cf 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -1920,6 +1920,9 @@ static struct page *alloc_page_interleave(gfp_t gfp, unsigned order,
- 	struct page *page;
- 
- 	page = __alloc_pages(gfp, order, nid);
-+	/* skip NUMA_INTERLEAVE_HIT counter update if numa stats is disabled */
-+	if (!static_branch_likely(&vm_numa_stat_key))
-+		return page;
- 	if (page && page_to_nid(page) == nid) {
- 		preempt_disable();
- 		__inc_numa_state(page_zone(page), NUMA_INTERLEAVE_HIT);
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 77e4d3c..7bdb4f7 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -83,6 +83,8 @@ DEFINE_PER_CPU(int, numa_node);
- EXPORT_PER_CPU_SYMBOL(numa_node);
- #endif
- 
-+DEFINE_STATIC_KEY_TRUE(vm_numa_stat_key);
-+
- #ifdef CONFIG_HAVE_MEMORYLESS_NODES
- /*
-  * N.B., Do NOT reference the '_numa_mem_' per cpu variable directly.
-@@ -2743,6 +2745,10 @@ static inline void zone_statistics(struct zone *preferred_zone, struct zone *z)
- #ifdef CONFIG_NUMA
- 	enum numa_stat_item local_stat = NUMA_LOCAL;
- 
-+	/* skip numa counters update if numa stats is disabled */
-+	if (!static_branch_likely(&vm_numa_stat_key))
-+		return;
-+
- 	if (z->node != numa_node_id())
- 		local_stat = NUMA_OTHER;
- 
-diff --git a/mm/vmstat.c b/mm/vmstat.c
-index 4bb13e7..1faf30d 100644
---- a/mm/vmstat.c
-+++ b/mm/vmstat.c
-@@ -32,6 +32,76 @@
- 
- #define NUMA_STATS_THRESHOLD (U16_MAX - 2)
- 
-+#ifdef CONFIG_NUMA
-+int sysctl_vm_numa_stat = ENABLE_NUMA_STAT;
-+
-+/* zero numa counters within a zone */
-+static void zero_zone_numa_counters(struct zone *zone)
-+{
-+	int item, cpu;
-+
-+	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++) {
-+		atomic_long_set(&zone->vm_numa_stat[item], 0);
-+		for_each_online_cpu(cpu)
-+			per_cpu_ptr(zone->pageset, cpu)->vm_numa_stat_diff[item]
-+						= 0;
-+	}
-+}
-+
-+/* zero numa counters of all the populated zones */
-+static void zero_zones_numa_counters(void)
-+{
-+	struct zone *zone;
-+
-+	for_each_populated_zone(zone)
-+		zero_zone_numa_counters(zone);
-+}
-+
-+/* zero global numa counters */
-+static void zero_global_numa_counters(void)
-+{
-+	int item;
-+
-+	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++)
-+		atomic_long_set(&vm_numa_stat[item], 0);
-+}
-+
-+static void invalid_numa_statistics(void)
-+{
-+	zero_zones_numa_counters();
-+	zero_global_numa_counters();
-+}
-+
-+int sysctl_vm_numa_stat_handler(struct ctl_table *table, int write,
-+		void __user *buffer, size_t *length, loff_t *ppos)
-+{
-+	int ret, oldval;
-+	DEFINE_MUTEX(vm_numa_stat_lock);
-+
-+	mutex_lock(&vm_numa_stat_lock);
-+	if (write)
-+		oldval = sysctl_vm_numa_stat;
-+	ret = proc_dointvec_minmax(table, write, buffer, length, ppos);
-+	if (ret || !write)
-+		goto out;
-+
-+	if (oldval == sysctl_vm_numa_stat)
-+		goto out;
-+	else if (sysctl_vm_numa_stat == ENABLE_NUMA_STAT) {
-+		static_branch_enable(&vm_numa_stat_key);
-+		pr_info("enable numa statistics\n");
-+	} else {
-+		static_branch_disable(&vm_numa_stat_key);
-+		invalid_numa_statistics();
-+		pr_info("disable numa statistics, and clear numa counters\n");
-+	}
-+
-+out:
-+	mutex_unlock(&vm_numa_stat_lock);
-+	return ret;
-+}
-+#endif
-+
- #ifdef CONFIG_VM_EVENT_COUNTERS
- DEFINE_PER_CPU(struct vm_event_state, vm_event_states) = {{0}};
- EXPORT_PER_CPU_SYMBOL(vm_event_states);
--- 
-2.7.4
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+cheers
