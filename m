@@ -1,87 +1,110 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mm/mempolicy: add node_empty check in SYSC_migrate_pages
-Date: Wed, 18 Oct 2017 09:54:05 +0200
-Message-ID: <7086c6ea-b721-684e-fe3d-ff59ae1d78ed@suse.cz>
-References: <1508290660-60619-1-git-send-email-xieyisheng1@huawei.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH v2] Userfaultfd: Add description for UFFD_FEATURE_SIGBUS
+Date: Wed, 18 Oct 2017 10:42:43 +0200
+Message-ID: <08376364-8110-3003-bc37-46cd0147263d@gmail.com>
+References: <1507589151-27430-1-git-send-email-prakash.sangappa@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1508290660-60619-1-git-send-email-xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1507589151-27430-1-git-send-email-prakash.sangappa@oracle.com>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, aarcange@redhat.com, rppt@linux.vnet.ibm.com, mhocko@suse.com
 List-Id: linux-api@vger.kernel.org
 
-+CC linux-api
+Hello Prakash,
 
-On 10/18/2017 03:37 AM, Yisheng Xie wrote:
-> As Xiaojun reported the ltp of migrate_pages01 will failed on ARCH arm64
-> system whoes has 4 nodes[0...3], all have memory and CONFIG_NODES_SHIFT=2:
+On 10/10/2017 12:45 AM, Prakash Sangappa wrote:
+> Userfaultfd feature UFFD_FEATURE_SIGBUS was merged recently and should
+> be available in Linux 4.14 release. This patch is for the manpage
+> changes documenting this API.
 > 
-> migrate_pages01    0  TINFO  :  test_invalid_nodes
-> migrate_pages01   14  TFAIL  :  migrate_pages_common.c:45: unexpected failure - returned value = 0, expected: -1
-> migrate_pages01   15  TFAIL  :  migrate_pages_common.c:55: call succeeded unexpectedly
+> Documents the following commit:
 > 
-> In this case the test_invalid_nodes of migrate_pages01 will call:
-> SYSC_migrate_pages as:
+> commit 2d6d6f5a09a96cc1fec7ed992b825e05f64cb50e
+> Author: Prakash Sangappa <prakash.sangappa@oracle.com>
+> Date: Wed Sep 6 16:23:39 2017 -0700
 > 
-> migrate_pages(0, , {0x0000000000000001}, 64, , {0x0000000000000010}, 64) = 0
+>      mm: userfaultfd: add feature to request for a signal delivery
 
-is 64 here the maxnode parameter of migrate_pages() ?
+Thanks for the patch. I've applied it, and polished it a little.
+The results are already visible in Git.
 
-> For MAX_NUMNODES is 4, so 0x10 nodemask will tread as empty set which makes
-> 	nodes_subset(*new, node_states[N_MEMORY])
+Thanks, Mike and Andrea, for the reviews!
 
-According to manpage of migrate_pages:
+Cheers,
 
-        EINVAL The value specified by maxnode exceeds a kernel-imposed
-limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
-are greater than the maximum supported node ID.  Or, none of the node
-IDs specified by new_nodes are on-line and allowed by the process's
-current cpuset context, or none of the specified nodes contain memory.
+Michael
 
-if maxnode parameter is 64, but MAX_NUMNODES ("kernel-imposed limit") is
-4, we should get EINVAL just because of that. I don't see such check in
-the migrate_pages implementation though. But then at least the
-"new_nodes specifies one or more node IDs that are greater than the
-maximum supported node ID" part should trigger here, because you have
-node number 8 set in the new_nodes nodemask, right?
-get_nodes() should be checking this according to comment:
 
-        /* When the user specified more nodes than supported just check
-           if the non supported part is all zero. */
-
-Somehow that doesn't seem to work then? I think we should look into
-this. Your patch may still be needed, or not, after that is resolved.
-
-> return true, as empty set is subset of any set.
-> 
-> So this is a common issue which also can happens in X86_64 system eg. 8 nodes[0..7],
-> all with memory and CONFIG_NODES_SHIFT=3. Fix it by adding node_empty check in
-> SYSC_migrate_pages.
-> 
-> Reported-by: Tan Xiaojun <tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-> Signed-off-by: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+> Signed-off-by: Prakash Sangappa <prakash.sangappa@oracle.com>
 > ---
->  mm/mempolicy.c | 5 +++++
->  1 file changed, 5 insertions(+)
+> v2: Incorporated review feedback changes.
+> ---
+>  man2/ioctl_userfaultfd.2 |  9 +++++++++
+>  man2/userfaultfd.2       | 23 +++++++++++++++++++++++
+>  2 files changed, 32 insertions(+)
 > 
-> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-> index a2af6d5..1dfd3cc 100644
-> --- a/mm/mempolicy.c
-> +++ b/mm/mempolicy.c
-> @@ -1388,6 +1388,11 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
->  	if (err)
->  		goto out;
->  
-> +	if (nodes_empty(*new)) {
-> +		err = -EINVAL;
-> +		goto out;
-> +	}
+> diff --git a/man2/ioctl_userfaultfd.2 b/man2/ioctl_userfaultfd.2
+> index 60fd29b..32f0744 100644
+> --- a/man2/ioctl_userfaultfd.2
+> +++ b/man2/ioctl_userfaultfd.2
+> @@ -196,6 +196,15 @@ with the
+>  flag set,
+>  .BR memfd_create (2),
+>  and so on.
+> +.TP
+> +.B UFFD_FEATURE_SIGBUS
+> +Since Linux 4.14, If this feature bit is set, no page-fault events
+> +.B (UFFD_EVENT_PAGEFAULT)
+> +will be delivered, instead a
+> +.B SIGBUS
+> +signal will be sent to the faulting process. Applications using this
+> +feature will not require the use of a userfaultfd monitor for processing
+> +memory accesses to the regions registered with userfaultfd.
+>  .IP
+>  The returned
+>  .I ioctls
+> diff --git a/man2/userfaultfd.2 b/man2/userfaultfd.2
+> index 1741ee3..3c5b9c0 100644
+> --- a/man2/userfaultfd.2
+> +++ b/man2/userfaultfd.2
+> @@ -172,6 +172,29 @@ or
+>  .BR ioctl (2)
+>  operations to resolve the page fault.
+>  .PP
+> +Starting from Linux 4.14, if application sets
+> +.B UFFD_FEATURE_SIGBUS
+> +feature bit using
+> +.B UFFDIO_API
+> +.BR ioctl (2),
+> +no page fault notification will be forwarded to
+> +the user-space, instead a
+> +.B SIGBUS
+> +signal is delivered to the faulting process. With this feature,
+> +userfaultfd can be used for robustness purpose to simply catch
+> +any access to areas within the registered address range that do not
+> +have pages allocated, without having to listen to userfaultfd events.
+> +No userfaultfd monitor will be required for dealing with such memory
+> +accesses. For example, this feature can be useful for applications that
+> +want to prevent the kernel from automatically allocating pages and filling
+> +holes in sparse files when the hole is accessed thru mapped address.
+> +.PP
+> +The
+> +.B UFFD_FEATURE_SIGBUS
+> +feature is implicitly inherited through fork() if used in combination with
+> +.BR UFFD_FEATURE_FORK .
 > +
->  	/* Find the mm_struct */
->  	rcu_read_lock();
->  	task = pid ? find_task_by_vpid(pid) : current;
+> +.PP
+>  Details of the various
+>  .BR ioctl (2)
+>  operations can be found in
 > 
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
