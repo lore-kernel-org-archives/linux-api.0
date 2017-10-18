@@ -1,40 +1,67 @@
-From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [1/2,v2] fdmap(2)
-Date: Wed, 18 Oct 2017 13:35:00 +0200
-Message-ID: <CACVxJT_ZP=VAJQ_=D1JV0yt3bT_RZjtWTW61KcV5gCbhF8ixBw@mail.gmail.com>
-References: <20170924200620.GA24368@avx2> <20171010220804.GA30735@outlook.office365.com>
- <20171011181234.GB2119@avx2> <20171012080608.GA23077@outlook.office365.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v9 for 4.15 01/14] Restartable sequences system call
+Date: Wed, 18 Oct 2017 16:28:12 +0000 (UTC)
+Message-ID: <505591961.43853.1508344092267.JavaMail.zimbra@efficios.com>
+References: <20171012230326.19984-1-mathieu.desnoyers@efficios.com> <CA+55aFwvNS95ByZJTh1yG25QfaD0K0ZByK3iXeeRU8LafFiGFQ@mail.gmail.com> <135399003.40850.1507930608890.JavaMail.zimbra@efficios.com> <165916d7-2f86-445a-9c84-f6444b5e753b@redhat.com> <20171016164600.GO2482@two.firstfloor.org> <21865534.42661.1508192263844.JavaMail.zimbra@efficios.com> <CY4PR15MB168879D6220D976B04FE482CCF4C0@CY4PR15MB1688.namprd15.prod.outlook.com> <20171018062226.GB18857@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171012080608.GA23077-1ViLX0X+lBJGNQ1M2rI3KwRV3xvJKrda@public.gmane.org>
+In-Reply-To: <20171018062226.GB18857-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+To: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+Cc: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, David Goldblatt <davidgoldblatt-b10kYP2dOMg@public.gmane.org>, Qi Wang <qiwang-b10kYP2dOMg@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>Andrew
 List-Id: linux-api@vger.kernel.org
 
-On 10/12/17, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+----- On Oct 18, 2017, at 2:22 AM, Greg Kroah-Hartman gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org wrote:
 
-> I'm agree with your points, but I think you choose a wrong set of data
-> to make an example of a new approach.
->
-> You are talking a lot about statx, but for me it is unclear how fdmap
-> follows the idea of statx. Let's imagine that I want to extend fdmap to
-> return mnt_id for each file descriptor?
+> On Tue, Oct 17, 2017 at 04:19:41PM +0000, Ben Maurer wrote:
+>> Hey,
+>> 
+>> > So far the restrictions I see for libraries using this symbol are:
+>> > - They should never be unloaded,
+>> > - They should never be loaded with dlopen RTLD_LOCAL flag.
+>> 
+>> We talked a bit about this off-list but I wanted to state publicly
+>> that I think this model works well for our use case. Specifically,
+>> 
+>> (1) It reduces complexity by focusing on the common case -- long term
+>> we expect glibc to manage the process of using this feature and
+>> registering/deregistering threads for rseq. Unloading isn't a
+>> challenge in these situations, so why add the complexity for it?
+> 
+> You never install a new version of glibc on a running system, and expect
+> everything to keep running successfully?  Breaking that would not be
+> good...
 
-fdmap() is standalone thing.
+If we share the __rseq_abi TLS weak symbol between glibc, applications,
+and early-adopter libraries, we just need those early adopters to
+check whether the TLS is already registered (cpu_id field >= 0), and
+don't bother doing their lazy registration if it's already been done
+for them (either by glibc or by the application).
 
-Next step is to design fdinfo(2) (?) which uses descriptors from fdmap(2).
-Extending structures is done as usual: but version, add new fields to the end.
+If either the application or a lazy-registering library gets a EBUSY
+errno from rseq registration, it can consider that another library
+already performed the registration for them (probably glibc).
 
-> Or it may be more complex case, when we decided to provide all data
-> from /proc/pid/fdinfo/X for each descriptor. A set of fields in fdinfo
-> depends on a type of a file descriptor, it is different for epoll,
-> signalfd, inotify, sockets, etc.
->
-> For inotify file descriptors, there are information about all watches,
-> so it is not possible to use a fixed size struture to present this data.
+As long as early adopter libraries don't expect to be sole users
+of __rseq_abi, upgrading to newer glibc should work fine.
 
-Now I didn't look closely at inotify watches but this is done with unions,
-zero-length trailing arrays, and other usual stuff. If OpenVZ/Virtuozzo is
-doing C/R of inotify then you already have all serializing code.
+But this means we need to get all early adopters to get it right from
+the get-go, or things could break when you compose them.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+> 
+> thanks,
+> 
+> greg k-h
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
