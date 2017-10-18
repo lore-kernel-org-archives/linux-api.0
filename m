@@ -1,74 +1,111 @@
-From: Laura Abbott <labbott@redhat.com>
-Subject: Re: [PATCH v5 2/2] staging: ion: create one device entry per heap
-Date: Wed, 18 Oct 2017 13:07:33 -0700
-Message-ID: <bff3d0c7-110d-d702-165b-855daaca6382@redhat.com>
-References: <1506518409-16887-1-git-send-email-benjamin.gaignard@linaro.org>
- <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
+From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Wed, 18 Oct 2017 16:56:06 -0400
+Message-ID: <CAHC9VhRV9m6-APj3ofMQc22rL-WUoDzB8-urUxryszjCHHHLTg@mail.gmail.com>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+	<75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
+	<20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
+	<2319693.5l3M4ZINGd@x2> <1508243469.6230.24.camel@redhat.com>
+	<a07968f6-fef1-f49d-01f1-6c660c0ada20@schaufler-ca.com>
+	<1508254120.6230.34.camel@redhat.com>
+	<1508255091.3129.27.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1506518409-16887-3-git-send-email-benjamin.gaignard@linaro.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Benjamin Gaignard <benjamin.gaignard@linaro.org>, sumit.semwal@linaro.org, gregkh@linuxfoundation.org, arve@android.com, riandrews@android.com, broonie@kernel.org, dan.carpenter@oracle.com
-Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <1508255091.3129.27.camel-d9PhHud1JfjCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-T24gMDkvMjcvMjAxNyAwNjoyMCBBTSwgQmVuamFtaW4gR2FpZ25hcmQgd3JvdGU6Cj4gZGlmZiAt
-LWdpdCBhL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24uYyBiL2RyaXZlcnMvc3RhZ2lu
-Zy9hbmRyb2lkL2lvbi9pb24uYwo+IGluZGV4IDkzZTJjOTAuLjA5MmIyNGMgMTAwNjQ0Cj4gLS0t
-IGEvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lvbi5jCj4gKysrIGIvZHJpdmVycy9zdGFn
-aW5nL2FuZHJvaWQvaW9uL2lvbi5jCj4gQEAgLTQwLDYgKzQwLDggQEAKPiAgCj4gICNpbmNsdWRl
-ICJpb24uaCIKPiAgCj4gKyNkZWZpbmUgSU9OX0RFVl9NQVggMzIKPiArCj4gIHN0YXRpYyBzdHJ1
-Y3QgaW9uX2RldmljZSAqaW50ZXJuYWxfZGV2Owo+ICBzdGF0aWMgaW50IGhlYXBfaWQ7Cj4gIAo+
-IEBAIC01MzcsMTUgKzUzOSwyOCBAQCBzdGF0aWMgaW50IGRlYnVnX3Nocmlua19nZXQodm9pZCAq
-ZGF0YSwgdTY0ICp2YWwpCj4gIERFRklORV9TSU1QTEVfQVRUUklCVVRFKGRlYnVnX3Nocmlua19m
-b3BzLCBkZWJ1Z19zaHJpbmtfZ2V0LAo+ICAJCQlkZWJ1Z19zaHJpbmtfc2V0LCAiJWxsdVxuIik7
-Cj4gIAo+IC12b2lkIGlvbl9kZXZpY2VfYWRkX2hlYXAoc3RydWN0IGlvbl9oZWFwICpoZWFwKQo+
-ICtpbnQgaW9uX2RldmljZV9hZGRfaGVhcChzdHJ1Y3QgaW9uX2hlYXAgKmhlYXApCj4gIHsKPiAg
-CXN0cnVjdCBkZW50cnkgKmRlYnVnX2ZpbGU7Cj4gIAlzdHJ1Y3QgaW9uX2RldmljZSAqZGV2ID0g
-aW50ZXJuYWxfZGV2Owo+ICsJaW50IHJldCA9IDA7Cj4gIAo+ICAJaWYgKCFoZWFwLT5vcHMtPmFs
-bG9jYXRlIHx8ICFoZWFwLT5vcHMtPmZyZWUpCj4gIAkJcHJfZXJyKCIlczogY2FuIG5vdCBhZGQg
-aGVhcCB3aXRoIGludmFsaWQgb3BzIHN0cnVjdC5cbiIsCj4gIAkJICAgICAgIF9fZnVuY19fKTsK
-PiAgCj4gKwlpZiAoaGVhcF9pZCA+PSBJT05fREVWX01BWCkKPiArCQlyZXR1cm4gLUVCVVNZOwo+
-ICsKPiArCWhlYXAtPmRkZXYuZGV2dCA9IE1LREVWKE1BSk9SKGRldi0+ZGV2dCksIGhlYXBfaWQp
-Owo+ICsJZGV2X3NldF9uYW1lKCZoZWFwLT5kZGV2LCAiaW9uJWQiLCBoZWFwX2lkKTsKPiArCWRl
-dmljZV9pbml0aWFsaXplKCZoZWFwLT5kZGV2KTsKPiArCWNkZXZfaW5pdCgmaGVhcC0+Y2hyZGV2
-LCAmaW9uX2ZvcHMpOwo+ICsJaGVhcC0+Y2hyZGV2Lm93bmVyID0gVEhJU19NT0RVTEU7Cj4gKwly
-ZXQgPSBjZGV2X2RldmljZV9hZGQoJmhlYXAtPmNocmRldiwgJmhlYXAtPmRkZXYpOwo+ICsJaWYg
-KHJldCA8IDApCj4gKwkJcmV0dXJuIHJldDsKPiArCj4gIAlzcGluX2xvY2tfaW5pdCgmaGVhcC0+
-ZnJlZV9sb2NrKTsKPiAgCWhlYXAtPmZyZWVfbGlzdF9zaXplID0gMDsKPiAgCj4gQEAgLTU4Myw2
-ICs1OTgsOCBAQCB2b2lkIGlvbl9kZXZpY2VfYWRkX2hlYXAoc3RydWN0IGlvbl9oZWFwICpoZWFw
-KQo+ICAKPiAgCWRldi0+aGVhcF9jbnQrKzsKPiAgCXVwX3dyaXRlKCZkZXYtPmxvY2spOwo+ICsK
-PiArCXJldHVybiByZXQ7Cj4gIH0KPiAgRVhQT1JUX1NZTUJPTChpb25fZGV2aWNlX2FkZF9oZWFw
-KTsKPiAgCj4gQEAgLTU5NSw2ICs2MTIsNyBAQCBzdGF0aWMgaW50IGlvbl9kZXZpY2VfY3JlYXRl
-KHZvaWQpCj4gIAlpZiAoIWlkZXYpCj4gIAkJcmV0dXJuIC1FTk9NRU07Cj4gIAo+ICsjaWZkZWYg
-Q09ORklHX0lPTl9MRUdBQ1lfREVWSUNFX0FQSQo+ICAJaWRldi0+ZGV2Lm1pbm9yID0gTUlTQ19E
-WU5BTUlDX01JTk9SOwo+ICAJaWRldi0+ZGV2Lm5hbWUgPSAiaW9uIjsKPiAgCWlkZXYtPmRldi5m
-b3BzID0gJmlvbl9mb3BzOwo+IEBAIC02MDUsNiArNjIzLDE3IEBAIHN0YXRpYyBpbnQgaW9uX2Rl
-dmljZV9jcmVhdGUodm9pZCkKPiAgCQlrZnJlZShpZGV2KTsKPiAgCQlyZXR1cm4gcmV0Owo+ICAJ
-fQo+ICsjZW5kaWYKPiArCj4gKwlyZXQgPSBhbGxvY19jaHJkZXZfcmVnaW9uKCZpZGV2LT5kZXZ0
-LCAwLCBJT05fREVWX01BWCwgImlvbiIpOwo+ICsJaWYgKHJldCkgewo+ICsJCXByX2VycigiaW9u
-OiB1bmFibGUgdG8gYWxsb2NhdGUgZGV2aWNlXG4iKTsKPiArI2lmZGVmIENPTkZJR19JT05fTEVH
-QUNZX0RFVklDRV9BUEkKPiArCQltaXNjX2RlcmVnaXN0ZXIoJmlkZXYtPmRldik7Cj4gKyNlbmRp
-Zgo+ICsJCWtmcmVlKGlkZXYpOwo+ICsJCXJldHVybiByZXQ7Cj4gKwl9Cj4gIAo+ICAJaWRldi0+
-ZGVidWdfcm9vdCA9IGRlYnVnZnNfY3JlYXRlX2RpcigiaW9uIiwgTlVMTCk7Cj4gIAlpZiAoIWlk
-ZXYtPmRlYnVnX3Jvb3QpIHsKCkknbSBub3QgMTAwJSBzdXJlIGFib3V0IHRoZSBkZXZpY2UgaGll
-cmFyY2h5IGhlcmUuIFdlJ3JlCmVuZGluZyB1cCB3aXRoIGRldmljZXMgYXQgdGhlIHJvb3Qgb2Yg
-L3N5cy9kZXZpY2VzCgovc3lzL2RldmljZXMgIyBscwpicmVha3BvaW50IGlvbjAgaW9uMSBpb24y
-IHBsYXRmb3JtIHNvZnR3YXJlIHN5c3RlbSB2aXJ0dWFsIAoKYW5kIHRoZSBBbmRyb2lkIGluaXQg
-c3lzdGVtIGRvZXNuJ3QgcGljayB0aGlzIHVwLiBJJ2xsCmFkbWl0IHRvIGJlaW5nIG91dCBvZiBt
-eSBhcmVhIGhlcmUgYnV0IEkgZG9uJ3QgdGhpbmsKdGhpcyBsb29rcyBxdWl0ZSByaWdodC4KClRo
-YW5rcywKTGF1cmEKCgoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Au
-b3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRl
-dmVsCg==
+On Tue, Oct 17, 2017 at 11:44 AM, James Bottomley
+<James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org> wrote:
+> On Tue, 2017-10-17 at 11:28 -0400, Simo Sorce wrote:
+>> > Without a *kernel* policy on containerIDs you can't say what
+>> > security policy is being exempted.
+>>
+>> The policy has been basically stated earlier.
+>>
+>> A way to track a set of processes from a specific point in time
+>> forward. The name used is "container id", but it could be anything.
+>> This marker is mostly used by user space to track process hierarchies
+>> without races, these processes can be very privileged, and must not
+>> be allowed to change the marker themselves when granted the current
+>> common capabilities.
+>>
+>> Is this a good enough description ? If not can you clarify your
+>> expectations ?
+>
+> I think you mean you want to be able to apply a label to a process
+> which is inherited across forks.  The label should only be susceptible
+> to modification by something possessing a capability (which one TBD).
+> The idea is that processes spawned into a container would be labelled
+> by the container orchestration system.  It's unclear what should happen
+> to processes using nsenter after the fact, but policy for that should
+> be up to the orchestration system.
+>
+> The label will be used as a tag for audit information.
+>
+> I think you were missing label inheritance above.
+
+That is a pretty good summary of what we want to do, and what Richard
+and I have discussed while brainstorming this offline.  The details
+may not have translated well into those initial emails from Richard,
+but I think you've got the idea, even if some of the smaller details
+are still TBD.  FWIW, right now I'm not as worried about the exact
+capability or the size of the audit container ID, I think those things
+will sort themselves out as we progress through the implementation,
+especially once we get to the next stage when we start to allow copies
+of the audit records to be routed to audit daemons running inside
+containers (note well that I said "copies", the host system still sees
+all).
+
+> The security implications are that anything that can change the label
+> could also hide itself and its doings from the audit system and thus
+> would be used as a means to evade detection.  I actually think this
+> means the label should be write once (once you've set it, you can't
+> change it) ...
+
+Richard and I have talked about a write once approach, but the
+thinking was that you may want to allow a nested container
+orchestrator (Why? I don't know, but people always want to do the
+craziest things.) and a write-once policy makes that impossible.  If
+we punt on the nested orchestrator, I believe we can seriously think
+about a write-once policy to simplify things.
+
+A bit off topic, but I've also wondered about not even implementing
+read access, just to help ensure the audit container ID wouldn't be
+abused, but I'm not sure how practical that will be.  Something else
+to sort out during the RFC phase of the implementation with the
+container orchestrators.
+
+> ... and orchestration systems should begin as unlabelled
+> processes allowing them to do arbitrary forks.
+
+My current thinking is that the default state is to start unlabeled (I
+just vomited a little into my SELinux hat); in other words
+init/systemd/PID-1 in the host system starts with an "unset" audit
+container ID.  This not only helps define the host system (anything
+that has an unset audit container ID) but provides a blank slate for
+the orchestrator(s).
+
+> For nested containers, I actually think the label should be
+> hierarchical, so you can add a label for the new nested container but
+> it still also contains its parents label as well.
+
+I haven't made up my mind on this completely just yet, but I'm
+currently of the mindset that supporting multiple audit container IDs
+on a given process is not a good idea.
+
+-- 
+paul moore
+www.paul-moore.com
