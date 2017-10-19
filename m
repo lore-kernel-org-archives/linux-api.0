@@ -1,78 +1,199 @@
-From: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Thu, 19 Oct 2017 10:46:18 +1100
-Message-ID: <49752b6f-8a77-d1e5-8acb-5a1eed0a992c@suse.de>
+Date: Wed, 18 Oct 2017 20:05:27 -0400
+Message-ID: <20171019000527.eio6dfsmujmtioyt@madcap2.tricolour.ca>
 References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
-	<75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
-	<20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
-	<2319693.5l3M4ZINGd@x2> <1508243469.6230.24.camel@redhat.com>
-	<a07968f6-fef1-f49d-01f1-6c660c0ada20@schaufler-ca.com>
-	<1508254120.6230.34.camel@redhat.com>
-	<1508255091.3129.27.camel@HansenPartnership.com>
-	<CAHC9VhRV9m6-APj3ofMQc22rL-WUoDzB8-urUxryszjCHHHLTg@mail.gmail.com>
+ <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
+ <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
+ <81c15928-c445-fb8e-251c-bee566fbbf58@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <CAHC9VhRV9m6-APj3ofMQc22rL-WUoDzB8-urUxryszjCHHHLTg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>
-Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <81c15928-c445-fb8e-251c-bee566fbbf58-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
->> The security implications are that anything that can change the label
->> could also hide itself and its doings from the audit system and thus
->> would be used as a means to evade detection.  I actually think this
->> means the label should be write once (once you've set it, you can't
->> change it) ...
+On 2017-10-17 01:10, Casey Schaufler wrote:
+> On 10/16/2017 5:33 PM, Richard Guy Briggs wrote:
+> > On 2017-10-12 16:33, Casey Schaufler wrote:
+> >> On 10/12/2017 7:14 AM, Richard Guy Briggs wrote:
+> >>> Containers are a userspace concept.  The kernel knows nothing of them.
+> >>>
+> >>> The Linux audit system needs a way to be able to track the container
+> >>> provenance of events and actions.  Audit needs the kernel's help to do
+> >>> this.
+> >>>
+> >>> Since the concept of a container is entirely a userspace concept, a
+> >>> registration from the userspace container orchestration system initiates
+> >>> this.  This will define a point in time and a set of resources
+> >>> associated with a particular container with an audit container ID.
+> >>>
+> >>> The registration is a pseudo filesystem (proc, since PID tree already
+> >>> exists) write of a u8[16] UUID representing the container ID to a file
+> >>> representing a process that will become the first process in a new
+> >>> container.  This write might place restrictions on mount namespaces
+> >>> required to define a container, or at least careful checking of
+> >>> namespaces in the kernel to verify permissions of the orchestrator so it
+> >>> can't change its own container ID.  A bind mount of nsfs may be
+> >>> necessary in the container orchestrator's mntNS.
+> >>> Note: Use a 128-bit scalar rather than a string to make compares faster
+> >>> and simpler.
+> >>>
+> >>> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
+> >>> registration.
+> >> Hang on. If containers are a user space concept, how can
+> >> you want CAP_CONTAINER_ANYTHING? If there's not such thing as
+> >> a container, how can you be asking for a capability to manage
+> >> them?
+> > There is such a thing, but the kernel doesn't know about it yet.
 > 
-> Richard and I have talked about a write once approach, but the
-> thinking was that you may want to allow a nested container
-> orchestrator (Why? I don't know, but people always want to do the
-> craziest things.) and a write-once policy makes that impossible.  If
-> we punt on the nested orchestrator, I believe we can seriously think
-> about a write-once policy to simplify things.
+> Then how can it be the kernel's place to control access to a
+> container resource, that is, the containerID.
 
-Nested containers are a very widely used use-case (see LXC system 
-containers, inside of which people run other container runtimes). So I 
-would definitely consider it something that "needs to be supported in 
-some way". While the LXC guys might be a *tad* crazy, the use-case isn't. :P
+Ok, let me try to address your objections.
 
->> ... and orchestration systems should begin as unlabelled
->> processes allowing them to do arbitrary forks.
+The kernel can know enough that if it is already set to not allow it to
+be set again.  Or if the user doesn't have permission to set it that the
+user be denied this action.  How is this different from loginuid and
+sessionid?
 > 
-> My current thinking is that the default state is to start unlabeled (I
-> just vomited a little into my SELinux hat); in other words
-> init/systemd/PID-1 in the host system starts with an "unset" audit
-> container ID.  This not only helps define the host system (anything
-> that has an unset audit container ID) but provides a blank slate for
-> the orchestrator(s).
+> >   This
+> > same situation exists for loginuid and sessionid which are userspace
+> > concepts that the kernel tracks for the convenience of userspace.
 > 
->> For nested containers, I actually think the label should be
->> hierarchical, so you can add a label for the new nested container but
->> it still also contains its parents label as well.
+> Ah, no. Loginuid identifies a user, which is a kernel concept in
+> that a user is defined by the uid.
+
+This simple explanation doesn't help me.  What makes that a kernel
+concept?  The fact that it is stored and compared in more than one
+place?
+
+> The session ID has well defined kernel semantics. You're trying to say
+> that the containerID is an opaque value that is meaningless to the
+> kernel, but you still want the kernel to protect it. How can the
+> kernel know if it is protecting it correctly?
+
+How so?  A userspace process triggers this.  Does the kernel know what
+these values mean?  Does it do anything with them other than report
+them or allow audit to filter them?  It is given some instructions on
+how to treat it.
+
+This is what we're trying to do with the containerID.
+
+> >   As
+> > for its name, I'm not particularly picky, so if you don't like
+> > CAP_CONTAINER_* then I'm fine with CAP_AUDIT_CONTAINERID.  It really
+> > needs to be distinct from CAP_AUDIT_WRITE and CAP_AUDIT_CONTROL since we
+> > don't want to give the ability to set a containerID to any process that
+> > is able to do audit logging (such as vsftpd) and similarly we don't want
+> > to give the orchestrator the ability to control the setup of the audit
+> > daemon.
 > 
-> I haven't made up my mind on this completely just yet, but I'm
-> currently of the mindset that supporting multiple audit container IDs
-> on a given process is not a good idea.
+> Sorry, but what aspect of the kernel security policy is this
+> capability supposed to protect? That's what capabilities are
+> for, not the undefined support of undefined user-space behavior.
 
-As long as creating a new "container" (that is, changing a process's 
-"audit container ID") is an audit event then I think that having a 
-hierarchy be explicit is not necessary (userspace audit can figure out 
-the hierarchy quite easily -- but also there are cases where thinking of 
-it as being hierarchical isn't necessarily correct).
+Similarly, loginuids and sessionIDs are only used for audit tracking and
+filtering.
 
--- 
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-https://www.cyphar.com/
+> If it's audit behavior, you want CAP_AUDIT_CONTROL. If it's
+> more than audit behavior you have to define what system security
+> policy you're dealing with in order to pick the right capability.
+
+It isn't audit behaviour (yet), it is audit reporting information, a
+level above simply writing logs and a level below controlling daemon
+behaviour.
+
+> We get this request pretty regularly. "I need my own capability
+> because I have a niche thing that isn't part of the system security
+> policy but that is important!" Fit the containerID into the
+> system security policy, and if that results in using CAP_SYS_ADMIN,
+> oh well.
+
+There's far too much piled in to CAP_SYS_ADMIN already, which is making
+capabilites less and less useful.  I realize that capabilities are
+limited compared with netlink message types, but this falls in between
+the abilities needed by CAP_AUDIT_CONTROL and CAP_AUDIT_WRITE.
+
+I'll continue on Steve Grubb's comment...
+
+> >>>   At that time, record the target container's user-supplied
+> >>> container identifier along with the target container's first process
+> >>> (which may become the target container's "init" process) process ID
+> >>> (referenced from the initial PID namespace), all namespace IDs (in the
+> >>> form of a nsfs device number and inode number tuple) in a new auxilliary
+> >>> record AUDIT_CONTAINER with a qualifying op=$action field.
+> >>>
+> >>> Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
+> >>> container ID present on an auditable action or event.
+> >>>
+> >>> Forked and cloned processes inherit their parent's container ID,
+> >>> referenced in the process' task_struct.
+> >>>
+> >>> Mimic setns(2) and return an error if the process has already initiated
+> >>> threading or forked since this registration should happen before the
+> >>> process execution is started by the orchestrator and hence should not
+> >>> yet have any threads or children.  If this is deemed overly restrictive,
+> >>> switch all threads and children to the new containerID.
+> >>>
+> >>> Trust the orchestrator to judiciously use and restrict CAP_CONTAINER_ADMIN.
+> >>>
+> >>> Log the creation of every namespace, inheriting/adding its spawning
+> >>> process' containerID(s), if applicable.  Include the spawning and
+> >>> spawned namespace IDs (device and inode number tuples).
+> >>> [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
+> >>> Note: At this point it appears only network namespaces may need to track
+> >>> container IDs apart from processes since incoming packets may cause an
+> >>> auditable event before being associated with a process.
+> >>>
+> >>> Log the destruction of every namespace when it is no longer used by any
+> >>> process, include the namespace IDs (device and inode number tuples).
+> >>> [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
+> >>>
+> >>> Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
+> >>> the parent and child namespace IDs for any changes to a process'
+> >>> namespaces. [setns(2)]
+> >>> Note: It may be possible to combine AUDIT_NS_* record formats and
+> >>> distinguish them with an op=$action field depending on the fields
+> >>> required for each message type.
+> >>>
+> >>> When a container ceases to exist because the last process in that
+> >>> container has exited and hence the last namespace has been destroyed and
+> >>> its refcount dropping to zero, log the fact.
+> >>> (This latter is likely needed for certification accountability.)  A
+> >>> container object may need a list of processes and/or namespaces.
+> >>>
+> >>> A namespace cannot directly migrate from one container to another but
+> >>> could be assigned to a newly spawned container.  A namespace can be
+> >>> moved from one container to another indirectly by having that namespace
+> >>> used in a second process in another container and then ending all the
+> >>> processes in the first container.
+> >>>
+> >>> (v2)
+> >>> - switch from u64 to u128 UUID
+> >>> - switch from "signal" and "trigger" to "register"
+> >>> - restrict registration to single process or force all threads and children into same container
+> >>>
+> >>> - RGB
+> > - RGB
+> >
+> > --
+> > Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> > Sr. S/W Engineer, Kernel Security, Base Operating Systems
+> > Remote, Ottawa, Red Hat Canada
+> > IRC: rgb, SunRaycer
+> > Voice: +1.647.777.2635, Internal: (81) 32635
+> >
+> 
+
+- RGB
+
+--
+Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
