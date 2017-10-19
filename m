@@ -1,299 +1,118 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5] mm, sysctl: make NUMA stats configurable
-Date: Thu, 19 Oct 2017 09:51:41 +0200
-Message-ID: <20171019075141.j42ysicbgbgs2gzt@dhcp22.suse.cz>
-References: <1508290927-8518-1-git-send-email-kemi.wang@intel.com>
+From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] mm/mempolicy: add node_empty check in SYSC_migrate_pages
+Date: Thu, 19 Oct 2017 18:31:03 +0800
+Message-ID: <ce912b7c-6e28-b780-3ba3-354b4226bb22@huawei.com>
+References: <1508290660-60619-1-git-send-email-xieyisheng1@huawei.com>
+ <7086c6ea-b721-684e-fe3d-ff59ae1d78ed@suse.cz>
+ <20aac66a-7252-947c-355b-6da4be671dcf@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1508290927-8518-1-git-send-email-kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20aac66a-7252-947c-355b-6da4be671dcf-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "Luis R . Rodriguez" <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jonathan Corbet <corbet-T1hC0tSOHrs@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Andrey Ryabinin <aryabinin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Dave <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Tim Chen <tim.c.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andi Kleen <andi.kleen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Jesper Dangaard Brouer <brouer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ying Huang <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Aaron Lu <aaron.lu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Proc sysctl <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, will.deacon-5wv7dgnIgG8@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 18-10-17 09:42:07, Kemi Wang wrote:
-> This is the second step which introduces a tunable interface that allow
-> numa stats configurable for optimizing zone_statistics(), as suggested by
-> Dave Hansen and Ying Huang.
-> 
-> =========================================================================
-> When page allocation performance becomes a bottleneck and you can tolerate
-> some possible tool breakage and decreased numa counter precision, you can
-> do:
-> 	echo 0 > /proc/sys/vm/numa_stat
-> In this case, numa counter update is ignored. We can see about
-> *4.8%*(185->176) drop of cpu cycles per single page allocation and reclaim
-> on Jesper's page_bench01 (single thread) and *8.1%*(343->315) drop of cpu
-> cycles per single page allocation and reclaim on Jesper's page_bench03 (88
-> threads) running on a 2-Socket Broadwell-based server (88 threads, 126G
-> memory).
-> 
-> Benchmark link provided by Jesper D Brouer(increase loop times to
-> 10000000):
-> https://github.com/netoptimizer/prototype-kernel/tree/master/kernel/mm/
-> bench
-> 
-> =========================================================================
-> When page allocation performance is not a bottleneck and you want all
-> tooling to work, you can do:
-> 	echo 1 > /proc/sys/vm/numa_stat
-> This is system default setting.
-> 
-> Many thanks to Michal Hocko, Dave Hansen, Ying Huang and Vlastimil Babka
-> for comments to help improve the original patch.
-> 
-> ChangeLog:
->   V4->V5
->   a) Scope vm_numa_stat_lock into the sysctl handler function, as suggested
->   by Michal Hocko;
->   b) Only allow 0/1 value when setting a value to numa_stat at userspace,
->   that would keep the possibility for add auto mode in future (e.g. 2 for
->   auto mode), as suggested by Michal Hocko.
-> 
->   V3->V4
->   a) Get rid of auto mode of numa stats, and may add it back if necessary,
->   as alignment before;
->   b) Skip NUMA_INTERLEAVE_HIT counter update when numa stats is disabled,
->   as reported by Andrey Ryabinin. See commit "de55c8b2519" for details
->   c) Remove extern declaration for those clear_numa_ function, and make
->   them static in vmstat.c, as suggested by Vlastimil Babka.
-> 
->   V2->V3:
->   a) Propose a better way to use jump label to eliminate the overhead of
->   branch selection in zone_statistics(), as inspired by Ying Huang;
->   b) Add a paragraph in commit log to describe the way for branch target
->   selection;
->   c) Use a more descriptive name numa_stats_mode instead of vmstat_mode,
->   and change the description accordingly, as suggested by Michal Hocko;
->   d) Make this functionality NUMA-specific via ifdef
-> 
->   V1->V2:
->   a) Merge to one patch;
->   b) Use jump label to eliminate the overhead of branch selection;
->   c) Add a single-time log message at boot time to help tell users what
->   happened.
-> 
-> Reported-by: Jesper Dangaard Brouer <brouer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> Suggested-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Suggested-by: Ying Huang <ying.huang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Kemi Wang <kemi.wang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Hi Vlastimil,
 
-Acked-by: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
-
-Thanks!
-
-> ---
->  Documentation/sysctl/vm.txt | 16 +++++++++++
->  include/linux/vmstat.h      | 10 +++++++
->  kernel/sysctl.c             |  9 ++++++
->  mm/mempolicy.c              |  3 ++
->  mm/page_alloc.c             |  6 ++++
->  mm/vmstat.c                 | 70 +++++++++++++++++++++++++++++++++++++++++++++
->  6 files changed, 114 insertions(+)
+Thanks for you comment!
+On 2017/10/18 17:34, Yisheng Xie wrote:
+> Hi Vlastimil,
 > 
-> diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
-> index 9baf66a..f65c5c7 100644
-> --- a/Documentation/sysctl/vm.txt
-> +++ b/Documentation/sysctl/vm.txt
-> @@ -58,6 +58,7 @@ Currently, these files are in /proc/sys/vm:
->  - percpu_pagelist_fraction
->  - stat_interval
->  - stat_refresh
-> +- numa_stat
->  - swappiness
->  - user_reserve_kbytes
->  - vfs_cache_pressure
-> @@ -792,6 +793,21 @@ with no ill effects: errors and warnings on these stats are suppressed.)
->  
->  ==============================================================
->  
-> +numa_stat
-> +
-> +This interface allows runtime configuration of numa statistics.
-> +
-> +When page allocation performance becomes a bottleneck and you can tolerate
-> +some possible tool breakage and decreased numa counter precision, you can
-> +do:
-> +	echo 0 > /proc/sys/vm/numa_stat
-> +
-> +When page allocation performance is not a bottleneck and you want all
-> +tooling to work, you can do:
-> +	echo 1 > /proc/sys/vm/numa_stat
-> +
-> +==============================================================
-> +
->  swappiness
->  
->  This control is used to define how aggressive the kernel will swap
-> diff --git a/include/linux/vmstat.h b/include/linux/vmstat.h
-> index ade7cb5..c605c94 100644
-> --- a/include/linux/vmstat.h
-> +++ b/include/linux/vmstat.h
-> @@ -6,9 +6,19 @@
->  #include <linux/mmzone.h>
->  #include <linux/vm_event_item.h>
->  #include <linux/atomic.h>
-> +#include <linux/static_key.h>
->  
->  extern int sysctl_stat_interval;
->  
-> +#ifdef CONFIG_NUMA
-> +#define ENABLE_NUMA_STAT   1
-> +#define DISABLE_NUMA_STAT   0
-> +extern int sysctl_vm_numa_stat;
-> +DECLARE_STATIC_KEY_TRUE(vm_numa_stat_key);
-> +extern int sysctl_vm_numa_stat_handler(struct ctl_table *table,
-> +		int write, void __user *buffer, size_t *length, loff_t *ppos);
-> +#endif
-> +
->  #ifdef CONFIG_VM_EVENT_COUNTERS
->  /*
->   * Light weight per cpu counter implementation.
-> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-> index d9c31bc..8f272db 100644
-> --- a/kernel/sysctl.c
-> +++ b/kernel/sysctl.c
-> @@ -1371,6 +1371,15 @@ static struct ctl_table vm_table[] = {
->  		.mode           = 0644,
->  		.proc_handler   = &hugetlb_mempolicy_sysctl_handler,
->  	},
-> +	{
-> +		.procname		= "numa_stat",
-> +		.data			= &sysctl_vm_numa_stat,
-> +		.maxlen			= sizeof(int),
-> +		.mode			= 0644,
-> +		.proc_handler	= sysctl_vm_numa_stat_handler,
-> +		.extra1			= &zero,
-> +		.extra2			= &one,
-> +	},
->  #endif
->  	 {
->  		.procname	= "hugetlb_shm_group",
-> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-> index a2af6d5..78344cf 100644
-> --- a/mm/mempolicy.c
-> +++ b/mm/mempolicy.c
-> @@ -1920,6 +1920,9 @@ static struct page *alloc_page_interleave(gfp_t gfp, unsigned order,
->  	struct page *page;
->  
->  	page = __alloc_pages(gfp, order, nid);
-> +	/* skip NUMA_INTERLEAVE_HIT counter update if numa stats is disabled */
-> +	if (!static_branch_likely(&vm_numa_stat_key))
-> +		return page;
->  	if (page && page_to_nid(page) == nid) {
->  		preempt_disable();
->  		__inc_numa_state(page_zone(page), NUMA_INTERLEAVE_HIT);
-> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-> index 77e4d3c..7bdb4f7 100644
-> --- a/mm/page_alloc.c
-> +++ b/mm/page_alloc.c
-> @@ -83,6 +83,8 @@ DEFINE_PER_CPU(int, numa_node);
->  EXPORT_PER_CPU_SYMBOL(numa_node);
->  #endif
->  
-> +DEFINE_STATIC_KEY_TRUE(vm_numa_stat_key);
-> +
->  #ifdef CONFIG_HAVE_MEMORYLESS_NODES
->  /*
->   * N.B., Do NOT reference the '_numa_mem_' per cpu variable directly.
-> @@ -2743,6 +2745,10 @@ static inline void zone_statistics(struct zone *preferred_zone, struct zone *z)
->  #ifdef CONFIG_NUMA
->  	enum numa_stat_item local_stat = NUMA_LOCAL;
->  
-> +	/* skip numa counters update if numa stats is disabled */
-> +	if (!static_branch_likely(&vm_numa_stat_key))
-> +		return;
-> +
->  	if (z->node != numa_node_id())
->  		local_stat = NUMA_OTHER;
->  
-> diff --git a/mm/vmstat.c b/mm/vmstat.c
-> index 4bb13e7..1faf30d 100644
-> --- a/mm/vmstat.c
-> +++ b/mm/vmstat.c
-> @@ -32,6 +32,76 @@
->  
->  #define NUMA_STATS_THRESHOLD (U16_MAX - 2)
->  
-> +#ifdef CONFIG_NUMA
-> +int sysctl_vm_numa_stat = ENABLE_NUMA_STAT;
-> +
-> +/* zero numa counters within a zone */
-> +static void zero_zone_numa_counters(struct zone *zone)
-> +{
-> +	int item, cpu;
-> +
-> +	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++) {
-> +		atomic_long_set(&zone->vm_numa_stat[item], 0);
-> +		for_each_online_cpu(cpu)
-> +			per_cpu_ptr(zone->pageset, cpu)->vm_numa_stat_diff[item]
-> +						= 0;
-> +	}
-> +}
-> +
-> +/* zero numa counters of all the populated zones */
-> +static void zero_zones_numa_counters(void)
-> +{
-> +	struct zone *zone;
-> +
-> +	for_each_populated_zone(zone)
-> +		zero_zone_numa_counters(zone);
-> +}
-> +
-> +/* zero global numa counters */
-> +static void zero_global_numa_counters(void)
-> +{
-> +	int item;
-> +
-> +	for (item = 0; item < NR_VM_NUMA_STAT_ITEMS; item++)
-> +		atomic_long_set(&vm_numa_stat[item], 0);
-> +}
-> +
-> +static void invalid_numa_statistics(void)
-> +{
-> +	zero_zones_numa_counters();
-> +	zero_global_numa_counters();
-> +}
-> +
-> +int sysctl_vm_numa_stat_handler(struct ctl_table *table, int write,
-> +		void __user *buffer, size_t *length, loff_t *ppos)
-> +{
-> +	int ret, oldval;
-> +	DEFINE_MUTEX(vm_numa_stat_lock);
-> +
-> +	mutex_lock(&vm_numa_stat_lock);
-> +	if (write)
-> +		oldval = sysctl_vm_numa_stat;
-> +	ret = proc_dointvec_minmax(table, write, buffer, length, ppos);
-> +	if (ret || !write)
-> +		goto out;
-> +
-> +	if (oldval == sysctl_vm_numa_stat)
-> +		goto out;
-> +	else if (sysctl_vm_numa_stat == ENABLE_NUMA_STAT) {
-> +		static_branch_enable(&vm_numa_stat_key);
-> +		pr_info("enable numa statistics\n");
-> +	} else {
-> +		static_branch_disable(&vm_numa_stat_key);
-> +		invalid_numa_statistics();
-> +		pr_info("disable numa statistics, and clear numa counters\n");
-> +	}
-> +
-> +out:
-> +	mutex_unlock(&vm_numa_stat_lock);
-> +	return ret;
-> +}
-> +#endif
-> +
->  #ifdef CONFIG_VM_EVENT_COUNTERS
->  DEFINE_PER_CPU(struct vm_event_state, vm_event_states) = {{0}};
->  EXPORT_PER_CPU_SYMBOL(vm_event_states);
-> -- 
-> 2.7.4
+> Thanks for your comment!
+> On 2017/10/18 15:54, Vlastimil Babka wrote:
+>> +CC linux-api
+>>
+>> On 10/18/2017 03:37 AM, Yisheng Xie wrote:
+>>> As Xiaojun reported the ltp of migrate_pages01 will failed on ARCH arm64
+>>> system whoes has 4 nodes[0...3], all have memory and CONFIG_NODES_SHIFT=2:
+>>>
+>>> migrate_pages01    0  TINFO  :  test_invalid_nodes
+>>> migrate_pages01   14  TFAIL  :  migrate_pages_common.c:45: unexpected failure - returned value = 0, expected: -1
+>>> migrate_pages01   15  TFAIL  :  migrate_pages_common.c:55: call succeeded unexpectedly
+>>>
+>>> In this case the test_invalid_nodes of migrate_pages01 will call:
+>>> SYSC_migrate_pages as:
+>>>
+>>> migrate_pages(0, , {0x0000000000000001}, 64, , {0x0000000000000010}, 64) = 0
+>>
+>> is 64 here the maxnode parameter of migrate_pages() ?
 > 
+> Yes, I have print it in the kernel.
+> 
+>>
+>>> For MAX_NUMNODES is 4, so 0x10 nodemask will tread as empty set which makes
+>>> 	nodes_subset(*new, node_states[N_MEMORY])
+>>
+>> According to manpage of migrate_pages:
+>>
+>>         EINVAL The value specified by maxnode exceeds a kernel-imposed
+>> limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
+>> are greater than the maximum supported node ID.  Or, none of the node
+>> IDs specified by new_nodes are on-line and allowed by the process's
+>> current cpuset context, or none of the specified nodes contain memory.
+>>
+>> if maxnode parameter is 64, but MAX_NUMNODES ("kernel-imposed limit") is
+>> 4, we should get EINVAL just because of that. I don't see such check in
+>> the migrate_pages implementation though.
+I agree that we should add this check,  howver, I'm doubt about what
+"kernel-imposed limit" in the manpage, does it really what your said
+MAX_NUMNODES? or BITS_PER_LONG * BITS_TO_LONGS(MAX_NUMNODES),
+we used unsigned long to store node bitmap, so the limit should count in
+multiple of BITS_PER_LONG, is this fare?
 
--- 
-Michal Hocko
-SUSE Labs
+> 
+> Yes, that is what manpage said, but I have a question about this: if user
+> set maxnode exceeds a kernel-imposed and try to access node without enough
+> privilege, which errors values we should return ? For I have seen that all
+> of the ltp migrate_pages01 will set maxnode to 64 in my system.
+> 
+>> But then at least the
+>> "new_nodes specifies one or more node IDs that are greater than the
+>> maximum supported node ID" part should trigger here, because you have
+>> node number 8 set in the new_nodes nodemask, right?
+>> get_nodes() should be checking this according to comment:
+>>
+>>         /* When the user specified more nodes than supported just check
+>>            if the non supported part is all zero. */
+
+here, "nodes than supported" also means BITS_PER_LONG * BITS_TO_LONGS(MAX_NUMNODES),
+it check whether user specified more than BITS_PER_LONG * BITS_TO_LONGS(MAX_NUMNODES)
+is zero or no. And if "kernel-imposed limit" means MAX_NUMNODES this check is no need
+at all, we can just check if maxnode > MAX_NUMNODES, for bits higher than maxnode is
+invalid which should be masked after taken from user:
+       The old_nodes and new_nodes arguments are pointers to bit masks of
+       node numbers, with up to maxnode bits in each mask.  These masks are
+       maintained as arrays of unsigned long integers (in the last long
+       integer, the bits beyond those specified by maxnode are ignored).
+       The maxnode argument is the maximum node number in the bit mask plus
+       one (this is the same as in mbind(2), but different from select(2)).
+
+The get_nodes is just a common code which also used in set_mempolicy whoes ERRORS
+of EINVAL is not the same as migrate_pages:
+    EINVAL
+        mode is invalid. Or, mode is MPOL_DEFAULT and nodemask is nonempty, or mode
+        is MPOL_BIND or MPOL_INTERLEAVE and nodemask is empty. Or, *maxnode specifies
+        more than a page worth of bits*. Or, nodemask specifies one or more node IDs
+        that are greater than the maximum supported node ID. Or, none of the node IDs
+        specified by nodemask are on-line and allowed by the process's current cpuset
+        context, or none of the specified nodes contain memory. Or, the mode argument
+        specified both MPOL_F_STATIC_NODES and MPOL_F_RELATIVE_NODES.
+
+So get_nodes just check whether "nodemask specifies one or more node IDs that are
+greater than the maximum supported node ID（BITS_TO_LONGS(MAX_NUMNODES)）" as a
+common part. If we want check "maxnode exceeds a kernel-imposed limit", maybe we
+should add following in migrate_pages:
++       if (BITS_TO_LONGS(MAX_NUMNODES) < BITS_TO_LONGS(maxnode)) {
++               err = -EINVAL;
++               goto out;
++       }
++
+
+And for nodes_empty() check should also be need for this case or real empty nodes set.
+Any opinion?
+
+Thanks
+Yisheng Xie.
