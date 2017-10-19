@@ -1,94 +1,159 @@
-From: Paul Moore <paul@paul-moore.com>
+From: Richard Guy Briggs <rgb@redhat.com>
 Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Thu, 19 Oct 2017 13:47:59 -0400
-Message-ID: <CAHC9VhRHnDHFF-GZEz46kOZWQM6gCx3pWPZgOmd=a9R1W2CQFg@mail.gmail.com>
+Date: Thu, 19 Oct 2017 15:57:47 -0400
+Message-ID: <20171019195747.4ssujtaj3f5ipsoh@madcap2.tricolour.ca>
 References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
- <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com> <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
- <2319693.5l3M4ZINGd@x2> <1508243469.6230.24.camel@redhat.com>
- <a07968f6-fef1-f49d-01f1-6c660c0ada20@schaufler-ca.com> <1508254120.6230.34.camel@redhat.com>
- <1508255091.3129.27.camel@HansenPartnership.com> <CAHC9VhRV9m6-APj3ofMQc22rL-WUoDzB8-urUxryszjCHHHLTg@mail.gmail.com>
- <49752b6f-8a77-d1e5-8acb-5a1eed0a992c@suse.de> <871sm0j7bm.fsf@xmission.com>
- <CAHC9VhTYF-MJm3ejWXE1H-eeXKaNBkeWKwdiKdj093xATYn7nQ@mail.gmail.com> <87y3o7gl5l.fsf@xmission.com>
+ <2307769.VGpzlLa4Dp@x2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <87y3o7gl5l.fsf@xmission.com>
+Content-Disposition: inline
+In-Reply-To: <2307769.VGpzlLa4Dp@x2>
 Sender: netdev-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Aleksa Sarai <asarai@suse.de>, James Bottomley <James.Bottomley@hansenpartnership.com>, cgroups@vger.kernel.org, mszeredi@redhat.com, Andy Lutomirski <luto@kernel.org>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-audit@redhat.com, Simo Sorce <simo@redhat.com>, Development <netdev@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Eric Paris <eparis@parisplace.org>, Steve Grubb <sgrubb@redhat.com>, trondmy@primarydata.com
+To: Steve Grubb <sgrubb@redhat.com>
+Cc: cgroups@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Audit <linux-audit@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux Network Development <netdev@vger.kernel.org>, Simo Sorce <simo@redhat.com>, Carlos O'Donell <carlos@redhat.com>, Aristeu Rozanski <arozansk@redhat.com>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eric Paris <eparis@parisplace.org>, jlayton@redhat.com, Andy Lutomirski <luto@kernel.org>, mszeredi@redhat.com, Paul Moore <pmoore@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, trondmy@primarydata.com, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 19, 2017 at 12:25 PM, Eric W. Biederman
-<ebiederm@xmission.com> wrote:
-> Paul Moore <paul@paul-moore.com> writes:
->
->> On Wed, Oct 18, 2017 at 8:43 PM, Eric W. Biederman
->> <ebiederm@xmission.com> wrote:
->>> Aleksa Sarai <asarai@suse.de> writes:
->>>>>> The security implications are that anything that can change the label
->>>>>> could also hide itself and its doings from the audit system and thus
->>>>>> would be used as a means to evade detection.  I actually think this
->>>>>> means the label should be write once (once you've set it, you can't
->>>>>> change it) ...
->>>>>
->>>>> Richard and I have talked about a write once approach, but the
->>>>> thinking was that you may want to allow a nested container
->>>>> orchestrator (Why? I don't know, but people always want to do the
->>>>> craziest things.) and a write-once policy makes that impossible.  If
->>>>> we punt on the nested orchestrator, I believe we can seriously think
->>>>> about a write-once policy to simplify things.
->>>>
->>>> Nested containers are a very widely used use-case (see LXC system containers,
->>>> inside of which people run other container runtimes). So I would definitely
->>>> consider it something that "needs to be supported in some way". While the LXC
->>>> guys might be a *tad* crazy, the use-case isn't. :P
->>
->> No worries, we're all a little crazy in our own special ways ;)
->>
->> Kidding aside, thanks for explaining the use case.
->>
->>> Of course some of that gets to running auditd inside a container which
->>> we don't have yet either.
->>>
->>> So I think to start it is perfectly fine to figure out the non-nested
->>> case first and what makes sense there.  Then to sort out the nested
->>> container case.
->>>
->>> The solution might be that a process gets at most one id per ``audit
->>> namespace''.
->>
->> In an attempt to stay on-topic, let's try to stick with "audit
->> container ID" or "container ID" if you must.  I really want to avoid
->> the term "audit namespace" simply because the term "namespace" implies
->> some things which we aren't planning on doing.
->
-> This is 100% on topic.  I am saying that unless we are planing to have
-> auditd running in a container with it's own set of rules you probably
-> don't care about nested containers.  Last time I heard a discussion
-> about that the term in use was audit namespace.   So I was referring to
-> that support when I said audit namespace, even if the end result only
-> loosely fits the term namespace.
+On 2017-10-12 15:45, Steve Grubb wrote:
+> On Thursday, October 12, 2017 10:14:00 AM EDT Richard Guy Briggs wrote:
+> > Containers are a userspace concept.  The kernel knows nothing of them.
+> > 
+> > The Linux audit system needs a way to be able to track the container
+> > provenance of events and actions.  Audit needs the kernel's help to do
+> > this.
+> > 
+> > Since the concept of a container is entirely a userspace concept, a
+> > registration from the userspace container orchestration system initiates
+> > this.  This will define a point in time and a set of resources
+> > associated with a particular container with an audit container ID.
+> 
+> The requirements for common criteria around containers should be very closely 
+> modeled on the requirements for virtualization. It would be the container 
+> manager that is responsible for logging the resource assignment events.
 
-My "stay on-topic" comment is directed at, and limited to, your choice
-of terminology, not the discussion about container nesting.  I'm
-purposefully not using the term "audit namespace" to refer to anything
-that Richard has presented, and I'm kindly asking you to do the same,
-it simply doesn't fit.
+I suspect we are in violent agreement here.
 
-> I could be wrong of course.  I don't fully understand what is driving
-> the desire to connect audit and containers.  But my naive guess is that
-> one from an audit perspective you don't care about nested containers
-> unless there is also a nested auditd who is looking at it from a nested
-> perspective.
+> > The registration is a pseudo filesystem (proc, since PID tree already
+> > exists) write of a u8[16] UUID representing the container ID to a file
+> > representing a process that will become the first process in a new
+> > container.  This write might place restrictions on mount namespaces
+> > required to define a container, or at least careful checking of
+> > namespaces in the kernel to verify permissions of the orchestrator so it
+> > can't change its own container ID.  A bind mount of nsfs may be
+> > necessary in the container orchestrator's mntNS.
+> > Note: Use a 128-bit scalar rather than a string to make compares faster
+> > and simpler.
+> > 
+> > Require a new CAP_CONTAINER_ADMIN to be able to carry out the
+> > registration.
+> 
+> Wouldn't CAP_AUDIT_WRITE be sufficient? After all, this is for auditing.
 
-Two motivations that are clear to me: the first is the desire to be
-able to associate events in the audit log with a container (much like
-how the session ID helped us associate events with a login session),
-the second is the desire for users to run an audit daemon instance in
-their containers to capture audit events generated by their container.
-There is also a security certification motivation, see some of Steve's
-comments for more on that.
+No, because then any process with that capability (vsftpd) could change
+its own container ID.  This is discussed more in other parts of the
+thread...
 
--- 
-paul moore
-www.paul-moore.com
+> > At that time, record the target container's user-supplied
+> > container identifier along with the target container's first process
+> > (which may become the target container's "init" process) process ID
+> > (referenced from the initial PID namespace), all namespace IDs (in the
+> > form of a nsfs device number and inode number tuple) in a new auxilliary
+> > record AUDIT_CONTAINER with a qualifying op=$action field.
+> 
+> This would be in addition to the normal audit fields.
+
+It was intended that this be an auxilliary record, but this issue is
+being debated in threads about other upstream issues currently so I
+won't cover that here.
+
+> > Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
+> > container ID present on an auditable action or event.
+> > 
+> > Forked and cloned processes inherit their parent's container ID,
+> > referenced in the process' task_struct.
+> > 
+> > Mimic setns(2) and return an error if the process has already initiated
+> > threading or forked since this registration should happen before the
+> > process execution is started by the orchestrator and hence should not
+> > yet have any threads or children.  If this is deemed overly restrictive,
+> > switch all threads and children to the new containerID.
+> > 
+> > Trust the orchestrator to judiciously use and restrict CAP_CONTAINER_ADMIN.
+> > 
+> > Log the creation of every namespace, inheriting/adding its spawning
+> > process' containerID(s), if applicable.  Include the spawning and
+> > spawned namespace IDs (device and inode number tuples).
+> > [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
+> > Note: At this point it appears only network namespaces may need to track
+> > container IDs apart from processes since incoming packets may cause an
+> > auditable event before being associated with a process.
+> > 
+> > Log the destruction of every namespace when it is no longer used by any
+> > process, include the namespace IDs (device and inode number tuples).
+> > [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
+> 
+> In the virtualization requirements, we only log removal of resources when 
+> something is removed by intention. If the VM shuts down, the manager issues a 
+> VIRT_CONTROL stop event and the user space utilities knows this means all 
+> resources have been unassigned.
+
+Ok, this assumes the orchestrator is waiting on that child process (and
+that it is in turn waiting on all its children) so it knows when that
+job has exited naturally or errored out.  I don't know if there is any
+consensus or best practice with orchestrators out there now.  The kernel
+should know, so it seemed reasonable to report what was known.  Besides,
+in this case, I was talking specifically about namespace creation and
+destruction rather than containers.
+
+> > Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
+> > the parent and child namespace IDs for any changes to a process'
+> > namespaces. [setns(2)]
+> > Note: It may be possible to combine AUDIT_NS_* record formats and
+> > distinguish them with an op=$action field depending on the fields
+> > required for each message type.
+> > 
+> > When a container ceases to exist because the last process in that
+> > container has exited and hence the last namespace has been destroyed and
+> > its refcount dropping to zero, log the fact.
+> > (This latter is likely needed for certification accountability.)  A
+> > container object may need a list of processes and/or namespaces.
+> > 
+> > A namespace cannot directly migrate from one container to another but
+> > could be assigned to a newly spawned container.  A namespace can be
+> > moved from one container to another indirectly by having that namespace
+> > used in a second process in another container and then ending all the
+> > processes in the first container.
+> 
+> I'm thinking that there needs to be a clear delineation between what the 
+> container manager is responsible for and what the kernel needs to do. The 
+> kernel needs the registration system and to associate an identifier with 
+> events inside the container.
+
+Agreed this needs to be defined much better than it is.
+
+> But would the container manager be mostly responsible for auditing the events 
+> described here:
+> 
+> https://github.com/linux-audit/audit-documentation/wiki/SPEC-Virtualization-Manager-Guest-Lifecycle-Events
+
+I'm having trouble fitting all these events into the container model,
+but recognize its importance in continuing to try to do so or to be able
+to justify deviations from this SPEC.
+
+> Also, we can already audit exit, unshare, setns, and clone. If the kernel just 
+> sticks the identifier on them, isn't that sufficient?
+
+I think this last one is incomplete without a way to identify the
+namespaces involved.
+
+> -Steve
+> 
+> > (v2)
+> > - switch from u64 to u128 UUID
+> > - switch from "signal" and "trigger" to "register"
+> > - restrict registration to single process or force all threads and children
+> > into same container
+> > 
+> > - RGB
+
+- RGB
