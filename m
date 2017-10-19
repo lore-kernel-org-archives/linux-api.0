@@ -1,55 +1,189 @@
-From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Fri, 20 Oct 2017 10:15:25 +1100
-Message-ID: <b0a59b79-64a5-feeb-7f85-ec0f482f0b96@suse.de>
-References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
- <2307769.VGpzlLa4Dp@x2>
- <20171019195747.4ssujtaj3f5ipsoh@madcap2.tricolour.ca>
- <8f495870-dd6c-23b9-b82b-4228a441c729@suse.de>
+From: Calvin Owens <calvinowens@fb.com>
+Subject: Re: [PATCH 1/3] printk: Introduce per-console loglevel setting
+Date: Thu, 19 Oct 2017 16:40:45 -0700
+Message-ID: <b6faa2e2-1480-c306-9c3f-9329d4c5b62d@fb.com>
+References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8f495870-dd6c-23b9-b82b-4228a441c729@suse.de>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-doc-owner@vger.kernel.org>
+In-Reply-To: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>, Steve Grubb <sgrubb@redhat.com>
-Cc: cgroups@vger.kernel.org, mszeredi@redhat.com, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Paul Moore <pmoore@redhat.com>, Linux Audit <linux-audit@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Eric Paris <eparis@parisplace.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, trondmy@primarydata.com, Linux Network Development <netdev@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Petr Mladek <pmladek@suse.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
->>>> The registration is a pseudo filesystem (proc, since PID tree already
->>>> exists) write of a u8[16] UUID representing the container ID to a file
->>>> representing a process that will become the first process in a new
->>>> container.  This write might place restrictions on mount namespaces
->>>> required to define a container, or at least careful checking of
->>>> namespaces in the kernel to verify permissions of the orchestrator 
->>>> so it
->>>> can't change its own container ID.  A bind mount of nsfs may be
->>>> necessary in the container orchestrator's mntNS.
->>>> Note: Use a 128-bit scalar rather than a string to make compares faster
->>>> and simpler.
->>>>
->>>> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
->>>> registration.
->>>
->>> Wouldn't CAP_AUDIT_WRITE be sufficient? After all, this is for auditing.
->>
->> No, because then any process with that capability (vsftpd) could change
->> its own container ID.  This is discussed more in other parts of the
->> thread...
+On 09/28/2017 05:43 PM, Calvin Owens wrote:
+> Not all consoles are created equal: depending on the actual hardware,
+> the latency of a printk() call can vary dramatically. The worst examples
+> are serial consoles, where it can spin for tens of milliseconds banging
+> the UART to emit a message, which can cause application-level problems
+> when the kernel spews onto the console.
+
+Any thoughts on this series? Happy to resend again, but if there are no
+objections I'd love to see it merged sooner rather than later :)
+
+Happy to resend too, just let me know.
+
+Thanks,
+Calvin
+
+> At Facebook we use netconsole to monitor our fleet, but we still have
+> serial consoles attached on each host for live debugging, and the latter
+> has caused problems. An obvious solution is to disable the kernel
+> console output to ttyS0, but this makes live debugging frustrating,
+> since crashes become silent and opaque to the ttyS0 user. Enabling it on
+> the fly when needed isn't feasible, since boxes you need to debug via
+> serial are likely to be borked in ways that make this impossible.
 > 
-> Not if we make the container ID append-only (to support nesting), or 
-> write-once (the other idea thrown around). In that case, you can't move 
-> "out" from a particular container ID, you can only go "deeper". These 
-> semantics don't make sense for generic containers, but since the point 
-> of this facility is *specifically* for audit I imagine that not being 
-> able to move a process from a sub-container's ID is a benefit.
+> That puts us between a rock and a hard place: we'd love to set
+> kernel.printk to KERN_INFO and get all the logs. But while netconsole is
+> fast enough to permit that without perturbing userspace, ttyS0 is not,
+> and we're forced to limit console logging to KERN_WARNING and higher.
+> 
+> This patch introduces a new per-console loglevel setting, and changes
+> console_unlock() to use max(global_level, per_console_level) when
+> deciding whether or not to emit a given log message.
+> 
+> This lets us have our cake and eat it too: instead of being forced to
+> limit all consoles verbosity based on the speed of the slowest one, we
+> can "promote" the faster console while still using a conservative system
+> loglevel setting to avoid disturbing applications.
+> 
+> Cc: Petr Mladek <pmladek@suse.com>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+> Signed-off-by: Calvin Owens <calvinowens@fb.com>
+> ---
+> (V1: https://lkml.org/lkml/2017/4/4/783)
+> 
+> Changes in V2:
+> 	* Honor the ignore_loglevel setting in all cases
+> 	* Change semantics to use max(global, console) as the loglevel
+> 	  for a console, instead of the previous patch where we treated
+> 	  the per-console one as a filter downstream of the global one.
+> 
+>   include/linux/console.h |  1 +
+>   kernel/printk/printk.c  | 38 +++++++++++++++++++-------------------
+>   2 files changed, 20 insertions(+), 19 deletions(-)
+> 
+> diff --git a/include/linux/console.h b/include/linux/console.h
+> index b8920a0..a5b5d79 100644
+> --- a/include/linux/console.h
+> +++ b/include/linux/console.h
+> @@ -147,6 +147,7 @@ struct console {
+>   	int	cflag;
+>   	void	*data;
+>   	struct	 console *next;
+> +	int	level;
+>   };
+>   
+>   /*
+> diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+> index 512f7c2..3f1675e 100644
+> --- a/kernel/printk/printk.c
+> +++ b/kernel/printk/printk.c
+> @@ -1141,9 +1141,14 @@ module_param(ignore_loglevel, bool, S_IRUGO | S_IWUSR);
+>   MODULE_PARM_DESC(ignore_loglevel,
+>   		 "ignore loglevel setting (prints all kernel messages to the console)");
+>   
+> -static bool suppress_message_printing(int level)
+> +static int effective_loglevel(struct console *con)
+>   {
+> -	return (level >= console_loglevel && !ignore_loglevel);
+> +	return max(console_loglevel, con ? con->level : LOGLEVEL_EMERG);
+> +}
+> +
+> +static bool suppress_message_printing(int level, struct console *con)
+> +{
+> +	return (level >= effective_loglevel(con) && !ignore_loglevel);
+>   }
+>   
+>   #ifdef CONFIG_BOOT_PRINTK_DELAY
+> @@ -1175,7 +1180,7 @@ static void boot_delay_msec(int level)
+>   	unsigned long timeout;
+>   
+>   	if ((boot_delay == 0 || system_state >= SYSTEM_RUNNING)
+> -		|| suppress_message_printing(level)) {
+> +		|| suppress_message_printing(level, NULL)) {
+>   		return;
+>   	}
+>   
+> @@ -1549,7 +1554,7 @@ SYSCALL_DEFINE3(syslog, int, type, char __user *, buf, int, len)
+>    * The console_lock must be held.
+>    */
+>   static void call_console_drivers(const char *ext_text, size_t ext_len,
+> -				 const char *text, size_t len)
+> +				 const char *text, size_t len, int level)
+>   {
+>   	struct console *con;
+>   
+> @@ -1568,6 +1573,8 @@ static void call_console_drivers(const char *ext_text, size_t ext_len,
+>   		if (!cpu_online(smp_processor_id()) &&
+>   		    !(con->flags & CON_ANYTIME))
+>   			continue;
+> +		if (suppress_message_printing(level, con))
+> +			continue;
+>   		if (con->flags & CON_EXTENDED)
+>   			con->write(con, ext_text, ext_len);
+>   		else
+> @@ -1856,10 +1863,9 @@ static ssize_t msg_print_ext_body(char *buf, size_t size,
+>   				  char *dict, size_t dict_len,
+>   				  char *text, size_t text_len) { return 0; }
+>   static void call_console_drivers(const char *ext_text, size_t ext_len,
+> -				 const char *text, size_t len) {}
+> +				 const char *text, size_t len, int level) {}
+>   static size_t msg_print_text(const struct printk_log *msg,
+>   			     bool syslog, char *buf, size_t size) { return 0; }
+> -static bool suppress_message_printing(int level) { return false; }
+>   
+>   #endif /* CONFIG_PRINTK */
+>   
+> @@ -2199,22 +2205,11 @@ void console_unlock(void)
+>   		} else {
+>   			len = 0;
+>   		}
+> -skip:
+> +
+>   		if (console_seq == log_next_seq)
+>   			break;
+>   
+>   		msg = log_from_idx(console_idx);
+> -		if (suppress_message_printing(msg->level)) {
+> -			/*
+> -			 * Skip record we have buffered and already printed
+> -			 * directly to the console when we received it, and
+> -			 * record that has level above the console loglevel.
+> -			 */
+> -			console_idx = log_next(console_idx);
+> -			console_seq++;
+> -			goto skip;
+> -		}
+> -
+>   		len += msg_print_text(msg, false, text + len, sizeof(text) - len);
+>   		if (nr_ext_console_drivers) {
+>   			ext_len = msg_print_ext_header(ext_text,
+> @@ -2230,7 +2225,7 @@ void console_unlock(void)
+>   		raw_spin_unlock(&logbuf_lock);
+>   
+>   		stop_critical_timings();	/* don't trace print latency */
+> -		call_console_drivers(ext_text, ext_len, text, len);
+> +		call_console_drivers(ext_text, ext_len, text, len, msg->level);
+>   		start_critical_timings();
+>   		printk_safe_exit_irqrestore(flags);
+>   
+> @@ -2497,6 +2492,11 @@ void register_console(struct console *newcon)
+>   		newcon->flags &= ~CON_PRINTBUFFER;
+>   
+>   	/*
+> +	 * By default, the per-console minimum forces no messages through.
+> +	 */
+> +	newcon->level = LOGLEVEL_EMERG;
+> +
+> +	/*
+>   	 *	Put this console in the list - keep the
+>   	 *	preferred driver at the head of the list.
+>   	 */
+> 
 
-[This assumes it's CAP_AUDIT_CONTROL which is what we are discussing in 
-a sister thread.]
-
--- 
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-https://www.cyphar.com/
