@@ -1,7 +1,7 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 02/17] mm: Remove VM_FAULT_HWPOISON_LARGE_MASK
-Date: Thu, 19 Oct 2017 14:58:01 +0200
-Message-ID: <20171019125817.11580-3-jack@suse.cz>
+Subject: [PATCH 09/17] dax: Fix comment describing dax_iomap_fault()
+Date: Thu, 19 Oct 2017 14:58:08 +0200
+Message-ID: <20171019125817.11580-10-jack@suse.cz>
 References: <20171019125817.11580-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,27 +21,28 @@ To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-It is unused.
+Add missing argument description.
 
-Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- include/linux/mm.h | 2 --
- 1 file changed, 2 deletions(-)
+ fs/dax.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 065d99deb847..ca72b67153d5 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1182,8 +1182,6 @@ static inline void clear_page_pfmemalloc(struct page *page)
- #define VM_FAULT_FALLBACK 0x0800	/* huge page fault failed, fall back to small */
- #define VM_FAULT_DONE_COW   0x1000	/* ->fault has fully handled COW */
- 
--#define VM_FAULT_HWPOISON_LARGE_MASK 0xf000 /* encodes hpage index for large hwpoison */
--
- #define VM_FAULT_ERROR	(VM_FAULT_OOM | VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV | \
- 			 VM_FAULT_HWPOISON | VM_FAULT_HWPOISON_LARGE | \
- 			 VM_FAULT_FALLBACK)
+diff --git a/fs/dax.c b/fs/dax.c
+index 675fab8ec41f..5214ed9ba508 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -1435,7 +1435,8 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf,
+ /**
+  * dax_iomap_fault - handle a page fault on a DAX file
+  * @vmf: The description of the fault
+- * @ops: iomap ops passed from the file system
++ * @pe_size: Size of the page to fault in
++ * @ops: Iomap ops passed from the file system
+  *
+  * When a page fault occurs, filesystems may call this helper in
+  * their fault handler for DAX files. dax_iomap_fault() assumes the caller
 -- 
 2.12.3
