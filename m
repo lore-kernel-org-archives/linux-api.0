@@ -1,78 +1,33 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and MAP_SYNC
-Date: Thu, 19 Oct 2017 14:58:17 +0200
-Message-ID: <20171019125817.11580-19-jack@suse.cz>
-References: <20171019125817.11580-1-jack@suse.cz>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 17/17] xfs: support for synchronous DAX faults
+Date: Thu, 19 Oct 2017 15:17:35 +0200
+Message-ID: <20171019131735.GC20645@lst.de>
+References: <20171019125817.11580-1-jack@suse.cz> <20171019125817.11580-18-jack@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20171019125817.11580-1-jack-AlSwsSmVLrQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171019125817.11580-18-jack@suse.cz>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, Ross Zwisler <ross.zwisler@linux.intel.com>, Dan Williams <dan.j.williams@intel.com>, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, linux-api@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
----
- man2/mmap.2 | 30 ++++++++++++++++++++++++++++++
- 1 file changed, 30 insertions(+)
+> +#define XFS_MAP_SUPPORTED (LEGACY_MAP_MASK | MAP_SYNC)
 
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 47c3148653be..598ff0c64f7f 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -125,6 +125,21 @@ are carried through to the underlying file.
- to the underlying file requires the use of
- .BR msync (2).)
- .TP
-+.B MAP_SHARED_VALIDATE
-+The same as
-+.B MAP_SHARED
-+except that
-+.B MAP_SHARED
-+mappings ignore unknown flags in
-+.IR flags .
-+In contrast when creating mapping of
-+.B MAP_SHARED_VALIDATE
-+mapping type, the kernel verifies all passed flags are known and fails the
-+mapping with
-+.BR EOPNOTSUPP
-+otherwise. This mapping type is also required to be able to use some mapping
-+flags.
-+.TP
- .B MAP_PRIVATE
- Create a private copy-on-write mapping.
- Updates to the mapping are not visible to other processes
-@@ -352,6 +367,21 @@ option.
- Because of the security implications,
- that option is normally enabled only on embedded devices
- (i.e., devices where one has complete control of the contents of user memory).
-+.TP
-+.BR MAP_SYNC " (since Linux 4.15)"
-+This flags is available only with
-+.B MAP_SHARED_VALIDATE
-+mapping type. Mappings of
-+.B MAP_SHARED
-+type will silently ignore this flag.
-+This flag is supported only for files supporting DAX (direct mapping of persistent
-+memory). For other files, creating mapping with this flag results in
-+.B EOPNOTSUPP
-+error. Shared file mappings with this flag provide the guarantee that while
-+some memory is writeably mapped in the address space of the process, it will
-+be visible in the same file at the same offset even after the system crashes or
-+is rebooted. This allows users of such mappings to make data modifications
-+persistent in a more efficient way using appropriate CPU instructions.
- .PP
- Of the above flags, only
- .B MAP_FIXED
--- 
-2.12.3
+I'd kill this define.  Also is there any good reason that we have
+to add LEGACY_MAP_MASK instead of assuming it's supported in the
+core?
+
+>  #endif
+>  	.mmap		= xfs_file_mmap,
+> +	.mmap_supported_flags	= XFS_MAP_SUPPORTED,
+>  	.open		= xfs_file_open,
+>  	.release	= xfs_file_release,
+>  	.fsync		= xfs_file_fsync,
+
+I usually either reformat all members to be aligned again, or if that's
+too much churn (in this case it probably is) just use a single space
+before the = to minimize the alignment differences.
+
+Otherwise your changes look good to me.
