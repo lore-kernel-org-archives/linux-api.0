@@ -1,61 +1,118 @@
-From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+From: Paul Moore <paul@paul-moore.com>
 Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Thu, 19 Oct 2017 11:36:39 -0400
-Message-ID: <CAHC9VhTYF-MJm3ejWXE1H-eeXKaNBkeWKwdiKdj093xATYn7nQ@mail.gmail.com>
+Date: Thu, 19 Oct 2017 11:51:13 -0400
+Message-ID: <CAHC9VhTN069L+-ei05EB8csiv1uJvoB-4SNhb9BcxSom=cRVeg@mail.gmail.com>
 References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
  <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com> <20171017003340.whjdkqmkw4lydwy7@madcap2.tricolour.ca>
- <2319693.5l3M4ZINGd@x2> <1508243469.6230.24.camel@redhat.com>
- <a07968f6-fef1-f49d-01f1-6c660c0ada20@schaufler-ca.com> <1508254120.6230.34.camel@redhat.com>
- <1508255091.3129.27.camel@HansenPartnership.com> <CAHC9VhRV9m6-APj3ofMQc22rL-WUoDzB8-urUxryszjCHHHLTg@mail.gmail.com>
- <49752b6f-8a77-d1e5-8acb-5a1eed0a992c@suse.de> <871sm0j7bm.fsf@xmission.com>
+ <81c15928-c445-fb8e-251c-bee566fbbf58@schaufler-ca.com> <20171019000527.eio6dfsmujmtioyt@madcap2.tricolour.ca>
+ <18cb69a5-f998-0e6e-85df-7f4b9b768a6f@schaufler-ca.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <871sm0j7bm.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: James Bottomley <James.Bottomley-JuX6DAaQMKPCXq6kfMZ53/egYHeGw8Jk@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <18cb69a5-f998-0e6e-85df-7f4b9b768a6f@schaufler-ca.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: Richard Guy Briggs <rgb@redhat.com>, mszeredi@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, Simo Sorce <simo@redhat.com>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, David Howells <dhowells@redhat.com>, Linux Audit <linux-audit@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Linux Network Development <netdev@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, cgroups@vger.kernel.org, "Serge E. Hallyn" <serge@hallyn.com>, trondmy@primarydata.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 18, 2017 at 8:43 PM, Eric W. Biederman
-<ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
-> Aleksa Sarai <asarai-l3A5Bk7waGM@public.gmane.org> writes:
->>>> The security implications are that anything that can change the label
->>>> could also hide itself and its doings from the audit system and thus
->>>> would be used as a means to evade detection.  I actually think this
->>>> means the label should be write once (once you've set it, you can't
->>>> change it) ...
->>>
->>> Richard and I have talked about a write once approach, but the
->>> thinking was that you may want to allow a nested container
->>> orchestrator (Why? I don't know, but people always want to do the
->>> craziest things.) and a write-once policy makes that impossible.  If
->>> we punt on the nested orchestrator, I believe we can seriously think
->>> about a write-once policy to simplify things.
+On Thu, Oct 19, 2017 at 9:32 AM, Casey Schaufler <casey@schaufler-ca.com> wrote:
+> On 10/18/2017 5:05 PM, Richard Guy Briggs wrote:
+>> On 2017-10-17 01:10, Casey Schaufler wrote:
+>>> On 10/16/2017 5:33 PM, Richard Guy Briggs wrote:
+>>>> On 2017-10-12 16:33, Casey Schaufler wrote:
+>>>>> On 10/12/2017 7:14 AM, Richard Guy Briggs wrote:
+>>>>>> Containers are a userspace concept.  The kernel knows nothing of them.
+>>>>>>
+>>>>>> The Linux audit system needs a way to be able to track the container
+>>>>>> provenance of events and actions.  Audit needs the kernel's help to do
+>>>>>> this.
+>>>>>>
+>>>>>> Since the concept of a container is entirely a userspace concept, a
+>>>>>> registration from the userspace container orchestration system initiates
+>>>>>> this.  This will define a point in time and a set of resources
+>>>>>> associated with a particular container with an audit container ID.
+>>>>>>
+>>>>>> The registration is a pseudo filesystem (proc, since PID tree already
+>>>>>> exists) write of a u8[16] UUID representing the container ID to a file
+>>>>>> representing a process that will become the first process in a new
+>>>>>> container.  This write might place restrictions on mount namespaces
+>>>>>> required to define a container, or at least careful checking of
+>>>>>> namespaces in the kernel to verify permissions of the orchestrator so it
+>>>>>> can't change its own container ID.  A bind mount of nsfs may be
+>>>>>> necessary in the container orchestrator's mntNS.
+>>>>>> Note: Use a 128-bit scalar rather than a string to make compares faster
+>>>>>> and simpler.
+>>>>>>
+>>>>>> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
+>>>>>> registration.
+>>>>> Hang on. If containers are a user space concept, how can
+>>>>> you want CAP_CONTAINER_ANYTHING? If there's not such thing as
+>>>>> a container, how can you be asking for a capability to manage
+>>>>> them?
+>>>> There is such a thing, but the kernel doesn't know about it yet.
+>>> Then how can it be the kernel's place to control access to a
+>>> container resource, that is, the containerID.
+>> Ok, let me try to address your objections.
 >>
->> Nested containers are a very widely used use-case (see LXC system containers,
->> inside of which people run other container runtimes). So I would definitely
->> consider it something that "needs to be supported in some way". While the LXC
->> guys might be a *tad* crazy, the use-case isn't. :P
-
-No worries, we're all a little crazy in our own special ways ;)
-
-Kidding aside, thanks for explaining the use case.
-
-> Of course some of that gets to running auditd inside a container which
-> we don't have yet either.
+>> The kernel can know enough that if it is already set to not allow it to
+>> be set again.  Or if the user doesn't have permission to set it that the
+>> user be denied this action.  How is this different from loginuid and
+>> sessionid?
+>>>>   This
+>>>> same situation exists for loginuid and sessionid which are userspace
+>>>> concepts that the kernel tracks for the convenience of userspace.
+>>> Ah, no. Loginuid identifies a user, which is a kernel concept in
+>>> that a user is defined by the uid.
+>> This simple explanation doesn't help me.  What makes that a kernel
+>> concept?  The fact that it is stored and compared in more than one
+>> place?
+>>
+>>> The session ID has well defined kernel semantics. You're trying to say
+>>> that the containerID is an opaque value that is meaningless to the
+>>> kernel, but you still want the kernel to protect it. How can the
+>>> kernel know if it is protecting it correctly?
+>> How so?  A userspace process triggers this.  Does the kernel know what
+>> these values mean?  Does it do anything with them other than report
+>> them or allow audit to filter them?  It is given some instructions on
+>> how to treat it.
+>>
+>> This is what we're trying to do with the containerID.
+>>
+>>>>   As
+>>>> for its name, I'm not particularly picky, so if you don't like
+>>>> CAP_CONTAINER_* then I'm fine with CAP_AUDIT_CONTAINERID.  It really
+>>>> needs to be distinct from CAP_AUDIT_WRITE and CAP_AUDIT_CONTROL since we
+>>>> don't want to give the ability to set a containerID to any process that
+>>>> is able to do audit logging (such as vsftpd) and similarly we don't want
+>>>> to give the orchestrator the ability to control the setup of the audit
+>>>> daemon.
+>>> Sorry, but what aspect of the kernel security policy is this
+>>> capability supposed to protect? That's what capabilities are
+>>> for, not the undefined support of undefined user-space behavior.
+>> Similarly, loginuids and sessionIDs are only used for audit tracking and
+>> filtering.
 >
-> So I think to start it is perfectly fine to figure out the non-nested
-> case first and what makes sense there.  Then to sort out the nested
-> container case.
->
-> The solution might be that a process gets at most one id per ``audit
-> namespace''.
+> Tell me again why you're not reusing either of these?
 
-In an attempt to stay on-topic, let's try to stick with "audit
-container ID" or "container ID" if you must.  I really want to avoid
-the term "audit namespace" simply because the term "namespace" implies
-some things which we aren't planning on doing.
+Ah, granularity arguments, welcome back old friend :)
+
+Once again, we're still trying to sort all this out so I reserve the
+right to change my mind, but my current thinking is as follows ...
+CAP_AUDIT_WRITE exists to control which applications can submit
+userspace generated audit records to the kernel, CAP_AUDIT_CONTROL
+exists to control which applications can manage the in-kernel audit
+configuration (e.g. filter rules) and the current task's loginuid
+value.  Reusing CAP_AUDIT_WRITE here would allow any application that
+can submit userspace audit records the ability to change the audit
+container ID; this would be bad, we don't allow CAP_AUDIT_WRITE to
+change the loginuid, it would be even worse to allow it to change the
+audit container ID.  Reusing CAP_AUDIT_CONTROL is less worse than than
+CAP_AUDIT_WRITE, but it gets sticky once we get to the part where we
+want to auditd instances in containers, complete with their own
+queues, filtering rules, etc..  Perhaps we could use CAP_AUDIT_CONTROL
+to guard the audit container ID value, but we would always want to do
+that check in the init userns in order to prevent container bound
+processes from manipulating their own audit container ID.
 
 -- 
 paul moore
