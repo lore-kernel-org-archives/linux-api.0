@@ -1,7 +1,7 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 13/17] dax, iomap: Add support for synchronous faults
-Date: Thu, 19 Oct 2017 14:58:12 +0200
-Message-ID: <20171019125817.11580-14-jack@suse.cz>
+Subject: [PATCH 16/17] ext4: Support for synchronous DAX faults
+Date: Thu, 19 Oct 2017 14:58:15 +0200
+Message-ID: <20171019125817.11580-17-jack@suse.cz>
 References: <20171019125817.11580-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,151 +21,163 @@ To: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add a flag to iomap interface informing the caller that inode needs
-fdstasync(2) for returned extent to become persistent and use it in DAX
-fault code so that we don't map such extents into page tables
-immediately. Instead we propagate the information that fdatasync(2) is
-necessary from dax_iomap_fault() with a new VM_FAULT_NEEDDSYNC flag.
-Filesystem fault handler is then responsible for calling fdatasync(2)
-and inserting pfn into page tables.
+We return IOMAP_F_DIRTY flag from ext4_iomap_begin() when asked to
+prepare blocks for writing and the inode has some uncommitted metadata
+changes. In the fault handler ext4_dax_fault() we then detect this case
+(through VM_FAULT_NEEDDSYNC return value) and call helper
+dax_finish_sync_fault() to flush metadata changes and insert page table
+entry. Note that this will also dirty corresponding radix tree entry
+which is what we want - fsync(2) will still provide data integrity
+guarantees for applications not using userspace flushing. And
+applications using userspace flushing can avoid calling fsync(2) and
+thus avoid the performance overhead.
 
 Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/dax.c              | 39 +++++++++++++++++++++++++++++++++++++--
- include/linux/iomap.h |  1 +
- include/linux/mm.h    |  6 +++++-
- 3 files changed, 43 insertions(+), 3 deletions(-)
+ fs/ext4/file.c       | 17 ++++++++++++++++-
+ fs/ext4/inode.c      | 15 +++++++++++++++
+ fs/jbd2/journal.c    | 17 +++++++++++++++++
+ include/linux/jbd2.h |  1 +
+ 4 files changed, 49 insertions(+), 1 deletion(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index efc210ff6665..bb9ff907738c 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1091,6 +1091,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	unsigned flags = IOMAP_FAULT;
- 	int error, major = 0;
- 	bool write = vmf->flags & FAULT_FLAG_WRITE;
-+	bool sync;
- 	int vmf_ret = 0;
- 	void *entry;
- 	pfn_t pfn;
-@@ -1169,6 +1170,8 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 		goto finish_iomap;
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index 208adfc3e673..20ad883cb330 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -26,6 +26,7 @@
+ #include <linux/quotaops.h>
+ #include <linux/pagevec.h>
+ #include <linux/uio.h>
++#include <linux/mman.h>
+ #include "ext4.h"
+ #include "ext4_jbd2.h"
+ #include "xattr.h"
+@@ -295,6 +296,7 @@ static int ext4_dax_huge_fault(struct vm_fault *vmf,
+ 	 */
+ 	bool write = (vmf->flags & FAULT_FLAG_WRITE) &&
+ 		(vmf->vma->vm_flags & VM_SHARED);
++	pfn_t pfn;
+ 
+ 	if (write) {
+ 		sb_start_pagefault(sb);
+@@ -310,9 +312,12 @@ static int ext4_dax_huge_fault(struct vm_fault *vmf,
+ 	} else {
+ 		down_read(&EXT4_I(inode)->i_mmap_sem);
+ 	}
+-	result = dax_iomap_fault(vmf, pe_size, NULL, &ext4_iomap_ops);
++	result = dax_iomap_fault(vmf, pe_size, &pfn, &ext4_iomap_ops);
+ 	if (write) {
+ 		ext4_journal_stop(handle);
++		/* Handling synchronous page fault? */
++		if (result & VM_FAULT_NEEDDSYNC)
++			result = dax_finish_sync_fault(vmf, pe_size, pfn);
+ 		up_read(&EXT4_I(inode)->i_mmap_sem);
+ 		sb_end_pagefault(sb);
+ 	} else {
+@@ -350,6 +355,13 @@ static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
+ 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+ 		return -EIO;
+ 
++	/*
++	 * We don't support synchronous mappings for non-DAX files. At least
++	 * until someone comes with a sensible use case.
++	 */
++	if (!IS_DAX(file_inode(file)) && (vma->vm_flags & VM_SYNC))
++		return -EOPNOTSUPP;
++
+ 	file_accessed(file);
+ 	if (IS_DAX(file_inode(file))) {
+ 		vma->vm_ops = &ext4_dax_vm_ops;
+@@ -710,6 +722,8 @@ loff_t ext4_llseek(struct file *file, loff_t offset, int whence)
+ 	return -EINVAL;
+ }
+ 
++#define EXT4_SUPPORTED_MAP_FLAGS (LEGACY_MAP_MASK | MAP_SYNC)
++
+ const struct file_operations ext4_file_operations = {
+ 	.llseek		= ext4_llseek,
+ 	.read_iter	= ext4_file_read_iter,
+@@ -719,6 +733,7 @@ const struct file_operations ext4_file_operations = {
+ 	.compat_ioctl	= ext4_compat_ioctl,
+ #endif
+ 	.mmap		= ext4_file_mmap,
++	.mmap_supported_flags	= EXT4_SUPPORTED_MAP_FLAGS,
+ 	.open		= ext4_file_open,
+ 	.release	= ext4_release_file,
+ 	.fsync		= ext4_sync_file,
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 31db875bc7a1..13a198924a0f 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -3394,6 +3394,19 @@ static int ext4_releasepage(struct page *page, gfp_t wait)
+ }
+ 
+ #ifdef CONFIG_FS_DAX
++static bool ext4_inode_datasync_dirty(struct inode *inode)
++{
++	journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
++
++	if (journal)
++		return !jbd2_transaction_committed(journal,
++					EXT4_I(inode)->i_datasync_tid);
++	/* Any metadata buffers to write? */
++	if (!list_empty(&inode->i_mapping->private_list))
++		return true;
++	return inode->i_state & I_DIRTY_DATASYNC;
++}
++
+ static int ext4_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
+ 			    unsigned flags, struct iomap *iomap)
+ {
+@@ -3466,6 +3479,8 @@ static int ext4_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
  	}
  
-+	sync = (vma->vm_flags & VM_SYNC) && (iomap.flags & IOMAP_F_DIRTY);
+ 	iomap->flags = 0;
++	if ((flags & IOMAP_WRITE) && ext4_inode_datasync_dirty(inode))
++		iomap->flags |= IOMAP_F_DIRTY;
+ 	iomap->bdev = inode->i_sb->s_bdev;
+ 	iomap->dax_dev = sbi->s_daxdev;
+ 	iomap->offset = first_block << blkbits;
+diff --git a/fs/jbd2/journal.c b/fs/jbd2/journal.c
+index 7d5ef3bf3f3e..fa8cde498b4b 100644
+--- a/fs/jbd2/journal.c
++++ b/fs/jbd2/journal.c
+@@ -738,6 +738,23 @@ int jbd2_log_wait_commit(journal_t *journal, tid_t tid)
+ 	return err;
+ }
+ 
++/* Return 1 when transaction with given tid has already committed. */
++int jbd2_transaction_committed(journal_t *journal, tid_t tid)
++{
++	int ret = 1;
 +
- 	switch (iomap.type) {
- 	case IOMAP_MAPPED:
- 		if (iomap.flags & IOMAP_F_NEW) {
-@@ -1182,12 +1185,27 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						 dax_iomap_sector(&iomap, pos),
--						 0, write);
-+						 0, write && !sync);
- 		if (IS_ERR(entry)) {
- 			error = PTR_ERR(entry);
- 			goto error_finish_iomap;
- 		}
- 
-+		/*
-+		 * If we are doing synchronous page fault and inode needs fsync,
-+		 * we can insert PTE into page tables only after that happens.
-+		 * Skip insertion for now and return the pfn so that caller can
-+		 * insert it after fsync is done.
-+		 */
-+		if (sync) {
-+			if (WARN_ON_ONCE(!pfnp)) {
-+				error = -EIO;
-+				goto error_finish_iomap;
-+			}
-+			*pfnp = pfn;
-+			vmf_ret = VM_FAULT_NEEDDSYNC | major;
-+			goto finish_iomap;
-+		}
- 		trace_dax_insert_mapping(inode, vmf, entry);
- 		if (write)
- 			error = vm_insert_mixed_mkwrite(vma, vaddr, pfn);
-@@ -1287,6 +1305,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	struct address_space *mapping = vma->vm_file->f_mapping;
- 	unsigned long pmd_addr = vmf->address & PMD_MASK;
- 	bool write = vmf->flags & FAULT_FLAG_WRITE;
-+	bool sync;
- 	unsigned int iomap_flags = (write ? IOMAP_WRITE : 0) | IOMAP_FAULT;
- 	struct inode *inode = mapping->host;
- 	int result = VM_FAULT_FALLBACK;
-@@ -1371,6 +1390,8 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	if (iomap.offset + iomap.length < pos + PMD_SIZE)
- 		goto finish_iomap;
- 
-+	sync = (vma->vm_flags & VM_SYNC) && (iomap.flags & IOMAP_F_DIRTY);
++	read_lock(&journal->j_state_lock);
++	if (journal->j_running_transaction &&
++	    journal->j_running_transaction->t_tid == tid)
++		ret = 0;
++	if (journal->j_committing_transaction &&
++	    journal->j_committing_transaction->t_tid == tid)
++		ret = 0;
++	read_unlock(&journal->j_state_lock);
++	return ret;
++}
++EXPORT_SYMBOL(jbd2_transaction_committed);
 +
- 	switch (iomap.type) {
- 	case IOMAP_MAPPED:
- 		error = dax_iomap_pfn(&iomap, pos, PMD_SIZE, &pfn);
-@@ -1379,10 +1400,24 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						dax_iomap_sector(&iomap, pos),
--						RADIX_DAX_PMD, write);
-+						RADIX_DAX_PMD, write && !sync);
- 		if (IS_ERR(entry))
- 			goto finish_iomap;
- 
-+		/*
-+		 * If we are doing synchronous page fault and inode needs fsync,
-+		 * we can insert PMD into page tables only after that happens.
-+		 * Skip insertion for now and return the pfn so that caller can
-+		 * insert it after fsync is done.
-+		 */
-+		if (sync) {
-+			if (WARN_ON_ONCE(!pfnp))
-+				goto finish_iomap;
-+			*pfnp = pfn;
-+			result = VM_FAULT_NEEDDSYNC;
-+			goto finish_iomap;
-+		}
-+
- 		trace_dax_pmd_insert_mapping(inode, vmf, PMD_SIZE, pfn, entry);
- 		result = vmf_insert_pfn_pmd(vma, vmf->address, vmf->pmd, pfn,
- 					    write);
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index f64dc6ce5161..4bc0a6fe3b15 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -22,6 +22,7 @@ struct vm_fault;
-  * Flags for all iomap mappings:
-  */
- #define IOMAP_F_NEW	0x01	/* blocks have been newly allocated */
-+#define IOMAP_F_DIRTY	0x02	/* block mapping is not yet on persistent storage */
- 
  /*
-  * Flags that only need to be reported for IOMAP_REPORT requests:
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 5411cb7442de..f57e55782d7d 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1182,6 +1182,9 @@ static inline void clear_page_pfmemalloc(struct page *page)
- #define VM_FAULT_RETRY	0x0400	/* ->fault blocked, must retry */
- #define VM_FAULT_FALLBACK 0x0800	/* huge page fault failed, fall back to small */
- #define VM_FAULT_DONE_COW   0x1000	/* ->fault has fully handled COW */
-+#define VM_FAULT_NEEDDSYNC  0x2000	/* ->fault did not modify page tables
-+					 * and needs fsync() to complete (for
-+					 * synchronous page faults in DAX) */
- 
- #define VM_FAULT_ERROR	(VM_FAULT_OOM | VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV | \
- 			 VM_FAULT_HWPOISON | VM_FAULT_HWPOISON_LARGE | \
-@@ -1199,7 +1202,8 @@ static inline void clear_page_pfmemalloc(struct page *page)
- 	{ VM_FAULT_LOCKED,		"LOCKED" }, \
- 	{ VM_FAULT_RETRY,		"RETRY" }, \
- 	{ VM_FAULT_FALLBACK,		"FALLBACK" }, \
--	{ VM_FAULT_DONE_COW,		"DONE_COW" }
-+	{ VM_FAULT_DONE_COW,		"DONE_COW" }, \
-+	{ VM_FAULT_NEEDDSYNC,		"NEEDDSYNC" }
- 
- /* Encode hstate index for a hwpoisoned large page */
- #define VM_FAULT_SET_HINDEX(x) ((x) << 12)
+  * When this function returns the transaction corresponding to tid
+  * will be completed.  If the transaction has currently running, start
+diff --git a/include/linux/jbd2.h b/include/linux/jbd2.h
+index 606b6bce3a5b..296d1e0ea87b 100644
+--- a/include/linux/jbd2.h
++++ b/include/linux/jbd2.h
+@@ -1367,6 +1367,7 @@ int jbd2_log_start_commit(journal_t *journal, tid_t tid);
+ int __jbd2_log_start_commit(journal_t *journal, tid_t tid);
+ int jbd2_journal_start_commit(journal_t *journal, tid_t *tid);
+ int jbd2_log_wait_commit(journal_t *journal, tid_t tid);
++int jbd2_transaction_committed(journal_t *journal, tid_t tid);
+ int jbd2_complete_transaction(journal_t *journal, tid_t tid);
+ int jbd2_log_do_checkpoint(journal_t *journal);
+ int jbd2_trans_will_send_data_barrier(journal_t *journal, tid_t tid);
 -- 
 2.12.3
