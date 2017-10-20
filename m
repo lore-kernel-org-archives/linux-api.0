@@ -1,64 +1,41 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 01/17] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
- safely define new mmap flags
-Date: Fri, 20 Oct 2017 00:27:07 -0700
-Message-ID: <20171020072707.GA18000@infradead.org>
-References: <20171019125817.11580-1-jack@suse.cz>
- <20171019125817.11580-2-jack@suse.cz>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [1/2,v2] fdmap(2)
+Date: Fri, 20 Oct 2017 09:48:29 +0200
+Message-ID: <20171020074829.GA9010@kroah.com>
+References: <20170924200620.GA24368@avx2>
+ <20171010220804.GA30735@outlook.office365.com>
+ <20171011181234.GB2119@avx2>
+ <20171012080608.GA23077@outlook.office365.com>
+ <CACVxJT_ZP=VAJQ_=D1JV0yt3bT_RZjtWTW61KcV5gCbhF8ixBw@mail.gmail.com>
+ <CALCETrW769=r4uXH2RqoQ0cQL2CakfupwAUM2_81Fr8Mo3JX=Q@mail.gmail.com>
+ <CACVxJT_AKQmd0ziP7jWQvfA5MQGJgC2q2VA3xyFjVARrQR-ekg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20171019125817.11580-2-jack@suse.cz>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, linux-xfs@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linux-ext4@vger.kernel.org
+In-Reply-To: <CACVxJT_AKQmd0ziP7jWQvfA5MQGJgC2q2VA3xyFjVARrQR-ekg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Andrei Vagin <avagin@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
->  	if (file) {
->  		struct inode *inode = file_inode(file);
-> +		unsigned long flags_mask = file->f_op->mmap_supported_flags;
-> +
-> +		if (!flags_mask)
-> +			flags_mask = LEGACY_MAP_MASK;
->  
->  		switch (flags & MAP_TYPE) {
->  		case MAP_SHARED:
-> +			/*
-> +			 * Silently ignore unsupported flags - MAP_SHARED has
-> +			 * traditionally behaved like that and we don't want
-> +			 * to break compatibility.
-> +			 */
-> +			flags &= flags_mask;
-> +			/*
-> +			 * Force use of MAP_SHARED_VALIDATE with non-legacy
-> +			 * flags. E.g. MAP_SYNC is dangerous to use with
-> +			 * MAP_SHARED as you don't know which consistency model
-> +			 * you will get.
-> +			 */
-> +			flags &= LEGACY_MAP_MASK;
-> +			/* fall through */
-> +		case MAP_SHARED_VALIDATE:
-> +			if (flags & ~flags_mask)
-> +				return -EOPNOTSUPP;
+On Thu, Oct 19, 2017 at 05:34:35PM +0200, Alexey Dobriyan wrote:
+> So the answer it not to fix /proc, the answer it to leave /proc alone.
 
-Hmmm.  I'd expect this to worth more like:
+No, because:
 
-		case MAP_SHARED:
-			/* Ignore all new flags that need validation: */
-			flags &= LEGACY_MAP_MASK;
-			/*FALLTHROUGH*/
-		case MAP_SHARED_VALIDATE:
-			if (flags & ~file->f_op->mmap_supported_flags)
-				return -EOPNOTSUPP;
+> The answer is make Unix shell people move their lazy asses and
+> implement minimal type system and a way to execute raw system calls
+> like all normal programming languages do. They still haven't done it
+> after dozens of years and are arrogant enough to say "oh uh we can't
+> use cat and pipe to awk".
 
-with the legacy mask always implicitly support as indicated in my
-comment to the XFS patch.
+Have you submitted changes and patches to those projects in order to
+implement such a thing?
 
-Although even the ignoring in MAP_SHARED seems dangerous, but I guess
-we need that to keep strict backwards compatibility.  In world I'd
-rather do
+If not, just complaining about it isn't going to change anything, you
+know better than that :)
 
-	case MAP_SHARED:
-		if (flags & ~LEGACY_MAP_MASK)
-			return -EINVAL;
+sorry,
+
+greg k-h
