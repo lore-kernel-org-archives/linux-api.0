@@ -1,64 +1,64 @@
-From: Yisheng Xie <xieyisheng1@huawei.com>
-Subject: Re: [PATCH] mm/mempolicy: add node_empty check in SYSC_migrate_pages
-Date: Fri, 20 Oct 2017 14:42:38 +0800
-Message-ID: <79f20d60-dd8d-2545-5a9b-09871ad8ee4e@huawei.com>
-References: <1508290660-60619-1-git-send-email-xieyisheng1@huawei.com>
- <7086c6ea-b721-684e-fe3d-ff59ae1d78ed@suse.cz>
- <20aac66a-7252-947c-355b-6da4be671dcf@huawei.com>
- <f889d39f-ca1f-9239-dc95-4e1806a6345f@suse.cz>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 01/17] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
+ safely define new mmap flags
+Date: Fri, 20 Oct 2017 00:27:07 -0700
+Message-ID: <20171020072707.GA18000@infradead.org>
+References: <20171019125817.11580-1-jack@suse.cz>
+ <20171019125817.11580-2-jack@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <f889d39f-ca1f-9239-dc95-4e1806a6345f@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, akpm@linux-foundation.org, mhocko@suse.com, mingo@kernel.org, rientjes@google.com, n-horiguchi@ah.jp.nec.com, salls@cs.ucsb.edu
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, will.deacon@arm.com, tanxiaojun@huawei.com, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171019125817.11580-2-jack@suse.cz>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, linux-nvdimm@lists.01.org, linux-api@vger.kernel.org, linux-xfs@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Vlastimil,
+>  	if (file) {
+>  		struct inode *inode = file_inode(file);
+> +		unsigned long flags_mask = file->f_op->mmap_supported_flags;
+> +
+> +		if (!flags_mask)
+> +			flags_mask = LEGACY_MAP_MASK;
+>  
+>  		switch (flags & MAP_TYPE) {
+>  		case MAP_SHARED:
+> +			/*
+> +			 * Silently ignore unsupported flags - MAP_SHARED has
+> +			 * traditionally behaved like that and we don't want
+> +			 * to break compatibility.
+> +			 */
+> +			flags &= flags_mask;
+> +			/*
+> +			 * Force use of MAP_SHARED_VALIDATE with non-legacy
+> +			 * flags. E.g. MAP_SYNC is dangerous to use with
+> +			 * MAP_SHARED as you don't know which consistency model
+> +			 * you will get.
+> +			 */
+> +			flags &= LEGACY_MAP_MASK;
+> +			/* fall through */
+> +		case MAP_SHARED_VALIDATE:
+> +			if (flags & ~flags_mask)
+> +				return -EOPNOTSUPP;
 
-Thanks for your comment!
-On 2017/10/18 18:46, Vlastimil Babka wrote:
-> On 10/18/2017 11:34 AM, Yisheng Xie wrote:
->>>> For MAX_NUMNODES is 4, so 0x10 nodemask will tread as empty set which makes
->>>> 	nodes_subset(*new, node_states[N_MEMORY])
->>>
->>> According to manpage of migrate_pages:
->>>
->>>         EINVAL The value specified by maxnode exceeds a kernel-imposed
->>> limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
->>> are greater than the maximum supported node ID.  Or, none of the node
->>> IDs specified by new_nodes are on-line and allowed by the process's
->>> current cpuset context, or none of the specified nodes contain memory.
->>>
->>> if maxnode parameter is 64, but MAX_NUMNODES ("kernel-imposed limit") is
->>> 4, we should get EINVAL just because of that. I don't see such check in
->>> the migrate_pages implementation though.
->>
->> Yes, that is what manpage said, but I have a question about this: if user
->> set maxnode exceeds a kernel-imposed and try to access node without enough
->> privilege, which errors values we should return ? For I have seen that all
->> of the ltp migrate_pages01 will set maxnode to 64 in my system.
-> 
-> Hm I don't think it matters much and don't know if there's some commonly
-> used priority. Personally I would do the checks resulting in EINVAL
-> first, before EPERM, but if the code is structured differently, it may
-> stay as it is.
+Hmmm.  I'd expect this to worth more like:
 
-I see，and  I have checked the code of get_nodes, which seems treat
-"kernel-imposed limit" as the meaning of
-BITS_PER_LONG * BITS_TO_LONGS(MAX_NUMNODES) instead of MAX_NUMNODES,
-which I have replied in another mail.
+		case MAP_SHARED:
+			/* Ignore all new flags that need validation: */
+			flags &= LEGACY_MAP_MASK;
+			/*FALLTHROUGH*/
+		case MAP_SHARED_VALIDATE:
+			if (flags & ~file->f_op->mmap_supported_flags)
+				return -EOPNOTSUPP;
 
-As we use unsigned long to store node bitmap, so the limit should be counted in
-multiple of BITS_PER_LONG, fair?
+with the legacy mask always implicitly support as indicated in my
+comment to the XFS patch.
 
-Thanks
-Yisheng Xie
+Although even the ignoring in MAP_SHARED seems dangerous, but I guess
+we need that to keep strict backwards compatibility.  In world I'd
+rather do
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+	case MAP_SHARED:
+		if (flags & ~LEGACY_MAP_MASK)
+			return -EINVAL;
