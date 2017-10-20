@@ -1,41 +1,38 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [1/2,v2] fdmap(2)
-Date: Fri, 20 Oct 2017 09:48:29 +0200
-Message-ID: <20171020074829.GA9010@kroah.com>
-References: <20170924200620.GA24368@avx2>
- <20171010220804.GA30735@outlook.office365.com>
- <20171011181234.GB2119@avx2>
- <20171012080608.GA23077@outlook.office365.com>
- <CACVxJT_ZP=VAJQ_=D1JV0yt3bT_RZjtWTW61KcV5gCbhF8ixBw@mail.gmail.com>
- <CALCETrW769=r4uXH2RqoQ0cQL2CakfupwAUM2_81Fr8Mo3JX=Q@mail.gmail.com>
- <CACVxJT_AKQmd0ziP7jWQvfA5MQGJgC2q2VA3xyFjVARrQR-ekg@mail.gmail.com>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH 1/3] printk: Introduce per-console loglevel setting
+Date: Fri, 20 Oct 2017 10:05:01 +0200
+Message-ID: <20171020080501.GD29163@pathway.suse.cz>
+References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
+ <b6faa2e2-1480-c306-9c3f-9329d4c5b62d@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CACVxJT_AKQmd0ziP7jWQvfA5MQGJgC2q2VA3xyFjVARrQR-ekg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Andrei Vagin <avagin@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Djalal Harouni <tixxdz@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>
+In-Reply-To: <b6faa2e2-1480-c306-9c3f-9329d4c5b62d@fb.com>
+Sender: linux-doc-owner@vger.kernel.org
+To: Calvin Owens <calvinowens@fb.com>
+Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 19, 2017 at 05:34:35PM +0200, Alexey Dobriyan wrote:
-> So the answer it not to fix /proc, the answer it to leave /proc alone.
+On Thu 2017-10-19 16:40:45, Calvin Owens wrote:
+> On 09/28/2017 05:43 PM, Calvin Owens wrote:
+> >Not all consoles are created equal: depending on the actual hardware,
+> >the latency of a printk() call can vary dramatically. The worst examples
+> >are serial consoles, where it can spin for tens of milliseconds banging
+> >the UART to emit a message, which can cause application-level problems
+> >when the kernel spews onto the console.
+> 
+> Any thoughts on this series? Happy to resend again, but if there are no
+> objections I'd love to see it merged sooner rather than later :)
+> 
+> Happy to resend too, just let me know.
 
-No, because:
+There is no need to resend the patch. It is on my radar and I am
+going to look at it.
 
-> The answer is make Unix shell people move their lazy asses and
-> implement minimal type system and a way to execute raw system calls
-> like all normal programming languages do. They still haven't done it
-> after dozens of years and are arrogant enough to say "oh uh we can't
-> use cat and pipe to awk".
+Please, be patient, you hit conference, illness, after vacation
+season. We do not want to unnecessarily delay it but it is
+not a trivial change that might be accepted within minutes.
 
-Have you submitted changes and patches to those projects in order to
-implement such a thing?
-
-If not, just complaining about it isn't going to change anything, you
-know better than that :)
-
-sorry,
-
-greg k-h
+Best Regards,
+Petr
