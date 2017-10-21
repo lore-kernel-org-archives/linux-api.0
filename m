@@ -1,62 +1,35 @@
-From: Nicolas Belouin <nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org>
-Subject: [PATCH] fs: check for DAC_READ_SEARCH instead of SYS_ADMIN
-Date: Sat, 21 Oct 2017 15:24:46 +0200
-Message-ID: <20171021132446.17567-1-nicolas@belouin.fr>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
-Cc: Nicolas Belouin <nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org>
+From: Nicolas Belouin <nicolas@belouin.fr>
+Subject: [PATCH] fs: check for CAP_SYS_RESOURCE instead of CAP_SYS_ADMIN
+Date: Sat, 21 Oct 2017 15:36:06 +0200
+Message-ID: <20171021133606.18866-1-nicolas@belouin.fr>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-hardening@lists.openwall.com
+Cc: Nicolas Belouin <nicolas@belouin.fr>
 List-Id: linux-api@vger.kernel.org
 
-These checks are meant to prevent leaks or attacks via directory
-traversal, the use of CAP_SYS_ADMIN here is a misuse,
-CAP_DAC_READ_SEARCH being way more appropriate as a process
-with CAP_DAC_READ_SEARCH is entrusted with going trough all directories.
-CAP_SYS_ADMIN is not meant to flag such a process.
+This check is meant to allow a privileged process to go above max_files,
+such a check must be done against CAP_SYS_RESOURCE as its role is to
+allow resources limits override.
 
-Signed-off-by: Nicolas Belouin <nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org>
+Signed-off-by: Nicolas Belouin <nicolas@belouin.fr>
 ---
- fs/dcookies.c  | 2 +-
- fs/proc/base.c | 8 ++++----
- 2 files changed, 5 insertions(+), 5 deletions(-)
+ fs/file_table.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/fs/dcookies.c b/fs/dcookies.c
-index 0d0461cf2431..48491299a183 100644
---- a/fs/dcookies.c
-+++ b/fs/dcookies.c
-@@ -158,7 +158,7 @@ SYSCALL_DEFINE3(lookup_dcookie, u64, cookie64, char __user *, buf, size_t, len)
- 	/* we could leak path information to users
- 	 * without dir read permission without this
+diff --git a/fs/file_table.c b/fs/file_table.c
+index 61517f57f8ef..4bc74fd50838 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -111,7 +111,8 @@ struct file *get_empty_filp(void)
+ 	/*
+ 	 * Privileged users can go above max_files
  	 */
--	if (!capable(CAP_SYS_ADMIN))
-+	if (!capable(CAP_SYS_ADMIN) && !capable(CAP_DAC_READ_SEARCH))
- 		return -EPERM;
- 
- 	mutex_lock(&dcookie_mutex);
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index ad3b0762cc3e..965a3aa1a77f 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2006,16 +2006,16 @@ struct map_files_info {
- };
- 
- /*
-- * Only allow CAP_SYS_ADMIN to follow the links, due to concerns about how the
-- * symlinks may be used to bypass permissions on ancestor directories in the
-- * path to the file in question.
-+ * Only allow CAP_SYS_ADMIN or CAP_DAC_READ_SEARCH to follow the links, due
-+ * to concerns about how the symlinks may be used to bypass permissions on
-+ * ancestor directories in the path to the file in question.
-  */
- static const char *
- proc_map_files_get_link(struct dentry *dentry,
- 			struct inode *inode,
- 		        struct delayed_call *done)
- {
--	if (!capable(CAP_SYS_ADMIN))
-+	if (!capable(CAP_SYS_ADMIN) && !capable(CAP_DAC_READ_SEARCH))
- 		return ERR_PTR(-EPERM);
- 
- 	return proc_pid_get_link(dentry, inode, done);
+-	if (get_nr_files() >= files_stat.max_files && !capable(CAP_SYS_ADMIN)) {
++	if (get_nr_files() >= files_stat.max_files && !capable(CAP_SYS_ADMIN) &&
++	    !capable(CAP_SYS_RESOURCE)) {
+ 		/*
+ 		 * percpu_counters are inaccurate.  Do an expensive check before
+ 		 * we go and fail.
 -- 
 2.14.2
