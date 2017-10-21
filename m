@@ -1,54 +1,28 @@
-From: Nick Kralevich <nnk-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [kernel-hardening] [PATCH] fs: Use CAP_DAC_OVERRIDE to allow for
- file dedupe
-Date: Sat, 21 Oct 2017 07:08:31 -0700
-Message-ID: <CAFJ0LnGjhjm9iswxh-naLM9qZq-fQ_a0MdyVDsmRUk4ME0xuNA@mail.gmail.com>
-References: <20171021132806.18086-1-nicolas@belouin.fr>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [RFC PATCH 1/2] security, capabilities: create CAP_TRUSTED
+Date: Sat, 21 Oct 2017 11:03:02 -0500
+Message-ID: <20171021160302.GA2842@mail.hallyn.com>
+References: <20171021134558.21195-1-nicolas@belouin.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171021132806.18086-1-nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Nicolas Belouin <nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org>
-Cc: Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171021134558.21195-1-nicolas@belouin.fr>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Nicolas Belouin <nicolas@belouin.fr>
+Cc: Jan Kara <jack@suse.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, David Woodhouse <dwmw2@infradead.org>, Dave Kleikamp <shaggy@kernel.org>, Mark Fasheh <mfasheh@versity.com>, Joel Becker <jlbec@evilplan.org>, Miklos Szeredi <miklos@szeredi.hu>, Phillip Lougher <phillip@squashfs.org.uk>, Richard Weinberger <richard@nod.at>, Artem Bityutskiy <dedekind1@gmail.com>, Adrian Hunter <adrian.hunter@intel.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Serge Hallyn <serge@hallyn.com>, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>, James Morris <james.l.morris@oracle.com>, linux-ext4@vger.kernel.o
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 21, 2017 at 6:28 AM, Nicolas Belouin <nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org> wrote:
-> In its current implementation the check is against CAP_SYS_ADMIN,
-> however this capability is bloated and inapropriate for this use.
-> Indeed the check aims to avoid dedupe against non writable files,
-> falling directly in the use case of CAP_DAC_OVERRIDE.
->
-> Signed-off-by: Nicolas Belouin <nicolas-6zwZCx3K5ONGWvitb5QawA@public.gmane.org>
-> ---
->  fs/read_write.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/fs/read_write.c b/fs/read_write.c
-> index f0d4b16873e8..43cc7e84e29e 100644
-> --- a/fs/read_write.c
-> +++ b/fs/read_write.c
-> @@ -1965,7 +1965,7 @@ int vfs_dedupe_file_range(struct file *file, struct file_dedupe_range *same)
->         u64 len;
->         int i;
->         int ret;
-> -       bool is_admin = capable(CAP_SYS_ADMIN);
-> +       bool is_admin = capable(CAP_SYS_ADMIN) || capable(CAP_DAC_OVERRIDE);
+Quoting Nicolas Belouin (nicolas@belouin.fr):
+> with CAP_SYS_ADMIN being bloated, the usefulness of using it to
+> flag a process to be entrusted for e.g reading and writing trusted
+> xattr is near zero.
+> CAP_TRUSTED aims to provide userland with a way to mark a process as
+> entrusted to do specific (not specially admin-centered) actions. It
+> would for example allow a process to red/write the trusted xattrs.
 
-Can you please reverse the order of the checks? In particular, on an
-SELinux based system, a capable() call generates an SELinux denial,
-and people often instinctively allow the first operation performed.
-Reordering the elements will ensure that the CAP_DAC_OVERRIDE denial
-(least permissive) is generated first.
+You say "for example".  Are you intending to add more uses?  If so, what
+are they?  If not, how about renaming it CAP_TRUSTED_XATTR?
 
->         u16 count = same->dest_count;
->         struct file *dst_file;
->         loff_t dst_off;
-> --
-> 2.14.2
->
-
-
-
--- 
-Nick Kralevich | Android Security | nnk-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org | 650.214.4037
+What all does allowing writes to trusted xattrs give you?  There are
+the overlayfs whiteouts, what else?
