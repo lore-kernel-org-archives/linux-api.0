@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers3@gmail.com>
-Subject: [RFC PATCH 08/25] fs/inode.c: rename and export
- dispose_list()
-Date: Mon, 23 Oct 2017 14:40:41 -0700
-Message-ID: <20171023214058.128121-9-ebiggers3@gmail.com>
+Subject: [RFC PATCH 21/25] fscrypt: require that key be added
+ when setting a v2 encryption policy
+Date: Mon, 23 Oct 2017 14:40:54 -0700
+Message-ID: <20171023214058.128121-22-ebiggers3@gmail.com>
 References: <20171023214058.128121-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,106 +23,116 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-When a filesystem encryption key is removed, we need all files which had
-been "unlocked" (had ->i_crypt_info set up) with it to appear "locked"
-again.  This is most easily done by evicting the inodes.  This can
-currently be done using 'echo 2 > /proc/sys/vm/drop_caches'; however,
-that is overkill and not usable by non-root users.  In preparation for
-allowing fs/crypto/ to evict just the needed inodes, export
-dispose_list() to modules.  For clarity also rename it to
-evict_inode_list().
+By looking up the master keys in a filesystem-level keyring rather than
+in the calling processes' key hierarchy, it becomes possible for a user
+to set an encryption policy which refers to some key they don't actually
+know, then encrypt their files using that key.  Cryptographically this
+shouldn't actually be a major problem; for one, every file will still be
+encrypted with a unique derived key, rather than with the master key
+directly.  But to be on the safe side, enforce that a v2 encryption
+policy can only be set if the user has previously added the key, or has
+capable(CAP_FOWNER).
+
+We tolerate that this problem will continue to exist for v1 encryption
+policies, however; there is no way around that.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/inode.c         | 19 ++++++++++---------
- include/linux/fs.h |  1 +
- 2 files changed, 11 insertions(+), 9 deletions(-)
+ fs/crypto/fscrypt_private.h |  2 ++
+ fs/crypto/keyinfo.c         | 42 ++++++++++++++++++++++++++++++++++++++++++
+ fs/crypto/policy.c          |  6 ++++++
+ 3 files changed, 50 insertions(+)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index 30ce98956801..fe47930835c0 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -570,13 +570,13 @@ static void evict(struct inode *inode)
- }
+diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+index d0a63086fa95..7a0d5b6c2504 100644
+--- a/fs/crypto/fscrypt_private.h
++++ b/fs/crypto/fscrypt_private.h
+@@ -234,6 +234,8 @@ extern struct page *fscrypt_alloc_bounce_page(struct fscrypt_ctx *ctx,
+ 					      gfp_t gfp_flags);
  
- /*
-- * dispose_list - dispose of the contents of a local list
-- * @head: the head of the list to free
-+ * evict_inode_list - evict each inode in a local list of inodes
-+ * @head: the head of the list
-  *
-- * Dispose-list gets a local list with local inodes in it, so it doesn't
-+ * This gets a local list with local inodes in it, so it doesn't
-  * need to worry about list corruption and SMP locks.
-  */
--static void dispose_list(struct list_head *head)
-+void evict_inode_list(struct list_head *head)
+ /* keyinfo.c */
++extern int fscrypt_verify_key_added(struct super_block *sb,
++				    const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE]);
+ extern struct key_type key_type_fscrypt_mk;
+ extern struct key_type key_type_fscrypt_mk_user;
+ extern void __exit fscrypt_essiv_cleanup(void);
+diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
+index 1fe44983239a..fd59f37dad10 100644
+--- a/fs/crypto/keyinfo.c
++++ b/fs/crypto/keyinfo.c
+@@ -851,6 +851,48 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
+ }
+ EXPORT_SYMBOL_GPL(fscrypt_ioctl_add_key);
+ 
++/*
++ * Verify that the current user has added a master key that has the given
++ * identifier (returns -ENOKEY if not).  This is needed to prevent a user from
++ * encrypting their files using some other user's key which they don't actually
++ * know.  Cryptographically speaking, it's debatable how much of a problem this
++ * actually would be, but it's best to just forbid it.
++ *
++ * The system administrator (CAP_FOWNER) can override this, which should be
++ * enough for any use cases where encryption policies are being set using keys
++ * that were chosen ahead of time but aren't available at the moment.
++ */
++int fscrypt_verify_key_added(struct super_block *sb,
++			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
++{
++	struct fscrypt_key_specifier mk_spec;
++	struct key *key, *mk_user;
++	struct fscrypt_master_key *mk;
++	int err;
++
++	mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
++	memcpy(mk_spec.identifier, identifier, FSCRYPT_KEY_IDENTIFIER_SIZE);
++
++	key = find_master_key(sb, &mk_spec);
++	if (IS_ERR(key)) {
++		err = PTR_ERR(key);
++		goto out;
++	}
++	mk = key->payload.data[0];
++	mk_user = find_master_key_user(mk);
++	if (IS_ERR(mk_user)) {
++		err = PTR_ERR(mk_user);
++	} else {
++		key_put(mk_user);
++		err = 0;
++	}
++	key_put(key);
++out:
++	if (err == -ENOKEY && capable(CAP_FOWNER))
++		err = 0;
++	return err;
++}
++
+ static void evict_dentries_for_decrypted_inodes(struct fscrypt_master_key *mk)
  {
- 	while (!list_empty(head)) {
- 		struct inode *inode;
-@@ -588,6 +588,7 @@ static void dispose_list(struct list_head *head)
- 		cond_resched();
- 	}
- }
-+EXPORT_SYMBOL_GPL(evict_inode_list);
- 
- /**
-  * evict_inodes	- evict all evictable inodes for a superblock
-@@ -628,13 +629,13 @@ void evict_inodes(struct super_block *sb)
- 		if (need_resched()) {
- 			spin_unlock(&sb->s_inode_list_lock);
- 			cond_resched();
--			dispose_list(&dispose);
-+			evict_inode_list(&dispose);
- 			goto again;
- 		}
- 	}
- 	spin_unlock(&sb->s_inode_list_lock);
- 
--	dispose_list(&dispose);
-+	evict_inode_list(&dispose);
- }
- EXPORT_SYMBOL_GPL(evict_inodes);
- 
-@@ -679,7 +680,7 @@ int invalidate_inodes(struct super_block *sb, bool kill_dirty)
- 	}
- 	spin_unlock(&sb->s_inode_list_lock);
- 
--	dispose_list(&dispose);
-+	evict_inode_list(&dispose);
- 
- 	return busy;
- }
-@@ -763,7 +764,7 @@ static enum lru_status inode_lru_isolate(struct list_head *item,
-  * Walk the superblock inode LRU for freeable inodes and attempt to free them.
-  * This is called from the superblock shrinker function with a number of inodes
-  * to trim from the LRU. Inodes to be freed are moved to a temporary list and
-- * then are freed outside inode_lock by dispose_list().
-+ * then are freed outside inode_lock by evict_inode_list().
-  */
- long prune_icache_sb(struct super_block *sb, struct shrink_control *sc)
+ 	struct fscrypt_info *ci;
+diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
+index 27a391038f73..cfb404def9ed 100644
+--- a/fs/crypto/policy.c
++++ b/fs/crypto/policy.c
+@@ -170,6 +170,7 @@ static int set_encryption_policy(struct inode *inode,
+ 				 const union fscrypt_policy *policy)
  {
-@@ -772,7 +773,7 @@ long prune_icache_sb(struct super_block *sb, struct shrink_control *sc)
+ 	union fscrypt_context ctx;
++	int err;
  
- 	freed = list_lru_shrink_walk(&sb->s_inode_lru, sc,
- 				     inode_lru_isolate, &freeable);
--	dispose_list(&freeable);
-+	evict_inode_list(&freeable);
- 	return freed;
- }
+ 	if (!fscrypt_supported_policy(policy))
+ 		return -EINVAL;
+@@ -190,6 +191,11 @@ static int set_encryption_policy(struct inode *inode,
+ 		 */
+ 		pr_warn_once("%s (pid %d) is setting less secure v1 encryption policy; recommend upgrading to v2.\n",
+ 			     current->comm, current->pid);
++	} else {
++		err = fscrypt_verify_key_added(inode->i_sb,
++					       policy->v2.master_key_identifier);
++		if (err)
++			return err;
+ 	}
  
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 2833ace2f01d..e0a8dae5f9dc 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2880,6 +2880,7 @@ extern void unlock_new_inode(struct inode *);
- extern unsigned int get_next_ino(void);
- extern void evict_inodes(struct super_block *sb);
- extern void inode_lru_list_del(struct inode *inode);
-+extern void evict_inode_list(struct list_head *head);
- 
- extern void __iget(struct inode * inode);
- extern void iget_failed(struct inode *);
+ 	return inode->i_sb->s_cop->set_context(inode, &ctx,
 -- 
 2.15.0.rc0.271.g36b669edcc-goog
 
