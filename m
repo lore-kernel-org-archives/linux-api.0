@@ -1,11 +1,13 @@
 From: Benjamin Gaignard <benjamin.gaignard@linaro.org>
-Subject: [PATCH v6 0/2] staging: ion: get one device per heap
-Date: Mon, 23 Oct 2017 17:55:35 +0200
-Message-ID: <1508774137-13835-1-git-send-email-benjamin.gaignard@linaro.org>
+Subject: [PATCH v6 1/2] staging: ion: simplify ioctl args checking function
+Date: Mon, 23 Oct 2017 17:55:36 +0200
+Message-ID: <1508774137-13835-2-git-send-email-benjamin.gaignard@linaro.org>
+References: <1508774137-13835-1-git-send-email-benjamin.gaignard@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+In-Reply-To: <1508774137-13835-1-git-send-email-benjamin.gaignard@linaro.org>
 List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
  <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
 List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
@@ -19,46 +21,42 @@ To: labbott@redhat.com, sumit.semwal@linaro.org, gregkh@linuxfoundation.org, arv
 Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, Benjamin Gaignard <benjamin.gaignard@linaro.org>, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org
 List-Id: linux-api@vger.kernel.org
 
-version 6:
-- add platform_bus and platform_bus_type when register Ion devices
-  to make them appear in /sys/devices/platform.
-- re-order include files in aphabetic order.
+Make arguments checking more easy to read.
 
-version 5:
-- create a configuration flag to keep legacy Ion misc device
+Signed-off-by: Benjamin Gaignard <benjamin.gaignard@linaro.org>
+Acked-by: Laura Abbott <labbott@redhat.com>
+---
+ drivers/staging/android/ion/ion-ioctl.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
 
-version 4:
-- add a configuration flag to switch between legacy Ion misc device
-  and one device per heap version.
-  This change has been suggested after Laura talks at XDC 2017.
-
-version 3:
-- change ion_device_add_heap prototype to return a possible error.
-
-version 2:
-- simplify ioctl check like propose by Dan
-- make sure that we don't register more than ION_DEV_MAX heaps.
-
-Until now all ion heaps are addressing using the same device "/dev/ion".
-This way of working doesn't allow to give access rights (for example with
-SElinux rules) per heap.
-This series propose to have one device "/dev/ionX" per heap.
-Query heaps informations will be possible on each device node but
-allocation request will only be possible if heap_mask_id match with device minor number.
-
-Using legacy Ion misc device is still by setting ION_LEGACY_DEVICE_API
-configuration flag.
-
-Benjamin Gaignard (2):
-  staging: ion: simplify ioctl args checking function
-  staging: ion: create one device entry per heap
-
- drivers/staging/android/TODO            |  1 -
- drivers/staging/android/ion/Kconfig     |  7 +++++
- drivers/staging/android/ion/ion-ioctl.c | 29 +++++++++++++-----
- drivers/staging/android/ion/ion.c       | 53 ++++++++++++++++++++++++++-------
- drivers/staging/android/ion/ion.h       | 15 ++++++++--
- 5 files changed, 84 insertions(+), 21 deletions(-)
-
+diff --git a/drivers/staging/android/ion/ion-ioctl.c b/drivers/staging/android/ion/ion-ioctl.c
+index d9f8b14..e26b786 100644
+--- a/drivers/staging/android/ion/ion-ioctl.c
++++ b/drivers/staging/android/ion/ion-ioctl.c
+@@ -27,19 +27,18 @@ union ion_ioctl_arg {
+ 
+ static int validate_ioctl_arg(unsigned int cmd, union ion_ioctl_arg *arg)
+ {
+-	int ret = 0;
+-
+ 	switch (cmd) {
+ 	case ION_IOC_HEAP_QUERY:
+-		ret = arg->query.reserved0 != 0;
+-		ret |= arg->query.reserved1 != 0;
+-		ret |= arg->query.reserved2 != 0;
++		if (arg->query.reserved0 ||
++		    arg->query.reserved1 ||
++		    arg->query.reserved2 )
++			return -EINVAL;
+ 		break;
+ 	default:
+ 		break;
+ 	}
+ 
+-	return ret ? -EINVAL : 0;
++	return 0;
+ }
+ 
+ /* fix up the cases where the ioctl direction bits are incorrect */
 -- 
 2.7.4
