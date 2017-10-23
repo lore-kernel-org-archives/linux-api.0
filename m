@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers3@gmail.com>
-Subject: [RFC PATCH 15/25] fscrypt: add UAPI definitions to
- get/set v2 encryption policies
-Date: Mon, 23 Oct 2017 14:40:48 -0700
-Message-ID: <20171023214058.128121-16-ebiggers3@gmail.com>
+Subject: [RFC PATCH 18/25] fscrypt: allow adding and removing
+ keys for v2 encryption policies
+Date: Mon, 23 Oct 2017 14:40:51 -0700
+Message-ID: <20171023214058.128121-19-ebiggers3@gmail.com>
 References: <20171023214058.128121-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,120 +23,189 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Currently, fscrypt policies and xattrs identify the master key by
-master_key_descriptor, which is an arbitrary 8-byte value used to form
-the description of the keyring key.  However, there is no verification
-that the key descriptor in any way corresponds with the key payload.
-Since ->i_crypt_info by necessity gets set up on a "first come, first
-serve" basis, this flaw allows a process with only read-only access to
-an encrypted file or directory to provide the wrong key, causing the
-file contents or directory listing to be corrupted.  This is a bug with
-security implications which must be fixed.
+Extend the FS_IOC_ADD_ENCRYPTION_KEY and FS_IOC_REMOVE_ENCRYPTION_KEY
+ioctls to support adding and removing keys for use by v2 encryption
+policies.
 
-To fix this bug without simply locking down adding keys to root, we must
-replace master_key_descriptor with a cryptographic hash of the key.  We
-name the replacement master_key_identifier and make it 16 bytes long,
-which should provide enough collision resistance, and more importantly
-preimage resistance, without bloating the size of the encryption xattr
-too much.
+Keys for v2 encryption policies are identified by a 16-byte
+"identifier", which is a cryptographic hash of the key, instead of by an
+8-byte "descriptor".  For FS_IOC_ADD_ENCRYPTION_KEY, the kernel
+calculates the key identifier and copies it to userspace.  Userspace is
+not allowed to choose the key identifier, since the kernel would have to
+recalculate it anyway to verify that it is correct.
 
-This will be both an on-disk format and API change, since we'll need to
-define new versions of both the fscrypt_context and fscrypt_policy.
-This patch begins this process by defining the UAPI changes to manage v2
-policies.  (Note: we jump to version 2 even though the previous policy
-version number was 0 because the fscrypt_context was actually already
-using version 1, not version 0.  It would be really confusing to have
-them always be 1 off from each other.)
+For FS_IOC_REMOVE_ENCRYPTION_KEY, userspace provides the key identifier
+rather than the key descriptor to identify the key to be removed.  For
+both ioctls, a type field indicates whether the old or new way of
+specifying keys is being used.  A common structure is used, 'struct
+fscrypt_key_specifier', and it has some extra space just in case we have
+to introduce a new way to identify keys in the future.
 
-The existing FS_IOC_SET_ENCRYPTION_POLICY will be used to set a v2
-policy, as the kernel will be able to examine the 'version' field.
+Note that keys for v1 and v2 encryption policies are both stored in
+->s_master_keys, but their descriptions will be of different lengths.
+Therefore, they cannot be mixed up when we search for a key.
 
-However, a new ioctl FS_IOC_GET_ENCRYPTION_POLICY_EX is needed to get a
-v2 policy, since the returned struct needs to be larger.  This ioctl
-includes a size field as input, so that it can be used for both v1 and
-v2 policies as well as any new policy versions that may get added in the
-future.
+For now the ioctls still always require capable(CAP_SYS_ADMIN).  We'll
+be able to relax that soon, but only for v2 policies.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- include/uapi/linux/fscrypt.h | 37 +++++++++++++++++++++++++++++++++++--
- 1 file changed, 35 insertions(+), 2 deletions(-)
+ fs/crypto/keyinfo.c          | 75 ++++++++++++++++++++++++++++++++++++++++----
+ include/uapi/linux/fscrypt.h |  2 ++
+ 2 files changed, 71 insertions(+), 6 deletions(-)
 
+diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
+index e9de625ddfe4..c9e7b2b262d2 100644
+--- a/fs/crypto/keyinfo.c
++++ b/fs/crypto/keyinfo.c
+@@ -32,6 +32,19 @@
+ #define HKDF_HMAC_ALG		"hmac(sha512)"
+ #define HKDF_HASHLEN		SHA512_DIGEST_SIZE
+ 
++/*
++ * The list of contexts in which we use HKDF to derive additional keys from a
++ * master key.  The values in this list are used as the first byte of the
++ * application-specific info string to guarantee that info strings are never
++ * repeated between contexts.
++ *
++ * Keys derived with different info strings are cryptographically isolated from
++ * each other --- knowledge of one derived key doesn't reveal any others.
++ * (This property is particularly important for the derived key used as the
++ * "key identifier", as that is stored in the clear.)
++ */
++#define HKDF_CONTEXT_KEY_IDENTIFIER	1
++
+ /*
+  * HKDF consists of two steps:
+  *
+@@ -228,7 +241,12 @@ struct fscrypt_master_key {
+ 	 */
+ 	struct fscrypt_master_key_secret	mk_secret;
+ 
+-	/* Arbitrary key descriptor which was assigned by userspace */
++	/*
++	 * For v1 policy keys: an arbitrary key descriptor which was assigned by
++	 * userspace (->descriptor).
++	 *
++	 * For v2 policy keys: a cryptographic hash of this key (->identifier).
++	 */
+ 	struct fscrypt_key_specifier		mk_spec;
+ 
+ 	/*
+@@ -252,6 +270,8 @@ static inline int master_key_spec_len(const struct fscrypt_key_specifier *spec)
+ 	switch (spec->type) {
+ 	case FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR:
+ 		return FSCRYPT_KEY_DESCRIPTOR_SIZE;
++	case FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER:
++		return FSCRYPT_KEY_IDENTIFIER_SIZE;
+ 	}
+ 	return 0;
+ }
+@@ -346,7 +366,7 @@ static struct key *search_fscrypt_keyring(struct key *keyring,
+ #define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE	\
+ 	(sizeof("fscrypt-") - 1 + sizeof(((struct super_block *)0)->s_id) + 1)
+ 
+-#define FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_DESCRIPTOR_SIZE + 1)
++#define FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + 1)
+ 
+ static void format_fs_keyring_description(
+ 			char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
+@@ -550,6 +570,39 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
+ 	if (copy_from_user(secret.raw, uarg->raw, secret.size))
+ 		goto out_wipe_secret;
+ 
++	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) {
++		struct crypto_shash *hmac_tfm;
++
++		hmac_tfm = allocate_hmac_tfm(secret.raw, secret.size);
++		if (IS_ERR(hmac_tfm)) {
++			err = PTR_ERR(hmac_tfm);
++			goto out_wipe_secret;
++		}
++
++		/*
++		 * Hash the master key to get the key identifier, then return it
++		 * to userspace.  Specifically, we derive the key identifier
++		 * from the master key with HKDF-SHA512, using a unique
++		 * application-specific info string.  This is preferable to a
++		 * simple truncated SHA512 because it means we only ever use the
++		 * master key for a single cryptographic primitive (HKDF-SHA512)
++		 * rather than two (HKDF-SHA512 and SHA512).  It *maybe* would
++		 * be okay, but cryptographically it would be bad practice.
++		 */
++		err = hkdf_expand(hmac_tfm, HKDF_CONTEXT_KEY_IDENTIFIER,
++				  NULL, 0, arg.key_spec.identifier,
++				  FSCRYPT_KEY_IDENTIFIER_SIZE);
++		crypto_free_shash(hmac_tfm);
++		if (err)
++			goto out_wipe_secret;
++
++		err = -EFAULT;
++		if (copy_to_user(uarg->key_spec.identifier,
++				 arg.key_spec.identifier,
++				 FSCRYPT_KEY_IDENTIFIER_SIZE))
++			goto out_wipe_secret;
++	}
++
+ 	err = add_master_key(sb, &secret, &arg.key_spec);
+ out_wipe_secret:
+ 	wipe_master_key_secret(&secret);
+@@ -872,6 +925,10 @@ static int derive_key_aes(const u8 *master_key,
+  * Search the current task's subscribed keyrings for a "logon" key with
+  * description prefix:descriptor, and if found acquire a read lock on it and
+  * return a pointer to its validated payload in *payload_ret.
++ *
++ * This is only used for v1 encryption policies, where keys are identified by
++ * master_key_descriptor.  With newer policy versions, only the filesystem-level
++ * keyring (->s_master_keys) is supported.
+  */
+ static struct key *
+ find_and_lock_process_key(const char *prefix,
+@@ -977,17 +1034,23 @@ static int find_and_derive_key(const struct inode *inode,
+ 		memcpy(mk_spec.descriptor, ctx->v1.master_key_descriptor,
+ 		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
+ 		break;
++	case FSCRYPT_CONTEXT_V2:
++		mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
++		memcpy(mk_spec.identifier, ctx->v2.master_key_identifier,
++		       FSCRYPT_KEY_IDENTIFIER_SIZE);
++		break;
+ 	default:
+-		return -EOPNOTSUPP;
++		return -EOPNOTSUPP; /* should have been checked earlier too */
+ 	}
+ 
+ 	key = find_master_key(inode->i_sb, &mk_spec);
+ 	if (IS_ERR(key)) {
+-		if (key != ERR_PTR(-ENOKEY))
++		if (key != ERR_PTR(-ENOKEY) ||
++		    ctx->v1.version != FSCRYPT_CONTEXT_V1)
+ 			return PTR_ERR(key);
+ 		/*
+-		 * As a legacy fallback, we search the current task's subscribed
+-		 * keyrings in addition to ->s_master_keys.
++		 * As a legacy fallback for v1 policies, we search the current
++		 * task's subscribed keyrings in addition to ->s_master_keys.
+ 		 */
+ 		return find_and_derive_key_legacy(inode, &ctx->v1, derived_key,
+ 						  derived_keysize);
 diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
-index 9da153df238a..065060b20a34 100644
+index 065060b20a34..1918bdc0c6d7 100644
 --- a/include/uapi/linux/fscrypt.h
 +++ b/include/uapi/linux/fscrypt.h
-@@ -7,7 +7,6 @@
-  * File system encryption support
-  */
- /* Policy provided via an ioctl on the topmost directory */
--#define FSCRYPT_KEY_DESCRIPTOR_SIZE	8
- 
- /* Encryption policy flags */
- #define FSCRYPT_POLICY_FLAGS_PAD_4	0x00
-@@ -26,13 +25,22 @@
- #define FSCRYPT_MODE_AES_128_CBC	5
- #define FSCRYPT_MODE_AES_128_CTS	6
- 
--struct fscrypt_policy {
-+/*
-+ * Legacy policy version; no key verification (potentially insecure).
-+ * For new encrypted directories, use fscrypt_policy_v2 instead.
-+ *
-+ * Careful: the .version field for this is actually 0, not 1.
-+ */
-+#define FSCRYPT_POLICY_VERSION_LEGACY	0
-+#define FSCRYPT_KEY_DESCRIPTOR_SIZE	8
-+struct fscrypt_policy_v1 {
- 	__u8 version;
- 	__u8 contents_encryption_mode;
- 	__u8 filenames_encryption_mode;
- 	__u8 flags;
- 	__u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
- };
-+#define fscrypt_policy	fscrypt_policy_v1
- 
- /*
-  * Process-subscribed "logon" key description prefix and payload format.
-@@ -47,6 +55,30 @@ struct fscrypt_key {
- 	__u32 size;
- };
- 
-+/*
-+ * New policy version with HKDF and key verification (recommended).
-+ */
-+#define FSCRYPT_POLICY_VERSION_2	2
-+#define FSCRYPT_KEY_IDENTIFIER_SIZE	16
-+struct fscrypt_policy_v2 {
-+	__u8 version;
-+	__u8 contents_encryption_mode;
-+	__u8 filenames_encryption_mode;
-+	__u8 flags;
-+	__u8 reserved[4];
-+	__u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
-+};
-+
-+/* Struct passed to FS_IOC_GET_ENCRYPTION_POLICY_EX */
-+struct fscrypt_get_policy_ex_args {
-+	__u64 size; /* input/output */
-+	union {
-+		__u8 version;
-+		struct fscrypt_policy_v1 v1;
-+		struct fscrypt_policy_v2 v2;
-+	} policy; /* output */
-+};
-+
+@@ -82,10 +82,12 @@ struct fscrypt_get_policy_ex_args {
  struct fscrypt_key_specifier {
  	__u32 type;
  #define FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR	1
-@@ -91,6 +123,7 @@ struct fscrypt_get_key_status_args {
- #define FS_IOC_SET_ENCRYPTION_POLICY	_IOR( 'f', 19, struct fscrypt_policy)
- #define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW( 'f', 20, __u8[16])
- #define FS_IOC_GET_ENCRYPTION_POLICY	_IOW( 'f', 21, struct fscrypt_policy)
-+#define FS_IOC_GET_ENCRYPTION_POLICY_EX	_IOWR('f', 21, __u8[9]) /* size + version */
- #define FS_IOC_ADD_ENCRYPTION_KEY	_IOWR('f', 22, struct fscrypt_add_key_args)
- #define FS_IOC_REMOVE_ENCRYPTION_KEY	_IOR( 'f', 23, struct fscrypt_remove_key_args)
- #define FS_IOC_GET_ENCRYPTION_KEY_STATUS _IOWR('f',24, struct fscrypt_get_key_status_args)
++#define FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER	2
+ 	__u32 reserved;
+ 	union {
+ 		__u8 max_specifier[32];
+ 		__u8 descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
++		__u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
+ 	};
+ };
+ 
 -- 
 2.15.0.rc0.271.g36b669edcc-goog
 
