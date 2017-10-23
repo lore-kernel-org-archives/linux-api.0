@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers3@gmail.com>
-Subject: [RFC PATCH 01/25] fs,
- fscrypt: move uapi definitions to new header <linux/fscrypt.h>
-Date: Mon, 23 Oct 2017 14:40:34 -0700
-Message-ID: <20171023214058.128121-2-ebiggers3@gmail.com>
+Subject: [RFC PATCH 02/25] fscrypt: use FSCRYPT_ prefix for uapi
+ constants
+Date: Mon, 23 Oct 2017 14:40:35 -0700
+Message-ID: <20171023214058.128121-3-ebiggers3@gmail.com>
 References: <20171023214058.128121-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,70 +23,118 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-There are going to be more filesystem encryption definitions added, and
-we don't want to use a disproportionate amount of space in <linux/fs.h>
-for filesystem encryption stuff.  So move the fscrypt definitions to a
-new header <linux/fscrypt.h>.
+Prefix all filesystem encryption UAPI constants except the ioctl numbers
+with "FSCRYPT_" rather than with "FS_".  This namespaces the constants
+more appropriately and makes it clear that they are related specifically
+to the filesystem encryption feature, and to the 'fscrypt_*' structures.
+With some of the old names like "FS_POLICY_FLAGS_VALID", it was not
+immediately clear that the constant had anything to do with encryption.
 
-For compatibility with existing userspace programs which may be
-including <linux/fs.h>, <linux/fs.h> still includes the new header.
-(It's debatable whether we really need this, though; the filesystem
-encryption API is new enough that most if not all programs that are
-using it have to declare it themselves anyway.)
+This is also useful because we'll be adding more encryption-related
+constants, e.g. for the policy version, and we'd otherwise have to
+choose whether to use unclear names like FS_POLICY_VERSION_* or
+inconsistent names like FS_ENCRYPTION_POLICY_VERSION_*.
+
+For source compatibility with older userspace programs, keep the old
+names defined as aliases to the new ones.  (It's debatable whether we
+really need this, though; the filesystem encryption API is new enough
+that most if not all programs that are using it have to declare it
+themselves anyway.)
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- include/linux/fscrypt.h      |  2 +-
- include/uapi/linux/fs.h      | 50 +++--------------------------------------
- include/uapi/linux/fscrypt.h | 53 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 57 insertions(+), 48 deletions(-)
- create mode 100644 include/uapi/linux/fscrypt.h
+ Documentation/filesystems/fscrypt.rst | 14 ++++-----
+ include/uapi/linux/fscrypt.h          | 59 ++++++++++++++++++++++++-----------
+ 2 files changed, 47 insertions(+), 26 deletions(-)
 
-diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index 53437bfdfcbc..f7aa7d62e235 100644
---- a/include/linux/fscrypt.h
-+++ b/include/linux/fscrypt.h
-@@ -19,7 +19,7 @@
- #include <linux/bio.h>
- #include <linux/dcache.h>
- #include <crypto/skcipher.h>
--#include <uapi/linux/fs.h>
-+#include <uapi/linux/fscrypt.h>
+diff --git a/Documentation/filesystems/fscrypt.rst b/Documentation/filesystems/fscrypt.rst
+index 776ddc655f79..f12956f3f1f8 100644
+--- a/Documentation/filesystems/fscrypt.rst
++++ b/Documentation/filesystems/fscrypt.rst
+@@ -251,14 +251,14 @@ empty directory or verifies that a directory or regular file already
+ has the specified encryption policy.  It takes in a pointer to a
+ :c:type:`struct fscrypt_policy`, defined as follows::
  
- #define FS_CRYPTO_BLOCK_SIZE		16
+-    #define FS_KEY_DESCRIPTOR_SIZE  8
++    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
  
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 56235dddea7d..6ecd3ee9960c 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -12,6 +12,9 @@
- #include <linux/limits.h>
- #include <linux/ioctl.h>
- #include <linux/types.h>
-+#ifndef __KERNEL__
-+#include <linux/fscrypt.h>
-+#endif
+     struct fscrypt_policy {
+             __u8 version;
+             __u8 contents_encryption_mode;
+             __u8 filenames_encryption_mode;
+             __u8 flags;
+-            __u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
++            __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
+     };
  
- /*
-  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
-@@ -253,53 +256,6 @@ struct fsxattr {
- #define FS_IOC_FSGETXATTR		_IOR ('X', 31, struct fsxattr)
- #define FS_IOC_FSSETXATTR		_IOW ('X', 32, struct fsxattr)
+ This structure must be initialized as follows:
+@@ -274,7 +274,7 @@ This structure must be initialized as follows:
  
--/*
-- * File system encryption support
-- */
--/* Policy provided via an ioctl on the topmost directory */
+ - ``flags`` must be set to a value from ``<linux/fs.h>`` which
+   identifies the amount of NUL-padding to use when encrypting
+-  filenames.  If unsure, use FS_POLICY_FLAGS_PAD_32 (0x3).
++  filenames.  If unsure, use FSCRYPT_POLICY_FLAGS_PAD_32 (0x3).
+ 
+ - ``master_key_descriptor`` specifies how to find the master key in
+   the keyring; see `Adding keys`_.  It is up to userspace to choose a
+@@ -374,11 +374,11 @@ followed by the 16-character lower case hex representation of the
+ ``master_key_descriptor`` that was set in the encryption policy.  The
+ key payload must conform to the following structure::
+ 
+-    #define FS_MAX_KEY_SIZE 64
++    #define FSCRYPT_MAX_KEY_SIZE 64
+ 
+     struct fscrypt_key {
+             u32 mode;
+-            u8 raw[FS_MAX_KEY_SIZE];
++            u8 raw[FSCRYPT_MAX_KEY_SIZE];
+             u32 size;
+     };
+ 
+@@ -533,7 +533,7 @@ much confusion if an encryption policy were to be added to or removed
+ from anything other than an empty directory.)  The struct is defined
+ as follows::
+ 
+-    #define FS_KEY_DESCRIPTOR_SIZE  8
++    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
+     #define FS_KEY_DERIVATION_NONCE_SIZE 16
+ 
+     struct fscrypt_context {
+@@ -541,7 +541,7 @@ as follows::
+             u8 contents_encryption_mode;
+             u8 filenames_encryption_mode;
+             u8 flags;
+-            u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
++            u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
+             u8 nonce[FS_KEY_DERIVATION_NONCE_SIZE];
+     };
+ 
+diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
+index c09209fc42ea..26c381a40279 100644
+--- a/include/uapi/linux/fscrypt.h
++++ b/include/uapi/linux/fscrypt.h
+@@ -7,30 +7,31 @@
+  * File system encryption support
+  */
+ /* Policy provided via an ioctl on the topmost directory */
 -#define FS_KEY_DESCRIPTOR_SIZE	8
--
++#define FSCRYPT_KEY_DESCRIPTOR_SIZE	8
+ 
 -#define FS_POLICY_FLAGS_PAD_4		0x00
 -#define FS_POLICY_FLAGS_PAD_8		0x01
 -#define FS_POLICY_FLAGS_PAD_16		0x02
 -#define FS_POLICY_FLAGS_PAD_32		0x03
 -#define FS_POLICY_FLAGS_PAD_MASK	0x03
 -#define FS_POLICY_FLAGS_VALID		0x03
--
--/* Encryption algorithms */
++/* Encryption policy flags */
++#define FSCRYPT_POLICY_FLAGS_PAD_4	0x00
++#define FSCRYPT_POLICY_FLAGS_PAD_8	0x01
++#define FSCRYPT_POLICY_FLAGS_PAD_16	0x02
++#define FSCRYPT_POLICY_FLAGS_PAD_32	0x03
++#define FSCRYPT_POLICY_FLAGS_PAD_MASK	0x03
++#define FSCRYPT_POLICY_FLAGS_VALID	0x03
+ 
+ /* Encryption algorithms */
 -#define FS_ENCRYPTION_MODE_INVALID		0
 -#define FS_ENCRYPTION_MODE_AES_256_XTS		1
 -#define FS_ENCRYPTION_MODE_AES_256_GCM		2
@@ -94,94 +142,65 @@ index 56235dddea7d..6ecd3ee9960c 100644
 -#define FS_ENCRYPTION_MODE_AES_256_CTS		4
 -#define FS_ENCRYPTION_MODE_AES_128_CBC		5
 -#define FS_ENCRYPTION_MODE_AES_128_CTS		6
--
--struct fscrypt_policy {
--	__u8 version;
--	__u8 contents_encryption_mode;
--	__u8 filenames_encryption_mode;
--	__u8 flags;
++#define FSCRYPT_MODE_INVALID		0
++#define FSCRYPT_MODE_AES_256_XTS	1
++#define FSCRYPT_MODE_AES_256_GCM	2
++#define FSCRYPT_MODE_AES_256_CBC	3
++#define FSCRYPT_MODE_AES_256_CTS	4
++#define FSCRYPT_MODE_AES_128_CBC	5
++#define FSCRYPT_MODE_AES_128_CTS	6
+ 
+ struct fscrypt_policy {
+ 	__u8 version;
+ 	__u8 contents_encryption_mode;
+ 	__u8 filenames_encryption_mode;
+ 	__u8 flags;
 -	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
--};
--
--#define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
--#define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
--#define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
--
--/* Parameters for passing an encryption key into the kernel keyring */
++	__u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
+ };
+ 
+ #define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
+@@ -38,16 +39,36 @@ struct fscrypt_policy {
+ #define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
+ 
+ /* Parameters for passing an encryption key into the kernel keyring */
 -#define FS_KEY_DESC_PREFIX		"fscrypt:"
 -#define FS_KEY_DESC_PREFIX_SIZE		8
--
--/* Structure that userspace passes to the kernel keyring */
++#define FSCRYPT_KEY_DESC_PREFIX		"fscrypt:"
++#define FSCRYPT_KEY_DESC_PREFIX_SIZE		8
+ 
+ /* Structure that userspace passes to the kernel keyring */
 -#define FS_MAX_KEY_SIZE			64
--
--struct fscrypt_key {
--	__u32 mode;
++#define FSCRYPT_MAX_KEY_SIZE			64
+ 
+ struct fscrypt_key {
+ 	__u32 mode;
 -	__u8 raw[FS_MAX_KEY_SIZE];
--	__u32 size;
--};
--
- /*
-  * Inode flags (FS_IOC_GETFLAGS / FS_IOC_SETFLAGS)
-  *
-diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
-new file mode 100644
-index 000000000000..c09209fc42ea
---- /dev/null
-+++ b/include/uapi/linux/fscrypt.h
-@@ -0,0 +1,53 @@
-+#ifndef _UAPI_LINUX_FSCRYPT_H
-+#define _UAPI_LINUX_FSCRYPT_H
++	__u8 raw[FSCRYPT_MAX_KEY_SIZE];
+ 	__u32 size;
+ };
++/**********************************************************************/
 +
-+#include <linux/types.h>
-+
-+/*
-+ * File system encryption support
-+ */
-+/* Policy provided via an ioctl on the topmost directory */
-+#define FS_KEY_DESCRIPTOR_SIZE	8
-+
-+#define FS_POLICY_FLAGS_PAD_4		0x00
-+#define FS_POLICY_FLAGS_PAD_8		0x01
-+#define FS_POLICY_FLAGS_PAD_16		0x02
-+#define FS_POLICY_FLAGS_PAD_32		0x03
-+#define FS_POLICY_FLAGS_PAD_MASK	0x03
-+#define FS_POLICY_FLAGS_VALID		0x03
-+
-+/* Encryption algorithms */
-+#define FS_ENCRYPTION_MODE_INVALID		0
-+#define FS_ENCRYPTION_MODE_AES_256_XTS		1
-+#define FS_ENCRYPTION_MODE_AES_256_GCM		2
-+#define FS_ENCRYPTION_MODE_AES_256_CBC		3
-+#define FS_ENCRYPTION_MODE_AES_256_CTS		4
-+#define FS_ENCRYPTION_MODE_AES_128_CBC		5
-+#define FS_ENCRYPTION_MODE_AES_128_CTS		6
-+
-+struct fscrypt_policy {
-+	__u8 version;
-+	__u8 contents_encryption_mode;
-+	__u8 filenames_encryption_mode;
-+	__u8 flags;
-+	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
-+};
-+
-+#define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
-+#define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
-+#define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
-+
-+/* Parameters for passing an encryption key into the kernel keyring */
-+#define FS_KEY_DESC_PREFIX		"fscrypt:"
-+#define FS_KEY_DESC_PREFIX_SIZE		8
-+
-+/* Structure that userspace passes to the kernel keyring */
-+#define FS_MAX_KEY_SIZE			64
-+
-+struct fscrypt_key {
-+	__u32 mode;
-+	__u8 raw[FS_MAX_KEY_SIZE];
-+	__u32 size;
-+};
-+
-+#endif /* _UAPI_LINUX_FSCRYPT_H */
++/* old names; don't add anything new here! */
++#define FS_POLICY_FLAGS_PAD_4		FSCRYPT_POLICY_FLAGS_PAD_4
++#define FS_POLICY_FLAGS_PAD_8		FSCRYPT_POLICY_FLAGS_PAD_8
++#define FS_POLICY_FLAGS_PAD_16		FSCRYPT_POLICY_FLAGS_PAD_16
++#define FS_POLICY_FLAGS_PAD_32		FSCRYPT_POLICY_FLAGS_PAD_32
++#define FS_POLICY_FLAGS_PAD_MASK	FSCRYPT_POLICY_FLAGS_PAD_MASK
++#define FS_POLICY_FLAGS_VALID		FSCRYPT_POLICY_FLAGS_VALID
++#define FS_KEY_DESCRIPTOR_SIZE		FSCRYPT_KEY_DESCRIPTOR_SIZE
++#define FS_ENCRYPTION_MODE_INVALID	FSCRYPT_MODE_INVALID
++#define FS_ENCRYPTION_MODE_AES_256_XTS	FSCRYPT_MODE_AES_256_XTS
++#define FS_ENCRYPTION_MODE_AES_256_GCM	FSCRYPT_MODE_AES_256_GCM
++#define FS_ENCRYPTION_MODE_AES_256_CBC	FSCRYPT_MODE_AES_256_CBC
++#define FS_ENCRYPTION_MODE_AES_256_CTS	FSCRYPT_MODE_AES_256_CTS
++#define FS_ENCRYPTION_MODE_AES_128_CBC	FSCRYPT_MODE_AES_128_CBC
++#define FS_ENCRYPTION_MODE_AES_128_CTS	FSCRYPT_MODE_AES_128_CTS
++#define FS_KEY_DESC_PREFIX		FSCRYPT_KEY_DESC_PREFIX
++#define FS_KEY_DESC_PREFIX_SIZE		FSCRYPT_KEY_DESC_PREFIX_SIZE
++#define FS_MAX_KEY_SIZE			FSCRYPT_MAX_KEY_SIZE
+ 
+ #endif /* _UAPI_LINUX_FSCRYPT_H */
 -- 
 2.15.0.rc0.271.g36b669edcc-goog
 
