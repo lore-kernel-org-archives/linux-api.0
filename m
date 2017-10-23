@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers3@gmail.com>
-Subject: [RFC PATCH 02/25] fscrypt: use FSCRYPT_ prefix for uapi
- constants
-Date: Mon, 23 Oct 2017 14:40:35 -0700
-Message-ID: <20171023214058.128121-3-ebiggers3@gmail.com>
+Subject: [RFC PATCH 04/25] fscrypt: refactor finding and deriving
+ key
+Date: Mon, 23 Oct 2017 14:40:37 -0700
+Message-ID: <20171023214058.128121-5-ebiggers3@gmail.com>
 References: <20171023214058.128121-1-ebiggers3@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,184 +23,326 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Prefix all filesystem encryption UAPI constants except the ioctl numbers
-with "FSCRYPT_" rather than with "FS_".  This namespaces the constants
-more appropriately and makes it clear that they are related specifically
-to the filesystem encryption feature, and to the 'fscrypt_*' structures.
-With some of the old names like "FS_POLICY_FLAGS_VALID", it was not
-immediately clear that the constant had anything to do with encryption.
+In preparation for introducing a new way to find the master keys and
+derive the per-file keys, clean up the current method.  This includes:
 
-This is also useful because we'll be adding more encryption-related
-constants, e.g. for the policy version, and we'd otherwise have to
-choose whether to use unclear names like FS_POLICY_VERSION_* or
-inconsistent names like FS_ENCRYPTION_POLICY_VERSION_*.
+- Introduce a helper function find_and_derive_key() so that we don't
+  have to add more code directly to fscrypt_get_encryption_info().
 
-For source compatibility with older userspace programs, keep the old
-names defined as aliases to the new ones.  (It's debatable whether we
-really need this, though; the filesystem encryption API is new enough
-that most if not all programs that are using it have to declare it
-themselves anyway.)
+- Don't pass the 'struct fscrypt_key' directly into derive_key_aes().
+  This is in preparation for the case where we find the master key in a
+  filesystem-level keyring, where (for good reasons) the key payload
+  will *not* be formatted as the UAPI 'struct fscrypt_key'.
+
+- Separate finding the key from key derivation.  In particular, it
+  *only* makes sense to fall back to the alternate key description
+  prefix if searching for the "fscrypt:" prefix returns -ENOKEY.  It
+  doesn't make sense to do so when derive_key_aes() fails, for example.
+
+- Improve the error messages for when the fscrypt_key is invalid.
+
+- Rename 'raw_key' to 'derived_key' for clarity.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- Documentation/filesystems/fscrypt.rst | 14 ++++-----
- include/uapi/linux/fscrypt.h          | 59 ++++++++++++++++++++++++-----------
- 2 files changed, 47 insertions(+), 26 deletions(-)
+ fs/crypto/keyinfo.c | 205 ++++++++++++++++++++++++++++------------------------
+ 1 file changed, 109 insertions(+), 96 deletions(-)
 
-diff --git a/Documentation/filesystems/fscrypt.rst b/Documentation/filesystems/fscrypt.rst
-index 776ddc655f79..f12956f3f1f8 100644
---- a/Documentation/filesystems/fscrypt.rst
-+++ b/Documentation/filesystems/fscrypt.rst
-@@ -251,14 +251,14 @@ empty directory or verifies that a directory or regular file already
- has the specified encryption policy.  It takes in a pointer to a
- :c:type:`struct fscrypt_policy`, defined as follows::
+diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
+index ac41f646e7b7..d3a97c2cd4dd 100644
+--- a/fs/crypto/keyinfo.c
++++ b/fs/crypto/keyinfo.c
+@@ -28,113 +28,138 @@ static void derive_crypt_complete(struct crypto_async_request *req, int rc)
+ 	complete(&ecr->completion);
+ }
  
--    #define FS_KEY_DESCRIPTOR_SIZE  8
-+    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
- 
-     struct fscrypt_policy {
-             __u8 version;
-             __u8 contents_encryption_mode;
-             __u8 filenames_encryption_mode;
-             __u8 flags;
--            __u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
-+            __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
-     };
- 
- This structure must be initialized as follows:
-@@ -274,7 +274,7 @@ This structure must be initialized as follows:
- 
- - ``flags`` must be set to a value from ``<linux/fs.h>`` which
-   identifies the amount of NUL-padding to use when encrypting
--  filenames.  If unsure, use FS_POLICY_FLAGS_PAD_32 (0x3).
-+  filenames.  If unsure, use FSCRYPT_POLICY_FLAGS_PAD_32 (0x3).
- 
- - ``master_key_descriptor`` specifies how to find the master key in
-   the keyring; see `Adding keys`_.  It is up to userspace to choose a
-@@ -374,11 +374,11 @@ followed by the 16-character lower case hex representation of the
- ``master_key_descriptor`` that was set in the encryption policy.  The
- key payload must conform to the following structure::
- 
--    #define FS_MAX_KEY_SIZE 64
-+    #define FSCRYPT_MAX_KEY_SIZE 64
- 
-     struct fscrypt_key {
-             u32 mode;
--            u8 raw[FS_MAX_KEY_SIZE];
-+            u8 raw[FSCRYPT_MAX_KEY_SIZE];
-             u32 size;
-     };
- 
-@@ -533,7 +533,7 @@ much confusion if an encryption policy were to be added to or removed
- from anything other than an empty directory.)  The struct is defined
- as follows::
- 
--    #define FS_KEY_DESCRIPTOR_SIZE  8
-+    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
-     #define FS_KEY_DERIVATION_NONCE_SIZE 16
- 
-     struct fscrypt_context {
-@@ -541,7 +541,7 @@ as follows::
-             u8 contents_encryption_mode;
-             u8 filenames_encryption_mode;
-             u8 flags;
--            u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
-+            u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
-             u8 nonce[FS_KEY_DERIVATION_NONCE_SIZE];
-     };
- 
-diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
-index c09209fc42ea..26c381a40279 100644
---- a/include/uapi/linux/fscrypt.h
-+++ b/include/uapi/linux/fscrypt.h
-@@ -7,30 +7,31 @@
-  * File system encryption support
+-/**
+- * derive_key_aes() - Derive a key using AES-128-ECB
+- * @deriving_key: Encryption key used for derivation.
+- * @source_key:   Source key to which to apply derivation.
+- * @derived_raw_key:  Derived raw key.
++/*
++ * Key derivation function.  This generates the derived key by encrypting the
++ * master key with AES-128-ECB using the nonce as the AES key.
+  *
+- * Return: Zero on success; non-zero otherwise.
++ * The master key must be at least as long as the derived key.  If the master
++ * key is longer, then only the first 'derived_keysize' bytes are used.
   */
- /* Policy provided via an ioctl on the topmost directory */
--#define FS_KEY_DESCRIPTOR_SIZE	8
-+#define FSCRYPT_KEY_DESCRIPTOR_SIZE	8
- 
--#define FS_POLICY_FLAGS_PAD_4		0x00
--#define FS_POLICY_FLAGS_PAD_8		0x01
--#define FS_POLICY_FLAGS_PAD_16		0x02
--#define FS_POLICY_FLAGS_PAD_32		0x03
--#define FS_POLICY_FLAGS_PAD_MASK	0x03
--#define FS_POLICY_FLAGS_VALID		0x03
-+/* Encryption policy flags */
-+#define FSCRYPT_POLICY_FLAGS_PAD_4	0x00
-+#define FSCRYPT_POLICY_FLAGS_PAD_8	0x01
-+#define FSCRYPT_POLICY_FLAGS_PAD_16	0x02
-+#define FSCRYPT_POLICY_FLAGS_PAD_32	0x03
-+#define FSCRYPT_POLICY_FLAGS_PAD_MASK	0x03
-+#define FSCRYPT_POLICY_FLAGS_VALID	0x03
- 
- /* Encryption algorithms */
--#define FS_ENCRYPTION_MODE_INVALID		0
--#define FS_ENCRYPTION_MODE_AES_256_XTS		1
--#define FS_ENCRYPTION_MODE_AES_256_GCM		2
--#define FS_ENCRYPTION_MODE_AES_256_CBC		3
--#define FS_ENCRYPTION_MODE_AES_256_CTS		4
--#define FS_ENCRYPTION_MODE_AES_128_CBC		5
--#define FS_ENCRYPTION_MODE_AES_128_CTS		6
-+#define FSCRYPT_MODE_INVALID		0
-+#define FSCRYPT_MODE_AES_256_XTS	1
-+#define FSCRYPT_MODE_AES_256_GCM	2
-+#define FSCRYPT_MODE_AES_256_CBC	3
-+#define FSCRYPT_MODE_AES_256_CTS	4
-+#define FSCRYPT_MODE_AES_128_CBC	5
-+#define FSCRYPT_MODE_AES_128_CTS	6
- 
- struct fscrypt_policy {
- 	__u8 version;
- 	__u8 contents_encryption_mode;
- 	__u8 filenames_encryption_mode;
- 	__u8 flags;
--	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
-+	__u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
- };
- 
- #define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
-@@ -38,16 +39,36 @@ struct fscrypt_policy {
- #define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
- 
- /* Parameters for passing an encryption key into the kernel keyring */
--#define FS_KEY_DESC_PREFIX		"fscrypt:"
--#define FS_KEY_DESC_PREFIX_SIZE		8
-+#define FSCRYPT_KEY_DESC_PREFIX		"fscrypt:"
-+#define FSCRYPT_KEY_DESC_PREFIX_SIZE		8
- 
- /* Structure that userspace passes to the kernel keyring */
--#define FS_MAX_KEY_SIZE			64
-+#define FSCRYPT_MAX_KEY_SIZE			64
- 
- struct fscrypt_key {
- 	__u32 mode;
--	__u8 raw[FS_MAX_KEY_SIZE];
-+	__u8 raw[FSCRYPT_MAX_KEY_SIZE];
- 	__u32 size;
- };
-+/**********************************************************************/
+-static int derive_key_aes(u8 deriving_key[FS_AES_128_ECB_KEY_SIZE],
+-				const struct fscrypt_key *source_key,
+-				u8 derived_raw_key[FSCRYPT_MAX_KEY_SIZE])
++static int derive_key_aes(const u8 *master_key,
++			  const struct fscrypt_context *ctx,
++			  u8 *derived_key, unsigned int derived_keysize)
+ {
+-	int res = 0;
++	int err;
+ 	struct skcipher_request *req = NULL;
+ 	DECLARE_FS_COMPLETION_RESULT(ecr);
+ 	struct scatterlist src_sg, dst_sg;
+-	struct crypto_skcipher *tfm = crypto_alloc_skcipher("ecb(aes)", 0, 0);
++	struct crypto_skcipher *tfm;
 +
-+/* old names; don't add anything new here! */
-+#define FS_POLICY_FLAGS_PAD_4		FSCRYPT_POLICY_FLAGS_PAD_4
-+#define FS_POLICY_FLAGS_PAD_8		FSCRYPT_POLICY_FLAGS_PAD_8
-+#define FS_POLICY_FLAGS_PAD_16		FSCRYPT_POLICY_FLAGS_PAD_16
-+#define FS_POLICY_FLAGS_PAD_32		FSCRYPT_POLICY_FLAGS_PAD_32
-+#define FS_POLICY_FLAGS_PAD_MASK	FSCRYPT_POLICY_FLAGS_PAD_MASK
-+#define FS_POLICY_FLAGS_VALID		FSCRYPT_POLICY_FLAGS_VALID
-+#define FS_KEY_DESCRIPTOR_SIZE		FSCRYPT_KEY_DESCRIPTOR_SIZE
-+#define FS_ENCRYPTION_MODE_INVALID	FSCRYPT_MODE_INVALID
-+#define FS_ENCRYPTION_MODE_AES_256_XTS	FSCRYPT_MODE_AES_256_XTS
-+#define FS_ENCRYPTION_MODE_AES_256_GCM	FSCRYPT_MODE_AES_256_GCM
-+#define FS_ENCRYPTION_MODE_AES_256_CBC	FSCRYPT_MODE_AES_256_CBC
-+#define FS_ENCRYPTION_MODE_AES_256_CTS	FSCRYPT_MODE_AES_256_CTS
-+#define FS_ENCRYPTION_MODE_AES_128_CBC	FSCRYPT_MODE_AES_128_CBC
-+#define FS_ENCRYPTION_MODE_AES_128_CTS	FSCRYPT_MODE_AES_128_CTS
-+#define FS_KEY_DESC_PREFIX		FSCRYPT_KEY_DESC_PREFIX
-+#define FS_KEY_DESC_PREFIX_SIZE		FSCRYPT_KEY_DESC_PREFIX_SIZE
-+#define FS_MAX_KEY_SIZE			FSCRYPT_MAX_KEY_SIZE
++	tfm = crypto_alloc_skcipher("ecb(aes)", 0, 0);
++	if (IS_ERR(tfm))
++		return PTR_ERR(tfm);
  
- #endif /* _UAPI_LINUX_FSCRYPT_H */
+-	if (IS_ERR(tfm)) {
+-		res = PTR_ERR(tfm);
+-		tfm = NULL;
+-		goto out;
+-	}
+ 	crypto_skcipher_set_flags(tfm, CRYPTO_TFM_REQ_WEAK_KEY);
+ 	req = skcipher_request_alloc(tfm, GFP_NOFS);
+ 	if (!req) {
+-		res = -ENOMEM;
++		err = -ENOMEM;
+ 		goto out;
+ 	}
+ 	skcipher_request_set_callback(req,
+ 			CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
+ 			derive_crypt_complete, &ecr);
+-	res = crypto_skcipher_setkey(tfm, deriving_key,
+-					FS_AES_128_ECB_KEY_SIZE);
+-	if (res < 0)
++
++	BUILD_BUG_ON(sizeof(ctx->nonce) != FS_AES_128_ECB_KEY_SIZE);
++	err = crypto_skcipher_setkey(tfm, ctx->nonce, sizeof(ctx->nonce));
++	if (err)
+ 		goto out;
+ 
+-	sg_init_one(&src_sg, source_key->raw, source_key->size);
+-	sg_init_one(&dst_sg, derived_raw_key, source_key->size);
+-	skcipher_request_set_crypt(req, &src_sg, &dst_sg, source_key->size,
++	sg_init_one(&src_sg, master_key, derived_keysize);
++	sg_init_one(&dst_sg, derived_key, derived_keysize);
++	skcipher_request_set_crypt(req, &src_sg, &dst_sg, derived_keysize,
+ 				   NULL);
+-	res = crypto_skcipher_encrypt(req);
+-	if (res == -EINPROGRESS || res == -EBUSY) {
++	err = crypto_skcipher_encrypt(req);
++	if (err == -EINPROGRESS || err == -EBUSY) {
+ 		wait_for_completion(&ecr.completion);
+-		res = ecr.res;
++		err = ecr.res;
+ 	}
+ out:
+ 	skcipher_request_free(req);
+ 	crypto_free_skcipher(tfm);
+-	return res;
++	return err;
+ }
+ 
+-static int validate_user_key(struct fscrypt_info *crypt_info,
+-			struct fscrypt_context *ctx, u8 *raw_key,
+-			const char *prefix, int min_keysize)
++/*
++ * Search the current task's subscribed keyrings for a "logon" key with
++ * description prefix:descriptor, and if found acquire a read lock on it and
++ * return a pointer to its validated payload in *payload_ret.
++ */
++static struct key *
++find_and_lock_process_key(const char *prefix,
++			  const u8 descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE],
++			  unsigned int min_keysize,
++			  const struct fscrypt_key **payload_ret)
+ {
+ 	char *description;
+-	struct key *keyring_key;
+-	struct fscrypt_key *master_key;
++	struct key *key;
+ 	const struct user_key_payload *ukp;
+-	int res;
++	const struct fscrypt_key *payload;
+ 
+ 	description = kasprintf(GFP_NOFS, "%s%*phN", prefix,
+-				FSCRYPT_KEY_DESCRIPTOR_SIZE,
+-				ctx->master_key_descriptor);
++				FSCRYPT_KEY_DESCRIPTOR_SIZE, descriptor);
+ 	if (!description)
+-		return -ENOMEM;
++		return ERR_PTR(-ENOMEM);
+ 
+-	keyring_key = request_key(&key_type_logon, description, NULL);
++	key = request_key(&key_type_logon, description, NULL);
+ 	kfree(description);
+-	if (IS_ERR(keyring_key))
+-		return PTR_ERR(keyring_key);
+-	down_read(&keyring_key->sem);
+-
+-	if (keyring_key->type != &key_type_logon) {
+-		printk_once(KERN_WARNING
+-				"%s: key type must be logon\n", __func__);
+-		res = -ENOKEY;
+-		goto out;
+-	}
+-	ukp = user_key_payload_locked(keyring_key);
+-	if (!ukp) {
+-		/* key was revoked before we acquired its semaphore */
+-		res = -EKEYREVOKED;
+-		goto out;
++	if (IS_ERR(key))
++		return key;
++
++	down_read(&key->sem);
++	ukp = user_key_payload_locked(key);
++
++	if (!ukp) /* was the key revoked before we acquired its semaphore? */
++		goto invalid;
++
++	payload = (const struct fscrypt_key *)ukp->data;
++
++	if (ukp->datalen != sizeof(struct fscrypt_key) ||
++	    payload->size < 1 || payload->size > FSCRYPT_MAX_KEY_SIZE) {
++		pr_warn_ratelimited("fscrypt: key with description '%s' has invalid payload\n",
++				    key->description);
++		goto invalid;
+ 	}
+-	if (ukp->datalen != sizeof(struct fscrypt_key)) {
+-		res = -EINVAL;
+-		goto out;
++
++	if (payload->size < min_keysize) {
++		pr_warn_ratelimited("fscrypt: key with description '%s' is too short "
++				    "(got %u bytes, need %u+ bytes)\n",
++				    key->description,
++				    payload->size, min_keysize);
++		goto invalid;
+ 	}
+-	master_key = (struct fscrypt_key *)ukp->data;
+-	BUILD_BUG_ON(FS_AES_128_ECB_KEY_SIZE != FS_KEY_DERIVATION_NONCE_SIZE);
+-
+-	if (master_key->size < min_keysize ||
+-	    master_key->size > FSCRYPT_MAX_KEY_SIZE
+-	    || master_key->size % AES_BLOCK_SIZE != 0) {
+-		printk_once(KERN_WARNING
+-				"%s: key size incorrect: %d\n",
+-				__func__, master_key->size);
+-		res = -ENOKEY;
+-		goto out;
++
++	*payload_ret = payload;
++	return key;
++
++invalid:
++	up_read(&key->sem);
++	key_put(key);
++	return ERR_PTR(-ENOKEY);
++}
++
++/* Find the master key, then derive the inode's actual encryption key */
++static int find_and_derive_key(const struct inode *inode,
++			       const struct fscrypt_context *ctx,
++			       u8 *derived_key, unsigned int derived_keysize)
++{
++	struct key *key;
++	const struct fscrypt_key *payload;
++	int err;
++
++	key = find_and_lock_process_key(FSCRYPT_KEY_DESC_PREFIX,
++					ctx->master_key_descriptor,
++					derived_keysize, &payload);
++	if (key == ERR_PTR(-ENOKEY) && inode->i_sb->s_cop->key_prefix) {
++		key = find_and_lock_process_key(inode->i_sb->s_cop->key_prefix,
++						ctx->master_key_descriptor,
++						derived_keysize, &payload);
+ 	}
+-	res = derive_key_aes(ctx->nonce, master_key, raw_key);
+-out:
+-	up_read(&keyring_key->sem);
+-	key_put(keyring_key);
+-	return res;
++	if (IS_ERR(key))
++		return PTR_ERR(key);
++	err = derive_key_aes(payload->raw, ctx, derived_key, derived_keysize);
++	up_read(&key->sem);
++	key_put(key);
++	return err;
+ }
+ 
+ static const struct {
+@@ -256,8 +281,8 @@ int fscrypt_get_encryption_info(struct inode *inode)
+ 	struct fscrypt_context ctx;
+ 	struct crypto_skcipher *ctfm;
+ 	const char *cipher_str;
+-	int keysize;
+-	u8 *raw_key = NULL;
++	unsigned int derived_keysize;
++	u8 *derived_key = NULL;
+ 	int res;
+ 
+ 	if (inode->i_crypt_info)
+@@ -301,7 +326,8 @@ int fscrypt_get_encryption_info(struct inode *inode)
+ 	memcpy(crypt_info->ci_master_key, ctx.master_key_descriptor,
+ 				sizeof(crypt_info->ci_master_key));
+ 
+-	res = determine_cipher_type(crypt_info, inode, &cipher_str, &keysize);
++	res = determine_cipher_type(crypt_info, inode,
++				    &cipher_str, &derived_keysize);
+ 	if (res)
+ 		goto out;
+ 
+@@ -310,24 +336,14 @@ int fscrypt_get_encryption_info(struct inode *inode)
+ 	 * crypto API as part of key derivation.
+ 	 */
+ 	res = -ENOMEM;
+-	raw_key = kmalloc(FSCRYPT_MAX_KEY_SIZE, GFP_NOFS);
+-	if (!raw_key)
++	derived_key = kmalloc(FS_MAX_KEY_SIZE, GFP_NOFS);
++	if (!derived_key)
+ 		goto out;
+ 
+-	res = validate_user_key(crypt_info, &ctx, raw_key,
+-				FSCRYPT_KEY_DESC_PREFIX, keysize);
+-	if (res && inode->i_sb->s_cop->key_prefix) {
+-		int res2 = validate_user_key(crypt_info, &ctx, raw_key,
+-					     inode->i_sb->s_cop->key_prefix,
+-					     keysize);
+-		if (res2) {
+-			if (res2 == -ENOKEY)
+-				res = -ENOKEY;
+-			goto out;
+-		}
+-	} else if (res) {
++	res = find_and_derive_key(inode, &ctx, derived_key, derived_keysize);
++	if (res)
+ 		goto out;
+-	}
++
+ 	ctfm = crypto_alloc_skcipher(cipher_str, 0, 0);
+ 	if (!ctfm || IS_ERR(ctfm)) {
+ 		res = ctfm ? PTR_ERR(ctfm) : -ENOMEM;
+@@ -338,17 +354,14 @@ int fscrypt_get_encryption_info(struct inode *inode)
+ 	crypt_info->ci_ctfm = ctfm;
+ 	crypto_skcipher_clear_flags(ctfm, ~0);
+ 	crypto_skcipher_set_flags(ctfm, CRYPTO_TFM_REQ_WEAK_KEY);
+-	/*
+-	 * if the provided key is longer than keysize, we use the first
+-	 * keysize bytes of the derived key only
+-	 */
+-	res = crypto_skcipher_setkey(ctfm, raw_key, keysize);
++	res = crypto_skcipher_setkey(ctfm, derived_key, derived_keysize);
+ 	if (res)
+ 		goto out;
+ 
+ 	if (S_ISREG(inode->i_mode) &&
+ 	    crypt_info->ci_data_mode == FSCRYPT_MODE_AES_128_CBC) {
+-		res = init_essiv_generator(crypt_info, raw_key, keysize);
++		res = init_essiv_generator(crypt_info, derived_key,
++					   derived_keysize);
+ 		if (res) {
+ 			pr_debug("%s: error %d (inode %lu) allocating essiv tfm\n",
+ 				 __func__, res, inode->i_ino);
+@@ -361,7 +374,7 @@ int fscrypt_get_encryption_info(struct inode *inode)
+ 	if (res == -ENOKEY)
+ 		res = 0;
+ 	put_crypt_info(crypt_info);
+-	kzfree(raw_key);
++	kzfree(derived_key);
+ 	return res;
+ }
+ EXPORT_SYMBOL(fscrypt_get_encryption_info);
 -- 
 2.15.0.rc0.271.g36b669edcc-goog
 
