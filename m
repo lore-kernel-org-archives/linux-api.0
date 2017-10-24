@@ -1,8 +1,7 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 06/17] dax: Create local variable for vmf->flags &
- FAULT_FLAG_WRITE test
-Date: Tue, 24 Oct 2017 17:24:03 +0200
-Message-ID: <20171024152415.22864-7-jack@suse.cz>
+Subject: [PATCH 07/17] dax: Inline dax_insert_mapping() into the callsite
+Date: Tue, 24 Oct 2017 17:24:04 +0200
+Message-ID: <20171024152415.22864-8-jack@suse.cz>
 References: <20171024152415.22864-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,44 +21,87 @@ To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-There are already two users and more are coming.
+dax_insert_mapping() has only one callsite and we will need to further
+fine tune what it does for synchronous faults. Just inline it into the
+callsite so that we don't have to pass awkward bools around.
 
 Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/dax.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ fs/dax.c | 46 +++++++++++++++++++---------------------------
+ 1 file changed, 19 insertions(+), 27 deletions(-)
 
 diff --git a/fs/dax.c b/fs/dax.c
-index c09465884bbe..5ea71381dba0 100644
+index 5ea71381dba0..5b20c6456926 100644
 --- a/fs/dax.c
 +++ b/fs/dax.c
-@@ -1116,6 +1116,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
- 	struct iomap iomap = { 0 };
- 	unsigned flags = IOMAP_FAULT;
- 	int error, major = 0;
-+	bool write = vmf->flags & FAULT_FLAG_WRITE;
+@@ -858,32 +858,6 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t pos, size_t size,
+ 	return rc;
+ }
+ 
+-static int dax_insert_mapping(struct vm_fault *vmf, struct iomap *iomap,
+-			      loff_t pos, void *entry)
+-{
+-	const sector_t sector = dax_iomap_sector(iomap, pos);
+-	struct vm_area_struct *vma = vmf->vma;
+-	struct address_space *mapping = vma->vm_file->f_mapping;
+-	unsigned long vaddr = vmf->address;
+-	void *ret;
+-	int rc;
+-	pfn_t pfn;
+-
+-	rc = dax_iomap_pfn(iomap, pos, PAGE_SIZE, &pfn);
+-	if (rc < 0)
+-		return rc;
+-
+-	ret = dax_insert_mapping_entry(mapping, vmf, entry, sector, 0);
+-	if (IS_ERR(ret))
+-		return PTR_ERR(ret);
+-
+-	trace_dax_insert_mapping(mapping->host, vmf, ret);
+-	if (vmf->flags & FAULT_FLAG_WRITE)
+-		return vm_insert_mixed_mkwrite(vma, vaddr, pfn);
+-	else
+-		return vm_insert_mixed(vma, vaddr, pfn);
+-}
+-
+ /*
+  * The user has performed a load from a hole in the file.  Allocating a new
+  * page in the file would cause excessive storage usage for workloads with
+@@ -1119,6 +1093,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
+ 	bool write = vmf->flags & FAULT_FLAG_WRITE;
  	int vmf_ret = 0;
  	void *entry;
++	pfn_t pfn;
  
-@@ -1130,7 +1131,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
- 		goto out;
- 	}
- 
--	if ((vmf->flags & FAULT_FLAG_WRITE) && !vmf->cow_page)
-+	if (write && !vmf->cow_page)
- 		flags |= IOMAP_WRITE;
- 
- 	entry = grab_mapping_entry(mapping, vmf->pgoff, 0);
-@@ -1207,7 +1208,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
- 		break;
- 	case IOMAP_UNWRITTEN:
- 	case IOMAP_HOLE:
--		if (!(vmf->flags & FAULT_FLAG_WRITE)) {
-+		if (!write) {
- 			vmf_ret = dax_load_hole(mapping, entry, vmf);
- 			goto finish_iomap;
+ 	trace_dax_pte_fault(inode, vmf, vmf_ret);
+ 	/*
+@@ -1201,7 +1176,24 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
+ 			count_memcg_event_mm(vma->vm_mm, PGMAJFAULT);
+ 			major = VM_FAULT_MAJOR;
  		}
+-		error = dax_insert_mapping(vmf, &iomap, pos, entry);
++		error = dax_iomap_pfn(&iomap, pos, PAGE_SIZE, &pfn);
++		if (error < 0)
++			goto error_finish_iomap;
++
++		entry = dax_insert_mapping_entry(mapping, vmf, entry,
++						 dax_iomap_sector(&iomap, pos),
++						 0);
++		if (IS_ERR(entry)) {
++			error = PTR_ERR(entry);
++			goto error_finish_iomap;
++		}
++
++		trace_dax_insert_mapping(inode, vmf, entry);
++		if (write)
++			error = vm_insert_mixed_mkwrite(vma, vaddr, pfn);
++		else
++			error = vm_insert_mixed(vma, vaddr, pfn);
++
+ 		/* -EBUSY is fine, somebody else faulted on the same PTE */
+ 		if (error == -EBUSY)
+ 			error = 0;
 -- 
 2.12.3
