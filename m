@@ -1,148 +1,89 @@
-From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [RFC PATCH] fs: fsnotify: account fsnotify metadata to kmemcg
-Date: Tue, 24 Oct 2017 08:42:04 +0300
-Message-ID: <CAOQ4uxiVbA1HxPt9mjn-AL0XzMuOYU5dMeMoHxZbxHLzaS=niQ@mail.gmail.com>
-References: <1508448056-21779-1-git-send-email-yang.s@alibaba-inc.com>
- <CAOQ4uxhPhXrMLu18TGKDA=ezUVHara95qJQ+BTCio8BHm-u6NA@mail.gmail.com>
- <b530521e-5215-f735-444a-13f722d90e40@alibaba-inc.com> <CAOQ4uxhFOoSknnG-0Jyv+=iCDjVNnAg6SiO-msxw4tORkVKJGQ@mail.gmail.com>
- <5b80a088-05f1-c9af-5b71-e1128fbb36a7@alibaba-inc.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 01/17] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
+ safely define new mmap flags
+Date: Tue, 24 Oct 2017 15:08:08 +0200
+Message-ID: <20171024130808.GC8556@quack2.suse.cz>
+References: <20171019125817.11580-1-jack@suse.cz>
+ <20171019125817.11580-2-jack@suse.cz>
+ <20171020072707.GA18000@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5b80a088-05f1-c9af-5b71-e1128fbb36a7-gPhfCIXyaqCqndwCJWfcng@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yang Shi <yang.s-gPhfCIXyaqCqndwCJWfcng@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20171020072707.GA18000-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 24, 2017 at 7:12 AM, Yang Shi <yang.s-gPhfCIXyaqCqndwCJWfcng@public.gmane.org> wrote:
->
->
-> On 10/22/17 1:24 AM, Amir Goldstein wrote:
->>
->> On Sat, Oct 21, 2017 at 12:07 AM, Yang Shi <yang.s-gPhfCIXyaqCqndwCJWfcng@public.gmane.org> wrote:
->>>
->>>
->>>
->>> On 10/19/17 8:14 PM, Amir Goldstein wrote:
->>>>
->>>>
->>>> On Fri, Oct 20, 2017 at 12:20 AM, Yang Shi <yang.s-gPhfCIXyaqCqndwCJWfcng@public.gmane.org>
->>>> wrote:
->>>>>
->>>>>
->>>>> We observed some misbehaved user applications might consume significant
->>>>> amount of fsnotify slabs silently. It'd better to account those slabs
->>>>> in
->>>>> kmemcg so that we can get heads up before misbehaved applications use
->>>>> too
->>>>> much memory silently.
->>>>
->>>>
->>>>
->>>> In what way do they misbehave? create a lot of marks? create a lot of
->>>> events?
->>>> Not reading events in their queue?
->>>
->>>
->>>
->>> It looks both a lot marks and events. I'm not sure if it is the latter
->>> case.
->>> If I knew more about the details of the behavior, I would elaborated more
->>> in
->>> the commit log.
->>
->>
->> If you are not sure, do not refer to user application as "misbehaved".
->> Is updatedb(8) a misbehaved application because it produces a lot of
->> access
->> events?
->
->
-> Should be not. It sounds like our in-house applications. But, it is a sort
-> of blackbox to me.
->
+On Fri 20-10-17 00:27:07, Christoph Hellwig wrote:
+> >  	if (file) {
+> >  		struct inode *inode = file_inode(file);
+> > +		unsigned long flags_mask = file->f_op->mmap_supported_flags;
+> > +
+> > +		if (!flags_mask)
+> > +			flags_mask = LEGACY_MAP_MASK;
+> >  
+> >  		switch (flags & MAP_TYPE) {
+> >  		case MAP_SHARED:
+> > +			/*
+> > +			 * Silently ignore unsupported flags - MAP_SHARED has
+> > +			 * traditionally behaved like that and we don't want
+> > +			 * to break compatibility.
+> > +			 */
+> > +			flags &= flags_mask;
+> > +			/*
+> > +			 * Force use of MAP_SHARED_VALIDATE with non-legacy
+> > +			 * flags. E.g. MAP_SYNC is dangerous to use with
+> > +			 * MAP_SHARED as you don't know which consistency model
+> > +			 * you will get.
+> > +			 */
+> > +			flags &= LEGACY_MAP_MASK;
+> > +			/* fall through */
+> > +		case MAP_SHARED_VALIDATE:
+> > +			if (flags & ~flags_mask)
+> > +				return -EOPNOTSUPP;
+> 
+> Hmmm.  I'd expect this to worth more like:
+> 
+> 		case MAP_SHARED:
+> 			/* Ignore all new flags that need validation: */
+> 			flags &= LEGACY_MAP_MASK;
+> 			/*FALLTHROUGH*/
+> 		case MAP_SHARED_VALIDATE:
+> 			if (flags & ~file->f_op->mmap_supported_flags)
+> 				return -EOPNOTSUPP;
+> 
+> with the legacy mask always implicitly support as indicated in my
+> comment to the XFS patch.
 
-If you know which process is "misbehaving" you can look at
-ls -l /proc/<pid>/fd |grep notify
-and see the anonymous inotify/fanotify file descriptors
+I was thinking about this. Originally I thought that mmap_supported_flags
+would allow also to declare some legacy flags as unsupported and also it
+seemed as a nicer symmetric interface to me. But I guess the need to mask
+out legacy flags is mostly theoretical so I'm fine giving that up. So I'll
+change this as you suggest.
 
-then you can look at  /proc/<pid>/fdinfo/<fd> file of those
-file descriptors to learn more about the fanotify flags etc.
+> Although even the ignoring in MAP_SHARED seems dangerous, but I guess
+> we need that to keep strict backwards compatibility.  In world I'd
+> rather do
+> 
+> 	case MAP_SHARED:
+> 		if (flags & ~LEGACY_MAP_MASK)
+> 			return -EINVAL;
 
-...
+Yes, I think just ignoring new flags for MAP_SHARED is safer...
 
->
->>
->> But I think there is another problem, not introduced by your change, but
->> could
->> be amplified because of it - when a non-permission event allocation fails,
->> the
->> event is silently dropped, AFAICT, with no indication to listener.
->> That seems like a bug to me, because there is a perfectly safe way to deal
->> with
->> event allocation failure - queue the overflow event.
->
->
-> I'm not sure if such issue could be amplified by the accounting since once
-> the usage exceeds the limit any following kmem allocation would fail. So, it
-> might fail at fsnotify event allocation, or other places, i.e. fork, open
-> syscall, etc. So, in most cases the generator even can't generate new event
-> any more.
->
+								Honza
 
-To be clear, I did not mean that kmem limit would cause a storm of dropped
-events. I meant if you have a listener outside memcp watching a single file
-for access/modifications and you have many containers each with its own
-limited memcg, then event drops probability goes to infinity as you run more
-of those kmem limited containers with event producers.
-
-> The typical output from my LTP test is filesystem dcache allocation error or
-> fork error due to kmem limit is reached.
-
-And that should be considered a success result of the test.
-The only failure case is when producer touches the file and event is
-not delivered
-nor an overflow event delivered.
-You can probably try to reduce allocation failure for fork and dentry by:
-1. pin dentry cache of subject file on test init by opening the file
-2. set the low kmem limit after forking
-
-Then you should probably loop the test enough times
-in some of the times, producer may fail to access the file
-in others if will succeed and produce events properly
-and many some times, producer will access the file and event
-will be dropped, so event count is lower than access count.
-
-
-
->
->> I am not going to be the one to determine if fixing this alleged bug is a
->> prerequisite for merging your patch, but I think enforcing memory limits
->> on
->> event allocation could amplify that bug, so it should be fixed.
->>
->> The upside is that with both your accounting fix and ENOMEM = overlflow
->> fix, it going to be easy to write a test that verifies both of them:
->> - Run a listener in memcg with limited kmem and unlimited (or very
->> large) event queue
->> - Produce events inside memcg without listener reading them
->> - Read event and expect an OVERFLOW even
->>
->> This is a simple variant of LTP tests inotify05 and fanotify05.
->
->
-> I tried to test your patch with LTP, but it sounds not that easy to setup a
-> scenario to make fsnotify event allocation just hit the kmem limit, since
-> the limit may be hit before a new event is allocated, for example allocating
-> dentry cache in open syscall may hit the limit.
->
-> So, it sounds the overflow event might be not generated by the producer in
-> most cases.
->
-
-Right. not as simple, but maybe still possible as I described above.
-Assuming that my patch is not buggy...
-
-Thanks,
-Amir.
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
