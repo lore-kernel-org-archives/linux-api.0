@@ -1,7 +1,8 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 16/17] ext4: Support for synchronous DAX faults
-Date: Tue, 24 Oct 2017 17:24:13 +0200
-Message-ID: <20171024152415.22864-17-jack@suse.cz>
+Subject: [PATCH 01/17] mm: introduce MAP_SHARED_VALIDATE,
+ a mechanism to safely define new mmap flags
+Date: Tue, 24 Oct 2017 17:23:58 +0200
+Message-ID: <20171024152415.22864-2-jack@suse.cz>
 References: <20171024152415.22864-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,157 +19,236 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-We return IOMAP_F_DIRTY flag from ext4_iomap_begin() when asked to
-prepare blocks for writing and the inode has some uncommitted metadata
-changes. In the fault handler ext4_dax_fault() we then detect this case
-(through VM_FAULT_NEEDDSYNC return value) and call helper
-dax_finish_sync_fault() to flush metadata changes and insert page table
-entry. Note that this will also dirty corresponding radix tree entry
-which is what we want - fsync(2) will still provide data integrity
-guarantees for applications not using userspace flushing. And
-applications using userspace flushing can avoid calling fsync(2) and
-thus avoid the performance overhead.
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+The mmap(2) syscall suffers from the ABI anti-pattern of not validating
+unknown flags. However, proposals like MAP_SYNC need a mechanism to
+define new behavior that is known to fail on older kernels without the
+support. Define a new MAP_SHARED_VALIDATE flag pattern that is
+guaranteed to fail on all legacy mmap implementations.
+
+It is worth noting that the original proposal was for a standalone
+MAP_VALIDATE flag. However, when that  could not be supported by all
+archs Linus observed:
+
+    I see why you *think* you want a bitmap. You think you want
+    a bitmap because you want to make MAP_VALIDATE be part of MAP_SYNC
+    etc, so that people can do
+
+    ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED
+		    | MAP_SYNC, fd, 0);
+
+    and "know" that MAP_SYNC actually takes.
+
+    And I'm saying that whole wish is bogus. You're fundamentally
+    depending on special semantics, just make it explicit. It's already
+    not portable, so don't try to make it so.
+
+    Rename that MAP_VALIDATE as MAP_SHARED_VALIDATE, make it have a value
+    of 0x3, and make people do
+
+    ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE
+		    | MAP_SYNC, fd, 0);
+
+    and then the kernel side is easier too (none of that random garbage
+    playing games with looking at the "MAP_VALIDATE bit", but just another
+    case statement in that map type thing.
+
+    Boom. Done.
+
+Similar to ->fallocate() we also want the ability to validate the
+support for new flags on a per ->mmap() 'struct file_operations'
+instance basis.  Towards that end arrange for flags to be generically
+validated against a mmap_supported_flags exported by 'struct
+file_operations'. By default all existing flags are implicitly
+supported, but new flags require MAP_SHARED_VALIDATE and
+per-instance-opt-in.
+
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Suggested-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Suggested-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/ext4/file.c       | 15 ++++++++++++++-
- fs/ext4/inode.c      | 15 +++++++++++++++
- fs/jbd2/journal.c    | 17 +++++++++++++++++
- include/linux/jbd2.h |  1 +
- 4 files changed, 47 insertions(+), 1 deletion(-)
+ arch/alpha/include/uapi/asm/mman.h           |  1 +
+ arch/mips/include/uapi/asm/mman.h            |  1 +
+ arch/parisc/include/uapi/asm/mman.h          |  1 +
+ arch/xtensa/include/uapi/asm/mman.h          |  1 +
+ include/linux/fs.h                           |  1 +
+ include/linux/mman.h                         | 39 ++++++++++++++++++++++++++++
+ include/uapi/asm-generic/mman-common.h       |  1 +
+ mm/mmap.c                                    | 15 +++++++++++
+ tools/include/uapi/asm-generic/mman-common.h |  1 +
+ 9 files changed, 61 insertions(+)
 
-diff --git a/fs/ext4/file.c b/fs/ext4/file.c
-index 208adfc3e673..08a1d1a33a90 100644
---- a/fs/ext4/file.c
-+++ b/fs/ext4/file.c
-@@ -26,6 +26,7 @@
- #include <linux/quotaops.h>
- #include <linux/pagevec.h>
- #include <linux/uio.h>
-+#include <linux/mman.h>
- #include "ext4.h"
- #include "ext4_jbd2.h"
- #include "xattr.h"
-@@ -295,6 +296,7 @@ static int ext4_dax_huge_fault(struct vm_fault *vmf,
- 	 */
- 	bool write = (vmf->flags & FAULT_FLAG_WRITE) &&
- 		(vmf->vma->vm_flags & VM_SHARED);
-+	pfn_t pfn;
+diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+index 3b26cc62dadb..f6d118aaedb9 100644
+--- a/arch/alpha/include/uapi/asm/mman.h
++++ b/arch/alpha/include/uapi/asm/mman.h
+@@ -11,6 +11,7 @@
  
- 	if (write) {
- 		sb_start_pagefault(sb);
-@@ -310,9 +312,12 @@ static int ext4_dax_huge_fault(struct vm_fault *vmf,
- 	} else {
- 		down_read(&EXT4_I(inode)->i_mmap_sem);
- 	}
--	result = dax_iomap_fault(vmf, pe_size, NULL, &ext4_iomap_ops);
-+	result = dax_iomap_fault(vmf, pe_size, &pfn, &ext4_iomap_ops);
- 	if (write) {
- 		ext4_journal_stop(handle);
-+		/* Handling synchronous page fault? */
-+		if (result & VM_FAULT_NEEDDSYNC)
-+			result = dax_finish_sync_fault(vmf, pe_size, pfn);
- 		up_read(&EXT4_I(inode)->i_mmap_sem);
- 		sb_end_pagefault(sb);
- 	} else {
-@@ -350,6 +355,13 @@ static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
- 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
- 		return -EIO;
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x0f		/* Mask for type of mapping (OSF/1 is _wrong_) */
+ #define MAP_FIXED	0x100		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x10		/* don't use a file */
+diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+index da3216007fe0..93268e4cd3c7 100644
+--- a/arch/mips/include/uapi/asm/mman.h
++++ b/arch/mips/include/uapi/asm/mman.h
+@@ -28,6 +28,7 @@
+  */
+ #define MAP_SHARED	0x001		/* Share changes */
+ #define MAP_PRIVATE	0x002		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x003	/* share + validate extension flags */
+ #define MAP_TYPE	0x00f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x010		/* Interpret addr exactly */
  
-+	/*
-+	 * We don't support synchronous mappings for non-DAX files. At least
-+	 * until someone comes with a sensible use case.
-+	 */
-+	if (!IS_DAX(file_inode(file)) && (vma->vm_flags & VM_SYNC))
-+		return -EOPNOTSUPP;
-+
- 	file_accessed(file);
- 	if (IS_DAX(file_inode(file))) {
- 		vma->vm_ops = &ext4_dax_vm_ops;
-@@ -719,6 +731,7 @@ const struct file_operations ext4_file_operations = {
- 	.compat_ioctl	= ext4_compat_ioctl,
- #endif
- 	.mmap		= ext4_file_mmap,
-+	.mmap_supported_flags = MAP_SYNC,
- 	.open		= ext4_file_open,
- 	.release	= ext4_release_file,
- 	.fsync		= ext4_sync_file,
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 31db875bc7a1..13a198924a0f 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -3394,6 +3394,19 @@ static int ext4_releasepage(struct page *page, gfp_t wait)
- }
+diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+index 775b5d5e41a1..bca652aa1677 100644
+--- a/arch/parisc/include/uapi/asm/mman.h
++++ b/arch/parisc/include/uapi/asm/mman.h
+@@ -11,6 +11,7 @@
  
- #ifdef CONFIG_FS_DAX
-+static bool ext4_inode_datasync_dirty(struct inode *inode)
-+{
-+	journal_t *journal = EXT4_SB(inode->i_sb)->s_journal;
-+
-+	if (journal)
-+		return !jbd2_transaction_committed(journal,
-+					EXT4_I(inode)->i_datasync_tid);
-+	/* Any metadata buffers to write? */
-+	if (!list_empty(&inode->i_mapping->private_list))
-+		return true;
-+	return inode->i_state & I_DIRTY_DATASYNC;
-+}
-+
- static int ext4_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
- 			    unsigned flags, struct iomap *iomap)
- {
-@@ -3466,6 +3479,8 @@ static int ext4_iomap_begin(struct inode *inode, loff_t offset, loff_t length,
- 	}
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x03		/* Mask for type of mapping */
+ #define MAP_FIXED	0x04		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x10		/* don't use a file */
+diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+index b15b278aa314..9ab426374714 100644
+--- a/arch/xtensa/include/uapi/asm/mman.h
++++ b/arch/xtensa/include/uapi/asm/mman.h
+@@ -35,6 +35,7 @@
+  */
+ #define MAP_SHARED	0x001		/* Share changes */
+ #define MAP_PRIVATE	0x002		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x003	/* share + validate extension flags */
+ #define MAP_TYPE	0x00f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x010		/* Interpret addr exactly */
  
- 	iomap->flags = 0;
-+	if ((flags & IOMAP_WRITE) && ext4_inode_datasync_dirty(inode))
-+		iomap->flags |= IOMAP_F_DIRTY;
- 	iomap->bdev = inode->i_sb->s_bdev;
- 	iomap->dax_dev = sbi->s_daxdev;
- 	iomap->offset = first_block << blkbits;
-diff --git a/fs/jbd2/journal.c b/fs/jbd2/journal.c
-index 7d5ef3bf3f3e..fa8cde498b4b 100644
---- a/fs/jbd2/journal.c
-+++ b/fs/jbd2/journal.c
-@@ -738,6 +738,23 @@ int jbd2_log_wait_commit(journal_t *journal, tid_t tid)
- 	return err;
- }
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 13dab191a23e..57added3201d 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1701,6 +1701,7 @@ struct file_operations {
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
++	unsigned long mmap_supported_flags;
+ 	int (*open) (struct inode *, struct file *);
+ 	int (*flush) (struct file *, fl_owner_t id);
+ 	int (*release) (struct inode *, struct file *);
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index c8367041fafd..94b63b4d71ff 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -7,6 +7,45 @@
+ #include <linux/atomic.h>
+ #include <uapi/linux/mman.h>
  
-+/* Return 1 when transaction with given tid has already committed. */
-+int jbd2_transaction_committed(journal_t *journal, tid_t tid)
-+{
-+	int ret = 1;
++/*
++ * Arrange for legacy / undefined architecture specific flags to be
++ * ignored by default in LEGACY_MAP_MASK.
++ */
++#ifndef MAP_32BIT
++#define MAP_32BIT 0
++#endif
++#ifndef MAP_HUGE_2MB
++#define MAP_HUGE_2MB 0
++#endif
++#ifndef MAP_HUGE_1GB
++#define MAP_HUGE_1GB 0
++#endif
++#ifndef MAP_UNINITIALIZED
++#define MAP_UNINITIALIZED 0
++#endif
 +
-+	read_lock(&journal->j_state_lock);
-+	if (journal->j_running_transaction &&
-+	    journal->j_running_transaction->t_tid == tid)
-+		ret = 0;
-+	if (journal->j_committing_transaction &&
-+	    journal->j_committing_transaction->t_tid == tid)
-+		ret = 0;
-+	read_unlock(&journal->j_state_lock);
-+	return ret;
-+}
-+EXPORT_SYMBOL(jbd2_transaction_committed);
++/*
++ * The historical set of flags that all mmap implementations implicitly
++ * support when a ->mmap_validate() op is not provided in file_operations.
++ */
++#define LEGACY_MAP_MASK (MAP_SHARED \
++		| MAP_PRIVATE \
++		| MAP_FIXED \
++		| MAP_ANONYMOUS \
++		| MAP_DENYWRITE \
++		| MAP_EXECUTABLE \
++		| MAP_UNINITIALIZED \
++		| MAP_GROWSDOWN \
++		| MAP_LOCKED \
++		| MAP_NORESERVE \
++		| MAP_POPULATE \
++		| MAP_NONBLOCK \
++		| MAP_STACK \
++		| MAP_HUGETLB \
++		| MAP_32BIT \
++		| MAP_HUGE_2MB \
++		| MAP_HUGE_1GB)
 +
- /*
-  * When this function returns the transaction corresponding to tid
-  * will be completed.  If the transaction has currently running, start
-diff --git a/include/linux/jbd2.h b/include/linux/jbd2.h
-index 606b6bce3a5b..296d1e0ea87b 100644
---- a/include/linux/jbd2.h
-+++ b/include/linux/jbd2.h
-@@ -1367,6 +1367,7 @@ int jbd2_log_start_commit(journal_t *journal, tid_t tid);
- int __jbd2_log_start_commit(journal_t *journal, tid_t tid);
- int jbd2_journal_start_commit(journal_t *journal, tid_t *tid);
- int jbd2_log_wait_commit(journal_t *journal, tid_t tid);
-+int jbd2_transaction_committed(journal_t *journal, tid_t tid);
- int jbd2_complete_transaction(journal_t *journal, tid_t tid);
- int jbd2_log_do_checkpoint(journal_t *journal);
- int jbd2_trans_will_send_data_barrier(journal_t *journal, tid_t tid);
+ extern int sysctl_overcommit_memory;
+ extern int sysctl_overcommit_ratio;
+ extern unsigned long sysctl_overcommit_kbytes;
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index 203268f9231e..8ce7f5a0800f 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -16,6 +16,7 @@
+ 
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x0f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x10		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x20		/* don't use a file */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 680506faceae..924839fac0e6 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1387,9 +1387,24 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 
+ 	if (file) {
+ 		struct inode *inode = file_inode(file);
++		unsigned long flags_mask;
++
++		flags_mask = LEGACY_MAP_MASK | file->f_op->mmap_supported_flags;
+ 
+ 		switch (flags & MAP_TYPE) {
+ 		case MAP_SHARED:
++			/*
++			 * Force use of MAP_SHARED_VALIDATE with non-legacy
++			 * flags. E.g. MAP_SYNC is dangerous to use with
++			 * MAP_SHARED as you don't know which consistency model
++			 * you will get. We silently ignore unsupported flags
++			 * with MAP_SHARED to preserve backward compatibility.
++			 */
++			flags &= LEGACY_MAP_MASK;
++			/* fall through */
++		case MAP_SHARED_VALIDATE:
++			if (flags & ~flags_mask)
++				return -EOPNOTSUPP;
+ 			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
+ 				return -EACCES;
+ 
+diff --git a/tools/include/uapi/asm-generic/mman-common.h b/tools/include/uapi/asm-generic/mman-common.h
+index 203268f9231e..8ce7f5a0800f 100644
+--- a/tools/include/uapi/asm-generic/mman-common.h
++++ b/tools/include/uapi/asm-generic/mman-common.h
+@@ -16,6 +16,7 @@
+ 
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x0f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x10		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x20		/* don't use a file */
 -- 
 2.12.3
