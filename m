@@ -1,92 +1,121 @@
-From: Jan Kara <jack@suse.cz>
-Subject: [PATCH 11/17] dax: Allow tuning whether dax_insert_mapping_entry() dirties entry
-Date: Tue, 24 Oct 2017 17:24:08 +0200
-Message-ID: <20171024152415.22864-12-jack@suse.cz>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 08/17] dax: Inline dax_pmd_insert_mapping() into the callsite
+Date: Tue, 24 Oct 2017 17:24:05 +0200
+Message-ID: <20171024152415.22864-9-jack@suse.cz>
 References: <20171024152415.22864-1-jack@suse.cz>
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20171024152415.22864-1-jack@suse.cz>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@infradead.org>, linux-ext4@vger.kernel.org, linux-nvdimm@lists.01.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, Jan Kara <jack@suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20171024152415.22864-1-jack-AlSwsSmVLrQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Currently we dirty radix tree entry whenever dax_insert_mapping_entry()
-gets called for a write fault. With synchronous page faults we would
-like to insert clean radix tree entry and dirty it only once we call
-fdatasync() and update page tables to save some unnecessary cache
-flushing. Add 'dirty' argument to dax_insert_mapping_entry() for that.
+dax_pmd_insert_mapping() has only one callsite and we will need to
+further fine tune what it does for synchronous faults. Just inline it
+into the callsite so that we don't have to pass awkward bools around.
 
-Reviewed-by: Ross Zwisler <ross.zwisler@linux.intel.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Signed-off-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/dax.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ fs/dax.c                      | 47 +++++++++++++++++--------------------------
+ include/trace/events/fs_dax.h |  1 -
+ 2 files changed, 19 insertions(+), 29 deletions(-)
 
 diff --git a/fs/dax.c b/fs/dax.c
-index 5ddf15161390..efc210ff6665 100644
+index 5b20c6456926..675fab8ec41f 100644
 --- a/fs/dax.c
 +++ b/fs/dax.c
-@@ -526,13 +526,13 @@ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
- static void *dax_insert_mapping_entry(struct address_space *mapping,
- 				      struct vm_fault *vmf,
- 				      void *entry, sector_t sector,
--				      unsigned long flags)
-+				      unsigned long flags, bool dirty)
- {
- 	struct radix_tree_root *page_tree = &mapping->page_tree;
- 	void *new_entry;
- 	pgoff_t index = vmf->pgoff;
+@@ -1235,33 +1235,11 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf,
+ }
  
--	if (vmf->flags & FAULT_FLAG_WRITE)
-+	if (dirty)
- 		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
+ #ifdef CONFIG_FS_DAX_PMD
+-static int dax_pmd_insert_mapping(struct vm_fault *vmf, struct iomap *iomap,
+-		loff_t pos, void *entry)
+-{
+-	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
+-	const sector_t sector = dax_iomap_sector(iomap, pos);
+-	struct inode *inode = mapping->host;
+-	void *ret = NULL;
+-	pfn_t pfn = {};
+-	int rc;
+-
+-	rc = dax_iomap_pfn(iomap, pos, PMD_SIZE, &pfn);
+-	if (rc < 0)
+-		goto fallback;
+-
+-	ret = dax_insert_mapping_entry(mapping, vmf, entry, sector,
+-			RADIX_DAX_PMD);
+-	if (IS_ERR(ret))
+-		goto fallback;
+-
+-	trace_dax_pmd_insert_mapping(inode, vmf, PMD_SIZE, pfn, ret);
+-	return vmf_insert_pfn_pmd(vmf->vma, vmf->address, vmf->pmd,
+-			pfn, vmf->flags & FAULT_FLAG_WRITE);
+-
+-fallback:
+-	trace_dax_pmd_insert_mapping_fallback(inode, vmf, PMD_SIZE, pfn, ret);
+-	return VM_FAULT_FALLBACK;
+-}
++/*
++ * The 'colour' (ie low bits) within a PMD of a page offset.  This comes up
++ * more often than one might expect in the below functions.
++ */
++#define PG_PMD_COLOUR	((PMD_SIZE >> PAGE_SHIFT) - 1)
  
- 	if (dax_is_zero_entry(entry) && !(flags & RADIX_DAX_ZERO_PAGE)) {
-@@ -569,7 +569,7 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
- 		entry = new_entry;
- 	}
+ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
+ 		void *entry)
+@@ -1317,6 +1295,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf,
+ 	void *entry;
+ 	loff_t pos;
+ 	int error;
++	pfn_t pfn;
  
--	if (vmf->flags & FAULT_FLAG_WRITE)
-+	if (dirty)
- 		radix_tree_tag_set(page_tree, index, PAGECACHE_TAG_DIRTY);
+ 	/*
+ 	 * Check whether offset isn't beyond end of file now. Caller is
+@@ -1394,7 +1373,19 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf,
  
- 	spin_unlock_irq(&mapping->tree_lock);
-@@ -881,7 +881,7 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
- 	}
+ 	switch (iomap.type) {
+ 	case IOMAP_MAPPED:
+-		result = dax_pmd_insert_mapping(vmf, &iomap, pos, entry);
++		error = dax_iomap_pfn(&iomap, pos, PMD_SIZE, &pfn);
++		if (error < 0)
++			goto finish_iomap;
++
++		entry = dax_insert_mapping_entry(mapping, vmf, entry,
++						dax_iomap_sector(&iomap, pos),
++						RADIX_DAX_PMD);
++		if (IS_ERR(entry))
++			goto finish_iomap;
++
++		trace_dax_pmd_insert_mapping(inode, vmf, PMD_SIZE, pfn, entry);
++		result = vmf_insert_pfn_pmd(vma, vmf->address, vmf->pmd, pfn,
++					    write);
+ 		break;
+ 	case IOMAP_UNWRITTEN:
+ 	case IOMAP_HOLE:
+diff --git a/include/trace/events/fs_dax.h b/include/trace/events/fs_dax.h
+index fbc4a06f7310..88a9d19b8ff8 100644
+--- a/include/trace/events/fs_dax.h
++++ b/include/trace/events/fs_dax.h
+@@ -148,7 +148,6 @@ DEFINE_EVENT(dax_pmd_insert_mapping_class, name, \
+ 	TP_ARGS(inode, vmf, length, pfn, radix_entry))
  
- 	entry2 = dax_insert_mapping_entry(mapping, vmf, entry, 0,
--			RADIX_DAX_ZERO_PAGE);
-+			RADIX_DAX_ZERO_PAGE, false);
- 	if (IS_ERR(entry2)) {
- 		ret = VM_FAULT_SIGBUS;
- 		goto out;
-@@ -1182,7 +1182,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ DEFINE_PMD_INSERT_MAPPING_EVENT(dax_pmd_insert_mapping);
+-DEFINE_PMD_INSERT_MAPPING_EVENT(dax_pmd_insert_mapping_fallback);
  
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						 dax_iomap_sector(&iomap, pos),
--						 0);
-+						 0, write);
- 		if (IS_ERR(entry)) {
- 			error = PTR_ERR(entry);
- 			goto error_finish_iomap;
-@@ -1258,7 +1258,7 @@ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
- 		goto fallback;
- 
- 	ret = dax_insert_mapping_entry(mapping, vmf, entry, 0,
--			RADIX_DAX_PMD | RADIX_DAX_ZERO_PAGE);
-+			RADIX_DAX_PMD | RADIX_DAX_ZERO_PAGE, false);
- 	if (IS_ERR(ret))
- 		goto fallback;
- 
-@@ -1379,7 +1379,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						dax_iomap_sector(&iomap, pos),
--						RADIX_DAX_PMD);
-+						RADIX_DAX_PMD, write);
- 		if (IS_ERR(entry))
- 			goto finish_iomap;
- 
+ DECLARE_EVENT_CLASS(dax_pte_fault_class,
+ 	TP_PROTO(struct inode *inode, struct vm_fault *vmf, int result),
 -- 
 2.12.3
