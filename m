@@ -1,17 +1,17 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 01/17] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
- safely define new mmap flags
-Date: Tue, 24 Oct 2017 15:08:08 +0200
-Message-ID: <20171024130808.GC8556@quack2.suse.cz>
+Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
+ MAP_SYNC
+Date: Tue, 24 Oct 2017 15:27:13 +0200
+Message-ID: <20171024132713.GD8556@quack2.suse.cz>
 References: <20171019125817.11580-1-jack@suse.cz>
- <20171019125817.11580-2-jack@suse.cz>
- <20171020072707.GA18000@infradead.org>
+ <20171019125817.11580-19-jack@suse.cz>
+ <20171020214753.GA15733@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171020072707.GA18000-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+In-Reply-To: <20171020214753.GA15733-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -21,66 +21,51 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri 20-10-17 00:27:07, Christoph Hellwig wrote:
-> >  	if (file) {
-> >  		struct inode *inode = file_inode(file);
-> > +		unsigned long flags_mask = file->f_op->mmap_supported_flags;
-> > +
-> > +		if (!flags_mask)
-> > +			flags_mask = LEGACY_MAP_MASK;
-> >  
-> >  		switch (flags & MAP_TYPE) {
-> >  		case MAP_SHARED:
-> > +			/*
-> > +			 * Silently ignore unsupported flags - MAP_SHARED has
-> > +			 * traditionally behaved like that and we don't want
-> > +			 * to break compatibility.
-> > +			 */
-> > +			flags &= flags_mask;
-> > +			/*
-> > +			 * Force use of MAP_SHARED_VALIDATE with non-legacy
-> > +			 * flags. E.g. MAP_SYNC is dangerous to use with
-> > +			 * MAP_SHARED as you don't know which consistency model
-> > +			 * you will get.
-> > +			 */
-> > +			flags &= LEGACY_MAP_MASK;
-> > +			/* fall through */
-> > +		case MAP_SHARED_VALIDATE:
-> > +			if (flags & ~flags_mask)
-> > +				return -EOPNOTSUPP;
+On Fri 20-10-17 15:47:53, Ross Zwisler wrote:
+> On Thu, Oct 19, 2017 at 02:58:17PM +0200, Jan Kara wrote:
+> > Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+> > ---
+> >  man2/mmap.2 | 30 ++++++++++++++++++++++++++++++
+> >  1 file changed, 30 insertions(+)
+> > 
+> > diff --git a/man2/mmap.2 b/man2/mmap.2
+> > index 47c3148653be..598ff0c64f7f 100644
+> > --- a/man2/mmap.2
+> > +++ b/man2/mmap.2
+> > @@ -125,6 +125,21 @@ are carried through to the underlying file.
+> >  to the underlying file requires the use of
+> >  .BR msync (2).)
+> >  .TP
+> > +.B MAP_SHARED_VALIDATE
+> > +The same as
+> > +.B MAP_SHARED
+> > +except that
+> > +.B MAP_SHARED
+> > +mappings ignore unknown flags in
+> > +.IR flags .
+> > +In contrast when creating mapping of
+> > +.B MAP_SHARED_VALIDATE
+> > +mapping type, the kernel verifies all passed flags are known and fails the
+> > +mapping with
+> > +.BR EOPNOTSUPP
+> > +otherwise. This mapping type is also required to be able to use some mapping
+> > +flags.
+> > +.TP
 > 
-> Hmmm.  I'd expect this to worth more like:
+> Some small nits:
 > 
-> 		case MAP_SHARED:
-> 			/* Ignore all new flags that need validation: */
-> 			flags &= LEGACY_MAP_MASK;
-> 			/*FALLTHROUGH*/
-> 		case MAP_SHARED_VALIDATE:
-> 			if (flags & ~file->f_op->mmap_supported_flags)
-> 				return -EOPNOTSUPP;
+> I think you should maybe include a "(since Linux 4.15)" type note after the
+> MAP_SHARED_VALIDATE header.  You also need to update the following line:
 > 
-> with the legacy mask always implicitly support as indicated in my
-> comment to the XFS patch.
+>        Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
+> 
+> Which used to refer to MAP_SYNC and MAP_PRIVATE.
 
-I was thinking about this. Originally I thought that mmap_supported_flags
-would allow also to declare some legacy flags as unsupported and also it
-seemed as a nicer symmetric interface to me. But I guess the need to mask
-out legacy flags is mostly theoretical so I'm fine giving that up. So I'll
-change this as you suggest.
-
-> Although even the ignoring in MAP_SHARED seems dangerous, but I guess
-> we need that to keep strict backwards compatibility.  In world I'd
-> rather do
-> 
-> 	case MAP_SHARED:
-> 		if (flags & ~LEGACY_MAP_MASK)
-> 			return -EINVAL;
-
-Yes, I think just ignoring new flags for MAP_SHARED is safer...
+Thanks, I've fixed these.
 
 								Honza
 
