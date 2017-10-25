@@ -1,107 +1,193 @@
-From: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
-Date: Wed, 25 Oct 2017 08:27:35 +0800
-Message-ID: <1508891255-15427-2-git-send-email-fan.du@intel.com>
-References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1508891255-15427-1-git-send-email-fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: "Yang Shi" <yang.s@alibaba-inc.com>
+Subject: Re: [RFC PATCH] fs: fsnotify: account fsnotify metadata to kmemcg
+Date: Wed, 25 Oct 2017 08:34:41 +0800
+Message-ID: <1400291b-0fe7-3a22-2f8a-84ff488b8fc1@alibaba-inc.com>
+References: <1508448056-21779-1-git-send-email-yang.s@alibaba-inc.com>
+ <CAOQ4uxhPhXrMLu18TGKDA=ezUVHara95qJQ+BTCio8BHm-u6NA@mail.gmail.com>
+ <b530521e-5215-f735-444a-13f722d90e40@alibaba-inc.com>
+ <CAOQ4uxhFOoSknnG-0Jyv+=iCDjVNnAg6SiO-msxw4tORkVKJGQ@mail.gmail.com>
+ <5b80a088-05f1-c9af-5b71-e1128fbb36a7@alibaba-inc.com>
+ <CAOQ4uxiVbA1HxPt9mjn-AL0XzMuOYU5dMeMoHxZbxHLzaS=niQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAOQ4uxiVbA1HxPt9mjn-AL0XzMuOYU5dMeMoHxZbxHLzaS=niQ@mail.gmail.com>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Amir Goldstein <amir73il@gmail.com>
+Cc: Jan Kara <jack@suse.cz>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-mm@kvack.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-So user could check those interface for more detailed
-information about how much DAX mappings are currently
-created.
 
-Here we use vma_is_dax method to find specific page
-struture with DAX {huge, normal}page mappings,
-vm_normal_page routine works as before without any
-impact on the existing logical where _vm_normal_page
-are called.
 
-With this patch, user could check Device DAX usage at Ptes@ readings,
-fox example, statistics from a Device DAX algined by 2MB:
+On 10/23/17 10:42 PM, Amir Goldstein wrote:
+> On Tue, Oct 24, 2017 at 7:12 AM, Yang Shi <yang.s@alibaba-inc.com> wrote:
+>>
+>>
+>> On 10/22/17 1:24 AM, Amir Goldstein wrote:
+>>>
+>>> On Sat, Oct 21, 2017 at 12:07 AM, Yang Shi <yang.s@alibaba-inc.com> wrote:
+>>>>
+>>>>
+>>>>
+>>>> On 10/19/17 8:14 PM, Amir Goldstein wrote:
+>>>>>
+>>>>>
+>>>>> On Fri, Oct 20, 2017 at 12:20 AM, Yang Shi <yang.s@alibaba-inc.com>
+>>>>> wrote:
+>>>>>>
+>>>>>>
+>>>>>> We observed some misbehaved user applications might consume significant
+>>>>>> amount of fsnotify slabs silently. It'd better to account those slabs
+>>>>>> in
+>>>>>> kmemcg so that we can get heads up before misbehaved applications use
+>>>>>> too
+>>>>>> much memory silently.
+>>>>>
+>>>>>
+>>>>>
+>>>>> In what way do they misbehave? create a lot of marks? create a lot of
+>>>>> events?
+>>>>> Not reading events in their queue?
+>>>>
+>>>>
+>>>>
+>>>> It looks both a lot marks and events. I'm not sure if it is the latter
+>>>> case.
+>>>> If I knew more about the details of the behavior, I would elaborated more
+>>>> in
+>>>> the commit log.
+>>>
+>>>
+>>> If you are not sure, do not refer to user application as "misbehaved".
+>>> Is updatedb(8) a misbehaved application because it produces a lot of
+>>> access
+>>> events?
+>>
+>>
+>> Should be not. It sounds like our in-house applications. But, it is a sort
+>> of blackbox to me.
+>>
+> 
+> If you know which process is "misbehaving" you can look at
+> ls -l /proc/<pid>/fd |grep notify
+> and see the anonymous inotify/fanotify file descriptors
+> 
+> then you can look at  /proc/<pid>/fdinfo/<fd> file of those
+> file descriptors to learn more about the fanotify flags etc.
 
-7f6c17800000-7f6c17e00000 rw-s 00000000 00:06 20559  /dev/dax12.0
-Size:               6144 kB
-.
-.
-.
-Ptes@2MB:      		6144 kB
+Thanks for the hints.
 
-Signed-off-by: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
-v3:
-* Elaborate more about the usage suggested by Michal Hocko
+> 
+> ...
+> 
+>>
+>>>
+>>> But I think there is another problem, not introduced by your change, but
+>>> could
+>>> be amplified because of it - when a non-permission event allocation fails,
+>>> the
+>>> event is silently dropped, AFAICT, with no indication to listener.
+>>> That seems like a bug to me, because there is a perfectly safe way to deal
+>>> with
+>>> event allocation failure - queue the overflow event.
+>>
+>>
+>> I'm not sure if such issue could be amplified by the accounting since once
+>> the usage exceeds the limit any following kmem allocation would fail. So, it
+>> might fail at fsnotify event allocation, or other places, i.e. fork, open
+>> syscall, etc. So, in most cases the generator even can't generate new event
+>> any more.
+>>
+> 
+> To be clear, I did not mean that kmem limit would cause a storm of dropped
+> events. I meant if you have a listener outside memcp watching a single file
+> for access/modifications and you have many containers each with its own
+> limited memcg, then event drops probability goes to infinity as you run more
+> of those kmem limited containers with event producers.
+> 
+>> The typical output from my LTP test is filesystem dcache allocation error or
+>> fork error due to kmem limit is reached.
+> 
+> And that should be considered a success result of the test.
+> The only failure case is when producer touches the file and event is
+> not delivered
+> nor an overflow event delivered.
+> You can probably try to reduce allocation failure for fork and dentry by:
+> 1. pin dentry cache of subject file on test init by opening the file
+> 2. set the low kmem limit after forking
+> 
+> Then you should probably loop the test enough times
+> in some of the times, producer may fail to access the file
+> in others if will succeed and produce events properly
+> and many some times, producer will access the file and event
+> will be dropped, so event count is lower than access count.
 
-v2:
-* Using pte_devmap to check valid pfn page structure,
-  Pointed out by Dan. thx!
+I still have not very direct test result shows the patch works as 
+expected. But, I did get some prove from running fanotify test *without* 
+your overflow event patch.
 
----
- fs/proc/task_mmu.c | 24 ++++++++++++++++++------
- 1 file changed, 18 insertions(+), 6 deletions(-)
+Running fanotify without your overflow patch, sometimes I can see:
 
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 30dbf37..5c4535c 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -531,7 +531,10 @@ static void smaps_pte_entry(pte_t *pte, unsigned long addr,
- 	struct page *page = NULL;
- 
- 	if (pte_present(*pte)) {
--		page = vm_normal_page(vma, addr, *pte);
-+		if (!vma_is_dax(vma))
-+			page = vm_normal_page(vma, addr, *pte);
-+		else if (pte_devmap(*pte))
-+			page = pte_page(*pte);
- 		mss->rss_pte += PAGE_SIZE;
- 	} else if (is_swap_pte(*pte)) {
- 		swp_entry_t swpent = pte_to_swp_entry(*pte);
-@@ -583,7 +586,11 @@ static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
- 	struct page *page;
- 
- 	/* FOLL_DUMP will return -EFAULT on huge zero page */
--	page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
-+	if (!vma_is_dax(vma))
-+		page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
-+	else if (pmd_devmap(*pmd))
-+		page = pmd_page(*pmd);
-+
- 	if (IS_ERR_OR_NULL(page))
- 		return;
- 	if (PageAnon(page))
-@@ -1770,13 +1777,15 @@ static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
- 	spinlock_t *ptl;
- 	pte_t *orig_pte;
- 	pte_t *pte;
-+	struct page *page;
- 
- #ifdef CONFIG_TRANSPARENT_HUGEPAGE
- 	ptl = pmd_trans_huge_lock(pmd, vma);
- 	if (ptl) {
--		struct page *page;
--
--		page = can_gather_numa_stats_pmd(*pmd, vma, addr);
-+		if (!vma_is_dax(vma))
-+			page = can_gather_numa_stats_pmd(*pmd, vma, addr);
-+		else if (pmd_devmap(*pmd))
-+			page = pmd_page(*pmd);
- 		if (page)
- 			gather_stats(page, md, pmd_dirty(*pmd),
- 				     HPAGE_PMD_SIZE/PAGE_SIZE);
-@@ -1789,7 +1798,10 @@ static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
- #endif
- 	orig_pte = pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
- 	do {
--		struct page *page = can_gather_numa_stats(*pte, vma, addr);
-+		if (!vma_is_dax(vma))
-+			page = can_gather_numa_stats(*pte, vma, addr);
-+		else if (pte_devmap(*pte))
-+			page = pte_page(*pte);
- 		if (!page)
- 			continue;
- 		gather_stats(page, md, pte_dirty(*pte), 1);
--- 
-1.8.3.1
+[  122.222455] SLUB: Unable to allocate memory on node -1, 
+gfp=0x14000c0(GFP_KERNEL)
+[  122.224198]   cache: fanotify_event_info(110:fsnotify), object size: 
+56, buffer size: 88, default order: 0, min order: 0
+[  122.226578]   node 0: slabs: 11, objs: 506, free: 0
+[  122.227655]   node 1: slabs: 0, objs: 0, free: 0
+[  122.229251] SLUB: Unable to allocate memory on node -1, 
+gfp=0x14000c0(GFP_KERNEL)
+[  122.230912]   cache: fanotify_event_info(110:fsnotify), object size: 
+56, buffer size: 88, default order: 0, min order: 0
+[  122.233266]   node 0: slabs: 11, objs: 506, free: 0
+[  122.234337]   node 1: slabs: 0, objs: 0, free: 0
+
+The slub oom information is printed a couple of times, it should mean 
+neither the event is delivered nor the overflow event is delivered.
+
+With your overflow patch, I've never seen such message.
+
+Regards,
+Yang
+
+> 
+> 
+> 
+>>
+>>> I am not going to be the one to determine if fixing this alleged bug is a
+>>> prerequisite for merging your patch, but I think enforcing memory limits
+>>> on
+>>> event allocation could amplify that bug, so it should be fixed.
+>>>
+>>> The upside is that with both your accounting fix and ENOMEM = overlflow
+>>> fix, it going to be easy to write a test that verifies both of them:
+>>> - Run a listener in memcg with limited kmem and unlimited (or very
+>>> large) event queue
+>>> - Produce events inside memcg without listener reading them
+>>> - Read event and expect an OVERFLOW even
+>>>
+>>> This is a simple variant of LTP tests inotify05 and fanotify05.
+>>
+>>
+>> I tried to test your patch with LTP, but it sounds not that easy to setup a
+>> scenario to make fsnotify event allocation just hit the kmem limit, since
+>> the limit may be hit before a new event is allocated, for example allocating
+>> dentry cache in open syscall may hit the limit.
+>>
+>> So, it sounds the overflow event might be not generated by the producer in
+>> most cases.
+>>
+> 
+> Right. not as simple, but maybe still possible as I described above.
+> Assuming that my patch is not buggy...
+> 
+> Thanks,
+> Amir.
+> 
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
