@@ -1,120 +1,27 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
-Date: Wed, 25 Oct 2017 11:30:45 +0200
-Message-ID: <20171025093045.s3rpcuovld22bhqu@dhcp22.suse.cz>
-References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
- <1508891255-15427-2-git-send-email-fan.du@intel.com>
+From: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 1/2 v2] fdmap(2)
+Date: Wed, 25 Oct 2017 14:45:31 +0200
+Message-ID: <CACVxJT-YmJQcp9PPhA1cx3rzUF1onzg-AzpC88L+QXz9xgYGtQ@mail.gmail.com>
+References: <20170924200620.GA24368@avx2> <9bc11ace-d111-cdef-5280-8cdda027ae9a@gmail.com>
+ <20171023092938.GC32228@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1508891255-15427-2-git-send-email-fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <20171023092938.GC32228@amd>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Aliaksandr Patseyenak <Aliaksandr_Patseyenak1-uRwfk40T5oI@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 25-10-17 08:27:35, Fan Du wrote:
-> So user could check those interface for more detailed
-> information about how much DAX mappings are currently
-> created.
-> 
-> Here we use vma_is_dax method to find specific page
-> struture with DAX {huge, normal}page mappings,
-> vm_normal_page routine works as before without any
-> impact on the existing logical where _vm_normal_page
-> are called.
-> 
-> With this patch, user could check Device DAX usage at Ptes@ readings,
-> fox example, statistics from a Device DAX algined by 2MB:
-> 
-> 7f6c17800000-7f6c17e00000 rw-s 00000000 00:06 20559  /dev/dax12.0
-> Size:               6144 kB
-> .
-> .
-> .
-> Ptes@2MB:      		6144 kB
+On 10/23/17, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org> wrote:
 
-This says how but it doesn't tell why and who is going to use the
-information and what for.
+> Binary fdmap looks... quite ugly to me. But close_all(from, to)
+> syscall kindof makes sense to me... and is not that ugly.
+>
+> Given that openbsd has something similar... perhaps we can take that?
 
-> 
-> Signed-off-by: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> ---
-> v3:
-> * Elaborate more about the usage suggested by Michal Hocko
-> 
-> v2:
-> * Using pte_devmap to check valid pfn page structure,
->   Pointed out by Dan. thx!
-> 
-> ---
->  fs/proc/task_mmu.c | 24 ++++++++++++++++++------
->  1 file changed, 18 insertions(+), 6 deletions(-)
-> 
-> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-> index 30dbf37..5c4535c 100644
-> --- a/fs/proc/task_mmu.c
-> +++ b/fs/proc/task_mmu.c
-> @@ -531,7 +531,10 @@ static void smaps_pte_entry(pte_t *pte, unsigned long addr,
->  	struct page *page = NULL;
->  
->  	if (pte_present(*pte)) {
-> -		page = vm_normal_page(vma, addr, *pte);
-> +		if (!vma_is_dax(vma))
-> +			page = vm_normal_page(vma, addr, *pte);
-> +		else if (pte_devmap(*pte))
-> +			page = pte_page(*pte);
->  		mss->rss_pte += PAGE_SIZE;
->  	} else if (is_swap_pte(*pte)) {
->  		swp_entry_t swpent = pte_to_swp_entry(*pte);
-> @@ -583,7 +586,11 @@ static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
->  	struct page *page;
->  
->  	/* FOLL_DUMP will return -EFAULT on huge zero page */
-> -	page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
-> +	if (!vma_is_dax(vma))
-> +		page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
-> +	else if (pmd_devmap(*pmd))
-> +		page = pmd_page(*pmd);
-> +
->  	if (IS_ERR_OR_NULL(page))
->  		return;
->  	if (PageAnon(page))
-> @@ -1770,13 +1777,15 @@ static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
->  	spinlock_t *ptl;
->  	pte_t *orig_pte;
->  	pte_t *pte;
-> +	struct page *page;
->  
->  #ifdef CONFIG_TRANSPARENT_HUGEPAGE
->  	ptl = pmd_trans_huge_lock(pmd, vma);
->  	if (ptl) {
-> -		struct page *page;
-> -
-> -		page = can_gather_numa_stats_pmd(*pmd, vma, addr);
-> +		if (!vma_is_dax(vma))
-> +			page = can_gather_numa_stats_pmd(*pmd, vma, addr);
-> +		else if (pmd_devmap(*pmd))
-> +			page = pmd_page(*pmd);
->  		if (page)
->  			gather_stats(page, md, pmd_dirty(*pmd),
->  				     HPAGE_PMD_SIZE/PAGE_SIZE);
-> @@ -1789,7 +1798,10 @@ static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
->  #endif
->  	orig_pte = pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
->  	do {
-> -		struct page *page = can_gather_numa_stats(*pte, vma, addr);
-> +		if (!vma_is_dax(vma))
-> +			page = can_gather_numa_stats(*pte, vma, addr);
-> +		else if (pte_devmap(*pte))
-> +			page = pte_page(*pte);
->  		if (!page)
->  			continue;
->  		gather_stats(page, md, pte_dirty(*pte), 1);
-> -- 
-> 1.8.3.1
+closefrom() can be implemented on top of fdmap().
+fdmap as is is useful for other purposes.
 
--- 
-Michal Hocko
-SUSE Labs
+> Except during startup, application should have good idea what fds it
+> has open, so maybe that's enough?
