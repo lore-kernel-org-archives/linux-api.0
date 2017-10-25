@@ -1,193 +1,89 @@
-From: "Yang Shi" <yang.s@alibaba-inc.com>
-Subject: Re: [RFC PATCH] fs: fsnotify: account fsnotify metadata to kmemcg
-Date: Wed, 25 Oct 2017 08:34:41 +0800
-Message-ID: <1400291b-0fe7-3a22-2f8a-84ff488b8fc1@alibaba-inc.com>
-References: <1508448056-21779-1-git-send-email-yang.s@alibaba-inc.com>
- <CAOQ4uxhPhXrMLu18TGKDA=ezUVHara95qJQ+BTCio8BHm-u6NA@mail.gmail.com>
- <b530521e-5215-f735-444a-13f722d90e40@alibaba-inc.com>
- <CAOQ4uxhFOoSknnG-0Jyv+=iCDjVNnAg6SiO-msxw4tORkVKJGQ@mail.gmail.com>
- <5b80a088-05f1-c9af-5b71-e1128fbb36a7@alibaba-inc.com>
- <CAOQ4uxiVbA1HxPt9mjn-AL0XzMuOYU5dMeMoHxZbxHLzaS=niQ@mail.gmail.com>
+From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCHv3 1/2] proc: mm: export PTE sizes directly in smaps
+Date: Wed, 25 Oct 2017 11:28:38 +0200
+Message-ID: <20171025092838.4j4u4eeppzh6uto2@dhcp22.suse.cz>
+References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAOQ4uxiVbA1HxPt9mjn-AL0XzMuOYU5dMeMoHxZbxHLzaS=niQ@mail.gmail.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Amir Goldstein <amir73il@gmail.com>
-Cc: Jan Kara <jack@suse.cz>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-mm@kvack.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <1508891255-15427-1-git-send-email-fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+On Wed 25-10-17 08:27:34, Fan Du wrote:
+> From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> 
+> /proc/$pid/smaps has a number of fields that are intended to imply the
+> kinds of PTEs used to map memory.  "AnonHugePages" obviously tells you
+> how many PMDs are being used.  "MMUPageSize" along with the "Hugetlb"
+> fields tells you how many PTEs you have for a huge page.
+> 
+> The current mechanisms work fine when we have one or two page sizes.
+> But, they start to get a bit muddled when we mix page sizes inside
+> one VMA.  For instance, the DAX folks were proposing adding a set of
+> fields like:
+> 
+> 	DevicePages:
+> 	DeviceHugePages:
+> 	DeviceGiganticPages:
+> 	DeviceGinormousPages:
+> 
+> to unmuddle things when page sizes get mixed.  That's fine, but
+> it does require userspace know the mapping from our various
+> arbitrary names to hardware page sizes on each architecture and
+> kernel configuration.  That seems rather suboptimal.
+> 
+> What folks really want is to know how much memory is mapped with
+> each page size.  How about we just do *that* instead?
+> 
+> Patch attached.  Seems harmless enough.  Seems to compile on a
+> bunch of random architectures.  Makes smaps look like this:
+> 
+> Private_Hugetlb:       0 kB
+> Swap:                  0 kB
+> SwapPss:               0 kB
+> KernelPageSize:        4 kB
+> MMUPageSize:           4 kB
+> Locked:                0 kB
+> Ptes@4kB:	      32 kB
+> Ptes@2MB:	    2048 kB
 
+Yes, I agree that the current situation is quite messy. But I am
+wondering who is going to use this new information and what for?
 
-On 10/23/17 10:42 PM, Amir Goldstein wrote:
-> On Tue, Oct 24, 2017 at 7:12 AM, Yang Shi <yang.s@alibaba-inc.com> wrote:
->>
->>
->> On 10/22/17 1:24 AM, Amir Goldstein wrote:
->>>
->>> On Sat, Oct 21, 2017 at 12:07 AM, Yang Shi <yang.s@alibaba-inc.com> wrote:
->>>>
->>>>
->>>>
->>>> On 10/19/17 8:14 PM, Amir Goldstein wrote:
->>>>>
->>>>>
->>>>> On Fri, Oct 20, 2017 at 12:20 AM, Yang Shi <yang.s@alibaba-inc.com>
->>>>> wrote:
->>>>>>
->>>>>>
->>>>>> We observed some misbehaved user applications might consume significant
->>>>>> amount of fsnotify slabs silently. It'd better to account those slabs
->>>>>> in
->>>>>> kmemcg so that we can get heads up before misbehaved applications use
->>>>>> too
->>>>>> much memory silently.
->>>>>
->>>>>
->>>>>
->>>>> In what way do they misbehave? create a lot of marks? create a lot of
->>>>> events?
->>>>> Not reading events in their queue?
->>>>
->>>>
->>>>
->>>> It looks both a lot marks and events. I'm not sure if it is the latter
->>>> case.
->>>> If I knew more about the details of the behavior, I would elaborated more
->>>> in
->>>> the commit log.
->>>
->>>
->>> If you are not sure, do not refer to user application as "misbehaved".
->>> Is updatedb(8) a misbehaved application because it produces a lot of
->>> access
->>> events?
->>
->>
->> Should be not. It sounds like our in-house applications. But, it is a sort
->> of blackbox to me.
->>
+> The format I used here should be unlikely to break smaps parsers
+> unless they're looking for "kB" and now match the 'Ptes@4kB' instead
+> of the one at the end of the line.
 > 
-> If you know which process is "misbehaving" you can look at
-> ls -l /proc/<pid>/fd |grep notify
-> and see the anonymous inotify/fanotify file descriptors
+> Note: hugetlbfs PTEs are unusual.  We can have more than one "pte_t"
+> for each hugetlbfs "page".  arm64 has this configuration, and probably
+> others.  The code should now handle when an hstate's size is not equal
+> to one of the page table entry sizes.  For instance, it assumes that
+> hstates between PMD_SIZE and PUD_SIZE are made up of multiple PMDs
+> and prints them as such.
 > 
-> then you can look at  /proc/<pid>/fdinfo/<fd> file of those
-> file descriptors to learn more about the fanotify flags etc.
+> I've tested this on x86 with normal 4k ptes, anonymous huge pages,
+> 1G hugetlbfs and 2M hugetlbfs pages.
+> 
+> 1. I'd like to thank Dan Williams for showing me a mirror as I
+>    complained about the bozo that introduced 'AnonHugePages'.
 
-Thanks for the hints.
+Does the new code add any measurable overhead? I assume it shouldn't
+from a quick look at the code. Anyway this is a useful information
+because there are people who really want it as cheap as possible.
 
+> [Fan]
+> Rebase the original patch from Dave Hansen by fixing a couple of compile
+> issues.
 > 
-> ...
-> 
->>
->>>
->>> But I think there is another problem, not introduced by your change, but
->>> could
->>> be amplified because of it - when a non-permission event allocation fails,
->>> the
->>> event is silently dropped, AFAICT, with no indication to listener.
->>> That seems like a bug to me, because there is a perfectly safe way to deal
->>> with
->>> event allocation failure - queue the overflow event.
->>
->>
->> I'm not sure if such issue could be amplified by the accounting since once
->> the usage exceeds the limit any following kmem allocation would fail. So, it
->> might fail at fsnotify event allocation, or other places, i.e. fork, open
->> syscall, etc. So, in most cases the generator even can't generate new event
->> any more.
->>
-> 
-> To be clear, I did not mean that kmem limit would cause a storm of dropped
-> events. I meant if you have a listener outside memcp watching a single file
-> for access/modifications and you have many containers each with its own
-> limited memcg, then event drops probability goes to infinity as you run more
-> of those kmem limited containers with event producers.
-> 
->> The typical output from my LTP test is filesystem dcache allocation error or
->> fork error due to kmem limit is reached.
-> 
-> And that should be considered a success result of the test.
-> The only failure case is when producer touches the file and event is
-> not delivered
-> nor an overflow event delivered.
-> You can probably try to reduce allocation failure for fork and dentry by:
-> 1. pin dentry cache of subject file on test init by opening the file
-> 2. set the low kmem limit after forking
-> 
-> Then you should probably loop the test enough times
-> in some of the times, producer may fail to access the file
-> in others if will succeed and produce events properly
-> and many some times, producer will access the file and event
-> will be dropped, so event count is lower than access count.
+> Signed-off-by: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-I still have not very direct test result shows the patch works as 
-expected. But, I did get some prove from running fanotify test *without* 
-your overflow event patch.
-
-Running fanotify without your overflow patch, sometimes I can see:
-
-[  122.222455] SLUB: Unable to allocate memory on node -1, 
-gfp=0x14000c0(GFP_KERNEL)
-[  122.224198]   cache: fanotify_event_info(110:fsnotify), object size: 
-56, buffer size: 88, default order: 0, min order: 0
-[  122.226578]   node 0: slabs: 11, objs: 506, free: 0
-[  122.227655]   node 1: slabs: 0, objs: 0, free: 0
-[  122.229251] SLUB: Unable to allocate memory on node -1, 
-gfp=0x14000c0(GFP_KERNEL)
-[  122.230912]   cache: fanotify_event_info(110:fsnotify), object size: 
-56, buffer size: 88, default order: 0, min order: 0
-[  122.233266]   node 0: slabs: 11, objs: 506, free: 0
-[  122.234337]   node 1: slabs: 0, objs: 0, free: 0
-
-The slub oom information is printed a couple of times, it should mean 
-neither the event is delivered nor the overflow event is delivered.
-
-With your overflow patch, I've never seen such message.
-
-Regards,
-Yang
-
-> 
-> 
-> 
->>
->>> I am not going to be the one to determine if fixing this alleged bug is a
->>> prerequisite for merging your patch, but I think enforcing memory limits
->>> on
->>> event allocation could amplify that bug, so it should be fixed.
->>>
->>> The upside is that with both your accounting fix and ENOMEM = overlflow
->>> fix, it going to be easy to write a test that verifies both of them:
->>> - Run a listener in memcg with limited kmem and unlimited (or very
->>> large) event queue
->>> - Produce events inside memcg without listener reading them
->>> - Read event and expect an OVERFLOW even
->>>
->>> This is a simple variant of LTP tests inotify05 and fanotify05.
->>
->>
->> I tried to test your patch with LTP, but it sounds not that easy to setup a
->> scenario to make fsnotify event allocation just hit the kmem limit, since
->> the limit may be hit before a new event is allocated, for example allocating
->> dentry cache in open syscall may hit the limit.
->>
->> So, it sounds the overflow event might be not generated by the producer in
->> most cases.
->>
-> 
-> Right. not as simple, but maybe still possible as I described above.
-> Assuming that my patch is not buggy...
-> 
-> Thanks,
-> Amir.
-> 
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+nit, the s-o-b ordering should be reverse. The original author should be
+first.
+-- 
+Michal Hocko
+SUSE Labs
