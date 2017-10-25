@@ -1,89 +1,120 @@
 From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCHv3 1/2] proc: mm: export PTE sizes directly in smaps
-Date: Wed, 25 Oct 2017 11:28:38 +0200
-Message-ID: <20171025092838.4j4u4eeppzh6uto2@dhcp22.suse.cz>
+Subject: Re: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
+Date: Wed, 25 Oct 2017 11:30:45 +0200
+Message-ID: <20171025093045.s3rpcuovld22bhqu@dhcp22.suse.cz>
 References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
+ <1508891255-15427-2-git-send-email-fan.du@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1508891255-15427-1-git-send-email-fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+In-Reply-To: <1508891255-15427-2-git-send-email-fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 25-10-17 08:27:34, Fan Du wrote:
-> From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+On Wed 25-10-17 08:27:35, Fan Du wrote:
+> So user could check those interface for more detailed
+> information about how much DAX mappings are currently
+> created.
 > 
-> /proc/$pid/smaps has a number of fields that are intended to imply the
-> kinds of PTEs used to map memory.  "AnonHugePages" obviously tells you
-> how many PMDs are being used.  "MMUPageSize" along with the "Hugetlb"
-> fields tells you how many PTEs you have for a huge page.
+> Here we use vma_is_dax method to find specific page
+> struture with DAX {huge, normal}page mappings,
+> vm_normal_page routine works as before without any
+> impact on the existing logical where _vm_normal_page
+> are called.
 > 
-> The current mechanisms work fine when we have one or two page sizes.
-> But, they start to get a bit muddled when we mix page sizes inside
-> one VMA.  For instance, the DAX folks were proposing adding a set of
-> fields like:
+> With this patch, user could check Device DAX usage at Ptes@ readings,
+> fox example, statistics from a Device DAX algined by 2MB:
 > 
-> 	DevicePages:
-> 	DeviceHugePages:
-> 	DeviceGiganticPages:
-> 	DeviceGinormousPages:
-> 
-> to unmuddle things when page sizes get mixed.  That's fine, but
-> it does require userspace know the mapping from our various
-> arbitrary names to hardware page sizes on each architecture and
-> kernel configuration.  That seems rather suboptimal.
-> 
-> What folks really want is to know how much memory is mapped with
-> each page size.  How about we just do *that* instead?
-> 
-> Patch attached.  Seems harmless enough.  Seems to compile on a
-> bunch of random architectures.  Makes smaps look like this:
-> 
-> Private_Hugetlb:       0 kB
-> Swap:                  0 kB
-> SwapPss:               0 kB
-> KernelPageSize:        4 kB
-> MMUPageSize:           4 kB
-> Locked:                0 kB
-> Ptes@4kB:	      32 kB
-> Ptes@2MB:	    2048 kB
+> 7f6c17800000-7f6c17e00000 rw-s 00000000 00:06 20559  /dev/dax12.0
+> Size:               6144 kB
+> .
+> .
+> .
+> Ptes@2MB:      		6144 kB
 
-Yes, I agree that the current situation is quite messy. But I am
-wondering who is going to use this new information and what for?
+This says how but it doesn't tell why and who is going to use the
+information and what for.
 
-> The format I used here should be unlikely to break smaps parsers
-> unless they're looking for "kB" and now match the 'Ptes@4kB' instead
-> of the one at the end of the line.
-> 
-> Note: hugetlbfs PTEs are unusual.  We can have more than one "pte_t"
-> for each hugetlbfs "page".  arm64 has this configuration, and probably
-> others.  The code should now handle when an hstate's size is not equal
-> to one of the page table entry sizes.  For instance, it assumes that
-> hstates between PMD_SIZE and PUD_SIZE are made up of multiple PMDs
-> and prints them as such.
-> 
-> I've tested this on x86 with normal 4k ptes, anonymous huge pages,
-> 1G hugetlbfs and 2M hugetlbfs pages.
-> 
-> 1. I'd like to thank Dan Williams for showing me a mirror as I
->    complained about the bozo that introduced 'AnonHugePages'.
-
-Does the new code add any measurable overhead? I assume it shouldn't
-from a quick look at the code. Anyway this is a useful information
-because there are people who really want it as cheap as possible.
-
-> [Fan]
-> Rebase the original patch from Dave Hansen by fixing a couple of compile
-> issues.
 > 
 > Signed-off-by: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> ---
+> v3:
+> * Elaborate more about the usage suggested by Michal Hocko
+> 
+> v2:
+> * Using pte_devmap to check valid pfn page structure,
+>   Pointed out by Dan. thx!
+> 
+> ---
+>  fs/proc/task_mmu.c | 24 ++++++++++++++++++------
+>  1 file changed, 18 insertions(+), 6 deletions(-)
+> 
+> diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+> index 30dbf37..5c4535c 100644
+> --- a/fs/proc/task_mmu.c
+> +++ b/fs/proc/task_mmu.c
+> @@ -531,7 +531,10 @@ static void smaps_pte_entry(pte_t *pte, unsigned long addr,
+>  	struct page *page = NULL;
+>  
+>  	if (pte_present(*pte)) {
+> -		page = vm_normal_page(vma, addr, *pte);
+> +		if (!vma_is_dax(vma))
+> +			page = vm_normal_page(vma, addr, *pte);
+> +		else if (pte_devmap(*pte))
+> +			page = pte_page(*pte);
+>  		mss->rss_pte += PAGE_SIZE;
+>  	} else if (is_swap_pte(*pte)) {
+>  		swp_entry_t swpent = pte_to_swp_entry(*pte);
+> @@ -583,7 +586,11 @@ static void smaps_pmd_entry(pmd_t *pmd, unsigned long addr,
+>  	struct page *page;
+>  
+>  	/* FOLL_DUMP will return -EFAULT on huge zero page */
+> -	page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
+> +	if (!vma_is_dax(vma))
+> +		page = follow_trans_huge_pmd(vma, addr, pmd, FOLL_DUMP);
+> +	else if (pmd_devmap(*pmd))
+> +		page = pmd_page(*pmd);
+> +
+>  	if (IS_ERR_OR_NULL(page))
+>  		return;
+>  	if (PageAnon(page))
+> @@ -1770,13 +1777,15 @@ static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
+>  	spinlock_t *ptl;
+>  	pte_t *orig_pte;
+>  	pte_t *pte;
+> +	struct page *page;
+>  
+>  #ifdef CONFIG_TRANSPARENT_HUGEPAGE
+>  	ptl = pmd_trans_huge_lock(pmd, vma);
+>  	if (ptl) {
+> -		struct page *page;
+> -
+> -		page = can_gather_numa_stats_pmd(*pmd, vma, addr);
+> +		if (!vma_is_dax(vma))
+> +			page = can_gather_numa_stats_pmd(*pmd, vma, addr);
+> +		else if (pmd_devmap(*pmd))
+> +			page = pmd_page(*pmd);
+>  		if (page)
+>  			gather_stats(page, md, pmd_dirty(*pmd),
+>  				     HPAGE_PMD_SIZE/PAGE_SIZE);
+> @@ -1789,7 +1798,10 @@ static int gather_pte_stats(pmd_t *pmd, unsigned long addr,
+>  #endif
+>  	orig_pte = pte = pte_offset_map_lock(walk->mm, pmd, addr, &ptl);
+>  	do {
+> -		struct page *page = can_gather_numa_stats(*pte, vma, addr);
+> +		if (!vma_is_dax(vma))
+> +			page = can_gather_numa_stats(*pte, vma, addr);
+> +		else if (pte_devmap(*pte))
+> +			page = pte_page(*pte);
+>  		if (!page)
+>  			continue;
+>  		gather_stats(page, md, pte_dirty(*pte), 1);
+> -- 
+> 1.8.3.1
 
-nit, the s-o-b ordering should be reverse. The original author should be
-first.
 -- 
 Michal Hocko
 SUSE Labs
