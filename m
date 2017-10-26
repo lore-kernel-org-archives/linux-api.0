@@ -1,62 +1,116 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [kernel-hardening] [PATCH] fs: Use CAP_DAC_OVERRIDE to allow for
- file dedupe
-Date: Thu, 26 Oct 2017 00:54:42 -0700
-Message-ID: <CALCETrVaAOaQgTGiTnSoRiEX4oj1BOiKdfjsd+O8-zQd_vHk4Q@mail.gmail.com>
-References: <20171021132806.18086-1-nicolas@belouin.fr> <CAFJ0LnGjhjm9iswxh-naLM9qZq-fQ_a0MdyVDsmRUk4ME0xuNA@mail.gmail.com>
- <A9CEA82D-DEC7-4F4F-AF16-68CFF5DA203A@belouin.fr>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
+ MAP_SYNC
+Date: Thu, 26 Oct 2017 15:24:02 +0200
+Message-ID: <20171026132402.GB31161@quack2.suse.cz>
+References: <20171024152415.22864-1-jack@suse.cz>
+ <20171024152415.22864-19-jack@suse.cz>
+ <20171024211007.GA1611@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <A9CEA82D-DEC7-4F4F-AF16-68CFF5DA203A@belouin.fr>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Nicolas Belouin <nicolas@belouin.fr>
-Cc: Nick Kralevich <nnk@google.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>
+Content-Type: multipart/mixed; boundary="GvXjxJ+pjyke8COw"
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171024211007.GA1611@linux.intel.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Jan Kara <jack@suse.cz>, Dan Williams <dan.j.williams@intel.com>, Christoph Hellwig <hch@infradead.org>, linux-ext4@vger.kernel.org, linux-nvdimm@lists.01.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 21, 2017 at 12:40 PM, Nicolas Belouin <nicolas@belouin.fr> wrote:
->
->
-> On October 21, 2017 4:08:31 PM GMT+02:00, Nick Kralevich <nnk@google.com> wrote:
->>On Sat, Oct 21, 2017 at 6:28 AM, Nicolas Belouin <nicolas@belouin.fr>
->>wrote:
->>> In its current implementation the check is against CAP_SYS_ADMIN,
->>> however this capability is bloated and inapropriate for this use.
->>> Indeed the check aims to avoid dedupe against non writable files,
->>> falling directly in the use case of CAP_DAC_OVERRIDE.
->>>
->>> Signed-off-by: Nicolas Belouin <nicolas@belouin.fr>
->>> ---
->>>  fs/read_write.c | 2 +-
->>>  1 file changed, 1 insertion(+), 1 deletion(-)
->>>
->>> diff --git a/fs/read_write.c b/fs/read_write.c
->>> index f0d4b16873e8..43cc7e84e29e 100644
->>> --- a/fs/read_write.c
->>> +++ b/fs/read_write.c
->>> @@ -1965,7 +1965,7 @@ int vfs_dedupe_file_range(struct file *file,
->>struct file_dedupe_range *same)
->>>         u64 len;
->>>         int i;
->>>         int ret;
->>> -       bool is_admin = capable(CAP_SYS_ADMIN);
->>> +       bool is_admin = capable(CAP_SYS_ADMIN) ||
->>capable(CAP_DAC_OVERRIDE);
->>
->>Can you please reverse the order of the checks? In particular, on an
->>SELinux based system, a capable() call generates an SELinux denial,
->>and people often instinctively allow the first operation performed.
->>Reordering the elements will ensure that the CAP_DAC_OVERRIDE denial
->>(least permissive) is generated first.
->
-> Will do in the v2 of every concerned patch.
->
 
-That's still a bit wrong because of how audit works.  What you really want is:
+--GvXjxJ+pjyke8COw
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-bool have_either_global_cap(int cap1, int cap2);
+On Tue 24-10-17 15:10:07, Ross Zwisler wrote:
+> On Tue, Oct 24, 2017 at 05:24:15PM +0200, Jan Kara wrote:
+> > Signed-off-by: Jan Kara <jack@suse.cz>
+> 
+> This looks unchanged since the previous version?
 
-where, if neither cap is available, the audit message references cap1
-and not cap2.  Ditto for have_either_ns_cap().
+Ah, thanks for checking. I forgot to commit modifications. Attached is
+really updated patch.
 
---Andy
+								Honza
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
+
+--GvXjxJ+pjyke8COw
+Content-Type: text/x-patch; charset=us-ascii
+Content-Disposition: attachment; filename="0001-mmap.2-Add-description-of-MAP_SHARED_VALIDATE-and-MA.patch"
+
+>From 59eeec2998ed9b3840aab951f213148cb1d053a5 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Thu, 19 Oct 2017 14:44:55 +0200
+Subject: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and MAP_SYNC
+
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ man2/mmap.2 | 35 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index 47c3148653be..b38ee6809327 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -125,6 +125,21 @@ are carried through to the underlying file.
+ to the underlying file requires the use of
+ .BR msync (2).)
+ .TP
++.BR MAP_SHARED_VALIDATE " (since Linux 4.15)"
++The same as
++.B MAP_SHARED
++except that
++.B MAP_SHARED
++mappings ignore unknown flags in
++.IR flags .
++In contrast when creating mapping of
++.B MAP_SHARED_VALIDATE
++mapping type, the kernel verifies all passed flags are known and fails the
++mapping with
++.BR EOPNOTSUPP
++otherwise. This mapping type is also required to be able to use some mapping
++flags.
++.TP
+ .B MAP_PRIVATE
+ Create a private copy-on-write mapping.
+ Updates to the mapping are not visible to other processes
+@@ -134,7 +149,10 @@ It is unspecified whether changes made to the file after the
+ .BR mmap ()
+ call are visible in the mapped region.
+ .PP
+-Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
++.B MAP_SHARED
++and
++.B MAP_PRIVATE
++are described in POSIX.1-2001 and POSIX.1-2008.
+ .PP
+ In addition, zero or more of the following values can be ORed in
+ .IR flags :
+@@ -352,6 +370,21 @@ option.
+ Because of the security implications,
+ that option is normally enabled only on embedded devices
+ (i.e., devices where one has complete control of the contents of user memory).
++.TP
++.BR MAP_SYNC " (since Linux 4.15)"
++This flags is available only with
++.B MAP_SHARED_VALIDATE
++mapping type. Mappings of
++.B MAP_SHARED
++type will silently ignore this flag.
++This flag is supported only for files supporting DAX (direct mapping of persistent
++memory). For other files, creating mapping with this flag results in
++.B EOPNOTSUPP
++error. Shared file mappings with this flag provide the guarantee that while
++some memory is writeably mapped in the address space of the process, it will
++be visible in the same file at the same offset even after the system crashes or
++is rebooted. This allows users of such mappings to make data modifications
++persistent in a more efficient way using appropriate CPU instructions.
+ .PP
+ Of the above flags, only
+ .B MAP_FIXED
+-- 
+2.12.3
+
+
+--GvXjxJ+pjyke8COw--
