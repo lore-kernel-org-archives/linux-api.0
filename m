@@ -1,120 +1,124 @@
-From: "Du, Fan" <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCHv3 1/2] proc: mm: export PTE sizes directly in smaps
-Date: Thu, 26 Oct 2017 01:41:26 +0000
-Message-ID: <5A90DA2E42F8AE43BC4A093BF06788481AA50489@SHSMSX104.ccr.corp.intel.com>
-References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
- <20171025092838.4j4u4eeppzh6uto2@dhcp22.suse.cz>
+From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [1/2,v2] fdmap(2)
+Date: Thu, 26 Oct 2017 00:53:24 -0700
+Message-ID: <CALCETrWctpobKaKKdEiF6O1xVsVJw_bK32NFRNmeYea8zs8thw@mail.gmail.com>
+References: <20170924200620.GA24368@avx2> <20171010220804.GA30735@outlook.office365.com>
+ <20171011181234.GB2119@avx2> <20171012080608.GA23077@outlook.office365.com>
+ <CACVxJT_ZP=VAJQ_=D1JV0yt3bT_RZjtWTW61KcV5gCbhF8ixBw@mail.gmail.com>
+ <CALCETrW769=r4uXH2RqoQ0cQL2CakfupwAUM2_81Fr8Mo3JX=Q@mail.gmail.com> <CACVxJT_AKQmd0ziP7jWQvfA5MQGJgC2q2VA3xyFjVARrQR-ekg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171025092838.4j4u4eeppzh6uto2-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <CACVxJT_AKQmd0ziP7jWQvfA5MQGJgC2q2VA3xyFjVARrQR-ekg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>, "Williams, Dan J" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Hansen, Dave" <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Du, Fan" <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+To: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Randy Dunlap <rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Djalal Harouni <tixxdz-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Alexey Gladkov <gladkov.alexey-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
->-----Original Message-----
->From: Michal Hocko [mailto:mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org]
->Sent: Wednesday, October 25, 2017 5:29 PM
->To: Du, Fan <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
->Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org; hch-jcswGhMUV9g@public.gmane.org; Williams, Dan J
-><dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>; Hansen, Dave <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>;
->linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->Subject: Re: [PATCHv3 1/2] proc: mm: export PTE sizes directly in smaps
+> On Oct 19, 2017, at 5:34 PM, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
 >
->On Wed 25-10-17 08:27:34, Fan Du wrote:
->> From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> On 10/18/17, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>> fdmap() is standalone thing.
+>>>
+>>> Next step is to design fdinfo(2) (?) which uses descriptors from
+>>> fdmap(2). Extending structures is done as usual: but version,
+>>> add new fields to the end.
 >>
->> /proc/$pid/smaps has a number of fields that are intended to imply the
->> kinds of PTEs used to map memory.  "AnonHugePages" obviously tells you
->> how many PMDs are being used.  "MMUPageSize" along with the
->"Hugetlb"
->> fields tells you how many PTEs you have for a huge page.
->>
->> The current mechanisms work fine when we have one or two page sizes.
->> But, they start to get a bit muddled when we mix page sizes inside
->> one VMA.  For instance, the DAX folks were proposing adding a set of
->> fields like:
->>
->> 	DevicePages:
->> 	DeviceHugePages:
->> 	DeviceGiganticPages:
->> 	DeviceGinormousPages:
->>
->> to unmuddle things when page sizes get mixed.  That's fine, but
->> it does require userspace know the mapping from our various
->> arbitrary names to hardware page sizes on each architecture and
->> kernel configuration.  That seems rather suboptimal.
->>
->> What folks really want is to know how much memory is mapped with
->> each page size.  How about we just do *that* instead?
->>
->> Patch attached.  Seems harmless enough.  Seems to compile on a
->> bunch of random architectures.  Makes smaps look like this:
->>
->> Private_Hugetlb:       0 kB
->> Swap:                  0 kB
->> SwapPss:               0 kB
->> KernelPageSize:        4 kB
->> MMUPageSize:           4 kB
->> Locked:                0 kB
->> Ptes@4kB:	      32 kB
->> Ptes@2MB:	    2048 kB
+>> I very strongly disagree.  If you really want a new interface for
+>> reading out information about other processes, design one that makes
+>> sense as a whole.  Don't design it piecemeal. The last thing we need
+>> is a crappy /proc alternative that covers a small fraction of use
+>> cases.
 >
->Yes, I agree that the current situation is quite messy. But I am
->wondering who is going to use this new information and what for?
-
-It comes from my customer who are using Device DAX, looking for any statistics
-of how much persistent memory mapping has been created, or used by application.
-
-Current vm_normal_page implementation doesn't pick up page with DEVMAP pfn.
-The second patch fix this and export DAX mappings into counters introduced in the
-first patch.
-
-IMO, the user care more about how much persistent memory they used, how about
-a small tweak with smaps_account, and report the total mapping size into RSS/PSS,
-which user are usually more familiar with?
-
-
->> The format I used here should be unlikely to break smaps parsers
->> unless they're looking for "kB" and now match the 'Ptes@4kB' instead
->> of the one at the end of the line.
->>
->> Note: hugetlbfs PTEs are unusual.  We can have more than one "pte_t"
->> for each hugetlbfs "page".  arm64 has this configuration, and probably
->> others.  The code should now handle when an hstate's size is not equal
->> to one of the page table entry sizes.  For instance, it assumes that
->> hstates between PMD_SIZE and PUD_SIZE are made up of multiple PMDs
->> and prints them as such.
->>
->> I've tested this on x86 with normal 4k ptes, anonymous huge pages,
->> 1G hugetlbfs and 2M hugetlbfs pages.
->>
->> 1. I'd like to thank Dan Williams for showing me a mirror as I
->>    complained about the bozo that introduced 'AnonHugePages'.
+> Oh well.
 >
->Does the new code add any measurable overhead? I assume it shouldn't
->from a quick look at the code. Anyway this is a useful information
->because there are people who really want it as cheap as possible.
+>> And demonstrate that it actually has a material benefit over
+>> fixing /proc.
 >
->> [Fan]
->> Rebase the original patch from Dave Hansen by fixing a couple of compile
->> issues.
->>
->> Signed-off-by: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
->> Signed-off-by: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+>> Meanwhile, why not just fix /proc?
 >
->nit, the s-o-b ordering should be reverse. The original author should be
->first.
+> /proc can not be fixed. Let me reiterate the arguments one more time.
+>
+> Using /proc
+> * overallocates memory even if temporarily,
 
-Oh, got it! seems there are community curtesy I'm not fully aware.
-Apologize to Dave.
+This is fixable.  Maybe hard, but fixable.
 
+> * instantiates dentries and inodes nobody cares about,
 
->--
->Michal Hocko
->SUSE Labs
+Your syscalls won't make a difference here because we can't just
+remove /proc.  But IIRC we could give it a backing store like sysfs
+has.
+
+> * make expansion path more painful than necessary:
+>  1) adding field to the end of the file is the least risky move,
+>  2) decimal radix and unfixed positioning are used often
+
+These two are fixable by adding extensible binary files.
+
+>  3) read() doesn't accept any sort of filter for data
+
+Indeed.  Doing this directly in /proc is hard.
+
+>
+>  (1)+(3) = those who added their fields later eat the cost of all
+>  previous fields even if their field is very simple and easy
+>  to calculate.
+>
+>  (2)+(3) = lseek() can not be used as a substitute.
+>
+>  4) adding new file is cleaner however every virtual file creates
+>     kernel objects which aren't interesting themselves.
+>     This has direct costs (more syscalls and lookups) and
+>     indirect costs (more garbage in d/icache and more flushing
+>     when the process dies)
+>
+>  5) converting to strings eats cycles (and more cycles are consumed
+>     if userspace decides to convert it back to binary for whatever
+>     reasons)
+
+As above, fixable with new files.
+
+>
+>     For those who didn't pay attention, first patch to make integer
+>     conversion faster made /proc/*/stat (?) 30% faster!
+>     This is how slow text can be.
+
+Alternatively, that's how much improvement is available without any
+ABI change at all.
+
+>
+> Sysfs is overall better but solely because it has strict one-value-per-file
+> rule, so interfaces are cleaner and there is less room for mistakes.
+>
+>
+> Philosophically, text files create false impression that parsing text
+> is easy.
+>
+> As an example grab a bunch of students and ask them to write a program
+> which parses something innocent like /proc/*/stat for process state.
+>
+> The beartrap is that ->comm is not escaped for Space and ')' so naive
+> strchr() from the beginning doesn't work reliably. The only reliable
+> way is to count spaces from the end(!) and pray kernel devs do not
+> extend the file with another field or, worse, with another textual
+> field.
+>
+> ESCAPE_SPACE doesn't escape Space, funny, isn't it?
+>
+> /proc/*/status kind of has the same problem however forward strstr()
+> works with "\nState:\t" because \n and \t will be escaped. But nobody
+> would search for just "State:", especially in scripts, right?
+>
+> EIATF people often critique binary people for their mistakes
+> but themselves make equally stupid ones. "(unreachable)" anyone?.
+>
+> So the answer it not to fix /proc, the answer it to leave /proc alone.
+> The answer is make Unix shell people move their lazy asses and
+> implement minimal type system and a way to execute raw system calls
+> like all normal programming languages do. They still haven't done it
+> after dozens of years and are arrogant enough to say "oh uh we can't
+> use cat and pipe to awk"
+
+I think that asking the bash maintainers to implement PowerShell does
+not fall into the lazy ass category.
