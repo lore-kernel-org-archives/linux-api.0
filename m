@@ -1,48 +1,34 @@
-From: Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
-Date: Thu, 26 Oct 2017 07:24:14 -0700
-Message-ID: <97774073-1df0-328a-68f8-f59667bce168@intel.com>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [PATCHv3 1/2] proc: mm: export PTE sizes directly in smaps
+Date: Thu, 26 Oct 2017 07:25:37 -0700
+Message-ID: <10bc2525-fccc-81e6-1ec0-27d63cff89b4@intel.com>
 References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
- <1508891255-15427-2-git-send-email-fan.du@intel.com>
- <20171025093045.s3rpcuovld22bhqu@dhcp22.suse.cz>
- <1f673f36-74b0-3321-32a4-a8031d5f268a@intel.com>
- <20171026141604.susqkaniglc5aqw2@dhcp22.suse.cz>
+ <20171025092838.4j4u4eeppzh6uto2@dhcp22.suse.cz>
+ <5A90DA2E42F8AE43BC4A093BF06788481AA50489@SHSMSX104.ccr.corp.intel.com>
+ <20171026141943.fsmd4goiec32qjkf@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171026141604.susqkaniglc5aqw2-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171026141943.fsmd4goiec32qjkf@dhcp22.suse.cz>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Fan Du <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, hch-jcswGhMUV9g@public.gmane.org, dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>, "Du, Fan" <fan.du@intel.com>
+Cc: "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "hch@lst.de" <hch@lst.de>, "Williams, Dan J" <dan.j.williams@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 10/26/2017 07:16 AM, Michal Hocko wrote:
->> The original motivation was for DAX.  They have parallel large page
->> infrastructure separate from hugetlbfs and THP.  Their constraints about
->> when they can use large pages differ from the normal mm cases, so it is
->> hard to tell when large pages are in use.  For instance, the file on
->> *disk* has to be 2MB contiguous and aligned to map with 2MB pages even
->> if the mmap() address is >2MB and 2MB-aligned.
-> 
-> I assume there is some tool which is going to use this information?
+On 10/26/2017 07:19 AM, Michal Hocko wrote:
+>> Current vm_normal_page implementation doesn't pick up page with DEVMAP pfn.
+>> The second patch fix this and export DAX mappings into counters introduced in the
+>> first patch.
+>>
+>> IMO, the user care more about how much persistent memory they used, how about
+>> a small tweak with smaps_account, and report the total mapping size into RSS/PSS,
+>> which user are usually more familiar with?
+> No! Rss and pss is already used by many tools to evaluate misbehaving
+> tasks. If you start accounting the memory which is not bound to the
+> process life time then you can break those usecases. This is the reason
+> why hugetlb is not accounted to rss as well.
 
-Actually, I don't remember whether it was tooling or just confused
-humans.  I *think* Dan was trying to write test cases for huge page DAX
-support and couldn't figure out whether or not it was using large pages.
-
->> But, in general, this seems like the thing that we probably should have
->> done in the first place for THP.  It's a lot more generic and does not
->> require someone reading the file to know what the particular
->> architecture's page sizes are.
-> 
-> I fully agree. This just shows how single usecase focus driven smaps
-> file was. That is why I am asking about usecases when somebody want to
-> try yet another special field there. Smaps has become a dump of of
-> special cases which is not really easy to understand and so people tend
-> to use it incorrectly.
-
-We just have to be careful not to cram use-cases into the existing
-fields which might make them meaningless.  I fear that Fan Du's latest
-patches do that.
+Yeah, folks (rightly) assume Rss is memory and eaten from MemTotal.  DAX
+mappings do not use RAM.
