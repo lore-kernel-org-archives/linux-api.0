@@ -1,70 +1,29 @@
-From: "Du, Fan" <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
-Date: Fri, 27 Oct 2017 04:00:36 +0000
-Message-ID: <5A90DA2E42F8AE43BC4A093BF06788481AA514EA@SHSMSX104.ccr.corp.intel.com>
-References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
- <1508891255-15427-2-git-send-email-fan.du@intel.com>
- <20171025093045.s3rpcuovld22bhqu@dhcp22.suse.cz>
- <1f673f36-74b0-3321-32a4-a8031d5f268a@intel.com>
- <20171026141604.susqkaniglc5aqw2@dhcp22.suse.cz>
- <97774073-1df0-328a-68f8-f59667bce168@intel.com>
- <20171026143133.7rm5wcgikjgmx4sc@dhcp22.suse.cz>
- <83cb9f0e-cd37-5355-9b03-aef9e62e7200@intel.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 17/17] xfs: support for synchronous DAX faults
+Date: Fri, 27 Oct 2017 08:43:01 +0200
+Message-ID: <20171027064301.GC22931@lst.de>
+References: <20171024152415.22864-1-jack@suse.cz> <20171024152415.22864-18-jack@suse.cz> <20171024222322.GX3666@dastard> <20171026154804.GF31161@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <83cb9f0e-cd37-5355-9b03-aef9e62e7200-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Hansen, Dave" <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>, "Williams, Dan J" <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Du, Fan" <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20171026154804.GF31161@quack2.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Jan Kara <jack@suse.cz>
+Cc: Dave Chinner <david@fromorbit.com>, Dan Williams <dan.j.williams@intel.com>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@infradead.org>, linux-ext4@vger.kernel.org, linux-nvdimm@lists.01.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-DQoNCj4tLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPkZyb206IGxpbnV4LWtlcm5lbC1vd25l
-ckB2Z2VyLmtlcm5lbC5vcmcNCj5bbWFpbHRvOmxpbnV4LWtlcm5lbC1vd25lckB2Z2VyLmtlcm5l
-bC5vcmddIE9uIEJlaGFsZiBPZiBEYXZlIEhhbnNlbg0KPlNlbnQ6IFRodXJzZGF5LCBPY3RvYmVy
-IDI2LCAyMDE3IDEwOjUxIFBNDQo+VG86IE1pY2hhbCBIb2NrbyA8bWhvY2tvQGtlcm5lbC5vcmc+
-DQo+Q2M6IER1LCBGYW4gPGZhbi5kdUBpbnRlbC5jb20+OyBha3BtQGxpbnV4LWZvdW5kYXRpb24u
-b3JnOyBoY2hAbHN0LmRlOw0KPldpbGxpYW1zLCBEYW4gSiA8ZGFuLmoud2lsbGlhbXNAaW50ZWwu
-Y29tPjsgbGludXgta2VybmVsQHZnZXIua2VybmVsLm9yZzsNCj5saW51eC1hcGlAdmdlci5rZXJu
-ZWwub3JnDQo+U3ViamVjdDogUmU6IFtQQVRDSCAyLzJdIEFkZCAvcHJvYy9QSUQve3NtYXBzLCBu
-dW1hX21hcHN9IHN1cHBvcnQgZm9yIERBWA0KPg0KPk9uIDEwLzI2LzIwMTcgMDc6MzEgQU0sIE1p
-Y2hhbCBIb2NrbyB3cm90ZToNCj4+IE9uIFRodSAyNi0xMC0xNyAwNzoyNDoxNCwgRGF2ZSBIYW5z
-ZW4gd3JvdGU6DQo+Pj4gQWN0dWFsbHksIEkgZG9uJ3QgcmVtZW1iZXIgd2hldGhlciBpdCB3YXMg
-dG9vbGluZyBvciBqdXN0IGNvbmZ1c2VkDQo+Pj4gaHVtYW5zLiAgSSAqdGhpbmsqIERhbiB3YXMg
-dHJ5aW5nIHRvIHdyaXRlIHRlc3QgY2FzZXMgZm9yIGh1Z2UgcGFnZSBEQVgNCj4+PiBzdXBwb3J0
-IGFuZCBjb3VsZG4ndCBmaWd1cmUgb3V0IHdoZXRoZXIgb3Igbm90IGl0IHdhcyB1c2luZyBsYXJn
-ZSBwYWdlcy4NCj4+DQo+PiBUaGF0IHNvdW5kcyBsaWtlIGEgdmVyeSB3ZWFrIGp1c3RpZmljYXRp
-b24gdG8gYWRkaW5nIG5ldyBzdHVmZiB0byBzbWFwcw0KPj4gdG8gYmUgaG9uZXN0Lg0KPg0KPlll
-cCwgYWdyZWVkLiAgSXQgY2FuJ3QgZ28gaW4gX2p1c3RfIGZvciBEQVgsIGFuZCBGYW4gYW5kIHRo
-ZSBvdGhlciBEQVgNCj5mb2xrcyBuZWVkIHRvIGVsYWJvcmF0ZSBvbiB0aGVpciBuZWVkcyBoZXJl
-Lg0KDQpJZiB1c2VyIGNyZWF0ZXMgZGV2aWNlIERBWCAvZGV2L2RheCB3aXRoIHNvbWUgY2FwYWNp
-dHkgbGlrZSA1MTJHLCBtbWFwIGl0IGFuZA0KVXNlIGl0IHdpbGwsIG9yIHRvdWNoZWQgMTI4Ry4g
-VG8gbXkgYmVzdCBrbm93bGVkZ2UgYXQgdGhpcyBwYXJ0LCB0aGVyZSBpcyBubw0Kc3RhdGlzdGlj
-cyByZXBvcnRlZCBob3cgbXVjaCBtZW1vcnkgYmVoaW5kIERBWCBhY3R1YWxseSB1c2VkLg0KDQpU
-aGlzIGlzIHRoZSBwcm9ibGVtIG91ciBjdXN0b21lciBpcyBmYWNpbmcgcmlnaHQgbm93Lg0KDQpJ
-IGFncmVlIHdpdGggc21hcHMgc2hvdWxkIG1ha2Ugbm8gc3BlY2lhbCBmb3IgREFYLCB3aGV0aGVy
-IG9yIG5vdCB3ZSB1cGRhdGUNCnNtYXBzIGZvciBEQVgsIGNhdCAvcHJvYy9QSUQvc21hcHMgYWx3
-YXlzIHJlcG9ydCBpdHMgcGFydCBmb3IgL2Rldi9kYXguDQpUaGUgcHJvYmxlbSBpcyBzaG91bGQg
-d2UgcmVwb3J0IERBWCB1c2FnZSBieSBSU1MsIG9yIGludHJvZHVjZSBuZXcgZmllbGRzDQpMaWtl
-IFB0ZUB7NEssMk19IGZvciBhIGFub3RoZXIgZGlmZmVyZW50IHB1cnBvc2UuDQoNClRoZSB2NCB2
-ZXJzaW9uIHRyaWVkIHRvIG1lcmdlZCBkZXZpY2UgREFYIHVzYWdlIHdpdGggUlNTLA0KaHR0cHM6
-Ly9sa21sLm9yZy9sa21sLzIwMTcvMTAvMjYvMjQNCg0KDQoNCj5EbyB5b3UgaGF2ZSBhbnkgYmV0
-dGVyIGlkZWFzPyAgSWYgd2UgZGlkIHRoaXMsIHdlIGNvdWxkIHByb2JhYmx5IG1ha2UgYW4NCj5h
-cmd1bWVudCB0aGF0IHRoZSBBbm9uSHVnZSBmaWVsZHMgY291bGQgZ28gYXdheSBzb21lIGRheS4g
-IFRoZXkgaGF2ZW4ndA0KPmFsd2F5cyBiZWVuIHRoZXJlLg0KPg0KPlRoZSBvbmx5IG90aGVyIGFs
-dGVybmF0aXZlIEkgY2FuIHRoaW5rIG9mIGFyZSB0cnVseSBEQVgtc3BlY2lmaWMNCj5pbnRlcmZh
-Y2VzLCB3aGljaCBhbHNvIHNlZW0gbGlrZSBhIHJlYWxseSBiYWQgaWRlYS4NCj4NCj4+IE5vdCBv
-bmx5IHRoYXQuIFRoZXJlIGhhdmUgYmVlbiByZXBvcnRzIHRoYXQgcmVhZGluZyBzbWFwcyBpcyB0
-b28NCj4+IGV4cGVuc2l2ZS4gQ3VyaW91c2x5IGVub3VnaCB0aGUgb3ZlcmhlYWQgZG9lc24ndCBj
-b21lIHVwIGZyb20NCj4+IHRoZSBkYXRhIGNvbGxlY3Rpb24gYnV0IHJhdGhlciBjb3B5aW5nIHRv
-IHRoZSB1c2Vyc3BhY2UuIFNvIHdlIHNob3VsZCBiZQ0KPj4gY2FyZWZ1bCB0byBub3QgcHJpbnQg
-ZGF0YSB0aGF0IGlzIG5vdCBvZiBnZW5lcmFsIHVzZS4NCj4NCj5ZaWtlcyEgIEkganVzdCBkaWQg
-YSBxdWljazoNCj4NCj4Jd2hpbGUgdHJ1ZTsgZG8gY2F0IC9wcm9jLyovc21hcHMgfCB3YyA7IGRv
-bmUNCj4NCj5hbmQgdGhlIGNvcHlpbmcgb3V0IHRvIHVzZXJzcGFjZSBpcyB+MS8xNXRoIHRoZSBv
-dmVyaGVhZCBvZg0KPnNtYXBzX2FjY291bnQoKS4gIFNvbWV0aGluZyBzb3VuZHMgc2NyZXd5IGlm
-IHlvdSdyZSBzZWVpbmcgdGhlIG92ZXJoZWFkDQo+YXQgY29weWluZyB0byB1c2Vyc3BhY2UuDQo+
-DQo+V2hhdCBlbHNlIGNhbiB3ZSBkbyB0aGFuIGNvbnRpbnVlIHRvIGJsb2F0IHNtYXBzPyAgQ291
-bGQgd2UgZG8gYSBmaWxlDQo+cGVyIFZNQT8NCj4NCj4JL3Byb2MvJHBpZC9zbWFwLzB4MTIzMDAw
-LTB4NDU2MDAwDQoNCg==
+On Thu, Oct 26, 2017 at 05:48:04PM +0200, Jan Kara wrote:
+> But now that I look at XFS implementation again, it misses handling
+> of VM_FAULT_NEEDSYNC in xfs_filemap_pfn_mkwrite() (ext4 gets this right).
+> I'll fix this by using __xfs_filemap_fault() for xfs_filemap_pfn_mkwrite()
+> as well since it mostly duplicates it anyway... Thanks for inquiring!
+
+My first patches move xfs_filemap_pfn_mkwrite to use __xfs_filemap_fault,
+but that didn't work.  Wish I'd remember why, though.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
