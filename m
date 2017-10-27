@@ -1,55 +1,39 @@
-From: Yisheng Xie <xieyisheng1@huawei.com>
-Subject: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in SYSC_migrate_pages
-Date: Fri, 27 Oct 2017 18:14:25 +0800
-Message-ID: <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com>
+From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH RFC v2 2/4] mm/mempolicy: remove redundant check in get_nodes
+Date: Fri, 27 Oct 2017 18:14:23 +0800
+Message-ID: <1509099265-30868-3-git-send-email-xieyisheng1@huawei.com>
 References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
-Sender: owner-linux-mm@kvack.org
-To: akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, mingo@kernel.org, rientjes@google.com, n-horiguchi@ah.jp.nec.com, salls@cs.ucsb.edu
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, tanxiaojun@huawei.com, linux-api@vger.kernel.org
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1509099265-30868-1-git-send-email-xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-As manpage of migrate_pages, the errno should be set to EINVAL when none
-of the specified nodes contain memory. However, when new_nodes is null,
-i.e. the specified nodes also do not have memory, as the following case:
+We have already checked whether maxnode is a page worth of bits, by:
+    maxnode > PAGE_SIZE*BITS_PER_BYTE
 
-	new_nodes = 0;
-	old_nodes = 0xf;
-	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
+So no need to check it once more.
 
-The ret will be 0 and no errno is set.
-
-This patch is to add nodes_empty check to fix above case.
-
-Signed-off-by: Yisheng Xie <xieyisheng1@huawei.com>
+Signed-off-by: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 ---
- mm/mempolicy.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ mm/mempolicy.c | 2 --
+ 1 file changed, 2 deletions(-)
 
 diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 8798ecb..58352cc 100644
+index 613e9d0..3b51bb3 100644
 --- a/mm/mempolicy.c
 +++ b/mm/mempolicy.c
-@@ -1402,6 +1402,11 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
- 	if (err)
- 		goto out;
- 
-+	if (nodes_empty(*new)) {
-+		err = -EINVAL;
-+		goto out;
-+	}
-+
- 	/* Find the mm_struct */
- 	rcu_read_lock();
- 	task = pid ? find_task_by_vpid(pid) : current;
+@@ -1280,8 +1280,6 @@ static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
+ 	/* When the user specified more nodes than supported just check
+ 	   if the non supported part is all zero. */
+ 	if (nlongs > BITS_TO_LONGS(MAX_NUMNODES)) {
+-		if (nlongs > PAGE_SIZE/sizeof(long))
+-			return -EINVAL;
+ 		for (k = BITS_TO_LONGS(MAX_NUMNODES); k < nlongs; k++) {
+ 			unsigned long t;
+ 			if (get_user(t, nmask + k))
 -- 
 1.7.12.4
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
