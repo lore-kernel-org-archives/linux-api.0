@@ -1,53 +1,256 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
-Date: Fri, 27 Oct 2017 03:31:46 -0700
-Message-ID: <CAPcyv4jCPE4NRGH2MmbKWbNOSZe4feVDQmJwozJBTYMRg2uqjQ@mail.gmail.com>
-References: <1508891255-15427-1-git-send-email-fan.du@intel.com>
- <1508891255-15427-2-git-send-email-fan.du@intel.com> <20171025093045.s3rpcuovld22bhqu@dhcp22.suse.cz>
- <1f673f36-74b0-3321-32a4-a8031d5f268a@intel.com> <20171026141604.susqkaniglc5aqw2@dhcp22.suse.cz>
- <97774073-1df0-328a-68f8-f59667bce168@intel.com> <20171026143133.7rm5wcgikjgmx4sc@dhcp22.suse.cz>
- <83cb9f0e-cd37-5355-9b03-aef9e62e7200@intel.com> <5A90DA2E42F8AE43BC4A093BF06788481AA514EA@SHSMSX104.ccr.corp.intel.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: [PATCH v4 00/28] ARM Scalable Vector Extension (SVE)
+Date: Fri, 27 Oct 2017 11:50:42 +0100
+Message-ID: <1509101470-7881-1-git-send-email-Dave.Martin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5A90DA2E42F8AE43BC4A093BF06788481AA514EA-0J0gbvR4kTg/UvCtAeCM4rfspsVTdybXVpNB7YpNyf8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Du, Fan" <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: "Hansen, Dave" <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org" <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, "hch-jcswGhMUV9g@public.gmane.org" <hch-jcswGhMUV9g@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, =?UTF-8?q?Alex=20Benn=C3=A9e?= <alex.bennee@linaro.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Okamoto Takayuki <tokamoto@jp.fujitsu.com>, kvmarm@lists.cs.columbia.edu, libc-alpha@sourceware.org, linux-arch@vger.kernel.org, Alan Hayward <alan.hayward@arm.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoffer Dall <christoffer.dall@linaro.org>, Mark Rutland <mark.rutland@arm.com>, Marc Zyngier <marc.zyngier@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Oleg Nesterov <oleg@redhat.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 26, 2017 at 9:00 PM, Du, Fan <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
->
->
->>-----Original Message-----
->>From: linux-kernel-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>[mailto:linux-kernel-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org] On Behalf Of Dave Hansen
->>Sent: Thursday, October 26, 2017 10:51 PM
->>To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>Cc: Du, Fan <fan.du-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>; akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org; hch-jcswGhMUV9g@public.gmane.org;
->>Williams, Dan J <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>; linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
->>linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>Subject: Re: [PATCH 2/2] Add /proc/PID/{smaps, numa_maps} support for DAX
->>
->>On 10/26/2017 07:31 AM, Michal Hocko wrote:
->>> On Thu 26-10-17 07:24:14, Dave Hansen wrote:
->>>> Actually, I don't remember whether it was tooling or just confused
->>>> humans.  I *think* Dan was trying to write test cases for huge page DAX
->>>> support and couldn't figure out whether or not it was using large pages.
->>>
->>> That sounds like a very weak justification to adding new stuff to smaps
->>> to be honest.
->>
->>Yep, agreed.  It can't go in _just_ for DAX, and Fan and the other DAX
->>folks need to elaborate on their needs here.
->
-> If user creates device DAX /dev/dax with some capacity like 512G, mmap it and
-> Use it will, or touched 128G. To my best knowledge at this part, there is no
-> statistics reported how much memory behind DAX actually used.
->
-> This is the problem our customer is facing right now.
+This series implements Linux kernel support for the ARM Scalable Vector
+Extension (SVE). [1]  It supersedes the previous v3: see [3] for link.
+See the individual patches for details of changes.
 
-I'm not sure I understand, DAX is statically allocated. There's no
-private memory taken from the page allocator to back device-dax
-mappings. Unless you are trying to determine memory usage of page
-tables?
+The patches apply on
+git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git
+for-next/core
+fa3eb71d96f5 ("arm64: asm-bug: Renumber macro local labels to avoid
+clashes")
+
+For reviewer convenience, a git tree is available. [4]
+
+To reduce spam, some people may not been copied on the entire series.
+For those who did not receive the whole series, it can be found in the
+linux-arm-kernel archive. [2]
+
+
+*Note* The final two patches (27-28) of the series are still RFC and not
+proposed for merging at present.  Before committing to this ABI it would
+be good to get feedback on whether the approach makes sense and whether
+it suitable for other architectures.  These two patches are not required
+by the rest of the series and can be revised or merged later.
+
+
+Support for use of SVE by KVM guests is not currently included.
+Instead, such use will be trapped and reflected to the guest as
+undefined instruction execution.  SVE is hidden from the view of the
+CPU feature registers visible to guests, so that guests will not
+expect it to work.
+
+
+This series has been build- and boot-tested on the ARM FVP Base model
+with and without the SVE plugin, and on ARM Juno r0.  Because there is
+no hardware with SVE support yet, testing of the SVE functionality has
+only been performed on the model.
+
+Additional testing is under way.
+
+
+Series summary:
+
+ * Patches 1-5 contain some individual bits of preparatory spadework,
+   which are indirectly related to SVE.
+
+Dave Martin (5):
+  regset: Add support for dynamically sized regsets
+  arm64: KVM: Hide unsupported AArch64 CPU features from guests
+  arm64: efi: Add missing Kconfig dependency on KERNEL_MODE_NEON
+  arm64: Port deprecated instruction emulation to new sysctl interface
+  arm64: fpsimd: Simplify uses of {set,clear}_ti_thread_flag()
+
+   Non-trivial changes among these are:
+
+   * Patch 1: updates the regset core code to handle regsets whose size
+     is not fixed at compile time.  This avoids bloating coredumps even
+     though the maximum theoretical SVE regset size is large.
+
+   * Patch 2: extends KVM to modify the ARM architectural ID registers
+     seen by guests, by trapping and emulating certain registers.  For
+     SVE this is a temporary measure, but it may be useful for other
+     architecture extensions.  This patch may also be built on in the
+     future, since the only registers currently emulated are those
+     required for hiding SVE.
+
+ * Patches 6-10 add SVE-specific system register and structure layout
+   definitions, and the low-level boot code and accessors needed for
+   making use of SVE.
+
+Dave Martin (5):
+  arm64/sve: System register and exception syndrome definitions
+  arm64/sve: Low-level SVE architectural state manipulation functions
+  arm64/sve: Kconfig update and conditional compilation support
+  arm64/sve: Signal frame and context structure definition
+  arm64/sve: Low-level CPU setup
+
+ * Patches 11-13 implement the core context management facilities to
+   provide each user task with its own SVE register context, signal
+   handling facilities, and sane programmer's model interoperation
+   between SVE and FPSIMD.
+
+Dave Martin (3):
+  arm64/sve: Core task context handling
+  arm64/sve: Support vector length resetting for new processes
+  arm64/sve: Signal handling support
+
+ * Patches 14 and 16 provide backend logic for detecting and making use
+   of the different SVE vector lengths supported by the hardware.
+
+ * Patch 15 moves around code in cpufeatures.c to fit.
+
+Dave Martin (3):
+  arm64/sve: Backend logic for setting the vector length
+  arm64: cpufeature: Move sys_caps_initialised declarations
+  arm64/sve: Probe SVE capabilities and usable vector lengths
+
+ * Patches 17-18 update the kernel-mode NEON / EFI FPSIMD frameworks to
+   interoperate correctly with SVE.
+
+Dave Martin (2):
+  arm64/sve: Preserve SVE registers around kernel-mode NEON use
+  arm64/sve: Preserve SVE registers around EFI runtime service calls
+
+ * Patches 19-21 implement the userspace frontend for managing SVE,
+   comprising ptrace, some new arch-specific prctl() calls, and a new
+   sysctl for init-time setup.
+
+Dave Martin (3):
+  arm64/sve: ptrace and ELF coredump support
+  arm64/sve: Add prctl controls for userspace vector length management
+  arm64/sve: Add sysctl to set the default vector length for new
+    processes
+
+ * Patches 22-24 provide stub KVM extensions for using KVM only on the
+   host, while denying guest access.  (A future series will extend this
+   with full support for SVE in guests.)
+
+Dave Martin (3):
+  arm64/sve: KVM: Prevent guests from using SVE
+  arm64/sve: KVM: Treat guest SVE use as undefined instruction
+    execution
+  arm64/sve: KVM: Hide SVE from CPU features exposed to guests
+
+And finally:
+
+ * Patch 25 disengages the safety catch, enabling the kernel SVE runtime
+   support and allowing userspace to use SVE.
+
+Dave Martin (1):
+  arm64/sve: Detect SVE and activate runtime support
+
+ * Patch 26 adds some basic documentation.
+
+Dave Martin (1):
+  arm64/sve: Add documentation
+
+ * Patches 27-28 (which may be considered RFC) propose a mechanism to
+   report the maximum runtime signal frame size to userspace.
+
+Dave Martin (2):
+  arm64: signal: Report signal frame size to userspace via auxv
+  arm64/sve: signal: Include SVE when computing AT_MINSIGSTKSZ
+
+
+References:
+
+[1] ARM Scalable Vector Extension
+https://community.arm.com/groups/processors/blog/2016/08/22/technology-update-the-scalable-vector-extension-sve-for-the-armv8-a-architecture
+
+[2] linux-arm-kernel October 2017 Archives by thread
+http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/thread.html
+
+[3] [PATCH v3 00/28] ARM Scalable Vector Extension (SVE)
+http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/535717.html
+
+[4] For review and testing only -- **do not pull**
+    (This branch has review changelogs which should not form part of
+    the final commits.)
+
+    http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v4
+    git://linux-arm.org/linux-dm.git sve/v4
+
+
+Full series and diffstat:
+
+Dave Martin (28):
+  regset: Add support for dynamically sized regsets
+  arm64: KVM: Hide unsupported AArch64 CPU features from guests
+  arm64: efi: Add missing Kconfig dependency on KERNEL_MODE_NEON
+  arm64: Port deprecated instruction emulation to new sysctl interface
+  arm64: fpsimd: Simplify uses of {set,clear}_ti_thread_flag()
+  arm64/sve: System register and exception syndrome definitions
+  arm64/sve: Low-level SVE architectural state manipulation functions
+  arm64/sve: Kconfig update and conditional compilation support
+  arm64/sve: Signal frame and context structure definition
+  arm64/sve: Low-level CPU setup
+  arm64/sve: Core task context handling
+  arm64/sve: Support vector length resetting for new processes
+  arm64/sve: Signal handling support
+  arm64/sve: Backend logic for setting the vector length
+  arm64: cpufeature: Move sys_caps_initialised declarations
+  arm64/sve: Probe SVE capabilities and usable vector lengths
+  arm64/sve: Preserve SVE registers around kernel-mode NEON use
+  arm64/sve: Preserve SVE registers around EFI runtime service calls
+  arm64/sve: ptrace and ELF coredump support
+  arm64/sve: Add prctl controls for userspace vector length management
+  arm64/sve: Add sysctl to set the default vector length for new
+    processes
+  arm64/sve: KVM: Prevent guests from using SVE
+  arm64/sve: KVM: Treat guest SVE use as undefined instruction execution
+  arm64/sve: KVM: Hide SVE from CPU features exposed to guests
+  arm64/sve: Detect SVE and activate runtime support
+  arm64/sve: Add documentation
+  arm64: signal: Report signal frame size to userspace via auxv
+  arm64/sve: signal: Include SVE when computing AT_MINSIGSTKSZ
+
+ Documentation/arm64/cpu-feature-registers.txt |   6 +-
+ Documentation/arm64/elf_hwcaps.txt            |   4 +
+ Documentation/arm64/sve.txt                   | 508 +++++++++++++++
+ arch/arm/include/asm/kvm_host.h               |   3 +
+ arch/arm64/Kconfig                            |  12 +
+ arch/arm64/include/asm/cpu.h                  |   4 +
+ arch/arm64/include/asm/cpucaps.h              |   3 +-
+ arch/arm64/include/asm/cpufeature.h           |  42 ++
+ arch/arm64/include/asm/elf.h                  |   5 +
+ arch/arm64/include/asm/esr.h                  |   3 +-
+ arch/arm64/include/asm/fpsimd.h               |  71 +-
+ arch/arm64/include/asm/fpsimdmacros.h         | 148 +++++
+ arch/arm64/include/asm/kvm_arm.h              |   5 +-
+ arch/arm64/include/asm/kvm_host.h             |  11 +
+ arch/arm64/include/asm/processor.h            |  10 +
+ arch/arm64/include/asm/sysreg.h               |  24 +
+ arch/arm64/include/asm/thread_info.h          |   5 +
+ arch/arm64/include/asm/traps.h                |   2 +
+ arch/arm64/include/uapi/asm/auxvec.h          |   3 +-
+ arch/arm64/include/uapi/asm/hwcap.h           |   1 +
+ arch/arm64/include/uapi/asm/ptrace.h          | 138 ++++
+ arch/arm64/include/uapi/asm/sigcontext.h      | 120 +++-
+ arch/arm64/kernel/armv8_deprecated.c          |  15 +-
+ arch/arm64/kernel/cpufeature.c                |  99 ++-
+ arch/arm64/kernel/cpuinfo.c                   |   7 +
+ arch/arm64/kernel/entry-fpsimd.S              |  17 +
+ arch/arm64/kernel/entry.S                     |  40 +-
+ arch/arm64/kernel/fpsimd.c                    | 902 +++++++++++++++++++++++++-
+ arch/arm64/kernel/head.S                      |  13 +-
+ arch/arm64/kernel/process.c                   |  24 +
+ arch/arm64/kernel/ptrace.c                    | 280 +++++++-
+ arch/arm64/kernel/signal.c                    | 216 +++++-
+ arch/arm64/kernel/signal32.c                  |   2 +-
+ arch/arm64/kernel/traps.c                     |   7 +-
+ arch/arm64/kvm/handle_exit.c                  |   8 +
+ arch/arm64/kvm/hyp/switch.c                   |  12 +-
+ arch/arm64/kvm/sys_regs.c                     | 292 +++++++--
+ fs/binfmt_elf.c                               |   6 +-
+ include/linux/regset.h                        |  67 +-
+ include/uapi/linux/elf.h                      |   1 +
+ include/uapi/linux/prctl.h                    |   9 +
+ kernel/sys.c                                  |  12 +
+ virt/kvm/arm/arm.c                            |   3 +
+ 43 files changed, 3014 insertions(+), 146 deletions(-)
+ create mode 100644 Documentation/arm64/sve.txt
+
+-- 
+2.1.4
