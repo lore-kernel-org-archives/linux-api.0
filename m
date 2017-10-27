@@ -1,53 +1,185 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 03/14] VFS: Implement a filesystem superblock creation/configuration context [ver #6]
-Date: Fri, 27 Oct 2017 17:03:04 +0100
-Message-ID: <3054.1509120184@warthog.procyon.org.uk>
-References: <CAOssrKd2MX0ao7f2X32js=72YmZ0exn4KkwdgrXB9tKY7KiSXg@mail.gmail.com> <150730494491.6182.5139368907374172391.stgit@warthog.procyon.org.uk> <150730496982.6182.10042997820796149075.stgit@warthog.procyon.org.uk> <CAOssrKfNtKLskdPWS_p87uFzDsZCoN+4L+_bcWBvX18mRVVf_Q@mail.gmail.com> <28791.1509035055@warthog.procyon.org.uk> <CAOssrKdm-znRnR80rxvzH8WVWf=sEkL1EGMzV4c3dyp_FK2-rA@mail.gmail.com> <29611.1509114932@warthog.procyon.org.uk>
+From: Michael Halcrow <mhalcrow@google.com>
+Subject: Re: [RFC PATCH 01/25] fs, fscrypt: move uapi definitions to new
+ header <linux/fscrypt.h>
+Date: Fri, 27 Oct 2017 11:01:41 -0700
+Message-ID: <20171027180141.GA10611@google.com>
+References: <20171023214058.128121-1-ebiggers3@gmail.com>
+ <20171023214058.128121-2-ebiggers3@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAOssrKd2MX0ao7f2X32js=72YmZ0exn4KkwdgrXB9tKY7KiSXg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-ID: <3053.1509120184.1-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, lkml <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171023214058.128121-2-ebiggers3@gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Eric Biggers <ebiggers3@gmail.com>
+Cc: linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, keyrings@vger.kernel.org, "Theodore Y . Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Gwendal Grignou <gwendal@chromium.org>, Ryo Hashimoto <hashimoto@chromium.org>, Sarthak Kukreti <sarthakkukreti@chromium.org>, Nick Desaulniers <ndesaulniers@google.com>, Eric Biggers <ebiggers@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-
-> Yes I did mean vfs_parse_sb_flag_option().
+On Mon, Oct 23, 2017 at 02:40:34PM -0700, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers@google.com>
 > 
-> Yes, I understand its purpose, but it would be cleaner if all the
-> option parsing was done in fc->ops->parse_option().
+> There are going to be more filesystem encryption definitions added, and
+> we don't want to use a disproportionate amount of space in <linux/fs.h>
+> for filesystem encryption stuff.  So move the fscrypt definitions to a
+> new header <linux/fscrypt.h>.
 > 
-> It might be worth introducing the vfs_parse_sb_flag_option(), to be
-> called from ->parse_option().
-
-I was trying to relieve the filesystem of the requirement to have to deal with
-common stuff and also the need to talk directly to the LSM.
-
-> > Btw, how would it affect the LSM?
+> For compatibility with existing userspace programs which may be
+> including <linux/fs.h>, <linux/fs.h> still includes the new header.
+> (It's debatable whether we really need this, though; the filesystem
+> encryption API is new enough that most if not all programs that are
+> using it have to declare it themselves anyway.)
 > 
-> LSM would have to reject a "reset" if not enough privileges to
-> *create* a new fs instance, since it essentially requires creating a
-> new config, which is what is done when creating an fs instance.
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-That's not what I'm asking.  Would the reset change LSM state?  Reset security
-labels and options?
+Reviewed-by: Michael Halcrow <mhalcrow@google.com>
 
-> > Sorry, how does the new, clean one do it without handling these options?
-> > There is no MS_* mask passed in, except to fsmount().
+> ---
+>  include/linux/fscrypt.h      |  2 +-
+>  include/uapi/linux/fs.h      | 50 +++--------------------------------------
+>  include/uapi/linux/fscrypt.h | 53 ++++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 57 insertions(+), 48 deletions(-)
+>  create mode 100644 include/uapi/linux/fscrypt.h
 > 
-> The new one certainly should.
-
-Should what?
-
-> Ignoring unknown flags/options is generally a bad idea.
-
-They're not unknown - just not of interest to the filesystem.
-
-David
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
+> index 53437bfdfcbc..f7aa7d62e235 100644
+> --- a/include/linux/fscrypt.h
+> +++ b/include/linux/fscrypt.h
+> @@ -19,7 +19,7 @@
+>  #include <linux/bio.h>
+>  #include <linux/dcache.h>
+>  #include <crypto/skcipher.h>
+> -#include <uapi/linux/fs.h>
+> +#include <uapi/linux/fscrypt.h>
+>  
+>  #define FS_CRYPTO_BLOCK_SIZE		16
+>  
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 56235dddea7d..6ecd3ee9960c 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -12,6 +12,9 @@
+>  #include <linux/limits.h>
+>  #include <linux/ioctl.h>
+>  #include <linux/types.h>
+> +#ifndef __KERNEL__
+> +#include <linux/fscrypt.h>
+> +#endif
+>  
+>  /*
+>   * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
+> @@ -253,53 +256,6 @@ struct fsxattr {
+>  #define FS_IOC_FSGETXATTR		_IOR ('X', 31, struct fsxattr)
+>  #define FS_IOC_FSSETXATTR		_IOW ('X', 32, struct fsxattr)
+>  
+> -/*
+> - * File system encryption support
+> - */
+> -/* Policy provided via an ioctl on the topmost directory */
+> -#define FS_KEY_DESCRIPTOR_SIZE	8
+> -
+> -#define FS_POLICY_FLAGS_PAD_4		0x00
+> -#define FS_POLICY_FLAGS_PAD_8		0x01
+> -#define FS_POLICY_FLAGS_PAD_16		0x02
+> -#define FS_POLICY_FLAGS_PAD_32		0x03
+> -#define FS_POLICY_FLAGS_PAD_MASK	0x03
+> -#define FS_POLICY_FLAGS_VALID		0x03
+> -
+> -/* Encryption algorithms */
+> -#define FS_ENCRYPTION_MODE_INVALID		0
+> -#define FS_ENCRYPTION_MODE_AES_256_XTS		1
+> -#define FS_ENCRYPTION_MODE_AES_256_GCM		2
+> -#define FS_ENCRYPTION_MODE_AES_256_CBC		3
+> -#define FS_ENCRYPTION_MODE_AES_256_CTS		4
+> -#define FS_ENCRYPTION_MODE_AES_128_CBC		5
+> -#define FS_ENCRYPTION_MODE_AES_128_CTS		6
+> -
+> -struct fscrypt_policy {
+> -	__u8 version;
+> -	__u8 contents_encryption_mode;
+> -	__u8 filenames_encryption_mode;
+> -	__u8 flags;
+> -	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
+> -};
+> -
+> -#define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
+> -#define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
+> -#define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
+> -
+> -/* Parameters for passing an encryption key into the kernel keyring */
+> -#define FS_KEY_DESC_PREFIX		"fscrypt:"
+> -#define FS_KEY_DESC_PREFIX_SIZE		8
+> -
+> -/* Structure that userspace passes to the kernel keyring */
+> -#define FS_MAX_KEY_SIZE			64
+> -
+> -struct fscrypt_key {
+> -	__u32 mode;
+> -	__u8 raw[FS_MAX_KEY_SIZE];
+> -	__u32 size;
+> -};
+> -
+>  /*
+>   * Inode flags (FS_IOC_GETFLAGS / FS_IOC_SETFLAGS)
+>   *
+> diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
+> new file mode 100644
+> index 000000000000..c09209fc42ea
+> --- /dev/null
+> +++ b/include/uapi/linux/fscrypt.h
+> @@ -0,0 +1,53 @@
+> +#ifndef _UAPI_LINUX_FSCRYPT_H
+> +#define _UAPI_LINUX_FSCRYPT_H
+> +
+> +#include <linux/types.h>
+> +
+> +/*
+> + * File system encryption support
+> + */
+> +/* Policy provided via an ioctl on the topmost directory */
+> +#define FS_KEY_DESCRIPTOR_SIZE	8
+> +
+> +#define FS_POLICY_FLAGS_PAD_4		0x00
+> +#define FS_POLICY_FLAGS_PAD_8		0x01
+> +#define FS_POLICY_FLAGS_PAD_16		0x02
+> +#define FS_POLICY_FLAGS_PAD_32		0x03
+> +#define FS_POLICY_FLAGS_PAD_MASK	0x03
+> +#define FS_POLICY_FLAGS_VALID		0x03
+> +
+> +/* Encryption algorithms */
+> +#define FS_ENCRYPTION_MODE_INVALID		0
+> +#define FS_ENCRYPTION_MODE_AES_256_XTS		1
+> +#define FS_ENCRYPTION_MODE_AES_256_GCM		2
+> +#define FS_ENCRYPTION_MODE_AES_256_CBC		3
+> +#define FS_ENCRYPTION_MODE_AES_256_CTS		4
+> +#define FS_ENCRYPTION_MODE_AES_128_CBC		5
+> +#define FS_ENCRYPTION_MODE_AES_128_CTS		6
+> +
+> +struct fscrypt_policy {
+> +	__u8 version;
+> +	__u8 contents_encryption_mode;
+> +	__u8 filenames_encryption_mode;
+> +	__u8 flags;
+> +	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
+> +};
+> +
+> +#define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
+> +#define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
+> +#define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
+> +
+> +/* Parameters for passing an encryption key into the kernel keyring */
+> +#define FS_KEY_DESC_PREFIX		"fscrypt:"
+> +#define FS_KEY_DESC_PREFIX_SIZE		8
+> +
+> +/* Structure that userspace passes to the kernel keyring */
+> +#define FS_MAX_KEY_SIZE			64
+> +
+> +struct fscrypt_key {
+> +	__u32 mode;
+> +	__u8 raw[FS_MAX_KEY_SIZE];
+> +	__u32 size;
+> +};
+> +
+> +#endif /* _UAPI_LINUX_FSCRYPT_H */
+> -- 
+> 2.15.0.rc0.271.g36b669edcc-goog
+> 
