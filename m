@@ -1,182 +1,71 @@
-From: Michael Halcrow <mhalcrow@google.com>
-Subject: Re: [RFC PATCH 06/25] fscrypt: add FS_IOC_ADD_ENCRYPTION_KEY ioctl
-Date: Fri, 27 Oct 2017 13:14:46 -0700
-Message-ID: <20171027201446.GF10611@google.com>
+From: Michael Halcrow <mhalcrow-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH 07/25] fs/inode.c: export inode_lru_list_del()
+Date: Fri, 27 Oct 2017 13:28:28 -0700
+Message-ID: <20171027202828.GA10022@google.com>
 References: <20171023214058.128121-1-ebiggers3@gmail.com>
- <20171023214058.128121-7-ebiggers3@gmail.com>
+ <20171023214058.128121-8-ebiggers3@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171023214058.128121-7-ebiggers3@gmail.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Eric Biggers <ebiggers3@gmail.com>
-Cc: linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, keyrings@vger.kernel.org, "Theodore Y . Ts'o" <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Gwendal Grignou <gwendal@chromium.org>, Ryo Hashimoto <hashimoto@chromium.org>, Sarthak Kukreti <sarthakkukreti@chromium.org>, Nick Desaulniers <ndesaulniers@google.com>, Eric Biggers <ebiggers@google.com>
+In-Reply-To: <20171023214058.128121-8-ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric Biggers <ebiggers3-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-fscrypt-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-f2fs-devel-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Theodore Y . Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Jaegeuk Kim <jaegeuk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Gwendal Grignou <gwendal-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Ryo Hashimoto <hashimoto-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Sarthak Kukreti <sarthakkukreti-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Nick Desaulniers <ndesaulniers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 23, 2017 at 02:40:39PM -0700, Eric Biggers wrote:
-> By having an API to add a key to the *filesystem* we'll be able to
-> eliminate all the above hacks and better express the intended semantics:
-> the "locked/unlocked" status of an encrypted directory is global.  And
-> orthogonally to encryption, existing mechanisms such as file permissions
-> and LSMs can and should continue to be used for the purpose of *access
-> control*.
+On Mon, Oct 23, 2017 at 02:40:40PM -0700, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> 
+> When a filesystem encryption key is removed, we need all files which had
+> been "unlocked" (had ->i_crypt_info set up) with it to appear "locked"
+> again.  This is most easily done by evicting the inodes.  This can
+> currently be done using 'echo 2 > /proc/sys/vm/drop_caches'; however,
+> that is overkill and not usable by non-root users.  In preparation for
+> allowing fs/crypto/ to evict just the needed inodes, export
+> inode_lru_list_del() to modules.
+> 
+> Signed-off-by: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-At some point I'd like to try to tackle the problem of making the
-encryption policy somehow *reflect* the access control policy.
-
-For now this change cleans up a real mess and makes things much more
-manageable and predictable.
-
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
-
-Reviewed-by: Michael Halcrow <mhalcrow@google.com>
+Reviewed-by: Michael Halcrow <mhalcrow-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
 > ---
->  fs/crypto/crypto.c              |  12 +-
->  fs/crypto/fscrypt_private.h     |   3 +
->  fs/crypto/keyinfo.c             | 351 +++++++++++++++++++++++++++++++++++++++-
->  include/linux/fscrypt_notsupp.h |   5 +
->  include/linux/fscrypt_supp.h    |   1 +
->  include/uapi/linux/fscrypt.h    |  41 +++--
->  6 files changed, 397 insertions(+), 16 deletions(-)
+>  fs/inode.c         | 5 ++---
+>  include/linux/fs.h | 1 +
+>  2 files changed, 3 insertions(+), 3 deletions(-)
 > 
-> diff --git a/fs/crypto/crypto.c b/fs/crypto/crypto.c
-> index 608f6bbe0f31..489c504ac20d 100644
-> --- a/fs/crypto/crypto.c
-> +++ b/fs/crypto/crypto.c
-> @@ -24,6 +24,7 @@
->  #include <linux/module.h>
->  #include <linux/scatterlist.h>
->  #include <linux/ratelimit.h>
-> +#include <linux/key-type.h>
->  #include <linux/dcache.h>
->  #include <linux/namei.h>
->  #include <crypto/aes.h>
-> @@ -449,6 +450,8 @@ int fscrypt_initialize(unsigned int cop_flags)
->   */
->  static int __init fscrypt_init(void)
+> diff --git a/fs/inode.c b/fs/inode.c
+> index d1e35b53bb23..30ce98956801 100644
+> --- a/fs/inode.c
+> +++ b/fs/inode.c
+> @@ -420,13 +420,12 @@ void inode_add_lru(struct inode *inode)
+>  		inode_lru_list_add(inode);
+>  }
+>  
+> -
+> -static void inode_lru_list_del(struct inode *inode)
+> +void inode_lru_list_del(struct inode *inode)
 >  {
-> +	int err = -ENOMEM;
-> +
->  	fscrypt_read_workqueue = alloc_workqueue("fscrypt_read_queue",
->  							WQ_HIGHPRI, 0);
->  	if (!fscrypt_read_workqueue)
-> @@ -462,14 +465,20 @@ static int __init fscrypt_init(void)
->  	if (!fscrypt_info_cachep)
->  		goto fail_free_ctx;
->  
-> +	err = register_key_type(&key_type_fscrypt_mk);
-> +	if (err)
-> +		goto fail_free_info;
-> +
->  	return 0;
->  
-> +fail_free_info:
-> +	kmem_cache_destroy(fscrypt_info_cachep);
->  fail_free_ctx:
->  	kmem_cache_destroy(fscrypt_ctx_cachep);
->  fail_free_queue:
->  	destroy_workqueue(fscrypt_read_workqueue);
->  fail:
-> -	return -ENOMEM;
-> +	return err;
+> -
+>  	if (list_lru_del(&inode->i_sb->s_inode_lru, &inode->i_lru))
+>  		this_cpu_dec(nr_unused);
 >  }
->  module_init(fscrypt_init)
+> +EXPORT_SYMBOL_GPL(inode_lru_list_del);
 >  
-> @@ -484,6 +493,7 @@ static void __exit fscrypt_exit(void)
->  		destroy_workqueue(fscrypt_read_workqueue);
->  	kmem_cache_destroy(fscrypt_ctx_cachep);
->  	kmem_cache_destroy(fscrypt_info_cachep);
-> +	unregister_key_type(&key_type_fscrypt_mk);
->  
->  	fscrypt_essiv_cleanup();
->  }
-> diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-> index 5cb80a2d39ea..b2fad12eeedb 100644
-> --- a/fs/crypto/fscrypt_private.h
-> +++ b/fs/crypto/fscrypt_private.h
-> @@ -27,6 +27,8 @@
->  
->  #define FS_KEY_DERIVATION_NONCE_SIZE		16
->  
-> +#define FSCRYPT_MIN_KEY_SIZE		16
-> +
 >  /**
->   * Encryption context for inode
->   *
-> @@ -93,6 +95,7 @@ extern struct page *fscrypt_alloc_bounce_page(struct fscrypt_ctx *ctx,
->  					      gfp_t gfp_flags);
+>   * inode_sb_list_add - add inode to the superblock list of inodes
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 8cfb0877d32c..2833ace2f01d 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -2879,6 +2879,7 @@ static inline void lockdep_annotate_inode_mutex_key(struct inode *inode) { };
+>  extern void unlock_new_inode(struct inode *);
+>  extern unsigned int get_next_ino(void);
+>  extern void evict_inodes(struct super_block *sb);
+> +extern void inode_lru_list_del(struct inode *inode);
 >  
->  /* keyinfo.c */
-> +extern struct key_type key_type_fscrypt_mk;
->  extern void __exit fscrypt_essiv_cleanup(void);
->  
->  #endif /* _FSCRYPT_PRIVATE_H */
-> diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
-> index d3a97c2cd4dd..3f1cb8bbc1e5 100644
-> --- a/fs/crypto/keyinfo.c
-> +++ b/fs/crypto/keyinfo.c
-> @@ -9,14 +9,307 @@
->   */
->  
->  #include <keys/user-type.h>
-> -#include <linux/scatterlist.h>
-> +#include <linux/key-type.h>
->  #include <linux/ratelimit.h>
-> +#include <linux/scatterlist.h>
-> +#include <linux/seq_file.h>
->  #include <crypto/aes.h>
->  #include <crypto/sha.h>
->  #include "fscrypt_private.h"
->  
->  static struct crypto_shash *essiv_hash_tfm;
->  
-> +/*
-> + * fscrypt_master_key_secret - secret key material of an in-use master key
-> + */
-> +struct fscrypt_master_key_secret {
-> +
-> +	/* Size of the raw key in bytes */
-> +	u32			size;
-> +
-> +	/* The raw key */
-> +	u8			raw[FSCRYPT_MAX_KEY_SIZE];
-> +};
-
-With structs fscrypt introduces, I suggest __randomize_layout wherever
-feasible.
-
-> +#define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE	\
-> +	(sizeof("fscrypt-") - 1 + sizeof(((struct super_block
-> *)0)->s_id) + 1)
-
-What function do the " - 1" and " + 1" parts serve here?  Readability?
-
-> +	key = find_master_key(inode->i_sb, &mk_spec);
-> +	if (IS_ERR(key)) {
-> +		if (key != ERR_PTR(-ENOKEY))
-> +			return PTR_ERR(key);
-> +		/*
-> +		 * As a legacy fallback, we search the current task's subscribed
-> +		 * keyrings in addition to ->s_master_keys.
-
-Please add an explicit comment that it's important for security that
-the ordering of these two searches be preserved.
-
-> +		 */
-> +		return find_and_derive_key_legacy(inode, ctx, derived_key,
-> +						  derived_keysize);
-> +	}
-> +	mk = key->payload.data[0];
-> +
-> +	/*
-> +	 * Require that the master key be at least as long as the derived key.
-> +	 * Otherwise, the derived key cannot possibly contain as much entropy as
-> +	 * that required by the encryption mode it will be used for.
-> +	 */
-> +	if (mk->mk_secret.size < derived_keysize) {
-
-As I've mentioned in a previous patch in this set, if we're going to
-get opinionated about source entropy, there's more we could
-measure/estimate than just the length.
+>  extern void __iget(struct inode * inode);
+>  extern void iget_failed(struct inode *);
+> -- 
+> 2.15.0.rc0.271.g36b669edcc-goog
+> 
