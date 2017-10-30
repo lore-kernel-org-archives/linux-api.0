@@ -1,900 +1,382 @@
-From: Oleksandr Shamray <oleksandrs@mellanox.com>
-Subject: [patch v10 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master driver
-Date: Mon, 30 Oct 2017 14:12:06 +0200
-Message-ID: <1509365528-28803-3-git-send-email-oleksandrs@mellanox.com>
-References: <1509365528-28803-1-git-send-email-oleksandrs@mellanox.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH] [RFC] vm: add a syscall to map a process memory into a pipe
+Date: Mon, 30 Oct 2017 13:47:31 +0100
+Message-ID: <CAKgNAkiSMhmK7JzVArAUejGPpfvKu0ut-WbFg=r22vk4p78PEg@mail.gmail.com>
+References: <20170810184616.22726-1-avagin@openvz.org>
+Reply-To: mtk.manpages@gmail.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1509365528-28803-1-git-send-email-oleksandrs@mellanox.com>
+In-Reply-To: <20170810184616.22726-1-avagin@openvz.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, arnd@arndb.de
-Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, mec@shout.net, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>, Jiri Pirko <jiri@mellanox.com>
+To: Andrei Vagin <avagin@openvz.org>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Driver adds support of Aspeed 2500/2400 series SOC JTAG master controller.
+Hi Andrei,
 
-Driver implements the following jtag ops:
-- freq_get;
-- freq_set;
-- status_get;
-- idle;
-- xfer;
+On 10 August 2017 at 20:46, Andrei Vagin <avagin@openvz.org> wrote:
+> It is a hybrid of process_vm_readv() and vmsplice().
+>
+> vmsplice can map memory from a current address space into a pipe.
+> process_vm_readv can read memory of another process.
+>
+> A new system call can map memory of another process into a pipe.
+>
+> ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
+>                         unsigned long nr_segs, unsigned int flags)
+>
+> All arguments are identical with vmsplice except pid which specifies a
+> target process.
 
-It has been tested on Mellanox system with BMC equipped with
-Aspeed 2520 SoC for programming CPLD devices.
+Can we have a man page for this new syscall please?
 
-Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
-Signed-off-by: Jiri Pirko <jiri@mellanox.com>
-Acked-by: Arnd Bergmann <arnd@arndb.de>
----
-v9->v10
-V8->v9
-Comments pointed by Arnd Bergmann <arnd@arndb.de>
-- add *data parameter to xfer function prototype
+Thanks,
 
-v7->v8
-Comments pointed by Joel Stanley <joel.stan@gmail.com>
-- aspeed_jtag_init replace goto to return;
-- change input variables type from __u32 to u32
-  in functios freq_get, freq_set, status_get
-- change sm_ variables type from char to u8
-- in jatg_init add disable clocks on error case
-- remove release_mem_region on error case
-- remove devm_free_irq on jtag_deinit
-- Fix misspelling Disabe/Disable
-- Change compatible string to ast2400 and ast2000
+Michael
 
-v6->v7
-Notifications from kbuild test robot <lkp@intel.com>
-- Add include <linux/types.h> to jtag-asapeed.c
 
-v5->v6
-v4->v5
-Comments pointed by Arnd Bergmann <arnd@arndb.de>
-- Added HAS_IOMEM dependence in Kconfig to avoid
-  "undefined reference to `devm_ioremap_resource'" error,
-  because in some arch this not supported
+> Currently if we want to dump a process memory to a file or to a socket,
+> we can use process_vm_readv() + write(), but it works slow, because data
+> are copied into a temporary user-space buffer.
+>
+> A second way is to use vmsplice() + splice(). It is more effective,
+> because data are not copied into a temporary buffer, but here is another
+> problem. vmsplice works with the currect address space, so it can be
+> used only if we inject our code into a target process.
+>
+> The second way suffers from a few other issues:
+> * a process has to be stopped to run a parasite code
+> * a number of pipes is limited, so it may be impossible to dump all
+>   memory in one iteration, and we have to stop process and inject our
+>   code a few times.
+> * pages in pipes are unreclaimable, so it isn't good to hold a lot of
+>   memory in pipes.
+>
+> The introduced syscall allows to use a second way without injecting any
+> code into a target process.
+>
+> My experiments shows that process_vmsplice() + splice() works two time
+> faster than process_vm_readv() + write().
+>
+> It is particularly useful on a pre-dump stage. On this stage we enable a
+> memory tracker, and then we are dumping  a process memory while a
+> process continues work. On the first iteration we are dumping all
+> memory, and then we are dumpung only modified memory from a previous
+> iteration.  After a few pre-dump operations, a process is stopped and
+> dumped finally. The pre-dump operations allow to significantly decrease
+> a process downtime, when a process is migrated to another host.
+>
+> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Cc: Pavel Emelyanov <xemul@virtuozzo.com>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Signed-off-by: Andrei Vagin <avagin@openvz.org>
+> ---
+>  fs/splice.c                       | 219 ++++++++++++++++++++++++++++++++++++++
+>  include/linux/compat.h            |   3 +
+>  include/linux/syscalls.h          |   4 +
+>  include/uapi/asm-generic/unistd.h |   5 +-
+>  4 files changed, 230 insertions(+), 1 deletion(-)
+>
+> diff --git a/fs/splice.c b/fs/splice.c
+> index ae41201..4b050a4 100644
+> --- a/fs/splice.c
+> +++ b/fs/splice.c
+> @@ -34,6 +34,7 @@
+>  #include <linux/socket.h>
+>  #include <linux/compat.h>
+>  #include <linux/sched/signal.h>
+> +#include <linux/sched/mm.h>
+>
+>  #include "internal.h"
+>
+> @@ -1374,6 +1375,201 @@ SYSCALL_DEFINE4(vmsplice, int, fd, const struct iovec __user *, iov,
+>         return error;
+>  }
+>
+> +/*
+> + * Map pages from a specified task into a pipe
+> + */
+> +static int remote_single_vec_to_pipe(struct task_struct *task,
+> +                       struct mm_struct *mm,
+> +                       const struct iovec *rvec,
+> +                       struct pipe_inode_info *pipe,
+> +                       unsigned int flags,
+> +                       size_t *total)
+> +{
+> +       struct pipe_buffer buf = {
+> +               .ops = &user_page_pipe_buf_ops,
+> +               .flags = flags
+> +       };
+> +       unsigned long addr = (unsigned long) rvec->iov_base;
+> +       unsigned long pa = addr & PAGE_MASK;
+> +       unsigned long start_offset = addr - pa;
+> +       unsigned long nr_pages;
+> +       ssize_t len = rvec->iov_len;
+> +       struct page *process_pages[16];
+> +       bool failed = false;
+> +       int ret = 0;
+> +
+> +       nr_pages = (addr + len - 1) / PAGE_SIZE - addr / PAGE_SIZE + 1;
+> +       while (nr_pages) {
+> +               long pages = min(nr_pages, 16UL);
+> +               int locked = 1, n;
+> +               ssize_t copied;
+> +
+> +               /*
+> +                * Get the pages we're interested in.  We must
+> +                * access remotely because task/mm might not
+> +                * current/current->mm
+> +                */
+> +               down_read(&mm->mmap_sem);
+> +               pages = get_user_pages_remote(task, mm, pa, pages, flags,
+> +                                             process_pages, NULL, &locked);
+> +               if (locked)
+> +                       up_read(&mm->mmap_sem);
+> +               if (pages <= 0) {
+> +                       failed = true;
+> +                       ret = -EFAULT;
+> +                       break;
+> +               }
+> +
+> +               copied = pages * PAGE_SIZE - start_offset;
+> +               if (copied > len)
+> +                       copied = len;
+> +               len -= copied;
+> +
+> +               for (n = 0; copied; n++, start_offset = 0) {
+> +                       int size = min_t(int, copied, PAGE_SIZE - start_offset);
+> +
+> +                       if (!failed) {
+> +                               buf.page = process_pages[n];
+> +                               buf.offset = start_offset;
+> +                               buf.len = size;
+> +                               ret = add_to_pipe(pipe, &buf);
+> +                               if (unlikely(ret < 0))
+> +                                       failed = true;
+> +                               else
+> +                                       *total += ret;
+> +                       } else {
+> +                               put_page(process_pages[n]);
+> +                       }
+> +                       copied -= size;
+> +               }
+> +               if (failed)
+> +                       break;
+> +               start_offset = 0;
+> +               nr_pages -= pages;
+> +               pa += pages * PAGE_SIZE;
+> +       }
+> +       return ret < 0 ? ret : 0;
+> +}
+> +
+> +static ssize_t remote_iovec_to_pipe(struct task_struct *task,
+> +                       struct mm_struct *mm,
+> +                       const struct iovec *rvec,
+> +                       unsigned long riovcnt,
+> +                       struct pipe_inode_info *pipe,
+> +                       unsigned int flags)
+> +{
+> +       size_t total = 0;
+> +       int ret = 0, i;
+> +
+> +       for (i = 0; i < riovcnt; i++) {
+> +               /* Work out address and page range required */
+> +               if (rvec[i].iov_len == 0)
+> +                       continue;
+> +
+> +               ret = remote_single_vec_to_pipe(
+> +                               task, mm, &rvec[i], pipe, flags, &total);
+> +               if (ret < 0)
+> +                       break;
+> +       }
+> +       return total ? total : ret;
+> +}
+> +
+> +static long process_vmsplice_to_pipe(struct task_struct *task,
+> +                               struct mm_struct *mm, struct file *file,
+> +                               const struct iovec __user *uiov,
+> +                               unsigned long nr_segs, unsigned int flags)
+> +{
+> +       struct pipe_inode_info *pipe;
+> +       struct iovec iovstack[UIO_FASTIOV];
+> +       struct iovec *iov = iovstack;
+> +       unsigned int buf_flag = 0;
+> +       long ret;
+> +
+> +       if (flags & SPLICE_F_GIFT)
+> +               buf_flag = PIPE_BUF_FLAG_GIFT;
+> +
+> +       pipe = get_pipe_info(file);
+> +       if (!pipe)
+> +               return -EBADF;
+> +
+> +       ret = rw_copy_check_uvector(CHECK_IOVEC_ONLY, uiov, nr_segs,
+> +                                       UIO_FASTIOV, iovstack, &iov);
+> +       if (ret < 0)
+> +               return ret;
+> +
+> +       pipe_lock(pipe);
+> +       ret = wait_for_space(pipe, flags);
+> +       if (!ret)
+> +               ret = remote_iovec_to_pipe(task, mm, iov,
+> +                                               nr_segs, pipe, buf_flag);
+> +       pipe_unlock(pipe);
+> +       if (ret > 0)
+> +               wakeup_pipe_readers(pipe);
+> +
+> +       if (iov != iovstack)
+> +               kfree(iov);
+> +       return ret;
+> +}
+> +
+> +/* process_vmsplice splices a process address range into a pipe. */
+> +SYSCALL_DEFINE5(process_vmsplice, int, pid, int, fd,
+> +               const struct iovec __user *, iov,
+> +               unsigned long, nr_segs, unsigned int, flags)
+> +{
+> +       struct task_struct *task;
+> +       struct mm_struct *mm;
+> +       struct fd f;
+> +       long ret;
+> +
+> +       if (unlikely(flags & ~SPLICE_F_ALL))
+> +               return -EINVAL;
+> +       if (unlikely(nr_segs > UIO_MAXIOV))
+> +               return -EINVAL;
+> +       else if (unlikely(!nr_segs))
+> +               return 0;
+> +
+> +       f = fdget(fd);
+> +       if (!f.file)
+> +               return -EBADF;
+> +
+> +       /* Get process information */
+> +       rcu_read_lock();
+> +       task = find_task_by_vpid(pid);
+> +       if (task)
+> +               get_task_struct(task);
+> +       rcu_read_unlock();
+> +       if (!task) {
+> +               ret = -ESRCH;
+> +               goto out_fput;
+> +       }
+> +
+> +       mm = mm_access(task, PTRACE_MODE_ATTACH_REALCREDS);
+> +       if (!mm || IS_ERR(mm)) {
+> +               ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
+> +               /*
+> +                * Explicitly map EACCES to EPERM as EPERM is a more a
+> +                * appropriate error code for process_vw_readv/writev
+> +                */
+> +               if (ret == -EACCES)
+> +                       ret = -EPERM;
+> +               goto put_task_struct;
+> +       }
+> +
+> +       ret = -EBADF;
+> +       if (f.file->f_mode & FMODE_WRITE)
+> +               ret = process_vmsplice_to_pipe(task, mm, f.file,
+> +                                               iov, nr_segs, flags);
+> +       mmput(mm);
+> +
+> +put_task_struct:
+> +       put_task_struct(task);
+> +
+> +out_fput:
+> +       fdput(f);
+> +
+> +       return ret;
+> +}
+> +
+>  #ifdef CONFIG_COMPAT
+>  COMPAT_SYSCALL_DEFINE4(vmsplice, int, fd, const struct compat_iovec __user *, iov32,
+>                     unsigned int, nr_segs, unsigned int, flags)
+> @@ -1393,6 +1589,29 @@ COMPAT_SYSCALL_DEFINE4(vmsplice, int, fd, const struct compat_iovec __user *, io
+>         }
+>         return sys_vmsplice(fd, iov, nr_segs, flags);
+>  }
+> +
+> +COMPAT_SYSCALL_DEFINE5(process_vmsplice, pid_t, pid, int, fd,
+> +                       const struct compat_iovec __user *, iov32,
+> +                       unsigned int, nr_segs, unsigned int, flags)
+> +{
+> +       struct iovec __user *iov;
+> +       unsigned int i;
+> +
+> +       if (nr_segs > UIO_MAXIOV)
+> +               return -EINVAL;
+> +
+> +       iov = compat_alloc_user_space(nr_segs * sizeof(struct iovec));
+> +       for (i = 0; i < nr_segs; i++) {
+> +               struct compat_iovec v;
+> +
+> +               if (get_user(v.iov_base, &iov32[i].iov_base) ||
+> +                   get_user(v.iov_len, &iov32[i].iov_len) ||
+> +                   put_user(compat_ptr(v.iov_base), &iov[i].iov_base) ||
+> +                   put_user(v.iov_len, &iov[i].iov_len))
+> +                       return -EFAULT;
+> +       }
+> +       return sys_process_vmsplice(pid, fd, iov, nr_segs, flags);
+> +}
+>  #endif
+>
+>  SYSCALL_DEFINE6(splice, int, fd_in, loff_t __user *, off_in,
+> diff --git a/include/linux/compat.h b/include/linux/compat.h
+> index 5a6a109..3590cc7 100644
+> --- a/include/linux/compat.h
+> +++ b/include/linux/compat.h
+> @@ -550,6 +550,9 @@ asmlinkage long compat_sys_getdents(unsigned int fd,
+>                                     unsigned int count);
+>  asmlinkage long compat_sys_vmsplice(int fd, const struct compat_iovec __user *,
+>                                     unsigned int nr_segs, unsigned int flags);
+> +asmlinkage long compat_sys_process_vmsplice(pid_t pid, int fd,
+> +                                   const struct compat_iovec __user *,
+> +                                   unsigned int nr_segs, unsigned int flags);
+>  asmlinkage long compat_sys_open(const char __user *filename, int flags,
+>                                 umode_t mode);
+>  asmlinkage long compat_sys_openat(int dfd, const char __user *filename,
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 3cb15ea..49bdf96 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -906,4 +906,8 @@ asmlinkage long sys_pkey_free(int pkey);
+>  asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
+>                           unsigned mask, struct statx __user *buffer);
+>
+> +asmlinkage long sys_process_vmsplice(pid_t pid,
+> +                       int fd, const struct iovec __user *iov,
+> +                       unsigned long nr_segs, unsigned int flags);
+> +
+>  #endif
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 061185a..d18019d 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -731,9 +731,12 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
+>  __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+>  #define __NR_statx 291
+>  __SYSCALL(__NR_statx,     sys_statx)
+> +#define __NR_process_vmsplice 292
+> +__SC_COMP(__NR_process_vmsplice, sys_process_vmsplice,
+> +         compat_sys_process_vmsplice)
+>
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 292
+> +#define __NR_syscalls 293
+>
+>  /*
+>   * All syscalls below here should go away really,
+> --
+> 2.9.4
+>
 
-v3->v4
-Comments pointed by Arnd Bergmann <arnd@arndb.de>
-- change transaction pointer tdio type  to __u64
-- change internal status type from enum to __u32
 
-v2->v3
 
-v1->v2
-Comments pointed by Greg KH <gregkh@linuxfoundation.org>
-- change license type from GPLv2/BSD to GPLv2
-
-Comments pointed by Neil Armstrong <narmstrong@baylibre.com>
-- Add clk_prepare_enable/clk_disable_unprepare in clock init/deinit
-- Change .compatible to soc-specific compatible names
-  aspeed,aspeed4000-jtag/aspeed5000-jtag
-- Added dt-bindings
-
-Comments pointed by Arnd Bergmann <arnd@arndb.de>
-- Reorder functions and removed the forward declarations
-- Add static const qualifier to state machine states transitions
-- Change .compatible to soc-specific compatible names
-  aspeed,aspeed4000-jtag/aspeed5000-jtag
-- Add dt-bindings
-
-Comments pointed by Randy Dunlap <rdunlap@infradead.org>
-- Change module name jtag-aspeed in description in Kconfig
-
-Comments pointed by kbuild test robot <lkp@intel.com>
-- Remove invalid include <asm/mach-types.h>
-- add resource_size instead of calculation
----
- drivers/jtag/Kconfig       |   13 +
- drivers/jtag/Makefile      |    1 +
- drivers/jtag/jtag-aspeed.c |  771 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 785 insertions(+), 0 deletions(-)
- create mode 100644 drivers/jtag/jtag-aspeed.c
-
-diff --git a/drivers/jtag/Kconfig b/drivers/jtag/Kconfig
-index 0fad1a3..098beb0 100644
---- a/drivers/jtag/Kconfig
-+++ b/drivers/jtag/Kconfig
-@@ -14,3 +14,16 @@ menuconfig JTAG
- 
- 	  To compile this driver as a module, choose M here: the module will
- 	  be called jtag.
-+
-+menuconfig JTAG_ASPEED
-+	tristate "Aspeed SoC JTAG controller support"
-+	depends on JTAG && HAS_IOMEM
-+	---help---
-+	  This provides a support for Aspeed JTAG device, equipped on
-+	  Aspeed SoC 24xx and 25xx families. Drivers allows programming
-+	  of hardware devices, connected to SoC through the JTAG interface.
-+
-+	  If you want this support, you should say Y here.
-+
-+	  To compile this driver as a module, choose M here: the module will
-+	  be called jtag-aspeed.
-diff --git a/drivers/jtag/Makefile b/drivers/jtag/Makefile
-index af37493..04a855e 100644
---- a/drivers/jtag/Makefile
-+++ b/drivers/jtag/Makefile
-@@ -1 +1,2 @@
- obj-$(CONFIG_JTAG)		+= jtag.o
-+obj-$(CONFIG_JTAG_ASPEED)	+= jtag-aspeed.o
-diff --git a/drivers/jtag/jtag-aspeed.c b/drivers/jtag/jtag-aspeed.c
-new file mode 100644
-index 0000000..0392751
---- /dev/null
-+++ b/drivers/jtag/jtag-aspeed.c
-@@ -0,0 +1,771 @@
-+/*
-+ * drivers/jtag/aspeed-jtag.c
-+ *
-+ * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
-+ * Copyright (c) 2017 Oleksandr Shamray <oleksandrs@mellanox.com>
-+ *
-+ * Released under the GPLv2 only.
-+ * SPDX-License-Identifier: GPL-2.0
-+ */
-+
-+#include <linux/clk.h>
-+#include <linux/device.h>
-+#include <linux/interrupt.h>
-+#include <linux/jtag.h>
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+#include <linux/of_address.h>
-+#include <linux/platform_device.h>
-+#include <linux/slab.h>
-+#include <linux/types.h>
-+#include <uapi/linux/jtag.h>
-+
-+#define ASPEED_JTAG_DATA		0x00
-+#define ASPEED_JTAG_INST		0x04
-+#define ASPEED_JTAG_CTRL		0x08
-+#define ASPEED_JTAG_ISR			0x0C
-+#define ASPEED_JTAG_SW			0x10
-+#define ASPEED_JTAG_TCK			0x14
-+#define ASPEED_JTAG_EC			0x18
-+
-+#define ASPEED_JTAG_DATA_MSB		0x01
-+#define ASPEED_JTAG_DATA_CHUNK_SIZE	0x20
-+
-+/* ASPEED_JTAG_CTRL: Engine Control */
-+#define ASPEED_JTAG_CTL_ENG_EN		BIT(31)
-+#define ASPEED_JTAG_CTL_ENG_OUT_EN	BIT(30)
-+#define ASPEED_JTAG_CTL_FORCE_TMS	BIT(29)
-+#define ASPEED_JTAG_CTL_INST_LEN(x)	((x) << 20)
-+#define ASPEED_JTAG_CTL_LASPEED_INST	BIT(17)
-+#define ASPEED_JTAG_CTL_INST_EN		BIT(16)
-+#define ASPEED_JTAG_CTL_DR_UPDATE	BIT(10)
-+#define ASPEED_JTAG_CTL_DATA_LEN(x)	((x) << 4)
-+#define ASPEED_JTAG_CTL_LASPEED_DATA	BIT(1)
-+#define ASPEED_JTAG_CTL_DATA_EN		BIT(0)
-+
-+/* ASPEED_JTAG_ISR : Interrupt status and enable */
-+#define ASPEED_JTAG_ISR_INST_PAUSE	BIT(19)
-+#define ASPEED_JTAG_ISR_INST_COMPLETE	BIT(18)
-+#define ASPEED_JTAG_ISR_DATA_PAUSE	BIT(17)
-+#define ASPEED_JTAG_ISR_DATA_COMPLETE	BIT(16)
-+#define ASPEED_JTAG_ISR_INST_PAUSE_EN	BIT(3)
-+#define ASPEED_JTAG_ISR_INST_COMPLETE_EN BIT(2)
-+#define ASPEED_JTAG_ISR_DATA_PAUSE_EN	BIT(1)
-+#define ASPEED_JTAG_ISR_DATA_COMPLETE_EN BIT(0)
-+#define ASPEED_JTAG_ISR_INT_EN_MASK	GENMASK(3, 0)
-+#define ASPEED_JTAG_ISR_INT_MASK	GENMASK(19, 16)
-+
-+/* ASPEED_JTAG_SW : Software Mode and Status */
-+#define ASPEED_JTAG_SW_MODE_EN		BIT(19)
-+#define ASPEED_JTAG_SW_MODE_TCK		BIT(18)
-+#define ASPEED_JTAG_SW_MODE_TMS		BIT(17)
-+#define ASPEED_JTAG_SW_MODE_TDIO	BIT(16)
-+
-+/* ASPEED_JTAG_TCK : TCK Control */
-+#define ASPEED_JTAG_TCK_DIVISOR_MASK	GENMASK(10, 0)
-+#define ASPEED_JTAG_TCK_GET_DIV(x)	((x) & ASPEED_JTAG_TCK_DIVISOR_MASK)
-+
-+/* ASPEED_JTAG_EC : Controller set for go to IDLE */
-+#define ASPEED_JTAG_EC_GO_IDLE		BIT(0)
-+
-+#define ASPEED_JTAG_IOUT_LEN(len)	(ASPEED_JTAG_CTL_ENG_EN |\
-+					 ASPEED_JTAG_CTL_ENG_OUT_EN |\
-+					 ASPEED_JTAG_CTL_INST_LEN(len))
-+
-+#define ASPEED_JTAG_DOUT_LEN(len)	(ASPEED_JTAG_CTL_ENG_EN |\
-+					 ASPEED_JTAG_CTL_ENG_OUT_EN |\
-+					 ASPEED_JTAG_CTL_DATA_LEN(len))
-+
-+#define ASPEED_JTAG_TCK_WAIT		10
-+#define ASPEED_JTAG_RESET_CNTR		10
-+
-+#define ASPEED_JTAG_NAME		"jtag-aspeed"
-+
-+struct aspeed_jtag {
-+	void __iomem			*reg_base;
-+	struct device			*dev;
-+	struct clk			*pclk;
-+	enum jtag_endstate		status;
-+	int				irq;
-+	u32				flag;
-+	wait_queue_head_t		jtag_wq;
-+	bool				is_open;
-+};
-+
-+static char *end_status_str[] = {"idle", "ir pause", "drpause"};
-+
-+static u32 aspeed_jtag_read(struct aspeed_jtag *aspeed_jtag, u32 reg)
-+{
-+	return readl(aspeed_jtag->reg_base + reg);
-+}
-+
-+static void
-+aspeed_jtag_write(struct aspeed_jtag *aspeed_jtag, u32 val, u32 reg)
-+{
-+	writel(val, aspeed_jtag->reg_base + reg);
-+}
-+
-+static int aspeed_jtag_freq_set(struct jtag *jtag, u32 freq)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+	unsigned long apb_frq;
-+	u32 tck_val;
-+	u16 div;
-+
-+	apb_frq = clk_get_rate(aspeed_jtag->pclk);
-+	div = (apb_frq % freq == 0) ? (apb_frq / freq) - 1 : (apb_frq / freq);
-+	tck_val = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_TCK);
-+	aspeed_jtag_write(aspeed_jtag,
-+			  (tck_val & ASPEED_JTAG_TCK_DIVISOR_MASK) | div,
-+			  ASPEED_JTAG_TCK);
-+	return 0;
-+}
-+
-+static int aspeed_jtag_freq_get(struct jtag *jtag, u32 *frq)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+	u32 pclk;
-+	u32 tck;
-+
-+	pclk = clk_get_rate(aspeed_jtag->pclk);
-+	tck = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_TCK);
-+	*frq = pclk / (ASPEED_JTAG_TCK_GET_DIV(tck) + 1);
-+
-+	return 0;
-+}
-+
-+static void aspeed_jtag_sw_delay(struct aspeed_jtag *aspeed_jtag, int cnt)
-+{
-+	int i;
-+
-+	for (i = 0; i < cnt; i++)
-+		aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_SW);
-+}
-+
-+static char aspeed_jtag_tck_cycle(struct aspeed_jtag *aspeed_jtag,
-+				  u8 tms, u8 tdi)
-+{
-+	char tdo = 0;
-+
-+	/* TCK = 0 */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  (tms * ASPEED_JTAG_SW_MODE_TMS) |
-+			  (tdi * ASPEED_JTAG_SW_MODE_TDIO), ASPEED_JTAG_SW);
-+
-+	aspeed_jtag_sw_delay(aspeed_jtag, ASPEED_JTAG_TCK_WAIT);
-+
-+	/* TCK = 1 */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TCK |
-+			  (tms * ASPEED_JTAG_SW_MODE_TMS) |
-+			  (tdi * ASPEED_JTAG_SW_MODE_TDIO), ASPEED_JTAG_SW);
-+
-+	if (aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_SW) &
-+	    ASPEED_JTAG_SW_MODE_TDIO)
-+		tdo = 1;
-+
-+	aspeed_jtag_sw_delay(aspeed_jtag, ASPEED_JTAG_TCK_WAIT);
-+
-+	/* TCK = 0 */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  (tms * ASPEED_JTAG_SW_MODE_TMS) |
-+			  (tdi * ASPEED_JTAG_SW_MODE_TDIO), ASPEED_JTAG_SW);
-+	return tdo;
-+}
-+
-+static void aspeed_jtag_wait_instruction_pause(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_INST_PAUSE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_INST_PAUSE;
-+}
-+
-+static void
-+aspeed_jtag_wait_instruction_complete(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_INST_COMPLETE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_INST_COMPLETE;
-+}
-+
-+static void
-+aspeed_jtag_wait_data_pause_complete(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_DATA_PAUSE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_DATA_PAUSE;
-+}
-+
-+static void aspeed_jtag_wait_data_complete(struct aspeed_jtag *aspeed_jtag)
-+{
-+	wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
-+				 ASPEED_JTAG_ISR_DATA_COMPLETE);
-+	aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_DATA_COMPLETE;
-+}
-+
-+static void aspeed_jtag_sm_cycle(struct aspeed_jtag *aspeed_jtag, const u8 *tms,
-+				 int len)
-+{
-+	int i;
-+
-+	for (i = 0; i < len; i++)
-+		aspeed_jtag_tck_cycle(aspeed_jtag, tms[i], 0);
-+}
-+
-+static void aspeed_jtag_run_test_idle_sw(struct aspeed_jtag *aspeed_jtag,
-+					 struct jtag_run_test_idle *runtest)
-+{
-+	static const u8 sm_pause_irpause[] = {1, 1, 1, 1, 0, 1, 0};
-+	static const u8 sm_pause_drpause[] = {1, 1, 1, 0, 1, 0};
-+	static const u8 sm_idle_irpause[] = {1, 1, 0, 1, 0};
-+	static const u8 sm_idle_drpause[] = {1, 0, 1, 0};
-+	static const u8 sm_pause_idle[] = {1, 1, 0};
-+	int i;
-+
-+	/* SW mode from idle/pause-> to pause/idle */
-+	if (runtest->reset) {
-+		for (i = 0; i < ASPEED_JTAG_RESET_CNTR; i++)
-+			aspeed_jtag_tck_cycle(aspeed_jtag, 1, 0);
-+	}
-+
-+	switch (aspeed_jtag->status) {
-+	case JTAG_STATE_IDLE:
-+		switch (runtest->endstate) {
-+		case JTAG_STATE_PAUSEIR:
-+			/* ->DRSCan->IRSCan->IRCap->IRExit1->PauseIR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_idle_irpause,
-+					     sizeof(sm_idle_irpause));
-+
-+			aspeed_jtag->status = JTAG_STATE_PAUSEIR;
-+			break;
-+		case JTAG_STATE_PAUSEDR:
-+			/* ->DRSCan->DRCap->DRExit1->PauseDR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_idle_drpause,
-+					     sizeof(sm_idle_drpause));
-+
-+			aspeed_jtag->status = JTAG_STATE_PAUSEDR;
-+			break;
-+		case JTAG_STATE_IDLE:
-+			/* IDLE */
-+			aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
-+			aspeed_jtag->status = JTAG_STATE_IDLE;
-+			break;
-+		default:
-+			break;
-+		}
-+		break;
-+
-+	case JTAG_STATE_PAUSEIR:
-+	/* Fall-through */
-+	case JTAG_STATE_PAUSEDR:
-+		/* From IR/DR Pause */
-+		switch (runtest->endstate) {
-+		case JTAG_STATE_PAUSEIR:
-+			/*
-+			 * to Exit2 IR/DR->Updt IR/DR->DRSCan->IRSCan->IRCap->
-+			 * IRExit1->PauseIR
-+			 */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_irpause,
-+					     sizeof(sm_pause_irpause));
-+
-+			aspeed_jtag->status = JTAG_STATE_PAUSEIR;
-+			break;
-+		case JTAG_STATE_PAUSEDR:
-+			/*
-+			 * to Exit2 IR/DR->Updt IR/DR->DRSCan->DRCap->
-+			 * DRExit1->PauseDR
-+			 */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_drpause,
-+					     sizeof(sm_pause_drpause));
-+			aspeed_jtag->status = JTAG_STATE_PAUSEDR;
-+			break;
-+		case JTAG_STATE_IDLE:
-+			/* to Exit2 IR/DR->Updt IR/DR->IDLE */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_idle,
-+					     sizeof(sm_pause_idle));
-+			aspeed_jtag->status = JTAG_STATE_IDLE;
-+			break;
-+		default:
-+			break;
-+		}
-+		break;
-+
-+	default:
-+		dev_err(aspeed_jtag->dev, "aspeed_jtag_run_test_idle error\n");
-+		break;
-+	}
-+
-+	/* Stay on IDLE for at least  TCK cycle */
-+	for (i = 0; i < runtest->tck; i++)
-+		aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
-+}
-+
-+/**
-+ * aspeed_jtag_run_test_idle:
-+ * JTAG reset: generates at least 9 TMS high and 1 TMS low to force
-+ * devices into Run-Test/Idle State.
-+ */
-+static int aspeed_jtag_idle(struct jtag *jtag,
-+			    struct jtag_run_test_idle *runtest)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+
-+	dev_dbg(aspeed_jtag->dev, "aspeed_jtag runtest, status:%d, mode:%s, state:%s, reset:%d, tck:%d\n",
-+		aspeed_jtag->status, runtest->mode ? "SW" : "HW",
-+		end_status_str[runtest->endstate], runtest->reset,
-+		runtest->tck);
-+
-+	if (runtest->mode) {
-+		aspeed_jtag_run_test_idle_sw(aspeed_jtag, runtest);
-+		return 0;
-+	}
-+
-+	/* Disable sw mode */
-+	aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_SW);
-+	/* x TMS high + 1 TMS low */
-+	if (runtest->reset)
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_CTL_ENG_EN |
-+				  ASPEED_JTAG_CTL_ENG_OUT_EN |
-+				  ASPEED_JTAG_CTL_FORCE_TMS, ASPEED_JTAG_CTRL);
-+	else
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_EC_GO_IDLE,
-+				  ASPEED_JTAG_EC);
-+
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+
-+	aspeed_jtag->status = JTAG_STATE_IDLE;
-+	return 0;
-+}
-+
-+static void aspeed_jtag_xfer_sw(struct aspeed_jtag *aspeed_jtag,
-+				struct jtag_xfer *xfer, unsigned long *data)
-+{
-+	unsigned long remain_xfer = xfer->length;
-+	unsigned long shift_bits = 0;
-+	unsigned long index = 0;
-+	unsigned long tdi;
-+	char          tdo;
-+
-+	if (xfer->direction == JTAG_READ_XFER)
-+		tdi = UINT_MAX;
-+	else
-+		tdi = data[index];
-+
-+	while (remain_xfer > 1) {
-+		tdo = aspeed_jtag_tck_cycle(aspeed_jtag, 0,
-+					    tdi & ASPEED_JTAG_DATA_MSB);
-+		data[index] |= tdo << (shift_bits %
-+					    ASPEED_JTAG_DATA_CHUNK_SIZE);
-+
-+		tdi >>= 1;
-+		shift_bits++;
-+		remain_xfer--;
-+
-+		if (shift_bits % ASPEED_JTAG_DATA_CHUNK_SIZE == 0) {
-+			dev_dbg(aspeed_jtag->dev, "R/W data[%lu]:%lx\n",
-+				index, data[index]);
-+
-+			tdo = 0;
-+			index++;
-+
-+			if (xfer->direction == JTAG_READ_XFER)
-+				tdi = UINT_MAX;
-+			else
-+				tdi = data[index];
-+		}
-+	}
-+
-+	tdo = aspeed_jtag_tck_cycle(aspeed_jtag, 1, tdi & ASPEED_JTAG_DATA_MSB);
-+	data[index] |= tdo << (shift_bits % ASPEED_JTAG_DATA_CHUNK_SIZE);
-+}
-+
-+static void aspeed_jtag_xfer_push_data(struct aspeed_jtag *aspeed_jtag,
-+				       enum jtag_xfer_type type, u32 bits_len)
-+{
-+	dev_dbg(aspeed_jtag->dev, "shift bits %d\n", bits_len);
-+
-+	if (type == JTAG_SIR_XFER) {
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_IOUT_LEN(bits_len),
-+				  ASPEED_JTAG_CTRL);
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_DOUT_LEN(bits_len) |
-+				  ASPEED_JTAG_CTL_INST_EN, ASPEED_JTAG_CTRL);
-+	} else {
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_DOUT_LEN(bits_len),
-+				  ASPEED_JTAG_CTRL);
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_DOUT_LEN(bits_len) |
-+				  ASPEED_JTAG_CTL_DATA_EN, ASPEED_JTAG_CTRL);
-+	}
-+}
-+
-+static void aspeed_jtag_xfer_push_data_last(struct aspeed_jtag *aspeed_jtag,
-+					    enum jtag_xfer_type type,
-+					    u32 shift_bits,
-+					    enum jtag_endstate endstate)
-+{
-+	if (endstate != JTAG_STATE_IDLE) {
-+		if (type == JTAG_SIR_XFER) {
-+			dev_dbg(aspeed_jtag->dev, "IR Keep Pause\n");
-+
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits),
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_INST_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_instruction_pause(aspeed_jtag);
-+		} else {
-+			dev_dbg(aspeed_jtag->dev, "DR Keep Pause\n");
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_DR_UPDATE,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_DR_UPDATE |
-+					  ASPEED_JTAG_CTL_DATA_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_data_pause_complete(aspeed_jtag);
-+		}
-+	} else {
-+		if (type == JTAG_SIR_XFER) {
-+			dev_dbg(aspeed_jtag->dev, "IR go IDLE\n");
-+
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_INST,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_IOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_INST |
-+					  ASPEED_JTAG_CTL_INST_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_instruction_complete(aspeed_jtag);
-+		} else {
-+			dev_dbg(aspeed_jtag->dev, "DR go IDLE\n");
-+
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_DATA,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_write(aspeed_jtag,
-+					  ASPEED_JTAG_DOUT_LEN(shift_bits) |
-+					  ASPEED_JTAG_CTL_LASPEED_DATA |
-+					  ASPEED_JTAG_CTL_DATA_EN,
-+					  ASPEED_JTAG_CTRL);
-+			aspeed_jtag_wait_data_complete(aspeed_jtag);
-+		}
-+	}
-+}
-+
-+static void aspeed_jtag_xfer_hw(struct aspeed_jtag *aspeed_jtag,
-+				struct jtag_xfer *xfer, unsigned long *data)
-+{
-+	unsigned long remain_xfer = xfer->length;
-+	unsigned long index = 0;
-+	char shift_bits;
-+	u32 data_reg;
-+
-+	data_reg = xfer->type == JTAG_SIR_XFER ?
-+		   ASPEED_JTAG_INST : ASPEED_JTAG_DATA;
-+	while (remain_xfer) {
-+		if (xfer->direction == JTAG_WRITE_XFER) {
-+			dev_dbg(aspeed_jtag->dev, "W dr->dr_data[%lu]:%lx\n",
-+				index, data[index]);
-+
-+			aspeed_jtag_write(aspeed_jtag, data[index], data_reg);
-+		} else {
-+			aspeed_jtag_write(aspeed_jtag, 0, data_reg);
-+		}
-+
-+		if (remain_xfer > ASPEED_JTAG_DATA_CHUNK_SIZE) {
-+			shift_bits = ASPEED_JTAG_DATA_CHUNK_SIZE;
-+
-+			/*
-+			 * Read bytes were not equals to column length
-+			 * and go to Pause-DR
-+			 */
-+			aspeed_jtag_xfer_push_data(aspeed_jtag, xfer->type,
-+						   shift_bits);
-+		} else {
-+			/*
-+			 * Read bytes equals to column length =>
-+			 * Update-DR
-+			 */
-+			shift_bits = remain_xfer;
-+			aspeed_jtag_xfer_push_data_last(aspeed_jtag, xfer->type,
-+							shift_bits,
-+							xfer->endstate);
-+		}
-+
-+		if (xfer->direction == JTAG_READ_XFER) {
-+			if (shift_bits < ASPEED_JTAG_DATA_CHUNK_SIZE) {
-+				data[index] = aspeed_jtag_read(aspeed_jtag,
-+							       data_reg);
-+
-+				data[index] >>= ASPEED_JTAG_DATA_CHUNK_SIZE -
-+								shift_bits;
-+			} else {
-+				data[index] = aspeed_jtag_read(aspeed_jtag,
-+							       data_reg);
-+			}
-+			dev_dbg(aspeed_jtag->dev, "R dr->dr_data[%lu]:%lx\n",
-+				index, data[index]);
-+		}
-+
-+		remain_xfer = remain_xfer - shift_bits;
-+		index++;
-+		dev_dbg(aspeed_jtag->dev, "remain_xfer %lu\n", remain_xfer);
-+	}
-+}
-+
-+static int aspeed_jtag_xfer(struct jtag *jtag, struct jtag_xfer *xfer,
-+			    u8 *xfer_data)
-+{
-+	static const u8 sm_update_shiftir[] = {1, 1, 0, 0};
-+	static const u8 sm_update_shiftdr[] = {1, 0, 0};
-+	static const u8 sm_pause_idle[] = {1, 1, 0};
-+	static const u8 sm_pause_update[] = {1, 1};
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+	unsigned long *data = (unsigned long *)xfer_data;
-+	unsigned long remain_xfer = xfer->length;
-+	unsigned long offset;
-+	char dbg_str[256];
-+	int pos = 0;
-+	int i;
-+
-+	for (offset = 0, i = 0; offset < xfer->length;
-+			offset += ASPEED_JTAG_DATA_CHUNK_SIZE, i++) {
-+		pos += snprintf(&dbg_str[pos], sizeof(dbg_str) - pos,
-+				"0x%08lx ", data[i]);
-+	}
-+
-+	dev_dbg(aspeed_jtag->dev, "aspeed_jtag %s %s xfer, mode:%s, END:%d, len:%lu, TDI[%s]\n",
-+		xfer->type == JTAG_SIR_XFER ? "SIR" : "SDR",
-+		xfer->direction == JTAG_READ_XFER ? "READ" : "WRITE",
-+		xfer->mode ? "SW" : "HW",
-+		xfer->endstate, remain_xfer, dbg_str);
-+
-+	if (xfer->mode == JTAG_XFER_SW_MODE) {
-+		/* SW mode */
-+		aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+				  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+
-+		if (aspeed_jtag->status != JTAG_STATE_IDLE) {
-+			/*IR/DR Pause->Exit2 IR / DR->Update IR /DR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_update,
-+					     sizeof(sm_pause_update));
-+		}
-+
-+		if (xfer->type == JTAG_SIR_XFER)
-+			/* ->IRSCan->CapIR->ShiftIR */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_update_shiftir,
-+					     sizeof(sm_update_shiftir));
-+		else
-+			/* ->DRScan->DRCap->DRShift */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_update_shiftdr,
-+					     sizeof(sm_update_shiftdr));
-+
-+		aspeed_jtag_xfer_sw(aspeed_jtag, xfer, data);
-+
-+		/* DIPause/DRPause */
-+		aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
-+
-+		if (xfer->endstate == JTAG_STATE_IDLE) {
-+			/* ->DRExit2->DRUpdate->IDLE */
-+			aspeed_jtag_sm_cycle(aspeed_jtag, sm_pause_idle,
-+					     sizeof(sm_pause_idle));
-+		}
-+	} else {
-+		/* hw mode */
-+		aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_SW);
-+		aspeed_jtag_xfer_hw(aspeed_jtag, xfer, data);
-+	}
-+
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+	aspeed_jtag->status = xfer->endstate;
-+	return 0;
-+}
-+
-+static int aspeed_jtag_status_get(struct jtag *jtag, u32 *status)
-+{
-+	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-+
-+	*status = aspeed_jtag->status;
-+	return 0;
-+}
-+
-+static irqreturn_t aspeed_jtag_interrupt(s32 this_irq, void *dev_id)
-+{
-+	struct aspeed_jtag *aspeed_jtag = dev_id;
-+	irqreturn_t ret;
-+	u32 status;
-+
-+	status = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_ISR);
-+	dev_dbg(aspeed_jtag->dev, "status %x\n", status);
-+
-+	if (status & ASPEED_JTAG_ISR_INT_MASK) {
-+		aspeed_jtag_write(aspeed_jtag,
-+				  (status & ASPEED_JTAG_ISR_INT_MASK)
-+				  | (status & ASPEED_JTAG_ISR_INT_EN_MASK),
-+				  ASPEED_JTAG_ISR);
-+		aspeed_jtag->flag |= status & ASPEED_JTAG_ISR_INT_MASK;
-+	}
-+
-+	if (aspeed_jtag->flag) {
-+		wake_up_interruptible(&aspeed_jtag->jtag_wq);
-+		ret = IRQ_HANDLED;
-+	} else {
-+		dev_err(aspeed_jtag->dev, "aspeed_jtag irq status:%x\n",
-+			status);
-+		ret = IRQ_NONE;
-+	}
-+	return ret;
-+}
-+
-+int aspeed_jtag_init(struct platform_device *pdev,
-+		     struct aspeed_jtag *aspeed_jtag)
-+{
-+	struct resource *res;
-+	int err;
-+
-+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-+	aspeed_jtag->reg_base = devm_ioremap_resource(aspeed_jtag->dev, res);
-+	if (IS_ERR(aspeed_jtag->reg_base))
-+		return -ENOMEM;
-+
-+	aspeed_jtag->pclk = devm_clk_get(aspeed_jtag->dev, NULL);
-+	if (IS_ERR(aspeed_jtag->pclk)) {
-+		dev_err(aspeed_jtag->dev, "devm_clk_get failed\n");
-+		return PTR_ERR(aspeed_jtag->pclk);
-+	}
-+
-+	clk_prepare_enable(aspeed_jtag->pclk);
-+
-+	aspeed_jtag->irq = platform_get_irq(pdev, 0);
-+	if (aspeed_jtag->irq < 0) {
-+		dev_err(aspeed_jtag->dev, "no irq specified\n");
-+		err = -ENOENT;
-+		goto clk_unprep;
-+	}
-+
-+	/* Enable clock */
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_CTL_ENG_EN |
-+			  ASPEED_JTAG_CTL_ENG_OUT_EN, ASPEED_JTAG_CTRL);
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
-+			  ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
-+
-+	err = devm_request_irq(aspeed_jtag->dev, aspeed_jtag->irq,
-+			       aspeed_jtag_interrupt, 0,
-+			       "aspeed-jtag", aspeed_jtag);
-+	if (err) {
-+		dev_err(aspeed_jtag->dev, "aspeed_jtag unable to get IRQ");
-+		goto clk_unprep;
-+	}
-+	dev_dbg(&pdev->dev, "aspeed_jtag:IRQ %d.\n", aspeed_jtag->irq);
-+
-+	aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_ISR_INST_PAUSE |
-+			  ASPEED_JTAG_ISR_INST_COMPLETE |
-+			  ASPEED_JTAG_ISR_DATA_PAUSE |
-+			  ASPEED_JTAG_ISR_DATA_COMPLETE |
-+			  ASPEED_JTAG_ISR_INST_PAUSE_EN |
-+			  ASPEED_JTAG_ISR_INST_COMPLETE_EN |
-+			  ASPEED_JTAG_ISR_DATA_PAUSE_EN |
-+			  ASPEED_JTAG_ISR_DATA_COMPLETE_EN,
-+			  ASPEED_JTAG_ISR);
-+
-+	aspeed_jtag->flag = 0;
-+	init_waitqueue_head(&aspeed_jtag->jtag_wq);
-+	return 0;
-+
-+clk_unprep:
-+	clk_disable_unprepare(aspeed_jtag->pclk);
-+	return err;
-+}
-+
-+int aspeed_jtag_deinit(struct platform_device *pdev,
-+		       struct aspeed_jtag *aspeed_jtag)
-+{
-+	aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_ISR);
-+	/* Disable clock */
-+	aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_CTRL);
-+	clk_disable_unprepare(aspeed_jtag->pclk);
-+	return 0;
-+}
-+
-+static const struct jtag_ops aspeed_jtag_ops = {
-+	.freq_get = aspeed_jtag_freq_get,
-+	.freq_set = aspeed_jtag_freq_set,
-+	.status_get = aspeed_jtag_status_get,
-+	.idle = aspeed_jtag_idle,
-+	.xfer = aspeed_jtag_xfer
-+};
-+
-+static int aspeed_jtag_probe(struct platform_device *pdev)
-+{
-+	struct aspeed_jtag *aspeed_jtag;
-+	struct jtag *jtag;
-+	int err;
-+
-+	if (!of_device_is_compatible(pdev->dev.of_node, "aspeed,aspeed-jtag"))
-+		return -ENOMEM;
-+
-+	jtag = jtag_alloc(sizeof(*aspeed_jtag), &aspeed_jtag_ops);
-+	if (!jtag)
-+		return -ENODEV;
-+
-+	platform_set_drvdata(pdev, jtag);
-+	aspeed_jtag = jtag_priv(jtag);
-+	aspeed_jtag->dev = &pdev->dev;
-+
-+	/* Initialize device*/
-+	err = aspeed_jtag_init(pdev, aspeed_jtag);
-+	if (err)
-+		goto err_jtag_init;
-+
-+	/* Initialize JTAG core structure*/
-+	err = jtag_register(jtag);
-+	if (err)
-+		goto err_jtag_register;
-+
-+	return 0;
-+
-+err_jtag_register:
-+	aspeed_jtag_deinit(pdev, aspeed_jtag);
-+err_jtag_init:
-+	jtag_free(jtag);
-+	return err;
-+}
-+
-+static int aspeed_jtag_remove(struct platform_device *pdev)
-+{
-+	struct jtag *jtag;
-+
-+	jtag = platform_get_drvdata(pdev);
-+	aspeed_jtag_deinit(pdev, jtag_priv(jtag));
-+	jtag_unregister(jtag);
-+	jtag_free(jtag);
-+	return 0;
-+}
-+
-+static const struct of_device_id aspeed_jtag_of_match[] = {
-+	{ .compatible = "aspeed,ast2400-jtag", },
-+	{ .compatible = "aspeed,ast2500-jtag", },
-+	{}
-+};
-+
-+static struct platform_driver aspeed_jtag_driver = {
-+	.probe = aspeed_jtag_probe,
-+	.remove = aspeed_jtag_remove,
-+	.driver = {
-+		.name = ASPEED_JTAG_NAME,
-+		.of_match_table = aspeed_jtag_of_match,
-+	},
-+};
-+module_platform_driver(aspeed_jtag_driver);
-+
-+MODULE_AUTHOR("Oleksandr Shamray <oleksandrs@mellanox.com>");
-+MODULE_DESCRIPTION("ASPEED JTAG driver");
-+MODULE_LICENSE("GPL v2");
 -- 
-1.7.1
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
