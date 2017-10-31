@@ -1,83 +1,104 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH RFC v2 3/4] mm/mempolicy: fix the check of nodemask from
- user
-Date: Tue, 31 Oct 2017 12:28:41 +0100
-Message-ID: <1e0f1e50-4900-78d2-6586-bd68f5849337@suse.cz>
-References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
- <1509099265-30868-4-git-send-email-xieyisheng1@huawei.com>
- <56c4cdbf-c228-6203-285c-15f19a841538@suse.cz>
- <65c0e6cb-28b4-f202-1d7f-278b5dfc3440@huawei.com>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [RFC PATCH] fs: fsnotify: account fsnotify metadata to kmemcg
+Date: Tue, 31 Oct 2017 13:51:40 +0200
+Message-ID: <CAOQ4uxgqR1GvuTiMreDQrx2m=V4pzcn3o2T7_YQAj46AZ7fHQQ@mail.gmail.com>
+References: <1508448056-21779-1-git-send-email-yang.s@alibaba-inc.com>
+ <CAOQ4uxhPhXrMLu18TGKDA=ezUVHara95qJQ+BTCio8BHm-u6NA@mail.gmail.com>
+ <b530521e-5215-f735-444a-13f722d90e40@alibaba-inc.com> <CAOQ4uxhFOoSknnG-0Jyv+=iCDjVNnAg6SiO-msxw4tORkVKJGQ@mail.gmail.com>
+ <20171031105030.GE8989@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <65c0e6cb-28b4-f202-1d7f-278b5dfc3440-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171031105030.GE8989@quack2.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Jan Kara <jack@suse.cz>
+Cc: Yang Shi <yang.s@alibaba-inc.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-mm@kvack.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/31/2017 12:01 PM, Yisheng Xie wrote:
-> 
-> 
-> On 2017/10/31 17:30, Vlastimil Babka wrote:
->> On 10/27/2017 12:14 PM, Yisheng Xie wrote:
->>> +	/*
->>> +	 * When the user specified more nodes than supported just check
->>> +	 * if the non supported part is all zero.
->>> +	 *
->>> +	 * If maxnode have more longs than MAX_NUMNODES, check
->>> +	 * the bits in that area first. And then go through to
->>> +	 * check the rest bits which equal or bigger than MAX_NUMNODES.
->>> +	 * Otherwise, just check bits [MAX_NUMNODES, maxnode).
->>> +	 */
->>>  	if (nlongs > BITS_TO_LONGS(MAX_NUMNODES)) {
->>>  		for (k = BITS_TO_LONGS(MAX_NUMNODES); k < nlongs; k++) {
->>> -			unsigned long t;
->>>  			if (get_user(t, nmask + k))
->>>  				return -EFAULT;
->>>  			if (k == nlongs - 1) {
->>> @@ -1294,6 +1301,16 @@ static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
->>>  		endmask = ~0UL;
->>>  	}
->>>  
->>> +	if (maxnode > MAX_NUMNODES && MAX_NUMNODES % BITS_PER_LONG != 0) {
->>> +		unsigned long valid_mask = endmask;
->>> +
->>> +		valid_mask &= ~((1UL << (MAX_NUMNODES % BITS_PER_LONG)) - 1);
+On Tue, Oct 31, 2017 at 12:50 PM, Jan Kara <jack@suse.cz> wrote:
+> On Sun 22-10-17 11:24:17, Amir Goldstein wrote:
+>> But I think there is another problem, not introduced by your change, but could
+>> be amplified because of it - when a non-permission event allocation fails, the
+>> event is silently dropped, AFAICT, with no indication to listener.
+>> That seems like a bug to me, because there is a perfectly safe way to deal with
+>> event allocation failure - queue the overflow event.
 >>
->> I'm not sure if the combination with endmask works in this case:
+>> I am not going to be the one to determine if fixing this alleged bug is a
+>> prerequisite for merging your patch, but I think enforcing memory limits on
+>> event allocation could amplify that bug, so it should be fixed.
 >>
->> 0      BITS_PER_LONG  2xBITS_PER_LONG
->> |____________|____________|
->>        |             |
->>   MAX_NUMNODES      maxnode
+>> The upside is that with both your accounting fix and ENOMEM = overlflow
+>> fix, it going to be easy to write a test that verifies both of them:
+>> - Run a listener in memcg with limited kmem and unlimited (or very
+>> large) event queue
+>> - Produce events inside memcg without listener reading them
+>> - Read event and expect an OVERFLOW event
 >>
->> endmask will contain bits between 0 and maxnode
-> 
-> In the case, BITS_TO_LONGS(maxnode) > BITS_TO_LONGS(MAX_NUMNODES), right?
-> And after checking BITS_PER_LONG to 2xBITS_PER_LONG，endmask will set to
-> "~0UL". e.g. endmask will be 0xffff ffff ffff ffff if
-> unsigned long is 64bit.
-> 
-> Then the valid_mask will just contain bits MAX_NUMNODES to BITS_PER_LONG.
+>> This is a simple variant of LTP tests inotify05 and fanotify05.
+>>
+>> I realize that is user application behavior change and that documentation
+>> implies that an OVERFLOW event is not expected when using
+>> FAN_UNLIMITED_QUEUE, but IMO no one will come shouting
+>> if we stop silently dropping events, so it is better to fix this and update
+>> documentation.
+>>
+>> Attached a compile-tested patch to implement overflow on ENOMEM
+>> Hope this helps to test your patch and then we can merge both, accompanied
+>> with LTP tests for inotify and fanotify.
+>>
+>> Amir.
+>
+>> From 112ecd54045f14aff2c42622fabb4ffab9f0d8ff Mon Sep 17 00:00:00 2001
+>> From: Amir Goldstein <amir73il@gmail.com>
+>> Date: Sun, 22 Oct 2017 11:13:10 +0300
+>> Subject: [PATCH] fsnotify: queue an overflow event on failure to allocate
+>>  event
+>>
+>> In low memory situations, non permissions events are silently dropped.
+>> It is better to queue an OVERFLOW event in that case to let the listener
+>> know about the lost event.
+>>
+>> With this change, an application can now get an FAN_Q_OVERFLOW event,
+>> even if it used flag FAN_UNLIMITED_QUEUE on fanotify_init().
+>>
+>> Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+>
+> So I agree something like this is desirable but I'm uneasy about using
+> {IN|FAN}_Q_OVERFLOW for this. Firstly, it is userspace visible change for
+> FAN_UNLIMITED_QUEUE queues which could confuse applications as you properly
+> note. Secondly, the event is similar to queue overflow but not quite the
+> same (it is not that the application would be too slow in processing
+> events, it is just that the system is in a problematic state overall). What
+> are your thoughts on adding a new event flags like FAN_Q_LOSTEVENT or
+> something like that? Probably the biggest downside there I see is that apps
+> would have to learn to use it...
+>
 
-Ugh, right. I missed that. This code is not simple...
+Well, I can't say I like FAN_Q_LOSTEVENT, but I can't really think of
+a better option. I guess apps that would want to provide better protection
+against loosing event will have to opt-in with a new fanotify_init() flag.
+OTOH, if apps opts-in for this feature, we can also report Q_OVERFLOW
+and document that it *is* expected in OOM situation.
 
-> Thanks
-> Yisheng Xie
-> 
->> but here we want to check bits between MAX_NUMNODES and BITS_PER_LONG
->> and endmask should not be mixed up with that?
->>
->>
->> Vlastimil
->>
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+If we have FAN_Q_LOSTEVENT, we can use it to handle both the case of
+error to queue event (-ENOMEM) and the case of error on copy event to user
+(e.g. -ENODEV), which is another case where we silently drop events
+(in case buffer already contains good events).
+In latter case, the error would be reported to user on event->fd.
+In the former case, event->fd will also hold the error, as long as we can only
+report -ENOMEM from this sort of error, because like overflow event, there
+should probably be only one event of that sort in the queue.
+
+Another option for API name is {IN|FAN}_Q_ERR, which implies that event->fd
+carries the error. And of course user can get an event with mask
+FAN_Q_OVERFLOW|FAN_Q_ERR, where event->fd is -ENOMEM or
+-EOVERFLOW and then there is no ambiguity between different kind of
+queue overflows.
+
+Amir.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
