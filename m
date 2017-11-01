@@ -1,7 +1,7 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 18/18] xfs: support for synchronous DAX faults
-Date: Wed,  1 Nov 2017 16:36:47 +0100
-Message-ID: <20171101153648.30166-19-jack@suse.cz>
+Subject: [PATCH 14/18] dax: Implement dax_finish_sync_fault()
+Date: Wed,  1 Nov 2017 16:36:43 +0100
+Message-ID: <20171101153648.30166-15-jack@suse.cz>
 References: <20171101153648.30166-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,102 +18,138 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-
-Return IOMAP_F_DIRTY from xfs_file_iomap_begin() when asked to prepare
-blocks for writing and the inode is pinned, and has dirty fields other
-than the timestamps.  In __xfs_filemap_fault() we then detect this case
-and call dax_finish_sync_fault() to make sure all metadata is committed,
-and to insert the page table entry.
-
-Note that this will also dirty corresponding radix tree entry which is
-what we want - fsync(2) will still provide data integrity guarantees for
-applications not using userspace flushing. And applications using
-userspace flushing can avoid calling fsync(2) and thus avoid the
-performance overhead.
-
-[JK: Added VM_SYNC flag handling]
+Implement a function that filesystems can call to finish handling of
+synchronous page faults. It takes care of syncing appropriare file range
+and insertion of page table entry.
 
 Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/xfs/xfs_file.c  | 15 ++++++++++++++-
- fs/xfs/xfs_iomap.c |  5 +++++
- 2 files changed, 19 insertions(+), 1 deletion(-)
+ fs/dax.c                      | 83 +++++++++++++++++++++++++++++++++++++++++++
+ include/linux/dax.h           |  2 ++
+ include/trace/events/fs_dax.h |  2 ++
+ 3 files changed, 87 insertions(+)
 
-diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-index 4496b45678de..4827e82d5d2c 100644
---- a/fs/xfs/xfs_file.c
-+++ b/fs/xfs/xfs_file.c
-@@ -44,6 +44,7 @@
- #include <linux/falloc.h>
- #include <linux/pagevec.h>
- #include <linux/backing-dev.h>
-+#include <linux/mman.h>
- 
- static const struct vm_operations_struct xfs_file_vm_ops;
- 
-@@ -1040,7 +1041,11 @@ __xfs_filemap_fault(
- 
- 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
- 	if (IS_DAX(inode)) {
--		ret = dax_iomap_fault(vmf, pe_size, NULL, &xfs_iomap_ops);
-+		pfn_t pfn;
-+
-+		ret = dax_iomap_fault(vmf, pe_size, &pfn, &xfs_iomap_ops);
-+		if (ret & VM_FAULT_NEEDDSYNC)
-+			ret = dax_finish_sync_fault(vmf, pe_size, pfn);
- 	} else {
- 		if (write_fault)
- 			ret = iomap_page_mkwrite(vmf, &xfs_iomap_ops);
-@@ -1110,6 +1115,13 @@ xfs_file_mmap(
- 	struct file	*filp,
- 	struct vm_area_struct *vma)
- {
-+	/*
-+	 * We don't support synchronous mappings for non-DAX files. At least
-+	 * until someone comes with a sensible use case.
-+	 */
-+	if (!IS_DAX(file_inode(filp)) && (vma->vm_flags & VM_SYNC))
-+		return -EOPNOTSUPP;
-+
- 	file_accessed(filp);
- 	vma->vm_ops = &xfs_file_vm_ops;
- 	if (IS_DAX(file_inode(filp)))
-@@ -1128,6 +1140,7 @@ const struct file_operations xfs_file_operations = {
- 	.compat_ioctl	= xfs_file_compat_ioctl,
- #endif
- 	.mmap		= xfs_file_mmap,
-+	.mmap_supported_flags = MAP_SYNC,
- 	.open		= xfs_file_open,
- 	.release	= xfs_file_release,
- 	.fsync		= xfs_file_fsync,
-diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
-index f179bdf1644d..b43be199fbdf 100644
---- a/fs/xfs/xfs_iomap.c
-+++ b/fs/xfs/xfs_iomap.c
-@@ -33,6 +33,7 @@
- #include "xfs_error.h"
- #include "xfs_trans.h"
- #include "xfs_trans_space.h"
-+#include "xfs_inode_item.h"
- #include "xfs_iomap.h"
- #include "xfs_trace.h"
- #include "xfs_icache.h"
-@@ -1086,6 +1087,10 @@ xfs_file_iomap_begin(
- 		trace_xfs_iomap_found(ip, offset, length, 0, &imap);
+diff --git a/fs/dax.c b/fs/dax.c
+index bb9ff907738c..78233c716757 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -1492,3 +1492,86 @@ int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
  	}
- 
-+	if ((flags & IOMAP_WRITE) && xfs_ipincount(ip) &&
-+	    (ip->i_itemp->ili_fsync_fields & ~XFS_ILOG_TIMESTAMP))
-+		iomap->flags |= IOMAP_F_DIRTY;
+ }
+ EXPORT_SYMBOL_GPL(dax_iomap_fault);
 +
- 	xfs_bmbt_to_iomap(ip, iomap, &imap);
++/**
++ * dax_insert_pfn_mkwrite - insert PTE or PMD entry into page tables
++ * @vmf: The description of the fault
++ * @pe_size: Size of entry to be inserted
++ * @pfn: PFN to insert
++ *
++ * This function inserts writeable PTE or PMD entry into page tables for mmaped
++ * DAX file.  It takes care of marking corresponding radix tree entry as dirty
++ * as well.
++ */
++static int dax_insert_pfn_mkwrite(struct vm_fault *vmf,
++				  enum page_entry_size pe_size,
++				  pfn_t pfn)
++{
++	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
++	void *entry, **slot;
++	pgoff_t index = vmf->pgoff;
++	int vmf_ret, error;
++
++	spin_lock_irq(&mapping->tree_lock);
++	entry = get_unlocked_mapping_entry(mapping, index, &slot);
++	/* Did we race with someone splitting entry or so? */
++	if (!entry ||
++	    (pe_size == PE_SIZE_PTE && !dax_is_pte_entry(entry)) ||
++	    (pe_size == PE_SIZE_PMD && !dax_is_pmd_entry(entry))) {
++		put_unlocked_mapping_entry(mapping, index, entry);
++		spin_unlock_irq(&mapping->tree_lock);
++		trace_dax_insert_pfn_mkwrite_no_entry(mapping->host, vmf,
++						      VM_FAULT_NOPAGE);
++		return VM_FAULT_NOPAGE;
++	}
++	radix_tree_tag_set(&mapping->page_tree, index, PAGECACHE_TAG_DIRTY);
++	entry = lock_slot(mapping, slot);
++	spin_unlock_irq(&mapping->tree_lock);
++	switch (pe_size) {
++	case PE_SIZE_PTE:
++		error = vm_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
++		vmf_ret = dax_fault_return(error);
++		break;
++#ifdef CONFIG_FS_DAX_PMD
++	case PE_SIZE_PMD:
++		vmf_ret = vmf_insert_pfn_pmd(vmf->vma, vmf->address, vmf->pmd,
++			pfn, true);
++		break;
++#endif
++	default:
++		vmf_ret = VM_FAULT_FALLBACK;
++	}
++	put_locked_mapping_entry(mapping, index);
++	trace_dax_insert_pfn_mkwrite(mapping->host, vmf, vmf_ret);
++	return vmf_ret;
++}
++
++/**
++ * dax_finish_sync_fault - finish synchronous page fault
++ * @vmf: The description of the fault
++ * @pe_size: Size of entry to be inserted
++ * @pfn: PFN to insert
++ *
++ * This function ensures that the file range touched by the page fault is
++ * stored persistently on the media and handles inserting of appropriate page
++ * table entry.
++ */
++int dax_finish_sync_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
++			  pfn_t pfn)
++{
++	int err;
++	loff_t start = ((loff_t)vmf->pgoff) << PAGE_SHIFT;
++	size_t len = 0;
++
++	if (pe_size == PE_SIZE_PTE)
++		len = PAGE_SIZE;
++	else if (pe_size == PE_SIZE_PMD)
++		len = PMD_SIZE;
++	else
++		WARN_ON_ONCE(1);
++	err = vfs_fsync_range(vmf->vma->vm_file, start, start + len - 1, 1);
++	if (err)
++		return VM_FAULT_SIGBUS;
++	return dax_insert_pfn_mkwrite(vmf, pe_size, pfn);
++}
++EXPORT_SYMBOL_GPL(dax_finish_sync_fault);
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index e7fa4b8f45bc..d403f78b706c 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -96,6 +96,8 @@ ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
+ 		const struct iomap_ops *ops);
+ int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
+ 		    pfn_t *pfnp, const struct iomap_ops *ops);
++int dax_finish_sync_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
++			  pfn_t pfn);
+ int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index);
+ int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
+ 				      pgoff_t index);
+diff --git a/include/trace/events/fs_dax.h b/include/trace/events/fs_dax.h
+index 88a9d19b8ff8..7725459fafef 100644
+--- a/include/trace/events/fs_dax.h
++++ b/include/trace/events/fs_dax.h
+@@ -190,6 +190,8 @@ DEFINE_EVENT(dax_pte_fault_class, name, \
+ DEFINE_PTE_FAULT_EVENT(dax_pte_fault);
+ DEFINE_PTE_FAULT_EVENT(dax_pte_fault_done);
+ DEFINE_PTE_FAULT_EVENT(dax_load_hole);
++DEFINE_PTE_FAULT_EVENT(dax_insert_pfn_mkwrite_no_entry);
++DEFINE_PTE_FAULT_EVENT(dax_insert_pfn_mkwrite);
  
- 	if (shared)
+ TRACE_EVENT(dax_insert_mapping,
+ 	TP_PROTO(struct inode *inode, struct vm_fault *vmf, void *radix_entry),
 -- 
 2.12.3
