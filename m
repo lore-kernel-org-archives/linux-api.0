@@ -1,147 +1,132 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Wed, 1 Nov 2017 18:43:13 +0100
-Message-ID: <CAG48ez1E6qPvN7jdQw0DDZXU0n+gdQrFULLrbCSUoQb2SZhJoQ@mail.gmail.com>
-References: <150788678482.924140.11785205105514746135.stgit@buzz>
- <20171013160514.GA27812@redhat.com> <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
- <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru> <20171016143628.b2ef80a9ef16d4345889b4d9@linux-foundation.org>
- <fc2ae985-7ef7-0caf-4eb9-9348a5ca5e78@oracle.com> <fb03aaef-84e5-c869-11cc-6e1d8b4699c8@oracle.com>
- <CALCETrUg0xrkWnsQhq5L9RpDunrD8w7C3EjxeOPPrQv2h1KMEA@mail.gmail.com> <a41bbfdf-6af5-6b29-36bf-1ed677b6ca75@oracle.com>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH] [RFC] vm: add a syscall to map a process memory into a
+ pipe
+Date: Wed, 1 Nov 2017 10:47:13 -0700
+Message-ID: <20171101174712.GA26700@outlook.office365.com>
+References: <20170810184616.22726-1-avagin@openvz.org>
+ <CAKgNAkiSMhmK7JzVArAUejGPpfvKu0ut-WbFg=r22vk4p78PEg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a41bbfdf-6af5-6b29-36bf-1ed677b6ca75@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
+Content-Type: multipart/mixed; boundary="fdj2RfSjLxBAspz7"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAKgNAkiSMhmK7JzVArAUejGPpfvKu0ut-WbFg=r22vk4p78PEg@mail.gmail.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Andrei Vagin <avagin@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 17, 2017 at 5:38 PM, Prakash Sangappa
-<prakash.sangappa@oracle.com> wrote:
->
->
-> On 10/16/17 5:52 PM, Andy Lutomirski wrote:
->>
->> On Mon, Oct 16, 2017 at 3:54 PM, prakash.sangappa
->> <prakash.sangappa@oracle.com> wrote:
->>>
->>>
->>> On 10/16/2017 03:07 PM, Nagarathnam Muthusamy wrote:
->>>>
->>>>
->>>>
->>>> On 10/16/2017 02:36 PM, Andrew Morton wrote:
->>>>>
->>>>> On Sat, 14 Oct 2017 11:17:47 +0300 Konstantin Khlebnikov
->>>>> <khlebnikov@yandex-team.ru> wrote:
->>>>>
->>>>>>>>> pid_t translate_pid(pid_t pid, int source, int target);
->>>>>>>>>
->>>>>>>>> This syscall converts pid from source pid-ns into pid in target
->>>>>>>>> pid-ns.
->>>>>>>>> If pid is unreachable from target pid-ns it returns zero.
->>>>>>>>>
->>>>>>>>> Pid-namespaces are referred file descriptors opened to proc files
->>>>>>>>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative
->>>>>>>>> argument
->>>>>>>>> refers to current pid namespace, same as file /proc/self/ns/pid.
->>>>>>>>>
->>>>>>>>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but
->>>>>>>>> backward
->>>>>>>>> translation requires scanning all tasks. Also pids could be
->>>>>>>>> translated
->>>>>>>>> by sending them through unix socket between namespaces, this method
->>>>>>>>> is
->>>>>>>>> slow and insecure because other side is exposed inside pid
->>>>>>>>> namespace.
->>>>>>
->>>>>> Andrew asked why we might need this.
->>>>>>
->>>>>> Such conversion is required for interaction between processes across
->>>>>> pid-namespaces.
->>>>>> For example to identify process in container by pid file looking from
->>>>>> outside.
->>>>>>
->>>>>> Two years ago I've solved this in project of mine with monstrous code
->>>>>> which
->>>>>> forks couple times just to convert pid, lucky for me performance
->>>>>> wasn't
->>>>>> important.
->>>>>
->>>>> That's a single user who needed this a single time, and found a
->>>>> userspace-based solution anyway.  This is not exactly compelling!
->>>>>
->>>>> Is there a stronger case to be made?  How does this change benefit our
->>>>> users?  Sell it to us!
->>>>
->>>> Oracle database is planning to use pid namespace for sandboxing database
->>>> instances and they need an API similar to translate_pid to effectively
->>>> translate process IDs from other pid namespaces. Prakash (cced in mail)
->>>> can
->>>> provide more details on this usecase.
->>>
->>>
->>> As Nagarathnam indicated, Oracle Database will be using pid namespaces
->>> and
->>> needs a direct method of converting pids of processes in the pid
->>> namespace
->>> hierarchy. In this use case multiple
->>> nested PID namespaces will be used.  The currently available mechanism
->>> are
->>> not very efficient for this use case. For ex. as Konstantin described,
->>> using
->>> /proc/<pid>/status would require the application to scan all the pid's
->>> status files to determine the pid of given process in a child namespace.
->>>
->>> Use of SCM_CREDENTIALS's socket message is another way, which would
->>> require
->>> every process starting inside a pid namespace to send this message and
->>> the
->>> receiving process in the target namespace would have to save the
->>> converted
->>> pid and reference it. This mechanism becomes cumbersome especially if the
->>> application has to deal with multiple nested pid namespaces. Also, the
->>> Database needs to be able to convert a thread's global pid(gettid()).
->>> Passing the thread's pid(gettid()) in SCM_CREDENTIALS message requires
->>> CAP_SYS_ADMIN, which is an issue.
->>>
->>> So having a direct method, like the API that Konstantin is proposing,
->>> will
->>> work best for the Database
->>> since pid of a process in any of the nested pid namespaces can be
->>> converted
->>> as and when required. I think with the proposed API, the application
->>> should
->>> be able to convert pid of a process or tid(gettid()) of a thread as well.
->>>
->>
->> Can you explain what Oracle's database is planning to do with this
->> information?
->
->
-> Database uses the PID to programmatically find out if the process/thread is
-> alive(kill 0) also send signals to the processes requesting it to dump
-> status/debug information and kill the processes in case of a shutdown abort
-> of the instance.
 
-But if kill(pid, 0) returns 0, that doesn't tell you anything, right?
-It could be that
-the process you're trying to check is still alive, but it could also
-be that it has
-died, ns_last_pid has wrapped around, and the PID is now being reused by
-another process, right?
+--fdj2RfSjLxBAspz7
+Content-Type: text/plain; charset=koi8-r
+Content-Disposition: inline
 
-Wouldn't it be more reliable to open("/proc/self", O_RDONLY)
-(or /proc/thread-self) in the process you want to monitor, then send
-the resulting file descriptor to the monitoring process with SCM_RIGHTS?
-Then something like this should work for checking whether the process
-is still alive without relying on PIDs at all:
+Hi Michael,
 
-    int retval = faccessat(child_proc_self_fd, "stat", F_OK, 0);
-    if (retval == 0) {
-      /* process still exists */
-    } else if (retval == -1 && errno == ESRCH) {
-      /* process is gone */
-    } else {
-      err(1, "unexpected fstatat result");
-    }
+On Mon, Oct 30, 2017 at 01:47:31PM +0100, Michael Kerrisk (man-pages) wrote:
+> On 10 August 2017 at 20:46, Andrei Vagin <avagin@openvz.org> wrote:
+> > It is a hybrid of process_vm_readv() and vmsplice().
+> >
+> > vmsplice can map memory from a current address space into a pipe.
+> > process_vm_readv can read memory of another process.
+> >
+> > A new system call can map memory of another process into a pipe.
+> >
+> > ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
+> >                         unsigned long nr_segs, unsigned int flags)
+> >
+> > All arguments are identical with vmsplice except pid which specifies a
+> > target process.
+> 
+> Can we have a man page for this new syscall please?
+
+I think we can add a description for process_vmsplice into
+man2/vmsplice.2. The patch is attached.
+
+Thanks,
+Andrei
+
+> 
+> Thanks,
+> 
+> Michael
+> 
+> 
+
+--fdj2RfSjLxBAspz7
+Content-Type: text/plain; charset=koi8-r
+Content-Disposition: attachment; filename="0001-vmsplice.2-add-description-for-process_vmsplice.patch"
+
+>From 923cbd38805f8017b6d86ac6a12c8f45a4117399 Mon Sep 17 00:00:00 2001
+From: Andrei Vagin <avagin@openvz.org>
+Date: Wed, 1 Nov 2017 10:26:06 -0700
+Subject: [PATCH] vmsplice.2: add description for process_vmsplice
+
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
+---
+ man2/vmsplice.2 | 20 +++++++++++++++++++-
+ 1 file changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/man2/vmsplice.2 b/man2/vmsplice.2
+index e3e61cf27..8b28b6fff 100644
+--- a/man2/vmsplice.2
++++ b/man2/vmsplice.2
+@@ -25,7 +25,7 @@
+ .\"
+ .TH VMSPLICE 2 2014-10-02 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+-vmsplice \- splice user pages into a pipe
++vmsplice, process_vmsplice \- splice user pages into a pipe
+ .SH SYNOPSIS
+ .nf
+ .BR "#define _GNU_SOURCE" "         /* See feature_test_macros(7) */"
+@@ -34,6 +34,8 @@ vmsplice \- splice user pages into a pipe
+ 
+ .BI "ssize_t vmsplice(int " fd ", const struct iovec *" iov ,
+ .BI "                 unsigned long " nr_segs ", unsigned int " flags );
++.BI "ssize_t process_vmsplice(pid_t " pid ", int " fd ", const struct iovec *" iov ,
++.BI "                 unsigned long " nr_segs ", unsigned int " flags );
+ .fi
+ .\" Return type was long before glibc 2.7
+ .SH DESCRIPTION
+@@ -55,6 +57,12 @@ The file descriptor
+ .I fd
+ must refer to a pipe.
+ 
++The
++.BR process_vmsplice()
++system call maps user memory from the process identified by
++.I pid
++to the local pipe.
++
+ The pointer
+ .I iov
+ points to an array of
+@@ -114,6 +122,7 @@ Data must also be properly page aligned, both in memory and length.
+ .\"	commit bd1a68b59c8e3bce45fb76632c64e1e063c3962d
+ .\"
+ .\" .... if we expect to later SPLICE_F_MOVE to the cache.
++
+ .SH RETURN VALUE
+ Upon successful completion,
+ .BR vmsplice ()
+@@ -145,6 +154,15 @@ set.
+ .TP
+ .B ENOMEM
+ Out of memory.
++.TP
++.B ESRCH
++No process with ID
++.I pid
++exists.
++.TP
++.B EPERM
++The caller does not have permission to access the address space of the process
++.IR pid .
+ .SH VERSIONS
+ The
+ .BR vmsplice ()
+-- 
+2.13.6
+
+
+--fdj2RfSjLxBAspz7--
