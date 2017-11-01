@@ -1,180 +1,147 @@
-From: nagarathnam muthusamy <nagarathnam.muthusamy@oracle.com>
+From: Jann Horn <jannh@google.com>
 Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
-Date: Wed, 01 Nov 2017 09:59:55 -0700
-Message-ID: <59F9FD8B.8090607@oracle.com>
-References: <150788678482.924140.11785205105514746135.stgit@buzz> <20171013160514.GA27812@redhat.com> <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru> <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru> <20171016143628.b2ef80a9ef16d4345889b4d9@linux-foundation.org> <fc2ae985-7ef7-0caf-4eb9-9348a5ca5e78@oracle.com> <fb03aaef-84e5-c869-11cc-6e1d8b4699c8@oracle.com> <CALCETrUg0xrkWnsQhq5L9RpDunrD8w7C3EjxeOPPrQv2h1KMEA@mail.gmail.com> <a41bbfdf-6af5-6b29-36bf-1ed677b6ca75@oracle.com> <CALCETrXXDQEddqx5yUnGtgZnv_7eDc=GAFsmUSNPV45BGxQbPw@mail.gmail.com> <59E685B3.1000200@oracle.com> <CALCETrWv5sYXvyL2mYwDK99O-awB6e2KV++oQK7Nrmgkvt9vPA@mail.gmail.com> <59E689F5.2080706@oracle.com>
+Date: Wed, 1 Nov 2017 18:43:13 +0100
+Message-ID: <CAG48ez1E6qPvN7jdQw0DDZXU0n+gdQrFULLrbCSUoQb2SZhJoQ@mail.gmail.com>
+References: <150788678482.924140.11785205105514746135.stgit@buzz>
+ <20171013160514.GA27812@redhat.com> <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru>
+ <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru> <20171016143628.b2ef80a9ef16d4345889b4d9@linux-foundation.org>
+ <fc2ae985-7ef7-0caf-4eb9-9348a5ca5e78@oracle.com> <fb03aaef-84e5-c869-11cc-6e1d8b4699c8@oracle.com>
+ <CALCETrUg0xrkWnsQhq5L9RpDunrD8w7C3EjxeOPPrQv2h1KMEA@mail.gmail.com> <a41bbfdf-6af5-6b29-36bf-1ed677b6ca75@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <59E689F5.2080706@oracle.com>
+In-Reply-To: <a41bbfdf-6af5-6b29-36bf-1ed677b6ca75@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: prakash sangappa <prakash.sangappa@oracle.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
+To: Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-I believe all the questions raised in this thread were answered. Just 
-wondering if there are any outstanding questions?
-
-Thanks,
-Nagarathnam.
-On 10/17/2017 3:53 PM, prakash sangappa wrote:
+On Tue, Oct 17, 2017 at 5:38 PM, Prakash Sangappa
+<prakash.sangappa@oracle.com> wrote:
 >
-> On 10/17/2017 3:40 PM, Andy Lutomirski wrote:
->> On Tue, Oct 17, 2017 at 3:35 PM, prakash sangappa
->> <prakash.sangappa@oracle.com> wrote:
->>> On 10/17/2017 3:02 PM, Andy Lutomirski wrote:
->>>> On Tue, Oct 17, 2017 at 8:38 AM, Prakash Sangappa
->>>> <prakash.sangappa@oracle.com> wrote:
->>>>>
->>>>> On 10/16/17 5:52 PM, Andy Lutomirski wrote:
->>>>>> On Mon, Oct 16, 2017 at 3:54 PM, prakash.sangappa
->>>>>> <prakash.sangappa@oracle.com> wrote:
->>>>>>>
->>>>>>> On 10/16/2017 03:07 PM, Nagarathnam Muthusamy wrote:
->>>>>>>>
->>>>>>>>
->>>>>>>> On 10/16/2017 02:36 PM, Andrew Morton wrote:
->>>>>>>>> On Sat, 14 Oct 2017 11:17:47 +0300 Konstantin Khlebnikov
->>>>>>>>> <khlebnikov@yandex-team.ru> wrote:
->>>>>>>>>
->>>>>>>>>>>>> pid_t translate_pid(pid_t pid, int source, int target);
->>>>>>>>>>>>>
->>>>>>>>>>>>> This syscall converts pid from source pid-ns into pid in 
->>>>>>>>>>>>> target
->>>>>>>>>>>>> pid-ns.
->>>>>>>>>>>>> If pid is unreachable from target pid-ns it returns zero.
->>>>>>>>>>>>>
->>>>>>>>>>>>> Pid-namespaces are referred file descriptors opened to 
->>>>>>>>>>>>> proc files
->>>>>>>>>>>>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. 
->>>>>>>>>>>>> Negative
->>>>>>>>>>>>> argument
->>>>>>>>>>>>> refers to current pid namespace, same as file 
->>>>>>>>>>>>> /proc/self/ns/pid.
->>>>>>>>>>>>>
->>>>>>>>>>>>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but
->>>>>>>>>>>>> backward
->>>>>>>>>>>>> translation requires scanning all tasks. Also pids could be
->>>>>>>>>>>>> translated
->>>>>>>>>>>>> by sending them through unix socket between namespaces, this
->>>>>>>>>>>>> method
->>>>>>>>>>>>> is
->>>>>>>>>>>>> slow and insecure because other side is exposed inside pid
->>>>>>>>>>>>> namespace.
->>>>>>>>>> Andrew asked why we might need this.
->>>>>>>>>>
->>>>>>>>>> Such conversion is required for interaction between processes 
->>>>>>>>>> across
->>>>>>>>>> pid-namespaces.
->>>>>>>>>> For example to identify process in container by pid file looking
->>>>>>>>>> from
->>>>>>>>>> outside.
->>>>>>>>>>
->>>>>>>>>> Two years ago I've solved this in project of mine with monstrous
->>>>>>>>>> code
->>>>>>>>>> which
->>>>>>>>>> forks couple times just to convert pid, lucky for me performance
->>>>>>>>>> wasn't
->>>>>>>>>> important.
->>>>>>>>> That's a single user who needed this a single time, and found a
->>>>>>>>> userspace-based solution anyway.  This is not exactly compelling!
->>>>>>>>>
->>>>>>>>> Is there a stronger case to be made?  How does this change 
->>>>>>>>> benefit
->>>>>>>>> our
->>>>>>>>> users?  Sell it to us!
->>>>>>>> Oracle database is planning to use pid namespace for sandboxing
->>>>>>>> database
->>>>>>>> instances and they need an API similar to translate_pid to 
->>>>>>>> effectively
->>>>>>>> translate process IDs from other pid namespaces. Prakash (cced in
->>>>>>>> mail)
->>>>>>>> can
->>>>>>>> provide more details on this usecase.
->>>>>>>
->>>>>>> As Nagarathnam indicated, Oracle Database will be using pid 
->>>>>>> namespaces
->>>>>>> and
->>>>>>> needs a direct method of converting pids of processes in the pid
->>>>>>> namespace
->>>>>>> hierarchy. In this use case multiple
->>>>>>> nested PID namespaces will be used.  The currently available 
->>>>>>> mechanism
->>>>>>> are
->>>>>>> not very efficient for this use case. For ex. as Konstantin 
->>>>>>> described,
->>>>>>> using
->>>>>>> /proc/<pid>/status would require the application to scan all the 
->>>>>>> pid's
->>>>>>> status files to determine the pid of given process in a child
->>>>>>> namespace.
->>>>>>>
->>>>>>> Use of SCM_CREDENTIALS's socket message is another way, which would
->>>>>>> require
->>>>>>> every process starting inside a pid namespace to send this 
->>>>>>> message and
->>>>>>> the
->>>>>>> receiving process in the target namespace would have to save the
->>>>>>> converted
->>>>>>> pid and reference it. This mechanism becomes cumbersome 
->>>>>>> especially if
->>>>>>> the
->>>>>>> application has to deal with multiple nested pid namespaces. 
->>>>>>> Also, the
->>>>>>> Database needs to be able to convert a thread's global 
->>>>>>> pid(gettid()).
->>>>>>> Passing the thread's pid(gettid()) in SCM_CREDENTIALS message 
->>>>>>> requires
->>>>>>> CAP_SYS_ADMIN, which is an issue.
->>>>>>>
->>>>>>> So having a direct method, like the API that Konstantin is 
->>>>>>> proposing,
->>>>>>> will
->>>>>>> work best for the Database
->>>>>>> since pid of a process in any of the nested pid namespaces can be
->>>>>>> converted
->>>>>>> as and when required. I think with the proposed API, the 
->>>>>>> application
->>>>>>> should
->>>>>>> be able to convert pid of a process or tid(gettid()) of a thread as
->>>>>>> well.
->>>>>>>
->>>>>> Can you explain what Oracle's database is planning to do with this
->>>>>> information?
->>>>>
->>>>> Database uses the PID to programmatically find out if the 
->>>>> process/thread
->>>>> is
->>>>> alive(kill 0) also send signals to the processes requesting it to 
->>>>> dump
->>>>> status/debug information and kill the processes in case of a shutdown
->>>>> abort
->>>>> of the instance.
->>>> What I'm wondering is: how does the caller of kill() end up
->>>> controlling a task whose pid it doesn't know in its own namespace?
->>>
->>> I was generally describing how DB would use the PID of process. The 
->>> above
->>> description
->>> was in the case when no namespaces are used.
->>>
->>> With use of namespaces, the DB would convert the PID of processes 
->>> inside
->>> its children namespaces to PID in its namespace and use that pid to 
->>> issue
->>> kill().
->> Seems vaguely sensible.
+>
+> On 10/16/17 5:52 PM, Andy Lutomirski wrote:
 >>
->> If I were designing this type of system, I'd have a manager process in
->> each namespace running as PID 1, though -- PID 1 is special and needs
->> to understand what's going on anyway.  Then PID 1 would do the kill()
->> calls and wouldn't need translate_pid().
+>> On Mon, Oct 16, 2017 at 3:54 PM, prakash.sangappa
+>> <prakash.sangappa@oracle.com> wrote:
+>>>
+>>>
+>>> On 10/16/2017 03:07 PM, Nagarathnam Muthusamy wrote:
+>>>>
+>>>>
+>>>>
+>>>> On 10/16/2017 02:36 PM, Andrew Morton wrote:
+>>>>>
+>>>>> On Sat, 14 Oct 2017 11:17:47 +0300 Konstantin Khlebnikov
+>>>>> <khlebnikov@yandex-team.ru> wrote:
+>>>>>
+>>>>>>>>> pid_t translate_pid(pid_t pid, int source, int target);
+>>>>>>>>>
+>>>>>>>>> This syscall converts pid from source pid-ns into pid in target
+>>>>>>>>> pid-ns.
+>>>>>>>>> If pid is unreachable from target pid-ns it returns zero.
+>>>>>>>>>
+>>>>>>>>> Pid-namespaces are referred file descriptors opened to proc files
+>>>>>>>>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative
+>>>>>>>>> argument
+>>>>>>>>> refers to current pid namespace, same as file /proc/self/ns/pid.
+>>>>>>>>>
+>>>>>>>>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but
+>>>>>>>>> backward
+>>>>>>>>> translation requires scanning all tasks. Also pids could be
+>>>>>>>>> translated
+>>>>>>>>> by sending them through unix socket between namespaces, this method
+>>>>>>>>> is
+>>>>>>>>> slow and insecure because other side is exposed inside pid
+>>>>>>>>> namespace.
+>>>>>>
+>>>>>> Andrew asked why we might need this.
+>>>>>>
+>>>>>> Such conversion is required for interaction between processes across
+>>>>>> pid-namespaces.
+>>>>>> For example to identify process in container by pid file looking from
+>>>>>> outside.
+>>>>>>
+>>>>>> Two years ago I've solved this in project of mine with monstrous code
+>>>>>> which
+>>>>>> forks couple times just to convert pid, lucky for me performance
+>>>>>> wasn't
+>>>>>> important.
+>>>>>
+>>>>> That's a single user who needed this a single time, and found a
+>>>>> userspace-based solution anyway.  This is not exactly compelling!
+>>>>>
+>>>>> Is there a stronger case to be made?  How does this change benefit our
+>>>>> users?  Sell it to us!
+>>>>
+>>>> Oracle database is planning to use pid namespace for sandboxing database
+>>>> instances and they need an API similar to translate_pid to effectively
+>>>> translate process IDs from other pid namespaces. Prakash (cced in mail)
+>>>> can
+>>>> provide more details on this usecase.
+>>>
+>>>
+>>> As Nagarathnam indicated, Oracle Database will be using pid namespaces
+>>> and
+>>> needs a direct method of converting pids of processes in the pid
+>>> namespace
+>>> hierarchy. In this use case multiple
+>>> nested PID namespaces will be used.  The currently available mechanism
+>>> are
+>>> not very efficient for this use case. For ex. as Konstantin described,
+>>> using
+>>> /proc/<pid>/status would require the application to scan all the pid's
+>>> status files to determine the pid of given process in a child namespace.
+>>>
+>>> Use of SCM_CREDENTIALS's socket message is another way, which would
+>>> require
+>>> every process starting inside a pid namespace to send this message and
+>>> the
+>>> receiving process in the target namespace would have to save the
+>>> converted
+>>> pid and reference it. This mechanism becomes cumbersome especially if the
+>>> application has to deal with multiple nested pid namespaces. Also, the
+>>> Database needs to be able to convert a thread's global pid(gettid()).
+>>> Passing the thread's pid(gettid()) in SCM_CREDENTIALS message requires
+>>> CAP_SYS_ADMIN, which is an issue.
+>>>
+>>> So having a direct method, like the API that Konstantin is proposing,
+>>> will
+>>> work best for the Database
+>>> since pid of a process in any of the nested pid namespaces can be
+>>> converted
+>>> as and when required. I think with the proposed API, the application
+>>> should
+>>> be able to convert pid of a process or tid(gettid()) of a thread as well.
+>>>
+>>
+>> Can you explain what Oracle's database is planning to do with this
+>> information?
 >
-> Yes, this has been tried out with the prototype use of PID namespaces 
-> in the DB.
-> It works, but would be slow as the manager would have to exchange 
-> messages with the
-> controlling processes which would be in the parent namespace.
-> DB could use the api to convert the pid.
 >
+> Database uses the PID to programmatically find out if the process/thread is
+> alive(kill 0) also send signals to the processes requesting it to dump
+> status/debug information and kill the processes in case of a shutdown abort
+> of the instance.
+
+But if kill(pid, 0) returns 0, that doesn't tell you anything, right?
+It could be that
+the process you're trying to check is still alive, but it could also
+be that it has
+died, ns_last_pid has wrapped around, and the PID is now being reused by
+another process, right?
+
+Wouldn't it be more reliable to open("/proc/self", O_RDONLY)
+(or /proc/thread-self) in the process you want to monitor, then send
+the resulting file descriptor to the monitoring process with SCM_RIGHTS?
+Then something like this should work for checking whether the process
+is still alive without relying on PIDs at all:
+
+    int retval = faccessat(child_proc_self_fd, "stat", F_OK, 0);
+    if (retval == 0) {
+      /* process still exists */
+    } else if (retval == -1 && errno == ESRCH) {
+      /* process is gone */
+    } else {
+      err(1, "unexpected fstatat result");
+    }
