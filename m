@@ -1,8 +1,7 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 11/18] dax: Allow tuning whether dax_insert_mapping_entry()
- dirties entry
-Date: Wed,  1 Nov 2017 16:36:40 +0100
-Message-ID: <20171101153648.30166-12-jack@suse.cz>
+Subject: [PATCH 12/18] mm: Define MAP_SYNC and VM_SYNC flags
+Date: Wed,  1 Nov 2017 16:36:41 +0100
+Message-ID: <20171101153648.30166-13-jack@suse.cz>
 References: <20171101153648.30166-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,83 +21,89 @@ To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Currently we dirty radix tree entry whenever dax_insert_mapping_entry()
-gets called for a write fault. With synchronous page faults we would
-like to insert clean radix tree entry and dirty it only once we call
-fdatasync() and update page tables to save some unnecessary cache
-flushing. Add 'dirty' argument to dax_insert_mapping_entry() for that.
+Define new MAP_SYNC flag and corresponding VMA VM_SYNC flag. As the
+MAP_SYNC flag is not part of LEGACY_MAP_MASK, currently it will be
+refused by all MAP_SHARED_VALIDATE map attempts and silently ignored for
+everything else.
 
 Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/dax.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ fs/proc/task_mmu.c              | 1 +
+ include/linux/mm.h              | 1 +
+ include/linux/mman.h            | 8 ++++++--
+ include/uapi/asm-generic/mman.h | 1 +
+ 4 files changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 5ddf15161390..efc210ff6665 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -526,13 +526,13 @@ static int copy_user_dax(struct block_device *bdev, struct dax_device *dax_dev,
- static void *dax_insert_mapping_entry(struct address_space *mapping,
- 				      struct vm_fault *vmf,
- 				      void *entry, sector_t sector,
--				      unsigned long flags)
-+				      unsigned long flags, bool dirty)
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index 5589b4bd4b85..ea78b37deeaa 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -664,6 +664,7 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
+ 		[ilog2(VM_ACCOUNT)]	= "ac",
+ 		[ilog2(VM_NORESERVE)]	= "nr",
+ 		[ilog2(VM_HUGETLB)]	= "ht",
++		[ilog2(VM_SYNC)]	= "sf",
+ 		[ilog2(VM_ARCH_1)]	= "ar",
+ 		[ilog2(VM_WIPEONFORK)]	= "wf",
+ 		[ilog2(VM_DONTDUMP)]	= "dd",
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index ca72b67153d5..5411cb7442de 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -189,6 +189,7 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_ACCOUNT	0x00100000	/* Is a VM accounted object */
+ #define VM_NORESERVE	0x00200000	/* should the VM suppress accounting */
+ #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
++#define VM_SYNC		0x00800000	/* Synchronous page faults */
+ #define VM_ARCH_1	0x01000000	/* Architecture-specific flag */
+ #define VM_WIPEONFORK	0x02000000	/* Wipe VMA contents in child. */
+ #define VM_DONTDUMP	0x04000000	/* Do not include in the core dump */
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index 94b63b4d71ff..8f7cc87828e6 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -9,7 +9,7 @@
+ 
+ /*
+  * Arrange for legacy / undefined architecture specific flags to be
+- * ignored by default in LEGACY_MAP_MASK.
++ * ignored by mmap handling code.
+  */
+ #ifndef MAP_32BIT
+ #define MAP_32BIT 0
+@@ -23,6 +23,9 @@
+ #ifndef MAP_UNINITIALIZED
+ #define MAP_UNINITIALIZED 0
+ #endif
++#ifndef MAP_SYNC
++#define MAP_SYNC 0
++#endif
+ 
+ /*
+  * The historical set of flags that all mmap implementations implicitly
+@@ -125,7 +128,8 @@ calc_vm_flag_bits(unsigned long flags)
  {
- 	struct radix_tree_root *page_tree = &mapping->page_tree;
- 	void *new_entry;
- 	pgoff_t index = vmf->pgoff;
+ 	return _calc_vm_trans(flags, MAP_GROWSDOWN,  VM_GROWSDOWN ) |
+ 	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
+-	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
++	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    ) |
++	       _calc_vm_trans(flags, MAP_SYNC,	     VM_SYNC      );
+ }
  
--	if (vmf->flags & FAULT_FLAG_WRITE)
-+	if (dirty)
- 		__mark_inode_dirty(mapping->host, I_DIRTY_PAGES);
+ unsigned long vm_commit_limit(void);
+diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
+index 7162cd4cca73..00e55627d2df 100644
+--- a/include/uapi/asm-generic/mman.h
++++ b/include/uapi/asm-generic/mman.h
+@@ -12,6 +12,7 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
++#define MAP_SYNC	0x80000		/* perform synchronous page faults for the mapping */
  
- 	if (dax_is_zero_entry(entry) && !(flags & RADIX_DAX_ZERO_PAGE)) {
-@@ -569,7 +569,7 @@ static void *dax_insert_mapping_entry(struct address_space *mapping,
- 		entry = new_entry;
- 	}
- 
--	if (vmf->flags & FAULT_FLAG_WRITE)
-+	if (dirty)
- 		radix_tree_tag_set(page_tree, index, PAGECACHE_TAG_DIRTY);
- 
- 	spin_unlock_irq(&mapping->tree_lock);
-@@ -881,7 +881,7 @@ static int dax_load_hole(struct address_space *mapping, void *entry,
- 	}
- 
- 	entry2 = dax_insert_mapping_entry(mapping, vmf, entry, 0,
--			RADIX_DAX_ZERO_PAGE);
-+			RADIX_DAX_ZERO_PAGE, false);
- 	if (IS_ERR(entry2)) {
- 		ret = VM_FAULT_SIGBUS;
- 		goto out;
-@@ -1182,7 +1182,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						 dax_iomap_sector(&iomap, pos),
--						 0);
-+						 0, write);
- 		if (IS_ERR(entry)) {
- 			error = PTR_ERR(entry);
- 			goto error_finish_iomap;
-@@ -1258,7 +1258,7 @@ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
- 		goto fallback;
- 
- 	ret = dax_insert_mapping_entry(mapping, vmf, entry, 0,
--			RADIX_DAX_PMD | RADIX_DAX_ZERO_PAGE);
-+			RADIX_DAX_PMD | RADIX_DAX_ZERO_PAGE, false);
- 	if (IS_ERR(ret))
- 		goto fallback;
- 
-@@ -1379,7 +1379,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						dax_iomap_sector(&iomap, pos),
--						RADIX_DAX_PMD);
-+						RADIX_DAX_PMD, write);
- 		if (IS_ERR(entry))
- 			goto finish_iomap;
+ /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
  
 -- 
 2.12.3
