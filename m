@@ -1,7 +1,7 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 13/18] dax, iomap: Add support for synchronous faults
-Date: Wed,  1 Nov 2017 16:36:42 +0100
-Message-ID: <20171101153648.30166-14-jack@suse.cz>
+Subject: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and MAP_SYNC
+Date: Wed,  1 Nov 2017 16:36:48 +0100
+Message-ID: <20171101153648.30166-20-jack@suse.cz>
 References: <20171101153648.30166-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,155 +21,71 @@ To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Add a flag to iomap interface informing the caller that inode needs
-fdstasync(2) for returned extent to become persistent and use it in DAX
-fault code so that we don't map such extents into page tables
-immediately. Instead we propagate the information that fdatasync(2) is
-necessary from dax_iomap_fault() with a new VM_FAULT_NEEDDSYNC flag.
-Filesystem fault handler is then responsible for calling fdatasync(2)
-and inserting pfn into page tables.
-
 Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
- fs/dax.c              | 39 +++++++++++++++++++++++++++++++++++++--
- include/linux/iomap.h |  5 +++++
- include/linux/mm.h    |  6 +++++-
- 3 files changed, 47 insertions(+), 3 deletions(-)
+ man2/mmap.2 | 35 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index efc210ff6665..bb9ff907738c 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1091,6 +1091,7 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	unsigned flags = IOMAP_FAULT;
- 	int error, major = 0;
- 	bool write = vmf->flags & FAULT_FLAG_WRITE;
-+	bool sync;
- 	int vmf_ret = 0;
- 	void *entry;
- 	pfn_t pfn;
-@@ -1169,6 +1170,8 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 		goto finish_iomap;
- 	}
- 
-+	sync = (vma->vm_flags & VM_SYNC) && (iomap.flags & IOMAP_F_DIRTY);
-+
- 	switch (iomap.type) {
- 	case IOMAP_MAPPED:
- 		if (iomap.flags & IOMAP_F_NEW) {
-@@ -1182,12 +1185,27 @@ static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						 dax_iomap_sector(&iomap, pos),
--						 0, write);
-+						 0, write && !sync);
- 		if (IS_ERR(entry)) {
- 			error = PTR_ERR(entry);
- 			goto error_finish_iomap;
- 		}
- 
-+		/*
-+		 * If we are doing synchronous page fault and inode needs fsync,
-+		 * we can insert PTE into page tables only after that happens.
-+		 * Skip insertion for now and return the pfn so that caller can
-+		 * insert it after fsync is done.
-+		 */
-+		if (sync) {
-+			if (WARN_ON_ONCE(!pfnp)) {
-+				error = -EIO;
-+				goto error_finish_iomap;
-+			}
-+			*pfnp = pfn;
-+			vmf_ret = VM_FAULT_NEEDDSYNC | major;
-+			goto finish_iomap;
-+		}
- 		trace_dax_insert_mapping(inode, vmf, entry);
- 		if (write)
- 			error = vm_insert_mixed_mkwrite(vma, vaddr, pfn);
-@@ -1287,6 +1305,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	struct address_space *mapping = vma->vm_file->f_mapping;
- 	unsigned long pmd_addr = vmf->address & PMD_MASK;
- 	bool write = vmf->flags & FAULT_FLAG_WRITE;
-+	bool sync;
- 	unsigned int iomap_flags = (write ? IOMAP_WRITE : 0) | IOMAP_FAULT;
- 	struct inode *inode = mapping->host;
- 	int result = VM_FAULT_FALLBACK;
-@@ -1371,6 +1390,8 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 	if (iomap.offset + iomap.length < pos + PMD_SIZE)
- 		goto finish_iomap;
- 
-+	sync = (vma->vm_flags & VM_SYNC) && (iomap.flags & IOMAP_F_DIRTY);
-+
- 	switch (iomap.type) {
- 	case IOMAP_MAPPED:
- 		error = dax_iomap_pfn(&iomap, pos, PMD_SIZE, &pfn);
-@@ -1379,10 +1400,24 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
- 
- 		entry = dax_insert_mapping_entry(mapping, vmf, entry,
- 						dax_iomap_sector(&iomap, pos),
--						RADIX_DAX_PMD, write);
-+						RADIX_DAX_PMD, write && !sync);
- 		if (IS_ERR(entry))
- 			goto finish_iomap;
- 
-+		/*
-+		 * If we are doing synchronous page fault and inode needs fsync,
-+		 * we can insert PMD into page tables only after that happens.
-+		 * Skip insertion for now and return the pfn so that caller can
-+		 * insert it after fsync is done.
-+		 */
-+		if (sync) {
-+			if (WARN_ON_ONCE(!pfnp))
-+				goto finish_iomap;
-+			*pfnp = pfn;
-+			result = VM_FAULT_NEEDDSYNC;
-+			goto finish_iomap;
-+		}
-+
- 		trace_dax_pmd_insert_mapping(inode, vmf, PMD_SIZE, pfn, entry);
- 		result = vmf_insert_pfn_pmd(vma, vmf->address, vmf->pmd, pfn,
- 					    write);
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index f64dc6ce5161..73e3b7085dbe 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -22,6 +22,11 @@ struct vm_fault;
-  * Flags for all iomap mappings:
-  */
- #define IOMAP_F_NEW	0x01	/* blocks have been newly allocated */
-+/*
-+ * IOMAP_F_DIRTY indicates the inode has uncommitted metadata needed to access
-+ * written data and requires fdatasync to commit them to persistent storage.
-+ */
-+#define IOMAP_F_DIRTY	0x02
- 
- /*
-  * Flags that only need to be reported for IOMAP_REPORT requests:
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 5411cb7442de..f57e55782d7d 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1182,6 +1182,9 @@ static inline void clear_page_pfmemalloc(struct page *page)
- #define VM_FAULT_RETRY	0x0400	/* ->fault blocked, must retry */
- #define VM_FAULT_FALLBACK 0x0800	/* huge page fault failed, fall back to small */
- #define VM_FAULT_DONE_COW   0x1000	/* ->fault has fully handled COW */
-+#define VM_FAULT_NEEDDSYNC  0x2000	/* ->fault did not modify page tables
-+					 * and needs fsync() to complete (for
-+					 * synchronous page faults in DAX) */
- 
- #define VM_FAULT_ERROR	(VM_FAULT_OOM | VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV | \
- 			 VM_FAULT_HWPOISON | VM_FAULT_HWPOISON_LARGE | \
-@@ -1199,7 +1202,8 @@ static inline void clear_page_pfmemalloc(struct page *page)
- 	{ VM_FAULT_LOCKED,		"LOCKED" }, \
- 	{ VM_FAULT_RETRY,		"RETRY" }, \
- 	{ VM_FAULT_FALLBACK,		"FALLBACK" }, \
--	{ VM_FAULT_DONE_COW,		"DONE_COW" }
-+	{ VM_FAULT_DONE_COW,		"DONE_COW" }, \
-+	{ VM_FAULT_NEEDDSYNC,		"NEEDDSYNC" }
- 
- /* Encode hstate index for a hwpoisoned large page */
- #define VM_FAULT_SET_HINDEX(x) ((x) << 12)
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index 47c3148653be..b38ee6809327 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -125,6 +125,21 @@ are carried through to the underlying file.
+ to the underlying file requires the use of
+ .BR msync (2).)
+ .TP
++.BR MAP_SHARED_VALIDATE " (since Linux 4.15)"
++The same as
++.B MAP_SHARED
++except that
++.B MAP_SHARED
++mappings ignore unknown flags in
++.IR flags .
++In contrast when creating mapping of
++.B MAP_SHARED_VALIDATE
++mapping type, the kernel verifies all passed flags are known and fails the
++mapping with
++.BR EOPNOTSUPP
++otherwise. This mapping type is also required to be able to use some mapping
++flags.
++.TP
+ .B MAP_PRIVATE
+ Create a private copy-on-write mapping.
+ Updates to the mapping are not visible to other processes
+@@ -134,7 +149,10 @@ It is unspecified whether changes made to the file after the
+ .BR mmap ()
+ call are visible in the mapped region.
+ .PP
+-Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
++.B MAP_SHARED
++and
++.B MAP_PRIVATE
++are described in POSIX.1-2001 and POSIX.1-2008.
+ .PP
+ In addition, zero or more of the following values can be ORed in
+ .IR flags :
+@@ -352,6 +370,21 @@ option.
+ Because of the security implications,
+ that option is normally enabled only on embedded devices
+ (i.e., devices where one has complete control of the contents of user memory).
++.TP
++.BR MAP_SYNC " (since Linux 4.15)"
++This flags is available only with
++.B MAP_SHARED_VALIDATE
++mapping type. Mappings of
++.B MAP_SHARED
++type will silently ignore this flag.
++This flag is supported only for files supporting DAX (direct mapping of persistent
++memory). For other files, creating mapping with this flag results in
++.B EOPNOTSUPP
++error. Shared file mappings with this flag provide the guarantee that while
++some memory is writeably mapped in the address space of the process, it will
++be visible in the same file at the same offset even after the system crashes or
++is rebooted. This allows users of such mappings to make data modifications
++persistent in a more efficient way using appropriate CPU instructions.
+ .PP
+ Of the above flags, only
+ .B MAP_FIXED
 -- 
 2.12.3
