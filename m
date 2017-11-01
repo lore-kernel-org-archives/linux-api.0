@@ -1,91 +1,42 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and MAP_SYNC
-Date: Wed,  1 Nov 2017 16:36:48 +0100
-Message-ID: <20171101153648.30166-20-jack@suse.cz>
+From: Jan Kara <jack@suse.cz>
+Subject: [PATCH 02/18] mm: Remove VM_FAULT_HWPOISON_LARGE_MASK
+Date: Wed,  1 Nov 2017 16:36:31 +0100
+Message-ID: <20171101153648.30166-3-jack@suse.cz>
 References: <20171101153648.30166-1-jack@suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20171101153648.30166-1-jack-AlSwsSmVLrQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171101153648.30166-1-jack@suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-nvdimm@lists.01.org, linux-mm@kvack.org, linux-api@vger.kernel.org, linux-ext4@vger.kernel.org, linux-xfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, Jan Kara <jack@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
----
- man2/mmap.2 | 35 ++++++++++++++++++++++++++++++++++-
- 1 file changed, 34 insertions(+), 1 deletion(-)
+It is unused.
 
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 47c3148653be..b38ee6809327 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -125,6 +125,21 @@ are carried through to the underlying file.
- to the underlying file requires the use of
- .BR msync (2).)
- .TP
-+.BR MAP_SHARED_VALIDATE " (since Linux 4.15)"
-+The same as
-+.B MAP_SHARED
-+except that
-+.B MAP_SHARED
-+mappings ignore unknown flags in
-+.IR flags .
-+In contrast when creating mapping of
-+.B MAP_SHARED_VALIDATE
-+mapping type, the kernel verifies all passed flags are known and fails the
-+mapping with
-+.BR EOPNOTSUPP
-+otherwise. This mapping type is also required to be able to use some mapping
-+flags.
-+.TP
- .B MAP_PRIVATE
- Create a private copy-on-write mapping.
- Updates to the mapping are not visible to other processes
-@@ -134,7 +149,10 @@ It is unspecified whether changes made to the file after the
- .BR mmap ()
- call are visible in the mapped region.
- .PP
--Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
-+.B MAP_SHARED
-+and
-+.B MAP_PRIVATE
-+are described in POSIX.1-2001 and POSIX.1-2008.
- .PP
- In addition, zero or more of the following values can be ORed in
- .IR flags :
-@@ -352,6 +370,21 @@ option.
- Because of the security implications,
- that option is normally enabled only on embedded devices
- (i.e., devices where one has complete control of the contents of user memory).
-+.TP
-+.BR MAP_SYNC " (since Linux 4.15)"
-+This flags is available only with
-+.B MAP_SHARED_VALIDATE
-+mapping type. Mappings of
-+.B MAP_SHARED
-+type will silently ignore this flag.
-+This flag is supported only for files supporting DAX (direct mapping of persistent
-+memory). For other files, creating mapping with this flag results in
-+.B EOPNOTSUPP
-+error. Shared file mappings with this flag provide the guarantee that while
-+some memory is writeably mapped in the address space of the process, it will
-+be visible in the same file at the same offset even after the system crashes or
-+is rebooted. This allows users of such mappings to make data modifications
-+persistent in a more efficient way using appropriate CPU instructions.
- .PP
- Of the above flags, only
- .B MAP_FIXED
+Reviewed-by: Ross Zwisler <ross.zwisler@linux.intel.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ include/linux/mm.h | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 065d99deb847..ca72b67153d5 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1182,8 +1182,6 @@ static inline void clear_page_pfmemalloc(struct page *page)
+ #define VM_FAULT_FALLBACK 0x0800	/* huge page fault failed, fall back to small */
+ #define VM_FAULT_DONE_COW   0x1000	/* ->fault has fully handled COW */
+ 
+-#define VM_FAULT_HWPOISON_LARGE_MASK 0xf000 /* encodes hpage index for large hwpoison */
+-
+ #define VM_FAULT_ERROR	(VM_FAULT_OOM | VM_FAULT_SIGBUS | VM_FAULT_SIGSEGV | \
+ 			 VM_FAULT_HWPOISON | VM_FAULT_HWPOISON_LARGE | \
+ 			 VM_FAULT_FALLBACK)
 -- 
 2.12.3
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
