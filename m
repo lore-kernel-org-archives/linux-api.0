@@ -1,11 +1,14 @@
 From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 0/18 v6] dax, ext4, xfs: Synchronous page faults
-Date: Wed,  1 Nov 2017 16:36:29 +0100
-Message-ID: <20171101153648.30166-1-jack@suse.cz>
+Subject: [PATCH 01/18] mm: introduce MAP_SHARED_VALIDATE,
+ a mechanism to safely define new mmap flags
+Date: Wed,  1 Nov 2017 16:36:30 +0100
+Message-ID: <20171101153648.30166-2-jack@suse.cz>
+References: <20171101153648.30166-1-jack@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20171101153648.30166-1-jack-AlSwsSmVLrQ@public.gmane.org>
 List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
  <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
@@ -16,118 +19,237 @@ List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
 Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-here is the sixth version of my patches to implement synchronous page faults
-for DAX mappings to make flushing of DAX mappings possible from userspace so
-that they can be flushed on finer than page granularity and also avoid the
-overhead of a syscall.
+The mmap(2) syscall suffers from the ABI anti-pattern of not validating
+unknown flags. However, proposals like MAP_SYNC need a mechanism to
+define new behavior that is known to fail on older kernels without the
+support. Define a new MAP_SHARED_VALIDATE flag pattern that is
+guaranteed to fail on all legacy mmap implementations.
 
-I think we are ready to get this merged - I've talked to Dan and he said he
-could take the patches through his tree. It would just be nice to get final
-ack from Christoph for the first patch implementing MAP_VALIDATE and someone
-from XFS folks to check patch 17 (make xfs_filemap_pfn_mkwrite use
-__xfs_filemap_fault()).
+It is worth noting that the original proposal was for a standalone
+MAP_VALIDATE flag. However, when that  could not be supported by all
+archs Linus observed:
 
+    I see why you *think* you want a bitmap. You think you want
+    a bitmap because you want to make MAP_VALIDATE be part of MAP_SYNC
+    etc, so that people can do
+
+    ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED
+		    | MAP_SYNC, fd, 0);
+
+    and "know" that MAP_SYNC actually takes.
+
+    And I'm saying that whole wish is bogus. You're fundamentally
+    depending on special semantics, just make it explicit. It's already
+    not portable, so don't try to make it so.
+
+    Rename that MAP_VALIDATE as MAP_SHARED_VALIDATE, make it have a value
+    of 0x3, and make people do
+
+    ret = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED_VALIDATE
+		    | MAP_SYNC, fd, 0);
+
+    and then the kernel side is easier too (none of that random garbage
+    playing games with looking at the "MAP_VALIDATE bit", but just another
+    case statement in that map type thing.
+
+    Boom. Done.
+
+Similar to ->fallocate() we also want the ability to validate the
+support for new flags on a per ->mmap() 'struct file_operations'
+instance basis.  Towards that end arrange for flags to be generically
+validated against a mmap_supported_flags exported by 'struct
+file_operations'. By default all existing flags are implicitly
+supported, but new flags require MAP_SHARED_VALIDATE and
+per-instance-opt-in.
+
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Suggested-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Suggested-by: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 ---
+ arch/alpha/include/uapi/asm/mman.h           |  1 +
+ arch/mips/include/uapi/asm/mman.h            |  1 +
+ arch/parisc/include/uapi/asm/mman.h          |  1 +
+ arch/xtensa/include/uapi/asm/mman.h          |  1 +
+ include/linux/fs.h                           |  1 +
+ include/linux/mman.h                         | 39 ++++++++++++++++++++++++++++
+ include/uapi/asm-generic/mman-common.h       |  1 +
+ mm/mmap.c                                    | 15 +++++++++++
+ tools/include/uapi/asm-generic/mman-common.h |  1 +
+ 9 files changed, 61 insertions(+)
 
-We use a new mmap flag MAP_SYNC to indicate that page faults for the mapping
-should be synchronous.  The guarantee provided by this flag is: While a block
-is writeably mapped into page tables of this mapping, it is guaranteed to be
-visible in the file at that offset also after a crash.
-
-How I implement this is that ->iomap_begin() indicates by a flag that inode
-block mapping metadata is unstable and may need flushing (use the same test as
-whether fdatasync() has metadata to write). If yes, DAX fault handler refrains
-from inserting / write-enabling the page table entry and returns special flag
-VM_FAULT_NEEDDSYNC together with a PFN to map to the filesystem fault handler.
-The handler then calls fdatasync() (vfs_fsync_range()) for the affected range
-and after that calls DAX code to update the page table entry appropriately.
-
-I did some basic performance testing on the patches over ramdisk - timed
-latency of page faults when faulting 512 pages. I did several tests: with file
-preallocated / with file empty, with background file copying going on / without
-it, with / without MAP_SYNC (so that we get comparison).  The results are
-(numbers are in microseconds):
-
-File preallocated, no background load no MAP_SYNC:
-min=9 avg=10 max=46
-8 - 15 us: 508
-16 - 31 us: 3
-32 - 63 us: 1
-
-File preallocated, no background load, MAP_SYNC:
-min=9 avg=10 max=47
-8 - 15 us: 508
-16 - 31 us: 2
-32 - 63 us: 2
-
-File empty, no background load, no MAP_SYNC:
-min=21 avg=22 max=70
-16 - 31 us: 506
-32 - 63 us: 5
-64 - 127 us: 1
-
-File empty, no background load, MAP_SYNC:
-min=40 avg=124 max=242
-32 - 63 us: 1
-64 - 127 us: 333
-128 - 255 us: 178
-
-File empty, background load, no MAP_SYNC:
-min=21 avg=23 max=67
-16 - 31 us: 507
-32 - 63 us: 4
-64 - 127 us: 1
-
-File empty, background load, MAP_SYNC:
-min=94 avg=112 max=181
-64 - 127 us: 489
-128 - 255 us: 23
-
-So here we can see the difference between MAP_SYNC vs non MAP_SYNC is about
-100-200 us when we need to wait for transaction commit in this setup. 
-
-Changes since v5:
-* really updated the manpage
-* improved comment describing IOMAP_F_DIRTY
-* fixed XFS handling of VM_FAULT_NEEDSYNC in xfs_filemap_pfn_mkwrite()
-
-Changes since v4:
-* fixed couple of minor things in the manpage
-* make legacy mmap flags always supported, remove them from mask declared
-  to be supported by ext4 and xfs
-
-Changes since v3:
-* updated some changelogs
-* folded fs support for VM_SYNC flag into patches implementing the
-  functionality
-* removed ->mmap_validate, use ->mmap_supported_flags instead
-* added some Reviewed-by tags
-* added manpage patch
-
-Changes since v2:
-* avoid unnecessary flushing of faulted page (Ross) - I've realized it makes no
-  sense to remeasure my benchmark results (after actually doing that and seeing
-  no difference, sigh) since I use ramdisk and not real PMEM HW and so flushes
-  are ignored.
-* handle nojournal mode of ext4
-* other smaller cleanups & fixes (Ross)
-* factor larger part of finishing of synchronous fault into a helper (Christoph)
-* reorder pfnp argument of dax_iomap_fault() (Christoph)
-* add XFS support from Christoph
-* use proper MAP_SYNC support in mmap(2)
-* rebased on top of 4.14-rc4
-
-Changes since v1:
-* switched to using mmap flag MAP_SYNC
-* cleaned up fault handlers to avoid passing pfn in vmf->orig_pte
-* switched to not touching page tables before we are ready to insert final
-  entry as it was unnecessary and not really simplifying anything
-* renamed fault flag to VM_FAULT_NEEDDSYNC
-* other smaller fixes found by reviewers
-
-								Honza
+diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+index 3b26cc62dadb..f6d118aaedb9 100644
+--- a/arch/alpha/include/uapi/asm/mman.h
++++ b/arch/alpha/include/uapi/asm/mman.h
+@@ -11,6 +11,7 @@
+ 
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x0f		/* Mask for type of mapping (OSF/1 is _wrong_) */
+ #define MAP_FIXED	0x100		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x10		/* don't use a file */
+diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+index da3216007fe0..93268e4cd3c7 100644
+--- a/arch/mips/include/uapi/asm/mman.h
++++ b/arch/mips/include/uapi/asm/mman.h
+@@ -28,6 +28,7 @@
+  */
+ #define MAP_SHARED	0x001		/* Share changes */
+ #define MAP_PRIVATE	0x002		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x003	/* share + validate extension flags */
+ #define MAP_TYPE	0x00f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x010		/* Interpret addr exactly */
+ 
+diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+index 775b5d5e41a1..bca652aa1677 100644
+--- a/arch/parisc/include/uapi/asm/mman.h
++++ b/arch/parisc/include/uapi/asm/mman.h
+@@ -11,6 +11,7 @@
+ 
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x03		/* Mask for type of mapping */
+ #define MAP_FIXED	0x04		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x10		/* don't use a file */
+diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+index b15b278aa314..9ab426374714 100644
+--- a/arch/xtensa/include/uapi/asm/mman.h
++++ b/arch/xtensa/include/uapi/asm/mman.h
+@@ -35,6 +35,7 @@
+  */
+ #define MAP_SHARED	0x001		/* Share changes */
+ #define MAP_PRIVATE	0x002		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x003	/* share + validate extension flags */
+ #define MAP_TYPE	0x00f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x010		/* Interpret addr exactly */
+ 
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 13dab191a23e..57added3201d 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1701,6 +1701,7 @@ struct file_operations {
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
++	unsigned long mmap_supported_flags;
+ 	int (*open) (struct inode *, struct file *);
+ 	int (*flush) (struct file *, fl_owner_t id);
+ 	int (*release) (struct inode *, struct file *);
+diff --git a/include/linux/mman.h b/include/linux/mman.h
+index c8367041fafd..94b63b4d71ff 100644
+--- a/include/linux/mman.h
++++ b/include/linux/mman.h
+@@ -7,6 +7,45 @@
+ #include <linux/atomic.h>
+ #include <uapi/linux/mman.h>
+ 
++/*
++ * Arrange for legacy / undefined architecture specific flags to be
++ * ignored by default in LEGACY_MAP_MASK.
++ */
++#ifndef MAP_32BIT
++#define MAP_32BIT 0
++#endif
++#ifndef MAP_HUGE_2MB
++#define MAP_HUGE_2MB 0
++#endif
++#ifndef MAP_HUGE_1GB
++#define MAP_HUGE_1GB 0
++#endif
++#ifndef MAP_UNINITIALIZED
++#define MAP_UNINITIALIZED 0
++#endif
++
++/*
++ * The historical set of flags that all mmap implementations implicitly
++ * support when a ->mmap_validate() op is not provided in file_operations.
++ */
++#define LEGACY_MAP_MASK (MAP_SHARED \
++		| MAP_PRIVATE \
++		| MAP_FIXED \
++		| MAP_ANONYMOUS \
++		| MAP_DENYWRITE \
++		| MAP_EXECUTABLE \
++		| MAP_UNINITIALIZED \
++		| MAP_GROWSDOWN \
++		| MAP_LOCKED \
++		| MAP_NORESERVE \
++		| MAP_POPULATE \
++		| MAP_NONBLOCK \
++		| MAP_STACK \
++		| MAP_HUGETLB \
++		| MAP_32BIT \
++		| MAP_HUGE_2MB \
++		| MAP_HUGE_1GB)
++
+ extern int sysctl_overcommit_memory;
+ extern int sysctl_overcommit_ratio;
+ extern unsigned long sysctl_overcommit_kbytes;
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index 203268f9231e..8ce7f5a0800f 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -16,6 +16,7 @@
+ 
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x0f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x10		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x20		/* don't use a file */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 680506faceae..924839fac0e6 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1387,9 +1387,24 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 
+ 	if (file) {
+ 		struct inode *inode = file_inode(file);
++		unsigned long flags_mask;
++
++		flags_mask = LEGACY_MAP_MASK | file->f_op->mmap_supported_flags;
+ 
+ 		switch (flags & MAP_TYPE) {
+ 		case MAP_SHARED:
++			/*
++			 * Force use of MAP_SHARED_VALIDATE with non-legacy
++			 * flags. E.g. MAP_SYNC is dangerous to use with
++			 * MAP_SHARED as you don't know which consistency model
++			 * you will get. We silently ignore unsupported flags
++			 * with MAP_SHARED to preserve backward compatibility.
++			 */
++			flags &= LEGACY_MAP_MASK;
++			/* fall through */
++		case MAP_SHARED_VALIDATE:
++			if (flags & ~flags_mask)
++				return -EOPNOTSUPP;
+ 			if ((prot&PROT_WRITE) && !(file->f_mode&FMODE_WRITE))
+ 				return -EACCES;
+ 
+diff --git a/tools/include/uapi/asm-generic/mman-common.h b/tools/include/uapi/asm-generic/mman-common.h
+index 203268f9231e..8ce7f5a0800f 100644
+--- a/tools/include/uapi/asm-generic/mman-common.h
++++ b/tools/include/uapi/asm-generic/mman-common.h
+@@ -16,6 +16,7 @@
+ 
+ #define MAP_SHARED	0x01		/* Share changes */
+ #define MAP_PRIVATE	0x02		/* Changes are private */
++#define MAP_SHARED_VALIDATE 0x03	/* share + validate extension flags */
+ #define MAP_TYPE	0x0f		/* Mask for type of mapping */
+ #define MAP_FIXED	0x10		/* Interpret addr exactly */
+ #define MAP_ANONYMOUS	0x20		/* don't use a file */
+-- 
+2.12.3
