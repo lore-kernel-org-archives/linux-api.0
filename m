@@ -1,132 +1,174 @@
-From: Andrei Vagin <avagin@virtuozzo.com>
-Subject: Re: [PATCH] [RFC] vm: add a syscall to map a process memory into a
- pipe
-Date: Wed, 1 Nov 2017 10:47:13 -0700
-Message-ID: <20171101174712.GA26700@outlook.office365.com>
-References: <20170810184616.22726-1-avagin@openvz.org>
- <CAKgNAkiSMhmK7JzVArAUejGPpfvKu0ut-WbFg=r22vk4p78PEg@mail.gmail.com>
+From: kbuild test robot <lkp@intel.com>
+Subject: Re: [patch v10 1/4] drivers: jtag: Add JTAG core driver
+Date: Thu, 2 Nov 2017 05:34:04 +0800
+Message-ID: <201711020548.ETMSMVaX%fengguang.wu@intel.com>
+References: <1509365528-28803-2-git-send-email-oleksandrs@mellanox.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="fdj2RfSjLxBAspz7"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="cWoXeonUoKmBZSoM"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKgNAkiSMhmK7JzVArAUejGPpfvKu0ut-WbFg=r22vk4p78PEg@mail.gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Andrei Vagin <avagin@openvz.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>
+In-Reply-To: <1509365528-28803-2-git-send-email-oleksandrs@mellanox.com>
+Sender: linux-kernel-owner@vger.kernel.org
+Cc: kbuild-all@01.org, gregkh@linuxfoundation.org, arnd@arndb.de, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, mec@shout.net, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>, Jiri Pirko <jiri@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
 
---fdj2RfSjLxBAspz7
-Content-Type: text/plain; charset=koi8-r
+--cWoXeonUoKmBZSoM
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-Hi Michael,
+Hi Oleksandr,
 
-On Mon, Oct 30, 2017 at 01:47:31PM +0100, Michael Kerrisk (man-pages) wrote:
-> On 10 August 2017 at 20:46, Andrei Vagin <avagin@openvz.org> wrote:
-> > It is a hybrid of process_vm_readv() and vmsplice().
-> >
-> > vmsplice can map memory from a current address space into a pipe.
-> > process_vm_readv can read memory of another process.
-> >
-> > A new system call can map memory of another process into a pipe.
-> >
-> > ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
-> >                         unsigned long nr_segs, unsigned int flags)
-> >
-> > All arguments are identical with vmsplice except pid which specifies a
-> > target process.
-> 
-> Can we have a man page for this new syscall please?
+I love your patch! Perhaps something to improve:
 
-I think we can add a description for process_vmsplice into
-man2/vmsplice.2. The patch is attached.
+[auto build test WARNING on linus/master]
+[also build test WARNING on v4.14-rc7]
+[cannot apply to next-20171018]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-Thanks,
-Andrei
+url:    https://github.com/0day-ci/linux/commits/Oleksandr-Shamray/JTAG-driver-introduction/20171102-045624
+config: i386-tinyconfig (attached as .config)
+compiler: gcc-6 (Debian 6.2.0-3) 6.2.0 20160901
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=i386 
 
-> 
-> Thanks,
-> 
-> Michael
-> 
-> 
+All warnings (new ones prefixed by >>):
 
---fdj2RfSjLxBAspz7
-Content-Type: text/plain; charset=koi8-r
-Content-Disposition: attachment; filename="0001-vmsplice.2-add-description-for-process_vmsplice.patch"
+>> ./usr/include/linux/jtag.h:74: found __[us]{8,16,32,64} type without #include <linux/types.h>
 
->From 923cbd38805f8017b6d86ac6a12c8f45a4117399 Mon Sep 17 00:00:00 2001
-From: Andrei Vagin <avagin@openvz.org>
-Date: Wed, 1 Nov 2017 10:26:06 -0700
-Subject: [PATCH] vmsplice.2: add description for process_vmsplice
-
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
 ---
- man2/vmsplice.2 | 20 +++++++++++++++++++-
- 1 file changed, 19 insertions(+), 1 deletion(-)
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-diff --git a/man2/vmsplice.2 b/man2/vmsplice.2
-index e3e61cf27..8b28b6fff 100644
---- a/man2/vmsplice.2
-+++ b/man2/vmsplice.2
-@@ -25,7 +25,7 @@
- .\"
- .TH VMSPLICE 2 2014-10-02 "Linux" "Linux Programmer's Manual"
- .SH NAME
--vmsplice \- splice user pages into a pipe
-+vmsplice, process_vmsplice \- splice user pages into a pipe
- .SH SYNOPSIS
- .nf
- .BR "#define _GNU_SOURCE" "         /* See feature_test_macros(7) */"
-@@ -34,6 +34,8 @@ vmsplice \- splice user pages into a pipe
- 
- .BI "ssize_t vmsplice(int " fd ", const struct iovec *" iov ,
- .BI "                 unsigned long " nr_segs ", unsigned int " flags );
-+.BI "ssize_t process_vmsplice(pid_t " pid ", int " fd ", const struct iovec *" iov ,
-+.BI "                 unsigned long " nr_segs ", unsigned int " flags );
- .fi
- .\" Return type was long before glibc 2.7
- .SH DESCRIPTION
-@@ -55,6 +57,12 @@ The file descriptor
- .I fd
- must refer to a pipe.
- 
-+The
-+.BR process_vmsplice()
-+system call maps user memory from the process identified by
-+.I pid
-+to the local pipe.
-+
- The pointer
- .I iov
- points to an array of
-@@ -114,6 +122,7 @@ Data must also be properly page aligned, both in memory and length.
- .\"	commit bd1a68b59c8e3bce45fb76632c64e1e063c3962d
- .\"
- .\" .... if we expect to later SPLICE_F_MOVE to the cache.
-+
- .SH RETURN VALUE
- Upon successful completion,
- .BR vmsplice ()
-@@ -145,6 +154,15 @@ set.
- .TP
- .B ENOMEM
- Out of memory.
-+.TP
-+.B ESRCH
-+No process with ID
-+.I pid
-+exists.
-+.TP
-+.B EPERM
-+The caller does not have permission to access the address space of the process
-+.IR pid .
- .SH VERSIONS
- The
- .BR vmsplice ()
--- 
-2.13.6
+--cWoXeonUoKmBZSoM
+Content-Type: application/gzip
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
 
+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
 
---fdj2RfSjLxBAspz7--
+--cWoXeonUoKmBZSoM--
