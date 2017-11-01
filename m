@@ -1,121 +1,53 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH 17/17] xfs: support for synchronous DAX faults
-Date: Tue, 31 Oct 2017 21:47:07 -0600
-Message-ID: <20171101034707.GA1662@linux.intel.com>
-References: <20171024152415.22864-1-jack@suse.cz>
- <20171024152415.22864-18-jack@suse.cz>
- <20171024222322.GX3666@dastard>
- <20171026154804.GF31161@quack2.suse.cz>
- <20171026211611.GC3666@dastard>
- <20171027100834.GH31161@quack2.suse.cz>
- <20171031151907.GB26128@quack2.suse.cz>
- <CAPcyv4gBVyZ8KhB2s1M0BdhC1=HAean6Mb6oV7zsJBx0-t3bhw@mail.gmail.com>
+From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC v2 1/4] mm/mempolicy: Fix get_nodes() mask
+ miscalculation
+Date: Wed, 1 Nov 2017 17:37:36 +0800
+Message-ID: <c9b57bde-7834-45c4-2c22-3220e3680c93@huawei.com>
+References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
+ <1509099265-30868-2-git-send-email-xieyisheng1@huawei.com>
+ <922a4767-9eed-40aa-c437-6f6fcdcab150@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4gBVyZ8KhB2s1M0BdhC1=HAean6Mb6oV7zsJBx0-t3bhw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <922a4767-9eed-40aa-c437-6f6fcdcab150-AlSwsSmVLrQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 31, 2017 at 02:50:01PM -0700, Dan Williams wrote:
-> On Tue, Oct 31, 2017 at 8:19 AM, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > On Fri 27-10-17 12:08:34, Jan Kara wrote:
-> >> On Fri 27-10-17 08:16:11, Dave Chinner wrote:
-> >> > On Thu, Oct 26, 2017 at 05:48:04PM +0200, Jan Kara wrote:
-> >> > > > > diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
-> >> > > > > index f179bdf1644d..b43be199fbdf 100644
-> >> > > > > --- a/fs/xfs/xfs_iomap.c
-> >> > > > > +++ b/fs/xfs/xfs_iomap.c
-> >> > > > > @@ -33,6 +33,7 @@
-> >> > > > >  #include "xfs_error.h"
-> >> > > > >  #include "xfs_trans.h"
-> >> > > > >  #include "xfs_trans_space.h"
-> >> > > > > +#include "xfs_inode_item.h"
-> >> > > > >  #include "xfs_iomap.h"
-> >> > > > >  #include "xfs_trace.h"
-> >> > > > >  #include "xfs_icache.h"
-> >> > > > > @@ -1086,6 +1087,10 @@ xfs_file_iomap_begin(
-> >> > > > >               trace_xfs_iomap_found(ip, offset, length, 0, &imap);
-> >> > > > >       }
-> >> > > > >
-> >> > > > > +     if ((flags & IOMAP_WRITE) && xfs_ipincount(ip) &&
-> >> > > > > +         (ip->i_itemp->ili_fsync_fields & ~XFS_ILOG_TIMESTAMP))
-> >> > > > > +             iomap->flags |= IOMAP_F_DIRTY;
-> >> > > >
-> >> > > > This is the very definition of an inode that is "fdatasync dirty".
-> >> > > >
-> >> > > > Hmmmm, shouldn't this also be set for read faults, too?
-> >> > >
-> >> > > No, read faults don't need to set IOMAP_F_DIRTY since user cannot write any
-> >> > > data to the page which he'd then like to be persistent. The only reason why
-> >> > > I thought it could be useful for a while was that it would be nice to make
-> >> > > MAP_SYNC mapping provide the guarantee that data you see now is the data
-> >> > > you'll see after a crash
-> >> >
-> >> > Isn't that the entire point of MAP_SYNC? i.e. That when we return
-> >> > from a page fault, the app knows that the data and it's underlying
-> >> > extent is on persistent storage?
-> >> >
-> >> > > but we cannot provide that guarantee for RO
-> >> > > mapping anyway if someone else has the page mapped as well. So I just
-> >> > > decided not to return IOMAP_F_DIRTY for read faults.
-> >> >
-> >> > If there are multiple MAP_SYNC mappings to the inode, I would have
-> >> > expected that they all sync all of the data/metadata on every page
-> >> > fault, regardless of who dirtied the inode. An RO mapping doesn't
-> >>
-> >> Well, they all do sync regardless of who dirtied the inode on every *write*
-> >> fault.
-> >>
-> >> > mean the data/metadata on the inode can't change, it just means it
-> >> > can't change through that mapping.  Running fsync() to guarantee the
-> >> > persistence of that data/metadata doesn't actually changing any
-> >> > data....
-> >> >
-> >> > IOWs, if read faults don't guarantee the mapped range has stable
-> >> > extents on a MAP_SYNC mapping, then I think MAP_SYNC is broken
-> >> > because it's not giving consistent guarantees to userspace. Yes, it
-> >> > works fine when only one MAP_SYNC mapping is modifying the inode,
-> >> > but the moment we have concurrent operations on the inode that
-> >> > aren't MAP_SYNC or O_SYNC this goes out the window....
-> >>
-> >> MAP_SYNC as I've implemented it provides guarantees only for data the
-> >> process has actually written. I agree with that and it was a conscious
-> >> decision. In my opinion that covers most usecases, provides reasonably
-> >> simple semantics (i.e., if you write data through MAP_SYNC mapping, you can
-> >> persist it just using CPU instructions), and reasonable performance.
-> >>
-> >> Now you seem to suggest the semantics should be: "Data you have read from or
-> >> written to a MAP_SYNC mapping can be persisted using CPU instructions." And
-> >> from implementation POV we can do that rather easily (just rip out the
-> >> IOMAP_WRITE checks). But I'm unsure whether this additional guarantee would
-> >> be useful enough to justify the slowdown of read faults? I was not able to
-> >> come up with a good usecase and so I've decided for current semantics. What
-> >> do other people think?
-> >
-> > Nobody commented on this for couple of days so how do we proceed? I would
-> > prefer to go just with a guarantee for data written and we can always make
-> > the guarantee stronger (i.e. apply it also for read data) when some user
-> > comes with a good usecase?
-> 
-> I think it is easier to strengthen the guarantee than loosen it later
-> especially since it is not yet clear that we have a use case for the
-> stronger semantic. At least the initial motivation for MAP_SYNC was
-> for writers.
+Hi Vlastimil,
 
-I agree.  It seems like all threads/processes in a given application need to
-use MAP_SYNC consistently so they can be sure that data that is written (and
-then possibly read) will be durable on media.  I think what you have is a good
-starting point, and we can adjust later if necessary.
+Thanks for comment!
+On 2017/10/31 16:34, Vlastimil Babka wrote:
+> On 10/27/2017 12:14 PM, Yisheng Xie wrote:
+>> It appears there is a nodemask miscalculation in the get_nodes()
+>> function in mm/mempolicy.c.  This bug has two effects:
+>>
+>> 1. It is impossible to specify a length 1 nodemask.
+>> 2. It is impossible to specify a nodemask containing the last node.
+> 
+> This should be more specific, which syscalls are you talking about?
+> I assume it's set_mempolicy() and mbind() and it's the same issue that
+> was discussed at https://marc.info/?l=linux-mm&m=150732591909576&w=2 ?
+
+I just missed this thread, sorry about that. Not only set_mempolicy() and
+mbind(), but migrate_pages() also suffers this problem. Maybe related
+manpage should documented this as your mentioned below.
+
+Thanks
+Yisheng Xie
+
+> 
+>> Brent have submmit a patch before v2.6.12, however, Andi revert his
+>> changed for ABI problem. I just resent this patch as RFC, for do not
+>> clear about what's the problem Andi have met.
+> 
+> You should have CC'd Andi. As was discussed in the other thread, this
+> would make existing programs potentially unsafe, so we can't change it.
+> Instead it should be documented.
+> 
+>> As manpage of set_mempolicy, If the value of maxnode is zero, the
+>> nodemask argument is ignored. but we should not ignore the nodemask
+>> when maxnode is 1.
+>>
