@@ -1,53 +1,157 @@
-From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC v2 1/4] mm/mempolicy: Fix get_nodes() mask
- miscalculation
-Date: Wed, 1 Nov 2017 17:37:36 +0800
-Message-ID: <c9b57bde-7834-45c4-2c22-3220e3680c93@huawei.com>
-References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
- <1509099265-30868-2-git-send-email-xieyisheng1@huawei.com>
- <922a4767-9eed-40aa-c437-6f6fcdcab150@suse.cz>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: [PATCH 10/18] dax: Allow dax_iomap_fault() to return pfn
+Date: Wed,  1 Nov 2017 16:36:39 +0100
+Message-ID: <20171101153648.30166-11-jack@suse.cz>
+References: <20171101153648.30166-1-jack@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <922a4767-9eed-40aa-c437-6f6fcdcab150-AlSwsSmVLrQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20171101153648.30166-1-jack-AlSwsSmVLrQ@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Vlastimil,
+For synchronous page fault dax_iomap_fault() will need to return PFN
+which will then need to be inserted into page tables after fsync()
+completes. Add necessary parameter to dax_iomap_fault().
 
-Thanks for comment!
-On 2017/10/31 16:34, Vlastimil Babka wrote:
-> On 10/27/2017 12:14 PM, Yisheng Xie wrote:
->> It appears there is a nodemask miscalculation in the get_nodes()
->> function in mm/mempolicy.c.  This bug has two effects:
->>
->> 1. It is impossible to specify a length 1 nodemask.
->> 2. It is impossible to specify a nodemask containing the last node.
-> 
-> This should be more specific, which syscalls are you talking about?
-> I assume it's set_mempolicy() and mbind() and it's the same issue that
-> was discussed at https://marc.info/?l=linux-mm&m=150732591909576&w=2 ?
+Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+---
+ fs/dax.c            | 13 +++++++------
+ fs/ext2/file.c      |  2 +-
+ fs/ext4/file.c      |  2 +-
+ fs/xfs/xfs_file.c   |  4 ++--
+ include/linux/dax.h |  2 +-
+ 5 files changed, 12 insertions(+), 11 deletions(-)
 
-I just missed this thread, sorry about that. Not only set_mempolicy() and
-mbind(), but migrate_pages() also suffers this problem. Maybe related
-manpage should documented this as your mentioned below.
-
-Thanks
-Yisheng Xie
-
-> 
->> Brent have submmit a patch before v2.6.12, however, Andi revert his
->> changed for ABI problem. I just resent this patch as RFC, for do not
->> clear about what's the problem Andi have met.
-> 
-> You should have CC'd Andi. As was discussed in the other thread, this
-> would make existing programs potentially unsafe, so we can't change it.
-> Instead it should be documented.
-> 
->> As manpage of set_mempolicy, If the value of maxnode is zero, the
->> nodemask argument is ignored. but we should not ignore the nodemask
->> when maxnode is 1.
->>
+diff --git a/fs/dax.c b/fs/dax.c
+index 5214ed9ba508..5ddf15161390 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -1079,7 +1079,7 @@ static int dax_fault_return(int error)
+ 	return VM_FAULT_SIGBUS;
+ }
+ 
+-static int dax_iomap_pte_fault(struct vm_fault *vmf,
++static int dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 			       const struct iomap_ops *ops)
+ {
+ 	struct vm_area_struct *vma = vmf->vma;
+@@ -1280,7 +1280,7 @@ static int dax_pmd_load_hole(struct vm_fault *vmf, struct iomap *iomap,
+ 	return VM_FAULT_FALLBACK;
+ }
+ 
+-static int dax_iomap_pmd_fault(struct vm_fault *vmf,
++static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 			       const struct iomap_ops *ops)
+ {
+ 	struct vm_area_struct *vma = vmf->vma;
+@@ -1425,7 +1425,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf,
+ 	return result;
+ }
+ #else
+-static int dax_iomap_pmd_fault(struct vm_fault *vmf,
++static int dax_iomap_pmd_fault(struct vm_fault *vmf, pfn_t *pfnp,
+ 			       const struct iomap_ops *ops)
+ {
+ 	return VM_FAULT_FALLBACK;
+@@ -1436,6 +1436,7 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf,
+  * dax_iomap_fault - handle a page fault on a DAX file
+  * @vmf: The description of the fault
+  * @pe_size: Size of the page to fault in
++ * @pfnp: PFN to insert for synchronous faults if fsync is required
+  * @ops: Iomap ops passed from the file system
+  *
+  * When a page fault occurs, filesystems may call this helper in
+@@ -1444,13 +1445,13 @@ static int dax_iomap_pmd_fault(struct vm_fault *vmf,
+  * successfully.
+  */
+ int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
+-		    const struct iomap_ops *ops)
++		    pfn_t *pfnp, const struct iomap_ops *ops)
+ {
+ 	switch (pe_size) {
+ 	case PE_SIZE_PTE:
+-		return dax_iomap_pte_fault(vmf, ops);
++		return dax_iomap_pte_fault(vmf, pfnp, ops);
+ 	case PE_SIZE_PMD:
+-		return dax_iomap_pmd_fault(vmf, ops);
++		return dax_iomap_pmd_fault(vmf, pfnp, ops);
+ 	default:
+ 		return VM_FAULT_FALLBACK;
+ 	}
+diff --git a/fs/ext2/file.c b/fs/ext2/file.c
+index ff3a3636a5ca..d2bb7c96307d 100644
+--- a/fs/ext2/file.c
++++ b/fs/ext2/file.c
+@@ -99,7 +99,7 @@ static int ext2_dax_fault(struct vm_fault *vmf)
+ 	}
+ 	down_read(&ei->dax_sem);
+ 
+-	ret = dax_iomap_fault(vmf, PE_SIZE_PTE, &ext2_iomap_ops);
++	ret = dax_iomap_fault(vmf, PE_SIZE_PTE, NULL, &ext2_iomap_ops);
+ 
+ 	up_read(&ei->dax_sem);
+ 	if (vmf->flags & FAULT_FLAG_WRITE)
+diff --git a/fs/ext4/file.c b/fs/ext4/file.c
+index b1da660ac3bc..3cec0b95672f 100644
+--- a/fs/ext4/file.c
++++ b/fs/ext4/file.c
+@@ -306,7 +306,7 @@ static int ext4_dax_huge_fault(struct vm_fault *vmf,
+ 		down_read(&EXT4_I(inode)->i_mmap_sem);
+ 	}
+ 	if (!IS_ERR(handle))
+-		result = dax_iomap_fault(vmf, pe_size, &ext4_iomap_ops);
++		result = dax_iomap_fault(vmf, pe_size, NULL, &ext4_iomap_ops);
+ 	else
+ 		result = VM_FAULT_SIGBUS;
+ 	if (write) {
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index 309e26c9dddb..7c6b8def6eed 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -1040,7 +1040,7 @@ __xfs_filemap_fault(
+ 
+ 	xfs_ilock(XFS_I(inode), XFS_MMAPLOCK_SHARED);
+ 	if (IS_DAX(inode)) {
+-		ret = dax_iomap_fault(vmf, pe_size, &xfs_iomap_ops);
++		ret = dax_iomap_fault(vmf, pe_size, NULL, &xfs_iomap_ops);
+ 	} else {
+ 		if (write_fault)
+ 			ret = iomap_page_mkwrite(vmf, &xfs_iomap_ops);
+@@ -1111,7 +1111,7 @@ xfs_filemap_pfn_mkwrite(
+ 	if (vmf->pgoff >= size)
+ 		ret = VM_FAULT_SIGBUS;
+ 	else if (IS_DAX(inode))
+-		ret = dax_iomap_fault(vmf, PE_SIZE_PTE, &xfs_iomap_ops);
++		ret = dax_iomap_fault(vmf, PE_SIZE_PTE, NULL, &xfs_iomap_ops);
+ 	xfs_iunlock(ip, XFS_MMAPLOCK_SHARED);
+ 	sb_end_pagefault(inode->i_sb);
+ 	return ret;
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 122197124b9d..e7fa4b8f45bc 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -95,7 +95,7 @@ bool dax_write_cache_enabled(struct dax_device *dax_dev);
+ ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
+ 		const struct iomap_ops *ops);
+ int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
+-		    const struct iomap_ops *ops);
++		    pfn_t *pfnp, const struct iomap_ops *ops);
+ int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index);
+ int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
+ 				      pgoff_t index);
+-- 
+2.12.3
