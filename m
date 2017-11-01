@@ -1,155 +1,180 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: [PATCH 14/18] dax: Implement dax_finish_sync_fault()
-Date: Wed,  1 Nov 2017 16:36:43 +0100
-Message-ID: <20171101153648.30166-15-jack@suse.cz>
-References: <20171101153648.30166-1-jack@suse.cz>
+From: nagarathnam muthusamy <nagarathnam.muthusamy@oracle.com>
+Subject: Re: [PATCH v4] pidns: introduce syscall translate_pid
+Date: Wed, 01 Nov 2017 09:59:55 -0700
+Message-ID: <59F9FD8B.8090607@oracle.com>
+References: <150788678482.924140.11785205105514746135.stgit@buzz> <20171013160514.GA27812@redhat.com> <3bdb5341-9ae6-265a-ce5b-45c2cfc76fad@yandex-team.ru> <d7b2a0b6-6d0c-5ca8-9d2b-3a1211713d34@yandex-team.ru> <20171016143628.b2ef80a9ef16d4345889b4d9@linux-foundation.org> <fc2ae985-7ef7-0caf-4eb9-9348a5ca5e78@oracle.com> <fb03aaef-84e5-c869-11cc-6e1d8b4699c8@oracle.com> <CALCETrUg0xrkWnsQhq5L9RpDunrD8w7C3EjxeOPPrQv2h1KMEA@mail.gmail.com> <a41bbfdf-6af5-6b29-36bf-1ed677b6ca75@oracle.com> <CALCETrXXDQEddqx5yUnGtgZnv_7eDc=GAFsmUSNPV45BGxQbPw@mail.gmail.com> <59E685B3.1000200@oracle.com> <CALCETrWv5sYXvyL2mYwDK99O-awB6e2KV++oQK7Nrmgkvt9vPA@mail.gmail.com> <59E689F5.2080706@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20171101153648.30166-1-jack-AlSwsSmVLrQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <59E689F5.2080706@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: prakash sangappa <prakash.sangappa@oracle.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Implement a function that filesystems can call to finish handling of
-synchronous page faults. It takes care of syncing appropriare file range
-and insertion of page table entry.
+I believe all the questions raised in this thread were answered. Just 
+wondering if there are any outstanding questions?
 
-Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Reviewed-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
-Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
----
- fs/dax.c                      | 83 +++++++++++++++++++++++++++++++++++++++++++
- include/linux/dax.h           |  2 ++
- include/trace/events/fs_dax.h |  2 ++
- 3 files changed, 87 insertions(+)
-
-diff --git a/fs/dax.c b/fs/dax.c
-index bb9ff907738c..78233c716757 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -1492,3 +1492,86 @@ int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
- 	}
- }
- EXPORT_SYMBOL_GPL(dax_iomap_fault);
-+
-+/**
-+ * dax_insert_pfn_mkwrite - insert PTE or PMD entry into page tables
-+ * @vmf: The description of the fault
-+ * @pe_size: Size of entry to be inserted
-+ * @pfn: PFN to insert
-+ *
-+ * This function inserts writeable PTE or PMD entry into page tables for mmaped
-+ * DAX file.  It takes care of marking corresponding radix tree entry as dirty
-+ * as well.
-+ */
-+static int dax_insert_pfn_mkwrite(struct vm_fault *vmf,
-+				  enum page_entry_size pe_size,
-+				  pfn_t pfn)
-+{
-+	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
-+	void *entry, **slot;
-+	pgoff_t index = vmf->pgoff;
-+	int vmf_ret, error;
-+
-+	spin_lock_irq(&mapping->tree_lock);
-+	entry = get_unlocked_mapping_entry(mapping, index, &slot);
-+	/* Did we race with someone splitting entry or so? */
-+	if (!entry ||
-+	    (pe_size == PE_SIZE_PTE && !dax_is_pte_entry(entry)) ||
-+	    (pe_size == PE_SIZE_PMD && !dax_is_pmd_entry(entry))) {
-+		put_unlocked_mapping_entry(mapping, index, entry);
-+		spin_unlock_irq(&mapping->tree_lock);
-+		trace_dax_insert_pfn_mkwrite_no_entry(mapping->host, vmf,
-+						      VM_FAULT_NOPAGE);
-+		return VM_FAULT_NOPAGE;
-+	}
-+	radix_tree_tag_set(&mapping->page_tree, index, PAGECACHE_TAG_DIRTY);
-+	entry = lock_slot(mapping, slot);
-+	spin_unlock_irq(&mapping->tree_lock);
-+	switch (pe_size) {
-+	case PE_SIZE_PTE:
-+		error = vm_insert_mixed_mkwrite(vmf->vma, vmf->address, pfn);
-+		vmf_ret = dax_fault_return(error);
-+		break;
-+#ifdef CONFIG_FS_DAX_PMD
-+	case PE_SIZE_PMD:
-+		vmf_ret = vmf_insert_pfn_pmd(vmf->vma, vmf->address, vmf->pmd,
-+			pfn, true);
-+		break;
-+#endif
-+	default:
-+		vmf_ret = VM_FAULT_FALLBACK;
-+	}
-+	put_locked_mapping_entry(mapping, index);
-+	trace_dax_insert_pfn_mkwrite(mapping->host, vmf, vmf_ret);
-+	return vmf_ret;
-+}
-+
-+/**
-+ * dax_finish_sync_fault - finish synchronous page fault
-+ * @vmf: The description of the fault
-+ * @pe_size: Size of entry to be inserted
-+ * @pfn: PFN to insert
-+ *
-+ * This function ensures that the file range touched by the page fault is
-+ * stored persistently on the media and handles inserting of appropriate page
-+ * table entry.
-+ */
-+int dax_finish_sync_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
-+			  pfn_t pfn)
-+{
-+	int err;
-+	loff_t start = ((loff_t)vmf->pgoff) << PAGE_SHIFT;
-+	size_t len = 0;
-+
-+	if (pe_size == PE_SIZE_PTE)
-+		len = PAGE_SIZE;
-+	else if (pe_size == PE_SIZE_PMD)
-+		len = PMD_SIZE;
-+	else
-+		WARN_ON_ONCE(1);
-+	err = vfs_fsync_range(vmf->vma->vm_file, start, start + len - 1, 1);
-+	if (err)
-+		return VM_FAULT_SIGBUS;
-+	return dax_insert_pfn_mkwrite(vmf, pe_size, pfn);
-+}
-+EXPORT_SYMBOL_GPL(dax_finish_sync_fault);
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index e7fa4b8f45bc..d403f78b706c 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -96,6 +96,8 @@ ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
- 		const struct iomap_ops *ops);
- int dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
- 		    pfn_t *pfnp, const struct iomap_ops *ops);
-+int dax_finish_sync_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
-+			  pfn_t pfn);
- int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index);
- int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
- 				      pgoff_t index);
-diff --git a/include/trace/events/fs_dax.h b/include/trace/events/fs_dax.h
-index 88a9d19b8ff8..7725459fafef 100644
---- a/include/trace/events/fs_dax.h
-+++ b/include/trace/events/fs_dax.h
-@@ -190,6 +190,8 @@ DEFINE_EVENT(dax_pte_fault_class, name, \
- DEFINE_PTE_FAULT_EVENT(dax_pte_fault);
- DEFINE_PTE_FAULT_EVENT(dax_pte_fault_done);
- DEFINE_PTE_FAULT_EVENT(dax_load_hole);
-+DEFINE_PTE_FAULT_EVENT(dax_insert_pfn_mkwrite_no_entry);
-+DEFINE_PTE_FAULT_EVENT(dax_insert_pfn_mkwrite);
- 
- TRACE_EVENT(dax_insert_mapping,
- 	TP_PROTO(struct inode *inode, struct vm_fault *vmf, void *radix_entry),
--- 
-2.12.3
+Thanks,
+Nagarathnam.
+On 10/17/2017 3:53 PM, prakash sangappa wrote:
+>
+> On 10/17/2017 3:40 PM, Andy Lutomirski wrote:
+>> On Tue, Oct 17, 2017 at 3:35 PM, prakash sangappa
+>> <prakash.sangappa@oracle.com> wrote:
+>>> On 10/17/2017 3:02 PM, Andy Lutomirski wrote:
+>>>> On Tue, Oct 17, 2017 at 8:38 AM, Prakash Sangappa
+>>>> <prakash.sangappa@oracle.com> wrote:
+>>>>>
+>>>>> On 10/16/17 5:52 PM, Andy Lutomirski wrote:
+>>>>>> On Mon, Oct 16, 2017 at 3:54 PM, prakash.sangappa
+>>>>>> <prakash.sangappa@oracle.com> wrote:
+>>>>>>>
+>>>>>>> On 10/16/2017 03:07 PM, Nagarathnam Muthusamy wrote:
+>>>>>>>>
+>>>>>>>>
+>>>>>>>> On 10/16/2017 02:36 PM, Andrew Morton wrote:
+>>>>>>>>> On Sat, 14 Oct 2017 11:17:47 +0300 Konstantin Khlebnikov
+>>>>>>>>> <khlebnikov@yandex-team.ru> wrote:
+>>>>>>>>>
+>>>>>>>>>>>>> pid_t translate_pid(pid_t pid, int source, int target);
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> This syscall converts pid from source pid-ns into pid in 
+>>>>>>>>>>>>> target
+>>>>>>>>>>>>> pid-ns.
+>>>>>>>>>>>>> If pid is unreachable from target pid-ns it returns zero.
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> Pid-namespaces are referred file descriptors opened to 
+>>>>>>>>>>>>> proc files
+>>>>>>>>>>>>> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. 
+>>>>>>>>>>>>> Negative
+>>>>>>>>>>>>> argument
+>>>>>>>>>>>>> refers to current pid namespace, same as file 
+>>>>>>>>>>>>> /proc/self/ns/pid.
+>>>>>>>>>>>>>
+>>>>>>>>>>>>> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but
+>>>>>>>>>>>>> backward
+>>>>>>>>>>>>> translation requires scanning all tasks. Also pids could be
+>>>>>>>>>>>>> translated
+>>>>>>>>>>>>> by sending them through unix socket between namespaces, this
+>>>>>>>>>>>>> method
+>>>>>>>>>>>>> is
+>>>>>>>>>>>>> slow and insecure because other side is exposed inside pid
+>>>>>>>>>>>>> namespace.
+>>>>>>>>>> Andrew asked why we might need this.
+>>>>>>>>>>
+>>>>>>>>>> Such conversion is required for interaction between processes 
+>>>>>>>>>> across
+>>>>>>>>>> pid-namespaces.
+>>>>>>>>>> For example to identify process in container by pid file looking
+>>>>>>>>>> from
+>>>>>>>>>> outside.
+>>>>>>>>>>
+>>>>>>>>>> Two years ago I've solved this in project of mine with monstrous
+>>>>>>>>>> code
+>>>>>>>>>> which
+>>>>>>>>>> forks couple times just to convert pid, lucky for me performance
+>>>>>>>>>> wasn't
+>>>>>>>>>> important.
+>>>>>>>>> That's a single user who needed this a single time, and found a
+>>>>>>>>> userspace-based solution anyway.  This is not exactly compelling!
+>>>>>>>>>
+>>>>>>>>> Is there a stronger case to be made?  How does this change 
+>>>>>>>>> benefit
+>>>>>>>>> our
+>>>>>>>>> users?  Sell it to us!
+>>>>>>>> Oracle database is planning to use pid namespace for sandboxing
+>>>>>>>> database
+>>>>>>>> instances and they need an API similar to translate_pid to 
+>>>>>>>> effectively
+>>>>>>>> translate process IDs from other pid namespaces. Prakash (cced in
+>>>>>>>> mail)
+>>>>>>>> can
+>>>>>>>> provide more details on this usecase.
+>>>>>>>
+>>>>>>> As Nagarathnam indicated, Oracle Database will be using pid 
+>>>>>>> namespaces
+>>>>>>> and
+>>>>>>> needs a direct method of converting pids of processes in the pid
+>>>>>>> namespace
+>>>>>>> hierarchy. In this use case multiple
+>>>>>>> nested PID namespaces will be used.  The currently available 
+>>>>>>> mechanism
+>>>>>>> are
+>>>>>>> not very efficient for this use case. For ex. as Konstantin 
+>>>>>>> described,
+>>>>>>> using
+>>>>>>> /proc/<pid>/status would require the application to scan all the 
+>>>>>>> pid's
+>>>>>>> status files to determine the pid of given process in a child
+>>>>>>> namespace.
+>>>>>>>
+>>>>>>> Use of SCM_CREDENTIALS's socket message is another way, which would
+>>>>>>> require
+>>>>>>> every process starting inside a pid namespace to send this 
+>>>>>>> message and
+>>>>>>> the
+>>>>>>> receiving process in the target namespace would have to save the
+>>>>>>> converted
+>>>>>>> pid and reference it. This mechanism becomes cumbersome 
+>>>>>>> especially if
+>>>>>>> the
+>>>>>>> application has to deal with multiple nested pid namespaces. 
+>>>>>>> Also, the
+>>>>>>> Database needs to be able to convert a thread's global 
+>>>>>>> pid(gettid()).
+>>>>>>> Passing the thread's pid(gettid()) in SCM_CREDENTIALS message 
+>>>>>>> requires
+>>>>>>> CAP_SYS_ADMIN, which is an issue.
+>>>>>>>
+>>>>>>> So having a direct method, like the API that Konstantin is 
+>>>>>>> proposing,
+>>>>>>> will
+>>>>>>> work best for the Database
+>>>>>>> since pid of a process in any of the nested pid namespaces can be
+>>>>>>> converted
+>>>>>>> as and when required. I think with the proposed API, the 
+>>>>>>> application
+>>>>>>> should
+>>>>>>> be able to convert pid of a process or tid(gettid()) of a thread as
+>>>>>>> well.
+>>>>>>>
+>>>>>> Can you explain what Oracle's database is planning to do with this
+>>>>>> information?
+>>>>>
+>>>>> Database uses the PID to programmatically find out if the 
+>>>>> process/thread
+>>>>> is
+>>>>> alive(kill 0) also send signals to the processes requesting it to 
+>>>>> dump
+>>>>> status/debug information and kill the processes in case of a shutdown
+>>>>> abort
+>>>>> of the instance.
+>>>> What I'm wondering is: how does the caller of kill() end up
+>>>> controlling a task whose pid it doesn't know in its own namespace?
+>>>
+>>> I was generally describing how DB would use the PID of process. The 
+>>> above
+>>> description
+>>> was in the case when no namespaces are used.
+>>>
+>>> With use of namespaces, the DB would convert the PID of processes 
+>>> inside
+>>> its children namespaces to PID in its namespace and use that pid to 
+>>> issue
+>>> kill().
+>> Seems vaguely sensible.
+>>
+>> If I were designing this type of system, I'd have a manager process in
+>> each namespace running as PID 1, though -- PID 1 is special and needs
+>> to understand what's going on anyway.  Then PID 1 would do the kill()
+>> calls and wouldn't need translate_pid().
+>
+> Yes, this has been tried out with the prototype use of PID namespaces 
+> in the DB.
+> It works, but would be slow as the manager would have to exchange 
+> messages with the
+> controlling processes which would be in the parent namespace.
+> DB could use the api to convert the pid.
+>
