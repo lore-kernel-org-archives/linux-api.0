@@ -1,149 +1,269 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 1/3] printk: Introduce per-console loglevel setting
-Date: Fri, 3 Nov 2017 09:41:43 -0400
-Message-ID: <20171103094143.460e3b63@vmware.local.home>
+From: Petr Mladek <pmladek@suse.com>
+Subject: Re: [PATCH 2/3] printk: Add /sys/consoles/ interface
+Date: Fri, 3 Nov 2017 15:21:14 +0100
+Message-ID: <20171103142114.GG31148@pathway.suse.cz>
 References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
-        <20171103120005.GF31148@pathway.suse.cz>
+ <afd350e1157ed3f31d37597d3c2ee5d9d5cfd30d.1506644730.git.calvinowens@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171103120005.GF31148@pathway.suse.cz>
+Content-Disposition: inline
+In-Reply-To: <afd350e1157ed3f31d37597d3c2ee5d9d5cfd30d.1506644730.git.calvinowens@fb.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Petr Mladek <pmladek@suse.com>
-Cc: Calvin Owens <calvinowens@fb.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com
+To: Calvin Owens <calvinowens@fb.com>
+Cc: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 3 Nov 2017 13:00:05 +0100
-Petr Mladek <pmladek@suse.com> wrote:
-
-> On Thu 2017-09-28 17:43:55, Calvin Owens wrote:
-> > This patch introduces a new per-console loglevel setting, and changes
-> > console_unlock() to use max(global_level, per_console_level) when
-> > deciding whether or not to emit a given log message.  
+On Thu 2017-09-28 17:43:56, Calvin Owens wrote:
+> This adds a new sysfs interface that contains a directory for each
+> console registered on the system. Each directory contains a single
+> "loglevel" file for reading and setting the per-console loglevel.
 > 
-> > diff --git a/include/linux/console.h b/include/linux/console.h
-> > index b8920a0..a5b5d79 100644
-> > --- a/include/linux/console.h
-> > +++ b/include/linux/console.h
-> > @@ -147,6 +147,7 @@ struct console {
-> >  	int	cflag;
-> >  	void	*data;
-> >  	struct	 console *next;
-> > +	int	level;  
-> 
-> I would make the meaning more clear and call this min_loglevel.
+> We can let kobject destruction race with console removal: if it does,
+> loglevel_{show,store}() will safely fail with -ENODEV. This is a little
+> weird, but avoids embedding the kobject and therefore needing to totally
+> refactor the way we handle console struct lifetime.
 
-Or just loglevel, as those of us dealing with printk should understand.
-This is just a per console loglevel, and if we call it min_loglevel, it
-may be confusing because there is no "min_loglevel" that is currently
-used.
-
-[ Just read what you did below, maybe min is OK ]
-
-> 
-> >  };
-> >  
-> >  /*
-> > diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-> > index 512f7c2..3f1675e 100644
-> > --- a/kernel/printk/printk.c
-> > +++ b/kernel/printk/printk.c
-> > @@ -1141,9 +1141,14 @@ module_param(ignore_loglevel, bool, S_IRUGO | S_IWUSR);
-> >  MODULE_PARM_DESC(ignore_loglevel,
-> >  		 "ignore loglevel setting (prints all kernel messages to the console)");
-> >  
-> > -static bool suppress_message_printing(int level)
-> > +static int effective_loglevel(struct console *con)
-> >  {
-> > -	return (level >= console_loglevel && !ignore_loglevel);
-> > +	return max(console_loglevel, con ? con->level : LOGLEVEL_EMERG);
-> > +}
-> > +
-> > +static bool suppress_message_printing(int level, struct console *con)
-> > +{
-> > +	return (level >= effective_loglevel(con) && !ignore_loglevel);
-> >  }  
-> 
-> We need to be more careful here:
-> 
-> First, there is one ugly level called CONSOLE_LOGLEVEL_SILENT. Fortunately,
-> it is used only by vkdb_printf(). I guess that the purpose is to store
-> messages into the log buffer and do not show them on consoles.
-
-Unfortunately, it is also used by
-arch/mn10300/kernel/mn10300-watchdog.c.
-
-Which calls console_silent().
+It looks like a sane approach. It might be worth a comment in the code.
 
 
+>  Documentation/ABI/testing/sysfs-consoles | 13 +++++
+>  include/linux/console.h                  |  1 +
+>  kernel/printk/printk.c                   | 88 ++++++++++++++++++++++++++++++++
+>  3 files changed, 102 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-consoles
 > 
-> It is hack and it is racy. It would hide the messages only when the
-> console_lock() is not already taken. Similar hack is used on more
-> locations, e.g. in __handle_sysrq() and these are racy as well.
-> We need to come up with something better in the future but this
-> is a task for another patchset.
+> diff --git a/Documentation/ABI/testing/sysfs-consoles b/Documentation/ABI/testing/sysfs-consoles
+> new file mode 100644
+> index 0000000..6a1593e
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-consoles
+> @@ -0,0 +1,13 @@
+> +What:		/sys/consoles/
 
-Agreed.
+I rather add Greg in CC. I am not 100% sure that the top level
+directory is the right thing to do.
 
-> 
-> 
-> Second, this functions are called with NULL when we need to take
-> all usable consoles into account. You simplified it by ignoring
-> the per-console setting. But it is not correct. For example,
-> you might need to delay the printing in boot_delay_msec()
-> also on the fast console. Also this was the reason to remove
-> one optimization in console_unlock().
-> 
-> I thought about a reasonable solution and came up with something like:
-> 
-> static bool suppress_message_printing(int level, struct console *con)
-> {
-> 	int callable_loglevel;
-> 
-> 	if (ignore_loglevel || console_loglevel == CONSOLE_LOGLEVEL_MOTORMOUTH)
-> 		return false;
-> 
-> 	/* Make silent even fast consoles. */
-> 	if (console_loglevel == CONSOLE_LOGLEVEL_SILENT)
-> 		return true;
-> 
-> 	if (con)
-> 		callable_loglevel = con->min_loglevel;
-> 	else
-> 		callable_loglevel = max_custom_console_loglevel;
-> 
-> 	/* Global setting might make all consoles more verbose. */
-> 	if (callable_loglevel < console_loglevel)
-> 		callable_loglevel = console_loglevel;
-> 
-> 	return level >= callable_loglevel();
-> }
-> 
-> Yes, it is complicated. But the logic is complicated. IMHO, this has
-> the advantage that we do most of the decisions on a single place
-> and it might be easier to get the picture.
+Alternative might be to hide this under /sys/kernel/consoles/.
 
-It's not that complex, and it also has the benefit to document exactly
-what the console_loglevel is doing.
 
-> 
-> Anyway, max_custom_console_loglevel would be a global variable
-> defined as:
-> 
-> /*
->  * Minimum loglevel of the most talkative registered console.
->  * It is a maximum of all registered con->min_logvevel values.
->  */
-> static int max_custom_console_loglevel = LOGLEVEL_EMERG;
+> +Date:		September 2017
+> +KernelVersion:	4.15
+> +Contact:	Calvin Owens <calvinowens@fb.com>
+> +Description:	The /sys/consoles tree contains a directory for each console
+> +		configured on the system. These directories contain the
+> +		following attributes:
+> +
+> +		* "loglevel"	Set the per-console loglevel: the kernel uses
+> +				max(system_loglevel, perconsole_loglevel) when
+> +				deciding whether to emit a given message. The
+> +				default is 0, which means max() always yields
+> +				the system setting in the kernel.printk sysctl.
 
-Ah, that is why you added min_loglevel.
+I would call the attribute "min_loglevel". The name "loglevel" should
+be reserved for the really used loglevel that depends also on the
+global loglevel value.
 
--- Steve
 
-> 
-> The value should get updated when any console is registered
-> and when a registered console is manipulated. It means in
-> register_console(), unregister_console(), and the sysfs
-> write callbacks.
-> 
+> diff --git a/include/linux/console.h b/include/linux/console.h
+> index a5b5d79..76840be 100644
+> --- a/include/linux/console.h
+> +++ b/include/linux/console.h
+> @@ -148,6 +148,7 @@ struct console {
+>  	void	*data;
+>  	struct	 console *next;
+>  	int	level;
+> +	struct kobject *kobj;
+>  };
+>  
+>  /*
+> diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
+> index 3f1675e..488bda3 100644
+> --- a/kernel/printk/printk.c
+> +++ b/kernel/printk/printk.c
+> @@ -105,6 +105,8 @@ enum devkmsg_log_masks {
+>  
+>  static unsigned int __read_mostly devkmsg_log = DEVKMSG_LOG_MASK_DEFAULT;
+>  
+> +static struct kobject *consoles_dir_kobj;
+>
+>  static int __control_devkmsg(char *str)
+>  {
+>  	if (!str)
+> @@ -2371,6 +2373,82 @@ static int __init keep_bootcon_setup(char *str)
+>  
+>  early_param("keep_bootcon", keep_bootcon_setup);
+>  
+> +static ssize_t loglevel_show(struct kobject *kobj, struct kobj_attribute *attr,
+> +			     char *buf)
+> +{
+> +	struct console *con;
+> +	ssize_t ret = -ENODEV;
+> +
+
+This might deserve a comment. Something like:
+
+	/*
+	 * Find the related struct console a safe way. The kobject
+	 * desctruction is asynchronous.
+	 */
+> +	console_lock();
+> +	for_each_console(con) {
+> +		if (con->kobj == kobj) {
+> +			ret = sprintf(buf, "%d\n", con->level);
+> +			break;
+> +		}
+> +	}
+> +	console_unlock();
+> +
+> +	return ret;
+> +}
+> +
+> +static ssize_t loglevel_store(struct kobject *kobj, struct kobj_attribute *attr,
+> +			      const char *buf, size_t count)
+> +{
+> +	struct console *con;
+> +	ssize_t ret;
+> +	int tmp;
+
+I would use some meaningful name, e.g. new_level ;-)
+
+> +	ret = kstrtoint(buf, 10, &tmp);
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	if (tmp < LOGLEVEL_EMERG)
+> +		return -ERANGE;
+> +
+> +	/*
+> +	 * Mimic the behavior of /dev/kmsg with respect to minimum_loglevel
+> +	 */
+> +	if (tmp < minimum_console_loglevel)
+> +		tmp = minimum_console_loglevel;
+
+Hmm, I would remove this "mimic" stuff. minimum_console_loglevel is currently
+used to limit operations by the syslog system call. But root is still
+able modify the minimum_console_loglevel by writing into
+/proc/sys/kernel/printk.
+
+My plan is that /sys/console interface would eventually replace the
+crazy /proc/sys/kernel/printk one.
+
+In each case, the default con->level value is zero. It would be
+weird if people were not able to set this value.
+
+> +
+> +	ret = -ENODEV;
+
+I would repeat the same comment here:
+
+	/*
+	 * Find the related struct console a safe way. The kobject
+	 * desctruction is asynchronous.
+	 */
+
+> +	console_lock();
+> +	for_each_console(con) {
+> +		if (con->kobj == kobj) {
+> +			con->level = tmp;
+> +			ret = count;
+> +			break;
+> +		}
+> +	}
+> +	console_unlock();
+> +
+> +	return ret;
+> +}
+> +
+> +static const struct kobj_attribute console_loglevel_attr =
+> +	__ATTR(loglevel, 0644, loglevel_show, loglevel_store);
+> +
+> +static void console_register_sysfs(struct console *newcon)
+> +{
+Please, add a sanity check to make sure that this API is used the
+right way.
+
+	if (WARN_ON(newcon->kobj))
+		return;
+
+> +	/*
+> +	 * We might be called very early from register_console(): in that case,
+> +	 * printk_late_init() will take care of this later.
+> +	 */
+> +	if (!consoles_dir_kobj)
+> +		return;
+> +
+> +	newcon->kobj = kobject_create_and_add(newcon->name, consoles_dir_kobj);
+> +	if (WARN_ON(!newcon->kobj))
+
+I would just return in case of error. The error messages from
+kobject_create_and_add() should be enough and actually more useful.
+
+> +		return;
+> +
+> +	WARN_ON(sysfs_create_file(newcon->kobj, &console_loglevel_attr.attr));
+
+Similar here. Well, I would destroy the kobject if the sysfs file
+cannot be created:
+
+       if (sysfs_create_file(newcon->kobj, &console_loglevel_attr.attr))
+	       console_unregister_sysfs(newcon);
+
+> +}
+> +
+> +static void console_unregister_sysfs(struct console *oldcon)
+> +{
+> +	kobject_put(oldcon->kobj);
+
+We need to make that the carefull access in the show()/store() methods work.
+
+	oldcon->kobj = NULL;
+
+> +}
+> +
+>  /*
+>   * The console driver calls this routine during kernel initialization
+>   * to register the console printing procedure with printk() and to
+> @@ -2495,6 +2573,7 @@ void register_console(struct console *newcon)
+>  	 * By default, the per-console minimum forces no messages through.
+>  	 */
+>  	newcon->level = LOGLEVEL_EMERG;
+> +	newcon->kobj = NULL;
+
+IMHO, we do not need this. The pointer should already be NULL.
+
+>  	/*
+>  	 *	Put this console in the list - keep the
+> @@ -2531,6 +2610,7 @@ void register_console(struct console *newcon)
+>  		 */
+>  		exclusive_console = newcon;
+>  	}
+> +	console_register_sysfs(newcon);
+>  	console_unlock();
+>  	console_sysfs_notify();
+>  
+> @@ -2597,6 +2677,7 @@ int unregister_console(struct console *console)
+>  		console_drivers->flags |= CON_CONSDEV;
+>  
+>  	console->flags &= ~CON_ENABLED;
+> +	console_unregister_sysfs(console);
+>  	console_unlock();
+>  	console_sysfs_notify();
+>  	return res;
+> @@ -2672,6 +2753,13 @@ static int __init printk_late_init(void)
+>  	ret = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN, "printk:online",
+>  					console_cpu_notify, NULL);
+>  	WARN_ON(ret < 0);
+> +
+> +	consoles_dir_kobj = kobject_create_and_add("consoles", NULL);
+> +	WARN_ON(!consoles_dir_kobj);
+
+Again, I would just return in case of error.
+
+> +	for_each_console(con)
+> +		console_register_sysfs(con);
+> +
+>  	return 0;
+
+Best Regards,
+Petr
