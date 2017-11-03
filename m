@@ -1,104 +1,118 @@
-From: Petr Mladek <pmladek@suse.com>
-Subject: Re: [PATCH 2/3] printk: Add /sys/consoles/ interface
-Date: Fri, 3 Nov 2017 16:46:51 +0100
-Message-ID: <20171103154651.GJ20040@pathway.suse.cz>
-References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
- <afd350e1157ed3f31d37597d3c2ee5d9d5cfd30d.1506644730.git.calvinowens@fb.com>
- <20171103142114.GG31148@pathway.suse.cz>
- <20171103143234.GA7801@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171103143234.GA7801@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Calvin Owens <calvinowens@fb.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com
+From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: [patch v11 0/4] JTAG driver introduction
+Date: Fri,  3 Nov 2017 17:54:05 +0200
+Message-ID: <1509724449-26221-1-git-send-email-oleksandrs@mellanox.com>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 2017-11-03 15:32:34, Kroah-Hartman wrote:
-> > > diff --git a/Documentation/ABI/testing/sysfs-consoles b/Documentation/ABI/testing/sysfs-consoles
-> > > new file mode 100644
-> > > index 0000000..6a1593e
-> > > --- /dev/null
-> > > +++ b/Documentation/ABI/testing/sysfs-consoles
-> > > @@ -0,0 +1,13 @@
-> > > +What:		/sys/consoles/
-> 
-> Eeek, what!
-> 
-> > I rather add Greg in CC. I am not 100% sure that the top level
-> > directory is the right thing to do.
-> 
-> Neither do I.
-> 
-> > Alternative might be to hide this under /sys/kernel/consoles/.
-> 
-> No no no.
-> 
-> > > diff --git a/include/linux/console.h b/include/linux/console.h
-> > > index a5b5d79..76840be 100644
-> > > --- a/include/linux/console.h
-> > > +++ b/include/linux/console.h
-> > > @@ -148,6 +148,7 @@ struct console {
-> > >  	void	*data;
-> > >  	struct	 console *next;
-> > >  	int	level;
-> > > +	struct kobject *kobj;
-> 
-> Why are you using "raw" kobjects and not a "real" struct device?  This
-> is a device, use that interface instead please.
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-Hmm, struct console has a member
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
-	struct tty_driver *(*device)(struct console *, int *);
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
 
-but it is set only when the console has tty binding.
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
 
-> If you need a console 'bus' to place them on, fine, but the virtual bus
-> is probably best and simpler to use.
-> 
-> That is if you _really_ feel you need sysfs interaction with the console
-> layer (hint, I am not yet convinced...)
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
 
-The purpose of this patch is to make a userfriendly interface
-for setting console-specific loglevel (message filtering).
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
 
-It curretnly uses kobject for creating a simple directory
-structure under /sys/. It is inspired by /sys/power/, /sys/kernel/mm/,
-/sys/kernel/debug/tracing/ stuff.
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
 
-There are ideas to add more files that would allow to modify even the
-global setting. This is currectly possible by the four numbers in
-/proc/sys/kernel/printk. Nobody knows what the four numbers mean.
-IMHO, the following interface would be easier to work with:
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
 
-       /sys/console/loglevel
-       /sys/console/min_loglevel
-       /sys/condole/default_loglevel
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
 
-> > 	/*
-> > 	 * Find the related struct console a safe way. The kobject
-> > 	 * desctruction is asynchronous.
-> > 	 */
-> > > +	console_lock();
-> > > +	for_each_console(con) {
-> > > +		if (con->kobj == kobj) {
-> 
-> You are doing something wrong, go from kobj to your console directly,
-> the fact that you can not do that here is a _huge_ hint that your
-> structure is not correct.
-> 
-> Hint, it's not correct at all :)
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
 
-I know that we are not following the original purpose of sysfs.
-But there are more (mis)users.
+ Documentation/ABI/testing/jatg-dev                 |   27 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   18 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   29 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  771 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  267 +++++++
+ include/linux/jtag.h                               |   48 ++
+ include/uapi/linux/jtag.h                          |  117 +++
+ 12 files changed, 1294 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jatg-dev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
 
-> Please cc: me on stuff like this if you want a review, and as you are
-> adding a random new sysfs root directory, please always cc: me on that
-> so I can talk you out of it...
-
-Good to know.
-
-Best Regards,
-Petr
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
