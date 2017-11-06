@@ -1,95 +1,53 @@
-From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
- SYSC_migrate_pages
-Date: Mon, 6 Nov 2017 09:31:44 +0800
-Message-ID: <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com>
-References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
- <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com>
- <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz>
+From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
+        <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH resend 2/2] userns: control capabilities of some user namespaces
+Date: Sun, 5 Nov 2017 23:23:33 -0800
+Message-ID: <CAF2d9jg1tZz-hnVBeXm3geq7jSBt5v5w6+p5B1V-7huS4qbMBA@mail.gmail.com>
+References: <20171103004436.40026-1-mahesh@bandewar.net> <20171104235346.GA17170@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <dccbeccc-4155-94a8-0e67-b7c28238896d-AlSwsSmVLrQ@public.gmane.org>
+In-Reply-To: <20171104235346.GA17170-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Vlastimil,
+On Sat, Nov 4, 2017 at 4:53 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+>
+> Quoting Mahesh Bandewar (mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org):
+> > Init-user-ns is always uncontrolled and a process that has SYS_ADMIN
+> > that belongs to uncontrolled user-ns can create another (child) user-
+> > namespace that is uncontrolled. Any other process (that either does
+> > not have SYS_ADMIN or belongs to a controlled user-ns) can only
+> > create a user-ns that is controlled.
+>
+> That's a huge change though.  It means that any system that previously
+> used unprivileged containers will need new privileged code (which always
+> risks more privilege leaks through the new code) to re-enable what was
+> possible without privilege before.  That's a regression.
+>
+I wouldn't call it a regression since the existing behavior is
+preserved as it is if the default-mask is not altered. i.e.
+uncontrolled process can create user-ns and have full control inside
+that user-ns. The only difference is - as an example if 'something'
+comes up which makes a specific capability expose ring-0, so admin can
+quickly remove the capability in question from the mask, so that no
+untrusted code can exploit that capability until either the kernel is
+patched or workloads are sanitized keeping in mind what was
+discovered. (I have given some real life example vulnerabilities
+published recently about CAP_NET_RAW in the cover letter)
 
-On 2017/10/31 17:46, Vlastimil Babka wrote:
-> +CC Andi and Christoph
-> 
-> On 10/27/2017 12:14 PM, Yisheng Xie wrote:
->> As manpage of migrate_pages, the errno should be set to EINVAL when none
->> of the specified nodes contain memory. However, when new_nodes is null,
->> i.e. the specified nodes also do not have memory, as the following case:
->>
->> 	new_nodes = 0;
->> 	old_nodes = 0xf;
->> 	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
->>
->> The ret will be 0 and no errno is set.
->>
->> This patch is to add nodes_empty check to fix above case.
-> 
-> Hmm, I think we have a bigger problem than "empty set is a subset of
-> anything" here.
-> 
-> The existing checks are:
-> 
->         task_nodes = cpuset_mems_allowed(task);
->         if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
->                 err = -EPERM;
->                 goto out_put;
->         }
-> 
->         if (!nodes_subset(*new, node_states[N_MEMORY])) {
->                 err = -EINVAL;
->                 goto out_put;
->         }
-> 
-> 
-> And manpage says:
-> 
->        EINVAL The value specified by maxnode exceeds a kernel-imposed
-> limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
-> are greater than the maximum supported node
->               ID.  *Or, none of the node IDs specified by new_nodes are
-> on-line and allowed by the process's current cpuset context, or none of
-> the specified nodes contain memory.*
-> 
->        EPERM  Insufficient privilege (CAP_SYS_NICE) to move pages of the
-> process specified by pid, or insufficient privilege (CAP_SYS_NICE) to
-> access the specified target nodes.
-> 
-> - it says "none ... are allowed", but checking for subset means we check
-> if "all ... are allowed". Shouldn't we be checking for a non-empty
-> intersection?
+> I'm very much interested in what you want to do,  But it seems like
+> it would be worth starting with some automated code analysis that shows
+> exactly what code becomes accessible to unprivileged users with user
+> namespaces which was accessible to unprivileged users before.  Then we
+> can reason about classifying that code and perhaps limiting access to
+> some of it.
+I would like to look at this as 'a tool' that is available to admins
+who can quickly take possible-compromise-situation under-control
+probably at the cost of some functionality-loss until kernel is
+patched and the mask is restored to default value.
 
-You are absolutely right. To follow the manpage, we should check non-empty
-of intersection instead of subset. I mean：
-         nodes_and(*new, *new, task_nodes);
-         if (!node_empty(*new) && !capable(CAP_SYS_NICE)) {
-                 err = -EPERM;
-                 goto out_put;
-         }
-
-         nodes_and(*new, *new, node_states[N_MEMORY]);
-         if (!node_empty(*new)) {
-                 err = -EINVAL;
-                 goto out_put;
-         }
-
-So finally, we should only migrate the smallest intersection of all the node
-set, right?
-
-> - there doesn't seem to be any EINVAL check for "process's current
-> cpuset context", there's just an EPERM check for "target process's
-> cpuset context".
-
-This also need to be checked as manpage.
-
-Thanks
-Yisheng Xie
+I'm not sure if automated tools could discover anything since these
+changes should not alter behavior in any way.
