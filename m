@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.15 05/14] Restartable sequences: wire up x86 32/64 system call
-Date: Mon,  6 Nov 2017 15:56:35 -0500
-Message-ID: <20171106205644.29386-6-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 02/14] Restartable sequences: ARM 32 architecture support
+Date: Mon,  6 Nov 2017 15:56:32 -0500
+Message-ID: <20171106205644.29386-3-mathieu.desnoyers@efficios.com>
 References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171106205644.29386-1-mathieu.desnoyers@efficios.com>
@@ -10,12 +10,12 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Wire up the rseq system call on x86 32/64.
+Call the rseq_handle_notify_resume() function on return to
+userspace if TIF_NOTIFY_RESUME thread flag is set.
 
-This provides an ABI improving the speed of a user-space getcpu
-operation on x86 by removing the need to perform a function call, "lsl"
-instruction, or system call on the fast path, as well as improving the
-speed of user-space operations on per-cpu data.
+Increment the event counter and perform fixup on the pre-signal frame
+when a signal is delivered on top of a restartable sequence critical
+section.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: Russell King <linux@arm.linux.org.uk>
@@ -30,7 +30,6 @@ CC: Andi Kleen <andi@firstfloor.org>
 CC: Dave Watson <davejwatson@fb.com>
 CC: Chris Lameter <cl@linux.com>
 CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
 CC: Ben Maurer <bmaurer@fb.com>
 CC: Steven Rostedt <rostedt@goodmis.org>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -40,30 +39,46 @@ CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- arch/x86/entry/syscalls/syscall_32.tbl | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl | 1 +
- 2 files changed, 2 insertions(+)
+ arch/arm/Kconfig         | 1 +
+ arch/arm/kernel/signal.c | 7 +++++++
+ 2 files changed, 8 insertions(+)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 448ac2161112..ba43ee75e425 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -391,3 +391,4 @@
- 382	i386	pkey_free		sys_pkey_free
- 383	i386	statx			sys_statx
- 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
-+385	i386	rseq			sys_rseq
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5aef183e2f85..3ad03495bbb9 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -339,6 +339,7 @@
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
- 332	common	statx			sys_statx
-+333	common	rseq			sys_rseq
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index d1346a160760..1469f3f39475 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -87,6 +87,7 @@ config ARM
+ 	select HAVE_PERF_USER_STACK_DUMP
+ 	select HAVE_RCU_TABLE_FREE if (SMP && ARM_LPAE)
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
++	select HAVE_RSEQ
+ 	select HAVE_SYSCALL_TRACEPOINTS
+ 	select HAVE_UID16
+ 	select HAVE_VIRT_CPU_ACCOUNTING_GEN
+diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
+index b67ae12503f3..cc3260f475b0 100644
+--- a/arch/arm/kernel/signal.c
++++ b/arch/arm/kernel/signal.c
+@@ -518,6 +518,12 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
+ 	int ret;
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
+ 	/*
++	 * Increment event counter and perform fixup for the pre-signal
++	 * frame.
++	 */
++	rseq_signal_deliver(regs);
++
++	/*
+ 	 * Set up the stack frame
+ 	 */
+ 	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+@@ -637,6 +643,7 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
+ 			} else {
+ 				clear_thread_flag(TIF_NOTIFY_RESUME);
+ 				tracehook_notify_resume(regs);
++				rseq_handle_notify_resume(regs);
+ 			}
+ 		}
+ 		local_irq_disable();
 -- 
 2.11.0
