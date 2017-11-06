@@ -1,58 +1,74 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v6 2/2] staging: ion: create one device entry per heap
-Date: Mon, 6 Nov 2017 15:46:50 +0100
-Message-ID: <20171106144650.GA8743@kroah.com>
-References: <1508774137-13835-1-git-send-email-benjamin.gaignard@linaro.org>
- <1508774137-13835-3-git-send-email-benjamin.gaignard@linaro.org>
- <3e3af8e3-76c5-754c-caaa-3f8c9b54723f@redhat.com>
- <20171031191153.avolosp6n5gb3xao@sirena.co.uk>
- <20171102104407.GA14048@kroah.com>
- <20171102111019.kpsvobvzfiezdndp@sirena.co.uk>
- <CA+M3ks5pV=j_DeQ9ohhtv62WL=pzWH0Q5jdKtQby5vs=NUZT-Q@mail.gmail.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH resend 2/2] userns: control capabilities of some user
+ namespaces
+Date: Mon, 6 Nov 2017 09:03:02 -0600
+Message-ID: <20171106150302.GA26634@mail.hallyn.com>
+References: <20171103004436.40026-1-mahesh@bandewar.net>
+ <20171104235346.GA17170@mail.hallyn.com>
+ <CAF2d9jg1tZz-hnVBeXm3geq7jSBt5v5w6+p5B1V-7huS4qbMBA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CA+M3ks5pV=j_DeQ9ohhtv62WL=pzWH0Q5jdKtQby5vs=NUZT-Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Benjamin Gaignard <benjamin.gaignard-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Riley Andrews <riandrews-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, driverdevel <devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <CAF2d9jg1tZz-hnVBeXm3geq7jSBt5v5w6+p5B1V-7huS4qbMBA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mahesh Bandewar =?utf-8?B?KOCkruCkueClh+CktiDgpKzgpILgpKHgpYfgpLXgpL4=?= =?utf-8?B?4KSwKQ==?= <maheshb@google.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 06, 2017 at 03:42:04PM +0100, Benjamin Gaignard wrote:
-> 2017-11-02 12:10 GMT+01:00 Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>:
-> > On Thu, Nov 02, 2017 at 11:44:07AM +0100, Greg KH wrote:
-> >> On Tue, Oct 31, 2017 at 07:11:53PM +0000, Mark Brown wrote:
+Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
+> On Sat, Nov 4, 2017 at 4:53 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
 > >
-> >> > There was a discussion a while ago in the context of I2C/SPI MFDs
-> >> > which concluded that if you need a bus and it's going to be effectively
-> >> > noop then you should just use the platform bus as anything else will
-> >> > consist almost entirely of cut'n'paste from the platform bus with some
-> >> > light sed usage and code duplication is bad.  It's not super lovely as
-> >> > it's not actually a memory mapped device but it's the best idea we've
-> >> > got.
+> > Quoting Mahesh Bandewar (mahesh@bandewar.net):
+> > > Init-user-ns is always uncontrolled and a process that has SYS_ADMIN
+> > > that belongs to uncontrolled user-ns can create another (child) user-
+> > > namespace that is uncontrolled. Any other process (that either does
+> > > not have SYS_ADMIN or belongs to a controlled user-ns) can only
+> > > create a user-ns that is controlled.
 > >
-> >> Ugh, I hate that.  What's wrong with using a "virtual" device instead?
+> > That's a huge change though.  It means that any system that previously
+> > used unprivileged containers will need new privileged code (which always
+> > risks more privilege leaks through the new code) to re-enable what was
+> > possible without privilege before.  That's a regression.
 > >
-> > It was the duplication, initially everyone was making buses.
-> >
-> >> I can create a "virtual" bus for things like this if they really want a
-> >> "simple" bus, abusing platform for this is the major reason I hate the
-> >> platform bus code...
-> >
-> > In the MFD case they're physical devices, they're just usually on the
-> > wrong side of an I2C or SPI link.  Plus MFD already handles platform
-> > devices for things that are memory mapped so it's a bit of a more
-> > natural fit there.
+> I wouldn't call it a regression since the existing behavior is
+> preserved as it is if the default-mask is not altered. i.e.
+> uncontrolled process can create user-ns and have full control inside
+> that user-ns. The only difference is - as an example if 'something'
+> comes up which makes a specific capability expose ring-0, so admin can
+> quickly remove the capability in question from the mask, so that no
+> untrusted code can exploit that capability until either the kernel is
+
+Oh, sorry, I misread then, and missed that step.  I thought the default
+with this patchset was that there were no capabilities exposed to user
+namespaces.
+
+> patched or workloads are sanitized keeping in mind what was
+> discovered. (I have given some real life example vulnerabilities
+> published recently about CAP_NET_RAW in the cover letter)
 > 
-> What I can do is to register an ion bus (like cec one for example),
-> add one ion parent device so heaps will appear in /sys/bus/ion/ion*
-> and /sys/devices/ion/ion*
-> 
-> Does that could sound good enough ?
+> > I'm very much interested in what you want to do,  But it seems like
+> > it would be worth starting with some automated code analysis that shows
+> > exactly what code becomes accessible to unprivileged users with user
+> > namespaces which was accessible to unprivileged users before.  Then we
+> > can reason about classifying that code and perhaps limiting access to
+> > some of it.
+> I would like to look at this as 'a tool' that is available to admins
+> who can quickly take possible-compromise-situation under-control
+> probably at the cost of some functionality-loss until kernel is
+> patched and the mask is restored to default value.
 
-I would like to see that...
+The thing that makes me hesitate with this set is that it is a
+permanent new feature to address what (I hope) is a temporary
+problem.  What would you think about doing this as a stackable
+(yama-style) LSM?
 
-thanks,
+> I'm not sure if automated tools could discover anything since these
+> changes should not alter behavior in any way.
 
-greg k-h
+Seems like there are two naive ways to do it, the first being to just
+look at all code under ns_capable() plus code called from there.  It
+seems like looking at the result of that could be fruitful.
+
+-serge
