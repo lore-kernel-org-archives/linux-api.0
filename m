@@ -1,70 +1,95 @@
-From: Chip Bilbrey <chip-Gz1Ta9Qd61ZAfugRpC6u6w@public.gmane.org>
-Subject: Re: [v11,1/4] drivers: jtag: Add JTAG core driver
-Date: Sun, 05 Nov 2017 14:32:53 -0800
-Message-ID: <8760aoz78q.fsf@bilbrey.org>
-References: <1509724449-26221-2-git-send-email-oleksandrs@mellanox.com>
+From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
+ SYSC_migrate_pages
+Date: Mon, 6 Nov 2017 09:31:44 +0800
+Message-ID: <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com>
+References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
+ <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com>
+ <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-reply-to: <1509724449-26221-2-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <dccbeccc-4155-94a8-0e67-b7c28238896d-AlSwsSmVLrQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi Vlastimil,
 
-Oleksandr Shamray writes:
-> diff --git a/include/uapi/linux/jtag.h b/include/uapi/linux/jtag.h
-> new file mode 100644
-> index 0000000..0b25a83
-> --- /dev/null
-> +++ b/include/uapi/linux/jtag.h
-> [...]
-> +/**
-> + * enum jtag_xfer_mode:
-> + *
-> + * @JTAG_XFER_HW_MODE: hardware mode transfer
-> + * @JTAG_XFER_SW_MODE: software mode transfer
-> + */
-> +enum jtag_xfer_mode {
-> +	JTAG_XFER_HW_MODE,
-> +	JTAG_XFER_SW_MODE,
-> +};
+On 2017/10/31 17:46, Vlastimil Babka wrote:
+> +CC Andi and Christoph
+> 
+> On 10/27/2017 12:14 PM, Yisheng Xie wrote:
+>> As manpage of migrate_pages, the errno should be set to EINVAL when none
+>> of the specified nodes contain memory. However, when new_nodes is null,
+>> i.e. the specified nodes also do not have memory, as the following case:
+>>
+>> 	new_nodes = 0;
+>> 	old_nodes = 0xf;
+>> 	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
+>>
+>> The ret will be 0 and no errno is set.
+>>
+>> This patch is to add nodes_empty check to fix above case.
+> 
+> Hmm, I think we have a bigger problem than "empty set is a subset of
+> anything" here.
+> 
+> The existing checks are:
+> 
+>         task_nodes = cpuset_mems_allowed(task);
+>         if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
+>                 err = -EPERM;
+>                 goto out_put;
+>         }
+> 
+>         if (!nodes_subset(*new, node_states[N_MEMORY])) {
+>                 err = -EINVAL;
+>                 goto out_put;
+>         }
+> 
+> 
+> And manpage says:
+> 
+>        EINVAL The value specified by maxnode exceeds a kernel-imposed
+> limit.  Or, old_nodes or new_nodes specifies one or more node IDs that
+> are greater than the maximum supported node
+>               ID.  *Or, none of the node IDs specified by new_nodes are
+> on-line and allowed by the process's current cpuset context, or none of
+> the specified nodes contain memory.*
+> 
+>        EPERM  Insufficient privilege (CAP_SYS_NICE) to move pages of the
+> process specified by pid, or insufficient privilege (CAP_SYS_NICE) to
+> access the specified target nodes.
+> 
+> - it says "none ... are allowed", but checking for subset means we check
+> if "all ... are allowed". Shouldn't we be checking for a non-empty
+> intersection?
 
-Is this essentially selecting between bit-bang mode or not?  Is there a
-generally applicable reason to select SW mode over HW (or vice versa)?
-This sounds like it's tied to device-specific capability which shouldn't
-be exposed in a generic user API.
+You are absolutely right. To follow the manpage, we should check non-empty
+of intersection instead of subset. I mean：
+         nodes_and(*new, *new, task_nodes);
+         if (!node_empty(*new) && !capable(CAP_SYS_NICE)) {
+                 err = -EPERM;
+                 goto out_put;
+         }
 
-> +/**
-> + * struct jtag_xfer - jtag xfer:
-> + *
-> + * @mode: access mode
-> + * @type: transfer type
-> + * @direction: xfer direction
-> + * @length: xfer bits len
-> + * @tdio : xfer data array
-> + * @endir: xfer end state
-> + *
-> + * Structure represents interface to Aspeed JTAG device for jtag sdr xfer
-> + * execution.
+         nodes_and(*new, *new, node_states[N_MEMORY]);
+         if (!node_empty(*new)) {
+                 err = -EINVAL;
+                 goto out_put;
+         }
 
-Probably should remove the reference to Aspeed here.
+So finally, we should only migrate the smallest intersection of all the node
+set, right?
 
-> +/* ioctl interface */
-> +#define __JTAG_IOCTL_MAGIC	0xb2
-> +
-> +#define JTAG_IOCRUNTEST	_IOW(__JTAG_IOCTL_MAGIC, 0,\
-> +			     struct jtag_run_test_idle)
-> +#define JTAG_SIOCFREQ	_IOW(__JTAG_IOCTL_MAGIC, 1, unsigned int)
-> +#define JTAG_GIOCFREQ	_IOR(__JTAG_IOCTL_MAGIC, 2, unsigned int)
-> +#define JTAG_IOCXFER	_IOWR(__JTAG_IOCTL_MAGIC, 3, struct jtag_xfer)
-> +#define JTAG_GIOCSTATUS _IOWR(__JTAG_IOCTL_MAGIC, 4, enum jtag_endstate)
+> - there doesn't seem to be any EINVAL check for "process's current
+> cpuset context", there's just an EPERM check for "target process's
+> cpuset context".
 
-I notice the single-open()-per-device lock was dropped by request in an
-earlier revision of your patches, but multiple processes trying to drive
-a single JTAG master could wreak serious havoc if transactions get
-interleaved. Would something like an added JTAG_LOCKCHAIN/UNLOCKCHAIN
-ioctl() for exclusive client access be reasonable to prevent this?
+This also need to be checked as manpage.
 
--Chip
+Thanks
+Yisheng Xie
