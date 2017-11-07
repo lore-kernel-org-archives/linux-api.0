@@ -1,73 +1,136 @@
-From: Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [kernel-hardening] Re: [PATCH resend 2/2] userns: control
- capabilities of some user namespaces
-Date: Mon, 06 Nov 2017 21:16:03 -0500
-Message-ID: <1510020963.736.42.camel@gmail.com>
-References: <20171103004436.40026-1-mahesh@bandewar.net>
-         <20171104235346.GA17170@mail.hallyn.com>
-         <CAF2d9jg1tZz-hnVBeXm3geq7jSBt5v5w6+p5B1V-7huS4qbMBA@mail.gmail.com>
-         <20171106150302.GA26634@mail.hallyn.com> <1510003994.736.0.camel@gmail.com>
-         <20171106221418.GA32543@mail.hallyn.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH v10 for 4.15 01/14] Restartable sequences system
+ call
+Date: Tue, 7 Nov 2017 02:20:31 +0000 (UTC)
+Message-ID: <1057691675.6149.1510021231078.JavaMail.zimbra@efficios.com>
+References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com> <20171106205644.29386-2-mathieu.desnoyers@efficios.com> <20171107012424.GB6280@tardis>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171106221418.GA32543-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+In-Reply-To: <20171107012424.GB6280@tardis>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: Mahesh Bandewar =?UTF-8?Q?=28=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=B6_?= =?UTF-8?Q?=E0=A4=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE?= =?UTF-8?Q?=E0=A4=B0=29?= <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+To: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2017-11-06 at 16:14 -0600, Serge E. Hallyn wrote:
-> Quoting Daniel Micay (danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org):
-> > Substantial added attack surface will never go away as a problem.
-> > There
-> > aren't a finite number of vulnerabilities to be found.
+----- On Nov 6, 2017, at 8:24 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+
+> On Mon, Nov 06, 2017 at 03:56:31PM -0500, Mathieu Desnoyers wrote:
+> [...]
+>> +
+>> +/*
+>> + * struct rseq is aligned on 4 * 8 bytes to ensure it is always
+>> + * contained within a single cache-line.
+>> + *
+>> + * A single struct rseq per thread is allowed.
+>> + */
+>> +struct rseq {
+>> +	/*
+>> +	 * Restartable sequences cpu_id_start field. Updated by the
+>> +	 * kernel, and read by user-space with single-copy atomicity
+>> +	 * semantics. Aligned on 32-bit. Always contain a value in the
+>> +	 * range of possible CPUs, although the value may not be the
+>> +	 * actual current CPU (e.g. if rseq is not initialized). This
+>> +	 * CPU number value should always be confirmed against the value
+>> +	 * of the cpu_id field.
+>> +	 */
+>> +	uint32_t cpu_id_start;
+>> +	/*
+>> +	 * Restartable sequences cpu_id field. Updated by the kernel,
+>> +	 * and read by user-space with single-copy atomicity semantics.
+>> +	 * Aligned on 32-bit. Values -1U and -2U have a special
+>> +	 * semantic: -1U means "rseq uninitialized", and -2U means "rseq
+>> +	 * initialization failed".
+>> +	 */
+>> +	uint32_t cpu_id;
+>> +	/*
+>> +	 * Restartable sequences rseq_cs field.
+>> +	 *
+>> +	 * Contains NULL when no critical section is active for the current
+>> +	 * thread, or holds a pointer to the currently active struct rseq_cs.
+>> +	 *
+>> +	 * Updated by user-space at the beginning of assembly instruction
+>> +	 * sequence block, and by the kernel when it restarts an assembly
+>> +	 * instruction sequence block, and when the kernel detects that it
+>> +	 * is preempting or delivering a signal outside of the range
+>> +	 * targeted by the rseq_cs. Also needs to be cleared by user-space
+>> +	 * before reclaiming memory that contains the targeted struct
+>> +	 * rseq_cs.
+>> +	 *
+>> +	 * Read and set by the kernel with single-copy atomicity semantics.
+>> +	 * Aligned on 64-bit.
+>> +	 */
+>> +	RSEQ_FIELD_u32_u64(rseq_cs);
+>> +	/*
+>> +	 * - RSEQ_DISABLE flag:
+>> +	 *
+>> +	 * Fallback fast-track flag for single-stepping.
+>> +	 * Set by user-space if lack of progress is detected.
+>> +	 * Cleared by user-space after rseq finish.
+>> +	 * Read by the kernel.
+>> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
+>> +	 *     Inhibit instruction sequence block restart and event
+>> +	 *     counter increment on preemption for this thread.
 > 
-> There's varying levels of usefulness and quality.  There is code which
-> I
-> want to be able to use in a container, and code which I can't ever see
-> a
-> reason for using there.  The latter, especially if it's also in a
-> staging driver, would be nice to have a toggle to disable.
+> Nit: "event counter" has been removed entirely ;-)
 > 
-> You're not advocating dropping the added attack surface, only adding a
-> way of dealing with an 0day after the fact.  Privilege raising 0days
-> can
-> exist anywhere, not just in code which only root in a user namespace
-> can
-> exercise.  So from that point of view, ksplice seems a more complete
-> solution.  Why not just actually fix the bad code block when we know
-> about it?
+>> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
+>> +	 *     Inhibit instruction sequence block restart and event
+>> +	 *     counter increment on signal delivery for this thread.
+>> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
+>> +	 *     Inhibit instruction sequence block restart and event
+>> +	 *     counter increment on migration for this thread.
+>> +	 */
+>> +	uint32_t flags;
+>> +} __attribute__((aligned(4 * sizeof(uint64_t))));
+>> +
+>> +#endif /* _UAPI_LINUX_RSEQ_H */
+> [...]
+>> +	} else {
+>> +		/*
+>> +		 * If there was no rseq previously registered,
+>> +		 * we need to ensure the provided rseq is
+>> +		 * properly aligned and valid.
+>> +		 */
+>> +		if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq))
+>> +				|| rseq_len != sizeof(*rseq))
+>> +			return -EINVAL;
+>> +		if (!access_ok(VERIFY_WRITE, rseq, rseq_len))
+>> +			return -EFAULT;
+>> +		current->rseq = rseq;
+>> +		current->rseq_len = rseq_len;
+>> +		current->rseq_sig = sig;
+>> +		/*
+>> +		 * If rseq was previously inactive, and has just
+>> +		 * been registered, ensure the cpu_id and
+>> +		 * event_counter fields are updated before
+> 
+> s/event_counter/cpu_start_id/ ?
 
-That's not what I'm advocating. I only care about it for proactive
-attack surface reduction downstream. I have no interest in using it to
-block access to known vulnerabilities.
+I guess you mean "cpu_id_start".
 
-> Finally, it has been well argued that you can gain many new caps from
-> having only a few others.  Given that, how could you ever be sure
-> that,
-> if an 0day is found which allows root in a user ns to abuse
-> CAP_NET_ADMIN against the host, just keeping CAP_NET_ADMIN from them
-> would suffice?
+Good point. v11 will include that fix. Meanwhile, it is available
+at https://git.kernel.org/pub/scm/linux/kernel/git/rseq/linux-rseq.git/log/?h=rseq/dev
 
-I didn't suggest using it that way...
+Thanks,
 
->  It seems to me that the existing control in
-> /proc/sys/kernel/unprivileged_userns_clone might be the better duct
-> tape
-> in that case.
+Mathieu
 
-There's no such thing as unprivileged_userns_clone in mainline.
+> 
+> Regards,
+> Boqun
+> 
+>> +		 * returning to user-space.
+>> +		 */
+>> +		rseq_set_notify_resume(current);
+>> +	}
+>> +
+>> +	return 0;
+>> +}
+> [...]
 
-The advantage of this over unprivileged_userns_clone in Debian and maybe
-some other distributions is not giving up unprivileged app containers /
-sandboxes implemented via user namespaces.  For example, Chromium's user
-namespace sandbox likely only needs to have CAP_SYS_CHROOT. Chromium
-will be dropping their setuid sandbox, forcing usage of user namespaces
-to avoid losing the sandbox which will greatly increase local kernel
-attack surface on the host by exposing netfilter management, etc. to
-unprivileged users.
-
-The proposed approach isn't necessarily the best way to implement this
-kind of mitigation but I think it's filling a real need.
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
