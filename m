@@ -1,44 +1,37 @@
 From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
- SYSC_migrate_pages
-Date: Tue, 7 Nov 2017 09:55:47 -0600 (CST)
-Message-ID: <alpine.DEB.2.20.1711070948410.19176@nuc-kabylake>
-References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com> <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com> <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz> <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com> <d774ecf6-5e7b-e185-85a0-27bf2bcacfb4@suse.cz>
- <alpine.DEB.2.20.1711060926001.9015@nuc-kabylake> <a4f1212f-3903-abbc-772a-1ddee6f7f98b@huawei.com> <alpine.DEB.2.20.1711070851560.18776@nuc-kabylake> <04e4cb50-8cba-58af-1a5e-61e818cffa70@suse.cz>
+Subject: Re: [PATCH v16 00/13] support "task_isolation" mode
+Date: Tue, 7 Nov 2017 11:10:02 -0600 (CST)
+Message-ID: <alpine.DEB.2.20.1711071109090.19523@nuc-kabylake>
+References: <1509728692-10460-1-git-send-email-cmetcalf@mellanox.com> <alpine.DEB.2.20.1711060932520.9015@nuc-kabylake> <bd5526d4-7b6e-3b3d-79d0-5d6567c0bdf8@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <04e4cb50-8cba-58af-1a5e-61e818cffa70@suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Yisheng Xie <xieyisheng1@huawei.com>, akpm@linux-foundation.org, mhocko@suse.com, mingo@kernel.org, rientjes@google.com, n-horiguchi@ah.jp.nec.com, salls@cs.ucsb.edu, linux-mm@kvack.org, linux-kernel@vger.kernel.org, tanxiaojun@huawei.com, linux-api@vger.kernel.org, Andi Kleen <ak@linux.intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <bd5526d4-7b6e-3b3d-79d0-5d6567c0bdf8@mellanox.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, linux-mm@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 7 Nov 2017, Vlastimil Babka wrote:
+On Mon, 6 Nov 2017, Chris Metcalf wrote:
 
-> > Migrate pages moves the pages of a single process there is no TARGET
-> > process.
+> On 11/6/2017 10:38 AM, Christopher Lameter wrote:
+> > > What about that d*mn 1 Hz clock?
+> > >
+> > > It's still there, so this code still requires some further work before
+> > > it can actually get a process into long-term task isolation (without
+> > > the obvious one-line kernel hack).  Frederic suggested a while ago
+> > > forcing updates on cpustats was required as the last gating factor; do
+> > > we think that is still true?  Christoph was working on this at one
+> > > point - any progress from your point of view?
+> > Well if you still have the 1 HZ clock then you can simply defer the numa
+> > remote page cleanup of the page allocator to that the time you execute
+> > that tick.
 >
-> migrate_pages(2) takes a pid argument
->
-> "migrate_pages()  attempts  to  move all pages of the process pid that
-> are in memory nodes old_nodes to the memory nodes in new_nodes. "
+> We have to get rid of the 1 Hz tick, so we don't want to tie anything
+> else to it...
 
-Ok missed that. Most use cases here are on the current process.
+Yes we want to get rid of the 1 HZ tick but the work on that could also
+include dealing with the remove page cleanup issue that we have deferred.
 
-Fundamentally a process can have shared pages outside of the cpuset that
-a process is restricted to. Thus I would think that migration to any of
-the allowed nodes of the current process that is calling migrate pages
-is ok. The caller wants this and the caller has a right to allocate on
-these nodes. It would be strange if migrate_pages would allow allocation
-outside of the current cpuset.
-
-> > Thus thehe *target* nodes need to be a subset of the current cpu set.
-
-And therefore the above still holds.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Presumably we have another context there were we may be able to call into
+the cleanup code with interrupts enabled.
