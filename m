@@ -1,80 +1,46 @@
-From: Tobias Klauser <tklauser@distanz.ch>
-Subject: Re: [patch v11 4/4] Documentation: jtag: Add ABI documentation
-Date: Tue, 7 Nov 2017 11:36:13 +0100
-Message-ID: <20171107103613.GJ1370@distanz.ch>
-References: <1509724449-26221-1-git-send-email-oleksandrs@mellanox.com>
- <1509724449-26221-5-git-send-email-oleksandrs@mellanox.com>
+From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
+ SYSC_migrate_pages
+Date: Tue, 7 Nov 2017 19:23:52 +0800
+Message-ID: <a4f1212f-3903-abbc-772a-1ddee6f7f98b@huawei.com>
+References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
+ <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com>
+ <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz>
+ <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com>
+ <d774ecf6-5e7b-e185-85a0-27bf2bcacfb4@suse.cz>
+ <alpine.DEB.2.20.1711060926001.9015@nuc-kabylake>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1509724449-26221-5-git-send-email-oleksandrs@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Shamray <oleksandrs@mellanox.com>
-Cc: gregkh@linuxfoundation.org, arnd@arndb.de, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, linux-serial@vger.kernel.org, mec@shout.net, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <alpine.DEB.2.20.1711060926001.9015@nuc-kabylake>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2017-11-03 at 16:54:09 +0100, Oleksandr Shamray <oleksandrs@mellanox.com> wrote:
-> Added document that describe the ABI for JTAG class drivrer
+hi Christopher and Vlastimil,
+
+Thanks for your comment!
+On 2017/11/6 23:29, Christopher Lameter wrote:
+> On Mon, 6 Nov 2017, Vlastimil Babka wrote:
 > 
-> Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
-> Acked-by: Arnd Bergmann <arnd@arndb.de>
-> ---
-> v10->v11
-> v9->v10
-> Fixes added by Oleksandr:
-> - change jtag-cdev to jtag-dev in documentation
-> - update Kernel Version and Date in jtag-dev documentation;
-> v8->v9
-> v7->v8
-> v6->v7
-> Comments pointed by Pavel Machek <pavel@ucw.cz>
-> - Added jtag-cdev documentation to Documentation/ABI/testing folder
-> ---
->  Documentation/ABI/testing/jatg-dev |   27 +++++++++++++++++++++++++++
->  1 files changed, 27 insertions(+), 0 deletions(-)
->  create mode 100644 Documentation/ABI/testing/jatg-dev
+>> I'm not sure what exactly is the EPERM intention. Should really the
+>> capability of THIS process override the cpuset restriction of the TARGET
+>> process? Maybe yes. Then, does "insufficient privilege (CAP_SYS_NICE) to
 > 
-> diff --git a/Documentation/ABI/testing/jatg-dev b/Documentation/ABI/testing/jatg-dev
-> new file mode 100644
-> index 0000000..803dbab
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/jatg-dev
+> CAP_SYS_NICE never overrides cpuset restrictions. The cap can be used to
+> migrate pages that are *also* mapped by other processes (and thus move
+> pages of another process which may have different cpu set restrictions!).
 
-Typo in the file name: s/jatg-dev/jtag-dev/
+So you means the specified nodes should be a subset of target cpu set, right?
 
-> @@ -0,0 +1,27 @@
-> +What:		/dev/jtag[0-9]+
-> +Date:		October 2017
-> +KernelVersion:	4.15
-> +Contact:	oleksandrs@mellanox.com
-> +Description:
-> +		The misc device files /dev/jtag* are the interface
-> +		between JTAG master interfase and userspace.
-
-Typo: s/interfase/interface/
-
-> +
-> +		The ioctl(2)-based ABI is defined and documented in
-> +		[include/uapi]<linux/jtag.h>.
-> +
-> +		The following file operations are supported:
-> +
-> +		open(2)
-> +		The argument flag currently support only one access
-> +		mode O_RDWR.
-> +
-> +		ioctl(2)
-> +		Initiate various actions.
-> +		See the inline documentation in [include/uapi]<linux/jtag.h>
-> +		for descriptions of all ioctls.
-> +
-> +		close(2)
-> +		Stops and free up the I/O contexts that was associated
-> +		with the file descriptor.
-> +
-> +Users:		TBD
-> \ No newline at end of file
-> -- 
-> 1.7.1
+Thanks
+Yisheng Xie
+> The cap should not allow migrating pages to nodes that are not allowed by
+> the cpuset of the current process.
+> 
+> 
+> 
+> .
 > 
