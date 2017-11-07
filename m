@@ -1,142 +1,232 @@
-From: Boqun Feng <boqun.feng@gmail.com>
-Subject: Re: [RFC PATCH v10 for 4.15 01/14] Restartable sequences system call
-Date: Tue, 7 Nov 2017 09:24:24 +0800
-Message-ID: <20171107012424.GB6280@tardis>
+From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v2 for 4.15 08/14] Provide cpu_opv system call
+Date: Tue, 7 Nov 2017 10:07:11 +0800
+Message-ID: <20171107020711.GA6095@tardis>
 References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com>
- <20171106205644.29386-2-mathieu.desnoyers@efficios.com>
+ <20171106205644.29386-9-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="Fba/0zbH8Xs+Fj9o"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+        protocol="application/pgp-signature"; boundary="VS++wcV0S1rZb1Fb"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171106205644.29386-2-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+In-Reply-To: <20171106205644.29386-9-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---Fba/0zbH8Xs+Fj9o
+--VS++wcV0S1rZb1Fb
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-On Mon, Nov 06, 2017 at 03:56:31PM -0500, Mathieu Desnoyers wrote:
+On Mon, Nov 06, 2017 at 03:56:38PM -0500, Mathieu Desnoyers wrote:
 [...]
+> +static int cpu_op_pin_pages(unsigned long addr, unsigned long len,
+> +		struct page ***pinned_pages_ptr, size_t *nr_pinned,
+> +		int write)
+> +{
+> +	struct page *pages[2];
+> +	int ret, nr_pages;
 > +
-> +/*
-> + * struct rseq is aligned on 4 * 8 bytes to ensure it is always
-> + * contained within a single cache-line.
-> + *
-> + * A single struct rseq per thread is allowed.
-> + */
-> +struct rseq {
-> +	/*
-> +	 * Restartable sequences cpu_id_start field. Updated by the
-> +	 * kernel, and read by user-space with single-copy atomicity
-> +	 * semantics. Aligned on 32-bit. Always contain a value in the
-> +	 * range of possible CPUs, although the value may not be the
-> +	 * actual current CPU (e.g. if rseq is not initialized). This
-> +	 * CPU number value should always be confirmed against the value
-> +	 * of the cpu_id field.
-> +	 */
-> +	uint32_t cpu_id_start;
-> +	/*
-> +	 * Restartable sequences cpu_id field. Updated by the kernel,
-> +	 * and read by user-space with single-copy atomicity semantics.
-> +	 * Aligned on 32-bit. Values -1U and -2U have a special
-> +	 * semantic: -1U means "rseq uninitialized", and -2U means "rseq
-> +	 * initialization failed".
-> +	 */
-> +	uint32_t cpu_id;
-> +	/*
-> +	 * Restartable sequences rseq_cs field.
-> +	 *
-> +	 * Contains NULL when no critical section is active for the current
-> +	 * thread, or holds a pointer to the currently active struct rseq_cs.
-> +	 *
-> +	 * Updated by user-space at the beginning of assembly instruction
-> +	 * sequence block, and by the kernel when it restarts an assembly
-> +	 * instruction sequence block, and when the kernel detects that it
-> +	 * is preempting or delivering a signal outside of the range
-> +	 * targeted by the rseq_cs. Also needs to be cleared by user-space
-> +	 * before reclaiming memory that contains the targeted struct
-> +	 * rseq_cs.
-> +	 *
-> +	 * Read and set by the kernel with single-copy atomicity semantics.
-> +	 * Aligned on 64-bit.
-> +	 */
-> +	RSEQ_FIELD_u32_u64(rseq_cs);
-> +	/*
-> +	 * - RSEQ_DISABLE flag:
-> +	 *
-> +	 * Fallback fast-track flag for single-stepping.
-> +	 * Set by user-space if lack of progress is detected.
-> +	 * Cleared by user-space after rseq finish.
-> +	 * Read by the kernel.
-> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
-> +	 *     Inhibit instruction sequence block restart and event
-> +	 *     counter increment on preemption for this thread.
+> +	if (!len)
+> +		return 0;
+> +	nr_pages = cpu_op_range_nr_pages(addr, len);
+> +	BUG_ON(nr_pages > 2);
+> +	if (*nr_pinned + nr_pages > NR_PINNED_PAGES_ON_STACK) {
 
-Nit: "event counter" has been removed entirely ;-)
+Is this a bug? Seems you will kzalloc() every time if *nr_pinned is
+bigger than NR_PINNED_PAGES_ON_STACK, which will result in memory
+leaking.
 
-> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
-> +	 *     Inhibit instruction sequence block restart and event
-> +	 *     counter increment on signal delivery for this thread.
-> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
-> +	 *     Inhibit instruction sequence block restart and event
-> +	 *     counter increment on migration for this thread.
-> +	 */
-> +	uint32_t flags;
-> +} __attribute__((aligned(4 * sizeof(uint64_t))));
-> +
-> +#endif /* _UAPI_LINUX_RSEQ_H */
-[...]
-> +	} else {
-> +		/*
-> +		 * If there was no rseq previously registered,
-> +		 * we need to ensure the provided rseq is
-> +		 * properly aligned and valid.
-> +		 */
-> +		if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq))
-> +				|| rseq_len != sizeof(*rseq))
-> +			return -EINVAL;
-> +		if (!access_ok(VERIFY_WRITE, rseq, rseq_len))
-> +			return -EFAULT;
-> +		current->rseq = rseq;
-> +		current->rseq_len = rseq_len;
-> +		current->rseq_sig = sig;
-> +		/*
-> +		 * If rseq was previously inactive, and has just
-> +		 * been registered, ensure the cpu_id and
-> +		 * event_counter fields are updated before
+I think the logic here is complex enough for us to introduce a
+structure, like:
 
-s/event_counter/cpu_start_id/ ?
+	struct cpu_opv_page_pinner {
+		int nr_pinned;
+		bool is_kmalloc;
+		struct page **pinned_pages;
+	};
+
+Thoughts?
 
 Regards,
 Boqun
 
-> +		 * returning to user-space.
-> +		 */
-> +		rseq_set_notify_resume(current);
+> +		struct page **pinned_pages =
+> +			kzalloc(CPU_OP_VEC_LEN_MAX * CPU_OP_MAX_PAGES
+> +				* sizeof(struct page *), GFP_KERNEL);
+> +		if (!pinned_pages)
+> +			return -ENOMEM;
+> +		memcpy(pinned_pages, *pinned_pages_ptr,
+> +			*nr_pinned * sizeof(struct page *));
+> +		*pinned_pages_ptr = pinned_pages;
 > +	}
-> +
+> +again:
+> +	ret = get_user_pages_fast(addr, nr_pages, write, pages);
+> +	if (ret < nr_pages) {
+> +		if (ret > 0)
+> +			put_page(pages[0]);
+> +		return -EFAULT;
+> +	}
+> +	/*
+> +	 * Refuse device pages, the zero page, pages in the gate area,
+> +	 * and special mappings.
+> +	 */
+> +	ret = cpu_op_check_pages(pages, nr_pages);
+> +	if (ret == -EAGAIN) {
+> +		put_page(pages[0]);
+> +		if (nr_pages > 1)
+> +			put_page(pages[1]);
+> +		goto again;
+> +	}
+> +	if (ret)
+> +		goto error;
+> +	(*pinned_pages_ptr)[(*nr_pinned)++] = pages[0];
+> +	if (nr_pages > 1)
+> +		(*pinned_pages_ptr)[(*nr_pinned)++] = pages[1];
 > +	return 0;
+> +
+> +error:
+> +	put_page(pages[0]);
+> +	if (nr_pages > 1)
+> +		put_page(pages[1]);
+> +	return -EFAULT;
+> +}
+> +
+> +static int cpu_opv_pin_pages(struct cpu_op *cpuop, int cpuopcnt,
+> +		struct page ***pinned_pages_ptr, size_t *nr_pinned)
+> +{
+> +	int ret, i;
+> +	bool expect_fault = false;
+> +
+> +	/* Check access, pin pages. */
+> +	for (i = 0; i < cpuopcnt; i++) {
+> +		struct cpu_op *op = &cpuop[i];
+> +
+> +		switch (op->op) {
+> +		case CPU_COMPARE_EQ_OP:
+> +		case CPU_COMPARE_NE_OP:
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.compare_op.expect_fault_a;
+> +			if (!access_ok(VERIFY_READ, op->u.compare_op.a,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.compare_op.a,
+> +					op->len, pinned_pages_ptr, nr_pinned, 0);
+> +			if (ret)
+> +				goto error;
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.compare_op.expect_fault_b;
+> +			if (!access_ok(VERIFY_READ, op->u.compare_op.b,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.compare_op.b,
+> +					op->len, pinned_pages_ptr, nr_pinned, 0);
+> +			if (ret)
+> +				goto error;
+> +			break;
+> +		case CPU_MEMCPY_OP:
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.memcpy_op.expect_fault_dst;
+> +			if (!access_ok(VERIFY_WRITE, op->u.memcpy_op.dst,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.memcpy_op.dst,
+> +					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +			if (ret)
+> +				goto error;
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.memcpy_op.expect_fault_src;
+> +			if (!access_ok(VERIFY_READ, op->u.memcpy_op.src,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.memcpy_op.src,
+> +					op->len, pinned_pages_ptr, nr_pinned, 0);
+> +			if (ret)
+> +				goto error;
+> +			break;
+> +		case CPU_ADD_OP:
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.arithmetic_op.expect_fault_p;
+> +			if (!access_ok(VERIFY_WRITE, op->u.arithmetic_op.p,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.arithmetic_op.p,
+> +					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +			if (ret)
+> +				goto error;
+> +			break;
+> +		case CPU_OR_OP:
+> +		case CPU_AND_OP:
+> +		case CPU_XOR_OP:
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.bitwise_op.expect_fault_p;
+> +			if (!access_ok(VERIFY_WRITE, op->u.bitwise_op.p,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.bitwise_op.p,
+> +					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +			if (ret)
+> +				goto error;
+> +			break;
+> +		case CPU_LSHIFT_OP:
+> +		case CPU_RSHIFT_OP:
+> +			ret = -EFAULT;
+> +			expect_fault = op->u.shift_op.expect_fault_p;
+> +			if (!access_ok(VERIFY_WRITE, op->u.shift_op.p,
+> +					op->len))
+> +				goto error;
+> +			ret = cpu_op_pin_pages(
+> +					(unsigned long)op->u.shift_op.p,
+> +					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +			if (ret)
+> +				goto error;
+> +			break;
+> +		case CPU_MB_OP:
+> +			break;
+> +		default:
+> +			return -EINVAL;
+> +		}
+> +	}
+> +	return 0;
+> +
+> +error:
+> +	for (i = 0; i < *nr_pinned; i++)
+> +		put_page((*pinned_pages_ptr)[i]);
+> +	*nr_pinned = 0;
+> +	/*
+> +	 * If faulting access is expected, return EAGAIN to user-space.
+> +	 * It allows user-space to distinguish between a fault caused by
+> +	 * an access which is expect to fault (e.g. due to concurrent
+> +	 * unmapping of underlying memory) from an unexpected fault from
+> +	 * which a retry would not recover.
+> +	 */
+> +	if (ret == -EFAULT && expect_fault)
+> +		return -EAGAIN;
+> +	return ret;
 > +}
 [...]
 
---Fba/0zbH8Xs+Fj9o
+--VS++wcV0S1rZb1Fb
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAABCAAdFiEEj5IosQTPz8XU1wRHSXnow7UH+rgFAloBCzAACgkQSXnow7UH
-+rh5kgf8DdscO+BkvEsWLYd8FuiBt/DjH9XFZ5iIorgkJvhlYcIHbosUFgbAsnu8
-ZG8Fj0/DUW6Av51/29qu/9SzZ0e0MWRQ2L6sRLH9k9mTrq0YZ+xEEdLMCUMSiovG
-9tbizablJHA1DzahbYk/U7o2keEv9ov3zuFL73X+7AW4p7IAAPa5/a10CYki3nV/
-ppO2L8gb/FkPIExOtgB59X9jmwnWTcMoLx5z+eg6ioIa4TfWWdkGriOr/3ddn3Vv
-gwRqyKsbdDsZ329WYlJfINP0bezH9vgQz6hKTzlPcOER6pURG+Ji7qiQpuiRJeHi
-1kBH4GC4ap92TrSThcA8yLQdqgc55Q==
-=rM6n
+iQEzBAABCAAdFiEEj5IosQTPz8XU1wRHSXnow7UH+rgFAloBFUwACgkQSXnow7UH
++rizbQf/YrHwtP/maCz0HCu1aAAE3fdR3JRW3fFS11wwENDR8mkNt3IHcdTDotij
+rc9g7866GZRUZUNpK4b6K2h0pkcIhVwCdbAk+YZGDQ2ZBM4N39C/0TtLP9e72xXB
+5U5fdg44R5iasw2S4fAigSi/H7wzv1zBC2khRhUOyvnbvyRdNGe4NOjpmBASGs6q
+IWA16UlxjKUInNdGCt0nn5tgC8bPOUGR40g2DVInwoYU1LNvvGEwWM0nKEmn4/0J
+X7870nAYPtwQ7J4AWu5Yf2vz7mGUZC/D0fakM3MmFhdFlFYFsUih+PQ0rSQc49Wu
+rDd1G+ma4wTRuSNtILmcp5bdBVvKsQ==
+=o9va
 -----END PGP SIGNATURE-----
 
---Fba/0zbH8Xs+Fj9o--
+--VS++wcV0S1rZb1Fb--
