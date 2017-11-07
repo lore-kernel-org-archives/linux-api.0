@@ -1,136 +1,172 @@
 From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH v10 for 4.15 01/14] Restartable sequences system
- call
-Date: Tue, 7 Nov 2017 02:20:31 +0000 (UTC)
-Message-ID: <1057691675.6149.1510021231078.JavaMail.zimbra@efficios.com>
-References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com> <20171106205644.29386-2-mathieu.desnoyers@efficios.com> <20171107012424.GB6280@tardis>
+Subject: Re: [RFC PATCH v2 for 4.15 08/14] Provide cpu_opv system call
+Date: Tue, 7 Nov 2017 02:40:37 +0000 (UTC)
+Message-ID: <444885121.6172.1510022437259.JavaMail.zimbra@efficios.com>
+References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com> <20171106205644.29386-9-mathieu.desnoyers@efficios.com> <20171107020711.GA6095@tardis>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed;
+        boundary="----=_Part_6170_530219652.1510022437257"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171107012424.GB6280@tardis>
+In-Reply-To: <20171107020711.GA6095@tardis>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 6, 2017, at 8:24 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+------=_Part_6170_530219652.1510022437257
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 
-> On Mon, Nov 06, 2017 at 03:56:31PM -0500, Mathieu Desnoyers wrote:
+----- On Nov 6, 2017, at 9:07 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+
+> On Mon, Nov 06, 2017 at 03:56:38PM -0500, Mathieu Desnoyers wrote:
 > [...]
+>> +static int cpu_op_pin_pages(unsigned long addr, unsigned long len,
+>> +		struct page ***pinned_pages_ptr, size_t *nr_pinned,
+>> +		int write)
+>> +{
+>> +	struct page *pages[2];
+>> +	int ret, nr_pages;
 >> +
->> +/*
->> + * struct rseq is aligned on 4 * 8 bytes to ensure it is always
->> + * contained within a single cache-line.
->> + *
->> + * A single struct rseq per thread is allowed.
->> + */
->> +struct rseq {
->> +	/*
->> +	 * Restartable sequences cpu_id_start field. Updated by the
->> +	 * kernel, and read by user-space with single-copy atomicity
->> +	 * semantics. Aligned on 32-bit. Always contain a value in the
->> +	 * range of possible CPUs, although the value may not be the
->> +	 * actual current CPU (e.g. if rseq is not initialized). This
->> +	 * CPU number value should always be confirmed against the value
->> +	 * of the cpu_id field.
->> +	 */
->> +	uint32_t cpu_id_start;
->> +	/*
->> +	 * Restartable sequences cpu_id field. Updated by the kernel,
->> +	 * and read by user-space with single-copy atomicity semantics.
->> +	 * Aligned on 32-bit. Values -1U and -2U have a special
->> +	 * semantic: -1U means "rseq uninitialized", and -2U means "rseq
->> +	 * initialization failed".
->> +	 */
->> +	uint32_t cpu_id;
->> +	/*
->> +	 * Restartable sequences rseq_cs field.
->> +	 *
->> +	 * Contains NULL when no critical section is active for the current
->> +	 * thread, or holds a pointer to the currently active struct rseq_cs.
->> +	 *
->> +	 * Updated by user-space at the beginning of assembly instruction
->> +	 * sequence block, and by the kernel when it restarts an assembly
->> +	 * instruction sequence block, and when the kernel detects that it
->> +	 * is preempting or delivering a signal outside of the range
->> +	 * targeted by the rseq_cs. Also needs to be cleared by user-space
->> +	 * before reclaiming memory that contains the targeted struct
->> +	 * rseq_cs.
->> +	 *
->> +	 * Read and set by the kernel with single-copy atomicity semantics.
->> +	 * Aligned on 64-bit.
->> +	 */
->> +	RSEQ_FIELD_u32_u64(rseq_cs);
->> +	/*
->> +	 * - RSEQ_DISABLE flag:
->> +	 *
->> +	 * Fallback fast-track flag for single-stepping.
->> +	 * Set by user-space if lack of progress is detected.
->> +	 * Cleared by user-space after rseq finish.
->> +	 * Read by the kernel.
->> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
->> +	 *     Inhibit instruction sequence block restart and event
->> +	 *     counter increment on preemption for this thread.
+>> +	if (!len)
+>> +		return 0;
+>> +	nr_pages = cpu_op_range_nr_pages(addr, len);
+>> +	BUG_ON(nr_pages > 2);
+>> +	if (*nr_pinned + nr_pages > NR_PINNED_PAGES_ON_STACK) {
 > 
-> Nit: "event counter" has been removed entirely ;-)
+> Is this a bug? Seems you will kzalloc() every time if *nr_pinned is
+> bigger than NR_PINNED_PAGES_ON_STACK, which will result in memory
+> leaking.
 > 
->> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
->> +	 *     Inhibit instruction sequence block restart and event
->> +	 *     counter increment on signal delivery for this thread.
->> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
->> +	 *     Inhibit instruction sequence block restart and event
->> +	 *     counter increment on migration for this thread.
->> +	 */
->> +	uint32_t flags;
->> +} __attribute__((aligned(4 * sizeof(uint64_t))));
->> +
->> +#endif /* _UAPI_LINUX_RSEQ_H */
-> [...]
->> +	} else {
->> +		/*
->> +		 * If there was no rseq previously registered,
->> +		 * we need to ensure the provided rseq is
->> +		 * properly aligned and valid.
->> +		 */
->> +		if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq))
->> +				|| rseq_len != sizeof(*rseq))
->> +			return -EINVAL;
->> +		if (!access_ok(VERIFY_WRITE, rseq, rseq_len))
->> +			return -EFAULT;
->> +		current->rseq = rseq;
->> +		current->rseq_len = rseq_len;
->> +		current->rseq_sig = sig;
->> +		/*
->> +		 * If rseq was previously inactive, and has just
->> +		 * been registered, ensure the cpu_id and
->> +		 * event_counter fields are updated before
+> I think the logic here is complex enough for us to introduce a
+> structure, like:
 > 
-> s/event_counter/cpu_start_id/ ?
+>	struct cpu_opv_page_pinner {
+>		int nr_pinned;
+>		bool is_kmalloc;
+>		struct page **pinned_pages;
+>	};
+> 
+> Thoughts?
 
-I guess you mean "cpu_id_start".
+Good catch !
 
-Good point. v11 will include that fix. Meanwhile, it is available
-at https://git.kernel.org/pub/scm/linux/kernel/git/rseq/linux-rseq.git/log/?h=rseq/dev
+How about the attached diff ? I'll fold it into the rseq/dev tree.
 
 Thanks,
 
 Mathieu
 
-> 
-> Regards,
-> Boqun
-> 
->> +		 * returning to user-space.
->> +		 */
->> +		rseq_set_notify_resume(current);
->> +	}
->> +
->> +	return 0;
->> +}
-> [...]
-
 -- 
 Mathieu Desnoyers
 EfficiOS Inc.
 http://www.efficios.com
+
+------=_Part_6170_530219652.1510022437257
+Content-Type: text/x-patch; name=fix-cpu-opv-leak.patch
+Content-Disposition: attachment; filename=fix-cpu-opv-leak.patch
+Content-Transfer-Encoding: base64
+
+ZGlmZiAtLWdpdCBhL2tlcm5lbC9jcHVfb3B2LmMgYi9rZXJuZWwvY3B1X29wdi5jCmluZGV4IDA5
+NzU0YmJlNmE0Zi4uM2Q4ZmQ2NjQxNmEwIDEwMDY0NAotLS0gYS9rZXJuZWwvY3B1X29wdi5jCisr
+KyBiL2tlcm5lbC9jcHVfb3B2LmMKQEAgLTQ2LDYgKzQ2LDEyIEBAIHVuaW9uIG9wX2ZuX2RhdGEg
+ewogI2VuZGlmCiB9OwogCitzdHJ1Y3QgY3B1X29wdl9waW5uZWRfcGFnZXMgeworCXN0cnVjdCBw
+YWdlICoqcGFnZXM7CisJc2l6ZV90IG5yOworCWJvb2wgaXNfa21hbGxvYzsKK307CisKIHR5cGVk
+ZWYgaW50ICgqb3BfZm5fdCkodW5pb24gb3BfZm5fZGF0YSAqZGF0YSwgdWludDY0X3QgdiwgdWlu
+dDMyX3QgbGVuKTsKIAogc3RhdGljIERFRklORV9NVVRFWChjcHVfb3B2X29mZmxpbmVfbG9jayk7
+CkBAIC0yMTcsOCArMjIzLDcgQEAgc3RhdGljIGludCBjcHVfb3BfY2hlY2tfcGFnZXMoc3RydWN0
+IHBhZ2UgKipwYWdlcywKIH0KIAogc3RhdGljIGludCBjcHVfb3BfcGluX3BhZ2VzKHVuc2lnbmVk
+IGxvbmcgYWRkciwgdW5zaWduZWQgbG9uZyBsZW4sCi0JCXN0cnVjdCBwYWdlICoqKnBpbm5lZF9w
+YWdlc19wdHIsIHNpemVfdCAqbnJfcGlubmVkLAotCQlpbnQgd3JpdGUpCisJCXN0cnVjdCBjcHVf
+b3B2X3Bpbm5lZF9wYWdlcyAqcGluX3BhZ2VzLCBpbnQgd3JpdGUpCiB7CiAJc3RydWN0IHBhZ2Ug
+KnBhZ2VzWzJdOwogCWludCByZXQsIG5yX3BhZ2VzOwpAQCAtMjI3LDE1ICsyMzIsMTcgQEAgc3Rh
+dGljIGludCBjcHVfb3BfcGluX3BhZ2VzKHVuc2lnbmVkIGxvbmcgYWRkciwgdW5zaWduZWQgbG9u
+ZyBsZW4sCiAJCXJldHVybiAwOwogCW5yX3BhZ2VzID0gY3B1X29wX3JhbmdlX25yX3BhZ2VzKGFk
+ZHIsIGxlbik7CiAJQlVHX09OKG5yX3BhZ2VzID4gMik7Ci0JaWYgKCpucl9waW5uZWQgKyBucl9w
+YWdlcyA+IE5SX1BJTk5FRF9QQUdFU19PTl9TVEFDSykgeworCWlmICghcGluX3BhZ2VzLT5pc19r
+bWFsbG9jICYmIHBpbl9wYWdlcy0+bnIgKyBucl9wYWdlcworCQkJPiBOUl9QSU5ORURfUEFHRVNf
+T05fU1RBQ0spIHsKIAkJc3RydWN0IHBhZ2UgKipwaW5uZWRfcGFnZXMgPQogCQkJa3phbGxvYyhD
+UFVfT1BfVkVDX0xFTl9NQVggKiBDUFVfT1BfTUFYX1BBR0VTCiAJCQkJKiBzaXplb2Yoc3RydWN0
+IHBhZ2UgKiksIEdGUF9LRVJORUwpOwogCQlpZiAoIXBpbm5lZF9wYWdlcykKIAkJCXJldHVybiAt
+RU5PTUVNOwotCQltZW1jcHkocGlubmVkX3BhZ2VzLCAqcGlubmVkX3BhZ2VzX3B0ciwKLQkJCSpu
+cl9waW5uZWQgKiBzaXplb2Yoc3RydWN0IHBhZ2UgKikpOwotCQkqcGlubmVkX3BhZ2VzX3B0ciA9
+IHBpbm5lZF9wYWdlczsKKwkJbWVtY3B5KHBpbm5lZF9wYWdlcywgcGluX3BhZ2VzLT5wYWdlcywK
+KwkJCXBpbl9wYWdlcy0+bnIgKiBzaXplb2Yoc3RydWN0IHBhZ2UgKikpOworCQlwaW5fcGFnZXMt
+PnBhZ2VzID0gcGlubmVkX3BhZ2VzOworCQlwaW5fcGFnZXMtPmlzX2ttYWxsb2MgPSB0cnVlOwog
+CX0KIGFnYWluOgogCXJldCA9IGdldF91c2VyX3BhZ2VzX2Zhc3QoYWRkciwgbnJfcGFnZXMsIHdy
+aXRlLCBwYWdlcyk7CkBAIC0yNTcsOSArMjY0LDkgQEAgc3RhdGljIGludCBjcHVfb3BfcGluX3Bh
+Z2VzKHVuc2lnbmVkIGxvbmcgYWRkciwgdW5zaWduZWQgbG9uZyBsZW4sCiAJfQogCWlmIChyZXQp
+CiAJCWdvdG8gZXJyb3I7Ci0JKCpwaW5uZWRfcGFnZXNfcHRyKVsoKm5yX3Bpbm5lZCkrK10gPSBw
+YWdlc1swXTsKKwlwaW5fcGFnZXMtPnBhZ2VzW3Bpbl9wYWdlcy0+bnIrK10gPSBwYWdlc1swXTsK
+IAlpZiAobnJfcGFnZXMgPiAxKQotCQkoKnBpbm5lZF9wYWdlc19wdHIpWygqbnJfcGlubmVkKSsr
+XSA9IHBhZ2VzWzFdOworCQlwaW5fcGFnZXMtPnBhZ2VzW3Bpbl9wYWdlcy0+bnIrK10gPSBwYWdl
+c1sxXTsKIAlyZXR1cm4gMDsKIAogZXJyb3I6CkBAIC0yNzAsNyArMjc3LDcgQEAgc3RhdGljIGlu
+dCBjcHVfb3BfcGluX3BhZ2VzKHVuc2lnbmVkIGxvbmcgYWRkciwgdW5zaWduZWQgbG9uZyBsZW4s
+CiB9CiAKIHN0YXRpYyBpbnQgY3B1X29wdl9waW5fcGFnZXMoc3RydWN0IGNwdV9vcCAqY3B1b3As
+IGludCBjcHVvcGNudCwKLQkJc3RydWN0IHBhZ2UgKioqcGlubmVkX3BhZ2VzX3B0ciwgc2l6ZV90
+ICpucl9waW5uZWQpCisJCXN0cnVjdCBjcHVfb3B2X3Bpbm5lZF9wYWdlcyAqcGluX3BhZ2VzKQog
+ewogCWludCByZXQsIGk7CiAJYm9vbCBleHBlY3RfZmF1bHQgPSBmYWxzZTsKQEAgLTI4OSw3ICsy
+OTYsNyBAQCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0cnVjdCBjcHVfb3AgKmNwdW9w
+LCBpbnQgY3B1b3BjbnQsCiAJCQkJZ290byBlcnJvcjsKIAkJCXJldCA9IGNwdV9vcF9waW5fcGFn
+ZXMoCiAJCQkJCSh1bnNpZ25lZCBsb25nKW9wLT51LmNvbXBhcmVfb3AuYSwKLQkJCQkJb3AtPmxl
+biwgcGlubmVkX3BhZ2VzX3B0ciwgbnJfcGlubmVkLCAwKTsKKwkJCQkJb3AtPmxlbiwgcGluX3Bh
+Z2VzLCAwKTsKIAkJCWlmIChyZXQpCiAJCQkJZ290byBlcnJvcjsKIAkJCXJldCA9IC1FRkFVTFQ7
+CkBAIC0yOTksNyArMzA2LDcgQEAgc3RhdGljIGludCBjcHVfb3B2X3Bpbl9wYWdlcyhzdHJ1Y3Qg
+Y3B1X29wICpjcHVvcCwgaW50IGNwdW9wY250LAogCQkJCWdvdG8gZXJyb3I7CiAJCQlyZXQgPSBj
+cHVfb3BfcGluX3BhZ2VzKAogCQkJCQkodW5zaWduZWQgbG9uZylvcC0+dS5jb21wYXJlX29wLmIs
+Ci0JCQkJCW9wLT5sZW4sIHBpbm5lZF9wYWdlc19wdHIsIG5yX3Bpbm5lZCwgMCk7CisJCQkJCW9w
+LT5sZW4sIHBpbl9wYWdlcywgMCk7CiAJCQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7CiAJCQli
+cmVhazsKQEAgLTMxMSw3ICszMTgsNyBAQCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0
+cnVjdCBjcHVfb3AgKmNwdW9wLCBpbnQgY3B1b3BjbnQsCiAJCQkJZ290byBlcnJvcjsKIAkJCXJl
+dCA9IGNwdV9vcF9waW5fcGFnZXMoCiAJCQkJCSh1bnNpZ25lZCBsb25nKW9wLT51Lm1lbWNweV9v
+cC5kc3QsCi0JCQkJCW9wLT5sZW4sIHBpbm5lZF9wYWdlc19wdHIsIG5yX3Bpbm5lZCwgMSk7CisJ
+CQkJCW9wLT5sZW4sIHBpbl9wYWdlcywgMSk7CiAJCQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7
+CiAJCQlyZXQgPSAtRUZBVUxUOwpAQCAtMzIxLDcgKzMyOCw3IEBAIHN0YXRpYyBpbnQgY3B1X29w
+dl9waW5fcGFnZXMoc3RydWN0IGNwdV9vcCAqY3B1b3AsIGludCBjcHVvcGNudCwKIAkJCQlnb3Rv
+IGVycm9yOwogCQkJcmV0ID0gY3B1X29wX3Bpbl9wYWdlcygKIAkJCQkJKHVuc2lnbmVkIGxvbmcp
+b3AtPnUubWVtY3B5X29wLnNyYywKLQkJCQkJb3AtPmxlbiwgcGlubmVkX3BhZ2VzX3B0ciwgbnJf
+cGlubmVkLCAwKTsKKwkJCQkJb3AtPmxlbiwgcGluX3BhZ2VzLCAwKTsKIAkJCWlmIChyZXQpCiAJ
+CQkJZ290byBlcnJvcjsKIAkJCWJyZWFrOwpAQCAtMzMzLDcgKzM0MCw3IEBAIHN0YXRpYyBpbnQg
+Y3B1X29wdl9waW5fcGFnZXMoc3RydWN0IGNwdV9vcCAqY3B1b3AsIGludCBjcHVvcGNudCwKIAkJ
+CQlnb3RvIGVycm9yOwogCQkJcmV0ID0gY3B1X29wX3Bpbl9wYWdlcygKIAkJCQkJKHVuc2lnbmVk
+IGxvbmcpb3AtPnUuYXJpdGhtZXRpY19vcC5wLAotCQkJCQlvcC0+bGVuLCBwaW5uZWRfcGFnZXNf
+cHRyLCBucl9waW5uZWQsIDEpOworCQkJCQlvcC0+bGVuLCBwaW5fcGFnZXMsIDEpOwogCQkJaWYg
+KHJldCkKIAkJCQlnb3RvIGVycm9yOwogCQkJYnJlYWs7CkBAIC0zNDcsNyArMzU0LDcgQEAgc3Rh
+dGljIGludCBjcHVfb3B2X3Bpbl9wYWdlcyhzdHJ1Y3QgY3B1X29wICpjcHVvcCwgaW50IGNwdW9w
+Y250LAogCQkJCWdvdG8gZXJyb3I7CiAJCQlyZXQgPSBjcHVfb3BfcGluX3BhZ2VzKAogCQkJCQko
+dW5zaWduZWQgbG9uZylvcC0+dS5iaXR3aXNlX29wLnAsCi0JCQkJCW9wLT5sZW4sIHBpbm5lZF9w
+YWdlc19wdHIsIG5yX3Bpbm5lZCwgMSk7CisJCQkJCW9wLT5sZW4sIHBpbl9wYWdlcywgMSk7CiAJ
+CQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7CiAJCQlicmVhazsKQEAgLTM2MCw3ICszNjcsNyBA
+QCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0cnVjdCBjcHVfb3AgKmNwdW9wLCBpbnQg
+Y3B1b3BjbnQsCiAJCQkJZ290byBlcnJvcjsKIAkJCXJldCA9IGNwdV9vcF9waW5fcGFnZXMoCiAJ
+CQkJCSh1bnNpZ25lZCBsb25nKW9wLT51LnNoaWZ0X29wLnAsCi0JCQkJCW9wLT5sZW4sIHBpbm5l
+ZF9wYWdlc19wdHIsIG5yX3Bpbm5lZCwgMSk7CisJCQkJCW9wLT5sZW4sIHBpbl9wYWdlcywgMSk7
+CiAJCQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7CiAJCQlicmVhazsKQEAgLTM3Myw5ICszODAs
+OSBAQCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0cnVjdCBjcHVfb3AgKmNwdW9wLCBp
+bnQgY3B1b3BjbnQsCiAJcmV0dXJuIDA7CiAKIGVycm9yOgotCWZvciAoaSA9IDA7IGkgPCAqbnJf
+cGlubmVkOyBpKyspCi0JCXB1dF9wYWdlKCgqcGlubmVkX3BhZ2VzX3B0cilbaV0pOwotCSpucl9w
+aW5uZWQgPSAwOworCWZvciAoaSA9IDA7IGkgPCBwaW5fcGFnZXMtPm5yOyBpKyspCisJCXB1dF9w
+YWdlKHBpbl9wYWdlcy0+cGFnZXNbaV0pOworCXBpbl9wYWdlcy0+bnIgPSAwOwogCS8qCiAJICog
+SWYgZmF1bHRpbmcgYWNjZXNzIGlzIGV4cGVjdGVkLCByZXR1cm4gRUFHQUlOIHRvIHVzZXItc3Bh
+Y2UuCiAJICogSXQgYWxsb3dzIHVzZXItc3BhY2UgdG8gZGlzdGluZ3Vpc2ggYmV0d2VlbiBhIGZh
+dWx0IGNhdXNlZCBieQpAQCAtOTIzLDkgKzkzMCwxMiBAQCBTWVNDQUxMX0RFRklORTQoY3B1X29w
+diwgc3RydWN0IGNwdV9vcCBfX3VzZXIgKiwgdWNwdW9wdiwgaW50LCBjcHVvcGNudCwKIHsKIAlz
+dHJ1Y3QgY3B1X29wIGNwdW9wdltDUFVfT1BfVkVDX0xFTl9NQVhdOwogCXN0cnVjdCBwYWdlICpw
+aW5uZWRfcGFnZXNfb25fc3RhY2tbTlJfUElOTkVEX1BBR0VTX09OX1NUQUNLXTsKLQlzdHJ1Y3Qg
+cGFnZSAqKnBpbm5lZF9wYWdlcyA9IHBpbm5lZF9wYWdlc19vbl9zdGFjazsKKwlzdHJ1Y3QgY3B1
+X29wdl9waW5uZWRfcGFnZXMgcGluX3BhZ2VzID0geworCQkucGFnZXMgPSBwaW5uZWRfcGFnZXNf
+b25fc3RhY2ssCisJCS5uciA9IDAsCisJCS5pc19rbWFsbG9jID0gZmFsc2UsCisJfTsKIAlpbnQg
+cmV0LCBpOwotCXNpemVfdCBucl9waW5uZWQgPSAwOwogCiAJaWYgKHVubGlrZWx5KGZsYWdzKSkK
+IAkJcmV0dXJuIC1FSU5WQUw7CkBAIC05MzgsMTUgKzk0OCwxNCBAQCBTWVNDQUxMX0RFRklORTQo
+Y3B1X29wdiwgc3RydWN0IGNwdV9vcCBfX3VzZXIgKiwgdWNwdW9wdiwgaW50LCBjcHVvcGNudCwK
+IAlyZXQgPSBjcHVfb3B2X2NoZWNrKGNwdW9wdiwgY3B1b3BjbnQpOwogCWlmIChyZXQpCiAJCXJl
+dHVybiByZXQ7Ci0JcmV0ID0gY3B1X29wdl9waW5fcGFnZXMoY3B1b3B2LCBjcHVvcGNudCwKLQkJ
+CQkmcGlubmVkX3BhZ2VzLCAmbnJfcGlubmVkKTsKKwlyZXQgPSBjcHVfb3B2X3Bpbl9wYWdlcyhj
+cHVvcHYsIGNwdW9wY250LCAmcGluX3BhZ2VzKTsKIAlpZiAocmV0KQogCQlnb3RvIGVuZDsKIAly
+ZXQgPSBkb19jcHVfb3B2KGNwdW9wdiwgY3B1b3BjbnQsIGNwdSk7Ci0JZm9yIChpID0gMDsgaSA8
+IG5yX3Bpbm5lZDsgaSsrKQotCQlwdXRfcGFnZShwaW5uZWRfcGFnZXNbaV0pOworCWZvciAoaSA9
+IDA7IGkgPCBwaW5fcGFnZXMubnI7IGkrKykKKwkJcHV0X3BhZ2UocGluX3BhZ2VzLnBhZ2VzW2ld
+KTsKIGVuZDoKLQlpZiAocGlubmVkX3BhZ2VzICE9IHBpbm5lZF9wYWdlc19vbl9zdGFjaykKLQkJ
+a2ZyZWUocGlubmVkX3BhZ2VzKTsKKwlpZiAocGluX3BhZ2VzLmlzX2ttYWxsb2MpCisJCWtmcmVl
+KHBpbl9wYWdlcy5wYWdlcyk7CiAJcmV0dXJuIHJldDsKIH0K
+------=_Part_6170_530219652.1510022437257--
