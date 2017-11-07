@@ -1,106 +1,142 @@
-From: Boris Lukashev <blukashev@sempervictus.com>
-Subject: Re: Re: [PATCH resend 2/2] userns: control
- capabilities of some user namespaces
-Date: Mon, 6 Nov 2017 19:01:58 -0500
-Message-ID: <CAFUG7CcW077LHcQEqk7qy7iVvmi-3J8psD1Kwj45XvHThiZC6w@mail.gmail.com>
-References: <20171103004436.40026-1-mahesh@bandewar.net> <20171104235346.GA17170@mail.hallyn.com>
- <CAF2d9jg1tZz-hnVBeXm3geq7jSBt5v5w6+p5B1V-7huS4qbMBA@mail.gmail.com>
- <20171106150302.GA26634@mail.hallyn.com> <1510003994.736.0.camel@gmail.com>
- <20171106221418.GA32543@mail.hallyn.com> <CAFUG7CcEy9a=RxBQZJR-C_2VuhZXrzJ_QxJnrSxdM=ox36DsXQ@mail.gmail.com>
- <20171106233913.GA1518@mail.hallyn.com>
+From: Boqun Feng <boqun.feng@gmail.com>
+Subject: Re: [RFC PATCH v10 for 4.15 01/14] Restartable sequences system call
+Date: Tue, 7 Nov 2017 09:24:24 +0800
+Message-ID: <20171107012424.GB6280@tardis>
+References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com>
+ <20171106205644.29386-2-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <kernel-hardening-return-10400-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20171106233913.GA1518@mail.hallyn.com>
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Daniel Micay <danielmicay@gmail.com>, =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?= <maheshb@google.com>, Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="Fba/0zbH8Xs+Fj9o"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171106205644.29386-2-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 6, 2017 at 6:39 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
-> Quoting Boris Lukashev (blukashev@sempervictus.com):
->> On Mon, Nov 6, 2017 at 5:14 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
->> > Quoting Daniel Micay (danielmicay@gmail.com):
->> >> Substantial added attack surface will never go away as a problem. There
->> >> aren't a finite number of vulnerabilities to be found.
->> >
->> > There's varying levels of usefulness and quality.  There is code which I
->> > want to be able to use in a container, and code which I can't ever see a
->> > reason for using there.  The latter, especially if it's also in a
->> > staging driver, would be nice to have a toggle to disable.
->> >
->> > You're not advocating dropping the added attack surface, only adding a
->> > way of dealing with an 0day after the fact.  Privilege raising 0days can
->> > exist anywhere, not just in code which only root in a user namespace can
->> > exercise.  So from that point of view, ksplice seems a more complete
->> > solution.  Why not just actually fix the bad code block when we know
->> > about it?
->> >
->> > Finally, it has been well argued that you can gain many new caps from
->> > having only a few others.  Given that, how could you ever be sure that,
->> > if an 0day is found which allows root in a user ns to abuse
->> > CAP_NET_ADMIN against the host, just keeping CAP_NET_ADMIN from them
->> > would suffice?  It seems to me that the existing control in
->> > /proc/sys/kernel/unprivileged_userns_clone might be the better duct tape
->> > in that case.
->> >
->> > -serge
->>
->> This seems to be heading toward "we need full zones in Linux" with
->> their own procfs and sysfs namespace and a stricter isolation model
->> for resources and capabilities. So long as things can happen in a
->> namespace which have a privileged relationship with host resources,
->> this is going to be cat-and-mouse to one degree or another.
->>
->> Containers and namespaces dont have a one-to-one relationship, so i'm
->> not sure that's the best term to use in the kernel security context
->
-> Sorry - what's not the best term to use?
 
-Pardon, "containers," since they're namespaces+system construct.
+--Fba/0zbH8Xs+Fj9o
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
->
->> since there's a bunch of userspace and implementation delta across the
->> different systems (with their own security models and so forth).
->> Without accounting for what a specific implementation may or may not
->> do, and only looking at "how do we reduce privileged impact on parent
->> context from unprivileged namespaces," this patch does seem to provide
->> a logical way of reducing the privileges available in such a namespace
->> and often needed to mount escapes/impact parent context.
->
-> What different implementations do is irrelevant - as an unprivileged user
-> I can always, with no help, create a new user namespace mapping my current
-> uid to root, and exercise this code.  So the security model implemented
-> by a particular userspace namespace-using driver doesn't matter, as it
-> only restricts me if I choose to use it.
->
-> But, I guess you're actually saying that some program might know that it
-> should never use network code so want to drop CAP_NET_*?  And you're
-> saying that a "global capability bounding set" might be useful?
->
+On Mon, Nov 06, 2017 at 03:56:31PM -0500, Mathieu Desnoyers wrote:
+[...]
+> +
+> +/*
+> + * struct rseq is aligned on 4 * 8 bytes to ensure it is always
+> + * contained within a single cache-line.
+> + *
+> + * A single struct rseq per thread is allowed.
+> + */
+> +struct rseq {
+> +	/*
+> +	 * Restartable sequences cpu_id_start field. Updated by the
+> +	 * kernel, and read by user-space with single-copy atomicity
+> +	 * semantics. Aligned on 32-bit. Always contain a value in the
+> +	 * range of possible CPUs, although the value may not be the
+> +	 * actual current CPU (e.g. if rseq is not initialized). This
+> +	 * CPU number value should always be confirmed against the value
+> +	 * of the cpu_id field.
+> +	 */
+> +	uint32_t cpu_id_start;
+> +	/*
+> +	 * Restartable sequences cpu_id field. Updated by the kernel,
+> +	 * and read by user-space with single-copy atomicity semantics.
+> +	 * Aligned on 32-bit. Values -1U and -2U have a special
+> +	 * semantic: -1U means "rseq uninitialized", and -2U means "rseq
+> +	 * initialization failed".
+> +	 */
+> +	uint32_t cpu_id;
+> +	/*
+> +	 * Restartable sequences rseq_cs field.
+> +	 *
+> +	 * Contains NULL when no critical section is active for the current
+> +	 * thread, or holds a pointer to the currently active struct rseq_cs.
+> +	 *
+> +	 * Updated by user-space at the beginning of assembly instruction
+> +	 * sequence block, and by the kernel when it restarts an assembly
+> +	 * instruction sequence block, and when the kernel detects that it
+> +	 * is preempting or delivering a signal outside of the range
+> +	 * targeted by the rseq_cs. Also needs to be cleared by user-space
+> +	 * before reclaiming memory that contains the targeted struct
+> +	 * rseq_cs.
+> +	 *
+> +	 * Read and set by the kernel with single-copy atomicity semantics.
+> +	 * Aligned on 64-bit.
+> +	 */
+> +	RSEQ_FIELD_u32_u64(rseq_cs);
+> +	/*
+> +	 * - RSEQ_DISABLE flag:
+> +	 *
+> +	 * Fallback fast-track flag for single-stepping.
+> +	 * Set by user-space if lack of progress is detected.
+> +	 * Cleared by user-space after rseq finish.
+> +	 * Read by the kernel.
+> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
+> +	 *     Inhibit instruction sequence block restart and event
+> +	 *     counter increment on preemption for this thread.
 
-The "global capability bounding set" with forced inheritance can be
-used to prevent the vector you describe wherein the capability of UID
-0 in the child NS is restricted from the parent implicitly, so yes,
-that nomenclature seems appropriate.
+Nit: "event counter" has been removed entirely ;-)
 
-> Would it be better to actually implement it as a new bounding set that
-> is maintained across user namespace creations, but is per-task (inherted
-> by children of course)?  Instead of a sysctl?
->
-> -serge
+> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
+> +	 *     Inhibit instruction sequence block restart and event
+> +	 *     counter increment on signal delivery for this thread.
+> +	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
+> +	 *     Inhibit instruction sequence block restart and event
+> +	 *     counter increment on migration for this thread.
+> +	 */
+> +	uint32_t flags;
+> +} __attribute__((aligned(4 * sizeof(uint64_t))));
+> +
+> +#endif /* _UAPI_LINUX_RSEQ_H */
+[...]
+> +	} else {
+> +		/*
+> +		 * If there was no rseq previously registered,
+> +		 * we need to ensure the provided rseq is
+> +		 * properly aligned and valid.
+> +		 */
+> +		if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq))
+> +				|| rseq_len != sizeof(*rseq))
+> +			return -EINVAL;
+> +		if (!access_ok(VERIFY_WRITE, rseq, rseq_len))
+> +			return -EFAULT;
+> +		current->rseq = rseq;
+> +		current->rseq_len = rseq_len;
+> +		current->rseq_sig = sig;
+> +		/*
+> +		 * If rseq was previously inactive, and has just
+> +		 * been registered, ensure the cpu_id and
+> +		 * event_counter fields are updated before
 
-In line with the previous comment, the inheritance across subsequent
-invocations should be forced to prevent the context you described.
-Please pardon my ignorance, not sure what you mean in terms of
-"per-task" across namespace creation.
+s/event_counter/cpu_start_id/ ?
 
--Boris
+Regards,
+Boqun
 
--- 
-Boris Lukashev
-Systems Architect
-Semper Victus
+> +		 * returning to user-space.
+> +		 */
+> +		rseq_set_notify_resume(current);
+> +	}
+> +
+> +	return 0;
+> +}
+[...]
+
+--Fba/0zbH8Xs+Fj9o
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEj5IosQTPz8XU1wRHSXnow7UH+rgFAloBCzAACgkQSXnow7UH
++rh5kgf8DdscO+BkvEsWLYd8FuiBt/DjH9XFZ5iIorgkJvhlYcIHbosUFgbAsnu8
+ZG8Fj0/DUW6Av51/29qu/9SzZ0e0MWRQ2L6sRLH9k9mTrq0YZ+xEEdLMCUMSiovG
+9tbizablJHA1DzahbYk/U7o2keEv9ov3zuFL73X+7AW4p7IAAPa5/a10CYki3nV/
+ppO2L8gb/FkPIExOtgB59X9jmwnWTcMoLx5z+eg6ioIa4TfWWdkGriOr/3ddn3Vv
+gwRqyKsbdDsZ329WYlJfINP0bezH9vgQz6hKTzlPcOER6pURG+Ji7qiQpuiRJeHi
+1kBH4GC4ap92TrSThcA8yLQdqgc55Q==
+=rM6n
+-----END PGP SIGNATURE-----
+
+--Fba/0zbH8Xs+Fj9o--
