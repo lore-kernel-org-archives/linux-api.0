@@ -1,172 +1,290 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: [RFC PATCH v2 for 4.15 08/14] Provide cpu_opv system call
-Date: Tue, 7 Nov 2017 02:40:37 +0000 (UTC)
-Message-ID: <444885121.6172.1510022437259.JavaMail.zimbra@efficios.com>
-References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com> <20171106205644.29386-9-mathieu.desnoyers@efficios.com> <20171107020711.GA6095@tardis>
+Date: Tue, 7 Nov 2017 11:03:55 +0800
+Message-ID: <20171107030355.GB6095@tardis>
+References: <20171106205644.29386-1-mathieu.desnoyers@efficios.com>
+ <20171106205644.29386-9-mathieu.desnoyers@efficios.com>
+ <20171107020711.GA6095@tardis>
+ <444885121.6172.1510022437259.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-        boundary="----=_Part_6170_530219652.1510022437257"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="LyciRD1jyfeSSjG0"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171107020711.GA6095@tardis>
+Content-Disposition: inline
+In-Reply-To: <444885121.6172.1510022437259.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-------=_Part_6170_530219652.1510022437257
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
 
------ On Nov 6, 2017, at 9:07 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+--LyciRD1jyfeSSjG0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> On Mon, Nov 06, 2017 at 03:56:38PM -0500, Mathieu Desnoyers wrote:
-> [...]
->> +static int cpu_op_pin_pages(unsigned long addr, unsigned long len,
->> +		struct page ***pinned_pages_ptr, size_t *nr_pinned,
->> +		int write)
->> +{
->> +	struct page *pages[2];
->> +	int ret, nr_pages;
->> +
->> +	if (!len)
->> +		return 0;
->> +	nr_pages = cpu_op_range_nr_pages(addr, len);
->> +	BUG_ON(nr_pages > 2);
->> +	if (*nr_pinned + nr_pages > NR_PINNED_PAGES_ON_STACK) {
-> 
-> Is this a bug? Seems you will kzalloc() every time if *nr_pinned is
-> bigger than NR_PINNED_PAGES_ON_STACK, which will result in memory
-> leaking.
-> 
-> I think the logic here is complex enough for us to introduce a
-> structure, like:
-> 
->	struct cpu_opv_page_pinner {
->		int nr_pinned;
->		bool is_kmalloc;
->		struct page **pinned_pages;
->	};
-> 
-> Thoughts?
+On Tue, Nov 07, 2017 at 02:40:37AM +0000, Mathieu Desnoyers wrote:
+> ----- On Nov 6, 2017, at 9:07 PM, Boqun Feng boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
+>=20
+> > On Mon, Nov 06, 2017 at 03:56:38PM -0500, Mathieu Desnoyers wrote:
+> > [...]
+> >> +static int cpu_op_pin_pages(unsigned long addr, unsigned long len,
+> >> +		struct page ***pinned_pages_ptr, size_t *nr_pinned,
+> >> +		int write)
+> >> +{
+> >> +	struct page *pages[2];
+> >> +	int ret, nr_pages;
+> >> +
+> >> +	if (!len)
+> >> +		return 0;
+> >> +	nr_pages =3D cpu_op_range_nr_pages(addr, len);
+> >> +	BUG_ON(nr_pages > 2);
+> >> +	if (*nr_pinned + nr_pages > NR_PINNED_PAGES_ON_STACK) {
+> >=20
+> > Is this a bug? Seems you will kzalloc() every time if *nr_pinned is
+> > bigger than NR_PINNED_PAGES_ON_STACK, which will result in memory
+> > leaking.
+> >=20
+> > I think the logic here is complex enough for us to introduce a
+> > structure, like:
+> >=20
+> >	struct cpu_opv_page_pinner {
+> >		int nr_pinned;
+> >		bool is_kmalloc;
+> >		struct page **pinned_pages;
+> >	};
+> >=20
+> > Thoughts?
+>=20
+> Good catch !
+>=20
+> How about the attached diff ? I'll fold it into the rseq/dev tree.
+>=20
 
-Good catch !
+Looks good to me ;-)
 
-How about the attached diff ? I'll fold it into the rseq/dev tree.
+Regards,
+Boqun
 
-Thanks,
+> Thanks,
+>=20
+> Mathieu
+>=20
+> --=20
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
 
-Mathieu
+> diff --git a/kernel/cpu_opv.c b/kernel/cpu_opv.c
+> index 09754bbe6a4f..3d8fd66416a0 100644
+> --- a/kernel/cpu_opv.c
+> +++ b/kernel/cpu_opv.c
+> @@ -46,6 +46,12 @@ union op_fn_data {
+>  #endif
+>  };
+> =20
+> +struct cpu_opv_pinned_pages {
+> +	struct page **pages;
+> +	size_t nr;
+> +	bool is_kmalloc;
+> +};
+> +
+>  typedef int (*op_fn_t)(union op_fn_data *data, uint64_t v, uint32_t len);
+> =20
+>  static DEFINE_MUTEX(cpu_opv_offline_lock);
+> @@ -217,8 +223,7 @@ static int cpu_op_check_pages(struct page **pages,
+>  }
+> =20
+>  static int cpu_op_pin_pages(unsigned long addr, unsigned long len,
+> -		struct page ***pinned_pages_ptr, size_t *nr_pinned,
+> -		int write)
+> +		struct cpu_opv_pinned_pages *pin_pages, int write)
+>  {
+>  	struct page *pages[2];
+>  	int ret, nr_pages;
+> @@ -227,15 +232,17 @@ static int cpu_op_pin_pages(unsigned long addr, uns=
+igned long len,
+>  		return 0;
+>  	nr_pages =3D cpu_op_range_nr_pages(addr, len);
+>  	BUG_ON(nr_pages > 2);
+> -	if (*nr_pinned + nr_pages > NR_PINNED_PAGES_ON_STACK) {
+> +	if (!pin_pages->is_kmalloc && pin_pages->nr + nr_pages
+> +			> NR_PINNED_PAGES_ON_STACK) {
+>  		struct page **pinned_pages =3D
+>  			kzalloc(CPU_OP_VEC_LEN_MAX * CPU_OP_MAX_PAGES
+>  				* sizeof(struct page *), GFP_KERNEL);
+>  		if (!pinned_pages)
+>  			return -ENOMEM;
+> -		memcpy(pinned_pages, *pinned_pages_ptr,
+> -			*nr_pinned * sizeof(struct page *));
+> -		*pinned_pages_ptr =3D pinned_pages;
+> +		memcpy(pinned_pages, pin_pages->pages,
+> +			pin_pages->nr * sizeof(struct page *));
+> +		pin_pages->pages =3D pinned_pages;
+> +		pin_pages->is_kmalloc =3D true;
+>  	}
+>  again:
+>  	ret =3D get_user_pages_fast(addr, nr_pages, write, pages);
+> @@ -257,9 +264,9 @@ static int cpu_op_pin_pages(unsigned long addr, unsig=
+ned long len,
+>  	}
+>  	if (ret)
+>  		goto error;
+> -	(*pinned_pages_ptr)[(*nr_pinned)++] =3D pages[0];
+> +	pin_pages->pages[pin_pages->nr++] =3D pages[0];
+>  	if (nr_pages > 1)
+> -		(*pinned_pages_ptr)[(*nr_pinned)++] =3D pages[1];
+> +		pin_pages->pages[pin_pages->nr++] =3D pages[1];
+>  	return 0;
+> =20
+>  error:
+> @@ -270,7 +277,7 @@ static int cpu_op_pin_pages(unsigned long addr, unsig=
+ned long len,
+>  }
+> =20
+>  static int cpu_opv_pin_pages(struct cpu_op *cpuop, int cpuopcnt,
+> -		struct page ***pinned_pages_ptr, size_t *nr_pinned)
+> +		struct cpu_opv_pinned_pages *pin_pages)
+>  {
+>  	int ret, i;
+>  	bool expect_fault =3D false;
+> @@ -289,7 +296,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.compare_op.a,
+> -					op->len, pinned_pages_ptr, nr_pinned, 0);
+> +					op->len, pin_pages, 0);
+>  			if (ret)
+>  				goto error;
+>  			ret =3D -EFAULT;
+> @@ -299,7 +306,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.compare_op.b,
+> -					op->len, pinned_pages_ptr, nr_pinned, 0);
+> +					op->len, pin_pages, 0);
+>  			if (ret)
+>  				goto error;
+>  			break;
+> @@ -311,7 +318,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.memcpy_op.dst,
+> -					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +					op->len, pin_pages, 1);
+>  			if (ret)
+>  				goto error;
+>  			ret =3D -EFAULT;
+> @@ -321,7 +328,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.memcpy_op.src,
+> -					op->len, pinned_pages_ptr, nr_pinned, 0);
+> +					op->len, pin_pages, 0);
+>  			if (ret)
+>  				goto error;
+>  			break;
+> @@ -333,7 +340,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.arithmetic_op.p,
+> -					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +					op->len, pin_pages, 1);
+>  			if (ret)
+>  				goto error;
+>  			break;
+> @@ -347,7 +354,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.bitwise_op.p,
+> -					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +					op->len, pin_pages, 1);
+>  			if (ret)
+>  				goto error;
+>  			break;
+> @@ -360,7 +367,7 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  				goto error;
+>  			ret =3D cpu_op_pin_pages(
+>  					(unsigned long)op->u.shift_op.p,
+> -					op->len, pinned_pages_ptr, nr_pinned, 1);
+> +					op->len, pin_pages, 1);
+>  			if (ret)
+>  				goto error;
+>  			break;
+> @@ -373,9 +380,9 @@ static int cpu_opv_pin_pages(struct cpu_op *cpuop, in=
+t cpuopcnt,
+>  	return 0;
+> =20
+>  error:
+> -	for (i =3D 0; i < *nr_pinned; i++)
+> -		put_page((*pinned_pages_ptr)[i]);
+> -	*nr_pinned =3D 0;
+> +	for (i =3D 0; i < pin_pages->nr; i++)
+> +		put_page(pin_pages->pages[i]);
+> +	pin_pages->nr =3D 0;
+>  	/*
+>  	 * If faulting access is expected, return EAGAIN to user-space.
+>  	 * It allows user-space to distinguish between a fault caused by
+> @@ -923,9 +930,12 @@ SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucp=
+uopv, int, cpuopcnt,
+>  {
+>  	struct cpu_op cpuopv[CPU_OP_VEC_LEN_MAX];
+>  	struct page *pinned_pages_on_stack[NR_PINNED_PAGES_ON_STACK];
+> -	struct page **pinned_pages =3D pinned_pages_on_stack;
+> +	struct cpu_opv_pinned_pages pin_pages =3D {
+> +		.pages =3D pinned_pages_on_stack,
+> +		.nr =3D 0,
+> +		.is_kmalloc =3D false,
+> +	};
+>  	int ret, i;
+> -	size_t nr_pinned =3D 0;
+> =20
+>  	if (unlikely(flags))
+>  		return -EINVAL;
+> @@ -938,15 +948,14 @@ SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, uc=
+puopv, int, cpuopcnt,
+>  	ret =3D cpu_opv_check(cpuopv, cpuopcnt);
+>  	if (ret)
+>  		return ret;
+> -	ret =3D cpu_opv_pin_pages(cpuopv, cpuopcnt,
+> -				&pinned_pages, &nr_pinned);
+> +	ret =3D cpu_opv_pin_pages(cpuopv, cpuopcnt, &pin_pages);
+>  	if (ret)
+>  		goto end;
+>  	ret =3D do_cpu_opv(cpuopv, cpuopcnt, cpu);
+> -	for (i =3D 0; i < nr_pinned; i++)
+> -		put_page(pinned_pages[i]);
+> +	for (i =3D 0; i < pin_pages.nr; i++)
+> +		put_page(pin_pages.pages[i]);
+>  end:
+> -	if (pinned_pages !=3D pinned_pages_on_stack)
+> -		kfree(pinned_pages);
+> +	if (pin_pages.is_kmalloc)
+> +		kfree(pin_pages.pages);
+>  	return ret;
+>  }
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
 
-------=_Part_6170_530219652.1510022437257
-Content-Type: text/x-patch; name=fix-cpu-opv-leak.patch
-Content-Disposition: attachment; filename=fix-cpu-opv-leak.patch
-Content-Transfer-Encoding: base64
+--LyciRD1jyfeSSjG0
+Content-Type: application/pgp-signature; name="signature.asc"
 
-ZGlmZiAtLWdpdCBhL2tlcm5lbC9jcHVfb3B2LmMgYi9rZXJuZWwvY3B1X29wdi5jCmluZGV4IDA5
-NzU0YmJlNmE0Zi4uM2Q4ZmQ2NjQxNmEwIDEwMDY0NAotLS0gYS9rZXJuZWwvY3B1X29wdi5jCisr
-KyBiL2tlcm5lbC9jcHVfb3B2LmMKQEAgLTQ2LDYgKzQ2LDEyIEBAIHVuaW9uIG9wX2ZuX2RhdGEg
-ewogI2VuZGlmCiB9OwogCitzdHJ1Y3QgY3B1X29wdl9waW5uZWRfcGFnZXMgeworCXN0cnVjdCBw
-YWdlICoqcGFnZXM7CisJc2l6ZV90IG5yOworCWJvb2wgaXNfa21hbGxvYzsKK307CisKIHR5cGVk
-ZWYgaW50ICgqb3BfZm5fdCkodW5pb24gb3BfZm5fZGF0YSAqZGF0YSwgdWludDY0X3QgdiwgdWlu
-dDMyX3QgbGVuKTsKIAogc3RhdGljIERFRklORV9NVVRFWChjcHVfb3B2X29mZmxpbmVfbG9jayk7
-CkBAIC0yMTcsOCArMjIzLDcgQEAgc3RhdGljIGludCBjcHVfb3BfY2hlY2tfcGFnZXMoc3RydWN0
-IHBhZ2UgKipwYWdlcywKIH0KIAogc3RhdGljIGludCBjcHVfb3BfcGluX3BhZ2VzKHVuc2lnbmVk
-IGxvbmcgYWRkciwgdW5zaWduZWQgbG9uZyBsZW4sCi0JCXN0cnVjdCBwYWdlICoqKnBpbm5lZF9w
-YWdlc19wdHIsIHNpemVfdCAqbnJfcGlubmVkLAotCQlpbnQgd3JpdGUpCisJCXN0cnVjdCBjcHVf
-b3B2X3Bpbm5lZF9wYWdlcyAqcGluX3BhZ2VzLCBpbnQgd3JpdGUpCiB7CiAJc3RydWN0IHBhZ2Ug
-KnBhZ2VzWzJdOwogCWludCByZXQsIG5yX3BhZ2VzOwpAQCAtMjI3LDE1ICsyMzIsMTcgQEAgc3Rh
-dGljIGludCBjcHVfb3BfcGluX3BhZ2VzKHVuc2lnbmVkIGxvbmcgYWRkciwgdW5zaWduZWQgbG9u
-ZyBsZW4sCiAJCXJldHVybiAwOwogCW5yX3BhZ2VzID0gY3B1X29wX3JhbmdlX25yX3BhZ2VzKGFk
-ZHIsIGxlbik7CiAJQlVHX09OKG5yX3BhZ2VzID4gMik7Ci0JaWYgKCpucl9waW5uZWQgKyBucl9w
-YWdlcyA+IE5SX1BJTk5FRF9QQUdFU19PTl9TVEFDSykgeworCWlmICghcGluX3BhZ2VzLT5pc19r
-bWFsbG9jICYmIHBpbl9wYWdlcy0+bnIgKyBucl9wYWdlcworCQkJPiBOUl9QSU5ORURfUEFHRVNf
-T05fU1RBQ0spIHsKIAkJc3RydWN0IHBhZ2UgKipwaW5uZWRfcGFnZXMgPQogCQkJa3phbGxvYyhD
-UFVfT1BfVkVDX0xFTl9NQVggKiBDUFVfT1BfTUFYX1BBR0VTCiAJCQkJKiBzaXplb2Yoc3RydWN0
-IHBhZ2UgKiksIEdGUF9LRVJORUwpOwogCQlpZiAoIXBpbm5lZF9wYWdlcykKIAkJCXJldHVybiAt
-RU5PTUVNOwotCQltZW1jcHkocGlubmVkX3BhZ2VzLCAqcGlubmVkX3BhZ2VzX3B0ciwKLQkJCSpu
-cl9waW5uZWQgKiBzaXplb2Yoc3RydWN0IHBhZ2UgKikpOwotCQkqcGlubmVkX3BhZ2VzX3B0ciA9
-IHBpbm5lZF9wYWdlczsKKwkJbWVtY3B5KHBpbm5lZF9wYWdlcywgcGluX3BhZ2VzLT5wYWdlcywK
-KwkJCXBpbl9wYWdlcy0+bnIgKiBzaXplb2Yoc3RydWN0IHBhZ2UgKikpOworCQlwaW5fcGFnZXMt
-PnBhZ2VzID0gcGlubmVkX3BhZ2VzOworCQlwaW5fcGFnZXMtPmlzX2ttYWxsb2MgPSB0cnVlOwog
-CX0KIGFnYWluOgogCXJldCA9IGdldF91c2VyX3BhZ2VzX2Zhc3QoYWRkciwgbnJfcGFnZXMsIHdy
-aXRlLCBwYWdlcyk7CkBAIC0yNTcsOSArMjY0LDkgQEAgc3RhdGljIGludCBjcHVfb3BfcGluX3Bh
-Z2VzKHVuc2lnbmVkIGxvbmcgYWRkciwgdW5zaWduZWQgbG9uZyBsZW4sCiAJfQogCWlmIChyZXQp
-CiAJCWdvdG8gZXJyb3I7Ci0JKCpwaW5uZWRfcGFnZXNfcHRyKVsoKm5yX3Bpbm5lZCkrK10gPSBw
-YWdlc1swXTsKKwlwaW5fcGFnZXMtPnBhZ2VzW3Bpbl9wYWdlcy0+bnIrK10gPSBwYWdlc1swXTsK
-IAlpZiAobnJfcGFnZXMgPiAxKQotCQkoKnBpbm5lZF9wYWdlc19wdHIpWygqbnJfcGlubmVkKSsr
-XSA9IHBhZ2VzWzFdOworCQlwaW5fcGFnZXMtPnBhZ2VzW3Bpbl9wYWdlcy0+bnIrK10gPSBwYWdl
-c1sxXTsKIAlyZXR1cm4gMDsKIAogZXJyb3I6CkBAIC0yNzAsNyArMjc3LDcgQEAgc3RhdGljIGlu
-dCBjcHVfb3BfcGluX3BhZ2VzKHVuc2lnbmVkIGxvbmcgYWRkciwgdW5zaWduZWQgbG9uZyBsZW4s
-CiB9CiAKIHN0YXRpYyBpbnQgY3B1X29wdl9waW5fcGFnZXMoc3RydWN0IGNwdV9vcCAqY3B1b3As
-IGludCBjcHVvcGNudCwKLQkJc3RydWN0IHBhZ2UgKioqcGlubmVkX3BhZ2VzX3B0ciwgc2l6ZV90
-ICpucl9waW5uZWQpCisJCXN0cnVjdCBjcHVfb3B2X3Bpbm5lZF9wYWdlcyAqcGluX3BhZ2VzKQog
-ewogCWludCByZXQsIGk7CiAJYm9vbCBleHBlY3RfZmF1bHQgPSBmYWxzZTsKQEAgLTI4OSw3ICsy
-OTYsNyBAQCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0cnVjdCBjcHVfb3AgKmNwdW9w
-LCBpbnQgY3B1b3BjbnQsCiAJCQkJZ290byBlcnJvcjsKIAkJCXJldCA9IGNwdV9vcF9waW5fcGFn
-ZXMoCiAJCQkJCSh1bnNpZ25lZCBsb25nKW9wLT51LmNvbXBhcmVfb3AuYSwKLQkJCQkJb3AtPmxl
-biwgcGlubmVkX3BhZ2VzX3B0ciwgbnJfcGlubmVkLCAwKTsKKwkJCQkJb3AtPmxlbiwgcGluX3Bh
-Z2VzLCAwKTsKIAkJCWlmIChyZXQpCiAJCQkJZ290byBlcnJvcjsKIAkJCXJldCA9IC1FRkFVTFQ7
-CkBAIC0yOTksNyArMzA2LDcgQEAgc3RhdGljIGludCBjcHVfb3B2X3Bpbl9wYWdlcyhzdHJ1Y3Qg
-Y3B1X29wICpjcHVvcCwgaW50IGNwdW9wY250LAogCQkJCWdvdG8gZXJyb3I7CiAJCQlyZXQgPSBj
-cHVfb3BfcGluX3BhZ2VzKAogCQkJCQkodW5zaWduZWQgbG9uZylvcC0+dS5jb21wYXJlX29wLmIs
-Ci0JCQkJCW9wLT5sZW4sIHBpbm5lZF9wYWdlc19wdHIsIG5yX3Bpbm5lZCwgMCk7CisJCQkJCW9w
-LT5sZW4sIHBpbl9wYWdlcywgMCk7CiAJCQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7CiAJCQli
-cmVhazsKQEAgLTMxMSw3ICszMTgsNyBAQCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0
-cnVjdCBjcHVfb3AgKmNwdW9wLCBpbnQgY3B1b3BjbnQsCiAJCQkJZ290byBlcnJvcjsKIAkJCXJl
-dCA9IGNwdV9vcF9waW5fcGFnZXMoCiAJCQkJCSh1bnNpZ25lZCBsb25nKW9wLT51Lm1lbWNweV9v
-cC5kc3QsCi0JCQkJCW9wLT5sZW4sIHBpbm5lZF9wYWdlc19wdHIsIG5yX3Bpbm5lZCwgMSk7CisJ
-CQkJCW9wLT5sZW4sIHBpbl9wYWdlcywgMSk7CiAJCQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7
-CiAJCQlyZXQgPSAtRUZBVUxUOwpAQCAtMzIxLDcgKzMyOCw3IEBAIHN0YXRpYyBpbnQgY3B1X29w
-dl9waW5fcGFnZXMoc3RydWN0IGNwdV9vcCAqY3B1b3AsIGludCBjcHVvcGNudCwKIAkJCQlnb3Rv
-IGVycm9yOwogCQkJcmV0ID0gY3B1X29wX3Bpbl9wYWdlcygKIAkJCQkJKHVuc2lnbmVkIGxvbmcp
-b3AtPnUubWVtY3B5X29wLnNyYywKLQkJCQkJb3AtPmxlbiwgcGlubmVkX3BhZ2VzX3B0ciwgbnJf
-cGlubmVkLCAwKTsKKwkJCQkJb3AtPmxlbiwgcGluX3BhZ2VzLCAwKTsKIAkJCWlmIChyZXQpCiAJ
-CQkJZ290byBlcnJvcjsKIAkJCWJyZWFrOwpAQCAtMzMzLDcgKzM0MCw3IEBAIHN0YXRpYyBpbnQg
-Y3B1X29wdl9waW5fcGFnZXMoc3RydWN0IGNwdV9vcCAqY3B1b3AsIGludCBjcHVvcGNudCwKIAkJ
-CQlnb3RvIGVycm9yOwogCQkJcmV0ID0gY3B1X29wX3Bpbl9wYWdlcygKIAkJCQkJKHVuc2lnbmVk
-IGxvbmcpb3AtPnUuYXJpdGhtZXRpY19vcC5wLAotCQkJCQlvcC0+bGVuLCBwaW5uZWRfcGFnZXNf
-cHRyLCBucl9waW5uZWQsIDEpOworCQkJCQlvcC0+bGVuLCBwaW5fcGFnZXMsIDEpOwogCQkJaWYg
-KHJldCkKIAkJCQlnb3RvIGVycm9yOwogCQkJYnJlYWs7CkBAIC0zNDcsNyArMzU0LDcgQEAgc3Rh
-dGljIGludCBjcHVfb3B2X3Bpbl9wYWdlcyhzdHJ1Y3QgY3B1X29wICpjcHVvcCwgaW50IGNwdW9w
-Y250LAogCQkJCWdvdG8gZXJyb3I7CiAJCQlyZXQgPSBjcHVfb3BfcGluX3BhZ2VzKAogCQkJCQko
-dW5zaWduZWQgbG9uZylvcC0+dS5iaXR3aXNlX29wLnAsCi0JCQkJCW9wLT5sZW4sIHBpbm5lZF9w
-YWdlc19wdHIsIG5yX3Bpbm5lZCwgMSk7CisJCQkJCW9wLT5sZW4sIHBpbl9wYWdlcywgMSk7CiAJ
-CQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7CiAJCQlicmVhazsKQEAgLTM2MCw3ICszNjcsNyBA
-QCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0cnVjdCBjcHVfb3AgKmNwdW9wLCBpbnQg
-Y3B1b3BjbnQsCiAJCQkJZ290byBlcnJvcjsKIAkJCXJldCA9IGNwdV9vcF9waW5fcGFnZXMoCiAJ
-CQkJCSh1bnNpZ25lZCBsb25nKW9wLT51LnNoaWZ0X29wLnAsCi0JCQkJCW9wLT5sZW4sIHBpbm5l
-ZF9wYWdlc19wdHIsIG5yX3Bpbm5lZCwgMSk7CisJCQkJCW9wLT5sZW4sIHBpbl9wYWdlcywgMSk7
-CiAJCQlpZiAocmV0KQogCQkJCWdvdG8gZXJyb3I7CiAJCQlicmVhazsKQEAgLTM3Myw5ICszODAs
-OSBAQCBzdGF0aWMgaW50IGNwdV9vcHZfcGluX3BhZ2VzKHN0cnVjdCBjcHVfb3AgKmNwdW9wLCBp
-bnQgY3B1b3BjbnQsCiAJcmV0dXJuIDA7CiAKIGVycm9yOgotCWZvciAoaSA9IDA7IGkgPCAqbnJf
-cGlubmVkOyBpKyspCi0JCXB1dF9wYWdlKCgqcGlubmVkX3BhZ2VzX3B0cilbaV0pOwotCSpucl9w
-aW5uZWQgPSAwOworCWZvciAoaSA9IDA7IGkgPCBwaW5fcGFnZXMtPm5yOyBpKyspCisJCXB1dF9w
-YWdlKHBpbl9wYWdlcy0+cGFnZXNbaV0pOworCXBpbl9wYWdlcy0+bnIgPSAwOwogCS8qCiAJICog
-SWYgZmF1bHRpbmcgYWNjZXNzIGlzIGV4cGVjdGVkLCByZXR1cm4gRUFHQUlOIHRvIHVzZXItc3Bh
-Y2UuCiAJICogSXQgYWxsb3dzIHVzZXItc3BhY2UgdG8gZGlzdGluZ3Vpc2ggYmV0d2VlbiBhIGZh
-dWx0IGNhdXNlZCBieQpAQCAtOTIzLDkgKzkzMCwxMiBAQCBTWVNDQUxMX0RFRklORTQoY3B1X29w
-diwgc3RydWN0IGNwdV9vcCBfX3VzZXIgKiwgdWNwdW9wdiwgaW50LCBjcHVvcGNudCwKIHsKIAlz
-dHJ1Y3QgY3B1X29wIGNwdW9wdltDUFVfT1BfVkVDX0xFTl9NQVhdOwogCXN0cnVjdCBwYWdlICpw
-aW5uZWRfcGFnZXNfb25fc3RhY2tbTlJfUElOTkVEX1BBR0VTX09OX1NUQUNLXTsKLQlzdHJ1Y3Qg
-cGFnZSAqKnBpbm5lZF9wYWdlcyA9IHBpbm5lZF9wYWdlc19vbl9zdGFjazsKKwlzdHJ1Y3QgY3B1
-X29wdl9waW5uZWRfcGFnZXMgcGluX3BhZ2VzID0geworCQkucGFnZXMgPSBwaW5uZWRfcGFnZXNf
-b25fc3RhY2ssCisJCS5uciA9IDAsCisJCS5pc19rbWFsbG9jID0gZmFsc2UsCisJfTsKIAlpbnQg
-cmV0LCBpOwotCXNpemVfdCBucl9waW5uZWQgPSAwOwogCiAJaWYgKHVubGlrZWx5KGZsYWdzKSkK
-IAkJcmV0dXJuIC1FSU5WQUw7CkBAIC05MzgsMTUgKzk0OCwxNCBAQCBTWVNDQUxMX0RFRklORTQo
-Y3B1X29wdiwgc3RydWN0IGNwdV9vcCBfX3VzZXIgKiwgdWNwdW9wdiwgaW50LCBjcHVvcGNudCwK
-IAlyZXQgPSBjcHVfb3B2X2NoZWNrKGNwdW9wdiwgY3B1b3BjbnQpOwogCWlmIChyZXQpCiAJCXJl
-dHVybiByZXQ7Ci0JcmV0ID0gY3B1X29wdl9waW5fcGFnZXMoY3B1b3B2LCBjcHVvcGNudCwKLQkJ
-CQkmcGlubmVkX3BhZ2VzLCAmbnJfcGlubmVkKTsKKwlyZXQgPSBjcHVfb3B2X3Bpbl9wYWdlcyhj
-cHVvcHYsIGNwdW9wY250LCAmcGluX3BhZ2VzKTsKIAlpZiAocmV0KQogCQlnb3RvIGVuZDsKIAly
-ZXQgPSBkb19jcHVfb3B2KGNwdW9wdiwgY3B1b3BjbnQsIGNwdSk7Ci0JZm9yIChpID0gMDsgaSA8
-IG5yX3Bpbm5lZDsgaSsrKQotCQlwdXRfcGFnZShwaW5uZWRfcGFnZXNbaV0pOworCWZvciAoaSA9
-IDA7IGkgPCBwaW5fcGFnZXMubnI7IGkrKykKKwkJcHV0X3BhZ2UocGluX3BhZ2VzLnBhZ2VzW2ld
-KTsKIGVuZDoKLQlpZiAocGlubmVkX3BhZ2VzICE9IHBpbm5lZF9wYWdlc19vbl9zdGFjaykKLQkJ
-a2ZyZWUocGlubmVkX3BhZ2VzKTsKKwlpZiAocGluX3BhZ2VzLmlzX2ttYWxsb2MpCisJCWtmcmVl
-KHBpbl9wYWdlcy5wYWdlcyk7CiAJcmV0dXJuIHJldDsKIH0K
-------=_Part_6170_530219652.1510022437257--
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEj5IosQTPz8XU1wRHSXnow7UH+rgFAloBIpgACgkQSXnow7UH
++rg7Twf8D1o5/HIRgtW0OoxohYe9KaU3Ipo284ufuik6YnfT9EXyvtpxb85zm1mP
+BOV+BXUWEKH0kQaxCWj0EeMGOa2GrNTv6oexWrNRzTHvVqchYQh8QliNHMqA6Z8A
+JQK4XwY61nVa5dfdeXMlysK9yD5x7dc5NcM7WVqOktsK0zvyAhUe9g3ikV8rGWb5
+mIsQk/cNjWQ/TAgxz2BnvpgEIUF4OKGAHSfttHq7KkIRaa++YA7BHKYg/GGnaVVF
+sCgxYuE1wPQxGlNxRY0DmyQZsBNPkIDgGXeFyn7bNGVR8O6v0DAOOk81K+TJFtQY
+qFYbVgbpChYx7LRMEtWsL3DZnpizVQ==
+=6Hp+
+-----END PGP SIGNATURE-----
+
+--LyciRD1jyfeSSjG0--
