@@ -1,125 +1,73 @@
-From: Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Subject: Re: Seccomp implications for glibc wrapper function changes
-Date: Tue, 7 Nov 2017 23:18:12 -0200
-Message-ID: <2884aeec-a7ba-937a-4f77-7225dd4ef00c@linaro.org>
-References: <CAKgNAkixA6T7J_1Gs=5+riq6i=dr9XP4ZCGu67YVcuDNg3cT4g@mail.gmail.com>
- <be4cc7fc-90c2-4370-2eab-8948d0ba75be@linaro.org>
- <CAKgNAkiRFsUigsV1OCrrjUzq8MO3wwtsT2SGuOJth56OcqCTcA@mail.gmail.com>
+From: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
+ SYSC_migrate_pages
+Date: Wed, 8 Nov 2017 09:38:36 +0800
+Message-ID: <4b08f1e9-5449-6ea2-e7da-65fe5f678683@huawei.com>
+References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com>
+ <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com>
+ <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz>
+ <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com>
+ <d774ecf6-5e7b-e185-85a0-27bf2bcacfb4@suse.cz>
+ <alpine.DEB.2.20.1711060926001.9015@nuc-kabylake>
+ <a4f1212f-3903-abbc-772a-1ddee6f7f98b@huawei.com>
+ <alpine.DEB.2.20.1711070851560.18776@nuc-kabylake>
+ <04e4cb50-8cba-58af-1a5e-61e818cffa70@suse.cz>
+ <alpine.DEB.2.20.1711070948410.19176@nuc-kabylake>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKgNAkiRFsUigsV1OCrrjUzq8MO3wwtsT2SGuOJth56OcqCTcA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-GB
+In-Reply-To: <alpine.DEB.2.20.1711070948410.19176@nuc-kabylake>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Cc: "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi Christopher,
 
-
-On 07/11/2017 19:47, Michael Kerrisk (man-pages) wrote:
-> Hi Adhemerval
+On 2017/11/7 23:55, Christopher Lameter wrote:
+> On Tue, 7 Nov 2017, Vlastimil Babka wrote:
 > 
-> On 7 November 2017 at 22:14, Adhemerval Zanella
-> <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+>>> Migrate pages moves the pages of a single process there is no TARGET
+>>> process.
 >>
+>> migrate_pages(2) takes a pid argument
 >>
->> On 07/11/2017 18:35, Michael Kerrisk (man-pages) wrote:
->>> Hello,
->>>
->>> I was recently testing some code I'd written a while back that makes
->>> use of seccomp filters to control which system calls a process can
->>> make, and I got a surpise when someone showed the code no longer
->>> worked in on a system that had glibc 2.26.
->>>
->>> The behavior change resulted from Adhemerval's glibc commit
->>>
->>>      commit b41152d716ee9c5ba34495a54e64ea2b732139b5
->>>      Author: Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>>      Date:   Fri Nov 11 15:00:03 2016 -0200
->>>
->>>         Consolidate Linux open implementation
->>>             [...]
->>>             3. Use __NR_openat as default syscall for open{64}.
->>>
->>> The commit in question changed the glibc open() wrapper to swtcch from
->>> use the kernel's open() system call to using the kernel's openat()
->>> system call.
->>>
->>> This change broke my code that was doing seccomp filtering for the
->>> open() system call number (__NR_open). The breakage in question is not
->>> serious, since this was really just demonstration code. However, I
->>> want to raise awareness that these sorts of changes have the potential
->>> to possibly cause breakages for some code using seccomp, and note that
->>> I think such changes should not be made lightly or gratuitously. (In
->>> the above commit, it's not clear why the switch was made to using
->>> openat(): there's no mention of the reasoning in the commit message,
->>> nor is there anything that is obvious from reading through the code
->>> change itself.)
->>
->> Your code would 'break' if you run with on a new architecture that does
->> not implement __NR_open, which it is the default for new architecture
->> on Linux.
+>> "migrate_pages()  attempts  to  move all pages of the process pid that
+>> are in memory nodes old_nodes to the memory nodes in new_nodes. "
 > 
-> (Is it the default for new architectures? I was unaware of that.)
+> Ok missed that. Most use cases here are on the current process.
 
-Yes, new architectures should use the kernel headers
-include/uapi/asm-generic/unistd.h for syscall definition and the idea
-is to avoid duplication of functionality like syscalls that supplant
-each one (openat and open for instance).  AArch64, for instance, only
-supports on compat more for 32 bits.
+Yeah, so most case current process is the same as target process.
+But maybe I still miss someting, see below:
 
 > 
->> In fact I hardly consider this is a 'break' since the user API we
->> export does not have any constraint which underlying syscall we use.
->> For instance, a user can seccomp gettimeofday syscall on a system
->> without vDSO just to found out it is 'broken' on a vDSO kernel.
->>
->> I think we should not constraint for this specific usercase; if one
->> is doing syscall filtering it is expected system level knowledge to
->> handle all possible syscalls related.  For instance, I would expect
->> that if the idea is to filtering open() libc implementation the
->> program should also filter __NR_openat and __NR_openat2 since it
->> is semantically possible to implement open() with __NR_openat2 if
->> the syscall is available.
+> Fundamentally a process can have shared pages outside of the cpuset that
+> a process is restricted to. Thus I would think that migration to any of
+> the allowed nodes of the current process that is calling migrate pages
+> is ok. The caller wants this and the caller has a right to allocate on
+> these nodes. It would be strange if migrate_pages would allow allocation
+> outside of the current cpuset.
 > 
-> Perhaps my use of the word 'break' was a bit too loaded. (And if my
-> mail came across as somehow critical of your patch, that was not my
-> intention, and if you feel it as such, I do apologize for my poor
-> wording.)
-
-In fact I did not take is a criticize, but rather I was worried users
-would expect that kind of syscalls stability over glibc releases.  The
-'break' word indeed raise a flag ;)
-
+>>> Thus thehe *target* nodes need to be a subset of the current cpu set.
 > 
-> My "broken" code was just some demo code, and I got surprised by the
-> behavior change. And I agree with pretty much everything you say,
-> especially the point about needing good system level knowledge when
-> you are doing system call filtering (and of course a real-world
-> application that cared about filtering open() should also be filtering
-> for openat()). This is one of the reasons that Linux man-pages have
-> steadily been acquiring subsections called "C library/kernel
-> differences". But I did just want to raise some awareness about that
-> these sorts of changes could be a possible issue in some cases.
+> And therefore the above still holds.
 
-I would expect a more high level library such libseccomp to provide
-family like filter (to get all variant of open, rename, etc.).
+Another case is current process is *not* the same as target process, and
+when current process try to migrate pages of target process from old_nodes
+to new_nodes, the new_nodes should be a subset of target process cpuset.
+CAP_SYS_NICE will insure that current process have the privilege, and will
+not overwrite the restriction of target process cpuset.
+
+However, for the current cpuset restriction, as manpage says :
+  EINVAL... Or, _none_ of the node IDs specified by new_nodes are
+  on-line and allowed by the process's current cpuset context, or none of
+  the specified nodes contain memory.
+
+So for current cpuset restriction, an intersection check should be enough
+instead of subset? And it will also make sure migrate_pages will not
+allocate pages outside of the current cpuset.
 
 > 
-> (By the way, unless I am missing something, there is no __NR_openat2?)
-
-There is not indeed, I confused with rename which has 3 variants
-(__NR_rename, __NR_renameat, and __NR_renameat2).
-
+> .
 > 
->> Now for the reasoning of using __NR_openat is since we have support
->> for it on all architecture it meant less logic to handle possible
->> architecture differences.
-> 
-> Fair enough. Maybe this could be stated more explicitly in the commit
-> message though?
-
-I assumed it was implicit by the idea of consolidation. But I agree
-a more thoughtfully explanation on commit won't hurt.
