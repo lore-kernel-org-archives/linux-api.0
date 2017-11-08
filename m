@@ -1,131 +1,28 @@
-From: Szabolcs Nagy <nsz@port70.net>
-Subject: Re: [(resend)] seq_file: reset iterator to first record for zero
- offset
-Date: Wed, 8 Nov 2017 14:10:05 +0100
-Message-ID: <20171108131005.GA15263@port70.net>
-References: <20161219113800.GE27207@veci.piliscsaba.szeredi.hu>
-Reply-To: musl@lists.openwall.com
+From: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
+ SYSC_migrate_pages
+Date: Wed, 8 Nov 2017 09:02:36 -0600 (CST)
+Message-ID: <alpine.DEB.2.20.1711080900050.6161@nuc-kabylake>
+References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com> <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com> <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz> <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com> <d774ecf6-5e7b-e185-85a0-27bf2bcacfb4@suse.cz>
+ <alpine.DEB.2.20.1711060926001.9015@nuc-kabylake> <a4f1212f-3903-abbc-772a-1ddee6f7f98b@huawei.com> <alpine.DEB.2.20.1711070851560.18776@nuc-kabylake> <04e4cb50-8cba-58af-1a5e-61e818cffa70@suse.cz> <alpine.DEB.2.20.1711070948410.19176@nuc-kabylake>
+ <4b08f1e9-5449-6ea2-e7da-65fe5f678683@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <musl-return-12082-gllmg-musl=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:musl@lists.openwall.com>
-List-Help: <mailto:musl-help@lists.openwall.com>
-List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <20161219113800.GE27207@veci.piliscsaba.szeredi.hu>
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Tomasz Majchrzak <tomasz.majchrzak@intel.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, musl@lists.openwall.com, Rich Felker <dalias@libc.org>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <4b08f1e9-5449-6ea2-e7da-65fe5f678683-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-* Miklos Szeredi <miklos@szeredi.hu> [2016-12-19 12:38:00 +0100]:
-> Al,
-> 
-> Can you please take (or NACK) this patch please?
-> 
-> Thanks,
-> Miklos
-> ---
-> From: Tomasz Majchrzak <tomasz.majchrzak@intel.com>
-> Date: Tue, 29 Nov 2016 15:18:20 +0100
-> 
-> If kernfs file is empty on a first read, successive read operations
-> using the same file descriptor will return no data, even when data is
-> available. Default kernfs 'seq_next' implementation advances iterator
-> position even when next object is not there. Kernfs 'seq_start' for
-> following requests will not return iterator as position is already on
-> the second object.
-> 
-> This defect doesn't allow to monitor badblocks sysfs files from MD raid.
-> They are initially empty but if data appears at some stage, userspace is
-> not able to read it.
-> 
-> Signed-off-by: Tomasz Majchrzak <tomasz.majchrzak@intel.com>
-> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
-> ---
+On Wed, 8 Nov 2017, Yisheng Xie wrote:
 
-this patch broke userspace abi:
+> Another case is current process is *not* the same as target process, and
+> when current process try to migrate pages of target process from old_nodes
+> to new_nodes, the new_nodes should be a subset of target process cpuset.
 
-commit e522751d605d99a81508e58390a8f51ee96fb662
-Author:     Tomasz Majchrzak <tomasz.majchrzak@intel.com>
-AuthorDate: 2016-11-29 15:18:20 +0100
-Commit:     Al Viro <viro@zeniv.linux.org.uk>
-CommitDate: 2016-12-22 23:03:06 -0500
-
-    seq_file: reset iterator to first record for zero offset
-
-reported in may at:
-https://bugzilla.kernel.org/show_bug.cgi?id=195697
-
-read(fd,buf,0) on sysfs/procfs changes the behaviour of the next read:
-the next read reads the first line twice.
-
-same issue with readv() with a 0 length buffer.
-
-test code:
-
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-int main(int argc, char* argv[])
-{
-	char buf1[512] = {0};
-	char buf2[512] = {0};
-	int fd;
-
-	fd = open("/proc/mounts", O_RDONLY);
-	if (read(fd, buf1, 0) < 0) return 1;
-	if (read(fd, buf1, 512) < 0) return 1;
-	lseek(fd, 0, SEEK_SET);
-	if (read(fd, buf2, 512) < 0) return 1;
-
-	// buf1 should be the same as buf2,
-	// the first 512 bytes of /proc/mounts
-
-	buf1[511]=buf2[511]='\n';
-	write(1, "# buf1:\n", 8);
-	write(1, buf1, 512);      // prints the first line twice
-	write(1, "# buf2:\n", 8);
-	write(1, buf2, 512);
-
-	return memcmp(buf1, buf2, 512) != 0;
-}
-
-stdio in musl libc can use readv with 0 length buffer in some cases,
-and various tools use stdio to read these synthetic filesystems
-so this is observable regression between linux v4.9 and v4.10
-
-(i think musl can avoid the 0 length buffer in stdio, but the
-linux behaviour is still incorrect. in general readv/writev could
-have more posix conform behaviour on sysfs/procfs, currently they
-don't behave as atomic fs operations which is surprising:
-writev with several buffers behaves as if several independent write
-syscalls were made instead of one, which can cause issues when users
-do 'echo 12 >/proc/foo' and writev is used in the stdio implementation)
-
-
->  fs/seq_file.c |    7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fsdevel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> --- a/fs/seq_file.c
-> +++ b/fs/seq_file.c
-> @@ -190,6 +190,13 @@ ssize_t seq_read(struct file *file, char
->  	 */
->  	m->version = file->f_version;
->  
-> +	/*
-> +	 * if request is to read from zero offset, reset iterator to first
-> +	 * record as it might have been already advanced by previous requests
-> +	 */
-> +	if (*ppos == 0)
-> +		m->index = 0;
-> +
->  	/* Don't assume *ppos is where we left it */
->  	if (unlikely(*ppos != m->read_pos)) {
->  		while ((err = traverse(m, *ppos)) == -EAGAIN)
+The caller of migrate_pages should be able to migrate the target process
+pages anywhere the caller can allocate memory. If that is outside the
+target processes cpuset then that is fine. Pagecache pages that are not
+allocated by the target process already are not subject to the target
+processes restriction. So this is not that unusual.
