@@ -1,232 +1,197 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [RFC PATCH for 4.15 5/6] membarrier: x86: Provide core serializing command
-Date: Wed,  8 Nov 2017 13:35:13 -0500
-Message-ID: <20171108183514.3306-6-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 2/6] membarrier: powerpc: Skip memory barrier in switch_mm() (v6)
+Date: Wed,  8 Nov 2017 13:35:10 -0500
+Message-ID: <20171108183514.3306-3-mathieu.desnoyers@efficios.com>
 References: <20171108183514.3306-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171108183514.3306-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, gromer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171108183514.3306-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@kernel.org>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, gromer@google.com, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, x86@kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Alan Stern <stern@rowland.harvard.edu>, Will Deacon <will.deacon@arm.com>Alexander Viro <v>
 List-Id: linux-api@vger.kernel.org
 
-There are two places where core serialization is needed by membarrier:
+Allow PowerPC to skip the full memory barrier in switch_mm(), and
+only issue the barrier when scheduling into a task belonging to a
+process that has registered to use expedited private.
 
-1) When returning from the membarrier IPI,
-2) After scheduler updates curr to a thread with a different mm, before
-   going back to user-space, since the curr->mm is used by membarrier to
-   check whether it needs to send an IPI to that CPU.
+Threads targeting the same VM but which belong to different thread
+groups is a tricky case. It has a few consequences:
 
-x86-32 uses only iret both as return from interrupt, and to go back to
-user-space. The iret instruction is core serializing.
+It turns out that we cannot rely on get_nr_threads(p) to count the
+number of threads using a VM. We can use
+(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)
+instead to skip the synchronize_sched() for cases where the VM only has
+a single user, and that user only has a single thread.
 
-x86-64 uses iret as return from interrupt, which takes care of the IPI.
-However, it can return to user-space through either sysretl (compat
-code), sysretq, or iret. Given that sysret{l,q} is not core serializing,
-we rely instead on write_cr3() performed by switch_mm() to provide core
-serialization after changing the current mm, and deal with the special
-case of kthread -> uthread (temporarily keeping current mm into
-active_mm) by adding a sync_core() in that specific case.
+It also turns out that we cannot use for_each_thread() to set
+thread flags in all threads using a VM, as it only iterates on the
+thread group.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-CC: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-CC: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: gromer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org
-CC: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
-CC: Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
-CC: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-CC: Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Therefore, test the membarrier state variable directly rather than
+relying on thread flags. This means
+membarrier_register_private_expedited() needs to set the
+MEMBARRIER_STATE_SWITCH_MM flag, issue synchronize_sched(), and only
+then set MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY which allows private
+expedited membarrier commands to succeed. membarrier_arch_switch_mm()
+now tests for the MEMBARRIER_STATE_SWITCH_MM flag.
+
+Changes since v1:
+- Use test_ti_thread_flag(next, ...) instead of test_thread_flag() in
+  powerpc membarrier_arch_sched_in(), given that we want to specifically
+  check the next thread state.
+- Add missing ARCH_HAS_MEMBARRIER_HOOKS in Kconfig.
+- Use task_thread_info() to pass thread_info from task to
+  *_ti_thread_flag().
+
+Changes since v2:
+- Move membarrier_arch_sched_in() call to finish_task_switch().
+- Check for NULL t->mm in membarrier_arch_fork().
+- Use membarrier_sched_in() in generic code, which invokes the
+  arch-specific membarrier_arch_sched_in(). This fixes allnoconfig
+  build on PowerPC.
+- Move asm/membarrier.h include under CONFIG_MEMBARRIER, fixing
+  allnoconfig build on PowerPC.
+- Build and runtime tested on PowerPC.
+
+Changes since v3:
+- Simply rely on copy_mm() to copy the membarrier_private_expedited mm
+  field on fork.
+- powerpc: test thread flag instead of reading
+  membarrier_private_expedited in membarrier_arch_fork().
+- powerpc: skip memory barrier in membarrier_arch_sched_in() if coming
+  from kernel thread, since mmdrop() implies a full barrier.
+- Set membarrier_private_expedited to 1 only after arch registration
+  code, thus eliminating a race where concurrent commands could succeed
+  when they should fail if issued concurrently with process
+  registration.
+- Use READ_ONCE() for membarrier_private_expedited field access in
+  membarrier_private_expedited. Matches WRITE_ONCE() performed in
+  process registration.
+
+Changes since v4:
+- Move powerpc hook from sched_in() to switch_mm(), based on feedback
+  from Nicholas Piggin.
+
+Changes since v5:
+- Rebase on v4.14-rc6.
+- Fold "Fix: membarrier: Handle CLONE_VM + !CLONE_THREAD correctly on
+  powerpc (v2)"
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Maged Michael <maged.michael@gmail.com>
+CC: gromer@google.com
+CC: Avi Kivity <avi@scylladb.com>
+CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+CC: Paul Mackerras <paulus@samba.org>
+CC: Michael Ellerman <mpe@ellerman.id.au>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Alan Stern <stern@rowland.harvard.edu>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Alexander Viro <viro@zeniv.linux.org.uk>
+CC: Nicholas Piggin <npiggin@gmail.com>
+CC: linuxppc-dev@lists.ozlabs.org
+CC: linux-arch@vger.kernel.org
 ---
  MAINTAINERS                           |  2 ++
- arch/powerpc/include/asm/membarrier.h |  8 ++++++-
- arch/powerpc/kernel/membarrier.c      |  3 ++-
- arch/x86/Kconfig                      |  2 ++
- arch/x86/entry/entry_32.S             |  5 +++++
- arch/x86/entry/entry_64.S             |  8 +++++++
- arch/x86/include/asm/membarrier.h     | 36 ++++++++++++++++++++++++++++++++
- arch/x86/kernel/Makefile              |  1 +
- arch/x86/kernel/membarrier.c          | 39 +++++++++++++++++++++++++++++++++++
- arch/x86/mm/tlb.c                     |  7 ++++---
- include/linux/sched/mm.h              |  9 +++++++-
- kernel/sched/core.c                   |  6 +++++-
- 12 files changed, 119 insertions(+), 7 deletions(-)
- create mode 100644 arch/x86/include/asm/membarrier.h
- create mode 100644 arch/x86/kernel/membarrier.c
+ arch/powerpc/Kconfig                  |  1 +
+ arch/powerpc/include/asm/membarrier.h | 26 +++++++++++++++++++++++++
+ arch/powerpc/kernel/Makefile          |  2 ++
+ arch/powerpc/kernel/membarrier.c      | 36 +++++++++++++++++++++++++++++++++++
+ arch/powerpc/mm/mmu_context.c         |  7 +++++++
+ include/linux/sched/mm.h              | 15 +++++++++++++++
+ init/Kconfig                          |  3 +++
+ kernel/sched/core.c                   | 10 ----------
+ kernel/sched/membarrier.c             |  1 +
+ 10 files changed, 93 insertions(+), 10 deletions(-)
+ create mode 100644 arch/powerpc/include/asm/membarrier.h
+ create mode 100644 arch/powerpc/kernel/membarrier.c
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 34687a0ec28c..ff564e5195fb 100644
+index 2f4e462aa4a2..34687a0ec28c 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -8831,6 +8831,8 @@ F:	kernel/sched/membarrier.c
+@@ -8829,6 +8829,8 @@ L:	linux-kernel@vger.kernel.org
+ S:	Supported
+ F:	kernel/sched/membarrier.c
  F:	include/uapi/linux/membarrier.h
- F:	arch/powerpc/kernel/membarrier.c
- F:	arch/powerpc/include/asm/membarrier.h
-+F:	arch/x86/kernel/membarrier.c
-+F:	arch/x86/include/asm/membarrier.h
++F:	arch/powerpc/kernel/membarrier.c
++F:	arch/powerpc/include/asm/membarrier.h
  
  MEMORY MANAGEMENT
- L:	linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-diff --git a/arch/powerpc/include/asm/membarrier.h b/arch/powerpc/include/asm/membarrier.h
-index 0951646253d9..018cf278dc93 100644
---- a/arch/powerpc/include/asm/membarrier.h
-+++ b/arch/powerpc/include/asm/membarrier.h
-@@ -21,6 +21,12 @@ static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
- 	 */
- 	smp_mb();
- }
--void membarrier_arch_register_private_expedited(struct task_struct *t);
-+
-+static inline void membarrier_arch_mm_sync_core(void)
-+{
-+}
-+
-+void membarrier_arch_register_private_expedited(struct task_struct *t,
-+		int flags);
- 
- #endif /* _ASM_POWERPC_MEMBARRIER_H */
-diff --git a/arch/powerpc/kernel/membarrier.c b/arch/powerpc/kernel/membarrier.c
-index 4795ad59b833..0026d740e5a3 100644
---- a/arch/powerpc/kernel/membarrier.c
-+++ b/arch/powerpc/kernel/membarrier.c
-@@ -21,7 +21,8 @@
- #include <linux/rcupdate.h>
- #include <linux/atomic.h>
- 
--void membarrier_arch_register_private_expedited(struct task_struct *p)
-+void membarrier_arch_register_private_expedited(struct task_struct *p,
-+		int flags)
- {
- 	struct mm_struct *mm = p->mm;
- 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 2fdb23313dd5..6ac32fe768a8 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -54,6 +54,8 @@ config X86
+ L:	linux-mm@kvack.org
+diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
+index cb782ac1c35d..86077c4cd0a4 100644
+--- a/arch/powerpc/Kconfig
++++ b/arch/powerpc/Kconfig
+@@ -139,6 +139,7 @@ config PPC
+ 	select ARCH_HAS_ELF_RANDOMIZE
  	select ARCH_HAS_FORTIFY_SOURCE
  	select ARCH_HAS_GCOV_PROFILE_ALL
- 	select ARCH_HAS_KCOV			if X86_64
 +	select ARCH_HAS_MEMBARRIER_HOOKS
-+	select ARCH_HAS_MEMBARRIER_SYNC_CORE
- 	select ARCH_HAS_PMEM_API		if X86_64
- 	# Causing hangs/crashes, see the commit that added this change for details.
- 	select ARCH_HAS_REFCOUNT		if BROKEN
-diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
-index 4838037f97f6..04e5daba8456 100644
---- a/arch/x86/entry/entry_32.S
-+++ b/arch/x86/entry/entry_32.S
-@@ -553,6 +553,11 @@ restore_all:
- .Lrestore_nocheck:
- 	RESTORE_REGS 4				# skip orig_eax/error_code
- .Lirq_return:
-+	/*
-+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
-+	 * when returning from IPI handler and when returning from
-+	 * scheduler to user-space.
-+	 */
- 	INTERRUPT_RETURN
- 
- .section .fixup, "ax"
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index bcfc5668dcb2..4859f04e1695 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -642,6 +642,10 @@ GLOBAL(restore_regs_and_iret)
- restore_c_regs_and_iret:
- 	RESTORE_C_REGS
- 	REMOVE_PT_GPREGS_FROM_STACK 8
-+	/*
-+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
-+	 * when returning from IPI handler.
-+	 */
- 	INTERRUPT_RETURN
- 
- ENTRY(native_iret)
-@@ -1122,6 +1126,10 @@ paranoid_exit_restore:
- 	RESTORE_EXTRA_REGS
- 	RESTORE_C_REGS
- 	REMOVE_PT_GPREGS_FROM_STACK 8
-+	/*
-+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
-+	 * when returning from IPI handler.
-+	 */
- 	INTERRUPT_RETURN
- END(paranoid_exit)
- 
-diff --git a/arch/x86/include/asm/membarrier.h b/arch/x86/include/asm/membarrier.h
+ 	select ARCH_HAS_SCALED_CPUTIME		if VIRT_CPU_ACCOUNTING_NATIVE
+ 	select ARCH_HAS_SG_CHAIN
+ 	select ARCH_HAS_TICK_BROADCAST		if GENERIC_CLOCKEVENTS_BROADCAST
+diff --git a/arch/powerpc/include/asm/membarrier.h b/arch/powerpc/include/asm/membarrier.h
 new file mode 100644
-index 000000000000..d22aac77047c
+index 000000000000..0951646253d9
 --- /dev/null
-+++ b/arch/x86/include/asm/membarrier.h
-@@ -0,0 +1,36 @@
-+#ifndef _ASM_X86_MEMBARRIER_H
-+#define _ASM_X86_MEMBARRIER_H
-+
-+#include <asm/processor.h>
++++ b/arch/powerpc/include/asm/membarrier.h
+@@ -0,0 +1,26 @@
++#ifndef _ASM_POWERPC_MEMBARRIER_H
++#define _ASM_POWERPC_MEMBARRIER_H
 +
 +static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
 +		struct mm_struct *next, struct task_struct *tsk)
 +{
-+}
-+
-+#ifdef CONFIG_X86_32
-+static inline void membarrier_arch_mm_sync_core(struct mm_struct *mm)
-+{
-+}
-+static inline
-+void membarrier_arch_register_private_expedited(struct task_struct *t,
-+		int flags);
-+#else
-+/*
-+ * x86-64 implements return to user-space through sysret, which is not a
-+ * core-serializing instruction. Therefore, we need an explicit core
-+ * serializing instruction after going from kernel thread back to
-+ * user-space thread (active_mm moved back to current mm).
-+ */
-+static inline void membarrier_arch_mm_sync_core(struct mm_struct *mm)
-+{
-+	if (likely(!(atomic_read(&mm->membarrier_state) &
-+			MEMBARRIER_STATE_SYNC_CORE)))
++	/*
++	 * Only need the full barrier when switching between processes.
++	 * Barrier when switching from kernel to userspace is not
++	 * required here, given that it is implied by mmdrop(). Barrier
++	 * when switching from userspace to kernel is not needed after
++	 * store to rq->curr.
++	 */
++	if (likely(!(atomic_read(&next->membarrier_state)
++			& MEMBARRIER_STATE_SWITCH_MM) || !prev))
 +		return;
-+	sync_core();
-+}
-+void membarrier_arch_register_private_expedited(struct task_struct *t,
-+		int flags);
-+#endif
 +
-+#endif /* _ASM_X86_MEMBARRIER_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index 5f70044340ff..13d6738b26c5 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -111,6 +111,7 @@ obj-$(CONFIG_PARAVIRT)		+= paravirt.o paravirt_patch_$(BITS).o
- obj-$(CONFIG_PARAVIRT_SPINLOCKS)+= paravirt-spinlocks.o
- obj-$(CONFIG_PARAVIRT_CLOCK)	+= pvclock.o
- obj-$(CONFIG_X86_PMEM_LEGACY_DEVICE) += pmem.o
-+obj-$(CONFIG_X86_64)		+= membarrier.o
++	/*
++	 * The membarrier system call requires a full memory barrier
++	 * after storing to rq->curr, before going back to user-space.
++	 */
++	smp_mb();
++}
++void membarrier_arch_register_private_expedited(struct task_struct *t);
++
++#endif /* _ASM_POWERPC_MEMBARRIER_H */
+diff --git a/arch/powerpc/kernel/Makefile b/arch/powerpc/kernel/Makefile
+index 6c6cce937dd8..2ad3b55fa2b6 100644
+--- a/arch/powerpc/kernel/Makefile
++++ b/arch/powerpc/kernel/Makefile
+@@ -136,6 +136,8 @@ endif
+ obj-$(CONFIG_EPAPR_PARAVIRT)	+= epapr_paravirt.o epapr_hcalls.o
+ obj-$(CONFIG_KVM_GUEST)		+= kvm.o kvm_emul.o
  
- obj-$(CONFIG_EISA)		+= eisa.o
- obj-$(CONFIG_PCSPKR_PLATFORM)	+= pcspeaker.o
-diff --git a/arch/x86/kernel/membarrier.c b/arch/x86/kernel/membarrier.c
++obj-$(CONFIG_MEMBARRIER)	+= membarrier.o
++
+ # Disable GCOV & sanitizers in odd or sensitive code
+ GCOV_PROFILE_prom_init.o := n
+ UBSAN_SANITIZE_prom_init.o := n
+diff --git a/arch/powerpc/kernel/membarrier.c b/arch/powerpc/kernel/membarrier.c
 new file mode 100644
-index 000000000000..978698d7da3d
+index 000000000000..4795ad59b833
 --- /dev/null
-+++ b/arch/x86/kernel/membarrier.c
-@@ -0,0 +1,39 @@
++++ b/arch/powerpc/kernel/membarrier.c
+@@ -0,0 +1,36 @@
 +/*
-+ * Copyright (C) 2010-2017 Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
++ * Copyright (C) 2010-2017 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 + *
-+ * membarrier system call - x86 architecture code
++ * membarrier system call - PowerPC architecture code
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -246,14 +211,11 @@ index 000000000000..978698d7da3d
 +#include <linux/rcupdate.h>
 +#include <linux/atomic.h>
 +
-+void membarrier_arch_register_private_expedited(struct task_struct *p,
-+		int flags)
++void membarrier_arch_register_private_expedited(struct task_struct *p)
 +{
 +	struct mm_struct *mm = p->mm;
 +
-+	if (!(flags & MEMBARRIER_FLAG_SYNC_CORE))
-+		return;
-+	atomic_or(MEMBARRIER_STATE_SYNC_CORE, &mm->membarrier_state);
++	atomic_or(MEMBARRIER_STATE_SWITCH_MM, &mm->membarrier_state);
 +	if (atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)
 +		return;
 +	/*
@@ -262,76 +224,115 @@ index 000000000000..978698d7da3d
 +	 */
 +	synchronize_sched();
 +}
-diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 5abf9bfcca1f..3b13d6735fa5 100644
---- a/arch/x86/mm/tlb.c
-+++ b/arch/x86/mm/tlb.c
-@@ -147,9 +147,10 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
- 	this_cpu_write(cpu_tlbstate.is_lazy, false);
+diff --git a/arch/powerpc/mm/mmu_context.c b/arch/powerpc/mm/mmu_context.c
+index 0f613bc63c50..22f5c91cdc38 100644
+--- a/arch/powerpc/mm/mmu_context.c
++++ b/arch/powerpc/mm/mmu_context.c
+@@ -12,6 +12,7 @@
+ 
+ #include <linux/mm.h>
+ #include <linux/cpu.h>
++#include <linux/sched/mm.h>
+ 
+ #include <asm/mmu_context.h>
+ 
+@@ -67,6 +68,10 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 		 *
+ 		 * On the read side the barrier is in pte_xchg(), which orders
+ 		 * the store to the PTE vs the load of mm_cpumask.
++		 *
++		 * This full barrier is needed by membarrier when switching
++		 * between processes after store to rq->curr, before user-space
++		 * memory accesses.
+ 		 */
+ 		smp_mb();
+ 
+@@ -89,6 +94,8 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 
+ 	if (new_on_cpu)
+ 		radix_kvm_prefetch_workaround(next);
++	else
++		membarrier_arch_switch_mm(prev, next, tsk);
  
  	/*
--	 * The membarrier system call requires a full memory barrier
--	 * before returning to user-space, after storing to rq->curr.
--	 * Writing to CR3 provides that full memory barrier.
-+	 * The membarrier system call requires a full memory barrier and
-+	 * core serialization before returning to user-space, after
-+	 * storing to rq->curr. Writing to CR3 provides that full
-+	 * memory barrier and core serializing instruction.
- 	 */
- 	if (real_prev == next) {
- 		VM_WARN_ON(this_cpu_read(cpu_tlbstate.ctxs[prev_asid].ctx_id) !=
+ 	 * The actual HW switching method differs between the various
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index a888da398517..5561b92b597a 100644
+index 3d49b91b674d..bbc3861d14c8 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
-@@ -222,6 +222,7 @@ enum {
- 	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY		= (1U << 0),
- 	MEMBARRIER_STATE_SWITCH_MM				= (1U << 1),
- 	MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY	= (1U << 2),
-+	MEMBARRIER_STATE_SYNC_CORE				= (1U << 3),
+@@ -218,11 +218,26 @@ enum {
+ 	MEMBARRIER_STATE_SWITCH_MM			= (1U << 1),
  };
  
- enum {
-@@ -232,7 +233,10 @@ enum {
- #include <asm/membarrier.h>
- #else
- static inline void membarrier_arch_register_private_expedited(
--		struct task_struct *p)
-+		struct task_struct *p, int flags)
++#ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
++#include <asm/membarrier.h>
++#else
++static inline void membarrier_arch_register_private_expedited(
++		struct task_struct *p)
 +{
 +}
-+static inline void membarrier_arch_mm_sync_core(struct mm_struct *mm)
++#endif
++
+ static inline void membarrier_execve(struct task_struct *t)
  {
+ 	atomic_set(&t->mm->membarrier_state, 0);
  }
- #endif
-@@ -251,6 +255,9 @@ static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
+ #else
++#ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
++static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
++		struct mm_struct *next, struct task_struct *tsk)
++{
++}
++#endif
  static inline void membarrier_execve(struct task_struct *t)
  {
  }
-+static inline void membarrier_arch_mm_sync_core(struct mm_struct *mm)
-+{
-+}
- #endif
+diff --git a/init/Kconfig b/init/Kconfig
+index 3c1faaa2af4a..ba7f17971554 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1400,6 +1400,9 @@ config MEMBARRIER
  
- #endif /* _LINUX_SCHED_MM_H */
+ 	  If unsure, say Y.
+ 
++config ARCH_HAS_MEMBARRIER_HOOKS
++	bool
++
+ config EMBEDDED
+ 	bool "Embedded system"
+ 	option allnoconfig_y
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 8a176892b4f0..b5194cfc2199 100644
+index d17c5da523a0..f29525e453c4 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -2653,9 +2653,13 @@ static struct rq *finish_task_switch(struct task_struct *prev)
- 	 * thread, mmdrop()'s implicit full barrier is required by the
- 	 * membarrier system call, because the current active_mm can
- 	 * become the current mm without going through switch_mm().
-+	 * membarrier also requires a core serializing instruction
-+	 * before going back to user-space after storing to rq->curr.
- 	 */
--	if (mm)
-+	if (mm) {
- 		mmdrop(mm);
-+		membarrier_arch_mm_sync_core(mm);
-+	}
- 	if (unlikely(prev_state == TASK_DEAD)) {
- 		if (prev->sched_class->task_dead)
- 			prev->sched_class->task_dead(prev);
+@@ -2644,16 +2644,6 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+ 	prev_state = prev->state;
+ 	vtime_task_switch(prev);
+ 	perf_event_task_sched_in(prev, current);
+-	/*
+-	 * The membarrier system call requires a full memory barrier
+-	 * after storing to rq->curr, before going back to user-space.
+-	 *
+-	 * TODO: This smp_mb__after_unlock_lock can go away if PPC end
+-	 * up adding a full barrier to switch_mm(), or we should figure
+-	 * out if a smp_mb__after_unlock_lock is really the proper API
+-	 * to use.
+-	 */
+-	smp_mb__after_unlock_lock();
+ 	finish_lock_switch(rq, prev);
+ 	finish_arch_post_lock_switch();
+ 
+diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
+index dd7908743dab..23bd256f8458 100644
+--- a/kernel/sched/membarrier.c
++++ b/kernel/sched/membarrier.c
+@@ -116,6 +116,7 @@ static void membarrier_register_private_expedited(void)
+ 	if (atomic_read(&mm->membarrier_state)
+ 			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY)
+ 		return;
++	membarrier_arch_register_private_expedited(p);
+ 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY,
+ 			&mm->membarrier_state);
+ }
 -- 
 2.11.0
