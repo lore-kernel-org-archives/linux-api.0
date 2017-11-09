@@ -1,103 +1,54 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 5/6] membarrier: x86: Provide core
- serializing command
-Date: Thu, 9 Nov 2017 19:35:25 +0000 (UTC)
-Message-ID: <452803516.12441.1510256125252.JavaMail.zimbra@efficios.com>
-References: <20171108183514.3306-1-mathieu.desnoyers@efficios.com> <20171108183514.3306-6-mathieu.desnoyers@efficios.com> <CALCETrX4vZHxkWhLKBebZ+R_UE8pDsmVbpJzpyPt=ZgZB8w8iQ@mail.gmail.com>
+From: Laura Abbott <labbott@redhat.com>
+Subject: Re: [PATCH v6 1/2] staging: ion: reorder include
+Date: Thu, 9 Nov 2017 13:02:59 -0800
+Message-ID: <42b0c9ca-36f2-4437-a50b-fdec984ea78c@redhat.com>
+References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
+ <1509983985-20950-2-git-send-email-benjamin.gaignard@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALCETrX4vZHxkWhLKBebZ+R_UE8pDsmVbpJzpyPt=ZgZB8w8iQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, gromer <gromer-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, x86 <x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <1509983985-20950-2-git-send-email-benjamin.gaignard@linaro.org>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Benjamin Gaignard <benjamin.gaignard@linaro.org>, sumit.semwal@linaro.org, gregkh@linuxfoundation.org, arve@android.com, riandrews@android.com, broonie@kernel.org, dan.carpenter@oracle.com
+Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 9, 2017, at 2:07 PM, Andy Lutomirski luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org wrote:
-
-> On Wed, Nov 8, 2017 at 10:35 AM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> 
->> +/*
->> + * x86-64 implements return to user-space through sysret, which is not a
->> + * core-serializing instruction. Therefore, we need an explicit core
->> + * serializing instruction after going from kernel thread back to
->> + * user-space thread (active_mm moved back to current mm).
->> + */
->> +static inline void membarrier_arch_mm_sync_core(struct mm_struct *mm)
->> +{
->> +       if (likely(!(atomic_read(&mm->membarrier_state) &
->> +                       MEMBARRIER_STATE_SYNC_CORE)))
->> +               return;
->> +       sync_core();
->> +}
-> 
-> IMO there should be an extremely clear specification somewhere for
-> what this function is supposed to do.
-> 
-> If I remember correctly, it's supposed to promise that the icache is
-> synced before the next time we return to usermode for the current mm
-> on this CPU.  If that's correct, then let's document it very
-> explicitly and let's also drop the "membarrier" from the name -- it's
-> a primitive we'll need anyway given the existing migration bug.
-
-I understand that on x86 (specifically), synchronizing the icache and
-doing a core serializing instruction may mean the same thing.
-
-However, on architectures like ARM, icache sync differs from core
-serialization. Those architectures typically have either a user-space
-accessible instruction or a system call to perform the icache flush.
-The missing part for JIT is core serialization (also called context
-synchronization). icache flush is already handled by pre-existing
-means.
-
-So the promise here given by membarrier_arch_mm_sync_core() is that
-a core serializing instruction is issued before the next time we return
-to usermode on the current thread. However, we only need that guarantee
-if the current thread's mm is a registered MEMBARRIER_{...}_SYNC_CORE user.
-
-Regarding the existing migration bug, what I think you want is a kind
-of weaker "sync_core()", which ensures that a core serializing
-instruction is issued before the next time the current thread returns
-to usermode.
-
-It could be e.g.: set_tsk_need_core_sync() which would set a
-TIF_NEED_CORE_SYNC thread flag on the current thread.
-
-Clearly, when this kind of thread flag is introduced as an
-optimization over sync_core(), I would like to use that. However,
-I don't think it replaces the membarrier_arch_mm_sync_core() entirely,
-given that it would not check for the mm membarrier "SYNC_CORE"
-registration state. It appears to me to be merely an optimization over
-directly invoking sync_core.
-
-What I suggest is that I update the comment above
-membarrier_arch_mm_sync_core to spell out more clearly that all we
-need is to have a core serializing instruction issued before the next
-time the current thread returns to user-space. I can still use
-sync_core for now, and we can then improve the implementation
-whenever a new thread flag is introduced. The new comment would look
-like:
-
-/*
- * x86-64 implements return to user-space through sysret, which is not a
- * core-serializing instruction. Therefore, we need an explicit core
- * serializing instruction after going from kernel thread back to
- * user-space thread (active_mm moved back to current mm).
- *
- * This function ensures that a core serializing instruction is issued
- * before the current thread returns to user-space.
- */
-
-Thoughts ?
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+T24gMTEvMDYvMjAxNyAwNzo1OSBBTSwgQmVuamFtaW4gR2FpZ25hcmQgd3JvdGU6Cj4gUHV0IGlu
+Y2x1ZGUgaW4gYWxwaGFiZXRpYyBvcmRlcgo+IAoKQWNrZWQtYnk6IExhdXJhIEFiYm90dCA8bGFi
+Ym90dEByZWRoYXQuY29tPgoKPiBTaWduZWQtb2ZmLWJ5OiBCZW5qYW1pbiBHYWlnbmFyZCA8YmVu
+amFtaW4uZ2FpZ25hcmRAbGluYXJvLm9yZz4KPiAtLS0KPiAgIGRyaXZlcnMvc3RhZ2luZy9hbmRy
+b2lkL2lvbi9pb24uYyB8IDE0ICsrKysrKystLS0tLS0tCj4gICAxIGZpbGUgY2hhbmdlZCwgNyBp
+bnNlcnRpb25zKCspLCA3IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL3N0
+YWdpbmcvYW5kcm9pZC9pb24vaW9uLmMgYi9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9u
+LmMKPiBpbmRleCBhN2Q5YjBlLi5mZGE5NzU2IDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMvc3RhZ2lu
+Zy9hbmRyb2lkL2lvbi9pb24uYwo+ICsrKyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9p
+b24uYwo+IEBAIC0xNSwyOCArMTUsMjggQEAKPiAgICAqCj4gICAgKi8KPiAgIAo+ICsjaW5jbHVk
+ZSA8bGludXgvYW5vbl9pbm9kZXMuaD4KPiArI2luY2x1ZGUgPGxpbnV4L2RlYnVnZnMuaD4KPiAg
+ICNpbmNsdWRlIDxsaW51eC9kZXZpY2UuaD4KPiArI2luY2x1ZGUgPGxpbnV4L2RtYS1idWYuaD4K
+PiAgICNpbmNsdWRlIDxsaW51eC9lcnIuaD4KPiArI2luY2x1ZGUgPGxpbnV4L2V4cG9ydC5oPgo+
+ICAgI2luY2x1ZGUgPGxpbnV4L2ZpbGUuaD4KPiAgICNpbmNsdWRlIDxsaW51eC9mcmVlemVyLmg+
+Cj4gICAjaW5jbHVkZSA8bGludXgvZnMuaD4KPiAtI2luY2x1ZGUgPGxpbnV4L2Fub25faW5vZGVz
+Lmg+Cj4gKyNpbmNsdWRlIDxsaW51eC9pZHIuaD4KPiAgICNpbmNsdWRlIDxsaW51eC9rdGhyZWFk
+Lmg+Cj4gICAjaW5jbHVkZSA8bGludXgvbGlzdC5oPgo+ICAgI2luY2x1ZGUgPGxpbnV4L21lbWJs
+b2NrLmg+Cj4gICAjaW5jbHVkZSA8bGludXgvbWlzY2RldmljZS5oPgo+IC0jaW5jbHVkZSA8bGlu
+dXgvZXhwb3J0Lmg+Cj4gICAjaW5jbHVkZSA8bGludXgvbW0uaD4KPiAgICNpbmNsdWRlIDxsaW51
+eC9tbV90eXBlcy5oPgo+ICAgI2luY2x1ZGUgPGxpbnV4L3JidHJlZS5oPgo+IC0jaW5jbHVkZSA8
+bGludXgvc2xhYi5oPgo+ICsjaW5jbHVkZSA8bGludXgvc2NoZWQvdGFzay5oPgo+ICAgI2luY2x1
+ZGUgPGxpbnV4L3NlcV9maWxlLmg+Cj4gKyNpbmNsdWRlIDxsaW51eC9zbGFiLmg+Cj4gICAjaW5j
+bHVkZSA8bGludXgvdWFjY2Vzcy5oPgo+ICAgI2luY2x1ZGUgPGxpbnV4L3ZtYWxsb2MuaD4KPiAt
+I2luY2x1ZGUgPGxpbnV4L2RlYnVnZnMuaD4KPiAtI2luY2x1ZGUgPGxpbnV4L2RtYS1idWYuaD4K
+PiAtI2luY2x1ZGUgPGxpbnV4L2lkci5oPgo+IC0jaW5jbHVkZSA8bGludXgvc2NoZWQvdGFzay5o
+Pgo+ICAgCj4gICAjaW5jbHVkZSAiaW9uLmgiCj4gICAKPiAKCl9fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRl
+dmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9t
+YWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
