@@ -1,62 +1,189 @@
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: MPK: pkey_free and key reuse
-Date: Thu, 9 Nov 2017 08:59:56 -0800
-Message-ID: <633b5b03-3481-0da2-9d6c-f5298902e36a@linux.intel.com>
-References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
- <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH resend 1/2] capability: introduce sysctl for controlled
+ user-ns capability whitelist
+Date: Thu, 9 Nov 2017 11:22:01 -0600
+Message-ID: <20171109172201.GA26229@mail.hallyn.com>
+References: <20171103004433.39954-1-mahesh@bandewar.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Florian Weimer <fweimer@redhat.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171103004433.39954-1-mahesh@bandewar.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mahesh Bandewar <mahesh@bandewar.net>
+Cc: LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <maheshb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 11/09/2017 06:48 AM, Florian Weimer wrote:
-> On 11/08/2017 09:41 PM, Dave Hansen wrote:
->>> (B) If a key is reused, existing threads retain their access rights,
->>> while there is an expectation that pkey_alloc denies access for the
->>> threads except the current one.
->> Where does this expectation come from?
+Quoting Mahesh Bandewar (mahesh@bandewar.net):
+> From: Mahesh Bandewar <maheshb@google.com>
 > 
-> For me, it was the access_rights argument to pkey_alloc.  What else
-> would it do?  For the current thread, I can already set the rights with
-> a PKRU write, so the existence of the syscall argument is puzzling.
-
-The manpage is pretty bare here.  But the thought was that, in most
-cases, you will want to allocate a key and start using it immediately.
-This was in response to some feedback on one of the earlier reviews of
-the patch set.
-
->> Using the malloc() analogy, we
->> don't expect that free() in one thread actively takes away references to
->> the memory held by other threads.
+> Add a sysctl variable kernel.controlled_userns_caps_whitelist. This
+> takes input as capability mask expressed as two comma separated hex
+> u32 words. The mask, however, is stored in kernel as kernel_cap_t type.
 > 
-> But malloc/free isn't expected to be a partial antidote to random
-> pointer scribbling.
+> Any capabilities that are not part of this mask will be controlled and
+> will not be allowed to processes in controlled user-ns.
+> 
+> Signed-off-by: Mahesh Bandewar <maheshb@google.com>
+> ---
+>  Documentation/sysctl/kernel.txt | 21 ++++++++++++++++++
+>  include/linux/capability.h      |  3 +++
+>  kernel/capability.c             | 47 +++++++++++++++++++++++++++++++++++++++++
+>  kernel/sysctl.c                 |  5 +++++
+>  4 files changed, 76 insertions(+)
+> 
+> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
+> index 694968c7523c..a1d39dbae847 100644
+> --- a/Documentation/sysctl/kernel.txt
+> +++ b/Documentation/sysctl/kernel.txt
+> @@ -25,6 +25,7 @@ show up in /proc/sys/kernel:
+>  - bootloader_version	     [ X86 only ]
+>  - callhome		     [ S390 only ]
+>  - cap_last_cap
+> +- controlled_userns_caps_whitelist
+>  - core_pattern
+>  - core_pipe_limit
+>  - core_uses_pid
+> @@ -187,6 +188,26 @@ CAP_LAST_CAP from the kernel.
+>  
+>  ==============================================================
+>  
+> +controlled_userns_caps_whitelist
+> +
+> +Capability mask that is whitelisted for "controlled" user namespaces.
+> +Any capability that is missing from this mask will not be allowed to
+> +any process that is attached to a controlled-userns. e.g. if CAP_NET_RAW
+> +is not part of this mask, then processes running inside any controlled
+> +userns's will not be allowed to perform action that needs CAP_NET_RAW
+> +capability. However, processes that are attached to a parent user-ns
+> +hierarchy that is *not* controlled and has CAP_NET_RAW can continue
+> +performing those actions. User-namespaces are marked "controlled" at
+> +the time of their creation based on the capabilities of the creator.
+> +A process that does not have CAP_SYS_ADMIN will create user-namespaces
+> +that are controlled.
 
-Nor is protection keys intended to be an antidote for use-after-free.
+Hm.  I think that's fine (the way 'controlled' user namespaces are
+defined), but that is design decision in itself, and should perhaps be
+discussed.
 
-> I think we should either implement revoke on pkey_alloc, with a
-> broadcast to all threads (the pkey_set race can be closed by having a
-> vDSO for that an the revocation code can check %rip to see if the old
-> PKRU value needs to be fixed up).  Or we add the two pkey_alloc flags I
-> mentioned earlier.
+Did you consider other ways?  What about using CAP_SETPCAP?
 
-That sounds awfully complicated to put in-kernel.  I'd be happy to
-review the patches after you put them together once we see how it looks.
+> +The value is expressed as two comma separated hex words (u32). This
 
-You basically want threads to broadcast their PKRU values at pkey_free()
-time.  That's totally doable... in userspace.  You just need a mechanism
-for each thread to periodically check if they need an update.  I don't
-think we need kernel intervention and vDSO magic for that.
+Why comma separated?  whitespace ok?  Leading 0x ok?  What is the
+default at boot?  (Obviously the patch tells me, I'm asking for it
+to be spelled out in the doc)
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Otherwise looks good, thanks!
+
+Serge
+
+> +sysctl is avaialble in init-ns and users with CAP_SYS_ADMIN in init-ns
+> +are allowed to make changes.
+> +
+> +==============================================================
+> +
+>  core_pattern:
+>  
+>  core_pattern is used to specify a core dumpfile pattern name.
+> diff --git a/include/linux/capability.h b/include/linux/capability.h
+> index b52e278e4744..6c0b9677c03f 100644
+> --- a/include/linux/capability.h
+> +++ b/include/linux/capability.h
+> @@ -13,6 +13,7 @@
+>  #define _LINUX_CAPABILITY_H
+>  
+>  #include <uapi/linux/capability.h>
+> +#include <linux/sysctl.h>
+>  
+>  
+>  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
+> @@ -247,6 +248,8 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
+>  
+>  /* audit system wants to get cap info from files as well */
+>  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+> +				 void __user *buff, size_t *lenp, loff_t *ppos);
+>  
+>  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
+>  
+> diff --git a/kernel/capability.c b/kernel/capability.c
+> index f97fe77ceb88..62dbe3350c1b 100644
+> --- a/kernel/capability.c
+> +++ b/kernel/capability.c
+> @@ -28,6 +28,8 @@ EXPORT_SYMBOL(__cap_empty_set);
+>  
+>  int file_caps_enabled = 1;
+>  
+> +kernel_cap_t controlled_userns_caps_whitelist = CAP_FULL_SET;
+> +
+>  static int __init file_caps_disable(char *str)
+>  {
+>  	file_caps_enabled = 0;
+> @@ -506,3 +508,48 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
+>  	rcu_read_unlock();
+>  	return (ret == 0);
+>  }
+> +
+> +/* Controlled-userns capabilities routines */
+> +#ifdef CONFIG_SYSCTL
+> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+> +				 void __user *buff, size_t *lenp, loff_t *ppos)
+> +{
+> +	DECLARE_BITMAP(caps_bitmap, CAP_LAST_CAP);
+> +	struct ctl_table caps_table;
+> +	char tbuf[NAME_MAX];
+> +	int ret;
+> +
+> +	ret = bitmap_from_u32array(caps_bitmap, CAP_LAST_CAP,
+> +				   controlled_userns_caps_whitelist.cap,
+> +				   _KERNEL_CAPABILITY_U32S);
+> +	if (ret != CAP_LAST_CAP)
+> +		return -1;
+> +
+> +	scnprintf(tbuf, NAME_MAX, "%*pb", CAP_LAST_CAP, caps_bitmap);
+> +
+> +	caps_table.data = tbuf;
+> +	caps_table.maxlen = NAME_MAX;
+> +	caps_table.mode = table->mode;
+> +	ret = proc_dostring(&caps_table, write, buff, lenp, ppos);
+> +	if (ret)
+> +		return ret;
+> +	if (write) {
+> +		kernel_cap_t tmp;
+> +
+> +		if (!capable(CAP_SYS_ADMIN))
+> +			return -EPERM;
+> +
+> +		ret = bitmap_parse_user(buff, *lenp, caps_bitmap, CAP_LAST_CAP);
+> +		if (ret)
+> +			return ret;
+> +
+> +		ret = bitmap_to_u32array(tmp.cap, _KERNEL_CAPABILITY_U32S,
+> +					 caps_bitmap, CAP_LAST_CAP);
+> +		if (ret != CAP_LAST_CAP)
+> +			return -1;
+> +
+> +		controlled_userns_caps_whitelist = tmp;
+> +	}
+> +	return 0;
+> +}
+> +#endif /* CONFIG_SYSCTL */
+> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+> index d9c31bc2eaea..25c3f7b76ece 100644
+> --- a/kernel/sysctl.c
+> +++ b/kernel/sysctl.c
+> @@ -1226,6 +1226,11 @@ static struct ctl_table kern_table[] = {
+>  		.extra2		= &one,
+>  	},
+>  #endif
+> +	{
+> +		.procname	= "controlled_userns_caps_whitelist",
+> +		.mode		= 0644,
+> +		.proc_handler	= proc_douserns_caps_whitelist,
+> +	},
+>  	{ }
+>  };
+>  
+> -- 
+> 2.15.0.403.gc27cc4dac6-goog
