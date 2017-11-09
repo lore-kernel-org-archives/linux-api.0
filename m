@@ -1,106 +1,53 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 Subject: Re: Seccomp implications for glibc wrapper function changes
-Date: Thu, 9 Nov 2017 08:15:32 +0100
-Message-ID: <CAKgNAkjKwXRUhaQcF5r4qXkV6xoG_RmjptE1mtdsv75S2oF0yg@mail.gmail.com>
+Date: Thu, 9 Nov 2017 08:17:50 +0100
+Message-ID: <CAKgNAkhLsBNVO9axSxwH8VNxBW1QPWjaEOS_ubu-nUZ7_gsn7w@mail.gmail.com>
 References: <CAKgNAkixA6T7J_1Gs=5+riq6i=dr9XP4ZCGu67YVcuDNg3cT4g@mail.gmail.com>
- <be4cc7fc-90c2-4370-2eab-8948d0ba75be@linaro.org> <CAKgNAkiRFsUigsV1OCrrjUzq8MO3wwtsT2SGuOJth56OcqCTcA@mail.gmail.com>
- <2884aeec-a7ba-937a-4f77-7225dd4ef00c@linaro.org>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+ <0049d6a8-de25-ff02-31ef-38a7db05b878@redhat.com>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2884aeec-a7ba-937a-4f77-7225dd4ef00c-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Cc: "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <libc-alpha-return-86933-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <0049d6a8-de25-ff02-31ef-38a7db05b878@redhat.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>, Adhemerval Zanella <adhemerval.zanella@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Adhemerval
+Hi Florian,
 
-On 8 November 2017 at 02:18, Adhemerval Zanella
-<adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
->
->
-> On 07/11/2017 19:47, Michael Kerrisk (man-pages) wrote:
->> Hi Adhemerval
+On 8 November 2017 at 07:24, Florian Weimer <fweimer@redhat.com> wrote:
+> On 11/07/2017 09:35 PM, Michael Kerrisk (man-pages) wrote:
 >>
->> On 7 November 2017 at 22:14, Adhemerval Zanella
->> <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
->>>
->>>
->>> On 07/11/2017 18:35, Michael Kerrisk (man-pages) wrote:
->>>> Hello,
->>>>
->>>> I was recently testing some code I'd written a while back that makes
->>>> use of seccomp filters to control which system calls a process can
->>>> make, and I got a surpise when someone showed the code no longer
->>>> worked in on a system that had glibc 2.26.
->>>>
->>>> The behavior change resulted from Adhemerval's glibc commit
->>>>
->>>>      commit b41152d716ee9c5ba34495a54e64ea2b732139b5
->>>>      Author: Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
->>>>      Date:   Fri Nov 11 15:00:03 2016 -0200
->>>>
->>>>         Consolidate Linux open implementation
->>>>             [...]
->>>>             3. Use __NR_openat as default syscall for open{64}.
->>>>
->>>> The commit in question changed the glibc open() wrapper to swtcch from
->>>> use the kernel's open() system call to using the kernel's openat()
->>>> system call.
->>>>
->>>> This change broke my code that was doing seccomp filtering for the
->>>> open() system call number (__NR_open). The breakage in question is not
->>>> serious, since this was really just demonstration code. However, I
->>>> want to raise awareness that these sorts of changes have the potential
->>>> to possibly cause breakages for some code using seccomp, and note that
->>>> I think such changes should not be made lightly or gratuitously. (In
->>>> the above commit, it's not clear why the switch was made to using
->>>> openat(): there's no mention of the reasoning in the commit message,
->>>> nor is there anything that is obvious from reading through the code
->>>> change itself.)
->>>
->>> Your code would 'break' if you run with on a new architecture that does
->>> not implement __NR_open, which it is the default for new architecture
->>> on Linux.
->>
->> (Is it the default for new architectures? I was unaware of that.)
+>> This change broke my code that was doing seccomp filtering for the
+>> open() system call number (__NR_open). The breakage in question is not
+>> serious, since this was really just demonstration code. However, I
+>> want to raise awareness that these sorts of changes have the potential
+>> to possibly cause breakages for some code using seccomp, and note that
+>> I think such changes should not be made lightly or gratuitously.
 >
-> Yes, new architectures should use the kernel headers
-> include/uapi/asm-generic/unistd.h for syscall definition and the idea
-> is to avoid duplication of functionality like syscalls that supplant
-> each one (openat and open for instance).  AArch64, for instance, only
-> supports on compat more for 32 bits.
-
-Thanks for the info.
-
->>> In fact I hardly consider this is a 'break' since the user API we
->>> export does not have any constraint which underlying syscall we use.
->>> For instance, a user can seccomp gettimeofday syscall on a system
->>> without vDSO just to found out it is 'broken' on a vDSO kernel.
->>>
->>> I think we should not constraint for this specific usercase; if one
->>> is doing syscall filtering it is expected system level knowledge to
->>> handle all possible syscalls related.  For instance, I would expect
->>> that if the idea is to filtering open() libc implementation the
->>> program should also filter __NR_openat and __NR_openat2 since it
->>> is semantically possible to implement open() with __NR_openat2 if
->>> the syscall is available.
->>
->> Perhaps my use of the word 'break' was a bit too loaded. (And if my
->> mail came across as somehow critical of your patch, that was not my
->> intention, and if you feel it as such, I do apologize for my poor
->> wording.)
 >
-> In fact I did not take is a criticize, but rather I was worried users
-> would expect that kind of syscalls stability over glibc releases.  The
-> 'break' word indeed raise a flag ;)
+> I have the opposite view: We should make such changes as often as possible,
+> to remind people that seccomp filters (and certain SELinux and AppArmor
+> policies) are incompatible with the GNU/Linux model, where everything is
+> developed separately and not maintained within a single source tree (unlike
+> say OpenBSD).  This means that you really can't deviate from the upstream
+> Linux userspace ABI (in the broadest possible sense) and still expect things
+> to work.
+>
+> I know that people like to slap seccomp filters on everything today, but
+> without careful examination, that is likely to introduce bugs (particularly
+> on rarely used code paths).  It can also cause the process to switch to
+> legacy interfaces with known issues (e.g., reading from /dev/urandom instead
+> of getrandom, without waiting for the kernel to signal initialization of the
+> pool).
 
-Okay -- I see your philosophical position. I guess my only thought is
-that these sort of changes are likely to at least surprise some
-people. I'll see whether I can work some hints about this into a
-suitable man page.
+Thanks. The above is a good summary of the counterpoints to my initial argument.
 
 Cheers,
 
