@@ -1,43 +1,41 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH resend 1/2] capability: introduce sysctl for controlled
- user-ns capability whitelist
-Date: Thu, 9 Nov 2017 11:30:37 -0600
-Message-ID: <20171109173037.GC26229@mail.hallyn.com>
-References: <20171103004433.39954-1-mahesh@bandewar.net>
+From: chris hyser <chris.hyser@oracle.com>
+Subject: Re: [kernel-hardening] Re: [PATCH resend 2/2] userns: control
+ capabilities of some user namespaces
+Date: Thu, 9 Nov 2017 13:01:24 -0500
+Message-ID: <da764cbf-7522-06a0-6c21-adfa3eaac9c2@oracle.com>
+References: <20171103004436.40026-1-mahesh@bandewar.net>
+ <20171104235346.GA17170@mail.hallyn.com>
+ <CAF2d9jg1tZz-hnVBeXm3geq7jSBt5v5w6+p5B1V-7huS4qbMBA@mail.gmail.com>
+ <20171106150302.GA26634@mail.hallyn.com> <1510003994.736.0.camel@gmail.com>
+ <20171106221418.GA32543@mail.hallyn.com> <1510020963.736.42.camel@gmail.com>
+ <20171107032310.GA6429@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-10489-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <20171103004433.39954-1-mahesh@bandewar.net>
-To: Mahesh Bandewar <mahesh@bandewar.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <maheshb@google.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171107032310.GA6429@mail.hallyn.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Serge E. Hallyn" <serge@hallyn.com>, Daniel Micay <danielmicay@gmail.com>
+Cc: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS1?= =?UTF-8?B?4KS+4KSwKQ==?= <maheshb@google.com>, Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Mahesh Bandewar (mahesh@bandewar.net):
-> From: Mahesh Bandewar <maheshb@google.com>
-> 
-> Add a sysctl variable kernel.controlled_userns_caps_whitelist. This
+On 11/06/2017 10:23 PM, Serge E. Hallyn wrote:
+> I think I definately prefer what I mentioned in the email to Boris.
+> Basically a "permanent capability bounding set".  The normal bounding
+> set gets reset to a full set on every new user_ns creation.  In this
+> proposal, it would instead be set to the calling task's permanent
+> capability set, which starts (at boot) full, and which privileged
+> tasks can pull capabilities out of.
 
-I understand the arguments in favor of whitelists in most cases for
-security purposes.  But given that you've said the goal here is to
-prevent use of a capability in a user namespace when a CVE has been
-found, a whitelist seems the wrong choice, since
+Actually, this may solve a similar problem I've been looking at. The 
+idea was basically at strategic points in the kernel (possibly LSM hook 
+sites, still evaluating, and probably syscall entry) validate that a 
+task has not "magically" acquired capabilities that it or parent 
+specifically said it cannot have and then take some action like say 
+killing it immediately. Using your terms, basically make the "permanent 
+capability set" a write-once privilege escalation defense. To handle the 
+0-day threat, perhaps make it writable but only with more "restrictive" 
+values.
 
-1. it means that an attacker may through some other means be able
-to add a capability back into the whitelist when you specifically
-wanted to drop it.  With a blacklist, you could say "once a cap has
-been dropped it can never be re-added without rebooting".
-2. it means by default all capabilities will be denied once the
-switch is pulled which is specifically not what you want in this
-case.
-3. the admin can't just say "drop CAP_NET_ADMIN", but needs to
-know to echo ~CAP_NET_ADMIN.
-
-Why not make it a blacklist, and once a cap is dropped it can
-never be re-added?
-
--serge
+-chrish
