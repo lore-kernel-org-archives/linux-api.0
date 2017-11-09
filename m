@@ -1,124 +1,85 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Seccomp implications for glibc wrapper function changes
-Date: Thu, 9 Nov 2017 14:37:15 +0100
-Message-ID: <CAKgNAki9m460sOw8KP9unnBU_ANctXj4H=gUEiRgRhUHFGjDbQ@mail.gmail.com>
-References: <CAKgNAkixA6T7J_1Gs=5+riq6i=dr9XP4ZCGu67YVcuDNg3cT4g@mail.gmail.com>
- <0049d6a8-de25-ff02-31ef-38a7db05b878@redhat.com> <CAKgNAkhLsBNVO9axSxwH8VNxBW1QPWjaEOS_ubu-nUZ7_gsn7w@mail.gmail.com>
- <CAKgNAkjAbRN7gVuErpmBZ2YtkYfRSAdnWVdRR1B34BvszRZ0-g@mail.gmail.com> <c2965313-404b-71fb-0686-bd13fde2b975@redhat.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: MPK: pkey_free and key reuse
+Date: Thu, 9 Nov 2017 15:48:26 +0100
+Message-ID: <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
+References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
+ <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <c2965313-404b-71fb-0686-bd13fde2b975-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Dave Hansen <dave.hansen@linux.intel.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Florian,
-
-On 9 November 2017 at 13:02, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> On 11/09/2017 12:58 PM, Michael Kerrisk (man-pages) wrote:
+On 11/08/2017 09:41 PM, Dave Hansen wrote:
+> On 11/05/2017 02:35 AM, Florian Weimer wrote:
+>> I don't think pkey_free, as it is implemented today, is very safe due to
+>> key reuse by a subsequent pkey_alloc.  I see two problems:
 >>
->> [CC +=3D Kees, in case he has some comments]
->>
->> On 9 November 2017 at 08:17, Michael Kerrisk (man-pages)
->> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->>>
->>> Hi Florian,
->>>
->>> On 8 November 2017 at 07:24, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
->>>>
->>>> On 11/07/2017 09:35 PM, Michael Kerrisk (man-pages) wrote:
->>>>>
->>>>>
->>>>> This change broke my code that was doing seccomp filtering for the
->>>>> open() system call number (__NR_open). The breakage in question is no=
-t
->>>>> serious, since this was really just demonstration code. However, I
->>>>> want to raise awareness that these sorts of changes have the potentia=
-l
->>>>> to possibly cause breakages for some code using seccomp, and note tha=
-t
->>>>> I think such changes should not be made lightly or gratuitously.
->>>>
->>>>
->>>>
->>>> I have the opposite view: We should make such changes as often as
->>>> possible,
->>>> to remind people that seccomp filters (and certain SELinux and AppArmo=
-r
->>>> policies) are incompatible with the GNU/Linux model, where everything =
-is
->>>> developed separately and not maintained within a single source tree
->>>> (unlike
->>>> say OpenBSD).  This means that you really can't deviate from the
->>>> upstream
->>>> Linux userspace ABI (in the broadest possible sense) and still expect
->>>> things
->>>> to work.
->>>>
->>>> I know that people like to slap seccomp filters on everything today, b=
-ut
->>>> without careful examination, that is likely to introduce bugs
->>>> (particularly
->>>> on rarely used code paths).  It can also cause the process to switch t=
-o
->>>> legacy interfaces with known issues (e.g., reading from /dev/urandom
->>>> instead
->>>> of getrandom, without waiting for the kernel to signal initialization =
-of
->>>> the
->>>> pool).
->>>
->>>
->>> Thanks. The above is a good summary of the counterpoints to my initial
->>> argument.
->>
->>
->> Florian, taking your and Adhemerval's useful comments into account, I
->> added the following text to the seccomp(2) manual page:
->>
->> [[
->>     Caveats
->>         There  are  various  subtleties  to consider when applying secco=
-mp
->>         filters to a program, including the following:
->>
->>         *  Some traditional system calls have  user-space  implementatio=
-ns
->>            in the vdso(7) on many architectures.  Notable examples inclu=
-de
->>            clock_gettime(2), gettimeofday(2), and time(2).  On such arch=
-i=E2=80=90
->>            tectures, seccomp filtering for these system calls will have =
-no
->>            effect.
->
->
-> I think the situation is more complicated for many of those because they =
-can
-> still perform system calls on their fallback paths.  So it's one more cas=
-e
-> where seccomp can give you unpredictable failures.
+>> (A) pkey_free allows reuse for they key while there are still mappings
+>> that use it.
+> 
+> I don't agree with this assessment.  Is malloc() unsafe?  If someone
+> free()s memory that is still in use, a subsequent malloc() would hand
+> the address out again for reuse.
 
-Good point. I added the following text:
+I think the disagreement is not about what is considered acceptable 
+behavior as such, but what constitutes “use”.
 
-          (However,  there are cases where the vdso(7) implemen=E2=80=90
-          tations may fall back  to  invoking  the  true  system
-          call, in which case seccomp filters would see the sys=E2=80=90
-          tem call.)
+And even if with concurrent use, the behavior can be well-defined.  We 
+make sure that if munmap is called, we do not return before all threads 
+have observed in principle that the page is gone (at considerable cost, 
+of course, and in most cases, that is total overkill).
 
-> Rest looks good to me.  Thanks for the writeup.
+I'm pretty sure there is another key reuse scenario which does not even 
+involve pkey_free, but I need to write a test first.
 
-Thanks for the review!
+>> (B) If a key is reused, existing threads retain their access rights,
+>> while there is an expectation that pkey_alloc denies access for the
+>> threads except the current one.
+> Where does this expectation come from?
 
-Cheers,
+For me, it was the access_rights argument to pkey_alloc.  What else 
+would it do?  For the current thread, I can already set the rights with 
+a PKRU write, so the existence of the syscall argument is puzzling.
 
-Michael
+> Using the malloc() analogy, we
+> don't expect that free() in one thread actively takes away references to
+> the memory held by other threads.
 
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+But malloc/free isn't expected to be a partial antidote to random 
+pointer scribbling.
+
+> We define free() as only being called on resources to which there are no
+> active references.  If you free() things in use, bad things happen.
+> pkey_free() is only to be called when there is nothing actively using
+> the key.  If you pkey_free() an in-use key, bad things happen.
+
+My impression was that MPK was intended as a fallback in case you did 
+that, and unrelated code suddenly writes through a dangling pointer and 
+accidentally hits the DAX-mapped persistent memory of the database.  To 
+prevent that, the those pages are mapped write-disabled on all threads 
+almost all the time, and only if the database needs to write something, 
+it temporarily tweaks PKRU so that it gains access.  All that assumes 
+that you can actually restrict all threads in the process, but with the 
+current implementation, that's not true even if threads never touch keys 
+they don't know.
+
+I think we should either implement revoke on pkey_alloc, with a 
+broadcast to all threads (the pkey_set race can be closed by having a 
+vDSO for that an the revocation code can check %rip to see if the old 
+PKRU value needs to be fixed up).  Or we add the two pkey_alloc flags I 
+mentioned earlier.
+
+Thanks,
+Florian
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
