@@ -1,191 +1,224 @@
-From: Laura Abbott <labbott@redhat.com>
-Subject: Re: [PATCH v6 2/2] staging: ion: create one device entry per heap
-Date: Thu, 9 Nov 2017 13:17:52 -0800
-Message-ID: <1e7fc718-825c-1028-1c28-a75a7320103f@redhat.com>
-References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
- <1509983985-20950-3-git-send-email-benjamin.gaignard@linaro.org>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [kernel-hardening] Re: [PATCH resend 2/2] userns: control capabilities of some user namespaces
+Date: Thu, 09 Nov 2017 15:58:43 -0600
+Message-ID: <871sl7dsh8.fsf@xmission.com>
+References: <20171106150302.GA26634@mail.hallyn.com>
+        <1510003994.736.0.camel@gmail.com>
+        <20171106221418.GA32543@mail.hallyn.com>
+        <CAFUG7CcEy9a=RxBQZJR-C_2VuhZXrzJ_QxJnrSxdM=ox36DsXQ@mail.gmail.com>
+        <20171106233913.GA1518@mail.hallyn.com>
+        <CAFUG7CcW077LHcQEqk7qy7iVvmi-3J8psD1Kwj45XvHThiZC6w@mail.gmail.com>
+        <20171107032802.GA6669@mail.hallyn.com>
+        <CAF2d9jiwu3Ss7Dtem8qSptKgMc0Mc_o8MAAJkWM5CwJaFsbrcg@mail.gmail.com>
+        <20171108190223.vdkyepcaegmub6le@gmail.com>
+        <CAF2d9jjed4Q7QvCD9Kpaa7L-Ngg3XFbJvt0jNVUUwt=52wDjjw@mail.gmail.com>
+        <20171109032134.GA15666@mail.hallyn.com>
+        <CAF2d9jgs5MYn1dMT2mbhF=6UB2Hoo5kwmJhXuE6memBfWzkWXQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <1509983985-20950-3-git-send-email-benjamin.gaignard@linaro.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Benjamin Gaignard <benjamin.gaignard@linaro.org>, sumit.semwal@linaro.org, gregkh@linuxfoundation.org, arve@android.com, riandrews@android.com, broonie@kernel.org, dan.carpenter@oracle.com
-Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAF2d9jgs5MYn1dMT2mbhF=6UB2Hoo5kwmJhXuE6memBfWzkWXQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+        (Mahesh Bandewar's message of "Thu, 9 Nov 2017 16:18:08 +0900")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: =?utf-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS1?= =?utf-8?B?4KS+4KSwKQ==?= <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Christian Brauner <christian.brauner-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Boris Lukashev <blukashev-JNja4Z15B3SvB/ACxS1yDA@public.gmane.org>, Daniel Micay <danielmicay-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTEvMDYvMjAxNyAwNzo1OSBBTSwgQmVuamFtaW4gR2FpZ25hcmQgd3JvdGU6Cj4gSW5zdGVh
-ZCBhIGdldHRpbmcgb25seSBvbmUgY29tbW9uIGRldmljZSAiL2Rldi9pb24iIGZvcgo+IGFsbCB0
-aGUgaGVhcHMgdGhpcyBwYXRjaCBhbGxvdyB0byBjcmVhdGUgb25lIGRldmljZQo+IGVudHJ5ICgi
-L2Rldi9pb25YIikgcGVyIGhlYXAuCj4gR2V0dGluZyBhbiBlbnRyeSBwZXIgaGVhcCBjb3VsZCBh
-bGxvdyB0byBzZXQgc2VjdXJpdHkgcnVsZXMKPiBwZXIgaGVhcCBhbmQgZ2xvYmFsIG9uZXMgZm9y
-IGFsbCBoZWFwcy4KPiAKPiBBbGxvY2F0aW9uIHJlcXVlc3RzIHdpbGwgYmUgb25seSBhbGxvd2Vk
-IGlmIHRoZSBtYXNrX2lkCj4gbWF0Y2ggd2l0aCBkZXZpY2UgbWlub3IuCj4gUXVlcnkgcmVxdWVz
-dCBjb3VsZCBiZSBkb25lIG9uIGFueSBvZiB0aGUgZGV2aWNlcy4KPiAKCldpdGggdGhpcyBwYXRj
-aCwgc3lzZnMgbG9va3MgbGlrZToKCiQgbHMgL3N5cy9kZXZpY2VzLwpicmVha3BvaW50IGlvbiBw
-bGF0Zm9ybSBzb2Z0d2FyZSBzeXN0ZW0gdmlydHVhbAoKIEZyb20gYW4gSW9uIHBlcnNwZWN0aXZl
-LCB5b3UgY2FuIGhhdmUKCkFja2VkLWJ5OiBMYXVyYSBBYmJvdHQgPGxhYmJvdHRAcmVkaGF0LmNv
-bT4KCkFub3RoZXIgQWNrIGZvciB0aGUgZGV2aWNlIG1vZGVsIHN0dWZmIHdvdWxkIGJlIGdvb2Qg
-YnV0IEknbGwKYXNzdW1lIGRlYWZlbmluZyBzaWxlbmNlIG1lYW5zIG5vYm9keSBoYXRlcyBpdC4K
-ClRoYW5rcywKTGF1cmEKCj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gR2FpZ25hcmQgPGJlbmph
-bWluLmdhaWduYXJkQGxpbmFyby5vcmc+Cj4gLS0tCj4gICBkcml2ZXJzL3N0YWdpbmcvYW5kcm9p
-ZC9UT0RPICAgICAgICAgICAgfCAgMSAtCj4gICBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24v
-S2NvbmZpZyAgICAgfCAgNyArKysrCj4gICBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9u
-LWlvY3RsLmMgfCAxOCArKysrKysrKy0tCj4gICBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24v
-aW9uLmMgICAgICAgfCA2MiArKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0KPiAgIGRy
-aXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24uaCAgICAgICB8IDE1ICsrKysrKy0tCj4gICA1
-IGZpbGVzIGNoYW5nZWQsIDkxIGluc2VydGlvbnMoKyksIDEyIGRlbGV0aW9ucygtKQo+IAo+IGRp
-ZmYgLS1naXQgYS9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9UT0RPIGIvZHJpdmVycy9zdGFnaW5n
-L2FuZHJvaWQvVE9ETwo+IGluZGV4IDY4N2UwZWEuLjhhMTE5MzEgMTAwNjQ0Cj4gLS0tIGEvZHJp
-dmVycy9zdGFnaW5nL2FuZHJvaWQvVE9ETwo+ICsrKyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lk
-L1RPRE8KPiBAQCAtOCw3ICs4LDYgQEAgVE9ETzoKPiAgIGlvbi8KPiAgICAtIEFkZCBkdC1iaW5k
-aW5ncyBmb3IgcmVtYWluaW5nIGhlYXBzIChjaHVuayBhbmQgY2FydmVvdXQgaGVhcHMpLiBUaGlz
-IHdvdWxkCj4gICAgICBpbnZvbHZlIHB1dHRpbmcgYXBwcm9wcmlhdGUgYmluZGluZ3MgaW4gYSBt
-ZW1vcnkgbm9kZSBmb3IgSW9uIHRvIGZpbmQuCj4gLSAtIFNwbGl0IC9kZXYvaW9uIHVwIGludG8g
-bXVsdGlwbGUgbm9kZXMgKGUuZy4gL2Rldi9pb24vaGVhcDApCj4gICAgLSBCZXR0ZXIgdGVzdCBm
-cmFtZXdvcmsgKGludGVncmF0aW9uIHdpdGggVkdFTSB3YXMgc3VnZ2VzdGVkKQo+ICAgCj4gICBQ
-bGVhc2Ugc2VuZCBwYXRjaGVzIHRvIEdyZWcgS3JvYWgtSGFydG1hbiA8Z3JlZ0Brcm9haC5jb20+
-IGFuZCBDYzoKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL0tjb25m
-aWcgYi9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vS2NvbmZpZwo+IGluZGV4IGE1MTdiMmQu
-LmNiNDY2NmUgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL0tjb25m
-aWcKPiArKysgYi9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vS2NvbmZpZwo+IEBAIC0xMCw2
-ICsxMCwxMyBAQCBtZW51Y29uZmlnIElPTgo+ICAgCSAgSWYgeW91J3JlIG5vdCB1c2luZyBBbmRy
-b2lkIGl0cyBwcm9iYWJseSBzYWZlIHRvCj4gICAJICBzYXkgTiBoZXJlLgo+ICAgCj4gK2NvbmZp
-ZyBJT05fTEVHQUNZX0RFVklDRV9BUEkKPiArCWJvb2wgIktlZXAgdXNpbmcgSW9uIGxlZ2FjeSBt
-aXNjIGRldmljZSBBUEkiCj4gKwlkZXBlbmRzIG9uIElPTgo+ICsJaGVscAo+ICsJICBDaG9vc2Ug
-dGhpcyBvcHRpb24gdG8ga2VlcCB1c2luZyBJb24gbGVnYWN5IG1pc2MgZGV2aWNlIEFQSQo+ICsJ
-ICBpLmUuIC9kZXYvaW9uCj4gKwo+ICAgY29uZmlnIElPTl9TWVNURU1fSEVBUAo+ICAgCWJvb2wg
-IklvbiBzeXN0ZW0gaGVhcCIKPiAgIAlkZXBlbmRzIG9uIElPTgo+IGRpZmYgLS1naXQgYS9kcml2
-ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9uLWlvY3RsLmMgYi9kcml2ZXJzL3N0YWdpbmcvYW5k
-cm9pZC9pb24vaW9uLWlvY3RsLmMKPiBpbmRleCBlMjZiNzg2Li5iYjVjNzdiIDEwMDY0NAo+IC0t
-LSBhL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24taW9jdGwuYwo+ICsrKyBiL2RyaXZl
-cnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24taW9jdGwuYwo+IEBAIC0yNSw3ICsyNSw4IEBAIHVu
-aW9uIGlvbl9pb2N0bF9hcmcgewo+ICAgCXN0cnVjdCBpb25faGVhcF9xdWVyeSBxdWVyeTsKPiAg
-IH07Cj4gICAKPiAtc3RhdGljIGludCB2YWxpZGF0ZV9pb2N0bF9hcmcodW5zaWduZWQgaW50IGNt
-ZCwgdW5pb24gaW9uX2lvY3RsX2FyZyAqYXJnKQo+ICtzdGF0aWMgaW50IHZhbGlkYXRlX2lvY3Rs
-X2FyZyhzdHJ1Y3QgZmlsZSAqZmlscCwKPiArCQkJICAgICAgdW5zaWduZWQgaW50IGNtZCwgdW5p
-b24gaW9uX2lvY3RsX2FyZyAqYXJnKQo+ICAgewo+ICAgCXN3aXRjaCAoY21kKSB7Cj4gICAJY2Fz
-ZSBJT05fSU9DX0hFQVBfUVVFUlk6Cj4gQEAgLTM0LDYgKzM1LDE5IEBAIHN0YXRpYyBpbnQgdmFs
-aWRhdGVfaW9jdGxfYXJnKHVuc2lnbmVkIGludCBjbWQsIHVuaW9uIGlvbl9pb2N0bF9hcmcgKmFy
-ZykKPiAgIAkJICAgIGFyZy0+cXVlcnkucmVzZXJ2ZWQyICkKPiAgIAkJCXJldHVybiAtRUlOVkFM
-Owo+ICAgCQlicmVhazsKPiArCj4gKwljYXNlIElPTl9JT0NfQUxMT0M6Cj4gKwl7Cj4gKwkJaW50
-IG1hc2sgPSAxIDw8IGltaW5vcihmaWxwLT5mX2lub2RlKTsKPiArCj4gKyNpZmRlZiBDT05GSUdf
-SU9OX0xFR0FDWV9ERVZJQ0VfQVBJCj4gKwkJaWYgKGltYWpvcihmaWxwLT5mX2lub2RlKSA9PSBN
-SVNDX01BSk9SKQo+ICsJCQlyZXR1cm4gMDsKPiArI2VuZGlmCj4gKwkJaWYgKCEoYXJnLT5hbGxv
-Y2F0aW9uLmhlYXBfaWRfbWFzayAmIG1hc2spKQo+ICsJCQlyZXR1cm4gLUVJTlZBTDsKPiArCQli
-cmVhazsKPiArCX0KPiAgIAlkZWZhdWx0Ogo+ICAgCQlicmVhazsKPiAgIAl9Cj4gQEAgLTY5LDcg
-KzgzLDcgQEAgbG9uZyBpb25faW9jdGwoc3RydWN0IGZpbGUgKmZpbHAsIHVuc2lnbmVkIGludCBj
-bWQsIHVuc2lnbmVkIGxvbmcgYXJnKQo+ICAgCWlmIChjb3B5X2Zyb21fdXNlcigmZGF0YSwgKHZv
-aWQgX191c2VyICopYXJnLCBfSU9DX1NJWkUoY21kKSkpCj4gICAJCXJldHVybiAtRUZBVUxUOwo+
-ICAgCj4gLQlyZXQgPSB2YWxpZGF0ZV9pb2N0bF9hcmcoY21kLCAmZGF0YSk7Cj4gKwlyZXQgPSB2
-YWxpZGF0ZV9pb2N0bF9hcmcoZmlscCwgY21kLCAmZGF0YSk7Cj4gICAJaWYgKFdBUk5fT05fT05D
-RShyZXQpKQo+ICAgCQlyZXR1cm4gcmV0Owo+ICAgCj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvc3Rh
-Z2luZy9hbmRyb2lkL2lvbi9pb24uYyBiL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24u
-Ywo+IGluZGV4IGZkYTk3NTYuLjJjMjU2OGIgMTAwNjQ0Cj4gLS0tIGEvZHJpdmVycy9zdGFnaW5n
-L2FuZHJvaWQvaW9uL2lvbi5jCj4gKysrIGIvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lv
-bi5jCj4gQEAgLTQwLDYgKzQwLDkgQEAKPiAgIAo+ICAgI2luY2x1ZGUgImlvbi5oIgo+ICAgCj4g
-KyNkZWZpbmUgSU9OX0RFVl9NQVggMzIKPiArI2RlZmluZSBJT05fTkFNRSAiaW9uIgo+ICsKPiAg
-IHN0YXRpYyBzdHJ1Y3QgaW9uX2RldmljZSAqaW50ZXJuYWxfZGV2Owo+ICAgc3RhdGljIGludCBo
-ZWFwX2lkOwo+ICAgCj4gQEAgLTUzNSwxNSArNTM4LDM4IEBAIHN0YXRpYyBpbnQgZGVidWdfc2hy
-aW5rX2dldCh2b2lkICpkYXRhLCB1NjQgKnZhbCkKPiAgIERFRklORV9TSU1QTEVfQVRUUklCVVRF
-KGRlYnVnX3Nocmlua19mb3BzLCBkZWJ1Z19zaHJpbmtfZ2V0LAo+ICAgCQkJZGVidWdfc2hyaW5r
-X3NldCwgIiVsbHVcbiIpOwo+ICAgCj4gLXZvaWQgaW9uX2RldmljZV9hZGRfaGVhcChzdHJ1Y3Qg
-aW9uX2hlYXAgKmhlYXApCj4gK3N0YXRpYyBzdHJ1Y3QgZGV2aWNlIGlvbl9idXMgPSB7Cj4gKwku
-aW5pdF9uYW1lID0gSU9OX05BTUUsCj4gK307Cj4gKwo+ICtzdGF0aWMgc3RydWN0IGJ1c190eXBl
-IGlvbl9idXNfdHlwZSA9IHsKPiArCS5uYW1lID0gSU9OX05BTUUsCj4gK307Cj4gKwo+ICtpbnQg
-aW9uX2RldmljZV9hZGRfaGVhcChzdHJ1Y3QgaW9uX2hlYXAgKmhlYXApCj4gICB7Cj4gICAJc3Ry
-dWN0IGRlbnRyeSAqZGVidWdfZmlsZTsKPiAgIAlzdHJ1Y3QgaW9uX2RldmljZSAqZGV2ID0gaW50
-ZXJuYWxfZGV2Owo+ICsJaW50IHJldCA9IDA7Cj4gICAKPiAgIAlpZiAoIWhlYXAtPm9wcy0+YWxs
-b2NhdGUgfHwgIWhlYXAtPm9wcy0+ZnJlZSkKPiAgIAkJcHJfZXJyKCIlczogY2FuIG5vdCBhZGQg
-aGVhcCB3aXRoIGludmFsaWQgb3BzIHN0cnVjdC5cbiIsCj4gICAJCSAgICAgICBfX2Z1bmNfXyk7
-Cj4gICAKPiArCWlmIChoZWFwX2lkID49IElPTl9ERVZfTUFYKQo+ICsJCXJldHVybiAtRUJVU1k7
-Cj4gKwo+ICsJaGVhcC0+ZGRldi5wYXJlbnQgPSAmaW9uX2J1czsKPiArCWhlYXAtPmRkZXYuYnVz
-ID0gJmlvbl9idXNfdHlwZTsKPiArCWhlYXAtPmRkZXYuZGV2dCA9IE1LREVWKE1BSk9SKGludGVy
-bmFsX2Rldi0+ZGV2dCksIGhlYXBfaWQpOwo+ICsJZGV2X3NldF9uYW1lKCZoZWFwLT5kZGV2LCBJ
-T05fTkFNRSIlZCIsIGhlYXBfaWQpOwo+ICsJZGV2aWNlX2luaXRpYWxpemUoJmhlYXAtPmRkZXYp
-Owo+ICsJY2Rldl9pbml0KCZoZWFwLT5jaHJkZXYsICZpb25fZm9wcyk7Cj4gKwloZWFwLT5jaHJk
-ZXYub3duZXIgPSBUSElTX01PRFVMRTsKPiArCXJldCA9IGNkZXZfZGV2aWNlX2FkZCgmaGVhcC0+
-Y2hyZGV2LCAmaGVhcC0+ZGRldik7Cj4gKwlpZiAocmV0IDwgMCkKPiArCQlyZXR1cm4gcmV0Owo+
-ICsKPiAgIAlzcGluX2xvY2tfaW5pdCgmaGVhcC0+ZnJlZV9sb2NrKTsKPiAgIAloZWFwLT5mcmVl
-X2xpc3Rfc2l6ZSA9IDA7Cj4gICAKPiBAQCAtNTgxLDYgKzYwNyw4IEBAIHZvaWQgaW9uX2Rldmlj
-ZV9hZGRfaGVhcChzdHJ1Y3QgaW9uX2hlYXAgKmhlYXApCj4gICAKPiAgIAlkZXYtPmhlYXBfY250
-Kys7Cj4gICAJdXBfd3JpdGUoJmRldi0+bG9jayk7Cj4gKwo+ICsJcmV0dXJuIHJldDsKPiAgIH0K
-PiAgIEVYUE9SVF9TWU1CT0woaW9uX2RldmljZV9hZGRfaGVhcCk7Cj4gICAKPiBAQCAtNTkzLDgg
-KzYyMSw5IEBAIHN0YXRpYyBpbnQgaW9uX2RldmljZV9jcmVhdGUodm9pZCkKPiAgIAlpZiAoIWlk
-ZXYpCj4gICAJCXJldHVybiAtRU5PTUVNOwo+ICAgCj4gKyNpZmRlZiBDT05GSUdfSU9OX0xFR0FD
-WV9ERVZJQ0VfQVBJCj4gICAJaWRldi0+ZGV2Lm1pbm9yID0gTUlTQ19EWU5BTUlDX01JTk9SOwo+
-IC0JaWRldi0+ZGV2Lm5hbWUgPSAiaW9uIjsKPiArCWlkZXYtPmRldi5uYW1lID0gSU9OX05BTUU7
-Cj4gICAJaWRldi0+ZGV2LmZvcHMgPSAmaW9uX2ZvcHM7Cj4gICAJaWRldi0+ZGV2LnBhcmVudCA9
-IE5VTEw7Cj4gICAJcmV0ID0gbWlzY19yZWdpc3RlcigmaWRldi0+ZGV2KTsKPiBAQCAtNjAzLDE5
-ICs2MzIsMzggQEAgc3RhdGljIGludCBpb25fZGV2aWNlX2NyZWF0ZSh2b2lkKQo+ICAgCQlrZnJl
-ZShpZGV2KTsKPiAgIAkJcmV0dXJuIHJldDsKPiAgIAl9Cj4gKyNlbmRpZgo+ICAgCj4gLQlpZGV2
-LT5kZWJ1Z19yb290ID0gZGVidWdmc19jcmVhdGVfZGlyKCJpb24iLCBOVUxMKTsKPiAtCWlmICgh
-aWRldi0+ZGVidWdfcm9vdCkgewo+ICsJcmV0ID0gZGV2aWNlX3JlZ2lzdGVyKCZpb25fYnVzKTsK
-PiArCWlmIChyZXQpCj4gKwkJZ290byBjbGVhbl9taXNjOwo+ICsKPiArCXJldCA9IGJ1c19yZWdp
-c3RlcigmaW9uX2J1c190eXBlKTsKPiArCWlmIChyZXQpCj4gKwkJZ290byBjbGVhbl9kZXZpY2U7
-Cj4gKwo+ICsJcmV0ID0gYWxsb2NfY2hyZGV2X3JlZ2lvbigmaWRldi0+ZGV2dCwgMCwgSU9OX0RF
-Vl9NQVgsIElPTl9OQU1FKTsKPiArCWlmIChyZXQpCj4gKwkJZ290byBjbGVhbl9kZXZpY2U7Cj4g
-Kwo+ICsJaWRldi0+ZGVidWdfcm9vdCA9IGRlYnVnZnNfY3JlYXRlX2RpcihJT05fTkFNRSwgTlVM
-TCk7Cj4gKwlpZiAoIWlkZXYtPmRlYnVnX3Jvb3QpCj4gICAJCXByX2VycigiaW9uOiBmYWlsZWQg
-dG8gY3JlYXRlIGRlYnVnZnMgcm9vdCBkaXJlY3RvcnkuXG4iKTsKPiAtCQlnb3RvIGRlYnVnZnNf
-ZG9uZTsKPiAtCX0KPiAgIAo+IC1kZWJ1Z2ZzX2RvbmU6Cj4gICAJaWRldi0+YnVmZmVycyA9IFJC
-X1JPT1Q7Cj4gICAJbXV0ZXhfaW5pdCgmaWRldi0+YnVmZmVyX2xvY2spOwo+ICAgCWluaXRfcndz
-ZW0oJmlkZXYtPmxvY2spOwo+ICAgCXBsaXN0X2hlYWRfaW5pdCgmaWRldi0+aGVhcHMpOwo+ICAg
-CWludGVybmFsX2RldiA9IGlkZXY7Cj4gICAJcmV0dXJuIDA7Cj4gKwo+ICtjbGVhbl9kZXZpY2U6
-Cj4gKwlkZXZpY2VfdW5yZWdpc3RlcigmaW9uX2J1cyk7Cj4gK2NsZWFuX21pc2M6Cj4gKyNpZmRl
-ZiBDT05GSUdfSU9OX0xFR0FDWV9ERVZJQ0VfQVBJCj4gKwltaXNjX2RlcmVnaXN0ZXIoJmlkZXYt
-PmRldik7Cj4gKyNlbmRpZgo+ICsJa2ZyZWUoaWRldik7Cj4gKwlyZXR1cm4gcmV0Owo+ICAgfQo+
-ICAgc3Vic3lzX2luaXRjYWxsKGlvbl9kZXZpY2VfY3JlYXRlKTsKPiBkaWZmIC0tZ2l0IGEvZHJp
-dmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL2lvbi5oIGIvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQv
-aW9uL2lvbi5oCj4gaW5kZXggZjVmOWNkNi4uNDg2OWU5NiAxMDA2NDQKPiAtLS0gYS9kcml2ZXJz
-L3N0YWdpbmcvYW5kcm9pZC9pb24vaW9uLmgKPiArKysgYi9kcml2ZXJzL3N0YWdpbmcvYW5kcm9p
-ZC9pb24vaW9uLmgKPiBAQCAtMTcsMTYgKzE3LDE5IEBACj4gICAjaWZuZGVmIF9JT05fSAo+ICAg
-I2RlZmluZSBfSU9OX0gKPiAgIAo+ICsjaW5jbHVkZSA8bGludXgvY2Rldi5oPgo+ICAgI2luY2x1
-ZGUgPGxpbnV4L2RldmljZS5oPgo+ICAgI2luY2x1ZGUgPGxpbnV4L2RtYS1kaXJlY3Rpb24uaD4K
-PiAgICNpbmNsdWRlIDxsaW51eC9rcmVmLmg+Cj4gKyNpZmRlZiBDT05GSUdfSU9OX0xFR0FDWV9E
-RVZJQ0VfQVBJCj4gKyNpbmNsdWRlIDxsaW51eC9taXNjZGV2aWNlLmg+Cj4gKyNlbmRpZgo+ICAg
-I2luY2x1ZGUgPGxpbnV4L21tX3R5cGVzLmg+Cj4gICAjaW5jbHVkZSA8bGludXgvbXV0ZXguaD4K
-PiAgICNpbmNsdWRlIDxsaW51eC9yYnRyZWUuaD4KPiAgICNpbmNsdWRlIDxsaW51eC9zY2hlZC5o
-Pgo+ICAgI2luY2x1ZGUgPGxpbnV4L3Nocmlua2VyLmg+Cj4gICAjaW5jbHVkZSA8bGludXgvdHlw
-ZXMuaD4KPiAtI2luY2x1ZGUgPGxpbnV4L21pc2NkZXZpY2UuaD4KPiAgIAo+ICAgI2luY2x1ZGUg
-Ii4uL3VhcGkvaW9uLmgiCj4gICAKPiBAQCAtOTIsMTIgKzk1LDE2IEBAIHZvaWQgaW9uX2J1ZmZl
-cl9kZXN0cm95KHN0cnVjdCBpb25fYnVmZmVyICpidWZmZXIpOwo+ICAgLyoqCj4gICAgKiBzdHJ1
-Y3QgaW9uX2RldmljZSAtIHRoZSBtZXRhZGF0YSBvZiB0aGUgaW9uIGRldmljZSBub2RlCj4gICAg
-KiBAZGV2OgkJdGhlIGFjdHVhbCBtaXNjIGRldmljZQo+ICsgKiBAZGV2dDoJCUlvbiBkZXZpY2UK
-PiAgICAqIEBidWZmZXJzOgkJYW4gcmIgdHJlZSBvZiBhbGwgdGhlIGV4aXN0aW5nIGJ1ZmZlcnMK
-PiAgICAqIEBidWZmZXJfbG9jazoJbG9jayBwcm90ZWN0aW5nIHRoZSB0cmVlIG9mIGJ1ZmZlcnMK
-PiAgICAqIEBsb2NrOgkJcndzZW0gcHJvdGVjdGluZyB0aGUgdHJlZSBvZiBoZWFwcyBhbmQgY2xp
-ZW50cwo+ICAgICovCj4gICBzdHJ1Y3QgaW9uX2RldmljZSB7Cj4gKyNpZmRlZiBDT05GSUdfSU9O
-X0xFR0FDWV9ERVZJQ0VfQVBJCj4gICAJc3RydWN0IG1pc2NkZXZpY2UgZGV2Owo+ICsjZW5kaWYK
-PiArCWRldl90IGRldnQ7Cj4gICAJc3RydWN0IHJiX3Jvb3QgYnVmZmVyczsKPiAgIAlzdHJ1Y3Qg
-bXV0ZXggYnVmZmVyX2xvY2s7Cj4gICAJc3RydWN0IHJ3X3NlbWFwaG9yZSBsb2NrOwo+IEBAIC0x
-NTMsNiArMTYwLDggQEAgc3RydWN0IGlvbl9oZWFwX29wcyB7Cj4gICAgKiBzdHJ1Y3QgaW9uX2hl
-YXAgLSByZXByZXNlbnRzIGEgaGVhcCBpbiB0aGUgc3lzdGVtCj4gICAgKiBAbm9kZToJCXJiIG5v
-ZGUgdG8gcHV0IHRoZSBoZWFwIG9uIHRoZSBkZXZpY2UncyB0cmVlIG9mIGhlYXBzCj4gICAgKiBA
-ZGV2OgkJYmFjayBwb2ludGVyIHRvIHRoZSBpb25fZGV2aWNlCj4gKyAqIEBkZGV2OgkJZGV2aWNl
-IHN0cnVjdHVyZQo+ICsgKiBAY2hyZGV2OgkJYXNzb2NpYXRlZCBjaGFyYWN0ZXIgZGV2aWNlCj4g
-ICAgKiBAdHlwZToJCXR5cGUgb2YgaGVhcAo+ICAgICogQG9wczoJCW9wcyBzdHJ1Y3QgYXMgYWJv
-dmUKPiAgICAqIEBmbGFnczoJCWZsYWdzCj4gQEAgLTE3Nyw2ICsxODYsOCBAQCBzdHJ1Y3QgaW9u
-X2hlYXBfb3BzIHsKPiAgIHN0cnVjdCBpb25faGVhcCB7Cj4gICAJc3RydWN0IHBsaXN0X25vZGUg
-bm9kZTsKPiAgIAlzdHJ1Y3QgaW9uX2RldmljZSAqZGV2Owo+ICsJc3RydWN0IGRldmljZSBkZGV2
-Owo+ICsJc3RydWN0IGNkZXYgY2hyZGV2Owo+ICAgCWVudW0gaW9uX2hlYXBfdHlwZSB0eXBlOwo+
-ICAgCXN0cnVjdCBpb25faGVhcF9vcHMgKm9wczsKPiAgIAl1bnNpZ25lZCBsb25nIGZsYWdzOwo+
-IEBAIC0yMTMsNyArMjI0LDcgQEAgYm9vbCBpb25fYnVmZmVyX2ZhdWx0X3VzZXJfbWFwcGluZ3Mo
-c3RydWN0IGlvbl9idWZmZXIgKmJ1ZmZlcik7Cj4gICAgKiBpb25fZGV2aWNlX2FkZF9oZWFwIC0g
-YWRkcyBhIGhlYXAgdG8gdGhlIGlvbiBkZXZpY2UKPiAgICAqIEBoZWFwOgkJdGhlIGhlYXAgdG8g
-YWRkCj4gICAgKi8KPiAtdm9pZCBpb25fZGV2aWNlX2FkZF9oZWFwKHN0cnVjdCBpb25faGVhcCAq
-aGVhcCk7Cj4gK2ludCBpb25fZGV2aWNlX2FkZF9oZWFwKHN0cnVjdCBpb25faGVhcCAqaGVhcCk7
-Cj4gICAKPiAgIC8qKgo+ICAgICogc29tZSBoZWxwZXJzIGZvciBjb21tb24gb3BlcmF0aW9ucyBv
-biBidWZmZXJzIHVzaW5nIHRoZSBzZ190YWJsZQo+IAoKX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxA
-bGlzdHMuZnJlZWRlc2t0b3Aub3JnCmh0dHBzOi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxt
-YW4vbGlzdGluZm8vZHJpLWRldmVsCg==
+"Mahesh Bandewar (महेश बंडेवार)" <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> writes:
+
+> [resend response as earlier one failed because of formatting issues]
+>
+> On Thu, Nov 9, 2017 at 12:21 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+>>
+>> On Thu, Nov 09, 2017 at 09:55:41AM +0900, Mahesh Bandewar (महेश बंडेवार) wrote:
+>> > On Thu, Nov 9, 2017 at 4:02 AM, Christian Brauner
+>> > <christian.brauner-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org> wrote:
+>> > > On Wed, Nov 08, 2017 at 03:09:59AM -0800, Mahesh Bandewar (महेश बंडेवार) wrote:
+>> > >> Sorry folks I was traveling and seems like lot happened on this thread. :p
+>> > >>
+>> > >> I will try to response few of these comments selectively -
+>> > >>
+>> > >> > The thing that makes me hesitate with this set is that it is a
+>> > >> > permanent new feature to address what (I hope) is a temporary
+>> > >> > problem.
+>> > >> I agree this is permanent new feature but it's not solving a temporary
+>> > >> problem. It's impossible to assess what and when new vulnerability
+>> > >> that could show up. I think Daniel summed it up appropriately in his
+>> > >> response
+>> > >>
+>> > >> > Seems like there are two naive ways to do it, the first being to just
+>> > >> > look at all code under ns_capable() plus code called from there.  It
+>> > >> > seems like looking at the result of that could be fruitful.
+>> > >> This is really hard. The main issue that there were features designed
+>> > >> and developed before user-ns days with an assumption that unprivileged
+>> > >> users will never get certain capabilities which only root user gets.
+>> > >> Now that is not true anymore with user-ns creation with mapping root
+>> > >> for any process. Also at the same time blocking user-ns creation for
+>> > >> eveyone is a big-hammer which is not needed too. So it's not that easy
+>> > >> to just perform a code-walk-though and correct those decisions now.
+>> > >>
+>> > >> > It seems to me that the existing control in
+>> > >> > /proc/sys/kernel/unprivileged_userns_clone might be the better duct tape
+>> > >> > in that case.
+>> > >> This solution is essentially blocking unprivileged users from using
+>> > >> the user-namespaces entirely. This is not really a solution that can
+>> > >> work. The solution that this patch-set adds allows unprivileged users
+>> > >> to create user-namespaces. Actually the proposed solution is more
+>> > >> fine-grained approach than the unprivileged_userns_clone solution
+>> > >> since you can selectively block capabilities rather than completely
+>> > >> blocking the functionality.
+>> > >
+>> > > I've been talking to Stéphane today about this and we should also keep in mind
+>> > > that we have:
+>> > >
+>> > > chb@conventiont|~
+>> > >> ls -al /proc/sys/user/
+>> > > total 0
+>> > > dr-xr-xr-x 1 root root 0 Nov  6 23:32 .
+>> > > dr-xr-xr-x 1 root root 0 Nov  2 22:13 ..
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_cgroup_namespaces
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_inotify_instances
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_inotify_watches
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_ipc_namespaces
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_mnt_namespaces
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_net_namespaces
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_pid_namespaces
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_user_namespaces
+>> > > -rw-r--r-- 1 root root 0 Nov  8 19:48 max_uts_namespaces
+>> > >
+>> > > These files allow you to limit the number of namespaces that can be created
+>> > > *per namespace* type. So let's say your system runs a bunch of user namespaces
+>> > > you can do:
+>> > >
+>> > > chb@conventiont|~
+>> > >> echo 0 > /proc/sys/user/max_user_namespaces
+>> > >
+>> > > So that the next time you try to create a user namespaces you'd see:
+>> > >
+>> > > chb@conventiont|~
+>> > >> unshare -U
+>> > > unshare: unshare failed: No space left on device
+>> > >
+>> > > So there's not even a need to upstream a new sysctl since we have ways of
+>> > > blocking this.
+>> > >
+>> > I'm not sure how it's solving the problem that my patch-set is addressing?
+>> > I agree though that the need for unprivileged_userns_clone sysctl goes
+>> > away as this is equivalent to setting that sysctl to 0 as you have
+>> > described above.
+>>
+>> oh right that was the reasoning iirc for not needing the other sysctl.
+>>
+>> > However as I mentioned earlier, blocking processes from creating
+>> > user-namespaces is not the solution. Processes should be able to
+>> > create namespaces as they are designed but at the same time we need to
+>> > have controls to 'contain' them if a need arise. Setting max_no to 0
+>> > is not the solution that I'm looking for since it doesn't solve the
+>> > problem.
+>>
+>> well yesterday we were told that was explicitly not the goal, but that was
+>> not by you ... i just mention it to explain why we seem to be walking in
+>> circles a bit.
+>>
+>> anyway the bounding set doesn't actually make sense so forget that.   the
+>> question then is just whether it makes sense to allow things to continue
+>> at all in this situation.  would you mind indulging me by giving one or two
+>> concrete examples in the previous known cves of what capabilities you would
+>> have dropped tto allow the rest to continue to be safely used?
+>>
+> Of course. Let's take an example of the CVE that I have mentioned in
+> my cover-letter -
+> CVE-2017-7308(https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-7308).
+> It's well documented and even has a
+> exploit(https://github.com/xairy/kernel-exploits/tree/master/CVE-2017-7308)
+> c-program that can demonstrate how it can be used against non-patched
+> kernel. There is very nice blog
+> post(https://googleprojectzero.blogspot.kr/2017/05/exploiting-linux-kernel-via-packet.html)
+> about this vulnerability by Andrey Konovalov.
+>
+> This is about the AF_PACKET socket interface that is protected behind
+> NET_RAW capability. This capability is not available to unprivileged
+> user. However, any unprivileged user can get NET_RAW capability (as
+> demonstrated in the cover-letter code that I have attached in this
+> patch series) so this NET_RAW capability is available to any
+> unprivileged user on the host if the kernel has user-namespaces
+> available.
+>
+> With this patch-set applied, all that is needed is to flip a bit with
+> the sysctl (kernel.controlled_userns_caps_whitelist) as demonstrated
+> below -
+>
+> root@lphh6:~# uname -a
+> Linux lphh6 4.14.0-smp-DEV #97 SMP @1510203579 x86_64 GNU/Linux
+> root@lphh6:~# sysctl -q kernel.controlled_userns_caps_whitelist
+> kernel.controlled_userns_caps_whitelist = 1f,ffffffff
+>
+> Now when I run the program (demo from the cover-letter) as a normal
+> unprivileged user I can't create a RAW socket in init-ns but I can in
+> the child-ns.
+>
+> dumbo@lphh6:~$ /tmp/acquire_raw
+> Attempting to open RAW socket before unshare()...
+> socket() SOCK_RAW failed: : Operation not permitted
+> Attempting to open RAW socket after unshare()...
+> Successfully opened RAW-Sock after unshare().
+> dumbo@lphh6:~$
+>
+> Now as a root user. Take off CAP_NET_RAW
+>
+> root@lphh6:~# sysctl -w kernel.controlled_userns_caps_whitelist=1f,ffffdfff
+> kernel.controlled_userns_caps_whitelist = 1f,ffffdfff
+> root@lphh6:~#
+>
+> Now run the same program as an unprivileged user -
+>
+> dumbo@lphh6:~$ /tmp/acquire_raw
+> Attempting to open RAW socket before unshare()...
+> socket() SOCK_RAW failed: : Operation not permitted
+> Attempting to open RAW socket after unshare()...
+> socket() SOCK_RAW failed: : Operation not permitted
+> dumbo@lphh6:~$
+>
+> Notice that it has failed to create a raw socket in init and in child
+> namespace. It's not blocking creation of user-namespaces but allowing
+> admin turn individual capability bits on and off.
+>
+> This is very simplistic example of just demonstrating how capability
+> bits turn-on/off works. So let's assume a sandboxed environment where
+> we don't know what a binary that we are about run in an environment
+> which is identified as susceptible. By turning off the NET_RAW bit,
+> the admin gets an assurance that system is safe and if binary fails
+> because it's not getting this capability then that bad but a sad
+> consequence (without compromising the host integrity) but if it
+> doesn't use the NET_RAW capability but any other combination of
+> remaining 36 capabilities, it would get whatever is necessary. This
+> means we can safely allow processes to create user-namespaces by
+> taking off certain capabilities in question for temporary/extended
+> period until proper fix is applied without compromising the system
+> integrity. The impact will vary based on which capability is taken off
+> and admin would / should be ware of for the environment that he/she is
+> dealing with.
+
+My challenge with this reasoning is that I don't know that it meanifully
+generalizes to any other capability.
+
+I can in the sandbox today create a user namespace and then set
+max_net_namespaces to 0, and drop CAP_NET_RAW and that blocks
+the attack.  (Possibly with a little spice to prevent a suid root
+program from reacquiring CAP_NET_RAW).
+
+So while your solution doesn't look horrible especially if it can be
+done at a user namespace level so the restrictions can be limited to a
+single sandbox.  I am not at all certain that the capabilities is the
+proper place to limit code reachability.
+
+I would very much like to see which capabilities that are available with
+ns_capable, are more meaningful to limit than just dropping the
+capability during sandbox creation and denying the creation of the
+corresponding namespace.
+
+CAP_NET_RAW is one.  Are there any other capabilities that are
+meanginful to limit?
+
+Eric
