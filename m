@@ -1,85 +1,29 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: MPK: pkey_free and key reuse
-Date: Thu, 9 Nov 2017 15:48:26 +0100
-Message-ID: <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
-References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
+From: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH RFC v2 4/4] mm/mempolicy: add nodes_empty check in
+ SYSC_migrate_pages
+Date: Thu, 9 Nov 2017 09:46:42 -0600 (CST)
+Message-ID: <alpine.DEB.2.20.1711090946130.12483@nuc-kabylake>
+References: <1509099265-30868-1-git-send-email-xieyisheng1@huawei.com> <1509099265-30868-5-git-send-email-xieyisheng1@huawei.com> <dccbeccc-4155-94a8-0e67-b7c28238896d@suse.cz> <bc57f574-92f2-0b69-4717-a1ec7170387c@huawei.com> <d774ecf6-5e7b-e185-85a0-27bf2bcacfb4@suse.cz>
+ <alpine.DEB.2.20.1711060926001.9015@nuc-kabylake> <a4f1212f-3903-abbc-772a-1ddee6f7f98b@huawei.com> <alpine.DEB.2.20.1711070851560.18776@nuc-kabylake> <04e4cb50-8cba-58af-1a5e-61e818cffa70@suse.cz> <alpine.DEB.2.20.1711070948410.19176@nuc-kabylake>
+ <4b08f1e9-5449-6ea2-e7da-65fe5f678683@huawei.com> <alpine.DEB.2.20.1711080900050.6161@nuc-kabylake> <9991dd10-8883-7c82-bb4e-8145ea2b7299@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <9991dd10-8883-7c82-bb4e-8145ea2b7299-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andi Kleen <ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/08/2017 09:41 PM, Dave Hansen wrote:
-> On 11/05/2017 02:35 AM, Florian Weimer wrote:
->> I don't think pkey_free, as it is implemented today, is very safe due to
->> key reuse by a subsequent pkey_alloc.  I see two problems:
->>
->> (A) pkey_free allows reuse for they key while there are still mappings
->> that use it.
-> 
-> I don't agree with this assessment.  Is malloc() unsafe?  If someone
-> free()s memory that is still in use, a subsequent malloc() would hand
-> the address out again for reuse.
+On Thu, 9 Nov 2017, Yisheng Xie wrote:
 
-I think the disagreement is not about what is considered acceptable 
-behavior as such, but what constitutes “use”.
+> > The caller of migrate_pages should be able to migrate the target process
+> > pages anywhere the caller can allocate memory. If that is outside the
+> > target processes cpuset then that is fine. Pagecache pages that are not
+> > allocated by the target process already are not subject to the target
+> > processes restriction. So this is not that unusual.
+>
+> So there is no need to check the restriction of target process cpuset, right?
+> I hope that I do not miss anything :)
 
-And even if with concurrent use, the behavior can be well-defined.  We 
-make sure that if munmap is called, we do not return before all threads 
-have observed in principle that the page is gone (at considerable cost, 
-of course, and in most cases, that is total overkill).
-
-I'm pretty sure there is another key reuse scenario which does not even 
-involve pkey_free, but I need to write a test first.
-
->> (B) If a key is reused, existing threads retain their access rights,
->> while there is an expectation that pkey_alloc denies access for the
->> threads except the current one.
-> Where does this expectation come from?
-
-For me, it was the access_rights argument to pkey_alloc.  What else 
-would it do?  For the current thread, I can already set the rights with 
-a PKRU write, so the existence of the syscall argument is puzzling.
-
-> Using the malloc() analogy, we
-> don't expect that free() in one thread actively takes away references to
-> the memory held by other threads.
-
-But malloc/free isn't expected to be a partial antidote to random 
-pointer scribbling.
-
-> We define free() as only being called on resources to which there are no
-> active references.  If you free() things in use, bad things happen.
-> pkey_free() is only to be called when there is nothing actively using
-> the key.  If you pkey_free() an in-use key, bad things happen.
-
-My impression was that MPK was intended as a fallback in case you did 
-that, and unrelated code suddenly writes through a dangling pointer and 
-accidentally hits the DAX-mapped persistent memory of the database.  To 
-prevent that, the those pages are mapped write-disabled on all threads 
-almost all the time, and only if the database needs to write something, 
-it temporarily tweaks PKRU so that it gains access.  All that assumes 
-that you can actually restrict all threads in the process, but with the 
-current implementation, that's not true even if threads never touch keys 
-they don't know.
-
-I think we should either implement revoke on pkey_alloc, with a 
-broadcast to all threads (the pkey_set race can be closed by having a 
-vDSO for that an the revocation code can check %rip to see if the old 
-PKRU value needs to be fixed up).  Or we add the two pkey_alloc flags I 
-mentioned earlier.
-
-Thanks,
-Florian
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Exactly.
