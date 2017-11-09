@@ -1,64 +1,62 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: [PATCH RFC v3 5/7] proc: move hidepid definitions to proc files
-Date: Thu,  9 Nov 2017 17:14:04 +0100
-Message-ID: <1510244046-3256-6-git-send-email-tixxdz@gmail.com>
-References: <1510244046-3256-1-git-send-email-tixxdz@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1510244046-3256-1-git-send-email-tixxdz@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, me@tobin.cc, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, ebiederm@xmission.com, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, bfields@fieldses.org, Stephen Rothwell <sfr@canb.auug.org.au>, solar@openwall.com, Djalal Harouni <tixxdz@gmail.com>
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: MPK: pkey_free and key reuse
+Date: Thu, 9 Nov 2017 08:59:56 -0800
+Message-ID: <633b5b03-3481-0da2-9d6c-f5298902e36a@linux.intel.com>
+References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
+ <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
+ <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Florian Weimer <fweimer@redhat.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This moves the 'hidepid' definitions to proc files. The 'hidepid' is a
-proc mount option, not really a per pid namespace value. It was there
-since it was used inside PID namespaces, however now we have improved
-proc logic and reduce the complexity and ties with PID namespaces lets
-move this last bit to where it really belongs.
+On 11/09/2017 06:48 AM, Florian Weimer wrote:
+> On 11/08/2017 09:41 PM, Dave Hansen wrote:
+>>> (B) If a key is reused, existing threads retain their access rights,
+>>> while there is an expectation that pkey_alloc denies access for the
+>>> threads except the current one.
+>> Where does this expectation come from?
+> 
+> For me, it was the access_rights argument to pkey_alloc.  What else
+> would it do?  For the current thread, I can already set the rights with
+> a PKRU write, so the existence of the syscall argument is puzzling.
 
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>
-Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
----
- include/linux/pid_namespace.h | 6 ------
- include/linux/proc_fs.h       | 6 ++++++
- 2 files changed, 6 insertions(+), 6 deletions(-)
+The manpage is pretty bare here.  But the thought was that, in most
+cases, you will want to allocate a key and start using it immediately.
+This was in response to some feedback on one of the earlier reviews of
+the patch set.
 
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index 786ea04..66f47f1 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -15,12 +15,6 @@
- 
- struct fs_pin;
- 
--enum { /* definitions for pid_namespace's hide_pid field */
--	HIDEPID_OFF	  = 0,
--	HIDEPID_NO_ACCESS = 1,
--	HIDEPID_INVISIBLE = 2,
--};
--
- struct pid_namespace {
- 	struct kref kref;
- 	struct idr idr;
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 408b51d..c123e5ec 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -12,6 +12,12 @@
- struct proc_dir_entry;
- struct pid_namespace;
- 
-+enum { /* definitions for 'hidepid' mount option */
-+	HIDEPID_OFF	  = 0,
-+	HIDEPID_NO_ACCESS = 1,
-+	HIDEPID_INVISIBLE = 2,
-+};
-+
- struct proc_fs_info {
- 	struct pid_namespace *pid_ns;
- 	struct dentry *proc_self; /* For /proc/self/ */
--- 
-2.7.4
+>> Using the malloc() analogy, we
+>> don't expect that free() in one thread actively takes away references to
+>> the memory held by other threads.
+> 
+> But malloc/free isn't expected to be a partial antidote to random
+> pointer scribbling.
+
+Nor is protection keys intended to be an antidote for use-after-free.
+
+> I think we should either implement revoke on pkey_alloc, with a
+> broadcast to all threads (the pkey_set race can be closed by having a
+> vDSO for that an the revocation code can check %rip to see if the old
+> PKRU value needs to be fixed up).  Or we add the two pkey_alloc flags I
+> mentioned earlier.
+
+That sounds awfully complicated to put in-kernel.  I'd be happy to
+review the patches after you put them together once we see how it looks.
+
+You basically want threads to broadcast their PKRU values at pkey_free()
+time.  That's totally doable... in userspace.  You just need a mechanism
+for each thread to periodically check if they need an update.  I don't
+think we need kernel intervention and vDSO magic for that.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
