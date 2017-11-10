@@ -1,139 +1,143 @@
-From: Deepa Dinamani <deepa.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH 9/9] nanosleep: change time types to safe __kernel_* types
-Date: Fri, 10 Nov 2017 14:42:59 -0800
-Message-ID: <20171110224259.15930-10-deepa.kernel@gmail.com>
-References: <20171110224259.15930-1-deepa.kernel@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171110224259.15930-1-deepa.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.15 05/10] x86: Introduce
+ sync_core_before_usermode
+Date: Fri, 10 Nov 2017 23:13:50 +0000 (UTC)
+Message-ID: <641795751.13070.1510355630950.JavaMail.zimbra@efficios.com>
+References: <20171110213717.12457-1-mathieu.desnoyers@efficios.com> <20171110213717.12457-6-mathieu.desnoyers@efficios.com> <CALCETrWV+bgUPoS7NqVYhoi7hOyvsfoWw5CnyMrkYz=HYznmXQ@mail.gmail.com> <1007217384.13056.1510352430448.JavaMail.zimbra@efficios.com> <115800448.13060.1510353174125.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <115800448.13060.1510353174125.JavaMail.zimbra@efficios.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David
 List-Id: linux-api@vger.kernel.org
 
-Change over clock_nanosleep syscalls to use y2038 safe
-__kernel_timespec times. This will enable changing over
-of these syscalls to use new y2038 safe syscalls when
-the architectures define the CONFIG_64BIT_TIME.
+----- On Nov 10, 2017, at 5:32 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-Note that nanosleep syscall is deprecated and does not have a
-plan for making it y2038 safe. But, the syscall should work as
-before on 64 bit machines and on 32 bit machines, the syscall
-works correctly until y2038 as before using the existing compat
-syscall version. There is no new syscall for supporting 64 bit
-time_t on 32 bit architectures.
+> ----- On Nov 10, 2017, at 5:20 PM, Mathieu Desnoyers
+> mathieu.desnoyers@efficios.com wrote:
+> 
+>> ----- On Nov 10, 2017, at 5:02 PM, Andy Lutomirski luto@kernel.org wrote:
+>> 
+>>> On Fri, Nov 10, 2017 at 1:37 PM, Mathieu Desnoyers
+>>> <mathieu.desnoyers@efficios.com> wrote:
+>>>> Introduce an architecture function that ensures the current CPU
+>>>> issues a core serializing instruction before returning to usermode.
+>>>>
+>>>> This is needed to fix an existing core serialization bug on
+>>>> thread migration, and also needed by the membarrier "sync_core" command.
+>>>>
+>>>> Architectures defining the sync_core_before_usermode() static inline
+>>>> need to define ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
+>>>>
+>>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+>>>> CC: Peter Zijlstra <peterz@infradead.org>
+>>>> CC: Andy Lutomirski <luto@kernel.org>
+>>>> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+>>>> CC: Boqun Feng <boqun.feng@gmail.com>
+>>>> CC: Andrew Hunter <ahh@google.com>
+>>>> CC: Maged Michael <maged.michael@gmail.com>
+>>>> CC: Avi Kivity <avi@scylladb.com>
+>>>> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+>>>> CC: Paul Mackerras <paulus@samba.org>
+>>>> CC: Michael Ellerman <mpe@ellerman.id.au>
+>>>> CC: Dave Watson <davejwatson@fb.com>
+>>>> CC: Thomas Gleixner <tglx@linutronix.de>
+>>>> CC: Ingo Molnar <mingo@redhat.com>
+>>>> CC: "H. Peter Anvin" <hpa@zytor.com>
+>>>> CC: Andrea Parri <parri.andrea@gmail.com>
+>>>> CC: Russell King <linux@armlinux.org.uk>
+>>>> CC: Greg Hackmann <ghackmann@google.com>
+>>>> CC: Will Deacon <will.deacon@arm.com>
+>>>> CC: David Sehr <sehr@google.com>
+>>>> CC: Linus Torvalds <torvalds@linux-foundation.org>
+>>>> CC: x86@kernel.org
+>>>> CC: linux-arch@vger.kernel.org
+>>>> ---
+>>>>  arch/x86/Kconfig                 |  1 +
+>>>>  arch/x86/include/asm/processor.h | 10 ++++++++++
+>>>>  include/linux/processor.h        |  6 ++++++
+>>>>  3 files changed, 17 insertions(+)
+>>>>
+>>>> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+>>>> index 01f78c1d40b5..54fbb8960d94 100644
+>>>> --- a/arch/x86/Kconfig
+>>>> +++ b/arch/x86/Kconfig
+>>>> @@ -62,6 +62,7 @@ config X86
+>>>>         select ARCH_HAS_SG_CHAIN
+>>>>         select ARCH_HAS_STRICT_KERNEL_RWX
+>>>>         select ARCH_HAS_STRICT_MODULE_RWX
+>>>> +       select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+>>>>         select ARCH_HAS_UBSAN_SANITIZE_ALL
+>>>>         select ARCH_HAS_ZONE_DEVICE             if X86_64
+>>>>         select ARCH_HAVE_NMI_SAFE_CMPXCHG
+>>>> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+>>>> index bdac19ab2488..6ce996a7c730 100644
+>>>> --- a/arch/x86/include/asm/processor.h
+>>>> +++ b/arch/x86/include/asm/processor.h
+>>>> @@ -706,6 +706,16 @@ static inline void sync_core(void)
+>>>>  #endif
+>>>>  }
+>>>>
+>>>> +/*
+>>>> + * Ensure that a core serializing instruction is issued before returning
+>>>> + * to user-mode. x86 implements return to user-space through sysexit and
+>>>> + * sysretq, which are not core serializing.
+>>>> + */
+>>>> +static inline void sync_core_before_usermode(void)
+>>>> +{
+>>>> +       sync_core();
+>>>> +}
+>>> 
+>>> Make this if (!in_interrupt()) sync_core(); please.  We can optimize
+>>> it better later on.
+>> 
+>> Sure, done. It will be part of the next version of that patch.
+> 
+> Of course, using in_interrupt() from linux/interrupt.h from
+> asm/processor.h is not such a good idea (circular dependency).
+> 
+> Any recommendation on where to move that static inline on x86 ?
 
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Deepa Dinamani <deepa.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- include/linux/restart_block.h | 7 ++-----
- include/linux/syscalls.h      | 6 +++---
- kernel/time/hrtimer.c         | 4 ++--
- kernel/time/posix-stubs.c     | 4 ++--
- kernel/time/posix-timers.c    | 4 ++--
- 5 files changed, 11 insertions(+), 14 deletions(-)
+Actually, for the needs of the fix, I plan on not putting the
+if (!in_interrupt()) check, given that the only caller will
+be the scheduler, not in an interrupt context.
 
-diff --git a/include/linux/restart_block.h b/include/linux/restart_block.h
-index bcfdb918cd81..5d83d0c1d06c 100644
---- a/include/linux/restart_block.h
-+++ b/include/linux/restart_block.h
-@@ -7,6 +7,7 @@
- 
- #include <linux/compiler.h>
- #include <linux/types.h>
-+#include <linux/time64.h>
- 
- struct timespec;
- struct compat_timespec;
-@@ -15,9 +16,7 @@ struct pollfd;
- enum timespec_type {
- 	TT_NONE		= 0,
- 	TT_NATIVE	= 1,
--#ifdef CONFIG_COMPAT
- 	TT_COMPAT	= 2,
--#endif
- };
- 
- /*
-@@ -40,10 +39,8 @@ struct restart_block {
- 			clockid_t clockid;
- 			enum timespec_type type;
- 			union {
--				struct timespec __user *rmtp;
--#ifdef CONFIG_COMPAT
-+				struct __kernel_timespec __user *rmtp;
- 				struct compat_timespec __user *compat_rmtp;
--#endif
- 			};
- 			u64 expires;
- 		} nanosleep;
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 7ac1bb9ea7da..4df16a70b0d7 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -254,7 +254,7 @@ asmlinkage long sys_adjtimex(struct timex __user *txc_p);
- asmlinkage long sys_times(struct tms __user *tbuf);
- 
- asmlinkage long sys_gettid(void);
--asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __user *rmtp);
-+asmlinkage long sys_nanosleep(struct __kernel_timespec __user *rqtp, struct __kernel_timespec __user *rmtp);
- asmlinkage long sys_alarm(unsigned int seconds);
- asmlinkage long sys_getpid(void);
- asmlinkage long sys_getppid(void);
-@@ -317,8 +317,8 @@ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
- asmlinkage long sys_clock_getres(clockid_t which_clock,
- 				struct __kernel_timespec __user *tp);
- asmlinkage long sys_clock_nanosleep(clockid_t which_clock, int flags,
--				const struct timespec __user *rqtp,
--				struct timespec __user *rmtp);
-+				const struct __kernel_timespec __user *rqtp,
-+				struct __kernel_timespec __user *rmtp);
- 
- asmlinkage long sys_nice(int increment);
- asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index e7db66af5a23..ce6cbb687c47 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1541,8 +1541,8 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
- 	return ret;
- }
- 
--SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	struct timespec64 tu;
- 
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index 684d470dba2c..cdc5fed5f89b 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -114,8 +114,8 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_time
- }
- 
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
--		const struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+		const struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	struct timespec64 t;
- 
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index d482359bce1b..b8e1bf1aa00f 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1197,8 +1197,8 @@ static int common_nsleep(const clockid_t which_clock, int flags,
- }
- 
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
--		const struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+		const struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct timespec64 t;
+We can always revisit this optimization-wise if we end up
+using in interrupt handlers in the future.
+
+Is that ok with you ?
+
+Thanks,
+
+Mathieu
+
+
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> 
+>> 
+>> Thanks!
+>> 
+>> Mathieu
+>> 
+>> 
+>> --
+>> Mathieu Desnoyers
+>> EfficiOS Inc.
+>> http://www.efficios.com
+> 
+> --
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
+
 -- 
-2.11.0
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
