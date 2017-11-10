@@ -1,62 +1,86 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on
- migration
-Date: Fri, 10 Nov 2017 21:57:14 +0000 (UTC)
-Message-ID: <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com>
-References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com> <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [RFC PATCH for 4.15 05/10] x86: Introduce sync_core_before_usermode
+Date: Fri, 10 Nov 2017 14:02:41 -0800
+Message-ID: <CALCETrWV+bgUPoS7NqVYhoi7hOyvsfoWw5CnyMrkYz=HYznmXQ@mail.gmail.com>
+References: <20171110213717.12457-1-mathieu.desnoyers@efficios.com> <20171110213717.12457-6-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171110213717.12457-6-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 10, 2017, at 4:36 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org wrote:
+On Fri, Nov 10, 2017 at 1:37 PM, Mathieu Desnoyers
+<mathieu.desnoyers@efficios.com> wrote:
+> Introduce an architecture function that ensures the current CPU
+> issues a core serializing instruction before returning to usermode.
+>
+> This is needed to fix an existing core serialization bug on
+> thread migration, and also needed by the membarrier "sync_core" command.
+>
+> Architectures defining the sync_core_before_usermode() static inline
+> need to define ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
+>
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: Andy Lutomirski <luto@kernel.org>
+> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> CC: Boqun Feng <boqun.feng@gmail.com>
+> CC: Andrew Hunter <ahh@google.com>
+> CC: Maged Michael <maged.michael@gmail.com>
+> CC: Avi Kivity <avi@scylladb.com>
+> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+> CC: Paul Mackerras <paulus@samba.org>
+> CC: Michael Ellerman <mpe@ellerman.id.au>
+> CC: Dave Watson <davejwatson@fb.com>
+> CC: Thomas Gleixner <tglx@linutronix.de>
+> CC: Ingo Molnar <mingo@redhat.com>
+> CC: "H. Peter Anvin" <hpa@zytor.com>
+> CC: Andrea Parri <parri.andrea@gmail.com>
+> CC: Russell King <linux@armlinux.org.uk>
+> CC: Greg Hackmann <ghackmann@google.com>
+> CC: Will Deacon <will.deacon@arm.com>
+> CC: David Sehr <sehr@google.com>
+> CC: Linus Torvalds <torvalds@linux-foundation.org>
+> CC: x86@kernel.org
+> CC: linux-arch@vger.kernel.org
+> ---
+>  arch/x86/Kconfig                 |  1 +
+>  arch/x86/include/asm/processor.h | 10 ++++++++++
+>  include/linux/processor.h        |  6 ++++++
+>  3 files changed, 17 insertions(+)
+>
+> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> index 01f78c1d40b5..54fbb8960d94 100644
+> --- a/arch/x86/Kconfig
+> +++ b/arch/x86/Kconfig
+> @@ -62,6 +62,7 @@ config X86
+>         select ARCH_HAS_SG_CHAIN
+>         select ARCH_HAS_STRICT_KERNEL_RWX
+>         select ARCH_HAS_STRICT_MODULE_RWX
+> +       select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+>         select ARCH_HAS_UBSAN_SANITIZE_ALL
+>         select ARCH_HAS_ZONE_DEVICE             if X86_64
+>         select ARCH_HAVE_NMI_SAFE_CMPXCHG
+> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+> index bdac19ab2488..6ce996a7c730 100644
+> --- a/arch/x86/include/asm/processor.h
+> +++ b/arch/x86/include/asm/processor.h
+> @@ -706,6 +706,16 @@ static inline void sync_core(void)
+>  #endif
+>  }
+>
+> +/*
+> + * Ensure that a core serializing instruction is issued before returning
+> + * to user-mode. x86 implements return to user-space through sysexit and
+> + * sysretq, which are not core serializing.
+> + */
+> +static inline void sync_core_before_usermode(void)
+> +{
+> +       sync_core();
+> +}
 
-> On Fri, Nov 10, 2017 at 1:12 PM, Mathieu Desnoyers
-> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->> x86 can return to user-space through sysexit and sysretq, which are not
->> core serializing. This breaks expectations from user-space about
->> sequential consistency from a single-threaded self-modifying program
->> point of view in specific migration patterns.
->>
->> Feedback is welcome,
-> 
-> We should check with Intel. I would actually be surprised if the I$
-> can be out of sync with the D$ after a sysretq.  It would actually
-> break things like "read code from disk" too in theory.
-
-That core serializing instruction is not that much about I$ vs D$
-consistency, but rather about the processor speculatively executing code
-ahead of its retirement point. Ref. Intel Architecture Software Developer's
-Manual, Volume 3: System Programming.
-
-7.1.3. "Handling Self- and Cross-Modifying Code":
-
-"The act of a processor writing data into a currently executing code segment with the intent of
-executing that data as code is called self-modifying code. Intel Architecture processors exhibit
-model-specific behavior when executing self-modified code, depending upon how far ahead of
-the current execution pointer the code has been modified. As processor architectures become
-more complex and start to speculatively execute code ahead of the retirement point (as in the P6
-family processors), the rules regarding which code should execute, pre- or post-modification,
-become blurred. [...]"
-
-AFAIU, this core serializing instruction seems to be needed for use-cases of
-self-modifying code, but not for the initial load of a program from disk,
-as the processor has no way to have speculatively executed any of its
-instructions.
-
-Hopefully hpa can tell us more about this,
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Make this if (!in_interrupt()) sync_core(); please.  We can optimize
+it better later on.
