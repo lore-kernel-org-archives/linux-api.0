@@ -1,43 +1,99 @@
-From: Djalal Harouni <tixxdz@gmail.com>
-Subject: Re: [PATCH RFC v3 4/7] proc: support mounting private procfs
- instances inside same pid namespace
-Date: Fri, 10 Nov 2017 11:33:47 +0100
-Message-ID: <CAEiveUfOoQVNnq0tRVEDJsqBHX99uMHwK3eRJKneuh+ERo7D6w@mail.gmail.com>
-References: <1510244046-3256-1-git-send-email-tixxdz@gmail.com>
- <1510244046-3256-5-git-send-email-tixxdz@gmail.com> <alpine.LFD.2.20.1711101352580.8844@localhost>
+From: Alexey Dobriyan <adobriyan@gmail.com>
+Subject: Re: [PATCH RFC v3 3/7] proc: add helpers to set and get proc hidepid
+ and gid mount options
+Date: Fri, 10 Nov 2017 12:36:48 +0200
+Message-ID: <CACVxJT_cC1BZvfVxhNfa45zwUzO6=b6qef61XbnMaRLQmYtchg@mail.gmail.com>
+References: <1510244046-3256-1-git-send-email-tixxdz@gmail.com> <1510244046-3256-4-git-send-email-tixxdz@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.20.1711101352580.8844@localhost>
-Sender: linux-kernel-owner@vger.kernel.org
-To: James Morris <james.l.morris@oracle.com>
-Cc: Kees Cook <keescook@chromium.org>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, kernel-hardening@lists.openwall.com, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, "Tobin C. Harding" <me@tobin.cc>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-fo>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <1510244046-3256-4-git-send-email-tixxdz@gmail.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Djalal Harouni <tixxdz@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, me@tobin.cc, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, ebiederm@xmission.com, Linus Torvalds <torvalds@linux-foundation.org>, Daniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, bfields@fieldses.org, Stephen Rothwell <sfr@canb.auug.org.>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 10, 2017 at 3:53 AM, James Morris <james.l.morris@oracle.com> wrote:
-> On Thu, 9 Nov 2017, Djalal Harouni wrote:
->
->> This should allow later after real testing to have a smooth transition
->> to a procfs with default private instances.
->>
->> [1] https://lists.linuxfoundation.org/pipermail/ksummit-discuss/2017-January/004215.html
->> [2] http://www.openwall.com/lists/kernel-hardening/2017/10/05/5
->> [3] https://lwn.net/Articles/689539/
->> [4] http://lxr.free-electrons.com/source/Documentation/filesystems/devpts.txt?v=3.14
->> [5] https://lkml.org/lkml/2017/5/2/407
->> [6] https://lkml.org/lkml/2017/5/3/357
->>
->> Cc: Kees Cook <keescook@chromium.org>
->> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
->> Suggested-by: Andy Lutomirski <luto@kernel.org>
->> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
->> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
->
->
-> Reviewed-by: James Morris <james.l.morris@oracle.com>
+On 11/9/17, Djalal Harouni <tixxdz@gmail.com> wrote:
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
 
-Thank you James!
+> -static bool has_pid_permissions(struct pid_namespace *pid,
+> +static bool has_pid_permissions(struct proc_fs_info *fs_info,
+
+More "const".
+
+> diff --git a/fs/proc/inode.c b/fs/proc/inode.c
+> index 9abc370..bdd808d 100644
+> --- a/fs/proc/inode.c
+> +++ b/fs/proc/inode.c
+> @@ -476,11 +476,12 @@ struct inode *proc_get_inode(struct super_block *sb,
+> struct proc_dir_entry *de)
+>  int proc_fill_super(struct super_block *s, void *data, int silent)
+>  {
+>  	struct proc_fs_info *fs_info = proc_sb(s);
+> -	struct pid_namespace *ns = get_pid_ns(fs_info->pid_ns);
+>  	struct inode *root_inode;
+>  	int ret;
+>
+> -	if (!proc_parse_options(data, ns))
+> +	get_pid_ns(fs_info->pid_ns);
+> +
+> +	if (!proc_parse_options(data, fs_info))
+>  		return -EINVAL;
+>
+>  	/* User space would break if executables or devices appear on proc */
+> diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+> index 4a67188..10bc7be 100644
+> --- a/fs/proc/internal.h
+> +++ b/fs/proc/internal.h
+> @@ -240,7 +240,7 @@ static inline void proc_tty_init(void) {}
+>   * root.c
+>   */
+>  extern struct proc_dir_entry proc_root;
+> -extern int proc_parse_options(char *options, struct pid_namespace *pid);
+> +extern int proc_parse_options(char *options, struct proc_fs_info
+> *fs_info);
+
+"extern" can be dropped if you're touching prototype anyway.
 
 
--- 
-tixxdz
+
+> +static inline int proc_fs_hide_pid(struct proc_fs_info *fs_info)
+> +{
+> +	return fs_info->pid_ns->hide_pid;
+> +}
+> +
+> +static inline kgid_t proc_fs_pid_gid(struct proc_fs_info *fs_info)
+> +{
+> +	return fs_info->pid_ns->pid_gid;
+> +}
+
+More "const".
+
+> @@ -59,6 +81,24 @@ static inline void proc_flush_task(struct task_struct
+> *task)
+>  {
+>  }
+>
+> +static inline void proc_fs_set_hide_pid(struct proc_fs_info *fs_info, int
+> hide_pid)
+> +{
+> +}
+> +
+> +static inline void proc_fs_set_pid_gid(struct proc_info_fs *fs_info, kgid_t
+> gid)
+> +{
+> +}
+> +
+> +static inline int proc_fs_hide_pid(struct proc_fs_info *fs_info)
+> +{
+> +	return 0;
+> +}
+> +
+> +extern kgid_t proc_fs_pid_gid(struct proc_fs_info *fs_info)
+
+ehh?
+
+> +{
+> +	return GLOBAL_ROOT_GID;
+> +}
