@@ -1,122 +1,148 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.15 05/10] x86: Introduce
- sync_core_before_usermode
-Date: Fri, 10 Nov 2017 22:39:25 +0000 (UTC)
-Message-ID: <82389374.13067.1510353565472.JavaMail.zimbra@efficios.com>
-References: <20171110213717.12457-1-mathieu.desnoyers@efficios.com> <20171110213717.12457-6-mathieu.desnoyers@efficios.com> <CALCETrWV+bgUPoS7NqVYhoi7hOyvsfoWw5CnyMrkYz=HYznmXQ@mail.gmail.com> <1007217384.13056.1510352430448.JavaMail.zimbra@efficios.com> <FC7466BE-FDEE-4FB8-ADA5-98C38050F7DF@amacapital.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <FC7466BE-FDEE-4FB8-ADA5-98C38050F7DF@amacapital.net>
-Sender: linux-arch-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Andy Lutomirski <luto@kernel.org>, Boqun Feng <boqun.feng@gmail.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: [PATCH 0/9] posix_clocks: Prepare syscalls for 64 bit time_t conversion
+Date: Fri, 10 Nov 2017 14:42:50 -0800
+Message-ID: <20171110224259.15930-1-deepa.kernel@gmail.com>
+Return-path: <linux-parisc-owner@vger.kernel.org>
+Sender: linux-parisc-owner@vger.kernel.org
+To: tglx@linutronix.de, john.stultz@linaro.org
+Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, acme@kernel.org, benh@kernel.crashing.org, borntraeger@de.ibm.com, catalin.marinas@arm.com, cmetcalf@mellanox.com, cohuck@redhat.com, davem@davemloft.net, deller@gmx.de, devel@driverdev.osuosl.org, gerald.schaefer@de.ibm.com, gregkh@linuxfoundation.org, heiko.carstens@de.ibm.com, hoeppner@linux.vnet.ibm.com, hpa@zytor.com, jejb@parisc-linux.org, jwi@linux.vnet.ibm.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, mark.rutland@arm.com, mingo@redhat.com, mpe@ellerman.id.au, oberpar@linux.vnet.ibm.com, oprofile-list@lists.sf.net, paulus@samba.org, peterz@infradead.org, ralf@linux-mips.org
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 10, 2017, at 5:36 PM, Andy Lutomirski luto@amacapital.net wrote:
+The series is a preparation series for individual architectures
+to use 64 bit time_t syscalls in compat and 32 bit emulation modes.
 
->> On Nov 10, 2017, at 2:20 PM, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
->> wrote:
->> 
->> ----- On Nov 10, 2017, at 5:02 PM, Andy Lutomirski luto@kernel.org wrote:
->> 
->>> On Fri, Nov 10, 2017 at 1:37 PM, Mathieu Desnoyers
->>> <mathieu.desnoyers@efficios.com> wrote:
->>>> Introduce an architecture function that ensures the current CPU
->>>> issues a core serializing instruction before returning to usermode.
->>>> 
->>>> This is needed to fix an existing core serialization bug on
->>>> thread migration, and also needed by the membarrier "sync_core" command.
->>>> 
->>>> Architectures defining the sync_core_before_usermode() static inline
->>>> need to define ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
->>>> 
->>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
->>>> CC: Peter Zijlstra <peterz@infradead.org>
->>>> CC: Andy Lutomirski <luto@kernel.org>
->>>> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
->>>> CC: Boqun Feng <boqun.feng@gmail.com>
->>>> CC: Andrew Hunter <ahh@google.com>
->>>> CC: Maged Michael <maged.michael@gmail.com>
->>>> CC: Avi Kivity <avi@scylladb.com>
->>>> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
->>>> CC: Paul Mackerras <paulus@samba.org>
->>>> CC: Michael Ellerman <mpe@ellerman.id.au>
->>>> CC: Dave Watson <davejwatson@fb.com>
->>>> CC: Thomas Gleixner <tglx@linutronix.de>
->>>> CC: Ingo Molnar <mingo@redhat.com>
->>>> CC: "H. Peter Anvin" <hpa@zytor.com>
->>>> CC: Andrea Parri <parri.andrea@gmail.com>
->>>> CC: Russell King <linux@armlinux.org.uk>
->>>> CC: Greg Hackmann <ghackmann@google.com>
->>>> CC: Will Deacon <will.deacon@arm.com>
->>>> CC: David Sehr <sehr@google.com>
->>>> CC: Linus Torvalds <torvalds@linux-foundation.org>
->>>> CC: x86@kernel.org
->>>> CC: linux-arch@vger.kernel.org
->>>> ---
->>>> arch/x86/Kconfig                 |  1 +
->>>> arch/x86/include/asm/processor.h | 10 ++++++++++
->>>> include/linux/processor.h        |  6 ++++++
->>>> 3 files changed, 17 insertions(+)
->>>> 
->>>> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
->>>> index 01f78c1d40b5..54fbb8960d94 100644
->>>> --- a/arch/x86/Kconfig
->>>> +++ b/arch/x86/Kconfig
->>>> @@ -62,6 +62,7 @@ config X86
->>>>        select ARCH_HAS_SG_CHAIN
->>>>        select ARCH_HAS_STRICT_KERNEL_RWX
->>>>        select ARCH_HAS_STRICT_MODULE_RWX
->>>> +       select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
->>>>        select ARCH_HAS_UBSAN_SANITIZE_ALL
->>>>        select ARCH_HAS_ZONE_DEVICE             if X86_64
->>>>        select ARCH_HAVE_NMI_SAFE_CMPXCHG
->>>> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
->>>> index bdac19ab2488..6ce996a7c730 100644
->>>> --- a/arch/x86/include/asm/processor.h
->>>> +++ b/arch/x86/include/asm/processor.h
->>>> @@ -706,6 +706,16 @@ static inline void sync_core(void)
->>>> #endif
->>>> }
->>>> 
->>>> +/*
->>>> + * Ensure that a core serializing instruction is issued before returning
->>>> + * to user-mode. x86 implements return to user-space through sysexit and
->>>> + * sysretq, which are not core serializing.
->>>> + */
->>>> +static inline void sync_core_before_usermode(void)
->>>> +{
->>>> +       sync_core();
->>>> +}
->>> 
->>> Make this if (!in_interrupt()) sync_core(); please.  We can optimize
->>> it better later on.
->> 
->> Sure, done. It will be part of the next version of that patch.
->> 
->> Thanks!
-> 
-> Hmm.  Can you also cc stable and make sure it applies by itself?
+This is a follow up to the series Arnd Bergmann posted:
+https://sourceware.org/ml/libc-alpha/2015-05/msg00070.html
 
-Do you mean merging both this patch and the fix into a single patch ?
+Big picture is as per the lwn article:
+https://lwn.net/Articles/643234/
 
-> 
->> 
->> Mathieu
->> 
->> 
->> --
->> Mathieu Desnoyers
->> EfficiOS Inc.
->> http://www.efficios.com
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-api" in
->> the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+The series is directed at converting posix clock syscalls:
+clock_gettime, clock_settime, clock_getres and clock_nanosleep
+to use a new data structure __kernel_timespec at syscall boundaries.
+__kernel_timespec maintains 64 bit time_t across all execution modes.
 
+vdso will be handled as part of each architecture when they enable
+support for 64 bit time_t.
+
+The compat syscalls are repurposed to provide backward compatibility
+by using them as native syscalls as well for 32 bit architectures.
+They will continue to use timespec at syscall boundaries.
+
+CONFIG_64_BIT_TIME controls whether the syscalls use __kernel_timespec
+or timespec at syscall boundaries.
+
+The series does the following:
+1. Enable compat syscalls unconditionally.
+2. Add a new __kernel_timespec type to be used as the data structure
+   for all the new syscalls.
+3. Add new config CONFIG_64BIT_TIME(intead of the CONFIG_COMPAT_TIME in
+   [1] and [2] to switch to new definition of __kernel_timespec. It is
+   the same as struct timespec otherwise.
+
+Arnd Bergmann (1):
+  y2038: introduce CONFIG_64BIT_TIME
+
+Deepa Dinamani (8):
+  include: Move compat_timespec/ timeval to compat_time.h
+  compat: Make compat helpers independent of CONFIG_COMPAT
+  compat: enable compat_get/put_timespec64 always
+  posix-clocks: Enable compat syscalls always
+  include: Add new y2038 safe __kernel_timespec
+  fix get_timespec64() for y2038 safe compat interfaces
+  change time types to new y2038 safe __kernel_* types
+  nanosleep: change time types to safe __kernel_* types
+
+ arch/Kconfig                           | 11 ++++
+ arch/arm64/include/asm/compat.h        | 11 ----
+ arch/arm64/include/asm/stat.h          |  1 +
+ arch/arm64/kernel/hw_breakpoint.c      |  1 -
+ arch/arm64/kernel/perf_regs.c          |  2 +-
+ arch/arm64/kernel/process.c            |  1 -
+ arch/mips/include/asm/compat.h         | 11 ----
+ arch/mips/kernel/signal32.c            |  2 +-
+ arch/parisc/include/asm/compat.h       | 11 ----
+ arch/powerpc/include/asm/compat.h      | 11 ----
+ arch/powerpc/kernel/asm-offsets.c      |  2 +-
+ arch/powerpc/oprofile/backtrace.c      |  2 +-
+ arch/s390/hypfs/hypfs_sprp.c           |  1 -
+ arch/s390/include/asm/compat.h         | 11 ----
+ arch/s390/include/asm/elf.h            |  3 +-
+ arch/s390/kvm/priv.c                   |  1 -
+ arch/s390/pci/pci_clp.c                |  1 -
+ arch/sparc/include/asm/compat.h        | 11 ----
+ arch/tile/include/asm/compat.h         | 11 ----
+ arch/x86/events/core.c                 |  2 +-
+ arch/x86/include/asm/compat.h          | 11 ----
+ arch/x86/include/asm/ftrace.h          |  2 +-
+ arch/x86/include/asm/sys_ia32.h        |  2 +-
+ arch/x86/kernel/sys_x86_64.c           |  2 +-
+ drivers/s390/block/dasd_ioctl.c        |  1 -
+ drivers/s390/char/fs3270.c             |  1 -
+ drivers/s390/char/sclp_ctl.c           |  1 -
+ drivers/s390/char/vmcp.c               |  1 -
+ drivers/s390/cio/chsc_sch.c            |  1 -
+ drivers/s390/net/qeth_core_main.c      |  2 +-
+ drivers/staging/pi433/pi433_if.c       |  2 +-
+ include/linux/compat.h                 |  7 ++-
+ include/linux/compat_time.h            | 23 +++++++++
+ include/linux/restart_block.h          |  7 +--
+ include/linux/syscalls.h               | 12 ++---
+ include/linux/time.h                   |  4 +-
+ include/linux/time64.h                 | 10 +++-
+ include/uapi/asm-generic/posix_types.h |  1 +
+ include/uapi/linux/time.h              |  7 +++
+ kernel/Makefile                        |  2 +-
+ kernel/compat.c                        | 92 ++++++++++++++++++----------------
+ kernel/time/hrtimer.c                  |  7 +--
+ kernel/time/posix-stubs.c              | 12 ++---
+ kernel/time/posix-timers.c             | 20 ++++----
+ kernel/time/time.c                     | 10 +++-
+ 45 files changed, 152 insertions(+), 195 deletions(-)
+ create mode 100644 include/linux/compat_time.h
+
+
+base-commit: d9e0e63d9a6f88440eb201e1491fcf730272c706
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.11.0
+
+Cc: acme@kernel.org
+Cc: benh@kernel.crashing.org
+Cc: borntraeger@de.ibm.com
+Cc: catalin.marinas@arm.com
+Cc: cmetcalf@mellanox.com
+Cc: cohuck@redhat.com
+Cc: davem@davemloft.net
+Cc: deller@gmx.de
+Cc: devel@driverdev.osuosl.org
+Cc: gerald.schaefer@de.ibm.com
+Cc: gregkh@linuxfoundation.org
+Cc: heiko.carstens@de.ibm.com
+Cc: hoeppner@linux.vnet.ibm.com
+Cc: hpa@zytor.com
+Cc: jejb@parisc-linux.org
+Cc: jwi@linux.vnet.ibm.com
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-mips@linux-mips.org
+Cc: linux-parisc@vger.kernel.org
+Cc: linuxppc-dev@lists.ozlabs.org
+Cc: linux-s390@vger.kernel.org
+Cc: mark.rutland@arm.com
+Cc: mingo@redhat.com
+Cc: mpe@ellerman.id.au
+Cc: oberpar@linux.vnet.ibm.com
+Cc: oprofile-list@lists.sf.net
+Cc: paulus@samba.org
+Cc: peterz@infradead.org
+Cc: ralf@linux-mips.org
+Cc: rostedt@goodmis.org
+Cc: rric@kernel.org
+Cc: schwidefsky@de.ibm.com
+Cc: sebott@linux.vnet.ibm.com
+Cc: sparclinux@vger.kernel.org
+Cc: sth@linux.vnet.ibm.com
+Cc: ubraun@linux.vnet.ibm.com
+Cc: will.deacon@arm.com
+Cc: x86@kernel.org
