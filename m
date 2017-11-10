@@ -1,127 +1,145 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [RFC PATCH for 4.15 5/6] membarrier: x86: Provide core
- serializing command
-Date: Thu, 9 Nov 2017 17:19:34 -0800
-Message-ID: <CALCETrUqGBe7S0RvAtk19vAry4bEHS09JwkhqgNTpAmw=rK2Yw@mail.gmail.com>
-References: <20171108183514.3306-1-mathieu.desnoyers@efficios.com>
- <20171108183514.3306-6-mathieu.desnoyers@efficios.com> <CALCETrX4vZHxkWhLKBebZ+R_UE8pDsmVbpJzpyPt=ZgZB8w8iQ@mail.gmail.com>
- <452803516.12441.1510256125252.JavaMail.zimbra@efficios.com>
+From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
+        <maheshb@google.com>
+Subject: Re: [PATCH resend 2/2] userns: control capabilities of some user namespaces
+Date: Fri, 10 Nov 2017 10:49:58 +0900
+Message-ID: <CAF2d9jir4WF=YyBVbAM=WAopYukcZz_==0+LtKepv8Qv8UNaEw@mail.gmail.com>
+References: <20171103004436.40026-1-mahesh@bandewar.net> <20171109172544.GB26229@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <452803516.12441.1510256125252.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20171109172544.GB26229@mail.hallyn.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Andy Lutomirski <luto@kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, gromer <gromer@google.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, x86 <x86@kernel.org>
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 9, 2017 at 11:35 AM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
-> ----- On Nov 9, 2017, at 2:07 PM, Andy Lutomirski luto@kernel.org wrote:
->
->> On Wed, Nov 8, 2017 at 10:35 AM, Mathieu Desnoyers
->> <mathieu.desnoyers@efficios.com> wrote:
+On Fri, Nov 10, 2017 at 2:25 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> Quoting Mahesh Bandewar (mahesh@bandewar.net):
+>> From: Mahesh Bandewar <maheshb@google.com>
 >>
->>> +/*
->>> + * x86-64 implements return to user-space through sysret, which is not a
->>> + * core-serializing instruction. Therefore, we need an explicit core
->>> + * serializing instruction after going from kernel thread back to
->>> + * user-space thread (active_mm moved back to current mm).
->>> + */
->>> +static inline void membarrier_arch_mm_sync_core(struct mm_struct *mm)
->>> +{
->>> +       if (likely(!(atomic_read(&mm->membarrier_state) &
->>> +                       MEMBARRIER_STATE_SYNC_CORE)))
->>> +               return;
->>> +       sync_core();
->>> +}
+>> With this new notion of "controlled" user-namespaces, the controlled
+>> user-namespaces are marked at the time of their creation while the
+>> capabilities of processes that belong to them are controlled using the
+>> global mask.
 >>
->> IMO there should be an extremely clear specification somewhere for
->> what this function is supposed to do.
+>> Init-user-ns is always uncontrolled and a process that has SYS_ADMIN
+>> that belongs to uncontrolled user-ns can create another (child) user-
+>> namespace that is uncontrolled. Any other process (that either does
+>> not have SYS_ADMIN or belongs to a controlled user-ns) can only
+>> create a user-ns that is controlled.
 >>
->> If I remember correctly, it's supposed to promise that the icache is
->> synced before the next time we return to usermode for the current mm
->> on this CPU.  If that's correct, then let's document it very
->> explicitly and let's also drop the "membarrier" from the name -- it's
->> a primitive we'll need anyway given the existing migration bug.
+>> global-capability-whitelist (controlled_userns_caps_whitelist) is used
+>> at the capability check-time and keeps the semantics for the processes
+>> that belong to uncontrolled user-ns as it is. Processes that belong to
+>> controlled user-ns however are subjected to different checks-
+>>
+>>    (a) if the capability in question is controlled and process belongs
+>>        to controlled user-ns, then it's always denied.
+>>    (b) if the capability in question is NOT controlled then fall back
+>>        to the traditional check.
+>>
+>> Signed-off-by: Mahesh Bandewar <maheshb@google.com>
+>> ---
+>>  include/linux/capability.h     |  1 +
+>>  include/linux/user_namespace.h | 20 ++++++++++++++++++++
+>>  kernel/capability.c            |  5 +++++
+>>  kernel/user_namespace.c        |  3 +++
+>>  security/commoncap.c           |  8 ++++++++
+>>  5 files changed, 37 insertions(+)
+>>
+>> diff --git a/include/linux/capability.h b/include/linux/capability.h
+>> index 6c0b9677c03f..b8c6cac18658 100644
+>> --- a/include/linux/capability.h
+>> +++ b/include/linux/capability.h
+>> @@ -250,6 +250,7 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
+>>  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+>>  int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+>>                                void __user *buff, size_t *lenp, loff_t *ppos);
+>> +bool is_capability_controlled(int cap);
+>>
+>>  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
+>>
+>> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+>> index c18e01252346..e890fe81b47e 100644
+>> --- a/include/linux/user_namespace.h
+>> +++ b/include/linux/user_namespace.h
+>> @@ -22,6 +22,7 @@ struct uid_gid_map {        /* 64 bytes -- 1 cache line */
+>>  };
+>>
+>>  #define USERNS_SETGROUPS_ALLOWED 1UL
+>> +#define USERNS_CONTROLLED     2UL
+>>
+>>  #define USERNS_INIT_FLAGS USERNS_SETGROUPS_ALLOWED
+>>
+>> @@ -102,6 +103,16 @@ static inline void put_user_ns(struct user_namespace *ns)
+>>               __put_user_ns(ns);
+>>  }
+>>
+>> +static inline bool is_user_ns_controlled(const struct user_namespace *ns)
+>> +{
+>> +     return ns->flags & USERNS_CONTROLLED;
+>> +}
+>> +
+>> +static inline void mark_user_ns_controlled(struct user_namespace *ns)
+>> +{
+>> +     ns->flags |= USERNS_CONTROLLED;
+>> +}
+>> +
+>>  struct seq_operations;
+>>  extern const struct seq_operations proc_uid_seq_operations;
+>>  extern const struct seq_operations proc_gid_seq_operations;
+>> @@ -160,6 +171,15 @@ static inline struct ns_common *ns_get_owner(struct ns_common *ns)
+>>  {
+>>       return ERR_PTR(-EPERM);
+>>  }
+>> +
+>> +static inline bool is_user_ns_controlled(const struct user_namespace *ns)
+>> +{
+>> +     return false;
+>> +}
+>> +
+>> +static inline void mark_user_ns_controlled(struct user_namespace *ns)
+>> +{
+>> +}
+>>  #endif
+>>
+>>  #endif /* _LINUX_USER_H */
+>> diff --git a/kernel/capability.c b/kernel/capability.c
+>> index 62dbe3350c1b..40a38cc4ff43 100644
+>> --- a/kernel/capability.c
+>> +++ b/kernel/capability.c
+>> @@ -510,6 +510,11 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
+>>  }
+>>
+>>  /* Controlled-userns capabilities routines */
+>> +bool is_capability_controlled(int cap)
+>> +{
+>> +     return !cap_raised(controlled_userns_caps_whitelist, cap);
+>> +}
+>> +
+>>  #ifdef CONFIG_SYSCTL
+>>  int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+>>                                void __user *buff, size_t *lenp, loff_t *ppos)
+>> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+>> index c490f1e4313b..f393ea5108f0 100644
+>> --- a/kernel/user_namespace.c
+>> +++ b/kernel/user_namespace.c
+>> @@ -53,6 +53,9 @@ static void set_cred_user_ns(struct cred *cred, struct user_namespace *user_ns)
+>>       cred->cap_effective = CAP_FULL_SET;
+>>       cred->cap_ambient = CAP_EMPTY_SET;
+>>       cred->cap_bset = CAP_FULL_SET;
+>> +     if (!ns_capable(user_ns->parent, CAP_SYS_ADMIN) ||
+>> +         is_user_ns_controlled(user_ns->parent))
+>> +             mark_user_ns_controlled(user_ns);
 >
-> I understand that on x86 (specifically), synchronizing the icache and
-> doing a core serializing instruction may mean the same thing.
+> Hm, why do this here, rather than at create_user_ns()? It
+> shouldn't be recalculated when someone does setns() should it?
 >
-> However, on architectures like ARM, icache sync differs from core
-> serialization. Those architectures typically have either a user-space
-> accessible instruction or a system call to perform the icache flush.
-> The missing part for JIT is core serialization (also called context
-> synchronization). icache flush is already handled by pre-existing
-> means.
+You are absolutely right! It doesn't make sense to recalculate for
+every setns() call. It's a side effect of couple of iterations /
+approaches that I tried before finalizing this one. I'll move this
+block to create_user_ns() after the set_cred_user_ns() call so that
+this wont be triggered in setns() path.
 
-Can you explain what "core serialization" means for the non-ARM-using
-dummies in the audience? :)  That is, what does it actually guarantee.
-
->
-> So the promise here given by membarrier_arch_mm_sync_core() is that
-> a core serializing instruction is issued before the next time we return
-> to usermode on the current thread. However, we only need that guarantee
-> if the current thread's mm is a registered MEMBARRIER_{...}_SYNC_CORE user.
-
-Why not make is so that it guarantees core serialization before the
-next time we return to usermode on the current thread regardless of
-membarrier details and to push the membarrier details into the caller?
- Also, do you really mean "current thread" or do you mean "current
-mm", perhaps, or even "current CPU"?  The latter makes the most sense
-to me.
-
->
-> Regarding the existing migration bug, what I think you want is a kind
-> of weaker "sync_core()", which ensures that a core serializing
-> instruction is issued before the next time the current thread returns
-> to usermode.
-
-ISTM that would also satisfy membarrier's needs.
-
->
-> It could be e.g.: set_tsk_need_core_sync() which would set a
-> TIF_NEED_CORE_SYNC thread flag on the current thread.
-
-Nah, only x86 and maybe power are weird enough to need thread info
-flags.  Let's keep implementation details like that out of the
-interface.
-
-> What I suggest is that I update the comment above
-> membarrier_arch_mm_sync_core to spell out more clearly that all we
-> need is to have a core serializing instruction issued before the next
-> time the current thread returns to user-space.
-
-I would want more justification before x86 adds the "current thread"
-mechanism.  x86 has an existing bug that needs fixing.  Once that bug
-is fixed, I think you don't need anything that follows the thread
-around if it migrates before the core sync happens.  With that bug
-unfixed, I think this whole exercise is pointless on x86 -- we're
-already buggy, and your series doesn't actually fix the bug.
-
-> I can still use
-> sync_core for now, and we can then improve the implementation
-> whenever a new thread flag is introduced. The new comment would look
-> like:
->
-> /*
->  * x86-64 implements return to user-space through sysret, which is not a
->  * core-serializing instruction. Therefore, we need an explicit core
->  * serializing instruction after going from kernel thread back to
->  * user-space thread (active_mm moved back to current mm).
->  *
->  * This function ensures that a core serializing instruction is issued
->  * before the current thread returns to user-space.
->  */
->
-
-What I'm suggesting is that you put something like the second
-paragraph into the generic header.  But I still think that acting on
-the current *thread* is a mistake.  On any architecture where you sync
-a thread properly but then get unsynced on migration, you have a
-problem just like x86 has now.  Once we've logically synced a thread,
-I think it needs to remain synced regardless of migration.  Also, what
-happens to all the other non-running threads that belong to the same
-mm?  I.e. what's at all special about current?
-
---Andy
+Thanks,
+--mahesh..
