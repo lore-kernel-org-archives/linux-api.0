@@ -1,160 +1,175 @@
-From: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-Subject: [PATCHv3 resend] uapi libc compat: add fallback for unsupported libcs
-Date: Sun, 12 Nov 2017 13:30:17 -0500
-Message-ID: <20171112183017.GA8431@nyan>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Subject: Re: [RFC PATCH v2] Fix: x86: Add missing core serializing
+ instruction on migration
+Date: Mon, 13 Nov 2017 10:26:04 +1100
+Message-ID: <1510529164.12797.41.camel@kernel.crashing.org>
+References: <20171111150357.26072-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, musl-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org, Hauke Mehrtens <hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Florian Fainelli <f.fainelli-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20171111150357.26072-1-mathieu.desnoyers@efficios.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andy Lutomirski <luto@kernel.org>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David Sehr <sehr@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, linux-arch@vger.kernel.org, stable@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-libc-compat.h aims to prevent symbol collisions between uapi and libc
-headers for each supported libc. This requires continuous coordination
-between them.
+On Sat, 2017-11-11 at 10:03 -0500, Mathieu Desnoyers wrote:
+> x86 has a missing core serializing instruction in migration scenarios.
+> 
+> Given that x86-32 can return to user-space with sysexit, and x86-64
+> through sysretq and sysretl, which are not core serializing, the
+> following user-space self-modifiying code (JIT) scenario can occur:
 
-The goal of this commit is to improve the situation for libcs (such as
-musl) which are not yet supported and/or do not wish to be explicitly
-supported, while not affecting supported libcs. More precisely, with
-this commit, unsupported libcs can request the suppression of any
-specific uapi definition by defining the correspondings _UAPI_DEF_*
-macro as 0. This can fix symbol collisions for them, as long as the
-libc headers are included before the uapi headers. Inclusion in the
-other order is outside the scope of this commit.
+Is this about load/store consistency ? In this case, don't you also
+have problems with get/put_user and not just going to userspace ?
 
-All infrastructure in order to enable this fallback for unsupported
-libcs is already in place, except that libc-compat.h unconditionally
-defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
-any previous definitions are ignored. In order to fix this, this commit
-merely makes these definitions conditional.
-
-This commit together with the musl libc commit
-
-http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
-
-fixes for example the following compiler errors when <linux/in6.h> is
-included after musl's <netinet/in.h>:
-
-./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
-./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
-./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
-
-Signed-off-by: Felix Janda <felix.janda-1KBjaw7Xf1+zQB+pC5nmwQ@public.gmane.org>
-Reviewed-by: Hauke Mehrtens <hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>
----
-v3: Fix typos, add a comment to the file and use #ifndef.
-v2: The only change to the previous version is the commit title and
-    message.
----
- include/uapi/linux/libc-compat.h | 55 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 54 insertions(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
-index 44b8a6bd5fe1..65db6b26d790 100644
---- a/include/uapi/linux/libc-compat.h
-+++ b/include/uapi/linux/libc-compat.h
-@@ -167,46 +167,99 @@
- 
- /* If we did not see any headers from any supported C libraries,
-  * or we are being included in the kernel, then define everything
-- * that we need. */
-+ * that we need. Check for previous __UAPI_* definitions to give
-+ * unsupported C libraries a way to opt out of any kernel definition. */
- #else /* !defined(__GLIBC__) */
- 
- /* Definitions for if.h */
-+#ifndef __UAPI_DEF_IF_IFCONF
- #define __UAPI_DEF_IF_IFCONF 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFMAP
- #define __UAPI_DEF_IF_IFMAP 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFNAMSIZ
- #define __UAPI_DEF_IF_IFNAMSIZ 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFREQ
- #define __UAPI_DEF_IF_IFREQ 1
-+#endif
- /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
-+#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS
- #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
-+#endif
- /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
-+#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO
- #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
-+#endif
- 
- /* Definitions for in.h */
-+#ifndef __UAPI_DEF_IN_ADDR
- #define __UAPI_DEF_IN_ADDR		1
-+#endif
-+#ifndef __UAPI_DEF_IN_IPPROTO
- #define __UAPI_DEF_IN_IPPROTO		1
-+#endif
-+#ifndef __UAPI_DEF_IN_PKTINFO
- #define __UAPI_DEF_IN_PKTINFO		1
-+#endif
-+#ifndef __UAPI_DEF_IP_MREQ
- #define __UAPI_DEF_IP_MREQ		1
-+#endif
-+#ifndef __UAPI_DEF_SOCKADDR_IN
- #define __UAPI_DEF_SOCKADDR_IN		1
-+#endif
-+#ifndef __UAPI_DEF_IN_CLASS
- #define __UAPI_DEF_IN_CLASS		1
-+#endif
- 
- /* Definitions for in6.h */
-+#ifndef __UAPI_DEF_IN6_ADDR
- #define __UAPI_DEF_IN6_ADDR		1
-+#endif
-+#ifndef __UAPI_DEF_IN6_ADDR_ALT
- #define __UAPI_DEF_IN6_ADDR_ALT		1
-+#endif
-+#ifndef __UAPI_DEF_SOCKADDR_IN6
- #define __UAPI_DEF_SOCKADDR_IN6		1
-+#endif
-+#ifndef __UAPI_DEF_IPV6_MREQ
- #define __UAPI_DEF_IPV6_MREQ		1
-+#endif
-+#ifndef __UAPI_DEF_IPPROTO_V6
- #define __UAPI_DEF_IPPROTO_V6		1
-+#endif
-+#ifndef __UAPI_DEF_IPV6_OPTIONS
- #define __UAPI_DEF_IPV6_OPTIONS		1
-+#endif
-+#ifndef __UAPI_DEF_IN6_PKTINFO
- #define __UAPI_DEF_IN6_PKTINFO		1
-+#endif
-+#ifndef __UAPI_DEF_IP6_MTUINFO
- #define __UAPI_DEF_IP6_MTUINFO		1
-+#endif
- 
- /* Definitions for ipx.h */
-+#ifndef __UAPI_DEF_SOCKADDR_IPX
- #define __UAPI_DEF_SOCKADDR_IPX			1
-+#endif
-+#ifndef __UAPI_DEF_IPX_ROUTE_DEFINITION
- #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
-+#endif
-+#ifndef __UAPI_DEF_IPX_INTERFACE_DEFINITION
- #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
-+#endif
-+#ifndef __UAPI_DEF_IPX_CONFIG_DATA
- #define __UAPI_DEF_IPX_CONFIG_DATA		1
-+#endif
-+#ifndef __UAPI_DEF_IPX_ROUTE_DEF
- #define __UAPI_DEF_IPX_ROUTE_DEF		1
-+#endif
- 
- /* Definitions for xattr.h */
-+#ifndef __UAPI_DEF_XATTR
- #define __UAPI_DEF_XATTR		1
-+#endif
- 
- #endif /* __GLIBC__ */
- 
--- 
-2.13.0
+>      CPU 0                      CPU 1
+> 
+> User-space self-modify code
+> Preempted
+> migrated              ->
+>                                 scheduler selects task
+>                                 Return to user-space (iret or sysexit)
+>                                 User-space issues sync_core()
+>                       <-        migrated
+> scheduler selects task
+> Return to user-space (sysexit)
+> jump to modified code
+> Run modified code without sync_core() -> bug.
+> 
+> This migration pattern can return to user-space through sysexit,
+> sysretl, or sysretq, which are not core serializing, and therefore
+> breaks sequential consistency expectations from a single-threaded
+> process.
+> 
+> Fix this issue by introducing sync_core_before_usermode(), invoked the
+> first time a runqueue finishes a task switch after receiving a migrated
+> thread.
+> 
+> Architectures defining the sync_core_before_usermode() static inline
+> need to define ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: Andy Lutomirski <luto@kernel.org>
+> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> CC: Boqun Feng <boqun.feng@gmail.com>
+> CC: Andrew Hunter <ahh@google.com>
+> CC: Maged Michael <maged.michael@gmail.com>
+> CC: Avi Kivity <avi@scylladb.com>
+> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+> CC: Paul Mackerras <paulus@samba.org>
+> CC: Michael Ellerman <mpe@ellerman.id.au>
+> CC: Dave Watson <davejwatson@fb.com>
+> CC: Thomas Gleixner <tglx@linutronix.de>
+> CC: Ingo Molnar <mingo@redhat.com>
+> CC: "H. Peter Anvin" <hpa@zytor.com>
+> CC: Andrea Parri <parri.andrea@gmail.com>
+> CC: Russell King <linux@armlinux.org.uk>
+> CC: Greg Hackmann <ghackmann@google.com>
+> CC: Will Deacon <will.deacon@arm.com>
+> CC: David Sehr <sehr@google.com>
+> CC: Linus Torvalds <torvalds@linux-foundation.org>
+> CC: x86@kernel.org
+> CC: linux-arch@vger.kernel.org
+> CC: stable@kernel.org
+> 
+> ---
+> Changes since v1:
+> - Fold patch introducing sync_core_before_usermode and the fix
+>   into a single patch.
+> - CC stable@kernel.org
+> ---
+>  arch/x86/Kconfig                 |  1 +
+>  arch/x86/include/asm/processor.h | 10 ++++++++++
+>  include/linux/processor.h        |  6 ++++++
+>  kernel/sched/core.c              |  7 +++++++
+>  kernel/sched/sched.h             |  1 +
+>  5 files changed, 25 insertions(+)
+> 
+> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+> index 2fdb23313dd5..b27456f04cc6 100644
+> --- a/arch/x86/Kconfig
+> +++ b/arch/x86/Kconfig
+> @@ -62,6 +62,7 @@ config X86
+>  	select ARCH_HAS_SG_CHAIN
+>  	select ARCH_HAS_STRICT_KERNEL_RWX
+>  	select ARCH_HAS_STRICT_MODULE_RWX
+> +	select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+>  	select ARCH_HAS_UBSAN_SANITIZE_ALL
+>  	select ARCH_HAS_ZONE_DEVICE		if X86_64
+>  	select ARCH_HAVE_NMI_SAFE_CMPXCHG
+> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+> index bdac19ab2488..6daf70a8c81c 100644
+> --- a/arch/x86/include/asm/processor.h
+> +++ b/arch/x86/include/asm/processor.h
+> @@ -706,6 +706,16 @@ static inline void sync_core(void)
+>  #endif
+>  }
+>  
+> +/*
+> + * Ensure that a core serializing instruction is issued before returning
+> + * to user-mode. x86 implements return to user-space through sysexit,
+> + * sysretl, and sysretq, which are not core serializing.
+> + */
+> +static inline void sync_core_before_usermode(void)
+> +{
+> +	sync_core();
+> +}
+> +
+>  extern void select_idle_routine(const struct cpuinfo_x86 *c);
+>  extern void amd_e400_c1e_apic_setup(void);
+>  
+> diff --git a/include/linux/processor.h b/include/linux/processor.h
+> index dbc952eec869..7d12e6fa050e 100644
+> --- a/include/linux/processor.h
+> +++ b/include/linux/processor.h
+> @@ -68,4 +68,10 @@ do {								\
+>  
+>  #endif
+>  
+> +#ifndef ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+> +static inline sync_core_before_usermode(void)
+> +{
+> +}
+> +#endif
+> +
+>  #endif /* _LINUX_PROCESSOR_H */
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index d17c5da523a0..39c0bbe8f259 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -927,6 +927,7 @@ static struct rq *move_queued_task(struct rq *rq, struct rq_flags *rf,
+>  
+>  	rq_lock(rq, rf);
+>  	BUG_ON(task_cpu(p) != new_cpu);
+> +	rq->need_sync_core = 1;
+>  	enqueue_task(rq, p, 0);
+>  	p->on_rq = TASK_ON_RQ_QUEUED;
+>  	check_preempt_curr(rq, p, 0);
+> @@ -2654,6 +2655,12 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+>  	 * to use.
+>  	 */
+>  	smp_mb__after_unlock_lock();
+> +#ifdef CONFIG_SMP
+> +	if (unlikely(rq->need_sync_core)) {
+> +		sync_core_before_usermode();
+> +		rq->need_sync_core = 0;
+> +	}
+> +#endif
+>  	finish_lock_switch(rq, prev);
+>  	finish_arch_post_lock_switch();
+>  
+> diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+> index 3b448ba82225..e02cc362637c 100644
+> --- a/kernel/sched/sched.h
+> +++ b/kernel/sched/sched.h
+> @@ -734,6 +734,7 @@ struct rq {
+>  	/* For active balancing */
+>  	int active_balance;
+>  	int push_cpu;
+> +	int need_sync_core;
+>  	struct cpu_stop_work active_balance_work;
+>  	/* cpu of this runqueue: */
+>  	int cpu;
