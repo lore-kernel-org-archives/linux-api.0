@@ -1,91 +1,66 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on
- migration
-Date: Mon, 13 Nov 2017 16:56:47 +0000 (UTC)
-Message-ID: <617343212.13932.1510592207202.JavaMail.zimbra@efficios.com>
-References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com> <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com> <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com>
+From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on migration
+Date: Mon, 13 Nov 2017 09:14:42 -0800
+Message-ID: <CA+55aFz9JuQbt93uJn6-aLUE2OJS9xiS928d77MJmBdQoQLKrQ@mail.gmail.com>
+References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com>
+ <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com>
+ <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com> <617343212.13932.1510592207202.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <885227610.13045.1510351034488.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <617343212.13932.1510592207202.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 10, 2017, at 4:57 PM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
+On Mon, Nov 13, 2017 at 8:56 AM, Mathieu Desnoyers
+<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>
+> I figured out what you're pointing to: if exec() is executed by a previously
+> running thread, and there is no core serializing instruction between program
+> load and return to user-space, the kernel ends up acting like a JIT, indeed.
 
-> ----- On Nov 10, 2017, at 4:36 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
-> wrote:
-> 
->> On Fri, Nov 10, 2017 at 1:12 PM, Mathieu Desnoyers
->> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>> x86 can return to user-space through sysexit and sysretq, which are not
->>> core serializing. This breaks expectations from user-space about
->>> sequential consistency from a single-threaded self-modifying program
->>> point of view in specific migration patterns.
->>>
->>> Feedback is welcome,
->> 
->> We should check with Intel. I would actually be surprised if the I$
->> can be out of sync with the D$ after a sysretq.  It would actually
->> break things like "read code from disk" too in theory.
-> 
-> That core serializing instruction is not that much about I$ vs D$
-> consistency, but rather about the processor speculatively executing code
-> ahead of its retirement point. Ref. Intel Architecture Software Developer's
-> Manual, Volume 3: System Programming.
-> 
-> 7.1.3. "Handling Self- and Cross-Modifying Code":
-> 
-> "The act of a processor writing data into a currently executing code segment
-> with the intent of
-> executing that data as code is called self-modifying code. Intel Architecture
-> processors exhibit
-> model-specific behavior when executing self-modified code, depending upon how
-> far ahead of
-> the current execution pointer the code has been modified. As processor
-> architectures become
-> more complex and start to speculatively execute code ahead of the retirement
-> point (as in the P6
-> family processors), the rules regarding which code should execute, pre- or
-> post-modification,
-> become blurred. [...]"
-> 
-> AFAIU, this core serializing instruction seems to be needed for use-cases of
-> self-modifying code, but not for the initial load of a program from disk,
-> as the processor has no way to have speculatively executed any of its
-> instructions.
+Well, exec() is actually the least of our problems, because it will
+have caused the virtual m apping to be set up too.
 
-I figured out what you're pointing to: if exec() is executed by a previously
-running thread, and there is no core serializing instruction between program
-load and return to user-space, the kernel ends up acting like a JIT, indeed.
+But we have had cases that haven't had that basically forever. Your
+example of user-space doing an _unintentional_ cross-modification is
+just such a case, but so is anybody doing their own code management in
+user space by just reading their own executable into memory etc.
 
-Therefore, we'd also need to invoke sync_core_before_usermode() after loading
-the program.
+So part of the problem is that it's perfectly valid to generate code
+and then just jump to it in x86 space as long as you stay on the same
+CPU. And there has never been any guarantee that that you wouldn't be
+migrated in between.
 
-Let's wait to hear back from hpa,
+In _practice_, I suspect that migration events are much much too big
+for this to be an issue at all. And the trigger for migration is going
+to be something like a timer interrupt that causes us to reschedule in
+the first place - which ends up serializing due to the iret. And even
+if the rescheduling is done by one CPU just doing a "schedule()", us
+doing a re-balancing of CPU's, and another CPU then picking up the
+process, there's been tens of thousands of instructions, several
+spinlocks, lots of cross-CPU synchronization etc going on.
 
-Thanks,
+I do not believe for a second that the CPU prefetching queue will be
+active over those kinds of ranges and events.
 
-Mathieu
+So I don't really think the problem can actually occur in the first
+place. I think the SDK rules are garbage.
 
+But that's exactly why I'd actually really want to get some more real
+rules from Intel and AMD. Because I think your patch is pointless, and
+doesn't really fix anything in reality, but it's triggered by reading
+the Intel SDK and going "in theory, this means that we would need to
+do XYZ".
 
-> 
-> Hopefully hpa can tell us more about this,
-> 
-> Thanks,
-> 
-> Mathieu
-> 
-> 
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+And when theory and practice do not match, I think (a) the theory is
+bad, and (b) reality trumps theory.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+In this case (b) means that I'm not super-eager to apply the patch,
+and (a) means that since the theory is based on the Intel SDK, I think
+ we should consider the Intel SDK to be a problem, and ask for
+clarification of just what the rules really are.
+
+            Linus
