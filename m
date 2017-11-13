@@ -1,66 +1,126 @@
-From: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on migration
-Date: Mon, 13 Nov 2017 09:14:42 -0800
-Message-ID: <CA+55aFz9JuQbt93uJn6-aLUE2OJS9xiS928d77MJmBdQoQLKrQ@mail.gmail.com>
-References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com>
- <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com>
- <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com> <617343212.13932.1510592207202.JavaMail.zimbra@efficios.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: Seccomp implications for glibc wrapper function changes
+Date: Mon, 13 Nov 2017 14:44:26 -0800
+Message-ID: <CAGXu5jJwgavx5jNpMGdR5D4rAv4GxtrERgGgi-FQDaROOTocLw@mail.gmail.com>
+References: <CAKgNAkixA6T7J_1Gs=5+riq6i=dr9XP4ZCGu67YVcuDNg3cT4g@mail.gmail.com>
+ <0049d6a8-de25-ff02-31ef-38a7db05b878@redhat.com> <CAKgNAkhLsBNVO9axSxwH8VNxBW1QPWjaEOS_ubu-nUZ7_gsn7w@mail.gmail.com>
+ <CAKgNAkjAbRN7gVuErpmBZ2YtkYfRSAdnWVdRR1B34BvszRZ0-g@mail.gmail.com>
+ <c2965313-404b-71fb-0686-bd13fde2b975@redhat.com> <CAKgNAki9m460sOw8KP9unnBU_ANctXj4H=gUEiRgRhUHFGjDbQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <617343212.13932.1510592207202.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <CAKgNAki9m460sOw8KP9unnBU_ANctXj4H=gUEiRgRhUHFGjDbQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 13, 2017 at 8:56 AM, Mathieu Desnoyers
-<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+On Thu, Nov 9, 2017 at 5:37 AM, Michael Kerrisk (man-pages)
+<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> Hi Florian,
 >
-> I figured out what you're pointing to: if exec() is executed by a previously
-> running thread, and there is no core serializing instruction between program
-> load and return to user-space, the kernel ends up acting like a JIT, indeed.
+> On 9 November 2017 at 13:02, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>> On 11/09/2017 12:58 PM, Michael Kerrisk (man-pages) wrote:
+>>>
+>>> [CC +=3D Kees, in case he has some comments]
+>>>
+>>> On 9 November 2017 at 08:17, Michael Kerrisk (man-pages)
+>>> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>>>
+>>>> Hi Florian,
+>>>>
+>>>> On 8 November 2017 at 07:24, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote=
+:
+>>>>>
+>>>>> On 11/07/2017 09:35 PM, Michael Kerrisk (man-pages) wrote:
+>>>>>>
+>>>>>>
+>>>>>> This change broke my code that was doing seccomp filtering for the
+>>>>>> open() system call number (__NR_open). The breakage in question is n=
+ot
+>>>>>> serious, since this was really just demonstration code. However, I
+>>>>>> want to raise awareness that these sorts of changes have the potenti=
+al
+>>>>>> to possibly cause breakages for some code using seccomp, and note th=
+at
+>>>>>> I think such changes should not be made lightly or gratuitously.
+>>>>>
+>>>>>
+>>>>>
+>>>>> I have the opposite view: We should make such changes as often as
+>>>>> possible,
+>>>>> to remind people that seccomp filters (and certain SELinux and AppArm=
+or
+>>>>> policies) are incompatible with the GNU/Linux model, where everything=
+ is
+>>>>> developed separately and not maintained within a single source tree
+>>>>> (unlike
+>>>>> say OpenBSD).  This means that you really can't deviate from the
+>>>>> upstream
+>>>>> Linux userspace ABI (in the broadest possible sense) and still expect
+>>>>> things
+>>>>> to work.
+>>>>>
+>>>>> I know that people like to slap seccomp filters on everything today, =
+but
+>>>>> without careful examination, that is likely to introduce bugs
+>>>>> (particularly
+>>>>> on rarely used code paths).  It can also cause the process to switch =
+to
+>>>>> legacy interfaces with known issues (e.g., reading from /dev/urandom
+>>>>> instead
+>>>>> of getrandom, without waiting for the kernel to signal initialization=
+ of
+>>>>> the
+>>>>> pool).
+>>>>
+>>>>
+>>>> Thanks. The above is a good summary of the counterpoints to my initial
+>>>> argument.
+>>>
+>>>
+>>> Florian, taking your and Adhemerval's useful comments into account, I
+>>> added the following text to the seccomp(2) manual page:
+>>>
+>>> [[
+>>>     Caveats
+>>>         There  are  various  subtleties  to consider when applying secc=
+omp
+>>>         filters to a program, including the following:
+>>>
+>>>         *  Some traditional system calls have  user-space  implementati=
+ons
+>>>            in the vdso(7) on many architectures.  Notable examples incl=
+ude
+>>>            clock_gettime(2), gettimeofday(2), and time(2).  On such arc=
+hi=E2=80=90
+>>>            tectures, seccomp filtering for these system calls will have=
+ no
+>>>            effect.
+>>
+>>
+>> I think the situation is more complicated for many of those because they=
+ can
+>> still perform system calls on their fallback paths.  So it's one more ca=
+se
+>> where seccomp can give you unpredictable failures.
+>
+> Good point. I added the following text:
+>
+>           (However,  there are cases where the vdso(7) implemen=E2=80=90
+>           tations may fall back  to  invoking  the  true  system
+>           call, in which case seccomp filters would see the sys=E2=80=90
+>           tem call.)
+>
+>> Rest looks good to me.  Thanks for the writeup.
+>
+> Thanks for the review!
 
-Well, exec() is actually the least of our problems, because it will
-have caused the virtual m apping to be set up too.
+Agreed, this looks good. Thanks for clarifying it. :)
 
-But we have had cases that haven't had that basically forever. Your
-example of user-space doing an _unintentional_ cross-modification is
-just such a case, but so is anybody doing their own code management in
-user space by just reading their own executable into memory etc.
+-Kees
 
-So part of the problem is that it's perfectly valid to generate code
-and then just jump to it in x86 space as long as you stay on the same
-CPU. And there has never been any guarantee that that you wouldn't be
-migrated in between.
-
-In _practice_, I suspect that migration events are much much too big
-for this to be an issue at all. And the trigger for migration is going
-to be something like a timer interrupt that causes us to reschedule in
-the first place - which ends up serializing due to the iret. And even
-if the rescheduling is done by one CPU just doing a "schedule()", us
-doing a re-balancing of CPU's, and another CPU then picking up the
-process, there's been tens of thousands of instructions, several
-spinlocks, lots of cross-CPU synchronization etc going on.
-
-I do not believe for a second that the CPU prefetching queue will be
-active over those kinds of ranges and events.
-
-So I don't really think the problem can actually occur in the first
-place. I think the SDK rules are garbage.
-
-But that's exactly why I'd actually really want to get some more real
-rules from Intel and AMD. Because I think your patch is pointless, and
-doesn't really fix anything in reality, but it's triggered by reading
-the Intel SDK and going "in theory, this means that we would need to
-do XYZ".
-
-And when theory and practice do not match, I think (a) the theory is
-bad, and (b) reality trumps theory.
-
-In this case (b) means that I'm not super-eager to apply the patch,
-and (a) means that since the theory is based on the Intel SDK, I think
- we should consider the Intel SDK to be a problem, and ask for
-clarification of just what the rules really are.
-
-            Linus
+--=20
+Kees Cook
+Pixel Security
