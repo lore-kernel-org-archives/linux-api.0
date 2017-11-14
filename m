@@ -1,63 +1,101 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 0/9] posix_clocks: Prepare syscalls for 64 bit time_t conversion
-Date: Tue, 14 Nov 2017 15:24:40 +0100
-Message-ID: <CAK8P3a2uD=xV5GKtL+nhVoPckb6uoXztEvXK-iP_OYbct8QvJA@mail.gmail.com>
-References: <20171110224259.15930-1-deepa.kernel@gmail.com>
+From: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
+Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on migration
+Date: Tue, 14 Nov 2017 16:53:34 +0200
+Message-ID: <4d47fbb8-8f99-19d3-a9cf-66841aeffac3@scylladb.com>
+References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com>
+ <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com>
+ <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com>
+ <617343212.13932.1510592207202.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20171110224259.15930-1-deepa.kernel@gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Deepa Dinamani <deepa.kernel@gmail.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, John Stultz <john.stultz@linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Christian Borntraeger <borntraeger@de.ibm.com>, Catalin Marinas <catalin.marinas@arm.com>, Chris Metcalf <cmetcalf@mellanox.com>, cohuck@redhat.com, David Miller <davem@davemloft.net>, Helge Deller <deller@gmx.de>, devel@driverdev.osuosl.org, gerald.schaefer@de.ibm.com, gregkh <gregkh@linuxfoundation.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Jan Hoeppner <hoeppner@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Julian
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <617343212.13932.1510592207202.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>Dav
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 10, 2017 at 11:42 PM, Deepa Dinamani <deepa.kernel@gmail.com> wrote:
-> The series is a preparation series for individual architectures
-> to use 64 bit time_t syscalls in compat and 32 bit emulation modes.
->
-> This is a follow up to the series Arnd Bergmann posted:
-> https://sourceware.org/ml/libc-alpha/2015-05/msg00070.html
->
-> Big picture is as per the lwn article:
-> https://lwn.net/Articles/643234/
->
-> The series is directed at converting posix clock syscalls:
-> clock_gettime, clock_settime, clock_getres and clock_nanosleep
-> to use a new data structure __kernel_timespec at syscall boundaries.
-> __kernel_timespec maintains 64 bit time_t across all execution modes.
->
-> vdso will be handled as part of each architecture when they enable
-> support for 64 bit time_t.
->
-> The compat syscalls are repurposed to provide backward compatibility
-> by using them as native syscalls as well for 32 bit architectures.
-> They will continue to use timespec at syscall boundaries.
->
-> CONFIG_64_BIT_TIME controls whether the syscalls use __kernel_timespec
-> or timespec at syscall boundaries.
->
-> The series does the following:
-> 1. Enable compat syscalls unconditionally.
-> 2. Add a new __kernel_timespec type to be used as the data structure
->    for all the new syscalls.
-> 3. Add new config CONFIG_64BIT_TIME(intead of the CONFIG_COMPAT_TIME in
->    [1] and [2] to switch to new definition of __kernel_timespec. It is
->    the same as struct timespec otherwise.
->
-> Arnd Bergmann (1):
->   y2038: introduce CONFIG_64BIT_TIME
 
-The series looks good to me overall, and I've added it to my build-testing tree
-to see if it shows any regressions in random configurations.
 
-I had on concern about x32, maybe we should check
-for "COMPAT_USE_64BIT_TIME" before zeroing out the tv_nsec
-bits.
+On 11/13/2017 06:56 PM, Mathieu Desnoyers wrote:
+> ----- On Nov 10, 2017, at 4:57 PM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
+>
+>> ----- On Nov 10, 2017, at 4:36 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+>> wrote:
+>>
+>>> On Fri, Nov 10, 2017 at 1:12 PM, Mathieu Desnoyers
+>>> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+>>>> x86 can return to user-space through sysexit and sysretq, which are not
+>>>> core serializing. This breaks expectations from user-space about
+>>>> sequential consistency from a single-threaded self-modifying program
+>>>> point of view in specific migration patterns.
+>>>>
+>>>> Feedback is welcome,
+>>> We should check with Intel. I would actually be surprised if the I$
+>>> can be out of sync with the D$ after a sysretq.  It would actually
+>>> break things like "read code from disk" too in theory.
+>> That core serializing instruction is not that much about I$ vs D$
+>> consistency, but rather about the processor speculatively executing code
+>> ahead of its retirement point. Ref. Intel Architecture Software Developer's
+>> Manual, Volume 3: System Programming.
+>>
+>> 7.1.3. "Handling Self- and Cross-Modifying Code":
+>>
+>> "The act of a processor writing data into a currently executing code segment
+>> with the intent of
+>> executing that data as code is called self-modifying code. Intel Architecture
+>> processors exhibit
+>> model-specific behavior when executing self-modified code, depending upon how
+>> far ahead of
+>> the current execution pointer the code has been modified. As processor
+>> architectures become
+>> more complex and start to speculatively execute code ahead of the retirement
+>> point (as in the P6
+>> family processors), the rules regarding which code should execute, pre- or
+>> post-modification,
+>> become blurred. [...]"
+>>
+>> AFAIU, this core serializing instruction seems to be needed for use-cases of
+>> self-modifying code, but not for the initial load of a program from disk,
+>> as the processor has no way to have speculatively executed any of its
+>> instructions.
+> I figured out what you're pointing to: if exec() is executed by a previously
+> running thread, and there is no core serializing instruction between program
+> load and return to user-space, the kernel ends up acting like a JIT, indeed.
 
-Regarding CONFIG_COMPAT_TIME/CONFIG_64BIT_TIME, would
-it help to just leave out that part for now and unconditionally
-define '__kernel_timespec' as 'timespec' until we are ready to
-convert the architectures?
+I think that's safe. The kernel has to execute a MOV CR3 instruction 
+before it can execute code loaded by exec, and that is a serializing 
+instruction. Loading and unloading shared libraries is made safe by the 
+IRET executed by page faults (loading) and TLB shootdown IPIs (unloading).
 
-       Arnd
+Directly modifying code in userspace is unsafe if there is some 
+non-coherent instruction cache. Instruction fetch and speculative 
+execution are non-coherent, but they're probably too short (in current 
+processors) to matter. Trace caches are probably large enough, but I 
+don't know whether they are coherent or not.
+
+
+>
+> Therefore, we'd also need to invoke sync_core_before_usermode() after loading
+> the program.
+>
+> Let's wait to hear back from hpa,
+>
+> Thanks,
+>
+> Mathieu
+>
+>
+>> Hopefully hpa can tell us more about this,
+>>
+>> Thanks,
+>>
+>> Mathieu
+>>
+>>
+>> --
+>> Mathieu Desnoyers
+>> EfficiOS Inc.
+>> http://www.efficios.com
