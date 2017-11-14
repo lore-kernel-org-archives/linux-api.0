@@ -1,73 +1,120 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on
- migration
-Date: Tue, 14 Nov 2017 16:49:15 +0000 (UTC)
-Message-ID: <798843926.14994.1510678155257.JavaMail.zimbra@efficios.com>
-References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com> <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com> <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com> <617343212.13932.1510592207202.JavaMail.zimbra@efficios.com> <4d47fbb8-8f99-19d3-a9cf-66841aeffac3@scylladb.com> <4431530.14831.1510672632887.JavaMail.zimbra@efficios.com> <20171114160541.GC3165@worktop.lehotels.local> <20171114160842.GH3857@worktop>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171114160842.GH3857@worktop>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: [patch v12 0/4] JTAG driver introduction
+Date: Tue, 14 Nov 2017 18:11:03 +0200
+Message-ID: <1510675867-24276-1-git-send-email-oleksandrs@mellanox.com>
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 14, 2017, at 11:08 AM, Peter Zijlstra peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org wrote:
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-> On Tue, Nov 14, 2017 at 05:05:41PM +0100, Peter Zijlstra wrote:
->> On Tue, Nov 14, 2017 at 03:17:12PM +0000, Mathieu Desnoyers wrote:
->> > I've tried to create a small single-threaded self-modifying loop in
->> > user-space to trigger a trace cache or speculative execution quirk,
->> > but I have not succeeded yet. I suspect that I would need to know
->> > more about the internals of the processor architecture to create the
->> > right stalls that would allow speculative execution to move further
->> > ahead, and trigger an incoherent execution flow. Ideas on how to
->> > trigger this would be welcome.
->> 
->> I thought the whole problem was per definition multi-threaded.
->> 
->> Single-threaded stuff can't get out of sync with itself; you'll always
->> observe your own stores.
-> 
-> And even if you could, you can always execute a local serializing
-> instruction like CPUID to force things.
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
-What I'm trying to reproduce is something that breaks in single-threaded
-case if I explicitly leave out the CPUID core serializing instruction
-when doing code modification on upcoming code, in a loop.
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
 
-AFAIU, Intel requires a core serializing instruction to be issued even
-in single-threaded scenarios between code update and execution, to ensure
-that speculative execution does not observe incoherent code. Now the
-question we all have for Intel is: is this requirement too strong, or
-required by reality ?
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
 
-Thanks,
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
 
-Mathieu
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
 
-> 
->> And ISTR the JIT scenario being something like the JIT overwriting
->> previously executed but supposedly no longer used code. And in this
->> scenario you'd want to guarantee all CPUs observe the new code before
->> jumping into it.
->> 
->> The current approach is using mprotect(), except that on a number of
->> platforms the TLB invalidate from that is not guaranteed to be strong
->> enough to sync for code changes.
->> 
->> On x86 the mprotect() should work just fine, since we broadcast IPIs for
->> the TLB invalidate and the IRET from those will get the things synced up
->> again (if nothing else; very likely we'll have done a MOV-CR3 which will
->> of course also have sufficient syncness on it).
->> 
->> But PowerPC, s390, ARM et al that do TLB invalidates without interrupts
->> and don't guarantee their TLB invalidate sync against execution units
->> are left broken by this scheme.
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
+
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
+
+
+
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
+
+ Documentation/ABI/testing/jtag-dev                 |   27 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   18 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   29 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  782 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  292 ++++++++
+ include/linux/jtag.h                               |   46 ++
+ include/uapi/linux/jtag.h                          |  105 +++
+ 12 files changed, 1316 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jtag-dev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
+
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
