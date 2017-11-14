@@ -1,38 +1,73 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Seccomp implications for glibc wrapper function changes
-Date: Tue, 14 Nov 2017 08:00:35 +0100
-Message-ID: <CAKgNAkgi==0gbopTZq46t96TqSf7ye9w6fpe_XKrPKKnXc00dw@mail.gmail.com>
-References: <CAKgNAkixA6T7J_1Gs=5+riq6i=dr9XP4ZCGu67YVcuDNg3cT4g@mail.gmail.com>
- <0049d6a8-de25-ff02-31ef-38a7db05b878@redhat.com> <CAKgNAkhLsBNVO9axSxwH8VNxBW1QPWjaEOS_ubu-nUZ7_gsn7w@mail.gmail.com>
- <CAKgNAkjAbRN7gVuErpmBZ2YtkYfRSAdnWVdRR1B34BvszRZ0-g@mail.gmail.com>
- <c2965313-404b-71fb-0686-bd13fde2b975@redhat.com> <CAKgNAki9m460sOw8KP9unnBU_ANctXj4H=gUEiRgRhUHFGjDbQ@mail.gmail.com>
- <CAGXu5jJwgavx5jNpMGdR5D4rAv4GxtrERgGgi-FQDaROOTocLw@mail.gmail.com>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: RE: [v11,1/4] drivers: jtag: Add JTAG core driver
+Date: Tue, 14 Nov 2017 10:34:49 +0000
+Message-ID: <DB6PR0501MB219753AC43515148F39CC2D0B1280@DB6PR0501MB2197.eurprd05.prod.outlook.com>
+References: <1509724449-26221-2-git-send-email-oleksandrs@mellanox.com>
+ <8760aoz78q.fsf@bilbrey.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGXu5jJwgavx5jNpMGdR5D4rAv4GxtrERgGgi-FQDaROOTocLw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org" <libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Adhemerval Zanella <adhemerval.zanella-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <8760aoz78q.fsf-Gz1Ta9Qd61ZAfugRpC6u6w@public.gmane.org>
+Content-Language: en-US
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Chip Bilbrey' <chip-Gz1Ta9Qd61ZAfugRpC6u6w@public.gmane.org>
+Cc: "gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org" <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, "arnd-r2nGTMty4D4@public.gmane.org" <arnd-r2nGTMty4D4@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org" <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, "joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org" <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, "jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org" <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, "tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org" <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, "linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org" <mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org>, "robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org" <openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, davem@davemlo
 List-Id: linux-api@vger.kernel.org
 
-Hi Kees,
+> -----Original Message-----
+> From: Chip Bilbrey [mailto:chip-Gz1Ta9Qd61ZAfugRpC6u6w@public.gmane.org]
+> Sent: Monday, November 6, 2017 12:33 AM
+> To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org; arnd-r2nGTMty4D4@public.gmane.org; linux-
+> kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org;
+> devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org; openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org; joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org;
+> jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org; tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org; linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
+> mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org; Vadim Pasternak <vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>; system-sw-low-
+> level <system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>; robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org; openocd-
+> devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org; linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org;
+> davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org; mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org; Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Subject: Re: [v11,1/4] drivers: jtag: Add JTAG core driver
+>=20
+>=20
+> Oleksandr Shamray writes:
 
-On 13 November 2017 at 23:44, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> wrote:
-[...]
-> Agreed, this looks good. Thanks for clarifying it. :)
+[..]
+
+> I notice the single-open()-per-device lock was dropped by request in an e=
+arlier
+> revision of your patches, but multiple processes trying to drive a single=
+ JTAG
+> master could wreak serious havoc if transactions get interleaved. Would
+> something like an added JTAG_LOCKCHAIN/UNLOCKCHAIN
+> ioctl() for exclusive client access be reasonable to prevent this?
+>=20
+
+Yes, it dropped by recommendation of Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>.=
+=20
+
+Greg, what you can suggest about it. May be better to add again single-open=
+()-per-device lock with right locking way like:
+
+>if (mutex_lock_interruptible(&jtag->open_lock)) {
+>	return -ERESTARTSYS;
+>}
 >
-> -Kees
+>if (jtag->opened) {
+>	mutex_unlock(&jtag->open_lock);
+>	return -EINVAL;
+>}
+>
+>nonseekable_open(inode, file);
+>file->private_data =3D jtag;
+>jtag->opened++;
+>mutex_unlock(&jtag->open_lock);
+>
 
-Thanks for checking it.
+Thaks.
 
-Cheers,
-
-Michael
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+> -Chip
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
