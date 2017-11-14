@@ -1,7 +1,7 @@
-From: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [RFC PATCH 0/2] x86: Fix missing core serialization on migration
-Date: Tue, 14 Nov 2017 17:42:42 +0200
-Message-ID: <690d1bff-8447-a294-3222-d6f134d276a9@scylladb.com>
+Date: Tue, 14 Nov 2017 17:05:41 +0100
+Message-ID: <20171114160541.GC3165@worktop.lehotels.local>
 References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com>
  <CA+55aFzbroWqi+FTdYhRVSwUZ-M0wDVxjXqDbh40JEnXc2LdgQ@mail.gmail.com>
  <885227610.13045.1510351034488.JavaMail.zimbra@efficios.com>
@@ -9,90 +9,16 @@ References: <20171110211249.10742-1-mathieu.desnoyers@efficios.com>
  <4d47fbb8-8f99-19d3-a9cf-66841aeffac3@scylladb.com>
  <4431530.14831.1510672632887.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
 In-Reply-To: <4431530.14831.1510672632887.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 11/14/2017 05:17 PM, Mathieu Desnoyers wrote:
-> ----- On Nov 14, 2017, at 9:53 AM, Avi Kivity avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org wrote:
->
->> On 11/13/2017 06:56 PM, Mathieu Desnoyers wrote:
->>> ----- On Nov 10, 2017, at 4:57 PM, Mathieu Desnoyers
->>> mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
->>>
->>>> ----- On Nov 10, 2017, at 4:36 PM, Linus Torvalds torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
->>>> wrote:
->>>>
->>>>> On Fri, Nov 10, 2017 at 1:12 PM, Mathieu Desnoyers
->>>>> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>>>>> x86 can return to user-space through sysexit and sysretq, which are not
->>>>>> core serializing. This breaks expectations from user-space about
->>>>>> sequential consistency from a single-threaded self-modifying program
->>>>>> point of view in specific migration patterns.
->>>>>>
->>>>>> Feedback is welcome,
->>>>> We should check with Intel. I would actually be surprised if the I$
->>>>> can be out of sync with the D$ after a sysretq.  It would actually
->>>>> break things like "read code from disk" too in theory.
->>>> That core serializing instruction is not that much about I$ vs D$
->>>> consistency, but rather about the processor speculatively executing code
->>>> ahead of its retirement point. Ref. Intel Architecture Software Developer's
->>>> Manual, Volume 3: System Programming.
->>>>
->>>> 7.1.3. "Handling Self- and Cross-Modifying Code":
->>>>
->>>> "The act of a processor writing data into a currently executing code segment
->>>> with the intent of
->>>> executing that data as code is called self-modifying code. Intel Architecture
->>>> processors exhibit
->>>> model-specific behavior when executing self-modified code, depending upon how
->>>> far ahead of
->>>> the current execution pointer the code has been modified. As processor
->>>> architectures become
->>>> more complex and start to speculatively execute code ahead of the retirement
->>>> point (as in the P6
->>>> family processors), the rules regarding which code should execute, pre- or
->>>> post-modification,
->>>> become blurred. [...]"
->>>>
->>>> AFAIU, this core serializing instruction seems to be needed for use-cases of
->>>> self-modifying code, but not for the initial load of a program from disk,
->>>> as the processor has no way to have speculatively executed any of its
->>>> instructions.
->>> I figured out what you're pointing to: if exec() is executed by a previously
->>> running thread, and there is no core serializing instruction between program
->>> load and return to user-space, the kernel ends up acting like a JIT, indeed.
->> I think that's safe. The kernel has to execute a MOV CR3 instruction
->> before it can execute code loaded by exec, and that is a serializing
->> instruction. Loading and unloading shared libraries is made safe by the
->> IRET executed by page faults (loading) and TLB shootdown IPIs (unloading).
-> Very good points! Perhaps those guarantees should be documented somewhere ?
->
->> Directly modifying code in userspace is unsafe if there is some
->> non-coherent instruction cache. Instruction fetch and speculative
->> execution are non-coherent, but they're probably too short (in current
->> processors) to matter. Trace caches are probably large enough, but I
->> don't know whether they are coherent or not.
-> Android guys at Google have reproducers of context synchronization issues
-> on arm 64 in JIT scenarios. Based on the information I got, flushing the
-> instruction caches is not enough: they also need to issue a context
-> synchronizing instruction.
->
-> Perhaps the current Intel processors may have short enough speculative
-> execution and small enough trace caches, but relying on this without
-> a clear statement from Intel seems fragile.
-
-A small trace cache is still vulnerable, the question is whether it is 
-coherent or not.
-
+On Tue, Nov 14, 2017 at 03:17:12PM +0000, Mathieu Desnoyers wrote:
 > I've tried to create a small single-threaded self-modifying loop in
 > user-space to trigger a trace cache or speculative execution quirk,
 > but I have not succeeded yet. I suspect that I would need to know
@@ -100,11 +26,26 @@ coherent or not.
 > right stalls that would allow speculative execution to move further
 > ahead, and trigger an incoherent execution flow. Ideas on how to
 > trigger this would be welcome.
->
->
 
+I thought the whole problem was per definition multi-threaded.
 
-Intels resynchronize as soon as you jump (in single-threaded execution), 
-so you need to update ahead of the current instruction pointer to see 
-something. Not sure what quirk you're interested in seeing, executing 
-the old code? That's not very exciting.
+Single-threaded stuff can't get out of sync with itself; you'll always
+observe your own stores.
+
+And ISTR the JIT scenario being something like the JIT overwriting
+previously executed but supposedly no longer used code. And in this
+scenario you'd want to guarantee all CPUs observe the new code before
+jumping into it.
+
+The current approach is using mprotect(), except that on a number of
+platforms the TLB invalidate from that is not guaranteed to be strong
+enough to sync for code changes.
+
+On x86 the mprotect() should work just fine, since we broadcast IPIs for
+the TLB invalidate and the IRET from those will get the things synced up
+again (if nothing else; very likely we'll have done a MOV-CR3 which will
+of course also have sufficient syncness on it).
+
+But PowerPC, s390, ARM et al that do TLB invalidates without interrupts
+and don't guarantee their TLB invalidate sync against execution units
+are left broken by this scheme.
