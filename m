@@ -1,65 +1,34 @@
-From: Yisheng Xie <xieyisheng1@huawei.com>
-Subject: [PATCH v3 3/3] mm/mempolicy: add nodes_empty check in SYSC_migrate_pages
-Date: Fri, 17 Nov 2017 09:37:04 +0800
-Message-ID: <1510882624-44342-4-git-send-email-xieyisheng1@huawei.com>
-References: <1510882624-44342-1-git-send-email-xieyisheng1@huawei.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC PATCH 1/2] mm: introduce MAP_FIXED_SAFE
+Date: Fri, 17 Nov 2017 08:30:48 +0100
+Message-ID: <a3f7aed9-0df2-2fd6-cebb-ba569ad66781@redhat.com>
+References: <20171116101900.13621-1-mhocko@kernel.org>
+ <20171116101900.13621-2-mhocko@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1510882624-44342-1-git-send-email-xieyisheng1@huawei.com>
-Sender: owner-linux-mm@kvack.org
-To: akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, mingo@kernel.org, rientjes@google.com, n-horiguchi@ah.jp.nec.com, salls@cs.ucsb.edu, ak@linux.intel.com, cl@linux.com
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, tanxiaojun@huawei.com
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20171116101900.13621-2-mhocko@kernel.org>
+Content-Language: en-US
+Sender: linux-arch-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
+Cc: Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-As manpage of migrate_pages, the errno should be set to EINVAL when
-none of the node IDs specified by new_nodes are on-line and allowed
-by the process's current cpuset context, or none of the specified
-nodes contain memory. However, when test by following case:
+On 11/16/2017 11:18 AM, Michal Hocko wrote:
+> +	if (flags & MAP_FIXED_SAFE) {
+> +		struct vm_area_struct *vma = find_vma(mm, addr);
+> +
+> +		if (vma && vma->vm_start <= addr)
+> +			return -ENOMEM;
+> +	}
 
-	new_nodes = 0;
-	old_nodes = 0xf;
-	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
+Could you pick a different error code which cannot also be caused by a 
+an unrelated, possibly temporary condition?  Maybe EBUSY or EEXIST?
 
-The ret will be 0 and no errno is set. As the new_nodes is empty,
-we should expect EINVAL as documented.
+This would definitely help with application-based randomization of 
+mappings, and there, actual ENOMEM and this error would have to be 
+handled differently.
 
-To fix the case like above, this patch check whether target nodes
-AND current task_nodes is empty, and then check whether AND
-node_states[N_MEMORY] is empty.
-
-Signed-off-by: Yisheng Xie <xieyisheng1@huawei.com>
----
- mm/mempolicy.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
-
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 65df28d..f604b22 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -1433,10 +1433,14 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
- 		goto out_put;
- 	}
- 
--	if (!nodes_subset(*new, node_states[N_MEMORY])) {
--		err = -EINVAL;
-+	task_nodes = cpuset_mems_allowed(current);
-+	nodes_and(*new, *new, task_nodes);
-+	if (nodes_empty(*new))
-+		goto out_put;
-+
-+	nodes_and(*new, *new, node_states[N_MEMORY]);
-+	if (nodes_empty(*new))
- 		goto out_put;
--	}
- 
- 	err = security_task_movememory(task);
- 	if (err)
--- 
-1.8.3.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Thanks,
+Florian
