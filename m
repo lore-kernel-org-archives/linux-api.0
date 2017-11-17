@@ -1,42 +1,212 @@
-From: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-Subject: Re: [RFC PATCH v3 for 4.15 08/24] Provide cpu_opv system call
-Date: Thu, 16 Nov 2017 16:14:10 -0800
-Message-ID: <20171117001410.GG2482@two.firstfloor.org>
-References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com>
- <20171114200414.2188-9-mathieu.desnoyers@efficios.com>
- <alpine.DEB.2.20.1711162215100.2109@nanos>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [RFC PATCH 1/2] mm: introduce MAP_FIXED_SAFE
+Date: Thu, 16 Nov 2017 16:27:36 -0800
+Message-ID: <CAGXu5jKssQCcYcZujvQeFy5LTzhXSW=f-a0riB=4+caT1i38BQ@mail.gmail.com>
+References: <20171116101900.13621-1-mhocko@kernel.org> <20171116101900.13621-2-mhocko@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.20.1711162215100.2109@nanos>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas@>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171116101900.13621-2-mhocko@kernel.org>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Nov 16, 2017 at 2:18 AM, Michal Hocko <mhocko@kernel.org> wrote:
+> From: Michal Hocko <mhocko@suse.com>
+>
+> MAP_FIXED is used quite often to enforce mapping at the particular
+> range. The main problem of this flag is, however, that it is inherently
+> dangerous because it unmaps existing mappings covered by the requested
+> range. This can cause silent memory corruptions. Some of them even with
+> serious security implications. While the current semantic might be
+> really desiderable in many cases there are others which would want to
+> enforce the given range but rather see a failure than a silent memory
+> corruption on a clashing range. Please note that there is no guarantee
+> that a given range is obeyed by the mmap even when it is free - e.g.
+> arch specific code is allowed to apply an alignment.
+>
+> Introduce a new MAP_FIXED_SAFE flag for mmap to achieve this behavior.
+> It has the same semantic as MAP_FIXED wrt. the given address request
+> with a single exception that it fails with ENOMEM if the requested
+> address is already covered by an existing mapping. We still do rely on
+> get_unmaped_area to handle all the arch specific MAP_FIXED treatment and
+> check for a conflicting vma after it returns.
 
-My preference would be just to drop this new super ugly system call. 
+I like this much more than special-casing the ELF loader. It is an
+unusual property that MAP_FIXED does _two_ things, so I like having
+this split out.
 
-It's also not just the ugliness, but the very large attack surface
-that worries me here.
+Bikeshedding: maybe call this MAP_NO_CLOBBER? It's a modifier to
+MAP_FIXED, really...
 
-As far as I know it is only needed to support single stepping, correct?
+At the end of the day, I don't really care about the name, but "SAFE"
+isn't very descriptive for what the flag changes about FIXED.
 
-We already have other code that cannot be single stepped, most
-prominently the ring 3 vdso time functions that rely on seq locks.
+-Kees
 
-The code that actually cannot be single stepped is very small
-and only a few lines.
+>
+> [set MAP_FIXED before round_hint_to_min as per Khalid Aziz]
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
+>  arch/alpha/include/uapi/asm/mman.h   |  2 ++
+>  arch/mips/include/uapi/asm/mman.h    |  2 ++
+>  arch/parisc/include/uapi/asm/mman.h  |  2 ++
+>  arch/powerpc/include/uapi/asm/mman.h |  1 +
+>  arch/sparc/include/uapi/asm/mman.h   |  1 +
+>  arch/tile/include/uapi/asm/mman.h    |  1 +
+>  arch/xtensa/include/uapi/asm/mman.h  |  2 ++
+>  include/uapi/asm-generic/mman.h      |  1 +
+>  mm/mmap.c                            | 11 +++++++++++
+>  9 files changed, 23 insertions(+)
+>
+> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+> index 3b26cc62dadb..0e5724e4b4ad 100644
+> --- a/arch/alpha/include/uapi/asm/mman.h
+> +++ b/arch/alpha/include/uapi/asm/mman.h
+> @@ -31,6 +31,8 @@
+>  #define MAP_STACK      0x80000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x100000        /* create a huge page mapping */
+>
+> +#define MAP_FIXED_SAFE 0x200000        /* MAP_FIXED which doesn't unmap underlying mapping */
+> +
+>  #define MS_ASYNC       1               /* sync memory asynchronously */
+>  #define MS_SYNC                2               /* synchronous memory sync */
+>  #define MS_INVALIDATE  4               /* invalidate the caches */
+> diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
+> index da3216007fe0..fc5e61ef9fd4 100644
+> --- a/arch/mips/include/uapi/asm/mman.h
+> +++ b/arch/mips/include/uapi/asm/mman.h
+> @@ -49,6 +49,8 @@
+>  #define MAP_STACK      0x40000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x80000         /* create a huge page mapping */
+>
+> +#define MAP_FIXED_SAFE 0x100000        /* MAP_FIXED which doesn't unmap underlying mapping */
+> +
+>  /*
+>   * Flags for msync
+>   */
+> diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
+> index cc9ba1d34779..c926487472fa 100644
+> --- a/arch/parisc/include/uapi/asm/mman.h
+> +++ b/arch/parisc/include/uapi/asm/mman.h
+> @@ -25,6 +25,8 @@
+>  #define MAP_STACK      0x40000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x80000         /* create a huge page mapping */
+>
+> +#define MAP_FIXED_SAFE 0x100000        /* MAP_FIXED which doesn't unmap underlying mapping */
+> +
+>  #define MS_SYNC                1               /* synchronous memory sync */
+>  #define MS_ASYNC       2               /* sync memory asynchronously */
+>  #define MS_INVALIDATE  4               /* invalidate the caches */
+> diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/include/uapi/asm/mman.h
+> index 03c06ba7464f..d97342ca25b1 100644
+> --- a/arch/powerpc/include/uapi/asm/mman.h
+> +++ b/arch/powerpc/include/uapi/asm/mman.h
+> @@ -28,5 +28,6 @@
+>  #define MAP_NONBLOCK   0x10000         /* do not block on IO */
+>  #define MAP_STACK      0x20000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x40000         /* create a huge page mapping */
+> +#define MAP_FIXED_SAFE 0x800000        /* MAP_FIXED which doesn't unmap underlying mapping */
+>
+>  #endif /* _UAPI_ASM_POWERPC_MMAN_H */
+> diff --git a/arch/sparc/include/uapi/asm/mman.h b/arch/sparc/include/uapi/asm/mman.h
+> index 9765896ecb2c..7b00477a7f9a 100644
+> --- a/arch/sparc/include/uapi/asm/mman.h
+> +++ b/arch/sparc/include/uapi/asm/mman.h
+> @@ -23,6 +23,7 @@
+>  #define MAP_NONBLOCK   0x10000         /* do not block on IO */
+>  #define MAP_STACK      0x20000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x40000         /* create a huge page mapping */
+> +#define MAP_FIXED_SAFE 0x80000         /* MAP_FIXED which doesn't unmap underlying mapping */
+>
+>
+>  #endif /* _UAPI__SPARC_MMAN_H__ */
+> diff --git a/arch/tile/include/uapi/asm/mman.h b/arch/tile/include/uapi/asm/mman.h
+> index 63ee13faf17d..d5d58d2dc95e 100644
+> --- a/arch/tile/include/uapi/asm/mman.h
+> +++ b/arch/tile/include/uapi/asm/mman.h
+> @@ -29,6 +29,7 @@
+>  #define MAP_DENYWRITE  0x0800          /* ETXTBSY */
+>  #define MAP_EXECUTABLE 0x1000          /* mark it as an executable */
+>  #define MAP_HUGETLB    0x4000          /* create a huge page mapping */
+> +#define MAP_FIXED_SAFE 0x8000          /* MAP_FIXED which doesn't unmap underlying mapping */
+>
+>
+>  /*
+> diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
+> index b15b278aa314..d665bd8b7cbd 100644
+> --- a/arch/xtensa/include/uapi/asm/mman.h
+> +++ b/arch/xtensa/include/uapi/asm/mman.h
+> @@ -55,6 +55,7 @@
+>  #define MAP_NONBLOCK   0x20000         /* do not block on IO */
+>  #define MAP_STACK      0x40000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x80000         /* create a huge page mapping */
+> +#define MAP_FIXED_SAFE 0x100000        /* MAP_FIXED which doesn't unmap underlying mapping */
+>  #ifdef CONFIG_MMAP_ALLOW_UNINITIALIZED
+>  # define MAP_UNINITIALIZED 0x4000000   /* For anonymous mmap, memory could be
+>                                          * uninitialized */
+> @@ -62,6 +63,7 @@
+>  # define MAP_UNINITIALIZED 0x0         /* Don't support this flag */
+>  #endif
+>
+> +
+>  /*
+>   * Flags for msync
+>   */
+> diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
+> index 7162cd4cca73..64c46047fbd3 100644
+> --- a/include/uapi/asm-generic/mman.h
+> +++ b/include/uapi/asm-generic/mman.h
+> @@ -12,6 +12,7 @@
+>  #define MAP_NONBLOCK   0x10000         /* do not block on IO */
+>  #define MAP_STACK      0x20000         /* give out an address that is best suited for process/thread stacks */
+>  #define MAP_HUGETLB    0x40000         /* create a huge page mapping */
+> +#define MAP_FIXED_SAFE 0x80000         /* MAP_FIXED which doesn't unmap underlying mapping */
+>
+>  /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
+>
+> diff --git a/mm/mmap.c b/mm/mmap.c
+> index 680506faceae..89af0b5839a5 100644
+> --- a/mm/mmap.c
+> +++ b/mm/mmap.c
+> @@ -1342,6 +1342,10 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+>                 if (!(file && path_noexec(&file->f_path)))
+>                         prot |= PROT_EXEC;
+>
+> +       /* force arch specific MAP_FIXED handling in get_unmapped_area */
+> +       if (flags & MAP_FIXED_SAFE)
+> +               flags |= MAP_FIXED;
+> +
+>         if (!(flags & MAP_FIXED))
+>                 addr = round_hint_to_min(addr);
+>
+> @@ -1365,6 +1369,13 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+>         if (offset_in_page(addr))
+>                 return addr;
+>
+> +       if (flags & MAP_FIXED_SAFE) {
+> +               struct vm_area_struct *vma = find_vma(mm, addr);
+> +
+> +               if (vma && vma->vm_start <= addr)
+> +                       return -ENOMEM;
+> +       }
+> +
+>         if (prot == PROT_EXEC) {
+>                 pkey = execute_only_pkey(mm);
+>                 if (pkey < 0)
+> --
+> 2.15.0
+>
 
-As far as I know this wasn't ever a significant problem for anybody, and
-there is always a simple workaround (set a temporary break point
-after it and continue) 
 
-Same should apply to the new rseq regions. They should be all
-tiny, and we should just accept that they cannot be single-stepped,
-but only skipped.
 
-Then this whole mess would disappear.
+-- 
+Kees Cook
+Pixel Security
 
--Andi
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
