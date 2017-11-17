@@ -1,32 +1,54 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [RFC PATCH v3 for 4.15 08/24] Provide cpu_opv system call
-Date: Fri, 17 Nov 2017 11:09:54 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711171107450.1709@nanos>
-References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com> <20171114200414.2188-9-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1711162215100.2109@nanos> <20171117001410.GG2482@two.firstfloor.org>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 0/9] posix_clocks: Prepare syscalls for 64 bit time_t conversion
+Date: Fri, 17 Nov 2017 11:30:57 +0100
+Message-ID: <CAK8P3a10N42rBO8XBrZWYOCwVB8jayjgZu2oa8FSpHTzszQacQ@mail.gmail.com>
+References: <20171110224259.15930-1-deepa.kernel@gmail.com>
+ <CAK8P3a2uD=xV5GKtL+nhVoPckb6uoXztEvXK-iP_OYbct8QvJA@mail.gmail.com>
+ <CABeXuvpy1jbqjeUFHHX-MrJXQLA2QNYbAa6OX7qOpPp4q-mQYQ@mail.gmail.com>
+ <alpine.DEB.2.20.1711160958430.2191@nanos> <CAK8P3a0wxs59T1zW4ahbJXeW6QjStm0mbCFoL_RQexAa6dzh_w@mail.gmail.com>
+ <alpine.DEB.2.20.1711170954000.1709@nanos> <CAK8P3a3fcVKTwoqN0CxYchzcFqUZPBeko=oYsA9eNxu4bQoYyw@mail.gmail.com>
+ <alpine.DEB.2.20.1711171049180.1709@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171117001410.GG2482-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.20.1711171049180.1709@nanos>
+Sender: linux-arch-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Deepa Dinamani <deepa.kernel@gmail.com>, John Stultz <john.stultz@linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Christian Borntraeger <borntraeger@de.ibm.com>, Catalin Marinas <catalin.marinas@arm.com>, Chris Metcalf <cmetcalf@mellanox.com>, cohuck@redhat.com, David Miller <davem@davemloft.net>, Helge Deller <deller@gmx.de>, devel@driverdev.osuosl.org, gerald.schaefer@de.ibm.com, gregkh <gregkh@linuxfoundation.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Jan Hoeppner <hoeppner@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Julian
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 16 Nov 2017, Andi Kleen wrote:
-> My preference would be just to drop this new super ugly system call. 
-> 
-> It's also not just the ugliness, but the very large attack surface
-> that worries me here.
-> 
-> As far as I know it is only needed to support single stepping, correct?
+On Fri, Nov 17, 2017 at 10:54 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> On Fri, 17 Nov 2017, Arnd Bergmann wrote:
+>> On Fri, Nov 17, 2017 at 9:58 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+>>
+>> No, syscall that existing 32-bit user space enters would be handled by
+>> compat_sys_nanosleep() on both 32-bit and 64-bit kernels at that
+>> point. The idea here is to make the code path more uniform between
+>> 32-bit and 64-bit kernels.
+>
+> So on a 32bit system compat_sys_nanosleep() would be the legacy
+> sys_nanosleep() with the existing syscall number, but you don't want to
+> introduce a new sys_nanosleep64() for 32bit. That makes a lot of sense.
+>
+> So back to your original question whether to use #if (MAGIC logic) or a
+> separate config symbol. Please use the latter, these magic logic constructs
+> are harder to read and prone to get wrong at some point. Having the
+> decision logic in one place is always the right thing to do.
 
-I can't figure that out because the changelog describes only WHAT the patch
-does and not WHY. Useful, isn't it?
+How about this:
 
-> Then this whole mess would disappear.
+config LEGACY_TIME_SYSCALLS
+      def_bool 64BIT || !64BIT_TIME
+      help
+        This controls the compilation of the following system calls:
+time, stime,
+        gettimeofday, settimeofday, adjtimex, nanosleep, alarm, getitimer,
+        setitimer, select, utime, utimes, futimesat, and
+{old,new}{l,f,}stat{,64}.
+        These all pass 32-bit time_t arguments on 32-bit architectures and
+        are replaced by other interfaces (e.g. posix timers and clocks, statx).
+        C libraries implementing 64-bit time_t in 32-bit architectures have to
+        implement the handles by wrapping around the newer interfaces.
+        New architectures should not explicitly disable this.
 
-Agreed. That would be much appreciated.
-
-Thanks,
-
-	tglx
+       Arnd
