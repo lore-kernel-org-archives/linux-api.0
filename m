@@ -1,76 +1,32 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 0/9] posix_clocks: Prepare syscalls for 64 bit
- time_t conversion
-Date: Fri, 17 Nov 2017 10:54:07 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711171049180.1709@nanos>
-References: <20171110224259.15930-1-deepa.kernel@gmail.com>
- <CAK8P3a2uD=xV5GKtL+nhVoPckb6uoXztEvXK-iP_OYbct8QvJA@mail.gmail.com>
- <CABeXuvpy1jbqjeUFHHX-MrJXQLA2QNYbAa6OX7qOpPp4q-mQYQ@mail.gmail.com>
- <alpine.DEB.2.20.1711160958430.2191@nanos>
- <CAK8P3a0wxs59T1zW4ahbJXeW6QjStm0mbCFoL_RQexAa6dzh_w@mail.gmail.com>
- <alpine.DEB.2.20.1711170954000.1709@nanos>
- <CAK8P3a3fcVKTwoqN0CxYchzcFqUZPBeko=oYsA9eNxu4bQoYyw@mail.gmail.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [RFC PATCH v3 for 4.15 08/24] Provide cpu_opv system call
+Date: Fri, 17 Nov 2017 11:09:54 +0100 (CET)
+Message-ID: <alpine.DEB.2.20.1711171107450.1709@nanos>
+References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com> <20171114200414.2188-9-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1711162215100.2109@nanos> <20171117001410.GG2482@two.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <CAK8P3a3fcVKTwoqN0CxYchzcFqUZPBeko=oYsA9eNxu4bQoYyw@mail.gmail.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Mark Rutland <mark.rutland@arm.com>, "open list:RALINK MIPS ARCHITECTURE" <linux-mips@linux-mips.org>, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Stefan Haberland <sth@linux.vnet.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Paul Mackerras <paulus@samba.org>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, devel@driverdev.osuosl.org, linux-s390 <linux-s390@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Michael Ellerman <mpe@ellerman.id.au>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, sebott@linux.vnet.ibm.com, "James E.J. Bottomley" <jejb@parisc-linux.org>, Will Deacon <will.deacon@arm.com>, Christian Borntraeger <borntraeger@de.ibm.com>, Ingo Molnar <mingo@redhat.com>, oprofile-list@lists.sf.net, Catali
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171117001410.GG2482-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCAxNyBOb3YgMjAxNywgQXJuZCBCZXJnbWFubiB3cm90ZToKPiBPbiBGcmksIE5vdiAx
-NywgMjAxNyBhdCA5OjU4IEFNLCBUaG9tYXMgR2xlaXhuZXIgPHRnbHhAbGludXRyb25peC5kZT4g
-d3JvdGU6Cj4gPiBPbiBGcmksIDE3IE5vdiAyMDE3LCBBcm5kIEJlcmdtYW5uIHdyb3RlOgo+ID4+
-IE9uIFRodSwgTm92IDE2LCAyMDE3IGF0IDEwOjA0IEFNLCBUaG9tYXMgR2xlaXhuZXIgPHRnbHhA
-bGludXRyb25peC5kZT4gd3JvdGU6Cj4gPj4gPiBPbiBXZWQsIDE1IE5vdiAyMDE3LCBEZWVwYSBE
-aW5hbWFuaSB3cm90ZToKPiA+PiA+PiBXb3VsZCB0aGlzIHdvcmsgZm9yIGV2ZXJ5b25lPwo+ID4+
-ID4KPiA+PiA+IEhhdmluZyBleHRyYSBjb25maWcgc3dpdGNoZXMgd2hpY2ggYXJlIHNlbGVjdGFi
-bGUgYnkgYXJjaGl0ZWN0dXJlcyBhbmQKPiA+PiA+IHJlbW92ZWQgd2hlbiBldmVyeXRoaW5nIGlz
-IGNvbnZlcnRlZCBpcyBkZWZpbml0ZWx5IHRoZSByaWdodCB3YXkgdG8gZ28uCj4gPj4gPgo+ID4+
-ID4gVGhhdCBhbGxvd3MgeW91IHRvIGdyYWR1YWxseSBjb252ZXJ0IHN0dWZmIHcvbyBpbmZsaWN0
-aW5nIHdyZWNrYWdlIGFsbCBvdmVyCj4gPj4gPiB0aGUgcGxhY2UuCj4gPj4KPiA+PiBUaGUgQ09O
-RklHXzY0QklUX1RJTUUgd291bGQgZG8gdGhhdCBuaWNlbHkgZm9yIHRoZSBuZXcgc3R1ZmYgbGlr
-ZQo+ID4+IHRoZSBjb25kaXRpb25hbCBkZWZpbml0aW9uIG9mIF9fa2VybmVsX3RpbWVzcGVjLCB0
-aGlzIG9uZSB3b3VsZCBnZXQKPiA+PiByZW1vdmVkIGFmdGVyIHdlIGNvbnZlcnQgYWxsIGFyY2hp
-dGVjdHVyZXMuCj4gPj4KPiA+PiBBIHNlY29uZCBpc3N1ZSBpcyBob3cgdG8gY29udHJvbCB0aGUg
-Y29tcGlsYXRpb24gb2YgdGhlIGNvbXBhdCBzeXNjYWxscy4KPiA+PiBDT05GSUdfQ09NUEFUXzMy
-QklUX1RJTUUgaGFuZGxlcyB0aGF0IGFuZCBjb3VsZCBiZSBkZWZpbmVkCj4gPj4gaW4gS2NvbmZp
-ZyBhcyAnZGVmX2Jvb2wgKCE2NEJJVCAmJiBDT05GSUdfNjRCSVRfVElNRSkgfHwgQ09NUEFUJywK
-PiA+PiB0aGlzIGlzIHRoZW4ganVzdCBhIG1vcmUgcmVhZGFibGUgd2F5IG9mIGV4cHJlc3Npbmcg
-ZXhhY3RseSB3aGVuIHRoZQo+ID4+IGZ1bmN0aW9ucyBzaG91bGQgYmUgYnVpbHQuCj4gPj4KPiA+
-PiBGb3IgY29tcGxldGVuZXNzLCB0aGVyZSBtYXkgYmUgYSB0aGlyZCBjYXRlZ29yeSwgZGVwZW5k
-aW5nIG9uIGhvdwo+ID4+IHdlIGhhbmRsZSB0aGluZ3MgbGlrZSBzeXNfbmFub3NsZWVwKCk6IEhl
-cmUsIHdlIHdhbnQgdGhlIG5hdGl2ZQo+ID4+IHN5c19uYW5vc2xlZXAgb24gNjQtYml0IGFyY2hp
-dGVjdHVyZXMsIGFuZCBjb21wYXRfc3lzX25hbm9zbGVlcCgpCj4gPj4gdG8gaGFuZGxlIHRoZSAz
-Mi1iaXQgdGltZV90IHZhcmlhbnQgb24gYm90aCAzMi1iaXQgYW5kIDY0LWJpdCB0YXJnZXRzLAo+
-ID4+IGJ1dCBvdXIgcGxhbiBpcyB0byBub3QgaGF2ZSBhIG5hdGl2ZSAzMi1iaXQgc3lzX25hbm9z
-bGVlcCBvbiAzMi1iaXQKPiA+PiBhcmNoaXRlY3R1cmVzIGFueSBtb3JlLCBhcyBuZXcgZ2xpYmMg
-c2hvdWxkIGNhbGwgY2xvY2tfbmFub3NsZWVwKCkKPiA+PiB3aXRoIGEgbmV3IHN5c2NhbGwgbnVt
-YmVyIGluc3RlYWQuIFNob3VsZCB3ZSB0aGVuIGVuY2xvc2UKPiA+Cj4gPiBJc24ndCB0aGF0IGdv
-aW5nIHRvIGJyZWFrIGV4aXN0aW5nIHVzZXJzcGFjZT8KPiAKPiBObywgc3lzY2FsbCB0aGF0IGV4
-aXN0aW5nIDMyLWJpdCB1c2VyIHNwYWNlIGVudGVycyB3b3VsZCBiZSBoYW5kbGVkIGJ5Cj4gY29t
-cGF0X3N5c19uYW5vc2xlZXAoKSBvbiBib3RoIDMyLWJpdCBhbmQgNjQtYml0IGtlcm5lbHMgYXQg
-dGhhdAo+IHBvaW50LiBUaGUgaWRlYSBoZXJlIGlzIHRvIG1ha2UgdGhlIGNvZGUgcGF0aCBtb3Jl
-IHVuaWZvcm0gYmV0d2Vlbgo+IDMyLWJpdCBhbmQgNjQtYml0IGtlcm5lbHMuCgpTbyBvbiBhIDMy
-Yml0IHN5c3RlbSBjb21wYXRfc3lzX25hbm9zbGVlcCgpIHdvdWxkIGJlIHRoZSBsZWdhY3kKc3lz
-X25hbm9zbGVlcCgpIHdpdGggdGhlIGV4aXN0aW5nIHN5c2NhbGwgbnVtYmVyLCBidXQgeW91IGRv
-bid0IHdhbnQgdG8KaW50cm9kdWNlIGEgbmV3IHN5c19uYW5vc2xlZXA2NCgpIGZvciAzMmJpdC4g
-VGhhdCBtYWtlcyBhIGxvdCBvZiBzZW5zZS4KClNvIGJhY2sgdG8geW91ciBvcmlnaW5hbCBxdWVz
-dGlvbiB3aGV0aGVyIHRvIHVzZSAjaWYgKE1BR0lDIGxvZ2ljKSBvciBhCnNlcGFyYXRlIGNvbmZp
-ZyBzeW1ib2wuIFBsZWFzZSB1c2UgdGhlIGxhdHRlciwgdGhlc2UgbWFnaWMgbG9naWMgY29uc3Ry
-dWN0cwphcmUgaGFyZGVyIHRvIHJlYWQgYW5kIHByb25lIHRvIGdldCB3cm9uZyBhdCBzb21lIHBv
-aW50LiBIYXZpbmcgdGhlCmRlY2lzaW9uIGxvZ2ljIGluIG9uZSBwbGFjZSBpcyBhbHdheXMgdGhl
-IHJpZ2h0IHRoaW5nIHRvIGRvLgoKVGhhbmtzLAoKCXRnbHgKX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxpc3Rz
-LmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8veTIw
-MzgK
+On Thu, 16 Nov 2017, Andi Kleen wrote:
+> My preference would be just to drop this new super ugly system call. 
+> 
+> It's also not just the ugliness, but the very large attack surface
+> that worries me here.
+> 
+> As far as I know it is only needed to support single stepping, correct?
+
+I can't figure that out because the changelog describes only WHAT the patch
+does and not WHY. Useful, isn't it?
+
+> Then this whole mess would disappear.
+
+Agreed. That would be much appreciated.
+
+Thanks,
+
+	tglx
