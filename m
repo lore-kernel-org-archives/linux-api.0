@@ -1,225 +1,108 @@
-From: John Hubbard <jhubbard@nvidia.com>
-Subject: Re: [RFC PATCH 1/2] mm: introduce MAP_FIXED_SAFE
-Date: Fri, 17 Nov 2017 00:37:18 -0800
-Message-ID: <be5c9478-3e03-9a1d-525c-31c904b667d8@nvidia.com>
+From: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Fri, 17 Nov 2017 00:45:49 -0800
+Message-ID: <b1848e34-7fcd-8ad8-6a6a-3be3dce3fda7@nvidia.com>
 References: <20171116101900.13621-1-mhocko@kernel.org>
- <20171116101900.13621-2-mhocko@kernel.org>
+ <20171116121438.6vegs4wiahod3byl@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20171116101900.13621-2-mhocko@kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171116121438.6vegs4wiahod3byl-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
 Content-Language: en-US
-Sender: linux-arch-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
-Cc: Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Michal Hocko <mhocko@suse.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Abdul Haleem <abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/16/2017 02:18 AM, Michal Hocko wrote:
-> From: Michal Hocko <mhocko@suse.com>
+On 11/16/2017 04:14 AM, Michal Hocko wrote:
+> [Ups, managed to screw the subject - fix it]
 > 
-> MAP_FIXED is used quite often to enforce mapping at the particular
-> range. The main problem of this flag is, however, that it is inherently
-> dangerous because it unmaps existing mappings covered by the requested
-> range. This can cause silent memory corruptions. Some of them even with
-> serious security implications. While the current semantic might be
-> really desiderable in many cases there are others which would want to
-> enforce the given range but rather see a failure than a silent memory
-> corruption on a clashing range. Please note that there is no guarantee
-> that a given range is obeyed by the mmap even when it is free - e.g.
-> arch specific code is allowed to apply an alignment.
-> 
-> Introduce a new MAP_FIXED_SAFE flag for mmap to achieve this behavior.
-> It has the same semantic as MAP_FIXED wrt. the given address request
-> with a single exception that it fails with ENOMEM if the requested
-> address is already covered by an existing mapping. We still do rely on
-> get_unmaped_area to handle all the arch specific MAP_FIXED treatment and
-> check for a conflicting vma after it returns.
-> 
-> [set MAP_FIXED before round_hint_to_min as per Khalid Aziz]
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
-> ---
->  arch/alpha/include/uapi/asm/mman.h   |  2 ++
->  arch/mips/include/uapi/asm/mman.h    |  2 ++
->  arch/parisc/include/uapi/asm/mman.h  |  2 ++
->  arch/powerpc/include/uapi/asm/mman.h |  1 +
->  arch/sparc/include/uapi/asm/mman.h   |  1 +
->  arch/tile/include/uapi/asm/mman.h    |  1 +
->  arch/xtensa/include/uapi/asm/mman.h  |  2 ++
->  include/uapi/asm-generic/mman.h      |  1 +
->  mm/mmap.c                            | 11 +++++++++++
->  9 files changed, 23 insertions(+)
-> 
-> diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
-> index 3b26cc62dadb..0e5724e4b4ad 100644
-> --- a/arch/alpha/include/uapi/asm/mman.h
-> +++ b/arch/alpha/include/uapi/asm/mman.h
-> @@ -31,6 +31,8 @@
->  #define MAP_STACK	0x80000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x100000	/* create a huge page mapping */
->  
-> +#define MAP_FIXED_SAFE	0x200000	/* MAP_FIXED which doesn't unmap underlying mapping */
-> +
->  #define MS_ASYNC	1		/* sync memory asynchronously */
->  #define MS_SYNC		2		/* synchronous memory sync */
->  #define MS_INVALIDATE	4		/* invalidate the caches */
-> diff --git a/arch/mips/include/uapi/asm/mman.h b/arch/mips/include/uapi/asm/mman.h
-> index da3216007fe0..fc5e61ef9fd4 100644
-> --- a/arch/mips/include/uapi/asm/mman.h
-> +++ b/arch/mips/include/uapi/asm/mman.h
-> @@ -49,6 +49,8 @@
->  #define MAP_STACK	0x40000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x80000		/* create a huge page mapping */
->  
-> +#define MAP_FIXED_SAFE	0x100000	/* MAP_FIXED which doesn't unmap underlying mapping */
-> +
->  /*
->   * Flags for msync
->   */
-> diff --git a/arch/parisc/include/uapi/asm/mman.h b/arch/parisc/include/uapi/asm/mman.h
-> index cc9ba1d34779..c926487472fa 100644
-> --- a/arch/parisc/include/uapi/asm/mman.h
-> +++ b/arch/parisc/include/uapi/asm/mman.h
-> @@ -25,6 +25,8 @@
->  #define MAP_STACK	0x40000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x80000		/* create a huge page mapping */
->  
-> +#define MAP_FIXED_SAFE	0x100000	/* MAP_FIXED which doesn't unmap underlying mapping */
-> +
->  #define MS_SYNC		1		/* synchronous memory sync */
->  #define MS_ASYNC	2		/* sync memory asynchronously */
->  #define MS_INVALIDATE	4		/* invalidate the caches */
-> diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/include/uapi/asm/mman.h
-> index 03c06ba7464f..d97342ca25b1 100644
-> --- a/arch/powerpc/include/uapi/asm/mman.h
-> +++ b/arch/powerpc/include/uapi/asm/mman.h
-> @@ -28,5 +28,6 @@
->  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
->  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-> +#define MAP_FIXED_SAFE	0x800000	/* MAP_FIXED which doesn't unmap underlying mapping */
- 
+> On Thu 16-11-17 11:18:58, Michal Hocko wrote:
+>> Hi,
+>> this has started as a follow up discussion [1][2] resulting in the
+>> runtime failure caused by hardening patch [3] which removes MAP_FIXED
+>> from the elf loader because MAP_FIXED is inherently dangerous as it
+>> might silently clobber and existing underlying mapping (e.g. stack). The
+>> reason for the failure is that some architectures enforce an alignment
+>> for the given address hint without MAP_FIXED used (e.g. for shared or
+>> file backed mappings).
+>>
+>> One way around this would be excluding those archs which do alignment
+>> tricks from the hardening [4]. The patch is really trivial but it has
+>> been objected, rightfully so, that this screams for a more generic
+>> solution. We basically want a non-destructive MAP_FIXED.
+>>
+>> The first patch introduced MAP_FIXED_SAFE which enforces the given
+>> address but unlike MAP_FIXED it fails with ENOMEM if the given range
+>> conflicts with an existing one. The flag is introduced as a completely
+>> new flag rather than a MAP_FIXED extension because of the backward
+>> compatibility. We really want a never-clobber semantic even on older
+>> kernels which do not recognize the flag. Unfortunately mmap sucks wrt.
+>> flags evaluation because we do not EINVAL on unknown flags. On those
+>> kernels we would simply use the traditional hint based semantic so the
+>> caller can still get a different address (which sucks) but at least not
+>> silently corrupt an existing mapping. I do not see a good way around
+>> that. Except we won't export expose the new semantic to the userspace at
+>> all. It seems there are users who would like to have something like that
+>> [5], though. Atomic address range probing in the multithreaded programs
+>> sounds like an interesting thing to me as well, although I do not have
+>> any specific usecase in mind.
 
 Hi Michal,
 
-1. The powerpc change, above, has one too many zeroes. It should be 0x80000, 
-not 0x800000.
+>From looking at the patchset, it seems to me that the new MAP_FIXED_SAFE
+(or whatever it ends up being named) *would* be passed through from
+user space. When you say that "we won't export expose the new semantic 
+to the userspace at all", do you mean that glibc won't add it? Or
+is there something I'm missing, that prevents that flag from getting
+from the syscall, to do_mmap()?
 
-2. For the one-line comments, if you phrase them like this:
-
-/* Like MAP_FIXED, except that it doesn't unmap pre-existing mappings */
-
-...I think that would be a little clearer.
-
-more below:
-
->  #endif /* _UAPI_ASM_POWERPC_MMAN_H */
-> diff --git a/arch/sparc/include/uapi/asm/mman.h b/arch/sparc/include/uapi/asm/mman.h
-> index 9765896ecb2c..7b00477a7f9a 100644
-> --- a/arch/sparc/include/uapi/asm/mman.h
-> +++ b/arch/sparc/include/uapi/asm/mman.h
-> @@ -23,6 +23,7 @@
->  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
->  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-> +#define MAP_FIXED_SAFE	0x80000		/* MAP_FIXED which doesn't unmap underlying mapping */
->  
->  
->  #endif /* _UAPI__SPARC_MMAN_H__ */
-> diff --git a/arch/tile/include/uapi/asm/mman.h b/arch/tile/include/uapi/asm/mman.h
-> index 63ee13faf17d..d5d58d2dc95e 100644
-> --- a/arch/tile/include/uapi/asm/mman.h
-> +++ b/arch/tile/include/uapi/asm/mman.h
-> @@ -29,6 +29,7 @@
->  #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
->  #define MAP_EXECUTABLE	0x1000		/* mark it as an executable */
->  #define MAP_HUGETLB	0x4000		/* create a huge page mapping */
-> +#define MAP_FIXED_SAFE	0x8000		/* MAP_FIXED which doesn't unmap underlying mapping */
->  
->  
->  /*
-> diff --git a/arch/xtensa/include/uapi/asm/mman.h b/arch/xtensa/include/uapi/asm/mman.h
-> index b15b278aa314..d665bd8b7cbd 100644
-> --- a/arch/xtensa/include/uapi/asm/mman.h
-> +++ b/arch/xtensa/include/uapi/asm/mman.h
-> @@ -55,6 +55,7 @@
->  #define MAP_NONBLOCK	0x20000		/* do not block on IO */
->  #define MAP_STACK	0x40000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x80000		/* create a huge page mapping */
-> +#define MAP_FIXED_SAFE	0x100000	/* MAP_FIXED which doesn't unmap underlying mapping */
->  #ifdef CONFIG_MMAP_ALLOW_UNINITIALIZED
->  # define MAP_UNINITIALIZED 0x4000000	/* For anonymous mmap, memory could be
->  					 * uninitialized */
-> @@ -62,6 +63,7 @@
->  # define MAP_UNINITIALIZED 0x0		/* Don't support this flag */
->  #endif
->  
-> +
->  /*
->   * Flags for msync
->   */
-> diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
-> index 7162cd4cca73..64c46047fbd3 100644
-> --- a/include/uapi/asm-generic/mman.h
-> +++ b/include/uapi/asm-generic/mman.h
-> @@ -12,6 +12,7 @@
->  #define MAP_NONBLOCK	0x10000		/* do not block on IO */
->  #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
->  #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
-> +#define MAP_FIXED_SAFE	0x80000		/* MAP_FIXED which doesn't unmap underlying mapping */
->  
->  /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
->  
-> diff --git a/mm/mmap.c b/mm/mmap.c
-> index 680506faceae..89af0b5839a5 100644
-> --- a/mm/mmap.c
-> +++ b/mm/mmap.c
-> @@ -1342,6 +1342,10 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
->  		if (!(file && path_noexec(&file->f_path)))
->  			prot |= PROT_EXEC;
->  
-> +	/* force arch specific MAP_FIXED handling in get_unmapped_area */
-> +	if (flags & MAP_FIXED_SAFE)
-> +		flags |= MAP_FIXED;
-
-Hooking in at this point is a nice way to solve the problem. :)
-
-For the naming and implementation, I see a couple of things that might improve
-it slightly:
-
-a) Change MAP_FIXED_SAFE to MAP_NO_CLOBBER (as per Kees' idea), but keep the
-new flag independent, by omitting the above two lines. Instead of forcing
-MAP_FIXED as a result of the new flag, you could simply fail to take any action
-on MAP_NO_CLOBBER *unless* MAP_FIXED is set.
-
-This is a bit easier to explain and reason about, as compared to a flag that
-auto-sets another flag. I like this approach best.
-
-  or
-
-b) Change MAP_FIXED_SAFE to MAP_FIXED_NO_CLOBBER (also a variation on Kees' name
-idea, but a little longer, a bit uglier, and clearer), and leave the implementation
-the same.
+On the usage: there are cases in user space that could probably make
+good use of a no-clobber hint to MAP_FIXED. The user space code
+that surrounds HMM (speaking loosely there--it's really any user space
+code that manages a unified memory address space, across devices)
+often ends up using MAP_FIXED, but MAP_FIXED crams several features
+into one flag: an exact address, an "atomic" switch to the new mapping,
+and unmapping the old mappings. That's pretty overloaded, so being
+able to split it up a bit, by removing one of those features, seems
+useful.
 
 thanks,
 John Hubbard
 
-> +
->  	if (!(flags & MAP_FIXED))
->  		addr = round_hint_to_min(addr);
->  
-> @@ -1365,6 +1369,13 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
->  	if (offset_in_page(addr))
->  		return addr;
->  
-> +	if (flags & MAP_FIXED_SAFE) {
-> +		struct vm_area_struct *vma = find_vma(mm, addr);
-> +
-> +		if (vma && vma->vm_start <= addr)
-> +			return -ENOMEM;
-> +	}
-> +
->  	if (prot == PROT_EXEC) {
->  		pkey = execute_only_pkey(mm);
->  		if (pkey < 0)
+>>
+>> The second patch simply replaces MAP_FIXED use in elf loader by
+>> MAP_FIXED_SAFE. I believe other places which rely on MAP_FIXED should
+>> follow. Actually real MAP_FIXED usages should be docummented properly
+>> and they should be more of an exception.
+>>
+>> Does anybody see any fundamental reasons why this is a wrong approach?
+>>
+>> Diffstat says
+>>  arch/alpha/include/uapi/asm/mman.h   |  2 ++
+>>  arch/metag/kernel/process.c          |  6 +++++-
+>>  arch/mips/include/uapi/asm/mman.h    |  2 ++
+>>  arch/parisc/include/uapi/asm/mman.h  |  2 ++
+>>  arch/powerpc/include/uapi/asm/mman.h |  1 +
+>>  arch/sparc/include/uapi/asm/mman.h   |  1 +
+>>  arch/tile/include/uapi/asm/mman.h    |  1 +
+>>  arch/xtensa/include/uapi/asm/mman.h  |  2 ++
+>>  fs/binfmt_elf.c                      | 12 ++++++++----
+>>  include/uapi/asm-generic/mman.h      |  1 +
+>>  mm/mmap.c                            | 11 +++++++++++
+>>  11 files changed, 36 insertions(+), 5 deletions(-)
+>>
+>> [1] http://lkml.kernel.org/r/20171107162217.382cd754-3FnU+UHB4dNDw9hX6IcOSA@public.gmane.org
+>> [2] http://lkml.kernel.org/r/1510048229.12079.7.camel-JKZ9t1WPFCv1ENwx4SLHqw@public.gmane.org
+>> [3] http://lkml.kernel.org/r/20171023082608.6167-1-mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+>> [4] http://lkml.kernel.org/r/20171113094203.aofz2e7kueitk55y-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org
+>> [5] http://lkml.kernel.org/r/87efp1w7vy.fsf-W0DJWXSxmBNbyGPkN3NxC2scP1bn1w/D@public.gmane.org
+>>
+>>
+>> --
+>> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+>> the body to majordomo-Bw31MaZKKs0EbZ0PF+XxCw@public.gmane.org  For more info on Linux MM,
+>> see: http://www.linux-mm.org/ .
+>> Don't email: <a href=mailto:"dont-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org"> email-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org </a>
 > 
