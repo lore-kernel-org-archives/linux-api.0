@@ -1,151 +1,43 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH 2/2] fs, elf: drop MAP_FIXED usage from elf_map
-Date: Thu, 16 Nov 2017 16:30:01 -0800
-Message-ID: <CAGXu5jL2qE7Zh3DrLrTOfk7svahtk6vBkyToDhopK0YSGh+cKg@mail.gmail.com>
-References: <20171116101900.13621-1-mhocko@kernel.org> <20171116101900.13621-3-mhocko@kernel.org>
+From: Yisheng Xie <xieyisheng1@huawei.com>
+Subject: [PATCH v3 1/3] mm/mempolicy: remove redundant check in get_nodes
+Date: Fri, 17 Nov 2017 09:37:02 +0800
+Message-ID: <1510882624-44342-2-git-send-email-xieyisheng1@huawei.com>
+References: <1510882624-44342-1-git-send-email-xieyisheng1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171116101900.13621-3-mhocko@kernel.org>
+In-Reply-To: <1510882624-44342-1-git-send-email-xieyisheng1@huawei.com>
 Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>
+To: akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, mingo@kernel.org, rientjes@google.com, n-horiguchi@ah.jp.nec.com, salls@cs.ucsb.edu, ak@linux.intel.com, cl@linux.com
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, tanxiaojun@huawei.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 16, 2017 at 2:19 AM, Michal Hocko <mhocko@kernel.org> wrote:
-> From: Michal Hocko <mhocko@suse.com>
->
-> Both load_elf_interp and load_elf_binary rely on elf_map to map segments
-> on a controlled address and they use MAP_FIXED to enforce that. This is
-> however dangerous thing prone to silent data corruption which can be
-> even exploitable. Let's take CVE-2017-1000253 as an example. At the time
-> (before eab09532d400 ("binfmt_elf: use ELF_ET_DYN_BASE only for PIE"))
-> ELF_ET_DYN_BASE was at TASK_SIZE / 3 * 2 which is not that far away from
-> the stack top on 32b (legacy) memory layout (only 1GB away). Therefore
-> we could end up mapping over the existing stack with some luck.
->
-> The issue has been fixed since then (a87938b2e246 ("fs/binfmt_elf.c:
-> fix bug in loading of PIE binaries")), ELF_ET_DYN_BASE moved moved much
-> further from the stack (eab09532d400 and later by c715b72c1ba4 ("mm:
-> revert x86_64 and arm64 ELF_ET_DYN_BASE base changes")) and excessive
-> stack consumption early during execve fully stopped by da029c11e6b1
-> ("exec: Limit arg stack to at most 75% of _STK_LIM"). So we should be
-> safe and any attack should be impractical. On the other hand this is
-> just too subtle assumption so it can break quite easily and hard to
-> spot.
->
-> I believe that the MAP_FIXED usage in load_elf_binary (et. al) is still
-> fundamentally dangerous. Moreover it shouldn't be even needed. We are
-> at the early process stage and so there shouldn't be unrelated mappings
-> (except for stack and loader) existing so mmap for a given address
-> should succeed even without MAP_FIXED. Something is terribly wrong if
-> this is not the case and we should rather fail than silently corrupt the
-> underlying mapping.
->
-> Address this issue by changing MAP_FIXED to the newly added
-> MAP_FIXED_SAFE. This will mean that mmap will fail if there is an
-> existing mapping clashing with the requested one without clobbering it.
->
-> Cc: Abdul Haleem <abdhalee@linux.vnet.ibm.com>
-> Cc: Joel Stanley <joel@jms.id.au>
-> Cc: Kees Cook <keescook@chromium.org>
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+We have already checked whether maxnode is a page worth of bits, by:
+    maxnode > PAGE_SIZE*BITS_PER_BYTE
 
-Once (if?) the name gets settled, this looks good to me:
+So no need to check it once more.
 
-Acked-by: Kees Cook <keescook@chromium.org>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Yisheng Xie <xieyisheng1@huawei.com>
+---
+ mm/mempolicy.c | 2 --
+ 1 file changed, 2 deletions(-)
 
--Kees
-
-> ---
->  arch/metag/kernel/process.c |  6 +++++-
->  fs/binfmt_elf.c             | 12 ++++++++----
->  2 files changed, 13 insertions(+), 5 deletions(-)
->
-> diff --git a/arch/metag/kernel/process.c b/arch/metag/kernel/process.c
-> index c4606ce743d2..2286140e54e0 100644
-> --- a/arch/metag/kernel/process.c
-> +++ b/arch/metag/kernel/process.c
-> @@ -398,7 +398,7 @@ unsigned long __metag_elf_map(struct file *filep, unsigned long addr,
->         tcm_tag = tcm_lookup_tag(addr);
->
->         if (tcm_tag != TCM_INVALID_TAG)
-> -               type &= ~MAP_FIXED;
-> +               type &= ~(MAP_FIXED | MAP_FIXED_SAFE);
->
->         /*
->         * total_size is the size of the ELF (interpreter) image.
-> @@ -416,6 +416,10 @@ unsigned long __metag_elf_map(struct file *filep, unsigned long addr,
->         } else
->                 map_addr = vm_mmap(filep, addr, size, prot, type, off);
->
-> +       if ((type & MAP_FIXED_SAFE) && BAD_ADDR(map_addr))
-> +               pr_info("%d (%s): Uhuuh, elf segement at %p requested but the memory is mapped already\n",
-> +                               task_pid_nr(current), tsk->comm, (void*)addr);
-> +
->         if (!BAD_ADDR(map_addr) && tcm_tag != TCM_INVALID_TAG) {
->                 struct tcm_allocation *tcm;
->                 unsigned long tcm_addr;
-> diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-> index 6466153f2bf0..12b21942ccde 100644
-> --- a/fs/binfmt_elf.c
-> +++ b/fs/binfmt_elf.c
-> @@ -372,6 +372,10 @@ static unsigned long elf_map(struct file *filep, unsigned long addr,
->         } else
->                 map_addr = vm_mmap(filep, addr, size, prot, type, off);
->
-> +       if ((type & MAP_FIXED_SAFE) && BAD_ADDR(map_addr))
-> +               pr_info("%d (%s): Uhuuh, elf segement at %p requested but the memory is mapped already\n",
-> +                               task_pid_nr(current), current->comm, (void*)addr);
-> +
->         return(map_addr);
->  }
->
-> @@ -569,7 +573,7 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
->                                 elf_prot |= PROT_EXEC;
->                         vaddr = eppnt->p_vaddr;
->                         if (interp_elf_ex->e_type == ET_EXEC || load_addr_set)
-> -                               elf_type |= MAP_FIXED;
-> +                               elf_type |= MAP_FIXED_SAFE;
->                         else if (no_base && interp_elf_ex->e_type == ET_DYN)
->                                 load_addr = -vaddr;
->
-> @@ -929,7 +933,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
->                  * the ET_DYN load_addr calculations, proceed normally.
->                  */
->                 if (loc->elf_ex.e_type == ET_EXEC || load_addr_set) {
-> -                       elf_flags |= MAP_FIXED;
-> +                       elf_flags |= MAP_FIXED_SAFE;
->                 } else if (loc->elf_ex.e_type == ET_DYN) {
->                         /*
->                          * This logic is run once for the first LOAD Program
-> @@ -965,7 +969,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
->                                 load_bias = ELF_ET_DYN_BASE;
->                                 if (current->flags & PF_RANDOMIZE)
->                                         load_bias += arch_mmap_rnd();
-> -                               elf_flags |= MAP_FIXED;
-> +                               elf_flags |= MAP_FIXED_SAFE;
->                         } else
->                                 load_bias = 0;
->
-> @@ -1220,7 +1224,7 @@ static int load_elf_library(struct file *file)
->                         (eppnt->p_filesz +
->                          ELF_PAGEOFFSET(eppnt->p_vaddr)),
->                         PROT_READ | PROT_WRITE | PROT_EXEC,
-> -                       MAP_FIXED | MAP_PRIVATE | MAP_DENYWRITE,
-> +                       MAP_FIXED_SAFE | MAP_PRIVATE | MAP_DENYWRITE,
->                         (eppnt->p_offset -
->                          ELF_PAGEOFFSET(eppnt->p_vaddr)));
->         if (error != ELF_PAGESTART(eppnt->p_vaddr))
-> --
-> 2.15.0
->
-
-
-
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index 4ce44d3..6e867a8 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -1282,8 +1282,6 @@ static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
+ 	/* When the user specified more nodes than supported just check
+ 	   if the non supported part is all zero. */
+ 	if (nlongs > BITS_TO_LONGS(MAX_NUMNODES)) {
+-		if (nlongs > PAGE_SIZE/sizeof(long))
+-			return -EINVAL;
+ 		for (k = BITS_TO_LONGS(MAX_NUMNODES); k < nlongs; k++) {
+ 			unsigned long t;
+ 			if (get_user(t, nmask + k))
 -- 
-Kees Cook
-Pixel Security
+1.8.3.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
