@@ -1,88 +1,45 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [RFC PATCH v3 for 4.15 08/24] Provide cpu_opv system call
-Date: Fri, 17 Nov 2017 21:07:23 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711172025320.2186@nanos>
+Date: Fri, 17 Nov 2017 21:22:04 +0100 (CET)
+Message-ID: <alpine.DEB.2.20.1711172118270.2186@nanos>
 References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com> <20171114200414.2188-9-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1711162215100.2109@nanos> <20171117001410.GG2482@two.firstfloor.org> <alpine.DEB.2.20.1711171107450.1709@nanos>
- <1756446476.17265.1510938872121.JavaMail.zimbra@efficios.com> <20171117181839.GH2482@two.firstfloor.org> <alpine.DEB.2.20.1711171922420.2186@nanos> <20171117191547.GI2482@two.firstfloor.org>
+ <1756446476.17265.1510938872121.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171117191547.GI2482-1g7Xle2YJi4/4alezvVtWx2eb7JE58TQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1756446476.17265.1510938872121.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andi Kleen <andi@firstfloor.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 17 Nov 2017, Andi Kleen wrote:
-> > The most straight forward is to have a mechanism which forces everything
-> > into the slow path in case of debugging, lack of progress, etc. The slow
+On Fri, 17 Nov 2017, Mathieu Desnoyers wrote:
+> ----- On Nov 17, 2017, at 5:09 AM, Thomas Gleixner tglx@linutronix.de wrote:
+> 7) Allow libraries with multi-part algorithms to work on same per-cpu
+>    data without affecting the allowed cpu mask
 > 
-> That's the abort address, right?
-
-Yes.
-
-> For the generic case the fall back path would require disabling preemption
-> unfortunately, for which we don't have a mechanism in user space.
+> I stumbled on an interesting use-case within the lttng-ust tracer
+> per-cpu buffers: the algorithm needs to update a "reserve" counter,
+> serialize data into the buffer, and then update a "commit" counter
+> _on the same per-cpu buffer_. My goal is to use rseq for both reserve
+> and commit.
 > 
-> I think that is what Mathieu tried to implement here with this call.
+> Clearly, if rseq reserve fails, the algorithm can retry on a different
+> per-cpu buffer. However, it's not that easy for the commit. It needs to
+> be performed on the same per-cpu buffer as the reserve.
+> 
+> The cpu_opv system call solves that problem by receiving the cpu number
+> on which the operation needs to be performed as argument. It can push
+> the task to the right CPU if needed, and perform the operations there
+> with preemption disabled.
 
-Yes. preempt disabled execution of byte code to make sure that the
-transaction succeeds.
+If your transaction cannot be done in one go, then abusing that byte code
+interpreter for concluding it is just hillarious. That whole exercise is a
+gazillion times slower than the atomic operations which are neccesary to do
+it without all that.
 
-But, why is disabling preemption mandatory? If stuff fails due to hitting a
-breakpoint or because it retried a gazillion times without progress, then
-the abort code can detect that and act accordingly. Pseudo code:
+I'm even more convinced now that this is overengineered beyond repair.
 
-abort:
-	if (!slowpath_required() &&
-	    !breakpoint_caused_abort() &&
-	    !stall_detected()) {
-		do_the_normal_abort_postprocessing();
-		goto retry;
-	}
-
-	lock(slowpath_lock[cpu]);
-
-	if (!slowpath_required()) {
-	   	unlock(slowpath_lock[cpu]);
-		goto retry;
-	}
-
-	if (rseq_supported)
-		set_slow_path();
-
-	/* Same code as inside the actual rseq */
-	do_transaction();
-
-	if (rseq_supported)
-		unset_slow_path();
-
-	unlock(slowpath_lock[cpu]);
-
-The only interesting question is how to make sure that all threads on that
-CPU see the slowpath required before they execute the commit so they are
-forced into the slow path. The simplest thing would be atomics, but that's
-what rseq wants to avoid.
-
-I think that this can be solved cleanly with the help of the membarrier
-syscall or some variant of that without all that 'yet another byte code
-interpreter' mess.
-
-The other question is whether do_transaction() is required to run on that
-specific CPU. I don't think so because that magic interpreter operates even
-when the required target cpu is offline and with locking in place there is
-no reason why running on the target CPU would be required.
-
-Sure, that's going to affect performance, but only for two cases:
-
-  1) Debugging. That's completely uninteresting
-
-  2) No progress at all. Performance is down the drain anyway, so it does
-     not matter at all whether you spend a few more cycles or not to
-     resolve that.
-
-I might be missing something as usual :)
-
-Thanks
+Thanks,
 
 	tglx
