@@ -1,45 +1,179 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC PATCH v3 for 4.15 08/24] Provide cpu_opv system call
-Date: Fri, 17 Nov 2017 21:22:04 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711172118270.2186@nanos>
-References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com> <20171114200414.2188-9-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1711162215100.2109@nanos> <20171117001410.GG2482@two.firstfloor.org> <alpine.DEB.2.20.1711171107450.1709@nanos>
- <1756446476.17265.1510938872121.JavaMail.zimbra@efficios.com>
+From: Shawn Landden <slandden@gmail.com>
+Subject: Re: [RFC v2] prctl: prctl(PR_SET_IDLE, PR_IDLE_MODE_KILLME), for
+ stateless idle loops
+Date: Fri, 17 Nov 2017 20:45:03 -0800
+Message-ID: <CA+49okqZ8CME0EN1xS_cCTc5Q-fGRreg0makhzNNuRpGs3mjfw@mail.gmail.com>
+References: <20171101053244.5218-1-slandden@gmail.com> <20171103063544.13383-1-slandden@gmail.com>
+ <20171103090915.uuaqo56phdbt6gnf@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1756446476.17265.1510938872121.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Andi Kleen <andi@firstfloor.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
+Content-Type: multipart/alternative; boundary="f403045f90d041d9e7055e3a84a0"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171103090915.uuaqo56phdbt6gnf@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 17 Nov 2017, Mathieu Desnoyers wrote:
-> ----- On Nov 17, 2017, at 5:09 AM, Thomas Gleixner tglx@linutronix.de wrote:
-> 7) Allow libraries with multi-part algorithms to work on same per-cpu
->    data without affecting the allowed cpu mask
-> 
-> I stumbled on an interesting use-case within the lttng-ust tracer
-> per-cpu buffers: the algorithm needs to update a "reserve" counter,
-> serialize data into the buffer, and then update a "commit" counter
-> _on the same per-cpu buffer_. My goal is to use rseq for both reserve
-> and commit.
-> 
-> Clearly, if rseq reserve fails, the algorithm can retry on a different
-> per-cpu buffer. However, it's not that easy for the commit. It needs to
-> be performed on the same per-cpu buffer as the reserve.
-> 
-> The cpu_opv system call solves that problem by receiving the cpu number
-> on which the operation needs to be performed as argument. It can push
-> the task to the right CPU if needed, and perform the operations there
-> with preemption disabled.
+--f403045f90d041d9e7055e3a84a0
+Content-Type: text/plain; charset="UTF-8"
 
-If your transaction cannot be done in one go, then abusing that byte code
-interpreter for concluding it is just hillarious. That whole exercise is a
-gazillion times slower than the atomic operations which are neccesary to do
-it without all that.
+On Fri, Nov 3, 2017 at 2:09 AM, Michal Hocko <mhocko@kernel.org> wrote:
 
-I'm even more convinced now that this is overengineered beyond repair.
+> On Thu 02-11-17 23:35:44, Shawn Landden wrote:
+> > It is common for services to be stateless around their main event loop.
+> > If a process sets PR_SET_IDLE to PR_IDLE_MODE_KILLME then it
+> > signals to the kernel that epoll_wait() and friends may not complete,
+> > and the kernel may send SIGKILL if resources get tight.
+> >
+> > See my systemd patch: https://github.com/shawnl/systemd/tree/prctl
+> >
+> > Android uses this memory model for all programs, and having it in the
+> > kernel will enable integration with the page cache (not in this
+> > series).
+> >
+> > 16 bytes per process is kinda spendy, but I want to keep
+> > lru behavior, which mem_score_adj does not allow. When a supervisor,
+> > like Android's user input is keeping track this can be done in
+> user-space.
+> > It could be pulled out of task_struct if an cross-indexing additional
+> > red-black tree is added to support pid-based lookup.
+>
+> This is still an abuse and the patch is wrong. We really do have an API
+> to use I fail to see why you do not use it.
+>
+When I looked at wait_queue_head_t it was 20 byes.
 
-Thanks,
+>
+> [...]
+> > @@ -1018,6 +1060,24 @@ bool out_of_memory(struct oom_control *oc)
+> >                       return true;
+> >       }
+> >
+> > +     /*
+> > +      * Check death row for current memcg or global.
+> > +      */
+> > +     l = oom_target_get_queue(current);
+> > +     if (!list_empty(l)) {
+> > +             struct task_struct *ts = list_first_entry(l,
+> > +                             struct task_struct, se.oom_target_queue);
+> > +
+> > +             pr_debug("Killing pid %u from EPOLL_KILLME death row.",
+> > +                      ts->pid);
+> > +
+> > +             /* We use SIGKILL instead of the oom killer
+> > +              * so as to cleanly interrupt ep_poll()
+> > +              */
+> > +             send_sig(SIGKILL, ts, 1);
+> > +             return true;
+> > +     }
+>
+> Still not NUMA aware and completely backwards. If this is a memcg OOM
+> then it is _memcg_ to evaluate not the current. The oom might happen up
+> the hierarchy due to hard limit.
+>
+> But still, you should be very clear _why_ the existing oom tuning is not
+> appropropriate and we can think of a way to hanle it better but cramming
+> the oom selection this way is simply not acceptable.
+> --
+> Michal Hocko
+> SUSE Labs
+>
 
-	tglx
+--f403045f90d041d9e7055e3a84a0
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div class=3D"gmail_extra"><div class=3D"gmail_quote">On F=
+ri, Nov 3, 2017 at 2:09 AM, Michal Hocko <span dir=3D"ltr">&lt;<a href=3D"m=
+ailto:mhocko@kernel.org" target=3D"_blank">mhocko@kernel.org</a>&gt;</span>=
+ wrote:<br><blockquote class=3D"gmail_quote" style=3D"margin:0 0 0 .8ex;bor=
+der-left:1px #ccc solid;padding-left:1ex"><span class=3D"">On Thu 02-11-17 =
+23:35:44, Shawn Landden wrote:<br>
+&gt; It is common for services to be stateless around their main event loop=
+.<br>
+&gt; If a process sets PR_SET_IDLE to PR_IDLE_MODE_KILLME then it<br>
+&gt; signals to the kernel that epoll_wait() and friends may not complete,<=
+br>
+&gt; and the kernel may send SIGKILL if resources get tight.<br>
+&gt;<br>
+&gt; See my systemd patch: <a href=3D"https://github.com/shawnl/systemd/tre=
+e/prctl" rel=3D"noreferrer" target=3D"_blank">https://github.com/shawnl/<wb=
+r>systemd/tree/prctl</a><br>
+&gt;<br>
+&gt; Android uses this memory model for all programs, and having it in the<=
+br>
+&gt; kernel will enable integration with the page cache (not in this<br>
+&gt; series).<br>
+&gt;<br>
+&gt; 16 bytes per process is kinda spendy, but I want to keep<br>
+&gt; lru behavior, which mem_score_adj does not allow. When a supervisor,<b=
+r>
+&gt; like Android&#39;s user input is keeping track this can be done in use=
+r-space.<br>
+&gt; It could be pulled out of task_struct if an cross-indexing additional<=
+br>
+&gt; red-black tree is added to support pid-based lookup.<br>
+<br>
+</span>This is still an abuse and the patch is wrong. We really do have an =
+API<br>
+to use I fail to see why you do not use it.<br></blockquote><div>When I loo=
+ked at wait_queue_head_t it was 20 byes.<br></div><blockquote class=3D"gmai=
+l_quote" style=3D"margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left=
+:1ex">
+<br>
+[...]<br>
+<span class=3D"">&gt; @@ -1018,6 +1060,24 @@ bool out_of_memory(struct oom_=
+control *oc)<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0return true;<br>
+&gt;=C2=A0 =C2=A0 =C2=A0 =C2=A0}<br>
+&gt;<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0/*<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 * Check death row for current memcg or global.<b=
+r>
+&gt; +=C2=A0 =C2=A0 =C2=A0 */<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0l =3D oom_target_get_queue(current);<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0if (!list_empty(l)) {<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0struct task_struct *t=
+s =3D list_first_entry(l,<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0struct task_struct, se.oom_target_queue)=
+;<br>
+&gt; +<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0pr_debug(&quot;Killin=
+g pid %u from EPOLL_KILLME death row.&quot;,<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 ts-&gt;pid);<br>
+&gt; +<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0/* We use SIGKILL ins=
+tead of the oom killer<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 * so as to cleanly i=
+nterrupt ep_poll()<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 */<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0send_sig(SIGKILL, ts,=
+ 1);<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return true;<br>
+&gt; +=C2=A0 =C2=A0 =C2=A0}<br>
+<br>
+</span>Still not NUMA aware and completely backwards. If this is a memcg OO=
+M<br>
+then it is _memcg_ to evaluate not the current. The oom might happen up<br>
+the hierarchy due to hard limit.<br>
+<br>
+But still, you should be very clear _why_ the existing oom tuning is not<br=
+>
+appropropriate and we can think of a way to hanle it better but cramming<br=
+>
+the oom selection this way is simply not acceptable.<br>
+<span class=3D"HOEnZb"><font color=3D"#888888">--<br>
+Michal Hocko<br>
+SUSE Labs<br>
+</font></span></blockquote></div><br></div></div>
+
+--f403045f90d041d9e7055e3a84a0--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
