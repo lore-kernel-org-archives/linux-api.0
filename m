@@ -1,38 +1,51 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [RFC v2] prctl: prctl(PR_SET_IDLE, PR_IDLE_MODE_KILLME), for
- stateless idle loops
-Date: Sat, 18 Nov 2017 20:19:54 -0800
-Message-ID: <20171119041954.GA12039@bombadil.infradead.org>
-References: <20171101053244.5218-1-slandden@gmail.com>
- <20171103063544.13383-1-slandden@gmail.com>
- <20171103090915.uuaqo56phdbt6gnf@dhcp22.suse.cz>
- <CA+49okqZ8CME0EN1xS_cCTc5Q-fGRreg0makhzNNuRpGs3mjfw@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH v2 0/3] Man pages for rseq, cpu_opv, update membarrier
+Date: Sun, 19 Nov 2017 11:28:52 +0100
+Message-ID: <d0d18e9e-0d6c-8608-9d7e-3ac1dd538a02@gmail.com>
+References: <20171116151711.19001-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CA+49okqZ8CME0EN1xS_cCTc5Q-fGRreg0makhzNNuRpGs3mjfw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <20171116151711.19001-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shawn Landden <slandden-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catali>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 17, 2017 at 08:45:03PM -0800, Shawn Landden wrote:
-> On Fri, Nov 3, 2017 at 2:09 AM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> > On Thu 02-11-17 23:35:44, Shawn Landden wrote:
-> > > 16 bytes per process is kinda spendy, but I want to keep
-> > > lru behavior, which mem_score_adj does not allow. When a supervisor,
-> > > like Android's user input is keeping track this can be done in
-> > user-space.
-> > > It could be pulled out of task_struct if an cross-indexing additional
-> > > red-black tree is added to support pid-based lookup.
-> >
-> > This is still an abuse and the patch is wrong. We really do have an API
-> > to use I fail to see why you do not use it.
-> >
-> When I looked at wait_queue_head_t it was 20 byes.
+On 11/16/2017 04:17 PM, Mathieu Desnoyers wrote:
+> This updated man pages series removes the "core serializing" membarrier
+> commands documentation, which is now queued for 4.16.
 
-24 bytes actually; the compiler will add 4 bytes of padding between
-the spinlock and the list_head.  But there's one for the entire system.
-Then you add a 40 byte structure (wait_queue_entry) on the stack for each
-sleeping process.  There's no per-process cost.
+Mathieu,
+
+Thanks for the page series. It does help people understand and
+perhaps review the kernel patch series.
+
+I've applied the 4.14 pieces of the 3rd patch.
+
+Cheers,
+
+Michael
+
+> Mathieu
+> 
+> Mathieu Desnoyers (3):
+>   Add cpu_opv system call manpage
+>   Add rseq manpage
+>   Update membarrier manpage for 4.14, 4.15
+> 
+>  man2/cpu_opv.2    | 297 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  man2/membarrier.2 |  75 +++++++++++---
+>  man2/rseq.2       | 268 ++++++++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 626 insertions(+), 14 deletions(-)
+>  create mode 100644 man2/cpu_opv.2
+>  create mode 100644 man2/rseq.2
+> 
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
