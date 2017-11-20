@@ -1,49 +1,57 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 04/24] Restartable sequences: x86 32/64
- architecture support
-Date: Sun, 19 Nov 2017 17:41:31 +0000 (UTC)
-Message-ID: <1390396579.17843.1511113291117.JavaMail.zimbra@efficios.com>
-References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com> <20171114200414.2188-5-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1711162208350.2109@nanos>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC v2] prctl: prctl(PR_SET_IDLE, PR_IDLE_MODE_KILLME), for
+ stateless idle loops
+Date: Mon, 20 Nov 2017 09:35:48 +0100
+Message-ID: <20171120083548.stupram6kpi5iu7i@dhcp22.suse.cz>
+References: <20171101053244.5218-1-slandden@gmail.com>
+ <20171103063544.13383-1-slandden@gmail.com>
+ <20171103090915.uuaqo56phdbt6gnf@dhcp22.suse.cz>
+ <CA+49okqZ8CME0EN1xS_cCTc5Q-fGRreg0makhzNNuRpGs3mjfw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <alpine.DEB.2.20.1711162208350.2109@nanos>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <wil>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <CA+49okqZ8CME0EN1xS_cCTc5Q-fGRreg0makhzNNuRpGs3mjfw@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Shawn Landden <slandden@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 16, 2017, at 4:14 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
-
-> On Tue, 14 Nov 2017, Mathieu Desnoyers wrote:
+On Fri 17-11-17 20:45:03, Shawn Landden wrote:
+> On Fri, Nov 3, 2017 at 2:09 AM, Michal Hocko <mhocko@kernel.org> wrote:
 > 
-> Please fix the subject line:
-> 
-> x86: Add support for restartable sequences
-> 
-> or something like that.
-> 
-> And for the actual rseq patches please come up with a proper short
-> susbsytem prefix for restartable sequences. There is no point in occupying
-> half of the subject space for a prefix.
+> > On Thu 02-11-17 23:35:44, Shawn Landden wrote:
+> > > It is common for services to be stateless around their main event loop.
+> > > If a process sets PR_SET_IDLE to PR_IDLE_MODE_KILLME then it
+> > > signals to the kernel that epoll_wait() and friends may not complete,
+> > > and the kernel may send SIGKILL if resources get tight.
+> > >
+> > > See my systemd patch: https://github.com/shawnl/systemd/tree/prctl
+> > >
+> > > Android uses this memory model for all programs, and having it in the
+> > > kernel will enable integration with the page cache (not in this
+> > > series).
+> > >
+> > > 16 bytes per process is kinda spendy, but I want to keep
+> > > lru behavior, which mem_score_adj does not allow. When a supervisor,
+> > > like Android's user input is keeping track this can be done in
+> > user-space.
+> > > It could be pulled out of task_struct if an cross-indexing additional
+> > > red-black tree is added to support pid-based lookup.
+> >
+> > This is still an abuse and the patch is wrong. We really do have an API
+> > to use I fail to see why you do not use it.
+> >
+> When I looked at wait_queue_head_t it was 20 byes.
 
-ok. done.
-
-> 
-> Other than that.
-> 
-> Reviewed-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-
-Thanks! Should I apply the reviewed-by only to the x86 patches,
-or patch 01 (rseq: Introduce restartable sequences system call)
-as well ?
-
-Thanks,
-
-Mathieu
-
+I do not understand. What I meant to say is that we do have a proper
+user api to hint OOM killer decisions.
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
