@@ -1,58 +1,26 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [RFC PATCH v3 for 4.15 08/24] Provide cpu_opv system call
-Date: Mon, 20 Nov 2017 20:44:18 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711202037280.2348@nanos>
-References: <20171114200414.2188-1-mathieu.desnoyers@efficios.com> <20171114200414.2188-9-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1711162215100.2109@nanos> <1766414702.18278.1511194398489.JavaMail.zimbra@efficios.com> <alpine.DEB.2.20.1711201831490.1734@nanos>
- <204285712.18480.1511203151076.JavaMail.zimbra@efficios.com>
+From: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH v3 1/3] mm/mempolicy: remove redundant check in
+ get_nodes
+Date: Mon, 20 Nov 2017 14:24:21 -0800 (PST)
+Message-ID: <alpine.DEB.2.10.1711201424100.42955@chino.kir.corp.google.com>
+References: <1510882624-44342-1-git-send-email-xieyisheng1@huawei.com> <1510882624-44342-2-git-send-email-xieyisheng1@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <204285712.18480.1511203151076.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <1510882624-44342-2-git-send-email-xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <wil>
+To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Cc: akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, vbabka-AlSwsSmVLrQ@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org, ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 20 Nov 2017, Mathieu Desnoyers wrote:
-> ----- On Nov 20, 2017, at 12:48 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
-> The use-case for 4k memcpy operation is a per-cpu ring buffer where
-> the rseq fast-path does the following:
+On Fri, 17 Nov 2017, Yisheng Xie wrote:
+
+> We have already checked whether maxnode is a page worth of bits, by:
+>     maxnode > PAGE_SIZE*BITS_PER_BYTE
 > 
-> - ring buffer push: in the rseq asm instruction sequence, a memcpy of a
->   given structure (limited to 4k in size) into a ring buffer,
->   followed by the final commit instruction which increments the current
->   position offset by the number of bytes pushed.
+> So no need to check it once more.
 > 
-> - ring buffer pop: in the rseq asm instruction sequence, a memcpy of
->   a given structure (up to 4k) from the ring buffer, at "position" offset.
->   The final commit instruction decrements the current position offset by
->   the number of bytes pop'd.
-> 
-> Having cpu_opv do a 4k memcpy allow it to handle scenarios where
-> rseq fails to progress.
+> Acked-by: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> Signed-off-by: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
 
-I'm still confused. Before you talked about the sequence:
-
-    1) Reserve
-
-    2) Commit
-
-and both use rseq, but obviously you cannot do two "atomic" operation in
-one section.
-
-So now you talk about push. Is that what you described earlier as commit?
-
-Assumed that it is, I still have no idea why the memcpy needs to happen in
-that preempt disabled region.
-
-If you have space reserved, then the copy does not have any dependencies
-neither on the cpu it runs on nor on anything else. So the only
-interresting operation is the final commit instruction which tells the
-consumer that its ready.
-
-So what is the part I am missing here aside of having difficulties to map
-the constantly changing names of this stuff?
-
-Thanks,
-
-	tglx
+Acked-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
