@@ -1,61 +1,93 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH 1/2] mm: introduce MAP_FIXED_SAFE
-Date: Mon, 20 Nov 2017 10:45:56 +0100
-Message-ID: <dc021363-bc42-dbf3-7712-2f71a500eb77@redhat.com>
-References: <20171116101900.13621-1-mhocko@kernel.org>
- <20171116101900.13621-2-mhocko@kernel.org>
- <a3f7aed9-0df2-2fd6-cebb-ba569ad66781@redhat.com>
- <20171120085524.y4onsl5dpd3qbh7y@dhcp22.suse.cz>
- <37a6e9ba-e0df-b65f-d5ef-871c25b5cb87@redhat.com>
- <20171120093309.wobvu6mixbk75m3v@dhcp22.suse.cz>
+From: Jeff Layton <jlayton@kernel.org>
+Subject: Re: Provision for filesystem specific open flags
+Date: Mon, 20 Nov 2017 08:38:16 -0500
+Message-ID: <1511185096.4228.8.camel@kernel.org>
+References: <BN3PR0801MB2257E7D90F26A85C1D16730EAB540@BN3PR0801MB2257.namprd08.prod.outlook.com>
+         <20171110172344.GA15288@lst.de>
+         <BN3PR0801MB2257E71C2A12EA41C77FF7EBAB540@BN3PR0801MB2257.namprd08.prod.outlook.com>
+         <20171110192902.GA10339@bombadil.infradead.org>
+         <BN3PR0801MB22576444104088CEDD24DE7DAB540@BN3PR0801MB2257.namprd08.prod.outlook.com>
+         <20171111003721.GA9546@bombadil.infradead.org>
+         <BN3PR0801MB2257249A7388086676CBA811AB2B0@BN3PR0801MB2257.namprd08.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171120093309.wobvu6mixbk75m3v@dhcp22.suse.cz>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <BN3PR0801MB2257249A7388086676CBA811AB2B0@BN3PR0801MB2257.namprd08.prod.outlook.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: "Fu, Rodney" <rfu@panasas.com>, Matthew Wilcox <willy@infradead.org>
+Cc: "hch@lst.de" <hch@lst.de>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/20/2017 10:33 AM, Michal Hocko wrote:
-> On Mon 20-11-17 10:10:32, Florian Weimer wrote:
->> On 11/20/2017 09:55 AM, Michal Hocko wrote:
->>> On Fri 17-11-17 08:30:48, Florian Weimer wrote:
->>>> On 11/16/2017 11:18 AM, Michal Hocko wrote:
->>>>> +	if (flags & MAP_FIXED_SAFE) {
->>>>> +		struct vm_area_struct *vma = find_vma(mm, addr);
->>>>> +
->>>>> +		if (vma && vma->vm_start <= addr)
->>>>> +			return -ENOMEM;
->>>>> +	}
->>>>
->>>> Could you pick a different error code which cannot also be caused by a an
->>>> unrelated, possibly temporary condition?  Maybe EBUSY or EEXIST?
->>>
->>> Hmm, none of those are described in the man page. I am usually very
->>> careful to not add new and potentially unexpected error codes but it is
->>
->> I think this is a bad idea.  It leads to bizarre behavior, like open failing
->> with EOVERFLOW with certain namespace configurations (which have nothing to
->> do with file sizes).
+On Mon, 2017-11-13 at 15:16 +0000, Fu, Rodney wrote:
+> > > > No.  If you want new flags bits, make a public proposal.  Maybe some 
+> > > > other filesystem would also benefit from them.
+> > > 
+> > > Ah, I see what you mean now, thanks.
+> > > 
+> > > I would like to propose O_CONCURRENT_WRITE as a new open flag.  It is 
+> > > currently used in the Panasas filesystem (panfs) and defined with value:
+> > > 
+> > > #define O_CONCURRENT_WRITE 020000000000
+> > > 
+> > > This flag has been provided by panfs to HPC users via the mpich 
+> > > package for well over a decade.  See:
+> > > 
+> > > https://github.com/pmodels/mpich/blob/master/src/mpi/romio/adio/ad_pan
+> > > fs/ad_panfs_open6.c#L344
+> > > 
+> > > O_CONCURRENT_WRITE indicates to the filesystem that the application 
+> > > doing the open is participating in a coordinated distributed manner 
+> > > with other such applications, possibly running on different hosts.  
+> > > This allows the panfs filesystem to delegate some of the cache 
+> > > coherency responsibilities to the application, improving performance.
+> > > 
+> > > The reason this flag is used on open as opposed to having a post-open 
+> > > ioctl or fcntl SETFL is to allow panfs to catch and reject opens by 
+> > > applications that attempt to access files that have already been 
+> > > opened by applications that have set O_CONCURRENT_WRITE.
+> > OK, let me just check I understand.  Once any application has opened the inode
+> > with O_CONCURRENT_WRITE, all subsequent attempts to open the same inode without
+> > O_CONCURRENT_WRITE will fail.  Presumably also if somebody already has the inode
+> > open without O_CONCURRENT_WRITE set, the first open with O_CONCURRENT_WRITE will
+> > fail?
 > 
-> Ohh, I agree but breaking userspace is, you know, no-no. And an
-> unexpected error codes can break things terribly.
+> Yes on both counts.  Opening with O_CONCURRENT_WRITE, followed by an open
+> without will fail.  Opening without O_CONCURRENT_WRITE followed by one with it
+> will also fail.
+> 
+> > Are opens with O_RDONLY also blocked?
+> 
+> No they are not.  The decision to grant access is based solely on the
+> O_CONCURRENT_WRITE flag.
+> 
+> > This feels a lot like leases ... maybe there's an opportunity to give better
+> > semantics here -- rather than rejecting opens without O_CONCURRENT_WRITE, all
+> > existing users could be forced to use the stricter coherency model?
+> 
+> I don't think that will work, at least not from the perspective of trying to
+> maintain good performance.  A user that does not open with O_CONCURRENT_WRITE
+> does not know how to adhere to the proper access patterns that maintain
+> coherency.  To continue to allow all users access after that point, the
+> filesystem will have to force all users into a non-cacheable mode.  Instead, we
+> reject stray opens to allow any existing CONCURRENT_WRITE application to
+> complete in a higher performance mode.
+> 
 
-On the glibc side, we see a lot of changes in error codes depending on 
-kernel version, build and run-time configuration.  It never occurred to 
-me that you guys think the precise error code is part of the userspace 
-ABI.  Personally, I even assume that failure itself can disappear at any 
-time (evidence: the f* functions which accept O_PATH in their non-*at 
-variants).
+(added linux-api@vger.kernel.org to the cc list...)
 
-Thanks,
-Florian
+Actually, it feels more like O_EXLOCK / O_SHLOCK to me:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+    https://www.gnu.org/software/libc/manual/html_node/Open_002dtime-Flags.html
+
+Those are not quite the same semantics as what you're describing for
+O_CONCURRENT_WRITE, but the handling of conflicts would be similar. 
+
+Maybe it's possible to dovetail your new flag on top of a credible
+O_EXLOCK/O_SHLOCK implementation? It'd be nice to have those to
+implement VFS-level share/deny locking. Most NFS and SMB servers could
+make good use of it.
+
+
+-- 
+Jeff Layton <jlayton@kernel.org>
