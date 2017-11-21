@@ -1,38 +1,21 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.15 v2 21/22] membarrier: provide SHARED_EXPEDITED command
-Date: Tue, 21 Nov 2017 09:18:59 -0500
-Message-ID: <20171121141900.18471-22-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 22/22] membarrier: selftest: Test shared expedited cmd
+Date: Tue, 21 Nov 2017 09:19:00 -0500
+Message-ID: <20171121141900.18471-23-mathieu.desnoyers@efficios.com>
 References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scyllad>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Allow expedited membarrier to be used for data shared between processes
-(shared memory).
-
-Processes wishing to receive the membarriers register with
-MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED. Those which want to issue
-membarrier invoke MEMBARRIER_CMD_SHARED_EXPEDITED.
-
-This allows extremely simple kernel-level implementation: we have almost
-everything we need with the PRIVATE_EXPEDITED barrier code. All we need
-to do is to add a flag in the mm_struct that will be used to check
-whether we need to send the IPI to the current thread of each CPU.
-
-There is a slight downside of this approach compared to targeting
-specific shared memory users: when performing a membarrier operation,
-all registered "shared" receivers will get the barrier, even if they
-don't share a memory mapping with the "sender" issuing
-MEMBARRIER_CMD_SHARED_EXPEDITED.
-
-This registration approach seems to fit the requirement of not
-disturbing processes that really deeply care about real-time: they
-simply should not register with MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED.
+Test the new MEMBARRIER_CMD_SHARED_EXPEDITED and
+MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED commands.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
+CC: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 CC: Peter Zijlstra <peterz@infradead.org>
 CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
@@ -43,266 +26,93 @@ CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 CC: Paul Mackerras <paulus@samba.org>
 CC: Michael Ellerman <mpe@ellerman.id.au>
 CC: Dave Watson <davejwatson@fb.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Andrea Parri <parri.andrea@gmail.com>
-CC: x86@kernel.org
+CC: Alan Stern <stern@rowland.harvard.edu>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Alice Ferrazzi <alice.ferrazzi@gmail.com>
+CC: Paul Elder <paul.elder@pitt.edu>
+CC: linux-kselftest@vger.kernel.org
+CC: linux-arch@vger.kernel.org
 ---
-Changes since v1:
-- Add missing preempt disable around smp_call_function_many().
----
- arch/powerpc/include/asm/membarrier.h |   3 +-
- include/linux/sched/mm.h              |   6 +-
- include/uapi/linux/membarrier.h       |  34 ++++++++--
- kernel/sched/membarrier.c             | 114 ++++++++++++++++++++++++++++++++--
- 4 files changed, 143 insertions(+), 14 deletions(-)
+ .../testing/selftests/membarrier/membarrier_test.c | 51 +++++++++++++++++++++-
+ 1 file changed, 50 insertions(+), 1 deletion(-)
 
-diff --git a/arch/powerpc/include/asm/membarrier.h b/arch/powerpc/include/asm/membarrier.h
-index 046f96768ab5..ddf4baedd132 100644
---- a/arch/powerpc/include/asm/membarrier.h
-+++ b/arch/powerpc/include/asm/membarrier.h
-@@ -12,7 +12,8 @@ static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
- 	 * store to rq->curr.
- 	 */
- 	if (likely(!(atomic_read(&next->membarrier_state)
--			& MEMBARRIER_STATE_PRIVATE_EXPEDITED) || !prev))
-+			& (MEMBARRIER_STATE_PRIVATE_EXPEDITED
-+			| MEMBARRIER_STATE_SHARED_EXPEDITED)) || !prev))
- 		return;
- 
- 	/*
-diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 0f9e1a96b890..c7b0f5970d7c 100644
---- a/include/linux/sched/mm.h
-+++ b/include/linux/sched/mm.h
-@@ -219,8 +219,10 @@ static inline void memalloc_noreclaim_restore(unsigned int flags)
- 
- #ifdef CONFIG_MEMBARRIER
- enum {
--	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY	= (1U << 0),
--	MEMBARRIER_STATE_PRIVATE_EXPEDITED		= (1U << 1),
-+	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY		= (1U << 0),
-+	MEMBARRIER_STATE_PRIVATE_EXPEDITED			= (1U << 1),
-+	MEMBARRIER_STATE_SHARED_EXPEDITED_READY			= (1U << 2),
-+	MEMBARRIER_STATE_SHARED_EXPEDITED			= (1U << 3),
- };
- 
- #ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
-diff --git a/include/uapi/linux/membarrier.h b/include/uapi/linux/membarrier.h
-index 4e01ad7ffe98..2de01e595d3b 100644
---- a/include/uapi/linux/membarrier.h
-+++ b/include/uapi/linux/membarrier.h
-@@ -40,6 +40,28 @@
-  *                          (non-running threads are de facto in such a
-  *                          state). This covers threads from all processes
-  *                          running on the system. This command returns 0.
-+ * @MEMBARRIER_CMD_SHARED_EXPEDITED:
-+ *                          Execute a memory barrier on all running threads
-+ *                          part of a process which previously registered
-+ *                          with MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED.
-+ *                          Upon return from system call, the caller thread
-+ *                          is ensured that all running threads have passed
-+ *                          through a state where all memory accesses to
-+ *                          user-space addresses match program order between
-+ *                          entry to and return from the system call
-+ *                          (non-running threads are de facto in such a
-+ *                          state). This only covers threads from processes
-+ *                          which registered with
-+ *                          MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED.
-+ *                          This command returns 0. Given that
-+ *                          registration is about the intent to receive
-+ *                          the barriers, it is valid to invoke
-+ *                          MEMBARRIER_CMD_SHARED_EXPEDITED from a
-+ *                          non-registered process.
-+ * @MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED:
-+ *                          Register the process intent to receive
-+ *                          MEMBARRIER_CMD_SHARED_EXPEDITED memory
-+ *                          barriers. Always returns 0.
-  * @MEMBARRIER_CMD_PRIVATE_EXPEDITED:
-  *                          Execute a memory barrier on each running
-  *                          thread belonging to the same process as the current
-@@ -70,12 +92,12 @@
-  * the value 0.
-  */
- enum membarrier_cmd {
--	MEMBARRIER_CMD_QUERY				= 0,
--	MEMBARRIER_CMD_SHARED				= (1 << 0),
--	/* reserved for MEMBARRIER_CMD_SHARED_EXPEDITED (1 << 1) */
--	/* reserved for MEMBARRIER_CMD_PRIVATE (1 << 2) */
--	MEMBARRIER_CMD_PRIVATE_EXPEDITED		= (1 << 3),
--	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED	= (1 << 4),
-+	MEMBARRIER_CMD_QUERY					= 0,
-+	MEMBARRIER_CMD_SHARED					= (1 << 0),
-+	MEMBARRIER_CMD_SHARED_EXPEDITED				= (1 << 1),
-+	MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED		= (1 << 2),
-+	MEMBARRIER_CMD_PRIVATE_EXPEDITED			= (1 << 3),
-+	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED		= (1 << 4),
- };
- 
- #endif /* _UAPI_LINUX_MEMBARRIER_H */
-diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
-index 7d2ec7202ba8..b1312eb9d292 100644
---- a/kernel/sched/membarrier.c
-+++ b/kernel/sched/membarrier.c
-@@ -27,7 +27,9 @@
-  * except MEMBARRIER_CMD_QUERY.
-  */
- #define MEMBARRIER_CMD_BITMASK	\
--	(MEMBARRIER_CMD_SHARED | MEMBARRIER_CMD_PRIVATE_EXPEDITED	\
-+	(MEMBARRIER_CMD_SHARED | MEMBARRIER_CMD_SHARED_EXPEDITED \
-+	| MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED \
-+	| MEMBARRIER_CMD_PRIVATE_EXPEDITED	\
- 	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED)
- 
- static void ipi_mb(void *info)
-@@ -35,6 +37,73 @@ static void ipi_mb(void *info)
- 	smp_mb();	/* IPIs should be serializing but paranoid. */
- }
- 
-+static int membarrier_shared_expedited(void)
-+{
-+	int cpu;
-+	bool fallback = false;
-+	cpumask_var_t tmpmask;
-+
-+	if (num_online_cpus() == 1)
-+		return 0;
-+
-+	/*
-+	 * Matches memory barriers around rq->curr modification in
-+	 * scheduler.
-+	 */
-+	smp_mb();	/* system call entry is not a mb. */
-+
-+	/*
-+	 * Expedited membarrier commands guarantee that they won't
-+	 * block, hence the GFP_NOWAIT allocation flag and fallback
-+	 * implementation.
-+	 */
-+	if (!zalloc_cpumask_var(&tmpmask, GFP_NOWAIT)) {
-+		/* Fallback for OOM. */
-+		fallback = true;
-+	}
-+
-+	cpus_read_lock();
-+	for_each_online_cpu(cpu) {
-+		struct task_struct *p;
-+
-+		/*
-+		 * Skipping the current CPU is OK even through we can be
-+		 * migrated at any point. The current CPU, at the point
-+		 * where we read raw_smp_processor_id(), is ensured to
-+		 * be in program order with respect to the caller
-+		 * thread. Therefore, we can skip this CPU from the
-+		 * iteration.
-+		 */
-+		if (cpu == raw_smp_processor_id())
-+			continue;
-+		rcu_read_lock();
-+		p = task_rcu_dereference(&cpu_rq(cpu)->curr);
-+		if (p && p->mm && (atomic_read(&p->mm->membarrier_state)
-+				& MEMBARRIER_STATE_SHARED_EXPEDITED)) {
-+			if (!fallback)
-+				__cpumask_set_cpu(cpu, tmpmask);
-+			else
-+				smp_call_function_single(cpu, ipi_mb, NULL, 1);
-+		}
-+		rcu_read_unlock();
-+	}
-+	if (!fallback) {
-+		preempt_disable();
-+		smp_call_function_many(tmpmask, ipi_mb, NULL, 1);
-+		preempt_enable();
-+		free_cpumask_var(tmpmask);
-+	}
-+	cpus_read_unlock();
-+
-+	/*
-+	 * Memory barrier on the caller thread _after_ we finished
-+	 * waiting for the last IPI. Matches memory barriers around
-+	 * rq->curr modification in scheduler.
-+	 */
-+	smp_mb();	/* exit from system call is not a mb */
-+	return 0;
-+}
-+
- static int membarrier_private_expedited(void)
- {
- 	int cpu;
-@@ -105,7 +174,38 @@ static int membarrier_private_expedited(void)
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index e6ee73d01fa1..bb9c58072c5c 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -132,6 +132,40 @@ static int test_membarrier_private_expedited_success(void)
  	return 0;
  }
  
--static void membarrier_register_private_expedited(void)
-+static int membarrier_register_shared_expedited(void)
++static int test_membarrier_register_shared_expedited_success(void)
 +{
-+	struct task_struct *p = current;
-+	struct mm_struct *mm = p->mm;
++	int cmd = MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED";
 +
-+	if (atomic_read(&mm->membarrier_state)
-+			& MEMBARRIER_STATE_SHARED_EXPEDITED_READY)
-+		return 0;
-+	atomic_or(MEMBARRIER_STATE_SHARED_EXPEDITED, &mm->membarrier_state);
-+	if (atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1) {
-+		/*
-+		 * For single mm user, single threaded process, we can
-+		 * simply issue a memory barrier after setting
-+		 * MEMBARRIER_STATE_SHARED_EXPEDITED to guarantee that
-+		 * no memory access following registration is reordered
-+		 * before registration.
-+		 */
-+		smp_mb();
-+	} else {
-+		/*
-+		 * For multi-mm user threads, we need to ensure all
-+		 * future scheduler executions will observe the new
-+		 * thread flag state for this mm.
-+		 */
-+		synchronize_sched();
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
 +	}
-+	atomic_or(MEMBARRIER_STATE_SHARED_EXPEDITED_READY,
-+			&mm->membarrier_state);
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
 +	return 0;
 +}
 +
-+static int membarrier_register_private_expedited(void)
- {
- 	struct task_struct *p = current;
- 	struct mm_struct *mm = p->mm;
-@@ -117,7 +217,7 @@ static void membarrier_register_private_expedited(void)
- 	 */
- 	if (atomic_read(&mm->membarrier_state)
- 			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY)
--		return;
-+		return 0;
- 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED,
- 			&mm->membarrier_state);
- 	if (!(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)) {
-@@ -129,6 +229,7 @@ static void membarrier_register_private_expedited(void)
- 	}
- 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY,
- 			&mm->membarrier_state);
++static int test_membarrier_shared_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_SHARED_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED_EXPEDITED";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
 +	return 0;
++}
++
+ static int test_membarrier(void)
+ {
+ 	int status;
+@@ -154,6 +188,19 @@ static int test_membarrier(void)
+ 	status = test_membarrier_private_expedited_success();
+ 	if (status)
+ 		return status;
++	/*
++	 * It is valid to send a shared membarrier from a non-registered
++	 * process.
++	 */
++	status = test_membarrier_shared_expedited_success();
++	if (status)
++		return status;
++	status = test_membarrier_register_shared_expedited_success();
++	if (status)
++		return status;
++	status = test_membarrier_shared_expedited_success();
++	if (status)
++		return status;
+ 	return 0;
  }
  
- /**
-@@ -178,11 +279,14 @@ SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
- 		if (num_online_cpus() > 1)
- 			synchronize_sched();
- 		return 0;
-+	case MEMBARRIER_CMD_SHARED_EXPEDITED:
-+		return membarrier_shared_expedited();
-+	case MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED:
-+		return membarrier_register_shared_expedited();
- 	case MEMBARRIER_CMD_PRIVATE_EXPEDITED:
- 		return membarrier_private_expedited();
- 	case MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED:
--		membarrier_register_private_expedited();
--		return 0;
-+		return membarrier_register_private_expedited();
- 	default:
- 		return -EINVAL;
+@@ -173,8 +220,10 @@ static int test_membarrier_query(void)
+ 		}
+ 		ksft_exit_fail_msg("sys_membarrier() failed\n");
  	}
+-	if (!(ret & MEMBARRIER_CMD_SHARED))
++	if (!(ret & MEMBARRIER_CMD_SHARED)) {
++		ksft_test_result_fail("sys_membarrier() CMD_SHARED query failed\n");
+ 		ksft_exit_fail_msg("sys_membarrier is not supported.\n");
++	}
+ 
+ 	ksft_test_result_pass("sys_membarrier available\n");
+ 	return 0;
 -- 
 2.11.0
