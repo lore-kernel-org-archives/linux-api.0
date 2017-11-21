@@ -1,247 +1,211 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.15 16/22] rseq: selftests: arm: workaround gcc asm size guess
-Date: Tue, 21 Nov 2017 09:18:54 -0500
-Message-ID: <20171121141900.18471-17-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 18/22] membarrier: selftest: Test private expedited cmd
+Date: Tue, 21 Nov 2017 09:18:56 -0500
+Message-ID: <20171121141900.18471-19-mathieu.desnoyers@efficios.com>
 References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Florian Weimer <fweimer@redhat.com>, Shuah Khan <shuah@kernel.or>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scyllad>
 List-Id: linux-api@vger.kernel.org
 
-Fixes assembler errors:
-/tmp/cceKwI9a.s: Assembler messages:
-/tmp/cceKwI9a.s:849: Error: co-processor offset out of range
+Test the new MEMBARRIER_CMD_PRIVATE_EXPEDITED and
+MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED commands.
 
-with gcc prior to gcc-7. This can trigger if multiple rseq inline asm
-are used within the same function.
-
-My best guess on the cause of this issue is that gcc has a hard
-time figuring out the actual size of the inline asm, and therefore
-does not compute the offsets at which literal values can be
-placed from the program counter accurately.
+Add checks expecting specific error values on system calls expected to
+fail.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
+Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul Turner <pjt@google.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andrew Hunter <ahh@google.com>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Shuah Khan <shuah@kernel.org>
+CC: Andrew Hunter <ahh@google.com>
+CC: Maged Michael <maged.michael@gmail.com>
+CC: Avi Kivity <avi@scylladb.com>
+CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+CC: Paul Mackerras <paulus@samba.org>
+CC: Michael Ellerman <mpe@ellerman.id.au>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Alan Stern <stern@rowland.harvard.edu>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Alice Ferrazzi <alice.ferrazzi@gmail.com>
+CC: Paul Elder <paul.elder@pitt.edu>
 CC: linux-kselftest@vger.kernel.org
-CC: linux-api@vger.kernel.org
+CC: linux-arch@vger.kernel.org
 ---
- tools/testing/selftests/rseq/rseq-arm.h | 33 +++++++++++++++++++++++++++++++++
- 1 file changed, 33 insertions(+)
+Changes since v1:
+- return result of ksft_exit_pass from main(), silencing compiler
+  warning about missing return value.
+---
+ .../testing/selftests/membarrier/membarrier_test.c | 111 ++++++++++++++++++---
+ 1 file changed, 95 insertions(+), 16 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
-index 47953c0cef4f..6d3fda276f4d 100644
---- a/tools/testing/selftests/rseq/rseq-arm.h
-+++ b/tools/testing/selftests/rseq/rseq-arm.h
-@@ -79,12 +79,15 @@ do {									\
- 		teardown						\
- 		"b %l[" __rseq_str(cmpfail_label) "]\n\t"
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index 9e674d9514d1..e6ee73d01fa1 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -16,49 +16,119 @@ static int sys_membarrier(int cmd, int flags)
+ static int test_membarrier_cmd_fail(void)
+ {
+ 	int cmd = -1, flags = 0;
++	const char *test_name = "sys membarrier invalid command";
  
-+#define rseq_workaround_gcc_asm_size_guess()	__asm__ __volatile__("")
+ 	if (sys_membarrier(cmd, flags) != -1) {
+ 		ksft_exit_fail_msg(
+-			"sys membarrier invalid command test: command = %d, flags = %d. Should fail, but passed\n",
+-			cmd, flags);
++			"%s test: command = %d, flags = %d. Should fail, but passed\n",
++			test_name, cmd, flags);
++	}
++	if (errno != EINVAL) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EINVAL, strerror(EINVAL),
++			errno, strerror(errno));
+ 	}
+ 
+ 	ksft_test_result_pass(
+-		"sys membarrier invalid command test: command = %d, flags = %d. Failed as expected\n",
+-		cmd, flags);
++		"%s test: command = %d, flags = %d, errno = %d. Failed as expected\n",
++		test_name, cmd, flags, errno);
+ 	return 0;
+ }
+ 
+ static int test_membarrier_flags_fail(void)
+ {
+ 	int cmd = MEMBARRIER_CMD_QUERY, flags = 1;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_QUERY invalid flags";
+ 
+ 	if (sys_membarrier(cmd, flags) != -1) {
+ 		ksft_exit_fail_msg(
+-			"sys membarrier MEMBARRIER_CMD_QUERY invalid flags test: flags = %d. Should fail, but passed\n",
+-			flags);
++			"%s test: flags = %d. Should fail, but passed\n",
++			test_name, flags);
++	}
++	if (errno != EINVAL) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EINVAL, strerror(EINVAL),
++			errno, strerror(errno));
+ 	}
+ 
+ 	ksft_test_result_pass(
+-		"sys membarrier MEMBARRIER_CMD_QUERY invalid flags test: flags = %d. Failed as expected\n",
+-		flags);
++		"%s test: flags = %d, errno = %d. Failed as expected\n",
++		test_name, flags, errno);
+ 	return 0;
+ }
+ 
+-static int test_membarrier_success(void)
++static int test_membarrier_shared_success(void)
+ {
+ 	int cmd = MEMBARRIER_CMD_SHARED, flags = 0;
+-	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED\n";
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED";
 +
- static inline __attribute__((always_inline))
- int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv,
- 		int cpu)
- {
- 	RSEQ_INJECT_C(9)
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n", test_name, flags);
++	return 0;
++}
++
++static int test_membarrier_private_expedited_fail(void)
++{
++	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED not registered failure";
++
++	if (sys_membarrier(cmd, flags) != -1) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should fail, but passed\n",
++			test_name, flags);
++	}
++	if (errno != EPERM) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EPERM, strerror(EPERM),
++			errno, strerror(errno));
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d, errno = %d\n",
++		test_name, flags, errno);
++	return 0;
++}
++
++static int test_membarrier_register_private_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED";
  
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		RSEQ_ASM_STORE_RSEQ_CS(1, 3f, rseq_cs)
-@@ -115,11 +118,14 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
+ 	if (sys_membarrier(cmd, flags) != 0) {
+ 		ksft_exit_fail_msg(
+-			"sys membarrier MEMBARRIER_CMD_SHARED test: flags = %d\n",
+-			flags);
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
+ 	}
+ 
+ 	ksft_test_result_pass(
+-		"sys membarrier MEMBARRIER_CMD_SHARED test: flags = %d\n",
+-		flags);
++		"%s test: flags = %d\n",
++		test_name, flags);
++	return 0;
++}
++
++static int test_membarrier_private_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
  	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
  }
  
-@@ -129,6 +135,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
- {
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		RSEQ_ASM_STORE_RSEQ_CS(1, 3f, rseq_cs)
-@@ -164,11 +171,14 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
+@@ -72,7 +142,16 @@ static int test_membarrier(void)
+ 	status = test_membarrier_flags_fail();
+ 	if (status)
+ 		return status;
+-	status = test_membarrier_success();
++	status = test_membarrier_shared_success();
++	if (status)
++		return status;
++	status = test_membarrier_private_expedited_fail();
++	if (status)
++		return status;
++	status = test_membarrier_register_private_expedited_success();
++	if (status)
++		return status;
++	status = test_membarrier_private_expedited_success();
+ 	if (status)
+ 		return status;
  	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
- }
+@@ -108,5 +187,5 @@ int main(int argc, char **argv)
+ 	test_membarrier_query();
+ 	test_membarrier();
  
-@@ -177,6 +187,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
- {
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		RSEQ_ASM_STORE_RSEQ_CS(1, 3f, rseq_cs)
-@@ -203,8 +214,10 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
- 		  RSEQ_INJECT_CLOBBER
- 		: abort
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- }
-@@ -216,6 +229,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
- {
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		RSEQ_ASM_STORE_RSEQ_CS(1, 3f, rseq_cs)
-@@ -253,11 +267,14 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
- }
- 
-@@ -268,6 +285,7 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
- {
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		RSEQ_ASM_STORE_RSEQ_CS(1, 3f, rseq_cs)
-@@ -306,11 +324,14 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
- }
- 
-@@ -321,6 +342,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
- {
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		RSEQ_ASM_STORE_RSEQ_CS(1, 3f, rseq_cs)
-@@ -359,11 +381,14 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
- }
- 
-@@ -376,6 +401,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
- 
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		"str %[src], %[rseq_scratch0]\n\t"
-@@ -442,11 +468,14 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
- }
- 
-@@ -459,6 +488,7 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
- 
- 	RSEQ_INJECT_C(9)
- 
-+	rseq_workaround_gcc_asm_size_guess();
- 	__asm__ __volatile__ goto (
- 		RSEQ_ASM_DEFINE_TABLE(__rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
- 		"str %[src], %[rseq_scratch0]\n\t"
-@@ -526,10 +556,13 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
- 		  RSEQ_INJECT_CLOBBER
- 		: abort, cmpfail
- 	);
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 0;
- abort:
-+	rseq_workaround_gcc_asm_size_guess();
- 	RSEQ_INJECT_FAILED
- 	return -1;
- cmpfail:
-+	rseq_workaround_gcc_asm_size_guess();
- 	return 1;
+-	ksft_exit_pass();
++	return ksft_exit_pass();
  }
 -- 
 2.11.0
