@@ -1,49 +1,67 @@
-From: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Subject: Re: [PATCH] [man-pages] adjtimex.2: document clock_adjtime
-Date: Tue, 21 Nov 2017 23:09:16 +0100
-Message-ID: <CAK8P3a3mJCoPG17giBb8G7um0MKkF-ff6maOOW5RGXQb9bVcFQ@mail.gmail.com>
-References: <20171120225302.3379657-1-arnd@arndb.de> <20171121030459.swng4eyke34uf3sv@localhost>
- <CAK8P3a1TFPNE+A5Gf=cgsxiqi2VQOzfRLUgirjNtb6Tdei0Ovg@mail.gmail.com> <20171121160601.2xti5ho5pul2v7tm@localhost>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH update for 4.15 1/3] selftests: lib.mk: Introduce OVERRIDE_TARGETS
+Date: Tue, 21 Nov 2017 17:19:31 -0500
+Message-ID: <20171121221933.25959-1-mathieu.desnoyers@efficios.com>
+References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171121160601.2xti5ho5pul2v7tm@localhost>
+In-Reply-To: <20171121141900.18471-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 21, 2017 at 5:06 PM, Richard Cochran
-<richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> On Tue, Nov 21, 2017 at 09:06:37AM +0100, Arnd Bergmann wrote:
->>
->> I copied that line from clock_gettime() man page. I suppose we want to
->> fix change this in both pages, right? Any suggestions for a good way to
->> express your explanation in the man page? I suppose we don't want to
->> go into details of the implementation there but still capture the possible
->> corner cases.
->
-> Dynamic clockids are a Linux specific extension.  This should be
-> explained with a paragraph or two on the gettime man page, along with
-> an example using the macros.
->
->         #define CLOCKFD 3
->         #define FD_TO_CLOCKID(fd)       ((~(clockid_t) (fd) << 3) | CLOCKFD)
->         #define CLOCKID_TO_FD(clk)      ((unsigned int) ~((clk) >> 3))
->
-> Then, the adjtimex page can say, see gettime.
->
-> Let me try to come up with a text over the (USA) holiday weekend.
+Introduce OVERRIDE_TARGETS to allow tests to express dependencies on
+header files and .so, which require to override the selftests lib.mk
+targets.
 
-Thanks! There is no rush here, take your time. One more question:
-I see that ptp_clock_adjtime doesn't call timekeeping_validate_timex(),
-so a number of the error conditions are not caught there. Should we
-document that as intended, or change it to behave the same way
-as do_adjtimex()?
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ tools/testing/selftests/lib.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-I also see that ptp_clock_adjtime() ignores all other flags whenever
-ADJ_SETOFFSET is set, while __do_adjtimex() can do ADJ_SETOFFSET
-and ADJ_FREQUENCY (or any other combination) in a single syscall,
-which matches what is documented in the man page.
-
-       Arnd
+diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+index 5bef05d6ba39..441d7bc63bb7 100644
+--- a/tools/testing/selftests/lib.mk
++++ b/tools/testing/selftests/lib.mk
+@@ -105,6 +105,9 @@ COMPILE.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+ LINK.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+ endif
+ 
++# Selftest makefiles can override those targets by setting
++# OVERRIDE_TARGETS = 1.
++ifeq ($(OVERRIDE_TARGETS),)
+ $(OUTPUT)/%:%.c
+ 	$(LINK.c) $^ $(LDLIBS) -o $@
+ 
+@@ -113,5 +116,6 @@ $(OUTPUT)/%.o:%.S
+ 
+ $(OUTPUT)/%:%.S
+ 	$(LINK.S) $^ $(LDLIBS) -o $@
++endif
+ 
+ .PHONY: run_tests all clean install emit_tests
+-- 
+2.11.0
