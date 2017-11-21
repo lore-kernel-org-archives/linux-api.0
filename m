@@ -1,86 +1,87 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [PATCH update for 4.15 1/3] selftests: lib.mk: Introduce
- OVERRIDE_TARGETS
-Date: Tue, 21 Nov 2017 22:22:43 +0000 (UTC)
-Message-ID: <645378149.19703.1511302963855.JavaMail.zimbra@efficios.com>
-References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com> <20171121221933.25959-1-mathieu.desnoyers@efficios.com>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.15 v12 00/22] Restartable sequences and CPU op
+ vector
+Date: Tue, 21 Nov 2017 23:59:07 +0100 (CET)
+Message-ID: <alpine.DEB.2.20.1711212315450.2399@nanos>
+References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com> <20171121172144.GL2482@two.firstfloor.org> <740195164.19702.1511301908907.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171121221933.25959-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <740195164.19702.1511301908907.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, shuah <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kselftest <linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 21, 2017, at 5:19 PM, Mathieu Desnoyers mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org wrote:
+On Tue, 21 Nov 2017, Mathieu Desnoyers wrote:
+> ----- On Nov 21, 2017, at 12:21 PM, Andi Kleen andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org wrote:
+> 
+> > On Tue, Nov 21, 2017 at 09:18:38AM -0500, Mathieu Desnoyers wrote:
+> >> Hi,
+> >> 
+> >> Following changes based on a thorough coding style and patch changelog
+> >> review from Thomas Gleixner and Peter Zijlstra, I'm respinning this
+> >> series for another RFC.
+> >> 
+> > My suggestion would be that you also split out the opv system call.
+> > That seems to be main contention point currently, and the restartable
+> > sequences should be useful without it.
+> 
+> I consider rseq to be incomplete and a pain to use in various scenarios
+> without cpu_opv. 
+> 
+> About the contention point you refer to:
+> 
+> Using vDSO as an example of how things should be done is just wrong: the
+> vDSO interaction with debugger instruction single-stepping is broken,
+> as I detailed in my previous email.
 
-> Introduce OVERRIDE_TARGETS to allow tests to express dependencies on
-> header files and .so, which require to override the selftests lib.mk
-> targets.
+Let me turn that around. You're lamenting about a conditional branch in
+your rseq thing for performance reasons and at the same time you want to
+force extra code into the VDSO? clock_gettime() is one of the hottest
+vsyscalls in certain scenarions. So why would we want to have extra code
+there? Just to make debuggers happy. You really can't be serious about
+that.
 
-Those 3 seftests update patches are still RFC (even though the subject tag
-is missing).
+> Thomas' proposal of handling single-stepping with a user-space locking
+> fallback, which is pretty much what I had in 2016, pushes a lot of
+> complexity to user-space, requires an extra branch in the fast-path,
+> as well as additional store-release/load-acquire semantics for consistency.
+> I don't plan going down that route.
+>
+> Other than that, I have not received any concrete alternative proposal to
+> properly handle single-stepping.
+
+You provided the details today. Up to that point all we had was handwaving
+and inconsistent information.
+
+> The only opposition against cpu_opv is that there *should* be an hypothetical
+> simpler solution. The rseq idea is not new: it's been presented by Paul Turner
+> in 2012 at LPC. And so far, cpu_opv is the overall simplest and most
+> efficient way I encountered to handle single-stepping, and it gives extra
+> benefits, as described in my changelog.
+
+That's how you define it and that does not make cpu_opv less complex and
+more debuggable. There is no way to debug that and still you claim that it
+removes compexity from user space. That ops stuff comes from user space and
+is not magically constructed by the kernel. In some of your use cases it
+even has different semantics than the rseq section code. So how is that
+removing any complexity from user space? All it buys you is an extra branch
+less in your rseq hotpath and that's your justification to shove that
+thing into the kernel.
+
+The version I reviewed was just undigestable. I did not have time to look
+at the hastily cobbled together version of today. Aside of that the
+scheduler portion of it has not seen any review from scheduler folks
+either.
+
+AFAICT there is not a single reviewed-by tag on the sys_rseq and the
+sys_opv patches either.
+
+Are you seriously expecting that new syscalls of that kind are going to be
+merged without a deep and thorough review just based on your decision to
+declare them ready?
 
 Thanks,
 
-Mathieu
-
-> 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-> CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
-> CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
-> CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-> CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-> CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-> CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
-> CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
-> CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-> CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
-> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-> CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-> CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
-> CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
-> CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-> CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
-> CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-> CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-> CC: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> CC: linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-> ---
-> tools/testing/selftests/lib.mk | 4 ++++
-> 1 file changed, 4 insertions(+)
-> 
-> diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
-> index 5bef05d6ba39..441d7bc63bb7 100644
-> --- a/tools/testing/selftests/lib.mk
-> +++ b/tools/testing/selftests/lib.mk
-> @@ -105,6 +105,9 @@ COMPILE.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
-> LINK.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
-> endif
-> 
-> +# Selftest makefiles can override those targets by setting
-> +# OVERRIDE_TARGETS = 1.
-> +ifeq ($(OVERRIDE_TARGETS),)
-> $(OUTPUT)/%:%.c
-> 	$(LINK.c) $^ $(LDLIBS) -o $@
-> 
-> @@ -113,5 +116,6 @@ $(OUTPUT)/%.o:%.S
-> 
-> $(OUTPUT)/%:%.S
-> 	$(LINK.S) $^ $(LDLIBS) -o $@
-> +endif
-> 
-> .PHONY: run_tests all clean install emit_tests
-> --
-> 2.11.0
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+	tglx
