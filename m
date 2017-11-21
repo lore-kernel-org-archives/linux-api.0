@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.15 v5 20/22] membarrier: Document scheduler barrier requirements
-Date: Tue, 21 Nov 2017 09:18:58 -0500
-Message-ID: <20171121141900.18471-21-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 v7 19/22] powerpc: membarrier: Skip memory barrier in switch_mm()
+Date: Tue, 21 Nov 2017 09:18:57 -0500
+Message-ID: <20171121141900.18471-20-mathieu.desnoyers@efficios.com>
 References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
@@ -10,29 +10,76 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scyllad>
 List-Id: linux-api@vger.kernel.org
 
-Document the membarrier requirement on having a full memory barrier in
-__schedule() after coming from user-space, before storing to rq->curr.
-It is provided by smp_mb__after_spinlock() in __schedule().
+Allow PowerPC to skip the full memory barrier in switch_mm(), and
+only issue the barrier when scheduling into a task belonging to a
+process that has registered to use expedited private.
 
-Document that membarrier requires a full barrier on transition from
-kernel thread to userspace thread. We currently have an implicit barrier
-from atomic_dec_and_test() in mmdrop() that ensures this.
+Threads targeting the same VM but which belong to different thread
+groups is a tricky case. It has a few consequences:
 
-The x86 switch_mm_irqs_off() full barrier is currently provided by many
-cpumask update operations as well as write_cr3(). Document that
-write_cr3() provides this barrier.
+It turns out that we cannot rely on get_nr_threads(p) to count the
+number of threads using a VM. We can use
+(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)
+instead to skip the synchronize_sched() for cases where the VM only has
+a single user, and that user only has a single thread.
+
+It also turns out that we cannot use for_each_thread() to set
+thread flags in all threads using a VM, as it only iterates on the
+thread group.
+
+Therefore, test the membarrier state variable directly rather than
+relying on thread flags. This means
+membarrier_register_private_expedited() needs to set the
+MEMBARRIER_STATE_PRIVATE_EXPEDITED flag, issue synchronize_sched(), and
+only then set MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY which allows
+private expedited membarrier commands to succeed.
+membarrier_arch_switch_mm() now tests for the
+MEMBARRIER_STATE_PRIVATE_EXPEDITED flag.
 
 Changes since v1:
-- Update comments to match reality for code paths which are after
-  storing to rq->curr, before returning to user-space, based on feedback
-  from Andrea Parri.
+- Use test_ti_thread_flag(next, ...) instead of test_thread_flag() in
+  powerpc membarrier_arch_sched_in(), given that we want to specifically
+  check the next thread state.
+- Add missing ARCH_HAS_MEMBARRIER_HOOKS in Kconfig.
+- Use task_thread_info() to pass thread_info from task to
+  *_ti_thread_flag().
+
 Changes since v2:
-- Update changelog (smp_mb__before_spinlock -> smp_mb__after_spinlock).
-  Based on feedback from Andrea Parri.
+- Move membarrier_arch_sched_in() call to finish_task_switch().
+- Check for NULL t->mm in membarrier_arch_fork().
+- Use membarrier_sched_in() in generic code, which invokes the
+  arch-specific membarrier_arch_sched_in(). This fixes allnoconfig
+  build on PowerPC.
+- Move asm/membarrier.h include under CONFIG_MEMBARRIER, fixing
+  allnoconfig build on PowerPC.
+- Build and runtime tested on PowerPC.
+
 Changes since v3:
-- Clarify comments following feeback from Peter Zijlstra.
+- Simply rely on copy_mm() to copy the membarrier_private_expedited mm
+  field on fork.
+- powerpc: test thread flag instead of reading
+  membarrier_private_expedited in membarrier_arch_fork().
+- powerpc: skip memory barrier in membarrier_arch_sched_in() if coming
+  from kernel thread, since mmdrop() implies a full barrier.
+- Set membarrier_private_expedited to 1 only after arch registration
+  code, thus eliminating a race where concurrent commands could succeed
+  when they should fail if issued concurrently with process
+  registration.
+- Use READ_ONCE() for membarrier_private_expedited field access in
+  membarrier_private_expedited. Matches WRITE_ONCE() performed in
+  process registration.
+
 Changes since v4:
-- Update comment regarding powerpc barrier.
+- Move powerpc hook from sched_in() to switch_mm(), based on feedback
+  from Nicholas Piggin.
+
+Changes since v5:
+- Rebase on v4.14-rc6.
+- Fold "Fix: membarrier: Handle CLONE_VM + !CLONE_THREAD correctly on
+  powerpc (v2)"
+
+Changes since v6:
+- Rename MEMBARRIER_STATE_SWITCH_MM to MEMBARRIER_STATE_PRIVATE_EXPEDITED.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: Peter Zijlstra <peterz@infradead.org>
@@ -45,117 +92,197 @@ CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 CC: Paul Mackerras <paulus@samba.org>
 CC: Michael Ellerman <mpe@ellerman.id.au>
 CC: Dave Watson <davejwatson@fb.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Alan Stern <stern@rowland.harvard.edu>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Andy Lutomirski <luto@kernel.org>
 CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Andrea Parri <parri.andrea@gmail.com>
-CC: x86@kernel.org
+CC: Alexander Viro <viro@zeniv.linux.org.uk>
+CC: Nicholas Piggin <npiggin@gmail.com>
+CC: linuxppc-dev@lists.ozlabs.org
+CC: linux-arch@vger.kernel.org
 ---
- arch/x86/mm/tlb.c        |  5 +++++
- include/linux/sched/mm.h |  5 +++++
- kernel/sched/core.c      | 37 ++++++++++++++++++++++++++-----------
- 3 files changed, 36 insertions(+), 11 deletions(-)
+ MAINTAINERS                           |  1 +
+ arch/powerpc/Kconfig                  |  1 +
+ arch/powerpc/include/asm/membarrier.h | 25 +++++++++++++++++++++++++
+ arch/powerpc/mm/mmu_context.c         |  7 +++++++
+ include/linux/sched/mm.h              | 12 +++++++++++-
+ init/Kconfig                          |  3 +++
+ kernel/sched/core.c                   | 10 ----------
+ kernel/sched/membarrier.c             |  9 +++++++++
+ 8 files changed, 57 insertions(+), 11 deletions(-)
+ create mode 100644 arch/powerpc/include/asm/membarrier.h
 
-diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 3118392cdf75..5abf9bfcca1f 100644
---- a/arch/x86/mm/tlb.c
-+++ b/arch/x86/mm/tlb.c
-@@ -146,6 +146,11 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
- #endif
- 	this_cpu_write(cpu_tlbstate.is_lazy, false);
+diff --git a/MAINTAINERS b/MAINTAINERS
+index ba9137c1f295..92f460afeaaf 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -8938,6 +8938,7 @@ L:	linux-kernel@vger.kernel.org
+ S:	Supported
+ F:	kernel/sched/membarrier.c
+ F:	include/uapi/linux/membarrier.h
++F:	arch/powerpc/include/asm/membarrier.h
  
+ MEMORY MANAGEMENT
+ L:	linux-mm@kvack.org
+diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
+index e9992f80819c..d41c6ede0709 100644
+--- a/arch/powerpc/Kconfig
++++ b/arch/powerpc/Kconfig
+@@ -140,6 +140,7 @@ config PPC
+ 	select ARCH_HAS_FORTIFY_SOURCE
+ 	select ARCH_HAS_GCOV_PROFILE_ALL
+ 	select ARCH_HAS_PMEM_API                if PPC64
++	select ARCH_HAS_MEMBARRIER_HOOKS
+ 	select ARCH_HAS_SCALED_CPUTIME		if VIRT_CPU_ACCOUNTING_NATIVE
+ 	select ARCH_HAS_SG_CHAIN
+ 	select ARCH_HAS_TICK_BROADCAST		if GENERIC_CLOCKEVENTS_BROADCAST
+diff --git a/arch/powerpc/include/asm/membarrier.h b/arch/powerpc/include/asm/membarrier.h
+new file mode 100644
+index 000000000000..046f96768ab5
+--- /dev/null
++++ b/arch/powerpc/include/asm/membarrier.h
+@@ -0,0 +1,25 @@
++#ifndef _ASM_POWERPC_MEMBARRIER_H
++#define _ASM_POWERPC_MEMBARRIER_H
++
++static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
++		struct mm_struct *next, struct task_struct *tsk)
++{
++	/*
++	 * Only need the full barrier when switching between processes.
++	 * Barrier when switching from kernel to userspace is not
++	 * required here, given that it is implied by mmdrop(). Barrier
++	 * when switching from userspace to kernel is not needed after
++	 * store to rq->curr.
++	 */
++	if (likely(!(atomic_read(&next->membarrier_state)
++			& MEMBARRIER_STATE_PRIVATE_EXPEDITED) || !prev))
++		return;
++
 +	/*
 +	 * The membarrier system call requires a full memory barrier
-+	 * before returning to user-space, after storing to rq->curr.
-+	 * Writing to CR3 provides that full memory barrier.
++	 * after storing to rq->curr, before going back to user-space.
 +	 */
- 	if (real_prev == next) {
- 		VM_WARN_ON(this_cpu_read(cpu_tlbstate.ctxs[prev_asid].ctx_id) !=
- 			   next->context.ctx_id);
++	smp_mb();
++}
++
++#endif /* _ASM_POWERPC_MEMBARRIER_H */
+diff --git a/arch/powerpc/mm/mmu_context.c b/arch/powerpc/mm/mmu_context.c
+index d60a62bf4fc7..0ab297c4cfad 100644
+--- a/arch/powerpc/mm/mmu_context.c
++++ b/arch/powerpc/mm/mmu_context.c
+@@ -12,6 +12,7 @@
+ 
+ #include <linux/mm.h>
+ #include <linux/cpu.h>
++#include <linux/sched/mm.h>
+ 
+ #include <asm/mmu_context.h>
+ 
+@@ -58,6 +59,10 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 		 *
+ 		 * On the read side the barrier is in pte_xchg(), which orders
+ 		 * the store to the PTE vs the load of mm_cpumask.
++		 *
++		 * This full barrier is needed by membarrier when switching
++		 * between processes after store to rq->curr, before user-space
++		 * memory accesses.
+ 		 */
+ 		smp_mb();
+ 
+@@ -80,6 +85,8 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 
+ 	if (new_on_cpu)
+ 		radix_kvm_prefetch_workaround(next);
++	else
++		membarrier_arch_switch_mm(prev, next, tsk);
+ 
+ 	/*
+ 	 * The actual HW switching method differs between the various
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 7077253d0df4..0f9e1a96b890 100644
+index 3d49b91b674d..7077253d0df4 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
-@@ -39,6 +39,11 @@ static inline void mmgrab(struct mm_struct *mm)
- extern void __mmdrop(struct mm_struct *);
- static inline void mmdrop(struct mm_struct *mm)
+@@ -215,14 +215,24 @@ static inline void memalloc_noreclaim_restore(unsigned int flags)
+ #ifdef CONFIG_MEMBARRIER
+ enum {
+ 	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY	= (1U << 0),
+-	MEMBARRIER_STATE_SWITCH_MM			= (1U << 1),
++	MEMBARRIER_STATE_PRIVATE_EXPEDITED		= (1U << 1),
+ };
+ 
++#ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
++#include <asm/membarrier.h>
++#endif
++
+ static inline void membarrier_execve(struct task_struct *t)
  {
-+	/*
-+	 * The implicit full barrier implied by atomic_dec_and_test is
-+	 * required by the membarrier system call before returning to
-+	 * user-space, after storing to rq->curr.
-+	 */
- 	if (unlikely(atomic_dec_and_test(&mm->mm_count)))
- 		__mmdrop(mm);
+ 	atomic_set(&t->mm->membarrier_state, 0);
  }
+ #else
++#ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
++static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
++		struct mm_struct *next, struct task_struct *tsk)
++{
++}
++#endif
+ static inline void membarrier_execve(struct task_struct *t)
+ {
+ }
+diff --git a/init/Kconfig b/init/Kconfig
+index acf678e2363c..7300640235dc 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1400,6 +1400,9 @@ config USERFAULTFD
+ 	  Enable the userfaultfd() system call that allows to intercept and
+ 	  handle page faults in userland.
+ 
++config ARCH_HAS_MEMBARRIER_HOOKS
++	bool
++
+ config RSEQ
+ 	bool "Enable rseq() system call" if EXPERT
+ 	default y
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 55cc426ff46e..0151eb1fcd5b 100644
+index 4bbe297574b5..55cc426ff46e 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -2697,6 +2697,12 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+@@ -2693,16 +2693,6 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+ 	prev_state = prev->state;
+ 	vtime_task_switch(prev);
+ 	perf_event_task_sched_in(prev, current);
+-	/*
+-	 * The membarrier system call requires a full memory barrier
+-	 * after storing to rq->curr, before going back to user-space.
+-	 *
+-	 * TODO: This smp_mb__after_unlock_lock can go away if PPC end
+-	 * up adding a full barrier to switch_mm(), or we should figure
+-	 * out if a smp_mb__after_unlock_lock is really the proper API
+-	 * to use.
+-	 */
+-	smp_mb__after_unlock_lock();
+ 	finish_lock_switch(rq, prev);
  	finish_arch_post_lock_switch();
  
- 	fire_sched_in_preempt_notifiers(current);
-+	/*
-+	 * When transitioning from a kernel thread to a userspace
-+	 * thread, mmdrop()'s implicit full barrier is required by the
-+	 * membarrier system call, because the current active_mm can
-+	 * become the current mm without going through switch_mm().
-+	 */
- 	if (mm)
- 		mmdrop(mm);
- 	if (unlikely(prev_state == TASK_DEAD)) {
-@@ -2802,6 +2808,13 @@ context_switch(struct rq *rq, struct task_struct *prev,
- 	 */
- 	arch_start_context_switch(prev);
- 
-+	/*
-+	 * If mm is non-NULL, we pass through switch_mm(). If mm is
-+	 * NULL, we will pass through mmdrop() in finish_task_switch().
-+	 * Both of these contain the full memory barrier required by
-+	 * membarrier after storing to rq->curr, before returning to
-+	 * user-space.
-+	 */
- 	if (!mm) {
- 		next->active_mm = oldmm;
- 		mmgrab(oldmm);
-@@ -3338,6 +3351,9 @@ static void __sched notrace __schedule(bool preempt)
- 	 * Make sure that signal_pending_state()->signal_pending() below
- 	 * can't be reordered with __set_current_state(TASK_INTERRUPTIBLE)
- 	 * done by the caller to avoid the race with signal_wake_up().
-+	 *
-+	 * The membarrier system call requires a full memory barrier
-+	 * after coming from user-space, before storing to rq->curr.
- 	 */
- 	rq_lock(rq, &rf);
- 	smp_mb__after_spinlock();
-@@ -3386,17 +3402,16 @@ static void __sched notrace __schedule(bool preempt)
- 		/*
- 		 * The membarrier system call requires each architecture
- 		 * to have a full memory barrier after updating
--		 * rq->curr, before returning to user-space. For TSO
--		 * (e.g. x86), the architecture must provide its own
--		 * barrier in switch_mm(). For weakly ordered machines
--		 * for which spin_unlock() acts as a full memory
--		 * barrier, finish_lock_switch() in common code takes
--		 * care of this barrier. For weakly ordered machines for
--		 * which spin_unlock() acts as a RELEASE barrier (only
--		 * arm64 and PowerPC), arm64 has a full barrier in
--		 * switch_to(), and PowerPC has
--		 * smp_mb__after_unlock_lock() before
--		 * finish_lock_switch().
-+		 * rq->curr, before returning to user-space.
-+		 *
-+		 * Here are the schemes providing that barrier on the
-+		 * various architectures:
-+		 * - mm ? switch_mm() : mmdrop() for x86, s390, sparc, PowerPC.
-+		 *   switch_mm() rely on membarrier_arch_switch_mm() on PowerPC.
-+		 * - finish_lock_switch() for weakly-ordered
-+		 *   architectures where spin_unlock is a full barrier,
-+		 * - switch_to() for arm64 (weakly-ordered, spin_unlock
-+		 *   is a RELEASE barrier),
- 		 */
- 		++*switch_count;
- 
+diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
+index 9bcbacba82a8..7d2ec7202ba8 100644
+--- a/kernel/sched/membarrier.c
++++ b/kernel/sched/membarrier.c
+@@ -118,6 +118,15 @@ static void membarrier_register_private_expedited(void)
+ 	if (atomic_read(&mm->membarrier_state)
+ 			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY)
+ 		return;
++	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED,
++			&mm->membarrier_state);
++	if (!(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)) {
++		/*
++		 * Ensure all future scheduler executions will observe the
++		 * new thread flag state for this process.
++		 */
++		synchronize_sched();
++	}
+ 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY,
+ 			&mm->membarrier_state);
+ }
 -- 
 2.11.0
