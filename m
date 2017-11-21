@@ -1,37 +1,127 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] [man-pages] adjtimex.2: document clock_adjtime
-Date: Tue, 21 Nov 2017 09:06:37 +0100
-Message-ID: <CAK8P3a1TFPNE+A5Gf=cgsxiqi2VQOzfRLUgirjNtb6Tdei0Ovg@mail.gmail.com>
-References: <20171120225302.3379657-1-arnd@arndb.de> <20171121030459.swng4eyke34uf3sv@localhost>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC v4] It is common for services to be stateless around their
+ main event loop. If a process sets PR_SET_IDLE to PR_IDLE_MODE_KILLME then
+ it signals to the kernel that epoll_wait() and friends may not complete,
+ and the kernel may send SIGKILL if resources get tight.
+Date: Tue, 21 Nov 2017 10:14:41 +0100 (CET)
+Message-ID: <alpine.DEB.2.20.1711210948530.1782@nanos>
+References: <20171121044947.18479-1-slandden@gmail.com> <20171121051639.1228-1-slandden@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171121030459.swng4eyke34uf3sv@localhost>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Cochran <richardcochran@gmail.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Stephen Boyd <sboyd@codeaurora.org>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171121051639.1228-1-slandden@gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Shawn Landden <slandden@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@kernel.org, willy@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 21, 2017 at 4:05 AM, Richard Cochran
-<richardcochran@gmail.com> wrote:
-> On Mon, Nov 20, 2017 at 11:53:02PM +0100, Arnd Bergmann wrote:
->>  .B EINVAL
->> +The
->> +.I clk_id
->> +specified is not supported on this system.
->
-> We return EINVAL when the clockid is not valid.  That can mean two
-> things.  Either the SYS-V style hard coded positive clockid is out of
-> range, or the dynamic negative clockid does not refer to a valid
-> instance of a clock object.
->
-> Dynamic clocks might also return ENODEV in case a hot-plugable device
-> (like USB) has disappeared after its character device was opened.
+On Mon, 20 Nov 2017, Shawn Landden wrote:
 
-I copied that line from clock_gettime() man page. I suppose we want to
-fix change this in both pages, right? Any suggestions for a good way to
-express your explanation in the man page? I suppose we don't want to
-go into details of the implementation there but still capture the possible
-corner cases.
+Please use a short and comprehensible subject line and do not pack a full
+sentence into it. The sentence wants to be in the change log body.
 
-       Arnd
+> +static DECLARE_WAIT_QUEUE_HEAD(oom_target);
+> +
+> +/* Clean up after a EPOLL_KILLME process quits.
+> + * Called by kernel/exit.c.
+
+It's hardly called by kernel/exit.c and aside of that multi line comments
+are formatted like this:
+
+/*
+ * ....
+ * ....
+ */
+
+> + */
+> +void exit_oom_target(void)
+> +{
+> +	DECLARE_WAITQUEUE(wait, current);
+> +
+> +	remove_wait_queue(&oom_target, &wait);
+
+This is completely pointless, really. It does:
+
+     	INIT_LIST_HEAD(&wait.entry);
+
+	spin_lock_irqsave(&oom_target->lock, flags);
+	list_del(&wait->entry);
+	spin_lock_irqrestore(&oom_target->lock, flags);
+
+IOW. It's a NOOP. What are you trying to achieve?
+
+> +}
+> +
+> +inline struct wait_queue_head *oom_target_get_wait()
+> +{
+> +	return &oom_target;
+
+This wrapper is useless.
+
+> +}
+> +
+>  #ifdef CONFIG_NUMA
+>  /**
+>   * has_intersects_mems_allowed() - check task eligiblity for kill
+> @@ -994,6 +1013,18 @@ int unregister_oom_notifier(struct notifier_block *nb)
+>  }
+>  EXPORT_SYMBOL_GPL(unregister_oom_notifier);
+>  
+> +int oom_target_callback(wait_queue_entry_t *wait, unsigned mode, int sync, void *key)
+> +{
+> +	struct task_struct *ts = wait->private;
+> +
+> +	/* We use SIGKILL instead of the oom killer
+> +	 * so as to cleanly interrupt ep_poll()
+
+Huch? oom_killer uses SIGKILL as well, it just does it correctly.
+
+> +	 */
+> +	pr_debug("Killing pid %u from prctl(PR_SET_IDLE) death row.\n", ts->pid);
+> +	send_sig(SIGKILL, ts, 1);
+> +	return 0;
+> +}
+> +
+>  /**
+>   * out_of_memory - kill the "best" process when we run out of memory
+>   * @oc: pointer to struct oom_control
+> @@ -1007,6 +1038,7 @@ bool out_of_memory(struct oom_control *oc)
+>  {
+>  	unsigned long freed = 0;
+>  	enum oom_constraint constraint = CONSTRAINT_NONE;
+> +	wait_queue_head_t *w;
+>  
+>  	if (oom_killer_disabled)
+>  		return false;
+> @@ -1056,6 +1088,17 @@ bool out_of_memory(struct oom_control *oc)
+>  		return true;
+>  	}
+>  
+> +	/*
+> +	 * Check death row for current memcg or global.
+> +	 */
+> +	if (!is_memcg_oom(oc)) {
+> +		w = oom_target_get_wait();
+> +		if (waitqueue_active(w)) {
+> +			wake_up(w);
+> +			return true;
+> +		}
+> +	}
+
+Why on earth do you need that extra wait_queue magic?
+
+You completely fail to explain in your empty changelog why the existing
+oom hinting infrastructure is not sufficient.
+
+If you can explain why, then there is no reason to have this side
+channel. Extend/fix the current hinting mechanism and be done with it.
+
+Thanks,
+
+	tglx
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
