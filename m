@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.15 03/22] arm: Add restartable sequences support
-Date: Tue, 21 Nov 2017 09:18:41 -0500
-Message-ID: <20171121141900.18471-4-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.15 04/22] arm: Wire up restartable sequences system call
+Date: Tue, 21 Nov 2017 09:18:42 -0500
+Message-ID: <20171121141900.18471-5-mathieu.desnoyers@efficios.com>
 References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
@@ -10,12 +10,12 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Call the rseq_handle_notify_resume() function on return to
-userspace if TIF_NOTIFY_RESUME thread flag is set.
+Wire up the rseq system call on 32-bit ARM.
 
-Increment the event counter and perform fixup on the pre-signal frame
-when a signal is delivered on top of a restartable sequence critical
-section.
+This provides an ABI improving the speed of a user-space getcpu
+operation on ARM by skipping the getcpu system call on the fast path, as
+well as improving the speed of user-space operations on per-cpu data
+compared to using load-linked/store-conditional.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: Russell King <linux@arm.linux.org.uk>
@@ -39,46 +39,17 @@ CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- arch/arm/Kconfig         | 1 +
- arch/arm/kernel/signal.c | 7 +++++++
- 2 files changed, 8 insertions(+)
+ arch/arm/tools/syscall.tbl | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 51c8df561077..556e9b2225c6 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -88,6 +88,7 @@ config ARM
- 	select HAVE_PERF_USER_STACK_DUMP
- 	select HAVE_RCU_TABLE_FREE if (SMP && ARM_LPAE)
- 	select HAVE_REGS_AND_STACK_ACCESS_API
-+	select HAVE_RSEQ
- 	select HAVE_SYSCALL_TRACEPOINTS
- 	select HAVE_UID16
- 	select HAVE_VIRT_CPU_ACCOUNTING_GEN
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index bd8810d4acb3..5879ab3f53c1 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -541,6 +541,12 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
- 	int ret;
- 
- 	/*
-+	 * Increment event counter and perform fixup for the pre-signal
-+	 * frame.
-+	 */
-+	rseq_signal_deliver(regs);
-+
-+	/*
- 	 * Set up the stack frame
- 	 */
- 	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-@@ -660,6 +666,7 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
- 			} else {
- 				clear_thread_flag(TIF_NOTIFY_RESUME);
- 				tracehook_notify_resume(regs);
-+				rseq_handle_notify_resume(regs);
- 			}
- 		}
- 		local_irq_disable();
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 0bb0e9c6376c..fbc74b5fa3ed 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -412,3 +412,4 @@
+ 395	common	pkey_alloc		sys_pkey_alloc
+ 396	common	pkey_free		sys_pkey_free
+ 397	common	statx			sys_statx
++398	common	rseq			sys_rseq
 -- 
 2.11.0
