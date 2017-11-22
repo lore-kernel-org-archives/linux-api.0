@@ -1,28 +1,82 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Wed, 22 Nov 2017 14:20:14 +0100
-Message-ID: <a35c5d6e-b862-8165-04cb-55f76189ebb5@suse.cz>
-References: <20171116101900.13621-1-mhocko@kernel.org>
- <20171116121438.6vegs4wiahod3byl@dhcp22.suse.cz>
- <b1848e34-7fcd-8ad8-6a6a-3be3dce3fda7@nvidia.com>
- <20171120090509.moagbwu7ug3y42gj@dhcp22.suse.cz>
- <9a02b37c-978a-48ef-0b22-b1e4cbb9a704@nvidia.com>
- <20171122131245.fpqtipwdxzuaj6gl@dhcp22.suse.cz>
+From: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH update for 4.15 1/3] selftests: lib.mk: Introduce
+ OVERRIDE_TARGETS
+Date: Wed, 22 Nov 2017 08:16:06 -0700
+Message-ID: <48e64ffd-4936-74cf-aaee-c383fc75a97f@kernel.org>
+References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
+ <20171121221933.25959-1-mathieu.desnoyers@efficios.com>
+Reply-To: shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20171122131245.fpqtipwdxzuaj6gl@dhcp22.suse.cz>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171121221933.25959-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Content-Language: en-US
-Sender: linux-arch-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, John Hubbard <jhubbard@nvidia.com>
-Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>, Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/22/2017 02:12 PM, Michal Hocko wrote:
-> I will be probably stubborn and go with a shorter name I have currently.
-> I am not very fond-of-very-long-names.
+On 11/21/2017 03:19 PM, Mathieu Desnoyers wrote:
+> Introduce OVERRIDE_TARGETS to allow tests to express dependencies on
+> header files and .so, which require to override the selftests lib.mk
+> targets.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> CC: Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>
+> CC: Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+> CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+> CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+> CC: Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> CC: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+> CC: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>
+> CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+> CC: Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+> CC: Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>
+> CC: Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>
+> CC: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+> CC: Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>
+> CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> CC: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+> CC: Shuah Khan <shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+> CC: linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> CC: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> ---
+>  tools/testing/selftests/lib.mk | 4 ++++
+>  1 file changed, 4 insertions(+)
+> 
+> diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+> index 5bef05d6ba39..441d7bc63bb7 100644
+> --- a/tools/testing/selftests/lib.mk
+> +++ b/tools/testing/selftests/lib.mk
+> @@ -105,6 +105,9 @@ COMPILE.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+>  LINK.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+>  endif
+>  
+> +# Selftest makefiles can override those targets by setting
+> +# OVERRIDE_TARGETS = 1.
+> +ifeq ($(OVERRIDE_TARGETS),)
+>  $(OUTPUT)/%:%.c
+>  	$(LINK.c) $^ $(LDLIBS) -o $@
+>  
+> @@ -113,5 +116,6 @@ $(OUTPUT)/%.o:%.S
+>  
+>  $(OUTPUT)/%:%.S
+>  	$(LINK.S) $^ $(LDLIBS) -o $@
+> +endif
+>  
+>  .PHONY: run_tests all clean install emit_tests
+> 
 
-The short synonym for the last word is "German"
+Thanks for splitting this patch. It will make it easier since it
+is kselftest framework change.
 
-SCNR :P
+Acked-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+
+thanks,
+-- Shuah
