@@ -1,55 +1,59 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: MPK: removing a pkey
-Date: Wed, 22 Nov 2017 13:46:15 +0100
-Message-ID: <f0495f01-9821-ec36-56b4-333f109eb761@suse.cz>
-References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
- <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm/hugetlb: Fix NULL-pointer dereference on 5-level
+ paging machine
+Date: Wed, 22 Nov 2017 13:47:23 +0100
+Message-ID: <20171122124723.pr2yazh2g3zqjula@dhcp22.suse.cz>
+References: <20171122121921.64822-1-kirill.shutemov@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Florian Weimer <fweimer@redhat.com>, Dave Hansen <dave.hansen@linux.intel.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171122121921.64822-1-kirill.shutemov@linux.intel.com>
+Sender: stable-owner@vger.kernel.org
+To: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/22/2017 01:15 PM, Florian Weimer wrote:
-> On 11/22/2017 09:18 AM, Vlastimil Babka wrote:
->> And, was the pkey == -1 internal wiring supposed to be exposed to the
->> pkey_mprotect() signal, or should there have been a pre-check returning
->> EINVAL in SYSCALL_DEFINE4(pkey_mprotect), before calling
->> do_mprotect_pkey())? I assume it's too late to change it now anyway (or
->> not?), so should we also document it?
+On Wed 22-11-17 15:19:21, Kirill A. Shutemov wrote:
+> I've made mistake during converting hugetlb code to 5-level paging:
+> in huge_pte_alloc() we have to use p4d_alloc(), not p4d_offset().
+> Otherwise it leads to crash -- NULL-pointer dereference in pud_alloc()
+> if p4d table is not yet allocated.
+
+Ups, I have completely missed that when reviewing the patch. Sorry about
+that.
+ 
+> It only can happen in 5-level paging mode. In 4-level paging mode
+> p4d_offset() always returns pgd, so we are fine.
 > 
-> I think the -1 case to the set the default key is useful because it 
-> allows you to use a key value of -1 to mean “MPK is not supported”, and 
-> still call pkey_mprotect.
+> Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+> Fixes: c2febafc6773 ("mm: convert generic code to 5-level paging")
+> Cc: <stable@vger.kernel.org> # v4.11+
 
-Hmm the current manpage says then when MPK is not supported, pkey has to
-be specified 0. Which is a value that doesn't work when MPK *is*
-supported. So -1 is more universal indeed.
+Acked-by: Michal Hocko <mhocko@suse.com>
 
-> I plan to document this behavior on the glibc side, and glibc will call 
-> mprotect (not pkey_mprotect) for key -1, so that you won't get ENOSYS 
-> with kernels which do not support pkey_mprotect.
-
-Fair enough. What will you do about pkey_alloc() in that case, emulate
-ENOSPC? Oh, the manpage already suggests so. And the return value in
-that case is... -1. Makes sense :)
-
-> Thanks,
-> Florian
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> ---
+>  mm/hugetlb.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
 > 
+> diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+> index 2d2ff5e8bf2b..94a4c0b63580 100644
+> --- a/mm/hugetlb.c
+> +++ b/mm/hugetlb.c
+> @@ -4617,7 +4617,9 @@ pte_t *huge_pte_alloc(struct mm_struct *mm,
+>  	pte_t *pte = NULL;
+>  
+>  	pgd = pgd_offset(mm, addr);
+> -	p4d = p4d_offset(pgd, addr);
+> +	p4d = p4d_alloc(mm, pgd, addr);
+> +	if (!p4d)
+> +		return NULL;
+>  	pud = pud_alloc(mm, p4d, addr);
+>  	if (pud) {
+>  		if (sz == PUD_SIZE) {
+> -- 
+> 2.15.0
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Michal Hocko
+SUSE Labs
