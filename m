@@ -1,53 +1,84 @@
-From: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: MPK: removing a pkey
-Date: Wed, 22 Nov 2017 13:49:33 +0100
-Message-ID: <6299ccb2-ca6b-b49e-fca0-6baa0d6581a9@redhat.com>
-References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
- <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
- <f0495f01-9821-ec36-56b4-333f109eb761@suse.cz>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Wed, 22 Nov 2017 14:12:45 +0100
+Message-ID: <20171122131245.fpqtipwdxzuaj6gl@dhcp22.suse.cz>
+References: <20171116101900.13621-1-mhocko@kernel.org>
+ <20171116121438.6vegs4wiahod3byl@dhcp22.suse.cz>
+ <b1848e34-7fcd-8ad8-6a6a-3be3dce3fda7@nvidia.com>
+ <20171120090509.moagbwu7ug3y42gj@dhcp22.suse.cz>
+ <9a02b37c-978a-48ef-0b22-b1e4cbb9a704@nvidia.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <f0495f01-9821-ec36-56b4-333f109eb761-AlSwsSmVLrQ@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, linux-x86_64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <9a02b37c-978a-48ef-0b22-b1e4cbb9a704@nvidia.com>
+Sender: owner-linux-mm@kvack.org
+To: John Hubbard <jhubbard@nvidia.com>
+Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/22/2017 01:46 PM, Vlastimil Babka wrote:
-> On 11/22/2017 01:15 PM, Florian Weimer wrote:
->> On 11/22/2017 09:18 AM, Vlastimil Babka wrote:
->>> And, was the pkey == -1 internal wiring supposed to be exposed to the
->>> pkey_mprotect() signal, or should there have been a pre-check returning
->>> EINVAL in SYSCALL_DEFINE4(pkey_mprotect), before calling
->>> do_mprotect_pkey())? I assume it's too late to change it now anyway (or
->>> not?), so should we also document it?
->>
->> I think the -1 case to the set the default key is useful because it
->> allows you to use a key value of -1 to mean “MPK is not supported”, and
->> still call pkey_mprotect.
+On Tue 21-11-17 17:48:31, John Hubbard wrote:
+[...]
+> Hi Michal,
 > 
-> Hmm the current manpage says then when MPK is not supported, pkey has to
-> be specified 0. Which is a value that doesn't work when MPK *is*
-> supported. So -1 is more universal indeed.
-
--1 also chosen a different key if key 0 does not support the requested 
-protection flags.
-
->> I plan to document this behavior on the glibc side, and glibc will call
->> mprotect (not pkey_mprotect) for key -1, so that you won't get ENOSYS
->> with kernels which do not support pkey_mprotect.
+> Yes, it really is useful for user space. I'll use CUDA as an example, but I 
+> think anything that enforces a uniform virtual addressing scheme across CPUs
+> and devices, probably has to do something eerily similar. CUDA does this:
 > 
-> Fair enough. What will you do about pkey_alloc() in that case, emulate
-> ENOSPC? Oh, the manpage already suggests so. And the return value in
-> that case is... -1. Makes sense :)
+> a) Searches /proc/<pid>/maps for a "suitable" region of available VA space. 
+> "Suitable" generally means it has to have a base address within a certain
+> limited range (a particular device model might have odd limitations, for 
+> example), it has to be large enough, and alignment has to be large enough
+> (again, various devices may have constraints that lead us to do this).
+> 
+> This is of course subject to races with other threads in the process.
+> 
+> Let's say it finds a region starting at va.
+> 
+> b) Next it does: 
+>     p = mmap(va, ...) 
+> 
+> *without* setting MAP_FIXED, of course (so va is just a hint), to attempt to
+> safely reserve that region. If p != va, then in most cases, this is a failure
+> (almost certainly due to another thread getting a mapping from that region
+> before we did), and so this layer now has to call munmap(), before returning
+> a "failure: retry" to upper layers.
+> 
+>     IMPROVEMENT: --> if instead, we could call this:
+> 
+>             p = mmap(va, ... MAP_FIXED_NO_CLOBBER ...)
+> 
+>         , then we could skip the munmap() call upon failure. This is a small thing, 
+>         but it is useful here. (Thanks to Piotr Jaroszynski and Mark Hairgrove
+>         for helping me get that detail exactly right, btw.)
+> 
+> c) After that, CUDA suballocates from p, via: 
+>  
+>      q = mmap(sub_region_start, ... MAP_FIXED ...)
+> 
+> Interestingly enough, "freeing" is also done via MAP_FIXED, and setting PROT_NONE
+> to the subregion. Anyway, I just included (c) for general interest.
 
-The manual page is incorrect, the kernel actually returns EINVAL. 
-Applications should check for EINVAL (and also ENOSYS) and activate 
-fallback code.  Using -1 directly would be a bit reckless IMHO.
+OK, I will add this to the changelog. This is basically the "Atomic
+address range probing in the multithreaded programs" I've had in the
+cover letter.
 
-Thanks
-Florian
+> I expect that as we continue working on the open source compute software stack,
+> this new capability will be useful there, too.
+> 
+> Oh, and on the naming, when I described how your implementation worked (without
+> naming it) to Piotr, he said, "oh, something like map-fixed-no-clobber?". So I
+> think my miniature sociology naming data point here can bolster the case ever so
+> slightly for calling it MAP_FIXED_NO_CLOBBER. haha. :)
+
+I will be probably stubborn and go with a shorter name I have currently.
+I am not very fond-of-very-long-names.
+-- 
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
