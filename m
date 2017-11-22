@@ -1,39 +1,52 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 v12 00/22] Restartable sequences and CPU op
- vector
-Date: Wed, 22 Nov 2017 20:32:19 +0100
-Message-ID: <20171122193219.GI3165@worktop.lehotels.local>
-References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
- <20171121172144.GL2482@two.firstfloor.org>
- <740195164.19702.1511301908907.JavaMail.zimbra@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <740195164.19702.1511301908907.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will
+From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Subject: [PATCH v3 0/4] vm: add a syscall to map a process memory into a pipe
+Date: Wed, 22 Nov 2017 21:36:27 +0200
+Message-ID: <1511379391-988-1-git-send-email-rppt@linux.vnet.ibm.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Josh Triplett <josh@joshtriplett.org>, Jann Horn <jannh@google.com>, Yossi Kuperman <yossiku@il.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 21, 2017 at 10:05:08PM +0000, Mathieu Desnoyers wrote:
-> Other than that, I have not received any concrete alternative proposal to
-> properly handle single-stepping.
+From: Yossi Kuperman <yossiku@il.ibm.com>
 
-That's not entirely true; amluto did have an alternative in Prague: do
-full machine level instruction emulation till the end of the rseq when
-it gets 'preempted too often'.
+Hi,
 
-Yes, implementing that will be an absolute royal pain. But it does
-remove the whole duplicate/dual program asm/bytecode thing and avoids
-the syscall entirely.
+This patches introduces new process_vmsplice system call that combines
+functionality of process_vm_read and vmsplice.
 
-And we don't need to do a full x86_64/arch-of-choice emulator for this
-either; just as cpu_opv is fairly limited too. We can do a subset that
-allows dealing with the known sequences and go from there -- it can
-always fall back to not emulating and reverting to the pure rseq with
-debug/fwd progress 'issues'.
+It allows to map the memory of another process into a pipe, similarly to
+what vmsplice does for its own address space.
 
-So what exactly is the problem of leaving out the whole cpu_opv thing
-for now? Pure rseq is usable -- albeit a bit cumbersome without
-additional debugger support.
+The patch 2/4 ("vm: add a syscall to map a process memory into a pipe")
+actually adds the new system call and provides its elaborate description.
+
+The patchset is against -mm tree.
+
+v3: minor refactoring to reduce code duplication
+v2: move this syscall under CONFIG_CROSS_MEMORY_ATTACH
+    give correct flags to get_user_pages_remote()
+
+Andrei Vagin (3):
+  vm: add a syscall to map a process memory into a pipe
+  x86: wire up the process_vmsplice syscall
+  test: add a test for the process_vmsplice syscall
+
+Mike Rapoport (1):
+  fs/splice: introduce pages_to_pipe helper
+
+ arch/x86/entry/syscalls/syscall_32.tbl             |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl             |   2 +
+ fs/splice.c                                        | 262 +++++++++++++++++++--
+ include/linux/compat.h                             |   3 +
+ include/linux/syscalls.h                           |   4 +
+ include/uapi/asm-generic/unistd.h                  |   5 +-
+ kernel/sys_ni.c                                    |   2 +
+ tools/testing/selftests/process_vmsplice/Makefile  |   5 +
+ .../process_vmsplice/process_vmsplice_test.c       | 188 +++++++++++++++
+ 9 files changed, 450 insertions(+), 22 deletions(-)
+ create mode 100644 tools/testing/selftests/process_vmsplice/Makefile
+ create mode 100644 tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
+
+-- 
+2.7.4
