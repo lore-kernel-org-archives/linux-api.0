@@ -1,49 +1,56 @@
-From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 v3 15/22] rseq: selftests: Provide self-tests
-Date: Wed, 22 Nov 2017 20:38:21 +0100
-Message-ID: <20171122193821.GJ3165@worktop.lehotels.local>
-References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
- <20171121141900.18471-16-mathieu.desnoyers@efficios.com>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [PATCH 01/18] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
+ safely define new mmap flags
+Date: Wed, 22 Nov 2017 11:53:18 -0800
+Message-ID: <20171122195318.GA29485@bombadil.infradead.org>
+References: <20171101153648.30166-1-jack@suse.cz>
+ <20171101153648.30166-2-jack@suse.cz>
+ <638b3b80-5cb9-97c2-5055-fef3a1ec25b9@suse.cz>
+ <CAPcyv4gGRHWc6AH5Enb7njtmqHgd=g+0-mYMdd5wWjJMW0+d7g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171121141900.18471-16-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+In-Reply-To: <CAPcyv4gGRHWc6AH5Enb7njtmqHgd=g+0-mYMdd5wWjJMW0+d7g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, linux-parisc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "Kirill A. Shutemov" <kirill.shutemov-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 21, 2017 at 09:18:53AM -0500, Mathieu Desnoyers wrote:
-> Implements two basic tests of RSEQ functionality, and one more
-> exhaustive parameterizable test.
+On Wed, Nov 22, 2017 at 08:52:37AM -0800, Dan Williams wrote:
+> On Wed, Nov 22, 2017 at 4:02 AM, Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org> wrote:
+> > On 11/01/2017 04:36 PM, Jan Kara wrote:
+> >> From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >>
+> >> The mmap(2) syscall suffers from the ABI anti-pattern of not validating
+> >> unknown flags. However, proposals like MAP_SYNC need a mechanism to
+> >> define new behavior that is known to fail on older kernels without the
+> >> support. Define a new MAP_SHARED_VALIDATE flag pattern that is
+> >> guaranteed to fail on all legacy mmap implementations.
+> >
+> > So I'm trying to make sense of this together with Michal's attempt for
+> > MAP_FIXED_SAFE [1] where he has to introduce a completely new flag
+> > instead of flag modifier exactly for the reason of not validating
+> > unknown flags. And my conclusion is that because MAP_SHARED_VALIDATE
+> > implies MAP_SHARED and excludes MAP_PRIVATE, MAP_FIXED_SAFE as a
+> > modifier cannot build on top of this. Wouldn't thus it be really better
+> > long-term to introduce mmap3 at this point? ...
 > 
-> The first, "basic_test" only asserts that RSEQ works moderately
-> correctly. E.g. that the CPUID pointer works.
-> 
-> "basic_percpu_ops_test" is a slightly more "realistic" variant,
-> implementing a few simple per-cpu operations and testing their
-> correctness.
-> 
-> "param_test" is a parametrizable restartable sequences test. See
-> the "--help" output for usage.
-> 
-> A run_param_test.sh script runs many variants of the parametrizable
-> tests.
-> 
-> As part of those tests, a helper library "rseq" implements a user-space
-> API around restartable sequences. It uses the cpu_opv system call as
-> fallback when single-stepped by a debugger. It exposes the instruction
-> pointer addresses where the rseq assembly blocks begin and end, as well
-> as the associated abort instruction pointer, in the __rseq_table
-> section. This section allows debuggers may know where to place
-> breakpoints when single-stepping through assembly blocks which may be
-> aborted at any point by the kernel.
+> We have room to define MAP_PRIVATE_VALIDATE in MAP_TYPE on every arch
+> except parisc. Can we steal an extra bit for MAP_TYPE from somewhere
+> else on parisc?
 
-Could I ask you to split this in smaller bits?
+It looks like 0x08 should work.  But I don't have an HPUX machine around
+to check that HP didn't use that bit for something else.
 
-I'd start with just the rseq library, using only the rseq interface.
-Then add the whole cpu_opv fallback stuff.
-Then add the selftests using librseq.
-
-As is this is a tad much to read in a single go.
+It'd probably help to cc the linux-parisc mailing list when asking
+questions about PARISC, eh?
