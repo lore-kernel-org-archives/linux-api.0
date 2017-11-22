@@ -1,74 +1,291 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH v3 0/4] vm: add a syscall to map a process memory into a pipe
-Date: Wed, 22 Nov 2017 21:43:31 +0100
-Message-ID: <CAKgNAkhtm0JqxeKXovoXPbApogMsGtMR=1td_NhT3AMv_Ot1Ng@mail.gmail.com>
-References: <1511379391-988-1-git-send-email-rppt@linux.vnet.ibm.com>
-Reply-To: mtk.manpages@gmail.com
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.15 v3 15/22] rseq: selftests: Provide self-tests
+Date: Wed, 22 Nov 2017 22:48:13 +0100
+Message-ID: <20171122214813.GK3165@worktop.lehotels.local>
+References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
+ <20171121141900.18471-16-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1511379391-988-1-git-send-email-rppt@linux.vnet.ibm.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, criu@openvz.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Thomas Gleixner <tglx@linutronix.de>, Josh Triplett <josh@joshtriplett.org>, Jann Horn <jannh@google.com>, Yossi Kuperman <yossiku@il.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20171121141900.18471-16-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mike,
+On Tue, Nov 21, 2017 at 09:18:53AM -0500, Mathieu Desnoyers wrote:
+> diff --git a/tools/testing/selftests/rseq/rseq-x86.h b/tools/testing/selftests/rseq/rseq-x86.h
+> new file mode 100644
+> index 000000000000..63e81d6c61fa
+> --- /dev/null
+> +++ b/tools/testing/selftests/rseq/rseq-x86.h
+> @@ -0,0 +1,898 @@
+> +/*
+> + * rseq-x86.h
+> + *
+> + * (C) Copyright 2016 - Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+> + *
+> + * Permission is hereby granted, free of charge, to any person obtaining a copy
+> + * of this software and associated documentation files (the "Software"), to deal
+> + * in the Software without restriction, including without limitation the rights
+> + * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+> + * copies of the Software, and to permit persons to whom the Software is
+> + * furnished to do so, subject to the following conditions:
+> + *
+> + * The above copyright notice and this permission notice shall be included in
+> + * all copies or substantial portions of the Software.
+> + *
+> + * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+> + * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+> + * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+> + * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> + * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+> + * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+> + * SOFTWARE.
+> + */
+> +
+> +#include <stdint.h>
+> +
+> +#define RSEQ_SIG	0x53053053
+> +
+> +#ifdef __x86_64__
+> +
+> +#define rseq_smp_mb()	__asm__ __volatile__ ("mfence" : : : "memory")
 
-On 22 November 2017 at 20:36, Mike Rapoport <rppt@linux.vnet.ibm.com> wrote:
-> From: Yossi Kuperman <yossiku@il.ibm.com>
->
-> Hi,
->
-> This patches introduces new process_vmsplice system call that combines
-> functionality of process_vm_read and vmsplice.
->
-> It allows to map the memory of another process into a pipe, similarly to
-> what vmsplice does for its own address space.
->
-> The patch 2/4 ("vm: add a syscall to map a process memory into a pipe")
-> actually adds the new system call and provides its elaborate description.
+See commit:
 
-Where is the man page for this new syscall?
+  450cbdd0125c ("locking/x86: Use LOCK ADD for smp_mb() instead of MFENCE")
 
-Cheers,
+> +#define rseq_smp_rmb()	barrier()
+> +#define rseq_smp_wmb()	barrier()
+> +
+> +#define rseq_smp_load_acquire(p)					\
+> +__extension__ ({							\
+> +	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
+> +	barrier();							\
+> +	____p1;								\
+> +})
+> +
+> +#define rseq_smp_acquire__after_ctrl_dep()	rseq_smp_rmb()
+> +
+> +#define rseq_smp_store_release(p, v)					\
+> +do {									\
+> +	barrier();							\
+> +	RSEQ_WRITE_ONCE(*p, v);						\
+> +} while (0)
+> +
+> +#define RSEQ_ASM_DEFINE_TABLE(label, section, version, flags,		\
+> +			start_ip, post_commit_offset, abort_ip)		\
+> +		".pushsection " __rseq_str(section) ", \"aw\"\n\t"	\
+> +		".balign 32\n\t"					\
+> +		__rseq_str(label) ":\n\t"				\
+> +		".long " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+> +		".quad " __rseq_str(start_ip) ", " __rseq_str(post_commit_offset) ", " __rseq_str(abort_ip) "\n\t" \
+> +		".popsection\n\t"
 
-Michael
+OK, so this creates table entry, but why is @section an argument, AFAICT
+its _always_ the same thing, no?
 
-> The patchset is against -mm tree.
->
-> v3: minor refactoring to reduce code duplication
-> v2: move this syscall under CONFIG_CROSS_MEMORY_ATTACH
->     give correct flags to get_user_pages_remote()
->
-> Andrei Vagin (3):
->   vm: add a syscall to map a process memory into a pipe
->   x86: wire up the process_vmsplice syscall
->   test: add a test for the process_vmsplice syscall
->
-> Mike Rapoport (1):
->   fs/splice: introduce pages_to_pipe helper
->
->  arch/x86/entry/syscalls/syscall_32.tbl             |   1 +
->  arch/x86/entry/syscalls/syscall_64.tbl             |   2 +
->  fs/splice.c                                        | 262 +++++++++++++++++++--
->  include/linux/compat.h                             |   3 +
->  include/linux/syscalls.h                           |   4 +
->  include/uapi/asm-generic/unistd.h                  |   5 +-
->  kernel/sys_ni.c                                    |   2 +
->  tools/testing/selftests/process_vmsplice/Makefile  |   5 +
->  .../process_vmsplice/process_vmsplice_test.c       | 188 +++++++++++++++
->  9 files changed, 450 insertions(+), 22 deletions(-)
->  create mode 100644 tools/testing/selftests/process_vmsplice/Makefile
->  create mode 100644 tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
->
-> --
-> 2.7.4
->
+> +#define RSEQ_ASM_STORE_RSEQ_CS(label, cs_label, rseq_cs)		\
+> +		RSEQ_INJECT_ASM(1)					\
+> +		"leaq " __rseq_str(cs_label) "(%%rip), %%rax\n\t"	\
+> +		"movq %%rax, %[" __rseq_str(rseq_cs) "]\n\t"		\
+> +		__rseq_str(label) ":\n\t"
+
+And this sets the TLS variable to point to the table entry from the
+previous macro, no? But again @rseq_cs seems to always be the very same,
+why is that an argument?
+
+> +#define RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, label)		\
+> +		RSEQ_INJECT_ASM(2)					\
+> +		"cmpl %[" __rseq_str(cpu_id) "], %[" __rseq_str(current_cpu_id) "]\n\t" \
+> +		"jnz " __rseq_str(label) "\n\t"
+
+more things that are always the same it seems..
+
+> +#define RSEQ_ASM_DEFINE_ABORT(label, section, sig, teardown, abort_label) \
+> +		".pushsection " __rseq_str(section) ", \"ax\"\n\t"	\
+> +		/* Disassembler-friendly signature: nopl <sig>(%rip). */\
+> +		".byte 0x0f, 0x1f, 0x05\n\t"				\
+> +		".long " __rseq_str(sig) "\n\t"			\
+> +		__rseq_str(label) ":\n\t"				\
+> +		teardown						\
+> +		"jmp %l[" __rseq_str(abort_label) "]\n\t"		\
+> +		".popsection\n\t"
+
+@section and @sig seem to always be the same...
+
+> +#define RSEQ_ASM_DEFINE_CMPFAIL(label, section, teardown, cmpfail_label) \
+> +		".pushsection " __rseq_str(section) ", \"ax\"\n\t"	\
+> +		__rseq_str(label) ":\n\t"				\
+> +		teardown						\
+> +		"jmp %l[" __rseq_str(cmpfail_label) "]\n\t"		\
+> +		".popsection\n\t"
+
+Somewhat failing to see the point of this macro, it seems to just
+obfuscate the normal failure path.
+
+> +static inline __attribute__((always_inline))
+> +int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv,
+> +		int cpu)
+
+I find this a very confusing name for what is essentially
+compare-and-exchange or compare-and-swap, no?
+
+> +{
+> +	__asm__ __volatile__ goto (
+> +		RSEQ_ASM_DEFINE_TABLE(3, __rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
+
+So we set up the section, but unreadably so... reducing the number of
+arguments would help a lot.
+
+Rename the current one to __RSEQ_ASM_DEFINE_TABLE() and then use:
+
+#define RSEQ_ASM_DEFINE_TABLE(label, start_ip, post_commit_ip, abort_ip) \
+	__RSEQ_ASM_DEFINE_TABLE(label, __rseq_table, 0x0, 0x0, start_ip, \
+				(post_commit_ip - start_ip), abort_ip)
+
+or something, such that we can write:
+
+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+
+> +		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+
+And here we open start the rseq by storing the table entry pointer into
+the TLS thingy.
+
+> +		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
+> +		"cmpq %[v], %[expect]\n\t"
+> +		"jnz 5f\n\t"
+
+		"jnz %l[cmpfail]\n\t"
+
+was too complicated?
+
+> +		/* final store */
+> +		"movq %[newv], %[v]\n\t"
+> +		"2:\n\t"
+> +		RSEQ_ASM_DEFINE_ABORT(4, __rseq_failure, RSEQ_SIG, "", abort)
+> +		RSEQ_ASM_DEFINE_CMPFAIL(5, __rseq_failure, "", cmpfail)
+> +		: /* gcc asm goto does not allow outputs */
+> +		: [cpu_id]"r"(cpu),
+> +		  [current_cpu_id]"m"(__rseq_abi.cpu_id),
+> +		  [rseq_cs]"m"(__rseq_abi.rseq_cs),
+> +		  [v]"m"(*v),
+> +		  [expect]"r"(expect),
+> +		  [newv]"r"(newv)
+
+		: [cpu_id]         "r" (cpu),
+		  [current_cpu_id] "m" (__rseq_abi.cpu_id),
+		  [rseq_cs]        "m" (__rseq_abi.rseq_cs),
+		  [v]              "m" (*v),
+		  [expect]         "r" (expect),
+		  [newv]           "r" (newv)
+
+or something does read much better
+
+> +		: "memory", "cc", "rax"
+> +		: abort, cmpfail
+> +	);
+> +	return 0;
+> +abort:
+> +	return -1;
+> +cmpfail:
+> +	return 1;
+> +}
+> +
+> +static inline __attribute__((always_inline))
+> +int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+> +		off_t voffp, intptr_t *load, int cpu)
+
+so this thing does what now? It compares @v to @expectnot, when _not_
+matching it will store @voffp into @v and load something..?
+
+> +{
+> +	__asm__ __volatile__ goto (
+> +		RSEQ_ASM_DEFINE_TABLE(3, __rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
+> +		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+> +		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
+> +		"cmpq %[v], %[expectnot]\n\t"
+> +		"jz 5f\n\t"
+
+So I would prefer "je" in this context, or rather:
+
+		je %l[cmpfail]
+
+> +		"movq %[v], %%rax\n\t"
+
+loads @v in A
+
+But it could already have changed since the previous load from cmp, no?
+Would it not make sense to put this load before the cmp and use A
+instead?
+
+> +		"movq %%rax, %[load]\n\t"
+
+stores A in @load
+
+> +		"addq %[voffp], %%rax\n\t"
+
+adds @off to A
+
+> +		"movq (%%rax), %%rax\n\t"
+
+loads (A) in A
+
+> +		/* final store */
+> +		"movq %%rax, %[v]\n\t"
+
+stores A in @v
 
 
+So the whole thing loads @v into @load, adds and offset, dereferences
+and adds that back in @v, provided @v doesn't match @expected.. whee.
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+> +		"2:\n\t"
+> +		RSEQ_ASM_DEFINE_ABORT(4, __rseq_failure, RSEQ_SIG, "", abort)
+> +		RSEQ_ASM_DEFINE_CMPFAIL(5, __rseq_failure, "", cmpfail)
+> +		: /* gcc asm goto does not allow outputs */
+> +		: [cpu_id]"r"(cpu),
+> +		  [current_cpu_id]"m"(__rseq_abi.cpu_id),
+> +		  [rseq_cs]"m"(__rseq_abi.rseq_cs),
+> +		  /* final store input */
+> +		  [v]"m"(*v),
+> +		  [expectnot]"r"(expectnot),
+> +		  [voffp]"er"(voffp),
+> +		  [load]"m"(*load)
+> +		: "memory", "cc", "rax"
+> +		: abort, cmpfail
+> +	);
+> +	return 0;
+> +abort:
+> +	return -1;
+> +cmpfail:
+> +	return 1;
+> +}
+
+> +#elif __i386__
+> +
+> +/*
+> + * Support older 32-bit architectures that do not implement fence
+> + * instructions.
+> + */
+> +#define rseq_smp_mb()	\
+> +	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
+> +#define rseq_smp_rmb()	\
+> +	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
+> +#define rseq_smp_wmb()	\
+> +	__asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
+
+Oh shiny, you're supporting that OOSTORE and PPRO_FENCE nonsense?
+
+Going by commit:
+
+  09df7c4c8097 ("x86: Remove CONFIG_X86_OOSTORE")
+
+That smp_wmb() one was an 'optimization' (forced store buffer flush) but
+not a correctness thing. And we dropped that stuff from the kernel a
+_long_ time ago.
+
+Ideally we'd kill that PPRO_FENCE crap too.
