@@ -1,87 +1,132 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 v12 00/22] Restartable sequences and CPU op
- vector
-Date: Tue, 21 Nov 2017 23:59:07 +0100 (CET)
-Message-ID: <alpine.DEB.2.20.1711212315450.2399@nanos>
-References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com> <20171121172144.GL2482@two.firstfloor.org> <740195164.19702.1511301908907.JavaMail.zimbra@efficios.com>
+From: John Hubbard <jhubbard@nvidia.com>
+Subject: Re: [RFC PATCH 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Tue, 21 Nov 2017 17:48:31 -0800
+Message-ID: <9a02b37c-978a-48ef-0b22-b1e4cbb9a704@nvidia.com>
+References: <20171116101900.13621-1-mhocko@kernel.org>
+ <20171116121438.6vegs4wiahod3byl@dhcp22.suse.cz>
+ <b1848e34-7fcd-8ad8-6a6a-3be3dce3fda7@nvidia.com>
+ <20171120090509.moagbwu7ug3y42gj@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <740195164.19702.1511301908907.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20171120090509.moagbwu7ug3y42gj@dhcp22.suse.cz>
+Content-Language: en-US
+Sender: linux-arch-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 21 Nov 2017, Mathieu Desnoyers wrote:
-> ----- On Nov 21, 2017, at 12:21 PM, Andi Kleen andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org wrote:
+On 11/20/2017 01:05 AM, Michal Hocko wrote:
+> On Fri 17-11-17 00:45:49, John Hubbard wrote:
+>> On 11/16/2017 04:14 AM, Michal Hocko wrote:
+>>> [Ups, managed to screw the subject - fix it]
+>>>
+>>> On Thu 16-11-17 11:18:58, Michal Hocko wrote:
+>>>> Hi,
+>>>> this has started as a follow up discussion [1][2] resulting in the
+>>>> runtime failure caused by hardening patch [3] which removes MAP_FIXED
+>>>> from the elf loader because MAP_FIXED is inherently dangerous as it
+>>>> might silently clobber and existing underlying mapping (e.g. stack). The
+>>>> reason for the failure is that some architectures enforce an alignment
+>>>> for the given address hint without MAP_FIXED used (e.g. for shared or
+>>>> file backed mappings).
+>>>>
+>>>> One way around this would be excluding those archs which do alignment
+>>>> tricks from the hardening [4]. The patch is really trivial but it has
+>>>> been objected, rightfully so, that this screams for a more generic
+>>>> solution. We basically want a non-destructive MAP_FIXED.
+>>>>
+>>>> The first patch introduced MAP_FIXED_SAFE which enforces the given
+>>>> address but unlike MAP_FIXED it fails with ENOMEM if the given range
+>>>> conflicts with an existing one. The flag is introduced as a completely
+>>>> new flag rather than a MAP_FIXED extension because of the backward
+>>>> compatibility. We really want a never-clobber semantic even on older
+>>>> kernels which do not recognize the flag. Unfortunately mmap sucks wrt.
+>>>> flags evaluation because we do not EINVAL on unknown flags. On those
+>>>> kernels we would simply use the traditional hint based semantic so the
+>>>> caller can still get a different address (which sucks) but at least not
+>>>> silently corrupt an existing mapping. I do not see a good way around
+>>>> that. Except we won't export expose the new semantic to the userspace at
+>>>> all. It seems there are users who would like to have something like that
+>>>> [5], though. Atomic address range probing in the multithreaded programs
+>>>> sounds like an interesting thing to me as well, although I do not have
+>>>> any specific usecase in mind.
+>>
+>> Hi Michal,
+>>
+>> From looking at the patchset, it seems to me that the new MAP_FIXED_SAFE
+>> (or whatever it ends up being named) *would* be passed through from
+>> user space. When you say that "we won't export expose the new semantic 
+>> to the userspace at all", do you mean that glibc won't add it? Or
+>> is there something I'm missing, that prevents that flag from getting
+>> from the syscall, to do_mmap()?
 > 
-> > On Tue, Nov 21, 2017 at 09:18:38AM -0500, Mathieu Desnoyers wrote:
-> >> Hi,
-> >> 
-> >> Following changes based on a thorough coding style and patch changelog
-> >> review from Thomas Gleixner and Peter Zijlstra, I'm respinning this
-> >> series for another RFC.
-> >> 
-> > My suggestion would be that you also split out the opv system call.
-> > That seems to be main contention point currently, and the restartable
-> > sequences should be useful without it.
+> I meant that I could make it an internal flag outside of the map_type
+> space. So the userspace will not be able to use it.
+>  
+>> On the usage: there are cases in user space that could probably make
+>> good use of a no-clobber hint to MAP_FIXED. The user space code
+>> that surrounds HMM (speaking loosely there--it's really any user space
+>> code that manages a unified memory address space, across devices)
+>> often ends up using MAP_FIXED, but MAP_FIXED crams several features
+>> into one flag: an exact address, an "atomic" switch to the new mapping,
+>> and unmapping the old mappings. That's pretty overloaded, so being
+>> able to split it up a bit, by removing one of those features, seems
+>> useful.
 > 
-> I consider rseq to be incomplete and a pain to use in various scenarios
-> without cpu_opv. 
+> Yes, atomic address range probing sounds useful. I cannot comment on HMM
+> usage but if you have any more specific I would welcome any links to add
+> them to the changelog.
 > 
-> About the contention point you refer to:
-> 
-> Using vDSO as an example of how things should be done is just wrong: the
-> vDSO interaction with debugger instruction single-stepping is broken,
-> as I detailed in my previous email.
 
-Let me turn that around. You're lamenting about a conditional branch in
-your rseq thing for performance reasons and at the same time you want to
-force extra code into the VDSO? clock_gettime() is one of the hottest
-vsyscalls in certain scenarions. So why would we want to have extra code
-there? Just to make debuggers happy. You really can't be serious about
-that.
+Hi Michal,
 
-> Thomas' proposal of handling single-stepping with a user-space locking
-> fallback, which is pretty much what I had in 2016, pushes a lot of
-> complexity to user-space, requires an extra branch in the fast-path,
-> as well as additional store-release/load-acquire semantics for consistency.
-> I don't plan going down that route.
->
-> Other than that, I have not received any concrete alternative proposal to
-> properly handle single-stepping.
+Yes, it really is useful for user space. I'll use CUDA as an example, but I 
+think anything that enforces a uniform virtual addressing scheme across CPUs
+and devices, probably has to do something eerily similar. CUDA does this:
 
-You provided the details today. Up to that point all we had was handwaving
-and inconsistent information.
+a) Searches /proc/<pid>/maps for a "suitable" region of available VA space. 
+"Suitable" generally means it has to have a base address within a certain
+limited range (a particular device model might have odd limitations, for 
+example), it has to be large enough, and alignment has to be large enough
+(again, various devices may have constraints that lead us to do this).
 
-> The only opposition against cpu_opv is that there *should* be an hypothetical
-> simpler solution. The rseq idea is not new: it's been presented by Paul Turner
-> in 2012 at LPC. And so far, cpu_opv is the overall simplest and most
-> efficient way I encountered to handle single-stepping, and it gives extra
-> benefits, as described in my changelog.
+This is of course subject to races with other threads in the process.
 
-That's how you define it and that does not make cpu_opv less complex and
-more debuggable. There is no way to debug that and still you claim that it
-removes compexity from user space. That ops stuff comes from user space and
-is not magically constructed by the kernel. In some of your use cases it
-even has different semantics than the rseq section code. So how is that
-removing any complexity from user space? All it buys you is an extra branch
-less in your rseq hotpath and that's your justification to shove that
-thing into the kernel.
+Let's say it finds a region starting at va.
 
-The version I reviewed was just undigestable. I did not have time to look
-at the hastily cobbled together version of today. Aside of that the
-scheduler portion of it has not seen any review from scheduler folks
-either.
+b) Next it does: 
+    p = mmap(va, ...) 
 
-AFAICT there is not a single reviewed-by tag on the sys_rseq and the
-sys_opv patches either.
+*without* setting MAP_FIXED, of course (so va is just a hint), to attempt to
+safely reserve that region. If p != va, then in most cases, this is a failure
+(almost certainly due to another thread getting a mapping from that region
+before we did), and so this layer now has to call munmap(), before returning
+a "failure: retry" to upper layers.
 
-Are you seriously expecting that new syscalls of that kind are going to be
-merged without a deep and thorough review just based on your decision to
-declare them ready?
+    IMPROVEMENT: --> if instead, we could call this:
 
-Thanks,
+            p = mmap(va, ... MAP_FIXED_NO_CLOBBER ...)
 
-	tglx
+        , then we could skip the munmap() call upon failure. This is a small thing, 
+        but it is useful here. (Thanks to Piotr Jaroszynski and Mark Hairgrove
+        for helping me get that detail exactly right, btw.)
+
+c) After that, CUDA suballocates from p, via: 
+ 
+     q = mmap(sub_region_start, ... MAP_FIXED ...)
+
+Interestingly enough, "freeing" is also done via MAP_FIXED, and setting PROT_NONE
+to the subregion. Anyway, I just included (c) for general interest.
+
+I expect that as we continue working on the open source compute software stack,
+this new capability will be useful there, too.
+
+Oh, and on the naming, when I described how your implementation worked (without
+naming it) to Piotr, he said, "oh, something like map-fixed-no-clobber?". So I
+think my miniature sociology naming data point here can bolster the case ever so
+slightly for calling it MAP_FIXED_NO_CLOBBER. haha. :)
+
+thanks,
+John Hubbard
