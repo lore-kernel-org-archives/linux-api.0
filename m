@@ -1,276 +1,87 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: MPK: removing a pkey
-Date: Thu, 23 Nov 2017 13:38:21 +0100
-Message-ID: <28f6e430-293d-4b30-dce6-018a2b3c03e8@redhat.com>
+Subject: Re: MPK: pkey_free and key reuse
+Date: Thu, 23 Nov 2017 13:48:57 +0100
+Message-ID: <068b89c7-4303-88a7-540a-1491dc8a292d@redhat.com>
 References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
- <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
- <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
- <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
- <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
+ <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
+ <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
+ <633b5b03-3481-0da2-9d6c-f5298902e36a@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------FF525EDD2571B48E744E8AB5"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
+In-Reply-To: <633b5b03-3481-0da2-9d6c-f5298902e36a@linux.intel.com>
 Content-Language: en-US
 Sender: linux-arch-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, Vlastimil Babka <vbabka@suse.cz>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+To: Dave Hansen <dave.hansen@linux.intel.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
 Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------FF525EDD2571B48E744E8AB5
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-
-On 11/22/2017 05:32 PM, Dave Hansen wrote:
-> On 11/22/2017 08:21 AM, Florian Weimer wrote:
->> On 11/22/2017 05:10 PM, Dave Hansen wrote:
->>> On 11/22/2017 04:15 AM, Florian Weimer wrote:
->>>> On 11/22/2017 09:18 AM, Vlastimil Babka wrote:
->>>>> And, was the pkey == -1 internal wiring supposed to be exposed to the
->>>>> pkey_mprotect() signal, or should there have been a pre-check returning
->>>>> EINVAL in SYSCALL_DEFINE4(pkey_mprotect), before calling
->>>>> do_mprotect_pkey())? I assume it's too late to change it now anyway (or
->>>>> not?), so should we also document it?
->>>>
->>>> I think the -1 case to the set the default key is useful because it
->>>> allows you to use a key value of -1 to mean “MPK is not supported”, and
->>>> still call pkey_mprotect.
->>>
->>> The behavior to not allow 0 to be set was unintentional and is a bug.
->>> We should fix that.
+On 11/09/2017 05:59 PM, Dave Hansen wrote:
+> On 11/09/2017 06:48 AM, Florian Weimer wrote:
+>> On 11/08/2017 09:41 PM, Dave Hansen wrote:
+>>>> (B) If a key is reused, existing threads retain their access rights,
+>>>> while there is an expectation that pkey_alloc denies access for the
+>>>> threads except the current one.
+>>> Where does this expectation come from?
 >>
->> On the other hand, x86-64 has no single default protection key due to
->> the PROT_EXEC emulation.
+>> For me, it was the access_rights argument to pkey_alloc.  What else
+>> would it do?  For the current thread, I can already set the rights with
+>> a PKRU write, so the existence of the syscall argument is puzzling.
 > 
-> No, the default is clearly 0 and documented to be so.  The PROT_EXEC
-> emulation one should be inaccessible in all the APIs so does not even
-> show up as *being* a key in the API.
+> The manpage is pretty bare here.  But the thought was that, in most
+> cases, you will want to allocate a key and start using it immediately.
+> This was in response to some feedback on one of the earlier reviews of
+> the patch set.
 
-I see key 1 in /proc for a PROT_EXEC mapping.  If I supply an explicit 
-protection key, that key is used, and the page ends up having read 
-access enabled.
+Okay.  In the future, may want to use this access rights to specify the 
+default for the signal handler (with a new pkey_alloc flag).  If I can 
+the default access rights, that would pretty much solve the sigsetjmp 
+problem for me, too, and I can start using protection keys in low-level 
+glibc code.
 
-The key is also visible in the siginfo_t argument on read access to a 
-PROT_EXEC mapping with the default key, so it's not just /proc:
+>>> Using the malloc() analogy, we
+>>> don't expect that free() in one thread actively takes away references to
+>>> the memory held by other threads.
+>>
+>> But malloc/free isn't expected to be a partial antidote to random
+>> pointer scribbling.
+> 
+> Nor is protection keys intended to be an antidote for use-after-free.
 
-page 1 (0x7f008242d000): read access denied
-   SIGSEGV address: 0x7f008242d000
-   SIGSEGV code: 4
-   SIGSEGV key: 1
+I'm comparing this to munmap, which is actually such an antidote 
+(because it involves an IPI to flush all CPUs which could have seen the 
+mapping before).
 
-I'm attaching my test.
+I'm surprised that pkey_free doesn't perform a similar broadcast.
 
- > The fact that it's implemented
- > with pkeys should be pretty immaterial other than the fact that you
- > can't touch the high bits in PKRU.
+>> I think we should either implement revoke on pkey_alloc, with a
+>> broadcast to all threads (the pkey_set race can be closed by having a
+>> vDSO for that an the revocation code can check %rip to see if the old
+>> PKRU value needs to be fixed up).  Or we add the two pkey_alloc flags I
+>> mentioned earlier.
+> 
+> That sounds awfully complicated to put in-kernel.  I'd be happy to
+> review the patches after you put them together once we see how it looks.
 
-I don't see a restriction for PKRU updates.  If I write zero to the PKRU 
-register, PROT_EXEC implies PROT_READ, as I would expect.
+TLB flushes are complicated, too, and very costly, but we still do them 
+on unmap, even in cases where they are not required for security reasons.
 
-This is with kernel 4.14.
+> You basically want threads to broadcast their PKRU values at pkey_free()
+> time.  That's totally doable... in userspace.  You just need a mechanism
+> for each thread to periodically check if they need an update.
 
+No, we want to the revocation to be immediate, so we'd have to use 
+something like the setxid broadcast, and we have to make sure that we 
+aren't in a pkey_set, and if we are, adjust register contents besides 
+PKRU.  Not pretty at all.  I really don't want to implement that.
+
+If the broadcast is lazy, I think it defeats its purpose because you 
+don't know what kind of access privileges other threads in the system have.
+
+Your solution to all MPK problems seems to be to say that it's undefined 
+and applications shouldn't do that.  But if applications only used 
+well-defined memory accesses, why would we need MPK?
+
+Thanks,
 Florian
-
---------------FF525EDD2571B48E744E8AB5
-Content-Type: text/x-csrc;
- name="mpk-default.c"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="mpk-default.c"
-
-#include <err.h>
-#include <setjmp.h>
-#include <signal.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
-#define PKEY_DISABLE_ACCESS 1
-#define PKEY_DISABLE_WRITE 2
-
-__attribute__ ((weak, noinline, noclone)) /* Compiler barrier.  */
-void
-touch (void *buffer)
-{
-}
-
-__attribute__ ((weak, noinline, noclone)) /* Compiler barrier.  */
-void
-read_page (void *page)
-{
-  char buf[16];
-  memcpy (buf, page, sizeof (buf));
-  touch (buf);
-}
-
-__attribute__ ((weak, noinline, noclone)) /* Compiler barrier.  */
-void
-write_page (void *page)
-{
-  memset (page, 0, 16);
-  touch (page);
-}
-
-static volatile void *sigsegv_addr;
-static volatile int sigsegv_code;
-static volatile int sigsegv_pkey;
-static sigjmp_buf sigsegv_jmp;
-
-static void
-sigsegv_handler (int signo, siginfo_t *info, void *arg)
-{
-  sigsegv_addr = info->si_addr;
-  sigsegv_code = info->si_code;
-  if (info->si_code == 4)
-    {
-      /* Guess the address of the protection key field.  */
-      int *ppkey = 2 + ((int *)((&info->si_addr) + 1));
-      sigsegv_pkey = *ppkey;
-    }
-  else
-    sigsegv_pkey = -1;
-  siglongjmp (sigsegv_jmp, 2);
-}
-
-static const struct sigaction sigsegv_sigaction =
-  {
-    .sa_flags = SA_RESETHAND | SA_SIGINFO,
-    .sa_sigaction = &sigsegv_handler,
-  };
-
-/* Return the value of the PKRU register.  */
-static inline unsigned int
-pkey_read (void)
-{
-  unsigned int result;
-  __asm__ volatile (".byte 0x0f, 0x01, 0xee"
-                    : "=a" (result) : "c" (0) : "rdx");
-  return result;
-}
-
-/* Overwrite the PKRU register with VALUE.  */
-static inline void
-pkey_write (unsigned int value)
-{
-  __asm__ volatile (".byte 0x0f, 0x01, 0xef"
-                    : : "a" (value), "c" (0), "d" (0));
-}
-
-enum { page_count = 7 };
-static void *pages[page_count];
-
-static void
-check_fault_1 (int page, const char *what, void (*op) (void *))
-{
-  unsigned pkru = pkey_read ();
-
-  int result = sigsetjmp (sigsegv_jmp, 1);
-  if (result == 0)
-    {
-      if (sigaction (SIGSEGV, &sigsegv_sigaction, NULL) != 0)
-	err (1, "sigaction");
-      op (pages[page]);
-      printf ("page %d (%p): %s access allowed\n", page, pages[page], what);
-      return;
-    }
-  else
-    {
-      if (signal (SIGSEGV, SIG_DFL) == SIG_ERR)
-	err (1, "signal");
-      printf ("page %d (%p): %s access denied\n", page, pages[page], what);
-      printf ("  SIGSEGV address: %p\n", sigsegv_addr);
-      printf ("  SIGSEGV code: %d\n", sigsegv_code);
-      printf ("  SIGSEGV key: %d\n", sigsegv_pkey);
-    }
-
-  /* Preserve PKRU register value (clobbered by signal handler).  */
-  pkey_write (pkru);
-}
-
-static void
-check_fault (int page)
-{
-  check_fault_1 (page, "read", read_page);
-  check_fault_1 (page, "write", write_page);
-}
-
-static void
-dump_smaps (const char *what)
-{
-  printf ("info: *** BEGIN %s ***\n", what);
-  FILE *fp = fopen ("/proc/self/smaps", "r");
-  if (fp == NULL)
-    err (1, "fopen");
-  while (true)
-    {
-      int ch = fgetc (fp);
-      if (ch == EOF)
-	break;
-      fputc (ch, stdout);
-    }
-  if (ferror (fp))
-    err (1, "fgetc");
-  if (fclose (fp) != 0)
-    err (1, "fclose");
-  printf ("info: *** END %s ***\n", what);
-  fflush (stdout);
-}
-
-int
-main (void)
-{
-  int protections[page_count] = 
-    { PROT_READ | PROT_WRITE, PROT_EXEC, PROT_READ, PROT_READ,
-      PROT_EXEC | PROT_WRITE, PROT_EXEC | PROT_WRITE, PROT_EXEC };
-  for (int i = 0; i < page_count; ++i)
-    {
-      pages[i] = mmap (NULL, 1, protections[i],
-		       MAP_ANON | MAP_PRIVATE, -1, 0);
-      if (pages[i] == MAP_FAILED)
-	err (1, "mmap");
-      printf ("page %d: %p\n", i, pages[i]);
-    }
-      
-  int key = syscall (SYS_pkey_alloc, 0, 0);
-  if (key < 0)
-    err (1, "pkey_alloc");
-  printf ("key: %d\n", key);
-
-  if (syscall (SYS_pkey_mprotect, pages[2], 1, PROT_READ, key) != 0)
-    err (1, "pkey_mprotected (pages[2])");
-  if (syscall (SYS_pkey_mprotect, pages[3], 1, PROT_EXEC, key) != 0)
-    err (1, "pkey_mprotected (pages[3])");
-  if (syscall (SYS_pkey_mprotect, pages[5], 1, PROT_EXEC | PROT_WRITE, key)
-      != 0)
-    err (1, "pkey_mprotected (pages[5])");
-  if (syscall (SYS_pkey_mprotect, pages[6], 1, PROT_EXEC, key) != 0)
-    err (1, "pkey_mprotected (pages[6])");
-  if (syscall (SYS_pkey_mprotect, pages[6], 1, PROT_EXEC, -1) != 0)
-    err (1, "pkey_mprotected (pages[6])");
-
-  dump_smaps ("dump before faults");
-
-  /* This succeeds because the page is mapped readable.  */
-  puts ("info: performing accesses");
-  fflush (stdout);
-  for (int i = 0; i < page_count; ++i)
-    check_fault (i);
-
-  /* See what happens if we grant all access rights.  */
-  puts ("info: setting PKRU to zero");
-  fflush (stdout);
-  pkey_write (0);
-
-  for (int i = 0; i < page_count; ++i)
-    check_fault (i);
-
-  return 0;
-}
-
---------------FF525EDD2571B48E744E8AB5--
