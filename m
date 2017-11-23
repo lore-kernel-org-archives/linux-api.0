@@ -1,51 +1,72 @@
-From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: MPK: removing a pkey
-Date: Thu, 23 Nov 2017 15:29:20 -0800
-Message-ID: <8051353f-47d3-37a4-a402-41adc8b6eb88@linux.intel.com>
-References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
- <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
- <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
- <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
- <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
- <de93997a-7802-96cf-62e2-e59416e745ca@suse.cz>
- <17831167-7142-d42a-c7a0-59bdc8bbb786@linux.intel.com>
- <2d12777f-615a-8101-2156-cf861ec13aa7@suse.cz>
+From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.15 v12 00/22] Restartable sequences and CPU op
+ vector
+Date: Fri, 24 Nov 2017 00:38:57 +0100 (CET)
+Message-ID: <alpine.DEB.2.20.1711240026480.2364@nanos>
+References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com> <20171121172144.GL2482@two.firstfloor.org> <740195164.19702.1511301908907.JavaMail.zimbra@efficios.com> <20171122193219.GI3165@worktop.lehotels.local> <20171122193734.GO22648@arm.com>
+ <165707648.21250.1511471721845.JavaMail.zimbra@efficios.com> <alpine.DEB.2.20.1711232346030.2364@nanos> <739755311.21380.1511478071883.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <2d12777f-615a-8101-2156-cf861ec13aa7-AlSwsSmVLrQ@public.gmane.org>
-Content-Language: en-US
+In-Reply-To: <739755311.21380.1511478071883.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-x86_64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin
 List-Id: linux-api@vger.kernel.org
 
-On 11/23/2017 01:42 PM, Vlastimil Babka wrote:
->> It's supposed to set 0.
->>
->> -1 was, as far as I remember, an internal-to-the-kernel-only thing to
->> tell us that a key came from *mprotect()* instead of pkey_mprotect().
-> So, pkey_mprotect(..., 0) will set it to 0, regardless of PROT_EXEC.
-
-Although weird, the thought here was that pkey_mprotect() callers are
-new and should know about the interactions with PROT_EXEC.  They can
-also *get* PROT_EXEC semantics if they want.
-
-The only wart here is if you do:
-
-	mprotect(..., PROT_EXEC); // key 10 is now the PROT_EXEC key
-	pkey_mprotect(..., PROT_EXEC, key=3);
-
-I'm not sure what this does.  We should probably ensure that it returns
-an error.
-
-> pkey_mprotect(..., -1) or mprotect() will set it to 0-or-PROT_EXEC-pkey.
+On Thu, 23 Nov 2017, Mathieu Desnoyers wrote:
+> ----- On Nov 23, 2017, at 5:51 PM, Thomas Gleixner tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org wrote:
+> > On Thu, 23 Nov 2017, Mathieu Desnoyers wrote:
+> >> ----- On Nov 22, 2017, at 2:37 PM, Will Deacon will.deacon-5wv7dgnIgG8@public.gmane.org wrote:
+> >> > On Wed, Nov 22, 2017 at 08:32:19PM +0100, Peter Zijlstra wrote:
+> >> >>
+> >> >> So what exactly is the problem of leaving out the whole cpu_opv thing
+> >> >> for now? Pure rseq is usable -- albeit a bit cumbersome without
+> >> >> additional debugger support.
+> >> > 
+> >> > Drive-by "ack" to that. I'd really like a working rseq implementation in
+> >> > mainline, but I don't much care for another interpreter.
+> >> 
+> >> Considering the arm 64 use-case of reading PMU counters from user-space
+> >> using rseq to prevent migration, I understand that you're lucky enough to
+> >> already have a system call at your disposal that can perform the slow-path
+> >> in case of single-stepping.
+> >> 
+> >> So yes, your particular case is already covered, but unfortunately that's
+> >> not the same situation for other use-cases that have been expressed.
+> > 
+> > If we have users of rseq which can do without the other muck, then what's
+> > the reason not to support it?
+> > 
+> > The sysops thing can be sorted out on top and the use cases which need both
+> > will have to test for both syscalls being available anyway.
 > 
-> Can't shake the feeling that it's somewhat weird, but I guess it's
-> flexible at least. So just has to be well documented.
+> I'm currently making sure CONFIG_RSEQ selects both CONFIG_CPU_OPV and
+> CONFIG_MEMBARRIER, so the user-space fast-paths don't end up with
+> various ways of doing the fallback/single-stepping/memory barrier handling
+> depending on whether the kernel support each of those individually.
+> So first of all, it reduces complexity from a user-space perspective.
+>
+> Moreover, with a single already needed cpu_id vs cpu_id_start field comparison
+> in the rseq fast-path, user-space knows that it can rely on having rseq,
+> cpu_opv, and membarrier. Without this guarantee, user-space would have to
+> detect individually whether each of those system calls is available, and
+> test flags on the fast-path, for additional overhead.
 
-It *is* weird.  But, layering on top of legacy APIs are often weird.  I
-would have been open to other sane, but less weird ways to do it a year
-ago. :)
+You have to test for sys_rseq somewhere in the init code. So you can test
+for the other two being fully functional as well.
+
+If one of them is missing then you can avoid that rseq fastpath either
+completely or because you never registered that rseq muck your rseq will
+just contain stale init data which kicks you into some slowpath fallback
+code.
+
+You need something like this anyway unless you plan to ship code which
+cannot run on systems w/o rseq support at all.
+
+Either you designed your thing wrong or you try to create an artifical
+dependency for political reasons.
+
+Thanks,
+
+	tglx
