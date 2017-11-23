@@ -1,36 +1,87 @@
-From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Dave Hansen <dave.hansen@linux.intel.com>
 Subject: Re: MPK: removing a pkey
-Date: Thu, 23 Nov 2017 07:00:32 -0800
-Message-ID: <17831167-7142-d42a-c7a0-59bdc8bbb786@linux.intel.com>
+Date: Thu, 23 Nov 2017 07:09:13 -0800
+Message-ID: <39ea6607-a013-bd18-b478-3f44fb17caa4@linux.intel.com>
 References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
  <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
  <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
  <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
  <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
  <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
- <de93997a-7802-96cf-62e2-e59416e745ca@suse.cz>
+ <28f6e430-293d-4b30-dce6-018a2b3c03e8@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <de93997a-7802-96cf-62e2-e59416e745ca-AlSwsSmVLrQ@public.gmane.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <28f6e430-293d-4b30-dce6-018a2b3c03e8@redhat.com>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-x86_64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/23/2017 12:11 AM, Vlastimil Babka wrote:
->> No, the default is clearly 0 and documented to be so.  The PROT_EXEC
+On 11/23/2017 04:38 AM, Florian Weimer wrote:
+> On 11/22/2017 05:32 PM, Dave Hansen wrote:
+>> On 11/22/2017 08:21 AM, Florian Weimer wrote:
+>>> On 11/22/2017 05:10 PM, Dave Hansen wrote:
+>>>> On 11/22/2017 04:15 AM, Florian Weimer wrote:
+>>>>> On 11/22/2017 09:18 AM, Vlastimil Babka wrote:
+>>>>>> And, was the pkey == -1 internal wiring supposed to be exposed to the
+>>>>>> pkey_mprotect() signal, or should there have been a pre-check
+>>>>>> returning
+>>>>>> EINVAL in SYSCALL_DEFINE4(pkey_mprotect), before calling
+>>>>>> do_mprotect_pkey())? I assume it's too late to change it now
+>>>>>> anyway (or
+>>>>>> not?), so should we also document it?
+>>>>>
+>>>>> I think the -1 case to the set the default key is useful because it
+>>>>> allows you to use a key value of -1 to mean “MPK is not supported”,
+>>>>> and
+>>>>> still call pkey_mprotect.
+>>>>
+>>>> The behavior to not allow 0 to be set was unintentional and is a bug.
+>>>> We should fix that.
+>>>
+>>> On the other hand, x86-64 has no single default protection key due to
+>>> the PROT_EXEC emulation.
+>>
+>> No, the default is clearly 0 and documented to be so.  The PROT_EXEC
 >> emulation one should be inaccessible in all the APIs so does not even
->> show up as *being* a key in the API.  The fact that it's implemented
+>> show up as *being* a key in the API.
+
+I should have been more explicit: the EXEC pkey does not show up in the
+syscall API.
+
+> I see key 1 in /proc for a PROT_EXEC mapping.  If I supply an explicit
+> protection key, that key is used, and the page ends up having read
+> access enabled.
+> 
+> The key is also visible in the siginfo_t argument on read access to a
+> PROT_EXEC mapping with the default key, so it's not just /proc:
+> 
+> page 1 (0x7f008242d000): read access denied
+>   SIGSEGV address: 0x7f008242d000
+>   SIGSEGV code: 4
+>   SIGSEGV key: 1
+> 
+> I'm attaching my test.
+
+Yes, it is exposed there.  But, as a non-allocated pkey, the intention
+in the kernel was to make sure that it could not be passed to the syscalls.
+
+If that behavior is broken, we should probably fix it.
+
+>> The fact that it's implemented
 >> with pkeys should be pretty immaterial other than the fact that you
 >> can't touch the high bits in PKRU.
-> So, just to be sure, if we call pkey_mprotect() with 0, will it blindly
-> set 0, or the result of arch_override_mprotect_pkey() (thus equivalent
-> to call with -1) ? I assume the latter?
+> 
+> I don't see a restriction for PKRU updates.  If I write zero to the PKRU
+> register, PROT_EXEC implies PROT_READ, as I would expect.
 
-It's supposed to set 0.
+I'll rephrase:
+	
+	The fact that it's implemented with pkeys should be pretty
+	immaterial other than the fact that you must not touch the bits
+	controlling PROT_EXEC in PKRU if you want to keep it working.
 
--1 was, as far as I remember, an internal-to-the-kernel-only thing to
-tell us that a key came from *mprotect()* instead of pkey_mprotect().
+There is no restriction which is *enforced*.  It's just documented.
