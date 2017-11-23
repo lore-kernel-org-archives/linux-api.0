@@ -1,65 +1,50 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: Re: [RFC PATCH for 4.15 v3 15/22] rseq: selftests: Provide
- self-tests
-Date: Thu, 23 Nov 2017 21:16:52 +0000 (UTC)
-Message-ID: <1863234483.21251.1511471812668.JavaMail.zimbra@efficios.com>
-References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com> <20171121141900.18471-16-mathieu.desnoyers@efficios.com> <20171122193821.GJ3165@worktop.lehotels.local>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: MPK: removing a pkey
+Date: Thu, 23 Nov 2017 22:42:20 +0100
+Message-ID: <2d12777f-615a-8101-2156-cf861ec13aa7@suse.cz>
+References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
+ <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
+ <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
+ <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
+ <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
+ <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
+ <de93997a-7802-96cf-62e2-e59416e745ca@suse.cz>
+ <17831167-7142-d42a-c7a0-59bdc8bbb786@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171122193821.GJ3165-IIpfhp3q70x9+YH6RuovlLjjLBE8jN/0@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <17831167-7142-d42a-c7a0-59bdc8bbb786@linux.intel.com>
+Content-Language: en-US
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 22, 2017, at 2:38 PM, Peter Zijlstra peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org wrote:
-
-> On Tue, Nov 21, 2017 at 09:18:53AM -0500, Mathieu Desnoyers wrote:
->> Implements two basic tests of RSEQ functionality, and one more
->> exhaustive parameterizable test.
->> 
->> The first, "basic_test" only asserts that RSEQ works moderately
->> correctly. E.g. that the CPUID pointer works.
->> 
->> "basic_percpu_ops_test" is a slightly more "realistic" variant,
->> implementing a few simple per-cpu operations and testing their
->> correctness.
->> 
->> "param_test" is a parametrizable restartable sequences test. See
->> the "--help" output for usage.
->> 
->> A run_param_test.sh script runs many variants of the parametrizable
->> tests.
->> 
->> As part of those tests, a helper library "rseq" implements a user-space
->> API around restartable sequences. It uses the cpu_opv system call as
->> fallback when single-stepped by a debugger. It exposes the instruction
->> pointer addresses where the rseq assembly blocks begin and end, as well
->> as the associated abort instruction pointer, in the __rseq_table
->> section. This section allows debuggers may know where to place
->> breakpoints when single-stepping through assembly blocks which may be
->> aborted at any point by the kernel.
+On 11/23/2017 04:00 PM, Dave Hansen wrote:
+> On 11/23/2017 12:11 AM, Vlastimil Babka wrote:
+>>> No, the default is clearly 0 and documented to be so.  The PROT_EXEC
+>>> emulation one should be inaccessible in all the APIs so does not even
+>>> show up as *being* a key in the API.  The fact that it's implemented
+>>> with pkeys should be pretty immaterial other than the fact that you
+>>> can't touch the high bits in PKRU.
+>> So, just to be sure, if we call pkey_mprotect() with 0, will it blindly
+>> set 0, or the result of arch_override_mprotect_pkey() (thus equivalent
+>> to call with -1) ? I assume the latter?
 > 
-> Could I ask you to split this in smaller bits?
+> It's supposed to set 0.
 > 
-> I'd start with just the rseq library, using only the rseq interface.
-> Then add the whole cpu_opv fallback stuff.
-> Then add the selftests using librseq.
+> -1 was, as far as I remember, an internal-to-the-kernel-only thing to
+> tell us that a key came from *mprotect()* instead of pkey_mprotect().
+
+So, pkey_mprotect(..., 0) will set it to 0, regardless of PROT_EXEC.
+pkey_mprotect(..., -1) or mprotect() will set it to 0-or-PROT_EXEC-pkey.
+
+Can't shake the feeling that it's somewhat weird, but I guess it's
+flexible at least. So just has to be well documented.
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 > 
-> As is this is a tad much to read in a single go.
-
-Sure, will do! And I plan to change the selftests to use the new
-"percpu_*()" API that removes the need to duplicate code in the
-caller code.
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
