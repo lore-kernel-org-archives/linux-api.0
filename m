@@ -1,66 +1,51 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.15 v12 00/22] Restartable sequences and CPU op
- vector
-Date: Thu, 23 Nov 2017 23:01:11 +0000 (UTC)
-Message-ID: <739755311.21380.1511478071883.JavaMail.zimbra@efficios.com>
-References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com> <20171121172144.GL2482@two.firstfloor.org> <740195164.19702.1511301908907.JavaMail.zimbra@efficios.com> <20171122193219.GI3165@worktop.lehotels.local> <20171122193734.GO22648@arm.com> <165707648.21250.1511471721845.JavaMail.zimbra@efficios.com> <alpine.DEB.2.20.1711232346030.2364@nanos>
+From: Dave Hansen <dave.hansen-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Subject: Re: MPK: removing a pkey
+Date: Thu, 23 Nov 2017 15:29:20 -0800
+Message-ID: <8051353f-47d3-37a4-a402-41adc8b6eb88@linux.intel.com>
+References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
+ <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
+ <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
+ <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
+ <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
+ <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
+ <de93997a-7802-96cf-62e2-e59416e745ca@suse.cz>
+ <17831167-7142-d42a-c7a0-59bdc8bbb786@linux.intel.com>
+ <2d12777f-615a-8101-2156-cf861ec13aa7@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.20.1711232346030.2364@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Will Deacon <will.deacon@arm.com>, Peter Zijlstra <peterz@infradead.org>, Andi Kleen <andi@firstfloor.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <2d12777f-615a-8101-2156-cf861ec13aa7-AlSwsSmVLrQ@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-x86_64-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 23, 2017, at 5:51 PM, Thomas Gleixner tglx@linutronix.de wrote:
+On 11/23/2017 01:42 PM, Vlastimil Babka wrote:
+>> It's supposed to set 0.
+>>
+>> -1 was, as far as I remember, an internal-to-the-kernel-only thing to
+>> tell us that a key came from *mprotect()* instead of pkey_mprotect().
+> So, pkey_mprotect(..., 0) will set it to 0, regardless of PROT_EXEC.
 
-> On Thu, 23 Nov 2017, Mathieu Desnoyers wrote:
->> ----- On Nov 22, 2017, at 2:37 PM, Will Deacon will.deacon@arm.com wrote:
->> > On Wed, Nov 22, 2017 at 08:32:19PM +0100, Peter Zijlstra wrote:
->> >>
->> >> So what exactly is the problem of leaving out the whole cpu_opv thing
->> >> for now? Pure rseq is usable -- albeit a bit cumbersome without
->> >> additional debugger support.
->> > 
->> > Drive-by "ack" to that. I'd really like a working rseq implementation in
->> > mainline, but I don't much care for another interpreter.
->> 
->> Considering the arm 64 use-case of reading PMU counters from user-space
->> using rseq to prevent migration, I understand that you're lucky enough to
->> already have a system call at your disposal that can perform the slow-path
->> in case of single-stepping.
->> 
->> So yes, your particular case is already covered, but unfortunately that's
->> not the same situation for other use-cases that have been expressed.
+Although weird, the thought here was that pkey_mprotect() callers are
+new and should know about the interactions with PROT_EXEC.  They can
+also *get* PROT_EXEC semantics if they want.
+
+The only wart here is if you do:
+
+	mprotect(..., PROT_EXEC); // key 10 is now the PROT_EXEC key
+	pkey_mprotect(..., PROT_EXEC, key=3);
+
+I'm not sure what this does.  We should probably ensure that it returns
+an error.
+
+> pkey_mprotect(..., -1) or mprotect() will set it to 0-or-PROT_EXEC-pkey.
 > 
-> If we have users of rseq which can do without the other muck, then what's
-> the reason not to support it?
-> 
-> The sysops thing can be sorted out on top and the use cases which need both
-> will have to test for both syscalls being available anyway.
+> Can't shake the feeling that it's somewhat weird, but I guess it's
+> flexible at least. So just has to be well documented.
 
-I'm currently making sure CONFIG_RSEQ selects both CONFIG_CPU_OPV and
-CONFIG_MEMBARRIER, so the user-space fast-paths don't end up with
-various ways of doing the fallback/single-stepping/memory barrier handling
-depending on whether the kernel support each of those individually.
-So first of all, it reduces complexity from a user-space perspective.
-
-Moreover, with a single already needed cpu_id vs cpu_id_start field comparison
-in the rseq fast-path, user-space knows that it can rely on having rseq,
-cpu_opv, and membarrier. Without this guarantee, user-space would have to
-detect individually whether each of those system calls is available, and
-test flags on the fast-path, for additional overhead.
-
-Those are my main concerns about pushing an incomplete solution at this
-stage.
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+It *is* weird.  But, layering on top of legacy APIs are often weird.  I
+would have been open to other sane, but less weird ways to do it a year
+ago. :)
