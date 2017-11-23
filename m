@@ -1,89 +1,61 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [RFC PATCH for 4.15 v3 15/22] rseq: selftests: Provide self-tests
-Date: Thu, 23 Nov 2017 09:55:11 +0100
-Message-ID: <20171123085511.ohwuobf5v32vggho@hirez.programming.kicks-ass.net>
+Date: Thu, 23 Nov 2017 09:57:21 +0100
+Message-ID: <20171123085721.bzburngdsatgewjo@hirez.programming.kicks-ass.net>
 References: <20171121141900.18471-1-mathieu.desnoyers@efficios.com>
  <20171121141900.18471-16-mathieu.desnoyers@efficios.com>
+ <20171123085511.ohwuobf5v32vggho@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171121141900.18471-16-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+In-Reply-To: <20171123085511.ohwuobf5v32vggho-Nxj+rRp3nVydTX5a5knrm8zTDFooKrT+cvkQGrU6aU0@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 21, 2017 at 09:18:53AM -0500, Mathieu Desnoyers wrote:
-> +int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node)
-> +{
-> +	intptr_t *targetptr, newval, expect;
-> +	int cpu, ret;
-> +
-> +	/* Try fast path. */
-> +	cpu = rseq_cpu_start();
+On Thu, Nov 23, 2017 at 09:55:11AM +0100, Peter Zijlstra wrote:
+> On Tue, Nov 21, 2017 at 09:18:53AM -0500, Mathieu Desnoyers wrote:
+> > +static inline __attribute__((always_inline))
+> > +int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv,
+> > +		int cpu)
+> > +{
+> > +	__asm__ __volatile__ goto (
+> > +		RSEQ_ASM_DEFINE_TABLE(3, __rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
+> > +		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+> 
+> > +		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
 
-> +	/* Load list->c[cpu].head with single-copy atomicity. */
-> +	expect = (intptr_t)READ_ONCE(list->c[cpu].head);
-> +	newval = (intptr_t)node;
-> +	targetptr = (intptr_t *)&list->c[cpu].head;
-> +	node->next = (struct percpu_list_node *)expect;
+> > +		"cmpq %[v], %[expect]\n\t"
+> > +		"jnz 5f\n\t"
 
-> +	ret = rseq_cmpeqv_storev(targetptr, expect, newval, cpu);
+Also, I'm confused between the abort and cmpfail cases.
 
-> +	if (likely(!ret))
-> +		return cpu;
+In would expect the cpu_id compare to also result in cmpfail, that is, I
+would only expect the kernel to result in abort.
 
-> +	return cpu;
-> +}
+> > +		/* final store */
+> > +		"movq %[newv], %[v]\n\t"
+> > +		"2:\n\t"
+> > +		RSEQ_ASM_DEFINE_ABORT(4, __rseq_failure, RSEQ_SIG, "", abort)
+> > +		RSEQ_ASM_DEFINE_CMPFAIL(5, __rseq_failure, "", cmpfail)
+> > +		: /* gcc asm goto does not allow outputs */
+> > +		: [cpu_id]"r"(cpu),
+> > +		  [current_cpu_id]"m"(__rseq_abi.cpu_id),
+> > +		  [rseq_cs]"m"(__rseq_abi.rseq_cs),
+> > +		  [v]"m"(*v),
+> > +		  [expect]"r"(expect),
+> > +		  [newv]"r"(newv)
+> > +		: "memory", "cc", "rax"
+> > +		: abort, cmpfail
+> > +	);
+> > +	return 0;
+> > +abort:
+> > +	return -1;
 
-> +static inline __attribute__((always_inline))
-> +int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv,
-> +		int cpu)
-> +{
-> +	__asm__ __volatile__ goto (
-> +		RSEQ_ASM_DEFINE_TABLE(3, __rseq_table, 0x0, 0x0, 1f, 2f-1f, 4f)
-> +		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+Which then would suggest this be -EINTR or something like that.
 
-> +		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-
-So the actual C part of the RSEQ is subject to an ABA, right? We can get
-migrated to another CPU and back again without then failing here.
-
-It used to be that this was caught by the sequence count, but that is
-now gone.
-
-The thing that makes it work is the compare against @v:
-
-> +		"cmpq %[v], %[expect]\n\t"
-> +		"jnz 5f\n\t"
-
-That then ensures things are still as we observed them before (although
-this itself is also subject to ABA).
-
-This means all RSEQ primitives that have a C part must have a cmp-and-
-form, but I suppose that was already pretty much the case anyway. I just
-don't remember seeing that spelled out anywhere. Then again, I've not
-yet read that manpage.
-
-> +		/* final store */
-> +		"movq %[newv], %[v]\n\t"
-> +		"2:\n\t"
-> +		RSEQ_ASM_DEFINE_ABORT(4, __rseq_failure, RSEQ_SIG, "", abort)
-> +		RSEQ_ASM_DEFINE_CMPFAIL(5, __rseq_failure, "", cmpfail)
-> +		: /* gcc asm goto does not allow outputs */
-> +		: [cpu_id]"r"(cpu),
-> +		  [current_cpu_id]"m"(__rseq_abi.cpu_id),
-> +		  [rseq_cs]"m"(__rseq_abi.rseq_cs),
-> +		  [v]"m"(*v),
-> +		  [expect]"r"(expect),
-> +		  [newv]"r"(newv)
-> +		: "memory", "cc", "rax"
-> +		: abort, cmpfail
-> +	);
-> +	return 0;
-> +abort:
-> +	return -1;
-> +cmpfail:
-> +	return 1;
-> +}
+> > +cmpfail:
+> > +	return 1;
+> > +}
