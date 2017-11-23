@@ -1,154 +1,51 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v3 4/4] test: add a test for the process_vmsplice syscall
-Date: Thu, 23 Nov 2017 09:01:03 +0100
-Message-ID: <20171123080103.GA490@kroah.com>
-References: <1511379391-988-1-git-send-email-rppt@linux.vnet.ibm.com>
- <1511379391-988-5-git-send-email-rppt@linux.vnet.ibm.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: MPK: removing a pkey
+Date: Thu, 23 Nov 2017 09:11:05 +0100
+Message-ID: <de93997a-7802-96cf-62e2-e59416e745ca@suse.cz>
+References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
+ <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
+ <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
+ <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
+ <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
+ <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1511379391-988-5-git-send-email-rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
+Content-Language: en-US
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 22, 2017 at 09:36:31PM +0200, Mike Rapoport wrote:
-> From: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
+On 11/22/2017 05:32 PM, Dave Hansen wrote:
+> On 11/22/2017 08:21 AM, Florian Weimer wrote:
+>> On 11/22/2017 05:10 PM, Dave Hansen wrote:
+>>> On 11/22/2017 04:15 AM, Florian Weimer wrote:
+>>>> On 11/22/2017 09:18 AM, Vlastimil Babka wrote:
+>>>>> And, was the pkey == -1 internal wiring supposed to be exposed to the
+>>>>> pkey_mprotect() signal, or should there have been a pre-check returning
+>>>>> EINVAL in SYSCALL_DEFINE4(pkey_mprotect), before calling
+>>>>> do_mprotect_pkey())? I assume it's too late to change it now anyway (or
+>>>>> not?), so should we also document it?
+>>>>
+>>>> I think the -1 case to the set the default key is useful because it
+>>>> allows you to use a key value of -1 to mean “MPK is not supported”, and
+>>>> still call pkey_mprotect.
+>>>
+>>> The behavior to not allow 0 to be set was unintentional and is a bug.
+>>> We should fix that.
+>>
+>> On the other hand, x86-64 has no single default protection key due to
+>> the PROT_EXEC emulation.
 > 
-> This test checks that process_vmsplice() can splice pages from a remote
-> process and returns EFAULT, if process_vmsplice() tries to splice pages
-> by an unaccessiable address.
-> 
-> Signed-off-by: Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>
-> ---
->  tools/testing/selftests/process_vmsplice/Makefile  |   5 +
->  .../process_vmsplice/process_vmsplice_test.c       | 188 +++++++++++++++++++++
->  2 files changed, 193 insertions(+)
->  create mode 100644 tools/testing/selftests/process_vmsplice/Makefile
->  create mode 100644 tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
-> 
-> diff --git a/tools/testing/selftests/process_vmsplice/Makefile b/tools/testing/selftests/process_vmsplice/Makefile
-> new file mode 100644
-> index 0000000..246d5a7
-> --- /dev/null
-> +++ b/tools/testing/selftests/process_vmsplice/Makefile
-> @@ -0,0 +1,5 @@
-> +CFLAGS += -I../../../../usr/include/
-> +
-> +TEST_GEN_PROGS := process_vmsplice_test
-> +
-> +include ../lib.mk
-> diff --git a/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c b/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
-> new file mode 100644
-> index 0000000..8abf59b
-> --- /dev/null
-> +++ b/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
-> @@ -0,0 +1,188 @@
-> +#define _GNU_SOURCE
-> +#include <stdio.h>
-> +#include <unistd.h>
-> +#include <sys/mman.h>
-> +#include <sys/syscall.h>
-> +#include <fcntl.h>
-> +#include <sys/uio.h>
-> +#include <errno.h>
-> +#include <signal.h>
-> +#include <sys/prctl.h>
-> +#include <sys/wait.h>
-> +
-> +#include "../kselftest.h"
-> +
-> +#ifndef __NR_process_vmsplice
-> +#define __NR_process_vmsplice 333
-> +#endif
-> +
-> +#define pr_err(fmt, ...) \
-> +		({ \
-> +			fprintf(stderr, "%s:%d:" fmt, \
-> +				__func__, __LINE__, ##__VA_ARGS__); \
-> +			KSFT_FAIL; \
-> +		})
-> +#define pr_perror(fmt, ...) pr_err(fmt ": %m\n", ##__VA_ARGS__)
-> +#define fail(fmt, ...) pr_err("FAIL:" fmt, ##__VA_ARGS__)
-> +
-> +static ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
-> +			unsigned long nr_segs, unsigned int flags)
-> +{
-> +	return syscall(__NR_process_vmsplice, pid, fd, iov, nr_segs, flags);
-> +
-> +}
-> +
-> +#define MEM_SIZE (4096 * 100)
-> +#define MEM_WRONLY_SIZE (4096 * 10)
-> +
-> +int main(int argc, char **argv)
-> +{
-> +	char *addr, *addr_wronly;
-> +	int p[2];
-> +	struct iovec iov[2];
-> +	char buf[4096];
-> +	int status, ret;
-> +	pid_t pid;
-> +
-> +	ksft_print_header();
-> +
-> +	addr = mmap(0, MEM_SIZE, PROT_READ | PROT_WRITE,
-> +					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-> +	if (addr == MAP_FAILED)
-> +		return pr_perror("Unable to create a mapping");
-> +
-> +	addr_wronly = mmap(0, MEM_WRONLY_SIZE, PROT_WRITE,
-> +				MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-> +	if (addr_wronly == MAP_FAILED)
-> +		return pr_perror("Unable to create a write-only mapping");
-> +
-> +	if (pipe(p))
-> +		return pr_perror("Unable to create a pipe");
-> +
-> +	pid = fork();
-> +	if (pid < 0)
-> +		return pr_perror("Unable to fork");
-> +
-> +	if (pid == 0) {
-> +		addr[0] = 'C';
-> +		addr[4096 + 128] = 'A';
-> +		addr[4096 + 128 + 4096 - 1] = 'B';
-> +
-> +		if (prctl(PR_SET_PDEATHSIG, SIGKILL))
-> +			return pr_perror("Unable to set PR_SET_PDEATHSIG");
-> +		if (write(p[1], "c", 1) != 1)
-> +			return pr_perror("Unable to write data into pipe");
-> +
-> +		while (1)
-> +			sleep(1);
-> +		return 1;
-> +	}
-> +	if (read(p[0], buf, 1) != 1) {
-> +		pr_perror("Unable to read data from pipe");
-> +		kill(pid, SIGKILL);
-> +		wait(&status);
-> +		return 1;
-> +	}
-> +
-> +	munmap(addr, MEM_SIZE);
-> +	munmap(addr_wronly, MEM_WRONLY_SIZE);
-> +
-> +	iov[0].iov_base = addr;
-> +	iov[0].iov_len = 1;
-> +
-> +	iov[1].iov_base = addr + 4096 + 128;
-> +	iov[1].iov_len = 4096;
-> +
-> +	/* check one iovec */
-> +	if (process_vmsplice(pid, p[1], iov, 1, SPLICE_F_GIFT) != 1)
-> +		return pr_perror("Unable to splice pages");
+> No, the default is clearly 0 and documented to be so.  The PROT_EXEC
+> emulation one should be inaccessible in all the APIs so does not even
+> show up as *being* a key in the API.  The fact that it's implemented
+> with pkeys should be pretty immaterial other than the fact that you
+> can't touch the high bits in PKRU.
 
-Shouldn't you check to see if the syscall is even present?  You should
-not error if it is not, as this test will then "fail" on kernels/arches
-without the syscall enabled, which isn't the nicest.
-
-thanks,
-
-greg k-h
+So, just to be sure, if we call pkey_mprotect() with 0, will it blindly
+set 0, or the result of arch_override_mprotect_pkey() (thus equivalent
+to call with -1) ? I assume the latter?
