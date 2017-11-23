@@ -1,87 +1,85 @@
 From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: MPK: removing a pkey
-Date: Thu, 23 Nov 2017 07:09:13 -0800
-Message-ID: <39ea6607-a013-bd18-b478-3f44fb17caa4@linux.intel.com>
+Subject: Re: MPK: pkey_free and key reuse
+Date: Thu, 23 Nov 2017 07:25:53 -0800
+Message-ID: <04ef6b4a-6d20-d025-0b56-741fd467d445@linux.intel.com>
 References: <0f006ef4-a7b5-c0cf-5f58-d0fd1f911a54@redhat.com>
- <8741e4d6-6ac0-9c07-99f3-95d8d04940b4@suse.cz>
- <813f9736-36dd-b2e5-c850-9f2d5f94514a@redhat.com>
- <f42fe774-bdcc-a509-bb7f-fe709fd28fcb@linux.intel.com>
- <9ec19ff3-86f6-7cfe-1a07-1ab1c5d9882c@redhat.com>
- <d98eb4b8-6e59-513d-fdf8-3395485cb851@linux.intel.com>
- <28f6e430-293d-4b30-dce6-018a2b3c03e8@redhat.com>
+ <e7d1e622-bbac-2750-2895-cc151458ff2f@linux.intel.com>
+ <48ac42c0-4c31-cef8-a75a-8f3beab7cc66@redhat.com>
+ <633b5b03-3481-0da2-9d6c-f5298902e36a@linux.intel.com>
+ <068b89c7-4303-88a7-540a-1491dc8a292d@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <28f6e430-293d-4b30-dce6-018a2b3c03e8@redhat.com>
+In-Reply-To: <068b89c7-4303-88a7-540a-1491dc8a292d@redhat.com>
 Content-Language: en-US
 Sender: linux-arch-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>, Vlastimil Babka <vbabka@suse.cz>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>, linux-x86_64@vger.kernel.org, linux-arch@vger.kernel.org
 Cc: linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/23/2017 04:38 AM, Florian Weimer wrote:
-> On 11/22/2017 05:32 PM, Dave Hansen wrote:
->> On 11/22/2017 08:21 AM, Florian Weimer wrote:
->>> On 11/22/2017 05:10 PM, Dave Hansen wrote:
->>>> On 11/22/2017 04:15 AM, Florian Weimer wrote:
->>>>> On 11/22/2017 09:18 AM, Vlastimil Babka wrote:
->>>>>> And, was the pkey == -1 internal wiring supposed to be exposed to the
->>>>>> pkey_mprotect() signal, or should there have been a pre-check
->>>>>> returning
->>>>>> EINVAL in SYSCALL_DEFINE4(pkey_mprotect), before calling
->>>>>> do_mprotect_pkey())? I assume it's too late to change it now
->>>>>> anyway (or
->>>>>> not?), so should we also document it?
->>>>>
->>>>> I think the -1 case to the set the default key is useful because it
->>>>> allows you to use a key value of -1 to mean “MPK is not supported”,
->>>>> and
->>>>> still call pkey_mprotect.
->>>>
->>>> The behavior to not allow 0 to be set was unintentional and is a bug.
->>>> We should fix that.
->>>
->>> On the other hand, x86-64 has no single default protection key due to
->>> the PROT_EXEC emulation.
+On 11/23/2017 04:48 AM, Florian Weimer wrote:
+> On 11/09/2017 05:59 PM, Dave Hansen wrote:
+>> The manpage is pretty bare here.  But the thought was that, in most
+>> cases, you will want to allocate a key and start using it immediately.
+>> This was in response to some feedback on one of the earlier reviews of
+>> the patch set.
+> 
+> Okay.  In the future, may want to use this access rights to specify the
+> default for the signal handler (with a new pkey_alloc flag).  If I can
+> the default access rights, that would pretty much solve the sigsetjmp
+> problem for me, too, and I can start using protection keys in low-level
+> glibc code.
+
+I haven't thought about this much in a year or so, but I think this is
+doable.
+
+One bit of advice: please look at features when they go in to the
+kernel.  Your feedback has been valuable, but not very timely.  I
+promise you'll get better results if you give feedback when patches are
+being posted rather than when they've been in the kernel for a year.
+
+>>> I think we should either implement revoke on pkey_alloc, with a
+>>> broadcast to all threads (the pkey_set race can be closed by having a
+>>> vDSO for that an the revocation code can check %rip to see if the old
+>>> PKRU value needs to be fixed up).  Or we add the two pkey_alloc flags I
+>>> mentioned earlier.
 >>
->> No, the default is clearly 0 and documented to be so.  The PROT_EXEC
->> emulation one should be inaccessible in all the APIs so does not even
->> show up as *being* a key in the API.
-
-I should have been more explicit: the EXEC pkey does not show up in the
-syscall API.
-
-> I see key 1 in /proc for a PROT_EXEC mapping.  If I supply an explicit
-> protection key, that key is used, and the page ends up having read
-> access enabled.
+>> That sounds awfully complicated to put in-kernel.  I'd be happy to
+>> review the patches after you put them together once we see how it looks.
 > 
-> The key is also visible in the siginfo_t argument on read access to a
-> PROT_EXEC mapping with the default key, so it's not just /proc:
+> TLB flushes are complicated, too, and very costly, but we still do them
+> on unmap, even in cases where they are not required for security reasons.
+
+I'll also note that TLB flushes are transparent to software.  What you
+are suggesting is not.  That makes it a *LOT* more difficult to implement.
+
+If you have an idea how to do this, I'll happily review patches!
+
+>> You basically want threads to broadcast their PKRU values at pkey_free()
+>> time.  That's totally doable... in userspace.  You just need a mechanism
+>> for each thread to periodically check if they need an update.
 > 
-> page 1 (0x7f008242d000): read access denied
->   SIGSEGV address: 0x7f008242d000
->   SIGSEGV code: 4
->   SIGSEGV key: 1
+> No, we want to the revocation to be immediate, so we'd have to use
+> something like the setxid broadcast, and we have to make sure that we
+> aren't in a pkey_set, and if we are, adjust register contents besides
+> PKRU.  Not pretty at all.  I really don't want to implement that.
 > 
-> I'm attaching my test.
-
-Yes, it is exposed there.  But, as a non-allocated pkey, the intention
-in the kernel was to make sure that it could not be passed to the syscalls.
-
-If that behavior is broken, we should probably fix it.
-
->> The fact that it's implemented
->> with pkeys should be pretty immaterial other than the fact that you
->> can't touch the high bits in PKRU.
+> If the broadcast is lazy, I think it defeats its purpose because you
+> don't know what kind of access privileges other threads in the system have.
 > 
-> I don't see a restriction for PKRU updates.  If I write zero to the PKRU
-> register, PROT_EXEC implies PROT_READ, as I would expect.
+> Your solution to all MPK problems seems to be to say that it's undefined
+> and applications shouldn't do that.  But if applications only used
+> well-defined memory accesses, why would we need MPK?
 
-I'll rephrase:
-	
-	The fact that it's implemented with pkeys should be pretty
-	immaterial other than the fact that you must not touch the bits
-	controlling PROT_EXEC in PKRU if you want to keep it working.
+BTW, I never call this feature MPK because it looks too much like MPX
+and they have nothing to do with each other.  I'd recommend the same to
+you.  It keeps your audience less confused.
 
-There is no restriction which is *enforced*.  It's just documented.
+I understand there is some distaste for where the implementation
+settled.  I don't, either, in a lot of ways.  If I were to re-architect
+it in the CPU, I certainly wouldn't have a user-visible PKRU and and
+found a way to avoid the signal PKRU issues.  But, that ship has sailed.
+
+I don't see a way to do a broadcast PKRU update.  But, I'd love to be
+proven wrong, with code.
