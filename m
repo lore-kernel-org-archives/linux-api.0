@@ -1,75 +1,182 @@
-From: Helge Deller <deller@gmx.de>
-Subject: Re: [PATCH 01/18] mm: introduce MAP_SHARED_VALIDATE, a mechanism to
- safely define new mmap flags
-Date: Sat, 25 Nov 2017 19:45:21 +0100
-Message-ID: <09f54d38-7cb5-343d-a017-2d71a793d05c@gmx.de>
-References: <20171101153648.30166-1-jack@suse.cz>
- <20171101153648.30166-2-jack@suse.cz>
- <638b3b80-5cb9-97c2-5055-fef3a1ec25b9@suse.cz>
- <CAPcyv4gGRHWc6AH5Enb7njtmqHgd=g+0-mYMdd5wWjJMW0+d7g@mail.gmail.com>
- <20171122195318.GA29485@bombadil.infradead.org>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 1/2] capability: introduce sysctl for controlled
+ user-ns capability whitelist
+Date: Sun, 26 Nov 2017 00:34:54 -0600
+Message-ID: <20171126063454.GA30279@mail.hallyn.com>
+References: <20171110053747.21093-1-mahesh@bandewar.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171122195318.GA29485@bombadil.infradead.org>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Matthew Wilcox <willy@infradead.org>, Dan Williams <dan.j.williams@intel.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Jan Kara <jack@suse.cz>, Ross Zwisler <ross.zwisler@linux.intel.com>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, "Darrick J . Wong" <darrick.wong@oracle.com>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-parisc@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20171110053747.21093-1-mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
+Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 22.11.2017 20:53, Matthew Wilcox wrote:
-> On Wed, Nov 22, 2017 at 08:52:37AM -0800, Dan Williams wrote:
->> On Wed, Nov 22, 2017 at 4:02 AM, Vlastimil Babka <vbabka@suse.cz> wrote:
->>> On 11/01/2017 04:36 PM, Jan Kara wrote:
->>>> From: Dan Williams <dan.j.williams@intel.com>
->>>>
->>>> The mmap(2) syscall suffers from the ABI anti-pattern of not validating
->>>> unknown flags. However, proposals like MAP_SYNC need a mechanism to
->>>> define new behavior that is known to fail on older kernels without the
->>>> support. Define a new MAP_SHARED_VALIDATE flag pattern that is
->>>> guaranteed to fail on all legacy mmap implementations.
->>>
->>> So I'm trying to make sense of this together with Michal's attempt for
->>> MAP_FIXED_SAFE [1] where he has to introduce a completely new flag
->>> instead of flag modifier exactly for the reason of not validating
->>> unknown flags. And my conclusion is that because MAP_SHARED_VALIDATE
->>> implies MAP_SHARED and excludes MAP_PRIVATE, MAP_FIXED_SAFE as a
->>> modifier cannot build on top of this. Wouldn't thus it be really better
->>> long-term to introduce mmap3 at this point? ...
->>
->> We have room to define MAP_PRIVATE_VALIDATE in MAP_TYPE on every arch
->> except parisc. Can we steal an extra bit for MAP_TYPE from somewhere
->> else on parisc?
+Quoting Mahesh Bandewar (mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org):
+> From: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 > 
-> It looks like 0x08 should work.
+> Add a sysctl variable kernel.controlled_userns_caps_whitelist. This
+> takes input as capability mask expressed as two comma separated hex
+> u32 words. The mask, however, is stored in kernel as kernel_cap_t type.
+> 
+> Any capabilities that are not part of this mask will be controlled and
+> will not be allowed to processes in controlled user-ns.
+> 
+> Signed-off-by: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-I posted an RFC to the parisc mailing list for that:
-https://patchwork.kernel.org/patch/9970553/
+Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
 
-Basically this is (for parisc only):
--#define MAP_TYPE	0x03		/* Mask for type of mapping */
-+#define MAP_TYPE	(MAP_SHARED|MAP_PRIVATE|MAP_RESRVD1|MAP_RESRVD2) /* Mask for type of mapping */
- #define MAP_FIXED	0x04		/* Interpret addr exactly */
-+#define MAP_RESRVD1	0x08		/* reserved for 3rd bit of MAP_TYPE */
- #define MAP_ANONYMOUS	0x10		/* don't use a file */
-+#define MAP_RESRVD2	0x20		/* reserved for 4th bit of MAP_TYPE */
-
-> But I don't have an HPUX machine around
-> to check that HP didn't use that bit for something else.
-
-We completely dropped support for HPUX binaries, so it's not relvant any longer. 
-
-> It'd probably help to cc the linux-parisc mailing list when asking
-> questions about PARISC, eh?
-
-Yes, please.
-
-Helge
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> ---
+> v2:
+>   Rebase
+> v1:
+>   Initial submission
+> 
+>  Documentation/sysctl/kernel.txt | 21 ++++++++++++++++++
+>  include/linux/capability.h      |  3 +++
+>  kernel/capability.c             | 47 +++++++++++++++++++++++++++++++++++++++++
+>  kernel/sysctl.c                 |  5 +++++
+>  4 files changed, 76 insertions(+)
+> 
+> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
+> index 694968c7523c..a1d39dbae847 100644
+> --- a/Documentation/sysctl/kernel.txt
+> +++ b/Documentation/sysctl/kernel.txt
+> @@ -25,6 +25,7 @@ show up in /proc/sys/kernel:
+>  - bootloader_version	     [ X86 only ]
+>  - callhome		     [ S390 only ]
+>  - cap_last_cap
+> +- controlled_userns_caps_whitelist
+>  - core_pattern
+>  - core_pipe_limit
+>  - core_uses_pid
+> @@ -187,6 +188,26 @@ CAP_LAST_CAP from the kernel.
+>  
+>  ==============================================================
+>  
+> +controlled_userns_caps_whitelist
+> +
+> +Capability mask that is whitelisted for "controlled" user namespaces.
+> +Any capability that is missing from this mask will not be allowed to
+> +any process that is attached to a controlled-userns. e.g. if CAP_NET_RAW
+> +is not part of this mask, then processes running inside any controlled
+> +userns's will not be allowed to perform action that needs CAP_NET_RAW
+> +capability. However, processes that are attached to a parent user-ns
+> +hierarchy that is *not* controlled and has CAP_NET_RAW can continue
+> +performing those actions. User-namespaces are marked "controlled" at
+> +the time of their creation based on the capabilities of the creator.
+> +A process that does not have CAP_SYS_ADMIN will create user-namespaces
+> +that are controlled.
+> +
+> +The value is expressed as two comma separated hex words (u32). This
+> +sysctl is avaialble in init-ns and users with CAP_SYS_ADMIN in init-ns
+> +are allowed to make changes.
+> +
+> +==============================================================
+> +
+>  core_pattern:
+>  
+>  core_pattern is used to specify a core dumpfile pattern name.
+> diff --git a/include/linux/capability.h b/include/linux/capability.h
+> index f640dcbc880c..7d79a4689625 100644
+> --- a/include/linux/capability.h
+> +++ b/include/linux/capability.h
+> @@ -14,6 +14,7 @@
+>  #define _LINUX_CAPABILITY_H
+>  
+>  #include <uapi/linux/capability.h>
+> +#include <linux/sysctl.h>
+>  
+>  
+>  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
+> @@ -248,6 +249,8 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
+>  
+>  /* audit system wants to get cap info from files as well */
+>  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+> +				 void __user *buff, size_t *lenp, loff_t *ppos);
+>  
+>  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
+>  
+> diff --git a/kernel/capability.c b/kernel/capability.c
+> index 1e1c0236f55b..4a859b7d4902 100644
+> --- a/kernel/capability.c
+> +++ b/kernel/capability.c
+> @@ -29,6 +29,8 @@ EXPORT_SYMBOL(__cap_empty_set);
+>  
+>  int file_caps_enabled = 1;
+>  
+> +kernel_cap_t controlled_userns_caps_whitelist = CAP_FULL_SET;
+> +
+>  static int __init file_caps_disable(char *str)
+>  {
+>  	file_caps_enabled = 0;
+> @@ -507,3 +509,48 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
+>  	rcu_read_unlock();
+>  	return (ret == 0);
+>  }
+> +
+> +/* Controlled-userns capabilities routines */
+> +#ifdef CONFIG_SYSCTL
+> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+> +				 void __user *buff, size_t *lenp, loff_t *ppos)
+> +{
+> +	DECLARE_BITMAP(caps_bitmap, CAP_LAST_CAP);
+> +	struct ctl_table caps_table;
+> +	char tbuf[NAME_MAX];
+> +	int ret;
+> +
+> +	ret = bitmap_from_u32array(caps_bitmap, CAP_LAST_CAP,
+> +				   controlled_userns_caps_whitelist.cap,
+> +				   _KERNEL_CAPABILITY_U32S);
+> +	if (ret != CAP_LAST_CAP)
+> +		return -1;
+> +
+> +	scnprintf(tbuf, NAME_MAX, "%*pb", CAP_LAST_CAP, caps_bitmap);
+> +
+> +	caps_table.data = tbuf;
+> +	caps_table.maxlen = NAME_MAX;
+> +	caps_table.mode = table->mode;
+> +	ret = proc_dostring(&caps_table, write, buff, lenp, ppos);
+> +	if (ret)
+> +		return ret;
+> +	if (write) {
+> +		kernel_cap_t tmp;
+> +
+> +		if (!capable(CAP_SYS_ADMIN))
+> +			return -EPERM;
+> +
+> +		ret = bitmap_parse_user(buff, *lenp, caps_bitmap, CAP_LAST_CAP);
+> +		if (ret)
+> +			return ret;
+> +
+> +		ret = bitmap_to_u32array(tmp.cap, _KERNEL_CAPABILITY_U32S,
+> +					 caps_bitmap, CAP_LAST_CAP);
+> +		if (ret != CAP_LAST_CAP)
+> +			return -1;
+> +
+> +		controlled_userns_caps_whitelist = tmp;
+> +	}
+> +	return 0;
+> +}
+> +#endif /* CONFIG_SYSCTL */
+> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+> index d9c31bc2eaea..25c3f7b76ece 100644
+> --- a/kernel/sysctl.c
+> +++ b/kernel/sysctl.c
+> @@ -1226,6 +1226,11 @@ static struct ctl_table kern_table[] = {
+>  		.extra2		= &one,
+>  	},
+>  #endif
+> +	{
+> +		.procname	= "controlled_userns_caps_whitelist",
+> +		.mode		= 0644,
+> +		.proc_handler	= proc_douserns_caps_whitelist,
+> +	},
+>  	{ }
+>  };
+>  
+> -- 
+> 2.15.0.448.gf294e3d99a-goog
