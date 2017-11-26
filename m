@@ -1,181 +1,364 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCHv2 2/2] userns: control capabilities of some user
- namespaces
-Date: Sun, 26 Nov 2017 00:40:37 -0600
-Message-ID: <20171126064037.GB30279@mail.hallyn.com>
-References: <20171110053757.21170-1-mahesh@bandewar.net>
+From: Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH] mm: disable `vm.max_map_count' sysctl limit
+Date: Sun, 26 Nov 2017 17:09:32 +0100
+Message-ID: <23066.59196.909026.689706@gargle.gargle.HOWL>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20171110053757.21170-1-mahesh@bandewar.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mahesh Bandewar <mahesh@bandewar.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <maheshb@google.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Quoting Mahesh Bandewar (mahesh@bandewar.net):
-> From: Mahesh Bandewar <maheshb@google.com>
-> 
-> With this new notion of "controlled" user-namespaces, the controlled
-> user-namespaces are marked at the time of their creation while the
-> capabilities of processes that belong to them are controlled using the
-> global mask.
-> 
-> Init-user-ns is always uncontrolled and a process that has SYS_ADMIN
-> that belongs to uncontrolled user-ns can create another (child) user-
-> namespace that is uncontrolled. Any other process (that either does
-> not have SYS_ADMIN or belongs to a controlled user-ns) can only
-> create a user-ns that is controlled.
-> 
-> global-capability-whitelist (controlled_userns_caps_whitelist) is used
-> at the capability check-time and keeps the semantics for the processes
-> that belong to uncontrolled user-ns as it is. Processes that belong to
-> controlled user-ns however are subjected to different checks-
-> 
->    (a) if the capability in question is controlled and process belongs
->        to controlled user-ns, then it's always denied.
->    (b) if the capability in question is NOT controlled then fall back
->        to the traditional check.
-> 
-> Signed-off-by: Mahesh Bandewar <maheshb@google.com>
+The `vm.max_map_count' sysctl limit is IMO useless and confusing, so
+this patch disables it.
 
-Acked-by: Serge Hallyn <serge@hallyn.com>
+- Old ELF had a limit of 64K segments, making core dumps from processes
+  with more mappings than that problematic, but that was fixed in March
+  2010 ("elf coredump: add extended numbering support").
 
-Although a few comment addition requests below:
+- There are no internal data structures sized by this limit, making it
+  entirely artificial.
 
-> ---
-> v2:
->   Don't recalculate user-ns flags for every setns() call.
-> v1:
->   Initial submission.
-> 
->  include/linux/capability.h     |  1 +
->  include/linux/user_namespace.h | 20 ++++++++++++++++++++
->  kernel/capability.c            |  5 +++++
->  kernel/user_namespace.c        |  4 ++++
->  security/commoncap.c           |  8 ++++++++
->  5 files changed, 38 insertions(+)
-> 
-> diff --git a/include/linux/capability.h b/include/linux/capability.h
-> index 7d79a4689625..a1fd9e460379 100644
-> --- a/include/linux/capability.h
-> +++ b/include/linux/capability.h
-> @@ -251,6 +251,7 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
->  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
->  int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
->  				 void __user *buff, size_t *lenp, loff_t *ppos);
+- When viewed as a limit on memory consumption, it is ineffective since
+  the number of mappings does not correspond directly to the amount of
+  memory consumed, since each mapping is variable-length.
 
-Here and at the definition below, please add a comment explaining
-that a controlled cap is defined as not being in the sysctl.
+- Reaching the limit causes various memory management system calls to
+  fail with ENOMEM, which is a lie.  Combined with the unpredictability
+  of the number of mappings in a process, especially when non-trivial
+  memory management or heavy file mapping is used, it can be difficult
+  to reproduce these events and debug them.  It's also confusing to get
+  ENOMEM when you know you have lots of free RAM.
 
-> +bool is_capability_controlled(int cap);
->  
->  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
->  
-> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-> index 3fe714da7f5a..647f825c7b5f 100644
-> --- a/include/linux/user_namespace.h
-> +++ b/include/linux/user_namespace.h
-> @@ -23,6 +23,7 @@ struct uid_gid_map {	/* 64 bytes -- 1 cache line */
->  };
->  
->  #define USERNS_SETGROUPS_ALLOWED 1UL
-> +#define USERNS_CONTROLLED	 2UL
->  
->  #define USERNS_INIT_FLAGS USERNS_SETGROUPS_ALLOWED
->  
-> @@ -103,6 +104,16 @@ static inline void put_user_ns(struct user_namespace *ns)
->  		__put_user_ns(ns);
->  }
->  
+This limit was apparently introduced in the 2.1.80 kernel (first as a
+compile-time constant, later changed to a sysctl), but I haven't been
+able to find any description for it in Git or the LKML archives, so I
+don't know what the original motivation was.
 
-Please add a comment explaining that a controlled ns
-is one created by a user which did not have CAP_SYS_ADMIN
-(or descended from such an ns).
+I've kept the kernel tunable to not break the API towards user-space,
+but it's a no-op now.  Also the distinction between split_vma() and
+__split_vma() disappears, so they are merged.
 
-> +static inline bool is_user_ns_controlled(const struct user_namespace *ns)
-> +{
-> +	return ns->flags & USERNS_CONTROLLED;
-> +}
-> +
-> +static inline void mark_user_ns_controlled(struct user_namespace *ns)
-> +{
-> +	ns->flags |= USERNS_CONTROLLED;
-> +}
-> +
->  struct seq_operations;
->  extern const struct seq_operations proc_uid_seq_operations;
->  extern const struct seq_operations proc_gid_seq_operations;
-> @@ -161,6 +172,15 @@ static inline struct ns_common *ns_get_owner(struct ns_common *ns)
->  {
->  	return ERR_PTR(-EPERM);
->  }
-> +
-> +static inline bool is_user_ns_controlled(const struct user_namespace *ns)
-> +{
-> +	return false;
-> +}
-> +
-> +static inline void mark_user_ns_controlled(struct user_namespace *ns)
-> +{
-> +}
->  #endif
->  
->  #endif /* _LINUX_USER_H */
-> diff --git a/kernel/capability.c b/kernel/capability.c
-> index 4a859b7d4902..bffe249922de 100644
-> --- a/kernel/capability.c
-> +++ b/kernel/capability.c
-> @@ -511,6 +511,11 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
->  }
->  
->  /* Controlled-userns capabilities routines */
-> +bool is_capability_controlled(int cap)
-> +{
-> +	return !cap_raised(controlled_userns_caps_whitelist, cap);
-> +}
-> +
->  #ifdef CONFIG_SYSCTL
->  int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
->  				 void __user *buff, size_t *lenp, loff_t *ppos)
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index c490f1e4313b..600c7dcb9ff7 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -139,6 +139,10 @@ int create_user_ns(struct cred *new)
->  		goto fail_keyring;
->  
->  	set_cred_user_ns(new, ns);
-> +	if (!ns_capable(parent_ns, CAP_SYS_ADMIN) ||
-> +	    is_user_ns_controlled(parent_ns))
-> +		mark_user_ns_controlled(ns);
-> +
->  	return 0;
->  fail_keyring:
->  #ifdef CONFIG_PERSISTENT_KEYRINGS
-> diff --git a/security/commoncap.c b/security/commoncap.c
-> index fc46f5b85251..89103f16ac37 100644
-> --- a/security/commoncap.c
-> +++ b/security/commoncap.c
-> @@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
->  {
->  	struct user_namespace *ns = targ_ns;
->  
-> +	/* If the capability is controlled and user-ns that process
-> +	 * belongs-to is 'controlled' then return EPERM and no need
-> +	 * to check the user-ns hierarchy.
-> +	 */
-> +	if (is_user_ns_controlled(cred->user_ns) &&
-> +	    is_capability_controlled(cap))
-> +		return -EPERM;
+Tested on x86_64 with Fedora 26 user-space.  Also built an ARM NOMMU
+kernel to make sure NOMMU compiles and links cleanly.
 
-I'd be curious to see the performance impact on this on a regular
-workload (kernel build?) in a controlled ns.
+Signed-off-by: Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+---
+ Documentation/sysctl/vm.txt           | 17 +-------------
+ Documentation/vm/ksm.txt              |  4 ----
+ Documentation/vm/remap_file_pages.txt |  4 ----
+ fs/binfmt_elf.c                       |  4 ----
+ include/linux/mm.h                    | 23 -------------------
+ kernel/sysctl.c                       |  3 +++
+ mm/madvise.c                          | 12 ++--------
+ mm/mmap.c                             | 42 ++++++-----------------------------
+ mm/mremap.c                           |  7 ------
+ mm/nommu.c                            |  3 ---
+ mm/util.c                             |  1 -
+ 11 files changed, 13 insertions(+), 107 deletions(-)
 
-> +
->  	/* See if cred has the capability in the target user namespace
->  	 * by examining the target user namespace and all of the target
->  	 * user namespace's parents.
-> -- 
-> 2.15.0.448.gf294e3d99a-goog
+diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+index b920423f88cb..0fcb511d07e6 100644
+--- a/Documentation/sysctl/vm.txt
++++ b/Documentation/sysctl/vm.txt
+@@ -35,7 +35,7 @@ Currently, these files are in /proc/sys/vm:
+ - laptop_mode
+ - legacy_va_layout
+ - lowmem_reserve_ratio
+-- max_map_count
++- max_map_count (unused, kept for backwards compatibility)
+ - memory_failure_early_kill
+ - memory_failure_recovery
+ - min_free_kbytes
+@@ -400,21 +400,6 @@ The minimum value is 1 (1/1 -> 100%).
+ 
+ ==============================================================
+ 
+-max_map_count:
+-
+-This file contains the maximum number of memory map areas a process
+-may have. Memory map areas are used as a side-effect of calling
+-malloc, directly by mmap, mprotect, and madvise, and also when loading
+-shared libraries.
+-
+-While most applications need less than a thousand maps, certain
+-programs, particularly malloc debuggers, may consume lots of them,
+-e.g., up to one or two maps per allocation.
+-
+-The default value is 65536.
+-
+-=============================================================
+-
+ memory_failure_early_kill:
+ 
+ Control how to kill processes when uncorrected memory error (typically
+diff --git a/Documentation/vm/ksm.txt b/Documentation/vm/ksm.txt
+index 6686bd267dc9..4a917f88cb11 100644
+--- a/Documentation/vm/ksm.txt
++++ b/Documentation/vm/ksm.txt
+@@ -38,10 +38,6 @@ the range for whenever the KSM daemon is started; even if the range
+ cannot contain any pages which KSM could actually merge; even if
+ MADV_UNMERGEABLE is applied to a range which was never MADV_MERGEABLE.
+ 
+-If a region of memory must be split into at least one new MADV_MERGEABLE
+-or MADV_UNMERGEABLE region, the madvise may return ENOMEM if the process
+-will exceed vm.max_map_count (see Documentation/sysctl/vm.txt).
+-
+ Like other madvise calls, they are intended for use on mapped areas of
+ the user address space: they will report ENOMEM if the specified range
+ includes unmapped gaps (though working on the intervening mapped areas),
+diff --git a/Documentation/vm/remap_file_pages.txt b/Documentation/vm/remap_file_pages.txt
+index f609142f406a..85985a89f05d 100644
+--- a/Documentation/vm/remap_file_pages.txt
++++ b/Documentation/vm/remap_file_pages.txt
+@@ -21,7 +21,3 @@ systems are widely available.
+ The syscall is deprecated and replaced it with an emulation now. The
+ emulation creates new VMAs instead of nonlinear mappings. It's going to
+ work slower for rare users of remap_file_pages() but ABI is preserved.
+-
+-One side effect of emulation (apart from performance) is that user can hit
+-vm.max_map_count limit more easily due to additional VMAs. See comment for
+-DEFAULT_MAX_MAP_COUNT for more details on the limit.
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 83732fef510d..8e870b6e4ad9 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -2227,10 +2227,6 @@ static int elf_core_dump(struct coredump_params *cprm)
+ 	elf = kmalloc(sizeof(*elf), GFP_KERNEL);
+ 	if (!elf)
+ 		goto out;
+-	/*
+-	 * The number of segs are recored into ELF header as 16bit value.
+-	 * Please check DEFAULT_MAX_MAP_COUNT definition when you modify here.
+-	 */
+ 	segs = current->mm->map_count;
+ 	segs += elf_core_extra_phdrs();
+ 
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index ee073146aaa7..cf545264eb8b 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -104,27 +104,6 @@ extern int mmap_rnd_compat_bits __read_mostly;
+ #define mm_zero_struct_page(pp)  ((void)memset((pp), 0, sizeof(struct page)))
+ #endif
+ 
+-/*
+- * Default maximum number of active map areas, this limits the number of vmas
+- * per mm struct. Users can overwrite this number by sysctl but there is a
+- * problem.
+- *
+- * When a program's coredump is generated as ELF format, a section is created
+- * per a vma. In ELF, the number of sections is represented in unsigned short.
+- * This means the number of sections should be smaller than 65535 at coredump.
+- * Because the kernel adds some informative sections to a image of program at
+- * generating coredump, we need some margin. The number of extra sections is
+- * 1-3 now and depends on arch. We use "5" as safe margin, here.
+- *
+- * ELF extended numbering allows more than 65535 sections, so 16-bit bound is
+- * not a hard limit any more. Although some userspace tools can be surprised by
+- * that.
+- */
+-#define MAPCOUNT_ELF_CORE_MARGIN	(5)
+-#define DEFAULT_MAX_MAP_COUNT	(USHRT_MAX - MAPCOUNT_ELF_CORE_MARGIN)
+-
+-extern int sysctl_max_map_count;
+-
+ extern unsigned long sysctl_user_reserve_kbytes;
+ extern unsigned long sysctl_admin_reserve_kbytes;
+ 
+@@ -2134,8 +2113,6 @@ extern struct vm_area_struct *vma_merge(struct mm_struct *,
+ 	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+ 	struct mempolicy *, struct vm_userfaultfd_ctx);
+ extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
+-extern int __split_vma(struct mm_struct *, struct vm_area_struct *,
+-	unsigned long addr, int new_below);
+ extern int split_vma(struct mm_struct *, struct vm_area_struct *,
+ 	unsigned long addr, int new_below);
+ extern int insert_vm_struct(struct mm_struct *, struct vm_area_struct *);
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 557d46728577..caced68ff0d0 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -110,6 +110,9 @@ extern int pid_max_min, pid_max_max;
+ extern int percpu_pagelist_fraction;
+ extern int latencytop_enabled;
+ extern unsigned int sysctl_nr_open_min, sysctl_nr_open_max;
++#ifdef CONFIG_MMU
++static int sysctl_max_map_count = 65530; /* obsolete, kept for backwards compatibility */
++#endif
+ #ifndef CONFIG_MMU
+ extern int sysctl_nr_trim_pages;
+ #endif
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 375cf32087e4..f63834f59ca7 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -147,11 +147,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
+ 	*prev = vma;
+ 
+ 	if (start != vma->vm_start) {
+-		if (unlikely(mm->map_count >= sysctl_max_map_count)) {
+-			error = -ENOMEM;
+-			goto out;
+-		}
+-		error = __split_vma(mm, vma, start, 1);
++		error = split_vma(mm, vma, start, 1);
+ 		if (error) {
+ 			/*
+ 			 * madvise() returns EAGAIN if kernel resources, such as
+@@ -164,11 +160,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
+ 	}
+ 
+ 	if (end != vma->vm_end) {
+-		if (unlikely(mm->map_count >= sysctl_max_map_count)) {
+-			error = -ENOMEM;
+-			goto out;
+-		}
+-		error = __split_vma(mm, vma, end, 0);
++		error = split_vma(mm, vma, end, 0);
+ 		if (error) {
+ 			/*
+ 			 * madvise() returns EAGAIN if kernel resources, such as
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 924839fac0e6..e821d9c4395d 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1354,10 +1354,6 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	if ((pgoff + (len >> PAGE_SHIFT)) < pgoff)
+ 		return -EOVERFLOW;
+ 
+-	/* Too many mappings? */
+-	if (mm->map_count > sysctl_max_map_count)
+-		return -ENOMEM;
+-
+ 	/* Obtain the address to map to. we verify (or select) it and ensure
+ 	 * that it represents a valid section of the address space.
+ 	 */
+@@ -2546,11 +2542,11 @@ detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
+ }
+ 
+ /*
+- * __split_vma() bypasses sysctl_max_map_count checking.  We use this where it
+- * has already been checked or doesn't make sense to fail.
++ * Split a vma into two pieces at address 'addr', a new vma is allocated
++ * either for the first part or the tail.
+  */
+-int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+-		unsigned long addr, int new_below)
++int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
++	      unsigned long addr, int new_below)
+ {
+ 	struct vm_area_struct *new;
+ 	int err;
+@@ -2612,19 +2608,6 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+ 	return err;
+ }
+ 
+-/*
+- * Split a vma into two pieces at address 'addr', a new vma is allocated
+- * either for the first part or the tail.
+- */
+-int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+-	      unsigned long addr, int new_below)
+-{
+-	if (mm->map_count >= sysctl_max_map_count)
+-		return -ENOMEM;
+-
+-	return __split_vma(mm, vma, addr, new_below);
+-}
+-
+ /* Munmap is split into 2 main parts -- this part which finds
+  * what needs doing, and the areas themselves, which do the
+  * work.  This now handles partial unmappings.
+@@ -2665,15 +2648,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
+ 	if (start > vma->vm_start) {
+ 		int error;
+ 
+-		/*
+-		 * Make sure that map_count on return from munmap() will
+-		 * not exceed its limit; but let map_count go just above
+-		 * its limit temporarily, to help free resources as expected.
+-		 */
+-		if (end < vma->vm_end && mm->map_count >= sysctl_max_map_count)
+-			return -ENOMEM;
+-
+-		error = __split_vma(mm, vma, start, 0);
++		error = split_vma(mm, vma, start, 0);
+ 		if (error)
+ 			return error;
+ 		prev = vma;
+@@ -2682,7 +2657,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
+ 	/* Does it split the last one? */
+ 	last = find_vma(mm, end);
+ 	if (last && end > last->vm_start) {
+-		int error = __split_vma(mm, last, end, 1);
++		int error = split_vma(mm, last, end, 1);
+ 		if (error)
+ 			return error;
+ 	}
+@@ -2694,7 +2669,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
+ 		 * will remain splitted, but userland will get a
+ 		 * highly unexpected error anyway. This is no
+ 		 * different than the case where the first of the two
+-		 * __split_vma fails, but we don't undo the first
++		 * split_vma fails, but we don't undo the first
+ 		 * split, despite we could. This is unlikely enough
+ 		 * failure that it's not worth optimizing it for.
+ 		 */
+@@ -2915,9 +2890,6 @@ static int do_brk_flags(unsigned long addr, unsigned long request, unsigned long
+ 	if (!may_expand_vm(mm, flags, len >> PAGE_SHIFT))
+ 		return -ENOMEM;
+ 
+-	if (mm->map_count > sysctl_max_map_count)
+-		return -ENOMEM;
+-
+ 	if (security_vm_enough_memory_mm(mm, len >> PAGE_SHIFT))
+ 		return -ENOMEM;
+ 
+diff --git a/mm/mremap.c b/mm/mremap.c
+index 049470aa1e3e..5544dd3e6e10 100644
+--- a/mm/mremap.c
++++ b/mm/mremap.c
+@@ -278,13 +278,6 @@ static unsigned long move_vma(struct vm_area_struct *vma,
+ 	bool need_rmap_locks;
+ 
+ 	/*
+-	 * We'd prefer to avoid failure later on in do_munmap:
+-	 * which may split one vma into three before unmapping.
+-	 */
+-	if (mm->map_count >= sysctl_max_map_count - 3)
+-		return -ENOMEM;
+-
+-	/*
+ 	 * Advise KSM to break any KSM pages in the area to be moved:
+ 	 * it would be confusing if they were to turn up at the new
+ 	 * location, where they happen to coincide with different KSM
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 17c00d93de2e..0f6d37be4797 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1487,9 +1487,6 @@ int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+ 	if (vma->vm_file)
+ 		return -ENOMEM;
+ 
+-	if (mm->map_count >= sysctl_max_map_count)
+-		return -ENOMEM;
+-
+ 	region = kmem_cache_alloc(vm_region_jar, GFP_KERNEL);
+ 	if (!region)
+ 		return -ENOMEM;
+diff --git a/mm/util.c b/mm/util.c
+index 34e57fae959d..7e757686f186 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -516,7 +516,6 @@ EXPORT_SYMBOL_GPL(__page_mapcount);
+ int sysctl_overcommit_memory __read_mostly = OVERCOMMIT_GUESS;
+ int sysctl_overcommit_ratio __read_mostly = 50;
+ unsigned long sysctl_overcommit_kbytes __read_mostly;
+-int sysctl_max_map_count __read_mostly = DEFAULT_MAX_MAP_COUNT;
+ unsigned long sysctl_user_reserve_kbytes __read_mostly = 1UL << 17; /* 128MB */
+ unsigned long sysctl_admin_reserve_kbytes __read_mostly = 1UL << 13; /* 8MB */
+ 
+-- 
+2.13.6
