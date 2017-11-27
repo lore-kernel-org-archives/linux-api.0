@@ -1,300 +1,169 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v3 01/21] docs: fpga: add a document for Intel FPGA driver overview
-Date: Mon, 27 Nov 2017 14:42:08 +0800
-Message-ID: <1511764948-20972-2-git-send-email-hao.wu@intel.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1511764948-20972-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v3 00/21] Intel FPGA Device Drivers
+Date: Mon, 27 Nov 2017 14:42:07 +0800
+Message-ID: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-Add a document for Intel FPGA driver overview.
+Hi All,
 
-Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-----
-v2: added FME fpga-mgr/bridge/region platform driver to driver organization.
-    updated open discussion per current implementation.
-    fixed some typos.
-v3: use FPGA base region as container device instead of fpga-dev class.
-    split common enumeration code from pcie driver to functions exposed by
-    device feature list framework.
-    update FME performance reporting which supports both integrated (iperf/)
-    and discrete (dperf/) FPGA solutions.
----
- Documentation/fpga/intel-fpga.txt | 261 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 261 insertions(+)
+Here is v3 patch-series adding drivers for Intel FPGA devices.
+
+The Intel FPGA driver provides interfaces for userspace applications to
+configure, enumerate, open, and access FPGA accelerators on platforms
+equipped with Intel(R) PCIe based FPGA solutions and enables system
+level management functions such as FPGA partial reconfiguration, power
+management and virtualization. It also provides a common framework to
+support FPGA devices which implement Device Feature List (DFL) and feature
+devices under DFL for better code reuse.
+
+This patch series only adds the basic functions for FPGA accelerators and
+partial reconfiguration. Patches for more functions, e.g power management
+and virtualization, will be submitted after this series gets reviewed.
+
+Patch 1: add a document for Intel FPGA driver overview, including the HW
+architecture, driver organization, device enumeration, virtualization and
+opens.
+
+Patch 2: add region_id for fpga_image_info data structure, which allows
+driver to pass region id information to fpga-mgr for FPGA reconfiguration
+function. (Used by Patch 13)
+
+Patch 3: add a 'status' sysfs interface to fpga-mgr class, it reflects
+the status of the fpga-mgr including reconfiguration errors. (Used by
+Patch 14)
+
+Patch 4-7: add FPGA device feature list support, it provides common
+enumeration interfaces which creates container device (FPGA base region)
+and all feature devices by walking through all the 'Device Feature Lists'
+provided low level drivers.
+
+Patch 8-9: implement Intel FPGA PCIe device driver. It locates all 'Device
+Feature Lists' in PCIe device memory and invokes common interfaces from
+above device feature list framework to finish the enumeration.
+
+Patch 10-13: implement FPGA Management Engine (FME) driver. It's a
+platform driver matching with the FME platform device created by above
+device feature list framework during enumeration. Sysfs and device file
+ioctls are exposed as user interfaces to allow partial reconfiguration
+to Accelerated Function Units (AFUs) from user space applications.
+
+Patch 14-16: implement FPGA manager/bridge/region platform drivers for
+Intel FPGA Management Engine (FME). These platform drivers match with
+platform devices created by above FME driver, they use the generic
+fpga-mgr/bridge/region class infrastructure to implement FPGA partial
+reconfiguration function.
+
+Patch 17-21: implement FPGA Accelerated Function Unit (AFU) driver.
+It's a platform driver matching with AFU platform device created by above
+device feature list framework during enumeration. It provides user
+interfaces to expose the AFU MMIO region, map/unmap dma buffer, and
+control the port which AFU connects to.
+
+Changes from v2:
+- Split common enumeration code from pcie driver to a separated module
+  which for device feature list support.
+- Drop fpga-dev class and switch to use fpga base region as container.
+- Update the intel-fpga.txt documentation for new driver organization.
+- Rename feature device drivers for future code reuse.
+- Rebase code due to fpga APIs changes
+- replace bitfields with marco and shift.
+- fix typos, checkpatch issue and other comments.
+
+Changes from v1:
+
+- Use GPLv2 license instead of Dual BSD/GPL.
+- Move the code to drivers/fpga folder.
+- Update the intel-fpga.txt documentation for new driver organization.
+- Add documentation for new sysfs interfaces.
+- Switch to use common fpga-region interface for partial reconfiguration
+  (PR) function in FME. It creates fpga-region/fpga-mgr/fpga-bridge
+  platform devices and leave the implementation to their platform drivers.
+- Add platform drivers for FME fpga-mgr/bridge/region platform devices.
+- Fix kbuild warnings, typos and other comments.
+
+This patch series depends on the below patchset from Alan Tull.
+[PATCH v2 0/5] fpga: don't use drvdata in common fpga code[1]
+
+[1] https://marc.info/?l=linux-fpga&m=151077942606263&w=2
+
+Kang Luwei (3):
+  fpga: dfl: add FPGA Management Engine driver basic framework
+  fpga: dfl: fme: add header sub feature support
+  fpga: dfl: fme: add partial reconfiguration sub feature support
+
+Wu Hao (15):
+  docs: fpga: add a document for Intel FPGA driver overview
+  fpga: mgr: add region_id to fpga_image_info
+  fpga: mgr: add status for fpga-manager
+  fpga: add device feature list support
+  fpga: dfl: add chardev support for feature devices
+  fpga: dfl: adds fpga_cdev_find_port
+  fpga: intel-dfl-pci: add enumeration for feature devices
+  fpga: dfl: fme: add FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
+    support
+  fpga: dfl: add fpga manager platform driver for FME
+  fpga: dfl: add fpga bridge platform driver for FME
+  fpga: dfl: add fpga region platform driver for FME
+  fpga: dfl: add FPGA Accelerated Function Unit driver basic framework
+  fpga: dfl: afu: add header sub feature support
+  fpga: dfl: afu: add FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
+    support
+  fpga: dfl: afu: add FPGA_PORT_DMA_MAP/UNMAP ioctls support
+
+Xiao Guangrong (2):
+  fpga: dfl: add feature device infrastructure
+  fpga: dfl: afu: add user afu sub feature support
+
+Zhang Yi (1):
+  fpga: add Intel FPGA DFL PCIe device
+
+ Documentation/ABI/testing/sysfs-class-fpga-manager |   10 +
+ .../ABI/testing/sysfs-platform-fpga-dfl-afu        |   16 +
+ .../ABI/testing/sysfs-platform-fpga-dfl-fme        |   21 +
+ .../ABI/testing/sysfs-platform-fpga-dfl-fme-mgr    |    8 +
+ Documentation/fpga/intel-fpga.txt                  |  261 +++++
+ Documentation/ioctl/ioctl-number.txt               |    1 +
+ drivers/fpga/Kconfig                               |   71 ++
+ drivers/fpga/Makefile                              |   14 +
+ drivers/fpga/dfl-afu-dma-region.c                  |  465 +++++++++
+ drivers/fpga/dfl-afu-main.c                        |  478 +++++++++
+ drivers/fpga/dfl-afu-region.c                      |  127 +++
+ drivers/fpga/dfl-afu.h                             |   72 ++
+ drivers/fpga/dfl-fme-main.c                        |  275 +++++
+ drivers/fpga/dfl-fme-pr.c                          |  492 +++++++++
+ drivers/fpga/dfl-fme.h                             |   57 ++
+ drivers/fpga/fpga-dfl-fme-br.c                     |   87 ++
+ drivers/fpga/fpga-dfl-fme-mgr.c                    |  318 ++++++
+ drivers/fpga/fpga-dfl-fme-region.c                 |   92 ++
+ drivers/fpga/fpga-dfl.c                            | 1068 ++++++++++++++++++++
+ drivers/fpga/fpga-dfl.h                            |  511 ++++++++++
+ drivers/fpga/fpga-mgr.c                            |   28 +
+ drivers/fpga/intel-dfl-pci.c                       |  324 ++++++
+ include/linux/fpga/fpga-mgr.h                      |   19 +
+ include/uapi/linux/fpga-dfl.h                      |  178 ++++
+ 24 files changed, 4993 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme-mgr
  create mode 100644 Documentation/fpga/intel-fpga.txt
+ create mode 100644 drivers/fpga/dfl-afu-dma-region.c
+ create mode 100644 drivers/fpga/dfl-afu-main.c
+ create mode 100644 drivers/fpga/dfl-afu-region.c
+ create mode 100644 drivers/fpga/dfl-afu.h
+ create mode 100644 drivers/fpga/dfl-fme-main.c
+ create mode 100644 drivers/fpga/dfl-fme-pr.c
+ create mode 100644 drivers/fpga/dfl-fme.h
+ create mode 100644 drivers/fpga/fpga-dfl-fme-br.c
+ create mode 100644 drivers/fpga/fpga-dfl-fme-mgr.c
+ create mode 100644 drivers/fpga/fpga-dfl-fme-region.c
+ create mode 100644 drivers/fpga/fpga-dfl.c
+ create mode 100644 drivers/fpga/fpga-dfl.h
+ create mode 100644 drivers/fpga/intel-dfl-pci.c
+ create mode 100644 include/uapi/linux/fpga-dfl.h
 
-diff --git a/Documentation/fpga/intel-fpga.txt b/Documentation/fpga/intel-fpga.txt
-new file mode 100644
-index 0000000..0754733
---- /dev/null
-+++ b/Documentation/fpga/intel-fpga.txt
-@@ -0,0 +1,261 @@
-+===============================================================================
-+                    Intel FPGA driver Overview
-+-------------------------------------------------------------------------------
-+                Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-+                Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-+                Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-+
-+The Intel FPGA driver provides interfaces for userspace applications to
-+configure, enumerate, open, and access FPGA accelerators on platforms equipped
-+with Intel(R) FPGA PCIe based solutions and enables system level management
-+functions such as FPGA reconfiguration, power management, and virtualization.
-+
-+HW Architecture
-+===============
-+From the OS's point of view, the FPGA hardware appears as a regular PCIe device.
-+The FPGA device memory is organized using a predefined data structure (Device
-+Feature List). Features supported by the particular FPGA device are exposed
-+through these data structures, as illustrated below:
-+
-+  +-------------------------------+  +-------------+
-+  |              PF               |  |     VF      |
-+  +-------------------------------+  +-------------+
-+      ^            ^         ^              ^
-+      |            |         |              |
-++-----|------------|---------|--------------|-------+
-+|     |            |         |              |       |
-+|  +-----+     +-------+ +-------+      +-------+   |
-+|  | FME |     | Port0 | | Port1 |      | Port2 |   |
-+|  +-----+     +-------+ +-------+      +-------+   |
-+|                  ^         ^              ^       |
-+|                  |         |              |       |
-+|              +-------+ +------+       +-------+   |
-+|              |  AFU  | |  AFU |       |  AFU  |   |
-+|              +-------+ +------+       +-------+   |
-+|                                                   |
-+|                 FPGA PCIe Device                  |
-++---------------------------------------------------+
-+
-+The driver supports PCIe SR-IOV to create virtual functions (VFs) which can be
-+used to assign individual accelerators to virtual machines.
-+
-+FME (FPGA Management Engine)
-+============================
-+The FPGA Management Engine performs power and thermal management, error
-+reporting, reconfiguration, performance reporting for integrated and discrete
-+solution, and other infrastructure functions. Each FPGA has one FME, which is
-+always accessed through the physical function (PF).
-+
-+User-space applications can acquire exclusive access to the FME using open(),
-+and release it using close().
-+
-+The following functions are exposed through ioctls:
-+
-+	Get driver API version (FPGA_GET_API_VERSION)
-+	Check for extensions (FPGA_CHECK_EXTENSION)
-+	Assign port to PF (FPGA_FME_PORT_ASSIGN)
-+	Release port from PF (FPGA_FME_PORT_RELEASE)
-+	Program bitstream (FPGA_FME_PORT_PR)
-+
-+More functions are exposed through sysfs
-+(/sys/class/fpga_region/regionX/fpga-dfl-fme.n/):
-+
-+	Read bitstream ID (bitstream_id)
-+	Read bitstream metadata (bitstream_metadata)
-+	Read number of ports (ports_num)
-+	Read socket ID (socket_id)
-+	Read performance counters (iperf/ and dperf/)
-+	Power management (power_mgmt/)
-+	Thermal management (thermal_mgmt/)
-+	Error reporting (errors/)
-+
-+PORT
-+====
-+A port represents the interface between the static FPGA fabric (the "blue
-+bitstream") and a partially reconfigurable region containing an AFU (the "green
-+bitstream"). It controls the communication from SW to the accelerator and
-+exposes features such as reset and debug.
-+
-+A PCIe device may have several ports and each port can be released from PF by
-+FPGA_FME_PORT_RELEASE ioctl on FME, and exposed through a VF via PCIe sriov
-+sysfs interface.
-+
-+AFU
-+===
-+An AFU is attached to a port and exposes a 256k MMIO region to be used for
-+accelerator-specific control registers.
-+
-+User-space applications can acquire exclusive access to an AFU attached to a
-+port by using open() on the port device node, and release it using close().
-+
-+The following functions are exposed through ioctls:
-+
-+	Get driver API version (FPGA_GET_API_VERSION)
-+	Check for extensions (FPGA_CHECK_EXTENSION)
-+	Get port info (FPGA_PORT_GET_INFO)
-+	Get MMIO region info (FPGA_PORT_GET_REGION_INFO)
-+	Map DMA buffer (FPGA_PORT_DMA_MAP)
-+	Unmap DMA buffer (FPGA_PORT_DMA_UNMAP)
-+	Reset AFU (FPGA_PORT_RESET)
-+	Enable UMsg (FPGA_PORT_UMSG_ENABLE)
-+	Disable UMsg (FPGA_PORT_UMSG_DISABLE)
-+	Set UMsg mode (FPGA_PORT_UMSG_SET_MODE)
-+	Set UMsg base address (FPGA_PORT_UMSG_SET_BASE_ADDR)
-+
-+User-space applications can also mmap() accelerator MMIO regions.
-+
-+More functions are exposed through sysfs:
-+(/sys/class/fpga_region/<regionX>/<fpga-dfl-port.m>/):
-+
-+	Read Accelerator GUID (afu_id)
-+	Error reporting (errors/)
-+
-+Partial Reconfiguration
-+=======================
-+As mentioned above, accelerators can be reconfigured through partial
-+reconfiguration of a green bitstream file (GBS). The green bitstream must have
-+been generated for the exact blue bitstream and targeted reconfigurable region
-+(port) of the FPGA; otherwise, the reconfiguration operation will fail and
-+possibly cause system instability. This compatibility can be checked by
-+comparing the interface ID noted in the GBS header against the interface ID
-+exposed by the FME through sysfs (see above). This check is usually done by
-+user-space before calling the reconfiguration IOCTL.
-+
-+FPGA virtualization
-+===================
-+To enable accessing an accelerator from applications running in a VM, the
-+respective AFU's port needs to be assigned to a VF using the following steps:
-+
-+ a) The PF owns all AFU ports by default. Any port that needs to be reassigned
-+ to a VF must first be released through the FPGA_FME_PORT_RELEASE ioctl on the
-+ FME device.
-+
-+ b) Once N ports are released from PF, then user can use command below to
-+ enable SRIOV and VFs. Each VF owns only one Port with AFU.
-+
-+ echo N > $PCI_DEVICE_PATH/sriov_numvfs
-+
-+ c) Pass through the VFs to VMs
-+
-+ d) The AFU under VF is accessible from applications in VM (using the same
-+ driver inside the VF).
-+
-+Note that an FME can't be assigned to a VF, thus PR and other management
-+functions are only available via the PF.
-+
-+
-+Driver organization
-+===================
-+
-+  +-------++------++------+             |
-+  | FME   || FME  || FME  |             |
-+  | FPGA  || FPGA || FPGA |             |
-+  |Manager||Bridge||Region|             |
-+  +-------++------++------+             |
-+  +-----------------------+  +--------+ |             +--------+
-+  |          FME          |  |  AFU   | |             |  AFU   |
-+  |         Module        |  | Module | |             | Module |
-+  +-----------------------+  +--------+ |             +--------+
-+        +-----------------------+       |       +-----------------------+
-+        | FPGA Container Device |       |       | FPGA Container Device |
-+        |  (FPGA Base Region)   |       |       |  (FPGA Base Region)   |
-+        +-----------------------+       |       +-----------------------+
-+          +------------------+          |         +------------------+
-+          | FPGA PCIE Module |          | Virtual | FPGA PCIE Module |
-+          +------------------+   Host   | Machine +------------------+
-+ -------------------------------------- | ------------------------------
-+           +---------------+            |          +---------------+
-+           | PCI PF Device |            |          | PCI VF Device |
-+           +---------------+            |          +---------------+
-+
-+The FPGA devices appear as regular PCIe devices; thus, the FPGA PCIe device
-+driver is always loaded first once a FPGA PCIE PF or VF device is detected. This
-+driver plays an infrastructural role in the driver architecture.  It:
-+
-+	a) locates the Device Feature Lists in PCIE device BAR memory, handles
-+	   them and related resources to common interfaces from DFL framework
-+	   for enumeration.
-+	b) supports SRIOV.
-+
-+The feature device infrastructure provides common interfaces to create container
-+device (FPGA base region), discover feature devices and their sub features from
-+the given Device Feature Lists, and create platform devices for feature devices
-+with related resources under the container device. It also abstracts operations
-+for sub features and exposes common interfaces to feature device drivers.
-+
-+The FPGA Management Engine (FME) driver is a platform driver which is loaded
-+automatically after FME platform device creation from the PCIE driver. It
-+provides the key features for FPGA management, including:
-+
-+	a) Power and thermal management, error reporting, performance reporting
-+	   and other infrastructure functions. Users can access these functions
-+	   via sysfs interfaces exposed by FME driver.
-+	b) Partial Reconfiguration. The FME driver creates FPGA manager, FPGA
-+	   bridges and FPGA regions during PR sub feature initialization; Once
-+	   it receives an FPGA_FME_PORT_PR ioctl from user, it invokes the
-+	   common interface function from FPGA Region to complete the partial
-+	   reconfiguration of the bitstream to the given port.
-+	c) Port management for virtualization. The FME driver introduces two
-+	   ioctls, FPGA_FME_PORT_RELEASE (releases given port from PF) and
-+	   FPGA_FME_PORT_ASSIGN (assigns the port back to PF). Once the port is
-+	   released from the PF, it can be assigned to the VF through the SRIOV
-+	   interfaces provided by PCIE driver. (Refer to "FPGA virtualization"
-+	   for more details).
-+
-+Similar to the the FME driver, the FPGA Accelerated Function Unit (AFU) driver
-+is probed once the AFU platform device is created. The main function of this
-+module is to provide an interface for userspace applications to access the
-+individual accelerators, including basic reset control on port, AFU MMIO region
-+export, dma buffer mapping service, UMsg notification, and remote debug
-+functions (see above).
-+
-+
-+Device enumeration
-+==================
-+This section introduces how applications enumerate the fpga device from
-+the sysfs hierarchy under /sys/class/fpga_region.
-+
-+In the example below, two Intel(R) FPGA devices are installed in the host. Each
-+fpga device has one FME and two ports (AFUs).
-+
-+FPGA regions are created under /sys/class/fpga_region/
-+
-+	/sys/class/fpga_region/region0
-+	/sys/class/fpga_region/region1
-+	/sys/class/fpga_region/region2
-+	...
-+
-+Application needs to search each regionX folder, if feature device is found,
-+(e.g "fpga-dfl-port.n" or "fpga-dfl-fme.m" is found), then it's the base
-+fpga region which represents the FPGA device.
-+
-+Each base region has one FME and two ports (AFUs) as child devices:
-+
-+	/sys/class/fpga_region/region0/fpga-dfl-fme.0
-+	/sys/class/fpga_region/region0/fpga-dfl-port.0
-+	/sys/class/fpga_region/region0/fpga-dfl-port.1
-+	...
-+
-+	/sys/class/fpga_region/region3/fpga-dfl-fme.1
-+	/sys/class/fpga_region/region3/fpga-dfl-port.2
-+	/sys/class/fpga_region/region3/fpga-dfl-port.3
-+	...
-+
-+In general, the FME/AFU sysfs interfaces are named as follows:
-+
-+	/sys/class/fpga_region/<regionX>/<fpga-dfl-fme.n>/
-+	/sys/class/fpga_region/<regionX>/<fpga-dfl-port.m>/
-+
-+with 'n' consecutively numbering all FMEs and 'm' consecutively numbering all
-+ports.
-+
-+The device nodes used for ioctl() or mmap() can be referenced through:
-+
-+	/sys/class/fpga_region/<regionX>/<fpga-dfl-fme.n>/dev
-+	/sys/class/fpga_region/<regionX>/<fpga-dfl-port.n>/dev
-+
-+Open discussion
-+===============
-+FME driver exports one ioctl (FPGA_FME_PORT_PR) for partial reconfiguration to
-+user now. In the future, if unified user interfaces for reconfiguration are
-+added, FME driver should switch to them from ioctl interface.
 -- 
 1.8.3.1
