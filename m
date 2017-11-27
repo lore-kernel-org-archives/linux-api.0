@@ -1,150 +1,48 @@
-From: Deepa Dinamani <deepa.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v2 10/10] nanosleep: change time types to safe __kernel_* types
-Date: Mon, 27 Nov 2017 11:30:37 -0800
-Message-ID: <20171127193037.8711-11-deepa.kernel@gmail.com>
-References: <20171127193037.8711-1-deepa.kernel@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171127193037.8711-1-deepa.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, y2038-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+From: Mikael Pettersson <mikpelinux@gmail.com>
+Subject: Re: [PATCH] mm: disable `vm.max_map_count' sysctl limit
+Date: Mon, 27 Nov 2017 20:36:55 +0100
+Message-ID: <CAM43=SPgi9aXGFWYwpqeN26s5aUTdk7F6C+5wgrQOTq2QmvTzA@mail.gmail.com>
+References: <23066.59196.909026.689706@gargle.gargle.HOWL> <20171127101232.ykriowhatecnvjvg@dhcp22.suse.cz>
+ <87vahv8whv.fsf@linux.intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <87vahv8whv.fsf@linux.intel.com>
+Sender: owner-linux-mm@kvack.org
+To: Andi Kleen <ak@linux.intel.com>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-mm@kvack.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Change over clock_nanosleep syscalls to use y2038 safe
-__kernel_timespec times. This will enable changing over
-of these syscalls to use new y2038 safe syscalls when
-the architectures define the CONFIG_64BIT_TIME.
+On Mon, Nov 27, 2017 at 6:25 PM, Andi Kleen <ak@linux.intel.com> wrote:
+> It's an arbitrary scaling limit on the how many mappings the process
+> has. The more memory you have the bigger a problem it is. We've
+> ran into this problem too on larger systems.
+>
+> The reason the limit was there originally because it allows a DoS
+> attack against the kernel by filling all unswappable memory up with VMAs.
+>
+> The old limit was designed for much smaller systems than we have
+> today.
+>
+> There needs to be some limit, but it should be on the number of memory
+> pinned by the VMAs, and needs to scale with the available memory,
+> so that large systems are not penalized.
 
-Note that nanosleep syscall is deprecated and does not have a
-plan for making it y2038 safe. But, the syscall should work as
-before on 64 bit machines and on 32 bit machines, the syscall
-works correctly until y2038 as before using the existing compat
-syscall version. There is no new syscall for supporting 64 bit
-time_t on 32 bit architectures.
+Fully agreed.  One problem with the current limit is that number of VMAs
+is only weakly related to the amount of memory one has mapped, and is
+also prone to grow due to memory fragmentation.  I've seen processes
+differ by 3X number of VMAs, even though they ran the same code and
+had similar memory sizes; they only differed on how long they had been
+running and which servers they ran on (and how long those had been up).
 
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Signed-off-by: Deepa Dinamani <deepa.kernel-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
----
- include/linux/restart_block.h | 7 ++-----
- include/linux/syscalls.h      | 6 +++---
- kernel/time/hrtimer.c         | 8 ++++++--
- kernel/time/posix-stubs.c     | 4 ++--
- kernel/time/posix-timers.c    | 4 ++--
- 5 files changed, 15 insertions(+), 14 deletions(-)
+> Unfortunately just making it part of the existing mlock limit could
+> break some existing setups which max out the mlock limit with something
+> else. Maybe we need a new rlimit for this?
+>
+> -Andi
 
-diff --git a/include/linux/restart_block.h b/include/linux/restart_block.h
-index bcfdb918cd81..5d83d0c1d06c 100644
---- a/include/linux/restart_block.h
-+++ b/include/linux/restart_block.h
-@@ -7,6 +7,7 @@
- 
- #include <linux/compiler.h>
- #include <linux/types.h>
-+#include <linux/time64.h>
- 
- struct timespec;
- struct compat_timespec;
-@@ -15,9 +16,7 @@ struct pollfd;
- enum timespec_type {
- 	TT_NONE		= 0,
- 	TT_NATIVE	= 1,
--#ifdef CONFIG_COMPAT
- 	TT_COMPAT	= 2,
--#endif
- };
- 
- /*
-@@ -40,10 +39,8 @@ struct restart_block {
- 			clockid_t clockid;
- 			enum timespec_type type;
- 			union {
--				struct timespec __user *rmtp;
--#ifdef CONFIG_COMPAT
-+				struct __kernel_timespec __user *rmtp;
- 				struct compat_timespec __user *compat_rmtp;
--#endif
- 			};
- 			u64 expires;
- 		} nanosleep;
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 7ac1bb9ea7da..4df16a70b0d7 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -254,7 +254,7 @@ asmlinkage long sys_adjtimex(struct timex __user *txc_p);
- asmlinkage long sys_times(struct tms __user *tbuf);
- 
- asmlinkage long sys_gettid(void);
--asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __user *rmtp);
-+asmlinkage long sys_nanosleep(struct __kernel_timespec __user *rqtp, struct __kernel_timespec __user *rmtp);
- asmlinkage long sys_alarm(unsigned int seconds);
- asmlinkage long sys_getpid(void);
- asmlinkage long sys_getppid(void);
-@@ -317,8 +317,8 @@ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
- asmlinkage long sys_clock_getres(clockid_t which_clock,
- 				struct __kernel_timespec __user *tp);
- asmlinkage long sys_clock_nanosleep(clockid_t which_clock, int flags,
--				const struct timespec __user *rqtp,
--				struct timespec __user *rmtp);
-+				const struct __kernel_timespec __user *rqtp,
-+				struct __kernel_timespec __user *rmtp);
- 
- asmlinkage long sys_nice(int increment);
- asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index bbd740171554..6cb6e6632ecf 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1541,8 +1541,10 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
- 	return ret;
- }
- 
--SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-+
-+SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	struct timespec64 tu;
- 
-@@ -1557,6 +1559,8 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- 
-+#endif
-+
- #ifdef CONFIG_COMPAT_32BIT_TIME
- 
- COMPAT_SYSCALL_DEFINE2(nanosleep, struct compat_timespec __user *, rqtp,
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index 28c22f54d0f2..f7e7a05e651d 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -114,8 +114,8 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_time
- }
- 
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
--		const struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+		const struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	struct timespec64 t;
- 
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index d46ee8264fd3..a6c4cb6de6a2 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1205,8 +1205,8 @@ static int common_nsleep(const clockid_t which_clock, int flags,
- }
- 
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
--		const struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+		const struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct timespec64 t;
--- 
-2.14.1
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
