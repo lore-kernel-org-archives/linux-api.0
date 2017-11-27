@@ -1,7 +1,7 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
-Date: Mon, 27 Nov 2017 14:42:15 +0800
-Message-ID: <1511764948-20972-9-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v3 10/21] fpga: dfl: add FPGA Management Engine driver basic framework
+Date: Mon, 27 Nov 2017 14:42:17 +0800
+Message-ID: <1511764948-20972-11-git-send-email-hao.wu@intel.com>
 References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
@@ -10,87 +10,83 @@ To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@v
 Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Zhang Yi <yi.z.zhang@intel.com>
+From: Kang Luwei <luwei.kang@intel.com>
 
-The Intel FPGA device appears as a PCIe device on the system. This patch
-implements the basic framework of the driver for Intel PCIe device which
-is located between CPU and Accelerated Function Units (AFUs), and has
-the Device Feature List (DFL) implemented in its MMIO space.
+The FPGA Management Engine (FME) provides power, thermal management,
+performance counters, partial reconfiguration and other functions. For each
+function, it is packaged into a private feature linked to the FME feature
+device in the 'Device Feature List'. It's a platform device created by
+DFL framework.
+
+This patch adds the basic framework of FME platform driver. It defines
+sub feature drivers to handle the different sub features, including init,
+uinit and ioctl. It also registers the file operations for the device file.
 
 Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
 Signed-off-by: Shiva Rao <shiva.rao@intel.com>
 Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
+Signed-off-by: Kang Luwei <luwei.kang@intel.com>
 Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 ----
-v2: move the code to drivers/fpga folder as suggested by Alan Tull.
-    switch to GPLv2 license.
-    fix comments from Moritz Fischer.
-v3: switch to pci_set_dma_mask/consistent_dma_mask() function.
-    remove pci_save_state() in probe function.
-    rename driver to INTEL_FPGA_DFL_PCI and intel-dfl-pci.c to indicate
-    this driver supports Intel FPGA PCI devices which implement DFL.
-    improve Kconfig description for INTEL_FPGA_DFL_PCI
+v3: rename driver from intel-fpga-fme to dfl-fme
+    rename Kconfig from INTEL_FPGA_FME to FPGA_DFL_FME
 ---
- drivers/fpga/Kconfig         |  18 ++++++
- drivers/fpga/Makefile        |   3 +
- drivers/fpga/intel-dfl-pci.c | 129 +++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 150 insertions(+)
- create mode 100644 drivers/fpga/intel-dfl-pci.c
+ drivers/fpga/Kconfig        |  10 +++
+ drivers/fpga/Makefile       |   3 +
+ drivers/fpga/dfl-fme-main.c | 160 ++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 173 insertions(+)
+ create mode 100644 drivers/fpga/dfl-fme-main.c
 
 diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index 01ad31f..cc35d12 100644
+index cc35d12..57da904 100644
 --- a/drivers/fpga/Kconfig
 +++ b/drivers/fpga/Kconfig
-@@ -140,4 +140,22 @@ config FPGA_DFL
+@@ -140,6 +140,16 @@ config FPGA_DFL
  	  Gate Array (FPGA) solutions which implement Device Feature List.
  	  It provides enumeration APIs, and feature device infrastructure.
  
-+config INTEL_FPGA_DFL_PCI
-+	tristate "Intel FPGA DFL PCIe Device Driver"
-+	depends on PCI && FPGA_DFL
++config FPGA_DFL_FME
++	tristate "FPGA DFL FME Driver"
++	depends on FPGA_DFL
 +	help
-+	  Select this option to enable PCIe driver for Intel(R) PCIe based
-+	  Field-Programmable Gate Array (FPGA) solutions which implemented
-+	  the Device Feature List (DFL). It supports both integrated (e.g
-+	  Intel Server Platform with In-package FPGA) and discrete (e.g
-+	  Intel FPGA PCIe Acceleration Cards) solutions. This driver
-+	  provides interfaces for userspace applications to configure,
-+	  enumerate, open and access FPGA accelerators on platforms
-+	  equipped with Intel(R) FPGA solutions and enables system level
-+	  management functions such as FPGA partial reconfiguration, power
-+	  management, and virtualization via DFL framework and DFL feature
-+	  device drivers.
++	  The FPGA Management Engine (FME) is a feature device implemented
++	  under Device Feature List (DFL) framework. Select this option to
++	  enable the platform device driver for FME which implements all
++	  FPGA platform level management features. There shall be 1 FME
++	  per DFL based FPGA device.
 +
-+	  To compile this as a module, choose M here.
-+
- endif # FPGA
+ config INTEL_FPGA_DFL_PCI
+ 	tristate "Intel FPGA DFL PCIe Device Driver"
+ 	depends on PCI && FPGA_DFL
 diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 447ba2b..d39a431 100644
+index d39a431..e5ba158 100644
 --- a/drivers/fpga/Makefile
 +++ b/drivers/fpga/Makefile
-@@ -30,3 +30,6 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
+@@ -30,6 +30,9 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
  
  # FPGA Device Feature List Support
  obj-$(CONFIG_FPGA_DFL)			+= fpga-dfl.o
++obj-$(CONFIG_FPGA_DFL_FME)		+= fpga-dfl-fme.o
 +
-+# Drivers for FPGAs which implement DFL
-+obj-$(CONFIG_INTEL_FPGA_DFL_PCI)	+= intel-dfl-pci.o
-diff --git a/drivers/fpga/intel-dfl-pci.c b/drivers/fpga/intel-dfl-pci.c
++fpga-dfl-fme-objs := dfl-fme-main.o
+ 
+ # Drivers for FPGAs which implement DFL
+ obj-$(CONFIG_INTEL_FPGA_DFL_PCI)	+= intel-dfl-pci.o
+diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
 new file mode 100644
-index 0000000..4774a77
+index 0000000..f7b5f7d
 --- /dev/null
-+++ b/drivers/fpga/intel-dfl-pci.c
-@@ -0,0 +1,129 @@
++++ b/drivers/fpga/dfl-fme-main.c
+@@ -0,0 +1,160 @@
 +/*
-+ * Driver for Intel FPGA DFL PCIe device
++ * Driver for FPGA Management Engine (FME)
 + *
 + * Copyright (C) 2017 Intel Corporation, Inc.
 + *
 + * Authors:
-+ *   Zhang Yi <Yi.Z.Zhang@intel.com>
++ *   Kang Luwei <luwei.kang@intel.com>
 + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
 + *   Joseph Grecco <joe.grecco@intel.com>
 + *   Enno Luebbers <enno.luebbers@intel.com>
@@ -102,116 +98,147 @@ index 0000000..4774a77
 + * SPDX-License-Identifier: GPL-2.0
 + */
 +
-+#include <linux/pci.h>
-+#include <linux/types.h>
 +#include <linux/kernel.h>
 +#include <linux/module.h>
-+#include <linux/stddef.h>
-+#include <linux/errno.h>
-+#include <linux/aer.h>
 +
-+#define DRV_VERSION	"0.8"
-+#define DRV_NAME	"intel-dfl-pci"
++#include "fpga-dfl.h"
 +
-+/* PCI Device ID */
-+#define PCIE_DEVICE_ID_PF_INT_5_X	0xBCBD
-+#define PCIE_DEVICE_ID_PF_INT_6_X	0xBCC0
-+#define PCIE_DEVICE_ID_PF_DSC_1_X	0x09C4
-+/* VF Device */
-+#define PCIE_DEVICE_ID_VF_INT_5_X	0xBCBF
-+#define PCIE_DEVICE_ID_VF_INT_6_X	0xBCC1
-+#define PCIE_DEVICE_ID_VF_DSC_1_X	0x09C5
++static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
++{
++	dev_dbg(&pdev->dev, "FME HDR Init.\n");
 +
-+static struct pci_device_id cci_pcie_id_tbl[] = {
-+	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_INT_5_X),},
-+	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_INT_5_X),},
-+	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_INT_6_X),},
-+	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_INT_6_X),},
-+	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_DSC_1_X),},
-+	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_DSC_1_X),},
-+	{0,}
++	return 0;
++}
++
++static void fme_hdr_uinit(struct platform_device *pdev, struct feature *feature)
++{
++	dev_dbg(&pdev->dev, "FME HDR UInit.\n");
++}
++
++static const struct feature_ops fme_hdr_ops = {
++	.init = fme_hdr_init,
++	.uinit = fme_hdr_uinit,
 +};
-+MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
 +
-+static
-+int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
++static struct feature_driver fme_feature_drvs[] = {
++	{
++		.name = FME_FEATURE_HEADER,
++		.ops = &fme_hdr_ops,
++	},
++	{
++		.ops = NULL,
++	},
++};
++
++static int fme_open(struct inode *inode, struct file *filp)
++{
++	struct platform_device *fdev = fpga_inode_to_feature_dev(inode);
++	struct feature_platform_data *pdata = dev_get_platdata(&fdev->dev);
++	int ret;
++
++	if (WARN_ON(!pdata))
++		return -ENODEV;
++
++	ret = feature_dev_use_begin(pdata);
++	if (ret)
++		return ret;
++
++	dev_dbg(&fdev->dev, "Device File Open\n");
++	filp->private_data = pdata;
++
++	return 0;
++}
++
++static int fme_release(struct inode *inode, struct file *filp)
++{
++	struct feature_platform_data *pdata = filp->private_data;
++	struct platform_device *pdev = pdata->dev;
++
++	dev_dbg(&pdev->dev, "Device File Release\n");
++	feature_dev_use_end(pdata);
++
++	return 0;
++}
++
++static long fme_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
++{
++	struct feature_platform_data *pdata = filp->private_data;
++	struct platform_device *pdev = pdata->dev;
++	struct feature *f;
++	long ret;
++
++	dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
++
++	switch (cmd) {
++	default:
++		/*
++		 * Let sub-feature's ioctl function to handle the cmd
++		 * Sub-feature's ioctl returns -ENODEV when cmd is not
++		 * handled in this sub feature, and returns 0 and other
++		 * error code if cmd is handled.
++		 */
++		fpga_dev_for_each_feature(pdata, f) {
++			if (f->ops && f->ops->ioctl) {
++				ret = f->ops->ioctl(pdev, f, cmd, arg);
++				if (ret == -ENODEV)
++					continue;
++				else
++					return ret;
++			}
++		}
++	}
++
++	return -EINVAL;
++}
++
++static const struct file_operations fme_fops = {
++	.owner		= THIS_MODULE,
++	.open		= fme_open,
++	.release	= fme_release,
++	.unlocked_ioctl = fme_ioctl,
++};
++
++static int fme_probe(struct platform_device *pdev)
 +{
 +	int ret;
 +
-+	ret = pci_enable_device(pcidev);
-+	if (ret < 0) {
-+		dev_err(&pcidev->dev, "Failed to enable device %d.\n", ret);
-+		return ret;
-+	}
++	ret = fpga_dev_feature_init(pdev, fme_feature_drvs);
++	if (ret)
++		goto exit;
 +
-+	ret = pci_enable_pcie_error_reporting(pcidev);
-+	if (ret && ret != -EINVAL)
-+		dev_info(&pcidev->dev, "PCIE AER unavailable %d.\n", ret);
++	ret = fpga_register_dev_ops(pdev, &fme_fops, THIS_MODULE);
++	if (ret)
++		goto feature_uinit;
 +
-+	ret = pci_request_regions(pcidev, DRV_NAME);
-+	if (ret) {
-+		dev_err(&pcidev->dev, "Failed to request regions.\n");
-+		goto disable_error_report_exit;
-+	}
-+
-+	pci_set_master(pcidev);
-+
-+	if (!pci_set_dma_mask(pcidev, DMA_BIT_MASK(64))) {
-+		ret = pci_set_consistent_dma_mask(pcidev, DMA_BIT_MASK(64));
-+		if (ret)
-+			goto release_region_exit;
-+	} else if (!pci_set_dma_mask(pcidev, DMA_BIT_MASK(32))) {
-+		ret = pci_set_consistent_dma_mask(pcidev, DMA_BIT_MASK(32));
-+		if (ret)
-+			goto release_region_exit;
-+	} else {
-+		ret = -EIO;
-+		dev_err(&pcidev->dev, "No suitable DMA support available.\n");
-+		goto release_region_exit;
-+	}
-+
-+	/* TODO: create and add the platform device per feature list */
 +	return 0;
 +
-+release_region_exit:
-+	pci_release_regions(pcidev);
-+disable_error_report_exit:
-+	pci_disable_pcie_error_reporting(pcidev);
-+	pci_disable_device(pcidev);
++feature_uinit:
++	fpga_dev_feature_uinit(pdev);
++exit:
 +	return ret;
 +}
 +
-+static void cci_pci_remove(struct pci_dev *pcidev)
++static int fme_remove(struct platform_device *pdev)
 +{
-+	pci_release_regions(pcidev);
-+	pci_disable_pcie_error_reporting(pcidev);
-+	pci_disable_device(pcidev);
++	fpga_dev_feature_uinit(pdev);
++	fpga_unregister_dev_ops(pdev);
++
++	return 0;
 +}
 +
-+static struct pci_driver cci_pci_driver = {
-+	.name = DRV_NAME,
-+	.id_table = cci_pcie_id_tbl,
-+	.probe = cci_pci_probe,
-+	.remove = cci_pci_remove,
++static struct platform_driver fme_driver = {
++	.driver	= {
++		.name    = FPGA_FEATURE_DEV_FME,
++	},
++	.probe   = fme_probe,
++	.remove  = fme_remove,
 +};
 +
-+static int __init ccidrv_init(void)
-+{
-+	pr_info("Intel(R) FPGA PCIe Driver: Version %s\n", DRV_VERSION);
++module_platform_driver(fme_driver);
 +
-+	return pci_register_driver(&cci_pci_driver);
-+}
-+
-+static void __exit ccidrv_exit(void)
-+{
-+	pci_unregister_driver(&cci_pci_driver);
-+}
-+
-+module_init(ccidrv_init);
-+module_exit(ccidrv_exit);
-+
-+MODULE_DESCRIPTION("Intel FPGA DFL PCIe Device Driver");
++MODULE_DESCRIPTION("FPGA Management Engine driver");
 +MODULE_AUTHOR("Intel Corporation");
 +MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:fpga-dfl-fme");
 -- 
 1.8.3.1
