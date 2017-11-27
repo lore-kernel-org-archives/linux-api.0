@@ -1,131 +1,42 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 3/3] y2038: rusage: use __kernel_old_timeval for
-	process times
-Date: Mon, 27 Nov 2017 21:41:54 +0100
-Message-ID: <CAK8P3a1asMLnJtea=JkduiYzr0dF0BTKQzcx5aQVv1zU5dK2FA@mail.gmail.com>
-References: <20171127170121.634826-1-arnd@arndb.de>
- <20171127170121.634826-3-arnd@arndb.de>
- <34369a6e-e0ce-fe7b-65e3-9c4a33e4789a@cs.ucla.edu>
- <87o9nnlfpq.fsf@xmission.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm: disable `vm.max_map_count' sysctl limit
+Date: Mon, 27 Nov 2017 21:52:10 +0100
+Message-ID: <20171127205210.zmah36uliajnbjon@dhcp22.suse.cz>
+References: <23066.59196.909026.689706@gargle.gargle.HOWL>
+ <20171127101232.ykriowhatecnvjvg@dhcp22.suse.cz>
+ <87vahv8whv.fsf@linux.intel.com>
+ <20171127183218.33zm666jw3uqkxdq@dhcp22.suse.cz>
+ <20171127195732.3hkfx57d3ytyccvp@dhcp22.suse.cz>
+ <20171127202121.GB3070@tassilo.jf.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <87o9nnlfpq.fsf@xmission.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, GNU C Library <libc-alpha@sourceware.org>, Andrew Morton <akpm@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, linux-alpha@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, Deepa Dinamani <deepa.kernel@gmail.com>, Kirill Tkhai <ktkhai@virtuozzo.com>, John Stultz <john.stultz@linaro.org>, Al Viro <viro@zeniv.linux.org.uk>, Frederic Weisbecker <fweisbec@gmail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Thomas Gleixner <tglx@linutronix.de>, Matt Turner <mattst88@gmail.com>, Richard Henderson <rth@twiddle.net>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171127202121.GB3070@tassilo.jf.intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andi Kleen <ak@linux.intel.com>
+Cc: Mikael Pettersson <mikpelinux@gmail.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-T24gTW9uLCBOb3YgMjcsIDIwMTcgYXQgNzo0OSBQTSwgRXJpYyBXLiBCaWVkZXJtYW4KPGViaWVk
-ZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4gUGF1bCBFZ2dlcnQgPGVnZ2VydEBjcy51Y2xhLmVk
-dT4gd3JpdGVzOgo+Cj4+IE9uIDExLzI3LzIwMTcgMDk6MDAgQU0sIEFybmQgQmVyZ21hbm4gd3Jv
-dGU6Cj4+PiBiKSBFeHRlbmQgdGhlIGFwcHJvYWNoIHRha2VuIGJ5IHRoZSB4MzIgQUJJLCBhbmQg
-dXNlIHRoZSA2NC1iaXQKPj4+ICAgICBuYXRpdmUgc3RydWN0dXJlIGxheW91dCBmb3IgcnVzYWdl
-IG9uIGFsbCBhcmNoaXRlY3R1cmVzIHdpdGggbmV3Cj4+PiAgICAgc3lzdGVtIGNhbGxzIHRoYXQg
-aXMgb3RoZXJ3aXNlIGNvbXBhdGlibGUuIEEgcG9zc2libGUgcHJvYmxlbSBoZXJlCj4+PiAgICAg
-aXMgdGhhdCB3ZSBlbmQgdXAgd2l0aCBpbmNvbXBhdGlibGUgZGVmaW5pdGlvbnMgb2YgcnVzYWdl
-IGJldHdlZW4KPj4+ICAgICAvdXNyL2luY2x1ZGUvbGludXgvcmVzb3VyY2UuaCBhbmQgL3Vzci9p
-bmNsdWRlL2JpdHMvcmVzb3VyY2UuaAo+Pj4KPj4+IGMpIENoYW5nZSB0aGUgZGVmaW5pdGlvbiBv
-ZiBzdHJ1Y3QgcnVzYWdlIHRvIGJlIGluZGVwZW5kZW50IG9mCj4+PiAgICAgdGltZV90LiBUaGlz
-IGlzIHRoZSBlYXNpZXN0IGNoYW5nZSwgYXMgaXQgZG9lcyBub3QgaW52b2x2ZSBuZXcgc3lzdGVt
-Cj4+PiAgICAgY2FsbCBlbnRyeSBwb2ludHMsIGJ1dCBpdCBoYXMgdGhlIHJpc2sgb2YgaW50cm9k
-dWNpbmcgY29tcGlsZS10aW1lCj4+PiAgICAgaW5jb21wYXRpYmlsaXRpZXMgd2l0aCB1c2VyIHNw
-YWNlIHNvdXJjZXMgdGhhdCByZWx5IG9uIHRoZSB0eXBlCj4+PiAgICAgb2YgcnVfdXRpbWUgYW5k
-IHJ1X3N0aW1lLgo+Pj4KPj4+IEknbSBwaWNraW5nIGFwcHJvY2ggYykgZm9yIGl0cyBzaW1wbGlj
-aXR5LCBidXQgSSdkIGxpa2UgdG8gaGVhciBmcm9tCj4+PiBvdGhlcnMgd2hldGhlciB0aGV5IHdv
-dWxkIHByZWZlciBhIGRpZmZlcmVudCBhcHByb2FjaC4KPj4KPj4gKGMpIHdvdWxkIGJyZWFrIHBy
-b2dyYW1zIGxpa2UgR05VIEVtYWNzLCB3aGljaCBjb3B5IHJ1X3V0aW1lIGFuZCBydV9zdGltZQo+
-PiBtZW1iZXJzIGludG8gc3RydWN0IHRpbWV2YWwgdmFyaWFibGVzLgoKUmlnaHQuIEkgdGhpbmsg
-SSBvcmlnaW5hbGx5IGhhZCB0aGUgd29ya2Fyb3VuZCB0byBoYXZlIGdsaWJjIGNvbnZlcnQKYmV0
-d2VlbiBpdHMgb3duIHN0cnVjdHVyZSBhbmQgdGhlIGtlcm5lbCBzdHJ1Y3R1cmUgaW4gbWluZCwg
-YnV0IHRoZW4KZW5kZWQgdXAgbm90IGluY2x1ZGluZyB0aGF0IGluIHRoZSB0ZXh0IGFib3ZlLiBJ
-IHdhcyBnb2luZyBiYWNrIGFuZApmb3J0aCBvbiB3aGV0aGVyIGl0IHdvdWxkIGJlIG5lZWRlZCBv
-ciBub3QuCgo+PiBBbGwgaW4gYWxsLCAoYikgc291bmRzIGxpa2UgaXQgd291bGQgYmUgYmV0dGVy
-IGZvciBwcm9ncmFtcyB1c2luZyBnbGliYywgYXMgaXQncwo+PiBtb3JlIGNvbXBhdGlibGUgd2l0
-aCB3aGF0IFBPU0lYIGFwcHMgZXhwZWN0LiBUaG91Z2ggSSdtIG5vdCBzdXJlIHdoYXQgcHJvYmxl
-bXMKPj4gYXJlIG1lYW50IGJ5ICJwb3NzaWJsZSAuLi4gaW5jb21wYXRpYmxlIGRlZmluaXRpb25z
-IjsgcGVyaGFwcyB5b3UgY291bGQKPj4gZWxhYm9yYXRlLgoKSSBtZWFudCB0aGF0IHlvdSBtaWdo
-dCBoYXZlIGFuIGFwcGxpY2F0aW9uIHRoYXQgaW5jbHVkZXMKbGludXgvcmVzb3VyY2UuaCBpbnN0
-ZWFkIG9mIHN5cy9yZXNvdXJjZS5oIGJ1dCBjYWxscyB0aGUgZ2xpYmMKZnVuY3Rpb24sIG9yIG9u
-ZSB0aGF0IGluY2x1ZGVzIHN5cy9yZXNvdXJjZS5oIGFuZCBpbnZva2VzIHRoZQpzeXN0ZW0gY2Fs
-bCBkaXJlY3RseS4KCj4gZ2V0cnVzYWdlIGlzIHBvc2l4IGFuZCBJIGJlbGlldmUgdGhlIHVzZSBv
-ZiBzdHJ1Y3QgdGltZXZhbCBpcyBwb3NpeCBhcwo+IHdlbGwuCj4KPiBTbyBnZXRydXNhZ2UoMykg
-dGhlIGxpYmMgZGVmaW5pdGlvbiBhbmQgdGhhdCBkZWZpbnRpb24gbXVzdCBzdHJ1Y3QKPiB0aW1l
-dmFsIG9yIHRoZSBpbXBsZW1lbnRhdGlvbiB3aWxsIGJlIG5vbi1jb25mb3JtaW5nIGFuZCBpdCB3
-b24ndCBiZQo+IGp1c3QgZW1hY3Mgd2UgbmVlZCB0byB3b3JyeSBhYm91dC4KPgo+IFRoZSBwcmFj
-dGljYWwgcXVlc3Rpb24gaXMgd2hhdCBkbyB3ZSBwcm92aWRlIHRvIHVzZXJzcGFjZSBzbyB0aGF0
-IGl0IGNhbgo+IGltcGxlbWVudCBhIGNvbmZvcm1pbmcgZ2V0cnVzYWdlPwo+Cj4gQSAzMmJpdCB0
-aW1lX3QgYmFzZWQgc3RydWN0IHRpbWV2YWwgaXMgZ29vZCBmb3IgZHVyYXRpb25zIHVwIHRvIDEz
-NiB5ZWFycwo+IG9yIHNvLiAgV2hpY2ggc3Ryb25nbHkgc3VnZ2VzdHMgdGhlIHJhbmdlIGlzIGxh
-cmdlIGVub3VnaCwgZXhjZXB0IGZvcgo+IHNvbWUgY3JhenkgbWFzc2l2ZWx5IG11bHRpLXRocmVh
-ZGVkIGFwcGxpY2F0aW9uLiAgQW5kIGFueXRoaW5nIG9mZiB0aGUKPiBjaGFydHMgY3B1IGh1bmdy
-eSBhdCB0aGlzIHBvaW50IEkgZXhwZWN0IHdpbGwgYmUgNjRiaXQuCj4KPiBJdCBpcyBwb3NzaWJs
-ZSB0byBnZXQgYSAxMjggd2F5IHN5c3RlbSB3aXRoIG9uZSB0aHJlYWQgb24gZWFjaCBjb3JlIGFu
-ZAo+IGNvbnN1bWUgMTAwJSBvZiB0aGUgY29yZSBmb3IgYSBiaXQgb3ZlciBhIHllYXIgdG8gbWF4
-IG91dCBnZXRydXNhZ2UuICBTbwo+IEkgZG8gdGhpbmsgaW4gdGhlIGxvbmcgcnVuIHdlIGNhcmUg
-YWJvdXQgaW5jcmVhc2luZyB0aGUgc2l6ZSBvZiB0aW1lX3QKPiBoZXJlLiAgTGFzdCBJIGNoZWNr
-ZWQgYXBwbGljYXRpb25zIGRvaW5nIHRoaW5ncyBsaWtlIHRoYXQgd2VyZSA2NGJpdCBpbgo+IHRo
-ZSB5ZWFyIDIwMDAuCgpBZ3JlZWQsIHRoaXMgd2FzIGFsc28gYSBjYWxjdWxhdGlvbiBJIGRpZC4K
-Cj4gR2l2ZW4gdGhhdCB1c2Vyc3BhY2UgaXMgZ29pbmcgdG8gYmUgc2VlaW5nIHRoZSBsYXJnZXIg
-c3RydWN0IHJ1c2FnZSBpbgo+IGFueSBldmVudCBteSBpbmNsaW5hdGlvbiBmb3IgbG9uZyB0ZXJt
-IG1haW50YWluYWJpbGl0eSB3b3VsZCBiZSB0bwo+IGludHJvZHVjZSB0aGUgbmV3IHN5c2NhbGwg
-YW5kIGhhdmUgdGhlIGN1cnJlbnQgb25lIGNhbGxlZCBvbGRnZXRydXNhZ2UKPiBvbiAzMmJpdCBh
-cmNoaXRlY3R1cmVzLiAgVGhlbiB3ZSB3b24ndCBoYXZlIHRvIHdvcnJ5IGFib3V0IHdoYXQgd2Vp
-cmQKPiB0aGluZ3MgZ2xpYmMgd2lsbCBkbyB3aGVuIHRyYW5zbGF0aW5nIHRoZSBkYXRhLCBhbmQg
-d2UgY2FuIGhhbmRsZQo+IGFwcGxpY2F0aW9ucyB3aXRoIGNyYXp5IChidXQgcG9zc2libGUpIHJ1
-bnRpbWVzLiAgV2hpY2ggaW5jbGluZXMgbWUgdG8KPiAoYikgYXMgd2VsbC4KClRoaXMgd291bGQg
-YWN0dWFsbHkgYmUgdGhlIHNhbWUgdGhpbmcgd2UgZG8gZm9yIG1vc3Qgb3RoZXIgc3lzY2FsbHMs
-CnJlZ2FyZGluZyB0aGUgbmFtaW5nLCBpdCB3b3VsZCBiZWNvbWUgY29tcGF0X3N5c19nZXRydXNh
-Z2UoKQphbmQgc2hhcmUgdGhlIGltcGxlbWVudGF0aW9uIGJldHdlZW4gbmF0aXZlIDMyLWJpdCBt
-b2RlIGFuZApjb21wYXQgbW9kZSBvbiA2NC1iaXQgYXJjaGl0ZWN0dXJlcywgd2hpbGUgc3lzX2dl
-dHJ1c2FnZSBiZWNvbWVzCnRoZSBmdW5jdGlvbiB0aGF0IGRlYWxzIHdpdGggdGhlIDY0LWJpdCBs
-YXlvdXQsIGFuZCB3b3VsZCBoYXZlIHRoZQpzYW1lIGJpbmFyeSBmb3JtYXQgb24gYm90aCAzMi1i
-aXQgYW5kIDY0LWJpdCBuYXRpdmUgQUJJcy4KClVuZm9ydHVuYXRlbHksIHRoaXMgb3BlbnMgYSBu
-ZXcgcXVlc3Rpb24sIGFzIHRoZSBzdHJ1Y3R1cmUgaXMgY3VycmVudGx5CmRlZmluZWQgYnkgZ2xp
-YmMgYXM6CgovKiBTdHJ1Y3R1cmUgd2hpY2ggc2F5cyBob3cgbXVjaCBvZiBlYWNoIHJlc291cmNl
-IGhhcyBiZWVuIHVzZWQuICAqLwoKLyogVGhlIHB1cnBvc2Ugb2YgYWxsIHRoZSB1bmlvbnMgaXMg
-dG8gaGF2ZSB0aGUga2VybmVsLWNvbXBhdGlibGUgbGF5b3V0CiAgIHdoaWxlIGtlZXBpbmcgdGhl
-IEFQSSB0eXBlIGFzICdsb25nIGludCcsIGFuZCBhbW9uZyBtYWNoaW5lcyB3aGVyZQogICBfX3N5
-c2NhbGxfc2xvbmdfdCBpcyBub3QgJ2xvbmcgaW50JywgdGhpcyBvbmx5IGRvZXMgdGhlIHJpZ2h0
-IHRoaW5nCiAgIGZvciBsaXR0bGUtZW5kaWFuIG9uZXMsIGxpa2UgeDMyLiAgKi8Kc3RydWN0IHJ1
-c2FnZQogIHsKICAgIC8qIFRvdGFsIGFtb3VudCBvZiB1c2VyIHRpbWUgdXNlZC4gICovCiAgICBz
-dHJ1Y3QgdGltZXZhbCBydV91dGltZTsKICAgIC8qIFRvdGFsIGFtb3VudCBvZiBzeXN0ZW0gdGlt
-ZSB1c2VkLiAgKi8KICAgIHN0cnVjdCB0aW1ldmFsIHJ1X3N0aW1lOwogICAgLyogTWF4aW11bSBy
-ZXNpZGVudCBzZXQgc2l6ZSAoaW4ga2lsb2J5dGVzKS4gICovCiAgICBfX2V4dGVuc2lvbl9fIHVu
-aW9uCiAgICAgIHsKICAgICAgICBsb25nIGludCBydV9tYXhyc3M7CiAgICAgICAgX19zeXNjYWxs
-X3Nsb25nX3QgX19ydV9tYXhyc3Nfd29yZDsKICAgICAgfTsKICAgIC8qIEFtb3VudCBvZiBzaGFy
-aW5nIG9mIHRleHQgc2VnbWVudCBtZW1vcnkKICAgICAgIHdpdGggb3RoZXIgcHJvY2Vzc2VzIChr
-aWxvYnl0ZS1zZWNvbmRzKS4gICovCiAgICAvKiBNYXhpbXVtIHJlc2lkZW50IHNldCBzaXplIChp
-biBraWxvYnl0ZXMpLiAgKi8KICAgIF9fZXh0ZW5zaW9uX18gdW5pb24KICAgICAgewogICAgICAg
-IGxvbmcgaW50IHJ1X2l4cnNzOwogICAgICAgIF9fc3lzY2FsbF9zbG9uZ190IF9fcnVfaXhyc3Nf
-d29yZDsKICAgICAgfTsKICAgLi4uCn07CgpIZXJlLCBJIGd1ZXNzIHdlIGhhdmUgdG8gcmVwbGFj
-ZSBfX3N5c2NhbGxfc2xvbmdfdCB3aXRoIGFuICdydXNhZ2UnCnNwZWNpZmljIHR5cGUgdGhhdCBo
-YXMgdGhlIHNhbWUgbGVuZ3RoIGFzIHRpbWVfdCwgYnV0IGlzIGluZGVwZW5kZW50Cm9mIF9fc3lz
-Y2FsbF9zbG9uZ190LCB3aGljaCBpcyBzdGlsbCAzMi1iaXQgZm9yIG1vc3QgMzItYml0IGFyY2hp
-dGVjdHVyZXMuCgpIb3cgd291bGQgd2UgZG8gdGhlIGJpZy1lbmRpYW4gdmVyc2lvbiBvZiB0aGF0
-IHRob3VnaD8KCk9uZSBhcmd1bWVudCBmb3IgdXNpbmcgYykgcGx1cyB0aGUgZW11bGF0aW9uIGlu
-IGdsaWJjIGlzIHRoYXQgZ2xpYmMKaGFzIHRvIGRvIGVtdWxhdGlvbiBhbnl3YXksIHRvIGFsbG93
-IHJ1bm5pbmcgdXNlciBzcGFjZSB3aXRoIDY0LWJpdAp0aW1lX3Qgb24gb2xkZXIga2VybmVscyB0
-aGF0IGRvbid0IGhhdmUgdGhlIG5ldyBnZXRydXNhZ2Ugc3lzdGVtCmNhbGwuCgo+IEFzIGZvciAo
-YSkgZG9lcyBhbnlvbmUgaGF2ZSBhIG5lZWQgZm9yIHByb2Nlc3MgYWNvdW50aW5nIGF0IG5zZWMK
-PiBncmFudWxhcml0eT8gIFVubGVzcyB3ZSBjYW4gZ2V0IHRoYXQgZm9yIGZyZWUgdGhhdCBqdXN0
-IHNlZW1zIGxpa2UKPiBvdmVycHJvbWlzaW5nIGFuZCBhIHdhaXN0IHRvIGhhdmUgc28gbXVjaCBm
-aW5lIGdyYW51bGFyaXR5LgoKVGhlIGtlcm5lbCBkb2VzIGV2ZXJ5dGhpbmcgaW4gbmFub3NlY29u
-ZHMsIHNvIHdlIGFsd2F5cyBzcGVuZAphIGZldyBjeWNsZXMgKGEgbG90IG9mIGN5Y2xlcyBvbiBz
-b21lIG9mIHRoZSB2ZXJ5IGxvdy1lbmQgYXJjaGl0ZWN0dXJlcykKb24gZGl2aWRpbmcgaXQgYnkg
-MTAwMC4gTW92aW5nIHRoZSBkaXZpc2lvbiBvcGVyYXRpb24gdG8gdXNlciBzcGFjZQppcyBlc3Nl
-bnRpYWxseSBmcmVlLCBhbmQgdXNpbmcgdGhlIG5hbm9zZWNvbmRzIGluc3RlYWQgb2YgbWljcm9z
-ZWNvbmRzCm1pZ2h0IGJlIHNsaWdodGx5IGNoZWFwZXIuIEkgZG9uJ3QgdGhpbmsgYW55b25lIHJl
-YWxseSBuZWVkcyBpdCB0aG91Z2guCgogICAgICBBcm5kCl9fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5s
-aW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4
-Cg==
+On Mon 27-11-17 12:21:21, Andi Kleen wrote:
+> On Mon, Nov 27, 2017 at 08:57:32PM +0100, Michal Hocko wrote:
+> > On Mon 27-11-17 19:32:18, Michal Hocko wrote:
+> > > On Mon 27-11-17 09:25:16, Andi Kleen wrote:
+> > [...]
+> > > > The reason the limit was there originally because it allows a DoS
+> > > > attack against the kernel by filling all unswappable memory up with VMAs.
+> > > 
+> > > We can reduce the effect by accounting vmas to memory cgroups.
+> > 
+> > As it turned out we already do.
+> > 	vm_area_cachep = KMEM_CACHE(vm_area_struct, SLAB_PANIC|SLAB_ACCOUNT);
+> 
+> That only helps if you have memory cgroups enabled. It would be a regression
+> to break the accounting on all the systems that don't.
+
+I agree. And I didn't say we should remove the existing limit. I am just
+saying that we can reduce existing problems by increasing the limit and
+relying on memcg accounting where possible.
+-- 
+Michal Hocko
+SUSE Labs
