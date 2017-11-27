@@ -1,84 +1,45 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH v3 3/3] mm/mempolicy: add nodes_empty check in
- SYSC_migrate_pages
-Date: Mon, 27 Nov 2017 18:25:48 +0100
-Message-ID: <ea6e56d5-ede6-580e-ed2d-c1ab975f5d91@suse.cz>
-References: <1510882624-44342-1-git-send-email-xieyisheng1@huawei.com>
- <1510882624-44342-4-git-send-email-xieyisheng1@huawei.com>
+From: Paul Eggert <eggert@cs.ucla.edu>
+Subject: Re: [PATCH 3/3] y2038: rusage: use __kernel_old_timeval for process
+ times
+Date: Mon, 27 Nov 2017 09:52:06 -0800
+Message-ID: <34369a6e-e0ce-fe7b-65e3-9c4a33e4789a@cs.ucla.edu>
+References: <20171127170121.634826-1-arnd@arndb.de>
+ <20171127170121.634826-3-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1510882624-44342-4-git-send-email-xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, mhocko-IBi9RG/b67k@public.gmane.org, mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, n-horiguchi-PaJj6Psr51x8UrSeD/g0lQ@public.gmane.org, salls-b3bnyZ7c9ISVc3sceRu5cw@public.gmane.org, ak-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tanxiaojun-hv44wF8Li93QT0dZR+AlfA@public.gmane.org
+Return-path: <libc-alpha-return-87567-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <20171127170121.634826-3-arnd@arndb.de>
+To: Arnd Bergmann <arnd@arndb.de>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>
+Cc: y2038@lists.linaro.org, libc-alpha@sourceware.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Albert ARIBAUD <albert.aribaud@3adev.fr>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Ingo Molnar <mingo@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, linux-alpha@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/17/2017 02:37 AM, Yisheng Xie wrote:
-> As manpage of migrate_pages, the errno should be set to EINVAL when
-> none of the node IDs specified by new_nodes are on-line and allowed
-> by the process's current cpuset context, or none of the specified
-> nodes contain memory. However, when test by following case:
-> 
-> 	new_nodes = 0;
-> 	old_nodes = 0xf;
-> 	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
-> 
-> The ret will be 0 and no errno is set. As the new_nodes is empty,
-> we should expect EINVAL as documented.
-> 
-> To fix the case like above, this patch check whether target nodes
-> AND current task_nodes is empty, and then check whether AND
-> node_states[N_MEMORY] is empty.
-> 
-> Signed-off-by: Yisheng Xie <xieyisheng1-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-> ---
->  mm/mempolicy.c | 10 +++++++---
->  1 file changed, 7 insertions(+), 3 deletions(-)
-> 
-> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-> index 65df28d..f604b22 100644
-> --- a/mm/mempolicy.c
-> +++ b/mm/mempolicy.c
-> @@ -1433,10 +1433,14 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
->  		goto out_put;
->  	}
+On 11/27/2017 09:00 AM, Arnd Bergmann wrote:
+> b) Extend the approach taken by the x32 ABI, and use the 64-bit
+>     native structure layout for rusage on all architectures with new
+>     system calls that is otherwise compatible. A possible problem here
+>     is that we end up with incompatible definitions of rusage between
+>     /usr/include/linux/resource.h and /usr/include/bits/resource.h
+>
+> c) Change the definition of struct rusage to be independent of
+>     time_t. This is the easiest change, as it does not involve new system
+>     call entry points, but it has the risk of introducing compile-time
+>     incompatibilities with user space sources that rely on the type
+>     of ru_utime and ru_stime.
+>
+> I'm picking approch c) for its simplicity, but I'd like to hear from
+> others whether they would prefer a different approach.
 
-Let me add the whole preceding that ends on the lines above:
+(c) would break programs like GNU Emacs, which copy ru_utime and 
+ru_stime members into struct timeval variables.
 
-        task_nodes = cpuset_mems_allowed(task);
-        /* Is the user allowed to access the target nodes? */
-        if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
-                err = -EPERM;
-                goto out_put;
-        }
-
->  
-> -	if (!nodes_subset(*new, node_states[N_MEMORY])) {
-> -		err = -EINVAL;
-> +	task_nodes = cpuset_mems_allowed(current);
-> +	nodes_and(*new, *new, task_nodes);
-> +	if (nodes_empty(*new))
-> +		goto out_put;
-
-So if we have CAP_SYS_NICE, we pass (or rather skip) the EPERM check
-above, but the current cpuset restriction still applies regardless. This
-doesn't make sense to me? If I get Christoph right in the v2 discussion,
-then CAP_SYS_NICE should not allow current cpuset escape. In that case,
-we should remove the CAP_SYS_NICE check from the EPERM check? Also
-should it be a subset check, or a non-empty-intersection check?
-
-Note there's still a danger that we are breaking existing code so this
-will have to be reverted in any case...
-
-> +
-> +	nodes_and(*new, *new, node_states[N_MEMORY]);
-> +	if (nodes_empty(*new))
->  		goto out_put;
-> -	}
->  
->  	err = security_task_movememory(task);
->  	if (err)
-> 
+All in all, (b) sounds like it would be better for programs using glibc, 
+as it's more compatible with what POSIX apps expect. Though I'm not sure 
+what problems are meant by "possible ... incompatible definitions"; 
+perhaps you could elaborate.
