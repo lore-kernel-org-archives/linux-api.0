@@ -1,59 +1,75 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: Re: [PATCH v2 00/10] posix_clocks: Prepare syscalls for 64 bit time_t conversion
-Date: Mon, 27 Nov 2017 14:29:59 -0800
-Message-ID: <CABeXuvrBOSVTNSbEZZMKmuTgWeU_VDqjSZkwGAM+bnPh0-72zA@mail.gmail.com>
-References: <20171127193037.8711-1-deepa.kernel@gmail.com> <CAK8P3a2pcpQqf_TNGVxLBePBSKYhxD90UN-FjBor4d-dKhAwbQ@mail.gmail.com>
+From: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH] mm: disable `vm.max_map_count' sysctl limit
+Date: Mon, 27 Nov 2017 15:26:27 -0800
+Message-ID: <b6faf739-1a4a-12e1-ad84-0b42166d68c1@nvidia.com>
+References: <23066.59196.909026.689706@gargle.gargle.HOWL>
+ <20171127101232.ykriowhatecnvjvg@dhcp22.suse.cz>
+ <CAM43=SPVvBTPz31Uu=iz3fpS9tb75uSmL=pYP3AfsfmYr9u4Og@mail.gmail.com>
+ <20171127195207.vderbbkbgygawuhx@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a2pcpQqf_TNGVxLBePBSKYhxD90UN-FjBor4d-dKhAwbQ@mail.gmail.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Thomas Gleixner <tglx@linutronix.de>, John Stultz <john.stultz@linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Christian Borntraeger <borntraeger@de.ibm.com>, Catalin Marinas <catalin.marinas@arm.com>, Chris Metcalf <cmetcalf@mellanox.com>, cohuck@redhat.com, David Miller <davem@davemloft.net>, Helge Deller <deller@gmx.de>, devel@driverdev.osuosl.org, gerald.schaefer@de.ibm.com, gregkh <gregkh@linuxfoundation.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Jan Hoeppner <hoeppner@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Julian
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171127195207.vderbbkbgygawuhx-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Content-Language: en-US
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mikael Pettersson <mikpelinux-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
->> I decided against using LEGACY_TIME_SYSCALLS to conditionally compile
->> legacy time syscalls such as sys_nanosleep because this will need to
->> enclose compat_sys_nanosleep as well. So, defining it as
+On 11/27/2017 11:52 AM, Michal Hocko wrote:
+> On Mon 27-11-17 20:18:00, Mikael Pettersson wrote:
+>> On Mon, Nov 27, 2017 at 11:12 AM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>>> I've kept the kernel tunable to not break the API towards user-space,
+>>>> but it's a no-op now.  Also the distinction between split_vma() and
+>>>> __split_vma() disappears, so they are merged.
+>>>
+>>> Could you be more explicit about _why_ we need to remove this tunable?
+>>> I am not saying I disagree, the removal simplifies the code but I do not
+>>> really see any justification here.
 >>
->> config LEGACY_TIME_SYSCALLS
->>      def_bool 64BIT || !64BIT_TIME
->>
->> will not include compat_sys_nanosleep. We will instead need a new config to
->> exclusively mark legacy syscalls.
->
-> Do you mean we would need to do this separately for native and compat
-> syscalls, and have yet another option, like LEGACY_TIME_SYSCALLS
-> and LEGACY_TIME_COMPAT_SYSCALLS, to cover all cases? I would
-> think that CONFIG_COMPAT_32BIT_TIME handles all the compat versions,
-> while CONFIG_LEGACY_TIME_SYSCALLS handles all the native ones.
+>> In principle you don't "need" to, as those that know about it can bump it
+>> to some insanely high value and get on with life.  Meanwhile those that don't
+>> (and I was one of them until fairly recently, and I'm no newcomer to Unix or
+>> Linux) get to scratch their heads and wonder why the kernel says ENOMEM
+>> when one has loads of free RAM.
+> 
+> I agree that our error reporting is more than suboptimal in this regard.
+> These are all historical mistakes and we have much more of those. The
+> thing is that we have means to debug these issues (check
+> /proc/<pid>/maps e.g.).
+> 
+>> But what _is_ the justification for having this arbitrary limit?
+>> There might have been historical reasons, but at least ELF core dumps
+>> are no longer a problem.
+> 
+> Andi has already mentioned the the resource consumption. You can create
+> a lot of unreclaimable memory and there should be some cap. Whether our
+> default is good is questionable. Whether we can remove it altogether is
+> a different thing.
+> 
+> As I've said I am not a great fan of the limit but "I've just notice it
+> breaks on me" doesn't sound like a very good justification. You still
+> have an option to increase it. Considering we do not have too many
+> reports suggests that this is not such a big deal for most users.
+> 
 
-I meant sys_nanosleep would be covered by LEGACY_TIME_SYSCALLS, but
-compat_sys_nanosleep would be covered by CONFIG_COMPAT_32BIT_TIME
-along with other compat syscalls.
-So, if we define the LEGACY_TIME_SYSCALLS as
+Let me add a belated report, then: we ran into this limit while implementing 
+an early version of Unified Memory[1], back in 2013. The implementation
+at the time depended on tracking that assumed "one allocation == one vma".
+So, with only 64K vmas, we quickly ran out, and changed the design to work
+around that. (And later, the design was *completely* changed to use a separate
+tracking system altogether). 
+
+The existing limit seems rather too low, at least from my perspective. Maybe
+it would be better, if expressed as a function of RAM size?
 
 
-        "This controls the compilation of the following system calls:
-        time, stime, gettimeofday, settimeofday, adjtimex, nanosleep,
-alarm, getitimer,
-        setitimer, select, utime, utimes, futimesat, and
-{old,new}{l,f,}stat{,64}.
-        These all pass 32-bit time_t arguments on 32-bit architectures and
-        are replaced by other interfaces (e.g. posix timers and clocks, statx).
-        C libraries implementing 64-bit time_t in 32-bit architectures have to
-        implement the handles by wrapping around the newer interfaces.
-        New architectures should not explicitly enable this."
+[1] https://devblogs.nvidia.com/parallelforall/unified-memory-in-cuda-6/
 
-This would not be really true as compat interfaces have nothing to do
-with this config.
+    This is a way to automatically (via page faulting) migrate memory
+    between CPUs and devices (GPUs, here). This is before HMM, of course.
 
-I was proposing that we could have LEGACY_TIME_SYSCALLS config, but
-then have all these "deprecated" syscalls be enclosed within this,
-compat or not.
-This will also mean that we will have to come up representing these
-syscalls in the syscall header files.
-This can be a separate patch and this series can be merged as is if
-everyone agrees.
-
--Deepa
+thanks,
+John Hubbard
+      
