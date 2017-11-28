@@ -1,46 +1,190 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v6 2/2] staging: ion: create one device entry per heap
-Date: Tue, 28 Nov 2017 19:00:16 +0100
-Message-ID: <20171128180016.GA10169@kroah.com>
-References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
- <1509983985-20950-3-git-send-email-benjamin.gaignard@linaro.org>
- <20171128133217.GA29995@kroah.com>
- <20171128162620.levmpcgaixilwq3n@sirena.org.uk>
- <20171128170822.GA22359@kroah.com>
- <20171128171223.qnd7z7h2lnxy5lkd@sirena.org.uk>
- <20171128172838.GA31113@kroah.com>
- <20171128173753.t7dk6n7ouwypmumw@sirena.org.uk>
+From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
+        <maheshb@google.com>
+Subject: Re: [PATCHv2 2/2] userns: control capabilities of some user namespaces
+Date: Tue, 28 Nov 2017 13:22:12 -0800
+Message-ID: <CAF2d9jhiZFiFODNXUY13F+4Pm+59+rZW=CnLPX1VUT3BAJdeeA@mail.gmail.com>
+References: <20171110053757.21170-1-mahesh@bandewar.net> <20171126064037.GB30279@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <20171128173753.t7dk6n7ouwypmumw@sirena.org.uk>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Mark Brown <broonie@kernel.org>
-Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, arve@android.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, riandrews@android.com, dan.carpenter@oracle.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171126064037.GB30279@mail.hallyn.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-T24gVHVlLCBOb3YgMjgsIDIwMTcgYXQgMDU6Mzc6NTNQTSArMDAwMCwgTWFyayBCcm93biB3cm90
-ZToKPiBPbiBUdWUsIE5vdiAyOCwgMjAxNyBhdCAwNjoyODozOFBNICswMTAwLCBHcmVnIEtIIHdy
-b3RlOgo+ID4gT24gVHVlLCBOb3YgMjgsIDIwMTcgYXQgMDU6MTI6MjNQTSArMDAwMCwgTWFyayBC
-cm93biB3cm90ZToKPiAKPiA+ID4gSSB0aGluayBpdCdzIHJlYXNvbmFibGUgdG8gYXNrIGZvciB1
-c2Vyc3BhY2UsIEknbSBxdWVyeWluZyB3aHkgaXQgbmVlZHMKPiA+ID4gdG8gc3BlY2lmaWNhbGx5
-IGJlIEFuZHJvaWQuCj4gCj4gPiBEb2VzIGFueW9uZSBvdGhlciB0aGFuIEFuZHJvaWQgdXNlIHRo
-aXMgaW50ZXJmYWNlPwo+IAo+IFRoZXJlJ3MgcGxlbnR5IG9mIG90aGVyIHVzZXJzcGFjZXMgdGhh
-dCBoYXZlIHRoZSBzYW1lIHJlcXVpcmVtZW50cyBmb3IKPiBhbGxvY2F0aW9uIGZvciBhcHBsaWNh
-dGlvbnMgbGlrZSB2aWRlbyBjYXB0dXJlLCBJIGJlbGlldmUgc29tZSBvZiB0aGVtCj4gaGF2ZSBh
-Y3R1YWxseSBtb3ZlZCB0byBJT04gYWxyZWFkeSBhbmQgdGhleSdyZSBjZXJ0YWlubHkgd2hlcmUg
-c29tZSBvZgo+IHRoZSByZXF1aXJlbWVudHMgaGVyZSBhcmUgY29taW5nIGZyb20uCgpUaGVuIHRo
-ZSBLY29uZmlnIG9wdGlvbiBzaG91bGQgc3RhcnQgdG8gZGVzY3JpYmUgc29tZSBvZiB0aGlzIDop
-Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xp
-c3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Sat, Nov 25, 2017 at 10:40 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> Quoting Mahesh Bandewar (mahesh@bandewar.net):
+>> From: Mahesh Bandewar <maheshb@google.com>
+>>
+>> With this new notion of "controlled" user-namespaces, the controlled
+>> user-namespaces are marked at the time of their creation while the
+>> capabilities of processes that belong to them are controlled using the
+>> global mask.
+>>
+>> Init-user-ns is always uncontrolled and a process that has SYS_ADMIN
+>> that belongs to uncontrolled user-ns can create another (child) user-
+>> namespace that is uncontrolled. Any other process (that either does
+>> not have SYS_ADMIN or belongs to a controlled user-ns) can only
+>> create a user-ns that is controlled.
+>>
+>> global-capability-whitelist (controlled_userns_caps_whitelist) is used
+>> at the capability check-time and keeps the semantics for the processes
+>> that belong to uncontrolled user-ns as it is. Processes that belong to
+>> controlled user-ns however are subjected to different checks-
+>>
+>>    (a) if the capability in question is controlled and process belongs
+>>        to controlled user-ns, then it's always denied.
+>>    (b) if the capability in question is NOT controlled then fall back
+>>        to the traditional check.
+>>
+>> Signed-off-by: Mahesh Bandewar <maheshb@google.com>
+>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+>
+> Although a few comment addition requests below:
+>
+>> ---
+>> v2:
+>>   Don't recalculate user-ns flags for every setns() call.
+>> v1:
+>>   Initial submission.
+>>
+>>  include/linux/capability.h     |  1 +
+>>  include/linux/user_namespace.h | 20 ++++++++++++++++++++
+>>  kernel/capability.c            |  5 +++++
+>>  kernel/user_namespace.c        |  4 ++++
+>>  security/commoncap.c           |  8 ++++++++
+>>  5 files changed, 38 insertions(+)
+>>
+>> diff --git a/include/linux/capability.h b/include/linux/capability.h
+>> index 7d79a4689625..a1fd9e460379 100644
+>> --- a/include/linux/capability.h
+>> +++ b/include/linux/capability.h
+>> @@ -251,6 +251,7 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
+>>  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+>>  int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+>>                                void __user *buff, size_t *lenp, loff_t *ppos);
+>
+> Here and at the definition below, please add a comment explaining
+> that a controlled cap is defined as not being in the sysctl.
+>
+will do in v3.
+
+>> +bool is_capability_controlled(int cap);
+>>
+>>  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
+>>
+>> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+>> index 3fe714da7f5a..647f825c7b5f 100644
+>> --- a/include/linux/user_namespace.h
+>> +++ b/include/linux/user_namespace.h
+>> @@ -23,6 +23,7 @@ struct uid_gid_map {        /* 64 bytes -- 1 cache line */
+>>  };
+>>
+>>  #define USERNS_SETGROUPS_ALLOWED 1UL
+>> +#define USERNS_CONTROLLED     2UL
+>>
+>>  #define USERNS_INIT_FLAGS USERNS_SETGROUPS_ALLOWED
+>>
+>> @@ -103,6 +104,16 @@ static inline void put_user_ns(struct user_namespace *ns)
+>>               __put_user_ns(ns);
+>>  }
+>>
+>
+> Please add a comment explaining that a controlled ns
+> is one created by a user which did not have CAP_SYS_ADMIN
+> (or descended from such an ns).
+>
+will do in v3.
+
+>> +static inline bool is_user_ns_controlled(const struct user_namespace *ns)
+>> +{
+>> +     return ns->flags & USERNS_CONTROLLED;
+>> +}
+>> +
+>> +static inline void mark_user_ns_controlled(struct user_namespace *ns)
+>> +{
+>> +     ns->flags |= USERNS_CONTROLLED;
+>> +}
+>> +
+>>  struct seq_operations;
+>>  extern const struct seq_operations proc_uid_seq_operations;
+>>  extern const struct seq_operations proc_gid_seq_operations;
+>> @@ -161,6 +172,15 @@ static inline struct ns_common *ns_get_owner(struct ns_common *ns)
+>>  {
+>>       return ERR_PTR(-EPERM);
+>>  }
+>> +
+>> +static inline bool is_user_ns_controlled(const struct user_namespace *ns)
+>> +{
+>> +     return false;
+>> +}
+>> +
+>> +static inline void mark_user_ns_controlled(struct user_namespace *ns)
+>> +{
+>> +}
+>>  #endif
+>>
+>>  #endif /* _LINUX_USER_H */
+>> diff --git a/kernel/capability.c b/kernel/capability.c
+>> index 4a859b7d4902..bffe249922de 100644
+>> --- a/kernel/capability.c
+>> +++ b/kernel/capability.c
+>> @@ -511,6 +511,11 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
+>>  }
+>>
+>>  /* Controlled-userns capabilities routines */
+>> +bool is_capability_controlled(int cap)
+>> +{
+>> +     return !cap_raised(controlled_userns_caps_whitelist, cap);
+>> +}
+>> +
+>>  #ifdef CONFIG_SYSCTL
+>>  int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+>>                                void __user *buff, size_t *lenp, loff_t *ppos)
+>> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+>> index c490f1e4313b..600c7dcb9ff7 100644
+>> --- a/kernel/user_namespace.c
+>> +++ b/kernel/user_namespace.c
+>> @@ -139,6 +139,10 @@ int create_user_ns(struct cred *new)
+>>               goto fail_keyring;
+>>
+>>       set_cred_user_ns(new, ns);
+>> +     if (!ns_capable(parent_ns, CAP_SYS_ADMIN) ||
+>> +         is_user_ns_controlled(parent_ns))
+>> +             mark_user_ns_controlled(ns);
+>> +
+>>       return 0;
+>>  fail_keyring:
+>>  #ifdef CONFIG_PERSISTENT_KEYRINGS
+>> diff --git a/security/commoncap.c b/security/commoncap.c
+>> index fc46f5b85251..89103f16ac37 100644
+>> --- a/security/commoncap.c
+>> +++ b/security/commoncap.c
+>> @@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+>>  {
+>>       struct user_namespace *ns = targ_ns;
+>>
+>> +     /* If the capability is controlled and user-ns that process
+>> +      * belongs-to is 'controlled' then return EPERM and no need
+>> +      * to check the user-ns hierarchy.
+>> +      */
+>> +     if (is_user_ns_controlled(cred->user_ns) &&
+>> +         is_capability_controlled(cap))
+>> +             return -EPERM;
+>
+> I'd be curious to see the performance impact on this on a regular
+> workload (kernel build?) in a controlled ns.
+>
+Should it affect? If at all, it should be +ve since, the recursive
+user-ns hierarchy lookup is avoided with the above check if the
+capability is controlled. The additional cost otherwise is this check
+per cap_capable() call.
+
+>> +
+>>       /* See if cred has the capability in the target user namespace
+>>        * by examining the target user namespace and all of the target
+>>        * user namespace's parents.
+>> --
+>> 2.15.0.448.gf294e3d99a-goog
