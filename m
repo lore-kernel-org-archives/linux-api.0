@@ -1,52 +1,44 @@
-From: Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+From: Greg KH <gregkh@linuxfoundation.org>
 Subject: Re: [PATCH v6 2/2] staging: ion: create one device entry per heap
-Date: Tue, 28 Nov 2017 16:26:20 +0000
-Message-ID: <20171128162620.levmpcgaixilwq3n@sirena.org.uk>
+Date: Tue, 28 Nov 2017 18:08:22 +0100
+Message-ID: <20171128170822.GA22359@kroah.com>
 References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
  <1509983985-20950-3-git-send-email-benjamin.gaignard@linaro.org>
  <20171128133217.GA29995@kroah.com>
+ <20171128162620.levmpcgaixilwq3n@sirena.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-        protocol="application/pgp-signature"; boundary="4ymeqh6frfbjbna7"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
 Content-Disposition: inline
-In-Reply-To: <20171128133217.GA29995-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Cc: Benjamin Gaignard <benjamin.gaignard-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, riandrews-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <20171128162620.levmpcgaixilwq3n@sirena.org.uk>
+List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+To: Mark Brown <broonie@kernel.org>
+Cc: devel@driverdev.osuosl.org, linux-api@vger.kernel.org, arve@android.com, dri-devel@lists.freedesktop.org, linux-kernel@vger.kernel.org, riandrews@android.com, dan.carpenter@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-
---4ymeqh6frfbjbna7
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-
-On Tue, Nov 28, 2017 at 02:32:17PM +0100, Greg KH wrote:
-
-> Where is the documentation for the new sysfs files and the new ioctl
-
-Didn't see any sysfs files in there?
-
-> call you added?  What did you do to test this out?  Where are the AOSP
-> patches to use this?  Happen to have a VTS test for it?
-
-Do we need to convert Android for this to be accepted?  The single
-device is being kept around for it and the use case was from non-Android
-users wasn't it?
-
---4ymeqh6frfbjbna7
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAlodjiwACgkQJNaLcl1U
-h9AXCgf/ZDKANJ8CKPNiJo90cxLnLuA5wCkNst7MoBklEXDpbg2+3jZJS4fB9mvH
-eYl0NjnFPLcwbjfD4MtXCYtPP6K/2vatjxZOaWNz9/jO8rn1Annw526K2ILlnEEA
-QCilyhGFq/jkGnpihOzeBH3cVpGAQf8LvUEZL+Zf37H5zegdh5/d1WrecB5HZqE3
-+gH9M6MampCBqWEXVVbMu8Ke8nlibavM4QDuHyeOTOHUhyoYw9RCzMz9LF8nOZGX
-F9VUr94lp0L+uWJlikJlHE6Lqe1xJ8BKFJ6csnHp74o4wOVxc8TVwulQDF2rI2WV
-ayOcUET4jfBlK8wGwEjnImNQEym+Ng==
-=Dvf7
------END PGP SIGNATURE-----
-
---4ymeqh6frfbjbna7--
+T24gVHVlLCBOb3YgMjgsIDIwMTcgYXQgMDQ6MjY6MjBQTSArMDAwMCwgTWFyayBCcm93biB3cm90
+ZToKPiBPbiBUdWUsIE5vdiAyOCwgMjAxNyBhdCAwMjozMjoxN1BNICswMTAwLCBHcmVnIEtIIHdy
+b3RlOgo+IAo+ID4gV2hlcmUgaXMgdGhlIGRvY3VtZW50YXRpb24gZm9yIHRoZSBuZXcgc3lzZnMg
+ZmlsZXMgYW5kIHRoZSBuZXcgaW9jdGwKPiAKPiBEaWRuJ3Qgc2VlIGFueSBzeXNmcyBmaWxlcyBp
+biB0aGVyZT8KCk5ldyBzdHJ1Y3QgZGV2aWNlcyB3ZXJlIGNyZWF0ZWQgYW5kIHJlZ2lzdGVyZWQu
+ICBXaHkgd291bGQgdGhhdCBoYXBwZW4KaWYgdGhlcmUgd2FzIG5vdCBhIG5lZWQgZm9yIHN5c2Zz
+IGZpbGVzPyA6KQoKPiA+IGNhbGwgeW91IGFkZGVkPyAgV2hhdCBkaWQgeW91IGRvIHRvIHRlc3Qg
+dGhpcyBvdXQ/ICBXaGVyZSBhcmUgdGhlIEFPU1AKPiA+IHBhdGNoZXMgdG8gdXNlIHRoaXM/ICBI
+YXBwZW4gdG8gaGF2ZSBhIFZUUyB0ZXN0IGZvciBpdD8KPiAKPiBEbyB3ZSBuZWVkIHRvIGNvbnZl
+cnQgQW5kcm9pZCBmb3IgdGhpcyB0byBiZSBhY2NlcHRlZD8gIFRoZSBzaW5nbGUKPiBkZXZpY2Ug
+aXMgYmVpbmcga2VwdCBhcm91bmQgZm9yIGl0IGFuZCB0aGUgdXNlIGNhc2Ugd2FzIGZyb20gbm9u
+LUFuZHJvaWQKPiB1c2VycyB3YXNuJ3QgaXQ/CgpTbyB3ZSBhcmUganVzdCBnb2luZyB0byBhZGQg
+a2VybmVsIGZlYXR1cmVzIHdpdGggbm8gdXNlcnNwYWNlIHVzZXJzIG9mCml0IGF0IGFsbD8gIFdo
+eSB3b3VsZCB3ZSBkbyB0aGF0PyAgSG93IHdhcyBpdCBldmVuIHRlc3RlZD8KCmdyZWcgay1oCl9f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBt
+YWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3Rz
+LmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
