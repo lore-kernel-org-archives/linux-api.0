@@ -1,40 +1,86 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v6 1/2] staging: ion: reorder include
-Date: Tue, 28 Nov 2017 14:40:12 +0100
-Message-ID: <20171128134012.GA18424@kroah.com>
-References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
- <1509983985-20950-2-git-send-email-benjamin.gaignard@linaro.org>
- <20171128132024.GD20021@kroah.com>
- <CA+M3ks7v32iozDrj0HZ4RJLiokffnZyyZNUezg+ExD9=rdSLQg@mail.gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 00/10] posix_clocks: Prepare syscalls for 64 bit time_t conversion
+Date: Tue, 28 Nov 2017 15:17:26 +0100
+Message-ID: <CAK8P3a26g74UA5J5uQLwdjK3hq+htzjrdTYRKqfy_MawY7st+g@mail.gmail.com>
+References: <20171127193037.8711-1-deepa.kernel@gmail.com> <CAK8P3a2pcpQqf_TNGVxLBePBSKYhxD90UN-FjBor4d-dKhAwbQ@mail.gmail.com>
+ <CABeXuvrBOSVTNSbEZZMKmuTgWeU_VDqjSZkwGAM+bnPh0-72zA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <CA+M3ks7v32iozDrj0HZ4RJLiokffnZyyZNUezg+ExD9=rdSLQg@mail.gmail.com>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Benjamin Gaignard <benjamin.gaignard@linaro.org>
-Cc: driverdevel <devel@driverdev.osuosl.org>, linux-api@vger.kernel.org, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Riley Andrews <riandrews@android.com>, Mark Brown <broonie@kernel.org>, Dan Carpenter <dan.carpenter@oracle.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <CABeXuvrBOSVTNSbEZZMKmuTgWeU_VDqjSZkwGAM+bnPh0-72zA@mail.gmail.com>
+Sender: sparclinux-owner@vger.kernel.org
+To: Deepa Dinamani <deepa.kernel@gmail.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, John Stultz <john.stultz@linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Christian Borntraeger <borntraeger@de.ibm.com>, Catalin Marinas <catalin.marinas@arm.com>, Chris Metcalf <cmetcalf@mellanox.com>, cohuck@redhat.com, David Miller <davem@davemloft.net>, Helge Deller <deller@gmx.de>, devel@driverdev.osuosl.org, gerald.schaefer@de.ibm.com, gregkh <gregkh@linuxfoundation.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Jan Hoeppner <hoeppner@linux.vnet.ibm.com>, "H. Peter Anvin" <hpa@zytor.com>, "James E.J. Bottomley" <jejb@parisc-linux.org>, Julian
 List-Id: linux-api@vger.kernel.org
 
-T24gVHVlLCBOb3YgMjgsIDIwMTcgYXQgMDI6MzQ6MDBQTSArMDEwMCwgQmVuamFtaW4gR2FpZ25h
-cmQgd3JvdGU6Cj4gMjAxNy0xMS0yOCAxNDoyMCBHTVQrMDE6MDAgR3JlZyBLSCA8Z3JlZ2toQGxp
-bnV4Zm91bmRhdGlvbi5vcmc+Ogo+ID4gT24gTW9uLCBOb3YgMDYsIDIwMTcgYXQgMDQ6NTk6NDRQ
-TSArMDEwMCwgQmVuamFtaW4gR2FpZ25hcmQgd3JvdGU6Cj4gPj4gUHV0IGluY2x1ZGUgaW4gYWxw
-aGFiZXRpYyBvcmRlcgo+ID4KPiA+IFdoeT8/Pwo+IAo+IE1haW5seSBiZWNhdXNlIHRoZSBuZXh0
-IHBhdGNoIGluIHRoZSBzZXJpZXMgYWRkcyBuZXcgaW5jbHVkZXMgYW5kIEkgaGF2ZQo+IGRlY2lk
-ZSB0byBzcGxpdCBjbGVhbi11cCBhbmQgbmV3IGZlYXR1cmUgcGF0Y2hlcwoKVGhhdCdzIGZpbmUs
-IGJ1dCB0aGlzIHJlYWxseSBpc24ndCBuZWVkZWQgZm9yIGFueSB0eXBlIG9mICJjbGVhbi11cCIg
-YXQKYWxsLiAgQnV0IG9oIHdlbGwsIGlmIHlvdSBhbGwgbGlrZSBpdCB0aGF0IHdheSwgSSdtIG5v
-dCBnb2luZyB0bwpjb21wbGFpbiB0aGF0IG11Y2ggOikKCmdyZWcgay1oCl9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QK
-ZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9w
-Lm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Mon, Nov 27, 2017 at 11:29 PM, Deepa Dinamani <deepa.kernel@gmail.com> wrote:
+>>> I decided against using LEGACY_TIME_SYSCALLS to conditionally compile
+>>> legacy time syscalls such as sys_nanosleep because this will need to
+>>> enclose compat_sys_nanosleep as well. So, defining it as
+>>>
+>>> config LEGACY_TIME_SYSCALLS
+>>>      def_bool 64BIT || !64BIT_TIME
+>>>
+>>> will not include compat_sys_nanosleep. We will instead need a new config to
+>>> exclusively mark legacy syscalls.
+>>
+>> Do you mean we would need to do this separately for native and compat
+>> syscalls, and have yet another option, like LEGACY_TIME_SYSCALLS
+>> and LEGACY_TIME_COMPAT_SYSCALLS, to cover all cases? I would
+>> think that CONFIG_COMPAT_32BIT_TIME handles all the compat versions,
+>> while CONFIG_LEGACY_TIME_SYSCALLS handles all the native ones.
+>
+> I meant sys_nanosleep would be covered by LEGACY_TIME_SYSCALLS, but
+> compat_sys_nanosleep would be covered by CONFIG_COMPAT_32BIT_TIME
+> along with other compat syscalls.
+> So, if we define the LEGACY_TIME_SYSCALLS as
+>
+>
+>         "This controls the compilation of the following system calls:
+>         time, stime, gettimeofday, settimeofday, adjtimex, nanosleep,
+> alarm, getitimer,
+>         setitimer, select, utime, utimes, futimesat, and
+> {old,new}{l,f,}stat{,64}.
+>         These all pass 32-bit time_t arguments on 32-bit architectures and
+>         are replaced by other interfaces (e.g. posix timers and clocks, statx).
+>         C libraries implementing 64-bit time_t in 32-bit architectures have to
+>         implement the handles by wrapping around the newer interfaces.
+>         New architectures should not explicitly enable this."
+>
+> This would not be really true as compat interfaces have nothing to do
+> with this config.
+>
+> I was proposing that we could have LEGACY_TIME_SYSCALLS config, but
+> then have all these "deprecated" syscalls be enclosed within this,
+> compat or not.
+> This will also mean that we will have to come up representing these
+> syscalls in the syscall header files.
+> This can be a separate patch and this series can be merged as is if
+> everyone agrees.
+
+I think doing this separately  would be good, I don't see any interdependency
+with the other patches, we just need to decide what we want in the long
+run.
+
+I agree my text that you cited doesn't capture the situation correctly,
+as this is really about the obsolete system calls that take 64-bit time_t
+arguments on architectures that are converted to allow 64-bit time_t
+for non-obsolete system calls.
+
+Maybe it's better to just reword this to
+
+      "This controls the compilation of the following system calls:
+      time, stime, gettimeofday, settimeofday, adjtimex, nanosleep,
+alarm, getitimer,
+      setitimer, select, utime, utimes, futimesat, and {old,new}{l,f,}stat{,64}.
+      These are all replaced by other interfaces (e.g. posix timers and clocks,
+      statx) on architectures that got converted from 32-bit time_t to
+64-bit time_t.
+      C libraries implementing 64-bit time_t in 32-bit architectures have to
+      implement the handles by wrapping around the newer interfaces.
+      New architectures should not explicitly enable this."
+
+That would clarify that it's not about the compat system calls, while
+also allowing the two options to be set independently.
+
+        Arnd
