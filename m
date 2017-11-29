@@ -1,64 +1,73 @@
-From: Khalid Aziz <khalid.aziz@oracle.com>
-Subject: Re: [PATCH 2/2] fs, elf: drop MAP_FIXED usage from elf_map
-Date: Wed, 29 Nov 2017 10:45:43 -0700
-Message-ID: <93ce964b-e352-1905-c2b6-deedf2ea06f8@oracle.com>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <20171129144219.22867-3-mhocko@kernel.org>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCHv2 2/2] userns: control capabilities of some user
+ namespaces
+Date: Wed, 29 Nov 2017 11:57:12 -0600
+Message-ID: <20171129175712.GB14545@mail.hallyn.com>
+References: <20171110053757.21170-1-mahesh@bandewar.net>
+ <20171126064037.GB30279@mail.hallyn.com>
+ <CAF2d9jhiZFiFODNXUY13F+4Pm+59+rZW=CnLPX1VUT3BAJdeeA@mail.gmail.com>
+ <20171128230440.GB28297@mail.hallyn.com>
+ <CAF2d9jhCDasnf2tbaGA04MV5ygZ9o1FaVRCEU2TkHjZR7d1ifw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171129144219.22867-3-mhocko@kernel.org>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Michal Hocko <mhocko@suse.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <kernel-hardening-return-10758-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Content-Disposition: inline
+In-Reply-To: <CAF2d9jhCDasnf2tbaGA04MV5ygZ9o1FaVRCEU2TkHjZR7d1ifw@mail.gmail.com>
+To: Mahesh Bandewar =?utf-8?B?KOCkruCkueClh+CktiDgpKzgpILgpKHgpYfgpLXgpL4=?= =?utf-8?B?4KSwKQ==?= <maheshb@google.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-On 11/29/2017 07:42 AM, Michal Hocko wrote:
-> From: Michal Hocko <mhocko@suse.com>
+Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
+> On Tue, Nov 28, 2017 at 3:04 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
+> > ...
+> >> >> diff --git a/security/commoncap.c b/security/commoncap.c
+> >> >> index fc46f5b85251..89103f16ac37 100644
+> >> >> --- a/security/commoncap.c
+> >> >> +++ b/security/commoncap.c
+> >> >> @@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+> >> >>  {
+> >> >>       struct user_namespace *ns = targ_ns;
+> >> >>
+> >> >> +     /* If the capability is controlled and user-ns that process
+> >> >> +      * belongs-to is 'controlled' then return EPERM and no need
+> >> >> +      * to check the user-ns hierarchy.
+> >> >> +      */
+> >> >> +     if (is_user_ns_controlled(cred->user_ns) &&
+> >> >> +         is_capability_controlled(cap))
+> >> >> +             return -EPERM;
+> >> >
+> >> > I'd be curious to see the performance impact on this on a regular
+> >> > workload (kernel build?) in a controlled ns.
+> >> >
+> >> Should it affect? If at all, it should be +ve since, the recursive
+> >> user-ns hierarchy lookup is avoided with the above check if the
+> >> capability is controlled.
+> >
+> > Yes but I expect that to be the rare case for normal lxc installs
+> > (which are of course what I am interested in)
+> >
+> >>  The additional cost otherwise is this check
+> >> per cap_capable() call.
+> >
+> > And pipeline refetching?
+> >
+> > Capability calls also shouldn't be all that frequent, but still I'm
+> > left wondering...
 > 
-> Both load_elf_interp and load_elf_binary rely on elf_map to map segments
-> on a controlled address and they use MAP_FIXED to enforce that. This is
-> however dangerous thing prone to silent data corruption which can be
-> even exploitable. Let's take CVE-2017-1000253 as an example. At the time
-> (before eab09532d400 ("binfmt_elf: use ELF_ET_DYN_BASE only for PIE"))
-> ELF_ET_DYN_BASE was at TASK_SIZE / 3 * 2 which is not that far away from
-> the stack top on 32b (legacy) memory layout (only 1GB away). Therefore
-> we could end up mapping over the existing stack with some luck.
-> 
-> The issue has been fixed since then (a87938b2e246 ("fs/binfmt_elf.c:
-> fix bug in loading of PIE binaries")), ELF_ET_DYN_BASE moved moved much
-> further from the stack (eab09532d400 and later by c715b72c1ba4 ("mm:
-> revert x86_64 and arm64 ELF_ET_DYN_BASE base changes")) and excessive
-> stack consumption early during execve fully stopped by da029c11e6b1
-> ("exec: Limit arg stack to at most 75% of _STK_LIM"). So we should be
-> safe and any attack should be impractical. On the other hand this is
-> just too subtle assumption so it can break quite easily and hard to
-> spot.
-> 
-> I believe that the MAP_FIXED usage in load_elf_binary (et. al) is still
-> fundamentally dangerous. Moreover it shouldn't be even needed. We are
-> at the early process stage and so there shouldn't be unrelated mappings
-> (except for stack and loader) existing so mmap for a given address
-> should succeed even without MAP_FIXED. Something is terribly wrong if
-> this is not the case and we should rather fail than silently corrupt the
-> underlying mapping.
-> 
-> Address this issue by changing MAP_FIXED to the newly added
-> MAP_FIXED_SAFE. This will mean that mmap will fail if there is an
-> existing mapping clashing with the requested one without clobbering it.
-> 
-> Cc: Abdul Haleem <abdhalee@linux.vnet.ibm.com>
-> Cc: Joel Stanley <joel@jms.id.au>
-> Acked-by: Kees Cook <keescook@chromium.org>
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
-> ---
+> Correct, and capability checks are part of the control-path and not
+> the data-path so shouldn't matter but I guess it doesn't hurt to
+> find-out the number. Do you have any workload in mind, that we can use
+> for this test/benchmark?
 
-Reviewed-by: Khalid Aziz <khalid.aziz@oracle.com>
+I suppose if you did both (a) a kernel build and (b) a webserver
+like https://github.com/m3ng9i/ran , being hit for a minute by a
+heavy load of requests, those two together would be re-assuring.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+thanks,
+-serge
