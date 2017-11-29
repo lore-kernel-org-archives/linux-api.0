@@ -1,60 +1,33 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: [PATCH] mmap.2: document new MAP_FIXED_SAFE flag
-Date: Wed, 29 Nov 2017 15:45:24 +0100
-Message-ID: <20171129144524.23518-1-mhocko@kernel.org>
-References: <20171129144219.22867-1-mhocko@kernel.org>
+From: Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee@linaro.org>
+Subject: Re: [PATCH v5 00/30] ARM Scalable Vector Extension (SVE)
+Date: Wed, 29 Nov 2017 15:04:12 +0000
+Message-ID: <877eu9dt3n.fsf@linaro.org>
+References: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20171129144219.22867-1-mhocko@kernel.org>
+In-reply-to: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
 Sender: linux-arch-owner@vger.kernel.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Michal Hocko <mhocko@suse.com>
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: linux-arm-kernel@lists.infradead.org, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Okamoto Takayuki <tokamoto@jp.fujitsu.com>, kvmarm@lists.cs.columbia.edu, libc-alpha@sourceware.org, linux-arch@vger.kernel.org, Alan Hayward <alan.hayward@arm.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Christoffer Dall <christoffer.dall@linaro.org>, Mark Rutland <mark.rutland@arm.com>, Oleg Nesterov <oleg@redhat.com>, Dmitry Safonov <dsafonov@virtuozzo.com>, "H . J . Lu" <hjl.tools@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vg
 List-Id: linux-api@vger.kernel.org
 
-From: Michal Hocko <mhocko@suse.com>
 
-4.16+ kernels offer a new MAP_FIXED_SAFE flag which allows to atomicaly
-probe for a given address range.
+Dave Martin <Dave.Martin@arm.com> writes:
 
-Signed-off-by: Michal Hocko <mhocko@suse.com>
----
- man2/mmap.2 | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+> This series implements Linux kernel support for the ARM Scalable Vector
+> Extension (SVE). [1]  It supersedes the previous v3: see [3] for link
+> and full cover letter.
+>
+> This is a minor update to v4, but does contain a couple of important
+> fixes.
+<snip>
 
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 385f3bfd5393..622a7000de83 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -225,6 +225,18 @@ will fail.
- Because requiring a fixed address for a mapping is less portable,
- the use of this option is discouraged.
- .TP
-+.B MAP_FIXED_SAFE (since 4.16)
-+Similar to MAP_FIXED wrt. to the
-+.I
-+addr
-+enforcement except it never clobbers a colliding mapped range and rather fail with
-+.B EEXIST
-+in such a case. This flag can therefore be used as a safe and atomic probe for the
-+the specific address range. Please note that older kernels which do not recognize
-+this flag can fallback to the hint based implementation and map to a different
-+location. Any backward compatible software should therefore check the returning
-+address with the given one.
-+.TP
- .B MAP_GROWSDOWN
- This flag is used for stacks.
- It indicates to the kernel virtual memory system that the mapping
-@@ -449,6 +461,12 @@ is not a valid file descriptor (and
- .B MAP_ANONYMOUS
- was not set).
- .TP
-+.B EEXIST
-+range covered by
-+.IR addr , 
-+.IR length
-+is clashing with an existing mapping.
-+.TP
- .B EINVAL
- We don't like
- .IR addr ,
--- 
-2.15.0
+I seem to have run into a regression with normal non-SVE sigcontexts
+while trying to run consecutive RISU runs in the Foundation Model. I'm
+failing to get repeatable results playing back a previous --master run.
+It works OK with the default Debian kernel.
+
+What is the current status of the tree? I'd like to try an narrow it
+down but I seem to recall it was now in a next tree somewhere?
