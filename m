@@ -1,39 +1,64 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Wed, 29 Nov 2017 16:50:09 +0100
-Message-ID: <20171129155009.i5xai77rrapsyrd2@dhcp22.suse.cz>
+From: Khalid Aziz <khalid.aziz@oracle.com>
+Subject: Re: [PATCH 2/2] fs, elf: drop MAP_FIXED usage from elf_map
+Date: Wed, 29 Nov 2017 10:45:43 -0700
+Message-ID: <93ce964b-e352-1905-c2b6-deedf2ea06f8@oracle.com>
 References: <20171129144219.22867-1-mhocko@kernel.org>
- <b154b794-7a8b-995e-0954-9234b9446b31@prevas.dk>
+ <20171129144219.22867-3-mhocko@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <b154b794-7a8b-995e-0954-9234b9446b31-rjjw5hvvQKZaa/9Udqfwiw@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Rasmus Villemoes <rasmus.villemoes-rjjw5hvvQKZaa/9Udqfwiw@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Abdul Haleem <abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171129144219.22867-3-mhocko@kernel.org>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Michal Hocko <mhocko@suse.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 29-11-17 16:13:53, Rasmus Villemoes wrote:
-> On 2017-11-29 15:42, Michal Hocko wrote:
-[...]
-> >The flag is introduced as a completely
-> > new one rather than a MAP_FIXED extension because of the backward
-> > compatibility. We really want a never-clobber semantic even on older
-> > kernels which do not recognize the flag. Unfortunately mmap sucks wrt.
-> > flags evaluation because we do not EINVAL on unknown flags. On those
-> > kernels we would simply use the traditional hint based semantic so the
-> > caller can still get a different address (which sucks) but at least not
-> > silently corrupt an existing mapping. I do not see a good way around
-> > that.
+On 11/29/2017 07:42 AM, Michal Hocko wrote:
+> From: Michal Hocko <mhocko@suse.com>
 > 
-> I think it would be nice if this rationale was in the 1/2 changelog,
-> along with the hint about what userspace that wants to be compatible
-> with old kernels will have to do (namely, check that it got what it
-> requested) - which I see you did put in the man page.
+> Both load_elf_interp and load_elf_binary rely on elf_map to map segments
+> on a controlled address and they use MAP_FIXED to enforce that. This is
+> however dangerous thing prone to silent data corruption which can be
+> even exploitable. Let's take CVE-2017-1000253 as an example. At the time
+> (before eab09532d400 ("binfmt_elf: use ELF_ET_DYN_BASE only for PIE"))
+> ELF_ET_DYN_BASE was at TASK_SIZE / 3 * 2 which is not that far away from
+> the stack top on 32b (legacy) memory layout (only 1GB away). Therefore
+> we could end up mapping over the existing stack with some luck.
+> 
+> The issue has been fixed since then (a87938b2e246 ("fs/binfmt_elf.c:
+> fix bug in loading of PIE binaries")), ELF_ET_DYN_BASE moved moved much
+> further from the stack (eab09532d400 and later by c715b72c1ba4 ("mm:
+> revert x86_64 and arm64 ELF_ET_DYN_BASE base changes")) and excessive
+> stack consumption early during execve fully stopped by da029c11e6b1
+> ("exec: Limit arg stack to at most 75% of _STK_LIM"). So we should be
+> safe and any attack should be impractical. On the other hand this is
+> just too subtle assumption so it can break quite easily and hard to
+> spot.
+> 
+> I believe that the MAP_FIXED usage in load_elf_binary (et. al) is still
+> fundamentally dangerous. Moreover it shouldn't be even needed. We are
+> at the early process stage and so there shouldn't be unrelated mappings
+> (except for stack and loader) existing so mmap for a given address
+> should succeed even without MAP_FIXED. Something is terribly wrong if
+> this is not the case and we should rather fail than silently corrupt the
+> underlying mapping.
+> 
+> Address this issue by changing MAP_FIXED to the newly added
+> MAP_FIXED_SAFE. This will mean that mmap will fail if there is an
+> existing mapping clashing with the requested one without clobbering it.
+> 
+> Cc: Abdul Haleem <abdhalee@linux.vnet.ibm.com>
+> Cc: Joel Stanley <joel@jms.id.au>
+> Acked-by: Kees Cook <keescook@chromium.org>
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
 
-OK, I've added there.
+Reviewed-by: Khalid Aziz <khalid.aziz@oracle.com>
 
--- 
-Michal Hocko
-SUSE Labs
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
