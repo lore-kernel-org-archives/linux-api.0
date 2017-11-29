@@ -1,61 +1,86 @@
-From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
-        <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv2 2/2] userns: control capabilities of some user namespaces
-Date: Tue, 28 Nov 2017 15:50:48 -0800
-Message-ID: <CAF2d9jhCDasnf2tbaGA04MV5ygZ9o1FaVRCEU2TkHjZR7d1ifw@mail.gmail.com>
-References: <20171110053757.21170-1-mahesh@bandewar.net> <20171126064037.GB30279@mail.hallyn.com>
- <CAF2d9jhiZFiFODNXUY13F+4Pm+59+rZW=CnLPX1VUT3BAJdeeA@mail.gmail.com> <20171128230440.GB28297@mail.hallyn.com>
+From: John Hubbard <jhubbard@nvidia.com>
+Subject: Re: [PATCH] mm: disable `vm.max_map_count' sysctl limit
+Date: Tue, 28 Nov 2017 21:14:23 -0800
+Message-ID: <5ca7d54b-5ae4-646d-f3a0-9b85129c9ccf@nvidia.com>
+References: <23066.59196.909026.689706@gargle.gargle.HOWL>
+ <20171127101232.ykriowhatecnvjvg@dhcp22.suse.cz>
+ <CAM43=SPVvBTPz31Uu=iz3fpS9tb75uSmL=pYP3AfsfmYr9u4Og@mail.gmail.com>
+ <20171127195207.vderbbkbgygawuhx@dhcp22.suse.cz>
+ <b6faf739-1a4a-12e1-ad84-0b42166d68c1@nvidia.com>
+ <20171128081259.gnkiw5227dtmfm4l@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171128230440.GB28297-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Cc: Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171128081259.gnkiw5227dtmfm4l@dhcp22.suse.cz>
+Content-Language: en-US
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Mikael Pettersson <mikpelinux@gmail.com>, linux-mm@kvack.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 28, 2017 at 3:04 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
-> Quoting Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=B6 =E0=A4=AC=
-=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0) (maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org=
-):
-> ...
->> >> diff --git a/security/commoncap.c b/security/commoncap.c
->> >> index fc46f5b85251..89103f16ac37 100644
->> >> --- a/security/commoncap.c
->> >> +++ b/security/commoncap.c
->> >> @@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct us=
-er_namespace *targ_ns,
->> >>  {
->> >>       struct user_namespace *ns =3D targ_ns;
->> >>
->> >> +     /* If the capability is controlled and user-ns that process
->> >> +      * belongs-to is 'controlled' then return EPERM and no need
->> >> +      * to check the user-ns hierarchy.
->> >> +      */
->> >> +     if (is_user_ns_controlled(cred->user_ns) &&
->> >> +         is_capability_controlled(cap))
->> >> +             return -EPERM;
->> >
->> > I'd be curious to see the performance impact on this on a regular
->> > workload (kernel build?) in a controlled ns.
->> >
->> Should it affect? If at all, it should be +ve since, the recursive
->> user-ns hierarchy lookup is avoided with the above check if the
->> capability is controlled.
->
-> Yes but I expect that to be the rare case for normal lxc installs
-> (which are of course what I am interested in)
->
->>  The additional cost otherwise is this check
->> per cap_capable() call.
->
-> And pipeline refetching?
->
-> Capability calls also shouldn't be all that frequent, but still I'm
-> left wondering...
+On 11/28/2017 12:12 AM, Michal Hocko wrote:
+> On Mon 27-11-17 15:26:27, John Hubbard wrote:
+> [...]
+>> Let me add a belated report, then: we ran into this limit while implementing 
+>> an early version of Unified Memory[1], back in 2013. The implementation
+>> at the time depended on tracking that assumed "one allocation == one vma".
+> 
+> And you tried hard to make those VMAs really separate? E.g. with
+> prot_none gaps?
 
-Correct, and capability checks are part of the control-path and not
-the data-path so shouldn't matter but I guess it doesn't hurt to
-find-out the number. Do you have any workload in mind, that we can use
-for this test/benchmark?
+We didn't do that, and in fact I'm probably failing to grasp the underlying 
+design idea that you have in mind there...hints welcome...
+
+What we did was to hook into the mmap callbacks in the kernel driver, after 
+userspace mmap'd a region (via a custom allocator API). And we had an ioctl
+in there, to connect up other allocation attributes that couldn't be passed
+through via mmap. Again, this was for regions of memory that were to be
+migrated between CPU and device (GPU).
+
+> 
+>> So, with only 64K vmas, we quickly ran out, and changed the design to work
+>> around that. (And later, the design was *completely* changed to use a separate
+>> tracking system altogether). exag
+>>
+>> The existing limit seems rather too low, at least from my perspective. Maybe
+>> it would be better, if expressed as a function of RAM size?
+> 
+> Dunno. Whenever we tried to do RAM scaling it turned out a bad idea
+> after years when memory grown much more than the code author expected.
+> Just look how we scaled hash table sizes... But maybe you can come up
+> with something clever. In any case tuning this from the userspace is a
+> trivial thing to do and I am somehow skeptical that any early boot code
+> would trip over the limit.
+> 
+
+I agree that this is not a limit that boot code is likely to hit. And maybe 
+tuning from userspace really is the right approach here, considering that
+there is a real cost to going too large. 
+
+Just philosophically here, hard limits like this seem a little awkward if they 
+are set once in, say, 1999 (gross exaggeration here, for effect) and then not
+updated to stay with the times, right? In other words, one should not routinely 
+need to tune most things. That's why I was wondering if something crude and silly
+would work, such as just a ratio of RAM to vma count. (I'm more just trying to
+understand the "rules" here, than to debate--I don't have a strong opinion 
+on this.)
+
+The fact that this apparently failed with hash tables is interesting, I'd
+love to read more if you have any notes or links. I spotted a 2014 LWN article
+( https://lwn.net/Articles/612100 ) about hash table resizing, and some commits
+that fixed resizing bugs, such as
+
+    12311959ecf8a ("rhashtable: fix shift by 64 when shrinking")
+
+...was it just a storm of bugs that showed up?
+
+
+thanks,
+John Hubbard
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
