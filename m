@@ -1,38 +1,52 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Thu, 30 Nov 2017 07:58:35 +0100
-Message-ID: <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
+From: Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
+Subject: Re: [patch v12 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
+ families JTAG master driver
+Date: Thu, 30 Nov 2017 09:21:29 +0100
+Message-ID: <CAOFm3uHg8n4A8opaOC3=pNtM1yJU6iy5Ta8XtGOvqT-Euv=X1w@mail.gmail.com>
+References: <1510675867-24276-1-git-send-email-oleksandrs@mellanox.com>
+ <1510675867-24276-3-git-send-email-oleksandrs@mellanox.com> <CAGMNF6XRwU5QEJhkg-mVwE5zpPigtcGJtRUupZHtcWRdedcsxg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Abdul Haleem <abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAGMNF6XRwU5QEJhkg-mVwE5zpPigtcGJtRUupZHtcWRdedcsxg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kun Yi <kunyi-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, OpenBMC Maillist <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 29-11-17 14:25:36, Kees Cook wrote:
-> On Wed, Nov 29, 2017 at 6:42 AM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> > The first patch introduced MAP_FIXED_SAFE which enforces the given
-> > address but unlike MAP_FIXED it fails with ENOMEM if the given range
-> > conflicts with an existing one. The flag is introduced as a completely
-> 
-> I still think this name should be better. "SAFE" doesn't say what it's
-> safe from...
+On Wed, Nov 29, 2017 at 11:51 PM, Kun Yi <kunyi-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Nov 14, 2017 at 8:11 AM, Oleksandr Shamray
+> <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org> wrote:
+[]
+>> diff --git a/drivers/jtag/jtag-aspeed.c b/drivers/jtag/jtag-aspeed.c
+>> new file mode 100644
+>> index 0000000..a6e2417
+>> --- /dev/null
+>> +++ b/drivers/jtag/jtag-aspeed.c
+>> @@ -0,0 +1,782 @@
+>> +/*
+>> + * drivers/jtag/aspeed-jtag.c
+>> + *
+>> + * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
+>> + * Copyright (c) 2017 Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+>> + *
+>> + * Released under the GPLv2 only.
+>> + * SPDX-License-Identifier: GPL-2.0
+>> + */
 
-It is safe in a sense it doesn't perform any address space dangerous
-operations. mmap is _inherently_ about the address space so the context
-should be kind of clear.
+I think the SPDX id should be on the first line as requested by Linus
+and documented by Thomas (tglx) and Greg (greg-kh). And it should use
+// comments, e.g:
 
-> MAP_FIXED_UNIQUE
-> MAP_FIXED_ONCE
-> MAP_FIXED_FRESH
+// SPDX-License-Identifier: GPL-2.0
 
-Well, I can open a poll for the best name, but none of those you are
-proposing sound much better to me. Yeah, naming sucks...
+See the threads discussing all these.
+
+
 -- 
-Michal Hocko
-SUSE Labs
+Cordially
+Philippe Ombredanne
+--
+To unsubscribe from this list: send the line "unsubscribe devicetree" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
