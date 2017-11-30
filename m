@@ -1,84 +1,56 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: [PATCH v2] mmap.2: document new MAP_FIXED_SAFE flag
-Date: Thu, 30 Nov 2017 09:24:05 +0100
-Message-ID: <20171130082405.b77eknaiblgmpa4s@dhcp22.suse.cz>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <20171129144524.23518-1-mhocko@kernel.org>
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: RE: [patch v12 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
+ families JTAG master driver
+Date: Thu, 30 Nov 2017 10:49:27 +0000
+Message-ID: <AM4PR0501MB2194FDF093DD241694BE77BFB1380@AM4PR0501MB2194.eurprd05.prod.outlook.com>
+References: <1510675867-24276-1-git-send-email-oleksandrs@mellanox.com>
+ <1510675867-24276-3-git-send-email-oleksandrs@mellanox.com>
+ <CAGMNF6XRwU5QEJhkg-mVwE5zpPigtcGJtRUupZHtcWRdedcsxg@mail.gmail.com>
+ <CAOFm3uHg8n4A8opaOC3=pNtM1yJU6iy5Ta8XtGOvqT-Euv=X1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171129144524.23518-1-mhocko@kernel.org>
-Sender: owner-linux-mm@kvack.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAOFm3uHg8n4A8opaOC3=pNtM1yJU6iy5Ta8XtGOvqT-Euv=X1w@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Philippe Ombredanne <pombredanne@nexb.com>, Kun Yi <kunyi@google.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "arnd@arndb.de" <arnd@arndb.de>, system-sw-low-level <system-sw-low-level@mellanox.com>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "jiri@resnulli.us" <jiri@resnulli.us>, Vadim Pasternak <vadimp@mellanox.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, OpenBMC Maillist <openbmc@lists.ozlabs.org>, LKML <linux-kernel@vger.kernel.org>, "openocd-devel-owner@lists.sourceforge.net" <openocd-devel-owner@lists.sourceforge.net>, "mec@shout.net" <mec@shout.net>, Jiri Pirko <jiri@mellanox.com>, "robh+dt@kernel.org" <robh+dt@kernel.org>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, "tklauser@distanz.ch" <tklauser@distanz.ch>, Mauro Carvalho Chehab <mchehab@kernel.org>, Dav
 List-Id: linux-api@vger.kernel.org
 
-Updated version based on feedback from John.
----
->From ade1eba229b558431581448e7d7838f0e1fe2c49 Mon Sep 17 00:00:00 2001
-From: Michal Hocko <mhocko@suse.com>
-Date: Wed, 29 Nov 2017 15:32:08 +0100
-Subject: [PATCH] mmap.2: document new MAP_FIXED_SAFE flag
-
-4.16+ kernels offer a new MAP_FIXED_SAFE flag which allows the caller to
-atomicaly probe for a given address range.
-
-[wording heavily updated by John Hubbard <jhubbard@nvidia.com>]
-Signed-off-by: Michal Hocko <mhocko@suse.com>
----
- man2/mmap.2 | 22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
-
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 385f3bfd5393..923bbb290875 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -225,6 +225,22 @@ will fail.
- Because requiring a fixed address for a mapping is less portable,
- the use of this option is discouraged.
- .TP
-+.BR MAP_FIXED_SAFE " (since Linux 4.16)"
-+Similar to MAP_FIXED with respect to the
-+.I
-+addr
-+enforcement, but different in that MAP_FIXED_SAFE never clobbers a pre-existing
-+mapped range. If the requested range would collide with an existing
-+mapping, then this call fails with
-+.B EEXIST.
-+This flag can therefore be used as a way to atomically (with respect to other
-+threads) attempt to map an address range: one thread will succeed; all others
-+will report failure. Please note that older kernels which do not recognize this
-+flag will typically (upon detecting a collision with a pre-existing mapping)
-+fall back a "non-MAP_FIXED" type of behavior: they will return an address that
-+is different than the requested one. Therefore, backward-compatible software
-+should check the returned address against the requested address.
-+.TP
- .B MAP_GROWSDOWN
- This flag is used for stacks.
- It indicates to the kernel virtual memory system that the mapping
-@@ -449,6 +465,12 @@ is not a valid file descriptor (and
- .B MAP_ANONYMOUS
- was not set).
- .TP
-+.B EEXIST
-+range covered by
-+.IR addr ,
-+.IR length
-+is clashing with an existing mapping.
-+.TP
- .B EINVAL
- We don't like
- .IR addr ,
--- 
-2.15.0
-
--- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+VGhuYWtzIGZvciBwb2ludCANCg0KQmVzdCBSZWdhcmRzLA0KT2xla3NhbmRyIFNoYW1yYXkNCg0K
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBQaGlsaXBwZSBPbWJyZWRhbm5l
+IFttYWlsdG86cG9tYnJlZGFubmVAbmV4Yi5jb21dDQo+IFNlbnQ6IFRodXJzZGF5LCBOb3ZlbWJl
+ciAzMCwgMjAxNyAxMDoyMSBBTQ0KPiBUbzogS3VuIFlpIDxrdW55aUBnb29nbGUuY29tPg0KPiBD
+YzogT2xla3NhbmRyIFNoYW1yYXkgPG9sZWtzYW5kcnNAbWVsbGFub3guY29tPjsgR3JlZyBLcm9h
+aC1IYXJ0bWFuDQo+IDxncmVna2hAbGludXhmb3VuZGF0aW9uLm9yZz47IGFybmRAYXJuZGIuZGU7
+IHN5c3RlbS1zdy1sb3ctbGV2ZWwgPHN5c3RlbS0NCj4gc3ctbG93LWxldmVsQG1lbGxhbm94LmNv
+bT47IGRldmljZXRyZWVAdmdlci5rZXJuZWwub3JnOyBqaXJpQHJlc251bGxpLnVzOw0KPiBWYWRp
+bSBQYXN0ZXJuYWsgPHZhZGltcEBtZWxsYW5veC5jb20+OyBsaW51eC1hcGlAdmdlci5rZXJuZWwu
+b3JnOw0KPiBPcGVuQk1DIE1haWxsaXN0IDxvcGVuYm1jQGxpc3RzLm96bGFicy5vcmc+OyBMS01M
+IDxsaW51eC0NCj4ga2VybmVsQHZnZXIua2VybmVsLm9yZz47IG9wZW5vY2QtZGV2ZWwtb3duZXJA
+bGlzdHMuc291cmNlZm9yZ2UubmV0Ow0KPiBtZWNAc2hvdXQubmV0OyBKaXJpIFBpcmtvIDxqaXJp
+QG1lbGxhbm94LmNvbT47IHJvYmgrZHRAa2VybmVsLm9yZzsgbGludXgtDQo+IHNlcmlhbEB2Z2Vy
+Lmtlcm5lbC5vcmc7IHRrbGF1c2VyQGRpc3RhbnouY2g7IE1hdXJvIENhcnZhbGhvIENoZWhhYg0K
+PiA8bWNoZWhhYkBrZXJuZWwub3JnPjsgRGF2aWQgUy4gTWlsbGVyIDxkYXZlbUBkYXZlbWxvZnQu
+bmV0PjsgbGludXgtYXJtLQ0KPiBrZXJuZWxAbGlzdHMuaW5mcmFkZWFkLm9yZw0KPiBTdWJqZWN0
+OiBSZTogW3BhdGNoIHYxMiAyLzRdIGRyaXZlcnM6IGp0YWc6IEFkZCBBc3BlZWQgU29DIDI0eHgg
+YW5kIDI1eHgNCj4gZmFtaWxpZXMgSlRBRyBtYXN0ZXIgZHJpdmVyDQo+IA0KPiBPbiBXZWQsIE5v
+diAyOSwgMjAxNyBhdCAxMTo1MSBQTSwgS3VuIFlpIDxrdW55aUBnb29nbGUuY29tPiB3cm90ZToN
+Cj4gPiBPbiBUdWUsIE5vdiAxNCwgMjAxNyBhdCA4OjExIEFNLCBPbGVrc2FuZHIgU2hhbXJheQ0K
+PiA+IDxvbGVrc2FuZHJzQG1lbGxhbm94LmNvbT4gd3JvdGU6DQo+IFtdDQo+ID4+IGRpZmYgLS1n
+aXQgYS9kcml2ZXJzL2p0YWcvanRhZy1hc3BlZWQuYyBiL2RyaXZlcnMvanRhZy9qdGFnLWFzcGVl
+ZC5jDQo+ID4+IG5ldyBmaWxlIG1vZGUgMTAwNjQ0IGluZGV4IDAwMDAwMDAuLmE2ZTI0MTcNCj4g
+Pj4gLS0tIC9kZXYvbnVsbA0KPiA+PiArKysgYi9kcml2ZXJzL2p0YWcvanRhZy1hc3BlZWQuYw0K
+PiA+PiBAQCAtMCwwICsxLDc4MiBAQA0KPiA+PiArLyoNCj4gPj4gKyAqIGRyaXZlcnMvanRhZy9h
+c3BlZWQtanRhZy5jDQo+ID4+ICsgKg0KPiA+PiArICogQ29weXJpZ2h0IChjKSAyMDE3IE1lbGxh
+bm94IFRlY2hub2xvZ2llcy4gQWxsIHJpZ2h0cyByZXNlcnZlZC4NCj4gPj4gKyAqIENvcHlyaWdo
+dCAoYykgMjAxNyBPbGVrc2FuZHIgU2hhbXJheSA8b2xla3NhbmRyc0BtZWxsYW5veC5jb20+DQo+
+ID4+ICsgKg0KPiA+PiArICogUmVsZWFzZWQgdW5kZXIgdGhlIEdQTHYyIG9ubHkuDQo+ID4+ICsg
+KiBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogR1BMLTIuMA0KPiA+PiArICovDQo+IA0KPiBJIHRo
+aW5rIHRoZSBTUERYIGlkIHNob3VsZCBiZSBvbiB0aGUgZmlyc3QgbGluZSBhcyByZXF1ZXN0ZWQg
+YnkgTGludXMgYW5kDQo+IGRvY3VtZW50ZWQgYnkgVGhvbWFzICh0Z2x4KSBhbmQgR3JlZyAoZ3Jl
+Zy1raCkuIEFuZCBpdCBzaG91bGQgdXNlIC8vDQo+IGNvbW1lbnRzLCBlLmc6DQo+IA0KPiAvLyBT
+UERYLUxpY2Vuc2UtSWRlbnRpZmllcjogR1BMLTIuMA0KPiANCj4gU2VlIHRoZSB0aHJlYWRzIGRp
+c2N1c3NpbmcgYWxsIHRoZXNlLg0KPiANCj4gDQo+IC0tDQo+IENvcmRpYWxseQ0KPiBQaGlsaXBw
+ZSBPbWJyZWRhbm5lDQo=
