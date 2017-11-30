@@ -1,52 +1,100 @@
-From: Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
-Subject: Re: [patch v12 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
- families JTAG master driver
-Date: Thu, 30 Nov 2017 09:21:29 +0100
-Message-ID: <CAOFm3uHg8n4A8opaOC3=pNtM1yJU6iy5Ta8XtGOvqT-Euv=X1w@mail.gmail.com>
-References: <1510675867-24276-1-git-send-email-oleksandrs@mellanox.com>
- <1510675867-24276-3-git-send-email-oleksandrs@mellanox.com> <CAGMNF6XRwU5QEJhkg-mVwE5zpPigtcGJtRUupZHtcWRdedcsxg@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mmap.2: document new MAP_FIXED_SAFE flag
+Date: Thu, 30 Nov 2017 09:23:14 +0100
+Message-ID: <20171130082314.6b4cubakdhwtis7y@dhcp22.suse.cz>
+References: <20171129144219.22867-1-mhocko@kernel.org>
+ <20171129144524.23518-1-mhocko@kernel.org>
+ <593899ff-08ad-6c3f-d69d-346f6bc5d1f6@nvidia.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAGMNF6XRwU5QEJhkg-mVwE5zpPigtcGJtRUupZHtcWRdedcsxg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: devicetree-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kun Yi <kunyi-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, arnd-r2nGTMty4D4@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, OpenBMC Maillist <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, mec-WqBc5aa1uDFeoWH0uzbU5w@public.gmane.org, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <593899ff-08ad-6c3f-d69d-346f6bc5d1f6@nvidia.com>
+Sender: owner-linux-mm@kvack.org
+To: John Hubbard <jhubbard@nvidia.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 29, 2017 at 11:51 PM, Kun Yi <kunyi-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> On Tue, Nov 14, 2017 at 8:11 AM, Oleksandr Shamray
-> <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org> wrote:
-[]
->> diff --git a/drivers/jtag/jtag-aspeed.c b/drivers/jtag/jtag-aspeed.c
->> new file mode 100644
->> index 0000000..a6e2417
->> --- /dev/null
->> +++ b/drivers/jtag/jtag-aspeed.c
->> @@ -0,0 +1,782 @@
->> +/*
->> + * drivers/jtag/aspeed-jtag.c
->> + *
->> + * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
->> + * Copyright (c) 2017 Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
->> + *
->> + * Released under the GPLv2 only.
->> + * SPDX-License-Identifier: GPL-2.0
->> + */
+On Wed 29-11-17 19:16:39, John Hubbard wrote:
+[...]
+> Hi Michal,
+> 
+> I've taken the liberty of mostly rewriting this part, in order to more closely 
+> match the existing paragraphs; to fix minor typos; and to attempt to slightly
+> clarify the paragraph.
+> 
+> +.BR MAP_FIXED_SAFE " (since Linux 4.16)"
+> +Similar to MAP_FIXED with respect to the
+> +.I
+> +addr
+> +enforcement, but different in that MAP_FIXED_SAFE never clobbers a pre-existing
+> +mapped range. If the requested range would collide with an existing
+> +mapping, then this call fails with
+> +.B EEXIST.
+> +This flag can therefore be used as a way to atomically (with respect to other
+> +threads) attempt to map an address range: one thread will succeed; all others
+> +will report failure. Please note that older kernels which do not recognize this
+> +flag will typically (upon detecting a collision with a pre-existing mapping)
+> +fall back a "non-MAP_FIXED" type of behavior: they will return an address that
+> +is different than the requested one. Therefore, backward-compatible software
+> +should check the returned address against the requested address.
+> +.TP
 
-I think the SPDX id should be on the first line as requested by Linus
-and documented by Thomas (tglx) and Greg (greg-kh). And it should use
-// comments, e.g:
+I have taken yours. Thanks a lot!
 
-// SPDX-License-Identifier: GPL-2.0
+> (I'm ignoring the naming, because there is another thread about that,
+> so please just the above as "MAP_FIXED_whatever-is-chosen".)
+> 
+> > @@ -449,6 +461,12 @@ is not a valid file descriptor (and
+> >  .B MAP_ANONYMOUS
+> >  was not set).
+> >  .TP
+> > +.B EEXIST
+> > +range covered by
+> > +.IR addr , 
+> 
+> nit: trailing space on the above line.
 
-See the threads discussing all these.
+fixed
 
+> > +.IR length
+> > +is clashing with an existing mapping.
+> > +.TP
+> >  .B EINVAL
+> >  We don't like
+> >  .IR addr ,
+> > 
+> 
+> One other thing: reading through mmap.2, I now want to add this as well:
+> 
+> diff --git a/man2/mmap.2 b/man2/mmap.2
+> index 622a7000d..780cad6d9 100644
+> --- a/man2/mmap.2
+> +++ b/man2/mmap.2
+> @@ -222,20 +222,25 @@ part of the existing mapping(s) will be discarded.
+>  If the specified address cannot be used,
+>  .BR mmap ()
+>  will fail.
+> -Because requiring a fixed address for a mapping is less portable,
+> -the use of this option is discouraged.
+> +Software that aspires to be as portable as possible should use this option with
+> +care, keeping in mind that different kernels and C libraries may set up quite
+> +different mapping ranges.
+> 
+> 
+> ...because that advice is just wrong (it presumes that "less portable" ==
+> "must be discouraged").
+> 
+> Should I send out a separate patch for that, or is it better to glom it together 
+> with this one?
 
+yes please
 -- 
-Cordially
-Philippe Ombredanne
+Michal Hocko
+SUSE Labs
+
 --
-To unsubscribe from this list: send the line "unsubscribe devicetree" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
