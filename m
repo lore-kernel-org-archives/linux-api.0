@@ -1,100 +1,37 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v4 3/3] mm/mempolicy: add nodes_empty check in
- SYSC_migrate_pages
-Date: Fri, 1 Dec 2017 16:18:42 +0100
-Message-ID: <305e9b37-0e58-a53d-55b7-f0815c1ba64f@suse.cz>
-References: <1512122128-6220-1-git-send-email-xieyisheng1@huawei.com>
+From: Cyril Hrubis <chrubis@suse.cz>
+Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Fri, 1 Dec 2017 16:26:40 +0100
+Message-ID: <20171201152640.GA3765@rei>
+References: <20171129144219.22867-1-mhocko@kernel.org>
+ <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
+ <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1512122128-6220-1-git-send-email-xieyisheng1@huawei.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yisheng Xie <xieyisheng1@huawei.com>, akpm@linux-foundation.org
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andi Kleen <ak@linux.intel.com>, Chris Salls <salls@cs.ucsb.edu>, Christopher Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Ingo Molnar <mingo@kernel.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Tan Xiaojun <tanxiaojun@huawei.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>
 List-Id: linux-api@vger.kernel.org
 
-On 12/01/2017 10:55 AM, Yisheng Xie wrote:
-> As in manpage of migrate_pages, the errno should be set to EINVAL when
-> none of the node IDs specified by new_nodes are on-line and allowed by the
-> process's current cpuset context, or none of the specified nodes contain
-> memory.  However, when test by following case:
+Hi!
+> > MAP_FIXED_UNIQUE
+> > MAP_FIXED_ONCE
+> > MAP_FIXED_FRESH
 > 
-> 	new_nodes = 0;
-> 	old_nodes = 0xf;
-> 	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
-> 
-> The ret will be 0 and no errno is set.  As the new_nodes is empty, we
-> should expect EINVAL as documented.
-> 
-> To fix the case like above, this patch check whether target nodes AND
-> current task_nodes is empty, and then check whether AND
-> node_states[N_MEMORY] is empty.
-> 
-> Meanwhile,this patch also remove the check of EPERM on CAP_SYS_NICE. 
-> The caller of migrate_pages should be able to migrate the target process
-> pages anywhere the caller can allocate memory, if the caller can access
-> the mm_struct.
-> 
-> Signed-off-by: Yisheng Xie <xieyisheng1@huawei.com>
-> Cc: Andi Kleen <ak@linux.intel.com>
-> Cc: Chris Salls <salls@cs.ucsb.edu>
-> Cc: Christopher Lameter <cl@linux.com>
-> Cc: David Rientjes <rientjes@google.com>
-> Cc: Ingo Molnar <mingo@kernel.org>
-> Cc: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
-> Cc: Tan Xiaojun <tanxiaojun@huawei.com>
-> Cc: Vlastimil Babka <vbabka@suse.cz>
-> ---
-> v3:
->  * check whether node is empty after AND current task node, and then nodes
->    which have memory
-> v4:
->  * remove the check of EPERM on CAP_SYS_NICE.
-> 
-> Hi Vlastimil and Christopher,
-> 
-> Could you please help to review this version?
+> Well, I can open a poll for the best name, but none of those you are
+> proposing sound much better to me. Yeah, naming sucks...
 
-Hi, I think we should stay with v3 after all. What I missed when
-reviewing it, is that the EPERM check is for cpuset_mems_allowed(task)
-and in v3 you add EINVAL check for cpuset_mems_allowed(current), which
-may not be the same, and the intention of CAP_SYS_NICE is not whether we
-can bypass our own cpuset, but whether we can bypass the target task's
-cpuset. Sorry for the confusion.
+Given that MAP_FIXED replaces the previous mapping MAP_FIXED_NOREPLACE
+would probably be a best fit.
 
-> Thanks
-> Yisheng Xie
-> 
->  mm/mempolicy.c | 13 +++++--------
->  1 file changed, 5 insertions(+), 8 deletions(-)
-> 
-> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-> index 65df28d..4da74b6 100644
-> --- a/mm/mempolicy.c
-> +++ b/mm/mempolicy.c
-> @@ -1426,17 +1426,14 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
->  	}
->  	rcu_read_unlock();
->  
-> -	task_nodes = cpuset_mems_allowed(task);
-> -	/* Is the user allowed to access the target nodes? */
-> -	if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
-> -		err = -EPERM;
-> +	task_nodes = cpuset_mems_allowed(current);
-> +	nodes_and(*new, *new, task_nodes);
-> +	if (nodes_empty(*new))
->  		goto out_put;
-> -	}
->  
-> -	if (!nodes_subset(*new, node_states[N_MEMORY])) {
-> -		err = -EINVAL;
-> +	nodes_and(*new, *new, node_states[N_MEMORY]);
-> +	if (nodes_empty(*new))
->  		goto out_put;
-> -	}
->  
->  	err = security_task_movememory(task);
->  	if (err)
-> 
+-- 
+Cyril Hrubis
+chrubis@suse.cz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
