@@ -1,138 +1,44 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v6 2/2] staging: ion: create one device entry per heap
-Date: Sat, 2 Dec 2017 15:53:17 +0000
-Message-ID: <20171202155317.GB5311@kroah.com>
-References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
- <1509983985-20950-3-git-send-email-benjamin.gaignard@linaro.org>
- <20171128133217.GA29995@kroah.com>
- <CA+M3ks51HFZr62FKsuc6k84ei=scbQDBjtgQy25Mi3RjXhYcyw@mail.gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH] mmap.2: MAP_FIXED is no longer discouraged
+Date: Sat, 2 Dec 2017 19:49:20 +0100
+Message-ID: <CAG48ez2u3fjBDCMH4x3EUhG6ZD6VUa=A1p441P9fg=wUdzwHNQ@mail.gmail.com>
+References: <20171202021626.26478-1-jhubbard@nvidia.com> <20171202150554.GA30203@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-Content-Disposition: inline
-In-Reply-To: <CA+M3ks51HFZr62FKsuc6k84ei=scbQDBjtgQy25Mi3RjXhYcyw@mail.gmail.com>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Benjamin Gaignard <benjamin.gaignard@linaro.org>
-Cc: driverdevel <devel@driverdev.osuosl.org>, linux-api@vger.kernel.org, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve@android.com>, "dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Riley Andrews <riandrews@android.com>, Mark Brown <broonie@kernel.org>, Dan Carpenter <dan.carpenter@oracle.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <20171202150554.GA30203@bombadil.infradead.org>
+Sender: owner-linux-mm@kvack.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: john.hubbard@gmail.com, Michael Kerrisk <mtk.manpages@gmail.com>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, John Hubbard <jhubbard@nvidia.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gV2VkLCBOb3YgMjksIDIwMTcgYXQgMDM6MDA6NTZQTSArMDEwMCwgQmVuamFtaW4gR2FpZ25h
-cmQgd3JvdGU6Cj4gMjAxNy0xMS0yOCAxNDozMiBHTVQrMDE6MDAgR3JlZyBLSCA8Z3JlZ2toQGxp
-bnV4Zm91bmRhdGlvbi5vcmc+Ogo+ID4gT24gTW9uLCBOb3YgMDYsIDIwMTcgYXQgMDQ6NTk6NDVQ
-TSArMDEwMCwgQmVuamFtaW4gR2FpZ25hcmQgd3JvdGU6Cj4gPj4gSW5zdGVhZCBhIGdldHRpbmcg
-b25seSBvbmUgY29tbW9uIGRldmljZSAiL2Rldi9pb24iIGZvcgo+ID4+IGFsbCB0aGUgaGVhcHMg
-dGhpcyBwYXRjaCBhbGxvdyB0byBjcmVhdGUgb25lIGRldmljZQo+ID4+IGVudHJ5ICgiL2Rldi9p
-b25YIikgcGVyIGhlYXAuCj4gPj4gR2V0dGluZyBhbiBlbnRyeSBwZXIgaGVhcCBjb3VsZCBhbGxv
-dyB0byBzZXQgc2VjdXJpdHkgcnVsZXMKPiA+PiBwZXIgaGVhcCBhbmQgZ2xvYmFsIG9uZXMgZm9y
-IGFsbCBoZWFwcy4KPiA+Pgo+ID4+IEFsbG9jYXRpb24gcmVxdWVzdHMgd2lsbCBiZSBvbmx5IGFs
-bG93ZWQgaWYgdGhlIG1hc2tfaWQKPiA+PiBtYXRjaCB3aXRoIGRldmljZSBtaW5vci4KPiA+PiBR
-dWVyeSByZXF1ZXN0IGNvdWxkIGJlIGRvbmUgb24gYW55IG9mIHRoZSBkZXZpY2VzLgo+ID4+Cj4g
-Pj4gU2lnbmVkLW9mZi1ieTogQmVuamFtaW4gR2FpZ25hcmQgPGJlbmphbWluLmdhaWduYXJkQGxp
-bmFyby5vcmc+Cj4gPj4gLS0tCj4gPj4gIGRyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL1RPRE8gICAg
-ICAgICAgICB8ICAxIC0KPiA+PiAgZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL0tjb25maWcg
-ICAgIHwgIDcgKysrKwo+ID4+ICBkcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9uLWlvY3Rs
-LmMgfCAxOCArKysrKysrKy0tCj4gPj4gIGRyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL2lvbi9pb24u
-YyAgICAgICB8IDYyICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tLQo+ID4+ICBkcml2
-ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vaW9uLmggICAgICAgfCAxNSArKysrKystLQo+ID4+ICA1
-IGZpbGVzIGNoYW5nZWQsIDkxIGluc2VydGlvbnMoKyksIDEyIGRlbGV0aW9ucygtKQo+ID4+Cj4g
-Pj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvc3RhZ2luZy9hbmRyb2lkL1RPRE8gYi9kcml2ZXJzL3N0
-YWdpbmcvYW5kcm9pZC9UT0RPCj4gPj4gaW5kZXggNjg3ZTBlYS4uOGExMTkzMSAxMDA2NDQKPiA+
-PiAtLS0gYS9kcml2ZXJzL3N0YWdpbmcvYW5kcm9pZC9UT0RPCj4gPj4gKysrIGIvZHJpdmVycy9z
-dGFnaW5nL2FuZHJvaWQvVE9ETwo+ID4+IEBAIC04LDcgKzgsNiBAQCBUT0RPOgo+ID4+ICBpb24v
-Cj4gPj4gICAtIEFkZCBkdC1iaW5kaW5ncyBmb3IgcmVtYWluaW5nIGhlYXBzIChjaHVuayBhbmQg
-Y2FydmVvdXQgaGVhcHMpLiBUaGlzIHdvdWxkCj4gPj4gICAgIGludm9sdmUgcHV0dGluZyBhcHBy
-b3ByaWF0ZSBiaW5kaW5ncyBpbiBhIG1lbW9yeSBub2RlIGZvciBJb24gdG8gZmluZC4KPiA+PiAt
-IC0gU3BsaXQgL2Rldi9pb24gdXAgaW50byBtdWx0aXBsZSBub2RlcyAoZS5nLiAvZGV2L2lvbi9o
-ZWFwMCkKPiA+PiAgIC0gQmV0dGVyIHRlc3QgZnJhbWV3b3JrIChpbnRlZ3JhdGlvbiB3aXRoIFZH
-RU0gd2FzIHN1Z2dlc3RlZCkKPiA+Pgo+ID4+ICBQbGVhc2Ugc2VuZCBwYXRjaGVzIHRvIEdyZWcg
-S3JvYWgtSGFydG1hbiA8Z3JlZ0Brcm9haC5jb20+IGFuZCBDYzoKPiA+PiBkaWZmIC0tZ2l0IGEv
-ZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL0tjb25maWcgYi9kcml2ZXJzL3N0YWdpbmcvYW5k
-cm9pZC9pb24vS2NvbmZpZwo+ID4+IGluZGV4IGE1MTdiMmQuLmNiNDY2NmUgMTAwNjQ0Cj4gPj4g
-LS0tIGEvZHJpdmVycy9zdGFnaW5nL2FuZHJvaWQvaW9uL0tjb25maWcKPiA+PiArKysgYi9kcml2
-ZXJzL3N0YWdpbmcvYW5kcm9pZC9pb24vS2NvbmZpZwo+ID4+IEBAIC0xMCw2ICsxMCwxMyBAQCBt
-ZW51Y29uZmlnIElPTgo+ID4+ICAgICAgICAgSWYgeW91J3JlIG5vdCB1c2luZyBBbmRyb2lkIGl0
-cyBwcm9iYWJseSBzYWZlIHRvCj4gPj4gICAgICAgICBzYXkgTiBoZXJlLgo+ID4+Cj4gPj4gK2Nv
-bmZpZyBJT05fTEVHQUNZX0RFVklDRV9BUEkKPiA+PiArICAgICBib29sICJLZWVwIHVzaW5nIElv
-biBsZWdhY3kgbWlzYyBkZXZpY2UgQVBJIgo+ID4+ICsgICAgIGRlcGVuZHMgb24gSU9OCj4gPgo+
-ID4gWW91IHdhbnQgdG8gZGVmYXVsdCB0byBZIGhlcmUsIHNvIHdoZW4geW91IGRvICdtYWtlIG9s
-ZGNvbmZpZycgbm90aGluZwo+ID4gYnJlYWtzLCByaWdodD8KPiA+Cj4gCj4gSSB3aWxsIGFkZCBp
-dC4KPiAKPiA+PiArICAgICBoZWxwCj4gPj4gKyAgICAgICBDaG9vc2UgdGhpcyBvcHRpb24gdG8g
-a2VlcCB1c2luZyBJb24gbGVnYWN5IG1pc2MgZGV2aWNlIEFQSQo+ID4+ICsgICAgICAgaS5lLiAv
-ZGV2L2lvbgo+ID4KPiA+IFlvdSBuZWVkIG1vcmUgdGV4dCBoZXJlIHRvIGRlc2NyaWJlIHRoZSB0
-cmFkZSBvZmZzLiAgV2h5IHdvdWxkIEkgbm90Cj4gPiB3YW50IHRvIGtlZXAgZG9pbmcgdGhpcz8g
-IFdoYXQgZG9lcyB0dXJuaW5nIHRoaXMgb2ZmIGdldCBtZT8gIFdoYXQgZG9lcwo+ID4ga2VlcGlu
-ZyBpdCBvbiBrZWVwIG1lIGZyb20gZG9pbmc/Cj4gPgo+IERvZXMgZGVzY3JpYmUgaXQgbGlrZSB0
-aGF0IHNvdW5kIGJldHRlciA/Cj4gIkNob29zZSB0aGlzIG9wdGlvbiB0byBrZWVwIHVzaW5nIElP
-TiBsZWdhY3kgbWlzYyBkZXZpY2UgQVBJCj4gICBpLmUuIC9kZXYvaW9uLiBJZiB0aGlzIG9wdGlv
-biBpc24ndCBzZWxlY3RlZCB5b3Ugd2lsbCBvbmx5Cj4gICBoYXZlIHBlciBoZWFwIGRldmljZSBu
-b2RlIChpLmUgL2Rldi9pb25YKSBhbmQgYWxsb2NhdGluZyBidWZmZXIKPiAgIGZyb20gYW4gdW5p
-cXVlIGRldmljZSBub2RlIHdvbid0IGJlIHBvc3NpYmxlLiIKCkkgc3RpbGwgZG9uJ3Qga25vdyB3
-aHkgSSB3b3VsZCBub3Qgc2VsZWN0IHN1Y2ggYW4gb3B0aW9uLCBvdGhlciB0aGFuIGl0CndvdWxk
-IGJyZWFrIG15IHdvcmtpbmcgQW5kcm9pZCBzeXN0ZW0gaWYgSSBkaWQgc28gOikKClBsZWFzZSB0
-cnkgdG8gZXhwbGFpbiBpdCBhIGJpdCBiZXR0ZXIuICBGb3IgZXhhbXBsZSwgSSByZWFsbHkgZG9u
-J3Qga25vdwp3aHkgeW91IHdhbnQgdG8gZG8gdGhpcyBhdCBhbGwuCgo+ID4+IC12b2lkIGlvbl9k
-ZXZpY2VfYWRkX2hlYXAoc3RydWN0IGlvbl9oZWFwICpoZWFwKQo+ID4+ICtzdGF0aWMgc3RydWN0
-IGRldmljZSBpb25fYnVzID0gewo+ID4+ICsgICAgIC5pbml0X25hbWUgPSBJT05fTkFNRSwKPiA+
-PiArfTsKPiA+Cj4gPiBPaCBsb29rLCBhIHN0cnVjdCBkZXZpY2Ugb24gdGhlIHN0YWNrLiAgV2F0
-Y2ggYmFkIHRoaW5ncyBoYXBwZW4gOigKPiA+Cj4gPiBUaGlzIGlzIGEgZHluYW1pYyBkZXZpY2Us
-IG1ha2UgaXQgZHluYW1pYywgb3IgZWxzZSB5b3UgaGFkIGJldHRlciBrbm93Cj4gPiBleGFjdGx5
-IHdoYXQgeW91IGFyZSBkb2luZy4uLgo+IAo+IFRoZSBuYW1pbmcgaXMgYmFkIGhlcmUsIEkgd2ls
-bCByZW5hbWUgaXQgaW9uX3BhcmVudCBiZWNhdXNlIEkgdXNlIGl0IHRvIHByb3ZpZGUKPiBhIHBh
-cmVudCB0byBpb24gaGVhcCBkZXZpY2UgZWl0aGVyIHRoZXkgd29uJ3QgZ28gaW4gL3N5cy9idXMv
-aW9uCgpBZ2FpbiwgbmV2ZXIgdXNlIGEgc3RhdGljIHN0cnVjdCBkZXZpY2UsIGlmIHlvdSBkbywg
-aXQgaXMgYSBfaHVnZV8gaGludAp0aGUgY29kZSBpcyBpbmNvcnJlY3QuCgo+ID4+IC0gICAgIGlk
-ZXYtPmRlYnVnX3Jvb3QgPSBkZWJ1Z2ZzX2NyZWF0ZV9kaXIoImlvbiIsIE5VTEwpOwo+ID4+IC0g
-ICAgIGlmICghaWRldi0+ZGVidWdfcm9vdCkgewo+ID4+ICsgICAgIHJldCA9IGRldmljZV9yZWdp
-c3RlcigmaW9uX2J1cyk7Cj4gPgo+ID4gWW91IGNhbGwgZGV2aWNlX3JlZ2lzdGVyIGZvciBzb21l
-dGhpbmcgeW91IGFyZSBjYWxsaW5nIGEgYnVzPz8/ICBBcmUgeW91Cj4gPiBfc3VyZV8gYWJvdXQg
-dGhpcz8KPiA+Cj4gPiBXaGF0IGV4YWN0bHkgYXJlIHlvdSBjcmVhdGluZyBpbiBzeXNmcyBoZXJl
-PyAgWW91IGFyZSB0aHJvd2luZyBhcm91bmQKPiA+ICJyYXciIGRldmljZXMsIHdoaWNoIGlzIGFs
-bW9zdCBuZXZlciB3aGF0IHlvdSBldmVyIHdhbnQgdG8gZG8uCj4gPiBFc3BlY2lhbGx5IGZvciBz
-b21lIHJhbmRvbSBjaGFyIGRyaXZlci4KPiAKPiBpb24gaGVhcCBkZXZpY2VzIG5lZWQgYSBwYXJl
-bnQgdG8gYmUgY29ycmVjdGx5IHB1dCBpbiAvc3lzL2J1cy9pb24gZWl0aGVyIHRoZXkKPiB3aWxs
-IGdvIGRpcmVjdGx5IGluIC9zeXMvYnVzIGRpcmVjdG9yeS4gWW91IGFyZSByaWdodCBuYW1lIGl0
-IGlvbl9idXMKPiBpcyBjb25mdXNpbmcKPiBJIHdpbGwgcmVuYW1lIGl0IGlvbl9wYXJlbnQuCgpB
-Z2Fpbiwgd2hhdCBhcmUgeW91IHRyeWluZyB0byBzaG93IGluIHN5c2ZzPyAgV2hhdCB0eXBlIG9m
-CnJlcHJlc2VudGF0aW9uPyAgV2hhdCBpcyB0aGUgYnVzPyAgV2hhdCBkZXZpY2UgdHlwZT8gIFdo
-eSBpbiBzeXNmcyBhdAphbGw/Cgo+ID4gSG93IG1hbnkgZGlmZmVyZW50IHJlZmVyZW5jZSBjb3Vu
-dGVkIG9iamVjdHMgZG8geW91IG5vdyBoYXZlIGluIHRoaXMKPiA+IHN0cnVjdHVyZT8gIEFuZCB3
-aGF0IGV4YWN0bHkgaXMgdGhlIGxpZmV0aW1lIHJ1bGVzIGludm9sdmVkIGluIHRoZW0/Cj4gPgo+
-ID4gSGludCwgeW91IG5ldmVyIHRyaWVkIHJlbW92aW5nIGFueSBvZiB0aGVzZSBmcm9tIHRoZSBz
-eXN0ZW0sIG90aGVyd2lzZQo+ID4geW91IHdvdWxkIGhhdmUgc2VlbiB0aGUga2VybmVsIHdhcm5p
-bmdzLi4uCj4gPgo+IAo+IE5vIEkgaGF2ZSBuZXZlciB0cnkgYmVjYXVzZSBJT04gZG9lc24ndCBh
-bGxvdyB0byBiZSByZW1vdmVkLgoKVGhhdCBzZWVtcyBvZGQsIHRoZXJlJ3Mgbm8gd2F5IHRvIGZy
-ZWUgdXAgYWxsIHJlc291cmNlcyBhbmQgcmVtb3ZlIHRoZQptb2R1bGU/Cgo+ID4gU3RlcCBiYWNr
-IGhlcmUsIHdoYXQgZXhhY3RseSBkbyB5b3Ugd2FudCB0byBkbz8gIFdoYXQgZG8geW91IGV4cGVj
-dAo+ID4gc3lzZnMgdG8gbG9vayBsaWtlPyAgV2hhdCBkbyB5b3Ugd2FudCAvZGV2LyB0byBsb29r
-IGxpa2U/Cj4gPgo+ID4gV2hlcmUgaXMgdGhlIGRvY3VtZW50YXRpb24gZm9yIHRoZSBuZXcgc3lz
-ZnMgZmlsZXMgYW5kIHRoZSBuZXcgaW9jdGwKPiA+IGNhbGwgeW91IGFkZGVkPyAgV2hhdCBkaWQg
-eW91IGRvIHRvIHRlc3QgdGhpcyBvdXQ/ICBXaGVyZSBhcmUgdGhlIEFPU1AKPiA+IHBhdGNoZXMg
-dG8gdXNlIHRoaXM/ICBIYXBwZW4gdG8gaGF2ZSBhIFZUUyB0ZXN0IGZvciBpdD8KPiA+Cj4gCj4g
-SSBkbyBub3QgYWRkIGlvY3RsIGp1c3QgY3JlYXRpbmcgYSBkZXZpY2Ugbm9kZSBwZXIgaGVhcCB3
-aGlsZSBrZWVwaW5nIGFsaXZlCj4gdGhlIGxlZ2FjeSBtb2RlIG9uIHRoZSBtaXNjIGRldmljZS4K
-PiBVbnRpbCBub3cgYWxsIHRoZSB1c2VycyBvZiBpb24gaGF2ZSB0aGUgc2FtZSBhY2Nlc3Mgcmln
-aHRzIG9uIGFsbCB0aGUgaGVhcHMKPiBiZWNhdXNlIHRoZXkgbXVzdCB1c2UgYSBjb21tb24gZGV2
-aWNlIG1pc2MgdG8gZG8gdGhlIGFsbG9jYXRpb24uCj4gQ3JlYXRpbmcgb24gZGV2aWNlIG5vZGUg
-cGVyIGhlYXAgd2lsbCBhbGxvdyB0byBjdXN0b21pemUgdGhlIGFjY2VzcyByaWdodHMKPiBwZXIg
-aGVhcC4KClRoaXMgaXMgbm90IGV4cGxhaW5pbmcgeW91ciBzeXNmcyByZXByZXNlbnRhdGlvbiBh
-dCBhbGwuICBJIGhhdmUgbm8gaWRlYQp3aGF0IHlvdSBhcmUgd2FudGluZyB0byBkbyBoZXJlLgoK
-WW91IGFyZSBjb25mdXNpbmcgc3RydWN0IGRldmljZSB3aXRoIGEgY2hhcmFjdGVyIGRldmljZSBu
-b2RlIGhlcmUgSQp0aGluay4gIFRoZXkgYXJlIHR3byB0b3RhbGx5IGRpZmZlcmVudCB0aGluZ3Ms
-IHlldCBhcmUgcmVsYXRlZCBpbiBzb21lCndheXMuCgo+IFRoaXMgaXMgb25lIG9mIHRoZSBpdGVt
-IGluIHRoZSBUT0RPIGxpc3QgYmVmb3JlIGJlZW4gYWJsZSB0byB1bnN0YWdlIElPTgo+IHdoaWNo
-IGlzIG15IHJlYWwgbmVlZC4KCldoeSBkb2VzIGl0IG1hdHRlciB3aGVyZSBpbiB0aGUgdHJlZSB0
-aGlzIGNvZGUgaXM/ICBEb24ndCBnbyBhZGRpbmcgbmV3CnRoaW5ncyB0byBpdCB0aGF0IGFyZSBu
-b3QgbmVlZGVkLiAgV2hvIG5lZWRzIHRoaXM/ICBXaGF0IHVzZXJzcGFjZSBjb2RlCndhbnRzIHRo
-aXMgdHlwZSBvZiBtdWx0aXBsZSBpb24gZGV2aWNlcz8KCnRoYW5rcywKCmdyZWcgay1oCl9fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRyaS1kZXZlbCBtYWls
-aW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZy
-ZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZvL2RyaS1kZXZlbAo=
+On Sat, Dec 2, 2017 at 4:05 PM, Matthew Wilcox <willy@infradead.org> wrote:
+> On Fri, Dec 01, 2017 at 06:16:26PM -0800, john.hubbard@gmail.com wrote:
+>> MAP_FIXED has been widely used for a very long time, yet the man
+>> page still claims that "the use of this option is discouraged".
+>
+> I think we should continue to discourage the use of this option, but
+> I'm going to include some of your text in my replacement paragraph ...
+>
+> -Because requiring a fixed address for a mapping is less portable,
+> -the use of this option is discouraged.
+> +The use of this option is discouraged because it forcibly unmaps any
+> +existing mapping at that address.  Programs which use this option need
+> +to be aware that their memory map may change significantly from one run to
+> +the next, depending on library versions, kernel versions and random numbers.
+
+How about adding something explicit about when it's okay to use MAP_FIXED?
+"This option should only be used to displace an existing mapping that is
+controlled by the caller, or part of such a mapping." or something like that?
+
+> +In a threaded process, checking the existing mappings can race against
+> +a new dynamic library being loaded
+
+malloc() and its various callers can also cause mmap() calls, which is probably
+more relevant than library loading.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
