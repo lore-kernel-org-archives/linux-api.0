@@ -1,37 +1,53 @@
-From: Cyril Hrubis <chrubis@suse.cz>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Fri, 1 Dec 2017 16:26:40 +0100
-Message-ID: <20171201152640.GA3765@rei>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
- <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>
+From: john.hubbard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Subject: [PATCH] mmap.2: MAP_FIXED is no longer discouraged
+Date: Fri,  1 Dec 2017 18:16:26 -0800
+Message-ID: <20171202021626.26478-1-jhubbard@nvidia.com>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi!
-> > MAP_FIXED_UNIQUE
-> > MAP_FIXED_ONCE
-> > MAP_FIXED_FRESH
-> 
-> Well, I can open a poll for the best name, but none of those you are
-> proposing sound much better to me. Yeah, naming sucks...
+From: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
 
-Given that MAP_FIXED replaces the previous mapping MAP_FIXED_NOREPLACE
-would probably be a best fit.
+MAP_FIXED has been widely used for a very long time, yet the man
+page still claims that "the use of this option is discouraged".
 
+The documentation assumes that "less portable" == "must be discouraged".
+
+Instead of discouraging something that is so useful and widely used,
+change the documentation to explain its limitations better.
+
+Signed-off-by: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
+---
+While reviewing Michal Hocko's man page update for MAP_FIXED_SAFE,
+I noticed that MAP_FIXED was no longer reflecting the current
+situation, so here is a patch to bring it into the year 2017.
+
+ man2/mmap.2 | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index 385f3bfd5..a5a8eb47a 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -222,8 +222,10 @@ part of the existing mapping(s) will be discarded.
+ If the specified address cannot be used,
+ .BR mmap ()
+ will fail.
+-Because requiring a fixed address for a mapping is less portable,
+-the use of this option is discouraged.
++Software that aspires to be portable should use this option with care, keeping
++in mind that the exact layout of a process' memory map is allowed to change
++significantly between kernel versions, C library versions, and operating system
++releases.
+ .TP
+ .B MAP_GROWSDOWN
+ This flag is used for stacks.
 -- 
-Cyril Hrubis
-chrubis@suse.cz
+2.15.1
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
