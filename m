@@ -1,24 +1,37 @@
-From: Hauke Mehrtens <hauke@hauke-m.de>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
 Subject: Re: [PATCHv3 resend] uapi libc compat: add fallback for unsupported
  libcs
-Date: Sun, 3 Dec 2017 12:04:21 +0100
-Message-ID: <c64ab844-ac60-1826-a72b-f37597fa30fc@hauke-m.de>
+Date: Sun, 3 Dec 2017 14:28:25 +0300
+Message-ID: <20171203112825.GA452@altlinux.org>
 References: <20171112183017.GA8431@nyan>
+Reply-To: musl@lists.openwall.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="OXfL5xGRrasGEqWY"
+Return-path: <musl-return-12211-gllmg-musl=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:musl@lists.openwall.com>
+List-Help: <mailto:musl-help@lists.openwall.com>
+List-Unsubscribe: <mailto:musl-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:musl-subscribe@lists.openwall.com>
+Content-Disposition: inline
 In-Reply-To: <20171112183017.GA8431@nyan>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, musl@lists.openwall.com, "David S. Miller" <davem@davemloft.net>, Carlos O'Donell <carlos@redhat.com>, Florian Fainelli <f.fainelli@gmail.com>
+To: Felix Janda <felix.janda@posteo.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, musl@lists.openwall.com, Hauke Mehrtens <hauke@hauke-m.de>, "David S. Miller" <davem@davemloft.net>, Carlos O'Donell <carlos@redhat.com>, Florian Fainelli <f.fainelli@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 11/12/2017 07:30 PM, Felix Janda wrote:
+
+--OXfL5xGRrasGEqWY
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+
+On Sun, Nov 12, 2017 at 01:30:17PM -0500, Felix Janda wrote:
 > libc-compat.h aims to prevent symbol collisions between uapi and libc
 > headers for each supported libc. This requires continuous coordination
 > between them.
-> 
+>=20
 > The goal of this commit is to improve the situation for libcs (such as
 > musl) which are not yet supported and/or do not wish to be explicitly
 > supported, while not affecting supported libcs. More precisely, with
@@ -27,24 +40,25 @@ On 11/12/2017 07:30 PM, Felix Janda wrote:
 > macro as 0. This can fix symbol collisions for them, as long as the
 > libc headers are included before the uapi headers. Inclusion in the
 > other order is outside the scope of this commit.
-> 
+>=20
 > All infrastructure in order to enable this fallback for unsupported
 > libcs is already in place, except that libc-compat.h unconditionally
 > defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
 > any previous definitions are ignored. In order to fix this, this commit
 > merely makes these definitions conditional.
-> 
+>=20
 > This commit together with the musl libc commit
-> 
-> http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
-> 
+>=20
+> http://git.musl-libc.org/cgit/musl/commit/?id=3D04983f2272382af92eb8f8838=
+964ff944fbb8258
+>=20
 > fixes for example the following compiler errors when <linux/in6.h> is
 > included after musl's <netinet/in.h>:
-> 
+>=20
 > ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
 > ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
 > ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
-> 
+>=20
 > Signed-off-by: Felix Janda <felix.janda@posteo.de>
 > Reviewed-by: Hauke Mehrtens <hauke@hauke-m.de>
 > ---
@@ -52,28 +66,146 @@ On 11/12/2017 07:30 PM, Felix Janda wrote:
 > v2: The only change to the previous version is the commit title and
 >     message.
 > ---
->  include/uapi/linux/libc-compat.h | 55 +++++++++++++++++++++++++++++++++++++++-
+>  include/uapi/linux/libc-compat.h | 55 ++++++++++++++++++++++++++++++++++=
++++++-
 >  1 file changed, 54 insertions(+), 1 deletion(-)
-> 
+>=20
+> diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-c=
+ompat.h
+> index 44b8a6bd5fe1..65db6b26d790 100644
+> --- a/include/uapi/linux/libc-compat.h
+> +++ b/include/uapi/linux/libc-compat.h
+> @@ -167,46 +167,99 @@
+> =20
+>  /* If we did not see any headers from any supported C libraries,
+>   * or we are being included in the kernel, then define everything
+> - * that we need. */
+> + * that we need. Check for previous __UAPI_* definitions to give
+> + * unsupported C libraries a way to opt out of any kernel definition. */
+>  #else /* !defined(__GLIBC__) */
+> =20
+>  /* Definitions for if.h */
+> +#ifndef __UAPI_DEF_IF_IFCONF
+>  #define __UAPI_DEF_IF_IFCONF 1
+> +#endif
+> +#ifndef __UAPI_DEF_IF_IFMAP
+>  #define __UAPI_DEF_IF_IFMAP 1
+> +#endif
+> +#ifndef __UAPI_DEF_IF_IFNAMSIZ
+>  #define __UAPI_DEF_IF_IFNAMSIZ 1
+> +#endif
+> +#ifndef __UAPI_DEF_IF_IFREQ
+>  #define __UAPI_DEF_IF_IFREQ 1
+> +#endif
+>  /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
+> +#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS
+>  #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
+> +#endif
+>  /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
+> +#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO
+>  #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
+> +#endif
 
-I would really like to see this in the mainline kernel as this is needed
-to use the kernel headers with the musl libc, so probably every user of
-the musl libc needs this.
-A similar patch is in OpenWrt / LEDE and is mandatory when building the
-musl toolchain used in OpenWrt / LEDE, which is the default. I would
-like to get closer to build OpenWrt / LEDE with an unmodified Linux
-kernel and getting this into mainline is one part of it.
+Please double-check that mentioning glibc in comments
+of this !__GLIBC__ section is relevant.
 
-As this patch is on the mailling lists since multiple months without any
-reaction it looks like there is no maintainer for:
-include/uapi/linux/libc-compat.h
+> =20
+>  /* Definitions for in.h */
+> +#ifndef __UAPI_DEF_IN_ADDR
+>  #define __UAPI_DEF_IN_ADDR		1
+> +#endif
+> +#ifndef __UAPI_DEF_IN_IPPROTO
+>  #define __UAPI_DEF_IN_IPPROTO		1
+> +#endif
+> +#ifndef __UAPI_DEF_IN_PKTINFO
+>  #define __UAPI_DEF_IN_PKTINFO		1
+> +#endif
+> +#ifndef __UAPI_DEF_IP_MREQ
+>  #define __UAPI_DEF_IP_MREQ		1
+> +#endif
+> +#ifndef __UAPI_DEF_SOCKADDR_IN
+>  #define __UAPI_DEF_SOCKADDR_IN		1
+> +#endif
+> +#ifndef __UAPI_DEF_IN_CLASS
+>  #define __UAPI_DEF_IN_CLASS		1
+> +#endif
+> =20
+>  /* Definitions for in6.h */
+> +#ifndef __UAPI_DEF_IN6_ADDR
+>  #define __UAPI_DEF_IN6_ADDR		1
+> +#endif
+> +#ifndef __UAPI_DEF_IN6_ADDR_ALT
+>  #define __UAPI_DEF_IN6_ADDR_ALT		1
+> +#endif
+> +#ifndef __UAPI_DEF_SOCKADDR_IN6
+>  #define __UAPI_DEF_SOCKADDR_IN6		1
+> +#endif
+> +#ifndef __UAPI_DEF_IPV6_MREQ
+>  #define __UAPI_DEF_IPV6_MREQ		1
+> +#endif
+> +#ifndef __UAPI_DEF_IPPROTO_V6
+>  #define __UAPI_DEF_IPPROTO_V6		1
+> +#endif
+> +#ifndef __UAPI_DEF_IPV6_OPTIONS
+>  #define __UAPI_DEF_IPV6_OPTIONS		1
+> +#endif
+> +#ifndef __UAPI_DEF_IN6_PKTINFO
+>  #define __UAPI_DEF_IN6_PKTINFO		1
+> +#endif
+> +#ifndef __UAPI_DEF_IP6_MTUINFO
+>  #define __UAPI_DEF_IP6_MTUINFO		1
+> +#endif
+> =20
+>  /* Definitions for ipx.h */
+> +#ifndef __UAPI_DEF_SOCKADDR_IPX
+>  #define __UAPI_DEF_SOCKADDR_IPX			1
+> +#endif
+> +#ifndef __UAPI_DEF_IPX_ROUTE_DEFINITION
+>  #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
+> +#endif
+> +#ifndef __UAPI_DEF_IPX_INTERFACE_DEFINITION
+>  #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
+> +#endif
+> +#ifndef __UAPI_DEF_IPX_CONFIG_DATA
+>  #define __UAPI_DEF_IPX_CONFIG_DATA		1
+> +#endif
+> +#ifndef __UAPI_DEF_IPX_ROUTE_DEF
+>  #define __UAPI_DEF_IPX_ROUTE_DEF		1
+> +#endif
+> =20
+>  /* Definitions for xattr.h */
+> +#ifndef __UAPI_DEF_XATTR
+>  #define __UAPI_DEF_XATTR		1
+> +#endif
+> =20
+>  #endif /* __GLIBC__ */
 
-Should we send this in the next merge window directly to Linus?
+As most of affected macros are related to networking (in fact, all except
+__UAPI_DEF_XATTR affect uapi/linux/{if.h,in.h,in6.h,ipv6.h,ipx.h} only),
+I think this patch should be submitted to netdev.
 
-If I am wrong please correct me.
 
-Post on the mailling list:
-patch v2: https://patchwork.kernel.org/patch/9831533/
-patch v3: https://patchwork.kernel.org/patch/9869953/
+--=20
+ldv
 
-Hauke
+--OXfL5xGRrasGEqWY
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJaI9/ZAAoJEAVFT+BVnCUIiqoQAKEcGha6uTfMPfhC/QByBoCy
+6Fphx4KtFVn4xWexzuEXrmm4ssAYj2ygZr4/REqjcKUgABoEXLEZNkvbzAUPxDgs
+LXRfEXxJ0NIVIZJA9VuW2/KgOZ3U+cLpyi7ZgP3W9hRrpdIPu1Gg/RQGykuwnMBK
+6TgpY1tJ8x4KLv54BOvXaixWczbvLSR1RsVD1uN9wkpAM1f9N8kvVWEumu52COt5
+gVhQ0LEBCULjcNwIvnLIuEh+savp3WLBk61xn7qUlUb98sokdg6+iuNK3pM205DF
+MbGDeDMUsjnfNdF7T2KE3DsLzqCWgVJRIasqfAjP0M7SaRkkLhA4Q1q7JOSpvEri
+mlBfeKxhkI3ElfCw1SiVG87FMCsMQu7yqwipW8KXpVLtC8FVyuCC6LY/hFh1peBa
+YpGy6zVu0YRjtmbk4D7TaBGqWDHXD83OrOZxat4L9g82CVIw3J2x9llzuuyZ+dYC
+s/snjxI2RsaKXQXs03DAtRf4itNDswzBkzbiO3DhYjEoH39J3yd4J5GrtE4wmUdv
+EQYYgZ4vxSfnYNzXaWk9EJgwKbuHP6ESeTte92PuOWImGifYMPsJdAV1O2bKVM0m
+4g2ILMExWevOxURFt8Sn6MYEX+QiyfvfNdcUSUmrd2tWvwrs1nJXunjU4bnRrPac
+cE3ruYgGlSe5b35l4Xti
+=5P0Q
+-----END PGP SIGNATURE-----
+
+--OXfL5xGRrasGEqWY--
