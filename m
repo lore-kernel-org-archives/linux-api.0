@@ -1,85 +1,79 @@
-From: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] mmap.2: MAP_FIXED is no longer discouraged
-Date: Sat, 2 Dec 2017 20:06:17 -0800
-Message-ID: <d654b75e-e20b-b8ed-4564-abb1d210a921@nvidia.com>
-References: <20171202021626.26478-1-jhubbard@nvidia.com>
- <20171202150554.GA30203@bombadil.infradead.org>
- <CAG48ez2u3fjBDCMH4x3EUhG6ZD6VUa=A1p441P9fg=wUdzwHNQ@mail.gmail.com>
- <20171202221910.GA8228@bombadil.infradead.org>
+From: Hauke Mehrtens <hauke@hauke-m.de>
+Subject: Re: [PATCHv3 resend] uapi libc compat: add fallback for unsupported
+ libcs
+Date: Sun, 3 Dec 2017 12:04:21 +0100
+Message-ID: <c64ab844-ac60-1826-a72b-f37597fa30fc@hauke-m.de>
+References: <20171112183017.GA8431@nyan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171202221910.GA8228-PfSpb0PWhxZc2C7mugBRk2EX/6BAtgUQ@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171112183017.GA8431@nyan>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, musl@lists.openwall.com, "David S. Miller" <davem@davemloft.net>, Carlos O'Donell <carlos@redhat.com>, Florian Fainelli <f.fainelli@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 12/02/2017 02:19 PM, Matthew Wilcox wrote:
-> On Sat, Dec 02, 2017 at 07:49:20PM +0100, Jann Horn wrote:
->> On Sat, Dec 2, 2017 at 4:05 PM, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> wrote:
->>> On Fri, Dec 01, 2017 at 06:16:26PM -0800, john.hubbard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org wrote:
-[...]
+On 11/12/2017 07:30 PM, Felix Janda wrote:
+> libc-compat.h aims to prevent symbol collisions between uapi and libc
+> headers for each supported libc. This requires continuous coordination
+> between them.
 > 
-> Maybe that should be up front rather than buried at the end of the sentence.
+> The goal of this commit is to improve the situation for libcs (such as
+> musl) which are not yet supported and/or do not wish to be explicitly
+> supported, while not affecting supported libcs. More precisely, with
+> this commit, unsupported libcs can request the suppression of any
+> specific uapi definition by defining the correspondings _UAPI_DEF_*
+> macro as 0. This can fix symbol collisions for them, as long as the
+> libc headers are included before the uapi headers. Inclusion in the
+> other order is outside the scope of this commit.
 > 
-> "In a multi-threaded process, the address space can change in response to
-> virtually any library call.  This is because almost any library call may be
-> implemented by using dlopen(3) to load another shared library, which will be
-> mapped into the process's address space.  The PAM libraries are an excellent
-> example, as well as more obvious examples like brk(2), malloc(3) and even
-> pthread_create(3)."
+> All infrastructure in order to enable this fallback for unsupported
+> libcs is already in place, except that libc-compat.h unconditionally
+> defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
+> any previous definitions are ignored. In order to fix this, this commit
+> merely makes these definitions conditional.
 > 
-> What do you think?
+> This commit together with the musl libc commit
+> 
+> http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
+> 
+> fixes for example the following compiler errors when <linux/in6.h> is
+> included after musl's <netinet/in.h>:
+> 
+> ./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
+> ./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
+> ./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
+> 
+> Signed-off-by: Felix Janda <felix.janda@posteo.de>
+> Reviewed-by: Hauke Mehrtens <hauke@hauke-m.de>
+> ---
+> v3: Fix typos, add a comment to the file and use #ifndef.
+> v2: The only change to the previous version is the commit title and
+>     message.
+> ---
+>  include/uapi/linux/libc-compat.h | 55 +++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 54 insertions(+), 1 deletion(-)
 > 
 
-Hi Matthew,
+I would really like to see this in the mainline kernel as this is needed
+to use the kernel headers with the musl libc, so probably every user of
+the musl libc needs this.
+A similar patch is in OpenWrt / LEDE and is mandatory when building the
+musl toolchain used in OpenWrt / LEDE, which is the default. I would
+like to get closer to build OpenWrt / LEDE with an unmodified Linux
+kernel and getting this into mainline is one part of it.
 
-Here is a new version, based on your and Jann's comments. I also added a
-reference to MAP_FIXED_SAFE. If it looks close, I'll send a v2 with proper
-formatting applied.
+As this patch is on the mailling lists since multiple months without any
+reaction it looks like there is no maintainer for:
+include/uapi/linux/libc-compat.h
 
-I did wonder briefly if your ATM reference was a oblique commentary about
-security, but then realized...you probably just needed some cash. :)
+Should we send this in the next merge window directly to Linus?
 
------
+If I am wrong please correct me.
 
-This option is extremely hazardous (when used on its own) and moderately
-non-portable.
+Post on the mailling list:
+patch v2: https://patchwork.kernel.org/patch/9831533/
+patch v3: https://patchwork.kernel.org/patch/9869953/
 
-On portability: a process's memory map may change significantly from one
-run to the next, depending on library versions, kernel versions and ran‐
-dom numbers.
-
-On hazards: this option forcibly removes pre-existing  mappings,  making
-it easy for a multi-threaded process to corrupt its own address space.
-
-For  example,  thread  A  looks  through /proc/<pid>/maps and locates an
-available address range, while thread B simultaneously acquires part  or
-all  of  that  same  address range. Thread A then calls mmap(MAP_FIXED),
-effectively overwriting thread B's mapping.
-
-Thread B need not create a mapping directly;  simply  making  a  library
-call that, internally, uses dlopen(3) to load some other shared library,
-will suffice. The dlopen(3) call will map the library into the process's
-address  space.  Furthermore, almost any library call may be implemented
-using this technique.  Examples include brk(2), malloc(3),  pthread_cre‐
-ate(3), and the PAM libraries (http://www.linux-pam.org).
-
-Given the above limitations, one of the very few ways to use this option
-safely is: mmap() a region, without specifying MAP_FIXED.  Then,  within
-that  region,  call  mmap(MAP_FIXED) to suballocate regions. This avoids
-both the portability problem (because the first mmap call lets the  ker‐
-nel pick the address), and the address space corruption problem (because
-the region being overwritten is already owned by the calling thread).
-
-Newer kernels (Linux 4.16 and later) have a MAP_FIXED_SAFE  option  that
-avoids  the  corruption  problem; if available, MAP_FIXED_SAFE should be
-preferred over MAP_FIXED.
-
-
-thanks,
-John Hubbard
-NVIDIA
+Hauke
