@@ -1,58 +1,52 @@
-From: Philippe Ombredanne <pombredanne@nexb.com>
-Subject: Re: [patch v13 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
- families JTAG master driver
-Date: Mon, 4 Dec 2017 13:41:08 +0100
-Message-ID: <CAOFm3uGYCssRV4D+Ht6NQLxFSijWt0dgsQEucJmVThjLqiD-oA@mail.gmail.com>
-References: <1512382405-14774-1-git-send-email-oleksandrs@mellanox.com> <1512382405-14774-3-git-send-email-oleksandrs@mellanox.com>
+From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Mon, 4 Dec 2017 13:46:59 -0600
+Message-ID: <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com> <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1512382405-14774-3-git-send-email-oleksandrs@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Shamray <oleksandrs@mellanox.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, "moderated list:ARM/FREESCALE IMX / MXC ARM ARCHITECTURE" <linux-arm-kernel@lists.infradead.org>, "open list:OPEN FIRMWARE AND FLATTENED DEVICE TREE BINDINGS" <devicetree@vger.kernel.org>, OpenBMC Maillist <openbmc@lists.ozlabs.org>, joel@jms.id.au, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri@resnulli.us>, Tobias Klauser <tklauser@distanz.ch>, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, Rob Herring <robh+dt@kernel.org>, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@kernel.org>, Jiri Pirko <jiri@mellanox.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171128031519.GA25705@hao-dev>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: David Laight <David.Laight-JxhZ9S5GRejQT0dZR+AlfA@public.gmane.org>, "mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Oleksandr,
+On Mon, Nov 27, 2017 at 9:15 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> On Mon, Nov 27, 2017 at 10:28:04AM +0000, David Laight wrote:
+>> From: Wu Hao
+>> > Sent: 27 November 2017 06:42
+>> > From: Zhang Yi <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+>> >
+>> > The Intel FPGA device appears as a PCIe device on the system. This patch
+>> > implements the basic framework of the driver for Intel PCIe device which
+>> > is located between CPU and Accelerated Function Units (AFUs), and has
+>> > the Device Feature List (DFL) implemented in its MMIO space.
+>>
+>> This ought to have a better name than 'Intel FPGA'.
+>> An fpga can be used for all sorts of things, this looks like
+>> a very specific architecture using a common VHDL environment to
+>> allow certain types of user VHDL be accessed over PCIe.
+>
+> Hi David
+>
+> This patch adds a pcie device driver for Intel FPGA devices which implements
+> the DFL, e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
+> Acceleration Cards. They are pcie devices, and all have DFL implemented in
+> the MMIO space, so we would like to use one kernel driver to handle them.
+>
+> With this full patchset, it just provides user the interfaces to configure
+> and access the FPGA accelerators on Intel DFL based FPGA devices. For sure,
+> users can develop and build their own logics via tools provided by Intel,
+> program them to accelerators on these Intel FPGA devices, and access them
+> for their workloads.
 
-On Mon, Dec 4, 2017 at 11:13 AM, Oleksandr Shamray
-<oleksandrs@mellanox.com> wrote:
-[...]
-> v12->v13
-> Comments pointed by Philippe Ombredanne <pombredanne@nexb.com>
-> - Change jtag-aspeed.c licence type to
->   SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
->   and reorder line with license in description
-[...]
-> diff --git a/drivers/jtag/jtag-aspeed.c b/drivers/jtag/jtag-aspeed.c
-> new file mode 100644
-> index 0000000..2ff46b0
-> --- /dev/null
-> +++ b/drivers/jtag/jtag-aspeed.c
-> @@ -0,0 +1,784 @@
-> +/* SPDX-License-Identifier: GPL-2.0
+I don't see anything Intel specific here.  This could all be named dfl-*
 
-Sorry to nit pick on this but the comment style should be // here IMHO
-This is what Linus requested, e.g.:
+Alan
 
-> +// SPDX-License-Identifier: GPL-2.0
-
-For reference, the doc is being written:Thomas (tglx) has already
-submitted a first series of doc patches a few weeks ago. And AFAIK he
-might be working on posting the updates soon, whenever his real time
-clock yields a few cycles away from real time coding work ;)
-
-See also these discussions with Linus [1][2][3], Thomas[4] and Greg[5]
-on this and mostly related topics, where you will see Linus rationale
-for the C++ comment stylle
-
-[1] https://lkml.org/lkml/2017/11/2/715
-[2] https://lkml.org/lkml/2017/11/25/125
-[3] https://lkml.org/lkml/2017/11/25/133
-[4] https://lkml.org/lkml/2017/11/2/805
-[5] https://lkml.org/lkml/2017/10/19/165
-
-
--- 
-Cordially
-Philippe Ombredanne
+>
+> Thanks
+> Hao
