@@ -1,80 +1,98 @@
-From: Yisheng Xie <xieyisheng1@huawei.com>
-Subject: Re: [PATCH v4 3/3] mm/mempolicy: add nodes_empty check in
- SYSC_migrate_pages
-Date: Mon, 4 Dec 2017 08:49:08 +0800
-Message-ID: <b52cb4a7-50c9-4b77-503d-ba3add24d0c8@huawei.com>
-References: <1512122128-6220-1-git-send-email-xieyisheng1@huawei.com>
- <305e9b37-0e58-a53d-55b7-f0815c1ba64f@suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+From: john.hubbard@gmail.com
+Subject: [PATCH v2] mmap.2: MAP_FIXED updated documentation
+Date: Sun,  3 Dec 2017 18:14:11 -0800
+Message-ID: <20171204021411.4786-1-jhubbard@nvidia.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <305e9b37-0e58-a53d-55b7-f0815c1ba64f@suse.cz>
 Sender: owner-linux-mm@kvack.org
-To: Vlastimil Babka <vbabka@suse.cz>, akpm@linux-foundation.org
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andi Kleen <ak@linux.intel.com>, Chris Salls <salls@cs.ucsb.edu>, Christopher Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Ingo Molnar <mingo@kernel.org>, Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>, Tan Xiaojun <tanxiaojun@huawei.com>
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@suse.com>, John Hubbard <jhubbard@nvidia.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Vlastimil,
+From: John Hubbard <jhubbard@nvidia.com>
 
-On 2017/12/1 23:18, Vlastimil Babka wrote:
-> On 12/01/2017 10:55 AM, Yisheng Xie wrote:
->> As in manpage of migrate_pages, the errno should be set to EINVAL when
->> none of the node IDs specified by new_nodes are on-line and allowed by the
->> process's current cpuset context, or none of the specified nodes contain
->> memory.  However, when test by following case:
->>
->> 	new_nodes = 0;
->> 	old_nodes = 0xf;
->> 	ret = migrate_pages(pid, old_nodes, new_nodes, MAX);
->>
->> The ret will be 0 and no errno is set.  As the new_nodes is empty, we
->> should expect EINVAL as documented.
->>
->> To fix the case like above, this patch check whether target nodes AND
->> current task_nodes is empty, and then check whether AND
->> node_states[N_MEMORY] is empty.
->>
->> Meanwhile,this patch also remove the check of EPERM on CAP_SYS_NICE. 
->> The caller of migrate_pages should be able to migrate the target process
->> pages anywhere the caller can allocate memory, if the caller can access
->> the mm_struct.
->>
->> Signed-off-by: Yisheng Xie <xieyisheng1@huawei.com>
->> Cc: Andi Kleen <ak@linux.intel.com>
->> Cc: Chris Salls <salls@cs.ucsb.edu>
->> Cc: Christopher Lameter <cl@linux.com>
->> Cc: David Rientjes <rientjes@google.com>
->> Cc: Ingo Molnar <mingo@kernel.org>
->> Cc: Naoya Horiguchi <n-horiguchi@ah.jp.nec.com>
->> Cc: Tan Xiaojun <tanxiaojun@huawei.com>
->> Cc: Vlastimil Babka <vbabka@suse.cz>
->> ---
->> v3:
->>  * check whether node is empty after AND current task node, and then nodes
->>    which have memory
->> v4:
->>  * remove the check of EPERM on CAP_SYS_NICE.
->>
->> Hi Vlastimil and Christopher,
->>
->> Could you please help to review this version?
-> 
-> Hi, I think we should stay with v3 after all. What I missed when
-> reviewing it, is that the EPERM check is for cpuset_mems_allowed(task)
-> and in v3 you add EINVAL check for cpuset_mems_allowed(current), which
-> may not be the same, and the intention of CAP_SYS_NICE is not whether we
-> can bypass our own cpuset, but whether we can bypass the target task's
-> cpuset. Sorry for the confusion.
+Previously, MAP_FIXED was "discouraged", due to portability
+issues with the fixed address. In fact, there are other, more
+serious issues. Also, in some limited cases, this option can
+be used safely.
 
-Ok, so please ignore this version.
+Expand the documentation to discuss both the hazards, and how
+to use it safely.
 
-Thanks
-Yisheng Xie
-> 
-> 
-> .
-> 
+The "Portability issues" wording is lifted directly from
+Matthew Wilcox's review. The notes about other libraries
+creating mappings is also from Matthew (lightly edited).
+
+The suggestion to explain how to use MAP_FIXED safely is
+from Jann Horn.
+
+Suggested-by: Matthew Wilcox <willy@infradead.org>
+Suggested-by: Jann Horn <jannh@google.com>
+Signed-off-by: John Hubbard <jhubbard@nvidia.com>
+---
+
+Changed from v1:
+
+    -- Covered topics recommended by Matthew Wilcox
+       and Jann Horn, in their recent review: the hazards
+       of overwriting pre-exising mappings, and some notes
+       about how to use MAP_FIXED safely.
+
+    -- Rewrote the commit description accordingly.
+
+ man2/mmap.2 | 38 ++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 36 insertions(+), 2 deletions(-)
+
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index 385f3bfd5..9038256d4 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -222,8 +222,42 @@ part of the existing mapping(s) will be discarded.
+ If the specified address cannot be used,
+ .BR mmap ()
+ will fail.
+-Because requiring a fixed address for a mapping is less portable,
+-the use of this option is discouraged.
++.IP
++This option is extremely hazardous (when used on its own) and moderately
++non-portable.
++.IP
++Portability issues: a process's memory map may change significantly from one
++run to the next, depending on library versions, kernel versions and random
++numbers.
++.IP
++Hazards: this option forcibly removes pre-existing mappings, making it easy
++for a multi-threaded process to corrupt its own address space.
++.IP
++For example, thread A looks through /proc/<pid>/maps and locates an available
++address range, while thread B simultaneously acquires part or all of that same
++address range. Thread A then calls mmap(MAP_FIXED), effectively overwriting
++thread B's mapping.
++.IP
++Thread B need not create a mapping directly; simply making a library call
++that, internally, uses dlopen(3) to load some other shared library, will
++suffice. The dlopen(3) call will map the library into the process's address
++space. Furthermore, almost any library call may be implemented using this
++technique.
++Examples include brk(2), malloc(3), pthread_create(3), and the PAM libraries
++(http://www.linux-pam.org).
++.IP
++Given the above limitations, one of the very few ways to use this option
++safely is: mmap() a region, without specifying MAP_FIXED. Then, within that
++region, call mmap(MAP_FIXED) to suballocate regions. This avoids both the
++portability problem (because the first mmap call lets the kernel pick the
++address), and the address space corruption problem (because the region being
++overwritten is already owned by the calling thread).
++.IP
++Newer kernels
++(Linux 4.16 and later) have a
++.B MAP_FIXED_SAFE
++option that avoids the corruption problem; if available, MAP_FIXED_SAFE
++should be preferred over MAP_FIXED.
+ .TP
+ .B MAP_GROWSDOWN
+ This flag is used for stacks.
+-- 
+2.15.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
