@@ -1,191 +1,167 @@
-From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
-        <maheshb@google.com>
-Subject: Re: [PATCHv2 2/2] userns: control capabilities of some user namespaces
-Date: Tue, 5 Dec 2017 13:55:53 -0800
-Message-ID: <CAF2d9jgsSZ6mCE8QwxPpoO7GoO4zeQzNfZuZwM9Gqqdi8uP4fw@mail.gmail.com>
-References: <20171110053757.21170-1-mahesh@bandewar.net> <20171126064037.GB30279@mail.hallyn.com>
- <CAF2d9jhiZFiFODNXUY13F+4Pm+59+rZW=CnLPX1VUT3BAJdeeA@mail.gmail.com>
- <20171128230440.GB28297@mail.hallyn.com> <CAF2d9jhCDasnf2tbaGA04MV5ygZ9o1FaVRCEU2TkHjZR7d1ifw@mail.gmail.com>
- <20171129175712.GB14545@mail.hallyn.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171129175712.GB14545@mail.hallyn.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>
+From: Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
+Subject: [PATCHv3 2/2] userns: control capabilities of some user namespaces
+Date: Tue,  5 Dec 2017 14:31:05 -0800
+Message-ID: <20171205223105.12845-1-mahesh@bandewar.net>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 29, 2017 at 9:57 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
-> Quoting Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=B6 =E0=A4=AC=
-=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0) (maheshb@google.com=
-):
->> On Tue, Nov 28, 2017 at 3:04 PM, Serge E. Hallyn <serge@hallyn.com> wrot=
-e:
->> > Quoting Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=B6 =E0=A4=
-=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0) (maheshb@google.=
-com):
->> > ...
->> >> >> diff --git a/security/commoncap.c b/security/commoncap.c
->> >> >> index fc46f5b85251..89103f16ac37 100644
->> >> >> --- a/security/commoncap.c
->> >> >> +++ b/security/commoncap.c
->> >> >> @@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct=
- user_namespace *targ_ns,
->> >> >>  {
->> >> >>       struct user_namespace *ns =3D targ_ns;
->> >> >>
->> >> >> +     /* If the capability is controlled and user-ns that process
->> >> >> +      * belongs-to is 'controlled' then return EPERM and no need
->> >> >> +      * to check the user-ns hierarchy.
->> >> >> +      */
->> >> >> +     if (is_user_ns_controlled(cred->user_ns) &&
->> >> >> +         is_capability_controlled(cap))
->> >> >> +             return -EPERM;
->> >> >
->> >> > I'd be curious to see the performance impact on this on a regular
->> >> > workload (kernel build?) in a controlled ns.
->> >> >
->> >> Should it affect? If at all, it should be +ve since, the recursive
->> >> user-ns hierarchy lookup is avoided with the above check if the
->> >> capability is controlled.
->> >
->> > Yes but I expect that to be the rare case for normal lxc installs
->> > (which are of course what I am interested in)
->> >
->> >>  The additional cost otherwise is this check
->> >> per cap_capable() call.
->> >
->> > And pipeline refetching?
->> >
->> > Capability calls also shouldn't be all that frequent, but still I'm
->> > left wondering...
->>
->> Correct, and capability checks are part of the control-path and not
->> the data-path so shouldn't matter but I guess it doesn't hurt to
->> find-out the number. Do you have any workload in mind, that we can use
->> for this test/benchmark?
->
-> I suppose if you did both (a) a kernel build and (b) a webserve
-> like https://github.com/m3ng9i/ran , being hit for a minute by a
-> heavy load of requests, those two together would be re-assuring.
->
-Well, I did (a) and (b). Here are the results.
+From: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 
-(a0) I used the ubuntu-artful (17.10) vm instance with standard kernel
-to compile the kernel
+With this new notion of "controlled" user-namespaces, the controlled
+user-namespaces are marked at the time of their creation while the
+capabilities of processes that belong to them are controlled using the
+global mask.
 
-mahesh@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s clean
-mahesh@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s
-real 6m47.525s
-user 22m37.424s
-sys 2m44.745s
+Init-user-ns is always uncontrolled and a process that has SYS_ADMIN
+that belongs to uncontrolled user-ns can create another (child) user-
+namespace that is uncontrolled. Any other process (that either does
+not have SYS_ADMIN or belongs to a controlled user-ns) can only
+create a user-ns that is controlled.
 
-(b0) Now in an user-namespce create by an user that does not have
-SYS_ADMIN (just for apples-to-apples comparison)
-mahesh@mahesh-vm0-artful:~$ sysctl -q kernel.controlled_userns_caps_whiteli=
-st
-sysctl: cannot stat /proc/sys/kernel/controlled_userns_caps_whitelist:
-No such file or directory
-mahesh@mahesh-vm0-artful:~$ id
-uid=3D1000(mahesh) gid=3D1000(mahesh)
-groups=3D1000(mahesh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),118(lpa=
-dmin),128(sambashare)
-mahesh@mahesh-vm0-artful:~/Work/Linux$ unshare -Uf -- bash
-nobody@mahesh-vm0-artful:~/Work/Linux$ id
-uid=3D65534(nobody) gid=3D65534(nogroup) groups=3D65534(nogroup)
-nobody@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s clean
-nobody@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s
-real 9m10.115s
-user 25m20.984s
-sys 2m48.129s
+global-capability-whitelist (controlled_userns_caps_whitelist) is used
+at the capability check-time and keeps the semantics for the processes
+that belong to uncontrolled user-ns as it is. Processes that belong to
+controlled user-ns however are subjected to different checks-
 
+   (a) if the capability in question is controlled and process belongs
+       to controlled user-ns, then it's always denied.
+   (b) if the capability in question is NOT controlled then fall back
+       to the traditional check.
 
-(a1) Now patched the same kernel and built and booted with this new kernel =
--
-
-mahesh@mahesh-vm0-artful:~$ sysctl -q kernel.controlled_userns_caps_whiteli=
-st
-kernel.controlled_userns_caps_whitelist =3D 1f,ffffffff
-mahesh@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s clean
-mahesh@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s
-real 6m39.964s
-user 22m23.538s
-sys 2m34.258s
-
-(b1) Now in an user-namespace created by an user that does not have SYS_ADM=
-IN
-
-mahesh@mahesh-vm0-artful:~$ id
-uid=3D1000(mahesh) gid=3D1000(mahesh)
-groups=3D1000(mahesh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),118(lpa=
-dmin),128(sambashare)
-mahesh@mahesh-vm0-artful:~/Work/Linux$ unshare -Uf -- bash
-nobody@mahesh-vm0-artful:~/Work/Linux$ id
-uid=3D65534(nobody) gid=3D65534(nogroup) groups=3D65534(nogroup)
-nobody@mahesh-vm0-artful:~/Work/Linux$ make -s clean
-nobody@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s
-real 6m54.725s
-user 23m18.833s
-sys 2m38.996s
-
+Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 ---
+v3:
+  Rebase
+v2:
+  Don't recalculate user-ns flags for every setns() call.
+v1:
+  Initial submission.
 
-For the http-get test, I used the same 'ran' utility you have proposed
-and wrapped inside a script like -
-mahesh@mahesh-vm0-artful:~/Work/Scripts$ cat RanLauncher1m.sh
-#!/bin/bash
-set -v
-(sleep 60; killall ran) &
-time (cd ~/go/bin; ./ran -i index.html >& /dev/null)
+ include/linux/capability.h     |  4 ++++
+ include/linux/user_namespace.h | 25 +++++++++++++++++++++++++
+ kernel/capability.c            |  5 +++++
+ kernel/user_namespace.c        |  4 ++++
+ security/commoncap.c           |  8 ++++++++
+ 5 files changed, 46 insertions(+)
 
-and another script that constantly performs wget -
-mahesh@mahesh-vm0-artful:~/Work/Scripts$ cat WgetLoop.sh#!/bin/bash
-#set -v
-while true; do
-wget http://127.0.0.1:8080 >& /dev/null
-
-... here are the results -
-(A0) Kernel that is unpatched and comes with ubuntu-artful
-
-mahesh@mahesh-vm0-artful:~/Work/Scripts$ ./RanLauncher1m.sh
-(sleep 60; killall ran) &
-time (cd ~/go/bin; ./ran -i index.html >& /dev/null)
-real 1m0.009s
-user 0m2.885s
-sys 0m2.774s
-
-(B0) Now in an user-ns created by an user that does not have SYS_ADMIN
-
-mahesh@mahesh-vm0-artful:~/Work/Scripts$ unshare -Uf -- bash
-nobody@mahesh-vm0-artful:~/Work/Scripts$ ./RanLauncher1m.sh
-(sleep 60; killall ran) &
-time (cd ~/go/bin; ./ran -i index.html >& /dev/null)
-real 1m0.004s
-user 0m3.003s
-sys 0m2.737s
-
-(A1) With the patched kernel
-
-mahesh@mahesh-vm0-artful:~/Work/Scripts$ ./RanLauncher1m.sh
-(sleep 60; killall ran) &
-time (cd ~/go/bin; ./ran -i index.html >& /dev/null)
-
-real 1m0.005s
-user 0m1.941s
-sys 0m1.507s
-
-
-(B1) With patched kernel and inside user-ns
-
-mahesh@mahesh-vm0-artful:~/Work/Scripts$ unshare -Uf -- bash
-nobody@mahesh-vm0-artful:~/Work/Scripts$ ./RanLauncher1m.sh
-(sleep 60; killall ran) &
-time (cd ~/go/bin; ./ran -i index.html >& /dev/null)
-real 1m0.004s
-user 0m1.513s
-sys 0m1.254s
-
-> thanks,
-> -serge
+diff --git a/include/linux/capability.h b/include/linux/capability.h
+index 7d79a4689625..383f31f066f0 100644
+--- a/include/linux/capability.h
++++ b/include/linux/capability.h
+@@ -251,6 +251,10 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
+ extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
+ int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+ 				 void __user *buff, size_t *lenp, loff_t *ppos);
++/* Controlled capability is capability that is missing from the capability-mask
++ * controlled_userns_caps_whitelist controlled via sysctl.
++ */
++bool is_capability_controlled(int cap);
+ 
+ extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
+ 
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index d6b74b91096b..a5c48684b317 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -32,6 +32,7 @@ struct uid_gid_map { /* 64 bytes -- 1 cache line */
+ };
+ 
+ #define USERNS_SETGROUPS_ALLOWED 1UL
++#define USERNS_CONTROLLED	 2UL
+ 
+ #define USERNS_INIT_FLAGS USERNS_SETGROUPS_ALLOWED
+ 
+@@ -112,6 +113,21 @@ static inline void put_user_ns(struct user_namespace *ns)
+ 		__put_user_ns(ns);
+ }
+ 
++/* Controlled user-ns is the one that is created by a process that does not
++ * have CAP_SYS_ADMIN (or descended from such an user-ns).
++ * For more details please see the sysctl description of
++ * controlled_userns_caps_whitelist.
++ */
++static inline bool is_user_ns_controlled(const struct user_namespace *ns)
++{
++	return ns->flags & USERNS_CONTROLLED;
++}
++
++static inline void mark_user_ns_controlled(struct user_namespace *ns)
++{
++	ns->flags |= USERNS_CONTROLLED;
++}
++
+ struct seq_operations;
+ extern const struct seq_operations proc_uid_seq_operations;
+ extern const struct seq_operations proc_gid_seq_operations;
+@@ -170,6 +186,15 @@ static inline struct ns_common *ns_get_owner(struct ns_common *ns)
+ {
+ 	return ERR_PTR(-EPERM);
+ }
++
++static inline bool is_user_ns_controlled(const struct user_namespace *ns)
++{
++	return false;
++}
++
++static inline void mark_user_ns_controlled(struct user_namespace *ns)
++{
++}
+ #endif
+ 
+ #endif /* _LINUX_USER_H */
+diff --git a/kernel/capability.c b/kernel/capability.c
+index 4a859b7d4902..bffe249922de 100644
+--- a/kernel/capability.c
++++ b/kernel/capability.c
+@@ -511,6 +511,11 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
+ }
+ 
+ /* Controlled-userns capabilities routines */
++bool is_capability_controlled(int cap)
++{
++	return !cap_raised(controlled_userns_caps_whitelist, cap);
++}
++
+ #ifdef CONFIG_SYSCTL
+ int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
+ 				 void __user *buff, size_t *lenp, loff_t *ppos)
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index 246d4d4ce5c7..ca0556d466b6 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -141,6 +141,10 @@ int create_user_ns(struct cred *new)
+ 		goto fail_keyring;
+ 
+ 	set_cred_user_ns(new, ns);
++	if (!ns_capable(parent_ns, CAP_SYS_ADMIN) ||
++	    is_user_ns_controlled(parent_ns))
++		mark_user_ns_controlled(ns);
++
+ 	return 0;
+ fail_keyring:
+ #ifdef CONFIG_PERSISTENT_KEYRINGS
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 4f8e09340956..5454e9c03ee8 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+ {
+ 	struct user_namespace *ns = targ_ns;
+ 
++	/* If the capability is controlled and user-ns that process
++	 * belongs-to is 'controlled' then return EPERM and no need
++	 * to check the user-ns hierarchy.
++	 */
++	if (is_user_ns_controlled(cred->user_ns) &&
++	    is_capability_controlled(cap))
++		return -EPERM;
++
+ 	/* See if cred has the capability in the target user namespace
+ 	 * by examining the target user namespace and all of the target
+ 	 * user namespace's parents.
+-- 
+2.15.0.531.g2ccb3012c9-goog
