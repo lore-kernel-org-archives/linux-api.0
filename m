@@ -1,118 +1,60 @@
-From: john.hubbard@gmail.com
-Subject: [PATCH v3] mmap.2: MAP_FIXED updated documentation
-Date: Mon,  4 Dec 2017 19:12:57 -0800
-Message-ID: <20171205031257.14407-1-jhubbard@nvidia.com>
-Return-path: <linux-arch-owner@vger.kernel.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@suse.com>, John Hubbard <jhubbard@nvidia.com>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Tue, 5 Dec 2017 11:33:30 +0800
+Message-ID: <20171205033330.GA19730@hao-dev>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com>
+ <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev>
+ <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: David Laight <David.Laight-JxhZ9S5GRejQT0dZR+AlfA@public.gmane.org>, "mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: John Hubbard <jhubbard@nvidia.com>
+On Mon, Dec 04, 2017 at 01:46:59PM -0600, Alan Tull wrote:
+> On Mon, Nov 27, 2017 at 9:15 PM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> > On Mon, Nov 27, 2017 at 10:28:04AM +0000, David Laight wrote:
+> >> From: Wu Hao
+> >> > Sent: 27 November 2017 06:42
+> >> > From: Zhang Yi <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >> >
+> >> > The Intel FPGA device appears as a PCIe device on the system. This patch
+> >> > implements the basic framework of the driver for Intel PCIe device which
+> >> > is located between CPU and Accelerated Function Units (AFUs), and has
+> >> > the Device Feature List (DFL) implemented in its MMIO space.
+> >>
+> >> This ought to have a better name than 'Intel FPGA'.
+> >> An fpga can be used for all sorts of things, this looks like
+> >> a very specific architecture using a common VHDL environment to
+> >> allow certain types of user VHDL be accessed over PCIe.
+> >
+> > Hi David
+> >
+> > This patch adds a pcie device driver for Intel FPGA devices which implements
+> > the DFL, e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
+> > Acceleration Cards. They are pcie devices, and all have DFL implemented in
+> > the MMIO space, so we would like to use one kernel driver to handle them.
+> >
+> > With this full patchset, it just provides user the interfaces to configure
+> > and access the FPGA accelerators on Intel DFL based FPGA devices. For sure,
+> > users can develop and build their own logics via tools provided by Intel,
+> > program them to accelerators on these Intel FPGA devices, and access them
+> > for their workloads.
+> 
+> I don't see anything Intel specific here.  This could all be named dfl-*
 
-Previously, MAP_FIXED was "discouraged", due to portability
-issues with the fixed address. In fact, there are other, more
-serious issues. Also, in some limited cases, this option can
-be used safely.
+The maybe some device specific things, e.g Intel FPGA devices supported by this
+driver always have FME DFL at the beginning on the BAR0 for PF device.
 
-Expand the documentation to discuss both the hazards, and how
-to use it safely.
+But I think this should be the right direction for better code reuse, it could
+save efforts for other vendors who want to use DFL and follow the same way.
 
-Some of the wording is lifted from Matthew Wilcox's review
-(the "Portability issues" section).
+Thanks for the comments. I will rename this driver in the next version.
 
-Suggested-by: Matthew Wilcox <willy@infradead.org>
-Suggested-by: Jann Horn <jannh@google.com>
-Signed-off-by: John Hubbard <jhubbard@nvidia.com>
----
-
-Changes since v2:
-
-    -- Fixed up the "how to use safely" example, in response
-       to Mike Rapoport's review.
-
-    -- Changed the alignment requirement from system page
-       size, to SHMLBA. This was inspired by (but not yet
-       recommended by) Cyril Hrubis' review.
-
-    -- Formatting: underlined /proc/<pid>/maps 
-
-Changes since v1:
-
-    -- Covered topics recommended by Matthew Wilcox
-       and Jann Horn, in their recent review: the hazards
-       of overwriting pre-exising mappings, and some notes
-       about how to use MAP_FIXED safely.
-
-    -- Rewrote the commit description accordingly.
-
- man2/mmap.2 | 47 ++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 44 insertions(+), 3 deletions(-)
-
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 385f3bfd5..0db8fad80 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -212,7 +212,9 @@ Don't interpret
- .I addr
- as a hint: place the mapping at exactly that address.
- .I addr
--must be a multiple of the page size.
-+must be a multiple of SHMLBA (<sys/shm.h>), which in turn is either
-+the system page size (on many architectures) or a multiple of the system
-+page size (on some architectures).
- If the memory region specified by
- .I addr
- and
-@@ -222,8 +224,47 @@ part of the existing mapping(s) will be discarded.
- If the specified address cannot be used,
- .BR mmap ()
- will fail.
--Because requiring a fixed address for a mapping is less portable,
--the use of this option is discouraged.
-+.IP
-+This option is extremely hazardous (when used on its own) and moderately
-+non-portable.
-+.IP
-+Portability issues: a process's memory map may change significantly from one
-+run to the next, depending on library versions, kernel versions and random
-+numbers.
-+.IP
-+Hazards: this option forcibly removes pre-existing mappings, making it easy
-+for a multi-threaded process to corrupt its own address space.
-+.IP
-+For example, thread A looks through
-+.I /proc/<pid>/maps
-+and locates an available
-+address range, while thread B simultaneously acquires part or all of that same
-+address range. Thread A then calls mmap(MAP_FIXED), effectively overwriting
-+thread B's mapping.
-+.IP
-+Thread B need not create a mapping directly; simply making a library call
-+that, internally, uses
-+.I dlopen(3)
-+to load some other shared library, will
-+suffice. The dlopen(3) call will map the library into the process's address
-+space. Furthermore, almost any library call may be implemented using this
-+technique.
-+Examples include brk(2), malloc(3), pthread_create(3), and the PAM libraries
-+(http://www.linux-pam.org).
-+.IP
-+Given the above limitations, one of the very few ways to use this option
-+safely is: mmap() an enclosing region, without specifying MAP_FIXED.
-+Then, within that region, call mmap(MAP_FIXED) to suballocate regions
-+within the enclosing region. This avoids both the portability problem
-+(because the first mmap call lets the kernel pick the address), and the
-+address space corruption problem (because implicit calls to mmap will
-+not affect the already-mapped enclosing region).
-+.IP
-+Newer kernels
-+(Linux 4.16 and later) have a
-+.B MAP_FIXED_SAFE
-+option that avoids the corruption problem; if available, MAP_FIXED_SAFE
-+should be preferred over MAP_FIXED.
- .TP
- .B MAP_GROWSDOWN
- This flag is used for stacks.
--- 
-2.15.1
+Hao
