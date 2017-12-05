@@ -1,98 +1,68 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 2/2] [RFC] disable -Wattribute-alias warning for SYSCALL_DEFINEx()
-Date: Tue,  5 Dec 2017 17:06:31 +0100
-Message-ID: <20171205160651.2920270-1-arnd@arndb.de>
-References: <20171205153259.2522368-1-arnd@arndb.de>
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <20171205153259.2522368-1-arnd@arndb.de>
-Sender: linux-kbuild-owner@vger.kernel.org
-To: linux-kbuild@vger.kernel.org
-Cc: Michal Marek <michal.lkml@markovi.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, Douglas Anderson <dianders@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Heiko Carstens <heiko.carstens@de.ibm.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Matthew Wilcox <matthew@wil.cx>, Matthias Kaehlcke <mka@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, Stephan Mueller <smueller@chronox.de>, "David S. Miller" <davem@davemloft.net>, Yonghong Song <yhs@fb.com>, Thomas Garnier <thgarnie@google.com>, David Howells <dhowells@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Tue, 5 Dec 2017 11:00:22 -0600
+Message-ID: <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com> <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev> <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+ <20171205033330.GA19730@hao-dev>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171205033330.GA19730@hao-dev>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: David Laight <David.Laight@aculab.com>, "mdf@kernel.org" <mdf@kernel.org>, "linux-fpga@vger.kernel.org" <linux-fpga@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "luwei.kang@intel.com" <luwei.kang@intel.com>, "yi.z.zhang@intel.com" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-gcc-8 warns for every single definition of a system call entry
-point, e.g.:
+On Mon, Dec 4, 2017 at 9:33 PM, Wu Hao <hao.wu@intel.com> wrote:
+> On Mon, Dec 04, 2017 at 01:46:59PM -0600, Alan Tull wrote:
+>> On Mon, Nov 27, 2017 at 9:15 PM, Wu Hao <hao.wu@intel.com> wrote:
+>> > On Mon, Nov 27, 2017 at 10:28:04AM +0000, David Laight wrote:
+>> >> From: Wu Hao
+>> >> > Sent: 27 November 2017 06:42
+>> >> > From: Zhang Yi <yi.z.zhang@intel.com>
+>> >> >
+>> >> > The Intel FPGA device appears as a PCIe device on the system. This patch
+>> >> > implements the basic framework of the driver for Intel PCIe device which
+>> >> > is located between CPU and Accelerated Function Units (AFUs), and has
+>> >> > the Device Feature List (DFL) implemented in its MMIO space.
+>> >>
+>> >> This ought to have a better name than 'Intel FPGA'.
+>> >> An fpga can be used for all sorts of things, this looks like
+>> >> a very specific architecture using a common VHDL environment to
+>> >> allow certain types of user VHDL be accessed over PCIe.
+>> >
+>> > Hi David
+>> >
+>> > This patch adds a pcie device driver for Intel FPGA devices which implements
+>> > the DFL, e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
+>> > Acceleration Cards. They are pcie devices, and all have DFL implemented in
+>> > the MMIO space, so we would like to use one kernel driver to handle them.
+>> >
+>> > With this full patchset, it just provides user the interfaces to configure
+>> > and access the FPGA accelerators on Intel DFL based FPGA devices. For sure,
+>> > users can develop and build their own logics via tools provided by Intel,
+>> > program them to accelerators on these Intel FPGA devices, and access them
+>> > for their workloads.
+>>
+>> I don't see anything Intel specific here.  This could all be named dfl-*
+>
+> The maybe some device specific things, e.g Intel FPGA devices supported by this
+> driver always have FME DFL at the beginning on the BAR0 for PF device.
+>
+> But I think this should be the right direction for better code reuse, it could
+> save efforts for other vendors who want to use DFL and follow the same way.
+>
+> Thanks for the comments. I will rename this driver in the next version.
 
-include/linux/compat.h:56:18: error: 'compat_sys_rt_sigprocmask' alias between functions of incompatible types 'long int(int,  compat_sigset_t *, compat_sigset_t *, compat_size_t)' {aka 'long int(int,  struct <anonymous> *, struct <anonymous> *, unsigned int)'} and 'long int(long int,  long int,  long int,  long int)' [-Werror=attribute-alias]
-  asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))\
-                  ^~~~~~~~~~
-include/linux/compat.h:45:2: note: in expansion of macro 'COMPAT_SYSCALL_DEFINEx'
-  COMPAT_SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
-  ^~~~~~~~~~~~~~~~~~~~~~
-kernel/signal.c:2601:1: note: in expansion of macro 'COMPAT_SYSCALL_DEFINE4'
- COMPAT_SYSCALL_DEFINE4(rt_sigprocmask, int, how, compat_sigset_t __user *, nset,
- ^~~~~~~~~~~~~~~~~~~~~~
-include/linux/compat.h:60:18: note: aliased declaration here
-  asmlinkage long compat_SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))\
-                  ^~~~~~~~~~
+Thanks!
 
-The new warning seems reasonable in principle, but it doesn't
-help us here, since we rely on the type mismatch to sanitize the
-system call arguments. After I reported this as GCC PR82435, a new
--Wno-attribute-alias option was added that could be used to turn the
-warning off globally on the command line, but I'd prefer to do it a
-little more fine-grained.
+Regarding file names, it seems like the files added to drivers/fpga
+could be uniformly named dfl-*.[ch].  Some are fpga-dfl-*.[ch] while
+other are currently dfl-*.[ch] currently.
 
-Interestingly, turning a warning off and on again inside of
-a single macro doesn't always work, in this case I had to add
-an extra statement inbetween and decided to copy the __SC_TEST
-one from the native syscall to the compat syscall macro.  See
-https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83256 for more details
-about this.
+Alan
 
-Link: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82435
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- include/linux/compat.h   | 7 ++++++-
- include/linux/syscalls.h | 3 +++
- 2 files changed, 9 insertions(+), 1 deletion(-)
-
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 1165036d091f..27b4a429df77 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -49,14 +49,19 @@
- 	COMPAT_SYSCALL_DEFINEx(6, _##name, __VA_ARGS__)
- 
- #define COMPAT_SYSCALL_DEFINEx(x, name, ...)				\
-+	__diag_push();							\
-+	__diag_ignore(GCC_8, "-Wattribute-alias");			\
- 	asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))\
- 		__attribute__((alias(__stringify(compat_SyS##name))));  \
- 	static inline long C_SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
- 	asmlinkage long compat_SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));\
- 	asmlinkage long compat_SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))\
- 	{								\
--		return C_SYSC##name(__MAP(x,__SC_DELOUSE,__VA_ARGS__));	\
-+		long ret = C_SYSC##name(__MAP(x,__SC_DELOUSE,__VA_ARGS__));\
-+		__MAP(x,__SC_TEST,__VA_ARGS__);				\
-+		return ret;						\
- 	}								\
-+	__diag_pop();							\
- 	static inline long C_SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
- 
- #ifdef CONFIG_COMPAT
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 4df16a70b0d7..dcf6ceabda44 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -208,6 +208,8 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
- 
- #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
- #define __SYSCALL_DEFINEx(x, name, ...)					\
-+	__diag_push();							\
-+	__diag_ignore(GCC_8, "-Wattribute-alias");			\
- 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
- 		__attribute__((alias(__stringify(SyS##name))));		\
- 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__));	\
-@@ -219,6 +221,7 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
- 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
- 		return ret;						\
- 	}								\
-+	__diag_pop();							\
- 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__))
- 
- /*
--- 
-2.9.0
-
+>
+> Hao
