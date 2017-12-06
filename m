@@ -1,77 +1,101 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
-Date: Wed, 6 Dec 2017 16:39:32 -0600
-Message-ID: <CANk1AXTwERaK52p+gbLGx-JxK0g9hq2oYwbJNzbJNbHp6X03Jw@mail.gmail.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
- <1511764948-20972-9-git-send-email-hao.wu@intel.com> <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
- <20171128031519.GA25705@hao-dev> <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
- <20171205033330.GA19730@hao-dev> <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
- <20171206053015.GA19023@hao-dev> <e73f5bc9bfc54efcb7b7c43c66379452@AcuMS.aculab.com>
- <CANk1AXRFfV9dL+82RcdwRtwTwE9jdE5erZ8q8MUud4z_k6Fn=g@mail.gmail.com> <e2b9d86fda904f709158c018a099e19d@AcuMS.aculab.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv2 2/2] userns: control capabilities of some user
+ namespaces
+Date: Wed, 6 Dec 2017 17:59:42 -0600
+Message-ID: <20171206235942.GA10689@mail.hallyn.com>
+References: <20171110053757.21170-1-mahesh@bandewar.net>
+ <20171126064037.GB30279@mail.hallyn.com>
+ <CAF2d9jhiZFiFODNXUY13F+4Pm+59+rZW=CnLPX1VUT3BAJdeeA@mail.gmail.com>
+ <20171128230440.GB28297@mail.hallyn.com>
+ <CAF2d9jhCDasnf2tbaGA04MV5ygZ9o1FaVRCEU2TkHjZR7d1ifw@mail.gmail.com>
+ <20171129175712.GB14545@mail.hallyn.com>
+ <CAF2d9jgsSZ6mCE8QwxPpoO7GoO4zeQzNfZuZwM9Gqqdi8uP4fw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <e2b9d86fda904f709158c018a099e19d@AcuMS.aculab.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Laight <David.Laight@aculab.com>
-Cc: Wu Hao <hao.wu@intel.com>, "mdf@kernel.org" <mdf@kernel.org>, "linux-fpga@vger.kernel.org" <linux-fpga@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "luwei.kang@intel.com" <luwei.kang@intel.com>, "yi.z.zhang@intel.com" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAF2d9jgsSZ6mCE8QwxPpoO7GoO4zeQzNfZuZwM9Gqqdi8uP4fw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Mahesh Bandewar =?utf-8?B?KOCkruCkueClh+CktiDgpKzgpILgpKHgpYfgpLXgpL4=?= =?utf-8?B?4KSwKQ==?= <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 6, 2017 at 10:28 AM, David Laight <David.Laight@aculab.com> wrote:
-> From: Alan Tull
->> Sent: 06 December 2017 15:30
->> On Wed, Dec 6, 2017 at 3:44 AM, David Laight <David.Laight@aculab.com> wrote:
->> > From: Wu Hao
->> >> Sent: 06 December 2017 05:30
->> > ...
->> >> > Regarding file names, it seems like the files added to drivers/fpga
->> >> > could be uniformly named dfl-*.[ch].  Some are fpga-dfl-*.[ch] while
->> >> > other are currently dfl-*.[ch] currently.
->> >
->> > They don't even want to do into a drivers/fgpa directory.
->> > Maybe drivers/dfl or drivers/dfl/intel
->>
->> It's plugged into the fpga framework in drivers/fpga.  This patchset
->> also handles reprogramming the fpga, not just the dfl style
->> enumeration.  But your points about this being not just for FPGA are
->> interesting to me.  Do you have a use for this that isn't
->> FPGA-centric?
->
-> That all just seems wrong to me.
-> If you've managed to invent some common code for reprogramming fpga
-> I'd have though it would be library functions.
+Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
+> On Wed, Nov 29, 2017 at 9:57 AM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
+> >> On Tue, Nov 28, 2017 at 3:04 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+> >> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
+> >> > ...
+> >> >> >> diff --git a/security/commoncap.c b/security/commoncap.c
+> >> >> >> index fc46f5b85251..89103f16ac37 100644
+> >> >> >> --- a/security/commoncap.c
+> >> >> >> +++ b/security/commoncap.c
+> >> >> >> @@ -73,6 +73,14 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+> >> >> >>  {
+> >> >> >>       struct user_namespace *ns = targ_ns;
+> >> >> >>
+> >> >> >> +     /* If the capability is controlled and user-ns that process
+> >> >> >> +      * belongs-to is 'controlled' then return EPERM and no need
+> >> >> >> +      * to check the user-ns hierarchy.
+> >> >> >> +      */
+> >> >> >> +     if (is_user_ns_controlled(cred->user_ns) &&
+> >> >> >> +         is_capability_controlled(cap))
+> >> >> >> +             return -EPERM;
+> >> >> >
+> >> >> > I'd be curious to see the performance impact on this on a regular
+> >> >> > workload (kernel build?) in a controlled ns.
+> >> >> >
+> >> >> Should it affect? If at all, it should be +ve since, the recursive
+> >> >> user-ns hierarchy lookup is avoided with the above check if the
+> >> >> capability is controlled.
+> >> >
+> >> > Yes but I expect that to be the rare case for normal lxc installs
+> >> > (which are of course what I am interested in)
+> >> >
+> >> >>  The additional cost otherwise is this check
+> >> >> per cap_capable() call.
+> >> >
+> >> > And pipeline refetching?
+> >> >
+> >> > Capability calls also shouldn't be all that frequent, but still I'm
+> >> > left wondering...
+> >>
+> >> Correct, and capability checks are part of the control-path and not
+> >> the data-path so shouldn't matter but I guess it doesn't hurt to
+> >> find-out the number. Do you have any workload in mind, that we can use
+> >> for this test/benchmark?
+> >
+> > I suppose if you did both (a) a kernel build and (b) a webserve
+> > like https://github.com/m3ng9i/ran , being hit for a minute by a
+> > heavy load of requests, those two together would be re-assuring.
+> >
+> Well, I did (a) and (b). Here are the results.
+> 
+> (a0) I used the ubuntu-artful (17.10) vm instance with standard kernel
+> to compile the kernel
+> 
+> mahesh@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s clean
+> mahesh@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s
+> real 6m47.525s
+> user 22m37.424s
+> sys 2m44.745s
+> 
+> (b0) Now in an user-namespce create by an user that does not have
+> SYS_ADMIN (just for apples-to-apples comparison)
+> mahesh@mahesh-vm0-artful:~$ sysctl -q kernel.controlled_userns_caps_whitelist
+> sysctl: cannot stat /proc/sys/kernel/controlled_userns_caps_whitelist:
+> No such file or directory
+> mahesh@mahesh-vm0-artful:~$ id
+> uid=1000(mahesh) gid=1000(mahesh)
+> groups=1000(mahesh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),118(lpadmin),128(sambashare)
+> mahesh@mahesh-vm0-artful:~/Work/Linux$ unshare -Uf -- bash
+> nobody@mahesh-vm0-artful:~/Work/Linux$ id
+> uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+> nobody@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s clean
+> nobody@mahesh-vm0-artful:~/Work/Linux$ time make -j4 -s
+> real 9m10.115s
 
-Why don't you familiarize yourself with the fpga framework before
-commenting on it? ;)
+Got some serious noise in this run?
 
->
-> The driver ought to sit somewhere related to its functionality.
->
-> Our fpga loads from a serial EEPROM, the image is about 6.5MB.
-> We can rewrite it from userspace by mmap()ing part of one of the BARs
-> to access some very locally written (by me) VHDL that does most of
-> the required bit-banging for 32it word accesses.
-
-The fpga framework is intended to handle cases where the it is desired
-to reprogram the fpga a lot without having to reboot.  It doesn't
-sound like that is your use case.
-
-> You really wouldn't want to load 6.5MB into kernel space!
-
-No, and there have been proposals, shot down so far regarding
-streaming firmware images a page at a time.
-
->
-> We also had to solve the problem of 9 separate driver modules that
-> want to access different parts of the BARs.
-> I think we have 46 separate slaves in the fpgas BARs (most are in 1 BAR).
-> Some of these are common between different boards (or completely different
-> memory maps for the same board.
->
-> I can imagine some generic method of having a 'board' driver for a
-> specific PCI-id that knows the BAR offsets of various functions so that
-> other sub-drivers could be loaded to access those functions.
-> But that is some kind of pseudo-bus not fpga specific in any way.
->
->         David
->
+But the numbers look good - thanks!
