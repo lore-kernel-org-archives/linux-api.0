@@ -1,71 +1,124 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Tue, 5 Dec 2017 23:03:55 -0800
-Message-ID: <20171206070355.GA32044@bombadil.infradead.org>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
- <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
- <20171201152640.GA3765@rei>
- <87wp20e9wf.fsf@concordia.ellerman.id.au>
- <20171206045433.GQ26021@bombadil.infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171206045433.GQ26021@bombadil.infradead.org>
-Sender: owner-linux-mm@kvack.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@kernel.org>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>
+From: john.hubbard@gmail.com
+Subject: [PATCH v4] mmap.2: MAP_FIXED updated documentation
+Date: Tue,  5 Dec 2017 19:14:34 -0800
+Message-ID: <20171206031434.29087-1-jhubbard@nvidia.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+Sender: linux-arch-owner@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@kernel.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@suse.com>, John Hubbard <jhubbard@nvidia.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 05, 2017 at 08:54:35PM -0800, Matthew Wilcox wrote:
-> On Wed, Dec 06, 2017 at 03:51:44PM +1100, Michael Ellerman wrote:
-> > Cyril Hrubis <chrubis@suse.cz> writes:
-> > 
-> > > Hi!
-> > >> > MAP_FIXED_UNIQUE
-> > >> > MAP_FIXED_ONCE
-> > >> > MAP_FIXED_FRESH
-> > >> 
-> > >> Well, I can open a poll for the best name, but none of those you are
-> > >> proposing sound much better to me. Yeah, naming sucks...
-> > >
-> > > Given that MAP_FIXED replaces the previous mapping MAP_FIXED_NOREPLACE
-> > > would probably be a best fit.
-> > 
-> > Yeah that could work.
-> > 
-> > I prefer "no clobber" as I just suggested, because the existing
-> > MAP_FIXED doesn't politely "replace" a mapping, it destroys the current
-> > one - which you or another thread may be using - and clobbers it with
-> > the new one.
-> 
-> It's longer than MAP_FIXED_WEAK :-P
-> 
-> You'd have to be pretty darn strong to clobber an existing mapping.
+From: John Hubbard <jhubbard@nvidia.com>
 
-I think we're thinking about this all wrong.  We shouldn't document it as
-"This is a variant of MAP_FIXED".  We should document it as "Here's an
-alternative to MAP_FIXED".
+Previously, MAP_FIXED was "discouraged", due to portability
+issues with the fixed address. In fact, there are other, more
+serious issues. Also, alignment requirements were a bit vague.
+So:
 
-So, just like we currently say "exactly one of MAP_SHARED or MAP_PRIVATE",
-we could add a new paragraph saying "at most one of MAP_FIXED or
-MAP_REQUIRED" and "any of the following values".
+    -- Expand the documentation to discuss the hazards in
+       enough detail to allow avoiding them.
 
-Now, we should implement MAP_REQUIRED as having each architecture
-define _MAP_NOT_A_HINT, and then #define MAP_REQUIRED (MAP_FIXED |
-_MAP_NOT_A_HINT), but that's not information to confuse users with.
+    -- Mention the upcoming MAP_FIXED_SAFE flag.
 
-Also, that lets us add a third option at some point that is Yet Another
-Way to interpret the 'addr' argument, by having MAP_FIXED clear and
-_MAP_NOT_A_HINT set.
+    -- Enhance the alignment requirement slightly.
 
-I'm not set on MAP_REQUIRED.  I came up with some awful names
-(MAP_TODDLER, MAP_TANTRUM, MAP_ULTIMATUM, MAP_BOSS, MAP_PROGRAM_MANAGER,
-etc).  But I think we should drop FIXED from the middle of the name.
+Some of the wording is lifted from Matthew Wilcox's review
+(the "Portability issues" section). The alignment requirements
+section uses Cyril Hrubis' wording, with light editing applied.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Suggested-by: Matthew Wilcox <willy@infradead.org>
+Suggested-by: Cyril Hrubis <chrubis@suse.cz>
+Signed-off-by: John Hubbard <jhubbard@nvidia.com>
+---
+
+Changes since v3:
+
+    -- Removed the "how to use this safely" part, and
+       the SHMLBA part, both as a result of Michal Hocko's
+       review.
+
+    -- A few tiny wording fixes, at the not-quite-typo level.
+
+Changes since v2:
+
+    -- Fixed up the "how to use safely" example, in response
+       to Mike Rapoport's review.
+
+    -- Changed the alignment requirement from system page
+       size, to SHMLBA. This was inspired by (but not yet
+       recommended by) Cyril Hrubis' review.
+
+    -- Formatting: underlined /proc/<pid>/maps 
+
+Changes since v1:
+
+    -- Covered topics recommended by Matthew Wilcox
+       and Jann Horn, in their recent review: the hazards
+       of overwriting pre-exising mappings, and some notes
+       about how to use MAP_FIXED safely.
+
+    -- Rewrote the commit description accordingly.
+
+ man2/mmap.2 | 40 ++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 36 insertions(+), 4 deletions(-)
+
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index 385f3bfd5..56b05cff1 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -212,8 +212,9 @@ Don't interpret
+ .I addr
+ as a hint: place the mapping at exactly that address.
+ .I addr
+-must be a multiple of the page size.
+-If the memory region specified by
++must be suitably aligned: for most architectures a multiple of page
++size is sufficient; however, some architectures may impose additional
++restrictions. If the memory region specified by
+ .I addr
+ and
+ .I len
+@@ -222,8 +223,39 @@ part of the existing mapping(s) will be discarded.
+ If the specified address cannot be used,
+ .BR mmap ()
+ will fail.
+-Because requiring a fixed address for a mapping is less portable,
+-the use of this option is discouraged.
++.IP
++This option is extremely hazardous (when used on its own) and moderately
++non-portable.
++.IP
++Portability issues: a process's memory map may change significantly from one
++run to the next, depending on library versions, kernel versions and random
++numbers.
++.IP
++Hazards: this option forcibly removes pre-existing mappings, making it easy
++for a multi-threaded process to corrupt its own address space.
++.IP
++For example, thread A looks through
++.I /proc/<pid>/maps
++and locates an available
++address range, while thread B simultaneously acquires part or all of that same
++address range. Thread A then calls mmap(MAP_FIXED), effectively overwriting
++the mapping that thread B created.
++.IP
++Thread B need not create a mapping directly; simply making a library call
++that, internally, uses
++.I dlopen(3)
++to load some other shared library, will
++suffice. The dlopen(3) call will map the library into the process's address
++space. Furthermore, almost any library call may be implemented using this
++technique.
++Examples include brk(2), malloc(3), pthread_create(3), and the PAM libraries
++(http://www.linux-pam.org).
++.IP
++Newer kernels
++(Linux 4.16 and later) have a
++.B MAP_FIXED_SAFE
++option that avoids the corruption problem; if available, MAP_FIXED_SAFE
++should be preferred over MAP_FIXED.
+ .TP
+ .B MAP_GROWSDOWN
+ This flag is used for stacks.
+-- 
+2.15.1
