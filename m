@@ -1,40 +1,59 @@
-From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
-Date: Wed, 6 Dec 2017 09:29:34 -0600
-Message-ID: <CANk1AXRFfV9dL+82RcdwRtwTwE9jdE5erZ8q8MUud4z_k6Fn=g@mail.gmail.com>
+From: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
+Subject: RE: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Wed, 6 Dec 2017 16:28:55 +0000
+Message-ID: <e2b9d86fda904f709158c018a099e19d@AcuMS.aculab.com>
 References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
- <1511764948-20972-9-git-send-email-hao.wu@intel.com> <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
- <20171128031519.GA25705@hao-dev> <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
- <20171205033330.GA19730@hao-dev> <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
- <20171206053015.GA19023@hao-dev> <e73f5bc9bfc54efcb7b7c43c66379452@AcuMS.aculab.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com>
+ <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev>
+ <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+ <20171205033330.GA19730@hao-dev>
+ <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
+ <20171206053015.GA19023@hao-dev>
+ <e73f5bc9bfc54efcb7b7c43c66379452@AcuMS.aculab.com>
+ <CANk1AXRFfV9dL+82RcdwRtwTwE9jdE5erZ8q8MUud4z_k6Fn=g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <e73f5bc9bfc54efcb7b7c43c66379452-1XygrNkDbNvwg4NCKwmqgw@public.gmane.org>
+In-Reply-To: <CANk1AXRFfV9dL+82RcdwRtwTwE9jdE5erZ8q8MUud4z_k6Fn=g@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Laight <David.Laight-JxhZ9S5GRejQT0dZR+AlfA@public.gmane.org>
+To: 'Alan Tull' <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 6, 2017 at 3:44 AM, David Laight <David.Laight-JxhZ9S5GRejQT0dZR+AlfA@public.gmane.org> wrote:
-> From: Wu Hao
->> Sent: 06 December 2017 05:30
-> ...
->> > Regarding file names, it seems like the files added to drivers/fpga
->> > could be uniformly named dfl-*.[ch].  Some are fpga-dfl-*.[ch] while
->> > other are currently dfl-*.[ch] currently.
->
-> They don't even want to do into a drivers/fgpa directory.
-> Maybe drivers/dfl or drivers/dfl/intel
-
-It's plugged into the fpga framework in drivers/fpga.  This patchset
-also handles reprogramming the fpga, not just the dfl style
-enumeration.  But your points about this being not just for FPGA are
-interesting to me.  Do you have a use for this that isn't
-FPGA-centric?
-
-Alan
-
->
->         David
->
+RnJvbTogQWxhbiBUdWxsDQo+IFNlbnQ6IDA2IERlY2VtYmVyIDIwMTcgMTU6MzANCj4gT24gV2Vk
+LCBEZWMgNiwgMjAxNyBhdCAzOjQ0IEFNLCBEYXZpZCBMYWlnaHQgPERhdmlkLkxhaWdodEBhY3Vs
+YWIuY29tPiB3cm90ZToNCj4gPiBGcm9tOiBXdSBIYW8NCj4gPj4gU2VudDogMDYgRGVjZW1iZXIg
+MjAxNyAwNTozMA0KPiA+IC4uLg0KPiA+PiA+IFJlZ2FyZGluZyBmaWxlIG5hbWVzLCBpdCBzZWVt
+cyBsaWtlIHRoZSBmaWxlcyBhZGRlZCB0byBkcml2ZXJzL2ZwZ2ENCj4gPj4gPiBjb3VsZCBiZSB1
+bmlmb3JtbHkgbmFtZWQgZGZsLSouW2NoXS4gIFNvbWUgYXJlIGZwZ2EtZGZsLSouW2NoXSB3aGls
+ZQ0KPiA+PiA+IG90aGVyIGFyZSBjdXJyZW50bHkgZGZsLSouW2NoXSBjdXJyZW50bHkuDQo+ID4N
+Cj4gPiBUaGV5IGRvbid0IGV2ZW4gd2FudCB0byBkbyBpbnRvIGEgZHJpdmVycy9mZ3BhIGRpcmVj
+dG9yeS4NCj4gPiBNYXliZSBkcml2ZXJzL2RmbCBvciBkcml2ZXJzL2RmbC9pbnRlbA0KPiANCj4g
+SXQncyBwbHVnZ2VkIGludG8gdGhlIGZwZ2EgZnJhbWV3b3JrIGluIGRyaXZlcnMvZnBnYS4gIFRo
+aXMgcGF0Y2hzZXQNCj4gYWxzbyBoYW5kbGVzIHJlcHJvZ3JhbW1pbmcgdGhlIGZwZ2EsIG5vdCBq
+dXN0IHRoZSBkZmwgc3R5bGUNCj4gZW51bWVyYXRpb24uICBCdXQgeW91ciBwb2ludHMgYWJvdXQg
+dGhpcyBiZWluZyBub3QganVzdCBmb3IgRlBHQSBhcmUNCj4gaW50ZXJlc3RpbmcgdG8gbWUuICBE
+byB5b3UgaGF2ZSBhIHVzZSBmb3IgdGhpcyB0aGF0IGlzbid0DQo+IEZQR0EtY2VudHJpYz8NCg0K
+VGhhdCBhbGwganVzdCBzZWVtcyB3cm9uZyB0byBtZS4NCklmIHlvdSd2ZSBtYW5hZ2VkIHRvIGlu
+dmVudCBzb21lIGNvbW1vbiBjb2RlIGZvciByZXByb2dyYW1taW5nIGZwZ2ENCkknZCBoYXZlIHRo
+b3VnaCBpdCB3b3VsZCBiZSBsaWJyYXJ5IGZ1bmN0aW9ucy4NCg0KVGhlIGRyaXZlciBvdWdodCB0
+byBzaXQgc29tZXdoZXJlIHJlbGF0ZWQgdG8gaXRzIGZ1bmN0aW9uYWxpdHkuDQoNCk91ciBmcGdh
+IGxvYWRzIGZyb20gYSBzZXJpYWwgRUVQUk9NLCB0aGUgaW1hZ2UgaXMgYWJvdXQgNi41TUIuDQpX
+ZSBjYW4gcmV3cml0ZSBpdCBmcm9tIHVzZXJzcGFjZSBieSBtbWFwKClpbmcgcGFydCBvZiBvbmUg
+b2YgdGhlIEJBUnMNCnRvIGFjY2VzcyBzb21lIHZlcnkgbG9jYWxseSB3cml0dGVuIChieSBtZSkg
+VkhETCB0aGF0IGRvZXMgbW9zdCBvZg0KdGhlIHJlcXVpcmVkIGJpdC1iYW5naW5nIGZvciAzMml0
+IHdvcmQgYWNjZXNzZXMuDQpZb3UgcmVhbGx5IHdvdWxkbid0IHdhbnQgdG8gbG9hZCA2LjVNQiBp
+bnRvIGtlcm5lbCBzcGFjZSENCg0KV2UgYWxzbyBoYWQgdG8gc29sdmUgdGhlIHByb2JsZW0gb2Yg
+OSBzZXBhcmF0ZSBkcml2ZXIgbW9kdWxlcyB0aGF0DQp3YW50IHRvIGFjY2VzcyBkaWZmZXJlbnQg
+cGFydHMgb2YgdGhlIEJBUnMuDQpJIHRoaW5rIHdlIGhhdmUgNDYgc2VwYXJhdGUgc2xhdmVzIGlu
+IHRoZSBmcGdhcyBCQVJzIChtb3N0IGFyZSBpbiAxIEJBUikuDQpTb21lIG9mIHRoZXNlIGFyZSBj
+b21tb24gYmV0d2VlbiBkaWZmZXJlbnQgYm9hcmRzIChvciBjb21wbGV0ZWx5IGRpZmZlcmVudA0K
+bWVtb3J5IG1hcHMgZm9yIHRoZSBzYW1lIGJvYXJkLg0KDQpJIGNhbiBpbWFnaW5lIHNvbWUgZ2Vu
+ZXJpYyBtZXRob2Qgb2YgaGF2aW5nIGEgJ2JvYXJkJyBkcml2ZXIgZm9yIGENCnNwZWNpZmljIFBD
+SS1pZCB0aGF0IGtub3dzIHRoZSBCQVIgb2Zmc2V0cyBvZiB2YXJpb3VzIGZ1bmN0aW9ucyBzbyB0
+aGF0DQpvdGhlciBzdWItZHJpdmVycyBjb3VsZCBiZSBsb2FkZWQgdG8gYWNjZXNzIHRob3NlIGZ1
+bmN0aW9ucy4NCkJ1dCB0aGF0IGlzIHNvbWUga2luZCBvZiBwc2V1ZG8tYnVzIG5vdCBmcGdhIHNw
+ZWNpZmljIGluIGFueSB3YXkuDQoNCglEYXZpZA0KDQo=
