@@ -1,117 +1,151 @@
-From: Mahesh Bandewar <mahesh@bandewar.net>
-Subject: [PATCHv3 0/2] capability controlled user-namespaces
-Date: Tue,  5 Dec 2017 14:30:52 -0800
-Message-ID: <20171205223052.12687-1-mahesh@bandewar.net>
-Return-path: <netdev-owner@vger.kernel.org>
-Sender: netdev-owner@vger.kernel.org
-To: LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>
-Cc: Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>, Mahesh Bandewar <maheshb@google.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 1/2] mm: introduce MAP_FIXED_SAFE
+Date: Wed, 6 Dec 2017 11:02:29 +0100
+Message-ID: <20171206100229.GI16386@dhcp22.suse.cz>
+References: <20171129144219.22867-1-mhocko@kernel.org>
+ <20171129144219.22867-2-mhocko@kernel.org>
+ <87tvx4e8sz.fsf@concordia.ellerman.id.au>
+ <20171206092724.GH16386@dhcp22.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20171206092724.GH16386@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Mahesh Bandewar <maheshb@google.com>
+On Wed 06-12-17 10:27:24, Michal Hocko wrote:
+> On Wed 06-12-17 16:15:24, Michael Ellerman wrote:
+[...]
+> > So I think I proved above that all the arches that are using 0x80000 are
+> > also using mman-common.h, and vice-versa.
+> > 
+> > So you can put this in mman-common.h can't your?
+> 
+> Yes it seems I can. I would have to double check. It is true that
+> defining the new flag closer to MAP_FIXED makes some sense
 
-TL;DR version
--------------
-Creating a sandbox environment with namespaces is challenging
-considering what these sandboxed processes can engage into. e.g.
-CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
-Current form of user-namespaces, however, if changed a bit can allow
-us to create a sandbox environment without locking down user-
-namespaces.
+OK, so some recap
+those which include generic mman-common.h directly
+arch/sparc/include/uapi/asm/mman.h:#include <asm-generic/mman-common.h>
+arch/powerpc/include/uapi/asm/mman.h:#include <asm-generic/mman-common.h>
+arch/tile/include/uapi/asm/mman.h:#include <asm-generic/mman-common.h>
 
-Detailed version
-----------------
+then we have
+arch/metag/include/asm/mman.h
+which includes uapi/asm/mman.h and that is a generic one
+arch/metag/include/uapi/asm/Kbuild:generic-y += mman.h
 
-Problem
--------
-User-namespaces in the current form have increased the attack surface as
-any process can acquire capabilities which are not available to them (by
-default) by performing combination of clone()/unshare()/setns() syscalls.
+others include generic mman.h
+arch/arm/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
+arch/frv/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
+arch/ia64/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
+arch/m32r/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
+arch/mn10300/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
+arch/score/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
+arch/x86/include/uapi/asm/mman.h:#include <asm-generic/mman.h>
 
-    #define _GNU_SOURCE
-    #include <stdio.h>
-    #include <sched.h>
-    #include <netinet/in.h>
+which includes mman-common.h as well
 
-    int main(int ac, char **av)
-    {
-        int sock = -1;
+and then we are left with
+arch/alpha/include/uapi/asm/mman.h
+arch/mips/include/uapi/asm/mman.h
+arch/parisc/include/uapi/asm/mman.h
+arch/xtensa/include/uapi/asm/mman.h
 
-        printf("Attempting to open RAW socket before unshare()...\n");
-        sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
-        if (sock < 0) {
-            perror("socket() SOCK_RAW failed: ");
-        } else {
-            printf("Successfully opened RAW-Sock before unshare().\n");
-            close(sock);
-            sock = -1;
-        }
+which do not include anything. So the patch can be indeed simplified.
+I will fold the following into the patch. I hope nothing got left behind
+but my defconfig compile test on all arches which i have a cross
+compiler for succeeded.
+---
+commit 52a9272f419f428cb079d340f64113325516ef9b
+Author: Michal Hocko <mhocko@suse.com>
+Date:   Wed Dec 6 10:46:16 2017 +0100
 
-        if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
-            perror("unshare() failed: ");
-            return 1;
-        }
+    - define MAP_FIXED_SAFE in asm-generic/mman-common.h as per Michael
+      Ellerman because all architecture which use this header can share
+      the same value. This will leave us with only 4 arches which need
+      special handling.
 
-        printf("Attempting to open RAW socket after unshare()...\n");
-        sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
-        if (sock < 0) {
-            perror("socket() SOCK_RAW failed: ");
-        } else {
-            printf("Successfully opened RAW-Sock after unshare().\n");
-            close(sock);
-            sock = -1;
-        }
-
-        return 0;
-    }
-
-The above example shows how easy it is to acquire NET_RAW capabilities
-and once acquired, these processes could take benefit of above mentioned
-or similar issues discovered/undiscovered with malicious intent. Note
-that this is just an example and the problem/solution is not limited
-to NET_RAW capability *only*. 
-
-The easiest fix one can apply here is to lock-down user-namespaces which
-many of the distros do (i.e. don't allow users to create user namespaces),
-but unfortunately that prevents everyone from using them.
-
-Approach
---------
-Introduce a notion of 'controlled' user-namespaces. Every process on
-the host is allowed to create user-namespaces (governed by the limit
-imposed by per-ns sysctl) however, mark user-namespaces created by
-sandboxed processes as 'controlled'. Use this 'mark' at the time of
-capability check in conjunction with a global capability whitelist.
-If the capability is not whitelisted, processes that belong to 
-controlled user-namespaces will not be allowed.
-
-Once a user-ns is marked as 'controlled'; all its child user-
-namespaces are marked as 'controlled' too.
-
-A global whitelist is list of capabilities governed by the
-sysctl which is available to (privileged) user in init-ns to modify
-while it's applicable to all controlled user-namespaces on the host.
-
-Marking user-namespaces controlled without modifying the whitelist is
-equivalent of the current behavior. The default value of whitelist includes
-all capabilities so that the compatibility is maintained. However it gives
-admins fine-grained ability to control various capabilities system wide
-without locking down user-namespaces.
-
-Please see individual patches in this series.
-
-Mahesh Bandewar (2):
-  capability: introduce sysctl for controlled user-ns capability whitelist
-  userns: control capabilities of some user namespaces
-
- Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
- include/linux/capability.h      |  7 ++++++
- include/linux/user_namespace.h  | 25 ++++++++++++++++++++
- kernel/capability.c             | 52 +++++++++++++++++++++++++++++++++++++++++
- kernel/sysctl.c                 |  5 ++++
- kernel/user_namespace.c         |  4 ++++
- security/commoncap.c            |  8 +++++++
- 7 files changed, 122 insertions(+)
-
+diff --git a/arch/alpha/include/uapi/asm/mman.h b/arch/alpha/include/uapi/asm/mman.h
+index ef3770262925..7287dbf1e11b 100644
+--- a/arch/alpha/include/uapi/asm/mman.h
++++ b/arch/alpha/include/uapi/asm/mman.h
+@@ -31,7 +31,6 @@
+ #define MAP_NONBLOCK	0x40000		/* do not block on IO */
+ #define MAP_STACK	0x80000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x100000	/* create a huge page mapping */
+-
+ #define MAP_FIXED_SAFE	0x200000	/* MAP_FIXED which doesn't unmap underlying mapping */
+ 
+ #define MS_ASYNC	1		/* sync memory asynchronously */
+diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/include/uapi/asm/mman.h
+index 3ffd284e7160..e63bc37e33af 100644
+--- a/arch/powerpc/include/uapi/asm/mman.h
++++ b/arch/powerpc/include/uapi/asm/mman.h
+@@ -29,6 +29,5 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+-#define MAP_FIXED_SAFE	0x800000	/* MAP_FIXED which doesn't unmap underlying mapping */
+ 
+ #endif /* _UAPI_ASM_POWERPC_MMAN_H */
+diff --git a/arch/sparc/include/uapi/asm/mman.h b/arch/sparc/include/uapi/asm/mman.h
+index 0c282c09fae8..d21bffd5d3dc 100644
+--- a/arch/sparc/include/uapi/asm/mman.h
++++ b/arch/sparc/include/uapi/asm/mman.h
+@@ -24,7 +24,5 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+-#define MAP_FIXED_SAFE	0x80000		/* MAP_FIXED which doesn't unmap underlying mapping */
+-
+ 
+ #endif /* _UAPI__SPARC_MMAN_H__ */
+diff --git a/arch/tile/include/uapi/asm/mman.h b/arch/tile/include/uapi/asm/mman.h
+index b212f5fd5345..9b7add95926b 100644
+--- a/arch/tile/include/uapi/asm/mman.h
++++ b/arch/tile/include/uapi/asm/mman.h
+@@ -30,7 +30,6 @@
+ #define MAP_DENYWRITE	0x0800		/* ETXTBSY */
+ #define MAP_EXECUTABLE	0x1000		/* mark it as an executable */
+ #define MAP_HUGETLB	0x4000		/* create a huge page mapping */
+-#define MAP_FIXED_SAFE	0x8000		/* MAP_FIXED which doesn't unmap underlying mapping */
+ 
+ 
+ /*
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index 6d319c46fd90..1eca2cb10d44 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -25,6 +25,7 @@
+ #else
+ # define MAP_UNINITIALIZED 0x0		/* Don't support this flag */
+ #endif
++#define MAP_FIXED_SAFE	0x80000		/* MAP_FIXED which doesn't unmap underlying mapping */
+ 
+ /*
+  * Flags for mlock
+diff --git a/include/uapi/asm-generic/mman.h b/include/uapi/asm-generic/mman.h
+index 56cde132a80a..2dffcbf705b3 100644
+--- a/include/uapi/asm-generic/mman.h
++++ b/include/uapi/asm-generic/mman.h
+@@ -13,7 +13,6 @@
+ #define MAP_NONBLOCK	0x10000		/* do not block on IO */
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+-#define MAP_FIXED_SAFE	0x80000		/* MAP_FIXED which doesn't unmap underlying mapping */
+ 
+ /* Bits [26:31] are reserved, see mman-common.h for MAP_HUGETLB usage */
+ 
 -- 
-2.15.0.531.g2ccb3012c9-goog
+Michal Hocko
+SUSE Labs
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
