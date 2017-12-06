@@ -1,36 +1,79 @@
-From: Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
-Subject: Re: [PATCH v6 2/2] staging: ion: create one device entry per heap
-Date: Wed, 6 Dec 2017 07:28:22 +0100
-Message-ID: <20171206062822.GB20995@kroah.com>
-References: <1509983985-20950-1-git-send-email-benjamin.gaignard@linaro.org>
- <1509983985-20950-3-git-send-email-benjamin.gaignard@linaro.org>
- <20171128133217.GA29995@kroah.com>
- <CA+M3ks51HFZr62FKsuc6k84ei=scbQDBjtgQy25Mi3RjXhYcyw@mail.gmail.com>
- <20171202155317.GB5311@kroah.com>
- <65ef83b2-db3e-eaf6-129f-40e156400624@redhat.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Wed, 6 Dec 2017 13:30:15 +0800
+Message-ID: <20171206053015.GA19023@hao-dev>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com>
+ <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev>
+ <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+ <20171205033330.GA19730@hao-dev>
+ <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <65ef83b2-db3e-eaf6-129f-40e156400624-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Benjamin Gaignard <benjamin.gaignard-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Sumit Semwal <sumit.semwal-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Arve =?iso-8859-1?B?SGr4bm5lduVn?= <arve-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Riley Andrews <riandrews-z5hGa2qSFaRBDgjK7y7TUQ@public.gmane.org>, Mark Brown <broonie-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Dan Carpenter <dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, driverdevel <devel-gWbeCf7V1WCQmaza687I9mD2FQJk+8+b@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org" <dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alan Tull <atull@kernel.org>
+Cc: David Laight <David.Laight@aculab.com>, "mdf@kernel.org" <mdf@kernel.org>, "linux-fpga@vger.kernel.org" <linux-fpga@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "luwei.kang@intel.com" <luwei.kang@intel.com>, "yi.z.zhang@intel.com" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 05, 2017 at 03:01:42PM -0800, Laura Abbott wrote:
-> On 12/02/2017 07:53 AM, Greg KH wrote:
-> > > This is one of the item in the TODO list before been able to unstage ION
-> > > which is my real need.
-> > Why does it matter where in the tree this code is?  Don't go adding new
-> > things to it that are not needed.  Who needs this?  What userspace code
-> > wants this type of multiple ion devices?
-> > 
+On Tue, Dec 05, 2017 at 11:00:22AM -0600, Alan Tull wrote:
+> On Mon, Dec 4, 2017 at 9:33 PM, Wu Hao <hao.wu@intel.com> wrote:
+> > On Mon, Dec 04, 2017 at 01:46:59PM -0600, Alan Tull wrote:
+> >> On Mon, Nov 27, 2017 at 9:15 PM, Wu Hao <hao.wu@intel.com> wrote:
+> >> > On Mon, Nov 27, 2017 at 10:28:04AM +0000, David Laight wrote:
+> >> >> From: Wu Hao
+> >> >> > Sent: 27 November 2017 06:42
+> >> >> > From: Zhang Yi <yi.z.zhang@intel.com>
+> >> >> >
+> >> >> > The Intel FPGA device appears as a PCIe device on the system. This patch
+> >> >> > implements the basic framework of the driver for Intel PCIe device which
+> >> >> > is located between CPU and Accelerated Function Units (AFUs), and has
+> >> >> > the Device Feature List (DFL) implemented in its MMIO space.
+> >> >>
+> >> >> This ought to have a better name than 'Intel FPGA'.
+> >> >> An fpga can be used for all sorts of things, this looks like
+> >> >> a very specific architecture using a common VHDL environment to
+> >> >> allow certain types of user VHDL be accessed over PCIe.
+> >> >
+> >> > Hi David
+> >> >
+> >> > This patch adds a pcie device driver for Intel FPGA devices which implements
+> >> > the DFL, e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
+> >> > Acceleration Cards. They are pcie devices, and all have DFL implemented in
+> >> > the MMIO space, so we would like to use one kernel driver to handle them.
+> >> >
+> >> > With this full patchset, it just provides user the interfaces to configure
+> >> > and access the FPGA accelerators on Intel DFL based FPGA devices. For sure,
+> >> > users can develop and build their own logics via tools provided by Intel,
+> >> > program them to accelerators on these Intel FPGA devices, and access them
+> >> > for their workloads.
+> >>
+> >> I don't see anything Intel specific here.  This could all be named dfl-*
+> >
+> > The maybe some device specific things, e.g Intel FPGA devices supported by this
+> > driver always have FME DFL at the beginning on the BAR0 for PF device.
+> >
+> > But I think this should be the right direction for better code reuse, it could
+> > save efforts for other vendors who want to use DFL and follow the same way.
+> >
+> > Thanks for the comments. I will rename this driver in the next version.
 > 
-> Requirements came in from several places to split /dev/ion -> /dev/ion0
-> and /dev/ion1 so that security policy (i.e. selinux) could be used to
-> protect access to certain heaps. I wanted the ABI to be settled before
-> trying to move out of staging, hence the line in the TODO list about
-> doing the split.
+> Thanks!
+> 
+> Regarding file names, it seems like the files added to drivers/fpga
+> could be uniformly named dfl-*.[ch].  Some are fpga-dfl-*.[ch] while
+> other are currently dfl-*.[ch] currently.
 
-Ok, but we should have some way of testing it works, right?  :)
+Sure, will have all related drivers files renamed to dfl-*.[ch].
+
+Thanks
+Hao
+
+> 
+> Alan
+> 
+> >
+> > Hao
