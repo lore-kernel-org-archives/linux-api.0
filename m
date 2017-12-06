@@ -1,34 +1,55 @@
-From: David Laight <David.Laight@ACULAB.COM>
+From: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
 Subject: RE: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
-Date: Wed, 6 Dec 2017 09:44:42 +0000
-Message-ID: <e73f5bc9bfc54efcb7b7c43c66379452@AcuMS.aculab.com>
+Date: Wed, 6 Dec 2017 09:31:57 +0000
+Message-ID: <4c45380a630b4927b4de97114b508f1a@AcuMS.aculab.com>
 References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
  <1511764948-20972-9-git-send-email-hao.wu@intel.com>
  <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
  <20171128031519.GA25705@hao-dev>
  <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
- <20171205033330.GA19730@hao-dev>
- <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
- <20171206053015.GA19023@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171206053015.GA19023@hao-dev>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Wu Hao' <hao.wu@intel.com>, Alan Tull <atull@kernel.org>
-Cc: "mdf@kernel.org" <mdf@kernel.org>, "linux-fpga@vger.kernel.org" <linux-fpga@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "luwei.kang@intel.com" <luwei.kang@intel.com>, "yi.z.zhang@intel.com" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: 'Alan Tull' <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: "mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Wu Hao
-> Sent: 06 December 2017 05:30
-...
-> > Regarding file names, it seems like the files added to drivers/fpga
-> > could be uniformly named dfl-*.[ch].  Some are fpga-dfl-*.[ch] while
-> > other are currently dfl-*.[ch] currently.
-
-They don't even want to do into a drivers/fgpa directory.
-Maybe drivers/dfl or drivers/dfl/intel
-
-	David
+RnJvbTogQWxhbiBUdWxsDQo+IFNlbnQ6IDA0IERlY2VtYmVyIDIwMTcgMTk6NDcNCj4gDQo+IE9u
+IE1vbiwgTm92IDI3LCAyMDE3IGF0IDk6MTUgUE0sIFd1IEhhbyA8aGFvLnd1QGludGVsLmNvbT4g
+d3JvdGU6DQo+ID4gT24gTW9uLCBOb3YgMjcsIDIwMTcgYXQgMTA6Mjg6MDRBTSArMDAwMCwgRGF2
+aWQgTGFpZ2h0IHdyb3RlOg0KPiA+PiBGcm9tOiBXdSBIYW8NCj4gPj4gPiBTZW50OiAyNyBOb3Zl
+bWJlciAyMDE3IDA2OjQyDQo+ID4+ID4gRnJvbTogWmhhbmcgWWkgPHlpLnouemhhbmdAaW50ZWwu
+Y29tPg0KPiA+PiA+DQo+ID4+ID4gVGhlIEludGVsIEZQR0EgZGV2aWNlIGFwcGVhcnMgYXMgYSBQ
+Q0llIGRldmljZSBvbiB0aGUgc3lzdGVtLiBUaGlzIHBhdGNoDQo+ID4+ID4gaW1wbGVtZW50cyB0
+aGUgYmFzaWMgZnJhbWV3b3JrIG9mIHRoZSBkcml2ZXIgZm9yIEludGVsIFBDSWUgZGV2aWNlIHdo
+aWNoDQo+ID4+ID4gaXMgbG9jYXRlZCBiZXR3ZWVuIENQVSBhbmQgQWNjZWxlcmF0ZWQgRnVuY3Rp
+b24gVW5pdHMgKEFGVXMpLCBhbmQgaGFzDQo+ID4+ID4gdGhlIERldmljZSBGZWF0dXJlIExpc3Qg
+KERGTCkgaW1wbGVtZW50ZWQgaW4gaXRzIE1NSU8gc3BhY2UuDQo+ID4+DQo+ID4+IFRoaXMgb3Vn
+aHQgdG8gaGF2ZSBhIGJldHRlciBuYW1lIHRoYW4gJ0ludGVsIEZQR0EnLg0KPiA+PiBBbiBmcGdh
+IGNhbiBiZSB1c2VkIGZvciBhbGwgc29ydHMgb2YgdGhpbmdzLCB0aGlzIGxvb2tzIGxpa2UNCj4g
+Pj4gYSB2ZXJ5IHNwZWNpZmljIGFyY2hpdGVjdHVyZSB1c2luZyBhIGNvbW1vbiBWSERMIGVudmly
+b25tZW50IHRvDQo+ID4+IGFsbG93IGNlcnRhaW4gdHlwZXMgb2YgdXNlciBWSERMIGJlIGFjY2Vz
+c2VkIG92ZXIgUENJZS4NCj4gPg0KPiA+IEhpIERhdmlkDQo+ID4NCj4gPiBUaGlzIHBhdGNoIGFk
+ZHMgYSBwY2llIGRldmljZSBkcml2ZXIgZm9yIEludGVsIEZQR0EgZGV2aWNlcyB3aGljaCBpbXBs
+ZW1lbnRzDQo+ID4gdGhlIERGTCwgZS5nIEludGVsIFNlcnZlciBQbGF0Zm9ybSB3aXRoIEluLXBh
+Y2thZ2UgRlBHQSBhbmQgSW50ZWwgRlBHQSBQQ0llDQo+ID4gQWNjZWxlcmF0aW9uIENhcmRzLiBU
+aGV5IGFyZSBwY2llIGRldmljZXMsIGFuZCBhbGwgaGF2ZSBERkwgaW1wbGVtZW50ZWQgaW4NCj4g
+PiB0aGUgTU1JTyBzcGFjZSwgc28gd2Ugd291bGQgbGlrZSB0byB1c2Ugb25lIGtlcm5lbCBkcml2
+ZXIgdG8gaGFuZGxlIHRoZW0uDQo+ID4NCj4gPiBXaXRoIHRoaXMgZnVsbCBwYXRjaHNldCwgaXQg
+anVzdCBwcm92aWRlcyB1c2VyIHRoZSBpbnRlcmZhY2VzIHRvIGNvbmZpZ3VyZQ0KPiA+IGFuZCBh
+Y2Nlc3MgdGhlIEZQR0EgYWNjZWxlcmF0b3JzIG9uIEludGVsIERGTCBiYXNlZCBGUEdBIGRldmlj
+ZXMuIEZvciBzdXJlLA0KPiA+IHVzZXJzIGNhbiBkZXZlbG9wIGFuZCBidWlsZCB0aGVpciBvd24g
+bG9naWNzIHZpYSB0b29scyBwcm92aWRlZCBieSBJbnRlbCwNCj4gPiBwcm9ncmFtIHRoZW0gdG8g
+YWNjZWxlcmF0b3JzIG9uIHRoZXNlIEludGVsIEZQR0EgZGV2aWNlcywgYW5kIGFjY2VzcyB0aGVt
+DQo+ID4gZm9yIHRoZWlyIHdvcmtsb2Fkcy4NCj4gDQo+IEkgZG9uJ3Qgc2VlIGFueXRoaW5nIElu
+dGVsIHNwZWNpZmljIGhlcmUuICBUaGlzIGNvdWxkIGFsbCBiZSBuYW1lZCBkZmwtKg0KDQpJbmRl
+ZWQsIGRvZXNuJ3QgZXZlbiBzZWVtIHRvIGhhdmUgdG8gYmUgaW1wbGVtZW50ZWQgaW4gYW4gZnBn
+YS4NCkl0IG1pZ2h0IGFsc28gbm90IGJlIHRoZSBvbmx5IGRldmljZSB0aGF0IGltcGxlbWVudHMg
+REZMLg0KWW91IHJlYWxseSBuZWVkIGEgbmFtZSBmb3IgeW91ciBERkwgYWNjZWxlcmF0aW9uIGlt
+cGxlbWVudGF0aW9uL2ludGVyZmFjZS4NCg0KV2UgbWFrZSBhIGJvYXJkIHRoYXQgdXNlcyBhbiBJ
+bnRlbC9BbHRlcmEgZnBnYSBhcyBhIFBDSWUgZGV2aWNlLCB3b24ndCBsb29rDQphbnl0aGluZyBs
+aWtlIHlvdXIgb25lIQ0KDQoJRGF2aWQNCg0K
