@@ -1,42 +1,67 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH 1/2] mm: introduce MAP_FIXED_SAFE
-Date: Thu, 7 Dec 2017 13:07:35 +0100
-Message-ID: <20171207120735.GA24547@atrey.karlin.mff.cuni.cz>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <20171129144219.22867-2-mhocko@kernel.org>
+From: Cyril Hrubis <chrubis@suse.cz>
+Subject: Re: [PATCH v2] mmap.2: MAP_FIXED updated documentation
+Date: Thu, 7 Dec 2017 13:58:05 +0100
+Message-ID: <20171207125805.GA1210@rei.lan>
+References: <20171204021411.4786-1-jhubbard@nvidia.com>
+ <20171204105549.GA31332@rei>
+ <efb6eae4-7f30-42c3-0efe-0ab5fbf0fdb4@nvidia.com>
+ <20171205070510.aojohhvixijk3i27@dhcp22.suse.cz>
+ <2cff594a-b481-269d-dd91-ff2cc2f4100a@nvidia.com>
+ <20171206100118.GA13979@rei>
+ <deb952d9-82bc-e737-8060-8fe7e70f44a1@nvidia.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20171129144219.22867-2-mhocko@kernel.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Michal Hocko <mhocko@suse.com>
+In-Reply-To: <deb952d9-82bc-e737-8060-8fe7e70f44a1@nvidia.com>
+Sender: owner-linux-mm@kvack.org
+To: John Hubbard <jhubbard@nvidia.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
 Hi!
-
-> MAP_FIXED is used quite often to enforce mapping at the particular
-> range. The main problem of this flag is, however, that it is inherently
-> dangerous because it unmaps existing mappings covered by the requested
-> range. This can cause silent memory corruptions. Some of them even with
-> serious security implications. While the current semantic might be
-> really desiderable in many cases there are others which would want to
-> enforce the given range but rather see a failure than a silent memory
-> corruption on a clashing range. Please note that there is no guarantee
-> that a given range is obeyed by the mmap even when it is free - e.g.
-> arch specific code is allowed to apply an alignment.
+> >> (It does seem unfortunate that the man page cannot help the programmer
+> >> actually write correct code here. He or she is forced to read the kernel
+> >> implementation, in order to figure out the true alignment rules. I was
+> >> hoping we could avoid that.)
+> > 
+> > It would be nice if we had this information exported somehere so that we
+> > do not have to rely on per-architecture ifdefs.
+> > 
+> > What about adding MapAligment or something similar to the /proc/meminfo?
+> > 
 > 
-> Introduce a new MAP_FIXED_SAFE flag for mmap to achieve this behavior.
-> It has the same semantic as MAP_FIXED wrt. the given address request
+> What's the use case you envision for that? I don't see how that would be
+> better than using SHMLBA, which is available at compiler time. Because 
+> unless someone expects to be able to run an app that was compiled for 
+> Arch X, on Arch Y (surely that's not requirement here?), I don't see how
+> the run-time check is any better.
 
-Could we get some better name? Functionality seems reasonable, but
-_SAFE suffix does not really explain what is going on to the user.
+I guess that some kind of compile time constant in uapi headers will do
+as well, I'm really open to any solution that would expose this constant
+as some kind of official API.
 
-MAP_ADD_FIXED ?
+There is one problem with using SHMLBA, there are more than one libc
+implementations and at least two of them (bionic and klibc) does not
+implement the SysV IPC at all. I know that the chances that you are
+writing a program that requires MAP_FIXED, is compiled against
+alternative libc, and expected to run on less common architectures are
+pretty slim. On the other hand I do not see a reason why this cannot be
+done properly, this is just about exporting one simple constant to
+userspace after all.
 
-								Pavel
+> Or maybe you're thinking that since the SHMLBA cannot be put in the man
+> pages, we could instead provide MapAlignment as sort of a different
+> way to document the requirement?
+
+This is my intention as well.
 
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Cyril Hrubis
+chrubis@suse.cz
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
