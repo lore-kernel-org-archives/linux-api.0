@@ -1,71 +1,159 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Thu, 7 Dec 2017 11:57:27 -0800
-Message-ID: <20171207195727.GA26792@bombadil.infradead.org>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
- <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
- <20171201152640.GA3765@rei>
- <87wp20e9wf.fsf@concordia.ellerman.id.au>
- <20171206045433.GQ26021@bombadil.infradead.org>
- <20171206070355.GA32044@bombadil.infradead.org>
- <87bmjbks4c.fsf@concordia.ellerman.id.au>
- <CAGXu5jLWRQn6EaXEEvdvXr+4gbiJawwp1EaLMfYisHVfMiqgSA@mail.gmail.com>
+From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 09/21] fpga: intel-dfl-pci: add enumeration for feature devices
+Date: Thu, 7 Dec 2017 15:41:41 -0600
+Message-ID: <CANk1AXQ3+Y6De1i6i0YacUxS+vBzhEfRX_jJ_wQKJOCWmYetxw@mail.gmail.com>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-10-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jLWRQn6EaXEEvdvXr+4gbiJawwp1EaLMfYisHVfMiqgSA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1511764948-20972-10-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
-Cc: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Abdul Haleem <abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 07, 2017 at 11:14:27AM -0800, Kees Cook wrote:
-> On Wed, Dec 6, 2017 at 9:46 PM, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org> wrote:
-> > Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org> writes:
-> >> So, just like we currently say "exactly one of MAP_SHARED or MAP_PRIVATE",
-> >> we could add a new paragraph saying "at most one of MAP_FIXED or
-> >> MAP_REQUIRED" and "any of the following values".
-> >
-> > MAP_REQUIRED doesn't immediately grab me, but I don't actively dislike
-> > it either :)
-> >
-> > What about MAP_AT_ADDR ?
-> >
-> > It's short, and says what it does on the tin. The first argument to mmap
-> > is actually called "addr" too.
-> 
-> "FIXED" is supposed to do this too.
-> 
-> Pavel suggested:
-> 
-> MAP_ADD_FIXED
-> 
-> (which is different from "use fixed", and describes why it would fail:
-> can't add since it already exists.)
-> 
-> Perhaps "MAP_FIXED_NEW"?
-> 
-> There has been a request to drop "FIXED" from the name, so these:
-> 
-> MAP_FIXED_NOCLOBBER
-> MAP_FIXED_NOREPLACE
-> MAP_FIXED_ADD
-> MAP_FIXED_NEW
-> 
-> Could be:
-> 
-> MAP_NOCLOBBER
-> MAP_NOREPLACE
-> MAP_ADD
-> MAP_NEW
-> 
-> and we still have the unloved, but acceptable:
-> 
-> MAP_REQUIRED
-> 
-> My vote is still for "NOREPLACE" or "NOCLOBBER" since it's very
-> specific, though "NEW" is pretty clear too.
+On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
-How about MAP_NOFORCE?
+> +/* enumerate feature devices under pci device */
+> +static int cci_enumerate_feature_devs(struct pci_dev *pcidev)
+> +{
+> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
+> +       struct fpga_cdev *cdev;
+> +       struct fpga_enum_info *info;
+> +       resource_size_t start, len;
+> +       void __iomem *base;
+> +       int port_num, bar, i, ret = 0;
+> +       u32 offset;
+> +       u64 v;
+> +
+> +       /* allocate enumeration info via pci_dev */
+> +       info = fpga_enum_info_alloc(&pcidev->dev);
+> +       if (!info)
+> +               return -ENOMEM;
+> +
+> +       /* start to find Device Feature List from Bar 0 */
+> +       base = cci_pci_ioremap_bar(pcidev, 0);
+> +       if (!base) {
+> +               ret = -ENOMEM;
+> +               goto enum_info_free_exit;
+> +       }
+> +
+> +       /*
+> +        * PF device has FME and Ports/AFUs, and VF device only has 1 Port/AFU.
+> +        * check them and add related "Device Feature List" info for the next
+> +        * step enumeration.
+> +        */
+> +       if (feature_is_fme(base)) {
+> +               start = pci_resource_start(pcidev, 0);
+> +               len = pci_resource_len(pcidev, 0);
+> +
+> +               fpga_enum_info_add_dfl(info, start, len, base);
+> +
+> +               /*
+> +                * find more Device Feature Lists (e.g Ports) per information
+> +                * indicated by FME module.
+> +                */
+> +               v = readq(base + FME_HDR_CAP);
+> +               port_num = FIELD_GET(FME_CAP_NUM_PORTS, v);
+> +
+> +               WARN_ON(port_num > MAX_FPGA_PORT_NUM);
+> +
+> +               for (i = 0; i < port_num; i++) {
+> +                       v = readq(base + FME_HDR_PORT_OFST(i));
+> +
+> +                       /* skip ports which are not implemented. */
+> +                       if (!(v & FME_PORT_OFST_IMP))
+> +                               continue;
+> +
+> +                       /*
+> +                        * add Port's Device Feature List information for next
+> +                        * step enumeration.
+> +                        */
+> +                       bar = FIELD_GET(FME_PORT_OFST_BAR_ID, v);
+> +                       offset = FIELD_GET(FME_PORT_OFST_DFH_OFST, v);
+> +                       base = cci_pci_ioremap_bar(pcidev, bar);
+> +                       if (!base)
+> +                               continue;
+> +
+> +                       start = pci_resource_start(pcidev, bar) + offset;
+> +                       len = pci_resource_len(pcidev, bar) - offset;
+> +
+> +                       fpga_enum_info_add_dfl(info, start, len, base + offset);
+> +               }
+> +       } else if (feature_is_port(base)) {
+> +               start = pci_resource_start(pcidev, 0);
+> +               len = pci_resource_len(pcidev, 0);
+> +
+> +               fpga_enum_info_add_dfl(info, start, len, base);
+> +       } else {
+> +               ret = -ENODEV;
+> +               goto enum_info_free_exit;
+> +       }
+> +
+> +       /* start enumeration with prepared enumeration information */
+> +       cdev = fpga_enumerate_feature_devs(info);
+
+Hi Hao,
+
+I appreciate you separating the DFL enumeration code from this PCIe
+module.  This made the pcie part quite small.  It should work for
+embedded platforms just by adding a platform device whose function is
+to find the DFL structures at some address and then call these same
+fpga_enum_info_add_dfl adn fpga_enumerate_feature_devs functions.
+
+Alan
+
+> +       if (IS_ERR(cdev)) {
+> +               dev_err(&pcidev->dev, "Enumeration failure\n");
+> +               ret = PTR_ERR(cdev);
+> +               goto enum_info_free_exit;
+> +       }
+> +
+> +       drvdata->cdev = cdev;
+> +
+> +enum_info_free_exit:
+> +       fpga_enum_info_free(info);
+> +
+> +       return ret;
+> +}
+> +
+>  static
+>  int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
+>  {
+> @@ -84,9 +264,22 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
+>                 goto release_region_exit;
+>         }
+>
+> -       /* TODO: create and add the platform device per feature list */
+> -       return 0;
+> +       ret = cci_init_drvdata(pcidev);
+> +       if (ret) {
+> +               dev_err(&pcidev->dev, "Fail to init drvdata %d.\n", ret);
+> +               goto release_region_exit;
+> +       }
+> +
+> +       ret = cci_enumerate_feature_devs(pcidev);
+> +       if (ret) {
+> +               dev_err(&pcidev->dev, "enumeration failure %d.\n", ret);
+> +               goto remove_drvdata_exit;
+> +       }
+> +
+> +       return ret;
+>
+> +remove_drvdata_exit:
+> +       cci_remove_drvdata(pcidev);
+>  release_region_exit:
+>         pci_release_regions(pcidev);
+>  disable_error_report_exit:
+> @@ -97,6 +290,8 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
+>
+>  static void cci_pci_remove(struct pci_dev *pcidev)
+>  {
+> +       cci_remove_feature_devs(pcidev);
+> +       cci_remove_drvdata(pcidev);
+>         pci_release_regions(pcidev);
+>         pci_disable_pcie_error_reporting(pcidev);
+>         pci_disable_device(pcidev);
+> --
+> 1.8.3.1
+>
