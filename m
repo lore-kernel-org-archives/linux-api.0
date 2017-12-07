@@ -1,60 +1,114 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v2] mmap.2: MAP_FIXED updated documentation
-Date: Thu, 7 Dec 2017 15:02:21 +0100
-Message-ID: <20171207140221.GJ20234@dhcp22.suse.cz>
-References: <20171204021411.4786-1-jhubbard@nvidia.com>
- <20171204105549.GA31332@rei>
- <efb6eae4-7f30-42c3-0efe-0ab5fbf0fdb4@nvidia.com>
- <20171205070510.aojohhvixijk3i27@dhcp22.suse.cz>
- <2cff594a-b481-269d-dd91-ff2cc2f4100a@nvidia.com>
- <20171206100118.GA13979@rei>
- <deb952d9-82bc-e737-8060-8fe7e70f44a1@nvidia.com>
- <20171207125805.GA1210@rei.lan>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Thu, 7 Dec 2017 11:14:27 -0800
+Message-ID: <CAGXu5jLWRQn6EaXEEvdvXr+4gbiJawwp1EaLMfYisHVfMiqgSA@mail.gmail.com>
+References: <20171129144219.22867-1-mhocko@kernel.org> <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
+ <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz> <20171201152640.GA3765@rei>
+ <87wp20e9wf.fsf@concordia.ellerman.id.au> <20171206045433.GQ26021@bombadil.infradead.org>
+ <20171206070355.GA32044@bombadil.infradead.org> <87bmjbks4c.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20171207125805.GA1210@rei.lan>
+In-Reply-To: <87bmjbks4c.fsf@concordia.ellerman.id.au>
 Sender: owner-linux-mm@kvack.org
-To: Cyril Hrubis <chrubis@suse.cz>
-Cc: John Hubbard <jhubbard@nvidia.com>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>
+To: Michael Ellerman <mpe@ellerman.id.au>
+Cc: Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@kernel.org>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Pavel Machek <pavel@ucw.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 07-12-17 13:58:05, Cyril Hrubis wrote:
-> Hi!
-> > >> (It does seem unfortunate that the man page cannot help the programmer
-> > >> actually write correct code here. He or she is forced to read the kernel
-> > >> implementation, in order to figure out the true alignment rules. I was
-> > >> hoping we could avoid that.)
-> > > 
-> > > It would be nice if we had this information exported somehere so that we
-> > > do not have to rely on per-architecture ifdefs.
-> > > 
-> > > What about adding MapAligment or something similar to the /proc/meminfo?
-> > > 
-> > 
-> > What's the use case you envision for that? I don't see how that would be
-> > better than using SHMLBA, which is available at compiler time. Because 
-> > unless someone expects to be able to run an app that was compiled for 
-> > Arch X, on Arch Y (surely that's not requirement here?), I don't see how
-> > the run-time check is any better.
-> 
-> I guess that some kind of compile time constant in uapi headers will do
-> as well, I'm really open to any solution that would expose this constant
-> as some kind of official API.
+On Wed, Dec 6, 2017 at 9:46 PM, Michael Ellerman <mpe@ellerman.id.au> wrote:
+> Matthew Wilcox <willy@infradead.org> writes:
+>
+>> On Tue, Dec 05, 2017 at 08:54:35PM -0800, Matthew Wilcox wrote:
+>>> On Wed, Dec 06, 2017 at 03:51:44PM +1100, Michael Ellerman wrote:
+>>> > Cyril Hrubis <chrubis@suse.cz> writes:
+>>> >
+>>> > > Hi!
+>>> > >> > MAP_FIXED_UNIQUE
+>>> > >> > MAP_FIXED_ONCE
+>>> > >> > MAP_FIXED_FRESH
+>>> > >>
+>>> > >> Well, I can open a poll for the best name, but none of those you are
+>>> > >> proposing sound much better to me. Yeah, naming sucks...
+>>> > >
+>>> > > Given that MAP_FIXED replaces the previous mapping MAP_FIXED_NOREPLACE
+>>> > > would probably be a best fit.
+>>> >
+>>> > Yeah that could work.
+>>> >
+>>> > I prefer "no clobber" as I just suggested, because the existing
+>>> > MAP_FIXED doesn't politely "replace" a mapping, it destroys the current
+>>> > one - which you or another thread may be using - and clobbers it with
+>>> > the new one.
+>>>
+>>> It's longer than MAP_FIXED_WEAK :-P
+>>>
+>>> You'd have to be pretty darn strong to clobber an existing mapping.
+>>
+>> I think we're thinking about this all wrong.  We shouldn't document it as
+>> "This is a variant of MAP_FIXED".  We should document it as "Here's an
+>> alternative to MAP_FIXED".
+>>
+>> So, just like we currently say "exactly one of MAP_SHARED or MAP_PRIVATE",
+>> we could add a new paragraph saying "at most one of MAP_FIXED or
+>> MAP_REQUIRED" and "any of the following values".
+>>
+>> Now, we should implement MAP_REQUIRED as having each architecture
+>> define _MAP_NOT_A_HINT, and then #define MAP_REQUIRED (MAP_FIXED |
+>> _MAP_NOT_A_HINT), but that's not information to confuse users with.
+>>
+>> Also, that lets us add a third option at some point that is Yet Another
+>> Way to interpret the 'addr' argument, by having MAP_FIXED clear and
+>> _MAP_NOT_A_HINT set.
+>>
+>> I'm not set on MAP_REQUIRED.  I came up with some awful names
+>> (MAP_TODDLER, MAP_TANTRUM, MAP_ULTIMATUM, MAP_BOSS, MAP_PROGRAM_MANAGER,
+>> etc).  But I think we should drop FIXED from the middle of the name.
+>
+> MAP_REQUIRED doesn't immediately grab me, but I don't actively dislike
+> it either :)
+>
+> What about MAP_AT_ADDR ?
+>
+> It's short, and says what it does on the tin. The first argument to mmap
+> is actually called "addr" too.
 
-I am not sure this is really feasible. It is not only a simple alignment
-thing. Look at ppc for example (slice_get_unmapped_area). Other
-architectures might have even more complicated rules e.g. arm and its
-cache_is_vipt_aliasing. Also this applies only on MAP_SHARED || file
-backed mappings.
+"FIXED" is supposed to do this too.
 
-I would really leave dogs sleeping... Trying to document all this in the
-man page has chances to confuse more people than it has chances to help
-those who already know all these nasty details.
+Pavel suggested:
+
+MAP_ADD_FIXED
+
+(which is different from "use fixed", and describes why it would fail:
+can't add since it already exists.)
+
+Perhaps "MAP_FIXED_NEW"?
+
+There has been a request to drop "FIXED" from the name, so these:
+
+MAP_FIXED_NOCLOBBER
+MAP_FIXED_NOREPLACE
+MAP_FIXED_ADD
+MAP_FIXED_NEW
+
+Could be:
+
+MAP_NOCLOBBER
+MAP_NOREPLACE
+MAP_ADD
+MAP_NEW
+
+and we still have the unloved, but acceptable:
+
+MAP_REQUIRED
+
+My vote is still for "NOREPLACE" or "NOCLOBBER" since it's very
+specific, though "NEW" is pretty clear too.
+
+-Kees
+
 -- 
-Michal Hocko
-SUSE Labs
+Kees Cook
+Pixel Security
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
