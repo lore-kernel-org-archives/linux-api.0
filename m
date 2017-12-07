@@ -1,66 +1,45 @@
-From: John Hubbard <jhubbard@nvidia.com>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Wed, 6 Dec 2017 17:08:19 -0800
-Message-ID: <c427dc00-2835-a475-1ef5-f5550c4113a0@nvidia.com>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
- <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
- <87zi6we9z2.fsf@concordia.ellerman.id.au>
- <a3b3129a-2626-a65e-59b0-68aada523723@prevas.dk>
- <20171206090803.GG16386@dhcp22.suse.cz>
- <CAGXu5jKGsAjwF7nE_vjaWPnG0QJRx_qFeiSBLRg_g73iUJ-pwA@mail.gmail.com>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Thu, 7 Dec 2017 11:47:49 +0800
+Message-ID: <20171207034749.GA23924@hao-dev>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com>
+ <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev>
+ <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+ <20171205033330.GA19730@hao-dev>
+ <391be54799604c1fb3d7b80c7ad6d111@AcuMS.aculab.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jKGsAjwF7nE_vjaWPnG0QJRx_qFeiSBLRg_g73iUJ-pwA@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-arch-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Rasmus Villemoes <rasmus.villemoes@prevas.dk>, Michael Ellerman <mpe@ellerman.id.au>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Matthew Wilcox <willy@infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <391be54799604c1fb3d7b80c7ad6d111-1XygrNkDbNvwg4NCKwmqgw@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Laight <David.Laight-ZS65k/vG3HxXrIkS9f7CXA@public.gmane.org>
+Cc: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org" <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/06/2017 04:19 PM, Kees Cook wrote:
-> On Wed, Dec 6, 2017 at 1:08 AM, Michal Hocko <mhocko@kernel.org> wrote:
->> On Wed 06-12-17 08:33:37, Rasmus Villemoes wrote:
->>> On 2017-12-06 05:50, Michael Ellerman wrote:
->>>> Michal Hocko <mhocko@kernel.org> writes:
->>>>
->>>>> On Wed 29-11-17 14:25:36, Kees Cook wrote:
->>>>> It is safe in a sense it doesn't perform any address space dangerous
->>>>> operations. mmap is _inherently_ about the address space so the context
->>>>> should be kind of clear.
->>>>
->>>> So now you have to define what "dangerous" means.
->>>>
->>>>>> MAP_FIXED_UNIQUE
->>>>>> MAP_FIXED_ONCE
->>>>>> MAP_FIXED_FRESH
->>>>>
->>>>> Well, I can open a poll for the best name, but none of those you are
->>>>> proposing sound much better to me. Yeah, naming sucks...
->>>
->>> I also don't like the _SAFE name - MAP_FIXED in itself isn't unsafe [1],
->>> but I do agree that having a way to avoid clobbering (parts of) an
->>> existing mapping is quite useful. Since we're bikeshedding names, how
->>> about MAP_FIXED_EXCL, in analogy with the O_ flag.
->>
->> I really give up on the name discussion. I will take whatever the
->> majority comes up with. I just do not want this (useful) funtionality
->> get bikeched to death.
+On Wed, Dec 06, 2017 at 09:34:14AM +0000, David Laight wrote:
+> From: Wu Hao
+> > Sent: 05 December 2017 03:34
+> ...
+> > > I don't see anything Intel specific here.  This could all be named dfl-*
+> > 
+> > The maybe some device specific things, e.g Intel FPGA devices supported by this
+> > driver always have FME DFL at the beginning on the BAR0 for PF device.
 > 
-> Yup, I really want this to land too. What do people think of Matthew
-> Wilcox's MAP_REQUIRED ? MAP_EXACT isn't exact, and dropping "FIXED"
-> out of the middle seems sensible to me.
+> Since when has that been a method for specifying what the card does?
+> You need to allocate a PCI-id for your DFL accelerator.
 
-+1, MAP_REQUIRED does sound like the best one so far, yes. Sorry if I contributed
-to any excessive bikeshedding. :)
+This driver only supports Intel FPGA devices (see PCI Device Ids table
+in this patch) as mentioned above now, per my current understanding, if
+other vendors follow the same hardware design on using DFL for their PCIe
+based devices, then it's possible for them to fully reuse this code,
+otherwise they need to develop new drivers for their own designs or extend
+this driver in some ways (it depends on actual hardware implementation).
 
-thanks,
-john h
+Thanks
+Hao
 
 > 
-> MIchael, any suggestions with your API hat on?
-> 
-> -Kees
-> 
+> 	David
