@@ -1,86 +1,115 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Fri, 8 Dec 2017 09:33:15 +0100
-Message-ID: <20171208083315.GR20234@dhcp22.suse.cz>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
- <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz>
- <20171201152640.GA3765@rei>
- <87wp20e9wf.fsf@concordia.ellerman.id.au>
- <20171206045433.GQ26021@bombadil.infradead.org>
- <20171206070355.GA32044@bombadil.infradead.org>
- <87bmjbks4c.fsf@concordia.ellerman.id.au>
- <CAGXu5jLWRQn6EaXEEvdvXr+4gbiJawwp1EaLMfYisHVfMiqgSA@mail.gmail.com>
- <20171207195727.GA26792@bombadil.infradead.org>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 09/21] fpga: intel-dfl-pci: add enumeration for
+ feature devices
+Date: Fri, 8 Dec 2017 17:25:11 +0800
+Message-ID: <20171208092511.GA513@hao-dev>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-10-git-send-email-hao.wu@intel.com>
+ <CANk1AXQ3+Y6De1i6i0YacUxS+vBzhEfRX_jJ_wQKJOCWmYetxw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171207195727.GA26792@bombadil.infradead.org>
-Sender: linux-arch-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Kees Cook <keescook@chromium.org>, Michael Ellerman <mpe@ellerman.id.au>, Cyril Hrubis <chrubis@suse.cz>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Pavel Machek <pavel@ucw.cz>
+In-Reply-To: <CANk1AXQ3+Y6De1i6i0YacUxS+vBzhEfRX_jJ_wQKJOCWmYetxw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 07-12-17 11:57:27, Matthew Wilcox wrote:
-> On Thu, Dec 07, 2017 at 11:14:27AM -0800, Kees Cook wrote:
-> > On Wed, Dec 6, 2017 at 9:46 PM, Michael Ellerman <mpe@ellerman.id.au> wrote:
-> > > Matthew Wilcox <willy@infradead.org> writes:
-> > >> So, just like we currently say "exactly one of MAP_SHARED or MAP_PRIVATE",
-> > >> we could add a new paragraph saying "at most one of MAP_FIXED or
-> > >> MAP_REQUIRED" and "any of the following values".
-> > >
-> > > MAP_REQUIRED doesn't immediately grab me, but I don't actively dislike
-> > > it either :)
-> > >
-> > > What about MAP_AT_ADDR ?
-> > >
-> > > It's short, and says what it does on the tin. The first argument to mmap
-> > > is actually called "addr" too.
-> > 
-> > "FIXED" is supposed to do this too.
-> > 
-> > Pavel suggested:
-> > 
-> > MAP_ADD_FIXED
-> > 
-> > (which is different from "use fixed", and describes why it would fail:
-> > can't add since it already exists.)
-> > 
-> > Perhaps "MAP_FIXED_NEW"?
-> > 
-> > There has been a request to drop "FIXED" from the name, so these:
-> > 
-> > MAP_FIXED_NOCLOBBER
-> > MAP_FIXED_NOREPLACE
-> > MAP_FIXED_ADD
-> > MAP_FIXED_NEW
-> > 
-> > Could be:
-> > 
-> > MAP_NOCLOBBER
-> > MAP_NOREPLACE
-> > MAP_ADD
-> > MAP_NEW
-> > 
-> > and we still have the unloved, but acceptable:
-> > 
-> > MAP_REQUIRED
-> > 
-> > My vote is still for "NOREPLACE" or "NOCLOBBER" since it's very
-> > specific, though "NEW" is pretty clear too.
+On Thu, Dec 07, 2017 at 03:41:41PM -0600, Alan Tull wrote:
+> On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 > 
-> How about MAP_NOFORCE?
+> > +/* enumerate feature devices under pci device */
+> > +static int cci_enumerate_feature_devs(struct pci_dev *pcidev)
+> > +{
+> > +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
+> > +       struct fpga_cdev *cdev;
+> > +       struct fpga_enum_info *info;
+> > +       resource_size_t start, len;
+> > +       void __iomem *base;
+> > +       int port_num, bar, i, ret = 0;
+> > +       u32 offset;
+> > +       u64 v;
+> > +
+> > +       /* allocate enumeration info via pci_dev */
+> > +       info = fpga_enum_info_alloc(&pcidev->dev);
+> > +       if (!info)
+> > +               return -ENOMEM;
+> > +
+> > +       /* start to find Device Feature List from Bar 0 */
+> > +       base = cci_pci_ioremap_bar(pcidev, 0);
+> > +       if (!base) {
+> > +               ret = -ENOMEM;
+> > +               goto enum_info_free_exit;
+> > +       }
+> > +
+> > +       /*
+> > +        * PF device has FME and Ports/AFUs, and VF device only has 1 Port/AFU.
+> > +        * check them and add related "Device Feature List" info for the next
+> > +        * step enumeration.
+> > +        */
+> > +       if (feature_is_fme(base)) {
+> > +               start = pci_resource_start(pcidev, 0);
+> > +               len = pci_resource_len(pcidev, 0);
+> > +
+> > +               fpga_enum_info_add_dfl(info, start, len, base);
+> > +
+> > +               /*
+> > +                * find more Device Feature Lists (e.g Ports) per information
+> > +                * indicated by FME module.
+> > +                */
+> > +               v = readq(base + FME_HDR_CAP);
+> > +               port_num = FIELD_GET(FME_CAP_NUM_PORTS, v);
+> > +
+> > +               WARN_ON(port_num > MAX_FPGA_PORT_NUM);
+> > +
+> > +               for (i = 0; i < port_num; i++) {
+> > +                       v = readq(base + FME_HDR_PORT_OFST(i));
+> > +
+> > +                       /* skip ports which are not implemented. */
+> > +                       if (!(v & FME_PORT_OFST_IMP))
+> > +                               continue;
+> > +
+> > +                       /*
+> > +                        * add Port's Device Feature List information for next
+> > +                        * step enumeration.
+> > +                        */
+> > +                       bar = FIELD_GET(FME_PORT_OFST_BAR_ID, v);
+> > +                       offset = FIELD_GET(FME_PORT_OFST_DFH_OFST, v);
+> > +                       base = cci_pci_ioremap_bar(pcidev, bar);
+> > +                       if (!base)
+> > +                               continue;
+> > +
+> > +                       start = pci_resource_start(pcidev, bar) + offset;
+> > +                       len = pci_resource_len(pcidev, bar) - offset;
+> > +
+> > +                       fpga_enum_info_add_dfl(info, start, len, base + offset);
+> > +               }
+> > +       } else if (feature_is_port(base)) {
+> > +               start = pci_resource_start(pcidev, 0);
+> > +               len = pci_resource_len(pcidev, 0);
+> > +
+> > +               fpga_enum_info_add_dfl(info, start, len, base);
+> > +       } else {
+> > +               ret = -ENODEV;
+> > +               goto enum_info_free_exit;
+> > +       }
+> > +
+> > +       /* start enumeration with prepared enumeration information */
+> > +       cdev = fpga_enumerate_feature_devs(info);
+> 
+> Hi Hao,
+> 
+> I appreciate you separating the DFL enumeration code from this PCIe
+> module.  This made the pcie part quite small.  It should work for
+> embedded platforms just by adding a platform device whose function is
+> to find the DFL structures at some address and then call these same
+> fpga_enum_info_add_dfl adn fpga_enumerate_feature_devs functions.
 
-OK, this doesn't seem to lead to anywhere. The more this is discussed
-the more names we are getting. So you know what? I will resubmit and
-keep my original name. If somebody really hates it then feel free to
-nack the patch and push alternative and gain concensus on it.
+Yes, I think this is the right direction as you suggested. : )
 
-I will keep MAP_FIXED_SAFE because it is an alternative to MAP_FIXED so
-having that in the name is _useful_ for everybody familiar with
-MAP_FIXED already. And _SAFE suffix tells that the operation doesn't
-cause any silent memory corruptions or other unexpected side effects.
--- 
-Michal Hocko
-SUSE Labs
+Thanks
+Hao
+
+> 
+> Alan
