@@ -1,159 +1,94 @@
-From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 09/21] fpga: intel-dfl-pci: add enumeration for feature devices
-Date: Thu, 7 Dec 2017 15:41:41 -0600
-Message-ID: <CANk1AXQ3+Y6De1i6i0YacUxS+vBzhEfRX_jJ_wQKJOCWmYetxw@mail.gmail.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-10-git-send-email-hao.wu@intel.com>
+From: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>
+Subject: Re: [RFC v4 0/9] NFS Force Unmounting
+Date: Fri, 08 Dec 2017 13:10:40 +1100
+Message-ID: <87bmjaq89r.fsf@notabene.neil.brown.name>
+References: <20171117174552.18722-1-JPEWhacker@gmail.com> <1512398194.7031.56.camel@gmail.com> <87indksq9q.fsf@notabene.neil.brown.name> <1512565420.4048.21.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1511764948-20972-10-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Content-Type: multipart/signed; boundary="=-=-=";
+        micalg=pgp-sha256; protocol="application/pgp-signature"
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1512565420.4048.21.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Joshua Watt <jpewhacker-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+--=-=-=
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-> +/* enumerate feature devices under pci device */
-> +static int cci_enumerate_feature_devs(struct pci_dev *pcidev)
-> +{
-> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-> +       struct fpga_cdev *cdev;
-> +       struct fpga_enum_info *info;
-> +       resource_size_t start, len;
-> +       void __iomem *base;
-> +       int port_num, bar, i, ret = 0;
-> +       u32 offset;
-> +       u64 v;
-> +
-> +       /* allocate enumeration info via pci_dev */
-> +       info = fpga_enum_info_alloc(&pcidev->dev);
-> +       if (!info)
-> +               return -ENOMEM;
-> +
-> +       /* start to find Device Feature List from Bar 0 */
-> +       base = cci_pci_ioremap_bar(pcidev, 0);
-> +       if (!base) {
-> +               ret = -ENOMEM;
-> +               goto enum_info_free_exit;
-> +       }
-> +
-> +       /*
-> +        * PF device has FME and Ports/AFUs, and VF device only has 1 Port/AFU.
-> +        * check them and add related "Device Feature List" info for the next
-> +        * step enumeration.
-> +        */
-> +       if (feature_is_fme(base)) {
-> +               start = pci_resource_start(pcidev, 0);
-> +               len = pci_resource_len(pcidev, 0);
-> +
-> +               fpga_enum_info_add_dfl(info, start, len, base);
-> +
-> +               /*
-> +                * find more Device Feature Lists (e.g Ports) per information
-> +                * indicated by FME module.
-> +                */
-> +               v = readq(base + FME_HDR_CAP);
-> +               port_num = FIELD_GET(FME_CAP_NUM_PORTS, v);
-> +
-> +               WARN_ON(port_num > MAX_FPGA_PORT_NUM);
-> +
-> +               for (i = 0; i < port_num; i++) {
-> +                       v = readq(base + FME_HDR_PORT_OFST(i));
-> +
-> +                       /* skip ports which are not implemented. */
-> +                       if (!(v & FME_PORT_OFST_IMP))
-> +                               continue;
-> +
-> +                       /*
-> +                        * add Port's Device Feature List information for next
-> +                        * step enumeration.
-> +                        */
-> +                       bar = FIELD_GET(FME_PORT_OFST_BAR_ID, v);
-> +                       offset = FIELD_GET(FME_PORT_OFST_DFH_OFST, v);
-> +                       base = cci_pci_ioremap_bar(pcidev, bar);
-> +                       if (!base)
-> +                               continue;
-> +
-> +                       start = pci_resource_start(pcidev, bar) + offset;
-> +                       len = pci_resource_len(pcidev, bar) - offset;
-> +
-> +                       fpga_enum_info_add_dfl(info, start, len, base + offset);
-> +               }
-> +       } else if (feature_is_port(base)) {
-> +               start = pci_resource_start(pcidev, 0);
-> +               len = pci_resource_len(pcidev, 0);
-> +
-> +               fpga_enum_info_add_dfl(info, start, len, base);
-> +       } else {
-> +               ret = -ENODEV;
-> +               goto enum_info_free_exit;
-> +       }
-> +
-> +       /* start enumeration with prepared enumeration information */
-> +       cdev = fpga_enumerate_feature_devs(info);
+On Wed, Dec 06 2017, Jeff Layton wrote:
 
-Hi Hao,
-
-I appreciate you separating the DFL enumeration code from this PCIe
-module.  This made the pcie part quite small.  It should work for
-embedded platforms just by adding a platform device whose function is
-to find the DFL structures at some address and then call these same
-fpga_enum_info_add_dfl adn fpga_enumerate_feature_devs functions.
-
-Alan
-
-> +       if (IS_ERR(cdev)) {
-> +               dev_err(&pcidev->dev, "Enumeration failure\n");
-> +               ret = PTR_ERR(cdev);
-> +               goto enum_info_free_exit;
-> +       }
-> +
-> +       drvdata->cdev = cdev;
-> +
-> +enum_info_free_exit:
-> +       fpga_enum_info_free(info);
-> +
-> +       return ret;
-> +}
-> +
->  static
->  int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
->  {
-> @@ -84,9 +264,22 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
->                 goto release_region_exit;
->         }
+> On Wed, 2017-12-06 at 10:34 +1100, NeilBrown wrote:
+>>=20
+>> The new semantic for MNT_DETACH|MNT_FORCE is interesting.
+>> As it was never possible before (from /bin/umount), it should be safe to
+>> add a new meaning.
+>> The meaning is effectively "detach the filesystem from the namespace and
+>> detach the transport from the filesystem", which sounds like it is
+>> useful.
+>> It is worth highlighting this, and maybe even cc:ing
+>> linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org ... done that.
+>>=20
 >
-> -       /* TODO: create and add the platform device per feature list */
-> -       return 0;
-> +       ret = cci_init_drvdata(pcidev);
-> +       if (ret) {
-> +               dev_err(&pcidev->dev, "Fail to init drvdata %d.\n", ret);
-> +               goto release_region_exit;
-> +       }
-> +
-> +       ret = cci_enumerate_feature_devs(pcidev);
-> +       if (ret) {
-> +               dev_err(&pcidev->dev, "enumeration failure %d.\n", ret);
-> +               goto remove_drvdata_exit;
-> +       }
-> +
-> +       return ret;
->
-> +remove_drvdata_exit:
-> +       cci_remove_drvdata(pcidev);
->  release_region_exit:
->         pci_release_regions(pcidev);
->  disable_error_report_exit:
-> @@ -97,6 +290,8 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
->
->  static void cci_pci_remove(struct pci_dev *pcidev)
->  {
-> +       cci_remove_feature_devs(pcidev);
-> +       cci_remove_drvdata(pcidev);
->         pci_release_regions(pcidev);
->         pci_disable_pcie_error_reporting(pcidev);
->         pci_disable_device(pcidev);
-> --
-> 1.8.3.1
->
+> I'm not thrilled with the new flag combo, personally. Given that we're
+> introducing new behavior here, I think it wouldn't hurt to add a new
+> UMOUNT_* flag for this (UMOUNT_NUKE_FROM_ORBIT?).
+
+Suppose we did... MNT_FORCE_PONIES. What would be the semantics of this
+flag?  Once we had it, would anyone ever want to use MNT_FORCE again?
+
+MNT_FORCE is already fairly heavy handled.  It abort an arbitrary
+collections of RPC requests being sent for the given filesystem, no
+matter where else that filesystem might be mounted.
+Is it ever safe to use this flag unless you have good reason to believe
+that the server is not available and there is no point pretending any
+more?
+And if that is the case, why not use the new MNT_FORCE_PONIES which is
+at least predictable and reliable.
+
+We've talking a lot about the one NFS filesystem being mounted in
+multiple containers.  MNT_FORCE is already a problem for such mounts as
+one contains can kill requests generated from another container.  Maybe
+MNT_FORCE needs to be restricted to "real" root.
+Once we restrict it, do we need to keep it from being too harsh?
+
+What would be really nice is a timeout for umount, and for sync.
+The timeout only starts when the filesystem stops making progress for
+writeback.  If it eventually does timeout, then the caller can fall back
+to MNT_DETACH if they are in a container, or MNT_FORCE if not.
+(Maybe MNT_FORCE should map to MNT_DETACH in a container??? or maybe
+not).
+
+There is a lot here that still isn't clear to me, but one this does seem
+to be becoming clear:  MNT_FORCE as it stands is nearly useless and it
+would serve is well to find a semantic that it actually useful, and
+impose that.
+
+Thanks,
+NeilBrown
+
+--=-=-=
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEG8Yp69OQ2HB7X0l6Oeye3VZigbkFAlop9KAACgkQOeye3VZi
+gbmnGA/+LUCXuxlji4dN70TLZJFwzr3sHIJ0mQZpsx/jooeerllMthXHE2HyxJqO
+lGlnE1YyaKSjef2gjJp3FyR4z6zr8DFRsJ0TJpbuKNv0dlvmN23enJ8wa0A5lk5a
+cZtEDslZAAdNPe9nAKwV7T+LXi+487n2VwTopMlL55EU84CFvT7cQZdjYVxPcVaE
+b942feqU75/SSCFFfJwfrtT45hHwbN2lUeTj5AVqiaxmmvoARrxpY1dUTgE6pVzv
+wB2p5/BypPcVfbyR39bBgtew+VlHPXa+MOJSXypMExr0Yolgb9/1jEPEXEIqAO6O
+ULteF1XvOGafPVJsf+YgbPS7uOC82bT5zb6/rSjn4lNsA0icqbSSmTvfIytjYEKj
+4u06cEM4zDl99Bv57vTS9VA39Ri1zFsyg+tJv553n4ZklQT8zFzylAvwrNzb0Wkk
+vy2/e8a/nIhF7tGWC3M/txsNO1pN9xuf3OczsgeX+HCus3pCsAgwqh+pKFbC6TBX
+17/jW/a0n5ThPxuNE642Pp6MEZ9jgPQtWrkHQ6erAQXUWqQMTJZWDGHNJv5X7Mcv
+CG0f5jmelwZQWbkp9UkwB4HN7a0PTzEQNP4EdPzWBN5ep4Q/hHW0zHlQtsahJZu7
+EtjoKQ7qVs1l0I8shuL1qPQfDsuOzUBD0kUa6LuH65B8mZNGpZM=
+=Xk3D
+-----END PGP SIGNATURE-----
+--=-=-=--
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
