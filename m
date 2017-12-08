@@ -1,54 +1,37 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Fri, 8 Dec 2017 14:33:35 +0000
-Message-ID: <0b0bd6862e3a47728c8f658c8a6b3dea@AcuMS.aculab.com>
-References: <20171129144219.22867-1-mhocko@kernel.org>
- <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
+From: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Subject: Re: [PATCH 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Fri, 8 Dec 2017 12:13:31 -0800
+Message-ID: <CAGXu5j+VupGmKEEHx-uNXw27Xvndu=0ObsBqMwQiaYPyMGD+vw@mail.gmail.com>
+References: <20171129144219.22867-1-mhocko@kernel.org> <CAGXu5jLa=b2HhjWXXTQunaZuz11qUhm5aNXHpS26jVqb=G-gfw@mail.gmail.com>
  <20171130065835.dbw4ajh5q5whikhf@dhcp22.suse.cz> <20171201152640.GA3765@rei>
- <87wp20e9wf.fsf@concordia.ellerman.id.au>
- <20171206045433.GQ26021@bombadil.infradead.org>
- <20171206070355.GA32044@bombadil.infradead.org>
- <87bmjbks4c.fsf@concordia.ellerman.id.au>
+ <87wp20e9wf.fsf@concordia.ellerman.id.au> <20171206045433.GQ26021@bombadil.infradead.org>
+ <20171206070355.GA32044@bombadil.infradead.org> <87bmjbks4c.fsf@concordia.ellerman.id.au>
  <CAGXu5jLWRQn6EaXEEvdvXr+4gbiJawwp1EaLMfYisHVfMiqgSA@mail.gmail.com>
- <20171207195727.GA26792@bombadil.infradead.org>
- <87shclh3zc.fsf@concordia.ellerman.id.au>
+ <20171207195727.GA26792@bombadil.infradead.org> <20171208083315.GR20234@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <87shclh3zc.fsf@concordia.ellerman.id.au>
-Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: 'Michael Ellerman' <mpe@ellerman.id.au>, Matthew Wilcox <willy@infradead.org>, Kees Cook <keescook@chromium.org>
-Cc: Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@kernel.org>, Linux
- API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John
- Hubbard <jhubbard@nvidia.com>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Pavel Machek <pavel@ucw.cz>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171208083315.GR20234-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Abdul Haleem <abdhalee-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Joel Stanley <joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Michael Ellerman
-> Sent: 08 December 2017 11:08
-...
-> If we had a time machine, the right set of flags would be:
->=20
->   - MAP_FIXED:   don't treat addr as a hint, fail if addr is not free
->   - MAP_REPLACE: replace an existing mapping (or force or clobber)
->=20
-> But the two were conflated for some reason in the current MAP_FIXED.
+On Fri, Dec 8, 2017 at 12:33 AM, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+> OK, this doesn't seem to lead to anywhere. The more this is discussed
+> the more names we are getting. So you know what? I will resubmit and
+> keep my original name. If somebody really hates it then feel free to
+> nack the patch and push alternative and gain concensus on it.
+>
+> I will keep MAP_FIXED_SAFE because it is an alternative to MAP_FIXED so
+> having that in the name is _useful_ for everybody familiar with
+> MAP_FIXED already. And _SAFE suffix tells that the operation doesn't
+> cause any silent memory corruptions or other unexpected side effects.
 
-Possibly because the original use was loading overlays?
+Looks like consensus is MAP_FIXED_NOREPLACE.
 
-> Given we can't go back and fix it, the closest we can get is to add a
-> variant of MAP_FIXED which subtracts the "REPLACE" semantic.
->=20
-> ie: MAP_FIXED_NOREPLACE
+-Kees
 
-Much better than _SAFE - which is always bad because it is usually
-one 'safe' for one specific use case.
-
-	David
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-- 
+Kees Cook
+Pixel Security
