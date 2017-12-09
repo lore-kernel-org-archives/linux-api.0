@@ -1,74 +1,137 @@
-From: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Subject: =?utf-8?B?4piFIGxJTEpBX01BTkdPIC0t4oCcMjAx?=
-        =?utf-8?B?OOS4lueVjOWkjeWQiOadkOaWmeWxleiniOWPiuS8muiuruKAneWwhuS6juKAnDPmnIjigJ3lnKg=?=
-        =?utf-8?B?4oCc5rOV5Zu95be06buO4oCd5Li+6KGMICAgIO+8iOWcsOWPs1AxLUwt?=
-        =?utf-8?B?TWXvvIk=?=
-Date: Sat, 9 Dec 2017 09:42:27 +0800
-Message-ID: <20171209094241557457@bss.com.cn>
-Reply-To: <EMAILQUNFA-guc8Kt/Hbbw@public.gmane.org>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+Date: Sat, 9 Dec 2017 11:20:48 +0100
+Message-ID: <7ebca85a-425c-2b95-9a5f-59d81707339e@digikod.net>
+References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca>
+ <75b7d6a6-42ba-2dff-1836-1091c7c024e7@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="5DS20X9VhgecTVVW8xNVvheqxKAC9uLlu"
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <75b7d6a6-42ba-2dff-1836-1091c7c024e7-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-5bCK5pWs55qEIGxJTEpBX01BTkdPQFVLUi5ORVQg5LyB5Lia6aKG5a+8L+WFrOWPuOi0n+i0o+S6
-ui/kuJrnlYzkuJPlrrbvvIzmgqjlpb3vvJoNCuOAgOOAgA0K44CA44CA5paw5p2Q5paZ5Li6MjHk
-uJbnuqrkuInlpKflhbHmgKflhbPplK7mioDmnK/kuYvkuIDvvIzlt7LmiJDkuLrlhajnkIPnu4/m
-tY7ov4XpgJ/lop7plb/nmoTmupDliqjlipvlkozmj5DljYfmoLjlv4Pnq57kuonlipvnmoTmiJjn
-laXnhKbngrnjgILmnZDmlpnkvZzkuLrliLbpgKDkuJrnmoTln7rnoYDvvIznibnliKvmmK/mlrDm
-nZDmlpnnoJTnqbblkozkuqfkuJrlj5HlsZXnmoTmsLTlubPkuI7op4TmqKHvvIzlt7Lnu4/miJDk
-uLrooaHph4/kuIDkuKrlm73lrrbnp5HmioDov5vmraXlkoznu7zlkIjlrp7lipvnmoTph43opoHm
-oIflv5fjgILlnKjmlrDmnZDmlpnlj5HlsZXkuI7lupTnlKjkuK3vvIzlpI3lkIjmnZDmlpnljaDm
-nInnm7jlvZPph43opoHnmoTlnLDkvY3vvIznibnliKvlub/ms5vnmoTlupTnlKjlnKjmsb3ovabj
-gIHkuqTpgJrjgIHpo47og73jgIHoiKrnqbrjgIHoiKrlpKnjgIHlhbXlmajjgIHoiLnoiLbjgIHl
-m73pmLLjgIHmnLrmorDjgIHnlLXlrZDjgIHljJblt6XjgIHlu7rnrZHjgIHlhpzkuJrjgIHmuJTk
-uJrjgIHnurrnu4fjgIHov5DliqjlmajmnZDnrYnpoobln5/vvIzkuIDnm7TmmK/kuJbnlYzlkITl
-m73kvJjlhYjlj5HlsZXlkoznq57kuonmv4Dng4jnmoTph43opoHooYzkuJrjgIINCuOAgOOAgA0K
-44CA44CA4oCcSkVD5LiW55WM5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd77yISkVDIHdv
-cmxkIENvbXBvc2l0ZXMgU2hvdyAmIENvbmZlcmVuY2Vz77yJ5Yib5Yqe5LqOMTk2M+W5tO+8jOav
-j+W5tOS4vuWKnuS4gOWxiu+8jOiHszIwMTflubTmgLvlhbHkuL7lip7kuoY1MuWxiu+8jOS4u+WK
-nuWNleS9jeaYr+azleWbvUpFQ+WkjeWQiOadkOaWmeWPkeWxleS/g+i/m+S8mi9KRUPpm4blm6Lv
-vIzkuK3lm73mgLvlsZXlm6LlsZXllYbnu4Tnu4fljZXkvY3kuLrmmKDlvrflm73pmYXkvJrlsZXp
-m4blm6LkuK3lm73ku6PooajlpITvvIzlnKjljJfkuqzjgIHkuIrmtbfnrYnlnLDorr7mnInliIbm
-lK/mnLrmnoTvvIzotJ/otKPor6XlsZXkvJrlnKjkuK3lm73nmoTmjqjlub/lkozmi5vllYblt6Xk
-vZzvvIhKRUPkuK3lm73mgLvlsZXlm6LmiqXlkI3ng63nur/vvJo0MDAwLTY4MC04NjDovaw4MTQ0
-44CBNTIyMO+8ieOAgkpFQ+WkjeWQiOadkOaWmeWxleW3suaIkOS4uuS4lueVjOS4iuWOhuWPsuac
-gOaCoOS5heOAgeinhOaooeacgOWkp+eahOWkjeWQiOadkOaWmeihjOS4muS4k+S4muWxleiniOS8
-mu+8jOWxleekuuWSjOWPjeaYoOS6huW9k+WJjeWkjeWQiOadkOaWmeihjOS4mueahOacgOaWsOaK
-gOacr+WSjOW6lOeUqOaIkOaenOOAgg0K44CA44CADQrjgIDjgIDkuLrkuoblop7ov5vlm73lhoXl
-pJblpI3lkIjmnZDmlpnooYzkuJrnmoTkuqTmtYHkuI7lkIjkvZzvvIzlkIzml7blsZXnpLrmiJHl
-m73lpI3lkIjmnZDmlpnkuqfkuJrnmoTlj5HlsZXkuI7miJDlsLHvvIzluK7liqnlooPlhoXkvIHk
-uJrlvIDmi5Plm73lhoXlpJbluILlnLrvvIzkuK3lm73lm73pmYXlpI3mnZDljY/kvJrjgIHmmKDl
-vrflm73pmYXkvJrlsZXpm4blm6LvvIhZT05EIEVYUE/vvInkuK3lm73ku6PooajlpITlt7Lov5Hl
-jYHlubTnu4Tnu4fkuK3lm73kvIHkuJrlj4LkuI7or6XlsZXkvJrvvIzkuLrkuK3lm73lpI3lkIjm
-nZDmlpnpm4blm6LjgIHkuK3mnZDnp5HmioDjgIHkuK3pkqLpm4blm6LjgIHkuK3lm73lu7rmnZDp
-m4blm6LjgIHkuK3lm73llYbpo57jgIHljJfkuqznjrvpkqLpmaLjgIHkuIrmtbfmnbDkuovmnbDm
-lrDmnZDmlpnpm4blm6LjgIHph43luoblm73pmYXlpI3lkIjmnZDmlpnjgIHkuK3ljZfmjqfogqHp
-m4blm6LjgIHnp6bnmoflspvogIDljY7njrvnkoPpkqLjgIHng5/lj7DmsKjnurbjgIHlpKnpqazp
-m4blm6LjgIHljY7kuJznkIblt6XlpKflrabjgIHlk4jlsJTmu6jlt6XkuJrlpKflrabjgIHlt6jn
-n7Ppm4blm6LjgIHkuK3lhrbpm4blm6LjgIHph5HlhYnpm4blm6LjgIHmsZ/oi4/mgZLnpZ7nuqTn
-u7TmnZDmlpnjgIHph43luoblpKflrabjgIHkuIrmtbfnjrvnkoPpkqLnoJTnqbbpmaLjgIHkuK3l
-jZflpKflrabjgIHlk4jlsJTmu6jnjrvnkoPpkqLnoJTnqbbpmaLnrYnkvJflpJrooYzkuJrlt6jl
-pLTlkoznn6XlkI3mnLrmnoTmj5DkvpvkuobkvJjotKjpq5jmlYjnmoTlooPlpJblsZXotLjmnI3l
-iqHjgIINCuOAgOOAgA0K44CA44CA4oCcSkVDIHdvcmxkIDIwMTgg56ys5LqU5Y2B5LiJ5LiW55WM
-5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd5bCG5LqO4oCcM+aciDA2LTA45pel4oCd5Zyo
-4oCc5rOV5Zu95be06buO5bGV6KeI5Lya6K6u5Lit5b+D4oCd5YaN5bqm5Li+6KGM77yM5oiR5Lus
-6K+a6YKA5YWo5Zu95ZCE5Zyw5aSN5ZCI5p2Q5paZ5Y+K5paw5p2Q5paZ55u45YWz5Y2V5L2N5LiO
-5Lia55WM5Lq65aOr5Yqg5YWl5ZKx5Lus55qE5Lit5Zu95oC75bGV5Zui5YmN5b6A5Y+C5bGV5Y+C
-6KeC44CC44CA44CADQrjgIDjgIANCuOAgOOAgOacieWFs+WPguWxleWPguinguKAnEpFQ+S4lueV
-jOWkjeWQiOadkOaWmeWxleKAneS6i+WunO+8jOivt+iBlOe7nOOAkOS4reWbveaAu+WxleWbouOA
-kee7hOWKnuaWueKAlOKAlCDlhajlm73nu5/kuIDlrqLmnI3ng63nur/vvJo0MDAwLTU4MC04NTDv
-vIjovaw1MjIw44CBODE0NOOAgTg4ODjvvInjgIEwMTDigJQ2OTIzLTY5NDTvvJsg6YKu566xL1FR
-77yaMTI4MDkzOTUjcXEuY29t77ybIOW+ruS/oe+8miBDYW5aaGFuWGlhb1hp77yI5Y+C5bGV5raI
-5oGv77yJ44CBWmhhblNoYW5nWmhpSmlh77yI5bGV5ZWG5LmL5a6277yJ77ybIOW+ruWNmu+8mmh0
-dHA6Ly93ZWliby5jb20vamVjc2hvd++8iOWxleS8mu+8ieOAgWh0dHA6Ly93ZWliby5jb20veWlu
-Z2RlaHVpemhhbu+8iOWFrOWPuO+8ieOAgg0K44CA44CADQrjgIDjgIDlj4LliqBKRUPlsZXkvJrm
-mK/kuIDkuKrlpI3lkIjmnZDmlpnlj4rmlrDmnZDmlpnkvIHkuJrotbDlkJHlm73pmYXljJbnmoTm
-oIflv5flkozpgJTlvoTvvIENCuOAgOOAgA0K44CA44CADQrjgIDjgIANCuOAgOOAgA0KX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX+OAgOOAgA0K77yI55m+5LiH576k5Y+R57O757uffOS4uuaCqOWP
-kemAgXzlpoLkuI3luIzmnJvlho3mlLbliLDmraTooYzkuJrotYTorq986K+35Zue5aSN4oCcVEQr
-SkVD4oCd6Iez6YKu566xMTA1NTgwMDgxMkBxcS5jb23vvIkNCg==
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--5DS20X9VhgecTVVW8xNVvheqxKAC9uLlu
+Content-Type: multipart/mixed; boundary="QGDc1o6vhukr6jaTrhkTtq2q2Krwn30pv";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>,
+ Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+ Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>,
+ Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
+ Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+ Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+ Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>,
+ Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org,
+ Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
+ Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>,
+ Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org,
+ Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Message-ID: <7ebca85a-425c-2b95-9a5f-59d81707339e-WFhQfpSGs3bR7s880joybQ@public.gmane.org>
+Subject: Re: RFC(v2): Audit Kernel Container IDs
+References: <20171012141359.saqdtnodwmbz33b2-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+ <75b7d6a6-42ba-2dff-1836-1091c7c024e7-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+In-Reply-To: <75b7d6a6-42ba-2dff-1836-1091c7c024e7-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
+
+--QGDc1o6vhukr6jaTrhkTtq2q2Krwn30pv
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
+
+
+On 12/10/2017 18:33, Casey Schaufler wrote:
+> On 10/12/2017 7:14 AM, Richard Guy Briggs wrote:
+>> Containers are a userspace concept.  The kernel knows nothing of them.=
+
+>>
+>> The Linux audit system needs a way to be able to track the container
+>> provenance of events and actions.  Audit needs the kernel's help to do=
+
+>> this.
+>>
+>> Since the concept of a container is entirely a userspace concept, a
+>> registration from the userspace container orchestration system initiat=
+es
+>> this.  This will define a point in time and a set of resources
+>> associated with a particular container with an audit container ID.
+>>
+>> The registration is a pseudo filesystem (proc, since PID tree already
+>> exists) write of a u8[16] UUID representing the container ID to a file=
+
+>> representing a process that will become the first process in a new
+>> container.  This write might place restrictions on mount namespaces
+>> required to define a container, or at least careful checking of
+>> namespaces in the kernel to verify permissions of the orchestrator so =
+it
+>> can't change its own container ID.  A bind mount of nsfs may be
+>> necessary in the container orchestrator's mntNS.
+>> Note: Use a 128-bit scalar rather than a string to make compares faste=
+r
+>> and simpler.
+>>
+>> Require a new CAP_CONTAINER_ADMIN to be able to carry out the
+>> registration.
+>=20
+> Hang on. If containers are a user space concept, how can
+> you want CAP_CONTAINER_ANYTHING? If there's not such thing as
+> a container, how can you be asking for a capability to manage
+> them?
+>=20
+>>   At that time, record the target container's user-supplied
+>> container identifier along with the target container's first process
+>> (which may become the target container's "init" process) process ID
+>> (referenced from the initial PID namespace), all namespace IDs (in the=
+
+>> form of a nsfs device number and inode number tuple) in a new auxillia=
+ry
+>> record AUDIT_CONTAINER with a qualifying op=3D$action field.
+
+Here is an idea to avoid privilege problems or the need for a new
+capability: make it automatic. What makes a container a container seems
+to be the use of at least a namespace. What about automatically create
+and assign an ID to a process when it enters a namespace different than
+one of its parent process? This delegates the (permission)
+responsibility to the use of namespaces (e.g. /proc/sys/user/max_* limit)=
+=2E
+
+One interesting side effect of this approach would be to be able to
+identify which processes are in the same set of namespaces, even if not
+spawn from the container but entered after its creation (i.e. using
+setns), by creating container IDs as a (deterministic) checksum from the
+/proc/self/ns/* IDs.
+
+Since the concern is to identify a container, I think the ability to
+audit the switch from one container ID to another is enough. I don't
+think we need nested IDs.
+
+As a side note, you may want to take a look at the Linux-VServer's XID.
+
+Regards,
+ Micka=EBl
+
+
+--QGDc1o6vhukr6jaTrhkTtq2q2Krwn30pv--
+
+--5DS20X9VhgecTVVW8xNVvheqxKAC9uLlu
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAloruQUACgkQIt7+33O9
+apUJFgf/a2a5wJF16U89qtxT53Tdxz2ILPBOcQzYNeLHPoJURcIWelgS/g1KZ2Xo
+elaWkhEkUFqCuoaTPcUuELZphkr/M+tOYgfjNyvG4k8Q0bsn2OrdVfuSRYeLt8G0
+8Jwt3gLPqQFUVj2W8F0ldw07ERSTxaML5NKPj4Acu60qWYKbRiXfFJFVNNWJXpKW
+IfMdy8mkU7IrLNlrxRc6VUGs/sJXA54uMQVAy730/BFwwSkb3EYktWl03VzjYO/N
+ovANuNFhL2ocIgEgjHBYV5zdL7HlE3pFmkiiPKYgtjFjvlxYcJ7NMDjaHnQFQR2h
+88zji87kj051njI0Hhc2kbejUyoH2A==
+=LLoq
+-----END PGP SIGNATURE-----
+
+--5DS20X9VhgecTVVW8xNVvheqxKAC9uLlu--
