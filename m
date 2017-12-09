@@ -1,155 +1,74 @@
-From: akpm@linux-foundation.org
-Subject: +
- mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request.patch
- added to -mm tree
-Date: Fri, 08 Dec 2017 14:45:28 -0800
-Message-ID: <5a2b1608.fzedxVmuuLgSQW11%akpm@linux-foundation.org>
-Reply-To: linux-kernel@vger.kernel.org
+From: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Subject: =?utf-8?B?4piFIGxJTEpBX01BTkdPIC0t4oCcMjAx?=
+        =?utf-8?B?OOS4lueVjOWkjeWQiOadkOaWmeWxleiniOWPiuS8muiuruKAneWwhuS6juKAnDPmnIjigJ3lnKg=?=
+        =?utf-8?B?4oCc5rOV5Zu95be06buO4oCd5Li+6KGMICAgIO+8iOWcsOWPs1AxLUwt?=
+        =?utf-8?B?TWXvvIk=?=
+Date: Sat, 9 Dec 2017 09:42:27 +0800
+Message-ID: <20171209094241557457@bss.com.cn>
+Reply-To: <EMAILQUNFA-guc8Kt/Hbbw@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <mm-commits-owner@vger.kernel.org>
-Sender: mm-commits-owner@vger.kernel.org
-To: iamjoonsoo.kim@lge.com, aneesh.kumar@linux.vnet.ibm.com, hannes@cmpxchg.org, lauraa@codeaurora.org, linux-api@vger.kernel.org, linux@armlinux.org.uk, mgorman@techsingularity.net, mhocko@suse.com, mina86@mina86.com, minchan@kernel.org, m.szyprowski@samsung.com, riel@redhat.com, tony@atomide.com, vbabka@suse.cz, will.deacon@arm.com, mm-commits@vger.kernel.org
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-
-The patch titled
-     Subject: mm/page_alloc: don't reserve ZONE_HIGHMEM for ZONE_MOVABLE request
-has been added to the -mm tree.  Its filename is
-     mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request.patch
-
-This patch should soon appear at
-    http://ozlabs.org/~akpm/mmots/broken-out/mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request.patch
-and later at
-    http://ozlabs.org/~akpm/mmotm/broken-out/mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request.patch
-
-Before you just go and hit "reply", please:
-   a) Consider who else should be cc'ed
-   b) Prefer to cc a suitable mailing list as well
-   c) Ideally: find the original patch on the mailing list and do a
-      reply-to-all to that, adding suitable additional cc's
-
-*** Remember to use Documentation/SubmitChecklist when testing your code ***
-
-The -mm tree is included into linux-next and is updated
-there every 3-4 working days
-
-------------------------------------------------------
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: mm/page_alloc: don't reserve ZONE_HIGHMEM for ZONE_MOVABLE request
-
-Freepage on ZONE_HIGHMEM doesn't work for kernel memory so it's not that
-important to reserve.  When ZONE_MOVABLE is used, this problem would
-theorectically cause to decrease usable memory for GFP_HIGHUSER_MOVABLE
-allocation request which is mainly used for page cache and anon page
-allocation.  So, fix it by setting 0 to
-sysctl_lowmem_reserve_ratio[ZONE_HIGHMEM].
-
-And, defining sysctl_lowmem_reserve_ratio array by MAX_NR_ZONES - 1 size
-makes code complex.  For example, if there is highmem system, following
-reserve ratio is activated for *NORMAL ZONE* which would be easyily
-misleading people.
-
- #ifdef CONFIG_HIGHMEM
- 32
- #endif
-
-This patch also fixes this situation by defining
-sysctl_lowmem_reserve_ratio array by MAX_NR_ZONES and place "#ifdef" to
-right place.
-
-Link: http://lkml.kernel.org/r/1504672525-17915-1-git-send-email-iamjoonsoo.kim@lge.com
-Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-Acked-by: Vlastimil Babka <vbabka@suse.cz>
-Tested-by: Tony Lindgren <tony@atomide.com>
-Cc: Michal Hocko <mhocko@suse.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>
-Cc: Mel Gorman <mgorman@techsingularity.net>
-Cc: Johannes Weiner <hannes@cmpxchg.org>
-Cc: "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>
-Cc: Minchan Kim <minchan@kernel.org>
-Cc: Rik van Riel <riel@redhat.com>
-Cc: Laura Abbott <lauraa@codeaurora.org>
-Cc: Marek Szyprowski <m.szyprowski@samsung.com>
-Cc: Michal Nazarewicz <mina86@mina86.com>
-Cc: Russell King <linux@armlinux.org.uk>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: <linux-api@vger.kernel.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
-
- Documentation/sysctl/vm.txt |    5 ++---
- include/linux/mmzone.h      |    2 +-
- mm/page_alloc.c             |   25 ++++++++++++++-----------
- 3 files changed, 17 insertions(+), 15 deletions(-)
-
-diff -puN Documentation/sysctl/vm.txt~mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request Documentation/sysctl/vm.txt
---- a/Documentation/sysctl/vm.txt~mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request
-+++ a/Documentation/sysctl/vm.txt
-@@ -312,8 +312,6 @@ The lowmem_reserve_ratio is an array. Yo
- % cat /proc/sys/vm/lowmem_reserve_ratio
- 256     256     32
- -
--Note: # of this elements is one fewer than number of zones. Because the highest
--      zone's value is not necessary for following calculation.
- 
- But, these values are not used directly. The kernel calculates # of protection
- pages for each zones from them. These are shown as array of protection pages
-@@ -364,7 +362,8 @@ As above expression, they are reciprocal
- pages of higher zones on the node.
- 
- If you would like to protect more pages, smaller values are effective.
--The minimum value is 1 (1/1 -> 100%).
-+The minimum value is 1 (1/1 -> 100%). The value less than 1 completely
-+disables protection of the pages.
- 
- ==============================================================
- 
-diff -puN include/linux/mmzone.h~mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request include/linux/mmzone.h
---- a/include/linux/mmzone.h~mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request
-+++ a/include/linux/mmzone.h
-@@ -886,7 +886,7 @@ int min_free_kbytes_sysctl_handler(struc
- 					void __user *, size_t *, loff_t *);
- int watermark_scale_factor_sysctl_handler(struct ctl_table *, int,
- 					void __user *, size_t *, loff_t *);
--extern int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES-1];
-+extern int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES];
- int lowmem_reserve_ratio_sysctl_handler(struct ctl_table *, int,
- 					void __user *, size_t *, loff_t *);
- int percpu_pagelist_fraction_sysctl_handler(struct ctl_table *, int,
-diff -puN mm/page_alloc.c~mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request mm/page_alloc.c
---- a/mm/page_alloc.c~mm-page_alloc-dont-reserve-zone_highmem-for-zone_movable-request
-+++ a/mm/page_alloc.c
-@@ -204,17 +204,18 @@ static void __free_pages_ok(struct page
-  * TBD: should special case ZONE_DMA32 machines here - in those we normally
-  * don't need any ZONE_NORMAL reservation
-  */
--int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES-1] = {
-+int sysctl_lowmem_reserve_ratio[MAX_NR_ZONES] = {
- #ifdef CONFIG_ZONE_DMA
--	 256,
-+	[ZONE_DMA] = 256,
- #endif
- #ifdef CONFIG_ZONE_DMA32
--	 256,
-+	[ZONE_DMA32] = 256,
- #endif
-+	[ZONE_NORMAL] = 32,
- #ifdef CONFIG_HIGHMEM
--	 32,
-+	[ZONE_HIGHMEM] = 0,
- #endif
--	 32,
-+	[ZONE_MOVABLE] = 0,
- };
- 
- EXPORT_SYMBOL(totalram_pages);
-@@ -6971,13 +6972,15 @@ static void setup_per_zone_lowmem_reserv
- 				struct zone *lower_zone;
- 
- 				idx--;
--
--				if (sysctl_lowmem_reserve_ratio[idx] < 1)
--					sysctl_lowmem_reserve_ratio[idx] = 1;
+5bCK5pWs55qEIGxJTEpBX01BTkdPQFVLUi5ORVQg5LyB5Lia6aKG5a+8L+WFrOWPuOi0n+i0o+S6
+ui/kuJrnlYzkuJPlrrbvvIzmgqjlpb3vvJoNCuOAgOOAgA0K44CA44CA5paw5p2Q5paZ5Li6MjHk
+uJbnuqrkuInlpKflhbHmgKflhbPplK7mioDmnK/kuYvkuIDvvIzlt7LmiJDkuLrlhajnkIPnu4/m
+tY7ov4XpgJ/lop7plb/nmoTmupDliqjlipvlkozmj5DljYfmoLjlv4Pnq57kuonlipvnmoTmiJjn
+laXnhKbngrnjgILmnZDmlpnkvZzkuLrliLbpgKDkuJrnmoTln7rnoYDvvIznibnliKvmmK/mlrDm
+nZDmlpnnoJTnqbblkozkuqfkuJrlj5HlsZXnmoTmsLTlubPkuI7op4TmqKHvvIzlt7Lnu4/miJDk
+uLrooaHph4/kuIDkuKrlm73lrrbnp5HmioDov5vmraXlkoznu7zlkIjlrp7lipvnmoTph43opoHm
+oIflv5fjgILlnKjmlrDmnZDmlpnlj5HlsZXkuI7lupTnlKjkuK3vvIzlpI3lkIjmnZDmlpnljaDm
+nInnm7jlvZPph43opoHnmoTlnLDkvY3vvIznibnliKvlub/ms5vnmoTlupTnlKjlnKjmsb3ovabj
+gIHkuqTpgJrjgIHpo47og73jgIHoiKrnqbrjgIHoiKrlpKnjgIHlhbXlmajjgIHoiLnoiLbjgIHl
+m73pmLLjgIHmnLrmorDjgIHnlLXlrZDjgIHljJblt6XjgIHlu7rnrZHjgIHlhpzkuJrjgIHmuJTk
+uJrjgIHnurrnu4fjgIHov5DliqjlmajmnZDnrYnpoobln5/vvIzkuIDnm7TmmK/kuJbnlYzlkITl
+m73kvJjlhYjlj5HlsZXlkoznq57kuonmv4Dng4jnmoTph43opoHooYzkuJrjgIINCuOAgOOAgA0K
+44CA44CA4oCcSkVD5LiW55WM5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd77yISkVDIHdv
+cmxkIENvbXBvc2l0ZXMgU2hvdyAmIENvbmZlcmVuY2Vz77yJ5Yib5Yqe5LqOMTk2M+W5tO+8jOav
+j+W5tOS4vuWKnuS4gOWxiu+8jOiHszIwMTflubTmgLvlhbHkuL7lip7kuoY1MuWxiu+8jOS4u+WK
+nuWNleS9jeaYr+azleWbvUpFQ+WkjeWQiOadkOaWmeWPkeWxleS/g+i/m+S8mi9KRUPpm4blm6Lv
+vIzkuK3lm73mgLvlsZXlm6LlsZXllYbnu4Tnu4fljZXkvY3kuLrmmKDlvrflm73pmYXkvJrlsZXp
+m4blm6LkuK3lm73ku6PooajlpITvvIzlnKjljJfkuqzjgIHkuIrmtbfnrYnlnLDorr7mnInliIbm
+lK/mnLrmnoTvvIzotJ/otKPor6XlsZXkvJrlnKjkuK3lm73nmoTmjqjlub/lkozmi5vllYblt6Xk
+vZzvvIhKRUPkuK3lm73mgLvlsZXlm6LmiqXlkI3ng63nur/vvJo0MDAwLTY4MC04NjDovaw4MTQ0
+44CBNTIyMO+8ieOAgkpFQ+WkjeWQiOadkOaWmeWxleW3suaIkOS4uuS4lueVjOS4iuWOhuWPsuac
+gOaCoOS5heOAgeinhOaooeacgOWkp+eahOWkjeWQiOadkOaWmeihjOS4muS4k+S4muWxleiniOS8
+mu+8jOWxleekuuWSjOWPjeaYoOS6huW9k+WJjeWkjeWQiOadkOaWmeihjOS4mueahOacgOaWsOaK
+gOacr+WSjOW6lOeUqOaIkOaenOOAgg0K44CA44CADQrjgIDjgIDkuLrkuoblop7ov5vlm73lhoXl
+pJblpI3lkIjmnZDmlpnooYzkuJrnmoTkuqTmtYHkuI7lkIjkvZzvvIzlkIzml7blsZXnpLrmiJHl
+m73lpI3lkIjmnZDmlpnkuqfkuJrnmoTlj5HlsZXkuI7miJDlsLHvvIzluK7liqnlooPlhoXkvIHk
+uJrlvIDmi5Plm73lhoXlpJbluILlnLrvvIzkuK3lm73lm73pmYXlpI3mnZDljY/kvJrjgIHmmKDl
+vrflm73pmYXkvJrlsZXpm4blm6LvvIhZT05EIEVYUE/vvInkuK3lm73ku6PooajlpITlt7Lov5Hl
+jYHlubTnu4Tnu4fkuK3lm73kvIHkuJrlj4LkuI7or6XlsZXkvJrvvIzkuLrkuK3lm73lpI3lkIjm
+nZDmlpnpm4blm6LjgIHkuK3mnZDnp5HmioDjgIHkuK3pkqLpm4blm6LjgIHkuK3lm73lu7rmnZDp
+m4blm6LjgIHkuK3lm73llYbpo57jgIHljJfkuqznjrvpkqLpmaLjgIHkuIrmtbfmnbDkuovmnbDm
+lrDmnZDmlpnpm4blm6LjgIHph43luoblm73pmYXlpI3lkIjmnZDmlpnjgIHkuK3ljZfmjqfogqHp
+m4blm6LjgIHnp6bnmoflspvogIDljY7njrvnkoPpkqLjgIHng5/lj7DmsKjnurbjgIHlpKnpqazp
+m4blm6LjgIHljY7kuJznkIblt6XlpKflrabjgIHlk4jlsJTmu6jlt6XkuJrlpKflrabjgIHlt6jn
+n7Ppm4blm6LjgIHkuK3lhrbpm4blm6LjgIHph5HlhYnpm4blm6LjgIHmsZ/oi4/mgZLnpZ7nuqTn
+u7TmnZDmlpnjgIHph43luoblpKflrabjgIHkuIrmtbfnjrvnkoPpkqLnoJTnqbbpmaLjgIHkuK3l
+jZflpKflrabjgIHlk4jlsJTmu6jnjrvnkoPpkqLnoJTnqbbpmaLnrYnkvJflpJrooYzkuJrlt6jl
+pLTlkoznn6XlkI3mnLrmnoTmj5DkvpvkuobkvJjotKjpq5jmlYjnmoTlooPlpJblsZXotLjmnI3l
+iqHjgIINCuOAgOOAgA0K44CA44CA4oCcSkVDIHdvcmxkIDIwMTgg56ys5LqU5Y2B5LiJ5LiW55WM
+5aSN5ZCI5p2Q5paZ5bGV6KeI5Y+K5Lya6K6u4oCd5bCG5LqO4oCcM+aciDA2LTA45pel4oCd5Zyo
+4oCc5rOV5Zu95be06buO5bGV6KeI5Lya6K6u5Lit5b+D4oCd5YaN5bqm5Li+6KGM77yM5oiR5Lus
+6K+a6YKA5YWo5Zu95ZCE5Zyw5aSN5ZCI5p2Q5paZ5Y+K5paw5p2Q5paZ55u45YWz5Y2V5L2N5LiO
+5Lia55WM5Lq65aOr5Yqg5YWl5ZKx5Lus55qE5Lit5Zu95oC75bGV5Zui5YmN5b6A5Y+C5bGV5Y+C
+6KeC44CC44CA44CADQrjgIDjgIANCuOAgOOAgOacieWFs+WPguWxleWPguinguKAnEpFQ+S4lueV
+jOWkjeWQiOadkOaWmeWxleKAneS6i+WunO+8jOivt+iBlOe7nOOAkOS4reWbveaAu+WxleWbouOA
+kee7hOWKnuaWueKAlOKAlCDlhajlm73nu5/kuIDlrqLmnI3ng63nur/vvJo0MDAwLTU4MC04NTDv
+vIjovaw1MjIw44CBODE0NOOAgTg4ODjvvInjgIEwMTDigJQ2OTIzLTY5NDTvvJsg6YKu566xL1FR
+77yaMTI4MDkzOTUjcXEuY29t77ybIOW+ruS/oe+8miBDYW5aaGFuWGlhb1hp77yI5Y+C5bGV5raI
+5oGv77yJ44CBWmhhblNoYW5nWmhpSmlh77yI5bGV5ZWG5LmL5a6277yJ77ybIOW+ruWNmu+8mmh0
+dHA6Ly93ZWliby5jb20vamVjc2hvd++8iOWxleS8mu+8ieOAgWh0dHA6Ly93ZWliby5jb20veWlu
+Z2RlaHVpemhhbu+8iOWFrOWPuO+8ieOAgg0K44CA44CADQrjgIDjgIDlj4LliqBKRUPlsZXkvJrm
+mK/kuIDkuKrlpI3lkIjmnZDmlpnlj4rmlrDmnZDmlpnkvIHkuJrotbDlkJHlm73pmYXljJbnmoTm
+oIflv5flkozpgJTlvoTvvIENCuOAgOOAgA0K44CA44CADQrjgIDjgIANCuOAgOOAgA0KX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX+OAgOOAgA0K77yI55m+5LiH576k5Y+R57O757uffOS4uuaCqOWP
+kemAgXzlpoLkuI3luIzmnJvlho3mlLbliLDmraTooYzkuJrotYTorq986K+35Zue5aSN4oCcVEQr
+SkVD4oCd6Iez6YKu566xMTA1NTgwMDgxMkBxcS5jb23vvIkNCg==
