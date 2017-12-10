@@ -1,46 +1,91 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: pkeys: Support setting access rights for signal handlers
-Date: Sun, 10 Dec 2017 07:42:21 +0100
-Message-ID: <5965d682-61b2-d7da-c4d7-c223aa396fab@redhat.com>
-References: <5fee976a-42d4-d469-7058-b78ad8897219@redhat.com>
- <c034f693-95d1-65b8-2031-b969c2771fed@intel.com>
+From: John Hubbard <jhubbard@nvidia.com>
+Subject: Re: [PATCH v2] mmap.2: MAP_FIXED updated documentation
+Date: Sat, 9 Dec 2017 23:44:29 -0800
+Message-ID: <8b9de658-81f4-f09b-cc7d-cef8ea0bd1ff@nvidia.com>
+References: <20171204021411.4786-1-jhubbard@nvidia.com>
+ <20171204105549.GA31332@rei>
+ <efb6eae4-7f30-42c3-0efe-0ab5fbf0fdb4@nvidia.com>
+ <20171205070510.aojohhvixijk3i27@dhcp22.suse.cz>
+ <2cff594a-b481-269d-dd91-ff2cc2f4100a@nvidia.com>
+ <20171206100118.GA13979@rei>
+ <deb952d9-82bc-e737-8060-8fe7e70f44a1@nvidia.com>
+ <20171207125805.GA1210@rei.lan> <20171207140221.GJ20234@dhcp22.suse.cz>
+ <20171209171958.GB19862@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <c034f693-95d1-65b8-2031-b969c2771fed@intel.com>
+In-Reply-To: <20171209171958.GB19862@localhost>
 Content-Language: en-US
 Sender: linux-arch-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>, linux-mm <linux-mm@kvack.org>, x86@kernel.org, linux-arch <linux-arch@vger.kernel.org>, linux-x86_64@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+To: Pavel Machek <pavel@ucw.cz>, Michal Hocko <mhocko@kernel.org>
+Cc: Cyril Hrubis <chrubis@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/10/2017 01:17 AM, Dave Hansen wrote:
-> On 12/09/2017 01:16 PM, Florian Weimer wrote:
->> The attached patch addresses a problem with the current x86 pkey
->> implementation, which makes default-readable pkeys unusable from signal
->> handlers because the default init_pkru value blocks access.
+On 12/09/2017 09:19 AM, Pavel Machek wrote:
+> On Thu 2017-12-07 15:02:21, Michal Hocko wrote:
+>> On Thu 07-12-17 13:58:05, Cyril Hrubis wrote:
+>>> Hi!
+>>>>>> (It does seem unfortunate that the man page cannot help the programmer
+>>>>>> actually write correct code here. He or she is forced to read the kernel
+>>>>>> implementation, in order to figure out the true alignment rules. I was
+>>>>>> hoping we could avoid that.)
+>>>>>
+>>>>> It would be nice if we had this information exported somehere so that we
+>>>>> do not have to rely on per-architecture ifdefs.
+>>>>>
+>>>>> What about adding MapAligment or something similar to the /proc/meminfo?
+>>>>>
+>>>>
+>>>> What's the use case you envision for that? I don't see how that would be
+>>>> better than using SHMLBA, which is available at compiler time. Because 
+>>>> unless someone expects to be able to run an app that was compiled for 
+>>>> Arch X, on Arch Y (surely that's not requirement here?), I don't see how
+>>>> the run-time check is any better.
+>>>
+>>> I guess that some kind of compile time constant in uapi headers will do
+>>> as well, I'm really open to any solution that would expose this constant
+>>> as some kind of official API.
+>>
+>> I am not sure this is really feasible. It is not only a simple alignment
+>> thing. Look at ppc for example (slice_get_unmapped_area). Other
+>> architectures might have even more complicated rules e.g. arm and its
+>> cache_is_vipt_aliasing. Also this applies only on MAP_SHARED || file
+>> backed mappings.
+>>
+>> I would really leave dogs sleeping... Trying to document all this in the
+>> man page has chances to confuse more people than it has chances to help
+>> those who already know all these nasty details.
 > 
-> Thanks for looking into this!
+> You don't have to provide all the details, but warning that there's arch-
+> specific magic would be nice...
+
+Hi Pavel,
+
+In version 4 of this patch (which oddly enough, I have trouble finding via
+google, it only seems to show up in patchwork.kernel.org [1]), I phrased it 
+like this:
+
+    Don't interpret addr as a hint: place the mapping at  exactly  that
+    address.   addr  must be suitably aligned: for most architectures a
+    multiple of page size is sufficient;  however,  some  architectures
+    may  impose additional restrictions. 
+
+...which is basically what Cyril was asking for, in his early feedback.
+Does that work for you?
+
+(Maybe I need to repost that patch. In any case the CC's need updating,
+at least.)
+
+[1] https://patchwork.kernel.org/patch/10094905/
+
+thanks,
+-- 
+John Hubbard
+NVIDIA
+
+> 								Pavel
 > 
-> What do you mean by "default-readable pkeys"?
+> (english) http://www.livejournal.com/~pavelmachek
+> (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
 > 
-> I think you mean that, for any data that needs to be accessed to enter a
-> signal handler, it must be set to pkey=0 with the current
-> implementation.  All other keys are inaccessible when entering a signal
-> handler because the "init" value disables access.
-
-Right, and for keys which are readable (but not writable) most of the 
-time, so that date is readable, this breaks things.
-
-> My only nit with this is whether it is the *right* interface.  The
-> signal vs. XSAVE state thing is pretty x86 specific and I doubt that
-> this will be the last feature that we encounter that needs special
-> signal behavior.
-
-The interface is not specific to XSAVE.  To generic code, only the two 
-signal mask manipulation functions are exposed.  And I expect that we're 
-going to need that for other (non-x86) implementations because they will 
-have the same issue because the signal handler behavior will be identical.
-
-Thanks,
-Florian
