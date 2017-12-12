@@ -1,38 +1,121 @@
-From: Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: RFC(v2): Audit Kernel Container IDs
-Date: Mon, 11 Dec 2017 14:37:05 -0500
-Message-ID: <1574245.bUo6J1duCc@x2>
-References: <20171012141359.saqdtnodwmbz33b2@madcap2.tricolour.ca> <f8ea78be-9bbf-2967-7b12-ac93bb85b0bc@schaufler-ca.com> <1513009857.6310.337.camel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+From: john.hubbard-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Subject: [PATCH v5] mmap.2: MAP_FIXED updated documentation
+Date: Mon, 11 Dec 2017 16:23:31 -0800
+Message-ID: <20171212002331.6838-1-jhubbard@nvidia.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1513009857.6310.337.camel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: Eric Paris <eparis-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>, =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic-WFhQfpSGs3bR7s880joybQ@public.gmane.org>, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Monday, December 11, 2017 11:30:57 AM EST Eric Paris wrote:
-> > Because a container doesn't have to use namespaces to be a container
-> > you still need a mechanism for a process to declare that it is in
-> > fact
-> > in a container, and to identify the container.
-> 
-> I like the idea but I'm still tossing it around in my head (and
-> thinking about Casey's statement too). Lets say we have a 'docker-like'
-> container with pid=100  netns=X,userns=Y,mountns=Z. If I'm on the host
-> in all init namespaces and I run
->   nsenter -t 100 -n ip link set eth0 promisc on
-> How should this be logged?
+From: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
 
-If it is a normal process, then everything would match the init name space and 
-you wouldn't have entered a container. If it were a container, any generated 
-event should have the container ID from registration attached to it.
+    -- Expand the documentation to discuss the hazards in
+       enough detail to allow avoiding them.
 
-> Did this command run in it's own 'container' unrelated to the 'docker-like'
-> container?
+    -- Mention the upcoming MAP_FIXED_SAFE flag.
 
-That should be determined by what's in the task struct.
+    -- Enhance the alignment requirement slightly.
 
--Steve
+CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+CC: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+CC: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+CC: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+CC: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+CC: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Signed-off-by: John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>
+---
+
+Changes since v4:
+
+    -- v2 ("mmap.2: MAP_FIXED is no longer discouraged") was applied already,
+       so v5 is a merge, including rewording of the paragraph transitions.
+
+    -- We seem to have consensus about what to say about alignment
+       now, and this includes that new wording.
+
+Changes since v3:
+
+    -- Removed the "how to use this safely" part, and
+       the SHMLBA part, both as a result of Michal Hocko's
+       review.
+
+    -- A few tiny wording fixes, at the not-quite-typo level.
+
+Changes since v2:
+
+    -- Fixed up the "how to use safely" example, in response
+       to Mike Rapoport's review.
+
+    -- Changed the alignment requirement from system page
+       size, to SHMLBA. This was inspired by (but not yet
+       recommended by) Cyril Hrubis' review.
+
+    -- Formatting: underlined /proc/<pid>/maps
+
+Changes since v1:
+
+    -- Covered topics recommended by Matthew Wilcox
+       and Jann Horn, in their recent review: the hazards
+       of overwriting pre-exising mappings, and some notes
+       about how to use MAP_FIXED safely.
+
+    -- Rewrote the commit description accordingly.
+
+ man2/mmap.2 | 32 ++++++++++++++++++++++++++++++--
+ 1 file changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index a5a8eb47a..400cfda2d 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -212,8 +212,9 @@ Don't interpret
+ .I addr
+ as a hint: place the mapping at exactly that address.
+ .I addr
+-must be a multiple of the page size.
+-If the memory region specified by
++must be suitably aligned: for most architectures a multiple of page
++size is sufficient; however, some architectures may impose additional
++restrictions. If the memory region specified by
+ .I addr
+ and
+ .I len
+@@ -226,6 +227,33 @@ Software that aspires to be portable should use this option with care, keeping
+ in mind that the exact layout of a process' memory map is allowed to change
+ significantly between kernel versions, C library versions, and operating system
+ releases.
++.IP
++Furthermore, this option is extremely hazardous (when used on its own), because
++it forcibly removes pre-existing mappings, making it easy for a multi-threaded
++process to corrupt its own address space.
++.IP
++For example, thread A looks through
++.I /proc/<pid>/maps
++and locates an available
++address range, while thread B simultaneously acquires part or all of that same
++address range. Thread A then calls mmap(MAP_FIXED), effectively overwriting
++the mapping that thread B created.
++.IP
++Thread B need not create a mapping directly; simply making a library call
++that, internally, uses
++.I dlopen(3)
++to load some other shared library, will
++suffice. The dlopen(3) call will map the library into the process's address
++space. Furthermore, almost any library call may be implemented using this
++technique.
++Examples include brk(2), malloc(3), pthread_create(3), and the PAM libraries
++(http://www.linux-pam.org).
++.IP
++Newer kernels
++(Linux 4.16 and later) have a
++.B MAP_FIXED_SAFE
++option that avoids the corruption problem; if available, MAP_FIXED_SAFE
++should be preferred over MAP_FIXED.
+ .TP
+ .B MAP_GROWSDOWN
+ This flag is used for stacks.
+-- 
+2.15.1
