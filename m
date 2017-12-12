@@ -1,117 +1,50 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v3 03/21] fpga: mgr: add status for fpga-manager
-Date: Tue, 12 Dec 2017 12:18:06 -0600
-Message-ID: <CANk1AXTGdskD9rT5wty1pFeBQ9jK5BhRZFCVbkY3iG9EeEXOvQ@mail.gmail.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-4-git-send-email-hao.wu@intel.com>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: Re: pkeys: Support setting access rights for signal handlers
+Date: Tue, 12 Dec 2017 15:13:24 -0800
+Message-ID: <20171212231324.GE5460@ram.oc3035372033.ibm.com>
+References: <5fee976a-42d4-d469-7058-b78ad8897219@redhat.com>
+ <c034f693-95d1-65b8-2031-b969c2771fed@intel.com>
+ <5965d682-61b2-d7da-c4d7-c223aa396fab@redhat.com>
+ <aa4d127f-0315-3ac9-3fdf-1f0a89cf60b8@intel.com>
+Reply-To: Ram Pai <linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1511764948-20972-4-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <aa4d127f-0315-3ac9-3fdf-1f0a89cf60b8@intel.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Florian Weimer <fweimer@redhat.com>, linux-mm <linux-mm@kvack.org>, x86@kernel.org, linux-arch <linux-arch@vger.kernel.org>, linux-x86_64@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu@intel.com> wrote:
-> This patch adds status to fpga-manager data structure, to allow
-> driver to store full/partial reconfiguration errors and other
-> status information, and adds one status callback to fpga_manager_ops
-> to allow fpga_manager to collect latest status when failures are
-> detected.
->
-> The following sysfs file is created:
-> * /sys/class/fpga_manager/<fpga>/status
->   Return status of fpga manager, including reconfiguration errors.
->
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-> ----
-> v3: add one line description for status
->     add status callback function to fpga_manager_ops
->     update fpga-mgr status if any failure or during initialization
->     s/INCOMPATIBLE_BS_ERR/INCOMPATIBLE_IMAGE_ERR/
-> ---
->  Documentation/ABI/testing/sysfs-class-fpga-manager | 10 ++++++++
->  drivers/fpga/fpga-mgr.c                            | 28 ++++++++++++++++++++++
->  include/linux/fpga/fpga-mgr.h                      | 17 +++++++++++++
->  3 files changed, 55 insertions(+)
->
-> diff --git a/Documentation/ABI/testing/sysfs-class-fpga-manager b/Documentation/ABI/testing/sysfs-class-fpga-manager
-> index 23056c5..01db14d 100644
-> --- a/Documentation/ABI/testing/sysfs-class-fpga-manager
-> +++ b/Documentation/ABI/testing/sysfs-class-fpga-manager
-> @@ -35,3 +35,13 @@ Description: Read fpga manager state as a string.
->                 * write complete        = Doing post programming steps
->                 * write complete error  = Error while doing post programming
->                 * operating             = FPGA is programmed and operating
-> +
-> +What:          /sys/class/fpga_manager/<fpga>/status
-> +Date:          November 2017
-> +KernelVersion: 4.15
-> +Contact:       Wu Hao <hao.wu@intel.com>
-> +Description:   Read fpga manager status as a string.
-> +               If FPGA programming operation fails, it could be due to crc
-> +               error or incompatible bitstream image. The intent of this
-> +               interface is to provide more detailed information for FPGA
-> +               programming errors to userspace.
+On Mon, Dec 11, 2017 at 08:13:12AM -0800, Dave Hansen wrote:
+> On 12/09/2017 10:42 PM, Florian Weimer wrote:
+> >> My only nit with this is whether it is the *right* interface.  The 
+> >> signal vs. XSAVE state thing is pretty x86 specific and I doubt
+> >> that this will be the last feature that we encounter that needs
+> >> special signal behavior.
+> > 
+> > The interface is not specific to XSAVE.  To generic code, only the
+> > two signal mask manipulation functions are exposed.  And I expect
+> > that we're going to need that for other (non-x86) implementations
+> > because they will have the same issue because the signal handler
+> > behavior will be identical.
+> 
+> Let's check with the other implementation...
+> 
+> Ram, this is a question about the signal handler behavior on POWER.  I
+> thought you ended up having different behavior in signal handlers than x86.
 
-Hi Hao,
+On POWER, the value of the pkey_read() i.e contents the AMR
+register(pkru equivalent), is always the same regardless of its
+context; signal handler or not.
 
-Please also add a list of status strings that can be given, such as
-"reconfig operation error"  I understand that this list may grow
-somewhat in the future.
+In other words, the permission of any allocated key will not
+reset in a signal handler context.
 
-Alan
+I was not aware that x86 would reset the key permissions in signal
+handler.  I think, the proposed behavior for PKEY_ALLOC_SETSIGNAL should
+actually be the default behavior.
 
-> diff --git a/drivers/fpga/fpga-mgr.c b/drivers/fpga/fpga-mgr.c
-> index 1fd5494..8b583ba 100644
-> --- a/drivers/fpga/fpga-mgr.c
-> +++ b/drivers/fpga/fpga-mgr.c
-> @@ -88,6 +88,7 @@ static int fpga_mgr_write_init_buf(struct fpga_manager *mgr,
->         if (ret) {
->                 dev_err(&mgr->dev, "Error preparing FPGA for writing\n");
->                 mgr->state = FPGA_MGR_STATE_WRITE_INIT_ERR;
-> +               fpga_mgr_update_status(mgr);
->                 return ret;
->         }
->
-> @@ -148,6 +149,7 @@ static int fpga_mgr_write_complete(struct fpga_manager *mgr,
->         if (ret) {
->                 dev_err(&mgr->dev, "Error after writing image data to FPGA\n");
->                 mgr->state = FPGA_MGR_STATE_WRITE_COMPLETE_ERR;
-> +               fpga_mgr_update_status(mgr);
->                 return ret;
->         }
->         mgr->state = FPGA_MGR_STATE_OPERATING;
-> @@ -225,6 +227,7 @@ static int fpga_mgr_buf_load_mapped(struct fpga_manager *mgr,
->         if (ret) {
->                 dev_err(&mgr->dev, "Error while writing image data to FPGA\n");
->                 mgr->state = FPGA_MGR_STATE_WRITE_ERR;
-> +               fpga_mgr_update_status(mgr);
->                 return ret;
->         }
->
-> @@ -397,12 +400,36 @@ static ssize_t state_show(struct device *dev,
->         return sprintf(buf, "%s\n", state_str[mgr->state]);
->  }
->
-> +static ssize_t status_show(struct device *dev,
-> +                          struct device_attribute *attr, char *buf)
-> +{
-> +       struct fpga_manager *mgr = to_fpga_manager(dev);
-> +       int len = 0;
-> +
-> +       if (mgr->status & FPGA_MGR_STATUS_OPERATION_ERR)
-> +               len += sprintf(buf + len, "reconfig operation error\n");
-> +       if (mgr->status & FPGA_MGR_STATUS_CRC_ERR)
-> +               len += sprintf(buf + len, "reconfig CRC error\n");
-> +       if (mgr->status & FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR)
-> +               len += sprintf(buf + len, "reconfig incompatible image\n");
-> +       if (mgr->status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
-> +               len += sprintf(buf + len, "reconfig IP protocol error\n");
-> +       if (mgr->status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
-> +               len += sprintf(buf + len, "reconfig fifo overflow error\n");
-> +       if (mgr->status & FPGA_MGR_STATUS_SECURE_LOAD_ERR)
-> +               len += sprintf(buf + len, "reconfig secure load error\n");
-> +
-> +       return len;
-> +}
+
+RP
