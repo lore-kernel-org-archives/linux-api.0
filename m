@@ -1,127 +1,142 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 03/21] fpga: mgr: add status for fpga-manager
-Date: Wed, 13 Dec 2017 12:48:08 +0800
-Message-ID: <20171213044808.GA26748@hao-dev>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
- <1511764948-20972-4-git-send-email-hao.wu@intel.com>
- <CANk1AXTGdskD9rT5wty1pFeBQ9jK5BhRZFCVbkY3iG9EeEXOvQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXTGdskD9rT5wty1pFeBQ9jK5BhRZFCVbkY3iG9EeEXOvQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: [PATCH v2 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Wed, 13 Dec 2017 10:25:48 +0100
+Message-ID: <20171213092550.2774-1-mhocko@kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+To: linux-api@vger.kernel.org
+Cc: Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Matthew Wilcox <willy@infradead.org>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 12, 2017 at 12:18:06PM -0600, Alan Tull wrote:
-> On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> > This patch adds status to fpga-manager data structure, to allow
-> > driver to store full/partial reconfiguration errors and other
-> > status information, and adds one status callback to fpga_manager_ops
-> > to allow fpga_manager to collect latest status when failures are
-> > detected.
-> >
-> > The following sysfs file is created:
-> > * /sys/class/fpga_manager/<fpga>/status
-> >   Return status of fpga manager, including reconfiguration errors.
-> >
-> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > ----
-> > v3: add one line description for status
-> >     add status callback function to fpga_manager_ops
-> >     update fpga-mgr status if any failure or during initialization
-> >     s/INCOMPATIBLE_BS_ERR/INCOMPATIBLE_IMAGE_ERR/
-> > ---
-> >  Documentation/ABI/testing/sysfs-class-fpga-manager | 10 ++++++++
-> >  drivers/fpga/fpga-mgr.c                            | 28 ++++++++++++++++++++++
-> >  include/linux/fpga/fpga-mgr.h                      | 17 +++++++++++++
-> >  3 files changed, 55 insertions(+)
-> >
-> > diff --git a/Documentation/ABI/testing/sysfs-class-fpga-manager b/Documentation/ABI/testing/sysfs-class-fpga-manager
-> > index 23056c5..01db14d 100644
-> > --- a/Documentation/ABI/testing/sysfs-class-fpga-manager
-> > +++ b/Documentation/ABI/testing/sysfs-class-fpga-manager
-> > @@ -35,3 +35,13 @@ Description: Read fpga manager state as a string.
-> >                 * write complete        = Doing post programming steps
-> >                 * write complete error  = Error while doing post programming
-> >                 * operating             = FPGA is programmed and operating
-> > +
-> > +What:          /sys/class/fpga_manager/<fpga>/status
-> > +Date:          November 2017
-> > +KernelVersion: 4.15
-> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +Description:   Read fpga manager status as a string.
-> > +               If FPGA programming operation fails, it could be due to crc
-> > +               error or incompatible bitstream image. The intent of this
-> > +               interface is to provide more detailed information for FPGA
-> > +               programming errors to userspace.
-> 
-> Hi Hao,
-> 
-> Please also add a list of status strings that can be given, such as
-> "reconfig operation error"  I understand that this list may grow
-> somewhat in the future.
 
-Sure, will add it in the next version.
+Hi,
+I am resending with some minor updates based on Michael's review and
+ask for inclusion. There haven't been any fundamental objections for
+the RFC [1] nor the previous version [2].  The biggest discussion
+revolved around the naming. There were many suggestions flowing
+around MAP_REQUIRED, MAP_EXACT, MAP_FIXED_NOCLOBBER, MAP_AT_ADDR,
+MAP_FIXED_NOREPLACE etc...
 
-Thanks
-Hao
+I am afraid we can bikeshed this to death and there will still be
+somebody finding yet another better name. Therefore I've decided to
+stick with my original MAP_FIXED_SAFE. Why? Well, because it keeps the
+MAP_FIXED prefix which should be recognized by developers and _SAFE
+suffix should also be clear that all dangerous side effects of the old
+MAP_FIXED are gone.
 
-> 
-> Alan
-> 
-> > diff --git a/drivers/fpga/fpga-mgr.c b/drivers/fpga/fpga-mgr.c
-> > index 1fd5494..8b583ba 100644
-> > --- a/drivers/fpga/fpga-mgr.c
-> > +++ b/drivers/fpga/fpga-mgr.c
-> > @@ -88,6 +88,7 @@ static int fpga_mgr_write_init_buf(struct fpga_manager *mgr,
-> >         if (ret) {
-> >                 dev_err(&mgr->dev, "Error preparing FPGA for writing\n");
-> >                 mgr->state = FPGA_MGR_STATE_WRITE_INIT_ERR;
-> > +               fpga_mgr_update_status(mgr);
-> >                 return ret;
-> >         }
-> >
-> > @@ -148,6 +149,7 @@ static int fpga_mgr_write_complete(struct fpga_manager *mgr,
-> >         if (ret) {
-> >                 dev_err(&mgr->dev, "Error after writing image data to FPGA\n");
-> >                 mgr->state = FPGA_MGR_STATE_WRITE_COMPLETE_ERR;
-> > +               fpga_mgr_update_status(mgr);
-> >                 return ret;
-> >         }
-> >         mgr->state = FPGA_MGR_STATE_OPERATING;
-> > @@ -225,6 +227,7 @@ static int fpga_mgr_buf_load_mapped(struct fpga_manager *mgr,
-> >         if (ret) {
-> >                 dev_err(&mgr->dev, "Error while writing image data to FPGA\n");
-> >                 mgr->state = FPGA_MGR_STATE_WRITE_ERR;
-> > +               fpga_mgr_update_status(mgr);
-> >                 return ret;
-> >         }
-> >
-> > @@ -397,12 +400,36 @@ static ssize_t state_show(struct device *dev,
-> >         return sprintf(buf, "%s\n", state_str[mgr->state]);
-> >  }
-> >
-> > +static ssize_t status_show(struct device *dev,
-> > +                          struct device_attribute *attr, char *buf)
-> > +{
-> > +       struct fpga_manager *mgr = to_fpga_manager(dev);
-> > +       int len = 0;
-> > +
-> > +       if (mgr->status & FPGA_MGR_STATUS_OPERATION_ERR)
-> > +               len += sprintf(buf + len, "reconfig operation error\n");
-> > +       if (mgr->status & FPGA_MGR_STATUS_CRC_ERR)
-> > +               len += sprintf(buf + len, "reconfig CRC error\n");
-> > +       if (mgr->status & FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR)
-> > +               len += sprintf(buf + len, "reconfig incompatible image\n");
-> > +       if (mgr->status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
-> > +               len += sprintf(buf + len, "reconfig IP protocol error\n");
-> > +       if (mgr->status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
-> > +               len += sprintf(buf + len, "reconfig fifo overflow error\n");
-> > +       if (mgr->status & FPGA_MGR_STATUS_SECURE_LOAD_ERR)
-> > +               len += sprintf(buf + len, "reconfig secure load error\n");
-> > +
-> > +       return len;
-> > +}
+If somebody _really_ hates this then feel free to nack and resubmit
+with a different name you can find a consensus for. I am sorry to be
+stubborn here but I would rather have this merged than go over few more
+iterations changing the name just because it seems like a good idea
+now. My experience tells me that chances are that the name will turn out
+to be "suboptimal" anyway over time.
+
+Some more background:
+This has started as a follow up discussion [3][4] resulting in the
+runtime failure caused by hardening patch [5] which removes MAP_FIXED
+from the elf loader because MAP_FIXED is inherently dangerous as it
+might silently clobber an existing underlying mapping (e.g. stack). The
+reason for the failure is that some architectures enforce an alignment
+for the given address hint without MAP_FIXED used (e.g. for shared or
+file backed mappings).
+
+One way around this would be excluding those archs which do alignment
+tricks from the hardening [6]. The patch is really trivial but it has
+been objected, rightfully so, that this screams for a more generic
+solution. We basically want a non-destructive MAP_FIXED.
+
+The first patch introduced MAP_FIXED_SAFE which enforces the given
+address but unlike MAP_FIXED it fails with EEXIST if the given range
+conflicts with an existing one. The flag is introduced as a completely
+new one rather than a MAP_FIXED extension because of the backward
+compatibility. We really want a never-clobber semantic even on older
+kernels which do not recognize the flag. Unfortunately mmap sucks wrt.
+flags evaluation because we do not EINVAL on unknown flags. On those
+kernels we would simply use the traditional hint based semantic so the
+caller can still get a different address (which sucks) but at least not
+silently corrupt an existing mapping. I do not see a good way around
+that. Except we won't export expose the new semantic to the userspace at
+all. 
+
+It seems there are users who would like to have something like that.
+Jemalloc has been mentioned by Michael Ellerman [7]
+
+Florian Weimer has mentioned the following:
+: glibc ld.so currently maps DSOs without hints.  This means that the kernel
+: will map right next to each other, and the offsets between them a completely
+: predictable.  We would like to change that and supply a random address in a
+: window of the address space.  If there is a conflict, we do not want the
+: kernel to pick a non-random address. Instead, we would try again with a
+: random address.
+
+John Hubbard has mentioned CUDA example
+: a) Searches /proc/<pid>/maps for a "suitable" region of available
+: VA space.  "Suitable" generally means it has to have a base address
+: within a certain limited range (a particular device model might
+: have odd limitations, for example), it has to be large enough, and
+: alignment has to be large enough (again, various devices may have
+: constraints that lead us to do this).
+: 
+: This is of course subject to races with other threads in the process.
+: 
+: Let's say it finds a region starting at va.
+: 
+: b) Next it does: 
+:     p = mmap(va, ...) 
+: 
+: *without* setting MAP_FIXED, of course (so va is just a hint), to
+: attempt to safely reserve that region. If p != va, then in most cases,
+: this is a failure (almost certainly due to another thread getting a
+: mapping from that region before we did), and so this layer now has to
+: call munmap(), before returning a "failure: retry" to upper layers.
+: 
+:     IMPROVEMENT: --> if instead, we could call this:
+: 
+:             p = mmap(va, ... MAP_FIXED_SAFE ...)
+: 
+:         , then we could skip the munmap() call upon failure. This
+:         is a small thing, but it is useful here. (Thanks to Piotr
+:         Jaroszynski and Mark Hairgrove for helping me get that detail
+:         exactly right, btw.)
+: 
+: c) After that, CUDA suballocates from p, via: 
+:  
+:      q = mmap(sub_region_start, ... MAP_FIXED ...)
+: 
+: Interestingly enough, "freeing" is also done via MAP_FIXED, and
+: setting PROT_NONE to the subregion. Anyway, I just included (c) for
+: general interest.
+
+Atomic address range probing in the multithreaded programs in general
+sounds like an interesting thing to me.
+
+The second patch simply replaces MAP_FIXED use in elf loader by
+MAP_FIXED_SAFE. I believe other places which rely on MAP_FIXED should
+follow. Actually real MAP_FIXED usages should be docummented properly
+and they should be more of an exception.
+
+Diffstat says
+ arch/alpha/include/uapi/asm/mman.h     |  1 +
+ arch/metag/kernel/process.c            |  6 +++++-
+ arch/mips/include/uapi/asm/mman.h      |  2 ++
+ arch/parisc/include/uapi/asm/mman.h    |  2 ++
+ arch/sparc/include/uapi/asm/mman.h     |  1 -
+ arch/xtensa/include/uapi/asm/mman.h    |  2 ++
+ fs/binfmt_elf.c                        | 12 ++++++++----
+ include/uapi/asm-generic/mman-common.h |  1 +
+ mm/mmap.c                              | 11 +++++++++++
+ 9 files changed, 32 insertions(+), 6 deletions(-)
+
+[1] http://lkml.kernel.org/r/20171116101900.13621-1-mhocko@kernel.org
+[2] http://lkml.kernel.org/r/20171129144219.22867-1-mhocko@kernel.org
+[3] http://lkml.kernel.org/r/20171107162217.382cd754@canb.auug.org.au
+[4] http://lkml.kernel.org/r/1510048229.12079.7.camel@abdul.in.ibm.com
+[5] http://lkml.kernel.org/r/20171023082608.6167-1-mhocko@kernel.org
+[6] http://lkml.kernel.org/r/20171113094203.aofz2e7kueitk55y@dhcp22.suse.cz
+[7] http://lkml.kernel.org/r/87efp1w7vy.fsf@concordia.ellerman.id.au
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
