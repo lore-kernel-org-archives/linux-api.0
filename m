@@ -1,58 +1,27 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 1/2] mm: introduce MAP_FIXED_SAFE
-Date: Wed, 13 Dec 2017 14:01:35 +0100
-Message-ID: <20171213130135.GG25185@dhcp22.suse.cz>
+From: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 2/2] mmap.2: MAP_FIXED updated documentation
+Date: Wed, 13 Dec 2017 14:03:16 +0100
+Message-ID: <20171213130316.GD11493@rei>
 References: <20171213092550.2774-1-mhocko@kernel.org>
- <20171213092550.2774-2-mhocko@kernel.org>
- <20171213125053.GB2384@bombadil.infradead.org>
+ <20171213093110.3550-1-mhocko@kernel.org>
+ <20171213093110.3550-2-mhocko@kernel.org>
+ <20171213125540.GA18897@amd>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171213125053.GB2384@bombadil.infradead.org>
-Sender: owner-linux-mm@kvack.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>
+In-Reply-To: <20171213125540.GA18897@amd>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 13-12-17 04:50:53, Matthew Wilcox wrote:
-> On Wed, Dec 13, 2017 at 10:25:49AM +0100, Michal Hocko wrote:
-> > +++ b/mm/mmap.c
-> > @@ -1342,6 +1342,10 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
-> >  		if (!(file && path_noexec(&file->f_path)))
-> >  			prot |= PROT_EXEC;
-> >  
-> > +	/* force arch specific MAP_FIXED handling in get_unmapped_area */
-> > +	if (flags & MAP_FIXED_SAFE)
-> > +		flags |= MAP_FIXED;
-> > +
-> >  	if (!(flags & MAP_FIXED))
-> >  		addr = round_hint_to_min(addr);
-> >  
-> 
-> We're up to 22 MAP_ flags now.  We'll run out soon.  Let's preserve half
-> of a flag by giving userspace the definition:
-> 
-> #define MAP_FIXED_SAFE	(MAP_FIXED | _MAP_NOT_HINT)
+Hi!
+> Pretty map everyone agreed MAP_FIXED_SAFE was a bad
+> name. MAP_FIXED_NOREPLACE (IIRC) was best replacement.
 
-I've already tried to explain why this cannot be a modifier for
-MAP_FIXED. Read about the backward compatibility note...
-Or do I misunderstand what you are saying here?
- 
-> then in here:
-> 
-> 	if ((flags & _MAP_NOT_HINT) && !(flags & MAP_FIXED))
-> 		return -EINVAL;
-> 
-> Now we can use _MAP_NOT_HINT all by itself in the future to mean
-> something else.
+For what it's worth I do agree here.
 
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Cyril Hrubis
+chrubis-AlSwsSmVLrQ@public.gmane.org
