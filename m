@@ -1,28 +1,33 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.16 19/21] rseq: selftests: Provide basic percpu ops test
-Date: Thu, 14 Dec 2017 11:14:01 -0500
-Message-ID: <20171214161403.30643-20-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.16 09/21] sched: Implement push_task_to_cpu
+Date: Thu, 14 Dec 2017 11:13:51 -0500
+Message-ID: <20171214161403.30643-10-mathieu.desnoyers@efficios.com>
 References: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kselftest@vger.kerne
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-"basic_percpu_ops_test" is a slightly more "realistic" variant,
-implementing a few simple per-cpu operations and testing their
-correctness.
+Implement push_task_to_cpu(), which moves the task received as argument
+to the destination cpu's runqueue. It only does so if the CPU is within
+the CPU allowed mask of the task, else it returns -EINVAL.
+
+It does not change the CPU allowed mask, and can therefore be used
+within applications which rely on owning the sched_setaffinity() state.
+
+It does not pin the task to the destination CPU, which means that the
+scheduler may choose to move the task away from that CPU before the
+task executes. Code invoking push_task_to_cpu() must be prepared to
+retry in that case.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Shuah Khan <shuahkh@osg.samsung.com>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andrew Hunter <ahh@google.com>
 CC: Andy Lutomirski <luto@amacapital.net>
 CC: Andi Kleen <andi@firstfloor.org>
 CC: Dave Watson <davejwatson@fb.com>
@@ -31,319 +36,87 @@ CC: Ingo Molnar <mingo@redhat.com>
 CC: "H. Peter Anvin" <hpa@zytor.com>
 CC: Ben Maurer <bmaurer@fb.com>
 CC: Steven Rostedt <rostedt@goodmis.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 CC: Josh Triplett <josh@joshtriplett.org>
 CC: Linus Torvalds <torvalds@linux-foundation.org>
 CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-kselftest@vger.kernel.org
 CC: linux-api@vger.kernel.org
 ---
- .../testing/selftests/rseq/basic_percpu_ops_test.c | 296 +++++++++++++++++++++
- 1 file changed, 296 insertions(+)
- create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
+ kernel/sched/core.c  | 37 +++++++++++++++++++++++++++++++++++++
+ kernel/sched/sched.h |  9 +++++++++
+ 2 files changed, 46 insertions(+)
 
-diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-new file mode 100644
-index 000000000000..e585bba0bf8d
---- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-@@ -0,0 +1,296 @@
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <pthread.h>
-+#include <sched.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <stddef.h>
-+
-+#include "percpu-op.h"
-+
-+#define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
-+
-+struct percpu_lock_entry {
-+	intptr_t v;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_lock {
-+	struct percpu_lock_entry c[CPU_SETSIZE];
-+};
-+
-+struct test_data_entry {
-+	intptr_t count;
-+} __attribute__((aligned(128)));
-+
-+struct spinlock_test_data {
-+	struct percpu_lock lock;
-+	struct test_data_entry c[CPU_SETSIZE];
-+	int reps;
-+};
-+
-+struct percpu_list_node {
-+	intptr_t data;
-+	struct percpu_list_node *next;
-+};
-+
-+struct percpu_list_entry {
-+	struct percpu_list_node *head;
-+} __attribute__((aligned(128)));
-+
-+struct percpu_list {
-+	struct percpu_list_entry c[CPU_SETSIZE];
-+};
-+
-+/* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
-+int rseq_percpu_lock(struct percpu_lock *lock)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index a7cc81d1fcb6..58a8f93949d8 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1061,6 +1061,43 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+ 		set_curr_task(rq, p);
+ }
+ 
++int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
 +{
-+	int cpu;
++	struct rq_flags rf;
++	struct rq *rq;
++	int ret = 0;
 +
-+	for (;;) {
-+		int ret;
++	rq = task_rq_lock(p, &rf);
++	update_rq_clock(rq);
 +
-+		cpu = rseq_cpu_start();
-+		ret = percpu_cmpeqv_storev(&lock->c[cpu].v,
-+					   0, 1, cpu);
-+		if (rseq_likely(!ret))
-+			break;
-+		if (rseq_unlikely(ret < 0)) {
-+			perror("cpu_opv");
-+			abort();
-+		}
-+		/* Retry if comparison fails. */
++	if (!cpumask_test_cpu(dest_cpu, &p->cpus_allowed)) {
++		ret = -EINVAL;
++		goto out;
 +	}
-+	/*
-+	 * Acquire semantic when taking lock after control dependency.
-+	 * Matches rseq_smp_store_release().
-+	 */
-+	rseq_smp_acquire__after_ctrl_dep();
-+	return cpu;
++
++	if (task_cpu(p) == dest_cpu)
++		goto out;
++
++	if (task_running(rq, p) || p->state == TASK_WAKING) {
++		struct migration_arg arg = { p, dest_cpu };
++		/* Need help from migration thread: drop lock and wait. */
++		task_rq_unlock(rq, p, &rf);
++		stop_one_cpu(cpu_of(rq), migration_cpu_stop, &arg);
++		tlb_migrate_finish(p->mm);
++		return 0;
++	} else if (task_on_rq_queued(p)) {
++		/*
++		 * OK, since we're going to drop the lock immediately
++		 * afterwards anyway.
++		 */
++		rq = move_queued_task(rq, &rf, p, dest_cpu);
++	}
++out:
++	task_rq_unlock(rq, p, &rf);
++
++	return ret;
 +}
 +
-+void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
+ /*
+  * Change a given task's CPU affinity. Migrate the thread to a
+  * proper CPU and schedule it away if the CPU it's executing on
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index 85e7a622ee88..85f409a18772 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -1224,6 +1224,15 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
+ 	rseq_migrate(p);
+ }
+ 
++#ifdef CONFIG_SMP
++int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu);
++#else
++static inline int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
 +{
-+	assert(lock->c[cpu].v == 1);
-+	/*
-+	 * Release lock, with release semantic. Matches
-+	 * rseq_smp_acquire__after_ctrl_dep().
-+	 */
-+	rseq_smp_store_release(&lock->c[cpu].v, 0);
-+}
-+
-+void *test_percpu_spinlock_thread(void *arg)
-+{
-+	struct spinlock_test_data *data = arg;
-+	int i, cpu;
-+
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+	for (i = 0; i < data->reps; i++) {
-+		cpu = rseq_percpu_lock(&data->lock);
-+		data->c[cpu].count++;
-+		rseq_percpu_unlock(&data->lock, cpu);
-+	}
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+
-+	return NULL;
-+}
-+
-+/*
-+ * A simple test which implements a sharded counter using a per-cpu
-+ * lock.  Obviously real applications might prefer to simply use a
-+ * per-cpu increment; however, this is reasonable for a test and the
-+ * lock can be extended to synchronize more complicated operations.
-+ */
-+void test_percpu_spinlock(void)
-+{
-+	const int num_threads = 200;
-+	int i;
-+	uint64_t sum;
-+	pthread_t test_threads[num_threads];
-+	struct spinlock_test_data data;
-+
-+	memset(&data, 0, sizeof(data));
-+	data.reps = 5000;
-+
-+	for (i = 0; i < num_threads; i++)
-+		pthread_create(&test_threads[i], NULL,
-+			       test_percpu_spinlock_thread, &data);
-+
-+	for (i = 0; i < num_threads; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	sum = 0;
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		sum += data.c[i].count;
-+
-+	assert(sum == (uint64_t)data.reps * num_threads);
-+}
-+
-+int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node,
-+		     int cpu)
-+{
-+	for (;;) {
-+		intptr_t *targetptr, newval, expect;
-+		int ret;
-+
-+		/* Load list->c[cpu].head with single-copy atomicity. */
-+		expect = (intptr_t)RSEQ_READ_ONCE(list->c[cpu].head);
-+		newval = (intptr_t)node;
-+		targetptr = (intptr_t *)&list->c[cpu].head;
-+		node->next = (struct percpu_list_node *)expect;
-+		ret = percpu_cmpeqv_storev(targetptr, expect, newval, cpu);
-+		if (rseq_likely(!ret))
-+			break;
-+		if (rseq_unlikely(ret < 0)) {
-+			perror("cpu_opv");
-+			abort();
-+		}
-+		/* Retry if comparison fails. */
-+	}
-+	return cpu;
-+}
-+
-+/*
-+ * Unlike a traditional lock-less linked list; the availability of a
-+ * rseq primitive allows us to implement pop without concerns over
-+ * ABA-type races.
-+ */
-+struct percpu_list_node *percpu_list_pop(struct percpu_list *list,
-+					 int cpu)
-+{
-+	struct percpu_list_node *head;
-+	intptr_t *targetptr, expectnot, *load;
-+	off_t offset;
-+	int ret;
-+
-+	targetptr = (intptr_t *)&list->c[cpu].head;
-+	expectnot = (intptr_t)NULL;
-+	offset = offsetof(struct percpu_list_node, next);
-+	load = (intptr_t *)&head;
-+	ret = percpu_cmpnev_storeoffp_load(targetptr, expectnot,
-+					   offset, load, cpu);
-+	if (rseq_unlikely(ret < 0)) {
-+		perror("cpu_opv");
-+		abort();
-+	}
-+	if (ret > 0)
-+		return NULL;
-+	return head;
-+}
-+
-+void *test_percpu_list_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_list *list = (struct percpu_list *)arg;
-+
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+
-+	for (i = 0; i < 100000; i++) {
-+		struct percpu_list_node *node;
-+
-+		node = percpu_list_pop(list, rseq_cpu_start());
-+		sched_yield();  /* encourage shuffling */
-+		if (node)
-+			percpu_list_push(list, node, rseq_cpu_start());
-+	}
-+
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+
-+	return NULL;
-+}
-+
-+/* Simultaneous modification to a per-cpu linked list from many threads.  */
-+void test_percpu_list(void)
-+{
-+	int i, j;
-+	uint64_t sum = 0, expected_sum = 0;
-+	struct percpu_list list;
-+	pthread_t test_threads[200];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&list, 0, sizeof(list));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+		for (j = 1; j <= 100; j++) {
-+			struct percpu_list_node *node;
-+
-+			expected_sum += j;
-+
-+			node = malloc(sizeof(*node));
-+			assert(node);
-+			node->data = j;
-+			node->next = list.c[i].head;
-+			list.c[i].head = node;
-+		}
-+	}
-+
-+	for (i = 0; i < 200; i++)
-+		pthread_create(&test_threads[i], NULL,
-+		       test_percpu_list_thread, &list);
-+
-+	for (i = 0; i < 200; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		struct percpu_list_node *node;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+
-+		while ((node = percpu_list_pop(&list, i))) {
-+			sum += node->data;
-+			free(node);
-+		}
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external
-+	 * actor is interfering with our allowed affinity while this
-+	 * test is running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		goto error;
-+	}
-+	printf("spinlock\n");
-+	test_percpu_spinlock();
-+	printf("percpu_list\n");
-+	test_percpu_list();
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		goto error;
-+	}
 +	return 0;
-+
-+error:
-+	return -1;
 +}
++#endif
 +
+ /*
+  * Tunables that become constants when CONFIG_SCHED_DEBUG is off:
+  */
 -- 
 2.11.0
