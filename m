@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.16 04/21] arm: Wire up restartable sequences system call
-Date: Thu, 14 Dec 2017 11:13:46 -0500
-Message-ID: <20171214161403.30643-5-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.16 06/21] x86: Wire up restartable sequence system call
+Date: Thu, 14 Dec 2017 11:13:48 -0500
+Message-ID: <20171214161403.30643-7-mathieu.desnoyers@efficios.com>
 References: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
@@ -10,18 +10,18 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Wire up the rseq system call on 32-bit ARM.
+Wire up the rseq system call on x86 32/64.
 
 This provides an ABI improving the speed of a user-space getcpu
-operation on ARM by skipping the getcpu system call on the fast path, as
-well as improving the speed of user-space operations on per-cpu data
-compared to using load-linked/store-conditional.
+operation on x86 by removing the need to perform a function call, "lsl"
+instruction, or system call on the fast path, as well as improving the
+speed of user-space operations on per-cpu data.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
 CC: Russell King <linux@arm.linux.org.uk>
 CC: Catalin Marinas <catalin.marinas@arm.com>
 CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
 CC: Paul Turner <pjt@google.com>
 CC: Andrew Hunter <ahh@google.com>
 CC: Peter Zijlstra <peterz@infradead.org>
@@ -30,6 +30,7 @@ CC: Andi Kleen <andi@firstfloor.org>
 CC: Dave Watson <davejwatson@fb.com>
 CC: Chris Lameter <cl@linux.com>
 CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
 CC: Ben Maurer <bmaurer@fb.com>
 CC: Steven Rostedt <rostedt@goodmis.org>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -39,17 +40,30 @@ CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- arch/arm/tools/syscall.tbl | 1 +
- 1 file changed, 1 insertion(+)
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ 2 files changed, 2 insertions(+)
 
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 0bb0e9c6376c..fbc74b5fa3ed 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -412,3 +412,4 @@
- 395	common	pkey_alloc		sys_pkey_alloc
- 396	common	pkey_free		sys_pkey_free
- 397	common	statx			sys_statx
-+398	common	rseq			sys_rseq
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 448ac2161112..ba43ee75e425 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -391,3 +391,4 @@
+ 382	i386	pkey_free		sys_pkey_free
+ 383	i386	statx			sys_statx
+ 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
++385	i386	rseq			sys_rseq
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 5aef183e2f85..3ad03495bbb9 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -339,6 +339,7 @@
+ 330	common	pkey_alloc		sys_pkey_alloc
+ 331	common	pkey_free		sys_pkey_free
+ 332	common	statx			sys_statx
++333	common	rseq			sys_rseq
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
 -- 
 2.11.0
