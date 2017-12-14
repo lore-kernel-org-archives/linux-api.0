@@ -1,52 +1,89 @@
-From: Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
-Subject: Re: [patch v14 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
- families JTAG master driver
-Date: Thu, 14 Dec 2017 19:14:47 +0100
-Message-ID: <CAOFm3uHohuaoBYWCxnwzDgGATrt8Zf1B-JaOtQ0sZgf+=sSovw@mail.gmail.com>
-References: <1513268971-13518-1-git-send-email-oleksandrs@mellanox.com> <1513268971-13518-3-git-send-email-oleksandrs@mellanox.com>
+From: Joshua Watt <jpewhacker-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC v4 0/9] NFS Force Unmounting
+Date: Thu, 14 Dec 2017 12:22:53 -0600
+Message-ID: <1513275773.3888.20.camel@gmail.com>
+References: <20171117174552.18722-1-JPEWhacker@gmail.com>
+         <1512398194.7031.56.camel@gmail.com>
+         <87indksq9q.fsf@notabene.neil.brown.name>
+         <1512565420.4048.21.camel@redhat.com>
+         <87bmjaq89r.fsf@notabene.neil.brown.name>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1513268971-13518-3-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <87bmjaq89r.fsf-wvvUuzkyo1HefUI2i7LXDhCRmIWqnp/j@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "moderated list:ARM/FREESCALE IMX / MXC ARM ARCHITECTURE" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "open list:OPEN FIRMWARE AND FLATTENED DEVICE TREE BINDINGS" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, OpenBMC Maillist <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+To: NeilBrown <neilb-IBi9RG/b67k@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Trond Myklebust <trond.myklebust-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org>, "J . Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>
+Cc: linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Oleksandr,
+On Fri, 2017-12-08 at 13:10 +1100, NeilBrown wrote:
+> On Wed, Dec 06 2017, Jeff Layton wrote:
+> 
+> > On Wed, 2017-12-06 at 10:34 +1100, NeilBrown wrote:
+> > > 
+> > > The new semantic for MNT_DETACH|MNT_FORCE is interesting.
+> > > As it was never possible before (from /bin/umount), it should be
+> > > safe to
+> > > add a new meaning.
+> > > The meaning is effectively "detach the filesystem from the
+> > > namespace and
+> > > detach the transport from the filesystem", which sounds like it
+> > > is
+> > > useful.
+> > > It is worth highlighting this, and maybe even cc:ing
+> > > linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org ... done that.
+> > > 
+> > 
+> > I'm not thrilled with the new flag combo, personally. Given that
+> > we're
+> > introducing new behavior here, I think it wouldn't hurt to add a
+> > new
+> > UMOUNT_* flag for this (UMOUNT_NUKE_FROM_ORBIT?).
+> 
+> Suppose we did... MNT_FORCE_PONIES. What would be the semantics of
+> this
+> flag?  Once we had it, would anyone ever want to use MNT_FORCE again?
+> 
+> MNT_FORCE is already fairly heavy handled.  It abort an arbitrary
+> collections of RPC requests being sent for the given filesystem, no
+> matter where else that filesystem might be mounted.
+> Is it ever safe to use this flag unless you have good reason to
+> believe
+> that the server is not available and there is no point pretending any
+> more?
+> And if that is the case, why not use the new MNT_FORCE_PONIES which
+> is
+> at least predictable and reliable.
+> 
+> We've talking a lot about the one NFS filesystem being mounted in
+> multiple containers.  MNT_FORCE is already a problem for such mounts
+> as
+> one contains can kill requests generated from another
+> container.  Maybe
+> MNT_FORCE needs to be restricted to "real" root.
+> Once we restrict it, do we need to keep it from being too harsh?
+> 
+> What would be really nice is a timeout for umount, and for sync.
+> The timeout only starts when the filesystem stops making progress for
+> writeback.  If it eventually does timeout, then the caller can fall
+> back
+> to MNT_DETACH if they are in a container, or MNT_FORCE if not.
+> (Maybe MNT_FORCE should map to MNT_DETACH in a container??? or maybe
+> not).
+> 
+> There is a lot here that still isn't clear to me, but one this does
+> seem
+> to be becoming clear:  MNT_FORCE as it stands is nearly useless and
+> it
+> would serve is well to find a semantic that it actually useful, and
+> impose that.
 
-On Thu, Dec 14, 2017 at 5:29 PM, Oleksandr Shamray
-<oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org> wrote:
-> Driver adds support of Aspeed 2500/2400 series SOC JTAG master controller.
->
-> Driver implements the following jtag ops:
-> - freq_get;
-> - freq_set;
-> - status_get;
-> - idle;
-> - xfer;
->
-> It has been tested on Mellanox system with BMC equipped with
-> Aspeed 2520 SoC for programming CPLD devices.
->
-> Signed-off-by: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> Signed-off-by: Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-> ---
-> v13->v14
-> Comments pointed by Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
-> - Change style of head block comment from /**/ to //
->
-> v12->v13
-> Comments pointed by Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
-> - Change jtag-aspeed.c licence type to
->   SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
->   and reorder line with license in description
+Trying to keep the discussion going... does anyone else have thoughts
+on this?
 
-Thanks for the SPDX tags! for this part you have my ack:
-
-Acked-by: Philippe Ombredanne <pombredanne-kIH2VFuay/A@public.gmane.org?
-
---
-Cordially
-Philippe Ombredanne
+Thanks,
+Joshua Watt
+> 
+> Thanks,
+> NeilBrown
