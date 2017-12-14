@@ -1,158 +1,123 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [RFC PATCH for 4.16 00/21] Restartable sequences and CPU op vector
-Date: Thu, 14 Dec 2017 11:13:42 -0500
-Message-ID: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.16 01/21] uapi headers: Provide types_32_64.h
+Date: Thu, 14 Dec 2017 11:13:43 -0500
+Message-ID: <20171214161403.30643-2-mathieu.desnoyers@efficios.com>
+References: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171214161403.30643-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Provide helper macros for fields which represent pointers in
+kernel-userspace ABI. This facilitates handling of 32-bit
+user-space by 64-bit kernels by defining those fields as
+32-bit 0-padding and 32-bit integer on 32-bit architectures,
+which allows the kernel to treat those as 64-bit integers.
+The order of padding and 32-bit integer depends on the
+endianness.
 
-Following changes based on the last round of review, I'm respinning this
-series for another RFC round. It is based on the v4.15-rc3 tag. I am
-now targeting the 4.16 merge window.
-
-This series contains:
-
-- Restartable sequences system call (x86 32/64, powerpc 32/64, arm 32),
-- CPU operation vector system call (x86 32/64, powerpc 32/64, arm 32).
-
-I have moved the membarrier patches to a different series.
-
-The main changes introduced in this updated version are:
-
-- Introducing a user-space "percpu-op.h" API, which wraps fast and slow
-  paths into a single inline function,
-- Changes to the cpu_opv page pinning, making it robust with respect to
-  concurrent PTE changes,
-- Fixed a rseq bug where the rseq_cs pointer was cleared too soon,
-  causing hard-to-reproduce races triggered by NUMA page protection.
-- Extended rseq selftests to add a "compare twice" approach validating
-  invaritants, which catches races more quickly and closer to the
-  race.
-
-This updated series documents a major upside of the cpu_opv system call:
-it allows performing operations on remote per-cpu data (e.g. migration
-of memory between per-cpu memory pools, task migration across per-cpu
-work queues, or summing up and clearning per-cpu statistics counters)
-by simply passing the CPU number on which the operation must be
-performed as argument to the system call.
-
-Doing this without cpu_opv would require use of sched_setaffinity
-alongside with restartable sequences, which is not safe against CPU
-hot-unplug.
-
-Feedback is welcome!
-
-Thanks,
-
-Mathieu
-
-Boqun Feng (2):
-  powerpc: Add support for restartable sequences
-  powerpc: Wire up restartable sequences system call
-
-Mathieu Desnoyers (19):
-  uapi headers: Provide types_32_64.h
-  rseq: Introduce restartable sequences system call (v12)
-  arm: Add restartable sequences support
-  arm: Wire up restartable sequences system call
-  x86: Add support for restartable sequences
-  x86: Wire up restartable sequence system call
-  sched: Implement push_task_to_cpu
-  cpu_opv: Provide cpu_opv system call (v5)
-  x86: Wire up cpu_opv system call
-  powerpc: Wire up cpu_opv system call
-  arm: Wire up cpu_opv system call
-  selftests: lib.mk: Introduce OVERRIDE_TARGETS
-  cpu_opv: selftests: Implement selftests (v6)
-  rseq: selftests: Provide rseq library (v5)
-  rseq: selftests: Provide percpu_op API
-  rseq: selftests: Provide basic test
-  rseq: selftests: Provide basic percpu ops test
-  rseq: selftests: Provide parametrized tests
-  rseq: selftests: Provide Makefile, scripts, gitignore
-
- MAINTAINERS                                        |   20 +
- arch/Kconfig                                       |    7 +
- arch/arm/Kconfig                                   |    1 +
- arch/arm/kernel/signal.c                           |    7 +
- arch/arm/tools/syscall.tbl                         |    2 +
- arch/powerpc/Kconfig                               |    1 +
- arch/powerpc/include/asm/systbl.h                  |    2 +
- arch/powerpc/include/asm/unistd.h                  |    2 +-
- arch/powerpc/include/uapi/asm/unistd.h             |    2 +
- arch/powerpc/kernel/signal.c                       |    3 +
- arch/x86/Kconfig                                   |    1 +
- arch/x86/entry/common.c                            |    1 +
- arch/x86/entry/syscalls/syscall_32.tbl             |    2 +
- arch/x86/entry/syscalls/syscall_64.tbl             |    2 +
- arch/x86/kernel/signal.c                           |    6 +
- fs/exec.c                                          |    1 +
- include/linux/sched.h                              |  109 ++
- include/linux/syscalls.h                           |    6 +
- include/trace/events/rseq.h                        |   56 +
- include/uapi/linux/cpu_opv.h                       |  114 ++
- include/uapi/linux/rseq.h                          |  150 +++
- include/uapi/linux/types_32_64.h                   |   67 ++
- init/Kconfig                                       |   30 +
- kernel/Makefile                                    |    2 +
- kernel/cpu_opv.c                                   | 1078 +++++++++++++++++
- kernel/fork.c                                      |    2 +
- kernel/rseq.c                                      |  358 ++++++
- kernel/sched/core.c                                |   38 +
- kernel/sched/sched.h                               |   10 +
- kernel/sys_ni.c                                    |    4 +
- tools/testing/selftests/Makefile                   |    2 +
- tools/testing/selftests/cpu-opv/.gitignore         |    1 +
- tools/testing/selftests/cpu-opv/Makefile           |   17 +
- .../testing/selftests/cpu-opv/basic_cpu_opv_test.c | 1258 ++++++++++++++++++++
- tools/testing/selftests/cpu-opv/cpu-op.c           |  352 ++++++
- tools/testing/selftests/cpu-opv/cpu-op.h           |   59 +
- tools/testing/selftests/lib.mk                     |    4 +
- tools/testing/selftests/rseq/.gitignore            |    7 +
- tools/testing/selftests/rseq/Makefile              |   37 +
- .../testing/selftests/rseq/basic_percpu_ops_test.c |  296 +++++
- tools/testing/selftests/rseq/basic_test.c          |   55 +
- tools/testing/selftests/rseq/param_test.c          | 1163 ++++++++++++++++++
- tools/testing/selftests/rseq/percpu-op.h           |  163 +++
- tools/testing/selftests/rseq/rseq-arm.h            |  732 ++++++++++++
- tools/testing/selftests/rseq/rseq-ppc.h            |  688 +++++++++++
- tools/testing/selftests/rseq/rseq-skip.h           |   82 ++
- tools/testing/selftests/rseq/rseq-x86.h            | 1149 ++++++++++++++++++
- tools/testing/selftests/rseq/rseq.c                |  116 ++
- tools/testing/selftests/rseq/rseq.h                |  164 +++
- tools/testing/selftests/rseq/run_param_test.sh     |  130 ++
- 50 files changed, 8558 insertions(+), 1 deletion(-)
- create mode 100644 include/trace/events/rseq.h
- create mode 100644 include/uapi/linux/cpu_opv.h
- create mode 100644 include/uapi/linux/rseq.h
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andrew Hunter <ahh@google.com>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ include/uapi/linux/types_32_64.h | 67 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 67 insertions(+)
  create mode 100644 include/uapi/linux/types_32_64.h
- create mode 100644 kernel/cpu_opv.c
- create mode 100644 kernel/rseq.c
- create mode 100644 tools/testing/selftests/cpu-opv/.gitignore
- create mode 100644 tools/testing/selftests/cpu-opv/Makefile
- create mode 100644 tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c
- create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.c
- create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.h
- create mode 100644 tools/testing/selftests/rseq/.gitignore
- create mode 100644 tools/testing/selftests/rseq/Makefile
- create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
- create mode 100644 tools/testing/selftests/rseq/basic_test.c
- create mode 100644 tools/testing/selftests/rseq/param_test.c
- create mode 100644 tools/testing/selftests/rseq/percpu-op.h
- create mode 100644 tools/testing/selftests/rseq/rseq-arm.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc.h
- create mode 100644 tools/testing/selftests/rseq/rseq-skip.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86.h
- create mode 100644 tools/testing/selftests/rseq/rseq.c
- create mode 100644 tools/testing/selftests/rseq/rseq.h
- create mode 100755 tools/testing/selftests/rseq/run_param_test.sh
 
+diff --git a/include/uapi/linux/types_32_64.h b/include/uapi/linux/types_32_64.h
+new file mode 100644
+index 000000000000..18dc8808d026
+--- /dev/null
++++ b/include/uapi/linux/types_32_64.h
+@@ -0,0 +1,67 @@
++#ifndef _UAPI_LINUX_TYPES_32_64_H
++#define _UAPI_LINUX_TYPES_32_64_H
++
++/*
++ * linux/types_32_64.h
++ *
++ * Integer type declaration for pointers across 32-bit and 64-bit systems.
++ *
++ * Copyright (c) 2015-2017 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
++ * SOFTWARE.
++ */
++
++#ifdef __KERNEL__
++# include <linux/types.h>
++#else
++# include <stdint.h>
++#endif
++
++#include <asm/byteorder.h>
++
++#ifdef __BYTE_ORDER
++# if (__BYTE_ORDER == __BIG_ENDIAN)
++#  define LINUX_BYTE_ORDER_BIG_ENDIAN
++# else
++#  define LINUX_BYTE_ORDER_LITTLE_ENDIAN
++# endif
++#else
++# ifdef __BIG_ENDIAN
++#  define LINUX_BYTE_ORDER_BIG_ENDIAN
++# else
++#  define LINUX_BYTE_ORDER_LITTLE_ENDIAN
++# endif
++#endif
++
++#ifdef __LP64__
++# define LINUX_FIELD_u32_u64(field)			uint64_t field
++# define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	field = (intptr_t)v
++#else
++# ifdef LINUX_BYTE_ORDER_BIG_ENDIAN
++#  define LINUX_FIELD_u32_u64(field)	uint32_t field ## _padding, field
++#  define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	\
++	field ## _padding = 0, field = (intptr_t)v
++# else
++#  define LINUX_FIELD_u32_u64(field)	uint32_t field, field ## _padding
++#  define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	\
++	field = (intptr_t)v, field ## _padding = 0
++# endif
++#endif
++
++#endif /* _UAPI_LINUX_TYPES_32_64_H */
 -- 
 2.11.0
