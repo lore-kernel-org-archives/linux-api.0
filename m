@@ -1,68 +1,52 @@
-From: Philippe Ombredanne <pombredanne@nexb.com>
-Subject: Re: [patch v14 1/4] drivers: jtag: Add JTAG core driver
-Date: Thu, 14 Dec 2017 19:13:06 +0100
-Message-ID: <CAOFm3uHd7VJWRiYPSuTbEmeh1YohUC_9Gr2AiP8qdpUPcY83nQ@mail.gmail.com>
-References: <1513268971-13518-1-git-send-email-oleksandrs@mellanox.com> <1513268971-13518-2-git-send-email-oleksandrs@mellanox.com>
+From: Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
+Subject: Re: [patch v14 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
+ families JTAG master driver
+Date: Thu, 14 Dec 2017 19:14:47 +0100
+Message-ID: <CAOFm3uHohuaoBYWCxnwzDgGATrt8Zf1B-JaOtQ0sZgf+=sSovw@mail.gmail.com>
+References: <1513268971-13518-1-git-send-email-oleksandrs@mellanox.com> <1513268971-13518-3-git-send-email-oleksandrs@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1513268971-13518-2-git-send-email-oleksandrs@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Shamray <oleksandrs@mellanox.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, LKML <linux-kernel@vger.kernel.org>, "moderated list:ARM/FREESCALE IMX / MXC ARM ARCHITECTURE" <linux-arm-kernel@lists.infradead.org>, "open list:OPEN FIRMWARE AND FLATTENED DEVICE TREE BINDINGS" <devicetree@vger.kernel.org>, OpenBMC Maillist <openbmc@lists.ozlabs.org>, joel@jms.id.au, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri@resnulli.us>, Tobias Klauser <tklauser@distanz.ch>, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, Rob Herring <robh+dt@kernel.org>, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@kernel.org>, Jiri Pirko <jiri@mellanox.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1513268971-13518-3-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "moderated list:ARM/FREESCALE IMX / MXC ARM ARCHITECTURE" <linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>, "open list:OPEN FIRMWARE AND FLATTENED DEVICE TREE BINDINGS" <devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, OpenBMC Maillist <openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org>, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org>, Tobias Klauser <tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org>, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, Rob Herring <robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "David S. Miller" <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mauro Carvalho Chehab <mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 Oleksandr,
 
 On Thu, Dec 14, 2017 at 5:29 PM, Oleksandr Shamray
-<oleksandrs@mellanox.com> wrote:
-> Initial patch for JTAG driver
-> JTAG class driver provide infrastructure to support hardware/software
-> JTAG platform drivers. It provide user layer API interface for flashing
-> and debugging external devices which equipped with JTAG interface
-> using standard transactions.
+<oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org> wrote:
+> Driver adds support of Aspeed 2500/2400 series SOC JTAG master controller.
 >
-> Driver exposes set of IOCTL to user space for:
-> - XFER:
-> - SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
-> - SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
-> - RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
->   number of clocks).
-> - SIOCFREQ/GIOCFREQ for setting and reading JTAG frequency.
+> Driver implements the following jtag ops:
+> - freq_get;
+> - freq_set;
+> - status_get;
+> - idle;
+> - xfer;
 >
-> Driver core provides set of internal APIs for allocation and
-> registration:
-> - jtag_register;
-> - jtag_unregister;
-> - jtag_alloc;
-> - jtag_free;
+> It has been tested on Mellanox system with BMC equipped with
+> Aspeed 2520 SoC for programming CPLD devices.
 >
-> Platform driver on registration with jtag-core creates the next
-> entry in dev folder:
-> /dev/jtagX
->
-> Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
-> Signed-off-by: Jiri Pirko <jiri@mellanox.com>
+> Signed-off-by: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Signed-off-by: Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+> Acked-by: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
 > ---
 > v13->v14
-> Comments pointed by Philippe Ombredanne <pombredanne@nexb.com>
+> Comments pointed by Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
 > - Change style of head block comment from /**/ to //
 >
 > v12->v13
-> Comments pointed by Philippe Ombredanne <pombredanne@nexb.com>
-> - Change jtag.c licence type to
->   SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
->   and reorder line with license in description
-> v11->v12
-> Comments pointed by Greg KH <gregkh@linuxfoundation.org>
-> - Change jtag.h licence type to
+> Comments pointed by Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
+> - Change jtag-aspeed.c licence type to
 >   SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note
 >   and reorder line with license in description
 
-Thanks for the SPDX bits: for this part you have my ack:
+Thanks for the SPDX tags! for this part you have my ack:
 
-Acked-by: Philippe Ombredanne <pombredanne@nexB.com?
+Acked-by: Philippe Ombredanne <pombredanne-kIH2VFuay/A@public.gmane.org?
 
--- 
+--
 Cordially
 Philippe Ombredanne
