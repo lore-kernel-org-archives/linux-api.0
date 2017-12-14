@@ -1,165 +1,133 @@
-From: David Goldblatt <davidtgoldblatt@gmail.com>
-Subject: Re: [PATCH v2 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Wed, 13 Dec 2017 17:42:14 -0800
-Message-ID: <CAHD6eXc=C4tw3s1a9Z9uy1V2qHsvukntJqDR0Wp9ziPxK8Yiiw@mail.gmail.com>
-References: <20171213092550.2774-1-mhocko@kernel.org> <20171213163210.6a16ccf8753b74a6982ef5b6@linux-foundation.org>
- <CAHD6eXccNCJDMPEhrYkYUO-+GH3GLseoYSVE375OcKMNYJKm-A@mail.gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH 2/2] mmap.2: MAP_FIXED updated documentation
+Date: Thu, 14 Dec 2017 03:52:59 +0100
+Message-ID: <CAG48ez0JZ3PVW3vgSXDmDijS+a_5bSX9qNuyggnsB6JTSkKngA@mail.gmail.com>
+References: <20171213092550.2774-1-mhocko@kernel.org> <20171213093110.3550-1-mhocko@kernel.org>
+ <20171213093110.3550-2-mhocko@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <CAHD6eXccNCJDMPEhrYkYUO-+GH3GLseoYSVE375OcKMNYJKm-A@mail.gmail.com>
+In-Reply-To: <20171213093110.3550-2-mhocko@kernel.org>
 Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Matthew Wilcox <willy@infradead.org>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@suse.com>, trasz@freebsd.org, Jason Evans <jasone@canonware.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Matthew Wilcox <willy@infradead.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Cyril Hrubis <chrubis@suse.cz>, Pavel Machek <pavel@ucw.cz>, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-(+cc the jemalloc jasone; -cc,+bcc the Google jasone).
-
-The only time we would want MAP_FIXED (or rather, a non-broken
-variant) is in the middle of trying to expand an allocation in place;
-"atomic address range probing in the multithreaded programs" describes
-our use case pretty well. That's in a pathway that usually fails; it's
-pretty far down on our kernel mmap enhancements wish-list.
-
-(Sorry if you get this twice, an html reply bounced).
-
-
-On Wed, Dec 13, 2017 at 5:35 PM, David Goldblatt
-<davidtgoldblatt@gmail.com> wrote:
-> (+cc the jemalloc jasone; -cc,+bcc the Google jasone).
+On Wed, Dec 13, 2017 at 10:31 AM, Michal Hocko <mhocko@kernel.org> wrote:
+> From: John Hubbard <jhubbard@nvidia.com>
 >
-> The only time we would want MAP_FIXED (or rather, a non-broken variant) is
-> in the middle of trying to expand an allocation in place; "atomic address
-> range probing in the multithreaded programs" describes our use case pretty
-> well. That's in a pathway that usually fails; it's pretty far down on our
-> kernel mmap enhancements wish-list.
+>     -- Expand the documentation to discuss the hazards in
+>        enough detail to allow avoiding them.
 >
-> On Wed, Dec 13, 2017 at 4:32 PM, Andrew Morton <akpm@linux-foundation.org>
-> wrote:
->>
->> On Wed, 13 Dec 2017 10:25:48 +0100 Michal Hocko <mhocko@kernel.org> wrote:
->>
->> >
->> > Hi,
->> > I am resending with some minor updates based on Michael's review and
->> > ask for inclusion. There haven't been any fundamental objections for
->> > the RFC [1] nor the previous version [2].  The biggest discussion
->> > revolved around the naming. There were many suggestions flowing
->> > around MAP_REQUIRED, MAP_EXACT, MAP_FIXED_NOCLOBBER, MAP_AT_ADDR,
->> > MAP_FIXED_NOREPLACE etc...
->>
->> I like MAP_FIXED_CAREFUL :)
->>
->> > I am afraid we can bikeshed this to death and there will still be
->> > somebody finding yet another better name. Therefore I've decided to
->> > stick with my original MAP_FIXED_SAFE. Why? Well, because it keeps the
->> > MAP_FIXED prefix which should be recognized by developers and _SAFE
->> > suffix should also be clear that all dangerous side effects of the old
->> > MAP_FIXED are gone.
->> >
->> > If somebody _really_ hates this then feel free to nack and resubmit
->> > with a different name you can find a consensus for. I am sorry to be
->> > stubborn here but I would rather have this merged than go over few more
->> > iterations changing the name just because it seems like a good idea
->> > now. My experience tells me that chances are that the name will turn out
->> > to be "suboptimal" anyway over time.
->> >
->> > Some more background:
->> > This has started as a follow up discussion [3][4] resulting in the
->> > runtime failure caused by hardening patch [5] which removes MAP_FIXED
->> > from the elf loader because MAP_FIXED is inherently dangerous as it
->> > might silently clobber an existing underlying mapping (e.g. stack). The
->> > reason for the failure is that some architectures enforce an alignment
->> > for the given address hint without MAP_FIXED used (e.g. for shared or
->> > file backed mappings).
->> >
->> > One way around this would be excluding those archs which do alignment
->> > tricks from the hardening [6]. The patch is really trivial but it has
->> > been objected, rightfully so, that this screams for a more generic
->> > solution. We basically want a non-destructive MAP_FIXED.
->> >
->> > The first patch introduced MAP_FIXED_SAFE which enforces the given
->> > address but unlike MAP_FIXED it fails with EEXIST if the given range
->> > conflicts with an existing one. The flag is introduced as a completely
->> > new one rather than a MAP_FIXED extension because of the backward
->> > compatibility. We really want a never-clobber semantic even on older
->> > kernels which do not recognize the flag. Unfortunately mmap sucks wrt.
->> > flags evaluation because we do not EINVAL on unknown flags. On those
->> > kernels we would simply use the traditional hint based semantic so the
->> > caller can still get a different address (which sucks) but at least not
->> > silently corrupt an existing mapping. I do not see a good way around
->> > that. Except we won't export expose the new semantic to the userspace at
->> > all.
->> >
->> > It seems there are users who would like to have something like that.
->> > Jemalloc has been mentioned by Michael Ellerman [7]
->>
->> http://lkml.kernel.org/r/87efp1w7vy.fsf@concordia.ellerman.id.au.
->>
->> It would be useful to get feedback from jemalloc developers (please).
->> I'll add some cc's.
->>
->>
->> > Florian Weimer has mentioned the following:
->> > : glibc ld.so currently maps DSOs without hints.  This means that the
->> > kernel
->> > : will map right next to each other, and the offsets between them a
->> > completely
->> > : predictable.  We would like to change that and supply a random address
->> > in a
->> > : window of the address space.  If there is a conflict, we do not want
->> > the
->> > : kernel to pick a non-random address. Instead, we would try again with
->> > a
->> > : random address.
->> >
->> > John Hubbard has mentioned CUDA example
->> > : a) Searches /proc/<pid>/maps for a "suitable" region of available
->> > : VA space.  "Suitable" generally means it has to have a base address
->> > : within a certain limited range (a particular device model might
->> > : have odd limitations, for example), it has to be large enough, and
->> > : alignment has to be large enough (again, various devices may have
->> > : constraints that lead us to do this).
->> > :
->> > : This is of course subject to races with other threads in the process.
->> > :
->> > : Let's say it finds a region starting at va.
->> > :
->> > : b) Next it does:
->> > :     p = mmap(va, ...)
->> > :
->> > : *without* setting MAP_FIXED, of course (so va is just a hint), to
->> > : attempt to safely reserve that region. If p != va, then in most cases,
->> > : this is a failure (almost certainly due to another thread getting a
->> > : mapping from that region before we did), and so this layer now has to
->> > : call munmap(), before returning a "failure: retry" to upper layers.
->> > :
->> > :     IMPROVEMENT: --> if instead, we could call this:
->> > :
->> > :             p = mmap(va, ... MAP_FIXED_SAFE ...)
->> > :
->> > :         , then we could skip the munmap() call upon failure. This
->> > :         is a small thing, but it is useful here. (Thanks to Piotr
->> > :         Jaroszynski and Mark Hairgrove for helping me get that detail
->> > :         exactly right, btw.)
->> > :
->> > : c) After that, CUDA suballocates from p, via:
->> > :
->> > :      q = mmap(sub_region_start, ... MAP_FIXED ...)
->> > :
->> > : Interestingly enough, "freeing" is also done via MAP_FIXED, and
->> > : setting PROT_NONE to the subregion. Anyway, I just included (c) for
->> > : general interest.
->> >
->> > Atomic address range probing in the multithreaded programs in general
->> > sounds like an interesting thing to me.
->> >
->> > The second patch simply replaces MAP_FIXED use in elf loader by
->> > MAP_FIXED_SAFE. I believe other places which rely on MAP_FIXED should
->> > follow. Actually real MAP_FIXED usages should be docummented properly
->> > and they should be more of an exception.
->>
+>     -- Mention the upcoming MAP_FIXED_SAFE flag.
 >
+>     -- Enhance the alignment requirement slightly.
+>
+> CC: Michael Ellerman <mpe@ellerman.id.au>
+> CC: Jann Horn <jannh@google.com>
+> CC: Matthew Wilcox <willy@infradead.org>
+> CC: Michal Hocko <mhocko@kernel.org>
+> CC: Mike Rapoport <rppt@linux.vnet.ibm.com>
+> CC: Cyril Hrubis <chrubis@suse.cz>
+> CC: Pavel Machek <pavel@ucw.cz>
+> Acked-by: Michal Hocko <mhocko@suse.com>
+> Signed-off-by: John Hubbard <jhubbard@nvidia.com>
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
+>  man2/mmap.2 | 32 ++++++++++++++++++++++++++++++--
+>  1 file changed, 30 insertions(+), 2 deletions(-)
+>
+> diff --git a/man2/mmap.2 b/man2/mmap.2
+> index 02d391697ce6..cb8789daec2d 100644
+> --- a/man2/mmap.2
+> +++ b/man2/mmap.2
+[...]
+> @@ -226,6 +227,33 @@ Software that aspires to be portable should use this option with care, keeping
+>  in mind that the exact layout of a process' memory map is allowed to change
+>  significantly between kernel versions, C library versions, and operating system
+>  releases.
+> +.IP
+> +Furthermore, this option is extremely hazardous (when used on its own), because
+> +it forcibly removes pre-existing mappings, making it easy for a multi-threaded
+> +process to corrupt its own address space.
+
+I think this is worded unfortunately. It is dangerous if used
+incorrectly, and it's a good tool when used correctly.
+
+[...]
+> +Thread B need not create a mapping directly; simply making a library call
+> +that, internally, uses
+> +.I dlopen(3)
+> +to load some other shared library, will
+> +suffice. The dlopen(3) call will map the library into the process's address
+> +space. Furthermore, almost any library call may be implemented using this
+> +technique.
+> +Examples include brk(2), malloc(3), pthread_create(3), and the PAM libraries
+> +(http://www.linux-pam.org).
+
+This is arkward. This first mentions dlopen(), which is a very niche
+case, and then just very casually mentions the much bigger
+problem that tons of library functions can allocate memory through
+malloc(), causing mmap() calls, sometimes without that even being
+a documented property of the function.
+
+> +.IP
+> +Newer kernels
+> +(Linux 4.16 and later) have a
+> +.B MAP_FIXED_SAFE
+> +option that avoids the corruption problem; if available, MAP_FIXED_SAFE
+> +should be preferred over MAP_FIXED.
+
+This is bad advice. MAP_FIXED is completely safe if you use it on an address
+range you've allocated, and it is used in this way by core system libraries to
+place multiple VMAs in virtually contiguous memory, for example:
+
+ld.so (from glibc) uses it to load dynamic libraries:
+
+$ strace -e trace=open,mmap,close /usr/bin/id 2>&1 >/dev/null | head -n20
+mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1,
+0) = 0x7f35811c0000
+open("/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+mmap(NULL, 161237, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f3581198000
+close(3)                                = 0
+open("/lib/x86_64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC) = 3
+mmap(NULL, 2259664, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3,
+0) = 0x7f3580d78000
+mmap(0x7f3580f9c000, 8192, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x24000) = 0x7f3580f9c000
+mmap(0x7f3580f9e000, 6864, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f3580f9e000
+close(3)                                = 0
+open("/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+mmap(NULL, 3795360, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3,
+0) = 0x7f35809d9000
+mmap(0x7f3580d6e000, 24576, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x195000) = 0x7f3580d6e000
+mmap(0x7f3580d74000, 14752, PROT_READ|PROT_WRITE,
+MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f3580d74000
+close(3)                                = 0
+[...]
+
+As a comment in dl-map-segments.h in glibc explains:
+      /* This is a position-independent shared object.  We can let the
+         kernel map it anywhere it likes, but we must have space for all
+         the segments in their specified positions relative to the first.
+         So we map the first segment without MAP_FIXED, but with its
+         extent increased to cover all the segments.  Then we remove
+         access from excess portion, and there is known sufficient space
+         there to remap from the later segments.
+
+
+And AFAIK anything that allocates thread stacks uses MAP_FIXED to
+create the guard page at the bottom.
+
+
+MAP_FIXED is a better solution for these usecases than MAP_FIXED_SAFE,
+or whatever it ends up being called. Please remove this advice or, better,
+clarify what MAP_FIXED should be used for (creation of virtually contiguous
+VMAs) and what MAP_FIXED_SAFE should be used for (attempting to
+allocate memory at a fixed address for some reason, with a failure instead of
+the normal fallback to using a different address).
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
