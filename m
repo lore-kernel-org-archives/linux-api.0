@@ -1,23 +1,28 @@
-From: =?UTF-8?Q?Iago_L=c3=b3pez_Galeiras?= <iago@kinvolk.io>
-Subject: Re: [PATCHv3, 1/2] capability: introduce sysctl for controlled
- user-ns capability whitelist
-Date: Fri, 15 Dec 2017 12:10:00 +0100
-Message-ID: <b4367cb6-82a0-5e5b-f94f-2581ba207f77@kinvolk.io>
-References: <20171205223101.12765-1-mahesh@bandewar.net>
+From: Christopher Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC PATCH for 4.16 02/21] rseq: Introduce restartable sequences
+ system call (v12)
+Date: Fri, 15 Dec 2017 09:05:09 -0600 (CST)
+Message-ID: <alpine.DEB.2.20.1712150903490.14235@nuc-kabylake>
+References: <20171214161403.30643-1-mathieu.desnoyers@efficios.com> <20171214161403.30643-3-mathieu.desnoyers@efficios.com> <alpine.DEB.2.20.1712141033100.6249@nuc-kabylake> <12046460.34426.1513275177081.JavaMail.zimbra@efficios.com>
+ <alpine.DEB.2.20.1712141238180.8340@nuc-kabylake> <1537392285.34532.1513279478488.JavaMail.zimbra@efficios.com> <alpine.DEB.2.20.1712141512360.8945@nuc-kabylake> <20171214212023.GJ3326@worktop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171205223101.12765-1-mahesh@bandewar.net>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>
-Cc: Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <maheshb@google.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171214212023.GJ3326@worktop>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas@arm.c>
 List-Id: linux-api@vger.kernel.org
 
-On 12/05/2017 11:31 PM, Mahesh Bandewar wrote:
-> +The value is expressed as two comma separated hex words (u32). This
-> +sysctl is avaialble in init-ns and users with CAP_SYS_ADMIN in init-ns
-> +are allowed to make changes.
+On Thu, 14 Dec 2017, Peter Zijlstra wrote:
 
-Typo: avaialble -> available
+> > But my company has extensive user space code that maintains a lot of
+> > counters and does other tricks to get full performance out of the
+> > hardware. Such a mechanism would also be good from user space. Why keep
+> > the good stuff only inside the kernel?
+>
+> Mathieu's proposal is for userspace, _only_ userspace.
+
+But what we were talking about are instructions that work effectively in
+kernel space whose efficiency restartable sequences could bring to user
+space.
