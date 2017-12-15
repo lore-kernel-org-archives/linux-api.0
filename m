@@ -1,33 +1,48 @@
-From: =?utf-8?B?6IO95byQ6aKi?= <cwhj-85LpOwx5Cic@public.gmane.org>
-Subject: =?utf-8?B?bGluc29uZ2JpbjcyMu+8muKAnENBUEUg?=
-        =?utf-8?B?MjAxOCDnrKzljYHlha3lsYrkuK3lm73vvIjlub/lt57vvInlm73pmYXmsb3ovabpm7Y=?=
-        =?utf-8?B?6YOo5Lu25Y+K55So5ZOB5bGV4oCd5bCG5LqO4oCcNOaciDEzLTE15pel4oCd5Li+?=
-        =?utf-8?B?6KGMIFt6RS1jNTAt5Zyw5bemUDFd?=
-Date: Fri, 15 Dec 2017 11:57:04 +0800
-Message-ID: <00cf02617cdb$e0b4a925$6a399608$@szhbmoxy>
-Reply-To: emailqunfa-9Onoh4P/yGk@public.gmane.org
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH v2 0/2] mm: introduce MAP_FIXED_SAFE
+Date: Fri, 15 Dec 2017 20:02:04 +1100
+Message-ID: <876098ictv.fsf@concordia.ellerman.id.au>
+References: <20171213092550.2774-1-mhocko@kernel.org> <CAGXu5jKjjsyYJTWTqzO0mQKM+9mCH=jY_x90wJpoXbsDcLSv+Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <CAGXu5jKjjsyYJTWTqzO0mQKM+9mCH=jY_x90wJpoXbsDcLSv+Q@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Kees Cook <keescook@chromium.org>, Michal Hocko <mhocko@kernel.org>
+Cc: Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Matthew Wilcox <willy@infradead.org>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-5bCK5pWs55qEIGxpbnNvbmdiaW43MjIg5LyB5Lia6aKG5a+8L+WFrOWPuOi0n+i0o+S6ui/kuJrn
-lYzkuJPlrrbvvIzmgqjlpb3vvJoNCuOAgOOAgA0KICAgIOS4reWNjuS6uuawkeWFseWSjOWbveWV
-huWKoemDqOaJueWHhuS4vuWKnueahOKAnENBUEUgMjAxOCDnrKzljYHlha3lsYrkuK3lm73vvIjl
-ub/lt57vvInlm73pmYXmsb3ovabpm7bpg6jku7blj4rnlKjlk4HlsZXop4jkvJrigJ3lkozigJxO
-RUEgMjAxOCDnrKzkuZ3lsYrlub/lt57lm73pmYXmlrDog73mupDmsb3ovablt6XkuJrlsZXop4jk
-vJrigJ3lsIbkuo4yMDE45bm0MDTmnIgxMy0xNeaXpeWcqOW5v+W3nueQtua0suWbvemZhemHh+i0
-reS4reW/g+S4juKAnOS4reWbvei/m+WHuuWPo+WVhuWTgeS6pOaYk+S8mu+8iOW5v+S6pOS8mu+8
-ieKAneWQjOacn+WQjOWcsOS4vuihjO+8jOS7peKAnOW5v+S6pOS8muKAneW6nuWkp+eahOWuoua1
-gemHj+S4uuS+neaJmO+8jOS5sOWutuS6kuWKqO+8jOWAn+WKv+WFtOWxle+8jOWFseS6q+adpeiH
-quWFqOeQg+aVsOWNgeS4h+mHh+i0reWVhui1hOa6kO+8jOivmumCgOihjOS4muWQjOS7geenr+ae
-geWPguWxle+8jOWFseilhOebm+S4vu+8gQ0KDQogICAg6K+m5oOF5ZKo6K+i77yM55S16K+d77ya
-NDAwMC01ODAtODUw77yI6L2sODg4OOaIljUyMjDvvInvvIwgMTM5LTEwMzEtODE0NO+8m1FR77ya
-MTI4MDkzOTXvvJvnjovotoXvvIjlhYjnlJ/vvInjgIINCg0KDQrjgIDjgIANCuOAgOOAgA0K44CA
-44CADQrjgIDjgIANCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX1/jgIDjgIANCu+8iOeZvuS4h+e+
-pOWPkeezu+e7n3zkuLrmgqjlj5HpgIF85aaC5LiN5biM5pyb5YaN5pS25Yiw5q2k6KGM5Lia6LWE
-6K6vfOivt+WbnuWkjeKAnFREK0pFQ+KAneiHs+mCrueusTEwNTU4MDA4MTJAcXEuY29t77yJIA0K
+Kees Cook <keescook@chromium.org> writes:
+
+> On Wed, Dec 13, 2017 at 1:25 AM, Michal Hocko <mhocko@kernel.org> wrote:
+>>
+>> Hi,
+>> I am resending with some minor updates based on Michael's review and
+>> ask for inclusion. There haven't been any fundamental objections for
+>> the RFC [1] nor the previous version [2].  The biggest discussion
+>> revolved around the naming. There were many suggestions flowing
+>> around MAP_REQUIRED, MAP_EXACT, MAP_FIXED_NOCLOBBER, MAP_AT_ADDR,
+>> MAP_FIXED_NOREPLACE etc...
+>
+> With this named MAP_FIXED_NOREPLACE (the best consensus we've got on a
+> name), please consider this series:
+>
+> Acked-by: Kees Cook <keescook@chromium.org>
+
+I don't feel like I'm actually qualified to ack the mm and binfmt
+changes, but everything *looks* correct to me, and you've fixed the flag
+numbering such that it can go in mman-common.h as I suggested.
+
+So if the name was MAP_FIXED_NOREPLACE I would also be happy with it.
+
+Acked-by: Michael Ellerman <mpe@ellerman.id.au>
+
+I can resubmit with the name changed if that's what it takes.
+
+cheers
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
