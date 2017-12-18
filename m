@@ -1,154 +1,54 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH v5] mmap.2: MAP_FIXED updated documentation
-Date: Mon, 18 Dec 2017 20:15:29 +0100
-Message-ID: <3a07ef4d-7435-7b8d-d5c7-3bce80042577@gmail.com>
-References: <20171212002331.6838-1-jhubbard@nvidia.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH] [man-pages] adjtimex.2: document clock_adjtime
+Date: Mon, 18 Dec 2017 20:19:42 +0100
+Message-ID: <436eb61b-0fe2-41c8-0992-e21614fd3657@gmail.com>
+References: <20171120225302.3379657-1-arnd@arndb.de>
+ <20171121030459.swng4eyke34uf3sv@localhost>
+ <CAK8P3a1TFPNE+A5Gf=cgsxiqi2VQOzfRLUgirjNtb6Tdei0Ovg@mail.gmail.com>
+ <20171121160601.2xti5ho5pul2v7tm@localhost>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171212002331.6838-1-jhubbard@nvidia.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171121160601.2xti5ho5pul2v7tm@localhost>
 Content-Language: en-US
-Sender: owner-linux-mm@kvack.org
-To: john.hubbard@gmail.com
-Cc: mtk.manpages@gmail.com, linux-man <linux-man@vger.kernel.org>, linux-api@vger.kernel.org, Michael Ellerman <mpe@ellerman.id.au>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, linux-arch@vger.kernel.org, Jann Horn <jannh@google.com>, Matthew Wilcox <willy@infradead.org>, Michal Hocko <mhocko@kernel.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@suse.com>, Pavel Machek <pavel@ucw.cz>, John Hubbard <jhubbard@nvidia.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
+Cc: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/12/2017 01:23 AM, john.hubbard@gmail.com wrote:
-> From: John Hubbard <jhubbard@nvidia.com>
-> 
->     -- Expand the documentation to discuss the hazards in
->        enough detail to allow avoiding them.
-> 
->     -- Mention the upcoming MAP_FIXED_SAFE flag.
-> 
->     -- Enhance the alignment requirement slightly.
-> 
-> CC: Michael Ellerman <mpe@ellerman.id.au>
-> CC: Jann Horn <jannh@google.com>
-> CC: Matthew Wilcox <willy@infradead.org>
-> CC: Michal Hocko <mhocko@kernel.org>
-> CC: Mike Rapoport <rppt@linux.vnet.ibm.com>
-> CC: Cyril Hrubis <chrubis@suse.cz>
-> CC: Michal Hocko <mhocko@suse.com>
-> CC: Pavel Machek <pavel@ucw.cz>
-> Signed-off-by: John Hubbard <jhubbard@nvidia.com>
+Hi Richard,
 
-John,
+On 11/21/2017 05:06 PM, Richard Cochran wrote:
+> On Tue, Nov 21, 2017 at 09:06:37AM +0100, Arnd Bergmann wrote:
+>>
+>> I copied that line from clock_gettime() man page. I suppose we want to
+>> fix change this in both pages, right? Any suggestions for a good way to
+>> express your explanation in the man page? I suppose we don't want to
+>> go into details of the implementation there but still capture the possible
+>> corner cases.
+> 
+> Dynamic clockids are a Linux specific extension.  This should be
+> explained with a paragraph or two on the gettime man page, along with
+> an example using the macros.
+> 
+> 	#define CLOCKFD 3
+> 	#define FD_TO_CLOCKID(fd)	((~(clockid_t) (fd) << 3) | CLOCKFD)
+> 	#define CLOCKID_TO_FD(clk)	((unsigned int) ~((clk) >> 3))
+> 
+> Then, the adjtimex page can say, see gettime.
+> 
+> Let me try to come up with a text over the (USA) holiday weekend.
 
-Thanks for the patch. I think you win the prize for the 
-most iterations ever on a man-pages patch! (And Michal,
-thanks for helping out.) I've applied your patch, made 
-some minor tweaks, and removed the mention of 
-MAP_FIXED_SAFE, since I don't like to document stuff
-that hasn't yet been merged. (I only later noticed the
-fuss about the naming...)
+Might you have a chance to look at this still?
 
 Cheers,
 
 Michael
 
-> ---
-> 
-> Changes since v4:
-> 
->     -- v2 ("mmap.2: MAP_FIXED is no longer discouraged") was applied already,
->        so v5 is a merge, including rewording of the paragraph transitions.
-> 
->     -- We seem to have consensus about what to say about alignment
->        now, and this includes that new wording.
-> 
-> Changes since v3:
-> 
->     -- Removed the "how to use this safely" part, and
->        the SHMLBA part, both as a result of Michal Hocko's
->        review.
-> 
->     -- A few tiny wording fixes, at the not-quite-typo level.
-> 
-> Changes since v2:
-> 
->     -- Fixed up the "how to use safely" example, in response
->        to Mike Rapoport's review.
-> 
->     -- Changed the alignment requirement from system page
->        size, to SHMLBA. This was inspired by (but not yet
->        recommended by) Cyril Hrubis' review.
-> 
->     -- Formatting: underlined /proc/<pid>/maps
-> 
-> Changes since v1:
-> 
->     -- Covered topics recommended by Matthew Wilcox
->        and Jann Horn, in their recent review: the hazards
->        of overwriting pre-exising mappings, and some notes
->        about how to use MAP_FIXED safely.
-> 
->     -- Rewrote the commit description accordingly.
-> 
->  man2/mmap.2 | 32 ++++++++++++++++++++++++++++++--
->  1 file changed, 30 insertions(+), 2 deletions(-)
-> 
-> diff --git a/man2/mmap.2 b/man2/mmap.2
-> index a5a8eb47a..400cfda2d 100644
-> --- a/man2/mmap.2
-> +++ b/man2/mmap.2
-> @@ -212,8 +212,9 @@ Don't interpret
->  .I addr
->  as a hint: place the mapping at exactly that address.
->  .I addr
-> -must be a multiple of the page size.
-> -If the memory region specified by
-> +must be suitably aligned: for most architectures a multiple of page
-> +size is sufficient; however, some architectures may impose additional
-> +restrictions. If the memory region specified by
->  .I addr
->  and
->  .I len
-> @@ -226,6 +227,33 @@ Software that aspires to be portable should use this option with care, keeping
->  in mind that the exact layout of a process' memory map is allowed to change
->  significantly between kernel versions, C library versions, and operating system
->  releases.
-> +.IP
-> +Furthermore, this option is extremely hazardous (when used on its own), because
-> +it forcibly removes pre-existing mappings, making it easy for a multi-threaded
-> +process to corrupt its own address space.
-> +.IP
-> +For example, thread A looks through
-> +.I /proc/<pid>/maps
-> +and locates an available
-> +address range, while thread B simultaneously acquires part or all of that same
-> +address range. Thread A then calls mmap(MAP_FIXED), effectively overwriting
-> +the mapping that thread B created.
-> +.IP
-> +Thread B need not create a mapping directly; simply making a library call
-> +that, internally, uses
-> +.I dlopen(3)
-> +to load some other shared library, will
-> +suffice. The dlopen(3) call will map the library into the process's address
-> +space. Furthermore, almost any library call may be implemented using this
-> +technique.
-> +Examples include brk(2), malloc(3), pthread_create(3), and the PAM libraries
-> +(http://www.linux-pam.org).
-> +.IP
-> +Newer kernels
-> +(Linux 4.16 and later) have a
-> +.B MAP_FIXED_SAFE
-> +option that avoids the corruption problem; if available, MAP_FIXED_SAFE
-> +should be preferred over MAP_FIXED.
->  .TP
->  .B MAP_GROWSDOWN
->  This flag is used for stacks.
-> 
 
 
 -- 
 Michael Kerrisk
 Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
 Linux/UNIX System Programming Training: http://man7.org/training/
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
