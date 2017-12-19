@@ -1,65 +1,60 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v2 0/2] mm: introduce MAP_FIXED_SAFE
-Date: Tue, 19 Dec 2017 13:46:46 +0100
-Message-ID: <20171219124646.GR2787@dhcp22.suse.cz>
-References: <20171213092550.2774-1-mhocko@kernel.org>
- <20171213163210.6a16ccf8753b74a6982ef5b6@linux-foundation.org>
- <CAFLM3-oANXKEU=tuurSJx9rdzfWGfym-0FUEWnfBq8mOaVMzOA@mail.gmail.com>
- <20171214131526.GM16951@dhcp22.suse.cz>
- <20171214145443.GA2202@brick>
- <0ca2620ce7534c5491e69416621ac41b@AcuMS.aculab.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: Documentation patch for namespaced file capabilities
+Date: Tue, 19 Dec 2017 16:33:33 +0100
+Message-ID: <CAKgNAkgMAPZXUXX6eidP3nCws8x0xXBL9CGdNdERzHyhPt5QNQ@mail.gmail.com>
+References: <CAKgNAkiAeqbD=G6hnExh4cC84nA2mU6xdLzzS0F2x1wviEPgHg@mail.gmail.com>
+ <20171129175849.GC14545@mail.hallyn.com>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <0ca2620ce7534c5491e69416621ac41b@AcuMS.aculab.com>
-Sender: owner-linux-mm@kvack.org
-To: David Laight <David.Laight@ACULAB.COM>
-Cc: 'Edward Napierala' <trasz@freebsd.org>, Andrew Morton <akpm@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Michael Ellerman <mpe@ellerman.id.au>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Matthew Wilcox <willy@infradead.org>, Abdul Haleem <abdhalee@linux.vnet.ibm.com>, Joel Stanley <joel@jms.id.au>, Kees Cook <keescook@chromium.org>, "jasone@google.com" <jasone@google.com>, "davidtgoldblatt@gmail.com" <davidtgoldblatt@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20171129175849.GC14545@mail.hallyn.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Amir Goldstein <amir73il@gmail.com>, Stefan Berger <stefanb@linux.vnet.ibm.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux Containers <containers@lists.linux-foundation.org>, lkp@01.org, xiaolong.ye@intel.com, linux-kernel <linux-kernel@vger.kernel.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Tycho Andersen <tycho@docker.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, christian.brauner@mailbox.org, Vivek Goyal <vgoyal@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 19-12-17 12:40:16, David Laight wrote:
-> From: Edward Napierala
-> > Sent: 14 December 2017 14:55
-> >
-> > On 1214T1415, Michal Hocko wrote:
-> > > On Thu 14-12-17 12:44:17, Edward Napierala wrote:
-> > > > Regarding the name - how about adopting MAP_EXCL?  It was introduced in
-> > > > FreeBSD,
-> > > > and seems to do exactly this; quoting mmap(2):
-> > > >
-> > > > MAP_FIXED    Do not permit the system to select a different address
-> > > >                         than the one specified.  If the specified address
-> > > >                         cannot be used, mmap() will fail.  If MAP_FIXED is
-> > > >                         specified, addr must be a multiple of the page size.
-> > > >                         If MAP_EXCL is not specified, a successful MAP_FIXED
-> > > >                         request replaces any previous mappings for the
-> > > >                         process' pages in the range from addr to addr + len.
-> > > >                         In contrast, if MAP_EXCL is specified, the request
-> > > >                         will fail if a mapping already exists within the
-> > > >                         range.
-> > >
-> > > I am not familiar with the FreeBSD implementation but from the above it
-> > > looks like MAP_EXCL is a MAP_FIXED mofifier which is not how we are
-> > > going to implement it in linux due to reasons mentioned in this cover
-> > > letter. Using the same name would be more confusing than helpful I am
-> > > afraid.
-> > 
-> > Sorry, missed that.  Indeed, reusing a name with a different semantics
-> > would be a bad idea.
-> 
-> I don't remember any discussion about using MAP_FIXED | MAP_EXCL ?
-> 
-> Why not match the prior art??
+Hi Serge,
 
-See the cover letter which explains why an extension is not backward
-compatible.
+On 29 November 2017 at 18:58, Serge E. Hallyn <serge@hallyn.com> wrote:
+> Quoting Michael Kerrisk (man-pages) (mtk.manpages@gmail.com):
+>> Hi Serge,
+>>
+>> At the moment man-pages lacks documentation of the namespaced file
+>> capability feature that you added with commit
+>> 8db6c34f1dbc8e06aa016a9b829b06902c3e1340. Would you be able to send a
+>> patch describing the feature?
+>
+> Sorry.  I'm adding this to my todo list, so I should get to it soon.
+
+A gentle ping...
+
+Cheers,
+
+Michael
+
+>> Presumably, the patch would be for the capabilities(7) page (or
+>> perhaps for the user_namespaces(7) page, if that seems more
+>> appropriate), As well as documenting the semantics, it would be good
+>> to include an example or two of the notation that is used for the
+>> xattr names.
+>>
+>> Presumably also there will be some changes in userspace tools
+>> (setcap/getcap?). Do you know anything about what's happening there?
+>>
+>> Cheers,
+>>
+>> Michael
+>>
+>>
+>> --
+>> Michael Kerrisk
+>> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+>> Linux/UNIX System Programming Training: http://man7.org/training/
+
+
+
 -- 
-Michal Hocko
-SUSE Labs
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
