@@ -1,56 +1,46 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: shmctl(SHM_STAT) vs. /proc/sysvipc/shm permissions discrepancies
-Date: Wed, 20 Dec 2017 17:17:46 +0100
-Message-ID: <CAKgNAkisD7zDRoqJd6Gk1JMCZ8+Huj5QPV04nh2JXHMA+_R0-A@mail.gmail.com>
-References: <20171219094848.GE2787@dhcp22.suse.cz> <CAKgNAkjJrmCFY-h2oqKS3zM_D+Csx-17A27mh08WKahyOVzrgQ@mail.gmail.com>
- <20171220092025.GD4831@dhcp22.suse.cz>
-Reply-To: mtk.manpages@gmail.com
+From: Ross Zwisler <ross.zwisler@linux.intel.com>
+Subject: Re: [PATCH v3 0/3] create sysfs representation of ACPI HMAT
+Date: Wed, 20 Dec 2017 09:41:07 -0700
+Message-ID: <20171220164107.GA29103@linux.intel.com>
+References: <20171214021019.13579-1-ross.zwisler@linux.intel.com>
+ <20171214130032.GK16951@dhcp22.suse.cz>
+ <20171218203547.GA2366@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20171220092025.GD4831@dhcp22.suse.cz>
-Sender: owner-linux-mm@kvack.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Linux API <linux-api@vger.kernel.org>, Manfred Spraul <manfred@colorfullife.com>, Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Mike Waychison <mikew@google.com>, LKML <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-acpi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20171218203547.GA2366@linux.intel.com>
+Sender: linux-acpi-owner@vger.kernel.org
+To: Ross Zwisler <ross.zwisler@linux.intel.com>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-kernel@vger.kernel.org, "Anaczkowski, Lukasz" <lukasz.anaczkowski@intel.com>, "Box, David E" <david.e.box@intel.com>, "Kogut, Jaroslaw" <Jaroslaw.Kogut@intel.com>, "Koss, Marcin" <marcin.koss@intel.com>, "Koziej, Artur" <artur.koziej@intel.com>, "Lahtinen, Joonas" <joonas.lahtinen@intel.com>, "Moore, Robert" <robert.moore@intel.com>, "Nachimuthu, Murugasamy" <murugasamy.nachimuthu@intel.com>, "Odzioba, Lukasz" <lukasz.odzioba@intel.com>, "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Schmauss, Erik" <erik.schmauss@intel.com>, "Verma, Vishal L" <vishal.l.verma@intel.com>, "Zheng, Lv" <lv.zheng@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Balbir Singh <bsingharora@gm>
 List-Id: linux-api@vger.kernel.org
 
-Hello Michal,
+On Mon, Dec 18, 2017 at 01:35:47PM -0700, Ross Zwisler wrote:
+> On Thu, Dec 14, 2017 at 02:00:32PM +0100, Michal Hocko wrote:
+<>
+> > What is the testing procedure? How can I setup qemu to simlate such HW?
+> 
+> Well, the QEMU table simulation is gross, so I'd rather not get everyone
+> testing with that.  Injecting custom HMAT and SRAT tables via initrd/initramfs
+> is a much better way:
+> 
+> https://www.kernel.org/doc/Documentation/acpi/initrd_table_override.txt
+> 
+> Dan recently posted a patch that lets this happen for the HMAT:
+> 
+> https://lists.01.org/pipermail/linux-nvdimm/2017-December/013545.html
+> 
+> I'm working right now on getting an easier way to generate HMAT tables - I'll
+> let you know when I have something working.
 
-On 20 December 2017 at 10:20, Michal Hocko <mhocko@kernel.org> wrote:
-> On Tue 19-12-17 17:45:40, Michael Kerrisk wrote:
->> But, is
->> there a pressing reason to make the change? (Okay, I guess iterating
->> using *_STAT is nicer than parsing /proc/sysvipc/*.)
->
-> The reporter of this issue claims that "Reading /proc/sysvipc/shm is way
-> slower than executing the system call." I haven't checked that but I can
-> imagine that /proc/sysvipc/shm can take quite some time when there are
-> _many_ segments registered.
+I've posted details on how to set up test configurations using injected HMAT
+and SRAT tables here:
 
-Yes, that makes sense.
+https://github.com/rzwisler/hmat_examples
 
-> So they would like to use the syscall but
-> the interacting parties do not have compatible permissions.
+So far I've got two different sample configs, and we can add more as they are
+useful.  Having the sample configs in github is also nice because if someone
+finds a config that causes a kernel issue it can be reported then added to
+this list of example configs for future testing.
 
-So, I don't think there is any security issue, since the same info is
-available in /proc/sysvipc/*. The only question would be whether
-change in the *_STAT behavior might surprise some applications into
-behaving differently. I presume the chances of that are low, but if it
-was a concert, one could add new shmctl/msgctl/semctl *_STAT_ALL (or
-some such) operations that have the desired behavior.
-
-Cheers,
-
-Michael
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Please let me know if you have trouble getting this working.
