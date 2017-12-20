@@ -1,133 +1,44 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v3 04/21] fpga: add device feature list support
-Date: Wed, 20 Dec 2017 16:29:52 -0600
-Message-ID: <CANk1AXQ_9+m-MvawwhaSpSfxO-Psg1F37vA9MfMcL4Q2t65dVA@mail.gmail.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-5-git-send-email-hao.wu@intel.com>
+From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 01/21] docs: fpga: add a document for Intel FPGA driver overview
+Date: Wed, 20 Dec 2017 16:31:15 -0600
+Message-ID: <CANk1AXTLBWXGUozXJdKRThJwLiHJ==B--DkkE+YRjveA2YvifQ@mail.gmail.com>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-2-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1511764948-20972-5-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1511764948-20972-2-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu@intel.com> wrote:
+On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> +
+> +PORT
+> +====
+> +A port represents the interface between the static FPGA fabric (the "blue
+> +bitstream") and a partially reconfigurable region containing an AFU (the "green
+> +bitstream"). It controls the communication from SW to the accelerator and
+> +exposes features such as reset and debug.
 
 Hi Hao,
 
-> +
-> +enum port_feature_id {
-> +       PORT_FEATURE_ID_HEADER = 0x0,
-> +       PORT_FEATURE_ID_ERROR = 0x1,
-> +       PORT_FEATURE_ID_UMSG = 0x2,
-> +       PORT_FEATURE_ID_PR = 0x3,
-> +       PORT_FEATURE_ID_STP = 0x4,
-> +       PORT_FEATURE_ID_UAFU = 0x5,
-> +       PORT_FEATURE_ID_MAX = 0x6,
-> +};
-> +
-> +#define FME_FEATURE_NUM                        FME_FEATURE_ID_MAX
-> +#define PORT_FEATURE_NUM               PORT_FEATURE_ID_MAX
-> +
-> +#define FPGA_FEATURE_DEV_FME           "fpga-dfl-fme"
-> +#define FPGA_FEATURE_DEV_PORT          "fpga-dfl-port"
-> +
-> +static inline int feature_platform_data_size(const int num)
-> +{
-> +       return sizeof(struct feature_platform_data) +
-> +               num * sizeof(struct feature);
-> +}
-> +
-> +int fpga_port_id(struct platform_device *pdev);
-> +
-> +static inline int fpga_port_check_id(struct platform_device *pdev,
-> +                                    void *pport_id)
-> +{
-> +       return fpga_port_id(pdev) == *(int *)pport_id;
-> +}
-> +
-> +void __fpga_port_enable(struct platform_device *pdev);
-> +int __fpga_port_disable(struct platform_device *pdev);
-> +
-> +static inline void fpga_port_enable(struct platform_device *pdev)
-> +{
-> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> +
-> +       mutex_lock(&pdata->lock);
-> +       __fpga_port_enable(pdev);
-> +       mutex_unlock(&pdata->lock);
-> +}
-> +
-> +static inline int fpga_port_disable(struct platform_device *pdev)
-> +{
-> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> +       int ret;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       ret = __fpga_port_disable(pdev);
-> +       mutex_unlock(&pdata->lock);
-> +
-> +       return ret;
-> +}
-> +
-> +static inline int __fpga_port_reset(struct platform_device *pdev)
-> +{
-> +       int ret;
-> +
-> +       ret = __fpga_port_disable(pdev);
-> +       if (ret)
-> +               return ret;
-> +
-> +       __fpga_port_enable(pdev);
-> +
-> +       return 0;
-> +}
-> +
-> +static inline int fpga_port_reset(struct platform_device *pdev)
-> +{
-> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> +       int ret;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       ret = __fpga_port_reset(pdev);
-> +       mutex_unlock(&pdata->lock);
-> +
-> +       return ret;
-> +}
-
-I see that the port code is included as part of the enumeration code.
-This is not very future-proofed, if a different port needs to be
-supported.
-
-The port is a FPGA fabric based bridge with expanded functionality,
-right?  So it is similar to the altera freeze bridge, but adds the
-ability to reset the fabric and some other features are promised in
-the future, IIUC.  I still think that the port could be implemented in
-the bridge driver .c file instead of being here as part of the
-enumeration code.   For that to happen, some APIs would need to be
-added to the bridge framework and the FPGA region framework.  Then the
-reset can be requested through a new FPGA region API function.
-
-The advantage of this is that if this patchset evolves and there is
-some other v2 port driver needed, it can be a different driver if it
-needs to be.
-
-If the port reset is really a fabric reset, (correct me if I'm
-remembering wrongly) then it would be helpful to call it a
-fabric_reset.  This would be the first bridge driver supporting fabric
-reset.  I think it won't be the last.
-
-So what I'm proposing would be added/changed would be:
-* move all the bridge code to fpga-dfl-fme-br.c
-* add .fabric_reset to bridge ops
-* add fpga_bridges_reset to fpga-bridge.c (a new function that goes
-through a list of bridges and calls the reset ops if it exists,
-ignores the bridges where it doesn't exist)
-* add fpga_region_fabric_reset to fpga-region.c.  This function gets
-the region, gets the bridges, calls fpga_bridges_reset (can steal code
-from fpga_region_program_fpga)
-* the rest of the patchset can use fpga_region_fabric_reset instead of
-fpga_port_reset
+If I remember correctly, reset means that the accelerator gets reset
+and this is something that is desirable to do between jobs.  I've
+asked for some documentation about the port reset function, partly
+because the idea of being able to reset hardware from userspace
+somehow scares me.  So please find a good logical place to explain
+what a port reset does and how it is safe for userspace to request it
+at some arbitrary time and how it won't crash the kernel.  We
+discussed this in v2, I grepped v3 for it, maybe I missed it, but I
+don't see it in v3.  My understanding is that disabling and reenabling
+the port bridge causes the accelerator in its FPGA region to get
+reset.
 
 Alan
+
+> +
+> +A PCIe device may have several ports and each port can be released from PF by
+> +FPGA_FME_PORT_RELEASE ioctl on FME, and exposed through a VF via PCIe sriov
+> +sysfs interface.
+> +
