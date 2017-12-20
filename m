@@ -1,46 +1,57 @@
-From: Ross Zwisler <ross.zwisler@linux.intel.com>
+From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Subject: Re: [PATCH v3 0/3] create sysfs representation of ACPI HMAT
-Date: Wed, 20 Dec 2017 09:41:07 -0700
-Message-ID: <20171220164107.GA29103@linux.intel.com>
+Date: Wed, 20 Dec 2017 10:19:37 -0800
+Message-ID: <20171220181937.GB12236@bombadil.infradead.org>
 References: <20171214021019.13579-1-ross.zwisler@linux.intel.com>
  <20171214130032.GK16951@dhcp22.suse.cz>
  <20171218203547.GA2366@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-acpi-owner@vger.kernel.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20171218203547.GA2366@linux.intel.com>
-Sender: linux-acpi-owner@vger.kernel.org
-To: Ross Zwisler <ross.zwisler@linux.intel.com>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-kernel@vger.kernel.org, "Anaczkowski, Lukasz" <lukasz.anaczkowski@intel.com>, "Box, David E" <david.e.box@intel.com>, "Kogut, Jaroslaw" <Jaroslaw.Kogut@intel.com>, "Koss, Marcin" <marcin.koss@intel.com>, "Koziej, Artur" <artur.koziej@intel.com>, "Lahtinen, Joonas" <joonas.lahtinen@intel.com>, "Moore, Robert" <robert.moore@intel.com>, "Nachimuthu, Murugasamy" <murugasamy.nachimuthu@intel.com>, "Odzioba, Lukasz" <lukasz.odzioba@intel.com>, "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, "Schmauss, Erik" <erik.schmauss@intel.com>, "Verma, Vishal L" <vishal.l.verma@intel.com>, "Zheng, Lv" <lv.zheng@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Balbir Singh <bsingharora@gm>
+In-Reply-To: <20171218203547.GA2366-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Anaczkowski, Lukasz" <lukasz.anaczkowski-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Box, David E" <david.e.box-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kogut, Jaroslaw" <Jaroslaw.Kogut-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Koss, Marcin" <marcin.koss-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Koziej, Artur" <artur.koziej-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Lahtinen, Joonas" <joonas.lahtinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Moore, Robert" <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Nachimuthu, Murugasamy" <murugasamy.nachimuthu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Odzioba, Lukasz" <lukasz.odzioba-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Schmauss, Erik" <erik.schmauss-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Verma, Vishal L" <vishal.l.verma-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zheng, Lv" <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Balbir Singh <bsingharora@gm>
 List-Id: linux-api@vger.kernel.org
 
 On Mon, Dec 18, 2017 at 01:35:47PM -0700, Ross Zwisler wrote:
-> On Thu, Dec 14, 2017 at 02:00:32PM +0100, Michal Hocko wrote:
-<>
-> > What is the testing procedure? How can I setup qemu to simlate such HW?
+> What I'm hoping to do with this series is to just provide a sysfs
+> representation of the HMAT so that applications can know which NUMA nodes to
+> select with existing utilities like numactl.  This series does not currently
+> alter any kernel behavior, it only provides a sysfs interface.
 > 
-> Well, the QEMU table simulation is gross, so I'd rather not get everyone
-> testing with that.  Injecting custom HMAT and SRAT tables via initrd/initramfs
-> is a much better way:
+> Say for example you had a system with some high bandwidth memory (HBM), and
+> you wanted to use it for a specific application.  You could use the sysfs
+> representation of the HMAT to figure out which memory target held your HBM.
+> You could do this by looking at the local bandwidth values for the various
+> memory targets, so:
 > 
-> https://www.kernel.org/doc/Documentation/acpi/initrd_table_override.txt
+> 	# grep . /sys/devices/system/hmat/mem_tgt*/local_init/write_bw_MBps
+> 	/sys/devices/system/hmat/mem_tgt2/local_init/write_bw_MBps:81920
+> 	/sys/devices/system/hmat/mem_tgt3/local_init/write_bw_MBps:40960
+> 	/sys/devices/system/hmat/mem_tgt4/local_init/write_bw_MBps:40960
+> 	/sys/devices/system/hmat/mem_tgt5/local_init/write_bw_MBps:40960
 > 
-> Dan recently posted a patch that lets this happen for the HMAT:
-> 
-> https://lists.01.org/pipermail/linux-nvdimm/2017-December/013545.html
-> 
-> I'm working right now on getting an easier way to generate HMAT tables - I'll
-> let you know when I have something working.
+> and look for the one that corresponds to your HBM speed. (These numbers are
+> made up, but you get the idea.)
 
-I've posted details on how to set up test configurations using injected HMAT
-and SRAT tables here:
+Presumably ACPI-based platforms will not be the only ones who have the
+ability to expose different bandwidth memories in the future.  I think
+we need a platform-agnostic way ... right, PowerPC people?
 
-https://github.com/rzwisler/hmat_examples
+I don't know what the right interface is, but my laptop has a set of
+/sys/devices/system/memory/memoryN/ directories.  Perhaps this is the
+right place to expose write_bw (etc).
 
-So far I've got two different sample configs, and we can add more as they are
-useful.  Having the sample configs in github is also nice because if someone
-finds a config that causes a kernel issue it can be reported then added to
-this list of example configs for future testing.
+> Once you know the NUMA node of your HBM, you can figure out the NUMA node of
+> it's local initiator:
+> 
+> 	# ls -d /sys/devices/system/hmat/mem_tgt2/local_init/mem_init*
+> 	/sys/devices/system/hmat/mem_tgt2/local_init/mem_init0
+> 
+> So, in our made-up example our HBM is located in numa node 2, and the local
+> CPU for that HBM is at numa node 0.
 
-Please let me know if you have trouble getting this working.
+initiator is a CPU?  I'd have expected you to expose a memory controller
+abstraction rather than re-use storage terminology.
