@@ -1,90 +1,66 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: shmctl(SHM_STAT) vs. /proc/sysvipc/shm permissions discrepancies
-Date: Thu, 21 Dec 2017 09:56:16 +0100
-Message-ID: <CAKgNAkjSF9fXhKCxPMp92zftA4Qtq91WBt8L5UR50oQO8HgRxw@mail.gmail.com>
-References: <20171219094848.GE2787@dhcp22.suse.cz> <CAKgNAkjJrmCFY-h2oqKS3zM_D+Csx-17A27mh08WKahyOVzrgQ@mail.gmail.com>
- <20171220092025.GD4831@dhcp22.suse.cz> <CAKgNAkisD7zDRoqJd6Gk1JMCZ8+Huj5QPV04nh2JXHMA+_R0-A@mail.gmail.com>
- <20171221080203.GZ4831@dhcp22.suse.cz>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Subject: Re: [PATCH 2/2] mmap.2: MAP_FIXED updated documentation
+Date: Thu, 21 Dec 2017 23:38:37 +1100
+Message-ID: <87po78fe7m.fsf@concordia.ellerman.id.au>
+References: <20171213092550.2774-1-mhocko@kernel.org> <20171213093110.3550-1-mhocko@kernel.org> <20171213093110.3550-2-mhocko@kernel.org> <20171213125540.GA18897@amd> <20171213130458.GI25185@dhcp22.suse.cz> <20171213130900.GA19932@amd> <20171213131640.GJ25185@dhcp22.suse.cz> <20171213132105.GA20517@amd> <20171213144050.GG11493@rei> <CAGXu5jLqE6cUxk-Girx6PG7upEzz8jmu1OH_3LVC26iJc2vTxQ@mail.gmail.com> <c7c7a30e-a122-1bbf-88a2-3349d755c62d@gmail.com> <CAGXu5jJ289R9koVoHmxcvUWr6XHSZR2p0qq3WtpNyN-iNSvrNQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171221080203.GZ4831-2MMpYkNvuYDjFM9bn6wA6Q@public.gmane.org>
+In-Reply-To: <CAGXu5jJ289R9koVoHmxcvUWr6XHSZR2p0qq3WtpNyN-iNSvrNQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Manfred Spraul <manfred-nhLOkwUX5cPe2c5cEj3t2g@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+To: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org>, Pavel Machek <pavel-+ZI9xUNit7I@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Khalid Aziz <khalid.aziz-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Russell King - ARM Linux <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Andrea Arcangeli <aarcange-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-arch <linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michal,
+Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org> writes:
 
-On 21 December 2017 at 09:02, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> On Wed 20-12-17 17:17:46, Michael Kerrisk wrote:
->> Hello Michal,
+> On Mon, Dec 18, 2017 at 11:12 AM, Michael Kerrisk (man-pages)
+> <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> Hello Kees,
 >>
->> On 20 December 2017 at 10:20, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> > On Tue 19-12-17 17:45:40, Michael Kerrisk wrote:
->> >> But, is
->> >> there a pressing reason to make the change? (Okay, I guess iterating
->> >> using *_STAT is nicer than parsing /proc/sysvipc/*.)
->> >
->> > The reporter of this issue claims that "Reading /proc/sysvipc/shm is way
->> > slower than executing the system call." I haven't checked that but I can
->> > imagine that /proc/sysvipc/shm can take quite some time when there are
->> > _many_ segments registered.
->>
->> Yes, that makes sense.
->>
->> > So they would like to use the syscall but
->> > the interacting parties do not have compatible permissions.
->>
->> So, I don't think there is any security issue, since the same info is
->> available in /proc/sysvipc/*.
+>> I'm late to the party, and only just caught up with the fuss :-).
 >
-> Well, I am not sure this is a valid argument (maybe I just misread your
-> statement).
-
-(Or perhaps I was not clear enough; see below)
-
-> Our security model _might_ be broken because of the sysipc
-> proc interface existance already. I am not saying it is broken because
-> I cannot see an attack vector based solely on the metadata information
-> knowledge. An attacker still cannot see/modify the real data. But maybe
-> there are some bugs lurking there and knowing the metadata might help to
-> exploit them. I dunno.
+> No worries!
 >
-> You are certainly right that modifying/adding STAT flag to comply with
-> the proc interface permission model will not make the system any more
-> vulnerable, though.
-
-Yep, that was my point. Modifying _STAT behavior won't decrease security.
-
-That said, /proc/sysvipc/* has been around for a long time now, and
-nothing bad seems to have happened so far, AFAIK.
-
->> The only question would be whether
->> change in the *_STAT behavior might surprise some applications into
->> behaving differently. I presume the chances of that are low, but if it
->> was a concert, one could add new shmctl/msgctl/semctl *_STAT_ALL (or
->> some such) operations that have the desired behavior.
+>> On 12/14/2017 12:19 AM, Kees Cook wrote:
+>>> On Wed, Dec 13, 2017 at 6:40 AM, Cyril Hrubis <chrubis-AlSwsSmVLrQ@public.gmane.org> wrote:
+>>>> Hi!
+>>>>> You selected stupid name for a flag. Everyone and their dog agrees
+>>>>> with that. There's even consensus on better name (and everyone agrees
+>>>>> it is better than .._SAFE). Of course, we could have debate if it is
+>>>>> NOREPLACE or NOREMOVE or ... and that would be bikeshed. This was just
+>>>>> poor naming on your part.
+>>>>
+>>>> Well while everybody agrees that the name is so bad that basically
+>>>> anything else would be better, there does not seem to be consensus on
+>>>> which one to pick. I do understand that this frustrating and fruitless.
+>>>
+>>> Based on the earlier threads where I tried to end the bikeshedding, it
+>>> seemed like MAP_FIXED_NOREPLACE was the least bad option.
+>>>
+>>>> So what do we do now, roll a dice to choose new name?
+>>>>
+>>>> Or do we ask BFDL[1] to choose the name?
+>>>
+>>> I'd like to hear feedback from Michael Kerrisk, as he's had to deal
+>>> with these kinds of choices in the past. I'm fine to ask Linus too. I
+>>> just want to get past the name since the feature is quite valuable.
+>>>
+>>> And if Michal doesn't want to touch this patch any more, I'm happy to
+>>> do the search/replace/resend. :P
+>>
+>> Something with the prefix MAP_FIXED_ seems to me obviously desirable,
+>> both to suggest that the function is similar, and also for easy
+>> grepping of the source code to look for instances of both.
+>> MAP_FIXED_SAFE didn't really bother me as a name, but
+>> MAP_FIXED_NOREPLACE (or MAP_FIXED_NOCLOBBER) seem slightly more
+>> descriptive of what the flag actually does, so a little better.
 >
-> I would lean towards _STAT_ALL because this is Linux specific behavior
-> (I have looked at what BSD does here and they are checking permissions
-> for STAT as well). It would also be simpler to revert if we ever find
-> that this is a leak with security consequences.
+> Great, thanks!
+>
+> Andrew, can you s/MAP_FIXED_SAFE/MAP_FIXED_NOREPLACE/g in the series?
 
-Oh -- I was unaware of this BSD behavior. At least on the various UNIX
-systems that I ever used SYSVIPC (including one or two ancient
-commercial BSD derivatives), ipcs(1) showed all IPC objects. (On
-FeeBSD, at least, it looks like ipcs(1) doesn't use the *_STAT
-interfaces.)
+This seems to have not happened. Presumably Andrew just missed the mail
+in the flood. And will probably miss this one too ... :)
 
-Cheers,
-
-Michael
-
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+cheers
