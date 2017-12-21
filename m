@@ -1,73 +1,84 @@
-From: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 0/3] create sysfs representation of ACPI HMAT
-Date: Thu, 21 Dec 2017 14:18:05 +0100
-Message-ID: <20171221131805.GE4831@dhcp22.suse.cz>
-References: <20171214021019.13579-1-ross.zwisler@linux.intel.com>
- <20171214130032.GK16951@dhcp22.suse.cz>
- <20171218203547.GA2366@linux.intel.com>
- <20171220164107.GA29103@linux.intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: known bad patch in -mm tree was Re: [PATCH 2/2] mmap.2: MAP_FIXED
+ updated documentation
+Date: Thu, 21 Dec 2017 15:59:07 +0100
+Message-ID: <20171221145907.GA7604@amd>
+References: <20171213125540.GA18897@amd>
+ <20171213130458.GI25185@dhcp22.suse.cz>
+ <20171213130900.GA19932@amd>
+ <20171213131640.GJ25185@dhcp22.suse.cz>
+ <20171213132105.GA20517@amd>
+ <20171213144050.GG11493@rei>
+ <CAGXu5jLqE6cUxk-Girx6PG7upEzz8jmu1OH_3LVC26iJc2vTxQ@mail.gmail.com>
+ <c7c7a30e-a122-1bbf-88a2-3349d755c62d@gmail.com>
+ <CAGXu5jJ289R9koVoHmxcvUWr6XHSZR2p0qq3WtpNyN-iNSvrNQ@mail.gmail.com>
+ <87po78fe7m.fsf@concordia.ellerman.id.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="pf9I7BMVVzbSWLtt"
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20171220164107.GA29103-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Cc: "Box, David E" <david.e.box-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zheng, Lv" <lv.zheng-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Anaczkowski,
- Lukasz" <lukasz.anaczkowski-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Moore,
- Robert" <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-acpi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Odzioba,
- Lukasz" <lukasz.odzioba-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Schmauss, Erik" <erik.schmauss-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Len Brown <lenb-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, John Hubbard <jhubbard-DDmLM1+adcrQT0dZR+AlfA@public.gmane.org>, Jerome Glisse <jglisse-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, devel-E0kO6a4B6psdnm+yROfE0A@public.gmane.org, "Kogut,
- Jaroslaw" <Jaroslaw.Kogut-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, "Koss,
- Marcin" <marcin.koss-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Brice Goglin <brice.goglin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Nachimuthu,
- Murugasamy" <murugasamy.nachimuthu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Koziej,
- Artur" <artur.koziej-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Lahtinen,
- Joona
+In-Reply-To: <87po78fe7m.fsf@concordia.ellerman.id.au>
+Sender: owner-linux-mm@kvack.org
+To: Michael Ellerman <mpe@ellerman.id.au>, vojtech@suse.cz, jikos@suse.cz
+Cc: Kees Cook <keescook@chromium.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Cyril Hrubis <chrubis@suse.cz>, Michal Hocko <mhocko@kernel.org>, Linux API <linux-api@vger.kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Russell King - ARM Linux <linux@armlinux.org.uk>, Andrea Arcangeli <aarcange@redhat.com>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, John Hubbard <jhubbard@nvidia.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 20-12-17 09:41:07, Ross Zwisler wrote:
-> On Mon, Dec 18, 2017 at 01:35:47PM -0700, Ross Zwisler wrote:
-> > On Thu, Dec 14, 2017 at 02:00:32PM +0100, Michal Hocko wrote:
-> <>
-> > > What is the testing procedure? How can I setup qemu to simlate such HW?
-> > 
-> > Well, the QEMU table simulation is gross, so I'd rather not get everyone
-> > testing with that.  Injecting custom HMAT and SRAT tables via initrd/initramfs
-> > is a much better way:
-> > 
-> > https://www.kernel.org/doc/Documentation/acpi/initrd_table_override.txt
-> > 
-> > Dan recently posted a patch that lets this happen for the HMAT:
-> > 
-> > https://lists.01.org/pipermail/linux-nvdimm/2017-December/013545.html
-> > 
-> > I'm working right now on getting an easier way to generate HMAT tables - I'll
-> > let you know when I have something working.
-> 
-> I've posted details on how to set up test configurations using injected HMAT
-> and SRAT tables here:
-> 
-> https://github.com/rzwisler/hmat_examples
-> 
-> So far I've got two different sample configs, and we can add more as they are
-> useful.  Having the sample configs in github is also nice because if someone
-> finds a config that causes a kernel issue it can be reported then added to
-> this list of example configs for future testing.
-> 
-> Please let me know if you have trouble getting this working.
 
-Thanks a lot Ross, I will try this but things are getting pretty busy
-here before the holiday so I won't be able to get to it and your other
-email before new year. Sorry about that.
+--pf9I7BMVVzbSWLtt
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
--- 
-Michal Hocko
-SUSE Labs
+Hi!
+
+> >>> And if Michal doesn't want to touch this patch any more, I'm happy to
+> >>> do the search/replace/resend. :P
+> >>
+> >> Something with the prefix MAP_FIXED_ seems to me obviously desirable,
+> >> both to suggest that the function is similar, and also for easy
+> >> grepping of the source code to look for instances of both.
+> >> MAP_FIXED_SAFE didn't really bother me as a name, but
+> >> MAP_FIXED_NOREPLACE (or MAP_FIXED_NOCLOBBER) seem slightly more
+> >> descriptive of what the flag actually does, so a little better.
+> >
+> > Great, thanks!
+> >
+> > Andrew, can you s/MAP_FIXED_SAFE/MAP_FIXED_NOREPLACE/g in the series?
+>=20
+> This seems to have not happened. Presumably Andrew just missed the mail
+> in the flood. And will probably miss this one too ... :)
+
+Nice way to mess up kernel development, Michal. Thank you! :-(.
+
+Andrew, everyone and their dog agrees MAP_FIXED_SAFE is stupid name,
+but Michal decided to just go ahead, ignoring feedback...
+
+Can you either s/MAP_FIXED_SAFE/MAP_FIXED_NOREPLACE/g or drop the patches?
+
+Thanks,
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--pf9I7BMVVzbSWLtt
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlo7zDsACgkQMOfwapXb+vJPWgCbBfYtq66FI5JTa2xsFDGf0za9
+djIAoJx/7xt2XwUfdzK545naG/32MRDV
+=vmt7
+-----END PGP SIGNATURE-----
+
+--pf9I7BMVVzbSWLtt--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
