@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [RFC PATCH for 4.16 07/11] membarrier: Provide core serializing command
-Date: Fri, 22 Dec 2017 15:15:32 -0500
-Message-ID: <20171222201536.29809-8-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.16 09/11] membarrier: x86: Provide core serializing command (v3)
+Date: Fri, 22 Dec 2017 15:15:34 -0500
+Message-ID: <20171222201536.29809-10-mathieu.desnoyers@efficios.com>
 References: <20171222201536.29809-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <20171222201536.29809-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
@@ -10,16 +10,26 @@ To: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Peter Zijlstra <pete
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Provide core serializing membarrier command to support memory reclaim
-by JIT.
+There are two places where core serialization is needed by membarrier:
 
-Each architecture needs to explicitly opt into that support by
-documenting in their architecture code how they provide the core
-serializing instructions required when returning from the membarrier
-IPI, and after the scheduler has updated the curr->mm pointer (before
-going back to user-space). They should then select
-ARCH_HAS_MEMBARRIER_SYNC_CORE to enable support for that command on
-their architecture.
+1) When returning from the membarrier IPI,
+2) After scheduler updates curr to a thread with a different mm, before
+   going back to user-space, since the curr->mm is used by membarrier to
+   check whether it needs to send an IPI to that CPU.
+
+x86-32 uses iret as return from interrupt, and both iret and sysexit to go
+back to user-space. The iret instruction is core serializing, but not
+sysexit.
+
+x86-64 uses iret as return from interrupt, which takes care of the IPI.
+However, it can return to user-space through either sysretl (compat
+code), sysretq, or iret. Given that sysret{l,q} is not core serializing,
+we rely instead on write_cr3() performed by switch_mm() to provide core
+serialization after changing the current mm, and deal with the special
+case of kthread -> uthread (temporarily keeping current mm into
+active_mm) by adding a sync_core() in that specific case.
+
+Use the new sync_core_before_usermode() to guarantee this.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
@@ -41,209 +51,157 @@ CC: Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
 CC: Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
 CC: David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
 CC: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- include/linux/sched/mm.h        |  6 +++++
- include/uapi/linux/membarrier.h | 32 +++++++++++++++++++++++++-
- init/Kconfig                    |  3 +++
- kernel/sched/membarrier.c       | 50 +++++++++++++++++++++++++++++++----------
- 4 files changed, 78 insertions(+), 13 deletions(-)
 
-diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index cbeecd287589..3ff217a071ca 100644
---- a/include/linux/sched/mm.h
-+++ b/include/linux/sched/mm.h
-@@ -223,6 +223,12 @@ enum {
- 	MEMBARRIER_STATE_PRIVATE_EXPEDITED			= (1U << 1),
- 	MEMBARRIER_STATE_SHARED_EXPEDITED_READY			= (1U << 2),
- 	MEMBARRIER_STATE_SHARED_EXPEDITED			= (1U << 3),
-+	MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY	= (1U << 4),
-+	MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE		= (1U << 5),
-+};
-+
-+enum {
-+	MEMBARRIER_FLAG_SYNC_CORE	= (1U << 0),
- };
+---
+Changes since v1:
+- Use the newly introduced sync_core_before_usermode(). Move all state
+  handling to generic code.
+- Add linux/processor.h include to include/linux/sched/mm.h.
+
+Changes since v2:
+- Fix use-after-free in membarrier_mm_sync_core_before_usermode.
+---
+ arch/x86/Kconfig          |  1 +
+ arch/x86/entry/entry_32.S |  5 +++++
+ arch/x86/entry/entry_64.S |  4 ++++
+ arch/x86/mm/tlb.c         |  7 ++++---
+ include/linux/sched/mm.h  | 12 ++++++++++++
+ kernel/sched/core.c       |  6 +++++-
+ kernel/sched/membarrier.c |  3 +++
+ 7 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index fbf05a880603..73a1e94174dd 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -54,6 +54,7 @@ config X86
+ 	select ARCH_HAS_FORTIFY_SOURCE
+ 	select ARCH_HAS_GCOV_PROFILE_ALL
+ 	select ARCH_HAS_KCOV			if X86_64
++	select ARCH_HAS_MEMBARRIER_SYNC_CORE
+ 	select ARCH_HAS_PMEM_API		if X86_64
+ 	# Causing hangs/crashes, see the commit that added this change for details.
+ 	select ARCH_HAS_REFCOUNT
+diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
+index 4838037f97f6..04e5daba8456 100644
+--- a/arch/x86/entry/entry_32.S
++++ b/arch/x86/entry/entry_32.S
+@@ -553,6 +553,11 @@ restore_all:
+ .Lrestore_nocheck:
+ 	RESTORE_REGS 4				# skip orig_eax/error_code
+ .Lirq_return:
++	/*
++	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
++	 * when returning from IPI handler and when returning from
++	 * scheduler to user-space.
++	 */
+ 	INTERRUPT_RETURN
  
- #ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
-diff --git a/include/uapi/linux/membarrier.h b/include/uapi/linux/membarrier.h
-index 2de01e595d3b..99a66577bd85 100644
---- a/include/uapi/linux/membarrier.h
-+++ b/include/uapi/linux/membarrier.h
-@@ -73,7 +73,7 @@
-  *                          to and return from the system call
-  *                          (non-running threads are de facto in such a
-  *                          state). This only covers threads from the
-- *                          same processes as the caller thread. This
-+ *                          same process as the caller thread. This
-  *                          command returns 0 on success. The
-  *                          "expedited" commands complete faster than
-  *                          the non-expedited ones, they never block,
-@@ -86,6 +86,34 @@
-  *                          Register the process intent to use
-  *                          MEMBARRIER_CMD_PRIVATE_EXPEDITED. Always
-  *                          returns 0.
-+ * @MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE:
-+ *                          In addition to provide memory ordering
-+ *                          guarantees described in
-+ *                          MEMBARRIER_CMD_PRIVATE_EXPEDITED, ensure
-+ *                          the caller thread, upon return from system
-+ *                          call, that all its running threads siblings
-+ *                          have executed a core serializing
-+ *                          instruction. (architectures are required to
-+ *                          guarantee that non-running threads issue
-+ *                          core serializing instructions before they
-+ *                          resume user-space execution). This only
-+ *                          covers threads from the same process as the
-+ *                          caller thread. This command returns 0 on
-+ *                          success. The "expedited" commands complete
-+ *                          faster than the non-expedited ones, they
-+ *                          never block, but have the downside of
-+ *                          causing extra overhead. If this command is
-+ *                          not implemented by an architecture, -EINVAL
-+ *                          is returned. A process needs to register its
-+ *                          intent to use the private expedited sync
-+ *                          core command prior to using it, otherwise
-+ *                          this command returns -EPERM.
-+ * @MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE:
-+ *                          Register the process intent to use
-+ *                          MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE.
-+ *                          If this command is not implemented by an
-+ *                          architecture, -EINVAL is returned.
-+ *                          Returns 0 on success.
-  *
-  * Command to be passed to the membarrier system call. The commands need to
-  * be a single bit each, except for MEMBARRIER_CMD_QUERY which is assigned to
-@@ -98,6 +126,8 @@ enum membarrier_cmd {
- 	MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED		= (1 << 2),
- 	MEMBARRIER_CMD_PRIVATE_EXPEDITED			= (1 << 3),
- 	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED		= (1 << 4),
-+	MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE		= (1 << 5),
-+	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE	= (1 << 6),
- };
+ .section .fixup, "ax"
+diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
+index f81d50d7ceac..3edfd3777841 100644
+--- a/arch/x86/entry/entry_64.S
++++ b/arch/x86/entry/entry_64.S
+@@ -666,6 +666,10 @@ GLOBAL(restore_regs_and_return_to_kernel)
+ 	POP_EXTRA_REGS
+ 	POP_C_REGS
+ 	addq	$8, %rsp	/* skip regs->orig_ax */
++	/*
++	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
++	 * when returning from IPI handler.
++	 */
+ 	INTERRUPT_RETURN
  
- #endif /* _UAPI_LINUX_MEMBARRIER_H */
-diff --git a/init/Kconfig b/init/Kconfig
-index dbf2d85ba67d..92b4a07aa56d 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1403,6 +1403,9 @@ config USERFAULTFD
- config ARCH_HAS_MEMBARRIER_HOOKS
- 	bool
- 
-+config ARCH_HAS_MEMBARRIER_SYNC_CORE
-+	bool
-+
- config EMBEDDED
- 	bool "Embedded system"
- 	option allnoconfig_y
-diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
-index 14bc8bf9e736..fcd2306c2367 100644
---- a/kernel/sched/membarrier.c
-+++ b/kernel/sched/membarrier.c
-@@ -26,11 +26,20 @@
-  * Bitmask made from a "or" of all commands within enum membarrier_cmd,
-  * except MEMBARRIER_CMD_QUERY.
-  */
-+#ifdef CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE
-+#define MEMBARRIER_PRIVATE_EXPEDITED_SYNC_CORE_BITMASK	\
-+	(MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE \
-+	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE)
-+#else
-+#define MEMBARRIER_PRIVATE_EXPEDITED_SYNC_CORE_BITMASK	0
-+#endif
-+
- #define MEMBARRIER_CMD_BITMASK	\
- 	(MEMBARRIER_CMD_SHARED | MEMBARRIER_CMD_SHARED_EXPEDITED \
- 	| MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED \
- 	| MEMBARRIER_CMD_PRIVATE_EXPEDITED	\
--	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED)
-+	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED	\
-+	| MEMBARRIER_PRIVATE_EXPEDITED_SYNC_CORE_BITMASK)
- 
- static void ipi_mb(void *info)
- {
-@@ -104,15 +113,23 @@ static int membarrier_shared_expedited(void)
- 	return 0;
- }
- 
--static int membarrier_private_expedited(void)
-+static int membarrier_private_expedited(int flags)
- {
- 	int cpu;
- 	bool fallback = false;
- 	cpumask_var_t tmpmask;
- 
--	if (!(atomic_read(&current->mm->membarrier_state)
--			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY))
--		return -EPERM;
-+	if (flags & MEMBARRIER_FLAG_SYNC_CORE) {
-+		if (!IS_ENABLED(CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE))
-+			return -EINVAL;
-+		if (!(atomic_read(&current->mm->membarrier_state) &
-+		      MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY))
-+			return -EPERM;
-+	} else {
-+		if (!(atomic_read(&current->mm->membarrier_state) &
-+		      MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY))
-+			return -EPERM;
-+	}
- 
- 	if (num_online_cpus() == 1)
- 		return 0;
-@@ -205,18 +222,24 @@ static int membarrier_register_shared_expedited(void)
- 	return 0;
- }
- 
--static int membarrier_register_private_expedited(void)
-+static int membarrier_register_private_expedited(int flags)
- {
- 	struct task_struct *p = current;
- 	struct mm_struct *mm = p->mm;
-+	int state = MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY;
-+
-+	if (flags & MEMBARRIER_FLAG_SYNC_CORE) {
-+		if (!IS_ENABLED(CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE))
-+			return -EINVAL;
-+		state = MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY;
-+	}
+ ENTRY(native_iret)
+diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
+index 5abf9bfcca1f..3b13d6735fa5 100644
+--- a/arch/x86/mm/tlb.c
++++ b/arch/x86/mm/tlb.c
+@@ -147,9 +147,10 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
+ 	this_cpu_write(cpu_tlbstate.is_lazy, false);
  
  	/*
- 	 * We need to consider threads belonging to different thread
- 	 * groups, which use the same mm. (CLONE_VM but not
- 	 * CLONE_THREAD).
+-	 * The membarrier system call requires a full memory barrier
+-	 * before returning to user-space, after storing to rq->curr.
+-	 * Writing to CR3 provides that full memory barrier.
++	 * The membarrier system call requires a full memory barrier and
++	 * core serialization before returning to user-space, after
++	 * storing to rq->curr. Writing to CR3 provides that full
++	 * memory barrier and core serializing instruction.
  	 */
--	if (atomic_read(&mm->membarrier_state)
--			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY)
-+	if (atomic_read(&mm->membarrier_state) & state)
+ 	if (real_prev == next) {
+ 		VM_WARN_ON(this_cpu_read(cpu_tlbstate.ctxs[prev_asid].ctx_id) !=
+diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
+index 3ff217a071ca..fcd2cdc482c1 100644
+--- a/include/linux/sched/mm.h
++++ b/include/linux/sched/mm.h
+@@ -7,6 +7,7 @@
+ #include <linux/sched.h>
+ #include <linux/mm_types.h>
+ #include <linux/gfp.h>
++#include <linux/processor.h>
+ 
+ /*
+  * Routines for handling mm_structs
+@@ -235,6 +236,14 @@ enum {
+ #include <asm/membarrier.h>
+ #endif
+ 
++static inline void membarrier_mm_sync_core_before_usermode(struct mm_struct *mm)
++{
++	if (likely(!(atomic_read(&mm->membarrier_state) &
++		     MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE)))
++		return;
++	sync_core_before_usermode();
++}
++
+ static inline void membarrier_execve(struct task_struct *t)
+ {
+ 	atomic_set(&t->mm->membarrier_state, 0);
+@@ -250,6 +259,9 @@ static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
+ static inline void membarrier_execve(struct task_struct *t)
+ {
+ }
++static inline void membarrier_mm_sync_core_before_usermode(struct mm_struct *mm)
++{
++}
+ #endif
+ 
+ #endif /* _LINUX_SCHED_MM_H */
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 62f269980e29..f86cbba038b9 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2662,9 +2662,13 @@ static struct rq *finish_task_switch(struct task_struct *prev)
+ 	 * thread, mmdrop()'s implicit full barrier is required by the
+ 	 * membarrier system call, because the current active_mm can
+ 	 * become the current mm without going through switch_mm().
++	 * membarrier also requires a core serializing instruction
++	 * before going back to user-space after storing to rq->curr.
+ 	 */
+-	if (mm)
++	if (mm) {
++		membarrier_mm_sync_core_before_usermode(mm);
+ 		mmdrop(mm);
++	}
+ 	if (unlikely(prev_state == TASK_DEAD)) {
+ 		if (prev->sched_class->task_dead)
+ 			prev->sched_class->task_dead(prev);
+diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
+index fcd2306c2367..e4f7b6dfb07b 100644
+--- a/kernel/sched/membarrier.c
++++ b/kernel/sched/membarrier.c
+@@ -242,6 +242,9 @@ static int membarrier_register_private_expedited(int flags)
+ 	if (atomic_read(&mm->membarrier_state) & state)
  		return 0;
  	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED, &mm->membarrier_state);
++	if (flags & MEMBARRIER_FLAG_SYNC_CORE)
++		atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE,
++			  &mm->membarrier_state);
  	if (!(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)) {
-@@ -226,8 +249,7 @@ static int membarrier_register_private_expedited(void)
- 		 */
- 		synchronize_sched();
- 	}
--	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY,
--			&mm->membarrier_state);
-+	atomic_or(state, &mm->membarrier_state);
- 	return 0;
- }
- 
-@@ -283,9 +305,13 @@ SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
- 	case MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED:
- 		return membarrier_register_shared_expedited();
- 	case MEMBARRIER_CMD_PRIVATE_EXPEDITED:
--		return membarrier_private_expedited();
-+		return membarrier_private_expedited(0);
- 	case MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED:
--		return membarrier_register_private_expedited();
-+		return membarrier_register_private_expedited(0);
-+	case MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE:
-+		return membarrier_private_expedited(MEMBARRIER_FLAG_SYNC_CORE);
-+	case MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE:
-+		return membarrier_register_private_expedited(MEMBARRIER_FLAG_SYNC_CORE);
- 	default:
- 		return -EINVAL;
- 	}
+ 		/*
+ 		 * Ensure all future scheduler executions will observe the
 -- 
 2.11.0
