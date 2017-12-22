@@ -1,161 +1,308 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [RFC PATCH for 4.16 04/11] membarrier: Document scheduler barrier requirements (v5)
-Date: Fri, 22 Dec 2017 15:15:29 -0500
-Message-ID: <20171222201536.29809-5-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.16 05/11] membarrier: provide SHARED_EXPEDITED command (v2)
+Date: Fri, 22 Dec 2017 15:15:30 -0500
+Message-ID: <20171222201536.29809-6-mathieu.desnoyers@efficios.com>
 References: <20171222201536.29809-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171222201536.29809-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171222201536.29809-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Will Deacon <will.deacon@arm.com>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, David Sehr <sehr@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Document the membarrier requirement on having a full memory barrier in
-__schedule() after coming from user-space, before storing to rq->curr.
-It is provided by smp_mb__after_spinlock() in __schedule().
+Allow expedited membarrier to be used for data shared between processes
+(shared memory).
 
-Document that membarrier requires a full barrier on transition from
-kernel thread to userspace thread. We currently have an implicit barrier
-from atomic_dec_and_test() in mmdrop() that ensures this.
+Processes wishing to receive the membarriers register with
+MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED. Those which want to issue
+membarrier invoke MEMBARRIER_CMD_SHARED_EXPEDITED.
 
-The x86 switch_mm_irqs_off() full barrier is currently provided by many
-cpumask update operations as well as write_cr3(). Document that
-write_cr3() provides this barrier.
+This allows extremely simple kernel-level implementation: we have almost
+everything we need with the PRIVATE_EXPEDITED barrier code. All we need
+to do is to add a flag in the mm_struct that will be used to check
+whether we need to send the IPI to the current thread of each CPU.
 
-Changes since v1:
-- Update comments to match reality for code paths which are after
-  storing to rq->curr, before returning to user-space, based on feedback
-  from Andrea Parri.
-Changes since v2:
-- Update changelog (smp_mb__before_spinlock -> smp_mb__after_spinlock).
-  Based on feedback from Andrea Parri.
-Changes since v3:
-- Clarify comments following feeback from Peter Zijlstra.
-Changes since v4:
-- Update comment regarding powerpc barrier.
+There is a slight downside to this approach compared to targeting
+specific shared memory users: when performing a membarrier operation,
+all registered "shared" receivers will get the barrier, even if they
+don't share a memory mapping with the "sender" issuing
+MEMBARRIER_CMD_SHARED_EXPEDITED.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-CC: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-CC: Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
-CC: Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
-CC: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-CC: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-CC: Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+This registration approach seems to fit the requirement of not
+disturbing processes that really deeply care about real-time: they
+simply should not register with MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED.
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Maged Michael <maged.michael@gmail.com>
+CC: Avi Kivity <avi@scylladb.com>
+CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+CC: Paul Mackerras <paulus@samba.org>
+CC: Michael Ellerman <mpe@ellerman.id.au>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Andrea Parri <parri.andrea@gmail.com>
+CC: x86@kernel.org
 ---
- arch/x86/mm/tlb.c        |  5 +++++
- include/linux/sched/mm.h |  5 +++++
- kernel/sched/core.c      | 37 ++++++++++++++++++++++++++-----------
- 3 files changed, 36 insertions(+), 11 deletions(-)
+Changes since v1:
+- Add missing preempt disable around smp_call_function_many().
+---
+ arch/powerpc/include/asm/membarrier.h |   3 +-
+ include/linux/sched/mm.h              |   6 +-
+ include/uapi/linux/membarrier.h       |  34 ++++++++--
+ kernel/sched/membarrier.c             | 114 ++++++++++++++++++++++++++++++++--
+ 4 files changed, 143 insertions(+), 14 deletions(-)
 
-diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 3118392cdf75..5abf9bfcca1f 100644
---- a/arch/x86/mm/tlb.c
-+++ b/arch/x86/mm/tlb.c
-@@ -146,6 +146,11 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
- #endif
- 	this_cpu_write(cpu_tlbstate.is_lazy, false);
+diff --git a/arch/powerpc/include/asm/membarrier.h b/arch/powerpc/include/asm/membarrier.h
+index 98ff4f1fcf2b..20cd79ed3fc6 100644
+--- a/arch/powerpc/include/asm/membarrier.h
++++ b/arch/powerpc/include/asm/membarrier.h
+@@ -13,7 +13,8 @@ static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
+ 	 * store to rq->curr.
+ 	 */
+ 	if (likely(!(atomic_read(&next->membarrier_state) &
+-		     MEMBARRIER_STATE_PRIVATE_EXPEDITED) || !prev))
++		     (MEMBARRIER_STATE_PRIVATE_EXPEDITED |
++		      MEMBARRIER_STATE_SHARED_EXPEDITED)) || !prev))
+ 		return;
  
-+	/*
-+	 * The membarrier system call requires a full memory barrier
-+	 * before returning to user-space, after storing to rq->curr.
-+	 * Writing to CR3 provides that full memory barrier.
-+	 */
- 	if (real_prev == next) {
- 		VM_WARN_ON(this_cpu_read(cpu_tlbstate.ctxs[prev_asid].ctx_id) !=
- 			   next->context.ctx_id);
+ 	/*
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 1754396795f6..28aef7051d73 100644
+index 28aef7051d73..cbeecd287589 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
-@@ -39,6 +39,11 @@ static inline void mmgrab(struct mm_struct *mm)
- extern void __mmdrop(struct mm_struct *);
- static inline void mmdrop(struct mm_struct *mm)
- {
-+	/*
-+	 * The implicit full barrier implied by atomic_dec_and_test is
-+	 * required by the membarrier system call before returning to
-+	 * user-space, after storing to rq->curr.
-+	 */
- 	if (unlikely(atomic_dec_and_test(&mm->mm_count)))
- 		__mmdrop(mm);
+@@ -219,8 +219,10 @@ static inline void memalloc_noreclaim_restore(unsigned int flags)
+ 
+ #ifdef CONFIG_MEMBARRIER
+ enum {
+-	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY	= (1U << 0),
+-	MEMBARRIER_STATE_PRIVATE_EXPEDITED		= (1U << 1),
++	MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY		= (1U << 0),
++	MEMBARRIER_STATE_PRIVATE_EXPEDITED			= (1U << 1),
++	MEMBARRIER_STATE_SHARED_EXPEDITED_READY			= (1U << 2),
++	MEMBARRIER_STATE_SHARED_EXPEDITED			= (1U << 3),
+ };
+ 
+ #ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
+diff --git a/include/uapi/linux/membarrier.h b/include/uapi/linux/membarrier.h
+index 4e01ad7ffe98..2de01e595d3b 100644
+--- a/include/uapi/linux/membarrier.h
++++ b/include/uapi/linux/membarrier.h
+@@ -40,6 +40,28 @@
+  *                          (non-running threads are de facto in such a
+  *                          state). This covers threads from all processes
+  *                          running on the system. This command returns 0.
++ * @MEMBARRIER_CMD_SHARED_EXPEDITED:
++ *                          Execute a memory barrier on all running threads
++ *                          part of a process which previously registered
++ *                          with MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED.
++ *                          Upon return from system call, the caller thread
++ *                          is ensured that all running threads have passed
++ *                          through a state where all memory accesses to
++ *                          user-space addresses match program order between
++ *                          entry to and return from the system call
++ *                          (non-running threads are de facto in such a
++ *                          state). This only covers threads from processes
++ *                          which registered with
++ *                          MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED.
++ *                          This command returns 0. Given that
++ *                          registration is about the intent to receive
++ *                          the barriers, it is valid to invoke
++ *                          MEMBARRIER_CMD_SHARED_EXPEDITED from a
++ *                          non-registered process.
++ * @MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED:
++ *                          Register the process intent to receive
++ *                          MEMBARRIER_CMD_SHARED_EXPEDITED memory
++ *                          barriers. Always returns 0.
+  * @MEMBARRIER_CMD_PRIVATE_EXPEDITED:
+  *                          Execute a memory barrier on each running
+  *                          thread belonging to the same process as the current
+@@ -70,12 +92,12 @@
+  * the value 0.
+  */
+ enum membarrier_cmd {
+-	MEMBARRIER_CMD_QUERY				= 0,
+-	MEMBARRIER_CMD_SHARED				= (1 << 0),
+-	/* reserved for MEMBARRIER_CMD_SHARED_EXPEDITED (1 << 1) */
+-	/* reserved for MEMBARRIER_CMD_PRIVATE (1 << 2) */
+-	MEMBARRIER_CMD_PRIVATE_EXPEDITED		= (1 << 3),
+-	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED	= (1 << 4),
++	MEMBARRIER_CMD_QUERY					= 0,
++	MEMBARRIER_CMD_SHARED					= (1 << 0),
++	MEMBARRIER_CMD_SHARED_EXPEDITED				= (1 << 1),
++	MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED		= (1 << 2),
++	MEMBARRIER_CMD_PRIVATE_EXPEDITED			= (1 << 3),
++	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED		= (1 << 4),
+ };
+ 
+ #endif /* _UAPI_LINUX_MEMBARRIER_H */
+diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
+index 678577267a9a..14bc8bf9e736 100644
+--- a/kernel/sched/membarrier.c
++++ b/kernel/sched/membarrier.c
+@@ -27,7 +27,9 @@
+  * except MEMBARRIER_CMD_QUERY.
+  */
+ #define MEMBARRIER_CMD_BITMASK	\
+-	(MEMBARRIER_CMD_SHARED | MEMBARRIER_CMD_PRIVATE_EXPEDITED	\
++	(MEMBARRIER_CMD_SHARED | MEMBARRIER_CMD_SHARED_EXPEDITED \
++	| MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED \
++	| MEMBARRIER_CMD_PRIVATE_EXPEDITED	\
+ 	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED)
+ 
+ static void ipi_mb(void *info)
+@@ -35,6 +37,73 @@ static void ipi_mb(void *info)
+ 	smp_mb();	/* IPIs should be serializing but paranoid. */
  }
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 524b705892db..62f269980e29 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2657,6 +2657,12 @@ static struct rq *finish_task_switch(struct task_struct *prev)
- 	finish_arch_post_lock_switch();
  
- 	fire_sched_in_preempt_notifiers(current);
++static int membarrier_shared_expedited(void)
++{
++	int cpu;
++	bool fallback = false;
++	cpumask_var_t tmpmask;
++
++	if (num_online_cpus() == 1)
++		return 0;
++
 +	/*
-+	 * When transitioning from a kernel thread to a userspace
-+	 * thread, mmdrop()'s implicit full barrier is required by the
-+	 * membarrier system call, because the current active_mm can
-+	 * become the current mm without going through switch_mm().
++	 * Matches memory barriers around rq->curr modification in
++	 * scheduler.
 +	 */
- 	if (mm)
- 		mmdrop(mm);
- 	if (unlikely(prev_state == TASK_DEAD)) {
-@@ -2762,6 +2768,13 @@ context_switch(struct rq *rq, struct task_struct *prev,
- 	 */
- 	arch_start_context_switch(prev);
++	smp_mb();	/* system call entry is not a mb. */
++
++	/*
++	 * Expedited membarrier commands guarantee that they won't
++	 * block, hence the GFP_NOWAIT allocation flag and fallback
++	 * implementation.
++	 */
++	if (!zalloc_cpumask_var(&tmpmask, GFP_NOWAIT)) {
++		/* Fallback for OOM. */
++		fallback = true;
++	}
++
++	cpus_read_lock();
++	for_each_online_cpu(cpu) {
++		struct task_struct *p;
++
++		/*
++		 * Skipping the current CPU is OK even through we can be
++		 * migrated at any point. The current CPU, at the point
++		 * where we read raw_smp_processor_id(), is ensured to
++		 * be in program order with respect to the caller
++		 * thread. Therefore, we can skip this CPU from the
++		 * iteration.
++		 */
++		if (cpu == raw_smp_processor_id())
++			continue;
++		rcu_read_lock();
++		p = task_rcu_dereference(&cpu_rq(cpu)->curr);
++		if (p && p->mm && (atomic_read(&p->mm->membarrier_state) &
++				   MEMBARRIER_STATE_SHARED_EXPEDITED)) {
++			if (!fallback)
++				__cpumask_set_cpu(cpu, tmpmask);
++			else
++				smp_call_function_single(cpu, ipi_mb, NULL, 1);
++		}
++		rcu_read_unlock();
++	}
++	if (!fallback) {
++		preempt_disable();
++		smp_call_function_many(tmpmask, ipi_mb, NULL, 1);
++		preempt_enable();
++		free_cpumask_var(tmpmask);
++	}
++	cpus_read_unlock();
++
++	/*
++	 * Memory barrier on the caller thread _after_ we finished
++	 * waiting for the last IPI. Matches memory barriers around
++	 * rq->curr modification in scheduler.
++	 */
++	smp_mb();	/* exit from system call is not a mb */
++	return 0;
++}
++
+ static int membarrier_private_expedited(void)
+ {
+ 	int cpu;
+@@ -105,7 +174,38 @@ static int membarrier_private_expedited(void)
+ 	return 0;
+ }
  
-+	/*
-+	 * If mm is non-NULL, we pass through switch_mm(). If mm is
-+	 * NULL, we will pass through mmdrop() in finish_task_switch().
-+	 * Both of these contain the full memory barrier required by
-+	 * membarrier after storing to rq->curr, before returning to
-+	 * user-space.
-+	 */
- 	if (!mm) {
- 		next->active_mm = oldmm;
- 		mmgrab(oldmm);
-@@ -3298,6 +3311,9 @@ static void __sched notrace __schedule(bool preempt)
- 	 * Make sure that signal_pending_state()->signal_pending() below
- 	 * can't be reordered with __set_current_state(TASK_INTERRUPTIBLE)
- 	 * done by the caller to avoid the race with signal_wake_up().
-+	 *
-+	 * The membarrier system call requires a full memory barrier
-+	 * after coming from user-space, before storing to rq->curr.
+-static void membarrier_register_private_expedited(void)
++static int membarrier_register_shared_expedited(void)
++{
++	struct task_struct *p = current;
++	struct mm_struct *mm = p->mm;
++
++	if (atomic_read(&mm->membarrier_state) &
++	    MEMBARRIER_STATE_SHARED_EXPEDITED_READY)
++		return 0;
++	atomic_or(MEMBARRIER_STATE_SHARED_EXPEDITED, &mm->membarrier_state);
++	if (atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1) {
++		/*
++		 * For single mm user, single threaded process, we can
++		 * simply issue a memory barrier after setting
++		 * MEMBARRIER_STATE_SHARED_EXPEDITED to guarantee that
++		 * no memory access following registration is reordered
++		 * before registration.
++		 */
++		smp_mb();
++	} else {
++		/*
++		 * For multi-mm user threads, we need to ensure all
++		 * future scheduler executions will observe the new
++		 * thread flag state for this mm.
++		 */
++		synchronize_sched();
++	}
++	atomic_or(MEMBARRIER_STATE_SHARED_EXPEDITED_READY,
++		  &mm->membarrier_state);
++	return 0;
++}
++
++static int membarrier_register_private_expedited(void)
+ {
+ 	struct task_struct *p = current;
+ 	struct mm_struct *mm = p->mm;
+@@ -117,7 +217,7 @@ static void membarrier_register_private_expedited(void)
  	 */
- 	rq_lock(rq, &rf);
- 	smp_mb__after_spinlock();
-@@ -3345,17 +3361,16 @@ static void __sched notrace __schedule(bool preempt)
+ 	if (atomic_read(&mm->membarrier_state)
+ 			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY)
+-		return;
++		return 0;
+ 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED, &mm->membarrier_state);
+ 	if (!(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)) {
  		/*
- 		 * The membarrier system call requires each architecture
- 		 * to have a full memory barrier after updating
--		 * rq->curr, before returning to user-space. For TSO
--		 * (e.g. x86), the architecture must provide its own
--		 * barrier in switch_mm(). For weakly ordered machines
--		 * for which spin_unlock() acts as a full memory
--		 * barrier, finish_lock_switch() in common code takes
--		 * care of this barrier. For weakly ordered machines for
--		 * which spin_unlock() acts as a RELEASE barrier (only
--		 * arm64 and PowerPC), arm64 has a full barrier in
--		 * switch_to(), and PowerPC has
--		 * smp_mb__after_unlock_lock() before
--		 * finish_lock_switch().
-+		 * rq->curr, before returning to user-space.
-+		 *
-+		 * Here are the schemes providing that barrier on the
-+		 * various architectures:
-+		 * - mm ? switch_mm() : mmdrop() for x86, s390, sparc, PowerPC.
-+		 *   switch_mm() rely on membarrier_arch_switch_mm() on PowerPC.
-+		 * - finish_lock_switch() for weakly-ordered
-+		 *   architectures where spin_unlock is a full barrier,
-+		 * - switch_to() for arm64 (weakly-ordered, spin_unlock
-+		 *   is a RELEASE barrier),
- 		 */
- 		++*switch_count;
+@@ -128,6 +228,7 @@ static void membarrier_register_private_expedited(void)
+ 	}
+ 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY,
+ 			&mm->membarrier_state);
++	return 0;
+ }
  
+ /**
+@@ -177,11 +278,14 @@ SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
+ 		if (num_online_cpus() > 1)
+ 			synchronize_sched();
+ 		return 0;
++	case MEMBARRIER_CMD_SHARED_EXPEDITED:
++		return membarrier_shared_expedited();
++	case MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED:
++		return membarrier_register_shared_expedited();
+ 	case MEMBARRIER_CMD_PRIVATE_EXPEDITED:
+ 		return membarrier_private_expedited();
+ 	case MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED:
+-		membarrier_register_private_expedited();
+-		return 0;
++		return membarrier_register_private_expedited();
+ 	default:
+ 		return -EINVAL;
+ 	}
 -- 
 2.11.0
