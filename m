@@ -1,133 +1,164 @@
-From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
-        <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
-Date: Wed, 27 Dec 2017 09:09:24 -0800
-Message-ID: <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
-References: <20171205223052.12687-1-mahesh@bandewar.net>
+Date: Wed, 27 Dec 2017 21:23:23 +0100
+Message-ID: <CAKgNAkgzyUT5-Gb7COjz5Um0f=ViH8s8ap4Jh9vvtyS8G=iDkw@mail.gmail.com>
+References: <20171205223052.12687-1-mahesh@bandewar.net> <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20171205223052.12687-1-mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?= <maheshb@google.com>
+Cc: James Morris <james.l.morris@oracle.com>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>
 List-Id: linux-api@vger.kernel.org
 
-Hello James,
+Hello Mahesh,
 
-Seems like I missed your name to be added into the review of this
-patch series. Would you be willing be pull this into the security
-tree? Serge Hallyn has already ACKed it.
+On 27 December 2017 at 18:09, Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=87=
+=E0=A4=B6 =E0=A4=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0)
+<maheshb@google.com> wrote:
+> Hello James,
+>
+> Seems like I missed your name to be added into the review of this
+> patch series. Would you be willing be pull this into the security
+> tree? Serge Hallyn has already ACKed it.
 
-Thanks,
---mahesh..
+We seem to have no formal documentation/specification of this feature.
+I think that should be written up before this patch goes into
+mainline...
 
-On Tue, Dec 5, 2017 at 2:30 PM, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org> wrote:
-> From: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cheers,
+
+Michael
+
+
 >
-> TL;DR version
-> -------------
-> Creating a sandbox environment with namespaces is challenging
-> considering what these sandboxed processes can engage into. e.g.
-> CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
-> Current form of user-namespaces, however, if changed a bit can allow
-> us to create a sandbox environment without locking down user-
-> namespaces.
->
-> Detailed version
-> ----------------
->
-> Problem
-> -------
-> User-namespaces in the current form have increased the attack surface as
-> any process can acquire capabilities which are not available to them (by
-> default) by performing combination of clone()/unshare()/setns() syscalls.
->
->     #define _GNU_SOURCE
->     #include <stdio.h>
->     #include <sched.h>
->     #include <netinet/in.h>
->
->     int main(int ac, char **av)
->     {
->         int sock = -1;
->
->         printf("Attempting to open RAW socket before unshare()...\n");
->         sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
->         if (sock < 0) {
->             perror("socket() SOCK_RAW failed: ");
->         } else {
->             printf("Successfully opened RAW-Sock before unshare().\n");
->             close(sock);
->             sock = -1;
->         }
->
->         if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
->             perror("unshare() failed: ");
->             return 1;
->         }
->
->         printf("Attempting to open RAW socket after unshare()...\n");
->         sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
->         if (sock < 0) {
->             perror("socket() SOCK_RAW failed: ");
->         } else {
->             printf("Successfully opened RAW-Sock after unshare().\n");
->             close(sock);
->             sock = -1;
->         }
->
->         return 0;
->     }
->
-> The above example shows how easy it is to acquire NET_RAW capabilities
-> and once acquired, these processes could take benefit of above mentioned
-> or similar issues discovered/undiscovered with malicious intent. Note
-> that this is just an example and the problem/solution is not limited
-> to NET_RAW capability *only*.
->
-> The easiest fix one can apply here is to lock-down user-namespaces which
-> many of the distros do (i.e. don't allow users to create user namespaces),
-> but unfortunately that prevents everyone from using them.
->
-> Approach
-> --------
-> Introduce a notion of 'controlled' user-namespaces. Every process on
-> the host is allowed to create user-namespaces (governed by the limit
-> imposed by per-ns sysctl) however, mark user-namespaces created by
-> sandboxed processes as 'controlled'. Use this 'mark' at the time of
-> capability check in conjunction with a global capability whitelist.
-> If the capability is not whitelisted, processes that belong to
-> controlled user-namespaces will not be allowed.
->
-> Once a user-ns is marked as 'controlled'; all its child user-
-> namespaces are marked as 'controlled' too.
->
-> A global whitelist is list of capabilities governed by the
-> sysctl which is available to (privileged) user in init-ns to modify
-> while it's applicable to all controlled user-namespaces on the host.
->
-> Marking user-namespaces controlled without modifying the whitelist is
-> equivalent of the current behavior. The default value of whitelist includes
-> all capabilities so that the compatibility is maintained. However it gives
-> admins fine-grained ability to control various capabilities system wide
-> without locking down user-namespaces.
->
-> Please see individual patches in this series.
->
-> Mahesh Bandewar (2):
->   capability: introduce sysctl for controlled user-ns capability whitelist
->   userns: control capabilities of some user namespaces
->
->  Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
->  include/linux/capability.h      |  7 ++++++
->  include/linux/user_namespace.h  | 25 ++++++++++++++++++++
->  kernel/capability.c             | 52 +++++++++++++++++++++++++++++++++++++++++
->  kernel/sysctl.c                 |  5 ++++
->  kernel/user_namespace.c         |  4 ++++
->  security/commoncap.c            |  8 +++++++
->  7 files changed, 122 insertions(+)
->
+> On Tue, Dec 5, 2017 at 2:30 PM, Mahesh Bandewar <mahesh@bandewar.net> wro=
+te:
+>> From: Mahesh Bandewar <maheshb@google.com>
+>>
+>> TL;DR version
+>> -------------
+>> Creating a sandbox environment with namespaces is challenging
+>> considering what these sandboxed processes can engage into. e.g.
+>> CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
+>> Current form of user-namespaces, however, if changed a bit can allow
+>> us to create a sandbox environment without locking down user-
+>> namespaces.
+>>
+>> Detailed version
+>> ----------------
+>>
+>> Problem
+>> -------
+>> User-namespaces in the current form have increased the attack surface as
+>> any process can acquire capabilities which are not available to them (by
+>> default) by performing combination of clone()/unshare()/setns() syscalls=
+.
+>>
+>>     #define _GNU_SOURCE
+>>     #include <stdio.h>
+>>     #include <sched.h>
+>>     #include <netinet/in.h>
+>>
+>>     int main(int ac, char **av)
+>>     {
+>>         int sock =3D -1;
+>>
+>>         printf("Attempting to open RAW socket before unshare()...\n");
+>>         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+>>         if (sock < 0) {
+>>             perror("socket() SOCK_RAW failed: ");
+>>         } else {
+>>             printf("Successfully opened RAW-Sock before unshare().\n");
+>>             close(sock);
+>>             sock =3D -1;
+>>         }
+>>
+>>         if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
+>>             perror("unshare() failed: ");
+>>             return 1;
+>>         }
+>>
+>>         printf("Attempting to open RAW socket after unshare()...\n");
+>>         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+>>         if (sock < 0) {
+>>             perror("socket() SOCK_RAW failed: ");
+>>         } else {
+>>             printf("Successfully opened RAW-Sock after unshare().\n");
+>>             close(sock);
+>>             sock =3D -1;
+>>         }
+>>
+>>         return 0;
+>>     }
+>>
+>> The above example shows how easy it is to acquire NET_RAW capabilities
+>> and once acquired, these processes could take benefit of above mentioned
+>> or similar issues discovered/undiscovered with malicious intent. Note
+>> that this is just an example and the problem/solution is not limited
+>> to NET_RAW capability *only*.
+>>
+>> The easiest fix one can apply here is to lock-down user-namespaces which
+>> many of the distros do (i.e. don't allow users to create user namespaces=
+),
+>> but unfortunately that prevents everyone from using them.
+>>
+>> Approach
+>> --------
+>> Introduce a notion of 'controlled' user-namespaces. Every process on
+>> the host is allowed to create user-namespaces (governed by the limit
+>> imposed by per-ns sysctl) however, mark user-namespaces created by
+>> sandboxed processes as 'controlled'. Use this 'mark' at the time of
+>> capability check in conjunction with a global capability whitelist.
+>> If the capability is not whitelisted, processes that belong to
+>> controlled user-namespaces will not be allowed.
+>>
+>> Once a user-ns is marked as 'controlled'; all its child user-
+>> namespaces are marked as 'controlled' too.
+>>
+>> A global whitelist is list of capabilities governed by the
+>> sysctl which is available to (privileged) user in init-ns to modify
+>> while it's applicable to all controlled user-namespaces on the host.
+>>
+>> Marking user-namespaces controlled without modifying the whitelist is
+>> equivalent of the current behavior. The default value of whitelist inclu=
+des
+>> all capabilities so that the compatibility is maintained. However it giv=
+es
+>> admins fine-grained ability to control various capabilities system wide
+>> without locking down user-namespaces.
+>>
+>> Please see individual patches in this series.
+>>
+>> Mahesh Bandewar (2):
+>>   capability: introduce sysctl for controlled user-ns capability whiteli=
+st
+>>   userns: control capabilities of some user namespaces
+>>
+>>  Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
+>>  include/linux/capability.h      |  7 ++++++
+>>  include/linux/user_namespace.h  | 25 ++++++++++++++++++++
+>>  kernel/capability.c             | 52 ++++++++++++++++++++++++++++++++++=
++++++++
+>>  kernel/sysctl.c                 |  5 ++++
+>>  kernel/user_namespace.c         |  4 ++++
+>>  security/commoncap.c            |  8 +++++++
+>>  7 files changed, 122 insertions(+)
+>>
+>> --
+>> 2.15.0.531.g2ccb3012c9-goog
+>>
 > --
-> 2.15.0.531.g2ccb3012c9-goog
->
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
