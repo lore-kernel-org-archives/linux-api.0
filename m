@@ -1,179 +1,68 @@
-From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
-        <maheshb@google.com>
-Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
-Date: Wed, 27 Dec 2017 16:45:41 -0800
-Message-ID: <CAF2d9jjCJxu+oiCCSa1zN8OxfdiCMQb4dx7Mc0YdNgJuMNkOzw@mail.gmail.com>
-References: <20171205223052.12687-1-mahesh@bandewar.net> <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
- <CAKgNAkgzyUT5-Gb7COjz5Um0f=ViH8s8ap4Jh9vvtyS8G=iDkw@mail.gmail.com>
+From: Ozgur <ozgur@goosey.org>
+Subject: Re: rtc: sysfs: move sysfs interface to Documentation/ABI
+Date: Thu, 28 Dec 2017 21:30:14 +0300
+Message-ID: <4310831514485814@web18g.yandex.ru>
+References: <20171228133132.GA3927@mordor.localdomain>
+         <434381514470951@web50o.yandex.ru>
+         <480511514471013@web35j.yandex.ru> <20171228150027.GA11300@mordor.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAKgNAkgzyUT5-Gb7COjz5Um0f=ViH8s8ap4Jh9vvtyS8G=iDkw@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: mtk.manpages@gmail.com
-Cc: James Morris <james.l.morris@oracle.com>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20171228150027.GA11300@mordor.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Aishwarya Pant <aishpant@gmail.com>
+Cc: Alessandro Zummo <a.zummo@towertech.it>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, "linux-rtc@vger.kernel.org" <linux-rtc@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Julia Lawall <julia.lawall@lip6.fr>, Jonathan Corbet <corbet@lwn.net>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 27, 2017 at 12:23 PM, Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
-> Hello Mahesh,
->
-> On 27 December 2017 at 18:09, Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=
-=87=E0=A4=B6 =E0=A4=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=
-=B0)
-> <maheshb@google.com> wrote:
->> Hello James,
->>
->> Seems like I missed your name to be added into the review of this
->> patch series. Would you be willing be pull this into the security
->> tree? Serge Hallyn has already ACKed it.
->
-> We seem to have no formal documentation/specification of this feature.
-> I think that should be written up before this patch goes into
-> mainline...
->
-absolutely. I have added enough information into the Documentation dir
-relevant to this feature (please look at the  individual patches),
-that could be used. I could help if needed.
 
-thanks,
---mahesh..
 
-> Cheers,
->
-> Michael
->
->
+28.12.2017, 18:00, "Aishwarya Pant" <aishpant@gmail.com>:
+> On Thu, Dec 28, 2017 at 05:23:33PM +0300, Ozgur wrote:
+>>  28.12.2017, 17:22, "Ozgur" <okaratas@yandex.com>:
+>>  > 28.12.2017, 16:31, "Aishwarya Pant" <aishpant@gmail.com>:
+>>  >>  Hi
 >>
->> On Tue, Dec 5, 2017 at 2:30 PM, Mahesh Bandewar <mahesh@bandewar.net> wr=
-ote:
->>> From: Mahesh Bandewar <maheshb@google.com>
->>>
->>> TL;DR version
->>> -------------
->>> Creating a sandbox environment with namespaces is challenging
->>> considering what these sandboxed processes can engage into. e.g.
->>> CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
->>> Current form of user-namespaces, however, if changed a bit can allow
->>> us to create a sandbox environment without locking down user-
->>> namespaces.
->>>
->>> Detailed version
->>> ----------------
->>>
->>> Problem
->>> -------
->>> User-namespaces in the current form have increased the attack surface a=
-s
->>> any process can acquire capabilities which are not available to them (b=
-y
->>> default) by performing combination of clone()/unshare()/setns() syscall=
-s.
->>>
->>>     #define _GNU_SOURCE
->>>     #include <stdio.h>
->>>     #include <sched.h>
->>>     #include <netinet/in.h>
->>>
->>>     int main(int ac, char **av)
->>>     {
->>>         int sock =3D -1;
->>>
->>>         printf("Attempting to open RAW socket before unshare()...\n");
->>>         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
->>>         if (sock < 0) {
->>>             perror("socket() SOCK_RAW failed: ");
->>>         } else {
->>>             printf("Successfully opened RAW-Sock before unshare().\n");
->>>             close(sock);
->>>             sock =3D -1;
->>>         }
->>>
->>>         if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
->>>             perror("unshare() failed: ");
->>>             return 1;
->>>         }
->>>
->>>         printf("Attempting to open RAW socket after unshare()...\n");
->>>         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
->>>         if (sock < 0) {
->>>             perror("socket() SOCK_RAW failed: ");
->>>         } else {
->>>             printf("Successfully opened RAW-Sock after unshare().\n");
->>>             close(sock);
->>>             sock =3D -1;
->>>         }
->>>
->>>         return 0;
->>>     }
->>>
->>> The above example shows how easy it is to acquire NET_RAW capabilities
->>> and once acquired, these processes could take benefit of above mentione=
-d
->>> or similar issues discovered/undiscovered with malicious intent. Note
->>> that this is just an example and the problem/solution is not limited
->>> to NET_RAW capability *only*.
->>>
->>> The easiest fix one can apply here is to lock-down user-namespaces whic=
-h
->>> many of the distros do (i.e. don't allow users to create user namespace=
-s),
->>> but unfortunately that prevents everyone from using them.
->>>
->>> Approach
->>> --------
->>> Introduce a notion of 'controlled' user-namespaces. Every process on
->>> the host is allowed to create user-namespaces (governed by the limit
->>> imposed by per-ns sysctl) however, mark user-namespaces created by
->>> sandboxed processes as 'controlled'. Use this 'mark' at the time of
->>> capability check in conjunction with a global capability whitelist.
->>> If the capability is not whitelisted, processes that belong to
->>> controlled user-namespaces will not be allowed.
->>>
->>> Once a user-ns is marked as 'controlled'; all its child user-
->>> namespaces are marked as 'controlled' too.
->>>
->>> A global whitelist is list of capabilities governed by the
->>> sysctl which is available to (privileged) user in init-ns to modify
->>> while it's applicable to all controlled user-namespaces on the host.
->>>
->>> Marking user-namespaces controlled without modifying the whitelist is
->>> equivalent of the current behavior. The default value of whitelist incl=
-udes
->>> all capabilities so that the compatibility is maintained. However it gi=
-ves
->>> admins fine-grained ability to control various capabilities system wide
->>> without locking down user-namespaces.
->>>
->>> Please see individual patches in this series.
->>>
->>> Mahesh Bandewar (2):
->>>   capability: introduce sysctl for controlled user-ns capability whitel=
-ist
->>>   userns: control capabilities of some user namespaces
->>>
->>>  Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
->>>  include/linux/capability.h      |  7 ++++++
->>>  include/linux/user_namespace.h  | 25 ++++++++++++++++++++
->>>  kernel/capability.c             | 52 +++++++++++++++++++++++++++++++++=
-++++++++
->>>  kernel/sysctl.c                 |  5 ++++
->>>  kernel/user_namespace.c         |  4 ++++
->>>  security/commoncap.c            |  8 +++++++
->>>  7 files changed, 122 insertions(+)
->>>
->>> --
->>> 2.15.0.531.g2ccb3012c9-goog
->>>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-api" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>   Hello,
+>>
+>>  >>  In Documentation/rtc.txt, there is a description of the sysfs
+>>  >>  interface which could be moved to Documentation/ABI.
+>>  >>
+>>  >>  Would such a change be useful?
+>>  >>
+>>  >>  The ABI documentation format looks like the following:
+>>  >>
+>>  >>  What: (the full sysfs path of the attribute)
+>>  >>  Date: (date of creation)
+>>  >>  KernelVersion: (kernel version it first showed up in)
+>>  >>  Contact: (primary contact)
+>>  >>  Description: (long description on usage)
+>>  >>
+>>  >>  I am doing this in an exercise to move sysfs ABI interfaces (which are
+>>  >>  documented) to their right place i.e. in Documentation/ABI along with the rest.
+>>
+>>   Do I understand right? Are you want to make the rtc.txt part the same format as ABI folder?
+>>   for example create to RTC folder and add /dev/rtc what, date, kernelversion, contact right?
 >
+> Yes I mentioned just the sysfs interface. But both ioctl and sysfs interface
+> should be there in Documentation/ABI. There could a new file called sysfs-rtc in
+> Documentation/ABI/stable with both these interfaces.
+
+Hello,
+
+I think the ABI maintainer is API group but I think you have contact to linux documentation team. 
+maybe, Greg provide a  give information:
+
+>>   This can be a good idea and I can help.
 >
+> Sure thanks. I can maybe send a patch with these changes.
 >
-> --
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+> One question: who should be the primary contact for this ABI?
+
+I add linux-api mailing lists. So, please send a your patch linux-kernel and linux-api mailing lists.
+
+Ozgur
+
+>>  >>  Aishwarya
+>>
+>>  Ozgur
