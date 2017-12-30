@@ -1,207 +1,52 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCHv3 1/2] capability: introduce sysctl for controlled user-ns
- capability whitelist
-Date: Sat, 30 Dec 2017 09:50:52 +0100
-Message-ID: <fd118a72-ce69-99fe-1cc4-0adaee3660c9@gmail.com>
-References: <20171205223101.12765-1-mahesh@bandewar.net>
+From: Brice Goglin <brice.goglin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v3 0/3] create sysfs representation of ACPI HMAT
+Date: Sat, 30 Dec 2017 10:19:29 +0100
+Message-ID: <74a585de-c825-b568-ee14-c8799b9d6238@gmail.com>
+References: <20171218203547.GA2366@linux.intel.com>
+ <20171220181937.GB12236@bombadil.infradead.org>
+ <2da89d31-27a3-34ab-2dbb-92403c8215ec@intel.com>
+ <20171220211649.GA32200@bombadil.infradead.org>
+ <20171220212408.GA8308@linux.intel.com>
+ <CAPcyv4gTknp=0yQnVrrB5Ui+mJE_x-wdkV86UD4hsYnx3CAjfA@mail.gmail.com>
+ <20171220224105.GA27258@linux.intel.com>
+ <39cbe02a-d309-443d-54c9-678a0799342d@gmail.com>
+ <CAPcyv4j9shdJFrvADa=qW4L-jPJJ4S_TJc_c=aRoW3EmSCCChQ@mail.gmail.com>
+ <71317994-af66-a1b2-4c7a-86a03253cf62@gmail.com>
+ <20171230065845.GD27959@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171205223101.12765-1-mahesh@bandewar.net>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20171230065845.GD27959-PfSpb0PWhxZc2C7mugBRk2EX/6BAtgUQ@public.gmane.org>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mahesh Bandewar <mahesh@bandewar.net>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>
-Cc: mtk.manpages@gmail.com, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <maheshb@google.com>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Anaczkowski, Lukasz" <lukasz.anaczkowski-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Box, David E" <david.e.box-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kogut, Jaroslaw" <Jaroslaw.Kogut-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Koss, Marcin" <marcin.koss-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Koziej, Artur" <artur.koziej-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Lahtinen, Joonas" <joonas.lahtinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Moore, Robert" <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Nachimuthu, Murugasamy" <murugasamy.nachimuthu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Odzioba, Lukasz" <lukasz.odzioba-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Schmauss, Erik" <erik.schmauss@intel.c>
 List-Id: linux-api@vger.kernel.org
 
-Hello Mahesh,
-
-On 12/05/2017 11:31 PM, Mahesh Bandewar wrote:
-> From: Mahesh Bandewar <maheshb@google.com>
-> 
-> Add a sysctl variable kernel.controlled_userns_caps_whitelist. This
-> takes input as capability mask expressed as two comma separated hex
-> u32 words. The mask, however, is stored in kernel as kernel_cap_t type.
-
-Just by the way, why is it not expressed as a 64 bit value? (The answer
-to that question should I think be part of this commit message.)
-
-> Any capabilities that are not part of this mask will be controlled and
-> will not be allowed to processes in controlled user-ns.
-> 
-> Acked-by: Serge Hallyn <serge@hallyn.com>
-> Signed-off-by: Mahesh Bandewar <maheshb@google.com>
-> ---
-> v3:
->   Added couple of comments as requested by Serge Hallyn
-> v2:
->   Rebase
-> v1:
->   Initial submission
-> 
->  Documentation/sysctl/kernel.txt | 21 ++++++++++++++++++
->  include/linux/capability.h      |  3 +++
->  kernel/capability.c             | 47 +++++++++++++++++++++++++++++++++++++++++
->  kernel/sysctl.c                 |  5 +++++
->  4 files changed, 76 insertions(+)
-> 
-> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
-> index 694968c7523c..a1d39dbae847 100644
-> --- a/Documentation/sysctl/kernel.txt
-> +++ b/Documentation/sysctl/kernel.txt
-> @@ -25,6 +25,7 @@ show up in /proc/sys/kernel:
->  - bootloader_version	     [ X86 only ]
->  - callhome		     [ S390 only ]
->  - cap_last_cap
-> +- controlled_userns_caps_whitelist
->  - core_pattern
->  - core_pipe_limit
->  - core_uses_pid
-> @@ -187,6 +188,26 @@ CAP_LAST_CAP from the kernel.
->  
->  ==============================================================
->  
-> +controlled_userns_caps_whitelist
-> +
-> +Capability mask that is whitelisted for "controlled" user namespaces.
-
-How is a user-ns marked as "controlled"? Please clarify this.
-
-> +Any capability that is missing from this mask will not be allowed to
-> +any process that is attached to a controlled-userns. e.g. if CAP_NET_RAW
-> +is not part of this mask, then processes running inside any controlled
-> +userns's will not be allowed to perform action that needs CAP_NET_RAW
-> +capability. However, processes that are attached to a parent user-ns
-> +hierarchy that is *not* controlled and has CAP_NET_RAW can continue
-> +performing those actions. User-namespaces are marked "controlled" at
-> +the time of their creation based on the capabilities of the creator.
-> +A process that does not have CAP_SYS_ADMIN will create user-namespaces
-> +that are controlled.
-> +
-> +The value is expressed as two comma separated hex words (u32). This
-> +sysctl is avaialble in init-ns and users with CAP_SYS_ADMIN in init-ns
-> +are allowed to make changes.
-
-Could you add here a shell session that demonstrates the use of these 
-interfaces and how they allow/disallow capabilities. 
-
-Is there a way that a process can see whether it is a controlled user-ns
-vs an uncontrolled user-ns? I think it would be good to explain in this
-doc patch.
-
-Thanks,
-
-Michael
-
-> +==============================================================
-> +
->  core_pattern:
->  
->  core_pattern is used to specify a core dumpfile pattern name.
-> diff --git a/include/linux/capability.h b/include/linux/capability.h
-> index f640dcbc880c..7d79a4689625 100644
-> --- a/include/linux/capability.h
-> +++ b/include/linux/capability.h
-> @@ -14,6 +14,7 @@
->  #define _LINUX_CAPABILITY_H
->  
->  #include <uapi/linux/capability.h>
-> +#include <linux/sysctl.h>
->  
->  
->  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
-> @@ -248,6 +249,8 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
->  
->  /* audit system wants to get cap info from files as well */
->  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
-> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
-> +				 void __user *buff, size_t *lenp, loff_t *ppos);
->  
->  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
->  
-> diff --git a/kernel/capability.c b/kernel/capability.c
-> index 1e1c0236f55b..4a859b7d4902 100644
-> --- a/kernel/capability.c
-> +++ b/kernel/capability.c
-> @@ -29,6 +29,8 @@ EXPORT_SYMBOL(__cap_empty_set);
->  
->  int file_caps_enabled = 1;
->  
-> +kernel_cap_t controlled_userns_caps_whitelist = CAP_FULL_SET;
-> +
->  static int __init file_caps_disable(char *str)
->  {
->  	file_caps_enabled = 0;
-> @@ -507,3 +509,48 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
->  	rcu_read_unlock();
->  	return (ret == 0);
->  }
-> +
-> +/* Controlled-userns capabilities routines */
-> +#ifdef CONFIG_SYSCTL
-> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
-> +				 void __user *buff, size_t *lenp, loff_t *ppos)
-> +{
-> +	DECLARE_BITMAP(caps_bitmap, CAP_LAST_CAP);
-> +	struct ctl_table caps_table;
-> +	char tbuf[NAME_MAX];
-> +	int ret;
-> +
-> +	ret = bitmap_from_u32array(caps_bitmap, CAP_LAST_CAP,
-> +				   controlled_userns_caps_whitelist.cap,
-> +				   _KERNEL_CAPABILITY_U32S);
-> +	if (ret != CAP_LAST_CAP)
-> +		return -1;
-> +
-> +	scnprintf(tbuf, NAME_MAX, "%*pb", CAP_LAST_CAP, caps_bitmap);
-> +
-> +	caps_table.data = tbuf;
-> +	caps_table.maxlen = NAME_MAX;
-> +	caps_table.mode = table->mode;
-> +	ret = proc_dostring(&caps_table, write, buff, lenp, ppos);
-> +	if (ret)
-> +		return ret;
-> +	if (write) {
-> +		kernel_cap_t tmp;
-> +
-> +		if (!capable(CAP_SYS_ADMIN))
-> +			return -EPERM;
-> +
-> +		ret = bitmap_parse_user(buff, *lenp, caps_bitmap, CAP_LAST_CAP);
-> +		if (ret)
-> +			return ret;
-> +
-> +		ret = bitmap_to_u32array(tmp.cap, _KERNEL_CAPABILITY_U32S,
-> +					 caps_bitmap, CAP_LAST_CAP);
-> +		if (ret != CAP_LAST_CAP)
-> +			return -1;
-> +
-> +		controlled_userns_caps_whitelist = tmp;
-> +	}
-> +	return 0;
-> +}
-> +#endif /* CONFIG_SYSCTL */
-> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-> index 557d46728577..759b6c286806 100644
-> --- a/kernel/sysctl.c
-> +++ b/kernel/sysctl.c
-> @@ -1217,6 +1217,11 @@ static struct ctl_table kern_table[] = {
->  		.extra2		= &one,
->  	},
->  #endif
-> +	{
-> +		.procname	= "controlled_userns_caps_whitelist",
-> +		.mode		= 0644,
-> +		.proc_handler	= proc_douserns_caps_whitelist,
-> +	},
->  	{ }
->  };
->  
-> 
 
 
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Le 30/12/2017 à 07:58, Matthew Wilcox a écrit :
+> On Wed, Dec 27, 2017 at 10:10:34AM +0100, Brice Goglin wrote:
+>>> Perhaps we can enlist /proc/iomem or a similar enumeration interface
+>>> to tell userspace the NUMA node and whether the kernel thinks it has
+>>> better or worse performance characteristics relative to base
+>>> system-RAM, i.e. new IORES_DESC_* values. I'm worried that if we start
+>>> publishing absolute numbers in sysfs userspace will default to looking
+>>> for specific magic numbers in sysfs vs asking the kernel for memory
+>>> that has performance characteristics relative to base "System RAM". In
+>>> other words the absolute performance information that the HMAT
+>>> publishes is useful to the kernel, but it's not clear that userspace
+>>> needs that vs a relative indicator for making NUMA node preference
+>>> decisions.
+>> Some HPC users will benchmark the machine to discovery actual
+>> performance numbers anyway.
+>> However, most users won't do this. They will want to know relative
+>> performance of different nodes. If you normalize HMAT values by dividing
+>> them with system-RAM values, that's likely OK. If you just say "that
+>> node is faster than system RAM", it's not precise enough.
+> So "this memory has 800% bandwidth of normal" and "this memory has 70%
+> bandwidth of normal"?
+
+I guess that would work.
+Brice
