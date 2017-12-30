@@ -1,46 +1,164 @@
-From: Matthew Wilcox <willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/3] create sysfs representation of ACPI HMAT
-Date: Fri, 29 Dec 2017 22:58:45 -0800
-Message-ID: <20171230065845.GD27959@bombadil.infradead.org>
-References: <20171218203547.GA2366@linux.intel.com>
- <20171220181937.GB12236@bombadil.infradead.org>
- <2da89d31-27a3-34ab-2dbb-92403c8215ec@intel.com>
- <20171220211649.GA32200@bombadil.infradead.org>
- <20171220212408.GA8308@linux.intel.com>
- <CAPcyv4gTknp=0yQnVrrB5Ui+mJE_x-wdkV86UD4hsYnx3CAjfA@mail.gmail.com>
- <20171220224105.GA27258@linux.intel.com>
- <39cbe02a-d309-443d-54c9-678a0799342d@gmail.com>
- <CAPcyv4j9shdJFrvADa=qW4L-jPJJ4S_TJc_c=aRoW3EmSCCChQ@mail.gmail.com>
- <71317994-af66-a1b2-4c7a-86a03253cf62@gmail.com>
+From: James Morris <james.l.morris@oracle.com>
+Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
+Date: Sat, 30 Dec 2017 19:31:43 +1100 (AEDT)
+Message-ID: <alpine.LFD.2.20.1712301931360.24310@localhost>
+References: <20171205223052.12687-1-mahesh@bandewar.net> <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <71317994-af66-a1b2-4c7a-86a03253cf62-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Brice Goglin <brice.goglin-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Dave Hansen <dave.hansen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Anaczkowski, Lukasz" <lukasz.anaczkowski-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Box, David E" <david.e.box-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Kogut, Jaroslaw" <Jaroslaw.Kogut-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Koss, Marcin" <marcin.koss-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Koziej, Artur" <artur.koziej-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Lahtinen, Joonas" <joonas.lahtinen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Moore, Robert" <robert.moore-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Nachimuthu, Murugasamy" <murugasamy.nachimuthu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Odzioba, Lukasz" <lukasz.odzioba-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rafael.j.wysocki-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rafael J. Wysocki" <rjw-LthD3rsA81gm4RdzfppkhA@public.gmane.org>, "Schmauss, Erik" <erik.schmauss@intel.c>
+Content-Type: multipart/mixed; BOUNDARY="8323328-624254867-1514622714=:24310"
+Return-path: <kernel-hardening-return-11040-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
+To: =?UTF-8?Q?Mahesh_Bandewar_=28=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=B6_=E0=A4=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0=29?= <maheshb@google.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 27, 2017 at 10:10:34AM +0100, Brice Goglin wrote:
-> > Perhaps we can enlist /proc/iomem or a similar enumeration interface
-> > to tell userspace the NUMA node and whether the kernel thinks it has
-> > better or worse performance characteristics relative to base
-> > system-RAM, i.e. new IORES_DESC_* values. I'm worried that if we start
-> > publishing absolute numbers in sysfs userspace will default to looking
-> > for specific magic numbers in sysfs vs asking the kernel for memory
-> > that has performance characteristics relative to base "System RAM". In
-> > other words the absolute performance information that the HMAT
-> > publishes is useful to the kernel, but it's not clear that userspace
-> > needs that vs a relative indicator for making NUMA node preference
-> > decisions.
-> 
-> Some HPC users will benchmark the machine to discovery actual
-> performance numbers anyway.
-> However, most users won't do this. They will want to know relative
-> performance of different nodes. If you normalize HMAT values by dividing
-> them with system-RAM values, that's likely OK. If you just say "that
-> node is faster than system RAM", it's not precise enough.
+--8323328-624254867-1514622714=:24310
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 
-So "this memory has 800% bandwidth of normal" and "this memory has 70%
-bandwidth of normal"?
+On Wed, 27 Dec 2017, Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=B6 =
+=E0=A4=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0) wrote:
+
+> Hello James,
+>=20
+> Seems like I missed your name to be added into the review of this
+> patch series. Would you be willing be pull this into the security
+> tree? Serge Hallyn has already ACKed it.
+
+Sure!
+
+
+>=20
+> Thanks,
+> --mahesh..
+>=20
+> On Tue, Dec 5, 2017 at 2:30 PM, Mahesh Bandewar <mahesh@bandewar.net> wro=
+te:
+> > From: Mahesh Bandewar <maheshb@google.com>
+> >
+> > TL;DR version
+> > -------------
+> > Creating a sandbox environment with namespaces is challenging
+> > considering what these sandboxed processes can engage into. e.g.
+> > CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
+> > Current form of user-namespaces, however, if changed a bit can allow
+> > us to create a sandbox environment without locking down user-
+> > namespaces.
+> >
+> > Detailed version
+> > ----------------
+> >
+> > Problem
+> > -------
+> > User-namespaces in the current form have increased the attack surface a=
+s
+> > any process can acquire capabilities which are not available to them (b=
+y
+> > default) by performing combination of clone()/unshare()/setns() syscall=
+s.
+> >
+> >     #define _GNU_SOURCE
+> >     #include <stdio.h>
+> >     #include <sched.h>
+> >     #include <netinet/in.h>
+> >
+> >     int main(int ac, char **av)
+> >     {
+> >         int sock =3D -1;
+> >
+> >         printf("Attempting to open RAW socket before unshare()...\n");
+> >         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+> >         if (sock < 0) {
+> >             perror("socket() SOCK_RAW failed: ");
+> >         } else {
+> >             printf("Successfully opened RAW-Sock before unshare().\n");
+> >             close(sock);
+> >             sock =3D -1;
+> >         }
+> >
+> >         if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
+> >             perror("unshare() failed: ");
+> >             return 1;
+> >         }
+> >
+> >         printf("Attempting to open RAW socket after unshare()...\n");
+> >         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+> >         if (sock < 0) {
+> >             perror("socket() SOCK_RAW failed: ");
+> >         } else {
+> >             printf("Successfully opened RAW-Sock after unshare().\n");
+> >             close(sock);
+> >             sock =3D -1;
+> >         }
+> >
+> >         return 0;
+> >     }
+> >
+> > The above example shows how easy it is to acquire NET_RAW capabilities
+> > and once acquired, these processes could take benefit of above mentione=
+d
+> > or similar issues discovered/undiscovered with malicious intent. Note
+> > that this is just an example and the problem/solution is not limited
+> > to NET_RAW capability *only*.
+> >
+> > The easiest fix one can apply here is to lock-down user-namespaces whic=
+h
+> > many of the distros do (i.e. don't allow users to create user namespace=
+s),
+> > but unfortunately that prevents everyone from using them.
+> >
+> > Approach
+> > --------
+> > Introduce a notion of 'controlled' user-namespaces. Every process on
+> > the host is allowed to create user-namespaces (governed by the limit
+> > imposed by per-ns sysctl) however, mark user-namespaces created by
+> > sandboxed processes as 'controlled'. Use this 'mark' at the time of
+> > capability check in conjunction with a global capability whitelist.
+> > If the capability is not whitelisted, processes that belong to
+> > controlled user-namespaces will not be allowed.
+> >
+> > Once a user-ns is marked as 'controlled'; all its child user-
+> > namespaces are marked as 'controlled' too.
+> >
+> > A global whitelist is list of capabilities governed by the
+> > sysctl which is available to (privileged) user in init-ns to modify
+> > while it's applicable to all controlled user-namespaces on the host.
+> >
+> > Marking user-namespaces controlled without modifying the whitelist is
+> > equivalent of the current behavior. The default value of whitelist incl=
+udes
+> > all capabilities so that the compatibility is maintained. However it gi=
+ves
+> > admins fine-grained ability to control various capabilities system wide
+> > without locking down user-namespaces.
+> >
+> > Please see individual patches in this series.
+> >
+> > Mahesh Bandewar (2):
+> >   capability: introduce sysctl for controlled user-ns capability whitel=
+ist
+> >   userns: control capabilities of some user namespaces
+> >
+> >  Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
+> >  include/linux/capability.h      |  7 ++++++
+> >  include/linux/user_namespace.h  | 25 ++++++++++++++++++++
+> >  kernel/capability.c             | 52 +++++++++++++++++++++++++++++++++=
+++++++++
+> >  kernel/sysctl.c                 |  5 ++++
+> >  kernel/user_namespace.c         |  4 ++++
+> >  security/commoncap.c            |  8 +++++++
+> >  7 files changed, 122 insertions(+)
+> >
+> > --
+> > 2.15.0.531.g2ccb3012c9-goog
+> >
+>=20
+
+--=20
+James Morris
+<james.l.morris@oracle.com>
+
+--8323328-624254867-1514622714=:24310--
