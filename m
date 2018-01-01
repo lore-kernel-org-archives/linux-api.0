@@ -1,84 +1,163 @@
-From: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH man-pages 1/2] clock_getres.2: Explain dynamic clocks.
-Date: Sun, 31 Dec 2017 22:28:51 -0800
-Message-ID: <f85030cb44354de97f3b7822b23ec34fd21d1f28.1514787752.git.richardcochran@gmail.com>
+From: Richard Cochran <richardcochran@gmail.com>
+Subject: [PATCH man-pages 2/2] adjtimex.2: document clock_adjtime
+Date: Sun, 31 Dec 2017 22:28:52 -0800
+Message-ID: <88e5c54201bcfc335e484e83ab66f31f48e9f504.1514787752.git.richardcochran@gmail.com>
 References: <20171219165811.6ahuquuf5hq74zg3@localhost>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20171219165811.6ahuquuf5hq74zg3@localhost>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, John Stultz <john.stultz-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Stephen Boyd <sboyd-sgV2jX0FEOL9JmXXK+q4OQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+In-Reply-To: <f85030cb44354de97f3b7822b23ec34fd21d1f28.1514787752.git.richardcochran@gmail.com>
+References: <f85030cb44354de97f3b7822b23ec34fd21d1f28.1514787752.git.richardcochran@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, John Stultz <john.stultz@linaro.org>, Stephen Boyd <sboyd@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Linux has allowed passing open file descriptors to clock_gettime() and
-friends since v2.6.39.  This patch documents these "dynamic" clocks
-and adds a brief example of how to use them.
+From: Arnd Bergmann <arnd@arndb.de>
 
-Signed-off-by: Richard Cochran <richardcochran-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+I was experimenting with some possible changes to adjtimex(2) and
+clock_adjtime(2) and tried to look up the man page to see what the
+documented behavior is when I noticed that clock_adjtime() appears
+to be the only system call that is currently undocumented.
+
+Before I do any changes to it, this tries to document what I
+understand it currently does.
+
+[ RC: Add better explanations of the usage and error codes
+  and correct some typographical mistakes. ]
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+Signed-off-by: Richard Cochran <richardcochran@gmail.com>
 ---
- man2/clock_getres.2 | 39 ++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 38 insertions(+), 1 deletion(-)
+ man2/adjtimex.2      | 63 +++++++++++++++++++++++++++++++++++++++++++++++++---
+ man2/clock_adjtime.2 |  1 +
+ 2 files changed, 61 insertions(+), 3 deletions(-)
+ create mode 100644 man2/clock_adjtime.2
 
-diff --git a/man2/clock_getres.2 b/man2/clock_getres.2
-index 0812d159a..30cbfe46a 100644
---- a/man2/clock_getres.2
-+++ b/man2/clock_getres.2
-@@ -183,6 +183,35 @@ Per-process CPU-time clock
- .TP
- .BR CLOCK_THREAD_CPUTIME_ID " (since Linux 2.6.12)"
- Thread-specific CPU-time clock.
+diff --git a/man2/adjtimex.2 b/man2/adjtimex.2
+index fc6892d7e..71b5c4a5a 100644
+--- a/man2/adjtimex.2
++++ b/man2/adjtimex.2
+@@ -35,6 +35,8 @@ adjtimex, ntp_adjtime \- tune kernel clock
+ .PP
+ .BI "int adjtimex(struct timex *" "buf" );
+ .PP
++.BI "int clock_adjtime(clockid_t " clk_id, " struct timex *" "buf" );
 +.PP
-+Linux also implements dynamic clock instances as described below.
-+.SH DYNAMIC CLOCKS " (since Linux 2.6.39)"
-+In addition to hard coded SYS-V style clock ids, Linux also supports
-+POSIX clock operations on certain character devices.  Such devices are
-+called "dynamic" clocks.  Using the appropriate macros, open file
-+descriptors may be converted into clock ids and passed to
-+.BR clock_gettime (),
-+.BR clock_settime (),
-+and
-+.BR clock_adj (2).
-+The follow example shows how to convert a file descriptor into a
-+dynamic clock id.
+ .BI "int ntp_adjtime(struct timex *" buf );
+ .fi
+ .SH DESCRIPTION
+@@ -158,8 +160,26 @@ includes the
+ .B ADJ_NANO
+ flag, then
+ .I buf.time.tv_usec
+-is interpreted as a nanosecond value;
++is interpreted as a nanosecond value,
+ otherwise it is interpreted as microseconds.
++.IP
++The value of
++.I buf.time
++is the sum of its two fields, but the
++field
++.I buf.time.tv_usec
++must always be non-negative.  The following example shows how to
++normalize a timeval with nanosecond resolution.
 +.PP
-+.in +4n
++.in +12n
 +.EX
-+#define CLOCKFD 3
-+#define FD_TO_CLOCKID(fd)       ((~(clockid_t) (fd) << 3) | CLOCKFD)
-+#define CLOCKID_TO_FD(clk)      ((unsigned int) ~((clk) >> 3))
-+
-+struct timeval tv;
-+clockid_t clkid;
-+int fd;
-+
-+fd = open("/dev/ptp0", O_RDWR);
-+clkid = FD_TO_CLOCKID(fd);
-+clock_gettime(clkid, &tv);
++while (buf.time.tv_usec < 0) {
++    buf.time.tv_sec  -= 1;
++    buf.time.tv_usec += 1000000000;
++}
 +.EE
 +.in
- .SH RETURN VALUE
- .BR clock_gettime (),
- .BR clock_settime (),
-@@ -200,11 +229,19 @@ points outside the accessible address space.
- .B EINVAL
++.PP
+ .TP
+ .BR ADJ_MICRO " (since Linux 2.6.26)"
+ .\" commit eea83d896e318bda54be2d2770d2c5d6668d11db
+@@ -344,6 +364,12 @@ Attempts to set read-only
+ .I status
+ bits are silently ignored.
+ .\"
++.SS clock_adjtime ()
++The
++.BR clock_adjtime ()
++system call (added in Linux 2.6.39) behaves like adjtimex() but takes an additional
++.IR clk_id
++argument to specify the particular clock on which to act.
+ .SS ntp_adjtime ()
  The
- .I clk_id
--specified is not supported on this system.
-+specified is invalid for one of two reasons.  Either the SYS-V style
-+hard coded positive value is out of range, or the dynamic clock id
+ .BR ntp_adjtime ()
+@@ -472,6 +498,19 @@ An attempt was made to set
+ to a value other than those listed above.
+ .TP
+ .B EINVAL
++The
++.I clk_id
++given to
++.BR clock_adjtime ()
++is invalid for one of two reasons.  Either the SYS-V style hard coded
++positive value is out of range, or the dynamic
++.I clk_id
 +does not refer to a valid instance of a clock object.
- .\" Linux also gives this error on attempts to set CLOCK_PROCESS_CPUTIME_ID
- .\" and CLOCK_THREAD_CPUTIME_ID, when probably the proper error should be
- .\" EPERM.
++See
++.BR clock_gettime (2)
++for a discussion of dynamic clocks.
++.TP
++.B EINVAL
+ An attempt was made to set
+ .I buf.tick
+ to a value outside the range
+@@ -482,6 +521,20 @@ where
+ .B HZ
+ is the system timer interrupt frequency.
  .TP
 +.B ENODEV
 +The hot-plugable device (like USB for example) represented by a
 +dynamic
 +.I clk_id
 +has disappeared after its character device was opened.
++See
++.BR clock_gettime (2)
++for a discussion of dynamic clocks.
++.TP
++.B EOPNOTSUPP
++The given
++.I clk_id
++does not support adjustment.
 +.TP
  .B EPERM
- .BR clock_settime ()
- does not have permission to set the clock indicated.
+ .I buf.modes
+ is neither 0 nor
+@@ -503,10 +556,12 @@ T{
+ T}	Thread safety	MT-Safe
+ .TE
+ .SH CONFORMING TO
+-Neither of these interfaces is described in POSIX.1
++None of these interfaces is described in POSIX.1
+ .PP
+ .BR adjtimex ()
+-is Linux-specific and should not be used in programs
++and
++.BR clock_adjtime ()
++are Linux-specific and should not be used in programs
+ intended to be portable.
+ .PP
+ The preferred API for the NTP daemon is
+@@ -533,6 +588,8 @@ is done by the kernel in timer context
+ Thus, it will take one tick into the second
+ for the leap second to be inserted or deleted.
+ .SH SEE ALSO
++.BR clock_gettime (2)
++.BR clock_settime (2)
+ .BR settimeofday (2),
+ .BR adjtime (3),
+ .BR ntp_gettime (3),
+diff --git a/man2/clock_adjtime.2 b/man2/clock_adjtime.2
+new file mode 100644
+index 000000000..b08b9c801
+--- /dev/null
++++ b/man2/clock_adjtime.2
+@@ -0,0 +1 @@
++.so man2/adjtimex.2
 -- 
 2.11.0
