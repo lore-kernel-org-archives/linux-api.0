@@ -1,163 +1,259 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: [PATCH man-pages 2/2] adjtimex.2: document clock_adjtime
-Date: Sun, 31 Dec 2017 22:28:52 -0800
-Message-ID: <88e5c54201bcfc335e484e83ab66f31f48e9f504.1514787752.git.richardcochran@gmail.com>
-References: <20171219165811.6ahuquuf5hq74zg3@localhost>
+From: Aishwarya Pant <aishpant@gmail.com>
+Subject: [PATCH] rtc: sysfs: move sysfs & ioctl interface to Documentation/ABI
+Date: Mon, 1 Jan 2018 17:27:26 +0530
+Message-ID: <20180101115726.GA4519@mordor.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20171219165811.6ahuquuf5hq74zg3@localhost>
-In-Reply-To: <f85030cb44354de97f3b7822b23ec34fd21d1f28.1514787752.git.richardcochran@gmail.com>
-References: <f85030cb44354de97f3b7822b23ec34fd21d1f28.1514787752.git.richardcochran@gmail.com>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, John Stultz <john.stultz@linaro.org>, Stephen Boyd <sboyd@codeaurora.org>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Alessandro Zummo <a.zummo@towertech.it>, Alexandre Belloni <alexandre.belloni@free-electrons.com>, Jonathan Corbet <corbet@lwn.net>, linux-rtc@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Julia Lawall <julia.lawall@lip6.fr>, gregkh@linuxfoundation.org
 List-Id: linux-api@vger.kernel.org
 
-From: Arnd Bergmann <arnd@arndb.de>
+Right now, the decription of the rtc and sysfs interfaces is in
+Documentation/rtc.txt. Since these are a part of the ABI, they should be
+in Documentation/ABI along with the rest.
 
-I was experimenting with some possible changes to adjtimex(2) and
-clock_adjtime(2) and tried to look up the man page to see what the
-documented behavior is when I noticed that clock_adjtime() appears
-to be the only system call that is currently undocumented.
-
-Before I do any changes to it, this tries to document what I
-understand it currently does.
-
-[ RC: Add better explanations of the usage and error codes
-  and correct some typographical mistakes. ]
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-Signed-off-by: Richard Cochran <richardcochran@gmail.com>
+Signed-off-by: Aishwarya Pant <aishpant@gmail.com>
 ---
- man2/adjtimex.2      | 63 +++++++++++++++++++++++++++++++++++++++++++++++++---
- man2/clock_adjtime.2 |  1 +
- 2 files changed, 61 insertions(+), 3 deletions(-)
- create mode 100644 man2/clock_adjtime.2
+Let me know if the contact information should be different. I picked up the
+module author of drivers/rtc/rtc-sysfs.c as the primary contact of the
+interfaces.
 
-diff --git a/man2/adjtimex.2 b/man2/adjtimex.2
-index fc6892d7e..71b5c4a5a 100644
---- a/man2/adjtimex.2
-+++ b/man2/adjtimex.2
-@@ -35,6 +35,8 @@ adjtimex, ntp_adjtime \- tune kernel clock
- .PP
- .BI "int adjtimex(struct timex *" "buf" );
- .PP
-+.BI "int clock_adjtime(clockid_t " clk_id, " struct timex *" "buf" );
-+.PP
- .BI "int ntp_adjtime(struct timex *" buf );
- .fi
- .SH DESCRIPTION
-@@ -158,8 +160,26 @@ includes the
- .B ADJ_NANO
- flag, then
- .I buf.time.tv_usec
--is interpreted as a nanosecond value;
-+is interpreted as a nanosecond value,
- otherwise it is interpreted as microseconds.
-+.IP
-+The value of
-+.I buf.time
-+is the sum of its two fields, but the
-+field
-+.I buf.time.tv_usec
-+must always be non-negative.  The following example shows how to
-+normalize a timeval with nanosecond resolution.
-+.PP
-+.in +12n
-+.EX
-+while (buf.time.tv_usec < 0) {
-+    buf.time.tv_sec  -= 1;
-+    buf.time.tv_usec += 1000000000;
-+}
-+.EE
-+.in
-+.PP
- .TP
- .BR ADJ_MICRO " (since Linux 2.6.26)"
- .\" commit eea83d896e318bda54be2d2770d2c5d6668d11db
-@@ -344,6 +364,12 @@ Attempts to set read-only
- .I status
- bits are silently ignored.
- .\"
-+.SS clock_adjtime ()
-+The
-+.BR clock_adjtime ()
-+system call (added in Linux 2.6.39) behaves like adjtimex() but takes an additional
-+.IR clk_id
-+argument to specify the particular clock on which to act.
- .SS ntp_adjtime ()
- The
- .BR ntp_adjtime ()
-@@ -472,6 +498,19 @@ An attempt was made to set
- to a value other than those listed above.
- .TP
- .B EINVAL
-+The
-+.I clk_id
-+given to
-+.BR clock_adjtime ()
-+is invalid for one of two reasons.  Either the SYS-V style hard coded
-+positive value is out of range, or the dynamic
-+.I clk_id
-+does not refer to a valid instance of a clock object.
-+See
-+.BR clock_gettime (2)
-+for a discussion of dynamic clocks.
-+.TP
-+.B EINVAL
- An attempt was made to set
- .I buf.tick
- to a value outside the range
-@@ -482,6 +521,20 @@ where
- .B HZ
- is the system timer interrupt frequency.
- .TP
-+.B ENODEV
-+The hot-plugable device (like USB for example) represented by a
-+dynamic
-+.I clk_id
-+has disappeared after its character device was opened.
-+See
-+.BR clock_gettime (2)
-+for a discussion of dynamic clocks.
-+.TP
-+.B EOPNOTSUPP
-+The given
-+.I clk_id
-+does not support adjustment.
-+.TP
- .B EPERM
- .I buf.modes
- is neither 0 nor
-@@ -503,10 +556,12 @@ T{
- T}	Thread safety	MT-Safe
- .TE
- .SH CONFORMING TO
--Neither of these interfaces is described in POSIX.1
-+None of these interfaces is described in POSIX.1
- .PP
- .BR adjtimex ()
--is Linux-specific and should not be used in programs
-+and
-+.BR clock_adjtime ()
-+are Linux-specific and should not be used in programs
- intended to be portable.
- .PP
- The preferred API for the NTP daemon is
-@@ -533,6 +588,8 @@ is done by the kernel in timer context
- Thus, it will take one tick into the second
- for the leap second to be inserted or deleted.
- .SH SEE ALSO
-+.BR clock_gettime (2)
-+.BR clock_settime (2)
- .BR settimeofday (2),
- .BR adjtime (3),
- .BR ntp_gettime (3),
-diff --git a/man2/clock_adjtime.2 b/man2/clock_adjtime.2
+Documentation/ABI/stable/rtc | 135 +++++++++++++++++++++++++++++++++++++++++++
+ Documentation/rtc.txt        |  80 +------------------------
+ 2 files changed, 136 insertions(+), 79 deletions(-)
+ create mode 100644 Documentation/ABI/stable/rtc
+
+diff --git a/Documentation/ABI/stable/rtc b/Documentation/ABI/stable/rtc
 new file mode 100644
-index 000000000..b08b9c801
+index 000000000000..799003dfb86e
 --- /dev/null
-+++ b/man2/clock_adjtime.2
-@@ -0,0 +1 @@
-+.so man2/adjtimex.2
++++ b/Documentation/ABI/stable/rtc
+@@ -0,0 +1,135 @@
++SYSFS interface
++---------------
++
++The sysfs interface provides access to various
++rtc attributes without requiring the use of ioctls. All dates and times
++are in the RTC's timezone, rather than in system time.
++
++What:		/sys/class/rtc/rtc[0-*]/date
++Date:		March 2006
++KernelVersion:	2.6.17
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RO) RTC-provided date
++
++What:		/sys/class/rtc/rtc[0-*]/name
++Date:		March 2006
++KernelVersion:	2.6.17
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RO) The name of the RTC corresponding to this sysfs directory.
++
++What:		/sys/class/rtc/rtc[0-*]/time
++Date:		March 2006
++KernelVersion:	2.6.17
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RO) RTC-provided time
++
++What:		/sys/class/rtc/rtc[0-*]/since_epoch
++Date:		March 2006
++KernelVersion:	2.6.17
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RO) The number of seconds since the epoch according to the RTC.
++
++What:		/sys/class/rtc/rtc[0-*]/wakealarm
++Date:		February 2007
++KernelVersion:	2.6.21
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RW) The time at which the clock will generate a system wakeup
++		 event. This is a one shot wakeup event, so must be reset
++		 after wake if a daily wakeup is required. Format is seconds
++		 since the epoch by default, or if there's a leading +, seconds
++		 in the future, or if there is a leading +=, seconds ahead of
++		 the current alarm.
++
++What:		/sys/class/rtc/rtc[0-*]/max_user_freq
++Date:		October 2007
++KernelVersion:	2.6.24
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RW) The maximum interrupt rate an unprivileged user may request
++		 from this RTC.
++
++What:		/sys/class/rtc/rtc[0-*]/hctosys
++Date:		September 2009
++KernelVersion:	2.6.32
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RO) 1 if the RTC provided the system time at boot via the
++		 CONFIG_RTC_HCTOSYS kernel option, 0 otherwise.
++
++What:		/sys/class/rtc/rtc[0-*]/offset
++Date:		February 2016
++KernelVersion:	4.6
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RW) The amount which the rtc clock has been adjusted in firmware.
++		 Visible only if the driver supports clock offset adjustment.
++		 The unit is parts per billion, i.e. The number of clock ticks
++		 which are added to or removed from the rtc's base clock per
++		 billion ticks. A positive value makes a day pass more slowly,
++		 longer, and a negative value makes a day pass more quickly.
++
++What:		/sys/bus/nvmem/devices/dev-name/nvmem
++Date:		July 2017
++KernelVersion:	4.13
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	(RW) The non volatile storage exported as a raw file, as described
++		 in Documentation/nvmem/nvmem.txt. The previous ABI
++		 /sys/class/rtc/rtc[0-*]/device/nvram will be deprecated.
++
++IOCTL interface
++---------------
++
++What:		/dev/rtc[0-*]
++Date:		April 2005
++KernelVersion:	2.6.12
++Contact:	Alexandre Belloni <alexandre.belloni@free-electrons.com>
++Description:	The ioctl() calls supported by /dev/rtc are also supported by
++		the RTC class framework. However, because the chips and systems
++		are not standardized, some PC/AT functionality might not be
++		provided.  And in the same way, some newer features -- including
++		those enabled by ACPI -- are exposed by the RTC class framework,
++		but can't be supported by the older driver.
++
++		    *	RTC_RD_TIME, RTC_SET_TIME ... every RTC supports at
++			least reading time, returning the result as a Gregorian
++			calendar date and 24 hour wall clock time. To be most
++			useful, this time may also be updated.
++
++		    *	RTC_AIE_ON, RTC_AIE_OFF, RTC_ALM_SET, RTC_ALM_READ ...
++			when the RTC is connected to an IRQ line, it can often
++			issue an alarm IRQ up to 24 hours in the future. (Use
++			RTC_WKALM_* by preference.)
++
++		    *	RTC_WKALM_SET, RTC_WKALM_RD ... RTCs that can issue
++			alarms beyond the next 24 hours use a slightly more
++			powerful API, which supports setting the longer alarm
++			time and enabling its IRQ using a single request (using
++			the same model as EFI firmware).
++
++		    *	RTC_UIE_ON, RTC_UIE_OFF ... if the RTC offers IRQs, the
++			RTC framework will emulate this mechanism.
++
++		    *	RTC_PIE_ON, RTC_PIE_OFF, RTC_IRQP_SET, RTC_IRQP_READ ...
++		    	these icotls are emulated via a kernel hrtimer.
++
++		In many cases, the RTC alarm can be a system wake event, used to
++		force Linux out of a low power sleep state (or hibernation) back
++		to a fully operational state. For example, a system could enter
++		a deep power saving state until it's time to execute some
++		scheduled tasks.
++
++		Note that many of these ioctls are handled by the common rtc-dev
++		interface. Some common examples:
++
++		    *	RTC_RD_TIME, RTC_SET_TIME: the read_time/set_time
++		    	functions will be called with appropriate values.
++
++		    *	RTC_ALM_SET, RTC_ALM_READ, RTC_WKALM_SET, RTC_WKALM_RD:
++			gets or sets the alarm rtc_timer. May call the set_alarm
++			driver function.
++
++		    *	RTC_IRQP_SET, RTC_IRQP_READ: These are emulated by the
++		    	generic code.
++
++		    *	RTC_PIE_ON, RTC_PIE_OFF: These are also emulated by the
++		    	generic code.
++
++		If all else fails, check out the
++		tools/testing/selftests/timers/rtctest.c test!
+diff --git a/Documentation/rtc.txt b/Documentation/rtc.txt
+index c0c977445fb9..a7890ca9a27e 100644
+--- a/Documentation/rtc.txt
++++ b/Documentation/rtc.txt
+@@ -136,82 +136,4 @@ a high functionality RTC is integrated into the SOC.  That system might read
+ the system clock from the discrete RTC, but use the integrated one for all
+ other tasks, because of its greater functionality.
+ 
+-SYSFS interface
+----------------
+-
+-The sysfs interface under /sys/class/rtc/rtcN provides access to various
+-rtc attributes without requiring the use of ioctls. All dates and times
+-are in the RTC's timezone, rather than in system time.
+-
+-================ ==============================================================
+-date  	   	 RTC-provided date
+-hctosys   	 1 if the RTC provided the system time at boot via the
+-		 CONFIG_RTC_HCTOSYS kernel option, 0 otherwise
+-max_user_freq	 The maximum interrupt rate an unprivileged user may request
+-		 from this RTC.
+-name		 The name of the RTC corresponding to this sysfs directory
+-since_epoch	 The number of seconds since the epoch according to the RTC
+-time		 RTC-provided time
+-wakealarm	 The time at which the clock will generate a system wakeup
+-		 event. This is a one shot wakeup event, so must be reset
+-		 after wake if a daily wakeup is required. Format is seconds
+-		 since the epoch by default, or if there's a leading +, seconds
+-		 in the future, or if there is a leading +=, seconds ahead of
+-		 the current alarm.
+-offset		 The amount which the rtc clock has been adjusted in firmware.
+-		 Visible only if the driver supports clock offset adjustment.
+-		 The unit is parts per billion, i.e. The number of clock ticks
+-		 which are added to or removed from the rtc's base clock per
+-		 billion ticks. A positive value makes a day pass more slowly,
+-		 longer, and a negative value makes a day pass more quickly.
+-*/nvmem		 The non volatile storage exported as a raw file, as described
+-		 in Documentation/nvmem/nvmem.txt
+-================ ==============================================================
+-
+-IOCTL interface
+----------------
+-
+-The ioctl() calls supported by /dev/rtc are also supported by the RTC class
+-framework.  However, because the chips and systems are not standardized,
+-some PC/AT functionality might not be provided.  And in the same way, some
+-newer features -- including those enabled by ACPI -- are exposed by the
+-RTC class framework, but can't be supported by the older driver.
+-
+-    *	RTC_RD_TIME, RTC_SET_TIME ... every RTC supports at least reading
+-	time, returning the result as a Gregorian calendar date and 24 hour
+-	wall clock time.  To be most useful, this time may also be updated.
+-
+-    *	RTC_AIE_ON, RTC_AIE_OFF, RTC_ALM_SET, RTC_ALM_READ ... when the RTC
+-	is connected to an IRQ line, it can often issue an alarm IRQ up to
+-	24 hours in the future.  (Use RTC_WKALM_* by preference.)
+-
+-    *	RTC_WKALM_SET, RTC_WKALM_RD ... RTCs that can issue alarms beyond
+-	the next 24 hours use a slightly more powerful API, which supports
+-	setting the longer alarm time and enabling its IRQ using a single
+-	request (using the same model as EFI firmware).
+-
+-    *	RTC_UIE_ON, RTC_UIE_OFF ... if the RTC offers IRQs, the RTC framework
+-	will emulate this mechanism.
+-
+-    *	RTC_PIE_ON, RTC_PIE_OFF, RTC_IRQP_SET, RTC_IRQP_READ ... these icotls
+-	are emulated via a kernel hrtimer.
+-
+-In many cases, the RTC alarm can be a system wake event, used to force
+-Linux out of a low power sleep state (or hibernation) back to a fully
+-operational state.  For example, a system could enter a deep power saving
+-state until it's time to execute some scheduled tasks.
+-
+-Note that many of these ioctls are handled by the common rtc-dev interface.
+-Some common examples:
+-
+-    *	RTC_RD_TIME, RTC_SET_TIME: the read_time/set_time functions will be
+-	called with appropriate values.
+-
+-    *	RTC_ALM_SET, RTC_ALM_READ, RTC_WKALM_SET, RTC_WKALM_RD: gets or sets
+-	the alarm rtc_timer. May call the set_alarm driver function.
+-
+-    *	RTC_IRQP_SET, RTC_IRQP_READ: These are emulated by the generic code.
+-
+-    *	RTC_PIE_ON, RTC_PIE_OFF: These are also emulated by the generic code.
+-
+-If all else fails, check out the tools/testing/selftests/timers/rtctest.c test!
++The sysfs and ioctl interfaces are described in Documentation/ABI/stable/rtc.
 -- 
-2.11.0
+2.15.1
