@@ -1,168 +1,163 @@
-From: Hauke Mehrtens <hauke@hauke-m.de>
-Subject: [PATCH v4] uapi libc compat: add fallback for unsupported libcs
-Date: Mon,  1 Jan 2018 19:33:20 +0100
-Message-ID: <20180101183320.24409-1-hauke@hauke-m.de>
+From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
+        <maheshb@google.com>
+Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
+Date: Tue, 2 Jan 2018 17:30:34 -0800
+Message-ID: <CAF2d9jiPYvMN=_guoZHyTA5FmMgaJb5mtxroi5D9NvcNrHc5gg@mail.gmail.com>
+References: <20171205223052.12687-1-mahesh@bandewar.net> <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
+ <alpine.LFD.2.20.1712301931360.24310@localhost>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.20.1712301931360.24310@localhost>
 Sender: netdev-owner@vger.kernel.org
-To: davem@davemloft.net
-Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, musl@lists.openwall.com, felix.janda@posteo.de, f.fainelli@gmail.com, carlos@redhat.com, ldv@altlinux.org
+To: James Morris <james.l.morris@oracle.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Serge Hallyn <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>
 List-Id: linux-api@vger.kernel.org
 
-From: Felix Janda <felix.janda@posteo.de>
-
-libc-compat.h aims to prevent symbol collisions between uapi and libc
-headers for each supported libc. This requires continuous coordination
-between them.
-
-The goal of this commit is to improve the situation for libcs (such as
-musl) which are not yet supported and/or do not wish to be explicitly
-supported, while not affecting supported libcs. More precisely, with
-this commit, unsupported libcs can request the suppression of any
-specific uapi definition by defining the correspondings _UAPI_DEF_*
-macro as 0. This can fix symbol collisions for them, as long as the
-libc headers are included before the uapi headers. Inclusion in the
-other order is outside the scope of this commit.
-
-All infrastructure in order to enable this fallback for unsupported
-libcs is already in place, except that libc-compat.h unconditionally
-defines all _UAPI_DEF_* macros to 1 for all unsupported libcs so that
-any previous definitions are ignored. In order to fix this, this commit
-merely makes these definitions conditional.
-
-This commit together with the musl libc commit
-
-http://git.musl-libc.org/cgit/musl/commit/?id=04983f2272382af92eb8f8838964ff944fbb8258
-
-fixes for example the following compiler errors when <linux/in6.h> is
-included after musl's <netinet/in.h>:
-
-./linux/in6.h:32:8: error: redefinition of 'struct in6_addr'
-./linux/in6.h:49:8: error: redefinition of 'struct sockaddr_in6'
-./linux/in6.h:59:8: error: redefinition of 'struct ipv6_mreq'
-
-The comments referencing glibc are still correct, but this file is not
-only used for glibc any more.
-
-Signed-off-by: Felix Janda <felix.janda@posteo.de>
-Reviewed-by: Hauke Mehrtens <hauke@hauke-m.de>
----
-
-v4: Extend patch description with comment about glibc comments
-v3: Fix typos, add a comment to the file and use #ifndef.
-v2: The only change to the previous version is the commit title and
-    message.
-
-This was send to linux-api@vger.kernel.org before and it was suggested 
-that this patch should go through the networking tree to Linus because 
-most of these definitions are networking related.
-
- include/uapi/linux/libc-compat.h | 55 +++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 54 insertions(+), 1 deletion(-)
-
-diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
-index 282875cf8056..8254c937c9f4 100644
---- a/include/uapi/linux/libc-compat.h
-+++ b/include/uapi/linux/libc-compat.h
-@@ -168,46 +168,99 @@
- 
- /* If we did not see any headers from any supported C libraries,
-  * or we are being included in the kernel, then define everything
-- * that we need. */
-+ * that we need. Check for previous __UAPI_* definitions to give
-+ * unsupported C libraries a way to opt out of any kernel definition. */
- #else /* !defined(__GLIBC__) */
- 
- /* Definitions for if.h */
-+#ifndef __UAPI_DEF_IF_IFCONF
- #define __UAPI_DEF_IF_IFCONF 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFMAP
- #define __UAPI_DEF_IF_IFMAP 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFNAMSIZ
- #define __UAPI_DEF_IF_IFNAMSIZ 1
-+#endif
-+#ifndef __UAPI_DEF_IF_IFREQ
- #define __UAPI_DEF_IF_IFREQ 1
-+#endif
- /* Everything up to IFF_DYNAMIC, matches net/if.h until glibc 2.23 */
-+#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS
- #define __UAPI_DEF_IF_NET_DEVICE_FLAGS 1
-+#endif
- /* For the future if glibc adds IFF_LOWER_UP, IFF_DORMANT and IFF_ECHO */
-+#ifndef __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO
- #define __UAPI_DEF_IF_NET_DEVICE_FLAGS_LOWER_UP_DORMANT_ECHO 1
-+#endif
- 
- /* Definitions for in.h */
-+#ifndef __UAPI_DEF_IN_ADDR
- #define __UAPI_DEF_IN_ADDR		1
-+#endif
-+#ifndef __UAPI_DEF_IN_IPPROTO
- #define __UAPI_DEF_IN_IPPROTO		1
-+#endif
-+#ifndef __UAPI_DEF_IN_PKTINFO
- #define __UAPI_DEF_IN_PKTINFO		1
-+#endif
-+#ifndef __UAPI_DEF_IP_MREQ
- #define __UAPI_DEF_IP_MREQ		1
-+#endif
-+#ifndef __UAPI_DEF_SOCKADDR_IN
- #define __UAPI_DEF_SOCKADDR_IN		1
-+#endif
-+#ifndef __UAPI_DEF_IN_CLASS
- #define __UAPI_DEF_IN_CLASS		1
-+#endif
- 
- /* Definitions for in6.h */
-+#ifndef __UAPI_DEF_IN6_ADDR
- #define __UAPI_DEF_IN6_ADDR		1
-+#endif
-+#ifndef __UAPI_DEF_IN6_ADDR_ALT
- #define __UAPI_DEF_IN6_ADDR_ALT		1
-+#endif
-+#ifndef __UAPI_DEF_SOCKADDR_IN6
- #define __UAPI_DEF_SOCKADDR_IN6		1
-+#endif
-+#ifndef __UAPI_DEF_IPV6_MREQ
- #define __UAPI_DEF_IPV6_MREQ		1
-+#endif
-+#ifndef __UAPI_DEF_IPPROTO_V6
- #define __UAPI_DEF_IPPROTO_V6		1
-+#endif
-+#ifndef __UAPI_DEF_IPV6_OPTIONS
- #define __UAPI_DEF_IPV6_OPTIONS		1
-+#endif
-+#ifndef __UAPI_DEF_IN6_PKTINFO
- #define __UAPI_DEF_IN6_PKTINFO		1
-+#endif
-+#ifndef __UAPI_DEF_IP6_MTUINFO
- #define __UAPI_DEF_IP6_MTUINFO		1
-+#endif
- 
- /* Definitions for ipx.h */
-+#ifndef __UAPI_DEF_SOCKADDR_IPX
- #define __UAPI_DEF_SOCKADDR_IPX			1
-+#endif
-+#ifndef __UAPI_DEF_IPX_ROUTE_DEFINITION
- #define __UAPI_DEF_IPX_ROUTE_DEFINITION		1
-+#endif
-+#ifndef __UAPI_DEF_IPX_INTERFACE_DEFINITION
- #define __UAPI_DEF_IPX_INTERFACE_DEFINITION	1
-+#endif
-+#ifndef __UAPI_DEF_IPX_CONFIG_DATA
- #define __UAPI_DEF_IPX_CONFIG_DATA		1
-+#endif
-+#ifndef __UAPI_DEF_IPX_ROUTE_DEF
- #define __UAPI_DEF_IPX_ROUTE_DEF		1
-+#endif
- 
- /* Definitions for xattr.h */
-+#ifndef __UAPI_DEF_XATTR
- #define __UAPI_DEF_XATTR		1
-+#endif
- 
- #endif /* __GLIBC__ */
- 
--- 
-2.11.0
+On Sat, Dec 30, 2017 at 12:31 AM, James Morris
+<james.l.morris@oracle.com> wrote:
+> On Wed, 27 Dec 2017, Mahesh Bandewar (=E0=A4=AE=E0=A4=B9=E0=A5=87=E0=A4=
+=B6 =E0=A4=AC=E0=A4=82=E0=A4=A1=E0=A5=87=E0=A4=B5=E0=A4=BE=E0=A4=B0) wrote:
+>
+>> Hello James,
+>>
+>> Seems like I missed your name to be added into the review of this
+>> patch series. Would you be willing be pull this into the security
+>> tree? Serge Hallyn has already ACKed it.
+>
+> Sure!
+>
+Thank you James.
+>
+>>
+>> Thanks,
+>> --mahesh..
+>>
+>> On Tue, Dec 5, 2017 at 2:30 PM, Mahesh Bandewar <mahesh@bandewar.net> wr=
+ote:
+>> > From: Mahesh Bandewar <maheshb@google.com>
+>> >
+>> > TL;DR version
+>> > -------------
+>> > Creating a sandbox environment with namespaces is challenging
+>> > considering what these sandboxed processes can engage into. e.g.
+>> > CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
+>> > Current form of user-namespaces, however, if changed a bit can allow
+>> > us to create a sandbox environment without locking down user-
+>> > namespaces.
+>> >
+>> > Detailed version
+>> > ----------------
+>> >
+>> > Problem
+>> > -------
+>> > User-namespaces in the current form have increased the attack surface =
+as
+>> > any process can acquire capabilities which are not available to them (=
+by
+>> > default) by performing combination of clone()/unshare()/setns() syscal=
+ls.
+>> >
+>> >     #define _GNU_SOURCE
+>> >     #include <stdio.h>
+>> >     #include <sched.h>
+>> >     #include <netinet/in.h>
+>> >
+>> >     int main(int ac, char **av)
+>> >     {
+>> >         int sock =3D -1;
+>> >
+>> >         printf("Attempting to open RAW socket before unshare()...\n");
+>> >         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+>> >         if (sock < 0) {
+>> >             perror("socket() SOCK_RAW failed: ");
+>> >         } else {
+>> >             printf("Successfully opened RAW-Sock before unshare().\n")=
+;
+>> >             close(sock);
+>> >             sock =3D -1;
+>> >         }
+>> >
+>> >         if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
+>> >             perror("unshare() failed: ");
+>> >             return 1;
+>> >         }
+>> >
+>> >         printf("Attempting to open RAW socket after unshare()...\n");
+>> >         sock =3D socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+>> >         if (sock < 0) {
+>> >             perror("socket() SOCK_RAW failed: ");
+>> >         } else {
+>> >             printf("Successfully opened RAW-Sock after unshare().\n");
+>> >             close(sock);
+>> >             sock =3D -1;
+>> >         }
+>> >
+>> >         return 0;
+>> >     }
+>> >
+>> > The above example shows how easy it is to acquire NET_RAW capabilities
+>> > and once acquired, these processes could take benefit of above mention=
+ed
+>> > or similar issues discovered/undiscovered with malicious intent. Note
+>> > that this is just an example and the problem/solution is not limited
+>> > to NET_RAW capability *only*.
+>> >
+>> > The easiest fix one can apply here is to lock-down user-namespaces whi=
+ch
+>> > many of the distros do (i.e. don't allow users to create user namespac=
+es),
+>> > but unfortunately that prevents everyone from using them.
+>> >
+>> > Approach
+>> > --------
+>> > Introduce a notion of 'controlled' user-namespaces. Every process on
+>> > the host is allowed to create user-namespaces (governed by the limit
+>> > imposed by per-ns sysctl) however, mark user-namespaces created by
+>> > sandboxed processes as 'controlled'. Use this 'mark' at the time of
+>> > capability check in conjunction with a global capability whitelist.
+>> > If the capability is not whitelisted, processes that belong to
+>> > controlled user-namespaces will not be allowed.
+>> >
+>> > Once a user-ns is marked as 'controlled'; all its child user-
+>> > namespaces are marked as 'controlled' too.
+>> >
+>> > A global whitelist is list of capabilities governed by the
+>> > sysctl which is available to (privileged) user in init-ns to modify
+>> > while it's applicable to all controlled user-namespaces on the host.
+>> >
+>> > Marking user-namespaces controlled without modifying the whitelist is
+>> > equivalent of the current behavior. The default value of whitelist inc=
+ludes
+>> > all capabilities so that the compatibility is maintained. However it g=
+ives
+>> > admins fine-grained ability to control various capabilities system wid=
+e
+>> > without locking down user-namespaces.
+>> >
+>> > Please see individual patches in this series.
+>> >
+>> > Mahesh Bandewar (2):
+>> >   capability: introduce sysctl for controlled user-ns capability white=
+list
+>> >   userns: control capabilities of some user namespaces
+>> >
+>> >  Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
+>> >  include/linux/capability.h      |  7 ++++++
+>> >  include/linux/user_namespace.h  | 25 ++++++++++++++++++++
+>> >  kernel/capability.c             | 52 ++++++++++++++++++++++++++++++++=
++++++++++
+>> >  kernel/sysctl.c                 |  5 ++++
+>> >  kernel/user_namespace.c         |  4 ++++
+>> >  security/commoncap.c            |  8 +++++++
+>> >  7 files changed, 122 insertions(+)
+>> >
+>> > --
+>> > 2.15.0.531.g2ccb3012c9-goog
+>> >
+>>
+>
+> --
+> James Morris
+> <james.l.morris@oracle.com>
