@@ -1,225 +1,189 @@
-From: =?UTF-8?B?TWFoZXNoIEJhbmRld2FyICjgpK7gpLngpYfgpLYg4KSs4KSC4KSh4KWH4KS14KS+4KSwKQ==?=
-        <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCHv3 1/2] capability: introduce sysctl for controlled user-ns
- capability whitelist
-Date: Tue, 2 Jan 2018 17:39:18 -0800
-Message-ID: <CAF2d9jhD+VnnNocPruEYoU4oNx0dhNo7YYLWdiggXjMFWtdQQA@mail.gmail.com>
-References: <20171205223101.12765-1-mahesh@bandewar.net> <fd118a72-ce69-99fe-1cc4-0adaee3660c9@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <fd118a72-ce69-99fe-1cc4-0adaee3660c9-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
+From: Mahesh Bandewar <mahesh@bandewar.net>
+Subject: [PATCHv4 0/2] capability controlled user-namespaces
+Date: Tue,  2 Jan 2018 23:26:42 -0800
+Message-ID: <20180103072642.161742-1-mahesh@bandewar.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>, James Morris <james.l.morris@oracle.com>
+Cc: Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux Security <linux-security-module@vger.kernel.org>, Serge Hallyn <serge@hallyn.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>, Mahesh Bandewar <maheshb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Dec 30, 2017 at 12:50 AM, Michael Kerrisk (man-pages)
-<mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
-> Hello Mahesh,
->
-> On 12/05/2017 11:31 PM, Mahesh Bandewar wrote:
->> From: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>
->> Add a sysctl variable kernel.controlled_userns_caps_whitelist. This
->> takes input as capability mask expressed as two comma separated hex
->> u32 words. The mask, however, is stored in kernel as kernel_cap_t type.
->
-> Just by the way, why is it not expressed as a 64 bit value? (The answer
-> to that question should I think be part of this commit message.)
->
-I think I mentioned in the earlier threads but it's as simple as using
-the existing kernel API that deals with larger bit masks/arrays.
-Capability mask is an array of u32 and one cannot guarantee that
-kernel_cap_t is only 64 bits. So expressing it as u32 hex values makes
-logical sense. Yes, one can simplify this even further and make this
-sysctl accept string values. But bringing possibly buggy string
-manipulation inside kernel is far more desirable than an already used
-API that is designed specifically for this purpose. Also not expecting
-this sysctl to be changed very often so robustness is preferred over
-simplicity if that simplicity is accompanied by buggy behavior.
+From: Mahesh Bandewar <maheshb@google.com>
 
-I'll add similar text in the commit log.
+TL;DR version
+-------------
+Creating a sandbox environment with namespaces is challenging
+considering what these sandboxed processes can engage into. e.g.
+CVE-2017-6074, CVE-2017-7184, CVE-2017-7308 etc. just to name few.
+Current form of user-namespaces, however, if changed a bit can allow
+us to create a sandbox environment without locking down user-
+namespaces.
 
->> Any capabilities that are not part of this mask will be controlled and
->> will not be allowed to processes in controlled user-ns.
->>
->> Acked-by: Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
->> Signed-off-by: Mahesh Bandewar <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->> ---
->> v3:
->>   Added couple of comments as requested by Serge Hallyn
->> v2:
->>   Rebase
->> v1:
->>   Initial submission
->>
->>  Documentation/sysctl/kernel.txt | 21 ++++++++++++++++++
->>  include/linux/capability.h      |  3 +++
->>  kernel/capability.c             | 47 +++++++++++++++++++++++++++++++++++++++++
->>  kernel/sysctl.c                 |  5 +++++
->>  4 files changed, 76 insertions(+)
->>
->> diff --git a/Documentation/sysctl/kernel.txt b/Documentation/sysctl/kernel.txt
->> index 694968c7523c..a1d39dbae847 100644
->> --- a/Documentation/sysctl/kernel.txt
->> +++ b/Documentation/sysctl/kernel.txt
->> @@ -25,6 +25,7 @@ show up in /proc/sys/kernel:
->>  - bootloader_version      [ X86 only ]
->>  - callhome                [ S390 only ]
->>  - cap_last_cap
->> +- controlled_userns_caps_whitelist
->>  - core_pattern
->>  - core_pipe_limit
->>  - core_uses_pid
->> @@ -187,6 +188,26 @@ CAP_LAST_CAP from the kernel.
->>
->>  ==============================================================
->>
->> +controlled_userns_caps_whitelist
->> +
->> +Capability mask that is whitelisted for "controlled" user namespaces.
->
-> How is a user-ns marked as "controlled"? Please clarify this.
->
-Hmm, it's mentioned in this same paragraph (at the end). Looks like you miss it!
+Detailed version
+----------------
 
->> +Any capability that is missing from this mask will not be allowed to
->> +any process that is attached to a controlled-userns. e.g. if CAP_NET_RAW
->> +is not part of this mask, then processes running inside any controlled
->> +userns's will not be allowed to perform action that needs CAP_NET_RAW
->> +capability. However, processes that are attached to a parent user-ns
->> +hierarchy that is *not* controlled and has CAP_NET_RAW can continue
->> +performing those actions. User-namespaces are marked "controlled" at
->> +the time of their creation based on the capabilities of the creator.
->> +A process that does not have CAP_SYS_ADMIN will create user-namespaces
->> +that are controlled.
->> +
->> +The value is expressed as two comma separated hex words (u32). This
->> +sysctl is avaialble in init-ns and users with CAP_SYS_ADMIN in init-ns
->> +are allowed to make changes.
->
-> Could you add here a shell session that demonstrates the use of these
-> interfaces and how they allow/disallow capabilities.
->
-OK, will add something to address this.
+Problem
+-------
+User-namespaces in the current form have increased the attack surface as
+any process can acquire capabilities which are not available to them (by
+default) by performing combination of clone()/unshare()/setns() syscalls.
 
-> Is there a way that a process can see whether it is a controlled user-ns
-> vs an uncontrolled user-ns? I think it would be good to explain in this
-> doc patch.
->
-> Thanks,
->
-> Michael
->
->> +==============================================================
->> +
->>  core_pattern:
->>
->>  core_pattern is used to specify a core dumpfile pattern name.
->> diff --git a/include/linux/capability.h b/include/linux/capability.h
->> index f640dcbc880c..7d79a4689625 100644
->> --- a/include/linux/capability.h
->> +++ b/include/linux/capability.h
->> @@ -14,6 +14,7 @@
->>  #define _LINUX_CAPABILITY_H
->>
->>  #include <uapi/linux/capability.h>
->> +#include <linux/sysctl.h>
->>
->>
->>  #define _KERNEL_CAPABILITY_VERSION _LINUX_CAPABILITY_VERSION_3
->> @@ -248,6 +249,8 @@ extern bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns);
->>
->>  /* audit system wants to get cap info from files as well */
->>  extern int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps);
->> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
->> +                              void __user *buff, size_t *lenp, loff_t *ppos);
->>
->>  extern int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size);
->>
->> diff --git a/kernel/capability.c b/kernel/capability.c
->> index 1e1c0236f55b..4a859b7d4902 100644
->> --- a/kernel/capability.c
->> +++ b/kernel/capability.c
->> @@ -29,6 +29,8 @@ EXPORT_SYMBOL(__cap_empty_set);
->>
->>  int file_caps_enabled = 1;
->>
->> +kernel_cap_t controlled_userns_caps_whitelist = CAP_FULL_SET;
->> +
->>  static int __init file_caps_disable(char *str)
->>  {
->>       file_caps_enabled = 0;
->> @@ -507,3 +509,48 @@ bool ptracer_capable(struct task_struct *tsk, struct user_namespace *ns)
->>       rcu_read_unlock();
->>       return (ret == 0);
->>  }
->> +
->> +/* Controlled-userns capabilities routines */
->> +#ifdef CONFIG_SYSCTL
->> +int proc_douserns_caps_whitelist(struct ctl_table *table, int write,
->> +                              void __user *buff, size_t *lenp, loff_t *ppos)
->> +{
->> +     DECLARE_BITMAP(caps_bitmap, CAP_LAST_CAP);
->> +     struct ctl_table caps_table;
->> +     char tbuf[NAME_MAX];
->> +     int ret;
->> +
->> +     ret = bitmap_from_u32array(caps_bitmap, CAP_LAST_CAP,
->> +                                controlled_userns_caps_whitelist.cap,
->> +                                _KERNEL_CAPABILITY_U32S);
->> +     if (ret != CAP_LAST_CAP)
->> +             return -1;
->> +
->> +     scnprintf(tbuf, NAME_MAX, "%*pb", CAP_LAST_CAP, caps_bitmap);
->> +
->> +     caps_table.data = tbuf;
->> +     caps_table.maxlen = NAME_MAX;
->> +     caps_table.mode = table->mode;
->> +     ret = proc_dostring(&caps_table, write, buff, lenp, ppos);
->> +     if (ret)
->> +             return ret;
->> +     if (write) {
->> +             kernel_cap_t tmp;
->> +
->> +             if (!capable(CAP_SYS_ADMIN))
->> +                     return -EPERM;
->> +
->> +             ret = bitmap_parse_user(buff, *lenp, caps_bitmap, CAP_LAST_CAP);
->> +             if (ret)
->> +                     return ret;
->> +
->> +             ret = bitmap_to_u32array(tmp.cap, _KERNEL_CAPABILITY_U32S,
->> +                                      caps_bitmap, CAP_LAST_CAP);
->> +             if (ret != CAP_LAST_CAP)
->> +                     return -1;
->> +
->> +             controlled_userns_caps_whitelist = tmp;
->> +     }
->> +     return 0;
->> +}
->> +#endif /* CONFIG_SYSCTL */
->> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
->> index 557d46728577..759b6c286806 100644
->> --- a/kernel/sysctl.c
->> +++ b/kernel/sysctl.c
->> @@ -1217,6 +1217,11 @@ static struct ctl_table kern_table[] = {
->>               .extra2         = &one,
->>       },
->>  #endif
->> +     {
->> +             .procname       = "controlled_userns_caps_whitelist",
->> +             .mode           = 0644,
->> +             .proc_handler   = proc_douserns_caps_whitelist,
->> +     },
->>       { }
->>  };
->>
->>
->
->
-> --
-> Michael Kerrisk
-> Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-> Linux/UNIX System Programming Training: http://man7.org/training/
+    #define _GNU_SOURCE
+    #include <stdio.h>
+    #include <sched.h>
+    #include <netinet/in.h>
+
+    int main(int ac, char **av)
+    {
+        int sock = -1;
+
+        printf("Attempting to open RAW socket before unshare()...\n");
+        sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+        if (sock < 0) {
+            perror("socket() SOCK_RAW failed: ");
+        } else {
+            printf("Successfully opened RAW-Sock before unshare().\n");
+            close(sock);
+            sock = -1;
+        }
+
+        if (unshare(CLONE_NEWUSER | CLONE_NEWNET) < 0) {
+            perror("unshare() failed: ");
+            return 1;
+        }
+
+        printf("Attempting to open RAW socket after unshare()...\n");
+        sock = socket(AF_INET6, SOCK_RAW, IPPROTO_RAW);
+        if (sock < 0) {
+            perror("socket() SOCK_RAW failed: ");
+        } else {
+            printf("Successfully opened RAW-Sock after unshare().\n");
+            close(sock);
+            sock = -1;
+        }
+
+        return 0;
+    }
+
+The above example shows how easy it is to acquire NET_RAW capabilities
+and once acquired, these processes could take benefit of above mentioned
+or similar issues discovered/undiscovered with malicious intent. Note
+that this is just an example and the problem/solution is not limited
+to NET_RAW capability *only*. 
+
+The easiest fix one can apply here is to lock-down user-namespaces which
+many of the distros do (i.e. don't allow users to create user namespaces),
+but unfortunately that prevents everyone from using them.
+
+Approach
+--------
+Introduce a notion of 'controlled' user-namespaces. Every process on
+the host is allowed to create user-namespaces (governed by the limit
+imposed by per-ns sysctl) however, mark user-namespaces created by
+sandboxed processes as 'controlled'. Use this 'mark' at the time of
+capability check in conjunction with a global capability whitelist.
+If the capability is not whitelisted, processes that belong to 
+controlled user-namespaces will not be allowed.
+
+Processes that do not have CAP_SYS_ADMIN in init-ns can *only* create
+controlled user-namespaces. In other words, user-namespaces created by
+privileged processes (those which have CAP_SYS_ADMIN in init-ns) are
+not controlled. A hierarchy underneath any controlled user-ns is always
+controlled.
+
+A global whitelist is list of capabilities governed by a sysctl
+(kernel.controlled_userns_caps_whitelist) which is available to
+(privileged) user in init-ns to modify while it's applicable to all
+controlled user-namespaces on the host irrespective of when that user-ns
+was created.
+
+Marking user-namespaces controlled without modifying the whitelist is
+equivalent of the current behavior. The default value of whitelist includes
+all capabilities so that the compatibility is maintained. However it gives
+admins fine-grained ability to control various capabilities system wide
+without locking down user-namespaces.
+
+Example
+-------
+Here is the example that demonstrates the behavior of a kernel that has
+this patch-set applied. It uses the same c-code from this commit-log and
+is called acquire_raw.c -
+
+(a) The 'root' user has all the capabilities all the time (before and
+    after taking capability).
+
+    root@vm0:~# id
+    uid=0(root) gid=0(root) groups=0(root)
+
+    root@vm0:~# sysctl -q kernel.controlled_userns_caps_whitelist 
+    kernel.controlled_userns_caps_whitelist = 1f,ffffffff
+
+    root@vm0:~# ./acquire_raw 
+    Attempting to open RAW socket before unshare()...
+    Successfully opened RAW-Sock before unshare().
+    Attempting to open RAW socket after unshare()...
+    Successfully opened RAW-Sock after unshare().
+
+    root@vm0:~# sysctl -w kernel.controlled_userns_caps_whitelist=1f,ffffdfff
+    kernel.controlled_userns_caps_whitelist = 1f,ffffdfff
+
+    root@vm0:~# ./acquire_raw 
+    Attempting to open RAW socket before unshare()...
+    Successfully opened RAW-Sock before unshare().
+    Attempting to open RAW socket after unshare()...
+    Successfully opened RAW-Sock after unshare().
+
+(b) Unprivileged user cannot change the mask.
+
+    mahesh@vm0:~$ id
+    uid=1000(mahesh) gid=1000(mahesh)
+    groups=1000(mahesh),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),118(lpadmin),128(sambashare)
+
+    mahesh@vm0:~$ sysctl -q kernel.controlled_userns_caps_whitelist 
+    kernel.controlled_userns_caps_whitelist = 1f,ffffffff
+
+    mahesh@vm0:~$ sysctl -w kernel.controlled_userns_caps_whitelist=1f,ffffdfff
+    sysctl: permission denied on key 'kernel.controlled_userns_caps_whitelist'
+
+(c) Unprivileged user does not have CAP_NET_RAW in init-ns but can get
+    that capability inside child-user-ns when the controlled_userns_caps
+    mask is unchanged (current behavior).
+
+    mahesh@vm0:~$ sysctl -q kernel.controlled_userns_caps_whitelist 
+    kernel.controlled_userns_caps_whitelist = 1f,ffffffff
+
+    mahesh@vm0:~$ ./acquire_raw 
+    Attempting to open RAW socket before unshare()...
+    socket() SOCK_RAW failed: : Operation not permitted
+    Attempting to open RAW socket after unshare()...
+    Successfully opened RAW-Sock after unshare().
+
+(d) Changing the controlled_userns_caps_whitelist mask will prevent user
+    for acquiring 'controlled capability' inside user-namespace.
+
+    mahesh@vm0:~$ sysctl -q kernel.controlled_userns_caps_whitelist 
+    kernel.controlled_userns_caps_whitelist = 1f,ffffdfff
+    mahesh@vm0:~$ ./acquire_raw 
+    Attempting to open RAW socket before unshare()...
+    socket() SOCK_RAW failed: : Operation not permitted
+    Attempting to open RAW socket after unshare()...
+    socket() SOCK_RAW failed: : Operation not permitted
+
+
+Please see individual patches in this series.
+
+Mahesh Bandewar (2):
+  capability: introduce sysctl for controlled user-ns capability whitelist
+  userns: control capabilities of some user namespaces
+
+ Documentation/sysctl/kernel.txt | 21 +++++++++++++++++
+ include/linux/capability.h      |  7 ++++++
+ include/linux/user_namespace.h  | 25 ++++++++++++++++++++
+ kernel/capability.c             | 52 +++++++++++++++++++++++++++++++++++++++++
+ kernel/sysctl.c                 |  5 ++++
+ kernel/user_namespace.c         |  4 ++++
+ security/commoncap.c            |  8 +++++++
+ 7 files changed, 122 insertions(+)
+
+-- 
+2.15.1.620.gb9897f4670-goog
