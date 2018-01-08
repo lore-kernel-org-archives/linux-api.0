@@ -1,161 +1,62 @@
-From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: Re: [PATCH v5 00/30] ARM Scalable Vector Extension (SVE)
-Date: Mon, 8 Jan 2018 17:49:05 +0300
-Message-ID: <20180108144905.qu5qbmaaglcgwvwq@yury-thinkpad>
-References: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
+From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
+Date: Mon, 8 Jan 2018 09:47:33 -0600
+Message-ID: <20180108154733.GA29416@mail.hallyn.com>
+References: <20171205223052.12687-1-mahesh@bandewar.net>
+ <CAF2d9jit74_VCdD-pEFy3bJo2W1-0cDo0BOJC5beJiy8yFPCWg@mail.gmail.com>
+ <alpine.LFD.2.20.1712301931360.24310@localhost>
+ <CAF2d9jiPYvMN=_guoZHyTA5FmMgaJb5mtxroi5D9NvcNrHc5gg@mail.gmail.com>
+ <alpine.LFD.2.20.1801081131190.8436@localhost>
+ <20180108062452.GA21717@mail.hallyn.com>
+ <alpine.LFD.2.20.1801082040180.12014@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: Dave Martin <Dave.Martin@arm.com>
-Cc: Okamoto Takayuki <tokamoto@jp.fujitsu.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "H. Peter Anvin" <hpa@zytor.com>, kvmarm@lists.cs.columbia.edu, linux-arch@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Alan Hayward <alan.hayward@arm.com>, "H . J . Lu" <hjl.tools@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, linux-arm-kernel@lists.infradead.org, libc-alpha@sourceware.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Dmitry Safonov <dsafonov@virtuozzo.com>, Oleg Nesterov <oleg@redhat.com>, linux-api@vger.kernel.org
+In-Reply-To: <alpine.LFD.2.20.1801082040180.12014@localhost>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: James Morris <james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Cc: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Mahesh Bandewar =?utf-8?B?KOCkruCkueClh+CktiDgpKzgpILgpKHgpYfgpLXgpL4=?= =?utf-8?B?4KSwKQ==?= <maheshb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Netdev <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kernel-hardening <kernel-hardening-ZwoEplunGu1jrUoiu81ncdBPR1lH4CV8@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Eric W . Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Dumazet <edumazet-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Mahesh Bandewar <mahesh-bmGAjcP2qsnk1uMJSBkQmQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 31, 2017 at 03:50:52PM +0000, Dave Martin wrote:
-> This series implements Linux kernel support for the ARM Scalable Vector
-> Extension (SVE). [1]  It supersedes the previous v3: see [3] for link
-> and full cover letter.
+Quoting James Morris (james.l.morris-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org):
+> On Mon, 8 Jan 2018, Serge E. Hallyn wrote:
 > 
-> This is a minor update to v4, but does contain a couple of important
-> fixes.
+> > > Also, why do we need the concept of a controlled user-ns at all, if the 
+> > > default whitelist maintains existing behavior?
+> > 
+> > In past discussions two uses have been brought up:
+> > 
+> > 1. if an 0-day is discovered which is exacerbated by a specific
+> > privilege in user namespaces, that privilege could be turned off until a
+> > reboot with a fixed kernel is scheduled, without fully disabling all
+> > containers.
+> > 
+> > 2. some systems may be specifically designed to run software which
+> > only requires a few capabilities in a userns.  In that case all others
+> > could be disabled.
+> > 
 > 
-> As in previous postings, the last two patches (here 29-30) are still
-> RFC and not proposed for merging at this time.
-> 
-> The patches apply on
-> git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git
-> for-next/core
-> d7b1d22d3821 ("arm64: uapi: Remove PSR_Q_BIT")
-> 
-> To reduce spam, some people may not been copied on the entire series.
-> For those who did not receive the whole series, it can be found in the
-> linux-arm-kernel archive. [2]
-> 
-> See the individual patches for details of changes.
-> 
-> For reviewer convenience, a git tree is available. [4]
-> 
-> Since there are some changes against already-reviewed patches, I've also
-> pushed an unsquashed fixes tree for people to take a look at if it
-> helps. [5]
-> 
-> 
-> Summary:
-> 
->  * "regset: Add support for dynamically sized regsets" fixed to avoid
->    x86 breakage;
-> 
->  * one trival arm64 patch added to add asmlinkage annotations, and a
->    corresponding minor change to the Core task context handling patch;
-> 
->  * one new arm64 fix ("signal: Verify extra data is user-readable in
->    sys_rt_sigreturn") to ensure that access_ok() checks are done for the
->    whole extended signal frame, not just the base frame;
-> 
->  * one minor fix to the SVE sigreturn code to return consistent
->    intermediate error values (semantic correctness, non-functional
->    change);
-> 
->  * one minor change to call __copy_from_user() instead of
->    copy_from_user() in a situation where there is already an access_ok()
->    check;
-> 
-> 
-> [1] ARM Scalable Vector Extension
-> https://community.arm.com/groups/processors/blog/2016/08/22/technology-update-the-scalable-vector-extension-sve-for-the-armv8-a-architecture
-> 
-> [2] linux-arm-kernel October 2017 Archives by thread
-> http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/thread.html
-> 
-> [3] [PATCH v4 00/28] ARM Scalable Vector Extension (SVE)
-> http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/539414.html
-> 
-> [4] For review and testing only -- **do not pull**
->     (This branch has review changelogs which should not form part of
->     the final commits.)
-> 
->     v5 series (this posting)
-> 
->     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v5
->     git://linux-arm.org/linux-dm.git sve/v5
-> 
-> [5] For review and testing only -- **do not pull**
->     (This branch has review changelogs which should not form part of
->     the final commits.)
-> 
->     v4 with unsquashed fixes
-> 
->     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v4%2Bfixes
->     git://linux-arm.org/linux-dm.git sve/v4+fixes
+> I meant in terms of "marking" a user ns as "controlled" type -- it's 
+> unnecessary jargon from an end user point of view.
 
-Hi Dave,
+Ah, yes, that was my point in
 
-During rebase of my ILP32 series on 4.15 kernel I found that 
-ILP32 needs to be enabled with SVE support, like you do for 
-LP64 in this series.
+http://lkml.iu.edu/hypermail/linux/kernel/1711.1/01845.html
+and
+http://lkml.iu.edu/hypermail/linux/kernel/1711.1/02276.html
 
-I did all rebase work on this draft branch:
-https://github.com/norov/linux/tree/ilp32-4.15-rc7
+> This may happen internally but don't make it a special case with a 
+> different name and don't bother users with internal concepts: simply 
+> implement capability whitelists with the default having equivalent 
+> behavior of everything allowed.  Then, document the semantics of the 
+> whitelist in terms of inheritance etc., as a feature of user namespaces, 
+> not as a "type" of user namespace.
 
-But any ILP32 program I tried crash, and the message in dmesg looks
-like this:
-[   39.510667] CPU: 0 PID: 1857 Comm: mytime Not tainted 4.15.0-rc7-00028-g45e0659df4d9 #41
-[   39.510712] Hardware name: linux,dummy-virt (DT)
-[   39.510829] pstate: 00000000 (nzcv daif -PAN -UAO)
-[   39.511101] pc : 0x33488e28
-[   39.511125] lr : 0x33488e28
-[   39.511138] sp : 00000000fffef670
-[   39.511158] x29: 000000005a536c33 x28: 0000000000000000 
-[   39.511211] x27: 0000000000000000 x26: 0000000000000000 
-[   39.511235] x25: 0000000000000000 x24: 0000000000000000 
-[   39.511257] x23: 0000000000466000 x22: 0000000000000000 
-[   39.511278] x21: 0000000000000000 x20: 000000000047f2a8 
-[   39.511300] x19: 0000000000000000 x18: 0000000000000001 
-[   39.511321] x17: 0000000000001000 x16: 0000000000001030 
-[   39.511342] x15: 0000000000554e47 x14: 0000000000000001 
-[   39.511364] x13: 0000000000000004 x12: 000000000000003c 
-[   39.511385] x11: 0000100000000000 x10: 0800000000000000 
-[   39.511406] x9 : 0fffffffffffffff x8 : 000000000000007c 
-[   39.511427] x7 : 0000000000000077 x6 : 0000000000000041 
-[   39.511448] x5 : 0000000000000411 x4 : 00000000fbad2488 
-[   39.511468] x3 : 0000000000000001 x2 : 0000000000497950 
-[   39.511489] x1 : 0000000000497550 x0 : 0000000000000001
+The problem with making them inheritable is that an adversarial user
+can just create a user namespace at boot that sits and waits for an
+0day to be published, then log in and attach to that namespace later,
+since it has already inherited the open whitelist.
 
-(PC, LR and other registers may differ depending on test)
-
-I'm pretty sure that this is SVE-related issue because if I disable
-ARM64_SVE in config, everything becomes working.
-
-I didn't get deep enough into this yet, and most probably there's
-some stupid reason for crashing apps on my side, but in mail list
-I found some sve-related patches that I cannot apply both on 4.15-rc
-and next-20180108. And according to patch names, it is important
-fixes, like this one:
-https://www.spinics.net/lists/arm-kernel/msg619548.html
-
-ILP32 code may spit some kernel issues from time to time, so there's
-minor chance that the problem is not in ILP32 itself - that's why I
-write this email to you.
-
-What I want to ask you, do you have some branch with the most recent
-SVE code that includes all fixes? Better if it would be 4.15-based
-series, because we don't support ILP32 on next-* kernels now.
-
-Also, if you have few minutes to take look at my series, I would
-kindly ask you do this, because I still think that this is my
-misunderstanding of how SVE should work for ILP32, and you as author
-may just catch the bug at a glance.
-
-Thanks,
-Yury
+It feels like there must be some other approach that doesn't feel as...
+band-aid-y as this does, but I'm not sure what.
