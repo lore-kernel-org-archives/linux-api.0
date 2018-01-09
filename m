@@ -1,374 +1,242 @@
-From: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: [PATCH v5 2/4] vm: add a syscall to map a process memory into a pipe
-Date: Tue,  9 Jan 2018 08:30:51 +0200
-Message-ID: <1515479453-14672-3-git-send-email-rppt@linux.vnet.ibm.com>
+From: Mike Rapoport <rppt@linux.vnet.ibm.com>
+Subject: [PATCH v5 4/4] test: add a test for the process_vmsplice syscall
+Date: Tue,  9 Jan 2018 08:30:53 +0200
+Message-ID: <1515479453-14672-5-git-send-email-rppt@linux.vnet.ibm.com>
 References: <1515479453-14672-1-git-send-email-rppt@linux.vnet.ibm.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1515479453-14672-1-git-send-email-rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, criu-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, gdb-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, devel-ZwoEplunGu0Hn6HYM5JI3R2eb7JE58TQ@public.gmane.org, rr-dev-4eJtQOnFJqFAfugRpC6u6w@public.gmane.org, Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, Pavel Emelyanov <xemul-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Greg KH <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Andrei Vagin <avagin-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org>, Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <1515479453-14672-1-git-send-email-rppt@linux.vnet.ibm.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, criu@openvz.org, gdb@sourceware.org, devel@lists.open-mpi.org, rr-dev@mozilla.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Josh Triplett <josh@joshtriplett.org>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Andrei Vagin <avagin@openvz.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+From: Andrei Vagin <avagin@openvz.org>
 
-It is a hybrid of process_vm_readv() and vmsplice().
+This test checks that process_vmsplice() can splice pages from a remote
+process and returns EFAULT, if process_vmsplice() tries to splice pages
+by an unaccessiable address.
 
-vmsplice can map memory from a current address space into a pipe.
-process_vm_readv can read memory of another process.
-
-A new system call can map memory of another process into a pipe.
-
-ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
-                        unsigned long nr_segs, unsigned int flags)
-
-All arguments are identical with vmsplice except pid which specifies a
-target process.
-
-Currently if we want to dump a process memory to a file or to a socket,
-we can use process_vm_readv() + write(), but it works slow, because data
-are copied into a temporary user-space buffer.
-
-A second way is to use vmsplice() + splice(). It is more effective,
-because data are not copied into a temporary buffer, but here is another
-problem. vmsplice works with the currect address space, so it can be
-used only if we inject our code into a target process.
-
-The second way suffers from a few other issues:
-* a process has to be stopped to run a parasite code
-* a number of pipes is limited, so it may be impossible to dump all
-  memory in one iteration, and we have to stop process and inject our
-  code a few times.
-* pages in pipes are unreclaimable, so it isn't good to hold a lot of
-  memory in pipes.
-
-The introduced syscall allows to use a second way without injecting any
-code into a target process.
-
-My experiments shows that process_vmsplice() + splice() works two time
-faster than process_vm_readv() + write().
-
-It is particularly useful for iterative migration. In those cases we enable
-a memory tracker, and then we are dumping  a process memory while a process
-continues to work. On the first iteration we are dumping all memory, and
-then we are dumpung only memory that was modified from the previous
-iteration.  After a few pre-dump operations, a process is stopped and
-dumped finally. The pre-dump operations allow to significantly decrease a
-process downtime, when a process is migrated to another host.
-
-The primary disadvantage of the process_vm_readv() + write() approach for
-the iterative migration usecase is the need to stop the processes with, e.g.
-ptrace, and inject parasite code. And, since the the number of pipes and
-their size is limited, we either have to limit the dump size to about 1.5GB
-or to keep the target processes stopped. The process_vmsplice system call
-allows splicing memory without the parasite code and even without stopping
-target processes.
-
-This system call maybe usefult for debuggers. For example, a debugger can
-use it to generate a core file, it can splice memory of a process into a
-pipe and then splice it from the pipe to a file. This method works much
-faster than using PTRACE_PEEK* commands.
-
-Debuggers may also use process_vmsplice() to observe memory changes in a
-process page. process_vmsplice() attaches a real process page to a pipe, so
-we can splice it once and observe how it is being changed over time.
-
-The process_vmsplice syscall might be of interest for users of
-process_vm_readv(), in case if they read memory to send it to somewhere
-else.
-
-Signed-off-by: Andrei Vagin <avagin-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
-Signed-off-by: Mike Rapoport <rppt-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
 ---
- fs/splice.c                       | 205 ++++++++++++++++++++++++++++++++++++++
- include/linux/compat.h            |   3 +
- include/linux/syscalls.h          |   4 +
- include/uapi/asm-generic/unistd.h |   5 +-
- kernel/sys_ni.c                   |   2 +
- 5 files changed, 218 insertions(+), 1 deletion(-)
+ tools/testing/selftests/process_vmsplice/Makefile  |   5 +
+ .../process_vmsplice/process_vmsplice_test.c       | 196 +++++++++++++++++++++
+ 2 files changed, 201 insertions(+)
+ create mode 100644 tools/testing/selftests/process_vmsplice/Makefile
+ create mode 100644 tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
 
-diff --git a/fs/splice.c b/fs/splice.c
-index 7f1ffc50ff1d..72397d2a59b9 100644
---- a/fs/splice.c
-+++ b/fs/splice.c
-@@ -34,6 +34,7 @@
- #include <linux/socket.h>
- #include <linux/compat.h>
- #include <linux/sched/signal.h>
-+#include <linux/sched/mm.h>
- 
- #include "internal.h"
- 
-@@ -1373,6 +1374,210 @@ SYSCALL_DEFINE4(vmsplice, int, fd, const struct iovec __user *, iov,
- 	return error;
- }
- 
-+#ifdef CONFIG_CROSS_MEMORY_ATTACH
-+/*
-+ * Map pages from a specified task into a pipe
-+ */
-+static int remote_single_vec_to_pipe(struct task_struct *task,
-+			struct mm_struct *mm,
-+			const struct iovec *rvec,
-+			struct pipe_inode_info *pipe,
-+			unsigned int flags,
-+			size_t *total)
-+{
-+	struct pipe_buffer buf = {
-+		.ops = &user_page_pipe_buf_ops,
-+		.flags = flags
-+	};
-+	unsigned long addr = (unsigned long) rvec->iov_base;
-+	unsigned long pa = addr & PAGE_MASK;
-+	unsigned long start_offset = addr - pa;
-+	unsigned long nr_pages;
-+	ssize_t len = rvec->iov_len;
-+	struct page *process_pages[16];
-+	bool failed = false;
-+	int ret = 0;
+diff --git a/tools/testing/selftests/process_vmsplice/Makefile b/tools/testing/selftests/process_vmsplice/Makefile
+new file mode 100644
+index 000000000000..246d5a7dfed6
+--- /dev/null
++++ b/tools/testing/selftests/process_vmsplice/Makefile
+@@ -0,0 +1,5 @@
++CFLAGS += -I../../../../usr/include/
 +
-+	nr_pages = (addr + len - 1) / PAGE_SIZE - addr / PAGE_SIZE + 1;
-+	while (nr_pages) {
-+		long pages = min(nr_pages, 16UL);
-+		int locked = 1;
-+		ssize_t copied;
++TEST_GEN_PROGS := process_vmsplice_test
 +
-+		/*
-+		 * Get the pages we're interested in.  We must
-+		 * access remotely because task/mm might not
-+		 * current/current->mm
-+		 */
-+		down_read(&mm->mmap_sem);
-+		pages = get_user_pages_remote(task, mm, pa, pages, 0,
-+					      process_pages, NULL, &locked);
-+		if (locked)
-+			up_read(&mm->mmap_sem);
-+		if (pages <= 0) {
-+			failed = true;
-+			ret = -EFAULT;
-+			break;
-+		}
++include ../lib.mk
+diff --git a/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c b/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
+new file mode 100644
+index 000000000000..1682bdb32de3
+--- /dev/null
++++ b/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
+@@ -0,0 +1,196 @@
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <unistd.h>
++#include <sys/mman.h>
++#include <sys/syscall.h>
++#include <fcntl.h>
++#include <sys/uio.h>
++#include <errno.h>
++#include <signal.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
 +
-+		copied = pages * PAGE_SIZE - start_offset;
-+		if (copied > len)
-+			copied = len;
-+		len -= copied;
++#include "../kselftest.h"
 +
-+		ret = pages_to_pipe(process_pages, pipe, &buf, total, copied,
-+				    start_offset);
-+		if (unlikely(ret < 0))
-+			break;
-+
-+		start_offset = 0;
-+		nr_pages -= pages;
-+		pa += pages * PAGE_SIZE;
-+	}
-+	return ret < 0 ? ret : 0;
-+}
-+
-+static ssize_t remote_iovec_to_pipe(struct task_struct *task,
-+			struct mm_struct *mm,
-+			const struct iovec *rvec,
-+			unsigned long riovcnt,
-+			struct pipe_inode_info *pipe,
-+			unsigned int flags)
-+{
-+	size_t total = 0;
-+	int ret = 0, i;
-+
-+	for (i = 0; i < riovcnt; i++) {
-+		/* Work out address and page range required */
-+		if (rvec[i].iov_len == 0)
-+			continue;
-+
-+		ret = remote_single_vec_to_pipe(
-+				task, mm, &rvec[i], pipe, flags, &total);
-+		if (ret < 0)
-+			break;
-+	}
-+	return total ? total : ret;
-+}
-+
-+static long process_vmsplice_to_pipe(struct task_struct *task,
-+				struct mm_struct *mm, struct file *file,
-+				const struct iovec __user *uiov,
-+				unsigned long nr_segs, unsigned int flags)
-+{
-+	struct pipe_inode_info *pipe;
-+	struct iovec iovstack[UIO_FASTIOV];
-+	struct iovec *iov = iovstack;
-+	unsigned int buf_flag = 0;
-+	long ret;
-+
-+	if (flags & SPLICE_F_GIFT)
-+		buf_flag = PIPE_BUF_FLAG_GIFT;
-+
-+	pipe = get_pipe_info(file);
-+	if (!pipe)
-+		return -EBADF;
-+
-+	ret = rw_copy_check_uvector(CHECK_IOVEC_ONLY, uiov, nr_segs,
-+					UIO_FASTIOV, iovstack, &iov);
-+	if (ret < 0)
-+		return ret;
-+
-+	pipe_lock(pipe);
-+	ret = wait_for_space(pipe, flags);
-+	if (!ret)
-+		ret = remote_iovec_to_pipe(task, mm, iov,
-+						nr_segs, pipe, buf_flag);
-+	pipe_unlock(pipe);
-+	if (ret > 0)
-+		wakeup_pipe_readers(pipe);
-+
-+	if (iov != iovstack)
-+		kfree(iov);
-+	return ret;
-+}
-+
-+/* process_vmsplice splices a process address range into a pipe. */
-+SYSCALL_DEFINE5(process_vmsplice, int, pid, int, fd,
-+		const struct iovec __user *, iov,
-+		unsigned long, nr_segs, unsigned int, flags)
-+{
-+	struct task_struct *task;
-+	struct mm_struct *mm;
-+	struct fd f;
-+	long ret;
-+
-+	if (unlikely(flags & ~SPLICE_F_ALL))
-+		return -EINVAL;
-+	if (unlikely(nr_segs > UIO_MAXIOV))
-+		return -EINVAL;
-+	else if (unlikely(!nr_segs))
-+		return 0;
-+
-+	f = fdget(fd);
-+	if (!f.file)
-+		return -EBADF;
-+
-+	/* Get process information */
-+	task = find_get_task_by_vpid(pid);
-+	if (!task) {
-+		ret = -ESRCH;
-+		goto out_fput;
-+	}
-+
-+	mm = mm_access(task, PTRACE_MODE_ATTACH_REALCREDS);
-+	if (!mm || IS_ERR(mm)) {
-+		ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
-+		/*
-+		 * Explicitly map EACCES to EPERM as EPERM is a more a
-+		 * appropriate error code for process_vw_readv/writev
-+		 */
-+		if (ret == -EACCES)
-+			ret = -EPERM;
-+		goto put_task_struct;
-+	}
-+
-+	ret = -EBADF;
-+	if (f.file->f_mode & FMODE_WRITE)
-+		ret = process_vmsplice_to_pipe(task, mm, f.file,
-+						iov, nr_segs, flags);
-+	mmput(mm);
-+
-+put_task_struct:
-+	put_task_struct(task);
-+
-+out_fput:
-+	fdput(f);
-+
-+	return ret;
-+}
-+
-+#ifdef CONFIG_COMPAT
-+COMPAT_SYSCALL_DEFINE5(process_vmsplice, pid_t, pid, int, fd,
-+			const struct compat_iovec __user *, iov32,
-+			unsigned int, nr_segs, unsigned int, flags)
-+{
-+	struct iovec __user *iov;
-+	unsigned int i;
-+
-+	if (nr_segs > UIO_MAXIOV)
-+		return -EINVAL;
-+
-+	iov = compat_alloc_user_space(nr_segs * sizeof(struct iovec));
-+	for (i = 0; i < nr_segs; i++) {
-+		struct compat_iovec v;
-+
-+		if (get_user(v.iov_base, &iov32[i].iov_base) ||
-+		    get_user(v.iov_len, &iov32[i].iov_len) ||
-+		    put_user(compat_ptr(v.iov_base), &iov[i].iov_base) ||
-+		    put_user(v.iov_len, &iov[i].iov_len))
-+			return -EFAULT;
-+	}
-+	return sys_process_vmsplice(pid, fd, iov, nr_segs, flags);
-+}
++#ifndef __NR_process_vmsplice
++#define __NR_process_vmsplice 333
 +#endif
-+#endif /* CONFIG_CROSS_MEMORY_ATTACH */
 +
- #ifdef CONFIG_COMPAT
- COMPAT_SYSCALL_DEFINE4(vmsplice, int, fd, const struct compat_iovec __user *, iov32,
- 		    unsigned int, nr_segs, unsigned int, flags)
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 0fc36406f32c..11b375319289 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -550,6 +550,9 @@ asmlinkage long compat_sys_getdents(unsigned int fd,
- 				    unsigned int count);
- asmlinkage long compat_sys_vmsplice(int fd, const struct compat_iovec __user *,
- 				    unsigned int nr_segs, unsigned int flags);
-+asmlinkage long compat_sys_process_vmsplice(pid_t pid, int fd,
-+				    const struct compat_iovec __user *,
-+				    unsigned int nr_segs, unsigned int flags);
- asmlinkage long compat_sys_open(const char __user *filename, int flags,
- 				umode_t mode);
- asmlinkage long compat_sys_openat(int dfd, const char __user *filename,
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a78186d826d7..4ba93336bf05 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -941,4 +941,8 @@ asmlinkage long sys_pkey_free(int pkey);
- asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
- 			  unsigned mask, struct statx __user *buffer);
- 
-+asmlinkage long sys_process_vmsplice(pid_t pid,
-+			int fd, const struct iovec __user *iov,
-+			unsigned long nr_segs, unsigned int flags);
++#define pr_err(fmt, ...) \
++		({ \
++			fprintf(stderr, "%s:%d:" fmt, \
++				__func__, __LINE__, ##__VA_ARGS__); \
++			KSFT_FAIL; \
++		})
++#define pr_perror(fmt, ...) pr_err(fmt ": %m\n", ##__VA_ARGS__)
++#define fail(fmt, ...) pr_err("FAIL:" fmt, ##__VA_ARGS__)
 +
- #endif
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 8b87de067bc7..37f18320ae94 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -732,9 +732,12 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
- __SYSCALL(__NR_pkey_free,     sys_pkey_free)
- #define __NR_statx 291
- __SYSCALL(__NR_statx,     sys_statx)
-+#define __NR_process_vmsplice 292
-+__SC_COMP(__NR_process_vmsplice, sys_process_vmsplice,
-+	  compat_sys_process_vmsplice)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 292
-+#define __NR_syscalls 293
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index b5189762d275..a939fbb92d9e 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -158,8 +158,10 @@ cond_syscall(sys_sysfs);
- cond_syscall(sys_syslog);
- cond_syscall(sys_process_vm_readv);
- cond_syscall(sys_process_vm_writev);
-+cond_syscall(sys_process_vmsplice);
- cond_syscall(compat_sys_process_vm_readv);
- cond_syscall(compat_sys_process_vm_writev);
-+cond_syscall(compat_sys_process_vmsplice);
- cond_syscall(sys_uselib);
- cond_syscall(sys_fadvise64);
- cond_syscall(sys_fadvise64_64);
++static ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
++			unsigned long nr_segs, unsigned int flags)
++{
++	return syscall(__NR_process_vmsplice, pid, fd, iov, nr_segs, flags);
++
++}
++
++#define MEM_SIZE (4096 * 100)
++#define MEM_WRONLY_SIZE (4096 * 10)
++
++int main(int argc, char **argv)
++{
++	char *addr, *addr_wronly;
++	int p[2];
++	struct iovec iov[2];
++	char buf[4096];
++	int status, ret;
++	pid_t pid;
++
++	ksft_print_header();
++
++	if (process_vmsplice(0, 0, 0, 0, 0)) {
++		if (errno == ENOSYS) {
++			ksft_exit_skip("process_vmsplice is not supported\n");
++			return 0;
++		}
++		return pr_perror("Zero-length process_vmsplice failed");
++	}
++
++	addr = mmap(0, MEM_SIZE, PROT_READ | PROT_WRITE,
++					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
++	if (addr == MAP_FAILED)
++		return pr_perror("Unable to create a mapping");
++
++	addr_wronly = mmap(0, MEM_WRONLY_SIZE, PROT_WRITE,
++				MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
++	if (addr_wronly == MAP_FAILED)
++		return pr_perror("Unable to create a write-only mapping");
++
++	if (pipe(p))
++		return pr_perror("Unable to create a pipe");
++
++	pid = fork();
++	if (pid < 0)
++		return pr_perror("Unable to fork");
++
++	if (pid == 0) {
++		addr[0] = 'C';
++		addr[4096 + 128] = 'A';
++		addr[4096 + 128 + 4096 - 1] = 'B';
++
++		if (prctl(PR_SET_PDEATHSIG, SIGKILL))
++			return pr_perror("Unable to set PR_SET_PDEATHSIG");
++		if (write(p[1], "c", 1) != 1)
++			return pr_perror("Unable to write data into pipe");
++
++		while (1)
++			sleep(1);
++		return 1;
++	}
++	if (read(p[0], buf, 1) != 1) {
++		pr_perror("Unable to read data from pipe");
++		kill(pid, SIGKILL);
++		wait(&status);
++		return 1;
++	}
++
++	munmap(addr, MEM_SIZE);
++	munmap(addr_wronly, MEM_WRONLY_SIZE);
++
++	iov[0].iov_base = addr;
++	iov[0].iov_len = 1;
++
++	iov[1].iov_base = addr + 4096 + 128;
++	iov[1].iov_len = 4096;
++
++	/* check one iovec */
++	if (process_vmsplice(pid, p[1], iov, 1, SPLICE_F_GIFT) != 1)
++		return pr_perror("Unable to splice pages");
++
++	if (read(p[0], buf, 1) != 1)
++		return pr_perror("Unable to read from pipe");
++
++	if (buf[0] != 'C')
++		ksft_test_result_fail("Get wrong data\n");
++	else
++		ksft_test_result_pass("Check process_vmsplice with one vec\n");
++
++	/* check two iovec-s */
++	if (process_vmsplice(pid, p[1], iov, 2, SPLICE_F_GIFT) != 4097)
++		return pr_perror("Unable to spice pages\n");
++
++	if (read(p[0], buf, 1) != 1)
++		return pr_perror("Unable to read from pipe\n");
++
++	if (buf[0] != 'C')
++		ksft_test_result_fail("Get wrong data\n");
++
++	if (read(p[0], buf, 4096) != 4096)
++		return pr_perror("Unable to read from pipe\n");
++
++	if (buf[0] != 'A' || buf[4095] != 'B')
++		ksft_test_result_fail("Get wrong data\n");
++	else
++		ksft_test_result_pass("check process_vmsplice with two vecs\n");
++
++	/* check how an unreadable region in a second vec is handled */
++	iov[0].iov_base = addr;
++	iov[0].iov_len = 1;
++
++	iov[1].iov_base = addr_wronly + 5;
++	iov[1].iov_len = 1;
++
++	if (process_vmsplice(pid, p[1], iov, 2, SPLICE_F_GIFT) != 1)
++		return pr_perror("Unable to splice data");
++
++	if (read(p[0], buf, 1) != 1)
++		return pr_perror("Unable to read form pipe");
++
++	if (buf[0] != 'C')
++		ksft_test_result_fail("Get wrong data\n");
++	else
++		ksft_test_result_pass("unreadable region in a second vec\n");
++
++	/* check how an unreadable region in a first vec is handled */
++	errno = 0;
++	if (process_vmsplice(pid, p[1], iov + 1, 1, SPLICE_F_GIFT) != -1 ||
++	    errno != EFAULT)
++		ksft_test_result_fail("Got anexpected errno %d\n", errno);
++	else
++		ksft_test_result_pass("splice as much as possible\n");
++
++	iov[0].iov_base = addr;
++	iov[0].iov_len = 1;
++
++	iov[1].iov_base = addr;
++	iov[1].iov_len = MEM_SIZE;
++
++	/* splice as much as possible */
++	ret = process_vmsplice(pid, p[1], iov, 2,
++				SPLICE_F_GIFT | SPLICE_F_NONBLOCK);
++	if (ret != 4096 * 15 + 1) /* by default a pipe can fit 16 pages */
++		return pr_perror("Unable to splice pages");
++
++	while (ret > 0) {
++		int len;
++
++		len = read(p[0], buf, 4096);
++		if (len < 0)
++			return pr_perror("Unable to read data");
++		if (len > ret)
++			return pr_err("Read more than expected\n");
++		ret -= len;
++	}
++	ksft_test_result_pass("splice as much as possible\n");
++
++	if (kill(pid, SIGTERM))
++		return pr_perror("Unable to kill a child process");
++	status = -1;
++	if (wait(&status) < 0)
++		return pr_perror("Unable to wait a child process");
++	if (!WIFSIGNALED(status) || WTERMSIG(status) != SIGTERM)
++		return pr_err("The child exited with an unexpected code %d\n",
++									status);
++
++	if (ksft_get_fail_cnt())
++		return ksft_exit_fail();
++	return ksft_exit_pass();
++}
 -- 
 2.7.4
