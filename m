@@ -1,87 +1,81 @@
-From: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
-Subject: [manpages PATCH] capabilities.7: describe namespaced file
- capabilities
-Date: Tue, 9 Jan 2018 12:52:18 -0600
-Message-ID: <20180109185218.GA21753@mail.hallyn.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
+Date: Tue, 9 Jan 2018 16:28:59 -0600
+Message-ID: <20180109222859.GA25956@mail.hallyn.com>
+References: <CAF2d9jiPYvMN=_guoZHyTA5FmMgaJb5mtxroi5D9NvcNrHc5gg@mail.gmail.com>
+ <alpine.LFD.2.20.1801081131190.8436@localhost>
+ <20180108062452.GA21717@mail.hallyn.com>
+ <alpine.LFD.2.20.1801082040180.12014@localhost>
+ <20180108154733.GA29416@mail.hallyn.com>
+ <CAF2d9jgVJpuAH+jgK0v7sQ9Pr75xy=GSnqKDdpeE7d97O0EbcQ@mail.gmail.com>
+ <20180108181121.GA32302@mail.hallyn.com>
+ <CAF2d9jgar8J+mQjUfF=+XdvrcS=RvtOpKysxOiZkG-rXgm0KVw@mail.gmail.com>
+ <20180108183610.GA562@mail.hallyn.com>
+ <CAF2d9jjws=jEbybHs18J_xkduAWB+bh6BA_CkD5oYRWz7PwjZA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Cc: linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+In-Reply-To: <CAF2d9jjws=jEbybHs18J_xkduAWB+bh6BA_CkD5oYRWz7PwjZA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mahesh Bandewar =?utf-8?B?KOCkruCkueClh+CktiDgpKzgpILgpKHgpYfgpLXgpL4=?= =?utf-8?B?4KSwKQ==?= <maheshb@google.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, James Morris <james.l.morris@oracle.com>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>
 List-Id: linux-api@vger.kernel.org
 
-Update the capabilities(7)  manpage with a description of the
-new-ish namespaced file capability support.
+Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
+> On Mon, Jan 8, 2018 at 10:36 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
+> >> On Mon, Jan 8, 2018 at 10:11 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> >> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
+> >> >> On Mon, Jan 8, 2018 at 7:47 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> >> >> > Quoting James Morris (james.l.morris@oracle.com):
+> >> >> >> On Mon, 8 Jan 2018, Serge E. Hallyn wrote:
+> >> >> >> I meant in terms of "marking" a user ns as "controlled" type -- it's
+> >> >> >> unnecessary jargon from an end user point of view.
+> >> >> >
+> >> >> > Ah, yes, that was my point in
+> >> >> >
+> >> >> > http://lkml.iu.edu/hypermail/linux/kernel/1711.1/01845.html
+> >> >> > and
+> >> >> > http://lkml.iu.edu/hypermail/linux/kernel/1711.1/02276.html
+> >> >> >
+> >> >> >> This may happen internally but don't make it a special case with a
+> >> >> >> different name and don't bother users with internal concepts: simply
+> >> >> >> implement capability whitelists with the default having equivalent
+> >> >
+> >> > So the challenge is to have unprivileged users be contained, while
+> >> > allowing trusted workloads in containers created by a root user to
+> >> > bypass the restriction.
+> >> >
+> >> > Now, the current proposal actually doesn't support a root user starting
+> >> > an application that it doesn't quite trust in such a way that it *is*
+> >> > subject to the whitelist.
+> >>
+> >> Well, this is not hard since root process can spawn another process
+> >> and loose privileges before creating user-ns to be controlled by the
+> >> whitelist.
+> >
+> > It would have to drop cap_sys_admin for the container to be marked as
+> > "controlled", which may prevent the container runtime from properly starting
+> > the container.
+> >
+> Yes, but that's a conflict of trusted operations (that requires
+> SYS_ADMIN) and untrusted processes it may spawn.
 
-A note on userspace tools:  since the kernel will automatically
-convert between v2 and v3 xattrs, and translate nsroot between
-v3 xattrs, we can make do with the current getcap(8) and setcap(8)
-tools. I.e. a user on the host can create a transient user namespace
-with the appropriate mappings and run setcap(8) there.  The kernel
-will automatically write a v3 xattr with the transient namespace's
-root user as nsroot.
+Not sure I understand what you're saying, but
 
-Signed-off-by: Serge Hallyn <shallyn-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
----
- man7/capabilities.7 | 44 ++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 44 insertions(+)
+I guess that in any case the task which is doing unshare(CLONE_NEWNS)
+can drop cap_sys_admin first.  Though that is harder if using clone,
+and it is awkward because it's not the container manager, but the user,
+who will judge whether the container workload should be restricted.
+So the container driver will add a flag like "run-controlled", and
+the driver will convert that to dropping a capability; which again
+is weird.  It would seem nicer to introduce a userns flag, 'caps-controlled'
+For an unprivileged userns, it is always set to 1, and root cannot
+change it.  For a root-created userns, it stays 0, but root can set it
+to 1 (using /proc file?).  In this way a either container runtime or just an
+admin script can say "no wait I want this container to still be controlled".
 
-diff --git a/man7/capabilities.7 b/man7/capabilities.7
-index 166eaaf..76e7e02 100644
---- a/man7/capabilities.7
-+++ b/man7/capabilities.7
-@@ -936,6 +936,50 @@ if we specify the effective flag as being enabled for any capability,
- then the effective flag must also be specified as enabled
- for all other capabilities for which the corresponding permitted or
- inheritable flags is enabled.
-+.PP
-+Until 4.13, only VFS_CAP_REVISION_2 xattrs were supported.  These store only
-+the capabilities to be applied to the file, with no record of the writer's
-+credentials.  Therefore only privileged users can be trusted to write them, and
-+.BR CAP_SETFCAP
-+over the user namespace which mounted the filesystem (usually the initial user
-+namespace) is required.  This makes it impossible to write file capabilities
-+from a user namespaced container, which causes some package updates to fail.
-+.PP
-+In order to support setting file capabilities in containers, the
-+kernel must be able to identify whether the task executing the
-+file will be constrained to a subset of the resources over which
-+the writer of the file capabilities has privilege.  To this end,
-+since 4.13, VFS_CAP_REVISION_3 capabilities store the user ID
-+of the root user in the writer's namespace ("nsroot").  Hence the writer only
-+requires
-+.IP 1.
-+.BR CAP_SETFCAP
-+over the file inode, meaning the writing task must have
-+.BR CAP_SETFCAP
-+over a user namespace into which the inode's owning user ID is mapped.
-+.PP
-+and
-+.IP 2.
-+.BR CAP_SETFCAP
-+over the writer's own user namespace.
-+.PP
-+A VFS_CAP_REVISION_3 file capability will take effect only when run in a user namespace
-+whose UID 0 maps to the saved "nsroot", or a descendant of such a namespace.
-+.PP
-+Users with the required privilege may use
-+.BR setxattr(2)
-+to request either a VFS_CAP_REVISION_2 or VFS_CAP_REVISION_3 write.
-+The kernel will automatically convert a VFS_CAP_REVISION_2 to a
-+VFS_CAP_REVISION_3 extended attribute with the "nsroot"
-+set to the root user in the writer's user namespace, or, if a VFS_CAP_REVISION_3
-+extended attribute is specified, then the kernel will map the
-+specified root user ID (which must be a valid user ID mapped in the caller's
-+user namespace) into the initial user namespace.  Likewise,
-+.BR getxattr(2)
-+results will be converted and simplified to show a VFS_CAP_REVISION_2
-+extended attribute, if a VFS_CAP_REVISION_3 applies to the caller's
-+namespace, or to map the VFS_CAP_REVISION_3 root user ID into the
-+caller's namespace.
- .\"
- .SS Transformation of capabilities during execve()
- .PP
--- 
-1.9.1
+Or we could instead add a second sysctl to decide whether all or only
+'controlled' user namespaces should be controlled.  That's not pretty though.
