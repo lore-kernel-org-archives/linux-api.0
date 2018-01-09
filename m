@@ -1,174 +1,133 @@
-From: Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: RFC(V3): Audit Kernel Container IDs
-Date: Tue, 09 Jan 2018 11:18:56 -0500
-Message-ID: <1515514736.3239.10.camel@redhat.com>
-References: <20180109121620.wi7dq2423ugsraqv@madcap2.tricolour.ca>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH v5 00/30] ARM Scalable Vector Extension (SVE)
+Date: Tue, 9 Jan 2018 19:51:20 +0300
+Message-ID: <20180109165120.6ravt4stp3654374@yury-thinkpad>
+References: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
+ <20180108144905.qu5qbmaaglcgwvwq@yury-thinkpad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20180109121620.wi7dq2423ugsraqv-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Daniel Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Madz Car <madzcar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, "Eric W.
-	Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180108144905.qu5qbmaaglcgwvwq@yury-thinkpad>
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: linux-arm-kernel@lists.infradead.org, linux-arch@vger.kernel.org, Mark Rutland <mark.rutland@arm.com>, Okamoto Takayuki <tokamoto@jp.fujitsu.com>, libc-alpha@sourceware.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, "H . J . Lu" <hjl.tools@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Will Deacon <will.deacon@arm.com>, Oleg Nesterov <oleg@redhat.com>, Dmitry Safonov <dsafonov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alan Hayward <alan.hayward@arm.com>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>, kvmarm@lists.cs.columbia.edu, Ch
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2018-01-09 at 07:16 -0500, Richard Guy Briggs wrote:
-> Containers are a userspace concept.  The kernel knows nothing of them.
+On Mon, Jan 08, 2018 at 05:49:05PM +0300, Yury Norov wrote:
+> On Tue, Oct 31, 2017 at 03:50:52PM +0000, Dave Martin wrote:
+> > This series implements Linux kernel support for the ARM Scalable Vector
+> > Extension (SVE). [1]  It supersedes the previous v3: see [3] for link
+> > and full cover letter.
+> > 
+> > This is a minor update to v4, but does contain a couple of important
+> > fixes.
+> > 
+> > As in previous postings, the last two patches (here 29-30) are still
+> > RFC and not proposed for merging at this time.
+> > 
+> > The patches apply on
+> > git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git
+> > for-next/core
+> > d7b1d22d3821 ("arm64: uapi: Remove PSR_Q_BIT")
+> > 
+> > To reduce spam, some people may not been copied on the entire series.
+> > For those who did not receive the whole series, it can be found in the
+> > linux-arm-kernel archive. [2]
+> > 
+> > See the individual patches for details of changes.
+> > 
+> > For reviewer convenience, a git tree is available. [4]
+> > 
+> > Since there are some changes against already-reviewed patches, I've also
+> > pushed an unsquashed fixes tree for people to take a look at if it
+> > helps. [5]
+> > 
+> > 
+> > Summary:
+> > 
+> >  * "regset: Add support for dynamically sized regsets" fixed to avoid
+> >    x86 breakage;
+> > 
+> >  * one trival arm64 patch added to add asmlinkage annotations, and a
+> >    corresponding minor change to the Core task context handling patch;
+> > 
+> >  * one new arm64 fix ("signal: Verify extra data is user-readable in
+> >    sys_rt_sigreturn") to ensure that access_ok() checks are done for the
+> >    whole extended signal frame, not just the base frame;
+> > 
+> >  * one minor fix to the SVE sigreturn code to return consistent
+> >    intermediate error values (semantic correctness, non-functional
+> >    change);
+> > 
+> >  * one minor change to call __copy_from_user() instead of
+> >    copy_from_user() in a situation where there is already an access_ok()
+> >    check;
+> > 
+> > 
+> > [1] ARM Scalable Vector Extension
+> > https://community.arm.com/groups/processors/blog/2016/08/22/technology-update-the-scalable-vector-extension-sve-for-the-armv8-a-architecture
+> > 
+> > [2] linux-arm-kernel October 2017 Archives by thread
+> > http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/thread.html
+> > 
+> > [3] [PATCH v4 00/28] ARM Scalable Vector Extension (SVE)
+> > http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/539414.html
+> > 
+> > [4] For review and testing only -- **do not pull**
+> >     (This branch has review changelogs which should not form part of
+> >     the final commits.)
+> > 
+> >     v5 series (this posting)
+> > 
+> >     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v5
+> >     git://linux-arm.org/linux-dm.git sve/v5
+> > 
+> > [5] For review and testing only -- **do not pull**
+> >     (This branch has review changelogs which should not form part of
+> >     the final commits.)
+> > 
+> >     v4 with unsquashed fixes
+> > 
+> >     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v4%2Bfixes
+> >     git://linux-arm.org/linux-dm.git sve/v4+fixes
 > 
-> The Linux audit system needs a way to be able to track the container
-> provenance of events and actions.  Audit needs the kernel's help to do
-> this.
+> Hi Dave,
 > 
-> Since the concept of a container is entirely a userspace concept, a
-> registration from the userspace container orchestration system initiates
-> this.  This will define a point in time and a set of resources
-> associated with a particular container with an audit container
-> identifier.
+> During rebase of my ILP32 series on 4.15 kernel I found that 
+> ILP32 needs to be enabled with SVE support, like you do for 
+> LP64 in this series.
 > 
-> The registration is a u64 representing the audit container identifier
-> written to a special file in a pseudo filesystem (proc, since PID tree
-> already exists) representing a process that will become a parent process
-> in that container.  This write might place restrictions on mount
-> namespaces required to define a container, or at least careful checking
-> of namespaces in the kernel to verify permissions of the orchestrator so
-> it can't change its own container ID.  A bind mount of nsfs may be
-> necessary in the container orchestrator's mount namespace.  This write
-> can only happen once per process.
+> I did all rebase work on this draft branch:
+> https://github.com/norov/linux/tree/ilp32-4.15-rc7
 > 
-> Note: The justification for using a u64 is that it minimizes the
-> information printed in every audit record, reducing bandwidth and limits
-> comparisons to a single u64 which will be faster and less error-prone.
-> 
-> Require CAP_AUDIT_CONTROL to be able to carry out the registration.  At
-> that time, record the target container's user-supplied audit container
-> identifier along with a target container's parent process (which may
-> become the target container's "init" process) process ID (referenced
-> from the initial PID namespace) in a new record AUDIT_CONTAINER with a
-> qualifying op=$action field.
-> 
-> Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
-> container ID present on an auditable action or event.
-> 
-> Forked and cloned processes inherit their parent's audit container
-> identifier, referenced in the process' task_struct.  Since the audit
-> container identifier is inherited rather than written, it can still be
-> written once.  This will prevent tampering while allowing nesting.
-> (This can be implemented with an internal settable flag upon
-> registration that does not get copied across a fork/clone.)
-> 
-> Mimic setns(2) and return an error if the process has already initiated
-> threading or forked since this registration should happen before the
-> process execution is started by the orchestrator and hence should not
-> yet have any threads or children.  If this is deemed overly restrictive,
-> switch all of the target's threads and children to the new containerID.
-> 
-> Trust the orchestrator to judiciously use and restrict CAP_AUDIT_CONTROL.
-> 
-> When a container ceases to exist because the last process in that
-> container has exited log the fact to balance the registration action.  
-> (This is likely needed for certification accountability.)
-> 
-> At this point it appears unnecessary to add a container session
-> identifier since this is all tracked from loginuid and sessionid to
-> communicate with the container orchestrator to spawn an additional
-> session into an existing container which would be logged.  It can be
-> added at a later date without breaking API should it be deemed
-> necessary.
-> 
-> The following namespace logging actions are not needed for certification
-> purposes at this point, but are helpful for tracking namespace activity.
-> These are auxilliary records that are associated with namespace
-> manipulation syscalls unshare(2), clone(2) and setns(2), so the records
-> will only show up if explicit syscall rules have been added to document
-> this activity.
-> 
-> Log the creation of every namespace, inheriting/adding its spawning
-> process' audit container identifier(s), if applicable.  Include the
-> spawning and spawned namespace IDs (device and inode number tuples).
-> [AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
-> Note: At this point it appears only network namespaces may need to track
-> container IDs apart from processes since incoming packets may cause an
-> auditable event before being associated with a process.  Since a
-> namespace can be shared by processes in different containers, the
-> namespace will need to track all containers to which it has been
-> assigned.
-> 
-> Upon registration, the target process' namespace IDs (in the form of a
-> nsfs device number and inode number tuple) will be recorded in an
-> AUDIT_NS_INFO auxilliary record.
-> 
-> Log the destruction of every namespace that is no longer used by any
-> process, including the namespace IDs (device and inode number tuples).
-> [AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
-> 
-> Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
-> the parent and child namespace IDs for any changes to a process'
-> namespaces. [setns(2)]
-> Note: It may be possible to combine AUDIT_NS_* record formats and
-> distinguish them with an op=$action field depending on the fields
-> required for each message type.
-> 
-> The audit container identifier will need to be reaped from all
-> implicated namespaces upon the destruction of a container.
-> 
-> This namespace information adds supporting information for tracking
-> events not attributable to specific processes.
-> 
-> Changelog:
-> 
-> (Upstream V3)
-> - switch back to u64 (from pmoore, can be expanded to u128 in future if
->   need arises without breaking API.  u32 was originally proposed, up to
->   c36 discussed)
-> - write-once, but children inherit audit container identifier and can
->   then still be written once
-> - switch to CAP_AUDIT_CONTROL
-> - group namespace actions together, auxilliary records to namespace
->   operations.
-> 
-> (Upstream V2)
-> - switch from u64 to u128 UUID
-> - switch from "signal" and "trigger" to "register"
-> - restrict registration to single process or force all threads and
->   children into same container
+> But any ILP32 program I tried crash, and the message in dmesg looks
+> like this:
+> [   39.510667] CPU: 0 PID: 1857 Comm: mytime Not tainted 4.15.0-rc7-00028-g45e0659df4d9 #41
+> [   39.510712] Hardware name: linux,dummy-virt (DT)
+> [   39.510829] pstate: 00000000 (nzcv daif -PAN -UAO)
+> [   39.511101] pc : 0x33488e28
+> [   39.511125] lr : 0x33488e28
+> [   39.511138] sp : 00000000fffef670
+> [   39.511158] x29: 000000005a536c33 x28: 0000000000000000 
+> [   39.511211] x27: 0000000000000000 x26: 0000000000000000 
+> [   39.511235] x25: 0000000000000000 x24: 0000000000000000 
+> [   39.511257] x23: 0000000000466000 x22: 0000000000000000 
+> [   39.511278] x21: 0000000000000000 x20: 000000000047f2a8 
+> [   39.511300] x19: 0000000000000000 x18: 0000000000000001 
+> [   39.511321] x17: 0000000000001000 x16: 0000000000001030 
+> [   39.511342] x15: 0000000000554e47 x14: 0000000000000001 
+> [   39.511364] x13: 0000000000000004 x12: 000000000000003c 
+> [   39.511385] x11: 0000100000000000 x10: 0800000000000000 
+> [   39.511406] x9 : 0fffffffffffffff x8 : 000000000000007c 
+> [   39.511427] x7 : 0000000000000077 x6 : 0000000000000041 
+> [   39.511448] x5 : 0000000000000411 x4 : 00000000fbad2488 
+> [   39.511468] x3 : 0000000000000001 x2 : 0000000000497950 
+> [   39.511489] x1 : 0000000000497550 x0 : 0000000000000001
 
-I am trying to understand the back and forth on the ID size.
+Hi Dave,
 
->From an orchestrator POV anything that requires tracking a node
-specific ID is not ideal.
+I fixed the crash. It was my local problem.
 
-Orchestrators tend to span many nodes, and containers tend to have IDs
-that are either UUID or have a Hash (like SHA256) as identifier.
-
-The problem here is two-fold:
-
-a) Your auditing requires some mapping to be useful outside of the
-system.
-If you aggreggate audit logs outside of the system or you want to
-correlate the system audit logs with other components dealing with
-containers, now you need a place where you provide a mapping from your
-audit u64 to the ID a container has in the rest of the system.
-
-b) Now you need a mapping of some sort. The simplest way a container
-orchestrator can go about this is to just use the UUID or Hash
-representing their view of the container, truncate it to a u64 and use
-that for Audit. This means there are some chances there will be a
-collision and a duplicate u64 ID will be used by the orchestrator as
-the container ID. What happen in that case ?
-
-Simo.
-
--- 
-Simo Sorce
-Sr. Principal Software Engineer
-Red Hat, Inc
+Thanks,
+Yury
