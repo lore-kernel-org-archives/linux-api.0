@@ -1,242 +1,140 @@
-From: Mike Rapoport <rppt@linux.vnet.ibm.com>
-Subject: [PATCH v5 4/4] test: add a test for the process_vmsplice syscall
-Date: Tue,  9 Jan 2018 08:30:53 +0200
-Message-ID: <1515479453-14672-5-git-send-email-rppt@linux.vnet.ibm.com>
-References: <1515479453-14672-1-git-send-email-rppt@linux.vnet.ibm.com>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1515479453-14672-1-git-send-email-rppt@linux.vnet.ibm.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, criu@openvz.org, gdb@sourceware.org, devel@lists.open-mpi.org, rr-dev@mozilla.org, Arnd Bergmann <arnd@arndb.de>, Pavel Emelyanov <xemul@virtuozzo.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Josh Triplett <josh@joshtriplett.org>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Andrei Vagin <avagin@openvz.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: RFC(V3): Audit Kernel Container IDs
+Date: Tue, 9 Jan 2018 07:16:20 -0500
+Message-ID: <20180109121620.wi7dq2423ugsraqv@madcap2.tricolour.ca>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Audit <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Linux FS Devel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Network Development <netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Simo Sorce <simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Carlos O'Donell <carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Aristeu Rozanski <arozansk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Daniel Walsh <dwalsh-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Paul Moore <pmoore-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Madz Car <madzcar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@openvz.org>
+Containers are a userspace concept.  The kernel knows nothing of them.
 
-This test checks that process_vmsplice() can splice pages from a remote
-process and returns EFAULT, if process_vmsplice() tries to splice pages
-by an unaccessiable address.
+The Linux audit system needs a way to be able to track the container
+provenance of events and actions.  Audit needs the kernel's help to do
+this.
 
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
-Signed-off-by: Mike Rapoport <rppt@linux.vnet.ibm.com>
----
- tools/testing/selftests/process_vmsplice/Makefile  |   5 +
- .../process_vmsplice/process_vmsplice_test.c       | 196 +++++++++++++++++++++
- 2 files changed, 201 insertions(+)
- create mode 100644 tools/testing/selftests/process_vmsplice/Makefile
- create mode 100644 tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
+Since the concept of a container is entirely a userspace concept, a
+registration from the userspace container orchestration system initiates
+this.  This will define a point in time and a set of resources
+associated with a particular container with an audit container
+identifier.
 
-diff --git a/tools/testing/selftests/process_vmsplice/Makefile b/tools/testing/selftests/process_vmsplice/Makefile
-new file mode 100644
-index 000000000000..246d5a7dfed6
---- /dev/null
-+++ b/tools/testing/selftests/process_vmsplice/Makefile
-@@ -0,0 +1,5 @@
-+CFLAGS += -I../../../../usr/include/
-+
-+TEST_GEN_PROGS := process_vmsplice_test
-+
-+include ../lib.mk
-diff --git a/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c b/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
-new file mode 100644
-index 000000000000..1682bdb32de3
---- /dev/null
-+++ b/tools/testing/selftests/process_vmsplice/process_vmsplice_test.c
-@@ -0,0 +1,196 @@
-+#define _GNU_SOURCE
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <sys/mman.h>
-+#include <sys/syscall.h>
-+#include <fcntl.h>
-+#include <sys/uio.h>
-+#include <errno.h>
-+#include <signal.h>
-+#include <sys/prctl.h>
-+#include <sys/wait.h>
-+
-+#include "../kselftest.h"
-+
-+#ifndef __NR_process_vmsplice
-+#define __NR_process_vmsplice 333
-+#endif
-+
-+#define pr_err(fmt, ...) \
-+		({ \
-+			fprintf(stderr, "%s:%d:" fmt, \
-+				__func__, __LINE__, ##__VA_ARGS__); \
-+			KSFT_FAIL; \
-+		})
-+#define pr_perror(fmt, ...) pr_err(fmt ": %m\n", ##__VA_ARGS__)
-+#define fail(fmt, ...) pr_err("FAIL:" fmt, ##__VA_ARGS__)
-+
-+static ssize_t process_vmsplice(pid_t pid, int fd, const struct iovec *iov,
-+			unsigned long nr_segs, unsigned int flags)
-+{
-+	return syscall(__NR_process_vmsplice, pid, fd, iov, nr_segs, flags);
-+
-+}
-+
-+#define MEM_SIZE (4096 * 100)
-+#define MEM_WRONLY_SIZE (4096 * 10)
-+
-+int main(int argc, char **argv)
-+{
-+	char *addr, *addr_wronly;
-+	int p[2];
-+	struct iovec iov[2];
-+	char buf[4096];
-+	int status, ret;
-+	pid_t pid;
-+
-+	ksft_print_header();
-+
-+	if (process_vmsplice(0, 0, 0, 0, 0)) {
-+		if (errno == ENOSYS) {
-+			ksft_exit_skip("process_vmsplice is not supported\n");
-+			return 0;
-+		}
-+		return pr_perror("Zero-length process_vmsplice failed");
-+	}
-+
-+	addr = mmap(0, MEM_SIZE, PROT_READ | PROT_WRITE,
-+					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (addr == MAP_FAILED)
-+		return pr_perror("Unable to create a mapping");
-+
-+	addr_wronly = mmap(0, MEM_WRONLY_SIZE, PROT_WRITE,
-+				MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (addr_wronly == MAP_FAILED)
-+		return pr_perror("Unable to create a write-only mapping");
-+
-+	if (pipe(p))
-+		return pr_perror("Unable to create a pipe");
-+
-+	pid = fork();
-+	if (pid < 0)
-+		return pr_perror("Unable to fork");
-+
-+	if (pid == 0) {
-+		addr[0] = 'C';
-+		addr[4096 + 128] = 'A';
-+		addr[4096 + 128 + 4096 - 1] = 'B';
-+
-+		if (prctl(PR_SET_PDEATHSIG, SIGKILL))
-+			return pr_perror("Unable to set PR_SET_PDEATHSIG");
-+		if (write(p[1], "c", 1) != 1)
-+			return pr_perror("Unable to write data into pipe");
-+
-+		while (1)
-+			sleep(1);
-+		return 1;
-+	}
-+	if (read(p[0], buf, 1) != 1) {
-+		pr_perror("Unable to read data from pipe");
-+		kill(pid, SIGKILL);
-+		wait(&status);
-+		return 1;
-+	}
-+
-+	munmap(addr, MEM_SIZE);
-+	munmap(addr_wronly, MEM_WRONLY_SIZE);
-+
-+	iov[0].iov_base = addr;
-+	iov[0].iov_len = 1;
-+
-+	iov[1].iov_base = addr + 4096 + 128;
-+	iov[1].iov_len = 4096;
-+
-+	/* check one iovec */
-+	if (process_vmsplice(pid, p[1], iov, 1, SPLICE_F_GIFT) != 1)
-+		return pr_perror("Unable to splice pages");
-+
-+	if (read(p[0], buf, 1) != 1)
-+		return pr_perror("Unable to read from pipe");
-+
-+	if (buf[0] != 'C')
-+		ksft_test_result_fail("Get wrong data\n");
-+	else
-+		ksft_test_result_pass("Check process_vmsplice with one vec\n");
-+
-+	/* check two iovec-s */
-+	if (process_vmsplice(pid, p[1], iov, 2, SPLICE_F_GIFT) != 4097)
-+		return pr_perror("Unable to spice pages\n");
-+
-+	if (read(p[0], buf, 1) != 1)
-+		return pr_perror("Unable to read from pipe\n");
-+
-+	if (buf[0] != 'C')
-+		ksft_test_result_fail("Get wrong data\n");
-+
-+	if (read(p[0], buf, 4096) != 4096)
-+		return pr_perror("Unable to read from pipe\n");
-+
-+	if (buf[0] != 'A' || buf[4095] != 'B')
-+		ksft_test_result_fail("Get wrong data\n");
-+	else
-+		ksft_test_result_pass("check process_vmsplice with two vecs\n");
-+
-+	/* check how an unreadable region in a second vec is handled */
-+	iov[0].iov_base = addr;
-+	iov[0].iov_len = 1;
-+
-+	iov[1].iov_base = addr_wronly + 5;
-+	iov[1].iov_len = 1;
-+
-+	if (process_vmsplice(pid, p[1], iov, 2, SPLICE_F_GIFT) != 1)
-+		return pr_perror("Unable to splice data");
-+
-+	if (read(p[0], buf, 1) != 1)
-+		return pr_perror("Unable to read form pipe");
-+
-+	if (buf[0] != 'C')
-+		ksft_test_result_fail("Get wrong data\n");
-+	else
-+		ksft_test_result_pass("unreadable region in a second vec\n");
-+
-+	/* check how an unreadable region in a first vec is handled */
-+	errno = 0;
-+	if (process_vmsplice(pid, p[1], iov + 1, 1, SPLICE_F_GIFT) != -1 ||
-+	    errno != EFAULT)
-+		ksft_test_result_fail("Got anexpected errno %d\n", errno);
-+	else
-+		ksft_test_result_pass("splice as much as possible\n");
-+
-+	iov[0].iov_base = addr;
-+	iov[0].iov_len = 1;
-+
-+	iov[1].iov_base = addr;
-+	iov[1].iov_len = MEM_SIZE;
-+
-+	/* splice as much as possible */
-+	ret = process_vmsplice(pid, p[1], iov, 2,
-+				SPLICE_F_GIFT | SPLICE_F_NONBLOCK);
-+	if (ret != 4096 * 15 + 1) /* by default a pipe can fit 16 pages */
-+		return pr_perror("Unable to splice pages");
-+
-+	while (ret > 0) {
-+		int len;
-+
-+		len = read(p[0], buf, 4096);
-+		if (len < 0)
-+			return pr_perror("Unable to read data");
-+		if (len > ret)
-+			return pr_err("Read more than expected\n");
-+		ret -= len;
-+	}
-+	ksft_test_result_pass("splice as much as possible\n");
-+
-+	if (kill(pid, SIGTERM))
-+		return pr_perror("Unable to kill a child process");
-+	status = -1;
-+	if (wait(&status) < 0)
-+		return pr_perror("Unable to wait a child process");
-+	if (!WIFSIGNALED(status) || WTERMSIG(status) != SIGTERM)
-+		return pr_err("The child exited with an unexpected code %d\n",
-+									status);
-+
-+	if (ksft_get_fail_cnt())
-+		return ksft_exit_fail();
-+	return ksft_exit_pass();
-+}
--- 
-2.7.4
+The registration is a u64 representing the audit container identifier
+written to a special file in a pseudo filesystem (proc, since PID tree
+already exists) representing a process that will become a parent process
+in that container.  This write might place restrictions on mount
+namespaces required to define a container, or at least careful checking
+of namespaces in the kernel to verify permissions of the orchestrator so
+it can't change its own container ID.  A bind mount of nsfs may be
+necessary in the container orchestrator's mount namespace.  This write
+can only happen once per process.
+
+Note: The justification for using a u64 is that it minimizes the
+information printed in every audit record, reducing bandwidth and limits
+comparisons to a single u64 which will be faster and less error-prone.
+
+Require CAP_AUDIT_CONTROL to be able to carry out the registration.  At
+that time, record the target container's user-supplied audit container
+identifier along with a target container's parent process (which may
+become the target container's "init" process) process ID (referenced
+from the initial PID namespace) in a new record AUDIT_CONTAINER with a
+qualifying op=$action field.
+
+Issue a new auxilliary record AUDIT_CONTAINER_INFO for each valid
+container ID present on an auditable action or event.
+
+Forked and cloned processes inherit their parent's audit container
+identifier, referenced in the process' task_struct.  Since the audit
+container identifier is inherited rather than written, it can still be
+written once.  This will prevent tampering while allowing nesting.
+(This can be implemented with an internal settable flag upon
+registration that does not get copied across a fork/clone.)
+
+Mimic setns(2) and return an error if the process has already initiated
+threading or forked since this registration should happen before the
+process execution is started by the orchestrator and hence should not
+yet have any threads or children.  If this is deemed overly restrictive,
+switch all of the target's threads and children to the new containerID.
+
+Trust the orchestrator to judiciously use and restrict CAP_AUDIT_CONTROL.
+
+When a container ceases to exist because the last process in that
+container has exited log the fact to balance the registration action.  
+(This is likely needed for certification accountability.)
+
+At this point it appears unnecessary to add a container session
+identifier since this is all tracked from loginuid and sessionid to
+communicate with the container orchestrator to spawn an additional
+session into an existing container which would be logged.  It can be
+added at a later date without breaking API should it be deemed
+necessary.
+
+The following namespace logging actions are not needed for certification
+purposes at this point, but are helpful for tracking namespace activity.
+These are auxilliary records that are associated with namespace
+manipulation syscalls unshare(2), clone(2) and setns(2), so the records
+will only show up if explicit syscall rules have been added to document
+this activity.
+
+Log the creation of every namespace, inheriting/adding its spawning
+process' audit container identifier(s), if applicable.  Include the
+spawning and spawned namespace IDs (device and inode number tuples).
+[AUDIT_NS_CREATE, AUDIT_NS_DESTROY] [clone(2), unshare(2), setns(2)]
+Note: At this point it appears only network namespaces may need to track
+container IDs apart from processes since incoming packets may cause an
+auditable event before being associated with a process.  Since a
+namespace can be shared by processes in different containers, the
+namespace will need to track all containers to which it has been
+assigned.
+
+Upon registration, the target process' namespace IDs (in the form of a
+nsfs device number and inode number tuple) will be recorded in an
+AUDIT_NS_INFO auxilliary record.
+
+Log the destruction of every namespace that is no longer used by any
+process, including the namespace IDs (device and inode number tuples).
+[AUDIT_NS_DESTROY] [process exit, unshare(2), setns(2)]
+
+Issue a new auxilliary record AUDIT_NS_CHANGE listing (opt: op=$action)
+the parent and child namespace IDs for any changes to a process'
+namespaces. [setns(2)]
+Note: It may be possible to combine AUDIT_NS_* record formats and
+distinguish them with an op=$action field depending on the fields
+required for each message type.
+
+The audit container identifier will need to be reaped from all
+implicated namespaces upon the destruction of a container.
+
+This namespace information adds supporting information for tracking
+events not attributable to specific processes.
+
+Changelog:
+
+(Upstream V3)
+- switch back to u64 (from pmoore, can be expanded to u128 in future if
+  need arises without breaking API.  u32 was originally proposed, up to
+  c36 discussed)
+- write-once, but children inherit audit container identifier and can
+  then still be written once
+- switch to CAP_AUDIT_CONTROL
+- group namespace actions together, auxilliary records to namespace
+  operations.
+
+(Upstream V2)
+- switch from u64 to u128 UUID
+- switch from "signal" and "trigger" to "register"
+- restrict registration to single process or force all threads and
+  children into same container
+
+- RGB
+
+--
+Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
