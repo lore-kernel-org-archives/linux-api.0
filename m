@@ -1,81 +1,40 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCHv3 0/2] capability controlled user-namespaces
-Date: Tue, 9 Jan 2018 16:28:59 -0600
-Message-ID: <20180109222859.GA25956@mail.hallyn.com>
-References: <CAF2d9jiPYvMN=_guoZHyTA5FmMgaJb5mtxroi5D9NvcNrHc5gg@mail.gmail.com>
- <alpine.LFD.2.20.1801081131190.8436@localhost>
- <20180108062452.GA21717@mail.hallyn.com>
- <alpine.LFD.2.20.1801082040180.12014@localhost>
- <20180108154733.GA29416@mail.hallyn.com>
- <CAF2d9jgVJpuAH+jgK0v7sQ9Pr75xy=GSnqKDdpeE7d97O0EbcQ@mail.gmail.com>
- <20180108181121.GA32302@mail.hallyn.com>
- <CAF2d9jgar8J+mQjUfF=+XdvrcS=RvtOpKysxOiZkG-rXgm0KVw@mail.gmail.com>
- <20180108183610.GA562@mail.hallyn.com>
- <CAF2d9jjws=jEbybHs18J_xkduAWB+bh6BA_CkD5oYRWz7PwjZA@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [RFC git branches] rseq and membarrier against v4.15-rc7
+Date: Tue, 9 Jan 2018 23:09:59 +0000 (UTC)
+Message-ID: <1603062338.50102.1515539399479.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAF2d9jjws=jEbybHs18J_xkduAWB+bh6BA_CkD5oYRWz7PwjZA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mahesh Bandewar =?utf-8?B?KOCkruCkueClh+CktiDgpKzgpILgpKHgpYfgpLXgpL4=?= =?utf-8?B?4KSwKQ==?= <maheshb@google.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, James Morris <james.l.morris@oracle.com>, LKML <linux-kernel@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Kernel-hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Mahesh Bandewar <mahesh@bandewar.net>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
-> On Mon, Jan 8, 2018 at 10:36 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
-> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
-> >> On Mon, Jan 8, 2018 at 10:11 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
-> >> > Quoting Mahesh Bandewar (महेश बंडेवार) (maheshb@google.com):
-> >> >> On Mon, Jan 8, 2018 at 7:47 AM, Serge E. Hallyn <serge@hallyn.com> wrote:
-> >> >> > Quoting James Morris (james.l.morris@oracle.com):
-> >> >> >> On Mon, 8 Jan 2018, Serge E. Hallyn wrote:
-> >> >> >> I meant in terms of "marking" a user ns as "controlled" type -- it's
-> >> >> >> unnecessary jargon from an end user point of view.
-> >> >> >
-> >> >> > Ah, yes, that was my point in
-> >> >> >
-> >> >> > http://lkml.iu.edu/hypermail/linux/kernel/1711.1/01845.html
-> >> >> > and
-> >> >> > http://lkml.iu.edu/hypermail/linux/kernel/1711.1/02276.html
-> >> >> >
-> >> >> >> This may happen internally but don't make it a special case with a
-> >> >> >> different name and don't bother users with internal concepts: simply
-> >> >> >> implement capability whitelists with the default having equivalent
-> >> >
-> >> > So the challenge is to have unprivileged users be contained, while
-> >> > allowing trusted workloads in containers created by a root user to
-> >> > bypass the restriction.
-> >> >
-> >> > Now, the current proposal actually doesn't support a root user starting
-> >> > an application that it doesn't quite trust in such a way that it *is*
-> >> > subject to the whitelist.
-> >>
-> >> Well, this is not hard since root process can spawn another process
-> >> and loose privileges before creating user-ns to be controlled by the
-> >> whitelist.
-> >
-> > It would have to drop cap_sys_admin for the container to be marked as
-> > "controlled", which may prevent the container runtime from properly starting
-> > the container.
-> >
-> Yes, but that's a conflict of trusted operations (that requires
-> SYS_ADMIN) and untrusted processes it may spawn.
+Hi,
 
-Not sure I understand what you're saying, but
+I rebased the rseq and membarrier development branches on top of v4.15-rc7. I'm
+not sending an RFC round now considering that everyone in CC here has other
+fishes to fry (speculatively speaking).
 
-I guess that in any case the task which is doing unshare(CLONE_NEWNS)
-can drop cap_sys_admin first.  Though that is harder if using clone,
-and it is awkward because it's not the container manager, but the user,
-who will judge whether the container workload should be restricted.
-So the container driver will add a flag like "run-controlled", and
-the driver will convert that to dropping a capability; which again
-is weird.  It would seem nicer to introduce a userns flag, 'caps-controlled'
-For an unprivileged userns, it is always set to 1, and root cannot
-change it.  For a root-created userns, it stays 0, but root can set it
-to 1 (using /proc file?).  In this way a either container runtime or just an
-admin script can say "no wait I want this container to still be controlled".
+Those with time on their hands and interested to test those branches can fetch
+them at:
 
-Or we could instead add a second sysctl to decide whether all or only
-'controlled' user namespaces should be controlled.  That's not pretty though.
+https://git.kernel.org/pub/scm/linux/kernel/git/rseq/linux-rseq.git/
+
+tags:
+v4.15-rc7-rseq-20180109
+v4.15-rc7-membarrier-20180109
+
+Feedback is welcome, although I really hope those involved with the recent
+security effort will take a break and breathe some fresh air rather than
+look at my branches in the short term.
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
