@@ -1,258 +1,177 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 32/32] aio: implement io_pgetevents
-Date: Wed, 10 Jan 2018 16:58:53 +0100
-Message-ID: <20180110155853.32348-33-hch@lst.de>
+Subject: [PATCH 31/32] aio: implement IOCB_CMD_POLL
+Date: Wed, 10 Jan 2018 16:58:52 +0100
+Message-ID: <20180110155853.32348-32-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
-Sender: netdev-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is the io_getevents equivalent of ppoll/pselect and allows to
-properly mix signals and aio completions (especially with IOCB_CMD_POLL)
-and atomically executes the following sequence:
+Simple one-shot poll through the io_submit() interface.  To poll for
+a file descriptor the application should submit an iocb of type
+IOCB_CMD_POLL.  It will poll the fd for the events specified in the
+the first 32 bits of the aio_buf field of the iocb.
 
-	sigset_t origmask;
-
-	pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
-	ret = io_getevents(ctx, min_nr, nr, events, timeout);
-	pthread_sigmask(SIG_SETMASK, &origmask, NULL);
-
-Note that unlike many other signal related calls we do not pass a sigmask
-size, as that would get us to 7 arguments, which aren't easily supported
-by the syscall infrastructure.  It seems a lot less painful to just add a
-new syscall variant in the unlikely case we're going to increase the
-sigset size.
+Unlike poll or epoll without EPOLLONESHOT this interface always works
+in one shot mode, that is once the iocb is completed, it will have to be
+resubmitted.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- arch/x86/entry/syscalls/syscall_32.tbl |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl |  1 +
- fs/aio.c                               | 96 ++++++++++++++++++++++++++++++----
- include/linux/compat.h                 |  6 +++
- include/linux/syscalls.h               |  6 +++
- include/uapi/asm-generic/unistd.h      |  4 +-
- kernel/sys_ni.c                        |  2 +
- 7 files changed, 105 insertions(+), 11 deletions(-)
+ fs/aio.c                     | 103 +++++++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/aio_abi.h |   6 +--
+ 2 files changed, 105 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 448ac2161112..5997c3e9ac3e 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -391,3 +391,4 @@
- 382	i386	pkey_free		sys_pkey_free
- 383	i386	statx			sys_statx
- 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
-+385	i386	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5aef183e2f85..e995cd2b4e65 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -339,6 +339,7 @@
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
- 332	common	statx			sys_statx
-+333	common	io_pgetevents		sys_io_pgetevents
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
 diff --git a/fs/aio.c b/fs/aio.c
-index cae90ac6e4a3..57a4e8d89f78 100644
+index 6fca1408a8a8..cae90ac6e4a3 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -1299,10 +1299,6 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
- 		wait_event_interruptible_hrtimeout(ctx->wait,
- 				aio_read_events(ctx, min_nr, nr, event, &ret),
- 				until);
--
--	if (!ret && signal_pending(current))
--		ret = -EINTR;
--
+@@ -156,9 +156,17 @@ struct kioctx {
+ 	unsigned		id;
+ };
+ 
++struct poll_iocb {
++	struct file		*file;
++	__poll_t		events;
++	struct wait_queue_head	*head;
++	struct wait_queue_entry	wait;
++};
++
+ struct aio_kiocb {
+ 	union {
+ 		struct kiocb		rw;
++		struct poll_iocb	poll;
+ 	};
+ 
+ 	struct kioctx		*ki_ctx;
+@@ -1570,6 +1578,98 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
  	return ret;
  }
  
-@@ -1978,13 +1974,54 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 		struct timespec __user *, timeout)
- {
- 	struct timespec64	ts;
-+	int			ret;
++static void __aio_complete_poll(struct poll_iocb *req, __poll_t mask)
++{
++	fput(req->file);
++	aio_complete(container_of(req, struct aio_kiocb, poll),
++			mangle_poll(mask), 0);
++}
 +
-+	if (timeout && unlikely(get_timespec64(&ts, timeout)))
-+		return -EFAULT;
- 
--	if (timeout) {
--		if (unlikely(get_timespec64(&ts, timeout)))
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	if (!ret && signal_pending(current))
-+		ret = -EINTR;
++static void aio_complete_poll(struct poll_iocb *req, __poll_t mask)
++{
++	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
++
++	if (!(iocb->flags & AIO_IOCB_CANCELLED))
++		__aio_complete_poll(req, mask);
++}
++
++static int aio_poll_cancel(struct kiocb *rw)
++{
++	struct aio_kiocb *iocb = container_of(rw, struct aio_kiocb, rw);
++
++	remove_wait_queue(iocb->poll.head, &iocb->poll.wait);
++	__aio_complete_poll(&iocb->poll, 0); /* no events to report */
++	return 0;
++}
++
++static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
++		void *key)
++{
++	struct poll_iocb *req = container_of(wait, struct poll_iocb, wait);
++	struct file *file = req->file;
++	__poll_t mask = key_to_poll(key);
++
++	assert_spin_locked(&req->head->lock);
++
++	/* for instances that support it check for an event match first: */
++	if (mask && !(mask & req->events))
++		return 0;
++
++	mask = vfs_poll_mask(file, req->events);
++	if (!mask)
++		return 0;
++
++	__remove_wait_queue(req->head, &req->wait);
++	aio_complete_poll(req, mask);
++	return 1;
++}
++
++static ssize_t aio_poll(struct aio_kiocb *aiocb, struct iocb *iocb)
++{
++	struct poll_iocb *req = &aiocb->poll;
++	struct file *file;
++	unsigned long flags;
++	__poll_t mask;
++	int ret;
++
++	/* reject any unknown events outside the normal event mask. */
++	if (unlikely((u16)iocb->aio_buf != iocb->aio_buf))
++		return -EINVAL;
++	/* reject fields that are not defined for poll */
++	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
++		return -EINVAL;
++
++	req->events = demangle_poll(iocb->aio_buf) | POLLERR | POLLHUP;
++	req->file = file = fget(iocb->aio_fildes);
++	if (unlikely(!req->file))
++		return -EBADF;
++
++	ret = -EOPNOTSUPP;
++	if (unlikely(!file->f_op->get_poll_head || !file->f_op->poll_mask))
++		goto out_fput;
++	req->head = file->f_op->get_poll_head(file, req->events);
++	if (!req->head)
++		goto out_fput;
++
++	init_waitqueue_func_entry(&req->wait, aio_poll_wake);
++
++	spin_lock_irqsave(&req->head->lock, flags);
++	mask = vfs_poll_mask(file, req->events);
++	if (!mask) {
++		__kiocb_set_cancel_fn(aiocb, aio_poll_cancel,
++				AIO_IOCB_DELAYED_CANCEL);
++		__add_wait_queue(req->head, &req->wait);
++	}
++	spin_unlock_irqrestore(&req->head->lock, flags);
++
++	if (mask)
++		aio_complete_poll(req, mask);
++	return -EIOCBQUEUED;
++out_fput:
++	fput(file);
 +	return ret;
 +}
 +
-+SYSCALL_DEFINE6(io_pgetevents,
-+		aio_context_t, ctx_id,
-+		long, min_nr,
-+		long, nr,
-+		struct io_event __user *, events,
-+		struct timespec __user *, timeout,
-+		const sigset_t __user *, sigmask)
-+{
-+	sigset_t		ksigmask, sigsaved;
-+	struct timespec64	ts;
-+	int ret;
-+
-+	if (timeout && unlikely(get_timespec64(&ts, timeout)))
-+		return -EFAULT;
-+
-+	if (sigmask) {
-+		if (copy_from_user(&ksigmask, sigmask, sizeof(ksigmask)))
- 			return -EFAULT;
-+		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
-+		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
- 	}
- 
--	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	if (signal_pending(current)) {
-+		if (sigmask) {
-+			current->saved_sigmask = sigsaved;
-+			set_restore_sigmask();
-+		}
-+
-+		if (!ret)
-+			ret = -ERESTARTNOHAND;
-+	} else {
-+		if (sigmask)
-+			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
-+	}
-+
-+	return ret;
- }
- 
- #ifdef CONFIG_COMPAT
-@@ -1995,13 +2032,52 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 		       struct compat_timespec __user *, timeout)
+ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 			 struct iocb *iocb, bool compat)
  {
- 	struct timespec64 t;
-+	int ret;
-+
-+	if (timeout && compat_get_timespec64(&t, timeout))
-+		return -EFAULT;
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	if (!ret && signal_pending(current))
-+		ret = -EINTR;
-+	return ret;
-+}
-+
-+COMPAT_SYSCALL_DEFINE6(io_pgetevents,
-+		compat_aio_context_t, ctx_id,
-+		compat_long_t, min_nr,
-+		compat_long_t, nr,
-+		struct io_event __user *, events,
-+		struct compat_timespec __user *, timeout,
-+		const compat_sigset_t __user *, sigmask)
-+{
-+	sigset_t ksigmask, sigsaved;
-+	struct timespec64 t;
-+	int ret;
- 
--	if (timeout) {
--		if (compat_get_timespec64(&t, timeout))
-+	if (timeout && compat_get_timespec64(&t, timeout))
-+		return -EFAULT;
-+
-+	if (sigmask) {
-+		if (get_compat_sigset(&ksigmask, sigmask))
- 			return -EFAULT;
-+		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
-+		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
-+	}
- 
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	if (signal_pending(current)) {
-+		if (sigmask) {
-+			current->saved_sigmask = sigsaved;
-+			set_restore_sigmask();
-+		}
-+		if (!ret)
-+			ret = -ERESTARTNOHAND;
-+	} else {
-+		if (sigmask)
-+			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
- 	}
- 
--	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	return ret;
- }
- #endif
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 0fc36406f32c..a4cda98073f1 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -536,6 +536,12 @@ asmlinkage long compat_sys_io_getevents(compat_aio_context_t ctx_id,
- 					compat_long_t nr,
- 					struct io_event __user *events,
- 					struct compat_timespec __user *timeout);
-+asmlinkage long compat_sys_io_pgetevents(compat_aio_context_t ctx_id,
-+					compat_long_t min_nr,
-+					compat_long_t nr,
-+					struct io_event __user *events,
-+					struct compat_timespec __user *timeout,
-+					const compat_sigset_t __user *sigmask);
- asmlinkage long compat_sys_io_submit(compat_aio_context_t ctx_id, int nr,
- 				     u32 __user *iocb);
- asmlinkage long compat_sys_mount(const char __user *dev_name,
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a78186d826d7..3bc9a130f4a9 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -539,6 +539,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
- 				long nr,
- 				struct io_event __user *events,
- 				struct timespec __user *timeout);
-+asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
-+				long min_nr,
-+				long nr,
-+				struct io_event __user *events,
-+				struct timespec __user *timeout,
-+				const sigset_t __user *sigmask);
- asmlinkage long sys_io_submit(aio_context_t, long,
- 				struct iocb __user * __user *);
- asmlinkage long sys_io_cancel(aio_context_t ctx_id, struct iocb __user *iocb,
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 8b87de067bc7..ce2ebbeece10 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -732,9 +732,11 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
- __SYSCALL(__NR_pkey_free,     sys_pkey_free)
- #define __NR_statx 291
- __SYSCALL(__NR_statx,     sys_statx)
-+#define __NR_io_pgetevents 292
-+__SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 292
-+#define __NR_syscalls 293
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index b5189762d275..8f7705559b38 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -151,9 +151,11 @@ cond_syscall(sys_io_destroy);
- cond_syscall(sys_io_submit);
- cond_syscall(sys_io_cancel);
- cond_syscall(sys_io_getevents);
-+cond_syscall(sys_io_pgetevents);
- cond_syscall(compat_sys_io_setup);
- cond_syscall(compat_sys_io_submit);
- cond_syscall(compat_sys_io_getevents);
-+cond_syscall(compat_sys_io_pgetevents);
- cond_syscall(sys_sysfs);
- cond_syscall(sys_syslog);
- cond_syscall(sys_process_vm_readv);
+@@ -1633,6 +1733,9 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	case IOCB_CMD_PWRITEV:
+ 		ret = aio_write(&req->rw, iocb, true, compat);
+ 		break;
++	case IOCB_CMD_POLL:
++		ret = aio_poll(req, iocb);
++		break;
+ 	default:
+ 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
+ 		ret = -EINVAL;
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index a04adbc70ddf..28330105a4b6 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -38,10 +38,8 @@ enum {
+ 	IOCB_CMD_PWRITE = 1,
+ 	IOCB_CMD_FSYNC = 2,
+ 	IOCB_CMD_FDSYNC = 3,
+-	/* These two are experimental.
+-	 * IOCB_CMD_PREADX = 4,
+-	 * IOCB_CMD_POLL = 5,
+-	 */
++	/* 4 was the experimental IOCB_CMD_PREADX */
++	IOCB_CMD_POLL = 5,
+ 	IOCB_CMD_NOOP = 6,
+ 	IOCB_CMD_PREADV = 7,
+ 	IOCB_CMD_PWRITEV = 8,
 -- 
 2.14.2
