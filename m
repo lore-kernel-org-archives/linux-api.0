@@ -1,84 +1,118 @@
 From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH for 4.16 00/11] membarrier updates for 4.16
-Date: Wed, 10 Jan 2018 10:46:14 -0500
-Message-ID: <20180110154625.4319-1-mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 4.16 06/11] membarrier: selftest: Test shared expedited cmd
+Date: Wed, 10 Jan 2018 10:46:20 -0500
+Message-ID: <20180110154625.4319-7-mathieu.desnoyers@efficios.com>
+References: <20180110154625.4319-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180110154625.4319-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
 Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, x86@kernel.
 List-Id: linux-api@vger.kernel.org
 
-Hi Ingo, Hi Peter,
+Test the new MEMBARRIER_CMD_SHARED_EXPEDITED and
+MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED commands.
 
-Here are the membarrier patch series I would like to upstream for 4.16.
-It would be appreciated of those can go through the tip tree.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Acked-by: Shuah Khan <shuahkh-JPH+aEBZ4P+UEJcrhfAQsw@public.gmane.org>
+CC: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>
+CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+CC: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+CC: Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
+CC: Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
+CC: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+CC: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
+CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+CC: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+CC: Alice Ferrazzi <alice.ferrazzi-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+CC: Paul Elder <paul.elder-fYq5UfK3d1k@public.gmane.org>
+CC: linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+CC: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ .../testing/selftests/membarrier/membarrier_test.c | 51 +++++++++++++++++++++-
+ 1 file changed, 50 insertions(+), 1 deletion(-)
 
-Highlights:
-
-"Fix: membarrier: add missing preempt off around smp_call_function_many"
-is in the series mainly because the following patches apply on top of
-it. Ingo pulled it into tip/sched/urgent already.
-
-"powerpc: membarrier: Skip memory barrier in switch_mm()" takes care of
-a TODO that was left in the private expedited implementation when merged
-in 4.14: an extra memory barrier was added on context switch on powerpc.
-Ensure that the barrier is only performed when scheduling between
-different processes, only for threads belonging to processes that have
-registered their intent to use the private expedited command.
-
-"membarrier: provide SHARED_EXPEDITED command" adds new commands to
-membarrier for registration and use of membarrier across shared
-memory mappings. The non-expedited command has proven to be really
-too slow (taking 10ms and more to complete) for real-world use. The
-expedited version completes in a matter of microseconds.
-
-"membarrier: Provide core serializing command" provides core
-serialization for JIT reclaim. We received positive feedback from
-Android developers that the proposed ABI fits their use-case.
-Only x86 32/64 and arm 64 implement this command so far. This is
-opt-in per architecture.
-
-The other patches add selftests and documentation.
-
-Let me know if anything raises uneasiness, or seems unfit for 4.16.
-
-Thanks!
-
-Mathieu
-
-Mathieu Desnoyers (11):
-  Fix: membarrier: add missing preempt off around smp_call_function_many
-  membarrier: selftest: Test private expedited cmd
-  powerpc: membarrier: Skip memory barrier in switch_mm()
-  membarrier: Document scheduler barrier requirements
-  membarrier: provide SHARED_EXPEDITED command
-  membarrier: selftest: Test shared expedited cmd
-  membarrier: Provide core serializing command
-  x86: Introduce sync_core_before_usermode
-  membarrier: x86: Provide core serializing command
-  membarrier: arm64: Provide core serializing command
-  membarrier: selftest: Test private expedited sync core cmd
-
- MAINTAINERS                                        |   1 +
- arch/arm64/Kconfig                                 |   1 +
- arch/arm64/kernel/entry.S                          |   4 +
- arch/powerpc/Kconfig                               |   1 +
- arch/powerpc/include/asm/membarrier.h              |  27 +++
- arch/powerpc/mm/mmu_context.c                      |   7 +
- arch/x86/Kconfig                                   |   2 +
- arch/x86/entry/entry_32.S                          |   5 +
- arch/x86/entry/entry_64.S                          |   4 +
- arch/x86/include/asm/processor.h                   |  10 +
- arch/x86/mm/tlb.c                                  |   6 +
- include/linux/processor.h                          |   6 +
- include/linux/sched/mm.h                           |  40 +++-
- include/uapi/linux/membarrier.h                    |  66 +++++-
- init/Kconfig                                       |   9 +
- kernel/sched/core.c                                |  53 +++--
- kernel/sched/membarrier.c                          | 173 +++++++++++++--
- .../testing/selftests/membarrier/membarrier_test.c | 235 +++++++++++++++++++--
- 18 files changed, 587 insertions(+), 63 deletions(-)
- create mode 100644 arch/powerpc/include/asm/membarrier.h
-
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index e6ee73d01fa1..bb9c58072c5c 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -132,6 +132,40 @@ static int test_membarrier_private_expedited_success(void)
+ 	return 0;
+ }
+ 
++static int test_membarrier_register_shared_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_REGISTER_SHARED_EXPEDITED";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
++	return 0;
++}
++
++static int test_membarrier_shared_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_SHARED_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED_EXPEDITED";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
++	return 0;
++}
++
+ static int test_membarrier(void)
+ {
+ 	int status;
+@@ -154,6 +188,19 @@ static int test_membarrier(void)
+ 	status = test_membarrier_private_expedited_success();
+ 	if (status)
+ 		return status;
++	/*
++	 * It is valid to send a shared membarrier from a non-registered
++	 * process.
++	 */
++	status = test_membarrier_shared_expedited_success();
++	if (status)
++		return status;
++	status = test_membarrier_register_shared_expedited_success();
++	if (status)
++		return status;
++	status = test_membarrier_shared_expedited_success();
++	if (status)
++		return status;
+ 	return 0;
+ }
+ 
+@@ -173,8 +220,10 @@ static int test_membarrier_query(void)
+ 		}
+ 		ksft_exit_fail_msg("sys_membarrier() failed\n");
+ 	}
+-	if (!(ret & MEMBARRIER_CMD_SHARED))
++	if (!(ret & MEMBARRIER_CMD_SHARED)) {
++		ksft_test_result_fail("sys_membarrier() CMD_SHARED query failed\n");
+ 		ksft_exit_fail_msg("sys_membarrier is not supported.\n");
++	}
+ 
+ 	ksft_test_result_pass("sys_membarrier available\n");
+ 	return 0;
 -- 
 2.11.0
