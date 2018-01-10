@@ -1,42 +1,29 @@
 From: Jeff Moyer <jmoyer@redhat.com>
-Subject: Re: [PATCH 30/32] aio: add delayed cancel support
-Date: Wed, 10 Jan 2018 18:26:39 -0500
-Message-ID: <x49r2qx2t3k.fsf@segfault.boston.devel.redhat.com>
+Subject: Re: aio poll, io_pgetevents and a new in-kernel poll API V2
+Date: Wed, 10 Jan 2018 18:34:17 -0500
+Message-ID: <x49mv1l2squ.fsf@segfault.boston.devel.redhat.com>
 References: <20180110155853.32348-1-hch@lst.de>
-	<20180110155853.32348-31-hch@lst.de>
-	<x49y3l52uda.fsf@segfault.boston.devel.redhat.com>
+	<7eda0558-dc70-2d0c-5eca-ca4c3036585d@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <x49y3l52uda.fsf@segfault.boston.devel.redhat.com> (Jeff Moyer's
-	message of "Wed, 10 Jan 2018 17:59:13 -0500")
+In-Reply-To: <7eda0558-dc70-2d0c-5eca-ca4c3036585d@gmail.com> (Michael
+	Kerrisk's message of "Wed, 10 Jan 2018 23:36:19 +0100")
 Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Jeff Moyer <jmoyer@redhat.com> writes:
+"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
 
-> Christoph Hellwig <hch@lst.de> writes:
->
->> The upcoming aio poll support would like to be able to complete the
->> iocb inline from the cancellation context, but that would cause
->> a lock order reversal.  Add support for optionally moving the cancelation
->> outside the context lock to avoid this reversal.
->>
->> Signed-off-by: Christoph Hellwig <hch@lst.de>
->
-> Acked-by: Jeff Moyer <jmoyer@redhat.com>
+Hi, Michael,
 
-Actually, let's move these two defines:
+> Are there some man pages patches already for these changes?
 
-#define AIO_IOCB_DELAYED_CANCEL (1 << 0)
-#define AIO_IOCB_CANCELLED      (1 << 1)
+https://patchwork.kernel.org/patch/10144129/
 
-to include/linux/aio.h so that drivers outside of fs/aio.c can make use
-of them.
-
--Jeff
+Cheers,
+Jeff
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
