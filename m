@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 08/32] net/unix: convert to ->poll_mask
-Date: Wed, 10 Jan 2018 16:58:29 +0100
-Message-ID: <20180110155853.32348-9-hch@lst.de>
+Subject: [PATCH 10/32] net/dccp: convert to ->poll_mask
+Date: Wed, 10 Jan 2018 16:58:31 +0100
+Message-ID: <20180110155853.32348-11-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
@@ -12,96 +12,87 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/unix/af_unix.c | 30 +++++++++++-------------------
- 1 file changed, 11 insertions(+), 19 deletions(-)
+ net/dccp/dccp.h  |  3 +--
+ net/dccp/ipv4.c  |  2 +-
+ net/dccp/ipv6.c  |  2 +-
+ net/dccp/proto.c | 13 ++-----------
+ 4 files changed, 5 insertions(+), 15 deletions(-)
 
-diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-index 6b7678df41e5..f426a6f68355 100644
---- a/net/unix/af_unix.c
-+++ b/net/unix/af_unix.c
-@@ -638,9 +638,8 @@ static int unix_stream_connect(struct socket *, struct sockaddr *,
- static int unix_socketpair(struct socket *, struct socket *);
- static int unix_accept(struct socket *, struct socket *, int, bool);
- static int unix_getname(struct socket *, struct sockaddr *, int *, int);
--static __poll_t unix_poll(struct file *, struct socket *, poll_table *);
--static __poll_t unix_dgram_poll(struct file *, struct socket *,
--				    poll_table *);
-+static __poll_t unix_poll_mask(struct socket *, __poll_t);
-+static __poll_t unix_dgram_poll_mask(struct socket *, __poll_t);
- static int unix_ioctl(struct socket *, unsigned int, unsigned long);
- static int unix_shutdown(struct socket *, int);
- static int unix_stream_sendmsg(struct socket *, struct msghdr *, size_t);
-@@ -681,7 +680,7 @@ static const struct proto_ops unix_stream_ops = {
- 	.socketpair =	unix_socketpair,
- 	.accept =	unix_accept,
- 	.getname =	unix_getname,
--	.poll =		unix_poll,
-+	.poll_mask =	unix_poll_mask,
- 	.ioctl =	unix_ioctl,
- 	.listen =	unix_listen,
- 	.shutdown =	unix_shutdown,
-@@ -704,7 +703,7 @@ static const struct proto_ops unix_dgram_ops = {
- 	.socketpair =	unix_socketpair,
- 	.accept =	sock_no_accept,
- 	.getname =	unix_getname,
--	.poll =		unix_dgram_poll,
-+	.poll_mask =	unix_dgram_poll_mask,
- 	.ioctl =	unix_ioctl,
- 	.listen =	sock_no_listen,
- 	.shutdown =	unix_shutdown,
-@@ -726,7 +725,7 @@ static const struct proto_ops unix_seqpacket_ops = {
- 	.socketpair =	unix_socketpair,
- 	.accept =	unix_accept,
- 	.getname =	unix_getname,
--	.poll =		unix_dgram_poll,
-+	.poll_mask =	unix_dgram_poll_mask,
- 	.ioctl =	unix_ioctl,
- 	.listen =	unix_listen,
- 	.shutdown =	unix_shutdown,
-@@ -2640,13 +2639,10 @@ static int unix_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
- 	return err;
- }
+diff --git a/net/dccp/dccp.h b/net/dccp/dccp.h
+index f91e3816806b..0ea2ee56ac1b 100644
+--- a/net/dccp/dccp.h
++++ b/net/dccp/dccp.h
+@@ -316,8 +316,7 @@ int dccp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
+ 		 int flags, int *addr_len);
+ void dccp_shutdown(struct sock *sk, int how);
+ int inet_dccp_listen(struct socket *sock, int backlog);
+-__poll_t dccp_poll(struct file *file, struct socket *sock,
+-		       poll_table *wait);
++__poll_t dccp_poll_mask(struct socket *sock, __poll_t events);
+ int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+ void dccp_req_err(struct sock *sk, u64 seq);
  
--static __poll_t unix_poll(struct file *file, struct socket *sock, poll_table *wait)
-+static __poll_t unix_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/net/dccp/ipv4.c b/net/dccp/ipv4.c
+index e65fcb45c3f6..e8476f319efd 100644
+--- a/net/dccp/ipv4.c
++++ b/net/dccp/ipv4.c
+@@ -983,7 +983,7 @@ static const struct proto_ops inet_dccp_ops = {
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet_getname,
+ 	/* FIXME: work on tcp_poll to rename it to inet_csk_poll */
+-	.poll		   = dccp_poll,
++	.poll_mask	   = dccp_poll_mask,
+ 	.ioctl		   = inet_ioctl,
+ 	/* FIXME: work on inet_listen to rename it to sock_common_listen */
+ 	.listen		   = inet_dccp_listen,
+diff --git a/net/dccp/ipv6.c b/net/dccp/ipv6.c
+index 5df7857fc0f3..f0aac8e4b888 100644
+--- a/net/dccp/ipv6.c
++++ b/net/dccp/ipv6.c
+@@ -1069,7 +1069,7 @@ static const struct proto_ops inet6_dccp_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet6_getname,
+-	.poll		   = dccp_poll,
++	.poll_mask	   = dccp_poll_mask,
+ 	.ioctl		   = inet6_ioctl,
+ 	.listen		   = inet_dccp_listen,
+ 	.shutdown	   = inet_shutdown,
+diff --git a/net/dccp/proto.c b/net/dccp/proto.c
+index 8b8db3d481bd..11f91fbe7359 100644
+--- a/net/dccp/proto.c
++++ b/net/dccp/proto.c
+@@ -311,20 +311,11 @@ int dccp_disconnect(struct sock *sk, int flags)
+ 
+ EXPORT_SYMBOL_GPL(dccp_disconnect);
+ 
+-/*
+- *	Wait for a DCCP event.
+- *
+- *	Note that we don't need to lock the socket, as the upper poll layers
+- *	take care of normal races (between the test and the event) and we don't
+- *	go look at any of the socket buffers directly.
+- */
+-__poll_t dccp_poll(struct file *file, struct socket *sock,
+-		       poll_table *wait)
++__poll_t dccp_poll_mask(struct socket *sock, __poll_t events)
  {
+ 	__poll_t mask;
  	struct sock *sk = sock->sk;
--	__poll_t mask;
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	__poll_t mask = 0;
  
- 	/* exceptional events? */
- 	if (sk->sk_err)
-@@ -2675,15 +2671,11 @@ static __poll_t unix_poll(struct file *file, struct socket *sock, poll_table *wa
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+ 	if (sk->sk_state == DCCP_LISTEN)
+ 		return inet_csk_listen_poll(sk);
+ 
+@@ -366,7 +357,7 @@ __poll_t dccp_poll(struct file *file, struct socket *sock,
  	return mask;
  }
  
--static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
--				    poll_table *wait)
-+static __poll_t unix_dgram_poll_mask(struct socket *sock, __poll_t events)
+-EXPORT_SYMBOL_GPL(dccp_poll);
++EXPORT_SYMBOL_GPL(dccp_poll_mask);
+ 
+ int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg)
  {
- 	struct sock *sk = sock->sk, *other;
--	unsigned int writable;
--	__poll_t mask;
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	int writable;
-+	__poll_t mask = 0;
- 
- 	/* exceptional events? */
- 	if (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
-@@ -2709,7 +2701,7 @@ static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
- 	}
- 
- 	/* No write status requested, avoid expensive OUT tests. */
--	if (!(poll_requested_events(wait) & (POLLWRBAND|POLLWRNORM|POLLOUT)))
-+	if (!(events & (POLLWRBAND|POLLWRNORM|POLLOUT)))
- 		return mask;
- 
- 	writable = unix_writable(sk);
 -- 
 2.14.2
 
