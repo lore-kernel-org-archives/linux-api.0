@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 13/32] net/tipc: convert to ->poll_mask
-Date: Wed, 10 Jan 2018 16:58:34 +0100
-Message-ID: <20180110155853.32348-14-hch@lst.de>
+Subject: [PATCH 15/32] net/bluetooth: convert to ->poll_mask
+Date: Wed, 10 Jan 2018 16:58:36 +0100
+Message-ID: <20180110155853.32348-16-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
@@ -12,70 +12,96 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/tipc/socket.c | 14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
+ include/net/bluetooth/bluetooth.h | 2 +-
+ net/bluetooth/af_bluetooth.c      | 7 ++-----
+ net/bluetooth/l2cap_sock.c        | 2 +-
+ net/bluetooth/rfcomm/sock.c       | 2 +-
+ net/bluetooth/sco.c               | 2 +-
+ 5 files changed, 6 insertions(+), 9 deletions(-)
 
-diff --git a/net/tipc/socket.c b/net/tipc/socket.c
-index fcbd6489a8b5..527d113c38b0 100644
---- a/net/tipc/socket.c
-+++ b/net/tipc/socket.c
-@@ -693,10 +693,9 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
+diff --git a/include/net/bluetooth/bluetooth.h b/include/net/bluetooth/bluetooth.h
+index ec9d6bc65855..53ce8176c313 100644
+--- a/include/net/bluetooth/bluetooth.h
++++ b/include/net/bluetooth/bluetooth.h
+@@ -271,7 +271,7 @@ int  bt_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+ 		     int flags);
+ int  bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,
+ 			    size_t len, int flags);
+-__poll_t bt_sock_poll(struct file *file, struct socket *sock, poll_table *wait);
++__poll_t bt_sock_poll_mask(struct socket *sock, __poll_t events);
+ int  bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+ int  bt_sock_wait_state(struct sock *sk, int state, unsigned long timeo);
+ int  bt_sock_wait_ready(struct sock *sk, unsigned long flags);
+diff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
+index 671b907ba678..777ef0977a95 100644
+--- a/net/bluetooth/af_bluetooth.c
++++ b/net/bluetooth/af_bluetooth.c
+@@ -437,16 +437,13 @@ static inline __poll_t bt_accept_poll(struct sock *parent)
+ 	return 0;
  }
  
- /**
-- * tipc_poll - read and possibly block on pollmask
-+ * tipc_poll - read pollmask
-  * @file: file structure associated with the socket
-  * @sock: socket for which to calculate the poll bits
-- * @wait: ???
-  *
-  * Returns pollmask value
-  *
-@@ -710,16 +709,13 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
-  * imply that the operation will succeed, merely that it should be performed
-  * and will not block.
-  */
--static __poll_t tipc_poll(struct file *file, struct socket *sock,
--			      poll_table *wait)
-+static __poll_t tipc_poll_mask(struct socket *sock, __poll_t events)
+-__poll_t bt_sock_poll(struct file *file, struct socket *sock,
+-			  poll_table *wait)
++__poll_t bt_sock_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct tipc_sock *tsk = tipc_sk(sk);
- 	struct tipc_group *grp = tsk->group;
- 	__poll_t revents = 0;
+ 	__poll_t mask = 0;
  
--	sock_poll_wait(file, sk_sleep(sk), wait);
+ 	BT_DBG("sock %p, sk %p", sock, sk);
+ 
+-	poll_wait(file, sk_sleep(sk), wait);
 -
- 	if (sk->sk_shutdown & RCV_SHUTDOWN)
- 		revents |= POLLRDHUP | POLLIN | POLLRDNORM;
- 	if (sk->sk_shutdown == SHUTDOWN_MASK)
-@@ -3005,7 +3001,7 @@ static const struct proto_ops msg_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= sock_no_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= sock_no_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3026,7 +3022,7 @@ static const struct proto_ops packet_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3047,7 +3043,7 @@ static const struct proto_ops stream_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
+ 	if (sk->sk_state == BT_LISTEN)
+ 		return bt_accept_poll(sk);
+ 
+@@ -478,7 +475,7 @@ __poll_t bt_sock_poll(struct file *file, struct socket *sock,
+ 
+ 	return mask;
+ }
+-EXPORT_SYMBOL(bt_sock_poll);
++EXPORT_SYMBOL(bt_sock_poll_mask);
+ 
+ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+ {
+diff --git a/net/bluetooth/l2cap_sock.c b/net/bluetooth/l2cap_sock.c
+index 67a8642f57ea..d20b33daa80f 100644
+--- a/net/bluetooth/l2cap_sock.c
++++ b/net/bluetooth/l2cap_sock.c
+@@ -1654,7 +1654,7 @@ static const struct proto_ops l2cap_sock_ops = {
+ 	.getname	= l2cap_sock_getname,
+ 	.sendmsg	= l2cap_sock_sendmsg,
+ 	.recvmsg	= l2cap_sock_recvmsg,
+-	.poll		= bt_sock_poll,
++	.poll_mask	= bt_sock_poll_mask,
+ 	.ioctl		= bt_sock_ioctl,
+ 	.mmap		= sock_no_mmap,
+ 	.socketpair	= sock_no_socketpair,
+diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
+index 1aaccf637479..b4dc96481d92 100644
+--- a/net/bluetooth/rfcomm/sock.c
++++ b/net/bluetooth/rfcomm/sock.c
+@@ -1049,7 +1049,7 @@ static const struct proto_ops rfcomm_sock_ops = {
+ 	.setsockopt	= rfcomm_sock_setsockopt,
+ 	.getsockopt	= rfcomm_sock_getsockopt,
+ 	.ioctl		= rfcomm_sock_ioctl,
+-	.poll		= bt_sock_poll,
++	.poll_mask	= bt_sock_poll_mask,
+ 	.socketpair	= sock_no_socketpair,
+ 	.mmap		= sock_no_mmap
+ };
+diff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c
+index 08df57665e1f..b2bf5c767b3e 100644
+--- a/net/bluetooth/sco.c
++++ b/net/bluetooth/sco.c
+@@ -1198,7 +1198,7 @@ static const struct proto_ops sco_sock_ops = {
+ 	.getname	= sco_sock_getname,
+ 	.sendmsg	= sco_sock_sendmsg,
+ 	.recvmsg	= sco_sock_recvmsg,
+-	.poll		= bt_sock_poll,
++	.poll_mask	= bt_sock_poll_mask,
+ 	.ioctl		= bt_sock_ioctl,
+ 	.mmap		= sock_no_mmap,
+ 	.socketpair	= sock_no_socketpair,
 -- 
 2.14.2
 
