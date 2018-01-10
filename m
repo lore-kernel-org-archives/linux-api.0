@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 22/32] eventfd: switch to ->poll_mask
-Date: Wed, 10 Jan 2018 16:58:43 +0100
-Message-ID: <20180110155853.32348-23-hch@lst.de>
+Subject: [PATCH 21/32] pipe: convert to ->poll_mask
+Date: Wed, 10 Jan 2018 16:58:42 +0100
+Message-ID: <20180110155853.32348-22-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
@@ -12,47 +12,54 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/eventfd.c | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ fs/pipe.c | 22 +++++++++++++---------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
 
-diff --git a/fs/eventfd.c b/fs/eventfd.c
-index 6318a9b57e53..2bbbf13cb816 100644
---- a/fs/eventfd.c
-+++ b/fs/eventfd.c
-@@ -114,14 +114,20 @@ static int eventfd_release(struct inode *inode, struct file *file)
- 	return 0;
+diff --git a/fs/pipe.c b/fs/pipe.c
+index a449ca0ec0c6..33a32d13b83d 100644
+--- a/fs/pipe.c
++++ b/fs/pipe.c
+@@ -514,19 +514,22 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	}
  }
  
--static __poll_t eventfd_poll(struct file *file, poll_table *wait)
+-/* No kernel lock held - fine */
+-static __poll_t
+-pipe_poll(struct file *filp, poll_table *wait)
 +static struct wait_queue_head *
-+eventfd_get_poll_head(struct file *file, __poll_t events)
-+{
-+	struct eventfd_ctx *ctx = file->private_data;
-+
-+	return &ctx->wqh;
++pipe_get_poll_head(struct file *filp, __poll_t events)
+ {
+-	__poll_t mask;
+ 	struct pipe_inode_info *pipe = filp->private_data;
+-	int nrbufs;
+ 
+-	poll_wait(filp, &pipe->wait, wait);
++	return &pipe->wait;
 +}
 +
-+static __poll_t eventfd_poll_mask(struct file *file, __poll_t eventmask)
- {
- 	struct eventfd_ctx *ctx = file->private_data;
- 	__poll_t events = 0;
- 	u64 count;
++/* No kernel lock held - fine */
++static __poll_t pipe_poll_mask(struct file *filp, __poll_t events)
++{
++	struct pipe_inode_info *pipe = filp->private_data;
++	int nrbufs = pipe->nrbufs;
++	__poll_t mask = 0;
  
--	poll_wait(file, &ctx->wqh, wait);
--
- 	/*
- 	 * All writes to ctx->count occur within ctx->wqh.lock.  This read
- 	 * can be done outside ctx->wqh.lock because we know that poll_wait
-@@ -341,7 +347,8 @@ static const struct file_operations eventfd_fops = {
- 	.show_fdinfo	= eventfd_show_fdinfo,
- #endif
- 	.release	= eventfd_release,
--	.poll		= eventfd_poll,
-+	.get_poll_head	= eventfd_get_poll_head,
-+	.poll_mask	= eventfd_poll_mask,
- 	.read		= eventfd_read,
- 	.write		= eventfd_write,
- 	.llseek		= noop_llseek,
+ 	/* Reading only -- no need for acquiring the semaphore.  */
+-	nrbufs = pipe->nrbufs;
+-	mask = 0;
+ 	if (filp->f_mode & FMODE_READ) {
+ 		mask = (nrbufs > 0) ? POLLIN | POLLRDNORM : 0;
+ 		if (!pipe->writers && filp->f_version != pipe->w_counter)
+@@ -1010,7 +1013,8 @@ const struct file_operations pipefifo_fops = {
+ 	.llseek		= no_llseek,
+ 	.read_iter	= pipe_read,
+ 	.write_iter	= pipe_write,
+-	.poll		= pipe_poll,
++	.get_poll_head	= pipe_get_poll_head,
++	.poll_mask	= pipe_poll_mask,
+ 	.unlocked_ioctl	= pipe_ioctl,
+ 	.release	= pipe_release,
+ 	.fasync		= pipe_fasync,
 -- 
 2.14.2
 
