@@ -1,44 +1,84 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [RFC git branches] rseq and membarrier against v4.15-rc7
-Date: Wed, 10 Jan 2018 08:47:55 +0100
-Message-ID: <20180110074755.hfexiqkl6ptinm2w@gmail.com>
-References: <1603062338.50102.1515539399479.JavaMail.zimbra@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH for 4.16 00/11] membarrier updates for 4.16
+Date: Wed, 10 Jan 2018 10:46:14 -0500
+Message-ID: <20180110154625.4319-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1603062338.50102.1515539399479.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Paul Turner <pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Russell King <linux-lFZ/pmaqli7XmaaqVzeoHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andi Kleen <andi-Vw/NltI1exuRpAAqCnN02g@public.gmane.org>, Chris Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>, Ben Maurer <bmaurer-b10kYP2dOMg@public.gmane.org>, rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Josh Triplett <josh-iaAMLnmF4UmaiuxdJuQwMA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Catalin Marinas <catalin.mari>
+To: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, x86@kernel.
 List-Id: linux-api@vger.kernel.org
 
+Hi Ingo, Hi Peter,
 
-* Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+Here are the membarrier patch series I would like to upstream for 4.16.
+It would be appreciated of those can go through the tip tree.
 
-> Hi,
-> 
-> I rebased the rseq and membarrier development branches on top of v4.15-rc7. I'm
-> not sending an RFC round now considering that everyone in CC here has other
-> fishes to fry (speculatively speaking).
-> 
-> Those with time on their hands and interested to test those branches can fetch
-> them at:
-> 
-> https://git.kernel.org/pub/scm/linux/kernel/git/rseq/linux-rseq.git/
-> 
-> tags:
-> v4.15-rc7-rseq-20180109
-> v4.15-rc7-membarrier-20180109
-> 
-> Feedback is welcome, although I really hope those involved with the recent
-> security effort will take a break and breathe some fresh air rather than
-> look at my branches in the short term.
+Highlights:
 
-Please submit all pending membarrier patches you intend for v4.16 inclusion to me 
-and PeterZ (as a reviewable git-send-email patch series, not as a Git tree URI 
-only), for inclusion into the scheduler tree.
+"Fix: membarrier: add missing preempt off around smp_call_function_many"
+is in the series mainly because the following patches apply on top of
+it. Ingo pulled it into tip/sched/urgent already.
 
-Thanks,
+"powerpc: membarrier: Skip memory barrier in switch_mm()" takes care of
+a TODO that was left in the private expedited implementation when merged
+in 4.14: an extra memory barrier was added on context switch on powerpc.
+Ensure that the barrier is only performed when scheduling between
+different processes, only for threads belonging to processes that have
+registered their intent to use the private expedited command.
 
-	Ingo
+"membarrier: provide SHARED_EXPEDITED command" adds new commands to
+membarrier for registration and use of membarrier across shared
+memory mappings. The non-expedited command has proven to be really
+too slow (taking 10ms and more to complete) for real-world use. The
+expedited version completes in a matter of microseconds.
+
+"membarrier: Provide core serializing command" provides core
+serialization for JIT reclaim. We received positive feedback from
+Android developers that the proposed ABI fits their use-case.
+Only x86 32/64 and arm 64 implement this command so far. This is
+opt-in per architecture.
+
+The other patches add selftests and documentation.
+
+Let me know if anything raises uneasiness, or seems unfit for 4.16.
+
+Thanks!
+
+Mathieu
+
+Mathieu Desnoyers (11):
+  Fix: membarrier: add missing preempt off around smp_call_function_many
+  membarrier: selftest: Test private expedited cmd
+  powerpc: membarrier: Skip memory barrier in switch_mm()
+  membarrier: Document scheduler barrier requirements
+  membarrier: provide SHARED_EXPEDITED command
+  membarrier: selftest: Test shared expedited cmd
+  membarrier: Provide core serializing command
+  x86: Introduce sync_core_before_usermode
+  membarrier: x86: Provide core serializing command
+  membarrier: arm64: Provide core serializing command
+  membarrier: selftest: Test private expedited sync core cmd
+
+ MAINTAINERS                                        |   1 +
+ arch/arm64/Kconfig                                 |   1 +
+ arch/arm64/kernel/entry.S                          |   4 +
+ arch/powerpc/Kconfig                               |   1 +
+ arch/powerpc/include/asm/membarrier.h              |  27 +++
+ arch/powerpc/mm/mmu_context.c                      |   7 +
+ arch/x86/Kconfig                                   |   2 +
+ arch/x86/entry/entry_32.S                          |   5 +
+ arch/x86/entry/entry_64.S                          |   4 +
+ arch/x86/include/asm/processor.h                   |  10 +
+ arch/x86/mm/tlb.c                                  |   6 +
+ include/linux/processor.h                          |   6 +
+ include/linux/sched/mm.h                           |  40 +++-
+ include/uapi/linux/membarrier.h                    |  66 +++++-
+ init/Kconfig                                       |   9 +
+ kernel/sched/core.c                                |  53 +++--
+ kernel/sched/membarrier.c                          | 173 +++++++++++++--
+ .../testing/selftests/membarrier/membarrier_test.c | 235 +++++++++++++++++++--
+ 18 files changed, 587 insertions(+), 63 deletions(-)
+ create mode 100644 arch/powerpc/include/asm/membarrier.h
+
+-- 
+2.11.0
