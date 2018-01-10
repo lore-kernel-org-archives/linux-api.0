@@ -1,49 +1,60 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 01/32] fs: update documentation for __poll_t
-Date: Wed, 10 Jan 2018 16:58:22 +0100
-Message-ID: <20180110155853.32348-2-hch@lst.de>
-References: <20180110155853.32348-1-hch@lst.de>
+Subject: aio poll, io_pgetevents and a new in-kernel poll API V2
+Date: Wed, 10 Jan 2018 16:58:21 +0100
+Message-ID: <20180110155853.32348-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180110155853.32348-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- Documentation/filesystems/Locking | 2 +-
- Documentation/filesystems/vfs.txt | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+Hi all,
 
-diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-index 75d2d57e2c44..220bba28f72b 100644
---- a/Documentation/filesystems/Locking
-+++ b/Documentation/filesystems/Locking
-@@ -439,7 +439,7 @@ prototypes:
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
--	unsigned int (*poll) (struct file *, struct poll_table_struct *);
-+	__poll_t (*poll) (struct file *, struct poll_table_struct *);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-index 5fd325df59e2..f608180ad59d 100644
---- a/Documentation/filesystems/vfs.txt
-+++ b/Documentation/filesystems/vfs.txt
-@@ -856,7 +856,7 @@ struct file_operations {
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
--	unsigned int (*poll) (struct file *, struct poll_table_struct *);
-+	__poll_t (*poll) (struct file *, struct poll_table_struct *);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
--- 
-2.14.2
+this series adds support for the IOCB_CMD_POLL operation to poll for the
+readyness of file descriptors using the aio subsystem.  The API is based
+on patches that existed in RHAS2.1 and RHEL3, which means it already is
+supported by libaio.  To implement the poll support efficiently new
+methods to poll are introduced in struct file_operations:  get_poll_head
+and poll_mask.  The first one returns a wait_queue_head to wait on
+(lifetime is bound by the file), and the second does a non-blocking
+check for the POLL* events.  This allows aio poll to work without
+any additional context switches, unlike epoll.
+
+To make the interface fully useful a new io_pgetevents system call is
+added, which atomically saves and restores the signal mask over the
+io_pgetevents system call.  It it the logical equivalent to pselect and
+ppoll for io_pgetevents.
+
+The corresponding libaio changes for io_pgetevents support and
+documentation, as well as a test case will be posted in a separate
+series.
+
+The changes were sponsored by Scylladb, and improve performance
+of the seastar framework up to 10%, while also removing the need
+for a privileged SCHED_FIFO epoll listener thread.
+
+The patches are on top of Als __poll_t annoations, so I've also
+prepared a git branch on top of those here:
+
+    git://git.infradead.org/users/hch/vfs.git aio-poll
+
+Gitweb:
+
+    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.2
+
+Libaio changes:
+
+    http://git.infradead.org/users/hch/libaio.git/shortlog/refs/heads/aio-poll
+
+Seastar changes:
+
+    https://github.com/avikivity/seastar/commits/aio
+
+Changes since V1:
+ - handle the NULL ->poll case in vfs_poll
+ - dropped the file argument to the ->poll_mask socket operation
+ - replace the ->pre_poll socket operation with ->get_poll_head as
+   in the file operations
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
