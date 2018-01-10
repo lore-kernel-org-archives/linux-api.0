@@ -1,64 +1,43 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 23/32] timerfd: convert to ->poll_mask
-Date: Wed, 10 Jan 2018 16:58:44 +0100
-Message-ID: <20180110155853.32348-24-hch@lst.de>
+Subject: [PATCH 24/32] aio: don't print the page size at boot time
+Date: Wed, 10 Jan 2018 16:58:45 +0100
+Message-ID: <20180110155853.32348-25-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/timerfd.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+The page size is in no way related to the aio code, and printing it in
+the (debug) dmesg at every boot serves no purpose.
 
-diff --git a/fs/timerfd.c b/fs/timerfd.c
-index 0510717f3a53..ee36bb5b2698 100644
---- a/fs/timerfd.c
-+++ b/fs/timerfd.c
-@@ -226,21 +226,20 @@ static int timerfd_release(struct inode *inode, struct file *file)
- 	kfree_rcu(ctx, rcu);
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
+---
+ fs/aio.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/fs/aio.c b/fs/aio.c
+index a062d75109cb..03d59593912d 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -264,9 +264,6 @@ static int __init aio_setup(void)
+ 
+ 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+ 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+-
+-	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
+-
  	return 0;
  }
--
--static __poll_t timerfd_poll(struct file *file, poll_table *wait)
-+	
-+static struct wait_queue_head *timerfd_get_poll_head(struct file *file,
-+		__poll_t eventmask)
- {
- 	struct timerfd_ctx *ctx = file->private_data;
--	__poll_t events = 0;
--	unsigned long flags;
- 
--	poll_wait(file, &ctx->wqh, wait);
-+	return &ctx->wqh;
-+}
- 
--	spin_lock_irqsave(&ctx->wqh.lock, flags);
--	if (ctx->ticks)
--		events |= POLLIN;
--	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
-+static __poll_t timerfd_poll_mask(struct file *file, __poll_t eventmask)
-+{
-+	struct timerfd_ctx *ctx = file->private_data;
- 
--	return events;
-+	return ctx->ticks ? POLLIN : 0;
- }
- 
- static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
-@@ -364,7 +363,8 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
- 
- static const struct file_operations timerfd_fops = {
- 	.release	= timerfd_release,
--	.poll		= timerfd_poll,
-+	.get_poll_head	= timerfd_get_poll_head,
-+	.poll_mask	= timerfd_poll_mask,
- 	.read		= timerfd_read,
- 	.llseek		= noop_llseek,
- 	.show_fdinfo	= timerfd_show,
+ __initcall(aio_setup);
 -- 
 2.14.2
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
