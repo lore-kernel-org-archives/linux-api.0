@@ -1,70 +1,50 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 21/32] pipe: convert to ->poll_mask
-Date: Wed, 10 Jan 2018 16:58:42 +0100
-Message-ID: <20180110155853.32348-22-hch@lst.de>
+Subject: [PATCH 20/32] net/rxrpc: convert to ->poll_mask
+Date: Wed, 10 Jan 2018 16:58:41 +0100
+Message-ID: <20180110155853.32348-21-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/pipe.c | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
+ net/rxrpc/af_rxrpc.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/fs/pipe.c b/fs/pipe.c
-index a449ca0ec0c6..33a32d13b83d 100644
---- a/fs/pipe.c
-+++ b/fs/pipe.c
-@@ -514,19 +514,22 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	}
- }
- 
--/* No kernel lock held - fine */
--static __poll_t
--pipe_poll(struct file *filp, poll_table *wait)
-+static struct wait_queue_head *
-+pipe_get_poll_head(struct file *filp, __poll_t events)
+diff --git a/net/rxrpc/af_rxrpc.c b/net/rxrpc/af_rxrpc.c
+index 21ad6a3a465c..46d393ef99e0 100644
+--- a/net/rxrpc/af_rxrpc.c
++++ b/net/rxrpc/af_rxrpc.c
+@@ -729,15 +729,11 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
+ /*
+  * permit an RxRPC socket to be polled
+  */
+-static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
+-			       poll_table *wait)
++static __poll_t rxrpc_poll_mask(struct socket *sock, __poll_t events)
  {
+ 	struct sock *sk = sock->sk;
+ 	struct rxrpc_sock *rx = rxrpc_sk(sk);
 -	__poll_t mask;
- 	struct pipe_inode_info *pipe = filp->private_data;
--	int nrbufs;
- 
--	poll_wait(filp, &pipe->wait, wait);
-+	return &pipe->wait;
-+}
-+
-+/* No kernel lock held - fine */
-+static __poll_t pipe_poll_mask(struct file *filp, __poll_t events)
-+{
-+	struct pipe_inode_info *pipe = filp->private_data;
-+	int nrbufs = pipe->nrbufs;
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
 +	__poll_t mask = 0;
  
- 	/* Reading only -- no need for acquiring the semaphore.  */
--	nrbufs = pipe->nrbufs;
--	mask = 0;
- 	if (filp->f_mode & FMODE_READ) {
- 		mask = (nrbufs > 0) ? POLLIN | POLLRDNORM : 0;
- 		if (!pipe->writers && filp->f_version != pipe->w_counter)
-@@ -1010,7 +1013,8 @@ const struct file_operations pipefifo_fops = {
- 	.llseek		= no_llseek,
- 	.read_iter	= pipe_read,
- 	.write_iter	= pipe_write,
--	.poll		= pipe_poll,
-+	.get_poll_head	= pipe_get_poll_head,
-+	.poll_mask	= pipe_poll_mask,
- 	.unlocked_ioctl	= pipe_ioctl,
- 	.release	= pipe_release,
- 	.fasync		= pipe_fasync,
+ 	/* the socket is readable if there are any messages waiting on the Rx
+ 	 * queue */
+@@ -940,7 +936,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
+ 	.socketpair	= sock_no_socketpair,
+ 	.accept		= sock_no_accept,
+ 	.getname	= sock_no_getname,
+-	.poll		= rxrpc_poll,
++	.poll_mask	= rxrpc_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.listen		= rxrpc_listen,
+ 	.shutdown	= rxrpc_shutdown,
 -- 
 2.14.2
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
