@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 16/32] net/caif: convert to ->poll_mask
-Date: Wed, 10 Jan 2018 16:58:37 +0100
-Message-ID: <20180110155853.32348-17-hch@lst.de>
+Subject: [PATCH 19/32] net/iucv: convert to ->poll_mask
+Date: Wed, 10 Jan 2018 16:58:40 +0100
+Message-ID: <20180110155853.32348-20-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
@@ -12,49 +12,52 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/caif/caif_socket.c | 12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ include/net/iucv/af_iucv.h | 2 --
+ net/iucv/af_iucv.c         | 7 ++-----
+ 2 files changed, 2 insertions(+), 7 deletions(-)
 
-diff --git a/net/caif/caif_socket.c b/net/caif/caif_socket.c
-index 64048cec41e0..3e47cafbe3e7 100644
---- a/net/caif/caif_socket.c
-+++ b/net/caif/caif_socket.c
-@@ -934,15 +934,11 @@ static int caif_release(struct socket *sock)
+diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
+index f4c21b5a1242..b0eaeb02d46d 100644
+--- a/include/net/iucv/af_iucv.h
++++ b/include/net/iucv/af_iucv.h
+@@ -153,8 +153,6 @@ struct iucv_sock_list {
+ 	atomic_t	  autobind_name;
+ };
+ 
+-__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+-			    poll_table *wait);
+ void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
+ void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
+ void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
+diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
+index 64331158d693..da2043d1b322 100644
+--- a/net/iucv/af_iucv.c
++++ b/net/iucv/af_iucv.c
+@@ -1489,14 +1489,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
+ 	return 0;
  }
  
- /* Copied from af_unix.c:unix_poll(), added CAIF tx_flow handling */
--static __poll_t caif_poll(struct file *file,
--			      struct socket *sock, poll_table *wait)
-+static __poll_t caif_poll_mask(struct socket *sock, __poll_t events)
+-__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+-			    poll_table *wait)
++static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
--	__poll_t mask;
- 	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	__poll_t mask = 0;
+ 	__poll_t mask = 0;
  
- 	/* exceptional events? */
- 	if (sk->sk_err)
-@@ -976,7 +972,7 @@ static const struct proto_ops caif_seqpacket_ops = {
- 	.socketpair = sock_no_socketpair,
- 	.accept = sock_no_accept,
- 	.getname = sock_no_getname,
--	.poll = caif_poll,
-+	.poll_mask = caif_poll_mask,
- 	.ioctl = sock_no_ioctl,
- 	.listen = sock_no_listen,
- 	.shutdown = sock_no_shutdown,
-@@ -997,7 +993,7 @@ static const struct proto_ops caif_stream_ops = {
- 	.socketpair = sock_no_socketpair,
- 	.accept = sock_no_accept,
- 	.getname = sock_no_getname,
--	.poll = caif_poll,
-+	.poll_mask = caif_poll_mask,
- 	.ioctl = sock_no_ioctl,
- 	.listen = sock_no_listen,
- 	.shutdown = sock_no_shutdown,
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-
+ 	if (sk->sk_state == IUCV_LISTEN)
+ 		return iucv_accept_poll(sk);
+ 
+@@ -2389,7 +2386,7 @@ static const struct proto_ops iucv_sock_ops = {
+ 	.getname	= iucv_sock_getname,
+ 	.sendmsg	= iucv_sock_sendmsg,
+ 	.recvmsg	= iucv_sock_recvmsg,
+-	.poll		= iucv_sock_poll,
++	.poll_mask	= iucv_sock_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.mmap		= sock_no_mmap,
+ 	.socketpair	= sock_no_socketpair,
 -- 
 2.14.2
 
