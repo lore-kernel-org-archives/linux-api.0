@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 04/32] net: refactor socket_poll
-Date: Wed, 10 Jan 2018 16:58:25 +0100
-Message-ID: <20180110155853.32348-5-hch@lst.de>
+Subject: [PATCH 07/32] net/tcp: convert to ->poll_mask
+Date: Wed, 10 Jan 2018 16:58:28 +0100
+Message-ID: <20180110155853.32348-8-hch@lst.de>
 References: <20180110155853.32348-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180110155853.32348-1-hch@lst.de>
@@ -10,75 +10,119 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Factor out two busy poll related helpers for late reuse, and remove
-a command that isn't very helpful, especially with the __poll_t
-annotations in place.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/busy_poll.h | 15 +++++++++++++++
- net/socket.c            | 21 ++++-----------------
- 2 files changed, 19 insertions(+), 17 deletions(-)
+ include/net/tcp.h   |  4 ++--
+ net/ipv4/af_inet.c  |  3 ++-
+ net/ipv4/tcp.c      | 33 ++++++++++++++-------------------
+ net/ipv6/af_inet6.c |  3 ++-
+ 4 files changed, 20 insertions(+), 23 deletions(-)
 
-diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
-index 71c72a939bf8..c5187438af38 100644
---- a/include/net/busy_poll.h
-+++ b/include/net/busy_poll.h
-@@ -121,6 +121,21 @@ static inline void sk_busy_loop(struct sock *sk, int nonblock)
- #endif
+diff --git a/include/net/tcp.h b/include/net/tcp.h
+index 50b21a49d870..75b3ce444b1c 100644
+--- a/include/net/tcp.h
++++ b/include/net/tcp.h
+@@ -387,8 +387,8 @@ bool tcp_peer_is_proven(struct request_sock *req, struct dst_entry *dst);
+ void tcp_close(struct sock *sk, long timeout);
+ void tcp_init_sock(struct sock *sk);
+ void tcp_init_transfer(struct sock *sk, int bpf_op);
+-__poll_t tcp_poll(struct file *file, struct socket *sock,
+-		      struct poll_table_struct *wait);
++struct wait_queue_head *tcp_get_poll_head(struct socket *sock, __poll_t events);
++__poll_t tcp_poll_mask(struct socket *sock, __poll_t events);
+ int tcp_getsockopt(struct sock *sk, int level, int optname,
+ 		   char __user *optval, int __user *optlen);
+ int tcp_setsockopt(struct sock *sk, int level, int optname,
+diff --git a/net/ipv4/af_inet.c b/net/ipv4/af_inet.c
+index f00499a46927..2a362198a03e 100644
+--- a/net/ipv4/af_inet.c
++++ b/net/ipv4/af_inet.c
+@@ -934,7 +934,8 @@ const struct proto_ops inet_stream_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet_getname,
+-	.poll		   = tcp_poll,
++	.get_poll_head	   = tcp_get_poll_head,
++	.poll_mask	   = tcp_poll_mask,
+ 	.ioctl		   = inet_ioctl,
+ 	.listen		   = inet_listen,
+ 	.shutdown	   = inet_shutdown,
+diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+index c4a7ee7f6721..4d88c765cfcc 100644
+--- a/net/ipv4/tcp.c
++++ b/net/ipv4/tcp.c
+@@ -486,35 +486,30 @@ static void tcp_tx_timestamp(struct sock *sk, u16 tsflags)
+ 	}
  }
  
-+static inline void sock_poll_busy_loop(struct socket *sock, __poll_t events)
++struct wait_queue_head *tcp_get_poll_head(struct socket *sock, __poll_t events)
 +{
-+	if (sk_can_busy_loop(sock->sk) &&
-+	    events && (events & POLL_BUSY_LOOP)) {
-+		/* once, only if requested by syscall */
-+		sk_busy_loop(sock->sk, 1);
-+	}
-+}
-+
-+/* if this socket can poll_ll, tell the system call */
-+static inline __poll_t sock_poll_busy_flag(struct socket *sock)
-+{
-+	return sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0;
-+}
-+
- /* used in the NIC receive handler to mark the skb */
- static inline void skb_mark_napi_id(struct sk_buff *skb,
- 				    struct napi_struct *napi)
-diff --git a/net/socket.c b/net/socket.c
-index 092baa464afc..db11e48a375b 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -1097,24 +1097,11 @@ EXPORT_SYMBOL(sock_create_lite);
- /* No kernel lock held - perfect */
- static __poll_t sock_poll(struct file *file, poll_table *wait)
- {
--	__poll_t busy_flag = 0;
--	struct socket *sock;
--
--	/*
--	 *      We can't return errors to poll, so it's either yes or no.
--	 */
--	sock = file->private_data;
--
--	if (sk_can_busy_loop(sock->sk)) {
--		/* this socket can poll_ll so tell the system call */
--		busy_flag = POLL_BUSY_LOOP;
--
--		/* once, only if requested by syscall */
--		if (wait && (wait->_key & POLL_BUSY_LOOP))
--			sk_busy_loop(sock->sk, 1);
--	}
-+	struct socket *sock = file->private_data;
-+	__poll_t events = poll_requested_events(wait);
- 
--	return busy_flag | sock->ops->poll(file, sock, wait);
 +	sock_poll_busy_loop(sock, events);
-+	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
- }
++	sock_rps_record_flow(sock->sk);
++	return sk_sleep(sock->sk);
++}
++EXPORT_SYMBOL(tcp_get_poll_head);
++
+ /*
+- *	Wait for a TCP event.
+- *
+- *	Note that we don't need to lock the socket, as the upper poll layers
+- *	take care of normal races (between the test and the event) and we don't
+- *	go look at any of the socket buffers directly.
++ * Socket is not locked. We are protected from async events by poll logic and
++ * correct handling of state changes made by other threads is impossible in
++ * any case.
+  */
+-__poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
++__poll_t tcp_poll_mask(struct socket *sock, __poll_t events)
+ {
+-	__poll_t mask;
+ 	struct sock *sk = sock->sk;
+ 	const struct tcp_sock *tp = tcp_sk(sk);
++	__poll_t mask = 0;
+ 	int state;
  
- static int sock_mmap(struct file *file, struct vm_area_struct *vma)
+-	sock_rps_record_flow(sk);
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-
+ 	state = sk_state_load(sk);
+ 	if (state == TCP_LISTEN)
+ 		return inet_csk_listen_poll(sk);
+ 
+-	/* Socket is not locked. We are protected from async events
+-	 * by poll logic and correct handling of state changes
+-	 * made by other threads is impossible in any case.
+-	 */
+-
+-	mask = 0;
+-
+ 	/*
+ 	 * POLLHUP is certainly not done right. But poll() doesn't
+ 	 * have a notion of HUP in just one direction, and for a
+@@ -595,7 +590,7 @@ __poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
+ 
+ 	return mask;
+ }
+-EXPORT_SYMBOL(tcp_poll);
++EXPORT_SYMBOL(tcp_poll_mask);
+ 
+ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
+ {
+diff --git a/net/ipv6/af_inet6.c b/net/ipv6/af_inet6.c
+index c9441ca45399..cccbb6e6603a 100644
+--- a/net/ipv6/af_inet6.c
++++ b/net/ipv6/af_inet6.c
+@@ -544,7 +544,8 @@ const struct proto_ops inet6_stream_ops = {
+ 	.socketpair	   = sock_no_socketpair,	/* a do nothing	*/
+ 	.accept		   = inet_accept,		/* ok		*/
+ 	.getname	   = inet6_getname,
+-	.poll		   = tcp_poll,			/* ok		*/
++	.get_poll_head	   = tcp_get_poll_head,
++	.poll_mask	   = tcp_poll_mask,		/* ok		*/
+ 	.ioctl		   = inet6_ioctl,		/* must change  */
+ 	.listen		   = inet_listen,		/* ok		*/
+ 	.shutdown	   = inet_shutdown,		/* ok		*/
 -- 
 2.14.2
 
