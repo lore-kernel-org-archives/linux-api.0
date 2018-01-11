@@ -1,8 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
 Subject: Re: [PATCH 03/32] fs: introduce new ->get_poll_head and
 	->poll_mask methods
-Date: Thu, 11 Jan 2018 09:28:13 +0100
-Message-ID: <20180111082813.GA760@lst.de>
+Date: Thu, 11 Jan 2018 12:32:56 +0100
+Message-ID: <20180111113256.GA4078@lst.de>
 References: <20180110155853.32348-1-hch@lst.de> <20180110155853.32348-4-hch@lst.de> <20180110210416.GH13338@ZenIV.linux.org.uk> <20180111052200.GJ13338@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -14,26 +14,8 @@ To: Al Viro <viro@ZenIV.linux.org.uk>
 Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 11, 2018 at 05:22:00AM +0000, Al Viro wrote:
-> Whee...  The very first ->poll() instance in alphabetic order on pathnames:
-> in arch/cris/arch-v10/drivers/gpio.c
-> 
-> static __poll_t gpio_poll(struct file *file, poll_table *wait)
-> {
->         __poll_t mask = 0;
->         struct gpio_private *priv = file->private_data;
->         unsigned long data;
->         unsigned long flags;
-> 
->         spin_lock_irqsave(&gpio_lock, flags);
-> 
->         poll_wait(file, &priv->alarm_wq, wait);
-> 
-> IOW, we are doing poll_wait() (== possible GFP_KERNEL __get_free_page()) under
-> a spinlock...
-
-Yes.  Another god reason to separate poll_wait and the actual
-event check callback..
+For other horrors that are even worse than any given ->poll instance
+take a look at scif_poll and friends..
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
