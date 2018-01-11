@@ -1,122 +1,91 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: [PATCH 03/32] fs: introduce new ->get_poll_head and ->poll_mask
- methods
-Date: Thu, 11 Jan 2018 17:47:50 +0000
-Message-ID: <20180111174750.GL13338@ZenIV.linux.org.uk>
-References: <20180110155853.32348-1-hch@lst.de>
- <20180110155853.32348-4-hch@lst.de>
- <20180110210416.GH13338@ZenIV.linux.org.uk>
- <20180111113600.GA4120@lst.de>
+From: Joel Stanley <joel@jms.id.au>
+Subject: Re: [patch v15 3/4] Documentation: jtag: Add bindings for Aspeed SoC
+ 24xx and 25xx families JTAG master driver
+Date: Thu, 11 Jan 2018 09:50:19 -0800
+Message-ID: <CACPK8XfH-4r0mBQYA+BwvUo2+RF8igai2jy+RqTDQcxx2-acsQ@mail.gmail.com>
+References: <1514202808-29747-1-git-send-email-oleksandrs@mellanox.com> <1514202808-29747-4-git-send-email-oleksandrs@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20180111113600.GA4120@lst.de>
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1514202808-29747-4-git-send-email-oleksandrs@mellanox.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleksandr Shamray <oleksandrs@mellanox.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ARM <linux-arm-kernel@lists.infradead.org>, devicetree <devicetree@vger.kernel.org>, OpenBMC Maillist <openbmc@lists.ozlabs.org>, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri@resnulli.us>, Tobias Klauser <tklauser@distanz.ch>, linux-serial@vger.kernel.org, Vadim Pasternak <vadimp@mellanox.com>, system-sw-low-level@mellanox.com, Rob Herring <robh+dt@kernel.org>, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, "David S . Miller" <davem@davemloft.net>, mchehab@kernel.org, Jiri Pirko <jiri@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 11, 2018 at 12:36:00PM +0100, Christoph Hellwig wrote:
-> On Wed, Jan 10, 2018 at 09:04:16PM +0000, Al Viro wrote:
-> > There's another problem with that - currently ->poll() may tell you "sod off,
-> > I've got nothing for you to sleep on, eat your POLLHUP|POLLERR|something
-> > and don't pester me again".  With your API that's hard to express sanely.
-> 
-> And what exactly can currently tell 'sod off' right now?  ->poll
-> can only return the (E)POLL* mask.  But what would probably be sane
-> is to do the same thing in vfs_poll I already do in aio poll:  call
-> ->poll_mask a first time before calling poll_wait to clear any
-> already pending events.  That way any early error gets instantly
-> propagated.
+On Mon, Dec 25, 2017 at 3:53 AM, Oleksandr Shamray
+<oleksandrs@mellanox.com> wrote:
+> It has been tested on Mellanox system with BMC equipped with
+> Aspeed 2520 SoC for programming CPLD devices.
+>
+> Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
+> Signed-off-by: Jiri Pirko <jiri@mellanox.com>
+> Acked-by: Rob Herring <robh@kernel.org>
+> ---
+> v14->v15
+> v13->v14
+> v12->v13
+> v11->v12
+> v10->v11
+> v9->v10
+> v8->v9
+> v7->v8
+> Comments pointed by pointed by Joel Stanley <joel.stan@gmail.com>
+> - Change compatible string to ast2400 and ast2000
+>
+> V6->v7
+> Comments pointed by Tobias Klauser <tklauser@distanz.ch>
+>  - Fix spell "Doccumentation" -> "Documentation"
+>
+> v5->v6
+> Comments pointed by Tobias Klauser <tklauser@distanz.ch>
+> - Small nit: s/documentation/Documentation/
+>
+> v4->v5
+>
+> V3->v4
+> Comments pointed by Rob Herring <robh@kernel.org>
+> - delete unnecessary "status" and "reg-shift" descriptions in
+>   bndings file
+>
+> v2->v3
+> Comments pointed by Rob Herring <robh@kernel.org>
+> - split Aspeed jtag driver and binding to sepatrate patches
+> - delete unnecessary "status" and "reg-shift" descriptions in
+>   bndings file
+> ---
+>  .../devicetree/bindings/jtag/aspeed-jtag.txt       |   18 ++++++++++++++++++
+>  1 files changed, 18 insertions(+), 0 deletions(-)
+>  create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+>
+> diff --git a/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+> new file mode 100644
+> index 0000000..8cfc610
+> --- /dev/null
+> +++ b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+> @@ -0,0 +1,18 @@
+> +Aspeed JTAG driver for ast2400 and ast2500 SoC
+> +
+> +Required properties:
+> +- compatible:          Should be one of
+> +      - "aspeed,ast2400-jtag"
+> +      - "aspeed,ast2500-jtag"
+> +- reg                  contains the offset and length of the JTAG memory
+> +                       region
+> +- clocks               root clock of bus, should reference the APB clock
+> +- interrupts           should contain JTAG controller interrupt
+> +
+> +Example:
+> +jtag: jtag@1e6e4000 {
+> +       compatible = "aspeed,ast2500-jtag";
+> +       reg = <0x1e6e4000 0x1c>;
+> +       clocks = <&clk_apb>;
 
-static __poll_t
-capi_poll(struct file *file, poll_table *wait)
-{
-        struct capidev *cdev = file->private_data;
-        __poll_t mask = 0;
+We've now got a proper clock driver upstream. Can you update the
+example to match the newly added bindings?
 
-        if (!cdev->ap.applid)
-                return POLLERR;
+ clocks = <&syscon ASPEED_CLK_APB>;
 
-        poll_wait(file, &(cdev->recvwait), wait);
-        mask = POLLOUT | POLLWRNORM;
-        if (!skb_queue_empty(&cdev->recvqueue))
-                mask |= POLLIN | POLLRDNORM;
-        return mask;
-}
+Cheers,
 
-and a bunch of similar beasts.  FWIW, I'm going through that zoo, looking for
-existing patterns.
-
-BTW, consider this:
-static __poll_t sync_serial_poll(struct file *file, poll_table *wait)
-{
-        int dev = iminor(file_inode(file));
-        __poll_t mask = 0;
-        struct sync_port *port;
-        DEBUGPOLL(
-        static __poll_t prev_mask;
-        );
-
-        port = &ports[dev];
-
-        if (!port->started)
-                sync_serial_start_port(port);
-
-        poll_wait(file, &port->out_wait_q, wait);
-        poll_wait(file, &port->in_wait_q, wait);
-
-        /* No active transfer, descriptors are available */
-        if (port->output && !port->tr_running)
-                mask |= POLLOUT | POLLWRNORM;
-	...
-}
-
-Besides having two queues, note the one-time sync_serial_start_port()
-there.  Where would you map such things?  First ->poll_mask()?
-
-> Can't find anything in sysfs,
-
-Large chunk of sysfs is in fs/kernfs/*.c; it's there.
-
-> > Note, BTW, the places like wait->_qproc = NULL; in do_select() and its ilk.
-> > Some of them are "don't bother putting me on any queues, I won't be sleeping
-> > anyway".  Some are "I'm already on all queues I care about, I'm going to
-> > sleep now and the query everything again once woken up".  It would be nice
-> > to have the method splitup reflect that kind of logics...
-> 
-> Hmm.  ->poll_mask already is a simple 'are these events pending'
-> method, and thuse should deal perfectly fine with both cases.  What
-> additional split do you think would be helpful?
-
-What I mean is that it would be nice to have do_select() and friends aware of that.
-You are hiding the whole thing behind vfs_poll(); sure, we can't really exploit
-that while we have the mix of converted and unconverted instances, but it would
-be a nice payoff.
-
-As for calling ->poll_mask() first...  Three method calls per descriptor on the
-first pass?  Overhead might get painful...
-
-FWIW, the problem with "sod off early" ones is not the cost of poll_wait() -
-it's that sometimes we might not _have_ a queue to sleep on.  Hell knows, I need
-to finish the walk through that zoo to see what's out there...  Pox on
-drivers/media - that's where the bulk of instances is, and they are fairly
-convoluted...
-
-wait_on_event_..._key() might be a good idea; we probably want comments from
-Peter on that one.  An interesting testcase would be tty - the amount of
-threads sleeping on those queues is going to be large; can we combine
-->read_wait and ->write_wait without serious PITA?  Another issue is
-ldisc handling - the first thing tty_poll() is doing is
-        ld = tty_ldisc_ref_wait(tty);
-and it really waits for ldisc changes in progress to settle.  Hell knows
-whether anything relies on that, but I wouldn't be surprised if it did -
-tty handling is one of the areas where select(2)/poll(2) get non-trivial
-use...
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Joel
