@@ -1,57 +1,52 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [REGRESSION] testing/selftests/x86/ pkeys build failures
-Date: Fri, 12 Jan 2018 14:15:32 +0100
-Message-ID: <063ba398-88e6-8650-2905-c378ee1fb8b2@redhat.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [REGRESSION] testing/selftests/x86/ pkeys build failures (was:
+ Re: [PATCH] mm, x86: pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
+ signal semantics)
+Date: Fri, 12 Jan 2018 15:14:49 +0100
+Message-ID: <20180112141449.5gmn3nxvosk6y6qs@gmail.com>
 References: <360ef254-48bc-aee6-70f9-858f773b8693@redhat.com>
  <20180112125537.bdl376ziiaqp664o@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
 In-Reply-To: <20180112125537.bdl376ziiaqp664o@gmail.com>
-Content-Language: en-US
 Sender: owner-linux-mm@kvack.org
-To: Ingo Molnar <mingo@kernel.org>, Shuah Khan <shuahkh@osg.samsung.com>, Dave Hansen <dave.hansen@linux.intel.com>
+To: Florian Weimer <fweimer@redhat.com>, Shuah Khan <shuahkh@osg.samsung.com>, Dave Hansen <dave.hansen@linux.intel.com>
 Cc: linux-mm <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, linux-x86_64@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, x86@kernel.org, Dave Hansen <dave.hansen@intel.com>, Ram Pai <linuxram@us.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 01/12/2018 01:55 PM, Ingo Molnar wrote:
-> 
-> * Florian Weimer <fweimer@redhat.com> wrote:
-> 
->> This patch is based on the previous discussion (pkeys: Support setting
->> access rights for signal handlers):
->>
->>    https://marc.info/?t=151285426000001
->>
->> It aligns the signal semantics of the x86 implementation with the upcoming
->> POWER implementation, and defines a new flag, so that applications can
->> detect which semantics the kernel uses.
->>
->> A change in this area is needed to make memory protection keys usable for
->> protecting the GOT in the dynamic linker.
->>
->> (Feel free to replace the trigraphs in the commit message before committing,
->> or to remove the program altogether.)
-> 
-> Could you please send patches not as MIME attachments?
 
-My mail infrastructure corrupts patches not sent as attachments, sorry.
+* Ingo Molnar <mingo@kernel.org> wrote:
 
-> Also, the protection keys testcase first need to be fixed, before we complicate
-> them - for example on a pretty regular Ubuntu x86-64 installation they fail to
+> Also, the protection keys testcase first need to be fixed, before we complicate 
+> them - for example on a pretty regular Ubuntu x86-64 installation they fail to 
 > build with the build errors attached further below.
+> 
+> On an older Fedora 23 installation, the testcases themselves don't build at all:
 
-I can fix things up so that they build on Fedora 26, Debian stretch, and 
-Red Hat Enterprise Linux 7.  Would that be sufficient?
+The Ubuntu build failure seems to have gone away after a 'make clean', what 
+remains is an ugly build warning:
 
-Fedora 23 is out of support and I'd prefer not invest any work into it.
+triton:~/tip/tools/testing/selftests/x86> make
+gcc -m32 -o /home/mingo/tip/tools/testing/selftests/x86/protection_keys_32 -O2 -g -std=gnu99 -pthread -Wall -no-pie  protection_keys.c -lrt -ldl -lm
+protection_keys.c: In function ‘dumpit’:
+protection_keys.c:419:3: warning: ignoring return value of ‘write’, declared with attribute warn_unused_result [-Wunused-result]
+   write(1, buf, nr_read);
+   ^~~~~~~~~~~~~~~~~~~~~~
+gcc -m64 -o /home/mingo/tip/tools/testing/selftests/x86/protection_keys_64 -O2 -g -std=gnu99 -pthread -Wall -no-pie  protection_keys.c -lrt -ldl
+protection_keys.c: In function ‘dumpit’:
+protection_keys.c:419:3: warning: ignoring return value of ‘write’, declared with attribute warn_unused_result [-Wunused-result]
+   write(1, buf, nr_read);
+   ^~~~~~~~~~~~~~~~~~~~~~
 
-Note that I find it strange to make this a precondition for even looking 
-at the patch.
+If this build warning and the Fedora build failure is fixed we can apply your 
+patch too I think.
 
 Thanks,
-Florian
+
+	Ingo
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-mm' in
