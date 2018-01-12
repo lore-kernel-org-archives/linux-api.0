@@ -1,85 +1,87 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 03/32] fs: introduce new ->get_poll_head and
-	->poll_mask methods
-Date: Fri, 12 Jan 2018 10:06:59 +0100
-Message-ID: <20180112090659.GB24190@lst.de>
-References: <20180110155853.32348-1-hch@lst.de> <20180110155853.32348-4-hch@lst.de> <20180110210416.GH13338@ZenIV.linux.org.uk> <20180111113600.GA4120@lst.de> <20180111174750.GL13338@ZenIV.linux.org.uk>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: [REGRESSION] testing/selftests/x86/ pkeys build failures (was: Re:
+ [PATCH] mm, x86: pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change signal
+ semantics)
+Date: Fri, 12 Jan 2018 13:55:38 +0100
+Message-ID: <20180112125537.bdl376ziiaqp664o@gmail.com>
+References: <360ef254-48bc-aee6-70f9-858f773b8693@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180111174750.GL13338@ZenIV.linux.org.uk>
-Sender: owner-linux-aio@kvack.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>
+In-Reply-To: <360ef254-48bc-aee6-70f9-858f773b8693@redhat.com>
+Sender: owner-linux-mm@kvack.org
+To: Florian Weimer <fweimer@redhat.com>, Shuah Khan <shuahkh@osg.samsung.com>, Dave Hansen <dave.hansen@linux.intel.com>
+Cc: linux-mm <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, linux-x86_64@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, x86@kernel.org, Dave Hansen <dave.hansen@intel.com>, Ram Pai <linuxram@us.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 11, 2018 at 05:47:50PM +0000, Al Viro wrote:
-> Besides having two queues, note the one-time sync_serial_start_port()
-> there.  Where would you map such things?  First ->poll_mask()?
 
-->get_poll_mask.  These sorts of calls are the prime reason why
-the events argument is passed to it.
+* Florian Weimer <fweimer@redhat.com> wrote:
 
+> This patch is based on the previous discussion (pkeys: Support setting
+> access rights for signal handlers):
 > 
-> > Can't find anything in sysfs,
+>   https://marc.info/?t=151285426000001
 > 
-> Large chunk of sysfs is in fs/kernfs/*.c; it's there.
-
-Still can't find it - there is exactly one poll implementation in there,
-and it's not a forwarder.
-
-> > Hmm.  ->poll_mask already is a simple 'are these events pending'
-> > method, and thuse should deal perfectly fine with both cases.  What
-> > additional split do you think would be helpful?
+> It aligns the signal semantics of the x86 implementation with the upcoming
+> POWER implementation, and defines a new flag, so that applications can
+> detect which semantics the kernel uses.
 > 
-> What I mean is that it would be nice to have do_select() and friends aware of that.
-> You are hiding the whole thing behind vfs_poll(); sure, we can't really exploit
-> that while we have the mix of converted and unconverted instances, but it would
-> be a nice payoff.
+> A change in this area is needed to make memory protection keys usable for
+> protecting the GOT in the dynamic linker.
+> 
+> (Feel free to replace the trigraphs in the commit message before committing,
+> or to remove the program altogether.)
 
-Yes.  I think we can actually get rid of vfs_poll again rather soon,
-the prime reason for it was to isolate non-core callers.  But most
-of them should use better primitives anyway, and even until then we
-can get rid of vfs_poll for the core to make things cleaner.
+Could you please send patches not as MIME attachments?
 
-> As for calling ->poll_mask() first...  Three method calls per descriptor on the
-> first pass?  Overhead might get painful...
+Also, the protection keys testcase first need to be fixed, before we complicate 
+them - for example on a pretty regular Ubuntu x86-64 installation they fail to 
+build with the build errors attached further below.
 
-I would have said no until a about a week ago.  But with branch prediction
-on indirect branches basically gone on x86 now it's not going to get
-better.  That beeing said we already do three method calls for the aio
-poll case and it hasn't been an issue.
+On an older Fedora 23 installation, the testcases themselves don't build at all:
 
-> FWIW, the problem with "sod off early" ones is not the cost of poll_wait() -
-> it's that sometimes we might not _have_ a queue to sleep on.  Hell knows, I need
-> to finish the walk through that zoo to see what's out there...  Pox on
-> drivers/media - that's where the bulk of instances is, and they are fairly
-> convoluted...
+ fomalhaut:~/tip2/tools/testing/selftests/x86> make protection_keys
+ gcc -O2 -g -std=gnu99 -pthread -Wall -no-pie    protection_keys.c   -o protection_keys
+ gcc: error: unrecognized command line option ‘-no-pie’
+ <builtin>: recipe for target 'protection_keys' failed
+ make: *** [protection_keys] Error 1
 
-I've seen a few instances that return errors before poll_wait, but
-most of them seemed buggy.
+so it's one big mess at the moment that needs some love ...
 
-> wait_on_event_..._key() might be a good idea; we probably want comments from
-> Peter on that one.  An interesting testcase would be tty - the amount of
-> threads sleeping on those queues is going to be large; can we combine
-> ->read_wait and ->write_wait without serious PITA?  Another issue is
-> ldisc handling - the first thing tty_poll() is doing is
->         ld = tty_ldisc_ref_wait(tty);
-> and it really waits for ldisc changes in progress to settle.  Hell knows
-> whether anything relies on that, but I wouldn't be surprised if it did -
-> tty handling is one of the areas where select(2)/poll(2) get non-trivial
-> use...
+Thanks,
 
-Yes. I'll look into it.
+	Ingo
 
-In the meantime I think that poll_mask semantics are a big improvement
-for the common case, and they enable doing aio poll.  So I'd rather
-move ahead and fix any details of method signatures once we're down
-to just the hard cases instead of trying to do everything at once.
+==================>
+
+triton:~/tip/tools/testing/selftests/x86> make
+gcc -m32 -o /home/mingo/tip/tools/testing/selftests/x86/protection_keys_32 -O2 -g -std=gnu99 -pthread -Wall -no-pie  protection_keys.c -lrt -ldl -lm
+In file included from /usr/include/signal.h:57:0,
+                 from protection_keys.c:33:
+protection_keys.c: In function ‘signal_handler’:
+protection_keys.c:253:6: error: expected ‘=’, ‘,’, ‘;’, ‘asm’ or ‘__attribute__’ before ‘.’ token
+  u64 si_pkey;
+      ^
+protection_keys.c:253:6: error: expected expression before ‘.’ token
+protection_keys.c:295:2: error: ‘_sifields’ undeclared (first use in this function)
+  si_pkey = *si_pkey_ptr;
+  ^
+protection_keys.c:295:2: note: each undeclared identifier is reported only once for each function it appears in
+In file included from protection_keys.c:46:0:
+pkey-helpers.h: In function ‘sigsafe_printf’:
+pkey-helpers.h:42:3: warning: ignoring return value of ‘write’, declared with attribute warn_unused_result [-Wunused-result]
+   write(1, dprint_in_signal_buffer, len);
+   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+protection_keys.c: In function ‘dumpit’:
+protection_keys.c:419:3: warning: ignoring return value of ‘write’, declared with attribute warn_unused_result [-Wunused-result]
+   write(1, buf, nr_read);
+   ^~~~~~~~~~~~~~~~~~~~~~
+Makefile:47: recipe for target '/home/mingo/tip/tools/testing/selftests/x86/protection_keys_32' failed
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
