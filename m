@@ -1,140 +1,80 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v5 00/30] ARM Scalable Vector Extension (SVE)
-Date: Mon, 15 Jan 2018 17:22:01 +0000
-Message-ID: <20180115172201.GW22781@e103592.cambridge.arm.com>
-References: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
- <20180108144905.qu5qbmaaglcgwvwq@yury-thinkpad>
- <20180109165120.6ravt4stp3654374@yury-thinkpad>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180109165120.6ravt4stp3654374@yury-thinkpad>
-Sender: linux-arch-owner@vger.kernel.org
-To: Yury Norov <ynorov@caviumnetworks.com>
-Cc: linux-arm-kernel@lists.infradead.org, linux-arch@vger.kernel.org, Mark Rutland <mark.rutland@arm.com>, Okamoto Takayuki <tokamoto@jp.fujitsu.com>, libc-alpha@sourceware.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, "H . J . Lu" <hjl.tools@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Will Deacon <will.deacon@arm.com>, Oleg Nesterov <oleg@redhat.com>, Dmitry Safonov <dsafonov@virtuozzo.com>, Ingo Molnar <mingo@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alan Hayward <alan.hayward@arm.com>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>, kvmarm@lists.cs.columbia.edu, Ch
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH for 4.16 00/10] membarrier updates for 4.16
+Date: Mon, 15 Jan 2018 14:10:54 -0500
+Message-ID: <20180115191104.12437-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, x86@kernel.
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 09, 2018 at 07:51:20PM +0300, Yury Norov wrote:
-> On Mon, Jan 08, 2018 at 05:49:05PM +0300, Yury Norov wrote:
-> > On Tue, Oct 31, 2017 at 03:50:52PM +0000, Dave Martin wrote:
-> > > This series implements Linux kernel support for the ARM Scalable Vector
-> > > Extension (SVE). [1]  It supersedes the previous v3: see [3] for link
-> > > and full cover letter.
-> > > 
-> > > This is a minor update to v4, but does contain a couple of important
-> > > fixes.
-> > > 
-> > > As in previous postings, the last two patches (here 29-30) are still
-> > > RFC and not proposed for merging at this time.
-> > > 
-> > > The patches apply on
-> > > git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git
-> > > for-next/core
-> > > d7b1d22d3821 ("arm64: uapi: Remove PSR_Q_BIT")
-> > > 
-> > > To reduce spam, some people may not been copied on the entire series.
-> > > For those who did not receive the whole series, it can be found in the
-> > > linux-arm-kernel archive. [2]
-> > > 
-> > > See the individual patches for details of changes.
-> > > 
-> > > For reviewer convenience, a git tree is available. [4]
-> > > 
-> > > Since there are some changes against already-reviewed patches, I've also
-> > > pushed an unsquashed fixes tree for people to take a look at if it
-> > > helps. [5]
-> > > 
-> > > 
-> > > Summary:
-> > > 
-> > >  * "regset: Add support for dynamically sized regsets" fixed to avoid
-> > >    x86 breakage;
-> > > 
-> > >  * one trival arm64 patch added to add asmlinkage annotations, and a
-> > >    corresponding minor change to the Core task context handling patch;
-> > > 
-> > >  * one new arm64 fix ("signal: Verify extra data is user-readable in
-> > >    sys_rt_sigreturn") to ensure that access_ok() checks are done for the
-> > >    whole extended signal frame, not just the base frame;
-> > > 
-> > >  * one minor fix to the SVE sigreturn code to return consistent
-> > >    intermediate error values (semantic correctness, non-functional
-> > >    change);
-> > > 
-> > >  * one minor change to call __copy_from_user() instead of
-> > >    copy_from_user() in a situation where there is already an access_ok()
-> > >    check;
-> > > 
-> > > 
-> > > [1] ARM Scalable Vector Extension
-> > > https://community.arm.com/groups/processors/blog/2016/08/22/technology-update-the-scalable-vector-extension-sve-for-the-armv8-a-architecture
-> > > 
-> > > [2] linux-arm-kernel October 2017 Archives by thread
-> > > http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/thread.html
-> > > 
-> > > [3] [PATCH v4 00/28] ARM Scalable Vector Extension (SVE)
-> > > http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/539414.html
-> > > 
-> > > [4] For review and testing only -- **do not pull**
-> > >     (This branch has review changelogs which should not form part of
-> > >     the final commits.)
-> > > 
-> > >     v5 series (this posting)
-> > > 
-> > >     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v5
-> > >     git://linux-arm.org/linux-dm.git sve/v5
-> > > 
-> > > [5] For review and testing only -- **do not pull**
-> > >     (This branch has review changelogs which should not form part of
-> > >     the final commits.)
-> > > 
-> > >     v4 with unsquashed fixes
-> > > 
-> > >     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v4%2Bfixes
-> > >     git://linux-arm.org/linux-dm.git sve/v4+fixes
-> > 
-> > Hi Dave,
-> > 
-> > During rebase of my ILP32 series on 4.15 kernel I found that 
-> > ILP32 needs to be enabled with SVE support, like you do for 
-> > LP64 in this series.
-> > 
-> > I did all rebase work on this draft branch:
-> > https://github.com/norov/linux/tree/ilp32-4.15-rc7
-> > 
-> > But any ILP32 program I tried crash, and the message in dmesg looks
-> > like this:
-> > [   39.510667] CPU: 0 PID: 1857 Comm: mytime Not tainted 4.15.0-rc7-00028-g45e0659df4d9 #41
-> > [   39.510712] Hardware name: linux,dummy-virt (DT)
-> > [   39.510829] pstate: 00000000 (nzcv daif -PAN -UAO)
-> > [   39.511101] pc : 0x33488e28
-> > [   39.511125] lr : 0x33488e28
-> > [   39.511138] sp : 00000000fffef670
-> > [   39.511158] x29: 000000005a536c33 x28: 0000000000000000 
-> > [   39.511211] x27: 0000000000000000 x26: 0000000000000000 
-> > [   39.511235] x25: 0000000000000000 x24: 0000000000000000 
-> > [   39.511257] x23: 0000000000466000 x22: 0000000000000000 
-> > [   39.511278] x21: 0000000000000000 x20: 000000000047f2a8 
-> > [   39.511300] x19: 0000000000000000 x18: 0000000000000001 
-> > [   39.511321] x17: 0000000000001000 x16: 0000000000001030 
-> > [   39.511342] x15: 0000000000554e47 x14: 0000000000000001 
-> > [   39.511364] x13: 0000000000000004 x12: 000000000000003c 
-> > [   39.511385] x11: 0000100000000000 x10: 0800000000000000 
-> > [   39.511406] x9 : 0fffffffffffffff x8 : 000000000000007c 
-> > [   39.511427] x7 : 0000000000000077 x6 : 0000000000000041 
-> > [   39.511448] x5 : 0000000000000411 x4 : 00000000fbad2488 
-> > [   39.511468] x3 : 0000000000000001 x2 : 0000000000497950 
-> > [   39.511489] x1 : 0000000000497550 x0 : 0000000000000001
-> 
-> Hi Dave,
-> 
-> I fixed the crash. It was my local problem.
+Hi Ingo, Hi Peter,
 
-Ah, right :)
+Here are the membarrier patch series I would like to submit for the
+4.16 merge window. It would be appreciated of those can go through the
+scheduler tree.
 
-I'll take a look at your code anyway in case there's something
-else one of us didn't think of.
+It's the same series as last week, rebased on top of 4.15-rc8.
 
-Cheers
----Dave
+Highlights:
+
+"powerpc: membarrier: Skip memory barrier in switch_mm()" takes care of
+a TODO that was left in the private expedited implementation when merged
+in 4.14: an extra memory barrier was added on context switch on powerpc.
+Ensure that the barrier is only performed when scheduling between
+different processes, only for threads belonging to processes that have
+registered their intent to use the private expedited command.
+
+"membarrier: provide SHARED_EXPEDITED command" adds new commands to
+membarrier for registration and use of membarrier across shared
+memory mappings. The non-expedited command has proven to be really
+too slow (taking 10ms and more to complete) for real-world use. The
+expedited version completes in a matter of microseconds.
+
+"membarrier: Provide core serializing command" provides core
+serialization for JIT reclaim. We received positive feedback from
+Android developers that the proposed ABI fits their use-case.
+Only x86 32/64 and arm 64 implement this command so far. This is
+opt-in per architecture.
+
+The other patches add selftests and documentation.
+
+Thanks,
+
+Mathieu
+
+Mathieu Desnoyers (10):
+  membarrier: selftest: Test private expedited cmd (v2)
+  powerpc: membarrier: Skip memory barrier in switch_mm() (v7)
+  membarrier: Document scheduler barrier requirements (v5)
+  membarrier: provide SHARED_EXPEDITED command (v2)
+  membarrier: selftest: Test shared expedited cmd
+  membarrier: Provide core serializing command
+  x86: Introduce sync_core_before_usermode (v2)
+  membarrier: x86: Provide core serializing command (v3)
+  membarrier: arm64: Provide core serializing command
+  membarrier: selftest: Test private expedited sync core cmd
+
+ MAINTAINERS                                        |   1 +
+ arch/arm64/Kconfig                                 |   1 +
+ arch/arm64/kernel/entry.S                          |   4 +
+ arch/powerpc/Kconfig                               |   1 +
+ arch/powerpc/include/asm/membarrier.h              |  27 +++
+ arch/powerpc/mm/mmu_context.c                      |   7 +
+ arch/x86/Kconfig                                   |   2 +
+ arch/x86/entry/entry_32.S                          |   5 +
+ arch/x86/entry/entry_64.S                          |   4 +
+ arch/x86/include/asm/processor.h                   |  10 +
+ arch/x86/mm/tlb.c                                  |   6 +
+ include/linux/processor.h                          |   6 +
+ include/linux/sched/mm.h                           |  40 +++-
+ include/uapi/linux/membarrier.h                    |  66 +++++-
+ init/Kconfig                                       |   9 +
+ kernel/sched/core.c                                |  53 +++--
+ kernel/sched/membarrier.c                          | 171 +++++++++++++--
+ .../testing/selftests/membarrier/membarrier_test.c | 235 +++++++++++++++++++--
+ 18 files changed, 585 insertions(+), 63 deletions(-)
+ create mode 100644 arch/powerpc/include/asm/membarrier.h
+
+-- 
+2.11.0
