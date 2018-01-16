@@ -1,110 +1,80 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v3 09/10] change time types to new y2038 safe __kernel_* types
-Date: Mon, 15 Jan 2018 18:18:17 -0800
-Message-ID: <20180116021818.24791-10-deepa.kernel@gmail.com>
-References: <20180116021818.24791-1-deepa.kernel@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180116021818.24791-1-deepa.kernel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: tglx@linutronix.de, john.stultz@linaro.org
-Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, linux-api@vger.kernel.org
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [REGRESSION] testing/selftests/x86/ pkeys build failures
+Date: Tue, 16 Jan 2018 03:37:59 +0100
+Message-ID: <20180116023759.4xpgkc53qfbtmemb@gmail.com>
+References: <360ef254-48bc-aee6-70f9-858f773b8693@redhat.com>
+ <20180112125537.bdl376ziiaqp664o@gmail.com>
+ <063ba398-88e6-8650-2905-c378ee1fb8b2@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <063ba398-88e6-8650-2905-c378ee1fb8b2@redhat.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>, Dave Hansen <dave.hansen@linux.intel.com>, linux-mm <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, linux-x86_64@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, x86@kernel.org, Dave Hansen <dave.hansen@intel.com>, Ram Pai <linuxram@us.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-Change over clock_settime, clock_gettime and clock_getres
-syscalls to use __kernel_timespec times. This will enable
-changing over of these syscalls to use new y2038 safe syscalls
-when the architectures define the CONFIG_64BIT_TIME.
 
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
----
- include/linux/syscalls.h   | 6 +++---
- kernel/time/posix-stubs.c  | 6 +++---
- kernel/time/posix-timers.c | 6 +++---
- 3 files changed, 9 insertions(+), 9 deletions(-)
+* Florian Weimer <fweimer@redhat.com> wrote:
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a78186d826d7..7ac1bb9ea7da 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -309,13 +309,13 @@ asmlinkage long sys_timer_settime(timer_t timer_id, int flags,
- 				struct itimerspec __user *old_setting);
- asmlinkage long sys_timer_delete(timer_t timer_id);
- asmlinkage long sys_clock_settime(clockid_t which_clock,
--				const struct timespec __user *tp);
-+				const struct __kernel_timespec __user *tp);
- asmlinkage long sys_clock_gettime(clockid_t which_clock,
--				struct timespec __user *tp);
-+				struct __kernel_timespec __user *tp);
- asmlinkage long sys_clock_adjtime(clockid_t which_clock,
- 				struct timex __user *tx);
- asmlinkage long sys_clock_getres(clockid_t which_clock,
--				struct timespec __user *tp);
-+				struct __kernel_timespec __user *tp);
- asmlinkage long sys_clock_nanosleep(clockid_t which_clock, int flags,
- 				const struct timespec __user *rqtp,
- 				struct timespec __user *rmtp);
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index 0645cfa93609..28c22f54d0f2 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -49,7 +49,7 @@ SYS_NI(alarm);
-  */
- 
- SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
--		const struct timespec __user *, tp)
-+		const struct __kernel_timespec __user *, tp)
- {
- 	struct timespec64 new_tp;
- 
-@@ -80,7 +80,7 @@ int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
- 	return 0;
- }
- SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
--		struct timespec __user *, tp)
-+		struct __kernel_timespec __user *, tp)
- {
- 	int ret;
- 	struct timespec64 kernel_tp;
-@@ -94,7 +94,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
- 	return 0;
- }
- 
--SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct timespec __user *, tp)
-+SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_timespec __user *, tp)
- {
- 	struct timespec64 rtn_tp = {
- 		.tv_sec = 0,
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 673525f98ecf..da17eb61edda 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1039,7 +1039,7 @@ void exit_itimers(struct signal_struct *sig)
- }
- 
- SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
--		const struct timespec __user *, tp)
-+		const struct __kernel_timespec __user *, tp)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct timespec64 new_tp;
-@@ -1054,7 +1054,7 @@ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
- }
- 
- SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
--		struct timespec __user *,tp)
-+		struct __kernel_timespec __user *, tp)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct timespec64 kernel_tp;
-@@ -1095,7 +1095,7 @@ SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
- }
- 
- SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
--		struct timespec __user *, tp)
-+		struct __kernel_timespec __user *, tp)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct timespec64 rtn_tp;
--- 
-2.14.1
+> On 01/12/2018 01:55 PM, Ingo Molnar wrote:
+> > 
+> > * Florian Weimer <fweimer@redhat.com> wrote:
+> > 
+> > > This patch is based on the previous discussion (pkeys: Support setting
+> > > access rights for signal handlers):
+> > > 
+> > >    https://marc.info/?t=151285426000001
+> > > 
+> > > It aligns the signal semantics of the x86 implementation with the upcoming
+> > > POWER implementation, and defines a new flag, so that applications can
+> > > detect which semantics the kernel uses.
+> > > 
+> > > A change in this area is needed to make memory protection keys usable for
+> > > protecting the GOT in the dynamic linker.
+> > > 
+> > > (Feel free to replace the trigraphs in the commit message before committing,
+> > > or to remove the program altogether.)
+> > 
+> > Could you please send patches not as MIME attachments?
+> 
+> My mail infrastructure corrupts patches not sent as attachments, sorry.
+
+Your headers suggest the following mail client:
+
+  User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:52.0) Gecko/20100101
+        Thunderbird/52.5.0
+
+Have you seen the suggestions in Documentation/process/email-clients.rst, which 
+lists a handful of Thunderbird tips:
+
+  Thunderbird (GUI)
+  *****************
+
+  Thunderbird is an Outlook clone that likes to mangle text, but there are ways
+  to coerce it into behaving.
+
+?
+
+> > Also, the protection keys testcase first need to be fixed, before we complicate
+> > them - for example on a pretty regular Ubuntu x86-64 installation they fail to
+> > build with the build errors attached further below.
+> 
+> I can fix things up so that they build on Fedora 26, Debian stretch, and Red
+> Hat Enterprise Linux 7.  Would that be sufficient?
+
+Yeah, I think so.
+
+> Fedora 23 is out of support and I'd prefer not invest any work into it.
+> 
+> Note that I find it strange to make this a precondition for even looking at
+> the patch.
+
+I wanted to try the patch to give review feedback, but found these annoyances. 
+It's customary to make new features dependent on the cleanliness of the underlying 
+code.
+
+Thanks,
+
+	Ingo
