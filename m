@@ -1,165 +1,150 @@
 From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v3 00/10] posix_clocks: Prepare syscalls for 64 bit time_t conversion
-Date: Mon, 15 Jan 2018 18:18:08 -0800
-Message-ID: <20180116021818.24791-1-deepa.kernel@gmail.com>
-Return-path: <sparclinux-owner@vger.kernel.org>
-Sender: sparclinux-owner@vger.kernel.org
+Subject: [PATCH v3 10/10] nanosleep: change time types to safe __kernel_* types
+Date: Mon, 15 Jan 2018 18:18:18 -0800
+Message-ID: <20180116021818.24791-11-deepa.kernel@gmail.com>
+References: <20180116021818.24791-1-deepa.kernel@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180116021818.24791-1-deepa.kernel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: tglx@linutronix.de, john.stultz@linaro.org
-Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, acme@kernel.org, benh@kernel.crashing.org, borntraeger@de.ibm.com, catalin.marinas@arm.com, cmetcalf@mellanox.com, cohuck@redhat.com, davem@davemloft.net, deller@gmx.de, devel@driverdev.osuosl.org, gerald.schaefer@de.ibm.com, gregkh@linuxfoundation.org, heiko.carstens@de.ibm.com, hoeppner@linux.vnet.ibm.com, hpa@zytor.com, jejb@parisc-linux.org, jwi@linux.vnet.ibm.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-mips@linux-mips.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, mark.rutland@arm.com, mingo@redhat.com, mpe@ellerman.id.au, oberpar@linux.vnet.ibm.com, oprofile-list@lists.sf.net, paulus@samba.org, peterz@infradead.org, ralf@linux-mips.org
+Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The series is a preparation series for individual architectures
-to use 64 bit time_t syscalls in compat and 32 bit emulation modes.
+Change over clock_nanosleep syscalls to use y2038 safe
+__kernel_timespec times. This will enable changing over
+of these syscalls to use new y2038 safe syscalls when
+the architectures define the CONFIG_64BIT_TIME.
 
-This is a follow up to the series Arnd Bergmann posted:
-https://sourceware.org/ml/libc-alpha/2015-05/msg00070.html [1]
+Note that nanosleep syscall is deprecated and does not have a
+plan for making it y2038 safe. But, the syscall should work as
+before on 64 bit machines and on 32 bit machines, the syscall
+works correctly until y2038 as before using the existing compat
+syscall version. There is no new syscall for supporting 64 bit
+time_t on 32 bit architectures.
 
-Big picture is as per the lwn article:
-https://lwn.net/Articles/643234/ [2]
+Cc: linux-api@vger.kernel.org
+Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
+---
+ include/linux/restart_block.h | 7 ++-----
+ include/linux/syscalls.h      | 6 +++---
+ kernel/time/hrtimer.c         | 8 ++++++--
+ kernel/time/posix-stubs.c     | 4 ++--
+ kernel/time/posix-timers.c    | 4 ++--
+ 5 files changed, 15 insertions(+), 14 deletions(-)
 
-The series is directed at converting posix clock syscalls:
-clock_gettime, clock_settime, clock_getres and clock_nanosleep
-to use a new data structure __kernel_timespec at syscall boundaries.
-__kernel_timespec maintains 64 bit time_t across all execution modes.
-
-vdso will be handled as part of each architecture when they enable
-support for 64 bit time_t.
-
-The compat syscalls are repurposed to provide backward compatibility
-by using them as native syscalls as well for 32 bit architectures.
-They will continue to use timespec at syscall boundaries.
-
-CONFIG_64_BIT_TIME controls whether the syscalls use __kernel_timespec
-or timespec at syscall boundaries.
-
-The series does the following:
-1. Enable compat syscalls on 32 bit architectures.
-2. Add a new __kernel_timespec type to be used as the data structure
-   for all the new syscalls.
-3. Add new config CONFIG_64BIT_TIME(intead of the CONFIG_COMPAT_TIME in
-   [1] and [2] to switch to new definition of __kernel_timespec. It is
-   the same as struct timespec otherwise.
-4. Add new CONFIG_32BIT_TIME to conditionally compile compat syscalls.
-
-* Changes since v2:
- * Dropped the ARCH_HAS_64BIT_TIME config.
- * Fixed zeroing out of higher order bits of tv_nsec for real.
- * Addressed minor review comments from v1.
-* Changes since v1:
- * Introduce CONFIG_32BIT_TIME
- * Fixed zeroing out of higher order bits of tv_nsec
- * Included Arnd's changes to fix up use of compat headers
-
-I decided against using LEGACY_TIME_SYSCALLS to conditionally compile
-legacy time syscalls such as sys_nanosleep because this will need to
-enclose compat_sys_nanosleep as well. So, defining it as 
-
-config LEGACY_TIME_SYSCALLS
-     def_bool 64BIT || !64BIT_TIME
-
-will not include compat_sys_nanosleep. We will instead need a new config to
-exclusively mark legacy syscalls.
-
-Deepa Dinamani (10):
-  compat: Make compat helpers independent of CONFIG_COMPAT
-  include: Move compat_timespec/ timeval to compat_time.h
-  compat: enable compat_get/put_timespec64 always
-  arch: introduce CONFIG_64BIT_TIME
-  arch: Introduce CONFIG_COMPAT_32BIT_TIME
-  posix-clocks: Make compat syscalls depend on CONFIG_COMPAT_32BIT_TIME
-  include: Add new y2038 safe __kernel_timespec
-  fix get_timespec64() for y2038 safe compat interfaces
-  change time types to new y2038 safe __kernel_* types
-  nanosleep: change time types to safe __kernel_* types
-
- arch/Kconfig                           | 15 +++++++++
- arch/arm64/include/asm/compat.h        | 11 -------
- arch/arm64/include/asm/stat.h          |  1 +
- arch/arm64/kernel/hw_breakpoint.c      |  1 -
- arch/arm64/kernel/perf_regs.c          |  2 +-
- arch/arm64/kernel/process.c            |  1 -
- arch/mips/include/asm/compat.h         | 11 -------
- arch/mips/kernel/signal32.c            |  2 +-
- arch/parisc/include/asm/compat.h       | 11 -------
- arch/powerpc/include/asm/compat.h      | 11 -------
- arch/powerpc/kernel/asm-offsets.c      |  2 +-
- arch/powerpc/oprofile/backtrace.c      |  2 +-
- arch/s390/hypfs/hypfs_sprp.c           |  1 -
- arch/s390/include/asm/compat.h         | 11 -------
- arch/s390/include/asm/elf.h            |  3 +-
- arch/s390/kvm/priv.c                   |  1 -
- arch/s390/pci/pci_clp.c                |  1 -
- arch/sparc/include/asm/compat.h        | 11 -------
- arch/tile/include/asm/compat.h         | 11 -------
- arch/x86/events/core.c                 |  2 +-
- arch/x86/include/asm/compat.h          | 11 -------
- arch/x86/include/asm/ftrace.h          |  2 +-
- arch/x86/include/asm/sys_ia32.h        |  2 +-
- arch/x86/kernel/sys_x86_64.c           |  2 +-
- drivers/s390/block/dasd_ioctl.c        |  1 -
- drivers/s390/char/fs3270.c             |  1 -
- drivers/s390/char/sclp_ctl.c           |  1 -
- drivers/s390/char/vmcp.c               |  1 -
- drivers/s390/cio/chsc_sch.c            |  1 -
- drivers/s390/net/qeth_core_main.c      |  2 +-
- include/linux/compat.h                 | 11 ++++---
- include/linux/compat_time.h            | 23 ++++++++++++++
- include/linux/restart_block.h          |  7 ++--
- include/linux/syscalls.h               | 12 +++----
- include/linux/time.h                   |  4 +--
- include/linux/time64.h                 | 10 +++++-
- include/uapi/asm-generic/posix_types.h |  1 +
- include/uapi/linux/time.h              |  7 ++++
- kernel/compat.c                        | 52 +++++-------------------------
- kernel/time/hrtimer.c                  | 10 ++++--
- kernel/time/posix-stubs.c              | 12 ++++---
- kernel/time/posix-timers.c             | 24 ++++++++++----
- kernel/time/time.c                     | 58 +++++++++++++++++++++++++++++++---
- 43 files changed, 176 insertions(+), 190 deletions(-)
- create mode 100644 include/linux/compat_time.h
-
-
-base-commit: 8418f88764046d0e8ca6a3c04a69a0e57189aa1e
+diff --git a/include/linux/restart_block.h b/include/linux/restart_block.h
+index bcfdb918cd81..5d83d0c1d06c 100644
+--- a/include/linux/restart_block.h
++++ b/include/linux/restart_block.h
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/compiler.h>
+ #include <linux/types.h>
++#include <linux/time64.h>
+ 
+ struct timespec;
+ struct compat_timespec;
+@@ -15,9 +16,7 @@ struct pollfd;
+ enum timespec_type {
+ 	TT_NONE		= 0,
+ 	TT_NATIVE	= 1,
+-#ifdef CONFIG_COMPAT
+ 	TT_COMPAT	= 2,
+-#endif
+ };
+ 
+ /*
+@@ -40,10 +39,8 @@ struct restart_block {
+ 			clockid_t clockid;
+ 			enum timespec_type type;
+ 			union {
+-				struct timespec __user *rmtp;
+-#ifdef CONFIG_COMPAT
++				struct __kernel_timespec __user *rmtp;
+ 				struct compat_timespec __user *compat_rmtp;
+-#endif
+ 			};
+ 			u64 expires;
+ 		} nanosleep;
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 7ac1bb9ea7da..4df16a70b0d7 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -254,7 +254,7 @@ asmlinkage long sys_adjtimex(struct timex __user *txc_p);
+ asmlinkage long sys_times(struct tms __user *tbuf);
+ 
+ asmlinkage long sys_gettid(void);
+-asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __user *rmtp);
++asmlinkage long sys_nanosleep(struct __kernel_timespec __user *rqtp, struct __kernel_timespec __user *rmtp);
+ asmlinkage long sys_alarm(unsigned int seconds);
+ asmlinkage long sys_getpid(void);
+ asmlinkage long sys_getppid(void);
+@@ -317,8 +317,8 @@ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
+ asmlinkage long sys_clock_getres(clockid_t which_clock,
+ 				struct __kernel_timespec __user *tp);
+ asmlinkage long sys_clock_nanosleep(clockid_t which_clock, int flags,
+-				const struct timespec __user *rqtp,
+-				struct timespec __user *rmtp);
++				const struct __kernel_timespec __user *rqtp,
++				struct __kernel_timespec __user *rmtp);
+ 
+ asmlinkage long sys_nice(int increment);
+ asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 65cc7272d954..ee636646cc07 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1540,8 +1540,10 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
+ 	return ret;
+ }
+ 
+-SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
+-		struct timespec __user *, rmtp)
++#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
++
++SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
++		struct __kernel_timespec __user *, rmtp)
+ {
+ 	struct timespec64 tu;
+ 
+@@ -1556,6 +1558,8 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
+ 	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
+ }
+ 
++#endif
++
+ #ifdef CONFIG_COMPAT_32BIT_TIME
+ 
+ COMPAT_SYSCALL_DEFINE2(nanosleep, struct compat_timespec __user *, rqtp,
+diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
+index 28c22f54d0f2..f7e7a05e651d 100644
+--- a/kernel/time/posix-stubs.c
++++ b/kernel/time/posix-stubs.c
+@@ -114,8 +114,8 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_time
+ }
+ 
+ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+-		const struct timespec __user *, rqtp,
+-		struct timespec __user *, rmtp)
++		const struct __kernel_timespec __user *, rqtp,
++		struct __kernel_timespec __user *, rmtp)
+ {
+ 	struct timespec64 t;
+ 
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index da17eb61edda..31ce3482884d 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -1210,8 +1210,8 @@ static int common_nsleep(const clockid_t which_clock, int flags,
+ }
+ 
+ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+-		const struct timespec __user *, rqtp,
+-		struct timespec __user *, rmtp)
++		const struct __kernel_timespec __user *, rqtp,
++		struct __kernel_timespec __user *, rmtp)
+ {
+ 	const struct k_clock *kc = clockid_to_kclock(which_clock);
+ 	struct timespec64 t;
 -- 
 2.14.1
-
-Cc: acme@kernel.org
-Cc: benh@kernel.crashing.org
-Cc: borntraeger@de.ibm.com
-Cc: catalin.marinas@arm.com
-Cc: cmetcalf@mellanox.com
-Cc: cohuck@redhat.com
-Cc: davem@davemloft.net
-Cc: deller@gmx.de
-Cc: devel@driverdev.osuosl.org
-Cc: gerald.schaefer@de.ibm.com
-Cc: gregkh@linuxfoundation.org
-Cc: heiko.carstens@de.ibm.com
-Cc: hoeppner@linux.vnet.ibm.com
-Cc: hpa@zytor.com
-Cc: jejb@parisc-linux.org
-Cc: jwi@linux.vnet.ibm.com
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-mips@linux-mips.org
-Cc: linux-parisc@vger.kernel.org
-Cc: linuxppc-dev@lists.ozlabs.org
-Cc: linux-s390@vger.kernel.org
-Cc: mark.rutland@arm.com
-Cc: mingo@redhat.com
-Cc: mpe@ellerman.id.au
-Cc: oberpar@linux.vnet.ibm.com
-Cc: oprofile-list@lists.sf.net
-Cc: paulus@samba.org
-Cc: peterz@infradead.org
-Cc: ralf@linux-mips.org
-Cc: rostedt@goodmis.org
-Cc: rric@kernel.org
-Cc: schwidefsky@de.ibm.com
-Cc: sebott@linux.vnet.ibm.com
-Cc: sparclinux@vger.kernel.org
-Cc: sth@linux.vnet.ibm.com
-Cc: ubraun@linux.vnet.ibm.com
-Cc: will.deacon@arm.com
-Cc: x86@kernel.org
