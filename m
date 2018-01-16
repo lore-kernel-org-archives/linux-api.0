@@ -1,94 +1,152 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: User-visible context-mount API
-Date: Tue, 16 Jan 2018 10:10:12 +0000
-Message-ID: <22576.1516097412@warthog.procyon.org.uk>
-References: <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com> <28167.1516032442@warthog.procyon.org.uk>
+From: Yury Norov <ynorov-M3mlKVOIwJVv6pq1l3V1OdBPR1lH4CV8@public.gmane.org>
+Subject: Re: [PATCH v5 00/30] ARM Scalable Vector Extension (SVE)
+Date: Tue, 16 Jan 2018 13:11:49 +0300
+Message-ID: <20180116101149.pyqbn3dkhnw5x2dv@yury-thinkpad>
+References: <1509465082-30427-1-git-send-email-Dave.Martin@arm.com>
+ <20180108144905.qu5qbmaaglcgwvwq@yury-thinkpad>
+ <20180109165120.6ravt4stp3654374@yury-thinkpad>
+ <20180115172201.GW22781@e103592.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com>
-Content-ID: <22575.1516097412.1@warthog.procyon.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Miklos Szeredi <mszeredi@redhat.com>
-Cc: dhowells@redhat.com, viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@redhat.com>, "Eric W. Biederman" <ebiederm@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20180115172201.GW22781-M5GwZQ6tE7x5pKCnmE3YQBJ8xKzm50AiAL8bYrjMMd8@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
+Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mark Rutland <mark.rutland-5wv7dgnIgG8@public.gmane.org>, Okamoto Takayuki <tokamoto-+CUm20s59erQFUHtdCDX3A@public.gmane.org>, libc-alpha-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, Ard Biesheuvel <ard.biesheuvel-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, Szabolcs Nagy <szabolcs.nagy-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, "H . J . Lu" <hjl.tools-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Dmitry Safonov <dsafonov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Alexander Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Alan Hayward <alan.hayward-5wv7dgnIgG8@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, Ch
 List-Id: linux-api@vger.kernel.org
 
-Miklos Szeredi <mszeredi@redhat.com> wrote:
-
-> >  (6) Adjust a mountpoint's topology flags:
-> >
-> >         mount_set_topology(int dfd, const char *path,
-> >                            unsigned int topology_flags);
-> >
-> >  (7) Reconfigure a mountpoint:
-> >
-> >         mount_reconfigure(int dfd, const char *path,
-> >                           unsigned int mount_flags);
+On Mon, Jan 15, 2018 at 05:22:01PM +0000, Dave Martin wrote:
+> On Tue, Jan 09, 2018 at 07:51:20PM +0300, Yury Norov wrote:
+> > On Mon, Jan 08, 2018 at 05:49:05PM +0300, Yury Norov wrote:
+> > > On Tue, Oct 31, 2017 at 03:50:52PM +0000, Dave Martin wrote:
+> > > > This series implements Linux kernel support for the ARM Scalable Vector
+> > > > Extension (SVE). [1]  It supersedes the previous v3: see [3] for link
+> > > > and full cover letter.
+> > > > 
+> > > > This is a minor update to v4, but does contain a couple of important
+> > > > fixes.
+> > > > 
+> > > > As in previous postings, the last two patches (here 29-30) are still
+> > > > RFC and not proposed for merging at this time.
+> > > > 
+> > > > The patches apply on
+> > > > git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git
+> > > > for-next/core
+> > > > d7b1d22d3821 ("arm64: uapi: Remove PSR_Q_BIT")
+> > > > 
+> > > > To reduce spam, some people may not been copied on the entire series.
+> > > > For those who did not receive the whole series, it can be found in the
+> > > > linux-arm-kernel archive. [2]
+> > > > 
+> > > > See the individual patches for details of changes.
+> > > > 
+> > > > For reviewer convenience, a git tree is available. [4]
+> > > > 
+> > > > Since there are some changes against already-reviewed patches, I've also
+> > > > pushed an unsquashed fixes tree for people to take a look at if it
+> > > > helps. [5]
+> > > > 
+> > > > 
+> > > > Summary:
+> > > > 
+> > > >  * "regset: Add support for dynamically sized regsets" fixed to avoid
+> > > >    x86 breakage;
+> > > > 
+> > > >  * one trival arm64 patch added to add asmlinkage annotations, and a
+> > > >    corresponding minor change to the Core task context handling patch;
+> > > > 
+> > > >  * one new arm64 fix ("signal: Verify extra data is user-readable in
+> > > >    sys_rt_sigreturn") to ensure that access_ok() checks are done for the
+> > > >    whole extended signal frame, not just the base frame;
+> > > > 
+> > > >  * one minor fix to the SVE sigreturn code to return consistent
+> > > >    intermediate error values (semantic correctness, non-functional
+> > > >    change);
+> > > > 
+> > > >  * one minor change to call __copy_from_user() instead of
+> > > >    copy_from_user() in a situation where there is already an access_ok()
+> > > >    check;
+> > > > 
+> > > > 
+> > > > [1] ARM Scalable Vector Extension
+> > > > https://community.arm.com/groups/processors/blog/2016/08/22/technology-update-the-scalable-vector-extension-sve-for-the-armv8-a-architecture
+> > > > 
+> > > > [2] linux-arm-kernel October 2017 Archives by thread
+> > > > http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/thread.html
+> > > > 
+> > > > [3] [PATCH v4 00/28] ARM Scalable Vector Extension (SVE)
+> > > > http://lists.infradead.org/pipermail/linux-arm-kernel/2017-October/539414.html
+> > > > 
+> > > > [4] For review and testing only -- **do not pull**
+> > > >     (This branch has review changelogs which should not form part of
+> > > >     the final commits.)
+> > > > 
+> > > >     v5 series (this posting)
+> > > > 
+> > > >     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v5
+> > > >     git://linux-arm.org/linux-dm.git sve/v5
+> > > > 
+> > > > [5] For review and testing only -- **do not pull**
+> > > >     (This branch has review changelogs which should not form part of
+> > > >     the final commits.)
+> > > > 
+> > > >     v4 with unsquashed fixes
+> > > > 
+> > > >     http://linux-arm.org/git?p=linux-dm.git;a=shortlog;h=refs/heads/sve/v4%2Bfixes
+> > > >     git://linux-arm.org/linux-dm.git sve/v4+fixes
+> > > 
+> > > Hi Dave,
+> > > 
+> > > During rebase of my ILP32 series on 4.15 kernel I found that 
+> > > ILP32 needs to be enabled with SVE support, like you do for 
+> > > LP64 in this series.
+> > > 
+> > > I did all rebase work on this draft branch:
+> > > https://github.com/norov/linux/tree/ilp32-4.15-rc7
+> > > 
+> > > But any ILP32 program I tried crash, and the message in dmesg looks
+> > > like this:
+> > > [   39.510667] CPU: 0 PID: 1857 Comm: mytime Not tainted 4.15.0-rc7-00028-g45e0659df4d9 #41
+> > > [   39.510712] Hardware name: linux,dummy-virt (DT)
+> > > [   39.510829] pstate: 00000000 (nzcv daif -PAN -UAO)
+> > > [   39.511101] pc : 0x33488e28
+> > > [   39.511125] lr : 0x33488e28
+> > > [   39.511138] sp : 00000000fffef670
+> > > [   39.511158] x29: 000000005a536c33 x28: 0000000000000000 
+> > > [   39.511211] x27: 0000000000000000 x26: 0000000000000000 
+> > > [   39.511235] x25: 0000000000000000 x24: 0000000000000000 
+> > > [   39.511257] x23: 0000000000466000 x22: 0000000000000000 
+> > > [   39.511278] x21: 0000000000000000 x20: 000000000047f2a8 
+> > > [   39.511300] x19: 0000000000000000 x18: 0000000000000001 
+> > > [   39.511321] x17: 0000000000001000 x16: 0000000000001030 
+> > > [   39.511342] x15: 0000000000554e47 x14: 0000000000000001 
+> > > [   39.511364] x13: 0000000000000004 x12: 000000000000003c 
+> > > [   39.511385] x11: 0000100000000000 x10: 0800000000000000 
+> > > [   39.511406] x9 : 0fffffffffffffff x8 : 000000000000007c 
+> > > [   39.511427] x7 : 0000000000000077 x6 : 0000000000000041 
+> > > [   39.511448] x5 : 0000000000000411 x4 : 00000000fbad2488 
+> > > [   39.511468] x3 : 0000000000000001 x2 : 0000000000497950 
+> > > [   39.511489] x1 : 0000000000497550 x0 : 0000000000000001
+> > 
+> > Hi Dave,
+> > 
+> > I fixed the crash. It was my local problem.
 > 
+> Ah, right :)
 > 
-> What's the fundamental  difference between topology flags and other
-> flags?  Why two syscalls?
+> I'll take a look at your code anyway in case there's something
+> else one of us didn't think of.
 
-Inside the kernel the MS_* flags appear to belong to a number of fundamentally
-different classes:
+Thanks, Dave.
 
- (1) Things like MS_SILENT and MS_REMOUNT which affect the behaviour of the
-     mount process, but aren't persistent beyond that.
+This is the branch:
+https://github.com/norov/linux/tree/ilp32-4.15-rc7
 
- (2) Inter-namespace topology management, controlling how mounts are shared
-     and duplicated between namespaces.
+SVE-related changes are mostly in patches:
+arm64: ilp32: introduce ilp32-specific handlers for sigframe and ucontext
+arm64: signal32: move ilp32 and aarch32 common code to separated file
+arm64: signal: share lp64 signal structures and routines to ilp32
+arm64: ilp32: add sys_ilp32.c and a separate table (in entry.S) to use it
 
- (3) Restrictions on accesses through a particular mountpoint, eg. MS_NODEV,
-     MS_NOEXEC.
-
- (4) Instructions to a filesystem on how a superblock is to behave.
-
-I think the classes are fundamentally different - and we've already separated
-(4) from the others inside the kernel.  However, I've no great objection to
-keeping (2) and (3) together in the same mask.  It just sounds cleaner to
-separate them.  Do we foresee adding any extra flags to these classes?
-
-> Also I think we need a "mask" argument telling the kernel which flags
-> need to be changed.
-
-Sounds reasonable.
-
-> >  (8) Change R/O protection on a mountpoint:
-> >
-> >         mount_protect(int dfd, const char *path,
-> >                       bool read_only);
-> >
-> >      This involves changing the R/O protection on the superblock also, but
-> >      might be mergeable with mount_reconfigure().
-> 
-> Methinks this should be merged with mount_reconfigure(), and if
-> superblock state needs to be changed, than that should be done with
-> the "remount" procedure below.
-
-Maybe - the problem is that it's harder to manage if you've got multiple
-mounts attached to a single superblock as you can only change the superblock
-state if all the mounts are R/O.
-
-> >         write(mfd, "o bind=1"); // Set MS_BIND
-> 
-> What does MS_BIND mean here?
-
-Sorry, bad example; MS_BIND wouldn't be allowed there.  Consider the following
-instead:
-
-     write(mfd, "o nodev=1"); // Set 'MS_NODEV'
-
-> >         write(mfd, "o nosuid=1"); // Set MS_NOSUID
-> >
-> >         mount_create(mfd, AT_FDCWD, "/mnt/a", sbfd);
-> 
-> Yeah, more flexible, but also more complicated, with mount_create()
-> now taking 3 file descriptors, ugh...
-
-Yeah, I know:-/ ... but there are more parameters that I can foresee adding
-(such as [ug]id mapping tables), and a syscall just doesn't have enough
-argument space.  Also, I think that we need to set all the parameters on a
-mountpoint at the time of creation and that doing this retroactively isn't a
-good idea, since it's live as soon as it's created.
-
-David
+Yury
