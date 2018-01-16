@@ -1,78 +1,98 @@
-From: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: User-visible context-mount API
-Date: Tue, 16 Jan 2018 17:41:46 +0100
-Message-ID: <CAOssrKdn-ZhOB9V28uL-JK9zgNGJzF4cFBeyoqLLj4pADqNFVQ@mail.gmail.com>
-References: <28167.1516032442@warthog.procyon.org.uk> <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com>
- <1643.1516117204@warthog.procyon.org.uk>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [manpages PATCH] capabilities.7: describe namespaced file capabilities
+Date: Tue, 16 Jan 2018 18:26:08 +0100
+Message-ID: <CAG48ez39UyiqE539rS6RSayj4tPBfQPHPiQ=48Roi55qFJLT7g@mail.gmail.com>
+References: <20180109185218.GA21753@mail.hallyn.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1643.1516117204-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20180109185218.GA21753@mail.hallyn.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-man <linux-man@vger.kernel.org>, Seth Forshee <seth.forshee@canonical.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module@vger.kernel.org, Kees Cook <keescook@chromium.org>, Andreas Gruenbacher <agruenba@redhat.com>, Andy Lutomirski <luto@kernel.org>, "Andrew G. Morgan" <morgan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 16, 2018 at 4:40 PM, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
-> Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+On Tue, Jan 9, 2018 at 7:52 PM, Serge E. Hallyn <serge@hallyn.com> wrote:
+> Update the capabilities(7)  manpage with a description of the
+> new-ish namespaced file capability support.
 >
->> >  (6) Adjust a mountpoint's topology flags:
->> >
->> >         mount_set_topology(int dfd, const char *path,
->> >                            unsigned int topology_flags);
->> >
->> >  (7) Reconfigure a mountpoint:
->> >
->> >         mount_reconfigure(int dfd, const char *path,
->> >                           unsigned int mount_flags);
->>
->>
->> What's the fundamental  difference between topology flags and other
->> flags?  Why two syscalls?
+> A note on userspace tools:  since the kernel will automatically
+> convert between v2 and v3 xattrs, and translate nsroot between
+> v3 xattrs, we can make do with the current getcap(8) and setcap(8)
+> tools. I.e. a user on the host can create a transient user namespace
+> with the appropriate mappings and run setcap(8) there.  The kernel
+> will automatically write a v3 xattr with the transient namespace's
+> root user as nsroot.
 >
-> Actually, if you look at the do_mount() function, these *are* separate
-> things.  If you look at the code:
+> Signed-off-by: Serge Hallyn <shallyn@cisco.com>
+> ---
+>  man7/capabilities.7 | 44 ++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 44 insertions(+)
 >
->         if (flags & MS_REMOUNT)
->                 retval = do_remount(&path, flags, sb_flags, mnt_flags,
->                                     data_page);
->
-> ^^^ that is mount_reconfigure() and superblock reconfiguration.
->
->         else if (flags & MS_BIND)
->                 retval = do_loopback(&path, dev_name, flags & MS_REC);
->         else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
->                 retval = do_change_type(&path, flags);
->
-> ^^^ that is mount_set_topology().
->
->         else if (flags & MS_MOVE)
->                 retval = do_move_mount(&path, dev_name);
->         else
->                 retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
->                                       dev_name, data_page);
->
-> The mount() syscall is actually a function switch with five functions.
+> diff --git a/man7/capabilities.7 b/man7/capabilities.7
+> index 166eaaf..76e7e02 100644
+> --- a/man7/capabilities.7
+> +++ b/man7/capabilities.7
+> @@ -936,6 +936,50 @@ if we specify the effective flag as being enabled for any capability,
+>  then the effective flag must also be specified as enabled
+>  for all other capabilities for which the corresponding permitted or
+>  inheritable flags is enabled.
+> +.PP
+> +Until 4.13, only VFS_CAP_REVISION_2 xattrs were supported.  These store only
+> +the capabilities to be applied to the file, with no record of the writer's
+> +credentials.  Therefore only privileged users can be trusted to write them, and
+> +.BR CAP_SETFCAP
+> +over the user namespace which mounted the filesystem (usually the initial user
+> +namespace) is required.  This makes it impossible to write file capabilities
+> +from a user namespaced container, which causes some package updates to fail.
+> +.PP
+> +In order to support setting file capabilities in containers, the
+> +kernel must be able to identify whether the task executing the
+> +file will be constrained to a subset of the resources over which
+> +the writer of the file capabilities has privilege.  To this end,
+> +since 4.13, VFS_CAP_REVISION_3 capabilities store the user ID
+> +of the root user in the writer's namespace ("nsroot").  Hence the writer only
+> +requires
+> +.IP 1.
+> +.BR CAP_SETFCAP
+> +over the file inode, meaning the writing task must have
+> +.BR CAP_SETFCAP
+> +over a user namespace into which the inode's owning user ID is mapped.
+> +.PP
+> +and
+> +.IP 2.
+> +.BR CAP_SETFCAP
+> +over the writer's own user namespace.
 
-Right.
+I think that the following would be clearer (but technically
+equivalent): "Hence the writer only requires CAP_SETFCAP over the file
+inode, meaning that the writing task must have CAP_SETFCAP in its own
+user namespace and the UID and GID of the file inode must be mapped in
+the writing task's user namespace.".
 
-Still, those two (propagation and flags) are properties of the mount.
-No fundamental difference in how to handle them, that I see.  Okay, we
-have MS_REC handling in the propagation and not in the flags, but
-that's something that might make sense for flags as well.
+> +A VFS_CAP_REVISION_3 file capability will take effect only when run in a user namespace
+> +whose UID 0 maps to the saved "nsroot", or a descendant of such a namespace.
+> +.PP
+> +Users with the required privilege may use
+> +.BR setxattr(2)
+> +to request either a VFS_CAP_REVISION_2 or VFS_CAP_REVISION_3 write.
+> +The kernel will automatically convert a VFS_CAP_REVISION_2 to a
+> +VFS_CAP_REVISION_3 extended attribute with the "nsroot"
+> +set to the root user in the writer's user namespace, or, if a VFS_CAP_REVISION_3
+> +extended attribute is specified, then the kernel will map the
+> +specified root user ID (which must be a valid user ID mapped in the caller's
+> +user namespace) into the initial user namespace.
 
-What's more interesting is how MS_PRIVATE + MS_REC semantics are
-complete failure in the real world: the logical thing would be to mark
-a mount private on the supplied mount AND propagate an umount event to
-everywhere else.  But that's not what we do, we completely mess up
-propagation that can result in millions of "leaked" mounts.  I've seen
-multiple bug reports where this illogical behavior fooled people.  It
-can be worked around, of course, but maybe we should fix this on the
-new interface and allow a sane private setting.
+Really, "into the initial user namespace"? That may be true for the
+kernel-internal representation, but the on-disk representation is the
+mapping into the user namespace that contains the mount namespace into
+which the file system was mounted, right? This would become observable
+when a file system is mounted in a different namespace than before, or
+when working with FUSE in a namespace.
 
-Thanks,
-Miklos
-
-
->
-> David
+> Likewise,
+> +.BR getxattr(2)
+> +results will be converted and simplified to show a VFS_CAP_REVISION_2
+> +extended attribute, if a VFS_CAP_REVISION_3 applies to the caller's
+> +namespace, or to map the VFS_CAP_REVISION_3 root user ID into the
+> +caller's namespace.
