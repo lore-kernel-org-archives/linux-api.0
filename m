@@ -1,84 +1,132 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH for 4.16 00/11] membarrier updates for 4.16
-Date: Wed, 17 Jan 2018 11:54:47 -0500
-Message-ID: <20180117165458.13330-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Mathieu Desnoyers <mathieu.desnoy>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 4.16 11/11] membarrier: selftest: Test private expedited sync core cmd
+Date: Wed, 17 Jan 2018 11:54:58 -0500
+Message-ID: <20180117165458.13330-12-mathieu.desnoyers@efficios.com>
+References: <20180117165458.13330-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20180117165458.13330-1-mathieu.desnoyers@efficios.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David Sehr <sehr@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, Mathieu Desnoyers <mathieu.desnoy>
 List-Id: linux-api@vger.kernel.org
 
-Hi Ingo, Peter, Thomas,
+Test the new MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE and
+MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE commands.
 
-Here is the updated membarrier patch series following review from
-Thomas.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
+CC: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Maged Michael <maged.michael@gmail.com>
+CC: Avi Kivity <avi@scylladb.com>
+CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+CC: Paul Mackerras <paulus@samba.org>
+CC: Michael Ellerman <mpe@ellerman.id.au>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Alan Stern <stern@rowland.harvard.edu>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Alice Ferrazzi <alice.ferrazzi@gmail.com>
+CC: Paul Elder <paul.elder@pitt.edu>
+CC: linux-kselftest@vger.kernel.org
+CC: linux-arch@vger.kernel.org
+---
+ .../testing/selftests/membarrier/membarrier_test.c | 73 ++++++++++++++++++++++
+ 1 file changed, 73 insertions(+)
 
-It would be appreciated of those can go through the scheduler tree for
-the 4.16 merge window.
-
-Highlights:
-
-"powerpc: membarrier: Skip memory barrier in switch_mm()" takes care of
-a TODO that was left in the private expedited implementation when merged
-in 4.14: an extra memory barrier was added on context switch on powerpc.
-Ensure that the barrier is only performed when scheduling between
-different processes, only for threads belonging to processes that have
-registered their intent to use the private expedited command.
-
-"membarrier: provide GLOBAL_EXPEDITED command" adds new commands to
-membarrier for registration and use of membarrier across processes
-communicating through shared memory mappings. The non-expedited command
-has proven to be really too slow (taking 10ms and more to complete) for
-real-world use. The expedited version completes in a matter of
-microseconds. This patch renames the pre-existing MEMBARRIER_CMD_SHARED
-to MEMBARRIER_CMD_GLOBAL for consistency, keeping the old enum label
-as an alias for backward compatibility.
-
-"membarrier: Provide core serializing command" provides core
-serialization for JIT reclaim. We received positive feedback from
-Android developers that the proposed ABI fits their use-case.
-Only x86 32/64 and arm 64 implement this command so far. This is
-opt-in per architecture.
-
-The other patches add selftests and documentation.
-
-Thanks,
-
-Mathieu
-
-Mathieu Desnoyers (11):
-  membarrier: selftest: Test private expedited cmd (v2)
-  powerpc: membarrier: Skip memory barrier in switch_mm() (v7)
-  membarrier: Document scheduler barrier requirements (v5)
-  membarrier: provide GLOBAL_EXPEDITED command (v3)
-  membarrier: selftest: Test global expedited cmd (v2)
-  Introduce sync_core_before_usermode
-  x86: Implement sync_core_before_usermode (v3)
-  membarrier: Provide core serializing command
-  membarrier: x86: Provide core serializing command (v4)
-  membarrier: arm64: Provide core serializing command
-  membarrier: selftest: Test private expedited sync core cmd
-
- MAINTAINERS                                        |   1 +
- arch/arm64/Kconfig                                 |   1 +
- arch/arm64/kernel/entry.S                          |   4 +
- arch/powerpc/Kconfig                               |   1 +
- arch/powerpc/include/asm/membarrier.h              |  27 +++
- arch/powerpc/mm/mmu_context.c                      |   7 +
- arch/x86/Kconfig                                   |   2 +
- arch/x86/entry/entry_32.S                          |   5 +
- arch/x86/entry/entry_64.S                          |   4 +
- arch/x86/include/asm/processor.h                   |  10 +
- arch/x86/mm/tlb.c                                  |   6 +
- include/linux/processor.h                          |   6 +
- include/linux/sched/mm.h                           |  40 +++-
- include/uapi/linux/membarrier.h                    |  74 ++++++-
- init/Kconfig                                       |   9 +
- kernel/sched/core.c                                |  53 +++--
- kernel/sched/membarrier.c                          | 177 +++++++++++++--
- .../testing/selftests/membarrier/membarrier_test.c | 237 +++++++++++++++++++--
- 18 files changed, 596 insertions(+), 68 deletions(-)
- create mode 100644 arch/powerpc/include/asm/membarrier.h
-
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index eec39a0e1f77..22bffd55a523 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -132,6 +132,63 @@ static int test_membarrier_private_expedited_success(void)
+ 	return 0;
+ }
+ 
++static int test_membarrier_private_expedited_sync_core_fail(void)
++{
++	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE not registered failure";
++
++	if (sys_membarrier(cmd, flags) != -1) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should fail, but passed\n",
++			test_name, flags);
++	}
++	if (errno != EPERM) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EPERM, strerror(EPERM),
++			errno, strerror(errno));
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d, errno = %d\n",
++		test_name, flags, errno);
++	return 0;
++}
++
++static int test_membarrier_register_private_expedited_sync_core_success(void)
++{
++	int cmd = MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
++	return 0;
++}
++
++static int test_membarrier_private_expedited_sync_core_success(void)
++{
++	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
++	return 0;
++}
++
+ static int test_membarrier_register_global_expedited_success(void)
+ {
+ 	int cmd = MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED, flags = 0;
+@@ -188,6 +245,22 @@ static int test_membarrier(void)
+ 	status = test_membarrier_private_expedited_success();
+ 	if (status)
+ 		return status;
++	status = sys_membarrier(MEMBARRIER_CMD_QUERY, 0);
++	if (status < 0) {
++		ksft_test_result_fail("sys_membarrier() failed\n");
++		return status;
++	}
++	if (status & MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE) {
++		status = test_membarrier_private_expedited_sync_core_fail();
++		if (status)
++			return status;
++		status = test_membarrier_register_private_expedited_sync_core_success();
++		if (status)
++			return status;
++		status = test_membarrier_private_expedited_sync_core_success();
++		if (status)
++			return status;
++	}
+ 	/*
+ 	 * It is valid to send a global membarrier from a non-registered
+ 	 * process.
 -- 
 2.11.0
