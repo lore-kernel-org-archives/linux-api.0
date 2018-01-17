@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 35/36] timerfd: convert to ->poll_mask
-Date: Wed, 17 Jan 2018 20:27:41 +0100
-Message-ID: <20180117192742.710-36-hch@lst.de>
+Subject: [PATCH 31/36] net/rxrpc: convert to ->poll_mask
+Date: Wed, 17 Jan 2018 20:27:37 +0100
+Message-ID: <20180117192742.710-32-hch@lst.de>
 References: <20180117192742.710-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180117192742.710-1-hch@lst.de>
@@ -12,54 +12,40 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/timerfd.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ net/rxrpc/af_rxrpc.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/fs/timerfd.c b/fs/timerfd.c
-index 0510717f3a53..ee36bb5b2698 100644
---- a/fs/timerfd.c
-+++ b/fs/timerfd.c
-@@ -226,21 +226,20 @@ static int timerfd_release(struct inode *inode, struct file *file)
- 	kfree_rcu(ctx, rcu);
- 	return 0;
- }
--
--static __poll_t timerfd_poll(struct file *file, poll_table *wait)
-+	
-+static struct wait_queue_head *timerfd_get_poll_head(struct file *file,
-+		__poll_t eventmask)
+diff --git a/net/rxrpc/af_rxrpc.c b/net/rxrpc/af_rxrpc.c
+index 21ad6a3a465c..46d393ef99e0 100644
+--- a/net/rxrpc/af_rxrpc.c
++++ b/net/rxrpc/af_rxrpc.c
+@@ -729,15 +729,11 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
+ /*
+  * permit an RxRPC socket to be polled
+  */
+-static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
+-			       poll_table *wait)
++static __poll_t rxrpc_poll_mask(struct socket *sock, __poll_t events)
  {
- 	struct timerfd_ctx *ctx = file->private_data;
--	__poll_t events = 0;
--	unsigned long flags;
+ 	struct sock *sk = sock->sk;
+ 	struct rxrpc_sock *rx = rxrpc_sk(sk);
+-	__poll_t mask;
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
  
--	poll_wait(file, &ctx->wqh, wait);
-+	return &ctx->wqh;
-+}
- 
--	spin_lock_irqsave(&ctx->wqh.lock, flags);
--	if (ctx->ticks)
--		events |= POLLIN;
--	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
-+static __poll_t timerfd_poll_mask(struct file *file, __poll_t eventmask)
-+{
-+	struct timerfd_ctx *ctx = file->private_data;
- 
--	return events;
-+	return ctx->ticks ? POLLIN : 0;
- }
- 
- static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
-@@ -364,7 +363,8 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
- 
- static const struct file_operations timerfd_fops = {
- 	.release	= timerfd_release,
--	.poll		= timerfd_poll,
-+	.get_poll_head	= timerfd_get_poll_head,
-+	.poll_mask	= timerfd_poll_mask,
- 	.read		= timerfd_read,
- 	.llseek		= noop_llseek,
- 	.show_fdinfo	= timerfd_show,
+ 	/* the socket is readable if there are any messages waiting on the Rx
+ 	 * queue */
+@@ -940,7 +936,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
+ 	.socketpair	= sock_no_socketpair,
+ 	.accept		= sock_no_accept,
+ 	.getname	= sock_no_getname,
+-	.poll		= rxrpc_poll,
++	.poll_mask	= rxrpc_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.listen		= rxrpc_listen,
+ 	.shutdown	= rxrpc_shutdown,
 -- 
 2.14.2
 
