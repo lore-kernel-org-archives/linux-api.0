@@ -1,124 +1,123 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH for 4.16 07/11] x86: Implement sync_core_before_usermode (v3)
-Date: Wed, 17 Jan 2018 15:37:58 -0800
-Message-ID: <CALCETrUVhb0LkVP++h5Vibd+iN3g2kfQJJFL1reucvG=v-3QSw@mail.gmail.com>
-References: <20180117165458.13330-1-mathieu.desnoyers@efficios.com>
- <20180117165458.13330-8-mathieu.desnoyers@efficios.com> <CALCETrWqRPsmLY=sTo5YHbWRh3HWjrVQ4FOn-=YfP=4_n98F6w@mail.gmail.com>
- <712464074.4666.1516212636860.JavaMail.zimbra@efficios.com>
- <CALCETrV2Cve1sW=UXHgjTWMKfsiwY5QdeaBnQRZGfpELLKry+A@mail.gmail.com> <80094124.4887.1516231532603.JavaMail.zimbra@efficios.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [manpages PATCH] capabilities.7: describe namespaced file capabilities
+Date: Thu, 18 Jan 2018 00:44:17 +0100
+Message-ID: <CAKgNAkhP4d8en-XDXkOqEzy1XpOhuXva6nGxD41URPkiAY0uKw@mail.gmail.com>
+References: <20180109185218.GA21753@mail.hallyn.com> <CAG48ez39UyiqE539rS6RSayj4tPBfQPHPiQ=48Roi55qFJLT7g@mail.gmail.com>
+ <20180116173803.GA15538@mail.hallyn.com>
+Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <80094124.4887.1516231532603.JavaMail.zimbra@efficios.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <wi>
+Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180116173803.GA15538-7LNsyQBKDXoIagZqoN9o3w@public.gmane.org>
+Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: "Serge E. Hallyn" <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>
+Cc: Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Seth Forshee <seth.forshee-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andreas Gruenbacher <agruenba-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Andrew G. Morgan" <morgan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 17, 2018 at 3:25 PM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
-> ----- On Jan 17, 2018, at 1:13 PM, Andy Lutomirski luto@kernel.org wrote:
->
->> On Wed, Jan 17, 2018 at 10:10 AM, Mathieu Desnoyers
->> <mathieu.desnoyers@efficios.com> wrote:
->>> ----- On Jan 17, 2018, at 12:53 PM, Andy Lutomirski luto@kernel.org wrote:
->>>
->>>> On Wed, Jan 17, 2018 at 8:54 AM, Mathieu Desnoyers
->>>> <mathieu.desnoyers@efficios.com> wrote:
->>>>> Ensure that a core serializing instruction is issued before returning to
->>>>> user-mode. x86 implements return to user-space through sysexit, sysrel,
->>>>> and sysretq, which are not core serializing.
->>>>>
->>>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
->>>>> Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
->>>>> CC: Peter Zijlstra <peterz@infradead.org>
->>>>> CC: Andy Lutomirski <luto@kernel.org>
->>>>> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
->>>>> CC: Boqun Feng <boqun.feng@gmail.com>
->>>>> CC: Andrew Hunter <ahh@google.com>
->>>>> CC: Maged Michael <maged.michael@gmail.com>
->>>>> CC: Avi Kivity <avi@scylladb.com>
->>>>> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
->>>>> CC: Paul Mackerras <paulus@samba.org>
->>>>> CC: Michael Ellerman <mpe@ellerman.id.au>
->>>>> CC: Dave Watson <davejwatson@fb.com>
->>>>> CC: Ingo Molnar <mingo@redhat.com>
->>>>> CC: "H. Peter Anvin" <hpa@zytor.com>
->>>>> CC: Andrea Parri <parri.andrea@gmail.com>
->>>>> CC: Russell King <linux@armlinux.org.uk>
->>>>> CC: Greg Hackmann <ghackmann@google.com>
->>>>> CC: Will Deacon <will.deacon@arm.com>
->>>>> CC: David Sehr <sehr@google.com>
->>>>> CC: Linus Torvalds <torvalds@linux-foundation.org>
->>>>> CC: x86@kernel.org
->>>>> CC: linux-arch@vger.kernel.org
->>>>> ---
->>>>> Changes since v1:
->>>>> - Fix prototype of sync_core_before_usermode in generic code (missing
->>>>>   return type).
->>>>> - Add linux/processor.h include to sched/core.c.
->>>>> - Add ARCH_HAS_SYNC_CORE_BEFORE_USERMODE to init/Kconfig.
->>>>> - Fix linux/processor.h ifdef to target
->>>>>   CONFIG_ARCH_HAS_SYNC_CORE_BEFORE_USERMODE rather than
->>>>>   ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
->>>>> - Move empty static inline in processor.h to generic patch.
->>>>> ---
->>>>>  arch/x86/Kconfig                 |  1 +
->>>>>  arch/x86/include/asm/processor.h | 10 ++++++++++
->>>>>  2 files changed, 11 insertions(+)
->>>>>
->>>>> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
->>>>> index 20da391b5f32..0b44c8dd0e95 100644
->>>>> --- a/arch/x86/Kconfig
->>>>> +++ b/arch/x86/Kconfig
->>>>> @@ -61,6 +61,7 @@ config X86
->>>>>         select ARCH_HAS_SG_CHAIN
->>>>>         select ARCH_HAS_STRICT_KERNEL_RWX
->>>>>         select ARCH_HAS_STRICT_MODULE_RWX
->>>>> +       select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
->>>>>         select ARCH_HAS_UBSAN_SANITIZE_ALL
->>>>>         select ARCH_HAS_ZONE_DEVICE             if X86_64
->>>>>         select ARCH_HAVE_NMI_SAFE_CMPXCHG
->>>>> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
->>>>> index d3a67fba200a..3257d34dbb40 100644
->>>>> --- a/arch/x86/include/asm/processor.h
->>>>> +++ b/arch/x86/include/asm/processor.h
->>>>> @@ -722,6 +722,16 @@ static inline void sync_core(void)
->>>>>  #endif
->>>>>  }
->>>>>
->>>>> +/*
->>>>> + * Ensure that a core serializing instruction is issued before returning
->>>>> + * to user-mode. x86 implements return to user-space through sysexit,
->>>>> + * sysrel, and sysretq, which are not core serializing.
->>>>> + */
->>>>> +static inline void sync_core_before_usermode(void)
->>>>> +{
->>>>
->>>> /* With PTI, we unconditionally serialize before running user code. */
->>>> if (static_cpu_has(X86_FEATURE_PTI))
->>>>  return;
->>>
->>> One issue I'm facing with this change is header dependency:
->>> sync_core_before_usermode() is currently implemented in
->>> arch/x86/include/asm/processor.h, but arch/x86/include/asm/cpufeature.h
->>> is needed for static_cpu_has, and it happens to include
->>> asm/processor.h.
->>>
->>> I'm facing a similar issue for adding a (in_irq() || in_nmi()) check.
->>>
->>> Should we move sync_core_before_usermode() to a different header, and if
->>> so, any suggestion ?
+On 16 January 2018 at 18:38, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+> Quoting Jann Horn (jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org):
+>> On Tue, Jan 9, 2018 at 7:52 PM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+>> > Update the capabilities(7)  manpage with a description of the
+>> > new-ish namespaced file capability support.
+>> >
+>> > A note on userspace tools:  since the kernel will automatically
+>> > convert between v2 and v3 xattrs, and translate nsroot between
+>> > v3 xattrs, we can make do with the current getcap(8) and setcap(8)
+>> > tools. I.e. a user on the host can create a transient user namespace
+>> > with the appropriate mappings and run setcap(8) there.  The kernel
+>> > will automatically write a v3 xattr with the transient namespace's
+>> > root user as nsroot.
+>> >
+>> > Signed-off-by: Serge Hallyn <shallyn-FYB4Gu1CFyUAvxtiuMwx3w@public.gmane.org>
+>> > ---
+>> >  man7/capabilities.7 | 44 ++++++++++++++++++++++++++++++++++++++++++++
+>> >  1 file changed, 44 insertions(+)
+>> >
+>> > diff --git a/man7/capabilities.7 b/man7/capabilities.7
+>> > index 166eaaf..76e7e02 100644
+>> > --- a/man7/capabilities.7
+>> > +++ b/man7/capabilities.7
+>> > @@ -936,6 +936,50 @@ if we specify the effective flag as being enabled for any capability,
+>> >  then the effective flag must also be specified as enabled
+>> >  for all other capabilities for which the corresponding permitted or
+>> >  inheritable flags is enabled.
+>> > +.PP
+>> > +Until 4.13, only VFS_CAP_REVISION_2 xattrs were supported.  These store only
+>> > +the capabilities to be applied to the file, with no record of the writer's
+>> > +credentials.  Therefore only privileged users can be trusted to write them, and
+>> > +.BR CAP_SETFCAP
+>> > +over the user namespace which mounted the filesystem (usually the initial user
+>> > +namespace) is required.  This makes it impossible to write file capabilities
+>> > +from a user namespaced container, which causes some package updates to fail.
+>> > +.PP
+>> > +In order to support setting file capabilities in containers, the
+>> > +kernel must be able to identify whether the task executing the
+>> > +file will be constrained to a subset of the resources over which
+>> > +the writer of the file capabilities has privilege.  To this end,
+>> > +since 4.13, VFS_CAP_REVISION_3 capabilities store the user ID
+>> > +of the root user in the writer's namespace ("nsroot").  Hence the writer only
+>> > +requires
+>> > +.IP 1.
+>> > +.BR CAP_SETFCAP
+>> > +over the file inode, meaning the writing task must have
+>> > +.BR CAP_SETFCAP
+>> > +over a user namespace into which the inode's owning user ID is mapped.
+>> > +.PP
+>> > +and
+>> > +.IP 2.
+>> > +.BR CAP_SETFCAP
+>> > +over the writer's own user namespace.
 >>
->> tlbflush.h, maybe?
+>> I think that the following would be clearer (but technically
+>> equivalent): "Hence the writer only requires CAP_SETFCAP over the file
+>> inode, meaning that the writing task must have CAP_SETFCAP in its own
+>> user namespace and the UID and GID of the file inode must be mapped in
+>> the writing task's user namespace.".
 >
-> Core serialization seems to be unrelated to TLB flushing though.
+> Looks good to me.
 >
-> I'm considering to create those new header files:
+>> > +A VFS_CAP_REVISION_3 file capability will take effect only when run in a user namespace
+>> > +whose UID 0 maps to the saved "nsroot", or a descendant of such a namespace.
+>> > +.PP
+>> > +Users with the required privilege may use
+>> > +.BR setxattr(2)
+>> > +to request either a VFS_CAP_REVISION_2 or VFS_CAP_REVISION_3 write.
+>> > +The kernel will automatically convert a VFS_CAP_REVISION_2 to a
+>> > +VFS_CAP_REVISION_3 extended attribute with the "nsroot"
+>> > +set to the root user in the writer's user namespace, or, if a VFS_CAP_REVISION_3
+>> > +extended attribute is specified, then the kernel will map the
+>> > +specified root user ID (which must be a valid user ID mapped in the caller's
+>> > +user namespace) into the initial user namespace.
+>>
+>> Really, "into the initial user namespace"? That may be true for the
+>> kernel-internal representation, but the on-disk representation is the
+>> mapping into the user namespace that contains the mount namespace into
+>> which the file system was mounted, right?
 >
-> include/asm-generic/sync_core.h (empty function)
-> arch/x86/include/asm/sync_core.h
+> Ah, yes, it is.
 >
-> for the sync_core_before_usermode() static inlines. Any better idea ?
+>>  This would become observable
+>> when a file system is mounted in a different namespace than before, or
+>> when working with FUSE in a namespace.
+>
+> Yes it would.
+>
+> Michael, you said you were reworking it, do you mind working this into
+> it as well?
 
-Seems reasonable to me.  Or maybe switch_to.h.
+Yes, I'll do that. It may be a couple of weeks before I get some more
+cycles for this, however.
+
+Thanks,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
+--
+To unsubscribe from this list: send the line "unsubscribe linux-man" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
