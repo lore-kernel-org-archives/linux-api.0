@@ -1,66 +1,55 @@
-From: Miklos Szeredi <mszeredi@redhat.com>
+From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 Subject: Re: User-visible context-mount API
-Date: Wed, 17 Jan 2018 10:53:36 +0100
-Message-ID: <CAOssrKfN_ZT5yJC1mxkhUf6FG=_eMD4nzQtETfu_4X3vOf1kHw@mail.gmail.com>
-References: <28167.1516032442@warthog.procyon.org.uk> <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com>
- <1643.1516117204@warthog.procyon.org.uk> <CAOssrKdn-ZhOB9V28uL-JK9zgNGJzF4cFBeyoqLLj4pADqNFVQ@mail.gmail.com>
- <20180117041727.GS13338@ZenIV.linux.org.uk>
+Date: Wed, 17 Jan 2018 11:43:35 +0100
+Message-ID: <20180117104335.m3oo3ee2xmercau3@ws.net.home>
+References: <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com>
+ <28167.1516032442@warthog.procyon.org.uk>
+ <22576.1516097412@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20180117041727.GS13338@ZenIV.linux.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: David Howells <dhowells@redhat.com>, Jeff Layton <jlayton@redhat.com>, "Eric W. Biederman" <ebiederm@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, util-linux@vger.kernel.org, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <22576.1516097412-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-[Adding util-linux@vger and Michael Kerrisk]
+On Tue, Jan 16, 2018 at 10:10:12AM +0000, David Howells wrote:
+> Inside the kernel the MS_* flags appear to belong to a number of fundamentally
+> different classes:
 
-On Wed, Jan 17, 2018 at 5:17 AM, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Tue, Jan 16, 2018 at 05:41:46PM +0100, Miklos Szeredi wrote:
->
->> Right.
->>
->> Still, those two (propagation and flags) are properties of the mount.
->> No fundamental difference in how to handle them, that I see.  Okay, we
->> have MS_REC handling in the propagation and not in the flags, but
->> that's something that might make sense for flags as well.
->>
->> What's more interesting is how MS_PRIVATE + MS_REC semantics are
->> complete failure in the real world: the logical thing would be to mark
->> a mount private on the supplied mount AND propagate an umount event to
->> everywhere else.
->
-> This is utter nonsense.  Most of the time it's "Fedora, in its infinite
-> bogo^Wwisdom has made everything shared; I don't fucking need that
-> idiocy, so please unshare this, this and that".  You really don't want
-> (or have permissions for) unmounting e.g. /mnt in namespace of init
-> when you do that.
->
-> Sure, we get tons of bug reports.  Due to idiotic Fedora setup, with
-> everything shared.  The same setup that would go up in flames on the
-> semantics change you propose.
+Good point, but I'm not sure about your terminology -- for example
+"topology" sounds strange if we use "propagation" for years.
 
-I wouldn't propose to change existing --make-private, as this would
-not be backward compatible. The new semantics would mean a new op,
-obviously.
+>  (1) Things like MS_SILENT and MS_REMOUNT which affect the behaviour of the
+>      mount process, but aren't persistent beyond that.
 
-Documenting  --make-private thing properly would also help.  To me the
-wording "make private" strongly implies "I want to make submounts
-private to this instance".  See for example rhbz#1432211.
+ mount-operation flags  (now including MS_BIND too)
 
-> If anything, "private bind on itself" would be a useful operation.
-> Turning given location into a mountpoint, and having everything
-> under it looking as it used to, but with no propagation at all.
-> Without bothering anybody else, even if location currently happens
-> to be on a shared/master mount.
->
-> I can slap that together for mount(2), but I'm not sure what a sane
-> combination of flags for that would look like ;-)  For fsmount
-> I think it would be very useful thing to have.
+>  (2) Inter-namespace topology management, controlling how mounts are shared
+>      and duplicated between namespaces.
 
-Yes, I think such an operation would be pretty useful.   Not sure if
-it's the whole story, though.
+ propagation flags
 
-Thanks,
-Miklos
+>  (3) Restrictions on accesses through a particular mountpoint, eg. MS_NODEV,
+>      MS_NOEXEC.
+
+ VFS flags (now including MS_BIND|MS_REMOUNT|MS_RDONLY too)
+
+>  (4) Instructions to a filesystem on how a superblock is to behave.
+
+ FS flags
+
+> I think the classes are fundamentally different - and we've already separated
+> (4) from the others inside the kernel.  However, I've no great objection to
+> keeping (2) and (3) together in the same mask.  It just sounds cleaner to
+> separate them. 
+
+ I agree.
+
+    Karel
+
+-- 
+ Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+ http://karelzak.blogspot.com
