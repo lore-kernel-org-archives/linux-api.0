@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 29/36] net/phonet: convert to ->poll_mask
-Date: Wed, 17 Jan 2018 20:27:35 +0100
-Message-ID: <20180117192742.710-30-hch@lst.de>
+Subject: [PATCH 33/36] pipe: convert to ->poll_mask
+Date: Wed, 17 Jan 2018 20:27:39 +0100
+Message-ID: <20180117192742.710-34-hch@lst.de>
 References: <20180117192742.710-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180117192742.710-1-hch@lst.de>
@@ -12,39 +12,54 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/phonet/socket.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ fs/pipe.c | 22 +++++++++++++---------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
 
-diff --git a/net/phonet/socket.c b/net/phonet/socket.c
-index 7563b0ac8386..c18c906c025f 100644
---- a/net/phonet/socket.c
-+++ b/net/phonet/socket.c
-@@ -341,15 +341,12 @@ static int pn_socket_getname(struct socket *sock, struct sockaddr *addr,
- 	return 0;
+diff --git a/fs/pipe.c b/fs/pipe.c
+index a449ca0ec0c6..33a32d13b83d 100644
+--- a/fs/pipe.c
++++ b/fs/pipe.c
+@@ -514,19 +514,22 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	}
  }
  
--static __poll_t pn_socket_poll(struct file *file, struct socket *sock,
--					poll_table *wait)
-+static __poll_t pn_socket_poll_mask(struct socket *sock, __poll_t events)
+-/* No kernel lock held - fine */
+-static __poll_t
+-pipe_poll(struct file *filp, poll_table *wait)
++static struct wait_queue_head *
++pipe_get_poll_head(struct file *filp, __poll_t events)
  {
- 	struct sock *sk = sock->sk;
- 	struct pep_sock *pn = pep_sk(sk);
- 	__poll_t mask = 0;
+-	__poll_t mask;
+ 	struct pipe_inode_info *pipe = filp->private_data;
+-	int nrbufs;
  
--	poll_wait(file, sk_sleep(sk), wait);
--
- 	if (sk->sk_state == TCP_CLOSE)
- 		return POLLERR;
- 	if (!skb_queue_empty(&sk->sk_receive_queue))
-@@ -474,7 +471,7 @@ const struct proto_ops phonet_stream_ops = {
- 	.socketpair	= sock_no_socketpair,
- 	.accept		= pn_socket_accept,
- 	.getname	= pn_socket_getname,
--	.poll		= pn_socket_poll,
-+	.poll_mask	= pn_socket_poll_mask,
- 	.ioctl		= pn_socket_ioctl,
- 	.listen		= pn_socket_listen,
- 	.shutdown	= sock_no_shutdown,
+-	poll_wait(filp, &pipe->wait, wait);
++	return &pipe->wait;
++}
++
++/* No kernel lock held - fine */
++static __poll_t pipe_poll_mask(struct file *filp, __poll_t events)
++{
++	struct pipe_inode_info *pipe = filp->private_data;
++	int nrbufs = pipe->nrbufs;
++	__poll_t mask = 0;
+ 
+ 	/* Reading only -- no need for acquiring the semaphore.  */
+-	nrbufs = pipe->nrbufs;
+-	mask = 0;
+ 	if (filp->f_mode & FMODE_READ) {
+ 		mask = (nrbufs > 0) ? POLLIN | POLLRDNORM : 0;
+ 		if (!pipe->writers && filp->f_version != pipe->w_counter)
+@@ -1010,7 +1013,8 @@ const struct file_operations pipefifo_fops = {
+ 	.llseek		= no_llseek,
+ 	.read_iter	= pipe_read,
+ 	.write_iter	= pipe_write,
+-	.poll		= pipe_poll,
++	.get_poll_head	= pipe_get_poll_head,
++	.poll_mask	= pipe_poll_mask,
+ 	.unlocked_ioctl	= pipe_ioctl,
+ 	.release	= pipe_release,
+ 	.fasync		= pipe_fasync,
 -- 
 2.14.2
 
