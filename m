@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 03/36] aio: refactor read/write iocb setup
-Date: Wed, 17 Jan 2018 20:27:09 +0100
-Message-ID: <20180117192742.710-4-hch@lst.de>
+Subject: [PATCH 08/36] aio: implement io_pgetevents
+Date: Wed, 17 Jan 2018 20:27:14 +0100
+Message-ID: <20180117192742.710-9-hch@lst.de>
 References: <20180117192742.710-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180117192742.710-1-hch@lst.de>
@@ -10,355 +10,300 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Don't reference the kiocb structure from the common aio code, and move
-any use of it into helper specific to the read/write path.  This is in
-preparation for aio_poll support that wants to use the space for different
-fields.
+This is the io_getevents equivalent of ppoll/pselect and allows to
+properly mix signals and aio completions (especially with IOCB_CMD_POLL)
+and atomically executes the following sequence:
+
+	sigset_t origmask;
+
+	pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
+	ret = io_getevents(ctx, min_nr, nr, events, timeout);
+	pthread_sigmask(SIG_SETMASK, &origmask, NULL);
+
+Note that unlike many other signal related calls we do not pass a sigmask
+size, as that would get us to 7 arguments, which aren't easily supported
+by the syscall infrastructure.  It seems a lot less painful to just add a
+new syscall variant in the unlikely case we're going to increase the
+sigset size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
 ---
- fs/aio.c | 171 ++++++++++++++++++++++++++++++++++++---------------------------
- 1 file changed, 97 insertions(+), 74 deletions(-)
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/aio.c                               | 114 ++++++++++++++++++++++++++++++---
+ include/linux/compat.h                 |   7 ++
+ include/linux/syscalls.h               |   6 ++
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ include/uapi/linux/aio_abi.h           |   6 ++
+ kernel/sys_ni.c                        |   2 +
+ 8 files changed, 130 insertions(+), 11 deletions(-)
 
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 448ac2161112..5997c3e9ac3e 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -391,3 +391,4 @@
+ 382	i386	pkey_free		sys_pkey_free
+ 383	i386	statx			sys_statx
+ 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
++385	i386	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 5aef183e2f85..e995cd2b4e65 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -339,6 +339,7 @@
+ 330	common	pkey_alloc		sys_pkey_alloc
+ 331	common	pkey_free		sys_pkey_free
+ 332	common	statx			sys_statx
++333	common	io_pgetevents		sys_io_pgetevents
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
 diff --git a/fs/aio.c b/fs/aio.c
-index 41fc8ce6bc7f..6295fc00f104 100644
+index 9d7d6e4cde87..da87cbf7c67a 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -170,7 +170,9 @@ struct kioctx {
- #define KIOCB_CANCELLED		((void *) (~0ULL))
- 
- struct aio_kiocb {
--	struct kiocb		common;
-+	union {
-+		struct kiocb		rw;
-+	};
- 
- 	struct kioctx		*ki_ctx;
- 	kiocb_cancel_fn		*ki_cancel;
-@@ -549,7 +551,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
- 
- void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
- {
--	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, common);
-+	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
- 	struct kioctx *ctx = req->ki_ctx;
- 	unsigned long flags;
- 
-@@ -582,7 +584,7 @@ static int kiocb_cancel(struct aio_kiocb *kiocb)
- 		cancel = cmpxchg(&kiocb->ki_cancel, old, KIOCB_CANCELLED);
- 	} while (cancel != old);
- 
--	return cancel(&kiocb->common);
-+	return cancel(&kiocb->rw);
+@@ -1291,10 +1291,6 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
+ 		wait_event_interruptible_hrtimeout(ctx->wait,
+ 				aio_read_events(ctx, min_nr, nr, event, &ret),
+ 				until);
+-
+-	if (!ret && signal_pending(current))
+-		ret = -EINTR;
+-
+ 	return ret;
  }
  
- static void free_ioctx(struct work_struct *work)
-@@ -1040,15 +1042,6 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
- 	return NULL;
- }
- 
--static void kiocb_free(struct aio_kiocb *req)
--{
--	if (req->common.ki_filp)
--		fput(req->common.ki_filp);
--	if (req->ki_eventfd != NULL)
--		eventfd_ctx_put(req->ki_eventfd);
--	kmem_cache_free(kiocb_cachep, req);
--}
--
- static struct kioctx *lookup_ioctx(unsigned long ctx_id)
+@@ -1874,13 +1870,60 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
+ 		struct timespec __user *, timeout)
  {
- 	struct aio_ring __user *ring  = (void __user *)ctx_id;
-@@ -1079,29 +1072,14 @@ static struct kioctx *lookup_ioctx(unsigned long ctx_id)
- /* aio_complete
-  *	Called when the io request on the given iocb is complete.
-  */
--static void aio_complete(struct kiocb *kiocb, long res, long res2)
-+static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
- {
--	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, common);
- 	struct kioctx	*ctx = iocb->ki_ctx;
- 	struct aio_ring	*ring;
- 	struct io_event	*ev_page, *event;
- 	unsigned tail, pos, head;
- 	unsigned long	flags;
- 
--	BUG_ON(is_sync_kiocb(kiocb));
--
--	if (kiocb->ki_flags & IOCB_WRITE) {
--		struct file *file = kiocb->ki_filp;
--
--		/*
--		 * Tell lockdep we inherited freeze protection from submission
--		 * thread.
--		 */
--		if (S_ISREG(file_inode(file)->i_mode))
--			__sb_writers_acquired(file_inode(file)->i_sb, SB_FREEZE_WRITE);
--		file_end_write(file);
--	}
--
- 	if (iocb->ki_list.next) {
- 		unsigned long flags;
- 
-@@ -1163,11 +1141,12 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
- 	 * eventfd. The eventfd_signal() function is safe to be called
- 	 * from IRQ context.
- 	 */
--	if (iocb->ki_eventfd != NULL)
-+	if (iocb->ki_eventfd) {
- 		eventfd_signal(iocb->ki_eventfd, 1);
-+		eventfd_ctx_put(iocb->ki_eventfd);
-+	}
- 
--	/* everything turned out well, dispose of the aiocb. */
--	kiocb_free(iocb);
-+	kmem_cache_free(kiocb_cachep, iocb);
- 
- 	/*
- 	 * We have to order our ring_info tail store above and test
-@@ -1430,6 +1409,47 @@ SYSCALL_DEFINE1(io_destroy, aio_context_t, ctx)
- 	return -EINVAL;
- }
- 
-+static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
-+{
-+	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
+ 	struct timespec64	ts;
++	int			ret;
 +
-+	WARN_ON_ONCE(is_sync_kiocb(kiocb));
++	if (timeout && unlikely(get_timespec64(&ts, timeout)))
++		return -EFAULT;
 +
-+	if (kiocb->ki_flags & IOCB_WRITE) {
-+		struct inode *inode = file_inode(kiocb->ki_filp);
-+
-+		/*
-+		 * Tell lockdep we inherited freeze protection from submission
-+		 * thread.
-+		 */
-+		if (S_ISREG(inode->i_mode))
-+			__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
-+		file_end_write(kiocb->ki_filp);
-+	}
-+
-+	fput(kiocb->ki_filp);
-+	aio_complete(iocb, res, res2);
-+}
-+
-+static int aio_prep_rw(struct kiocb *req, struct iocb *iocb)
-+{
-+	int ret;
-+
-+	req->ki_filp = fget(iocb->aio_fildes);
-+	if (unlikely(!req->ki_filp))
-+		return -EBADF;
-+	req->ki_complete = aio_complete_rw;
-+	req->ki_pos = iocb->aio_offset;
-+	req->ki_flags = iocb_flags(req->ki_filp);
-+	if (iocb->aio_flags & IOCB_FLAG_RESFD)
-+		req->ki_flags |= IOCB_EVENTFD;
-+	req->ki_hint = file_write_hint(req->ki_filp);
-+	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
-+	if (unlikely(ret))
-+		fput(req->ki_filp);
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
++	if (!ret && signal_pending(current))
++		ret = -EINTR;
 +	return ret;
 +}
 +
- static int aio_setup_rw(int rw, struct iocb *iocb, struct iovec **iovec,
- 		bool vectored, bool compat, struct iov_iter *iter)
- {
-@@ -1449,7 +1469,7 @@ static int aio_setup_rw(int rw, struct iocb *iocb, struct iovec **iovec,
- 	return import_iovec(rw, buf, len, UIO_FASTIOV, iovec, iter);
- }
- 
--static inline ssize_t aio_ret(struct kiocb *req, ssize_t ret)
-+static inline ssize_t aio_rw_ret(struct kiocb *req, ssize_t ret)
- {
- 	switch (ret) {
- 	case -EIOCBQUEUED:
-@@ -1465,7 +1485,7 @@ static inline ssize_t aio_ret(struct kiocb *req, ssize_t ret)
- 		ret = -EINTR;
- 		/*FALLTHRU*/
- 	default:
--		aio_complete(req, ret, 0);
-+		aio_complete_rw(req, ret, 0);
- 		return 0;
- 	}
- }
-@@ -1473,56 +1493,78 @@ static inline ssize_t aio_ret(struct kiocb *req, ssize_t ret)
- static ssize_t aio_read(struct kiocb *req, struct iocb *iocb, bool vectored,
- 		bool compat)
- {
--	struct file *file = req->ki_filp;
- 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
- 	struct iov_iter iter;
-+	struct file *file;
- 	ssize_t ret;
- 
-+	ret = aio_prep_rw(req, iocb);
-+	if (ret)
-+		return ret;
-+	file = req->ki_filp;
++SYSCALL_DEFINE6(io_pgetevents,
++		aio_context_t, ctx_id,
++		long, min_nr,
++		long, nr,
++		struct io_event __user *, events,
++		struct timespec __user *, timeout,
++		const struct __aio_sigset __user *, usig)
++{
++	struct __aio_sigset	ksig = { NULL, };
++	sigset_t		ksigmask, sigsaved;
++	struct timespec64	ts;
++	int ret;
 +
-+	ret = -EBADF;
- 	if (unlikely(!(file->f_mode & FMODE_READ)))
--		return -EBADF;
-+		goto out_fput;
-+	ret = -EINVAL;
- 	if (unlikely(!file->f_op->read_iter))
--		return -EINVAL;
-+		goto out_fput;
++	if (timeout && unlikely(get_timespec64(&ts, timeout)))
++		return -EFAULT;
  
- 	ret = aio_setup_rw(READ, iocb, &iovec, vectored, compat, &iter);
- 	if (ret)
--		return ret;
-+		goto out_fput;
- 	ret = rw_verify_area(READ, file, &req->ki_pos, iov_iter_count(&iter));
- 	if (!ret)
--		ret = aio_ret(req, call_read_iter(file, req, &iter));
-+		ret = aio_rw_ret(req, call_read_iter(file, req, &iter));
- 	kfree(iovec);
-+out_fput:
-+	if (unlikely(ret && ret != -EIOCBQUEUED))
-+		fput(file);
- 	return ret;
- }
- 
- static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
- 		bool compat)
- {
--	struct file *file = req->ki_filp;
- 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
- 	struct iov_iter iter;
-+	struct file *file;
- 	ssize_t ret;
- 
-+	ret = aio_prep_rw(req, iocb);
-+	if (ret)
-+		return ret;
-+	file = req->ki_filp;
+-	if (timeout) {
+-		if (unlikely(get_timespec64(&ts, timeout)))
++	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
++		return -EFAULT;
 +
-+	ret = -EBADF;
- 	if (unlikely(!(file->f_mode & FMODE_WRITE)))
--		return -EBADF;
-+		goto out_fput;
-+	ret = -EINVAL;
- 	if (unlikely(!file->f_op->write_iter))
--		return -EINVAL;
-+		goto out_fput;
- 
- 	ret = aio_setup_rw(WRITE, iocb, &iovec, vectored, compat, &iter);
- 	if (ret)
--		return ret;
-+		goto out_fput;
- 	ret = rw_verify_area(WRITE, file, &req->ki_pos, iov_iter_count(&iter));
- 	if (!ret) {
-+		struct inode *inode = file_inode(file);
++	if (ksig.sigmask) {
++		if (ksig.sigsetsize != sizeof(sigset_t))
++			return -EINVAL;
++		if (copy_from_user(&ksigmask, ksig.sigmask, sizeof(ksigmask)))
+ 			return -EFAULT;
++		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
++		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
++	}
 +
- 		req->ki_flags |= IOCB_WRITE;
- 		file_start_write(file);
--		ret = aio_ret(req, call_write_iter(file, req, &iter));
-+		ret = aio_rw_ret(req, call_write_iter(file, req, &iter));
- 		/*
--		 * We release freeze protection in aio_complete().  Fool lockdep
--		 * by telling it the lock got released so that it doesn't
--		 * complain about held lock when we return to userspace.
-+		 * We release freeze protection in aio_complete_rw().  Fool
-+		 * lockdep by telling it the lock got released so that it
-+		 * doesn't complain about held lock when we return to userspace.
- 		 */
--		if (S_ISREG(file_inode(file)->i_mode))
--			__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
-+		if (S_ISREG(inode->i_mode))
-+			__sb_writers_release(inode->i_sb, SB_FREEZE_WRITE);
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
++	if (signal_pending(current)) {
++		if (ksig.sigmask) {
++			current->saved_sigmask = sigsaved;
++			set_restore_sigmask();
++		}
++
++		if (!ret)
++			ret = -ERESTARTNOHAND;
++	} else {
++		if (ksig.sigmask)
++			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
  	}
- 	kfree(iovec);
-+out_fput:
-+	if (unlikely(ret && ret != -EIOCBQUEUED))
-+		fput(file);
- 	return ret;
+ 
+-	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
++	return ret;
  }
  
-@@ -1530,7 +1572,6 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 			 struct iocb *iocb, bool compat)
+ #ifdef CONFIG_COMPAT
+@@ -1891,13 +1934,64 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
+ 		       struct compat_timespec __user *, timeout)
  {
- 	struct aio_kiocb *req;
--	struct file *file;
- 	ssize_t ret;
+ 	struct timespec64 t;
++	int ret;
++
++	if (timeout && compat_get_timespec64(&t, timeout))
++		return -EFAULT;
++
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	if (!ret && signal_pending(current))
++		ret = -EINTR;
++	return ret;
++}
++
++
++struct __compat_aio_sigset {
++	compat_sigset_t __user	*sigmask;
++	compat_size_t		sigsetsize;
++};
++
++COMPAT_SYSCALL_DEFINE6(io_pgetevents,
++		compat_aio_context_t, ctx_id,
++		compat_long_t, min_nr,
++		compat_long_t, nr,
++		struct io_event __user *, events,
++		struct compat_timespec __user *, timeout,
++		const struct __compat_aio_sigset __user *, usig)
++{
++	struct __compat_aio_sigset ksig = { NULL, };
++	sigset_t ksigmask, sigsaved;
++	struct timespec64 t;
++	int ret;
++
++	if (timeout && compat_get_timespec64(&t, timeout))
++		return -EFAULT;
  
- 	/* enforce forwards compatibility on users */
-@@ -1553,16 +1594,6 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	if (unlikely(!req))
- 		return -EAGAIN;
+-	if (timeout) {
+-		if (compat_get_timespec64(&t, timeout))
++	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
++		return -EFAULT;
++
++	if (ksig.sigmask) {
++		if (ksig.sigsetsize != sizeof(compat_sigset_t))
++			return -EINVAL;
++		if (get_compat_sigset(&ksigmask, ksig.sigmask))
+ 			return -EFAULT;
++		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
++		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
++	}
  
--	req->common.ki_filp = file = fget(iocb->aio_fildes);
--	if (unlikely(!req->common.ki_filp)) {
--		ret = -EBADF;
--		goto out_put_req;
--	}
--	req->common.ki_pos = iocb->aio_offset;
--	req->common.ki_complete = aio_complete;
--	req->common.ki_flags = iocb_flags(req->common.ki_filp);
--	req->common.ki_hint = file_write_hint(file);
--
- 	if (iocb->aio_flags & IOCB_FLAG_RESFD) {
- 		/*
- 		 * If the IOCB_FLAG_RESFD flag of aio_flags is set, get an
-@@ -1576,14 +1607,6 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 			req->ki_eventfd = NULL;
- 			goto out_put_req;
- 		}
--
--		req->common.ki_flags |= IOCB_EVENTFD;
--	}
--
--	ret = kiocb_set_rw_flags(&req->common, iocb->aio_rw_flags);
--	if (unlikely(ret)) {
--		pr_debug("EINVAL: aio_rw_flags\n");
--		goto out_put_req;
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	if (signal_pending(current)) {
++		if (ksig.sigmask) {
++			current->saved_sigmask = sigsaved;
++			set_restore_sigmask();
++		}
++		if (!ret)
++			ret = -ERESTARTNOHAND;
++	} else {
++		if (ksig.sigmask)
++			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
  	}
  
- 	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
-@@ -1595,26 +1618,24 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	req->ki_user_iocb = user_iocb;
- 	req->ki_user_data = iocb->aio_data;
- 
--	get_file(file);
- 	switch (iocb->aio_lio_opcode) {
- 	case IOCB_CMD_PREAD:
--		ret = aio_read(&req->common, iocb, false, compat);
-+		ret = aio_read(&req->rw, iocb, false, compat);
- 		break;
- 	case IOCB_CMD_PWRITE:
--		ret = aio_write(&req->common, iocb, false, compat);
-+		ret = aio_write(&req->rw, iocb, false, compat);
- 		break;
- 	case IOCB_CMD_PREADV:
--		ret = aio_read(&req->common, iocb, true, compat);
-+		ret = aio_read(&req->rw, iocb, true, compat);
- 		break;
- 	case IOCB_CMD_PWRITEV:
--		ret = aio_write(&req->common, iocb, true, compat);
-+		ret = aio_write(&req->rw, iocb, true, compat);
- 		break;
- 	default:
- 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
- 		ret = -EINVAL;
- 		break;
- 	}
--	fput(file);
- 
- 	if (ret && ret != -EIOCBQUEUED)
- 		goto out_put_req;
-@@ -1622,7 +1643,9 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- out_put_req:
- 	put_reqs_available(ctx, 1);
- 	percpu_ref_put(&ctx->reqs);
--	kiocb_free(req);
-+	if (req->ki_eventfd)
-+		eventfd_ctx_put(req->ki_eventfd);
-+	kmem_cache_free(kiocb_cachep, req);
- 	return ret;
+-	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	return ret;
  }
+ #endif
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index 0fc36406f32c..6c04450e961f 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -205,6 +205,7 @@ extern int put_compat_rusage(const struct rusage *,
+ 			     struct compat_rusage __user *);
  
+ struct compat_siginfo;
++struct __compat_aio_sigset;
+ 
+ extern asmlinkage long compat_sys_waitid(int, compat_pid_t,
+ 		struct compat_siginfo __user *, int,
+@@ -536,6 +537,12 @@ asmlinkage long compat_sys_io_getevents(compat_aio_context_t ctx_id,
+ 					compat_long_t nr,
+ 					struct io_event __user *events,
+ 					struct compat_timespec __user *timeout);
++asmlinkage long compat_sys_io_pgetevents(compat_aio_context_t ctx_id,
++					compat_long_t min_nr,
++					compat_long_t nr,
++					struct io_event __user *events,
++					struct compat_timespec __user *timeout,
++					const struct __compat_aio_sigset __user *usig);
+ asmlinkage long compat_sys_io_submit(compat_aio_context_t ctx_id, int nr,
+ 				     u32 __user *iocb);
+ asmlinkage long compat_sys_mount(const char __user *dev_name,
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index a78186d826d7..8515ec53c81b 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -539,6 +539,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
+ 				long nr,
+ 				struct io_event __user *events,
+ 				struct timespec __user *timeout);
++asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
++				long min_nr,
++				long nr,
++				struct io_event __user *events,
++				struct timespec __user *timeout,
++				const struct __aio_sigset *sig);
+ asmlinkage long sys_io_submit(aio_context_t, long,
+ 				struct iocb __user * __user *);
+ asmlinkage long sys_io_cancel(aio_context_t ctx_id, struct iocb __user *iocb,
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 8b87de067bc7..ce2ebbeece10 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -732,9 +732,11 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
+ __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+ #define __NR_statx 291
+ __SYSCALL(__NR_statx,     sys_statx)
++#define __NR_io_pgetevents 292
++__SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 292
++#define __NR_syscalls 293
+ 
+ /*
+  * All syscalls below here should go away really,
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index a04adbc70ddf..2c0a3415beee 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -29,6 +29,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/fs.h>
++#include <linux/signal.h>
+ #include <asm/byteorder.h>
+ 
+ typedef __kernel_ulong_t aio_context_t;
+@@ -108,5 +109,10 @@ struct iocb {
+ #undef IFBIG
+ #undef IFLITTLE
+ 
++struct __aio_sigset {
++	sigset_t __user	*sigmask;
++	size_t		sigsetsize;
++};
++
+ #endif /* __LINUX__AIO_ABI_H */
+ 
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index b5189762d275..8f7705559b38 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -151,9 +151,11 @@ cond_syscall(sys_io_destroy);
+ cond_syscall(sys_io_submit);
+ cond_syscall(sys_io_cancel);
+ cond_syscall(sys_io_getevents);
++cond_syscall(sys_io_pgetevents);
+ cond_syscall(compat_sys_io_setup);
+ cond_syscall(compat_sys_io_submit);
+ cond_syscall(compat_sys_io_getevents);
++cond_syscall(compat_sys_io_pgetevents);
+ cond_syscall(sys_sysfs);
+ cond_syscall(sys_syslog);
+ cond_syscall(sys_process_vm_readv);
 -- 
 2.14.2
 
