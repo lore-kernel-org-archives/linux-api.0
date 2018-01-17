@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 15/36] net: refactor socket_poll
-Date: Wed, 17 Jan 2018 20:27:21 +0100
-Message-ID: <20180117192742.710-16-hch@lst.de>
+Subject: [PATCH 11/36] fs: update documentation for __poll_t
+Date: Wed, 17 Jan 2018 20:27:17 +0100
+Message-ID: <20180117192742.710-12-hch@lst.de>
 References: <20180117192742.710-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180117192742.710-1-hch@lst.de>
@@ -10,75 +10,38 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Factor out two busy poll related helpers for late reuse, and remove
-a command that isn't very helpful, especially with the __poll_t
-annotations in place.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/busy_poll.h | 15 +++++++++++++++
- net/socket.c            | 21 ++++-----------------
- 2 files changed, 19 insertions(+), 17 deletions(-)
+ Documentation/filesystems/Locking | 2 +-
+ Documentation/filesystems/vfs.txt | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
-index 71c72a939bf8..c5187438af38 100644
---- a/include/net/busy_poll.h
-+++ b/include/net/busy_poll.h
-@@ -121,6 +121,21 @@ static inline void sk_busy_loop(struct sock *sk, int nonblock)
- #endif
- }
- 
-+static inline void sock_poll_busy_loop(struct socket *sock, __poll_t events)
-+{
-+	if (sk_can_busy_loop(sock->sk) &&
-+	    events && (events & POLL_BUSY_LOOP)) {
-+		/* once, only if requested by syscall */
-+		sk_busy_loop(sock->sk, 1);
-+	}
-+}
-+
-+/* if this socket can poll_ll, tell the system call */
-+static inline __poll_t sock_poll_busy_flag(struct socket *sock)
-+{
-+	return sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0;
-+}
-+
- /* used in the NIC receive handler to mark the skb */
- static inline void skb_mark_napi_id(struct sk_buff *skb,
- 				    struct napi_struct *napi)
-diff --git a/net/socket.c b/net/socket.c
-index 092baa464afc..db11e48a375b 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -1097,24 +1097,11 @@ EXPORT_SYMBOL(sock_create_lite);
- /* No kernel lock held - perfect */
- static __poll_t sock_poll(struct file *file, poll_table *wait)
- {
--	__poll_t busy_flag = 0;
--	struct socket *sock;
--
--	/*
--	 *      We can't return errors to poll, so it's either yes or no.
--	 */
--	sock = file->private_data;
--
--	if (sk_can_busy_loop(sock->sk)) {
--		/* this socket can poll_ll so tell the system call */
--		busy_flag = POLL_BUSY_LOOP;
--
--		/* once, only if requested by syscall */
--		if (wait && (wait->_key & POLL_BUSY_LOOP))
--			sk_busy_loop(sock->sk, 1);
--	}
-+	struct socket *sock = file->private_data;
-+	__poll_t events = poll_requested_events(wait);
- 
--	return busy_flag | sock->ops->poll(file, sock, wait);
-+	sock_poll_busy_loop(sock, events);
-+	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
- }
- 
- static int sock_mmap(struct file *file, struct vm_area_struct *vma)
+diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
+index 75d2d57e2c44..220bba28f72b 100644
+--- a/Documentation/filesystems/Locking
++++ b/Documentation/filesystems/Locking
+@@ -439,7 +439,7 @@ prototypes:
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+ 	int (*iterate) (struct file *, struct dir_context *);
+-	unsigned int (*poll) (struct file *, struct poll_table_struct *);
++	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 5fd325df59e2..f608180ad59d 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -856,7 +856,7 @@ struct file_operations {
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+ 	int (*iterate) (struct file *, struct dir_context *);
+-	unsigned int (*poll) (struct file *, struct poll_table_struct *);
++	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
 -- 
 2.14.2
 
