@@ -1,93 +1,54 @@
-From: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: User-visible context-mount API
-Date: Wed, 17 Jan 2018 12:06:33 +0100
-Message-ID: <20180117110633.zneqvnjzgxkv4yc2@ws.net.home>
-References: <28167.1516032442@warthog.procyon.org.uk>
- <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com>
- <1643.1516117204@warthog.procyon.org.uk>
- <CAOssrKdn-ZhOB9V28uL-JK9zgNGJzF4cFBeyoqLLj4pADqNFVQ@mail.gmail.com>
- <20180117041727.GS13338@ZenIV.linux.org.uk>
- <CAOssrKfN_ZT5yJC1mxkhUf6FG=_eMD4nzQtETfu_4X3vOf1kHw@mail.gmail.com>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH 32/32] aio: implement io_pgetevents
+Date: Wed, 17 Jan 2018 08:49:22 -0500
+Message-ID: <x49k1wg1tp9.fsf@segfault.boston.devel.redhat.com>
+References: <20180110155853.32348-1-hch@lst.de>
+	<20180110155853.32348-33-hch@lst.de>
+	<x49k1wmdcxn.fsf@segfault.boston.devel.redhat.com>
+	<20180115085310.GB32532@lst.de> <20180116120433.GA14579@lst.de>
+	<x493735b9l7.fsf@segfault.boston.devel.redhat.com>
+	<20180117042721.GT13338@ZenIV.linux.org.uk>
+	<20180117070827.GA26868@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAOssrKfN_ZT5yJC1mxkhUf6FG=_eMD4nzQtETfu_4X3vOf1kHw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180117070827.GA26868@lst.de> (Christoph Hellwig's message of
+	"Wed, 17 Jan 2018 08:08:27 +0100")
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 17, 2018 at 10:53:36AM +0100, Miklos Szeredi wrote:
-> [Adding util-linux@vger and Michael Kerrisk]
-> 
-> On Wed, Jan 17, 2018 at 5:17 AM, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org> wrote:
-> > On Tue, Jan 16, 2018 at 05:41:46PM +0100, Miklos Szeredi wrote:
-> >
-> >> Right.
-> >>
-> >> Still, those two (propagation and flags) are properties of the mount.
-> >> No fundamental difference in how to handle them, that I see.  Okay, we
-> >> have MS_REC handling in the propagation and not in the flags, but
-> >> that's something that might make sense for flags as well.
-> >>
-> >> What's more interesting is how MS_PRIVATE + MS_REC semantics are
-> >> complete failure in the real world: the logical thing would be to mark
-> >> a mount private on the supplied mount AND propagate an umount event to
-> >> everywhere else.
-> >
-> > This is utter nonsense.  Most of the time it's "Fedora, in its infinite
-> > bogo^Wwisdom has made everything shared; I don't fucking need that
-> > idiocy, so please unshare this, this and that".  You really don't want
-> > (or have permissions for) unmounting e.g. /mnt in namespace of init
-> > when you do that.
-> >
-> > Sure, we get tons of bug reports.  Due to idiotic Fedora setup, with
-> > everything shared.  The same setup that would go up in flames on the
-> > semantics change you propose.
+Christoph Hellwig <hch@lst.de> writes:
 
-I guess "all shared" is systemd requirement, so I guess it's not
-Fedora specific, right?
+> On Wed, Jan 17, 2018 at 04:27:21AM +0000, Al Viro wrote:
+>> On Tue, Jan 16, 2018 at 07:41:24PM -0500, Jeff Moyer wrote:
+>> >  	if (sigmask) {
+>> > -		if (copy_from_user(&ksigmask, sigmask, sizeof(ksigmask)))
+>> > +		if (!access_ok(VERIFY_READ, sigmask,
+>> > +			       sizeof(void *) + sizeof(size_t)) ||
+>> > +		    __get_user(up, (sigset_t __user * __user *)sigmask) ||
+>> > +		    __get_user(sigsetsize,
+>> > +			       (size_t __user *)(sigmask + sizeof(void *))))
+>> >  			return -EFAULT;
+>> 
+>> How about copy_from_user() on a struct?  Making eyes bleed is fun, but
+>> people tend to get annoyed when you do it to them...
+>
+> Above is the copy & paste version from pselect.  I've got both copy_from_user
+> and that horrible version in my tree, and if we really need this awfull
+> calling convention copy_from_user certainly is much better.  pselect
+> also should be switched to explicit struct + copy_from_user while
+> we're at it.  In fact glibc defines a struct for the userland version
+> to start with.
 
-> I wouldn't propose to change existing --make-private, as this would
-> not be backward compatible. The new semantics would mean a new op,
-> obviously.
+Yeah, I did both, but stuck with this variant as that's what pselect
+did.  I'm fine with switching to the struct variant.
 
-Definitely.
+-Jeff
 
-> Documenting  --make-private thing properly would also help.  To me the
-> wording "make private" strongly implies "I want to make submounts
-> private to this instance".  See for example rhbz#1432211.
-
-All propagation stuff is poorly documented in mount.8. It would be
-nice to add section about it to the man page. Volunteer? (My skills to
-explain this topic to end-users is pretty limited...)
- 
-> > If anything, "private bind on itself" would be a useful operation.
-> > Turning given location into a mountpoint, and having everything
-> > under it looking as it used to, but with no propagation at all.
-> > Without bothering anybody else, even if location currently happens
-> > to be on a shared/master mount.
-
-Good idea.
-
-> > I can slap that together for mount(2), but I'm not sure what a sane
-> > combination of flags for that would look like ;-)
-
-What about new flag (for the API) rather than try to be smart with the
-current flags? But I have doubts that invest time to new mount(2)
-features is a good idea.
-
-> For fsmount I think it would be very useful thing to have.
-
-Yes.
-
-    Karel
-
--- 
- Karel Zak  <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
- http://karelzak.blogspot.com
 --
-To unsubscribe from this list: send the line "unsubscribe util-linux" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
