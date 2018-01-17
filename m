@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 30/36] net/iucv: convert to ->poll_mask
-Date: Wed, 17 Jan 2018 20:27:36 +0100
-Message-ID: <20180117192742.710-31-hch@lst.de>
+Subject: [PATCH 34/36] eventfd: switch to ->poll_mask
+Date: Wed, 17 Jan 2018 20:27:40 +0100
+Message-ID: <20180117192742.710-35-hch@lst.de>
 References: <20180117192742.710-1-hch@lst.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180117192742.710-1-hch@lst.de>
@@ -12,51 +12,46 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/iucv/af_iucv.h | 2 --
- net/iucv/af_iucv.c         | 7 ++-----
- 2 files changed, 2 insertions(+), 7 deletions(-)
+ fs/eventfd.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
-index f4c21b5a1242..b0eaeb02d46d 100644
---- a/include/net/iucv/af_iucv.h
-+++ b/include/net/iucv/af_iucv.h
-@@ -153,8 +153,6 @@ struct iucv_sock_list {
- 	atomic_t	  autobind_name;
- };
- 
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait);
- void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
- void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
- void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
-diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
-index 64331158d693..da2043d1b322 100644
---- a/net/iucv/af_iucv.c
-+++ b/net/iucv/af_iucv.c
-@@ -1489,14 +1489,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
+diff --git a/fs/eventfd.c b/fs/eventfd.c
+index 6318a9b57e53..2bbbf13cb816 100644
+--- a/fs/eventfd.c
++++ b/fs/eventfd.c
+@@ -114,14 +114,20 @@ static int eventfd_release(struct inode *inode, struct file *file)
  	return 0;
  }
  
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait)
-+static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
+-static __poll_t eventfd_poll(struct file *file, poll_table *wait)
++static struct wait_queue_head *
++eventfd_get_poll_head(struct file *file, __poll_t events)
++{
++	struct eventfd_ctx *ctx = file->private_data;
++
++	return &ctx->wqh;
++}
++
++static __poll_t eventfd_poll_mask(struct file *file, __poll_t eventmask)
  {
- 	struct sock *sk = sock->sk;
- 	__poll_t mask = 0;
+ 	struct eventfd_ctx *ctx = file->private_data;
+ 	__poll_t events = 0;
+ 	u64 count;
  
--	sock_poll_wait(file, sk_sleep(sk), wait);
+-	poll_wait(file, &ctx->wqh, wait);
 -
- 	if (sk->sk_state == IUCV_LISTEN)
- 		return iucv_accept_poll(sk);
- 
-@@ -2389,7 +2386,7 @@ static const struct proto_ops iucv_sock_ops = {
- 	.getname	= iucv_sock_getname,
- 	.sendmsg	= iucv_sock_sendmsg,
- 	.recvmsg	= iucv_sock_recvmsg,
--	.poll		= iucv_sock_poll,
-+	.poll_mask	= iucv_sock_poll_mask,
- 	.ioctl		= sock_no_ioctl,
- 	.mmap		= sock_no_mmap,
- 	.socketpair	= sock_no_socketpair,
+ 	/*
+ 	 * All writes to ctx->count occur within ctx->wqh.lock.  This read
+ 	 * can be done outside ctx->wqh.lock because we know that poll_wait
+@@ -341,7 +347,8 @@ static const struct file_operations eventfd_fops = {
+ 	.show_fdinfo	= eventfd_show_fdinfo,
+ #endif
+ 	.release	= eventfd_release,
+-	.poll		= eventfd_poll,
++	.get_poll_head	= eventfd_get_poll_head,
++	.poll_mask	= eventfd_poll_mask,
+ 	.read		= eventfd_read,
+ 	.write		= eventfd_write,
+ 	.llseek		= noop_llseek,
 -- 
 2.14.2
