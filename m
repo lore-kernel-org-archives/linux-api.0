@@ -1,137 +1,148 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH] aio: resurrect IOCB_CMD_FSYNC and IOCB_CMD_FDSYNC support
-Date: Wed, 17 Jan 2018 20:47:47 +0100
-Message-ID: <20180117194747.1631-2-hch@lst.de>
-References: <20180117194747.1631-1-hch@lst.de>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 4.16 07/11] x86: Implement sync_core_before_usermode
+ (v3)
+Date: Wed, 17 Jan 2018 23:25:32 +0000 (UTC)
+Message-ID: <80094124.4887.1516231532603.JavaMail.zimbra@efficios.com>
+References: <20180117165458.13330-1-mathieu.desnoyers@efficios.com> <20180117165458.13330-8-mathieu.desnoyers@efficios.com> <CALCETrWqRPsmLY=sTo5YHbWRh3HWjrVQ4FOn-=YfP=4_n98F6w@mail.gmail.com> <712464074.4666.1516212636860.JavaMail.zimbra@efficios.com> <CALCETrV2Cve1sW=UXHgjTWMKfsiwY5QdeaBnQRZGfpELLKry+A@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180117194747.1631-1-hch@lst.de>
+In-Reply-To: <CALCETrV2Cve1sW=UXHgjTWMKfsiwY5QdeaBnQRZGfpELLKry+A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David
 List-Id: linux-api@vger.kernel.org
 
-These and the ->aio_fsync method had been merged together with the
-initial aio support, but no ->aio_fsync method had ever been implemented
-in mainline, so it got removed a while ago.
+----- On Jan 17, 2018, at 1:13 PM, Andy Lutomirski luto@kernel.org wrote:
 
-This patch wires up the iocb commands to a simple workqueue based offload
-that already shows great performance.  In the future an aio_fsync method
-could be added if we grow more elaborate implementations, but for now
-an 6 to 8 fold improvement in the fsync rate in fs_mark should be good
-enough to go with this simple version.
+> On Wed, Jan 17, 2018 at 10:10 AM, Mathieu Desnoyers
+> <mathieu.desnoyers@efficios.com> wrote:
+>> ----- On Jan 17, 2018, at 12:53 PM, Andy Lutomirski luto@kernel.org wrote:
+>>
+>>> On Wed, Jan 17, 2018 at 8:54 AM, Mathieu Desnoyers
+>>> <mathieu.desnoyers@efficios.com> wrote:
+>>>> Ensure that a core serializing instruction is issued before returning to
+>>>> user-mode. x86 implements return to user-space through sysexit, sysrel,
+>>>> and sysretq, which are not core serializing.
+>>>>
+>>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+>>>> Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+>>>> CC: Peter Zijlstra <peterz@infradead.org>
+>>>> CC: Andy Lutomirski <luto@kernel.org>
+>>>> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+>>>> CC: Boqun Feng <boqun.feng@gmail.com>
+>>>> CC: Andrew Hunter <ahh@google.com>
+>>>> CC: Maged Michael <maged.michael@gmail.com>
+>>>> CC: Avi Kivity <avi@scylladb.com>
+>>>> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+>>>> CC: Paul Mackerras <paulus@samba.org>
+>>>> CC: Michael Ellerman <mpe@ellerman.id.au>
+>>>> CC: Dave Watson <davejwatson@fb.com>
+>>>> CC: Ingo Molnar <mingo@redhat.com>
+>>>> CC: "H. Peter Anvin" <hpa@zytor.com>
+>>>> CC: Andrea Parri <parri.andrea@gmail.com>
+>>>> CC: Russell King <linux@armlinux.org.uk>
+>>>> CC: Greg Hackmann <ghackmann@google.com>
+>>>> CC: Will Deacon <will.deacon@arm.com>
+>>>> CC: David Sehr <sehr@google.com>
+>>>> CC: Linus Torvalds <torvalds@linux-foundation.org>
+>>>> CC: x86@kernel.org
+>>>> CC: linux-arch@vger.kernel.org
+>>>> ---
+>>>> Changes since v1:
+>>>> - Fix prototype of sync_core_before_usermode in generic code (missing
+>>>>   return type).
+>>>> - Add linux/processor.h include to sched/core.c.
+>>>> - Add ARCH_HAS_SYNC_CORE_BEFORE_USERMODE to init/Kconfig.
+>>>> - Fix linux/processor.h ifdef to target
+>>>>   CONFIG_ARCH_HAS_SYNC_CORE_BEFORE_USERMODE rather than
+>>>>   ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
+>>>> - Move empty static inline in processor.h to generic patch.
+>>>> ---
+>>>>  arch/x86/Kconfig                 |  1 +
+>>>>  arch/x86/include/asm/processor.h | 10 ++++++++++
+>>>>  2 files changed, 11 insertions(+)
+>>>>
+>>>> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+>>>> index 20da391b5f32..0b44c8dd0e95 100644
+>>>> --- a/arch/x86/Kconfig
+>>>> +++ b/arch/x86/Kconfig
+>>>> @@ -61,6 +61,7 @@ config X86
+>>>>         select ARCH_HAS_SG_CHAIN
+>>>>         select ARCH_HAS_STRICT_KERNEL_RWX
+>>>>         select ARCH_HAS_STRICT_MODULE_RWX
+>>>> +       select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+>>>>         select ARCH_HAS_UBSAN_SANITIZE_ALL
+>>>>         select ARCH_HAS_ZONE_DEVICE             if X86_64
+>>>>         select ARCH_HAVE_NMI_SAFE_CMPXCHG
+>>>> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+>>>> index d3a67fba200a..3257d34dbb40 100644
+>>>> --- a/arch/x86/include/asm/processor.h
+>>>> +++ b/arch/x86/include/asm/processor.h
+>>>> @@ -722,6 +722,16 @@ static inline void sync_core(void)
+>>>>  #endif
+>>>>  }
+>>>>
+>>>> +/*
+>>>> + * Ensure that a core serializing instruction is issued before returning
+>>>> + * to user-mode. x86 implements return to user-space through sysexit,
+>>>> + * sysrel, and sysretq, which are not core serializing.
+>>>> + */
+>>>> +static inline void sync_core_before_usermode(void)
+>>>> +{
+>>>
+>>> /* With PTI, we unconditionally serialize before running user code. */
+>>> if (static_cpu_has(X86_FEATURE_PTI))
+>>>  return;
+>>
+>> One issue I'm facing with this change is header dependency:
+>> sync_core_before_usermode() is currently implemented in
+>> arch/x86/include/asm/processor.h, but arch/x86/include/asm/cpufeature.h
+>> is needed for static_cpu_has, and it happens to include
+>> asm/processor.h.
+>>
+>> I'm facing a similar issue for adding a (in_irq() || in_nmi()) check.
+>>
+>> Should we move sync_core_before_usermode() to a different header, and if
+>> so, any suggestion ?
+> 
+> tlbflush.h, maybe?
 
-Note that this does not wire up the offset and length fields and thus
-does not provide a ranged fsync.  The reasons for that are that in
-all current file system ranges only matter for writing back page cache,
-which doesn't mix with AIO anyway (as AIO only does direct I/O), and
-also because these fields would bloat the aio_kiocb over the size of
-the normal read/write and poll iocbs, which is worth it given the
-condition above.  But the offset and length fields are checked for
-being zero, so such a support could be added later if needed.
+Core serialization seems to be unrelated to TLB flushing though.
 
-Based on an earlier patch from Dave Chinner.
+I'm considering to create those new header files:
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/aio.c | 68 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 68 insertions(+)
+include/asm-generic/sync_core.h (empty function)
+arch/x86/include/asm/sync_core.h
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 0cddd24e7316..e1df7e8408ea 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -164,10 +164,17 @@ struct poll_iocb {
- 	struct wait_queue_entry	wait;
- };
- 
-+struct fsync_iocb {
-+	struct work_struct	work;
-+	struct file		*file;
-+	bool			datasync;
-+};
-+
- struct aio_kiocb {
- 	union {
- 		struct kiocb		rw;
- 		struct poll_iocb	poll;
-+		struct fsync_iocb	fsync;
- 	};
- 
- 	struct kioctx		*ki_ctx;
-@@ -1660,6 +1667,61 @@ static ssize_t aio_poll(struct aio_kiocb *aiocb, struct iocb *iocb)
- 	return -EIOCBQUEUED;
- }
- 
-+static void aio_fsync_work(struct work_struct *work)
-+{
-+	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
-+	int ret;
-+
-+	ret = vfs_fsync(req->file, req->datasync);
-+	fput(req->file);
-+	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
-+}
-+
-+static int generic_aio_fsync(struct fsync_iocb *req)
-+{
-+	struct super_block *sb = file_inode(req->file)->i_sb;
-+
-+	if (unlikely(!sb->s_dio_done_wq)) {
-+		int ret = sb_init_dio_done_wq(sb);
-+		if (ret)
-+			return ret;
-+	}
-+
-+	/*
-+	 * Use the direct I/O completion workqueue, as that is used to queue
-+	 * fsyncs for O_(D)SYNC writes already.
-+	 */
-+	INIT_WORK(&req->work, aio_fsync_work);
-+	queue_work(sb->s_dio_done_wq, &req->work);
-+	return -EIOCBQUEUED;
-+}
-+
-+static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
-+{
-+	int ret;
-+
-+	if (iocb->aio_buf)
-+		return -EINVAL;
-+	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
-+		return -EINVAL;
-+
-+	req->file = fget(iocb->aio_fildes);
-+	if (unlikely(!req->file))
-+		return -EBADF;
-+
-+	ret = -EINVAL;
-+	if (!req->file->f_op->fsync)
-+		goto out_fput;
-+
-+	req->datasync = datasync;
-+
-+	ret = generic_aio_fsync(req);
-+out_fput:
-+	if (unlikely(ret && ret != -EIOCBQUEUED))
-+		fput(req->file);
-+	return ret;
-+}
-+
- static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 			 struct iocb *iocb, bool compat)
- {
-@@ -1723,6 +1785,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	case IOCB_CMD_PWRITEV:
- 		ret = aio_write(&req->rw, iocb, true, compat);
- 		break;
-+	case IOCB_CMD_FSYNC:
-+		ret = aio_fsync(&req->fsync, iocb, false);
-+		break;
-+	case IOCB_CMD_FDSYNC:
-+		ret = aio_fsync(&req->fsync, iocb, true);
-+		break;
- 	case IOCB_CMD_POLL:
- 		ret = aio_poll(req, iocb);
- 		break;
+for the sync_core_before_usermode() static inlines. Any better idea ?
+
+Thanks,
+
+Mathieu
+
+
+> 
+>>
+>> Thanks,
+>>
+>> Mathieu
+>>
+>>
+>>
+>>>
+>>>> +       sync_core();
+>>>> +}
+>>>
+>>> --Andy
+>>
+>> --
+>> Mathieu Desnoyers
+>> EfficiOS Inc.
+> > http://www.efficios.com
+
 -- 
-2.14.2
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
