@@ -1,56 +1,62 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 31/36] net/rxrpc: convert to ->poll_mask
-Date: Wed, 17 Jan 2018 20:27:37 +0100
-Message-ID: <20180117192742.710-32-hch@lst.de>
+Subject: [PATCH 30/36] net/iucv: convert to ->poll_mask
+Date: Wed, 17 Jan 2018 20:27:36 +0100
+Message-ID: <20180117192742.710-31-hch@lst.de>
 References: <20180117192742.710-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180117192742.710-1-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/rxrpc/af_rxrpc.c | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
+ include/net/iucv/af_iucv.h | 2 --
+ net/iucv/af_iucv.c         | 7 ++-----
+ 2 files changed, 2 insertions(+), 7 deletions(-)
 
-diff --git a/net/rxrpc/af_rxrpc.c b/net/rxrpc/af_rxrpc.c
-index 21ad6a3a465c..46d393ef99e0 100644
---- a/net/rxrpc/af_rxrpc.c
-+++ b/net/rxrpc/af_rxrpc.c
-@@ -729,15 +729,11 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
- /*
-  * permit an RxRPC socket to be polled
-  */
--static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
--			       poll_table *wait)
-+static __poll_t rxrpc_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
+index f4c21b5a1242..b0eaeb02d46d 100644
+--- a/include/net/iucv/af_iucv.h
++++ b/include/net/iucv/af_iucv.h
+@@ -153,8 +153,6 @@ struct iucv_sock_list {
+ 	atomic_t	  autobind_name;
+ };
+ 
+-__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+-			    poll_table *wait);
+ void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
+ void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
+ void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
+diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
+index 64331158d693..da2043d1b322 100644
+--- a/net/iucv/af_iucv.c
++++ b/net/iucv/af_iucv.c
+@@ -1489,14 +1489,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
+ 	return 0;
+ }
+ 
+-__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+-			    poll_table *wait)
++static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct rxrpc_sock *rx = rxrpc_sk(sk);
--	__poll_t mask;
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	__poll_t mask = 0;
+ 	__poll_t mask = 0;
  
- 	/* the socket is readable if there are any messages waiting on the Rx
- 	 * queue */
-@@ -940,7 +936,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
- 	.socketpair	= sock_no_socketpair,
- 	.accept		= sock_no_accept,
- 	.getname	= sock_no_getname,
--	.poll		= rxrpc_poll,
-+	.poll_mask	= rxrpc_poll_mask,
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-
+ 	if (sk->sk_state == IUCV_LISTEN)
+ 		return iucv_accept_poll(sk);
+ 
+@@ -2389,7 +2386,7 @@ static const struct proto_ops iucv_sock_ops = {
+ 	.getname	= iucv_sock_getname,
+ 	.sendmsg	= iucv_sock_sendmsg,
+ 	.recvmsg	= iucv_sock_recvmsg,
+-	.poll		= iucv_sock_poll,
++	.poll_mask	= iucv_sock_poll_mask,
  	.ioctl		= sock_no_ioctl,
- 	.listen		= rxrpc_listen,
- 	.shutdown	= rxrpc_shutdown,
+ 	.mmap		= sock_no_mmap,
+ 	.socketpair	= sock_no_socketpair,
 -- 
 2.14.2
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
