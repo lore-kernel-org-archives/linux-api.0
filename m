@@ -1,126 +1,157 @@
-From: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH for 4.16 07/11] x86: Implement sync_core_before_usermode (v3)
-Date: Wed, 17 Jan 2018 10:13:05 -0800
-Message-ID: <CALCETrV2Cve1sW=UXHgjTWMKfsiwY5QdeaBnQRZGfpELLKry+A@mail.gmail.com>
-References: <20180117165458.13330-1-mathieu.desnoyers@efficios.com>
- <20180117165458.13330-8-mathieu.desnoyers@efficios.com> <CALCETrWqRPsmLY=sTo5YHbWRh3HWjrVQ4FOn-=YfP=4_n98F6w@mail.gmail.com>
- <712464074.4666.1516212636860.JavaMail.zimbra@efficios.com>
+From: Julia Cartwright <juliac@eso.teric.us>
+Subject: Re: [patch v17 1/4] drivers: jtag: Add JTAG core driver
+Date: Wed, 17 Jan 2018 13:14:41 -0600
+Message-ID: <20180117191441.GE2818@kryptos.localdomain>
+References: <1516087139-7510-1-git-send-email-oleksandrs@mellanox.com>
+ <1516087139-7510-2-git-send-email-oleksandrs@mellanox.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <712464074.4666.1516212636860.JavaMail.zimbra-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <wi>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1516087139-7510-2-git-send-email-oleksandrs@mellanox.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleksandr Shamray <oleksandrs@mellanox.com>
+Cc: gregkh@linuxfoundation.org, arnd@arndb.de, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Jiri Pirko <jiri@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 17, 2018 at 10:10 AM, Mathieu Desnoyers
-<mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
-> ----- On Jan 17, 2018, at 12:53 PM, Andy Lutomirski luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org wrote:
->
->> On Wed, Jan 17, 2018 at 8:54 AM, Mathieu Desnoyers
->> <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
->>> Ensure that a core serializing instruction is issued before returning to
->>> user-mode. x86 implements return to user-space through sysexit, sysrel,
->>> and sysretq, which are not core serializing.
->>>
->>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
->>> Reviewed-by: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
->>> CC: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
->>> CC: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
->>> CC: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
->>> CC: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>> CC: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>> CC: Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>> CC: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
->>> CC: Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
->>> CC: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
->>> CC: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
->>> CC: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
->>> CC: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
->>> CC: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
->>> CC: Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
->>> CC: Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
->>> CC: Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>> CC: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
->>> CC: David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
->>> CC: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
->>> CC: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
->>> CC: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
->>> ---
->>> Changes since v1:
->>> - Fix prototype of sync_core_before_usermode in generic code (missing
->>>   return type).
->>> - Add linux/processor.h include to sched/core.c.
->>> - Add ARCH_HAS_SYNC_CORE_BEFORE_USERMODE to init/Kconfig.
->>> - Fix linux/processor.h ifdef to target
->>>   CONFIG_ARCH_HAS_SYNC_CORE_BEFORE_USERMODE rather than
->>>   ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
->>> - Move empty static inline in processor.h to generic patch.
->>> ---
->>>  arch/x86/Kconfig                 |  1 +
->>>  arch/x86/include/asm/processor.h | 10 ++++++++++
->>>  2 files changed, 11 insertions(+)
->>>
->>> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
->>> index 20da391b5f32..0b44c8dd0e95 100644
->>> --- a/arch/x86/Kconfig
->>> +++ b/arch/x86/Kconfig
->>> @@ -61,6 +61,7 @@ config X86
->>>         select ARCH_HAS_SG_CHAIN
->>>         select ARCH_HAS_STRICT_KERNEL_RWX
->>>         select ARCH_HAS_STRICT_MODULE_RWX
->>> +       select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
->>>         select ARCH_HAS_UBSAN_SANITIZE_ALL
->>>         select ARCH_HAS_ZONE_DEVICE             if X86_64
->>>         select ARCH_HAVE_NMI_SAFE_CMPXCHG
->>> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
->>> index d3a67fba200a..3257d34dbb40 100644
->>> --- a/arch/x86/include/asm/processor.h
->>> +++ b/arch/x86/include/asm/processor.h
->>> @@ -722,6 +722,16 @@ static inline void sync_core(void)
->>>  #endif
->>>  }
->>>
->>> +/*
->>> + * Ensure that a core serializing instruction is issued before returning
->>> + * to user-mode. x86 implements return to user-space through sysexit,
->>> + * sysrel, and sysretq, which are not core serializing.
->>> + */
->>> +static inline void sync_core_before_usermode(void)
->>> +{
->>
->> /* With PTI, we unconditionally serialize before running user code. */
->> if (static_cpu_has(X86_FEATURE_PTI))
->>  return;
->
-> One issue I'm facing with this change is header dependency:
-> sync_core_before_usermode() is currently implemented in
-> arch/x86/include/asm/processor.h, but arch/x86/include/asm/cpufeature.h
-> is needed for static_cpu_has, and it happens to include
-> asm/processor.h.
->
-> I'm facing a similar issue for adding a (in_irq() || in_nmi()) check.
->
-> Should we move sync_core_before_usermode() to a different header, and if
-> so, any suggestion ?
+Hello Oleksandr-
 
-tlbflush.h, maybe?
+On Tue, Jan 16, 2018 at 09:18:56AM +0200, Oleksandr Shamray wrote:
+[..]
+> v16->v17
+> Comments pointed by Julia Cartwright <juliac@eso.teric.us>
 
->
-> Thanks,
->
-> Mathieu
->
->
->
->>
->>> +       sync_core();
->>> +}
->>
->> --Andy
->
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+More review feedback below:
+
+[..]
+> +++ b/drivers/jtag/jtag.c
+[..]
+> +static long jtag_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+> +{
+> +	struct jtag *jtag = file->private_data;
+> +	struct jtag_run_test_idle idle;
+> +	struct jtag_xfer xfer;
+> +	u8 *xfer_data;
+> +	u32 data_size;
+> +	u32 value;
+> +	int err;
+> +
+> +	if (!arg)
+> +		return -EINVAL;
+> +
+> +	switch (cmd) {
+> +	case JTAG_GIOCFREQ:
+> +		if (!jtag->ops->freq_get)
+> +			err = -EOPNOTSUPP;
+
+Did you mean:
+
+			return -EOPNOTSUPP;
+
+?
+
+> +
+> +		err = jtag->ops->freq_get(jtag, &value);
+
+Otherwise you're check was worthless, you'll call NULL here.
+
+Also, w.r.t. the set of ops which are required to be implemented: this
+isn't the right place to do the check.
+
+Instead, do it in jtag_alloc():
+
+	struct jtag *jtag_alloc(size_t priv_size, const struct jtag_ops *ops)
+	{
+		struct jtag *jtag;
+
+		if (!ops->freq_get || !ops->xfer || ...) /* fixup condition */
+			return NULL;
+
+		jtag = kzalloc(sizeof(*jtag) + priv_size, GFP_KERNEL);
+		if (!jtag)
+			return NULL;
+
+		jtag->ops = ops;
+		return jtag;
+	}
+	EXPORT_SYMBOL_GPL(jtag_alloc);
+
+[..]
+> +	case JTAG_IOCXFER:
+[..]
+> +		data_size = DIV_ROUND_UP(xfer.length, BITS_PER_BYTE);
+> +		xfer_data = memdup_user(u64_to_user_ptr(xfer.tdio), data_size);
+> +
+> +		if (!xfer_data)
+
+memdup_user() doesn't return NULL on error.  You need to check for
+IS_ERR(xfer_data).
+
+> +			return -EFAULT;
+> +
+> +		err = jtag->ops->xfer(jtag, &xfer, xfer_data);
+> +		if (err) {
+> +			kfree(xfer_data);
+> +			return -EFAULT;
+> +		}
+> +
+> +		err = copy_to_user(u64_to_user_ptr(xfer.tdio),
+> +				   (void *)(xfer_data), data_size);
+> +
+> +		if (err) {
+> +			kfree(xfer_data);
+> +			return -EFAULT;
+> +		}
+> +
+> +		kfree(xfer_data);
+
+Move the kfree() above the if (err).
+
+> +		if (copy_to_user((void *)arg, &xfer, sizeof(struct jtag_xfer)))
+> +			return -EFAULT;
+> +		break;
+> +
+> +	case JTAG_GIOCSTATUS:
+> +		if (!jtag->ops->status_get)
+> +			return -EOPNOTSUPP;
+> +
+> +		err = jtag->ops->status_get(jtag, &value);
+> +		if (err)
+> +			break;
+> +
+> +		err = put_user(value, (__u32 *)arg);
+> +		if (err)
+> +			err = -EFAULT;
+
+put_user() returns -EFAULT on failure, so this shouldn't be necessary.
+
+[..]
+> --- /dev/null
+> +++ b/include/uapi/linux/jtag.h
+[..]
+> +/**
+> + * struct jtag_xfer - jtag xfer:
+> + *
+> + * @type: transfer type
+> + * @direction: xfer direction
+> + * @length: xfer bits len
+> + * @tdio : xfer data array
+> + * @endir: xfer end state
+> + *
+> + * Structure represents interface to JTAG device for jtag sdr xfer
+> + * execution.
+> + */
+> +struct jtag_xfer {
+> +	__u8	type;
+> +	__u8	direction;
+> +	__u8	endstate;
+
+Just to be as unambiguous as possible, considering this is ABI, I would
+suggest explicitly putting a padding byte here.
+
+> +	__u32	length;
+> +	__u64	tdio;
+> +};
+
+Thanks,
+   Julia
