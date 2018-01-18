@@ -1,34 +1,93 @@
-From: Miklos Szeredi <mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: User-visible context-mount API
-Date: Thu, 18 Jan 2018 10:48:24 +0100
-Message-ID: <CAOssrKeRaA77NUctnwQ0=r6xMg_o1UVbqqTBJ60q-n4DP_LvDw@mail.gmail.com>
-References: <28167.1516032442@warthog.procyon.org.uk> <CAOssrKdgudK7kKbhQBAnV9EwzHBq=4+9M26JGfmhNDGrGXmnFg@mail.gmail.com>
- <1643.1516117204@warthog.procyon.org.uk> <CAOssrKdn-ZhOB9V28uL-JK9zgNGJzF4cFBeyoqLLj4pADqNFVQ@mail.gmail.com>
- <20180117041727.GS13338@ZenIV.linux.org.uk> <CAOssrKfN_ZT5yJC1mxkhUf6FG=_eMD4nzQtETfu_4X3vOf1kHw@mail.gmail.com>
- <20180117110633.zneqvnjzgxkv4yc2@ws.net.home>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: aio poll, io_pgetevents and a new in-kernel poll API V3
+Date: Thu, 18 Jan 2018 10:46:39 -0500
+Message-ID: <x49bmhruq3k.fsf@segfault.boston.devel.redhat.com>
+References: <20180117192742.710-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20180117110633.zneqvnjzgxkv4yc2-xkT7n84Rsxv/9pzu0YdTqQ@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Jeff Layton <jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "Eric W. Biederman" <ebiederm-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180117192742.710-1-hch@lst.de> (Christoph Hellwig's message of
+	"Wed, 17 Jan 2018 20:27:06 +0100")
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 17, 2018 at 12:06 PM, Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+FYI, this kernel has issues.  It will boot up, but I don't have
+networking, and even rebooting doesn't succeed.  I'm looking into it.
 
->> Documenting  --make-private thing properly would also help.  To me the
->> wording "make private" strongly implies "I want to make submounts
->> private to this instance".  See for example rhbz#1432211.
+-Jeff
+
+Christoph Hellwig <hch@lst.de> writes:
+
+> Hi all,
 >
-> All propagation stuff is poorly documented in mount.8. It would be
-> nice to add section about it to the man page. Volunteer? (My skills to
-> explain this topic to end-users is pretty limited...)
+> this series adds support for the IOCB_CMD_POLL operation to poll for the
+> readyness of file descriptors using the aio subsystem.  The API is based
+> on patches that existed in RHAS2.1 and RHEL3, which means it already is
+> supported by libaio.  To implement the poll support efficiently new
+> methods to poll are introduced in struct file_operations:  get_poll_head
+> and poll_mask.  The first one returns a wait_queue_head to wait on
+> (lifetime is bound by the file), and the second does a non-blocking
+> check for the POLL* events.  This allows aio poll to work without
+> any additional context switches, unlike epoll.
+>
+> To make the interface fully useful a new io_pgetevents system call is
+> added, which atomically saves and restores the signal mask over the
+> io_pgetevents system call.  It it the logical equivalent to pselect and
+> ppoll for io_pgetevents.
+>
+> The corresponding libaio changes for io_pgetevents support and
+> documentation, as well as a test case will be posted in a separate
+> series.
+>
+> The changes were sponsored by Scylladb, and improve performance
+> of the seastar framework up to 10%, while also removing the need
+> for a privileged SCHED_FIFO epoll listener thread.
+>
+> The patches are on top of Als __poll_t annoations, so I've also
+> prepared a git branch on top of those here:
+>
+>     git://git.infradead.org/users/hch/vfs.git aio-poll.3
+>
+> Gitweb:
+>
+>     http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.3
+>
+> Libaio changes:
+>
+>     https://pagure.io/libaio.git io-poll
+>
+> Seastar changes (not updated for the new io_pgetevens ABI yet):
+>
+>     https://github.com/avikivity/seastar/commits/aio
+>
+> Changes since V2:
+>  - removed a double initialization
+>  - new vfs_get_poll_head helper
+>  - document that ->get_poll_head can return NULL
+>  - call ->poll_mask before sleeping
+>  - various ACKs
+>  - add conversion of random to ->poll_mask
+>  - add conversion of af_alg to ->poll_mask
+>  - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
+>  - reshuffled the series so that prep patches and everything not
+>    requiring the new in-kernel poll API is in the beginning
+>
+> Changes since V1:
+>  - handle the NULL ->poll case in vfs_poll
+>  - dropped the file argument to the ->poll_mask socket operation
+>  - replace the ->pre_poll socket operation with ->get_poll_head as
+>    in the file operations
+>
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-aio' in
+> the body to majordomo@kvack.org.  For more info on Linux AIO,
+> see: http://www.kvack.org/aio/
+> Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
 
-Propagation is common to mount(2) and there's some info in there
-already, but fine points like this are not explained.
-
-Maybe a new page in section 7?
-
-Thanks,
-Miklos
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
