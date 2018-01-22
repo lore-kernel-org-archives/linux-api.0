@@ -1,86 +1,97 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 24/36] net/tipc: convert to ->poll_mask
-Date: Mon, 22 Jan 2018 21:12:31 +0100
-Message-ID: <20180122201243.31610-25-hch@lst.de>
+Subject: [PATCH 21/36] net/dccp: convert to ->poll_mask
+Date: Mon, 22 Jan 2018 21:12:28 +0100
+Message-ID: <20180122201243.31610-22-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/tipc/socket.c | 14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
+ net/dccp/dccp.h  |  3 +--
+ net/dccp/ipv4.c  |  2 +-
+ net/dccp/ipv6.c  |  2 +-
+ net/dccp/proto.c | 13 ++-----------
+ 4 files changed, 5 insertions(+), 15 deletions(-)
 
-diff --git a/net/tipc/socket.c b/net/tipc/socket.c
-index fcbd6489a8b5..527d113c38b0 100644
---- a/net/tipc/socket.c
-+++ b/net/tipc/socket.c
-@@ -693,10 +693,9 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
- }
+diff --git a/net/dccp/dccp.h b/net/dccp/dccp.h
+index f91e3816806b..0ea2ee56ac1b 100644
+--- a/net/dccp/dccp.h
++++ b/net/dccp/dccp.h
+@@ -316,8 +316,7 @@ int dccp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
+ 		 int flags, int *addr_len);
+ void dccp_shutdown(struct sock *sk, int how);
+ int inet_dccp_listen(struct socket *sock, int backlog);
+-__poll_t dccp_poll(struct file *file, struct socket *sock,
+-		       poll_table *wait);
++__poll_t dccp_poll_mask(struct socket *sock, __poll_t events);
+ int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
+ void dccp_req_err(struct sock *sk, u64 seq);
  
- /**
-- * tipc_poll - read and possibly block on pollmask
-+ * tipc_poll - read pollmask
-  * @file: file structure associated with the socket
-  * @sock: socket for which to calculate the poll bits
-- * @wait: ???
-  *
-  * Returns pollmask value
-  *
-@@ -710,16 +709,13 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
-  * imply that the operation will succeed, merely that it should be performed
-  * and will not block.
-  */
--static __poll_t tipc_poll(struct file *file, struct socket *sock,
--			      poll_table *wait)
-+static __poll_t tipc_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/net/dccp/ipv4.c b/net/dccp/ipv4.c
+index e65fcb45c3f6..e8476f319efd 100644
+--- a/net/dccp/ipv4.c
++++ b/net/dccp/ipv4.c
+@@ -983,7 +983,7 @@ static const struct proto_ops inet_dccp_ops = {
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet_getname,
+ 	/* FIXME: work on tcp_poll to rename it to inet_csk_poll */
+-	.poll		   = dccp_poll,
++	.poll_mask	   = dccp_poll_mask,
+ 	.ioctl		   = inet_ioctl,
+ 	/* FIXME: work on inet_listen to rename it to sock_common_listen */
+ 	.listen		   = inet_dccp_listen,
+diff --git a/net/dccp/ipv6.c b/net/dccp/ipv6.c
+index 5df7857fc0f3..f0aac8e4b888 100644
+--- a/net/dccp/ipv6.c
++++ b/net/dccp/ipv6.c
+@@ -1069,7 +1069,7 @@ static const struct proto_ops inet6_dccp_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet6_getname,
+-	.poll		   = dccp_poll,
++	.poll_mask	   = dccp_poll_mask,
+ 	.ioctl		   = inet6_ioctl,
+ 	.listen		   = inet_dccp_listen,
+ 	.shutdown	   = inet_shutdown,
+diff --git a/net/dccp/proto.c b/net/dccp/proto.c
+index 8b8db3d481bd..11f91fbe7359 100644
+--- a/net/dccp/proto.c
++++ b/net/dccp/proto.c
+@@ -311,20 +311,11 @@ int dccp_disconnect(struct sock *sk, int flags)
+ 
+ EXPORT_SYMBOL_GPL(dccp_disconnect);
+ 
+-/*
+- *	Wait for a DCCP event.
+- *
+- *	Note that we don't need to lock the socket, as the upper poll layers
+- *	take care of normal races (between the test and the event) and we don't
+- *	go look at any of the socket buffers directly.
+- */
+-__poll_t dccp_poll(struct file *file, struct socket *sock,
+-		       poll_table *wait)
++__poll_t dccp_poll_mask(struct socket *sock, __poll_t events)
  {
+ 	__poll_t mask;
  	struct sock *sk = sock->sk;
- 	struct tipc_sock *tsk = tipc_sk(sk);
- 	struct tipc_group *grp = tsk->group;
- 	__poll_t revents = 0;
  
 -	sock_poll_wait(file, sk_sleep(sk), wait);
--
- 	if (sk->sk_shutdown & RCV_SHUTDOWN)
- 		revents |= POLLRDHUP | POLLIN | POLLRDNORM;
- 	if (sk->sk_shutdown == SHUTDOWN_MASK)
-@@ -3005,7 +3001,7 @@ static const struct proto_ops msg_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= sock_no_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= sock_no_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3026,7 +3022,7 @@ static const struct proto_ops packet_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3047,7 +3043,7 @@ static const struct proto_ops stream_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
+ 	if (sk->sk_state == DCCP_LISTEN)
+ 		return inet_csk_listen_poll(sk);
+ 
+@@ -366,7 +357,7 @@ __poll_t dccp_poll(struct file *file, struct socket *sock,
+ 	return mask;
+ }
+ 
+-EXPORT_SYMBOL_GPL(dccp_poll);
++EXPORT_SYMBOL_GPL(dccp_poll_mask);
+ 
+ int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg)
+ {
 -- 
 2.14.2
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
