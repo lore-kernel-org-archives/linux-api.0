@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 22/36] net/atm: convert to ->poll_mask
-Date: Mon, 22 Jan 2018 21:12:29 +0100
-Message-ID: <20180122201243.31610-23-hch@lst.de>
+Subject: [PATCH 24/36] net/tipc: convert to ->poll_mask
+Date: Mon, 22 Jan 2018 21:12:31 +0100
+Message-ID: <20180122201243.31610-25-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
@@ -12,75 +12,70 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/atm/common.c | 11 +++--------
- net/atm/common.h |  2 +-
- net/atm/pvc.c    |  2 +-
- net/atm/svc.c    |  2 +-
- 4 files changed, 6 insertions(+), 11 deletions(-)
+ net/tipc/socket.c | 14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/net/atm/common.c b/net/atm/common.c
-index 8f12f1c6fa14..07223ef2a220 100644
---- a/net/atm/common.c
-+++ b/net/atm/common.c
-@@ -648,16 +648,11 @@ int vcc_sendmsg(struct socket *sock, struct msghdr *m, size_t size)
- 	return error;
+diff --git a/net/tipc/socket.c b/net/tipc/socket.c
+index fcbd6489a8b5..527d113c38b0 100644
+--- a/net/tipc/socket.c
++++ b/net/tipc/socket.c
+@@ -693,10 +693,9 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
  }
  
--__poll_t vcc_poll(struct file *file, struct socket *sock, poll_table *wait)
-+__poll_t vcc_poll_mask(struct socket *sock, __poll_t events)
+ /**
+- * tipc_poll - read and possibly block on pollmask
++ * tipc_poll - read pollmask
+  * @file: file structure associated with the socket
+  * @sock: socket for which to calculate the poll bits
+- * @wait: ???
+  *
+  * Returns pollmask value
+  *
+@@ -710,16 +709,13 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
+  * imply that the operation will succeed, merely that it should be performed
+  * and will not block.
+  */
+-static __poll_t tipc_poll(struct file *file, struct socket *sock,
+-			      poll_table *wait)
++static __poll_t tipc_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
--	struct atm_vcc *vcc;
--	__poll_t mask;
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
--
--	vcc = ATM_SD(sock);
-+	struct atm_vcc *vcc = ATM_SD(sock);
-+	__poll_t mask = 0;
+ 	struct tipc_sock *tsk = tipc_sk(sk);
+ 	struct tipc_group *grp = tsk->group;
+ 	__poll_t revents = 0;
  
- 	/* exceptional events */
- 	if (sk->sk_err)
-diff --git a/net/atm/common.h b/net/atm/common.h
-index 5850649068bb..526796ad230f 100644
---- a/net/atm/common.h
-+++ b/net/atm/common.h
-@@ -17,7 +17,7 @@ int vcc_connect(struct socket *sock, int itf, short vpi, int vci);
- int vcc_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
- 		int flags);
- int vcc_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len);
--__poll_t vcc_poll(struct file *file, struct socket *sock, poll_table *wait);
-+__poll_t vcc_poll_mask(struct socket *sock, __poll_t events);
- int vcc_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
- int vcc_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
- int vcc_setsockopt(struct socket *sock, int level, int optname,
-diff --git a/net/atm/pvc.c b/net/atm/pvc.c
-index e1140b3bdcaa..930651c5e77c 100644
---- a/net/atm/pvc.c
-+++ b/net/atm/pvc.c
-@@ -114,7 +114,7 @@ static const struct proto_ops pvc_proto_ops = {
- 	.socketpair =	sock_no_socketpair,
- 	.accept =	sock_no_accept,
- 	.getname =	pvc_getname,
--	.poll =		vcc_poll,
-+	.poll_mask =	vcc_poll_mask,
- 	.ioctl =	vcc_ioctl,
- #ifdef CONFIG_COMPAT
- 	.compat_ioctl = vcc_compat_ioctl,
-diff --git a/net/atm/svc.c b/net/atm/svc.c
-index c458adcbc177..ad0e6ffb9cfe 100644
---- a/net/atm/svc.c
-+++ b/net/atm/svc.c
-@@ -637,7 +637,7 @@ static const struct proto_ops svc_proto_ops = {
- 	.socketpair =	sock_no_socketpair,
- 	.accept =	svc_accept,
- 	.getname =	svc_getname,
--	.poll =		vcc_poll,
-+	.poll_mask =	vcc_poll_mask,
- 	.ioctl =	svc_ioctl,
- #ifdef CONFIG_COMPAT
- 	.compat_ioctl =	svc_compat_ioctl,
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-
+ 	if (sk->sk_shutdown & RCV_SHUTDOWN)
+ 		revents |= POLLRDHUP | POLLIN | POLLRDNORM;
+ 	if (sk->sk_shutdown == SHUTDOWN_MASK)
+@@ -3005,7 +3001,7 @@ static const struct proto_ops msg_ops = {
+ 	.socketpair	= tipc_socketpair,
+ 	.accept		= sock_no_accept,
+ 	.getname	= tipc_getname,
+-	.poll		= tipc_poll,
++	.poll_mask	= tipc_poll_mask,
+ 	.ioctl		= tipc_ioctl,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= tipc_shutdown,
+@@ -3026,7 +3022,7 @@ static const struct proto_ops packet_ops = {
+ 	.socketpair	= tipc_socketpair,
+ 	.accept		= tipc_accept,
+ 	.getname	= tipc_getname,
+-	.poll		= tipc_poll,
++	.poll_mask	= tipc_poll_mask,
+ 	.ioctl		= tipc_ioctl,
+ 	.listen		= tipc_listen,
+ 	.shutdown	= tipc_shutdown,
+@@ -3047,7 +3043,7 @@ static const struct proto_ops stream_ops = {
+ 	.socketpair	= tipc_socketpair,
+ 	.accept		= tipc_accept,
+ 	.getname	= tipc_getname,
+-	.poll		= tipc_poll,
++	.poll_mask	= tipc_poll_mask,
+ 	.ioctl		= tipc_ioctl,
+ 	.listen		= tipc_listen,
+ 	.shutdown	= tipc_shutdown,
 -- 
 2.14.2
 
