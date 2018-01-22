@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 10/36] fs: cleanup do_pollfd
-Date: Mon, 22 Jan 2018 21:12:17 +0100
-Message-ID: <20180122201243.31610-11-hch@lst.de>
+Subject: [PATCH 09/36] fs: unexport poll_schedule_timeout
+Date: Mon, 22 Jan 2018 21:12:16 +0100
+Message-ID: <20180122201243.31610-10-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
@@ -10,76 +10,48 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Use straigline code with failure handling gotos instead of a lot
-of nested conditionals.
+No users outside of select.c.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/select.c | 48 +++++++++++++++++++++++-------------------------
- 1 file changed, 23 insertions(+), 25 deletions(-)
+ fs/select.c          | 3 +--
+ include/linux/poll.h | 2 --
+ 2 files changed, 1 insertion(+), 4 deletions(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 4e1dccac2702..2ad66647f340 100644
+index ec14171dd78a..4e1dccac2702 100644
 --- a/fs/select.c
 +++ b/fs/select.c
-@@ -806,34 +806,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
- 				     bool *can_busy_poll,
- 				     __poll_t busy_flag)
- {
--	__poll_t mask;
--	int fd;
--
--	mask = 0;
--	fd = pollfd->fd;
--	if (fd >= 0) {
--		struct fd f = fdget(fd);
--		mask = POLLNVAL;
--		if (f.file) {
--			/* userland u16 ->events contains POLL... bitmap */
--			__poll_t filter = demangle_poll(pollfd->events) |
--						POLLERR | POLLHUP;
--			mask = DEFAULT_POLLMASK;
--			if (f.file->f_op->poll) {
--				pwait->_key = filter;
--				pwait->_key |= busy_flag;
--				mask = f.file->f_op->poll(f.file, pwait);
--				if (mask & busy_flag)
--					*can_busy_poll = true;
--			}
--			/* Mask out unneeded events. */
--			mask &= filter;
--			fdput(f);
--		}
-+	__poll_t mask = 0, filter;
-+	struct fd f;
-+
-+	if (pollfd->fd < 0)
-+		goto out;
-+	mask = POLLNVAL;
-+	f = fdget(pollfd->fd);
-+	if (!f.file)
-+		goto out;
-+
-+	/* userland u16 ->events contains POLL... bitmap */
-+	filter = demangle_poll(pollfd->events) | POLLERR | POLLHUP;
-+	mask = DEFAULT_POLLMASK;
-+	if (f.file->f_op->poll) {
-+		pwait->_key = filter | busy_flag;
-+		mask = f.file->f_op->poll(f.file, pwait);
-+		if (mask & busy_flag)
-+			*can_busy_poll = true;
- 	}
-+
-+	/* Mask out unneeded events. */
-+	mask &= filter;
-+	fdput(f);
-+out:
- 	/* ... and so does ->revents */
- 	pollfd->revents = mangle_poll(mask);
--
- 	return mask;
+@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
+ 	add_wait_queue(wait_address, &entry->wait);
  }
  
+-int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
++static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 			  ktime_t *expires, unsigned long slack)
+ {
+ 	int rc = -EINTR;
+@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 
+ 	return rc;
+ }
+-EXPORT_SYMBOL(poll_schedule_timeout);
+ 
+ /**
+  * poll_select_set_timeout - helper function to setup the timeout value
+diff --git a/include/linux/poll.h b/include/linux/poll.h
+index 04781a753326..a4b465fa2ca0 100644
+--- a/include/linux/poll.h
++++ b/include/linux/poll.h
+@@ -95,8 +95,6 @@ struct poll_wqueues {
+ 
+ extern void poll_initwait(struct poll_wqueues *pwq);
+ extern void poll_freewait(struct poll_wqueues *pwq);
+-extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+-				 ktime_t *expires, unsigned long slack);
+ extern u64 select_estimate_accuracy(struct timespec64 *tv);
+ 
+ #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
 -- 
 2.14.2
 
