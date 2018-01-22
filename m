@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 30/36] net/iucv: convert to ->poll_mask
-Date: Mon, 22 Jan 2018 21:12:37 +0100
-Message-ID: <20180122201243.31610-31-hch@lst.de>
+Subject: [PATCH 28/36] net/nfc: convert to ->poll_mask
+Date: Mon, 22 Jan 2018 21:12:35 +0100
+Message-ID: <20180122201243.31610-29-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
@@ -12,52 +12,49 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/iucv/af_iucv.h | 2 --
- net/iucv/af_iucv.c         | 7 ++-----
- 2 files changed, 2 insertions(+), 7 deletions(-)
+ net/nfc/llcp_sock.c | 9 +++------
+ 1 file changed, 3 insertions(+), 6 deletions(-)
 
-diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
-index f4c21b5a1242..b0eaeb02d46d 100644
---- a/include/net/iucv/af_iucv.h
-+++ b/include/net/iucv/af_iucv.h
-@@ -153,8 +153,6 @@ struct iucv_sock_list {
- 	atomic_t	  autobind_name;
- };
- 
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait);
- void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
- void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
- void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
-diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
-index 64331158d693..da2043d1b322 100644
---- a/net/iucv/af_iucv.c
-+++ b/net/iucv/af_iucv.c
-@@ -1489,14 +1489,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
+diff --git a/net/nfc/llcp_sock.c b/net/nfc/llcp_sock.c
+index 985909f105eb..1ee9f35084b1 100644
+--- a/net/nfc/llcp_sock.c
++++ b/net/nfc/llcp_sock.c
+@@ -549,16 +549,13 @@ static inline __poll_t llcp_accept_poll(struct sock *parent)
  	return 0;
  }
  
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait)
-+static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
+-static __poll_t llcp_sock_poll(struct file *file, struct socket *sock,
+-				   poll_table *wait)
++static __poll_t llcp_sock_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
  	__poll_t mask = 0;
  
+ 	pr_debug("%p\n", sk);
+ 
 -	sock_poll_wait(file, sk_sleep(sk), wait);
 -
- 	if (sk->sk_state == IUCV_LISTEN)
- 		return iucv_accept_poll(sk);
+ 	if (sk->sk_state == LLCP_LISTEN)
+ 		return llcp_accept_poll(sk);
  
-@@ -2389,7 +2386,7 @@ static const struct proto_ops iucv_sock_ops = {
- 	.getname	= iucv_sock_getname,
- 	.sendmsg	= iucv_sock_sendmsg,
- 	.recvmsg	= iucv_sock_recvmsg,
--	.poll		= iucv_sock_poll,
-+	.poll_mask	= iucv_sock_poll_mask,
- 	.ioctl		= sock_no_ioctl,
- 	.mmap		= sock_no_mmap,
- 	.socketpair	= sock_no_socketpair,
+@@ -900,7 +897,7 @@ static const struct proto_ops llcp_sock_ops = {
+ 	.socketpair     = sock_no_socketpair,
+ 	.accept         = llcp_sock_accept,
+ 	.getname        = llcp_sock_getname,
+-	.poll           = llcp_sock_poll,
++	.poll_mask      = llcp_sock_poll_mask,
+ 	.ioctl          = sock_no_ioctl,
+ 	.listen         = llcp_sock_listen,
+ 	.shutdown       = sock_no_shutdown,
+@@ -920,7 +917,7 @@ static const struct proto_ops llcp_rawsock_ops = {
+ 	.socketpair     = sock_no_socketpair,
+ 	.accept         = sock_no_accept,
+ 	.getname        = llcp_sock_getname,
+-	.poll           = llcp_sock_poll,
++	.poll_mask      = llcp_sock_poll_mask,
+ 	.ioctl          = sock_no_ioctl,
+ 	.listen         = sock_no_listen,
+ 	.shutdown       = sock_no_shutdown,
 -- 
 2.14.2
 
