@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/36] fs: unexport poll_schedule_timeout
-Date: Mon, 22 Jan 2018 21:12:16 +0100
-Message-ID: <20180122201243.31610-10-hch@lst.de>
+Subject: [PATCH 11/36] fs: update documentation for __poll_t
+Date: Mon, 22 Jan 2018 21:12:18 +0100
+Message-ID: <20180122201243.31610-12-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
@@ -10,48 +10,38 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-No users outside of select.c.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/select.c          | 3 +--
- include/linux/poll.h | 2 --
- 2 files changed, 1 insertion(+), 4 deletions(-)
+ Documentation/filesystems/Locking | 2 +-
+ Documentation/filesystems/vfs.txt | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/select.c b/fs/select.c
-index ec14171dd78a..4e1dccac2702 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
- 	add_wait_queue(wait_address, &entry->wait);
- }
- 
--int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
-+static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
- 			  ktime_t *expires, unsigned long slack)
- {
- 	int rc = -EINTR;
-@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
- 
- 	return rc;
- }
--EXPORT_SYMBOL(poll_schedule_timeout);
- 
- /**
-  * poll_select_set_timeout - helper function to setup the timeout value
-diff --git a/include/linux/poll.h b/include/linux/poll.h
-index 04781a753326..a4b465fa2ca0 100644
---- a/include/linux/poll.h
-+++ b/include/linux/poll.h
-@@ -95,8 +95,6 @@ struct poll_wqueues {
- 
- extern void poll_initwait(struct poll_wqueues *pwq);
- extern void poll_freewait(struct poll_wqueues *pwq);
--extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
--				 ktime_t *expires, unsigned long slack);
- extern u64 select_estimate_accuracy(struct timespec64 *tv);
- 
- #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
+diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
+index 75d2d57e2c44..220bba28f72b 100644
+--- a/Documentation/filesystems/Locking
++++ b/Documentation/filesystems/Locking
+@@ -439,7 +439,7 @@ prototypes:
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+ 	int (*iterate) (struct file *, struct dir_context *);
+-	unsigned int (*poll) (struct file *, struct poll_table_struct *);
++	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 5fd325df59e2..f608180ad59d 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -856,7 +856,7 @@ struct file_operations {
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+ 	int (*iterate) (struct file *, struct dir_context *);
+-	unsigned int (*poll) (struct file *, struct poll_table_struct *);
++	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
 -- 
 2.14.2
 
