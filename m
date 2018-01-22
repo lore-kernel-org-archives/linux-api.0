@@ -1,63 +1,41 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 34/36] eventfd: switch to ->poll_mask
-Date: Mon, 22 Jan 2018 21:12:41 +0100
-Message-ID: <20180122201243.31610-35-hch@lst.de>
-References: <20180122201243.31610-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180122201243.31610-1-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
-To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [RFC PATCH 1/2] arm64: fpsimd: Fix bad si_code for undiagnosed SIGFPE
+Date: Mon, 22 Jan 2018 15:13:08 -0600
+Message-ID: <878tcp8umz.fsf@xmission.com>
+References: <1516623798-25001-1-git-send-email-Dave.Martin@arm.com>
+        <1516623798-25001-2-git-send-email-Dave.Martin@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1516623798-25001-2-git-send-email-Dave.Martin@arm.com> (Dave
+        Martin's message of "Mon, 22 Jan 2018 12:23:17 +0000")
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: linux-arm-kernel@lists.infradead.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Russell King <linux@armlinux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/eventfd.c | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/fs/eventfd.c b/fs/eventfd.c
-index 6318a9b57e53..2bbbf13cb816 100644
---- a/fs/eventfd.c
-+++ b/fs/eventfd.c
-@@ -114,14 +114,20 @@ static int eventfd_release(struct inode *inode, struct file *file)
- 	return 0;
- }
- 
--static __poll_t eventfd_poll(struct file *file, poll_table *wait)
-+static struct wait_queue_head *
-+eventfd_get_poll_head(struct file *file, __poll_t events)
-+{
-+	struct eventfd_ctx *ctx = file->private_data;
-+
-+	return &ctx->wqh;
-+}
-+
-+static __poll_t eventfd_poll_mask(struct file *file, __poll_t eventmask)
- {
- 	struct eventfd_ctx *ctx = file->private_data;
- 	__poll_t events = 0;
- 	u64 count;
- 
--	poll_wait(file, &ctx->wqh, wait);
--
- 	/*
- 	 * All writes to ctx->count occur within ctx->wqh.lock.  This read
- 	 * can be done outside ctx->wqh.lock because we know that poll_wait
-@@ -341,7 +347,8 @@ static const struct file_operations eventfd_fops = {
- 	.show_fdinfo	= eventfd_show_fdinfo,
- #endif
- 	.release	= eventfd_release,
--	.poll		= eventfd_poll,
-+	.get_poll_head	= eventfd_get_poll_head,
-+	.poll_mask	= eventfd_poll_mask,
- 	.read		= eventfd_read,
- 	.write		= eventfd_write,
- 	.llseek		= noop_llseek,
--- 
-2.14.2
+> diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+> index e447283..77edb00 100644
+> --- a/include/uapi/asm-generic/siginfo.h
+> +++ b/include/uapi/asm-generic/siginfo.h
+> @@ -193,7 +193,8 @@ typedef struct siginfo {
+>  #define FPE_FLTRES	6	/* floating point inexact result */
+>  #define FPE_FLTINV	7	/* floating point invalid operation */
+>  #define FPE_FLTSUB	8	/* subscript out of range */
+> -#define NSIGFPE		8
+> +#define FPE_UNKNOWN	9	/* undiagnosed floating-point exception */
+> +#define NSIGFPE		9
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Minor nit here.
+
+At least before this is final I would really appreciate if you could
+rebase this on top of my unificiation of siginfo.h that I posted on
+linux-arch and is in my siginfo-next branch.
+
+As that already pushes NSIGFPE up to 13.
+
+Which would make this patch change NSIGFPE to 14 and allocate the number
+14 for FPE_UNKNOWN
+
+Eric
