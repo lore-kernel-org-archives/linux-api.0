@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 32/36] crypto: af_alg: convert to ->poll_mask
-Date: Mon, 22 Jan 2018 21:12:39 +0100
-Message-ID: <20180122201243.31610-33-hch@lst.de>
+Subject: [PATCH 34/36] eventfd: switch to ->poll_mask
+Date: Mon, 22 Jan 2018 21:12:41 +0100
+Message-ID: <20180122201243.31610-35-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
@@ -12,105 +12,47 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- crypto/af_alg.c         | 13 +++----------
- crypto/algif_aead.c     |  4 ++--
- crypto/algif_skcipher.c |  4 ++--
- include/crypto/if_alg.h |  3 +--
- 4 files changed, 8 insertions(+), 16 deletions(-)
+ fs/eventfd.c | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-index 592797ec8075..2639ffda4f4d 100644
---- a/crypto/af_alg.c
-+++ b/crypto/af_alg.c
-@@ -1058,19 +1058,12 @@ void af_alg_async_cb(struct crypto_async_request *_req, int err)
+diff --git a/fs/eventfd.c b/fs/eventfd.c
+index 6318a9b57e53..2bbbf13cb816 100644
+--- a/fs/eventfd.c
++++ b/fs/eventfd.c
+@@ -114,14 +114,20 @@ static int eventfd_release(struct inode *inode, struct file *file)
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(af_alg_async_cb);
  
--/**
-- * af_alg_poll - poll system call handler
-- */
--__poll_t af_alg_poll(struct file *file, struct socket *sock,
--			 poll_table *wait)
-+__poll_t af_alg_poll_mask(struct socket *sock, __poll_t events)
+-static __poll_t eventfd_poll(struct file *file, poll_table *wait)
++static struct wait_queue_head *
++eventfd_get_poll_head(struct file *file, __poll_t events)
++{
++	struct eventfd_ctx *ctx = file->private_data;
++
++	return &ctx->wqh;
++}
++
++static __poll_t eventfd_poll_mask(struct file *file, __poll_t eventmask)
  {
- 	struct sock *sk = sock->sk;
- 	struct alg_sock *ask = alg_sk(sk);
- 	struct af_alg_ctx *ctx = ask->private;
--	__poll_t mask;
+ 	struct eventfd_ctx *ctx = file->private_data;
+ 	__poll_t events = 0;
+ 	u64 count;
+ 
+-	poll_wait(file, &ctx->wqh, wait);
 -
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	__poll_t mask = 0;
- 
- 	if (!ctx->more || ctx->used)
- 		mask |= POLLIN | POLLRDNORM;
-@@ -1080,7 +1073,7 @@ __poll_t af_alg_poll(struct file *file, struct socket *sock,
- 
- 	return mask;
- }
--EXPORT_SYMBOL_GPL(af_alg_poll);
-+EXPORT_SYMBOL_GPL(af_alg_poll_mask);
- 
- /**
-  * af_alg_alloc_areq - allocate struct af_alg_async_req
-diff --git a/crypto/algif_aead.c b/crypto/algif_aead.c
-index ddcc45f77edd..0f726e55b0b1 100644
---- a/crypto/algif_aead.c
-+++ b/crypto/algif_aead.c
-@@ -376,7 +376,7 @@ static struct proto_ops algif_aead_ops = {
- 	.sendmsg	=	aead_sendmsg,
- 	.sendpage	=	af_alg_sendpage,
- 	.recvmsg	=	aead_recvmsg,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static int aead_check_key(struct socket *sock)
-@@ -472,7 +472,7 @@ static struct proto_ops algif_aead_ops_nokey = {
- 	.sendmsg	=	aead_sendmsg_nokey,
- 	.sendpage	=	aead_sendpage_nokey,
- 	.recvmsg	=	aead_recvmsg_nokey,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static void *aead_bind(const char *name, u32 type, u32 mask)
-diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
-index 494c99cbe48f..e5463cc0821e 100644
---- a/crypto/algif_skcipher.c
-+++ b/crypto/algif_skcipher.c
-@@ -212,7 +212,7 @@ static struct proto_ops algif_skcipher_ops = {
- 	.sendmsg	=	skcipher_sendmsg,
- 	.sendpage	=	af_alg_sendpage,
- 	.recvmsg	=	skcipher_recvmsg,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static int skcipher_check_key(struct socket *sock)
-@@ -308,7 +308,7 @@ static struct proto_ops algif_skcipher_ops_nokey = {
- 	.sendmsg	=	skcipher_sendmsg_nokey,
- 	.sendpage	=	skcipher_sendpage_nokey,
- 	.recvmsg	=	skcipher_recvmsg_nokey,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static void *skcipher_bind(const char *name, u32 type, u32 mask)
-diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
-index a50bdb9d7cfd..ff575671fb2f 100644
---- a/include/crypto/if_alg.h
-+++ b/include/crypto/if_alg.h
-@@ -244,8 +244,7 @@ ssize_t af_alg_sendpage(struct socket *sock, struct page *page,
- 			int offset, size_t size, int flags);
- void af_alg_free_resources(struct af_alg_async_req *areq);
- void af_alg_async_cb(struct crypto_async_request *_req, int err);
--__poll_t af_alg_poll(struct file *file, struct socket *sock,
--			 poll_table *wait);
-+__poll_t af_alg_poll_mask(struct socket *sock, __poll_t events);
- struct af_alg_async_req *af_alg_alloc_areq(struct sock *sk,
- 					   unsigned int areqlen);
- int af_alg_get_rsgl(struct sock *sk, struct msghdr *msg, int flags,
+ 	/*
+ 	 * All writes to ctx->count occur within ctx->wqh.lock.  This read
+ 	 * can be done outside ctx->wqh.lock because we know that poll_wait
+@@ -341,7 +347,8 @@ static const struct file_operations eventfd_fops = {
+ 	.show_fdinfo	= eventfd_show_fdinfo,
+ #endif
+ 	.release	= eventfd_release,
+-	.poll		= eventfd_poll,
++	.get_poll_head	= eventfd_get_poll_head,
++	.poll_mask	= eventfd_poll_mask,
+ 	.read		= eventfd_read,
+ 	.write		= eventfd_write,
+ 	.llseek		= noop_llseek,
 -- 
 2.14.2
 
