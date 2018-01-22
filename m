@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/36] aio: delete iocbs from the active_reqs list in kiocb_cancel
-Date: Mon, 22 Jan 2018 21:12:13 +0100
-Message-ID: <20180122201243.31610-7-hch@lst.de>
+Subject: [PATCH 10/36] fs: cleanup do_pollfd
+Date: Mon, 22 Jan 2018 21:12:17 +0100
+Message-ID: <20180122201243.31610-11-hch@lst.de>
 References: <20180122201243.31610-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180122201243.31610-1-hch@lst.de>
@@ -10,36 +10,75 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-One we cancel an iocb there is no reason to keep it on the active_reqs
-list, given that the list is only used to look for cancelation candidates.
+Use straigline code with failure handling gotos instead of a lot
+of nested conditionals.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
 ---
- fs/aio.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ fs/select.c | 48 +++++++++++++++++++++++-------------------------
+ 1 file changed, 23 insertions(+), 25 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 2d40cf5dd4ec..0b6394b4e528 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -561,6 +561,8 @@ static int kiocb_cancel(struct aio_kiocb *kiocb)
+diff --git a/fs/select.c b/fs/select.c
+index 4e1dccac2702..2ad66647f340 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -806,34 +806,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+ 				     bool *can_busy_poll,
+ 				     __poll_t busy_flag)
  {
- 	kiocb_cancel_fn *cancel = kiocb->ki_cancel;
- 
-+	list_del_init(&kiocb->ki_list);
-+
- 	if (!cancel)
- 		return -EINVAL;
- 	kiocb->ki_cancel = NULL;
-@@ -607,8 +609,6 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	while (!list_empty(&ctx->active_reqs)) {
- 		req = list_first_entry(&ctx->active_reqs,
- 				       struct aio_kiocb, ki_list);
+-	__poll_t mask;
+-	int fd;
 -
--		list_del_init(&req->ki_list);
- 		kiocb_cancel(req);
+-	mask = 0;
+-	fd = pollfd->fd;
+-	if (fd >= 0) {
+-		struct fd f = fdget(fd);
+-		mask = POLLNVAL;
+-		if (f.file) {
+-			/* userland u16 ->events contains POLL... bitmap */
+-			__poll_t filter = demangle_poll(pollfd->events) |
+-						POLLERR | POLLHUP;
+-			mask = DEFAULT_POLLMASK;
+-			if (f.file->f_op->poll) {
+-				pwait->_key = filter;
+-				pwait->_key |= busy_flag;
+-				mask = f.file->f_op->poll(f.file, pwait);
+-				if (mask & busy_flag)
+-					*can_busy_poll = true;
+-			}
+-			/* Mask out unneeded events. */
+-			mask &= filter;
+-			fdput(f);
+-		}
++	__poll_t mask = 0, filter;
++	struct fd f;
++
++	if (pollfd->fd < 0)
++		goto out;
++	mask = POLLNVAL;
++	f = fdget(pollfd->fd);
++	if (!f.file)
++		goto out;
++
++	/* userland u16 ->events contains POLL... bitmap */
++	filter = demangle_poll(pollfd->events) | POLLERR | POLLHUP;
++	mask = DEFAULT_POLLMASK;
++	if (f.file->f_op->poll) {
++		pwait->_key = filter | busy_flag;
++		mask = f.file->f_op->poll(f.file, pwait);
++		if (mask & busy_flag)
++			*can_busy_poll = true;
  	}
++
++	/* Mask out unneeded events. */
++	mask &= filter;
++	fdput(f);
++out:
+ 	/* ... and so does ->revents */
+ 	pollfd->revents = mangle_poll(mask);
+-
+ 	return mask;
+ }
  
 -- 
 2.14.2
