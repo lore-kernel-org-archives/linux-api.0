@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 08/11] membarrier: Provide core serializing command (v2)
-Date: Tue, 23 Jan 2018 10:57:30 -0500
-Message-ID: <20180123155733.3404-9-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 01/11] membarrier: selftest: Test private expedited cmd (v2)
+Date: Tue, 23 Jan 2018 10:57:23 -0500
+Message-ID: <20180123155733.3404-2-mathieu.desnoyers@efficios.com>
 References: <20180123155733.3404-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180123155733.3404-1-mathieu.desnoyers@efficios.com>
@@ -10,20 +10,16 @@ To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thoma
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David Sehr <sehr@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, Mathieu Desnoyers <mathieu.desnoy>
 List-Id: linux-api@vger.kernel.org
 
-Provide core serializing membarrier command to support memory reclaim
-by JIT.
+Test the new MEMBARRIER_CMD_PRIVATE_EXPEDITED and
+MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED commands.
 
-Each architecture needs to explicitly opt into that support by
-documenting in their architecture code how they provide the core
-serializing instructions required when returning from the membarrier
-IPI, and after the scheduler has updated the curr->mm pointer (before
-going back to user-space). They should then select
-ARCH_HAS_MEMBARRIER_SYNC_CORE to enable support for that command on
-their architecture.
+Add checks expecting specific error values on system calls expected to
+fail.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
+Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 CC: Peter Zijlstra <peterz@infradead.org>
-CC: Andy Lutomirski <luto@kernel.org>
 CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: Andrew Hunter <ahh@google.com>
@@ -33,277 +29,183 @@ CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 CC: Paul Mackerras <paulus@samba.org>
 CC: Michael Ellerman <mpe@ellerman.id.au>
 CC: Dave Watson <davejwatson@fb.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Andrea Parri <parri.andrea@gmail.com>
-CC: Russell King <linux@armlinux.org.uk>
-CC: Greg Hackmann <ghackmann@google.com>
+CC: Alan Stern <stern@rowland.harvard.edu>
 CC: Will Deacon <will.deacon@arm.com>
-CC: David Sehr <sehr@google.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Alice Ferrazzi <alice.ferrazzi@gmail.com>
+CC: Paul Elder <paul.elder@pitt.edu>
+CC: linux-kselftest@vger.kernel.org
 CC: linux-arch@vger.kernel.org
 ---
 Changes since v1:
-- Include linux/sync_core.h
+- return result of ksft_exit_pass from main(), silencing compiler
+  warning about missing return value.
 ---
- include/linux/sched/mm.h        | 18 ++++++++++++++
- include/uapi/linux/membarrier.h | 32 ++++++++++++++++++++++++-
- init/Kconfig                    |  3 +++
- kernel/sched/core.c             |  6 ++++-
- kernel/sched/membarrier.c       | 53 +++++++++++++++++++++++++++++++----------
- 5 files changed, 98 insertions(+), 14 deletions(-)
+ .../testing/selftests/membarrier/membarrier_test.c | 111 ++++++++++++++++++---
+ 1 file changed, 95 insertions(+), 16 deletions(-)
 
-diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index c7ad7a70cfef..a7840f0f8832 100644
---- a/include/linux/sched/mm.h
-+++ b/include/linux/sched/mm.h
-@@ -7,6 +7,7 @@
- #include <linux/sched.h>
- #include <linux/mm_types.h>
- #include <linux/gfp.h>
-+#include <linux/sync_core.h>
+diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
+index 9e674d9514d1..e6ee73d01fa1 100644
+--- a/tools/testing/selftests/membarrier/membarrier_test.c
++++ b/tools/testing/selftests/membarrier/membarrier_test.c
+@@ -16,49 +16,119 @@ static int sys_membarrier(int cmd, int flags)
+ static int test_membarrier_cmd_fail(void)
+ {
+ 	int cmd = -1, flags = 0;
++	const char *test_name = "sys membarrier invalid command";
  
- /*
-  * Routines for handling mm_structs
-@@ -223,12 +224,26 @@ enum {
- 	MEMBARRIER_STATE_PRIVATE_EXPEDITED			= (1U << 1),
- 	MEMBARRIER_STATE_GLOBAL_EXPEDITED_READY			= (1U << 2),
- 	MEMBARRIER_STATE_GLOBAL_EXPEDITED			= (1U << 3),
-+	MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY	= (1U << 4),
-+	MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE		= (1U << 5),
-+};
+ 	if (sys_membarrier(cmd, flags) != -1) {
+ 		ksft_exit_fail_msg(
+-			"sys membarrier invalid command test: command = %d, flags = %d. Should fail, but passed\n",
+-			cmd, flags);
++			"%s test: command = %d, flags = %d. Should fail, but passed\n",
++			test_name, cmd, flags);
++	}
++	if (errno != EINVAL) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EINVAL, strerror(EINVAL),
++			errno, strerror(errno));
+ 	}
+ 
+ 	ksft_test_result_pass(
+-		"sys membarrier invalid command test: command = %d, flags = %d. Failed as expected\n",
+-		cmd, flags);
++		"%s test: command = %d, flags = %d, errno = %d. Failed as expected\n",
++		test_name, cmd, flags, errno);
+ 	return 0;
+ }
+ 
+ static int test_membarrier_flags_fail(void)
+ {
+ 	int cmd = MEMBARRIER_CMD_QUERY, flags = 1;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_QUERY invalid flags";
+ 
+ 	if (sys_membarrier(cmd, flags) != -1) {
+ 		ksft_exit_fail_msg(
+-			"sys membarrier MEMBARRIER_CMD_QUERY invalid flags test: flags = %d. Should fail, but passed\n",
+-			flags);
++			"%s test: flags = %d. Should fail, but passed\n",
++			test_name, flags);
++	}
++	if (errno != EINVAL) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EINVAL, strerror(EINVAL),
++			errno, strerror(errno));
+ 	}
+ 
+ 	ksft_test_result_pass(
+-		"sys membarrier MEMBARRIER_CMD_QUERY invalid flags test: flags = %d. Failed as expected\n",
+-		flags);
++		"%s test: flags = %d, errno = %d. Failed as expected\n",
++		test_name, flags, errno);
+ 	return 0;
+ }
+ 
+-static int test_membarrier_success(void)
++static int test_membarrier_shared_success(void)
+ {
+ 	int cmd = MEMBARRIER_CMD_SHARED, flags = 0;
+-	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED\n";
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED";
 +
-+enum {
-+	MEMBARRIER_FLAG_SYNC_CORE	= (1U << 0),
- };
- 
- #ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
- #include <asm/membarrier.h>
- #endif
- 
-+static inline void membarrier_mm_sync_core_before_usermode(struct mm_struct *mm)
-+{
-+	if (likely(!(atomic_read(&mm->membarrier_state) &
-+		     MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE)))
-+		return;
-+	sync_core_before_usermode();
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n", test_name, flags);
++	return 0;
 +}
 +
- static inline void membarrier_execve(struct task_struct *t)
- {
- 	atomic_set(&t->mm->membarrier_state, 0);
-@@ -244,6 +259,9 @@ static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
- static inline void membarrier_execve(struct task_struct *t)
- {
- }
-+static inline void membarrier_mm_sync_core_before_usermode(struct mm_struct *mm)
++static int test_membarrier_private_expedited_fail(void)
 +{
++	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED not registered failure";
++
++	if (sys_membarrier(cmd, flags) != -1) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should fail, but passed\n",
++			test_name, flags);
++	}
++	if (errno != EPERM) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
++			test_name, flags, EPERM, strerror(EPERM),
++			errno, strerror(errno));
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d, errno = %d\n",
++		test_name, flags, errno);
++	return 0;
 +}
- #endif
- 
- #endif /* _LINUX_SCHED_MM_H */
-diff --git a/include/uapi/linux/membarrier.h b/include/uapi/linux/membarrier.h
-index d252506e1b5e..5891d7614c8c 100644
---- a/include/uapi/linux/membarrier.h
-+++ b/include/uapi/linux/membarrier.h
-@@ -73,7 +73,7 @@
-  *                          to and return from the system call
-  *                          (non-running threads are de facto in such a
-  *                          state). This only covers threads from the
-- *                          same processes as the caller thread. This
-+ *                          same process as the caller thread. This
-  *                          command returns 0 on success. The
-  *                          "expedited" commands complete faster than
-  *                          the non-expedited ones, they never block,
-@@ -86,6 +86,34 @@
-  *                          Register the process intent to use
-  *                          MEMBARRIER_CMD_PRIVATE_EXPEDITED. Always
-  *                          returns 0.
-+ * @MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE:
-+ *                          In addition to provide memory ordering
-+ *                          guarantees described in
-+ *                          MEMBARRIER_CMD_PRIVATE_EXPEDITED, ensure
-+ *                          the caller thread, upon return from system
-+ *                          call, that all its running threads siblings
-+ *                          have executed a core serializing
-+ *                          instruction. (architectures are required to
-+ *                          guarantee that non-running threads issue
-+ *                          core serializing instructions before they
-+ *                          resume user-space execution). This only
-+ *                          covers threads from the same process as the
-+ *                          caller thread. This command returns 0 on
-+ *                          success. The "expedited" commands complete
-+ *                          faster than the non-expedited ones, they
-+ *                          never block, but have the downside of
-+ *                          causing extra overhead. If this command is
-+ *                          not implemented by an architecture, -EINVAL
-+ *                          is returned. A process needs to register its
-+ *                          intent to use the private expedited sync
-+ *                          core command prior to using it, otherwise
-+ *                          this command returns -EPERM.
-+ * @MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE:
-+ *                          Register the process intent to use
-+ *                          MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE.
-+ *                          If this command is not implemented by an
-+ *                          architecture, -EINVAL is returned.
-+ *                          Returns 0 on success.
-  * @MEMBARRIER_CMD_SHARED:
-  *                          Alias to MEMBARRIER_CMD_GLOBAL. Provided for
-  *                          header backward compatibility.
-@@ -101,6 +129,8 @@ enum membarrier_cmd {
- 	MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED		= (1 << 2),
- 	MEMBARRIER_CMD_PRIVATE_EXPEDITED			= (1 << 3),
- 	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED		= (1 << 4),
-+	MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE		= (1 << 5),
-+	MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE	= (1 << 6),
- 
- 	/* Alias for header backward compatibility. */
- 	MEMBARRIER_CMD_SHARED			= MEMBARRIER_CMD_GLOBAL,
-diff --git a/init/Kconfig b/init/Kconfig
-index 30208da2221f..30b65febeb23 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1415,6 +1415,9 @@ config USERFAULTFD
- config ARCH_HAS_MEMBARRIER_HOOKS
- 	bool
- 
-+config ARCH_HAS_MEMBARRIER_SYNC_CORE
-+	bool
 +
- config EMBEDDED
- 	bool "Embedded system"
- 	option allnoconfig_y
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f38c4c7e256a..041893128f51 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2662,9 +2662,13 @@ static struct rq *finish_task_switch(struct task_struct *prev)
- 	 * thread, mmdrop()'s implicit full barrier is required by the
- 	 * membarrier system call, because the current active_mm can
- 	 * become the current mm without going through switch_mm().
-+	 * membarrier also requires a core serializing instruction
-+	 * before going back to user-space after storing to rq->curr.
- 	 */
--	if (mm)
-+	if (mm) {
-+		membarrier_mm_sync_core_before_usermode(mm);
- 		mmdrop(mm);
-+	}
- 	if (unlikely(prev_state == TASK_DEAD)) {
- 		if (prev->sched_class->task_dead)
- 			prev->sched_class->task_dead(prev);
-diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
-index d2087d5f9837..5d0762633639 100644
---- a/kernel/sched/membarrier.c
-+++ b/kernel/sched/membarrier.c
-@@ -26,11 +26,20 @@
-  * Bitmask made from a "or" of all commands within enum membarrier_cmd,
-  * except MEMBARRIER_CMD_QUERY.
-  */
-+#ifdef CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE
-+#define MEMBARRIER_PRIVATE_EXPEDITED_SYNC_CORE_BITMASK	\
-+	(MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE \
-+	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE)
-+#else
-+#define MEMBARRIER_PRIVATE_EXPEDITED_SYNC_CORE_BITMASK	0
-+#endif
-+
- #define MEMBARRIER_CMD_BITMASK	\
- 	(MEMBARRIER_CMD_GLOBAL | MEMBARRIER_CMD_GLOBAL_EXPEDITED \
- 	| MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED \
- 	| MEMBARRIER_CMD_PRIVATE_EXPEDITED	\
--	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED)
-+	| MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED	\
-+	| MEMBARRIER_PRIVATE_EXPEDITED_SYNC_CORE_BITMASK)
++static int test_membarrier_register_private_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED";
  
- static void ipi_mb(void *info)
- {
-@@ -104,15 +113,23 @@ static int membarrier_global_expedited(void)
- 	return 0;
- }
- 
--static int membarrier_private_expedited(void)
-+static int membarrier_private_expedited(int flags)
- {
- 	int cpu;
- 	bool fallback = false;
- 	cpumask_var_t tmpmask;
- 
--	if (!(atomic_read(&current->mm->membarrier_state)
--			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY))
--		return -EPERM;
-+	if (flags & MEMBARRIER_FLAG_SYNC_CORE) {
-+		if (!IS_ENABLED(CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE))
-+			return -EINVAL;
-+		if (!(atomic_read(&current->mm->membarrier_state) &
-+		      MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY))
-+			return -EPERM;
-+	} else {
-+		if (!(atomic_read(&current->mm->membarrier_state) &
-+		      MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY))
-+			return -EPERM;
-+	}
- 
- 	if (num_online_cpus() == 1)
- 		return 0;
-@@ -205,20 +222,29 @@ static int membarrier_register_global_expedited(void)
- 	return 0;
- }
- 
--static int membarrier_register_private_expedited(void)
-+static int membarrier_register_private_expedited(int flags)
- {
- 	struct task_struct *p = current;
- 	struct mm_struct *mm = p->mm;
-+	int state = MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY;
-+
-+	if (flags & MEMBARRIER_FLAG_SYNC_CORE) {
-+		if (!IS_ENABLED(CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE))
-+			return -EINVAL;
-+		state = MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY;
-+	}
- 
- 	/*
- 	 * We need to consider threads belonging to different thread
- 	 * groups, which use the same mm. (CLONE_VM but not
- 	 * CLONE_THREAD).
- 	 */
--	if (atomic_read(&mm->membarrier_state)
--			& MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY)
-+	if (atomic_read(&mm->membarrier_state) & state)
- 		return 0;
- 	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED, &mm->membarrier_state);
-+	if (flags & MEMBARRIER_FLAG_SYNC_CORE)
-+		atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE,
-+			  &mm->membarrier_state);
- 	if (!(atomic_read(&mm->mm_users) == 1 && get_nr_threads(p) == 1)) {
- 		/*
- 		 * Ensure all future scheduler executions will observe the
-@@ -226,8 +252,7 @@ static int membarrier_register_private_expedited(void)
- 		 */
- 		synchronize_sched();
+ 	if (sys_membarrier(cmd, flags) != 0) {
+ 		ksft_exit_fail_msg(
+-			"sys membarrier MEMBARRIER_CMD_SHARED test: flags = %d\n",
+-			flags);
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
  	}
--	atomic_or(MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY,
--			&mm->membarrier_state);
-+	atomic_or(state, &mm->membarrier_state);
+ 
+ 	ksft_test_result_pass(
+-		"sys membarrier MEMBARRIER_CMD_SHARED test: flags = %d\n",
+-		flags);
++		"%s test: flags = %d\n",
++		test_name, flags);
++	return 0;
++}
++
++static int test_membarrier_private_expedited_success(void)
++{
++	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
++	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED";
++
++	if (sys_membarrier(cmd, flags) != 0) {
++		ksft_exit_fail_msg(
++			"%s test: flags = %d, errno = %d\n",
++			test_name, flags, errno);
++	}
++
++	ksft_test_result_pass(
++		"%s test: flags = %d\n",
++		test_name, flags);
  	return 0;
  }
  
-@@ -283,9 +308,13 @@ SYSCALL_DEFINE2(membarrier, int, cmd, int, flags)
- 	case MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED:
- 		return membarrier_register_global_expedited();
- 	case MEMBARRIER_CMD_PRIVATE_EXPEDITED:
--		return membarrier_private_expedited();
-+		return membarrier_private_expedited(0);
- 	case MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED:
--		return membarrier_register_private_expedited();
-+		return membarrier_register_private_expedited(0);
-+	case MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE:
-+		return membarrier_private_expedited(MEMBARRIER_FLAG_SYNC_CORE);
-+	case MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE:
-+		return membarrier_register_private_expedited(MEMBARRIER_FLAG_SYNC_CORE);
- 	default:
- 		return -EINVAL;
- 	}
+@@ -72,7 +142,16 @@ static int test_membarrier(void)
+ 	status = test_membarrier_flags_fail();
+ 	if (status)
+ 		return status;
+-	status = test_membarrier_success();
++	status = test_membarrier_shared_success();
++	if (status)
++		return status;
++	status = test_membarrier_private_expedited_fail();
++	if (status)
++		return status;
++	status = test_membarrier_register_private_expedited_success();
++	if (status)
++		return status;
++	status = test_membarrier_private_expedited_success();
+ 	if (status)
+ 		return status;
+ 	return 0;
+@@ -108,5 +187,5 @@ int main(int argc, char **argv)
+ 	test_membarrier_query();
+ 	test_membarrier();
+ 
+-	ksft_exit_pass();
++	return ksft_exit_pass();
+ }
 -- 
 2.11.0
