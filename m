@@ -1,53 +1,82 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [RFC PATCH 1/2] arm64: fpsimd: Fix bad si_code for undiagnosed
- SIGFPE
-Date: Tue, 23 Jan 2018 10:14:48 +0000
-Message-ID: <20180123101446.GP22781@e103592.cambridge.arm.com>
-References: <1516623798-25001-1-git-send-email-Dave.Martin@arm.com>
- <1516623798-25001-2-git-send-email-Dave.Martin@arm.com>
- <878tcp8umz.fsf@xmission.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v3] mm: make faultaround produce old ptes
+Date: Tue, 23 Jan 2018 15:55:30 +0100
+Message-ID: <20180123145530.GO1526@dhcp22.suse.cz>
+References: <1516599614-18546-1-git-send-email-vinmenon@codeaurora.org>
+ <20180123145506.GN1526@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <878tcp8umz.fsf@xmission.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, linux-arm-kernel@lists.infradead.org
+In-Reply-To: <20180123145506.GN1526@dhcp22.suse.cz>
+Sender: owner-linux-mm@kvack.org
+To: Vinayak Menon <vinmenon@codeaurora.org>
+Cc: linux-mm@kvack.org, kirill.shutemov@linux.intel.com, akpm@linux-foundation.org, minchan@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, ying.huang@intel.com, riel@redhat.com, dave.hansen@linux.intel.com, mgorman@suse.de, torvalds@linux-foundation.org, jack@suse.cz, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 22, 2018 at 03:13:08PM -0600, Eric W. Biederman wrote:
-> 
-> > diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-> > index e447283..77edb00 100644
-> > --- a/include/uapi/asm-generic/siginfo.h
-> > +++ b/include/uapi/asm-generic/siginfo.h
-> > @@ -193,7 +193,8 @@ typedef struct siginfo {
-> >  #define FPE_FLTRES	6	/* floating point inexact result */
-> >  #define FPE_FLTINV	7	/* floating point invalid operation */
-> >  #define FPE_FLTSUB	8	/* subscript out of range */
-> > -#define NSIGFPE		8
-> > +#define FPE_UNKNOWN	9	/* undiagnosed floating-point exception */
-> > +#define NSIGFPE		9
-> 
-> Minor nit here.
-> 
-> At least before this is final I would really appreciate if you could
-> rebase this on top of my unificiation of siginfo.h that I posted on
-> linux-arch and is in my siginfo-next branch.
-> 
-> As that already pushes NSIGFPE up to 13.
-> 
-> Which would make this patch change NSIGFPE to 14 and allocate the number
-> 14 for FPE_UNKNOWN
+On Tue 23-01-18 15:55:06, Michal Hocko wrote:
+> [Please cc linux-api when proposing user interface]
 
-My bad -- I hadn't looked in detail at the whole series.
+now for real...
 
-However, the purpose of this as an RFC was to get feedback on whether
-adding FPE_UNKNOWN is considered acceptable at all from an API
-perspective -- the precise number doesn't matter for that discussion.
+> On Mon 22-01-18 11:10:14, Vinayak Menon wrote:
+> > Based on Kirill's patch [1].
+> > 
+> > Currently, faultaround code produces young pte.  This can screw up
+> > vmscan behaviour[2], as it makes vmscan think that these pages are hot
+> > and not push them out on first round.
+> > 
+> > During sparse file access faultaround gets more pages mapped and all of
+> > them are young. Under memory pressure, this makes vmscan swap out anon
+> > pages instead, or to drop other page cache pages which otherwise stay
+> > resident.
+> > 
+> > Modify faultaround to produce old ptes if sysctl 'want_old_faultaround_pte'
+> > is set, so they can easily be reclaimed under memory pressure.
+> > 
+> > This can to some extend defeat the purpose of faultaround on machines
+> > without hardware accessed bit as it will not help us with reducing the
+> > number of minor page faults.
+> 
+> So we just want to add a knob to cripple the feature? Isn't it better to
+> simply disable it than to have two distinct implementation which is
+> rather non-intuitive and I would bet that most users will be clueless
+> about how to set it or when to touch it at all. So we will end up with
+> random cargo cult hints all over internet giving you your performance
+> back...
+> 
+> I really dislike this new interface. If the fault around doesn't work
+> for you then disable it.
+> 
+> > Making the faultaround ptes old results in a unixbench regression for some
+> > architectures [3][4]. But on some architectures like arm64 it is not found
+> > to cause any regression.
+> > 
+> > unixbench shell8 scores on arm64 v8.2 hardware with CONFIG_ARM64_HW_AFDBM
+> > enabled  (5 runs min, max, avg):
+> > Base: (741,748,744)
+> > With this patch: (739,748,743)
+> > 
+> > So by default produce young ptes and provide a sysctl option to make the
+> > ptes old.
+> >
+> > [1] http://lkml.kernel.org/r/1463488366-47723-1-git-send-email-kirill.shutemov@linux.intel.com
+> > [2] https://lkml.kernel.org/r/1460992636-711-1-git-send-email-vinmenon@codeaurora.org
+> > [3] https://marc.info/?l=linux-kernel&m=146582237922378&w=2
+> > [4] https://marc.info/?l=linux-mm&m=146589376909424&w=2
+> > 
+> > Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+> > Signed-off-by: Vinayak Menon <vinmenon@codeaurora.org>
+> -- 
+> Michal Hocko
+> SUSE Labs
 
-Do you have any view on this?
+-- 
+Michal Hocko
+SUSE Labs
 
-Cheers
----Dave
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
