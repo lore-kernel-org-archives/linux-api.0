@@ -1,211 +1,58 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 01/11] membarrier: selftest: Test private expedited cmd (v2)
-Date: Tue, 23 Jan 2018 10:57:23 -0500
-Message-ID: <20180123155733.3404-2-mathieu.desnoyers@efficios.com>
-References: <20180123155733.3404-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180123155733.3404-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David Sehr <sehr@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, Mathieu Desnoyers <mathieu.desnoy>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+Subject: Re: [RFC PATCH 1/2] arm64: fpsimd: Fix bad si_code for undiagnosed SIGFPE
+Date: Tue, 23 Jan 2018 12:27:16 -0600
+Message-ID: <87tvvc77nf.fsf@xmission.com>
+References: <1516623798-25001-1-git-send-email-Dave.Martin@arm.com>
+        <1516623798-25001-2-git-send-email-Dave.Martin@arm.com>
+        <878tcp8umz.fsf@xmission.com>
+        <20180123101446.GP22781@e103592.cambridge.arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180123101446.GP22781-M5GwZQ6tE7x5pKCnmE3YQBJ8xKzm50AiAL8bYrjMMd8@public.gmane.org> (Dave Martin's
+        message of "Tue, 23 Jan 2018 10:14:48 +0000")
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
+Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Test the new MEMBARRIER_CMD_PRIVATE_EXPEDITED and
-MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED commands.
+Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org> writes:
 
-Add checks expecting specific error values on system calls expected to
-fail.
+> On Mon, Jan 22, 2018 at 03:13:08PM -0600, Eric W. Biederman wrote:
+>> 
+>> > diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+>> > index e447283..77edb00 100644
+>> > --- a/include/uapi/asm-generic/siginfo.h
+>> > +++ b/include/uapi/asm-generic/siginfo.h
+>> > @@ -193,7 +193,8 @@ typedef struct siginfo {
+>> >  #define FPE_FLTRES	6	/* floating point inexact result */
+>> >  #define FPE_FLTINV	7	/* floating point invalid operation */
+>> >  #define FPE_FLTSUB	8	/* subscript out of range */
+>> > -#define NSIGFPE		8
+>> > +#define FPE_UNKNOWN	9	/* undiagnosed floating-point exception */
+>> > +#define NSIGFPE		9
+>> 
+>> Minor nit here.
+>> 
+>> At least before this is final I would really appreciate if you could
+>> rebase this on top of my unificiation of siginfo.h that I posted on
+>> linux-arch and is in my siginfo-next branch.
+>> 
+>> As that already pushes NSIGFPE up to 13.
+>> 
+>> Which would make this patch change NSIGFPE to 14 and allocate the number
+>> 14 for FPE_UNKNOWN
+>
+> My bad -- I hadn't looked in detail at the whole series.
+>
+> However, the purpose of this as an RFC was to get feedback on whether
+> adding FPE_UNKNOWN is considered acceptable at all from an API
+> perspective -- the precise number doesn't matter for that discussion.
+>
+> Do you have any view on this?
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
-Acked-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Maged Michael <maged.michael@gmail.com>
-CC: Avi Kivity <avi@scylladb.com>
-CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-CC: Paul Mackerras <paulus@samba.org>
-CC: Michael Ellerman <mpe@ellerman.id.au>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Alan Stern <stern@rowland.harvard.edu>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Alice Ferrazzi <alice.ferrazzi@gmail.com>
-CC: Paul Elder <paul.elder@pitt.edu>
-CC: linux-kselftest@vger.kernel.org
-CC: linux-arch@vger.kernel.org
----
-Changes since v1:
-- return result of ksft_exit_pass from main(), silencing compiler
-  warning about missing return value.
----
- .../testing/selftests/membarrier/membarrier_test.c | 111 ++++++++++++++++++---
- 1 file changed, 95 insertions(+), 16 deletions(-)
+That seems as good a solution as any too me.  It is reality and it
+happens in the code and there are several places of the same form I
+would use it, just to get rid of the FPE_FIXME.
 
-diff --git a/tools/testing/selftests/membarrier/membarrier_test.c b/tools/testing/selftests/membarrier/membarrier_test.c
-index 9e674d9514d1..e6ee73d01fa1 100644
---- a/tools/testing/selftests/membarrier/membarrier_test.c
-+++ b/tools/testing/selftests/membarrier/membarrier_test.c
-@@ -16,49 +16,119 @@ static int sys_membarrier(int cmd, int flags)
- static int test_membarrier_cmd_fail(void)
- {
- 	int cmd = -1, flags = 0;
-+	const char *test_name = "sys membarrier invalid command";
- 
- 	if (sys_membarrier(cmd, flags) != -1) {
- 		ksft_exit_fail_msg(
--			"sys membarrier invalid command test: command = %d, flags = %d. Should fail, but passed\n",
--			cmd, flags);
-+			"%s test: command = %d, flags = %d. Should fail, but passed\n",
-+			test_name, cmd, flags);
-+	}
-+	if (errno != EINVAL) {
-+		ksft_exit_fail_msg(
-+			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
-+			test_name, flags, EINVAL, strerror(EINVAL),
-+			errno, strerror(errno));
- 	}
- 
- 	ksft_test_result_pass(
--		"sys membarrier invalid command test: command = %d, flags = %d. Failed as expected\n",
--		cmd, flags);
-+		"%s test: command = %d, flags = %d, errno = %d. Failed as expected\n",
-+		test_name, cmd, flags, errno);
- 	return 0;
- }
- 
- static int test_membarrier_flags_fail(void)
- {
- 	int cmd = MEMBARRIER_CMD_QUERY, flags = 1;
-+	const char *test_name = "sys membarrier MEMBARRIER_CMD_QUERY invalid flags";
- 
- 	if (sys_membarrier(cmd, flags) != -1) {
- 		ksft_exit_fail_msg(
--			"sys membarrier MEMBARRIER_CMD_QUERY invalid flags test: flags = %d. Should fail, but passed\n",
--			flags);
-+			"%s test: flags = %d. Should fail, but passed\n",
-+			test_name, flags);
-+	}
-+	if (errno != EINVAL) {
-+		ksft_exit_fail_msg(
-+			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
-+			test_name, flags, EINVAL, strerror(EINVAL),
-+			errno, strerror(errno));
- 	}
- 
- 	ksft_test_result_pass(
--		"sys membarrier MEMBARRIER_CMD_QUERY invalid flags test: flags = %d. Failed as expected\n",
--		flags);
-+		"%s test: flags = %d, errno = %d. Failed as expected\n",
-+		test_name, flags, errno);
- 	return 0;
- }
- 
--static int test_membarrier_success(void)
-+static int test_membarrier_shared_success(void)
- {
- 	int cmd = MEMBARRIER_CMD_SHARED, flags = 0;
--	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED\n";
-+	const char *test_name = "sys membarrier MEMBARRIER_CMD_SHARED";
-+
-+	if (sys_membarrier(cmd, flags) != 0) {
-+		ksft_exit_fail_msg(
-+			"%s test: flags = %d, errno = %d\n",
-+			test_name, flags, errno);
-+	}
-+
-+	ksft_test_result_pass(
-+		"%s test: flags = %d\n", test_name, flags);
-+	return 0;
-+}
-+
-+static int test_membarrier_private_expedited_fail(void)
-+{
-+	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
-+	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED not registered failure";
-+
-+	if (sys_membarrier(cmd, flags) != -1) {
-+		ksft_exit_fail_msg(
-+			"%s test: flags = %d. Should fail, but passed\n",
-+			test_name, flags);
-+	}
-+	if (errno != EPERM) {
-+		ksft_exit_fail_msg(
-+			"%s test: flags = %d. Should return (%d: \"%s\"), but returned (%d: \"%s\").\n",
-+			test_name, flags, EPERM, strerror(EPERM),
-+			errno, strerror(errno));
-+	}
-+
-+	ksft_test_result_pass(
-+		"%s test: flags = %d, errno = %d\n",
-+		test_name, flags, errno);
-+	return 0;
-+}
-+
-+static int test_membarrier_register_private_expedited_success(void)
-+{
-+	int cmd = MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED, flags = 0;
-+	const char *test_name = "sys membarrier MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED";
- 
- 	if (sys_membarrier(cmd, flags) != 0) {
- 		ksft_exit_fail_msg(
--			"sys membarrier MEMBARRIER_CMD_SHARED test: flags = %d\n",
--			flags);
-+			"%s test: flags = %d, errno = %d\n",
-+			test_name, flags, errno);
- 	}
- 
- 	ksft_test_result_pass(
--		"sys membarrier MEMBARRIER_CMD_SHARED test: flags = %d\n",
--		flags);
-+		"%s test: flags = %d\n",
-+		test_name, flags);
-+	return 0;
-+}
-+
-+static int test_membarrier_private_expedited_success(void)
-+{
-+	int cmd = MEMBARRIER_CMD_PRIVATE_EXPEDITED, flags = 0;
-+	const char *test_name = "sys membarrier MEMBARRIER_CMD_PRIVATE_EXPEDITED";
-+
-+	if (sys_membarrier(cmd, flags) != 0) {
-+		ksft_exit_fail_msg(
-+			"%s test: flags = %d, errno = %d\n",
-+			test_name, flags, errno);
-+	}
-+
-+	ksft_test_result_pass(
-+		"%s test: flags = %d\n",
-+		test_name, flags);
- 	return 0;
- }
- 
-@@ -72,7 +142,16 @@ static int test_membarrier(void)
- 	status = test_membarrier_flags_fail();
- 	if (status)
- 		return status;
--	status = test_membarrier_success();
-+	status = test_membarrier_shared_success();
-+	if (status)
-+		return status;
-+	status = test_membarrier_private_expedited_fail();
-+	if (status)
-+		return status;
-+	status = test_membarrier_register_private_expedited_success();
-+	if (status)
-+		return status;
-+	status = test_membarrier_private_expedited_success();
- 	if (status)
- 		return status;
- 	return 0;
-@@ -108,5 +187,5 @@ int main(int argc, char **argv)
- 	test_membarrier_query();
- 	test_membarrier();
- 
--	ksft_exit_pass();
-+	return ksft_exit_pass();
- }
--- 
-2.11.0
+Eric
