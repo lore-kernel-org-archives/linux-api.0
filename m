@@ -1,41 +1,64 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: aio poll, io_pgetevents and a new in-kernel poll API V4
-Date: Fri, 26 Jan 2018 13:31:23 +0100
-Message-ID: <20180126123123.GA6985@lst.de>
-References: <20180122201243.31610-1-hch@lst.de> <20180125201025.GN23664@kvack.org>
+From: Guillaume Nault <g.nault-pHk1y4uTXVDytLWWfqlThQ@public.gmane.org>
+Subject: Re: [regresssion 4.15] Userspace compilation broken by
+ uapi/linux/if_ether.h update
+Date: Fri, 26 Jan 2018 18:17:23 +0100
+Message-ID: <20180126171723.GV1422@alphalink.fr>
+References: <20180125145819.GT1422@alphalink.fr>
+ <032d01e4-81c8-ad2f-abaf-28a5584e6bef@hauke-m.de>
+ <20180126105138.GU1422@alphalink.fr>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180125201025.GN23664@kvack.org>
-Sender: owner-linux-aio@kvack.org
-To: Benjamin LaHaise <ben@communityfibre.ca>
-Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20180126105138.GU1422-pHk1y4uTXVDytLWWfqlThQ@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>, Hauke Mehrtens <hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org>
+Cc: netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 25, 2018 at 03:10:25PM -0500, Benjamin LaHaise wrote:
-> I implemented something similar back in December, but did so without
-> changing the in-kernel poll API.  See below for the patch that implements
-> it.  Is changing the in-kernel poll API really desirable given how many
-> drivers that will touch?
+On Fri, Jan 26, 2018 at 11:51:38AM +0100, Guillaume Nault wrote:
+> On Thu, Jan 25, 2018 at 11:21:34PM +0100, Hauke Mehrtens wrote:
+> > On 01/25/2018 03:58 PM, Guillaume Nault wrote:
+> > > Now that linux/libc-compat.h is included in linux/if_ether.h, it is
+> > > processed before netinet/in.h. Therefore, it sets the relevant
+> > > __UAPI_DEF_* guards to 1 (as _NETINET_IN_H isn't yet defined).
+> > > Then netinet/in.h is included, followed by linux/in.h. The later
+> > > doesn't realise that what it defines has already been included by
+> > > netinet/in.h because the __UAPI_DEF_* guards were set too early.
+> > > 
+> > This is about this commit:
+> > https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6926e041a8920c8ec27e4e155efa760aa01551fd
+> > 
+> > On option would be to move this into include/uapi/linux/if_ether.h and
+> > remove the include for libc-compat.h:
+> > #ifndef __UAPI_DEF_ETHHDR
+> > #define __UAPI_DEF_ETHHDR		1
+> > #endif
+> > 
+> > This will only work if netinet/if_ether.h is included before
+> > linux/if_ether.h, but I think this is very likely.
+> >
+> I don't see what makes its likely. That's not directly related to your
+> point, but for example, glibc guarantees the opposite as it includes
+> linux/if_ether.h at the beginning of netinet/if_ether.h.
+> 
+> > I think we can do this because we do not need some special libc handling
+> > like it is done for other symbols as __UAPI_DEF_ETHHDR is currently only
+> > needed by musl and not by glibc.
+> > 
+> That's ok for me as long as existing projects keep compiling. But all
+> __UAPI_DEF_* are currently centralised in libc-compat.h. Adding
+> __UAPI_DEF_ETHHDR in if_ether.h looks like defeating the purpose of
+> libc-compat.h and I wonder if that'd be accepted. Maybe with a
+> different name.
+> 
+> In any case, we're really late in the release cycle. If more discussion
+> is needed, it's probably better to revert and take time to work on a
+> solution for the next release.
+> 
+Hi David,
 
-I had various previous versions that did not touch the driver API,
-but there are a couple issues with that:
-
- (1) you cannot make the API race free.  With the existing convoluted
-     poll_table_struct-based API you can't check for pending items
-     before adding yourself to the waitqueue in a race free manner.
- (2) you cannot make the submit non-blocking without deferring to
-     a workqueue or similar and thus incurring another context switch
- (3) you cannot deliver events from the wakeup callback, incurring
-     another context switch, this time in the wakeup path that actually
-     matters for some applications
- (3) the in-kernel poll API really is broken to start with and needs
-     to be fixed anyway.  I'd rather rely on that instead of working
-     around decades old cruft that has no reason to exist.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+I just realise you've sent your last pull request for this release. I
+was waiting for feedbacks in order to avoid a revert. Should I send a
+revert now or do you prefer to sort this out later and backport a fix
+in 4.15.1?
