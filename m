@@ -1,70 +1,113 @@
-From: David Miller <davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org>
-Subject: Re: [regresssion 4.15] Userspace compilation broken by
- uapi/linux/if_ether.h update
-Date: Fri, 26 Jan 2018 14:21:12 -0500 (EST)
-Message-ID: <20180126.142112.325554964556420357.davem@davemloft.net>
-References: <032d01e4-81c8-ad2f-abaf-28a5584e6bef@hauke-m.de>
-        <20180126105138.GU1422@alphalink.fr>
-        <20180126171723.GV1422@alphalink.fr>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+From: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Subject: [patch v18 0/4] JTAG driver introduction
+Date: Mon, 29 Jan 2018 16:31:41 +0200
+Message-ID: <1517236305-4880-1-git-send-email-oleksandrs@mellanox.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20180126171723.GV1422-pHk1y4uTXVDytLWWfqlThQ@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: g.nault-pHk1y4uTXVDytLWWfqlThQ@public.gmane.org
-Cc: hauke-5/S+JYg5SzeELgA04lAiVw@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Guillaume Nault <g.nault-pHk1y4uTXVDytLWWfqlThQ@public.gmane.org>
-Date: Fri, 26 Jan 2018 18:17:23 +0100
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-> On Fri, Jan 26, 2018 at 11:51:38AM +0100, Guillaume Nault wrote:
->> On Thu, Jan 25, 2018 at 11:21:34PM +0100, Hauke Mehrtens wrote:
->> > On 01/25/2018 03:58 PM, Guillaume Nault wrote:
->> > > Now that linux/libc-compat.h is included in linux/if_ether.h, it is
->> > > processed before netinet/in.h. Therefore, it sets the relevant
->> > > __UAPI_DEF_* guards to 1 (as _NETINET_IN_H isn't yet defined).
->> > > Then netinet/in.h is included, followed by linux/in.h. The later
->> > > doesn't realise that what it defines has already been included by
->> > > netinet/in.h because the __UAPI_DEF_* guards were set too early.
->> > > 
->> > This is about this commit:
->> > https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6926e041a8920c8ec27e4e155efa760aa01551fd
->> > 
->> > On option would be to move this into include/uapi/linux/if_ether.h and
->> > remove the include for libc-compat.h:
->> > #ifndef __UAPI_DEF_ETHHDR
->> > #define __UAPI_DEF_ETHHDR		1
->> > #endif
->> > 
->> > This will only work if netinet/if_ether.h is included before
->> > linux/if_ether.h, but I think this is very likely.
->> >
->> I don't see what makes its likely. That's not directly related to your
->> point, but for example, glibc guarantees the opposite as it includes
->> linux/if_ether.h at the beginning of netinet/if_ether.h.
->> 
->> > I think we can do this because we do not need some special libc handling
->> > like it is done for other symbols as __UAPI_DEF_ETHHDR is currently only
->> > needed by musl and not by glibc.
->> > 
->> That's ok for me as long as existing projects keep compiling. But all
->> __UAPI_DEF_* are currently centralised in libc-compat.h. Adding
->> __UAPI_DEF_ETHHDR in if_ether.h looks like defeating the purpose of
->> libc-compat.h and I wonder if that'd be accepted. Maybe with a
->> different name.
->> 
->> In any case, we're really late in the release cycle. If more discussion
->> is needed, it's probably better to revert and take time to work on a
->> solution for the next release.
->> 
-> Hi David,
-> 
-> I just realise you've sent your last pull request for this release. I
-> was waiting for feedbacks in order to avoid a revert. Should I send a
-> revert now or do you prefer to sort this out later and backport a fix
-> in 4.15.1?
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
-We can do a -stable backport, and I was planning to help looking into this
-as well.
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
+
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
+
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
+
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
+
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
+
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
+
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
+
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
+
+ Documentation/ABI/testing/jtag-dev                 |   27 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   22 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   30 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  786 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  273 +++++++
+ include/linux/jtag.h                               |   41 +
+ include/uapi/linux/jtag.h                          |  105 +++
+ 12 files changed, 1301 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jtag-dev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
