@@ -1,69 +1,112 @@
-From: Julia Cartwright <juliac-SPobxgzVcRdvFhSgSjN+lA@public.gmane.org>
-Subject: Re: [patch v18 1/4] drivers: jtag: Add JTAG core driver
-Date: Mon, 29 Jan 2018 09:56:00 -0600
-Message-ID: <20180129155600.GA1924@kryptos.localdomain>
-References: <1517236305-4880-1-git-send-email-oleksandrs@mellanox.com>
- <1517236305-4880-2-git-send-email-oleksandrs@mellanox.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 4.16 00/11] membarrier updates for 4.16
+Date: Mon, 29 Jan 2018 16:02:46 +0000 (UTC)
+Message-ID: <1278608578.11357.1517241766434.JavaMail.zimbra@efficios.com>
+References: <20180123155733.3404-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <1517236305-4880-2-git-send-email-oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-Cc: gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, arnd-r2nGTMty4D4@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, openbmc-uLR06cmDAlY/bJ5BZ2RsiQ@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, jiri-rHqAuBHg3fBzbRFIqnYvSA@public.gmane.org, tklauser-93Khv+1bN0NyDzI6CaY1VQ@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, vadimp-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, system-sw-low-level-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org, robh+dt-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, openocd-devel-owner-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org, mchehab-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180123155733.3404-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 29, 2018 at 04:31:42PM +0200, Oleksandr Shamray wrote:
-> Initial patch for JTAG driver
-> JTAG class driver provide infrastructure to support hardware/software
-> JTAG platform drivers. It provide user layer API interface for flashing
-> and debugging external devices which equipped with JTAG interface
-> using standard transactions.
-> 
-> Driver exposes set of IOCTL to user space for:
-> - XFER:
-> - SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
-> - SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
-> - RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
->   number of clocks).
-> - SIOCFREQ/GIOCFREQ for setting and reading JTAG frequency.
-> 
-> Driver core provides set of internal APIs for allocation and
-> registration:
-> - jtag_register;
-> - jtag_unregister;
-> - jtag_alloc;
-> - jtag_free;
-> 
-> Platform driver on registration with jtag-core creates the next
-> entry in dev folder:
-> /dev/jtagX
-> 
-> Signed-off-by: Oleksandr Shamray <oleksandrs-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> Signed-off-by: Jiri Pirko <jiri-VPRAkNaXOzVWk0Htik3J/w@public.gmane.org>
-> Acked-by: Philippe Ombredanne <pombredanne-od1rfyK75/E@public.gmane.org>
-[..]
-> diff --git a/drivers/jtag/jtag.c b/drivers/jtag/jtag.c
-[..]
-> +struct jtag *jtag_alloc(size_t priv_size, const struct jtag_ops *ops)
-> +{
-> +	struct jtag *jtag;
-> +
-> +	jtag = kzalloc(sizeof(*jtag) + priv_size, GFP_KERNEL);
-> +	if (!jtag)
-> +		return NULL;
-> +
-> +	if (!ops)
-> +		return NULL;
-> +
-> +	if (!ops->idle || !ops->mode_set || !ops->status_get || !ops->xfer)
-> +		return NULL;
+Hi Ingo, Hi Peter,
 
-Did you think through this?
+Please let me know if you find anything that prevents you from integrating
+this patchset into the scheduler tree.
 
-You leak 'jtag' here and above.
+Thanks,
 
-Perform all the ops checks prior to the allocation.
+Mathieu
 
-   Julia
+
+----- On Jan 23, 2018, at 10:57 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+
+> Hi Ingo, Peter, Thomas,
+> 
+> Here is the updated membarrier patch series following review from
+> Andy.
+> 
+> It would be appreciated of those can go through the scheduler tree for
+> the 4.16 merge window.
+> 
+> Patch "x86: Implement sync_core_before_usermode" got a reviewed-by from
+> Thomas, but I removed the tag following KPTI-related optimizations based
+> on the discussion with Andy afterwards.
+> 
+> Highlights:
+> 
+> "powerpc: membarrier: Skip memory barrier in switch_mm()" takes care of
+> a TODO that was left in the private expedited implementation when merged
+> in 4.14: an extra memory barrier was added on context switch on powerpc.
+> Ensure that the barrier is only performed when scheduling between
+> different processes, only for threads belonging to processes that have
+> registered their intent to use the private expedited command.
+> 
+> "membarrier: provide GLOBAL_EXPEDITED command" adds new commands to
+> membarrier for registration and use of membarrier across processes
+> communicating through shared memory mappings. The non-expedited command
+> has proven to be really too slow (taking 10ms and more to complete) for
+> real-world use. The expedited version completes in a matter of
+> microseconds. This patch renames the pre-existing MEMBARRIER_CMD_SHARED
+> to MEMBARRIER_CMD_GLOBAL for consistency, keeping the old enum label
+> as an alias for backward compatibility.
+> 
+> "membarrier: Provide core serializing command" provides core
+> serialization for JIT reclaim. We received positive feedback from
+> Android developers that the proposed ABI fits their use-case.
+> Only x86 32/64 and arm 64 implement this command so far. This is
+> opt-in per architecture.
+> 
+> The other patches add selftests and documentation.
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> Mathieu Desnoyers (11):
+>  membarrier: selftest: Test private expedited cmd (v2)
+>  powerpc: membarrier: Skip memory barrier in switch_mm() (v7)
+>  membarrier: Document scheduler barrier requirements (v5)
+>  membarrier: provide GLOBAL_EXPEDITED command (v3)
+>  membarrier: selftest: Test global expedited cmd (v2)
+>  Introduce sync_core_before_usermode (v2)
+>  x86: Implement sync_core_before_usermode (v3)
+>  membarrier: Provide core serializing command (v2)
+>  membarrier: x86: Provide core serializing command (v4)
+>  membarrier: arm64: Provide core serializing command
+>  membarrier: selftest: Test private expedited sync core cmd
+> 
+> MAINTAINERS                                        |   1 +
+> arch/arm64/Kconfig                                 |   1 +
+> arch/arm64/kernel/entry.S                          |   4 +
+> arch/powerpc/Kconfig                               |   1 +
+> arch/powerpc/include/asm/membarrier.h              |  27 +++
+> arch/powerpc/mm/mmu_context.c                      |   7 +
+> arch/x86/Kconfig                                   |   2 +
+> arch/x86/entry/entry_32.S                          |   5 +
+> arch/x86/entry/entry_64.S                          |   4 +
+> arch/x86/include/asm/sync_core.h                   |  28 +++
+> arch/x86/mm/tlb.c                                  |   6 +
+> include/linux/sched/mm.h                           |  40 +++-
+> include/linux/sync_core.h                          |  21 ++
+> include/uapi/linux/membarrier.h                    |  74 ++++++-
+> init/Kconfig                                       |   9 +
+> kernel/sched/core.c                                |  53 +++--
+> kernel/sched/membarrier.c                          | 177 +++++++++++++--
+> .../testing/selftests/membarrier/membarrier_test.c | 237 +++++++++++++++++++--
+> 18 files changed, 629 insertions(+), 68 deletions(-)
+> create mode 100644 arch/powerpc/include/asm/membarrier.h
+> create mode 100644 arch/x86/include/asm/sync_core.h
+> create mode 100644 include/linux/sync_core.h
+> 
+> --
+> 2.11.0
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
