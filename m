@@ -1,93 +1,93 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 4.16 v2 06/11] Introduce sync_core_before_usermode
-Date: Mon, 29 Jan 2018 15:20:15 -0500
-Message-ID: <20180129202020.8515-7-mathieu.desnoyers@efficios.com>
-References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180129202020.8515-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David Sehr <sehr@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, Mathieu Desnoyers <mathieu.desnoy>
+From: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
+Subject: [RFC PATCH v2 0/3] arm64: Fix invalid si_codes for fault signals
+Date: Tue, 30 Jan 2018 18:50:40 +0000
+Message-ID: <1517338243-9749-1-git-send-email-Dave.Martin@arm.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Introduce an architecture function that ensures the current CPU
-issues a core serializing instruction before returning to usermode.
+Changes since RFC v1:
 
-This is needed for the membarrier "sync_core" command.
+ * Renamed FPE_UNKNOWN to FPE_FLTUNK to be more consistent with the
+   standardised error codes.
 
-Architectures defining the sync_core_before_usermode() static inline
-need to select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE.
+   _FLT because _some_ kind of floating- point exception has occurred,
+   and UNK because it is architecturally unkown what exception(s)
+   occurred.  "Undiagnosed" may be a better word and I include this in
+   the accompanying comment, but FPE_FLTUND is already taken for
+   floating-point underflow.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Maged Michael <maged.michael@gmail.com>
-CC: Avi Kivity <avi@scylladb.com>
-CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-CC: Paul Mackerras <paulus@samba.org>
-CC: Michael Ellerman <mpe@ellerman.id.au>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Andrea Parri <parri.andrea@gmail.com>
-CC: Russell King <linux@armlinux.org.uk>
-CC: Greg Hackmann <ghackmann@google.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: David Sehr <sehr@google.com>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Arnd Bergmann <arnd@arndb.de>
-CC: x86@kernel.org
-CC: linux-arch@vger.kernel.org
+ * Renumbered FPE_FLTUNK as 14, since this is the next unused number.
+   My assumption that the x86-specific codes weren't upstream yet was
+   wrong...
+
+ * Split this definition out as a separate patch, since it is likely
+   applicable to other architectures.
+
+
+These patches are based on:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git siginfo-next
+ea64d5acc8f0 ("signal: Unify and correct copy_siginfo_to_user32")
+
+... with 526c3ddb6aa2 ("signal/arm64: Document conflicts with SI_USER
+and SIGFPE,SIGTRAP,SIGBUS") reverted.
+
+
+Original blurb:
+
+As reported by Eric Biederman, [1], [2], [3] etc., several architectures
+are inappropriately setting si_code to 0 when signaling faults to
+userspace, which will interpret this value as SI_USER leading to garbage
+being read out of siginfo fields that the kernel doesn't initialise.
+
+This seems not to be a huge problem in practice, since many affected
+faults should only happen if the kernel or hardware is buggy or broken.
+However, there are some cases that don't fall under this.
+
+This RFC series proposes fixes to eliminate these si_code == 0 cases
+from arm64.  Some of the changes may be controversial.
+
+There are two main headlines here, which may be applicable to other
+architectures:
+
+ * addition of a new code FPE_UNKNOWN for undiagnosable floating-point
+   exception traps;
+
+ * delivering SIGKILL instead of SIGSEGV/BUS/TRAP etc. for "impossible"
+   exceptions that are not feasible to recover from and likely indicate
+   a kernel or system bug or failure.
+
+In particular there is likely to be a fair amount of overlap between arm
+and arm64 here, but due to the longer history and evolution of the arm
+tree and 32-bit architecture I'm less confident in making correct
+judgements for that case.  This series doesn't touch arm, for now.
+
+This series has been build-tested only.
+
+[1] [PATCH 00/11] siginfo fixes/cleanups esp SI_USER
+https://marc.info/?l=linux-kernel&m=151571871109016&w=2
+
+[2] [PATCH 08/11] signal/arm: Document conflicts with SI_USER and SIGFPE
+http://lists.infradead.org/pipermail/linux-arm-kernel/2018-January/553574.html
+
+[3] [PATCH 07/11] signal/arm64: Document conflicts with SI_USER and SIGFPE, SIGTRAP, SIGBUS
+lists.infradead.org/pipermail/linux-arm-kernel/2018-January/553573.html
+
 ---
-Changes since v1:
-- Introduce include/linux/sync_core.h
----
- include/linux/sync_core.h | 21 +++++++++++++++++++++
- init/Kconfig              |  3 +++
- 2 files changed, 24 insertions(+)
- create mode 100644 include/linux/sync_core.h
 
-diff --git a/include/linux/sync_core.h b/include/linux/sync_core.h
-new file mode 100644
-index 000000000000..013da4b8b327
---- /dev/null
-+++ b/include/linux/sync_core.h
-@@ -0,0 +1,21 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_SYNC_CORE_H
-+#define _LINUX_SYNC_CORE_H
-+
-+#ifdef CONFIG_ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
-+#include <asm/sync_core.h>
-+#else
-+/*
-+ * This is a dummy sync_core_before_usermode() implementation that can be used
-+ * on all architectures which return to user-space through core serializing
-+ * instructions.
-+ * If your architecture returns to user-space through non-core-serializing
-+ * instructions, you need to write your own functions.
-+ */
-+static inline void sync_core_before_usermode(void)
-+{
-+}
-+#endif
-+
-+#endif /* _LINUX_SYNC_CORE_H */
-+
-diff --git a/init/Kconfig b/init/Kconfig
-index 2d118b6adee2..30208da2221f 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1918,3 +1918,6 @@ config ASN1
- 	  functions to call on what tags.
- 
- source "kernel/Kconfig.locks"
-+
-+config ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
-+	bool
+Dave Martin (3):
+  signal: Add FPE_FLTUNK si_code for undiagnosable fp exceptions
+  arm64: fpsimd: Fix bad si_code for undiagnosed SIGFPE
+  arm64: signal: Ensure si_code is valid for all fault signals
+
+ arch/arm64/include/asm/esr.h       |   9 +++
+ arch/arm64/kernel/fpsimd.c         |  31 +++++-----
+ arch/arm64/mm/fault.c              | 114 ++++++++++++++++++-------------------
+ include/uapi/asm-generic/siginfo.h |   3 +-
+ 4 files changed, 85 insertions(+), 72 deletions(-)
+
 -- 
-2.11.0
+2.1.4
