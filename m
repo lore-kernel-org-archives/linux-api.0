@@ -1,7 +1,7 @@
 From: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
-Subject: [RFC PATCH v2 2/3] arm64: fpsimd: Fix bad si_code for undiagnosed SIGFPE
-Date: Tue, 30 Jan 2018 18:50:42 +0000
-Message-ID: <1517338243-9749-3-git-send-email-Dave.Martin@arm.com>
+Subject: [RFC PATCH v2 1/3] signal: Add FPE_FLTUNK si_code for undiagnosable fp exceptions
+Date: Tue, 30 Jan 2018 18:50:41 +0000
+Message-ID: <1517338243-9749-2-git-send-email-Dave.Martin@arm.com>
 References: <1517338243-9749-1-git-send-email-Dave.Martin@arm.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1517338243-9749-1-git-send-email-Dave.Martin-5wv7dgnIgG8@public.gmane.org>
@@ -10,123 +10,35 @@ To: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Currently a SIGFPE delivered in response to a floating-point
-exception trap may have si_code set to 0 on arm64.  As reported by
-Eric, this is a bad idea since this is the value of SI_USER -- yet
-this signal is definitely not the result of kill(2), tgkill(2) etc.
-and si_uid and si_pid make limited sense whereas we do want to
-yield a value for si_addr (which doesn't exist for SI_USER).
+Some architectures cannot always report accurately what kind of
+floating-point exception triggered a floating-point exception trap.
 
-It's not entirely clear whether the architecure permits a
-"spurious" fp exception trap where none of the exception flag bits
-in ESR_ELx is set.  (IMHO the architectural intent is to forbid
-this.)  However, it does permit those bits to contain garbage if
-the TFV bit in ESR_ELx is 0.  That case isn't currently handled at
-all and may result in si_code == 0 or si_code containing a FPE_FLT*
-constant corresponding to an exception that did not in fact happen.
+This can occur with fp exceptions occuring on lanes in a vector
+instruction on arm64 for example.
 
-There is nothing sensible we can return for si_code in such cases,
-but SI_USER is certainly not appropriate and will lead to violation
-of legitimate userspace assumptions.
+Rather than have every architecture come up with its own way of
+descrbing such a condition, this patch adds a common FPE_FLTUNK do
+report that an fp exception caused a trap but we cannot be certain
+which kind of fp exception it was.
 
-This patch allocates a new si_code value FPE_UNKNOWN that at least
-does not conflict with any existing SI_* or FPE_* code, and yields
-this in si_code for undiagnosable cases.  This is probably the best
-simplicity/incorrectness tradeoff achieveable without relying on
-implementation-dependent features or adding a lot of code.  In any
-case, there appears to be no perfect solution possible that would
-justify a lot of effort here.
-
-Yielding FPE_UNKNOWN when some well-defined fp exception caused the
-trap is a violation of POSIX, but this is forced by the
-architecture.  We have no realistic prospect of yielding the
-correct code in such cases.  At present I am not aware of any ARMv8
-implementation that supports trapped floating-point exceptions in
-any case.
-
-The new code may be applicable to other architectures for similar
-reasons.
-
-No attempt is made to provide ESR_ELx to userspace in the signal
-frame, since architectural limitations mean that it is unlikely to
-provide much diagnostic value, doesn't benefit existing software
-and would create ABI with no proven purpose.  The existing
-mechanism for passing it also has problems of its own which may
-result in the wrong value being passed to userspace due to
-interaction with mm faults.  The implied rework does not appear
-justified.
-
-Reported-by: Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Signed-off-by: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
 ---
- arch/arm64/include/asm/esr.h |  9 +++++++++
- arch/arm64/kernel/fpsimd.c   | 27 +++++++++++++++------------
- 2 files changed, 24 insertions(+), 12 deletions(-)
+ include/uapi/asm-generic/siginfo.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/arch/arm64/include/asm/esr.h b/arch/arm64/include/asm/esr.h
-index 014d7d8..c585e91 100644
---- a/arch/arm64/include/asm/esr.h
-+++ b/arch/arm64/include/asm/esr.h
-@@ -220,6 +220,15 @@
- 		(((e) & ESR_ELx_SYS64_ISS_OP2_MASK) >>		\
- 		 ESR_ELx_SYS64_ISS_OP2_SHIFT))
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index 254afc3..450b31f 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -229,7 +229,8 @@ typedef struct siginfo {
+ # define __FPE_INVASC	12	/* invalid ASCII digit */
+ # define __FPE_INVDEC	13	/* invalid decimal digit */
+ #endif
+-#define NSIGFPE		13
++#define FPE_FLTUNK	14	/* undiagnosed floating-point exception */
++#define NSIGFPE		14
  
-+/*
-+ * ISS field definitions for floating-point exception traps
-+ * (FP_EXC_32/FP_EXC_64).
-+ *
-+ * (The FPEXC_* constants are used instead for common bits.)
-+ */
-+
-+#define ESR_ELx_FP_EXC_TFV	(UL(1) << 23)
-+
- #ifndef __ASSEMBLY__
- #include <asm/types.h>
- 
-diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
-index fae81f7..4fecda1 100644
---- a/arch/arm64/kernel/fpsimd.c
-+++ b/arch/arm64/kernel/fpsimd.c
-@@ -39,6 +39,7 @@
- #include <linux/slab.h>
- #include <linux/sysctl.h>
- 
-+#include <asm/esr.h>
- #include <asm/fpsimd.h>
- #include <asm/cputype.h>
- #include <asm/simd.h>
-@@ -867,18 +868,20 @@ asmlinkage void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs)
- asmlinkage void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs)
- {
- 	siginfo_t info;
--	unsigned int si_code = 0;
--
--	if (esr & FPEXC_IOF)
--		si_code = FPE_FLTINV;
--	else if (esr & FPEXC_DZF)
--		si_code = FPE_FLTDIV;
--	else if (esr & FPEXC_OFF)
--		si_code = FPE_FLTOVF;
--	else if (esr & FPEXC_UFF)
--		si_code = FPE_FLTUND;
--	else if (esr & FPEXC_IXF)
--		si_code = FPE_FLTRES;
-+	unsigned int si_code = FPE_FLTUNK;
-+
-+	if (esr & ESR_ELx_FP_EXC_TFV) {
-+		if (esr & FPEXC_IOF)
-+			si_code = FPE_FLTINV;
-+		else if (esr & FPEXC_DZF)
-+			si_code = FPE_FLTDIV;
-+		else if (esr & FPEXC_OFF)
-+			si_code = FPE_FLTOVF;
-+		else if (esr & FPEXC_UFF)
-+			si_code = FPE_FLTUND;
-+		else if (esr & FPEXC_IXF)
-+			si_code = FPE_FLTRES;
-+	}
- 
- 	memset(&info, 0, sizeof(info));
- 	info.si_signo = SIGFPE;
+ /*
+  * SIGSEGV si_codes
 -- 
 2.1.4
