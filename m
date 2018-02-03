@@ -1,36 +1,20 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: RFC(V3): Audit Kernel Container IDs
-Date: Fri, 2 Feb 2018 19:57:21 -0600
-Message-ID: <20180203015721.GB27295@mail.hallyn.com>
-References: <20180109121620.wi7dq2423ugsraqv@madcap2.tricolour.ca>
- <CAHC9VhQ5ciUZDhrsb6S4YxwuzQEY-ra2RTDceWXOdjHEBoZ0BQ@mail.gmail.com>
+From: Payroll Portal <ida.westgaard-ti3pZAEQCXJuMpJDpNschA@public.gmane.org>
+Subject: Update
+Date: Sat, 3 Feb 2018 11:04:07 +0100 (CET)
+Message-ID: <1257078952.6724869.1517652247466.JavaMail.zimbra__852.833051658486$1517653299$gmane$org@getmail.no>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhQ5ciUZDhrsb6S4YxwuzQEY-ra2RTDceWXOdjHEBoZ0BQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Richard Guy Briggs <rgb@redhat.com>, cgroups@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux Audit <linux-audit@redhat.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, Linux Network Development <netdev@vger.kernel.org>, mszeredi@redhat.com, Andy Lutomirski <luto@kernel.org>, jlayton@redhat.com, Carlos O'Donell <carlos@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, trondmy@primarydata.com, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: info-admin-v7N2k3TrpGc@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 02, 2018 at 05:05:22PM -0500, Paul Moore wrote:
-> On Tue, Jan 9, 2018 at 7:16 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Containers are a userspace concept.  The kernel knows nothing of them.
-> >
-> > The Linux audit system needs a way to be able to track the container
-> > provenance of events and actions.  Audit needs the kernel's help to do
-> > this.
-> 
-> Two small comments below, but I tend to think we are at a point where
-> you can start cobbling together some prototype/RFC patches.  Surely
+Human Resources/Payroll Department has completed the final pay-stub
+changes for 2018 tax year.
 
-Agreed.
+You are requested to update your portal and view changes to your
+paysub immediately for (2015 - 2017 tax years), go to:
+https://princecontractingllc.com/my.adp.com
 
-LGTM.
-
-> there are going to be a few changes, and new comments, that come out
-> once we see an initial implementation so let's see what those are.
-
-thanks,
--serge
+Regards.
