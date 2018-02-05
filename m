@@ -1,33 +1,45 @@
-From: Ingo Molnar <mingo@kernel.org>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
 Subject: Re: [PATCH for 4.16 v7 02/11] powerpc: membarrier: Skip memory
  barrier in switch_mm()
-Date: Mon, 5 Feb 2018 21:22:42 +0100
-Message-ID: <20180205202242.6ilyjh35byycf3ez@gmail.com>
-References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com>
- <20180129202020.8515-3-mathieu.desnoyers@efficios.com>
+Date: Mon, 5 Feb 2018 20:32:08 +0000 (UTC)
+Message-ID: <1407075321.16343.1517862728006.JavaMail.zimbra@efficios.com>
+References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com> <20180129202020.8515-3-mathieu.desnoyers@efficios.com> <20180205202242.6ilyjh35byycf3ez@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180129202020.8515-3-mathieu.desnoyers@efficios.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180205202242.6ilyjh35byycf3ez-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, maged michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Russell King, ARM Linux" <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will
 List-Id: linux-api@vger.kernel.org
 
+----- On Feb 5, 2018, at 3:22 PM, Ingo Molnar mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org wrote:
 
-* Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+> * Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org> wrote:
+> 
+>>  
+>> +config ARCH_HAS_MEMBARRIER_HOOKS
+>> +	bool
+> 
+> Yeah, so I have renamed this to ARCH_HAS_MEMBARRIER_CALLBACKS, and propagated it
+> through the rest of the patches. "Callback" is the canonical name, and I also
+> cringe every time I see 'hook'.
+> 
+> Please let me know if there are any big objections against this minor cleanup.
 
->  
-> +config ARCH_HAS_MEMBARRIER_HOOKS
-> +	bool
+No objection at all,
 
-Yeah, so I have renamed this to ARCH_HAS_MEMBARRIER_CALLBACKS, and propagated it 
-through the rest of the patches. "Callback" is the canonical name, and I also 
-cringe every time I see 'hook'.
+Thanks!
 
-Please let me know if there are any big objections against this minor cleanup.
+Mathieu
 
-Thanks,
+> 
+> Thanks,
+> 
+> 	Ingo
 
-	Ingo
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
