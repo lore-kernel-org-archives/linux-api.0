@@ -1,121 +1,84 @@
-From: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH for 4.16 00/11] membarrier updates for 4.16
-Date: Mon, 5 Feb 2018 22:21:32 +0100
-Message-ID: <20180205212132.cbyqv25c2wouf4cp@gmail.com>
-References: <20180129202020.8515-1-mathieu.desnoyers@efficios.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v3 06/21] fpga: dfl: adds fpga_cdev_find_port
+Date: Mon, 5 Feb 2018 16:08:19 -0600
+Message-ID: <CANk1AXSNEX_pUTdWDOsXFsgogU2xbBBZwoLJFssqzF+q=hBssA@mail.gmail.com>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-7-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20180129202020.8515-1-mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Paul E . McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, "H . Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, David
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1511764948-20972-7-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu@intel.com> wrote:
 
-Hi,
+Hi Hao,
 
-Find below the interdiff of the (minor) edits I've done to the series, before 
-applying them to tip:sched/urgent.
+A couple comments below.
 
-I've also tidied up some of the changelogs.
+> For feature devices, e.g FPGA Management Engine (FME),
 
-Nothing earth-shattering.
+The first use I see of this function in this patchset is the FME PR,
+not the FME, or am I misunderstanding?
 
-Thanks,
+> it may
+> require fpga_cdev_find_port function to find dedicate port for
+> further actions, so export this function from feature device
+> driver module.
 
-	Ingo
+I understand the need for this function, but I'm having a hard time
+following this explanation here.   Suggestion: "For feature devices,
+we need a method to find the port dedicated to the device.  Add a
+function fpga_cdev_find_port to do that"
 
-=========>
+>
+> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+> ----
+> v3: s/fpga_for_each_port/fpga_cdev_find_port/
+>     move fpga_cdev_find_port to fpga-dfl module.
+> ---
+>  drivers/fpga/fpga-dfl.c | 27 +++++++++++++++++++++++++++
+>  drivers/fpga/fpga-dfl.h | 16 ++++++++++++++++
+>  2 files changed, 43 insertions(+)
+>
+> diff --git a/drivers/fpga/fpga-dfl.c b/drivers/fpga/fpga-dfl.c
+> index 9294c0a..ce03b17 100644
+> --- a/drivers/fpga/fpga-dfl.c
+> +++ b/drivers/fpga/fpga-dfl.c
+> @@ -873,6 +873,33 @@ void fpga_remove_feature_devs(struct fpga_cdev *cdev)
+>  }
+>  EXPORT_SYMBOL_GPL(fpga_remove_feature_devs);
+>
+> +/**
+> + * __fpga_cdev_find_port - find a port under given container device
+> + * @cdev: container device
+> + * @data: data passed to match function
+> + * @match: match function used to find specific port from the port device list
+> + *
+> + * Find a port device under container device. This function needs to be
+> + * invoked with lock held.
+> + */
+> +struct platform_device *
+> +__fpga_cdev_find_port(struct fpga_cdev *cdev, void *data,
+> +                     int (*match)(struct platform_device *, void *))
+> +{
+> +       struct feature_platform_data *pdata;
+> +       struct platform_device *port_dev;
+> +
+> +       list_for_each_entry(pdata, &cdev->port_dev_list, node) {
+> +               port_dev = pdata->dev;
+> +
+> +               if (match(port_dev, data) && get_device(&port_dev->dev))
+> +                       return port_dev;
 
- arch/powerpc/Kconfig      | 2 +-
- arch/x86/entry/entry_32.S | 2 +-
- arch/x86/entry/entry_64.S | 2 +-
- include/linux/sched/mm.h  | 6 +++---
- init/Kconfig              | 2 +-
- 5 files changed, 7 insertions(+), 7 deletions(-)
+The caller will need to put the port_dev->dev.  Please document that
+in the function header.  I mentioned that in v2.
 
-diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
-index 09b02180b8a0..a2380de50878 100644
---- a/arch/powerpc/Kconfig
-+++ b/arch/powerpc/Kconfig
-@@ -140,7 +140,7 @@ config PPC
- 	select ARCH_HAS_FORTIFY_SOURCE
- 	select ARCH_HAS_GCOV_PROFILE_ALL
- 	select ARCH_HAS_PMEM_API                if PPC64
--	select ARCH_HAS_MEMBARRIER_HOOKS
-+	select ARCH_HAS_MEMBARRIER_CALLBACKS
- 	select ARCH_HAS_SCALED_CPUTIME		if VIRT_CPU_ACCOUNTING_NATIVE
- 	select ARCH_HAS_SG_CHAIN
- 	select ARCH_HAS_TICK_BROADCAST		if GENERIC_CLOCKEVENTS_BROADCAST
-diff --git a/arch/x86/entry/entry_32.S b/arch/x86/entry/entry_32.S
-index d8ba23d0d77a..abee6d2b9311 100644
---- a/arch/x86/entry/entry_32.S
-+++ b/arch/x86/entry/entry_32.S
-@@ -567,7 +567,7 @@ ENTRY(entry_INT80_32)
- 	RESTORE_REGS 4				# skip orig_eax/error_code
- .Lirq_return:
- 	/*
--	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
-+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on IRET core serialization
- 	 * when returning from IPI handler and when returning from
- 	 * scheduler to user-space.
- 	 */
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index 49852d9920da..5816858c8820 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -805,7 +805,7 @@ GLOBAL(restore_regs_and_return_to_kernel)
- 	POP_C_REGS
- 	addq	$8, %rsp	/* skip regs->orig_ax */
- 	/*
--	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on iret core serialization
-+	 * ARCH_HAS_MEMBARRIER_SYNC_CORE rely on IRET core serialization
- 	 * when returning from IPI handler.
- 	 */
- 	INTERRUPT_RETURN
-diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index a7840f0f8832..03a169087a18 100644
---- a/include/linux/sched/mm.h
-+++ b/include/linux/sched/mm.h
-@@ -41,7 +41,7 @@ extern void __mmdrop(struct mm_struct *);
- static inline void mmdrop(struct mm_struct *mm)
- {
- 	/*
--	 * The implicit full barrier implied by atomic_dec_and_test is
-+	 * The implicit full barrier implied by atomic_dec_and_test() is
- 	 * required by the membarrier system call before returning to
- 	 * user-space, after storing to rq->curr.
- 	 */
-@@ -232,7 +232,7 @@ enum {
- 	MEMBARRIER_FLAG_SYNC_CORE	= (1U << 0),
- };
- 
--#ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
-+#ifdef CONFIG_ARCH_HAS_MEMBARRIER_CALLBACKS
- #include <asm/membarrier.h>
- #endif
- 
-@@ -249,7 +249,7 @@ static inline void membarrier_execve(struct task_struct *t)
- 	atomic_set(&t->mm->membarrier_state, 0);
- }
- #else
--#ifdef CONFIG_ARCH_HAS_MEMBARRIER_HOOKS
-+#ifdef CONFIG_ARCH_HAS_MEMBARRIER_CALLBACKS
- static inline void membarrier_arch_switch_mm(struct mm_struct *prev,
- 					     struct mm_struct *next,
- 					     struct task_struct *tsk)
-diff --git a/init/Kconfig b/init/Kconfig
-index 30b65febeb23..e37f4b2a6445 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1412,7 +1412,7 @@ config USERFAULTFD
- 	  Enable the userfaultfd() system call that allows to intercept and
- 	  handle page faults in userland.
- 
--config ARCH_HAS_MEMBARRIER_HOOKS
-+config ARCH_HAS_MEMBARRIER_CALLBACKS
- 	bool
- 
- config ARCH_HAS_MEMBARRIER_SYNC_CORE
+Alan
