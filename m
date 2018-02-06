@@ -1,8 +1,8 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Subject: Re: [PATCH v3 14/21] fpga: dfl: add fpga manager platform driver for
  FME
-Date: Tue, 6 Feb 2018 13:23:15 +0800
-Message-ID: <20180206052315.GA4882@hao-dev>
+Date: Tue, 6 Feb 2018 07:44:21 +0100
+Message-ID: <20180206064421.awx26yvsqk4gmqby@derp-derp.local>
 References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
  <1511764948-20972-15-git-send-email-hao.wu@intel.com>
  <CANk1AXS-ON+Pcxtk-AY1XxH8Paw2aFBjiqhuCz7cA4cyuAQMUA@mail.gmail.com>
@@ -20,7 +20,7 @@ Content-Disposition: inline
 In-Reply-To: <CANk1AXTYtLu_cnKG75FjBRCf5FAoHFj6saNRncYPjQpJoXd1eg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Luebbers, Enno" <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, "Luebbers, Enno" <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 On Mon, Feb 05, 2018 at 10:25:27PM -0600, Alan Tull wrote:
@@ -91,6 +91,16 @@ On Mon, Feb 05, 2018 at 10:25:27PM -0600, Alan Tull wrote:
 > >> >>
 > >> >> I'm not sure userland should be making the call on whether what you're
 > >> >> trying to load is compatible or not.
+
+I guess I was worried that you might take down a PR region that you
+could've avoided. On second thought unless the kernel could extract that
+info somehow from the bitstream before programming this is probably
+anyway not possible, since the only one that knows the id -> bitstream
+mapping is userland.
+
+Hao's comments further down outline well enough that the hardware can
+deal with incompatible bitstreams. So ignore my comments ;-)
+
 > >>
 > >> Could you explain more about what your concern was about this (unless
 > >> Hao has covered it below)?
@@ -148,8 +158,7 @@ On Mon, Feb 05, 2018 at 10:25:27PM -0600, Alan Tull wrote:
 > 
 > OK, thanks for that explanation.  That makes sense but could have
 > easily been different.  Please document this somewhere.
+> 
+> Alan
 
-Sure, will do.
-
-Thanks
-Hao
+Moritz
