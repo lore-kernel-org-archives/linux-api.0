@@ -1,108 +1,67 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: Re: [PATCH v2] inotify: Extend ioctl to allow to request id of new
- watch descriptor
-Date: Sat, 10 Feb 2018 01:45:16 +0300
-Message-ID: <bb9bafab-9a50-d19e-7293-65e74aca4720@virtuozzo.com>
-References: <151810242614.30935.12876744458891870220.stgit@localhost.localdomain>
- <ca006760-de72-37b3-f6fd-311c86f29b62@virtuozzo.com>
- <20180209125656.e440e0518540d6b76ae42bc0@linux-foundation.org>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH for 4.16] membarrier-sync-core: Document architecture
+ support
+Date: Sat, 10 Feb 2018 12:47:00 +0100
+Message-ID: <20180210114700.mq2rg4lbjtzyx5pn@gmail.com>
+References: <1518208256-22034-1-git-send-email-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20180209125656.e440e0518540d6b76ae42bc0@linux-foundation.org>
-Content-Language: en-US
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: jack@suse.cz, amir73il@gmail.com, willy@infradead.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, gorcunov@virtuozzo.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-arch-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1518208256-22034-1-git-send-email-mathieu.desnoyers@efficios.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Andrea Parri <parri.andrea@gmail.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, Greg Hackmann <ghackmann@google.com>, "H. Peter Anvin" <hpa@zytor.com>, Linus Torvalds <torvalds@linux-foundation.org>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Paul Mackerras <paulus@samba.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 09.02.2018 23:56, Andrew Morton wrote:
-> On Fri, 9 Feb 2018 18:04:54 +0300 Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
-> 
->> Watch descriptor is id of the watch created by inotify_add_watch().
->> It is allocated in inotify_add_to_idr(), and takes the numbers
->> starting from 1. Every new inotify watch obtains next available
->> number (usually, old + 1), as served by idr_alloc_cyclic().
->>
->> CRIU (Checkpoint/Restore In Userspace) project supports inotify
->> files, and restores watched descriptors with the same numbers,
->> they had before dump. Since there was no kernel support, we
->> had to use cycle to add a watch with specific descriptor id:
->>
->> 	while (1) {
->> 		int wd;
->>
->> 		wd = inotify_add_watch(inotify_fd, path, mask);
->> 		if (wd < 0) {
->> 			break;
->> 		} else if (wd == desired_wd_id) {
->> 			ret = 0;
->> 			break;
->> 		}
->>
->> 		inotify_rm_watch(inotify_fd, wd);
->> 	}
->>
->> (You may find the actual code at the below link:
->>  https://github.com/checkpoint-restore/criu/blob/v3.7/criu/fsnotify.c#L577)
->>
->> The cycle is suboptiomal and very expensive, but since there is no better
->> kernel support, it was the only way to restore that. Happily, we had met
->> mostly descriptors with small id, and this approach had worked somehow.
->>
->> But recent time containers with inotify with big watch descriptors
->> begun to come, and this way stopped to work at all. When descriptor id
->> is something about 0x34d71d6, the restoring process spins in busy loop
->> for a long time, and the restore hungs and delay of migration from node
->> to node could easily be watched.
->>
->> This patch aims to solve this problem. It introduces new ioctl
->> INOTIFY_IOC_SETNEXTWD, which allows to request the number of next created
->> watch descriptor from userspace. It simply calls idr_set_cursor() primitive
->> to populate idr::idr_next, so that next idr_alloc_cyclic() allocation
->> will return this id, if it is not occupied. This is the way which is
->> used to restore some other resources from userspace. For example,
->> /proc/sys/kernel/ns_last_pid works the same for task pids.
->>
->> The new code is under CONFIG_CHECKPOINT_RESTORE #define, so small system
->> may exclude it.
->>
-> 
-> Reviewed-by: Andrew Morton <akpm@linux-foundation.org>
-> 
-> With a little cleanup:
-> 
-> --- a/fs/notify/inotify/inotify_user.c~inotify-extend-ioctl-to-allow-to-request-id-of-new-watch-descriptor-fix
-> +++ a/fs/notify/inotify/inotify_user.c
-> @@ -285,7 +285,6 @@ static int inotify_release(struct inode
->  static long inotify_ioctl(struct file *file, unsigned int cmd,
->  			  unsigned long arg)
->  {
-> -	struct inotify_group_private_data *data __maybe_unused;
->  	struct fsnotify_group *group;
->  	struct fsnotify_event *fsn_event;
->  	void __user *p;
-> @@ -294,7 +293,6 @@ static long inotify_ioctl(struct file *f
->  
->  	group = file->private_data;
->  	p = (void __user *) arg;
-> -	data = &group->inotify_data;
->  
->  	pr_debug("%s: group=%p cmd=%u\n", __func__, group, cmd);
->  
-> @@ -313,6 +311,9 @@ static long inotify_ioctl(struct file *f
->  	case INOTIFY_IOC_SETNEXTWD:
->  		ret = -EINVAL;
->  		if (arg >= 1 && arg <= INT_MAX) {
-> +			struct inotify_group_private_data *data;
-> +
-> +			data = &group->inotify_data;
->  			spin_lock(&data->idr_lock);
->  			idr_set_cursor(&data->idr, (unsigned int)arg);
->  			spin_unlock(&data->idr_lock);
 
-I have no objections.
+* Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+
+> Ensure we gather architecture requirements about each architecture
+> supporting the "sync_core" membarrier command in a single file under
+> Documentation/features.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Cc: Ingo Molnar <mingo@kernel.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+> Cc: Andrea Parri <parri.andrea@gmail.com>
+> Cc: Andrew Hunter <ahh@google.com>
+> Cc: Andy Lutomirski <luto@kernel.org>
+> Cc: Avi Kivity <avi@scylladb.com>
+> Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+> Cc: Boqun Feng <boqun.feng@gmail.com>
+> Cc: Dave Watson <davejwatson@fb.com>
+> Cc: David Sehr <sehr@google.com>
+> Cc: Greg Hackmann <ghackmann@google.com>
+> Cc: H. Peter Anvin <hpa@zytor.com>
+> Cc: Linus Torvalds <torvalds@linux-foundation.org>
+> Cc: Maged Michael <maged.michael@gmail.com>
+> Cc: Michael Ellerman <mpe@ellerman.id.au>
+> Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> Cc: Paul Mackerras <paulus@samba.org>
+> Cc: Russell King <linux@armlinux.org.uk>
+> Cc: Will Deacon <will.deacon@arm.com>
+> Cc: linux-api@vger.kernel.org
+> Cc: linux-arch@vger.kernel.org
+> ---
+>  .../sched/membarrier-sync-core/arch-support.txt    | 62 ++++++++++++++++++++++
+>  1 file changed, 62 insertions(+)
+>  create mode 100644 Documentation/features/sched/membarrier-sync-core/arch-support.txt
+> 
+> diff --git a/Documentation/features/sched/membarrier-sync-core/arch-support.txt b/Documentation/features/sched/membarrier-sync-core/arch-support.txt
+> new file mode 100644
+> index 0000000..2c815a7
+> --- /dev/null
+> +++ b/Documentation/features/sched/membarrier-sync-core/arch-support.txt
+> @@ -0,0 +1,62 @@
+> +#
+> +# Feature name:          membarrier-sync-core
+> +#         Kconfig:       ARCH_HAS_MEMBARRIER_SYNC_CORE
+> +#         description:   arch supports core serializing membarrier
+
+This breaks the output of the Documentation/features/list-arch.sh script.
 
 Thanks,
-Kirill
+
+	Ingo
