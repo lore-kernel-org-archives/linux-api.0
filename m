@@ -1,67 +1,65 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH for 4.16] membarrier-sync-core: Document architecture
- support
-Date: Sat, 10 Feb 2018 12:47:00 +0100
-Message-ID: <20180210114700.mq2rg4lbjtzyx5pn@gmail.com>
-References: <1518208256-22034-1-git-send-email-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-arch-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1518208256-22034-1-git-send-email-mathieu.desnoyers@efficios.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Andrea Parri <parri.andrea@gmail.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, Greg Hackmann <ghackmann@google.com>, "H. Peter Anvin" <hpa@zytor.com>, Linus Torvalds <torvalds@linux-foundation.org>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Paul Mackerras <paulus@samba.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>
+From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Subject: [PATCH for 4.16] Documentation: Allow comments in arch features files
+Date: Sat, 10 Feb 2018 12:00:58 -0500
+Message-ID: <1518282058-24226-1-git-send-email-mathieu.desnoyers@efficios.com>
+References: <20180210114700.mq2rg4lbjtzyx5pn@gmail.com>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180210114700.mq2rg4lbjtzyx5pn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Peter Zijlstra (Intel)" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell
 List-Id: linux-api@vger.kernel.org
 
+The list-arch.sh script considers lines beginning with "#" as match for
+the feature table.
 
-* Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+Given that those tables are never in lines beginning with "#",
+add a reverse grep on "^#" when matching the "ok/TODO" state of
+the architecture.
 
-> Ensure we gather architecture requirements about each architecture
-> supporting the "sync_core" membarrier command in a single file under
-> Documentation/features.
-> 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> Cc: Ingo Molnar <mingo@kernel.org>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
-> Cc: Andrea Parri <parri.andrea@gmail.com>
-> Cc: Andrew Hunter <ahh@google.com>
-> Cc: Andy Lutomirski <luto@kernel.org>
-> Cc: Avi Kivity <avi@scylladb.com>
-> Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-> Cc: Boqun Feng <boqun.feng@gmail.com>
-> Cc: Dave Watson <davejwatson@fb.com>
-> Cc: David Sehr <sehr@google.com>
-> Cc: Greg Hackmann <ghackmann@google.com>
-> Cc: H. Peter Anvin <hpa@zytor.com>
-> Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> Cc: Maged Michael <maged.michael@gmail.com>
-> Cc: Michael Ellerman <mpe@ellerman.id.au>
-> Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-> Cc: Paul Mackerras <paulus@samba.org>
-> Cc: Russell King <linux@armlinux.org.uk>
-> Cc: Will Deacon <will.deacon@arm.com>
-> Cc: linux-api@vger.kernel.org
-> Cc: linux-arch@vger.kernel.org
-> ---
->  .../sched/membarrier-sync-core/arch-support.txt    | 62 ++++++++++++++++++++++
->  1 file changed, 62 insertions(+)
->  create mode 100644 Documentation/features/sched/membarrier-sync-core/arch-support.txt
-> 
-> diff --git a/Documentation/features/sched/membarrier-sync-core/arch-support.txt b/Documentation/features/sched/membarrier-sync-core/arch-support.txt
-> new file mode 100644
-> index 0000000..2c815a7
-> --- /dev/null
-> +++ b/Documentation/features/sched/membarrier-sync-core/arch-support.txt
-> @@ -0,0 +1,62 @@
-> +#
-> +# Feature name:          membarrier-sync-core
-> +#         Kconfig:       ARCH_HAS_MEMBARRIER_SYNC_CORE
-> +#         description:   arch supports core serializing membarrier
+This allows adding comments within the feature files, for instance
+describing the architecture requirements for the feature in each
+architecture.
 
-This breaks the output of the Documentation/features/list-arch.sh script.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
+Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Peter Zijlstra (Intel) <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+Cc: Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
+Cc: Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
+Cc: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
+Cc: David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
+Cc: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
+Cc: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
+Cc: Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
+Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+---
+ Documentation/features/list-arch.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks,
-
-	Ingo
+diff --git a/Documentation/features/list-arch.sh b/Documentation/features/list-arch.sh
+index c16b5b5..1ec47c3 100755
+--- a/Documentation/features/list-arch.sh
++++ b/Documentation/features/list-arch.sh
+@@ -17,7 +17,7 @@ for F in */*/arch-support.txt; do
+   N=$(grep -h "^# Feature name:"        $F | cut -c25-)
+   C=$(grep -h "^#         Kconfig:"     $F | cut -c25-)
+   D=$(grep -h "^#         description:" $F | cut -c25-)
+-  S=$(grep -hw $ARCH $F | cut -d\| -f3)
++  S=$(grep -hv "^#" $F | grep -w $ARCH | cut -d\| -f3)
+ 
+   printf "%10s/%-22s:%s| %35s # %s\n" "$SUBSYS" "$N" "$S" "$C" "$D"
+ done
+-- 
+1.9.1
