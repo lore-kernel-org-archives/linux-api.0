@@ -1,65 +1,54 @@
-From: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Subject: [PATCH for 4.16] Documentation: Allow comments in arch features files
-Date: Sat, 10 Feb 2018 12:00:58 -0500
-Message-ID: <1518282058-24226-1-git-send-email-mathieu.desnoyers@efficios.com>
-References: <20180210114700.mq2rg4lbjtzyx5pn@gmail.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20180210114700.mq2rg4lbjtzyx5pn-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, "Peter Zijlstra (Intel)" <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>, Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>, Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>, David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>, "Paul E. McKenney" <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>, Russell
+From: Stef Bon <stefbon@gmail.com>
+Subject: Re: [PATCH v2] inotify: Extend ioctl to allow to request id of new
+ watch descriptor
+Date: Sun, 11 Feb 2018 12:30:21 +0100
+Message-ID: <CANXojcxKH1zFHOPsJh7zbjshUkFGagah-vN6EvMU7Q-9kLFmpg@mail.gmail.com>
+References: <151810242614.30935.12876744458891870220.stgit@localhost.localdomain>
+ <ca006760-de72-37b3-f6fd-311c86f29b62@virtuozzo.com> <20180209125656.e440e0518540d6b76ae42bc0@linux-foundation.org>
+ <bb9bafab-9a50-d19e-7293-65e74aca4720@virtuozzo.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <bb9bafab-9a50-d19e-7293-65e74aca4720@virtuozzo.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Jan Kara <jack@suse.cz>, Amir Goldstein <amir73il@gmail.com>, willy@infradead.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, gorcunov@virtuozzo.com
 List-Id: linux-api@vger.kernel.org
 
-The list-arch.sh script considers lines beginning with "#" as match for
-the feature table.
+2018-02-09 23:45 GMT+01:00 Kirill Tkhai <ktkhai@virtuozzo.com>:
+> On 09.02.2018 23:56, Andrew Morton wrote:
+>> On Fri, 9 Feb 2018 18:04:54 +0300 Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+>>
+>>> Watch descriptor is id of the watch created by inotify_add_watch().
+>>> It is allocated in inotify_add_to_idr(), and takes the numbers
+>>> starting from 1. Every new inotify watch obtains next available
+>>> number (usually, old + 1), as served by idr_alloc_cyclic().
+>>>
+>>> CRIU (Checkpoint/Restore In Userspace) project supports inotify
+>>> files, and restores watched descriptors with the same numbers,
+>>> they had before dump. Since there was no kernel support, we
+>>> had to use cycle to add a watch with specific descriptor id:
+>>>
+>>>      while (1) {
+>>>              int wd;
+>>>
+>>>              wd = inotify_add_watch(inotify_fd, path, mask);
+>>>              if (wd < 0) {
+>>>                      break;
+>>>              } else if (wd == desired_wd_id) {
+>>>                      ret = 0;
+>>>                      break;
+>>>              }
+>>>
+>>>              inotify_rm_watch(inotify_fd, wd);
+>>>      }
+>>>
+>>> (You may find the actual code at the below link:
+>>>  https://github.com/checkpoint-restore/criu/blob/v3.7/criu/fsnotify.c#L577)
 
-Given that those tables are never in lines beginning with "#",
-add a reverse grep on "^#" when matching the "ok/TODO" state of
-the architecture.
+Well using a ioctl command to force a specific wd is possible, but
+isn't it also possible
+to do a "freeze" of all (inotify) watches which are involved, and
+"unfreeze" when restoring?
 
-This allows adding comments within the feature files, for instance
-describing the architecture requirements for the feature in each
-architecture.
-
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org>
-Cc: Ingo Molnar <mingo-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Cc: Peter Zijlstra (Intel) <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: Andrea Parri <parri.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Andrew Hunter <ahh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Avi Kivity <avi-VrcmuVmyx1hWk0Htik3J/w@public.gmane.org>
-Cc: Benjamin Herrenschmidt <benh-XVmvHMARGAS8U2dJNN8I7kB+6BGkLq7r@public.gmane.org>
-Cc: Boqun Feng <boqun.feng-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Dave Watson <davejwatson-b10kYP2dOMg@public.gmane.org>
-Cc: David Sehr <sehr-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Greg Hackmann <ghackmann-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: H. Peter Anvin <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Maged Michael <maged.michael-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Michael Ellerman <mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org>
-Cc: Paul E. McKenney <paulmck-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Cc: Paul Mackerras <paulus-eUNUBHrolfbYtjvyW6yDsg@public.gmane.org>
-Cc: Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>
-Cc: Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
----
- Documentation/features/list-arch.sh | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/Documentation/features/list-arch.sh b/Documentation/features/list-arch.sh
-index c16b5b5..1ec47c3 100755
---- a/Documentation/features/list-arch.sh
-+++ b/Documentation/features/list-arch.sh
-@@ -17,7 +17,7 @@ for F in */*/arch-support.txt; do
-   N=$(grep -h "^# Feature name:"        $F | cut -c25-)
-   C=$(grep -h "^#         Kconfig:"     $F | cut -c25-)
-   D=$(grep -h "^#         description:" $F | cut -c25-)
--  S=$(grep -hw $ARCH $F | cut -d\| -f3)
-+  S=$(grep -hv "^#" $F | grep -w $ARCH | cut -d\| -f3)
- 
-   printf "%10s/%-22s:%s| %35s # %s\n" "$SUBSYS" "$N" "$S" "$C" "$D"
- done
--- 
-1.9.1
+Stef
