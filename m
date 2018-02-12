@@ -1,175 +1,109 @@
-From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 11/21] fpga: dfl: fme: add header sub feature support
-Date: Mon, 12 Feb 2018 10:51:44 -0600
-Message-ID: <CANk1AXR2Q4M4c1TOQhR2J_Mz5MjwZWbR0JUXCR5jFVL_kZtcag@mail.gmail.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-12-git-send-email-hao.wu@intel.com>
+From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
+Subject: Re: shmctl(SHM_STAT) vs. /proc/sysvipc/shm permissions discrepancies
+Date: Mon, 12 Feb 2018 09:30:37 -0800
+Message-ID: <20180212173037.oruxafinai5tkv6t@linux-n805>
+References: <20171219094848.GE2787@dhcp22.suse.cz>
+ <CAKgNAkjJrmCFY-h2oqKS3zM_D+Csx-17A27mh08WKahyOVzrgQ@mail.gmail.com>
+ <20171220092025.GD4831@dhcp22.suse.cz>
+ <CAKgNAkisD7zDRoqJd6Gk1JMCZ8+Huj5QPV04nh2JXHMA+_R0-A@mail.gmail.com>
+ <20171221080203.GZ4831@dhcp22.suse.cz>
+ <CAKgNAkjSF9fXhKCxPMp92zftA4Qtq91WBt8L5UR50oQO8HgRxw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1511764948-20972-12-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAKgNAkjSF9fXhKCxPMp92zftA4Qtq91WBt8L5UR50oQO8HgRxw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Manfred Spraul <manfred-nhLOkwUX5cPe2c5cEj3t2g@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> From: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
->
-> The header register set is always present for FPGA Management Engine (FME),
-> this patch implements init and uinit function for header sub feature and
-> introduce several read-only sysfs interfaces for the capability and status.
->
-> Sysfs interfaces:
-> * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/ports_num
->   Read-only. Number of ports implemented
->
-> * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/bitstream_id
->   Read-only. Blue Bitstream (static FPGA region) identifier number
->
-> * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/bitstream_metadata
->   Read-only. Blue Bitstream (static FPGA region) meta data
+On Thu, 21 Dec 2017, Michael Kerrisk (man-pages) wrote:
 
-Please document the meta data.  I don't see anywhere that describes it
-or how it differs from the bitstream_id.  So it could be useful to
-document it in this header a bit, and in the code, in the sysfs
-document, and in the Documentation/fpga so that people don't have to
-go hunting.
+>Hi Michal,
+>
+>On 21 December 2017 at 09:02, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> On Wed 20-12-17 17:17:46, Michael Kerrisk wrote:
+>>> Hello Michal,
+>>>
+>>> On 20 December 2017 at 10:20, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>>> > On Tue 19-12-17 17:45:40, Michael Kerrisk wrote:
+>>> >> But, is
+>>> >> there a pressing reason to make the change? (Okay, I guess iterating
+>>> >> using *_STAT is nicer than parsing /proc/sysvipc/*.)
+>>> >
+>>> > The reporter of this issue claims that "Reading /proc/sysvipc/shm is way
+>>> > slower than executing the system call." I haven't checked that but I can
+>>> > imagine that /proc/sysvipc/shm can take quite some time when there are
+>>> > _many_ segments registered.
+>>>
+>>> Yes, that makes sense.
+>>>
+>>> > So they would like to use the syscall but
+>>> > the interacting parties do not have compatible permissions.
+>>>
+>>> So, I don't think there is any security issue, since the same info is
+>>> available in /proc/sysvipc/*.
+>>
+>> Well, I am not sure this is a valid argument (maybe I just misread your
+>> statement).
+>
+>(Or perhaps I was not clear enough; see below)
+>
+>> Our security model _might_ be broken because of the sysipc
+>> proc interface existance already. I am not saying it is broken because
+>> I cannot see an attack vector based solely on the metadata information
+>> knowledge. An attacker still cannot see/modify the real data. But maybe
+>> there are some bugs lurking there and knowing the metadata might help to
+>> exploit them. I dunno.
+>>
+>> You are certainly right that modifying/adding STAT flag to comply with
+>> the proc interface permission model will not make the system any more
+>> vulnerable, though.
+>
+>Yep, that was my point. Modifying _STAT behavior won't decrease security.
+>
+>That said, /proc/sysvipc/* has been around for a long time now, and
+>nothing bad seems to have happened so far, AFAIK.
+>
+>>> The only question would be whether
+>>> change in the *_STAT behavior might surprise some applications into
+>>> behaving differently. I presume the chances of that are low, but if it
+>>> was a concert, one could add new shmctl/msgctl/semctl *_STAT_ALL (or
+>>> some such) operations that have the desired behavior.
+>>
+>> I would lean towards _STAT_ALL because this is Linux specific behavior
+>> (I have looked at what BSD does here and they are checking permissions
+>> for STAT as well). It would also be simpler to revert if we ever find
+>> that this is a leak with security consequences.
 
-We discussed elsewhere the static region bitstream_id verses the other
-interface_ids, so that's been discussed.
+So I took a crack at this, and my only doubt is whether or not the lsm
+security hooks should be considered or not. Specifically, should the
+SHM_STAT_ALL case consider security_shm_shmctl()?
 
-Besides that, this patch looks good and straightforward.
+While the relevant persmission checks that allow for the discripancies
+between 0444 procfs and a 0600 via creating the ipc object are done in
+ipcperms() returning -1, is there a scenario where some lsm policy could
+change the /proc/sysvipc/ interface? If not, I think we can avoid it, but
+I'm not a security person.
 
 Thanks,
-Alan
+Davidlohr
 
 >
-> Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> ----
-> v2: add sysfs documentation
-> v3: rename driver to fpga-dfl-fme.
->     improve sysfs doc and commit description.
->     replace bitfield.
-> ---
->  .../ABI/testing/sysfs-platform-fpga-dfl-fme        | 21 ++++++++
->  drivers/fpga/dfl-fme-main.c                        | 60 ++++++++++++++++++++++
->  2 files changed, 81 insertions(+)
->  create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
+>Oh -- I was unaware of this BSD behavior. At least on the various UNIX
+>systems that I ever used SYSVIPC (including one or two ancient
+>commercial BSD derivatives), ipcs(1) showed all IPC objects. (On
+>FeeBSD, at least, it looks like ipcs(1) doesn't use the *_STAT
+>interfaces.)
 >
-> diff --git a/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
-> new file mode 100644
-> index 0000000..6b32799
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
-> @@ -0,0 +1,21 @@
-> +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/ports_num
-> +Date:          November 2017
-> +KernelVersion:  4.15
-> +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> +Description:   Read-only. One DFL FPGA device may have more than 1
-> +               port/Accelerator Function Unit (AFU). It returns the
-> +               number of ports on the FPGA device when read it.
-> +
-> +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/bitstream_id
-> +Date:          November 2017
-> +KernelVersion:  4.15
-> +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> +Description:   Read-only. It returns Blue Bitstream (static FPGA region)
-> +               identifier number.
-> +
-> +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/bitstream_meta
-> +Date:          November 2017
-> +KernelVersion:  4.15
-> +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> +Description:   Read-only. It returns Blue Bitstream (static FPGA region)
-> +               meta data.
-> diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> index f7b5f7d..d17c66a 100644
-> --- a/drivers/fpga/dfl-fme-main.c
-> +++ b/drivers/fpga/dfl-fme-main.c
-> @@ -21,9 +21,68 @@
+>Cheers,
 >
->  #include "fpga-dfl.h"
+>Michael
 >
-> +static ssize_t ports_num_show(struct device *dev,
-> +                             struct device_attribute *attr, char *buf)
-> +{
-> +       void __iomem *base;
-> +       u64 v;
-> +
-> +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
-> +
-> +       v = readq(base + FME_HDR_CAP);
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> +                        (unsigned int)FIELD_GET(FME_CAP_NUM_PORTS, v));
-> +}
-> +static DEVICE_ATTR_RO(ports_num);
-> +
-> +static ssize_t bitstream_id_show(struct device *dev,
-> +                                struct device_attribute *attr, char *buf)
-> +{
-> +       void __iomem *base;
-> +       u64 v;
-> +
-> +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
-> +
-> +       v = readq(base + FME_HDR_BITSTREAM_ID);
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "0x%llx\n", (unsigned long long)v);
-> +}
-> +static DEVICE_ATTR_RO(bitstream_id);
-> +
-> +static ssize_t bitstream_metadata_show(struct device *dev,
-> +                                      struct device_attribute *attr, char *buf)
-> +{
-> +       void __iomem *base;
-> +       u64 v;
-> +
-> +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
-> +
-> +       v = readq(base + FME_HDR_BITSTREAM_MD);
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "0x%llx\n", (unsigned long long)v);
-> +}
-> +static DEVICE_ATTR_RO(bitstream_metadata);
-> +
-> +static const struct attribute *fme_hdr_attrs[] = {
-> +       &dev_attr_ports_num.attr,
-> +       &dev_attr_bitstream_id.attr,
-> +       &dev_attr_bitstream_metadata.attr,
-> +       NULL,
-> +};
-> +
->  static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
->  {
-> +       void __iomem *base = feature->ioaddr;
-> +       int ret;
-> +
->         dev_dbg(&pdev->dev, "FME HDR Init.\n");
-> +       dev_dbg(&pdev->dev, "FME cap %llx.\n",
-> +               (unsigned long long)readq(base + FME_HDR_CAP));
-> +
-> +       ret = sysfs_create_files(&pdev->dev.kobj, fme_hdr_attrs);
-> +       if (ret)
-> +               return ret;
 >
->         return 0;
->  }
-> @@ -31,6 +90,7 @@ static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
->  static void fme_hdr_uinit(struct platform_device *pdev, struct feature *feature)
->  {
->         dev_dbg(&pdev->dev, "FME HDR UInit.\n");
-> +       sysfs_remove_files(&pdev->dev.kobj, fme_hdr_attrs);
->  }
 >
->  static const struct feature_ops fme_hdr_ops = {
-> --
-> 1.8.3.1
->
+>-- 
+>Michael Kerrisk
+>Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+>Linux/UNIX System Programming Training: http://man7.org/training/
