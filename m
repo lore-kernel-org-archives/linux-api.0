@@ -1,109 +1,195 @@
-From: Davidlohr Bueso <dave-h16yJtLeMjHk1uMJSBkQmQ@public.gmane.org>
-Subject: Re: shmctl(SHM_STAT) vs. /proc/sysvipc/shm permissions discrepancies
-Date: Mon, 12 Feb 2018 09:30:37 -0800
-Message-ID: <20180212173037.oruxafinai5tkv6t@linux-n805>
-References: <20171219094848.GE2787@dhcp22.suse.cz>
- <CAKgNAkjJrmCFY-h2oqKS3zM_D+Csx-17A27mh08WKahyOVzrgQ@mail.gmail.com>
- <20171220092025.GD4831@dhcp22.suse.cz>
- <CAKgNAkisD7zDRoqJd6Gk1JMCZ8+Huj5QPV04nh2JXHMA+_R0-A@mail.gmail.com>
- <20171221080203.GZ4831@dhcp22.suse.cz>
- <CAKgNAkjSF9fXhKCxPMp92zftA4Qtq91WBt8L5UR50oQO8HgRxw@mail.gmail.com>
+From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v3 18/21] fpga: dfl: afu: add header sub feature support
+Date: Mon, 12 Feb 2018 11:43:28 -0600
+Message-ID: <CANk1AXT0s1W99cRvWmT80nB+Buivt9xmjziDAz6pyxY-EJF2Fw@mail.gmail.com>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-19-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAKgNAkjSF9fXhKCxPMp92zftA4Qtq91WBt8L5UR50oQO8HgRxw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <1511764948-20972-19-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Manfred Spraul <manfred-nhLOkwUX5cPe2c5cEj3t2g@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Mike Waychison <mikew-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org" <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 21 Dec 2017, Michael Kerrisk (man-pages) wrote:
+On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
 
->Hi Michal,
->
->On 21 December 2017 at 09:02, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->> On Wed 20-12-17 17:17:46, Michael Kerrisk wrote:
->>> Hello Michal,
->>>
->>> On 20 December 2017 at 10:20, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
->>> > On Tue 19-12-17 17:45:40, Michael Kerrisk wrote:
->>> >> But, is
->>> >> there a pressing reason to make the change? (Okay, I guess iterating
->>> >> using *_STAT is nicer than parsing /proc/sysvipc/*.)
->>> >
->>> > The reporter of this issue claims that "Reading /proc/sysvipc/shm is way
->>> > slower than executing the system call." I haven't checked that but I can
->>> > imagine that /proc/sysvipc/shm can take quite some time when there are
->>> > _many_ segments registered.
->>>
->>> Yes, that makes sense.
->>>
->>> > So they would like to use the syscall but
->>> > the interacting parties do not have compatible permissions.
->>>
->>> So, I don't think there is any security issue, since the same info is
->>> available in /proc/sysvipc/*.
->>
->> Well, I am not sure this is a valid argument (maybe I just misread your
->> statement).
->
->(Or perhaps I was not clear enough; see below)
->
->> Our security model _might_ be broken because of the sysipc
->> proc interface existance already. I am not saying it is broken because
->> I cannot see an attack vector based solely on the metadata information
->> knowledge. An attacker still cannot see/modify the real data. But maybe
->> there are some bugs lurking there and knowing the metadata might help to
->> exploit them. I dunno.
->>
->> You are certainly right that modifying/adding STAT flag to comply with
->> the proc interface permission model will not make the system any more
->> vulnerable, though.
->
->Yep, that was my point. Modifying _STAT behavior won't decrease security.
->
->That said, /proc/sysvipc/* has been around for a long time now, and
->nothing bad seems to have happened so far, AFAIK.
->
->>> The only question would be whether
->>> change in the *_STAT behavior might surprise some applications into
->>> behaving differently. I presume the chances of that are low, but if it
->>> was a concert, one could add new shmctl/msgctl/semctl *_STAT_ALL (or
->>> some such) operations that have the desired behavior.
->>
->> I would lean towards _STAT_ALL because this is Linux specific behavior
->> (I have looked at what BSD does here and they are checking permissions
->> for STAT as well). It would also be simpler to revert if we ever find
->> that this is a leak with security consequences.
+Hi Hao,
 
-So I took a crack at this, and my only doubt is whether or not the lsm
-security hooks should be considered or not. Specifically, should the
-SHM_STAT_ALL case consider security_shm_shmctl()?
+Thanks for documenting the reset.  Please add this documentation to
+the function header that is in fpga-dfl.h.
 
-While the relevant persmission checks that allow for the discripancies
-between 0444 procfs and a 0600 via creating the ipc object are done in
-ipcperms() returning -1, is there a scenario where some lsm policy could
-change the /proc/sysvipc/ interface? If not, I think we can avoid it, but
-I'm not a security person.
+One question for clarification below.
 
-Thanks,
-Davidlohr
+This patch looks good.
 
+> The port header register set is always present for port, it is mainly
+> for capability, control and status of the ports that AFU connected to.
 >
->Oh -- I was unaware of this BSD behavior. At least on the various UNIX
->systems that I ever used SYSVIPC (including one or two ancient
->commercial BSD derivatives), ipcs(1) showed all IPC objects. (On
->FeeBSD, at least, it looks like ipcs(1) doesn't use the *_STAT
->interfaces.)
+> This patch implements header sub feature support. Below user interfaces
+> are created by this patch.
 >
->Cheers,
+> Sysfs interface:
+> * /sys/class/fpga_region/<regionX>/<fpga-dfl-port.x>/id
+>   Read-only. Port ID.
 >
->Michael
+> Ioctl interface:
+> * FPGA_PORT_RESET
+>   Reset the FPGA Port and its AFU.
 >
+> Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+
+Acked-by: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+
+> ----
+> v3: rename driver name to fpga-dfl-afu
+>     add more description for reset ioctl.
+>     fix some checkpatch issues.
+> ---
+>  .../ABI/testing/sysfs-platform-fpga-dfl-afu        |  7 ++++
+>  drivers/fpga/dfl-afu-main.c                        | 44 +++++++++++++++++++++-
+>  include/uapi/linux/fpga-dfl.h                      | 17 +++++++++
+>  3 files changed, 67 insertions(+), 1 deletion(-)
+>  create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
 >
+> diff --git a/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
+> new file mode 100644
+> index 0000000..f4bcd94
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
+> @@ -0,0 +1,7 @@
+> +What:          /sys/bus/platform/devices/fpga-dfl-port.0/id
+> +Date:          November 2017
+> +KernelVersion:  4.15
+> +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> +Description:   Read-only. It returns id of this port. One DFL FPGA device
+> +               may have more than one port. Userspace could use this id to
+> +               distinguish different ports under same FPGA device.
+
+Potentially >1 port per FPGA, but only one port per fpga-region, right?
+
+> diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+> index d9f4b81..b01376c 100644
+> --- a/drivers/fpga/dfl-afu-main.c
+> +++ b/drivers/fpga/dfl-afu-main.c
+> @@ -18,25 +18,66 @@
 >
->-- 
->Michael Kerrisk
->Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
->Linux/UNIX System Programming Training: http://man7.org/training/
+>  #include <linux/kernel.h>
+>  #include <linux/module.h>
+> +#include <linux/fpga-dfl.h>
+>
+>  #include "fpga-dfl.h"
+>
+> +static ssize_t
+> +id_show(struct device *dev, struct device_attribute *attr, char *buf)
+> +{
+> +       int id = fpga_port_id(to_platform_device(dev));
+> +
+> +       return scnprintf(buf, PAGE_SIZE, "%d\n", id);
+> +}
+> +static DEVICE_ATTR_RO(id);
+> +
+> +static const struct attribute *port_hdr_attrs[] = {
+> +       &dev_attr_id.attr,
+> +       NULL,
+> +};
+> +
+>  static int port_hdr_init(struct platform_device *pdev, struct feature *feature)
+>  {
+>         dev_dbg(&pdev->dev, "PORT HDR Init.\n");
+>
+> -       return 0;
+> +       fpga_port_reset(pdev);
+> +
+> +       return sysfs_create_files(&pdev->dev.kobj, port_hdr_attrs);
+>  }
+>
+>  static void port_hdr_uinit(struct platform_device *pdev,
+>                            struct feature *feature)
+>  {
+>         dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
+> +
+> +       sysfs_remove_files(&pdev->dev.kobj, port_hdr_attrs);
+> +}
+> +
+> +static long
+> +port_hdr_ioctl(struct platform_device *pdev, struct feature *feature,
+> +              unsigned int cmd, unsigned long arg)
+> +{
+> +       long ret;
+> +
+> +       switch (cmd) {
+> +       case FPGA_PORT_RESET:
+> +               if (!arg)
+> +                       ret = fpga_port_reset(pdev);
+> +               else
+> +                       ret = -EINVAL;
+> +               break;
+> +       default:
+> +               dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
+> +               ret = -ENODEV;
+> +       }
+> +
+> +       return ret;
+>  }
+>
+>  static const struct feature_ops port_hdr_ops = {
+>         .init = port_hdr_init,
+>         .uinit = port_hdr_uinit,
+> +       .ioctl = port_hdr_ioctl,
+>  };
+>
+>  static struct feature_driver port_feature_drvs[] = {
+> @@ -76,6 +117,7 @@ static int afu_release(struct inode *inode, struct file *filp)
+>
+>         dev_dbg(&pdev->dev, "Device File Release\n");
+>
+> +       fpga_port_reset(pdev);
+>         feature_dev_use_end(pdata);
+>
+>         return 0;
+> diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
+> index 75bdf88..9bf273d 100644
+> --- a/include/uapi/linux/fpga-dfl.h
+> +++ b/include/uapi/linux/fpga-dfl.h
+> @@ -30,8 +30,11 @@
+>  #define FPGA_MAGIC 0xB6
+>
+>  #define FPGA_BASE 0
+> +#define PORT_BASE 0x40
+>  #define FME_BASE 0x80
+>
+> +/* Common IOCTLs for both FME and AFU file descriptor */
+> +
+>  /**
+>   * FPGA_GET_API_VERSION - _IO(FPGA_MAGIC, FPGA_BASE + 0)
+>   *
+> @@ -50,6 +53,20 @@
+>
+>  #define FPGA_CHECK_EXTENSION   _IO(FPGA_MAGIC, FPGA_BASE + 1)
+>
+> +/* IOCTLs for AFU file descriptor */
+> +
+> +/**
+> + * FPGA_PORT_RESET - _IO(FPGA_MAGIC, PORT_BASE + 0)
+> + *
+> + * Reset the FPGA Port and its AFU. No parameters are supported.
+> + * Userspace can do Port reset at any time, e.g during DMA or PR. But
+> + * it should never cause any system level issue, only functional failure
+> + * (e.g DMA or PR operation failure) and be recoverable from the failure.
+> + * Return: 0 on success, -errno of failure
+> + */
+> +
+> +#define FPGA_PORT_RESET                _IO(FPGA_MAGIC, PORT_BASE + 0)
+> +
+>  /* IOCTLs for FME file descriptor */
+>
+>  /**
+> --
+> 1.8.3.1
+>
