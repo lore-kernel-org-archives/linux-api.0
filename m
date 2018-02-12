@@ -1,195 +1,162 @@
-From: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v3 18/21] fpga: dfl: afu: add header sub feature support
-Date: Mon, 12 Feb 2018 11:43:28 -0600
-Message-ID: <CANk1AXT0s1W99cRvWmT80nB+Buivt9xmjziDAz6pyxY-EJF2Fw@mail.gmail.com>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com> <1511764948-20972-19-git-send-email-hao.wu@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1511764948-20972-19-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH manpages] membarrier.2: New membarrier commands introduced in 4.16
+Date: Mon, 12 Feb 2018 14:55:49 -0500
+Message-ID: <20180212195549.11485-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, Maged Michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, Russell King <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will Deacon <will.deacon@arm.com>, David
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+Document the following membarrier commands introduced in 4.16:
+- MEMBARRIER_CMD_GLOBAL_EXPEDITED (the old enum label
+  MEMBARRIER_CMD_SHARED is now an alias to preserve header backward
+  compatibility),
+- MEMBARRIER_CMD_GLOBAL_EXPEDITED,
+- MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED,
+- MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE,
+- MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE.
 
-Hi Hao,
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Thomas Gleixner <tglx@linutronix.de>
+---
+ man2/membarrier.2 | 73 ++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 62 insertions(+), 11 deletions(-)
 
-Thanks for documenting the reset.  Please add this documentation to
-the function header that is in fpga-dfl.h.
-
-One question for clarification below.
-
-This patch looks good.
-
-> The port header register set is always present for port, it is mainly
-> for capability, control and status of the ports that AFU connected to.
->
-> This patch implements header sub feature support. Below user interfaces
-> are created by this patch.
->
-> Sysfs interface:
-> * /sys/class/fpga_region/<regionX>/<fpga-dfl-port.x>/id
->   Read-only. Port ID.
->
-> Ioctl interface:
-> * FPGA_PORT_RESET
->   Reset the FPGA Port and its AFU.
->
-> Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-
-Acked-by: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-
-> ----
-> v3: rename driver name to fpga-dfl-afu
->     add more description for reset ioctl.
->     fix some checkpatch issues.
-> ---
->  .../ABI/testing/sysfs-platform-fpga-dfl-afu        |  7 ++++
->  drivers/fpga/dfl-afu-main.c                        | 44 +++++++++++++++++++++-
->  include/uapi/linux/fpga-dfl.h                      | 17 +++++++++
->  3 files changed, 67 insertions(+), 1 deletion(-)
->  create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
->
-> diff --git a/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
-> new file mode 100644
-> index 0000000..f4bcd94
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
-> @@ -0,0 +1,7 @@
-> +What:          /sys/bus/platform/devices/fpga-dfl-port.0/id
-> +Date:          November 2017
-> +KernelVersion:  4.15
-> +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> +Description:   Read-only. It returns id of this port. One DFL FPGA device
-> +               may have more than one port. Userspace could use this id to
-> +               distinguish different ports under same FPGA device.
-
-Potentially >1 port per FPGA, but only one port per fpga-region, right?
-
-> diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-> index d9f4b81..b01376c 100644
-> --- a/drivers/fpga/dfl-afu-main.c
-> +++ b/drivers/fpga/dfl-afu-main.c
-> @@ -18,25 +18,66 @@
->
->  #include <linux/kernel.h>
->  #include <linux/module.h>
-> +#include <linux/fpga-dfl.h>
->
->  #include "fpga-dfl.h"
->
-> +static ssize_t
-> +id_show(struct device *dev, struct device_attribute *attr, char *buf)
-> +{
-> +       int id = fpga_port_id(to_platform_device(dev));
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%d\n", id);
-> +}
-> +static DEVICE_ATTR_RO(id);
-> +
-> +static const struct attribute *port_hdr_attrs[] = {
-> +       &dev_attr_id.attr,
-> +       NULL,
-> +};
-> +
->  static int port_hdr_init(struct platform_device *pdev, struct feature *feature)
->  {
->         dev_dbg(&pdev->dev, "PORT HDR Init.\n");
->
-> -       return 0;
-> +       fpga_port_reset(pdev);
-> +
-> +       return sysfs_create_files(&pdev->dev.kobj, port_hdr_attrs);
->  }
->
->  static void port_hdr_uinit(struct platform_device *pdev,
->                            struct feature *feature)
->  {
->         dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
-> +
-> +       sysfs_remove_files(&pdev->dev.kobj, port_hdr_attrs);
-> +}
-> +
-> +static long
-> +port_hdr_ioctl(struct platform_device *pdev, struct feature *feature,
-> +              unsigned int cmd, unsigned long arg)
-> +{
-> +       long ret;
-> +
-> +       switch (cmd) {
-> +       case FPGA_PORT_RESET:
-> +               if (!arg)
-> +                       ret = fpga_port_reset(pdev);
-> +               else
-> +                       ret = -EINVAL;
-> +               break;
-> +       default:
-> +               dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
-> +               ret = -ENODEV;
-> +       }
-> +
-> +       return ret;
->  }
->
->  static const struct feature_ops port_hdr_ops = {
->         .init = port_hdr_init,
->         .uinit = port_hdr_uinit,
-> +       .ioctl = port_hdr_ioctl,
->  };
->
->  static struct feature_driver port_feature_drvs[] = {
-> @@ -76,6 +117,7 @@ static int afu_release(struct inode *inode, struct file *filp)
->
->         dev_dbg(&pdev->dev, "Device File Release\n");
->
-> +       fpga_port_reset(pdev);
->         feature_dev_use_end(pdata);
->
->         return 0;
-> diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
-> index 75bdf88..9bf273d 100644
-> --- a/include/uapi/linux/fpga-dfl.h
-> +++ b/include/uapi/linux/fpga-dfl.h
-> @@ -30,8 +30,11 @@
->  #define FPGA_MAGIC 0xB6
->
->  #define FPGA_BASE 0
-> +#define PORT_BASE 0x40
->  #define FME_BASE 0x80
->
-> +/* Common IOCTLs for both FME and AFU file descriptor */
-> +
->  /**
->   * FPGA_GET_API_VERSION - _IO(FPGA_MAGIC, FPGA_BASE + 0)
->   *
-> @@ -50,6 +53,20 @@
->
->  #define FPGA_CHECK_EXTENSION   _IO(FPGA_MAGIC, FPGA_BASE + 1)
->
-> +/* IOCTLs for AFU file descriptor */
-> +
-> +/**
-> + * FPGA_PORT_RESET - _IO(FPGA_MAGIC, PORT_BASE + 0)
-> + *
-> + * Reset the FPGA Port and its AFU. No parameters are supported.
-> + * Userspace can do Port reset at any time, e.g during DMA or PR. But
-> + * it should never cause any system level issue, only functional failure
-> + * (e.g DMA or PR operation failure) and be recoverable from the failure.
-> + * Return: 0 on success, -errno of failure
-> + */
-> +
-> +#define FPGA_PORT_RESET                _IO(FPGA_MAGIC, PORT_BASE + 0)
-> +
->  /* IOCTLs for FME file descriptor */
->
->  /**
-> --
-> 1.8.3.1
->
+diff --git a/man2/membarrier.2 b/man2/membarrier.2
+index c47bc875a..e878301ca 100644
+--- a/man2/membarrier.2
++++ b/man2/membarrier.2
+@@ -80,7 +80,7 @@ This command is always supported (on kernels where
+ .BR membarrier ()
+ is provided).
+ .TP
+-.B MEMBARRIER_CMD_SHARED
++.B MEMBARRIER_CMD_GLOBAL " (since Linux 4.16)"
+ Ensure that all threads from all processes on the system pass through a
+ state where all memory accesses to user-space addresses match program
+ order between entry to and return from the
+@@ -88,7 +88,30 @@ order between entry to and return from the
+ system call.
+ All threads on the system are targeted by this command.
+ .TP
+-.BR MEMBARRIER_CMD_PRIVATE_EXPEDITED " (since Linux 4.14)"
++.B MEMBARRIER_CMD_GLOBAL_EXPEDITED " (since Linux 4.16)"
++Execute a memory barrier on all running threads of all processes which
++previously registered with
++.BR MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED .
++Upon return from system call, the caller thread is ensured that all
++running threads have passed through a state where all memory accesses to
++user-space addresses match program order between entry to and return
++from the system call (non-running threads are de facto in such a state).
++This only covers threads from processes which registered with
++.BR MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED .
++Given that registration is about the intent to receive the barriers, it
++is valid to invoke
++.BR MEMBARRIER_CMD_GLOBAL_EXPEDITED
++from a non-registered process.
++.IP
++The "expedited" commands complete faster than the non-expedited ones;
++they never block, but have the downside of causing extra overhead.
++.TP
++.B MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED " (since Linux 4.16)"
++Register the process intent to receive
++.BR MEMBARRIER_CMD_GLOBAL_EXPEDITED
++memory barriers.
++.TP
++.B MEMBARRIER_CMD_PRIVATE_EXPEDITED " (since Linux 4.14)"
+ Execute a memory barrier on each running thread belonging to the same
+ process as the current thread.
+ Upon return from system call, the calling
+@@ -103,9 +126,29 @@ they never block, but have the downside of causing extra overhead.
+ A process needs to register its intent to use the private
+ expedited command prior to using it.
+ .TP
+-.BR MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED " (since Linux 4.14)"
++.B MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED " (since Linux 4.14)"
+ Register the process's intent to use
+-.BR MEMBARRIER_CMD_PRIVATE_EXPEDITED .
++.B MEMBARRIER_CMD_PRIVATE_EXPEDITED .
++.TP
++.B MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE " (since Linux 4.16)"
++In addition to provide memory ordering guarantees described in
++.BR MEMBARRIER_CMD_PRIVATE_EXPEDITED ,
++ensure the caller thread, upon return from system call, that all its
++running threads siblings have executed a core serializing instruction.
++This only covers threads from the same process as the caller thread.
++The "expedited" commands complete faster than the non-expedited ones,
++they never block, but have the downside of causing extra overhead. A
++process needs to register its intent to use the private expedited sync
++core command prior to using it.
++.TP
++.B MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE " (since Linux 4.16)"
++Register the process intent to use
++.BR MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE .
++.TP
++.B MEMBARRIER_CMD_SHARED
++ Alias to
++.BR MEMBARRIER_CMD_GLOBAL .
++Provided for header backward compatibility.
+ .PP
+ The
+ .I flags
+@@ -137,10 +180,14 @@ The pair ordering is detailed as (O: ordered, X: not ordered):
+ On success, the
+ .B MEMBARRIER_CMD_QUERY
+ operation returns a bit mask of supported commands, and the
+-.B MEMBARRIER_CMD_SHARED ,
++.B MEMBARRIER_CMD_GLOBAL ,
++.B MEMBARRIER_CMD_GLOBAL_EXPEDITED ,
++.B MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED ,
+ .B MEMBARRIER_CMD_PRIVATE_EXPEDITED ,
+-and
+ .B MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED ,
++.B MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE ,
++and
++.B MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE
+ operations return zero.
+ On error, \-1 is returned,
+ and
+@@ -163,10 +210,14 @@ set to 0, error handling is required only for the first call to
+ is invalid, or
+ .I flags
+ is nonzero, or the
+-.BR MEMBARRIER_CMD_SHARED
++.BR MEMBARRIER_CMD_GLOBAL
+ command is disabled because the
+ .I nohz_full
+-CPU parameter has been set.
++CPU parameter has been set, or the
++.BR MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE
++and
++.BR MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED_SYNC_CORE
++commands are not implemented by the architecture.
+ .TP
+ .B ENOSYS
+ The
+@@ -294,9 +345,9 @@ init_membarrier(void)
+         return \-1;
+     }
+ 
+-    if (!(ret & MEMBARRIER_CMD_SHARED)) {
++    if (!(ret & MEMBARRIER_CMD_GLOBAL)) {
+         fprintf(stderr,
+-            "membarrier does not support MEMBARRIER_CMD_SHARED\\n");
++            "membarrier does not support MEMBARRIER_CMD_GLOBAL\\n");
+         return \-1;
+     }
+ 
+@@ -315,7 +366,7 @@ static void
+ slow_path(int *read_a)
+ {
+     b = 1;
+-    membarrier(MEMBARRIER_CMD_SHARED, 0);
++    membarrier(MEMBARRIER_CMD_GLOBAL, 0);
+     *read_a = a;
+ }
+ 
+-- 
+2.11.0
