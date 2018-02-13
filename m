@@ -1,108 +1,107 @@
-From: James Morse <james.morse-5wv7dgnIgG8@public.gmane.org>
-Subject: Re: [RFC PATCH v2 3/3] arm64: signal: Ensure si_code is valid for
- all fault signals
-Date: Tue, 13 Feb 2018 18:00:16 +0000
-Message-ID: <5A8327B0.7080204@arm.com>
-References: <1517338243-9749-1-git-send-email-Dave.Martin@arm.com> <1517338243-9749-4-git-send-email-Dave.Martin@arm.com> <5A82EF1F.8010701@arm.com> <20180213152207.GP5862@e103592.cambridge.arm.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH -next 0/3] sysvipc: introduce STAT_ALL commands
+Date: Tue, 13 Feb 2018 14:21:31 -0600
+Message-ID: <878tbw3ak4.fsf@xmission.com>
+References: <20180213174136.6346-1-dave@stgolabs.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20180213152207.GP5862-M5GwZQ6tE7x5pKCnmE3YQBJ8xKzm50AiAL8bYrjMMd8@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Dave Martin <Dave.Martin-5wv7dgnIgG8@public.gmane.org>
-Cc: linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-arch-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Will Deacon <will.deacon-5wv7dgnIgG8@public.gmane.org>, Russell King <linux-I+IVW8TIWO2tmTQ+vhA3Yw@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Catalin Marinas <catalin.marinas-5wv7dgnIgG8@public.gmane.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180213174136.6346-1-dave@stgolabs.net> (Davidlohr Bueso's
+        message of "Tue, 13 Feb 2018 09:41:33 -0800")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Davidlohr Bueso <dave@stgolabs.net>
+Cc: akpm@linux-foundation.org, mhocko@kernel.org, mtk.manpages@gmail.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Dave,
+Davidlohr Bueso <dave@stgolabs.net> writes:
 
-On 13/02/18 15:22, Dave Martin wrote:
-> On Tue, Feb 13, 2018 at 01:58:55PM +0000, James Morse wrote:
->> On 30/01/18 18:50, Dave Martin wrote:
->>> diff --git a/arch/arm64/mm/fault.c b/arch/arm64/mm/fault.c
->>> index 9b7f89d..4baa922 100644
->>> --- a/arch/arm64/mm/fault.c
->>> +++ b/arch/arm64/mm/fault.c
->>> @@ -607,70 +607,70 @@ static int do_sea(unsigned long addr, unsigned int esr, struct pt_regs *regs)
->> [..]
->>> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 0 (translation table walk)"	},
->>> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 1 (translation table walk)"	},
->>> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 2 (translation table walk)"	},
->>> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 3 (translation table walk)"	},
->>> +	{ do_sea,		SIGBUS,  BUS_OBJERR,	"synchronous parity or ECC error" },	// Reserved when RAS is implemented
->>
->> I agree the translation-table related external-aborts should end up with
->> SIGKILL: there is nothing user-space can do.
->>
->> You use the fault_info table to vary the signal and si_code that should be used,
->> but do_mem_abort() only uses these if the fn returns an error. For do_sea(),
->> regardless of the values in this table SIGBUS will be generated as it always
->> returns 0.
->>
->>
->>> @@ -596,7 +596,7 @@ static int do_sea(unsigned long addr, unsigned int esr,
->> struct pt_regs *regs)
->>>
->>>  	info.si_signo = SIGBUS;
->>>  	info.si_errno = 0;
->>> -	info.si_code  = 0;
->>> +	info.si_code  = BUS_OBJERR;
->>>  	if (esr & ESR_ELx_FnV)
->>>  		info.si_addr = NULL;
->>>  	else
->>
->> do_sea() has the right fault_info entry to hand, so I think these need to change
->> to inf->sig and inf->code. (I assume its not valid to set si_addr for SIGKILL...)
-> 
-> Yes, I guess that makes sense.
-> 
-> For SIGKILL, I'm assuming that it is harmless to populate si_addr: even
-> though not strictly valid, the signal is never delivered to userspace.
-> Even ptrace cannot see SIGKILL -- the trace just disappears and further
-> ptrace calls fail with ESRCH.
+> Hi,
+>
+> The following patches adds the discussed[1] new command for shm
+> as well as for sems and msq as they are subject to the same discrepancies
+> for ipc object permission checks between the syscall and via procfs.
+> These new commands are justified in that (1) we are stuck with this
+> semantics as changing syscall and procfs can break userland; and (2) some
+> users can benefit from performance (for large amounts of shm segments,
+> for example) from not having to parse the procfs interface.
+>
+> Once (if) merged, I will submit the necesary manpage updates. But I'm
+> thinking something like:
 
-Good point!
+I am just going to kibitz for a moment.
 
+Could we name this _STAT_ANY or _STAT_NOPERM instead of _STAT_ALL.
 
-> If is matters, I guess we could prepopulate si_uid = si_pid = 0 for
-> this case.  That's at least cleaner, so I might do that.
-> 
-> 
-> For do_sea:
-> 
-> I was thinking of the fault_info[] table entries as for the fallback
-> case only, but (a) I also try to use them to affect what do_sea() does
-> (which, as you observe, doesn't work right now), and (b) there's no
-> reason why they shouldn't inform what fn does.
+I keep thinking a name with _ALL in it should affect all ipc opbjects of
+a given type, not simply work any ipc object regardless of permissions.
 
-Sure,
+Eric
 
-
-> However, rather than duplicate code I wonder whether we can just
-> rearrange do_mem_abort() so that the lines
-> 
-> 	info.si_signo = inf->sig;
-> 	info.si_errno = 0;
-> 	info.si_code  = inf->code;
-> 	info.si_addr  = (void __user *)addr;
-> 
-> are moved ahead of the call to inf->fn().
-> 
-> This would have the effect of pre-populating info with sane defaults
-> while still allowing inf->fn() to override them if appropriate.
-
-I like the idea. It's a bit strange that do_mem_abort() looks up the table entry
-to call the handler, which looks up the table entry to find out what it should
-do. (__do_user_fault() already does this).
-
-This would change all of 'fn's prototypes, to save the struct-siginfo
-duplication in do_sea() and __do_user_fault().
-
-Should the 'leaf' helpers still send the signal, or update the siginfo and
-return back to do_mem_abort()? Getting things like do_alignment_fault() in a
-kernel stack trace is the only reason I can see...
-
-
-Thanks,
-
-James
+> diff --git a/man2/shmctl.2 b/man2/shmctl.2
+> index 7bb503999941..bb00bbe21a57 100644
+> --- a/man2/shmctl.2
+> +++ b/man2/shmctl.2
+> @@ -41,6 +41,7 @@
+>  .\" 2005-04-25, mtk -- noted aberrant Linux behavior w.r.t. new
+>  .\"	attaches to a segment that has already been marked for deletion.
+>  .\" 2005-08-02, mtk: Added IPC_INFO, SHM_INFO, SHM_STAT descriptions.
+> +.\" 2018-02-13, dbueso: Added SHM_STAT_ALL description.
+>  .\"
+>  .TH SHMCTL 2 2017-09-15 "Linux" "Linux Programmer's Manual"
+>  .SH NAME
+> @@ -242,6 +243,18 @@ However, the
+>  argument is not a segment identifier, but instead an index into
+>  the kernel's internal array that maintains information about
+>  all shared memory segments on the system.
+> +.TP
+> +.BR SHM_STAT_ALL " (Linux-specific)"
+> +Return a
+> +.I shmid_ds
+> +structure as for
+> +.BR SHM_STAT .
+> +However, the
+> +.I shm_perm.mode
+> +is not checked for read access for
+> +.IR shmid ,
+> +resembing the behaviour of
+> +/proc/sysvipc/shm.
+>  .PP
+>  The caller can prevent or allow swapping of a shared
+>  memory segment with the following \fIcmd\fP values:
+> @@ -287,7 +300,7 @@ operation returns the index of the highest used entry in the
+>  kernel's internal array recording information about all
+>  shared memory segments.
+>  (This information can be used with repeated
+> -.B SHM_STAT
+> +.B SHM_STAT/SHM_STAT_ALL
+>  operations to obtain information about all shared memory segments
+>  on the system.)
+>  A successful
+> @@ -328,7 +341,7 @@ isn't accessible.
+>  \fIshmid\fP is not a valid identifier, or \fIcmd\fP
+>  is not a valid command.
+>  Or: for a
+> -.B SHM_STAT
+> +.B SHM_STAT/SHM_STAT_ALL
+>  operation, the index value specified in
+>  .I shmid
+>  referred to an array slot that is currently unused.
+>
+>
+> Thanks!
+>
+> [1] https://lkml.org/lkml/2017/12/19/220
+>
+> Davidlohr Bueso (3):
+>   ipc/shm: introduce shmctl(SHM_STAT_ALL)
+>   ipc/sem: introduce shmctl(SEM_STAT_ALL)
+>   ipc/msg: introduce shmctl(MSG_STAT_ALL)
+>
+>  include/uapi/linux/msg.h |  1 +
+>  include/uapi/linux/sem.h |  1 +
+>  include/uapi/linux/shm.h |  5 +++--
+>  ipc/msg.c                | 17 ++++++++++++-----
+>  ipc/sem.c                | 17 ++++++++++++-----
+>  ipc/shm.c                | 23 ++++++++++++++++++-----
+>  security/selinux/hooks.c |  3 +++
+>  7 files changed, 50 insertions(+), 17 deletions(-)
