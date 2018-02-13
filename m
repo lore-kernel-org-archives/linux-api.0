@@ -1,210 +1,198 @@
 From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 18/21] fpga: dfl: afu: add header sub feature support
-Date: Tue, 13 Feb 2018 11:33:01 +0800
-Message-ID: <20180213033301.GA10936@hao-dev>
+Subject: Re: [PATCH v3 11/21] fpga: dfl: fme: add header sub feature support
+Date: Tue, 13 Feb 2018 11:44:31 +0800
+Message-ID: <20180213034431.GB10936@hao-dev>
 References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
- <1511764948-20972-19-git-send-email-hao.wu@intel.com>
- <CANk1AXT0s1W99cRvWmT80nB+Buivt9xmjziDAz6pyxY-EJF2Fw@mail.gmail.com>
+ <1511764948-20972-12-git-send-email-hao.wu@intel.com>
+ <CANk1AXR2Q4M4c1TOQhR2J_Mz5MjwZWbR0JUXCR5jFVL_kZtcag@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXT0s1W99cRvWmT80nB+Buivt9xmjziDAz6pyxY-EJF2Fw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CANk1AXR2Q4M4c1TOQhR2J_Mz5MjwZWbR0JUXCR5jFVL_kZtcag-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 12, 2018 at 11:43:28AM -0600, Alan Tull wrote:
+On Mon, Feb 12, 2018 at 10:51:44AM -0600, Alan Tull wrote:
 > On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
+> > From: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> >
+> > The header register set is always present for FPGA Management Engine (FME),
+> > this patch implements init and uinit function for header sub feature and
+> > introduce several read-only sysfs interfaces for the capability and status.
+> >
+> > Sysfs interfaces:
+> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/ports_num
+> >   Read-only. Number of ports implemented
+> >
+> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/bitstream_id
+> >   Read-only. Blue Bitstream (static FPGA region) identifier number
+> >
+> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/bitstream_metadata
+> >   Read-only. Blue Bitstream (static FPGA region) meta data
 > 
-> Hi Hao,
-> 
-> Thanks for documenting the reset.  Please add this documentation to
-> the function header that is in fpga-dfl.h.
+> Please document the meta data.  I don't see anywhere that describes it
+> or how it differs from the bitstream_id.  So it could be useful to
+> document it in this header a bit, and in the code, in the sysfs
+> document, and in the Documentation/fpga so that people don't have to
+> go hunting.
 
-Sure, thanks for the review. 
+Hi Alan
 
-I will add the description to the function header.
+Thanks a lot for the review.
 
-> 
-> One question for clarification below.
-> 
-> This patch looks good.
-> 
-> > The port header register set is always present for port, it is mainly
-> > for capability, control and status of the ports that AFU connected to.
-> >
-> > This patch implements header sub feature support. Below user interfaces
-> > are created by this patch.
-> >
-> > Sysfs interface:
-> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-port.x>/id
-> >   Read-only. Port ID.
-> >
-> > Ioctl interface:
-> > * FPGA_PORT_RESET
-> >   Reset the FPGA Port and its AFU.
-> >
-> > Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> 
-> Acked-by: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-> 
-> > ----
-> > v3: rename driver name to fpga-dfl-afu
-> >     add more description for reset ioctl.
-> >     fix some checkpatch issues.
-> > ---
-> >  .../ABI/testing/sysfs-platform-fpga-dfl-afu        |  7 ++++
-> >  drivers/fpga/dfl-afu-main.c                        | 44 +++++++++++++++++++++-
-> >  include/uapi/linux/fpga-dfl.h                      | 17 +++++++++
-> >  3 files changed, 67 insertions(+), 1 deletion(-)
-> >  create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
-> >
-> > diff --git a/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
-> > new file mode 100644
-> > index 0000000..f4bcd94
-> > --- /dev/null
-> > +++ b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-afu
-> > @@ -0,0 +1,7 @@
-> > +What:          /sys/bus/platform/devices/fpga-dfl-port.0/id
-> > +Date:          November 2017
-> > +KernelVersion:  4.15
-> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +Description:   Read-only. It returns id of this port. One DFL FPGA device
-> > +               may have more than one port. Userspace could use this id to
-> > +               distinguish different ports under same FPGA device.
-> 
-> Potentially >1 port per FPGA, but only one port per fpga-region, right?
+The Blue Bitstream (static FPGA region) meta data contains information
+like synthesis date and seed.
 
-Yes.
+The Blue Bitstream (static FPGA region) id contains version information
+like major, minor, patch number (e.g version 6.4.0)and etc.
+
+I used bitstream_id a lot, but bitstream_metadata is useful in some cases
+as well.
+
+I will add more descriptions for them.
 
 Thanks
 Hao
 
 > 
-> > diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-> > index d9f4b81..b01376c 100644
-> > --- a/drivers/fpga/dfl-afu-main.c
-> > +++ b/drivers/fpga/dfl-afu-main.c
-> > @@ -18,25 +18,66 @@
+> We discussed elsewhere the static region bitstream_id verses the other
+> interface_ids, so that's been discussed.
+> 
+> Besides that, this patch looks good and straightforward.
+> 
+> Thanks,
+> Alan
+> 
 > >
-> >  #include <linux/kernel.h>
-> >  #include <linux/module.h>
-> > +#include <linux/fpga-dfl.h>
+> > Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > ----
+> > v2: add sysfs documentation
+> > v3: rename driver to fpga-dfl-fme.
+> >     improve sysfs doc and commit description.
+> >     replace bitfield.
+> > ---
+> >  .../ABI/testing/sysfs-platform-fpga-dfl-fme        | 21 ++++++++
+> >  drivers/fpga/dfl-fme-main.c                        | 60 ++++++++++++++++++++++
+> >  2 files changed, 81 insertions(+)
+> >  create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
+> >
+> > diff --git a/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
+> > new file mode 100644
+> > index 0000000..6b32799
+> > --- /dev/null
+> > +++ b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
+> > @@ -0,0 +1,21 @@
+> > +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/ports_num
+> > +Date:          November 2017
+> > +KernelVersion:  4.15
+> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > +Description:   Read-only. One DFL FPGA device may have more than 1
+> > +               port/Accelerator Function Unit (AFU). It returns the
+> > +               number of ports on the FPGA device when read it.
+> > +
+> > +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/bitstream_id
+> > +Date:          November 2017
+> > +KernelVersion:  4.15
+> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > +Description:   Read-only. It returns Blue Bitstream (static FPGA region)
+> > +               identifier number.
+> > +
+> > +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/bitstream_meta
+> > +Date:          November 2017
+> > +KernelVersion:  4.15
+> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> > +Description:   Read-only. It returns Blue Bitstream (static FPGA region)
+> > +               meta data.
+> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+> > index f7b5f7d..d17c66a 100644
+> > --- a/drivers/fpga/dfl-fme-main.c
+> > +++ b/drivers/fpga/dfl-fme-main.c
+> > @@ -21,9 +21,68 @@
 > >
 > >  #include "fpga-dfl.h"
 > >
-> > +static ssize_t
-> > +id_show(struct device *dev, struct device_attribute *attr, char *buf)
+> > +static ssize_t ports_num_show(struct device *dev,
+> > +                             struct device_attribute *attr, char *buf)
 > > +{
-> > +       int id = fpga_port_id(to_platform_device(dev));
+> > +       void __iomem *base;
+> > +       u64 v;
 > > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%d\n", id);
+> > +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
+> > +
+> > +       v = readq(base + FME_HDR_CAP);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(FME_CAP_NUM_PORTS, v));
 > > +}
-> > +static DEVICE_ATTR_RO(id);
+> > +static DEVICE_ATTR_RO(ports_num);
 > > +
-> > +static const struct attribute *port_hdr_attrs[] = {
-> > +       &dev_attr_id.attr,
+> > +static ssize_t bitstream_id_show(struct device *dev,
+> > +                                struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
+> > +
+> > +       v = readq(base + FME_HDR_BITSTREAM_ID);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "0x%llx\n", (unsigned long long)v);
+> > +}
+> > +static DEVICE_ATTR_RO(bitstream_id);
+> > +
+> > +static ssize_t bitstream_metadata_show(struct device *dev,
+> > +                                      struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
+> > +
+> > +       v = readq(base + FME_HDR_BITSTREAM_MD);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "0x%llx\n", (unsigned long long)v);
+> > +}
+> > +static DEVICE_ATTR_RO(bitstream_metadata);
+> > +
+> > +static const struct attribute *fme_hdr_attrs[] = {
+> > +       &dev_attr_ports_num.attr,
+> > +       &dev_attr_bitstream_id.attr,
+> > +       &dev_attr_bitstream_metadata.attr,
 > > +       NULL,
 > > +};
 > > +
-> >  static int port_hdr_init(struct platform_device *pdev, struct feature *feature)
+> >  static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
 > >  {
-> >         dev_dbg(&pdev->dev, "PORT HDR Init.\n");
-> >
-> > -       return 0;
-> > +       fpga_port_reset(pdev);
+> > +       void __iomem *base = feature->ioaddr;
+> > +       int ret;
 > > +
-> > +       return sysfs_create_files(&pdev->dev.kobj, port_hdr_attrs);
-> >  }
-> >
-> >  static void port_hdr_uinit(struct platform_device *pdev,
-> >                            struct feature *feature)
-> >  {
-> >         dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
+> >         dev_dbg(&pdev->dev, "FME HDR Init.\n");
+> > +       dev_dbg(&pdev->dev, "FME cap %llx.\n",
+> > +               (unsigned long long)readq(base + FME_HDR_CAP));
 > > +
-> > +       sysfs_remove_files(&pdev->dev.kobj, port_hdr_attrs);
-> > +}
-> > +
-> > +static long
-> > +port_hdr_ioctl(struct platform_device *pdev, struct feature *feature,
-> > +              unsigned int cmd, unsigned long arg)
-> > +{
-> > +       long ret;
-> > +
-> > +       switch (cmd) {
-> > +       case FPGA_PORT_RESET:
-> > +               if (!arg)
-> > +                       ret = fpga_port_reset(pdev);
-> > +               else
-> > +                       ret = -EINVAL;
-> > +               break;
-> > +       default:
-> > +               dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
-> > +               ret = -ENODEV;
-> > +       }
-> > +
-> > +       return ret;
-> >  }
-> >
-> >  static const struct feature_ops port_hdr_ops = {
-> >         .init = port_hdr_init,
-> >         .uinit = port_hdr_uinit,
-> > +       .ioctl = port_hdr_ioctl,
-> >  };
-> >
-> >  static struct feature_driver port_feature_drvs[] = {
-> > @@ -76,6 +117,7 @@ static int afu_release(struct inode *inode, struct file *filp)
-> >
-> >         dev_dbg(&pdev->dev, "Device File Release\n");
-> >
-> > +       fpga_port_reset(pdev);
-> >         feature_dev_use_end(pdata);
+> > +       ret = sysfs_create_files(&pdev->dev.kobj, fme_hdr_attrs);
+> > +       if (ret)
+> > +               return ret;
 > >
 > >         return 0;
-> > diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
-> > index 75bdf88..9bf273d 100644
-> > --- a/include/uapi/linux/fpga-dfl.h
-> > +++ b/include/uapi/linux/fpga-dfl.h
-> > @@ -30,8 +30,11 @@
-> >  #define FPGA_MAGIC 0xB6
+> >  }
+> > @@ -31,6 +90,7 @@ static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
+> >  static void fme_hdr_uinit(struct platform_device *pdev, struct feature *feature)
+> >  {
+> >         dev_dbg(&pdev->dev, "FME HDR UInit.\n");
+> > +       sysfs_remove_files(&pdev->dev.kobj, fme_hdr_attrs);
+> >  }
 > >
-> >  #define FPGA_BASE 0
-> > +#define PORT_BASE 0x40
-> >  #define FME_BASE 0x80
-> >
-> > +/* Common IOCTLs for both FME and AFU file descriptor */
-> > +
-> >  /**
-> >   * FPGA_GET_API_VERSION - _IO(FPGA_MAGIC, FPGA_BASE + 0)
-> >   *
-> > @@ -50,6 +53,20 @@
-> >
-> >  #define FPGA_CHECK_EXTENSION   _IO(FPGA_MAGIC, FPGA_BASE + 1)
-> >
-> > +/* IOCTLs for AFU file descriptor */
-> > +
-> > +/**
-> > + * FPGA_PORT_RESET - _IO(FPGA_MAGIC, PORT_BASE + 0)
-> > + *
-> > + * Reset the FPGA Port and its AFU. No parameters are supported.
-> > + * Userspace can do Port reset at any time, e.g during DMA or PR. But
-> > + * it should never cause any system level issue, only functional failure
-> > + * (e.g DMA or PR operation failure) and be recoverable from the failure.
-> > + * Return: 0 on success, -errno of failure
-> > + */
-> > +
-> > +#define FPGA_PORT_RESET                _IO(FPGA_MAGIC, PORT_BASE + 0)
-> > +
-> >  /* IOCTLs for FME file descriptor */
-> >
-> >  /**
+> >  static const struct feature_ops fme_hdr_ops = {
 > > --
 > > 1.8.3.1
 > >
