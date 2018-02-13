@@ -1,48 +1,103 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v4 02/24] fpga: mgr: add region_id to fpga_image_info
-Date: Tue, 13 Feb 2018 17:24:31 +0800
-Message-ID: <1518513893-4719-3-git-send-email-hao.wu@intel.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+Subject: Re: [PATCH v3 08/21] fpga: add Intel FPGA DFL PCIe device
+Date: Tue, 13 Feb 2018 17:36:08 +0800
+Message-ID: <20180213093608.GA4809@hao-dev>
+References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
+ <1511764948-20972-9-git-send-email-hao.wu@intel.com>
+ <f5ae8e5edf88420e89cfbe754407b92e@AcuMS.aculab.com>
+ <20171128031519.GA25705@hao-dev>
+ <CANk1AXRBEcz5_j+v0oTAXfH10hrPbHGabdR8Pqt07exYxYgfCw@mail.gmail.com>
+ <20171205033330.GA19730@hao-dev>
+ <CANk1AXRdU6usqtsCUjjSC8Fk2SS8iKn+Ow4PvCiRpSBAcDwWjw@mail.gmail.com>
+ <20171206053015.GA19023@hao-dev>
+ <CANk1AXS6xa8FTBTk5Q2PWcijb1Uuy=XFAFFin-R2dU2y-iruvw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+Content-Disposition: inline
+In-Reply-To: <CANk1AXS6xa8FTBTk5Q2PWcijb1Uuy=XFAFFin-R2dU2y-iruvw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
+To: Alan Tull <atull@kernel.org>
+Cc: David Laight <David.Laight@aculab.com>, "mdf@kernel.org" <mdf@kernel.org>, "linux-fpga@vger.kernel.org" <linux-fpga@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "luwei.kang@intel.com" <luwei.kang@intel.com>, "yi.z.zhang@intel.com" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds region_id to fpga_image_info data structure, it
-allows driver to pass region id information to fpga-mgr via
-fpga_image_info for fpga reconfiguration function.
+On Thu, Feb 01, 2018 at 03:59:21PM -0600, Alan Tull wrote:
+> On Tue, Dec 5, 2017 at 11:30 PM, Wu Hao <hao.wu@intel.com> wrote:
+> > On Tue, Dec 05, 2017 at 11:00:22AM -0600, Alan Tull wrote:
+> >> On Mon, Dec 4, 2017 at 9:33 PM, Wu Hao <hao.wu@intel.com> wrote:
+> >> > On Mon, Dec 04, 2017 at 01:46:59PM -0600, Alan Tull wrote:
+> >> >> On Mon, Nov 27, 2017 at 9:15 PM, Wu Hao <hao.wu@intel.com> wrote:
+> >> >> > On Mon, Nov 27, 2017 at 10:28:04AM +0000, David Laight wrote:
+> >> >> >> From: Wu Hao
+> >> >> >> > Sent: 27 November 2017 06:42
+> >> >> >> > From: Zhang Yi <yi.z.zhang@intel.com>
+> >> >> >> >
+> >> >> >> > The Intel FPGA device appears as a PCIe device on the system. This patch
+> >> >> >> > implements the basic framework of the driver for Intel PCIe device which
+> >> >> >> > is located between CPU and Accelerated Function Units (AFUs), and has
+> >> >> >> > the Device Feature List (DFL) implemented in its MMIO space.
+> >> >> >>
+> >> >> >> This ought to have a better name than 'Intel FPGA'.
+> >> >> >> An fpga can be used for all sorts of things, this looks like
+> >> >> >> a very specific architecture using a common VHDL environment to
+> >> >> >> allow certain types of user VHDL be accessed over PCIe.
+> >> >> >
+> >> >> > Hi David
+> >> >> >
+> >> >> > This patch adds a pcie device driver for Intel FPGA devices which implements
+> >> >> > the DFL, e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
+> >> >> > Acceleration Cards. They are pcie devices, and all have DFL implemented in
+> >> >> > the MMIO space, so we would like to use one kernel driver to handle them.
+> >> >> >
+> >> >> > With this full patchset, it just provides user the interfaces to configure
+> >> >> > and access the FPGA accelerators on Intel DFL based FPGA devices. For sure,
+> >> >> > users can develop and build their own logics via tools provided by Intel,
+> >> >> > program them to accelerators on these Intel FPGA devices, and access them
+> >> >> > for their workloads.
+> >> >>
+> >> >> I don't see anything Intel specific here.  This could all be named dfl-*
+> >> >
+> >> > The maybe some device specific things, e.g Intel FPGA devices supported by this
+> >> > driver always have FME DFL at the beginning on the BAR0 for PF device.
+> 
+> I'm thinking that another user could add their PCI id's and a static
+> FPGA image that has a DFL in the right place for this to work for
+> them.
+> 
+> >> >
+> >> > But I think this should be the right direction for better code reuse, it could
+> >> > save efforts for other vendors who want to use DFL and follow the same way.
+> 
+> I appreciate your understanding here.
+> 
+> >> >
+> >> > Thanks for the comments. I will rename this driver in the next version.
+> >>
+> >> Thanks!
+> >>
+> >> Regarding file names, it seems like the files added to drivers/fpga
+> >> could be uniformly named dfl-*.[ch].  Some are fpga-dfl-*.[ch] while
+> >> other are currently dfl-*.[ch] currently.
+> >
+> > Sure, will have all related drivers files renamed to dfl-*.[ch].
+> 
+> Actually, I'll reverse that a bit.  The enumeration code, including
+> the pcie part is all sufficiently general to run on anything that has
+> a DFL struct located in the right place.  But individual feature
+> drivers (currently only the fme-mgr) will be vendor specific and could
+> be named intel-*.
 
-Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Moritz Fischer <mdf@kernel.org>
-Acked-by: Alan Tull <atull@kernel.org>
----
-v3: add one line comment for region_id
-v4: add Acked-by from Moritz and Alan.
----
- include/linux/fpga/fpga-mgr.h | 2 ++
- 1 file changed, 2 insertions(+)
+Hi Alan,
 
-diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
-index 1ad4822..6e98b66 100644
---- a/include/linux/fpga/fpga-mgr.h
-+++ b/include/linux/fpga/fpga-mgr.h
-@@ -88,6 +88,7 @@ enum fpga_mgr_states {
-  * @sgt: scatter/gather table containing FPGA image
-  * @buf: contiguous buffer containing FPGA image
-  * @count: size of buf
-+ * @region_id: id of target region
-  * @dev: device that owns this
-  * @overlay: Device Tree overlay
-  */
-@@ -100,6 +101,7 @@ struct fpga_image_info {
- 	struct sg_table *sgt;
- 	const char *buf;
- 	size_t count;
-+	int region_id;
- 	struct device *dev;
- #ifdef CONFIG_OF
- 	struct device_node *overlay;
--- 
-2.7.4
+I unified all the drivers to use dfl-* in the v4 patchset, including fme-mgr.
+As I feel it's hard to say which FME functions (sub features, registers) are
+vendor specific and which FME functions are not, from the spec, they all belong
+to FME, and people can be reused for sure. So I didn't rename it back to Intel
+driver in the v4 patchset. :)
+
+Thanks
+Hao
+
+
+> 
+> Alan
