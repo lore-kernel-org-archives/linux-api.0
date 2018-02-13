@@ -1,123 +1,94 @@
 From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: [PATCH 3/3] ipc/msg: introduce shmctl(MSG_STAT_ALL)
-Date: Tue, 13 Feb 2018 09:41:36 -0800
-Message-ID: <20180213174136.6346-4-dave@stgolabs.net>
-References: <20180213174136.6346-1-dave@stgolabs.net>
+Subject: [PATCH -next 0/3] sysvipc: introduce STAT_ALL commands
+Date: Tue, 13 Feb 2018 09:41:33 -0800
+Message-ID: <20180213174136.6346-1-dave@stgolabs.net>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180213174136.6346-1-dave@stgolabs.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: akpm@linux-foundation.org
-Cc: mhocko@kernel.org, mtk.manpages@gmail.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dave@stgolabs.net>, Davidlohr Bueso <dbueso@suse.de>
+Cc: mhocko@kernel.org, mtk.manpages@gmail.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dave@stgolabs.net>
 List-Id: linux-api@vger.kernel.org
 
-There is a permission discrepancy when consulting msq ipc
-object metadata between /proc/sysvipc/msg (0444) and the
-MSG_STAT shmctl command. The later does permission checks
-for the object vs S_IRUGO. As such there can be cases where
-EACCESS is returned via syscall but the info is displayed
-anyways in the procfs files.
+Hi,
 
-While this might have security implications via info leaking
-(albeit no writing to the msq metadata), this behavior goes
-way back and showing all the objects regardless of the
-permissions was most likely an overlook - so we are stuck
-with it. Furthermore, modifying either the syscall or the
-procfs file can cause userspace programs to break (ie ipcs).
-Some applications require getting the procfs info (without
-root privileges) and can be rather slow in comparison with
-a syscall -- up to 500x in some reported cases for shm.
+The following patches adds the discussed[1] new command for shm
+as well as for sems and msq as they are subject to the same discrepancies
+for ipc object permission checks between the syscall and via procfs.
+These new commands are justified in that (1) we are stuck with this
+semantics as changing syscall and procfs can break userland; and (2) some
+users can benefit from performance (for large amounts of shm segments,
+for example) from not having to parse the procfs interface.
 
-This patch introduces a new MSG_STAT_ALL command such that
-the msq ipc object permissions are ignored, and only audited
-instead. In addition, I've left the lsm security hook checks
-in place, as if some policy can block the call, then the user
-has no other choice than just parsing the procfs file.
+Once (if) merged, I will submit the necesary manpage updates. But I'm
+thinking something like:
 
-Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
----
+diff --git a/man2/shmctl.2 b/man2/shmctl.2
+index 7bb503999941..bb00bbe21a57 100644
+--- a/man2/shmctl.2
++++ b/man2/shmctl.2
+@@ -41,6 +41,7 @@
+ .\" 2005-04-25, mtk -- noted aberrant Linux behavior w.r.t. new
+ .\"	attaches to a segment that has already been marked for deletion.
+ .\" 2005-08-02, mtk: Added IPC_INFO, SHM_INFO, SHM_STAT descriptions.
++.\" 2018-02-13, dbueso: Added SHM_STAT_ALL description.
+ .\"
+ .TH SHMCTL 2 2017-09-15 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+@@ -242,6 +243,18 @@ However, the
+ argument is not a segment identifier, but instead an index into
+ the kernel's internal array that maintains information about
+ all shared memory segments on the system.
++.TP
++.BR SHM_STAT_ALL " (Linux-specific)"
++Return a
++.I shmid_ds
++structure as for
++.BR SHM_STAT .
++However, the
++.I shm_perm.mode
++is not checked for read access for
++.IR shmid ,
++resembing the behaviour of
++/proc/sysvipc/shm.
+ .PP
+ The caller can prevent or allow swapping of a shared
+ memory segment with the following \fIcmd\fP values:
+@@ -287,7 +300,7 @@ operation returns the index of the highest used entry in the
+ kernel's internal array recording information about all
+ shared memory segments.
+ (This information can be used with repeated
+-.B SHM_STAT
++.B SHM_STAT/SHM_STAT_ALL
+ operations to obtain information about all shared memory segments
+ on the system.)
+ A successful
+@@ -328,7 +341,7 @@ isn't accessible.
+ \fIshmid\fP is not a valid identifier, or \fIcmd\fP
+ is not a valid command.
+ Or: for a
+-.B SHM_STAT
++.B SHM_STAT/SHM_STAT_ALL
+ operation, the index value specified in
+ .I shmid
+ referred to an array slot that is currently unused.
+
+
+Thanks!
+
+[1] https://lkml.org/lkml/2017/12/19/220
+
+Davidlohr Bueso (3):
+  ipc/shm: introduce shmctl(SHM_STAT_ALL)
+  ipc/sem: introduce shmctl(SEM_STAT_ALL)
+  ipc/msg: introduce shmctl(MSG_STAT_ALL)
+
  include/uapi/linux/msg.h |  1 +
+ include/uapi/linux/sem.h |  1 +
+ include/uapi/linux/shm.h |  5 +++--
  ipc/msg.c                | 17 ++++++++++++-----
- security/selinux/hooks.c |  1 +
- 3 files changed, 14 insertions(+), 5 deletions(-)
+ ipc/sem.c                | 17 ++++++++++++-----
+ ipc/shm.c                | 23 ++++++++++++++++++-----
+ security/selinux/hooks.c |  3 +++
+ 7 files changed, 50 insertions(+), 17 deletions(-)
 
-diff --git a/include/uapi/linux/msg.h b/include/uapi/linux/msg.h
-index 5d5ab81dc9be..fe9bdfb25a2f 100644
---- a/include/uapi/linux/msg.h
-+++ b/include/uapi/linux/msg.h
-@@ -7,6 +7,7 @@
- /* ipcs ctl commands */
- #define MSG_STAT 11
- #define MSG_INFO 12
-+#define MSG_STAT_ALL 13
- 
- /* msgrcv options */
- #define MSG_NOERROR     010000  /* no error if message is too big */
-diff --git a/ipc/msg.c b/ipc/msg.c
-index 0dcc6699dc53..533c9ac2fb13 100644
---- a/ipc/msg.c
-+++ b/ipc/msg.c
-@@ -483,14 +483,14 @@ static int msgctl_stat(struct ipc_namespace *ns, int msqid,
- 	memset(p, 0, sizeof(*p));
- 
- 	rcu_read_lock();
--	if (cmd == MSG_STAT) {
-+	if (cmd == MSG_STAT || cmd == MSG_STAT_ALL) {
- 		msq = msq_obtain_object(ns, msqid);
- 		if (IS_ERR(msq)) {
- 			err = PTR_ERR(msq);
- 			goto out_unlock;
- 		}
- 		id = msq->q_perm.id;
--	} else {
-+	} else { /* IPC_STAT */
- 		msq = msq_obtain_object_check(ns, msqid);
- 		if (IS_ERR(msq)) {
- 			err = PTR_ERR(msq);
-@@ -498,9 +498,14 @@ static int msgctl_stat(struct ipc_namespace *ns, int msqid,
- 		}
- 	}
- 
--	err = -EACCES;
--	if (ipcperms(ns, &msq->q_perm, S_IRUGO))
--		goto out_unlock;
-+	/* see comment for SHM_STAT_ALL */
-+	if (cmd == MSG_STAT_ALL)
-+		audit_ipc_obj(&msq->q_perm);
-+	else {
-+		err = -EACCES;
-+		if (ipcperms(ns, &msq->q_perm, S_IRUGO))
-+			goto out_unlock;
-+	}
- 
- 	err = security_msg_queue_msgctl(msq, cmd);
- 	if (err)
-@@ -558,6 +563,7 @@ SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
- 		return err;
- 	}
- 	case MSG_STAT:	/* msqid is an index rather than a msg queue id */
-+	case MSG_STAT_ALL:
- 	case IPC_STAT:
- 		err = msgctl_stat(ns, msqid, cmd, &msqid64);
- 		if (err < 0)
-@@ -671,6 +677,7 @@ COMPAT_SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, void __user *, uptr)
- 	}
- 	case IPC_STAT:
- 	case MSG_STAT:
-+	case MSG_STAT_ALL:
- 		err = msgctl_stat(ns, msqid, cmd, &msqid64);
- 		if (err < 0)
- 			return err;
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index aa965742bba9..457e80f6b4e7 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -5591,6 +5591,7 @@ static int selinux_msg_queue_msgctl(struct msg_queue *msq, int cmd)
- 				    SECCLASS_SYSTEM, SYSTEM__IPC_INFO, NULL);
- 	case IPC_STAT:
- 	case MSG_STAT:
-+	case MSG_STAT_ALL:
- 		perms = MSGQ__GETATTR | MSGQ__ASSOCIATE;
- 		break;
- 	case IPC_SET:
 -- 
 2.13.6
