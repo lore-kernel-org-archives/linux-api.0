@@ -1,196 +1,117 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v4 00/24] FPGA Device Feature List (DFL) Device Drivers
-Date: Tue, 13 Feb 2018 17:24:29 +0800
-Message-ID: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
+From: James Morse <james.morse@arm.com>
+Subject: Re: [RFC PATCH v2 3/3] arm64: signal: Ensure si_code is valid for
+ all fault signals
+Date: Tue, 13 Feb 2018 13:58:55 +0000
+Message-ID: <5A82EF1F.8010701@arm.com>
+References: <1517338243-9749-1-git-send-email-Dave.Martin@arm.com> <1517338243-9749-4-git-send-email-Dave.Martin@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <1517338243-9749-4-git-send-email-Dave.Martin@arm.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Dave Martin <Dave.Martin@arm.com>, linux-arm-kernel@lists.infradead.org
+Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Russell King <linux@armlinux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi All,
+Hi Dave,
 
-Here is v4 patch-series adding drivers for FPGA DFL devices.
-(This is the new version of [PATCH v3 00/21] Intel FPGA Device Drivers[1])
+On 30/01/18 18:50, Dave Martin wrote:
+> Currently, as reported by Eric, an invalid si_code value 0 is
+> passed in many signals delivered to userspace in response to faults
+> and other kernel errors.  Typically 0 is passed when the fault is
+> insufficiently diagnosable or when there does not appear to be any
+> sensible alternative value to choose.
+> 
+> This appears to violate POSIX, and is intuitively wrong for at
+> least two reasons arising from the fact that 0 == SI_USER:
+> 
+>  1) si_code is a union selector, and SI_USER (and si_code <= 0 in
+>     general) implies the existence of a different set of fields
+>     (siginfo._kill) from that which exists for a fault signal
+>     (siginfo._sigfault).  However, the code raising the signal
+>     typically writes only the _sigfault fields, and the _kill
+>     fields make no sense in this case.
+> 
+>     Thus when userspace sees si_code == 0 (SI_USER) it may
+>     legitimately inspect fields in the inactive union member _kill
+>     and obtain garbage as a result.
+> 
+>     There appears to be software in the wild relying on this,
+>     albeit generally only for printing diagnostic messages.
+> 
+>  2) Software that wants to be robust against spurious signals may
+>     discard signals where si_code == SI_USER (or <= 0), or may
+>     filter such signals based on the si_uid and si_pid fields of
+>     siginfo._sigkill.  In the case of fault signals, this means
+>     that important (and usually fatal) error conditions may be
+>     silently ignored.
+> 
+> In practice, many of the faults for which arm64 passes si_code == 0
+> are undiagnosable conditions such as exceptions with syndrome
+> values in ESR_ELx to which the architecture does not yet assign any
+> meaning, or conditions indicative of a bug or error in the kernel
+> or system and thus that are unrecoverable and should never occur in
+> normal operation.
+> 
+> The approach taken in this patch is to translate all such
+> undiagnosable or "impossible" synchronous fault conditions to
+> SIGKILL, since these are at least probably localisable to a single
+> process.  Some of these conditions should really result in a kernel
+> panic, but due to the lack of diagnostic information it is
+> difficult to be certain: this patch does not add any calls to
+> panic(), but this could change later if justified.
+> 
+> Although si_code will not reach userspace in the case of SIGKILL,
+> it is still desirable to pass a nonzero value so that the common
+> siginfo handling code can detect incorrect use of si_code == 0
+> without false positives.  In this case the si_code dependent
+> siginfo fields will not be correctly initialised, but since they
+> are not passed to userspace I deem this not to matter.
+> 
+> A few faults can reasonably occur in realistic userspace scenarios,
+> and _should_ raise a regular, handleable (but perhaps not
+> ignorable/blockable) signal: for these, this patch attempts to
+> choose a suitable standard si_code value for the raised signal in
+> each case instead of 0.
 
-This patch series provides a common framework to support FPGA Device Feature
-List (DFL), and also feature dev drivers under this DFL framework to provide
-interfaces for userspace applications to configure, enumerate, open, and
-access FPGA accelerators on DFL based FPGA device and enables system level
-management functions such as FPGA partial reconfiguration, power management
-and virtualization.
 
-This patch series only adds the basic functions for FPGA accelerators and
-partial reconfiguration. Patches for more functions, e.g power management
-and virtualization, will be submitted after this series gets reviewed.
+> diff --git a/arch/arm64/mm/fault.c b/arch/arm64/mm/fault.c
+> index 9b7f89d..4baa922 100644
+> --- a/arch/arm64/mm/fault.c
+> +++ b/arch/arm64/mm/fault.c
+> @@ -607,70 +607,70 @@ static int do_sea(unsigned long addr, unsigned int esr, struct pt_regs *regs)
+[..]
+> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 0 (translation table walk)"	},
+> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 1 (translation table walk)"	},
+> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 2 (translation table walk)"	},
+> +	{ do_sea,		SIGKILL, SI_KERNEL,	"level 3 (translation table walk)"	},
+> +	{ do_sea,		SIGBUS,  BUS_OBJERR,	"synchronous parity or ECC error" },	// Reserved when RAS is implemented
 
-Note this patch series is only verified on DFL based Intel(R) FPGA PCIe
-devices (e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
-Acceleration Cards).
+I agree the translation-table related external-aborts should end up with
+SIGKILL: there is nothing user-space can do.
 
-Patch 1: add a document for FPGA DFL framework driver overview, including
-Device Feature List (DFL) introduction, the HW architecture, driver
-organization, device enumeration, virtualization and opens.
+You use the fault_info table to vary the signal and si_code that should be used,
+but do_mem_abort() only uses these if the fn returns an error. For do_sea(),
+regardless of the values in this table SIGBUS will be generated as it always
+returns 0.
 
-Patch 2: add region_id for fpga_image_info data structure, which allows
-driver to pass region id information to fpga-mgr for FPGA reconfiguration
-function. (Used by Patch 14)
 
-Patch 3: add a 'status' sysfs interface to fpga-mgr class, it reflects
-the status of the fpga-mgr including reconfiguration errors. (Used by
-Patch 16)
+> @@ -596,7 +596,7 @@ static int do_sea(unsigned long addr, unsigned int esr,
+struct pt_regs *regs)
+>
+>  	info.si_signo = SIGBUS;
+>  	info.si_errno = 0;
+> -	info.si_code  = 0;
+> +	info.si_code  = BUS_OBJERR;
+>  	if (esr & ESR_ELx_FnV)
+>  		info.si_addr = NULL;
+>  	else
 
-Patch 4-7: add FPGA device feature list support, it provides common
-enumeration interfaces which creates container device (FPGA base region)
-and all feature devices by walking through all the 'Device Feature Lists'
-provided low level drivers.
+do_sea() has the right fault_info entry to hand, so I think these need to change
+to inf->sig and inf->code. (I assume its not valid to set si_addr for SIGKILL...)
 
-Patch 8-9: implement FPGA PCIe device driver. It locates all 'Device
-Feature Lists' in PCIe device memory and invokes common interfaces from
-above device feature list framework to finish the enumeration.
 
-Patch 10-15: implement FPGA Management Engine (FME) driver. It's a
-platform driver matching with the FME platform device created by above
-device feature list framework during enumeration. Sysfs and device file
-ioctls are exposed as user interfaces to allow partial reconfiguration
-to Accelerated Function Units (AFUs) from user space applications.
+Thanks,
 
-Patch 16-19: implement FPGA manager/bridge/region platform drivers for
-Intel FPGA Management Engine (FME). These platform drivers match with
-platform devices created by above FME driver, they use the generic
-fpga-mgr/bridge/region class infrastructure to implement FPGA partial
-reconfiguration function.
-
-Patch 20-24: implement FPGA Accelerated Function Unit (AFU) driver.
-It's a platform driver matching with AFU platform device created by above
-device feature list framework during enumeration. It provides user
-interfaces to expose the AFU MMIO region, map/unmap dma buffer, and
-control the port which AFU connects to.
-
-Changes from v3:
-- Fix SPDX license issue.
-- Rename documentation to dfl.txt, add introduction for Device Feature List
-  (DFL) and re-organize the content.
-- Rename to FPGA Device Feature List (DFL) drivers from Intel FPGA device
-  drivers for better reuse purposes. Unified driver and files to dfl-*.*
-- Remove static feature_info table from common enumeration code, and switch
-  to use feature id for sub feature driver matching.
-- Remove next_afu register checking for AFU from common enumeration code.
-- Remove interface_id sysfs for dfl-fme-mgr and use per fpga-region
-  compat_id instead. (new patch 13, 15, 19).
-- Add more comments for driver data structures and functions.
-- Fix typos, issues in debug message/commit message and other places.
-
-Changes from v2:
-- Split common enumeration code from pcie driver to a separated module
-  which for device feature list support.
-- Drop fpga-dev class and switch to use fpga base region as container.
-- Update the intel-fpga.txt documentation for new driver organization.
-- Rename feature device drivers for future code reuse.
-- Rebase code due to fpga APIs changes
-- replace bitfields with marco and shift.
-- fix typos, checkpatch issue and other comments.
-
-Changes from v1:
-- Use GPLv2 license instead of Dual BSD/GPL.
-- Move the code to drivers/fpga folder.
-- Update the intel-fpga.txt documentation for new driver organization.
-- Add documentation for new sysfs interfaces.
-- Switch to use common fpga-region interface for partial reconfiguration
-  (PR) function in FME. It creates fpga-region/fpga-mgr/fpga-bridge
-  platform devices and leave the implementation to their platform drivers.
-- Add platform drivers for FME fpga-mgr/bridge/region platform devices.
-- Fix kbuild warnings, typos and other comments.
-
-This patch series depends on the below patchset from Alan Tull.
-[PATCH v3 0/5] fpga: don't use drvdata in common fpga code[2]
-
-[1] https://marc.info/?l=linux-api&m=151176589114857&w=2
-[2] https://marc.info/?l=linux-fpga&m=151803761521039&w=2
-
-Kang Luwei (3):
-  fpga: dfl: add FPGA Management Engine driver basic framework
-  fpga: dfl: fme: add header sub feature support
-  fpga: dfl: fme: add partial reconfiguration sub feature support
-
-Wu Hao (18):
-  docs: fpga: add a document for FPGA Device Feature List (DFL)
-    Framework Overview
-  fpga: mgr: add region_id to fpga_image_info
-  fpga: mgr: add status for fpga-manager
-  fpga: add device feature list support
-  fpga: dfl: add chardev support for feature devices
-  fpga: dfl: adds fpga_cdev_find_port
-  fpga: dfl-pci: add enumeration for feature devices
-  fpga: dfl: fme: add FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
-    support
-  fpga: region: add compat_id support
-  fpga: dfl-fme-pr: add compat_id support for dfl-fme-region platform
-    device.
-  fpga: dfl: add fpga manager platform driver for FME
-  fpga: dfl: add fpga bridge platform driver for FME
-  fpga: dfl: add fpga region platform driver for FME
-  fpga: dfl-fme-region: add compat_id support
-  fpga: dfl: add FPGA Accelerated Function Unit driver basic framework
-  fpga: dfl: afu: add header sub feature support
-  fpga: dfl: afu: add FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
-    support
-  fpga: dfl: afu: add FPGA_PORT_DMA_MAP/UNMAP ioctls support
-
-Xiao Guangrong (2):
-  fpga: dfl: add feature device infrastructure
-  fpga: dfl: afu: add user afu sub feature support
-
-Zhang Yi (1):
-  fpga: add FPGA DFL PCIe device driver
-
- Documentation/ABI/testing/sysfs-class-fpga-manager |  24 +
- Documentation/ABI/testing/sysfs-class-fpga-region  |   5 +
- Documentation/ABI/testing/sysfs-platform-dfl-fme   |  23 +
- Documentation/ABI/testing/sysfs-platform-dfl-port  |  16 +
- Documentation/fpga/dfl.txt                         | 382 ++++++++
- Documentation/ioctl/ioctl-number.txt               |   1 +
- drivers/fpga/Kconfig                               |  68 ++
- drivers/fpga/Makefile                              |  14 +
- drivers/fpga/dfl-afu-dma-region.c                  | 463 ++++++++++
- drivers/fpga/dfl-afu-main.c                        | 476 ++++++++++
- drivers/fpga/dfl-afu-region.c                      | 165 ++++
- drivers/fpga/dfl-afu.h                             | 100 +++
- drivers/fpga/dfl-fme-br.c                          |  85 ++
- drivers/fpga/dfl-fme-main.c                        | 281 ++++++
- drivers/fpga/dfl-fme-mgr.c                         | 290 ++++++
- drivers/fpga/dfl-fme-pr.c                          | 517 +++++++++++
- drivers/fpga/dfl-fme-pr.h                          | 115 +++
- drivers/fpga/dfl-fme-region.c                      |  90 ++
- drivers/fpga/dfl-fme.h                             |  38 +
- drivers/fpga/dfl-pci.c                             | 322 +++++++
- drivers/fpga/dfl.c                                 | 982 +++++++++++++++++++++
- drivers/fpga/dfl.h                                 | 462 ++++++++++
- drivers/fpga/fpga-mgr.c                            |  28 +
- drivers/fpga/fpga-region.c                         |  19 +
- include/linux/fpga/fpga-mgr.h                      |  11 +
- include/linux/fpga/fpga-region.h                   |  13 +
- include/uapi/linux/fpga-dfl.h                      | 176 ++++
- 27 files changed, 5166 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
- create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-fme
- create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-port
- create mode 100644 Documentation/fpga/dfl.txt
- create mode 100644 drivers/fpga/dfl-afu-dma-region.c
- create mode 100644 drivers/fpga/dfl-afu-main.c
- create mode 100644 drivers/fpga/dfl-afu-region.c
- create mode 100644 drivers/fpga/dfl-afu.h
- create mode 100644 drivers/fpga/dfl-fme-br.c
- create mode 100644 drivers/fpga/dfl-fme-main.c
- create mode 100644 drivers/fpga/dfl-fme-mgr.c
- create mode 100644 drivers/fpga/dfl-fme-pr.c
- create mode 100644 drivers/fpga/dfl-fme-pr.h
- create mode 100644 drivers/fpga/dfl-fme-region.c
- create mode 100644 drivers/fpga/dfl-fme.h
- create mode 100644 drivers/fpga/dfl-pci.c
- create mode 100644 drivers/fpga/dfl.c
- create mode 100644 drivers/fpga/dfl.h
- create mode 100644 include/uapi/linux/fpga-dfl.h
-
--- 
-2.7.4
+James
