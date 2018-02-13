@@ -1,270 +1,228 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v4 09/24] fpga: dfl-pci: add enumeration for feature devices
-Date: Tue, 13 Feb 2018 17:24:38 +0800
-Message-ID: <1518513893-4719-10-git-send-email-hao.wu@intel.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v4 05/24] fpga: dfl: add chardev support for feature devices
+Date: Tue, 13 Feb 2018 17:24:34 +0800
+Message-ID: <1518513893-4719-6-git-send-email-hao.wu@intel.com>
 References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1518513893-4719-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The Device Feature List (DFL) is implemented in MMIO, and features
-are linked via the DFLs. This patch enables pcie driver to prepare
-enumeration information (e.g locations of all device feature lists
-in MMIO) and use common APIs provided by the Device Feature List
-framework to enumerate each feature device linked.
+For feature devices drivers, both the FPGA Management Engine (FME) and
+Accelerated Function Unit (AFU) driver need to expose user interfaces via
+the device file, for example, mmap and ioctls.
 
-Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Zhang Yi <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
-v3: split from another patch
-    use common functions from DFL framework for enumeration.
-v4: rebase
----
- drivers/fpga/dfl-pci.c | 199 ++++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 197 insertions(+), 2 deletions(-)
+This patch adds chardev support in the dfl driver for feature devices,
+FME and AFU. It reserves the chardev regions for FME and AFU, and provide
+interfaces for FME and AFU driver to register their device file operations.
 
-diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
-index d91ea42..8ce8a94 100644
---- a/drivers/fpga/dfl-pci.c
-+++ b/drivers/fpga/dfl-pci.c
-@@ -22,9 +22,52 @@
- #include <linux/errno.h>
- #include <linux/aer.h>
+Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
+Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Signed-off-by: Wu Hao <hao.wu@intel.com>
+---
+v2: rebased
+v3: move chardev support to fpga-dfl framework
+v4: rebase, and add more comments in code.
+---
+ drivers/fpga/dfl.c | 104 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ drivers/fpga/dfl.h |  14 ++++++++
+ 2 files changed, 117 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
+index f50694e..dcfe5ab 100644
+--- a/drivers/fpga/dfl.c
++++ b/drivers/fpga/dfl.c
+@@ -74,6 +74,96 @@ static enum fpga_id_type feature_dev_id_type(struct platform_device *pdev)
+ 	return FPGA_ID_MAX;
+ }
  
-+#include "dfl.h"
-+
- #define DRV_VERSION	"0.8"
- #define DRV_NAME	"dfl-pci"
- 
-+struct cci_drvdata {
-+	struct fpga_cdev *cdev;	/* container device */
-+	struct list_head regions; /* list of pci bar mapping region */
++struct fpga_chardev_info {
++	const char *name;
++	dev_t devt;
 +};
 +
-+/* pci bar mapping info */
-+struct cci_region {
-+	int bar;
-+	void __iomem *ioaddr;	/* pointer to mapped bar region */
-+	struct list_head node;
++/* indexed by enum fpga_devt_type */
++struct fpga_chardev_info fpga_chrdevs[] = {
++	{.name = FPGA_FEATURE_DEV_FME},		/* FPGA_DEVT_FME */
++	{.name = FPGA_FEATURE_DEV_PORT},	/* FPGA_DEVT_AFU */
 +};
 +
-+static void __iomem *cci_pci_ioremap_bar(struct pci_dev *pcidev, int bar)
++static void fpga_chardev_uinit(void)
 +{
-+	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-+	struct cci_region *region;
++	int i;
 +
-+	list_for_each_entry(region, &drvdata->regions, node)
-+		if (region->bar == bar) {
-+			dev_dbg(&pcidev->dev, "BAR %d region exists\n", bar);
-+			return region->ioaddr;
++	for (i = 0; i < FPGA_DEVT_MAX; i++)
++		if (MAJOR(fpga_chrdevs[i].devt)) {
++			unregister_chrdev_region(fpga_chrdevs[i].devt,
++						 MINORMASK);
++			fpga_chrdevs[i].devt = MKDEV(0, 0);
 +		}
-+
-+	region = devm_kzalloc(&pcidev->dev, sizeof(*region), GFP_KERNEL);
-+	if (!region)
-+		return NULL;
-+
-+	region->bar = bar;
-+	region->ioaddr = pci_ioremap_bar(pcidev, bar);
-+	if (!region->ioaddr) {
-+		dev_err(&pcidev->dev, "can't ioremap memory from BAR %d.\n",
-+			bar);
-+		devm_kfree(&pcidev->dev, region);
-+		return NULL;
-+	}
-+
-+	list_add(&region->node, &drvdata->regions);
-+
-+	return region->ioaddr;
 +}
 +
- /* PCI Device ID */
- #define PCIE_DEVICE_ID_PF_INT_5_X	0xBCBD
- #define PCIE_DEVICE_ID_PF_INT_6_X	0xBCC0
-@@ -45,6 +88,143 @@ static struct pci_device_id cci_pcie_id_tbl[] = {
- };
- MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
- 
-+static int cci_init_drvdata(struct pci_dev *pcidev)
++static int fpga_chardev_init(void)
 +{
-+	struct cci_drvdata *drvdata;
++	int i, ret;
 +
-+	drvdata = devm_kzalloc(&pcidev->dev, sizeof(*drvdata), GFP_KERNEL);
-+	if (!drvdata)
-+		return -ENOMEM;
-+
-+	INIT_LIST_HEAD(&drvdata->regions);
-+
-+	pci_set_drvdata(pcidev, drvdata);
++	for (i = 0; i < FPGA_DEVT_MAX; i++) {
++		ret = alloc_chrdev_region(&fpga_chrdevs[i].devt, 0, MINORMASK,
++					  fpga_chrdevs[i].name);
++		if (ret)
++			goto exit;
++	}
 +
 +	return 0;
++
++exit:
++	fpga_chardev_uinit();
++	return ret;
 +}
 +
-+static void cci_pci_release_regions(struct pci_dev *pcidev)
++static dev_t fpga_get_devt(enum fpga_devt_type type, int id)
 +{
-+	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-+	struct cci_region *tmp, *region;
++	WARN_ON(type >= FPGA_DEVT_MAX);
 +
-+	list_for_each_entry_safe(region, tmp, &drvdata->regions, node) {
-+		list_del(&region->node);
-+		if (region->ioaddr)
-+			pci_iounmap(pcidev, region->ioaddr);
-+		devm_kfree(&pcidev->dev, region);
-+	}
++	return MKDEV(MAJOR(fpga_chrdevs[type].devt), id);
 +}
 +
-+static void cci_remove_drvdata(struct pci_dev *pcidev)
++/**
++ * fpga_register_dev_ops - register cdev ops for feature dev
++ *
++ * @pdev: feature dev.
++ * @fops: file operations for feature dev's cdev.
++ * @owner: owning module/driver.
++ *
++ * Return: 0 on success, negative error code otherwise.
++ */
++int fpga_register_dev_ops(struct platform_device *pdev,
++			  const struct file_operations *fops,
++			  struct module *owner)
 +{
-+	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
++	struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
 +
-+	cci_pci_release_regions(pcidev);
-+	pci_set_drvdata(pcidev, NULL);
-+	devm_kfree(&pcidev->dev, drvdata);
-+}
-+
-+static void cci_remove_feature_devs(struct pci_dev *pcidev)
-+{
-+	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-+
-+	/* remove all children feature devices */
-+	fpga_remove_feature_devs(drvdata->cdev);
-+}
-+
-+/* enumerate feature devices under pci device */
-+static int cci_enumerate_feature_devs(struct pci_dev *pcidev)
-+{
-+	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-+	struct fpga_cdev *cdev;
-+	struct fpga_enum_info *info;
-+	resource_size_t start, len;
-+	void __iomem *base;
-+	int port_num, bar, i, ret = 0;
-+	u32 offset;
-+	u64 v;
-+
-+	/* allocate enumeration info via pci_dev */
-+	info = fpga_enum_info_alloc(&pcidev->dev);
-+	if (!info)
-+		return -ENOMEM;
-+
-+	/* start to find Device Feature List from Bar 0 */
-+	base = cci_pci_ioremap_bar(pcidev, 0);
-+	if (!base) {
-+		ret = -ENOMEM;
-+		goto enum_info_free_exit;
-+	}
++	cdev_init(&pdata->cdev, fops);
++	pdata->cdev.owner = owner;
 +
 +	/*
-+	 * PF device has FME and Ports/AFUs, and VF device only has 1 Port/AFU.
-+	 * check them and add related "Device Feature List" info for the next
-+	 * step enumeration.
++	 * set parent to the feature device so that its refcount is
++	 * decreased after the last refcount of cdev is gone, that
++	 * makes sure the feature device is valid during device
++	 * file's life-cycle.
 +	 */
-+	if (feature_is_fme(base)) {
-+		start = pci_resource_start(pcidev, 0);
-+		len = pci_resource_len(pcidev, 0);
++	pdata->cdev.kobj.parent = &pdev->dev.kobj;
 +
-+		fpga_enum_info_add_dfl(info, start, len, base);
-+
-+		/*
-+		 * find more Device Feature Lists (e.g Ports) per information
-+		 * indicated by FME module.
-+		 */
-+		v = readq(base + FME_HDR_CAP);
-+		port_num = FIELD_GET(FME_CAP_NUM_PORTS, v);
-+
-+		WARN_ON(port_num > MAX_FPGA_PORT_NUM);
-+
-+		for (i = 0; i < port_num; i++) {
-+			v = readq(base + FME_HDR_PORT_OFST(i));
-+
-+			/* skip ports which are not implemented. */
-+			if (!(v & FME_PORT_OFST_IMP))
-+				continue;
-+
-+			/*
-+			 * add Port's Device Feature List information for next
-+			 * step enumeration.
-+			 */
-+			bar = FIELD_GET(FME_PORT_OFST_BAR_ID, v);
-+			offset = FIELD_GET(FME_PORT_OFST_DFH_OFST, v);
-+			base = cci_pci_ioremap_bar(pcidev, bar);
-+			if (!base)
-+				continue;
-+
-+			start = pci_resource_start(pcidev, bar) + offset;
-+			len = pci_resource_len(pcidev, bar) - offset;
-+
-+			fpga_enum_info_add_dfl(info, start, len, base + offset);
-+		}
-+	} else if (feature_is_port(base)) {
-+		start = pci_resource_start(pcidev, 0);
-+		len = pci_resource_len(pcidev, 0);
-+
-+		fpga_enum_info_add_dfl(info, start, len, base);
-+	} else {
-+		ret = -ENODEV;
-+		goto enum_info_free_exit;
-+	}
-+
-+	/* start enumeration with prepared enumeration information */
-+	cdev = fpga_enumerate_feature_devs(info);
-+	if (IS_ERR(cdev)) {
-+		dev_err(&pcidev->dev, "Enumeration failure\n");
-+		ret = PTR_ERR(cdev);
-+		goto enum_info_free_exit;
-+	}
-+
-+	drvdata->cdev = cdev;
-+
-+enum_info_free_exit:
-+	fpga_enum_info_free(info);
-+
-+	return ret;
++	return cdev_add(&pdata->cdev, pdev->dev.devt, 1);
 +}
++EXPORT_SYMBOL_GPL(fpga_register_dev_ops);
 +
- static
- int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
++/**
++ * fpga_unregister_dev_ops - unregister cdev ops for feature dev
++ * @pdev: feature dev.
++ */
++void fpga_unregister_dev_ops(struct platform_device *pdev)
++{
++	struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
++
++	cdev_del(&pdata->cdev);
++}
++EXPORT_SYMBOL_GPL(fpga_unregister_dev_ops);
++
+ /**
+  * struct build_feature_devs_info - info collected during feature dev build.
+  *
+@@ -207,8 +297,12 @@ build_info_create_dev(struct build_feature_devs_info *binfo,
+ 		      void __iomem *ioaddr)
  {
-@@ -82,9 +262,22 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
- 		goto release_region_exit;
- 	}
+ 	struct platform_device *fdev;
++	enum fpga_devt_type devt_type = FPGA_DEVT_FME;
+ 	int ret;
  
--	/* TODO: create and add the platform device per feature list */
--	return 0;
-+	ret = cci_init_drvdata(pcidev);
-+	if (ret) {
-+		dev_err(&pcidev->dev, "Fail to init drvdata %d.\n", ret);
-+		goto release_region_exit;
-+	}
++	if (type == PORT_ID)
++		devt_type = FPGA_DEVT_PORT;
 +
-+	ret = cci_enumerate_feature_devs(pcidev);
-+	if (ret) {
-+		dev_err(&pcidev->dev, "enumeration failure %d.\n", ret);
-+		goto remove_drvdata_exit;
-+	}
+ 	/* we will create a new device, commit current device first */
+ 	ret = build_info_commit_dev(binfo);
+ 	if (ret)
+@@ -232,6 +326,7 @@ build_info_create_dev(struct build_feature_devs_info *binfo,
+ 		return fdev->id;
+ 
+ 	fdev->dev.parent = &binfo->cdev->region.dev;
++	fdev->dev.devt = fpga_get_devt(devt_type, fdev->id);
+ 
+ 	return 0;
+ }
+@@ -769,13 +864,20 @@ EXPORT_SYMBOL_GPL(__fpga_port_disable);
+ 
+ static int __init dfl_fpga_init(void)
+ {
++	int ret;
++
+ 	fpga_ids_init();
+ 
+-	return 0;
++	ret = fpga_chardev_init();
++	if (ret)
++		fpga_ids_destroy();
 +
 +	return ret;
+ }
  
-+remove_drvdata_exit:
-+	cci_remove_drvdata(pcidev);
- release_region_exit:
- 	pci_release_regions(pcidev);
- disable_error_report_exit:
-@@ -95,6 +288,8 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
- 
- static void cci_pci_remove(struct pci_dev *pcidev)
+ static void __exit dfl_fpga_exit(void)
  {
-+	cci_remove_feature_devs(pcidev);
-+	cci_remove_drvdata(pcidev);
- 	pci_release_regions(pcidev);
- 	pci_disable_pcie_error_reporting(pcidev);
- 	pci_disable_device(pcidev);
++	fpga_chardev_uinit();
+ 	fpga_ids_destroy();
+ }
+ 
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 22dcf73..9b19399 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -15,6 +15,7 @@
+ #define __FPGA_DFL_H
+ 
+ #include <linux/bitfield.h>
++#include <linux/cdev.h>
+ #include <linux/delay.h>
+ #include <linux/fs.h>
+ #include <linux/iopoll.h>
+@@ -150,6 +151,7 @@ struct feature {
+  *
+  * @node: node to link feature devs to container device's port_dev_list.
+  * @lock: mutex to protect platform data.
++ * @cdev: cdev of feature dev.
+  * @dev: ptr to platform device linked with this platform data.
+  * @disable_count: count for port disable.
+  * @num: number for sub features.
+@@ -158,6 +160,7 @@ struct feature {
+ struct feature_platform_data {
+ 	struct list_head node;
+ 	struct mutex lock;
++	struct cdev cdev;
+ 	struct platform_device *dev;
+ 	unsigned int disable_count;
+ 
+@@ -174,6 +177,17 @@ static inline int feature_platform_data_size(const int num)
+ 		num * sizeof(struct feature);
+ }
+ 
++enum fpga_devt_type {
++	FPGA_DEVT_FME,
++	FPGA_DEVT_PORT,
++	FPGA_DEVT_MAX,
++};
++
++int fpga_register_dev_ops(struct platform_device *pdev,
++			  const struct file_operations *fops,
++			  struct module *owner);
++void fpga_unregister_dev_ops(struct platform_device *pdev);
++
+ int fpga_port_id(struct platform_device *pdev);
+ 
+ static inline int fpga_port_check_id(struct platform_device *pdev,
 -- 
 2.7.4
