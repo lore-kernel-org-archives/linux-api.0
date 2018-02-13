@@ -1,7 +1,7 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v4 13/24] fpga: region: add compat_id support
-Date: Tue, 13 Feb 2018 17:24:42 +0800
-Message-ID: <1518513893-4719-14-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v4 15/24] fpga: dfl-fme-pr: add compat_id support for dfl-fme-region platform device.
+Date: Tue, 13 Feb 2018 17:24:44 +0800
+Message-ID: <1518513893-4719-16-git-send-email-hao.wu@intel.com>
 References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
@@ -10,103 +10,79 @@ To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@v
 Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-This patch introduces a compat_id member and sysfs interface for each
-fpga-region, e.g userspace applications could read the compat_id
-from the sysfs interface for compatibility checking before PR.
+This patch adds compat_id support when driver creates the platform
+device for dfl-fme-region. It allows dfl-fme-region platform driver
+to create fpga-region with correct compat_id.
 
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 ---
- Documentation/ABI/testing/sysfs-class-fpga-region |  5 +++++
- drivers/fpga/fpga-region.c                        | 19 +++++++++++++++++++
- include/linux/fpga/fpga-region.h                  | 13 +++++++++++++
- 3 files changed, 37 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
+ drivers/fpga/dfl-fme-pr.c | 20 ++++++++++++++++++++
+ drivers/fpga/dfl-fme-pr.h |  3 +++
+ 2 files changed, 23 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-class-fpga-region b/Documentation/ABI/testing/sysfs-class-fpga-region
-new file mode 100644
-index 0000000..419d930
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-class-fpga-region
-@@ -0,0 +1,5 @@
-+What:		/sys/class/fpga_region/<region>/compat_id
-+Date:		February 2018
-+KernelVersion:	4.16
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	FPGA region id for compatibility check.
-diff --git a/drivers/fpga/fpga-region.c b/drivers/fpga/fpga-region.c
-index 660a91b..babec96 100644
---- a/drivers/fpga/fpga-region.c
-+++ b/drivers/fpga/fpga-region.c
-@@ -162,6 +162,24 @@ int fpga_region_program_fpga(struct fpga_region *region)
+diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
+index 526e90b..c17170b 100644
+--- a/drivers/fpga/dfl-fme-pr.c
++++ b/drivers/fpga/dfl-fme-pr.c
+@@ -314,6 +314,25 @@ static void fpga_fme_destroy_bridges(struct feature_platform_data *pdata)
  }
- EXPORT_SYMBOL_GPL(fpga_region_program_fpga);
- 
-+static ssize_t compat_id_show(struct device *dev,
-+			      struct device_attribute *attr, char *buf)
-+{
-+	struct fpga_region *region = to_fpga_region(dev);
-+
-+	return sprintf(buf, "%016llx%016llx\n",
-+		       (unsigned long long)region->compat_id.id_h,
-+		       (unsigned long long)region->compat_id.id_l);
-+}
-+
-+static DEVICE_ATTR_RO(compat_id);
-+
-+static struct attribute *fpga_region_attrs[] = {
-+	&dev_attr_compat_id.attr,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(fpga_region);
-+
- int fpga_region_register(struct fpga_region *region)
- {
- 	struct device *dev = region->parent;
-@@ -226,6 +244,7 @@ static int __init fpga_region_init(void)
- 	if (IS_ERR(fpga_region_class))
- 		return PTR_ERR(fpga_region_class);
- 
-+	fpga_region_class->dev_groups = fpga_region_groups;
- 	fpga_region_class->dev_release = fpga_region_dev_release;
- 
- 	return 0;
-diff --git a/include/linux/fpga/fpga-region.h b/include/linux/fpga/fpga-region.h
-index 423c87e..bf97dcc 100644
---- a/include/linux/fpga/fpga-region.h
-+++ b/include/linux/fpga/fpga-region.h
-@@ -6,6 +6,17 @@
- #include <linux/fpga/fpga-bridge.h>
  
  /**
-+ * struct fpga_region_compat_id - FPGA Region id for compatibility check
++ * fpga_fme_get_region_compat_id - read region compat_id from hardware
 + *
-+ * @id_h: high 64bit of the compat_id
-+ * @id_l: low 64bit of the compat_id
++ * @dev: fme device.
 + */
-+struct fpga_region_compat_id {
-+	u64 id_h;
-+	u64 id_l;
-+};
++static struct fpga_region_compat_id
++fpga_fme_get_region_compat_id(struct device *dev)
++{
++	struct fpga_region_compat_id compat_id;
++	void __iomem *fme_pr;
++
++	fme_pr = get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_PR_MGMT);
++
++	compat_id.id_l = readq(fme_pr + FME_PR_INTFC_ID_L);
++	compat_id.id_h = readq(fme_pr + FME_PR_INTFC_ID_H);
++
++	return compat_id;
++}
 +
 +/**
-  * struct fpga_region - FPGA Region structure
-  * @dev: FPGA Region device
-  * @parent: parent device
-@@ -13,6 +24,7 @@
-  * @bridge_list: list of FPGA bridges specified in region
-  * @mgr: FPGA manager
-  * @info: FPGA image info
-+ * @compat_id: FPGA region id for compatibility check.
-  * @priv: private data
-  * @get_bridges: optional function to get bridges to a list
-  * @groups: optional attribute groups.
-@@ -24,6 +36,7 @@ struct fpga_region {
- 	struct list_head bridge_list;
- 	struct fpga_manager *mgr;
- 	struct fpga_image_info *info;
+  * fpga_fme_create_region - create fpga region platform device as child
+  *
+  * @pdata: fme platform device's pdata
+@@ -339,6 +358,7 @@ fpga_fme_create_region(struct feature_platform_data *pdata,
+ 
+ 	region_pdata.mgr = mgr;
+ 	region_pdata.br = br;
++	region_pdata.compat_id = fpga_fme_get_region_compat_id(dev);
+ 
+ 	/*
+ 	 * Each FPGA device may have more than one port, so allocate platform
+diff --git a/drivers/fpga/dfl-fme-pr.h b/drivers/fpga/dfl-fme-pr.h
+index 11bd001..ef6c95a 100644
+--- a/drivers/fpga/dfl-fme-pr.h
++++ b/drivers/fpga/dfl-fme-pr.h
+@@ -19,6 +19,7 @@
+ #define __DFL_FME_PR_H
+ 
+ #include <linux/platform_device.h>
++#include <linux/fpga/fpga-region.h>
+ 
+ /**
+  * struct fme_region - FME fpga region data structure
+@@ -39,11 +40,13 @@ struct fme_region {
+  * @mgr: platform device of the FPGA manager.
+  * @br: platform device of the FPGA bridge.
+  * @region_id: region id (same as port_id).
++ * @compat_id: compat id of the FPGA region.
+  */
+ struct fme_region_pdata {
+ 	struct platform_device *mgr;
+ 	struct platform_device *br;
+ 	int region_id;
 +	struct fpga_region_compat_id compat_id;
- 	void *priv;
- 	int (*get_bridges)(struct fpga_region *region);
- 	const struct attribute_group **groups;
+ };
+ 
+ /**
 -- 
 2.7.4
