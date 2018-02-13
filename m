@@ -1,198 +1,69 @@
-From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v3 11/21] fpga: dfl: fme: add header sub feature support
-Date: Tue, 13 Feb 2018 11:44:31 +0800
-Message-ID: <20180213034431.GB10936@hao-dev>
-References: <1511764948-20972-1-git-send-email-hao.wu@intel.com>
- <1511764948-20972-12-git-send-email-hao.wu@intel.com>
- <CANk1AXR2Q4M4c1TOQhR2J_Mz5MjwZWbR0JUXCR5jFVL_kZtcag@mail.gmail.com>
+From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v2] fs: fsnotify: account fsnotify metadata to kmemcg
+Date: Tue, 13 Feb 2018 08:30:27 +0200
+Message-ID: <CAOQ4uxjgKUFJ_uhyrQdcTs1FzcN6JrR_JpPc9QBrGJEU+cf65w@mail.gmail.com>
+References: <20171030124358.GF23278@quack2.suse.cz> <76a4d544-833a-5f42-a898-115640b6783b@alibaba-inc.com>
+ <20171031101238.GD8989@quack2.suse.cz> <20171109135444.znaksm4fucmpuylf@dhcp22.suse.cz>
+ <10924085-6275-125f-d56b-547d734b6f4e@alibaba-inc.com> <20171114093909.dbhlm26qnrrb2ww4@dhcp22.suse.cz>
+ <afa2dc80-16a3-d3d1-5090-9430eaafc841@alibaba-inc.com> <20171115093131.GA17359@quack2.suse.cz>
+ <CALvZod6HJO73GUfLemuAXJfr4vZ8xMOmVQpFO3vJRog-s2T-OQ@mail.gmail.com>
+ <CAOQ4uxg-mTgQfTv-qO6EVwfttyOy+oFyAHyFDKTQsDOkQPyyfA@mail.gmail.com>
+ <20180124103454.ibuqt3njaqbjnrfr@quack2.suse.cz> <CAOQ4uxhDpBBUrr0JWRBaNQTTaUeJ4=gnM0iij2KivaGgp1ggtg@mail.gmail.com>
+ <CALvZod4PyqfaqgEswegF5uOjNwVwbY1C4ptJB0Ouvgchv2aVFg@mail.gmail.com>
+ <CAOQ4uxhyZNghjQU5atNv5xtgdHzA75UayphCyQDzxjM8GDTv3Q@mail.gmail.com>
+ <CALvZod5H4eL=YtZ3zkGG3p8gD+3=qnC3siUw1zpKL+128KufAA@mail.gmail.com> <CAOQ4uxgJqn0CJaf=LMH-iv2g1MJZwPM97K6iCtzrcY3eoN6KjA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXR2Q4M4c1TOQhR2J_Mz5MjwZWbR0JUXCR5jFVL_kZtcag-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+In-Reply-To: <CAOQ4uxgJqn0CJaf=LMH-iv2g1MJZwPM97K6iCtzrcY3eoN6KjA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+To: Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Yang Shi <yang.s-gPhfCIXyaqCqndwCJWfcng@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 12, 2018 at 10:51:44AM -0600, Alan Tull wrote:
-> On Mon, Nov 27, 2017 at 12:42 AM, Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org> wrote:
-> > From: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> >
-> > The header register set is always present for FPGA Management Engine (FME),
-> > this patch implements init and uinit function for header sub feature and
-> > introduce several read-only sysfs interfaces for the capability and status.
-> >
-> > Sysfs interfaces:
-> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/ports_num
-> >   Read-only. Number of ports implemented
-> >
-> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/bitstream_id
-> >   Read-only. Blue Bitstream (static FPGA region) identifier number
-> >
-> > * /sys/class/fpga_region/<regionX>/<fpga-dfl-fme.x>/bitstream_metadata
-> >   Read-only. Blue Bitstream (static FPGA region) meta data
-> 
-> Please document the meta data.  I don't see anywhere that describes it
-> or how it differs from the bitstream_id.  So it could be useful to
-> document it in this header a bit, and in the code, in the sysfs
-> document, and in the Documentation/fpga so that people don't have to
-> go hunting.
+On Thu, Jan 25, 2018 at 10:36 PM, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+> On Thu, Jan 25, 2018 at 10:20 PM, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
+>> On Wed, Jan 24, 2018 at 11:51 PM, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>>>
+>>> There is a nicer alternative, instead of failing the file access,
+>>> an overflow event can be queued. I sent a patch for that and Jan
+>>> agreed to the concept, but thought we should let user opt-in for this
+>>> change:
+>>> https://marc.info/?l=linux-fsdevel&m=150944704716447&w=2
+>>>
+>>> So IMO, if user opts-in for OVERFLOW instead of ENOMEM,
+>>> charging the listener memcg would be non controversial.
+>>> Otherwise, I cannot say that starting to charge the listener memgc
+>>> for events won't break any application.
+>>>
+>>
 
-Hi Alan
+Shakeel, Jan,
 
-Thanks a lot for the review.
+Reviving this thread and adding linux-api, because I think it is important to
+agree on the API before patches.
 
-The Blue Bitstream (static FPGA region) meta data contains information
-like synthesis date and seed.
+The last message on the thread you referenced suggest an API change
+for opting in for Q_OVERFLOW on ENOMEM:
+https://marc.info/?l=linux-api&m=150946878623441&w=2
 
-The Blue Bitstream (static FPGA region) id contains version information
-like major, minor, patch number (e.g version 6.4.0)and etc.
+However, the suggested API change in in fanotify_mark() syscall and
+this is not the time when fsnotify_group is initialized.
+I believe for opting-in to accounting events for listener, you
+will need to add an opt-in flag for the fanotify_init() syscall.
 
-I used bitstream_id a lot, but bitstream_metadata is useful in some cases
-as well.
+Something like FAN_GROUP_QUEUE  (better name is welcome)
+which is mutually exclusive (?) with FAN_UNLIMITED_QUEUE.
 
-I will add more descriptions for them.
+The question is, do we need the user to also explicitly opt-in for
+Q_OVERFLOW on ENOMEM with FAN_Q_ERR mark mask?
+Should these 2 new APIs be coupled or independent?
 
-Thanks
-Hao
+Another question is whether FAN_GROUP_QUEUE may require
+less than CAP_SYS_ADMIN? Of course for now, this is only a
+semantic change, because fanotify_init() requires CAP_SYS_ADMIN
+but as the documentation suggests, this may be relaxed in the future.
 
-> 
-> We discussed elsewhere the static region bitstream_id verses the other
-> interface_ids, so that's been discussed.
-> 
-> Besides that, this patch looks good and straightforward.
-> 
-> Thanks,
-> Alan
-> 
-> >
-> > Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > ----
-> > v2: add sysfs documentation
-> > v3: rename driver to fpga-dfl-fme.
-> >     improve sysfs doc and commit description.
-> >     replace bitfield.
-> > ---
-> >  .../ABI/testing/sysfs-platform-fpga-dfl-fme        | 21 ++++++++
-> >  drivers/fpga/dfl-fme-main.c                        | 60 ++++++++++++++++++++++
-> >  2 files changed, 81 insertions(+)
-> >  create mode 100644 Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
-> >
-> > diff --git a/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
-> > new file mode 100644
-> > index 0000000..6b32799
-> > --- /dev/null
-> > +++ b/Documentation/ABI/testing/sysfs-platform-fpga-dfl-fme
-> > @@ -0,0 +1,21 @@
-> > +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/ports_num
-> > +Date:          November 2017
-> > +KernelVersion:  4.15
-> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +Description:   Read-only. One DFL FPGA device may have more than 1
-> > +               port/Accelerator Function Unit (AFU). It returns the
-> > +               number of ports on the FPGA device when read it.
-> > +
-> > +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/bitstream_id
-> > +Date:          November 2017
-> > +KernelVersion:  4.15
-> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +Description:   Read-only. It returns Blue Bitstream (static FPGA region)
-> > +               identifier number.
-> > +
-> > +What:          /sys/bus/platform/devices/fpga-dfl-fme.0/bitstream_meta
-> > +Date:          November 2017
-> > +KernelVersion:  4.15
-> > +Contact:       Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-> > +Description:   Read-only. It returns Blue Bitstream (static FPGA region)
-> > +               meta data.
-> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> > index f7b5f7d..d17c66a 100644
-> > --- a/drivers/fpga/dfl-fme-main.c
-> > +++ b/drivers/fpga/dfl-fme-main.c
-> > @@ -21,9 +21,68 @@
-> >
-> >  #include "fpga-dfl.h"
-> >
-> > +static ssize_t ports_num_show(struct device *dev,
-> > +                             struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
-> > +
-> > +       v = readq(base + FME_HDR_CAP);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(FME_CAP_NUM_PORTS, v));
-> > +}
-> > +static DEVICE_ATTR_RO(ports_num);
-> > +
-> > +static ssize_t bitstream_id_show(struct device *dev,
-> > +                                struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
-> > +
-> > +       v = readq(base + FME_HDR_BITSTREAM_ID);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "0x%llx\n", (unsigned long long)v);
-> > +}
-> > +static DEVICE_ATTR_RO(bitstream_id);
-> > +
-> > +static ssize_t bitstream_metadata_show(struct device *dev,
-> > +                                      struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = get_feature_ioaddr_by_index(dev, FME_FEATURE_ID_HEADER);
-> > +
-> > +       v = readq(base + FME_HDR_BITSTREAM_MD);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "0x%llx\n", (unsigned long long)v);
-> > +}
-> > +static DEVICE_ATTR_RO(bitstream_metadata);
-> > +
-> > +static const struct attribute *fme_hdr_attrs[] = {
-> > +       &dev_attr_ports_num.attr,
-> > +       &dev_attr_bitstream_id.attr,
-> > +       &dev_attr_bitstream_metadata.attr,
-> > +       NULL,
-> > +};
-> > +
-> >  static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
-> >  {
-> > +       void __iomem *base = feature->ioaddr;
-> > +       int ret;
-> > +
-> >         dev_dbg(&pdev->dev, "FME HDR Init.\n");
-> > +       dev_dbg(&pdev->dev, "FME cap %llx.\n",
-> > +               (unsigned long long)readq(base + FME_HDR_CAP));
-> > +
-> > +       ret = sysfs_create_files(&pdev->dev.kobj, fme_hdr_attrs);
-> > +       if (ret)
-> > +               return ret;
-> >
-> >         return 0;
-> >  }
-> > @@ -31,6 +90,7 @@ static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
-> >  static void fme_hdr_uinit(struct platform_device *pdev, struct feature *feature)
-> >  {
-> >         dev_dbg(&pdev->dev, "FME HDR UInit.\n");
-> > +       sysfs_remove_files(&pdev->dev.kobj, fme_hdr_attrs);
-> >  }
-> >
-> >  static const struct feature_ops fme_hdr_ops = {
-> > --
-> > 1.8.3.1
-> >
+Thought?
+
+Amir.
