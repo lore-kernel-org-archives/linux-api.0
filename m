@@ -1,178 +1,158 @@
 From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: [PATCH v4 21/24] fpga: dfl: afu: add header sub feature support
-Date: Tue, 13 Feb 2018 17:24:50 +0800
-Message-ID: <1518513893-4719-22-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v4 17/24] fpga: dfl: add fpga bridge platform driver for FME
+Date: Tue, 13 Feb 2018 17:24:46 +0800
+Message-ID: <1518513893-4719-18-git-send-email-hao.wu@intel.com>
 References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 In-Reply-To: <1518513893-4719-1-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 To: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-The port header register set is always present for port, it is mainly
-for capability, control and status of the ports that AFU connected to.
-
-This patch implements header sub feature support. Below user interfaces
-are created by this patch.
-
-Sysfs interface:
-* /sys/class/fpga_region/<regionX>/<dfl-port.x>/id
-  Read-only. Port ID.
-
-Ioctl interface:
-* FPGA_PORT_RESET
-  Reset the FPGA Port and its AFU.
+This patch adds fpga bridge platform driver for FPGA Management Engine.
+It implements the enable_set call back for fpga bridge.
 
 Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 Acked-by: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Acked-by: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
 ---
-v3: rename driver name to fpga-dfl-afu
-    add more description for reset ioctl.
-    fix some checkpatch issues.
-v4: rebase.
-    add Acked-by from Alan.
+v3: rename driver to fpga-dfl-fme-br
+    remove useless dev_dbg in probe function.
+    rebased due to fpga api change.
+v4: rename to dfl-fme-br and fix SPDX license issue
+    include dfl-fme-pr.h instead of dfl-fme.h
+    add Acked-by from Alan and Moritz
 ---
- Documentation/ABI/testing/sysfs-platform-dfl-port |  7 ++++
- drivers/fpga/dfl-afu-main.c                       | 44 ++++++++++++++++++++++-
- include/uapi/linux/fpga-dfl.h                     | 17 +++++++++
- 3 files changed, 67 insertions(+), 1 deletion(-)
- create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-port
+ drivers/fpga/Kconfig      |  6 ++++
+ drivers/fpga/Makefile     |  1 +
+ drivers/fpga/dfl-fme-br.c | 85 +++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 92 insertions(+)
+ create mode 100644 drivers/fpga/dfl-fme-br.c
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
+diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+index 89f76e8..a8f939a 100644
+--- a/drivers/fpga/Kconfig
++++ b/drivers/fpga/Kconfig
+@@ -156,6 +156,12 @@ config FPGA_DFL_FME_MGR
+ 	help
+ 	  Say Y to enable FPGA Manager driver for FPGA Management Engine.
+ 
++config FPGA_DFL_FME_BRIDGE
++	tristate "FPGA DFL FME Bridge Driver"
++	depends on FPGA_DFL_FME
++	help
++	  Say Y to enable FPGA Bridge driver for FPGA Management Engine.
++
+ config FPGA_DFL_PCI
+ 	tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
+ 	depends on PCI && FPGA_DFL
+diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+index f82814a..75096e9 100644
+--- a/drivers/fpga/Makefile
++++ b/drivers/fpga/Makefile
+@@ -32,6 +32,7 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
+ obj-$(CONFIG_FPGA_DFL)			+= dfl.o
+ obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
+ obj-$(CONFIG_FPGA_DFL_FME_MGR)		+= dfl-fme-mgr.o
++obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
+ 
+ dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
+ 
+diff --git a/drivers/fpga/dfl-fme-br.c b/drivers/fpga/dfl-fme-br.c
 new file mode 100644
-index 0000000..79e8332
+index 0000000..46cee30
 --- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
-@@ -0,0 +1,7 @@
-+What:		/sys/bus/platform/devices/dfl-port.0/id
-+Date:		Februray 2018
-+KernelVersion:  4.16
-+Contact:	Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-+Description:	Read-only. It returns id of this port. One DFL FPGA device
-+		may have more than one port. Userspace could use this id to
-+		distinguish different ports under same FPGA device.
-diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-index 70db28c..b2f8798 100644
---- a/drivers/fpga/dfl-afu-main.c
-+++ b/drivers/fpga/dfl-afu-main.c
-@@ -16,25 +16,66 @@
- 
- #include <linux/kernel.h>
- #include <linux/module.h>
-+#include <linux/fpga-dfl.h>
- 
- #include "dfl.h"
- 
-+static ssize_t
-+id_show(struct device *dev, struct device_attribute *attr, char *buf)
-+{
-+	int id = fpga_port_id(to_platform_device(dev));
-+
-+	return scnprintf(buf, PAGE_SIZE, "%d\n", id);
-+}
-+static DEVICE_ATTR_RO(id);
-+
-+static const struct attribute *port_hdr_attrs[] = {
-+	&dev_attr_id.attr,
-+	NULL,
-+};
-+
- static int port_hdr_init(struct platform_device *pdev, struct feature *feature)
- {
- 	dev_dbg(&pdev->dev, "PORT HDR Init.\n");
- 
--	return 0;
-+	fpga_port_reset(pdev);
-+
-+	return sysfs_create_files(&pdev->dev.kobj, port_hdr_attrs);
- }
- 
- static void port_hdr_uinit(struct platform_device *pdev,
- 			   struct feature *feature)
- {
- 	dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
-+
-+	sysfs_remove_files(&pdev->dev.kobj, port_hdr_attrs);
-+}
-+
-+static long
-+port_hdr_ioctl(struct platform_device *pdev, struct feature *feature,
-+	       unsigned int cmd, unsigned long arg)
-+{
-+	long ret;
-+
-+	switch (cmd) {
-+	case FPGA_PORT_RESET:
-+		if (!arg)
-+			ret = fpga_port_reset(pdev);
-+		else
-+			ret = -EINVAL;
-+		break;
-+	default:
-+		dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
-+		ret = -ENODEV;
-+	}
-+
-+	return ret;
- }
- 
- static const struct feature_ops port_hdr_ops = {
- 	.init = port_hdr_init,
- 	.uinit = port_hdr_uinit,
-+	.ioctl = port_hdr_ioctl,
- };
- 
- static struct feature_driver port_feature_drvs[] = {
-@@ -74,6 +115,7 @@ static int afu_release(struct inode *inode, struct file *filp)
- 
- 	dev_dbg(&pdev->dev, "Device File Release\n");
- 
-+	fpga_port_reset(pdev);
- 	feature_dev_use_end(pdata);
- 
- 	return 0;
-diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
-index 50ee831..727bec2 100644
---- a/include/uapi/linux/fpga-dfl.h
-+++ b/include/uapi/linux/fpga-dfl.h
-@@ -28,8 +28,11 @@
- #define FPGA_MAGIC 0xB6
- 
- #define FPGA_BASE 0
-+#define PORT_BASE 0x40
- #define FME_BASE 0x80
- 
-+/* Common IOCTLs for both FME and AFU file descriptor */
-+
- /**
-  * FPGA_GET_API_VERSION - _IO(FPGA_MAGIC, FPGA_BASE + 0)
-  *
-@@ -48,6 +51,20 @@
- 
- #define FPGA_CHECK_EXTENSION	_IO(FPGA_MAGIC, FPGA_BASE + 1)
- 
-+/* IOCTLs for AFU file descriptor */
-+
-+/**
-+ * FPGA_PORT_RESET - _IO(FPGA_MAGIC, PORT_BASE + 0)
++++ b/drivers/fpga/dfl-fme-br.c
+@@ -0,0 +1,85 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * FPGA Bridge Driver for FPGA Management Engine (FME)
 + *
-+ * Reset the FPGA Port and its AFU. No parameters are supported.
-+ * Userspace can do Port reset at any time, e.g during DMA or PR. But
-+ * it should never cause any system level issue, only functional failure
-+ * (e.g DMA or PR operation failure) and be recoverable from the failure.
-+ * Return: 0 on success, -errno of failure
++ * Copyright (C) 2017 Intel Corporation, Inc.
++ *
++ * Authors:
++ *   Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
++ *   Joseph Grecco <joe.grecco-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
++ *   Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
++ *   Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
++ *   Ananda Ravuri <ananda.ravuri-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
++ *   Henry Mitchel <henry.mitchel-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 + */
 +
-+#define FPGA_PORT_RESET		_IO(FPGA_MAGIC, PORT_BASE + 0)
++#include <linux/module.h>
++#include <linux/fpga/fpga-bridge.h>
 +
- /* IOCTLs for FME file descriptor */
- 
- /**
++#include "dfl.h"
++#include "dfl-fme-pr.h"
++
++static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
++{
++	struct fme_br_pdata *pdata = bridge->priv;
++	int ret = 0;
++
++	if (enable)
++		fpga_port_enable(pdata->port);
++	else
++		ret = fpga_port_disable(pdata->port);
++
++	return ret;
++}
++
++static const struct fpga_bridge_ops fme_bridge_ops = {
++	.enable_set = fme_bridge_enable_set,
++};
++
++static int fme_br_probe(struct platform_device *pdev)
++{
++	struct device *dev = &pdev->dev;
++	struct fme_br_pdata *pdata = dev_get_platdata(dev);
++	struct fpga_bridge *br;
++	int ret;
++
++	br = devm_kzalloc(dev, sizeof(*br), GFP_KERNEL);
++	if (!br)
++		return -ENOMEM;
++
++	br->name = "FPGA FME Bridge";
++	br->br_ops = &fme_bridge_ops;
++	br->priv = pdata;
++	br->parent = dev;
++	platform_set_drvdata(pdev, br);
++
++	ret = fpga_bridge_register(br);
++	if (ret)
++		dev_err(dev, "unable to register FPGA Bridge\n");
++
++	return ret;
++}
++
++static int fme_br_remove(struct platform_device *pdev)
++{
++	struct fpga_bridge *br = platform_get_drvdata(pdev);
++
++	fpga_bridge_unregister(br);
++
++	return 0;
++}
++
++static struct platform_driver fme_br_driver = {
++	.driver	= {
++		.name    = FPGA_DFL_FME_BRIDGE,
++	},
++	.probe   = fme_br_probe,
++	.remove  = fme_br_remove,
++};
++
++module_platform_driver(fme_br_driver);
++
++MODULE_DESCRIPTION("FPGA Bridge for DFL FPGA Management Engine");
++MODULE_AUTHOR("Intel Corporation");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:dfl-fme-bridge");
 -- 
 2.7.4
