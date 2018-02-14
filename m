@@ -1,191 +1,317 @@
-From: Moritz Fischer <mdf@kernel.org>
-Subject: Re: [PATCH v4 03/24] fpga: mgr: add status for fpga-manager
-Date: Wed, 14 Feb 2018 12:55:50 -0800
-Message-ID: <20180214205550.GB25618@tyrael.ni.corp.natinst.com>
+From: Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4 07/24] fpga: dfl: add feature device infrastructure
+Date: Wed, 14 Feb 2018 13:03:19 -0800
+Message-ID: <20180214210319.GC25618@tyrael.ni.corp.natinst.com>
 References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-4-git-send-email-hao.wu@intel.com>
+ <1518513893-4719-8-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="l76fUT7nc3MelDdI"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+        protocol="application/pgp-signature"; boundary="da4uJneut+ArUgXk"
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <1518513893-4719-4-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com
+In-Reply-To: <1518513893-4719-8-git-send-email-hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
 
---l76fUT7nc3MelDdI
+--da4uJneut+ArUgXk
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-Hi Hao,
+HI Hao,
 
-with Alan's Feedback
-
-On Tue, Feb 13, 2018 at 05:24:32PM +0800, Wu Hao wrote:
-> This patch adds status to fpga-manager data structure, to allow
-> driver to store full/partial reconfiguration errors and other
-> status information, and adds one status callback to fpga_manager_ops
-> to allow fpga_manager to collect latest status when failures are
-> detected.
+On Tue, Feb 13, 2018 at 05:24:36PM +0800, Wu Hao wrote:
+> From: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
 >=20
-> The following sysfs file is created:
-> * /sys/class/fpga_manager/<fpga>/status
->   Return status of fpga manager, including reconfiguration errors.
+> This patch abstracts the common operations of the sub features, and defin=
+es
+> the feature_ops data structure, including init, uinit and ioctl function
+> pointers. And this patch adds some common helper functions for FME and AFU
+> drivers, e.g feature_dev_use_begin/end which are used to ensure exclusive
+> usage of the feature device file.
 >=20
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-
-Acked-by: Moritz Fischer <mdf@kernel.org>
+> Signed-off-by: Tim Whisonant <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Enno Luebbers <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Shiva Rao <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Christopher Rauer <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Kang Luwei <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Zhang Yi <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+> Signed-off-by: Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
+> Signed-off-by: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 > ---
-> v3: add one line description for status
->     add status callback function to fpga_manager_ops
->     update fpga-mgr status if any failure or during initialization
->     s/INCOMPATIBLE_BS_ERR/INCOMPATIBLE_IMAGE_ERR/
-> v4: simply code per suggestion from Alan.
->     add supported status strings (and descriptions) in sysfs document.
->     remove unused error code (SECURE_LOAD_ERR).
+> v2: rebased
+> v3: use const for feature_ops.
+>     replace pci related function.
+> v4: rebase and add more comments in code.
 > ---
->  Documentation/ABI/testing/sysfs-class-fpga-manager | 24 ++++++++++++++++=
-+++
->  drivers/fpga/fpga-mgr.c                            | 28 ++++++++++++++++=
-++++++
->  include/linux/fpga/fpga-mgr.h                      |  9 +++++++
->  3 files changed, 61 insertions(+)
+>  drivers/fpga/dfl.c | 59 +++++++++++++++++++++++++++++++++++++
+>  drivers/fpga/dfl.h | 85 ++++++++++++++++++++++++++++++++++++++++++++++++=
++++++-
+>  2 files changed, 143 insertions(+), 1 deletion(-)
 >=20
-> diff --git a/Documentation/ABI/testing/sysfs-class-fpga-manager b/Documen=
-tation/ABI/testing/sysfs-class-fpga-manager
-> index 23056c5..60db277 100644
-> --- a/Documentation/ABI/testing/sysfs-class-fpga-manager
-> +++ b/Documentation/ABI/testing/sysfs-class-fpga-manager
-> @@ -35,3 +35,27 @@ Description:	Read fpga manager state as a string.
->  		* write complete	=3D Doing post programming steps
->  		* write complete error	=3D Error while doing post programming
->  		* operating		=3D FPGA is programmed and operating
-> +
-> +What:		/sys/class/fpga_manager/<fpga>/status
-> +Date:		February 2018
-> +KernelVersion:	4.16
-> +Contact:	Wu Hao <hao.wu@intel.com>
-> +Description:	Read fpga manager status as a string.
-> +		If FPGA programming operation fails, it could be caused by crc
-> +		error or incompatible bitstream image. The intent of this
-> +		interface is to provide more detailed information for FPGA
-> +		programming errors to userspace. This is a list of strings for
-> +		the supported status.
-> +
-> +		* reconfig operation error 	- invalid operations detected by
-> +						  reconfiguration hardware.
-> +						  e.g start reconfiguration
-> +						  with errors not cleared
-> +		* reconfig CRC error		- CRC error detected by
-> +						  reconfiguration hardware.
-> +		* reconfig incompatible image	- reconfiguration image is
-> +						  incompatible with hardware
-> +		* reconfig IP protocol error	- protocol errors detected by
-> +						  reconfiguration hardware
-> +		* reconfig fifo overflow error	- FIFO overflow detected by
-> +						  reconfiguration hardware
-> diff --git a/drivers/fpga/fpga-mgr.c b/drivers/fpga/fpga-mgr.c
-> index 245e7a6..50b7396 100644
-> --- a/drivers/fpga/fpga-mgr.c
-> +++ b/drivers/fpga/fpga-mgr.c
-> @@ -397,12 +397,40 @@ static ssize_t state_show(struct device *dev,
->  	return sprintf(buf, "%s\n", state_str[mgr->state]);
+> diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
+> index 38dc819..c0aad87 100644
+> --- a/drivers/fpga/dfl.c
+> +++ b/drivers/fpga/dfl.c
+> @@ -74,6 +74,65 @@ static enum fpga_id_type feature_dev_id_type(struct pl=
+atform_device *pdev)
+>  	return FPGA_ID_MAX;
 >  }
 > =20
-> +static ssize_t status_show(struct device *dev,
-> +			   struct device_attribute *attr, char *buf)
+> +void fpga_dev_feature_uinit(struct platform_device *pdev)
 > +{
-> +	struct fpga_manager *mgr =3D to_fpga_manager(dev);
-> +	u64 status;
-> +	int len =3D 0;
+> +	struct feature *feature;
+> +	struct feature_platform_data *pdata =3D dev_get_platdata(&pdev->dev);
+See comment below w.r.t ordering declarations. Not a must for sure.
 > +
-> +	if (!mgr->mops->status)
-> +		return -ENOENT;
+> +	fpga_dev_for_each_feature(pdata, feature)
+> +		if (feature->ops) {
+> +			feature->ops->uinit(pdev, feature);
+> +			feature->ops =3D NULL;
+> +		}
+> +}
+> +EXPORT_SYMBOL_GPL(fpga_dev_feature_uinit);
 > +
-> +	status =3D mgr->mops->status(mgr);
+> +static int
+> +feature_instance_init(struct platform_device *pdev,
+> +		      struct feature_platform_data *pdata,
+> +		      struct feature *feature, struct feature_driver *drv)
+> +{
+> +	int ret;
 > +
-> +	if (status & FPGA_MGR_STATUS_OPERATION_ERR)
-> +		len +=3D sprintf(buf + len, "reconfig operation error\n");
-> +	if (status & FPGA_MGR_STATUS_CRC_ERR)
-> +		len +=3D sprintf(buf + len, "reconfig CRC error\n");
-> +	if (status & FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR)
-> +		len +=3D sprintf(buf + len, "reconfig incompatible image\n");
-> +	if (status & FPGA_MGR_STATUS_IP_PROTOCOL_ERR)
-> +		len +=3D sprintf(buf + len, "reconfig IP protocol error\n");
-> +	if (status & FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR)
-> +		len +=3D sprintf(buf + len, "reconfig fifo overflow error\n");
+> +	WARN_ON(!feature->ioaddr);
+
+Not sure I understand correctly, is the !feature->ioaddr a use-case that
+happens? If not just return early.
 > +
-> +	return len;
+> +	ret =3D drv->ops->init(pdev, feature);
+> +	if (ret)
+> +		return ret;
+> +
+> +	feature->ops =3D drv->ops;
+> +
+> +	return ret;
 > +}
 > +
->  static DEVICE_ATTR_RO(name);
->  static DEVICE_ATTR_RO(state);
-> +static DEVICE_ATTR_RO(status);
+> +int fpga_dev_feature_init(struct platform_device *pdev,
+> +			  struct feature_driver *feature_drvs)
+> +{
+> +	struct feature *feature;
+> +	struct feature_driver *drv =3D feature_drvs;
+> +	struct feature_platform_data *pdata =3D dev_get_platdata(&pdev->dev);
+> +	int ret;
+We don't have clear guidelines here, but some subsystems want reverse
+X-Mas tree declarations.
+> +
+> +	while (drv->ops) {
+> +		fpga_dev_for_each_feature(pdata, feature) {
+> +			/* match feature and drv using id */
+> +			if (feature->id =3D=3D drv->id) {
+> +				ret =3D feature_instance_init(pdev, pdata,
+> +							    feature, drv);
+> +				if (ret)
+> +					goto exit;
+> +			}
+> +		}
+> +		drv++;
+> +	}
+> +
+> +	return 0;
+> +exit:
+> +	fpga_dev_feature_uinit(pdev);
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(fpga_dev_feature_init);
+> +
+>  struct fpga_chardev_info {
+>  	const char *name;
+>  	dev_t devt;
+> diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+> index d6ecda1..ede1e95 100644
+> --- a/drivers/fpga/dfl.h
+> +++ b/drivers/fpga/dfl.h
+> @@ -132,6 +132,17 @@
+>  #define PORT_CTRL_SFTRST_ACK	BIT(4)			/* HW ack for reset */
 > =20
->  static struct attribute *fpga_mgr_attrs[] =3D {
->  	&dev_attr_name.attr,
->  	&dev_attr_state.attr,
-> +	&dev_attr_status.attr,
->  	NULL,
->  };
->  ATTRIBUTE_GROUPS(fpga_mgr);
-> diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
-> index 6e98b66..6c79183 100644
-> --- a/include/linux/fpga/fpga-mgr.h
-> +++ b/include/linux/fpga/fpga-mgr.h
-> @@ -112,6 +112,7 @@ struct fpga_image_info {
->   * struct fpga_manager_ops - ops for low level fpga manager drivers
->   * @initial_header_size: Maximum number of bytes that should be passed i=
-nto write_init
->   * @state: returns an enum value of the FPGA's state
-> + * @status: returns status of the FPGA, including reconfiguration error =
-code
->   * @write_init: prepare the FPGA to receive confuration data
->   * @write: write count bytes of configuration data to the FPGA
->   * @write_sg: write the scatter list of configuration data to the FPGA
-> @@ -126,6 +127,7 @@ struct fpga_image_info {
->  struct fpga_manager_ops {
->  	size_t initial_header_size;
->  	enum fpga_mgr_states (*state)(struct fpga_manager *mgr);
-> +	u64 (*status)(struct fpga_manager *mgr);
->  	int (*write_init)(struct fpga_manager *mgr,
->  			  struct fpga_image_info *info,
->  			  const char *buf, size_t count);
-> @@ -137,6 +139,13 @@ struct fpga_manager_ops {
->  	const struct attribute_group **groups;
+>  /**
+> + * struct feature_driver - sub feature's driver
+> + *
+> + * @id:	sub feature id.
+> + * @ops: ops of this sub feature.
+> + */
+> +struct feature_driver {
+> +	u64 id;
+> +	const struct feature_ops *ops;
+> +};
+> +
+> +/**
+>   * struct feature - sub feature of the feature devices
+>   *
+>   * @id:	sub feature id.
+> @@ -139,13 +150,17 @@
+>   *		    this index is used to find its mmio resource from the
+>   *		    feature dev (platform device)'s reources.
+>   * @ioaddr: mapped mmio resource address.
+> + * @ops: ops of this sub feature.
+>   */
+>  struct feature {
+>  	u64 id;
+>  	int resource_index;
+>  	void __iomem *ioaddr;
+> +	const struct feature_ops *ops;
 >  };
 > =20
-> +/* FPGA manager status: Partial/Full Reconfiguration errors */
-> +#define FPGA_MGR_STATUS_OPERATION_ERR		BIT(0)
-> +#define FPGA_MGR_STATUS_CRC_ERR			BIT(1)
-> +#define FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR	BIT(2)
-> +#define FPGA_MGR_STATUS_IP_PROTOCOL_ERR		BIT(3)
-> +#define FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR	BIT(4)
+> +#define DEV_STATUS_IN_USE	0
 > +
 >  /**
->   * struct fpga_manager - fpga manager structure
->   * @name: name of low level fpga manager
+>   * struct feature_platform_data - platform data for feature devices
+>   *
+> @@ -155,6 +170,8 @@ struct feature {
+>   * @dev: ptr to platform device linked with this platform data.
+>   * @disable_count: count for port disable.
+>   * @num: number for sub features.
+> + * @dev_status: dev status (e.g DEV_STATUS_IN_USE).
+> + * @private: ptr to feature dev private data.
+>   * @features: sub features of this feature dev.
+>   */
+>  struct feature_platform_data {
+> @@ -163,11 +180,44 @@ struct feature_platform_data {
+>  	struct cdev cdev;
+>  	struct platform_device *dev;
+>  	unsigned int disable_count;
+> -
+> +	unsigned long dev_status;
+> +	void *private;
+>  	int num;
+>  	struct feature features[0];
+>  };
+> =20
+> +static inline int feature_dev_use_begin(struct feature_platform_data *pd=
+ata)
+> +{
+> +	/* Test and set IN_USE flags to ensure file is exclusively used */
+> +	if (test_and_set_bit_lock(DEV_STATUS_IN_USE, &pdata->dev_status))
+> +		return -EBUSY;
+> +
+> +	return 0;
+> +}
+> +
+> +static inline void feature_dev_use_end(struct feature_platform_data *pda=
+ta)
+> +{
+> +	clear_bit_unlock(DEV_STATUS_IN_USE, &pdata->dev_status);
+> +}
+> +
+> +static inline void
+> +fpga_pdata_set_private(struct feature_platform_data *pdata, void *privat=
+e)
+> +{
+> +	pdata->private =3D private;
+> +}
+> +
+> +static inline void *fpga_pdata_get_private(struct feature_platform_data =
+*pdata)
+> +{
+> +	return pdata->private;
+> +}
+> +
+> +struct feature_ops {
+> +	int (*init)(struct platform_device *pdev, struct feature *feature);
+> +	void (*uinit)(struct platform_device *pdev, struct feature *feature);
+> +	long (*ioctl)(struct platform_device *pdev, struct feature *feature,
+> +		      unsigned int cmd, unsigned long arg);
+> +};
+> +
+>  #define FPGA_FEATURE_DEV_FME		"dfl-fme"
+>  #define FPGA_FEATURE_DEV_PORT		"dfl-port"
+> =20
+> @@ -177,6 +227,10 @@ static inline int feature_platform_data_size(const i=
+nt num)
+>  		num * sizeof(struct feature);
+>  }
+> =20
+> +void fpga_dev_feature_uinit(struct platform_device *pdev);
+> +int fpga_dev_feature_init(struct platform_device *pdev,
+> +			  struct feature_driver *feature_drvs);
+> +
+>  enum fpga_devt_type {
+>  	FPGA_DEVT_FME,
+>  	FPGA_DEVT_PORT,
+> @@ -257,6 +311,15 @@ static inline int fpga_port_reset(struct platform_de=
+vice *pdev)
+>  	return ret;
+>  }
+> =20
+> +static inline
+> +struct platform_device *fpga_inode_to_feature_dev(struct inode *inode)
+> +{
+> +	struct feature_platform_data *pdata;
+> +
+> +	pdata =3D container_of(inode->i_cdev, struct feature_platform_data, cde=
+v);
+> +	return pdata->dev;
+> +}
+> +
+>  #define fpga_dev_for_each_feature(pdata, feature)			    \
+>  	for ((feature) =3D (pdata)->features;				    \
+>  	   (feature) < (pdata)->features + (pdata)->num; (feature)++)
+> @@ -284,6 +347,17 @@ static inline void __iomem *get_feature_ioaddr_by_id=
+(struct device *dev, u64 id)
+>  	return NULL;
+>  }
+> =20
+> +static inline bool is_feature_present(struct device *dev, u64 id)
+> +{
+> +	return !!get_feature_ioaddr_by_id(dev, id);
+> +}
+> +
+> +static inline struct device *
+> +fpga_pdata_to_parent(struct feature_platform_data *pdata)
+> +{
+> +	return pdata->dev->dev.parent->parent;
+> +}
+> +
+>  static inline bool feature_is_fme(void __iomem *base)
+>  {
+>  	u64 v =3D readq(base + DFH);
+> @@ -376,4 +450,13 @@ fpga_cdev_find_port(struct fpga_cdev *cdev, void *da=
+ta,
+> =20
+>  	return pdev;
+>  }
+> +
+> +static inline struct fpga_cdev *
+> +fpga_pdata_to_fpga_cdev(struct feature_platform_data *pdata)
+> +{
+> +	struct device *dev =3D pdata->dev->dev.parent;
+> +	struct fpga_region *region =3D to_fpga_region(dev);
+> +
+> +	return container_of(region, struct fpga_cdev, region);
+> +}
+>  #endif /* __FPGA_DFL_H */
 > --=20
 > 2.7.4
 >=20
 
---l76fUT7nc3MelDdI
+Thanks,
+Moritz
+
+--da4uJneut+ArUgXk
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCAAdFiEEowQ4eJSlIZpNWnl2UVwKRFcJcNgFAlqEolIACgkQUVwKRFcJ
-cNiCBgf5AdCjqOIT/Zuc8MtaWYizG6WLKlMordYr+Ct+czrgrOlFvnVzMZ9GghWZ
-uUFoKJJ43F3ov67PIjpvVhwQYCR07FtX52N0pwXsyc8ullwPBCaijPmgSjZW7wVV
-33XE5IU6CTfIdDsvNQd/kSSmtEvv9r79+zgD+6nG5c9alB4yHxwmsKK7DXt/cMH5
-n5gfN9OX3o3rkxcPZaLSazcU5jzlXYM9I6HfJyDN7o31PkFPuxraKEawD01+KTci
-xeeX7MvZGVPCMr/AxjxUW63vQUMrkDltGUTcXXqjqjeWy2RBO8Yy1v5jDnj9iRQy
-oeyfqR0hAOiflUDmCPXyJqxeV1CwSg==
-=ql4b
+iQEzBAEBCAAdFiEEowQ4eJSlIZpNWnl2UVwKRFcJcNgFAlqEpBQACgkQUVwKRFcJ
+cNjSRAf+LhReDDmB8JFHGcb/vTAOftz0Pd8wWYUo7Qw7vTLnP8xocPKYzqnekilQ
+9nihgsoeoE2ezwbt2L2xRMyqstDYk2r26sD98WqeQi788TXxB4U1c4+16f5hV9In
+0L+epZd5Ocm+mo0cfb1Yvwg1QCLDbauWEgJgkaPm0sPmAtRVy9+2v1LhpLCwO03u
+O6ccWlEy9hO/hy6ENlpdGJuqX/fr7RJL6yEYnuisLSw6nMzSNe5qmpVPExx3MUJX
+Pb/44/XbFcdr2akqKP6IxMRO1NOybhIHJtlVLldnyoZRQmuExRDplrYMo+Ad/iY9
+AYCpBIPy0VHLGeDOH1YVlKl/aSUh2w==
+=kobZ
 -----END PGP SIGNATURE-----
 
---l76fUT7nc3MelDdI--
+--da4uJneut+ArUgXk--
