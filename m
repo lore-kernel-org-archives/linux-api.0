@@ -1,83 +1,113 @@
-From: Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH v2] fs: fsnotify: account fsnotify metadata to kmemcg
-Date: Wed, 14 Feb 2018 11:00:15 +0200
-Message-ID: <CAOQ4uxhRW=AN5UUHiWYaQp=Nw29ys_1Ak6ADCAvCLTUOqaYn6g@mail.gmail.com>
-References: <20171030124358.GF23278@quack2.suse.cz> <76a4d544-833a-5f42-a898-115640b6783b@alibaba-inc.com>
- <20171031101238.GD8989@quack2.suse.cz> <20171109135444.znaksm4fucmpuylf@dhcp22.suse.cz>
- <10924085-6275-125f-d56b-547d734b6f4e@alibaba-inc.com> <20171114093909.dbhlm26qnrrb2ww4@dhcp22.suse.cz>
- <afa2dc80-16a3-d3d1-5090-9430eaafc841@alibaba-inc.com> <20171115093131.GA17359@quack2.suse.cz>
- <CALvZod6HJO73GUfLemuAXJfr4vZ8xMOmVQpFO3vJRog-s2T-OQ@mail.gmail.com>
- <CAOQ4uxg-mTgQfTv-qO6EVwfttyOy+oFyAHyFDKTQsDOkQPyyfA@mail.gmail.com>
- <20180124103454.ibuqt3njaqbjnrfr@quack2.suse.cz> <CAOQ4uxhDpBBUrr0JWRBaNQTTaUeJ4=gnM0iij2KivaGgp1ggtg@mail.gmail.com>
- <CALvZod4PyqfaqgEswegF5uOjNwVwbY1C4ptJB0Ouvgchv2aVFg@mail.gmail.com>
- <CAOQ4uxhyZNghjQU5atNv5xtgdHzA75UayphCyQDzxjM8GDTv3Q@mail.gmail.com>
- <CALvZod5H4eL=YtZ3zkGG3p8gD+3=qnC3siUw1zpKL+128KufAA@mail.gmail.com>
- <CAOQ4uxgJqn0CJaf=LMH-iv2g1MJZwPM97K6iCtzrcY3eoN6KjA@mail.gmail.com>
- <CAOQ4uxjgKUFJ_uhyrQdcTs1FzcN6JrR_JpPc9QBrGJEU+cf65w@mail.gmail.com>
- <CALvZod45r7oW=HWH7KJyvFhJWB=6+Si54JK7E0Mx_2gLTZd1Pg@mail.gmail.com>
- <CAOQ4uxghwNg9Ni23EQA-971-qAaTNceSZS2MSvK06uEjoXG_yg@mail.gmail.com> <CALvZod7FTNzoGfGnaorqjk4KEsxJFdz1pApHi04P1cF10ejxpQ@mail.gmail.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH v2] inotify: Extend ioctl to allow to request id of new
+ watch descriptor
+Date: Wed, 14 Feb 2018 11:18:11 +0100
+Message-ID: <20180214101811.2m7atg4ca7w64m3u@quack2.suse.cz>
+References: <151810242614.30935.12876744458891870220.stgit@localhost.localdomain>
+ <ca006760-de72-37b3-f6fd-311c86f29b62@virtuozzo.com>
+ <20180209125656.e440e0518540d6b76ae42bc0@linux-foundation.org>
+ <bb9bafab-9a50-d19e-7293-65e74aca4720@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CALvZod7FTNzoGfGnaorqjk4KEsxJFdz1pApHi04P1cF10ejxpQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <bb9bafab-9a50-d19e-7293-65e74aca4720-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Cc: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Yang Shi <yang.s-gPhfCIXyaqCqndwCJWfcng@public.gmane.org>, Michal Hocko <mhocko-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, jack-AlSwsSmVLrQ@public.gmane.org, amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, willy-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, gorcunov-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 14, 2018 at 12:20 AM, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-> On Tue, Feb 13, 2018 at 1:54 PM, Amir Goldstein <amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
->> On Tue, Feb 13, 2018 at 11:10 PM, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org> wrote:
-[...]
->>>> The question is, do we need the user to also explicitly opt-in for
->>>> Q_OVERFLOW on ENOMEM with FAN_Q_ERR mark mask?
->>>> Should these 2 new APIs be coupled or independent?
->>>>
->>>
->>> Are there any error which are not related to queue overflows? I see
->>> the mention of ENODEV and EOVERFLOW in the discussion. If there are
->>> such errors and might be interesting to the listener then we should
->>> have 2 independent APIs.
->>>
->>
->> These are indeed 2 different use cases.
->> A Q_OVERFLOW event is only expected one of ENOMEM or
->> EOVERFLOW in event->fd, but other events (like open of special device
->> file) can have ENODEV in event->fd.
->>
->> But I am not convinced that those require 2 independent APIs.
->> Specifying FAN_Q_ERR means that the user expects to reads errors
->> from event->fd.
->>
->
-> Can you please explain what you mean by 2 independent APIs? I thought
-> "no independent APIs" means FAN_Q_ERR can only be used with
-> FAN_Q_OVERFLOW and without FAN_Q_OVERFLOW, FAN_Q_ERR is ignored. Is
-> that right or I misunderstood?
->
+On Sat 10-02-18 01:45:16, Kirill Tkhai wrote:
+> On 09.02.2018 23:56, Andrew Morton wrote:
+> > On Fri, 9 Feb 2018 18:04:54 +0300 Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+> > 
+> >> Watch descriptor is id of the watch created by inotify_add_watch().
+> >> It is allocated in inotify_add_to_idr(), and takes the numbers
+> >> starting from 1. Every new inotify watch obtains next available
+> >> number (usually, old + 1), as served by idr_alloc_cyclic().
+> >>
+> >> CRIU (Checkpoint/Restore In Userspace) project supports inotify
+> >> files, and restores watched descriptors with the same numbers,
+> >> they had before dump. Since there was no kernel support, we
+> >> had to use cycle to add a watch with specific descriptor id:
+> >>
+> >> 	while (1) {
+> >> 		int wd;
+> >>
+> >> 		wd = inotify_add_watch(inotify_fd, path, mask);
+> >> 		if (wd < 0) {
+> >> 			break;
+> >> 		} else if (wd == desired_wd_id) {
+> >> 			ret = 0;
+> >> 			break;
+> >> 		}
+> >>
+> >> 		inotify_rm_watch(inotify_fd, wd);
+> >> 	}
+> >>
+> >> (You may find the actual code at the below link:
+> >>  https://github.com/checkpoint-restore/criu/blob/v3.7/criu/fsnotify.c#L577)
+> >>
+> >> The cycle is suboptiomal and very expensive, but since there is no better
+> >> kernel support, it was the only way to restore that. Happily, we had met
+> >> mostly descriptors with small id, and this approach had worked somehow.
+> >>
+> >> But recent time containers with inotify with big watch descriptors
+> >> begun to come, and this way stopped to work at all. When descriptor id
+> >> is something about 0x34d71d6, the restoring process spins in busy loop
+> >> for a long time, and the restore hungs and delay of migration from node
+> >> to node could easily be watched.
+> >>
+> >> This patch aims to solve this problem. It introduces new ioctl
+> >> INOTIFY_IOC_SETNEXTWD, which allows to request the number of next created
+> >> watch descriptor from userspace. It simply calls idr_set_cursor() primitive
+> >> to populate idr::idr_next, so that next idr_alloc_cyclic() allocation
+> >> will return this id, if it is not occupied. This is the way which is
+> >> used to restore some other resources from userspace. For example,
+> >> /proc/sys/kernel/ns_last_pid works the same for task pids.
+> >>
+> >> The new code is under CONFIG_CHECKPOINT_RESTORE #define, so small system
+> >> may exclude it.
+> >>
+> > 
+> > Reviewed-by: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+> > 
+> > With a little cleanup:
+> > 
+> > --- a/fs/notify/inotify/inotify_user.c~inotify-extend-ioctl-to-allow-to-request-id-of-new-watch-descriptor-fix
+> > +++ a/fs/notify/inotify/inotify_user.c
+> > @@ -285,7 +285,6 @@ static int inotify_release(struct inode
+> >  static long inotify_ioctl(struct file *file, unsigned int cmd,
+> >  			  unsigned long arg)
+> >  {
+> > -	struct inotify_group_private_data *data __maybe_unused;
+> >  	struct fsnotify_group *group;
+> >  	struct fsnotify_event *fsn_event;
+> >  	void __user *p;
+> > @@ -294,7 +293,6 @@ static long inotify_ioctl(struct file *f
+> >  
+> >  	group = file->private_data;
+> >  	p = (void __user *) arg;
+> > -	data = &group->inotify_data;
+> >  
+> >  	pr_debug("%s: group=%p cmd=%u\n", __func__, group, cmd);
+> >  
+> > @@ -313,6 +311,9 @@ static long inotify_ioctl(struct file *f
+> >  	case INOTIFY_IOC_SETNEXTWD:
+> >  		ret = -EINVAL;
+> >  		if (arg >= 1 && arg <= INT_MAX) {
+> > +			struct inotify_group_private_data *data;
+> > +
+> > +			data = &group->inotify_data;
+> >  			spin_lock(&data->idr_lock);
+> >  			idr_set_cursor(&data->idr, (unsigned int)arg);
+> >  			spin_unlock(&data->idr_lock);
+> 
+> I have no objections.
 
-What I initially meant to say was, we actually consider several
-behavior changes:
-1. Charge event allocations to memcg of listener
-2. Queue a Q_OVERFLOW event on ENOMEM of event allocation
-3. Report the error to user on metadata->fd (instead of FAN_NOFD)
-4. Allow non Q_OVERFLOW event to have negative metadata->fd.
+Thanks guys, I have added the patch (with cleanup included) to my tree.
 
-#3 is applicable both to Q_OVERFLOW event and other events that
-can't provide and open file descriptor for some reason (i.e. ENODEV).
-
-#1 and #2 could be independent, but they both make sense together.
-When enabling #1 user increases the chance of ENOMEM and therefore
-#2 is desired. So if we are going to let distro/admin/programmer to
-opt-in for what we believe to be a "change of behavior for the best", then
-we could consider that opting-in  for #1 will also imply opting-in for #2
-and #3 (as the means to report Q_OVERFLOW due to ENOMEM).
-
-I guess we will need to allow user to opt-in to #4 and #3 by FAN_Q_ERR
-mask flag to cover the ENODEV case independently from opting-in to
-charging memcg.
-
-How was I doing in the balance of adding clarity vs. adding confusion?
-
-Thanks,
-Amir.
+								Honza
+-- 
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
