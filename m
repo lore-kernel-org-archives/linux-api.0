@@ -1,88 +1,102 @@
-From: "Wu, Hao" <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: RE: [PATCH v4 07/24] fpga: dfl: add feature device infrastructure
-Date: Thu, 15 Feb 2018 10:05:20 +0000
-Message-ID: <BE8371DA886269458E0220A16DC1F8277E154EC0@SHSMSX104.ccr.corp.intel.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-8-git-send-email-hao.wu@intel.com>
- <20180214210319.GC25618@tyrael.ni.corp.natinst.com>
- <CANk1AXRksJum6s5yB5727136DBLHs4UPW7xaLn_dT5qMEfqm9A@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CANk1AXRksJum6s5yB5727136DBLHs4UPW7xaLn_dT5qMEfqm9A-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alan Tull <atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Moritz Fischer <mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: "linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kernel <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Kang, Luwei" <luwei.kang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Zhang, Yi Z" <yi.z.zhang-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Xiao Guangrong <guangrong.xiao-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, "Whisonant, Tim" <tim.whisonant-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Luebbers, Enno" <enno.luebbers-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rao, Shiva" <shiva.rao-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, "Rauer, Christopher" <christopher.rauer-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+From: Davidlohr Bueso <dave@stgolabs.net>
+Subject: [PATCH -next v2 0/3] sysvipc: introduce STAT_ANY commands
+Date: Thu, 15 Feb 2018 08:24:55 -0800
+Message-ID: <20180215162458.10059-1-dave@stgolabs.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org
+Cc: mhocko@kernel.org, mtk.manpages@gmail.com, robert.kettler@outlook.com, manfred@colorfullife.com, ebiederm@xmission.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, dave@stgolabs.net
 List-Id: linux-api@vger.kernel.org
 
-PiBPbiBXZWQsIEZlYiAxNCwgMjAxOCBhdCAzOjAzIFBNLCBNb3JpdHogRmlzY2hlciA8bWRmQGtl
-cm5lbC5vcmc+IHdyb3RlOg0KPiANCj4gSGkgTW9yaXR6LA0KPiANCj4gPiBISSBIYW8sDQo+ID4N
-Cg0KSGkgQWxhbiBhbmQgTW9yaXR6DQoNClRoYW5rcyBhIGxvdCBmb3IgdGhlIGNvZGUgcmV2aWV3
-IGFuZCBjb21tZW50cy4NCg0KPiA+IE9uIFR1ZSwgRmViIDEzLCAyMDE4IGF0IDA1OjI0OjM2UE0g
-KzA4MDAsIFd1IEhhbyB3cm90ZToNCj4gPj4gRnJvbTogWGlhbyBHdWFuZ3JvbmcgPGd1YW5ncm9u
-Zy54aWFvQGxpbnV4LmludGVsLmNvbT4NCj4gPj4NCj4gPj4gVGhpcyBwYXRjaCBhYnN0cmFjdHMg
-dGhlIGNvbW1vbiBvcGVyYXRpb25zIG9mIHRoZSBzdWIgZmVhdHVyZXMsIGFuZCBkZWZpbmVzDQo+
-ID4+IHRoZSBmZWF0dXJlX29wcyBkYXRhIHN0cnVjdHVyZSwgaW5jbHVkaW5nIGluaXQsIHVpbml0
-IGFuZCBpb2N0bCBmdW5jdGlvbg0KPiA+PiBwb2ludGVycy4gQW5kIHRoaXMgcGF0Y2ggYWRkcyBz
-b21lIGNvbW1vbiBoZWxwZXIgZnVuY3Rpb25zIGZvciBGTUUgYW5kDQo+IEFGVQ0KPiA+PiBkcml2
-ZXJzLCBlLmcgZmVhdHVyZV9kZXZfdXNlX2JlZ2luL2VuZCB3aGljaCBhcmUgdXNlZCB0byBlbnN1
-cmUgZXhjbHVzaXZlDQo+ID4+IHVzYWdlIG9mIHRoZSBmZWF0dXJlIGRldmljZSBmaWxlLg0KPiA+
-Pg0KPiA+PiBTaWduZWQtb2ZmLWJ5OiBUaW0gV2hpc29uYW50IDx0aW0ud2hpc29uYW50QGludGVs
-LmNvbT4NCj4gPj4gU2lnbmVkLW9mZi1ieTogRW5ubyBMdWViYmVycyA8ZW5uby5sdWViYmVyc0Bp
-bnRlbC5jb20+DQo+ID4+IFNpZ25lZC1vZmYtYnk6IFNoaXZhIFJhbyA8c2hpdmEucmFvQGludGVs
-LmNvbT4NCj4gPj4gU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoZXIgUmF1ZXIgPGNocmlzdG9waGVy
-LnJhdWVyQGludGVsLmNvbT4NCj4gPj4gU2lnbmVkLW9mZi1ieTogS2FuZyBMdXdlaSA8bHV3ZWku
-a2FuZ0BpbnRlbC5jb20+DQo+ID4+IFNpZ25lZC1vZmYtYnk6IFpoYW5nIFlpIDx5aS56LnpoYW5n
-QGludGVsLmNvbT4NCj4gPj4gU2lnbmVkLW9mZi1ieTogWGlhbyBHdWFuZ3JvbmcgPGd1YW5ncm9u
-Zy54aWFvQGxpbnV4LmludGVsLmNvbT4NCj4gPj4gU2lnbmVkLW9mZi1ieTogV3UgSGFvIDxoYW8u
-d3VAaW50ZWwuY29tPg0KPiA+PiAtLS0NCj4gPj4gdjI6IHJlYmFzZWQNCj4gPj4gdjM6IHVzZSBj
-b25zdCBmb3IgZmVhdHVyZV9vcHMuDQo+ID4+ICAgICByZXBsYWNlIHBjaSByZWxhdGVkIGZ1bmN0
-aW9uLg0KPiA+PiB2NDogcmViYXNlIGFuZCBhZGQgbW9yZSBjb21tZW50cyBpbiBjb2RlLg0KPiA+
-PiAtLS0NCj4gPj4gIGRyaXZlcnMvZnBnYS9kZmwuYyB8IDU5ICsrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysNCj4gPj4gIGRyaXZlcnMvZnBnYS9kZmwuaCB8IDg1DQo+ICsrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLQ0KPiA+PiAg
-MiBmaWxlcyBjaGFuZ2VkLCAxNDMgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQ0KPiA+Pg0K
-PiA+PiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9mcGdhL2RmbC5jIGIvZHJpdmVycy9mcGdhL2RmbC5j
-DQo+ID4+IGluZGV4IDM4ZGM4MTkuLmMwYWFkODcgMTAwNjQ0DQo+ID4+IC0tLSBhL2RyaXZlcnMv
-ZnBnYS9kZmwuYw0KPiA+PiArKysgYi9kcml2ZXJzL2ZwZ2EvZGZsLmMNCj4gPj4gQEAgLTc0LDYg
-Kzc0LDY1IEBAIHN0YXRpYyBlbnVtIGZwZ2FfaWRfdHlwZSBmZWF0dXJlX2Rldl9pZF90eXBlKHN0
-cnVjdA0KPiBwbGF0Zm9ybV9kZXZpY2UgKnBkZXYpDQo+ID4+ICAgICAgIHJldHVybiBGUEdBX0lE
-X01BWDsNCj4gPj4gIH0NCj4gPj4NCj4gPj4gK3ZvaWQgZnBnYV9kZXZfZmVhdHVyZV91aW5pdChz
-dHJ1Y3QgcGxhdGZvcm1fZGV2aWNlICpwZGV2KQ0KPiA+PiArew0KPiA+PiArICAgICBzdHJ1Y3Qg
-ZmVhdHVyZSAqZmVhdHVyZTsNCj4gPj4gKyAgICAgc3RydWN0IGZlYXR1cmVfcGxhdGZvcm1fZGF0
-YSAqcGRhdGEgPSBkZXZfZ2V0X3BsYXRkYXRhKCZwZGV2LT5kZXYpOw0KPiA+IFNlZSBjb21tZW50
-IGJlbG93IHcuci50IG9yZGVyaW5nIGRlY2xhcmF0aW9ucy4gTm90IGEgbXVzdCBmb3Igc3VyZS4N
-Cj4gPj4gKw0KPiA+PiArICAgICBmcGdhX2Rldl9mb3JfZWFjaF9mZWF0dXJlKHBkYXRhLCBmZWF0
-dXJlKQ0KPiA+PiArICAgICAgICAgICAgIGlmIChmZWF0dXJlLT5vcHMpIHsNCj4gPj4gKyAgICAg
-ICAgICAgICAgICAgICAgIGZlYXR1cmUtPm9wcy0+dWluaXQocGRldiwgZmVhdHVyZSk7DQo+ID4+
-ICsgICAgICAgICAgICAgICAgICAgICBmZWF0dXJlLT5vcHMgPSBOVUxMOw0KPiA+PiArICAgICAg
-ICAgICAgIH0NCj4gPj4gK30NCj4gPj4gK0VYUE9SVF9TWU1CT0xfR1BMKGZwZ2FfZGV2X2ZlYXR1
-cmVfdWluaXQpOw0KPiA+PiArDQo+ID4+ICtzdGF0aWMgaW50DQo+ID4+ICtmZWF0dXJlX2luc3Rh
-bmNlX2luaXQoc3RydWN0IHBsYXRmb3JtX2RldmljZSAqcGRldiwNCj4gPj4gKyAgICAgICAgICAg
-ICAgICAgICBzdHJ1Y3QgZmVhdHVyZV9wbGF0Zm9ybV9kYXRhICpwZGF0YSwNCj4gPj4gKyAgICAg
-ICAgICAgICAgICAgICBzdHJ1Y3QgZmVhdHVyZSAqZmVhdHVyZSwgc3RydWN0IGZlYXR1cmVfZHJp
-dmVyICpkcnYpDQo+ID4+ICt7DQo+ID4+ICsgICAgIGludCByZXQ7DQo+ID4+ICsNCj4gPj4gKyAg
-ICAgV0FSTl9PTighZmVhdHVyZS0+aW9hZGRyKTsNCj4gPg0KPiA+IE5vdCBzdXJlIEkgdW5kZXJz
-dGFuZCBjb3JyZWN0bHksIGlzIHRoZSAhZmVhdHVyZS0+aW9hZGRyIGEgdXNlLWNhc2UgdGhhdA0K
-PiA+IGhhcHBlbnM/IElmIG5vdCBqdXN0IHJldHVybiBlYXJseS4NCg0KQWN0dWFsbHkgdGhpcyBz
-aG91bGQgbmV2ZXIgaGFwcGVuIChpbml0IGEgZmVhdHVyZSB3aXRob3V0IG1hcHBlZCBtbWlvDQpy
-ZXNvdXJjZSBhZGRyZXNzKS4gSWYgdGhpcyB3YXJuaW5nIGlzIHNlZW4sIHRoYXQgbWVhbnMgdGhl
-cmUgc2hvdWxkIGJlDQpjcml0aWNhbCBpc3N1ZXMgc29tZXdoZXJlIGluIGRyaXZlciBlbnVtZXJh
-dGlvbiBjb2RlLiBCdXQgc3VyZSwgSSBjYW4ganVzdA0KdXNlIGlmICgpIHJldHVybiBpbnN0ZWFk
-LiA6ICkNCg0KPiA+PiArDQo+ID4+ICsgICAgIHJldCA9IGRydi0+b3BzLT5pbml0KHBkZXYsIGZl
-YXR1cmUpOw0KPiA+PiArICAgICBpZiAocmV0KQ0KPiA+PiArICAgICAgICAgICAgIHJldHVybiBy
-ZXQ7DQo+ID4+ICsNCj4gPj4gKyAgICAgZmVhdHVyZS0+b3BzID0gZHJ2LT5vcHM7DQo+ID4+ICsN
-Cj4gPj4gKyAgICAgcmV0dXJuIHJldDsNCj4gPj4gK30NCj4gPj4gKw0KPiA+PiAraW50IGZwZ2Ff
-ZGV2X2ZlYXR1cmVfaW5pdChzdHJ1Y3QgcGxhdGZvcm1fZGV2aWNlICpwZGV2LA0KPiA+PiArICAg
-ICAgICAgICAgICAgICAgICAgICBzdHJ1Y3QgZmVhdHVyZV9kcml2ZXIgKmZlYXR1cmVfZHJ2cykN
-Cj4gPj4gK3sNCj4gPj4gKyAgICAgc3RydWN0IGZlYXR1cmUgKmZlYXR1cmU7DQo+ID4+ICsgICAg
-IHN0cnVjdCBmZWF0dXJlX2RyaXZlciAqZHJ2ID0gZmVhdHVyZV9kcnZzOw0KPiA+PiArICAgICBz
-dHJ1Y3QgZmVhdHVyZV9wbGF0Zm9ybV9kYXRhICpwZGF0YSA9IGRldl9nZXRfcGxhdGRhdGEoJnBk
-ZXYtPmRldik7DQo+ID4+ICsgICAgIGludCByZXQ7DQo+ID4gV2UgZG9uJ3QgaGF2ZSBjbGVhciBn
-dWlkZWxpbmVzIGhlcmUsIGJ1dCBzb21lIHN1YnN5c3RlbXMgd2FudCByZXZlcnNlDQo+ID4gWC1N
-YXMgdHJlZSBkZWNsYXJhdGlvbnMuDQo+IA0KPiBTb3VuZHMgZ29vZCEgIEkgYWdyZWUuDQoNCkRv
-IHlvdSBtZWFuIHdlIHNob3VsZCByZXZlcnNlIGZwZ2FfeHh4IGRlZmluaXRpb25zPyBJZiB5ZXMs
-IHRoZW4gSSBjYW4gdXBkYXRlDQp0aGUgY29kZSB0byB1c2UgZnBnYV9kZmxfeHh4IG9yIGRmbF94
-eHggaW5zdGVhZC4gOiApDQoNClRoYW5rcw0KSGFvDQoNCj4gDQo+IEFsYW4NCg==
+Changes from v1 (https://lwn.net/Articles/747225/):
+- Renamed cmds to STAT_ANY, instead of STAT_ALL (per Eric).
+- Added Robert's reported-by tag.
+- Added changes for smack lsm.
+
+Hi,
+
+The following patches adds the discussed[1] new command for shm
+as well as for sems and msq as they are subject to the same discrepancies
+for ipc object permission checks between the syscall and via procfs.
+These new commands are justified in that (1) we are stuck with this
+semantics as changing syscall and procfs can break userland; and (2) some
+users can benefit from performance (for large amounts of shm segments,
+for example) from not having to parse the procfs interface.
+
+Once (if) merged, I will submit the necesary manpage updates. But I'm
+thinking something like:
+
+diff --git a/man2/shmctl.2 b/man2/shmctl.2
+index 7bb503999941..bb00bbe21a57 100644
+--- a/man2/shmctl.2
++++ b/man2/shmctl.2
+@@ -41,6 +41,7 @@
+ .\" 2005-04-25, mtk -- noted aberrant Linux behavior w.r.t. new
+ .\"	attaches to a segment that has already been marked for deletion.
+ .\" 2005-08-02, mtk: Added IPC_INFO, SHM_INFO, SHM_STAT descriptions.
++.\" 2018-02-13, dbueso: Added SHM_STAT_ANY description.
+ .\"
+ .TH SHMCTL 2 2017-09-15 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+@@ -242,6 +243,18 @@ However, the
+ argument is not a segment identifier, but instead an index into
+ the kernel's internal array that maintains information about
+ all shared memory segments on the system.
++.TP
++.BR SHM_STAT_ANY " (Linux-specific)"
++Return a
++.I shmid_ds
++structure as for
++.BR SHM_STAT .
++However, the
++.I shm_perm.mode
++is not checked for read access for
++.IR shmid ,
++resembing the behaviour of
++/proc/sysvipc/shm.
+ .PP
+ The caller can prevent or allow swapping of a shared
+ memory segment with the following \fIcmd\fP values:
+@@ -287,7 +300,7 @@ operation returns the index of the highest used entry in the
+ kernel's internal array recording information about all
+ shared memory segments.
+ (This information can be used with repeated
+-.B SHM_STAT
++.B SHM_STAT/SHM_STAT_ANY
+ operations to obtain information about all shared memory segments
+ on the system.)
+ A successful
+@@ -328,7 +341,7 @@ isn't accessible.
+ \fIshmid\fP is not a valid identifier, or \fIcmd\fP
+ is not a valid command.
+ Or: for a
+-.B SHM_STAT
++.B SHM_STAT/SHM_STAT_ANY
+ operation, the index value specified in
+ .I shmid
+ referred to an array slot that is currently unused.
+
+
+Thanks!
+
+[1] https://lkml.org/lkml/2017/12/19/220
+
+*** BLURB HERE ***
+
+Davidlohr Bueso (3):
+  ipc/shm: introduce shmctl(SHM_STAT_ANY)
+  ipc/sem: introduce semctl(SEM_STAT_ANY)
+  ipc/msg: introduce msgctl(MSG_STAT_ANY)
+
+ include/uapi/linux/msg.h   |  1 +
+ include/uapi/linux/sem.h   |  1 +
+ include/uapi/linux/shm.h   |  5 +++--
+ ipc/msg.c                  | 17 ++++++++++++-----
+ ipc/sem.c                  | 17 ++++++++++++-----
+ ipc/shm.c                  | 23 ++++++++++++++++++-----
+ security/selinux/hooks.c   |  3 +++
+ security/smack/smack_lsm.c |  3 +++
+ 8 files changed, 53 insertions(+), 17 deletions(-)
+
+-- 
+2.13.6
