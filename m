@@ -1,158 +1,173 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH bpf-next v8 00/11] Landlock LSM: Toward unprivileged sandboxing
-Date: Tue, 27 Feb 2018 04:36:58 +0000
-Message-ID: <CALCETrV3OZb70o83uOG437PubwBwaUJ6SKQucq_7g1BuBOmxzg@mail.gmail.com>
-References: <20180227004121.3633-1-mic@digikod.net>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH bpf-next v8 05/11] seccomp,landlock: Enforce Landlock
+ programs per process hierarchy
+Date: Tue, 27 Feb 2018 04:40:34 +0000
+Message-ID: <CALCETrVKRYnGJ9XNW-x7eHdMt+eGP90j7cAed-KTzp1KT_kMeQ@mail.gmail.com>
+References: <20180227004121.3633-1-mic@digikod.net> <20180227004121.3633-6-mic@digikod.net>
+ <20180227020856.teq4hobw3zwussu2@ast-mbp>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180227004121.3633-1-mic@digikod.net>
+In-Reply-To: <20180227020856.teq4hobw3zwussu2@ast-mbp>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Tycho Andersen <tycho@tycho.ws>, Will Drewry <wad@chromium>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Ty
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 27, 2018 at 12:41 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net=
-> wrote:
-> Hi,
+On Tue, Feb 27, 2018 at 2:08 AM, Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
+> On Tue, Feb 27, 2018 at 01:41:15AM +0100, Mickaël Salaün wrote:
+>> The seccomp(2) syscall can be used by a task to apply a Landlock program
+>> to itself. As a seccomp filter, a Landlock program is enforced for the
+>> current task and all its future children. A program is immutable and a
+>> task can only add new restricting programs to itself, forming a list of
+>> programss.
+>>
+>> A Landlock program is tied to a Landlock hook. If the action on a kernel
+>> object is allowed by the other Linux security mechanisms (e.g. DAC,
+>> capabilities, other LSM), then a Landlock hook related to this kind of
+>> object is triggered. The list of programs for this hook is then
+>> evaluated. Each program return a 32-bit value which can deny the action
+>> on a kernel object with a non-zero value. If every programs of the list
+>> return zero, then the action on the object is allowed.
+>>
+>> Multiple Landlock programs can be chained to share a 64-bits value for a
+>> call chain (e.g. evaluating multiple elements of a file path).  This
+>> chaining is restricted when a process construct this chain by loading a
+>> program, but additional checks are performed when it requests to apply
+>> this chain of programs to itself.  The restrictions ensure that it is
+>> not possible to call multiple programs in a way that would imply to
+>> handle multiple shared values (i.e. cookies) for one chain.  For now,
+>> only a fs_pick program can be chained to the same type of program,
+>> because it may make sense if they have different triggers (cf. next
+>> commits).  This restrictions still allows to reuse Landlock programs in
+>> a safe way (e.g. use the same loaded fs_walk program with multiple
+>> chains of fs_pick programs).
+>>
+>> Signed-off-by: Mickaël Salaün <mic@digikod.net>
 >
-> This eight series is a major revamp of the Landlock design compared to
-> the previous series [1]. This enables more flexibility and granularity
-> of access control with file paths. It is now possible to enforce an
-> access control according to a file hierarchy. Landlock uses the concept
-> of inode and path to identify such hierarchy. In a way, it brings tools
-> to program what is a file hierarchy.
+> ...
 >
-> There is now three types of Landlock hooks: FS_WALK, FS_PICK and FS_GET.
-> Each of them accepts a dedicated eBPF program, called a Landlock
-> program.  They can be chained to enforce a full access control according
-> to a list of directories or files. The set of actions on a file is well
-> defined (e.g. read, write, ioctl, append, lock, mount...) taking
-> inspiration from the major Linux LSMs and some other access-controls
-> like Capsicum.  These program types are designed to be cache-friendly,
-> which give room for optimizations in the future.
+>> +struct landlock_prog_set *landlock_prepend_prog(
+>> +             struct landlock_prog_set *current_prog_set,
+>> +             struct bpf_prog *prog)
+>> +{
+>> +     struct landlock_prog_set *new_prog_set = current_prog_set;
+>> +     unsigned long pages;
+>> +     int err;
+>> +     size_t i;
+>> +     struct landlock_prog_set tmp_prog_set = {};
+>> +
+>> +     if (prog->type != BPF_PROG_TYPE_LANDLOCK_HOOK)
+>> +             return ERR_PTR(-EINVAL);
+>> +
+>> +     /* validate memory size allocation */
+>> +     pages = prog->pages;
+>> +     if (current_prog_set) {
+>> +             size_t i;
+>> +
+>> +             for (i = 0; i < ARRAY_SIZE(current_prog_set->programs); i++) {
+>> +                     struct landlock_prog_list *walker_p;
+>> +
+>> +                     for (walker_p = current_prog_set->programs[i];
+>> +                                     walker_p; walker_p = walker_p->prev)
+>> +                             pages += walker_p->prog->pages;
+>> +             }
+>> +             /* count a struct landlock_prog_set if we need to allocate one */
+>> +             if (refcount_read(&current_prog_set->usage) != 1)
+>> +                     pages += round_up(sizeof(*current_prog_set), PAGE_SIZE)
+>> +                             / PAGE_SIZE;
+>> +     }
+>> +     if (pages > LANDLOCK_PROGRAMS_MAX_PAGES)
+>> +             return ERR_PTR(-E2BIG);
+>> +
+>> +     /* ensure early that we can allocate enough memory for the new
+>> +      * prog_lists */
+>> +     err = store_landlock_prog(&tmp_prog_set, current_prog_set, prog);
+>> +     if (err)
+>> +             return ERR_PTR(err);
+>> +
+>> +     /*
+>> +      * Each task_struct points to an array of prog list pointers.  These
+>> +      * tables are duplicated when additions are made (which means each
+>> +      * table needs to be refcounted for the processes using it). When a new
+>> +      * table is created, all the refcounters on the prog_list are bumped (to
+>> +      * track each table that references the prog). When a new prog is
+>> +      * added, it's just prepended to the list for the new table to point
+>> +      * at.
+>> +      *
+>> +      * Manage all the possible errors before this step to not uselessly
+>> +      * duplicate current_prog_set and avoid a rollback.
+>> +      */
+>> +     if (!new_prog_set) {
+>> +             /*
+>> +              * If there is no Landlock program set used by the current task,
+>> +              * then create a new one.
+>> +              */
+>> +             new_prog_set = new_landlock_prog_set();
+>> +             if (IS_ERR(new_prog_set))
+>> +                     goto put_tmp_lists;
+>> +     } else if (refcount_read(&current_prog_set->usage) > 1) {
+>> +             /*
+>> +              * If the current task is not the sole user of its Landlock
+>> +              * program set, then duplicate them.
+>> +              */
+>> +             new_prog_set = new_landlock_prog_set();
+>> +             if (IS_ERR(new_prog_set))
+>> +                     goto put_tmp_lists;
+>> +             for (i = 0; i < ARRAY_SIZE(new_prog_set->programs); i++) {
+>> +                     new_prog_set->programs[i] =
+>> +                             READ_ONCE(current_prog_set->programs[i]);
+>> +                     if (new_prog_set->programs[i])
+>> +                             refcount_inc(&new_prog_set->programs[i]->usage);
+>> +             }
+>> +
+>> +             /*
+>> +              * Landlock program set from the current task will not be freed
+>> +              * here because the usage is strictly greater than 1. It is
+>> +              * only prevented to be freed by another task thanks to the
+>> +              * caller of landlock_prepend_prog() which should be locked if
+>> +              * needed.
+>> +              */
+>> +             landlock_put_prog_set(current_prog_set);
+>> +     }
+>> +
+>> +     /* prepend tmp_prog_set to new_prog_set */
+>> +     for (i = 0; i < ARRAY_SIZE(tmp_prog_set.programs); i++) {
+>> +             /* get the last new list */
+>> +             struct landlock_prog_list *last_list =
+>> +                     tmp_prog_set.programs[i];
+>> +
+>> +             if (last_list) {
+>> +                     while (last_list->prev)
+>> +                             last_list = last_list->prev;
+>> +                     /* no need to increment usage (pointer replacement) */
+>> +                     last_list->prev = new_prog_set->programs[i];
+>> +                     new_prog_set->programs[i] = tmp_prog_set.programs[i];
+>> +             }
+>> +     }
+>> +     new_prog_set->chain_last = tmp_prog_set.chain_last;
+>> +     return new_prog_set;
+>> +
+>> +put_tmp_lists:
+>> +     for (i = 0; i < ARRAY_SIZE(tmp_prog_set.programs); i++)
+>> +             put_landlock_prog_list(tmp_prog_set.programs[i]);
+>> +     return new_prog_set;
+>> +}
 >
-> The documentation patch contains some kernel documentation and
-> explanations on how to use Landlock.  The compiled documentation and
-> a talk I gave at FOSDEM can be found here: https://landlock.io
-> This patch series can be found in the branch landlock-v8 in this repo:
-> https://github.com/landlock-lsm/linux
+> Nack on the chaining concept.
+> Please do not reinvent the wheel.
+> There is an existing mechanism for attaching/detaching/quering multiple
+> programs attached to cgroup and tracing hooks that are also
+> efficiently executed via BPF_PROG_RUN_ARRAY.
+> Please use that instead.
 >
-> There is still some minor issues with this patch series but it should
-> demonstrate how powerful this design may be. One of these issues is that
-> it is not a stackable LSM anymore, but the infrastructure management of
-> security blobs should allow to stack it with other LSM [4].
->
-> This is the first step of the roadmap discussed at LPC [2].  While the
-> intended final goal is to allow unprivileged users to use Landlock, this
-> series allows only a process with global CAP_SYS_ADMIN to load and
-> enforce a rule.  This may help to get feedback and avoid unexpected
-> behaviors.
->
-> This series can be applied on top of bpf-next, commit 7d72637eb39f
-> ("Merge branch 'x86-jit'").  This can be tested with
-> CONFIG_SECCOMP_FILTER and CONFIG_SECURITY_LANDLOCK.  I would really
-> appreciate constructive comments on the design and the code.
->
->
-> # Landlock LSM
->
-> The goal of this new Linux Security Module (LSM) called Landlock is to
-> allow any process, including unprivileged ones, to create powerful
-> security sandboxes comparable to XNU Sandbox or OpenBSD Pledge. This
-> kind of sandbox is expected to help mitigate the security impact of bugs
-> or unexpected/malicious behaviors in user-space applications.
->
-> The approach taken is to add the minimum amount of code while still
-> allowing the user-space application to create quite complex access
-> rules.  A dedicated security policy language such as the one used by
-> SELinux, AppArmor and other major LSMs involves a lot of code and is
-> usually permitted to only a trusted user (i.e. root).  On the contrary,
-> eBPF programs already exist and are designed to be safely loaded by
-> unprivileged user-space.
->
-> This design does not seem too intrusive but is flexible enough to allow
-> a powerful sandbox mechanism accessible by any process on Linux. The use
-> of seccomp and Landlock is more suitable with the help of a user-space
-> library (e.g.  libseccomp) that could help to specify a high-level
-> language to express a security policy instead of raw eBPF programs.
-> Moreover, thanks to the LLVM front-end, it is quite easy to write an
-> eBPF program with a subset of the C language.
->
->
-> # Frequently asked questions
->
-> ## Why is seccomp-bpf not enough?
->
-> A seccomp filter can access only raw syscall arguments (i.e. the
-> register values) which means that it is not possible to filter according
-> to the value pointed to by an argument, such as a file pathname. As an
-> embryonic Landlock version demonstrated, filtering at the syscall level
-> is complicated (e.g. need to take care of race conditions). This is
-> mainly because the access control checkpoints of the kernel are not at
-> this high-level but more underneath, at the LSM-hook level. The LSM
-> hooks are designed to handle this kind of checks.  Landlock abstracts
-> this approach to leverage the ability of unprivileged users to limit
-> themselves.
->
-> Cf. section "What it isn't?" in Documentation/prctl/seccomp_filter.txt
->
->
-> ## Why use the seccomp(2) syscall?
->
-> Landlock use the same semantic as seccomp to apply access rule
-> restrictions. It add a new layer of security for the current process
-> which is inherited by its children. It makes sense to use an unique
-> access-restricting syscall (that should be allowed by seccomp filters)
-> which can only drop privileges. Moreover, a Landlock rule could come
-> from outside a process (e.g.  passed through a UNIX socket). It is then
-> useful to differentiate the creation/load of Landlock eBPF programs via
-> bpf(2), from rule enforcement via seccomp(2).
 
-This seems like a weak argument to me.  Sure, this is a bit different
-from seccomp(), and maybe shoving it into the seccomp() multiplexer is
-awkward, but surely the bpf() multiplexer is even less applicable.
+I don't see how that would help.  Suppose you add a filter, then
+fork(), and then the child adds another filter.  Do you want to
+duplicate the entire array?  You certainly can't *modify* the array
+because you'll affect processes that shouldn't be affected.
 
-But I think that you have more in common with seccomp() than you're
-giving it credit for.  With seccomp, you need to either prevent
-ptrace() of any more-privileged task or you need to filter to make
-sure you can't trace a more privileged program.  With landlock, you
-need exactly the same thing.  You have basically the same no_new_privs
-considerations, etc.
-
-Also, looking forward, I think you're going to want a bunch of the
-stuff that's under consideration as new seccomp features.  Tycho is
-working on a "user notifier" feature for seccomp where, in addition to
-accepting, rejecting, or kicking to ptrace, you can send a message to
-the creator of the filter and wait for a reply.  I think that Landlock
-will want exactly the same feature.
-
-In other words, it really seems to be that you should extend seccomp()
-with the ability to attach filters to things that aren't syscall
-entry, e.g. file open.
-
-I would also seriously consider doing a scaled-back Landlock variant
-first, with the intent of getting the main mechanism into the kernel.
-In particular, there are two big sources of complexity in Landlock.
-You need to deal with the API for managing bpf programs that filter
-various actions beyond just syscall entry, and you need to deal with
-giving those filters a way to deal with inodes, paths, etc.  But you
-can do the former without the latter.  For example, you could start
-with some Landlock-style filters on things that have nothing to do
-with files.  For example, you could allow a filter for connecting to
-an abstract-namespace unix socket.  Or you could have a hook for
-file_receive.  (You couldn't meaningfully filter based on the *path*
-of the fd being received without adding all the path infrastructure,
-but you could fitler on the *type* of the fd being received.)  Both of
-these add new sandboxing abilities that don't currently exist.  In
-particular, you can't write a seccomp rule that prevents receiving an
-fd using recvmsg() right now unless you block cmsg entirely.  And you
-can't write a filter that allows connecting to unix sockets by path
-without allowing abstract namespace sockets either.
-
-If you split up Landlock like this then, once you got all the
-installation and management of filters down, you could submit patches
-to add all the path stuff and deal with that review separately.
-
-What do you all think?
+In contrast, doing this through seccomp like the earlier patches
+seemed just fine to me, and seccomp already had the right logic.
