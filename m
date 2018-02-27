@@ -1,182 +1,145 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH bpf-next v8 05/11] seccomp,landlock: Enforce Landlock
- programs per process hierarchy
-Date: Mon, 26 Feb 2018 20:54:59 -0800
-Message-ID: <20180227045458.wjrbbsxf3po656du@ast-mbp>
-References: <20180227004121.3633-1-mic@digikod.net>
- <20180227004121.3633-6-mic@digikod.net>
- <20180227020856.teq4hobw3zwussu2@ast-mbp>
- <CALCETrVKRYnGJ9XNW-x7eHdMt+eGP90j7cAed-KTzp1KT_kMeQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH bpf-next v8 08/11] landlock: Add ptrace restrictions
+Date: Mon, 26 Feb 2018 21:01:28 -0800
+Message-ID: <D6B96EE0-8932-4845-BFA5-4C65E5189AFB@amacapital.net>
+References: <20180227004121.3633-1-mic@digikod.net> <20180227004121.3633-9-mic@digikod.net> <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrVKRYnGJ9XNW-x7eHdMt+eGP90j7cAed-KTzp1KT_kMeQ@mail.gmail.com>
+In-Reply-To: <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Tyc
+To: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Tycho Andersen <tycho@tycho.ws>, Will Drewry <wad@chromium>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 27, 2018 at 04:40:34AM +0000, Andy Lutomirski wrote:
-> On Tue, Feb 27, 2018 at 2:08 AM, Alexei Starovoitov
-> <alexei.starovoitov@gmail.com> wrote:
-> > On Tue, Feb 27, 2018 at 01:41:15AM +0100, Mickaël Salaün wrote:
-> >> The seccomp(2) syscall can be used by a task to apply a Landlock program
-> >> to itself. As a seccomp filter, a Landlock program is enforced for the
-> >> current task and all its future children. A program is immutable and a
-> >> task can only add new restricting programs to itself, forming a list of
-> >> programss.
-> >>
-> >> A Landlock program is tied to a Landlock hook. If the action on a kernel
-> >> object is allowed by the other Linux security mechanisms (e.g. DAC,
-> >> capabilities, other LSM), then a Landlock hook related to this kind of
-> >> object is triggered. The list of programs for this hook is then
-> >> evaluated. Each program return a 32-bit value which can deny the action
-> >> on a kernel object with a non-zero value. If every programs of the list
-> >> return zero, then the action on the object is allowed.
-> >>
-> >> Multiple Landlock programs can be chained to share a 64-bits value for a
-> >> call chain (e.g. evaluating multiple elements of a file path).  This
-> >> chaining is restricted when a process construct this chain by loading a
-> >> program, but additional checks are performed when it requests to apply
-> >> this chain of programs to itself.  The restrictions ensure that it is
-> >> not possible to call multiple programs in a way that would imply to
-> >> handle multiple shared values (i.e. cookies) for one chain.  For now,
-> >> only a fs_pick program can be chained to the same type of program,
-> >> because it may make sense if they have different triggers (cf. next
-> >> commits).  This restrictions still allows to reuse Landlock programs in
-> >> a safe way (e.g. use the same loaded fs_walk program with multiple
-> >> chains of fs_pick programs).
-> >>
-> >> Signed-off-by: Mickaël Salaün <mic@digikod.net>
-> >
-> > ...
-> >
-> >> +struct landlock_prog_set *landlock_prepend_prog(
-> >> +             struct landlock_prog_set *current_prog_set,
-> >> +             struct bpf_prog *prog)
-> >> +{
-> >> +     struct landlock_prog_set *new_prog_set = current_prog_set;
-> >> +     unsigned long pages;
-> >> +     int err;
-> >> +     size_t i;
-> >> +     struct landlock_prog_set tmp_prog_set = {};
-> >> +
-> >> +     if (prog->type != BPF_PROG_TYPE_LANDLOCK_HOOK)
-> >> +             return ERR_PTR(-EINVAL);
-> >> +
-> >> +     /* validate memory size allocation */
-> >> +     pages = prog->pages;
-> >> +     if (current_prog_set) {
-> >> +             size_t i;
-> >> +
-> >> +             for (i = 0; i < ARRAY_SIZE(current_prog_set->programs); i++) {
-> >> +                     struct landlock_prog_list *walker_p;
-> >> +
-> >> +                     for (walker_p = current_prog_set->programs[i];
-> >> +                                     walker_p; walker_p = walker_p->prev)
-> >> +                             pages += walker_p->prog->pages;
-> >> +             }
-> >> +             /* count a struct landlock_prog_set if we need to allocate one */
-> >> +             if (refcount_read(&current_prog_set->usage) != 1)
-> >> +                     pages += round_up(sizeof(*current_prog_set), PAGE_SIZE)
-> >> +                             / PAGE_SIZE;
-> >> +     }
-> >> +     if (pages > LANDLOCK_PROGRAMS_MAX_PAGES)
-> >> +             return ERR_PTR(-E2BIG);
-> >> +
-> >> +     /* ensure early that we can allocate enough memory for the new
-> >> +      * prog_lists */
-> >> +     err = store_landlock_prog(&tmp_prog_set, current_prog_set, prog);
-> >> +     if (err)
-> >> +             return ERR_PTR(err);
-> >> +
-> >> +     /*
-> >> +      * Each task_struct points to an array of prog list pointers.  These
-> >> +      * tables are duplicated when additions are made (which means each
-> >> +      * table needs to be refcounted for the processes using it). When a new
-> >> +      * table is created, all the refcounters on the prog_list are bumped (to
-> >> +      * track each table that references the prog). When a new prog is
-> >> +      * added, it's just prepended to the list for the new table to point
-> >> +      * at.
-> >> +      *
-> >> +      * Manage all the possible errors before this step to not uselessly
-> >> +      * duplicate current_prog_set and avoid a rollback.
-> >> +      */
-> >> +     if (!new_prog_set) {
-> >> +             /*
-> >> +              * If there is no Landlock program set used by the current task,
-> >> +              * then create a new one.
-> >> +              */
-> >> +             new_prog_set = new_landlock_prog_set();
-> >> +             if (IS_ERR(new_prog_set))
-> >> +                     goto put_tmp_lists;
-> >> +     } else if (refcount_read(&current_prog_set->usage) > 1) {
-> >> +             /*
-> >> +              * If the current task is not the sole user of its Landlock
-> >> +              * program set, then duplicate them.
-> >> +              */
-> >> +             new_prog_set = new_landlock_prog_set();
-> >> +             if (IS_ERR(new_prog_set))
-> >> +                     goto put_tmp_lists;
-> >> +             for (i = 0; i < ARRAY_SIZE(new_prog_set->programs); i++) {
-> >> +                     new_prog_set->programs[i] =
-> >> +                             READ_ONCE(current_prog_set->programs[i]);
-> >> +                     if (new_prog_set->programs[i])
-> >> +                             refcount_inc(&new_prog_set->programs[i]->usage);
-> >> +             }
-> >> +
-> >> +             /*
-> >> +              * Landlock program set from the current task will not be freed
-> >> +              * here because the usage is strictly greater than 1. It is
-> >> +              * only prevented to be freed by another task thanks to the
-> >> +              * caller of landlock_prepend_prog() which should be locked if
-> >> +              * needed.
-> >> +              */
-> >> +             landlock_put_prog_set(current_prog_set);
-> >> +     }
-> >> +
-> >> +     /* prepend tmp_prog_set to new_prog_set */
-> >> +     for (i = 0; i < ARRAY_SIZE(tmp_prog_set.programs); i++) {
-> >> +             /* get the last new list */
-> >> +             struct landlock_prog_list *last_list =
-> >> +                     tmp_prog_set.programs[i];
-> >> +
-> >> +             if (last_list) {
-> >> +                     while (last_list->prev)
-> >> +                             last_list = last_list->prev;
-> >> +                     /* no need to increment usage (pointer replacement) */
-> >> +                     last_list->prev = new_prog_set->programs[i];
-> >> +                     new_prog_set->programs[i] = tmp_prog_set.programs[i];
-> >> +             }
-> >> +     }
-> >> +     new_prog_set->chain_last = tmp_prog_set.chain_last;
-> >> +     return new_prog_set;
-> >> +
-> >> +put_tmp_lists:
-> >> +     for (i = 0; i < ARRAY_SIZE(tmp_prog_set.programs); i++)
-> >> +             put_landlock_prog_list(tmp_prog_set.programs[i]);
-> >> +     return new_prog_set;
-> >> +}
-> >
-> > Nack on the chaining concept.
-> > Please do not reinvent the wheel.
-> > There is an existing mechanism for attaching/detaching/quering multiple
-> > programs attached to cgroup and tracing hooks that are also
-> > efficiently executed via BPF_PROG_RUN_ARRAY.
-> > Please use that instead.
-> >
-> 
-> I don't see how that would help.  Suppose you add a filter, then
-> fork(), and then the child adds another filter.  Do you want to
-> duplicate the entire array?  You certainly can't *modify* the array
-> because you'll affect processes that shouldn't be affected.
-> 
-> In contrast, doing this through seccomp like the earlier patches
-> seemed just fine to me, and seccomp already had the right logic.
 
-it doesn't look to me that existing seccomp side of managing fork
-situation can be reused. Here there is an attempt to add 'chaining'
-concept which sort of an extension of existing seccomp style,
-but somehow heavily done on bpf side and contradicts cgroup/tracing.
+
+> On Feb 26, 2018, at 8:17 PM, Andy Lutomirski <luto@amacapital.net> wrote:
+>=20
+>> On Tue, Feb 27, 2018 at 12:41 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.n=
+et> wrote:
+>> A landlocked process has less privileges than a non-landlocked process
+>> and must then be subject to additional restrictions when manipulating
+>> processes. To be allowed to use ptrace(2) and related syscalls on a
+>> target process, a landlocked process must have a subset of the target
+>> process' rules.
+>>=20
+>> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+>> Cc: Alexei Starovoitov <ast@kernel.org>
+>> Cc: Andy Lutomirski <luto@amacapital.net>
+>> Cc: Daniel Borkmann <daniel@iogearbox.net>
+>> Cc: David S. Miller <davem@davemloft.net>
+>> Cc: James Morris <james.l.morris@oracle.com>
+>> Cc: Kees Cook <keescook@chromium.org>
+>> Cc: Serge E. Hallyn <serge@hallyn.com>
+>> ---
+>>=20
+>> Changes since v6:
+>> * factor out ptrace check
+>> * constify pointers
+>> * cleanup headers
+>> * use the new security_add_hooks()
+>> ---
+>> security/landlock/Makefile       |   2 +-
+>> security/landlock/hooks_ptrace.c | 124 ++++++++++++++++++++++++++++++++++=
++++++
+>> security/landlock/hooks_ptrace.h |  11 ++++
+>> security/landlock/init.c         |   2 +
+>> 4 files changed, 138 insertions(+), 1 deletion(-)
+>> create mode 100644 security/landlock/hooks_ptrace.c
+>> create mode 100644 security/landlock/hooks_ptrace.h
+>>=20
+>> diff --git a/security/landlock/Makefile b/security/landlock/Makefile
+>> index d0f532a93b4e..605504d852d3 100644
+>> --- a/security/landlock/Makefile
+>> +++ b/security/landlock/Makefile
+>> @@ -3,4 +3,4 @@ obj-$(CONFIG_SECURITY_LANDLOCK) :=3D landlock.o
+>> landlock-y :=3D init.o chain.o task.o \
+>>        tag.o tag_fs.o \
+>>        enforce.o enforce_seccomp.o \
+>> -       hooks.o hooks_cred.o hooks_fs.o
+>> +       hooks.o hooks_cred.o hooks_fs.o hooks_ptrace.o
+>> diff --git a/security/landlock/hooks_ptrace.c b/security/landlock/hooks_p=
+trace.c
+>> new file mode 100644
+>> index 000000000000..f1b977b9c808
+>> --- /dev/null
+>> +++ b/security/landlock/hooks_ptrace.c
+>> @@ -0,0 +1,124 @@
+>> +/*
+>> + * Landlock LSM - ptrace hooks
+>> + *
+>> + * Copyright =C2=A9 2017 Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+>> + *
+>> + * This program is free software; you can redistribute it and/or modify
+>> + * it under the terms of the GNU General Public License version 2, as
+>> + * published by the Free Software Foundation.
+>> + */
+>> +
+>> +#include <asm/current.h>
+>> +#include <linux/errno.h>
+>> +#include <linux/kernel.h> /* ARRAY_SIZE */
+>> +#include <linux/lsm_hooks.h>
+>> +#include <linux/sched.h> /* struct task_struct */
+>> +#include <linux/seccomp.h>
+>> +
+>> +#include "common.h" /* struct landlock_prog_set */
+>> +#include "hooks.h" /* landlocked() */
+>> +#include "hooks_ptrace.h"
+>> +
+>> +static bool progs_are_subset(const struct landlock_prog_set *parent,
+>> +               const struct landlock_prog_set *child)
+>> +{
+>> +       size_t i;
+>> +
+>> +       if (!parent || !child)
+>> +               return false;
+>> +       if (parent =3D=3D child)
+>> +               return true;
+>> +
+>> +       for (i =3D 0; i < ARRAY_SIZE(child->programs); i++) {
+>=20
+> ARRAY_SIZE(child->programs) seems misleading.  Is there no define
+> NUM_LANDLOCK_PROG_TYPES or similar?
+>=20
+>> +               struct landlock_prog_list *walker;
+>> +               bool found_parent =3D false;
+>> +
+>> +               if (!parent->programs[i])
+>> +                       continue;
+>> +               for (walker =3D child->programs[i]; walker;
+>> +                               walker =3D walker->prev) {
+>> +                       if (walker =3D=3D parent->programs[i]) {
+>> +                               found_parent =3D true;
+>> +                               break;
+>> +                       }
+>> +               }
+>> +               if (!found_parent)
+>> +                       return false;
+>> +       }
+>> +       return true;
+>> +}
+>=20
+> If you used seccomp, you'd get this type of check for free, and it
+> would be a lot easier to comprehend.  AFAICT the only extra leniency
+> you're granting is that you're agnostic to the order in which the
+> rules associated with different program types were applied, which
+> could easily be added to seccomp.
+
+On second thought, this is all way too complicated.  I think the correct log=
+ic is either "if you are filtered by Landlock, you cannot ptrace anything" o=
+r to delete this patch entirely. If something like Tycho's notifiers goes in=
+, then it's not obvious that, just because you have the same set of filters,=
+ you have the same privilege.  Similarly, if a feature that lets a filter qu=
+ery its cgroup goes in (and you proposed this once!) then the logic you impl=
+emented here is wrong.
+
+Or you could just say that it's the responsibility of a Landlock user to pro=
+perly filter ptrace() just like it's the responsibility of seccomp users to f=
+ilter ptrace if needed.
+
+I take this as further evidence that Landlock makes much more sense as part o=
+f seccomp than as a totally separate thing.  We've very carefully reviewed t=
+hese things for seccomp.  Please don't make us do it again from scratch.=
