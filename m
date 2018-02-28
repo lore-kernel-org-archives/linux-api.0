@@ -1,47 +1,79 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH bpf-next v8 08/11] landlock: Add ptrace restrictions
-Date: Wed, 28 Feb 2018 00:09:13 +0000
-Message-ID: <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
-References: <20180227004121.3633-1-mic@digikod.net> <20180227004121.3633-9-mic@digikod.net>
- <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
- <D6B96EE0-8932-4845-BFA5-4C65E5189AFB@amacapital.net> <0e7d0512-12a3-568d-aa55-3def4b91c6d0@digikod.net>
- <CALCETrUTiUeV71jgYWup0CZwG8eQ3=W7X5FgJqmgPxnYbFsccw@mail.gmail.com>
- <CALCETrV_BVc44YYq6g8PCpeUYuqQaooVoQSQ7Y=VpuaBshQgQg@mail.gmail.com> <f560a30d-10fd-31fc-adba-911961915937@digikod.net>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH v5 0/4] vm: add a syscall to map a process memory into a
+ pipe
+Date: Tue, 27 Feb 2018 22:11:04 -0800
+Message-ID: <20180228061103.GA8608@outlook.office365.com>
+References: <1515479453-14672-1-git-send-email-rppt@linux.vnet.ibm.com>
+ <20180220164406.3ec34509376f16841dc66e34@linux-foundation.org>
+ <3122ec5a-7f73-f6b4-33ea-8c10ef32e5b0@virtuozzo.com>
+ <20180227021818.GA31386@altlinux.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=koi8-r
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <f560a30d-10fd-31fc-adba-911961915937@digikod.net>
+Content-Disposition: inline
+In-Reply-To: <20180227021818.GA31386@altlinux.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Tycho Andersen <tycho@t>
+To: "Dmitry V. Levin" <ldv@altlinux.org>
+Cc: Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, criu@openvz.org, gdb@sourceware.org, devel@lists.open-mpi.org, rr-dev@mozilla.org, Arnd Bergmann <arnd@arndb.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Josh Triplett <josh@joshtriplett.org>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Andrei Vagin <avagin@openvz.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 28, 2018 at 12:00 AM, Mickaël Salaün <mic@digikod.net> wrote:
->
-> On 28/02/2018 00:23, Andy Lutomirski wrote:
->> On Tue, Feb 27, 2018 at 11:02 PM, Andy Lutomirski <luto@kernel.org> wrote:
->>> On Tue, Feb 27, 2018 at 10:14 PM, Mickaël Salaün <mic@digikod.net> wrote:
->>>>
->>>
->>> I think you're wrong here.  Any sane container trying to use Landlock
->>> like this would also create a PID namespace.  Problem solved.  I still
->>> think you should drop this patch.
->
-> Containers is one use case, another is build-in sandboxing (e.g. for web
-> browser…) and another one is for sandbox managers (e.g. Firejail,
-> Bubblewrap, Flatpack…). In some of these use cases, especially from a
-> developer point of view, you may want/need to debug your applications
-> (without requiring to be root). For nested Landlock access-controls
-> (e.g. container + user session + web browser), it may not be allowed to
-> create a PID namespace, but you still want to have a meaningful
-> access-control.
->
+On Tue, Feb 27, 2018 at 05:18:18AM +0300, Dmitry V. Levin wrote:
+> On Mon, Feb 26, 2018 at 12:02:25PM +0300, Pavel Emelyanov wrote:
+> > On 02/21/2018 03:44 AM, Andrew Morton wrote:
+> > > On Tue,  9 Jan 2018 08:30:49 +0200 Mike Rapoport <rppt@linux.vnet.ibm.com> wrote:
+> > > 
+> > >> This patches introduces new process_vmsplice system call that combines
+> > >> functionality of process_vm_read and vmsplice.
+> > > 
+> > > All seems fairly strightforward.  The big question is: do we know that
+> > > people will actually use this, and get sufficient value from it to
+> > > justify its addition?
+> > 
+> > Yes, that's what bothers us a lot too :) I've tried to start with finding out if anyone 
+> > used the sys_read/write_process_vm() calls, but failed :( Does anybody know how popular
+> > these syscalls are?
+> 
+> Well, process_vm_readv itself is quite popular, it's used by debuggers nowadays,
+> see e.g.
+> $ strace -qq -esignal=none -eprocess_vm_readv strace -qq -o/dev/null cat /dev/null
 
-The consideration should be exactly the same as for normal seccomp.
-If I'm in a container (using PID namespaces + seccomp) and a run a web
-browser, I can debug the browser.
+For this case, there is no advantage from process_vmsplice().
 
-If there's a real use case for adding this type of automatic ptrace
-protection, then by all means, let's add it as a general seccomp
-feature.
+But it can significantly optimize a process of generating a core file.
+In this case, we need to read a process memory and save content into a
+file. process_vmsplice() allows to do this more optimal than
+process_vm_readv(), because it doesn't copy data into a userspace.
+
+Here is a part of strace how gdb saves memory content into a core file:
+
+10593 open("/proc/10193/mem", O_RDONLY|O_CLOEXEC) = 17
+10593 pread64(17, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1048576, 140009356111872) = 1048576
+10593 close(17)                         = 0
+10593 write(16, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 4096) = 4096
+10593 write(16, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1044480) = 1044480
+10593 open("/proc/10193/mem", O_RDONLY|O_CLOEXEC) = 17
+10593 pread64(17, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1048576, 140009357160448) = 1048576
+10593 close(17)                         = 0
+10593 write(16, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 4096) = 4096
+10593 write(16, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1044480) = 1044480
+10593 open("/proc/10193/mem", O_RDONLY|O_CLOEXEC) = 17
+10593 pread64(17, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1048576, 140009358209024) = 1048576
+10593 close(17)                         = 0
+10593 write(16, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 4096) = 4096
+10593 write(16, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1044480) = 1044480
+10593 open("/proc/10193/mem", O_RDONLY|O_CLOEXEC) = 17
+10593 pread64(17, "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"..., 1048576, 140009359257600) = 1048576
+10593 close(17)
+
+It is strange that process_vm_readv() isn't used and that
+/proc/10193/mem is opened many times.
+
+BTW: "strace -fo strace-gdb.log gdb -p PID" doesn't work properly.
+
+Thanks,
+Andrei
+
+> 
+> 
+> -- 
+> ldv
