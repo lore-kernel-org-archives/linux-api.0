@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@kernel.org>
-Subject: [PATCH bpf-next 2/5] tracepoint: compute num_args at build time
-Date: Wed, 28 Feb 2018 20:19:54 -0800
-Message-ID: <20180301041957.399230-3-ast@kernel.org>
+Subject: [PATCH bpf-next 3/5] bpf: introduce BPF_RAW_TRACEPOINT
+Date: Wed, 28 Feb 2018 20:19:55 -0800
+Message-ID: <20180301041957.399230-4-ast@kernel.org>
 References: <20180301041957.399230-1-ast@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,207 +12,713 @@ To: davem@davemloft.net
 Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, mingo@kernel.org, rostedt@goodmis.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-add fancy macro to compute number of arguments passed into tracepoint
-at compile time and store it as part of 'struct tracepoint'.
-The number is necessary to check safety of bpf program access that
-is coming in subsequent patch.
+Introduce BPF_PROG_TYPE_RAW_TRACEPOINT bpf program type to access
+kernel internal arguments of the tracepoints in their raw form.
 
-for_each_tracepoint_range() api has no users inside the kernel.
-Make it more useful with ability to stop for_each() loop depending
-via callback return value.
-In such form it's used in subsequent patch.
+>From bpf program point of view the access to the arguments look like:
+struct bpf_raw_tracepoint_args {
+       __u64 args[0];
+};
+
+int bpf_prog(struct bpf_raw_tracepoint_args *ctx)
+{
+  // program can read args[N] where N depends on tracepoint
+  // and statically verified at program load+attach time
+}
+
+kprobe+bpf infrastructure allows programs access function arguments.
+This feature allows programs access raw tracepoint arguments.
+
+Similar to proposed 'dynamic ftrace events' there are no abi guarantees
+to what the tracepoints arguments are and what their meaning is.
+The program needs to type cast args properly and use bpf_probe_read()
+helper to access struct fields when argument is a pointer.
+
+For every tracepoint __bpf_trace_##call function is prepared.
+In assembler it looks like:
+(gdb) disassemble __bpf_trace_xdp_exception
+Dump of assembler code for function __bpf_trace_xdp_exception:
+   0xffffffff81132080 <+0>:     mov    %ecx,%ecx
+   0xffffffff81132082 <+2>:     jmpq   0xffffffff811231f0 <bpf_trace_run3>
+
+where
+
+TRACE_EVENT(xdp_exception,
+        TP_PROTO(const struct net_device *dev,
+                 const struct bpf_prog *xdp, u32 act),
+
+The above assembler snippet is casting 32-bit 'act' field into 'u64'
+to pass into bpf_trace_run3(), while 'dev' and 'xdp' args are passed as-is.
+All of ~500 of __bpf_trace_*() functions are only 5-10 byte long
+and in total this approach adds 7k bytes to .text and 8k bytes
+to .rodata since the probe funcs need to appear in kallsyms.
+The alternative of having __bpf_trace_##call being global in kallsyms
+could have been to keep them static and add another pointer to these
+static functions to 'struct trace_event_class' and 'struct trace_event_call',
+but keeping them global simplifies implementation and keeps it indepedent
+from the tracing side.
+
+Also such approach gives the lowest possible overhead
+while calling trace_xdp_exception() from kernel C code and
+transitioning into bpf land.
+Since tracepoint+bpf are used at speeds of 1M+ events per second
+this is very valuable optimization.
+
+Since ftrace and perf side are not involved the new
+BPF_RAW_TRACEPOINT_OPEN sys_bpf command is introduced
+that returns anon_inode FD of 'bpf-raw-tracepoint' object.
+
+The user space looks like:
+// load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
+prog_fd = bpf_prog_load(...);
+// receive anon_inode fd for given bpf_raw_tracepoint
+raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception");
+// attach bpf program to given tracepoint
+bpf_prog_attach(prog_fd, raw_tp_fd, BPF_RAW_TRACEPOINT);
+
+Ctrl-C of tracing daemon or cmdline tool that uses this feature
+will automatically detach bpf program, unload it and
+unregister tracepoint probe.
+
+On the kernel side for_each_kernel_tracepoint() is used
+to find a tracepoint with "xdp_exception" name
+(that would be __tracepoint_xdp_exception record)
+
+Then kallsyms_lookup_name() is used to find the addr
+of __bpf_trace_xdp_exception() probe function.
+
+And finally tracepoint_probe_register() is used to connect probe
+with tracepoint.
+
+Addition of bpf_raw_tracepoint doesn't interfere with ftrace and perf
+tracepoint mechanisms. perf_event_open() can be used in parallel
+on the same tracepoint.
+Also multiple bpf_raw_tracepoint_open("foo") are permitted.
+Each raw_tp_fd allows to attach one bpf program, so multiple
+user space processes can open their own raw_tp_fd with their own
+bpf program. The kernel will execute all tracepoint probes
+and all attached bpf programs.
+
+In the future bpf_raw_tracepoints can be extended with
+query/introspection logic.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- include/linux/tracepoint-defs.h |  1 +
- include/linux/tracepoint.h      | 32 +++++++++++++++++++++++---------
- include/trace/define_trace.h    | 14 +++++++-------
- kernel/tracepoint.c             | 27 ++++++++++++++++-----------
- 4 files changed, 47 insertions(+), 27 deletions(-)
+ include/linux/bpf_types.h    |   1 +
+ include/linux/trace_events.h |  57 ++++++++++++
+ include/trace/bpf_probe.h    |  87 ++++++++++++++++++
+ include/trace/define_trace.h |   1 +
+ include/uapi/linux/bpf.h     |  11 +++
+ kernel/bpf/syscall.c         | 108 ++++++++++++++++++++++
+ kernel/trace/bpf_trace.c     | 211 +++++++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 476 insertions(+)
+ create mode 100644 include/trace/bpf_probe.h
 
-diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
-index 64ed7064f1fa..39a283c61c51 100644
---- a/include/linux/tracepoint-defs.h
-+++ b/include/linux/tracepoint-defs.h
-@@ -33,6 +33,7 @@ struct tracepoint {
- 	int (*regfunc)(void);
- 	void (*unregfunc)(void);
- 	struct tracepoint_func __rcu *funcs;
-+	u32 num_args;
- };
- 
+diff --git a/include/linux/bpf_types.h b/include/linux/bpf_types.h
+index 19b8349a3809..b83ec377046a 100644
+--- a/include/linux/bpf_types.h
++++ b/include/linux/bpf_types.h
+@@ -18,6 +18,7 @@ BPF_PROG_TYPE(BPF_PROG_TYPE_SK_SKB, sk_skb)
+ BPF_PROG_TYPE(BPF_PROG_TYPE_KPROBE, kprobe)
+ BPF_PROG_TYPE(BPF_PROG_TYPE_TRACEPOINT, tracepoint)
+ BPF_PROG_TYPE(BPF_PROG_TYPE_PERF_EVENT, perf_event)
++BPF_PROG_TYPE(BPF_PROG_TYPE_RAW_TRACEPOINT, raw_tracepoint)
  #endif
-diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
-index c94f466d57ef..b1676e53bb23 100644
---- a/include/linux/tracepoint.h
-+++ b/include/linux/tracepoint.h
-@@ -40,9 +40,19 @@ tracepoint_probe_register_prio(struct tracepoint *tp, void *probe, void *data,
- 			       int prio);
- extern int
- tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data);
--extern void
--for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
--		void *priv);
-+
-+#ifdef CONFIG_TRACEPOINTS
-+void *
-+for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
-+			   void *priv);
-+#else
-+static inline void *
-+for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
-+			   void *priv)
+ #ifdef CONFIG_CGROUP_BPF
+ BPF_PROG_TYPE(BPF_PROG_TYPE_CGROUP_DEVICE, cg_dev)
+diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
+index 8a1442c4e513..46d76bbd5668 100644
+--- a/include/linux/trace_events.h
++++ b/include/linux/trace_events.h
+@@ -468,6 +468,8 @@ unsigned int trace_call_bpf(struct trace_event_call *call, void *ctx);
+ int perf_event_attach_bpf_prog(struct perf_event *event, struct bpf_prog *prog);
+ void perf_event_detach_bpf_prog(struct perf_event *event);
+ int perf_event_query_prog_array(struct perf_event *event, void __user *info);
++int bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog);
++int bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *prog);
+ #else
+ static inline unsigned int trace_call_bpf(struct trace_event_call *call, void *ctx)
+ {
+@@ -487,6 +489,14 @@ perf_event_query_prog_array(struct perf_event *event, void __user *info)
+ {
+ 	return -EOPNOTSUPP;
+ }
++static inline int bpf_probe_register(struct tracepoint *tp, struct bpf_prog *p)
 +{
-+	return NULL;
++	return -EOPNOTSUPP;
 +}
-+#endif
++static inline int bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *p)
++{
++	return -EOPNOTSUPP;
++}
+ #endif
  
- #ifdef CONFIG_MODULES
- struct tp_module {
-@@ -225,23 +235,27 @@ extern void syscall_unregfunc(void);
- 		return static_key_false(&__tracepoint_##name.key);	\
- 	}
+ enum {
+@@ -546,6 +556,53 @@ extern void ftrace_profile_free_filter(struct perf_event *event);
+ void perf_trace_buf_update(void *record, u16 type);
+ void *perf_trace_buf_alloc(int size, struct pt_regs **regs, int *rctxp);
  
-+#define ___FN_COUNT(fn,n0,n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,n16,n,...) fn##n
-+#define __FN_COUNT(fn,...) ___FN_COUNT(fn,##__VA_ARGS__,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
-+#define __COUNT(...) __FN_COUNT(/**/,##__VA_ARGS__)
++void bpf_trace_run1(struct bpf_prog *prog, u64 arg1);
++void bpf_trace_run2(struct bpf_prog *prog, u64 arg1, u64 arg2);
++void bpf_trace_run3(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3);
++void bpf_trace_run4(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4);
++void bpf_trace_run5(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5);
++void bpf_trace_run6(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6);
++void bpf_trace_run7(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7);
++void bpf_trace_run8(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		    u64 arg8);
++void bpf_trace_run9(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		    u64 arg8, u64 arg9);
++void bpf_trace_run10(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10);
++void bpf_trace_run11(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11);
++void bpf_trace_run12(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12);
++void bpf_trace_run13(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12,
++		     u64 arg13);
++void bpf_trace_run14(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12,
++		     u64 arg13, u64 arg14);
++void bpf_trace_run15(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12,
++		     u64 arg13, u64 arg14, u64 arg15);
++void bpf_trace_run16(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12,
++		     u64 arg13, u64 arg14, u64 arg15, u64 arg16);
++void bpf_trace_run17(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12,
++		     u64 arg13, u64 arg14, u64 arg15, u64 arg16, u64 arg17);
+ void perf_trace_run_bpf_submit(void *raw_data, int size, int rctx,
+ 			       struct trace_event_call *call, u64 count,
+ 			       struct pt_regs *regs, struct hlist_head *head,
+diff --git a/include/trace/bpf_probe.h b/include/trace/bpf_probe.h
+new file mode 100644
+index 000000000000..cfbdf6082a95
+--- /dev/null
++++ b/include/trace/bpf_probe.h
+@@ -0,0 +1,87 @@
++/* SPDX-License-Identifier: GPL-2.0 */
 +
- /*
-  * We have no guarantee that gcc and the linker won't up-align the tracepoint
-  * structures, so we create an array of pointers that will be used for iteration
-  * on the tracepoints.
-  */
--#define DEFINE_TRACE_FN(name, reg, unreg)				 \
-+#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
- 	static const char __tpstrtab_##name[]				 \
- 	__attribute__((section("__tracepoints_strings"))) = #name;	 \
- 	struct tracepoint __tracepoint_##name				 \
- 	__attribute__((section("__tracepoints"))) =			 \
--		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
-+		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
- 	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
- 	__attribute__((section("__tracepoints_ptrs"))) =		 \
- 		&__tracepoint_##name;
- 
--#define DEFINE_TRACE(name)						\
--	DEFINE_TRACE_FN(name, NULL, NULL);
-+#define DEFINE_TRACE(name, num_args)					\
-+	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
- 
- #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
- 	EXPORT_SYMBOL_GPL(__tracepoint_##name)
-@@ -275,8 +289,8 @@ extern void syscall_unregfunc(void);
- 		return false;						\
- 	}
- 
--#define DEFINE_TRACE_FN(name, reg, unreg)
--#define DEFINE_TRACE(name)
-+#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
-+#define DEFINE_TRACE(name, num_args)
- #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
- #define EXPORT_TRACEPOINT_SYMBOL(name)
- 
++#undef TRACE_SYSTEM_VAR
++
++#ifdef CONFIG_BPF_EVENTS
++
++#undef __entry
++#define __entry entry
++
++#undef __get_dynamic_array
++#define __get_dynamic_array(field)	\
++		((void *)__entry + (__entry->__data_loc_##field & 0xffff))
++
++#undef __get_dynamic_array_len
++#define __get_dynamic_array_len(field)	\
++		((__entry->__data_loc_##field >> 16) & 0xffff)
++
++#undef __get_str
++#define __get_str(field) ((char *)__get_dynamic_array(field))
++
++#undef __get_bitmask
++#define __get_bitmask(field) (char *)__get_dynamic_array(field)
++
++#undef __perf_count
++#define __perf_count(c)	(c)
++
++#undef __perf_task
++#define __perf_task(t)	(t)
++
++/*
++ * cast any interger or pointer type to u64 without warnings
++ * on 32 and 64 bit archs
++ */
++#define __CAST_TO_U64(expr) \
++	(u64) __builtin_choose_expr(sizeof(long) < sizeof(expr), \
++				    (expr), \
++				    (long) expr)
++#define __CAST1(a,...) __CAST_TO_U64(a)
++#define __CAST2(a,...) __CAST_TO_U64(a), __CAST1(__VA_ARGS__)
++#define __CAST3(a,...) __CAST_TO_U64(a), __CAST2(__VA_ARGS__)
++#define __CAST4(a,...) __CAST_TO_U64(a), __CAST3(__VA_ARGS__)
++#define __CAST5(a,...) __CAST_TO_U64(a), __CAST4(__VA_ARGS__)
++#define __CAST6(a,...) __CAST_TO_U64(a), __CAST5(__VA_ARGS__)
++#define __CAST7(a,...) __CAST_TO_U64(a), __CAST6(__VA_ARGS__)
++#define __CAST8(a,...) __CAST_TO_U64(a), __CAST7(__VA_ARGS__)
++#define __CAST9(a,...) __CAST_TO_U64(a), __CAST8(__VA_ARGS__)
++#define __CAST10(a,...) __CAST_TO_U64(a), __CAST9(__VA_ARGS__)
++#define __CAST11(a,...) __CAST_TO_U64(a), __CAST10(__VA_ARGS__)
++#define __CAST12(a,...) __CAST_TO_U64(a), __CAST11(__VA_ARGS__)
++#define __CAST13(a,...) __CAST_TO_U64(a), __CAST12(__VA_ARGS__)
++#define __CAST14(a,...) __CAST_TO_U64(a), __CAST13(__VA_ARGS__)
++#define __CAST15(a,...) __CAST_TO_U64(a), __CAST14(__VA_ARGS__)
++#define __CAST16(a,...) __CAST_TO_U64(a), __CAST15(__VA_ARGS__)
++#define __CAST17(a,...) __CAST_TO_U64(a), __CAST16(__VA_ARGS__)
++
++#define CAST_TO_U64(...) __FN_COUNT(__CAST,##__VA_ARGS__)(__VA_ARGS__)
++
++#undef DECLARE_EVENT_CLASS
++#define DECLARE_EVENT_CLASS(call, proto, args, tstruct, assign, print)	\
++/* no 'static' here. The bpf probe functions are global */		\
++notrace void								\
++__bpf_trace_##call(void *__data, proto)					\
++{									\
++	struct bpf_prog *prog = __data;					\
++	\
++	__FN_COUNT(bpf_trace_run, args)(prog, CAST_TO_U64(args));	\
++}
++
++/*
++ * This part is compiled out, it is only here as a build time check
++ * to make sure that if the tracepoint handling changes, the
++ * bpf probe will fail to compile unless it too is updated.
++ */
++#undef DEFINE_EVENT
++#define DEFINE_EVENT(template, call, proto, args)			\
++static inline void bpf_test_probe_##call(void)				\
++{									\
++	check_trace_callback_type_##call(__bpf_trace_##template);	\
++}
++
++
++#undef DEFINE_EVENT_PRINT
++#define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
++	DEFINE_EVENT(template, name, PARAMS(proto), PARAMS(args))
++
++#include TRACE_INCLUDE(TRACE_INCLUDE_FILE)
++#endif /* CONFIG_BPF_EVENTS */
 diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
-index d9e3d4aa3f6e..c040eda95d41 100644
+index c040eda95d41..3bbd3b88177f 100644
 --- a/include/trace/define_trace.h
 +++ b/include/trace/define_trace.h
-@@ -25,7 +25,7 @@
+@@ -95,6 +95,7 @@
+ #ifdef TRACEPOINTS_ENABLED
+ #include <trace/trace_events.h>
+ #include <trace/perf.h>
++#include <trace/bpf_probe.h>
+ #endif
  
  #undef TRACE_EVENT
- #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, __COUNT(args))
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index db6bdc375126..50bf5f9054da 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -94,6 +94,7 @@ enum bpf_cmd {
+ 	BPF_MAP_GET_FD_BY_ID,
+ 	BPF_OBJ_GET_INFO_BY_FD,
+ 	BPF_PROG_QUERY,
++	BPF_RAW_TRACEPOINT_OPEN,
+ };
  
- #undef TRACE_EVENT_CONDITION
- #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
-@@ -39,24 +39,24 @@
- #undef TRACE_EVENT_FN
- #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
- 		assign, print, reg, unreg)			\
--	DEFINE_TRACE_FN(name, reg, unreg)
-+	DEFINE_TRACE_FN(name, reg, unreg, __COUNT(args))
+ enum bpf_map_type {
+@@ -133,6 +134,7 @@ enum bpf_prog_type {
+ 	BPF_PROG_TYPE_SOCK_OPS,
+ 	BPF_PROG_TYPE_SK_SKB,
+ 	BPF_PROG_TYPE_CGROUP_DEVICE,
++	BPF_PROG_TYPE_RAW_TRACEPOINT,
+ };
  
- #undef TRACE_EVENT_FN_COND
- #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
- 		assign, print, reg, unreg)			\
--	DEFINE_TRACE_FN(name, reg, unreg)
-+	DEFINE_TRACE_FN(name, reg, unreg, __COUNT(args))
+ enum bpf_attach_type {
+@@ -143,6 +145,7 @@ enum bpf_attach_type {
+ 	BPF_SK_SKB_STREAM_PARSER,
+ 	BPF_SK_SKB_STREAM_VERDICT,
+ 	BPF_CGROUP_DEVICE,
++	BPF_RAW_TRACEPOINT,
+ 	__MAX_BPF_ATTACH_TYPE
+ };
  
- #undef DEFINE_EVENT
- #define DEFINE_EVENT(template, name, proto, args) \
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, __COUNT(args))
+@@ -320,6 +323,10 @@ union bpf_attr {
+ 		__aligned_u64	prog_ids;
+ 		__u32		prog_cnt;
+ 	} query;
++
++	struct {
++		__u64 name;
++	} raw_tracepoint;
+ } __attribute__((aligned(8)));
  
- #undef DEFINE_EVENT_FN
- #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
--	DEFINE_TRACE_FN(name, reg, unreg)
-+	DEFINE_TRACE_FN(name, reg, unreg, __COUNT(args))
+ /* BPF helper function descriptions:
+@@ -1106,4 +1113,8 @@ struct bpf_cgroup_dev_ctx {
+ 	__u32 minor;
+ };
  
- #undef DEFINE_EVENT_PRINT
- #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, __COUNT(args))
++struct bpf_raw_tracepoint_args {
++	__u64 args[0];
++};
++
+ #endif /* _UAPI__LINUX_BPF_H__ */
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index e24aa3241387..b5c33dda1a1c 100644
+--- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -1311,6 +1311,109 @@ static int bpf_obj_get(const union bpf_attr *attr)
+ 				attr->file_flags);
+ }
  
- #undef DEFINE_EVENT_CONDITION
- #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
-@@ -64,7 +64,7 @@
- 
- #undef DECLARE_TRACE
- #define DECLARE_TRACE(name, proto, args)	\
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, __COUNT(args))
- 
- #undef TRACE_INCLUDE
- #undef __TRACE_INCLUDE
-diff --git a/kernel/tracepoint.c b/kernel/tracepoint.c
-index 671b13457387..3f2dc5738c2b 100644
---- a/kernel/tracepoint.c
-+++ b/kernel/tracepoint.c
-@@ -502,17 +502,22 @@ static __init int init_tracepoints(void)
- __initcall(init_tracepoints);
- #endif /* CONFIG_MODULES */
- 
--static void for_each_tracepoint_range(struct tracepoint * const *begin,
--		struct tracepoint * const *end,
--		void (*fct)(struct tracepoint *tp, void *priv),
--		void *priv)
-+static void *for_each_tracepoint_range(struct tracepoint * const *begin,
-+				       struct tracepoint * const *end,
-+				       void *(*fct)(struct tracepoint *tp, void *priv),
-+				       void *priv)
- {
- 	struct tracepoint * const *iter;
-+	void *ret;
- 
- 	if (!begin)
--		return;
--	for (iter = begin; iter < end; iter++)
--		fct(*iter, priv);
-+		return NULL;
-+	for (iter = begin; iter < end; iter++) {
-+		ret = fct(*iter, priv);
-+		if (ret)
-+			return ret;
++struct bpf_raw_tracepoint {
++	struct tracepoint *tp;
++	struct bpf_prog *prog;
++};
++
++static int bpf_raw_tracepoint_release(struct inode *inode, struct file *filp)
++{
++	struct bpf_raw_tracepoint *raw_tp = filp->private_data;
++
++	if (raw_tp->prog) {
++		bpf_probe_unregister(raw_tp->tp, raw_tp->prog);
++		bpf_prog_put(raw_tp->prog);
 +	}
++	kfree(raw_tp);
++	return 0;
++}
++
++static const struct file_operations bpf_raw_tp_fops = {
++	.release	= bpf_raw_tracepoint_release,
++	.read		= bpf_dummy_read,
++	.write		= bpf_dummy_write,
++};
++
++static struct bpf_raw_tracepoint *__bpf_raw_tracepoint_get(struct fd f)
++{
++	if (!f.file)
++		return ERR_PTR(-EBADF);
++	if (f.file->f_op != &bpf_raw_tp_fops) {
++		fdput(f);
++		return ERR_PTR(-EINVAL);
++	}
++	return f.file->private_data;
++}
++
++static void *__find_tp(struct tracepoint *tp, void *priv)
++{
++	char *name = priv;
++
++	if (!strcmp(tp->name, name))
++		return tp;
 +	return NULL;
- }
++}
++
++#define BPF_RAW_TRACEPOINT_OPEN_LAST_FIELD raw_tracepoint.name
++
++static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
++{
++	struct bpf_raw_tracepoint *raw_tp;
++	struct tracepoint *tp;
++	char tp_name[128];
++
++	if (strncpy_from_user(tp_name, u64_to_user_ptr(attr->raw_tracepoint.name),
++			      sizeof(tp_name) - 1) < 0)
++		return -EFAULT;
++	tp_name[sizeof(tp_name) - 1] = 0;
++
++	tp = for_each_kernel_tracepoint(__find_tp, tp_name);
++	if (!tp)
++		return -ENOENT;
++
++	raw_tp = kmalloc(sizeof(*raw_tp), GFP_USER | __GFP_ZERO);
++	if (!raw_tp)
++		return -ENOMEM;
++	raw_tp->tp = tp;
++
++	return anon_inode_getfd("bpf-raw-tracepoint", &bpf_raw_tp_fops, raw_tp,
++				O_CLOEXEC);
++}
++
++static int attach_raw_tp(const union bpf_attr *attr)
++{
++	struct bpf_raw_tracepoint *raw_tp;
++	struct bpf_prog *prog;
++	struct fd f;
++	int err = -EEXIST;
++
++	if (attr->attach_flags)
++		return -EINVAL;
++
++	f = fdget(attr->target_fd);
++	raw_tp = __bpf_raw_tracepoint_get(f);
++	if (IS_ERR(raw_tp))
++		return PTR_ERR(raw_tp);
++
++	if (raw_tp->prog)
++		goto out;
++
++	prog = bpf_prog_get_type(attr->attach_bpf_fd,
++				 BPF_PROG_TYPE_RAW_TRACEPOINT);
++	if (IS_ERR(prog)) {
++		err = PTR_ERR(prog);
++		goto out;
++	}
++	err = bpf_probe_register(raw_tp->tp, prog);
++	if (err)
++		bpf_prog_put(prog);
++	else
++		raw_tp->prog = prog;
++out:
++	fdput(f);
++	return err;
++}
++
+ #ifdef CONFIG_CGROUP_BPF
  
- /**
-@@ -520,11 +525,11 @@ static void for_each_tracepoint_range(struct tracepoint * const *begin,
-  * @fct: callback
-  * @priv: private data
-  */
--void for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
--		void *priv)
-+void *for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
-+				 void *priv)
+ #define BPF_PROG_ATTACH_LAST_FIELD attach_flags
+@@ -1385,6 +1488,8 @@ static int bpf_prog_attach(const union bpf_attr *attr)
+ 	case BPF_SK_SKB_STREAM_PARSER:
+ 	case BPF_SK_SKB_STREAM_VERDICT:
+ 		return sockmap_get_from_fd(attr, true);
++	case BPF_RAW_TRACEPOINT:
++		return attach_raw_tp(attr);
+ 	default:
+ 		return -EINVAL;
+ 	}
+@@ -1917,6 +2022,9 @@ SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, siz
+ 	case BPF_OBJ_GET_INFO_BY_FD:
+ 		err = bpf_obj_get_info_by_fd(&attr, uattr);
+ 		break;
++	case BPF_RAW_TRACEPOINT_OPEN:
++		err = bpf_raw_tracepoint_open(&attr);
++		break;
+ 	default:
+ 		err = -EINVAL;
+ 		break;
+diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
+index c0a9e310d715..e59b62875d1e 100644
+--- a/kernel/trace/bpf_trace.c
++++ b/kernel/trace/bpf_trace.c
+@@ -723,6 +723,14 @@ const struct bpf_verifier_ops tracepoint_verifier_ops = {
+ const struct bpf_prog_ops tracepoint_prog_ops = {
+ };
+ 
++const struct bpf_verifier_ops raw_tracepoint_verifier_ops = {
++	.get_func_proto  = tp_prog_func_proto,
++	.is_valid_access = tp_prog_is_valid_access,
++};
++
++const struct bpf_prog_ops raw_tracepoint_prog_ops = {
++};
++
+ static bool pe_prog_is_valid_access(int off, int size, enum bpf_access_type type,
+ 				    struct bpf_insn_access_aux *info)
  {
--	for_each_tracepoint_range(__start___tracepoints_ptrs,
--		__stop___tracepoints_ptrs, fct, priv);
-+	return for_each_tracepoint_range(__start___tracepoints_ptrs,
-+					 __stop___tracepoints_ptrs, fct, priv);
- }
- EXPORT_SYMBOL_GPL(for_each_kernel_tracepoint);
+@@ -884,3 +892,206 @@ int perf_event_query_prog_array(struct perf_event *event, void __user *info)
  
+ 	return ret;
+ }
++
++static __always_inline
++void __bpf_trace_run(struct bpf_prog *prog, u64 *args)
++{
++	rcu_read_lock();
++	preempt_disable();
++	(void) BPF_PROG_RUN(prog, args);
++	preempt_enable();
++	rcu_read_unlock();
++}
++
++#define EVAL1(FN, X) FN(X)
++#define EVAL2(FN, X, Y...) FN(X) EVAL1(FN, Y)
++#define EVAL3(FN, X, Y...) FN(X) EVAL2(FN, Y)
++#define EVAL4(FN, X, Y...) FN(X) EVAL3(FN, Y)
++#define EVAL5(FN, X, Y...) FN(X) EVAL4(FN, Y)
++#define EVAL6(FN, X, Y...) FN(X) EVAL5(FN, Y)
++
++#define COPY(X) args[X - 1] = arg##X;
++
++void bpf_trace_run1(struct bpf_prog *prog, u64 arg1)
++{
++	u64 args[1];
++
++	EVAL1(COPY, 1);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run1);
++void bpf_trace_run2(struct bpf_prog *prog, u64 arg1, u64 arg2)
++{
++	u64 args[2];
++
++	EVAL2(COPY, 1, 2);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run2);
++void bpf_trace_run3(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3)
++{
++	u64 args[3];
++
++	EVAL3(COPY, 1, 2, 3);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run3);
++void bpf_trace_run4(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4)
++{
++	u64 args[4];
++
++	EVAL4(COPY, 1, 2, 3, 4);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run4);
++void bpf_trace_run5(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5)
++{
++	u64 args[5];
++
++	EVAL5(COPY, 1, 2, 3, 4, 5);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run5);
++void bpf_trace_run6(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6)
++{
++	u64 args[6];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run6);
++void bpf_trace_run7(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7)
++{
++	u64 args[7];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL1(COPY, 7);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run7);
++void bpf_trace_run8(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		    u64 arg8)
++{
++	u64 args[8];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL2(COPY, 7, 8);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run8);
++void bpf_trace_run9(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		    u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		    u64 arg8, u64 arg9)
++{
++	u64 args[9];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL3(COPY, 7, 8, 9);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run9);
++void bpf_trace_run10(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10)
++{
++	u64 args[10];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL4(COPY, 7, 8, 9, 10);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run10);
++void bpf_trace_run11(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11)
++{
++	u64 args[11];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL5(COPY, 7, 8, 9, 10, 11);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run11);
++void bpf_trace_run12(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12)
++{
++	u64 args[12];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL6(COPY, 7, 8, 9, 10, 11, 12);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run12);
++void bpf_trace_run17(struct bpf_prog *prog, u64 arg1, u64 arg2,
++		     u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7,
++		     u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12,
++		     u64 arg13, u64 arg14, u64 arg15, u64 arg16, u64 arg17)
++{
++	u64 args[17];
++
++	EVAL6(COPY, 1, 2, 3, 4, 5, 6);
++	EVAL6(COPY, 7, 8, 9, 10, 11, 12);
++	EVAL5(COPY, 13, 14, 15, 16, 17);
++	__bpf_trace_run(prog, args);
++}
++EXPORT_SYMBOL_GPL(bpf_trace_run17);
++
++static int __bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog)
++{
++	unsigned long addr;
++	char buf[128];
++
++	/*
++	 * check that program doesn't access arguments beyond what's
++	 * available in this tracepoint
++	 */
++	if (prog->aux->max_ctx_offset > tp->num_args * sizeof(u64))
++		return -EINVAL;
++
++	snprintf(buf, sizeof(buf), "__bpf_trace_%s", tp->name);
++	addr = kallsyms_lookup_name(buf);
++	if (!addr)
++		return -ENOENT;
++
++	return tracepoint_probe_register(tp, (void *)addr, prog);
++}
++
++int bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog)
++{
++	int err;
++
++	mutex_lock(&bpf_event_mutex);
++	err = __bpf_probe_register(tp, prog);
++	mutex_unlock(&bpf_event_mutex);
++	return err;
++}
++
++static int __bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *prog)
++{
++	unsigned long addr;
++	char buf[128];
++
++	snprintf(buf, sizeof(buf), "__bpf_trace_%s", tp->name);
++	addr = kallsyms_lookup_name(buf);
++	if (!addr)
++		return -ENOENT;
++
++	return tracepoint_probe_unregister(tp, (void *)addr, prog);
++}
++
++int bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *prog)
++{
++	int err;
++
++	mutex_lock(&bpf_event_mutex);
++	err = __bpf_probe_unregister(tp, prog);
++	mutex_unlock(&bpf_event_mutex);
++	return err;
++}
 -- 
 2.9.5
