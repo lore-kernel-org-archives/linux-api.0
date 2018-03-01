@@ -1,208 +1,229 @@
-From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [RFC PATCH V1 03/12] audit: add containerid filtering
-Date: Thu,  1 Mar 2018 14:41:06 -0500
-Message-ID: <d7374aaf6b7044ca397c372b89a1bf9598829251.1519930146.git.rgb@redhat.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: [RFC PATCH V1 05/12] audit: add containerid support for ptrace and signals
+Date: Thu,  1 Mar 2018 14:41:08 -0500
+Message-ID: <17f328b1bcda556184539b0980812d64cbca93d7.1519930146.git.rgb@redhat.com>
 References: <cover.1519930146.git.rgb@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <cover.1519930146.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-In-Reply-To: <cover.1519930146.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-References: <cover.1519930146.git.rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, madzcar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1519930146.git.rgb@redhat.com>
+In-Reply-To: <cover.1519930146.git.rgb@redhat.com>
+References: <cover.1519930146.git.rgb@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org
+Cc: mszeredi@redhat.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, viro@zeniv.linux.org.uk, dhowells@redhat.com, simo@redhat.com, trondmy@primarydata.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, madzcar@gmail.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Implement container ID filtering using the AUDIT_CONTAINERID field name
-to send an 8-character string representing a u64 since the value field
-is only u32.
+Add container ID support to ptrace and signals.  In particular, the "op"
+field provides a way to label the auxiliary record to which it is
+associated.
 
-Sending it as two u32 was considered, but gathering and comparing two
-fields was more complex.
-
-The feature indicator is AUDIT_FEATURE_BITMAP_CONTAINERID_FILTER.
-
-This requires support from userspace to be useful.
-See: https://github.com/linux-audit/audit-userspace/issues/40
-Signed-off-by: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 ---
- include/linux/audit.h      |  1 +
- include/uapi/linux/audit.h |  5 ++++-
- kernel/audit.h             |  1 +
- kernel/auditfilter.c       | 47 ++++++++++++++++++++++++++++++++++++++++++++++
- kernel/auditsc.c           |  3 +++
- 5 files changed, 56 insertions(+), 1 deletion(-)
+ include/linux/audit.h | 16 +++++++++++-----
+ kernel/audit.c        | 12 ++++++++----
+ kernel/audit.h        |  2 ++
+ kernel/auditsc.c      | 19 +++++++++++++++----
+ 4 files changed, 36 insertions(+), 13 deletions(-)
 
 diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 3acbe9d..f10ca1b 100644
+index f10ca1b..ed16bb6 100644
 --- a/include/linux/audit.h
 +++ b/include/linux/audit.h
-@@ -76,6 +76,7 @@ struct audit_field {
- 	u32				type;
- 	union {
- 		u32			val;
-+		u64			val64;
- 		kuid_t			uid;
- 		kgid_t			gid;
- 		struct {
-diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-index e83ccbd..8443a8f 100644
---- a/include/uapi/linux/audit.h
-+++ b/include/uapi/linux/audit.h
-@@ -262,6 +262,7 @@
- #define AUDIT_LOGINUID_SET	24
- #define AUDIT_SESSIONID	25	/* Session ID */
- #define AUDIT_FSTYPE	26	/* FileSystem Type */
-+#define AUDIT_CONTAINERID	27	/* Container ID */
+@@ -35,6 +35,7 @@ struct audit_sig_info {
+ 	uid_t		uid;
+ 	pid_t		pid;
+ 	char		ctx[0];
++	u64		cid;
+ };
  
- 				/* These are ONLY useful when checking
- 				 * at syscall exit time (AUDIT_AT_EXIT). */
-@@ -342,6 +343,7 @@ enum {
- #define AUDIT_FEATURE_BITMAP_SESSIONID_FILTER	0x00000010
- #define AUDIT_FEATURE_BITMAP_LOST_RESET		0x00000020
- #define AUDIT_FEATURE_BITMAP_FILTER_FS		0x00000040
-+#define AUDIT_FEATURE_BITMAP_CONTAINERID_FILTER	0x00000080
+ struct audit_buffer;
+@@ -155,8 +156,8 @@ extern void		    audit_log_link_denied(const char *operation,
+ extern int audit_log_task_context(struct audit_buffer *ab);
+ extern void audit_log_task_info(struct audit_buffer *ab,
+ 				struct task_struct *tsk);
+-extern int audit_log_container_info(struct task_struct *tsk,
+-				     struct audit_context *context);
++extern int audit_log_container_info(struct audit_context *context,
++				     char *op, u64 containerid);
  
- #define AUDIT_FEATURE_BITMAP_ALL (AUDIT_FEATURE_BITMAP_BACKLOG_LIMIT | \
- 				  AUDIT_FEATURE_BITMAP_BACKLOG_WAIT_TIME | \
-@@ -349,7 +351,8 @@ enum {
- 				  AUDIT_FEATURE_BITMAP_EXCLUDE_EXTEND | \
- 				  AUDIT_FEATURE_BITMAP_SESSIONID_FILTER | \
- 				  AUDIT_FEATURE_BITMAP_LOST_RESET | \
--				  AUDIT_FEATURE_BITMAP_FILTER_FS)
-+				  AUDIT_FEATURE_BITMAP_FILTER_FS | \
-+				  AUDIT_FEATURE_BITMAP_CONTAINERID_FILTER)
+ extern int		    audit_update_lsm_rules(void);
  
- /* deprecated: AUDIT_VERSION_* */
- #define AUDIT_VERSION_LATEST 		AUDIT_FEATURE_BITMAP_ALL
-diff --git a/kernel/audit.h b/kernel/audit.h
-index af5bc59..683316a 100644
---- a/kernel/audit.h
-+++ b/kernel/audit.h
-@@ -234,6 +234,7 @@ static inline int audit_hash_ino(u32 ino)
- 
- extern int audit_match_class(int class, unsigned syscall);
- extern int audit_comparator(const u32 left, const u32 op, const u32 right);
-+extern int audit_comparator64(const u64 left, const u32 op, const u64 right);
- extern int audit_uid_comparator(kuid_t left, u32 op, kuid_t right);
- extern int audit_gid_comparator(kgid_t left, u32 op, kgid_t right);
- extern int parent_len(const char *path);
-diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
-index d7a807e..c4c8746 100644
---- a/kernel/auditfilter.c
-+++ b/kernel/auditfilter.c
-@@ -410,6 +410,7 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
- 	/* FALL THROUGH */
- 	case AUDIT_ARCH:
- 	case AUDIT_FSTYPE:
-+	case AUDIT_CONTAINERID:
- 		if (f->op != Audit_not_equal && f->op != Audit_equal)
- 			return -EINVAL;
- 		break;
-@@ -584,6 +585,14 @@ static struct audit_entry *audit_data_to_entry(struct audit_rule_data *data,
- 			}
- 			entry->rule.exe = audit_mark;
- 			break;
-+		case AUDIT_CONTAINERID:
-+			if (f->val != sizeof(u64))
-+				goto exit_free;
-+			str = audit_unpack_string(&bufp, &remain, f->val);
-+			if (IS_ERR(str))
-+				goto exit_free;
-+			f->val64 = ((u64 *)str)[0];
-+			break;
- 		}
- 	}
- 
-@@ -666,6 +675,11 @@ static struct audit_rule_data *audit_krule_to_data(struct audit_krule *krule)
- 			data->buflen += data->values[i] =
- 				audit_pack_string(&bufp, audit_mark_path(krule->exe));
- 			break;
-+		case AUDIT_CONTAINERID:
-+			data->buflen += data->values[i] = sizeof(u64);
-+			for (i = 0; i < sizeof(u64); i++)
-+				((char *)bufp)[i] = ((char *)&f->val64)[i];
-+			break;
- 		case AUDIT_LOGINUID_SET:
- 			if (krule->pflags & AUDIT_LOGINUID_LEGACY && !f->val) {
- 				data->fields[i] = AUDIT_LOGINUID;
-@@ -752,6 +766,10 @@ static int audit_compare_rule(struct audit_krule *a, struct audit_krule *b)
- 			if (!gid_eq(a->fields[i].gid, b->fields[i].gid))
- 				return 1;
- 			break;
-+		case AUDIT_CONTAINERID:
-+			if (a->fields[i].val64 != b->fields[i].val64)
-+				return 1;
-+			break;
- 		default:
- 			if (a->fields[i].val != b->fields[i].val)
- 				return 1;
-@@ -1210,6 +1228,31 @@ int audit_comparator(u32 left, u32 op, u32 right)
- 	}
+@@ -208,8 +209,8 @@ static inline int audit_log_task_context(struct audit_buffer *ab)
+ static inline void audit_log_task_info(struct audit_buffer *ab,
+ 				       struct task_struct *tsk)
+ { }
+-static inline int audit_log_container_info(struct task_struct *tsk,
+-					    struct audit_context *context);
++static inline int audit_log_container_info(struct audit_context *context,
++					    char *op, u64 containerid);
+ { }
+ #define audit_enabled 0
+ #endif /* CONFIG_AUDIT */
+@@ -598,9 +599,14 @@ static inline bool audit_loginuid_set(struct task_struct *tsk)
+ 	return uid_valid(audit_get_loginuid(tsk));
  }
  
-+int audit_comparator64(u64 left, u32 op, u64 right)
++static inline bool cid_valid(u64 containerid)
 +{
-+	switch (op) {
-+	case Audit_equal:
-+		return (left == right);
-+	case Audit_not_equal:
-+		return (left != right);
-+	case Audit_lt:
-+		return (left < right);
-+	case Audit_le:
-+		return (left <= right);
-+	case Audit_gt:
-+		return (left > right);
-+	case Audit_ge:
-+		return (left >= right);
-+	case Audit_bitmask:
-+		return (left & right);
-+	case Audit_bittest:
-+		return ((left & right) == right);
-+	default:
-+		BUG();
-+		return 0;
-+	}
++	return containerid != INVALID_CID;
 +}
 +
- int audit_uid_comparator(kuid_t left, u32 op, kuid_t right)
+ static inline bool audit_containerid_set(struct task_struct *tsk)
  {
- 	switch (op) {
-@@ -1348,6 +1391,10 @@ int audit_filter(int msgtype, unsigned int listtype)
- 				result = audit_comparator(audit_loginuid_set(current),
- 							  f->op, f->val);
- 				break;
-+			case AUDIT_CONTAINERID:
-+				result = audit_comparator64(audit_get_containerid(current),
-+							      f->op, f->val64);
-+				break;
- 			case AUDIT_MSGTYPE:
- 				result = audit_comparator(msgtype, f->op, f->val);
- 				break;
+-	return audit_get_containerid(tsk) != INVALID_CID;
++	return cid_valid(audit_get_containerid(tsk));
+ }
+ 
+ static inline void audit_log_string(struct audit_buffer *ab, const char *buf)
+diff --git a/kernel/audit.c b/kernel/audit.c
+index 8dc745f..f5cd0bc 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -142,6 +142,7 @@ struct audit_net {
+ kuid_t		audit_sig_uid = INVALID_UID;
+ pid_t		audit_sig_pid = -1;
+ u32		audit_sig_sid = 0;
++u64		audit_sig_cid = INVALID_CID;
+ 
+ /* Records can be lost in several ways:
+    0) [suppressed in audit_alloc]
+@@ -1394,6 +1395,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+ 			memcpy(sig_data->ctx, ctx, len);
+ 			security_release_secctx(ctx, len);
+ 		}
++		sig_data->cid = audit_sig_cid;
+ 		audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO, 0, 0,
+ 				 sig_data, sizeof(*sig_data) + len);
+ 		kfree(sig_data);
+@@ -1998,20 +2000,22 @@ void audit_log_session_info(struct audit_buffer *ab)
+ 
+ /*
+  * audit_log_container_info - report container info
+- * @tsk: task to be recorded
+  * @context: task or local context for record
++ * @op: containerid string description
++ * @containerid: container ID to report
+  */
+-int audit_log_container_info(struct task_struct *tsk, struct audit_context *context)
++int audit_log_container_info(struct audit_context *context,
++			      char *op, u64 containerid)
+ {
+ 	struct audit_buffer *ab;
+ 
+-	if (!audit_containerid_set(tsk))
++	if (!cid_valid(containerid))
+ 		return 0;
+ 	/* Generate AUDIT_CONTAINER_INFO with container ID */
+ 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_INFO);
+ 	if (!ab)
+ 		return -ENOMEM;
+-	audit_log_format(ab, "contid=%llu", audit_get_containerid(tsk));
++	audit_log_format(ab, "op=%s contid=%llu", op, containerid);
+ 	audit_log_end(ab);
+ 	return 0;
+ }
+diff --git a/kernel/audit.h b/kernel/audit.h
+index 683316a..abbabba 100644
+--- a/kernel/audit.h
++++ b/kernel/audit.h
+@@ -147,6 +147,7 @@ struct audit_context {
+ 	kuid_t		    target_uid;
+ 	unsigned int	    target_sessionid;
+ 	u32		    target_sid;
++	u64		    target_cid;
+ 	char		    target_comm[TASK_COMM_LEN];
+ 
+ 	struct audit_tree_refs *trees, *first_trees;
+@@ -330,6 +331,7 @@ extern void audit_log_d_path_exe(struct audit_buffer *ab,
+ extern pid_t audit_sig_pid;
+ extern kuid_t audit_sig_uid;
+ extern u32 audit_sig_sid;
++extern u64 audit_sig_cid;
+ 
+ extern int audit_filter(int msgtype, unsigned int listtype);
+ 
 diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index f015c25..34396cb 100644
+index 34396cb..0e41884 100644
 --- a/kernel/auditsc.c
 +++ b/kernel/auditsc.c
-@@ -614,6 +614,9 @@ static int audit_filter_rules(struct task_struct *tsk,
- 		case AUDIT_LOGINUID_SET:
- 			result = audit_comparator(audit_loginuid_set(tsk), f->op, f->val);
- 			break;
-+		case AUDIT_CONTAINERID:
-+			result = audit_comparator64(audit_get_containerid(tsk), f->op, f->val64);
-+			break;
- 		case AUDIT_SUBJ_USER:
- 		case AUDIT_SUBJ_ROLE:
- 		case AUDIT_SUBJ_TYPE:
+@@ -113,6 +113,7 @@ struct audit_aux_data_pids {
+ 	kuid_t			target_uid[AUDIT_AUX_PIDS];
+ 	unsigned int		target_sessionid[AUDIT_AUX_PIDS];
+ 	u32			target_sid[AUDIT_AUX_PIDS];
++	u64			target_cid[AUDIT_AUX_PIDS];
+ 	char 			target_comm[AUDIT_AUX_PIDS][TASK_COMM_LEN];
+ 	int			pid_count;
+ };
+@@ -1422,21 +1423,27 @@ static void audit_log_exit(struct audit_context *context, struct task_struct *ts
+ 	for (aux = context->aux_pids; aux; aux = aux->next) {
+ 		struct audit_aux_data_pids *axs = (void *)aux;
+ 
+-		for (i = 0; i < axs->pid_count; i++)
++		for (i = 0; i < axs->pid_count; i++) {
++			char axsn[sizeof("aux0xN ")];
++
++			sprintf(axsn, "aux0x%x", i);
+ 			if (audit_log_pid_context(context, axs->target_pid[i],
+ 						  axs->target_auid[i],
+ 						  axs->target_uid[i],
+ 						  axs->target_sessionid[i],
+ 						  axs->target_sid[i],
+-						  axs->target_comm[i]))
++						  axs->target_comm[i])
++			    && audit_log_container_info(context, axsn, axs->target_cid[i]))
+ 				call_panic = 1;
++		}
+ 	}
+ 
+ 	if (context->target_pid &&
+ 	    audit_log_pid_context(context, context->target_pid,
+ 				  context->target_auid, context->target_uid,
+ 				  context->target_sessionid,
+-				  context->target_sid, context->target_comm))
++				  context->target_sid, context->target_comm)
++	    && audit_log_container_info(context, "target", context->target_cid))
+ 			call_panic = 1;
+ 
+ 	if (context->pwd.dentry && context->pwd.mnt) {
+@@ -1456,7 +1463,7 @@ static void audit_log_exit(struct audit_context *context, struct task_struct *ts
+ 
+ 	audit_log_proctitle(tsk, context);
+ 
+-	audit_log_container_info(tsk, context);
++	audit_log_container_info(context, "task", audit_get_containerid(tsk));
+ 
+ 	/* Send end of event record to help user space know we are finished */
+ 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
+@@ -2354,6 +2361,7 @@ void __audit_ptrace(struct task_struct *t)
+ 	context->target_uid = task_uid(t);
+ 	context->target_sessionid = audit_get_sessionid(t);
+ 	security_task_getsecid(t, &context->target_sid);
++	context->target_cid = audit_get_containerid(t);
+ 	memcpy(context->target_comm, t->comm, TASK_COMM_LEN);
+ }
+ 
+@@ -2381,6 +2389,7 @@ int audit_signal_info(int sig, struct task_struct *t)
+ 		else
+ 			audit_sig_uid = uid;
+ 		security_task_getsecid(tsk, &audit_sig_sid);
++		audit_sig_cid = audit_get_containerid(tsk);
+ 	}
+ 
+ 	if (!audit_signals || audit_dummy_context())
+@@ -2394,6 +2403,7 @@ int audit_signal_info(int sig, struct task_struct *t)
+ 		ctx->target_uid = t_uid;
+ 		ctx->target_sessionid = audit_get_sessionid(t);
+ 		security_task_getsecid(t, &ctx->target_sid);
++		ctx->target_cid = audit_get_containerid(t);
+ 		memcpy(ctx->target_comm, t->comm, TASK_COMM_LEN);
+ 		return 0;
+ 	}
+@@ -2415,6 +2425,7 @@ int audit_signal_info(int sig, struct task_struct *t)
+ 	axp->target_uid[axp->pid_count] = t_uid;
+ 	axp->target_sessionid[axp->pid_count] = audit_get_sessionid(t);
+ 	security_task_getsecid(t, &axp->target_sid[axp->pid_count]);
++	axp->target_cid[axp->pid_count] = audit_get_containerid(t);
+ 	memcpy(axp->target_comm[axp->pid_count], t->comm, TASK_COMM_LEN);
+ 	axp->pid_count++;
+ 
 -- 
 1.8.3.1
