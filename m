@@ -1,11 +1,13 @@
 From: Dave Martin <Dave.Martin@arm.com>
-Subject: [PATCH v2 0/3] arm64: Fix invalid si_codes for fault signals
-Date: Thu,  1 Mar 2018 17:44:05 +0000
-Message-ID: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
+Subject: [PATCH v2 2/3] arm64: fpsimd: Fix bad si_code for undiagnosed SIGFPE
+Date: Thu,  1 Mar 2018 17:44:07 +0000
+Message-ID: <1519926248-12591-3-git-send-email-Dave.Martin@arm.com>
+References: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
  <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
 List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
@@ -19,77 +21,142 @@ To: linux-arm-kernel@lists.infradead.org
 Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Will Deacon <will.deacon@arm.com>, James Morse <james.morse@arm.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-Changes since v1:
+Currently a SIGFPE delivered in response to a floating-point
+exception trap may have si_code set to 0 on arm64.  As reported by
+Eric, this is a bad idea since this is the value of SI_USER -- yet
+this signal is definitely not the result of kill(2), tgkill(2) etc.
+and si_uid and si_pid make limited sense whereas we do want to
+yield a value for si_addr (which doesn't exist for SI_USER).
 
- * Fixed failing BUILD_BUG_ON() sanity check on NSIGFPE done by x86.
-   (Thanks to James Morse for spotting.)
+It's not entirely clear whether the architecure permits a
+"spurious" fp exception trap where none of the exception flag bits
+in ESR_ELx is set.  (IMHO the architectural intent is to forbid
+this.)  However, it does permit those bits to contain garbage if
+the TFV bit in ESR_ELx is 0.  That case isn't currently handled at
+all and may result in si_code == 0 or si_code containing a FPE_FLT*
+constant corresponding to an exception that did not in fact happen.
 
-   The addition of FPE_FLTUNK is harmless to x86, since only arm64
-   uses this code right now.
+There is nothing sensible we can return for si_code in such cases,
+but SI_USER is certainly not appropriate and will lead to violation
+of legitimate userspace assumptions.
 
-Changes since RFC v2:
+This patch allocates a new si_code value FPE_UNKNOWN that at least
+does not conflict with any existing SI_* or FPE_* code, and yields
+this in si_code for undiagnosable cases.  This is probably the best
+simplicity/incorrectness tradeoff achieveable without relying on
+implementation-dependent features or adding a lot of code.  In any
+case, there appears to be no perfect solution possible that would
+justify a lot of effort here.
 
- * Fold in reverts of the relevant parts of Eric's *_FIXME changes,
-   since this series removes all cases of those dummy si_code values
-   from arm64.
+Yielding FPE_UNKNOWN when some well-defined fp exception caused the
+trap is a violation of POSIX, but this is forced by the
+architecture.  We have no realistic prospect of yielding the
+correct code in such cases.  At present I am not aware of any ARMv8
+implementation that supports trapped floating-point exceptions in
+any case.
 
- * Propagated the new signal/si_code assignments for synchronous
-   external aborts correctly to signals thrown from do_sea().
+The new code may be applicable to other architectures for similar
+reasons.
 
-Original blurb:
+No attempt is made to provide ESR_ELx to userspace in the signal
+frame, since architectural limitations mean that it is unlikely to
+provide much diagnostic value, doesn't benefit existing software
+and would create ABI with no proven purpose.  The existing
+mechanism for passing it also has problems of its own which may
+result in the wrong value being passed to userspace due to
+interaction with mm faults.  The implied rework does not appear
+justified.
 
-As reported by Eric Biederman, [1], [2], [3] etc., several architectures
-are inappropriately setting si_code to 0 when signaling faults to
-userspace, which will interpret this value as SI_USER leading to garbage
-being read out of siginfo fields that the kernel doesn't initialise.
+Reported-by: Eric W. Biederman <ebiederm@xmission.com>
+Signed-off-by: Dave Martin <Dave.Martin@arm.com>
+---
+ arch/arm64/include/asm/esr.h          |  9 +++++++++
+ arch/arm64/include/uapi/asm/siginfo.h |  7 -------
+ arch/arm64/kernel/fpsimd.c            | 27 +++++++++++++++------------
+ 3 files changed, 24 insertions(+), 19 deletions(-)
 
-This seems not to be a huge problem in practice, since many affected
-faults should only happen if the kernel or hardware is buggy or broken.
-However, there are some cases that don't fall under this.
-
-This RFC series proposes fixes to eliminate these si_code == 0 cases
-from arm64.  Some of the changes may be controversial.
-
-There are two main headlines here, which may be applicable to other
-architectures:
-
- * addition of a new code FPE_UNKNOWN for undiagnosable floating-point
-   exception traps;
-
- * delivering SIGKILL instead of SIGSEGV/BUS/TRAP etc. for "impossible"
-   exceptions that are not feasible to recover from and likely indicate
-   a kernel or system bug or failure.
-
-In particular there is likely to be a fair amount of overlap between arm
-and arm64 here, but due to the longer history and evolution of the arm
-tree and 32-bit architecture I'm less confident in making correct
-judgements for that case.  This series doesn't touch arm, for now.
-
-Boot-tested on Arm Juno r0.
-Floating-point exception traps tested on the Arm Fast Model.
-
-[1] [PATCH 00/11] siginfo fixes/cleanups esp SI_USER
-https://marc.info/?l=linux-kernel&m=151571871109016&w=2
-
-[2] [PATCH 08/11] signal/arm: Document conflicts with SI_USER and SIGFPE
-http://lists.infradead.org/pipermail/linux-arm-kernel/2018-January/553574.html
-
-[3] [PATCH 07/11] signal/arm64: Document conflicts with SI_USER and SIGFPE, SIGTRAP, SIGBUS
-lists.infradead.org/pipermail/linux-arm-kernel/2018-January/553573.html
-
-Dave Martin (3):
-  signal: Add FPE_FLTUNK si_code for undiagnosable fp exceptions
-  arm64: fpsimd: Fix bad si_code for undiagnosed SIGFPE
-  arm64: signal: Ensure si_code is valid for all fault signals
-
- arch/arm64/include/asm/esr.h          |   9 +++
- arch/arm64/include/uapi/asm/siginfo.h |  21 ------
- arch/arm64/kernel/fpsimd.c            |  31 +++++----
- arch/arm64/mm/fault.c                 | 116 +++++++++++++++++-----------------
- arch/x86/kernel/signal_compat.c       |   2 +-
- include/uapi/asm-generic/siginfo.h    |   3 +-
- kernel/signal.c                       |   4 --
- 7 files changed, 87 insertions(+), 99 deletions(-)
-
+diff --git a/arch/arm64/include/asm/esr.h b/arch/arm64/include/asm/esr.h
+index 803443d..ce70c3f 100644
+--- a/arch/arm64/include/asm/esr.h
++++ b/arch/arm64/include/asm/esr.h
+@@ -240,6 +240,15 @@
+ 		(((e) & ESR_ELx_SYS64_ISS_OP2_MASK) >>		\
+ 		 ESR_ELx_SYS64_ISS_OP2_SHIFT))
+ 
++/*
++ * ISS field definitions for floating-point exception traps
++ * (FP_EXC_32/FP_EXC_64).
++ *
++ * (The FPEXC_* constants are used instead for common bits.)
++ */
++
++#define ESR_ELx_FP_EXC_TFV	(UL(1) << 23)
++
+ #ifndef __ASSEMBLY__
+ #include <asm/types.h>
+ 
+diff --git a/arch/arm64/include/uapi/asm/siginfo.h b/arch/arm64/include/uapi/asm/siginfo.h
+index 9b4d912..157e6a8 100644
+--- a/arch/arm64/include/uapi/asm/siginfo.h
++++ b/arch/arm64/include/uapi/asm/siginfo.h
+@@ -22,13 +22,6 @@
+ #include <asm-generic/siginfo.h>
+ 
+ /*
+- * SIGFPE si_codes
+- */
+-#ifdef __KERNEL__
+-#define FPE_FIXME	0	/* Broken dup of SI_USER */
+-#endif /* __KERNEL__ */
+-
+-/*
+  * SIGBUS si_codes
+  */
+ #ifdef __KERNEL__
+diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+index e7226c4..9040038 100644
+--- a/arch/arm64/kernel/fpsimd.c
++++ b/arch/arm64/kernel/fpsimd.c
+@@ -39,6 +39,7 @@
+ #include <linux/slab.h>
+ #include <linux/sysctl.h>
+ 
++#include <asm/esr.h>
+ #include <asm/fpsimd.h>
+ #include <asm/cputype.h>
+ #include <asm/simd.h>
+@@ -867,18 +868,20 @@ asmlinkage void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs)
+ asmlinkage void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs)
+ {
+ 	siginfo_t info;
+-	unsigned int si_code = FPE_FIXME;
+-
+-	if (esr & FPEXC_IOF)
+-		si_code = FPE_FLTINV;
+-	else if (esr & FPEXC_DZF)
+-		si_code = FPE_FLTDIV;
+-	else if (esr & FPEXC_OFF)
+-		si_code = FPE_FLTOVF;
+-	else if (esr & FPEXC_UFF)
+-		si_code = FPE_FLTUND;
+-	else if (esr & FPEXC_IXF)
+-		si_code = FPE_FLTRES;
++	unsigned int si_code = FPE_FLTUNK;
++
++	if (esr & ESR_ELx_FP_EXC_TFV) {
++		if (esr & FPEXC_IOF)
++			si_code = FPE_FLTINV;
++		else if (esr & FPEXC_DZF)
++			si_code = FPE_FLTDIV;
++		else if (esr & FPEXC_OFF)
++			si_code = FPE_FLTOVF;
++		else if (esr & FPEXC_UFF)
++			si_code = FPE_FLTUND;
++		else if (esr & FPEXC_IXF)
++			si_code = FPE_FLTRES;
++	}
+ 
+ 	memset(&info, 0, sizeof(info));
+ 	info.si_signo = SIGFPE;
 -- 
 2.1.4
