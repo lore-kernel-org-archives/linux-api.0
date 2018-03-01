@@ -1,71 +1,157 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v4 15/24] fpga: dfl-fme-pr: add compat_id support for
- dfl-fme-region platform device.
-Date: Thu, 1 Mar 2018 13:49:35 +0800
-Message-ID: <20180301054935.GA8999@hao-dev>
+Subject: Re: [PATCH v4 13/24] fpga: region: add compat_id support
+Date: Thu, 1 Mar 2018 14:17:50 +0800
+Message-ID: <20180301061750.GB8999@hao-dev>
 References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-16-git-send-email-hao.wu@intel.com>
- <CANk1AXR9473+QqjF=R2JqqJGPB_XH9k+2qDhh68hN=5Fq4E7uw@mail.gmail.com>
+ <1518513893-4719-14-git-send-email-hao.wu@intel.com>
+ <CANk1AXSMtbnQDAO+XgVEOLh_F13OJyB3LCEPAc6_-U7CXnkfNw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXR9473+QqjF=R2JqqJGPB_XH9k+2qDhh68hN=5Fq4E7uw@mail.gmail.com>
+In-Reply-To: <CANk1AXSMtbnQDAO+XgVEOLh_F13OJyB3LCEPAc6_-U7CXnkfNw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alan Tull <atull@kernel.org>
 Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Feb 28, 2018 at 05:06:57PM -0600, Alan Tull wrote:
+On Wed, Feb 28, 2018 at 04:55:15PM -0600, Alan Tull wrote:
 > On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
 > 
 > Hi Hao,
+
+Hi Alan,
+
+Thanks for the review.
+
 > 
-> > This patch adds compat_id support when driver creates the platform
-> > device for dfl-fme-region. It allows dfl-fme-region platform driver
-> > to create fpga-region with correct compat_id.
+> > This patch introduces a compat_id member and sysfs interface for each
+> > fpga-region, e.g userspace applications could read the compat_id
+> > from the sysfs interface for compatibility checking before PR.
 > >
 > > Signed-off-by: Wu Hao <hao.wu@intel.com>
 > > ---
-> >  drivers/fpga/dfl-fme-pr.c | 20 ++++++++++++++++++++
-> >  drivers/fpga/dfl-fme-pr.h |  3 +++
-> >  2 files changed, 23 insertions(+)
+> >  Documentation/ABI/testing/sysfs-class-fpga-region |  5 +++++
+> >  drivers/fpga/fpga-region.c                        | 19 +++++++++++++++++++
+> >  include/linux/fpga/fpga-region.h                  | 13 +++++++++++++
+> >  3 files changed, 37 insertions(+)
+> >  create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
 > >
-> > diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
-> > index 526e90b..c17170b 100644
-> > --- a/drivers/fpga/dfl-fme-pr.c
-> > +++ b/drivers/fpga/dfl-fme-pr.c
-> > @@ -314,6 +314,25 @@ static void fpga_fme_destroy_bridges(struct feature_platform_data *pdata)
+> > diff --git a/Documentation/ABI/testing/sysfs-class-fpga-region b/Documentation/ABI/testing/sysfs-class-fpga-region
+> > new file mode 100644
+> > index 0000000..419d930
+> > --- /dev/null
+> > +++ b/Documentation/ABI/testing/sysfs-class-fpga-region
+> > @@ -0,0 +1,5 @@
+> > +What:          /sys/class/fpga_region/<region>/compat_id
+> > +Date:          February 2018
+> > +KernelVersion: 4.16
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   FPGA region id for compatibility check.
+> > diff --git a/drivers/fpga/fpga-region.c b/drivers/fpga/fpga-region.c
+> > index 660a91b..babec96 100644
+> > --- a/drivers/fpga/fpga-region.c
+> > +++ b/drivers/fpga/fpga-region.c
+> > @@ -162,6 +162,24 @@ int fpga_region_program_fpga(struct fpga_region *region)
 > >  }
+> >  EXPORT_SYMBOL_GPL(fpga_region_program_fpga);
+> >
+> > +static ssize_t compat_id_show(struct device *dev,
+> > +                             struct device_attribute *attr, char *buf)
+> > +{
+> > +       struct fpga_region *region = to_fpga_region(dev);
+> 
+> This looks good, but not all users of FPGA are going to use compat_id.
+> How would you feel about making it a pointer in struct fpga_region?
+> With compat_id as a pointer, could check for non-null compat_id
+> pointer and return an error if it wasn't initialized.
+
+It sounds good to me.
+
+if (!region->compat_id)
+	return -ENOENT;
+
+> 
+> > +
+> > +       return sprintf(buf, "%016llx%016llx\n",
+> > +                      (unsigned long long)region->compat_id.id_h,
+> > +                      (unsigned long long)region->compat_id.id_l);
+> > +}
+> > +
+> > +static DEVICE_ATTR_RO(compat_id);
+> > +
+> > +static struct attribute *fpga_region_attrs[] = {
+> > +       &dev_attr_compat_id.attr,
+> > +       NULL,
+> > +};
+> > +ATTRIBUTE_GROUPS(fpga_region);
+> > +
+> >  int fpga_region_register(struct fpga_region *region)
+> >  {
+> >         struct device *dev = region->parent;
+> > @@ -226,6 +244,7 @@ static int __init fpga_region_init(void)
+> >         if (IS_ERR(fpga_region_class))
+> >                 return PTR_ERR(fpga_region_class);
+> >
+> > +       fpga_region_class->dev_groups = fpga_region_groups;
+> >         fpga_region_class->dev_release = fpga_region_dev_release;
+> >
+> >         return 0;
+> > diff --git a/include/linux/fpga/fpga-region.h b/include/linux/fpga/fpga-region.h
+> > index 423c87e..bf97dcc 100644
+> > --- a/include/linux/fpga/fpga-region.h
+> > +++ b/include/linux/fpga/fpga-region.h
+> > @@ -6,6 +6,17 @@
+> >  #include <linux/fpga/fpga-bridge.h>
 > >
 > >  /**
-> > + * fpga_fme_get_region_compat_id - read region compat_id from hardware
+> > + * struct fpga_region_compat_id - FPGA Region id for compatibility check
 > > + *
-> > + * @dev: fme device.
+> > + * @id_h: high 64bit of the compat_id
+> > + * @id_l: low 64bit of the compat_id
 > > + */
-> > +static struct fpga_region_compat_id
-> > +fpga_fme_get_region_compat_id(struct device *dev)
-> > +{
-> > +       struct fpga_region_compat_id compat_id;
-> > +       void __iomem *fme_pr;
-> > +
-> > +       fme_pr = get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_PR_MGMT);
-> > +
-> > +       compat_id.id_l = readq(fme_pr + FME_PR_INTFC_ID_L);
-> > +       compat_id.id_h = readq(fme_pr + FME_PR_INTFC_ID_H);
+> > +struct fpga_region_compat_id {
+> > +       u64 id_h;
+> > +       u64 id_l;
 > 
-> I tried building for 32 bit ARM and ran into readq and writeq not
-> being defined.  v2 had proper '#indef readq/writeq', so looks like we
-> need that after all.
+> I guess each user will choose how to define these bits.
 
-Sorry, it's missing a header file for dfl-fme-pr.h, as some files don't include
-dfl.h at this version. That header file has definitions for readq/writeq.
+Yes.
 
-+#include <linux/io-64-nonatomic-lo-hi.h>
+> 
+> > +};
+> > +
+> > +/**
+> >   * struct fpga_region - FPGA Region structure
+> >   * @dev: FPGA Region device
+> >   * @parent: parent device
+> > @@ -13,6 +24,7 @@
+> >   * @bridge_list: list of FPGA bridges specified in region
+> >   * @mgr: FPGA manager
+> >   * @info: FPGA image info
+> > + * @compat_id: FPGA region id for compatibility check.
+> >   * @priv: private data
+> >   * @get_bridges: optional function to get bridges to a list
+> >   * @groups: optional attribute groups.
+> > @@ -24,6 +36,7 @@ struct fpga_region {
+> >         struct list_head bridge_list;
+> >         struct fpga_manager *mgr;
+> >         struct fpga_image_info *info;
+> > +       struct fpga_region_compat_id compat_id;
+> 
+> Here it would be a pointer instead.
 
-will fix it.
+Yes. Will update this patch.
 
 Thanks
 Hao
 
+> 
 > Alan
+> 
+> >         void *priv;
+> >         int (*get_bridges)(struct fpga_region *region);
+> >         const struct attribute_group **groups;
+> > --
+> > 2.7.4
+> >
