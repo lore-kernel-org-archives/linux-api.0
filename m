@@ -1,59 +1,97 @@
-From: "Atchley, Scott" <atchleyes@ornl.gov>
-Subject: Re: [OMPI devel] [PATCH v5 0/4] vm: add a syscall to map a process memory into a pipe
-Date: Wed, 28 Feb 2018 23:12:03 +0000
-Message-ID: <B748ED06-77CC-47F6-AA5C-0D9E2AD1BDB2@ornl.gov>
-References: <1515479453-14672-1-git-send-email-rppt@linux.vnet.ibm.com> <20180220164406.3ec34509376f16841dc66e34@linux-foundation.org> <3122ec5a-7f73-f6b4-33ea-8c10ef32e5b0@virtuozzo.com> <20180227021818.GA31386@altlinux.org> <627ac4f8-a52d-0582-0c9e-e70ea667fa7e@virtuozzo.com>
+From: Alexei Starovoitov <ast@kernel.org>
+Subject: [PATCH bpf-next 0/5] bpf, tracing: introduce bpf raw tracepoints
+Date: Wed, 28 Feb 2018 20:19:52 -0800
+Message-ID: <20180301041957.399230-1-ast@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <gdb-return-46344-gdb-gdb=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:gdb-unsubscribe-gdb-gdb=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:gdb-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/gdb/>
-List-Post: <mailto:gdb@sourceware.org>
-List-Help: <mailto:gdb-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: gdb-owner@sourceware.org
-In-Reply-To: <627ac4f8-a52d-0582-0c9e-e70ea667fa7e@virtuozzo.com>
-Content-ID: <37B81FBCB154B54D891DDE89E76BC0D1@ornl.gov>
-To: Open MPI Developers <devel@lists.open-mpi.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "criu@openvz.org" <criu@openvz.org>, "gdb@sourceware.org" <gdb@sourceware.org>, "rr-dev@mozilla.org" <rr-dev@mozilla.org>, Arnd Bergmann <arnd@arndb.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Josh Triplett <josh@joshtriplett.org>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Andrei Vagin <avagin@openvz.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: davem@davemloft.net
+Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, mingo@kernel.org, rostedt@goodmis.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-> On Feb 28, 2018, at 2:12 AM, Pavel Emelyanov <xemul@virtuozzo.com> wrote:
->=20
-> On 02/27/2018 05:18 AM, Dmitry V. Levin wrote:
->> On Mon, Feb 26, 2018 at 12:02:25PM +0300, Pavel Emelyanov wrote:
->>> On 02/21/2018 03:44 AM, Andrew Morton wrote:
->>>> On Tue,  9 Jan 2018 08:30:49 +0200 Mike Rapoport <rppt@linux.vnet.ibm.=
-com> wrote:
->>>>=20
->>>>> This patches introduces new process_vmsplice system call that combines
->>>>> functionality of process_vm_read and vmsplice.
->>>>=20
->>>> All seems fairly strightforward.  The big question is: do we know that
->>>> people will actually use this, and get sufficient value from it to
->>>> justify its addition?
->>>=20
->>> Yes, that's what bothers us a lot too :) I've tried to start with findi=
-ng out if anyone=20
->>> used the sys_read/write_process_vm() calls, but failed :( Does anybody =
-know how popular
->>> these syscalls are?
->>=20
->> Well, process_vm_readv itself is quite popular, it's used by debuggers n=
-owadays,
->> see e.g.
->> $ strace -qq -esignal=3Dnone -eprocess_vm_readv strace -qq -o/dev/null c=
-at /dev/null
->=20
-> I see. Well, yes, this use-case will not benefit much from remote splice.=
- How about more
-> interactive debug by, say, gdb? It may attach, then splice all the memory=
-, then analyze
-> the victim code/data w/o copying it to its address space?
->=20
-> -- Pavel
+This patch set is a different way to address the pressing need to access
+task_struct pointers in sched tracepoints from bpf programs.
 
-I may be completely off base, but could a FUSE daemon use this to read memo=
-ry from the client and dump it to a file descriptor without copying the dat=
-a into the kernel?=20
+The first approach simply added these pointers to sched tracepoints:
+https://lkml.org/lkml/2017/12/14/753
+which Peter nacked.
+Few options were discussed and eventually the discussion converged on
+doing bpf specific tracepoint_probe_register() probe functions.
+Details here:
+https://lkml.org/lkml/2017/12/20/929
+
+Patch 1 is kernel wide cleanup of pass-struct-by-value into
+pass-struct-by-reference into tracepoints.
+
+Patch 2 minor prep work to expose number of arguments passed
+into tracepoints.
+
+Patch 3 introduces BPF_RAW_TRACEPOINT api.
+the auto-cleanup and multiple concurrent users are must have
+features of tracing api. For bpf raw tracepoints it looks like:
+  // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
+  prog_fd = bpf_prog_load(...);
+
+  // receive anon_inode fd for given bpf_raw_tracepoint
+  raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception");
+
+  // attach bpf program to given tracepoint
+  bpf_prog_attach(prog_fd, raw_tp_fd, BPF_RAW_TRACEPOINT);
+
+Ctrl-C of tracing daemon or cmdline tool will automatically
+detach bpf program, unload it and unregister tracepoint probe.
+More details in patch 3.
+
+Patch 4, 5 - user space lib and tests
+
+samples/bpf/test_overhead performance on 1 cpu:
+
+tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
+task_rename   1.1M   769K        947K            1.0M
+urandom_read  789K   697K        750K            755K
+
+Alexei Starovoitov (5):
+  treewide: remove struct-pass-by-value from tracepoints arguments
+  tracepoint: compute num_args at build time
+  bpf: introduce BPF_RAW_TRACEPOINT
+  libbpf: add bpf_raw_tracepoint_open helper
+  samples/bpf: raw tracepoint test
+
+ arch/x86/xen/mmu_pv.c                    |  16 +--
+ drivers/gpu/drm/i915/i915_trace.h        |  13 +-
+ drivers/infiniband/hw/hfi1/file_ops.c    |   2 +-
+ drivers/infiniband/hw/hfi1/trace_ctxts.h |  12 +-
+ drivers/s390/cio/ioasm.c                 |  18 +--
+ drivers/s390/cio/trace.h                 |  50 ++++----
+ fs/dax.c                                 |   2 +-
+ include/linux/bpf_types.h                |   1 +
+ include/linux/trace_events.h             |  57 +++++++++
+ include/linux/tracepoint-defs.h          |   1 +
+ include/linux/tracepoint.h               |  32 +++--
+ include/trace/bpf_probe.h                |  87 +++++++++++++
+ include/trace/define_trace.h             |  15 ++-
+ include/trace/events/f2fs.h              |   2 +-
+ include/trace/events/fs_dax.h            |   6 +-
+ include/trace/events/rcu.h               |   4 +-
+ include/trace/events/xen.h               |  32 ++---
+ include/uapi/linux/bpf.h                 |  11 ++
+ kernel/bpf/syscall.c                     | 108 ++++++++++++++++
+ kernel/rcu/tree.c                        |  10 +-
+ kernel/trace/bpf_trace.c                 | 211 +++++++++++++++++++++++++++++++
+ kernel/tracepoint.c                      |  27 ++--
+ net/wireless/trace.h                     |   2 +-
+ samples/bpf/Makefile                     |   1 +
+ samples/bpf/bpf_load.c                   |  13 ++
+ samples/bpf/test_overhead_raw_tp_kern.c  |  17 +++
+ samples/bpf/test_overhead_user.c         |  12 ++
+ sound/firewire/amdtp-stream-trace.h      |   2 +-
+ tools/include/uapi/linux/bpf.h           |  11 ++
+ tools/lib/bpf/bpf.c                      |  10 ++
+ tools/lib/bpf/bpf.h                      |   1 +
+ 31 files changed, 677 insertions(+), 109 deletions(-)
+ create mode 100644 include/trace/bpf_probe.h
+ create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
+
+-- 
+2.9.5
