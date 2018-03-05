@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 04/36] aio: sanitize ki_list handling
-Date: Mon,  5 Mar 2018 13:27:11 -0800
-Message-ID: <20180305212743.16664-5-hch@lst.de>
+Subject: [PATCH 10/36] fs: cleanup do_pollfd
+Date: Mon,  5 Mar 2018 13:27:17 -0800
+Message-ID: <20180305212743.16664-11-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,57 +10,76 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Instead of handcoded non-null checks always initialize ki_list to an
-empty list and use list_empty / list_empty_careful on it.  While we're
-at it also error out on a double call to kiocb_set_cancel_fn instead
-of ignoring it.
+Use straigline code with failure handling gotos instead of a lot
+of nested conditionals.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
 ---
- fs/aio.c | 13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+ fs/select.c | 48 +++++++++++++++++++++++-------------------------
+ 1 file changed, 23 insertions(+), 25 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 6295fc00f104..c32c315f05b5 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -555,13 +555,12 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
- 	struct kioctx *ctx = req->ki_ctx;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&ctx->ctx_lock, flags);
+diff --git a/fs/select.c b/fs/select.c
+index 686de7b3a1db..c6c504a814f9 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -806,34 +806,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+ 				     bool *can_busy_poll,
+ 				     __poll_t busy_flag)
+ {
+-	__poll_t mask;
+-	int fd;
 -
--	if (!req->ki_list.next)
--		list_add(&req->ki_list, &ctx->active_reqs);
-+	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
-+		return;
- 
-+	spin_lock_irqsave(&ctx->ctx_lock, flags);
-+	list_add_tail(&req->ki_list, &ctx->active_reqs);
- 	req->ki_cancel = cancel;
+-	mask = 0;
+-	fd = pollfd->fd;
+-	if (fd >= 0) {
+-		struct fd f = fdget(fd);
+-		mask = EPOLLNVAL;
+-		if (f.file) {
+-			/* userland u16 ->events contains POLL... bitmap */
+-			__poll_t filter = demangle_poll(pollfd->events) |
+-						EPOLLERR | EPOLLHUP;
+-			mask = DEFAULT_POLLMASK;
+-			if (f.file->f_op->poll) {
+-				pwait->_key = filter;
+-				pwait->_key |= busy_flag;
+-				mask = f.file->f_op->poll(f.file, pwait);
+-				if (mask & busy_flag)
+-					*can_busy_poll = true;
+-			}
+-			/* Mask out unneeded events. */
+-			mask &= filter;
+-			fdput(f);
+-		}
++	int fd = pollfd->fd;
++	__poll_t mask = 0, filter;
++	struct fd f;
++
++	if (fd < 0)
++		goto out;
++	mask = EPOLLNVAL;
++	f = fdget(fd);
++	if (!f.file)
++		goto out;
++
++	/* userland u16 ->events contains POLL... bitmap */
++	filter = demangle_poll(pollfd->events) | EPOLLERR | EPOLLHUP;
++	mask = DEFAULT_POLLMASK;
++	if (f.file->f_op->poll) {
++		pwait->_key = filter | busy_flag;
++		mask = f.file->f_op->poll(f.file, pwait);
++		if (mask & busy_flag)
++			*can_busy_poll = true;
+ 	}
++	mask &= filter;		/* Mask out unneeded events. */
++	fdput(f);
++
++out:
+ 	/* ... and so does ->revents */
+ 	pollfd->revents = mangle_poll(mask);
 -
- 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+ 	return mask;
  }
- EXPORT_SYMBOL(kiocb_set_cancel_fn);
-@@ -1034,7 +1033,7 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
- 		goto out_put;
  
- 	percpu_ref_get(&ctx->reqs);
--
-+	INIT_LIST_HEAD(&req->ki_list);
- 	req->ki_ctx = ctx;
- 	return req;
- out_put:
-@@ -1080,7 +1079,7 @@ static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
- 	unsigned tail, pos, head;
- 	unsigned long	flags;
- 
--	if (iocb->ki_list.next) {
-+	if (!list_empty_careful(iocb->ki_list.next)) {
- 		unsigned long flags;
- 
- 		spin_lock_irqsave(&ctx->ctx_lock, flags);
 -- 
 2.14.2
 
