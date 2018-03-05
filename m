@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 08/36] aio: implement io_pgetevents
-Date: Mon,  5 Mar 2018 13:27:15 -0800
-Message-ID: <20180305212743.16664-9-hch@lst.de>
+Subject: [PATCH 15/36] net: refactor socket_poll
+Date: Mon,  5 Mar 2018 13:27:22 -0800
+Message-ID: <20180305212743.16664-16-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,300 +10,75 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is the io_getevents equivalent of ppoll/pselect and allows to
-properly mix signals and aio completions (especially with IOCB_CMD_POLL)
-and atomically executes the following sequence:
-
-	sigset_t origmask;
-
-	pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
-	ret = io_getevents(ctx, min_nr, nr, events, timeout);
-	pthread_sigmask(SIG_SETMASK, &origmask, NULL);
-
-Note that unlike many other signal related calls we do not pass a sigmask
-size, as that would get us to 7 arguments, which aren't easily supported
-by the syscall infrastructure.  It seems a lot less painful to just add a
-new syscall variant in the unlikely case we're going to increase the
-sigset size.
+Factor out two busy poll related helpers for late reuse, and remove
+a command that isn't very helpful, especially with the __poll_t
+annotations in place.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- fs/aio.c                               | 114 ++++++++++++++++++++++++++++++---
- include/linux/compat.h                 |   7 ++
- include/linux/syscalls.h               |   6 ++
- include/uapi/asm-generic/unistd.h      |   4 +-
- include/uapi/linux/aio_abi.h           |   6 ++
- kernel/sys_ni.c                        |   2 +
- 8 files changed, 130 insertions(+), 11 deletions(-)
+ include/net/busy_poll.h | 15 +++++++++++++++
+ net/socket.c            | 21 ++++-----------------
+ 2 files changed, 19 insertions(+), 17 deletions(-)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 448ac2161112..5997c3e9ac3e 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -391,3 +391,4 @@
- 382	i386	pkey_free		sys_pkey_free
- 383	i386	statx			sys_statx
- 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
-+385	i386	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5aef183e2f85..e995cd2b4e65 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -339,6 +339,7 @@
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
- 332	common	statx			sys_statx
-+333	common	io_pgetevents		sys_io_pgetevents
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/aio.c b/fs/aio.c
-index 9d7d6e4cde87..da87cbf7c67a 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1291,10 +1291,6 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
- 		wait_event_interruptible_hrtimeout(ctx->wait,
- 				aio_read_events(ctx, min_nr, nr, event, &ret),
- 				until);
--
--	if (!ret && signal_pending(current))
--		ret = -EINTR;
--
- 	return ret;
- }
- 
-@@ -1874,13 +1870,60 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 		struct timespec __user *, timeout)
- {
- 	struct timespec64	ts;
-+	int			ret;
-+
-+	if (timeout && unlikely(get_timespec64(&ts, timeout)))
-+		return -EFAULT;
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	if (!ret && signal_pending(current))
-+		ret = -EINTR;
-+	return ret;
-+}
-+
-+SYSCALL_DEFINE6(io_pgetevents,
-+		aio_context_t, ctx_id,
-+		long, min_nr,
-+		long, nr,
-+		struct io_event __user *, events,
-+		struct timespec __user *, timeout,
-+		const struct __aio_sigset __user *, usig)
-+{
-+	struct __aio_sigset	ksig = { NULL, };
-+	sigset_t		ksigmask, sigsaved;
-+	struct timespec64	ts;
-+	int ret;
-+
-+	if (timeout && unlikely(get_timespec64(&ts, timeout)))
-+		return -EFAULT;
- 
--	if (timeout) {
--		if (unlikely(get_timespec64(&ts, timeout)))
-+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
-+		return -EFAULT;
-+
-+	if (ksig.sigmask) {
-+		if (ksig.sigsetsize != sizeof(sigset_t))
-+			return -EINVAL;
-+		if (copy_from_user(&ksigmask, ksig.sigmask, sizeof(ksigmask)))
- 			return -EFAULT;
-+		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
-+		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
-+	}
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	if (signal_pending(current)) {
-+		if (ksig.sigmask) {
-+			current->saved_sigmask = sigsaved;
-+			set_restore_sigmask();
-+		}
-+
-+		if (!ret)
-+			ret = -ERESTARTNOHAND;
-+	} else {
-+		if (ksig.sigmask)
-+			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
- 	}
- 
--	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	return ret;
- }
- 
- #ifdef CONFIG_COMPAT
-@@ -1891,13 +1934,64 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 		       struct compat_timespec __user *, timeout)
- {
- 	struct timespec64 t;
-+	int ret;
-+
-+	if (timeout && compat_get_timespec64(&t, timeout))
-+		return -EFAULT;
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	if (!ret && signal_pending(current))
-+		ret = -EINTR;
-+	return ret;
-+}
-+
-+
-+struct __compat_aio_sigset {
-+	compat_sigset_t __user	*sigmask;
-+	compat_size_t		sigsetsize;
-+};
-+
-+COMPAT_SYSCALL_DEFINE6(io_pgetevents,
-+		compat_aio_context_t, ctx_id,
-+		compat_long_t, min_nr,
-+		compat_long_t, nr,
-+		struct io_event __user *, events,
-+		struct compat_timespec __user *, timeout,
-+		const struct __compat_aio_sigset __user *, usig)
-+{
-+	struct __compat_aio_sigset ksig = { NULL, };
-+	sigset_t ksigmask, sigsaved;
-+	struct timespec64 t;
-+	int ret;
-+
-+	if (timeout && compat_get_timespec64(&t, timeout))
-+		return -EFAULT;
- 
--	if (timeout) {
--		if (compat_get_timespec64(&t, timeout))
-+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
-+		return -EFAULT;
-+
-+	if (ksig.sigmask) {
-+		if (ksig.sigsetsize != sizeof(compat_sigset_t))
-+			return -EINVAL;
-+		if (get_compat_sigset(&ksigmask, ksig.sigmask))
- 			return -EFAULT;
-+		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
-+		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
-+	}
- 
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	if (signal_pending(current)) {
-+		if (ksig.sigmask) {
-+			current->saved_sigmask = sigsaved;
-+			set_restore_sigmask();
-+		}
-+		if (!ret)
-+			ret = -ERESTARTNOHAND;
-+	} else {
-+		if (ksig.sigmask)
-+			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
- 	}
- 
--	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	return ret;
- }
+diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
+index 71c72a939bf8..c5187438af38 100644
+--- a/include/net/busy_poll.h
++++ b/include/net/busy_poll.h
+@@ -121,6 +121,21 @@ static inline void sk_busy_loop(struct sock *sk, int nonblock)
  #endif
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 8a9643857c4a..bfb8a94fbabd 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -303,6 +303,7 @@ extern int put_compat_rusage(const struct rusage *,
- 			     struct compat_rusage __user *);
+ }
  
- struct compat_siginfo;
-+struct __compat_aio_sigset;
- 
- extern asmlinkage long compat_sys_waitid(int, compat_pid_t,
- 		struct compat_siginfo __user *, int,
-@@ -634,6 +635,12 @@ asmlinkage long compat_sys_io_getevents(compat_aio_context_t ctx_id,
- 					compat_long_t nr,
- 					struct io_event __user *events,
- 					struct compat_timespec __user *timeout);
-+asmlinkage long compat_sys_io_pgetevents(compat_aio_context_t ctx_id,
-+					compat_long_t min_nr,
-+					compat_long_t nr,
-+					struct io_event __user *events,
-+					struct compat_timespec __user *timeout,
-+					const struct __compat_aio_sigset __user *usig);
- asmlinkage long compat_sys_io_submit(compat_aio_context_t ctx_id, int nr,
- 				     u32 __user *iocb);
- asmlinkage long compat_sys_mount(const char __user *dev_name,
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a78186d826d7..8515ec53c81b 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -539,6 +539,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
- 				long nr,
- 				struct io_event __user *events,
- 				struct timespec __user *timeout);
-+asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
-+				long min_nr,
-+				long nr,
-+				struct io_event __user *events,
-+				struct timespec __user *timeout,
-+				const struct __aio_sigset *sig);
- asmlinkage long sys_io_submit(aio_context_t, long,
- 				struct iocb __user * __user *);
- asmlinkage long sys_io_cancel(aio_context_t ctx_id, struct iocb __user *iocb,
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 8b87de067bc7..ce2ebbeece10 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -732,9 +732,11 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
- __SYSCALL(__NR_pkey_free,     sys_pkey_free)
- #define __NR_statx 291
- __SYSCALL(__NR_statx,     sys_statx)
-+#define __NR_io_pgetevents 292
-+__SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 292
-+#define __NR_syscalls 293
- 
- /*
-  * All syscalls below here should go away really,
-diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
-index a04adbc70ddf..2c0a3415beee 100644
---- a/include/uapi/linux/aio_abi.h
-+++ b/include/uapi/linux/aio_abi.h
-@@ -29,6 +29,7 @@
- 
- #include <linux/types.h>
- #include <linux/fs.h>
-+#include <linux/signal.h>
- #include <asm/byteorder.h>
- 
- typedef __kernel_ulong_t aio_context_t;
-@@ -108,5 +109,10 @@ struct iocb {
- #undef IFBIG
- #undef IFLITTLE
- 
-+struct __aio_sigset {
-+	sigset_t __user	*sigmask;
-+	size_t		sigsetsize;
-+};
++static inline void sock_poll_busy_loop(struct socket *sock, __poll_t events)
++{
++	if (sk_can_busy_loop(sock->sk) &&
++	    events && (events & POLL_BUSY_LOOP)) {
++		/* once, only if requested by syscall */
++		sk_busy_loop(sock->sk, 1);
++	}
++}
 +
- #endif /* __LINUX__AIO_ABI_H */
++/* if this socket can poll_ll, tell the system call */
++static inline __poll_t sock_poll_busy_flag(struct socket *sock)
++{
++	return sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0;
++}
++
+ /* used in the NIC receive handler to mark the skb */
+ static inline void skb_mark_napi_id(struct sk_buff *skb,
+ 				    struct napi_struct *napi)
+diff --git a/net/socket.c b/net/socket.c
+index a93c99b518ca..3f859a07641a 100644
+--- a/net/socket.c
++++ b/net/socket.c
+@@ -1117,24 +1117,11 @@ EXPORT_SYMBOL(sock_create_lite);
+ /* No kernel lock held - perfect */
+ static __poll_t sock_poll(struct file *file, poll_table *wait)
+ {
+-	__poll_t busy_flag = 0;
+-	struct socket *sock;
+-
+-	/*
+-	 *      We can't return errors to poll, so it's either yes or no.
+-	 */
+-	sock = file->private_data;
+-
+-	if (sk_can_busy_loop(sock->sk)) {
+-		/* this socket can poll_ll so tell the system call */
+-		busy_flag = POLL_BUSY_LOOP;
+-
+-		/* once, only if requested by syscall */
+-		if (wait && (wait->_key & POLL_BUSY_LOOP))
+-			sk_busy_loop(sock->sk, 1);
+-	}
++	struct socket *sock = file->private_data;
++	__poll_t events = poll_requested_events(wait);
  
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index b5189762d275..8f7705559b38 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -151,9 +151,11 @@ cond_syscall(sys_io_destroy);
- cond_syscall(sys_io_submit);
- cond_syscall(sys_io_cancel);
- cond_syscall(sys_io_getevents);
-+cond_syscall(sys_io_pgetevents);
- cond_syscall(compat_sys_io_setup);
- cond_syscall(compat_sys_io_submit);
- cond_syscall(compat_sys_io_getevents);
-+cond_syscall(compat_sys_io_pgetevents);
- cond_syscall(sys_sysfs);
- cond_syscall(sys_syslog);
- cond_syscall(sys_process_vm_readv);
+-	return busy_flag | sock->ops->poll(file, sock, wait);
++	sock_poll_busy_loop(sock, events);
++	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
+ }
+ 
+ static int sock_mmap(struct file *file, struct vm_area_struct *vma)
 -- 
 2.14.2
 
