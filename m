@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 28/36] net/nfc: convert to ->poll_mask
-Date: Mon,  5 Mar 2018 13:27:35 -0800
-Message-ID: <20180305212743.16664-29-hch@lst.de>
+Subject: [PATCH 04/36] aio: sanitize ki_list handling
+Date: Mon,  5 Mar 2018 13:27:11 -0800
+Message-ID: <20180305212743.16664-5-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,51 +10,57 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- net/nfc/llcp_sock.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+Instead of handcoded non-null checks always initialize ki_list to an
+empty list and use list_empty / list_empty_careful on it.  While we're
+at it also error out on a double call to kiocb_set_cancel_fn instead
+of ignoring it.
 
-diff --git a/net/nfc/llcp_sock.c b/net/nfc/llcp_sock.c
-index 376040092142..b6010750e634 100644
---- a/net/nfc/llcp_sock.c
-+++ b/net/nfc/llcp_sock.c
-@@ -549,16 +549,13 @@ static inline __poll_t llcp_accept_poll(struct sock *parent)
- 	return 0;
- }
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
+---
+ fs/aio.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/fs/aio.c b/fs/aio.c
+index 6295fc00f104..c32c315f05b5 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -555,13 +555,12 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+ 	struct kioctx *ctx = req->ki_ctx;
+ 	unsigned long flags;
  
--static __poll_t llcp_sock_poll(struct file *file, struct socket *sock,
--				   poll_table *wait)
-+static __poll_t llcp_sock_poll_mask(struct socket *sock, __poll_t events)
- {
- 	struct sock *sk = sock->sk;
- 	__poll_t mask = 0;
- 
- 	pr_debug("%p\n", sk);
- 
--	sock_poll_wait(file, sk_sleep(sk), wait);
+-	spin_lock_irqsave(&ctx->ctx_lock, flags);
 -
- 	if (sk->sk_state == LLCP_LISTEN)
- 		return llcp_accept_poll(sk);
+-	if (!req->ki_list.next)
+-		list_add(&req->ki_list, &ctx->active_reqs);
++	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
++		return;
  
-@@ -900,7 +897,7 @@ static const struct proto_ops llcp_sock_ops = {
- 	.socketpair     = sock_no_socketpair,
- 	.accept         = llcp_sock_accept,
- 	.getname        = llcp_sock_getname,
--	.poll           = llcp_sock_poll,
-+	.poll_mask      = llcp_sock_poll_mask,
- 	.ioctl          = sock_no_ioctl,
- 	.listen         = llcp_sock_listen,
- 	.shutdown       = sock_no_shutdown,
-@@ -920,7 +917,7 @@ static const struct proto_ops llcp_rawsock_ops = {
- 	.socketpair     = sock_no_socketpair,
- 	.accept         = sock_no_accept,
- 	.getname        = llcp_sock_getname,
--	.poll           = llcp_sock_poll,
-+	.poll_mask      = llcp_sock_poll_mask,
- 	.ioctl          = sock_no_ioctl,
- 	.listen         = sock_no_listen,
- 	.shutdown       = sock_no_shutdown,
++	spin_lock_irqsave(&ctx->ctx_lock, flags);
++	list_add_tail(&req->ki_list, &ctx->active_reqs);
+ 	req->ki_cancel = cancel;
+-
+ 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+ }
+ EXPORT_SYMBOL(kiocb_set_cancel_fn);
+@@ -1034,7 +1033,7 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
+ 		goto out_put;
+ 
+ 	percpu_ref_get(&ctx->reqs);
+-
++	INIT_LIST_HEAD(&req->ki_list);
+ 	req->ki_ctx = ctx;
+ 	return req;
+ out_put:
+@@ -1080,7 +1079,7 @@ static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
+ 	unsigned tail, pos, head;
+ 	unsigned long	flags;
+ 
+-	if (iocb->ki_list.next) {
++	if (!list_empty_careful(iocb->ki_list.next)) {
+ 		unsigned long flags;
+ 
+ 		spin_lock_irqsave(&ctx->ctx_lock, flags);
 -- 
 2.14.2
 
