@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 01/36] aio: don't print the page size at boot time
-Date: Mon,  5 Mar 2018 13:27:08 -0800
-Message-ID: <20180305212743.16664-2-hch@lst.de>
+Subject: [PATCH 25/36] net/sctp: convert to ->poll_mask
+Date: Mon,  5 Mar 2018 13:27:32 -0800
+Message-ID: <20180305212743.16664-26-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,29 +10,74 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The page size is in no way related to the aio code, and printing it in
-the (debug) dmesg at every boot serves no purpose.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
 ---
- fs/aio.c | 3 ---
- 1 file changed, 3 deletions(-)
+ include/net/sctp/sctp.h | 3 +--
+ net/sctp/ipv6.c         | 2 +-
+ net/sctp/protocol.c     | 2 +-
+ net/sctp/socket.c       | 4 +---
+ 4 files changed, 4 insertions(+), 7 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index a062d75109cb..03d59593912d 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -264,9 +264,6 @@ static int __init aio_setup(void)
+diff --git a/include/net/sctp/sctp.h b/include/net/sctp/sctp.h
+index f7ae6b0a21d0..37abd5ba4a3f 100644
+--- a/include/net/sctp/sctp.h
++++ b/include/net/sctp/sctp.h
+@@ -107,8 +107,7 @@ int sctp_backlog_rcv(struct sock *sk, struct sk_buff *skb);
+ int sctp_inet_listen(struct socket *sock, int backlog);
+ void sctp_write_space(struct sock *sk);
+ void sctp_data_ready(struct sock *sk);
+-__poll_t sctp_poll(struct file *file, struct socket *sock,
+-		poll_table *wait);
++__poll_t sctp_poll_mask(struct socket *sock, __poll_t events);
+ void sctp_sock_rfree(struct sk_buff *skb);
+ void sctp_copy_sock(struct sock *newsk, struct sock *sk,
+ 		    struct sctp_association *asoc);
+diff --git a/net/sctp/ipv6.c b/net/sctp/ipv6.c
+index e35d4f73d2df..6b0b8fc5b75a 100644
+--- a/net/sctp/ipv6.c
++++ b/net/sctp/ipv6.c
+@@ -976,7 +976,7 @@ static const struct proto_ops inet6_seqpacket_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = sctp_getname,
+-	.poll		   = sctp_poll,
++	.poll_mask	   = sctp_poll_mask,
+ 	.ioctl		   = inet6_ioctl,
+ 	.listen		   = sctp_inet_listen,
+ 	.shutdown	   = inet_shutdown,
+diff --git a/net/sctp/protocol.c b/net/sctp/protocol.c
+index 91813e686c67..20c544890e80 100644
+--- a/net/sctp/protocol.c
++++ b/net/sctp/protocol.c
+@@ -1024,7 +1024,7 @@ static const struct proto_ops inet_seqpacket_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet_getname,	/* Semantics are different.  */
+-	.poll		   = sctp_poll,
++	.poll_mask	   = sctp_poll_mask,
+ 	.ioctl		   = inet_ioctl,
+ 	.listen		   = sctp_inet_listen,
+ 	.shutdown	   = inet_shutdown,	/* Looks harmless.  */
+diff --git a/net/sctp/socket.c b/net/sctp/socket.c
+index bf271f8c2dc9..097454740929 100644
+--- a/net/sctp/socket.c
++++ b/net/sctp/socket.c
+@@ -7587,14 +7587,12 @@ int sctp_inet_listen(struct socket *sock, int backlog)
+  * here, again, by modeling the current TCP/UDP code.  We don't have
+  * a good way to test with it yet.
+  */
+-__poll_t sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
++__poll_t sctp_poll_mask(struct socket *sock, __poll_t events)
+ {
+ 	struct sock *sk = sock->sk;
+ 	struct sctp_sock *sp = sctp_sk(sk);
+ 	__poll_t mask;
  
- 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
- 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+-	poll_wait(file, sk_sleep(sk), wait);
 -
--	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
--
- 	return 0;
- }
- __initcall(aio_setup);
+ 	sock_rps_record_flow(sk);
+ 
+ 	/* A TCP-style listening socket becomes readable when the accept queue
 -- 
 2.14.2
 
