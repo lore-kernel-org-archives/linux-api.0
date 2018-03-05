@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 15/36] net: refactor socket_poll
-Date: Mon,  5 Mar 2018 13:27:22 -0800
-Message-ID: <20180305212743.16664-16-hch@lst.de>
+Subject: [PATCH 35/36] timerfd: convert to ->poll_mask
+Date: Mon,  5 Mar 2018 13:27:42 -0800
+Message-ID: <20180305212743.16664-36-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,75 +10,56 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Factor out two busy poll related helpers for late reuse, and remove
-a command that isn't very helpful, especially with the __poll_t
-annotations in place.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/busy_poll.h | 15 +++++++++++++++
- net/socket.c            | 21 ++++-----------------
- 2 files changed, 19 insertions(+), 17 deletions(-)
+ fs/timerfd.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
-index 71c72a939bf8..c5187438af38 100644
---- a/include/net/busy_poll.h
-+++ b/include/net/busy_poll.h
-@@ -121,6 +121,21 @@ static inline void sk_busy_loop(struct sock *sk, int nonblock)
- #endif
+diff --git a/fs/timerfd.c b/fs/timerfd.c
+index cdad49da3ff7..d84a2bee4f82 100644
+--- a/fs/timerfd.c
++++ b/fs/timerfd.c
+@@ -226,21 +226,20 @@ static int timerfd_release(struct inode *inode, struct file *file)
+ 	kfree_rcu(ctx, rcu);
+ 	return 0;
  }
- 
-+static inline void sock_poll_busy_loop(struct socket *sock, __poll_t events)
-+{
-+	if (sk_can_busy_loop(sock->sk) &&
-+	    events && (events & POLL_BUSY_LOOP)) {
-+		/* once, only if requested by syscall */
-+		sk_busy_loop(sock->sk, 1);
-+	}
-+}
-+
-+/* if this socket can poll_ll, tell the system call */
-+static inline __poll_t sock_poll_busy_flag(struct socket *sock)
-+{
-+	return sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0;
-+}
-+
- /* used in the NIC receive handler to mark the skb */
- static inline void skb_mark_napi_id(struct sk_buff *skb,
- 				    struct napi_struct *napi)
-diff --git a/net/socket.c b/net/socket.c
-index a93c99b518ca..3f859a07641a 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -1117,24 +1117,11 @@ EXPORT_SYMBOL(sock_create_lite);
- /* No kernel lock held - perfect */
- static __poll_t sock_poll(struct file *file, poll_table *wait)
+-
+-static __poll_t timerfd_poll(struct file *file, poll_table *wait)
++	
++static struct wait_queue_head *timerfd_get_poll_head(struct file *file,
++		__poll_t eventmask)
  {
--	__poll_t busy_flag = 0;
--	struct socket *sock;
--
--	/*
--	 *      We can't return errors to poll, so it's either yes or no.
--	 */
--	sock = file->private_data;
--
--	if (sk_can_busy_loop(sock->sk)) {
--		/* this socket can poll_ll so tell the system call */
--		busy_flag = POLL_BUSY_LOOP;
--
--		/* once, only if requested by syscall */
--		if (wait && (wait->_key & POLL_BUSY_LOOP))
--			sk_busy_loop(sock->sk, 1);
--	}
-+	struct socket *sock = file->private_data;
-+	__poll_t events = poll_requested_events(wait);
+ 	struct timerfd_ctx *ctx = file->private_data;
+-	__poll_t events = 0;
+-	unsigned long flags;
  
--	return busy_flag | sock->ops->poll(file, sock, wait);
-+	sock_poll_busy_loop(sock, events);
-+	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
+-	poll_wait(file, &ctx->wqh, wait);
++	return &ctx->wqh;
++}
+ 
+-	spin_lock_irqsave(&ctx->wqh.lock, flags);
+-	if (ctx->ticks)
+-		events |= EPOLLIN;
+-	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
++static __poll_t timerfd_poll_mask(struct file *file, __poll_t eventmask)
++{
++	struct timerfd_ctx *ctx = file->private_data;
+ 
+-	return events;
++	return ctx->ticks ? EPOLLIN : 0;
  }
  
- static int sock_mmap(struct file *file, struct vm_area_struct *vma)
+ static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
+@@ -364,7 +363,8 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
+ 
+ static const struct file_operations timerfd_fops = {
+ 	.release	= timerfd_release,
+-	.poll		= timerfd_poll,
++	.get_poll_head	= timerfd_get_poll_head,
++	.poll_mask	= timerfd_poll_mask,
+ 	.read		= timerfd_read,
+ 	.llseek		= noop_llseek,
+ 	.show_fdinfo	= timerfd_show,
 -- 
 2.14.2
 
