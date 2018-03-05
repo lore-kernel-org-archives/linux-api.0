@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 24/36] net/tipc: convert to ->poll_mask
-Date: Mon,  5 Mar 2018 13:27:31 -0800
-Message-ID: <20180305212743.16664-25-hch@lst.de>
+Subject: [PATCH 32/36] crypto: af_alg: convert to ->poll_mask
+Date: Mon,  5 Mar 2018 13:27:39 -0800
+Message-ID: <20180305212743.16664-33-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -12,69 +12,105 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/tipc/socket.c | 14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
+ crypto/af_alg.c         | 13 +++----------
+ crypto/algif_aead.c     |  4 ++--
+ crypto/algif_skcipher.c |  4 ++--
+ include/crypto/if_alg.h |  3 +--
+ 4 files changed, 8 insertions(+), 16 deletions(-)
 
-diff --git a/net/tipc/socket.c b/net/tipc/socket.c
-index b0323ec7971e..1ea1666e8e95 100644
---- a/net/tipc/socket.c
-+++ b/net/tipc/socket.c
-@@ -694,10 +694,9 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index 50d75de539f5..330aef1cd08b 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -1060,19 +1060,12 @@ void af_alg_async_cb(struct crypto_async_request *_req, int err)
  }
+ EXPORT_SYMBOL_GPL(af_alg_async_cb);
  
- /**
-- * tipc_poll - read and possibly block on pollmask
-+ * tipc_poll - read pollmask
-  * @file: file structure associated with the socket
-  * @sock: socket for which to calculate the poll bits
-- * @wait: ???
-  *
-  * Returns pollmask value
-  *
-@@ -711,15 +710,12 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
-  * imply that the operation will succeed, merely that it should be performed
-  * and will not block.
-  */
--static __poll_t tipc_poll(struct file *file, struct socket *sock,
--			      poll_table *wait)
-+static __poll_t tipc_poll_mask(struct socket *sock, __poll_t events)
+-/**
+- * af_alg_poll - poll system call handler
+- */
+-__poll_t af_alg_poll(struct file *file, struct socket *sock,
+-			 poll_table *wait)
++__poll_t af_alg_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct tipc_sock *tsk = tipc_sk(sk);
- 	__poll_t revents = 0;
- 
--	sock_poll_wait(file, sk_sleep(sk), wait);
+ 	struct alg_sock *ask = alg_sk(sk);
+ 	struct af_alg_ctx *ctx = ask->private;
+-	__poll_t mask;
 -
- 	if (sk->sk_shutdown & RCV_SHUTDOWN)
- 		revents |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
- 	if (sk->sk_shutdown == SHUTDOWN_MASK)
-@@ -3019,7 +3015,7 @@ static const struct proto_ops msg_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= sock_no_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= sock_no_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3040,7 +3036,7 @@ static const struct proto_ops packet_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3061,7 +3057,7 @@ static const struct proto_ops stream_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
+ 
+ 	if (!ctx->more || ctx->used)
+ 		mask |= EPOLLIN | EPOLLRDNORM;
+@@ -1082,7 +1075,7 @@ __poll_t af_alg_poll(struct file *file, struct socket *sock,
+ 
+ 	return mask;
+ }
+-EXPORT_SYMBOL_GPL(af_alg_poll);
++EXPORT_SYMBOL_GPL(af_alg_poll_mask);
+ 
+ /**
+  * af_alg_alloc_areq - allocate struct af_alg_async_req
+diff --git a/crypto/algif_aead.c b/crypto/algif_aead.c
+index 4b07edd5a9ff..330cf9f2b767 100644
+--- a/crypto/algif_aead.c
++++ b/crypto/algif_aead.c
+@@ -375,7 +375,7 @@ static struct proto_ops algif_aead_ops = {
+ 	.sendmsg	=	aead_sendmsg,
+ 	.sendpage	=	af_alg_sendpage,
+ 	.recvmsg	=	aead_recvmsg,
+-	.poll		=	af_alg_poll,
++	.poll_mask	=	af_alg_poll_mask,
+ };
+ 
+ static int aead_check_key(struct socket *sock)
+@@ -471,7 +471,7 @@ static struct proto_ops algif_aead_ops_nokey = {
+ 	.sendmsg	=	aead_sendmsg_nokey,
+ 	.sendpage	=	aead_sendpage_nokey,
+ 	.recvmsg	=	aead_recvmsg_nokey,
+-	.poll		=	af_alg_poll,
++	.poll_mask	=	af_alg_poll_mask,
+ };
+ 
+ static void *aead_bind(const char *name, u32 type, u32 mask)
+diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
+index c4e885df4564..15cf3c5222e0 100644
+--- a/crypto/algif_skcipher.c
++++ b/crypto/algif_skcipher.c
+@@ -205,7 +205,7 @@ static struct proto_ops algif_skcipher_ops = {
+ 	.sendmsg	=	skcipher_sendmsg,
+ 	.sendpage	=	af_alg_sendpage,
+ 	.recvmsg	=	skcipher_recvmsg,
+-	.poll		=	af_alg_poll,
++	.poll_mask	=	af_alg_poll_mask,
+ };
+ 
+ static int skcipher_check_key(struct socket *sock)
+@@ -301,7 +301,7 @@ static struct proto_ops algif_skcipher_ops_nokey = {
+ 	.sendmsg	=	skcipher_sendmsg_nokey,
+ 	.sendpage	=	skcipher_sendpage_nokey,
+ 	.recvmsg	=	skcipher_recvmsg_nokey,
+-	.poll		=	af_alg_poll,
++	.poll_mask	=	af_alg_poll_mask,
+ };
+ 
+ static void *skcipher_bind(const char *name, u32 type, u32 mask)
+diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
+index 482461d8931d..cc414db9da0a 100644
+--- a/include/crypto/if_alg.h
++++ b/include/crypto/if_alg.h
+@@ -245,8 +245,7 @@ ssize_t af_alg_sendpage(struct socket *sock, struct page *page,
+ 			int offset, size_t size, int flags);
+ void af_alg_free_resources(struct af_alg_async_req *areq);
+ void af_alg_async_cb(struct crypto_async_request *_req, int err);
+-__poll_t af_alg_poll(struct file *file, struct socket *sock,
+-			 poll_table *wait);
++__poll_t af_alg_poll_mask(struct socket *sock, __poll_t events);
+ struct af_alg_async_req *af_alg_alloc_areq(struct sock *sk,
+ 					   unsigned int areqlen);
+ int af_alg_get_rsgl(struct sock *sk, struct msghdr *msg, int flags,
 -- 
 2.14.2
 
