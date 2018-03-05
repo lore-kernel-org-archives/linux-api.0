@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 36/36] random: convert to ->poll_mask
-Date: Mon,  5 Mar 2018 13:27:43 -0800
-Message-ID: <20180305212743.16664-37-hch@lst.de>
+Subject: [PATCH 08/36] aio: implement io_pgetevents
+Date: Mon,  5 Mar 2018 13:27:15 -0800
+Message-ID: <20180305212743.16664-9-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,100 +10,300 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The big change is that random_read_wait and random_write_wait are merged
-into a single waitqueue that uses keyed wakeups.  Because wait_event_*
-doesn't know about that this will lead to occassional spurious wakeups
-in _random_read and add_hwgenerator_randomness, but wait_event_* is
-designed to handle these and were are not in a a hot path there.
+This is the io_getevents equivalent of ppoll/pselect and allows to
+properly mix signals and aio completions (especially with IOCB_CMD_POLL)
+and atomically executes the following sequence:
+
+	sigset_t origmask;
+
+	pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
+	ret = io_getevents(ctx, min_nr, nr, events, timeout);
+	pthread_sigmask(SIG_SETMASK, &origmask, NULL);
+
+Note that unlike many other signal related calls we do not pass a sigmask
+size, as that would get us to 7 arguments, which aren't easily supported
+by the syscall infrastructure.  It seems a lot less painful to just add a
+new syscall variant in the unlikely case we're going to increase the
+sigset size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/char/random.c | 27 +++++++++++++++------------
- 1 file changed, 15 insertions(+), 12 deletions(-)
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/aio.c                               | 114 ++++++++++++++++++++++++++++++---
+ include/linux/compat.h                 |   7 ++
+ include/linux/syscalls.h               |   6 ++
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ include/uapi/linux/aio_abi.h           |   6 ++
+ kernel/sys_ni.c                        |   2 +
+ 8 files changed, 130 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index e5b3d3ba4660..840d80b64431 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -401,8 +401,7 @@ static struct poolinfo {
- /*
-  * Static global variables
-  */
--static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
--static DECLARE_WAIT_QUEUE_HEAD(random_write_wait);
-+static DECLARE_WAIT_QUEUE_HEAD(random_wait);
- static struct fasync_struct *fasync;
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 448ac2161112..5997c3e9ac3e 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -391,3 +391,4 @@
+ 382	i386	pkey_free		sys_pkey_free
+ 383	i386	statx			sys_statx
+ 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
++385	i386	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 5aef183e2f85..e995cd2b4e65 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -339,6 +339,7 @@
+ 330	common	pkey_alloc		sys_pkey_alloc
+ 331	common	pkey_free		sys_pkey_free
+ 332	common	statx			sys_statx
++333	common	io_pgetevents		sys_io_pgetevents
  
- static DEFINE_SPINLOCK(random_ready_list_lock);
-@@ -710,7 +709,7 @@ static void credit_entropy_bits(struct entropy_store *r, int nbits)
- 
- 		/* should we wake readers? */
- 		if (entropy_bits >= random_read_wakeup_bits) {
--			wake_up_interruptible(&random_read_wait);
-+			wake_up_interruptible_poll(&random_wait, POLLIN);
- 			kill_fasync(&fasync, SIGIO, POLL_IN);
- 		}
- 		/* If the input pool is getting full, send some
-@@ -1293,7 +1292,7 @@ static size_t account(struct entropy_store *r, size_t nbytes, int min,
- 	trace_debit_entropy(r->name, 8 * ibytes);
- 	if (ibytes &&
- 	    (r->entropy_count >> ENTROPY_SHIFT) < random_write_wakeup_bits) {
--		wake_up_interruptible(&random_write_wait);
-+		wake_up_interruptible_poll(&random_wait, POLLOUT);
- 		kill_fasync(&fasync, SIGIO, POLL_OUT);
- 	}
- 
-@@ -1748,7 +1747,7 @@ _random_read(int nonblock, char __user *buf, size_t nbytes)
- 		if (nonblock)
- 			return -EAGAIN;
- 
--		wait_event_interruptible(random_read_wait,
-+		wait_event_interruptible(random_wait,
- 			ENTROPY_BITS(&input_pool) >=
- 			random_read_wakeup_bits);
- 		if (signal_pending(current))
-@@ -1784,14 +1783,17 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/fs/aio.c b/fs/aio.c
+index 9d7d6e4cde87..da87cbf7c67a 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -1291,10 +1291,6 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
+ 		wait_event_interruptible_hrtimeout(ctx->wait,
+ 				aio_read_events(ctx, min_nr, nr, event, &ret),
+ 				until);
+-
+-	if (!ret && signal_pending(current))
+-		ret = -EINTR;
+-
  	return ret;
  }
  
-+static struct wait_queue_head *
-+random_get_poll_head(struct file *file, __poll_t events)
-+{
-+	return &random_wait;
+@@ -1874,13 +1870,60 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
+ 		struct timespec __user *, timeout)
+ {
+ 	struct timespec64	ts;
++	int			ret;
++
++	if (timeout && unlikely(get_timespec64(&ts, timeout)))
++		return -EFAULT;
++
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
++	if (!ret && signal_pending(current))
++		ret = -EINTR;
++	return ret;
 +}
 +
- static __poll_t
--random_poll(struct file *file, poll_table * wait)
-+random_poll_mask(struct file *file, __poll_t events)
- {
--	__poll_t mask;
-+	__poll_t mask = 0;
++SYSCALL_DEFINE6(io_pgetevents,
++		aio_context_t, ctx_id,
++		long, min_nr,
++		long, nr,
++		struct io_event __user *, events,
++		struct timespec __user *, timeout,
++		const struct __aio_sigset __user *, usig)
++{
++	struct __aio_sigset	ksig = { NULL, };
++	sigset_t		ksigmask, sigsaved;
++	struct timespec64	ts;
++	int ret;
++
++	if (timeout && unlikely(get_timespec64(&ts, timeout)))
++		return -EFAULT;
  
--	poll_wait(file, &random_read_wait, wait);
--	poll_wait(file, &random_write_wait, wait);
--	mask = 0;
- 	if (ENTROPY_BITS(&input_pool) >= random_read_wakeup_bits)
- 		mask |= EPOLLIN | EPOLLRDNORM;
- 	if (ENTROPY_BITS(&input_pool) < random_write_wakeup_bits)
-@@ -1890,7 +1892,8 @@ static int random_fasync(int fd, struct file *filp, int on)
- const struct file_operations random_fops = {
- 	.read  = random_read,
- 	.write = random_write,
--	.poll  = random_poll,
-+	.get_poll_head  = random_get_poll_head,
-+	.poll_mask  = random_poll_mask,
- 	.unlocked_ioctl = random_ioctl,
- 	.fasync = random_fasync,
- 	.llseek = noop_llseek,
-@@ -2223,7 +2226,7 @@ void add_hwgenerator_randomness(const char *buffer, size_t count,
- 	 * We'll be woken up again once below random_write_wakeup_thresh,
- 	 * or when the calling thread is about to terminate.
- 	 */
--	wait_event_interruptible(random_write_wait, kthread_should_stop() ||
-+	wait_event_interruptible(random_wait, kthread_should_stop() ||
- 			ENTROPY_BITS(&input_pool) <= random_write_wakeup_bits);
- 	mix_pool_bytes(poolp, buffer, count);
- 	credit_entropy_bits(poolp, entropy);
+-	if (timeout) {
+-		if (unlikely(get_timespec64(&ts, timeout)))
++	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
++		return -EFAULT;
++
++	if (ksig.sigmask) {
++		if (ksig.sigsetsize != sizeof(sigset_t))
++			return -EINVAL;
++		if (copy_from_user(&ksigmask, ksig.sigmask, sizeof(ksigmask)))
+ 			return -EFAULT;
++		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
++		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
++	}
++
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
++	if (signal_pending(current)) {
++		if (ksig.sigmask) {
++			current->saved_sigmask = sigsaved;
++			set_restore_sigmask();
++		}
++
++		if (!ret)
++			ret = -ERESTARTNOHAND;
++	} else {
++		if (ksig.sigmask)
++			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
+ 	}
+ 
+-	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
++	return ret;
+ }
+ 
+ #ifdef CONFIG_COMPAT
+@@ -1891,13 +1934,64 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
+ 		       struct compat_timespec __user *, timeout)
+ {
+ 	struct timespec64 t;
++	int ret;
++
++	if (timeout && compat_get_timespec64(&t, timeout))
++		return -EFAULT;
++
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	if (!ret && signal_pending(current))
++		ret = -EINTR;
++	return ret;
++}
++
++
++struct __compat_aio_sigset {
++	compat_sigset_t __user	*sigmask;
++	compat_size_t		sigsetsize;
++};
++
++COMPAT_SYSCALL_DEFINE6(io_pgetevents,
++		compat_aio_context_t, ctx_id,
++		compat_long_t, min_nr,
++		compat_long_t, nr,
++		struct io_event __user *, events,
++		struct compat_timespec __user *, timeout,
++		const struct __compat_aio_sigset __user *, usig)
++{
++	struct __compat_aio_sigset ksig = { NULL, };
++	sigset_t ksigmask, sigsaved;
++	struct timespec64 t;
++	int ret;
++
++	if (timeout && compat_get_timespec64(&t, timeout))
++		return -EFAULT;
+ 
+-	if (timeout) {
+-		if (compat_get_timespec64(&t, timeout))
++	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
++		return -EFAULT;
++
++	if (ksig.sigmask) {
++		if (ksig.sigsetsize != sizeof(compat_sigset_t))
++			return -EINVAL;
++		if (get_compat_sigset(&ksigmask, ksig.sigmask))
+ 			return -EFAULT;
++		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
++		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
++	}
+ 
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	if (signal_pending(current)) {
++		if (ksig.sigmask) {
++			current->saved_sigmask = sigsaved;
++			set_restore_sigmask();
++		}
++		if (!ret)
++			ret = -ERESTARTNOHAND;
++	} else {
++		if (ksig.sigmask)
++			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
+ 	}
+ 
+-	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	return ret;
+ }
+ #endif
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index 8a9643857c4a..bfb8a94fbabd 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -303,6 +303,7 @@ extern int put_compat_rusage(const struct rusage *,
+ 			     struct compat_rusage __user *);
+ 
+ struct compat_siginfo;
++struct __compat_aio_sigset;
+ 
+ extern asmlinkage long compat_sys_waitid(int, compat_pid_t,
+ 		struct compat_siginfo __user *, int,
+@@ -634,6 +635,12 @@ asmlinkage long compat_sys_io_getevents(compat_aio_context_t ctx_id,
+ 					compat_long_t nr,
+ 					struct io_event __user *events,
+ 					struct compat_timespec __user *timeout);
++asmlinkage long compat_sys_io_pgetevents(compat_aio_context_t ctx_id,
++					compat_long_t min_nr,
++					compat_long_t nr,
++					struct io_event __user *events,
++					struct compat_timespec __user *timeout,
++					const struct __compat_aio_sigset __user *usig);
+ asmlinkage long compat_sys_io_submit(compat_aio_context_t ctx_id, int nr,
+ 				     u32 __user *iocb);
+ asmlinkage long compat_sys_mount(const char __user *dev_name,
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index a78186d826d7..8515ec53c81b 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -539,6 +539,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
+ 				long nr,
+ 				struct io_event __user *events,
+ 				struct timespec __user *timeout);
++asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
++				long min_nr,
++				long nr,
++				struct io_event __user *events,
++				struct timespec __user *timeout,
++				const struct __aio_sigset *sig);
+ asmlinkage long sys_io_submit(aio_context_t, long,
+ 				struct iocb __user * __user *);
+ asmlinkage long sys_io_cancel(aio_context_t ctx_id, struct iocb __user *iocb,
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 8b87de067bc7..ce2ebbeece10 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -732,9 +732,11 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
+ __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+ #define __NR_statx 291
+ __SYSCALL(__NR_statx,     sys_statx)
++#define __NR_io_pgetevents 292
++__SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 292
++#define __NR_syscalls 293
+ 
+ /*
+  * All syscalls below here should go away really,
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index a04adbc70ddf..2c0a3415beee 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -29,6 +29,7 @@
+ 
+ #include <linux/types.h>
+ #include <linux/fs.h>
++#include <linux/signal.h>
+ #include <asm/byteorder.h>
+ 
+ typedef __kernel_ulong_t aio_context_t;
+@@ -108,5 +109,10 @@ struct iocb {
+ #undef IFBIG
+ #undef IFLITTLE
+ 
++struct __aio_sigset {
++	sigset_t __user	*sigmask;
++	size_t		sigsetsize;
++};
++
+ #endif /* __LINUX__AIO_ABI_H */
+ 
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index b5189762d275..8f7705559b38 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -151,9 +151,11 @@ cond_syscall(sys_io_destroy);
+ cond_syscall(sys_io_submit);
+ cond_syscall(sys_io_cancel);
+ cond_syscall(sys_io_getevents);
++cond_syscall(sys_io_pgetevents);
+ cond_syscall(compat_sys_io_setup);
+ cond_syscall(compat_sys_io_submit);
+ cond_syscall(compat_sys_io_getevents);
++cond_syscall(compat_sys_io_pgetevents);
+ cond_syscall(sys_sysfs);
+ cond_syscall(sys_syslog);
+ cond_syscall(sys_process_vm_readv);
 -- 
 2.14.2
 
