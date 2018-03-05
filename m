@@ -1,65 +1,102 @@
-From: Mimi Zohar <zohar-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: [RFC PATCH V1 00/12] audit: implement container id
-Date: Mon, 05 Mar 2018 08:27:39 -0500
-Message-ID: <1520256459.10396.283.camel@linux.vnet.ibm.com>
-References: <cover.1519930146.git.rgb@redhat.com>
-	<1520200557.10396.257.camel@linux.vnet.ibm.com>
-	<20180305033128.6sqreoo5olqwq5og@madcap2.tricolour.ca>
+From: Daniel Borkmann <daniel@iogearbox.net>
+Subject: Re: [PATCH bpf-next 0/5] bpf, tracing: introduce bpf raw tracepoints
+Date: Mon, 5 Mar 2018 14:36:07 +0100
+Message-ID: <9bb38939-c357-4db5-6cf4-7b42187f6c7c@iogearbox.net>
+References: <20180301041957.399230-1-ast@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20180305033128.6sqreoo5olqwq5og-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: mszeredi-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, trondmy-7I+n7zu2hftEKMMhf/gKZA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180301041957.399230-1-ast@kernel.org>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net
+Cc: torvalds@linux-foundation.org, peterz@infradead.org, mingo@kernel.org, rostedt@goodmis.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-T24gU3VuLCAyMDE4LTAzLTA0IGF0IDIyOjMxIC0wNTAwLCBSaWNoYXJkIEd1eSBCcmlnZ3Mgd3Jv
-dGU6Cj4gT24gMjAxOC0wMy0wNCAxNjo1NSwgTWltaSBab2hhciB3cm90ZToKPiA+IE9uIFRodSwg
-MjAxOC0wMy0wMSBhdCAxNDo0MSAtMDUwMCwgUmljaGFyZCBHdXkgQnJpZ2dzIHdyb3RlOgo+ID4g
-PiBJbXBsZW1lbnQgYXVkaXQga2VybmVsIGNvbnRhaW5lciBJRC4KPiA+ID4gCj4gPiA+IFRoaXMg
-cGF0Y2hzZXQgaXMgYSBwcmVsaW1pbmFyeSBSRkMgYmFzZWQgb24gdGhlIHByb3Bvc2FsIGRvY3Vt
-ZW50IChWMykKPiA+ID4gcG9zdGVkOgo+ID4gPiAJaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNo
-aXZlcy9saW51eC1hdWRpdC8yMDE4LUphbnVhcnkvbXNnMDAwMTQuaHRtbAo+ID4gPiAKPiA+ID4g
-VGhlIGZpcnN0IHBhdGNoIGltcGxlbWVudHMgdGhlIHByb2MgZnMgd3JpdGUgdG8gc2V0IHRoZSBh
-dWRpdCBjb250YWluZXIKPiA+ID4gSUQgb2YgYSBwcm9jZXNzLCBlbWl0dGluZyBhbiBBVURJVF9D
-T05UQUlORVIgcmVjb3JkLgo+ID4gPiAKPiA+ID4gVGhlIHNlY29uZCBpbXBsZW1lbnRzIGFuIGF1
-eGlsaWFyeSBzeXNjYWxsIHJlY29yZCBBVURJVF9DT05UQUlORVJfSU5GTwo+ID4gPiBpZiBhIGNv
-bnRhaW5lciBJRCBpcyBwcmVzZW50IG9uIGEgdGFzay4KPiA+ID4gCj4gPiA+IFRoZSB0aGlyZCBh
-ZGRzIGZpbHRlcmluZyB0byB0aGUgZXhpdCwgZXhjbHVkZSBhbmQgdXNlciBsaXN0cy4KPiA+ID4g
-Cj4gPiA+IFRoZSA0dGgsIGltcGxlbWVudHMgcmVhZGluZyB0aGUgY29udGFpbmVyIElEIGZyb20g
-dGhlIHByb2MgZmlsZXN5c3RlbQo+ID4gPiBmb3IgZGVidWdnaW5nLiAgVGhpcyBpc24ndCBwbGFu
-bmVkIGZvciB1cHN0cmVhbSBpbmNsdXNpb24uCj4gPiA+IAo+ID4gPiBUaGUgNXRoIGFkZHMgc2ln
-bmFsIGFuZCBwdHJhY2Ugc3VwcG9ydC4KPiA+ID4gCj4gPiA+IFRoZSA2dGggYXR0ZW1wdHMgdG8g
-Y3JlYXRlIGEgbG9jYWwgYXVkaXQgY29udGV4dCB0byBiZSBhYmxlIHRvIGJpbmQgYQo+ID4gPiBz
-dGFuZGFsb25lIHJlY29yZCB3aXRoIHRoZSBjb250YWluZXIgSUQgcmVjb3JkLgo+ID4gPiAKPiA+
-ID4gVGhlIDd0aCwgOHRoLCA5dGgsIDEwdGggcGF0Y2hlcyBhZGQgY29udGFpbmVyIElEIHJlY29y
-ZHMgdG8gc3RhbmRhbG9uZQo+ID4gPiByZWNvcmRzLiAgU29tZSBvZiB0aGVzZSBtYXkgZW5kIHVw
-IGJlaW5nIHN5c2NhbGwgYXV4aWxpYXJ5IHJlY29yZHMgYW5kCj4gPiA+IHdvbid0IG5lZWQgdGhp
-cyBzcGVjaWZpYyBzdXBwb3J0IHNpbmNlIHRoZXknbGwgYmUgc3VwcG9ydGVkIHZpYQo+ID4gPiBz
-eXNjYWxscy4KPiA+ID4gCj4gPiA+IFRoZSAxMXRoIGlzIGEgdGVtcG9yYXJ5IHdvcmthcm91bmQg
-ZHVlIHRvIHRoZSBBVURJVF9DT05UQUlORVIgcmVjb3Jkcwo+ID4gPiBub3Qgc2hvd2luZyB1cCBh
-cyBkbyBBVURJVF9MT0dJTiByZWNvcmRzLiAgSSBzdXNwZWN0IHRoaXMgaXMgZHVlIHRvIGl0cwo+
-ID4gPiByYW5nZSAoMTAwMCB2cyAxMzAwKSwgYnV0IHRoZSBpbnRlbnQgaXMgdG8gc29sdmUgaXQu
-Cj4gPiA+IAo+ID4gPiBUaGUgMTJ0aCBhZGRzIGRlYnVnIGluZm9ybWF0aW9uIG5vdCBpbnRlbmRl
-ZCBmb3IgdXBzdHJlYW0gZm9yIHRob3NlCj4gPiA+IGJyYXZlIHNvdWxzIHdhbnRpbmcgdG8gdGlu
-a2VyIHdpdGggaXQgaW4gdGhpcyBlYXJseSBzdGF0ZS4KPiA+ID4gCj4gPiA+IEZlZWRiYWNrIHBs
-ZWFzZSEKPiA+IAo+ID4gV2hpY2ggdHJlZSBjYW4gdGhpcyBwYXRjaCBzZXQgYmUgYXBwbGllZCB0
-bz8KPiAKPiBnaXQ6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvcGNt
-b29yZS9hdWRpdC5naXQgbmV4dAoKVGhhbmtzLCB0aGF0IHdvcmtlZC4gwqBJbiBjYXNlIGFueW9u
-ZSBlbHNlIGlzIHRyeWluZyB0byBhcHBseSB0aGVzZQpwYXRjaGVzIHRvIGEgNC4xNi4wLXJjIGJh
-c2VkIGtlcm5lbCwgY29tbWl0wqA0ZTdlM2FkYmJhNTIgKCJFeHBhbmQKdmFyaW91cyBJTklUXyog
-bWFjcm9zIGFuZCByZW1vdmUiKSBtb3ZlZCAuc2Vzc2lvbmlkCnRvwqBpbml0L2luaXRfdGFzay5j
-LgoKTWltaQoKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18K
-Q29udGFpbmVycyBtYWlsaW5nIGxpc3QKQ29udGFpbmVyc0BsaXN0cy5saW51eC1mb3VuZGF0aW9u
-Lm9yZwpodHRwczovL2xpc3RzLmxpbnV4Zm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0aW5mby9j
-b250YWluZXJz
+On 03/01/2018 05:19 AM, Alexei Starovoitov wrote:
+> This patch set is a different way to address the pressing need to access
+> task_struct pointers in sched tracepoints from bpf programs.
+> 
+> The first approach simply added these pointers to sched tracepoints:
+> https://lkml.org/lkml/2017/12/14/753
+> which Peter nacked.
+> Few options were discussed and eventually the discussion converged on
+> doing bpf specific tracepoint_probe_register() probe functions.
+> Details here:
+> https://lkml.org/lkml/2017/12/20/929
+
+Ping, Peter/Steven. If you have a chance, please review the series.
+
+> Patch 1 is kernel wide cleanup of pass-struct-by-value into
+> pass-struct-by-reference into tracepoints.
+> 
+> Patch 2 minor prep work to expose number of arguments passed
+> into tracepoints.
+> 
+> Patch 3 introduces BPF_RAW_TRACEPOINT api.
+> the auto-cleanup and multiple concurrent users are must have
+> features of tracing api. For bpf raw tracepoints it looks like:
+>   // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
+>   prog_fd = bpf_prog_load(...);
+> 
+>   // receive anon_inode fd for given bpf_raw_tracepoint
+>   raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception");
+> 
+>   // attach bpf program to given tracepoint
+>   bpf_prog_attach(prog_fd, raw_tp_fd, BPF_RAW_TRACEPOINT);
+> 
+> Ctrl-C of tracing daemon or cmdline tool will automatically
+> detach bpf program, unload it and unregister tracepoint probe.
+> More details in patch 3.
+> 
+> Patch 4, 5 - user space lib and tests
+> 
+> samples/bpf/test_overhead performance on 1 cpu:
+> 
+> tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
+> task_rename   1.1M   769K        947K            1.0M
+> urandom_read  789K   697K        750K            755K
+> 
+> Alexei Starovoitov (5):
+>   treewide: remove struct-pass-by-value from tracepoints arguments
+>   tracepoint: compute num_args at build time
+>   bpf: introduce BPF_RAW_TRACEPOINT
+>   libbpf: add bpf_raw_tracepoint_open helper
+>   samples/bpf: raw tracepoint test
+> 
+>  arch/x86/xen/mmu_pv.c                    |  16 +--
+>  drivers/gpu/drm/i915/i915_trace.h        |  13 +-
+>  drivers/infiniband/hw/hfi1/file_ops.c    |   2 +-
+>  drivers/infiniband/hw/hfi1/trace_ctxts.h |  12 +-
+>  drivers/s390/cio/ioasm.c                 |  18 +--
+>  drivers/s390/cio/trace.h                 |  50 ++++----
+>  fs/dax.c                                 |   2 +-
+>  include/linux/bpf_types.h                |   1 +
+>  include/linux/trace_events.h             |  57 +++++++++
+>  include/linux/tracepoint-defs.h          |   1 +
+>  include/linux/tracepoint.h               |  32 +++--
+>  include/trace/bpf_probe.h                |  87 +++++++++++++
+>  include/trace/define_trace.h             |  15 ++-
+>  include/trace/events/f2fs.h              |   2 +-
+>  include/trace/events/fs_dax.h            |   6 +-
+>  include/trace/events/rcu.h               |   4 +-
+>  include/trace/events/xen.h               |  32 ++---
+>  include/uapi/linux/bpf.h                 |  11 ++
+>  kernel/bpf/syscall.c                     | 108 ++++++++++++++++
+>  kernel/rcu/tree.c                        |  10 +-
+>  kernel/trace/bpf_trace.c                 | 211 +++++++++++++++++++++++++++++++
+>  kernel/tracepoint.c                      |  27 ++--
+>  net/wireless/trace.h                     |   2 +-
+>  samples/bpf/Makefile                     |   1 +
+>  samples/bpf/bpf_load.c                   |  13 ++
+>  samples/bpf/test_overhead_raw_tp_kern.c  |  17 +++
+>  samples/bpf/test_overhead_user.c         |  12 ++
+>  sound/firewire/amdtp-stream-trace.h      |   2 +-
+>  tools/include/uapi/linux/bpf.h           |  11 ++
+>  tools/lib/bpf/bpf.c                      |  10 ++
+>  tools/lib/bpf/bpf.h                      |   1 +
+>  31 files changed, 677 insertions(+), 109 deletions(-)
+>  create mode 100644 include/trace/bpf_probe.h
+>  create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
+> 
