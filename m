@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 09/36] fs: unexport poll_schedule_timeout
-Date: Mon,  5 Mar 2018 13:27:16 -0800
-Message-ID: <20180305212743.16664-10-hch@lst.de>
+Subject: [PATCH 31/36] net/rxrpc: convert to ->poll_mask
+Date: Mon,  5 Mar 2018 13:27:38 -0800
+Message-ID: <20180305212743.16664-32-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,48 +10,42 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-No users outside of select.c.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/select.c          | 3 +--
- include/linux/poll.h | 2 --
- 2 files changed, 1 insertion(+), 4 deletions(-)
+ net/rxrpc/af_rxrpc.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/fs/select.c b/fs/select.c
-index b6c36254028a..686de7b3a1db 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
- 	add_wait_queue(wait_address, &entry->wait);
- }
- 
--int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
-+static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
- 			  ktime_t *expires, unsigned long slack)
+diff --git a/net/rxrpc/af_rxrpc.c b/net/rxrpc/af_rxrpc.c
+index 0c9c18aa7c77..d2440d5c3ce8 100644
+--- a/net/rxrpc/af_rxrpc.c
++++ b/net/rxrpc/af_rxrpc.c
+@@ -729,15 +729,11 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
+ /*
+  * permit an RxRPC socket to be polled
+  */
+-static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
+-			       poll_table *wait)
++static __poll_t rxrpc_poll_mask(struct socket *sock, __poll_t events)
  {
- 	int rc = -EINTR;
-@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 	struct sock *sk = sock->sk;
+ 	struct rxrpc_sock *rx = rxrpc_sk(sk);
+-	__poll_t mask;
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
  
- 	return rc;
- }
--EXPORT_SYMBOL(poll_schedule_timeout);
- 
- /**
-  * poll_select_set_timeout - helper function to setup the timeout value
-diff --git a/include/linux/poll.h b/include/linux/poll.h
-index f45ebd017eaa..a3576da63377 100644
---- a/include/linux/poll.h
-+++ b/include/linux/poll.h
-@@ -96,8 +96,6 @@ struct poll_wqueues {
- 
- extern void poll_initwait(struct poll_wqueues *pwq);
- extern void poll_freewait(struct poll_wqueues *pwq);
--extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
--				 ktime_t *expires, unsigned long slack);
- extern u64 select_estimate_accuracy(struct timespec64 *tv);
- 
- #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
+ 	/* the socket is readable if there are any messages waiting on the Rx
+ 	 * queue */
+@@ -940,7 +936,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
+ 	.socketpair	= sock_no_socketpair,
+ 	.accept		= sock_no_accept,
+ 	.getname	= sock_no_getname,
+-	.poll		= rxrpc_poll,
++	.poll_mask	= rxrpc_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.listen		= rxrpc_listen,
+ 	.shutdown	= rxrpc_shutdown,
 -- 
 2.14.2
 
