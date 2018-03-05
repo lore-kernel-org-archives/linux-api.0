@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 19/36] net/unix: convert to ->poll_mask
-Date: Mon,  5 Mar 2018 13:27:26 -0800
-Message-ID: <20180305212743.16664-20-hch@lst.de>
+Subject: [PATCH 33/36] pipe: convert to ->poll_mask
+Date: Mon,  5 Mar 2018 13:27:40 -0800
+Message-ID: <20180305212743.16664-34-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -12,96 +12,54 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/unix/af_unix.c | 30 +++++++++++-------------------
- 1 file changed, 11 insertions(+), 19 deletions(-)
+ fs/pipe.c | 22 +++++++++++++---------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
 
-diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-index 2d465bdeccbc..619c6921dd46 100644
---- a/net/unix/af_unix.c
-+++ b/net/unix/af_unix.c
-@@ -638,9 +638,8 @@ static int unix_stream_connect(struct socket *, struct sockaddr *,
- static int unix_socketpair(struct socket *, struct socket *);
- static int unix_accept(struct socket *, struct socket *, int, bool);
- static int unix_getname(struct socket *, struct sockaddr *, int *, int);
--static __poll_t unix_poll(struct file *, struct socket *, poll_table *);
--static __poll_t unix_dgram_poll(struct file *, struct socket *,
--				    poll_table *);
-+static __poll_t unix_poll_mask(struct socket *, __poll_t);
-+static __poll_t unix_dgram_poll_mask(struct socket *, __poll_t);
- static int unix_ioctl(struct socket *, unsigned int, unsigned long);
- static int unix_shutdown(struct socket *, int);
- static int unix_stream_sendmsg(struct socket *, struct msghdr *, size_t);
-@@ -681,7 +680,7 @@ static const struct proto_ops unix_stream_ops = {
- 	.socketpair =	unix_socketpair,
- 	.accept =	unix_accept,
- 	.getname =	unix_getname,
--	.poll =		unix_poll,
-+	.poll_mask =	unix_poll_mask,
- 	.ioctl =	unix_ioctl,
- 	.listen =	unix_listen,
- 	.shutdown =	unix_shutdown,
-@@ -704,7 +703,7 @@ static const struct proto_ops unix_dgram_ops = {
- 	.socketpair =	unix_socketpair,
- 	.accept =	sock_no_accept,
- 	.getname =	unix_getname,
--	.poll =		unix_dgram_poll,
-+	.poll_mask =	unix_dgram_poll_mask,
- 	.ioctl =	unix_ioctl,
- 	.listen =	sock_no_listen,
- 	.shutdown =	unix_shutdown,
-@@ -726,7 +725,7 @@ static const struct proto_ops unix_seqpacket_ops = {
- 	.socketpair =	unix_socketpair,
- 	.accept =	unix_accept,
- 	.getname =	unix_getname,
--	.poll =		unix_dgram_poll,
-+	.poll_mask =	unix_dgram_poll_mask,
- 	.ioctl =	unix_ioctl,
- 	.listen =	unix_listen,
- 	.shutdown =	unix_shutdown,
-@@ -2640,13 +2639,10 @@ static int unix_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
- 	return err;
- }
- 
--static __poll_t unix_poll(struct file *file, struct socket *sock, poll_table *wait)
-+static __poll_t unix_poll_mask(struct socket *sock, __poll_t events)
- {
- 	struct sock *sk = sock->sk;
--	__poll_t mask;
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	__poll_t mask = 0;
- 
- 	/* exceptional events? */
- 	if (sk->sk_err)
-@@ -2675,15 +2671,11 @@ static __poll_t unix_poll(struct file *file, struct socket *sock, poll_table *wa
- 	return mask;
- }
- 
--static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
--				    poll_table *wait)
-+static __poll_t unix_dgram_poll_mask(struct socket *sock, __poll_t events)
- {
- 	struct sock *sk = sock->sk, *other;
--	unsigned int writable;
--	__poll_t mask;
--
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	int writable;
-+	__poll_t mask = 0;
- 
- 	/* exceptional events? */
- 	if (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
-@@ -2709,7 +2701,7 @@ static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
+diff --git a/fs/pipe.c b/fs/pipe.c
+index 7b1954caf388..81937590ea0a 100644
+--- a/fs/pipe.c
++++ b/fs/pipe.c
+@@ -509,19 +509,22 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
  	}
+ }
  
- 	/* No write status requested, avoid expensive OUT tests. */
--	if (!(poll_requested_events(wait) & (EPOLLWRBAND|EPOLLWRNORM|EPOLLOUT)))
-+	if (!(events & (EPOLLWRBAND|EPOLLWRNORM|EPOLLOUT)))
- 		return mask;
+-/* No kernel lock held - fine */
+-static __poll_t
+-pipe_poll(struct file *filp, poll_table *wait)
++static struct wait_queue_head *
++pipe_get_poll_head(struct file *filp, __poll_t events)
+ {
+-	__poll_t mask;
+ 	struct pipe_inode_info *pipe = filp->private_data;
+-	int nrbufs;
  
- 	writable = unix_writable(sk);
+-	poll_wait(filp, &pipe->wait, wait);
++	return &pipe->wait;
++}
++
++/* No kernel lock held - fine */
++static __poll_t pipe_poll_mask(struct file *filp, __poll_t events)
++{
++	struct pipe_inode_info *pipe = filp->private_data;
++	int nrbufs = pipe->nrbufs;
++	__poll_t mask = 0;
+ 
+ 	/* Reading only -- no need for acquiring the semaphore.  */
+-	nrbufs = pipe->nrbufs;
+-	mask = 0;
+ 	if (filp->f_mode & FMODE_READ) {
+ 		mask = (nrbufs > 0) ? EPOLLIN | EPOLLRDNORM : 0;
+ 		if (!pipe->writers && filp->f_version != pipe->w_counter)
+@@ -1015,7 +1018,8 @@ const struct file_operations pipefifo_fops = {
+ 	.llseek		= no_llseek,
+ 	.read_iter	= pipe_read,
+ 	.write_iter	= pipe_write,
+-	.poll		= pipe_poll,
++	.get_poll_head	= pipe_get_poll_head,
++	.poll_mask	= pipe_poll_mask,
+ 	.unlocked_ioctl	= pipe_ioctl,
+ 	.release	= pipe_release,
+ 	.fasync		= pipe_fasync,
 -- 
 2.14.2
 
