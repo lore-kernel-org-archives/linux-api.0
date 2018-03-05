@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 33/36] pipe: convert to ->poll_mask
-Date: Mon,  5 Mar 2018 13:27:40 -0800
-Message-ID: <20180305212743.16664-34-hch@lst.de>
+Subject: [PATCH 09/36] fs: unexport poll_schedule_timeout
+Date: Mon,  5 Mar 2018 13:27:16 -0800
+Message-ID: <20180305212743.16664-10-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,56 +10,48 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+No users outside of select.c.
+
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/pipe.c | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
+ fs/select.c          | 3 +--
+ include/linux/poll.h | 2 --
+ 2 files changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/fs/pipe.c b/fs/pipe.c
-index 7b1954caf388..81937590ea0a 100644
---- a/fs/pipe.c
-+++ b/fs/pipe.c
-@@ -509,19 +509,22 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	}
+diff --git a/fs/select.c b/fs/select.c
+index b6c36254028a..686de7b3a1db 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
+ 	add_wait_queue(wait_address, &entry->wait);
  }
  
--/* No kernel lock held - fine */
--static __poll_t
--pipe_poll(struct file *filp, poll_table *wait)
-+static struct wait_queue_head *
-+pipe_get_poll_head(struct file *filp, __poll_t events)
+-int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
++static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 			  ktime_t *expires, unsigned long slack)
  {
--	__poll_t mask;
- 	struct pipe_inode_info *pipe = filp->private_data;
--	int nrbufs;
+ 	int rc = -EINTR;
+@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
  
--	poll_wait(filp, &pipe->wait, wait);
-+	return &pipe->wait;
-+}
-+
-+/* No kernel lock held - fine */
-+static __poll_t pipe_poll_mask(struct file *filp, __poll_t events)
-+{
-+	struct pipe_inode_info *pipe = filp->private_data;
-+	int nrbufs = pipe->nrbufs;
-+	__poll_t mask = 0;
+ 	return rc;
+ }
+-EXPORT_SYMBOL(poll_schedule_timeout);
  
- 	/* Reading only -- no need for acquiring the semaphore.  */
--	nrbufs = pipe->nrbufs;
--	mask = 0;
- 	if (filp->f_mode & FMODE_READ) {
- 		mask = (nrbufs > 0) ? EPOLLIN | EPOLLRDNORM : 0;
- 		if (!pipe->writers && filp->f_version != pipe->w_counter)
-@@ -1015,7 +1018,8 @@ const struct file_operations pipefifo_fops = {
- 	.llseek		= no_llseek,
- 	.read_iter	= pipe_read,
- 	.write_iter	= pipe_write,
--	.poll		= pipe_poll,
-+	.get_poll_head	= pipe_get_poll_head,
-+	.poll_mask	= pipe_poll_mask,
- 	.unlocked_ioctl	= pipe_ioctl,
- 	.release	= pipe_release,
- 	.fasync		= pipe_fasync,
+ /**
+  * poll_select_set_timeout - helper function to setup the timeout value
+diff --git a/include/linux/poll.h b/include/linux/poll.h
+index f45ebd017eaa..a3576da63377 100644
+--- a/include/linux/poll.h
++++ b/include/linux/poll.h
+@@ -96,8 +96,6 @@ struct poll_wqueues {
+ 
+ extern void poll_initwait(struct poll_wqueues *pwq);
+ extern void poll_freewait(struct poll_wqueues *pwq);
+-extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+-				 ktime_t *expires, unsigned long slack);
+ extern u64 select_estimate_accuracy(struct timespec64 *tv);
+ 
+ #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
 -- 
 2.14.2
 
