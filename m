@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 30/36] net/iucv: convert to ->poll_mask
-Date: Mon,  5 Mar 2018 13:27:37 -0800
-Message-ID: <20180305212743.16664-31-hch@lst.de>
+Subject: [PATCH 05/36] aio: simplify cancellation
+Date: Mon,  5 Mar 2018 13:27:12 -0800
+Message-ID: <20180305212743.16664-6-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,54 +10,76 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- include/net/iucv/af_iucv.h | 2 --
- net/iucv/af_iucv.c         | 7 ++-----
- 2 files changed, 2 insertions(+), 7 deletions(-)
+With the current aio code there is no need for the magic KIOCB_CANCELLED
+value, as a cancelation just kicks the driver to queue the completion
+ASAP, with all actual completion handling done in another thread. Given
+that both the completion path and cancelation take the context lock there
+is no need for magic cmpxchg loops either.
 
-diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
-index f4c21b5a1242..b0eaeb02d46d 100644
---- a/include/net/iucv/af_iucv.h
-+++ b/include/net/iucv/af_iucv.h
-@@ -153,8 +153,6 @@ struct iucv_sock_list {
- 	atomic_t	  autobind_name;
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
+---
+ fs/aio.c | 37 +++++++++----------------------------
+ 1 file changed, 9 insertions(+), 28 deletions(-)
+
+diff --git a/fs/aio.c b/fs/aio.c
+index c32c315f05b5..2d40cf5dd4ec 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -156,19 +156,6 @@ struct kioctx {
+ 	unsigned		id;
  };
  
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait);
- void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
- void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
- void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
-diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
-index 1e8cc7bcbca3..539a312dc481 100644
---- a/net/iucv/af_iucv.c
-+++ b/net/iucv/af_iucv.c
-@@ -1489,14 +1489,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
- 	return 0;
+-/*
+- * We use ki_cancel == KIOCB_CANCELLED to indicate that a kiocb has been either
+- * cancelled or completed (this makes a certain amount of sense because
+- * successful cancellation - io_cancel() - does deliver the completion to
+- * userspace).
+- *
+- * And since most things don't implement kiocb cancellation and we'd really like
+- * kiocb completion to be lockless when possible, we use ki_cancel to
+- * synchronize cancellation and completion - we only set it to KIOCB_CANCELLED
+- * with xchg() or cmpxchg(), see batch_complete_aio() and kiocb_cancel().
+- */
+-#define KIOCB_CANCELLED		((void *) (~0ULL))
+-
+ struct aio_kiocb {
+ 	union {
+ 		struct kiocb		rw;
+@@ -565,24 +552,18 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+ }
+ EXPORT_SYMBOL(kiocb_set_cancel_fn);
+ 
++/*
++ * Only cancel if there ws a ki_cancel function to start with, and we
++ * are the one how managed to clear it (to protect against simulatinious
++ * cancel calls).
++ */
+ static int kiocb_cancel(struct aio_kiocb *kiocb)
+ {
+-	kiocb_cancel_fn *old, *cancel;
+-
+-	/*
+-	 * Don't want to set kiocb->ki_cancel = KIOCB_CANCELLED unless it
+-	 * actually has a cancel function, hence the cmpxchg()
+-	 */
+-
+-	cancel = READ_ONCE(kiocb->ki_cancel);
+-	do {
+-		if (!cancel || cancel == KIOCB_CANCELLED)
+-			return -EINVAL;
+-
+-		old = cancel;
+-		cancel = cmpxchg(&kiocb->ki_cancel, old, KIOCB_CANCELLED);
+-	} while (cancel != old);
++	kiocb_cancel_fn *cancel = kiocb->ki_cancel;
+ 
++	if (!cancel)
++		return -EINVAL;
++	kiocb->ki_cancel = NULL;
+ 	return cancel(&kiocb->rw);
  }
  
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait)
-+static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
- {
- 	struct sock *sk = sock->sk;
- 	__poll_t mask = 0;
- 
--	sock_poll_wait(file, sk_sleep(sk), wait);
--
- 	if (sk->sk_state == IUCV_LISTEN)
- 		return iucv_accept_poll(sk);
- 
-@@ -2389,7 +2386,7 @@ static const struct proto_ops iucv_sock_ops = {
- 	.getname	= iucv_sock_getname,
- 	.sendmsg	= iucv_sock_sendmsg,
- 	.recvmsg	= iucv_sock_recvmsg,
--	.poll		= iucv_sock_poll,
-+	.poll_mask	= iucv_sock_poll_mask,
- 	.ioctl		= sock_no_ioctl,
- 	.mmap		= sock_no_mmap,
- 	.socketpair	= sock_no_socketpair,
 -- 
 2.14.2
 
