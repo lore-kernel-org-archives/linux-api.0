@@ -1,102 +1,172 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH bpf-next 0/5] bpf, tracing: introduce bpf raw tracepoints
-Date: Mon, 5 Mar 2018 14:36:07 +0100
-Message-ID: <9bb38939-c357-4db5-6cf4-7b42187f6c7c@iogearbox.net>
-References: <20180301041957.399230-1-ast@kernel.org>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v4 13/24] fpga: region: add compat_id support
+Date: Mon, 5 Mar 2018 13:42:41 -0600
+Message-ID: <CANk1AXSKUgvwW_Gm9jUgis5sKipgLL+jT_t5cjWyrtzqYmxg5g@mail.gmail.com>
+References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+ <1518513893-4719-14-git-send-email-hao.wu@intel.com> <CANk1AXSMtbnQDAO+XgVEOLh_F13OJyB3LCEPAc6_-U7CXnkfNw@mail.gmail.com>
+ <20180301061750.GB8999@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180301041957.399230-1-ast@kernel.org>
-Content-Language: en-US
+In-Reply-To: <20180301061750.GB8999@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net
-Cc: torvalds@linux-foundation.org, peterz@infradead.org, mingo@kernel.org, rostedt@goodmis.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 03/01/2018 05:19 AM, Alexei Starovoitov wrote:
-> This patch set is a different way to address the pressing need to access
-> task_struct pointers in sched tracepoints from bpf programs.
-> 
-> The first approach simply added these pointers to sched tracepoints:
-> https://lkml.org/lkml/2017/12/14/753
-> which Peter nacked.
-> Few options were discussed and eventually the discussion converged on
-> doing bpf specific tracepoint_probe_register() probe functions.
-> Details here:
-> https://lkml.org/lkml/2017/12/20/929
+On Thu, Mar 1, 2018 at 12:17 AM, Wu Hao <hao.wu@intel.com> wrote:
+> On Wed, Feb 28, 2018 at 04:55:15PM -0600, Alan Tull wrote:
+>> On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
+>>
+>> Hi Hao,
+>
+> Hi Alan,
+>
+> Thanks for the review.
+>
+>>
+>> > This patch introduces a compat_id member and sysfs interface for each
+>> > fpga-region, e.g userspace applications could read the compat_id
+>> > from the sysfs interface for compatibility checking before PR.
+>> >
+>> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+>> > ---
+>> >  Documentation/ABI/testing/sysfs-class-fpga-region |  5 +++++
+>> >  drivers/fpga/fpga-region.c                        | 19 +++++++++++++++++++
+>> >  include/linux/fpga/fpga-region.h                  | 13 +++++++++++++
+>> >  3 files changed, 37 insertions(+)
+>> >  create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
+>> >
+>> > diff --git a/Documentation/ABI/testing/sysfs-class-fpga-region b/Documentation/ABI/testing/sysfs-class-fpga-region
+>> > new file mode 100644
+>> > index 0000000..419d930
+>> > --- /dev/null
+>> > +++ b/Documentation/ABI/testing/sysfs-class-fpga-region
+>> > @@ -0,0 +1,5 @@
+>> > +What:          /sys/class/fpga_region/<region>/compat_id
+>> > +Date:          February 2018
+>> > +KernelVersion: 4.16
+>> > +Contact:       Wu Hao <hao.wu@intel.com>
+>> > +Description:   FPGA region id for compatibility check.
 
-Ping, Peter/Steven. If you have a chance, please review the series.
+It would be helpful to add some explanation here that although the
+intended function of compat_id is set, the way the actual value is
+defined or calculated is set by the layer that is creating the FPGA
+region.
 
-> Patch 1 is kernel wide cleanup of pass-struct-by-value into
-> pass-struct-by-reference into tracepoints.
-> 
-> Patch 2 minor prep work to expose number of arguments passed
-> into tracepoints.
-> 
-> Patch 3 introduces BPF_RAW_TRACEPOINT api.
-> the auto-cleanup and multiple concurrent users are must have
-> features of tracing api. For bpf raw tracepoints it looks like:
->   // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
->   prog_fd = bpf_prog_load(...);
-> 
->   // receive anon_inode fd for given bpf_raw_tracepoint
->   raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception");
-> 
->   // attach bpf program to given tracepoint
->   bpf_prog_attach(prog_fd, raw_tp_fd, BPF_RAW_TRACEPOINT);
-> 
-> Ctrl-C of tracing daemon or cmdline tool will automatically
-> detach bpf program, unload it and unregister tracepoint probe.
-> More details in patch 3.
-> 
-> Patch 4, 5 - user space lib and tests
-> 
-> samples/bpf/test_overhead performance on 1 cpu:
-> 
-> tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
-> task_rename   1.1M   769K        947K            1.0M
-> urandom_read  789K   697K        750K            755K
-> 
-> Alexei Starovoitov (5):
->   treewide: remove struct-pass-by-value from tracepoints arguments
->   tracepoint: compute num_args at build time
->   bpf: introduce BPF_RAW_TRACEPOINT
->   libbpf: add bpf_raw_tracepoint_open helper
->   samples/bpf: raw tracepoint test
-> 
->  arch/x86/xen/mmu_pv.c                    |  16 +--
->  drivers/gpu/drm/i915/i915_trace.h        |  13 +-
->  drivers/infiniband/hw/hfi1/file_ops.c    |   2 +-
->  drivers/infiniband/hw/hfi1/trace_ctxts.h |  12 +-
->  drivers/s390/cio/ioasm.c                 |  18 +--
->  drivers/s390/cio/trace.h                 |  50 ++++----
->  fs/dax.c                                 |   2 +-
->  include/linux/bpf_types.h                |   1 +
->  include/linux/trace_events.h             |  57 +++++++++
->  include/linux/tracepoint-defs.h          |   1 +
->  include/linux/tracepoint.h               |  32 +++--
->  include/trace/bpf_probe.h                |  87 +++++++++++++
->  include/trace/define_trace.h             |  15 ++-
->  include/trace/events/f2fs.h              |   2 +-
->  include/trace/events/fs_dax.h            |   6 +-
->  include/trace/events/rcu.h               |   4 +-
->  include/trace/events/xen.h               |  32 ++---
->  include/uapi/linux/bpf.h                 |  11 ++
->  kernel/bpf/syscall.c                     | 108 ++++++++++++++++
->  kernel/rcu/tree.c                        |  10 +-
->  kernel/trace/bpf_trace.c                 | 211 +++++++++++++++++++++++++++++++
->  kernel/tracepoint.c                      |  27 ++--
->  net/wireless/trace.h                     |   2 +-
->  samples/bpf/Makefile                     |   1 +
->  samples/bpf/bpf_load.c                   |  13 ++
->  samples/bpf/test_overhead_raw_tp_kern.c  |  17 +++
->  samples/bpf/test_overhead_user.c         |  12 ++
->  sound/firewire/amdtp-stream-trace.h      |   2 +-
->  tools/include/uapi/linux/bpf.h           |  11 ++
->  tools/lib/bpf/bpf.c                      |  10 ++
->  tools/lib/bpf/bpf.h                      |   1 +
->  31 files changed, 677 insertions(+), 109 deletions(-)
->  create mode 100644 include/trace/bpf_probe.h
->  create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
-> 
+>> > diff --git a/drivers/fpga/fpga-region.c b/drivers/fpga/fpga-region.c
+>> > index 660a91b..babec96 100644
+>> > --- a/drivers/fpga/fpga-region.c
+>> > +++ b/drivers/fpga/fpga-region.c
+>> > @@ -162,6 +162,24 @@ int fpga_region_program_fpga(struct fpga_region *region)
+>> >  }
+>> >  EXPORT_SYMBOL_GPL(fpga_region_program_fpga);
+>> >
+>> > +static ssize_t compat_id_show(struct device *dev,
+>> > +                             struct device_attribute *attr, char *buf)
+>> > +{
+>> > +       struct fpga_region *region = to_fpga_region(dev);
+>>
+>> This looks good, but not all users of FPGA are going to use compat_id.
+>> How would you feel about making it a pointer in struct fpga_region?
+>> With compat_id as a pointer, could check for non-null compat_id
+>> pointer and return an error if it wasn't initialized.
+>
+> It sounds good to me.
+>
+> if (!region->compat_id)
+>         return -ENOENT;
+
+Yes, thanks!
+
+Alan
+
+>
+>>
+>> > +
+>> > +       return sprintf(buf, "%016llx%016llx\n",
+>> > +                      (unsigned long long)region->compat_id.id_h,
+>> > +                      (unsigned long long)region->compat_id.id_l);
+>> > +}
+>> > +
+>> > +static DEVICE_ATTR_RO(compat_id);
+>> > +
+>> > +static struct attribute *fpga_region_attrs[] = {
+>> > +       &dev_attr_compat_id.attr,
+>> > +       NULL,
+>> > +};
+>> > +ATTRIBUTE_GROUPS(fpga_region);
+>> > +
+>> >  int fpga_region_register(struct fpga_region *region)
+>> >  {
+>> >         struct device *dev = region->parent;
+>> > @@ -226,6 +244,7 @@ static int __init fpga_region_init(void)
+>> >         if (IS_ERR(fpga_region_class))
+>> >                 return PTR_ERR(fpga_region_class);
+>> >
+>> > +       fpga_region_class->dev_groups = fpga_region_groups;
+>> >         fpga_region_class->dev_release = fpga_region_dev_release;
+>> >
+>> >         return 0;
+>> > diff --git a/include/linux/fpga/fpga-region.h b/include/linux/fpga/fpga-region.h
+>> > index 423c87e..bf97dcc 100644
+>> > --- a/include/linux/fpga/fpga-region.h
+>> > +++ b/include/linux/fpga/fpga-region.h
+>> > @@ -6,6 +6,17 @@
+>> >  #include <linux/fpga/fpga-bridge.h>
+>> >
+>> >  /**
+>> > + * struct fpga_region_compat_id - FPGA Region id for compatibility check
+>> > + *
+>> > + * @id_h: high 64bit of the compat_id
+>> > + * @id_l: low 64bit of the compat_id
+>> > + */
+>> > +struct fpga_region_compat_id {
+>> > +       u64 id_h;
+>> > +       u64 id_l;
+>>
+>> I guess each user will choose how to define these bits.
+>
+> Yes.
+>
+>>
+>> > +};
+>> > +
+>> > +/**
+>> >   * struct fpga_region - FPGA Region structure
+>> >   * @dev: FPGA Region device
+>> >   * @parent: parent device
+>> > @@ -13,6 +24,7 @@
+>> >   * @bridge_list: list of FPGA bridges specified in region
+>> >   * @mgr: FPGA manager
+>> >   * @info: FPGA image info
+>> > + * @compat_id: FPGA region id for compatibility check.
+>> >   * @priv: private data
+>> >   * @get_bridges: optional function to get bridges to a list
+>> >   * @groups: optional attribute groups.
+>> > @@ -24,6 +36,7 @@ struct fpga_region {
+>> >         struct list_head bridge_list;
+>> >         struct fpga_manager *mgr;
+>> >         struct fpga_image_info *info;
+>> > +       struct fpga_region_compat_id compat_id;
+>>
+>> Here it would be a pointer instead.
+>
+> Yes. Will update this patch.
+>
+> Thanks
+> Hao
+>
+>>
+>> Alan
+>>
+>> >         void *priv;
+>> >         int (*get_bridges)(struct fpga_region *region);
+>> >         const struct attribute_group **groups;
+>> > --
+>> > 2.7.4
+>> >
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
