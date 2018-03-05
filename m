@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/36] aio: add delayed cancel support
-Date: Mon,  5 Mar 2018 13:27:14 -0800
-Message-ID: <20180305212743.16664-8-hch@lst.de>
+Subject: [PATCH 17/36] net: remove sock_no_poll
+Date: Mon,  5 Mar 2018 13:27:24 -0800
+Message-ID: <20180305212743.16664-18-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,127 +10,157 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The upcoming aio poll support would like to be able to complete the
-iocb inline from the cancellation context, but that would cause
-a lock order reversal.  Add support for optionally moving the cancelation
-outside the context lock to avoid this reversal.
+Now that sock_poll handles a NULL ->poll or ->poll_mask there is no need
+for a stub.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
 ---
- fs/aio.c | 49 ++++++++++++++++++++++++++++++++++++++-----------
- 1 file changed, 38 insertions(+), 11 deletions(-)
+ crypto/af_alg.c             | 1 -
+ crypto/algif_hash.c         | 2 --
+ crypto/algif_rng.c          | 1 -
+ drivers/isdn/mISDN/socket.c | 1 -
+ drivers/net/ppp/pptp.c      | 1 -
+ include/net/sock.h          | 2 --
+ net/bluetooth/bnep/sock.c   | 1 -
+ net/bluetooth/cmtp/sock.c   | 1 -
+ net/bluetooth/hidp/sock.c   | 1 -
+ net/core/sock.c             | 6 ------
+ 10 files changed, 17 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 0b6394b4e528..9d7d6e4cde87 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -170,6 +170,10 @@ struct aio_kiocb {
- 	struct list_head	ki_list;	/* the aio core uses this
- 						 * for cancellation */
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index c49766b03165..50d75de539f5 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -347,7 +347,6 @@ static const struct proto_ops alg_proto_ops = {
+ 	.sendpage	=	sock_no_sendpage,
+ 	.sendmsg	=	sock_no_sendmsg,
+ 	.recvmsg	=	sock_no_recvmsg,
+-	.poll		=	sock_no_poll,
  
-+	unsigned int		flags;		/* protected by ctx->ctx_lock */
-+#define AIO_IOCB_DELAYED_CANCEL	(1 << 0)
-+#define AIO_IOCB_CANCELLED	(1 << 1)
-+
- 	/*
- 	 * If the aio_resfd field of the userspace iocb is not zero,
- 	 * this is the underlying eventfd context to deliver events to.
-@@ -536,9 +540,9 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
- #define AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - sizeof(struct aio_ring)) / sizeof(struct io_event))
- #define AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
+ 	.bind		=	alg_bind,
+ 	.release	=	af_alg_release,
+diff --git a/crypto/algif_hash.c b/crypto/algif_hash.c
+index 6c9b1927a520..bfcf595fd8f9 100644
+--- a/crypto/algif_hash.c
++++ b/crypto/algif_hash.c
+@@ -288,7 +288,6 @@ static struct proto_ops algif_hash_ops = {
+ 	.mmap		=	sock_no_mmap,
+ 	.bind		=	sock_no_bind,
+ 	.setsockopt	=	sock_no_setsockopt,
+-	.poll		=	sock_no_poll,
  
--void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
-+static void __kiocb_set_cancel_fn(struct aio_kiocb *req,
-+		kiocb_cancel_fn *cancel, unsigned int iocb_flags)
+ 	.release	=	af_alg_release,
+ 	.sendmsg	=	hash_sendmsg,
+@@ -396,7 +395,6 @@ static struct proto_ops algif_hash_ops_nokey = {
+ 	.mmap		=	sock_no_mmap,
+ 	.bind		=	sock_no_bind,
+ 	.setsockopt	=	sock_no_setsockopt,
+-	.poll		=	sock_no_poll,
+ 
+ 	.release	=	af_alg_release,
+ 	.sendmsg	=	hash_sendmsg_nokey,
+diff --git a/crypto/algif_rng.c b/crypto/algif_rng.c
+index 150c2b6480ed..22df3799a17b 100644
+--- a/crypto/algif_rng.c
++++ b/crypto/algif_rng.c
+@@ -106,7 +106,6 @@ static struct proto_ops algif_rng_ops = {
+ 	.bind		=	sock_no_bind,
+ 	.accept		=	sock_no_accept,
+ 	.setsockopt	=	sock_no_setsockopt,
+-	.poll		=	sock_no_poll,
+ 	.sendmsg	=	sock_no_sendmsg,
+ 	.sendpage	=	sock_no_sendpage,
+ 
+diff --git a/drivers/isdn/mISDN/socket.c b/drivers/isdn/mISDN/socket.c
+index c5603d1a07d6..c84270e16bdd 100644
+--- a/drivers/isdn/mISDN/socket.c
++++ b/drivers/isdn/mISDN/socket.c
+@@ -746,7 +746,6 @@ static const struct proto_ops base_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
+index 6dde9a0cfe76..87f892f1d0fe 100644
+--- a/drivers/net/ppp/pptp.c
++++ b/drivers/net/ppp/pptp.c
+@@ -627,7 +627,6 @@ static const struct proto_ops pptp_ops = {
+ 	.socketpair = sock_no_socketpair,
+ 	.accept     = sock_no_accept,
+ 	.getname    = pptp_getname,
+-	.poll       = sock_no_poll,
+ 	.listen     = sock_no_listen,
+ 	.shutdown   = sock_no_shutdown,
+ 	.setsockopt = sock_no_setsockopt,
+diff --git a/include/net/sock.h b/include/net/sock.h
+index 169c92afcafa..d9249fe65859 100644
+--- a/include/net/sock.h
++++ b/include/net/sock.h
+@@ -1585,8 +1585,6 @@ int sock_no_connect(struct socket *, struct sockaddr *, int, int);
+ int sock_no_socketpair(struct socket *, struct socket *);
+ int sock_no_accept(struct socket *, struct socket *, int, bool);
+ int sock_no_getname(struct socket *, struct sockaddr *, int *, int);
+-__poll_t sock_no_poll(struct file *, struct socket *,
+-			  struct poll_table_struct *);
+ int sock_no_ioctl(struct socket *, unsigned int, unsigned long);
+ int sock_no_listen(struct socket *, int);
+ int sock_no_shutdown(struct socket *, int);
+diff --git a/net/bluetooth/bnep/sock.c b/net/bluetooth/bnep/sock.c
+index b5116fa9835e..00deacdcb51c 100644
+--- a/net/bluetooth/bnep/sock.c
++++ b/net/bluetooth/bnep/sock.c
+@@ -175,7 +175,6 @@ static const struct proto_ops bnep_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/net/bluetooth/cmtp/sock.c b/net/bluetooth/cmtp/sock.c
+index ce86a7bae844..e08f28fadd65 100644
+--- a/net/bluetooth/cmtp/sock.c
++++ b/net/bluetooth/cmtp/sock.c
+@@ -178,7 +178,6 @@ static const struct proto_ops cmtp_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/net/bluetooth/hidp/sock.c b/net/bluetooth/hidp/sock.c
+index 008ba439bd62..1eaac01f85de 100644
+--- a/net/bluetooth/hidp/sock.c
++++ b/net/bluetooth/hidp/sock.c
+@@ -208,7 +208,6 @@ static const struct proto_ops hidp_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/net/core/sock.c b/net/core/sock.c
+index c501499a04fe..b72b6ad050e4 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -2503,12 +2503,6 @@ int sock_no_getname(struct socket *sock, struct sockaddr *saddr,
+ }
+ EXPORT_SYMBOL(sock_no_getname);
+ 
+-__poll_t sock_no_poll(struct file *file, struct socket *sock, poll_table *pt)
+-{
+-	return 0;
+-}
+-EXPORT_SYMBOL(sock_no_poll);
+-
+ int sock_no_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
  {
--	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
- 	struct kioctx *ctx = req->ki_ctx;
- 	unsigned long flags;
- 
-@@ -548,8 +552,15 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
- 	spin_lock_irqsave(&ctx->ctx_lock, flags);
- 	list_add_tail(&req->ki_list, &ctx->active_reqs);
- 	req->ki_cancel = cancel;
-+	req->flags |= iocb_flags;
- 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
- }
-+
-+void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
-+{
-+	return __kiocb_set_cancel_fn(container_of(iocb, struct aio_kiocb, rw),
-+			cancel, 0);
-+}
- EXPORT_SYMBOL(kiocb_set_cancel_fn);
- 
- /*
-@@ -603,17 +614,27 @@ static void free_ioctx_users(struct percpu_ref *ref)
- {
- 	struct kioctx *ctx = container_of(ref, struct kioctx, users);
- 	struct aio_kiocb *req;
-+	LIST_HEAD(list);
- 
- 	spin_lock_irq(&ctx->ctx_lock);
--
- 	while (!list_empty(&ctx->active_reqs)) {
- 		req = list_first_entry(&ctx->active_reqs,
- 				       struct aio_kiocb, ki_list);
--		kiocb_cancel(req);
--	}
- 
-+		if (req->flags & AIO_IOCB_DELAYED_CANCEL) {
-+			req->flags |= AIO_IOCB_CANCELLED;
-+			list_move_tail(&req->ki_list, &list);
-+		} else {
-+			kiocb_cancel(req);
-+		}
-+	}
- 	spin_unlock_irq(&ctx->ctx_lock);
- 
-+	while (!list_empty(&list)) {
-+		req = list_first_entry(&list, struct aio_kiocb, ki_list);
-+		kiocb_cancel(req);
-+	}
-+
- 	percpu_ref_kill(&ctx->reqs);
- 	percpu_ref_put(&ctx->reqs);
- }
-@@ -1785,15 +1806,22 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
- 	if (unlikely(!ctx))
- 		return -EINVAL;
- 
--	spin_lock_irq(&ctx->ctx_lock);
-+	ret = -EINVAL;
- 
-+	spin_lock_irq(&ctx->ctx_lock);
- 	kiocb = lookup_kiocb(ctx, iocb, key);
-+	if (kiocb) {
-+		if (kiocb->flags & AIO_IOCB_DELAYED_CANCEL) {
-+			kiocb->flags |= AIO_IOCB_CANCELLED;
-+		} else {
-+			ret = kiocb_cancel(kiocb);
-+			kiocb = NULL;
-+		}
-+	}
-+	spin_unlock_irq(&ctx->ctx_lock);
-+
- 	if (kiocb)
- 		ret = kiocb_cancel(kiocb);
--	else
--		ret = -EINVAL;
--
--	spin_unlock_irq(&ctx->ctx_lock);
- 
- 	if (!ret) {
- 		/*
-@@ -1805,7 +1833,6 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
- 	}
- 
- 	percpu_ref_put(&ctx->users);
--
- 	return ret;
- }
- 
+ 	return -EOPNOTSUPP;
 -- 
 2.14.2
 
