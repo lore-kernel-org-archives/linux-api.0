@@ -1,175 +1,60 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [RFC PATCH] auditctl: add support for containerid filter
-Date: Mon,  5 Mar 2018 03:06:06 -0500
-Message-ID: <1520237166-15679-1-git-send-email-rgb@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org
-Cc: luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, viro@zeniv.linux.org.uk, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, madzcar@gmail.com, Richard Guy Briggs <rgb@redhat.com>
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [RFC PATCH V1 01/12] audit: add container id
+Date: Mon, 5 Mar 2018 03:16:49 -0500
+Message-ID: <20180305081649.yidzlnlu3pg3hjf2@madcap2.tricolour.ca>
+References: <cover.1519930146.git.rgb@redhat.com>
+	<2e5d93ee46feca915a101c2fc3062da674a98223.1519930146.git.rgb@redhat.com>
+	<20180303091913.GA13118@mail.hallyn.com>
+	<CAHC9VhQA23w39aaho1wkPawX7zxiGyTVQroZzpACKk8DK8-F8w@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhQA23w39aaho1wkPawX7zxiGyTVQroZzpACKk8DK8-F8w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-A u64 container identifier has been added to the kernel view of tasks.
-This allows container orchestrators to label tasks with a unique
-tamperproof identifier that gets inherited by its children to be able to
-track the provenance of actions by a container.
+On 2018-03-04 10:01, Paul Moore wrote:
+> On Sat, Mar 3, 2018 at 4:19 AM, Serge E. Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org> wrote:
+> > On Thu, Mar 01, 2018 at 02:41:04PM -0500, Richard Guy Briggs wrote:
+> > ...
+> >> +static inline bool audit_containerid_set(struct task_struct *tsk)
+> >
+> > Hi Richard,
+> >
+> > the calls to audit_containerid_set() confused me.  Could you make it
+> > is_audit_containerid_set() or audit_containerid_isset()?
+> 
+> I haven't gone through the entire patchset yet, but I wanted to
+> quickly comment on this ... I really dislike the
+> function-names-as-sentences approach and would would greatly prefer
+> audit_containerid_isset().
 
-Add support to libaudit and auditctl for the containerid field to filter
-based on container identifier.  Since it is a u64 and larger than any
-other numeric field, send it as a string but do the appropriate
-conversions on each end in each direction.
+I'd be ok with this latter if necessary, but the naming mimics the
+existing loginuid naming convention.
 
-See: https://github.com/linux-audit/audit-userspace/issues/40
-See: https://github.com/linux-audit/audit-kernel/issues/32
-See: https://github.com/linux-audit/audit-testsuite/issues/64
-Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
----
-Note: This is a userspace patch for the audit utils to support the
-kernel RFC patchset, in optimism of kernel support acceptance.
-ausearch would also need support added.
----
- docs/auditctl.8        |  3 +++
- lib/fieldtab.h         |  1 +
- lib/libaudit.c         | 36 ++++++++++++++++++++++++++++++++++++
- lib/libaudit.h         |  7 +++++++
- src/auditctl-listing.c | 21 +++++++++++++++++++++
- 5 files changed, 68 insertions(+)
+> >> +{
+> >> +     return audit_get_containerid(tsk) != INVALID_CID;
+> >> +}
+> 
+> paul moore
 
-diff --git a/docs/auditctl.8 b/docs/auditctl.8
-index 88466de..8bda43d 100644
---- a/docs/auditctl.8
-+++ b/docs/auditctl.8
-@@ -210,6 +210,9 @@ Parent's Process ID
- .B sessionid
- User's login session ID
- .TP
-+.B containerid
-+Process' container ID
-+.TP
- .B subj_user
- Program's SE Linux User
- .TP
-diff --git a/lib/fieldtab.h b/lib/fieldtab.h
-index c425d5b..755800a 100644
---- a/lib/fieldtab.h
-+++ b/lib/fieldtab.h
-@@ -47,6 +47,7 @@ _S(AUDIT_OBJ_TYPE,     "obj_type"     )
- _S(AUDIT_OBJ_LEV_LOW,  "obj_lev_low"  )
- _S(AUDIT_OBJ_LEV_HIGH, "obj_lev_high" )
- _S(AUDIT_SESSIONID,    "sessionid"    )
-+_S(AUDIT_CONTAINERID,  "containerid"  )
- 
- _S(AUDIT_DEVMAJOR,     "devmajor"     )
- _S(AUDIT_DEVMINOR,     "devminor"     )
-diff --git a/lib/libaudit.c b/lib/libaudit.c
-index aa8258c..2e01a22 100644
---- a/lib/libaudit.c
-+++ b/lib/libaudit.c
-@@ -1737,6 +1737,42 @@ int audit_rule_fieldpair_data(struct audit_rule_data **rulep, const char *pair,
- 			else if (strcmp(v, "unset") == 0)
- 				rule->values[rule->field_count] = 4294967295;
- 			break;
-+		case AUDIT_CONTAINERID: {
-+			unsigned long long val;
-+
-+			if ((audit_get_features() &
-+				AUDIT_FEATURE_BITMAP_CONTAINERID_FILTER) == 0)
-+				return -EAU_FIELDNOSUPPORT;
-+			if (flags != AUDIT_FILTER_EXCLUDE &&
-+			    flags != AUDIT_FILTER_USER &&
-+			    flags != AUDIT_FILTER_EXIT)
-+				return -EAU_FIELDNOFILTER;
-+			if (isdigit((char)*(v))) 
-+				val = strtoull(v, NULL, 0);
-+			else if (strlen(v) >= 2 && *(v)=='-' && 
-+						(isdigit((char)*(v+1)))) 
-+				val = strtoll(v, NULL, 0);
-+			else if (strcmp(v, "unset") == 0)
-+				val = ULLONG_MAX;
-+			else
-+				return -EAU_FIELDVALNUM;
-+			if (errno)
-+				return -EAU_FIELDVALNUM;
-+			vlen = sizeof(unsigned long long);
-+			rule->values[rule->field_count] = vlen;
-+			offset = rule->buflen;
-+			rule->buflen += vlen;
-+			*rulep = realloc(rule, sizeof(*rule) + rule->buflen);
-+			if (*rulep == NULL) {
-+				free(rule);
-+				audit_msg(LOG_ERR, "Cannot realloc memory!\n");
-+				return -3;
-+			} else {
-+				rule = *rulep;
-+			}
-+			*(unsigned long long*)(&rule->buf[offset]) = val;
-+			break;
-+		}
- 		case AUDIT_DEVMAJOR...AUDIT_INODE:
- 		case AUDIT_SUCCESS:
- 			if (flags != AUDIT_FILTER_EXIT)
-diff --git a/lib/libaudit.h b/lib/libaudit.h
-index b681e8d..542ec62 100644
---- a/lib/libaudit.h
-+++ b/lib/libaudit.h
-@@ -320,6 +320,9 @@ extern "C" {
- #ifndef AUDIT_FEATURE_BITMAP_FILTER_FS
- #define AUDIT_FEATURE_BITMAP_FILTER_FS		0x00000040
- #endif
-+#ifndef AUDIT_FEATURE_BITMAP_CONTAINERID_FILTER
-+#define AUDIT_FEATURE_BITMAP_CONTAINERID_FILTER 0x00000080
-+#endif
- 
- /* Defines for interfield comparison update */
- #ifndef AUDIT_OBJ_UID
-@@ -343,6 +346,10 @@ extern "C" {
- #define AUDIT_FSTYPE 26
- #endif
- 
-+#ifndef AUDIT_CONTAINERID
-+#define AUDIT_CONTAINERID 27
-+#endif
-+
- #ifndef AUDIT_COMPARE_UID_TO_OBJ_UID
- #define AUDIT_COMPARE_UID_TO_OBJ_UID   1
- #endif
-diff --git a/src/auditctl-listing.c b/src/auditctl-listing.c
-index f670ff9..974dcb4 100644
---- a/src/auditctl-listing.c
-+++ b/src/auditctl-listing.c
-@@ -25,6 +25,7 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
-+#include <limits.h>
- #include "auditctl-listing.h"
- #include "private.h"
- #include "auditctl-llist.h"
-@@ -460,6 +461,26 @@ static void print_rule(const struct audit_rule_data *r)
- 						audit_operator_to_symbol(op),
- 						audit_fstype_to_name(
- 						r->values[i]));
-+			} else if (field == AUDIT_CONTAINERID) {
-+				unsigned long long val;
-+
-+				if (r->values[i] == sizeof(unsigned long long)) {
-+					val = *(unsigned long long*)(&r->buf[boffset]);
-+
-+					if (val != ULLONG_MAX)
-+						printf(" -F %s%s%llu", name,
-+							audit_operator_to_symbol(op),
-+							val);
-+					else
-+						printf(" -F %s%s%s", name,
-+							audit_operator_to_symbol(op),
-+							"unset");
-+				} else {
-+					printf(" -F %s%s%s", name,
-+						audit_operator_to_symbol(op),
-+						"inval");
-+				}
-+				boffset += r->values[i];
- 			} else {
- 				// The default is signed decimal
- 				printf(" -F %s%s%d", name, 
--- 
-1.8.3.1
+- RGB
+
+--
+Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
