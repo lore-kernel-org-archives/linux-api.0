@@ -1,27 +1,59 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH bpf-next 0/5] bpf, tracing: introduce bpf raw
- tracepoints
-Date: Mon, 5 Mar 2018 16:11:39 -0500
-Message-ID: <20180305161139.1322f87d@gandalf.local.home>
-References: <20180301041957.399230-1-ast@kernel.org>
-        <9bb38939-c357-4db5-6cf4-7b42187f6c7c@iogearbox.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9bb38939-c357-4db5-6cf4-7b42187f6c7c@iogearbox.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>
-Cc: Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net, torvalds@linux-foundation.org, peterz@infradead.org, mingo@kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 02/36] aio: remove an outdated comment in aio_complete
+Date: Mon,  5 Mar 2018 13:27:09 -0800
+Message-ID: <20180305212743.16664-3-hch@lst.de>
+References: <20180305212743.16664-1-hch@lst.de>
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180305212743.16664-1-hch@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: viro@zeniv.linux.org.uk
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 5 Mar 2018 14:36:07 +0100
-Daniel Borkmann <daniel@iogearbox.net> wrote:
+These days we don't treat sync iocbs special in the aio completion code as
+they never use it.  Remove the old comment, and move the BUG_ON for a sync
+iocb to the top of the function.
 
-> Ping, Peter/Steven. If you have a chance, please review the series.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
+---
+ fs/aio.c | 11 ++---------
+ 1 file changed, 2 insertions(+), 9 deletions(-)
 
-You're not off my radar, but I'm doing a lot of traveling for the next
-two weeks (started last week). I'll see if I can find some time to look
-at them. I scanned them over once, and they look interesting ;-)
+diff --git a/fs/aio.c b/fs/aio.c
+index 03d59593912d..41fc8ce6bc7f 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -1088,6 +1088,8 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
+ 	unsigned tail, pos, head;
+ 	unsigned long	flags;
+ 
++	BUG_ON(is_sync_kiocb(kiocb));
++
+ 	if (kiocb->ki_flags & IOCB_WRITE) {
+ 		struct file *file = kiocb->ki_filp;
+ 
+@@ -1100,15 +1102,6 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
+ 		file_end_write(file);
+ 	}
+ 
+-	/*
+-	 * Special case handling for sync iocbs:
+-	 *  - events go directly into the iocb for fast handling
+-	 *  - the sync task with the iocb in its stack holds the single iocb
+-	 *    ref, no other paths have a way to get another ref
+-	 *  - the sync task helpfully left a reference to itself in the iocb
+-	 */
+-	BUG_ON(is_sync_kiocb(kiocb));
+-
+ 	if (iocb->ki_list.next) {
+ 		unsigned long flags;
+ 
+-- 
+2.14.2
 
--- Steve
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
