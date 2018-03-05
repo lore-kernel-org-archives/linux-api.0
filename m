@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 16/36] net: add support for ->poll_mask in proto_ops
-Date: Mon,  5 Mar 2018 13:27:23 -0800
-Message-ID: <20180305212743.16664-17-hch@lst.de>
+Subject: [PATCH 19/36] net/unix: convert to ->poll_mask
+Date: Mon,  5 Mar 2018 13:27:26 -0800
+Message-ID: <20180305212743.16664-20-hch@lst.de>
 References: <20180305212743.16664-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180305212743.16664-1-hch@lst.de>
@@ -10,110 +10,98 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The socket file operations still implement ->poll until all protocols are
-switched over.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/net.h |  3 +++
- net/socket.c        | 51 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 49 insertions(+), 5 deletions(-)
+ net/unix/af_unix.c | 30 +++++++++++-------------------
+ 1 file changed, 11 insertions(+), 19 deletions(-)
 
-diff --git a/include/linux/net.h b/include/linux/net.h
-index 91216b16feb7..ce3d4dacb51e 100644
---- a/include/linux/net.h
-+++ b/include/linux/net.h
-@@ -147,6 +147,9 @@ struct proto_ops {
- 	int		(*getname)   (struct socket *sock,
- 				      struct sockaddr *addr,
- 				      int *sockaddr_len, int peer);
-+	struct wait_queue_head *(*get_poll_head)(struct socket *sock,
-+				      __poll_t events);
-+	__poll_t	(*poll_mask) (struct socket *sock, __poll_t events);
- 	__poll_t	(*poll)	     (struct file *file, struct socket *sock,
- 				      struct poll_table_struct *wait);
- 	int		(*ioctl)     (struct socket *sock, unsigned int cmd,
-diff --git a/net/socket.c b/net/socket.c
-index 3f859a07641a..ceb69ddcd7bd 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -118,8 +118,10 @@ static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
- static int sock_mmap(struct file *file, struct vm_area_struct *vma);
- 
- static int sock_close(struct inode *inode, struct file *file);
--static __poll_t sock_poll(struct file *file,
--			      struct poll_table_struct *wait);
-+static struct wait_queue_head *sock_get_poll_head(struct file *file,
-+		__poll_t events);
-+static __poll_t sock_poll_mask(struct file *file, __poll_t);
-+static __poll_t sock_poll(struct file *file, struct poll_table_struct *wait);
- static long sock_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
- #ifdef CONFIG_COMPAT
- static long compat_sock_ioctl(struct file *file,
-@@ -142,6 +144,8 @@ static const struct file_operations socket_file_ops = {
- 	.llseek =	no_llseek,
- 	.read_iter =	sock_read_iter,
- 	.write_iter =	sock_write_iter,
-+	.get_poll_head = sock_get_poll_head,
-+	.poll_mask =	sock_poll_mask,
- 	.poll =		sock_poll,
- 	.unlocked_ioctl = sock_ioctl,
- #ifdef CONFIG_COMPAT
-@@ -1114,14 +1118,51 @@ int sock_create_lite(int family, int type, int protocol, struct socket **res)
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 2d465bdeccbc..619c6921dd46 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -638,9 +638,8 @@ static int unix_stream_connect(struct socket *, struct sockaddr *,
+ static int unix_socketpair(struct socket *, struct socket *);
+ static int unix_accept(struct socket *, struct socket *, int, bool);
+ static int unix_getname(struct socket *, struct sockaddr *, int *, int);
+-static __poll_t unix_poll(struct file *, struct socket *, poll_table *);
+-static __poll_t unix_dgram_poll(struct file *, struct socket *,
+-				    poll_table *);
++static __poll_t unix_poll_mask(struct socket *, __poll_t);
++static __poll_t unix_dgram_poll_mask(struct socket *, __poll_t);
+ static int unix_ioctl(struct socket *, unsigned int, unsigned long);
+ static int unix_shutdown(struct socket *, int);
+ static int unix_stream_sendmsg(struct socket *, struct msghdr *, size_t);
+@@ -681,7 +680,7 @@ static const struct proto_ops unix_stream_ops = {
+ 	.socketpair =	unix_socketpair,
+ 	.accept =	unix_accept,
+ 	.getname =	unix_getname,
+-	.poll =		unix_poll,
++	.poll_mask =	unix_poll_mask,
+ 	.ioctl =	unix_ioctl,
+ 	.listen =	unix_listen,
+ 	.shutdown =	unix_shutdown,
+@@ -704,7 +703,7 @@ static const struct proto_ops unix_dgram_ops = {
+ 	.socketpair =	unix_socketpair,
+ 	.accept =	sock_no_accept,
+ 	.getname =	unix_getname,
+-	.poll =		unix_dgram_poll,
++	.poll_mask =	unix_dgram_poll_mask,
+ 	.ioctl =	unix_ioctl,
+ 	.listen =	sock_no_listen,
+ 	.shutdown =	unix_shutdown,
+@@ -726,7 +725,7 @@ static const struct proto_ops unix_seqpacket_ops = {
+ 	.socketpair =	unix_socketpair,
+ 	.accept =	unix_accept,
+ 	.getname =	unix_getname,
+-	.poll =		unix_dgram_poll,
++	.poll_mask =	unix_dgram_poll_mask,
+ 	.ioctl =	unix_ioctl,
+ 	.listen =	unix_listen,
+ 	.shutdown =	unix_shutdown,
+@@ -2640,13 +2639,10 @@ static int unix_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+ 	return err;
  }
- EXPORT_SYMBOL(sock_create_lite);
  
-+static struct wait_queue_head *sock_get_poll_head(struct file *file,
-+		__poll_t events)
-+{
-+	struct socket *sock = file->private_data;
-+
-+	if (!sock->ops->poll_mask)
-+		return NULL;
-+	if (sock->ops->get_poll_head)
-+		return sock->ops->get_poll_head(sock, events);
-+
-+	sock_poll_busy_loop(sock, events);
-+	return sk_sleep(sock->sk);
-+}
-+
-+static __poll_t sock_poll_mask(struct file *file, __poll_t events)
-+{
-+	struct socket *sock = file->private_data;
-+
-+	/*
-+	 * We need to be sure we are in sync with the socket flags modification.
-+	 *
-+	 * This memory barrier is paired in the wq_has_sleeper.
-+	 */
-+	smp_mb();
-+
-+	/* this socket can poll_ll so tell the system call */
-+	return sock->ops->poll_mask(sock, events) |
-+		(sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0);
-+}
-+
- /* No kernel lock held - perfect */
- static __poll_t sock_poll(struct file *file, poll_table *wait)
+-static __poll_t unix_poll(struct file *file, struct socket *sock, poll_table *wait)
++static __poll_t unix_poll_mask(struct socket *sock, __poll_t events)
  {
- 	struct socket *sock = file->private_data;
--	__poll_t events = poll_requested_events(wait);
-+	__poll_t events = poll_requested_events(wait), mask = 0;
+ 	struct sock *sk = sock->sk;
+-	__poll_t mask;
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
  
--	sock_poll_busy_loop(sock, events);
--	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
-+	if (sock->ops->poll) {
-+		sock_poll_busy_loop(sock, events);
-+		mask = sock->ops->poll(file, sock, wait);
-+	} else if (sock->ops->poll_mask) {
-+		sock_poll_wait(file, sock_get_poll_head(file, events), wait);
-+		mask = sock->ops->poll_mask(sock, events);
-+	}
-+
-+	return mask | sock_poll_busy_flag(sock);
+ 	/* exceptional events? */
+ 	if (sk->sk_err)
+@@ -2675,15 +2671,11 @@ static __poll_t unix_poll(struct file *file, struct socket *sock, poll_table *wa
+ 	return mask;
  }
  
- static int sock_mmap(struct file *file, struct vm_area_struct *vma)
+-static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
+-				    poll_table *wait)
++static __poll_t unix_dgram_poll_mask(struct socket *sock, __poll_t events)
+ {
+ 	struct sock *sk = sock->sk, *other;
+-	unsigned int writable;
+-	__poll_t mask;
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	int writable;
++	__poll_t mask = 0;
+ 
+ 	/* exceptional events? */
+ 	if (sk->sk_err || !skb_queue_empty(&sk->sk_error_queue))
+@@ -2709,7 +2701,7 @@ static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
+ 	}
+ 
+ 	/* No write status requested, avoid expensive OUT tests. */
+-	if (!(poll_requested_events(wait) & (EPOLLWRBAND|EPOLLWRNORM|EPOLLOUT)))
++	if (!(events & (EPOLLWRBAND|EPOLLWRNORM|EPOLLOUT)))
+ 		return mask;
+ 
+ 	writable = unix_writable(sk);
 -- 
 2.14.2
 
