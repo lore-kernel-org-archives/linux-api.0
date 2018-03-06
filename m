@@ -1,476 +1,325 @@
-From: nagarathnam.muthusamy@oracle.com
-Subject: [RFC] translate_pid API
-Date: Tue,  6 Mar 2018 10:38:24 -0700
-Message-ID: <1520357904-17705-1-git-send-email-nagarathnam.muthusamy@oracle.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v4 14/24] fpga: dfl: fme: add partial reconfiguration sub
+ feature support
+Date: Tue, 6 Mar 2018 12:29:35 -0600
+Message-ID: <CANk1AXTPhxZq5PaJgVPeADjBLHYN7-A=drZ=3qVqROwXK4-O+Q@mail.gmail.com>
+References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+ <1518513893-4719-15-git-send-email-hao.wu@intel.com> <CANk1AXRT6Rd6kjxT9Q_=3T0zNfzLGmdxOzY=pyX0VKMYReh-0Q@mail.gmail.com>
+ <20180306020838.GB32057@hao-dev>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180306020838.GB32057@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: khlebnikov@yandex-team.ru, nagarathnam.muthusamy@oracle.com, Nagarajan.Muthukrishnan@oracle.com, prakash.sangappa@oracle.com
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Following patch which is a variation of a solution discussed
-in https://lwn.net/Articles/736330/ provides the users of
-pid namespace, the functionality of pid translation between
-namespaces using a namespace identifier. The topic of
-pid translation has been discussed in the community few times
-but there has always been a resistance to adding new solution
-for this problem.
+  On Mon, Mar 5, 2018 at 8:08 PM, Wu Hao <hao.wu@intel.com> wrote:
+> On Mon, Mar 05, 2018 at 04:46:02PM -0600, Alan Tull wrote:
+>> On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
+>>
+>> Hi Hao,
+>
+> Hi Alan,
+>
+> Thanks for the comments.
+>
+>>
+>> We are going to want to be able use different FPGA managers with this
+>> framework.  The different manager may be part of a different FME in
+>> fabric or it may be a hardware FPGA manager.  Fortunately, at this
+>> point now the changes, noted below, to get there are pretty small.
+>
+> Yes, understand these could be some cases that FME having different PR
+> hardware.
+>
 
-I will outline the planned usecase of pid namespace by oracle
-database and explain why any of the existing solution cannot
-be used to solve their problem.
+Or supporting reduced FME plus hardware-based FPGA manager.
 
-Consider a system in which several PID namespaces with multiple
-nested levels exists in parallel with monitor processes managing
-all the namespaces. PID translation is required for controlling
-and accessing information about the processes by the monitors
-and other processes down the hierarchy of namespaces. Controlling
-primarily involves sending signals or using ptrace by a process in
-parent namespace on any of the processes in its child namespace.
-Accessing information deals with the reading /proc/<pid>/* files
-of processes in child namespace. None of the processes have
-root/CAP_SYS_ADMIN privileges.
+Just to re-emphasize, the basic intent of the FPGA manager subsystem
+in the first place is to have FPGA managers separate from higher level
+frameworks so that the higher level frameworks will be able to able to
+use different FPGAs.
 
-Existing methods:
+>> > +/**
+>> > + * fpga_fme_create_mgr - create fpga mgr platform device as child device
+>> > + *
+>> > + * @pdata: fme platform_device's pdata
+>> > + *
+>> > + * Return: mgr platform device if successful, and error code otherwise.
+>> > + */
+>> > +static struct platform_device *
+>> > +fpga_fme_create_mgr(struct feature_platform_data *pdata)
+>> > +{
+>> > +       struct platform_device *mgr, *fme = pdata->dev;
+>> > +       struct feature *feature;
+>> > +       struct resource res;
+>> > +       struct resource *pres;
+>> > +       int ret = -ENOMEM;
+>> > +
+>> > +       feature = get_feature_by_id(&pdata->dev->dev, FME_FEATURE_ID_PR_MGMT);
+>> > +       if (!feature)
+>> > +               return ERR_PTR(-ENODEV);
+>> > +
+>> > +       /*
+>> > +        * Each FME has only one fpga-mgr, so allocate platform device using
+>> > +        * the same FME platform device id.
+>> > +        */
+>> > +       mgr = platform_device_alloc(FPGA_DFL_FME_MGR, fme->id);
+>>
+>> At this point, the framework is assuming all FME's include the same
+>> FPGA manager device which would use the driver in dfl-fme-mgr.c.
+>>
+>> I'm thinking of two cases where the manager isn't the same as a
+>> dfl-fme-mgr.c manager are a bit different:
+>>
+>> (1) a FME-based FPGA manager, but different implementation, different
+>> registers.  The constraint is that the port implementation has to be
+>> similar enough to use the rest of the base FME code.   I am wondering
+>> if the FPGA manager can be added to the DFL.  At this point, the DFL
+>> would drive which FPGA manager is alloc'd.   That way the user gets to
+>> use all this code in dfl-fme-pr.c but with their FPGA manager.
+>
+> Actually I'm not sure how this will be implemented in the hardware in the
+> future, but from my understanding, there may be several methods to add this
+> support (a different PR hardware) to FME.
+>
+> 1) introduce a new PR sub feature to FME.
+>    driver knows it by different feature id, and create different fpga
+>    manager platform device, but may not be able to reuse dfl-fme-pr.c.
 
-*) SCM_CREDENTIALS message:
-	Ref: http://man7.org/linux/man-pages/man7/unix.7.html
-	The sender can translate its pid from its own namespace
-to a pid in the target namespace by sending and receiving the
-SCM_CREDENTIALS message. The drawback of this method is the
-requirement of a socket communication channel to pid translation
-which adds to the management overhead. This method does not enable
-the sender to translate the pid of other process unless it is root
-or it has CAP_SYS_ADMIN.
+What would prevent reusing dfl-fme-pr.c?  It looks like this is 98% of
+the way there and only needs a way of knowing which FPGA manager
+driver to alloc here. I am hoping that a new PR sub feature could be
+added and that dfl-fme-pr.c can be reused.
 
-*) /proc/<pid>/status file
-	Ref: http://man7.org/linux/man-pages/man5/proc.5.html
-	Ref: https://patchwork.kernel.org/patch/5861791/
-	/proc/<pid>/status file provides a way to find the pids
-associated with a process in different namespaces. Pid translation
-from child namespace to parent namespace from parent namespace would
-require searching all the status file in the parent namespace to find
-the desired pid at desired level which is inefficient.
+>
+> 2) add a different PR hardware support to current PR sub feature.
+>    It requires hardware to add registers to indicate this is a different
+>    PR hardware than dfl-fme-mgr.c, and its register region information
+>    (e.g location and size). Then this dfl-fme-pr.c driver could read
+>    these information from hardware and create a different fpga manager
+>    platform device with correct resources.
 
-Method under review:
+So this dfl-fme-pr.c would have to know where some ID registers are
+and the enumeration gets messier.  Some of the enumeration would be
+DFL and some would be from information that is not in the DFL headers.
+The DFL should contain the knowledge of which mgr to use.
 
-*) pidns: introduce syscall translate_pid
-	Ref: https://lwn.net/Articles/736330/
-	This solution though not integrated yet, when used would require
-monitor to have open file descriptor for every level of namespace it
-has to monitor which results in explosion of number of file descriptors
-the monitor has to keep open.
+>
+> I think current driver framework could support both cases above for sure.
+>
+>>
+>> (2) a FPGA manager that can be added by device tree in the case of a
+>> platform that is using device tree.  I think this will be pretty
+>> simple and can be done later when someone is actually bringing this
+>> framework up on a FPGA running under device tree.  I'm thinking that
+>> the base DFL device that reads the dfl data from hardware can have a
+>> DT property that points to the FPGA manager.  That manager can be
+>> saved somewhere handy like the pdata and passed down to this code,
+>> which realizes it can use that existing device and doesn't need to
+>> alloc a platform device.  But again, that's probably best done later.
+>
+> Sure, we can discuss further when we really need it. Actually per my
+> understanding, if hardware describes itself clearly, we may not have to
+> use DT for fpga manager, as driver could create it automatically based
+> on information read from hardware. :)
 
-Following patch uses a 64-bit ID for namespace exported by procfs
-for pid translation through a new file /proc/<pid>/ns/pidns_id.
+DT exists for busses that don't have that kind of discovery.  For a
+concrete example, consider how the Arria10 driver (socfpga-a10.c)
+probe function is getting its two mmio spaces and clock.
 
-[root@brm-x4600-01 ~]# ls -l /proc/4690/ns
-total 0
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 cgroup -> cgroup:[4026531835]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 ipc -> ipc:[4026531839]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 mnt -> mnt:[4026532324]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 net -> net:[4026531993]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 pid -> pid:[4026532325]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 pid_for_children -> pid:[4026532325]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 pidns_id -> [14994344851325148137]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 user -> user:[4026531837]
-lrwxrwxrwx 1 root root 0 Mar  1 15:55 uts -> uts:[4026531838]
+>
+>>
+>> > +       if (!mgr)
+>> > +               return ERR_PTR(ret);
+>> > +
+>> > +       mgr->dev.parent = &fme->dev;
+>> > +
+>> > +       pres = platform_get_resource(fme, IORESOURCE_MEM,
+>> > +                                    feature->resource_index);
+>> > +       if (!pres) {
+>> > +               ret = -ENODEV;
+>> > +               goto create_mgr_err;
+>> > +       }
+>> > +
+>> > +       memset(&res, 0, sizeof(struct resource));
+>> > +
+>> > +       res.start = pres->start;
+>> > +       res.end = pres->end;
+>> > +       res.name = pres->name;
+>> > +       res.flags = IORESOURCE_MEM;
+>> > +
+>> > +       ret = platform_device_add_resources(mgr, &res, 1);
+>> > +       if (ret)
+>> > +               goto create_mgr_err;
+>> > +
+>> > +       ret = platform_device_add(mgr);
+>> > +       if (ret)
+>> > +               goto create_mgr_err;
+>> > +
+>> > +       return mgr;
+>> > +
+>> > +create_mgr_err:
+>> > +       platform_device_put(mgr);
+>> > +       return ERR_PTR(ret);
+>> > +}
 
-Though there is a problem of ID being recycled in longterm, managing
-an ID per namespace is easier than having open file descriptors per
-pid namespace. Existing namespace inode numbers recycles faster and hence
-their usability as ID for this API is less.
+>> > diff --git a/drivers/fpga/dfl-fme-pr.h b/drivers/fpga/dfl-fme-pr.h
+>> > new file mode 100644
+>> > index 0000000..11bd001
+>> > --- /dev/null
+>> > +++ b/drivers/fpga/dfl-fme-pr.h
+>> > @@ -0,0 +1,113 @@
+>> > +/* SPDX-License-Identifier: GPL-2.0 */
+>> > +/*
+>> > + * Header file for FPGA Management Engine (FME) Partial Reconfiguration Driver
+>> > + *
+>> > + * Copyright (C) 2017 Intel Corporation, Inc.
+>> > + *
+>> > + * Authors:
+>> > + *   Kang Luwei <luwei.kang@intel.com>
+>> > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+>> > + *   Wu Hao <hao.wu@intel.com>
+>> > + *   Joseph Grecco <joe.grecco@intel.com>
+>> > + *   Enno Luebbers <enno.luebbers@intel.com>
+>> > + *   Tim Whisonant <tim.whisonant@intel.com>
+>> > + *   Ananda Ravuri <ananda.ravuri@intel.com>
+>> > + *   Henry Mitchel <henry.mitchel@intel.com>
+>> > + */
+>> > +
+>> > +#ifndef __DFL_FME_PR_H
+>> > +#define __DFL_FME_PR_H
+>> > +
+>> > +#include <linux/platform_device.h>
+>> > +
+>> > +/**
+>> > + * struct fme_region - FME fpga region data structure
+>> > + *
+>> > + * @region: platform device of the FPGA region.
+>> > + * @node: used to link fme_region to a list.
+>> > + * @port_id: indicate which port this region connected to.
+>> > + */
+>> > +struct fme_region {
+>> > +       struct platform_device *region;
+>> > +       struct list_head node;
+>> > +       int port_id;
+>> > +};
+>> > +
+>> > +/**
+>> > + * struct fme_region_pdata - platform data for FME region platform device.
+>> > + *
+>> > + * @mgr: platform device of the FPGA manager.
+>> > + * @br: platform device of the FPGA bridge.
+>> > + * @region_id: region id (same as port_id).
+>> > + */
+>> > +struct fme_region_pdata {
+>> > +       struct platform_device *mgr;
+>> > +       struct platform_device *br;
+>> > +       int region_id;
+>> > +};
+>> > +
+>> > +/**
+>> > + * struct fme_bridge - FME fpga bridge data structure
+>> > + *
+>> > + * @br: platform device of the FPGA bridge.
+>> > + * @node: used to link fme_bridge to a list.
+>> > + */
+>> > +struct fme_bridge {
+>> > +       struct platform_device *br;
+>> > +       struct list_head node;
+>> > +};
+>> > +
+>> > +/**
+>> > + * struct fme_bridge_pdata - platform data for FME bridge platform device.
+>> > + *
+>> > + * @port: platform device of the port feature dev.
+>> > + */
+>> > +struct fme_br_pdata {
+>> > +       struct platform_device *port;
+>> > +};
+>> > +
+>> > +#define FPGA_DFL_FME_MGR       "dfl-fme-mgr"
+>> > +#define FPGA_DFL_FME_BRIDGE    "dfl-fme-bridge"
+>> > +#define FPGA_DFL_FME_REGION    "dfl-fme-region"
+>> > +
+>>
+>> Everything in dfl-fme-pr.h up to this point is good and general and
+>> should remain in dfl-fme-pr.h.  The register #defines for this FME's
+>> FPGA manager device below should be associated with the FPGA manager
+>> driver.  Sorry if the way I stated that in the v3 review wasn't clear.
+>
+> Actually I put the PR sub feature register set definitions in this header
+> file (dfl-fme-pr.h), because it's possible the driver (dfl-fme-pr.c) of
+> this PR sub feature access some of the registers in the future. e.g read
+> some PR sub feature registers to create different fpga manager platform
+> devices as I mentioned above.
 
-Signed-off-by: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
----
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   2 +
- fs/nsfs.c                              |   9 +-
- fs/proc/namespaces.c                   |   1 +
- include/linux/ns_common.h              |   1 +
- include/linux/pid_namespace.h          |   3 +
- include/linux/proc_ns.h                |   1 +
- include/linux/syscalls.h               |   1 +
- kernel/pid_namespace.c                 | 190 ++++++++++++++++++++++++++++++++-
- kernel/sys_ni.c                        |   4 +
- 10 files changed, 208 insertions(+), 5 deletions(-)
+That sounds like a workaround.  Since you're adding a new method of
+enumeration, you should use that new method of enumeration to choose
+which FPGA manager is being used.  Otherwise we are ending up with
+multi-level enumeration, i.e. look at the DFL and then look at a
+specific register location in the device.
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 448ac21..31bf798 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -391,3 +391,4 @@
- 382	i386	pkey_free		sys_pkey_free
- 383	i386	statx			sys_statx
- 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
-+385	i386	translate_pid		sys_translate_pid		compat_sys_translate_pid
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5aef183..89196c3 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -339,6 +339,7 @@
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
- 332	common	statx			sys_statx
-+333	64	translate_pid		sys_translate_pid
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-@@ -380,3 +381,4 @@
- 545	x32	execveat		compat_sys_execveat/ptregs
- 546	x32	preadv2			compat_sys_preadv64v2
- 547	x32	pwritev2		compat_sys_pwritev64v2
-+548	x32	translate_pid		compat_sys_translate_pid
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index 36b0772..c635465 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -222,8 +222,13 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
- 	const char *name;
- 	ns = ns_ops->get(task);
- 	if (ns) {
--		name = ns_ops->real_ns_name ? : ns_ops->name;
--		res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
-+		if (!strcmp(ns_ops->name, "pidns_id")) {
-+			res = snprintf(buf, size, "[%llu]",
-+				       (unsigned long long)ns->ns_id);
-+		} else {
-+			name = ns_ops->real_ns_name ? : ns_ops->name;
-+			res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
-+		}
- 		ns_ops->put(ns);
- 	}
- 	return res;
-diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-index 59b17e5..ac823ce 100644
---- a/fs/proc/namespaces.c
-+++ b/fs/proc/namespaces.c
-@@ -24,6 +24,7 @@
- #endif
- #ifdef CONFIG_PID_NS
- 	&pidns_operations,
-+	&pidns_id_operations,
- 	&pidns_for_children_operations,
- #endif
- #ifdef CONFIG_USER_NS
-diff --git a/include/linux/ns_common.h b/include/linux/ns_common.h
-index 5fbc400..6ca3d43 100644
---- a/include/linux/ns_common.h
-+++ b/include/linux/ns_common.h
-@@ -8,6 +8,7 @@ struct ns_common {
- 	atomic_long_t stashed;
- 	const struct proc_ns_operations *ops;
- 	unsigned int inum;
-+	u64 ns_id;
- };
- 
- #endif
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index 49538b1..11d1d57 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -11,6 +11,7 @@
- #include <linux/kref.h>
- #include <linux/ns_common.h>
- #include <linux/idr.h>
-+#include <linux/list_bl.h>
- 
- 
- struct fs_pin;
-@@ -44,6 +45,8 @@ struct pid_namespace {
- 	kgid_t pid_gid;
- 	int hide_pid;
- 	int reboot;	/* group exit code if this pidns was rebooted */
-+	struct hlist_bl_node node;
-+	atomic_t lookups_pending;
- 	struct ns_common ns;
- } __randomize_layout;
- 
-diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-index d31cb62..861e38bd 100644
---- a/include/linux/proc_ns.h
-+++ b/include/linux/proc_ns.h
-@@ -28,6 +28,7 @@ struct proc_ns_operations {
- extern const struct proc_ns_operations utsns_operations;
- extern const struct proc_ns_operations ipcns_operations;
- extern const struct proc_ns_operations pidns_operations;
-+extern const struct proc_ns_operations pidns_id_operations;
- extern const struct proc_ns_operations pidns_for_children_operations;
- extern const struct proc_ns_operations userns_operations;
- extern const struct proc_ns_operations mntns_operations;
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index a78186d..574349a 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -901,6 +901,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
- 				      struct file_handle __user *handle,
- 				      int flags);
- asmlinkage long sys_setns(int fd, int nstype);
-+asmlinkage long sys_translate_pid(pid_t pid, u64 source, u64 target);
- asmlinkage long sys_process_vm_readv(pid_t pid,
- 				     const struct iovec __user *lvec,
- 				     unsigned long liovcnt,
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 0b53eef..ff83aa8 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -22,6 +22,12 @@
- #include <linux/sched/task.h>
- #include <linux/sched/signal.h>
- #include <linux/idr.h>
-+#include <linux/random.h>
-+#include <linux/compat.h>
-+
-+#define	PID_NS_ID_HASH_BITS     9
-+
-+struct	hlist_bl_head *pid_ns_hash;
- 
- struct pid_cache {
- 	int nr_ids;
-@@ -34,6 +40,13 @@ struct pid_cache {
- static DEFINE_MUTEX(pid_caches_mutex);
- static struct kmem_cache *pid_ns_cachep;
- 
-+static inline struct hlist_bl_head *
-+	pid_ns_hash_head(struct hlist_bl_head *hash,
-+			 uint64_t key)
-+{
-+	return &hash[hash_64(key, PID_NS_ID_HASH_BITS)];
-+}
-+
- /*
-  * creates the kmem cache to allocate pids from.
-  * @nr_ids: the number of numerical ids this pid will have to carry
-@@ -93,12 +106,24 @@ static void dec_pid_namespaces(struct ucounts *ucounts)
- 	dec_ucount(ucounts, UCOUNT_PID_NAMESPACES);
- }
- 
-+static inline u64 get_namespace_id(void)
-+{
-+	u64 id = 0;
-+
-+	while (!id)
-+		get_random_bytes(&id, sizeof(id));
-+
-+	return id;
-+}
-+
- static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns,
- 	struct pid_namespace *parent_pid_ns)
- {
--	struct pid_namespace *ns;
--	unsigned int level = parent_pid_ns->level + 1;
-+	struct pid_namespace *ns, *pt;
- 	struct ucounts *ucounts;
-+	struct hlist_bl_head *head;
-+	struct hlist_bl_node *dup_node;
-+	unsigned int level = parent_pid_ns->level + 1;
- 	int err;
- 
- 	err = -EINVAL;
-@@ -135,7 +160,24 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
- 	ns->ucounts = ucounts;
- 	ns->pid_allocated = PIDNS_ADDING;
- 	INIT_WORK(&ns->proc_work, proc_cleanup_work);
--
-+	ns->ns.ns_id = get_namespace_id();
-+	while (1) {
-+		head = pid_ns_hash_head(pid_ns_hash, ns->ns.ns_id);
-+		hlist_bl_lock(head);
-+		hlist_bl_for_each_entry(pt, dup_node, head, node) {
-+			if (ns->ns.ns_id == pt->ns.ns_id) {
-+				/*
-+				 * ID is taken. Move to next ID;
-+				 */
-+				ns->ns.ns_id = get_namespace_id();
-+				hlist_bl_unlock(head);
-+				continue;
-+			}
-+		}
-+		break;
-+	}
-+	hlist_bl_add_head(&ns->node, head);
-+	hlist_bl_unlock(head);
- 	return ns;
- 
- out_free_idr:
-@@ -159,6 +201,30 @@ static void delayed_free_pidns(struct rcu_head *p)
- 
- static void destroy_pid_namespace(struct pid_namespace *ns)
- {
-+	struct pid_namespace *ph;
-+	struct hlist_bl_head *head;
-+	struct hlist_bl_node *dup_node;
-+
-+	/*
-+	 * Remove the namespace structure from hash table so
-+	 * now new lookups can start on it.
-+	 */
-+	if (ns->ns.ns_id) {
-+		head = pid_ns_hash_head(pid_ns_hash, ns->ns.ns_id);
-+		hlist_bl_lock(head);
-+		hlist_bl_for_each_entry(ph, dup_node, head, node) {
-+			if (ns->ns.ns_id == ph->ns.ns_id) {
-+				hlist_bl_del_init(&ph->node);
-+				break;
-+			}
-+		}
-+		hlist_bl_unlock(head);
-+	}
-+	/*
-+	 * Wait for pending lookups to complete.
-+	 */
-+	while (atomic_read(&ns->lookups_pending))
-+		cpu_relax();
- 	ns_free_inum(&ns->ns);
- 
- 	idr_destroy(&ns->idr);
-@@ -463,6 +529,17 @@ static struct user_namespace *pidns_owner(struct ns_common *ns)
- 	.get_parent	= pidns_get_parent,
- };
- 
-+const struct proc_ns_operations pidns_id_operations = {
-+	.name		= "pidns_id",
-+	.real_ns_name	= "pid",
-+	.type		= CLONE_NEWPID,
-+	.get		= pidns_get,
-+	.put		= pidns_put,
-+	.install	= pidns_install,
-+	.owner		= pidns_owner,
-+	.get_parent	= pidns_get_parent,
-+};
-+
- const struct proc_ns_operations pidns_for_children_operations = {
- 	.name		= "pid_for_children",
- 	.real_ns_name	= "pid",
-@@ -474,9 +551,116 @@ static struct user_namespace *pidns_owner(struct ns_common *ns)
- 	.get_parent	= pidns_get_parent,
- };
- 
-+/*
-+ * translate_pid - convert pid in source pid-ns into target pid-ns.
-+ * @pid: pid for translation
-+ * @source: pid-ns id
-+ * @target: pid-ns id
-+ *
-+ * Return pid in @target pid-ns, zero if task have no pid there,
-+ * or -ESRCH of task with @pid is not found in @source pid-ns.
-+ */
-+SYSCALL_DEFINE3(translate_pid, pid_t, pid, u64, source,
-+		u64, target)
-+{
-+	struct pid_namespace *source_ns = NULL, *target_ns = NULL;
-+	struct pid *struct_pid;
-+	struct pid_namespace *ph;
-+	struct hlist_bl_head *shead = NULL;
-+	struct hlist_bl_head *thead = NULL;
-+	struct hlist_bl_node *dup_node;
-+	pid_t result;
-+
-+	if (!source) {
-+		source_ns = &init_pid_ns;
-+	} else {
-+		shead = pid_ns_hash_head(pid_ns_hash, source);
-+		hlist_bl_lock(shead);
-+		hlist_bl_for_each_entry(ph, dup_node, shead, node) {
-+			if (source == ph->ns.ns_id) {
-+				source_ns = ph;
-+				break;
-+			}
-+		}
-+		if (!source_ns) {
-+			hlist_bl_unlock(shead);
-+			return -EINVAL;
-+		}
-+	}
-+	if (!ptrace_may_access(source_ns->child_reaper,
-+			       PTRACE_MODE_READ_FSCREDS)) {
-+		if (shead)
-+			hlist_bl_unlock(shead);
-+		return -EPERM;
-+	}
-+
-+	atomic_inc(&source_ns->lookups_pending);
-+	if (shead)
-+		hlist_bl_unlock(shead);
-+
-+	if (!target) {
-+		target_ns = &init_pid_ns;
-+	} else {
-+		thead = pid_ns_hash_head(pid_ns_hash, target);
-+		hlist_bl_lock(thead);
-+		hlist_bl_for_each_entry(ph, dup_node, thead, node) {
-+			if (target == ph->ns.ns_id) {
-+				target_ns = ph;
-+				break;
-+			}
-+		}
-+		if (!target_ns) {
-+			atomic_dec(&source_ns->lookups_pending);
-+			hlist_bl_unlock(thead);
-+			return -EINVAL;
-+		}
-+	}
-+	if (!ptrace_may_access(target_ns->child_reaper,
-+			       PTRACE_MODE_READ_FSCREDS)) {
-+		atomic_dec(&source_ns->lookups_pending);
-+		if (thead)
-+			hlist_bl_unlock(thead);
-+		return -EPERM;
-+	}
-+	atomic_inc(&target_ns->lookups_pending);
-+	if (thead)
-+		hlist_bl_unlock(thead);
-+
-+	rcu_read_lock();
-+	struct_pid = find_pid_ns(pid, source_ns);
-+	result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
-+	rcu_read_unlock();
-+	atomic_dec(&source_ns->lookups_pending);
-+	atomic_dec(&target_ns->lookups_pending);
-+	return result;
-+}
-+
-+#ifdef	CONFIG_COMPAT
-+COMPAT_SYSCALL_DEFINE5(translate_pid, pid_t, pid, u32, s0, u32, s1,
-+		       u32, t0, u32, t1)
-+{
-+#ifdef __BIG_ENDIAN
-+	return sys_translate_pid(pid, ((u64)s0 << 32) | s1,
-+				 ((u64)t0 << 32) | t1);
-+#else
-+	return sys_translate_pid(pid, ((u64)s1 << 32) | s0,
-+				 ((u64)t1 << 32) | t0);
-+#endif
-+}
-+#endif
-+
- static __init int pid_namespaces_init(void)
- {
-+	unsigned long bucket_count;
-+	int i;
-+
-+	bucket_count = (1UL << PID_NS_ID_HASH_BITS);
- 	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
-+	pid_ns_hash = kmalloc_array(bucket_count, sizeof(struct hlist_bl_head),
-+				    GFP_KERNEL);
-+
-+	for (i = 0; i < bucket_count; i++)
-+		INIT_HLIST_BL_HEAD(&pid_ns_hash[i]);
- 
- #ifdef CONFIG_CHECKPOINT_RESTORE
- 	register_sysctl_paths(kern_path, pid_ns_ctl_table);
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index b518976..467255f 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -259,3 +259,7 @@ asmlinkage long sys_ni_syscall(void)
- cond_syscall(sys_pkey_mprotect);
- cond_syscall(sys_pkey_alloc);
- cond_syscall(sys_pkey_free);
-+
-+/* pid translation */
-+cond_syscall(sys_translate_pid);
-+cond_syscall(compat_sys_translate_pid);
--- 
-1.8.3.1
+>
+> I have to say this is only future consideration, and in this dfl-fme-pr.c
+> driver there is no code to access below registers currently. I can move all
+> of them to dfl-fme-mgr.h or dfl-fme-mgr.c in the next version if this is
+> preferred. : )
+
+That sounds good.  That makes the mgr driver its own separate thing
+which is what is supposed to happen in this framework.
+
+>
+>>
+>> > +/* FME Partial Reconfiguration Sub Feature Register Set */
+>> > +#define FME_PR_DFH             0x0
+>> > +#define FME_PR_CTRL            0x8
+>> > +#define FME_PR_STS             0x10
+>> > +#define FME_PR_DATA            0x18
+>> > +#define FME_PR_ERR             0x20
+>> > +#define FME_PR_INTFC_ID_H      0xA8
+>> > +#define FME_PR_INTFC_ID_L      0xB0
+>> > +
+>> > +/* FME PR Control Register Bitfield */
+>> > +#define FME_PR_CTRL_PR_RST     BIT(0)  /* Reset PR engine */
+>> > +#define FME_PR_CTRL_PR_RSTACK  BIT(4)  /* Ack for PR engine reset */
+>> > +#define FME_PR_CTRL_PR_RGN_ID  GENMASK_ULL(9, 7)       /* PR Region ID */
+>> > +#define FME_PR_CTRL_PR_START   BIT(12) /* Start to request for PR service */
+>> > +#define FME_PR_CTRL_PR_COMPLETE        BIT(13) /* PR data push complete notification */
+>> > +
+>> > +/* FME PR Status Register Bitfield */
+>> > +/* Number of available entries in HW queue inside the PR engine. */
+>> > +#define FME_PR_STS_PR_CREDIT   GENMASK_ULL(8, 0)
+>> > +#define FME_PR_STS_PR_STS      BIT(16) /* PR operation status */
+>> > +#define FME_PR_STS_PR_STS_IDLE 0
+>> > +#define FME_PR_STS_PR_CTRLR_STS        GENMASK_ULL(22, 20)     /* Controller status */
+>> > +#define FME_PR_STS_PR_HOST_STS GENMASK_ULL(27, 24)     /* PR host status */
+>> > +
+>> > +/* FME PR Data Register Bitfield */
+>> > +/* PR data from the raw-binary file. */
+>> > +#define FME_PR_DATA_PR_DATA_RAW        GENMASK_ULL(32, 0)
+>> > +
+>> > +/* FME PR Error Register */
+>> > +/* PR Operation errors detected. */
+>> > +#define FME_PR_ERR_OPERATION_ERR       BIT(0)
+>> > +/* CRC error detected. */
+>> > +#define FME_PR_ERR_CRC_ERR             BIT(1)
+>> > +/* Incompatible PR bitstream detected. */
+>> > +#define FME_PR_ERR_INCOMPATIBLE_BS     BIT(2)
+>> > +/* PR data push protocol violated. */
+>> > +#define FME_PR_ERR_PROTOCOL_ERR                BIT(3)
+>> > +/* PR data fifo overflow error detected */
+>> > +#define FME_PR_ERR_FIFO_OVERFLOW       BIT(4)
+>>
+>> This stuff is specific to this FPGA manager device, so it should
+>> either be in the dfl-fme-mgr.c or in a dfl-fme-mgr.h
+>
+> same as above, I can fix this in the next version.
+>
+> Thanks
+> Hao
+
+Thanks,
+Alan
