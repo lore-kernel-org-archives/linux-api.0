@@ -1,36 +1,43 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
-Date: Tue, 6 Mar 2018 20:01:21 +0000
-Message-ID: <CALCETrVO6dc6Fzf2VPjLF1Z+YHU=di_fh53+EhcRqt3V+wQDuA@mail.gmail.com>
-References: <20180306013457.1955486-1-ast@kernel.org>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH] kernel/sys_ni: sort cond_syscall() entries
+Date: Tue, 6 Mar 2018 12:02:51 -0800
+Message-ID: <3d7b7278-e849-2673-564e-10a65774ee58@infradead.org>
+References: <20180306185301.GA31061@light.dominikbrodowski.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180306013457.1955486-1-ast@kernel.org>
+In-Reply-To: <20180306185301.GA31061@light.dominikbrodowski.net>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
+To: Dominik Brodowski <linux@dominikbrodowski.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: torvalds@linux-foundation.org, luto@amacapital.net, mingo@kernel.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, ak@linux.intel.com, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 6, 2018 at 1:34 AM, Alexei Starovoitov <ast@kernel.org> wrote:
-> As the first step in development of bpfilter project [1] the request_module()
-> code is extended to allow user mode helpers to be invoked. Idea is that
-> user mode helpers are built as part of the kernel build and installed as
-> traditional kernel modules with .ko file extension into distro specified
-> location, such that from a distribution point of view, they are no different
-> than regular kernel modules. Thus, allow request_module() logic to load such
-> user mode helper (umh) modules via:
->
->   request_module("foo") ->
->     call_umh("modprobe foo") ->
->       sys_finit_module(FD of /lib/modules/.../foo.ko) ->
->         call_umh(struct file)
->
+On 03/06/2018 10:53 AM, Dominik Brodowski wrote:
 
-I assume I'm missing some context here, but why does this need to be
-handled by the kernel rather than, say, a change to how modprobe
-works?  I imagine that usermode tooling needs to change regardless
-because the existing tools may get rather confused if a .ko "module"
-is really a dynamically liked program.  I notice that you're using
-ET_EXEC in your example, and that will probably avoid problems, but I
-imagine that some distros would much rather use ET_DYN.
+> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> index b5189762d275..44c65e4d2528 100644
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -17,245 +17,403 @@ asmlinkage long sys_ni_syscall(void)
+>  	return -ENOSYS;
+>  }
+>  
+> -cond_syscall(sys_quotactl);
+> -cond_syscall(sys32_quotactl);
+> -cond_syscall(sys_acct);
+> +/*
+> + * This list is kept in the same order as include/uapi/asm-generic/unistd.h.
+> + * Architecture specific entries go below, then follow deprecated or obsolote
+
+                                                                        obsolete
+
+> + * system calls.
+> + */
+
+> 
+
+
+-- 
+~Randy
