@@ -1,325 +1,602 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v4 14/24] fpga: dfl: fme: add partial reconfiguration sub
- feature support
-Date: Tue, 6 Mar 2018 12:29:35 -0600
-Message-ID: <CANk1AXTPhxZq5PaJgVPeADjBLHYN7-A=drZ=3qVqROwXK4-O+Q@mail.gmail.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-15-git-send-email-hao.wu@intel.com> <CANk1AXRT6Rd6kjxT9Q_=3T0zNfzLGmdxOzY=pyX0VKMYReh-0Q@mail.gmail.com>
- <20180306020838.GB32057@hao-dev>
+From: Dominik Brodowski <linux@dominikbrodowski.net>
+Subject: [PATCH] kernel/sys_ni: sort cond_syscall() entries
+Date: Tue, 6 Mar 2018 19:53:01 +0100
+Message-ID: <20180306185301.GA31061@light.dominikbrodowski.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180306020838.GB32057@hao-dev>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: torvalds@linux-foundation.org, luto@amacapital.net, mingo@kernel.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, ak@linux.intel.com, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-  On Mon, Mar 5, 2018 at 8:08 PM, Wu Hao <hao.wu@intel.com> wrote:
-> On Mon, Mar 05, 2018 at 04:46:02PM -0600, Alan Tull wrote:
->> On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
->>
->> Hi Hao,
->
-> Hi Alan,
->
-> Thanks for the comments.
->
->>
->> We are going to want to be able use different FPGA managers with this
->> framework.  The different manager may be part of a different FME in
->> fabric or it may be a hardware FPGA manager.  Fortunately, at this
->> point now the changes, noted below, to get there are pretty small.
->
-> Yes, understand these could be some cases that FME having different PR
-> hardware.
->
+Shuffle the cond_syscall() entries in kernel/sys_ni.c around so that they
+are kept in the same order as in include/uapi/asm-generic/unistd.h. For
+better structuring, add the same comments as in that file, but keep a few
+additional comments and extend the commentary where it seems useful.
 
-Or supporting reduced FME plus hardware-based FPGA manager.
+Signed-off-by: Dominik Brodowski <linux@dominikbrodowski.net>
 
-Just to re-emphasize, the basic intent of the FPGA manager subsystem
-in the first place is to have FPGA managers separate from higher level
-frameworks so that the higher level frameworks will be able to able to
-use different FPGAs.
-
->> > +/**
->> > + * fpga_fme_create_mgr - create fpga mgr platform device as child device
->> > + *
->> > + * @pdata: fme platform_device's pdata
->> > + *
->> > + * Return: mgr platform device if successful, and error code otherwise.
->> > + */
->> > +static struct platform_device *
->> > +fpga_fme_create_mgr(struct feature_platform_data *pdata)
->> > +{
->> > +       struct platform_device *mgr, *fme = pdata->dev;
->> > +       struct feature *feature;
->> > +       struct resource res;
->> > +       struct resource *pres;
->> > +       int ret = -ENOMEM;
->> > +
->> > +       feature = get_feature_by_id(&pdata->dev->dev, FME_FEATURE_ID_PR_MGMT);
->> > +       if (!feature)
->> > +               return ERR_PTR(-ENODEV);
->> > +
->> > +       /*
->> > +        * Each FME has only one fpga-mgr, so allocate platform device using
->> > +        * the same FME platform device id.
->> > +        */
->> > +       mgr = platform_device_alloc(FPGA_DFL_FME_MGR, fme->id);
->>
->> At this point, the framework is assuming all FME's include the same
->> FPGA manager device which would use the driver in dfl-fme-mgr.c.
->>
->> I'm thinking of two cases where the manager isn't the same as a
->> dfl-fme-mgr.c manager are a bit different:
->>
->> (1) a FME-based FPGA manager, but different implementation, different
->> registers.  The constraint is that the port implementation has to be
->> similar enough to use the rest of the base FME code.   I am wondering
->> if the FPGA manager can be added to the DFL.  At this point, the DFL
->> would drive which FPGA manager is alloc'd.   That way the user gets to
->> use all this code in dfl-fme-pr.c but with their FPGA manager.
->
-> Actually I'm not sure how this will be implemented in the hardware in the
-> future, but from my understanding, there may be several methods to add this
-> support (a different PR hardware) to FME.
->
-> 1) introduce a new PR sub feature to FME.
->    driver knows it by different feature id, and create different fpga
->    manager platform device, but may not be able to reuse dfl-fme-pr.c.
-
-What would prevent reusing dfl-fme-pr.c?  It looks like this is 98% of
-the way there and only needs a way of knowing which FPGA manager
-driver to alloc here. I am hoping that a new PR sub feature could be
-added and that dfl-fme-pr.c can be reused.
-
->
-> 2) add a different PR hardware support to current PR sub feature.
->    It requires hardware to add registers to indicate this is a different
->    PR hardware than dfl-fme-mgr.c, and its register region information
->    (e.g location and size). Then this dfl-fme-pr.c driver could read
->    these information from hardware and create a different fpga manager
->    platform device with correct resources.
-
-So this dfl-fme-pr.c would have to know where some ID registers are
-and the enumeration gets messier.  Some of the enumeration would be
-DFL and some would be from information that is not in the DFL headers.
-The DFL should contain the knowledge of which mgr to use.
-
->
-> I think current driver framework could support both cases above for sure.
->
->>
->> (2) a FPGA manager that can be added by device tree in the case of a
->> platform that is using device tree.  I think this will be pretty
->> simple and can be done later when someone is actually bringing this
->> framework up on a FPGA running under device tree.  I'm thinking that
->> the base DFL device that reads the dfl data from hardware can have a
->> DT property that points to the FPGA manager.  That manager can be
->> saved somewhere handy like the pdata and passed down to this code,
->> which realizes it can use that existing device and doesn't need to
->> alloc a platform device.  But again, that's probably best done later.
->
-> Sure, we can discuss further when we really need it. Actually per my
-> understanding, if hardware describes itself clearly, we may not have to
-> use DT for fpga manager, as driver could create it automatically based
-> on information read from hardware. :)
-
-DT exists for busses that don't have that kind of discovery.  For a
-concrete example, consider how the Arria10 driver (socfpga-a10.c)
-probe function is getting its two mmio spaces and clock.
-
->
->>
->> > +       if (!mgr)
->> > +               return ERR_PTR(ret);
->> > +
->> > +       mgr->dev.parent = &fme->dev;
->> > +
->> > +       pres = platform_get_resource(fme, IORESOURCE_MEM,
->> > +                                    feature->resource_index);
->> > +       if (!pres) {
->> > +               ret = -ENODEV;
->> > +               goto create_mgr_err;
->> > +       }
->> > +
->> > +       memset(&res, 0, sizeof(struct resource));
->> > +
->> > +       res.start = pres->start;
->> > +       res.end = pres->end;
->> > +       res.name = pres->name;
->> > +       res.flags = IORESOURCE_MEM;
->> > +
->> > +       ret = platform_device_add_resources(mgr, &res, 1);
->> > +       if (ret)
->> > +               goto create_mgr_err;
->> > +
->> > +       ret = platform_device_add(mgr);
->> > +       if (ret)
->> > +               goto create_mgr_err;
->> > +
->> > +       return mgr;
->> > +
->> > +create_mgr_err:
->> > +       platform_device_put(mgr);
->> > +       return ERR_PTR(ret);
->> > +}
-
->> > diff --git a/drivers/fpga/dfl-fme-pr.h b/drivers/fpga/dfl-fme-pr.h
->> > new file mode 100644
->> > index 0000000..11bd001
->> > --- /dev/null
->> > +++ b/drivers/fpga/dfl-fme-pr.h
->> > @@ -0,0 +1,113 @@
->> > +/* SPDX-License-Identifier: GPL-2.0 */
->> > +/*
->> > + * Header file for FPGA Management Engine (FME) Partial Reconfiguration Driver
->> > + *
->> > + * Copyright (C) 2017 Intel Corporation, Inc.
->> > + *
->> > + * Authors:
->> > + *   Kang Luwei <luwei.kang@intel.com>
->> > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
->> > + *   Wu Hao <hao.wu@intel.com>
->> > + *   Joseph Grecco <joe.grecco@intel.com>
->> > + *   Enno Luebbers <enno.luebbers@intel.com>
->> > + *   Tim Whisonant <tim.whisonant@intel.com>
->> > + *   Ananda Ravuri <ananda.ravuri@intel.com>
->> > + *   Henry Mitchel <henry.mitchel@intel.com>
->> > + */
->> > +
->> > +#ifndef __DFL_FME_PR_H
->> > +#define __DFL_FME_PR_H
->> > +
->> > +#include <linux/platform_device.h>
->> > +
->> > +/**
->> > + * struct fme_region - FME fpga region data structure
->> > + *
->> > + * @region: platform device of the FPGA region.
->> > + * @node: used to link fme_region to a list.
->> > + * @port_id: indicate which port this region connected to.
->> > + */
->> > +struct fme_region {
->> > +       struct platform_device *region;
->> > +       struct list_head node;
->> > +       int port_id;
->> > +};
->> > +
->> > +/**
->> > + * struct fme_region_pdata - platform data for FME region platform device.
->> > + *
->> > + * @mgr: platform device of the FPGA manager.
->> > + * @br: platform device of the FPGA bridge.
->> > + * @region_id: region id (same as port_id).
->> > + */
->> > +struct fme_region_pdata {
->> > +       struct platform_device *mgr;
->> > +       struct platform_device *br;
->> > +       int region_id;
->> > +};
->> > +
->> > +/**
->> > + * struct fme_bridge - FME fpga bridge data structure
->> > + *
->> > + * @br: platform device of the FPGA bridge.
->> > + * @node: used to link fme_bridge to a list.
->> > + */
->> > +struct fme_bridge {
->> > +       struct platform_device *br;
->> > +       struct list_head node;
->> > +};
->> > +
->> > +/**
->> > + * struct fme_bridge_pdata - platform data for FME bridge platform device.
->> > + *
->> > + * @port: platform device of the port feature dev.
->> > + */
->> > +struct fme_br_pdata {
->> > +       struct platform_device *port;
->> > +};
->> > +
->> > +#define FPGA_DFL_FME_MGR       "dfl-fme-mgr"
->> > +#define FPGA_DFL_FME_BRIDGE    "dfl-fme-bridge"
->> > +#define FPGA_DFL_FME_REGION    "dfl-fme-region"
->> > +
->>
->> Everything in dfl-fme-pr.h up to this point is good and general and
->> should remain in dfl-fme-pr.h.  The register #defines for this FME's
->> FPGA manager device below should be associated with the FPGA manager
->> driver.  Sorry if the way I stated that in the v3 review wasn't clear.
->
-> Actually I put the PR sub feature register set definitions in this header
-> file (dfl-fme-pr.h), because it's possible the driver (dfl-fme-pr.c) of
-> this PR sub feature access some of the registers in the future. e.g read
-> some PR sub feature registers to create different fpga manager platform
-> devices as I mentioned above.
-
-That sounds like a workaround.  Since you're adding a new method of
-enumeration, you should use that new method of enumeration to choose
-which FPGA manager is being used.  Otherwise we are ending up with
-multi-level enumeration, i.e. look at the DFL and then look at a
-specific register location in the device.
-
->
-> I have to say this is only future consideration, and in this dfl-fme-pr.c
-> driver there is no code to access below registers currently. I can move all
-> of them to dfl-fme-mgr.h or dfl-fme-mgr.c in the next version if this is
-> preferred. : )
-
-That sounds good.  That makes the mgr driver its own separate thing
-which is what is supposed to happen in this framework.
-
->
->>
->> > +/* FME Partial Reconfiguration Sub Feature Register Set */
->> > +#define FME_PR_DFH             0x0
->> > +#define FME_PR_CTRL            0x8
->> > +#define FME_PR_STS             0x10
->> > +#define FME_PR_DATA            0x18
->> > +#define FME_PR_ERR             0x20
->> > +#define FME_PR_INTFC_ID_H      0xA8
->> > +#define FME_PR_INTFC_ID_L      0xB0
->> > +
->> > +/* FME PR Control Register Bitfield */
->> > +#define FME_PR_CTRL_PR_RST     BIT(0)  /* Reset PR engine */
->> > +#define FME_PR_CTRL_PR_RSTACK  BIT(4)  /* Ack for PR engine reset */
->> > +#define FME_PR_CTRL_PR_RGN_ID  GENMASK_ULL(9, 7)       /* PR Region ID */
->> > +#define FME_PR_CTRL_PR_START   BIT(12) /* Start to request for PR service */
->> > +#define FME_PR_CTRL_PR_COMPLETE        BIT(13) /* PR data push complete notification */
->> > +
->> > +/* FME PR Status Register Bitfield */
->> > +/* Number of available entries in HW queue inside the PR engine. */
->> > +#define FME_PR_STS_PR_CREDIT   GENMASK_ULL(8, 0)
->> > +#define FME_PR_STS_PR_STS      BIT(16) /* PR operation status */
->> > +#define FME_PR_STS_PR_STS_IDLE 0
->> > +#define FME_PR_STS_PR_CTRLR_STS        GENMASK_ULL(22, 20)     /* Controller status */
->> > +#define FME_PR_STS_PR_HOST_STS GENMASK_ULL(27, 24)     /* PR host status */
->> > +
->> > +/* FME PR Data Register Bitfield */
->> > +/* PR data from the raw-binary file. */
->> > +#define FME_PR_DATA_PR_DATA_RAW        GENMASK_ULL(32, 0)
->> > +
->> > +/* FME PR Error Register */
->> > +/* PR Operation errors detected. */
->> > +#define FME_PR_ERR_OPERATION_ERR       BIT(0)
->> > +/* CRC error detected. */
->> > +#define FME_PR_ERR_CRC_ERR             BIT(1)
->> > +/* Incompatible PR bitstream detected. */
->> > +#define FME_PR_ERR_INCOMPATIBLE_BS     BIT(2)
->> > +/* PR data push protocol violated. */
->> > +#define FME_PR_ERR_PROTOCOL_ERR                BIT(3)
->> > +/* PR data fifo overflow error detected */
->> > +#define FME_PR_ERR_FIFO_OVERFLOW       BIT(4)
->>
->> This stuff is specific to this FPGA manager device, so it should
->> either be in the dfl-fme-mgr.c or in a dfl-fme-mgr.h
->
-> same as above, I can fix this in the next version.
->
-> Thanks
-> Hao
-
-Thanks,
-Alan
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index b5189762d275..44c65e4d2528 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -17,245 +17,403 @@ asmlinkage long sys_ni_syscall(void)
+ 	return -ENOSYS;
+ }
+ 
+-cond_syscall(sys_quotactl);
+-cond_syscall(sys32_quotactl);
+-cond_syscall(sys_acct);
++/*
++ * This list is kept in the same order as include/uapi/asm-generic/unistd.h.
++ * Architecture specific entries go below, then follow deprecated or obsolote
++ * system calls.
++ */
++
++cond_syscall(sys_io_setup);
++cond_syscall(compat_sys_io_setup);
++cond_syscall(sys_io_destroy);
++cond_syscall(sys_io_submit);
++cond_syscall(compat_sys_io_submit);
++cond_syscall(sys_io_cancel);
++cond_syscall(sys_io_getevents);
++cond_syscall(compat_sys_io_getevents);
++
++/* fs/xattr.c */
++
++/* fs/dcache.c */
++
++/* fs/cookies.c */
+ cond_syscall(sys_lookup_dcookie);
+ cond_syscall(compat_sys_lookup_dcookie);
+-cond_syscall(sys_swapon);
+-cond_syscall(sys_swapoff);
++
++/* fs/eventfd.c */
++cond_syscall(sys_eventfd2);
++
++/* fs/eventfd.c */
++cond_syscall(sys_epoll_create1);
++cond_syscall(sys_epoll_ctl);
++cond_syscall(sys_epoll_pwait);
++cond_syscall(compat_sys_epoll_pwait);
++
++/* fs/fcntl.c */
++
++/* fs/inotify_user.c */
++cond_syscall(sys_inotify_init1);
++cond_syscall(sys_inotify_add_watch);
++cond_syscall(sys_inotify_rm_watch);
++
++/* fs/ioctl.c */
++
++/* fs/ioprio.c */
++cond_syscall(sys_ioprio_set);
++cond_syscall(sys_ioprio_get);
++
++/* fs/locks.c */
++cond_syscall(sys_flock);
++
++/* fs/namei.c */
++
++/* fs/namespace.c */
++
++/* fs/nfsctl.c */
++
++/* fs/open.c */
++
++/* fs/pipe.c */
++
++/* fs/quota.c */
++cond_syscall(sys_quotactl);
++
++/* fs/readdir.c */
++
++/* fs/read_write.c */
++
++/* fs/sendfile.c */
++
++/* fs/select.c */
++
++/* fs/signalfd.c */
++cond_syscall(sys_signalfd4);
++cond_syscall(compat_sys_signalfd4);
++
++/* fs/splice.c */
++
++/* fs/stat.c */
++
++/* fs/sync.c */
++
++/* fs/timerfd.c */
++cond_syscall(sys_timerfd_create);
++cond_syscall(sys_timerfd_settime);
++cond_syscall(compat_sys_timerfd_settime);
++cond_syscall(sys_timerfd_gettime);
++cond_syscall(compat_sys_timerfd_gettime);
++
++/* fs/utimes.c */
++
++/* kernel/acct.c */
++cond_syscall(sys_acct);
++
++/* kernel/capability.c */
++cond_syscall(sys_capget);
++cond_syscall(sys_capset);
++
++/* kernel/exec_domain.c */
++
++/* kernel/exit.c */
++
++/* kernel/fork.c */
++
++/* kernel/futex.c */
++cond_syscall(sys_futex);
++cond_syscall(compat_sys_futex);
++cond_syscall(sys_set_robust_list);
++cond_syscall(compat_sys_set_robust_list);
++cond_syscall(sys_get_robust_list);
++cond_syscall(compat_sys_get_robust_list);
++
++/* kernel/hrtimer.c */
++
++/* kernel/itimer.c */
++
++/* kernel/kexec.c */
+ cond_syscall(sys_kexec_load);
+ cond_syscall(compat_sys_kexec_load);
+-cond_syscall(sys_kexec_file_load);
++
++/* kernel/module.c */
+ cond_syscall(sys_init_module);
+-cond_syscall(sys_finit_module);
+ cond_syscall(sys_delete_module);
++
++/* kernel/posix-timers.c */
++
++/* kernel/printk.c */
++cond_syscall(sys_syslog);
++
++/* kernel/ptrace.c */
++
++/* kernel/sched/core.c */
++
++/* kernel/signal.c */
++
++/* kernel/sys.c */
++cond_syscall(sys_setregid);
++cond_syscall(sys_setgid);
++cond_syscall(sys_setreuid);
++cond_syscall(sys_setuid);
++cond_syscall(sys_setresuid);
++cond_syscall(sys_getresuid);
++cond_syscall(sys_setresgid);
++cond_syscall(sys_getresgid);
++cond_syscall(sys_setfsuid);
++cond_syscall(sys_setfsgid);
++cond_syscall(sys_setgroups);
++cond_syscall(sys_getgroups);
++
++/* kernel/time.c */
++
++/* kernel/timer.c */
++
++/* ipc/mqueue.c */
++cond_syscall(sys_mq_open);
++cond_syscall(compat_sys_mq_open);
++cond_syscall(sys_mq_unlink);
++cond_syscall(sys_mq_timedsend);
++cond_syscall(compat_sys_mq_timedsend);
++cond_syscall(sys_mq_timedreceive);
++cond_syscall(compat_sys_mq_timedreceive);
++cond_syscall(sys_mq_notify);
++cond_syscall(compat_sys_mq_notify);
++cond_syscall(sys_mq_getsetattr);
++cond_syscall(compat_sys_mq_getsetattr);
++
++/* ipc/msg.c */
++cond_syscall(sys_msgget);
++cond_syscall(sys_msgctl);
++cond_syscall(compat_sys_msgctl);
++cond_syscall(sys_msgrcv);
++cond_syscall(compat_sys_msgrcv);
++cond_syscall(sys_msgsnd);
++cond_syscall(compat_sys_msgsnd);
++
++/* ipc/sem.c */
++cond_syscall(sys_semget);
++cond_syscall(sys_semctl);
++cond_syscall(compat_sys_semctl);
++cond_syscall(sys_semtimedop);
++cond_syscall(compat_sys_semtimedop);
++cond_syscall(sys_semop);
++
++/* ipc/shm.c */
++cond_syscall(sys_shmget);
++cond_syscall(sys_shmctl);
++cond_syscall(compat_sys_shmctl);
++cond_syscall(sys_shmat);
++cond_syscall(compat_sys_shmat);
++cond_syscall(sys_shmdt);
++
++/* net/socket.c */
++cond_syscall(sys_socket);
+ cond_syscall(sys_socketpair);
+ cond_syscall(sys_bind);
+ cond_syscall(sys_listen);
+ cond_syscall(sys_accept);
+-cond_syscall(sys_accept4);
+ cond_syscall(sys_connect);
+ cond_syscall(sys_getsockname);
+ cond_syscall(sys_getpeername);
+-cond_syscall(sys_sendto);
+-cond_syscall(sys_send);
+-cond_syscall(sys_recvfrom);
+-cond_syscall(sys_recv);
+-cond_syscall(sys_socket);
+ cond_syscall(sys_setsockopt);
+ cond_syscall(compat_sys_setsockopt);
+ cond_syscall(sys_getsockopt);
+ cond_syscall(compat_sys_getsockopt);
++cond_syscall(sys_sendto);
+ cond_syscall(sys_shutdown);
++cond_syscall(sys_recvfrom);
++cond_syscall(compat_sys_recvfrom);
+ cond_syscall(sys_sendmsg);
+-cond_syscall(sys_sendmmsg);
+ cond_syscall(compat_sys_sendmsg);
+-cond_syscall(compat_sys_sendmmsg);
+ cond_syscall(sys_recvmsg);
+-cond_syscall(sys_recvmmsg);
+ cond_syscall(compat_sys_recvmsg);
+-cond_syscall(compat_sys_recv);
+-cond_syscall(compat_sys_recvfrom);
+-cond_syscall(compat_sys_recvmmsg);
+-cond_syscall(sys_socketcall);
+-cond_syscall(sys_futex);
+-cond_syscall(compat_sys_futex);
+-cond_syscall(sys_set_robust_list);
+-cond_syscall(compat_sys_set_robust_list);
+-cond_syscall(sys_get_robust_list);
+-cond_syscall(compat_sys_get_robust_list);
+-cond_syscall(sys_epoll_create);
+-cond_syscall(sys_epoll_create1);
+-cond_syscall(sys_epoll_ctl);
+-cond_syscall(sys_epoll_wait);
+-cond_syscall(sys_epoll_pwait);
+-cond_syscall(compat_sys_epoll_pwait);
+-cond_syscall(sys_semget);
+-cond_syscall(sys_semop);
+-cond_syscall(sys_semtimedop);
+-cond_syscall(compat_sys_semtimedop);
+-cond_syscall(sys_semctl);
+-cond_syscall(compat_sys_semctl);
+-cond_syscall(sys_msgget);
+-cond_syscall(sys_msgsnd);
+-cond_syscall(compat_sys_msgsnd);
+-cond_syscall(sys_msgrcv);
+-cond_syscall(compat_sys_msgrcv);
+-cond_syscall(sys_msgctl);
+-cond_syscall(compat_sys_msgctl);
+-cond_syscall(sys_shmget);
+-cond_syscall(sys_shmat);
+-cond_syscall(compat_sys_shmat);
+-cond_syscall(sys_shmdt);
+-cond_syscall(sys_shmctl);
+-cond_syscall(compat_sys_shmctl);
+-cond_syscall(sys_mq_open);
+-cond_syscall(sys_mq_unlink);
+-cond_syscall(sys_mq_timedsend);
+-cond_syscall(sys_mq_timedreceive);
+-cond_syscall(sys_mq_notify);
+-cond_syscall(sys_mq_getsetattr);
+-cond_syscall(compat_sys_mq_open);
+-cond_syscall(compat_sys_mq_timedsend);
+-cond_syscall(compat_sys_mq_timedreceive);
+-cond_syscall(compat_sys_mq_notify);
+-cond_syscall(compat_sys_mq_getsetattr);
+-cond_syscall(sys_mbind);
+-cond_syscall(sys_get_mempolicy);
+-cond_syscall(sys_set_mempolicy);
+-cond_syscall(compat_sys_mbind);
+-cond_syscall(compat_sys_get_mempolicy);
+-cond_syscall(compat_sys_set_mempolicy);
++
++/* mm/filemap.c */
++
++/* mm/nommu.c, also with MMU */
++cond_syscall(sys_mremap);
++
++/* security/keys/keyctl.c */
+ cond_syscall(sys_add_key);
+ cond_syscall(sys_request_key);
+ cond_syscall(sys_keyctl);
+ cond_syscall(compat_sys_keyctl);
+-cond_syscall(compat_sys_socketcall);
+-cond_syscall(sys_inotify_init);
+-cond_syscall(sys_inotify_init1);
+-cond_syscall(sys_inotify_add_watch);
+-cond_syscall(sys_inotify_rm_watch);
+-cond_syscall(sys_migrate_pages);
+-cond_syscall(sys_move_pages);
+-cond_syscall(sys_chown16);
+-cond_syscall(sys_fchown16);
+-cond_syscall(sys_getegid16);
+-cond_syscall(sys_geteuid16);
+-cond_syscall(sys_getgid16);
+-cond_syscall(sys_getgroups16);
+-cond_syscall(sys_getresgid16);
+-cond_syscall(sys_getresuid16);
+-cond_syscall(sys_getuid16);
+-cond_syscall(sys_lchown16);
+-cond_syscall(sys_setfsgid16);
+-cond_syscall(sys_setfsuid16);
+-cond_syscall(sys_setgid16);
+-cond_syscall(sys_setgroups16);
+-cond_syscall(sys_setregid16);
+-cond_syscall(sys_setresgid16);
+-cond_syscall(sys_setresuid16);
+-cond_syscall(sys_setreuid16);
+-cond_syscall(sys_setuid16);
+-cond_syscall(sys_sgetmask);
+-cond_syscall(sys_ssetmask);
+-cond_syscall(sys_vm86old);
+-cond_syscall(sys_vm86);
+-cond_syscall(sys_modify_ldt);
+-cond_syscall(sys_ipc);
+-cond_syscall(compat_sys_ipc);
+-cond_syscall(compat_sys_sysctl);
+-cond_syscall(sys_flock);
+-cond_syscall(sys_io_setup);
+-cond_syscall(sys_io_destroy);
+-cond_syscall(sys_io_submit);
+-cond_syscall(sys_io_cancel);
+-cond_syscall(sys_io_getevents);
+-cond_syscall(compat_sys_io_setup);
+-cond_syscall(compat_sys_io_submit);
+-cond_syscall(compat_sys_io_getevents);
+-cond_syscall(sys_sysfs);
+-cond_syscall(sys_syslog);
+-cond_syscall(sys_process_vm_readv);
+-cond_syscall(sys_process_vm_writev);
+-cond_syscall(compat_sys_process_vm_readv);
+-cond_syscall(compat_sys_process_vm_writev);
+-cond_syscall(sys_uselib);
+-cond_syscall(sys_fadvise64);
+-cond_syscall(sys_fadvise64_64);
+-cond_syscall(sys_madvise);
+-cond_syscall(sys_setuid);
+-cond_syscall(sys_setregid);
+-cond_syscall(sys_setgid);
+-cond_syscall(sys_setreuid);
+-cond_syscall(sys_setresuid);
+-cond_syscall(sys_getresuid);
+-cond_syscall(sys_setresgid);
+-cond_syscall(sys_getresgid);
+-cond_syscall(sys_setgroups);
+-cond_syscall(sys_getgroups);
+-cond_syscall(sys_setfsuid);
+-cond_syscall(sys_setfsgid);
+-cond_syscall(sys_capget);
+-cond_syscall(sys_capset);
+-cond_syscall(sys_copy_file_range);
+ 
+-/* arch-specific weak syscall entries */
+-cond_syscall(sys_pciconfig_read);
+-cond_syscall(sys_pciconfig_write);
+-cond_syscall(sys_pciconfig_iobase);
+-cond_syscall(compat_sys_s390_ipc);
+-cond_syscall(ppc_rtas);
+-cond_syscall(sys_spu_run);
+-cond_syscall(sys_spu_create);
+-cond_syscall(sys_subpage_prot);
+-cond_syscall(sys_s390_pci_mmio_read);
+-cond_syscall(sys_s390_pci_mmio_write);
++/* arch/example/kernel/sys_example.c */
+ 
+-/* mmu depending weak syscall entries */
++/* mm/fadvise.c */
++cond_syscall(sys_fadvise64_64);
++
++/* mm/, CONFIG_MMU only */
++cond_syscall(sys_swapon);
++cond_syscall(sys_swapoff);
+ cond_syscall(sys_mprotect);
+ cond_syscall(sys_msync);
+ cond_syscall(sys_mlock);
+ cond_syscall(sys_munlock);
+ cond_syscall(sys_mlockall);
+ cond_syscall(sys_munlockall);
+-cond_syscall(sys_mlock2);
+ cond_syscall(sys_mincore);
+ cond_syscall(sys_madvise);
+-cond_syscall(sys_mremap);
+ cond_syscall(sys_remap_file_pages);
+-cond_syscall(compat_sys_move_pages);
++cond_syscall(sys_mbind);
++cond_syscall(compat_sys_mbind);
++cond_syscall(sys_get_mempolicy);
++cond_syscall(compat_sys_get_mempolicy);
++cond_syscall(sys_set_mempolicy);
++cond_syscall(compat_sys_set_mempolicy);
++cond_syscall(sys_migrate_pages);
+ cond_syscall(compat_sys_migrate_pages);
++cond_syscall(sys_move_pages);
++cond_syscall(compat_sys_move_pages);
+ 
+-/* block-layer dependent */
+-cond_syscall(sys_bdflush);
+-cond_syscall(sys_ioprio_set);
+-cond_syscall(sys_ioprio_get);
+-
+-/* New file descriptors */
+-cond_syscall(sys_signalfd);
+-cond_syscall(sys_signalfd4);
+-cond_syscall(compat_sys_signalfd);
+-cond_syscall(compat_sys_signalfd4);
+-cond_syscall(sys_timerfd_create);
+-cond_syscall(sys_timerfd_settime);
+-cond_syscall(sys_timerfd_gettime);
+-cond_syscall(compat_sys_timerfd_settime);
+-cond_syscall(compat_sys_timerfd_gettime);
+-cond_syscall(sys_eventfd);
+-cond_syscall(sys_eventfd2);
+-cond_syscall(sys_memfd_create);
+-cond_syscall(sys_userfaultfd);
+-
+-/* performance counters: */
+ cond_syscall(sys_perf_event_open);
++cond_syscall(sys_accept4);
++cond_syscall(sys_recvmmsg);
++cond_syscall(compat_sys_recvmmsg);
++
++/*
++ * Architecture specific syscalls: see further below
++ */
+ 
+-/* fanotify! */
++/* fanotify */
+ cond_syscall(sys_fanotify_init);
+ cond_syscall(sys_fanotify_mark);
+-cond_syscall(compat_sys_fanotify_mark);
+ 
+ /* open by handle */
+ cond_syscall(sys_name_to_handle_at);
+ cond_syscall(sys_open_by_handle_at);
+ cond_syscall(compat_sys_open_by_handle_at);
+ 
++cond_syscall(sys_sendmmsg);
++cond_syscall(compat_sys_sendmmsg);
++cond_syscall(sys_process_vm_readv);
++cond_syscall(compat_sys_process_vm_readv);
++cond_syscall(sys_process_vm_writev);
++cond_syscall(compat_sys_process_vm_writev);
++
+ /* compare kernel pointers */
+ cond_syscall(sys_kcmp);
+ 
++cond_syscall(sys_finit_module);
++
+ /* operate on Secure Computing state */
+ cond_syscall(sys_seccomp);
+ 
++cond_syscall(sys_memfd_create);
++
+ /* access BPF programs and maps */
+ cond_syscall(sys_bpf);
+ 
+ /* execveat */
+ cond_syscall(sys_execveat);
+ 
++cond_syscall(sys_userfaultfd);
++
+ /* membarrier */
+ cond_syscall(sys_membarrier);
+ 
++cond_syscall(sys_mlock2);
++
++cond_syscall(sys_copy_file_range);
++
+ /* memory protection keys */
+ cond_syscall(sys_pkey_mprotect);
+ cond_syscall(sys_pkey_alloc);
+ cond_syscall(sys_pkey_free);
++
++
++/*
++ * Architecture specific weak syscall entries.
++ */
++
++/* pciconfig: alpha, arm, arm64, ia64, sparc */
++cond_syscall(sys_pciconfig_read);
++cond_syscall(sys_pciconfig_write);
++cond_syscall(sys_pciconfig_iobase);
++
++/* sys_socketcall: arm, mips, x86, ... */
++cond_syscall(sys_socketcall);
++cond_syscall(compat_sys_socketcall);
++
++/* compat syscalls for arm64, x86, ... */
++cond_syscall(compat_sys_sysctl);
++cond_syscall(compat_sys_fanotify_mark);
++
++/* x86 */
++cond_syscall(sys_vm86old);
++cond_syscall(sys_modify_ldt);
++cond_syscall(sys32_quotactl);
++cond_syscall(sys_vm86);
++cond_syscall(sys_kexec_file_load);
++
++/* s390 */
++cond_syscall(sys_s390_pci_mmio_read);
++cond_syscall(sys_s390_pci_mmio_write);
++cond_syscall(compat_sys_s390_ipc);
++
++/* powerpc */
++cond_syscall(ppc_rtas);
++cond_syscall(sys_spu_run);
++cond_syscall(sys_spu_create);
++cond_syscall(sys_subpage_prot);
++
++
++/*
++ * Deprecated system calls whcih are still defined in
++ * include/uapi/asm-generic/unistd.h and wanted by >= 1 arch
++ */
++
++/* __ARCH_WANT_SYSCALL_NO_FLAGS */
++cond_syscall(sys_epoll_create);
++cond_syscall(sys_inotify_init);
++cond_syscall(sys_eventfd);
++cond_syscall(sys_signalfd);
++cond_syscall(compat_sys_signalfd);
++
++/* __ARCH_WANT_SYSCALL_OFF_T */
++cond_syscall(sys_fadvise64);
++
++/* __ARCH_WANT_SYSCALL_DEPRECATED */
++cond_syscall(sys_epoll_wait);
++cond_syscall(sys_recv);
++cond_syscall(compat_sys_recv);
++cond_syscall(sys_send);
++cond_syscall(sys_recv);
++cond_syscall(sys_uselib);
++
++
++/*
++ * The syscalls below are not found in include/uapi/asm-generic/unistd.h
++ */
++
++/* obsolete: SGETMASK_SYSCALL */
++cond_syscall(sys_sgetmask);
++cond_syscall(sys_ssetmask);
++
++/* obsolete: SYSFS_SYSCALL */
++cond_syscall(sys_sysfs);
++
++/* obsolete: __ARCH_WANT_SYS_IPC */
++cond_syscall(sys_ipc);
++cond_syscall(compat_sys_ipc);
++
++/* obsolete: UID16 */
++cond_syscall(sys_chown16);
++cond_syscall(sys_fchown16);
++cond_syscall(sys_getegid16);
++cond_syscall(sys_geteuid16);
++cond_syscall(sys_getgid16);
++cond_syscall(sys_getgroups16);
++cond_syscall(sys_getresgid16);
++cond_syscall(sys_getresuid16);
++cond_syscall(sys_getuid16);
++cond_syscall(sys_lchown16);
++cond_syscall(sys_setfsgid16);
++cond_syscall(sys_setfsuid16);
++cond_syscall(sys_setgid16);
++cond_syscall(sys_setgroups16);
++cond_syscall(sys_setregid16);
++cond_syscall(sys_setresgid16);
++cond_syscall(sys_setresuid16);
++cond_syscall(sys_setreuid16);
++cond_syscall(sys_setuid16);
