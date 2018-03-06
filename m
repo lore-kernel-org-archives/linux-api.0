@@ -1,155 +1,323 @@
-From: Alexei Starovoitov <ast@fb.com>
-Subject: Re: [PATCH bpf-next 3/5] bpf: introduce BPF_RAW_TRACEPOINT
-Date: Mon, 5 Mar 2018 17:28:28 -0800
-Message-ID: <dbac65a5-0e3c-7098-b9cb-1f2f5b9aee9f@fb.com>
-References: <20180301041957.399230-1-ast@kernel.org>
- <20180301041957.399230-4-ast@kernel.org>
- <56cd9ef9-41b0-dc89-fa49-92a459796515@iogearbox.net>
+From: Alexei Starovoitov <ast@kernel.org>
+Subject: [PATCH net-next] modules: allow modprobe load regular elf binaries
+Date: Mon, 5 Mar 2018 17:34:57 -0800
+Message-ID: <20180306013457.1955486-1-ast@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56cd9ef9-41b0-dc89-fa49-92a459796515@iogearbox.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>, Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net
-Cc: torvalds@linux-foundation.org, peterz@infradead.org, mingo@kernel.org, rostedt@goodmis.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+To: davem@davemloft.net
+Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, gregkh@linuxfoundation.org, mcgrof@kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 3/5/18 3:56 PM, Daniel Borkmann wrote:
-> On 03/01/2018 05:19 AM, Alexei Starovoitov wrote:
->> Introduce BPF_PROG_TYPE_RAW_TRACEPOINT bpf program type to access
->> kernel internal arguments of the tracepoints in their raw form.
->>
->> From bpf program point of view the access to the arguments look like:
->> struct bpf_raw_tracepoint_args {
->>        __u64 args[0];
->> };
->>
->> int bpf_prog(struct bpf_raw_tracepoint_args *ctx)
->> {
->>   // program can read args[N] where N depends on tracepoint
->>   // and statically verified at program load+attach time
->> }
->>
->> kprobe+bpf infrastructure allows programs access function arguments.
->> This feature allows programs access raw tracepoint arguments.
->>
->> Similar to proposed 'dynamic ftrace events' there are no abi guarantees
->> to what the tracepoints arguments are and what their meaning is.
->> The program needs to type cast args properly and use bpf_probe_read()
->> helper to access struct fields when argument is a pointer.
->>
->> For every tracepoint __bpf_trace_##call function is prepared.
->> In assembler it looks like:
->> (gdb) disassemble __bpf_trace_xdp_exception
->> Dump of assembler code for function __bpf_trace_xdp_exception:
->>    0xffffffff81132080 <+0>:     mov    %ecx,%ecx
->>    0xffffffff81132082 <+2>:     jmpq   0xffffffff811231f0 <bpf_trace_run3>
->>
->> where
->>
->> TRACE_EVENT(xdp_exception,
->>         TP_PROTO(const struct net_device *dev,
->>                  const struct bpf_prog *xdp, u32 act),
->>
->> The above assembler snippet is casting 32-bit 'act' field into 'u64'
->> to pass into bpf_trace_run3(), while 'dev' and 'xdp' args are passed as-is.
->> All of ~500 of __bpf_trace_*() functions are only 5-10 byte long
->> and in total this approach adds 7k bytes to .text and 8k bytes
->> to .rodata since the probe funcs need to appear in kallsyms.
->> The alternative of having __bpf_trace_##call being global in kallsyms
->> could have been to keep them static and add another pointer to these
->> static functions to 'struct trace_event_class' and 'struct trace_event_call',
->> but keeping them global simplifies implementation and keeps it indepedent
->> from the tracing side.
->>
->> Also such approach gives the lowest possible overhead
->> while calling trace_xdp_exception() from kernel C code and
->> transitioning into bpf land.
->
-> Awesome work! Just a few comments below.
->
->> Since tracepoint+bpf are used at speeds of 1M+ events per second
->> this is very valuable optimization.
->>
->> Since ftrace and perf side are not involved the new
->> BPF_RAW_TRACEPOINT_OPEN sys_bpf command is introduced
->> that returns anon_inode FD of 'bpf-raw-tracepoint' object.
->>
->> The user space looks like:
->> // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
->> prog_fd = bpf_prog_load(...);
->> // receive anon_inode fd for given bpf_raw_tracepoint
->> raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception");
->> // attach bpf program to given tracepoint
->> bpf_prog_attach(prog_fd, raw_tp_fd, BPF_RAW_TRACEPOINT);
->>
->> Ctrl-C of tracing daemon or cmdline tool that uses this feature
->> will automatically detach bpf program, unload it and
->> unregister tracepoint probe.
->>
->> On the kernel side for_each_kernel_tracepoint() is used
->> to find a tracepoint with "xdp_exception" name
->> (that would be __tracepoint_xdp_exception record)
->>
->> Then kallsyms_lookup_name() is used to find the addr
->> of __bpf_trace_xdp_exception() probe function.
->>
->> And finally tracepoint_probe_register() is used to connect probe
->> with tracepoint.
->>
->> Addition of bpf_raw_tracepoint doesn't interfere with ftrace and perf
->> tracepoint mechanisms. perf_event_open() can be used in parallel
->> on the same tracepoint.
->> Also multiple bpf_raw_tracepoint_open("foo") are permitted.
->> Each raw_tp_fd allows to attach one bpf program, so multiple
->> user space processes can open their own raw_tp_fd with their own
->> bpf program. The kernel will execute all tracepoint probes
->> and all attached bpf programs.
->>
->> In the future bpf_raw_tracepoints can be extended with
->> query/introspection logic.
->>
->> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
-...
->> +static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
->> +{
->> +	struct bpf_raw_tracepoint *raw_tp;
->> +	struct tracepoint *tp;
->> +	char tp_name[128];
->> +
->> +	if (strncpy_from_user(tp_name, u64_to_user_ptr(attr->raw_tracepoint.name),
->> +			      sizeof(tp_name) - 1) < 0)
->> +		return -EFAULT;
->> +	tp_name[sizeof(tp_name) - 1] = 0;
->> +
->> +	tp = for_each_kernel_tracepoint(__find_tp, tp_name);
->> +	if (!tp)
->> +		return -ENOENT;
->> +
->> +	raw_tp = kmalloc(sizeof(*raw_tp), GFP_USER | __GFP_ZERO);
->> +	if (!raw_tp)
->> +		return -ENOMEM;
->> +	raw_tp->tp = tp;
->> +
->> +	return anon_inode_getfd("bpf-raw-tracepoint", &bpf_raw_tp_fops, raw_tp,
->> +				O_CLOEXEC);
->
-> When anon_inode_getfd() fails to get you an fd, then you leak raw_tp here.
+As the first step in development of bpfilter project [1] the request_module()
+code is extended to allow user mode helpers to be invoked. Idea is that
+user mode helpers are built as part of the kernel build and installed as
+traditional kernel modules with .ko file extension into distro specified
+location, such that from a distribution point of view, they are no different
+than regular kernel modules. Thus, allow request_module() logic to load such
+user mode helper (umh) modules via:
 
-good catch. will fix.
+  request_module("foo") ->
+    call_umh("modprobe foo") ->
+      sys_finit_module(FD of /lib/modules/.../foo.ko) ->
+        call_umh(struct file)
 
->>  		break;
->> +	case BPF_RAW_TRACEPOINT_OPEN:
->> +		err = bpf_raw_tracepoint_open(&attr);
->
-> With regards to above attach_raw_tp() comment, why not having single
-> BPF_RAW_TRACEPOINT_OPEN command already passing BPF fd along with the
-> tp name? Is there a concrete reason/use-case why it's split that way?
+Such approach enables kernel to delegate functionality traditionally done
+by kernel modules into user space processes (either root or !root) and
+reduces security attack surface of such new code, meaning in case of
+potential bugs only the umh would crash but not the kernel. Another
+advantage coming with that would be that bpfilter.ko can be debugged and
+tested out of user space as well (e.g. opening the possibility to run
+all clang sanitizers, fuzzers or test suites for checking translation).
+Also, such architecture makes the kernel/user boundary very precise:
+control plane is done by the user space while data plane stays in the kernel.
 
-The use case is to attach the same bpf prog to multiple raw_tp,
-but with your suggestion it will work as well,
-so yeah will change to that since it simplifies uapi and avoids
-the race in attach.
+It's easy to distinguish "umh module" from traditional kernel module:
 
-Thank you for review.
+$ readelf -h bld/net/bpfilter/bpfilter.ko|grep Type
+  Type:                              EXEC (Executable file)
+$ readelf -h bld/net/ipv4/netfilter/iptable_filter.ko |grep Type
+  Type:                              REL (Relocatable file)
+
+Since umh can crash, can be oom-ed by the kernel, killed by admin,
+the subsystem that uses them (like bpfilter) need to manage life
+time of umh on its own, so module infra doesn't do any accounting
+of them. They don't appear in "lsmod" and cannot be "rmmod".
+Multiple request_module("umh") will load multiple umh.ko processes.
+
+Similar to kernel modules the kernel will be tainted if "umh module"
+has invalid signature.
+
+[1] https://lwn.net/Articles/747551/
+
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ fs/exec.c               | 40 +++++++++++++++++++++++++++++++---------
+ include/linux/binfmts.h |  1 +
+ include/linux/umh.h     |  3 +++
+ kernel/module.c         | 43 ++++++++++++++++++++++++++++++++++++++-----
+ kernel/umh.c            | 24 +++++++++++++++++++++---
+ 5 files changed, 94 insertions(+), 17 deletions(-)
+
+diff --git a/fs/exec.c b/fs/exec.c
+index 7eb8d21bcab9..0483c438de7d 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1691,14 +1691,13 @@ static int exec_binprm(struct linux_binprm *bprm)
+ /*
+  * sys_execve() executes a new program.
+  */
+-static int do_execveat_common(int fd, struct filename *filename,
+-			      struct user_arg_ptr argv,
+-			      struct user_arg_ptr envp,
+-			      int flags)
++static int __do_execve_file(int fd, struct filename *filename,
++			    struct user_arg_ptr argv,
++			    struct user_arg_ptr envp,
++			    int flags, struct file *file)
+ {
+ 	char *pathbuf = NULL;
+ 	struct linux_binprm *bprm;
+-	struct file *file;
+ 	struct files_struct *displaced;
+ 	int retval;
+ 
+@@ -1737,7 +1736,8 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	check_unsafe_exec(bprm);
+ 	current->in_execve = 1;
+ 
+-	file = do_open_execat(fd, filename, flags);
++	if (!file)
++		file = do_open_execat(fd, filename, flags);
+ 	retval = PTR_ERR(file);
+ 	if (IS_ERR(file))
+ 		goto out_unmark;
+@@ -1745,7 +1745,9 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	sched_exec();
+ 
+ 	bprm->file = file;
+-	if (fd == AT_FDCWD || filename->name[0] == '/') {
++	if (!filename) {
++		bprm->filename = "/dev/null";
++	} else if (fd == AT_FDCWD || filename->name[0] == '/') {
+ 		bprm->filename = filename->name;
+ 	} else {
+ 		if (filename->name[0] == '\0')
+@@ -1811,7 +1813,8 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	task_numa_free(current);
+ 	free_bprm(bprm);
+ 	kfree(pathbuf);
+-	putname(filename);
++	if (filename)
++		putname(filename);
+ 	if (displaced)
+ 		put_files_struct(displaced);
+ 	return retval;
+@@ -1834,10 +1837,29 @@ static int do_execveat_common(int fd, struct filename *filename,
+ 	if (displaced)
+ 		reset_files_struct(displaced);
+ out_ret:
+-	putname(filename);
++	if (filename)
++		putname(filename);
+ 	return retval;
+ }
+ 
++static int do_execveat_common(int fd, struct filename *filename,
++			      struct user_arg_ptr argv,
++			      struct user_arg_ptr envp,
++			      int flags)
++{
++	struct file *file = NULL;
++
++	return __do_execve_file(fd, filename, argv, envp, flags, file);
++}
++
++int do_execve_file(struct file *file, void *__argv, void *__envp)
++{
++	struct user_arg_ptr argv = { .ptr.native = __argv };
++	struct user_arg_ptr envp = { .ptr.native = __envp };
++
++	return __do_execve_file(AT_FDCWD, NULL, argv, envp, 0, file);
++}
++
+ int do_execve(struct filename *filename,
+ 	const char __user *const __user *__argv,
+ 	const char __user *const __user *__envp)
+diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
+index b0abe21d6cc9..c783a7b9f284 100644
+--- a/include/linux/binfmts.h
++++ b/include/linux/binfmts.h
+@@ -147,5 +147,6 @@ extern int do_execveat(int, struct filename *,
+ 		       const char __user * const __user *,
+ 		       const char __user * const __user *,
+ 		       int);
++int do_execve_file(struct file *file, void *__argv, void *__envp);
+ 
+ #endif /* _LINUX_BINFMTS_H */
+diff --git a/include/linux/umh.h b/include/linux/umh.h
+index 244aff638220..2b10d5f70bd9 100644
+--- a/include/linux/umh.h
++++ b/include/linux/umh.h
+@@ -22,6 +22,7 @@ struct subprocess_info {
+ 	const char *path;
+ 	char **argv;
+ 	char **envp;
++	struct file *file;
+ 	int wait;
+ 	int retval;
+ 	int (*init)(struct subprocess_info *info, struct cred *new);
+@@ -38,6 +39,8 @@ call_usermodehelper_setup(const char *path, char **argv, char **envp,
+ 			  int (*init)(struct subprocess_info *info, struct cred *new),
+ 			  void (*cleanup)(struct subprocess_info *), void *data);
+ 
++struct subprocess_info *call_usermodehelper_setup_file(struct file *file);
++
+ extern int
+ call_usermodehelper_exec(struct subprocess_info *info, int wait);
+ 
+diff --git a/kernel/module.c b/kernel/module.c
+index ad2d420024f6..6cfa35795741 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -325,6 +325,7 @@ struct load_info {
+ 	struct {
+ 		unsigned int sym, str, mod, vers, info, pcpu;
+ 	} index;
++	struct file *file;
+ };
+ 
+ /*
+@@ -2801,6 +2802,15 @@ static int module_sig_check(struct load_info *info, int flags)
+ }
+ #endif /* !CONFIG_MODULE_SIG */
+ 
++static int run_umh(struct file *file)
++{
++	struct subprocess_info *sub_info = call_usermodehelper_setup_file(file);
++
++	if (!sub_info)
++		return -ENOMEM;
++	return call_usermodehelper_exec(sub_info, UMH_WAIT_EXEC);
++}
++
+ /* Sanity checks against invalid binaries, wrong arch, weird elf version. */
+ static int elf_header_check(struct load_info *info)
+ {
+@@ -2808,7 +2818,6 @@ static int elf_header_check(struct load_info *info)
+ 		return -ENOEXEC;
+ 
+ 	if (memcmp(info->hdr->e_ident, ELFMAG, SELFMAG) != 0
+-	    || info->hdr->e_type != ET_REL
+ 	    || !elf_check_arch(info->hdr)
+ 	    || info->hdr->e_shentsize != sizeof(Elf_Shdr))
+ 		return -ENOEXEC;
+@@ -2818,6 +2827,11 @@ static int elf_header_check(struct load_info *info)
+ 		info->len - info->hdr->e_shoff))
+ 		return -ENOEXEC;
+ 
++	if (info->hdr->e_type == ET_EXEC)
++		return run_umh(info->file);
++
++	if (info->hdr->e_type != ET_REL)
++		return -ENOEXEC;
+ 	return 0;
+ }
+ 
+@@ -3669,6 +3683,17 @@ static int load_module(struct load_info *info, const char __user *uargs,
+ 	if (err)
+ 		goto free_copy;
+ 
++	if (info->hdr->e_type == ET_EXEC) {
++#ifdef CONFIG_MODULE_SIG
++		if (!info->sig_ok) {
++			pr_notice_once("umh %s verification failed: signature and/or required key missing - tainting kernel\n",
++				       info->file->f_path.dentry->d_name.name);
++			add_taint(TAINT_UNSIGNED_MODULE, LOCKDEP_STILL_OK);
++		}
++#endif
++		return 0;
++	}
++
+ 	/* Figure out module layout, and allocate all the memory. */
+ 	mod = layout_and_allocate(info, flags);
+ 	if (IS_ERR(mod)) {
+@@ -3856,6 +3881,7 @@ SYSCALL_DEFINE3(init_module, void __user *, umod,
+ SYSCALL_DEFINE3(finit_module, int, fd, const char __user *, uargs, int, flags)
+ {
+ 	struct load_info info = { };
++	struct fd f;
+ 	loff_t size;
+ 	void *hdr;
+ 	int err;
+@@ -3870,14 +3896,21 @@ SYSCALL_DEFINE3(finit_module, int, fd, const char __user *, uargs, int, flags)
+ 		      |MODULE_INIT_IGNORE_VERMAGIC))
+ 		return -EINVAL;
+ 
+-	err = kernel_read_file_from_fd(fd, &hdr, &size, INT_MAX,
+-				       READING_MODULE);
++	f = fdget(fd);
++	if (!f.file)
++		return -EBADF;
++
++	err = kernel_read_file(f.file, &hdr, &size, INT_MAX, READING_MODULE);
+ 	if (err)
+-		return err;
++		goto out;
+ 	info.hdr = hdr;
+ 	info.len = size;
++	info.file = f.file;
+ 
+-	return load_module(&info, uargs, flags);
++	err = load_module(&info, uargs, flags);
++out:
++	fdput(f);
++	return err;
+ }
+ 
+ static inline int within(unsigned long addr, void *start, unsigned long size)
+diff --git a/kernel/umh.c b/kernel/umh.c
+index 18e5fa4b0e71..4361c694bdb1 100644
+--- a/kernel/umh.c
++++ b/kernel/umh.c
+@@ -97,9 +97,13 @@ static int call_usermodehelper_exec_async(void *data)
+ 
+ 	commit_creds(new);
+ 
+-	retval = do_execve(getname_kernel(sub_info->path),
+-			   (const char __user *const __user *)sub_info->argv,
+-			   (const char __user *const __user *)sub_info->envp);
++	if (sub_info->file)
++		retval = do_execve_file(sub_info->file,
++					sub_info->argv, sub_info->envp);
++	else
++		retval = do_execve(getname_kernel(sub_info->path),
++				   (const char __user *const __user *)sub_info->argv,
++				   (const char __user *const __user *)sub_info->envp);
+ out:
+ 	sub_info->retval = retval;
+ 	/*
+@@ -393,6 +397,20 @@ struct subprocess_info *call_usermodehelper_setup(const char *path, char **argv,
+ }
+ EXPORT_SYMBOL(call_usermodehelper_setup);
+ 
++struct subprocess_info *call_usermodehelper_setup_file(struct file *file)
++{
++	struct subprocess_info *sub_info;
++
++	sub_info = kzalloc(sizeof(struct subprocess_info), GFP_KERNEL);
++	if (!sub_info)
++		return NULL;
++
++	INIT_WORK(&sub_info->work, call_usermodehelper_exec_work);
++	sub_info->path = "/dev/null";
++	sub_info->file = file;
++	return sub_info;
++}
++
+ /**
+  * call_usermodehelper_exec - start a usermode application
+  * @sub_info: information about the subprocessa
+-- 
+2.9.5
