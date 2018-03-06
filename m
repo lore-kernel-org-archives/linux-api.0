@@ -1,32 +1,36 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH bpf-next v8 00/11] Landlock LSM: Toward unprivileged
- sandboxing
-Date: Tue, 6 Mar 2018 23:25:31 +0100
-Message-ID: <a70b41ee-78cb-52cc-152c-ac5e43b7e45c@digikod.net>
+Subject: Re: [PATCH bpf-next v8 08/11] landlock: Add ptrace restrictions
+Date: Tue, 6 Mar 2018 23:28:24 +0100
+Message-ID: <679089bb-c0ac-ff68-71b1-1813d66c6aa7@digikod.net>
 References: <20180227004121.3633-1-mic@digikod.net>
- <CALCETrV3OZb70o83uOG437PubwBwaUJ6SKQucq_7g1BuBOmxzg@mail.gmail.com>
- <2e06621c-08e9-dc12-9b6e-9c09d5d8f458@digikod.net>
- <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
+ <20180227004121.3633-9-mic@digikod.net>
+ <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
+ <D6B96EE0-8932-4845-BFA5-4C65E5189AFB@amacapital.net>
+ <0e7d0512-12a3-568d-aa55-3def4b91c6d0@digikod.net>
+ <CALCETrUTiUeV71jgYWup0CZwG8eQ3=W7X5FgJqmgPxnYbFsccw@mail.gmail.com>
+ <CALCETrV_BVc44YYq6g8PCpeUYuqQaooVoQSQ7Y=VpuaBshQgQg@mail.gmail.com>
+ <f560a30d-10fd-31fc-adba-911961915937@digikod.net>
+ <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha512;
  protocol="application/pgp-signature";
- boundary="PvZReyUi33n28IxqiwHX1q5FTHMFGG1i5"
-Return-path: <kernel-hardening-return-12172-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+ boundary="h92TW2B8M4QjpHrJfREMpzqkQ8my7B1ZE"
+Return-path: <kernel-hardening-return-12173-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
 List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
-To: Andy Lutomirski <luto@amacapital.net>
+In-Reply-To: <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
+To: Andy Lutomirski <luto@kernel.org>
 Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Tycho Andersen <tycho@tycho.ws>, Will Drewry <wad@chromium.org>, Kernel
 List-Id: linux-api@vger.kernel.org
 
 This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---PvZReyUi33n28IxqiwHX1q5FTHMFGG1i5
-Content-Type: multipart/mixed; boundary="sEcIHHJqCS6B4cMrH9dqyVOUmWwcXc4Pq";
+--h92TW2B8M4QjpHrJfREMpzqkQ8my7B1ZE
+Content-Type: multipart/mixed; boundary="kZcZjw0WKnGSqLFbzG2fiWrSWdoqrYTdI";
  protected-headers="v1"
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Andy Lutomirski <luto@amacapital.net>
+To: Andy Lutomirski <luto@kernel.org>
 Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
  Arnaldo Carvalho de Melo <acme@kernel.org>,
  Casey Schaufler <casey@schaufler-ca.com>,
@@ -44,137 +48,86 @@ Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
  Linux API <linux-api@vger.kernel.org>,
  LSM List <linux-security-module@vger.kernel.org>,
  Network Development <netdev@vger.kernel.org>
-Message-ID: <a70b41ee-78cb-52cc-152c-ac5e43b7e45c@digikod.net>
-Subject: Re: [PATCH bpf-next v8 00/11] Landlock LSM: Toward unprivileged
- sandboxing
+Message-ID: <679089bb-c0ac-ff68-71b1-1813d66c6aa7@digikod.net>
+Subject: Re: [PATCH bpf-next v8 08/11] landlock: Add ptrace restrictions
 References: <20180227004121.3633-1-mic@digikod.net>
- <CALCETrV3OZb70o83uOG437PubwBwaUJ6SKQucq_7g1BuBOmxzg@mail.gmail.com>
- <2e06621c-08e9-dc12-9b6e-9c09d5d8f458@digikod.net>
- <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
-In-Reply-To: <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
+ <20180227004121.3633-9-mic@digikod.net>
+ <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
+ <D6B96EE0-8932-4845-BFA5-4C65E5189AFB@amacapital.net>
+ <0e7d0512-12a3-568d-aa55-3def4b91c6d0@digikod.net>
+ <CALCETrUTiUeV71jgYWup0CZwG8eQ3=W7X5FgJqmgPxnYbFsccw@mail.gmail.com>
+ <CALCETrV_BVc44YYq6g8PCpeUYuqQaooVoQSQ7Y=VpuaBshQgQg@mail.gmail.com>
+ <f560a30d-10fd-31fc-adba-911961915937@digikod.net>
+ <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
+In-Reply-To: <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
 
---sEcIHHJqCS6B4cMrH9dqyVOUmWwcXc4Pq
+--kZcZjw0WKnGSqLFbzG2fiWrSWdoqrYTdI
 Content-Type: text/plain; charset=utf-8
 Content-Language: en-US
 Content-Transfer-Encoding: quoted-printable
 
 
-
-On 28/02/2018 00:09, Andy Lutomirski wrote:
-> On Tue, Feb 27, 2018 at 10:03 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod=
+On 28/02/2018 01:09, Andy Lutomirski wrote:
+> On Wed, Feb 28, 2018 at 12:00 AM, Micka=C3=ABl Sala=C3=BCn <mic@digikod=
 =2Enet> wrote:
 >>
->> On 27/02/2018 05:36, Andy Lutomirski wrote:
->>> On Tue, Feb 27, 2018 at 12:41 AM, Micka=C3=ABl Sala=C3=BCn <mic@digik=
-od.net> wrote:
->>>> Hi,
+>> On 28/02/2018 00:23, Andy Lutomirski wrote:
+>>> On Tue, Feb 27, 2018 at 11:02 PM, Andy Lutomirski <luto@kernel.org> w=
+rote:
+>>>> On Tue, Feb 27, 2018 at 10:14 PM, Micka=C3=ABl Sala=C3=BCn <mic@digi=
+kod.net> wrote:
+>>>>>
 >>>>
->=20
->>>>
->>>> ## Why use the seccomp(2) syscall?
->>>>
->>>> Landlock use the same semantic as seccomp to apply access rule
->>>> restrictions. It add a new layer of security for the current process=
-
->>>> which is inherited by its children. It makes sense to use an unique
->>>> access-restricting syscall (that should be allowed by seccomp filter=
-s)
->>>> which can only drop privileges. Moreover, a Landlock rule could come=
-
->>>> from outside a process (e.g.  passed through a UNIX socket). It is t=
-hen
->>>> useful to differentiate the creation/load of Landlock eBPF programs =
-via
->>>> bpf(2), from rule enforcement via seccomp(2).
->>>
->>> This seems like a weak argument to me.  Sure, this is a bit different=
-
->>> from seccomp(), and maybe shoving it into the seccomp() multiplexer i=
-s
->>> awkward, but surely the bpf() multiplexer is even less applicable.
->>
->> I think using the seccomp syscall is fine, and everyone agreed on it.
->>
->=20
-> Ah, sorry, I completely misread what you wrote.  My apologies.  You
-> can disregard most of my email.
->=20
->>
->>>
->>> Also, looking forward, I think you're going to want a bunch of the
->>> stuff that's under consideration as new seccomp features.  Tycho is
->>> working on a "user notifier" feature for seccomp where, in addition t=
-o
->>> accepting, rejecting, or kicking to ptrace, you can send a message to=
-
->>> the creator of the filter and wait for a reply.  I think that Landloc=
+>>>> I think you're wrong here.  Any sane container trying to use Landloc=
 k
->>> will want exactly the same feature.
+>>>> like this would also create a PID namespace.  Problem solved.  I sti=
+ll
+>>>> think you should drop this patch.
 >>
->> I don't think why this may be useful at all her. Landlock does not
->> filter at the syscall level but handles kernel object and actions as
->> does an LSM. That is the whole purpose of Landlock.
+>> Containers is one use case, another is build-in sandboxing (e.g. for w=
+eb
+>> browser=E2=80=A6) and another one is for sandbox managers (e.g. Fireja=
+il,
+>> Bubblewrap, Flatpack=E2=80=A6). In some of these use cases, especially=
+ from a
+>> developer point of view, you may want/need to debug your applications
+>> (without requiring to be root). For nested Landlock access-controls
+>> (e.g. container + user session + web browser), it may not be allowed t=
+o
+>> create a PID namespace, but you still want to have a meaningful
+>> access-control.
+>>
 >=20
-> Suppose I'm writing a container manager.  I want to run "mount" in the
-> container, but I don't want to allow moun() in general and I want to
-> emulate certain mount() actions.  I can write a filter that catches
-> mount using seccomp and calls out to the container manager for help.
-> This isn't theoretical -- Tycho wants *exactly* this use case to be
-> supported.
-
-Well, I think this use case should be handled with something like
-LD_PRELOAD and a helper library. FYI, I did something like this:
-https://github.com/stemjail/stemshim
-
-Otherwise, we should think about enabling a process to (dynamically)
-extend/patch the vDSO (similar to LD_PRELOAD but at the syscall level
-and works with static binaries) for a subset of processes (the same way
-seccomp filters are inherited). It may be more powerful and flexible
-than extending the kernel/seccomp to patch (buggy?) userland.
-
+> The consideration should be exactly the same as for normal seccomp.
+> If I'm in a container (using PID namespaces + seccomp) and a run a web
+> browser, I can debug the browser.
 >=20
-> But using seccomp for this is indeed annoying.  It would be nice to
-> use Landlock's ability to filter based on the filesystem type, for
-> example.  So Tycho could write a Landlock rule like:
->=20
-> bool filter_mount(...)
-> {
->   if (path needs emulation)
->     call_user_notifier();
-> }
->=20
-> And it should work.
->=20
-> This means that, if both seccomp user notifiers and Landlock make it
-> upstream, then there should probably be a way to have a user notifier
-> bound to a seccomp filter and a set of landlock filters.
+> If there's a real use case for adding this type of automatic ptrace
+> protection, then by all means, let's add it as a general seccomp
+> feature.
 >=20
 
-Using seccomp filters and Landlock programs may be powerful. However,
-for this use case, I think a *post-syscall* vDSO-like (which could get
-some data returned by a Landlock program) may be much more flexible
-(with less kernel code). What is needed here is a way to know the kernel
-semantic (Landlock) and a way to patch userland without patching its
-code (vDSO-like).
+Right, it makes sense to add this feature to seccomp filters as well.
+What do you think Kees?
 
 
---sEcIHHJqCS6B4cMrH9dqyVOUmWwcXc4Pq--
+--kZcZjw0WKnGSqLFbzG2fiWrSWdoqrYTdI--
 
---PvZReyUi33n28IxqiwHX1q5FTHMFGG1i5
+--h92TW2B8M4QjpHrJfREMpzqkQ8my7B1ZE
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: OpenPGP digital signature
 Content-Disposition: attachment; filename="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlqfFVsACgkQIt7+33O9
-apXBpgf+IexCxH4mYe+h7ZXCYbbX2SNVuELlcdHdOc0/nWAtQp1iE60Q5cerYFzd
-2GyIc2aNTXQo8bxcvUIubzGPmvIiDkuAB5FvaDsjgkC/02YisW6N9QegxMx7duD6
-QtHTiW8LqIektN1IkNstUXn6M796ToUjMMrJo+Mh/hyUV488wepbsPNvRQwTD9g8
-sbvC1CVnQQtjqPNkgqaI1uA4n3hRB75a+9JH8tRu/Z7CP9EiTpqVuJhx02R7jO8P
-k2aMZXLNbdO3p14nk67gL/TMhLIIPLEcVWICjmDexGMY+o3ehARIYV+KqEXVbzO4
-rgQ9zEHUngRX4523Yf46CtEZUgn+3A==
-=i3OW
+iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlqfFggACgkQIt7+33O9
+apW73AgAnM/G8lr+aVe8sB1ahRhpdMjsohKrFeRcQE1cCiGoBWE+XYz2FA3dHmiT
+3cUeRbnQKONbgHsGF33+gzELd9Xrog1UfCi5BDaGQV4HYfCaMjr/ZiNQnaXXkw1L
+20nM3CZ2H7Y9Skohqt03fca0D3Em+VpFoIRNjin+QziCTpPKEr6YUqQasUmrBT1H
+FwjH9rEHtoUCavixV7k1cZgNaOBCwB8oKvgN/sYOkPn9CQLFQ2XaPLZz9To68UlZ
+BJwk/D1KCSGWdNSfyuz9TQmXrChalw1+D+HF1EDLTet30zGQIeg2BzOON212F6wM
+10W0n7lKkDWr/PskDeRE2EY8S4pYZw==
+=zkVw
 -----END PGP SIGNATURE-----
 
---PvZReyUi33n28IxqiwHX1q5FTHMFGG1i5--
+--h92TW2B8M4QjpHrJfREMpzqkQ8my7B1ZE--
