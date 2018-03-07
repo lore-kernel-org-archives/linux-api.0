@@ -1,64 +1,97 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH bpf-next v8 00/11] Landlock LSM: Toward unprivileged sandboxing
-Date: Wed, 7 Mar 2018 01:21:11 +0000
-Message-ID: <CALCETrXT8JUXVwDNKGVRG7=aenthDRePD+T+YiDY6cceaazDeA@mail.gmail.com>
-References: <20180227004121.3633-1-mic@digikod.net> <CALCETrV3OZb70o83uOG437PubwBwaUJ6SKQucq_7g1BuBOmxzg@mail.gmail.com>
- <2e06621c-08e9-dc12-9b6e-9c09d5d8f458@digikod.net> <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
- <a70b41ee-78cb-52cc-152c-ac5e43b7e45c@digikod.net> <CALCETrUQYp0ta4tLgUWJ79pZVwp3WRY7cp-XaPcn1WyTc=wZyg@mail.gmail.com>
- <20180306224636.wf5z3kujtc7r5qyh@cisco> <7082be04-d6af-b853-4bb7-f331836662e2@digikod.net>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Tue, 6 Mar 2018 19:24:14 -0800
+Message-ID: <20180307032414.GA24203@kroah.com>
+References: <20180306013457.1955486-1-ast@kernel.org>
+ <20180306110549.GB31087@kroah.com>
+ <d4fa4529-8341-8069-b80e-78773b0bb366@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7082be04-d6af-b853-4bb7-f331836662e2@digikod.net>
+Content-Disposition: inline
+In-Reply-To: <d4fa4529-8341-8069-b80e-78773b0bb366@fb.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: Tycho Andersen <tycho@tycho.ws>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium>
+To: Alexei Starovoitov <ast@fb.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, mcgrof@kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 6, 2018 at 11:06 PM, Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>=
- wrote:
->
-> On 06/03/2018 23:46, Tycho Andersen wrote:
->> On Tue, Mar 06, 2018 at 10:33:17PM +0000, Andy Lutomirski wrote:
->>>>> Suppose I'm writing a container manager.  I want to run "mount" in th=
-e
->>>>> container, but I don't want to allow moun() in general and I want to
->>>>> emulate certain mount() actions.  I can write a filter that catches
->>>>> mount using seccomp and calls out to the container manager for help.
->>>>> This isn't theoretical -- Tycho wants *exactly* this use case to be
->>>>> supported.
->>>>
->>>> Well, I think this use case should be handled with something like
->>>> LD_PRELOAD and a helper library. FYI, I did something like this:
->>>> https://github.com/stemjail/stemshim
->>>
->>> I doubt that will work for containers.  Containers that use user
->>> namespaces and, for example, setuid programs aren't going to honor
->>> LD_PRELOAD.
->>
->> Or anything that calls syscalls directly, like go programs.
->
-> That's why the vDSO-like approach. Enforcing an access control is not
-> the issue here, patching a buggy userland (without patching its code) is
-> the issue isn't it?
->
-> As far as I remember, the main problem is to handle file descriptors
-> while "emulating" the kernel behavior. This can be done with a "shim"
-> code mapped in every processes. Chrome used something like this (in a
-> previous sandbox mechanism) as a kind of emulation (with the current
-> seccomp-bpf ). I think it should be doable to replace the (userland)
-> emulation code with an IPC wrapper receiving file descriptors through
-> UNIX socket.
->
+On Tue, Mar 06, 2018 at 05:07:45PM -0800, Alexei Starovoitov wrote:
+> combining multiple answers...
+> 
+> On 3/6/18 3:05 AM, Greg KH wrote:
+> > 
+> > Any chance you can add a field to your "umh module" type such that a
+> > normal 'modinfo' program will be able to notice it is different easily?
+> 
+> ok. handling of modinfo turned out to be straightforward.
+> kmod tooling worked fine with simple addition of .modinfo section.
+> 
+> $ modinfo bpfilter
+> filename:
+> /lib/modules/4.16.0-rc4-00799-g1716f0aa3039-dirty/net/bpfilter/bpfilter.ko
+> umh:            Y
 
-Can you explain exactly what you mean by "vDSO-like"?
+Nice.  But perhaps spell it out, "user_mode_helper"?  Anyway,
+bikesheding now, sorry, whatever you want to call it is fine with me.
 
-When a 64-bit program does a syscall, it just executes the SYSCALL
-instruction.  The vDSO isn't involved at all.  32-bit programs usually
-go through the vDSO, but not always.
+> license:        GPL
+> 
+> I will require umh=Y and license to be present.
+> umh has to be set to Y for this 'umh modules'
+> and taint of kernel will happen if license is not gpl.
 
-It could be possible to force-load a DSO into an entire container and
-rig up seccomp to intercept all SYSCALLs not originating from the DSO
-such that they merely redirect control to the DSO, but that seems
-quite messy.
+Interesting, I like it :)
+
+
+> Other modinfo like vermagic are not applicable here, since
+> umh modules interact with kernel via normal kernel/user abi.
+
+Very true.
+
+> > > Since umh can crash, can be oom-ed by the kernel, killed by admin,
+> > > the subsystem that uses them (like bpfilter) need to manage life
+> > > time of umh on its own, so module infra doesn't do any accounting
+> > > of them. They don't appear in "lsmod" and cannot be "rmmod".
+> > > Multiple request_module("umh") will load multiple umh.ko processes.
+> > > 
+> > > Similar to kernel modules the kernel will be tainted if "umh module"
+> > > has invalid signature.
+> > 
+> > Shouldn't we fail to load the "module" if the signature is not valid if
+> > CONFIG_MODULE_SIG_FORCE=y is enabled, like we do for modules?  I run my
+> > systems like that, and just "warning" isn't probably a good idea for
+> > systems that want to enforce that everything is signed properly?
+> 
+> CONFIG_MODULE_SIG_FORCE=y is already handled by this patch.
+> It's checked first for either .ko or umh.ko (before any elf parsing)
+> and returns -ENOKEY to user space without any dmesg message.
+> I think it's best to keep it as-is.
+> The taint and warning is for 'undef SIG_FORCE' and when module
+> is signed, but incorrectly.
+
+Ah, sorry, I missed that, thanks for clearing it up.
+
+> > Other than that, one minor question:
+> > 
+> > > @@ -1745,7 +1745,9 @@ static int do_execveat_common(int fd, struct filename *filename,
+> > >  	sched_exec();
+> > > 
+> > >  	bprm->file = file;
+> > > -	if (fd == AT_FDCWD || filename->name[0] == '/') {
+> > > +	if (!filename) {
+> > > +		bprm->filename = "/dev/null";
+> > 
+> > Why the use of "/dev/null" for the filename here, and elsewhere in the
+> > code?  While I'm "sure" that everyone really does have /dev/null/
+> > mounted in the root namespace, what is the use of it here?
+> 
+> filename is assumed to be non-null in several places further
+> down and instead of hacking it everywhere it's cleaner to assign
+> some string to it.
+> I'll change it to filename = "none"
+> Same in umh part.
+
+Thanks, that makes sense.
+
+greg k-h
