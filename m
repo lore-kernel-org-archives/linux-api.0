@@ -1,87 +1,70 @@
 From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v2 1/3] signal: Add FPE_FLTUNK si_code for undiagnosable
- fp exceptions
-Date: Thu, 8 Mar 2018 17:11:50 +0000
-Message-ID: <20180308171149.GC14918@arm.com>
+Subject: Re: [PATCH v2 2/3] arm64: fpsimd: Fix bad si_code for undiagnosed
+ SIGFPE
+Date: Thu, 8 Mar 2018 17:11:53 +0000
+Message-ID: <20180308171153.GD14918@arm.com>
 References: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
- <1519926248-12591-2-git-send-email-Dave.Martin@arm.com>
+ <1519926248-12591-3-git-send-email-Dave.Martin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <1519926248-12591-2-git-send-email-Dave.Martin@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <1519926248-12591-3-git-send-email-Dave.Martin@arm.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: Dave Martin <Dave.Martin@arm.com>
-Cc: linux-arm-kernel@lists.infradead.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Catalin Marinas <catalin.marinas@arm.com>, James Morse <james.morse@arm.com>, linux-kernel@vger.kernel.org, tglx@linutronix.de, mingo@redhat.com, arnd@arndb.de
+Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, James Morse <james.morse@arm.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Catalin Marinas <catalin.marinas@arm.com>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Dave,
+On Thu, Mar 01, 2018 at 05:44:07PM +0000, Dave Martin wrote:
+> Currently a SIGFPE delivered in response to a floating-point
+> exception trap may have si_code set to 0 on arm64.  As reported by
+> Eric, this is a bad idea since this is the value of SI_USER -- yet
+> this signal is definitely not the result of kill(2), tgkill(2) etc.
+> and si_uid and si_pid make limited sense whereas we do want to
+> yield a value for si_addr (which doesn't exist for SI_USER).
 
-On Thu, Mar 01, 2018 at 05:44:06PM +0000, Dave Martin wrote:
-> Some architectures cannot always report accurately what kind of
-> floating-point exception triggered a floating-point exception trap.
-> 
-> This can occur with fp exceptions occurring on lanes in a vector
-> instruction on arm64 for example.
-> 
-> Rather than have every architecture come up with its own way of
-> describing such a condition, this patch adds a common FPE_FLTUNK
-> si_code value to report that an fp exception caused a trap but we
-> cannot be certain which kind of fp exception it was.
+[...]
 
-This looks straightforward to me, but I'll need Acks for the x86 and uapi
-changes if I'm to take this via arm64. I've added some others to CC and
-kept the patch intact below.
+> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+> index e7226c4..9040038 100644
+> --- a/arch/arm64/kernel/fpsimd.c
+> +++ b/arch/arm64/kernel/fpsimd.c
+> @@ -39,6 +39,7 @@
+>  #include <linux/slab.h>
+>  #include <linux/sysctl.h>
+>  
+> +#include <asm/esr.h>
+>  #include <asm/fpsimd.h>
+>  #include <asm/cputype.h>
+>  #include <asm/simd.h>
+> @@ -867,18 +868,20 @@ asmlinkage void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs)
+>  asmlinkage void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs)
+>  {
+>  	siginfo_t info;
+> -	unsigned int si_code = FPE_FIXME;
+> -
+> -	if (esr & FPEXC_IOF)
+> -		si_code = FPE_FLTINV;
+> -	else if (esr & FPEXC_DZF)
+> -		si_code = FPE_FLTDIV;
+> -	else if (esr & FPEXC_OFF)
+> -		si_code = FPE_FLTOVF;
+> -	else if (esr & FPEXC_UFF)
+> -		si_code = FPE_FLTUND;
+> -	else if (esr & FPEXC_IXF)
+> -		si_code = FPE_FLTRES;
+> +	unsigned int si_code = FPE_FLTUNK;
 
-Cheers,
+Happy to take this patch once the dependency on FPE_FLTUNK in core code is
+resolved.
 
 Will
-
-> Signed-off-by: Dave Martin <Dave.Martin@arm.com>
-> 
-> --
-> 
-> Changes since v1:
-> 
-> Reported by James Morse:
-> 
->  * Bump NSIGFPE BUILD_BUG_ON() check for x86 compat.
-> 
->    FPE_FLTUNK does not current have any implications for x86, since it
->    is not currently used and has no implications for the way siginfo
->    is populated.
-> ---
->  arch/x86/kernel/signal_compat.c    | 2 +-
->  include/uapi/asm-generic/siginfo.h | 3 ++-
->  2 files changed, 3 insertions(+), 2 deletions(-)
-> 
-> diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
-> index ac057f9..954ad99 100644
-> --- a/arch/x86/kernel/signal_compat.c
-> +++ b/arch/x86/kernel/signal_compat.c
-> @@ -26,7 +26,7 @@ static inline void signal_compat_build_tests(void)
->  	 * new fields are handled in copy_siginfo_to_user32()!
->  	 */
->  	BUILD_BUG_ON(NSIGILL  != 11);
-> -	BUILD_BUG_ON(NSIGFPE  != 13);
-> +	BUILD_BUG_ON(NSIGFPE  != 14);
->  	BUILD_BUG_ON(NSIGSEGV != 4);
->  	BUILD_BUG_ON(NSIGBUS  != 5);
->  	BUILD_BUG_ON(NSIGTRAP != 4);
-> diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-> index 85dc965..10304de 100644
-> --- a/include/uapi/asm-generic/siginfo.h
-> +++ b/include/uapi/asm-generic/siginfo.h
-> @@ -229,7 +229,8 @@ typedef struct siginfo {
->  # define __FPE_INVASC	12	/* invalid ASCII digit */
->  # define __FPE_INVDEC	13	/* invalid decimal digit */
->  #endif
-> -#define NSIGFPE		13
-> +#define FPE_FLTUNK	14	/* undiagnosed floating-point exception */
-> +#define NSIGFPE		14
->  
->  /*
->   * SIGSEGV si_codes
-> -- 
-> 2.1.4
-> 
