@@ -1,85 +1,74 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH v2 2/3] arm64: fpsimd: Fix bad si_code for undiagnosed
- SIGFPE
-Date: Thu, 08 Mar 2018 16:40:12 -0600
-Message-ID: <87o9jymbsj.fsf@xmission.com>
-References: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
- <1519926248-12591-3-git-send-email-Dave.Martin@arm.com>
- <20180308171153.GD14918@arm.com>
+From: Alexei Starovoitov <ast@fb.com>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Thu, 8 Mar 2018 15:07:01 -0800
+Message-ID: <d83869b4-260e-179d-d469-83b8d8068399@fb.com>
+References: <20180306013457.1955486-1-ast@kernel.org>
+ <20180308012353.GO14069@wotan.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20180308171153.GD14918@arm.com> (Will Deacon's message of "Thu,
- 8 Mar 2018 17:11:53 +0000")
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, James Morse <james.morse@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Martin <Dave.Martin@arm.com>, linux-arm-kernel@lists.infradead.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180308012353.GO14069@wotan.suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Luis R. Rodriguez" <mcgrof@kernel.org>, Alexei Starovoitov <ast@kernel.org>
+Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, gregkh@linuxfoundation.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Jessica Yu <jeyu@kernel.org>, Kees Cook <keescook@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Jiri Kosina <jikos@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Will Deacon <will.deacon@arm.com> writes:
-
-> On Thu, Mar 01, 2018 at 05:44:07PM +0000, Dave Martin wrote:
->> Currently a SIGFPE delivered in response to a floating-point
->> exception trap may have si_code set to 0 on arm64.  As reported by
->> Eric, this is a bad idea since this is the value of SI_USER -- yet
->> this signal is definitely not the result of kill(2), tgkill(2) etc.
->> and si_uid and si_pid make limited sense whereas we do want to
->> yield a value for si_addr (which doesn't exist for SI_USER).
+On 3/7/18 5:23 PM, Luis R. Rodriguez wrote:
 >
-> [...]
+> request_module() has its own world though too. How often in your proof of
+> concept is request_module() called? How many times do you envision it being
+> called?
+
+once.
+
+>> +static int run_umh(struct file *file)
+>> +{
+>> +	struct subprocess_info *sub_info = call_usermodehelper_setup_file(file);
+>> +
+>> +	if (!sub_info)
+>> +		return -ENOMEM;
+>> +	return call_usermodehelper_exec(sub_info, UMH_WAIT_EXEC);
+>> +}
 >
->> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
->> index e7226c4..9040038 100644
->> --- a/arch/arm64/kernel/fpsimd.c
->> +++ b/arch/arm64/kernel/fpsimd.c
->> @@ -39,6 +39,7 @@
->>  #include <linux/slab.h>
->>  #include <linux/sysctl.h>
->>  
->> +#include <asm/esr.h>
->>  #include <asm/fpsimd.h>
->>  #include <asm/cputype.h>
->>  #include <asm/simd.h>
->> @@ -867,18 +868,20 @@ asmlinkage void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs)
->>  asmlinkage void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs)
->>  {
->>  	siginfo_t info;
->> -	unsigned int si_code = FPE_FIXME;
->> -
->> -	if (esr & FPEXC_IOF)
->> -		si_code = FPE_FLTINV;
->> -	else if (esr & FPEXC_DZF)
->> -		si_code = FPE_FLTDIV;
->> -	else if (esr & FPEXC_OFF)
->> -		si_code = FPE_FLTOVF;
->> -	else if (esr & FPEXC_UFF)
->> -		si_code = FPE_FLTUND;
->> -	else if (esr & FPEXC_IXF)
->> -		si_code = FPE_FLTRES;
->> +	unsigned int si_code = FPE_FLTUNK;
+> run_umh() calls the program and waits. Note that while we are running a UMH we
+> can't suspend. What if they take forever, who is hosing them down with an
+> equivalent:
 >
-> Happy to take this patch once the dependency on FPE_FLTUNK in core code is
-> resolved.
+> 	schedule();
+> 	try_to_freeze();
+>
+> Say they are buggy and never return, will they stall suspend, have you tried?
+>
+> call_usermodehelper_exec() uses helper_lock() which in turn is used for
+> umh's accounting for number of running umh's. One of the sad obscure uses
+> for this is to deal with suspend/resume. Refer to __usermodehelper* calls
+> on kernel/power/process.c
+>
+> Note how you use UMH_WAIT_EXEC too, so this is all synchronous.
 
-Would it help for me to take the FPE_FLTUNK patch into my siginfo-next
-branch?   So that there is a common branch with the code so we don't
-need to worry about conflicts.  If so I will look at that on Monday.
+looks like you misread this code and the rest of your concerns
+with suspend/resume are not applicable any more.
 
-There is another FPE code that appears to be needed for one of the other
-architectures as well.  If we can figure out how to head conflicts off
-at the pass while everyone is fixing the FPE_FIXME type problems it
-might help.
+#define UMH_NO_WAIT     0       /* don't wait at all */
+#define UMH_WAIT_EXEC   1       /* wait for the exec, but not the process */
+#define UMH_WAIT_PROC   2       /* wait for the process to complete */
+#define UMH_KILLABLE    4       /* wait for EXEC/PROC killable */
 
-But it is all simple enough I expect a word to the wise when I send
-Linus my pull request will be enough to sort things out.
+bpftiler.ko is started once and runs non-stop from there on.
+Unless it crashes, but it's a different discussion.
 
-Eric
+>> +	if (info->hdr->e_type == ET_EXEC) {
+>> +#ifdef CONFIG_MODULE_SIG
+>> +		if (!info->sig_ok) {
+>> +			pr_notice_once("umh %s verification failed: signature and/or required key missing - tainting kernel\n",
+>> +				       info->file->f_path.dentry->d_name.name);
+>> +			add_taint(TAINT_UNSIGNED_MODULE, LOCKDEP_STILL_OK);
+>> +		}
+>> +#endif
+>
+> So I guess this check is done *after* run_umh() then, what about the enforce mode,
+> don't we want to reject loading at all in any circumstance?
+
+already answered this twice in the thread.
