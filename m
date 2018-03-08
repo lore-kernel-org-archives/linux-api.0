@@ -1,16 +1,16 @@
 From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH v2 1/3] signal: Add FPE_FLTUNK si_code for undiagnosable
- fp exceptions
-Date: Thu, 08 Mar 2018 16:35:45 -0600
-Message-ID: <876066nqke.fsf@xmission.com>
+Subject: Re: [PATCH v2 2/3] arm64: fpsimd: Fix bad si_code for undiagnosed
+ SIGFPE
+Date: Thu, 08 Mar 2018 16:37:02 -0600
+Message-ID: <87zi3imbxt.fsf@xmission.com>
 References: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
- <1519926248-12591-2-git-send-email-Dave.Martin@arm.com>
+ <1519926248-12591-3-git-send-email-Dave.Martin@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <1519926248-12591-2-git-send-email-Dave.Martin@arm.com> (Dave
- Martin's message of "Thu, 1 Mar 2018 17:44:06 +0000")
+In-Reply-To: <1519926248-12591-3-git-send-email-Dave.Martin@arm.com> (Dave
+ Martin's message of "Thu, 1 Mar 2018 17:44:07 +0000")
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
  <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
 List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
@@ -26,67 +26,143 @@ List-Id: linux-api@vger.kernel.org
 
 Dave Martin <Dave.Martin@arm.com> writes:
 
-> Some architectures cannot always report accurately what kind of
-> floating-point exception triggered a floating-point exception trap.
+> Currently a SIGFPE delivered in response to a floating-point
+> exception trap may have si_code set to 0 on arm64.  As reported by
+> Eric, this is a bad idea since this is the value of SI_USER -- yet
+> this signal is definitely not the result of kill(2), tgkill(2) etc.
+> and si_uid and si_pid make limited sense whereas we do want to
+> yield a value for si_addr (which doesn't exist for SI_USER).
 >
-> This can occur with fp exceptions occurring on lanes in a vector
-> instruction on arm64 for example.
+> It's not entirely clear whether the architecure permits a
+> "spurious" fp exception trap where none of the exception flag bits
+> in ESR_ELx is set.  (IMHO the architectural intent is to forbid
+> this.)  However, it does permit those bits to contain garbage if
+> the TFV bit in ESR_ELx is 0.  That case isn't currently handled at
+> all and may result in si_code == 0 or si_code containing a FPE_FLT*
+> constant corresponding to an exception that did not in fact happen.
 >
-> Rather than have every architecture come up with its own way of
-> describing such a condition, this patch adds a common FPE_FLTUNK
-> si_code value to report that an fp exception caused a trap but we
-> cannot be certain which kind of fp exception it was.
+> There is nothing sensible we can return for si_code in such cases,
+> but SI_USER is certainly not appropriate and will lead to violation
+> of legitimate userspace assumptions.
 >
+> This patch allocates a new si_code value FPE_UNKNOWN that at least
+> does not conflict with any existing SI_* or FPE_* code, and yields
+> this in si_code for undiagnosable cases.  This is probably the best
+> simplicity/incorrectness tradeoff achieveable without relying on
+> implementation-dependent features or adding a lot of code.  In any
+> case, there appears to be no perfect solution possible that would
+> justify a lot of effort here.
+>
+> Yielding FPE_UNKNOWN when some well-defined fp exception caused the
+> trap is a violation of POSIX, but this is forced by the
+> architecture.  We have no realistic prospect of yielding the
+> correct code in such cases.  At present I am not aware of any ARMv8
+> implementation that supports trapped floating-point exceptions in
+> any case.
+>
+> The new code may be applicable to other architectures for similar
+> reasons.
+>
+> No attempt is made to provide ESR_ELx to userspace in the signal
+> frame, since architectural limitations mean that it is unlikely to
+> provide much diagnostic value, doesn't benefit existing software
+> and would create ABI with no proven purpose.  The existing
+> mechanism for passing it also has problems of its own which may
+> result in the wrong value being passed to userspace due to
+> interaction with mm faults.  The implied rework does not appear
+> justified.
+>
+> Reported-by: Eric W. Biederman <ebiederm@xmission.com>
 > Signed-off-by: Dave Martin <Dave.Martin@arm.com>
 
-Reviewed-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Acked-by: "Eric W. Biederman" <ebiederm@xmission.com>
 
-> --
->
-> Changes since v1:
->
-> Reported by James Morse:
->
->  * Bump NSIGFPE BUILD_BUG_ON() check for x86 compat.
->
->    FPE_FLTUNK does not current have any implications for x86, since it
->    is not currently used and has no implications for the way siginfo
->    is populated.
 > ---
->  arch/x86/kernel/signal_compat.c    | 2 +-
->  include/uapi/asm-generic/siginfo.h | 3 ++-
->  2 files changed, 3 insertions(+), 2 deletions(-)
+>  arch/arm64/include/asm/esr.h          |  9 +++++++++
+>  arch/arm64/include/uapi/asm/siginfo.h |  7 -------
+>  arch/arm64/kernel/fpsimd.c            | 27 +++++++++++++++------------
+>  3 files changed, 24 insertions(+), 19 deletions(-)
 >
-> diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
-> index ac057f9..954ad99 100644
-> --- a/arch/x86/kernel/signal_compat.c
-> +++ b/arch/x86/kernel/signal_compat.c
-> @@ -26,7 +26,7 @@ static inline void signal_compat_build_tests(void)
->  	 * new fields are handled in copy_siginfo_to_user32()!
->  	 */
->  	BUILD_BUG_ON(NSIGILL  != 11);
-> -	BUILD_BUG_ON(NSIGFPE  != 13);
-> +	BUILD_BUG_ON(NSIGFPE  != 14);
->  	BUILD_BUG_ON(NSIGSEGV != 4);
->  	BUILD_BUG_ON(NSIGBUS  != 5);
->  	BUILD_BUG_ON(NSIGTRAP != 4);
-
-For other reviewers.  This bug on exists to ensure people remember to
-update the helper functions when new fields are added to struct siginfo.
-As new fields usually come with new si_codes.  There are no fields
-added so this is sufficient.
-
-> diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-> index 85dc965..10304de 100644
-> --- a/include/uapi/asm-generic/siginfo.h
-> +++ b/include/uapi/asm-generic/siginfo.h
-> @@ -229,7 +229,8 @@ typedef struct siginfo {
->  # define __FPE_INVASC	12	/* invalid ASCII digit */
->  # define __FPE_INVDEC	13	/* invalid decimal digit */
->  #endif
-> -#define NSIGFPE		13
-> +#define FPE_FLTUNK	14	/* undiagnosed floating-point exception */
-> +#define NSIGFPE		14
+> diff --git a/arch/arm64/include/asm/esr.h b/arch/arm64/include/asm/esr.h
+> index 803443d..ce70c3f 100644
+> --- a/arch/arm64/include/asm/esr.h
+> +++ b/arch/arm64/include/asm/esr.h
+> @@ -240,6 +240,15 @@
+>  		(((e) & ESR_ELx_SYS64_ISS_OP2_MASK) >>		\
+>  		 ESR_ELx_SYS64_ISS_OP2_SHIFT))
+>  
+> +/*
+> + * ISS field definitions for floating-point exception traps
+> + * (FP_EXC_32/FP_EXC_64).
+> + *
+> + * (The FPEXC_* constants are used instead for common bits.)
+> + */
+> +
+> +#define ESR_ELx_FP_EXC_TFV	(UL(1) << 23)
+> +
+>  #ifndef __ASSEMBLY__
+>  #include <asm/types.h>
+>  
+> diff --git a/arch/arm64/include/uapi/asm/siginfo.h b/arch/arm64/include/uapi/asm/siginfo.h
+> index 9b4d912..157e6a8 100644
+> --- a/arch/arm64/include/uapi/asm/siginfo.h
+> +++ b/arch/arm64/include/uapi/asm/siginfo.h
+> @@ -22,13 +22,6 @@
+>  #include <asm-generic/siginfo.h>
 >  
 >  /*
->   * SIGSEGV si_codes
+> - * SIGFPE si_codes
+> - */
+> -#ifdef __KERNEL__
+> -#define FPE_FIXME	0	/* Broken dup of SI_USER */
+> -#endif /* __KERNEL__ */
+> -
+> -/*
+>   * SIGBUS si_codes
+>   */
+>  #ifdef __KERNEL__
+> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+> index e7226c4..9040038 100644
+> --- a/arch/arm64/kernel/fpsimd.c
+> +++ b/arch/arm64/kernel/fpsimd.c
+> @@ -39,6 +39,7 @@
+>  #include <linux/slab.h>
+>  #include <linux/sysctl.h>
+>  
+> +#include <asm/esr.h>
+>  #include <asm/fpsimd.h>
+>  #include <asm/cputype.h>
+>  #include <asm/simd.h>
+> @@ -867,18 +868,20 @@ asmlinkage void do_fpsimd_acc(unsigned int esr, struct pt_regs *regs)
+>  asmlinkage void do_fpsimd_exc(unsigned int esr, struct pt_regs *regs)
+>  {
+>  	siginfo_t info;
+> -	unsigned int si_code = FPE_FIXME;
+> -
+> -	if (esr & FPEXC_IOF)
+> -		si_code = FPE_FLTINV;
+> -	else if (esr & FPEXC_DZF)
+> -		si_code = FPE_FLTDIV;
+> -	else if (esr & FPEXC_OFF)
+> -		si_code = FPE_FLTOVF;
+> -	else if (esr & FPEXC_UFF)
+> -		si_code = FPE_FLTUND;
+> -	else if (esr & FPEXC_IXF)
+> -		si_code = FPE_FLTRES;
+> +	unsigned int si_code = FPE_FLTUNK;
+> +
+> +	if (esr & ESR_ELx_FP_EXC_TFV) {
+> +		if (esr & FPEXC_IOF)
+> +			si_code = FPE_FLTINV;
+> +		else if (esr & FPEXC_DZF)
+> +			si_code = FPE_FLTDIV;
+> +		else if (esr & FPEXC_OFF)
+> +			si_code = FPE_FLTOVF;
+> +		else if (esr & FPEXC_UFF)
+> +			si_code = FPE_FLTUND;
+> +		else if (esr & FPEXC_IXF)
+> +			si_code = FPE_FLTRES;
+> +	}
+>  
+>  	memset(&info, 0, sizeof(info));
+>  	info.si_signo = SIGFPE;
