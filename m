@@ -1,85 +1,272 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH bpf-next v8 00/11] Landlock LSM: Toward unprivileged sandboxing
-Date: Thu, 8 Mar 2018 23:53:52 +0000
-Message-ID: <CALCETrUwkV4_65y7UjSgrq5WHOcZZ=+znKArehvhb1xEGG9HXw@mail.gmail.com>
-References: <20180227004121.3633-1-mic@digikod.net> <CALCETrV3OZb70o83uOG437PubwBwaUJ6SKQucq_7g1BuBOmxzg@mail.gmail.com>
- <2e06621c-08e9-dc12-9b6e-9c09d5d8f458@digikod.net> <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
- <a70b41ee-78cb-52cc-152c-ac5e43b7e45c@digikod.net> <CALCETrUQYp0ta4tLgUWJ79pZVwp3WRY7cp-XaPcn1WyTc=wZyg@mail.gmail.com>
- <20180306224636.wf5z3kujtc7r5qyh@cisco> <7082be04-d6af-b853-4bb7-f331836662e2@digikod.net>
- <CALCETrXT8JUXVwDNKGVRG7=aenthDRePD+T+YiDY6cceaazDeA@mail.gmail.com> <cd811155-9e0d-283a-9291-4adfcec848e6@digikod.net>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
+Date: Thu, 8 Mar 2018 16:24:33 -0800
+Message-ID: <CAGXu5j+Q=S5sw9N5avyByxi2ekM6povT5Tajjhdb6D9g9ggKxQ@mail.gmail.com>
+References: <20180306013457.1955486-1-ast@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cd811155-9e0d-283a-9291-4adfcec848e6@digikod.net>
+In-Reply-To: <20180306013457.1955486-1-ast@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
-Cc: Tycho Andersen <tycho@tycho.ws>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromium>
+To: Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>
+Cc: "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 8, 2018 at 11:51 PM, Mickaël Salaün <mic@digikod.net> wrote:
->
-> On 07/03/2018 02:21, Andy Lutomirski wrote:
->> On Tue, Mar 6, 2018 at 11:06 PM, Mickaël Salaün <mic@digikod.net> wrote:
->>>
->>> On 06/03/2018 23:46, Tycho Andersen wrote:
->>>> On Tue, Mar 06, 2018 at 10:33:17PM +0000, Andy Lutomirski wrote:
->>>>>>> Suppose I'm writing a container manager.  I want to run "mount" in the
->>>>>>> container, but I don't want to allow moun() in general and I want to
->>>>>>> emulate certain mount() actions.  I can write a filter that catches
->>>>>>> mount using seccomp and calls out to the container manager for help.
->>>>>>> This isn't theoretical -- Tycho wants *exactly* this use case to be
->>>>>>> supported.
->>>>>>
->>>>>> Well, I think this use case should be handled with something like
->>>>>> LD_PRELOAD and a helper library. FYI, I did something like this:
->>>>>> https://github.com/stemjail/stemshim
->>>>>
->>>>> I doubt that will work for containers.  Containers that use user
->>>>> namespaces and, for example, setuid programs aren't going to honor
->>>>> LD_PRELOAD.
->>>>
->>>> Or anything that calls syscalls directly, like go programs.
->>>
->>> That's why the vDSO-like approach. Enforcing an access control is not
->>> the issue here, patching a buggy userland (without patching its code) is
->>> the issue isn't it?
->>>
->>> As far as I remember, the main problem is to handle file descriptors
->>> while "emulating" the kernel behavior. This can be done with a "shim"
->>> code mapped in every processes. Chrome used something like this (in a
->>> previous sandbox mechanism) as a kind of emulation (with the current
->>> seccomp-bpf ). I think it should be doable to replace the (userland)
->>> emulation code with an IPC wrapper receiving file descriptors through
->>> UNIX socket.
->>>
->>
->> Can you explain exactly what you mean by "vDSO-like"?
->>
->> When a 64-bit program does a syscall, it just executes the SYSCALL
->> instruction.  The vDSO isn't involved at all.  32-bit programs usually
->> go through the vDSO, but not always.
->>
->> It could be possible to force-load a DSO into an entire container and
->> rig up seccomp to intercept all SYSCALLs not originating from the DSO
->> such that they merely redirect control to the DSO, but that seems
->> quite messy.
->
-> vDSO is a code mapped for all processes. As you said, these processes
-> may use it or not. What I was thinking about is to use the same concept,
-> i.e. map a "shim" code into each processes pertaining to a particular
-> hierarchy (the same way seccomp filters are inherited across processes).
-> With a seccomp filter matching some syscall (e.g. mount, open), it is
-> possible to jump back to the shim code thanks to SECCOMP_RET_TRAP. This
-> shim code should then be able to emulate/patch what is needed, even
-> faking a file opening by receiving a file descriptor through a UNIX
-> socket. As did the Chrome sandbox, the seccomp filter may look at the
-> calling address to allow the shim code to call syscalls without being
-> catched, if needed. However, relying on SIGSYS may not fit with
-> arbitrary code. Using a new SECCOMP_RET_EMULATE (?) may be used to jump
-> to a specific process address, to emulate the syscall in an easier way
-> than only relying on a {c,e}BPF program.
->
+How is this not marked [RFC]? :)
 
-This could indeed be done, but I think that Tycho's approach is much
-cleaner and probably faster.
+On Mon, Mar 5, 2018 at 5:34 PM, Alexei Starovoitov <ast@kernel.org> wrote:
+> As the first step in development of bpfilter project [1] the request_module()
+> code is extended to allow user mode helpers to be invoked. Idea is that
+> user mode helpers are built as part of the kernel build and installed as
+> traditional kernel modules with .ko file extension into distro specified
+> location, such that from a distribution point of view, they are no different
+> than regular kernel modules. Thus, allow request_module() logic to load such
+> user mode helper (umh) modules via:
+>
+>   request_module("foo") ->
+>     call_umh("modprobe foo") ->
+>       sys_finit_module(FD of /lib/modules/.../foo.ko) ->
+>         call_umh(struct file)
+
+Yikes. This means autoloaded artbitrary exec() now, instead of
+autoloading just loading arbitrary modules? That seems extremely bad.
+This just extends all the problems we've had with defining security
+boundaries with modules out to umh too. I would need some major
+convincing that this can be made safe.
+
+It's easy for container to trigger arbitrary module loading, so if it
+can find/use a similar one of the bugs we've seen in the past to
+redirect the module loading we don't just get new module-created
+attack surface added to the kernel, but we again get arbitrary ELF
+running in the root ns (not in the container). And in the insane case
+of a container with CAP_SYS_MODULE, this is a trivial escape without
+even needing to build a special kernel module: the root ns, running
+with all privileges runs an arbitrary ELF.
+
+As it stands, I have to NAK this. At the very least, you need to solve
+the execution environment problems here: the ELF should run with no
+greater privileges than what loaded the module, and very importantly,
+must not be allowed to bypass these checks through autoloading. What
+_triggered_ the autoload must be the environment, not the "modprobe",
+since that's running with full privileges. Basically, we need to fix
+module autoloading first, or at least a significant subset of the
+problems: https://lkml.org/lkml/2017/11/27/754
+
+> Such approach enables kernel to delegate functionality traditionally done
+> by kernel modules into user space processes (either root or !root) and
+> reduces security attack surface of such new code, meaning in case of
+> potential bugs only the umh would crash but not the kernel. Another
+> advantage coming with that would be that bpfilter.ko can be debugged and
+> tested out of user space as well (e.g. opening the possibility to run
+> all clang sanitizers, fuzzers or test suites for checking translation).
+> Also, such architecture makes the kernel/user boundary very precise:
+> control plane is done by the user space while data plane stays in the kernel.
+>
+> It's easy to distinguish "umh module" from traditional kernel module:
+>
+> $ readelf -h bld/net/bpfilter/bpfilter.ko|grep Type
+>   Type:                              EXEC (Executable file)
+
+As Andy asked earlier, why not DYN too to catch PIE executables? Seems
+like forcing the userspace helper to be non-PIE would defeat some of
+the userspace defenses in use in most distros.
+
+> $ readelf -h bld/net/ipv4/netfilter/iptable_filter.ko |grep Type
+>   Type:                              REL (Relocatable file)
+>
+> Since umh can crash, can be oom-ed by the kernel, killed by admin,
+> the subsystem that uses them (like bpfilter) need to manage life
+> time of umh on its own, so module infra doesn't do any accounting
+> of them. They don't appear in "lsmod" and cannot be "rmmod".
+> Multiple request_module("umh") will load multiple umh.ko processes.
+>
+> Similar to kernel modules the kernel will be tainted if "umh module"
+> has invalid signature.
+>
+> [1] https://lwn.net/Articles/747551/
+>
+> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+> ---
+>  fs/exec.c               | 40 +++++++++++++++++++++++++++++++---------
+>  include/linux/binfmts.h |  1 +
+>  include/linux/umh.h     |  3 +++
+>  kernel/module.c         | 43 ++++++++++++++++++++++++++++++++++++++-----
+>  kernel/umh.c            | 24 +++++++++++++++++++++---
+>  5 files changed, 94 insertions(+), 17 deletions(-)
+>
+> diff --git a/fs/exec.c b/fs/exec.c
+> index 7eb8d21bcab9..0483c438de7d 100644
+> --- a/fs/exec.c
+> +++ b/fs/exec.c
+> @@ -1691,14 +1691,13 @@ static int exec_binprm(struct linux_binprm *bprm)
+>  /*
+>   * sys_execve() executes a new program.
+>   */
+> -static int do_execveat_common(int fd, struct filename *filename,
+> -                             struct user_arg_ptr argv,
+> -                             struct user_arg_ptr envp,
+> -                             int flags)
+> +static int __do_execve_file(int fd, struct filename *filename,
+> +                           struct user_arg_ptr argv,
+> +                           struct user_arg_ptr envp,
+> +                           int flags, struct file *file)
+>  {
+>         char *pathbuf = NULL;
+>         struct linux_binprm *bprm;
+> -       struct file *file;
+>         struct files_struct *displaced;
+>         int retval;
+>
+> @@ -1737,7 +1736,8 @@ static int do_execveat_common(int fd, struct filename *filename,
+>         check_unsafe_exec(bprm);
+>         current->in_execve = 1;
+>
+> -       file = do_open_execat(fd, filename, flags);
+> +       if (!file)
+> +               file = do_open_execat(fd, filename, flags);
+>         retval = PTR_ERR(file);
+>         if (IS_ERR(file))
+>                 goto out_unmark;
+> @@ -1745,7 +1745,9 @@ static int do_execveat_common(int fd, struct filename *filename,
+>         sched_exec();
+>
+>         bprm->file = file;
+> -       if (fd == AT_FDCWD || filename->name[0] == '/') {
+> +       if (!filename) {
+> +               bprm->filename = "/dev/null";
+> +       } else if (fd == AT_FDCWD || filename->name[0] == '/') {
+>                 bprm->filename = filename->name;
+>         } else {
+>                 if (filename->name[0] == '\0')
+> @@ -1811,7 +1813,8 @@ static int do_execveat_common(int fd, struct filename *filename,
+>         task_numa_free(current);
+>         free_bprm(bprm);
+>         kfree(pathbuf);
+> -       putname(filename);
+> +       if (filename)
+> +               putname(filename);
+>         if (displaced)
+>                 put_files_struct(displaced);
+>         return retval;
+> @@ -1834,10 +1837,29 @@ static int do_execveat_common(int fd, struct filename *filename,
+>         if (displaced)
+>                 reset_files_struct(displaced);
+>  out_ret:
+> -       putname(filename);
+> +       if (filename)
+> +               putname(filename);
+>         return retval;
+>  }
+>
+> +static int do_execveat_common(int fd, struct filename *filename,
+> +                             struct user_arg_ptr argv,
+> +                             struct user_arg_ptr envp,
+> +                             int flags)
+> +{
+> +       struct file *file = NULL;
+> +
+> +       return __do_execve_file(fd, filename, argv, envp, flags, file);
+> +}
+> +
+> +int do_execve_file(struct file *file, void *__argv, void *__envp)
+> +{
+> +       struct user_arg_ptr argv = { .ptr.native = __argv };
+> +       struct user_arg_ptr envp = { .ptr.native = __envp };
+> +
+> +       return __do_execve_file(AT_FDCWD, NULL, argv, envp, 0, file);
+> +}
+
+The exec.c changes should be split into a separate patch. Something
+feels incorrectly refactored here, though. Passing all three of fd,
+filename, and file to __do_execve_file() seems wrong; perhaps the fd
+to file handling needs to happen externally in what you have here as
+do_execveat_common()? The resulting __do_execve_file() has repeated
+conditionals on filename... maybe what I object to is being able to
+pass a NULL filename at all. The filename can be (painfully)
+reconstructed from the struct file.
+
+> [...]
+> diff --git a/kernel/module.c b/kernel/module.c
+> index ad2d420024f6..6cfa35795741 100644
+> --- a/kernel/module.c
+> +++ b/kernel/module.c
+> [...]
+> @@ -3870,14 +3896,21 @@ SYSCALL_DEFINE3(finit_module, int, fd, const char __user *, uargs, int, flags)
+>                       |MODULE_INIT_IGNORE_VERMAGIC))
+>                 return -EINVAL;
+>
+> -       err = kernel_read_file_from_fd(fd, &hdr, &size, INT_MAX,
+> -                                      READING_MODULE);
+> +       f = fdget(fd);
+> +       if (!f.file)
+> +               return -EBADF;
+> +
+> +       err = kernel_read_file(f.file, &hdr, &size, INT_MAX, READING_MODULE);
+
+For the LSM subsystem, I think this should also get it's own enum
+kernel_read_file_id. This is really no longer a kernel module...
+
+>         if (err)
+> -               return err;
+> +               goto out;
+>         info.hdr = hdr;
+>         info.len = size;
+> +       info.file = f.file;
+>
+> -       return load_module(&info, uargs, flags);
+> +       err = load_module(&info, uargs, flags);
+> +out:
+> +       fdput(f);
+> +       return err;
+>  }
+>
+>  static inline int within(unsigned long addr, void *start, unsigned long size)
+> diff --git a/kernel/umh.c b/kernel/umh.c
+> index 18e5fa4b0e71..4361c694bdb1 100644
+> --- a/kernel/umh.c
+> +++ b/kernel/umh.c
+> @@ -97,9 +97,13 @@ static int call_usermodehelper_exec_async(void *data)
+>
+>         commit_creds(new);
+>
+> -       retval = do_execve(getname_kernel(sub_info->path),
+> -                          (const char __user *const __user *)sub_info->argv,
+> -                          (const char __user *const __user *)sub_info->envp);
+> +       if (sub_info->file)
+> +               retval = do_execve_file(sub_info->file,
+> +                                       sub_info->argv, sub_info->envp);
+> +       else
+> +               retval = do_execve(getname_kernel(sub_info->path),
+> +                                  (const char __user *const __user *)sub_info->argv,
+> +                                  (const char __user *const __user *)sub_info->envp);
+>  out:
+>         sub_info->retval = retval;
+>         /*
+> @@ -393,6 +397,20 @@ struct subprocess_info *call_usermodehelper_setup(const char *path, char **argv,
+>  }
+>  EXPORT_SYMBOL(call_usermodehelper_setup);
+>
+> +struct subprocess_info *call_usermodehelper_setup_file(struct file *file)
+> +{
+> +       struct subprocess_info *sub_info;
+> +
+> +       sub_info = kzalloc(sizeof(struct subprocess_info), GFP_KERNEL);
+> +       if (!sub_info)
+> +               return NULL;
+> +
+> +       INIT_WORK(&sub_info->work, call_usermodehelper_exec_work);
+> +       sub_info->path = "/dev/null";
+> +       sub_info->file = file;
+
+This use of "/dev/null" here and in execve is just wrong. It _does_
+have a path and filename...
+
+Anyway, interesting idea. I think it _can_ work, it just needs much
+much more careful security boundaries and to solve our autoloading
+exposures too.
+
+-Kees
+
+-- 
+Kees Cook
+Pixel Security
