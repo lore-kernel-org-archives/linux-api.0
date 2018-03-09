@@ -1,39 +1,47 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
-Date: Fri, 9 Mar 2018 10:50:59 -0800
-Message-ID: <CA+55aFzJEkUGfRkKqc8twaDSdSH_r_OWnFm-e4uNQf4SrJy7-A@mail.gmail.com>
-References: <C94A45E9-54A0-446D-86D6-82D06E2A35CD@amacapital.net>
- <87478c51-59a7-f6ac-1fb2-f3ca2dcf658b@fb.com> <CA+55aFwfcXzD+pzjN=vTcvscpK97pSztUZ2JK7pABs+rMtM7BQ@mail.gmail.com>
- <20180309.133509.1275903267249306409.davem@davemloft.net> <CAGXu5jJcuSojm_KN5+JQ3fV6J09V6dmNB6haqu11xkXTq=nxog@mail.gmail.com>
+From: Alexei Starovoitov <ast@fb.com>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Fri, 9 Mar 2018 10:50:49 -0800
+Message-ID: <74e26cc0-9e72-f03b-5396-f3480921f234@fb.com>
+References: <CALCETrX=Vfk1T-XegwnjtUqeEsyUFXH1744d0yGkufQvDA5xkQ@mail.gmail.com>
+ <CA+55aFwJPDub+tdShCgeTz3UejeskVE7_x+eQLq75mCjYPyP8w@mail.gmail.com>
+ <CAGXu5j+B4wgT3ovynAxa1zwCeROfN5zK45tL1FUnFh0sg8M5AA@mail.gmail.com>
+ <CA+55aFwRGDPvaCUgMtqnQHb2PZ77JSMQMQVf1znSN+PiV7NR-Q@mail.gmail.com>
+ <C94A45E9-54A0-446D-86D6-82D06E2A35CD@amacapital.net>
+ <87478c51-59a7-f6ac-1fb2-f3ca2dcf658b@fb.com>
+ <CALCETrWKLB4e8Cw6ZRiDP535=HzoQJczsEMEpytstveO15mAMg@mail.gmail.com>
+ <6d2e31fa-d87b-fea6-c919-b7d066bb0385@fb.com>
+ <CALCETrX+oGQthnk5AR0MUJwLLwguWG_yq_r9QQPhUYjvz9jyPw@mail.gmail.com>
+ <c9388b10-19ac-0bd5-4986-9c306d23046e@fb.com>
+ <20180309181527.GA15803@kroah.com>
+ <E622B120-3C3A-4A15-8E1B-6F7649038623@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jJcuSojm_KN5+JQ3fV6J09V6dmNB6haqu11xkXTq=nxog@mail.gmail.com>
+In-Reply-To: <E622B120-3C3A-4A15-8E1B-6F7649038623@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: David Miller <davem@davemloft.net>, Alexei Starovoitov <ast@fb.com>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Daniel Borkmann <daniel@iogearbox.net>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Andy Lutomirski <luto@amacapital.net>, Greg KH <gregkh@linuxfoundation.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 9, 2018 at 10:43 AM, Kees Cook <keescook@chromium.org> wrote:
+On 3/9/18 10:23 AM, Andy Lutomirski wrote:
 >
-> Module loading (via kernel_read_file()) already uses
-> deny_write_access(), and so does do_open_execat(). As long as module
-> loading doesn't call allow_write_access() before the execve() has
-> started in the new implementation, I think we'd be covered here.
+>
+>> On Mar 9, 2018, at 10:15 AM, Greg KH <gregkh@linuxfoundation.org> wrote:
+>>
+>
+>>
+>> Oh, and for the record, I like Andy's proposal as well as dumping this
+>> into a kernel module "blob" with the exception that this now would take
+>> up unswapable memory, which isn't the nicest and is one big reason we
+>> removed the in-kernel-memory firmware blobs many years ago.
+>>
+>
+> It might not be totally crazy to back it by tmpfs.
 
-No. kernel_read_file() only does it *during* the read.
-
-So there's a huge big honking gap between the two.
-
-Also, the second part of my suggestion was to be entirely synchronous
-with the whole execution of the process, and do it within the "we do
-mutual exclusion fo rmodules with the same name" logic.
-
-Note that Andrei's patch uses UMH_WAIT_EXEC. That's basically
-"vfork+exec" - it only waits for the exec to have started, it doesn't
-wait for the whole thing.
-
-So I'm saying "use UMH_WAIT_PROC, do it in a different place, and make
-sure you cover the whole sequence with deny_write_access()".
-
-              Linus
+interesting. how do you propose to do it?
+Something like:
+- create /umh_module_tempxxx dir
+- mount tmpfs there
+- copy elf into it and exec it?
