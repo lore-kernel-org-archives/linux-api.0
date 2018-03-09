@@ -1,32 +1,39 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
-Date: Fri, 9 Mar 2018 10:48:51 -0800
-Message-ID: <E459E6CC-F51B-4F2A-9D26-FFB7166E0A47@amacapital.net>
-References: <20180306013457.1955486-1-ast@kernel.org> <CAGXu5j+Q=S5sw9N5avyByxi2ekM6povT5Tajjhdb6D9g9ggKxQ@mail.gmail.com> <CALCETrX=Vfk1T-XegwnjtUqeEsyUFXH1744d0yGkufQvDA5xkQ@mail.gmail.com> <CA+55aFwJPDub+tdShCgeTz3UejeskVE7_x+eQLq75mCjYPyP8w@mail.gmail.com> <CAGXu5j+B4wgT3ovynAxa1zwCeROfN5zK45tL1FUnFh0sg8M5AA@mail.gmail.com> <CA+55aFwRGDPvaCUgMtqnQHb2PZ77JSMQMQVf1znSN+PiV7NR-Q@mail.gmail.com> <C94A45E9-54A0-446D-86D6-82D06E2A35CD@amacapital.net> <87478c51-59a7-f6ac-1fb2-f3ca2dcf658b@fb.com> <CA+55aFwfcXzD+pzjN=vTcvscpK97pSztUZ2JK7pABs+rMtM7BQ@mail.gmail.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Date: Fri, 9 Mar 2018 10:50:59 -0800
+Message-ID: <CA+55aFzJEkUGfRkKqc8twaDSdSH_r_OWnFm-e4uNQf4SrJy7-A@mail.gmail.com>
+References: <C94A45E9-54A0-446D-86D6-82D06E2A35CD@amacapital.net>
+ <87478c51-59a7-f6ac-1fb2-f3ca2dcf658b@fb.com> <CA+55aFwfcXzD+pzjN=vTcvscpK97pSztUZ2JK7pABs+rMtM7BQ@mail.gmail.com>
+ <20180309.133509.1275903267249306409.davem@davemloft.net> <CAGXu5jJcuSojm_KN5+JQ3fV6J09V6dmNB6haqu11xkXTq=nxog@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFwfcXzD+pzjN=vTcvscpK97pSztUZ2JK7pABs+rMtM7BQ@mail.gmail.com>
+In-Reply-To: <CAGXu5jJcuSojm_KN5+JQ3fV6J09V6dmNB6haqu11xkXTq=nxog@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Alexei Starovoitov <ast@fb.com>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Kees Cook <keescook@chromium.org>
+Cc: David Miller <davem@davemloft.net>, Alexei Starovoitov <ast@fb.com>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Daniel Borkmann <daniel@iogearbox.net>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Mar 9, 2018 at 10:43 AM, Kees Cook <keescook@chromium.org> wrote:
+>
+> Module loading (via kernel_read_file()) already uses
+> deny_write_access(), and so does do_open_execat(). As long as module
+> loading doesn't call allow_write_access() before the execve() has
+> started in the new implementation, I think we'd be covered here.
 
+No. kernel_read_file() only does it *during* the read.
 
-> On Mar 9, 2018, at 10:17 AM, Linus Torvalds <torvalds@linux-foundation.org=
-> wrote:
->=20
+So there's a huge big honking gap between the two.
 
->=20
-> Hmm. I wish we had an "execute blob" model, but we really don't, and
-> it would be hard/impossible to do without pinning the pages in memory.
->=20
+Also, the second part of my suggestion was to be entirely synchronous
+with the whole execution of the process, and do it within the "we do
+mutual exclusion fo rmodules with the same name" logic.
 
-Why so hard?  We can already execute a struct file for execveat, and Alexei a=
-lready has this working for umh. Surely we can make an immutable (as in even=
- root can=E2=80=99t write it) kernel-internal tmpfs file, execveat it, then u=
-nlink it. And /proc/PID/exe should be openable and readable.  The blob itsel=
-f would be __initdata so it gets discarded after it lands in tmpfs.=20=
+Note that Andrei's patch uses UMH_WAIT_EXEC. That's basically
+"vfork+exec" - it only waits for the exec to have started, it doesn't
+wait for the whole thing.
+
+So I'm saying "use UMH_WAIT_PROC, do it in a different place, and make
+sure you cover the whole sequence with deny_write_access()".
+
+              Linus
