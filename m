@@ -1,36 +1,46 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
-Date: Fri, 9 Mar 2018 11:12:17 -0800
-Message-ID: <CA+55aFyN8JDh76bm1VinBvrgMH5jNL6RbuFAkrH8vuYU1s9GDQ@mail.gmail.com>
-References: <CA+55aFwfcXzD+pzjN=vTcvscpK97pSztUZ2JK7pABs+rMtM7BQ@mail.gmail.com>
- <E459E6CC-F51B-4F2A-9D26-FFB7166E0A47@amacapital.net> <CA+55aFx7w1s7=5HzeczPkkksaU4oVsWQf+_c=aHS0O7i_9g+Kg@mail.gmail.com>
- <20180309.135724.452219538059491199.davem@davemloft.net>
+Date: Fri, 9 Mar 2018 19:37:57 +0000
+Message-ID: <CALCETrWYDfByh7=xiO9T7_fFGMwMvZxUu40bkMdO9HE3E6=1VQ@mail.gmail.com>
+References: <20180309181527.GA15803@kroah.com> <E622B120-3C3A-4A15-8E1B-6F7649038623@amacapital.net>
+ <74e26cc0-9e72-f03b-5396-f3480921f234@fb.com> <20180309.135550.385837861865623769.davem@davemloft.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180309.135724.452219538059491199.davem@davemloft.net>
+In-Reply-To: <20180309.135550.385837861865623769.davem@davemloft.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Miller <davem@davemloft.net>
-Cc: Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@fb.com>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Daniel Borkmann <daniel@iogearbox.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+Cc: Alexei Starovoitov <ast@fb.com>, Greg KH <gregkh@linuxfoundation.org>, Andrew Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Daniel Borkmann <daniel@iogearbox.net>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 9, 2018 at 10:57 AM, David Miller <davem@davemloft.net> wrote:
+On Fri, Mar 9, 2018 at 6:55 PM, David Miller <davem@davemloft.net> wrote:
+> From: Alexei Starovoitov <ast@fb.com>
+> Date: Fri, 9 Mar 2018 10:50:49 -0800
 >
-> Once the helper UMH is invoked, it runs asynchronously taking eBPF
-> translation requests.
+>> On 3/9/18 10:23 AM, Andy Lutomirski wrote:
+>>> It might not be totally crazy to back it by tmpfs.
+>>
+>> interesting. how do you propose to do it?
+>> Something like:
+>> - create /umh_module_tempxxx dir
+>> - mount tmpfs there
+>> - copy elf into it and exec it?
+>
+> I think the idea is that it's an internal tmpfs mount that only
+> the kernel has access too.
 
-How?
+That's what I was imagining.  There's precedent.  For example, there's
+a very short piece of code that does it in
+drivers/gpu/drm/i915/i915_gemfs.c.
 
-Really. See my comment about mutual exclusion. The current patch is
-*broken* because it doesn't handle it. Really.
 
-Think of it this way - you may have now started *five* of those things
-concurrently by mistake.
+>
+> And I don't think that even hurts your debuggability concerns.  The
+> user can just attach using the foo.ko file in the actual filesystem.
+>
 
-The actual module loading case never does that, because the actual
-module loading case has per-module serialization that got
-short-circuited.
-
-How are you going to handle five processes doing the same setup concurrently?
-
-                  Linus
+Not if the .ko is actually a shim that actually just contains a blob
+and a few lines of code to kick off the umh.  But one could still
+debug it using kernel debug symbols (like vDSO debugging works right
+now, at least if your distro is in a good mood) or by reading the
+contents from /proc/PID/exe.
