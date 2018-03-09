@@ -1,45 +1,107 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
-Date: Thu, 8 Mar 2018 17:44:11 -0800
-Message-ID: <CAGXu5j+B4wgT3ovynAxa1zwCeROfN5zK45tL1FUnFh0sg8M5AA@mail.gmail.com>
-References: <20180306013457.1955486-1-ast@kernel.org> <CAGXu5j+Q=S5sw9N5avyByxi2ekM6povT5Tajjhdb6D9g9ggKxQ@mail.gmail.com>
- <CALCETrX=Vfk1T-XegwnjtUqeEsyUFXH1744d0yGkufQvDA5xkQ@mail.gmail.com> <CA+55aFwJPDub+tdShCgeTz3UejeskVE7_x+eQLq75mCjYPyP8w@mail.gmail.com>
+From: "Luis R. Rodriguez" <mcgrof@kernel.org>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Fri, 9 Mar 2018 01:58:30 +0000
+Message-ID: <20180309015830.GO4449@wotan.suse.de>
+References: <20180306013457.1955486-1-ast@kernel.org>
+ <20180308012353.GO14069@wotan.suse.de>
+ <d83869b4-260e-179d-d469-83b8d8068399@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFwJPDub+tdShCgeTz3UejeskVE7_x+eQLq75mCjYPyP8w@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <d83869b4-260e-179d-d469-83b8d8068399@fb.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Alexei Starovoitov <ast@fb.com>
+Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, gregkh@linuxfoundation.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Jessica Yu <jeyu@kernel.org>, Kees Cook <keescook@chromium.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Jiri Kosina <jikos@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 8, 2018 at 5:38 PM, Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> On Thu, Mar 8, 2018 at 4:59 PM, Andy Lutomirski <luto@amacapital.net> wrote:
->>
->> Also, I don't see how this is any more exploitable than any other
->> init_module().
+On Thu, Mar 08, 2018 at 03:07:01PM -0800, Alexei Starovoitov wrote:
+> On 3/7/18 5:23 PM, Luis R. Rodriguez wrote:
+> > 
+> > request_module() has its own world though too. How often in your proof of
+> > concept is request_module() called? How many times do you envision it being
+> > called?
+> 
+> once.
+
+What about other users later in the kernel?
+
+> > > +static int run_umh(struct file *file)
+> > > +{
+> > > +	struct subprocess_info *sub_info = call_usermodehelper_setup_file(file);
+> > > +
+> > > +	if (!sub_info)
+> > > +		return -ENOMEM;
+> > > +	return call_usermodehelper_exec(sub_info, UMH_WAIT_EXEC);
+> > > +}
+> > 
+> > run_umh() calls the program and waits. Note that while we are running a UMH we
+> > can't suspend. What if they take forever, who is hosing them down with an
+> > equivalent:
+> > 
+> > 	schedule();
+> > 	try_to_freeze();
+> > 
+> > Say they are buggy and never return, will they stall suspend, have you tried?
+> > 
+> > call_usermodehelper_exec() uses helper_lock() which in turn is used for
+> > umh's accounting for number of running umh's. One of the sad obscure uses
+> > for this is to deal with suspend/resume. Refer to __usermodehelper* calls
+> > on kernel/power/process.c
+> > 
+> > Note how you use UMH_WAIT_EXEC too, so this is all synchronous.
+> 
+> looks like you misread this code
 >
-> Absolutely. If Kees doesn't trust the files to be loaded, an
-> executable - even if it's running with root privileges and in the
-> initns - is still fundamentally weaker than a kernel module.
->
-> So I don't understand the security argument AT ALL. It's nonsensical.
-> The executable loading does all the same security checks that the
-> module loading does, including the signing check.
->
-> And the whole point is that we can now do things with building and
-> loading a ebpf rule instead of having a full module.
+> #define UMH_NO_WAIT     0       /* don't wait at all */
+> #define UMH_WAIT_EXEC   1       /* wait for the exec, but not the process */
+> #define UMH_WAIT_PROC   2       /* wait for the process to complete */
+> #define UMH_KILLABLE    4       /* wait for EXEC/PROC killable */
 
-My concerns are mostly about crossing namespaces. If a container
-triggers an autoload, the result runs in the init_ns. So, really,
-there's nothing new from my perspective, except that it's in userspace
-instead of in the kernel.
+I certainly did get the incorrect impression this was a sync op, sorry
+about that. In that case its odd to see a request_module() call, when
+what is really meant is more of a request_module_nowait(), its also
+UMH_NO_WAIT on the modprobe call itself as well.
 
-Perhaps it's an orthogonal concern.
+In fact I think I'd much prefer at the very least to see a different wrapper
+for this, even if its using the same bolts and nuts underneath for userspace
+processes compiled on the kernel. The sanity checks in place for
+request_module() may change later and this use case seems rather simple and
+limited. Keeping tabs on this type of users seems desirable. At the *very
+least*
 
--Kees
+diff --git a/include/linux/kmod.h b/include/linux/kmod.h
+index 40c89ad4bea6..7530e00da03b 100644
+--- a/include/linux/kmod.h
++++ b/include/linux/kmod.h
+@@ -37,11 +37,13 @@ extern __printf(2, 3)
+ int __request_module(bool wait, const char *name, ...);
+ #define request_module(mod...) __request_module(true, mod)
+ #define request_module_nowait(mod...) __request_module(false, mod)
++#define request_umh_proc(mod...) __request_module(false, mod)
+ #define try_then_request_module(x, mod...) \
+ 	((x) ?: (__request_module(true, mod), (x)))
+ #else
+ static inline int request_module(const char *name, ...) { return -ENOSYS; }
+ static inline int request_module_nowait(const char *name, ...) { return -ENOSYS; }
++static inline int request_umh_proc(const char *name, ...) { return -ENOSYS; }
+ #define try_then_request_module(x, mod...) (x)
+ #endif
 
--- 
-Kees Cook
-Pixel Security
+Modulo, kernel/umh.c is already its own thing, so pick a name that helps
+identify these things clearly.
+
+> and the rest of your concerns with suspend/resume are not applicable any
+> more.
+
+Agreed, except it does still mean these userspace processes are limited to
+execution only the kernel is up, and not going to suspend, but I think that's
+a proper sanity check by the umh API.
+
+> bpftiler.ko is started once and runs non-stop from there on.
+> Unless it crashes, but it's a different discussion.
+
+Sure.
+
+  Luis
