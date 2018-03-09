@@ -1,37 +1,35 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf binaries
-Date: Fri, 9 Mar 2018 10:54:10 -0800
-Message-ID: <CAGXu5j+-M1zWUrA8uX1=f46t2RAym6N-T_Sf8T0P1wFCMhNCAQ@mail.gmail.com>
-References: <C94A45E9-54A0-446D-86D6-82D06E2A35CD@amacapital.net>
- <87478c51-59a7-f6ac-1fb2-f3ca2dcf658b@fb.com> <CA+55aFwfcXzD+pzjN=vTcvscpK97pSztUZ2JK7pABs+rMtM7BQ@mail.gmail.com>
- <20180309.133509.1275903267249306409.davem@davemloft.net> <CAGXu5jJcuSojm_KN5+JQ3fV6J09V6dmNB6haqu11xkXTq=nxog@mail.gmail.com>
- <CA+55aFzJEkUGfRkKqc8twaDSdSH_r_OWnFm-e4uNQf4SrJy7-A@mail.gmail.com>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Fri, 09 Mar 2018 13:55:50 -0500 (EST)
+Message-ID: <20180309.135550.385837861865623769.davem@davemloft.net>
+References: <20180309181527.GA15803@kroah.com>
+        <E622B120-3C3A-4A15-8E1B-6F7649038623@amacapital.net>
+        <74e26cc0-9e72-f03b-5396-f3480921f234@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFzJEkUGfRkKqc8twaDSdSH_r_OWnFm-e4uNQf4SrJy7-A@mail.gmail.com>
+In-Reply-To: <74e26cc0-9e72-f03b-5396-f3480921f234@fb.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: David Miller <davem@davemloft.net>, Alexei Starovoitov <ast@fb.com>, Andy Lutomirski <luto@amacapital.net>, Alexei Starovoitov <ast@kernel.org>, Djalal Harouni <tixxdz@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Daniel Borkmann <daniel@iogearbox.net>, Greg KH <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: ast@fb.com
+Cc: luto@amacapital.net, gregkh@linuxfoundation.org, luto@kernel.org, torvalds@linux-foundation.org, keescook@chromium.org, ast@kernel.org, tixxdz@gmail.com, viro@zeniv.linux.org.uk, daniel@iogearbox.net, mcgrof@kernel.org, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 9, 2018 at 10:50 AM, Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> On Fri, Mar 9, 2018 at 10:43 AM, Kees Cook <keescook@chromium.org> wrote:
->>
->> Module loading (via kernel_read_file()) already uses
->> deny_write_access(), and so does do_open_execat(). As long as module
->> loading doesn't call allow_write_access() before the execve() has
->> started in the new implementation, I think we'd be covered here.
->
-> No. kernel_read_file() only does it *during* the read.
+From: Alexei Starovoitov <ast@fb.com>
+Date: Fri, 9 Mar 2018 10:50:49 -0800
 
-Ah, true. And looking at this again, shouldn't deny_write_access()
-happen _before_ the LSM check in kernel_read_file()? That looks like a
-problem...
+> On 3/9/18 10:23 AM, Andy Lutomirski wrote:
+>> It might not be totally crazy to back it by tmpfs.
+> 
+> interesting. how do you propose to do it?
+> Something like:
+> - create /umh_module_tempxxx dir
+> - mount tmpfs there
+> - copy elf into it and exec it?
 
--Kees
+I think the idea is that it's an internal tmpfs mount that only
+the kernel has access too.
 
--- 
-Kees Cook
-Pixel Security
+And I don't think that even hurts your debuggability concerns.  The
+user can just attach using the foo.ko file in the actual filesystem.
