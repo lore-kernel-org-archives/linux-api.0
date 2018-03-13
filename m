@@ -1,295 +1,169 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v4 09/24] fpga: dfl-pci: add enumeration for feature devices
-Date: Tue, 13 Mar 2018 13:30:24 -0500
-Message-ID: <CANk1AXSfXBXj_NH4Qcj6EDXEzAD_+T1sVudJdMbbgKK7hk13Mg@mail.gmail.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com> <1518513893-4719-10-git-send-email-hao.wu@intel.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RESEND RFC] translate_pid API
+Date: Tue, 13 Mar 2018 13:47:43 -0700
+Message-ID: <CAG48ez1ww-pVQ9R+d+P+smRR3eaEkJ-=9GW-O-QOvH-YZoFG8A@mail.gmail.com>
+References: <1520875093-18174-1-git-send-email-nagarathnam.muthusamy@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1518513893-4719-10-git-send-email-hao.wu@intel.com>
+In-Reply-To: <1520875093-18174-1-git-send-email-nagarathnam.muthusamy@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Nagarajan.Muthukrishnan@oracle.com, Prakash Sangappa <prakash.sangappa@oracle.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Eugene Syromiatnikov <esyr@redhat.com>, xemul@parallels.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
-
-Hi Hao,
-
-Thanks again for splitting the pci part of the code from enumeration
-and everything else.
-
-One thing that may need to be fixed below, so with that fixed, adding my ack.
-
-> The Device Feature List (DFL) is implemented in MMIO, and features
-> are linked via the DFLs. This patch enables pcie driver to prepare
-> enumeration information (e.g locations of all device feature lists
-> in MMIO) and use common APIs provided by the Device Feature List
-> framework to enumerate each feature device linked.
+On Mon, Mar 12, 2018 at 10:18 AM,  <nagarathnam.muthusamy@oracle.com> wrote:
+> Resending the RFC with participants of previous discussions
+> in the list.
 >
-> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
-> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Alan Tull <atull@kernel.org>
+> Following patch which is a variation of a solution discussed
+> in https://lwn.net/Articles/736330/ provides the users of
+> pid namespace, the functionality of pid translation between
+> namespaces using a namespace identifier. The topic of
+> pid translation has been discussed in the community few times
+> but there has always been a resistance to adding new solution
+> for this problem.
 
-> ---
-> v3: split from another patch
->     use common functions from DFL framework for enumeration.
-> v4: rebase
-> ---
->  drivers/fpga/dfl-pci.c | 199 ++++++++++++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 197 insertions(+), 2 deletions(-)
+> I will outline the planned usecase of pid namespace by oracle
+> database and explain why any of the existing solution cannot
+> be used to solve their problem.
 >
-> diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
-> index d91ea42..8ce8a94 100644
-> --- a/drivers/fpga/dfl-pci.c
-> +++ b/drivers/fpga/dfl-pci.c
-> @@ -22,9 +22,52 @@
->  #include <linux/errno.h>
->  #include <linux/aer.h>
->
-> +#include "dfl.h"
-> +
->  #define DRV_VERSION    "0.8"
->  #define DRV_NAME       "dfl-pci"
->
-> +struct cci_drvdata {
-> +       struct fpga_cdev *cdev; /* container device */
-> +       struct list_head regions; /* list of pci bar mapping region */
-> +};
-> +
-> +/* pci bar mapping info */
-> +struct cci_region {
-> +       int bar;
-> +       void __iomem *ioaddr;   /* pointer to mapped bar region */
-> +       struct list_head node;
-> +};
-> +
-> +static void __iomem *cci_pci_ioremap_bar(struct pci_dev *pcidev, int bar)
-> +{
-> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-> +       struct cci_region *region;
-> +
-> +       list_for_each_entry(region, &drvdata->regions, node)
-> +               if (region->bar == bar) {
-> +                       dev_dbg(&pcidev->dev, "BAR %d region exists\n", bar);
-> +                       return region->ioaddr;
+> Consider a system in which several PID namespaces with multiple
+> nested levels exists in parallel with monitor processes managing
+> all the namespaces. PID translation is required for controlling
+> and accessing information about the processes by the monitors
+> and other processes down the hierarchy of namespaces. Controlling
+> primarily involves sending signals or using ptrace by a process in
+> parent namespace on any of the processes in its child namespace.
+> Accessing information deals with the reading /proc/<pid>/* files
+> of processes in child namespace. None of the processes have
+> root/CAP_SYS_ADMIN privileges.
+
+How are you dealing with PID reuse?
+
+[...]
+> diff --git a/fs/nsfs.c b/fs/nsfs.c
+> index 36b0772..c635465 100644
+> --- a/fs/nsfs.c
+> +++ b/fs/nsfs.c
+> @@ -222,8 +222,13 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
+>         const char *name;
+>         ns = ns_ops->get(task);
+>         if (ns) {
+> -               name = ns_ops->real_ns_name ? : ns_ops->name;
+> -               res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
+> +               if (!strcmp(ns_ops->name, "pidns_id")) {
+
+Wouldn't it be cleaner to check for "ns_ops==&pidns_id_operations"?
+
+> +                       res = snprintf(buf, size, "[%llu]",
+> +                                      (unsigned long long)ns->ns_id);
+> +               } else {
+> +                       name = ns_ops->real_ns_name ? : ns_ops->name;
+> +                       res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
 > +               }
-> +
-> +       region = devm_kzalloc(&pcidev->dev, sizeof(*region), GFP_KERNEL);
-> +       if (!region)
-> +               return NULL;
-> +
-> +       region->bar = bar;
-> +       region->ioaddr = pci_ioremap_bar(pcidev, bar);
-> +       if (!region->ioaddr) {
-> +               dev_err(&pcidev->dev, "can't ioremap memory from BAR %d.\n",
-> +                       bar);
-> +               devm_kfree(&pcidev->dev, region);
-> +               return NULL;
-> +       }
-> +
-> +       list_add(&region->node, &drvdata->regions);
-> +
-> +       return region->ioaddr;
-> +}
-> +
->  /* PCI Device ID */
->  #define PCIE_DEVICE_ID_PF_INT_5_X      0xBCBD
->  #define PCIE_DEVICE_ID_PF_INT_6_X      0xBCC0
-> @@ -45,6 +88,143 @@ static struct pci_device_id cci_pcie_id_tbl[] = {
->  };
->  MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
+>                 ns_ops->put(ns);
+>         }
+>         return res;
+[...]
+> diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
+> index 49538b1..11d1d57 100644
+> --- a/include/linux/pid_namespace.h
+> +++ b/include/linux/pid_namespace.h
+> @@ -11,6 +11,7 @@
+>  #include <linux/kref.h>
+>  #include <linux/ns_common.h>
+>  #include <linux/idr.h>
+> +#include <linux/list_bl.h>
 >
-> +static int cci_init_drvdata(struct pci_dev *pcidev)
-> +{
-> +       struct cci_drvdata *drvdata;
-> +
-> +       drvdata = devm_kzalloc(&pcidev->dev, sizeof(*drvdata), GFP_KERNEL);
-> +       if (!drvdata)
-> +               return -ENOMEM;
-> +
-> +       INIT_LIST_HEAD(&drvdata->regions);
-> +
-> +       pci_set_drvdata(pcidev, drvdata);
-> +
-> +       return 0;
-> +}
-> +
-> +static void cci_pci_release_regions(struct pci_dev *pcidev)
-> +{
-> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-> +       struct cci_region *tmp, *region;
-> +
-> +       list_for_each_entry_safe(region, tmp, &drvdata->regions, node) {
-> +               list_del(&region->node);
-> +               if (region->ioaddr)
-> +                       pci_iounmap(pcidev, region->ioaddr);
-> +               devm_kfree(&pcidev->dev, region);
-> +       }
-> +}
-> +
-> +static void cci_remove_drvdata(struct pci_dev *pcidev)
-> +{
-> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-> +
-> +       cci_pci_release_regions(pcidev);
-
-Would it make sense to call fpga_enum_info_free here?  I understand
-fpga_enum_info_alloc uses devm, but it does a get_device which needs
-to be put.
-
-> +       pci_set_drvdata(pcidev, NULL);
-> +       devm_kfree(&pcidev->dev, drvdata);
-> +}
-> +
-> +static void cci_remove_feature_devs(struct pci_dev *pcidev)
-> +{
-> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-> +
-> +       /* remove all children feature devices */
-> +       fpga_remove_feature_devs(drvdata->cdev);
-> +}
-> +
-> +/* enumerate feature devices under pci device */
-> +static int cci_enumerate_feature_devs(struct pci_dev *pcidev)
-> +{
-> +       struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-> +       struct fpga_cdev *cdev;
-> +       struct fpga_enum_info *info;
-> +       resource_size_t start, len;
-> +       void __iomem *base;
-> +       int port_num, bar, i, ret = 0;
-> +       u32 offset;
-> +       u64 v;
-> +
-> +       /* allocate enumeration info via pci_dev */
-> +       info = fpga_enum_info_alloc(&pcidev->dev);
-> +       if (!info)
-> +               return -ENOMEM;
-> +
-> +       /* start to find Device Feature List from Bar 0 */
-> +       base = cci_pci_ioremap_bar(pcidev, 0);
-> +       if (!base) {
-> +               ret = -ENOMEM;
-> +               goto enum_info_free_exit;
-> +       }
+>
+>  struct fs_pin;
+> @@ -44,6 +45,8 @@ struct pid_namespace {
+>         kgid_t pid_gid;
+>         int hide_pid;
+>         int reboot;     /* group exit code if this pidns was rebooted */
+> +       struct hlist_bl_node node;
+> +       atomic_t lookups_pending;
+>         struct ns_common ns;
+>  } __randomize_layout;
+>
+[...]
+> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+> index 0b53eef..ff83aa8 100644
+> --- a/kernel/pid_namespace.c
+> +++ b/kernel/pid_namespace.c
+[...]
+> @@ -159,6 +201,30 @@ static void delayed_free_pidns(struct rcu_head *p)
+>
+>  static void destroy_pid_namespace(struct pid_namespace *ns)
+>  {
+> +       struct pid_namespace *ph;
+> +       struct hlist_bl_head *head;
+> +       struct hlist_bl_node *dup_node;
 > +
 > +       /*
-> +        * PF device has FME and Ports/AFUs, and VF device only has 1 Port/AFU.
-> +        * check them and add related "Device Feature List" info for the next
-> +        * step enumeration.
-> +        */
-> +       if (feature_is_fme(base)) {
-> +               start = pci_resource_start(pcidev, 0);
-> +               len = pci_resource_len(pcidev, 0);
+> +        * Remove the namespace structure from hash table so
+> +        * now new lookups can start on it.
+
+s/now new/no new/
+
+[...]
+> @@ -474,9 +551,116 @@ static struct user_namespace *pidns_owner(struct ns_common *ns)
+>         .get_parent     = pidns_get_parent,
+>  };
+>
+> +/*
+> + * translate_pid - convert pid in source pid-ns into target pid-ns.
+> + * @pid: pid for translation
+> + * @source: pid-ns id
+> + * @target: pid-ns id
+> + *
+> + * Return pid in @target pid-ns, zero if task have no pid there,
+> + * or -ESRCH of task with @pid is not found in @source pid-ns.
+
+s/of/if/
+
+> + */
+> +SYSCALL_DEFINE3(translate_pid, pid_t, pid, u64, source,
+> +               u64, target)
+> +{
+> +       struct pid_namespace *source_ns = NULL, *target_ns = NULL;
+> +       struct pid *struct_pid;
+> +       struct pid_namespace *ph;
+> +       struct hlist_bl_head *shead = NULL;
+> +       struct hlist_bl_head *thead = NULL;
+> +       struct hlist_bl_node *dup_node;
+> +       pid_t result;
 > +
-> +               fpga_enum_info_add_dfl(info, start, len, base);
-> +
-> +               /*
-> +                * find more Device Feature Lists (e.g Ports) per information
-> +                * indicated by FME module.
-> +                */
-> +               v = readq(base + FME_HDR_CAP);
-> +               port_num = FIELD_GET(FME_CAP_NUM_PORTS, v);
-> +
-> +               WARN_ON(port_num > MAX_FPGA_PORT_NUM);
-> +
-> +               for (i = 0; i < port_num; i++) {
-> +                       v = readq(base + FME_HDR_PORT_OFST(i));
-> +
-> +                       /* skip ports which are not implemented. */
-> +                       if (!(v & FME_PORT_OFST_IMP))
-> +                               continue;
-> +
-> +                       /*
-> +                        * add Port's Device Feature List information for next
-> +                        * step enumeration.
-> +                        */
-> +                       bar = FIELD_GET(FME_PORT_OFST_BAR_ID, v);
-> +                       offset = FIELD_GET(FME_PORT_OFST_DFH_OFST, v);
-> +                       base = cci_pci_ioremap_bar(pcidev, bar);
-> +                       if (!base)
-> +                               continue;
-> +
-> +                       start = pci_resource_start(pcidev, bar) + offset;
-> +                       len = pci_resource_len(pcidev, bar) - offset;
-> +
-> +                       fpga_enum_info_add_dfl(info, start, len, base + offset);
-> +               }
-> +       } else if (feature_is_port(base)) {
-> +               start = pci_resource_start(pcidev, 0);
-> +               len = pci_resource_len(pcidev, 0);
-> +
-> +               fpga_enum_info_add_dfl(info, start, len, base);
+> +       if (!source) {
+> +               source_ns = &init_pid_ns;
 > +       } else {
-> +               ret = -ENODEV;
-> +               goto enum_info_free_exit;
+> +               shead = pid_ns_hash_head(pid_ns_hash, source);
+> +               hlist_bl_lock(shead);
+> +               hlist_bl_for_each_entry(ph, dup_node, shead, node) {
+> +                       if (source == ph->ns.ns_id) {
+> +                               source_ns = ph;
+> +                               break;
+> +                       }
+> +               }
+> +               if (!source_ns) {
+> +                       hlist_bl_unlock(shead);
+> +                       return -EINVAL;
+> +               }
 > +       }
-> +
-> +       /* start enumeration with prepared enumeration information */
-> +       cdev = fpga_enumerate_feature_devs(info);
-> +       if (IS_ERR(cdev)) {
-> +               dev_err(&pcidev->dev, "Enumeration failure\n");
-> +               ret = PTR_ERR(cdev);
-> +               goto enum_info_free_exit;
-> +       }
-> +
-> +       drvdata->cdev = cdev;
-> +
-> +enum_info_free_exit:
-> +       fpga_enum_info_free(info);
+> +       if (!ptrace_may_access(source_ns->child_reaper,
+> +                              PTRACE_MODE_READ_FSCREDS)) {
 
-This is the only place I saw fpga_enum_info_free being called.
+AFAICS this proposal breaks the visibility restrictions that
+namespaces normally create. If there are two namespaces-based
+containers that use the same UID range, I don't think they should be
+able to learn information about each other, such as which PIDs are in
+use in the other container; but as far as I can tell, your proposal
+makes it possible to do that (unless an LSM or so is interfering). I
+would prefer it if this API required visibility of the targeted PID
+namespaces in the caller's PID namespace.
 
-Thanks,
-Alan
-
-> +
-> +       return ret;
-> +}
-> +
->  static
->  int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
->  {
-> @@ -82,9 +262,22 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
->                 goto release_region_exit;
->         }
->
-> -       /* TODO: create and add the platform device per feature list */
-> -       return 0;
-> +       ret = cci_init_drvdata(pcidev);
-> +       if (ret) {
-> +               dev_err(&pcidev->dev, "Fail to init drvdata %d.\n", ret);
-> +               goto release_region_exit;
-> +       }
-> +
-> +       ret = cci_enumerate_feature_devs(pcidev);
-> +       if (ret) {
-> +               dev_err(&pcidev->dev, "enumeration failure %d.\n", ret);
-> +               goto remove_drvdata_exit;
-> +       }
-> +
-> +       return ret;
->
-> +remove_drvdata_exit:
-> +       cci_remove_drvdata(pcidev);
->  release_region_exit:
->         pci_release_regions(pcidev);
->  disable_error_report_exit:
-> @@ -95,6 +288,8 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
->
->  static void cci_pci_remove(struct pci_dev *pcidev)
->  {
-> +       cci_remove_feature_devs(pcidev);
-> +       cci_remove_drvdata(pcidev);
->         pci_release_regions(pcidev);
->         pci_disable_pcie_error_reporting(pcidev);
->         pci_disable_device(pcidev);
-> --
-> 2.7.4
->
+When doing ptrace access checks, please use the real creds in syscalls
+like this one, not the fs creds. The fs creds are for filesystem
+syscalls (in particular sys_open()), not for specialized syscalls like
+ptrace() or this one.
