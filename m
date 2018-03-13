@@ -1,82 +1,42 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: aio poll, io_pgetevents and a new in-kernel poll API V5
-Date: Tue, 13 Mar 2018 08:46:26 +0100
-Message-ID: <20180313074626.GA32614@lst.de>
-References: <20180305212743.16664-1-hch@lst.de>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Tue, 13 Mar 2018 09:48:35 +0100
+Message-ID: <20180313084835.GB8901@kroah.com>
+References: <E459E6CC-F51B-4F2A-9D26-FFB7166E0A47@amacapital.net>
+ <CA+55aFx7w1s7=5HzeczPkkksaU4oVsWQf+_c=aHS0O7i_9g+Kg@mail.gmail.com>
+ <20180309.135724.452219538059491199.davem@davemloft.net>
+ <CA+55aFyN8JDh76bm1VinBvrgMH5jNL6RbuFAkrH8vuYU1s9GDQ@mail.gmail.com>
+ <CA+55aFx-kDp87_uv9TW5pYD2+nr8c65=ervvwcxhTBJVg7c_pQ@mail.gmail.com>
+ <81b7599d-aab7-6cb6-7843-64510c8f6260@fb.com>
+ <20180310140843.GP4449@wotan.suse.de>
+ <20180310151652.GV4449@wotan.suse.de>
+ <20180310153431.GW4449@wotan.suse.de>
+ <1f3e2c92-1e09-cc77-3b90-e33d7da35a2f@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180305212743.16664-1-hch@lst.de>
+In-Reply-To: <1f3e2c92-1e09-cc77-3b90-e33d7da35a2f@fb.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Alexei Starovoitov <ast@fb.com>
+Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, Jessica Yu <jeyu@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Mimi Zohar <zohar@linux.vnet.ibm.com>, Djalal Harouni <tixxdz@gmail.com>, David Miller <davem@davemloft.net>, Andy Lutomirski <luto@amacapital.net>, Kees Cook <keescook@chromium.org>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-ping?
+On Mon, Mar 12, 2018 at 10:22:00AM -0700, Alexei Starovoitov wrote:
+> On 3/10/18 7:34 AM, Luis R. Rodriguez wrote:
+> > Also,
+> > 
+> > Alexei you never answered my questions out aliases with the umh modules.
+> > Long term this important to consider.
+> 
+> aliases always felt like a crutch to me.
+> I can see an argument when they're used as 'alias pci:* foo'
+> but the way it's used in networking with ip_set_* and nf-* is
+> something I prefer not to ever do again.
+> Definitely no aliases for bpfilter umh.
 
-On Mon, Mar 05, 2018 at 01:27:07PM -0800, Christoph Hellwig wrote:
-> Hi all,
-> 
-> this series adds support for the IOCB_CMD_POLL operation to poll for the
-> readyness of file descriptors using the aio subsystem.  The API is based
-> on patches that existed in RHAS2.1 and RHEL3, which means it already is
-> supported by libaio.  To implement the poll support efficiently new
-> methods to poll are introduced in struct file_operations:  get_poll_head
-> and poll_mask.  The first one returns a wait_queue_head to wait on
-> (lifetime is bound by the file), and the second does a non-blocking
-> check for the POLL* events.  This allows aio poll to work without
-> any additional context switches, unlike epoll.
-> 
-> To make the interface fully useful a new io_pgetevents system call is
-> added, which atomically saves and restores the signal mask over the
-> io_pgetevents system call.  It it the logical equivalent to pselect and
-> ppoll for io_pgetevents.
-> 
-> The corresponding libaio changes for io_pgetevents support and
-> documentation, as well as a test case will be posted in a separate
-> series.
-> 
-> The changes were sponsored by Scylladb, and improve performance
-> of the seastar framework up to 10%, while also removing the need
-> for a privileged SCHED_FIFO epoll listener thread.
-> 
->     git://git.infradead.org/users/hch/vfs.git aio-poll.5
-> 
-> Gitweb:
-> 
->     http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.5
-> 
-> Libaio changes:
-> 
->     https://pagure.io/libaio.git io-poll
-> 
-> Seastar changes (not updated for the new io_pgetevens ABI yet):
-> 
->     https://github.com/avikivity/seastar/commits/aio
-> 
-> Changes since V4:
->  - rebased ontop of Linux 4.16-rc4
-> 
-> Changes since V3:
->  - remove the pre-sleep ->poll_mask call in vfs_poll,
->    allow ->get_poll_head to return POLL* values.
-> 
-> Changes since V2:
->  - removed a double initialization
->  - new vfs_get_poll_head helper
->  - document that ->get_poll_head can return NULL
->  - call ->poll_mask before sleeping
->  - various ACKs
->  - add conversion of random to ->poll_mask
->  - add conversion of af_alg to ->poll_mask
->  - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
->  - reshuffled the series so that prep patches and everything not
->    requiring the new in-kernel poll API is in the beginning
-> 
-> Changes since V1:
->  - handle the NULL ->poll case in vfs_poll
->  - dropped the file argument to the ->poll_mask socket operation
->  - replace the ->pre_poll socket operation with ->get_poll_head as
->    in the file operations
----end quoted text---
+I agree, let's not do that if at all possible for these types of
+binaries.
+
+greg k-h
