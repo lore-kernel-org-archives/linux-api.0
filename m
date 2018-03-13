@@ -1,42 +1,74 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH] x86: always use SYSCALL_DEFINE*
-Date: Tue, 13 Mar 2018 23:18:08 +0000
-Message-ID: <CALCETrXh7BLrv4AsQm-Vpwmd=ttnGWQXV6dAxxi3GVevxnMO7w@mail.gmail.com>
-References: <14A5C8D0-3F9D-486F-A20C-55849D70FC80@amazon.com> <CAG48ez1RBhBbH8jHwseeZMQwdKciLdjYhoy3O9yDs8WEpMk2TQ@mail.gmail.com>
+From: Howard McLauchlan <hmclauchlan@fb.com>
+Subject: [PATCH] bpf: whitelist syscalls for error injection
+Date: Tue, 13 Mar 2018 16:16:27 -0700
+Message-ID: <20180313231627.1247-1-hmclauchlan@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez1RBhBbH8jHwseeZMQwdKciLdjYhoy3O9yDs8WEpMk2TQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>, Dominik Brodowski <linux@dominikbrodowski.net>
-Cc: "Tautschnig, Michael" <tautschn@amazon.co.uk>, "x86@kernel.org" <x86@kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Jaswinder Singh <jaswinder@infradead.org>, Andi Kleen <ak@linux.intel.com>
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Yonghong Song <yhs@fb.com>, "David S . Miller" <davem@davemloft.net>, Thomas Garnier <thgarnie@google.com>, kernel-team@fb.com, Howard McLauchlan <hmclauchlan@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 13, 2018 at 9:16 PM, Jann Horn <jannh@google.com> wrote:
-> On Sat, Mar 10, 2018 at 12:55 PM, Tautschnig, Michael
-> <tautschn@amazon.co.uk> wrote:
->> All syscall arguments are passed in as types of the same byte size as
->> unsigned long (width of full registers). Using a smaller type without a
->> cast may result in losing bits of information. SYSCALL_DEFINE* introduce
->> adequate type casts. All definitions of syscalls in x86 except for those
->> patched here have already been using the appropriate SYSCALL_DEFINE*.
-> [...]
->> diff --git a/arch/x86/kernel/ioport.c b/arch/x86/kernel/ioport.c
->> index 2f72330..d98b2a3 100644
->> --- a/arch/x86/kernel/ioport.c
->> +++ b/arch/x86/kernel/ioport.c
->> @@ -23,7 +23,8 @@
->>  /*
->>   * this changes the io permissions bitmap in the current task.
->>   */
->> -asmlinkage long sys_ioperm(unsigned long from, unsigned long num, int turn_on)
->> +SYSCALL_DEFINE3(sys_ioperm, unsigned long, from, unsigned long, num, int,
->> +               turn_on)
->
-> Shouldn't this be "SYSCALL_DEFINE3(ioperm, [...]", without the "sys_"?
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Error injection is a useful mechanism to fail arbitrary kernel
+functions. However, it is often hard to guarantee an error propagates
+appropriately to user space programs. By injecting into syscalls, we can
+return arbitrary values to user space directly; this increases
+flexibility and robustness in testing, allowing us to test user space
+error paths effectively.
 
-I think this patch will be obsoleted by a series of patches from Dominik.
+The following script, for example, fails calls to sys_open() from a
+given pid:
+
+from bcc import BPF
+from sys import argv
+
+pid = argv[1]
+
+prog = r"""
+
+int kprobe__SyS_open(struct pt_regs *ctx, const char *pathname, int flags)
+{
+    u32 pid = bpf_get_current_pid_tgid();
+    if (pid == %s)
+        bpf_override_return(ctx, -ENOENT);
+    return 0;
+}
+""" % pid
+
+b = BPF(text = prog)
+while 1:
+    b.perf_buffer_poll()
+
+This patch whitelists all syscalls defined with SYSCALL_DEFINE for error
+injection.
+
+Signed-off-by: Howard McLauchlan <hmclauchlan@fb.com>
+---
+based on 4.16-rc5
+ include/linux/syscalls.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index a78186d826d7..e8c6d63ace78 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -191,6 +191,8 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
+ 
+ #define SYSCALL_DEFINE0(sname)					\
+ 	SYSCALL_METADATA(_##sname, 0);				\
++	asmlinkage long sys_##sname(void);			\
++	ALLOW_ERROR_INJECTION(sys_##sname, ERRNO);		\
+ 	asmlinkage long sys_##sname(void)
+ 
+ #define SYSCALL_DEFINE1(name, ...) SYSCALL_DEFINEx(1, _##name, __VA_ARGS__)
+@@ -210,6 +212,7 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
+ #define __SYSCALL_DEFINEx(x, name, ...)					\
+ 	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
+ 		__attribute__((alias(__stringify(SyS##name))));		\
++	ALLOW_ERROR_INJECTION(sys##name, ERRNO);			\
+ 	static inline long SYSC##name(__MAP(x,__SC_DECL,__VA_ARGS__));	\
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+ 	asmlinkage long SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+-- 
+2.14.1
