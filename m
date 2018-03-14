@@ -1,534 +1,183 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [RESEND RFC] translate_pid API
-Date: Tue, 13 Mar 2018 22:29:53 -0500
-Message-ID: <87vadzqqq6.fsf@xmission.com>
-References: <1520875093-18174-1-git-send-email-nagarathnam.muthusamy@oracle.com>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: [PATCH v5 00/10] posix_clocks: Prepare syscalls for 64 bit time_t
+ conversion
+Date: Tue, 13 Mar 2018 21:03:23 -0700
+Message-ID: <20180314040333.3291-1-deepa.kernel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1520875093-18174-1-git-send-email-nagarathnam.muthusamy@oracle.com>
-        (nagarathnam muthusamy's message of "Mon, 12 Mar 2018 11:18:13 -0600")
-Sender: linux-kernel-owner@vger.kernel.org
-To: nagarathnam.muthusamy@oracle.com
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, khlebnikov@yandex-team.ru, Nagarajan.Muthukrishnan@oracle.com, prakash.sangappa@oracle.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, serge.hallyn@ubuntu.com, esyr@redhat.com, jannh@google.com, xemul@parallels.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <driverdev-devel-bounces@linuxdriverproject.org>
+List-Unsubscribe: <http://driverdev.linuxdriverproject.org/mailman/options/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=unsubscribe>
+List-Archive: <http://driverdev.linuxdriverproject.org/pipermail/driverdev-devel/>
+List-Post: <mailto:driverdev-devel@linuxdriverproject.org>
+List-Help: <mailto:driverdev-devel-request@linuxdriverproject.org?subject=help>
+List-Subscribe: <http://driverdev.linuxdriverproject.org/mailman/listinfo/driverdev-devel>,
+ <mailto:driverdev-devel-request@linuxdriverproject.org?subject=subscribe>
+Errors-To: driverdev-devel-bounces@linuxdriverproject.org
+Sender: "devel" <driverdev-devel-bounces@linuxdriverproject.org>
+To: arnd@arndb.de, tglx@linutronix.de, john.stultz@linaro.org
+Cc: mark.rutland@arm.com, linux-mips@linux-mips.org, peterz@infradead.org, benh@kernel.crashing.org, sth@linux.vnet.ibm.com, heiko.carstens@de.ibm.com, paulus@samba.org, hpa@zytor.com, sparclinux@vger.kernel.org, devel@driverdev.osuosl.org, linux-s390@vger.kernel.org, y2038@lists.linaro.org, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, sebott@linux.vnet.ibm.com, jejb@parisc-linux.org, will.deacon@arm.com, borntraeger@de.ibm.com, mingo@redhat.com, oprofile-list@lists.sf.net, catalin.marinas@arm.com, linux-arch@vger.kernel.org, rric@kernel.org, cmetcalf@mellanox.com, oberpar@linux.vnet.ibm.com, acme@kernel.org, jwi@linux.vnet.ibm.com, rostedt@goodmis.org, ubraun@linux.vnet.ibm.com, gerald.schaefer@de.ibm.com, linux-parisc@vger.kernel.org, gregkh@linuxfoundation.org, cohuck@redhat.com, linux-kernel@vger.kernel.org, ralf@linux-mips.org, hoeppner@linux.vnet.ibm.com, linux-ap
 List-Id: linux-api@vger.kernel.org
 
-nagarathnam.muthusamy@oracle.com writes:
+The series is a preparation series for individual architectures
+to use 64 bit time_t syscalls in compat and 32 bit emulation modes.
 
-> Resending the RFC with participants of previous discussions
-> in the list.
+This is a follow up to the series Arnd Bergmann posted:
+https://sourceware.org/ml/libc-alpha/2015-05/msg00070.html [1]
 
-Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Thomas, Arnd, this seems ready to be merged now.
+Can you help get this merged?
 
-Please read below to see why.
+Big picture is as per the lwn article:
+https://lwn.net/Articles/643234/ [2]
 
-> Following patch which is a variation of a solution discussed
-> in https://lwn.net/Articles/736330/ provides the users of
-> pid namespace, the functionality of pid translation between
-> namespaces using a namespace identifier. The topic of
-> pid translation has been discussed in the community few times
-> but there has always been a resistance to adding new solution
-> for this problem.
+The series is directed at converting posix clock syscalls:
+clock_gettime, clock_settime, clock_getres and clock_nanosleep
+to use a new data structure __kernel_timespec at syscall boundaries.
+__kernel_timespec maintains 64 bit time_t across all execution modes.
 
-So far there has been no clear cut case that is worth the maintenance
-challenge.  As I recall the conversations they have always resulted
-in a better way discovered.
+vdso will be handled as part of each architecture when they enable
+support for 64 bit time_t.
 
-> I will outline the planned usecase of pid namespace by oracle
-> database and explain why any of the existing solution cannot
-> be used to solve their problem.
->
-> Consider a system in which several PID namespaces with multiple
-> nested levels exists in parallel with monitor processes managing
-> all the namespaces. PID translation is required for controlling
-> and accessing information about the processes by the monitors
-> and other processes down the hierarchy of namespaces. Controlling
-> primarily involves sending signals or using ptrace by a process in
-> parent namespace on any of the processes in its child namespace.
-> Accessing information deals with the reading /proc/<pid>/* files
-> of processes in child namespace. None of the processes have
-> root/CAP_SYS_ADMIN privileges.
+The compat syscalls are repurposed to provide backward compatibility
+by using them as native syscalls as well for 32 bit architectures.
+They will continue to use timespec at syscall boundaries.
 
-So one process inside of a pid namespace one process outside of
-the pid namespace and they are talking about some other process
-inside the pid namespace.
+CONFIG_64_BIT_TIME controls whether the syscalls use __kernel_timespec
+or timespec at syscall boundaries.
 
-Agreed that is a usecase that likely needs pid translation.
+The series does the following:
+1. Enable compat syscalls on 32 bit architectures.
+2. Add a new __kernel_timespec type to be used as the data structure
+   for all the new syscalls.
+3. Add new config CONFIG_64BIT_TIME(intead of the CONFIG_COMPAT_TIME in
+   [1] and [2] to switch to new definition of __kernel_timespec. It is
+   the same as struct timespec otherwise.
+4. Add new CONFIG_32BIT_TIME to conditionally compile compat syscalls.
 
-> Existing methods:
->
-> *) SCM_CREDENTIALS message:
-> 	Ref: http://man7.org/linux/man-pages/man7/unix.7.html
-> 	The sender can translate its pid from its own namespace
-> to a pid in the target namespace by sending and receiving the
-> SCM_CREDENTIALS message. The drawback of this method is the
-> requirement of a socket communication channel to pid translation
-> which adds to the management overhead. This method does not enable
-> the sender to translate the pid of other process unless it is root
-> or it has CAP_SYS_ADMIN.
+* Changes since v4:
+ * Fixed up kbuild errors for arm64 and powerpc non compat configs
+* Changes since v3:
+ * Updated include file ordering
+* Changes since v2:
+ * Dropped the ARCH_HAS_64BIT_TIME config.
+ * Fixed zeroing out of higher order bits of tv_nsec for real.
+ * Addressed minor review comments from v1.
+* Changes since v1:
+ * Introduce CONFIG_32BIT_TIME
+ * Fixed zeroing out of higher order bits of tv_nsec
+ * Included Arnd's changes to fix up use of compat headers
 
-Or it has CAP_SYS_ADMIN (in the sending pid namespace).
-That is fair.
+I decided against using LEGACY_TIME_SYSCALLS to conditionally compile
+legacy time syscalls such as sys_nanosleep because this will need to
+enclose compat_sys_nanosleep as well. So, defining it as 
 
->
-> *) /proc/<pid>/status file
-> 	Ref: http://man7.org/linux/man-pages/man5/proc.5.html
-> 	Ref: https://patchwork.kernel.org/patch/5861791/
-> 	/proc/<pid>/status file provides a way to find the pids
-> associated with a process in different namespaces. Pid translation
-> from child namespace to parent namespace from parent namespace would
-> require searching all the status file in the parent namespace to find
-> the desired pid at desired level which is inefficient.
+config LEGACY_TIME_SYSCALLS
+     def_bool 64BIT || !64BIT_TIME
 
-That is fair.
->
-> Method under review:
->
-> *) pidns: introduce syscall translate_pid
-> 	Ref: https://lwn.net/Articles/736330/
-> 	This solution though not integrated yet, when used would require
-> monitor to have open file descriptor for every level of namespace it
-> has to monitor which results in explosion of number of file descriptors
-> the monitor has to keep open.
+will not include compat_sys_nanosleep. We will instead need a new config to
+exclusively mark legacy syscalls.
 
-You know what tough nuggies.
+Deepa Dinamani (10):
+  compat: Make compat helpers independent of CONFIG_COMPAT
+  include: Move compat_timespec/ timeval to compat_time.h
+  compat: enable compat_get/put_timespec64 always
+  arch: introduce CONFIG_64BIT_TIME
+  arch: Introduce CONFIG_COMPAT_32BIT_TIME
+  posix-clocks: Make compat syscalls depend on CONFIG_COMPAT_32BIT_TIME
+  include: Add new y2038 safe __kernel_timespec
+  fix get_timespec64() for y2038 safe compat interfaces
+  change time types to new y2038 safe __kernel_* types
+  nanosleep: change time types to safe __kernel_* types
 
-File descriptors aren't or at least shouldn't be that expensive.  And
-you are already committing to tracking the pid namespaces anyway.  An
-int for a file descriptor is cheaper than a u64 for the userspace
-process.
-
-The cost of that ``cheaper'' u64 that is not in any namespace is that
-you now have to go and implement a namespace of namespaces.  You haven't
-even attempted it.  So just no.    Anything that brings us to needing
-a namespace of namespaces is a bad design.
-
-> Following patch uses a 64-bit ID for namespace exported by procfs
-> for pid translation through a new file /proc/<pid>/ns/pidns_id.
-
-And this design detail is what brings the automatic nack.
-
-Use file descriptros and it sounds like your use case justifies what you
-are trying to do.
-
-> [root@brm-x4600-01 ~]# ls -l /proc/4690/ns
-> total 0
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 cgroup -> cgroup:[4026531835]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 ipc -> ipc:[4026531839]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 mnt -> mnt:[4026532324]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 net -> net:[4026531993]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 pid -> pid:[4026532325]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 pid_for_children -> pid:[4026532325]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 pidns_id -> [14994344851325148137]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 user -> user:[4026531837]
-> lrwxrwxrwx 1 root root 0 Mar  1 15:55 uts -> uts:[4026531838]
->
-> Though there is a problem of ID being recycled in longterm, managing
-> an ID per namespace is easier than having open file descriptors per
-> pid namespace. Existing namespace inode numbers recycles faster and hence
-> their usability as ID for this API is less.
-
-No.
-
-A namespace of namespaces is a much harder problem.  We aren't going
-there.
-
-It sounds like you may be struggling with lifetime issues and when
-to close/get rid of your pid namespace identifier.  That could deserve
-a conversation.  Idenitifiers that are not namespaced are absolutely not
-the solution.
-
-Eric
+ arch/Kconfig                           | 15 +++++++++
+ arch/arm64/include/asm/compat.h        | 11 -------
+ arch/arm64/include/asm/stat.h          |  1 +
+ arch/arm64/kernel/hw_breakpoint.c      |  1 -
+ arch/arm64/kernel/perf_regs.c          |  2 +-
+ arch/mips/include/asm/compat.h         | 11 -------
+ arch/mips/kernel/signal32.c            |  2 +-
+ arch/parisc/include/asm/compat.h       | 11 -------
+ arch/powerpc/include/asm/compat.h      | 11 -------
+ arch/powerpc/kernel/asm-offsets.c      |  2 +-
+ arch/powerpc/oprofile/backtrace.c      |  1 +
+ arch/s390/hypfs/hypfs_sprp.c           |  1 -
+ arch/s390/include/asm/compat.h         | 11 -------
+ arch/s390/include/asm/elf.h            |  4 +--
+ arch/s390/kvm/priv.c                   |  1 -
+ arch/s390/pci/pci_clp.c                |  1 -
+ arch/sparc/include/asm/compat.h        | 11 -------
+ arch/tile/include/asm/compat.h         | 11 -------
+ arch/x86/events/core.c                 |  2 +-
+ arch/x86/include/asm/compat.h          | 11 -------
+ arch/x86/include/asm/ftrace.h          |  2 +-
+ arch/x86/include/asm/sys_ia32.h        |  2 +-
+ arch/x86/kernel/sys_x86_64.c           |  2 +-
+ drivers/s390/block/dasd_ioctl.c        |  1 -
+ drivers/s390/char/fs3270.c             |  1 -
+ drivers/s390/char/sclp_ctl.c           |  1 -
+ drivers/s390/char/vmcp.c               |  1 -
+ drivers/s390/cio/chsc_sch.c            |  1 -
+ drivers/s390/net/qeth_core_main.c      |  2 +-
+ include/linux/compat.h                 | 11 ++++---
+ include/linux/compat_time.h            | 23 ++++++++++++++
+ include/linux/restart_block.h          |  7 ++--
+ include/linux/syscalls.h               | 12 +++----
+ include/linux/time.h                   |  4 +--
+ include/linux/time64.h                 | 10 +++++-
+ include/uapi/asm-generic/posix_types.h |  1 +
+ include/uapi/linux/time.h              |  7 ++++
+ kernel/compat.c                        | 52 +++++-------------------------
+ kernel/time/hrtimer.c                  | 10 ++++--
+ kernel/time/posix-stubs.c              | 12 ++++---
+ kernel/time/posix-timers.c             | 24 ++++++++++----
+ kernel/time/time.c                     | 58 +++++++++++++++++++++++++++++++---
+ 42 files changed, 177 insertions(+), 188 deletions(-)
+ create mode 100644 include/linux/compat_time.h
 
 
-> Signed-off-by: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-> ---
->  arch/x86/entry/syscalls/syscall_32.tbl |   1 +
->  arch/x86/entry/syscalls/syscall_64.tbl |   2 +
->  fs/nsfs.c                              |   9 +-
->  fs/proc/namespaces.c                   |   1 +
->  include/linux/ns_common.h              |   1 +
->  include/linux/pid_namespace.h          |   3 +
->  include/linux/proc_ns.h                |   1 +
->  include/linux/syscalls.h               |   1 +
->  kernel/pid_namespace.c                 | 190 ++++++++++++++++++++++++++++++++-
->  kernel/sys_ni.c                        |   4 +
->  10 files changed, 208 insertions(+), 5 deletions(-)
->
-> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-> index 448ac21..31bf798 100644
-> --- a/arch/x86/entry/syscalls/syscall_32.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-> @@ -391,3 +391,4 @@
->  382	i386	pkey_free		sys_pkey_free
->  383	i386	statx			sys_statx
->  384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
-> +385	i386	translate_pid		sys_translate_pid		compat_sys_translate_pid
-> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-> index 5aef183..89196c3 100644
-> --- a/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -339,6 +339,7 @@
->  330	common	pkey_alloc		sys_pkey_alloc
->  331	common	pkey_free		sys_pkey_free
->  332	common	statx			sys_statx
-> +333	64	translate_pid		sys_translate_pid
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> @@ -380,3 +381,4 @@
->  545	x32	execveat		compat_sys_execveat/ptregs
->  546	x32	preadv2			compat_sys_preadv64v2
->  547	x32	pwritev2		compat_sys_pwritev64v2
-> +548	x32	translate_pid		compat_sys_translate_pid
-> diff --git a/fs/nsfs.c b/fs/nsfs.c
-> index 36b0772..c635465 100644
-> --- a/fs/nsfs.c
-> +++ b/fs/nsfs.c
-> @@ -222,8 +222,13 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
->  	const char *name;
->  	ns = ns_ops->get(task);
->  	if (ns) {
-> -		name = ns_ops->real_ns_name ? : ns_ops->name;
-> -		res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
-> +		if (!strcmp(ns_ops->name, "pidns_id")) {
-> +			res = snprintf(buf, size, "[%llu]",
-> +				       (unsigned long long)ns->ns_id);
-> +		} else {
-> +			name = ns_ops->real_ns_name ? : ns_ops->name;
-> +			res = snprintf(buf, size, "%s:[%u]", name, ns->inum);
-> +		}
->  		ns_ops->put(ns);
->  	}
->  	return res;
-> diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
-> index 59b17e5..ac823ce 100644
-> --- a/fs/proc/namespaces.c
-> +++ b/fs/proc/namespaces.c
-> @@ -24,6 +24,7 @@
->  #endif
->  #ifdef CONFIG_PID_NS
->  	&pidns_operations,
-> +	&pidns_id_operations,
->  	&pidns_for_children_operations,
->  #endif
->  #ifdef CONFIG_USER_NS
-> diff --git a/include/linux/ns_common.h b/include/linux/ns_common.h
-> index 5fbc400..6ca3d43 100644
-> --- a/include/linux/ns_common.h
-> +++ b/include/linux/ns_common.h
-> @@ -8,6 +8,7 @@ struct ns_common {
->  	atomic_long_t stashed;
->  	const struct proc_ns_operations *ops;
->  	unsigned int inum;
-> +	u64 ns_id;
->  };
->  
->  #endif
-> diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-> index 49538b1..11d1d57 100644
-> --- a/include/linux/pid_namespace.h
-> +++ b/include/linux/pid_namespace.h
-> @@ -11,6 +11,7 @@
->  #include <linux/kref.h>
->  #include <linux/ns_common.h>
->  #include <linux/idr.h>
-> +#include <linux/list_bl.h>
->  
->  
->  struct fs_pin;
-> @@ -44,6 +45,8 @@ struct pid_namespace {
->  	kgid_t pid_gid;
->  	int hide_pid;
->  	int reboot;	/* group exit code if this pidns was rebooted */
-> +	struct hlist_bl_node node;
-> +	atomic_t lookups_pending;
->  	struct ns_common ns;
->  } __randomize_layout;
->  
-> diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
-> index d31cb62..861e38bd 100644
-> --- a/include/linux/proc_ns.h
-> +++ b/include/linux/proc_ns.h
-> @@ -28,6 +28,7 @@ struct proc_ns_operations {
->  extern const struct proc_ns_operations utsns_operations;
->  extern const struct proc_ns_operations ipcns_operations;
->  extern const struct proc_ns_operations pidns_operations;
-> +extern const struct proc_ns_operations pidns_id_operations;
->  extern const struct proc_ns_operations pidns_for_children_operations;
->  extern const struct proc_ns_operations userns_operations;
->  extern const struct proc_ns_operations mntns_operations;
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index a78186d..574349a 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -901,6 +901,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
->  				      struct file_handle __user *handle,
->  				      int flags);
->  asmlinkage long sys_setns(int fd, int nstype);
-> +asmlinkage long sys_translate_pid(pid_t pid, u64 source, u64 target);
->  asmlinkage long sys_process_vm_readv(pid_t pid,
->  				     const struct iovec __user *lvec,
->  				     unsigned long liovcnt,
-> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-> index 0b53eef..ff83aa8 100644
-> --- a/kernel/pid_namespace.c
-> +++ b/kernel/pid_namespace.c
-> @@ -22,6 +22,12 @@
->  #include <linux/sched/task.h>
->  #include <linux/sched/signal.h>
->  #include <linux/idr.h>
-> +#include <linux/random.h>
-> +#include <linux/compat.h>
-> +
-> +#define	PID_NS_ID_HASH_BITS     9
-> +
-> +struct	hlist_bl_head *pid_ns_hash;
->  
->  struct pid_cache {
->  	int nr_ids;
-> @@ -34,6 +40,13 @@ struct pid_cache {
->  static DEFINE_MUTEX(pid_caches_mutex);
->  static struct kmem_cache *pid_ns_cachep;
->  
-> +static inline struct hlist_bl_head *
-> +	pid_ns_hash_head(struct hlist_bl_head *hash,
-> +			 uint64_t key)
-> +{
-> +	return &hash[hash_64(key, PID_NS_ID_HASH_BITS)];
-> +}
-> +
->  /*
->   * creates the kmem cache to allocate pids from.
->   * @nr_ids: the number of numerical ids this pid will have to carry
-> @@ -93,12 +106,24 @@ static void dec_pid_namespaces(struct ucounts *ucounts)
->  	dec_ucount(ucounts, UCOUNT_PID_NAMESPACES);
->  }
->  
-> +static inline u64 get_namespace_id(void)
-> +{
-> +	u64 id = 0;
-> +
-> +	while (!id)
-> +		get_random_bytes(&id, sizeof(id));
-> +
-> +	return id;
-> +}
-> +
->  static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns,
->  	struct pid_namespace *parent_pid_ns)
->  {
-> -	struct pid_namespace *ns;
-> -	unsigned int level = parent_pid_ns->level + 1;
-> +	struct pid_namespace *ns, *pt;
->  	struct ucounts *ucounts;
-> +	struct hlist_bl_head *head;
-> +	struct hlist_bl_node *dup_node;
-> +	unsigned int level = parent_pid_ns->level + 1;
->  	int err;
->  
->  	err = -EINVAL;
-> @@ -135,7 +160,24 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
->  	ns->ucounts = ucounts;
->  	ns->pid_allocated = PIDNS_ADDING;
->  	INIT_WORK(&ns->proc_work, proc_cleanup_work);
-> -
-> +	ns->ns.ns_id = get_namespace_id();
-> +	while (1) {
-> +		head = pid_ns_hash_head(pid_ns_hash, ns->ns.ns_id);
-> +		hlist_bl_lock(head);
-> +		hlist_bl_for_each_entry(pt, dup_node, head, node) {
-> +			if (ns->ns.ns_id == pt->ns.ns_id) {
-> +				/*
-> +				 * ID is taken. Move to next ID;
-> +				 */
-> +				ns->ns.ns_id = get_namespace_id();
-> +				hlist_bl_unlock(head);
-> +				continue;
-> +			}
-> +		}
-> +		break;
-> +	}
-> +	hlist_bl_add_head(&ns->node, head);
-> +	hlist_bl_unlock(head);
->  	return ns;
->  
->  out_free_idr:
-> @@ -159,6 +201,30 @@ static void delayed_free_pidns(struct rcu_head *p)
->  
->  static void destroy_pid_namespace(struct pid_namespace *ns)
->  {
-> +	struct pid_namespace *ph;
-> +	struct hlist_bl_head *head;
-> +	struct hlist_bl_node *dup_node;
-> +
-> +	/*
-> +	 * Remove the namespace structure from hash table so
-> +	 * now new lookups can start on it.
-> +	 */
-> +	if (ns->ns.ns_id) {
-> +		head = pid_ns_hash_head(pid_ns_hash, ns->ns.ns_id);
-> +		hlist_bl_lock(head);
-> +		hlist_bl_for_each_entry(ph, dup_node, head, node) {
-> +			if (ns->ns.ns_id == ph->ns.ns_id) {
-> +				hlist_bl_del_init(&ph->node);
-> +				break;
-> +			}
-> +		}
-> +		hlist_bl_unlock(head);
-> +	}
-> +	/*
-> +	 * Wait for pending lookups to complete.
-> +	 */
-> +	while (atomic_read(&ns->lookups_pending))
-> +		cpu_relax();
->  	ns_free_inum(&ns->ns);
->  
->  	idr_destroy(&ns->idr);
-> @@ -463,6 +529,17 @@ static struct user_namespace *pidns_owner(struct ns_common *ns)
->  	.get_parent	= pidns_get_parent,
->  };
->  
-> +const struct proc_ns_operations pidns_id_operations = {
-> +	.name		= "pidns_id",
-> +	.real_ns_name	= "pid",
-> +	.type		= CLONE_NEWPID,
-> +	.get		= pidns_get,
-> +	.put		= pidns_put,
-> +	.install	= pidns_install,
-> +	.owner		= pidns_owner,
-> +	.get_parent	= pidns_get_parent,
-> +};
-> +
->  const struct proc_ns_operations pidns_for_children_operations = {
->  	.name		= "pid_for_children",
->  	.real_ns_name	= "pid",
-> @@ -474,9 +551,116 @@ static struct user_namespace *pidns_owner(struct ns_common *ns)
->  	.get_parent	= pidns_get_parent,
->  };
->  
-> +/*
-> + * translate_pid - convert pid in source pid-ns into target pid-ns.
-> + * @pid: pid for translation
-> + * @source: pid-ns id
-> + * @target: pid-ns id
-> + *
-> + * Return pid in @target pid-ns, zero if task have no pid there,
-> + * or -ESRCH of task with @pid is not found in @source pid-ns.
-> + */
-> +SYSCALL_DEFINE3(translate_pid, pid_t, pid, u64, source,
-> +		u64, target)
-> +{
-> +	struct pid_namespace *source_ns = NULL, *target_ns = NULL;
-> +	struct pid *struct_pid;
-> +	struct pid_namespace *ph;
-> +	struct hlist_bl_head *shead = NULL;
-> +	struct hlist_bl_head *thead = NULL;
-> +	struct hlist_bl_node *dup_node;
-> +	pid_t result;
-> +
-> +	if (!source) {
-> +		source_ns = &init_pid_ns;
-> +	} else {
-> +		shead = pid_ns_hash_head(pid_ns_hash, source);
-> +		hlist_bl_lock(shead);
-> +		hlist_bl_for_each_entry(ph, dup_node, shead, node) {
-> +			if (source == ph->ns.ns_id) {
-> +				source_ns = ph;
-> +				break;
-> +			}
-> +		}
-> +		if (!source_ns) {
-> +			hlist_bl_unlock(shead);
-> +			return -EINVAL;
-> +		}
-> +	}
-> +	if (!ptrace_may_access(source_ns->child_reaper,
-> +			       PTRACE_MODE_READ_FSCREDS)) {
-> +		if (shead)
-> +			hlist_bl_unlock(shead);
-> +		return -EPERM;
-> +	}
-> +
-> +	atomic_inc(&source_ns->lookups_pending);
-> +	if (shead)
-> +		hlist_bl_unlock(shead);
-> +
-> +	if (!target) {
-> +		target_ns = &init_pid_ns;
-> +	} else {
-> +		thead = pid_ns_hash_head(pid_ns_hash, target);
-> +		hlist_bl_lock(thead);
-> +		hlist_bl_for_each_entry(ph, dup_node, thead, node) {
-> +			if (target == ph->ns.ns_id) {
-> +				target_ns = ph;
-> +				break;
-> +			}
-> +		}
-> +		if (!target_ns) {
-> +			atomic_dec(&source_ns->lookups_pending);
-> +			hlist_bl_unlock(thead);
-> +			return -EINVAL;
-> +		}
-> +	}
-> +	if (!ptrace_may_access(target_ns->child_reaper,
-> +			       PTRACE_MODE_READ_FSCREDS)) {
-> +		atomic_dec(&source_ns->lookups_pending);
-> +		if (thead)
-> +			hlist_bl_unlock(thead);
-> +		return -EPERM;
-> +	}
-> +	atomic_inc(&target_ns->lookups_pending);
-> +	if (thead)
-> +		hlist_bl_unlock(thead);
-> +
-> +	rcu_read_lock();
-> +	struct_pid = find_pid_ns(pid, source_ns);
-> +	result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
-> +	rcu_read_unlock();
-> +	atomic_dec(&source_ns->lookups_pending);
-> +	atomic_dec(&target_ns->lookups_pending);
-> +	return result;
-> +}
-> +
-> +#ifdef	CONFIG_COMPAT
-> +COMPAT_SYSCALL_DEFINE5(translate_pid, pid_t, pid, u32, s0, u32, s1,
-> +		       u32, t0, u32, t1)
-> +{
-> +#ifdef __BIG_ENDIAN
-> +	return sys_translate_pid(pid, ((u64)s0 << 32) | s1,
-> +				 ((u64)t0 << 32) | t1);
-> +#else
-> +	return sys_translate_pid(pid, ((u64)s1 << 32) | s0,
-> +				 ((u64)t1 << 32) | t0);
-> +#endif
-> +}
-> +#endif
-> +
->  static __init int pid_namespaces_init(void)
->  {
-> +	unsigned long bucket_count;
-> +	int i;
-> +
-> +	bucket_count = (1UL << PID_NS_ID_HASH_BITS);
->  	pid_ns_cachep = KMEM_CACHE(pid_namespace, SLAB_PANIC);
-> +	pid_ns_hash = kmalloc_array(bucket_count, sizeof(struct hlist_bl_head),
-> +				    GFP_KERNEL);
-> +
-> +	for (i = 0; i < bucket_count; i++)
-> +		INIT_HLIST_BL_HEAD(&pid_ns_hash[i]);
->  
->  #ifdef CONFIG_CHECKPOINT_RESTORE
->  	register_sysctl_paths(kern_path, pid_ns_ctl_table);
-> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-> index b518976..467255f 100644
-> --- a/kernel/sys_ni.c
-> +++ b/kernel/sys_ni.c
-> @@ -259,3 +259,7 @@ asmlinkage long sys_ni_syscall(void)
->  cond_syscall(sys_pkey_mprotect);
->  cond_syscall(sys_pkey_alloc);
->  cond_syscall(sys_pkey_free);
-> +
-> +/* pid translation */
-> +cond_syscall(sys_translate_pid);
-> +cond_syscall(compat_sys_translate_pid);
+base-commit: 61530b14b059d4838dcc2186e9de9d57e195ce55
+-- 
+2.14.1
+
+Cc: acme@kernel.org
+Cc: benh@kernel.crashing.org
+Cc: borntraeger@de.ibm.com
+Cc: catalin.marinas@arm.com
+Cc: cmetcalf@mellanox.com
+Cc: cohuck@redhat.com
+Cc: davem@davemloft.net
+Cc: deller@gmx.de
+Cc: devel@driverdev.osuosl.org
+Cc: gerald.schaefer@de.ibm.com
+Cc: gregkh@linuxfoundation.org
+Cc: heiko.carstens@de.ibm.com
+Cc: hoeppner@linux.vnet.ibm.com
+Cc: hpa@zytor.com
+Cc: jejb@parisc-linux.org
+Cc: jwi@linux.vnet.ibm.com
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-mips@linux-mips.org
+Cc: linux-parisc@vger.kernel.org
+Cc: linuxppc-dev@lists.ozlabs.org
+Cc: linux-s390@vger.kernel.org
+Cc: mark.rutland@arm.com
+Cc: mingo@redhat.com
+Cc: mpe@ellerman.id.au
+Cc: oberpar@linux.vnet.ibm.com
+Cc: oprofile-list@lists.sf.net
+Cc: paulus@samba.org
+Cc: peterz@infradead.org
+Cc: ralf@linux-mips.org
+Cc: rostedt@goodmis.org
+Cc: rric@kernel.org
+Cc: schwidefsky@de.ibm.com
+Cc: sebott@linux.vnet.ibm.com
+Cc: sparclinux@vger.kernel.org
+Cc: sth@linux.vnet.ibm.com
+Cc: ubraun@linux.vnet.ibm.com
+Cc: will.deacon@arm.com
+Cc: x86@kernel.org
