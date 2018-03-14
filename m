@@ -1,56 +1,67 @@
-From: Dominik Brodowski <linux@dominikbrodowski.net>
-Subject: Re: [PATCH] x86: always use SYSCALL_DEFINE*
-Date: Wed, 14 Mar 2018 06:48:02 +0100
-Message-ID: <20180314054802.GC8354@light.dominikbrodowski.net>
-References: <14A5C8D0-3F9D-486F-A20C-55849D70FC80@amazon.com>
- <CAG48ez1RBhBbH8jHwseeZMQwdKciLdjYhoy3O9yDs8WEpMk2TQ@mail.gmail.com>
- <CALCETrXh7BLrv4AsQm-Vpwmd=ttnGWQXV6dAxxi3GVevxnMO7w@mail.gmail.com>
+From: "Tautschnig, Michael" <tautschn@amazon.co.uk>
+Subject: [PATCH] x86/sigreturn: use SYSCALL_DEFINE0
+Date: Wed, 14 Mar 2018 09:41:42 +0000
+Message-ID: <9C9981F4-0E5E-42A7-8788-70F3DEAD258D@amazon.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrXh7BLrv4AsQm-Vpwmd=ttnGWQXV6dAxxi3GVevxnMO7w@mail.gmail.com>
+Content-Language: en-US
+Content-ID: <BBB771763136B645B98AA59E70099F0B@amazon.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>, "Tautschnig, Michael" <tautschn@amazon.co.uk>
-Cc: Jann Horn <jannh@google.com>, "x86@kernel.org" <x86@kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Jaswinder Singh <jaswinder@infradead.org>, Andi Kleen <ak@linux.intel.com>
+To: "x86@kernel.org" <x86@kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Jaswinder Singh <jaswinder@infradead.org>, Andi Kleen <ak@linux.intel.com>, Dominik Brodowski <linux@dominikbrodowski.net>
 List-Id: linux-api@vger.kernel.org
 
-Michael,
+All definitions of syscalls in x86 except for those patched here have
+already been using the appropriate SYSCALL_DEFINE*.
 
-On Tue, Mar 13, 2018 at 11:18:08PM +0000, Andy Lutomirski wrote:
-> On Tue, Mar 13, 2018 at 9:16 PM, Jann Horn <jannh@google.com> wrote:
-> > On Sat, Mar 10, 2018 at 12:55 PM, Tautschnig, Michael
-> > <tautschn@amazon.co.uk> wrote:
-> >> All syscall arguments are passed in as types of the same byte size as
-> >> unsigned long (width of full registers). Using a smaller type without a
-> >> cast may result in losing bits of information. SYSCALL_DEFINE* introduce
-> >> adequate type casts. All definitions of syscalls in x86 except for those
-> >> patched here have already been using the appropriate SYSCALL_DEFINE*.
-> > [...]
-> >> diff --git a/arch/x86/kernel/ioport.c b/arch/x86/kernel/ioport.c
-> >> index 2f72330..d98b2a3 100644
-> >> --- a/arch/x86/kernel/ioport.c
-> >> +++ b/arch/x86/kernel/ioport.c
-> >> @@ -23,7 +23,8 @@
-> >>  /*
-> >>   * this changes the io permissions bitmap in the current task.
-> >>   */
-> >> -asmlinkage long sys_ioperm(unsigned long from, unsigned long num, int turn_on)
-> >> +SYSCALL_DEFINE3(sys_ioperm, unsigned long, from, unsigned long, num, int,
-> >> +               turn_on)
-> >
-> > Shouldn't this be "SYSCALL_DEFINE3(ioperm, [...]", without the "sys_"?
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-api" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
-> I think this patch will be obsoleted by a series of patches from Dominik.
+Signed-off-by: Michael Tautschnig <tautschn@amazon.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: H. Peter Anvin <hpa@zytor.com>
+Cc: Jaswinder Singh <jaswinder@infradead.org>
+Cc: Andi Kleen <ak@linux.intel.com>
+Cc: Dominik Brodowski <linux@dominikbrodowski.net>
+---
+ arch/x86/kernel/signal.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-... the ioperm change is already in mainline (did an equivalent change a
-couple of days ago), but the sigreturn/rt_sigreturn changes still seem
-useful. Could you send a fresh patch with just these two changes; and -- if
-the x86 maintainers agree -- I will push it with my syscall-related changes?
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index b9e00e8..40ba242 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -25,6 +25,7 @@
+ #include <linux/user-return-notifier.h>
+ #include <linux/uprobes.h>
+ #include <linux/context_tracking.h>
++#include <linux/syscalls.h>
 
-Thanks,
-	Dominik
+ #include <asm/processor.h>
+ #include <asm/ucontext.h>
+@@ -601,7 +602,7 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
+  * Do a signal return; undo the signal stack.
+  */
+ #ifdef CONFIG_X86_32
+-asmlinkage unsigned long sys_sigreturn(void)
++SYSCALL_DEFINE0(sigreturn)
+ {
+ 	struct pt_regs *regs =3D current_pt_regs();
+ 	struct sigframe __user *frame;
+@@ -633,7 +634,7 @@ asmlinkage unsigned long sys_sigreturn(void)
+ }
+ #endif /* CONFIG_X86_32 */
+
+-asmlinkage long sys_rt_sigreturn(void)
++SYSCALL_DEFINE0(rt_sigreturn)
+ {
+ 	struct pt_regs *regs =3D current_pt_regs();
+ 	struct rt_sigframe __user *frame;
+--
+2.7.3.AMZN
+
+
+
+Amazon Web Services UK Limited. Registered in England and Wales with regist=
+ration number 08650665 with its registered office at 1 Principal Place, Wor=
+ship Street, London, EC2A 2FA, United Kingdom.
