@@ -1,7 +1,7 @@
 From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v5 10/10] nanosleep: change time types to safe __kernel_* types
-Date: Tue, 13 Mar 2018 21:03:33 -0700
-Message-ID: <20180314040333.3291-11-deepa.kernel@gmail.com>
+Subject: [PATCH v5 09/10] change time types to new y2038 safe __kernel_* types
+Date: Tue, 13 Mar 2018 21:03:32 -0700
+Message-ID: <20180314040333.3291-10-deepa.kernel@gmail.com>
 References: <20180314040333.3291-1-deepa.kernel@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180314040333.3291-1-deepa.kernel@gmail.com>
@@ -10,141 +10,101 @@ To: arnd@arndb.de, tglx@linutronix.de, john.stultz@linaro.org
 Cc: linux-kernel@vger.kernel.org, y2038@lists.linaro.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Change over clock_nanosleep syscalls to use y2038 safe
-__kernel_timespec times. This will enable changing over
-of these syscalls to use new y2038 safe syscalls when
-the architectures define the CONFIG_64BIT_TIME.
-
-Note that nanosleep syscall is deprecated and does not have a
-plan for making it y2038 safe. But, the syscall should work as
-before on 64 bit machines and on 32 bit machines, the syscall
-works correctly until y2038 as before using the existing compat
-syscall version. There is no new syscall for supporting 64 bit
-time_t on 32 bit architectures.
+Change over clock_settime, clock_gettime and clock_getres
+syscalls to use __kernel_timespec times. This will enable
+changing over of these syscalls to use new y2038 safe syscalls
+when the architectures define the CONFIG_64BIT_TIME.
 
 Cc: linux-api@vger.kernel.org
 Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
 ---
- include/linux/restart_block.h | 7 ++-----
- include/linux/syscalls.h      | 6 +++---
- kernel/time/hrtimer.c         | 8 ++++++--
- kernel/time/posix-stubs.c     | 4 ++--
- kernel/time/posix-timers.c    | 4 ++--
- 5 files changed, 15 insertions(+), 14 deletions(-)
+ include/linux/syscalls.h   | 6 +++---
+ kernel/time/posix-stubs.c  | 6 +++---
+ kernel/time/posix-timers.c | 6 +++---
+ 3 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/include/linux/restart_block.h b/include/linux/restart_block.h
-index bcfdb918cd81..5d83d0c1d06c 100644
---- a/include/linux/restart_block.h
-+++ b/include/linux/restart_block.h
-@@ -7,6 +7,7 @@
- 
- #include <linux/compiler.h>
- #include <linux/types.h>
-+#include <linux/time64.h>
- 
- struct timespec;
- struct compat_timespec;
-@@ -15,9 +16,7 @@ struct pollfd;
- enum timespec_type {
- 	TT_NONE		= 0,
- 	TT_NATIVE	= 1,
--#ifdef CONFIG_COMPAT
- 	TT_COMPAT	= 2,
--#endif
- };
- 
- /*
-@@ -40,10 +39,8 @@ struct restart_block {
- 			clockid_t clockid;
- 			enum timespec_type type;
- 			union {
--				struct timespec __user *rmtp;
--#ifdef CONFIG_COMPAT
-+				struct __kernel_timespec __user *rmtp;
- 				struct compat_timespec __user *compat_rmtp;
--#endif
- 			};
- 			u64 expires;
- 		} nanosleep;
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 7ac1bb9ea7da..4df16a70b0d7 100644
+index a78186d826d7..7ac1bb9ea7da 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -254,7 +254,7 @@ asmlinkage long sys_adjtimex(struct timex __user *txc_p);
- asmlinkage long sys_times(struct tms __user *tbuf);
- 
- asmlinkage long sys_gettid(void);
--asmlinkage long sys_nanosleep(struct timespec __user *rqtp, struct timespec __user *rmtp);
-+asmlinkage long sys_nanosleep(struct __kernel_timespec __user *rqtp, struct __kernel_timespec __user *rmtp);
- asmlinkage long sys_alarm(unsigned int seconds);
- asmlinkage long sys_getpid(void);
- asmlinkage long sys_getppid(void);
-@@ -317,8 +317,8 @@ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
+@@ -309,13 +309,13 @@ asmlinkage long sys_timer_settime(timer_t timer_id, int flags,
+ 				struct itimerspec __user *old_setting);
+ asmlinkage long sys_timer_delete(timer_t timer_id);
+ asmlinkage long sys_clock_settime(clockid_t which_clock,
+-				const struct timespec __user *tp);
++				const struct __kernel_timespec __user *tp);
+ asmlinkage long sys_clock_gettime(clockid_t which_clock,
+-				struct timespec __user *tp);
++				struct __kernel_timespec __user *tp);
+ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
+ 				struct timex __user *tx);
  asmlinkage long sys_clock_getres(clockid_t which_clock,
- 				struct __kernel_timespec __user *tp);
+-				struct timespec __user *tp);
++				struct __kernel_timespec __user *tp);
  asmlinkage long sys_clock_nanosleep(clockid_t which_clock, int flags,
--				const struct timespec __user *rqtp,
--				struct timespec __user *rmtp);
-+				const struct __kernel_timespec __user *rqtp,
-+				struct __kernel_timespec __user *rmtp);
- 
- asmlinkage long sys_nice(int increment);
- asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 6528dec955b8..10190de38be3 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1710,8 +1710,10 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
- 	return ret;
- }
- 
--SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-+
-+SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
- {
- 	struct timespec64 tu;
- 
-@@ -1726,6 +1728,8 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- 
-+#endif
-+
- #ifdef CONFIG_COMPAT_32BIT_TIME
- 
- COMPAT_SYSCALL_DEFINE2(nanosleep, struct compat_timespec __user *, rqtp,
+ 				const struct timespec __user *rqtp,
+ 				struct timespec __user *rmtp);
 diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index 28c22f54d0f2..f7e7a05e651d 100644
+index 0645cfa93609..28c22f54d0f2 100644
 --- a/kernel/time/posix-stubs.c
 +++ b/kernel/time/posix-stubs.c
-@@ -114,8 +114,8 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_time
+@@ -49,7 +49,7 @@ SYS_NI(alarm);
+  */
+ 
+ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+-		const struct timespec __user *, tp)
++		const struct __kernel_timespec __user *, tp)
+ {
+ 	struct timespec64 new_tp;
+ 
+@@ -80,7 +80,7 @@ int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
+ 	return 0;
+ }
+ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+-		struct timespec __user *, tp)
++		struct __kernel_timespec __user *, tp)
+ {
+ 	int ret;
+ 	struct timespec64 kernel_tp;
+@@ -94,7 +94,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+ 	return 0;
  }
  
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
--		const struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+		const struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
+-SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct timespec __user *, tp)
++SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_timespec __user *, tp)
  {
- 	struct timespec64 t;
- 
+ 	struct timespec64 rtn_tp = {
+ 		.tv_sec = 0,
 diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 78e50b26a283..851886b38da6 100644
+index 35b7b08f79f5..78e50b26a283 100644
 --- a/kernel/time/posix-timers.c
 +++ b/kernel/time/posix-timers.c
-@@ -1210,8 +1210,8 @@ static int common_nsleep(const clockid_t which_clock, int flags,
+@@ -1039,7 +1039,7 @@ void exit_itimers(struct signal_struct *sig)
  }
  
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
--		const struct timespec __user *, rqtp,
--		struct timespec __user *, rmtp)
-+		const struct __kernel_timespec __user *, rqtp,
-+		struct __kernel_timespec __user *, rmtp)
+ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+-		const struct timespec __user *, tp)
++		const struct __kernel_timespec __user *, tp)
  {
  	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct timespec64 t;
+ 	struct timespec64 new_tp;
+@@ -1054,7 +1054,7 @@ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+ }
+ 
+ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+-		struct timespec __user *,tp)
++		struct __kernel_timespec __user *, tp)
+ {
+ 	const struct k_clock *kc = clockid_to_kclock(which_clock);
+ 	struct timespec64 kernel_tp;
+@@ -1095,7 +1095,7 @@ SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
+ }
+ 
+ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
+-		struct timespec __user *, tp)
++		struct __kernel_timespec __user *, tp)
+ {
+ 	const struct k_clock *kc = clockid_to_kclock(which_clock);
+ 	struct timespec64 rtn_tp;
 -- 
 2.14.1
