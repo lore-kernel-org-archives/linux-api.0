@@ -1,242 +1,136 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v4 08/24] fpga: add FPGA DFL PCIe device driver
-Date: Fri, 16 Mar 2018 12:29:29 +0800
-Message-ID: <20180316042929.GA11943@hao-dev>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-9-git-send-email-hao.wu@intel.com>
- <20180315184955.vaz2p4r5zzf4wspy@derp-derp.local>
+From: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [RFC PATCH ghak32 V2 00/13] audit: implement container id
+Date: Fri, 16 Mar 2018 05:00:27 -0400
+Message-ID: <cover.1521179281.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180315184955.vaz2p4r5zzf4wspy@derp-derp.local>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Moritz Fischer <mdf@kernel.org>
-Cc: atull@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Linux-Audit Mailing List <linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, madzcar-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 15, 2018 at 11:49:56AM -0700, Moritz Fischer wrote:
-> Hi Hao,
-> 
-> On Tue, Feb 13, 2018 at 05:24:37PM +0800, Wu Hao wrote:
-> > From: Zhang Yi <yi.z.zhang@intel.com>
-> > 
-> > This patch implements the basic framework of the driver for FPGA PCIe
-> > device which implements the Device Feature List (DFL) in its MMIO space.
-> > This driver is verified on Intel(R) PCIe based FPGA DFL devices, including
-> > both integrated (e.g Intel Server Platform with In-package FPGA) and
-> > discrete (e.g Intel FPGA PCIe Acceleration Cards) solutions.
-> > 
-> > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> > Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
-> > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> 
-> with module_pci_driver() fix:
-> 
-> Acked-by: Moritz Fischer <mdf@kernel.org>
-> > ---
-> > v2: move the code to drivers/fpga folder as suggested by Alan Tull.
-> >     switch to GPLv2 license.
-> >     fix comments from Moritz Fischer.
-> > v3: switch to pci_set_dma_mask/consistent_dma_mask() function.
-> >     remove pci_save_state() in probe function.
-> >     rename driver to INTEL_FPGA_DFL_PCI and intel-dfl-pci.c to indicate
-> >     this driver supports Intel FPGA PCI devices which implement DFL.
-> >     improve Kconfig description for INTEL_FPGA_DFL_PCI
-> > v4: rename to FPGA_DFL_PCI (dfl-pci.c) for better reuse.
-> >     fix SPDX license issue.
-> > ---
-> >  drivers/fpga/Kconfig   |  15 ++++++
-> >  drivers/fpga/Makefile  |   3 ++
-> >  drivers/fpga/dfl-pci.c | 127 +++++++++++++++++++++++++++++++++++++++++++++++++
-> >  3 files changed, 145 insertions(+)
-> >  create mode 100644 drivers/fpga/dfl-pci.c
-> > 
-> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> > index 01ad31f..87f3d44 100644
-> > --- a/drivers/fpga/Kconfig
-> > +++ b/drivers/fpga/Kconfig
-> > @@ -140,4 +140,19 @@ config FPGA_DFL
-> >  	  Gate Array (FPGA) solutions which implement Device Feature List.
-> >  	  It provides enumeration APIs, and feature device infrastructure.
-> >  
-> > +config FPGA_DFL_PCI
-> > +	tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
-> > +	depends on PCI && FPGA_DFL
-> > +	help
-> > +	  Select this option to enable PCIe driver for PCIe based
-> > +	  Field-Programmable Gate Array (FPGA) solutions which implemented
-> > +	  the Device Feature List (DFL). This driver provides interfaces
-> > +	  for userspace applications to configure, enumerate, open and access
-> > +	  FPGA accelerators on the FPGA DFL devices, enables system level
-> > +	  management functions such as FPGA partial reconfiguration, power
-> > +	  management, and virtualization with DFL framework and DFL feature
-> > +	  device drivers.
-> > +
-> > +	  To compile this as a module, choose M here.
-> > +
-> >  endif # FPGA
-> > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> > index c4c62b9..4375630 100644
-> > --- a/drivers/fpga/Makefile
-> > +++ b/drivers/fpga/Makefile
-> > @@ -30,3 +30,6 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
-> >  
-> >  # FPGA Device Feature List Support
-> >  obj-$(CONFIG_FPGA_DFL)			+= dfl.o
-> > +
-> > +# Drivers for FPGAs which implement DFL
-> > +obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
-> > diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
-> > new file mode 100644
-> > index 0000000..d91ea42
-> > --- /dev/null
-> > +++ b/drivers/fpga/dfl-pci.c
-> > @@ -0,0 +1,127 @@
-> > +// SPDX-License-Identifier: GPL-2.0
-> > +/*
-> > + * Driver for FPGA Device Feature List (DFL) PCIe device
-> > + *
-> > + * Copyright (C) 2017 Intel Corporation, Inc.
-> > + *
-> > + * Authors:
-> > + *   Zhang Yi <Yi.Z.Zhang@intel.com>
-> > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> > + *   Joseph Grecco <joe.grecco@intel.com>
-> > + *   Enno Luebbers <enno.luebbers@intel.com>
-> > + *   Tim Whisonant <tim.whisonant@intel.com>
-> > + *   Ananda Ravuri <ananda.ravuri@intel.com>
-> > + *   Henry Mitchel <henry.mitchel@intel.com>
-> > + */
-> > +
-> > +#include <linux/pci.h>
-> > +#include <linux/types.h>
-> > +#include <linux/kernel.h>
-> > +#include <linux/module.h>
-> > +#include <linux/stddef.h>
-> > +#include <linux/errno.h>
-> > +#include <linux/aer.h>
-> > +
-> > +#define DRV_VERSION	"0.8"
-> > +#define DRV_NAME	"dfl-pci"
-> > +
-> > +/* PCI Device ID */
-> > +#define PCIE_DEVICE_ID_PF_INT_5_X	0xBCBD
-> > +#define PCIE_DEVICE_ID_PF_INT_6_X	0xBCC0
-> > +#define PCIE_DEVICE_ID_PF_DSC_1_X	0x09C4
-> > +/* VF Device */
-> > +#define PCIE_DEVICE_ID_VF_INT_5_X	0xBCBF
-> > +#define PCIE_DEVICE_ID_VF_INT_6_X	0xBCC1
-> > +#define PCIE_DEVICE_ID_VF_DSC_1_X	0x09C5
-> > +
-> > +static struct pci_device_id cci_pcie_id_tbl[] = {
-> > +	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_INT_5_X),},
-> > +	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_INT_5_X),},
-> > +	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_INT_6_X),},
-> > +	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_INT_6_X),},
-> > +	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_DSC_1_X),},
-> > +	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_DSC_1_X),},
-> > +	{0,}
-> > +};
-> > +MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
-> > +
-> > +static
-> > +int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
-> > +{
-> > +	int ret;
-> > +
-> > +	ret = pci_enable_device(pcidev);
-> > +	if (ret < 0) {
-> > +		dev_err(&pcidev->dev, "Failed to enable device %d.\n", ret);
-> > +		return ret;
-> > +	}
-> > +
-> > +	ret = pci_enable_pcie_error_reporting(pcidev);
-> > +	if (ret && ret != -EINVAL)
-> > +		dev_info(&pcidev->dev, "PCIE AER unavailable %d.\n", ret);
-> > +
-> > +	ret = pci_request_regions(pcidev, DRV_NAME);
-> > +	if (ret) {
-> > +		dev_err(&pcidev->dev, "Failed to request regions.\n");
-> > +		goto disable_error_report_exit;
-> > +	}
-> > +
-> > +	pci_set_master(pcidev);
-> > +
-> > +	if (!pci_set_dma_mask(pcidev, DMA_BIT_MASK(64))) {
-> > +		ret = pci_set_consistent_dma_mask(pcidev, DMA_BIT_MASK(64));
-> > +		if (ret)
-> > +			goto release_region_exit;
-> > +	} else if (!pci_set_dma_mask(pcidev, DMA_BIT_MASK(32))) {
-> > +		ret = pci_set_consistent_dma_mask(pcidev, DMA_BIT_MASK(32));
-> > +		if (ret)
-> > +			goto release_region_exit;
-> > +	} else {
-> > +		ret = -EIO;
-> > +		dev_err(&pcidev->dev, "No suitable DMA support available.\n");
-> > +		goto release_region_exit;
-> > +	}
-> > +
-> > +	/* TODO: create and add the platform device per feature list */
-> > +	return 0;
-> > +
-> > +release_region_exit:
-> > +	pci_release_regions(pcidev);
-> > +disable_error_report_exit:
-> > +	pci_disable_pcie_error_reporting(pcidev);
-> > +	pci_disable_device(pcidev);
-> > +	return ret;
-> > +}
-> > +
-> > +static void cci_pci_remove(struct pci_dev *pcidev)
-> > +{
-> > +	pci_release_regions(pcidev);
-> > +	pci_disable_pcie_error_reporting(pcidev);
-> > +	pci_disable_device(pcidev);
-> > +}
-> > +
-> > +static struct pci_driver cci_pci_driver = {
-> > +	.name = DRV_NAME,
-> > +	.id_table = cci_pcie_id_tbl,
-> > +	.probe = cci_pci_probe,
-> > +	.remove = cci_pci_remove,
-> > +};
-> > +
-> > +static int __init ccidrv_init(void)
-> > +{
-> > +	pr_info("FPGA DFL PCIe Driver: Version %s\n", DRV_VERSION);
-> 
-> Not a fan of the additional output. Can you make it module_pci_driver?
+Implement audit kernel container ID.
 
-Hi Moritz,
+This patchset is a second RFC based on the proposal document (V3)
+posted:
+	https://www.redhat.com/archives/linux-audit/2018-January/msg00014.html
 
-Thanks a lot for the review and comments.
+The first patch implements the proc fs write to set the audit container
+ID of a process, emitting an AUDIT_CONTAINER record to announce the
+registration of that container ID on that process.  This patch requires
+userspace support for record acceptance and proper type display.
 
-I will use module_pci_driver and MODULE_VERSION(DRV_VERSION)
-instead of the additional output in the next version. :)
+The second checks for children or co-threads and refuses to set the
+container ID if either are present.  (This policy could be changed to
+set both with the same container ID provided they meet the rest of the
+requirements.)
 
-Thanks
-Hao
+The third implements the auxiliary record AUDIT_CONTAINER_INFO if a
+container ID is identifiable with an event.  This patch requires
+userspace support for proper type display.
 
-> > +
-> > +	return pci_register_driver(&cci_pci_driver);
-> > +}
-> > +
-> > +static void __exit ccidrv_exit(void)
-> > +{
-> > +	pci_unregister_driver(&cci_pci_driver);
-> > +}
-> > +
-> > +module_init(ccidrv_init);
-> > +module_exit(ccidrv_exit);
-> > +
-> > +MODULE_DESCRIPTION("FPGA DFL PCIe Device Driver");
-> > +MODULE_AUTHOR("Intel Corporation");
-> > +MODULE_LICENSE("GPL v2");
-> > -- 
-> > 2.7.4
-> > 
+The fourth adds container ID filtering to the exit, exclude and user
+lists.  This patch requires auditctil userspace support for the
+--containerid option.
+
+The 5th adds signal and ptrace support.
+
+The 6th creates a local audit context to be able to bind a standalone
+record with a locally created auxiliary record.
+
+The 7th, 8th, 9th, 10th patches add container ID records to standalone
+records.  Some of these may end up being syscall auxiliary records and
+won't need this specific support since they'll be supported via
+syscalls.
+
+The 11th adds network namespace container ID labelling based on member
+tasks' container ID labels.
+
+The 12th adds container ID support to standalone netfilter records that
+don't have a task context and lists each container to which that net
+namespace belongs.
+
+The 13th implements reading the container ID from the proc filesystem
+for debugging.  This patch isn't planned for upstream inclusion.
+
+Feedback please!
+
+Example: Set a container ID of 123456 to the "sleep" task:
+	sleep 2&  
+	child=$!
+	echo 123456 > /proc/$child/containerid; echo $?
+	ausearch -ts recent -m container
+	echo child:$child contid:$( cat /proc/$child/containerid)
+This should produce a record such as:
+	type=CONTAINER msg=audit(1521122590.315:222): op=set pid=689 uid=0 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 auid=0 tty=pts0 ses=3 opid=707 old-contid=18446744073709551615 contid=123456 res=1
+
+Example: Set a filter on a container ID 123459 on /tmp/tmpcontainerid:
+	containerid=123459
+	key=tmpcontainerid
+	auditctl -a exit,always -F dir=/tmp -F perm=wa -F containerid=$containerid -F key=$key
+	perl -e "sleep 1; open(my \$tmpfile, '>', \"/tmp/$key\"); close(\$tmpfile);" &
+	child=$!
+	echo $containerid > /proc/$child/containerid
+	sleep 2
+	ausearch -i -ts recent -k $key
+	auditctl -d exit,always -F dir=/tmp -F perm=wa -F containerid=$containerid -F key=$key
+	rm -f /tmp/$key
+This should produce an event such as:
+	type=CONTAINER_INFO msg=audit(1521122591.614:227): op=task contid=123459
+	type=PROCTITLE msg=audit(1521122591.614:227): proctitle=7065726C002D6500736C65657020313B206F70656E286D792024746D7066696C652C20273E272C20222F746D702F746D70636F6E7461696E6572696422293B20636C6F73652824746D7066696C65293B
+	type=PATH msg=audit(1521122591.614:227): item=1 name="/tmp/tmpcontainerid" inode=18427 dev=00:26 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
+	type=PATH msg=audit(1521122591.614:227): item=0 name="/tmp/" inode=13513 dev=00:26 mode=041777 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:tmp_t:s0 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
+	type=CWD msg=audit(1521122591.614:227): cwd="/root"
+	type=SYSCALL msg=audit(1521122591.614:227): arch=c000003e syscall=257 success=yes exit=3 a0=ffffffffffffff9c a1=55db90a28900 a2=241 a3=1b6 items=2 ppid=689 pid=724 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="perl" exe="/usr/bin/perl" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="tmpcontainerid"
+
+See:
+	https://github.com/linux-audit/audit-kernel/issues/32
+	https://github.com/linux-audit/audit-userspace/issues/40
+	https://github.com/linux-audit/audit-testsuite/issues/64
+
+Richard Guy Briggs (13):
+  audit: add container id
+  audit: check children and threading before allowing containerid
+  audit: log container info of syscalls
+  audit: add containerid filtering
+  audit: add containerid support for ptrace and signals
+  audit: add support for non-syscall auxiliary records
+  audit: add container aux record to watch/tree/mark
+  audit: add containerid support for tty_audit
+  audit: add containerid support for config/feature/user records
+  audit: add containerid support for seccomp and anom_abend records
+  audit: add support for containerid to network namespaces
+  audit: NETFILTER_PKT: record each container ID associated with a netNS
+  debug audit: read container ID of a process
+
+ drivers/tty/tty_audit.c     |   5 +-
+ fs/proc/base.c              |  53 ++++++++++++++++
+ include/linux/audit.h       |  43 +++++++++++++
+ include/linux/init_task.h   |   4 +-
+ include/linux/sched.h       |   1 +
+ include/net/net_namespace.h |  12 ++++
+ include/uapi/linux/audit.h  |   8 ++-
+ kernel/audit.c              |  75 ++++++++++++++++++++---
+ kernel/audit.h              |   3 +
+ kernel/audit_fsnotify.c     |   5 +-
+ kernel/audit_tree.c         |   5 +-
+ kernel/audit_watch.c        |  33 +++++-----
+ kernel/auditfilter.c        |  52 +++++++++++++++-
+ kernel/auditsc.c            | 145 ++++++++++++++++++++++++++++++++++++++++++--
+ kernel/nsproxy.c            |   6 ++
+ net/core/net_namespace.c    |  45 ++++++++++++++
+ net/netfilter/xt_AUDIT.c    |  15 ++++-
+ 17 files changed, 473 insertions(+), 37 deletions(-)
+
+-- 
+1.8.3.1
