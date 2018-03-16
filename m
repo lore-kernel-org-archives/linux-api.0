@@ -1,243 +1,250 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [RFC PATCH ghak32 V2 09/13] audit: add containerid support for
-	config/feature/user records
-Date: Fri, 16 Mar 2018 05:00:36 -0400
-Message-ID: <c34a7a95eb045a62e2443457979db9d7afbd9aee.1521179281.git.rgb@redhat.com>
+Subject: [RFC PATCH ghak32 V2 11/13] audit: add support for containerid to network namespaces
+Date: Fri, 16 Mar 2018 05:00:38 -0400
+Message-ID: <11b43a498e768a14764594c808a96b34d52be0af.1521179281.git.rgb@redhat.com>
 References: <cover.1521179281.git.rgb@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-audit-bounces@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1521179281.git.rgb@redhat.com>
 In-Reply-To: <cover.1521179281.git.rgb@redhat.com>
 References: <cover.1521179281.git.rgb@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-audit>
-List-Post: <mailto:linux-audit@redhat.com>
-List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=subscribe>
-Sender: linux-audit-bounces@redhat.com
-Errors-To: linux-audit-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org
-Cc: ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, Richard Guy Briggs <rgb@redhat.com>, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
+Cc: luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, viro@zeniv.linux.org.uk, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, madzcar@gmail.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Add container ID auxiliary records to configuration change, feature set change
-and user generated standalone records.
+Audit events could happen in a network namespace outside of a task
+context due to packets received from the net that trigger an auditing
+rule prior to being associated with a running task.  The network
+namespace could in use by multiple containers by association to the
+tasks in that network namespace.  We still want a way to attribute
+these events to any potential containers.  Keep a list per network
+namespace to track these container identifiiers.
 
+Add/increment the container identifier on:
+- initial setting of the container id via /proc
+- clone/fork call that inherits a container identifier
+- unshare call that inherits a container identifier
+- setns call that inherits a container identifier
+Delete/decrement the container identifier on:
+- an inherited container id dropped when child set
+- process exit
+- unshare call that drops a net namespace
+- setns call that drops a net namespace
+
+See: https://github.com/linux-audit/audit-kernel/issues/32
+See: https://github.com/linux-audit/audit-testsuite/issues/64
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 ---
- kernel/audit.c       | 50 ++++++++++++++++++++++++++++++++++++++++----------
- kernel/auditfilter.c |  5 ++++-
- 2 files changed, 44 insertions(+), 11 deletions(-)
+ include/linux/audit.h       |  7 +++++++
+ include/net/net_namespace.h | 12 ++++++++++++
+ kernel/auditsc.c            |  9 ++++++---
+ kernel/nsproxy.c            |  6 ++++++
+ net/core/net_namespace.c    | 45 +++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 76 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/audit.c b/kernel/audit.c
-index b238be5..08662b4 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -400,8 +400,9 @@ static int audit_log_config_change(char *function_name, u32 new, u32 old,
- {
- 	struct audit_buffer *ab;
- 	int rc = 0;
-+	struct audit_context *context = audit_alloc_local();
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index c0b83cb..d9afb7d 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -26,6 +26,7 @@
+ #include <linux/sched.h>
+ #include <linux/ptrace.h>
+ #include <uapi/linux/audit.h>
++#include <linux/refcount.h>
  
--	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
-+	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
- 	if (unlikely(!ab))
- 		return rc;
- 	audit_log_format(ab, "%s=%u old=%u", function_name, new, old);
-@@ -411,6 +412,8 @@ static int audit_log_config_change(char *function_name, u32 new, u32 old,
- 		allow_changes = 0; /* Something weird, deny request */
- 	audit_log_format(ab, " res=%d", allow_changes);
- 	audit_log_end(ab);
-+	audit_log_container_info(context, "config", audit_get_containerid(current));
-+	audit_free_context(context);
- 	return rc;
- }
+ #define AUDIT_INO_UNSET ((unsigned long)-1)
+ #define AUDIT_DEV_UNSET ((dev_t)-1)
+@@ -88,6 +89,12 @@ struct audit_field {
+ 	u32				op;
+ };
  
-@@ -1058,7 +1061,8 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
- 	return err;
- }
- 
--static void audit_log_common_recv_msg(struct audit_buffer **ab, u16 msg_type)
-+static void audit_log_common_recv_msg(struct audit_context *context,
-+				      struct audit_buffer **ab, u16 msg_type)
- {
- 	uid_t uid = from_kuid(&init_user_ns, current_uid());
- 	pid_t pid = task_tgid_nr(current);
-@@ -1068,7 +1072,7 @@ static void audit_log_common_recv_msg(struct audit_buffer **ab, u16 msg_type)
- 		return;
- 	}
- 
--	*ab = audit_log_start(NULL, GFP_KERNEL, msg_type);
-+	*ab = audit_log_start(context, GFP_KERNEL, msg_type);
- 	if (unlikely(!*ab))
- 		return;
- 	audit_log_format(*ab, "pid=%d uid=%u", pid, uid);
-@@ -1097,11 +1101,12 @@ static void audit_log_feature_change(int which, u32 old_feature, u32 new_feature
- 				     u32 old_lock, u32 new_lock, int res)
- {
- 	struct audit_buffer *ab;
-+	struct audit_context *context = audit_alloc_local();
- 
- 	if (audit_enabled == AUDIT_OFF)
- 		return;
- 
--	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_FEATURE_CHANGE);
-+	ab = audit_log_start(context, GFP_KERNEL, AUDIT_FEATURE_CHANGE);
- 	if (!ab)
- 		return;
- 	audit_log_task_info(ab, current);
-@@ -1109,6 +1114,8 @@ static void audit_log_feature_change(int which, u32 old_feature, u32 new_feature
- 			 audit_feature_names[which], !!old_feature, !!new_feature,
- 			 !!old_lock, !!new_lock, res);
- 	audit_log_end(ab);
-+	audit_log_container_info(context, "feature", audit_get_containerid(current));
-+	audit_free_context(context);
- }
- 
- static int audit_set_feature(struct sk_buff *skb)
-@@ -1337,13 +1344,15 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 
- 		err = audit_filter(msg_type, AUDIT_FILTER_USER);
- 		if (err == 1) { /* match or error */
-+			struct audit_context *context = audit_alloc_local();
++struct audit_containerid {
++	struct list_head	list;
++	u64			id;
++	refcount_t		refcount;
++};
 +
- 			err = 0;
- 			if (msg_type == AUDIT_USER_TTY) {
- 				err = tty_audit_push();
- 				if (err)
- 					break;
- 			}
--			audit_log_common_recv_msg(&ab, msg_type);
-+			audit_log_common_recv_msg(context, &ab, msg_type);
- 			if (msg_type != AUDIT_USER_TTY)
- 				audit_log_format(ab, " msg='%.*s'",
- 						 AUDIT_MESSAGE_TEXT_MAX,
-@@ -1359,6 +1368,9 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 				audit_log_n_untrustedstring(ab, data, size);
- 			}
- 			audit_log_end(ab);
-+			audit_log_container_info(context, "user",
-+						 audit_get_containerid(current));
-+			audit_free_context(context);
- 		}
- 		break;
- 	case AUDIT_ADD_RULE:
-@@ -1366,9 +1378,14 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 		if (nlmsg_len(nlh) < sizeof(struct audit_rule_data))
- 			return -EINVAL;
- 		if (audit_enabled == AUDIT_LOCKED) {
--			audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-+			struct audit_context *context = audit_alloc_local();
+ extern int is_audit_feature_set(int which);
+ 
+ extern int __init audit_register_class(int class, unsigned *list);
+diff --git a/include/net/net_namespace.h b/include/net/net_namespace.h
+index 0490084..343a428 100644
+--- a/include/net/net_namespace.h
++++ b/include/net/net_namespace.h
+@@ -33,6 +33,7 @@
+ #include <linux/ns_common.h>
+ #include <linux/idr.h>
+ #include <linux/skbuff.h>
++#include <linux/audit.h>
+ 
+ struct user_namespace;
+ struct proc_dir_entry;
+@@ -150,6 +151,7 @@ struct net {
+ #endif
+ 	struct sock		*diag_nlsk;
+ 	atomic_t		fnhe_genid;
++	struct list_head	audit_containerid;
+ } __randomize_layout;
+ 
+ #include <linux/seq_file_net.h>
+@@ -301,6 +303,16 @@ static inline struct net *read_pnet(const possible_net_t *pnet)
+ #define __net_initconst	__initconst
+ #endif
+ 
++#ifdef CONFIG_NET_NS
++void net_add_audit_containerid(struct net *net, u64 containerid);
++void net_del_audit_containerid(struct net *net, u64 containerid);
++#else
++static inline void net_add_audit_containerid(struct net *, u64)
++{ }
++static inline void net_del_audit_containerid(struct net *, u64)
++{ }
++#endif
 +
-+			audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
- 			audit_log_format(ab, " audit_enabled=%d res=0", audit_enabled);
- 			audit_log_end(ab);
-+			audit_log_container_info(context, "config",
-+						 audit_get_containerid(current));
-+			audit_free_context(context);
- 			return -EPERM;
- 		}
- 		err = audit_rule_change(msg_type, seq, data, nlmsg_len(nlh));
-@@ -1376,17 +1393,23 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 	case AUDIT_LIST_RULES:
- 		err = audit_list_rules_send(skb, seq);
- 		break;
--	case AUDIT_TRIM:
-+	case AUDIT_TRIM: {
-+		struct audit_context *context = audit_alloc_local();
- 		audit_trim_trees();
--		audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-+		audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
- 		audit_log_format(ab, " op=trim res=1");
- 		audit_log_end(ab);
-+		audit_log_container_info(context, "config",
-+					 audit_get_containerid(current));
-+		audit_free_context(context);
- 		break;
-+	}
- 	case AUDIT_MAKE_EQUIV: {
- 		void *bufp = data;
- 		u32 sizes[2];
- 		size_t msglen = nlmsg_len(nlh);
- 		char *old, *new;
-+		struct audit_context *context = audit_alloc_local();
+ int peernet2id_alloc(struct net *net, struct net *peer);
+ int peernet2id(struct net *net, struct net *peer);
+ bool peernet_has_id(struct net *net, struct net *peer);
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 2f02ed9..208da962 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -75,6 +75,7 @@
+ #include <linux/uaccess.h>
+ #include <linux/fsnotify_backend.h>
+ #include <uapi/linux/limits.h>
++#include <net/net_namespace.h>
  
- 		err = -EINVAL;
- 		if (msglen < 2 * sizeof(u32))
-@@ -1408,7 +1431,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 		/* OK, here comes... */
- 		err = audit_tag_tree(old, new);
+ #include "audit.h"
  
--		audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-+		audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
+@@ -2175,16 +2176,18 @@ static void audit_log_set_containerid(struct task_struct *task, u64 oldcontainer
+  */
+ int audit_set_containerid(struct task_struct *task, u64 containerid)
+ {
+-	u64 oldcontainerid;
++	u64 oldcontainerid = audit_get_containerid(task);
+ 	int rc;
+-
+-	oldcontainerid = audit_get_containerid(task);
++	struct net *net = task->nsproxy->net_ns;
  
- 		audit_log_format(ab, " op=make_equiv old=");
- 		audit_log_untrustedstring(ab, old);
-@@ -1418,6 +1441,9 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 		audit_log_end(ab);
- 		kfree(old);
- 		kfree(new);
-+		audit_log_container_info(context, "config",
-+					 audit_get_containerid(current));
-+		audit_free_context(context);
- 		break;
+ 	rc = audit_set_containerid_perm(task, containerid);
+ 	if (!rc) {
++		if (cid_valid(oldcontainerid))
++			net_del_audit_containerid(net, oldcontainerid);
+ 		task_lock(task);
+ 		task->containerid = containerid;
+ 		task_unlock(task);
++		net_add_audit_containerid(net, containerid);
  	}
- 	case AUDIT_SIGNAL_INFO:
-@@ -1459,6 +1485,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 		struct audit_tty_status s, old;
- 		struct audit_buffer	*ab;
- 		unsigned int t;
-+		struct audit_context *context = audit_alloc_local();
  
- 		memset(&s, 0, sizeof(s));
- 		/* guard against past and future API changes */
-@@ -1477,12 +1504,15 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
- 		old.enabled = t & AUDIT_TTY_ENABLE;
- 		old.log_passwd = !!(t & AUDIT_TTY_LOG_PASSWD);
+ 	audit_log_set_containerid(task, oldcontainerid, containerid, rc);
+diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+index f6c5d33..d9f1090 100644
+--- a/kernel/nsproxy.c
++++ b/kernel/nsproxy.c
+@@ -140,6 +140,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
+ 	struct nsproxy *old_ns = tsk->nsproxy;
+ 	struct user_namespace *user_ns = task_cred_xxx(tsk, user_ns);
+ 	struct nsproxy *new_ns;
++	u64 containerid = audit_get_containerid(tsk);
  
--		audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-+		audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
- 		audit_log_format(ab, " op=tty_set old-enabled=%d new-enabled=%d"
- 				 " old-log_passwd=%d new-log_passwd=%d res=%d",
- 				 old.enabled, s.enabled, old.log_passwd,
- 				 s.log_passwd, !err);
- 		audit_log_end(ab);
-+		audit_log_container_info(context, "config",
-+					 audit_get_containerid(current));
-+		audit_free_context(context);
- 		break;
- 	}
- 	default:
-diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
-index c4c8746..5f7f4d6 100644
---- a/kernel/auditfilter.c
-+++ b/kernel/auditfilter.c
-@@ -1109,11 +1109,12 @@ static void audit_log_rule_change(char *action, struct audit_krule *rule, int re
- 	struct audit_buffer *ab;
- 	uid_t loginuid = from_kuid(&init_user_ns, audit_get_loginuid(current));
- 	unsigned int sessionid = audit_get_sessionid(current);
-+	struct audit_context *context = audit_alloc_local();
+ 	if (likely(!(flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+ 			      CLONE_NEWPID | CLONE_NEWNET |
+@@ -167,6 +168,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
+ 		return  PTR_ERR(new_ns);
  
- 	if (!audit_enabled)
- 		return;
- 
--	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
-+	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
- 	if (!ab)
- 		return;
- 	audit_log_format(ab, "auid=%u ses=%u" ,loginuid, sessionid);
-@@ -1122,6 +1123,8 @@ static void audit_log_rule_change(char *action, struct audit_krule *rule, int re
- 	audit_log_key(ab, rule->filterkey);
- 	audit_log_format(ab, " list=%d res=%d", rule->listnr, res);
- 	audit_log_end(ab);
-+	audit_log_container_info(context, "config", audit_get_containerid(current));
-+	audit_free_context(context);
+ 	tsk->nsproxy = new_ns;
++	net_add_audit_containerid(new_ns->net_ns, containerid);
+ 	return 0;
  }
  
- /**
+@@ -217,6 +219,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
+ void switch_task_namespaces(struct task_struct *p, struct nsproxy *new)
+ {
+ 	struct nsproxy *ns;
++	u64 containerid = audit_get_containerid(p);
+ 
+ 	might_sleep();
+ 
+@@ -224,6 +227,9 @@ void switch_task_namespaces(struct task_struct *p, struct nsproxy *new)
+ 	ns = p->nsproxy;
+ 	p->nsproxy = new;
+ 	task_unlock(p);
++	net_del_audit_containerid(ns->net_ns, containerid);
++	if (new)
++		net_add_audit_containerid(new->net_ns, containerid);
+ 
+ 	if (ns && atomic_dec_and_test(&ns->count))
+ 		free_nsproxy(ns);
+diff --git a/net/core/net_namespace.c b/net/core/net_namespace.c
+index 60a71be7..ae30d33 100644
+--- a/net/core/net_namespace.c
++++ b/net/core/net_namespace.c
+@@ -22,6 +22,7 @@
+ #include <net/netlink.h>
+ #include <net/net_namespace.h>
+ #include <net/netns/generic.h>
++#include <linux/nsproxy.h>
+ 
+ /*
+  *	Our network namespace constructor/destructor lists
+@@ -290,6 +291,7 @@ static __net_init int setup_net(struct net *net, struct user_namespace *user_ns)
+ 	net->user_ns = user_ns;
+ 	idr_init(&net->netns_ids);
+ 	spin_lock_init(&net->nsid_lock);
++	INIT_LIST_HEAD(&net->audit_containerid);
+ 
+ 	list_for_each_entry(ops, &pernet_list, list) {
+ 		error = ops_init(ops, net);
+@@ -1067,6 +1069,49 @@ void unregister_pernet_device(struct pernet_operations *ops)
+ EXPORT_SYMBOL_GPL(unregister_pernet_device);
+ 
+ #ifdef CONFIG_NET_NS
++void net_add_audit_containerid(struct net *net, u64 containerid)
++{
++	struct audit_containerid *cont;
++
++	if (!cid_valid(containerid))
++		return;
++	if (!list_empty(&net->audit_containerid))
++		list_for_each_entry(cont, &net->audit_containerid, list)
++			if (cont->id == containerid) {
++				refcount_inc(&cont->refcount);
++				return;
++			}
++	cont = kmalloc(sizeof(struct audit_containerid), GFP_KERNEL);
++	if (!cont)
++		return;
++	INIT_LIST_HEAD(&cont->list);
++	cont->id = containerid;
++	refcount_set(&cont->refcount, 1);
++	list_add(&cont->list, &net->audit_containerid);
++}
++
++void net_del_audit_containerid(struct net *net, u64 containerid)
++{
++	struct audit_containerid *cont = NULL;
++	int found = 0;
++
++	if (!cid_valid(containerid))
++		return;
++	if (!list_empty(&net->audit_containerid))
++		list_for_each_entry(cont, &net->audit_containerid, list)
++			if (cont->id == containerid) {
++				found = 1;
++				break;
++			}
++	if (!found)
++		return;
++	list_del(&cont->list);
++	if (refcount_dec_and_test(&cont->refcount))
++		kfree(cont);
++}
++#endif
++
++#ifdef CONFIG_NET_NS
+ static struct ns_common *netns_get(struct task_struct *task)
+ {
+ 	struct net *net = NULL;
 -- 
 1.8.3.1
