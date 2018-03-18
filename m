@@ -1,70 +1,143 @@
-From: Dominik Brodowski <linux@dominikbrodowski.net>
-Subject: Re: [PATCH] bpf: whitelist syscalls for error injection
-Date: Sun, 18 Mar 2018 07:47:38 +0100
-Message-ID: <20180318064738.GA22649@light.dominikbrodowski.net>
-References: <20180313231627.1247-1-hmclauchlan@fb.com>
- <CALCETrWWAB4FcDe=uUUBiq9YZ-jN1G7kNjdEw=Pwe1SSqyL5LQ@mail.gmail.com>
- <f47e1374-43eb-d7c6-dd0a-5d530ff2b4e2@fb.com>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH v16 06/13] task_isolation: userspace hard isolation from
+ kernel
+Date: Sun, 18 Mar 2018 17:22:30 +0300
+Message-ID: <20180318142230.7vcvayiktypqqy7s@yury-thinkpad>
+References: <1509728692-10460-1-git-send-email-cmetcalf@mellanox.com>
+ <1509728692-10460-7-git-send-email-cmetcalf@mellanox.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <f47e1374-43eb-d7c6-dd0a-5d530ff2b4e2@fb.com>
+In-Reply-To: <1509728692-10460-7-git-send-email-cmetcalf@mellanox.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Howard McLauchlan <hmclauchlan@fb.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Yonghong Song <yhs@fb.com>, "David S . Miller" <davem@davemloft.net>, Thomas Garnier <thgarnie@google.com>, kernel-team <kernel-team@fb.com>
+To: Chris Metcalf <cmetcalf@mellanox.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Michal Hocko <mhocko@suse.com>, Jonathan Corbet <corbet@lwn.net>, linux-mm@kvack.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 16, 2018 at 03:55:04PM -0700, Howard McLauchlan wrote:
-> On 03/13/2018 04:56 PM, Andy Lutomirski wrote:
-> > On Tue, Mar 13, 2018 at 11:16 PM, Howard McLauchlan <hmclauchlan@fb.com> wrote:
-> >> Error injection is a useful mechanism to fail arbitrary kernel
-> >> functions. However, it is often hard to guarantee an error propagates
-> >> appropriately to user space programs. By injecting into syscalls, we can
-> >> return arbitrary values to user space directly; this increases
-> >> flexibility and robustness in testing, allowing us to test user space
-> >> error paths effectively.
-> > 
-> > Temporary NAK IMO.  Specifically:
-> > 
-> >> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> >> index a78186d826d7..e8c6d63ace78 100644
-> >> --- a/include/linux/syscalls.h
-> >> +++ b/include/linux/syscalls.h
-> >> @@ -191,6 +191,8 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
-> >>
-> >>  #define SYSCALL_DEFINE0(sname)                                 \
-> >>         SYSCALL_METADATA(_##sname, 0);                          \
-> >> +       asmlinkage long sys_##sname(void);                      \
-> >> +       ALLOW_ERROR_INJECTION(sys_##sname, ERRNO);              \
-> > 
-> > sys_xyz() is not just the syscall itself; it's also a helper that's
-> > used for entirely silly reasons by various bits of kernel code for
-> > quite a few syscalls.  Fortunately, Dominik has patches to fix that,
-> > and Linus is even considering pulling them for 4.16.  This patch will
-> > most likely conflict with the final result of Dominik's series.
-> > 
-> > Can you and Dominik coordinate a bit to get this patch or its
-> > equivalent landed on top of Dominik's work?  It might make sense for
-> > Dominik to just add this patch to his series so it can land with the
-> > rest of it.  Dominik, Ingo, what do you think?
-> > 
-> > --Andy
-> > 
+Hi Chris,
+
+On Fri, Nov 03, 2017 at 01:04:45PM -0400, Chris Metcalf wrote:
+> The existing nohz_full mode is designed as a "soft" isolation mode
+> that makes tradeoffs to minimize userspace interruptions while
+> still attempting to avoid overheads in the kernel entry/exit path,
+> to provide 100% kernel semantics, etc.
 > 
-> Dominik, 
+> However, some applications require a "hard" commitment from the
+> kernel to avoid interruptions, in particular userspace device driver
+> style applications, such as high-speed networking code.
 > 
-> This patch applies cleanly on top of your patch series. Is there anything you'd need from me to get this in on top of your work? 
+> This change introduces a framework to allow applications
+> to elect to have the "hard" semantics as needed, specifying
+> prctl(PR_TASK_ISOLATION, PR_TASK_ISOLATION_ENABLE) to do so.
+> 
+> The kernel must be built with the new TASK_ISOLATION Kconfig flag
+> to enable this mode, and the kernel booted with an appropriate
+> "nohz_full=CPULIST isolcpus=CPULIST" boot argument to enable
+> nohz_full and isolcpus.  The "task_isolation" state is then indicated
+> by setting a new task struct field, task_isolation_flag, to the
+> value passed by prctl(), and also setting a TIF_TASK_ISOLATION
+> bit in the thread_info flags.  When the kernel is returning to
+> userspace from the prctl() call and sees TIF_TASK_ISOLATION set,
+> it calls the new task_isolation_start() routine to arrange for
+> the task to avoid being interrupted in the future.
+> 
+> With interrupts disabled, task_isolation_start() ensures that kernel
+> subsystems that might cause a future interrupt are quiesced.  If it
+> doesn't succeed, it adjusts the syscall return value to indicate that
+> fact, and userspace can retry as desired.  In addition to stopping
+> the scheduler tick, the code takes any actions that might avoid
+> a future interrupt to the core, such as a worker thread being
+> scheduled that could be quiesced now (e.g. the vmstat worker)
+> or a future IPI to the core to clean up some state that could be
+> cleaned up now (e.g. the mm lru per-cpu cache).
+> 
+> Once the task has returned to userspace after issuing the prctl(),
+> if it enters the kernel again via system call, page fault, or any
+> other exception or irq, the kernel will kill it with SIGKILL.
+> In addition to sending a signal, the code supports a kernel
+> command-line "task_isolation_debug" flag which causes a stack
+> backtrace to be generated whenever a task loses isolation.
+> 
+> To allow the state to be entered and exited, the syscall checking
+> test ignores the prctl(PR_TASK_ISOLATION) syscall so that we can
+> clear the bit again later, and ignores exit/exit_group to allow
+> exiting the task without a pointless signal being delivered.
+> 
+> The prctl() API allows for specifying a signal number to use instead
+> of the default SIGKILL, to allow for catching the notification
+> signal; for example, in a production environment, it might be
+> helpful to log information to the application logging mechanism
+> before exiting.  Or, the signal handler might choose to reset the
+> program counter back to the code segment intended to be run isolated
+> via prctl() to continue execution.
+> 
+> In a number of cases we can tell on a remote cpu that we are
+> going to be interrupting the cpu, e.g. via an IPI or a TLB flush.
+> In that case we generate the diagnostic (and optional stack dump)
+> on the remote core to be able to deliver better diagnostics.
+> If the interrupt is not something caught by Linux (e.g. a
+> hypervisor interrupt) we can also request a reschedule IPI to
+> be sent to the remote core so it can be sure to generate a
+> signal to notify the process.
+> 
+> Separate patches that follow provide these changes for x86, tile,
+> arm, and arm64.
+> 
+> Signed-off-by: Chris Metcalf <cmetcalf@mellanox.com>
+> ---
+>  Documentation/admin-guide/kernel-parameters.txt |   6 +
+>  include/linux/isolation.h                       | 175 +++++++++++
+>  include/linux/sched.h                           |   4 +
+>  include/uapi/linux/prctl.h                      |   6 +
+>  init/Kconfig                                    |  28 ++
+>  kernel/Makefile                                 |   1 +
+>  kernel/context_tracking.c                       |   2 +
+>  kernel/isolation.c                              | 402 ++++++++++++++++++++++++
+>  kernel/signal.c                                 |   2 +
+>  kernel/sys.c                                    |   6 +
+>  10 files changed, 631 insertions(+)
+>  create mode 100644 include/linux/isolation.h
+>  create mode 100644 kernel/isolation.c
+ 
+[...]
 
-Howard,
+> + * This routine is called from syscall entry, prevents most syscalls
+> + * from executing, and if needed raises a signal to notify the process.
+> + *
+> + * Note that we have to stop isolation before we even print a message
+> + * here, since otherwise we might end up reporting an interrupt due to
+> + * kicking the printk handling code, rather than reporting the true
+> + * cause of interrupt here.
+> + */
+> +int task_isolation_syscall(int syscall)
+> +{
 
-would this form part of the kernel<->userspace interface and therefore needs
-to be kept stable? If so, this patch should wait until the arch-specific
-syscall calling convention is agreed upon.
+All callers of this function call it like this:
+        if (work & _TIF_TASK_ISOLATION) {
+                if (task_isolation_syscall(regs->syscallno) ==
+                                -1)
+                        return -1;
+        }
 
-Moreover, the patches I sent out already do not cover all syscalls yet.
-Until all in-kernel users of sys_*() are gone (or at least outside arch/),
-I'd prefer to postpone this patch.
+Would it make sense to move check of _TIF_TASK_ISOLATION flag inside
+the function?
 
-Thanks,
-	Dominik
+> +	struct task_struct *task = current;
+> +
+> +	if (is_acceptable_syscall(syscall)) {
+> +		stop_isolation(task);
+> +		return 0;
+> +	}
+> +
+> +	send_isolation_signal(task);
+> +
+> +	pr_warn("%s/%d (cpu %d): task_isolation lost due to syscall %d\n",
+> +		task->comm, task->pid, smp_processor_id(), syscall);
+> +	debug_dump_stack();
+> +
+> +	syscall_set_return_value(task, current_pt_regs(), -ERESTARTNOINTR, -1);
+> +	return -1;
+> +}
+
+Yury
