@@ -1,87 +1,735 @@
-From: Howard McLauchlan <hmclauchlan@fb.com>
-Subject: Re: [PATCH] bpf: whitelist syscalls for error injection
-Date: Mon, 19 Mar 2018 12:18:51 -0700
-Message-ID: <831eeeae-ecfe-efca-79a2-8edd50adc668@fb.com>
-References: <20180313231627.1247-1-hmclauchlan@fb.com>
- <CALCETrWWAB4FcDe=uUUBiq9YZ-jN1G7kNjdEw=Pwe1SSqyL5LQ@mail.gmail.com>
- <f47e1374-43eb-d7c6-dd0a-5d530ff2b4e2@fb.com>
- <20180318064738.GA22649@light.dominikbrodowski.net>
- <CALCETrWU4KDu+3U2Z6XpLcV5G9-ihesCdREdaGtO76spuHW-mA@mail.gmail.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v4 23/24] fpga: dfl: afu: add user afu sub feature support
+Date: Mon, 19 Mar 2018 15:10:28 -0500
+Message-ID: <CANk1AXQpPXhNoPt1Uj=YvbtO+jun7e2Yzvyp+wuR1ZXx6+-i8Q@mail.gmail.com>
+References: <1518513893-4719-1-git-send-email-hao.wu@intel.com> <1518513893-4719-24-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWU4KDu+3U2Z6XpLcV5G9-ihesCdREdaGtO76spuHW-mA@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <1518513893-4719-24-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>
-Cc: Ingo Molnar <mingo@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Yonghong Song <yhs@fb.com>, "David S . Miller" <davem@davemloft.net>, Thomas Garnier <thgarnie@google.com>, kernel-team <kernel-team@fb.com>
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 03/18/2018 07:13 PM, Andy Lutomirski wrote:
-> On Sun, Mar 18, 2018 at 6:47 AM, Dominik Brodowski
-> <linux@dominikbrodowski.net> wrote:
->> On Fri, Mar 16, 2018 at 03:55:04PM -0700, Howard McLauchlan wrote:
->>> On 03/13/2018 04:56 PM, Andy Lutomirski wrote:
->>>> On Tue, Mar 13, 2018 at 11:16 PM, Howard McLauchlan <hmclauchlan@fb.com> wrote:
->>>>> Error injection is a useful mechanism to fail arbitrary kernel
->>>>> functions. However, it is often hard to guarantee an error propagates
->>>>> appropriately to user space programs. By injecting into syscalls, we can
->>>>> return arbitrary values to user space directly; this increases
->>>>> flexibility and robustness in testing, allowing us to test user space
->>>>> error paths effectively.
->>>>
->>>> Temporary NAK IMO.  Specifically:
->>>>
->>>>> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
->>>>> index a78186d826d7..e8c6d63ace78 100644
->>>>> --- a/include/linux/syscalls.h
->>>>> +++ b/include/linux/syscalls.h
->>>>> @@ -191,6 +191,8 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
->>>>>
->>>>>  #define SYSCALL_DEFINE0(sname)                                 \
->>>>>         SYSCALL_METADATA(_##sname, 0);                          \
->>>>> +       asmlinkage long sys_##sname(void);                      \
->>>>> +       ALLOW_ERROR_INJECTION(sys_##sname, ERRNO);              \
->>>>
->>>> sys_xyz() is not just the syscall itself; it's also a helper that's
->>>> used for entirely silly reasons by various bits of kernel code for
->>>> quite a few syscalls.  Fortunately, Dominik has patches to fix that,
->>>> and Linus is even considering pulling them for 4.16.  This patch will
->>>> most likely conflict with the final result of Dominik's series.
->>>>
->>>> Can you and Dominik coordinate a bit to get this patch or its
->>>> equivalent landed on top of Dominik's work?  It might make sense for
->>>> Dominik to just add this patch to his series so it can land with the
->>>> rest of it.  Dominik, Ingo, what do you think?
->>>>
->>>> --Andy
->>>>
->>>
->>> Dominik,
->>>
->>> This patch applies cleanly on top of your patch series. Is there anything you'd need from me to get this in on top of your work?
->>
->> Howard,
->>
->> would this form part of the kernel<->userspace interface and therefore needs
->> to be kept stable? If so, this patch should wait until the arch-specific
->> syscall calling convention is agreed upon.
->>
->> Moreover, the patches I sent out already do not cover all syscalls yet.
->> Until all in-kernel users of sys_*() are gone (or at least outside arch/),
->> I'd prefer to postpone this patch.
->>
-> 
-> I was assuming that this ALLOW_ERROR_INJECTION thing is *not*
-> considered stable ABI.  We should be free to change the way that the
-> syscall entry code calls syscalls whenever we like.
-> 
-> If you want a stable syscall error injection mechanism, make it work
-> like seccomp instead, please.
-> 
+On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
 
-This is not supposed to be considered stable. It's for debug purposes only and 
-would normally be configured off.
+Hi Hao,
 
-Howard
+> From: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+>
+> User Accelerated Function Unit sub feature exposes the MMIO region of
+
+Is it 'user accelerated'?  I think it is the Accelerator interface.
+
+> the AFU. After valid green bitstream (GBS) is programmed and port is
+
+Would it make sense to just use "partial bitstream" or "PR bitstream"
+and "static bitstream" for this patchset?  I don't think that adding
+this terminology makes things clearer.  In any case when someone else
+uses this patchset, they may not be using this type of branding in
+their terminology.
+
+> enabled, then this MMIO region could be accessed.
+>
+> This patch adds support to enumerate the AFU MMIO region and expose it
+> to userspace via mmap file operation. Below interfaces are exposed to user:
+>
+> Sysfs interface:
+> * /sys/class/fpga_region/<regionX>/<dfl-port.x>/afu_id
+>   Read-only. Indicate which green bitstream is programmed to this AFU.
+
+Here too.
+
+>
+> Ioctl interfaces:
+> * FPGA_PORT_GET_INFO
+>   Provide info to userspace on the number of supported region.
+>   Only UAFU region is supported now.
+
+I think UAFU is really the interface for an AFU.  I'd like to not add
+more terminology than is really useful here.  Unless I'm missing
+something, all the UAFU stuff here is really AFU and not some
+different block.
+
+>
+> * FPGA_PORT_GET_REGION_INFO
+>   Provide region information, including access permission, region size,
+>   offset from the start of device fd.
+>
+> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+> ---
+> v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
+>     add sysfs documentation.
+>     switched to GPLv2 license.
+> v3: rename driver to fpga-dfl-afu
+>     fix coding style and checkpatch issue.
+>     only allow afu_id to be read when port isn't in reset.
+> v4: rebase and add more comments in code.
+>     fix SPDX license issue.
+> ---
+>  Documentation/ABI/testing/sysfs-platform-dfl-port |   9 +
+>  drivers/fpga/Makefile                             |   2 +-
+>  drivers/fpga/dfl-afu-main.c                       | 211 +++++++++++++++++++++-
+>  drivers/fpga/dfl-afu-region.c                     | 165 +++++++++++++++++
+>  drivers/fpga/dfl-afu.h                            |  71 ++++++++
+>  include/uapi/linux/fpga-dfl.h                     |  47 +++++
+>  6 files changed, 501 insertions(+), 4 deletions(-)
+>  create mode 100644 drivers/fpga/dfl-afu-region.c
+>  create mode 100644 drivers/fpga/dfl-afu.h
+>
+> diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
+> index 79e8332..10bda5a 100644
+> --- a/Documentation/ABI/testing/sysfs-platform-dfl-port
+> +++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
+> @@ -5,3 +5,12 @@ Contact:       Wu Hao <hao.wu@intel.com>
+>  Description:   Read-only. It returns id of this port. One DFL FPGA device
+>                 may have more than one port. Userspace could use this id to
+>                 distinguish different ports under same FPGA device.
+> +
+> +What:          /sys/bus/platform/devices/dfl-port.0/afu_id
+> +Date:          Februray 2018
+> +KernelVersion:  4.16
+> +Contact:       Wu Hao <hao.wu@intel.com>
+> +Description:   Read-only. User can program different green bitstreams (GBS) to
+> +               FPGA Accelerator Function Unit (AFU) for different functions.
+> +               It returns uuid which could be used to identify which GBS is
+> +               programmed in this AFU.
+> diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+> index 5c9607b..041e3cd1 100644
+> --- a/drivers/fpga/Makefile
+> +++ b/drivers/fpga/Makefile
+> @@ -37,7 +37,7 @@ obj-$(CONFIG_FPGA_DFL_FME_REGION)     += dfl-fme-region.o
+>  obj-$(CONFIG_FPGA_DFL_AFU)             += dfl-afu.o
+>
+>  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
+> -dfl-afu-objs := dfl-afu-main.o
+> +dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o
+>
+>  # Drivers for FPGAs which implement DFL
+>  obj-$(CONFIG_FPGA_DFL_PCI)             += dfl-pci.o
+> diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+> index bead242..9c0e4a8 100644
+> --- a/drivers/fpga/dfl-afu-main.c
+> +++ b/drivers/fpga/dfl-afu-main.c
+> @@ -16,9 +16,10 @@
+>
+>  #include <linux/kernel.h>
+>  #include <linux/module.h>
+> +#include <linux/uaccess.h>
+>  #include <linux/fpga-dfl.h>
+>
+> -#include "dfl.h"
+> +#include "dfl-afu.h"
+>
+>  static ssize_t
+>  id_show(struct device *dev, struct device_attribute *attr, char *buf)
+> @@ -78,12 +79,74 @@ static const struct feature_ops port_hdr_ops = {
+>         .ioctl = port_hdr_ioctl,
+>  };
+>
+> +static ssize_t
+> +afu_id_show(struct device *dev, struct device_attribute *attr, char *buf)
+> +{
+> +       struct feature_platform_data *pdata = dev_get_platdata(dev);
+> +       void __iomem *base;
+> +       u64 guidl, guidh;
+> +
+> +       base = get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_AFU);
+> +
+> +       mutex_lock(&pdata->lock);
+> +       if (pdata->disable_count) {
+> +               mutex_unlock(&pdata->lock);
+> +               return -EBUSY;
+> +       }
+> +
+> +       guidl = readq(base + GUID_L);
+> +       guidh = readq(base + GUID_H);
+> +       mutex_unlock(&pdata->lock);
+> +
+> +       return scnprintf(buf, PAGE_SIZE, "%016llx%016llx\n", guidh, guidl);
+> +}
+> +static DEVICE_ATTR_RO(afu_id);
+> +
+> +static const struct attribute *port_uafu_attrs[] = {
+
+port_afu_attrs?
+
+> +       &dev_attr_afu_id.attr,
+> +       NULL
+> +};
+> +
+> +static int port_uafu_init(struct platform_device *pdev, struct feature *feature)
+
+port_afu_init?
+
+so on.  The thing's userspace interface doesn't have to be named
+differently from the thing itself.
+
+> +{
+> +       struct resource *res = &pdev->resource[feature->resource_index];
+> +       u32 flags = FPGA_REGION_READ | FPGA_REGION_WRITE | FPGA_REGION_MMAP;
+> +       int ret;
+> +
+> +       dev_dbg(&pdev->dev, "PORT AFU Init.\n");
+> +
+> +       ret = afu_region_add(dev_get_platdata(&pdev->dev),
+> +                            FPGA_PORT_INDEX_UAFU, resource_size(res),
+> +                            res->start, flags);
+> +       if (ret)
+> +               return ret;
+> +
+> +       return sysfs_create_files(&pdev->dev.kobj, port_uafu_attrs);
+> +}
+> +
+> +static void port_uafu_uinit(struct platform_device *pdev,
+> +                           struct feature *feature)
+> +{
+> +       dev_dbg(&pdev->dev, "PORT AFU UInit.\n");
+> +
+> +       sysfs_remove_files(&pdev->dev.kobj, port_uafu_attrs);
+> +}
+> +
+> +static const struct feature_ops port_uafu_ops = {
+> +       .init = port_uafu_init,
+> +       .uinit = port_uafu_uinit,
+> +};
+> +
+>  static struct feature_driver port_feature_drvs[] = {
+>         {
+>                 .id = PORT_FEATURE_ID_HEADER,
+>                 .ops = &port_hdr_ops,
+>         },
+>         {
+> +               .id = PORT_FEATURE_ID_AFU,
+> +               .ops = &port_uafu_ops,
+> +       },
+> +       {
+>                 .ops = NULL,
+>         }
+>  };
+> @@ -128,6 +191,64 @@ static long afu_ioctl_check_extension(struct feature_platform_data *pdata,
+>         return 0;
+>  }
+>
+> +static long
+> +afu_ioctl_get_info(struct feature_platform_data *pdata, void __user *arg)
+> +{
+> +       struct fpga_port_info info;
+> +       struct fpga_afu *afu;
+> +       unsigned long minsz;
+> +
+> +       minsz = offsetofend(struct fpga_port_info, num_umsgs);
+> +
+> +       if (copy_from_user(&info, arg, minsz))
+> +               return -EFAULT;
+> +
+> +       if (info.argsz < minsz)
+> +               return -EINVAL;
+> +
+> +       mutex_lock(&pdata->lock);
+> +       afu = fpga_pdata_get_private(pdata);
+> +       info.flags = 0;
+> +       info.num_regions = afu->num_regions;
+> +       info.num_umsgs = afu->num_umsgs;
+> +       mutex_unlock(&pdata->lock);
+> +
+> +       if (copy_to_user(arg, &info, sizeof(info)))
+> +               return -EFAULT;
+> +
+> +       return 0;
+> +}
+> +
+> +static long
+> +afu_ioctl_get_region_info(struct feature_platform_data *pdata, void __user *arg)
+> +{
+> +       struct fpga_port_region_info rinfo;
+> +       struct fpga_afu_region region;
+> +       unsigned long minsz;
+> +       long ret;
+> +
+> +       minsz = offsetofend(struct fpga_port_region_info, offset);
+> +
+> +       if (copy_from_user(&rinfo, arg, minsz))
+> +               return -EFAULT;
+> +
+> +       if (rinfo.argsz < minsz || rinfo.padding)
+> +               return -EINVAL;
+> +
+> +       ret = afu_get_region_by_index(pdata, rinfo.index, &region);
+> +       if (ret)
+> +               return ret;
+> +
+> +       rinfo.flags = region.flags;
+> +       rinfo.size = region.size;
+> +       rinfo.offset = region.offset;
+> +
+> +       if (copy_to_user(arg, &rinfo, sizeof(rinfo)))
+> +               return -EFAULT;
+> +
+> +       return 0;
+> +}
+> +
+>  static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>  {
+>         struct platform_device *pdev = filp->private_data;
+> @@ -142,6 +263,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>                 return FPGA_API_VERSION;
+>         case FPGA_CHECK_EXTENSION:
+
+I commented elsewhere about the FPGA_* names.  These names such as
+FPGA_CHECK_EXTENSION are specific to this DFL patchset, they weren't
+written as addtions to the lower level FPGA stuff.
+
+>                 return afu_ioctl_check_extension(pdata, arg);
+> +       case FPGA_PORT_GET_INFO:
+> +               return afu_ioctl_get_info(pdata, (void __user *)arg);
+> +       case FPGA_PORT_GET_REGION_INFO:
+> +               return afu_ioctl_get_region_info(pdata, (void __user *)arg);
+>         default:
+>                 /*
+>                  * Let sub-feature's ioctl function to handle the cmd
+> @@ -162,27 +287,106 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>         return -EINVAL;
+>  }
+>
+> +static int afu_mmap(struct file *filp, struct vm_area_struct *vma)
+> +{
+> +       struct fpga_afu_region region;
+> +       struct platform_device *pdev = filp->private_data;
+> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+> +       u64 size = vma->vm_end - vma->vm_start;
+> +       u64 offset;
+> +       int ret;
+> +
+> +       if (!(vma->vm_flags & VM_SHARED))
+> +               return -EINVAL;
+> +
+> +       offset = vma->vm_pgoff << PAGE_SHIFT;
+> +       ret = afu_get_region_by_offset(pdata, offset, size, &region);
+> +       if (ret)
+> +               return ret;
+> +
+> +       if (!(region.flags & FPGA_REGION_MMAP))
+
+FPGA_REGION_*?  We already have FPGA regions which are something
+different.  Please call this something else.
+
+> +               return -EINVAL;
+> +
+> +       if ((vma->vm_flags & VM_READ) && !(region.flags & FPGA_REGION_READ))
+> +               return -EPERM;
+> +
+> +       if ((vma->vm_flags & VM_WRITE) && !(region.flags & FPGA_REGION_WRITE))
+> +               return -EPERM;
+> +
+> +       vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+> +
+> +       return remap_pfn_range(vma, vma->vm_start,
+> +                       (region.phys + (offset - region.offset)) >> PAGE_SHIFT,
+> +                       size, vma->vm_page_prot);
+> +}
+> +
+>  static const struct file_operations afu_fops = {
+>         .owner = THIS_MODULE,
+>         .open = afu_open,
+>         .release = afu_release,
+>         .unlocked_ioctl = afu_ioctl,
+> +       .mmap = afu_mmap,
+>  };
+>
+> +static int afu_dev_init(struct platform_device *pdev)
+> +{
+> +       struct fpga_afu *afu;
+> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+> +
+> +       afu = devm_kzalloc(&pdev->dev, sizeof(*afu), GFP_KERNEL);
+> +       if (!afu)
+> +               return -ENOMEM;
+> +
+> +       afu->pdata = pdata;
+> +
+> +       mutex_lock(&pdata->lock);
+> +       fpga_pdata_set_private(pdata, afu);
+> +       afu_region_init(pdata);
+> +       mutex_unlock(&pdata->lock);
+> +       return 0;
+> +}
+> +
+> +static int afu_dev_destroy(struct platform_device *pdev)
+> +{
+> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+> +       struct fpga_afu *afu;
+> +
+> +       mutex_lock(&pdata->lock);
+> +       afu = fpga_pdata_get_private(pdata);
+> +       afu_region_destroy(pdata);
+> +       fpga_pdata_set_private(pdata, NULL);
+> +       mutex_unlock(&pdata->lock);
+> +
+> +       devm_kfree(&pdev->dev, afu);
+> +
+> +       return 0;
+> +}
+> +
+>  static int afu_probe(struct platform_device *pdev)
+>  {
+>         int ret;
+>
+>         dev_dbg(&pdev->dev, "%s\n", __func__);
+>
+> +       ret = afu_dev_init(pdev);
+> +       if (ret)
+> +               goto exit;
+> +
+>         ret = fpga_dev_feature_init(pdev, port_feature_drvs);
+>         if (ret)
+> -               return ret;
+> +               goto dev_destroy;
+>
+>         ret = fpga_register_dev_ops(pdev, &afu_fops, THIS_MODULE);
+> -       if (ret)
+> +       if (ret) {
+>                 fpga_dev_feature_uinit(pdev);
+> +               goto dev_destroy;
+> +       }
+> +
+> +       return 0;
+>
+> +dev_destroy:
+> +       afu_dev_destroy(pdev);
+> +exit:
+>         return ret;
+>  }
+>
+> @@ -192,6 +396,7 @@ static int afu_remove(struct platform_device *pdev)
+>
+>         fpga_dev_feature_uinit(pdev);
+>         fpga_unregister_dev_ops(pdev);
+> +       afu_dev_destroy(pdev);
+>
+>         return 0;
+>  }
+> diff --git a/drivers/fpga/dfl-afu-region.c b/drivers/fpga/dfl-afu-region.c
+> new file mode 100644
+> index 0000000..e3a467b
+> --- /dev/null
+> +++ b/drivers/fpga/dfl-afu-region.c
+> @@ -0,0 +1,165 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Driver for FPGA Accelerated Function Unit (AFU) Region Management
+> + *
+> + * Copyright (C) 2017 Intel Corporation, Inc.
+> + *
+> + * Authors:
+> + *   Wu Hao <hao.wu@intel.com>
+> + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> + */
+> +#include "dfl-afu.h"
+> +
+> +/**
+> + * afu_region_init - init function for afu region support
+> + * @pdata: afu platform device's pdata.
+> + */
+> +void afu_region_init(struct feature_platform_data *pdata)
+
+These afu regions are memory regions?  We also have 'FPGA regions'
+which are partial reconfiguration areas.  It probably would be really
+helpful to name things to make it more clear what these are and that
+they are not what drivers/fpga already calls "FPGA regions".
+
+> +{
+> +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
+> +
+> +       INIT_LIST_HEAD(&afu->regions);
+> +}
+> +
+> +#define for_each_region(region, afu)   \
+> +       list_for_each_entry((region), &(afu)->regions, node)
+> +
+> +static struct fpga_afu_region *get_region_by_index(struct fpga_afu *afu,
+> +                                                  u32 region_index)
+> +{
+> +       struct fpga_afu_region *region;
+> +
+> +       for_each_region(region, afu)
+> +               if (region->index == region_index)
+> +                       return region;
+> +
+> +       return NULL;
+> +}
+> +
+> +/**
+> + * afu_region_add - add a region to given feature dev.
+> + *
+> + * @region_index: region index.
+> + * @region_size: region size.
+> + * @phys: region's physical address of this region.
+> + * @flags: region flags (access permission).
+> + *
+> + * Return: 0 on success, negative error code otherwise.
+> + */
+> +int afu_region_add(struct feature_platform_data *pdata, u32 region_index,
+> +                  u64 region_size, u64 phys, u32 flags)
+> +{
+> +       struct fpga_afu_region *region;
+> +       struct fpga_afu *afu;
+> +       int ret = 0;
+> +
+> +       region = devm_kzalloc(&pdata->dev->dev, sizeof(*region), GFP_KERNEL);
+> +       if (!region)
+> +               return -ENOMEM;
+> +
+> +       region->index = region_index;
+> +       region->size = region_size;
+> +       region->phys = phys;
+> +       region->flags = flags;
+> +
+> +       mutex_lock(&pdata->lock);
+> +
+> +       afu = fpga_pdata_get_private(pdata);
+> +
+> +       /* check if @index already exists */
+> +       if (get_region_by_index(afu, region_index)) {
+> +               mutex_unlock(&pdata->lock);
+> +               ret = -EEXIST;
+> +               goto exit;
+> +       }
+> +
+> +       region_size = PAGE_ALIGN(region_size);
+> +       region->offset = afu->region_cur_offset;
+> +       list_add(&region->node, &afu->regions);
+> +
+> +       afu->region_cur_offset += region_size;
+> +       afu->num_regions++;
+> +       mutex_unlock(&pdata->lock);
+> +
+> +       return 0;
+> +
+> +exit:
+> +       devm_kfree(&pdata->dev->dev, region);
+> +       return ret;
+> +}
+> +
+> +/**
+> + * afu_region_destroy - destroy all regions under given feature dev.
+> + * @pdata: afu platform device's pdata.
+> + */
+> +void afu_region_destroy(struct feature_platform_data *pdata)
+> +{
+> +       struct fpga_afu_region *tmp, *region;
+> +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
+> +
+> +       list_for_each_entry_safe(region, tmp, &afu->regions, node)
+> +               devm_kfree(&pdata->dev->dev, region);
+> +}
+> +
+> +/**
+> + * afu_get_region_by_index - find an afu region by index.
+> + * @pdata: afu platform device's pdata.
+> + * @region_index: region index.
+> + * @pregion: ptr to region for result.
+> + *
+> + * Return: 0 on success, negative error code otherwise.
+> + */
+> +int afu_get_region_by_index(struct feature_platform_data *pdata,
+> +                           u32 region_index, struct fpga_afu_region *pregion)
+> +{
+> +       struct fpga_afu_region *region;
+> +       struct fpga_afu *afu;
+> +       int ret = 0;
+> +
+> +       mutex_lock(&pdata->lock);
+> +       afu = fpga_pdata_get_private(pdata);
+> +       region = get_region_by_index(afu, region_index);
+> +       if (!region) {
+> +               ret = -EINVAL;
+> +               goto exit;
+> +       }
+> +       *pregion = *region;
+> +exit:
+> +       mutex_unlock(&pdata->lock);
+> +       return ret;
+> +}
+> +
+> +/**
+> + * afu_get_region_by_offset - find an afu region by offset and size
+> + *
+> + * @pdata: afu platform device's pdata.
+> + * @offset: region offset from start of the device fd.
+> + * @size: region size.
+> + * @pregion: ptr to region for result.
+> + *
+> + * Find the region which fully contains the region described by input
+> + * parameters (offset and size) from the feature dev's region link list.
+> + *
+> + * Return: 0 on success, negative error code otherwise.
+> + */
+> +int afu_get_region_by_offset(struct feature_platform_data *pdata,
+> +                            u64 offset, u64 size,
+> +                            struct fpga_afu_region *pregion)
+> +{
+> +       struct fpga_afu_region *region;
+> +       struct fpga_afu *afu;
+> +       int ret = 0;
+> +
+> +       mutex_lock(&pdata->lock);
+> +       afu = fpga_pdata_get_private(pdata);
+> +       for_each_region(region, afu)
+> +               if (region->offset <= offset &&
+> +                   region->offset + region->size >= offset + size) {
+> +                       *pregion = *region;
+> +                       goto exit;
+> +               }
+> +       ret = -EINVAL;
+> +exit:
+> +       mutex_unlock(&pdata->lock);
+> +       return ret;
+> +}
+> diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
+> new file mode 100644
+> index 0000000..af690cc
+> --- /dev/null
+> +++ b/drivers/fpga/dfl-afu.h
+> @@ -0,0 +1,71 @@
+> +/* SPDX-License-Identifier: GPL-2.0 */
+> +/*
+> + * Header file for FPGA Accelerated Function Unit (AFU) Driver
+> + *
+> + * Copyright (C) 2017 Intel Corporation, Inc.
+> + *
+> + * Authors:
+> + *     Wu Hao <hao.wu@intel.com>
+> + *     Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> + *     Joseph Grecco <joe.grecco@intel.com>
+> + *     Enno Luebbers <enno.luebbers@intel.com>
+> + *     Tim Whisonant <tim.whisonant@intel.com>
+> + *     Ananda Ravuri <ananda.ravuri@intel.com>
+> + *     Henry Mitchel <henry.mitchel@intel.com>
+> + */
+> +
+> +#ifndef __DFL_AFU_H
+> +#define __DFL_AFU_H
+> +
+> +#include <linux/mm.h>
+> +
+> +#include "dfl.h"
+> +
+> +/**
+> + * struct fpga_afu_region - afu region data structure
+> + *
+> + * @index: region index.
+> + * @flags: region flags (access permission).
+> + * @size: region size.
+> + * @offset: region offset from start of the device fd.
+> + * @phys: region's physical address.
+> + * @node: node to add to afu feature dev's region list.
+> + */
+> +struct fpga_afu_region {
+> +       u32 index;
+> +       u32 flags;
+> +       u64 size;
+> +       u64 offset;
+> +       u64 phys;
+> +       struct list_head node;
+> +};
+> +
+> +/**
+> + * struct fpga_afu - afu device data structure
+> + *
+> + * @region_cur_offset: current region offset from start to the device fd.
+> + * @num_regions: num of regions.
+> + * @regions: the region link list of this afu feature device.
+> + * @num_umsgs: num of umsgs.
+> + * @pdata: afu platform device's pdata.
+> + */
+> +struct fpga_afu {
+> +       u64 region_cur_offset;
+> +       int num_regions;
+> +       u8 num_umsgs;
+> +       struct list_head regions;
+> +
+> +       struct feature_platform_data *pdata;
+> +};
+> +
+> +void afu_region_init(struct feature_platform_data *pdata);
+> +int afu_region_add(struct feature_platform_data *pdata, u32 region_index,
+> +                  u64 region_size, u64 phys, u32 flags);
+> +void afu_region_destroy(struct feature_platform_data *pdata);
+> +int afu_get_region_by_index(struct feature_platform_data *pdata,
+> +                           u32 region_index, struct fpga_afu_region *pregion);
+> +int afu_get_region_by_offset(struct feature_platform_data *pdata,
+> +                            u64 offset, u64 size,
+> +                            struct fpga_afu_region *pregion);
+> +
+> +#endif
+> diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
+> index 727bec2..df41828 100644
+> --- a/include/uapi/linux/fpga-dfl.h
+> +++ b/include/uapi/linux/fpga-dfl.h
+> @@ -65,6 +65,53 @@
+>
+>  #define FPGA_PORT_RESET                _IO(FPGA_MAGIC, PORT_BASE + 0)
+>
+> +/**
+> + * FPGA_PORT_GET_INFO - _IOR(FPGA_MAGIC, PORT_BASE + 1, struct fpga_port_info)
+> + *
+> + * Retrieve information about the fpga port.
+> + * Driver fills the info in provided struct fpga_port_info.
+> + * Return: 0 on success, -errno on failure.
+> + */
+> +struct fpga_port_info {
+> +       /* Input */
+> +       __u32 argsz;            /* Structure length */
+> +       /* Output */
+> +       __u32 flags;            /* Zero for now */
+> +       __u32 num_regions;      /* The number of supported regions */
+> +       __u32 num_umsgs;        /* The number of allocated umsgs */
+> +};
+> +
+> +#define FPGA_PORT_GET_INFO     _IO(FPGA_MAGIC, PORT_BASE + 1)
+> +
+> +/**
+> + * FPGA_PORT_GET_REGION_INFO - _IOWR(FPGA_MAGIC, PORT_BASE + 2,
+> + *                                             struct fpga_port_region_info)
+> + *
+> + * Retrieve information about a device region.
+> + * Caller provides struct fpga_port_region_info with index value set.
+> + * Driver returns the region info in other fields.
+> + * Return: 0 on success, -errno on failure.
+> + */
+> +struct fpga_port_region_info {
+> +       /* input */
+> +       __u32 argsz;            /* Structure length */
+> +       /* Output */
+> +       __u32 flags;            /* Access permission */
+> +#define FPGA_REGION_READ       (1 << 0)        /* Region is readable */
+> +#define FPGA_REGION_WRITE      (1 << 1)        /* Region is writable */
+> +#define FPGA_REGION_MMAP       (1 << 2)        /* Can be mmaped to userspace */
+> +       /* Input */
+> +       __u32 index;            /* Region index */
+> +#define FPGA_PORT_INDEX_UAFU   0               /* User AFU */
+> +#define FPGA_PORT_INDEX_STP    1               /* Signal Tap */
+> +       __u32 padding;
+> +       /* Output */
+> +       __u64 size;             /* Region size (bytes) */
+> +       __u64 offset;           /* Region offset from start of device fd */
+> +};
+> +
+> +#define FPGA_PORT_GET_REGION_INFO      _IO(FPGA_MAGIC, PORT_BASE + 2)
+> +
+>  /* IOCTLs for FME file descriptor */
+>
+>  /**
+> --
+> 2.7.4
+>
+
+Thanks,
+Alan
