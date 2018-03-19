@@ -1,735 +1,619 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v4 23/24] fpga: dfl: afu: add user afu sub feature support
-Date: Mon, 19 Mar 2018 15:10:28 -0500
-Message-ID: <CANk1AXQpPXhNoPt1Uj=YvbtO+jun7e2Yzvyp+wuR1ZXx6+-i8Q@mail.gmail.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com> <1518513893-4719-24-git-send-email-hao.wu@intel.com>
+From: kbuild test robot <lkp@intel.com>
+Subject: Re: [PATCH] x86/sigreturn: use SYSCALL_DEFINE0
+Date: Tue, 20 Mar 2018 04:17:37 +0800
+Message-ID: <201803200440.2jyQrGjo%fengguang.wu@intel.com>
+References: <9C9981F4-0E5E-42A7-8788-70F3DEAD258D@amazon.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/mixed; boundary="UlVJffcvxoiEqYs2"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1518513893-4719-24-git-send-email-hao.wu@intel.com>
+Content-Disposition: inline
+In-Reply-To: <9C9981F4-0E5E-42A7-8788-70F3DEAD258D@amazon.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+To: "Tautschnig, Michael" <tautschn@amazon.co.uk>
+Cc: kbuild-all@01.org, "x86@kernel.org" <x86@kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Jaswinder Singh <jaswinder@infradead.org>, Andi Kleen <ak@linux.intel.com>, Dominik Brodowski <linux@dominikbrodowski.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
 
-Hi Hao,
+--UlVJffcvxoiEqYs2
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-> From: Xiao Guangrong <guangrong.xiao@linux.intel.com>
->
-> User Accelerated Function Unit sub feature exposes the MMIO region of
+Hi Michael,
 
-Is it 'user accelerated'?  I think it is the Accelerator interface.
+Thank you for the patch! Yet something to improve:
 
-> the AFU. After valid green bitstream (GBS) is programmed and port is
+[auto build test ERROR on v4.16-rc4]
+[also build test ERROR on next-20180319]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-Would it make sense to just use "partial bitstream" or "PR bitstream"
-and "static bitstream" for this patchset?  I don't think that adding
-this terminology makes things clearer.  In any case when someone else
-uses this patchset, they may not be using this type of branding in
-their terminology.
+url:    https://github.com/0day-ci/linux/commits/Tautschnig-Michael/x86-sigreturn-use-SYSCALL_DEFINE0/20180316-110516
+config: i386-randconfig-c0-03200324 (attached as .config)
+compiler: gcc-7 (Debian 7.3.0-1) 7.3.0
+reproduce:
+        # save the attached .config to linux build tree
+        make ARCH=i386 
 
-> enabled, then this MMIO region could be accessed.
->
-> This patch adds support to enumerate the AFU MMIO region and expose it
-> to userspace via mmap file operation. Below interfaces are exposed to user:
->
-> Sysfs interface:
-> * /sys/class/fpga_region/<regionX>/<dfl-port.x>/afu_id
->   Read-only. Indicate which green bitstream is programmed to this AFU.
+All errors (new ones prefixed by >>):
 
-Here too.
+   In file included from arch/x86/kernel/signal.c:28:0:
+>> include/linux/syscalls.h:194:18: error: conflicting types for 'sys_sigreturn'
+     asmlinkage long sys_##sname(void)
+                     ^
+   arch/x86/kernel/signal.c:605:1: note: in expansion of macro 'SYSCALL_DEFINE0'
+    SYSCALL_DEFINE0(sigreturn)
+    ^~~~~~~~~~~~~~~
+   In file included from arch/x86/kernel/signal.c:45:0:
+   arch/x86/include/asm/syscalls.h:37:26: note: previous declaration of 'sys_sigreturn' was here
+    asmlinkage unsigned long sys_sigreturn(void);
+                             ^~~~~~~~~~~~~
+--
+   In file included from arch/x86//kernel/signal.c:28:0:
+>> include/linux/syscalls.h:194:18: error: conflicting types for 'sys_sigreturn'
+     asmlinkage long sys_##sname(void)
+                     ^
+   arch/x86//kernel/signal.c:605:1: note: in expansion of macro 'SYSCALL_DEFINE0'
+    SYSCALL_DEFINE0(sigreturn)
+    ^~~~~~~~~~~~~~~
+   In file included from arch/x86//kernel/signal.c:45:0:
+   arch/x86/include/asm/syscalls.h:37:26: note: previous declaration of 'sys_sigreturn' was here
+    asmlinkage unsigned long sys_sigreturn(void);
+                             ^~~~~~~~~~~~~
 
->
-> Ioctl interfaces:
-> * FPGA_PORT_GET_INFO
->   Provide info to userspace on the number of supported region.
->   Only UAFU region is supported now.
+vim +/sys_sigreturn +194 include/linux/syscalls.h
 
-I think UAFU is really the interface for an AFU.  I'd like to not add
-more terminology than is really useful here.  Unless I'm missing
-something, all the UAFU stuff here is really AFU and not some
-different block.
+bed1ffca Frederic Weisbecker 2009-03-13  191  
+bed1ffca Frederic Weisbecker 2009-03-13  192  #define SYSCALL_DEFINE0(sname)					\
+99e621f7 Al Viro             2013-03-05  193  	SYSCALL_METADATA(_##sname, 0);				\
+bed1ffca Frederic Weisbecker 2009-03-13 @194  	asmlinkage long sys_##sname(void)
+bed1ffca Frederic Weisbecker 2009-03-13  195  
 
->
-> * FPGA_PORT_GET_REGION_INFO
->   Provide region information, including access permission, region size,
->   offset from the start of device fd.
->
-> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-> ---
-> v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
->     add sysfs documentation.
->     switched to GPLv2 license.
-> v3: rename driver to fpga-dfl-afu
->     fix coding style and checkpatch issue.
->     only allow afu_id to be read when port isn't in reset.
-> v4: rebase and add more comments in code.
->     fix SPDX license issue.
-> ---
->  Documentation/ABI/testing/sysfs-platform-dfl-port |   9 +
->  drivers/fpga/Makefile                             |   2 +-
->  drivers/fpga/dfl-afu-main.c                       | 211 +++++++++++++++++++++-
->  drivers/fpga/dfl-afu-region.c                     | 165 +++++++++++++++++
->  drivers/fpga/dfl-afu.h                            |  71 ++++++++
->  include/uapi/linux/fpga-dfl.h                     |  47 +++++
->  6 files changed, 501 insertions(+), 4 deletions(-)
->  create mode 100644 drivers/fpga/dfl-afu-region.c
->  create mode 100644 drivers/fpga/dfl-afu.h
->
-> diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
-> index 79e8332..10bda5a 100644
-> --- a/Documentation/ABI/testing/sysfs-platform-dfl-port
-> +++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
-> @@ -5,3 +5,12 @@ Contact:       Wu Hao <hao.wu@intel.com>
->  Description:   Read-only. It returns id of this port. One DFL FPGA device
->                 may have more than one port. Userspace could use this id to
->                 distinguish different ports under same FPGA device.
-> +
-> +What:          /sys/bus/platform/devices/dfl-port.0/afu_id
-> +Date:          Februray 2018
-> +KernelVersion:  4.16
-> +Contact:       Wu Hao <hao.wu@intel.com>
-> +Description:   Read-only. User can program different green bitstreams (GBS) to
-> +               FPGA Accelerator Function Unit (AFU) for different functions.
-> +               It returns uuid which could be used to identify which GBS is
-> +               programmed in this AFU.
-> diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> index 5c9607b..041e3cd1 100644
-> --- a/drivers/fpga/Makefile
-> +++ b/drivers/fpga/Makefile
-> @@ -37,7 +37,7 @@ obj-$(CONFIG_FPGA_DFL_FME_REGION)     += dfl-fme-region.o
->  obj-$(CONFIG_FPGA_DFL_AFU)             += dfl-afu.o
->
->  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
-> -dfl-afu-objs := dfl-afu-main.o
-> +dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o
->
->  # Drivers for FPGAs which implement DFL
->  obj-$(CONFIG_FPGA_DFL_PCI)             += dfl-pci.o
-> diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-> index bead242..9c0e4a8 100644
-> --- a/drivers/fpga/dfl-afu-main.c
-> +++ b/drivers/fpga/dfl-afu-main.c
-> @@ -16,9 +16,10 @@
->
->  #include <linux/kernel.h>
->  #include <linux/module.h>
-> +#include <linux/uaccess.h>
->  #include <linux/fpga-dfl.h>
->
-> -#include "dfl.h"
-> +#include "dfl-afu.h"
->
->  static ssize_t
->  id_show(struct device *dev, struct device_attribute *attr, char *buf)
-> @@ -78,12 +79,74 @@ static const struct feature_ops port_hdr_ops = {
->         .ioctl = port_hdr_ioctl,
->  };
->
-> +static ssize_t
-> +afu_id_show(struct device *dev, struct device_attribute *attr, char *buf)
-> +{
-> +       struct feature_platform_data *pdata = dev_get_platdata(dev);
-> +       void __iomem *base;
-> +       u64 guidl, guidh;
-> +
-> +       base = get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_AFU);
-> +
-> +       mutex_lock(&pdata->lock);
-> +       if (pdata->disable_count) {
-> +               mutex_unlock(&pdata->lock);
-> +               return -EBUSY;
-> +       }
-> +
-> +       guidl = readq(base + GUID_L);
-> +       guidh = readq(base + GUID_H);
-> +       mutex_unlock(&pdata->lock);
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%016llx%016llx\n", guidh, guidl);
-> +}
-> +static DEVICE_ATTR_RO(afu_id);
-> +
-> +static const struct attribute *port_uafu_attrs[] = {
+:::::: The code at line 194 was first introduced by commit
+:::::: bed1ffca022cc876fb83161d26670e9b5d3cf36b tracing/syscalls: core infrastructure for syscalls tracing, enhancements
 
-port_afu_attrs?
+:::::: TO: Frederic Weisbecker <fweisbec@gmail.com>
+:::::: CC: Ingo Molnar <mingo@elte.hu>
 
-> +       &dev_attr_afu_id.attr,
-> +       NULL
-> +};
-> +
-> +static int port_uafu_init(struct platform_device *pdev, struct feature *feature)
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
-port_afu_init?
+--UlVJffcvxoiEqYs2
+Content-Type: application/gzip
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
 
-so on.  The thing's userspace interface doesn't have to be named
-differently from the thing itself.
+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
+00Uyx//+B3tcRj6TugEA
 
-> +{
-> +       struct resource *res = &pdev->resource[feature->resource_index];
-> +       u32 flags = FPGA_REGION_READ | FPGA_REGION_WRITE | FPGA_REGION_MMAP;
-> +       int ret;
-> +
-> +       dev_dbg(&pdev->dev, "PORT AFU Init.\n");
-> +
-> +       ret = afu_region_add(dev_get_platdata(&pdev->dev),
-> +                            FPGA_PORT_INDEX_UAFU, resource_size(res),
-> +                            res->start, flags);
-> +       if (ret)
-> +               return ret;
-> +
-> +       return sysfs_create_files(&pdev->dev.kobj, port_uafu_attrs);
-> +}
-> +
-> +static void port_uafu_uinit(struct platform_device *pdev,
-> +                           struct feature *feature)
-> +{
-> +       dev_dbg(&pdev->dev, "PORT AFU UInit.\n");
-> +
-> +       sysfs_remove_files(&pdev->dev.kobj, port_uafu_attrs);
-> +}
-> +
-> +static const struct feature_ops port_uafu_ops = {
-> +       .init = port_uafu_init,
-> +       .uinit = port_uafu_uinit,
-> +};
-> +
->  static struct feature_driver port_feature_drvs[] = {
->         {
->                 .id = PORT_FEATURE_ID_HEADER,
->                 .ops = &port_hdr_ops,
->         },
->         {
-> +               .id = PORT_FEATURE_ID_AFU,
-> +               .ops = &port_uafu_ops,
-> +       },
-> +       {
->                 .ops = NULL,
->         }
->  };
-> @@ -128,6 +191,64 @@ static long afu_ioctl_check_extension(struct feature_platform_data *pdata,
->         return 0;
->  }
->
-> +static long
-> +afu_ioctl_get_info(struct feature_platform_data *pdata, void __user *arg)
-> +{
-> +       struct fpga_port_info info;
-> +       struct fpga_afu *afu;
-> +       unsigned long minsz;
-> +
-> +       minsz = offsetofend(struct fpga_port_info, num_umsgs);
-> +
-> +       if (copy_from_user(&info, arg, minsz))
-> +               return -EFAULT;
-> +
-> +       if (info.argsz < minsz)
-> +               return -EINVAL;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       afu = fpga_pdata_get_private(pdata);
-> +       info.flags = 0;
-> +       info.num_regions = afu->num_regions;
-> +       info.num_umsgs = afu->num_umsgs;
-> +       mutex_unlock(&pdata->lock);
-> +
-> +       if (copy_to_user(arg, &info, sizeof(info)))
-> +               return -EFAULT;
-> +
-> +       return 0;
-> +}
-> +
-> +static long
-> +afu_ioctl_get_region_info(struct feature_platform_data *pdata, void __user *arg)
-> +{
-> +       struct fpga_port_region_info rinfo;
-> +       struct fpga_afu_region region;
-> +       unsigned long minsz;
-> +       long ret;
-> +
-> +       minsz = offsetofend(struct fpga_port_region_info, offset);
-> +
-> +       if (copy_from_user(&rinfo, arg, minsz))
-> +               return -EFAULT;
-> +
-> +       if (rinfo.argsz < minsz || rinfo.padding)
-> +               return -EINVAL;
-> +
-> +       ret = afu_get_region_by_index(pdata, rinfo.index, &region);
-> +       if (ret)
-> +               return ret;
-> +
-> +       rinfo.flags = region.flags;
-> +       rinfo.size = region.size;
-> +       rinfo.offset = region.offset;
-> +
-> +       if (copy_to_user(arg, &rinfo, sizeof(rinfo)))
-> +               return -EFAULT;
-> +
-> +       return 0;
-> +}
-> +
->  static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->  {
->         struct platform_device *pdev = filp->private_data;
-> @@ -142,6 +263,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->                 return FPGA_API_VERSION;
->         case FPGA_CHECK_EXTENSION:
-
-I commented elsewhere about the FPGA_* names.  These names such as
-FPGA_CHECK_EXTENSION are specific to this DFL patchset, they weren't
-written as addtions to the lower level FPGA stuff.
-
->                 return afu_ioctl_check_extension(pdata, arg);
-> +       case FPGA_PORT_GET_INFO:
-> +               return afu_ioctl_get_info(pdata, (void __user *)arg);
-> +       case FPGA_PORT_GET_REGION_INFO:
-> +               return afu_ioctl_get_region_info(pdata, (void __user *)arg);
->         default:
->                 /*
->                  * Let sub-feature's ioctl function to handle the cmd
-> @@ -162,27 +287,106 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
->         return -EINVAL;
->  }
->
-> +static int afu_mmap(struct file *filp, struct vm_area_struct *vma)
-> +{
-> +       struct fpga_afu_region region;
-> +       struct platform_device *pdev = filp->private_data;
-> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> +       u64 size = vma->vm_end - vma->vm_start;
-> +       u64 offset;
-> +       int ret;
-> +
-> +       if (!(vma->vm_flags & VM_SHARED))
-> +               return -EINVAL;
-> +
-> +       offset = vma->vm_pgoff << PAGE_SHIFT;
-> +       ret = afu_get_region_by_offset(pdata, offset, size, &region);
-> +       if (ret)
-> +               return ret;
-> +
-> +       if (!(region.flags & FPGA_REGION_MMAP))
-
-FPGA_REGION_*?  We already have FPGA regions which are something
-different.  Please call this something else.
-
-> +               return -EINVAL;
-> +
-> +       if ((vma->vm_flags & VM_READ) && !(region.flags & FPGA_REGION_READ))
-> +               return -EPERM;
-> +
-> +       if ((vma->vm_flags & VM_WRITE) && !(region.flags & FPGA_REGION_WRITE))
-> +               return -EPERM;
-> +
-> +       vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-> +
-> +       return remap_pfn_range(vma, vma->vm_start,
-> +                       (region.phys + (offset - region.offset)) >> PAGE_SHIFT,
-> +                       size, vma->vm_page_prot);
-> +}
-> +
->  static const struct file_operations afu_fops = {
->         .owner = THIS_MODULE,
->         .open = afu_open,
->         .release = afu_release,
->         .unlocked_ioctl = afu_ioctl,
-> +       .mmap = afu_mmap,
->  };
->
-> +static int afu_dev_init(struct platform_device *pdev)
-> +{
-> +       struct fpga_afu *afu;
-> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> +
-> +       afu = devm_kzalloc(&pdev->dev, sizeof(*afu), GFP_KERNEL);
-> +       if (!afu)
-> +               return -ENOMEM;
-> +
-> +       afu->pdata = pdata;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       fpga_pdata_set_private(pdata, afu);
-> +       afu_region_init(pdata);
-> +       mutex_unlock(&pdata->lock);
-> +       return 0;
-> +}
-> +
-> +static int afu_dev_destroy(struct platform_device *pdev)
-> +{
-> +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> +       struct fpga_afu *afu;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       afu = fpga_pdata_get_private(pdata);
-> +       afu_region_destroy(pdata);
-> +       fpga_pdata_set_private(pdata, NULL);
-> +       mutex_unlock(&pdata->lock);
-> +
-> +       devm_kfree(&pdev->dev, afu);
-> +
-> +       return 0;
-> +}
-> +
->  static int afu_probe(struct platform_device *pdev)
->  {
->         int ret;
->
->         dev_dbg(&pdev->dev, "%s\n", __func__);
->
-> +       ret = afu_dev_init(pdev);
-> +       if (ret)
-> +               goto exit;
-> +
->         ret = fpga_dev_feature_init(pdev, port_feature_drvs);
->         if (ret)
-> -               return ret;
-> +               goto dev_destroy;
->
->         ret = fpga_register_dev_ops(pdev, &afu_fops, THIS_MODULE);
-> -       if (ret)
-> +       if (ret) {
->                 fpga_dev_feature_uinit(pdev);
-> +               goto dev_destroy;
-> +       }
-> +
-> +       return 0;
->
-> +dev_destroy:
-> +       afu_dev_destroy(pdev);
-> +exit:
->         return ret;
->  }
->
-> @@ -192,6 +396,7 @@ static int afu_remove(struct platform_device *pdev)
->
->         fpga_dev_feature_uinit(pdev);
->         fpga_unregister_dev_ops(pdev);
-> +       afu_dev_destroy(pdev);
->
->         return 0;
->  }
-> diff --git a/drivers/fpga/dfl-afu-region.c b/drivers/fpga/dfl-afu-region.c
-> new file mode 100644
-> index 0000000..e3a467b
-> --- /dev/null
-> +++ b/drivers/fpga/dfl-afu-region.c
-> @@ -0,0 +1,165 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Driver for FPGA Accelerated Function Unit (AFU) Region Management
-> + *
-> + * Copyright (C) 2017 Intel Corporation, Inc.
-> + *
-> + * Authors:
-> + *   Wu Hao <hao.wu@intel.com>
-> + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> + */
-> +#include "dfl-afu.h"
-> +
-> +/**
-> + * afu_region_init - init function for afu region support
-> + * @pdata: afu platform device's pdata.
-> + */
-> +void afu_region_init(struct feature_platform_data *pdata)
-
-These afu regions are memory regions?  We also have 'FPGA regions'
-which are partial reconfiguration areas.  It probably would be really
-helpful to name things to make it more clear what these are and that
-they are not what drivers/fpga already calls "FPGA regions".
-
-> +{
-> +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
-> +
-> +       INIT_LIST_HEAD(&afu->regions);
-> +}
-> +
-> +#define for_each_region(region, afu)   \
-> +       list_for_each_entry((region), &(afu)->regions, node)
-> +
-> +static struct fpga_afu_region *get_region_by_index(struct fpga_afu *afu,
-> +                                                  u32 region_index)
-> +{
-> +       struct fpga_afu_region *region;
-> +
-> +       for_each_region(region, afu)
-> +               if (region->index == region_index)
-> +                       return region;
-> +
-> +       return NULL;
-> +}
-> +
-> +/**
-> + * afu_region_add - add a region to given feature dev.
-> + *
-> + * @region_index: region index.
-> + * @region_size: region size.
-> + * @phys: region's physical address of this region.
-> + * @flags: region flags (access permission).
-> + *
-> + * Return: 0 on success, negative error code otherwise.
-> + */
-> +int afu_region_add(struct feature_platform_data *pdata, u32 region_index,
-> +                  u64 region_size, u64 phys, u32 flags)
-> +{
-> +       struct fpga_afu_region *region;
-> +       struct fpga_afu *afu;
-> +       int ret = 0;
-> +
-> +       region = devm_kzalloc(&pdata->dev->dev, sizeof(*region), GFP_KERNEL);
-> +       if (!region)
-> +               return -ENOMEM;
-> +
-> +       region->index = region_index;
-> +       region->size = region_size;
-> +       region->phys = phys;
-> +       region->flags = flags;
-> +
-> +       mutex_lock(&pdata->lock);
-> +
-> +       afu = fpga_pdata_get_private(pdata);
-> +
-> +       /* check if @index already exists */
-> +       if (get_region_by_index(afu, region_index)) {
-> +               mutex_unlock(&pdata->lock);
-> +               ret = -EEXIST;
-> +               goto exit;
-> +       }
-> +
-> +       region_size = PAGE_ALIGN(region_size);
-> +       region->offset = afu->region_cur_offset;
-> +       list_add(&region->node, &afu->regions);
-> +
-> +       afu->region_cur_offset += region_size;
-> +       afu->num_regions++;
-> +       mutex_unlock(&pdata->lock);
-> +
-> +       return 0;
-> +
-> +exit:
-> +       devm_kfree(&pdata->dev->dev, region);
-> +       return ret;
-> +}
-> +
-> +/**
-> + * afu_region_destroy - destroy all regions under given feature dev.
-> + * @pdata: afu platform device's pdata.
-> + */
-> +void afu_region_destroy(struct feature_platform_data *pdata)
-> +{
-> +       struct fpga_afu_region *tmp, *region;
-> +       struct fpga_afu *afu = fpga_pdata_get_private(pdata);
-> +
-> +       list_for_each_entry_safe(region, tmp, &afu->regions, node)
-> +               devm_kfree(&pdata->dev->dev, region);
-> +}
-> +
-> +/**
-> + * afu_get_region_by_index - find an afu region by index.
-> + * @pdata: afu platform device's pdata.
-> + * @region_index: region index.
-> + * @pregion: ptr to region for result.
-> + *
-> + * Return: 0 on success, negative error code otherwise.
-> + */
-> +int afu_get_region_by_index(struct feature_platform_data *pdata,
-> +                           u32 region_index, struct fpga_afu_region *pregion)
-> +{
-> +       struct fpga_afu_region *region;
-> +       struct fpga_afu *afu;
-> +       int ret = 0;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       afu = fpga_pdata_get_private(pdata);
-> +       region = get_region_by_index(afu, region_index);
-> +       if (!region) {
-> +               ret = -EINVAL;
-> +               goto exit;
-> +       }
-> +       *pregion = *region;
-> +exit:
-> +       mutex_unlock(&pdata->lock);
-> +       return ret;
-> +}
-> +
-> +/**
-> + * afu_get_region_by_offset - find an afu region by offset and size
-> + *
-> + * @pdata: afu platform device's pdata.
-> + * @offset: region offset from start of the device fd.
-> + * @size: region size.
-> + * @pregion: ptr to region for result.
-> + *
-> + * Find the region which fully contains the region described by input
-> + * parameters (offset and size) from the feature dev's region link list.
-> + *
-> + * Return: 0 on success, negative error code otherwise.
-> + */
-> +int afu_get_region_by_offset(struct feature_platform_data *pdata,
-> +                            u64 offset, u64 size,
-> +                            struct fpga_afu_region *pregion)
-> +{
-> +       struct fpga_afu_region *region;
-> +       struct fpga_afu *afu;
-> +       int ret = 0;
-> +
-> +       mutex_lock(&pdata->lock);
-> +       afu = fpga_pdata_get_private(pdata);
-> +       for_each_region(region, afu)
-> +               if (region->offset <= offset &&
-> +                   region->offset + region->size >= offset + size) {
-> +                       *pregion = *region;
-> +                       goto exit;
-> +               }
-> +       ret = -EINVAL;
-> +exit:
-> +       mutex_unlock(&pdata->lock);
-> +       return ret;
-> +}
-> diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
-> new file mode 100644
-> index 0000000..af690cc
-> --- /dev/null
-> +++ b/drivers/fpga/dfl-afu.h
-> @@ -0,0 +1,71 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +/*
-> + * Header file for FPGA Accelerated Function Unit (AFU) Driver
-> + *
-> + * Copyright (C) 2017 Intel Corporation, Inc.
-> + *
-> + * Authors:
-> + *     Wu Hao <hao.wu@intel.com>
-> + *     Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> + *     Joseph Grecco <joe.grecco@intel.com>
-> + *     Enno Luebbers <enno.luebbers@intel.com>
-> + *     Tim Whisonant <tim.whisonant@intel.com>
-> + *     Ananda Ravuri <ananda.ravuri@intel.com>
-> + *     Henry Mitchel <henry.mitchel@intel.com>
-> + */
-> +
-> +#ifndef __DFL_AFU_H
-> +#define __DFL_AFU_H
-> +
-> +#include <linux/mm.h>
-> +
-> +#include "dfl.h"
-> +
-> +/**
-> + * struct fpga_afu_region - afu region data structure
-> + *
-> + * @index: region index.
-> + * @flags: region flags (access permission).
-> + * @size: region size.
-> + * @offset: region offset from start of the device fd.
-> + * @phys: region's physical address.
-> + * @node: node to add to afu feature dev's region list.
-> + */
-> +struct fpga_afu_region {
-> +       u32 index;
-> +       u32 flags;
-> +       u64 size;
-> +       u64 offset;
-> +       u64 phys;
-> +       struct list_head node;
-> +};
-> +
-> +/**
-> + * struct fpga_afu - afu device data structure
-> + *
-> + * @region_cur_offset: current region offset from start to the device fd.
-> + * @num_regions: num of regions.
-> + * @regions: the region link list of this afu feature device.
-> + * @num_umsgs: num of umsgs.
-> + * @pdata: afu platform device's pdata.
-> + */
-> +struct fpga_afu {
-> +       u64 region_cur_offset;
-> +       int num_regions;
-> +       u8 num_umsgs;
-> +       struct list_head regions;
-> +
-> +       struct feature_platform_data *pdata;
-> +};
-> +
-> +void afu_region_init(struct feature_platform_data *pdata);
-> +int afu_region_add(struct feature_platform_data *pdata, u32 region_index,
-> +                  u64 region_size, u64 phys, u32 flags);
-> +void afu_region_destroy(struct feature_platform_data *pdata);
-> +int afu_get_region_by_index(struct feature_platform_data *pdata,
-> +                           u32 region_index, struct fpga_afu_region *pregion);
-> +int afu_get_region_by_offset(struct feature_platform_data *pdata,
-> +                            u64 offset, u64 size,
-> +                            struct fpga_afu_region *pregion);
-> +
-> +#endif
-> diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
-> index 727bec2..df41828 100644
-> --- a/include/uapi/linux/fpga-dfl.h
-> +++ b/include/uapi/linux/fpga-dfl.h
-> @@ -65,6 +65,53 @@
->
->  #define FPGA_PORT_RESET                _IO(FPGA_MAGIC, PORT_BASE + 0)
->
-> +/**
-> + * FPGA_PORT_GET_INFO - _IOR(FPGA_MAGIC, PORT_BASE + 1, struct fpga_port_info)
-> + *
-> + * Retrieve information about the fpga port.
-> + * Driver fills the info in provided struct fpga_port_info.
-> + * Return: 0 on success, -errno on failure.
-> + */
-> +struct fpga_port_info {
-> +       /* Input */
-> +       __u32 argsz;            /* Structure length */
-> +       /* Output */
-> +       __u32 flags;            /* Zero for now */
-> +       __u32 num_regions;      /* The number of supported regions */
-> +       __u32 num_umsgs;        /* The number of allocated umsgs */
-> +};
-> +
-> +#define FPGA_PORT_GET_INFO     _IO(FPGA_MAGIC, PORT_BASE + 1)
-> +
-> +/**
-> + * FPGA_PORT_GET_REGION_INFO - _IOWR(FPGA_MAGIC, PORT_BASE + 2,
-> + *                                             struct fpga_port_region_info)
-> + *
-> + * Retrieve information about a device region.
-> + * Caller provides struct fpga_port_region_info with index value set.
-> + * Driver returns the region info in other fields.
-> + * Return: 0 on success, -errno on failure.
-> + */
-> +struct fpga_port_region_info {
-> +       /* input */
-> +       __u32 argsz;            /* Structure length */
-> +       /* Output */
-> +       __u32 flags;            /* Access permission */
-> +#define FPGA_REGION_READ       (1 << 0)        /* Region is readable */
-> +#define FPGA_REGION_WRITE      (1 << 1)        /* Region is writable */
-> +#define FPGA_REGION_MMAP       (1 << 2)        /* Can be mmaped to userspace */
-> +       /* Input */
-> +       __u32 index;            /* Region index */
-> +#define FPGA_PORT_INDEX_UAFU   0               /* User AFU */
-> +#define FPGA_PORT_INDEX_STP    1               /* Signal Tap */
-> +       __u32 padding;
-> +       /* Output */
-> +       __u64 size;             /* Region size (bytes) */
-> +       __u64 offset;           /* Region offset from start of device fd */
-> +};
-> +
-> +#define FPGA_PORT_GET_REGION_INFO      _IO(FPGA_MAGIC, PORT_BASE + 2)
-> +
->  /* IOCTLs for FME file descriptor */
->
->  /**
-> --
-> 2.7.4
->
-
-Thanks,
-Alan
+--UlVJffcvxoiEqYs2--
