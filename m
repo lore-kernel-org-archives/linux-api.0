@@ -1,75 +1,101 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH] bpf: whitelist syscalls for error injection
-Date: Mon, 19 Mar 2018 02:13:25 +0000
-Message-ID: <CALCETrWU4KDu+3U2Z6XpLcV5G9-ihesCdREdaGtO76spuHW-mA@mail.gmail.com>
-References: <20180313231627.1247-1-hmclauchlan@fb.com> <CALCETrWWAB4FcDe=uUUBiq9YZ-jN1G7kNjdEw=Pwe1SSqyL5LQ@mail.gmail.com>
- <f47e1374-43eb-d7c6-dd0a-5d530ff2b4e2@fb.com> <20180318064738.GA22649@light.dominikbrodowski.net>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: aio poll, io_pgetevents and a new in-kernel poll API V5
+Date: Mon, 19 Mar 2018 09:35:48 +0100
+Message-ID: <20180319083548.GA21224@lst.de>
+References: <20180305212743.16664-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180318064738.GA22649@light.dominikbrodowski.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dominik Brodowski <linux@dominikbrodowski.net>
-Cc: Howard McLauchlan <hmclauchlan@fb.com>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Yonghong Song <yhs@fb.com>, "David S . Miller" <davem@davemloft.net>, Thomas Garnier <thgarnie@google.com>, kernel-team <kernel-team@fb.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180305212743.16664-1-hch@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: viro@zeniv.linux.org.uk
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 18, 2018 at 6:47 AM, Dominik Brodowski
-<linux@dominikbrodowski.net> wrote:
-> On Fri, Mar 16, 2018 at 03:55:04PM -0700, Howard McLauchlan wrote:
->> On 03/13/2018 04:56 PM, Andy Lutomirski wrote:
->> > On Tue, Mar 13, 2018 at 11:16 PM, Howard McLauchlan <hmclauchlan@fb.com> wrote:
->> >> Error injection is a useful mechanism to fail arbitrary kernel
->> >> functions. However, it is often hard to guarantee an error propagates
->> >> appropriately to user space programs. By injecting into syscalls, we can
->> >> return arbitrary values to user space directly; this increases
->> >> flexibility and robustness in testing, allowing us to test user space
->> >> error paths effectively.
->> >
->> > Temporary NAK IMO.  Specifically:
->> >
->> >> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
->> >> index a78186d826d7..e8c6d63ace78 100644
->> >> --- a/include/linux/syscalls.h
->> >> +++ b/include/linux/syscalls.h
->> >> @@ -191,6 +191,8 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
->> >>
->> >>  #define SYSCALL_DEFINE0(sname)                                 \
->> >>         SYSCALL_METADATA(_##sname, 0);                          \
->> >> +       asmlinkage long sys_##sname(void);                      \
->> >> +       ALLOW_ERROR_INJECTION(sys_##sname, ERRNO);              \
->> >
->> > sys_xyz() is not just the syscall itself; it's also a helper that's
->> > used for entirely silly reasons by various bits of kernel code for
->> > quite a few syscalls.  Fortunately, Dominik has patches to fix that,
->> > and Linus is even considering pulling them for 4.16.  This patch will
->> > most likely conflict with the final result of Dominik's series.
->> >
->> > Can you and Dominik coordinate a bit to get this patch or its
->> > equivalent landed on top of Dominik's work?  It might make sense for
->> > Dominik to just add this patch to his series so it can land with the
->> > rest of it.  Dominik, Ingo, what do you think?
->> >
->> > --Andy
->> >
->>
->> Dominik,
->>
->> This patch applies cleanly on top of your patch series. Is there anything you'd need from me to get this in on top of your work?
->
-> Howard,
->
-> would this form part of the kernel<->userspace interface and therefore needs
-> to be kept stable? If so, this patch should wait until the arch-specific
-> syscall calling convention is agreed upon.
->
-> Moreover, the patches I sent out already do not cover all syscalls yet.
-> Until all in-kernel users of sys_*() are gone (or at least outside arch/),
-> I'd prefer to postpone this patch.
->
+Hi everyone,
 
-I was assuming that this ALLOW_ERROR_INJECTION thing is *not*
-considered stable ABI.  We should be free to change the way that the
-syscall entry code calls syscalls whenever we like.
+this posting has been out for 2 weeks now, without any replies except
+for Jeff reminding of the missing reviews he already gave me in the
+previous version.
 
-If you want a stable syscall error injection mechanism, make it work
-like seccomp instead, please.
+Canwe make some progress on this?  Especially as all the aio bits
+have gotten reviews from Jeff.
+
+On Mon, Mar 05, 2018 at 01:27:07PM -0800, Christoph Hellwig wrote:
+> Hi all,
+> 
+> this series adds support for the IOCB_CMD_POLL operation to poll for the
+> readyness of file descriptors using the aio subsystem.  The API is based
+> on patches that existed in RHAS2.1 and RHEL3, which means it already is
+> supported by libaio.  To implement the poll support efficiently new
+> methods to poll are introduced in struct file_operations:  get_poll_head
+> and poll_mask.  The first one returns a wait_queue_head to wait on
+> (lifetime is bound by the file), and the second does a non-blocking
+> check for the POLL* events.  This allows aio poll to work without
+> any additional context switches, unlike epoll.
+> 
+> To make the interface fully useful a new io_pgetevents system call is
+> added, which atomically saves and restores the signal mask over the
+> io_pgetevents system call.  It it the logical equivalent to pselect and
+> ppoll for io_pgetevents.
+> 
+> The corresponding libaio changes for io_pgetevents support and
+> documentation, as well as a test case will be posted in a separate
+> series.
+> 
+> The changes were sponsored by Scylladb, and improve performance
+> of the seastar framework up to 10%, while also removing the need
+> for a privileged SCHED_FIFO epoll listener thread.
+> 
+>     git://git.infradead.org/users/hch/vfs.git aio-poll.5
+> 
+> Gitweb:
+> 
+>     http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.5
+> 
+> Libaio changes:
+> 
+>     https://pagure.io/libaio.git io-poll
+> 
+> Seastar changes (not updated for the new io_pgetevens ABI yet):
+> 
+>     https://github.com/avikivity/seastar/commits/aio
+> 
+> Changes since V4:
+>  - rebased ontop of Linux 4.16-rc4
+> 
+> Changes since V3:
+>  - remove the pre-sleep ->poll_mask call in vfs_poll,
+>    allow ->get_poll_head to return POLL* values.
+> 
+> Changes since V2:
+>  - removed a double initialization
+>  - new vfs_get_poll_head helper
+>  - document that ->get_poll_head can return NULL
+>  - call ->poll_mask before sleeping
+>  - various ACKs
+>  - add conversion of random to ->poll_mask
+>  - add conversion of af_alg to ->poll_mask
+>  - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
+>  - reshuffled the series so that prep patches and everything not
+>    requiring the new in-kernel poll API is in the beginning
+> 
+> Changes since V1:
+>  - handle the NULL ->poll case in vfs_poll
+>  - dropped the file argument to the ->poll_mask socket operation
+>  - replace the ->pre_poll socket operation with ->get_poll_head as
+>    in the file operations
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-aio' in
+> the body to majordomo@kvack.org.  For more info on Linux AIO,
+> see: http://www.kvack.org/aio/
+> Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+---end quoted text---
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
