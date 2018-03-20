@@ -1,64 +1,36 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v2 2/3] arm64: fpsimd: Fix bad si_code for undiagnosed
- SIGFPE
-Date: Tue, 20 Mar 2018 10:04:38 +0000
-Message-ID: <20180320100437.GB24986@arm.com>
-References: <1519926248-12591-1-git-send-email-Dave.Martin@arm.com>
- <1519926248-12591-3-git-send-email-Dave.Martin@arm.com>
- <20180308171153.GD14918@arm.com> <87o9jymbsj.fsf@xmission.com>
- <20180309131017.GB20370@arm.com>
- <20180309142557.GT32331@e103592.cambridge.arm.com>
- <87vadxyrdt.fsf@xmission.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 07/36] aio: add delayed cancel support
+Date: Tue, 20 Mar 2018 16:20:22 +0100
+Message-ID: <20180320152022.GB23920@lst.de>
+References: <20180305212743.16664-1-hch@lst.de> <20180305212743.16664-8-hch@lst.de> <20180320031957.GJ7282@magnolia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <87vadxyrdt.fsf@xmission.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, James Morse <james.morse@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Martin <Dave.Martin@arm.com>, linux-arm-kernel@lists.infradead.org
+In-Reply-To: <20180320031957.GJ7282@magnolia>
+Sender: owner-linux-aio@kvack.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 15, 2018 at 04:13:02PM -0500, Eric W. Biederman wrote:
-> Dave Martin <Dave.Martin@arm.com> writes:
+On Mon, Mar 19, 2018 at 08:19:57PM -0700, Darrick J. Wong wrote:
+> On Mon, Mar 05, 2018 at 01:27:14PM -0800, Christoph Hellwig wrote:
+> > The upcoming aio poll support would like to be able to complete the
+> > iocb inline from the cancellation context, but that would cause
+> > a lock order reversal.  Add support for optionally moving the cancelation
+> > outside the context lock to avoid this reversal.
 > 
-> > On Fri, Mar 09, 2018 at 01:10:18PM +0000, Will Deacon wrote:
-> >> Hi Eric,
-> >> 
-> >> On Thu, Mar 08, 2018 at 04:40:12PM -0600, Eric W. Biederman wrote:
-> >> > Will Deacon <will.deacon@arm.com> writes:
-> >> > > Happy to take this patch once the dependency on FPE_FLTUNK in core code is
-> >> > > resolved.
-> >> > 
-> >> > Would it help for me to take the FPE_FLTUNK patch into my siginfo-next
-> >> > branch?   So that there is a common branch with the code so we don't
-> >> > need to worry about conflicts.  If so I will look at that on Monday.
-> >> 
-> >> Yes please, that would be helpful actually. I can then pull that into
-> >> arm64 if you give me a stable branch or tag. Alternatively, I can define
-> >> FPE_FLTUNK locally and remove it at -rc1.
-> >
-> > OK Eric, let me know if you need me to rebase anything for the first 2
-> > patches.
+> I started to wonder which lock order reversal the commit message refers
+> to?
 > 
-> The first patch is now in my siginfo-next tree and avialable at:
-> 
-> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git siginfo-next
-> HEAD: 266da65e9156d93e1126e185259a4aae68188d0e signal: Add FPE_FLTUNK si_code for undiagnosable fp exceptions
-> 
-> I will not rebase this branch, so please fee free to merge it into other
-> trees.
+> I think the reason for adding delayed cancellations is that we want to
+> be able to call io_cancel -> kiocb_cancel -> aio_poll_cancel ->
+> aio_complete without double locking ctx_lock?
 
-Thanks, Eric. I've pulled this into the arm64 for-next/core branch and I'll
-push it out later on.
+It is.  I've updated the commit message.
 
-Will
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
