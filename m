@@ -1,21 +1,22 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 09/36] fs: unexport poll_schedule_timeout
-Date: Mon, 19 Mar 2018 19:13:14 -0700
-Message-ID: <20180320021314.GF7282@magnolia>
+Subject: Re: [PATCH 10/36] fs: cleanup do_pollfd
+Date: Mon, 19 Mar 2018 19:14:27 -0700
+Message-ID: <20180320021427.GG7282@magnolia>
 References: <20180305212743.16664-1-hch@lst.de>
- <20180305212743.16664-10-hch@lst.de>
+ <20180305212743.16664-11-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180305212743.16664-10-hch@lst.de>
+In-Reply-To: <20180305212743.16664-11-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 05, 2018 at 01:27:16PM -0800, Christoph Hellwig wrote:
-> No users outside of select.c.
+On Mon, Mar 05, 2018 at 01:27:17PM -0800, Christoph Hellwig wrote:
+> Use straigline code with failure handling gotos instead of a lot
+> of nested conditionals.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
@@ -25,44 +26,71 @@ Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 --D
 
 > ---
->  fs/select.c          | 3 +--
->  include/linux/poll.h | 2 --
->  2 files changed, 1 insertion(+), 4 deletions(-)
+>  fs/select.c | 48 +++++++++++++++++++++++-------------------------
+>  1 file changed, 23 insertions(+), 25 deletions(-)
 > 
 > diff --git a/fs/select.c b/fs/select.c
-> index b6c36254028a..686de7b3a1db 100644
+> index 686de7b3a1db..c6c504a814f9 100644
 > --- a/fs/select.c
 > +++ b/fs/select.c
-> @@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
->  	add_wait_queue(wait_address, &entry->wait);
->  }
->  
-> -int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
-> +static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
->  			  ktime_t *expires, unsigned long slack)
+> @@ -806,34 +806,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+>  				     bool *can_busy_poll,
+>  				     __poll_t busy_flag)
 >  {
->  	int rc = -EINTR;
-> @@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
->  
->  	return rc;
+> -	__poll_t mask;
+> -	int fd;
+> -
+> -	mask = 0;
+> -	fd = pollfd->fd;
+> -	if (fd >= 0) {
+> -		struct fd f = fdget(fd);
+> -		mask = EPOLLNVAL;
+> -		if (f.file) {
+> -			/* userland u16 ->events contains POLL... bitmap */
+> -			__poll_t filter = demangle_poll(pollfd->events) |
+> -						EPOLLERR | EPOLLHUP;
+> -			mask = DEFAULT_POLLMASK;
+> -			if (f.file->f_op->poll) {
+> -				pwait->_key = filter;
+> -				pwait->_key |= busy_flag;
+> -				mask = f.file->f_op->poll(f.file, pwait);
+> -				if (mask & busy_flag)
+> -					*can_busy_poll = true;
+> -			}
+> -			/* Mask out unneeded events. */
+> -			mask &= filter;
+> -			fdput(f);
+> -		}
+> +	int fd = pollfd->fd;
+> +	__poll_t mask = 0, filter;
+> +	struct fd f;
+> +
+> +	if (fd < 0)
+> +		goto out;
+> +	mask = EPOLLNVAL;
+> +	f = fdget(fd);
+> +	if (!f.file)
+> +		goto out;
+> +
+> +	/* userland u16 ->events contains POLL... bitmap */
+> +	filter = demangle_poll(pollfd->events) | EPOLLERR | EPOLLHUP;
+> +	mask = DEFAULT_POLLMASK;
+> +	if (f.file->f_op->poll) {
+> +		pwait->_key = filter | busy_flag;
+> +		mask = f.file->f_op->poll(f.file, pwait);
+> +		if (mask & busy_flag)
+> +			*can_busy_poll = true;
+>  	}
+> +	mask &= filter;		/* Mask out unneeded events. */
+> +	fdput(f);
+> +
+> +out:
+>  	/* ... and so does ->revents */
+>  	pollfd->revents = mangle_poll(mask);
+> -
+>  	return mask;
 >  }
-> -EXPORT_SYMBOL(poll_schedule_timeout);
 >  
->  /**
->   * poll_select_set_timeout - helper function to setup the timeout value
-> diff --git a/include/linux/poll.h b/include/linux/poll.h
-> index f45ebd017eaa..a3576da63377 100644
-> --- a/include/linux/poll.h
-> +++ b/include/linux/poll.h
-> @@ -96,8 +96,6 @@ struct poll_wqueues {
->  
->  extern void poll_initwait(struct poll_wqueues *pwq);
->  extern void poll_freewait(struct poll_wqueues *pwq);
-> -extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
-> -				 ktime_t *expires, unsigned long slack);
->  extern u64 select_estimate_accuracy(struct timespec64 *tv);
->  
->  #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
 > -- 
 > 2.14.2
 > 
