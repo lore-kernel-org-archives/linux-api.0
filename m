@@ -1,150 +1,206 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 07/36] aio: add delayed cancel support
-Date: Mon, 19 Mar 2018 20:19:57 -0700
-Message-ID: <20180320031957.GJ7282@magnolia>
+Subject: Re: [PATCH 13/36] fs: introduce new ->get_poll_head and ->poll_mask
+ methods
+Date: Mon, 19 Mar 2018 20:29:38 -0700
+Message-ID: <20180320032938.GK7282@magnolia>
 References: <20180305212743.16664-1-hch@lst.de>
- <20180305212743.16664-8-hch@lst.de>
+ <20180305212743.16664-14-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180305212743.16664-8-hch@lst.de>
+In-Reply-To: <20180305212743.16664-14-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 05, 2018 at 01:27:14PM -0800, Christoph Hellwig wrote:
-> The upcoming aio poll support would like to be able to complete the
-> iocb inline from the cancellation context, but that would cause
-> a lock order reversal.  Add support for optionally moving the cancelation
-> outside the context lock to avoid this reversal.
+On Mon, Mar 05, 2018 at 01:27:20PM -0800, Christoph Hellwig wrote:
+> ->get_poll_head returns the waitqueue that the poll operation is going
+> to sleep on.  Note that this means we can only use a single waitqueue
+> for the poll, unlike some current drivers that use two waitqueues for
+> different events.  But now that we have keyed wakeups and heavily use
+> those for poll there aren't that many good reason left to keep the
+> multiple waitqueues, and if there are any ->poll is still around, the
+> driver just won't support aio poll.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-I started to wonder which lock order reversal the commit message refers
-to?
-
-I think the reason for adding delayed cancellations is that we want to
-be able to call io_cancel -> kiocb_cancel -> aio_poll_cancel ->
-aio_complete without double locking ctx_lock?
+I've been wondering, how does a regular filesystem connect with this?
+Also, does anything implement get_poll_head?  It looks to me like an aio
+poll provider has to provide both...
 
 --D
 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Acked-by: Jeff Moyer <jmoyer@redhat.com>
 > ---
->  fs/aio.c | 49 ++++++++++++++++++++++++++++++++++++++-----------
->  1 file changed, 38 insertions(+), 11 deletions(-)
+>  Documentation/filesystems/Locking |  7 ++++++-
+>  Documentation/filesystems/vfs.txt | 13 +++++++++++++
+>  fs/select.c                       | 28 ++++++++++++++++++++++++++++
+>  include/linux/fs.h                |  2 ++
+>  include/linux/poll.h              | 27 +++++++++++++++++++++++----
+>  5 files changed, 72 insertions(+), 5 deletions(-)
 > 
-> diff --git a/fs/aio.c b/fs/aio.c
-> index 0b6394b4e528..9d7d6e4cde87 100644
-> --- a/fs/aio.c
-> +++ b/fs/aio.c
-> @@ -170,6 +170,10 @@ struct aio_kiocb {
->  	struct list_head	ki_list;	/* the aio core uses this
->  						 * for cancellation */
+> diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
+> index 220bba28f72b..6d227f9d7bd9 100644
+> --- a/Documentation/filesystems/Locking
+> +++ b/Documentation/filesystems/Locking
+> @@ -440,6 +440,8 @@ prototypes:
+>  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>  	int (*iterate) (struct file *, struct dir_context *);
+>  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
+> +	__poll_t (*poll_mask) (struct file *, __poll_t);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
+> @@ -470,7 +472,7 @@ prototypes:
+>  };
 >  
-> +	unsigned int		flags;		/* protected by ctx->ctx_lock */
-> +#define AIO_IOCB_DELAYED_CANCEL	(1 << 0)
-> +#define AIO_IOCB_CANCELLED	(1 << 1)
+>  locking rules:
+> -	All may block.
+> +	All except for ->poll_mask may block.
+>  
+>  ->llseek() locking has moved from llseek to the individual llseek
+>  implementations.  If your fs is not using generic_file_llseek, you
+> @@ -498,6 +500,9 @@ in sys_read() and friends.
+>  the lease within the individual filesystem to record the result of the
+>  operation
+>  
+> +->poll_mask can be called with or without the waitqueue lock for the waitqueue
+> +returned from ->get_poll_head.
 > +
->  	/*
->  	 * If the aio_resfd field of the userspace iocb is not zero,
->  	 * this is the underlying eventfd context to deliver events to.
-> @@ -536,9 +540,9 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
->  #define AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - sizeof(struct aio_ring)) / sizeof(struct io_event))
->  #define AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
+>  --------------------------- dquot_operations -------------------------------
+>  prototypes:
+>  	int (*write_dquot) (struct dquot *);
+> diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+> index f608180ad59d..50ee13563271 100644
+> --- a/Documentation/filesystems/vfs.txt
+> +++ b/Documentation/filesystems/vfs.txt
+> @@ -857,6 +857,8 @@ struct file_operations {
+>  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>  	int (*iterate) (struct file *, struct dir_context *);
+>  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
+> +	__poll_t (*poll_mask) (struct file *, __poll_t);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
+> @@ -901,6 +903,17 @@ otherwise noted.
+>  	activity on this file and (optionally) go to sleep until there
+>  	is activity. Called by the select(2) and poll(2) system calls
 >  
-> -void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
-> +static void __kiocb_set_cancel_fn(struct aio_kiocb *req,
-> +		kiocb_cancel_fn *cancel, unsigned int iocb_flags)
->  {
-> -	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
->  	struct kioctx *ctx = req->ki_ctx;
->  	unsigned long flags;
->  
-> @@ -548,8 +552,15 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
->  	spin_lock_irqsave(&ctx->ctx_lock, flags);
->  	list_add_tail(&req->ki_list, &ctx->active_reqs);
->  	req->ki_cancel = cancel;
-> +	req->flags |= iocb_flags;
->  	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
->  }
+> +  get_poll_head: Returns the struct wait_queue_head that poll, select,
+> +  epoll or aio poll should wait on in case this instance only has single
+> +  waitqueue.  Can return NULL to indicate polling is not supported,
+> +  or a POLL* value using the POLL_TO_PTR helper in case a grave error
+> +  occured and ->poll_mask shall not be called.
 > +
-> +void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+> +  poll_mask: return the mask of POLL* values describing the file descriptor
+> +  state.  Called either before going to sleep on the waitqueue returned by
+> +  get_poll_head, or after it has been woken.  If ->get_poll_head and
+> +  ->poll_mask are implemented ->poll does not need to be implement.
+> +
+>    unlocked_ioctl: called by the ioctl(2) system call.
+>  
+>    compat_ioctl: called by the ioctl(2) system call when 32 bit system calls
+> diff --git a/fs/select.c b/fs/select.c
+> index ba91103707ea..cc270d7f6192 100644
+> --- a/fs/select.c
+> +++ b/fs/select.c
+> @@ -34,6 +34,34 @@
+>  
+>  #include <linux/uaccess.h>
+>  
+> +__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
 > +{
-> +	return __kiocb_set_cancel_fn(container_of(iocb, struct aio_kiocb, rw),
-> +			cancel, 0);
+> +	unsigned int events = poll_requested_events(pt);
+> +	struct wait_queue_head *head;
+> +
+> +	if (unlikely(!file_can_poll(file)))
+> +		return DEFAULT_POLLMASK;
+> +
+> +	if (file->f_op->poll)
+> +		return file->f_op->poll(file, pt);
+> +
+> +	/*
+> +	 * Only get the poll head and do the first mask check if we are actually
+> +	 * going to sleep on this file:
+> +	 */
+> +	if (pt && pt->_qproc) {
+> +		head = vfs_get_poll_head(file, events);
+> +		if (!head)
+> +			return DEFAULT_POLLMASK;
+> +		if (IS_ERR(head))
+> +			return PTR_TO_POLL(head);
+> +
+> +		pt->_qproc(file, head, pt);
+> +	}
+> +
+> +	return file->f_op->poll_mask(file, events);
 > +}
->  EXPORT_SYMBOL(kiocb_set_cancel_fn);
+> +EXPORT_SYMBOL_GPL(vfs_poll);
 >  
 >  /*
-> @@ -603,17 +614,27 @@ static void free_ioctx_users(struct percpu_ref *ref)
+>   * Estimate expected accuracy in ns from a timeval.
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 79c413985305..6ea2c0843bb1 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -1708,6 +1708,8 @@ struct file_operations {
+>  	int (*iterate) (struct file *, struct dir_context *);
+>  	int (*iterate_shared) (struct file *, struct dir_context *);
+>  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
+> +	__poll_t (*poll_mask) (struct file *, __poll_t);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
+> diff --git a/include/linux/poll.h b/include/linux/poll.h
+> index 7e0fdcf905d2..42e8e8665fb0 100644
+> --- a/include/linux/poll.h
+> +++ b/include/linux/poll.h
+> @@ -74,18 +74,37 @@ static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
+>  	pt->_key   = ~(__poll_t)0; /* all events enabled */
+>  }
+>  
+> +/*
+> + * ->get_poll_head can return a __poll_t in the PTR_ERR, use these macros
+> + * to return the value and recover it.  It takes care of the negation as
+> + * well as off the annotations.
+> + */
+> +#define POLL_TO_PTR(mask)	(ERR_PTR(-(__force int)(mask)))
+> +#define PTR_TO_POLL(ptr)	((__force __poll_t)-PTR_ERR((ptr)))
+> +
+>  static inline bool file_can_poll(struct file *file)
 >  {
->  	struct kioctx *ctx = container_of(ref, struct kioctx, users);
->  	struct aio_kiocb *req;
-> +	LIST_HEAD(list);
->  
->  	spin_lock_irq(&ctx->ctx_lock);
-> -
->  	while (!list_empty(&ctx->active_reqs)) {
->  		req = list_first_entry(&ctx->active_reqs,
->  				       struct aio_kiocb, ki_list);
-> -		kiocb_cancel(req);
-> -	}
->  
-> +		if (req->flags & AIO_IOCB_DELAYED_CANCEL) {
-> +			req->flags |= AIO_IOCB_CANCELLED;
-> +			list_move_tail(&req->ki_list, &list);
-> +		} else {
-> +			kiocb_cancel(req);
-> +		}
-> +	}
->  	spin_unlock_irq(&ctx->ctx_lock);
->  
-> +	while (!list_empty(&list)) {
-> +		req = list_first_entry(&list, struct aio_kiocb, ki_list);
-> +		kiocb_cancel(req);
-> +	}
-> +
->  	percpu_ref_kill(&ctx->reqs);
->  	percpu_ref_put(&ctx->reqs);
->  }
-> @@ -1785,15 +1806,22 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
->  	if (unlikely(!ctx))
->  		return -EINVAL;
->  
-> -	spin_lock_irq(&ctx->ctx_lock);
-> +	ret = -EINVAL;
->  
-> +	spin_lock_irq(&ctx->ctx_lock);
->  	kiocb = lookup_kiocb(ctx, iocb, key);
-> +	if (kiocb) {
-> +		if (kiocb->flags & AIO_IOCB_DELAYED_CANCEL) {
-> +			kiocb->flags |= AIO_IOCB_CANCELLED;
-> +		} else {
-> +			ret = kiocb_cancel(kiocb);
-> +			kiocb = NULL;
-> +		}
-> +	}
-> +	spin_unlock_irq(&ctx->ctx_lock);
-> +
->  	if (kiocb)
->  		ret = kiocb_cancel(kiocb);
-> -	else
-> -		ret = -EINVAL;
-> -
-> -	spin_unlock_irq(&ctx->ctx_lock);
->  
->  	if (!ret) {
->  		/*
-> @@ -1805,7 +1833,6 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
->  	}
->  
->  	percpu_ref_put(&ctx->users);
-> -
->  	return ret;
+> -	return file->f_op->poll;
+> +	return file->f_op->poll ||
+> +		(file->f_op->get_poll_head && file->f_op->poll_mask);
 >  }
 >  
+> -static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
+> +static inline struct wait_queue_head *vfs_get_poll_head(struct file *file,
+> +		__poll_t events)
+>  {
+> -	if (unlikely(!file->f_op->poll))
+> +	if (unlikely(!file->f_op->get_poll_head || !file->f_op->poll_mask))
+> +		return NULL;
+> +	return file->f_op->get_poll_head(file, events);
+> +}
+> +
+> +static inline __poll_t vfs_poll_mask(struct file *file, __poll_t events)
+> +{
+> +	if (unlikely(!file->f_op->poll_mask))
+>  		return DEFAULT_POLLMASK;
+> -	return file->f_op->poll(file, pt);
+> +	return file->f_op->poll_mask(file, events) & events;
+>  }
+>  
+> +__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt);
+> +
+>  struct poll_table_entry {
+>  	struct file *filp;
+>  	__poll_t key;
 > -- 
 > 2.14.2
 > 
