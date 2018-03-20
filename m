@@ -1,96 +1,57 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 10/36] fs: cleanup do_pollfd
-Date: Mon, 19 Mar 2018 19:14:27 -0700
-Message-ID: <20180320021427.GG7282@magnolia>
+Subject: Re: [PATCH 11/36] fs: update documentation for __poll_t
+Date: Mon, 19 Mar 2018 19:19:35 -0700
+Message-ID: <20180320021935.GH7282@magnolia>
 References: <20180305212743.16664-1-hch@lst.de>
- <20180305212743.16664-11-hch@lst.de>
+ <20180305212743.16664-12-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180305212743.16664-11-hch@lst.de>
+In-Reply-To: <20180305212743.16664-12-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 05, 2018 at 01:27:17PM -0800, Christoph Hellwig wrote:
-> Use straigline code with failure handling gotos instead of a lot
-> of nested conditionals.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On Mon, Mar 05, 2018 at 01:27:18PM -0800, Christoph Hellwig wrote:
 
-Looks ok,
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+No commit message... "Update documentation to match the headers"?
 
 --D
 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  fs/select.c | 48 +++++++++++++++++++++++-------------------------
->  1 file changed, 23 insertions(+), 25 deletions(-)
+>  Documentation/filesystems/Locking | 2 +-
+>  Documentation/filesystems/vfs.txt | 2 +-
+>  2 files changed, 2 insertions(+), 2 deletions(-)
 > 
-> diff --git a/fs/select.c b/fs/select.c
-> index 686de7b3a1db..c6c504a814f9 100644
-> --- a/fs/select.c
-> +++ b/fs/select.c
-> @@ -806,34 +806,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
->  				     bool *can_busy_poll,
->  				     __poll_t busy_flag)
->  {
-> -	__poll_t mask;
-> -	int fd;
-> -
-> -	mask = 0;
-> -	fd = pollfd->fd;
-> -	if (fd >= 0) {
-> -		struct fd f = fdget(fd);
-> -		mask = EPOLLNVAL;
-> -		if (f.file) {
-> -			/* userland u16 ->events contains POLL... bitmap */
-> -			__poll_t filter = demangle_poll(pollfd->events) |
-> -						EPOLLERR | EPOLLHUP;
-> -			mask = DEFAULT_POLLMASK;
-> -			if (f.file->f_op->poll) {
-> -				pwait->_key = filter;
-> -				pwait->_key |= busy_flag;
-> -				mask = f.file->f_op->poll(f.file, pwait);
-> -				if (mask & busy_flag)
-> -					*can_busy_poll = true;
-> -			}
-> -			/* Mask out unneeded events. */
-> -			mask &= filter;
-> -			fdput(f);
-> -		}
-> +	int fd = pollfd->fd;
-> +	__poll_t mask = 0, filter;
-> +	struct fd f;
-> +
-> +	if (fd < 0)
-> +		goto out;
-> +	mask = EPOLLNVAL;
-> +	f = fdget(fd);
-> +	if (!f.file)
-> +		goto out;
-> +
-> +	/* userland u16 ->events contains POLL... bitmap */
-> +	filter = demangle_poll(pollfd->events) | EPOLLERR | EPOLLHUP;
-> +	mask = DEFAULT_POLLMASK;
-> +	if (f.file->f_op->poll) {
-> +		pwait->_key = filter | busy_flag;
-> +		mask = f.file->f_op->poll(f.file, pwait);
-> +		if (mask & busy_flag)
-> +			*can_busy_poll = true;
->  	}
-> +	mask &= filter;		/* Mask out unneeded events. */
-> +	fdput(f);
-> +
-> +out:
->  	/* ... and so does ->revents */
->  	pollfd->revents = mangle_poll(mask);
-> -
->  	return mask;
->  }
->  
+> diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
+> index 75d2d57e2c44..220bba28f72b 100644
+> --- a/Documentation/filesystems/Locking
+> +++ b/Documentation/filesystems/Locking
+> @@ -439,7 +439,7 @@ prototypes:
+>  	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+>  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>  	int (*iterate) (struct file *, struct dir_context *);
+> -	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+> +	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
+> diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+> index 5fd325df59e2..f608180ad59d 100644
+> --- a/Documentation/filesystems/vfs.txt
+> +++ b/Documentation/filesystems/vfs.txt
+> @@ -856,7 +856,7 @@ struct file_operations {
+>  	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+>  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>  	int (*iterate) (struct file *, struct dir_context *);
+> -	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+> +	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
 > -- 
 > 2.14.2
 > 
