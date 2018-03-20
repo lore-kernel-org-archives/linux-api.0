@@ -1,44 +1,49 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 13/36] fs: introduce new ->get_poll_head and
-	->poll_mask methods
-Date: Tue, 20 Mar 2018 16:39:00 +0100
-Message-ID: <20180320153900.GA24355@lst.de>
-References: <20180305212743.16664-1-hch@lst.de> <20180305212743.16664-14-hch@lst.de> <20180320032938.GK7282@magnolia>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v4 23/24] fpga: dfl: afu: add user afu sub feature support
+Date: Tue, 20 Mar 2018 13:17:14 -0500
+Message-ID: <CANk1AXRqfiWCDEo31-QGoKdUQ6PCjHH69LkuZdjErgGA-qxbiQ@mail.gmail.com>
+References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+ <1518513893-4719-24-git-send-email-hao.wu@intel.com> <CANk1AXQpPXhNoPt1Uj=YvbtO+jun7e2Yzvyp+wuR1ZXx6+-i8Q@mail.gmail.com>
+ <20180320071037.GB31239@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20180320032938.GK7282@magnolia>
-Sender: owner-linux-aio@kvack.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180320071037.GB31239@hao-dev>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 19, 2018 at 08:29:38PM -0700, Darrick J. Wong wrote:
-> On Mon, Mar 05, 2018 at 01:27:20PM -0800, Christoph Hellwig wrote:
-> > ->get_poll_head returns the waitqueue that the poll operation is going
-> > to sleep on.  Note that this means we can only use a single waitqueue
-> > for the poll, unlike some current drivers that use two waitqueues for
-> > different events.  But now that we have keyed wakeups and heavily use
-> > those for poll there aren't that many good reason left to keep the
-> > multiple waitqueues, and if there are any ->poll is still around, the
-> > driver just won't support aio poll.
-> > 
-> > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> 
-> I've been wondering, how does a regular filesystem connect with this?
+On Tue, Mar 20, 2018 at 2:10 AM, Wu Hao <hao.wu@intel.com> wrote:
+> On Mon, Mar 19, 2018 at 03:10:28PM -0500, Alan Tull wrote:
+>> On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
+>>
+>> Hi Hao,
+>>
+>> > From: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+>> >
+>> > User Accelerated Function Unit sub feature exposes the MMIO region of
+>>
+>> Is it 'user accelerated'?  I think it is the Accelerator interface.
+>
+> Hi Alan,
+>
+> This is only used to emphasize this is the interface to accelerator
+> exposed to user. But looks like this causes some confusions for user
+> actually from the description. I agree with you, that I will remove
+> this UAFU from this patchset.
+>
+>>
+>> > the AFU. After valid green bitstream (GBS) is programmed and port is
+>>
+>> Would it make sense to just use "partial bitstream" or "PR bitstream"
+>> and "static bitstream" for this patchset?  I don't think that adding
+>> this terminology makes things clearer.  In any case when someone else
+>> uses this patchset, they may not be using this type of branding in
+>> their terminology.
+>
+> Sure, will update the commit message and also sysfs doc below.
 
-In general, it doesn't.  In Unix regular files aren't pollable.
+Yes and dfl.txt and the rest of the patchset as well, please.
 
-> Also, does anything implement get_poll_head?  It looks to me like an aio
-> poll provider has to provide both...
-
-Yes.  Everyone who implements ->poll_mask also needs to implement
-get_poll_head.  For sockets we just happen to be able to use a generic
-implementation in net/socket.c for most of them.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Alan
