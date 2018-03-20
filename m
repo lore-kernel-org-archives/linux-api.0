@@ -1,212 +1,198 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 13/36] fs: introduce new ->get_poll_head and ->poll_mask
- methods
-Date: Mon, 19 Mar 2018 20:29:38 -0700
-Message-ID: <20180320032938.GK7282@magnolia>
-References: <20180305212743.16664-1-hch@lst.de>
- <20180305212743.16664-14-hch@lst.de>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH v4 12/24] fpga: dfl: fme: add
+ FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls support
+Date: Tue, 20 Mar 2018 14:46:59 +0800
+Message-ID: <20180320064659.GA31239@hao-dev>
+References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
+ <1518513893-4719-13-git-send-email-hao.wu@intel.com>
+ <CANk1AXQ79CvNECJav6bvs+XZHSD=1ai=kg55W4zTYvSn7GRwKQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180305212743.16664-14-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <CANk1AXQ79CvNECJav6bvs+XZHSD=1ai=kg55W4zTYvSn7GRwKQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alan Tull <atull@kernel.org>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 05, 2018 at 01:27:20PM -0800, Christoph Hellwig wrote:
-> ->get_poll_head returns the waitqueue that the poll operation is going
-> to sleep on.  Note that this means we can only use a single waitqueue
-> for the poll, unlike some current drivers that use two waitqueues for
-> different events.  But now that we have keyed wakeups and heavily use
-> those for poll there aren't that many good reason left to keep the
-> multiple waitqueues, and if there are any ->poll is still around, the
-> driver just won't support aio poll.
+On Mon, Mar 19, 2018 at 01:29:52PM -0500, Alan Tull wrote:
+> On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-I've been wondering, how does a regular filesystem connect with this?
-Also, does anything implement get_poll_head?  It looks to me like an aio
-poll provider has to provide both...
-
---D
-
-> ---
->  Documentation/filesystems/Locking |  7 ++++++-
->  Documentation/filesystems/vfs.txt | 13 +++++++++++++
->  fs/select.c                       | 28 ++++++++++++++++++++++++++++
->  include/linux/fs.h                |  2 ++
->  include/linux/poll.h              | 27 +++++++++++++++++++++++----
->  5 files changed, 72 insertions(+), 5 deletions(-)
+> Hi Hao,
 > 
-> diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-> index 220bba28f72b..6d227f9d7bd9 100644
-> --- a/Documentation/filesystems/Locking
-> +++ b/Documentation/filesystems/Locking
-> @@ -440,6 +440,8 @@ prototypes:
->  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->  	int (*iterate) (struct file *, struct dir_context *);
->  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-> +	__poll_t (*poll_mask) (struct file *, __poll_t);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> @@ -470,7 +472,7 @@ prototypes:
->  };
->  
->  locking rules:
-> -	All may block.
-> +	All except for ->poll_mask may block.
->  
->  ->llseek() locking has moved from llseek to the individual llseek
->  implementations.  If your fs is not using generic_file_llseek, you
-> @@ -498,6 +500,9 @@ in sys_read() and friends.
->  the lease within the individual filesystem to record the result of the
->  operation
->  
-> +->poll_mask can be called with or without the waitqueue lock for the waitqueue
-> +returned from ->get_poll_head.
-> +
->  --------------------------- dquot_operations -------------------------------
->  prototypes:
->  	int (*write_dquot) (struct dquot *);
-> diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-> index f608180ad59d..50ee13563271 100644
-> --- a/Documentation/filesystems/vfs.txt
-> +++ b/Documentation/filesystems/vfs.txt
-> @@ -857,6 +857,8 @@ struct file_operations {
->  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->  	int (*iterate) (struct file *, struct dir_context *);
->  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-> +	__poll_t (*poll_mask) (struct file *, __poll_t);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> @@ -901,6 +903,17 @@ otherwise noted.
->  	activity on this file and (optionally) go to sleep until there
->  	is activity. Called by the select(2) and poll(2) system calls
->  
-> +  get_poll_head: Returns the struct wait_queue_head that poll, select,
-> +  epoll or aio poll should wait on in case this instance only has single
-> +  waitqueue.  Can return NULL to indicate polling is not supported,
-> +  or a POLL* value using the POLL_TO_PTR helper in case a grave error
-> +  occured and ->poll_mask shall not be called.
-> +
-> +  poll_mask: return the mask of POLL* values describing the file descriptor
-> +  state.  Called either before going to sleep on the waitqueue returned by
-> +  get_poll_head, or after it has been woken.  If ->get_poll_head and
-> +  ->poll_mask are implemented ->poll does not need to be implement.
-> +
->    unlocked_ioctl: called by the ioctl(2) system call.
->  
->    compat_ioctl: called by the ioctl(2) system call when 32 bit system calls
-> diff --git a/fs/select.c b/fs/select.c
-> index ba91103707ea..cc270d7f6192 100644
-> --- a/fs/select.c
-> +++ b/fs/select.c
-> @@ -34,6 +34,34 @@
->  
->  #include <linux/uaccess.h>
->  
-> +__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-> +{
-> +	unsigned int events = poll_requested_events(pt);
-> +	struct wait_queue_head *head;
-> +
-> +	if (unlikely(!file_can_poll(file)))
-> +		return DEFAULT_POLLMASK;
-> +
-> +	if (file->f_op->poll)
-> +		return file->f_op->poll(file, pt);
-> +
-> +	/*
-> +	 * Only get the poll head and do the first mask check if we are actually
-> +	 * going to sleep on this file:
-> +	 */
-> +	if (pt && pt->_qproc) {
-> +		head = vfs_get_poll_head(file, events);
-> +		if (!head)
-> +			return DEFAULT_POLLMASK;
-> +		if (IS_ERR(head))
-> +			return PTR_TO_POLL(head);
-> +
-> +		pt->_qproc(file, head, pt);
-> +	}
-> +
-> +	return file->f_op->poll_mask(file, events);
-> +}
-> +EXPORT_SYMBOL_GPL(vfs_poll);
->  
->  /*
->   * Estimate expected accuracy in ns from a timeval.
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 79c413985305..6ea2c0843bb1 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -1708,6 +1708,8 @@ struct file_operations {
->  	int (*iterate) (struct file *, struct dir_context *);
->  	int (*iterate_shared) (struct file *, struct dir_context *);
->  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-> +	__poll_t (*poll_mask) (struct file *, __poll_t);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> diff --git a/include/linux/poll.h b/include/linux/poll.h
-> index 7e0fdcf905d2..42e8e8665fb0 100644
-> --- a/include/linux/poll.h
-> +++ b/include/linux/poll.h
-> @@ -74,18 +74,37 @@ static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
->  	pt->_key   = ~(__poll_t)0; /* all events enabled */
->  }
->  
-> +/*
-> + * ->get_poll_head can return a __poll_t in the PTR_ERR, use these macros
-> + * to return the value and recover it.  It takes care of the negation as
-> + * well as off the annotations.
-> + */
-> +#define POLL_TO_PTR(mask)	(ERR_PTR(-(__force int)(mask)))
-> +#define PTR_TO_POLL(ptr)	((__force __poll_t)-PTR_ERR((ptr)))
-> +
->  static inline bool file_can_poll(struct file *file)
->  {
-> -	return file->f_op->poll;
-> +	return file->f_op->poll ||
-> +		(file->f_op->get_poll_head && file->f_op->poll_mask);
->  }
->  
-> -static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-> +static inline struct wait_queue_head *vfs_get_poll_head(struct file *file,
-> +		__poll_t events)
->  {
-> -	if (unlikely(!file->f_op->poll))
-> +	if (unlikely(!file->f_op->get_poll_head || !file->f_op->poll_mask))
-> +		return NULL;
-> +	return file->f_op->get_poll_head(file, events);
-> +}
-> +
-> +static inline __poll_t vfs_poll_mask(struct file *file, __poll_t events)
-> +{
-> +	if (unlikely(!file->f_op->poll_mask))
->  		return DEFAULT_POLLMASK;
-> -	return file->f_op->poll(file, pt);
-> +	return file->f_op->poll_mask(file, events) & events;
->  }
->  
-> +__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt);
-> +
->  struct poll_table_entry {
->  	struct file *filp;
->  	__poll_t key;
-> -- 
-> 2.14.2
-> 
+> Looking at fpga-dfl.h again, there's a lot of things that start with
+> FPGA_.  Don't you think this is too general?  There are other FPGA_
+> things in the kernel.  Not just the things added by this patch, but
+> the whole file.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Hi Alan
+
+Thanks for the comments, I got your point here. FPGA_ things should be 
+reserved for more generic things for FPGA. I will search and replace
+the FPGA_xxx things used here and in other files.
+
+> 
+> > FPGA_GET_API_VERSION and FPGA_CHECK_EXTENSION ioctls are common ones which
+> 
+> Maybe DFL_FPGA_GET_API_VERSION?
+
+Yes, DFL_FPGA_GET_API_VERSION looks good.
+
+> 
+> > need to be supported by all feature devices drivers including FME and AFU.
+> > Userspace application can use these ioctl interfaces to get the API info
+> > and check if specific extension is supported or not in current driver.
+> >
+> > This patch implements above 2 ioctls in FPGA Management Engine (FME)
+> > driver.
+> >
+> > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+> > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+> > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+> > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+> > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> > Acked-by: Alan Tull <atull@kernel.org>
+> > Acked-by: Moritz Fischer <mdf@kernel.org>
+> > ---
+> > v2: switched to GPLv2 license.
+> > v3: rename intel-fpga.h to fpga-dfl.h and rebased.
+> > v4: fix SPDX license issue.
+> >     add Acked-by from Alan and Moritz.
+> > ---
+> >  Documentation/ioctl/ioctl-number.txt |  1 +
+> >  drivers/fpga/dfl-fme-main.c          | 12 +++++++++
+> >  include/uapi/linux/fpga-dfl.h        | 48 ++++++++++++++++++++++++++++++++++++
+> >  3 files changed, 61 insertions(+)
+> >  create mode 100644 include/uapi/linux/fpga-dfl.h
+> >
+> > diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
+> > index 6501389..f1e7baa 100644
+> > --- a/Documentation/ioctl/ioctl-number.txt
+> > +++ b/Documentation/ioctl/ioctl-number.txt
+> > @@ -324,6 +324,7 @@ Code  Seq#(hex)     Include File            Comments
+> >  0xB3   00      linux/mmc/ioctl.h
+> >  0xB4   00-0F   linux/gpio.h            <mailto:linux-gpio@vger.kernel.org>
+> >  0xB5   00-0F   uapi/linux/rpmsg.h      <mailto:linux-remoteproc@vger.kernel.org>
+> > +0xB6   all     linux/fpga-dfl.h
+> >  0xC0   00-0F   linux/usb/iowarrior.h
+> >  0xCA   00-0F   uapi/misc/cxl.h
+> >  0xCA   10-2F   uapi/misc/ocxl.h
+> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+> > index 056ae24..1a9929c 100644
+> > --- a/drivers/fpga/dfl-fme-main.c
+> > +++ b/drivers/fpga/dfl-fme-main.c
+> > @@ -16,6 +16,7 @@
+> >
+> >  #include <linux/kernel.h>
+> >  #include <linux/module.h>
+> > +#include <linux/fpga-dfl.h>
+> >
+> >  #include "dfl.h"
+> >
+> > @@ -114,6 +115,13 @@ static struct feature_driver fme_feature_drvs[] = {
+> >         },
+> >  };
+> >
+> > +static long fme_ioctl_check_extension(struct feature_platform_data *pdata,
+> > +                                     unsigned long arg)
+> > +{
+> > +       /* No extension support for now */
+> > +       return 0;
+> > +}
+> > +
+> >  static int fme_open(struct inode *inode, struct file *filp)
+> >  {
+> >         struct platform_device *fdev = fpga_inode_to_feature_dev(inode);
+> > @@ -154,6 +162,10 @@ static long fme_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> >         dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
+> >
+> >         switch (cmd) {
+> > +       case FPGA_GET_API_VERSION:
+> > +               return FPGA_API_VERSION;
+> > +       case FPGA_CHECK_EXTENSION:
+> > +               return fme_ioctl_check_extension(pdata, arg);
+> >         default:
+> >                 /*
+> >                  * Let sub-feature's ioctl function to handle the cmd
+> > diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
+> > new file mode 100644
+> > index 0000000..9321ee9
+> > --- /dev/null
+> > +++ b/include/uapi/linux/fpga-dfl.h
+> > @@ -0,0 +1,48 @@
+> > +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+> > +/*
+> > + * Header File for FPGA DFL User API
+> > + *
+> > + * Copyright (C) 2017 Intel Corporation, Inc.
+> > + *
+> > + * Authors:
+> > + *   Kang Luwei <luwei.kang@intel.com>
+> > + *   Zhang Yi <yi.z.zhang@intel.com>
+> > + *   Wu Hao <hao.wu@intel.com>
+> > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> > + */
+> > +
+> > +#ifndef _UAPI_LINUX_FPGA_DFL_H
+> > +#define _UAPI_LINUX_FPGA_DFL_H
+> > +
+> > +#define FPGA_API_VERSION 0
+> 
+> There will be other FPGA API's.  Maybe DFL_FPGA_... or FME_FPGA_...
+
+I will pick DFL_FPGA_... here and below places. :)
+
+> 
+> > +
+> > +/*
+> > + * The IOCTL interface for DFL based FPGA is designed for extensibility by
+> > + * embedding the structure length (argsz) and flags into structures passed
+> > + * between kernel and userspace. This design referenced the VFIO IOCTL
+> > + * interface (include/uapi/linux/vfio.h).
+> > + */
+> > +
+> > +#define FPGA_MAGIC 0xB6
+> 
+> Same here.
+> 
+> > +
+> > +#define FPGA_BASE 0
+> 
+> And here.
+> 
+> > +
+> > +/**
+> > + * FPGA_GET_API_VERSION - _IO(FPGA_MAGIC, FPGA_BASE + 0)
+> > + *
+> > + * Report the version of the driver API.
+> > + * Return: Driver API Version.
+> > + */
+> > +
+> > +#define FPGA_GET_API_VERSION   _IO(FPGA_MAGIC, FPGA_BASE + 0)
+> > +
+> > +/**
+> > + * FPGA_CHECK_EXTENSION - _IO(FPGA_MAGIC, FPGA_BASE + 1)
+> > + *
+> > + * Check whether an extension is supported.
+> > + * Return: 0 if not supported, otherwise the extension is supported.
+> > + */
+> > +
+> > +#define FPGA_CHECK_EXTENSION   _IO(FPGA_MAGIC, FPGA_BASE + 1)
+> 
+> Basically all the FPGA_* stuff here is specific to this particular DFL
+> FPGA API and should have a better name.
+
+Will update them in the next version, thanks again for the comments.
+
+Hao
+
+> 
+> Alan
+> 
+> > +
+> > +#endif /* _UAPI_LINUX_FPGA_DFL_H */
+> > --
+> > 2.7.4
+> >
