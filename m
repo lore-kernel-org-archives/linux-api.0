@@ -1,22 +1,23 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 01/36] aio: don't print the page size at boot time
-Date: Mon, 19 Mar 2018 17:11:07 -0700
-Message-ID: <20180320001107.GD4860@magnolia>
+Subject: Re: [PATCH 02/36] aio: remove an outdated comment in aio_complete
+Date: Mon, 19 Mar 2018 17:12:23 -0700
+Message-ID: <20180320001223.GE4860@magnolia>
 References: <20180305212743.16664-1-hch@lst.de>
- <20180305212743.16664-2-hch@lst.de>
+ <20180305212743.16664-3-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180305212743.16664-2-hch@lst.de>
+In-Reply-To: <20180305212743.16664-3-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 05, 2018 at 01:27:08PM -0800, Christoph Hellwig wrote:
-> The page size is in no way related to the aio code, and printing it in
-> the (debug) dmesg at every boot serves no purpose.
+On Mon, Mar 05, 2018 at 01:27:09PM -0800, Christoph Hellwig wrote:
+> These days we don't treat sync iocbs special in the aio completion code as
+> they never use it.  Remove the old comment, and move the BUG_ON for a sync
+> iocb to the top of the function.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > Acked-by: Jeff Moyer <jmoyer@redhat.com>
@@ -27,23 +28,38 @@ Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 --D
 
 > ---
->  fs/aio.c | 3 ---
->  1 file changed, 3 deletions(-)
+>  fs/aio.c | 11 ++---------
+>  1 file changed, 2 insertions(+), 9 deletions(-)
 > 
 > diff --git a/fs/aio.c b/fs/aio.c
-> index a062d75109cb..03d59593912d 100644
+> index 03d59593912d..41fc8ce6bc7f 100644
 > --- a/fs/aio.c
 > +++ b/fs/aio.c
-> @@ -264,9 +264,6 @@ static int __init aio_setup(void)
+> @@ -1088,6 +1088,8 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
+>  	unsigned tail, pos, head;
+>  	unsigned long	flags;
 >  
->  	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
->  	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+> +	BUG_ON(is_sync_kiocb(kiocb));
+> +
+>  	if (kiocb->ki_flags & IOCB_WRITE) {
+>  		struct file *file = kiocb->ki_filp;
+>  
+> @@ -1100,15 +1102,6 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
+>  		file_end_write(file);
+>  	}
+>  
+> -	/*
+> -	 * Special case handling for sync iocbs:
+> -	 *  - events go directly into the iocb for fast handling
+> -	 *  - the sync task with the iocb in its stack holds the single iocb
+> -	 *    ref, no other paths have a way to get another ref
+> -	 *  - the sync task helpfully left a reference to itself in the iocb
+> -	 */
+> -	BUG_ON(is_sync_kiocb(kiocb));
 > -
-> -	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
-> -
->  	return 0;
->  }
->  __initcall(aio_setup);
+>  	if (iocb->ki_list.next) {
+>  		unsigned long flags;
+>  
 > -- 
 > 2.14.2
 > 
