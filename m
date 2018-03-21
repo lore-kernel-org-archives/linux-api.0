@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 17/28] net/sctp: convert to ->poll_mask
-Date: Wed, 21 Mar 2018 08:40:21 +0100
-Message-ID: <20180321074032.14211-18-hch@lst.de>
+Subject: [PATCH 19/28] net/caif: convert to ->poll_mask
+Date: Wed, 21 Mar 2018 08:40:23 +0100
+Message-ID: <20180321074032.14211-20-hch@lst.de>
 References: <20180321074032.14211-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180321074032.14211-1-hch@lst.de>
@@ -12,72 +12,49 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/sctp/sctp.h | 3 +--
- net/sctp/ipv6.c         | 2 +-
- net/sctp/protocol.c     | 2 +-
- net/sctp/socket.c       | 4 +---
- 4 files changed, 4 insertions(+), 7 deletions(-)
+ net/caif/caif_socket.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/include/net/sctp/sctp.h b/include/net/sctp/sctp.h
-index f7ae6b0a21d0..37abd5ba4a3f 100644
---- a/include/net/sctp/sctp.h
-+++ b/include/net/sctp/sctp.h
-@@ -107,8 +107,7 @@ int sctp_backlog_rcv(struct sock *sk, struct sk_buff *skb);
- int sctp_inet_listen(struct socket *sock, int backlog);
- void sctp_write_space(struct sock *sk);
- void sctp_data_ready(struct sock *sk);
--__poll_t sctp_poll(struct file *file, struct socket *sock,
--		poll_table *wait);
-+__poll_t sctp_poll_mask(struct socket *sock, __poll_t events);
- void sctp_sock_rfree(struct sk_buff *skb);
- void sctp_copy_sock(struct sock *newsk, struct sock *sk,
- 		    struct sctp_association *asoc);
-diff --git a/net/sctp/ipv6.c b/net/sctp/ipv6.c
-index e35d4f73d2df..6b0b8fc5b75a 100644
---- a/net/sctp/ipv6.c
-+++ b/net/sctp/ipv6.c
-@@ -976,7 +976,7 @@ static const struct proto_ops inet6_seqpacket_ops = {
- 	.socketpair	   = sock_no_socketpair,
- 	.accept		   = inet_accept,
- 	.getname	   = sctp_getname,
--	.poll		   = sctp_poll,
-+	.poll_mask	   = sctp_poll_mask,
- 	.ioctl		   = inet6_ioctl,
- 	.listen		   = sctp_inet_listen,
- 	.shutdown	   = inet_shutdown,
-diff --git a/net/sctp/protocol.c b/net/sctp/protocol.c
-index 91813e686c67..20c544890e80 100644
---- a/net/sctp/protocol.c
-+++ b/net/sctp/protocol.c
-@@ -1024,7 +1024,7 @@ static const struct proto_ops inet_seqpacket_ops = {
- 	.socketpair	   = sock_no_socketpair,
- 	.accept		   = inet_accept,
- 	.getname	   = inet_getname,	/* Semantics are different.  */
--	.poll		   = sctp_poll,
-+	.poll_mask	   = sctp_poll_mask,
- 	.ioctl		   = inet_ioctl,
- 	.listen		   = sctp_inet_listen,
- 	.shutdown	   = inet_shutdown,	/* Looks harmless.  */
-diff --git a/net/sctp/socket.c b/net/sctp/socket.c
-index bf271f8c2dc9..097454740929 100644
---- a/net/sctp/socket.c
-+++ b/net/sctp/socket.c
-@@ -7587,14 +7587,12 @@ int sctp_inet_listen(struct socket *sock, int backlog)
-  * here, again, by modeling the current TCP/UDP code.  We don't have
-  * a good way to test with it yet.
-  */
--__poll_t sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
-+__poll_t sctp_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/net/caif/caif_socket.c b/net/caif/caif_socket.c
+index a6fb1b3bcad9..c7991867d622 100644
+--- a/net/caif/caif_socket.c
++++ b/net/caif/caif_socket.c
+@@ -934,15 +934,11 @@ static int caif_release(struct socket *sock)
+ }
+ 
+ /* Copied from af_unix.c:unix_poll(), added CAIF tx_flow handling */
+-static __poll_t caif_poll(struct file *file,
+-			      struct socket *sock, poll_table *wait)
++static __poll_t caif_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct sctp_sock *sp = sctp_sk(sk);
- 	__poll_t mask;
- 
--	poll_wait(file, sk_sleep(sk), wait);
+-	__poll_t mask;
+ 	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
 -
- 	sock_rps_record_flow(sk);
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
  
- 	/* A TCP-style listening socket becomes readable when the accept queue
+ 	/* exceptional events? */
+ 	if (sk->sk_err)
+@@ -976,7 +972,7 @@ static const struct proto_ops caif_seqpacket_ops = {
+ 	.socketpair = sock_no_socketpair,
+ 	.accept = sock_no_accept,
+ 	.getname = sock_no_getname,
+-	.poll = caif_poll,
++	.poll_mask = caif_poll_mask,
+ 	.ioctl = sock_no_ioctl,
+ 	.listen = sock_no_listen,
+ 	.shutdown = sock_no_shutdown,
+@@ -997,7 +993,7 @@ static const struct proto_ops caif_stream_ops = {
+ 	.socketpair = sock_no_socketpair,
+ 	.accept = sock_no_accept,
+ 	.getname = sock_no_getname,
+-	.poll = caif_poll,
++	.poll_mask = caif_poll_mask,
+ 	.ioctl = sock_no_ioctl,
+ 	.listen = sock_no_listen,
+ 	.shutdown = sock_no_shutdown,
 -- 
 2.14.2
 
