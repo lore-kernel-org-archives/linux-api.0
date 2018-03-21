@@ -1,28 +1,35 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 05/28] fs: introduce new ->get_poll_head and ->poll_mask
- methods
-Date: Wed, 21 Mar 2018 09:29:08 -0700
-Message-ID: <20180321162907.GG4807@magnolia>
-References: <20180321074032.14211-1-hch@lst.de>
- <20180321074032.14211-6-hch@lst.de>
+Subject: Re: [PATCH 8/9] aio: implement io_pgetevents
+Date: Wed, 21 Mar 2018 09:26:50 -0700
+Message-ID: <20180321162650.GE4807@magnolia>
+References: <20180321073232.13366-1-hch@lst.de>
+ <20180321073232.13366-9-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180321074032.14211-6-hch@lst.de>
+In-Reply-To: <20180321073232.13366-9-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 21, 2018 at 08:40:09AM +0100, Christoph Hellwig wrote:
-> ->get_poll_head returns the waitqueue that the poll operation is going
-> to sleep on.  Note that this means we can only use a single waitqueue
-> for the poll, unlike some current drivers that use two waitqueues for
-> different events.  But now that we have keyed wakeups and heavily use
-> those for poll there aren't that many good reason left to keep the
-> multiple waitqueues, and if there are any ->poll is still around, the
-> driver just won't support aio poll.
+On Wed, Mar 21, 2018 at 08:32:31AM +0100, Christoph Hellwig wrote:
+> This is the io_getevents equivalent of ppoll/pselect and allows to
+> properly mix signals and aio completions (especially with IOCB_CMD_POLL)
+> and atomically executes the following sequence:
+> 
+> 	sigset_t origmask;
+> 
+> 	pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
+> 	ret = io_getevents(ctx, min_nr, nr, events, timeout);
+> 	pthread_sigmask(SIG_SETMASK, &origmask, NULL);
+> 
+> Note that unlike many other signal related calls we do not pass a sigmask
+> size, as that would get us to 7 arguments, which aren't easily supported
+> by the syscall infrastructure.  It seems a lot less painful to just add a
+> new syscall variant in the unlikely case we're going to increase the
+> sigset size.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
@@ -32,174 +39,282 @@ Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 --D
 
 > ---
->  Documentation/filesystems/Locking |  7 ++++++-
->  Documentation/filesystems/vfs.txt | 13 +++++++++++++
->  fs/select.c                       | 28 ++++++++++++++++++++++++++++
->  include/linux/fs.h                |  2 ++
->  include/linux/poll.h              | 27 +++++++++++++++++++++++----
->  5 files changed, 72 insertions(+), 5 deletions(-)
+>  arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+>  arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+>  fs/aio.c                               | 114 ++++++++++++++++++++++++++++++---
+>  include/linux/compat.h                 |   7 ++
+>  include/linux/syscalls.h               |   6 ++
+>  include/uapi/asm-generic/unistd.h      |   4 +-
+>  include/uapi/linux/aio_abi.h           |   6 ++
+>  kernel/sys_ni.c                        |   2 +
+>  8 files changed, 130 insertions(+), 11 deletions(-)
 > 
-> diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-> index 220bba28f72b..6d227f9d7bd9 100644
-> --- a/Documentation/filesystems/Locking
-> +++ b/Documentation/filesystems/Locking
-> @@ -440,6 +440,8 @@ prototypes:
->  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->  	int (*iterate) (struct file *, struct dir_context *);
->  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-> +	__poll_t (*poll_mask) (struct file *, __poll_t);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> @@ -470,7 +472,7 @@ prototypes:
->  };
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index 2a5e99cff859..c1018580ddaa 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -391,3 +391,4 @@
+>  382	i386	pkey_free		sys_pkey_free
+>  383	i386	statx			sys_statx
+>  384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
+> +385	i386	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index 5aef183e2f85..e995cd2b4e65 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -339,6 +339,7 @@
+>  330	common	pkey_alloc		sys_pkey_alloc
+>  331	common	pkey_free		sys_pkey_free
+>  332	common	statx			sys_statx
+> +333	common	io_pgetevents		sys_io_pgetevents
 >  
->  locking rules:
-> -	All may block.
-> +	All except for ->poll_mask may block.
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/fs/aio.c b/fs/aio.c
+> index 9d7d6e4cde87..da87cbf7c67a 100644
+> --- a/fs/aio.c
+> +++ b/fs/aio.c
+> @@ -1291,10 +1291,6 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
+>  		wait_event_interruptible_hrtimeout(ctx->wait,
+>  				aio_read_events(ctx, min_nr, nr, event, &ret),
+>  				until);
+> -
+> -	if (!ret && signal_pending(current))
+> -		ret = -EINTR;
+> -
+>  	return ret;
+>  }
 >  
->  ->llseek() locking has moved from llseek to the individual llseek
->  implementations.  If your fs is not using generic_file_llseek, you
-> @@ -498,6 +500,9 @@ in sys_read() and friends.
->  the lease within the individual filesystem to record the result of the
->  operation
->  
-> +->poll_mask can be called with or without the waitqueue lock for the waitqueue
-> +returned from ->get_poll_head.
+> @@ -1874,13 +1870,60 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
+>  		struct timespec __user *, timeout)
+>  {
+>  	struct timespec64	ts;
+> +	int			ret;
 > +
->  --------------------------- dquot_operations -------------------------------
->  prototypes:
->  	int (*write_dquot) (struct dquot *);
-> diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-> index f608180ad59d..50ee13563271 100644
-> --- a/Documentation/filesystems/vfs.txt
-> +++ b/Documentation/filesystems/vfs.txt
-> @@ -857,6 +857,8 @@ struct file_operations {
->  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->  	int (*iterate) (struct file *, struct dir_context *);
->  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-> +	__poll_t (*poll_mask) (struct file *, __poll_t);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> @@ -901,6 +903,17 @@ otherwise noted.
->  	activity on this file and (optionally) go to sleep until there
->  	is activity. Called by the select(2) and poll(2) system calls
->  
-> +  get_poll_head: Returns the struct wait_queue_head that poll, select,
-> +  epoll or aio poll should wait on in case this instance only has single
-> +  waitqueue.  Can return NULL to indicate polling is not supported,
-> +  or a POLL* value using the POLL_TO_PTR helper in case a grave error
-> +  occured and ->poll_mask shall not be called.
+> +	if (timeout && unlikely(get_timespec64(&ts, timeout)))
+> +		return -EFAULT;
 > +
-> +  poll_mask: return the mask of POLL* values describing the file descriptor
-> +  state.  Called either before going to sleep on the waitqueue returned by
-> +  get_poll_head, or after it has been woken.  If ->get_poll_head and
-> +  ->poll_mask are implemented ->poll does not need to be implement.
+> +	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
+> +	if (!ret && signal_pending(current))
+> +		ret = -EINTR;
+> +	return ret;
+> +}
 > +
->    unlocked_ioctl: called by the ioctl(2) system call.
->  
->    compat_ioctl: called by the ioctl(2) system call when 32 bit system calls
-> diff --git a/fs/select.c b/fs/select.c
-> index ba91103707ea..cc270d7f6192 100644
-> --- a/fs/select.c
-> +++ b/fs/select.c
-> @@ -34,6 +34,34 @@
->  
->  #include <linux/uaccess.h>
->  
-> +__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
+> +SYSCALL_DEFINE6(io_pgetevents,
+> +		aio_context_t, ctx_id,
+> +		long, min_nr,
+> +		long, nr,
+> +		struct io_event __user *, events,
+> +		struct timespec __user *, timeout,
+> +		const struct __aio_sigset __user *, usig)
 > +{
-> +	unsigned int events = poll_requested_events(pt);
-> +	struct wait_queue_head *head;
+> +	struct __aio_sigset	ksig = { NULL, };
+> +	sigset_t		ksigmask, sigsaved;
+> +	struct timespec64	ts;
+> +	int ret;
 > +
-> +	if (unlikely(!file_can_poll(file)))
-> +		return DEFAULT_POLLMASK;
+> +	if (timeout && unlikely(get_timespec64(&ts, timeout)))
+> +		return -EFAULT;
+>  
+> -	if (timeout) {
+> -		if (unlikely(get_timespec64(&ts, timeout)))
+> +	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
+> +		return -EFAULT;
 > +
-> +	if (file->f_op->poll)
-> +		return file->f_op->poll(file, pt);
-> +
-> +	/*
-> +	 * Only get the poll head and do the first mask check if we are actually
-> +	 * going to sleep on this file:
-> +	 */
-> +	if (pt && pt->_qproc) {
-> +		head = vfs_get_poll_head(file, events);
-> +		if (!head)
-> +			return DEFAULT_POLLMASK;
-> +		if (IS_ERR(head))
-> +			return PTR_TO_POLL(head);
-> +
-> +		pt->_qproc(file, head, pt);
+> +	if (ksig.sigmask) {
+> +		if (ksig.sigsetsize != sizeof(sigset_t))
+> +			return -EINVAL;
+> +		if (copy_from_user(&ksigmask, ksig.sigmask, sizeof(ksigmask)))
+>  			return -EFAULT;
+> +		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
+> +		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
 > +	}
 > +
-> +	return file->f_op->poll_mask(file, events);
+> +	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
+> +	if (signal_pending(current)) {
+> +		if (ksig.sigmask) {
+> +			current->saved_sigmask = sigsaved;
+> +			set_restore_sigmask();
+> +		}
+> +
+> +		if (!ret)
+> +			ret = -ERESTARTNOHAND;
+> +	} else {
+> +		if (ksig.sigmask)
+> +			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
+>  	}
+>  
+> -	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
+> +	return ret;
+>  }
+>  
+>  #ifdef CONFIG_COMPAT
+> @@ -1891,13 +1934,64 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
+>  		       struct compat_timespec __user *, timeout)
+>  {
+>  	struct timespec64 t;
+> +	int ret;
+> +
+> +	if (timeout && compat_get_timespec64(&t, timeout))
+> +		return -EFAULT;
+> +
+> +	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
+> +	if (!ret && signal_pending(current))
+> +		ret = -EINTR;
+> +	return ret;
 > +}
-> +EXPORT_SYMBOL_GPL(vfs_poll);
+> +
+> +
+> +struct __compat_aio_sigset {
+> +	compat_sigset_t __user	*sigmask;
+> +	compat_size_t		sigsetsize;
+> +};
+> +
+> +COMPAT_SYSCALL_DEFINE6(io_pgetevents,
+> +		compat_aio_context_t, ctx_id,
+> +		compat_long_t, min_nr,
+> +		compat_long_t, nr,
+> +		struct io_event __user *, events,
+> +		struct compat_timespec __user *, timeout,
+> +		const struct __compat_aio_sigset __user *, usig)
+> +{
+> +	struct __compat_aio_sigset ksig = { NULL, };
+> +	sigset_t ksigmask, sigsaved;
+> +	struct timespec64 t;
+> +	int ret;
+> +
+> +	if (timeout && compat_get_timespec64(&t, timeout))
+> +		return -EFAULT;
+>  
+> -	if (timeout) {
+> -		if (compat_get_timespec64(&t, timeout))
+> +	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
+> +		return -EFAULT;
+> +
+> +	if (ksig.sigmask) {
+> +		if (ksig.sigsetsize != sizeof(compat_sigset_t))
+> +			return -EINVAL;
+> +		if (get_compat_sigset(&ksigmask, ksig.sigmask))
+>  			return -EFAULT;
+> +		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
+> +		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
+> +	}
+>  
+> +	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
+> +	if (signal_pending(current)) {
+> +		if (ksig.sigmask) {
+> +			current->saved_sigmask = sigsaved;
+> +			set_restore_sigmask();
+> +		}
+> +		if (!ret)
+> +			ret = -ERESTARTNOHAND;
+> +	} else {
+> +		if (ksig.sigmask)
+> +			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
+>  	}
+>  
+> -	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
+> +	return ret;
+>  }
+>  #endif
+> diff --git a/include/linux/compat.h b/include/linux/compat.h
+> index 16c3027074a2..d80cda61eafd 100644
+> --- a/include/linux/compat.h
+> +++ b/include/linux/compat.h
+> @@ -304,6 +304,7 @@ extern int put_compat_rusage(const struct rusage *,
+>  			     struct compat_rusage __user *);
+>  
+>  struct compat_siginfo;
+> +struct __compat_aio_sigset;
+>  
+>  extern asmlinkage long compat_sys_waitid(int, compat_pid_t,
+>  		struct compat_siginfo __user *, int,
+> @@ -656,6 +657,12 @@ asmlinkage long compat_sys_io_getevents(compat_aio_context_t ctx_id,
+>  					compat_long_t nr,
+>  					struct io_event __user *events,
+>  					struct compat_timespec __user *timeout);
+> +asmlinkage long compat_sys_io_pgetevents(compat_aio_context_t ctx_id,
+> +					compat_long_t min_nr,
+> +					compat_long_t nr,
+> +					struct io_event __user *events,
+> +					struct compat_timespec __user *timeout,
+> +					const struct __compat_aio_sigset __user *usig);
+>  asmlinkage long compat_sys_io_submit(compat_aio_context_t ctx_id, int nr,
+>  				     u32 __user *iocb);
+>  asmlinkage long compat_sys_mount(const char __user *dev_name,
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index a78186d826d7..8515ec53c81b 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -539,6 +539,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
+>  				long nr,
+>  				struct io_event __user *events,
+>  				struct timespec __user *timeout);
+> +asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
+> +				long min_nr,
+> +				long nr,
+> +				struct io_event __user *events,
+> +				struct timespec __user *timeout,
+> +				const struct __aio_sigset *sig);
+>  asmlinkage long sys_io_submit(aio_context_t, long,
+>  				struct iocb __user * __user *);
+>  asmlinkage long sys_io_cancel(aio_context_t ctx_id, struct iocb __user *iocb,
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 8b87de067bc7..ce2ebbeece10 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -732,9 +732,11 @@ __SYSCALL(__NR_pkey_alloc,    sys_pkey_alloc)
+>  __SYSCALL(__NR_pkey_free,     sys_pkey_free)
+>  #define __NR_statx 291
+>  __SYSCALL(__NR_statx,     sys_statx)
+> +#define __NR_io_pgetevents 292
+> +__SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
+>  
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 292
+> +#define __NR_syscalls 293
 >  
 >  /*
->   * Estimate expected accuracy in ns from a timeval.
-> diff --git a/include/linux/fs.h b/include/linux/fs.h
-> index 79c413985305..6ea2c0843bb1 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -1708,6 +1708,8 @@ struct file_operations {
->  	int (*iterate) (struct file *, struct dir_context *);
->  	int (*iterate_shared) (struct file *, struct dir_context *);
->  	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-> +	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-> +	__poll_t (*poll_mask) (struct file *, __poll_t);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> diff --git a/include/linux/poll.h b/include/linux/poll.h
-> index 7e0fdcf905d2..42e8e8665fb0 100644
-> --- a/include/linux/poll.h
-> +++ b/include/linux/poll.h
-> @@ -74,18 +74,37 @@ static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
->  	pt->_key   = ~(__poll_t)0; /* all events enabled */
->  }
+>   * All syscalls below here should go away really,
+> diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+> index a04adbc70ddf..2c0a3415beee 100644
+> --- a/include/uapi/linux/aio_abi.h
+> +++ b/include/uapi/linux/aio_abi.h
+> @@ -29,6 +29,7 @@
 >  
-> +/*
-> + * ->get_poll_head can return a __poll_t in the PTR_ERR, use these macros
-> + * to return the value and recover it.  It takes care of the negation as
-> + * well as off the annotations.
-> + */
-> +#define POLL_TO_PTR(mask)	(ERR_PTR(-(__force int)(mask)))
-> +#define PTR_TO_POLL(ptr)	((__force __poll_t)-PTR_ERR((ptr)))
-> +
->  static inline bool file_can_poll(struct file *file)
->  {
-> -	return file->f_op->poll;
-> +	return file->f_op->poll ||
-> +		(file->f_op->get_poll_head && file->f_op->poll_mask);
->  }
+>  #include <linux/types.h>
+>  #include <linux/fs.h>
+> +#include <linux/signal.h>
+>  #include <asm/byteorder.h>
 >  
-> -static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-> +static inline struct wait_queue_head *vfs_get_poll_head(struct file *file,
-> +		__poll_t events)
->  {
-> -	if (unlikely(!file->f_op->poll))
-> +	if (unlikely(!file->f_op->get_poll_head || !file->f_op->poll_mask))
-> +		return NULL;
-> +	return file->f_op->get_poll_head(file, events);
-> +}
-> +
-> +static inline __poll_t vfs_poll_mask(struct file *file, __poll_t events)
-> +{
-> +	if (unlikely(!file->f_op->poll_mask))
->  		return DEFAULT_POLLMASK;
-> -	return file->f_op->poll(file, pt);
-> +	return file->f_op->poll_mask(file, events) & events;
->  }
+>  typedef __kernel_ulong_t aio_context_t;
+> @@ -108,5 +109,10 @@ struct iocb {
+>  #undef IFBIG
+>  #undef IFLITTLE
 >  
-> +__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt);
+> +struct __aio_sigset {
+> +	sigset_t __user	*sigmask;
+> +	size_t		sigsetsize;
+> +};
 > +
->  struct poll_table_entry {
->  	struct file *filp;
->  	__poll_t key;
+>  #endif /* __LINUX__AIO_ABI_H */
+>  
+> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> index b5189762d275..8f7705559b38 100644
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -151,9 +151,11 @@ cond_syscall(sys_io_destroy);
+>  cond_syscall(sys_io_submit);
+>  cond_syscall(sys_io_cancel);
+>  cond_syscall(sys_io_getevents);
+> +cond_syscall(sys_io_pgetevents);
+>  cond_syscall(compat_sys_io_setup);
+>  cond_syscall(compat_sys_io_submit);
+>  cond_syscall(compat_sys_io_getevents);
+> +cond_syscall(compat_sys_io_pgetevents);
+>  cond_syscall(sys_sysfs);
+>  cond_syscall(sys_syslog);
+>  cond_syscall(sys_process_vm_readv);
 > -- 
 > 2.14.2
 > 
