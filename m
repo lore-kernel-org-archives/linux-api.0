@@ -1,35 +1,41 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: io_pgetevents & aio fsync
-Date: Wed, 21 Mar 2018 08:32:23 +0100
-Message-ID: <20180321073232.13366-1-hch@lst.de>
+Subject: [PATCH 1/9] aio: don't print the page size at boot time
+Date: Wed, 21 Mar 2018 08:32:24 +0100
+Message-ID: <20180321073232.13366-2-hch@lst.de>
+References: <20180321073232.13366-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180321073232.13366-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+The page size is in no way related to the aio code, and printing it in
+the (debug) dmesg at every boot serves no purpose.
 
-this patch adds workqueue based fsync offload.  Version of this
-patch have been floating around for a couple years, but we now
-have a user with seastar used by ScyllaDB (who sponsored this
-work) that really wants this in addition to the aio poll support.
-More details are in the patch itself.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ fs/aio.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-Because the iocb types have been defined sine day one (and probably
-were supported by RHEL3) libaio already supports these calls as-is.
-
-This also pulls in the aio cleanups and io_pgetevents support previously
-submitted and review as part of the aio poll series.  The aio poll
-series will be resubmitted on top of this series
-
-A git tree is available here:
-
-    git://git.infradead.org/users/hch/vfs.git aio-fsync.2
-
-Gitweb:
-
-    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-fsync.2
+diff --git a/fs/aio.c b/fs/aio.c
+index a062d75109cb..03d59593912d 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -264,9 +264,6 @@ static int __init aio_setup(void)
+ 
+ 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+ 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+-
+-	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
+-
+ 	return 0;
+ }
+ __initcall(aio_setup);
+-- 
+2.14.2
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
