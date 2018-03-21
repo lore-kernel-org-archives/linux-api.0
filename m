@@ -1,63 +1,112 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 03/28] fs: update documentation to mention __poll_t
-Date: Wed, 21 Mar 2018 09:28:42 -0700
-Message-ID: <20180321162842.GF4807@magnolia>
-References: <20180321074032.14211-1-hch@lst.de>
- <20180321074032.14211-4-hch@lst.de>
+Subject: Re: [PATCH 9/9] aio: implement IOCB_CMD_FSYNC and IOCB_CMD_FDSYNC
+Date: Wed, 21 Mar 2018 09:26:23 -0700
+Message-ID: <20180321162623.GD4807@magnolia>
+References: <20180321073232.13366-1-hch@lst.de>
+ <20180321073232.13366-10-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180321074032.14211-4-hch@lst.de>
+In-Reply-To: <20180321073232.13366-10-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 21, 2018 at 08:40:07AM +0100, Christoph Hellwig wrote:
+On Wed, Mar 21, 2018 at 08:32:32AM +0100, Christoph Hellwig wrote:
+> Simple workqueue offload for now, but prepared for adding a real aio_fsync
+> method if the need arises.  Based on an earlier patch from Dave Chinner.
+> 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-It still would be nice to have a commit message to note that we're
-merely updating the documentation to reflect what's currently in the C
-headers (as opposed to a mangled patch that updated the docs but dropped
-the actual code update)...
-
-...so with that fixed,
+Looks ok,
 Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 
 --D
 
 > ---
->  Documentation/filesystems/Locking | 2 +-
->  Documentation/filesystems/vfs.txt | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
+>  fs/aio.c | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 50 insertions(+)
 > 
-> diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-> index 75d2d57e2c44..220bba28f72b 100644
-> --- a/Documentation/filesystems/Locking
-> +++ b/Documentation/filesystems/Locking
-> @@ -439,7 +439,7 @@ prototypes:
->  	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
->  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->  	int (*iterate) (struct file *, struct dir_context *);
-> -	unsigned int (*poll) (struct file *, struct poll_table_struct *);
-> +	__poll_t (*poll) (struct file *, struct poll_table_struct *);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
-> diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-> index 5fd325df59e2..f608180ad59d 100644
-> --- a/Documentation/filesystems/vfs.txt
-> +++ b/Documentation/filesystems/vfs.txt
-> @@ -856,7 +856,7 @@ struct file_operations {
->  	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
->  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
->  	int (*iterate) (struct file *, struct dir_context *);
-> -	unsigned int (*poll) (struct file *, struct poll_table_struct *);
-> +	__poll_t (*poll) (struct file *, struct poll_table_struct *);
->  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
->  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
->  	int (*mmap) (struct file *, struct vm_area_struct *);
+> diff --git a/fs/aio.c b/fs/aio.c
+> index da87cbf7c67a..79d3eb3d2dd9 100644
+> --- a/fs/aio.c
+> +++ b/fs/aio.c
+> @@ -156,9 +156,16 @@ struct kioctx {
+>  	unsigned		id;
+>  };
+>  
+> +struct fsync_iocb {
+> +	struct work_struct	work;
+> +	struct file		*file;
+> +	bool			datasync;
+> +};
+> +
+>  struct aio_kiocb {
+>  	union {
+>  		struct kiocb		rw;
+> +		struct fsync_iocb	fsync;
+>  	};
+>  
+>  	struct kioctx		*ki_ctx;
+> @@ -1565,6 +1572,43 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
+>  	return ret;
+>  }
+>  
+> +static void aio_fsync_work(struct work_struct *work)
+> +{
+> +	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
+> +	int ret;
+> +
+> +	ret = vfs_fsync(req->file, req->datasync);
+> +	fput(req->file);
+> +	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
+> +}
+> +
+> +static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
+> +{
+> +	int ret;
+> +
+> +	if (iocb->aio_buf)
+> +		return -EINVAL;
+> +	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
+> +		return -EINVAL;
+> +
+> +	req->file = fget(iocb->aio_fildes);
+> +	if (unlikely(!req->file))
+> +		return -EBADF;
+> +
+> +	ret = -EINVAL;
+> +	if (!req->file->f_op->fsync)
+> +		goto out_fput;
+> +
+> +	req->datasync = datasync;
+> +	INIT_WORK(&req->work, aio_fsync_work);
+> +	schedule_work(&req->work);
+> +	return -EIOCBQUEUED;
+> +out_fput:
+> +	if (unlikely(ret && ret != -EIOCBQUEUED))
+> +		fput(req->file);
+> +	return ret;
+> +}
+> +
+>  static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+>  			 struct iocb *iocb, bool compat)
+>  {
+> @@ -1628,6 +1672,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+>  	case IOCB_CMD_PWRITEV:
+>  		ret = aio_write(&req->rw, iocb, true, compat);
+>  		break;
+> +	case IOCB_CMD_FSYNC:
+> +		ret = aio_fsync(&req->fsync, iocb, false);
+> +		break;
+> +	case IOCB_CMD_FDSYNC:
+> +		ret = aio_fsync(&req->fsync, iocb, true);
+> +		break;
+>  	default:
+>  		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
+>  		ret = -EINVAL;
 > -- 
 > 2.14.2
 > 
