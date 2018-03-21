@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/28] fs: cleanup do_pollfd
-Date: Wed, 21 Mar 2018 08:40:06 +0100
-Message-ID: <20180321074032.14211-3-hch@lst.de>
+Subject: [PATCH 03/28] fs: update documentation to mention __poll_t
+Date: Wed, 21 Mar 2018 08:40:07 +0100
+Message-ID: <20180321074032.14211-4-hch@lst.de>
 References: <20180321074032.14211-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180321074032.14211-1-hch@lst.de>
@@ -10,77 +10,38 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Use straigline code with failure handling gotos instead of a lot
-of nested conditionals.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/select.c | 48 +++++++++++++++++++++++-------------------------
- 1 file changed, 23 insertions(+), 25 deletions(-)
+ Documentation/filesystems/Locking | 2 +-
+ Documentation/filesystems/vfs.txt | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/select.c b/fs/select.c
-index 686de7b3a1db..c6c504a814f9 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -806,34 +806,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
- 				     bool *can_busy_poll,
- 				     __poll_t busy_flag)
- {
--	__poll_t mask;
--	int fd;
--
--	mask = 0;
--	fd = pollfd->fd;
--	if (fd >= 0) {
--		struct fd f = fdget(fd);
--		mask = EPOLLNVAL;
--		if (f.file) {
--			/* userland u16 ->events contains POLL... bitmap */
--			__poll_t filter = demangle_poll(pollfd->events) |
--						EPOLLERR | EPOLLHUP;
--			mask = DEFAULT_POLLMASK;
--			if (f.file->f_op->poll) {
--				pwait->_key = filter;
--				pwait->_key |= busy_flag;
--				mask = f.file->f_op->poll(f.file, pwait);
--				if (mask & busy_flag)
--					*can_busy_poll = true;
--			}
--			/* Mask out unneeded events. */
--			mask &= filter;
--			fdput(f);
--		}
-+	int fd = pollfd->fd;
-+	__poll_t mask = 0, filter;
-+	struct fd f;
-+
-+	if (fd < 0)
-+		goto out;
-+	mask = EPOLLNVAL;
-+	f = fdget(fd);
-+	if (!f.file)
-+		goto out;
-+
-+	/* userland u16 ->events contains POLL... bitmap */
-+	filter = demangle_poll(pollfd->events) | EPOLLERR | EPOLLHUP;
-+	mask = DEFAULT_POLLMASK;
-+	if (f.file->f_op->poll) {
-+		pwait->_key = filter | busy_flag;
-+		mask = f.file->f_op->poll(f.file, pwait);
-+		if (mask & busy_flag)
-+			*can_busy_poll = true;
- 	}
-+	mask &= filter;		/* Mask out unneeded events. */
-+	fdput(f);
-+
-+out:
- 	/* ... and so does ->revents */
- 	pollfd->revents = mangle_poll(mask);
--
- 	return mask;
- }
- 
+diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
+index 75d2d57e2c44..220bba28f72b 100644
+--- a/Documentation/filesystems/Locking
++++ b/Documentation/filesystems/Locking
+@@ -439,7 +439,7 @@ prototypes:
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+ 	int (*iterate) (struct file *, struct dir_context *);
+-	unsigned int (*poll) (struct file *, struct poll_table_struct *);
++	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 5fd325df59e2..f608180ad59d 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -856,7 +856,7 @@ struct file_operations {
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+ 	int (*iterate) (struct file *, struct dir_context *);
+-	unsigned int (*poll) (struct file *, struct poll_table_struct *);
++	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+ 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+ 	int (*mmap) (struct file *, struct vm_area_struct *);
 -- 
 2.14.2
 
