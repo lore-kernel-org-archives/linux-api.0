@@ -1,103 +1,74 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 9/9] aio: implement IOCB_CMD_FSYNC and IOCB_CMD_FDSYNC
-Date: Wed, 21 Mar 2018 08:32:32 +0100
-Message-ID: <20180321073232.13366-10-hch@lst.de>
-References: <20180321073232.13366-1-hch@lst.de>
+Subject: aio poll and a new in-kernel poll API V6
+Date: Wed, 21 Mar 2018 08:40:04 +0100
+Message-ID: <20180321074032.14211-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180321073232.13366-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Simple workqueue offload for now, but prepared for adding a real aio_fsync
-method if the need arises.  Based on an earlier patch from Dave Chinner.
+Hi all,
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/aio.c | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 50 insertions(+)
+this series adds support for the IOCB_CMD_POLL operation to poll for the
+readyness of file descriptors using the aio subsystem.  The API is based
+on patches that existed in RHAS2.1 and RHEL3, which means it already is
+supported by libaio.  To implement the poll support efficiently new
+methods to poll are introduced in struct file_operations:  get_poll_head
+and poll_mask.  The first one returns a wait_queue_head to wait on
+(lifetime is bound by the file), and the second does a non-blocking
+check for the POLL* events.  This allows aio poll to work without
+any additional context switches, unlike epoll.
 
-diff --git a/fs/aio.c b/fs/aio.c
-index da87cbf7c67a..79d3eb3d2dd9 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -156,9 +156,16 @@ struct kioctx {
- 	unsigned		id;
- };
- 
-+struct fsync_iocb {
-+	struct work_struct	work;
-+	struct file		*file;
-+	bool			datasync;
-+};
-+
- struct aio_kiocb {
- 	union {
- 		struct kiocb		rw;
-+		struct fsync_iocb	fsync;
- 	};
- 
- 	struct kioctx		*ki_ctx;
-@@ -1565,6 +1572,43 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
- 	return ret;
- }
- 
-+static void aio_fsync_work(struct work_struct *work)
-+{
-+	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
-+	int ret;
-+
-+	ret = vfs_fsync(req->file, req->datasync);
-+	fput(req->file);
-+	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
-+}
-+
-+static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
-+{
-+	int ret;
-+
-+	if (iocb->aio_buf)
-+		return -EINVAL;
-+	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
-+		return -EINVAL;
-+
-+	req->file = fget(iocb->aio_fildes);
-+	if (unlikely(!req->file))
-+		return -EBADF;
-+
-+	ret = -EINVAL;
-+	if (!req->file->f_op->fsync)
-+		goto out_fput;
-+
-+	req->datasync = datasync;
-+	INIT_WORK(&req->work, aio_fsync_work);
-+	schedule_work(&req->work);
-+	return -EIOCBQUEUED;
-+out_fput:
-+	if (unlikely(ret && ret != -EIOCBQUEUED))
-+		fput(req->file);
-+	return ret;
-+}
-+
- static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 			 struct iocb *iocb, bool compat)
- {
-@@ -1628,6 +1672,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	case IOCB_CMD_PWRITEV:
- 		ret = aio_write(&req->rw, iocb, true, compat);
- 		break;
-+	case IOCB_CMD_FSYNC:
-+		ret = aio_fsync(&req->fsync, iocb, false);
-+		break;
-+	case IOCB_CMD_FDSYNC:
-+		ret = aio_fsync(&req->fsync, iocb, true);
-+		break;
- 	default:
- 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
- 		ret = -EINVAL;
--- 
-2.14.2
+This series sits on top of the aio-fsync series that also includes
+support for io_pgetevents.
+
+The changes were sponsored by Scylladb, and improve performance
+of the seastar framework up to 10%, while also removing the need
+for a privileged SCHED_FIFO epoll listener thread.
+
+    git://git.infradead.org/users/hch/vfs.git aio-poll.6
+
+Gitweb:
+
+    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.6
+
+Libaio changes:
+
+    https://pagure.io/libaio.git io-poll
+
+Seastar changes (not updated for the new io_pgetevens ABI yet):
+
+    https://github.com/avikivity/seastar/commits/aio
+
+Changes since V6:
+ - small changelog updates
+ - rebased on top of the aio-fsync changes
+
+Changes since V4:
+ - rebased ontop of Linux 4.16-rc4
+
+Changes since V3:
+ - remove the pre-sleep ->poll_mask call in vfs_poll,
+   allow ->get_poll_head to return POLL* values.
+
+Changes since V2:
+ - removed a double initialization
+ - new vfs_get_poll_head helper
+ - document that ->get_poll_head can return NULL
+ - call ->poll_mask before sleeping
+ - various ACKs
+ - add conversion of random to ->poll_mask
+ - add conversion of af_alg to ->poll_mask
+ - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
+ - reshuffled the series so that prep patches and everything not
+   requiring the new in-kernel poll API is in the beginning
+
+Changes since V1:
+ - handle the NULL ->poll case in vfs_poll
+ - dropped the file argument to the ->poll_mask socket operation
+ - replace the ->pre_poll socket operation with ->get_poll_head as
+   in the file operations
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
