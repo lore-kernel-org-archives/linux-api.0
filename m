@@ -1,147 +1,63 @@
 From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH 7/9] aio: add delayed cancel support
-Date: Wed, 21 Mar 2018 09:23:48 -0700
-Message-ID: <20180321162348.GC4807@magnolia>
-References: <20180321073232.13366-1-hch@lst.de>
- <20180321073232.13366-8-hch@lst.de>
+Subject: Re: [PATCH 03/28] fs: update documentation to mention __poll_t
+Date: Wed, 21 Mar 2018 09:28:42 -0700
+Message-ID: <20180321162842.GF4807@magnolia>
+References: <20180321074032.14211-1-hch@lst.de>
+ <20180321074032.14211-4-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180321073232.13366-8-hch@lst.de>
+In-Reply-To: <20180321074032.14211-4-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
-Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 21, 2018 at 08:32:30AM +0100, Christoph Hellwig wrote:
-> The upcoming aio poll support would like to be able to complete the
-> iocb inline from the cancellation context, but that would cause
-> a lock order reversal.  Add support for optionally moving the cancelation
-> outside the context lock to avoid this reversal.
-> 
+On Wed, Mar 21, 2018 at 08:40:07AM +0100, Christoph Hellwig wrote:
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Acked-by: Jeff Moyer <jmoyer@redhat.com>
 
-Looks ok,
+It still would be nice to have a commit message to note that we're
+merely updating the documentation to reflect what's currently in the C
+headers (as opposed to a mangled patch that updated the docs but dropped
+the actual code update)...
+
+...so with that fixed,
 Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 
 --D
 
 > ---
->  fs/aio.c | 49 ++++++++++++++++++++++++++++++++++++++-----------
->  1 file changed, 38 insertions(+), 11 deletions(-)
+>  Documentation/filesystems/Locking | 2 +-
+>  Documentation/filesystems/vfs.txt | 2 +-
+>  2 files changed, 2 insertions(+), 2 deletions(-)
 > 
-> diff --git a/fs/aio.c b/fs/aio.c
-> index 0b6394b4e528..9d7d6e4cde87 100644
-> --- a/fs/aio.c
-> +++ b/fs/aio.c
-> @@ -170,6 +170,10 @@ struct aio_kiocb {
->  	struct list_head	ki_list;	/* the aio core uses this
->  						 * for cancellation */
->  
-> +	unsigned int		flags;		/* protected by ctx->ctx_lock */
-> +#define AIO_IOCB_DELAYED_CANCEL	(1 << 0)
-> +#define AIO_IOCB_CANCELLED	(1 << 1)
-> +
->  	/*
->  	 * If the aio_resfd field of the userspace iocb is not zero,
->  	 * this is the underlying eventfd context to deliver events to.
-> @@ -536,9 +540,9 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
->  #define AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - sizeof(struct aio_ring)) / sizeof(struct io_event))
->  #define AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
->  
-> -void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
-> +static void __kiocb_set_cancel_fn(struct aio_kiocb *req,
-> +		kiocb_cancel_fn *cancel, unsigned int iocb_flags)
->  {
-> -	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
->  	struct kioctx *ctx = req->ki_ctx;
->  	unsigned long flags;
->  
-> @@ -548,8 +552,15 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
->  	spin_lock_irqsave(&ctx->ctx_lock, flags);
->  	list_add_tail(&req->ki_list, &ctx->active_reqs);
->  	req->ki_cancel = cancel;
-> +	req->flags |= iocb_flags;
->  	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
->  }
-> +
-> +void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
-> +{
-> +	return __kiocb_set_cancel_fn(container_of(iocb, struct aio_kiocb, rw),
-> +			cancel, 0);
-> +}
->  EXPORT_SYMBOL(kiocb_set_cancel_fn);
->  
->  /*
-> @@ -603,17 +614,27 @@ static void free_ioctx_users(struct percpu_ref *ref)
->  {
->  	struct kioctx *ctx = container_of(ref, struct kioctx, users);
->  	struct aio_kiocb *req;
-> +	LIST_HEAD(list);
->  
->  	spin_lock_irq(&ctx->ctx_lock);
-> -
->  	while (!list_empty(&ctx->active_reqs)) {
->  		req = list_first_entry(&ctx->active_reqs,
->  				       struct aio_kiocb, ki_list);
-> -		kiocb_cancel(req);
-> -	}
->  
-> +		if (req->flags & AIO_IOCB_DELAYED_CANCEL) {
-> +			req->flags |= AIO_IOCB_CANCELLED;
-> +			list_move_tail(&req->ki_list, &list);
-> +		} else {
-> +			kiocb_cancel(req);
-> +		}
-> +	}
->  	spin_unlock_irq(&ctx->ctx_lock);
->  
-> +	while (!list_empty(&list)) {
-> +		req = list_first_entry(&list, struct aio_kiocb, ki_list);
-> +		kiocb_cancel(req);
-> +	}
-> +
->  	percpu_ref_kill(&ctx->reqs);
->  	percpu_ref_put(&ctx->reqs);
->  }
-> @@ -1785,15 +1806,22 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
->  	if (unlikely(!ctx))
->  		return -EINVAL;
->  
-> -	spin_lock_irq(&ctx->ctx_lock);
-> +	ret = -EINVAL;
->  
-> +	spin_lock_irq(&ctx->ctx_lock);
->  	kiocb = lookup_kiocb(ctx, iocb, key);
-> +	if (kiocb) {
-> +		if (kiocb->flags & AIO_IOCB_DELAYED_CANCEL) {
-> +			kiocb->flags |= AIO_IOCB_CANCELLED;
-> +		} else {
-> +			ret = kiocb_cancel(kiocb);
-> +			kiocb = NULL;
-> +		}
-> +	}
-> +	spin_unlock_irq(&ctx->ctx_lock);
-> +
->  	if (kiocb)
->  		ret = kiocb_cancel(kiocb);
-> -	else
-> -		ret = -EINVAL;
-> -
-> -	spin_unlock_irq(&ctx->ctx_lock);
->  
->  	if (!ret) {
->  		/*
-> @@ -1805,7 +1833,6 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
->  	}
->  
->  	percpu_ref_put(&ctx->users);
-> -
->  	return ret;
->  }
->  
+> diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
+> index 75d2d57e2c44..220bba28f72b 100644
+> --- a/Documentation/filesystems/Locking
+> +++ b/Documentation/filesystems/Locking
+> @@ -439,7 +439,7 @@ prototypes:
+>  	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+>  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>  	int (*iterate) (struct file *, struct dir_context *);
+> -	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+> +	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
+> diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+> index 5fd325df59e2..f608180ad59d 100644
+> --- a/Documentation/filesystems/vfs.txt
+> +++ b/Documentation/filesystems/vfs.txt
+> @@ -856,7 +856,7 @@ struct file_operations {
+>  	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+>  	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+>  	int (*iterate) (struct file *, struct dir_context *);
+> -	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+> +	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+>  	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+>  	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+>  	int (*mmap) (struct file *, struct vm_area_struct *);
 > -- 
 > 2.14.2
 > 
