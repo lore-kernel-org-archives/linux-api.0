@@ -1,45 +1,58 @@
 From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v4 23/24] fpga: dfl: afu: add user afu sub feature support
-Date: Wed, 21 Mar 2018 18:50:54 -0500
-Message-ID: <CANk1AXSyh1ZcbgVbj3DxjULEeYKMfq_4CA6P0DK6+_z-pnBMUw@mail.gmail.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-24-git-send-email-hao.wu@intel.com> <CANk1AXQpPXhNoPt1Uj=YvbtO+jun7e2Yzvyp+wuR1ZXx6+-i8Q@mail.gmail.com>
- <20180320071037.GB31239@hao-dev>
+Subject: Re: [PATCH v4 04/24] fpga: add device feature list support
+Date: Wed, 21 Mar 2018 18:54:58 -0500
+Message-ID: <CANk1AXT0dBT9qejdbSyi75e956OHA0-y0V7de7H=XkOZzVhRqQ@mail.gmail.com>
+References: <1518513893-4719-1-git-send-email-hao.wu@intel.com> <1518513893-4719-5-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180320071037.GB31239@hao-dev>
+In-Reply-To: <1518513893-4719-5-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 20, 2018 at 2:10 AM, Wu Hao <hao.wu@intel.com> wrote:
+On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
 
->> > +static int afu_mmap(struct file *filp, struct vm_area_struct *vma)
->> > +{
->> > +       struct fpga_afu_region region;
->> > +       struct platform_device *pdev = filp->private_data;
->> > +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
->> > +       u64 size = vma->vm_end - vma->vm_start;
->> > +       u64 offset;
->> > +       int ret;
->> > +
->> > +       if (!(vma->vm_flags & VM_SHARED))
->> > +               return -EINVAL;
->> > +
->> > +       offset = vma->vm_pgoff << PAGE_SHIFT;
->> > +       ret = afu_get_region_by_offset(pdata, offset, size, &region);
+Hi Hao,
 
-Most of the functions here are afu_region_*, but there's also
-afu_get_region_by_*.  Better if afu_region_get_by_* to be consistent.
+> +static int
+> +build_info_create_dev(struct build_feature_devs_info *binfo,
+> +                     enum fpga_id_type type, const char *name,
+> +                     void __iomem *ioaddr)
+> +{
+> +       struct platform_device *fdev;
+> +       int ret;
+> +
+> +       /* we will create a new device, commit current device first */
+> +       ret = build_info_commit_dev(binfo);
+> +       if (ret)
+> +               return ret;
+> +
+> +       /*
+> +        * we use -ENODEV as the initialization indicator which indicates
+> +        * whether the id need to be reclaimed
+> +        */
+> +       fdev = platform_device_alloc(name, -ENODEV);
+> +       if (!fdev)
+> +               return -ENOMEM;
+> +
+> +       binfo->feature_dev = fdev;
+> +       binfo->feature_num = 0;
+> +       binfo->ioaddr = ioaddr;
+> +       INIT_LIST_HEAD(&binfo->sub_features);
+> +
+> +       fdev->id = alloc_fpga_id(type, &fdev->dev);
+> +       if (fdev->id < 0)
+> +               return fdev->id;
 
->> > +       if (ret)
->> > +               return ret;
->> > +
->> > +       if (!(region.flags & FPGA_REGION_MMAP))
->>
->> FPGA_REGION_*?  We already have FPGA regions which are something
->> different.  Please call this something else.
->
-> Yes, will replace it with DFL_FPGA_*.
+Do we need platform_device_put if returning here?
+
+Alan
+
+> +
+> +       fdev->dev.parent = &binfo->cdev->region.dev;
+> +
+> +       return 0;
+> +}
+> +
