@@ -1,15 +1,15 @@
 From: NAGARATHNAM MUTHUSAMY <nagarathnam.muthusamy-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [REVIEW][PATCH 09/11] ipc/shm: Fix shmctl(..., IPC_STAT, ...)
-	between pid namespaces.
-Date: Fri, 23 Mar 2018 14:17:35 -0700
-Message-ID: <7df62190-2407-bfd4-d144-7304a8ea8ae3@oracle.com>
+Subject: Re: [REVIEW][PATCH 10/11] ipc/msg: Fix msgctl(..., IPC_STAT, ...)
+	between pid namespaces
+Date: Fri, 23 Mar 2018 14:21:16 -0700
+Message-ID: <c3524b20-38a0-4105-6b87-715ef94882b0@oracle.com>
 References: <87vadmobdw.fsf_-_@xmission.com>
-	<20180323191614.32489-9-ebiederm@xmission.com>
+	<20180323191614.32489-10-ebiederm@xmission.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20180323191614.32489-9-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+In-Reply-To: <20180323191614.32489-10-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
 Content-Language: en-US
 List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
 	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
@@ -27,128 +27,142 @@ List-Id: linux-api@vger.kernel.org
 
 
 On 3/23/2018 12:16 PM, Eric W. Biederman wrote:
-> Today shm_cpid and shm_lpid are remembered in the pid namespace of the
-> creator and the processes that last touched a sysvipc shared memory
-> segment.   If you have processes in multiple pid namespaces that
-> is just wrong, and I don't know how this has been over-looked for
-> so long.
+> Today msg_lspid and msg_lrpid are remembered in the pid namespace of
+> the creator and the processes that last send or received a sysvipc
+> message.  If you have processes in multiple pid namespaces that is
+> just wrong.  The process ids reported will not make the least bit of
+> sense.
 >
-> As only creation and shared memory attach and shared memory detach
-> update the pids I do not expect there to be a repeat of the issues
-> when struct pid was attached to each af_unix skb, which in some
-> notable cases cut the performance in half.  The problem was threads of
-> the same process updating same struct pid from different cpus causing
-> the cache line to be highly contended and bounce between cpus.
+> This fix is slightly more susceptible to a performance problem than
+> the related fix for System V shared memory.  By definition the pids
+> are updated by msgsnd and msgrcv, the fast path of System V message
+> queues.  The only concern over the previous implementation is the
+> incrementing and decrementing of the pid reference count.  As that is
+> the only difference and multiple updates by of the task_tgid by
+> threads in the same process have been shown in af_unix sockets to
+> create a cache line ping-pong between cpus of the same processor.
 >
-> As creation, attach, and detach are expected to be rare operations for
-> sysvipc shared memory segments I do not expect that kind of cache line
-> ping pong to cause probems.  In addition because the pid is at a fixed
-> location in the structure instead of being dynamic on a skb, the
-> reference count of the pid does not need to be updated on each
-> operation if the pid is the same.  This ability to simply skip the pid
-> reference count changes if the pid is unchanging further reduces the
-> likelihood of the a cache line holding a pid reference count
-> ping-ponging between cpus.
+> In this case I don't expect cache lines holding pid reference counts
+> to ping pong between cpus.  As senders and receivers update different
+> pids there is a natural separation there.  Further if multiple threads
+> of the same process either send or receive messages the pid will be
+> updated to the same value and ipc_update_pid will avoid the reference
+> count update.
+>
+> Which means in the common case I expect msg_lspid and msg_lrpid to
+> remain constant, and reference counts not to be updated when messages
+> are sent.
+>
+> In rare cases it may be possible to trigger the issue which was
+> observed for af_unix sockets, but it will require multiple processes
+> with multiple threads to be either sending or receiving messages.  It
+> just does not feel likely that anyone would do that in practice.
+>
+> This change updates msgctl(..., IPC_STAT, ...) to return msg_lspid and
+> msg_lrpid in the pid namespace of the process calling stat.
+>
+> This change also updates cat /proc/sysvipc/msg to return print msg_lspid
+> and msg_lrpid in the pid namespace of the process that opened the proc
+> file.
 >
 > Fixes: b488893a390e ("pid namespaces: changes to show virtual ids to user")
 > Signed-off-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+
 Thanks!
 
 Reviewed-by: Nagarathnam Muthusamy <nagarathnam.muthusamy-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
 > ---
->   ipc/shm.c | 25 +++++++++++++++----------
->   1 file changed, 15 insertions(+), 10 deletions(-)
+>   ipc/msg.c | 23 +++++++++++++----------
+>   1 file changed, 13 insertions(+), 10 deletions(-)
 >
-> diff --git a/ipc/shm.c b/ipc/shm.c
-> index 0565669ebe5c..932b7e411c6c 100644
-> --- a/ipc/shm.c
-> +++ b/ipc/shm.c
-> @@ -57,8 +57,8 @@ struct shmid_kernel /* private to the kernel */
->   	time64_t		shm_atim;
->   	time64_t		shm_dtim;
->   	time64_t		shm_ctim;
-> -	pid_t			shm_cprid;
-> -	pid_t			shm_lprid;
-> +	struct pid		*shm_cprid;
-> +	struct pid		*shm_lprid;
->   	struct user_struct	*mlock_user;
+> diff --git a/ipc/msg.c b/ipc/msg.c
+> index af5a963306c4..825ad585a6ff 100644
+> --- a/ipc/msg.c
+> +++ b/ipc/msg.c
+> @@ -52,8 +52,8 @@ struct msg_queue {
+>   	unsigned long q_cbytes;		/* current number of bytes on queue */
+>   	unsigned long q_qnum;		/* number of messages in queue */
+>   	unsigned long q_qbytes;		/* max number of bytes on queue */
+> -	pid_t q_lspid;			/* pid of last msgsnd */
+> -	pid_t q_lrpid;			/* last receive pid */
+> +	struct pid *q_lspid;		/* pid of last msgsnd */
+> +	struct pid *q_lrpid;		/* last receive pid */
 >   
->   	/* The task created the shm object.  NULL if the task is dead. */
-> @@ -226,7 +226,7 @@ static int __shm_open(struct vm_area_struct *vma)
->   		return PTR_ERR(shp);
->   
->   	shp->shm_atim = ktime_get_real_seconds();
-> -	shp->shm_lprid = task_tgid_vnr(current);
-> +	ipc_update_pid(&shp->shm_lprid, task_tgid(current));
->   	shp->shm_nattch++;
->   	shm_unlock(shp);
->   	return 0;
-> @@ -267,6 +267,8 @@ static void shm_destroy(struct ipc_namespace *ns, struct shmid_kernel *shp)
->   		user_shm_unlock(i_size_read(file_inode(shm_file)),
->   				shp->mlock_user);
->   	fput(shm_file);
-> +	ipc_update_pid(&shp->shm_cprid, NULL);
-> +	ipc_update_pid(&shp->shm_lprid, NULL);
->   	ipc_rcu_putref(&shp->shm_perm, shm_rcu_free);
+>   	struct list_head q_messages;
+>   	struct list_head q_receivers;
+> @@ -154,7 +154,7 @@ static int newque(struct ipc_namespace *ns, struct ipc_params *params)
+>   	msq->q_ctime = ktime_get_real_seconds();
+>   	msq->q_cbytes = msq->q_qnum = 0;
+>   	msq->q_qbytes = ns->msg_ctlmnb;
+> -	msq->q_lspid = msq->q_lrpid = 0;
+> +	msq->q_lspid = msq->q_lrpid = NULL;
+>   	INIT_LIST_HEAD(&msq->q_messages);
+>   	INIT_LIST_HEAD(&msq->q_receivers);
+>   	INIT_LIST_HEAD(&msq->q_senders);
+> @@ -267,6 +267,8 @@ static void freeque(struct ipc_namespace *ns, struct kern_ipc_perm *ipcp)
+>   		free_msg(msg);
+>   	}
+>   	atomic_sub(msq->q_cbytes, &ns->msg_bytes);
+> +	ipc_update_pid(&msq->q_lspid, NULL);
+> +	ipc_update_pid(&msq->q_lrpid, NULL);
+>   	ipc_rcu_putref(&msq->q_perm, msg_rcu_free);
 >   }
 >   
-> @@ -311,7 +313,7 @@ static void shm_close(struct vm_area_struct *vma)
->   	if (WARN_ON_ONCE(IS_ERR(shp)))
->   		goto done; /* no-op */
+> @@ -536,8 +538,8 @@ static int msgctl_stat(struct ipc_namespace *ns, int msqid,
+>   	p->msg_cbytes = msq->q_cbytes;
+>   	p->msg_qnum   = msq->q_qnum;
+>   	p->msg_qbytes = msq->q_qbytes;
+> -	p->msg_lspid  = msq->q_lspid;
+> -	p->msg_lrpid  = msq->q_lrpid;
+> +	p->msg_lspid  = pid_vnr(msq->q_lspid);
+> +	p->msg_lrpid  = pid_vnr(msq->q_lrpid);
 >   
-> -	shp->shm_lprid = task_tgid_vnr(current);
-> +	ipc_update_pid(&shp->shm_lprid, task_tgid(current));
->   	shp->shm_dtim = ktime_get_real_seconds();
->   	shp->shm_nattch--;
->   	if (shm_may_destroy(ns, shp))
-> @@ -614,8 +616,8 @@ static int newseg(struct ipc_namespace *ns, struct ipc_params *params)
->   	if (IS_ERR(file))
->   		goto no_file;
+>   	ipc_unlock_object(&msq->q_perm);
+>   	rcu_read_unlock();
+> @@ -741,7 +743,7 @@ static inline int pipelined_send(struct msg_queue *msq, struct msg_msg *msg,
+>   				wake_q_add(wake_q, msr->r_tsk);
+>   				WRITE_ONCE(msr->r_msg, ERR_PTR(-E2BIG));
+>   			} else {
+> -				msq->q_lrpid = task_pid_vnr(msr->r_tsk);
+> +				ipc_update_pid(&msq->q_lrpid, task_pid(msr->r_tsk));
+>   				msq->q_rtime = get_seconds();
 >   
-> -	shp->shm_cprid = task_tgid_vnr(current);
-> -	shp->shm_lprid = 0;
-> +	shp->shm_cprid = get_pid(task_tgid(current));
-> +	shp->shm_lprid = NULL;
->   	shp->shm_atim = shp->shm_dtim = 0;
->   	shp->shm_ctim = ktime_get_real_seconds();
->   	shp->shm_segsz = size;
-> @@ -648,6 +650,8 @@ static int newseg(struct ipc_namespace *ns, struct ipc_params *params)
->   		user_shm_unlock(size, shp->mlock_user);
->   	fput(file);
->   no_file:
-> +	ipc_update_pid(&shp->shm_cprid, NULL);
-> +	ipc_update_pid(&shp->shm_lprid, NULL);
->   	call_rcu(&shp->shm_perm.rcu, shm_rcu_free);
->   	return error;
->   }
-> @@ -970,8 +974,8 @@ static int shmctl_stat(struct ipc_namespace *ns, int shmid,
->   	tbuf->shm_atime	= shp->shm_atim;
->   	tbuf->shm_dtime	= shp->shm_dtim;
->   	tbuf->shm_ctime	= shp->shm_ctim;
-> -	tbuf->shm_cpid	= shp->shm_cprid;
-> -	tbuf->shm_lpid	= shp->shm_lprid;
-> +	tbuf->shm_cpid	= pid_vnr(shp->shm_cprid);
-> +	tbuf->shm_lpid	= pid_vnr(shp->shm_lprid);
->   	tbuf->shm_nattch = shp->shm_nattch;
+>   				wake_q_add(wake_q, msr->r_tsk);
+> @@ -842,7 +844,7 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
 >   
->   	ipc_unlock_object(&shp->shm_perm);
-> @@ -1605,6 +1609,7 @@ SYSCALL_DEFINE1(shmdt, char __user *, shmaddr)
+>   	}
+>   
+> -	msq->q_lspid = task_tgid_vnr(current);
+> +	ipc_update_pid(&msq->q_lspid, task_tgid(current));
+>   	msq->q_stime = get_seconds();
+>   
+>   	if (!pipelined_send(msq, msg, &wake_q)) {
+> @@ -1060,7 +1062,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
+>   			list_del(&msg->m_list);
+>   			msq->q_qnum--;
+>   			msq->q_rtime = get_seconds();
+> -			msq->q_lrpid = task_tgid_vnr(current);
+> +			ipc_update_pid(&msq->q_lrpid, task_tgid(current));
+>   			msq->q_cbytes -= msg->m_ts;
+>   			atomic_sub(msg->m_ts, &ns->msg_bytes);
+>   			atomic_dec(&ns->msg_hdrs);
+> @@ -1202,6 +1204,7 @@ void msg_exit_ns(struct ipc_namespace *ns)
 >   #ifdef CONFIG_PROC_FS
->   static int sysvipc_shm_proc_show(struct seq_file *s, void *it)
+>   static int sysvipc_msg_proc_show(struct seq_file *s, void *it)
 >   {
 > +	struct pid_namespace *pid_ns = ipc_seq_pid_ns(s);
 >   	struct user_namespace *user_ns = seq_user_ns(s);
 >   	struct kern_ipc_perm *ipcp = it;
->   	struct shmid_kernel *shp;
-> @@ -1627,8 +1632,8 @@ static int sysvipc_shm_proc_show(struct seq_file *s, void *it)
->   		   shp->shm_perm.id,
->   		   shp->shm_perm.mode,
->   		   shp->shm_segsz,
-> -		   shp->shm_cprid,
-> -		   shp->shm_lprid,
-> +		   pid_nr_ns(shp->shm_cprid, pid_ns),
-> +		   pid_nr_ns(shp->shm_lprid, pid_ns),
->   		   shp->shm_nattch,
->   		   from_kuid_munged(user_ns, shp->shm_perm.uid),
->   		   from_kgid_munged(user_ns, shp->shm_perm.gid),
+>   	struct msg_queue *msq = container_of(ipcp, struct msg_queue, q_perm);
+> @@ -1213,8 +1216,8 @@ static int sysvipc_msg_proc_show(struct seq_file *s, void *it)
+>   		   msq->q_perm.mode,
+>   		   msq->q_cbytes,
+>   		   msq->q_qnum,
+> -		   msq->q_lspid,
+> -		   msq->q_lrpid,
+> +		   pid_nr_ns(msq->q_lspid, pid_ns),
+> +		   pid_nr_ns(msq->q_lrpid, pid_ns),
+>   		   from_kuid_munged(user_ns, msq->q_perm.uid),
+>   		   from_kgid_munged(user_ns, msq->q_perm.gid),
+>   		   from_kuid_munged(user_ns, msq->q_perm.cuid),
