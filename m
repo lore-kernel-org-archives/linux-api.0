@@ -1,71 +1,49 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH v5 bpf-next 06/10] tracepoint: compute num_args at build
  time
-Date: Mon, 26 Mar 2018 11:55:45 -0400 (EDT)
-Message-ID: <523311773.184.1522079745421.JavaMail.zimbra@efficios.com>
-References: <20180324023038.938665-1-ast@fb.com> <20180324023038.938665-7-ast@fb.com> <20180326110204.042801dd@gandalf.local.home> <1787605856.4574.1522077244597.JavaMail.zimbra@efficios.com> <5bcacdb5-e72f-b67a-4884-61fcedf0938a@fb.com>
+Date: Mon, 26 Mar 2018 11:56:15 -0400
+Message-ID: <20180326115615.0ca53410@gandalf.local.home>
+References: <20180324023038.938665-1-ast@fb.com>
+        <20180324023038.938665-7-ast@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <5bcacdb5-e72f-b67a-4884-61fcedf0938a@fb.com>
+In-Reply-To: <20180324023038.938665-7-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
 To: Alexei Starovoitov <ast@fb.com>
-Cc: rostedt <rostedt@goodmis.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, "Frank Ch. Eigler" <fche@redhat.com>
+Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 26, 2018, at 11:42 AM, Alexei Starovoitov ast@fb.com wrote:
+On Fri, 23 Mar 2018 19:30:34 -0700
+Alexei Starovoitov <ast@fb.com> wrote:
 
-> On 3/26/18 8:14 AM, Mathieu Desnoyers wrote:
->> ----- On Mar 26, 2018, at 11:02 AM, rostedt rostedt@goodmis.org wrote:
->>
->>> On Fri, 23 Mar 2018 19:30:34 -0700
->>> Alexei Starovoitov <ast@fb.com> wrote:
->>>
->>>> From: Alexei Starovoitov <ast@kernel.org>
->>>>
->>>> add fancy macro to compute number of arguments passed into tracepoint
->>>> at compile time and store it as part of 'struct tracepoint'.
->>>> The number is necessary to check safety of bpf program access that
->>>> is coming in subsequent patch.
->>>>
->>>> for_each_tracepoint_range() api has no users inside the kernel.
->>>> Make it more useful with ability to stop for_each() loop depending
->>>> via callback return value.
->>>> In such form it's used in subsequent patch.
->>>
->>> I believe this is used by LTTng.
->>
->> Indeed, and by SystemTAP as well.
->>
->> What justifies the need to stop mid-iteration ? A less intrusive alternative
->> would be to use the "priv" data pointer to keep state telling further calls
->> to return immediately. Does performance of iteration over tracepoints really
->> matter here so much that stopping iteration immediately is worth it ?
-> 
-> I'm sure both you and Steven are not serious when you object
-> to _in-tree_ change to for_each_kernel_tracepoint() that
-> affects _out-of_tree_ modules?
-> 
-> Just change your module to 'return NULL' instead of plain 'return'.
+> +static void *for_each_tracepoint_range(struct tracepoint * const *begin,
+> +				       struct tracepoint * const *end,
+> +				       void *(*fct)(struct tracepoint *tp, void *priv),
+> +				       void *priv)
+>  {
+>  	struct tracepoint * const *iter;
+> +	void *ret;
+>  
+>  	if (!begin)
+> -		return;
+> -	for (iter = begin; iter < end; iter++)
+> -		fct(*iter, priv);
+> +		return NULL;
+> +	for (iter = begin; iter < end; iter++) {
+> +		ret = fct(*iter, priv);
+> +		if (ret)
+> +			return ret;
 
-I never said I objected to adapt the LTTng out of tree code. If there is a
-solid reason for changing the kernel API, I will adapt my code to those
-changes.
+So you just stopped the loop here. You have an inconsistent state. What
+about the functions that were called before. How do you undo them? Or
+what about the rest that haven't been touched. This function gives no
+feedback to the caller.
 
-What I'm trying to understand here is whether there is solid ground for
-the added complexity you are proposing. Is it a performance enhancement ?
-If so, explanation of the use cases targeted, and numbers that measure
-performance improvements are needed.
-
-How is your patch making tracepoints "more useful" ?
-
-Thanks,
-
-Mathieu
+-- Steve
 
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> +	}
+> +	return NULL;
+>  }
