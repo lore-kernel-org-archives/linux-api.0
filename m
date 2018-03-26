@@ -1,64 +1,149 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH v5 bpf-next 06/10] tracepoint: compute num_args at build
- time
-Date: Mon, 26 Mar 2018 17:27:19 -0400 (EDT)
-Message-ID: <443917241.580.1522099639111.JavaMail.zimbra@efficios.com>
-References: <20180324023038.938665-1-ast@fb.com> <523311773.184.1522079745421.JavaMail.zimbra@efficios.com> <f39181e0-3d46-2154-044c-dfc985053b3a@fb.com> <1055377367.195.1522081045131.JavaMail.zimbra@efficios.com> <89fbc745-c290-c82c-a837-8998cf2988e7@fb.com> <20180326123530.66ced6ae@gandalf.local.home> <1218234422.259.1522083422808.JavaMail.zimbra@efficios.com> <17073efa-d833-7348-bef1-79376ad43bc6@fb.com>
+From: Alexei Starovoitov <ast@kernel.org>
+Subject: [PATCH bpf-next] bpf, tracing: unbreak lttng
+Date: Mon, 26 Mar 2018 15:08:45 -0700
+Message-ID: <20180326220845.678423-1-ast@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <17073efa-d833-7348-bef1-79376ad43bc6@fb.com>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@fb.com>
-Cc: rostedt <rostedt@goodmis.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, "Frank Ch. Eigler" <fche@redhat.com>
+To: davem@davemloft.net
+Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 26, 2018, at 1:55 PM, Alexei Starovoitov ast@fb.com wrote:
+for_each_kernel_tracepoint() is used by out-of-tree lttng module
+and therefore cannot be changed.
+Instead introduce kernel_tracepoint_find_by_name() to find
+tracepoint by name.
 
-[...]
+Fixes: 9e9afbae6514 ("tracepoint: compute num_args at build time")
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ include/linux/tracepoint.h | 14 ++++++++++----
+ kernel/bpf/syscall.c       | 11 +----------
+ kernel/tracepoint.c        | 36 ++++++++++++++++++++----------------
+ 3 files changed, 31 insertions(+), 30 deletions(-)
 
-> 
-> correct. this set deals with in-kernel tracepoints only.
-> No attempt to do anything with tracepoints inside modules.
-
-Please endeavor to handle in-module tracepoints properly, then we'll
-be able to pursue a more constructive discussion.
-
-[...]
-
-> Also I hope you noticed that the patch is doing:
-> +++ b/include/linux/tracepoint-defs.h
-> @@ -33,6 +33,7 @@ struct tracepoint {
->         int (*regfunc)(void);
->         void (*unregfunc)(void);
->         struct tracepoint_func __rcu *funcs;
-> +       u32 num_args;
->  };
-> 
-> To make sure that bpf programs are safe I need to do a static check
-> in the verifier that programs don't access arguments beyond
-> those specified by the tracepoint.
-> 
-> That was mentioned in the commit log of patch 6 too:
-> "
-> compute number of arguments passed into tracepoint
-> at compile time and store it as part of 'struct tracepoint'.
-> The number is necessary to check safety of bpf program access that
-> is coming in subsequent patch.
-> "
-
-This part of the patch and its associated changelog is fine
-with me. Please submit it as a separate commit from the rest
-of the tracepoint.{c,h} changes.
-
-[...]
-
-Thanks,
-
-Mathieu
-
+diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
+index 2194e7c31484..035887dc4ed3 100644
+--- a/include/linux/tracepoint.h
++++ b/include/linux/tracepoint.h
+@@ -42,16 +42,22 @@ extern int
+ tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data);
+ 
+ #ifdef CONFIG_TRACEPOINTS
+-void *
+-for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
++void
++for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
+ 			   void *priv);
++struct tracepoint *kernel_tracepoint_find_by_name(const char *name);
+ #else
+-static inline void *
+-for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
++static inline void
++for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
+ 			   void *priv)
+ {
+ 	return NULL;
+ }
++static inline struct tracepoint *
++kernel_tracepoint_find_by_name(const char *name)
++{
++	return NULL;
++}
+ #endif
+ 
+ #ifdef CONFIG_MODULES
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index ae8b43f1cee3..644311777d8e 100644
+--- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -1334,15 +1334,6 @@ static const struct file_operations bpf_raw_tp_fops = {
+ 	.write		= bpf_dummy_write,
+ };
+ 
+-static void *__find_tp(struct tracepoint *tp, void *priv)
+-{
+-	char *name = priv;
+-
+-	if (!strcmp(tp->name, name))
+-		return tp;
+-	return NULL;
+-}
+-
+ #define BPF_RAW_TRACEPOINT_OPEN_LAST_FIELD raw_tracepoint.prog_fd
+ 
+ static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
+@@ -1358,7 +1349,7 @@ static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
+ 		return -EFAULT;
+ 	tp_name[sizeof(tp_name) - 1] = 0;
+ 
+-	tp = for_each_kernel_tracepoint(__find_tp, tp_name);
++	tp = kernel_tracepoint_find_by_name(tp_name);
+ 	if (!tp)
+ 		return -ENOENT;
+ 
+diff --git a/kernel/tracepoint.c b/kernel/tracepoint.c
+index 3f2dc5738c2b..764d02fbe782 100644
+--- a/kernel/tracepoint.c
++++ b/kernel/tracepoint.c
+@@ -502,22 +502,17 @@ static __init int init_tracepoints(void)
+ __initcall(init_tracepoints);
+ #endif /* CONFIG_MODULES */
+ 
+-static void *for_each_tracepoint_range(struct tracepoint * const *begin,
+-				       struct tracepoint * const *end,
+-				       void *(*fct)(struct tracepoint *tp, void *priv),
+-				       void *priv)
++static void for_each_tracepoint_range(struct tracepoint * const *begin,
++				      struct tracepoint * const *end,
++				      void (*fct)(struct tracepoint *tp, void *priv),
++				      void *priv)
+ {
+ 	struct tracepoint * const *iter;
+-	void *ret;
+ 
+ 	if (!begin)
+-		return NULL;
+-	for (iter = begin; iter < end; iter++) {
+-		ret = fct(*iter, priv);
+-		if (ret)
+-			return ret;
+-	}
+-	return NULL;
++		return;
++	for (iter = begin; iter < end; iter++)
++		fct(*iter, priv);
+ }
+ 
+ /**
+@@ -525,14 +520,23 @@ static void *for_each_tracepoint_range(struct tracepoint * const *begin,
+  * @fct: callback
+  * @priv: private data
+  */
+-void *for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
+-				 void *priv)
++void for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
++				void *priv)
+ {
+-	return for_each_tracepoint_range(__start___tracepoints_ptrs,
+-					 __stop___tracepoints_ptrs, fct, priv);
++	for_each_tracepoint_range(__start___tracepoints_ptrs,
++				  __stop___tracepoints_ptrs, fct, priv);
+ }
+ EXPORT_SYMBOL_GPL(for_each_kernel_tracepoint);
+ 
++struct tracepoint *kernel_tracepoint_find_by_name(const char *name)
++{
++	struct tracepoint * const *tp = __start___tracepoints_ptrs;
++
++	for (; tp < __stop___tracepoints_ptrs; tp++)
++		if (!strcmp((*tp)->name, name))
++			return *tp;
++	return NULL;
++}
+ #ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+ 
+ /* NB: reg/unreg are called while guarded with the tracepoints_mutex */
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.9.5
