@@ -1,91 +1,220 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH v5 bpf-next 00/10] bpf, tracing: introduce bpf raw
- tracepoints
-Date: Mon, 26 Mar 2018 10:28:03 +0200
-Message-ID: <c8be6d52-3f86-0402-9fdc-cc98f8e3e940@iogearbox.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v5 bpf-next 06/10] tracepoint: compute num_args at build
+ time
+Date: Mon, 26 Mar 2018 11:02:04 -0400
+Message-ID: <20180326110204.042801dd@gandalf.local.home>
 References: <20180324023038.938665-1-ast@fb.com>
+        <20180324023038.938665-7-ast@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180324023038.938665-1-ast@fb.com>
-Content-Language: en-US
+In-Reply-To: <20180324023038.938665-7-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@fb.com>, davem@davemloft.net
-Cc: torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+To: Alexei Starovoitov <ast@fb.com>
+Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-On 03/24/2018 03:30 AM, Alexei Starovoitov wrote:
+On Fri, 23 Mar 2018 19:30:34 -0700
+Alexei Starovoitov <ast@fb.com> wrote:
+
 > From: Alexei Starovoitov <ast@kernel.org>
 > 
-> v4->v5:
-> - adopted Daniel's fancy REPEAT macro in bpf_trace.c in patch 7
->   
-> v3->v4:
-> - adopted Linus's CAST_TO_U64 macro to cast any integer, pointer, or small
->   struct to u64. That nicely reduced the size of patch 1
+> add fancy macro to compute number of arguments passed into tracepoint
+> at compile time and store it as part of 'struct tracepoint'.
+> The number is necessary to check safety of bpf program access that
+> is coming in subsequent patch.
 > 
-> v2->v3:
-> - with Linus's suggestion introduced generic COUNT_ARGS and CONCATENATE macros
->   (or rather moved them from apparmor)
->   that cleaned up patches 6 and 7
-> - added patch 4 to refactor trace_iwlwifi_dev_ucode_error() from 17 args to 4
->   Now any tracepoint with >12 args will have build error
-> 
-> v1->v2:
-> - simplified api by combing bpf_raw_tp_open(name) + bpf_attach(prog_fd) into
->   bpf_raw_tp_open(name, prog_fd) as suggested by Daniel.
->   That simplifies bpf_detach as well which is now simple close() of fd.
-> - fixed memory leak in error path which was spotted by Daniel.
-> - fixed bpf_get_stackid(), bpf_perf_event_output() called from raw tracepoints
-> - added more tests
-> - fixed allyesconfig build caught by buildbot
-> 
-> v1:
-> This patch set is a different way to address the pressing need to access
-> task_struct pointers in sched tracepoints from bpf programs.
-> 
-> The first approach simply added these pointers to sched tracepoints:
-> https://lkml.org/lkml/2017/12/14/753
-> which Peter nacked.
-> Few options were discussed and eventually the discussion converged on
-> doing bpf specific tracepoint_probe_register() probe functions.
-> Details here:
-> https://lkml.org/lkml/2017/12/20/929
-> 
-> Patch 1 is kernel wide cleanup of pass-struct-by-value into
-> pass-struct-by-reference into tracepoints.
-> 
-> Patches 2 and 3 are minor cleanups to address allyesconfig build
-> 
-> Patch 4 refactor trace_iwlwifi_dev_ucode_error from 17 to 4 args
-> 
-> Patch 5 introduces COUNT_ARGS macro
-> 
-> Patch 6 minor prep work to expose number of arguments passed
-> into tracepoints.
-> 
-> Patch 7 introduces BPF_RAW_TRACEPOINT api.
-> the auto-cleanup and multiple concurrent users are must have
-> features of tracing api. For bpf raw tracepoints it looks like:
->   // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
->   prog_fd = bpf_prog_load(...);
-> 
->   // receive anon_inode fd for given bpf_raw_tracepoint
->   // and attach bpf program to it
->   raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception", prog_fd);
-> 
-> Ctrl-C of tracing daemon or cmdline tool will automatically
-> detach bpf program, unload it and unregister tracepoint probe.
-> More details in patch 7.
-> 
-> Patch 8 - trivial support in libbpf
-> Patches 9, 10 - user space tests
-> 
-> samples/bpf/test_overhead performance on 1 cpu:
-> 
-> tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
-> task_rename   1.1M   769K        947K            1.0M
-> urandom_read  789K   697K        750K            755K
+> for_each_tracepoint_range() api has no users inside the kernel.
+> Make it more useful with ability to stop for_each() loop depending
+> via callback return value.
+> In such form it's used in subsequent patch.
 
-Applied to bpf-next, thanks Alexei!
+I believe this is used by LTTng.
+
+-- Steve
+
+> 
+> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+> ---
+>  include/linux/tracepoint-defs.h |  1 +
+>  include/linux/tracepoint.h      | 28 +++++++++++++++++++---------
+>  include/trace/define_trace.h    | 14 +++++++-------
+>  kernel/tracepoint.c             | 27 ++++++++++++++++-----------
+>  4 files changed, 43 insertions(+), 27 deletions(-)
+> 
+> diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
+> index 64ed7064f1fa..39a283c61c51 100644
+> --- a/include/linux/tracepoint-defs.h
+> +++ b/include/linux/tracepoint-defs.h
+> @@ -33,6 +33,7 @@ struct tracepoint {
+>  	int (*regfunc)(void);
+>  	void (*unregfunc)(void);
+>  	struct tracepoint_func __rcu *funcs;
+> +	u32 num_args;
+>  };
+>  
+>  #endif
+> diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
+> index c94f466d57ef..2194e7c31484 100644
+> --- a/include/linux/tracepoint.h
+> +++ b/include/linux/tracepoint.h
+> @@ -40,9 +40,19 @@ tracepoint_probe_register_prio(struct tracepoint *tp, void *probe, void *data,
+>  			       int prio);
+>  extern int
+>  tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data);
+> -extern void
+> -for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
+> -		void *priv);
+> +
+> +#ifdef CONFIG_TRACEPOINTS
+> +void *
+> +for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
+> +			   void *priv);
+> +#else
+> +static inline void *
+> +for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
+> +			   void *priv)
+> +{
+> +	return NULL;
+> +}
+> +#endif
+>  
+>  #ifdef CONFIG_MODULES
+>  struct tp_module {
+> @@ -230,18 +240,18 @@ extern void syscall_unregfunc(void);
+>   * structures, so we create an array of pointers that will be used for iteration
+>   * on the tracepoints.
+>   */
+> -#define DEFINE_TRACE_FN(name, reg, unreg)				 \
+> +#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
+>  	static const char __tpstrtab_##name[]				 \
+>  	__attribute__((section("__tracepoints_strings"))) = #name;	 \
+>  	struct tracepoint __tracepoint_##name				 \
+>  	__attribute__((section("__tracepoints"))) =			 \
+> -		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
+> +		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
+>  	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
+>  	__attribute__((section("__tracepoints_ptrs"))) =		 \
+>  		&__tracepoint_##name;
+>  
+> -#define DEFINE_TRACE(name)						\
+> -	DEFINE_TRACE_FN(name, NULL, NULL);
+> +#define DEFINE_TRACE(name, num_args)					\
+> +	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
+>  
+>  #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
+>  	EXPORT_SYMBOL_GPL(__tracepoint_##name)
+> @@ -275,8 +285,8 @@ extern void syscall_unregfunc(void);
+>  		return false;						\
+>  	}
+>  
+> -#define DEFINE_TRACE_FN(name, reg, unreg)
+> -#define DEFINE_TRACE(name)
+> +#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
+> +#define DEFINE_TRACE(name, num_args)
+>  #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
+>  #define EXPORT_TRACEPOINT_SYMBOL(name)
+>  
+> diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
+> index d9e3d4aa3f6e..96b22ace9ae7 100644
+> --- a/include/trace/define_trace.h
+> +++ b/include/trace/define_trace.h
+> @@ -25,7 +25,7 @@
+>  
+>  #undef TRACE_EVENT
+>  #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef TRACE_EVENT_CONDITION
+>  #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
+> @@ -39,24 +39,24 @@
+>  #undef TRACE_EVENT_FN
+>  #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
+>  		assign, print, reg, unreg)			\
+> -	DEFINE_TRACE_FN(name, reg, unreg)
+> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+>  
+>  #undef TRACE_EVENT_FN_COND
+>  #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
+>  		assign, print, reg, unreg)			\
+> -	DEFINE_TRACE_FN(name, reg, unreg)
+> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT
+>  #define DEFINE_EVENT(template, name, proto, args) \
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT_FN
+>  #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
+> -	DEFINE_TRACE_FN(name, reg, unreg)
+> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT_PRINT
+>  #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT_CONDITION
+>  #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
+> @@ -64,7 +64,7 @@
+>  
+>  #undef DECLARE_TRACE
+>  #define DECLARE_TRACE(name, proto, args)	\
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef TRACE_INCLUDE
+>  #undef __TRACE_INCLUDE
+> diff --git a/kernel/tracepoint.c b/kernel/tracepoint.c
+> index 671b13457387..3f2dc5738c2b 100644
+> --- a/kernel/tracepoint.c
+> +++ b/kernel/tracepoint.c
+> @@ -502,17 +502,22 @@ static __init int init_tracepoints(void)
+>  __initcall(init_tracepoints);
+>  #endif /* CONFIG_MODULES */
+>  
+> -static void for_each_tracepoint_range(struct tracepoint * const *begin,
+> -		struct tracepoint * const *end,
+> -		void (*fct)(struct tracepoint *tp, void *priv),
+> -		void *priv)
+> +static void *for_each_tracepoint_range(struct tracepoint * const *begin,
+> +				       struct tracepoint * const *end,
+> +				       void *(*fct)(struct tracepoint *tp, void *priv),
+> +				       void *priv)
+>  {
+>  	struct tracepoint * const *iter;
+> +	void *ret;
+>  
+>  	if (!begin)
+> -		return;
+> -	for (iter = begin; iter < end; iter++)
+> -		fct(*iter, priv);
+> +		return NULL;
+> +	for (iter = begin; iter < end; iter++) {
+> +		ret = fct(*iter, priv);
+> +		if (ret)
+> +			return ret;
+> +	}
+> +	return NULL;
+>  }
+>  
+>  /**
+> @@ -520,11 +525,11 @@ static void for_each_tracepoint_range(struct tracepoint * const *begin,
+>   * @fct: callback
+>   * @priv: private data
+>   */
+> -void for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
+> -		void *priv)
+> +void *for_each_kernel_tracepoint(void *(*fct)(struct tracepoint *tp, void *priv),
+> +				 void *priv)
+>  {
+> -	for_each_tracepoint_range(__start___tracepoints_ptrs,
+> -		__stop___tracepoints_ptrs, fct, priv);
+> +	return for_each_tracepoint_range(__start___tracepoints_ptrs,
+> +					 __stop___tracepoints_ptrs, fct, priv);
+>  }
+>  EXPORT_SYMBOL_GPL(for_each_kernel_tracepoint);
+>  
