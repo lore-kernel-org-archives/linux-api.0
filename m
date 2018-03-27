@@ -1,133 +1,139 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.17 09/21] sched: Implement push_task_to_cpu (v2)
-Date: Tue, 27 Mar 2018 12:05:30 -0400
-Message-ID: <20180327160542.28457-10-mathieu.desnoyers@efficios.com>
-References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.17 00/21] Restartable sequences and CPU op vector
+Date: Tue, 27 Mar 2018 12:05:21 -0400
+Message-ID: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Implement push_task_to_cpu(), which moves the task received as argument
-to the destination cpu's runqueue. It only does so if the CPU is within
-the CPU allowed mask of the task and if the CPU is active. If the CPU is
-not part of the allowed mask, -EINVAL is returned. If the CPU is not
-active, -EBUSY is returned.
+Hi,
 
-It does not change the CPU allowed mask, and can therefore be used
-within applications which rely on owning the sched_setaffinity() state.
+I'm respinning this series for another RFC round. It is based on the
+v4.16-rc7 tag. I am now targeting the 4.17 merge window.
 
-It does not pin the task to the destination CPU, which means that the
-scheduler may choose to move the task away from that CPU before the
-task executes. Code invoking push_task_to_cpu() must be prepared to
-retry in that case.
+This series contains:
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul Turner <pjt@google.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andrew Hunter <ahh@google.com>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
+- Restartable sequences system call (x86 32/64, powerpc 32/64, arm 32),
+- CPU operation vector system call (x86 32/64, powerpc 32/64, arm 32).
 
----
-Change since v1:
-- Return -EBUSY if CPU is not active.
----
- kernel/sched/core.c  | 42 ++++++++++++++++++++++++++++++++++++++++++
- kernel/sched/sched.h |  9 +++++++++
- 2 files changed, 51 insertions(+)
+The main changes introduced in this updated version are:
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 771caa7e95c6..ef7f5eb5d56e 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1062,6 +1062,48 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
- 		set_curr_task(rq, p);
- }
- 
-+int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
-+{
-+	struct rq_flags rf;
-+	struct rq *rq;
-+	int ret = 0;
-+
-+	rq = task_rq_lock(p, &rf);
-+	update_rq_clock(rq);
-+
-+	if (!cpumask_test_cpu(dest_cpu, &p->cpus_allowed)) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	if (!cpumask_test_cpu(dest_cpu, cpu_active_mask)) {
-+		ret = -EBUSY;
-+		goto out;
-+	}
-+
-+	if (task_cpu(p) == dest_cpu)
-+		goto out;
-+
-+	if (task_running(rq, p) || p->state == TASK_WAKING) {
-+		struct migration_arg arg = { p, dest_cpu };
-+		/* Need help from migration thread: drop lock and wait. */
-+		task_rq_unlock(rq, p, &rf);
-+		stop_one_cpu(cpu_of(rq), migration_cpu_stop, &arg);
-+		tlb_migrate_finish(p->mm);
-+		return 0;
-+	} else if (task_on_rq_queued(p)) {
-+		/*
-+		 * OK, since we're going to drop the lock immediately
-+		 * afterwards anyway.
-+		 */
-+		rq = move_queued_task(rq, &rf, p, dest_cpu);
-+	}
-+out:
-+	task_rq_unlock(rq, p, &rf);
-+
-+	return ret;
-+}
-+
- /*
-  * Change a given task's CPU affinity. Migrate the thread to a
-  * proper CPU and schedule it away if the CPU it's executing on
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 66b070444a7e..4aaf70d54afc 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -1252,6 +1252,15 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
- 	rseq_migrate(p);
- }
- 
-+#ifdef CONFIG_SMP
-+int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu);
-+#else
-+static inline int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
-+{
-+	return 0;
-+}
-+#endif
-+
- /*
-  * Tunables that become constants when CONFIG_SCHED_DEBUG is off:
-  */
+- new cpu_opv flag to query the number of operations supported by the
+  system call (added associated test-cases),
+- Fix error handling when cpu_opv receives a cpu number not part of the
+  allowed cpu mask (added associated test-cases).
+
+Feedback is welcome!
+
+Thanks,
+
+Mathieu
+
+Boqun Feng (2):
+  powerpc: Add support for restartable sequences
+  powerpc: Wire up restartable sequences system call
+
+Mathieu Desnoyers (19):
+  uapi headers: Provide types_32_64.h
+  rseq: Introduce restartable sequences system call (v12)
+  arm: Add restartable sequences support
+  arm: Wire up restartable sequences system call
+  x86: Add support for restartable sequences
+  x86: Wire up restartable sequence system call
+  sched: Implement push_task_to_cpu (v2)
+  cpu_opv: Provide cpu_opv system call (v6)
+  x86: Wire up cpu_opv system call
+  powerpc: Wire up cpu_opv system call
+  arm: Wire up cpu_opv system call
+  selftests: lib.mk: Introduce OVERRIDE_TARGETS
+  cpu_opv: selftests: Implement selftests (v7)
+  rseq: selftests: Provide rseq library (v5)
+  rseq: selftests: Provide percpu_op API
+  rseq: selftests: Provide basic test
+  rseq: selftests: Provide basic percpu ops test
+  rseq: selftests: Provide parametrized tests
+  rseq: selftests: Provide Makefile, scripts, gitignore
+
+ MAINTAINERS                                        |   20 +
+ arch/Kconfig                                       |    7 +
+ arch/arm/Kconfig                                   |    1 +
+ arch/arm/kernel/signal.c                           |    7 +
+ arch/arm/tools/syscall.tbl                         |    2 +
+ arch/powerpc/Kconfig                               |    1 +
+ arch/powerpc/include/asm/systbl.h                  |    2 +
+ arch/powerpc/include/asm/unistd.h                  |    2 +-
+ arch/powerpc/include/uapi/asm/unistd.h             |    2 +
+ arch/powerpc/kernel/signal.c                       |    3 +
+ arch/x86/Kconfig                                   |    1 +
+ arch/x86/entry/common.c                            |    1 +
+ arch/x86/entry/syscalls/syscall_32.tbl             |    2 +
+ arch/x86/entry/syscalls/syscall_64.tbl             |    2 +
+ arch/x86/kernel/signal.c                           |    6 +
+ fs/exec.c                                          |    1 +
+ include/linux/sched.h                              |  118 ++
+ include/linux/syscalls.h                           |    6 +
+ include/trace/events/rseq.h                        |   56 +
+ include/uapi/linux/cpu_opv.h                       |  120 ++
+ include/uapi/linux/rseq.h                          |  150 +++
+ include/uapi/linux/types_32_64.h                   |   67 +
+ init/Kconfig                                       |   31 +
+ kernel/Makefile                                    |    2 +
+ kernel/cpu_opv.c                                   | 1083 ++++++++++++++++
+ kernel/fork.c                                      |    2 +
+ kernel/rseq.c                                      |  358 +++++
+ kernel/sched/core.c                                |   43 +
+ kernel/sched/sched.h                               |   10 +
+ kernel/sys_ni.c                                    |    4 +
+ tools/testing/selftests/Makefile                   |    2 +
+ tools/testing/selftests/cpu-opv/.gitignore         |    1 +
+ tools/testing/selftests/cpu-opv/Makefile           |   17 +
+ .../testing/selftests/cpu-opv/basic_cpu_opv_test.c | 1368 ++++++++++++++++++++
+ tools/testing/selftests/cpu-opv/cpu-op.c           |  352 +++++
+ tools/testing/selftests/cpu-opv/cpu-op.h           |   59 +
+ tools/testing/selftests/lib.mk                     |    4 +
+ tools/testing/selftests/rseq/.gitignore            |    7 +
+ tools/testing/selftests/rseq/Makefile              |   37 +
+ .../testing/selftests/rseq/basic_percpu_ops_test.c |  296 +++++
+ tools/testing/selftests/rseq/basic_test.c          |   55 +
+ tools/testing/selftests/rseq/param_test.c          | 1163 +++++++++++++++++
+ tools/testing/selftests/rseq/percpu-op.h           |  163 +++
+ tools/testing/selftests/rseq/rseq-arm.h            |  732 +++++++++++
+ tools/testing/selftests/rseq/rseq-ppc.h            |  688 ++++++++++
+ tools/testing/selftests/rseq/rseq-skip.h           |   82 ++
+ tools/testing/selftests/rseq/rseq-x86.h            | 1149 ++++++++++++++++
+ tools/testing/selftests/rseq/rseq.c                |  116 ++
+ tools/testing/selftests/rseq/rseq.h                |  164 +++
+ tools/testing/selftests/rseq/run_param_test.sh     |  130 ++
+ 50 files changed, 8694 insertions(+), 1 deletion(-)
+ create mode 100644 include/trace/events/rseq.h
+ create mode 100644 include/uapi/linux/cpu_opv.h
+ create mode 100644 include/uapi/linux/rseq.h
+ create mode 100644 include/uapi/linux/types_32_64.h
+ create mode 100644 kernel/cpu_opv.c
+ create mode 100644 kernel/rseq.c
+ create mode 100644 tools/testing/selftests/cpu-opv/.gitignore
+ create mode 100644 tools/testing/selftests/cpu-opv/Makefile
+ create mode 100644 tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c
+ create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.c
+ create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.h
+ create mode 100644 tools/testing/selftests/rseq/.gitignore
+ create mode 100644 tools/testing/selftests/rseq/Makefile
+ create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
+ create mode 100644 tools/testing/selftests/rseq/basic_test.c
+ create mode 100644 tools/testing/selftests/rseq/param_test.c
+ create mode 100644 tools/testing/selftests/rseq/percpu-op.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-arm.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-ppc.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-skip.h
+ create mode 100644 tools/testing/selftests/rseq/rseq-x86.h
+ create mode 100644 tools/testing/selftests/rseq/rseq.c
+ create mode 100644 tools/testing/selftests/rseq/rseq.h
+ create mode 100755 tools/testing/selftests/rseq/run_param_test.sh
+
 -- 
 2.11.0
