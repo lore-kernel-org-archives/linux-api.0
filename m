@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v6 bpf-next 11/11] selftests/bpf: test for bpf_get_stackid() from raw tracepoints
-Date: Mon, 26 Mar 2018 19:47:06 -0700
-Message-ID: <20180327024706.2064725-12-ast@fb.com>
+Subject: [PATCH v6 bpf-next 04/11] net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
+Date: Mon, 26 Mar 2018 19:46:59 -0700
+Message-ID: <20180327024706.2064725-5-ast@fb.com>
 References: <20180327024706.2064725-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,167 +14,127 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-similar to traditional traceopint test add bpf_get_stackid() test
-from raw tracepoints
-and reduce verbosity of existing stackmap test
+fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
+instead of all 17 arguments by value.
+dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
+defined with very similar yet subtly different fields and offsets.
+tracepoint is still common and using definition of 'struct iwl_error_event_table'
+from dvm/commands.h while copying fields.
+Long term this tracepoint probably should be split into two.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- tools/testing/selftests/bpf/test_progs.c | 91 ++++++++++++++++++++++++--------
- 1 file changed, 70 insertions(+), 21 deletions(-)
+ drivers/net/wireless/intel/iwlwifi/dvm/main.c      |  7 +---
+ .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  | 39 ++++++++++------------
+ drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |  1 +
+ drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |  7 +---
+ 4 files changed, 21 insertions(+), 33 deletions(-)
 
-diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-index e9df48b306df..faadbe233966 100644
---- a/tools/testing/selftests/bpf/test_progs.c
-+++ b/tools/testing/selftests/bpf/test_progs.c
-@@ -877,7 +877,7 @@ static void test_stacktrace_map()
+diff --git a/drivers/net/wireless/intel/iwlwifi/dvm/main.c b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
+index d11d72615de2..e68254e12764 100644
+--- a/drivers/net/wireless/intel/iwlwifi/dvm/main.c
++++ b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
+@@ -1651,12 +1651,7 @@ static void iwl_dump_nic_error_log(struct iwl_priv *priv)
+ 			priv->status, table.valid);
+ 	}
  
- 	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
- 	if (CHECK(err, "prog_load", "err %d errno %d\n", err, errno))
--		goto out;
-+		return;
+-	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
+-				      table.data1, table.data2, table.line,
+-				      table.blink2, table.ilink1, table.ilink2,
+-				      table.bcon_time, table.gp1, table.gp2,
+-				      table.gp3, table.ucode_ver, table.hw_ver,
+-				      0, table.brd_ver);
++	trace_iwlwifi_dev_ucode_error(trans->dev, &table, 0, table.brd_ver);
+ 	IWL_ERR(priv, "0x%08X | %-28s\n", table.error_id,
+ 		desc_lookup(table.error_id));
+ 	IWL_ERR(priv, "0x%08X | uPc\n", table.pc);
+diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
+index 9518a82f44c2..27e3e4e96aa2 100644
+--- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
++++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
+@@ -126,14 +126,11 @@ TRACE_EVENT(iwlwifi_dev_tx,
+ 		  __entry->framelen, __entry->skbaddr)
+ );
  
- 	/* Get the ID for the sched/sched_switch tracepoint */
- 	snprintf(buf, sizeof(buf),
-@@ -888,8 +888,7 @@ static void test_stacktrace_map()
++struct iwl_error_event_table;
+ TRACE_EVENT(iwlwifi_dev_ucode_error,
+-	TP_PROTO(const struct device *dev, u32 desc, u32 tsf_low,
+-		 u32 data1, u32 data2, u32 line, u32 blink2, u32 ilink1,
+-		 u32 ilink2, u32 bcon_time, u32 gp1, u32 gp2, u32 rev_type,
+-		 u32 major, u32 minor, u32 hw_ver, u32 brd_ver),
+-	TP_ARGS(dev, desc, tsf_low, data1, data2, line,
+-		 blink2, ilink1, ilink2, bcon_time, gp1, gp2,
+-		 rev_type, major, minor, hw_ver, brd_ver),
++	TP_PROTO(const struct device *dev, const struct iwl_error_event_table *table,
++		 u32 hw_ver, u32 brd_ver),
++	TP_ARGS(dev, table, hw_ver, brd_ver),
+ 	TP_STRUCT__entry(
+ 		DEV_ENTRY
+ 		__field(u32, desc)
+@@ -155,20 +152,20 @@ TRACE_EVENT(iwlwifi_dev_ucode_error,
+ 	),
+ 	TP_fast_assign(
+ 		DEV_ASSIGN;
+-		__entry->desc = desc;
+-		__entry->tsf_low = tsf_low;
+-		__entry->data1 = data1;
+-		__entry->data2 = data2;
+-		__entry->line = line;
+-		__entry->blink2 = blink2;
+-		__entry->ilink1 = ilink1;
+-		__entry->ilink2 = ilink2;
+-		__entry->bcon_time = bcon_time;
+-		__entry->gp1 = gp1;
+-		__entry->gp2 = gp2;
+-		__entry->rev_type = rev_type;
+-		__entry->major = major;
+-		__entry->minor = minor;
++		__entry->desc = table->error_id;
++		__entry->tsf_low = table->tsf_low;
++		__entry->data1 = table->data1;
++		__entry->data2 = table->data2;
++		__entry->line = table->line;
++		__entry->blink2 = table->blink2;
++		__entry->ilink1 = table->ilink1;
++		__entry->ilink2 = table->ilink2;
++		__entry->bcon_time = table->bcon_time;
++		__entry->gp1 = table->gp1;
++		__entry->gp2 = table->gp2;
++		__entry->rev_type = table->gp3;
++		__entry->major = table->ucode_ver;
++		__entry->minor = table->hw_ver;
+ 		__entry->hw_ver = hw_ver;
+ 		__entry->brd_ver = brd_ver;
+ 	),
+diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
+index 50510fb6ab8c..6aa719865a58 100644
+--- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
++++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
+@@ -30,6 +30,7 @@
+ #ifndef __CHECKER__
+ #include "iwl-trans.h"
  
- 	bytes = read(efd, buf, sizeof(buf));
- 	close(efd);
--	if (CHECK(bytes <= 0 || bytes >= sizeof(buf),
--		  "read", "bytes %d errno %d\n", bytes, errno))
-+	if (bytes <= 0 || bytes >= sizeof(buf))
- 		goto close_prog;
++#include "dvm/commands.h"
+ #define CREATE_TRACE_POINTS
+ #include "iwl-devtrace.h"
  
- 	/* Open the perf event and attach bpf progrram */
-@@ -906,29 +905,24 @@ static void test_stacktrace_map()
- 		goto close_prog;
+diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
+index d65e1db7c097..5442ead876eb 100644
+--- a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
++++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
+@@ -549,12 +549,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u32 base)
  
- 	err = ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0);
--	if (CHECK(err, "perf_event_ioc_enable", "err %d errno %d\n",
--		  err, errno))
--		goto close_pmu;
-+	if (err)
-+		goto disable_pmu;
+ 	IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
  
- 	err = ioctl(pmu_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
--	if (CHECK(err, "perf_event_ioc_set_bpf", "err %d errno %d\n",
--		  err, errno))
-+	if (err)
- 		goto disable_pmu;
- 
- 	/* find map fds */
- 	control_map_fd = bpf_find_map(__func__, obj, "control_map");
--	if (CHECK(control_map_fd < 0, "bpf_find_map control_map",
--		  "err %d errno %d\n", err, errno))
-+	if (control_map_fd < 0)
- 		goto disable_pmu;
- 
- 	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
--	if (CHECK(stackid_hmap_fd < 0, "bpf_find_map stackid_hmap",
--		  "err %d errno %d\n", err, errno))
-+	if (stackid_hmap_fd < 0)
- 		goto disable_pmu;
- 
- 	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
--	if (CHECK(stackmap_fd < 0, "bpf_find_map stackmap", "err %d errno %d\n",
--		  err, errno))
-+	if (stackmap_fd < 0)
- 		goto disable_pmu;
- 
- 	/* give some time for bpf program run */
-@@ -945,24 +939,78 @@ static void test_stacktrace_map()
- 	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
- 	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
- 		  "err %d errno %d\n", err, errno))
--		goto disable_pmu;
-+		goto disable_pmu_noerr;
- 
- 	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
- 	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
- 		  "err %d errno %d\n", err, errno))
--		; /* fall through */
-+		goto disable_pmu_noerr;
- 
-+	goto disable_pmu_noerr;
- disable_pmu:
-+	error_cnt++;
-+disable_pmu_noerr:
- 	ioctl(pmu_fd, PERF_EVENT_IOC_DISABLE);
--
--close_pmu:
- 	close(pmu_fd);
--
- close_prog:
- 	bpf_object__close(obj);
-+}
- 
--out:
--	return;
-+static void test_stacktrace_map_raw_tp()
-+{
-+	int control_map_fd, stackid_hmap_fd, stackmap_fd;
-+	const char *file = "./test_stacktrace_map.o";
-+	int efd, err, prog_fd;
-+	__u32 key, val, duration = 0;
-+	struct bpf_object *obj;
-+
-+	err = bpf_prog_load(file, BPF_PROG_TYPE_RAW_TRACEPOINT, &obj, &prog_fd);
-+	if (CHECK(err, "prog_load raw tp", "err %d errno %d\n", err, errno))
-+		return;
-+
-+	efd = bpf_raw_tracepoint_open("sched_switch", prog_fd);
-+	if (CHECK(efd < 0, "raw_tp_open", "err %d errno %d\n", efd, errno))
-+		goto close_prog;
-+
-+	/* find map fds */
-+	control_map_fd = bpf_find_map(__func__, obj, "control_map");
-+	if (control_map_fd < 0)
-+		goto close_prog;
-+
-+	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
-+	if (stackid_hmap_fd < 0)
-+		goto close_prog;
-+
-+	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
-+	if (stackmap_fd < 0)
-+		goto close_prog;
-+
-+	/* give some time for bpf program run */
-+	sleep(1);
-+
-+	/* disable stack trace collection */
-+	key = 0;
-+	val = 1;
-+	bpf_map_update_elem(control_map_fd, &key, &val, 0);
-+
-+	/* for every element in stackid_hmap, we can find a corresponding one
-+	 * in stackmap, and vise versa.
-+	 */
-+	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
-+	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
-+		  "err %d errno %d\n", err, errno))
-+		goto close_prog;
-+
-+	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
-+	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
-+		  "err %d errno %d\n", err, errno))
-+		goto close_prog;
-+
-+	goto close_prog_noerr;
-+close_prog:
-+	error_cnt++;
-+close_prog_noerr:
-+	bpf_object__close(obj);
- }
- 
- static int extract_build_id(char *build_id, size_t size)
-@@ -1138,6 +1186,7 @@ int main(void)
- 	test_tp_attach_query();
- 	test_stacktrace_map();
- 	test_stacktrace_build_id();
-+	test_stacktrace_map_raw_tp();
- 
- 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
- 	return error_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
+-	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
+-				      table.data1, table.data2, table.data3,
+-				      table.blink2, table.ilink1,
+-				      table.ilink2, table.bcon_time, table.gp1,
+-				      table.gp2, table.fw_rev_type, table.major,
+-				      table.minor, table.hw_ver, table.brd_ver);
++	trace_iwlwifi_dev_ucode_error(trans->dev, &table, table.hw_ver, table.brd_ver);
+ 	IWL_ERR(mvm, "0x%08X | %-28s\n", table.error_id,
+ 		desc_lookup(table.error_id));
+ 	IWL_ERR(mvm, "0x%08X | trm_hw_status0\n", table.trm_hw_status0);
 -- 
 2.9.5
