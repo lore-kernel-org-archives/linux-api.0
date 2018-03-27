@@ -1,315 +1,56 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Alexei Starovoitov <ast@fb.com>
 Subject: Re: [PATCH v6 bpf-next 08/11] bpf: introduce BPF_RAW_TRACEPOINT
-Date: Tue, 27 Mar 2018 17:04:38 -0400
-Message-ID: <20180327170438.77c0f8fd@gandalf.local.home>
+Date: Tue, 27 Mar 2018 15:48:35 -0700
+Message-ID: <563f7fa0-5fea-00d3-1eb3-fa00d8cf7e29@fb.com>
 References: <20180327024706.2064725-1-ast@fb.com>
-        <20180327024706.2064725-9-ast@fb.com>
-        <20180327130211.284c8924@gandalf.local.home>
-        <20180327131143.4b83534c@gandalf.local.home>
-        <20180327145824.602dfdec@gandalf.local.home>
+ <20180327024706.2064725-9-ast@fb.com>
+ <20180327130211.284c8924@gandalf.local.home>
+ <20180327131143.4b83534c@gandalf.local.home>
+ <20180327145824.602dfdec@gandalf.local.home>
+ <20180327170438.77c0f8fd@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180327145824.602dfdec@gandalf.local.home>
+In-Reply-To: <20180327170438.77c0f8fd@gandalf.local.home>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@fb.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 27 Mar 2018 14:58:24 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On 3/27/18 2:04 PM, Steven Rostedt wrote:
+>
+> +#ifdef CONFIG_BPF_EVENTS
+> +#define BPF_RAW_TP() . = ALIGN(8);		\
+> +			 VMLINUX_SYMBOL(__start__bpf_raw_tp) = .;	\
+> +			 KEEP(*(__bpf_raw_tp_map))			\
+> +			 VMLINUX_SYMBOL(__stop__bpf_raw_tp) = .;
 
-> +extern struct bpf_raw_event_map *__start__bpf_raw_tp[];
-> +extern struct bpf_raw_event_map *__stop__bpf_raw_tp[];
-> +
-> +struct bpf_raw_event_map *bpf_find_raw_tracepoint(const char *name)
-> +{
-> +	struct bpf_raw_event_map* const *btp = __start__bpf_raw_tp;
-> +
-> +	for (; btp < __stop__bpf_raw_tp; btp++)
-> +		if (!strcmp((*btp)->tp->name, name))
-> +			return *btp;
-> +	return NULL;
-> +}
-> +
+that looks to be correct, but something wrong with it.
 
-OK, this part is broken, and for some reason it didn't include my
-changes to bpf_probe.h. I also tested this without setting BPF_EVENTS,
-so I wasn't actually testing it.
+Can you try your mini test with kasan on ?
 
-I added a test in event_trace_init() to make sure that it worked:
-(Not included in the patch below)
+I'm seeing this crash:
+test_stacktrace_[   18.760662] start ffffffff84642438 stop ffffffff84644f60
+map_raw_tp:PASS:[   18.761467] i 1 btp->tp cccccccccccccccc
+prog_load raw tp[   18.762064] kasan: CONFIG_KASAN_INLINE enabled
+  0 nsec
+[   18.762704] kasan: GPF could be caused by NULL-ptr deref or user 
+memory access
+[   18.765125] general protection fault: 0000 [#1] SMP KASAN PTI
+[   18.765830] Modules linked in:
+[   18.778358] Call Trace:
+[   18.778674]  bpf_raw_tracepoint_open.isra.27+0x92/0x380
 
-{
-	struct bpf_raw_event_map *btp;
-	btp = bpf_find_raw_tracepoint("sched_switch");
-	if (btp)
-		printk("found BPF_RAW_TRACEPOINT: %s %pS\n",
-		       btp->tp->name, btp->bpf_func);
-	else
-		printk("COULD NOT FIND BPF_RAW_TRACEPOINT\n");
-}
+for some reason the start_bpf_raw_tp is off by 8.
+Not sure how it works for you.
 
-And it found the tracepoint.
+(gdb) p &__bpf_trace_tp_map_sys_exit
+$10 = (struct bpf_raw_event_map *) 0xffffffff84642440 
+<__bpf_trace_tp_map_sys_exit>
 
-Here's take two....
+(gdb)  p &__start__bpf_raw_tp
+$7 = (<data variable, no debug info> *) 0xffffffff84642438
 
-You can add my: Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-
--- Steve
-
-diff --git a/include/asm-generic/vmlinux.lds.h b/include/asm-generic/vmlinux.lds.h
-index 1ab0e520d6fc..4fab7392e237 100644
---- a/include/asm-generic/vmlinux.lds.h
-+++ b/include/asm-generic/vmlinux.lds.h
-@@ -178,6 +178,15 @@
- #define TRACE_SYSCALLS()
- #endif
- 
-+#ifdef CONFIG_BPF_EVENTS
-+#define BPF_RAW_TP() . = ALIGN(8);		\
-+			 VMLINUX_SYMBOL(__start__bpf_raw_tp) = .;	\
-+			 KEEP(*(__bpf_raw_tp_map))			\
-+			 VMLINUX_SYMBOL(__stop__bpf_raw_tp) = .;
-+#else
-+#define BPF_RAW_TP()
-+#endif
-+
- #ifdef CONFIG_SERIAL_EARLYCON
- #define EARLYCON_TABLE() STRUCT_ALIGN();			\
- 			 VMLINUX_SYMBOL(__earlycon_table) = .;	\
-@@ -576,6 +585,7 @@
- 	*(.init.rodata)							\
- 	FTRACE_EVENTS()							\
- 	TRACE_SYSCALLS()						\
-+	BPF_RAW_TP()							\
- 	KPROBE_BLACKLIST()						\
- 	ERROR_INJECT_WHITELIST()					\
- 	MEM_DISCARD(init.rodata)					\
-diff --git a/include/linux/trace_events.h b/include/linux/trace_events.h
-index 399ebe6f90cf..fb4778c0a248 100644
---- a/include/linux/trace_events.h
-+++ b/include/linux/trace_events.h
-@@ -470,8 +470,9 @@ unsigned int trace_call_bpf(struct trace_event_call *call, void *ctx);
- int perf_event_attach_bpf_prog(struct perf_event *event, struct bpf_prog *prog);
- void perf_event_detach_bpf_prog(struct perf_event *event);
- int perf_event_query_prog_array(struct perf_event *event, void __user *info);
--int bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog);
--int bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *prog);
-+int bpf_probe_register(struct bpf_raw_event_map *btp, struct bpf_prog *prog);
-+int bpf_probe_unregister(struct bpf_raw_event_map *btp, struct bpf_prog *prog);
-+struct bpf_raw_event_map *bpf_find_raw_tracepoint(const char *name);
- #else
- static inline unsigned int trace_call_bpf(struct trace_event_call *call, void *ctx)
- {
-@@ -491,14 +492,18 @@ perf_event_query_prog_array(struct perf_event *event, void __user *info)
- {
- 	return -EOPNOTSUPP;
- }
--static inline int bpf_probe_register(struct tracepoint *tp, struct bpf_prog *p)
-+static inline int bpf_probe_register(struct bpf_raw_event_map *btp, struct bpf_prog *p)
- {
- 	return -EOPNOTSUPP;
- }
--static inline int bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *p)
-+static inline int bpf_probe_unregister(struct bpf_raw_event_map *btp, struct bpf_prog *p)
- {
- 	return -EOPNOTSUPP;
- }
-+static inline struct bpf_raw_event_map *bpf_find_raw_tracepoint(const char *name)
-+{
-+	return NULL;
-+}
- #endif
- 
- enum {
-diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
-index 39a283c61c51..35db8dd48c4c 100644
---- a/include/linux/tracepoint-defs.h
-+++ b/include/linux/tracepoint-defs.h
-@@ -36,4 +36,9 @@ struct tracepoint {
- 	u32 num_args;
- };
- 
-+struct bpf_raw_event_map {
-+	struct tracepoint	*tp;
-+	void			*bpf_func;
-+};
-+
- #endif
-diff --git a/include/trace/bpf_probe.h b/include/trace/bpf_probe.h
-index d2cc0663e618..bb8ed2f530ad 100644
---- a/include/trace/bpf_probe.h
-+++ b/include/trace/bpf_probe.h
-@@ -76,7 +76,13 @@ __bpf_trace_##call(void *__data, proto)					\
- static inline void bpf_test_probe_##call(void)				\
- {									\
- 	check_trace_callback_type_##call(__bpf_trace_##template);	\
--}
-+}									\
-+static struct bpf_raw_event_map	__used					\
-+   __attribute__((section("__bpf_raw_tp_map")))				\
-+__bpf_trace_tp_map_##call= {						\
-+	.tp		= &__tracepoint_##call,				\
-+	.bpf_func	= (void *)__bpf_trace_##template,		\
-+};
- 
- 
- #undef DEFINE_EVENT_PRINT
-diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-index f100c63ff19e..6037a2f0108a 100644
---- a/kernel/bpf/syscall.c
-+++ b/kernel/bpf/syscall.c
-@@ -1312,7 +1312,7 @@ static int bpf_obj_get(const union bpf_attr *attr)
- }
- 
- struct bpf_raw_tracepoint {
--	struct tracepoint *tp;
-+	struct bpf_raw_event_map *btp;
- 	struct bpf_prog *prog;
- };
- 
-@@ -1321,7 +1321,7 @@ static int bpf_raw_tracepoint_release(struct inode *inode, struct file *filp)
- 	struct bpf_raw_tracepoint *raw_tp = filp->private_data;
- 
- 	if (raw_tp->prog) {
--		bpf_probe_unregister(raw_tp->tp, raw_tp->prog);
-+		bpf_probe_unregister(raw_tp->btp, raw_tp->prog);
- 		bpf_prog_put(raw_tp->prog);
- 	}
- 	kfree(raw_tp);
-@@ -1339,7 +1339,7 @@ static const struct file_operations bpf_raw_tp_fops = {
- static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
- {
- 	struct bpf_raw_tracepoint *raw_tp;
--	struct tracepoint *tp;
-+	struct bpf_raw_event_map *btp;
- 	struct bpf_prog *prog;
- 	char tp_name[128];
- 	int tp_fd, err;
-@@ -1349,14 +1349,14 @@ static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
- 		return -EFAULT;
- 	tp_name[sizeof(tp_name) - 1] = 0;
- 
--	tp = kernel_tracepoint_find_by_name(tp_name);
--	if (!tp)
-+	btp = bpf_find_raw_tracepoint(tp_name);
-+	if (!btp)
- 		return -ENOENT;
- 
- 	raw_tp = kmalloc(sizeof(*raw_tp), GFP_USER | __GFP_ZERO);
- 	if (!raw_tp)
- 		return -ENOMEM;
--	raw_tp->tp = tp;
-+	raw_tp->btp = btp;
- 
- 	prog = bpf_prog_get_type(attr->raw_tracepoint.prog_fd,
- 				 BPF_PROG_TYPE_RAW_TRACEPOINT);
-@@ -1365,7 +1365,7 @@ static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
- 		goto out_free_tp;
- 	}
- 
--	err = bpf_probe_register(raw_tp->tp, prog);
-+	err = bpf_probe_register(raw_tp->btp, prog);
- 	if (err)
- 		goto out_put_prog;
- 
-@@ -1373,7 +1373,7 @@ static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
- 	tp_fd = anon_inode_getfd("bpf-raw-tracepoint", &bpf_raw_tp_fops, raw_tp,
- 				 O_CLOEXEC);
- 	if (tp_fd < 0) {
--		bpf_probe_unregister(raw_tp->tp, prog);
-+		bpf_probe_unregister(raw_tp->btp, prog);
- 		err = tp_fd;
- 		goto out_put_prog;
- 	}
-diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
-index eb58ef156d36..d0975094cff7 100644
---- a/kernel/trace/bpf_trace.c
-+++ b/kernel/trace/bpf_trace.c
-@@ -965,6 +965,22 @@ int perf_event_query_prog_array(struct perf_event *event, void __user *info)
- 	return ret;
- }
- 
-+extern struct bpf_raw_event_map __start__bpf_raw_tp;
-+extern struct bpf_raw_event_map __stop__bpf_raw_tp;
-+
-+struct bpf_raw_event_map *bpf_find_raw_tracepoint(const char *name)
-+{
-+	const struct bpf_raw_event_map *btp = &__start__bpf_raw_tp;
-+	int i = 0;
-+
-+	for (; btp < &__stop__bpf_raw_tp; btp++) {
-+		i++;
-+		if (!strcmp(btp->tp->name, name))
-+			return btp;
-+	}
-+	return NULL;
-+}
-+
- static __always_inline
- void __bpf_trace_run(struct bpf_prog *prog, u64 *args)
- {
-@@ -1020,10 +1036,9 @@ BPF_TRACE_DEFN_x(10);
- BPF_TRACE_DEFN_x(11);
- BPF_TRACE_DEFN_x(12);
- 
--static int __bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog)
-+static int __bpf_probe_register(struct bpf_raw_event_map *btp, struct bpf_prog *prog)
- {
--	unsigned long addr;
--	char buf[128];
-+	struct tracepoint *tp = btp->tp;
- 
- 	/*
- 	 * check that program doesn't access arguments beyond what's
-@@ -1032,43 +1047,25 @@ static int __bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog)
- 	if (prog->aux->max_ctx_offset > tp->num_args * sizeof(u64))
- 		return -EINVAL;
- 
--	snprintf(buf, sizeof(buf), "__bpf_trace_%s", tp->name);
--	addr = kallsyms_lookup_name(buf);
--	if (!addr)
--		return -ENOENT;
--
--	return tracepoint_probe_register(tp, (void *)addr, prog);
-+	return tracepoint_probe_register(tp, (void *)btp->bpf_func, prog);
- }
- 
--int bpf_probe_register(struct tracepoint *tp, struct bpf_prog *prog)
-+int bpf_probe_register(struct bpf_raw_event_map *btp, struct bpf_prog *prog)
- {
- 	int err;
- 
- 	mutex_lock(&bpf_event_mutex);
--	err = __bpf_probe_register(tp, prog);
-+	err = __bpf_probe_register(btp, prog);
- 	mutex_unlock(&bpf_event_mutex);
- 	return err;
- }
- 
--static int __bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *prog)
--{
--	unsigned long addr;
--	char buf[128];
--
--	snprintf(buf, sizeof(buf), "__bpf_trace_%s", tp->name);
--	addr = kallsyms_lookup_name(buf);
--	if (!addr)
--		return -ENOENT;
--
--	return tracepoint_probe_unregister(tp, (void *)addr, prog);
--}
--
--int bpf_probe_unregister(struct tracepoint *tp, struct bpf_prog *prog)
-+int bpf_probe_unregister(struct bpf_raw_event_map *btp, struct bpf_prog *prog)
- {
- 	int err;
- 
- 	mutex_lock(&bpf_event_mutex);
--	err = __bpf_probe_unregister(tp, prog);
-+	err = tracepoint_probe_unregister(btp->tp, (void *)btp->bpf_func, prog);
- 	mutex_unlock(&bpf_event_mutex);
- 	return err;
- }
+(gdb)  p (void*)(&__start__bpf_raw_tp)+8
+$11 = (void *) 0xffffffff84642440 <__bpf_trace_tp_map_sys_exit>
