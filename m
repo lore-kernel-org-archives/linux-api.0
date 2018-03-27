@@ -1,195 +1,180 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v4 04/24] fpga: add device feature list support
-Date: Tue, 27 Mar 2018 10:35:49 +0800
-Message-ID: <20180327023549.GA15476@hao-dev>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-5-git-send-email-hao.wu@intel.com>
- <CANk1AXSaE3wQ7jnBkB0TR3kLKnG1XUeHk+LbDSxyRtBxbMNGPw@mail.gmail.com>
- <20180323043304.GA14733@hao-dev>
- <CANk1AXRbBonnop6Q3=kdXHdZEBoO9cGa6sON7e0GvFwd_TnYfw@mail.gmail.com>
+From: Alexei Starovoitov <ast@fb.com>
+Subject: [PATCH v6 bpf-next 11/11] selftests/bpf: test for bpf_get_stackid() from raw tracepoints
+Date: Mon, 26 Mar 2018 19:47:06 -0700
+Message-ID: <20180327024706.2064725-12-ast@fb.com>
+References: <20180327024706.2064725-1-ast@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXRbBonnop6Q3=kdXHdZEBoO9cGa6sON7e0GvFwd_TnYfw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Content-Type: text/plain
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180327024706.2064725-1-ast@fb.com>
+Sender: netdev-owner@vger.kernel.org
+To: davem@davemloft.net
+Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 26, 2018 at 12:21:23PM -0500, Alan Tull wrote:
-> On Thu, Mar 22, 2018 at 11:33 PM, Wu Hao <hao.wu@intel.com> wrote:
-> 
-> >> > +
-> >> > +/*
-> >> > + * This function resets the FPGA Port and its accelerator (AFU) by function
-> >> > + * __fpga_port_disable and __fpga_port_enable (set port soft reset bit and
-> >> > + * then clear it). Userspace can do Port reset at any time, e.g during DMA
-> >> > + * or Partial Reconfiguration. But it should never cause any system level
-> >> > + * issue, only functional failure (e.g DMA or PR operation failure) and be
-> >> > + * recoverable from the failure.
-> >> > + *
-> >> > + * Note: the accelerator (AFU) is not accessible when its port is in reset
-> >> > + * (disabled). Any attempts on MMIO access to AFU while in reset, will
-> >> > + * result errors reported via port error reporting sub feature (if present).
-> >> > + */
-> >> > +static inline int __fpga_port_reset(struct platform_device *pdev)
-> >> > +{
-> >> > +       int ret;
-> >> > +
-> >> > +       ret = __fpga_port_disable(pdev);
-> >> > +       if (ret)
-> >> > +               return ret;
-> >> > +
-> >> > +       __fpga_port_enable(pdev);
-> >> > +
-> >> > +       return 0;
-> >> > +}
-> >> > +
-> >> > +static inline int fpga_port_reset(struct platform_device *pdev)
-> >> > +{
-> >> > +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> >> > +       int ret;
-> >> > +
-> >> > +       mutex_lock(&pdata->lock);
-> >> > +       ret = __fpga_port_reset(pdev);
-> >> > +       mutex_unlock(&pdata->lock);
-> >> > +
-> >> > +       return ret;
-> >> > +}
-> >>
-> >> I'm still scratching my head about how the enumeration code also has
-> >> code that handles resetting the PL in a FPGA region and
-> >> enabling/disabling the bridge.  We've discussed this before [1] and I
-> >> know you've looked into it, I'm still trying to figure out how this
-> >> can be made modular, so when someone needs to support a different port
-> >> in the future, it isn't a complete rewrite.
-> >>
-> >> Speaking of resets, one way forward would be to create a reset
-> >> controller for the port (and if possible move the port code to the
-> >> bridge platform driver).  The current linux-next repo adds support for
-> >> reset lookups, so that reset controllers are supported for non-DT
-> >> platforms [2].
-> >>
-> >> So the bridge driver would implement the enable/disable functions and
-> >> create a reset controller, the fpga-region (or whoever else needs it)
-> >> could look the reset controller and use the reset.  By using the
-> >> kernel reset framework, we don't have to have that piece of code
-> >> shared around by having a reset function in a .h file.  And it avoids
-> >> adding extra dependencies between modules.  Also, where necessary, I'd
-> >> rather add functionality to the existing bridge/mgr/region frameworks,
-> >> adding common interfaces at that level to allow reuse (like adding
-> >> status to fpga-mgr).  Ideally, this DFL framework would sit on top of
-> >> mgr and bridge and allow those to be swapped out for reuse of the DFL
-> >> framework on other devices.  Also it will save future headaches as mgr
-> >> or port implementations evolve.
-> >
-> > Thanks a lot for the suggestion. I really really appreciate this.
-> 
-> Yes, this is a good discussion, thanks.
-> 
-> >
-> > Actually if we consider the virutalization case as I mentioned in [1] below,
-> > that means AFU and its Port will be turned into a PCI VF and assigned (passed
-> > through) to a virtual machine. There is no FME block on that PCI VF device,
-> > (the FME is always kept in PCI PF device in the host) and currently the bridge
-> > is created by FME module for PR functionatily. So in the guest virtual machine,
-> > nobody creates the reset controller actually.
-> >
-> > As I mentioned in [1], one possible method is, put these port reset functions to
-> > AFU (Port) module, and share those functions with FME bridge module.
-> 
-> Yes, the port reset functions could move into an AFU driver, and then
-> also the AFU driver could also create a reset controller and register
-> a lookup [2] for the reset.  That would be just a few lines of code.
-> The reset controller would control enabling/disabling the port.  The
-> bridge driver could get the reset controller to use during FPGA
-> programming.  That is instead of sharing a reset function with the
-> bridge driver.   It decouples the FPGA bridge driver and simplifies it
-> to be something that just needs to control a reset instead of needing
-> to include a specific .h file that makes  a port reset function
-> available.
+From: Alexei Starovoitov <ast@kernel.org>
 
-Hi Alan
+similar to traditional traceopint test add bpf_get_stackid() test
+from raw tracepoints
+and reduce verbosity of existing stackmap test
 
-Thanks a lot for the feedback. :)
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ tools/testing/selftests/bpf/test_progs.c | 91 ++++++++++++++++++++++++--------
+ 1 file changed, 70 insertions(+), 21 deletions(-)
 
-The major concern here is, for virtualization case, after we enable the SRIOV
-to create VFs, AFUs(and ports) are turned into VFs from PF. Once AFUs are moved
-from PF to VFs, then we should remove all related user interfaces exported by
-the afu platform device under PF by unregistering these platform devices from
-the system. So in this case the reset controller created by the AFU platform
-driver, should be removed when the AFU platform devices are deleted from the
-system in this case, but we still have FME and FME bridge present on PF, then
-FME bridge can't find the reset controller any longer to do port enable/disable.
-
-Sorry, I found my previous description is not accurate.
-
-VFs could be passed through to a virtual machine, if we let AFU/Port create
-reset controller, then the reset controllers are created in the virtual machine.
-And FME is always in PF in the host, so FME bridge in host have no access to the
-reset controllers in the virtual machine.
-
-> 
-> > I think
-> > that will make the code in the common DFL framework a little more clean,
-> 
-> Yes, IIUC that may also make it easier as the port/AFU gets added
-> functionality that is intended to be controlled by the VF anyway
-> (while the only port-related thing that is needed by the FME is port
-> enable/disable).
-> 
-> > but it
-> > will introduce some module dependency here for sure, (e.g FME modules can't
-> > finish PR without AFU (Port) Module loaded).
-> 
-> That sounds like an OK type of dependency, i.e. if the modules are not
-> all loaded, it doesn't work. :-)
-
-Find a reset controller by lookup, if not found, return error code. It seems
-not a really hard module dependency between port/afu and FME bridge modules.
-But if in FME bridge, it uses functions exposed by port/afu module, that's a
-hard dependency. : )
-
-I can try to move related code to afu/port driver instead in the next version
-for sure, but I can't create the reset controller per the reason above. Please
-let me know if more thoughts on this. : )
-
-> 
-> > But anyway it may be still
-> > acceptable for users as all these modules could be loaded automatically. How do
-> > you think? :)
-> 
-> The other thing I want to get right now is if there is a different
-> AFU/port that needs a different driver.  Can the DFL be changed to
-> specify what AFU/port to load?  I really really want to avoid large
-> code rewrites in the future that we can anticipate now.  Such as
-> someone implements their own static image, it has DFL, but the port is
-> somewhat different.  Instead of seeing features as just something that
-> gets added, the DFL also specifies what port driver and mgr driver to
-> load.  The stuff we discussed above is a good step towards that, but
-> not all of it.
-
-I'm not sure if any vendor wants to create a totally different port here, if
-yes, then it could have a different feature id in Device Feature Header (DFH).
-I think it's possible to use that feature id to decide which driver to load
-(or which platform device to create). But vendors don't have to do that, as it
-could reuse current port driver and private features added already, or even
-add some new vendor specific private feature under the port to save cost.
-
-Thanks
-Hao
-
-> 
-> Alan
-> 
-> >
-> > Thanks
-> > Hao
-> >
-> >
-> >>
-> >> Alan
-> >>
-> >> [1] https://lkml.org/lkml/2017/12/22/398
-> >> [2] https://patchwork.kernel.org/patch/10247475/
+diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
+index e9df48b306df..faadbe233966 100644
+--- a/tools/testing/selftests/bpf/test_progs.c
++++ b/tools/testing/selftests/bpf/test_progs.c
+@@ -877,7 +877,7 @@ static void test_stacktrace_map()
+ 
+ 	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
+ 	if (CHECK(err, "prog_load", "err %d errno %d\n", err, errno))
+-		goto out;
++		return;
+ 
+ 	/* Get the ID for the sched/sched_switch tracepoint */
+ 	snprintf(buf, sizeof(buf),
+@@ -888,8 +888,7 @@ static void test_stacktrace_map()
+ 
+ 	bytes = read(efd, buf, sizeof(buf));
+ 	close(efd);
+-	if (CHECK(bytes <= 0 || bytes >= sizeof(buf),
+-		  "read", "bytes %d errno %d\n", bytes, errno))
++	if (bytes <= 0 || bytes >= sizeof(buf))
+ 		goto close_prog;
+ 
+ 	/* Open the perf event and attach bpf progrram */
+@@ -906,29 +905,24 @@ static void test_stacktrace_map()
+ 		goto close_prog;
+ 
+ 	err = ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0);
+-	if (CHECK(err, "perf_event_ioc_enable", "err %d errno %d\n",
+-		  err, errno))
+-		goto close_pmu;
++	if (err)
++		goto disable_pmu;
+ 
+ 	err = ioctl(pmu_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+-	if (CHECK(err, "perf_event_ioc_set_bpf", "err %d errno %d\n",
+-		  err, errno))
++	if (err)
+ 		goto disable_pmu;
+ 
+ 	/* find map fds */
+ 	control_map_fd = bpf_find_map(__func__, obj, "control_map");
+-	if (CHECK(control_map_fd < 0, "bpf_find_map control_map",
+-		  "err %d errno %d\n", err, errno))
++	if (control_map_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
+-	if (CHECK(stackid_hmap_fd < 0, "bpf_find_map stackid_hmap",
+-		  "err %d errno %d\n", err, errno))
++	if (stackid_hmap_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
+-	if (CHECK(stackmap_fd < 0, "bpf_find_map stackmap", "err %d errno %d\n",
+-		  err, errno))
++	if (stackmap_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	/* give some time for bpf program run */
+@@ -945,24 +939,78 @@ static void test_stacktrace_map()
+ 	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
+ 	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
+ 		  "err %d errno %d\n", err, errno))
+-		goto disable_pmu;
++		goto disable_pmu_noerr;
+ 
+ 	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
+ 	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
+ 		  "err %d errno %d\n", err, errno))
+-		; /* fall through */
++		goto disable_pmu_noerr;
+ 
++	goto disable_pmu_noerr;
+ disable_pmu:
++	error_cnt++;
++disable_pmu_noerr:
+ 	ioctl(pmu_fd, PERF_EVENT_IOC_DISABLE);
+-
+-close_pmu:
+ 	close(pmu_fd);
+-
+ close_prog:
+ 	bpf_object__close(obj);
++}
+ 
+-out:
+-	return;
++static void test_stacktrace_map_raw_tp()
++{
++	int control_map_fd, stackid_hmap_fd, stackmap_fd;
++	const char *file = "./test_stacktrace_map.o";
++	int efd, err, prog_fd;
++	__u32 key, val, duration = 0;
++	struct bpf_object *obj;
++
++	err = bpf_prog_load(file, BPF_PROG_TYPE_RAW_TRACEPOINT, &obj, &prog_fd);
++	if (CHECK(err, "prog_load raw tp", "err %d errno %d\n", err, errno))
++		return;
++
++	efd = bpf_raw_tracepoint_open("sched_switch", prog_fd);
++	if (CHECK(efd < 0, "raw_tp_open", "err %d errno %d\n", efd, errno))
++		goto close_prog;
++
++	/* find map fds */
++	control_map_fd = bpf_find_map(__func__, obj, "control_map");
++	if (control_map_fd < 0)
++		goto close_prog;
++
++	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
++	if (stackid_hmap_fd < 0)
++		goto close_prog;
++
++	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
++	if (stackmap_fd < 0)
++		goto close_prog;
++
++	/* give some time for bpf program run */
++	sleep(1);
++
++	/* disable stack trace collection */
++	key = 0;
++	val = 1;
++	bpf_map_update_elem(control_map_fd, &key, &val, 0);
++
++	/* for every element in stackid_hmap, we can find a corresponding one
++	 * in stackmap, and vise versa.
++	 */
++	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
++	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
++		  "err %d errno %d\n", err, errno))
++		goto close_prog;
++
++	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
++	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
++		  "err %d errno %d\n", err, errno))
++		goto close_prog;
++
++	goto close_prog_noerr;
++close_prog:
++	error_cnt++;
++close_prog_noerr:
++	bpf_object__close(obj);
+ }
+ 
+ static int extract_build_id(char *build_id, size_t size)
+@@ -1138,6 +1186,7 @@ int main(void)
+ 	test_tp_attach_query();
+ 	test_stacktrace_map();
+ 	test_stacktrace_build_id();
++	test_stacktrace_map_raw_tp();
+ 
+ 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
+ 	return error_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
+-- 
+2.9.5
