@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.17 01/21] uapi headers: Provide types_32_64.h
-Date: Tue, 27 Mar 2018 12:05:22 -0400
-Message-ID: <20180327160542.28457-2-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.17 11/21] x86: Wire up cpu_opv system call
+Date: Tue, 27 Mar 2018 12:05:32 -0400
+Message-ID: <20180327160542.28457-12-mathieu.desnoyers@efficios.com>
 References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
@@ -9,14 +9,6 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
-
-Provide helper macros for fields which represent pointers in
-kernel-userspace ABI. This facilitates handling of 32-bit
-user-space by 64-bit kernels by defining those fields as
-32-bit 0-padding and 32-bit integer on 32-bit architectures,
-which allows the kernel to treat those as 64-bit integers.
-The order of padding and 32-bit integer depends on the
-endianness.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -42,82 +34,30 @@ CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- include/uapi/linux/types_32_64.h | 67 ++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 67 insertions(+)
- create mode 100644 include/uapi/linux/types_32_64.h
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ 2 files changed, 2 insertions(+)
 
-diff --git a/include/uapi/linux/types_32_64.h b/include/uapi/linux/types_32_64.h
-new file mode 100644
-index 000000000000..18dc8808d026
---- /dev/null
-+++ b/include/uapi/linux/types_32_64.h
-@@ -0,0 +1,67 @@
-+#ifndef _UAPI_LINUX_TYPES_32_64_H
-+#define _UAPI_LINUX_TYPES_32_64_H
-+
-+/*
-+ * linux/types_32_64.h
-+ *
-+ * Integer type declaration for pointers across 32-bit and 64-bit systems.
-+ *
-+ * Copyright (c) 2015-2017 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+ *
-+ * Permission is hereby granted, free of charge, to any person obtaining a copy
-+ * of this software and associated documentation files (the "Software"), to deal
-+ * in the Software without restriction, including without limitation the rights
-+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-+ * copies of the Software, and to permit persons to whom the Software is
-+ * furnished to do so, subject to the following conditions:
-+ *
-+ * The above copyright notice and this permission notice shall be included in
-+ * all copies or substantial portions of the Software.
-+ *
-+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-+ * SOFTWARE.
-+ */
-+
-+#ifdef __KERNEL__
-+# include <linux/types.h>
-+#else
-+# include <stdint.h>
-+#endif
-+
-+#include <asm/byteorder.h>
-+
-+#ifdef __BYTE_ORDER
-+# if (__BYTE_ORDER == __BIG_ENDIAN)
-+#  define LINUX_BYTE_ORDER_BIG_ENDIAN
-+# else
-+#  define LINUX_BYTE_ORDER_LITTLE_ENDIAN
-+# endif
-+#else
-+# ifdef __BIG_ENDIAN
-+#  define LINUX_BYTE_ORDER_BIG_ENDIAN
-+# else
-+#  define LINUX_BYTE_ORDER_LITTLE_ENDIAN
-+# endif
-+#endif
-+
-+#ifdef __LP64__
-+# define LINUX_FIELD_u32_u64(field)			uint64_t field
-+# define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	field = (intptr_t)v
-+#else
-+# ifdef LINUX_BYTE_ORDER_BIG_ENDIAN
-+#  define LINUX_FIELD_u32_u64(field)	uint32_t field ## _padding, field
-+#  define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	\
-+	field ## _padding = 0, field = (intptr_t)v
-+# else
-+#  define LINUX_FIELD_u32_u64(field)	uint32_t field, field ## _padding
-+#  define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	\
-+	field = (intptr_t)v, field ## _padding = 0
-+# endif
-+#endif
-+
-+#endif /* _UAPI_LINUX_TYPES_32_64_H */
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index b76cbd25854f..5772b343f7d5 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -392,3 +392,4 @@
+ 383	i386	statx			sys_statx
+ 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
+ 385	i386	rseq			sys_rseq
++386	i386	cpu_opv			sys_cpu_opv
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 3ad03495bbb9..ab5d1f9f9396 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -340,6 +340,7 @@
+ 331	common	pkey_free		sys_pkey_free
+ 332	common	statx			sys_statx
+ 333	common	rseq			sys_rseq
++334	common	cpu_opv			sys_cpu_opv
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
 -- 
 2.11.0
