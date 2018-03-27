@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v6 bpf-next 04/11] net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
-Date: Mon, 26 Mar 2018 19:46:59 -0700
-Message-ID: <20180327024706.2064725-5-ast@fb.com>
+Subject: [PATCH v6 bpf-next 02/11] net/mediatek: disambiguate mt76 vs mt7601u trace events
+Date: Mon, 26 Mar 2018 19:46:57 -0700
+Message-ID: <20180327024706.2064725-3-ast@fb.com>
 References: <20180327024706.2064725-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,127 +14,41 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
-instead of all 17 arguments by value.
-dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
-defined with very similar yet subtly different fields and offsets.
-tracepoint is still common and using definition of 'struct iwl_error_event_table'
-from dvm/commands.h while copying fields.
-Long term this tracepoint probably should be split into two.
+two trace events defined with the same name and both unused.
+They conflict in allyesconfig build. Rename one of them.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- drivers/net/wireless/intel/iwlwifi/dvm/main.c      |  7 +---
- .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  | 39 ++++++++++------------
- drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |  1 +
- drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |  7 +---
- 4 files changed, 21 insertions(+), 33 deletions(-)
+ drivers/net/wireless/mediatek/mt7601u/trace.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/wireless/intel/iwlwifi/dvm/main.c b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-index d11d72615de2..e68254e12764 100644
---- a/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-+++ b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-@@ -1651,12 +1651,7 @@ static void iwl_dump_nic_error_log(struct iwl_priv *priv)
- 			priv->status, table.valid);
- 	}
+diff --git a/drivers/net/wireless/mediatek/mt7601u/trace.h b/drivers/net/wireless/mediatek/mt7601u/trace.h
+index 289897300ef0..82c8898b9076 100644
+--- a/drivers/net/wireless/mediatek/mt7601u/trace.h
++++ b/drivers/net/wireless/mediatek/mt7601u/trace.h
+@@ -34,7 +34,7 @@
+ #define REG_PR_FMT	"%04x=%08x"
+ #define REG_PR_ARG	__entry->reg, __entry->val
  
--	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
--				      table.data1, table.data2, table.line,
--				      table.blink2, table.ilink1, table.ilink2,
--				      table.bcon_time, table.gp1, table.gp2,
--				      table.gp3, table.ucode_ver, table.hw_ver,
--				      0, table.brd_ver);
-+	trace_iwlwifi_dev_ucode_error(trans->dev, &table, 0, table.brd_ver);
- 	IWL_ERR(priv, "0x%08X | %-28s\n", table.error_id,
- 		desc_lookup(table.error_id));
- 	IWL_ERR(priv, "0x%08X | uPc\n", table.pc);
-diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-index 9518a82f44c2..27e3e4e96aa2 100644
---- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-+++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-@@ -126,14 +126,11 @@ TRACE_EVENT(iwlwifi_dev_tx,
- 		  __entry->framelen, __entry->skbaddr)
+-DECLARE_EVENT_CLASS(dev_reg_evt,
++DECLARE_EVENT_CLASS(dev_reg_evtu,
+ 	TP_PROTO(struct mt7601u_dev *dev, u32 reg, u32 val),
+ 	TP_ARGS(dev, reg, val),
+ 	TP_STRUCT__entry(
+@@ -51,12 +51,12 @@ DECLARE_EVENT_CLASS(dev_reg_evt,
+ 	)
  );
  
-+struct iwl_error_event_table;
- TRACE_EVENT(iwlwifi_dev_ucode_error,
--	TP_PROTO(const struct device *dev, u32 desc, u32 tsf_low,
--		 u32 data1, u32 data2, u32 line, u32 blink2, u32 ilink1,
--		 u32 ilink2, u32 bcon_time, u32 gp1, u32 gp2, u32 rev_type,
--		 u32 major, u32 minor, u32 hw_ver, u32 brd_ver),
--	TP_ARGS(dev, desc, tsf_low, data1, data2, line,
--		 blink2, ilink1, ilink2, bcon_time, gp1, gp2,
--		 rev_type, major, minor, hw_ver, brd_ver),
-+	TP_PROTO(const struct device *dev, const struct iwl_error_event_table *table,
-+		 u32 hw_ver, u32 brd_ver),
-+	TP_ARGS(dev, table, hw_ver, brd_ver),
- 	TP_STRUCT__entry(
- 		DEV_ENTRY
- 		__field(u32, desc)
-@@ -155,20 +152,20 @@ TRACE_EVENT(iwlwifi_dev_ucode_error,
- 	),
- 	TP_fast_assign(
- 		DEV_ASSIGN;
--		__entry->desc = desc;
--		__entry->tsf_low = tsf_low;
--		__entry->data1 = data1;
--		__entry->data2 = data2;
--		__entry->line = line;
--		__entry->blink2 = blink2;
--		__entry->ilink1 = ilink1;
--		__entry->ilink2 = ilink2;
--		__entry->bcon_time = bcon_time;
--		__entry->gp1 = gp1;
--		__entry->gp2 = gp2;
--		__entry->rev_type = rev_type;
--		__entry->major = major;
--		__entry->minor = minor;
-+		__entry->desc = table->error_id;
-+		__entry->tsf_low = table->tsf_low;
-+		__entry->data1 = table->data1;
-+		__entry->data2 = table->data2;
-+		__entry->line = table->line;
-+		__entry->blink2 = table->blink2;
-+		__entry->ilink1 = table->ilink1;
-+		__entry->ilink2 = table->ilink2;
-+		__entry->bcon_time = table->bcon_time;
-+		__entry->gp1 = table->gp1;
-+		__entry->gp2 = table->gp2;
-+		__entry->rev_type = table->gp3;
-+		__entry->major = table->ucode_ver;
-+		__entry->minor = table->hw_ver;
- 		__entry->hw_ver = hw_ver;
- 		__entry->brd_ver = brd_ver;
- 	),
-diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-index 50510fb6ab8c..6aa719865a58 100644
---- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-+++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-@@ -30,6 +30,7 @@
- #ifndef __CHECKER__
- #include "iwl-trans.h"
+-DEFINE_EVENT(dev_reg_evt, reg_read,
++DEFINE_EVENT(dev_reg_evtu, reg_read,
+ 	TP_PROTO(struct mt7601u_dev *dev, u32 reg, u32 val),
+ 	TP_ARGS(dev, reg, val)
+ );
  
-+#include "dvm/commands.h"
- #define CREATE_TRACE_POINTS
- #include "iwl-devtrace.h"
- 
-diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-index d65e1db7c097..5442ead876eb 100644
---- a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-+++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-@@ -549,12 +549,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u32 base)
- 
- 	IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
- 
--	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
--				      table.data1, table.data2, table.data3,
--				      table.blink2, table.ilink1,
--				      table.ilink2, table.bcon_time, table.gp1,
--				      table.gp2, table.fw_rev_type, table.major,
--				      table.minor, table.hw_ver, table.brd_ver);
-+	trace_iwlwifi_dev_ucode_error(trans->dev, &table, table.hw_ver, table.brd_ver);
- 	IWL_ERR(mvm, "0x%08X | %-28s\n", table.error_id,
- 		desc_lookup(table.error_id));
- 	IWL_ERR(mvm, "0x%08X | trm_hw_status0\n", table.trm_hw_status0);
+-DEFINE_EVENT(dev_reg_evt, reg_write,
++DEFINE_EVENT(dev_reg_evtu, reg_write,
+ 	TP_PROTO(struct mt7601u_dev *dev, u32 reg, u32 val),
+ 	TP_ARGS(dev, reg, val)
+ );
 -- 
 2.9.5
