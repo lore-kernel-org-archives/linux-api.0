@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.17 19/21] rseq: selftests: Provide basic percpu ops test
-Date: Tue, 27 Mar 2018 12:05:40 -0400
-Message-ID: <20180327160542.28457-20-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.17 21/21] rseq: selftests: Provide Makefile, scripts, gitignore
+Date: Tue, 27 Mar 2018 12:05:42 -0400
+Message-ID: <20180327160542.28457-22-mathieu.desnoyers@efficios.com>
 References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
@@ -10,9 +10,10 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kselftest@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
-"basic_percpu_ops_test" is a slightly more "realistic" variant,
-implementing a few simple per-cpu operations and testing their
-correctness.
+A run_param_test.sh script runs many variants of the parametrizable
+tests.
+
+Wire up the rseq Makefile, add directory entry into MAINTAINERS file.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: Shuah Khan <shuahkh@osg.samsung.com>
@@ -39,311 +40,231 @@ CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-kselftest@vger.kernel.org
 CC: linux-api@vger.kernel.org
 ---
- .../testing/selftests/rseq/basic_percpu_ops_test.c | 296 +++++++++++++++++++++
- 1 file changed, 296 insertions(+)
- create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
+ MAINTAINERS                                    |   1 +
+ tools/testing/selftests/Makefile               |   1 +
+ tools/testing/selftests/rseq/.gitignore        |   7 ++
+ tools/testing/selftests/rseq/Makefile          |  37 +++++++
+ tools/testing/selftests/rseq/run_param_test.sh | 130 +++++++++++++++++++++++++
+ 5 files changed, 176 insertions(+)
+ create mode 100644 tools/testing/selftests/rseq/.gitignore
+ create mode 100644 tools/testing/selftests/rseq/Makefile
+ create mode 100755 tools/testing/selftests/rseq/run_param_test.sh
 
-diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 936ff672d5fb..ba630a386a88 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -11830,6 +11830,7 @@ S:	Supported
+ F:	kernel/rseq.c
+ F:	include/uapi/linux/rseq.h
+ F:	include/trace/events/rseq.h
++F:	tools/testing/selftests/rseq/
+ 
+ RFKILL
+ M:	Johannes Berg <johannes@sipsolutions.net>
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 1322e63f5963..c1c9323d4e50 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -26,6 +26,7 @@ TARGETS += nsfs
+ TARGETS += powerpc
+ TARGETS += pstore
+ TARGETS += ptrace
++TARGETS += rseq
+ TARGETS += seccomp
+ TARGETS += sigaltstack
+ TARGETS += size
+diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
 new file mode 100644
-index 000000000000..e585bba0bf8d
+index 000000000000..73dcf05b69fd
 --- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-@@ -0,0 +1,296 @@
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <pthread.h>
-+#include <sched.h>
-+#include <stdint.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <stddef.h>
++++ b/tools/testing/selftests/rseq/.gitignore
+@@ -0,0 +1,7 @@
++basic_percpu_ops_test
++basic_test
++basic_rseq_op_test
++param_test
++param_test_benchmark
++param_test_compare_twice
++param_test_skip_fastpath
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+new file mode 100644
+index 000000000000..69f90d718774
+--- /dev/null
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -0,0 +1,37 @@
++CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/ -L./ -Wl,-rpath=./
++LDLIBS += -lpthread
 +
-+#include "percpu-op.h"
++# Own dependencies because we only want to build against 1st prerequisite, but
++# still track changes to header files and depend on shared object.
++OVERRIDE_TARGETS = 1
 +
-+#define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
++TEST_GEN_PROGS = basic_test basic_percpu_ops_test \
++		param_test param_test_skip_fastpath \
++		param_test_benchmark param_test_compare_twice
 +
-+struct percpu_lock_entry {
-+	intptr_t v;
-+} __attribute__((aligned(128)));
++TEST_GEN_PROGS_EXTENDED = librseq.so libcpu-op.so
 +
-+struct percpu_lock {
-+	struct percpu_lock_entry c[CPU_SETSIZE];
-+};
++TEST_PROGS = run_param_test.sh
 +
-+struct test_data_entry {
-+	intptr_t count;
-+} __attribute__((aligned(128)));
++include ../lib.mk
 +
-+struct spinlock_test_data {
-+	struct percpu_lock lock;
-+	struct test_data_entry c[CPU_SETSIZE];
-+	int reps;
-+};
++$(OUTPUT)/librseq.so: rseq.c rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -shared -fPIC $< $(LDLIBS) -o $@
 +
-+struct percpu_list_node {
-+	intptr_t data;
-+	struct percpu_list_node *next;
-+};
++$(OUTPUT)/libcpu-op.so: ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
++	$(CC) $(CFLAGS) -shared -fPIC $< $(LDLIBS) -o $@
 +
-+struct percpu_list_entry {
-+	struct percpu_list_node *head;
-+} __attribute__((aligned(128)));
++$(OUTPUT)/%: %.c $(TEST_GEN_PROGS_EXTENDED) rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
++	$(CC) $(CFLAGS) $< $(LDLIBS) -lrseq -lcpu-op -o $@
 +
-+struct percpu_list {
-+	struct percpu_list_entry c[CPU_SETSIZE];
-+};
++$(OUTPUT)/param_test_skip_fastpath: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
++	$(CC) $(CFLAGS) -DRSEQ_SKIP_FASTPATH $< $(LDLIBS) -lrseq -lcpu-op -o $@
 +
-+/* A simple percpu spinlock.  Returns the cpu lock was acquired on. */
-+int rseq_percpu_lock(struct percpu_lock *lock)
++$(OUTPUT)/param_test_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
++	$(CC) $(CFLAGS) -DBENCHMARK $< $(LDLIBS) -lrseq -lcpu-op -o $@
++
++$(OUTPUT)/param_test_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
++	$(CC) $(CFLAGS) -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -lcpu-op -o $@
+diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
+new file mode 100755
+index 000000000000..64d4c7d722c9
+--- /dev/null
++++ b/tools/testing/selftests/rseq/run_param_test.sh
+@@ -0,0 +1,130 @@
++#!/bin/bash
++
++EXTRA_ARGS=${@}
++
++OLDIFS="$IFS"
++IFS=$'\n'
++TEST_LIST=(
++	"-T s"
++	"-T l"
++	"-T b"
++	"-T b -M"
++	"-T m"
++	"-T m -M"
++	"-T i"
++)
++
++TEST_NAME=(
++	"spinlock"
++	"list"
++	"buffer"
++	"buffer with barrier"
++	"memcpy"
++	"memcpy with barrier"
++	"increment"
++)
++IFS="$OLDIFS"
++
++REPS=1000
++
++function do_tests()
 +{
-+	int cpu;
-+
-+	for (;;) {
-+		int ret;
-+
-+		cpu = rseq_cpu_start();
-+		ret = percpu_cmpeqv_storev(&lock->c[cpu].v,
-+					   0, 1, cpu);
-+		if (rseq_likely(!ret))
-+			break;
-+		if (rseq_unlikely(ret < 0)) {
-+			perror("cpu_opv");
-+			abort();
-+		}
-+		/* Retry if comparison fails. */
-+	}
-+	/*
-+	 * Acquire semantic when taking lock after control dependency.
-+	 * Matches rseq_smp_store_release().
-+	 */
-+	rseq_smp_acquire__after_ctrl_dep();
-+	return cpu;
++	local i=0
++	while [ "$i" -lt "${#TEST_LIST[@]}" ]; do
++		echo "Running test ${TEST_NAME[$i]}"
++		./param_test ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
++		echo "Running skip fast-path test ${TEST_NAME[$i]}"
++		./param_test_skip_fastpath ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
++		echo "Running compare-twice test ${TEST_NAME[$i]}"
++		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
++		let "i++"
++	done
 +}
 +
-+void rseq_percpu_unlock(struct percpu_lock *lock, int cpu)
++echo "Default parameters"
++do_tests
++
++echo "Loop injection: 10000 loops"
++
++OLDIFS="$IFS"
++IFS=$'\n'
++INJECT_LIST=(
++	"1"
++	"2"
++	"3"
++	"4"
++	"5"
++	"6"
++	"7"
++	"8"
++	"9"
++)
++IFS="$OLDIFS"
++
++NR_LOOPS=10000
++
++i=0
++while [ "$i" -lt "${#INJECT_LIST[@]}" ]; do
++	echo "Injecting at <${INJECT_LIST[$i]}>"
++	do_tests -${INJECT_LIST[i]} ${NR_LOOPS}
++	let "i++"
++done
++NR_LOOPS=
++
++function inject_blocking()
 +{
-+	assert(lock->c[cpu].v == 1);
-+	/*
-+	 * Release lock, with release semantic. Matches
-+	 * rseq_smp_acquire__after_ctrl_dep().
-+	 */
-+	rseq_smp_store_release(&lock->c[cpu].v, 0);
++	OLDIFS="$IFS"
++	IFS=$'\n'
++	INJECT_LIST=(
++		"7"
++		"8"
++		"9"
++	)
++	IFS="$OLDIFS"
++
++	NR_LOOPS=-1
++
++	i=0
++	while [ "$i" -lt "${#INJECT_LIST[@]}" ]; do
++		echo "Injecting at <${INJECT_LIST[$i]}>"
++		do_tests -${INJECT_LIST[i]} -1 ${@}
++		let "i++"
++	done
++	NR_LOOPS=
 +}
 +
-+void *test_percpu_spinlock_thread(void *arg)
-+{
-+	struct spinlock_test_data *data = arg;
-+	int i, cpu;
++echo "Yield injection (25%)"
++inject_blocking -m 4 -y
 +
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+	for (i = 0; i < data->reps; i++) {
-+		cpu = rseq_percpu_lock(&data->lock);
-+		data->c[cpu].count++;
-+		rseq_percpu_unlock(&data->lock, cpu);
-+	}
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
++echo "Yield injection (50%)"
++inject_blocking -m 2 -y
 +
-+	return NULL;
-+}
++echo "Yield injection (100%)"
++inject_blocking -m 1 -y
 +
-+/*
-+ * A simple test which implements a sharded counter using a per-cpu
-+ * lock.  Obviously real applications might prefer to simply use a
-+ * per-cpu increment; however, this is reasonable for a test and the
-+ * lock can be extended to synchronize more complicated operations.
-+ */
-+void test_percpu_spinlock(void)
-+{
-+	const int num_threads = 200;
-+	int i;
-+	uint64_t sum;
-+	pthread_t test_threads[num_threads];
-+	struct spinlock_test_data data;
++echo "Kill injection (25%)"
++inject_blocking -m 4 -k
 +
-+	memset(&data, 0, sizeof(data));
-+	data.reps = 5000;
++echo "Kill injection (50%)"
++inject_blocking -m 2 -k
 +
-+	for (i = 0; i < num_threads; i++)
-+		pthread_create(&test_threads[i], NULL,
-+			       test_percpu_spinlock_thread, &data);
++echo "Kill injection (100%)"
++inject_blocking -m 1 -k
 +
-+	for (i = 0; i < num_threads; i++)
-+		pthread_join(test_threads[i], NULL);
++echo "Sleep injection (1ms, 25%)"
++inject_blocking -m 4 -s 1
 +
-+	sum = 0;
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		sum += data.c[i].count;
++echo "Sleep injection (1ms, 50%)"
++inject_blocking -m 2 -s 1
 +
-+	assert(sum == (uint64_t)data.reps * num_threads);
-+}
++echo "Sleep injection (1ms, 100%)"
++inject_blocking -m 1 -s 1
 +
-+int percpu_list_push(struct percpu_list *list, struct percpu_list_node *node,
-+		     int cpu)
-+{
-+	for (;;) {
-+		intptr_t *targetptr, newval, expect;
-+		int ret;
++echo "Disable rseq for 25% threads"
++do_tests -D 4
 +
-+		/* Load list->c[cpu].head with single-copy atomicity. */
-+		expect = (intptr_t)RSEQ_READ_ONCE(list->c[cpu].head);
-+		newval = (intptr_t)node;
-+		targetptr = (intptr_t *)&list->c[cpu].head;
-+		node->next = (struct percpu_list_node *)expect;
-+		ret = percpu_cmpeqv_storev(targetptr, expect, newval, cpu);
-+		if (rseq_likely(!ret))
-+			break;
-+		if (rseq_unlikely(ret < 0)) {
-+			perror("cpu_opv");
-+			abort();
-+		}
-+		/* Retry if comparison fails. */
-+	}
-+	return cpu;
-+}
++echo "Disable rseq for 50% threads"
++do_tests -D 2
 +
-+/*
-+ * Unlike a traditional lock-less linked list; the availability of a
-+ * rseq primitive allows us to implement pop without concerns over
-+ * ABA-type races.
-+ */
-+struct percpu_list_node *percpu_list_pop(struct percpu_list *list,
-+					 int cpu)
-+{
-+	struct percpu_list_node *head;
-+	intptr_t *targetptr, expectnot, *load;
-+	off_t offset;
-+	int ret;
-+
-+	targetptr = (intptr_t *)&list->c[cpu].head;
-+	expectnot = (intptr_t)NULL;
-+	offset = offsetof(struct percpu_list_node, next);
-+	load = (intptr_t *)&head;
-+	ret = percpu_cmpnev_storeoffp_load(targetptr, expectnot,
-+					   offset, load, cpu);
-+	if (rseq_unlikely(ret < 0)) {
-+		perror("cpu_opv");
-+		abort();
-+	}
-+	if (ret > 0)
-+		return NULL;
-+	return head;
-+}
-+
-+void *test_percpu_list_thread(void *arg)
-+{
-+	int i;
-+	struct percpu_list *list = (struct percpu_list *)arg;
-+
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+
-+	for (i = 0; i < 100000; i++) {
-+		struct percpu_list_node *node;
-+
-+		node = percpu_list_pop(list, rseq_cpu_start());
-+		sched_yield();  /* encourage shuffling */
-+		if (node)
-+			percpu_list_push(list, node, rseq_cpu_start());
-+	}
-+
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+
-+	return NULL;
-+}
-+
-+/* Simultaneous modification to a per-cpu linked list from many threads.  */
-+void test_percpu_list(void)
-+{
-+	int i, j;
-+	uint64_t sum = 0, expected_sum = 0;
-+	struct percpu_list list;
-+	pthread_t test_threads[200];
-+	cpu_set_t allowed_cpus;
-+
-+	memset(&list, 0, sizeof(list));
-+
-+	/* Generate list entries for every usable cpu. */
-+	sched_getaffinity(0, sizeof(allowed_cpus), &allowed_cpus);
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+		for (j = 1; j <= 100; j++) {
-+			struct percpu_list_node *node;
-+
-+			expected_sum += j;
-+
-+			node = malloc(sizeof(*node));
-+			assert(node);
-+			node->data = j;
-+			node->next = list.c[i].head;
-+			list.c[i].head = node;
-+		}
-+	}
-+
-+	for (i = 0; i < 200; i++)
-+		pthread_create(&test_threads[i], NULL,
-+		       test_percpu_list_thread, &list);
-+
-+	for (i = 0; i < 200; i++)
-+		pthread_join(test_threads[i], NULL);
-+
-+	for (i = 0; i < CPU_SETSIZE; i++) {
-+		struct percpu_list_node *node;
-+
-+		if (!CPU_ISSET(i, &allowed_cpus))
-+			continue;
-+
-+		while ((node = percpu_list_pop(&list, i))) {
-+			sum += node->data;
-+			free(node);
-+		}
-+	}
-+
-+	/*
-+	 * All entries should now be accounted for (unless some external
-+	 * actor is interfering with our allowed affinity while this
-+	 * test is running).
-+	 */
-+	assert(sum == expected_sum);
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		goto error;
-+	}
-+	printf("spinlock\n");
-+	test_percpu_spinlock();
-+	printf("percpu_list\n");
-+	test_percpu_list();
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		goto error;
-+	}
-+	return 0;
-+
-+error:
-+	return -1;
-+}
-+
++echo "Disable rseq"
++do_tests -d
 -- 
 2.11.0
