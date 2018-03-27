@@ -1,54 +1,91 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH v2 bpf-next] bpf, tracing: unbreak lttng
-Date: Tue, 27 Mar 2018 11:39:19 +0200
-Message-ID: <1260578f-4a29-2c72-d81c-3f6e0588bbee@iogearbox.net>
-References: <20180326230220.1069180-1-ast@kernel.org>
- <20180326200704.27cb86fa@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v6 bpf-next 07/11] tracepoint: introduce
+ kernel_tracepoint_find_by_name
+Date: Tue, 27 Mar 2018 10:07:11 -0400
+Message-ID: <20180327100711.0ec7aafb@gandalf.local.home>
+References: <20180327024706.2064725-1-ast@fb.com>
+        <20180327024706.2064725-8-ast@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180326200704.27cb86fa@gandalf.local.home>
-Content-Language: en-US
+In-Reply-To: <20180327024706.2064725-8-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>, Alexei Starovoitov <ast@kernel.org>
-Cc: davem@davemloft.net, torvalds@linux-foundation.org, peterz@infradead.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+To: Alexei Starovoitov <ast@fb.com>
+Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-On 03/27/2018 02:07 AM, Steven Rostedt wrote:
-> On Mon, 26 Mar 2018 16:02:20 -0700
-> Alexei Starovoitov <ast@kernel.org> wrote:
+On Mon, 26 Mar 2018 19:47:02 -0700
+Alexei Starovoitov <ast@fb.com> wrote:
+
+> From: Alexei Starovoitov <ast@kernel.org>
 > 
->> for_each_kernel_tracepoint() is used by out-of-tree lttng module
->> and therefore cannot be changed.
+> introduce kernel_tracepoint_find_by_name() helper to let bpf core
+> find tracepoint by name and later attach bpf probe to a tracepoint
 > 
-> This is false and misleading. NACK.
+> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 
-Steven, while I really don't care about this particular function, you wrote
-a few emails ago, quote:
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
-  Look, the tracepoint code was written by Mathieu for LTTng, and perf
-  and ftrace were able to benefit because of it, as well as your bpf
-  code. For this, we agreed to keep this function around for his use,
-  as its the only thing he requires. Everyone has been fine with that.
-  [...] Having that function for LTTng does not hurt us. And I will NACK
-  removing it.
+Thanks for doing this Alexei!
 
-So later saying that "this is false and misleading" is kind of misleading
-by itself. ;-) Anyway, it would probably make sense to add a comment to
-for_each_kernel_tracepoint() that this is used by LTTng so that people
-don't accidentally remove it due to missing in-tree user. I would think
-some sort of clarification/background in a comment or such would have
-avoided the whole confusion and resulting discussion around this in the
-first place.
+One nit below.
 
-Btw, in networking land, as soon as there is no in-tree user for a particular
-kernel function, it will get ripped out, no matter what. Given this is also
-the typical convention in the kernel, it may have caused some confusion with
-above preference.
 
-Anyway, given v6 is out now, I've tossed the old series from bpf-next tree.
-So I hope we can all move on with some more constructive discussion. :-)
+> ---
+>  include/linux/tracepoint.h | 6 ++++++
+>  kernel/tracepoint.c        | 9 +++++++++
+>  2 files changed, 15 insertions(+)
+> 
+> diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
+> index c92f4adbc0d7..a00b84473211 100644
+> --- a/include/linux/tracepoint.h
+> +++ b/include/linux/tracepoint.h
+> @@ -43,6 +43,12 @@ tracepoint_probe_unregister(struct tracepoint *tp, void *probe, void *data);
+>  extern void
+>  for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
+>  		void *priv);
+> +#ifdef CONFIG_TRACEPOINTS
+> +struct tracepoint *kernel_tracepoint_find_by_name(const char *name);
+> +#else
+> +static inline struct tracepoint *
+> +kernel_tracepoint_find_by_name(const char *name) { return NULL; }
+> +#endif
+>  
+>  #ifdef CONFIG_MODULES
+>  struct tp_module {
+> diff --git a/kernel/tracepoint.c b/kernel/tracepoint.c
+> index 671b13457387..e2a9a0391ae2 100644
+> --- a/kernel/tracepoint.c
+> +++ b/kernel/tracepoint.c
+> @@ -528,6 +528,15 @@ void for_each_kernel_tracepoint(void (*fct)(struct tracepoint *tp, void *priv),
+>  }
+>  EXPORT_SYMBOL_GPL(for_each_kernel_tracepoint);
+>  
+> +struct tracepoint *kernel_tracepoint_find_by_name(const char *name)
+> +{
+> +	struct tracepoint * const *tp = __start___tracepoints_ptrs;
+> +
+> +	for (; tp < __stop___tracepoints_ptrs; tp++)
+> +		if (!strcmp((*tp)->name, name))
+> +			return *tp;
 
-Thanks everyone,
-Daniel
+
+Usually for cases like this, we prefer to add brackets for the for
+block, as it's not a single line below it.
+
+	for (; tp < __stop__tracepoints_ptrs; tp++) {
+		if (!strcmp((*tp)->name, name))
+			return *tp;
+	}
+
+-- Steve
+
+
+	
+
+> +	return NULL;
+> +}
+>  #ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+>  
+>  /* NB: reg/unreg are called while guarded with the tracepoints_mutex */
