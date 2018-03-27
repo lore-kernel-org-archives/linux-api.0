@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v6 bpf-next 02/11] net/mediatek: disambiguate mt76 vs mt7601u trace events
-Date: Mon, 26 Mar 2018 19:46:57 -0700
-Message-ID: <20180327024706.2064725-3-ast@fb.com>
+Subject: [PATCH v6 bpf-next 03/11] net/mac802154: disambiguate mac80215 vs mac802154 trace events
+Date: Mon, 26 Mar 2018 19:46:58 -0700
+Message-ID: <20180327024706.2064725-4-ast@fb.com>
 References: <20180327024706.2064725-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,36 +19,45 @@ They conflict in allyesconfig build. Rename one of them.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- drivers/net/wireless/mediatek/mt7601u/trace.h | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ net/mac802154/trace.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/net/wireless/mediatek/mt7601u/trace.h b/drivers/net/wireless/mediatek/mt7601u/trace.h
-index 289897300ef0..82c8898b9076 100644
---- a/drivers/net/wireless/mediatek/mt7601u/trace.h
-+++ b/drivers/net/wireless/mediatek/mt7601u/trace.h
-@@ -34,7 +34,7 @@
- #define REG_PR_FMT	"%04x=%08x"
- #define REG_PR_ARG	__entry->reg, __entry->val
+diff --git a/net/mac802154/trace.h b/net/mac802154/trace.h
+index 2c8a43d3607f..df855c33daf2 100644
+--- a/net/mac802154/trace.h
++++ b/net/mac802154/trace.h
+@@ -33,7 +33,7 @@
  
--DECLARE_EVENT_CLASS(dev_reg_evt,
-+DECLARE_EVENT_CLASS(dev_reg_evtu,
- 	TP_PROTO(struct mt7601u_dev *dev, u32 reg, u32 val),
- 	TP_ARGS(dev, reg, val),
+ /* Tracing for driver callbacks */
+ 
+-DECLARE_EVENT_CLASS(local_only_evt,
++DECLARE_EVENT_CLASS(local_only_evt4,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local),
  	TP_STRUCT__entry(
-@@ -51,12 +51,12 @@ DECLARE_EVENT_CLASS(dev_reg_evt,
- 	)
+@@ -45,7 +45,7 @@ DECLARE_EVENT_CLASS(local_only_evt,
+ 	TP_printk(LOCAL_PR_FMT, LOCAL_PR_ARG)
  );
  
--DEFINE_EVENT(dev_reg_evt, reg_read,
-+DEFINE_EVENT(dev_reg_evtu, reg_read,
- 	TP_PROTO(struct mt7601u_dev *dev, u32 reg, u32 val),
- 	TP_ARGS(dev, reg, val)
+-DEFINE_EVENT(local_only_evt, 802154_drv_return_void,
++DEFINE_EVENT(local_only_evt4, 802154_drv_return_void,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local)
+ );
+@@ -65,12 +65,12 @@ TRACE_EVENT(802154_drv_return_int,
+ 		  __entry->ret)
  );
  
--DEFINE_EVENT(dev_reg_evt, reg_write,
-+DEFINE_EVENT(dev_reg_evtu, reg_write,
- 	TP_PROTO(struct mt7601u_dev *dev, u32 reg, u32 val),
- 	TP_ARGS(dev, reg, val)
+-DEFINE_EVENT(local_only_evt, 802154_drv_start,
++DEFINE_EVENT(local_only_evt4, 802154_drv_start,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local)
+ );
+ 
+-DEFINE_EVENT(local_only_evt, 802154_drv_stop,
++DEFINE_EVENT(local_only_evt4, 802154_drv_stop,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local)
  );
 -- 
 2.9.5
