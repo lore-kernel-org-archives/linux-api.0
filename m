@@ -1,27 +1,25 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.17 06/21] x86: Wire up restartable sequence system call
-Date: Tue, 27 Mar 2018 12:05:27 -0400
-Message-ID: <20180327160542.28457-7-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.17 14/21] selftests: lib.mk: Introduce OVERRIDE_TARGETS
+Date: Tue, 27 Mar 2018 12:05:35 -0400
+Message-ID: <20180327160542.28457-15-mathieu.desnoyers@efficios.com>
 References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Wire up the rseq system call on x86 32/64.
-
-This provides an ABI improving the speed of a user-space getcpu
-operation on x86 by removing the need to perform a function call, "lsl"
-instruction, or system call on the fast path, as well as improving the
-speed of user-space operations on per-cpu data.
+Introduce OVERRIDE_TARGETS to allow tests to express dependencies on
+header files and .so, which require to override the selftests lib.mk
+targets.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
 CC: Russell King <linux@arm.linux.org.uk>
 CC: Catalin Marinas <catalin.marinas@arm.com>
 CC: Will Deacon <will.deacon@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
 CC: Paul Turner <pjt@google.com>
 CC: Andrew Hunter <ahh@google.com>
 CC: Peter Zijlstra <peterz@infradead.org>
@@ -38,32 +36,32 @@ CC: Josh Triplett <josh@joshtriplett.org>
 CC: Linus Torvalds <torvalds@linux-foundation.org>
 CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-kselftest@vger.kernel.org
 CC: linux-api@vger.kernel.org
 ---
- arch/x86/entry/syscalls/syscall_32.tbl | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl | 1 +
- 2 files changed, 2 insertions(+)
+ tools/testing/selftests/lib.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 2a5e99cff859..b76cbd25854f 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -391,3 +391,4 @@
- 382	i386	pkey_free		sys_pkey_free
- 383	i386	statx			sys_statx
- 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
-+385	i386	rseq			sys_rseq
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5aef183e2f85..3ad03495bbb9 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -339,6 +339,7 @@
- 330	common	pkey_alloc		sys_pkey_alloc
- 331	common	pkey_free		sys_pkey_free
- 332	common	statx			sys_statx
-+333	common	rseq			sys_rseq
+diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+index 7de482a0519d..3d4bdeb072b2 100644
+--- a/tools/testing/selftests/lib.mk
++++ b/tools/testing/selftests/lib.mk
+@@ -105,6 +105,9 @@ COMPILE.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+ LINK.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+ endif
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
++# Selftest makefiles can override those targets by setting
++# OVERRIDE_TARGETS = 1.
++ifeq ($(OVERRIDE_TARGETS),)
+ $(OUTPUT)/%:%.c
+ 	$(LINK.c) $^ $(LDLIBS) -o $@
+ 
+@@ -113,5 +116,6 @@ $(OUTPUT)/%.o:%.S
+ 
+ $(OUTPUT)/%:%.S
+ 	$(LINK.S) $^ $(LDLIBS) -o $@
++endif
+ 
+ .PHONY: run_tests all clean install emit_tests
 -- 
 2.11.0
