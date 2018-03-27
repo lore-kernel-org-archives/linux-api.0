@@ -1,70 +1,69 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH v6 bpf-next 08/11] bpf: introduce BPF_RAW_TRACEPOINT
-Date: Tue, 27 Mar 2018 15:10:55 -0400 (EDT)
-Message-ID: <824991433.1705.1522177855436.JavaMail.zimbra@efficios.com>
-References: <20180327024706.2064725-1-ast@fb.com> <20180327024706.2064725-9-ast@fb.com> <20180327130211.284c8924@gandalf.local.home> <f071b59d-5d67-0eb6-c5b1-68094b0a5118@fb.com> <20180327150041.3d86e16e@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH v2 bpf-next] bpf, tracing: unbreak lttng
+Date: Tue, 27 Mar 2018 15:35:23 -0400
+Message-ID: <20180327153523.0a2c5d33@gandalf.local.home>
+References: <20180326230220.1069180-1-ast@kernel.org>
+        <20180326200704.27cb86fa@gandalf.local.home>
+        <1260578f-4a29-2c72-d81c-3f6e0588bbee@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180327150041.3d86e16e@gandalf.local.home>
+In-Reply-To: <1260578f-4a29-2c72-d81c-3f6e0588bbee@iogearbox.net>
 Sender: netdev-owner@vger.kernel.org
-To: rostedt <rostedt@goodmis.org>
-Cc: Alexei Starovoitov <ast@fb.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net, torvalds@linux-foundation.org, peterz@infradead.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 27, 2018, at 3:00 PM, rostedt rostedt@goodmis.org wrote:
+On Tue, 27 Mar 2018 11:39:19 +0200
+Daniel Borkmann <daniel@iogearbox.net> wrote:
 
-> On Tue, 27 Mar 2018 11:45:34 -0700
-> Alexei Starovoitov <ast@fb.com> wrote:
+> On 03/27/2018 02:07 AM, Steven Rostedt wrote:
+> > On Mon, 26 Mar 2018 16:02:20 -0700
+> > Alexei Starovoitov <ast@kernel.org> wrote:
+> >   
+> >> for_each_kernel_tracepoint() is used by out-of-tree lttng module
+> >> and therefore cannot be changed.  
+> > 
+> > This is false and misleading. NACK.  
 > 
->> >> +
->> >> +	snprintf(buf, sizeof(buf), "__bpf_trace_%s", tp->name);
->> >> +	addr = kallsyms_lookup_name(buf);
->> >> +	if (!addr)
->> >> +		return -ENOENT;
->> >> +
->> >> +	return tracepoint_probe_register(tp, (void *)addr, prog);
->> >
->> > You are putting in a hell of a lot of trust with kallsyms returning
->> > properly. I can see this being very fragile. This is calling a function
->> > based on the result of kallsyms. I'm sure the security folks would love
->> > this.
->> >
->> > There's a few things to make this a bit more robust. One is to add a
->> > table that points to all __bpf_trace_* functions, and verify that the
->> > result from kallsyms is in that table.
->> >
->> > Honestly, I think this is too much of a short cut and a hack. I know
->> > you want to keep it "simple" and save space, but you really should do
->> > it the same way ftrace and perf do it. That is, create a section and
->> > have all tracepoints create a structure that holds a pointer to the
->> > tracepoint and to the bpf probe function. Then you don't even need the
->> > kernel_tracepoint_find_by_name(), you just iterate over your table and
->> > you get the tracepoint and the bpf function associated to it.
->> >
->> > Relying on kallsyms to return an address to execute is just way too
->> > extreme and fragile for my liking.
->> 
->> Wasting extra 8bytes * number_of_tracepoints just for lack of trust
->> in kallsyms doesn't sound like good trade off to me.
->> If kallsyms are inaccurate all sorts of things will break:
->> kprobes, livepatch, etc.
->> I'd rather suggest for ftrace to use kallsyms approach as well
->> and reduce memory footprint.
+> Steven, while I really don't care about this particular function, you wrote
+> a few emails ago, quote:
 > 
-> If Linus, Thomas, Peter, Ingo, and the security folks trust kallsyms to
-> return a valid function pointer from a name, then sure, we can try
-> going that way.
+>   Look, the tracepoint code was written by Mathieu for LTTng, and perf
+>   and ftrace were able to benefit because of it, as well as your bpf
+>   code. For this, we agreed to keep this function around for his use,
+>   as its the only thing he requires. Everyone has been fine with that.
+>   [...] Having that function for LTTng does not hurt us. And I will NACK
+>   removing it.
+> 
+> So later saying that "this is false and misleading" is kind of misleading
+> by itself. ;-) Anyway, it would probably make sense to add a comment to
+> for_each_kernel_tracepoint() that this is used by LTTng so that people
+> don't accidentally remove it due to missing in-tree user. I would think
+> some sort of clarification/background in a comment or such would have
+> avoided the whole confusion and resulting discussion around this in the
+> first place.
 
-This will crash on ARM Thumb2 kernels. Also, how is this expected to
-work on PowerPC ABIv1 without KALLSYMS_ALL ?
+I agree, a comment should be added. But the function can still be
+modified, which is what I meant here by being misleading.
 
-Thanks,
+> 
+> Btw, in networking land, as soon as there is no in-tree user for a particular
+> kernel function, it will get ripped out, no matter what. Given this is also
+> the typical convention in the kernel, it may have caused some confusion with
+> above preference.
 
-Mathieu
+This is usually the case with me too. This came from Mathieu doing a
+lot of work to help perf and ftrace, but keep this for him to maintain
+LTTng. This was the solution to a long drawn out flame war. Yes,
+there's a lot of history behind that function, and I agree that we
+should comment the history behind it.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> 
+> Anyway, given v6 is out now, I've tossed the old series from bpf-next tree.
+> So I hope we can all move on with some more constructive discussion. :-)
+
+Yes, which we are doing around the kallsyms part. ;-)
+
+-- Steve
