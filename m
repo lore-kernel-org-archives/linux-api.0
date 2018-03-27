@@ -1,12 +1,10 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v6 bpf-next 05/11] macro: introduce COUNT_ARGS() macro
-Date: Mon, 26 Mar 2018 19:47:00 -0700
-Message-ID: <20180327024706.2064725-6-ast@fb.com>
-References: <20180327024706.2064725-1-ast@fb.com>
+Subject: [PATCH v6 bpf-next 00/11] bpf, tracing: introduce bpf raw tracepoints
+Date: Mon, 26 Mar 2018 19:46:55 -0700
+Message-ID: <20180327024706.2064725-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180327024706.2064725-1-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
 To: davem@davemloft.net
 Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
@@ -14,59 +12,129 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-move COUNT_ARGS() macro from apparmor to generic header and extend it
-to count till twelve.
+v5->v6:
+- avoid changing semantics of for_each_kernel_tracepoint() function, instead
+  introduce kernel_tracepoint_find_by_name() helper
 
-COUNT() was an alternative name for this logic, but it's used for
-different purpose in many other places.
+v4->v5:
+- adopted Daniel's fancy REPEAT macro in bpf_trace.c in patch 8
+  
+v3->v4:
+- adopted Linus's CAST_TO_U64 macro to cast any integer, pointer, or small
+  struct to u64. That nicely reduced the size of patch 1
 
-Similarly for CONCATENATE() macro.
+v2->v3:
+- with Linus's suggestion introduced generic COUNT_ARGS and CONCATENATE macros
+  (or rather moved them from apparmor)
+  that cleaned up patches 6 and 8
+- added patch 4 to refactor trace_iwlwifi_dev_ucode_error() from 17 args to 4
+  Now any tracepoint with >12 args will have build error
 
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Alexei Starovoitov <ast@kernel.org>
----
- include/linux/kernel.h           | 7 +++++++
- security/apparmor/include/path.h | 7 +------
- 2 files changed, 8 insertions(+), 6 deletions(-)
+v1->v2:
+- simplified api by combing bpf_raw_tp_open(name) + bpf_attach(prog_fd) into
+  bpf_raw_tp_open(name, prog_fd) as suggested by Daniel.
+  That simplifies bpf_detach as well which is now simple close() of fd.
+- fixed memory leak in error path which was spotted by Daniel.
+- fixed bpf_get_stackid(), bpf_perf_event_output() called from raw tracepoints
+- added more tests
+- fixed allyesconfig build caught by buildbot
 
-diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index 3fd291503576..293fa0677fba 100644
---- a/include/linux/kernel.h
-+++ b/include/linux/kernel.h
-@@ -919,6 +919,13 @@ static inline void ftrace_dump(enum ftrace_dump_mode oops_dump_mode) { }
- #define swap(a, b) \
- 	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
- 
-+/* This counts to 12. Any more, it will return 13th argument. */
-+#define __COUNT_ARGS(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _n, X...) _n
-+#define COUNT_ARGS(X...) __COUNT_ARGS(, ##X, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-+
-+#define __CONCAT(a, b) a ## b
-+#define CONCATENATE(a, b) __CONCAT(a, b)
-+
- /**
-  * container_of - cast a member of a structure out to the containing structure
-  * @ptr:	the pointer to the member.
-diff --git a/security/apparmor/include/path.h b/security/apparmor/include/path.h
-index 05fb3305671e..e042b994f2b8 100644
---- a/security/apparmor/include/path.h
-+++ b/security/apparmor/include/path.h
-@@ -43,15 +43,10 @@ struct aa_buffers {
- 
- DECLARE_PER_CPU(struct aa_buffers, aa_buffers);
- 
--#define COUNT_ARGS(X...) COUNT_ARGS_HELPER(, ##X, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
--#define COUNT_ARGS_HELPER(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, n, X...) n
--#define CONCAT(X, Y) X ## Y
--#define CONCAT_AFTER(X, Y) CONCAT(X, Y)
--
- #define ASSIGN(FN, X, N) ((X) = FN(N))
- #define EVAL1(FN, X) ASSIGN(FN, X, 0) /*X = FN(0)*/
- #define EVAL2(FN, X, Y...) do { ASSIGN(FN, X, 1);  EVAL1(FN, Y); } while (0)
--#define EVAL(FN, X...) CONCAT_AFTER(EVAL, COUNT_ARGS(X))(FN, X)
-+#define EVAL(FN, X...) CONCATENATE(EVAL, COUNT_ARGS(X))(FN, X)
- 
- #define for_each_cpu_buffer(I) for ((I) = 0; (I) < MAX_PATH_BUFFERS; (I)++)
- 
+v1:
+This patch set is a different way to address the pressing need to access
+task_struct pointers in sched tracepoints from bpf programs.
+
+The first approach simply added these pointers to sched tracepoints:
+https://lkml.org/lkml/2017/12/14/753
+which Peter nacked.
+Few options were discussed and eventually the discussion converged on
+doing bpf specific tracepoint_probe_register() probe functions.
+Details here:
+https://lkml.org/lkml/2017/12/20/929
+
+Patch 1 is kernel wide cleanup of pass-struct-by-value into
+pass-struct-by-reference into tracepoints.
+
+Patches 2 and 3 are minor cleanups to address allyesconfig build
+
+Patch 4 refactor trace_iwlwifi_dev_ucode_error from 17 to 4 args
+
+Patch 5 introduces COUNT_ARGS macro
+
+Patch 6 minor prep work to expose number of arguments passed
+into tracepoints.
+
+Patch 7 kernel_tracepoint_find_by_name() helper
+
+Patch 8 introduces BPF_RAW_TRACEPOINT api.
+the auto-cleanup and multiple concurrent users are must have
+features of tracing api. For bpf raw tracepoints it looks like:
+  // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
+  prog_fd = bpf_prog_load(...);
+
+  // receive anon_inode fd for given bpf_raw_tracepoint
+  // and attach bpf program to it
+  raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception", prog_fd);
+
+Ctrl-C of tracing daemon or cmdline tool will automatically
+detach bpf program, unload it and unregister tracepoint probe.
+More details in patch 8.
+
+Patch 9 - trivial support in libbpf
+Patches 10, 11 - user space tests
+
+samples/bpf/test_overhead performance on 1 cpu:
+
+tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
+task_rename   1.1M   769K        947K            1.0M
+urandom_read  789K   697K        750K            755K
+
+Alexei Starovoitov (11):
+  treewide: remove large struct-pass-by-value from tracepoint arguments
+  net/mediatek: disambiguate mt76 vs mt7601u trace events
+  net/mac802154: disambiguate mac80215 vs mac802154 trace events
+  net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
+  macro: introduce COUNT_ARGS() macro
+  tracepoint: compute num_args at build time
+  tracepoint: introduce kernel_tracepoint_find_by_name
+  bpf: introduce BPF_RAW_TRACEPOINT
+  libbpf: add bpf_raw_tracepoint_open helper
+  samples/bpf: raw tracepoint test
+  selftests/bpf: test for bpf_get_stackid() from raw tracepoints
+
+ drivers/infiniband/hw/hfi1/file_ops.c              |   2 +-
+ drivers/infiniband/hw/hfi1/trace_ctxts.h           |  12 +-
+ drivers/net/wireless/intel/iwlwifi/dvm/main.c      |   7 +-
+ .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  |  39 ++---
+ drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |   1 +
+ drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |   7 +-
+ drivers/net/wireless/mediatek/mt7601u/trace.h      |   6 +-
+ include/linux/bpf_types.h                          |   1 +
+ include/linux/kernel.h                             |   7 +
+ include/linux/trace_events.h                       |  37 ++++
+ include/linux/tracepoint-defs.h                    |   1 +
+ include/linux/tracepoint.h                         |  18 +-
+ include/trace/bpf_probe.h                          |  87 ++++++++++
+ include/trace/define_trace.h                       |  15 +-
+ include/trace/events/f2fs.h                        |   2 +-
+ include/uapi/linux/bpf.h                           |  11 ++
+ kernel/bpf/syscall.c                               |  78 +++++++++
+ kernel/trace/bpf_trace.c                           | 188 +++++++++++++++++++++
+ kernel/tracepoint.c                                |   9 +
+ net/mac802154/trace.h                              |   8 +-
+ net/wireless/trace.h                               |   2 +-
+ samples/bpf/Makefile                               |   1 +
+ samples/bpf/bpf_load.c                             |  14 ++
+ samples/bpf/test_overhead_raw_tp_kern.c            |  17 ++
+ samples/bpf/test_overhead_user.c                   |  12 ++
+ security/apparmor/include/path.h                   |   7 +-
+ sound/firewire/amdtp-stream-trace.h                |   2 +-
+ tools/include/uapi/linux/bpf.h                     |  11 ++
+ tools/lib/bpf/bpf.c                                |  11 ++
+ tools/lib/bpf/bpf.h                                |   1 +
+ tools/testing/selftests/bpf/test_progs.c           |  91 +++++++---
+ 31 files changed, 615 insertions(+), 90 deletions(-)
+ create mode 100644 include/trace/bpf_probe.h
+ create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
+
 -- 
 2.9.5
