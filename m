@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v6 bpf-next 01/11] treewide: remove large struct-pass-by-value from tracepoint arguments
-Date: Mon, 26 Mar 2018 19:46:56 -0700
-Message-ID: <20180327024706.2064725-2-ast@fb.com>
+Subject: [PATCH v6 bpf-next 06/11] tracepoint: compute num_args at build time
+Date: Mon, 26 Mar 2018 19:47:01 -0700
+Message-ID: <20180327024706.2064725-7-ast@fb.com>
 References: <20180327024706.2064725-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,105 +14,119 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-- fix trace_hfi1_ctxt_info() to pass large struct by reference instead of by value
-- convert 'type array[]' tracepoint arguments into 'type *array',
-  since compiler will warn that sizeof('type array[]') == sizeof('type *array')
-  and later should be used instead
-
-The CAST_TO_U64 macro in the later patch will enforce that tracepoint
-arguments can only be integers, pointers, or less than 8 byte structures.
-Larger structures should be passed by reference.
+compute number of arguments passed into tracepoint
+at compile time and store it as part of 'struct tracepoint'.
+The number is necessary to check safety of bpf program access that
+is coming in subsequent patch.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- drivers/infiniband/hw/hfi1/file_ops.c    |  2 +-
- drivers/infiniband/hw/hfi1/trace_ctxts.h | 12 ++++++------
- include/trace/events/f2fs.h              |  2 +-
- net/wireless/trace.h                     |  2 +-
- sound/firewire/amdtp-stream-trace.h      |  2 +-
- 5 files changed, 10 insertions(+), 10 deletions(-)
+ include/linux/tracepoint-defs.h |  1 +
+ include/linux/tracepoint.h      | 12 ++++++------
+ include/trace/define_trace.h    | 14 +++++++-------
+ 3 files changed, 14 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/infiniband/hw/hfi1/file_ops.c b/drivers/infiniband/hw/hfi1/file_ops.c
-index 41fafebe3b0d..da4aa1a95b11 100644
---- a/drivers/infiniband/hw/hfi1/file_ops.c
-+++ b/drivers/infiniband/hw/hfi1/file_ops.c
-@@ -1153,7 +1153,7 @@ static int get_ctxt_info(struct hfi1_filedata *fd, unsigned long arg, u32 len)
- 	cinfo.sdma_ring_size = fd->cq->nentries;
- 	cinfo.rcvegr_size = uctxt->egrbufs.rcvtid_size;
+diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
+index 64ed7064f1fa..39a283c61c51 100644
+--- a/include/linux/tracepoint-defs.h
++++ b/include/linux/tracepoint-defs.h
+@@ -33,6 +33,7 @@ struct tracepoint {
+ 	int (*regfunc)(void);
+ 	void (*unregfunc)(void);
+ 	struct tracepoint_func __rcu *funcs;
++	u32 num_args;
+ };
  
--	trace_hfi1_ctxt_info(uctxt->dd, uctxt->ctxt, fd->subctxt, cinfo);
-+	trace_hfi1_ctxt_info(uctxt->dd, uctxt->ctxt, fd->subctxt, &cinfo);
- 	if (copy_to_user((void __user *)arg, &cinfo, len))
- 		return -EFAULT;
+ #endif
+diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
+index c94f466d57ef..c92f4adbc0d7 100644
+--- a/include/linux/tracepoint.h
++++ b/include/linux/tracepoint.h
+@@ -230,18 +230,18 @@ extern void syscall_unregfunc(void);
+  * structures, so we create an array of pointers that will be used for iteration
+  * on the tracepoints.
+  */
+-#define DEFINE_TRACE_FN(name, reg, unreg)				 \
++#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
+ 	static const char __tpstrtab_##name[]				 \
+ 	__attribute__((section("__tracepoints_strings"))) = #name;	 \
+ 	struct tracepoint __tracepoint_##name				 \
+ 	__attribute__((section("__tracepoints"))) =			 \
+-		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
++		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
+ 	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
+ 	__attribute__((section("__tracepoints_ptrs"))) =		 \
+ 		&__tracepoint_##name;
  
-diff --git a/drivers/infiniband/hw/hfi1/trace_ctxts.h b/drivers/infiniband/hw/hfi1/trace_ctxts.h
-index 4eb4cc798035..e00c8a7d559c 100644
---- a/drivers/infiniband/hw/hfi1/trace_ctxts.h
-+++ b/drivers/infiniband/hw/hfi1/trace_ctxts.h
-@@ -106,7 +106,7 @@ TRACE_EVENT(hfi1_uctxtdata,
- TRACE_EVENT(hfi1_ctxt_info,
- 	    TP_PROTO(struct hfi1_devdata *dd, unsigned int ctxt,
- 		     unsigned int subctxt,
--		     struct hfi1_ctxt_info cinfo),
-+		     struct hfi1_ctxt_info *cinfo),
- 	    TP_ARGS(dd, ctxt, subctxt, cinfo),
- 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
- 			     __field(unsigned int, ctxt)
-@@ -120,11 +120,11 @@ TRACE_EVENT(hfi1_ctxt_info,
- 	    TP_fast_assign(DD_DEV_ASSIGN(dd);
- 			    __entry->ctxt = ctxt;
- 			    __entry->subctxt = subctxt;
--			    __entry->egrtids = cinfo.egrtids;
--			    __entry->rcvhdrq_cnt = cinfo.rcvhdrq_cnt;
--			    __entry->rcvhdrq_size = cinfo.rcvhdrq_entsize;
--			    __entry->sdma_ring_size = cinfo.sdma_ring_size;
--			    __entry->rcvegr_size = cinfo.rcvegr_size;
-+			    __entry->egrtids = cinfo->egrtids;
-+			    __entry->rcvhdrq_cnt = cinfo->rcvhdrq_cnt;
-+			    __entry->rcvhdrq_size = cinfo->rcvhdrq_entsize;
-+			    __entry->sdma_ring_size = cinfo->sdma_ring_size;
-+			    __entry->rcvegr_size = cinfo->rcvegr_size;
- 			    ),
- 	    TP_printk("[%s] ctxt %u:%u " CINFO_FMT,
- 		      __get_str(dev),
-diff --git a/include/trace/events/f2fs.h b/include/trace/events/f2fs.h
-index 06c87f9f720c..795698925d20 100644
---- a/include/trace/events/f2fs.h
-+++ b/include/trace/events/f2fs.h
-@@ -491,7 +491,7 @@ DEFINE_EVENT(f2fs__truncate_node, f2fs_truncate_node,
+-#define DEFINE_TRACE(name)						\
+-	DEFINE_TRACE_FN(name, NULL, NULL);
++#define DEFINE_TRACE(name, num_args)					\
++	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
  
- TRACE_EVENT(f2fs_truncate_partial_nodes,
+ #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
+ 	EXPORT_SYMBOL_GPL(__tracepoint_##name)
+@@ -275,8 +275,8 @@ extern void syscall_unregfunc(void);
+ 		return false;						\
+ 	}
  
--	TP_PROTO(struct inode *inode, nid_t nid[], int depth, int err),
-+	TP_PROTO(struct inode *inode, nid_t *nid, int depth, int err),
+-#define DEFINE_TRACE_FN(name, reg, unreg)
+-#define DEFINE_TRACE(name)
++#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
++#define DEFINE_TRACE(name, num_args)
+ #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
+ #define EXPORT_TRACEPOINT_SYMBOL(name)
  
- 	TP_ARGS(inode, nid, depth, err),
+diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
+index d9e3d4aa3f6e..96b22ace9ae7 100644
+--- a/include/trace/define_trace.h
++++ b/include/trace/define_trace.h
+@@ -25,7 +25,7 @@
  
-diff --git a/net/wireless/trace.h b/net/wireless/trace.h
-index 5152938b358d..018c81fa72fb 100644
---- a/net/wireless/trace.h
-+++ b/net/wireless/trace.h
-@@ -3137,7 +3137,7 @@ TRACE_EVENT(rdev_start_radar_detection,
+ #undef TRACE_EVENT
+ #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
  
- TRACE_EVENT(rdev_set_mcast_rate,
- 	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
--		 int mcast_rate[NUM_NL80211_BANDS]),
-+		 int *mcast_rate),
- 	TP_ARGS(wiphy, netdev, mcast_rate),
- 	TP_STRUCT__entry(
- 		WIPHY_ENTRY
-diff --git a/sound/firewire/amdtp-stream-trace.h b/sound/firewire/amdtp-stream-trace.h
-index ea0d486652c8..54cdd4ffa9ce 100644
---- a/sound/firewire/amdtp-stream-trace.h
-+++ b/sound/firewire/amdtp-stream-trace.h
-@@ -14,7 +14,7 @@
- #include <linux/tracepoint.h>
+ #undef TRACE_EVENT_CONDITION
+ #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
+@@ -39,24 +39,24 @@
+ #undef TRACE_EVENT_FN
+ #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
+ 		assign, print, reg, unreg)			\
+-	DEFINE_TRACE_FN(name, reg, unreg)
++	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
  
- TRACE_EVENT(in_packet,
--	TP_PROTO(const struct amdtp_stream *s, u32 cycles, u32 cip_header[2], unsigned int payload_length, unsigned int index),
-+	TP_PROTO(const struct amdtp_stream *s, u32 cycles, u32 *cip_header, unsigned int payload_length, unsigned int index),
- 	TP_ARGS(s, cycles, cip_header, payload_length, index),
- 	TP_STRUCT__entry(
- 		__field(unsigned int, second)
+ #undef TRACE_EVENT_FN_COND
+ #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
+ 		assign, print, reg, unreg)			\
+-	DEFINE_TRACE_FN(name, reg, unreg)
++	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT
+ #define DEFINE_EVENT(template, name, proto, args) \
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT_FN
+ #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
+-	DEFINE_TRACE_FN(name, reg, unreg)
++	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT_PRINT
+ #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT_CONDITION
+ #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
+@@ -64,7 +64,7 @@
+ 
+ #undef DECLARE_TRACE
+ #define DECLARE_TRACE(name, proto, args)	\
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef TRACE_INCLUDE
+ #undef __TRACE_INCLUDE
 -- 
 2.9.5
