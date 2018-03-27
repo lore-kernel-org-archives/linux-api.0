@@ -1,61 +1,141 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v6 bpf-next 07/11] tracepoint: introduce
- kernel_tracepoint_find_by_name
-Date: Tue, 27 Mar 2018 10:42:42 -0400
-Message-ID: <20180327104242.3594bcac@gandalf.local.home>
+Subject: Re: [PATCH v6 bpf-next 06/11] tracepoint: compute num_args at build
+ time
+Date: Tue, 27 Mar 2018 11:15:59 -0400
+Message-ID: <20180327111559.2abb9981@gandalf.local.home>
 References: <20180327024706.2064725-1-ast@fb.com>
-        <20180327024706.2064725-8-ast@fb.com>
-        <20180327100711.0ec7aafb@gandalf.local.home>
-        <1566743692.1117.1522160304471.JavaMail.zimbra@efficios.com>
+        <20180327024706.2064725-7-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <1566743692.1117.1522160304471.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20180327024706.2064725-7-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Alexei Starovoitov <ast@fb.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>
+To: Alexei Starovoitov <ast@fb.com>
+Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 27 Mar 2018 10:18:24 -0400 (EDT)
-Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+On Mon, 26 Mar 2018 19:47:01 -0700
+Alexei Starovoitov <ast@fb.com> wrote:
 
-> ----- On Mar 27, 2018, at 10:07 AM, rostedt rostedt@goodmis.org wrote:
+> From: Alexei Starovoitov <ast@kernel.org>
 > 
-> > On Mon, 26 Mar 2018 19:47:02 -0700
-> > Alexei Starovoitov <ast@fb.com> wrote:
-> >   
-> >> From: Alexei Starovoitov <ast@kernel.org>
-> >> 
-> >> introduce kernel_tracepoint_find_by_name() helper to let bpf core
-> >> find tracepoint by name and later attach bpf probe to a tracepoint
-> >> 
-> >> Signed-off-by: Alexei Starovoitov <ast@kernel.org>  
-> > 
-> > Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>  
+> compute number of arguments passed into tracepoint
+> at compile time and store it as part of 'struct tracepoint'.
+> The number is necessary to check safety of bpf program access that
+> is coming in subsequent patch.
 > 
-> Steven showed preference for tracepoint_kernel_find_by_name() at some
-> point (starting with a tracepoint_ prefix). I'm find with either of
-> the names.
+> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 
-Yeah, I do prefer tracepoint_kernel_find_by_name() to stay consistent
-with the other tracepoint functions. But we have
-"for_each_kernel_tracepoint()" and not "for_each_tracepoint_kernel()",
-thus we need to pick being consistent with one or the other. One answer
-is to use tracpoint_kernel_find_by_name() and rename the for_each to
-for_each_tracpoint_kernel().
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
 -- Steve
 
-
+> ---
+>  include/linux/tracepoint-defs.h |  1 +
+>  include/linux/tracepoint.h      | 12 ++++++------
+>  include/trace/define_trace.h    | 14 +++++++-------
+>  3 files changed, 14 insertions(+), 13 deletions(-)
 > 
-> Reviewed-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> 
-> Thanks,
-> 
-> Mathieu
-> 
-> > 
-> > Thanks for doing this Alexei!
-> > 
-> > One nit below.
+> diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
+> index 64ed7064f1fa..39a283c61c51 100644
+> --- a/include/linux/tracepoint-defs.h
+> +++ b/include/linux/tracepoint-defs.h
+> @@ -33,6 +33,7 @@ struct tracepoint {
+>  	int (*regfunc)(void);
+>  	void (*unregfunc)(void);
+>  	struct tracepoint_func __rcu *funcs;
+> +	u32 num_args;
+>  };
+>  
+>  #endif
+> diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
+> index c94f466d57ef..c92f4adbc0d7 100644
+> --- a/include/linux/tracepoint.h
+> +++ b/include/linux/tracepoint.h
+> @@ -230,18 +230,18 @@ extern void syscall_unregfunc(void);
+>   * structures, so we create an array of pointers that will be used for iteration
+>   * on the tracepoints.
+>   */
+> -#define DEFINE_TRACE_FN(name, reg, unreg)				 \
+> +#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
+>  	static const char __tpstrtab_##name[]				 \
+>  	__attribute__((section("__tracepoints_strings"))) = #name;	 \
+>  	struct tracepoint __tracepoint_##name				 \
+>  	__attribute__((section("__tracepoints"))) =			 \
+> -		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
+> +		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
+>  	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
+>  	__attribute__((section("__tracepoints_ptrs"))) =		 \
+>  		&__tracepoint_##name;
+>  
+> -#define DEFINE_TRACE(name)						\
+> -	DEFINE_TRACE_FN(name, NULL, NULL);
+> +#define DEFINE_TRACE(name, num_args)					\
+> +	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
+>  
+>  #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
+>  	EXPORT_SYMBOL_GPL(__tracepoint_##name)
+> @@ -275,8 +275,8 @@ extern void syscall_unregfunc(void);
+>  		return false;						\
+>  	}
+>  
+> -#define DEFINE_TRACE_FN(name, reg, unreg)
+> -#define DEFINE_TRACE(name)
+> +#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
+> +#define DEFINE_TRACE(name, num_args)
+>  #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
+>  #define EXPORT_TRACEPOINT_SYMBOL(name)
+>  
+> diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
+> index d9e3d4aa3f6e..96b22ace9ae7 100644
+> --- a/include/trace/define_trace.h
+> +++ b/include/trace/define_trace.h
+> @@ -25,7 +25,7 @@
+>  
+>  #undef TRACE_EVENT
+>  #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef TRACE_EVENT_CONDITION
+>  #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
+> @@ -39,24 +39,24 @@
+>  #undef TRACE_EVENT_FN
+>  #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
+>  		assign, print, reg, unreg)			\
+> -	DEFINE_TRACE_FN(name, reg, unreg)
+> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+>  
+>  #undef TRACE_EVENT_FN_COND
+>  #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
+>  		assign, print, reg, unreg)			\
+> -	DEFINE_TRACE_FN(name, reg, unreg)
+> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT
+>  #define DEFINE_EVENT(template, name, proto, args) \
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT_FN
+>  #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
+> -	DEFINE_TRACE_FN(name, reg, unreg)
+> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT_PRINT
+>  #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef DEFINE_EVENT_CONDITION
+>  #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
+> @@ -64,7 +64,7 @@
+>  
+>  #undef DECLARE_TRACE
+>  #define DECLARE_TRACE(name, proto, args)	\
+> -	DEFINE_TRACE(name)
+> +	DEFINE_TRACE(name, COUNT_ARGS(args))
+>  
+>  #undef TRACE_INCLUDE
+>  #undef __TRACE_INCLUDE
