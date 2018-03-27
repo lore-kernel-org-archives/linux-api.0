@@ -1,61 +1,69 @@
-From: Alexei Starovoitov <ast@fb.com>
-Subject: Re: [PATCH v6 bpf-next 07/11] tracepoint: introduce
- kernel_tracepoint_find_by_name
-Date: Tue, 27 Mar 2018 08:53:21 -0700
-Message-ID: <8600dbae-389d-dd01-f003-44f1af7dcf0a@fb.com>
-References: <20180327024706.2064725-1-ast@fb.com>
- <20180327024706.2064725-8-ast@fb.com>
- <20180327100711.0ec7aafb@gandalf.local.home>
- <1566743692.1117.1522160304471.JavaMail.zimbra@efficios.com>
- <20180327104242.3594bcac@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180327104242.3594bcac@gandalf.local.home>
-Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.17 06/21] x86: Wire up restartable sequence system call
+Date: Tue, 27 Mar 2018 12:05:27 -0400
+Message-ID: <20180327160542.28457-7-mathieu.desnoyers@efficios.com>
+References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-On 3/27/18 7:42 AM, Steven Rostedt wrote:
-> On Tue, 27 Mar 2018 10:18:24 -0400 (EDT)
-> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
->
->> ----- On Mar 27, 2018, at 10:07 AM, rostedt rostedt@goodmis.org wrote:
->>
->>> On Mon, 26 Mar 2018 19:47:02 -0700
->>> Alexei Starovoitov <ast@fb.com> wrote:
->>>
->>>> From: Alexei Starovoitov <ast@kernel.org>
->>>>
->>>> introduce kernel_tracepoint_find_by_name() helper to let bpf core
->>>> find tracepoint by name and later attach bpf probe to a tracepoint
->>>>
->>>> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
->>>
->>> Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
->>
->> Steven showed preference for tracepoint_kernel_find_by_name() at some
->> point (starting with a tracepoint_ prefix). I'm find with either of
->> the names.
->
-> Yeah, I do prefer tracepoint_kernel_find_by_name() to stay consistent
-> with the other tracepoint functions. But we have
-> "for_each_kernel_tracepoint()" and not "for_each_tracepoint_kernel()",
-> thus we need to pick being consistent with one or the other. One answer
-> is to use tracpoint_kernel_find_by_name() and rename the for_each to
-> for_each_tracpoint_kernel().
+Wire up the rseq system call on x86 32/64.
 
-yep. that's exactly the reason I picked kernel_tracepoint_find_by_name()
-to match for_each_kernel_tracepoint() naming.
+This provides an ABI improving the speed of a user-space getcpu
+operation on x86 by removing the need to perform a function call, "lsl"
+instruction, or system call on the fast path, as well as improving the
+speed of user-space operations on per-cpu data.
 
-I can certainly send a follow up patch to rename both to
-*tracepoint_kernel* and then you can nack it because it breaks lttng :)
-but let's do it in a separate thread.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Paul Turner <pjt@google.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ 2 files changed, 2 insertions(+)
 
-Daniel,
-do you mind adding { } as Steven requested while applying or
-you want me to resubmit the whole thing?
-
-Thanks!
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 2a5e99cff859..b76cbd25854f 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -391,3 +391,4 @@
+ 382	i386	pkey_free		sys_pkey_free
+ 383	i386	statx			sys_statx
+ 384	i386	arch_prctl		sys_arch_prctl			compat_sys_arch_prctl
++385	i386	rseq			sys_rseq
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 5aef183e2f85..3ad03495bbb9 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -339,6 +339,7 @@
+ 330	common	pkey_alloc		sys_pkey_alloc
+ 331	common	pkey_free		sys_pkey_free
+ 332	common	statx			sys_statx
++333	common	rseq			sys_rseq
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+-- 
+2.11.0
