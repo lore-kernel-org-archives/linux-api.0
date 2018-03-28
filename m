@@ -1,61 +1,61 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build
- time
-Date: Wed, 28 Mar 2018 14:54:31 -0400
-Message-ID: <20180328145431.687643bc@gandalf.local.home>
-References: <20180328021105.4061744-1-ast@fb.com>
-        <20180328021105.4061744-7-ast@fb.com>
-        <1074829260.1986.1522244964935.JavaMail.zimbra@efficios.com>
-        <67c5f9b4-b24a-2806-e8d6-8b5241c66d6e@fb.com>
-        <20180328130407.7476cf17@gandalf.local.home>
-        <fdcb0bf0-f896-ffb3-b9de-0b17f5f70fc6@fb.com>
-        <20180328133830.3d5d74d3@gandalf.local.home>
-        <80d7af37-10ef-28d7-f03f-27b4b5849cd1@fb.com>
-        <20180328141045.1202afeb@gandalf.local.home>
-        <a5c8ff7c-8185-a3fd-89eb-45ddc099c03b@fb.com>
+From: Alexei Starovoitov <ast@kernel.org>
+Subject: [PATCH v8 bpf-next 3/9] net/mac802154: disambiguate mac80215 vs mac802154 trace events
+Date: Wed, 28 Mar 2018 12:05:34 -0700
+Message-ID: <20180328190540.370956-4-ast@kernel.org>
+References: <20180328190540.370956-1-ast@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <a5c8ff7c-8185-a3fd-89eb-45ddc099c03b@fb.com>
+In-Reply-To: <20180328190540.370956-1-ast@kernel.org>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@fb.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>
+To: davem@davemloft.net
+Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 28 Mar 2018 11:19:34 -0700
-Alexei Starovoitov <ast@fb.com> wrote:
+two trace events defined with the same name and both unused.
+They conflict in allyesconfig build. Rename one of them.
 
-> On 3/28/18 11:10 AM, Steven Rostedt wrote:
-> > On Wed, 28 Mar 2018 11:03:24 -0700
-> > Alexei Starovoitov <ast@fb.com> wrote:
-> >  
-> >> I can live with this overhead if Mathieu insists,
-> >> but I prefer to keep it in 'struct tracepoint'.
-> >>
-> >> Thoughts?  
-> >
-> > I'm fine with keeping it as is. We could probably use it for future
-> > enhancements in perf and ftrace.
-> >
-> > Perhaps, we should just add a:
-> >
-> > #ifdef CONFIG_BPF_EVENTS
-> >
-> > Around the use cases of num_args.  
-> 
-> it sounds like a good idea, but implementation wise
-> it will be ifdef CONFIG_BPF_EVENTS around u32 num_args;
-> in struct tracepoint and similar double definition of
-> DEFINE_TRACE_FN. One that uses num_args to init
-> struct tracepoint and one that doesn't ?
-> Feels like serious uglification of already macros heavy code.
-> Also what it will address?
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ net/mac802154/trace.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-32bit bloat ;-)
-
-But I agree, it's not worth uglifying it.
-
--- Steve
-
-> cache hot/cold argument clearly doesn't apply.
+diff --git a/net/mac802154/trace.h b/net/mac802154/trace.h
+index 2c8a43d3607f..df855c33daf2 100644
+--- a/net/mac802154/trace.h
++++ b/net/mac802154/trace.h
+@@ -33,7 +33,7 @@
+ 
+ /* Tracing for driver callbacks */
+ 
+-DECLARE_EVENT_CLASS(local_only_evt,
++DECLARE_EVENT_CLASS(local_only_evt4,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local),
+ 	TP_STRUCT__entry(
+@@ -45,7 +45,7 @@ DECLARE_EVENT_CLASS(local_only_evt,
+ 	TP_printk(LOCAL_PR_FMT, LOCAL_PR_ARG)
+ );
+ 
+-DEFINE_EVENT(local_only_evt, 802154_drv_return_void,
++DEFINE_EVENT(local_only_evt4, 802154_drv_return_void,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local)
+ );
+@@ -65,12 +65,12 @@ TRACE_EVENT(802154_drv_return_int,
+ 		  __entry->ret)
+ );
+ 
+-DEFINE_EVENT(local_only_evt, 802154_drv_start,
++DEFINE_EVENT(local_only_evt4, 802154_drv_start,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local)
+ );
+ 
+-DEFINE_EVENT(local_only_evt, 802154_drv_stop,
++DEFINE_EVENT(local_only_evt4, 802154_drv_stop,
+ 	TP_PROTO(struct ieee802154_local *local),
+ 	TP_ARGS(local)
+ );
+-- 
+2.9.5
