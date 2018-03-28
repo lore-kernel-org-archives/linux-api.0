@@ -1,8 +1,8 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable sequences
  system call (v12)
-Date: Wed, 28 Mar 2018 13:19:52 +0200
-Message-ID: <20180328111952.GS4043@hirez.programming.kicks-ass.net>
+Date: Wed, 28 Mar 2018 13:22:25 +0200
+Message-ID: <20180328112225.GT4043@hirez.programming.kicks-ass.net>
 References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
  <20180327160542.28457-3-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
@@ -16,34 +16,20 @@ Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gma
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Mar 27, 2018 at 12:05:23PM -0400, Mathieu Desnoyers wrote:
-> +#ifdef CONFIG_RSEQ
-> +	struct rseq __user *rseq;
-> +	u32 rseq_len;
-> +	u32 rseq_sig;
-> +	/*
-> +	 * RmW on rseq_event_mask must be performed atomically
-> +	 * with respect to preemption.
-> +	 */
-> +	unsigned long rseq_event_mask;
-> +#endif
+> +/*
+> + * struct rseq_cs is aligned on 4 * 8 bytes to ensure it is always
+> + * contained within a single cache-line. It is usually declared as
+> + * link-time constant data.
+> + */
+> +struct rseq_cs {
+> +	/* Version of this structure. */
+> +	uint32_t version;
+> +	/* enum rseq_cs_flags */
+> +	uint32_t flags;
+> +	LINUX_FIELD_u32_u64(start_ip);
+> +	/* Offset from start_ip. */
+> +	LINUX_FIELD_u32_u64(post_commit_offset);
+> +	LINUX_FIELD_u32_u64(abort_ip);
+> +} __attribute__((aligned(4 * sizeof(uint64_t))));
 
-> +static inline void rseq_signal_deliver(struct pt_regs *regs)
-> +{
-> +	set_bit(RSEQ_EVENT_SIGNAL_BIT, &current->rseq_event_mask);
-> +	rseq_handle_notify_resume(regs);
-> +}
-> +
-> +static inline void rseq_preempt(struct task_struct *t)
-> +{
-> +	set_bit(RSEQ_EVENT_PREEMPT_BIT, &t->rseq_event_mask);
-> +	rseq_set_notify_resume(t);
-> +}
-> +
-> +static inline void rseq_migrate(struct task_struct *t)
-> +{
-> +	set_bit(RSEQ_EVENT_MIGRATE_BIT, &t->rseq_event_mask);
-> +	rseq_set_notify_resume(t);
-> +}
-
-Given that comment above, do you really need the full atomic set bit?
-Isn't __set_bit() sufficient?
+What's with the uint32_t ? The normal Linux API type is __u32 afaik.
