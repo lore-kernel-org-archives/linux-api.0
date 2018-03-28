@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 04/10] net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
-Date: Tue, 27 Mar 2018 19:10:59 -0700
-Message-ID: <20180328021105.4061744-5-ast@fb.com>
+Subject: [PATCH v7 bpf-next 09/10] samples/bpf: raw tracepoint test
+Date: Tue, 27 Mar 2018 19:11:04 -0700
+Message-ID: <20180328021105.4061744-10-ast@fb.com>
 References: <20180328021105.4061744-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,127 +14,120 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
-instead of all 17 arguments by value.
-dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
-defined with very similar yet subtly different fields and offsets.
-tracepoint is still common and using definition of 'struct iwl_error_event_table'
-from dvm/commands.h while copying fields.
-Long term this tracepoint probably should be split into two.
+add empty raw_tracepoint bpf program to test overhead similar
+to kprobe and traditional tracepoint tests
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- drivers/net/wireless/intel/iwlwifi/dvm/main.c      |  7 +---
- .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  | 39 ++++++++++------------
- drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |  1 +
- drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |  7 +---
- 4 files changed, 21 insertions(+), 33 deletions(-)
+ samples/bpf/Makefile                    |  1 +
+ samples/bpf/bpf_load.c                  | 14 ++++++++++++++
+ samples/bpf/test_overhead_raw_tp_kern.c | 17 +++++++++++++++++
+ samples/bpf/test_overhead_user.c        | 12 ++++++++++++
+ 4 files changed, 44 insertions(+)
+ create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
 
-diff --git a/drivers/net/wireless/intel/iwlwifi/dvm/main.c b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-index d11d72615de2..e68254e12764 100644
---- a/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-+++ b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-@@ -1651,12 +1651,7 @@ static void iwl_dump_nic_error_log(struct iwl_priv *priv)
- 			priv->status, table.valid);
+diff --git a/samples/bpf/Makefile b/samples/bpf/Makefile
+index 2c2a587e0942..4d6a6edd4bf6 100644
+--- a/samples/bpf/Makefile
++++ b/samples/bpf/Makefile
+@@ -119,6 +119,7 @@ always += offwaketime_kern.o
+ always += spintest_kern.o
+ always += map_perf_test_kern.o
+ always += test_overhead_tp_kern.o
++always += test_overhead_raw_tp_kern.o
+ always += test_overhead_kprobe_kern.o
+ always += parse_varlen.o parse_simple.o parse_ldabs.o
+ always += test_cgrp2_tc_kern.o
+diff --git a/samples/bpf/bpf_load.c b/samples/bpf/bpf_load.c
+index b1a310c3ae89..bebe4188b4b3 100644
+--- a/samples/bpf/bpf_load.c
++++ b/samples/bpf/bpf_load.c
+@@ -61,6 +61,7 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
+ 	bool is_kprobe = strncmp(event, "kprobe/", 7) == 0;
+ 	bool is_kretprobe = strncmp(event, "kretprobe/", 10) == 0;
+ 	bool is_tracepoint = strncmp(event, "tracepoint/", 11) == 0;
++	bool is_raw_tracepoint = strncmp(event, "raw_tracepoint/", 15) == 0;
+ 	bool is_xdp = strncmp(event, "xdp", 3) == 0;
+ 	bool is_perf_event = strncmp(event, "perf_event", 10) == 0;
+ 	bool is_cgroup_skb = strncmp(event, "cgroup/skb", 10) == 0;
+@@ -85,6 +86,8 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
+ 		prog_type = BPF_PROG_TYPE_KPROBE;
+ 	} else if (is_tracepoint) {
+ 		prog_type = BPF_PROG_TYPE_TRACEPOINT;
++	} else if (is_raw_tracepoint) {
++		prog_type = BPF_PROG_TYPE_RAW_TRACEPOINT;
+ 	} else if (is_xdp) {
+ 		prog_type = BPF_PROG_TYPE_XDP;
+ 	} else if (is_perf_event) {
+@@ -131,6 +134,16 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
+ 		return populate_prog_array(event, fd);
  	}
  
--	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
--				      table.data1, table.data2, table.line,
--				      table.blink2, table.ilink1, table.ilink2,
--				      table.bcon_time, table.gp1, table.gp2,
--				      table.gp3, table.ucode_ver, table.hw_ver,
--				      0, table.brd_ver);
-+	trace_iwlwifi_dev_ucode_error(trans->dev, &table, 0, table.brd_ver);
- 	IWL_ERR(priv, "0x%08X | %-28s\n", table.error_id,
- 		desc_lookup(table.error_id));
- 	IWL_ERR(priv, "0x%08X | uPc\n", table.pc);
-diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-index 9518a82f44c2..27e3e4e96aa2 100644
---- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-+++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-@@ -126,14 +126,11 @@ TRACE_EVENT(iwlwifi_dev_tx,
- 		  __entry->framelen, __entry->skbaddr)
- );
++	if (is_raw_tracepoint) {
++		efd = bpf_raw_tracepoint_open(event + 15, fd);
++		if (efd < 0) {
++			printf("tracepoint %s %s\n", event + 15, strerror(errno));
++			return -1;
++		}
++		event_fd[prog_cnt - 1] = efd;
++		return 0;
++	}
++
+ 	if (is_kprobe || is_kretprobe) {
+ 		if (is_kprobe)
+ 			event += 7;
+@@ -587,6 +600,7 @@ static int do_load_bpf_file(const char *path, fixup_map_cb fixup_map)
+ 		if (memcmp(shname, "kprobe/", 7) == 0 ||
+ 		    memcmp(shname, "kretprobe/", 10) == 0 ||
+ 		    memcmp(shname, "tracepoint/", 11) == 0 ||
++		    memcmp(shname, "raw_tracepoint/", 15) == 0 ||
+ 		    memcmp(shname, "xdp", 3) == 0 ||
+ 		    memcmp(shname, "perf_event", 10) == 0 ||
+ 		    memcmp(shname, "socket", 6) == 0 ||
+diff --git a/samples/bpf/test_overhead_raw_tp_kern.c b/samples/bpf/test_overhead_raw_tp_kern.c
+new file mode 100644
+index 000000000000..d2af8bc1c805
+--- /dev/null
++++ b/samples/bpf/test_overhead_raw_tp_kern.c
+@@ -0,0 +1,17 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Copyright (c) 2018 Facebook */
++#include <uapi/linux/bpf.h>
++#include "bpf_helpers.h"
++
++SEC("raw_tracepoint/task_rename")
++int prog(struct bpf_raw_tracepoint_args *ctx)
++{
++	return 0;
++}
++
++SEC("raw_tracepoint/urandom_read")
++int prog2(struct bpf_raw_tracepoint_args *ctx)
++{
++	return 0;
++}
++char _license[] SEC("license") = "GPL";
+diff --git a/samples/bpf/test_overhead_user.c b/samples/bpf/test_overhead_user.c
+index d291167fd3c7..e1d35e07a10e 100644
+--- a/samples/bpf/test_overhead_user.c
++++ b/samples/bpf/test_overhead_user.c
+@@ -158,5 +158,17 @@ int main(int argc, char **argv)
+ 		unload_progs();
+ 	}
  
-+struct iwl_error_event_table;
- TRACE_EVENT(iwlwifi_dev_ucode_error,
--	TP_PROTO(const struct device *dev, u32 desc, u32 tsf_low,
--		 u32 data1, u32 data2, u32 line, u32 blink2, u32 ilink1,
--		 u32 ilink2, u32 bcon_time, u32 gp1, u32 gp2, u32 rev_type,
--		 u32 major, u32 minor, u32 hw_ver, u32 brd_ver),
--	TP_ARGS(dev, desc, tsf_low, data1, data2, line,
--		 blink2, ilink1, ilink2, bcon_time, gp1, gp2,
--		 rev_type, major, minor, hw_ver, brd_ver),
-+	TP_PROTO(const struct device *dev, const struct iwl_error_event_table *table,
-+		 u32 hw_ver, u32 brd_ver),
-+	TP_ARGS(dev, table, hw_ver, brd_ver),
- 	TP_STRUCT__entry(
- 		DEV_ENTRY
- 		__field(u32, desc)
-@@ -155,20 +152,20 @@ TRACE_EVENT(iwlwifi_dev_ucode_error,
- 	),
- 	TP_fast_assign(
- 		DEV_ASSIGN;
--		__entry->desc = desc;
--		__entry->tsf_low = tsf_low;
--		__entry->data1 = data1;
--		__entry->data2 = data2;
--		__entry->line = line;
--		__entry->blink2 = blink2;
--		__entry->ilink1 = ilink1;
--		__entry->ilink2 = ilink2;
--		__entry->bcon_time = bcon_time;
--		__entry->gp1 = gp1;
--		__entry->gp2 = gp2;
--		__entry->rev_type = rev_type;
--		__entry->major = major;
--		__entry->minor = minor;
-+		__entry->desc = table->error_id;
-+		__entry->tsf_low = table->tsf_low;
-+		__entry->data1 = table->data1;
-+		__entry->data2 = table->data2;
-+		__entry->line = table->line;
-+		__entry->blink2 = table->blink2;
-+		__entry->ilink1 = table->ilink1;
-+		__entry->ilink2 = table->ilink2;
-+		__entry->bcon_time = table->bcon_time;
-+		__entry->gp1 = table->gp1;
-+		__entry->gp2 = table->gp2;
-+		__entry->rev_type = table->gp3;
-+		__entry->major = table->ucode_ver;
-+		__entry->minor = table->hw_ver;
- 		__entry->hw_ver = hw_ver;
- 		__entry->brd_ver = brd_ver;
- 	),
-diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-index 50510fb6ab8c..6aa719865a58 100644
---- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-+++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-@@ -30,6 +30,7 @@
- #ifndef __CHECKER__
- #include "iwl-trans.h"
- 
-+#include "dvm/commands.h"
- #define CREATE_TRACE_POINTS
- #include "iwl-devtrace.h"
- 
-diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-index d65e1db7c097..5442ead876eb 100644
---- a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-+++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-@@ -549,12 +549,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u32 base)
- 
- 	IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
- 
--	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
--				      table.data1, table.data2, table.data3,
--				      table.blink2, table.ilink1,
--				      table.ilink2, table.bcon_time, table.gp1,
--				      table.gp2, table.fw_rev_type, table.major,
--				      table.minor, table.hw_ver, table.brd_ver);
-+	trace_iwlwifi_dev_ucode_error(trans->dev, &table, table.hw_ver, table.brd_ver);
- 	IWL_ERR(mvm, "0x%08X | %-28s\n", table.error_id,
- 		desc_lookup(table.error_id));
- 	IWL_ERR(mvm, "0x%08X | trm_hw_status0\n", table.trm_hw_status0);
++	if (test_flags & 0xC0) {
++		snprintf(filename, sizeof(filename),
++			 "%s_raw_tp_kern.o", argv[0]);
++		if (load_bpf_file(filename)) {
++			printf("%s", bpf_log_buf);
++			return 1;
++		}
++		printf("w/RAW_TRACEPOINT\n");
++		run_perf_test(num_cpu, test_flags >> 6);
++		unload_progs();
++	}
++
+ 	return 0;
+ }
 -- 
 2.9.5
