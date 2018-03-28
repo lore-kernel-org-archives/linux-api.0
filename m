@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 27/30] pipe: convert to ->poll_mask
-Date: Wed, 28 Mar 2018 09:29:23 +0200
-Message-ID: <20180328072926.17131-28-hch@lst.de>
+Subject: [PATCH 29/30] timerfd: convert to ->poll_mask
+Date: Wed, 28 Mar 2018 09:29:25 +0200
+Message-ID: <20180328072926.17131-30-hch@lst.de>
 References: <20180328072926.17131-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180328072926.17131-1-hch@lst.de>
@@ -12,54 +12,54 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/pipe.c | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
+ fs/timerfd.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/fs/pipe.c b/fs/pipe.c
-index 7b1954caf388..81937590ea0a 100644
---- a/fs/pipe.c
-+++ b/fs/pipe.c
-@@ -509,19 +509,22 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	}
+diff --git a/fs/timerfd.c b/fs/timerfd.c
+index cdad49da3ff7..d84a2bee4f82 100644
+--- a/fs/timerfd.c
++++ b/fs/timerfd.c
+@@ -226,21 +226,20 @@ static int timerfd_release(struct inode *inode, struct file *file)
+ 	kfree_rcu(ctx, rcu);
+ 	return 0;
+ }
+-
+-static __poll_t timerfd_poll(struct file *file, poll_table *wait)
++	
++static struct wait_queue_head *timerfd_get_poll_head(struct file *file,
++		__poll_t eventmask)
+ {
+ 	struct timerfd_ctx *ctx = file->private_data;
+-	__poll_t events = 0;
+-	unsigned long flags;
+ 
+-	poll_wait(file, &ctx->wqh, wait);
++	return &ctx->wqh;
++}
+ 
+-	spin_lock_irqsave(&ctx->wqh.lock, flags);
+-	if (ctx->ticks)
+-		events |= EPOLLIN;
+-	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
++static __poll_t timerfd_poll_mask(struct file *file, __poll_t eventmask)
++{
++	struct timerfd_ctx *ctx = file->private_data;
+ 
+-	return events;
++	return ctx->ticks ? EPOLLIN : 0;
  }
  
--/* No kernel lock held - fine */
--static __poll_t
--pipe_poll(struct file *filp, poll_table *wait)
-+static struct wait_queue_head *
-+pipe_get_poll_head(struct file *filp, __poll_t events)
- {
--	__poll_t mask;
- 	struct pipe_inode_info *pipe = filp->private_data;
--	int nrbufs;
+ static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
+@@ -364,7 +363,8 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
  
--	poll_wait(filp, &pipe->wait, wait);
-+	return &pipe->wait;
-+}
-+
-+/* No kernel lock held - fine */
-+static __poll_t pipe_poll_mask(struct file *filp, __poll_t events)
-+{
-+	struct pipe_inode_info *pipe = filp->private_data;
-+	int nrbufs = pipe->nrbufs;
-+	__poll_t mask = 0;
- 
- 	/* Reading only -- no need for acquiring the semaphore.  */
--	nrbufs = pipe->nrbufs;
--	mask = 0;
- 	if (filp->f_mode & FMODE_READ) {
- 		mask = (nrbufs > 0) ? EPOLLIN | EPOLLRDNORM : 0;
- 		if (!pipe->writers && filp->f_version != pipe->w_counter)
-@@ -1015,7 +1018,8 @@ const struct file_operations pipefifo_fops = {
- 	.llseek		= no_llseek,
- 	.read_iter	= pipe_read,
- 	.write_iter	= pipe_write,
--	.poll		= pipe_poll,
-+	.get_poll_head	= pipe_get_poll_head,
-+	.poll_mask	= pipe_poll_mask,
- 	.unlocked_ioctl	= pipe_ioctl,
- 	.release	= pipe_release,
- 	.fasync		= pipe_fasync,
+ static const struct file_operations timerfd_fops = {
+ 	.release	= timerfd_release,
+-	.poll		= timerfd_poll,
++	.get_poll_head	= timerfd_get_poll_head,
++	.poll_mask	= timerfd_poll_mask,
+ 	.read		= timerfd_read,
+ 	.llseek		= noop_llseek,
+ 	.show_fdinfo	= timerfd_show,
 -- 
 2.14.2
 
