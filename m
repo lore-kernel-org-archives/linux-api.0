@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 05/10] macro: introduce COUNT_ARGS() macro
-Date: Tue, 27 Mar 2018 19:11:00 -0700
-Message-ID: <20180328021105.4061744-6-ast@fb.com>
+Subject: [PATCH v7 bpf-next 10/10] selftests/bpf: test for bpf_get_stackid() from raw tracepoints
+Date: Tue, 27 Mar 2018 19:11:05 -0700
+Message-ID: <20180328021105.4061744-11-ast@fb.com>
 References: <20180328021105.4061744-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,59 +14,167 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-move COUNT_ARGS() macro from apparmor to generic header and extend it
-to count till twelve.
+similar to traditional traceopint test add bpf_get_stackid() test
+from raw tracepoints
+and reduce verbosity of existing stackmap test
 
-COUNT() was an alternative name for this logic, but it's used for
-different purpose in many other places.
-
-Similarly for CONCATENATE() macro.
-
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- include/linux/kernel.h           | 7 +++++++
- security/apparmor/include/path.h | 7 +------
- 2 files changed, 8 insertions(+), 6 deletions(-)
+ tools/testing/selftests/bpf/test_progs.c | 91 ++++++++++++++++++++++++--------
+ 1 file changed, 70 insertions(+), 21 deletions(-)
 
-diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index 3fd291503576..293fa0677fba 100644
---- a/include/linux/kernel.h
-+++ b/include/linux/kernel.h
-@@ -919,6 +919,13 @@ static inline void ftrace_dump(enum ftrace_dump_mode oops_dump_mode) { }
- #define swap(a, b) \
- 	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
+index e9df48b306df..faadbe233966 100644
+--- a/tools/testing/selftests/bpf/test_progs.c
++++ b/tools/testing/selftests/bpf/test_progs.c
+@@ -877,7 +877,7 @@ static void test_stacktrace_map()
  
-+/* This counts to 12. Any more, it will return 13th argument. */
-+#define __COUNT_ARGS(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _n, X...) _n
-+#define COUNT_ARGS(X...) __COUNT_ARGS(, ##X, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-+
-+#define __CONCAT(a, b) a ## b
-+#define CONCATENATE(a, b) __CONCAT(a, b)
-+
- /**
-  * container_of - cast a member of a structure out to the containing structure
-  * @ptr:	the pointer to the member.
-diff --git a/security/apparmor/include/path.h b/security/apparmor/include/path.h
-index 05fb3305671e..e042b994f2b8 100644
---- a/security/apparmor/include/path.h
-+++ b/security/apparmor/include/path.h
-@@ -43,15 +43,10 @@ struct aa_buffers {
+ 	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
+ 	if (CHECK(err, "prog_load", "err %d errno %d\n", err, errno))
+-		goto out;
++		return;
  
- DECLARE_PER_CPU(struct aa_buffers, aa_buffers);
+ 	/* Get the ID for the sched/sched_switch tracepoint */
+ 	snprintf(buf, sizeof(buf),
+@@ -888,8 +888,7 @@ static void test_stacktrace_map()
  
--#define COUNT_ARGS(X...) COUNT_ARGS_HELPER(, ##X, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
--#define COUNT_ARGS_HELPER(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, n, X...) n
--#define CONCAT(X, Y) X ## Y
--#define CONCAT_AFTER(X, Y) CONCAT(X, Y)
+ 	bytes = read(efd, buf, sizeof(buf));
+ 	close(efd);
+-	if (CHECK(bytes <= 0 || bytes >= sizeof(buf),
+-		  "read", "bytes %d errno %d\n", bytes, errno))
++	if (bytes <= 0 || bytes >= sizeof(buf))
+ 		goto close_prog;
+ 
+ 	/* Open the perf event and attach bpf progrram */
+@@ -906,29 +905,24 @@ static void test_stacktrace_map()
+ 		goto close_prog;
+ 
+ 	err = ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0);
+-	if (CHECK(err, "perf_event_ioc_enable", "err %d errno %d\n",
+-		  err, errno))
+-		goto close_pmu;
++	if (err)
++		goto disable_pmu;
+ 
+ 	err = ioctl(pmu_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+-	if (CHECK(err, "perf_event_ioc_set_bpf", "err %d errno %d\n",
+-		  err, errno))
++	if (err)
+ 		goto disable_pmu;
+ 
+ 	/* find map fds */
+ 	control_map_fd = bpf_find_map(__func__, obj, "control_map");
+-	if (CHECK(control_map_fd < 0, "bpf_find_map control_map",
+-		  "err %d errno %d\n", err, errno))
++	if (control_map_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
+-	if (CHECK(stackid_hmap_fd < 0, "bpf_find_map stackid_hmap",
+-		  "err %d errno %d\n", err, errno))
++	if (stackid_hmap_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
+-	if (CHECK(stackmap_fd < 0, "bpf_find_map stackmap", "err %d errno %d\n",
+-		  err, errno))
++	if (stackmap_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	/* give some time for bpf program run */
+@@ -945,24 +939,78 @@ static void test_stacktrace_map()
+ 	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
+ 	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
+ 		  "err %d errno %d\n", err, errno))
+-		goto disable_pmu;
++		goto disable_pmu_noerr;
+ 
+ 	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
+ 	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
+ 		  "err %d errno %d\n", err, errno))
+-		; /* fall through */
++		goto disable_pmu_noerr;
+ 
++	goto disable_pmu_noerr;
+ disable_pmu:
++	error_cnt++;
++disable_pmu_noerr:
+ 	ioctl(pmu_fd, PERF_EVENT_IOC_DISABLE);
 -
- #define ASSIGN(FN, X, N) ((X) = FN(N))
- #define EVAL1(FN, X) ASSIGN(FN, X, 0) /*X = FN(0)*/
- #define EVAL2(FN, X, Y...) do { ASSIGN(FN, X, 1);  EVAL1(FN, Y); } while (0)
--#define EVAL(FN, X...) CONCAT_AFTER(EVAL, COUNT_ARGS(X))(FN, X)
-+#define EVAL(FN, X...) CONCATENATE(EVAL, COUNT_ARGS(X))(FN, X)
+-close_pmu:
+ 	close(pmu_fd);
+-
+ close_prog:
+ 	bpf_object__close(obj);
++}
  
- #define for_each_cpu_buffer(I) for ((I) = 0; (I) < MAX_PATH_BUFFERS; (I)++)
+-out:
+-	return;
++static void test_stacktrace_map_raw_tp()
++{
++	int control_map_fd, stackid_hmap_fd, stackmap_fd;
++	const char *file = "./test_stacktrace_map.o";
++	int efd, err, prog_fd;
++	__u32 key, val, duration = 0;
++	struct bpf_object *obj;
++
++	err = bpf_prog_load(file, BPF_PROG_TYPE_RAW_TRACEPOINT, &obj, &prog_fd);
++	if (CHECK(err, "prog_load raw tp", "err %d errno %d\n", err, errno))
++		return;
++
++	efd = bpf_raw_tracepoint_open("sched_switch", prog_fd);
++	if (CHECK(efd < 0, "raw_tp_open", "err %d errno %d\n", efd, errno))
++		goto close_prog;
++
++	/* find map fds */
++	control_map_fd = bpf_find_map(__func__, obj, "control_map");
++	if (control_map_fd < 0)
++		goto close_prog;
++
++	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
++	if (stackid_hmap_fd < 0)
++		goto close_prog;
++
++	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
++	if (stackmap_fd < 0)
++		goto close_prog;
++
++	/* give some time for bpf program run */
++	sleep(1);
++
++	/* disable stack trace collection */
++	key = 0;
++	val = 1;
++	bpf_map_update_elem(control_map_fd, &key, &val, 0);
++
++	/* for every element in stackid_hmap, we can find a corresponding one
++	 * in stackmap, and vise versa.
++	 */
++	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
++	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
++		  "err %d errno %d\n", err, errno))
++		goto close_prog;
++
++	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
++	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
++		  "err %d errno %d\n", err, errno))
++		goto close_prog;
++
++	goto close_prog_noerr;
++close_prog:
++	error_cnt++;
++close_prog_noerr:
++	bpf_object__close(obj);
+ }
  
+ static int extract_build_id(char *build_id, size_t size)
+@@ -1138,6 +1186,7 @@ int main(void)
+ 	test_tp_attach_query();
+ 	test_stacktrace_map();
+ 	test_stacktrace_build_id();
++	test_stacktrace_map_raw_tp();
+ 
+ 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
+ 	return error_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
 -- 
 2.9.5
