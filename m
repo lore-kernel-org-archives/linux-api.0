@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build time
-Date: Tue, 27 Mar 2018 19:11:01 -0700
-Message-ID: <20180328021105.4061744-7-ast@fb.com>
+Subject: [PATCH v7 bpf-next 08/10] libbpf: add bpf_raw_tracepoint_open helper
+Date: Tue, 27 Mar 2018 19:11:03 -0700
+Message-ID: <20180328021105.4061744-9-ast@fb.com>
 References: <20180328021105.4061744-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,120 +14,87 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-compute number of arguments passed into tracepoint
-at compile time and store it as part of 'struct tracepoint'.
-The number is necessary to check safety of bpf program access that
-is coming in subsequent patch.
+add bpf_raw_tracepoint_open(const char *name, int prog_fd) api to libbpf
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
-Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- include/linux/tracepoint-defs.h |  1 +
- include/linux/tracepoint.h      | 12 ++++++------
- include/trace/define_trace.h    | 14 +++++++-------
- 3 files changed, 14 insertions(+), 13 deletions(-)
+ tools/include/uapi/linux/bpf.h | 11 +++++++++++
+ tools/lib/bpf/bpf.c            | 11 +++++++++++
+ tools/lib/bpf/bpf.h            |  1 +
+ 3 files changed, 23 insertions(+)
 
-diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
-index 64ed7064f1fa..39a283c61c51 100644
---- a/include/linux/tracepoint-defs.h
-+++ b/include/linux/tracepoint-defs.h
-@@ -33,6 +33,7 @@ struct tracepoint {
- 	int (*regfunc)(void);
- 	void (*unregfunc)(void);
- 	struct tracepoint_func __rcu *funcs;
-+	u32 num_args;
+diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
+index d245c41213ac..58060bec999d 100644
+--- a/tools/include/uapi/linux/bpf.h
++++ b/tools/include/uapi/linux/bpf.h
+@@ -94,6 +94,7 @@ enum bpf_cmd {
+ 	BPF_MAP_GET_FD_BY_ID,
+ 	BPF_OBJ_GET_INFO_BY_FD,
+ 	BPF_PROG_QUERY,
++	BPF_RAW_TRACEPOINT_OPEN,
  };
  
+ enum bpf_map_type {
+@@ -134,6 +135,7 @@ enum bpf_prog_type {
+ 	BPF_PROG_TYPE_SK_SKB,
+ 	BPF_PROG_TYPE_CGROUP_DEVICE,
+ 	BPF_PROG_TYPE_SK_MSG,
++	BPF_PROG_TYPE_RAW_TRACEPOINT,
+ };
+ 
+ enum bpf_attach_type {
+@@ -344,6 +346,11 @@ union bpf_attr {
+ 		__aligned_u64	prog_ids;
+ 		__u32		prog_cnt;
+ 	} query;
++
++	struct {
++		__u64 name;
++		__u32 prog_fd;
++	} raw_tracepoint;
+ } __attribute__((aligned(8)));
+ 
+ /* BPF helper function descriptions:
+@@ -1151,4 +1158,8 @@ struct bpf_cgroup_dev_ctx {
+ 	__u32 minor;
+ };
+ 
++struct bpf_raw_tracepoint_args {
++	__u64 args[0];
++};
++
+ #endif /* _UAPI__LINUX_BPF_H__ */
+diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
+index 592a58a2b681..e0500055f1a6 100644
+--- a/tools/lib/bpf/bpf.c
++++ b/tools/lib/bpf/bpf.c
+@@ -428,6 +428,17 @@ int bpf_obj_get_info_by_fd(int prog_fd, void *info, __u32 *info_len)
+ 	return err;
+ }
+ 
++int bpf_raw_tracepoint_open(const char *name, int prog_fd)
++{
++	union bpf_attr attr;
++
++	bzero(&attr, sizeof(attr));
++	attr.raw_tracepoint.name = ptr_to_u64(name);
++	attr.raw_tracepoint.prog_fd = prog_fd;
++
++	return sys_bpf(BPF_RAW_TRACEPOINT_OPEN, &attr, sizeof(attr));
++}
++
+ int bpf_set_link_xdp_fd(int ifindex, int fd, __u32 flags)
+ {
+ 	struct sockaddr_nl sa;
+diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
+index 8d18fb73d7fb..ee59342c6f42 100644
+--- a/tools/lib/bpf/bpf.h
++++ b/tools/lib/bpf/bpf.h
+@@ -79,4 +79,5 @@ int bpf_map_get_fd_by_id(__u32 id);
+ int bpf_obj_get_info_by_fd(int prog_fd, void *info, __u32 *info_len);
+ int bpf_prog_query(int target_fd, enum bpf_attach_type type, __u32 query_flags,
+ 		   __u32 *attach_flags, __u32 *prog_ids, __u32 *prog_cnt);
++int bpf_raw_tracepoint_open(const char *name, int prog_fd);
  #endif
-diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
-index c94f466d57ef..c92f4adbc0d7 100644
---- a/include/linux/tracepoint.h
-+++ b/include/linux/tracepoint.h
-@@ -230,18 +230,18 @@ extern void syscall_unregfunc(void);
-  * structures, so we create an array of pointers that will be used for iteration
-  * on the tracepoints.
-  */
--#define DEFINE_TRACE_FN(name, reg, unreg)				 \
-+#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
- 	static const char __tpstrtab_##name[]				 \
- 	__attribute__((section("__tracepoints_strings"))) = #name;	 \
- 	struct tracepoint __tracepoint_##name				 \
- 	__attribute__((section("__tracepoints"))) =			 \
--		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
-+		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
- 	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
- 	__attribute__((section("__tracepoints_ptrs"))) =		 \
- 		&__tracepoint_##name;
- 
--#define DEFINE_TRACE(name)						\
--	DEFINE_TRACE_FN(name, NULL, NULL);
-+#define DEFINE_TRACE(name, num_args)					\
-+	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
- 
- #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
- 	EXPORT_SYMBOL_GPL(__tracepoint_##name)
-@@ -275,8 +275,8 @@ extern void syscall_unregfunc(void);
- 		return false;						\
- 	}
- 
--#define DEFINE_TRACE_FN(name, reg, unreg)
--#define DEFINE_TRACE(name)
-+#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
-+#define DEFINE_TRACE(name, num_args)
- #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
- #define EXPORT_TRACEPOINT_SYMBOL(name)
- 
-diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
-index d9e3d4aa3f6e..96b22ace9ae7 100644
---- a/include/trace/define_trace.h
-+++ b/include/trace/define_trace.h
-@@ -25,7 +25,7 @@
- 
- #undef TRACE_EVENT
- #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, COUNT_ARGS(args))
- 
- #undef TRACE_EVENT_CONDITION
- #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
-@@ -39,24 +39,24 @@
- #undef TRACE_EVENT_FN
- #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
- 		assign, print, reg, unreg)			\
--	DEFINE_TRACE_FN(name, reg, unreg)
-+	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
- 
- #undef TRACE_EVENT_FN_COND
- #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
- 		assign, print, reg, unreg)			\
--	DEFINE_TRACE_FN(name, reg, unreg)
-+	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
- 
- #undef DEFINE_EVENT
- #define DEFINE_EVENT(template, name, proto, args) \
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, COUNT_ARGS(args))
- 
- #undef DEFINE_EVENT_FN
- #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
--	DEFINE_TRACE_FN(name, reg, unreg)
-+	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
- 
- #undef DEFINE_EVENT_PRINT
- #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, COUNT_ARGS(args))
- 
- #undef DEFINE_EVENT_CONDITION
- #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
-@@ -64,7 +64,7 @@
- 
- #undef DECLARE_TRACE
- #define DECLARE_TRACE(name, proto, args)	\
--	DEFINE_TRACE(name)
-+	DEFINE_TRACE(name, COUNT_ARGS(args))
- 
- #undef TRACE_INCLUDE
- #undef __TRACE_INCLUDE
 -- 
 2.9.5
