@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@kernel.org>
-Subject: [PATCH v8 bpf-next 9/9] selftests/bpf: test for bpf_get_stackid() from raw tracepoints
-Date: Wed, 28 Mar 2018 12:05:40 -0700
-Message-ID: <20180328190540.370956-10-ast@kernel.org>
+Subject: [PATCH v8 bpf-next 8/9] samples/bpf: raw tracepoint test
+Date: Wed, 28 Mar 2018 12:05:39 -0700
+Message-ID: <20180328190540.370956-9-ast@kernel.org>
 References: <20180328190540.370956-1-ast@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,167 +12,120 @@ To: davem@davemloft.net
 Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-similar to traditional traceopint test add bpf_get_stackid() test
-from raw tracepoints
-and reduce verbosity of existing stackmap test
+add empty raw_tracepoint bpf program to test overhead similar
+to kprobe and traditional tracepoint tests
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- tools/testing/selftests/bpf/test_progs.c | 91 ++++++++++++++++++++++++--------
- 1 file changed, 70 insertions(+), 21 deletions(-)
+ samples/bpf/Makefile                    |  1 +
+ samples/bpf/bpf_load.c                  | 14 ++++++++++++++
+ samples/bpf/test_overhead_raw_tp_kern.c | 17 +++++++++++++++++
+ samples/bpf/test_overhead_user.c        | 12 ++++++++++++
+ 4 files changed, 44 insertions(+)
+ create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
 
-diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-index e9df48b306df..faadbe233966 100644
---- a/tools/testing/selftests/bpf/test_progs.c
-+++ b/tools/testing/selftests/bpf/test_progs.c
-@@ -877,7 +877,7 @@ static void test_stacktrace_map()
+diff --git a/samples/bpf/Makefile b/samples/bpf/Makefile
+index 2c2a587e0942..4d6a6edd4bf6 100644
+--- a/samples/bpf/Makefile
++++ b/samples/bpf/Makefile
+@@ -119,6 +119,7 @@ always += offwaketime_kern.o
+ always += spintest_kern.o
+ always += map_perf_test_kern.o
+ always += test_overhead_tp_kern.o
++always += test_overhead_raw_tp_kern.o
+ always += test_overhead_kprobe_kern.o
+ always += parse_varlen.o parse_simple.o parse_ldabs.o
+ always += test_cgrp2_tc_kern.o
+diff --git a/samples/bpf/bpf_load.c b/samples/bpf/bpf_load.c
+index b1a310c3ae89..bebe4188b4b3 100644
+--- a/samples/bpf/bpf_load.c
++++ b/samples/bpf/bpf_load.c
+@@ -61,6 +61,7 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
+ 	bool is_kprobe = strncmp(event, "kprobe/", 7) == 0;
+ 	bool is_kretprobe = strncmp(event, "kretprobe/", 10) == 0;
+ 	bool is_tracepoint = strncmp(event, "tracepoint/", 11) == 0;
++	bool is_raw_tracepoint = strncmp(event, "raw_tracepoint/", 15) == 0;
+ 	bool is_xdp = strncmp(event, "xdp", 3) == 0;
+ 	bool is_perf_event = strncmp(event, "perf_event", 10) == 0;
+ 	bool is_cgroup_skb = strncmp(event, "cgroup/skb", 10) == 0;
+@@ -85,6 +86,8 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
+ 		prog_type = BPF_PROG_TYPE_KPROBE;
+ 	} else if (is_tracepoint) {
+ 		prog_type = BPF_PROG_TYPE_TRACEPOINT;
++	} else if (is_raw_tracepoint) {
++		prog_type = BPF_PROG_TYPE_RAW_TRACEPOINT;
+ 	} else if (is_xdp) {
+ 		prog_type = BPF_PROG_TYPE_XDP;
+ 	} else if (is_perf_event) {
+@@ -131,6 +134,16 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
+ 		return populate_prog_array(event, fd);
+ 	}
  
- 	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
- 	if (CHECK(err, "prog_load", "err %d errno %d\n", err, errno))
--		goto out;
-+		return;
- 
- 	/* Get the ID for the sched/sched_switch tracepoint */
- 	snprintf(buf, sizeof(buf),
-@@ -888,8 +888,7 @@ static void test_stacktrace_map()
- 
- 	bytes = read(efd, buf, sizeof(buf));
- 	close(efd);
--	if (CHECK(bytes <= 0 || bytes >= sizeof(buf),
--		  "read", "bytes %d errno %d\n", bytes, errno))
-+	if (bytes <= 0 || bytes >= sizeof(buf))
- 		goto close_prog;
- 
- 	/* Open the perf event and attach bpf progrram */
-@@ -906,29 +905,24 @@ static void test_stacktrace_map()
- 		goto close_prog;
- 
- 	err = ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0);
--	if (CHECK(err, "perf_event_ioc_enable", "err %d errno %d\n",
--		  err, errno))
--		goto close_pmu;
-+	if (err)
-+		goto disable_pmu;
- 
- 	err = ioctl(pmu_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
--	if (CHECK(err, "perf_event_ioc_set_bpf", "err %d errno %d\n",
--		  err, errno))
-+	if (err)
- 		goto disable_pmu;
- 
- 	/* find map fds */
- 	control_map_fd = bpf_find_map(__func__, obj, "control_map");
--	if (CHECK(control_map_fd < 0, "bpf_find_map control_map",
--		  "err %d errno %d\n", err, errno))
-+	if (control_map_fd < 0)
- 		goto disable_pmu;
- 
- 	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
--	if (CHECK(stackid_hmap_fd < 0, "bpf_find_map stackid_hmap",
--		  "err %d errno %d\n", err, errno))
-+	if (stackid_hmap_fd < 0)
- 		goto disable_pmu;
- 
- 	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
--	if (CHECK(stackmap_fd < 0, "bpf_find_map stackmap", "err %d errno %d\n",
--		  err, errno))
-+	if (stackmap_fd < 0)
- 		goto disable_pmu;
- 
- 	/* give some time for bpf program run */
-@@ -945,24 +939,78 @@ static void test_stacktrace_map()
- 	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
- 	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
- 		  "err %d errno %d\n", err, errno))
--		goto disable_pmu;
-+		goto disable_pmu_noerr;
- 
- 	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
- 	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
- 		  "err %d errno %d\n", err, errno))
--		; /* fall through */
-+		goto disable_pmu_noerr;
- 
-+	goto disable_pmu_noerr;
- disable_pmu:
-+	error_cnt++;
-+disable_pmu_noerr:
- 	ioctl(pmu_fd, PERF_EVENT_IOC_DISABLE);
--
--close_pmu:
- 	close(pmu_fd);
--
- close_prog:
- 	bpf_object__close(obj);
-+}
- 
--out:
--	return;
-+static void test_stacktrace_map_raw_tp()
++	if (is_raw_tracepoint) {
++		efd = bpf_raw_tracepoint_open(event + 15, fd);
++		if (efd < 0) {
++			printf("tracepoint %s %s\n", event + 15, strerror(errno));
++			return -1;
++		}
++		event_fd[prog_cnt - 1] = efd;
++		return 0;
++	}
++
+ 	if (is_kprobe || is_kretprobe) {
+ 		if (is_kprobe)
+ 			event += 7;
+@@ -587,6 +600,7 @@ static int do_load_bpf_file(const char *path, fixup_map_cb fixup_map)
+ 		if (memcmp(shname, "kprobe/", 7) == 0 ||
+ 		    memcmp(shname, "kretprobe/", 10) == 0 ||
+ 		    memcmp(shname, "tracepoint/", 11) == 0 ||
++		    memcmp(shname, "raw_tracepoint/", 15) == 0 ||
+ 		    memcmp(shname, "xdp", 3) == 0 ||
+ 		    memcmp(shname, "perf_event", 10) == 0 ||
+ 		    memcmp(shname, "socket", 6) == 0 ||
+diff --git a/samples/bpf/test_overhead_raw_tp_kern.c b/samples/bpf/test_overhead_raw_tp_kern.c
+new file mode 100644
+index 000000000000..d2af8bc1c805
+--- /dev/null
++++ b/samples/bpf/test_overhead_raw_tp_kern.c
+@@ -0,0 +1,17 @@
++// SPDX-License-Identifier: GPL-2.0
++/* Copyright (c) 2018 Facebook */
++#include <uapi/linux/bpf.h>
++#include "bpf_helpers.h"
++
++SEC("raw_tracepoint/task_rename")
++int prog(struct bpf_raw_tracepoint_args *ctx)
 +{
-+	int control_map_fd, stackid_hmap_fd, stackmap_fd;
-+	const char *file = "./test_stacktrace_map.o";
-+	int efd, err, prog_fd;
-+	__u32 key, val, duration = 0;
-+	struct bpf_object *obj;
++	return 0;
++}
 +
-+	err = bpf_prog_load(file, BPF_PROG_TYPE_RAW_TRACEPOINT, &obj, &prog_fd);
-+	if (CHECK(err, "prog_load raw tp", "err %d errno %d\n", err, errno))
-+		return;
++SEC("raw_tracepoint/urandom_read")
++int prog2(struct bpf_raw_tracepoint_args *ctx)
++{
++	return 0;
++}
++char _license[] SEC("license") = "GPL";
+diff --git a/samples/bpf/test_overhead_user.c b/samples/bpf/test_overhead_user.c
+index d291167fd3c7..e1d35e07a10e 100644
+--- a/samples/bpf/test_overhead_user.c
++++ b/samples/bpf/test_overhead_user.c
+@@ -158,5 +158,17 @@ int main(int argc, char **argv)
+ 		unload_progs();
+ 	}
+ 
++	if (test_flags & 0xC0) {
++		snprintf(filename, sizeof(filename),
++			 "%s_raw_tp_kern.o", argv[0]);
++		if (load_bpf_file(filename)) {
++			printf("%s", bpf_log_buf);
++			return 1;
++		}
++		printf("w/RAW_TRACEPOINT\n");
++		run_perf_test(num_cpu, test_flags >> 6);
++		unload_progs();
++	}
 +
-+	efd = bpf_raw_tracepoint_open("sched_switch", prog_fd);
-+	if (CHECK(efd < 0, "raw_tp_open", "err %d errno %d\n", efd, errno))
-+		goto close_prog;
-+
-+	/* find map fds */
-+	control_map_fd = bpf_find_map(__func__, obj, "control_map");
-+	if (control_map_fd < 0)
-+		goto close_prog;
-+
-+	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
-+	if (stackid_hmap_fd < 0)
-+		goto close_prog;
-+
-+	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
-+	if (stackmap_fd < 0)
-+		goto close_prog;
-+
-+	/* give some time for bpf program run */
-+	sleep(1);
-+
-+	/* disable stack trace collection */
-+	key = 0;
-+	val = 1;
-+	bpf_map_update_elem(control_map_fd, &key, &val, 0);
-+
-+	/* for every element in stackid_hmap, we can find a corresponding one
-+	 * in stackmap, and vise versa.
-+	 */
-+	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
-+	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
-+		  "err %d errno %d\n", err, errno))
-+		goto close_prog;
-+
-+	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
-+	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
-+		  "err %d errno %d\n", err, errno))
-+		goto close_prog;
-+
-+	goto close_prog_noerr;
-+close_prog:
-+	error_cnt++;
-+close_prog_noerr:
-+	bpf_object__close(obj);
+ 	return 0;
  }
- 
- static int extract_build_id(char *build_id, size_t size)
-@@ -1138,6 +1186,7 @@ int main(void)
- 	test_tp_attach_query();
- 	test_stacktrace_map();
- 	test_stacktrace_build_id();
-+	test_stacktrace_map_raw_tp();
- 
- 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
- 	return error_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
 -- 
 2.9.5
