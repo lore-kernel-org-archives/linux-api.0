@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 09/10] samples/bpf: raw tracepoint test
-Date: Tue, 27 Mar 2018 19:11:04 -0700
-Message-ID: <20180328021105.4061744-10-ast@fb.com>
+Subject: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build time
+Date: Tue, 27 Mar 2018 19:11:01 -0700
+Message-ID: <20180328021105.4061744-7-ast@fb.com>
 References: <20180328021105.4061744-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,120 +14,120 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-add empty raw_tracepoint bpf program to test overhead similar
-to kprobe and traditional tracepoint tests
+compute number of arguments passed into tracepoint
+at compile time and store it as part of 'struct tracepoint'.
+The number is necessary to check safety of bpf program access that
+is coming in subsequent patch.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- samples/bpf/Makefile                    |  1 +
- samples/bpf/bpf_load.c                  | 14 ++++++++++++++
- samples/bpf/test_overhead_raw_tp_kern.c | 17 +++++++++++++++++
- samples/bpf/test_overhead_user.c        | 12 ++++++++++++
- 4 files changed, 44 insertions(+)
- create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
+ include/linux/tracepoint-defs.h |  1 +
+ include/linux/tracepoint.h      | 12 ++++++------
+ include/trace/define_trace.h    | 14 +++++++-------
+ 3 files changed, 14 insertions(+), 13 deletions(-)
 
-diff --git a/samples/bpf/Makefile b/samples/bpf/Makefile
-index 2c2a587e0942..4d6a6edd4bf6 100644
---- a/samples/bpf/Makefile
-+++ b/samples/bpf/Makefile
-@@ -119,6 +119,7 @@ always += offwaketime_kern.o
- always += spintest_kern.o
- always += map_perf_test_kern.o
- always += test_overhead_tp_kern.o
-+always += test_overhead_raw_tp_kern.o
- always += test_overhead_kprobe_kern.o
- always += parse_varlen.o parse_simple.o parse_ldabs.o
- always += test_cgrp2_tc_kern.o
-diff --git a/samples/bpf/bpf_load.c b/samples/bpf/bpf_load.c
-index b1a310c3ae89..bebe4188b4b3 100644
---- a/samples/bpf/bpf_load.c
-+++ b/samples/bpf/bpf_load.c
-@@ -61,6 +61,7 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
- 	bool is_kprobe = strncmp(event, "kprobe/", 7) == 0;
- 	bool is_kretprobe = strncmp(event, "kretprobe/", 10) == 0;
- 	bool is_tracepoint = strncmp(event, "tracepoint/", 11) == 0;
-+	bool is_raw_tracepoint = strncmp(event, "raw_tracepoint/", 15) == 0;
- 	bool is_xdp = strncmp(event, "xdp", 3) == 0;
- 	bool is_perf_event = strncmp(event, "perf_event", 10) == 0;
- 	bool is_cgroup_skb = strncmp(event, "cgroup/skb", 10) == 0;
-@@ -85,6 +86,8 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
- 		prog_type = BPF_PROG_TYPE_KPROBE;
- 	} else if (is_tracepoint) {
- 		prog_type = BPF_PROG_TYPE_TRACEPOINT;
-+	} else if (is_raw_tracepoint) {
-+		prog_type = BPF_PROG_TYPE_RAW_TRACEPOINT;
- 	} else if (is_xdp) {
- 		prog_type = BPF_PROG_TYPE_XDP;
- 	} else if (is_perf_event) {
-@@ -131,6 +134,16 @@ static int load_and_attach(const char *event, struct bpf_insn *prog, int size)
- 		return populate_prog_array(event, fd);
+diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
+index 64ed7064f1fa..39a283c61c51 100644
+--- a/include/linux/tracepoint-defs.h
++++ b/include/linux/tracepoint-defs.h
+@@ -33,6 +33,7 @@ struct tracepoint {
+ 	int (*regfunc)(void);
+ 	void (*unregfunc)(void);
+ 	struct tracepoint_func __rcu *funcs;
++	u32 num_args;
+ };
+ 
+ #endif
+diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
+index c94f466d57ef..c92f4adbc0d7 100644
+--- a/include/linux/tracepoint.h
++++ b/include/linux/tracepoint.h
+@@ -230,18 +230,18 @@ extern void syscall_unregfunc(void);
+  * structures, so we create an array of pointers that will be used for iteration
+  * on the tracepoints.
+  */
+-#define DEFINE_TRACE_FN(name, reg, unreg)				 \
++#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
+ 	static const char __tpstrtab_##name[]				 \
+ 	__attribute__((section("__tracepoints_strings"))) = #name;	 \
+ 	struct tracepoint __tracepoint_##name				 \
+ 	__attribute__((section("__tracepoints"))) =			 \
+-		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
++		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
+ 	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
+ 	__attribute__((section("__tracepoints_ptrs"))) =		 \
+ 		&__tracepoint_##name;
+ 
+-#define DEFINE_TRACE(name)						\
+-	DEFINE_TRACE_FN(name, NULL, NULL);
++#define DEFINE_TRACE(name, num_args)					\
++	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
+ 
+ #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
+ 	EXPORT_SYMBOL_GPL(__tracepoint_##name)
+@@ -275,8 +275,8 @@ extern void syscall_unregfunc(void);
+ 		return false;						\
  	}
  
-+	if (is_raw_tracepoint) {
-+		efd = bpf_raw_tracepoint_open(event + 15, fd);
-+		if (efd < 0) {
-+			printf("tracepoint %s %s\n", event + 15, strerror(errno));
-+			return -1;
-+		}
-+		event_fd[prog_cnt - 1] = efd;
-+		return 0;
-+	}
-+
- 	if (is_kprobe || is_kretprobe) {
- 		if (is_kprobe)
- 			event += 7;
-@@ -587,6 +600,7 @@ static int do_load_bpf_file(const char *path, fixup_map_cb fixup_map)
- 		if (memcmp(shname, "kprobe/", 7) == 0 ||
- 		    memcmp(shname, "kretprobe/", 10) == 0 ||
- 		    memcmp(shname, "tracepoint/", 11) == 0 ||
-+		    memcmp(shname, "raw_tracepoint/", 15) == 0 ||
- 		    memcmp(shname, "xdp", 3) == 0 ||
- 		    memcmp(shname, "perf_event", 10) == 0 ||
- 		    memcmp(shname, "socket", 6) == 0 ||
-diff --git a/samples/bpf/test_overhead_raw_tp_kern.c b/samples/bpf/test_overhead_raw_tp_kern.c
-new file mode 100644
-index 000000000000..d2af8bc1c805
---- /dev/null
-+++ b/samples/bpf/test_overhead_raw_tp_kern.c
-@@ -0,0 +1,17 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/* Copyright (c) 2018 Facebook */
-+#include <uapi/linux/bpf.h>
-+#include "bpf_helpers.h"
-+
-+SEC("raw_tracepoint/task_rename")
-+int prog(struct bpf_raw_tracepoint_args *ctx)
-+{
-+	return 0;
-+}
-+
-+SEC("raw_tracepoint/urandom_read")
-+int prog2(struct bpf_raw_tracepoint_args *ctx)
-+{
-+	return 0;
-+}
-+char _license[] SEC("license") = "GPL";
-diff --git a/samples/bpf/test_overhead_user.c b/samples/bpf/test_overhead_user.c
-index d291167fd3c7..e1d35e07a10e 100644
---- a/samples/bpf/test_overhead_user.c
-+++ b/samples/bpf/test_overhead_user.c
-@@ -158,5 +158,17 @@ int main(int argc, char **argv)
- 		unload_progs();
- 	}
+-#define DEFINE_TRACE_FN(name, reg, unreg)
+-#define DEFINE_TRACE(name)
++#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
++#define DEFINE_TRACE(name, num_args)
+ #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
+ #define EXPORT_TRACEPOINT_SYMBOL(name)
  
-+	if (test_flags & 0xC0) {
-+		snprintf(filename, sizeof(filename),
-+			 "%s_raw_tp_kern.o", argv[0]);
-+		if (load_bpf_file(filename)) {
-+			printf("%s", bpf_log_buf);
-+			return 1;
-+		}
-+		printf("w/RAW_TRACEPOINT\n");
-+		run_perf_test(num_cpu, test_flags >> 6);
-+		unload_progs();
-+	}
-+
- 	return 0;
- }
+diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
+index d9e3d4aa3f6e..96b22ace9ae7 100644
+--- a/include/trace/define_trace.h
++++ b/include/trace/define_trace.h
+@@ -25,7 +25,7 @@
+ 
+ #undef TRACE_EVENT
+ #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef TRACE_EVENT_CONDITION
+ #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
+@@ -39,24 +39,24 @@
+ #undef TRACE_EVENT_FN
+ #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
+ 		assign, print, reg, unreg)			\
+-	DEFINE_TRACE_FN(name, reg, unreg)
++	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+ 
+ #undef TRACE_EVENT_FN_COND
+ #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
+ 		assign, print, reg, unreg)			\
+-	DEFINE_TRACE_FN(name, reg, unreg)
++	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT
+ #define DEFINE_EVENT(template, name, proto, args) \
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT_FN
+ #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
+-	DEFINE_TRACE_FN(name, reg, unreg)
++	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT_PRINT
+ #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef DEFINE_EVENT_CONDITION
+ #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
+@@ -64,7 +64,7 @@
+ 
+ #undef DECLARE_TRACE
+ #define DECLARE_TRACE(name, proto, args)	\
+-	DEFINE_TRACE(name)
++	DEFINE_TRACE(name, COUNT_ARGS(args))
+ 
+ #undef TRACE_INCLUDE
+ #undef __TRACE_INCLUDE
 -- 
 2.9.5
