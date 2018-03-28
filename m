@@ -1,104 +1,78 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.17 10/21] cpu_opv: Provide cpu_opv system call
- (v6)
-Date: Wed, 28 Mar 2018 13:54:41 -0400 (EDT)
-Message-ID: <1109208604.169.1522259681295.JavaMail.zimbra@efficios.com>
-References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com> <20180327160542.28457-11-mathieu.desnoyers@efficios.com> <20180328152203.GW4043@hirez.programming.kicks-ass.net>
+From: Alexei Starovoitov <ast@fb.com>
+Subject: Re: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build
+ time
+Date: Wed, 28 Mar 2018 11:03:24 -0700
+Message-ID: <80d7af37-10ef-28d7-f03f-27b4b5849cd1@fb.com>
+References: <20180328021105.4061744-1-ast@fb.com>
+ <20180328021105.4061744-7-ast@fb.com>
+ <1074829260.1986.1522244964935.JavaMail.zimbra@efficios.com>
+ <67c5f9b4-b24a-2806-e8d6-8b5241c66d6e@fb.com>
+ <20180328130407.7476cf17@gandalf.local.home>
+ <fdcb0bf0-f896-ffb3-b9de-0b17f5f70fc6@fb.com>
+ <20180328133830.3d5d74d3@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180328152203.GW4043@hirez.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180328133830.3d5d74d3@gandalf.local.home>
+Sender: netdev-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 28, 2018, at 11:22 AM, Peter Zijlstra peterz@infradead.org wrote:
+On 3/28/18 10:38 AM, Steven Rostedt wrote:
+> On Wed, 28 Mar 2018 10:10:34 -0700
+> Alexei Starovoitov <ast@fb.com> wrote:
+>
+>
+>>> and have:
+>>>
+>>> 	u64 tp_offset = (u64)tp - (u64)_sdata;
+>>>
+>>> 	if (WARN_ON(tp_offset > UINT_MAX)
+>>> 		return -EINVAL;
+>>>
+>>> 	 btp->tp_offset = (u32)tp_offset;
+>>
+>> above math has to be build time constant, so warn_on likely
+>> won't work.
+>
+> Right, it would require a BUILD_BUG_ON.
+>
+>> imo the whole thing is too fragile and obscure.
+>> I suggest to compress this 8 bytes * num_of_tracepoints later.
+>> Especially would be good to do it in one way for
+>> bpf_raw_event_map, ftrace and other places.
+>
+> Fair enough. We can defer this shrinkage to another time. I only
+> suggested it here over your concern for the added bloat.
 
-> On Tue, Mar 27, 2018 at 12:05:31PM -0400, Mathieu Desnoyers wrote:
-> 
->> 1) Allow algorithms to perform per-cpu data migration without relying on
->>    sched_setaffinity()
->> 
->> The use-cases are migrating memory between per-cpu memory free-lists, or
->> stealing tasks from other per-cpu work queues: each require that
->> accesses to remote per-cpu data structures are performed.
-> 
-> I think that one completely reduces to the per-cpu (spin)lock case,
-> right? Because, as per the below, your logging case (8) can 'easily' be
-> done without the cpu_opv monstrosity.
-> 
-> And if you can construct a per-cpu lock, that can be used to construct
-> aribtrary logic.
+Actually, I will take it back.
+I think the current shape of the patch is better.
+struct tracepoint is aligned to 32-bytes by linker
+Though sizeof(struct tracepoint) == 48 it actually consumes 64 bytes
+of memory.
+(gdb) p (void*)&__tracepoint_sys_enter - (void*)&__tracepoint_sys_exit
+$3 = 64
 
-The per-cpu spinlock does not have the same performance characteristics
-as lock-free alternatives for various operations. A rseq compare-and-store
-is faster than a rseq spinlock for linked-list operations.
+Adding num_args to 'struct tracepoint' makes it sizeof==56,
+but it still takes 64-bytes in memory.
 
-> 
-> And the difficult case for the per-cpu lock is the remote acquire; all
-> the other cases are (relatively) trivial.
-> 
-> I've not really managed to get anything sensible to work, I've tried
-> several variations of split lock, but you invariably end up with
-> barriers in the fast (local) path, which sucks.
-> 
-> But I feel this should be solvable without cpu_opv. As in, I really hate
-> that thing ;-)
+In this patch sizeof(struct bpf_raw_tp_map) == 16 and
+(gdb) p (void*)&__bpf_trace_tp_map_sys_enter - 
+(void*)&__bpf_trace_tp_map_sys_exit
+$3 = 16
 
-I have not developed cpu_opv out of any kind of love for that solution.
-I just realized that it did solve all my issues after failing for quite
-some time to implement acceptable solutions for the remote access
-problem, and for ensuring progress of single-stepping with current
-debuggers that don't know about the rseq_table section.
+so it consumes exactly the same 16-bytes.
+If we add 'u32 num_args' to it, it will have
+sizeof(struct bpf_raw_tp_map) == 24 and will consume 32-bytes
+of memory.
 
-> 
->> 8) Allow libraries with multi-part algorithms to work on same per-cpu
->>    data without affecting the allowed cpu mask
->> 
->> The lttng-ust tracer presents an interesting use-case for per-cpu
->> buffers: the algorithm needs to update a "reserve" counter, serialize
->> data into the buffer, and then update a "commit" counter _on the same
->> per-cpu buffer_. Using rseq for both reserve and commit can bring
->> significant performance benefits.
->> 
->> Clearly, if rseq reserve fails, the algorithm can retry on a different
->> per-cpu buffer. However, it's not that easy for the commit. It needs to
->> be performed on the same per-cpu buffer as the reserve.
->> 
->> The cpu_opv system call solves that problem by receiving the cpu number
->> on which the operation needs to be performed as argument. It can push
->> the task to the right CPU if needed, and perform the operations there
->> with preemption disabled.
->> 
->> Changing the allowed cpu mask for the current thread is not an
->> acceptable alternative for a tracing library, because the application
->> being traced does not expect that mask to be changed by libraries.
-> 
-> We talked about this use-case, and it can be solved without cpu_opv if
-> you keep a dual commit counter, one local and one (atomic) remote.
+So clearly adding num_args to struct tracepont gives zero additional
+bloat vs before this patch set, whereas moving it to
+struct bpf_raw_tp_map will add 16 * num_of_tracepoints bytes of memory.
 
-Right.
+I can live with this overhead if Mathieu insists,
+but I prefer to keep it in 'struct tracepoint'.
 
-> 
-> We retain the cpu_id from the first rseq, and the second part will, when
-> it (unlikely) finds it runs remotely, do an atomic increment on the
-> remote counter. The consumer of the counter will then have to sum both
-> the local and remote counter parts.
-
-Yes, I did a prototype of this specific case with split-counters a while
-ago. However, if we need cpu_opv as fallback for other reasons (e.g. remote
-accesses), then the split-counters are not needed, and there is no need to
-change the layout of user-space data to accommodate the extra per-cpu
-counter.
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Thoughts?
