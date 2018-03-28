@@ -1,154 +1,122 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build
- time
-Date: Wed, 28 Mar 2018 09:49:24 -0400 (EDT)
-Message-ID: <1074829260.1986.1522244964935.JavaMail.zimbra@efficios.com>
-References: <20180328021105.4061744-1-ast@fb.com> <20180328021105.4061744-7-ast@fb.com>
+Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable
+ sequences system call (v12)
+Date: Wed, 28 Mar 2018 10:06:00 -0400 (EDT)
+Message-ID: <777590253.2016.1522245960189.JavaMail.zimbra@efficios.com>
+References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com> <20180327160542.28457-3-mathieu.desnoyers@efficios.com> <20180328064703.56hsuicmikejg7np@tardis>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180328021105.4061744-7-ast@fb.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@fb.com>
-Cc: "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, rostedt <rostedt@goodmis.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180328064703.56hsuicmikejg7np@tardis>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Boqun Feng <boqun.feng@gmail.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 27, 2018, at 10:11 PM, Alexei Starovoitov ast@fb.com wrote:
+----- On Mar 28, 2018, at 2:47 AM, Boqun Feng boqun.feng@gmail.com wrote:
 
-> From: Alexei Starovoitov <ast@kernel.org>
+> On Tue, Mar 27, 2018 at 12:05:23PM -0400, Mathieu Desnoyers wrote:
+> [...]
+>> Changes since v11:
+>> 
+>> - Replace task struct rseq_preempt, rseq_signal, and rseq_migrate
+>>   bool by u32 rseq_event_mask.
+> [...]
+>> @@ -979,6 +980,17 @@ struct task_struct {
+>>  	unsigned long			numa_pages_migrated;
+>>  #endif /* CONFIG_NUMA_BALANCING */
+>>  
+>> +#ifdef CONFIG_RSEQ
+>> +	struct rseq __user *rseq;
+>> +	u32 rseq_len;
+>> +	u32 rseq_sig;
+>> +	/*
+>> +	 * RmW on rseq_event_mask must be performed atomically
+>> +	 * with respect to preemption.
+>> +	 */
+>> +	unsigned long rseq_event_mask;
 > 
-> compute number of arguments passed into tracepoint
-> at compile time and store it as part of 'struct tracepoint'.
-> The number is necessary to check safety of bpf program access that
-> is coming in subsequent patch.
+> s/unsigned long/u32
 
+good point, fixed.
 
-Hi Alexei,
+> 
+>> +#endif
+>> +
+>>  	struct tlbflush_unmap_batch	tlb_ubc;
+>>  
+>>  	struct rcu_head			rcu;
+>> @@ -1688,4 +1700,110 @@ extern long sched_getaffinity(pid_t pid, struct cpumask
+>> *mask);
+>>  #define TASK_SIZE_OF(tsk)	TASK_SIZE
+>>  #endif
+>>  
+> 
+> [...]
+> 
+>> +
+>> +static int rseq_ip_fixup(struct pt_regs *regs)
+>> +{
+>> +	unsigned long ip = instruction_pointer(regs), start_ip = 0,
+>> +		post_commit_offset = 0, abort_ip = 0;
+>> +	struct task_struct *t = current;
+>> +	uint32_t cs_flags = 0;
+>> +	bool in_rseq_cs = false;
+> 
+> This seems unnecessary? Because..
+> 
+>> +	int ret;
+>> +
+>> +	ret = rseq_get_rseq_cs(t, &start_ip, &post_commit_offset, &abort_ip,
+>> +			&cs_flags);
+>> +	if (ret)
+>> +		return ret;
+>> +
+>> +	/*
+>> +	 * Handle potentially not being within a critical section.
+>> +	 * Unsigned comparison will be true when
+>> +	 * ip >= start_ip, and when ip < start_ip + post_commit_offset.
+>> +	 */
+>> +	if (ip - start_ip < post_commit_offset)
+>> +		in_rseq_cs = true;
+>> +
+>> +	/*
+>> +	 * If not nested over a rseq critical section, restart is
+>> +	 * useless. Clear the rseq_cs pointer and return.
+>> +	 */
+>> +	if (!in_rseq_cs)
+>> +		return clear_rseq_cs(t);
+> 
+> we can write
+> 
+>	if (ip - start_ip >= post_commit_offset)
+>		return clear_rseq_cs(t);
 
-Given that only eBPF needs this parameter count, we can move
-it to the struct bpf_raw_event_map newly introduced by Steven,
-right ? This would reduce bloat of struct tracepoint. For instance,
-we don't need to keep this count around when eBPF is configured
-out.
+Good point. In a previous version, rseq_get_rseq_cs() had to conditionally
+update in_rseq_cs, but it's not the case anymore, so your approach
+indeed cleans up the code.
 
-Thanks,
+Thanks!
 
 Mathieu
 
 > 
-> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
-> Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-> ---
-> include/linux/tracepoint-defs.h |  1 +
-> include/linux/tracepoint.h      | 12 ++++++------
-> include/trace/define_trace.h    | 14 +++++++-------
-> 3 files changed, 14 insertions(+), 13 deletions(-)
+> Regards,
+> Boqun
 > 
-> diff --git a/include/linux/tracepoint-defs.h b/include/linux/tracepoint-defs.h
-> index 64ed7064f1fa..39a283c61c51 100644
-> --- a/include/linux/tracepoint-defs.h
-> +++ b/include/linux/tracepoint-defs.h
-> @@ -33,6 +33,7 @@ struct tracepoint {
-> 	int (*regfunc)(void);
-> 	void (*unregfunc)(void);
-> 	struct tracepoint_func __rcu *funcs;
-> +	u32 num_args;
-> };
-> 
-> #endif
-> diff --git a/include/linux/tracepoint.h b/include/linux/tracepoint.h
-> index c94f466d57ef..c92f4adbc0d7 100644
-> --- a/include/linux/tracepoint.h
-> +++ b/include/linux/tracepoint.h
-> @@ -230,18 +230,18 @@ extern void syscall_unregfunc(void);
->  * structures, so we create an array of pointers that will be used for iteration
->  * on the tracepoints.
->  */
-> -#define DEFINE_TRACE_FN(name, reg, unreg)				 \
-> +#define DEFINE_TRACE_FN(name, reg, unreg, num_args)			 \
-> 	static const char __tpstrtab_##name[]				 \
-> 	__attribute__((section("__tracepoints_strings"))) = #name;	 \
-> 	struct tracepoint __tracepoint_##name				 \
-> 	__attribute__((section("__tracepoints"))) =			 \
-> -		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL };\
-> +		{ __tpstrtab_##name, STATIC_KEY_INIT_FALSE, reg, unreg, NULL, num_args };\
-> 	static struct tracepoint * const __tracepoint_ptr_##name __used	 \
-> 	__attribute__((section("__tracepoints_ptrs"))) =		 \
-> 		&__tracepoint_##name;
-> 
-> -#define DEFINE_TRACE(name)						\
-> -	DEFINE_TRACE_FN(name, NULL, NULL);
-> +#define DEFINE_TRACE(name, num_args)					\
-> +	DEFINE_TRACE_FN(name, NULL, NULL, num_args);
-> 
-> #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)				\
-> 	EXPORT_SYMBOL_GPL(__tracepoint_##name)
-> @@ -275,8 +275,8 @@ extern void syscall_unregfunc(void);
-> 		return false;						\
-> 	}
-> 
-> -#define DEFINE_TRACE_FN(name, reg, unreg)
-> -#define DEFINE_TRACE(name)
-> +#define DEFINE_TRACE_FN(name, reg, unreg, num_args)
-> +#define DEFINE_TRACE(name, num_args)
-> #define EXPORT_TRACEPOINT_SYMBOL_GPL(name)
-> #define EXPORT_TRACEPOINT_SYMBOL(name)
-> 
-> diff --git a/include/trace/define_trace.h b/include/trace/define_trace.h
-> index d9e3d4aa3f6e..96b22ace9ae7 100644
-> --- a/include/trace/define_trace.h
-> +++ b/include/trace/define_trace.h
-> @@ -25,7 +25,7 @@
-> 
-> #undef TRACE_EVENT
-> #define TRACE_EVENT(name, proto, args, tstruct, assign, print)	\
-> -	DEFINE_TRACE(name)
-> +	DEFINE_TRACE(name, COUNT_ARGS(args))
-> 
-> #undef TRACE_EVENT_CONDITION
-> #define TRACE_EVENT_CONDITION(name, proto, args, cond, tstruct, assign, print) \
-> @@ -39,24 +39,24 @@
-> #undef TRACE_EVENT_FN
-> #define TRACE_EVENT_FN(name, proto, args, tstruct,		\
-> 		assign, print, reg, unreg)			\
-> -	DEFINE_TRACE_FN(name, reg, unreg)
-> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
-> 
-> #undef TRACE_EVENT_FN_COND
-> #define TRACE_EVENT_FN_COND(name, proto, args, cond, tstruct,		\
-> 		assign, print, reg, unreg)			\
-> -	DEFINE_TRACE_FN(name, reg, unreg)
-> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
-> 
-> #undef DEFINE_EVENT
-> #define DEFINE_EVENT(template, name, proto, args) \
-> -	DEFINE_TRACE(name)
-> +	DEFINE_TRACE(name, COUNT_ARGS(args))
-> 
-> #undef DEFINE_EVENT_FN
-> #define DEFINE_EVENT_FN(template, name, proto, args, reg, unreg) \
-> -	DEFINE_TRACE_FN(name, reg, unreg)
-> +	DEFINE_TRACE_FN(name, reg, unreg, COUNT_ARGS(args))
-> 
-> #undef DEFINE_EVENT_PRINT
-> #define DEFINE_EVENT_PRINT(template, name, proto, args, print)	\
-> -	DEFINE_TRACE(name)
-> +	DEFINE_TRACE(name, COUNT_ARGS(args))
-> 
-> #undef DEFINE_EVENT_CONDITION
-> #define DEFINE_EVENT_CONDITION(template, name, proto, args, cond) \
-> @@ -64,7 +64,7 @@
-> 
-> #undef DECLARE_TRACE
-> #define DECLARE_TRACE(name, proto, args)	\
-> -	DEFINE_TRACE(name)
-> +	DEFINE_TRACE(name, COUNT_ARGS(args))
-> 
-> #undef TRACE_INCLUDE
-> #undef __TRACE_INCLUDE
-> --
-> 2.9.5
+>> +	ret = rseq_need_restart(t, cs_flags);
+>> +	if (ret <= 0)
+>> +		return ret;
+>> +	ret = clear_rseq_cs(t);
+>> +	if (ret)
+>> +		return ret;
+>> +	trace_rseq_ip_fixup(ip, start_ip, post_commit_offset, abort_ip);
+>> +	instruction_pointer_set(regs, (unsigned long)abort_ip);
+>> +	return 0;
+>> +}
+>> +
+> [...]
 
 -- 
 Mathieu Desnoyers
