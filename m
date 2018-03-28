@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 4/6] aio: sanitize ki_list handling
-Date: Wed, 28 Mar 2018 09:26:37 +0200
-Message-ID: <20180328072639.16885-5-hch@lst.de>
+Subject: [PATCH 5/6] aio: implement IOCB_CMD_FSYNC and IOCB_CMD_FDSYNC
+Date: Wed, 28 Mar 2018 09:26:38 +0200
+Message-ID: <20180328072639.16885-6-hch@lst.de>
 References: <20180328072639.16885-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180328072639.16885-1-hch@lst.de>
@@ -10,59 +10,98 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Instead of handcoded non-null checks always initialize ki_list to an
-empty list and use list_empty / list_empty_careful on it.  While we're
-at it also error out on a double call to kiocb_set_cancel_fn instead
-of ignoring it.
+Simple workqueue offload for now, but prepared for adding a real aio_fsync
+method if the need arises.  Based on an earlier patch from Dave Chinner.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Jeff Moyer <jmoyer@redhat.com>
 Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/aio.c | 13 ++++++-------
- 1 file changed, 6 insertions(+), 7 deletions(-)
+ fs/aio.c | 50 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index 50c4a0554cc6..f35801d73e0b 100644
+index f35801d73e0b..fd6c72918a8e 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -555,13 +555,12 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
- 	struct kioctx *ctx = req->ki_ctx;
- 	unsigned long flags;
+@@ -156,6 +156,12 @@ struct kioctx {
+ 	unsigned		id;
+ };
  
--	spin_lock_irqsave(&ctx->ctx_lock, flags);
--
--	if (!req->ki_list.next)
--		list_add(&req->ki_list, &ctx->active_reqs);
-+	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
-+		return;
++struct fsync_iocb {
++	struct work_struct	work;
++	struct file		*file;
++	bool			datasync;
++};
++
+ /*
+  * We use ki_cancel == KIOCB_CANCELLED to indicate that a kiocb has been either
+  * cancelled or completed (this makes a certain amount of sense because
+@@ -172,6 +178,7 @@ struct kioctx {
+ struct aio_kiocb {
+ 	union {
+ 		struct kiocb		rw;
++		struct fsync_iocb	fsync;
+ 	};
  
-+	spin_lock_irqsave(&ctx->ctx_lock, flags);
-+	list_add_tail(&req->ki_list, &ctx->active_reqs);
- 	req->ki_cancel = cancel;
--
- 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+ 	struct kioctx		*ki_ctx;
+@@ -1565,6 +1572,43 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
+ 	return ret;
  }
- EXPORT_SYMBOL(kiocb_set_cancel_fn);
-@@ -1034,7 +1033,7 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
- 		goto out_put;
  
- 	percpu_ref_get(&ctx->reqs);
--
-+	INIT_LIST_HEAD(&req->ki_list);
- 	req->ki_ctx = ctx;
- 	return req;
- out_put:
-@@ -1080,7 +1079,7 @@ static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
- 	unsigned tail, pos, head;
- 	unsigned long	flags;
- 
--	if (iocb->ki_list.next) {
-+	if (!list_empty_careful(&iocb->ki_list)) {
- 		unsigned long flags;
- 
- 		spin_lock_irqsave(&ctx->ctx_lock, flags);
++static void aio_fsync_work(struct work_struct *work)
++{
++	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
++	int ret;
++
++	ret = vfs_fsync(req->file, req->datasync);
++	fput(req->file);
++	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
++}
++
++static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
++{
++	int ret;
++
++	if (iocb->aio_buf)
++		return -EINVAL;
++	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
++		return -EINVAL;
++
++	req->file = fget(iocb->aio_fildes);
++	if (unlikely(!req->file))
++		return -EBADF;
++
++	ret = -EINVAL;
++	if (!req->file->f_op->fsync)
++		goto out_fput;
++
++	req->datasync = datasync;
++	INIT_WORK(&req->work, aio_fsync_work);
++	schedule_work(&req->work);
++	return -EIOCBQUEUED;
++out_fput:
++	if (unlikely(ret && ret != -EIOCBQUEUED))
++		fput(req->file);
++	return ret;
++}
++
+ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 			 struct iocb *iocb, bool compat)
+ {
+@@ -1628,6 +1672,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	case IOCB_CMD_PWRITEV:
+ 		ret = aio_write(&req->rw, iocb, true, compat);
+ 		break;
++	case IOCB_CMD_FSYNC:
++		ret = aio_fsync(&req->fsync, iocb, false);
++		break;
++	case IOCB_CMD_FDSYNC:
++		ret = aio_fsync(&req->fsync, iocb, true);
++		break;
+ 	default:
+ 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
+ 		ret = -EINVAL;
 -- 
 2.14.2
 
