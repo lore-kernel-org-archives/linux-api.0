@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 23/30] net/phonet: convert to ->poll_mask
-Date: Wed, 28 Mar 2018 09:29:19 +0200
-Message-ID: <20180328072926.17131-24-hch@lst.de>
+Subject: [PATCH 25/30] net/rxrpc: convert to ->poll_mask
+Date: Wed, 28 Mar 2018 09:29:21 +0200
+Message-ID: <20180328072926.17131-26-hch@lst.de>
 References: <20180328072926.17131-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180328072926.17131-1-hch@lst.de>
@@ -12,39 +12,40 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/phonet/socket.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ net/rxrpc/af_rxrpc.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/net/phonet/socket.c b/net/phonet/socket.c
-index 28d981512f5f..70ac4539d5b7 100644
---- a/net/phonet/socket.c
-+++ b/net/phonet/socket.c
-@@ -341,15 +341,12 @@ static int pn_socket_getname(struct socket *sock, struct sockaddr *addr,
- 	return 0;
- }
- 
--static __poll_t pn_socket_poll(struct file *file, struct socket *sock,
--					poll_table *wait)
-+static __poll_t pn_socket_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/net/rxrpc/af_rxrpc.c b/net/rxrpc/af_rxrpc.c
+index 0c9c18aa7c77..d2440d5c3ce8 100644
+--- a/net/rxrpc/af_rxrpc.c
++++ b/net/rxrpc/af_rxrpc.c
+@@ -729,15 +729,11 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
+ /*
+  * permit an RxRPC socket to be polled
+  */
+-static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
+-			       poll_table *wait)
++static __poll_t rxrpc_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct pep_sock *pn = pep_sk(sk);
- 	__poll_t mask = 0;
- 
--	poll_wait(file, sk_sleep(sk), wait);
+ 	struct rxrpc_sock *rx = rxrpc_sk(sk);
+-	__poll_t mask;
 -
- 	if (sk->sk_state == TCP_CLOSE)
- 		return EPOLLERR;
- 	if (!skb_queue_empty(&sk->sk_receive_queue))
-@@ -474,7 +471,7 @@ const struct proto_ops phonet_stream_ops = {
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
+ 
+ 	/* the socket is readable if there are any messages waiting on the Rx
+ 	 * queue */
+@@ -940,7 +936,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
  	.socketpair	= sock_no_socketpair,
- 	.accept		= pn_socket_accept,
- 	.getname	= pn_socket_getname,
--	.poll		= pn_socket_poll,
-+	.poll_mask	= pn_socket_poll_mask,
- 	.ioctl		= pn_socket_ioctl,
- 	.listen		= pn_socket_listen,
- 	.shutdown	= sock_no_shutdown,
+ 	.accept		= sock_no_accept,
+ 	.getname	= sock_no_getname,
+-	.poll		= rxrpc_poll,
++	.poll_mask	= rxrpc_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.listen		= rxrpc_listen,
+ 	.shutdown	= rxrpc_shutdown,
 -- 
 2.14.2
 
