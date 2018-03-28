@@ -1,140 +1,178 @@
 From: Alexei Starovoitov <ast@kernel.org>
-Subject: [PATCH v8 bpf-next 0/9] bpf, tracing: introduce bpf raw tracepoints
-Date: Wed, 28 Mar 2018 12:05:31 -0700
-Message-ID: <20180328190540.370956-1-ast@kernel.org>
+Subject: [PATCH v8 bpf-next 9/9] selftests/bpf: test for bpf_get_stackid() from raw tracepoints
+Date: Wed, 28 Mar 2018 12:05:40 -0700
+Message-ID: <20180328190540.370956-10-ast@kernel.org>
+References: <20180328190540.370956-1-ast@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180328190540.370956-1-ast@kernel.org>
 Sender: netdev-owner@vger.kernel.org
 To: davem@davemloft.net
 Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-v7->v8:
-- moved 'u32 num_args' from 'struct tracepoint' into 'struct bpf_raw_event_map'
-  that increases memory overhead, but can be optimized/compressed later.
-  Now it's zero changes in tracepoint.[ch]
+similar to traditional traceopint test add bpf_get_stackid() test
+from raw tracepoints
+and reduce verbosity of existing stackmap test
 
-v6->v7:
-- adopted Steven's bpf_raw_tp_map section approach to find tracepoint
-  and corresponding bpf probe function instead of kallsyms approach.
-  dropped kernel_tracepoint_find_by_name() patch
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ tools/testing/selftests/bpf/test_progs.c | 91 ++++++++++++++++++++++++--------
+ 1 file changed, 70 insertions(+), 21 deletions(-)
 
-v5->v6:
-- avoid changing semantics of for_each_kernel_tracepoint() function, instead
-  introduce kernel_tracepoint_find_by_name() helper
-
-v4->v5:
-- adopted Daniel's fancy REPEAT macro in bpf_trace.c in patch 6
-  
-v3->v4:
-- adopted Linus's CAST_TO_U64 macro to cast any integer, pointer, or small
-  struct to u64. That nicely reduced the size of patch 1
-
-v2->v3:
-- with Linus's suggestion introduced generic COUNT_ARGS and CONCATENATE macros
-  (or rather moved them from apparmor)
-  that cleaned up patch 6
-- added patch 4 to refactor trace_iwlwifi_dev_ucode_error() from 17 args to 4
-  Now any tracepoint with >12 args will have build error
-
-v1->v2:
-- simplified api by combing bpf_raw_tp_open(name) + bpf_attach(prog_fd) into
-  bpf_raw_tp_open(name, prog_fd) as suggested by Daniel.
-  That simplifies bpf_detach as well which is now simple close() of fd.
-- fixed memory leak in error path which was spotted by Daniel.
-- fixed bpf_get_stackid(), bpf_perf_event_output() called from raw tracepoints
-- added more tests
-- fixed allyesconfig build caught by buildbot
-
-v1:
-This patch set is a different way to address the pressing need to access
-task_struct pointers in sched tracepoints from bpf programs.
-
-The first approach simply added these pointers to sched tracepoints:
-https://lkml.org/lkml/2017/12/14/753
-which Peter nacked.
-Few options were discussed and eventually the discussion converged on
-doing bpf specific tracepoint_probe_register() probe functions.
-Details here:
-https://lkml.org/lkml/2017/12/20/929
-
-Patch 1 is kernel wide cleanup of pass-struct-by-value into
-pass-struct-by-reference into tracepoints.
-
-Patches 2 and 3 are minor cleanups to address allyesconfig build
-
-Patch 4 refactor trace_iwlwifi_dev_ucode_error from 17 to 4 args
-
-Patch 5 introduces COUNT_ARGS macro
-
-Patch 6 introduces BPF_RAW_TRACEPOINT api.
-the auto-cleanup and multiple concurrent users are must have
-features of tracing api. For bpf raw tracepoints it looks like:
-  // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
-  prog_fd = bpf_prog_load(...);
-
-  // receive anon_inode fd for given bpf_raw_tracepoint
-  // and attach bpf program to it
-  raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception", prog_fd);
-
-Ctrl-C of tracing daemon or cmdline tool will automatically
-detach bpf program, unload it and unregister tracepoint probe.
-More details in patch 6.
-
-Patch 7 - trivial support in libbpf
-Patches 8, 9 - user space tests
-
-samples/bpf/test_overhead performance on 1 cpu:
-
-tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
-task_rename   1.1M   769K        947K            1.0M
-urandom_read  789K   697K        750K            755K
-
-Alexei Starovoitov (9):
-  treewide: remove large struct-pass-by-value from tracepoint arguments
-  net/mediatek: disambiguate mt76 vs mt7601u trace events
-  net/mac802154: disambiguate mac80215 vs mac802154 trace events
-  net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
-  macro: introduce COUNT_ARGS() macro
-  bpf: introduce BPF_RAW_TRACEPOINT
-  libbpf: add bpf_raw_tracepoint_open helper
-  samples/bpf: raw tracepoint test
-  selftests/bpf: test for bpf_get_stackid() from raw tracepoints
-
- drivers/infiniband/hw/hfi1/file_ops.c              |   2 +-
- drivers/infiniband/hw/hfi1/trace_ctxts.h           |  12 +-
- drivers/net/wireless/intel/iwlwifi/dvm/main.c      |   7 +-
- .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  |  39 ++---
- drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |   1 +
- drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |   7 +-
- drivers/net/wireless/mediatek/mt7601u/trace.h      |   6 +-
- include/asm-generic/vmlinux.lds.h                  |  10 ++
- include/linux/bpf_types.h                          |   1 +
- include/linux/kernel.h                             |   7 +
- include/linux/trace_events.h                       |  42 +++++
- include/linux/tracepoint-defs.h                    |   6 +
- include/trace/bpf_probe.h                          |  92 +++++++++++
- include/trace/define_trace.h                       |   1 +
- include/trace/events/f2fs.h                        |   2 +-
- include/uapi/linux/bpf.h                           |  11 ++
- kernel/bpf/syscall.c                               |  78 +++++++++
- kernel/trace/bpf_trace.c                           | 183 +++++++++++++++++++++
- net/mac802154/trace.h                              |   8 +-
- net/wireless/trace.h                               |   2 +-
- samples/bpf/Makefile                               |   1 +
- samples/bpf/bpf_load.c                             |  14 ++
- samples/bpf/test_overhead_raw_tp_kern.c            |  17 ++
- samples/bpf/test_overhead_user.c                   |  12 ++
- security/apparmor/include/path.h                   |   7 +-
- sound/firewire/amdtp-stream-trace.h                |   2 +-
- tools/include/uapi/linux/bpf.h                     |  11 ++
- tools/lib/bpf/bpf.c                                |  11 ++
- tools/lib/bpf/bpf.h                                |   1 +
- tools/testing/selftests/bpf/test_progs.c           |  91 +++++++---
- 30 files changed, 607 insertions(+), 77 deletions(-)
- create mode 100644 include/trace/bpf_probe.h
- create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
-
+diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
+index e9df48b306df..faadbe233966 100644
+--- a/tools/testing/selftests/bpf/test_progs.c
++++ b/tools/testing/selftests/bpf/test_progs.c
+@@ -877,7 +877,7 @@ static void test_stacktrace_map()
+ 
+ 	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
+ 	if (CHECK(err, "prog_load", "err %d errno %d\n", err, errno))
+-		goto out;
++		return;
+ 
+ 	/* Get the ID for the sched/sched_switch tracepoint */
+ 	snprintf(buf, sizeof(buf),
+@@ -888,8 +888,7 @@ static void test_stacktrace_map()
+ 
+ 	bytes = read(efd, buf, sizeof(buf));
+ 	close(efd);
+-	if (CHECK(bytes <= 0 || bytes >= sizeof(buf),
+-		  "read", "bytes %d errno %d\n", bytes, errno))
++	if (bytes <= 0 || bytes >= sizeof(buf))
+ 		goto close_prog;
+ 
+ 	/* Open the perf event and attach bpf progrram */
+@@ -906,29 +905,24 @@ static void test_stacktrace_map()
+ 		goto close_prog;
+ 
+ 	err = ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0);
+-	if (CHECK(err, "perf_event_ioc_enable", "err %d errno %d\n",
+-		  err, errno))
+-		goto close_pmu;
++	if (err)
++		goto disable_pmu;
+ 
+ 	err = ioctl(pmu_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
+-	if (CHECK(err, "perf_event_ioc_set_bpf", "err %d errno %d\n",
+-		  err, errno))
++	if (err)
+ 		goto disable_pmu;
+ 
+ 	/* find map fds */
+ 	control_map_fd = bpf_find_map(__func__, obj, "control_map");
+-	if (CHECK(control_map_fd < 0, "bpf_find_map control_map",
+-		  "err %d errno %d\n", err, errno))
++	if (control_map_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
+-	if (CHECK(stackid_hmap_fd < 0, "bpf_find_map stackid_hmap",
+-		  "err %d errno %d\n", err, errno))
++	if (stackid_hmap_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
+-	if (CHECK(stackmap_fd < 0, "bpf_find_map stackmap", "err %d errno %d\n",
+-		  err, errno))
++	if (stackmap_fd < 0)
+ 		goto disable_pmu;
+ 
+ 	/* give some time for bpf program run */
+@@ -945,24 +939,78 @@ static void test_stacktrace_map()
+ 	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
+ 	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
+ 		  "err %d errno %d\n", err, errno))
+-		goto disable_pmu;
++		goto disable_pmu_noerr;
+ 
+ 	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
+ 	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
+ 		  "err %d errno %d\n", err, errno))
+-		; /* fall through */
++		goto disable_pmu_noerr;
+ 
++	goto disable_pmu_noerr;
+ disable_pmu:
++	error_cnt++;
++disable_pmu_noerr:
+ 	ioctl(pmu_fd, PERF_EVENT_IOC_DISABLE);
+-
+-close_pmu:
+ 	close(pmu_fd);
+-
+ close_prog:
+ 	bpf_object__close(obj);
++}
+ 
+-out:
+-	return;
++static void test_stacktrace_map_raw_tp()
++{
++	int control_map_fd, stackid_hmap_fd, stackmap_fd;
++	const char *file = "./test_stacktrace_map.o";
++	int efd, err, prog_fd;
++	__u32 key, val, duration = 0;
++	struct bpf_object *obj;
++
++	err = bpf_prog_load(file, BPF_PROG_TYPE_RAW_TRACEPOINT, &obj, &prog_fd);
++	if (CHECK(err, "prog_load raw tp", "err %d errno %d\n", err, errno))
++		return;
++
++	efd = bpf_raw_tracepoint_open("sched_switch", prog_fd);
++	if (CHECK(efd < 0, "raw_tp_open", "err %d errno %d\n", efd, errno))
++		goto close_prog;
++
++	/* find map fds */
++	control_map_fd = bpf_find_map(__func__, obj, "control_map");
++	if (control_map_fd < 0)
++		goto close_prog;
++
++	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
++	if (stackid_hmap_fd < 0)
++		goto close_prog;
++
++	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
++	if (stackmap_fd < 0)
++		goto close_prog;
++
++	/* give some time for bpf program run */
++	sleep(1);
++
++	/* disable stack trace collection */
++	key = 0;
++	val = 1;
++	bpf_map_update_elem(control_map_fd, &key, &val, 0);
++
++	/* for every element in stackid_hmap, we can find a corresponding one
++	 * in stackmap, and vise versa.
++	 */
++	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
++	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
++		  "err %d errno %d\n", err, errno))
++		goto close_prog;
++
++	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
++	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
++		  "err %d errno %d\n", err, errno))
++		goto close_prog;
++
++	goto close_prog_noerr;
++close_prog:
++	error_cnt++;
++close_prog_noerr:
++	bpf_object__close(obj);
+ }
+ 
+ static int extract_build_id(char *build_id, size_t size)
+@@ -1138,6 +1186,7 @@ int main(void)
+ 	test_tp_attach_query();
+ 	test_stacktrace_map();
+ 	test_stacktrace_build_id();
++	test_stacktrace_map_raw_tp();
+ 
+ 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
+ 	return error_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
 -- 
 2.9.5
