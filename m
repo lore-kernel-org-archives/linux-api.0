@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 01/10] treewide: remove large struct-pass-by-value from tracepoint arguments
-Date: Tue, 27 Mar 2018 19:10:56 -0700
-Message-ID: <20180328021105.4061744-2-ast@fb.com>
+Subject: [PATCH v7 bpf-next 04/10] net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
+Date: Tue, 27 Mar 2018 19:10:59 -0700
+Message-ID: <20180328021105.4061744-5-ast@fb.com>
 References: <20180328021105.4061744-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -14,105 +14,127 @@ List-Id: linux-api@vger.kernel.org
 
 From: Alexei Starovoitov <ast@kernel.org>
 
-- fix trace_hfi1_ctxt_info() to pass large struct by reference instead of by value
-- convert 'type array[]' tracepoint arguments into 'type *array',
-  since compiler will warn that sizeof('type array[]') == sizeof('type *array')
-  and later should be used instead
-
-The CAST_TO_U64 macro in the later patch will enforce that tracepoint
-arguments can only be integers, pointers, or less than 8 byte structures.
-Larger structures should be passed by reference.
+fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
+instead of all 17 arguments by value.
+dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
+defined with very similar yet subtly different fields and offsets.
+tracepoint is still common and using definition of 'struct iwl_error_event_table'
+from dvm/commands.h while copying fields.
+Long term this tracepoint probably should be split into two.
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- drivers/infiniband/hw/hfi1/file_ops.c    |  2 +-
- drivers/infiniband/hw/hfi1/trace_ctxts.h | 12 ++++++------
- include/trace/events/f2fs.h              |  2 +-
- net/wireless/trace.h                     |  2 +-
- sound/firewire/amdtp-stream-trace.h      |  2 +-
- 5 files changed, 10 insertions(+), 10 deletions(-)
+ drivers/net/wireless/intel/iwlwifi/dvm/main.c      |  7 +---
+ .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  | 39 ++++++++++------------
+ drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |  1 +
+ drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |  7 +---
+ 4 files changed, 21 insertions(+), 33 deletions(-)
 
-diff --git a/drivers/infiniband/hw/hfi1/file_ops.c b/drivers/infiniband/hw/hfi1/file_ops.c
-index 41fafebe3b0d..da4aa1a95b11 100644
---- a/drivers/infiniband/hw/hfi1/file_ops.c
-+++ b/drivers/infiniband/hw/hfi1/file_ops.c
-@@ -1153,7 +1153,7 @@ static int get_ctxt_info(struct hfi1_filedata *fd, unsigned long arg, u32 len)
- 	cinfo.sdma_ring_size = fd->cq->nentries;
- 	cinfo.rcvegr_size = uctxt->egrbufs.rcvtid_size;
+diff --git a/drivers/net/wireless/intel/iwlwifi/dvm/main.c b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
+index d11d72615de2..e68254e12764 100644
+--- a/drivers/net/wireless/intel/iwlwifi/dvm/main.c
++++ b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
+@@ -1651,12 +1651,7 @@ static void iwl_dump_nic_error_log(struct iwl_priv *priv)
+ 			priv->status, table.valid);
+ 	}
  
--	trace_hfi1_ctxt_info(uctxt->dd, uctxt->ctxt, fd->subctxt, cinfo);
-+	trace_hfi1_ctxt_info(uctxt->dd, uctxt->ctxt, fd->subctxt, &cinfo);
- 	if (copy_to_user((void __user *)arg, &cinfo, len))
- 		return -EFAULT;
+-	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
+-				      table.data1, table.data2, table.line,
+-				      table.blink2, table.ilink1, table.ilink2,
+-				      table.bcon_time, table.gp1, table.gp2,
+-				      table.gp3, table.ucode_ver, table.hw_ver,
+-				      0, table.brd_ver);
++	trace_iwlwifi_dev_ucode_error(trans->dev, &table, 0, table.brd_ver);
+ 	IWL_ERR(priv, "0x%08X | %-28s\n", table.error_id,
+ 		desc_lookup(table.error_id));
+ 	IWL_ERR(priv, "0x%08X | uPc\n", table.pc);
+diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
+index 9518a82f44c2..27e3e4e96aa2 100644
+--- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
++++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
+@@ -126,14 +126,11 @@ TRACE_EVENT(iwlwifi_dev_tx,
+ 		  __entry->framelen, __entry->skbaddr)
+ );
  
-diff --git a/drivers/infiniband/hw/hfi1/trace_ctxts.h b/drivers/infiniband/hw/hfi1/trace_ctxts.h
-index 4eb4cc798035..e00c8a7d559c 100644
---- a/drivers/infiniband/hw/hfi1/trace_ctxts.h
-+++ b/drivers/infiniband/hw/hfi1/trace_ctxts.h
-@@ -106,7 +106,7 @@ TRACE_EVENT(hfi1_uctxtdata,
- TRACE_EVENT(hfi1_ctxt_info,
- 	    TP_PROTO(struct hfi1_devdata *dd, unsigned int ctxt,
- 		     unsigned int subctxt,
--		     struct hfi1_ctxt_info cinfo),
-+		     struct hfi1_ctxt_info *cinfo),
- 	    TP_ARGS(dd, ctxt, subctxt, cinfo),
- 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
- 			     __field(unsigned int, ctxt)
-@@ -120,11 +120,11 @@ TRACE_EVENT(hfi1_ctxt_info,
- 	    TP_fast_assign(DD_DEV_ASSIGN(dd);
- 			    __entry->ctxt = ctxt;
- 			    __entry->subctxt = subctxt;
--			    __entry->egrtids = cinfo.egrtids;
--			    __entry->rcvhdrq_cnt = cinfo.rcvhdrq_cnt;
--			    __entry->rcvhdrq_size = cinfo.rcvhdrq_entsize;
--			    __entry->sdma_ring_size = cinfo.sdma_ring_size;
--			    __entry->rcvegr_size = cinfo.rcvegr_size;
-+			    __entry->egrtids = cinfo->egrtids;
-+			    __entry->rcvhdrq_cnt = cinfo->rcvhdrq_cnt;
-+			    __entry->rcvhdrq_size = cinfo->rcvhdrq_entsize;
-+			    __entry->sdma_ring_size = cinfo->sdma_ring_size;
-+			    __entry->rcvegr_size = cinfo->rcvegr_size;
- 			    ),
- 	    TP_printk("[%s] ctxt %u:%u " CINFO_FMT,
- 		      __get_str(dev),
-diff --git a/include/trace/events/f2fs.h b/include/trace/events/f2fs.h
-index 06c87f9f720c..795698925d20 100644
---- a/include/trace/events/f2fs.h
-+++ b/include/trace/events/f2fs.h
-@@ -491,7 +491,7 @@ DEFINE_EVENT(f2fs__truncate_node, f2fs_truncate_node,
- 
- TRACE_EVENT(f2fs_truncate_partial_nodes,
- 
--	TP_PROTO(struct inode *inode, nid_t nid[], int depth, int err),
-+	TP_PROTO(struct inode *inode, nid_t *nid, int depth, int err),
- 
- 	TP_ARGS(inode, nid, depth, err),
- 
-diff --git a/net/wireless/trace.h b/net/wireless/trace.h
-index 5152938b358d..018c81fa72fb 100644
---- a/net/wireless/trace.h
-+++ b/net/wireless/trace.h
-@@ -3137,7 +3137,7 @@ TRACE_EVENT(rdev_start_radar_detection,
- 
- TRACE_EVENT(rdev_set_mcast_rate,
- 	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
--		 int mcast_rate[NUM_NL80211_BANDS]),
-+		 int *mcast_rate),
- 	TP_ARGS(wiphy, netdev, mcast_rate),
++struct iwl_error_event_table;
+ TRACE_EVENT(iwlwifi_dev_ucode_error,
+-	TP_PROTO(const struct device *dev, u32 desc, u32 tsf_low,
+-		 u32 data1, u32 data2, u32 line, u32 blink2, u32 ilink1,
+-		 u32 ilink2, u32 bcon_time, u32 gp1, u32 gp2, u32 rev_type,
+-		 u32 major, u32 minor, u32 hw_ver, u32 brd_ver),
+-	TP_ARGS(dev, desc, tsf_low, data1, data2, line,
+-		 blink2, ilink1, ilink2, bcon_time, gp1, gp2,
+-		 rev_type, major, minor, hw_ver, brd_ver),
++	TP_PROTO(const struct device *dev, const struct iwl_error_event_table *table,
++		 u32 hw_ver, u32 brd_ver),
++	TP_ARGS(dev, table, hw_ver, brd_ver),
  	TP_STRUCT__entry(
- 		WIPHY_ENTRY
-diff --git a/sound/firewire/amdtp-stream-trace.h b/sound/firewire/amdtp-stream-trace.h
-index ea0d486652c8..54cdd4ffa9ce 100644
---- a/sound/firewire/amdtp-stream-trace.h
-+++ b/sound/firewire/amdtp-stream-trace.h
-@@ -14,7 +14,7 @@
- #include <linux/tracepoint.h>
+ 		DEV_ENTRY
+ 		__field(u32, desc)
+@@ -155,20 +152,20 @@ TRACE_EVENT(iwlwifi_dev_ucode_error,
+ 	),
+ 	TP_fast_assign(
+ 		DEV_ASSIGN;
+-		__entry->desc = desc;
+-		__entry->tsf_low = tsf_low;
+-		__entry->data1 = data1;
+-		__entry->data2 = data2;
+-		__entry->line = line;
+-		__entry->blink2 = blink2;
+-		__entry->ilink1 = ilink1;
+-		__entry->ilink2 = ilink2;
+-		__entry->bcon_time = bcon_time;
+-		__entry->gp1 = gp1;
+-		__entry->gp2 = gp2;
+-		__entry->rev_type = rev_type;
+-		__entry->major = major;
+-		__entry->minor = minor;
++		__entry->desc = table->error_id;
++		__entry->tsf_low = table->tsf_low;
++		__entry->data1 = table->data1;
++		__entry->data2 = table->data2;
++		__entry->line = table->line;
++		__entry->blink2 = table->blink2;
++		__entry->ilink1 = table->ilink1;
++		__entry->ilink2 = table->ilink2;
++		__entry->bcon_time = table->bcon_time;
++		__entry->gp1 = table->gp1;
++		__entry->gp2 = table->gp2;
++		__entry->rev_type = table->gp3;
++		__entry->major = table->ucode_ver;
++		__entry->minor = table->hw_ver;
+ 		__entry->hw_ver = hw_ver;
+ 		__entry->brd_ver = brd_ver;
+ 	),
+diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
+index 50510fb6ab8c..6aa719865a58 100644
+--- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
++++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
+@@ -30,6 +30,7 @@
+ #ifndef __CHECKER__
+ #include "iwl-trans.h"
  
- TRACE_EVENT(in_packet,
--	TP_PROTO(const struct amdtp_stream *s, u32 cycles, u32 cip_header[2], unsigned int payload_length, unsigned int index),
-+	TP_PROTO(const struct amdtp_stream *s, u32 cycles, u32 *cip_header, unsigned int payload_length, unsigned int index),
- 	TP_ARGS(s, cycles, cip_header, payload_length, index),
- 	TP_STRUCT__entry(
- 		__field(unsigned int, second)
++#include "dvm/commands.h"
+ #define CREATE_TRACE_POINTS
+ #include "iwl-devtrace.h"
+ 
+diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
+index d65e1db7c097..5442ead876eb 100644
+--- a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
++++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
+@@ -549,12 +549,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u32 base)
+ 
+ 	IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
+ 
+-	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
+-				      table.data1, table.data2, table.data3,
+-				      table.blink2, table.ilink1,
+-				      table.ilink2, table.bcon_time, table.gp1,
+-				      table.gp2, table.fw_rev_type, table.major,
+-				      table.minor, table.hw_ver, table.brd_ver);
++	trace_iwlwifi_dev_ucode_error(trans->dev, &table, table.hw_ver, table.brd_ver);
+ 	IWL_ERR(mvm, "0x%08X | %-28s\n", table.error_id,
+ 		desc_lookup(table.error_id));
+ 	IWL_ERR(mvm, "0x%08X | trm_hw_status0\n", table.trm_hw_status0);
 -- 
 2.9.5
