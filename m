@@ -1,7 +1,7 @@
 From: Alexei Starovoitov <ast@kernel.org>
-Subject: [PATCH v8 bpf-next 4/9] net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
-Date: Wed, 28 Mar 2018 12:05:35 -0700
-Message-ID: <20180328190540.370956-5-ast@kernel.org>
+Subject: [PATCH v8 bpf-next 7/9] libbpf: add bpf_raw_tracepoint_open helper
+Date: Wed, 28 Mar 2018 12:05:38 -0700
+Message-ID: <20180328190540.370956-8-ast@kernel.org>
 References: <20180328190540.370956-1-ast@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,127 +12,87 @@ To: davem@davemloft.net
 Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
-instead of all 17 arguments by value.
-dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
-defined with very similar yet subtly different fields and offsets.
-tracepoint is still common and using definition of 'struct iwl_error_event_table'
-from dvm/commands.h while copying fields.
-Long term this tracepoint probably should be split into two.
+add bpf_raw_tracepoint_open(const char *name, int prog_fd) api to libbpf
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- drivers/net/wireless/intel/iwlwifi/dvm/main.c      |  7 +---
- .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  | 39 ++++++++++------------
- drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |  1 +
- drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |  7 +---
- 4 files changed, 21 insertions(+), 33 deletions(-)
+ tools/include/uapi/linux/bpf.h | 11 +++++++++++
+ tools/lib/bpf/bpf.c            | 11 +++++++++++
+ tools/lib/bpf/bpf.h            |  1 +
+ 3 files changed, 23 insertions(+)
 
-diff --git a/drivers/net/wireless/intel/iwlwifi/dvm/main.c b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-index d11d72615de2..e68254e12764 100644
---- a/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-+++ b/drivers/net/wireless/intel/iwlwifi/dvm/main.c
-@@ -1651,12 +1651,7 @@ static void iwl_dump_nic_error_log(struct iwl_priv *priv)
- 			priv->status, table.valid);
- 	}
+diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
+index d245c41213ac..58060bec999d 100644
+--- a/tools/include/uapi/linux/bpf.h
++++ b/tools/include/uapi/linux/bpf.h
+@@ -94,6 +94,7 @@ enum bpf_cmd {
+ 	BPF_MAP_GET_FD_BY_ID,
+ 	BPF_OBJ_GET_INFO_BY_FD,
+ 	BPF_PROG_QUERY,
++	BPF_RAW_TRACEPOINT_OPEN,
+ };
  
--	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
--				      table.data1, table.data2, table.line,
--				      table.blink2, table.ilink1, table.ilink2,
--				      table.bcon_time, table.gp1, table.gp2,
--				      table.gp3, table.ucode_ver, table.hw_ver,
--				      0, table.brd_ver);
-+	trace_iwlwifi_dev_ucode_error(trans->dev, &table, 0, table.brd_ver);
- 	IWL_ERR(priv, "0x%08X | %-28s\n", table.error_id,
- 		desc_lookup(table.error_id));
- 	IWL_ERR(priv, "0x%08X | uPc\n", table.pc);
-diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-index 9518a82f44c2..27e3e4e96aa2 100644
---- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-+++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h
-@@ -126,14 +126,11 @@ TRACE_EVENT(iwlwifi_dev_tx,
- 		  __entry->framelen, __entry->skbaddr)
- );
+ enum bpf_map_type {
+@@ -134,6 +135,7 @@ enum bpf_prog_type {
+ 	BPF_PROG_TYPE_SK_SKB,
+ 	BPF_PROG_TYPE_CGROUP_DEVICE,
+ 	BPF_PROG_TYPE_SK_MSG,
++	BPF_PROG_TYPE_RAW_TRACEPOINT,
+ };
  
-+struct iwl_error_event_table;
- TRACE_EVENT(iwlwifi_dev_ucode_error,
--	TP_PROTO(const struct device *dev, u32 desc, u32 tsf_low,
--		 u32 data1, u32 data2, u32 line, u32 blink2, u32 ilink1,
--		 u32 ilink2, u32 bcon_time, u32 gp1, u32 gp2, u32 rev_type,
--		 u32 major, u32 minor, u32 hw_ver, u32 brd_ver),
--	TP_ARGS(dev, desc, tsf_low, data1, data2, line,
--		 blink2, ilink1, ilink2, bcon_time, gp1, gp2,
--		 rev_type, major, minor, hw_ver, brd_ver),
-+	TP_PROTO(const struct device *dev, const struct iwl_error_event_table *table,
-+		 u32 hw_ver, u32 brd_ver),
-+	TP_ARGS(dev, table, hw_ver, brd_ver),
- 	TP_STRUCT__entry(
- 		DEV_ENTRY
- 		__field(u32, desc)
-@@ -155,20 +152,20 @@ TRACE_EVENT(iwlwifi_dev_ucode_error,
- 	),
- 	TP_fast_assign(
- 		DEV_ASSIGN;
--		__entry->desc = desc;
--		__entry->tsf_low = tsf_low;
--		__entry->data1 = data1;
--		__entry->data2 = data2;
--		__entry->line = line;
--		__entry->blink2 = blink2;
--		__entry->ilink1 = ilink1;
--		__entry->ilink2 = ilink2;
--		__entry->bcon_time = bcon_time;
--		__entry->gp1 = gp1;
--		__entry->gp2 = gp2;
--		__entry->rev_type = rev_type;
--		__entry->major = major;
--		__entry->minor = minor;
-+		__entry->desc = table->error_id;
-+		__entry->tsf_low = table->tsf_low;
-+		__entry->data1 = table->data1;
-+		__entry->data2 = table->data2;
-+		__entry->line = table->line;
-+		__entry->blink2 = table->blink2;
-+		__entry->ilink1 = table->ilink1;
-+		__entry->ilink2 = table->ilink2;
-+		__entry->bcon_time = table->bcon_time;
-+		__entry->gp1 = table->gp1;
-+		__entry->gp2 = table->gp2;
-+		__entry->rev_type = table->gp3;
-+		__entry->major = table->ucode_ver;
-+		__entry->minor = table->hw_ver;
- 		__entry->hw_ver = hw_ver;
- 		__entry->brd_ver = brd_ver;
- 	),
-diff --git a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-index 50510fb6ab8c..6aa719865a58 100644
---- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-+++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-@@ -30,6 +30,7 @@
- #ifndef __CHECKER__
- #include "iwl-trans.h"
+ enum bpf_attach_type {
+@@ -344,6 +346,11 @@ union bpf_attr {
+ 		__aligned_u64	prog_ids;
+ 		__u32		prog_cnt;
+ 	} query;
++
++	struct {
++		__u64 name;
++		__u32 prog_fd;
++	} raw_tracepoint;
+ } __attribute__((aligned(8)));
  
-+#include "dvm/commands.h"
- #define CREATE_TRACE_POINTS
- #include "iwl-devtrace.h"
+ /* BPF helper function descriptions:
+@@ -1151,4 +1158,8 @@ struct bpf_cgroup_dev_ctx {
+ 	__u32 minor;
+ };
  
-diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-index d65e1db7c097..5442ead876eb 100644
---- a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-+++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-@@ -549,12 +549,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u32 base)
++struct bpf_raw_tracepoint_args {
++	__u64 args[0];
++};
++
+ #endif /* _UAPI__LINUX_BPF_H__ */
+diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
+index 592a58a2b681..e0500055f1a6 100644
+--- a/tools/lib/bpf/bpf.c
++++ b/tools/lib/bpf/bpf.c
+@@ -428,6 +428,17 @@ int bpf_obj_get_info_by_fd(int prog_fd, void *info, __u32 *info_len)
+ 	return err;
+ }
  
- 	IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
- 
--	trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
--				      table.data1, table.data2, table.data3,
--				      table.blink2, table.ilink1,
--				      table.ilink2, table.bcon_time, table.gp1,
--				      table.gp2, table.fw_rev_type, table.major,
--				      table.minor, table.hw_ver, table.brd_ver);
-+	trace_iwlwifi_dev_ucode_error(trans->dev, &table, table.hw_ver, table.brd_ver);
- 	IWL_ERR(mvm, "0x%08X | %-28s\n", table.error_id,
- 		desc_lookup(table.error_id));
- 	IWL_ERR(mvm, "0x%08X | trm_hw_status0\n", table.trm_hw_status0);
++int bpf_raw_tracepoint_open(const char *name, int prog_fd)
++{
++	union bpf_attr attr;
++
++	bzero(&attr, sizeof(attr));
++	attr.raw_tracepoint.name = ptr_to_u64(name);
++	attr.raw_tracepoint.prog_fd = prog_fd;
++
++	return sys_bpf(BPF_RAW_TRACEPOINT_OPEN, &attr, sizeof(attr));
++}
++
+ int bpf_set_link_xdp_fd(int ifindex, int fd, __u32 flags)
+ {
+ 	struct sockaddr_nl sa;
+diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
+index 8d18fb73d7fb..ee59342c6f42 100644
+--- a/tools/lib/bpf/bpf.h
++++ b/tools/lib/bpf/bpf.h
+@@ -79,4 +79,5 @@ int bpf_map_get_fd_by_id(__u32 id);
+ int bpf_obj_get_info_by_fd(int prog_fd, void *info, __u32 *info_len);
+ int bpf_prog_query(int target_fd, enum bpf_attach_type type, __u32 query_flags,
+ 		   __u32 *attach_flags, __u32 *prog_ids, __u32 *prog_cnt);
++int bpf_raw_tracepoint_open(const char *name, int prog_fd);
+ #endif
 -- 
 2.9.5
