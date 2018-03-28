@@ -1,180 +1,130 @@
-From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 10/10] selftests/bpf: test for bpf_get_stackid() from raw tracepoints
-Date: Tue, 27 Mar 2018 19:11:05 -0700
-Message-ID: <20180328021105.4061744-11-ast@fb.com>
-References: <20180328021105.4061744-1-ast@fb.com>
+From: Boqun Feng <boqun.feng@gmail.com>
+Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable sequences
+ system call (v12)
+Date: Wed, 28 Mar 2018 14:47:54 +0800
+Message-ID: <20180328064703.56hsuicmikejg7np@tardis>
+References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
+ <20180327160542.28457-3-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180328021105.4061744-1-ast@fb.com>
-Sender: netdev-owner@vger.kernel.org
-To: davem@davemloft.net
-Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="yzsuj5wf7xcogpl6"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180327160542.28457-3-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Alexei Starovoitov <ast@kernel.org>
 
-similar to traditional traceopint test add bpf_get_stackid() test
-from raw tracepoints
-and reduce verbosity of existing stackmap test
+--yzsuj5wf7xcogpl6
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Alexei Starovoitov <ast@kernel.org>
----
- tools/testing/selftests/bpf/test_progs.c | 91 ++++++++++++++++++++++++--------
- 1 file changed, 70 insertions(+), 21 deletions(-)
+On Tue, Mar 27, 2018 at 12:05:23PM -0400, Mathieu Desnoyers wrote:
+[...]
+> Changes since v11:
+>=20
+> - Replace task struct rseq_preempt, rseq_signal, and rseq_migrate
+>   bool by u32 rseq_event_mask.
+[...]
+> @@ -979,6 +980,17 @@ struct task_struct {
+>  	unsigned long			numa_pages_migrated;
+>  #endif /* CONFIG_NUMA_BALANCING */
+> =20
+> +#ifdef CONFIG_RSEQ
+> +	struct rseq __user *rseq;
+> +	u32 rseq_len;
+> +	u32 rseq_sig;
+> +	/*
+> +	 * RmW on rseq_event_mask must be performed atomically
+> +	 * with respect to preemption.
+> +	 */
+> +	unsigned long rseq_event_mask;
 
-diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-index e9df48b306df..faadbe233966 100644
---- a/tools/testing/selftests/bpf/test_progs.c
-+++ b/tools/testing/selftests/bpf/test_progs.c
-@@ -877,7 +877,7 @@ static void test_stacktrace_map()
- 
- 	err = bpf_prog_load(file, BPF_PROG_TYPE_TRACEPOINT, &obj, &prog_fd);
- 	if (CHECK(err, "prog_load", "err %d errno %d\n", err, errno))
--		goto out;
-+		return;
- 
- 	/* Get the ID for the sched/sched_switch tracepoint */
- 	snprintf(buf, sizeof(buf),
-@@ -888,8 +888,7 @@ static void test_stacktrace_map()
- 
- 	bytes = read(efd, buf, sizeof(buf));
- 	close(efd);
--	if (CHECK(bytes <= 0 || bytes >= sizeof(buf),
--		  "read", "bytes %d errno %d\n", bytes, errno))
-+	if (bytes <= 0 || bytes >= sizeof(buf))
- 		goto close_prog;
- 
- 	/* Open the perf event and attach bpf progrram */
-@@ -906,29 +905,24 @@ static void test_stacktrace_map()
- 		goto close_prog;
- 
- 	err = ioctl(pmu_fd, PERF_EVENT_IOC_ENABLE, 0);
--	if (CHECK(err, "perf_event_ioc_enable", "err %d errno %d\n",
--		  err, errno))
--		goto close_pmu;
-+	if (err)
-+		goto disable_pmu;
- 
- 	err = ioctl(pmu_fd, PERF_EVENT_IOC_SET_BPF, prog_fd);
--	if (CHECK(err, "perf_event_ioc_set_bpf", "err %d errno %d\n",
--		  err, errno))
-+	if (err)
- 		goto disable_pmu;
- 
- 	/* find map fds */
- 	control_map_fd = bpf_find_map(__func__, obj, "control_map");
--	if (CHECK(control_map_fd < 0, "bpf_find_map control_map",
--		  "err %d errno %d\n", err, errno))
-+	if (control_map_fd < 0)
- 		goto disable_pmu;
- 
- 	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
--	if (CHECK(stackid_hmap_fd < 0, "bpf_find_map stackid_hmap",
--		  "err %d errno %d\n", err, errno))
-+	if (stackid_hmap_fd < 0)
- 		goto disable_pmu;
- 
- 	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
--	if (CHECK(stackmap_fd < 0, "bpf_find_map stackmap", "err %d errno %d\n",
--		  err, errno))
-+	if (stackmap_fd < 0)
- 		goto disable_pmu;
- 
- 	/* give some time for bpf program run */
-@@ -945,24 +939,78 @@ static void test_stacktrace_map()
- 	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
- 	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
- 		  "err %d errno %d\n", err, errno))
--		goto disable_pmu;
-+		goto disable_pmu_noerr;
- 
- 	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
- 	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
- 		  "err %d errno %d\n", err, errno))
--		; /* fall through */
-+		goto disable_pmu_noerr;
- 
-+	goto disable_pmu_noerr;
- disable_pmu:
-+	error_cnt++;
-+disable_pmu_noerr:
- 	ioctl(pmu_fd, PERF_EVENT_IOC_DISABLE);
--
--close_pmu:
- 	close(pmu_fd);
--
- close_prog:
- 	bpf_object__close(obj);
-+}
- 
--out:
--	return;
-+static void test_stacktrace_map_raw_tp()
-+{
-+	int control_map_fd, stackid_hmap_fd, stackmap_fd;
-+	const char *file = "./test_stacktrace_map.o";
-+	int efd, err, prog_fd;
-+	__u32 key, val, duration = 0;
-+	struct bpf_object *obj;
-+
-+	err = bpf_prog_load(file, BPF_PROG_TYPE_RAW_TRACEPOINT, &obj, &prog_fd);
-+	if (CHECK(err, "prog_load raw tp", "err %d errno %d\n", err, errno))
-+		return;
-+
-+	efd = bpf_raw_tracepoint_open("sched_switch", prog_fd);
-+	if (CHECK(efd < 0, "raw_tp_open", "err %d errno %d\n", efd, errno))
-+		goto close_prog;
-+
-+	/* find map fds */
-+	control_map_fd = bpf_find_map(__func__, obj, "control_map");
-+	if (control_map_fd < 0)
-+		goto close_prog;
-+
-+	stackid_hmap_fd = bpf_find_map(__func__, obj, "stackid_hmap");
-+	if (stackid_hmap_fd < 0)
-+		goto close_prog;
-+
-+	stackmap_fd = bpf_find_map(__func__, obj, "stackmap");
-+	if (stackmap_fd < 0)
-+		goto close_prog;
-+
-+	/* give some time for bpf program run */
-+	sleep(1);
-+
-+	/* disable stack trace collection */
-+	key = 0;
-+	val = 1;
-+	bpf_map_update_elem(control_map_fd, &key, &val, 0);
-+
-+	/* for every element in stackid_hmap, we can find a corresponding one
-+	 * in stackmap, and vise versa.
-+	 */
-+	err = compare_map_keys(stackid_hmap_fd, stackmap_fd);
-+	if (CHECK(err, "compare_map_keys stackid_hmap vs. stackmap",
-+		  "err %d errno %d\n", err, errno))
-+		goto close_prog;
-+
-+	err = compare_map_keys(stackmap_fd, stackid_hmap_fd);
-+	if (CHECK(err, "compare_map_keys stackmap vs. stackid_hmap",
-+		  "err %d errno %d\n", err, errno))
-+		goto close_prog;
-+
-+	goto close_prog_noerr;
-+close_prog:
-+	error_cnt++;
-+close_prog_noerr:
-+	bpf_object__close(obj);
- }
- 
- static int extract_build_id(char *build_id, size_t size)
-@@ -1138,6 +1186,7 @@ int main(void)
- 	test_tp_attach_query();
- 	test_stacktrace_map();
- 	test_stacktrace_build_id();
-+	test_stacktrace_map_raw_tp();
- 
- 	printf("Summary: %d PASSED, %d FAILED\n", pass_cnt, error_cnt);
- 	return error_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
--- 
-2.9.5
+s/unsigned long/u32
+
+> +#endif
+> +
+>  	struct tlbflush_unmap_batch	tlb_ubc;
+> =20
+>  	struct rcu_head			rcu;
+> @@ -1688,4 +1700,110 @@ extern long sched_getaffinity(pid_t pid, struct c=
+pumask *mask);
+>  #define TASK_SIZE_OF(tsk)	TASK_SIZE
+>  #endif
+> =20
+
+[...]
+
+> +
+> +static int rseq_ip_fixup(struct pt_regs *regs)
+> +{
+> +	unsigned long ip =3D instruction_pointer(regs), start_ip =3D 0,
+> +		post_commit_offset =3D 0, abort_ip =3D 0;
+> +	struct task_struct *t =3D current;
+> +	uint32_t cs_flags =3D 0;
+> +	bool in_rseq_cs =3D false;
+
+This seems unnecessary? Because..
+
+> +	int ret;
+> +
+> +	ret =3D rseq_get_rseq_cs(t, &start_ip, &post_commit_offset, &abort_ip,
+> +			&cs_flags);
+> +	if (ret)
+> +		return ret;
+> +
+> +	/*
+> +	 * Handle potentially not being within a critical section.
+> +	 * Unsigned comparison will be true when
+> +	 * ip >=3D start_ip, and when ip < start_ip + post_commit_offset.
+> +	 */
+> +	if (ip - start_ip < post_commit_offset)
+> +		in_rseq_cs =3D true;
+> +
+> +	/*
+> +	 * If not nested over a rseq critical section, restart is
+> +	 * useless. Clear the rseq_cs pointer and return.
+> +	 */
+> +	if (!in_rseq_cs)
+> +		return clear_rseq_cs(t);
+
+we can write
+
+	if (ip - start_ip >=3D post_commit_offset)
+		return clear_rseq_cs(t);
+
+Regards,
+Boqun
+
+> +	ret =3D rseq_need_restart(t, cs_flags);
+> +	if (ret <=3D 0)
+> +		return ret;
+> +	ret =3D clear_rseq_cs(t);
+> +	if (ret)
+> +		return ret;
+> +	trace_rseq_ip_fixup(ip, start_ip, post_commit_offset, abort_ip);
+> +	instruction_pointer_set(regs, (unsigned long)abort_ip);
+> +	return 0;
+> +}
+> +
+[...]
+
+--yzsuj5wf7xcogpl6
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEj5IosQTPz8XU1wRHSXnow7UH+rgFAlq7OpYACgkQSXnow7UH
++rjwhQf+LeKpKOoiYs2E75v4BONhGBr6S9icQvXV25bXj3nlHUJSOW9yHPtN3wjq
+GwR0eZQkCfKm5ir9BDyRe1L5nKYDWVz7qdj6IDN67yPr6fnAFPw1SNIM8RsOBvn2
+d5bLKbPAEJIvv0JWH7VQedq4SlQYfCKPrv0ue45QReE1FsxlDXPt1Aq3El4BUMaw
+yXEA4xMijOFqk8WOspEjgRkHn/k9jOCKpkVg/dCAu9OZ6Ivqsr4GKvaSpoo9RMfF
+EqR0/az/GkdJNEh0QlApYNNhBxB+dHd49bMN1K4ql2G7j1St+g6Vdb/3i6KM9PWJ
+alGOemjl4GXknHu6RE4U9ODYpGUBtQ==
+=e8tt
+-----END PGP SIGNATURE-----
+
+--yzsuj5wf7xcogpl6--
