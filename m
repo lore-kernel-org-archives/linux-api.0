@@ -1,140 +1,118 @@
 From: Alexei Starovoitov <ast@fb.com>
-Subject: [PATCH v7 bpf-next 00/10] bpf, tracing: introduce bpf raw tracepoints
-Date: Tue, 27 Mar 2018 19:10:55 -0700
-Message-ID: <20180328021105.4061744-1-ast@fb.com>
+Subject: [PATCH v7 bpf-next 01/10] treewide: remove large struct-pass-by-value from tracepoint arguments
+Date: Tue, 27 Mar 2018 19:10:56 -0700
+Message-ID: <20180328021105.4061744-2-ast@fb.com>
+References: <20180328021105.4061744-1-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180328021105.4061744-1-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
 To: davem@davemloft.net
 Cc: daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-v6->v7:
-- adopted Steven's bpf_raw_tp_map section approach to find tracepoint
-  and corresponding bpf probe function instead of kallsyms approach.
-  dropped kernel_tracepoint_find_by_name() patch
+From: Alexei Starovoitov <ast@kernel.org>
 
-v5->v6:
-- avoid changing semantics of for_each_kernel_tracepoint() function, instead
-  introduce kernel_tracepoint_find_by_name() helper
+- fix trace_hfi1_ctxt_info() to pass large struct by reference instead of by value
+- convert 'type array[]' tracepoint arguments into 'type *array',
+  since compiler will warn that sizeof('type array[]') == sizeof('type *array')
+  and later should be used instead
 
-v4->v5:
-- adopted Daniel's fancy REPEAT macro in bpf_trace.c in patch 7
-  
-v3->v4:
-- adopted Linus's CAST_TO_U64 macro to cast any integer, pointer, or small
-  struct to u64. That nicely reduced the size of patch 1
+The CAST_TO_U64 macro in the later patch will enforce that tracepoint
+arguments can only be integers, pointers, or less than 8 byte structures.
+Larger structures should be passed by reference.
 
-v2->v3:
-- with Linus's suggestion introduced generic COUNT_ARGS and CONCATENATE macros
-  (or rather moved them from apparmor)
-  that cleaned up patches 6 and 7
-- added patch 4 to refactor trace_iwlwifi_dev_ucode_error() from 17 args to 4
-  Now any tracepoint with >12 args will have build error
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ drivers/infiniband/hw/hfi1/file_ops.c    |  2 +-
+ drivers/infiniband/hw/hfi1/trace_ctxts.h | 12 ++++++------
+ include/trace/events/f2fs.h              |  2 +-
+ net/wireless/trace.h                     |  2 +-
+ sound/firewire/amdtp-stream-trace.h      |  2 +-
+ 5 files changed, 10 insertions(+), 10 deletions(-)
 
-v1->v2:
-- simplified api by combing bpf_raw_tp_open(name) + bpf_attach(prog_fd) into
-  bpf_raw_tp_open(name, prog_fd) as suggested by Daniel.
-  That simplifies bpf_detach as well which is now simple close() of fd.
-- fixed memory leak in error path which was spotted by Daniel.
-- fixed bpf_get_stackid(), bpf_perf_event_output() called from raw tracepoints
-- added more tests
-- fixed allyesconfig build caught by buildbot
-
-v1:
-This patch set is a different way to address the pressing need to access
-task_struct pointers in sched tracepoints from bpf programs.
-
-The first approach simply added these pointers to sched tracepoints:
-https://lkml.org/lkml/2017/12/14/753
-which Peter nacked.
-Few options were discussed and eventually the discussion converged on
-doing bpf specific tracepoint_probe_register() probe functions.
-Details here:
-https://lkml.org/lkml/2017/12/20/929
-
-Patch 1 is kernel wide cleanup of pass-struct-by-value into
-pass-struct-by-reference into tracepoints.
-
-Patches 2 and 3 are minor cleanups to address allyesconfig build
-
-Patch 4 refactor trace_iwlwifi_dev_ucode_error from 17 to 4 args
-
-Patch 5 introduces COUNT_ARGS macro
-
-Patch 6 minor prep work to expose number of arguments passed
-into tracepoints.
-
-Patch 7 introduces BPF_RAW_TRACEPOINT api.
-the auto-cleanup and multiple concurrent users are must have
-features of tracing api. For bpf raw tracepoints it looks like:
-  // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
-  prog_fd = bpf_prog_load(...);
-
-  // receive anon_inode fd for given bpf_raw_tracepoint
-  // and attach bpf program to it
-  raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception", prog_fd);
-
-Ctrl-C of tracing daemon or cmdline tool will automatically
-detach bpf program, unload it and unregister tracepoint probe.
-More details in patch 7.
-
-Patch 8 - trivial support in libbpf
-Patches 9, 10 - user space tests
-
-samples/bpf/test_overhead performance on 1 cpu:
-
-tracepoint    base  kprobe+bpf tracepoint+bpf raw_tracepoint+bpf
-task_rename   1.1M   769K        947K            1.0M
-urandom_read  789K   697K        750K            755K
-
-Alexei Starovoitov (10):
-  treewide: remove large struct-pass-by-value from tracepoint arguments
-  net/mediatek: disambiguate mt76 vs mt7601u trace events
-  net/mac802154: disambiguate mac80215 vs mac802154 trace events
-  net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
-  macro: introduce COUNT_ARGS() macro
-  tracepoint: compute num_args at build time
-  bpf: introduce BPF_RAW_TRACEPOINT
-  libbpf: add bpf_raw_tracepoint_open helper
-  samples/bpf: raw tracepoint test
-  selftests/bpf: test for bpf_get_stackid() from raw tracepoints
-
- drivers/infiniband/hw/hfi1/file_ops.c              |   2 +-
- drivers/infiniband/hw/hfi1/trace_ctxts.h           |  12 +-
- drivers/net/wireless/intel/iwlwifi/dvm/main.c      |   7 +-
- .../wireless/intel/iwlwifi/iwl-devtrace-iwlwifi.h  |  39 ++---
- drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c  |   1 +
- drivers/net/wireless/intel/iwlwifi/mvm/utils.c     |   7 +-
- drivers/net/wireless/mediatek/mt7601u/trace.h      |   6 +-
- include/asm-generic/vmlinux.lds.h                  |  10 ++
- include/linux/bpf_types.h                          |   1 +
- include/linux/kernel.h                             |   7 +
- include/linux/trace_events.h                       |  42 +++++
- include/linux/tracepoint-defs.h                    |   6 +
- include/linux/tracepoint.h                         |  12 +-
- include/trace/bpf_probe.h                          |  91 ++++++++++
- include/trace/define_trace.h                       |  15 +-
- include/trace/events/f2fs.h                        |   2 +-
- include/uapi/linux/bpf.h                           |  11 ++
- kernel/bpf/syscall.c                               |  78 +++++++++
- kernel/trace/bpf_trace.c                           | 183 +++++++++++++++++++++
- net/mac802154/trace.h                              |   8 +-
- net/wireless/trace.h                               |   2 +-
- samples/bpf/Makefile                               |   1 +
- samples/bpf/bpf_load.c                             |  14 ++
- samples/bpf/test_overhead_raw_tp_kern.c            |  17 ++
- samples/bpf/test_overhead_user.c                   |  12 ++
- security/apparmor/include/path.h                   |   7 +-
- sound/firewire/amdtp-stream-trace.h                |   2 +-
- tools/include/uapi/linux/bpf.h                     |  11 ++
- tools/lib/bpf/bpf.c                                |  11 ++
- tools/lib/bpf/bpf.h                                |   1 +
- tools/testing/selftests/bpf/test_progs.c           |  91 +++++++---
- 31 files changed, 619 insertions(+), 90 deletions(-)
- create mode 100644 include/trace/bpf_probe.h
- create mode 100644 samples/bpf/test_overhead_raw_tp_kern.c
-
+diff --git a/drivers/infiniband/hw/hfi1/file_ops.c b/drivers/infiniband/hw/hfi1/file_ops.c
+index 41fafebe3b0d..da4aa1a95b11 100644
+--- a/drivers/infiniband/hw/hfi1/file_ops.c
++++ b/drivers/infiniband/hw/hfi1/file_ops.c
+@@ -1153,7 +1153,7 @@ static int get_ctxt_info(struct hfi1_filedata *fd, unsigned long arg, u32 len)
+ 	cinfo.sdma_ring_size = fd->cq->nentries;
+ 	cinfo.rcvegr_size = uctxt->egrbufs.rcvtid_size;
+ 
+-	trace_hfi1_ctxt_info(uctxt->dd, uctxt->ctxt, fd->subctxt, cinfo);
++	trace_hfi1_ctxt_info(uctxt->dd, uctxt->ctxt, fd->subctxt, &cinfo);
+ 	if (copy_to_user((void __user *)arg, &cinfo, len))
+ 		return -EFAULT;
+ 
+diff --git a/drivers/infiniband/hw/hfi1/trace_ctxts.h b/drivers/infiniband/hw/hfi1/trace_ctxts.h
+index 4eb4cc798035..e00c8a7d559c 100644
+--- a/drivers/infiniband/hw/hfi1/trace_ctxts.h
++++ b/drivers/infiniband/hw/hfi1/trace_ctxts.h
+@@ -106,7 +106,7 @@ TRACE_EVENT(hfi1_uctxtdata,
+ TRACE_EVENT(hfi1_ctxt_info,
+ 	    TP_PROTO(struct hfi1_devdata *dd, unsigned int ctxt,
+ 		     unsigned int subctxt,
+-		     struct hfi1_ctxt_info cinfo),
++		     struct hfi1_ctxt_info *cinfo),
+ 	    TP_ARGS(dd, ctxt, subctxt, cinfo),
+ 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
+ 			     __field(unsigned int, ctxt)
+@@ -120,11 +120,11 @@ TRACE_EVENT(hfi1_ctxt_info,
+ 	    TP_fast_assign(DD_DEV_ASSIGN(dd);
+ 			    __entry->ctxt = ctxt;
+ 			    __entry->subctxt = subctxt;
+-			    __entry->egrtids = cinfo.egrtids;
+-			    __entry->rcvhdrq_cnt = cinfo.rcvhdrq_cnt;
+-			    __entry->rcvhdrq_size = cinfo.rcvhdrq_entsize;
+-			    __entry->sdma_ring_size = cinfo.sdma_ring_size;
+-			    __entry->rcvegr_size = cinfo.rcvegr_size;
++			    __entry->egrtids = cinfo->egrtids;
++			    __entry->rcvhdrq_cnt = cinfo->rcvhdrq_cnt;
++			    __entry->rcvhdrq_size = cinfo->rcvhdrq_entsize;
++			    __entry->sdma_ring_size = cinfo->sdma_ring_size;
++			    __entry->rcvegr_size = cinfo->rcvegr_size;
+ 			    ),
+ 	    TP_printk("[%s] ctxt %u:%u " CINFO_FMT,
+ 		      __get_str(dev),
+diff --git a/include/trace/events/f2fs.h b/include/trace/events/f2fs.h
+index 06c87f9f720c..795698925d20 100644
+--- a/include/trace/events/f2fs.h
++++ b/include/trace/events/f2fs.h
+@@ -491,7 +491,7 @@ DEFINE_EVENT(f2fs__truncate_node, f2fs_truncate_node,
+ 
+ TRACE_EVENT(f2fs_truncate_partial_nodes,
+ 
+-	TP_PROTO(struct inode *inode, nid_t nid[], int depth, int err),
++	TP_PROTO(struct inode *inode, nid_t *nid, int depth, int err),
+ 
+ 	TP_ARGS(inode, nid, depth, err),
+ 
+diff --git a/net/wireless/trace.h b/net/wireless/trace.h
+index 5152938b358d..018c81fa72fb 100644
+--- a/net/wireless/trace.h
++++ b/net/wireless/trace.h
+@@ -3137,7 +3137,7 @@ TRACE_EVENT(rdev_start_radar_detection,
+ 
+ TRACE_EVENT(rdev_set_mcast_rate,
+ 	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
+-		 int mcast_rate[NUM_NL80211_BANDS]),
++		 int *mcast_rate),
+ 	TP_ARGS(wiphy, netdev, mcast_rate),
+ 	TP_STRUCT__entry(
+ 		WIPHY_ENTRY
+diff --git a/sound/firewire/amdtp-stream-trace.h b/sound/firewire/amdtp-stream-trace.h
+index ea0d486652c8..54cdd4ffa9ce 100644
+--- a/sound/firewire/amdtp-stream-trace.h
++++ b/sound/firewire/amdtp-stream-trace.h
+@@ -14,7 +14,7 @@
+ #include <linux/tracepoint.h>
+ 
+ TRACE_EVENT(in_packet,
+-	TP_PROTO(const struct amdtp_stream *s, u32 cycles, u32 cip_header[2], unsigned int payload_length, unsigned int index),
++	TP_PROTO(const struct amdtp_stream *s, u32 cycles, u32 *cip_header, unsigned int payload_length, unsigned int index),
+ 	TP_ARGS(s, cycles, cip_header, payload_length, index),
+ 	TP_STRUCT__entry(
+ 		__field(unsigned int, second)
 -- 
 2.9.5
