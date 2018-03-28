@@ -1,56 +1,63 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build
- time
-Date: Wed, 28 Mar 2018 15:47:56 -0400 (EDT)
-Message-ID: <686218133.247.1522266476295.JavaMail.zimbra@efficios.com>
-References: <20180328021105.4061744-1-ast@fb.com> <80d7af37-10ef-28d7-f03f-27b4b5849cd1@fb.com> <20180328141045.1202afeb@gandalf.local.home> <a5c8ff7c-8185-a3fd-89eb-45ddc099c03b@fb.com> <20180328145431.687643bc@gandalf.local.home> <842190155.225.1522264944386.JavaMail.zimbra@efficios.com> <20180328153220.06a132f4@gandalf.local.home> <20180328153819.654c1600@gandalf.local.home>
+Subject: Re: [PATCH v8 bpf-next 6/9] bpf: introduce BPF_RAW_TRACEPOINT
+Date: Wed, 28 Mar 2018 15:48:47 -0400 (EDT)
+Message-ID: <2000920858.249.1522266527563.JavaMail.zimbra@efficios.com>
+References: <20180328190540.370956-1-ast@kernel.org> <20180328190540.370956-7-ast@kernel.org> <20180328153435.5e733957@gandalf.local.home> <2a0f6ac2-b13e-b8ad-31b4-a42909a34efa@fb.com> <20180328154027.569206ba@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180328153819.654c1600@gandalf.local.home>
+In-Reply-To: <20180328154027.569206ba@gandalf.local.home>
 Sender: netdev-owner@vger.kernel.org
 To: rostedt <rostedt@goodmis.org>
-Cc: Alexei Starovoitov <ast@fb.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: Alexei Starovoitov <ast@fb.com>, Alexei Starovoitov <ast@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 28, 2018, at 3:38 PM, rostedt rostedt@goodmis.org wrote:
+----- On Mar 28, 2018, at 3:40 PM, rostedt rostedt@goodmis.org wrote:
 
-> On Wed, 28 Mar 2018 15:32:20 -0400
-> Steven Rostedt <rostedt@goodmis.org> wrote:
+> On Wed, 28 Mar 2018 12:38:48 -0700
+> Alexei Starovoitov <ast@fb.com> wrote:
 > 
->> -#define __DO_TRACE(tp, proto, args, cond, rcucheck)			\
->> +#define __DO_TRACE(name, proto, args, cond, rcucheck)			\
->>  	do {								\
->>  		struct tracepoint_func *it_func_ptr;			\
->>  		void *it_func;						\
->> @@ -140,7 +140,7 @@ extern void syscall_unregfunc(void);
->>  		if (rcucheck)						\
->>  			rcu_irq_enter_irqson();				\
->>  		rcu_read_lock_sched_notrace();				\
->> -		it_func_ptr = rcu_dereference_sched((tp)->funcs);	\
->> +		it_func_ptr = rcu_dereference_sched(__trace_##name##_funcs); \
+>> On 3/28/18 12:34 PM, Steven Rostedt wrote:
+>> > On Wed, 28 Mar 2018 12:05:37 -0700
+>> > Alexei Starovoitov <ast@kernel.org> wrote:
+>> >  
+>> >> +++ b/include/linux/tracepoint-defs.h
+>> >> @@ -35,4 +35,10 @@ struct tracepoint {
+>> >>  	struct tracepoint_func __rcu *funcs;
+>> >>  };
+>> >>
+>> >> +struct bpf_raw_event_map {
+>> >> +	struct tracepoint	*tp;
+>> >> +	void			*bpf_func;
+>> >> +	u32			num_args;
+>> >> +} __aligned(32);
+>> >> +
+>> >
+>> > If you prefer v7, I'm fine with that. For cache issues, I can pull out
+>> > the funcs from the tracepoint structure like I posted.
+>> 
+>> I very much prefer to land this v8 as-is and optimize later.
+>> 
+>> I still have bpfilter/microkernel patches to finish which were
+>> practically ready two weeks ago and got delayed but this set.
 > 
-> What we lose in data size, we may make up for in text (which is even
-> more important). This will remove a dereference in the hot path.
+> Then by all means, you have my Ack. We can optimize later.
 > 
-> I'll make a few builds and run size on the vmlinux images to see how
-> this pans out.
+> For the whole series... (v7 or v8)
+> 
+> Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 
-I like the approach. If it passes testing, I think it's a valuable improvement
-to lessen cache footprint of tracepoint when tracing is active.
+I'm fine with either v7 or v8 as well.
 
-Thanks!
+Thanks,
 
 Mathieu
 
-
+> 
+> Thanks!
 > 
 > -- Steve
-> 
-> 
->>  		if (it_func_ptr) {					\
-> >  			do {						\
 
 -- 
 Mathieu Desnoyers
