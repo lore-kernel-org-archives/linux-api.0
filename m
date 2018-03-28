@@ -1,48 +1,111 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v7 bpf-next 06/10] tracepoint: compute num_args at build
- time
-Date: Wed, 28 Mar 2018 13:38:30 -0400
-Message-ID: <20180328133830.3d5d74d3@gandalf.local.home>
+Subject: Re: [PATCH v7 bpf-next 07/10] bpf: introduce BPF_RAW_TRACEPOINT
+Date: Wed, 28 Mar 2018 13:41:39 -0400
+Message-ID: <20180328134139.0db1b5b5@gandalf.local.home>
 References: <20180328021105.4061744-1-ast@fb.com>
-        <20180328021105.4061744-7-ast@fb.com>
-        <1074829260.1986.1522244964935.JavaMail.zimbra@efficios.com>
-        <67c5f9b4-b24a-2806-e8d6-8b5241c66d6e@fb.com>
-        <20180328130407.7476cf17@gandalf.local.home>
-        <fdcb0bf0-f896-ffb3-b9de-0b17f5f70fc6@fb.com>
+        <20180328021105.4061744-8-ast@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <fdcb0bf0-f896-ffb3-b9de-0b17f5f70fc6@fb.com>
+In-Reply-To: <20180328021105.4061744-8-ast@fb.com>
 Sender: netdev-owner@vger.kernel.org
 To: Alexei Starovoitov <ast@fb.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, netdev <netdev@vger.kernel.org>, kernel-team <kernel-team@fb.com>, linux-api <linux-api@vger.kernel.org>, Josh Poimboeuf <jpoimboe@redhat.com>
+Cc: davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 28 Mar 2018 10:10:34 -0700
+On Tue, 27 Mar 2018 19:11:02 -0700
 Alexei Starovoitov <ast@fb.com> wrote:
 
-
-> > and have:
-> >
-> > 	u64 tp_offset = (u64)tp - (u64)_sdata;
-> >
-> > 	if (WARN_ON(tp_offset > UINT_MAX)
-> > 		return -EINVAL;
-> >
-> > 	 btp->tp_offset = (u32)tp_offset;  
+> From: Alexei Starovoitov <ast@kernel.org>
 > 
-> above math has to be build time constant, so warn_on likely
-> won't work.
+> Introduce BPF_PROG_TYPE_RAW_TRACEPOINT bpf program type to access
+> kernel internal arguments of the tracepoints in their raw form.
+> 
+> >From bpf program point of view the access to the arguments look like:  
+> struct bpf_raw_tracepoint_args {
+>        __u64 args[0];
+> };
+> 
+> int bpf_prog(struct bpf_raw_tracepoint_args *ctx)
+> {
+>   // program can read args[N] where N depends on tracepoint
+>   // and statically verified at program load+attach time
+> }
+> 
+> kprobe+bpf infrastructure allows programs access function arguments.
+> This feature allows programs access raw tracepoint arguments.
+> 
+> Similar to proposed 'dynamic ftrace events' there are no abi guarantees
+> to what the tracepoints arguments are and what their meaning is.
+> The program needs to type cast args properly and use bpf_probe_read()
+> helper to access struct fields when argument is a pointer.
+> 
+> For every tracepoint __bpf_trace_##call function is prepared.
+> In assembler it looks like:
+> (gdb) disassemble __bpf_trace_xdp_exception
+> Dump of assembler code for function __bpf_trace_xdp_exception:
+>    0xffffffff81132080 <+0>:     mov    %ecx,%ecx
+>    0xffffffff81132082 <+2>:     jmpq   0xffffffff811231f0 <bpf_trace_run3>
+> 
+> where
+> 
+> TRACE_EVENT(xdp_exception,
+>         TP_PROTO(const struct net_device *dev,
+>                  const struct bpf_prog *xdp, u32 act),
+> 
+> The above assembler snippet is casting 32-bit 'act' field into 'u64'
+> to pass into bpf_trace_run3(), while 'dev' and 'xdp' args are passed as-is.
+> All of ~500 of __bpf_trace_*() functions are only 5-10 byte long
+> and in total this approach adds 7k bytes to .text.
+> 
+> This approach gives the lowest possible overhead
+> while calling trace_xdp_exception() from kernel C code and
+> transitioning into bpf land.
+> Since tracepoint+bpf are used at speeds of 1M+ events per second
+> this is valuable optimization.
+> 
+> The new BPF_RAW_TRACEPOINT_OPEN sys_bpf command is introduced
+> that returns anon_inode FD of 'bpf-raw-tracepoint' object.
+> 
+> The user space looks like:
+> // load bpf prog with BPF_PROG_TYPE_RAW_TRACEPOINT type
+> prog_fd = bpf_prog_load(...);
+> // receive anon_inode fd for given bpf_raw_tracepoint with prog attached
+> raw_tp_fd = bpf_raw_tracepoint_open("xdp_exception", prog_fd);
+> 
+> Ctrl-C of tracing daemon or cmdline tool that uses this feature
+> will automatically detach bpf program, unload it and
+> unregister tracepoint probe.
+> 
+> On the kernel side the __bpf_raw_tp_map section of pointers to
+> tracepoint definition and to __bpf_trace_*() probe function is used
+> to find a tracepoint with "xdp_exception" name and
+> corresponding __bpf_trace_xdp_exception() probe function
+> which are passed to tracepoint_probe_register() to connect probe
+> with tracepoint.
+> 
+> Addition of bpf_raw_tracepoint doesn't interfere with ftrace and perf
+> tracepoint mechanisms. perf_event_open() can be used in parallel
+> on the same tracepoint.
+> Multiple bpf_raw_tracepoint_open("xdp_exception", prog_fd) are permitted.
+> Each with its own bpf program. The kernel will execute
+> all tracepoint probes and all attached bpf programs.
+> 
+> In the future bpf_raw_tracepoints can be extended with
+> query/introspection logic.
+> 
+> __bpf_raw_tp_map section logic was contributed by Steven Rostedt
+> 
+> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+> Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> ---
 
-Right, it would require a BUILD_BUG_ON.
+Just an FYI, I applied all the patches up to and including this one
+(made sure BPF_EVENTS was enabled in my config this time), built and
+booted the kernel and ran a bunch of tests (not my full suite, but
+enough).
 
-> imo the whole thing is too fragile and obscure.
-> I suggest to compress this 8 bytes * num_of_tracepoints later.
-> Especially would be good to do it in one way for
-> bpf_raw_event_map, ftrace and other places.
-
-Fair enough. We can defer this shrinkage to another time. I only
-suggested it here over your concern for the added bloat.
+It didn't affect any other tracing features that I can see.
 
 -- Steve
