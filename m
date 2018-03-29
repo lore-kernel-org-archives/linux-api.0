@@ -1,86 +1,150 @@
-From: Matthew Wilcox <willy@infradead.org>
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: [RFC][PATCH] ipc: Remove IPCMNI
-Date: Thu, 29 Mar 2018 12:32:54 -0700
-Message-ID: <20180329193254.GA22300@bombadil.infradead.org>
-References: <87o9jru3bf.fsf@xmission.com>
- <935a7c50-50cc-2dc0-33bb-92c000d039bc@redhat.com>
- <87woyego2u.fsf_-_@xmission.com>
- <047c6ed6-6581-b543-ba3d-cadc543d3d25@redhat.com>
- <87h8ph6u67.fsf@xmission.com>
- <7d3a1f93-f8e5-5325-f9a7-0079f7777b6f@redhat.com>
- <20180329021409.gcjjrmviw2lckbfk@linux-n805>
- <3e201de2-bed2-6f7d-0783-700d095142e0@colorfullife.com>
- <20180329105601.GA597@bombadil.infradead.org>
- <05772f83-d680-aea1-b222-cef2430dcc83@colorfullife.com>
+Date: Thu, 29 Mar 2018 15:08:01 -0500
+Message-ID: <87y3ia3ase.fsf@xmission.com>
+References: <1520885744-1546-1-git-send-email-longman@redhat.com>
+        <1520885744-1546-5-git-send-email-longman@redhat.com>
+        <87woyfyh57.fsf@xmission.com>
+        <5d4a858a-3136-5ef4-76fe-a61e7f2aed56@redhat.com>
+        <87o9jru3bf.fsf@xmission.com>
+        <935a7c50-50cc-2dc0-33bb-92c000d039bc@redhat.com>
+        <87woyego2u.fsf_-_@xmission.com>
+        <047c6ed6-6581-b543-ba3d-cadc543d3d25@redhat.com>
+        <87h8ph6u67.fsf@xmission.com>
+        <7d3a1f93-f8e5-5325-f9a7-0079f7777b6f@redhat.com>
+        <20180329021409.gcjjrmviw2lckbfk@linux-n805>
+        <3e201de2-bed2-6f7d-0783-700d095142e0@colorfullife.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <05772f83-d680-aea1-b222-cef2430dcc83@colorfullife.com>
+In-Reply-To: <3e201de2-bed2-6f7d-0783-700d095142e0@colorfullife.com> (Manfred
+        Spraul's message of "Thu, 29 Mar 2018 10:47:45 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
 To: Manfred Spraul <manfred@colorfullife.com>
-Cc: Davidlohr Bueso <dave@stgolabs.net>, Waiman Long <longman@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Stanislav Kinsbursky <skinsbursky@parallels.com>, Linux Containers <containers@lists.linux-foundation.org>, linux-api@vger.kernel.org
+Cc: Davidlohr Bueso <dave@stgolabs.net>, Waiman Long <longman@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Matthew Wilcox <willy@infradead.org>, Stanislav Kinsbursky <skinsbursky@parallels.com>, Linux Containers <containers@lists.linux-foundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 29, 2018 at 08:07:44PM +0200, Manfred Spraul wrote:
-> Hello Mathew,
-> 
-> On 03/29/2018 12:56 PM, Matthew Wilcox wrote:
-> > On Thu, Mar 29, 2018 at 10:47:45AM +0200, Manfred Spraul wrote:
-> > > > > > > > This can be implemented trivially with the current code
-> > > > > > > > using idr_alloc_cyclic.
-> > > Is there a performance impact?
-> > > Right now, the idr tree is only large if there are lots of objects.
-> > > What happens if we have only 1 object, with id=INT_MAX-1?
-> > The radix tree uses a branching factor of 64 entries (6 bits) per level.
-> > The maximum ID is 31 bits (positive signed 32-bit integer).  So the
-> > worst case for a single object is 6 pointer dereferences to find the
-> > object anywhere in the range (INT_MAX/2 - INT_MAX].  That will read 12
-> > cachelines.  If we were to constrain ourselves to a maximum of INT_MAX/2
-> > (30 bits), we'd reduce that to 5 pointer dereferences and 10 cachelines.
-> I'm concerned about the up to 6 branches.
-> But this is just guessing, we need a test with a realistic workload.
+Manfred Spraul <manfred@colorfullife.com> writes:
 
-Yes, and once there's a realistic workload, I'll be happy to prioritise
-adapting the data structure to reduce the pointer chases.
+>>>>> On 03/14/2018 08:49 PM, Eric W. Biederman wrote:
+>>>>>> To make it possible to keep checkpoint/restore working I have renamed
+>>>>>> the sysctls from xxx_next_id to xxx_nextid.  That is enough change that
+>>>>>> a smart CRIU implementation can see that what is exported has changed,
+>>>>>> and act accordingly.  New kernels will be able to restore the old id's.
+>>>>>>
+>>>>>> This code still needs some real world testing to verify my assumptions.
+>>>>>> And some work with the CRIU implementations to actually add the code
+>>>>>> that deals with the new for of id assignment.
+>>>>>>
+> It means that all existing checkpoint/restore application will not work with a
+> new kernel.
+> Everyone must first update the checkpoint/restore application, then update the
+> kernel.
+>
+> Is this acceptable?
 
-FWIW, the plan is this:
+There is no nead.
 
-There's currently an unused 32-bit field (on 64-bit machines) which I plan
-to make the 'base' field.  So at each step down the tree, one subtracts
-that field from the index in order to decide which slot to look at next.
-Something like this:
+I just reread through how next_id is implementated in ipc/util.c and I
+had been reading it wrong.  There is no need to change the sysctl.
 
-index=0x3000'0000
-(root) -> order=24
-          offset=48 -> order=18
-                       offset=0 -> order=12
-                                   offset=0 -> order=6
-                                               offset=0 -> order=0
-                                                           offset=0 -> data
+What criu needs is an interface that specifies the next_id to allocate
+both the high and the low bits and that is what this the sysctl
+provides.
 
-compresses to a single node:
-(root) -> order=0
-          base=3000'0000
-          offset=0 -> data
+The implemenation could use a little cleanup so it is easier to
+understand something like this perhaps:
 
-If one has one entry at 5 and another entry at 0x3000'0000, the tree
-looks like this (three nodes):
+diff --git a/ipc/util.c b/ipc/util.c
+index 3783b7991cc7..2d4ec6e5b70b 100644
+--- a/ipc/util.c
++++ b/ipc/util.c
+@@ -192,46 +192,32 @@ static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
+ 	return NULL;
+ }
+ 
+-#ifdef CONFIG_CHECKPOINT_RESTORE
+-/*
+- * Specify desired id for next allocated IPC object.
+- */
+-#define ipc_idr_alloc(ids, new)						\
+-	idr_alloc(&(ids)->ipcs_idr, (new),				\
+-		  (ids)->next_id < 0 ? 0 : ipcid_to_idx((ids)->next_id),\
+-		  0, GFP_NOWAIT)
+-
+-static inline int ipc_buildid(int id, struct ipc_ids *ids,
+-			      struct kern_ipc_perm *new)
+-{
+-	if (ids->next_id < 0) { /* default, behave as !CHECKPOINT_RESTORE */
+-		new->seq = ids->seq++;
+-		if (ids->seq > IPCID_SEQ_MAX)
+-			ids->seq = 0;
+-	} else {
+-		new->seq = ipcid_to_seqx(ids->next_id);
+-		ids->next_id = -1;
+-	}
+ 
+-	return SEQ_MULTIPLIER * new->seq + id;
+-}
+-
+-#else
+-#define ipc_idr_alloc(ids, new)					\
+-	idr_alloc(&(ids)->ipcs_idr, (new), 0, 0, GFP_NOWAIT)
+-
+-static inline int ipc_buildid(int id, struct ipc_ids *ids,
+-			      struct kern_ipc_perm *new)
++static inline int ipc_idr_alloc(struct ipc_ids *ids, struct kern_ipc_perm *new)
+ {
++	int id;
++#ifdef CONFIG_CHECKPOINT_RESTORE
++	if (unlikely(new->id >= 0)) {
++		int idx = ipcid_to_idx(new->id);
++		id = idr_alloc(&ids->ipcs_idr, new, idx, 0, GFP_NOWAIT);
++		if (id < 0)
++			return id;
++		if (id != idx) {
++			idr_remove(&ids->ipcs_idr, id);
++			return -EBUSY;
++		}
++		new->seq = ipcid_to_seqx(new->id);
++		return id;
++	}
++#endif
++	id = idr_alloc(&ids->ipcs_idr, new, 0, 0, GFP_NOWAIT);
+ 	new->seq = ids->seq++;
+ 	if (ids->seq > IPCID_SEQ_MAX)
+ 		ids->seq = 0;
+-
+-	return SEQ_MULTIPLIER * new->seq + id;
++	new->id = SEQ_MULTIPLIER * new->seq + id;
++	return id;
+ }
+ 
+-#endif /* CONFIG_CHECKPOINT_RESTORE */
+-
+ /**
+  * ipc_addid - add an ipc identifier
+  * @ids: ipc identifier set
+@@ -269,6 +255,10 @@ int ipc_addid(struct ipc_ids *ids, struct kern_ipc_perm *new, int limit)
+ 	new->cuid = new->uid = euid;
+ 	new->gid = new->cgid = egid;
+ 
++	new->id = ids->next_id;
++	if (new->id >= 0)
++		ids->next_id = -1;
++
+ 	id = ipc_idr_alloc(ids, new);
+ 	idr_preload_end();
+ 
+@@ -290,8 +280,6 @@ int ipc_addid(struct ipc_ids *ids, struct kern_ipc_perm *new, int limit)
+ 	if (id > ids->max_id)
+ 		ids->max_id = id;
+ 
+-	new->id = ipc_buildid(id, ids, new);
+-
+ 	return id;
+ }
+ 
 
-(root) -> order=24
-          base=0
-          offset=0  -> order=0
-                       base=0
-                       offset=5 -> entry1
-          offset=48 -> order=0
-                       base=0
-                       offset=0 -> entry2
-
-The trick is making sure that looking up offset 0x300'1000 returns NULL
-and not entry2, but I can make that work.
-
-An alternative is to go to something a little more libJudy and have
-mutating internal nodes in the tree that can represent this kind of
-situation in a more compact form.  There's a tradeoff to be made between
-simplicity of implementation, cost of insertion, cost of lookup and
-memory consumption.  I don't know where the right balance point is yet.
+Eric
