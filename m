@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 10/30] net: add support for ->poll_mask in proto_ops
-Date: Thu, 29 Mar 2018 22:33:08 +0200
-Message-ID: <20180329203328.3248-11-hch@lst.de>
+Subject: [PATCH 11/30] net: remove sock_no_poll
+Date: Thu, 29 Mar 2018 22:33:09 +0200
+Message-ID: <20180329203328.3248-12-hch@lst.de>
 References: <20180329203328.3248-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180329203328.3248-1-hch@lst.de>
@@ -10,110 +10,157 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The socket file operations still implement ->poll until all protocols are
-switched over.
+Now that sock_poll handles a NULL ->poll or ->poll_mask there is no need
+for a stub.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/net.h |  3 +++
- net/socket.c        | 51 ++++++++++++++++++++++++++++++++++++++++++++++-----
- 2 files changed, 49 insertions(+), 5 deletions(-)
+ crypto/af_alg.c             | 1 -
+ crypto/algif_hash.c         | 2 --
+ crypto/algif_rng.c          | 1 -
+ drivers/isdn/mISDN/socket.c | 1 -
+ drivers/net/ppp/pptp.c      | 1 -
+ include/net/sock.h          | 2 --
+ net/bluetooth/bnep/sock.c   | 1 -
+ net/bluetooth/cmtp/sock.c   | 1 -
+ net/bluetooth/hidp/sock.c   | 1 -
+ net/core/sock.c             | 6 ------
+ 10 files changed, 17 deletions(-)
 
-diff --git a/include/linux/net.h b/include/linux/net.h
-index 91216b16feb7..ce3d4dacb51e 100644
---- a/include/linux/net.h
-+++ b/include/linux/net.h
-@@ -147,6 +147,9 @@ struct proto_ops {
- 	int		(*getname)   (struct socket *sock,
- 				      struct sockaddr *addr,
- 				      int *sockaddr_len, int peer);
-+	struct wait_queue_head *(*get_poll_head)(struct socket *sock,
-+				      __poll_t events);
-+	__poll_t	(*poll_mask) (struct socket *sock, __poll_t events);
- 	__poll_t	(*poll)	     (struct file *file, struct socket *sock,
- 				      struct poll_table_struct *wait);
- 	int		(*ioctl)     (struct socket *sock, unsigned int cmd,
-diff --git a/net/socket.c b/net/socket.c
-index 3f859a07641a..ceb69ddcd7bd 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -118,8 +118,10 @@ static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
- static int sock_mmap(struct file *file, struct vm_area_struct *vma);
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index c49766b03165..50d75de539f5 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -347,7 +347,6 @@ static const struct proto_ops alg_proto_ops = {
+ 	.sendpage	=	sock_no_sendpage,
+ 	.sendmsg	=	sock_no_sendmsg,
+ 	.recvmsg	=	sock_no_recvmsg,
+-	.poll		=	sock_no_poll,
  
- static int sock_close(struct inode *inode, struct file *file);
--static __poll_t sock_poll(struct file *file,
--			      struct poll_table_struct *wait);
-+static struct wait_queue_head *sock_get_poll_head(struct file *file,
-+		__poll_t events);
-+static __poll_t sock_poll_mask(struct file *file, __poll_t);
-+static __poll_t sock_poll(struct file *file, struct poll_table_struct *wait);
- static long sock_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
- #ifdef CONFIG_COMPAT
- static long compat_sock_ioctl(struct file *file,
-@@ -142,6 +144,8 @@ static const struct file_operations socket_file_ops = {
- 	.llseek =	no_llseek,
- 	.read_iter =	sock_read_iter,
- 	.write_iter =	sock_write_iter,
-+	.get_poll_head = sock_get_poll_head,
-+	.poll_mask =	sock_poll_mask,
- 	.poll =		sock_poll,
- 	.unlocked_ioctl = sock_ioctl,
- #ifdef CONFIG_COMPAT
-@@ -1114,14 +1118,51 @@ int sock_create_lite(int family, int type, int protocol, struct socket **res)
+ 	.bind		=	alg_bind,
+ 	.release	=	af_alg_release,
+diff --git a/crypto/algif_hash.c b/crypto/algif_hash.c
+index 6c9b1927a520..bfcf595fd8f9 100644
+--- a/crypto/algif_hash.c
++++ b/crypto/algif_hash.c
+@@ -288,7 +288,6 @@ static struct proto_ops algif_hash_ops = {
+ 	.mmap		=	sock_no_mmap,
+ 	.bind		=	sock_no_bind,
+ 	.setsockopt	=	sock_no_setsockopt,
+-	.poll		=	sock_no_poll,
+ 
+ 	.release	=	af_alg_release,
+ 	.sendmsg	=	hash_sendmsg,
+@@ -396,7 +395,6 @@ static struct proto_ops algif_hash_ops_nokey = {
+ 	.mmap		=	sock_no_mmap,
+ 	.bind		=	sock_no_bind,
+ 	.setsockopt	=	sock_no_setsockopt,
+-	.poll		=	sock_no_poll,
+ 
+ 	.release	=	af_alg_release,
+ 	.sendmsg	=	hash_sendmsg_nokey,
+diff --git a/crypto/algif_rng.c b/crypto/algif_rng.c
+index 150c2b6480ed..22df3799a17b 100644
+--- a/crypto/algif_rng.c
++++ b/crypto/algif_rng.c
+@@ -106,7 +106,6 @@ static struct proto_ops algif_rng_ops = {
+ 	.bind		=	sock_no_bind,
+ 	.accept		=	sock_no_accept,
+ 	.setsockopt	=	sock_no_setsockopt,
+-	.poll		=	sock_no_poll,
+ 	.sendmsg	=	sock_no_sendmsg,
+ 	.sendpage	=	sock_no_sendpage,
+ 
+diff --git a/drivers/isdn/mISDN/socket.c b/drivers/isdn/mISDN/socket.c
+index c5603d1a07d6..c84270e16bdd 100644
+--- a/drivers/isdn/mISDN/socket.c
++++ b/drivers/isdn/mISDN/socket.c
+@@ -746,7 +746,6 @@ static const struct proto_ops base_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
+index 6dde9a0cfe76..87f892f1d0fe 100644
+--- a/drivers/net/ppp/pptp.c
++++ b/drivers/net/ppp/pptp.c
+@@ -627,7 +627,6 @@ static const struct proto_ops pptp_ops = {
+ 	.socketpair = sock_no_socketpair,
+ 	.accept     = sock_no_accept,
+ 	.getname    = pptp_getname,
+-	.poll       = sock_no_poll,
+ 	.listen     = sock_no_listen,
+ 	.shutdown   = sock_no_shutdown,
+ 	.setsockopt = sock_no_setsockopt,
+diff --git a/include/net/sock.h b/include/net/sock.h
+index 169c92afcafa..d9249fe65859 100644
+--- a/include/net/sock.h
++++ b/include/net/sock.h
+@@ -1585,8 +1585,6 @@ int sock_no_connect(struct socket *, struct sockaddr *, int, int);
+ int sock_no_socketpair(struct socket *, struct socket *);
+ int sock_no_accept(struct socket *, struct socket *, int, bool);
+ int sock_no_getname(struct socket *, struct sockaddr *, int *, int);
+-__poll_t sock_no_poll(struct file *, struct socket *,
+-			  struct poll_table_struct *);
+ int sock_no_ioctl(struct socket *, unsigned int, unsigned long);
+ int sock_no_listen(struct socket *, int);
+ int sock_no_shutdown(struct socket *, int);
+diff --git a/net/bluetooth/bnep/sock.c b/net/bluetooth/bnep/sock.c
+index b5116fa9835e..00deacdcb51c 100644
+--- a/net/bluetooth/bnep/sock.c
++++ b/net/bluetooth/bnep/sock.c
+@@ -175,7 +175,6 @@ static const struct proto_ops bnep_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/net/bluetooth/cmtp/sock.c b/net/bluetooth/cmtp/sock.c
+index ce86a7bae844..e08f28fadd65 100644
+--- a/net/bluetooth/cmtp/sock.c
++++ b/net/bluetooth/cmtp/sock.c
+@@ -178,7 +178,6 @@ static const struct proto_ops cmtp_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/net/bluetooth/hidp/sock.c b/net/bluetooth/hidp/sock.c
+index 008ba439bd62..1eaac01f85de 100644
+--- a/net/bluetooth/hidp/sock.c
++++ b/net/bluetooth/hidp/sock.c
+@@ -208,7 +208,6 @@ static const struct proto_ops hidp_sock_ops = {
+ 	.getname	= sock_no_getname,
+ 	.sendmsg	= sock_no_sendmsg,
+ 	.recvmsg	= sock_no_recvmsg,
+-	.poll		= sock_no_poll,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= sock_no_shutdown,
+ 	.setsockopt	= sock_no_setsockopt,
+diff --git a/net/core/sock.c b/net/core/sock.c
+index c501499a04fe..b72b6ad050e4 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -2503,12 +2503,6 @@ int sock_no_getname(struct socket *sock, struct sockaddr *saddr,
  }
- EXPORT_SYMBOL(sock_create_lite);
+ EXPORT_SYMBOL(sock_no_getname);
  
-+static struct wait_queue_head *sock_get_poll_head(struct file *file,
-+		__poll_t events)
-+{
-+	struct socket *sock = file->private_data;
-+
-+	if (!sock->ops->poll_mask)
-+		return NULL;
-+	if (sock->ops->get_poll_head)
-+		return sock->ops->get_poll_head(sock, events);
-+
-+	sock_poll_busy_loop(sock, events);
-+	return sk_sleep(sock->sk);
-+}
-+
-+static __poll_t sock_poll_mask(struct file *file, __poll_t events)
-+{
-+	struct socket *sock = file->private_data;
-+
-+	/*
-+	 * We need to be sure we are in sync with the socket flags modification.
-+	 *
-+	 * This memory barrier is paired in the wq_has_sleeper.
-+	 */
-+	smp_mb();
-+
-+	/* this socket can poll_ll so tell the system call */
-+	return sock->ops->poll_mask(sock, events) |
-+		(sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0);
-+}
-+
- /* No kernel lock held - perfect */
- static __poll_t sock_poll(struct file *file, poll_table *wait)
+-__poll_t sock_no_poll(struct file *file, struct socket *sock, poll_table *pt)
+-{
+-	return 0;
+-}
+-EXPORT_SYMBOL(sock_no_poll);
+-
+ int sock_no_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
  {
- 	struct socket *sock = file->private_data;
--	__poll_t events = poll_requested_events(wait);
-+	__poll_t events = poll_requested_events(wait), mask = 0;
- 
--	sock_poll_busy_loop(sock, events);
--	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
-+	if (sock->ops->poll) {
-+		sock_poll_busy_loop(sock, events);
-+		mask = sock->ops->poll(file, sock, wait);
-+	} else if (sock->ops->poll_mask) {
-+		sock_poll_wait(file, sock_get_poll_head(file, events), wait);
-+		mask = sock->ops->poll_mask(sock, events);
-+	}
-+
-+	return mask | sock_poll_busy_flag(sock);
- }
- 
- static int sock_mmap(struct file *file, struct vm_area_struct *vma)
+ 	return -EOPNOTSUPP;
 -- 
 2.14.2
 
