@@ -1,34 +1,55 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 07/30] aio: add delayed cancel support
-Date: Thu, 29 Mar 2018 20:08:31 +0200
-Message-ID: <20180329180831.GA15948@lst.de>
-References: <20180328072926.17131-1-hch@lst.de> <20180328072926.17131-8-hch@lst.de> <20180328163526.GV30522@ZenIV.linux.org.uk> <20180329085305.GA22215@lst.de> <20180329142506.GX30522@ZenIV.linux.org.uk>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable
+ sequences system call (v12)
+Date: Thu, 29 Mar 2018 14:35:16 -0400 (EDT)
+Message-ID: <1657598086.875.1522348516598.JavaMail.zimbra@efficios.com>
+References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com> <alpine.DEB.2.21.1803282305030.1496@nanos.tec.linutronix.de> <87410797.545.1522331641598.JavaMail.zimbra@efficios.com> <20180329142338.GD4043@hirez.programming.kicks-ass.net> <544124089.623.1522337940950.JavaMail.zimbra@efficios.com> <20180329122439.4a909c72@gandalf.local.home> <21903915.856.1522346553810.JavaMail.zimbra@efficios.com> <20180329140752.12661138@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20180329142506.GX30522@ZenIV.linux.org.uk>
-Sender: owner-linux-aio@kvack.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180329140752.12661138@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+To: rostedt <rostedt@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>W
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 29, 2018 at 03:25:06PM +0100, Al Viro wrote:
-> OK.  Let's leave that alone for now.  Re deferred cancels - AFAICS, we *must*
-> remove the sucker from ctx->active_reqs before dropping ->ctx_lock.
+----- On Mar 29, 2018, at 2:07 PM, rostedt rostedt@goodmis.org wrote:
+
+> On Thu, 29 Mar 2018 14:02:33 -0400 (EDT)
+> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
 > 
-> As it is, you are creating a io_cancel()/io_cancel() race leading to double
-> fput().  It's not that hard to fix; I can do that myself while applying your
-> series (as described in previous posting - kiocb_cancel_locked() returning
-> NULL or ERR_PTR() in non-deferred case and pointer to aio_kiocb removed from
-> ->active_reqs in deferred one) or you could fix it in some other way and
-> update your branch.
+>> Currently, anyone using ptrace on a process has pretty much given up all
+>> hopes of performance. Processes will use rseq to gain performance, not the
+>> opposite, so this deterioration will be unwelcome.
+> 
+> The ptrace path has nothing to do with ptrace anymore, and probably be
+> hard to notice the performance hit. You simply set a TIF flag, and on
+> exit of the syscall it jumps to a path that checks special cases
+> (tracing system calls being one of them). It's called the ptrace path
+> because ptrace was the first one to use it (I'm guessing, I haven't
+> actually looked at the history).
 
-I think that is the right fix.  Let me resend so that I can test the
-result first.
+Last time I checked, it's not only a jump, it's actually saving/restoring
+tons of registers. Did this change recently ?
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+I use it for LTTng syscall tracing too. My experience so far is that it's really
+terribly slow. I've been waiting on Andy Lutomirski to complete his changes in that
+area to look into making this faster for syscall tracepoints.
+
+> 
+> This is used to add any system call checks that are not done during
+> normal operation. And this certainly falls under that category.
+
+I know it's used for stuff like seccomp too. My guess has always been that security
+people care much more about robustness than performance.
+
+Thanks,
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
