@@ -1,68 +1,62 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable sequences
- system call (v12)
-Date: Thu, 29 Mar 2018 16:23:38 +0200
-Message-ID: <20180329142338.GD4043@hirez.programming.kicks-ass.net>
-References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
- <20180328145946.GH4082@hirez.programming.kicks-ass.net>
- <265889560.1.1522250045589.JavaMail.zimbra@efficios.com>
- <20180328152814.GI4082@hirez.programming.kicks-ass.net>
- <533214853.56.1522251426819.JavaMail.zimbra@efficios.com>
- <20180328174935.GK4082@hirez.programming.kicks-ass.net>
- <181076499.279.1522268382303.JavaMail.zimbra@efficios.com>
- <alpine.DEB.2.21.1803282305030.1496@nanos.tec.linutronix.de>
- <87410797.545.1522331641598.JavaMail.zimbra@efficios.com>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 07/30] aio: add delayed cancel support
+Date: Thu, 29 Mar 2018 15:25:06 +0100
+Message-ID: <20180329142506.GX30522@ZenIV.linux.org.uk>
+References: <20180328072926.17131-1-hch@lst.de>
+ <20180328072926.17131-8-hch@lst.de>
+ <20180328163526.GV30522@ZenIV.linux.org.uk>
+ <20180329085305.GA22215@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <87410797.545.1522331641598.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will>
+In-Reply-To: <20180329085305.GA22215@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 29, 2018 at 09:54:01AM -0400, Mathieu Desnoyers wrote:
-> Let's say we disallow system calls from rseq critical sections. A few points
-> arise:
+On Thu, Mar 29, 2018 at 10:53:05AM +0200, Christoph Hellwig wrote:
+> On Wed, Mar 28, 2018 at 05:35:26PM +0100, Al Viro wrote:
+> > >  	ret = vfs_fsync(req->file, req->datasync);
+> > > -	fput(req->file);
+> > > -	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
+> > > +	if (aio_complete(iocb, ret, 0, 0))
+> > > +		fput(file);
+> > 
+> > IDGI.
+> > 	1) can aio_complete() ever return false here?
 > 
-> - We still need to allow traps (page faults, breakpoints, ...) within rseq c.s.,
+> It won't.  But sometimes checking the return value and sometimes not
+> seems like a bad pattern.
 > 
-> - We still need to allow interrupts within rseq c.s.,
-
-Sure, but all those are different entry points, so that shouldn't be a
-problem.
-
-> - We need to decide whether we just document that syscalls within rseq c.s.
->   are not supported, or we enforce a behavior if this happens (e.g. SIGSEGV).
->   If we enforce a SIGSEGV, we'd have to figure out whether it's worth it to
->   add extra branches to the system call fast path to validate this.
-
-Without enforcement someone will eventually do this :/ We might (maybe)
-get away with it being a debug option somewhere, but even that sounds
-like trouble.
-
-> - We need to carefully consider the case of system calls issued within signal
->   handlers nested on top of rseq. When RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL is
->   _not_ set, neither in the rseq c.s. descriptor nor in the TLS @flags,
->   it's pretty much straightforward: upon signal delivery, the kernel moves the
->   ip to abort, and clears the tls @rseq_cs pointer. This means that any system
->   call issued within the signal handler is not actually within the rseq c.s.
->   upon which the signal is nested.
+> > 	2) do we ever have aio_kiocb that would not have an associated
+> > struct file * that needs to be dropped on successful aio_complete()?  AFAICS,
+> > rw, fsync and poll variants all have one, and I'm not sure what kind of
+> > async IO *could* be done without an opened file.
 > 
->   The case I worry about is if a thread sets the RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
->   flag in its TLS @flags field (useful in a debugging scenario where we want a
->   debugger to single-step through the rseq c.s. and observe registers at each step).
->   Arguably, this is only ever used in development. However, it does allow a situation
->   where a system call executed within a signal handler can nest over a rseq c.s..
->   So if we choose to be very strict and SIGSEGV any syscall nested over rseq
->   c.s., we may very well end up killing the process for no good reason in this
->   scenario.
+> All have a file assoiated at least right now.  As mentioned last time
+> finding a struct to pass that file would be rather annoying, so we'd either
+> have to pass it explicitly, or do something nasty like duplicating the
+> pointer in the aio_kiocb in addition to struct kiocb.  Which might not
+> be that bad after all, as it would only bloat the aio_kiocb and not
+> struct kiocb used on stack all over.
 
-Yes, that needs a little thought; but when we run the signal handler,
-the IP would no longer be inside the active RSEQ, right?
+OK.  Let's leave that alone for now.  Re deferred cancels - AFAICS, we *must*
+remove the sucker from ctx->active_reqs before dropping ->ctx_lock.
 
-> - We need to decide whether all syscalls are disallowed, or if we want to pick
->   specific ones (e.g. fork()).
+As it is, you are creating a io_cancel()/io_cancel() race leading to double
+fput().  It's not that hard to fix; I can do that myself while applying your
+series (as described in previous posting - kiocb_cancel_locked() returning
+NULL or ERR_PTR() in non-deferred case and pointer to aio_kiocb removed from
+->active_reqs in deferred one) or you could fix it in some other way and
+update your branch.
 
-All.
+As it is, the race is user-exploitable and not that hard to trigger - AIO_POLL,
+then have two threads try and cancel it at the same time.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
