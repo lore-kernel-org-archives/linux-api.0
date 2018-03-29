@@ -1,50 +1,64 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable
- sequences system call (v12)
-Date: Thu, 29 Mar 2018 14:02:33 -0400 (EDT)
-Message-ID: <21903915.856.1522346553810.JavaMail.zimbra@efficios.com>
-References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com> <20180328174935.GK4082@hirez.programming.kicks-ass.net> <181076499.279.1522268382303.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1803282305030.1496@nanos.tec.linutronix.de> <87410797.545.1522331641598.JavaMail.zimbra@efficios.com> <20180329142338.GD4043@hirez.programming.kicks-ass.net> <544124089.623.1522337940950.JavaMail.zimbra@efficios.com> <20180329122439.4a909c72@gandalf.local.home>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [REVIEW][PATCH 00/11] ipc: Fixing the pid namespace support
+Date: Thu, 29 Mar 2018 13:42:00 -0500
+Message-ID: <874lky911j.fsf@xmission.com>
+References: <1520875093-18174-1-git-send-email-nagarathnam.muthusamy@oracle.com>
+        <87vadzqqq6.fsf@xmission.com>
+        <990e88fa-ab50-9645-b031-14e1afbf7ccc@oracle.com>
+        <877eqejowd.fsf@xmission.com>
+        <3a46a03d-e4dd-59b6-e25f-0020be1b1dc9@oracle.com>
+        <87a7v2z2qa.fsf@xmission.com> <87vadmobdw.fsf_-_@xmission.com>
+        <20180329011241.v5kgiwbbayz425hk@linux-n805>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180329122439.4a909c72@gandalf.local.home>
+In-Reply-To: <20180329011241.v5kgiwbbayz425hk@linux-n805> (Davidlohr Bueso's
+        message of "Wed, 28 Mar 2018 18:12:41 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: rostedt <rostedt@goodmis.org>
-Cc: Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>W
+To: Davidlohr Bueso <dave@stgolabs.net>
+Cc: Linux Containers <containers@lists.linux-foundation.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, khlebnikov@yandex-team.ru, prakash.sangappa@oracle.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, serge.hallyn@ubuntu.com, esyr@redhat.com, jannh@google.com, linux-security-module@vger.kernel.org, Pavel Emelyanov <xemul@openvz.org>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 29, 2018, at 12:24 PM, rostedt rostedt@goodmis.org wrote:
+Davidlohr Bueso <dave@stgolabs.net> writes:
 
-> On Thu, 29 Mar 2018 11:39:00 -0400 (EDT)
-> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
-> 
->> Enforcing SIGSEGV on syscall entry when nested in a rseq critical section
->> will not be free both in terms of syscall overhead, and in terms of code
->> maintenance: we'd need to add those checks into entry.S for each architecture
->> supported, which pretty much doubles the amount of architecture-specific
->> code we need to implement for rseq. Currently, all we need is to hook in
->> signal delivery and wire up the system call numbers.
-> 
-> Why not have the check on syscall exit? Then we could use the ptrace
-> type mechanism to only go that path when a rseq exists for the program.
+> On Fri, 23 Mar 2018, Eric W. Biederman wrote:
+>
+>>Still I would like to see this fixed and I plan on merging this code.
 
-Currently, anyone using ptrace on a process has pretty much given up all
-hopes of performance. Processes will use rseq to gain performance, not the
-opposite, so this deterioration will be unwelcome.
+The code is merged into my for-next tree now.
 
-One thing I would find more acceptable is to only compile in this check under
-a CONFIG_DEBUG_RSEQ option or something similar. This means we can then put
-the check at the most convenient location without caring too much about its
-performance impact.
+> Yes, it needs fixed, but 1) there are pending issues (such as the
+> extra atomics)
 
-Thoughts ?
+Concerns not issues.  I documented them but I don't see any serious
+reason to be concerned.  The data structures are sufficiently different
+from AF_UNIX as well as the usage patterns that I have no reasonable
+expectation that there will be problems.
 
-Thanks,
+There is no reasonable alternate implementation for correcting this bug.
+Because of my concerns I looked at several other possibilities and they
+all showed incorrect behavior, in different circumstances.
 
-Mathieu
+The implementations are simple enough there are no deep subtle issues.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+I have tested the code.
+
+If a regression happens the code is carefully split up so things can be
+bisected easily and reverted if necessary.
+
+> and 2) its late in the -rc cycle. Plus this issue has existed for 11 years without
+> the world ending, so I'm sure we can hold on until at least one more
+> release.
+
+People really are starting to seriously look at accessing a single ipc
+namespace from multiple pid namespaces.  The work arounds I saw posted
+for the current brokenness were too nasty to live.
+
+Better to fix things before there is code that actually starts depending
+on the current brokenness.
+
+I am the namespace maintianer and this is my area of responsibility.
+
+The code is ready and I see no reason or benefit in delay.
+
+Eric
