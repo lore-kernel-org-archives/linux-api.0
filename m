@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 18/30] net/tipc: convert to ->poll_mask
-Date: Thu, 29 Mar 2018 22:33:16 +0200
-Message-ID: <20180329203328.3248-19-hch@lst.de>
+Subject: [PATCH 19/30] net/sctp: convert to ->poll_mask
+Date: Thu, 29 Mar 2018 22:33:17 +0200
+Message-ID: <20180329203328.3248-20-hch@lst.de>
 References: <20180329203328.3248-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180329203328.3248-1-hch@lst.de>
@@ -12,69 +12,72 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/tipc/socket.c | 14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
+ include/net/sctp/sctp.h | 3 +--
+ net/sctp/ipv6.c         | 2 +-
+ net/sctp/protocol.c     | 2 +-
+ net/sctp/socket.c       | 4 +---
+ 4 files changed, 4 insertions(+), 7 deletions(-)
 
-diff --git a/net/tipc/socket.c b/net/tipc/socket.c
-index 7dfa9fc99ec3..e9c6f185db74 100644
---- a/net/tipc/socket.c
-+++ b/net/tipc/socket.c
-@@ -695,10 +695,9 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
- }
- 
- /**
-- * tipc_poll - read and possibly block on pollmask
-+ * tipc_poll - read pollmask
-  * @file: file structure associated with the socket
-  * @sock: socket for which to calculate the poll bits
-- * @wait: ???
-  *
-  * Returns pollmask value
-  *
-@@ -712,15 +711,12 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
-  * imply that the operation will succeed, merely that it should be performed
-  * and will not block.
+diff --git a/include/net/sctp/sctp.h b/include/net/sctp/sctp.h
+index f7ae6b0a21d0..37abd5ba4a3f 100644
+--- a/include/net/sctp/sctp.h
++++ b/include/net/sctp/sctp.h
+@@ -107,8 +107,7 @@ int sctp_backlog_rcv(struct sock *sk, struct sk_buff *skb);
+ int sctp_inet_listen(struct socket *sock, int backlog);
+ void sctp_write_space(struct sock *sk);
+ void sctp_data_ready(struct sock *sk);
+-__poll_t sctp_poll(struct file *file, struct socket *sock,
+-		poll_table *wait);
++__poll_t sctp_poll_mask(struct socket *sock, __poll_t events);
+ void sctp_sock_rfree(struct sk_buff *skb);
+ void sctp_copy_sock(struct sock *newsk, struct sock *sk,
+ 		    struct sctp_association *asoc);
+diff --git a/net/sctp/ipv6.c b/net/sctp/ipv6.c
+index e35d4f73d2df..6b0b8fc5b75a 100644
+--- a/net/sctp/ipv6.c
++++ b/net/sctp/ipv6.c
+@@ -976,7 +976,7 @@ static const struct proto_ops inet6_seqpacket_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = sctp_getname,
+-	.poll		   = sctp_poll,
++	.poll_mask	   = sctp_poll_mask,
+ 	.ioctl		   = inet6_ioctl,
+ 	.listen		   = sctp_inet_listen,
+ 	.shutdown	   = inet_shutdown,
+diff --git a/net/sctp/protocol.c b/net/sctp/protocol.c
+index 91813e686c67..20c544890e80 100644
+--- a/net/sctp/protocol.c
++++ b/net/sctp/protocol.c
+@@ -1024,7 +1024,7 @@ static const struct proto_ops inet_seqpacket_ops = {
+ 	.socketpair	   = sock_no_socketpair,
+ 	.accept		   = inet_accept,
+ 	.getname	   = inet_getname,	/* Semantics are different.  */
+-	.poll		   = sctp_poll,
++	.poll_mask	   = sctp_poll_mask,
+ 	.ioctl		   = inet_ioctl,
+ 	.listen		   = sctp_inet_listen,
+ 	.shutdown	   = inet_shutdown,	/* Looks harmless.  */
+diff --git a/net/sctp/socket.c b/net/sctp/socket.c
+index bf271f8c2dc9..097454740929 100644
+--- a/net/sctp/socket.c
++++ b/net/sctp/socket.c
+@@ -7587,14 +7587,12 @@ int sctp_inet_listen(struct socket *sock, int backlog)
+  * here, again, by modeling the current TCP/UDP code.  We don't have
+  * a good way to test with it yet.
   */
--static __poll_t tipc_poll(struct file *file, struct socket *sock,
--			      poll_table *wait)
-+static __poll_t tipc_poll_mask(struct socket *sock, __poll_t events)
+-__poll_t sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
++__poll_t sctp_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct tipc_sock *tsk = tipc_sk(sk);
- 	__poll_t revents = 0;
+ 	struct sctp_sock *sp = sctp_sk(sk);
+ 	__poll_t mask;
  
--	sock_poll_wait(file, sk_sleep(sk), wait);
+-	poll_wait(file, sk_sleep(sk), wait);
 -
- 	if (sk->sk_shutdown & RCV_SHUTDOWN)
- 		revents |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
- 	if (sk->sk_shutdown == SHUTDOWN_MASK)
-@@ -3020,7 +3016,7 @@ static const struct proto_ops msg_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= sock_no_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= sock_no_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3041,7 +3037,7 @@ static const struct proto_ops packet_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
-@@ -3062,7 +3058,7 @@ static const struct proto_ops stream_ops = {
- 	.socketpair	= tipc_socketpair,
- 	.accept		= tipc_accept,
- 	.getname	= tipc_getname,
--	.poll		= tipc_poll,
-+	.poll_mask	= tipc_poll_mask,
- 	.ioctl		= tipc_ioctl,
- 	.listen		= tipc_listen,
- 	.shutdown	= tipc_shutdown,
+ 	sock_rps_record_flow(sk);
+ 
+ 	/* A TCP-style listening socket becomes readable when the accept queue
 -- 
 2.14.2
 
