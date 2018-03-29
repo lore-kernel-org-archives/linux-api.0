@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 24/30] net/iucv: convert to ->poll_mask
-Date: Thu, 29 Mar 2018 22:33:22 +0200
-Message-ID: <20180329203328.3248-25-hch@lst.de>
+Subject: [PATCH 25/30] net/rxrpc: convert to ->poll_mask
+Date: Thu, 29 Mar 2018 22:33:23 +0200
+Message-ID: <20180329203328.3248-26-hch@lst.de>
 References: <20180329203328.3248-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180329203328.3248-1-hch@lst.de>
@@ -12,52 +12,40 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/iucv/af_iucv.h | 2 --
- net/iucv/af_iucv.c         | 7 ++-----
- 2 files changed, 2 insertions(+), 7 deletions(-)
+ net/rxrpc/af_rxrpc.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
-index f4c21b5a1242..b0eaeb02d46d 100644
---- a/include/net/iucv/af_iucv.h
-+++ b/include/net/iucv/af_iucv.h
-@@ -153,8 +153,6 @@ struct iucv_sock_list {
- 	atomic_t	  autobind_name;
- };
- 
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait);
- void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
- void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
- void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
-diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
-index 1e8cc7bcbca3..539a312dc481 100644
---- a/net/iucv/af_iucv.c
-+++ b/net/iucv/af_iucv.c
-@@ -1489,14 +1489,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
- 	return 0;
- }
- 
--__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
--			    poll_table *wait)
-+static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/net/rxrpc/af_rxrpc.c b/net/rxrpc/af_rxrpc.c
+index 0c9c18aa7c77..d2440d5c3ce8 100644
+--- a/net/rxrpc/af_rxrpc.c
++++ b/net/rxrpc/af_rxrpc.c
+@@ -729,15 +729,11 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
+ /*
+  * permit an RxRPC socket to be polled
+  */
+-static __poll_t rxrpc_poll(struct file *file, struct socket *sock,
+-			       poll_table *wait)
++static __poll_t rxrpc_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	__poll_t mask = 0;
- 
--	sock_poll_wait(file, sk_sleep(sk), wait);
+ 	struct rxrpc_sock *rx = rxrpc_sk(sk);
+-	__poll_t mask;
 -
- 	if (sk->sk_state == IUCV_LISTEN)
- 		return iucv_accept_poll(sk);
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
  
-@@ -2389,7 +2386,7 @@ static const struct proto_ops iucv_sock_ops = {
- 	.getname	= iucv_sock_getname,
- 	.sendmsg	= iucv_sock_sendmsg,
- 	.recvmsg	= iucv_sock_recvmsg,
--	.poll		= iucv_sock_poll,
-+	.poll_mask	= iucv_sock_poll_mask,
- 	.ioctl		= sock_no_ioctl,
- 	.mmap		= sock_no_mmap,
+ 	/* the socket is readable if there are any messages waiting on the Rx
+ 	 * queue */
+@@ -940,7 +936,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
  	.socketpair	= sock_no_socketpair,
+ 	.accept		= sock_no_accept,
+ 	.getname	= sock_no_getname,
+-	.poll		= rxrpc_poll,
++	.poll_mask	= rxrpc_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.listen		= rxrpc_listen,
+ 	.shutdown	= rxrpc_shutdown,
 -- 
 2.14.2
 
