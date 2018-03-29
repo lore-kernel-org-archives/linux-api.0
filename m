@@ -1,64 +1,67 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [REVIEW][PATCH 00/11] ipc: Fixing the pid namespace support
-Date: Thu, 29 Mar 2018 13:42:00 -0500
-Message-ID: <874lky911j.fsf@xmission.com>
-References: <1520875093-18174-1-git-send-email-nagarathnam.muthusamy@oracle.com>
-        <87vadzqqq6.fsf@xmission.com>
-        <990e88fa-ab50-9645-b031-14e1afbf7ccc@oracle.com>
-        <877eqejowd.fsf@xmission.com>
-        <3a46a03d-e4dd-59b6-e25f-0020be1b1dc9@oracle.com>
-        <87a7v2z2qa.fsf@xmission.com> <87vadmobdw.fsf_-_@xmission.com>
-        <20180329011241.v5kgiwbbayz425hk@linux-n805>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC PATCH for 4.17 02/21] rseq: Introduce restartable
+ sequences system call (v12)
+Date: Thu, 29 Mar 2018 14:46:05 -0400
+Message-ID: <20180329144605.599a8f46@gandalf.local.home>
+References: <20180327160542.28457-1-mathieu.desnoyers@efficios.com>
+        <alpine.DEB.2.21.1803282305030.1496@nanos.tec.linutronix.de>
+        <87410797.545.1522331641598.JavaMail.zimbra@efficios.com>
+        <20180329142338.GD4043@hirez.programming.kicks-ass.net>
+        <544124089.623.1522337940950.JavaMail.zimbra@efficios.com>
+        <20180329122439.4a909c72@gandalf.local.home>
+        <21903915.856.1522346553810.JavaMail.zimbra@efficios.com>
+        <20180329140752.12661138@gandalf.local.home>
+        <1657598086.875.1522348516598.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180329011241.v5kgiwbbayz425hk@linux-n805> (Davidlohr Bueso's
-        message of "Wed, 28 Mar 2018 18:12:41 -0700")
+In-Reply-To: <1657598086.875.1522348516598.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <dave@stgolabs.net>
-Cc: Linux Containers <containers@lists.linux-foundation.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, khlebnikov@yandex-team.ru, prakash.sangappa@oracle.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, serge.hallyn@ubuntu.com, esyr@redhat.com, jannh@google.com, linux-security-module@vger.kernel.org, Pavel Emelyanov <xemul@openvz.org>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>W
 List-Id: linux-api@vger.kernel.org
 
-Davidlohr Bueso <dave@stgolabs.net> writes:
+On Thu, 29 Mar 2018 14:35:16 -0400 (EDT)
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
 
-> On Fri, 23 Mar 2018, Eric W. Biederman wrote:
->
->>Still I would like to see this fixed and I plan on merging this code.
+> ----- On Mar 29, 2018, at 2:07 PM, rostedt rostedt@goodmis.org wrote:
+> 
+> > On Thu, 29 Mar 2018 14:02:33 -0400 (EDT)
+> > Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+> >   
+> >> Currently, anyone using ptrace on a process has pretty much given up all
+> >> hopes of performance. Processes will use rseq to gain performance, not the
+> >> opposite, so this deterioration will be unwelcome.  
+> > 
+> > The ptrace path has nothing to do with ptrace anymore, and probably be
+> > hard to notice the performance hit. You simply set a TIF flag, and on
+> > exit of the syscall it jumps to a path that checks special cases
+> > (tracing system calls being one of them). It's called the ptrace path
+> > because ptrace was the first one to use it (I'm guessing, I haven't
+> > actually looked at the history).  
+> 
+> Last time I checked, it's not only a jump, it's actually saving/restoring
+> tons of registers. Did this change recently ?
+> 
+> I use it for LTTng syscall tracing too. My experience so far is that it's really
+> terribly slow. I've been waiting on Andy Lutomirski to complete his changes in that
+> area to look into making this faster for syscall tracepoints.
 
-The code is merged into my for-next tree now.
+This gives us more incentive to help Andy make it faster ;-)
 
-> Yes, it needs fixed, but 1) there are pending issues (such as the
-> extra atomics)
+-- Steve
 
-Concerns not issues.  I documented them but I don't see any serious
-reason to be concerned.  The data structures are sufficiently different
-from AF_UNIX as well as the usage patterns that I have no reasonable
-expectation that there will be problems.
-
-There is no reasonable alternate implementation for correcting this bug.
-Because of my concerns I looked at several other possibilities and they
-all showed incorrect behavior, in different circumstances.
-
-The implementations are simple enough there are no deep subtle issues.
-
-I have tested the code.
-
-If a regression happens the code is carefully split up so things can be
-bisected easily and reverted if necessary.
-
-> and 2) its late in the -rc cycle. Plus this issue has existed for 11 years without
-> the world ending, so I'm sure we can hold on until at least one more
-> release.
-
-People really are starting to seriously look at accessing a single ipc
-namespace from multiple pid namespaces.  The work arounds I saw posted
-for the current brokenness were too nasty to live.
-
-Better to fix things before there is code that actually starts depending
-on the current brokenness.
-
-I am the namespace maintianer and this is my area of responsibility.
-
-The code is ready and I see no reason or benefit in delay.
-
-Eric
+> 
+> > 
+> > This is used to add any system call checks that are not done during
+> > normal operation. And this certainly falls under that category.  
+> 
+> I know it's used for stuff like seccomp too. My guess has always been that security
+> people care much more about robustness than performance.
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> 
