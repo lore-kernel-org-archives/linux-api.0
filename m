@@ -1,61 +1,84 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 01/32] fs: unexport poll_schedule_timeout
-Date: Fri, 30 Mar 2018 17:07:38 +0200
-Message-ID: <20180330150809.28094-2-hch@lst.de>
-References: <20180330150809.28094-1-hch@lst.de>
+Subject: aio poll and a new in-kernel poll API V9
+Date: Fri, 30 Mar 2018 17:07:37 +0200
+Message-ID: <20180330150809.28094-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180330150809.28094-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-No users outside of select.c.
+Hi all,
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- fs/select.c          | 3 +--
- include/linux/poll.h | 2 --
- 2 files changed, 1 insertion(+), 4 deletions(-)
+this series adds support for the IOCB_CMD_POLL operation to poll for the
+readyness of file descriptors using the aio subsystem.  The API is based
+on patches that existed in RHAS2.1 and RHEL3, which means it already is
+supported by libaio.  To implement the poll support efficiently new
+methods to poll are introduced in struct file_operations:  get_poll_head
+and poll_mask.  The first one returns a wait_queue_head to wait on
+(lifetime is bound by the file), and the second does a non-blocking
+check for the POLL* events.  This allows aio poll to work without
+any additional context switches, unlike epoll.
 
-diff --git a/fs/select.c b/fs/select.c
-index b6c36254028a..686de7b3a1db 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
- 	add_wait_queue(wait_address, &entry->wait);
- }
- 
--int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
-+static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
- 			  ktime_t *expires, unsigned long slack)
- {
- 	int rc = -EINTR;
-@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
- 
- 	return rc;
- }
--EXPORT_SYMBOL(poll_schedule_timeout);
- 
- /**
-  * poll_select_set_timeout - helper function to setup the timeout value
-diff --git a/include/linux/poll.h b/include/linux/poll.h
-index f45ebd017eaa..a3576da63377 100644
---- a/include/linux/poll.h
-+++ b/include/linux/poll.h
-@@ -96,8 +96,6 @@ struct poll_wqueues {
- 
- extern void poll_initwait(struct poll_wqueues *pwq);
- extern void poll_freewait(struct poll_wqueues *pwq);
--extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
--				 ktime_t *expires, unsigned long slack);
- extern u64 select_estimate_accuracy(struct timespec64 *tv);
- 
- #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
--- 
-2.14.2
+This series sits on top of the aio-fsync series that also includes
+support for io_pgetevents.
+
+The changes were sponsored by Scylladb, and improve performance
+of the seastar framework up to 10%, while also removing the need
+for a privileged SCHED_FIFO epoll listener thread.
+
+    git://git.infradead.org/users/hch/vfs.git aio-poll.9
+
+Gitweb:
+
+    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.9
+
+Libaio changes:
+
+    https://pagure.io/libaio.git io-poll
+
+Seastar changes (not updated for the new io_pgetevens ABI yet):
+
+    https://github.com/avikivity/seastar/commits/aio
+
+Changes since V9:
+ - make delayed cancellation conditional again
+ - add a cancel_kiocb file operation to split delayed vs normal cancel
+
+Changes since V8:
+ - make delayed cancellation safe and unconditional
+
+Changes since V7:
+ - reworked cancellation
+
+Changes since V6:
+ - small changelog updates
+ - rebased on top of the aio-fsync changes
+
+Changes since V4:
+ - rebased ontop of Linux 4.16-rc4
+
+Changes since V3:
+ - remove the pre-sleep ->poll_mask call in vfs_poll,
+   allow ->get_poll_head to return POLL* values.
+
+Changes since V2:
+ - removed a double initialization
+ - new vfs_get_poll_head helper
+ - document that ->get_poll_head can return NULL
+ - call ->poll_mask before sleeping
+ - various ACKs
+ - add conversion of random to ->poll_mask
+ - add conversion of af_alg to ->poll_mask
+ - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
+ - reshuffled the series so that prep patches and everything not
+   requiring the new in-kernel poll API is in the beginning
+
+Changes since V1:
+ - handle the NULL ->poll case in vfs_poll
+ - dropped the file argument to the ->poll_mask socket operation
+ - replace the ->pre_poll socket operation with ->get_poll_head as
+   in the file operations
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
