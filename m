@@ -1,49 +1,61 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 07/30] aio: add delayed cancel support
-Date: Fri, 30 Mar 2018 09:14:08 +0200
-Message-ID: <20180330071408.GB17095@lst.de>
-References: <20180329203328.3248-1-hch@lst.de> <20180329203328.3248-8-hch@lst.de> <20180329223500.GY30522@ZenIV.linux.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Subject: [PATCH 01/32] fs: unexport poll_schedule_timeout
+Date: Fri, 30 Mar 2018 17:07:38 +0200
+Message-ID: <20180330150809.28094-2-hch@lst.de>
+References: <20180330150809.28094-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20180329223500.GY30522@ZenIV.linux.org.uk>
+In-Reply-To: <20180330150809.28094-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: viro@zeniv.linux.org.uk
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 29, 2018 at 11:35:00PM +0100, Al Viro wrote:
-> Uh-oh...  What happens to existing users of kiocb_set_cancel_fn() now?
-> AFAICS, those guys will *not* get aio_kiocb freed at all in case of
-> io_cancel(2).  Look: we mark them with AIO_IOCB_CANCELLED and
-> call whatever ->ki_cancel() the driver has set.  Later the damn
-> thing calls ->ki_complete() (i.e. aio_complete_rw()), which calls
-> aio_complete(iocb, res, res2, 0) and gets false.  Nothing's freed,
-> struct file is leaked.
+No users outside of select.c.
 
-True, we'd need a complete call from it.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ fs/select.c          | 3 +--
+ include/linux/poll.h | 2 --
+ 2 files changed, 1 insertion(+), 4 deletions(-)
 
-> Frankly, the more I look at that, the less I like what you've done
-> with ->ki_cancel() overloading.  In regular case it's just accelerating
-> the call of ->ki_complete(), which will do freeing.  Here you have
-> ->ki_cancel() free the damn thing, with the resulting need to play
-> silly buggers with locking, freeing logics in aio_complete(), etc.
-
-I don't really like it all that much either, but I also think the
-current model is pretty broken - called under spinlock with irqs
-disabled is not even what the current users expect.  Second issue
-with the existing ki_cancel is that kiocb_set_cancel_fn operates
-on a kiocb, but expects that to be embedded in an aio_kiocb, which
-might not always be the case, althought in-kernel I/O is unlikely to
-be used on them.  And based on all of these I bet gadget aio cancel
-is basically untested.
-
-Anyway, I guess splitting poll direct cancel out in a way that doesn't
-overload ->ki_cancel might be a good idea.  It all is inside aio.c
-so simply switching on the opcode similar to the submission path
-might be one option, or having separate methods.  Moving ki_cancel
-to kiocb would also solve above mismatch issue.
+diff --git a/fs/select.c b/fs/select.c
+index b6c36254028a..686de7b3a1db 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
+ 	add_wait_queue(wait_address, &entry->wait);
+ }
+ 
+-int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
++static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 			  ktime_t *expires, unsigned long slack)
+ {
+ 	int rc = -EINTR;
+@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 
+ 	return rc;
+ }
+-EXPORT_SYMBOL(poll_schedule_timeout);
+ 
+ /**
+  * poll_select_set_timeout - helper function to setup the timeout value
+diff --git a/include/linux/poll.h b/include/linux/poll.h
+index f45ebd017eaa..a3576da63377 100644
+--- a/include/linux/poll.h
++++ b/include/linux/poll.h
+@@ -96,8 +96,6 @@ struct poll_wqueues {
+ 
+ extern void poll_initwait(struct poll_wqueues *pwq);
+ extern void poll_freewait(struct poll_wqueues *pwq);
+-extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+-				 ktime_t *expires, unsigned long slack);
+ extern u64 select_estimate_accuracy(struct timespec64 *tv);
+ 
+ #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
+-- 
+2.14.2
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
