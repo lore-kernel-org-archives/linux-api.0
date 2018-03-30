@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 08/32] aio: replace kiocb_set_cancel_fn with a cancel_kiocb file operation
-Date: Fri, 30 Mar 2018 17:07:45 +0200
-Message-ID: <20180330150809.28094-9-hch@lst.de>
+Subject: [PATCH 09/32] aio: add delayed cancel support
+Date: Fri, 30 Mar 2018 17:07:46 +0200
+Message-ID: <20180330150809.28094-10-hch@lst.de>
 References: <20180330150809.28094-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180330150809.28094-1-hch@lst.de>
@@ -10,229 +10,219 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The current kiocb_set_cancel_fn implementation assumes the kiocb is
-embedded into an aio_kiocb, which is fundamentally unsafe as it might
-have been submitted by non-aio callers.  Instead add a cancel_kiocb
-file operation that replaced the ki_cancel function pointer set by
-kiocb_set_cancel_fn, and only adds iocbs to the active list when
-the read/write_iter methods return -EIOCBQUEUED and the file has
-a cancel_kiocb method.
+The upcoming aio poll support would like to be able to complete the iocb
+inline from the cancellation context, but that would cause a double lock
+of ctx_lock as-is.  Add a new delayed_cancel_reqs list of iocbs that
+should be cancelled from outside the ctx_lock by calling the (re-)added
+ki_cancel callback.
+
+To make this safe aio_complete needs to check if this call should complete
+the iocb, and to make that safe without much reordering a struct file
+argument to put is padded to aio_complete.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/usb/gadget/function/f_fs.c | 10 ++--------
- drivers/usb/gadget/legacy/inode.c  |  5 ++---
- fs/aio.c                           | 31 ++++++++++++-------------------
- fs/orangefs/orangefs-kernel.h      |  1 -
- include/linux/aio.h                |  7 -------
- include/linux/fs.h                 |  1 +
- 6 files changed, 17 insertions(+), 38 deletions(-)
+ fs/aio.c | 80 +++++++++++++++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 51 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/usb/gadget/function/f_fs.c b/drivers/usb/gadget/function/f_fs.c
-index c2592d883f67..4dcf21ae39f8 100644
---- a/drivers/usb/gadget/function/f_fs.c
-+++ b/drivers/usb/gadget/function/f_fs.c
-@@ -26,7 +26,6 @@
- #include <linux/usb/composite.h>
- #include <linux/usb/functionfs.h>
- 
--#include <linux/aio.h>
- #include <linux/mmu_context.h>
- #include <linux/poll.h>
- #include <linux/eventfd.h>
-@@ -1068,7 +1067,7 @@ ffs_epfile_open(struct inode *inode, struct file *file)
- 	return 0;
- }
- 
--static int ffs_aio_cancel(struct kiocb *kiocb)
-+static int ffs_epfile_cancel_kiocb(struct kiocb *kiocb)
- {
- 	struct ffs_io_data *io_data = kiocb->private;
- 	struct ffs_epfile *epfile = kiocb->ki_filp->private_data;
-@@ -1111,9 +1110,6 @@ static ssize_t ffs_epfile_write_iter(struct kiocb *kiocb, struct iov_iter *from)
- 
- 	kiocb->private = p;
- 
--	if (p->aio)
--		kiocb_set_cancel_fn(kiocb, ffs_aio_cancel);
--
- 	res = ffs_epfile_io(kiocb->ki_filp, p);
- 	if (res == -EIOCBQUEUED)
- 		return res;
-@@ -1156,9 +1152,6 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
- 
- 	kiocb->private = p;
- 
--	if (p->aio)
--		kiocb_set_cancel_fn(kiocb, ffs_aio_cancel);
--
- 	res = ffs_epfile_io(kiocb->ki_filp, p);
- 	if (res == -EIOCBQUEUED)
- 		return res;
-@@ -1270,6 +1263,7 @@ static const struct file_operations ffs_epfile_operations = {
- 	.read_iter =	ffs_epfile_read_iter,
- 	.release =	ffs_epfile_release,
- 	.unlocked_ioctl =	ffs_epfile_ioctl,
-+	.cancel_kiocb = ffs_epfile_cancel_kiocb,
- };
- 
- 
-diff --git a/drivers/usb/gadget/legacy/inode.c b/drivers/usb/gadget/legacy/inode.c
-index 37ca0e669bd8..02ea83c8861a 100644
---- a/drivers/usb/gadget/legacy/inode.c
-+++ b/drivers/usb/gadget/legacy/inode.c
-@@ -21,7 +21,6 @@
- #include <linux/slab.h>
- #include <linux/poll.h>
- #include <linux/mmu_context.h>
--#include <linux/aio.h>
- #include <linux/uio.h>
- #include <linux/refcount.h>
- #include <linux/delay.h>
-@@ -435,7 +434,7 @@ struct kiocb_priv {
- 	unsigned		actual;
- };
- 
--static int ep_aio_cancel(struct kiocb *iocb)
-+static int ep_cancel_kiocb(struct kiocb *iocb)
- {
- 	struct kiocb_priv	*priv = iocb->private;
- 	struct ep_data		*epdata;
-@@ -528,7 +527,6 @@ static ssize_t ep_aio(struct kiocb *iocb,
- 	iocb->private = priv;
- 	priv->iocb = iocb;
- 
--	kiocb_set_cancel_fn(iocb, ep_aio_cancel);
- 	get_ep(epdata);
- 	priv->epdata = epdata;
- 	priv->actual = 0;
-@@ -700,6 +698,7 @@ static const struct file_operations ep_io_operations = {
- 	.unlocked_ioctl = ep_ioctl,
- 	.read_iter =	ep_read_iter,
- 	.write_iter =	ep_write_iter,
-+	.cancel_kiocb = ep_cancel_kiocb,
- };
- 
- /* ENDPOINT INITIALIZATION
 diff --git a/fs/aio.c b/fs/aio.c
-index 5a5d537cec2e..7e4b517c60c3 100644
+index 7e4b517c60c3..57c6cb20fd57 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -171,7 +171,6 @@ struct aio_kiocb {
+@@ -138,7 +138,8 @@ struct kioctx {
+ 
+ 	struct {
+ 		spinlock_t	ctx_lock;
+-		struct list_head active_reqs;	/* used for cancellation */
++		struct list_head cancel_reqs;
++		struct list_head delayed_cancel_reqs;
+ 	} ____cacheline_aligned_in_smp;
+ 
+ 	struct {
+@@ -171,6 +172,7 @@ struct aio_kiocb {
  	};
  
  	struct kioctx		*ki_ctx;
--	kiocb_cancel_fn		*ki_cancel;
++	int			(*ki_cancel)(struct aio_kiocb *iocb);
  
  	struct iocb __user	*ki_user_iocb;	/* user's aiocb */
  	__u64			ki_user_data;	/* user's data for completion */
-@@ -545,22 +544,6 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
- #define AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - sizeof(struct aio_ring)) / sizeof(struct io_event))
- #define AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
+@@ -178,6 +180,9 @@ struct aio_kiocb {
+ 	struct list_head	ki_list;	/* the aio core uses this
+ 						 * for cancellation */
  
--void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
--{
--	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
--	struct kioctx *ctx = req->ki_ctx;
--	unsigned long flags;
--
--	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
--		return;
--
--	spin_lock_irqsave(&ctx->ctx_lock, flags);
--	list_add_tail(&req->ki_list, &ctx->active_reqs);
--	req->ki_cancel = cancel;
--	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
--}
--EXPORT_SYMBOL(kiocb_set_cancel_fn);
--
- static void free_ioctx(struct work_struct *work)
++	unsigned int		flags;		/* protected by ctx->ctx_lock */
++#define AIO_IOCB_CANCELLED	(1 << 1)
++
+ 	/*
+ 	 * If the aio_resfd field of the userspace iocb is not zero,
+ 	 * this is the underlying eventfd context to deliver events to.
+@@ -578,18 +583,23 @@ static void free_ioctx_users(struct percpu_ref *ref)
  {
- 	struct kioctx *ctx = container_of(work, struct kioctx, free_work);
-@@ -602,7 +585,7 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 		req = list_first_entry(&ctx->active_reqs,
+ 	struct kioctx *ctx = container_of(ref, struct kioctx, users);
+ 	struct aio_kiocb *req;
++	LIST_HEAD(list);
+ 
+ 	spin_lock_irq(&ctx->ctx_lock);
+-
+-	while (!list_empty(&ctx->active_reqs)) {
+-		req = list_first_entry(&ctx->active_reqs,
++	while (!list_empty(&ctx->cancel_reqs)) {
++		req = list_first_entry(&ctx->cancel_reqs,
  				       struct aio_kiocb, ki_list);
  		list_del_init(&req->ki_list);
--		req->ki_cancel(&req->rw);
-+		req->rw.ki_filp->f_op->cancel_kiocb(&req->rw);
+ 		req->rw.ki_filp->f_op->cancel_kiocb(&req->rw);
  	}
- 
- 	spin_unlock_irq(&ctx->ctx_lock);
-@@ -1440,6 +1423,16 @@ static inline ssize_t aio_rw_ret(struct kiocb *req, ssize_t ret)
- {
- 	switch (ret) {
- 	case -EIOCBQUEUED:
-+		if (req->ki_filp->f_op->cancel_kiocb) {
-+			struct aio_kiocb *iocb =
-+				container_of(req, struct aio_kiocb, rw);
-+			struct kioctx *ctx = iocb->ki_ctx;
-+			unsigned long flags;
-+
-+			spin_lock_irqsave(&ctx->ctx_lock, flags);
-+			list_add_tail(&iocb->ki_list, &ctx->active_reqs);
-+			spin_unlock_irqrestore(&ctx->ctx_lock, flags);
-+		}
- 		return ret;
- 	case -ERESTARTSYS:
- 	case -ERESTARTNOINTR:
-@@ -1817,7 +1810,7 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
- 	kiocb = lookup_kiocb(ctx, iocb);
- 	if (kiocb) {
- 		list_del_init(&kiocb->ki_list);
--		ret = kiocb->ki_cancel(&kiocb->rw);
-+		ret = kiocb->rw.ki_filp->f_op->cancel_kiocb(&kiocb->rw);
- 	}
- 	spin_unlock_irq(&ctx->ctx_lock);
- 
-diff --git a/fs/orangefs/orangefs-kernel.h b/fs/orangefs/orangefs-kernel.h
-index eebbaece85ef..94a8ad6a7a02 100644
---- a/fs/orangefs/orangefs-kernel.h
-+++ b/fs/orangefs/orangefs-kernel.h
-@@ -34,7 +34,6 @@
- #include <linux/fs.h>
- #include <linux/vmalloc.h>
- 
--#include <linux/aio.h>
- #include <linux/posix_acl.h>
- #include <linux/posix_acl_xattr.h>
- #include <linux/compat.h>
-diff --git a/include/linux/aio.h b/include/linux/aio.h
-index b83e68dd006f..42e3cc953005 100644
---- a/include/linux/aio.h
-+++ b/include/linux/aio.h
-@@ -4,20 +4,13 @@
- 
- #include <linux/aio_abi.h>
- 
--struct kioctx;
--struct kiocb;
- struct mm_struct;
- 
--typedef int (kiocb_cancel_fn)(struct kiocb *);
 -
- /* prototypes */
- #ifdef CONFIG_AIO
- extern void exit_aio(struct mm_struct *mm);
--void kiocb_set_cancel_fn(struct kiocb *req, kiocb_cancel_fn *cancel);
- #else
- static inline void exit_aio(struct mm_struct *mm) { }
--static inline void kiocb_set_cancel_fn(struct kiocb *req,
--				       kiocb_cancel_fn *cancel) { }
- #endif /* CONFIG_AIO */
++	list_splice_init(&ctx->delayed_cancel_reqs, &list);
+ 	spin_unlock_irq(&ctx->ctx_lock);
  
- /* for sysctl: */
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 6ea2c0843bb1..c2729c634845 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1739,6 +1739,7 @@ struct file_operations {
- 			u64);
- 	ssize_t (*dedupe_file_range)(struct file *, u64, u64, struct file *,
- 			u64);
-+	int (*cancel_kiocb)(struct kiocb *);
- } __randomize_layout;
++	while (!list_empty(&list)) {
++		req = list_first_entry(&list, struct aio_kiocb, ki_list);
++		req->ki_cancel(req);
++	}
++
+ 	percpu_ref_kill(&ctx->reqs);
+ 	percpu_ref_put(&ctx->reqs);
+ }
+@@ -709,7 +719,8 @@ static struct kioctx *ioctx_alloc(unsigned nr_events)
+ 	mutex_lock(&ctx->ring_lock);
+ 	init_waitqueue_head(&ctx->wait);
  
- struct inode_operations {
+-	INIT_LIST_HEAD(&ctx->active_reqs);
++	INIT_LIST_HEAD(&ctx->cancel_reqs);
++	INIT_LIST_HEAD(&ctx->delayed_cancel_reqs);
+ 
+ 	if (percpu_ref_init(&ctx->users, free_ioctx_users, 0, GFP_KERNEL))
+ 		goto err;
+@@ -1025,25 +1036,34 @@ static struct kioctx *lookup_ioctx(unsigned long ctx_id)
+ 	return ret;
+ }
+ 
++#define AIO_COMPLETE_CANCEL	(1 << 0)
++
+ /* aio_complete
+  *	Called when the io request on the given iocb is complete.
+  */
+-static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
++static void aio_complete(struct aio_kiocb *iocb, struct file *file, long res,
++		long res2, unsigned complete_flags)
+ {
+ 	struct kioctx	*ctx = iocb->ki_ctx;
+ 	struct aio_ring	*ring;
+ 	struct io_event	*ev_page, *event;
+ 	unsigned tail, pos, head;
+-	unsigned long	flags;
++	unsigned long flags;
+ 
+ 	if (!list_empty_careful(&iocb->ki_list)) {
+-		unsigned long flags;
+-
+ 		spin_lock_irqsave(&ctx->ctx_lock, flags);
++		if (!(complete_flags & AIO_COMPLETE_CANCEL) &&
++		    (iocb->flags & AIO_IOCB_CANCELLED)) {
++			spin_unlock_irqrestore(&ctx->ctx_lock, flags);
++			return;
++		}
++
+ 		list_del(&iocb->ki_list);
+ 		spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+ 	}
+ 
++	fput(file);
++
+ 	/*
+ 	 * Add a completion event to the ring buffer. Must be done holding
+ 	 * ctx->completion_lock to prevent other code from messing with the tail
+@@ -1377,8 +1397,7 @@ static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
+ 		file_end_write(kiocb->ki_filp);
+ 	}
+ 
+-	fput(kiocb->ki_filp);
+-	aio_complete(iocb, res, res2);
++	aio_complete(iocb, kiocb->ki_filp, res, res2, 0);
+ }
+ 
+ static int aio_prep_rw(struct kiocb *req, struct iocb *iocb)
+@@ -1430,7 +1449,7 @@ static inline ssize_t aio_rw_ret(struct kiocb *req, ssize_t ret)
+ 			unsigned long flags;
+ 
+ 			spin_lock_irqsave(&ctx->ctx_lock, flags);
+-			list_add_tail(&iocb->ki_list, &ctx->active_reqs);
++			list_add_tail(&iocb->ki_list, &ctx->cancel_reqs);
+ 			spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+ 		}
+ 		return ret;
+@@ -1531,11 +1550,10 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
+ static void aio_fsync_work(struct work_struct *work)
+ {
+ 	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
+-	int ret;
++	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, fsync);
++	struct file *file = req->file;
+ 
+-	ret = vfs_fsync(req->file, req->datasync);
+-	fput(req->file);
+-	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
++	aio_complete(iocb, file, vfs_fsync(file, req->datasync), 0, 0);
+ }
+ 
+ static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
+@@ -1761,18 +1779,12 @@ COMPAT_SYSCALL_DEFINE3(io_submit, compat_aio_context_t, ctx_id,
+ }
+ #endif
+ 
+-/* lookup_kiocb
+- *	Finds a given iocb for cancellation.
+- */
+ static struct aio_kiocb *
+-lookup_kiocb(struct kioctx *ctx, struct iocb __user *iocb)
++lookup_kiocb(struct list_head *list, struct iocb __user *iocb)
+ {
+ 	struct aio_kiocb *kiocb;
+ 
+-	assert_spin_locked(&ctx->ctx_lock);
+-
+-	/* TODO: use a hash or array, this sucks. */
+-	list_for_each_entry(kiocb, &ctx->active_reqs, ki_list) {
++	list_for_each_entry(kiocb, list, ki_list) {
+ 		if (kiocb->ki_user_iocb == iocb)
+ 			return kiocb;
+ 	}
+@@ -1794,6 +1806,7 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ {
+ 	struct kioctx *ctx;
+ 	struct aio_kiocb *kiocb;
++	LIST_HEAD(dummy);
+ 	int ret = -EINVAL;
+ 	u32 key;
+ 
+@@ -1807,12 +1820,21 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 		return -EINVAL;
+ 
+ 	spin_lock_irq(&ctx->ctx_lock);
+-	kiocb = lookup_kiocb(ctx, iocb);
++	kiocb = lookup_kiocb(&ctx->delayed_cancel_reqs, iocb);
+ 	if (kiocb) {
+-		list_del_init(&kiocb->ki_list);
+-		ret = kiocb->rw.ki_filp->f_op->cancel_kiocb(&kiocb->rw);
++		kiocb->flags |= AIO_IOCB_CANCELLED;
++		list_move_tail(&kiocb->ki_list, &dummy);
++		spin_unlock_irq(&ctx->ctx_lock);
++
++		ret = kiocb->ki_cancel(kiocb);
++	} else {
++		kiocb = lookup_kiocb(&ctx->cancel_reqs, iocb);
++		if (kiocb) {
++			list_del_init(&kiocb->ki_list);
++			ret = kiocb->rw.ki_filp->f_op->cancel_kiocb(&kiocb->rw);
++		}
++		spin_unlock_irq(&ctx->ctx_lock);
+ 	}
+-	spin_unlock_irq(&ctx->ctx_lock);
+ 
+ 	if (!ret) {
+ 		/*
 -- 
 2.14.2
 
