@@ -1,166 +1,76 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH bpf-next v8 08/11] landlock: Add ptrace restrictions
-Date: Mon, 2 Apr 2018 00:48:55 +0200
-Message-ID: <63c56227-7394-92d5-d663-59dbe0efe20f@digikod.net>
-References: <20180227004121.3633-1-mic@digikod.net>
- <20180227004121.3633-9-mic@digikod.net>
- <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
- <D6B96EE0-8932-4845-BFA5-4C65E5189AFB@amacapital.net>
- <0e7d0512-12a3-568d-aa55-3def4b91c6d0@digikod.net>
- <CALCETrUTiUeV71jgYWup0CZwG8eQ3=W7X5FgJqmgPxnYbFsccw@mail.gmail.com>
- <CALCETrV_BVc44YYq6g8PCpeUYuqQaooVoQSQ7Y=VpuaBshQgQg@mail.gmail.com>
- <f560a30d-10fd-31fc-adba-911961915937@digikod.net>
- <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
- <679089bb-c0ac-ff68-71b1-1813d66c6aa7@digikod.net>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH bpf-next v8 00/11] Landlock LSM: Toward unprivileged
+ sandboxing
+Date: Sun, 1 Apr 2018 18:39:47 -0600
+Message-ID: <20180402003947.GE5586@cisco>
+References: <2e06621c-08e9-dc12-9b6e-9c09d5d8f458@digikod.net>
+ <CALCETrWnJ7WkkfiymyahQd7YqO0KXP4mG1pRMq7fp8LG8Bwtcw@mail.gmail.com>
+ <a70b41ee-78cb-52cc-152c-ac5e43b7e45c@digikod.net>
+ <CALCETrUQYp0ta4tLgUWJ79pZVwp3WRY7cp-XaPcn1WyTc=wZyg@mail.gmail.com>
+ <20180306224636.wf5z3kujtc7r5qyh@cisco>
+ <7082be04-d6af-b853-4bb7-f331836662e2@digikod.net>
+ <CALCETrXT8JUXVwDNKGVRG7=aenthDRePD+T+YiDY6cceaazDeA@mail.gmail.com>
+ <cd811155-9e0d-283a-9291-4adfcec848e6@digikod.net>
+ <CALCETrUwkV4_65y7UjSgrq5WHOcZZ=+znKArehvhb1xEGG9HXw@mail.gmail.com>
+ <0f355079-7ee2-c06a-2d47-a7a2fa6d98fe@digikod.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="Hm7bzBjMedEZq5T95smQuMfPMscRewwT9"
-Return-path: <kernel-hardening-return-12842-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <679089bb-c0ac-ff68-71b1-1813d66c6aa7@digikod.net>
-To: Andy Lutomirski <luto@kernel.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Tycho Andersen <tycho@tycho.ws>, Will Drewry <wad@chromium.org>, Kernel
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <0f355079-7ee2-c06a-2d47-a7a2fa6d98fe@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <james.l.morris@oracle.com>, Jann Horn <jann@thejh.net>, Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>, Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>, Thomas Graf <tgraf@suug.ch>, Will Drewry <wad@chromi>
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---Hm7bzBjMedEZq5T95smQuMfPMscRewwT9
-Content-Type: multipart/mixed; boundary="FOcscaVWkHHqGJfqTL970AuU7bacqfRtS";
- protected-headers="v1"
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Andy Lutomirski <luto@kernel.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>,
- Arnaldo Carvalho de Melo <acme@kernel.org>,
- Casey Schaufler <casey@schaufler-ca.com>,
- Daniel Borkmann <daniel@iogearbox.net>, David Drysdale
- <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>,
- "Eric W . Biederman" <ebiederm@xmission.com>,
- James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>,
- Jonathan Corbet <corbet@lwn.net>, Michael Kerrisk <mtk.manpages@gmail.com>,
- Kees Cook <keescook@chromium.org>, Paul Moore <paul@paul-moore.com>,
- Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>,
- Shuah Khan <shuah@kernel.org>, Tejun Heo <tj@kernel.org>,
- Thomas Graf <tgraf@suug.ch>, Tycho Andersen <tycho@tycho.ws>,
- Will Drewry <wad@chromium.org>,
- Kernel Hardening <kernel-hardening@lists.openwall.com>,
- Linux API <linux-api@vger.kernel.org>,
- LSM List <linux-security-module@vger.kernel.org>,
- Network Development <netdev@vger.kernel.org>
-Message-ID: <63c56227-7394-92d5-d663-59dbe0efe20f@digikod.net>
-Subject: Re: [PATCH bpf-next v8 08/11] landlock: Add ptrace restrictions
-References: <20180227004121.3633-1-mic@digikod.net>
- <20180227004121.3633-9-mic@digikod.net>
- <CALCETrUpDbusLPyZijR6MpZd5-0x0d9KuQHBaavqP1_GZ2tjfg@mail.gmail.com>
- <D6B96EE0-8932-4845-BFA5-4C65E5189AFB@amacapital.net>
- <0e7d0512-12a3-568d-aa55-3def4b91c6d0@digikod.net>
- <CALCETrUTiUeV71jgYWup0CZwG8eQ3=W7X5FgJqmgPxnYbFsccw@mail.gmail.com>
- <CALCETrV_BVc44YYq6g8PCpeUYuqQaooVoQSQ7Y=VpuaBshQgQg@mail.gmail.com>
- <f560a30d-10fd-31fc-adba-911961915937@digikod.net>
- <CALCETrW5v1sa17jPJuTskW5vdvcXqjFtRvAd0auWBmKvnAX-zQ@mail.gmail.com>
- <679089bb-c0ac-ff68-71b1-1813d66c6aa7@digikod.net>
-In-Reply-To: <679089bb-c0ac-ff68-71b1-1813d66c6aa7@digikod.net>
+Hi Mickaël,
 
---FOcscaVWkHHqGJfqTL970AuU7bacqfRtS
-Content-Type: text/plain; charset=utf-8
-Content-Language: en-US
-Content-Transfer-Encoding: quoted-printable
+On Mon, Apr 02, 2018 at 12:04:36AM +0200, Mickaël Salaün wrote:
+> >> vDSO is a code mapped for all processes. As you said, these processes
+> >> may use it or not. What I was thinking about is to use the same concept,
+> >> i.e. map a "shim" code into each processes pertaining to a particular
+> >> hierarchy (the same way seccomp filters are inherited across processes).
+> >> With a seccomp filter matching some syscall (e.g. mount, open), it is
+> >> possible to jump back to the shim code thanks to SECCOMP_RET_TRAP. This
+> >> shim code should then be able to emulate/patch what is needed, even
+> >> faking a file opening by receiving a file descriptor through a UNIX
+> >> socket. As did the Chrome sandbox, the seccomp filter may look at the
+> >> calling address to allow the shim code to call syscalls without being
+> >> catched, if needed. However, relying on SIGSYS may not fit with
+> >> arbitrary code. Using a new SECCOMP_RET_EMULATE (?) may be used to jump
+> >> to a specific process address, to emulate the syscall in an easier way
+> >> than only relying on a {c,e}BPF program.
+> >>
+> > 
+> > This could indeed be done, but I think that Tycho's approach is much
+> > cleaner and probably faster.
+> > 
+> 
+> I like it too but how does this handle file descriptors?
 
+I think it could be done fairly simply, the most complicated part is
+probably designing an API that doesn't suck. But the basic idea would
+be:
 
-On 03/06/2018 11:28 PM, Micka=C3=ABl Sala=C3=BCn wrote:
->=20
-> On 28/02/2018 01:09, Andy Lutomirski wrote:
->> On Wed, Feb 28, 2018 at 12:00 AM, Micka=C3=ABl Sala=C3=BCn <mic@digiko=
-d.net> wrote:
->>>
->>> On 28/02/2018 00:23, Andy Lutomirski wrote:
->>>> On Tue, Feb 27, 2018 at 11:02 PM, Andy Lutomirski <luto@kernel.org> =
-wrote:
->>>>> On Tue, Feb 27, 2018 at 10:14 PM, Micka=C3=ABl Sala=C3=BCn <mic@dig=
-ikod.net> wrote:
->>>>>>
->>>>>
->>>>> I think you're wrong here.  Any sane container trying to use Landlo=
-ck
->>>>> like this would also create a PID namespace.  Problem solved.  I st=
-ill
->>>>> think you should drop this patch.
->>>
->>> Containers is one use case, another is build-in sandboxing (e.g. for =
-web
->>> browser=E2=80=A6) and another one is for sandbox managers (e.g. Firej=
-ail,
->>> Bubblewrap, Flatpack=E2=80=A6). In some of these use cases, especiall=
-y from a
->>> developer point of view, you may want/need to debug your applications=
+struct seccomp_notif_resp {
+    __u64 id;
+    __s32 error;
+    __s64 val;
+    __s32 fd;
+};
 
->>> (without requiring to be root). For nested Landlock access-controls
->>> (e.g. container + user session + web browser), it may not be allowed =
-to
->>> create a PID namespace, but you still want to have a meaningful
->>> access-control.
->>>
->>
->> The consideration should be exactly the same as for normal seccomp.
->> If I'm in a container (using PID namespaces + seccomp) and a run a web=
+if the handler responds with fd >= 0, we grab the tracer's fd,
+duplicate it, and install it somewhere in the tracee's fd table. Since
+things like socket() will want to return the fd number as its
+installed and the handler doesn't know that, we'll probably want some
+way to indicate that the kernel should return this value. We could
+either mandate that if fd >= 0, that's the value that will be returned
+from the syscall, or add another flag that says "no, install the fd,
+but really return what's in val instead).
 
->> browser, I can debug the browser.
->>
->> If there's a real use case for adding this type of automatic ptrace
->> protection, then by all means, let's add it as a general seccomp
->> feature.
->>
->=20
-> Right, it makes sense to add this feature to seccomp filters as well.
-> What do you think Kees?
->=20
+I guess we can't mandate that we return fd, because e.g. netlink
+sockets can sometimes return fds as part of the netlink messages, and
+not as the return value from the syscall.
 
-As a second though, it may be useful for seccomp but it should be
-another patch series, independent from this one.
-
-The idea to keep in mind is that this ptrace restriction is an automatic
-way to define what is called a subject in common access control
-vocabulary, like used by SELinux. A subject should not be able to
-impersonate another one with less restrictions (to get more rights).
-Because of the stackable restrictions of Landlock (same principle used
-by seccomp), it is easy to identify which subject (i.e. group of
-processes) is more restricted (or with different restrictions) than
-another. This follow the same principle as Yama's ptrace_scope.
-
-Another important argument for a different ptrace-protection
-mechanism than seccomp is that Landlock programs may be applied (i.e.
-define subject) otherwise than with a process hierarchy. Another way to
-define a Landlock subject may be by using cgroups (which was previously
-discussed). I'm also thinking about being able to create (real)
-capabilities (not to be confused with POSIX capabilities), which may be
-useful to implement some parts of Capsicum, by attaching Landlock
-programs to a file descriptor (and not directly to a group of
-processes). All this to highlight that the ptrace protection is specific
-to Landlock and may not be directly shared with seccomp.
-
-Even if Landlock follows the footprints of seccomp, they are different
-beasts.
-
-
---FOcscaVWkHHqGJfqTL970AuU7bacqfRtS--
-
---Hm7bzBjMedEZq5T95smQuMfPMscRewwT9
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlrBYdgACgkQIt7+33O9
-apVKrQf+K+rJsgAAjeWuJAd0c5iCLG/3/eyy8Ioxr7BXFBsj4/I3+GZNohC+r7Q/
-cIQGPOhEXh1LoB/FLTpUwkbic8LudVKm6qB+2e3OCta1WEZKxWO/QaI9Hf0g6Flk
-/v7WBBghhZt/RkIMkHl0QNzx41ZJbBRrwP3yMsxhcgToyEZDBywcJq83hKyczDO7
-fJxMVugDgh7rdMwhdGdJj9RQrKOl5DKlWQXvAr1d8D1g4RkwT9nQLYfbc2JXNaC/
-miJ0Eo2F8le8UtTmf89fkO0tEMFmA45s4+CRkDz6Qd8zRjpW2vWi8LKdNwMmPIM0
-ne5ynEnMA8YlvNwz8pSxXHBO71G0ag==
-=p4QM
------END PGP SIGNATURE-----
-
---Hm7bzBjMedEZq5T95smQuMfPMscRewwT9--
+Tycho
