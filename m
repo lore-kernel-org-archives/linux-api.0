@@ -1,42 +1,53 @@
-From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Tue, 03 Apr 2018 21:37:28 +0000
-Message-ID: <CACdnJuvfDugkqZeW-0Y=vH-Gr+SpnnH7boRD5WygMff+rYXMug@mail.gmail.com>
-References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
- <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
- <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
- <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com>
- <CA+55aFy5EPxAyqyGGaYUUyakuLbjXHiseWCkz-oNdo=Y-878tg@mail.gmail.com>
- <CACdnJuuXOP5T-BRAwMvc7XF8S49wyvp4ZYgcU=EZkaGNgPAQig@mail.gmail.com>
- <CA+55aFzGFZT68ih446DeQbB69Fyk_wT6b7PGq0iz-gctUGQq_A@mail.gmail.com>
- <CACdnJuvheCbuvTLyDWMQWcUytc4EvuSUaEKywfEX8Kp6qYL9dg@mail.gmail.com> <20180403212102.GL30522@ZenIV.linux.org.uk>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [RESEND PATCH V4] pidns: introduce syscall translate_pid
+Date: Tue, 3 Apr 2018 14:38:38 -0700
+Message-ID: <20180403143838.614ecc083835d07d409a699c@linux-foundation.org>
+References: <1522706249-11578-1-git-send-email-nagarathnam.muthusamy@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180403212102.GL30522@ZenIV.linux.org.uk>
+In-Reply-To: <1522706249-11578-1-git-send-email-nagarathnam.muthusamy@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: nagarathnam.muthusamy@oracle.com
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, khlebnikov@yandex-team.ru, serge.hallyn@ubuntu.com, oleg@redhat.com, luto@amacapital.net, jannh@google.com, prakash.sangappa@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 3, 2018 at 2:21 PM Al Viro <viro@zeniv.linux.org.uk> wrote:
+On Mon,  2 Apr 2018 15:57:29 -0600 nagarathnam.muthusamy@oracle.com wrote:
 
-> On Tue, Apr 03, 2018 at 09:08:54PM +0000, Matthew Garrett wrote:
-> > If you don't want Secure Boot, turn it off. If you want Secure Boot,
-use a
-> > kernel that behaves in a way that actually increases your security.
+> pid_t translate_pid(pid_t pid, int source, int target);
+> 
+> This syscall converts pid from source pid-ns into pid in target pid-ns.
+> If pid is unreachable from target pid-ns it returns zero.
+> 
+> Pid-namespaces are referred file descriptors opened to proc files
+> /proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children. Negative argument
+> refers to current pid namespace, same as file /proc/self/ns/pid.
+> 
+> Kernel expose virtual pids in /proc/[pid]/status:NSpid, but backward
+> translation requires scanning all tasks. Also pids could be translated
+> by sending them through unix socket between namespaces, this method is
+> slow and insecure because other side is exposed inside pid namespace.
+> 
+> Examples:
+> translate_pid(pid, ns, -1)      - get pid in our pid namespace
+> translate_pid(pid, -1, ns)      - get pid in other pid namespace
+> translate_pid(1, ns, -1)        - get pid of init task for namespace
+> translate_pid(pid, -1, ns) > 0  - is pid is reachable from ns?
+> translate_pid(1, ns1, ns2) > 0  - is ns1 inside ns2?
+> translate_pid(1, ns1, ns2) == 0 - is ns1 outside ns2?
+> translate_pid(1, ns1, ns2) == 1 - is ns1 equal ns2?
+> 
+> Error codes:
+> EBADF    - file descriptor is closed
+> EINVAL   - file descriptor isn't pid-namespace
+> ESRCH    - task not found in @source namespace
 
-> That assumes you *can* turn that shit off.  On the hardware where
-manufacturer
-> has installed firmware that doesn't allow that SB is a misfeature that has
-> to be worked around.  Making that harder might improve the value of SB to
-> said manufacturers, but what's the benefit for everybody else?
+Presumably a manpage is planned?
 
-This is why Shim has support for its own key database, as well as allowing
-you to disable further signature validation. If the hardware supports third
-party code at all, you can just use Shim to sidestep any unreasonable
-restrictions the vendor has imposed.
-
-(This doesn't help with systems that don't support third party code at all,
-but this patchset does nothing to make that worse - that hardware wouldn't
-boot your own kernel before this patchset, and it won't afterwards either)
+This changelog doesn't explain what the value is to our users.  I
+assume it is a performance optimization because "backward translation
+requires scanning all tasks"?  If so, please show us real-world
+examples of the performance benefit from this patch, and please go to
+great lengths to explain to us why this optimisation is needed by our
+users.
