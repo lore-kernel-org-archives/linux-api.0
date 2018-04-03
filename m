@@ -1,93 +1,111 @@
-From: David Howells <dhowells@redhat.com>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Tue, 03 Apr 2018 08:06:59 +0100
-Message-ID: <30459.1522739219@warthog.procyon.org.uk>
-References: <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
+Date: Tue, 3 Apr 2018 08:11:07 -0700
+Message-ID: <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
+References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
+ <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org>
-Content-ID: <30458.1522739219.1@warthog.procyon.org.uk>
+In-Reply-To: <30459.1522739219@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: dhowells@redhat.com, James Morris <jmorris@namei.org>, gnomes@lxorguk.ukuu.org.uk, Linus Torvalds <torvalds@linux-foundation.org>, mjg59@google.com, gregkh@linuxfoundation.org, linux-kernel@vger.kernel.org, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, linux-security-module@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>
+To: David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>
+Cc: Andy Lutomirski <luto@kernel.org>, James Morris <jmorris@namei.org>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, Matthew Garrett <mjg59@google.com>, Greg KH <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto@kernel.org> wrote:
+[re-added cc's, I think.  Sorry, I think I failed to use the gmane
+gateway correctly there.]
 
-> This is an attempt at a review.  I'm replying here because I can't find the
-> actual relevant patch emails.
+On Tue, Apr 3, 2018 at 12:06 AM, David Howells <dhowells@redhat.com> wrote:
+> Andy Lutomirski <luto@kernel.org> wrote:
+>
+>> This is an attempt at a review.  I'm replying here because I can't find the
+>> actual relevant patch emails.
+>
+> This was the latest post:
+>
+>         https://lkml.org/lkml/2017/11/9/660
+>
+> and they were posted multiple times before that, plus distributions, such as
+> Fedora, have been carrying them for a long while.
+>
+>> For the rest of this review, I'm going to pretend that you actually want two
+>> features: "try-prevent-root-from-corrupting-the-kernel" and
+>> "try-to-prevent-root-from-reading-kernel-memory".
+>
+> It theoretically boils down into those two, but the line is blurrier than you
+> think.
+>
+> Further, some of the vectors that can be used to do one can potentially do the
+> other also and it starts getting to be a lot of extra work to distinguish the
+> two.
+>
+>> I do *not* see why the mere act of using Secure Boot should have this
+>> effect.
+>
+> To be able to pass secure boot mode over kexec, you have to make sure that the
+> kernel image doesn't get corrupted, lest someone blacklist your signing key in
+> the bootloader.
 
-This was the latest post:
+Can you explain that much more clearly?  I'm asking why booting via
+UEFI Secure Boot should enable lockdown, and I don't see what this has
+to do with kexec.  And "someone blacklist[ing] your key in the
+bootloader" sounds like a political issue, not a technical issue.
 
-	https://lkml.org/lkml/2017/11/9/660
+What is the actual purpose of these patches?
 
-and they were posted multiple times before that, plus distributions, such as
-Fedora, have been carrying them for a long while.
+>
+>> In particular, UEFI Secure Boot should *not* enable
+>> "try-to-prevent-root-from-reading-kernel-memory", which means that, unless
+>> you actually implement the split, you should drop a bunch of the patches.
+>
+> Yes it should.  If someone can read your kernel image, they can steal the
+> crypto keys you use to encrypt your filesystem.
 
-> For the rest of this review, I'm going to pretend that you actually want two
-> features: "try-prevent-root-from-corrupting-the-kernel" and
-> "try-to-prevent-root-from-reading-kernel-memory".
+Can you please explain the actual attack that is avoided by doing this?
 
-It theoretically boils down into those two, but the line is blurrier than you
-think.
+Suppose I'm a bad guy attacking someone's laptop.  If I just have
+normal uid!=0 access, then these patches have no effect.  Instead,
+we're talking about an attacker who is somehow able to become global
+root and bypass all LSM restrictions but has not gained kernel code
+execution.  It is indeed the case that your patches make it harder to
+simply read the dm-crypt encryption key out of main memory.  But root
+can attack the disk encryption in many other ways.  They can
+persistently compromise the machine by adding services or user
+accounts or intentionally misconfiguring something.  They can directly
+read the entire contents of the disk.  They can modify the initrd so
+that the next time the machine reboots and the user types the
+password, the attacker gets the key (unless the TPM is involved, but
+getting *that* right on a standard distro is difficult or impossible).
 
-Further, some of the vectors that can be used to do one can potentially do the
-other also and it starts getting to be a lot of extra work to distinguish the
-two.
+And I'm not even sure why an attacker who manages to become root wants
+your disk encryption key.  That key is worth nothing unless the
+attacker makes its attack persistent, but, if the attacker can install
+a persistent user-level backdoor, then they can read the cleartext off
+your disk just as easily as they can read the ciphertext.
 
-> I do *not* see why the mere act of using Secure Boot should have this
-> effect.
+>
+>> "Restrict /dev/{mem,kmem,port} when the kernel is locked down": this should
+>> probably split into one restriction for read and one for write.
+>
+> Not so for /dev/port.  Read & Write here are _not_ the same as Read & Write
+> on, say, /dev/mem.  In fact, if /dev/mem gives you access to mmio ports, then
+> the same applies there.  Btw, Fedora hasn't even provided /dev/kmem for a
+> while.
 
-To be able to pass secure boot mode over kexec, you have to make sure that the
-kernel image doesn't get corrupted, lest someone blacklist your signing key in
-the bootloader.
+Then split /dev/mem and turn off /dev/port for all locked-down modes.
 
-> In particular, UEFI Secure Boot should *not* enable
-> "try-to-prevent-root-from-reading-kernel-memory", which means that, unless
-> you actually implement the split, you should drop a bunch of the patches.
+>
+>> "bpf: Restrict kernel image access functions when the kernel is locked down":
+>> This patch just sucks in general.
+>
+> Yes - but that's what Alexei Starovoitov specified.  bpf kind of sucks since
+> it gives you unrestricted access to the kernel.
 
-Yes it should.  If someone can read your kernel image, they can steal the
-crypto keys you use to encrypt your filesystem.
+bpf, in certain contexts, gives you unrestricted access to *reading*
+kernel memory.  bpf should, under no circumstances, let you write to
+the kernel unless you're using fault injection or similar.
 
-> "Restrict /dev/{mem,kmem,port} when the kernel is locked down": this should
-> probably split into one restriction for read and one for write.
-
-Not so for /dev/port.  Read & Write here are _not_ the same as Read & Write
-on, say, /dev/mem.  In fact, if /dev/mem gives you access to mmio ports, then
-the same applies there.  Btw, Fedora hasn't even provided /dev/kmem for a
-while.
-
-> "bpf: Restrict kernel image access functions when the kernel is locked down":
-> This patch just sucks in general.
-
-Yes - but that's what Alexei Starovoitov specified.  bpf kind of sucks since
-it gives you unrestricted access to the kernel.
-
-> "debugfs: Restrict debugfs when the kernel is locked down": The logic is IMO
-> nutty.  Why the 0444 restriction?  I see no reason that reading a 0644 file
-> should be treated any differently from reading a 0444 file.
-
-Yes.  IMO it should be locked down entirely.  However, it's been abused and
-there are things in there that are apparently needed (ie. it's not
-debugging-only now); unfortunately, it *also* contains files that directly map
-hardware.
-
-> "efi: Lock down the kernel if booted in secure boot mode": you have a stray
-> change in fs/debugfs/inode.c in here.
-
-Good catch, thanks.
-
-> Also, as above, I really dislike this patch.
-
-You dislike everything, but you didn't say so any of the times these patches
-were posted...
-
-> "lockdown: Print current->comm in restriction messages": Shouldn't this be
-> folded in with whatever patch added that code in the first place?
-
-Perhaps, but at the time I added it, I didn't want to go back and change the
-existing patches again.  If I have to do so, I'll fold it in then.
-
-David
+I'm surprised that Alexei acked this patch.  If something like XDP or
+bpfilter starts becoming widely used, this patch will require a lot of
+reworking to avoid breaking standard distros.
