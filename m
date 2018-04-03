@@ -1,7 +1,7 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Matthew Garrett <mjg59@google.com>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Tue, 3 Apr 2018 16:42:46 -0700
-Message-ID: <CALCETrXThwok-koDREAP-0ycjphjpc_o0mSBB3zoNXb9rWGLCQ@mail.gmail.com>
+Date: Tue, 03 Apr 2018 23:45:50 +0000
+Message-ID: <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com>
 References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
  <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
  <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
@@ -10,74 +10,110 @@ References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145
  <9758.1522775763@warthog.procyon.org.uk> <CALCETrWHS9p1My=j07=V=OP7v4SwQkW-kJ3JOx6EbPU8fb_XEQ@mail.gmail.com>
  <13189.1522784944@warthog.procyon.org.uk> <CALCETrX4CuHVpn38R24TCcJgCBLSbh-sOD-qcD5kYF8Zo53ZJw@mail.gmail.com>
  <9349.1522794769@warthog.procyon.org.uk> <CALCETrV6E+r942K+fu-ALNf-x6qOZ3o1hNKGeu7qEMvr8sMP9A@mail.gmail.com>
- <10232.1522797179@warthog.procyon.org.uk>
+ <CA+55aFxKzxdRZthzaokaGPAsWCp3a-p3aVfJSutF+9Fp9sbaVA@mail.gmail.com>
+ <CACdnJusSfwULV-ubvgtYd8G_cTF4LnJ4DAeTCux4XRhHKVpBUw@mail.gmail.com>
+ <CA+55aFzG==xr2OLK8F03RH0nkUDeP6btWqepFTuHZqkPTAOWjQ@mail.gmail.com>
+ <CACdnJuv_=ihPut=5OvCYEphdBOn7+JrKacBbNa0n3wv_JvFMzg@mail.gmail.com> <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <10232.1522797179@warthog.procyon.org.uk>
+In-Reply-To: <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Matthew Garrett <mjg59@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 3, 2018 at 4:12 PM, David Howells <dhowells@redhat.com> wrote:
-> Andy Lutomirski <luto@kernel.org> wrote:
->
->> I'm having a very, very hard time coming up with a scenario where I
->> can "trust" something if an attacker can get root but can't modify the
->> running kernel image but I can't "trust" something if the attacker
->> can [modify the running kernel image].
->
-> (I think the above is what you meant)
->
-> Let's go at this a different way.  How do you decide you can trust something
-> in this context?  You compare it to something.  Signing it, keeping a hash
-> whitelist, IMA - these are all ways of comparing something.  Do you agree with
-> that?
+On Tue, Apr 3, 2018 at 4:26 PM Linus Torvalds
+<torvalds@linux-foundation.org>
+wrote:
 
-I trust or distrust a system as a whole.  I don't make that decision
-by comparing it to anything.  I make it by evaluating how the system
-works and deciding whether it's trustworthy.
+> On Tue, Apr 3, 2018 at 4:17 PM, Matthew Garrett <mjg59@google.com> wrote:
+> >
+> > 1) Secure Boot is intended to permit the construction of a boot chain
+that
+> > only runs ring 0 code that the user considers trustworthy
 
->
-> What use is secure boot if processes run as root can subvert your kernel?
->
+> No.
 
-Secure boot serves several purposes:
+> That may be *one* intention, for some people.
 
-1. Anti-competitive purposes.  It's intentionally difficult to run
-non-Windows OSes on Windows ARM machines, for example.
+> It's not an a-priori one for the actual user.
 
-2. Allowing me to use a stock UEFI machine to have a verified boot chain.
+Secure Boot is intended to *permit* that. Without Secure Boot you're unable
+to do that. Some users want that. Some users don't.
 
-The latter has nothing whatsoever to do with CPL0.  The former,
-however, does.  If I could easily write some Windows program to run
-CPL0 code, then I could chainload Linux using the Windows image, and
-I've subverted the purpose.
+> > 2) Allowing arbitrary user code to run in ring 0 without affirmative
+> > consent on the part of the user is therefore incompatible with the
+goals of
+> > Secure Boot
 
-Cynical?  Yes.
+> Again, that has absolutely zero relevance.
 
->> > There's no point bothering with UID/GID checking either.
->>
->> Give me a break.  There's a *huge* difference between a system where
->> only root can load unsigned modules and a system where anyone can load
->> unsigned modules.
->
-> I don't think we've ever advocated letting just anyone load a module.
->
-> But my point is that if you can modify the running kernel, you can nullify all
-> security checks, including UID/GID checks.
->
->> > However, if /dev/mem can be read, any root process can extract the session
->> > key for your disk.
->>
->> Any root process can read /dev/mapper/plaintext_disk, lockdown or otherwise.
->
-> True - for now - and they can also access the mounted filesystem.  But if they
-> get their hands on your powered-off computer, no, they can't.
+> Those goals are not the *users* goals.
 
-This is, IMO, a silly argument.  You're saying that some bad guy has
-managed to run code as root on my laptop.  Then, next week, the bad
-guy steals my laptop while it's powered off, and Lockdown is supposed
-to protect me against that bad guy.  If this happens, I've already
-lost completely, lockdown or no.
+> Be honest now. It wasn't generally users who clamored for it.
+
+If you ask a user whether they want a system that lets an attacker replace
+their kernel or one that doesn't, what do you think their answer is likely
+to be?
+
+> If the user actually wanted it, and is asking for it, he can enable
+> it. Independently of secure boot, which the user generally has little
+> control over.
+
+How? If the bootloader will boot kernels that don't impose this restriction
+then an attacker just replaces whatever's enabling that feature. And, uh,
+seriously, I've been asking for *years* for someone to point me at a PC on
+the market that doesn't give the user control over Secure Boot, but Shim
+was expressly designed to ensure that the user would have the ability to
+enroll additional trusted keys (or disable signature validation entirely),
+so which cases are you thinking of where the user doesn't have control?
+
+> > 3) This patchset provides a mechanism to alter the behaviour of the
+kernel
+> > such that it is significantly more difficult for arbitrary user code to
+run
+> > in ring 0 without affirmative user consent
+
+> That difficulty already exists, the new thing isn't somehow related to
+> that at all.
+
+> Look at our "uyou can only load modules if you're root" rules. Or the
+> "you can only load modules if they are signed".
+
+> See a pattern there? They don't magically enable themselves (or
+> disable themselves) depending on whether you booted with secure boot
+> or not.
+
+What's the benefit of "You can only load modules if they are signed" if
+root is able to just overwrite that policy bit in the kernel? The split
+between unprivileged users and root is real, but right now module
+signatures are theater - there's no significant security benefit from them.
+But the reason to tie this to Secure Boot is that without that an attacker
+who has root can just replace the kernel on disk (or patch the bootloader
+to live-patch the kernel on boot, and yes that's an attack we've seen in
+the real world), so while it's a feature that is arguably beneficial under
+all circumstances it's a feature that only has significant benefit if you
+have some way to actually validate what you're booting in the first place.
+
+> > 4) Providing a mechanism for automatically enabling this behaviour when
+> > running in a context that is intended to restrict access to ring 0 is a
+> > rational thing to do, because otherwise it is difficult to achieve the
+> > objective in (1)
+
+> No. See why it's *NOT* rational, as explained already several times.
+
+> Magically changing kernel behavior depending on some subtle and often
+> unintentional bootup behavior detail is completely idiotic.
+
+> It would be idiotic if it was that "check kernel module signatures"
+> check. This is no less idiotic.
+
+> Seriously, listen to your own arguments. If they don't make sense for
+> checking kernel module signatures, why the hell would they make sense
+> for something like lockdown.
+
+> THE TWO THINGS ARE ENTIRELY INDEPENDENT.
+
+Again, what is your proposed mechanism for ensuring that off the shelf
+systems can be configured in a way that makes this possible?
