@@ -1,7 +1,7 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Matthew Garrett <mjg59@google.com>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Tue, 3 Apr 2018 16:58:55 -0700
-Message-ID: <CA+55aFx8hQRdBp-7Jv=62Acy9vU53shsd09gFXiE-OYN+ynHEA@mail.gmail.com>
+Date: Tue, 03 Apr 2018 23:59:40 +0000
+Message-ID: <CACdnJuvqQQ+hidokY5GA7g-yrAs5-358it0cs+m_d4RFDMuB_w@mail.gmail.com>
 References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
  <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
  <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
@@ -12,41 +12,50 @@ References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145
  <9349.1522794769@warthog.procyon.org.uk> <CALCETrV6E+r942K+fu-ALNf-x6qOZ3o1hNKGeu7qEMvr8sMP9A@mail.gmail.com>
  <CA+55aFxKzxdRZthzaokaGPAsWCp3a-p3aVfJSutF+9Fp9sbaVA@mail.gmail.com>
  <CACdnJusSfwULV-ubvgtYd8G_cTF4LnJ4DAeTCux4XRhHKVpBUw@mail.gmail.com>
+ <CA+55aFzG==xr2OLK8F03RH0nkUDeP6btWqepFTuHZqkPTAOWjQ@mail.gmail.com>
  <CACdnJuv_=ihPut=5OvCYEphdBOn7+JrKacBbNa0n3wv_JvFMzg@mail.gmail.com>
- <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com> <11444.1522799762@warthog.procyon.org.uk>
+ <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
+ <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com> <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <11444.1522799762@warthog.procyon.org.uk>
+In-Reply-To: <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Matthew Garrett <mjg59@google.com>, Andrew Lutomirski <luto@kernel.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 3, 2018 at 4:56 PM, David Howells <dhowells@redhat.com> wrote:
-=>
-> Most users haven't even given this a moment's thought, aren't even aware of
-> the issues, don't even know to ask and, for them, it makes no difference.
-> They trust their distribution to deal with stuff they don't know about.
+On Tue, Apr 3, 2018 at 4:55 PM Linus Torvalds
+<torvalds@linux-foundation.org>
+wrote:
 
-Right.
+> On Tue, Apr 3, 2018 at 4:45 PM, Matthew Garrett <mjg59@google.com> wrote:
+> >> Be honest now. It wasn't generally users who clamored for it.
+> >
+> > If you ask a user whether they want a system that lets an attacker
+replace
+> > their kernel or one that doesn't, what do you think their answer is
+likely
+> > to be?
 
-Like perhaps trusting the distribution to just enable all those
-security measures _regaredless_ of whether they booted in using secure
-boot or not?
+> Goddamnit.
 
-See?
+> We both know what the answer will be.
 
-If lockdown breaks something, the distro would need to fix it
-regardless of secure boot.
+> And it will have *nothing* to do with secure boot.
 
-So why is the enablement dependent on it again?
+Right, because they care about outcome rather than mechanism. Secure Boot
+is the mechanism we have to make that outcome possible.
 
-I'm not arguing "lockdown shouldn't be on".
+> > Again, what is your proposed mechanism for ensuring that off the shelf
+> > systems can be configured in a way that makes this possible?
 
-I'm arguing "lockdown being on or off has _nothing_ to do with whether
-the machine was booted in EFI mode with secure boot or not".
+> If you think lockdown is a good idea, and you enabled it, then IT IS
+ENABLED.
 
-You don't seem to get it.
-
-                Linus
+Ok. So we can build distribution kernels that *always* have this on, and to
+turn it off you have to disable Secure Boot and install a different kernel.
+Or we can build distribution kernels that only have this on when you're
+booting in a context that makes sense, and you can disable it by just
+disabling Secure Boot (by running mokutil --disable-validation) and not
+have to install a new kernel. Which outcome do you prefer?
