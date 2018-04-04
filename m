@@ -1,70 +1,86 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Wed, 4 Apr 2018 15:57:38 +0200
-Message-ID: <20180404135738.GA17482@kroah.com>
-References: <CA+55aFwvuoSHhKnn82VnDndZ6oXMJgwHF604gZ=h3ehHyC600A@mail.gmail.com>
- <CA+55aFzJ2sQR13T+20MKEJ5co-f3Ev8rRxQkRCWVaeDSUU3yhQ@mail.gmail.com>
- <CACdnJuti5Riqoi1sesqPALYHq9LT87o4MFj-0Y5BZqqzJ5579g@mail.gmail.com>
- <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com>
- <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com>
- <CA+55aFxgrh5eeG9MRSEsJtyL5yTe0TehZ=BS2josGJaLxoMMBQ@mail.gmail.com>
- <CACdnJutuBaE3RaDx0KM5vDF9Sinrp=3tG9csrS-H3eU-J7-Utw@mail.gmail.com>
- <20180404125743.GB16242@thunk.org>
- <20180404130233.GA24008@kroah.com>
- <20180404133411.GC16242@thunk.org>
+Date: Wed, 4 Apr 2018 07:35:20 -0700
+Message-ID: <CALCETrUaKOG1q43W=UBPue5TAL61zzwzgr8QeH3Yh6KsMUA2aQ@mail.gmail.com>
+References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
+ <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
+ <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
+ <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com>
+ <CALCETrXeVod=kNpG-M7yKAMM0-n+PMg_OakN6ecWrTPmKXgMLg@mail.gmail.com>
+ <9758.1522775763@warthog.procyon.org.uk> <CALCETrWHS9p1My=j07=V=OP7v4SwQkW-kJ3JOx6EbPU8fb_XEQ@mail.gmail.com>
+ <13189.1522784944@warthog.procyon.org.uk> <CALCETrX4CuHVpn38R24TCcJgCBLSbh-sOD-qcD5kYF8Zo53ZJw@mail.gmail.com>
+ <9349.1522794769@warthog.procyon.org.uk> <CALCETrV6E+r942K+fu-ALNf-x6qOZ3o1hNKGeu7qEMvr8sMP9A@mail.gmail.com>
+ <CA+55aFxKzxdRZthzaokaGPAsWCp3a-p3aVfJSutF+9Fp9sbaVA@mail.gmail.com>
+ <CACdnJusSfwULV-ubvgtYd8G_cTF4LnJ4DAeTCux4XRhHKVpBUw@mail.gmail.com>
+ <CACdnJuv_=ihPut=5OvCYEphdBOn7+JrKacBbNa0n3wv_JvFMzg@mail.gmail.com>
+ <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
+ <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com>
+ <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com>
+ <CACdnJuvqQQ+hidokY5GA7g-yrAs5-358it0cs+m_d4RFDMuB_w@mail.gmail.com>
+ <CA+55aFwJBGCr-anrdV9N63fUH4V_QJqgr0_fJyHhH=fuqGAoog@mail.gmail.com>
+ <CAG48ez1MRsDGoea5MwGTXK6R0LJy9u0mX-1VrSSskwnV98kEjQ@mail.gmail.com>
+ <CALCETrXZWU1MC8LbLCg7VTVHMqKpXh51amnTjKePRCJ31jRiwg@mail.gmail.com> <20736.1522829117@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180404133411.GC16242@thunk.org>
+In-Reply-To: <20736.1522829117@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Theodore Y. Ts'o" <tytso@mit.edu>, Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Matthew Garrett <mjg59@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 04, 2018 at 09:34:11AM -0400, Theodore Y. Ts'o wrote:
-> On Wed, Apr 04, 2018 at 03:02:33PM +0200, Greg Kroah-Hartman wrote:
-> > On Wed, Apr 04, 2018 at 08:57:43AM -0400, Theodore Y. Ts'o wrote:
-> > > On Wed, Apr 04, 2018 at 04:30:18AM +0000, Matthew Garrett wrote:
-> > > > What I'm afraid of is this turning into a "security" feature that ends up
-> > > > being circumvented in most scenarios where it's currently deployed - eg,
-> > > > module signatures are mostly worthless in the non-lockdown case because you
-> > > > can just grab the sig_enforce symbol address and then kexec a preamble that
-> > > > flips it back to N regardless of the kernel config.
-> > > 
-> > > Whoa.  Why doesn't lockdown prevent kexec?  Put another away, why
-> > > isn't this a problem for people who are fearful that Linux could be
-> > > used as part of a Windows boot virus in a Secure UEFI context?
-> > 
-> > Because no one is afraid of that :)
-> 
-> Well, this is the excuse used by Windows.
+I've reordered your email to make my email more coherent.
 
-Really?  Every time I have tried to actually follow up on this
-statement, it turns into an urban myth.  If you have proof of this,
-please let me know, otherwise I am going to keep saying it is false.
+> On Apr 4, 2018, at 1:05 AM, David Howells <dhowells@redhat.com> wrote:
+>
 
-> Some more cynical people
-> believe it's really an anti-competitvie thing, but we should
-> acknowledge this is what is causing the fear that some distros have
-> that their UEFI secure boot certs will be revoked by Microsoft if they
-> don't have this crazy lockdown enforcement for UEFI Secure Boot.
+>
+> What we *have* said is that *if* we want to pass the secure boot state across
+> kexec, then we have to make sure that:
+>
 
-Unsubstantiated fear of relying on another company's signing key to
-suddenly stop working is worrying.  But it's just that, fear, and not
-anything that is actually true.  We have a working shim binary that is
-signed, in use by all distros and other operating systems (community and
-corporate).  To revoke that key now would be insane on a variety of
-levels.
+What do you even mean "pass the secure boot state across kexec"?  All
+I can come up with is that you want a kexeced Linux kernel to also be
+passed a flag saying "I was secure booted" and to enable or disable
+lockdown accordingly.  Let's consider the cases:
 
-So let's stop playing the myth and fear card people, and focus on the
-actual facts here.
+1. First kernel is verified (secure boot or otherwise) and locked
+down.  Certainly that lock down needs to enforce that the next kernel
+in the chain is locked down, otherwise lockdown gets defeated.
 
-> And I would all be for having the Kconfig description says, "This
-> config option is only needed by distros who are fearful of Microsoft
-> revoking their UEFI secure boot certificate."
+2. First kernel is not verified but is locked down.  It still needs to
+enforce that the next kernel is verified and locked down, otherwise
+lockdown gets defeated.
 
-Again, no fear please, facts only.
+3. First kernel is verified but not locked down.  There's very little
+point in trying to force the next kernel to be locked down.
 
-thanks,
+4. First kernel is neither verified nor locked down.  There's still no
+point in trying to force the next kernel to be locked down.
 
-greg k-h
+Isn't the right solution to have a flag saying "force lockdown" that
+kexec can pass to the child kernel?  A locked down parent kernel would
+refuse to load an unsigned child kernel and would always set that
+flag.
+
+> Andy Lutomirski <luto@kernel.org> wrote:
+>
+>> As far as I can tell, what's really going on here is that there's a
+>> significant contingent here that wants to prevent Linux from
+>> chainloading something that isn't Linux.
+>
+> You have completely the wrong end of the stick.  No one has said that or even
+> implied that.  You are alleging dishonesty on our part.
+
+I'm alleging that the idea that Linux seems some particular policy to
+avoid being blacklisted keeps being brought up as a justification for
+these patches.  And, in fact, you bring it up again right here:
+
+>
+> And if someone tampers with the aim of breaking, say, Windows, then someone,
+> e.g.  Microsoft, might blacklist the shim.
+
+In other words, if you chainload an intentionally corrupted copy of
+Windows, you get blacklisted?  This sounds awfully like what I said
+upthread.  Is this actually a real concern?  Greg seems quite
+convinced that it isn't.
