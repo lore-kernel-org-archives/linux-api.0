@@ -1,73 +1,67 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: An actual suggestion (Re: [GIT PULL] Kernel lockdown for secure boot)
-Date: Wed, 4 Apr 2018 07:49:12 -0700
-Message-ID: <CALCETrUVQLDC6_VEvuAbdCOuGrmcxohqTB6P8eyNojm9AryNkg@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [GIT PULL] Kernel lockdown for secure boot
+Date: Wed, 04 Apr 2018 10:43:57 -0500
+Message-ID: <87fu4bj7sy.fsf@xmission.com>
+References: <CALCETrXZWU1MC8LbLCg7VTVHMqKpXh51amnTjKePRCJ31jRiwg@mail.gmail.com>
+        <30459.1522739219@warthog.procyon.org.uk>
+        <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
+        <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com>
+        <CALCETrXeVod=kNpG-M7yKAMM0-n+PMg_OakN6ecWrTPmKXgMLg@mail.gmail.com>
+        <9758.1522775763@warthog.procyon.org.uk>
+        <CALCETrWHS9p1My=j07=V=OP7v4SwQkW-kJ3JOx6EbPU8fb_XEQ@mail.gmail.com>
+        <13189.1522784944@warthog.procyon.org.uk>
+        <CALCETrX4CuHVpn38R24TCcJgCBLSbh-sOD-qcD5kYF8Zo53ZJw@mail.gmail.com>
+        <9349.1522794769@warthog.procyon.org.uk>
+        <CALCETrV6E+r942K+fu-ALNf-x6qOZ3o1hNKGeu7qEMvr8sMP9A@mail.gmail.com>
+        <CA+55aFxKzxdRZthzaokaGPAsWCp3a-p3aVfJSutF+9Fp9sbaVA@mail.gmail.com>
+        <CACdnJusSfwULV-ubvgtYd8G_cTF4LnJ4DAeTCux4XRhHKVpBUw@mail.gmail.com>
+        <CACdnJuv_=ihPut=5OvCYEphdBOn7+JrKacBbNa0n3wv_JvFMzg@mail.gmail.com>
+        <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
+        <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com>
+        <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com>
+        <CACdnJuvqQQ+hidokY5GA7g-yrAs5-358it0cs+m_d4RFDMuB_w@mail.gmail.com>
+        <CA+55aFwJBGCr-anrdV9N63fUH4V_QJqgr0_fJyHhH=fuqGAoog@mail.gmail.com>
+        <CAG48ez1MRsDGoea5MwGTXK6R0LJy9u0mX-1VrSSskwnV98kEjQ@mail.gmail.com>
+        <20736.1522829117@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20736.1522829117@warthog.procyon.org.uk> (David Howells's
+        message of "Wed, 04 Apr 2018 09:05:17 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: "Theodore Y. Ts'o" <tytso@mit.edu>, Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Matthew Garrett <mjg59@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Since this thread has devolved horribly, I'm going to propose a solution.
+David Howells <dhowells@redhat.com> writes:
 
-1. Split the "lockdown" state into three levels:  (please don't
-bikeshed about the names right now.)
+> Andy Lutomirski <luto@kernel.org> wrote:
+>
+>> As far as I can tell, what's really going on here is that there's a
+>> significant contingent here that wants to prevent Linux from
+>> chainloading something that isn't Linux.
+>
+> You have completely the wrong end of the stick.  No one has said that or even
+> implied that.  You are alleging dishonesty on our part.
+>
+> What we *have* said is that *if* we want to pass the secure boot state across
+> kexec, then we have to make sure that:
+>
+>  (1) no one tampers with the intermediate kernel between boot and kexec
+>      otherwise the secure boot state is effectively invalidated, and
+>
+>  (2) the image that gets kexec'ed is trusted.
+>
+> Remember: you cannot know (2) if you don't have (1).
+>
+> And if someone tampers with the aim of breaking, say, Windows, then someone,
+> e.g.  Microsoft, might blacklist the shim.
 
-LOCKDOWN_NONE: normal behavior
+*Wow*   You just denied this isn't about not booting Windows and a few
+lines later said that is your concern.
 
-LOCKDOWN_PROTECT_INTEGREITY: kernel tries to keep root from writing to
-kernel memory
+I was thinking I would have to dig up old archives where I had been told
+this before, but you just nicely repeated all of the old arguments so I
+don't see the point.
 
-LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY: kernel tries to keep root from
-reading or writing kernel memory.
-
-2. The kexec protocol gets a new flag min_lockdown_level.  A kexeced
-kernel will boot with at least that lockdown level regardless of its
-configuration.  kexec sets min_lockdown_level to the running kernels'
-lockdown_level.  Some future API could allow kexec with a higher
-min_lockdown_level.  An even fancier future API could allow a
-LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY kernel to kexec with
-min_lockdown_level == LOCKDOWN_PROTECT_INTEGRITY if there's some
-mechanism that guarantees that memory gets zeroed in the process.
-
-3. All the bpf and tracing stuf, etc, gets changed so it only takes
-effect when LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY is set.  This
-removes a giant annoyance on distro kernels that are likely to want to
-enable LOCKDOWN_PROTECT_INTEGRITY.  If you load a key into the kernel,
-and you want to keep that key safe, you can enable
-LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY at that time.  After all, if
-root is compromised before that, root can just remember a copu of the
-key in user memory or email it to someone.
-
-4. There's a kernel config option for the default lockdown level.
-This operates completely independently of secure boot.
-
-5. There's a command line option to increase the lockdown level above
-the default level.  No particular authentication is needed for this
-option to work.
-
-6. There's a way to *decrease* the lockdown level below the configured
-value.  (This ability itself may be gated by a config option.)
-Choices include a UEFI protected variable, an authenticated flag
-passed by the bootloader, and even just some special flag in the boot
-handoff protocol.  It would be really quite useful for a user to be
-able to ask their bootloader to reduce the lockdown level for the
-purpose of a particular boot for debugging.  I read the docs on
-mokutil --disable-validation, and it's quite messy.  Let's have a way
-to do this that is mostly independent of the particular firmware in
-use.
-
-I can imagine a grub option that decreases lockdown level along with a
-rule that grub will *not* load that option from its config, for
-example.
-
-7. kexec does not attempt to think about "secure boot" at all.
-They're totally separate.
-
-What do you all think?  I think that this checks basically all the
-boxes, is a lot more user friendly than the current patchset or what
-distros do, and actually makes some sense from a security perspective.
-
---Andy
+Eric
