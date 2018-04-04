@@ -1,59 +1,46 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [RESEND PATCH V4] pidns: introduce syscall translate_pid
-Date: Wed, 4 Apr 2018 11:28:33 +0300
-Message-ID: <0f0a03df-9171-fc29-194b-77d1792b5698@yandex-team.ru>
-References: <1522706249-11578-1-git-send-email-nagarathnam.muthusamy@oracle.com>
- <20180403143838.614ecc083835d07d409a699c@linux-foundation.org>
- <678f275b-8d78-9b0f-177f-5ff5c9c55657@oracle.com>
- <20180403145248.fb4cd8c5ccd270ca77fd18f3@linux-foundation.org>
- <6a117d9a-f005-e1ae-5632-25e5c61dcb8f@oracle.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [GIT PULL] Kernel lockdown for secure boot
+Date: Wed, 4 Apr 2018 11:04:40 +0200
+Message-ID: <20180404090440.GA24169@kroah.com>
+References: <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
+ <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com>
+ <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com>
+ <CACdnJuvqQQ+hidokY5GA7g-yrAs5-358it0cs+m_d4RFDMuB_w@mail.gmail.com>
+ <CA+55aFwJBGCr-anrdV9N63fUH4V_QJqgr0_fJyHhH=fuqGAoog@mail.gmail.com>
+ <CACdnJuvFqXGLsAv1Km3MmdssHBfuH5-C_vG3A4eq4Yuj0HhFBA@mail.gmail.com>
+ <CA+55aFzYbpRAdma0PvqE+9ygySuKzNKByqOzzMufBoovXVnfPw@mail.gmail.com>
+ <CACdnJuv-VpdhjEe1cMysdHb6Oy67jQqg-_TVHbUrOfH9GmCVvg@mail.gmail.com>
+ <CALCETrVF2vSvoz0sBCrfMKcbJ4hmi=1QJZbUxdvurkimVXr0nA@mail.gmail.com>
+ <CACdnJutmTU4U0nMik0oqGHDEd-xd4Vhi06t3RsZ5tpUgugfNbQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6a117d9a-f005-e1ae-5632-25e5c61dcb8f@oracle.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CACdnJutmTU4U0nMik0oqGHDEd-xd4Vhi06t3RsZ5tpUgugfNbQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, serge.hallyn@ubuntu.com, oleg@redhat.com, luto@amacapital.net, jannh@google.com, prakash.sangappa@oracle.com
+To: Matthew Garrett <mjg59@google.com>
+Cc: luto@kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04.04.2018 00:51, Nagarathnam Muthusamy wrote:
+On Wed, Apr 04, 2018 at 12:19:35AM +0000, Matthew Garrett wrote:
+> On Tue, Apr 3, 2018 at 5:18 PM Andy Lutomirski <luto@kernel.org> wrote:
 > 
+> > if your secure boot-enabled bootloader can't prevent a bad guy from
+> > using malicious kernel command line parameters, then fix it.
 > 
-> On 04/03/2018 02:52 PM, Andrew Morton wrote:
->> On Tue, 3 Apr 2018 14:45:28 -0700 Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> wrote:
->>
->>>> This changelog doesn't explain what the value is to our users.  I
->>>> assume it is a performance optimization because "backward translation
->>>> requires scanning all tasks"?  If so, please show us real-world
->>>> examples of the performance benefit from this patch, and please go to
->>>> great lengths to explain to us why this optimisation is needed by our
->>>> users.
->>> One of the usecase by Oracle database involves multiple levels of
->>> nested pid namespaces and we require pid translation between the
->>> levels. Discussions on the particular usecase, why any of the existing
->>> methods was not usable happened in the following thread.
->>>
->>> https://patchwork.kernel.org/patch/10276785/
->>>
->>> At the end, it was agreed that this patch along with flocks will solve the
->>> issue.
->> Nobody who reads this patch's changelog will know any of this.  Please
->> let's get all this information into the proper place.
-> Sure! Will resend the patch with updated change log.
+> How is a bootloader supposed to know what the set of malicious kernel
+> command line parameters is?
 
-I have v5 version of this proposal in work.
+It wouldn't, it, if it really were "secure", would not allow any command
+line parameters to be changed.  Which is exactly what those bootloaders
+who "claim" to be secure do.
 
-I've redesigned interface to be more convenient for cases where
-strict race-protection isn't required and pid-ns could be referenced pid.
+And, just to butt in here, there is no requirement that I have ever
+heard of from anyone at UEFI or Microsoft that this type of "kernel
+feature" is a requirement to allow for a bootloader/kernel to be signed
+with their key.  So that should take the "politics" reason off the table
+here, if people thought that somehow it was even a viable reason...
 
-It has 5 arguments rather than 3 because types of references are
-defined explicitly rather than magic like -1, >0, <0.
-This more verbose but protects against errors like passing -1 from
-failed previous syscall as argument.
+thanks,
 
-kind of
-translate_pid(pid, TRANSLATE_PID_FD_PIDNS, ns_fd, TRANSLATE_PID_CURRENT_PIDNS, 0)
-
-I'll send it today with including more detailed motivation for patch.
+greg k-h
