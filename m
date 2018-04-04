@@ -1,162 +1,177 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Wed, 4 Apr 2018 09:09:03 -0700
-Message-ID: <CA+55aFyyom+jje0Q8xwLfKCWGkRbWC2Gan6xPOPWaqBCSS=5Ow@mail.gmail.com>
-References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
- <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
- <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
- <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com>
- <CALCETrXeVod=kNpG-M7yKAMM0-n+PMg_OakN6ecWrTPmKXgMLg@mail.gmail.com>
- <9758.1522775763@warthog.procyon.org.uk> <CALCETrWHS9p1My=j07=V=OP7v4SwQkW-kJ3JOx6EbPU8fb_XEQ@mail.gmail.com>
- <13189.1522784944@warthog.procyon.org.uk> <CALCETrX4CuHVpn38R24TCcJgCBLSbh-sOD-qcD5kYF8Zo53ZJw@mail.gmail.com>
- <9349.1522794769@warthog.procyon.org.uk> <CALCETrV6E+r942K+fu-ALNf-x6qOZ3o1hNKGeu7qEMvr8sMP9A@mail.gmail.com>
- <CA+55aFxKzxdRZthzaokaGPAsWCp3a-p3aVfJSutF+9Fp9sbaVA@mail.gmail.com>
- <CACdnJusSfwULV-ubvgtYd8G_cTF4LnJ4DAeTCux4XRhHKVpBUw@mail.gmail.com>
- <CA+55aFzG==xr2OLK8F03RH0nkUDeP6btWqepFTuHZqkPTAOWjQ@mail.gmail.com>
- <CACdnJuv_=ihPut=5OvCYEphdBOn7+JrKacBbNa0n3wv_JvFMzg@mail.gmail.com>
- <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com>
- <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com>
- <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com>
- <CACdnJuvqQQ+hidokY5GA7g-yrAs5-358it0cs+m_d4RFDMuB_w@mail.gmail.com>
- <CA+55aFwJBGCr-anrdV9N63fUH4V_QJqgr0_fJyHhH=fuqGAoog@mail.gmail.com>
- <CACdnJuvFqXGLsAv1Km3MmdssHBfuH5-C_vG3A4eq4Yuj0HhFBA@mail.gmail.com>
- <CA+55aFzYbpRAdma0PvqE+9ygySuKzNKByqOzzMufBoovXVnfPw@mail.gmail.com>
- <CACdnJuv-VpdhjEe1cMysdHb6Oy67jQqg-_TVHbUrOfH9GmCVvg@mail.gmail.com>
- <CA+55aFwvuoSHhKnn82VnDndZ6oXMJgwHF604gZ=h3ehHyC600A@mail.gmail.com>
- <CA+55aFzJ2sQR13T+20MKEJ5co-f3Ev8rRxQkRCWVaeDSUU3yhQ@mail.gmail.com>
- <CACdnJuti5Riqoi1sesqPALYHq9LT87o4MFj-0Y5BZqqzJ5579g@mail.gmail.com>
- <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com>
- <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com>
- <CA+55aFxgrh5eeG9MRSEsJtyL5yTe0TehZ=BS2josGJaLxoMMBQ@mail.gmail.com> <CACdnJutuBaE3RaDx0KM5vDF9Sinrp=3tG9csrS-H3eU-J7-Utw@mail.gmail.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: An actual suggestion (Re: [GIT PULL] Kernel lockdown for secure boot)
+Date: Wed, 04 Apr 2018 17:17:24 +0100
+Message-ID: <1119.1522858644@warthog.procyon.org.uk>
+References: <CALCETrUVQLDC6_VEvuAbdCOuGrmcxohqTB6P8eyNojm9AryNkg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CACdnJutuBaE3RaDx0KM5vDF9Sinrp=3tG9csrS-H3eU-J7-Utw@mail.gmail.com>
+In-Reply-To: <CALCETrUVQLDC6_VEvuAbdCOuGrmcxohqTB6P8eyNojm9AryNkg@mail.gmail.com>
+Content-ID: <1118.1522858644.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <mjg59@google.com>
-Cc: Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: dhowells@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 3, 2018 at 9:30 PM, Matthew Garrett <mjg59@google.com> wrote:
->
-> Bear in mind that I'm talking about defaults here
+Andy Lutomirski <luto@kernel.org> wrote:
 
-Mattyhew, I really want you to look yourself in the mirror.
+> Since this thread has devolved horribly, I'm going to propose a solution.
+> 
+> 1. Split the "lockdown" state into three levels:  (please don't
+> bikeshed about the names right now.)
+> 
+> LOCKDOWN_NONE: normal behavior
+> 
+> LOCKDOWN_PROTECT_INTEGREITY: kernel tries to keep root from writing to
+> kernel memory
+> 
+> LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY: kernel tries to keep root from
+> reading or writing kernel memory.
 
-Those defaults are really horrible defautls for real technical reasons.
+In theory, it's good idea, but in practice it's not as easy to implement as I
+think you think.
 
-You asked me why when I questioned this, but then when I replied, you
-entirely ignored it.
+Let me list here the things that currently get restricted by lockdown:
 
-So let me repeat: the defaults are *horrible*. They are horrible for a
-very simple reason: kernel behavior changes that depend on some subtle
-boot difference are truly nasty to debug, and nasty to get coverage
-for.
+ (1) Manipulation of devices to access the kernel image:
 
-And this "subtle boot difference" is really bad because it's a
-difference that has a particularly bad pattern: pretty much not a
-single mainline kernel developer will have secure boot enabled,
-exactly because it's so inconvenient for testing.
+	- Ioports & ioperm
+	- /dev/ports
+	- /dev/mem
+	- PCI Bar
+	- Some debugfs files
+	- pcmcia_cis
+	- Driver hardware parameters
+	  - ISA drivers
+	  - TIOCSSERIAL
+	  - SCSI EATA driver
+	- testmmiotrace
+	- firmware
 
-So what does that mean?
+ (2) Direct kernel memory modification:
 
-It means that the default is *actively* bad for kernel development. It
-means that the people who do kernel development will not be testing
-the behavior that "normal" users will actually see.
+	- /dev/mem
+	- /dev/kmem
+	- bpf
+	- kprobes
 
-If you do not see why that is a HORRIBLY BAD THING, I don't know what to say.
+ (3) Direct kernel memory reading:
 
-Seriously. It's a nasty nasty default behavior. It's absolutely
-disastrously wrong.
+	- /dev/mem
+	- /dev/kmem
+	- /dev/kcore
+	- bpf
+	- kprobes
+	- perf
 
-And then when people call you out on this bad linkage of this feature
-with secure boot, you spent a *LOT* of time being dishonest about it.
-Instead of answeing a simple technical question, you did just about
-everything you could to avoid answering it.
+ (4) Indirect kernel access:
 
-You initially turned the question back into a "Why would you want to?"
-rather than just answering.
+	- Modules
+	- MSRs
+	- Suspend to disk
+	- ACPI (custom_method, RSDP, table override, error injection)
 
-Then you spent a whole lot of time coming up with completely wrong
-excuses that had no actual technical reason for them.
+ (5) Kexec.
 
-And even now, you're trying to ignore the question, and the REASON for
-the question.
+Note that /dev/mem can be used to access MMIO devices (I'm not sure about
+/dev/kmem, though).  Even reads through /dev/mem can do this.  I'm not sure
+whether that's sufficient to actually affect a modification, though.
 
-See above: the default is really horrendously bad, and is just about
-the *worst* default you could ever pick from a kernel development
-angle.
+Debugfs is particularly icky.  It contains at least a couple of thousand
+files, a few of which provide direct access to hardware, some of which change
+driver behaviour and some of which just give information.  Auditing that pile
+isn't something I really want to have to do.  I'd rather just turn the whole
+lot off, but got persuaded otherwise by people who have been using it to
+provide mechanisms that programs rely on - hence the only allow files that
+have 0444 (and even that is iffy as some of these files have side effects and
+write ops anyway).
 
-So when a kernel developer - both me and Andy - ask you about the
-reason for that HORRIBLY BAD default, then you had better stop dancing
-around the issue, and be honesy.
+> 2. The kexec protocol gets a new flag min_lockdown_level.  A kexeced
+> kernel will boot with at least that lockdown level regardless of its
+> configuration.  kexec sets min_lockdown_level to the running kernels'
+> lockdown_level.  Some future API could allow kexec with a higher
+> min_lockdown_level.  An even fancier future API could allow a
+> LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY kernel to kexec with
+> min_lockdown_level == LOCKDOWN_PROTECT_INTEGRITY if there's some
+> mechanism that guarantees that memory gets zeroed in the process.
 
-Instead, you bring up complete red herrings:
+Note that on x86 we already have an allocated flag for passing the secure boot
+flag from kexec/bootloader to the kernel being booted, and what you're
+proposing ought to be redundant.  See boot_params::secure_boot.
 
-> If a user has a configuration where you're able to verify that userspace
-> has some degree of protection (eg, disk encryption keys are in the TPM and
-> won't unseal if someone's switched out the kernel) then it's reasonable for
-> userland (or a kernel command line option) to enable the functionality.
+> 3. All the bpf and tracing stuf, etc, gets changed so it only takes
+> effect when LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY is set.
 
-This line of arguyment of yours ends up STILL being complete and utter garbage.
+Uh, no.  bpf, for example, can be used to modify kernel memory.  I think only
+the following are safe from being able to talk directly to devices:
 
-There is not a single shred of evidence that there is some kind of
-"reasonable to enable the functionality" based on completely unrelated
-matters.
+	/dev/kmem (O_RDONLY only)
+	/dev/kcore
+	perf
+	some debugfs files
 
-See above on why such stupid linkages are a bad bad idea. Absolutely
-*ANY* time you make that decision silently for a user, you will just
-be doing the wrong thing.
+> This removes a giant annoyance on distro kernels that are likely to want to
+> enable LOCKDOWN_PROTECT_INTEGRITY.
 
-You will do the wrong thing for security, but equally importantly, you
-will be doing the wrong thing just for *development* and *test
-coverage*.
+*shrug* Distros have been running with the full set for a while.  I haven't
+seen many complaints.
 
-> What I'm afraid of is this turning into a "security" feature that ends up
-> being circumvented in most scenarios where it's currently deployed - eg,
-> module signatures are mostly worthless in the non-lockdown case because you
-> can just grab the sig_enforce symbol address and then kexec a preamble that
-> flips it back to N regardless of the kernel config.
+> If you load a key into the kernel, and you want to keep that key safe, you
+> can enable LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY at that time.  After all,
+> if root is compromised before that, root can just remember a copu of the key
+> in user memory or email it to someone.
 
-Honestyly, all of your arguments are made up shit.
+If your key needs to be truly protected, it should never be seen unencrypted
+in userspace, rather it should be decrypted in the TPM and then retained in
+kernel memory only.
 
-This argument, for example, is just a complete red herring.
+> ...
+> 6. There's a way to *decrease* the lockdown level below the configured
+> value.  (This ability itself may be gated by a config option.)
+> Choices include a UEFI protected variable,
 
-Do you want to protect against somebody flipping "sig_enforce"? Makes
-perfect sense to me.
+By turning secure boot off, maybe?
 
-Then WHY is that not just a config option for extra hardening?
-Seriously. I'd use it. I have never *ever* felt the need to switch
-"sig_enforce" off, and I always build with MODULE_SIG_FORCE and
-MODULE_SIG_ALL.
+> an authenticated flag passed by the bootloader,
 
-Getting rid of that switch entirely for security reasons sounds just
-_fine_ to me.
+Authenticated how?  How do you stop the running system from passing this to
+the bootloader next time it is run?  I guess you're thinking of a bootloader
+"command" that can only be passed by someone sat at a keyboard and never read
+from the config file.
 
-So you use these *stupid* things as "arguments" for why you think you
-want to do something. But you're putting the cart before the horse:
-you have a particular end result you want to get to, and then you make
-up arguments for why you want to get there.
+> and even just some special flag in the boot handoff protocol.
 
-Seriously, go back to that coverage and testing issue. Go back to the
-*fundamental* technical issue that we want kernel developers to
-actually *test* the code that users are running.
+We already have that with secure boot.
 
-*Gasp*.
+> It would be really quite useful for a user to be able to ask their
+> bootloader to reduce the lockdown level for the purpose of a particular boot
+> for debugging.
 
-Yeah, I know, it's a completely radical idea, but it's true. Having
-developers test and run the code actual real humans are using is a
-truly revolutionary concept in security too.
+This I shall grant you - but you have to be able to prevent an attacker inside
+the system from making use of it.  There's a SysRq provided to drop out of
+lockdown mode - in theory only usable if you're sat at a wired keyboard
+connected to the computer.
 
-> I'm making this argument from the perspective of "What should the kernel do
-> when it has no additional information".
+> 7. kexec does not attempt to think about "secure boot" at all.
+> They're totally separate.
 
-And I'm telling you that you're ignoring the fact that you picked a
-truly horrendously shitty default.
+Except that they're not.  The boot_params flag must be set to something by
+kexec on x86 for transfer along the chain.  However, we can leave secure boot
+out for now - that can be treated as a separate issue.
 
-And then you spent a *lot* of time giving misleading and bad
-information about why you picked that shitty default, and instead just
-questioning the people who asked you an actual and really simply
-technical question.
+Note that whether you like it or not, distribution kernels already work this
+way and propagate the boot_params flag over kexec.
 
-                  Linus
+> What do you all think?  I think that this checks basically all the
+> boxes, is a lot more user friendly than the current patchset or what
+> distros do, and actually makes some sense from a security perspective.
+
+You haven't really defined well what's allowed in _INTEGRITY mode verses
+_SECRECY mode.
+
+I'm currently in the throes of modifying my patchset to make it more inline
+with what Linus mandates: dropping the enablement from secure boot; dropping
+the propagation of the flag over kexec; providing a config option to make it
+mandatory.  There is already a command line option to trigger it.
+
+David
