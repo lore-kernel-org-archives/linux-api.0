@@ -1,7 +1,7 @@
-From: Justin Forbes <jforbes@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Tue, 3 Apr 2018 20:36:42 -0500
-Message-ID: <CAFbkSA1YTN3DVNBQzYuJpu-Y4cWb6iwR_VeWyZjtZ2Ejd8w6DA@mail.gmail.com>
+Date: Tue, 3 Apr 2018 18:43:04 -0700
+Message-ID: <CA+55aFxgrh5eeG9MRSEsJtyL5yTe0TehZ=BS2josGJaLxoMMBQ@mail.gmail.com>
 References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
  <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
  <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
@@ -24,64 +24,109 @@ References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145
  <CACdnJuv-VpdhjEe1cMysdHb6Oy67jQqg-_TVHbUrOfH9GmCVvg@mail.gmail.com>
  <CA+55aFwvuoSHhKnn82VnDndZ6oXMJgwHF604gZ=h3ehHyC600A@mail.gmail.com>
  <CA+55aFzJ2sQR13T+20MKEJ5co-f3Ev8rRxQkRCWVaeDSUU3yhQ@mail.gmail.com>
- <CACdnJuti5Riqoi1sesqPALYHq9LT87o4MFj-0Y5BZqqzJ5579g@mail.gmail.com> <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com>
+ <CACdnJuti5Riqoi1sesqPALYHq9LT87o4MFj-0Y5BZqqzJ5579g@mail.gmail.com>
+ <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com> <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com>
+In-Reply-To: <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Matthew Garrett <mjg59@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Matthew Garrett <mjg59@google.com>
+Cc: Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 3, 2018 at 7:56 PM, Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> On Tue, Apr 3, 2018 at 5:46 PM, Matthew Garrett <mjg59@google.com> wrote:
->>
->> The generic distros have been shipping this policy for the past 5 years.
+On Tue, Apr 3, 2018 at 6:13 PM, Matthew Garrett <mjg59@google.com> wrote:
 >
-> .. so apparently it doesn't actually break things? Why not enable it
-> by default then?
->
-> And if "turn off secure boot" really is the accepted - and actuially
-> used - workaround for the breakage, then
->
+> There are four cases:
 
-While there is very little breakage in the *years* we have been
-shipping this in distro kernels, the accepted and used workaround has
-always been "turn off secure boot" or sign/import your own keys,
-depending on the problems encountered.
+No.
 
->    WHY THE HELL DIDN'T YOU START OFF BY EXPLAINING THAT IN THE FIRST
-> PLACE WHEN PEOPLE ASKED WHY THE TIE-IN EXISTED?
->
-> Sorry for shouting, but really. We have a thread of just *how* many
-> email messages that asked for the explanation for this? All we got was
-> incomprehensible and illogical crap explanations.
->
-> If there actually was a good explanation for the tie-in, it should
-> have been front-and-center and explained as such.
->
+Matthew., stop with the agenda already.
 
-Honestly, yes, the major distros have been shipping this patch set for
-years now, and every time it comes to upstream, the same damn
-arguments emerge.  I do not disagree that there are uses for lockdown
-outside of secure boot, provided you have some other mechanism to
-verify your chain, I believe chrome OS does. But the tie to secure
-boot is because that is the use case that users have been using for
-years, it was discussed at kernel summit quite a while ago, plans went
-forward there seemed to be agreement, and when it comes time for a
-pull request, people come out of the woodwork with an expectation that
-it solves every problem or it doesn't need to exist. What is here is a
-good starting point. I would expect that if it were merged, others
-would build upon that and use much of the code already in place to
-extend it. It is tied to secure boot because that is what has been
-using this for years as it never seems to get upstream.  I am sure
-that once it does finally land, it can and will be extended to other
-things, but I don't think I would want to spend a lot of time trying
-to leverage another external patch set that has been delayed upstream
-so many times until it actually did land.
-As for the ties to MS that come up every time, and have here as well,
-there is no requirement on the MS signature. You can import your own
-keys if you don't want them involved, I keep a "test key" imported for
-actually running what I build locally.
+This shit is what I'm talking about:
+
+> Verified Boot off, lockdown on: Perception of security improvement that's
+> trivially circumvented (and so bad)
+
+You're doing some serious value judgement that is simply bogus.
+
+If lockdown actually helps avoid CPL0 execution attacks, then it helps
+even if secure more is off.
+
+Sure, you can do things like try to install kernels and reboot, but
+honestly, that's not "trivially circumvented". It can be quite hard to
+hide even if you don't have secure boot. Things like disk encryption
+(common for a lot of people) for example means that you simply won't
+be booting that machine without the user noticing.
+
+Or think of virtual machines - which people often use on purpose for
+security things. Again, they very much are _not_ going to have secure
+boot, but it's not necessarily even possible to "replace the kernel
+and reboot" at all, because the kernel came from outside the virtual
+machine entirely, and rebooting might just kill the VM rather than
+restart anything.
+
+So I really think you're pushing this whole "not secure boot" means
+"trivial circumvention" much much too hard.
+
+To the point of it being an outright lie.
+
+I think the kind of people who run stuff in virtual machines could
+easily want to also enable lockdown measures, simply to reduce the
+attack window within that VM. Wouldn't you agree? Those are often
+security-conscious people.
+
+This is what I mean by having an agenda.  We all know you are a big
+proponent of secure boot. But it seems to cloud your arguments, by
+turning your assumptions and your agenda into an "argument" that is
+simply not even TRUE.
+
+See what I'm unhappy about?
+
+> Verified Boot on, lockdown off: Perception of security improvement that's
+> trivially circumvented (and so bad), status quo in mainline kernels
+
+I think this is entirely false too. Again, the "trivial circumvention"
+shows a bias and agenda that isn't really all that true.
+
+> Of these four options, only two make sense.
+
+No.
+
+You say that, because you have that bias and that agenda.
+
+But that simply doesn't make it true.
+
+Now, what actually seems to be a real and valid argument is *this* part:
+
+> This makes it easy for a user to switch
+> between the two states that make sense by running a single command and then
+> following some prompts on the next reboot. The alternative would be to
+> provide a signed kernel that always enabled lockdown and an unsigned kernel
+> that didn't, which would (a) increase load on distributions and (b) force
+> users to both run mokutil --disable-validation and also install a different
+> kernel.
+
+THAT is an actual argument. Admittedly I think it's a horrible hack,
+but it's a hack that can be explained without outright lying. And it
+may be a hack that is "the best we can reasonably do"
+
+See what I'm saying?
+
+One argument is based on your value judgments that not everybody else
+believes in.
+
+The other argument is based purely on cold hard particular facts.
+
+Guess which argument is better for people who aren't Matthew Garrett?
+
+That said, wouldn't it be equally good to just make the whole thing be
+a protected EFI variable instead? Once you have physical access to the
+EFI shell (to turn off secure boot) you have access to that too.
+
+Which would allow the "switch off/on" case even if there are other
+reasons why changing secure boot isn't a great option (possibly
+because secure boot isn't an option to begin with due to being so
+invonvenient).
+
+              Linus
