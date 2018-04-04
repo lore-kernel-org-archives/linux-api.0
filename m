@@ -1,7 +1,7 @@
-From: Matthew Garrett <mjg59@google.com>
+From: Justin Forbes <jforbes@redhat.com>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Wed, 04 Apr 2018 01:13:10 +0000
-Message-ID: <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com>
+Date: Tue, 3 Apr 2018 20:36:42 -0500
+Message-ID: <CAFbkSA1YTN3DVNBQzYuJpu-Y4cWb6iwR_VeWyZjtZ2Ejd8w6DA@mail.gmail.com>
 References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
  <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
  <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
@@ -31,53 +31,57 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+Cc: Matthew Garrett <mjg59@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 3, 2018 at 5:56 PM Linus Torvalds
-<torvalds@linux-foundation.org>
-wrote:
-
+On Tue, Apr 3, 2018 at 7:56 PM, Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
 > On Tue, Apr 3, 2018 at 5:46 PM, Matthew Garrett <mjg59@google.com> wrote:
-> >
-> > The generic distros have been shipping this policy for the past 5 years.
-
+>>
+>> The generic distros have been shipping this policy for the past 5 years.
+>
 > .. so apparently it doesn't actually break things? Why not enable it
 > by default then?
-
-Because it does break things, and the documented fix is "Disable Secure
-Boot by running mokutil --disable-validation".
-
+>
 > And if "turn off secure boot" really is the accepted - and actuially
 > used - workaround for the breakage, then
+>
 
->     WHY THE HELL DIDN'T YOU START OFF BY EXPLAINING THAT IN THE FIRST
+While there is very little breakage in the *years* we have been
+shipping this in distro kernels, the accepted and used workaround has
+always been "turn off secure boot" or sign/import your own keys,
+depending on the problems encountered.
+
+>    WHY THE HELL DIDN'T YOU START OFF BY EXPLAINING THAT IN THE FIRST
 > PLACE WHEN PEOPLE ASKED WHY THE TIE-IN EXISTED?
-
+>
 > Sorry for shouting, but really. We have a thread of just *how* many
 > email messages that asked for the explanation for this? All we got was
 > incomprehensible and illogical crap explanations.
+>
+> If there actually was a good explanation for the tie-in, it should
+> have been front-and-center and explained as such.
+>
 
-There are four cases:
-
-Verified Boot off, lockdown off: Status quo in distro and mainline kernels
-Verified Boot off, lockdown on: Perception of security improvement that's
-trivially circumvented (and so bad)
-Verified Boot on, lockdown off: Perception of security improvement that's
-trivially circumvented (and so bad), status quo in mainline kernels
-Verified Boot on, lockdown on: Security improvement, status quo in distro
-kernels
-
-Of these four options, only two make sense. The most common implementation
-of Verified Boot on x86 platforms is UEFI Secure Boot, so this patchset
-includes an option that (if set) results in the kernel doing the right
-thing without user intervention. This makes it easy for a user to switch
-between the two states that make sense by running a single command and then
-following some prompts on the next reboot. The alternative would be to
-provide a signed kernel that always enabled lockdown and an unsigned kernel
-that didn't, which would (a) increase load on distributions and (b) force
-users to both run mokutil --disable-validation and also install a different
-kernel.
-
-I'm sorry if I've appeared tetchy in this discussion - having several of my
-coworkers shot has not done wonders for my mood.
+Honestly, yes, the major distros have been shipping this patch set for
+years now, and every time it comes to upstream, the same damn
+arguments emerge.  I do not disagree that there are uses for lockdown
+outside of secure boot, provided you have some other mechanism to
+verify your chain, I believe chrome OS does. But the tie to secure
+boot is because that is the use case that users have been using for
+years, it was discussed at kernel summit quite a while ago, plans went
+forward there seemed to be agreement, and when it comes time for a
+pull request, people come out of the woodwork with an expectation that
+it solves every problem or it doesn't need to exist. What is here is a
+good starting point. I would expect that if it were merged, others
+would build upon that and use much of the code already in place to
+extend it. It is tied to secure boot because that is what has been
+using this for years as it never seems to get upstream.  I am sure
+that once it does finally land, it can and will be extended to other
+things, but I don't think I would want to spend a lot of time trying
+to leverage another external patch set that has been delayed upstream
+so many times until it actually did land.
+As for the ties to MS that come up every time, and have here as well,
+there is no requirement on the MS signature. You can import your own
+keys if you don't want them involved, I keep a "test key" imported for
+actually running what I build locally.
