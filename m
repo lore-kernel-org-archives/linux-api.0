@@ -1,38 +1,35 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
+From: David Howells <dhowells@redhat.com>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Wed, 4 Apr 2018 09:52:51 -0400
-Message-ID: <20180404135251.GD16242@thunk.org>
-References: <CA+55aFzYbpRAdma0PvqE+9ygySuKzNKByqOzzMufBoovXVnfPw@mail.gmail.com>
- <CACdnJuv-VpdhjEe1cMysdHb6Oy67jQqg-_TVHbUrOfH9GmCVvg@mail.gmail.com>
- <CA+55aFwvuoSHhKnn82VnDndZ6oXMJgwHF604gZ=h3ehHyC600A@mail.gmail.com>
- <CA+55aFzJ2sQR13T+20MKEJ5co-f3Ev8rRxQkRCWVaeDSUU3yhQ@mail.gmail.com>
- <CACdnJuti5Riqoi1sesqPALYHq9LT87o4MFj-0Y5BZqqzJ5579g@mail.gmail.com>
- <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com>
- <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com>
- <CA+55aFxgrh5eeG9MRSEsJtyL5yTe0TehZ=BS2josGJaLxoMMBQ@mail.gmail.com>
- <CACdnJutuBaE3RaDx0KM5vDF9Sinrp=3tG9csrS-H3eU-J7-Utw@mail.gmail.com>
- <24353.1522848817@warthog.procyon.org.uk>
+Date: Wed, 04 Apr 2018 14:57:15 +0100
+Message-ID: <27481.1522850235@warthog.procyon.org.uk>
+References: <20180404135251.GD16242@thunk.org> <CA+55aFzYbpRAdma0PvqE+9ygySuKzNKByqOzzMufBoovXVnfPw@mail.gmail.com> <CACdnJuv-VpdhjEe1cMysdHb6Oy67jQqg-_TVHbUrOfH9GmCVvg@mail.gmail.com> <CA+55aFwvuoSHhKnn82VnDndZ6oXMJgwHF604gZ=h3ehHyC600A@mail.gmail.com> <CA+55aFzJ2sQR13T+20MKEJ5co-f3Ev8rRxQkRCWVaeDSUU3yhQ@mail.gmail.com> <CACdnJuti5Riqoi1sesqPALYHq9LT87o4MFj-0Y5BZqqzJ5579g@mail.gmail.com> <CA+55aFwhi=gz3HLoGST9--n1_kLJNP6jsf8GSesSFxTDCdPdtQ@mail.gmail.com> <CACdnJuuek-sS3esmomNOkjBMV_6VPL2NFCzRd+UGxbZrMe=4nw@mail.gmail.com> <CA+55aFxgrh5eeG9MRSEsJtyL5yTe0TehZ=BS2josGJaLxoMMBQ@mail.gmail.com> <CACdnJutuBaE3RaDx0KM5vDF9Sinrp=3tG9csrS-H3eU-J7-Utw@mail.gmail.com> <24353.1522848817@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <24353.1522848817@warthog.procyon.org.uk>
+In-Reply-To: <20180404135251.GD16242@thunk.org>
+Content-ID: <27480.1522850235.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, luto@kernel.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: dhowells@redhat.com, Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, luto@kernel.org, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 04, 2018 at 02:33:37PM +0100, David Howells wrote:
-> Theodore Y. Ts'o <tytso@mit.edu> wrote:
-> 
-> > Whoa.  Why doesn't lockdown prevent kexec?  Put another away, why
-> > isn't this a problem for people who are fearful that Linux could be
-> > used as part of a Windows boot virus in a Secure UEFI context?
-> 
-> Lockdown mode restricts kexec to booting an authorised image (where the
-> authorisation may be by signature or by IMA).
+Theodore Y. Ts'o <tytso@mit.edu> wrote:
 
-If that's true, then Matthew's assertion that lockdown w/o secure boot
-is insecure goes away, no?
+> > Lockdown mode restricts kexec to booting an authorised image (where the
+> > authorisation may be by signature or by IMA).
+> 
+> If that's true, then Matthew's assertion that lockdown w/o secure boot
+> is insecure goes away, no?
 
-							- Ted
+No.
+
+Lockdown prevents the running kernel from being modified (or, at least, that's
+the hope).
+
+But it doesn't do anything to prevent the kernel being modified before
+lockdown is engaged.
+
+We are trying to use secureboot to protect the system to the point that
+lockdown can take over.
+
+David
