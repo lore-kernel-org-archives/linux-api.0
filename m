@@ -1,40 +1,59 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Wed, 04 Apr 2018 09:05:17 +0100
-Message-ID: <20736.1522829117@warthog.procyon.org.uk>
-References: <CALCETrXZWU1MC8LbLCg7VTVHMqKpXh51amnTjKePRCJ31jRiwg@mail.gmail.com> <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org> <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk> <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com> <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com> <CALCETrXeVod=kNpG-M7yKAMM0-n+PMg_OakN6ecWrTPmKXgMLg@mail.gmail.com> <9758.1522775763@warthog.procyon.org.uk> <CALCETrWHS9p1My=j07=V=OP7v4SwQkW-kJ3JOx6EbPU8fb_XEQ@mail.gmail.com> <13189.1522784944@warthog.procyon.org.uk> <CALCETrX4CuHVpn38R24TCcJgCBLSbh-sOD-qcD5kYF8Zo53ZJw@mail.gmail.com> <9349.1522794769@warthog.procyon.org.uk> <CALCETrV6E+r942K+fu-ALNf-x6qOZ3o1hNKGeu7qEMvr8sMP9A@mail.gmail.com> <
- CA+55aFxKzxdRZthzaokaGPAsWCp3a-p3aVfJSutF+9Fp9sbaVA@mail.gmail.com> <CACdnJusSfwULV-ubvgtYd8G_cTF4LnJ4DAeTCux4XRhHKVpBUw@mail.gmail.com> <CA+55aFzG==xr2OLK8F03RH0nkUDeP6btWqepFTuHZqkPTAOWjQ@mail.gma
- il.com> <CACdnJuv_=ihPut=5OvCYEphdBOn7+JrKacBbNa0n3wv_JvFMzg@mail.gmail.com> <CA+55aFyWNok1K-Jo3TQAXGXHvFOTvuOb-Hw977B9RGjBa7prrg@mail.gmail.com> <CACdnJutZFKX+izBxRYbyxefT5KrKhVV0XsymU=vBhywd+TOE3A@mail.gmail.com> <CA+55aFwVUmjZ+Swe9xUdDOEE+EOoaU3dh7BcrH74BOLCi8y_Kw@mail.gmail.com> <CACdnJuvqQQ+hidokY5GA7g-yrAs5-358it0cs+m_d4RFDMuB_w@mail.gmail.com> <CA+55aFwJBGCr-anrdV9N63fUH4V_QJqgr0_fJyHhH=fuqGAoog@mail.gmail.com> <CAG48ez1MRsDGoea5MwGTXK6R0LJy9u0mX-1VrSSskwnV98kEjQ@mail.gmail.com>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: Re: [RESEND PATCH V4] pidns: introduce syscall translate_pid
+Date: Wed, 4 Apr 2018 11:28:33 +0300
+Message-ID: <0f0a03df-9171-fc29-194b-77d1792b5698@yandex-team.ru>
+References: <1522706249-11578-1-git-send-email-nagarathnam.muthusamy@oracle.com>
+ <20180403143838.614ecc083835d07d409a699c@linux-foundation.org>
+ <678f275b-8d78-9b0f-177f-5ff5c9c55657@oracle.com>
+ <20180403145248.fb4cd8c5ccd270ca77fd18f3@linux-foundation.org>
+ <6a117d9a-f005-e1ae-5632-25e5c61dcb8f@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXZWU1MC8LbLCg7VTVHMqKpXh51amnTjKePRCJ31jRiwg@mail.gmail.com>
-Content-ID: <20735.1522829117.1@warthog.procyon.org.uk>
+In-Reply-To: <6a117d9a-f005-e1ae-5632-25e5c61dcb8f@oracle.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: dhowells@redhat.com, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Matthew Garrett <mjg59@google.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, serge.hallyn@ubuntu.com, oleg@redhat.com, luto@amacapital.net, jannh@google.com, prakash.sangappa@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto@kernel.org> wrote:
+On 04.04.2018 00:51, Nagarathnam Muthusamy wrote:
+> 
+> 
+> On 04/03/2018 02:52 PM, Andrew Morton wrote:
+>> On Tue, 3 Apr 2018 14:45:28 -0700 Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> wrote:
+>>
+>>>> This changelog doesn't explain what the value is to our users.  I
+>>>> assume it is a performance optimization because "backward translation
+>>>> requires scanning all tasks"?  If so, please show us real-world
+>>>> examples of the performance benefit from this patch, and please go to
+>>>> great lengths to explain to us why this optimisation is needed by our
+>>>> users.
+>>> One of the usecase by Oracle database involves multiple levels of
+>>> nested pid namespaces and we require pid translation between the
+>>> levels. Discussions on the particular usecase, why any of the existing
+>>> methods was not usable happened in the following thread.
+>>>
+>>> https://patchwork.kernel.org/patch/10276785/
+>>>
+>>> At the end, it was agreed that this patch along with flocks will solve the
+>>> issue.
+>> Nobody who reads this patch's changelog will know any of this.  Please
+>> let's get all this information into the proper place.
+> Sure! Will resend the patch with updated change log.
 
-> As far as I can tell, what's really going on here is that there's a
-> significant contingent here that wants to prevent Linux from
-> chainloading something that isn't Linux.
+I have v5 version of this proposal in work.
 
-You have completely the wrong end of the stick.  No one has said that or even
-implied that.  You are alleging dishonesty on our part.
+I've redesigned interface to be more convenient for cases where
+strict race-protection isn't required and pid-ns could be referenced pid.
 
-What we *have* said is that *if* we want to pass the secure boot state across
-kexec, then we have to make sure that:
+It has 5 arguments rather than 3 because types of references are
+defined explicitly rather than magic like -1, >0, <0.
+This more verbose but protects against errors like passing -1 from
+failed previous syscall as argument.
 
- (1) no one tampers with the intermediate kernel between boot and kexec
-     otherwise the secure boot state is effectively invalidated, and
+kind of
+translate_pid(pid, TRANSLATE_PID_FD_PIDNS, ns_fd, TRANSLATE_PID_CURRENT_PIDNS, 0)
 
- (2) the image that gets kexec'ed is trusted.
-
-Remember: you cannot know (2) if you don't have (1).
-
-And if someone tampers with the aim of breaking, say, Windows, then someone,
-e.g.  Microsoft, might blacklist the shim.
-
-David
+I'll send it today with including more detailed motivation for patch.
