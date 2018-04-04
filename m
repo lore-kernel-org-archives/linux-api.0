@@ -1,29 +1,64 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: An actual suggestion (Re: [GIT PULL] Kernel lockdown for secure boot)
-Date: Wed, 04 Apr 2018 23:19:27 +0100
-Message-ID: <15406.1522880367@warthog.procyon.org.uk>
-References: <CAG48ez3edmZo1iFXqpvzOKNY0jLzcqa18KuoRrBaPyfp=7huZQ@mail.gmail.com> <CALCETrUVQLDC6_VEvuAbdCOuGrmcxohqTB6P8eyNojm9AryNkg@mail.gmail.com> <1119.1522858644@warthog.procyon.org.uk>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
+Date: Wed, 04 Apr 2018 17:29:30 -0500
+Message-ID: <87h8oqhagl.fsf@xmission.com>
+References: <152286911105.615669.14053871624892399807.stgit@buzz>
+        <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez3edmZo1iFXqpvzOKNY0jLzcqa18KuoRrBaPyfp=7huZQ@mail.gmail.com>
-Content-ID: <15405.1522880367.1@warthog.procyon.org.uk>
+In-Reply-To: <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com> (Nagarathnam
+        Muthusamy's message of "Wed, 4 Apr 2018 13:31:32 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: dhowells@redhat.com, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Jann Horn <jannh@google.com> wrote:
+Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
 
-> > Uh, no.  bpf, for example, can be used to modify kernel memory.
-> 
-> I'm pretty sure bpf isn't supposed to be able to modify arbitrary
-> kernel memory. AFAIU if you can use BPF to write to arbitrary kernel
-> memory, that's a bug; with CAP_SYS_ADMIN, you can read from userspace,
-> write to userspace, and read from kernelspace, but you shouldn't be
-> able to write to kernelspace.
+> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
+>> Each process have different pids, one for each pid namespace it belongs.
+>> When interaction happens within single pid-ns translation isn't required.
+>> More complicated scenarios needs special handling.
+>>
+>> For example:
+>> - reading pid-files or logs written inside container with pid namespace
+>> - attaching with ptrace to tasks from different pid namespace
+>> - passing pids across pid namespaces in any kind of API
+>>
+>> Currently there are several interfaces that could be used here:
+>>
+>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
 
-Ah - you may be right.  I seem to have misremembered what Joey Lee wrote in
-his patch description.
+Using the inode number in interfaces is not an option.  Especially not
+withou referencing the device number for the filesystem as well.
 
-David
+>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
+>> In some cases conversion pid -> vpid could be easily done using this
+>> information, but backward translation requires scanning all tasks.
+>>
+>> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
+>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+>> into pid namespace, this expose process and could be insecure.
+>>
+>> This patch adds new syscall for converting pids between pid namespaces:
+>>
+>> pid_t translate_pid(pid_t pid, int source_type, int source,
+>>                                 int target_type, int target);
+>>
+>> @source_type and @target_type defines type of following arguments:
+>>
+>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is unused
+>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
+>
+> I believe using pid to represent the namespace has been already
+> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
+> after which we moved on to fd based version of this interface.
+
+Or in short why is the case of pids important?
+
+You Konstantin you almost said why they were important in your message
+saying you were going to send this one.  However you don't explain in
+your description why you want to identify pid namespaces by pid.
+
+Eric
