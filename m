@@ -1,446 +1,83 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v4 16/24] fpga: dfl: add fpga manager platform driver for FME
-Date: Thu, 5 Apr 2018 13:45:07 -0500
-Message-ID: <CANk1AXRbYZDyguNfdE+n6Y2CwJFgqzZmQ0x-PiAa+kjqUUrB6g@mail.gmail.com>
-References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-17-git-send-email-hao.wu@intel.com> <CANk1AXSG08+=2pbhfiUV+mATO3F=MmDmmsc3ZFq5Eo7=WGOWag@mail.gmail.com>
- <20180321025001.GA3489@hao-dev> <20180321165552.e6kzvkbpak5hbfwo@us-sjc-wireless-10-16-34-52.amer.corp.natinst.com>
- <20180322060722.GA8707@hao-dev>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [GIT PULL] Kernel lockdown for secure boot
+Date: Thu, 5 Apr 2018 11:47:52 -0700
+Message-ID: <CALCETrU_4PywXj78pzfuCYCfXxQNvi_K-KfuyZKHu-upfesdPw@mail.gmail.com>
+References: <4136.1522452584@warthog.procyon.org.uk> <alpine.LRH.2.21.1803311145180.7769@namei.org>
+ <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org> <30459.1522739219@warthog.procyon.org.uk>
+ <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
+ <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com>
+ <CALCETrXeVod=kNpG-M7yKAMM0-n+PMg_OakN6ecWrTPmKXgMLg@mail.gmail.com>
+ <CACdnJuutJeeaaB2kwma0MMd9uDDbKavoHEk4koDLe1M6gYZWXQ@mail.gmail.com>
+ <CALCETrVR_EcbKv5-4AR6Zm02XHhJQQGNDeO8FGkMbYozmuDTJw@mail.gmail.com> <20180404184255.exdrtpqnxlqme7tl@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180322060722.GA8707@hao-dev>
+In-Reply-To: <20180404184255.exdrtpqnxlqme7tl@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+To: Peter Jones <pjones@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, joeyli <jlee@suse.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 22, 2018 at 1:07 AM, Wu Hao <hao.wu@intel.com> wrote:
-> On Wed, Mar 21, 2018 at 09:55:52AM -0700, Moritz Fischer wrote:
->> On Wed, Mar 21, 2018 at 10:50:01AM +0800, Wu Hao wrote:
->> > On Tue, Mar 20, 2018 at 03:32:34PM -0500, Alan Tull wrote:
->> > > On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
->> > >
->> > > Hi Hao,
->> > >
->> > > Elsewhere we discussed moving #defines used only in this driver either
->> > > to this .c file or to a similarly named .h file.  A couple minor
->> > > things below.
->> >
->> > Hi Alan,
->> >
->> > Yes, I will move those #defines into a similarly named .h file.
->> >
->> > >
->> > > > This patch adds fpga manager driver for FPGA Management Engine (FME). It
->> > > > implements fpga_manager_ops for FPGA Partial Reconfiguration function.
->> > > >
->> > > > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
->> > > > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
->> > > > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
->> > > > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
->> > > > Signed-off-by: Kang Luwei <luwei.kang@intel.com>
->> > > > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
->> > > > Signed-off-by: Wu Hao <hao.wu@intel.com>
->> > > > ---
->> > > > v3: rename driver to dfl-fpga-fme-mgr
->> > > >     implemented status callback for fpga manager
->> > > >     rebased due to fpga api changes
->> > > > v4: rename to dfl-fme-mgr, and fix SPDX license issue
->> > > >     add pr_credit comments and improve dev_err message
->> > > >     remove interface_id sysfs interface
->> > > >     include dfl-fme-pr.h instead of dfl.h
->> > > > ---
->> > > >  drivers/fpga/Kconfig       |   6 +
->> > > >  drivers/fpga/Makefile      |   1 +
->> > > >  drivers/fpga/dfl-fme-mgr.c | 290 +++++++++++++++++++++++++++++++++++++++++++++
->> > > >  3 files changed, 297 insertions(+)
->> > > >  create mode 100644 drivers/fpga/dfl-fme-mgr.c
->> > > >
->> > > > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
->> > > > index 103d5e2..89f76e8 100644
->> > > > --- a/drivers/fpga/Kconfig
->> > > > +++ b/drivers/fpga/Kconfig
->> > > > @@ -150,6 +150,12 @@ config FPGA_DFL_FME
->> > > >           FPGA platform level management features. There shall be 1 FME
->> > > >           per DFL based FPGA device.
->> > > >
->> > > > +config FPGA_DFL_FME_MGR
->> > > > +       tristate "FPGA DFL FME Manager Driver"
->> > > > +       depends on FPGA_DFL_FME
->> > > > +       help
->> > > > +         Say Y to enable FPGA Manager driver for FPGA Management Engine.
->> > > > +
->> > > >  config FPGA_DFL_PCI
->> > > >         tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
->> > > >         depends on PCI && FPGA_DFL
->> > > > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
->> > > > index 3c44fc9..f82814a 100644
->> > > > --- a/drivers/fpga/Makefile
->> > > > +++ b/drivers/fpga/Makefile
->> > > > @@ -31,6 +31,7 @@ obj-$(CONFIG_OF_FPGA_REGION)          += of-fpga-region.o
->> > > >  # FPGA Device Feature List Support
->> > > >  obj-$(CONFIG_FPGA_DFL)                 += dfl.o
->> > > >  obj-$(CONFIG_FPGA_DFL_FME)             += dfl-fme.o
->> > > > +obj-$(CONFIG_FPGA_DFL_FME_MGR)         += dfl-fme-mgr.o
->> > > >
->> > > >  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
->> > > >
->> > > > diff --git a/drivers/fpga/dfl-fme-mgr.c b/drivers/fpga/dfl-fme-mgr.c
->> > > > new file mode 100644
->> > > > index 0000000..2f92c29
->> > > > --- /dev/null
->> > > > +++ b/drivers/fpga/dfl-fme-mgr.c
->> > > > @@ -0,0 +1,290 @@
->> > > > +// SPDX-License-Identifier: GPL-2.0
->> > > > +/*
->> > > > + * FPGA Manager Driver for FPGA Management Engine (FME)
->> > > > + *
->> > > > + * Copyright (C) 2017 Intel Corporation, Inc.
->> > > > + *
->> > > > + * Authors:
->> > > > + *   Kang Luwei <luwei.kang@intel.com>
->> > > > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
->> > > > + *   Wu Hao <hao.wu@intel.com>
->> > > > + *   Joseph Grecco <joe.grecco@intel.com>
->> > > > + *   Enno Luebbers <enno.luebbers@intel.com>
->> > > > + *   Tim Whisonant <tim.whisonant@intel.com>
->> > > > + *   Ananda Ravuri <ananda.ravuri@intel.com>
->> > > > + *   Christopher Rauer <christopher.rauer@intel.com>
->> > > > + *   Henry Mitchel <henry.mitchel@intel.com>
->> > > > + */
->> > > > +
->> > > > +#include <linux/bitfield.h>
->> > > > +#include <linux/module.h>
->> > > > +#include <linux/iopoll.h>
->> > > > +#include <linux/fpga/fpga-mgr.h>
->> > > > +
->> > > > +#include "dfl-fme-pr.h"
->> > > > +
->> > > > +#define PR_WAIT_TIMEOUT   8000000
->> > > > +#define PR_HOST_STATUS_IDLE    0
->> > > > +
->> > > > +struct fme_mgr_priv {
->> > > > +       void __iomem *ioaddr;
->> > > > +       u64 pr_error;
->> > > > +};
->> > > > +
->> > > > +static u64 pr_error_to_mgr_status(u64 err)
->> > > > +{
->> > > > +       u64 status = 0;
->> > > > +
->> > > > +       if (err & FME_PR_ERR_OPERATION_ERR)
->> > > > +               status |= FPGA_MGR_STATUS_OPERATION_ERR;
->> > > > +       if (err & FME_PR_ERR_CRC_ERR)
->> > > > +               status |= FPGA_MGR_STATUS_CRC_ERR;
->> > > > +       if (err & FME_PR_ERR_INCOMPATIBLE_BS)
->> > > > +               status |= FPGA_MGR_STATUS_INCOMPATIBLE_IMAGE_ERR;
->> > > > +       if (err & FME_PR_ERR_PROTOCOL_ERR)
->> > > > +               status |= FPGA_MGR_STATUS_IP_PROTOCOL_ERR;
->> > > > +       if (err & FME_PR_ERR_FIFO_OVERFLOW)
->> > > > +               status |= FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR;
->> > > > +
->> > > > +       return status;
->> > > > +}
->> > > > +
->> > > > +static u64 fme_mgr_pr_error_handle(void __iomem *fme_pr)
->> > > > +{
->> > > > +       u64 pr_status, pr_error;
->> > > > +
->> > > > +       pr_status = readq(fme_pr + FME_PR_STS);
->> > > > +       if (!(pr_status & FME_PR_STS_PR_STS))
->> > > > +               return 0;
->> > > > +
->> > > > +       pr_error = readq(fme_pr + FME_PR_ERR);
->> > > > +       writeq(pr_error, fme_pr + FME_PR_ERR);
->> > > > +
->> > > > +       return pr_error;
->> > > > +}
->> > > > +
->> > > > +static int fme_mgr_write_init(struct fpga_manager *mgr,
->> > > > +                             struct fpga_image_info *info,
->> > > > +                             const char *buf, size_t count)
->> > > > +{
->> > > > +       struct device *dev = &mgr->dev;
->> > > > +       struct fme_mgr_priv *priv = mgr->priv;
->> > > > +       void __iomem *fme_pr = priv->ioaddr;
->> > > > +       u64 pr_ctrl, pr_status;
->> > > > +
->> > > > +       if (!(info->flags & FPGA_MGR_PARTIAL_RECONFIG)) {
->> > > > +               dev_err(dev, "only supports partial reconfiguration.\n");
->> > > > +               return -EINVAL;
->> > > > +       }
->> > > > +
->> > > > +       dev_dbg(dev, "resetting PR before initiated PR\n");
->> > > > +
->> > > > +       pr_ctrl = readq(fme_pr + FME_PR_CTRL);
->> > > > +       pr_ctrl |= FME_PR_CTRL_PR_RST;
->> > > > +       writeq(pr_ctrl, fme_pr + FME_PR_CTRL);
->> > > > +
->> > > > +       if (readq_poll_timeout(fme_pr + FME_PR_CTRL, pr_ctrl,
->> > > > +                              pr_ctrl & FME_PR_CTRL_PR_RSTACK, 1,
->> > > > +                              PR_WAIT_TIMEOUT)) {
->> > > > +               dev_err(dev, "PR Reset ACK timeout\n");
->> > > > +               return -ETIMEDOUT;
->> > > > +       }
->> > > > +
->> > > > +       pr_ctrl = readq(fme_pr + FME_PR_CTRL);
->> > > > +       pr_ctrl &= ~FME_PR_CTRL_PR_RST;
->> > > > +       writeq(pr_ctrl, fme_pr + FME_PR_CTRL);
->> > > > +
->> > > > +       dev_dbg(dev,
->> > > > +               "waiting for PR resource in HW to be initialized and ready\n");
->> > > > +
->> > > > +       if (readq_poll_timeout(fme_pr + FME_PR_STS, pr_status,
->> > > > +                              (pr_status & FME_PR_STS_PR_STS) ==
->> > > > +                              FME_PR_STS_PR_STS_IDLE, 1, PR_WAIT_TIMEOUT)) {
->> > > > +               dev_err(dev, "PR Status timeout\n");
->> > > > +               priv->pr_error = fme_mgr_pr_error_handle(fme_pr);
->> > > > +               return -ETIMEDOUT;
->> > > > +       }
->> > > > +
->> > > > +       dev_dbg(dev, "check and clear previous PR error\n");
->> > > > +       priv->pr_error = fme_mgr_pr_error_handle(fme_pr);
->> > > > +       if (priv->pr_error)
->> > > > +               dev_dbg(dev, "previous PR error detected %llx\n",
->> > > > +                       (unsigned long long)priv->pr_error);
->> > > > +
->> > > > +       dev_dbg(dev, "set PR port ID\n");
->> > > > +
->> > > > +       pr_ctrl = readq(fme_pr + FME_PR_CTRL);
->> > > > +       pr_ctrl &= ~FME_PR_CTRL_PR_RGN_ID;
->> > > > +       pr_ctrl |= FIELD_PREP(FME_PR_CTRL_PR_RGN_ID, info->region_id);
->> > > > +       writeq(pr_ctrl, fme_pr + FME_PR_CTRL);
->> > > > +
->> > > > +       return 0;
->> > > > +}
->> > > > +
->> > > > +static int fme_mgr_write(struct fpga_manager *mgr,
->> > > > +                        const char *buf, size_t count)
->> > > > +{
->> > > > +       struct device *dev = &mgr->dev;
->> > > > +       struct fme_mgr_priv *priv = mgr->priv;
->> > > > +       void __iomem *fme_pr = priv->ioaddr;
->> > > > +       u64 pr_ctrl, pr_status, pr_data;
->> > > > +       int delay = 0, pr_credit, i = 0;
->> > > > +
->> > > > +       dev_dbg(dev, "start request\n");
->> > > > +
->> > > > +       pr_ctrl = readq(fme_pr + FME_PR_CTRL);
->> > > > +       pr_ctrl |= FME_PR_CTRL_PR_START;
->> > > > +       writeq(pr_ctrl, fme_pr + FME_PR_CTRL);
->> > > > +
->> > > > +       dev_dbg(dev, "pushing data from bitstream to HW\n");
->> > > > +
->> > > > +       /*
->> > > > +        * driver can push data to PR hardware using PR_DATA register once HW
->> > > > +        * has enough pr_credit (> 1), pr_credit reduces one for every 32bit
->> > > > +        * pr data write to PR_DATA register. If pr_credit <= 1, driver needs
->> > > > +        * to wait for enough pr_credit from hardware by polling.
->> > > > +        */
->> > > > +       pr_status = readq(fme_pr + FME_PR_STS);
->> > > > +       pr_credit = FIELD_GET(FME_PR_STS_PR_CREDIT, pr_status);
->> > > > +
->> > > > +       while (count > 0) {
->> > > > +               while (pr_credit <= 1) {
->> > > > +                       if (delay++ > PR_WAIT_TIMEOUT) {
->> > > > +                               dev_err(dev, "PR_CREDIT timeout\n");
->> > > > +                               return -ETIMEDOUT;
->> > > > +                       }
->> > > > +                       udelay(1);
->> > > > +
->> > > > +                       pr_status = readq(fme_pr + FME_PR_STS);
->> > > > +                       pr_credit = FIELD_GET(FME_PR_STS_PR_CREDIT, pr_status);
->> > > > +               }
->> > > > +
->> > > > +               if (count >= 4) {
->> > > > +                       pr_data = 0;
->> > > > +                       pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
->> > > > +                                             *(((u32 *)buf) + i));
->> > > > +                       writeq(pr_data, fme_pr + FME_PR_DATA);
->> > > > +                       count -= 4;
->> > > > +                       pr_credit--;
->> > > > +                       i++;
->> > > > +               } else {
->> > > > +                       WARN_ON(1);
->> > > > +                       return -EINVAL;
->> > > > +               }
-
-Where there's an if..else that has a 'return' on one of its branch, it
-can become an 'if' without the 'else'.  This is strongly preferred in
-the kernel.  Trying to avoid indention where possible.  So this
-becomes
-
-if (count < 4) {
-        WARN_ON(1);
-        return -EINVAL;
-}
-
-pr_data = 0;
-so on...
-
-Alan
-
->> > > > +       }
->> > > > +
->> > > > +       return 0;
->> > > > +}
->> > > > +
->> > > > +static int fme_mgr_write_complete(struct fpga_manager *mgr,
->> > > > +                                 struct fpga_image_info *info)
->> > > > +{
->> > > > +       struct device *dev = &mgr->dev;
->> > > > +       struct fme_mgr_priv *priv = mgr->priv;
->> > > > +       void __iomem *fme_pr = priv->ioaddr;
->> > > > +       u64 pr_ctrl;
->> > > > +
->> > > > +       pr_ctrl = readq(fme_pr + FME_PR_CTRL);
->> > > > +       pr_ctrl |= FME_PR_CTRL_PR_COMPLETE;
->> > > > +       writeq(pr_ctrl, fme_pr + FME_PR_CTRL);
->> > > > +
->> > > > +       dev_dbg(dev, "green bitstream push complete\n");
->> > > > +       dev_dbg(dev, "waiting for HW to release PR resource\n");
->> > > > +
->> > > > +       if (readq_poll_timeout(fme_pr + FME_PR_CTRL, pr_ctrl,
->> > > > +                              !(pr_ctrl & FME_PR_CTRL_PR_START), 1,
->> > > > +                              PR_WAIT_TIMEOUT)) {
->> > > > +               dev_err(dev, "PR Completion ACK timeout.\n");
->> > > > +               return -ETIMEDOUT;
->> > > > +       }
->> > > > +
->> > > > +       dev_dbg(dev, "PR operation complete, checking status\n");
->> > > > +       priv->pr_error = fme_mgr_pr_error_handle(fme_pr);
->> > > > +       if (priv->pr_error) {
->> > > > +               dev_dbg(dev, "PR error detected %llx\n",
->> > > > +                       (unsigned long long)priv->pr_error);
->> > > > +               return -EIO;
->> > > > +       }
->> > > > +
->> > > > +       dev_dbg(dev, "PR done successfully\n");
->> > > > +
->> > > > +       return 0;
->> > > > +}
->> > > > +
->> > > > +static enum fpga_mgr_states fme_mgr_state(struct fpga_manager *mgr)
->> > > > +{
->> > > > +       return FPGA_MGR_STATE_UNKNOWN;
->> > > > +}
->> > > > +
->> > > > +static u64 fme_mgr_status(struct fpga_manager *mgr)
->> > > > +{
->> > > > +       struct fme_mgr_priv *priv = mgr->priv;
->> > > > +
->> > > > +       return pr_error_to_mgr_status(priv->pr_error);
->> > > > +}
->> > > > +
->> > > > +static const struct fpga_manager_ops fme_mgr_ops = {
->> > > > +       .write_init = fme_mgr_write_init,
->> > > > +       .write = fme_mgr_write,
->> > > > +       .write_complete = fme_mgr_write_complete,
->> > > > +       .state = fme_mgr_state,
->> > > > +       .status = fme_mgr_status,
->> > > > +};
->> > > > +
->> > > > +static int fme_mgr_probe(struct platform_device *pdev)
->> > > > +{
->> > > > +       struct device *dev = &pdev->dev;
->> > > > +       struct fme_mgr_priv *priv;
->> > > > +       struct fpga_manager *mgr;
->> > > > +       struct resource *res;
->> > > > +       int ret;
->> > > > +
->> > > > +       priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
->> > > > +       if (!priv)
->> > > > +               return -ENOMEM;
->> > > > +
->> > > > +       res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
->> > > > +       priv->ioaddr = devm_ioremap(dev, res->start, resource_size(res));
->> > >
->> > > How about using devm_ioremap_resourc(dev, res) here instead?
->> >
->> > Actually the register region has already been mapped in lower level driver
->> > (e.g pci) so I think we don't have to map the second time here. I plan to
->> > add some code to pass the ioaddr via the platform data, and check if valid
->> > ioaddr from the platform data firstly in this probe function. If no pdata
->> > or no valid ioaddr, then go with devm_ioremap_resource. :)
+On Wed, Apr 4, 2018 at 11:42 AM, Peter Jones <pjones@redhat.com> wrote:
+> On Tue, Apr 03, 2018 at 02:51:23PM -0700, Andy Lutomirski wrote:
+>> On Tue, Apr 3, 2018 at 12:29 PM, Matthew Garrett <mjg59@google.com> wrote:
+>> Can someone please explain why the UEFI crowd cares so much about "as
+>> a bootloader"?  Once I'm able to install an OS (Linux kernel +
+>> bootloader, Windows embedded doodad, OpenBSD, whatever) on your
+>> machine, I can use your peripherals, read your data, write your data,
+>> see your keystrokes, use your network connection, re-flash your BIOS
+>> (at least as well as any OS can), run VMs, and generally own your
+>> system.  Somehow you all seem fine with all of this, except that the
+>> fact that I can chainload something else gives UEFI people the
+>> willies.
 >>
->> If you end up sharing register spaces between drivers is regmap / syscon
->> maybe a good idea?
+>> Can someone explain why?
 >
-> Hi Moritz,
+> There's no inherent difference, in terms of the trust chain, between
+> compromising it to use the machine as a toaster or to run a botnet - the
+> trust chain is compromised either way.  But you're much more likely to
+> notice if your desktop starts producing bread products than if it hides
+> some malware and keeps on booting, and the second one is much more
+> attractive to attackers anyway.
 >
-> Thanks for the comments. I tried the regmap_mmio before but it failed to use
-> regmap_read and regmap_write for register access. It requires to use writeq /
-> readq for 64bit registers on the hardware, but regmap_read and regmap_write
-> only accepts unsigned int value as input parameter. So I only replaced the
-> bitfields struct/union with macro.
->
-> Thanks
-> Hao
->
->> >
->> > >
->> > > > +       if (IS_ERR(priv->ioaddr))
->> > > > +               return PTR_ERR(priv->ioaddr);
->> > > > +
->> > > > +       mgr = devm_kzalloc(dev, sizeof(*mgr), GFP_KERNEL);
->> > > > +       if (!mgr)
->> > > > +               return -ENOMEM;
->> > > > +
->> > > > +       mgr->name = "DFL FPGA Manager";
->> > > > +       mgr->mops = &fme_mgr_ops;
->> > > > +       mgr->priv = priv;
->> > > > +       mgr->parent = dev;
->> > > > +       platform_set_drvdata(pdev, mgr);
->> > > > +
->> > > > +       ret = fpga_mgr_register(mgr);
->> > > > +       if (ret)
->> > > > +               dev_err(dev, "unable to register FPGA manager\n");
->> > > > +
->> > > > +       return ret;
->> > >
->> > > You can probably just do "return fpga_mgr_register(mgr);" here.
->> >
->> > Yes, it looks better, I will fix it. Thanks a lot for the review.
->> >
->> > Hao
->> >
->> > >
->> > > Thanks,
->> > > Alan
->> > >
->> > > > +}
->> > > > +
->> > > > +static int fme_mgr_remove(struct platform_device *pdev)
->> > > > +{
->> > > > +       struct fpga_manager *mgr = platform_get_drvdata(pdev);
->> > > > +
->> > > > +       fpga_mgr_unregister(mgr);
->> > > > +
->> > > > +       return 0;
->> > > > +}
->> > > > +
->> > > > +static struct platform_driver fme_mgr_driver = {
->> > > > +       .driver = {
->> > > > +               .name    = FPGA_DFL_FME_MGR,
->> > > > +       },
->> > > > +       .probe   = fme_mgr_probe,
->> > > > +       .remove  = fme_mgr_remove,
->> > > > +};
->> > > > +
->> > > > +module_platform_driver(fme_mgr_driver);
->> > > > +
->> > > > +MODULE_DESCRIPTION("FPGA Manager for DFL FPGA Management Engine");
->> > > > +MODULE_AUTHOR("Intel Corporation");
->> > > > +MODULE_LICENSE("GPL v2");
->> > > > +MODULE_ALIAS("platform:dfl-fme-mgr");
->> > > > --
->> > > > 2.7.4
->> > > >
->>
->> Cheers,
->> Moritz
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> The reason we talk about it as a bootloader is because of the model
+> employed by malware.  I'm sure you know that one kind of malware that
+> exists in the wild, a so-called "boot kit", operates by modifying a
+> kernel during load (or on disk before loading) so that it has some
+> malicious payload, like exfiltrating user data or allowing a way to
+> install software that the kernel hides or *whatever*, and incorporating
+> some way to achieve relative persistence on the system - for example
+> hiding the real boot settings and loading a kernel with a different than
+> normal initramfs that loads an exploit before continuing with a normal
+> looking boot.
+
+This is a fair point, but I wonder how much it matters in practice.
+If I'm writing a bootkit, I can think of at least four ways to do it.
+
+1. The easy way.  Write a malicious bootloader that modifies the
+kernel image to insert malicious code.  Stock secure boot makes this
+awkward because you need a signed bootloader.  It's worth noting that
+a non-locked-down signed Linux kernel is actually a rather awkward way
+to do this because it will add several seconds to the boot and may
+show a splash screen unless you're rather careful.
+
+2. The CPL3 way.  Write a malicious initramfs that inserts the
+malicious code in PID 1 instead.  This might be easier to get working
+across a variety of Linux kernels, but it's more awkward to hide well
+from userspace.  Conventional secure boot (with the stock MS keys)
+doesn't help at all.
+
+3. The nasty way.  Find a known exploitable kernel or bootloader, and
+use it to do your evil deeds.  This is very, very hard to protect
+against with normal secure boot.
+
+4. The VM-kit way.  Use a signed, locked down, perfectly secure kernel
+and run your pwned system as a VM guest.  Secure boot doesn't help one
+whit.
+
+*All* of these variants are avoided by a real, working verified boot
+approach that chains all the way down to the running system image, and
+*that* solution doesn't need cpl0 and cpl3 to be separated.
+
+So I find myself wondering whether the bootkit argument is actually
+very compelling.
