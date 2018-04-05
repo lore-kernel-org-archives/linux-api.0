@@ -1,78 +1,68 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
-Date: Thu, 5 Apr 2018 10:02:42 +0300
-Message-ID: <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
-References: <152286911105.615669.14053871624892399807.stgit@buzz>
- <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
- <87h8oqhagl.fsf@xmission.com>
+From: Mimi Zohar <zohar@linux.vnet.ibm.com>
+Subject: Re: An actual suggestion (Re: [GIT PULL] Kernel lockdown for secure
+ boot)
+Date: Thu, 05 Apr 2018 10:01:09 -0400
+Message-ID: <1522936869.16421.63.camel@linux.vnet.ibm.com>
+References: <CALCETrUVQLDC6_VEvuAbdCOuGrmcxohqTB6P8eyNojm9AryNkg@mail.gmail.com>
+         <1119.1522858644@warthog.procyon.org.uk>
+         <20180405021650.GC7362@linux-l9pv.suse>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87h8oqhagl.fsf@xmission.com>
-Content-Language: en-US
+In-Reply-To: <20180405021650.GC7362@linux-l9pv.suse>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+To: joeyli <jlee@suse.com>, David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Theodore Y. Ts'o" <tytso@mit.edu>, Matthew Garrett <mjg59@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05.04.2018 01:29, Eric W. Biederman wrote:
-> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
+On Thu, 2018-04-05 at 10:16 +0800, joeyli wrote:
+> Hi David, 
 > 
->> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
->>> Each process have different pids, one for each pid namespace it belongs.
->>> When interaction happens within single pid-ns translation isn't required.
->>> More complicated scenarios needs special handling.
->>>
->>> For example:
->>> - reading pid-files or logs written inside container with pid namespace
->>> - attaching with ptrace to tasks from different pid namespace
->>> - passing pids across pid namespaces in any kind of API
->>>
->>> Currently there are several interfaces that could be used here:
->>>
->>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
+> On Wed, Apr 04, 2018 at 05:17:24PM +0100, David Howells wrote:
+> > Andy Lutomirski <luto@kernel.org> wrote:
+> > 
+> > > Since this thread has devolved horribly, I'm going to propose a solution.
+> > > 
+> > > 1. Split the "lockdown" state into three levels:  (please don't
+> > > bikeshed about the names right now.)
+> > > 
+> > > LOCKDOWN_NONE: normal behavior
+> > > 
+> > > LOCKDOWN_PROTECT_INTEGREITY: kernel tries to keep root from writing to
+> > > kernel memory
+> > > 
+> > > LOCKDOWN_PROTECT_INTEGRITY_AND_SECRECY: kernel tries to keep root from
+> > > reading or writing kernel memory.
+> > 
+> > In theory, it's good idea, but in practice it's not as easy to implement as I
+> > think you think.
+> > 
+> > Let me list here the things that currently get restricted by lockdown:
+> > 
+> [...snip]
+> >  (5) Kexec.
+> >
 > 
-> Using the inode number in interfaces is not an option.  Especially not
-> withou referencing the device number for the filesystem as well.
+> About IMA with kernel module signing and kexec(not on x86_64 yet)...
 
-This is supposed to be single-instance fs,
-not part of proc but referenced but its magic "symlinks".
+Only carrying the measurement list across kexec is architecture
+specific, but everything else should work.  
 
-Device numbers are not mentioned in "man namespaces".
+> Because IMA can be used to verify the integrity of kernel module or even
+> the image for kexec. I think that the
+> IMA_KEYRINGS_PERMIT_SIGNED_BY_BUILTIN_OR_SECONDARY must be enabled at runtime
+> when kernel is locked-down.
 
-> 
->>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
->>> In some cases conversion pid -> vpid could be easily done using this
->>> information, but backward translation requires scanning all tasks.
->>>
->>> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
->>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
->>> into pid namespace, this expose process and could be insecure.
->>>
->>> This patch adds new syscall for converting pids between pid namespaces:
->>>
->>> pid_t translate_pid(pid_t pid, int source_type, int source,
->>>                                  int target_type, int target);
->>>
->>> @source_type and @target_type defines type of following arguments:
->>>
->>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is unused
->>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
->>
->> I believe using pid to represent the namespace has been already
->> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
->> after which we moved on to fd based version of this interface.
-> 
-> Or in short why is the case of pids important?
-> 
-> You Konstantin you almost said why they were important in your message
-> saying you were going to send this one.  However you don't explain in
-> your description why you want to identify pid namespaces by pid.
-> 
+I think we need to understand the problem a bit better.  Is the
+problem that you're using the secondary keyring and loading the UEFI
+keys onto the secondary keyring?
 
-Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
-pid based variant doesn't have such restrictions.
-Most pid-based syscalls are racy in some cases but they are
-here for decades and everybody knowns how to deal with it.
-So, I've decided to merge both worlds in one interface which clearly tells what to expect.
+> Because the root can enroll master key to keyring then IMA trusts the ima key
+> derived from master key. It causes that the arbitrary signed module can be loaded
+> when the root compromised.
+
+With only the builtin keyring, only keys signed by a builtin key can
+be added to the IMA keyring.
+
+Mimi
