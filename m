@@ -1,7 +1,7 @@
 From: <gregkh@linuxfoundation.org>
-Subject: Patch "fs/proc: Stop trying to report thread stacks" has been added to the 3.18-stable tree
-Date: Fri, 06 Apr 2018 09:51:55 +0200
-Message-ID: <152300111522341@kroah.com>
+Subject: Patch "fs/proc: Stop trying to report thread stacks" has been added to the 4.4-stable tree
+Date: Fri, 06 Apr 2018 09:54:17 +0200
+Message-ID: <152300125715159@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ANSI_X3.4-1968
 Content-Transfer-Encoding: 8bit
@@ -16,12 +16,12 @@ This is a note to let you know that I've just added the patch titled
 
     fs/proc: Stop trying to report thread stacks
 
-to the 3.18-stable tree which can be found at:
+to the 4.4-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      fs-proc-stop-trying-to-report-thread-stacks.patch
-and it can be found in the queue-3.18 subdirectory.
+and it can be found in the queue-4.4 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
@@ -86,7 +86,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/Documentation/filesystems/proc.txt
 +++ b/Documentation/filesystems/proc.txt
-@@ -371,32 +371,6 @@ is not associated with a file:
+@@ -383,32 +383,6 @@ is not associated with a file:
  
   or if empty, the mapping is anonymous.
  
@@ -121,7 +121,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  is a series of lines such as the following:
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
-@@ -248,24 +248,15 @@ static int do_maps_open(struct inode *in
+@@ -253,24 +253,15 @@ static int do_maps_open(struct inode *in
   * /proc/PID/maps that is the stack of the main task.
   */
  static int is_stack(struct proc_maps_private *priv,
@@ -154,7 +154,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  }
  
  static void
-@@ -332,7 +323,7 @@ show_map_vma(struct seq_file *m, struct
+@@ -337,7 +328,7 @@ show_map_vma(struct seq_file *m, struct
  			goto done;
  		}
  
@@ -163,8 +163,8 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  			name = "[stack]";
  	}
  
-@@ -1501,7 +1492,7 @@ static int show_numa_map(struct seq_file
- 		seq_path(m, &file->f_path, "\n\t= ");
+@@ -1560,7 +1551,7 @@ static int show_numa_map(struct seq_file
+ 		seq_file_path(m, file, "\n\t= ");
  	} else if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
  		seq_puts(m, " heap");
 -	} else if (is_stack(proc_priv, vma, is_pid)) {
@@ -211,7 +211,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 @@ -184,7 +176,7 @@ static int nommu_vma_show(struct seq_fil
  	if (file) {
  		seq_pad(m, ' ');
- 		seq_path(m, &file->f_path, "");
+ 		seq_file_path(m, file, "");
 -	} else if (mm && is_stack(priv, vma, is_pid)) {
 +	} else if (mm && is_stack(priv, vma)) {
  		seq_pad(m, ' ');
@@ -221,6 +221,6 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 Patches currently in stable-queue which might be from luto@kernel.org are
 
-queue-3.18/perf-hwbp-simplify-the-perf-hwbp-code-fix-documentation.patch
-queue-3.18/fs-proc-stop-trying-to-report-thread-stacks.patch
-queue-3.18/kvm-x86-fix-icebp-instruction-handling.patch
+queue-4.4/perf-hwbp-simplify-the-perf-hwbp-code-fix-documentation.patch
+queue-4.4/fs-proc-stop-trying-to-report-thread-stacks.patch
+queue-4.4/nospec-kill-array_index_nospec_mask_check.patch
