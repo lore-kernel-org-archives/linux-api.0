@@ -1,18 +1,18 @@
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.4 53/72] fs/proc: Stop trying to report thread stacks
-Date: Fri,  6 Apr 2018 15:23:54 +0200
-Message-ID: <20180406084309.688792227@linuxfoundation.org>
-References: <20180406084305.210085169@linuxfoundation.org>
+Subject: [PATCH 3.18 84/93] fs/proc: Stop trying to report thread stacks
+Date: Fri,  6 Apr 2018 15:23:53 +0200
+Message-ID: <20180406084228.851219946@linuxfoundation.org>
+References: <20180406084224.918716300@linuxfoundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180406084305.210085169@linuxfoundation.org>
+In-Reply-To: <20180406084224.918716300@linuxfoundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Jann Horn <jann@thejh.net>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Tycho Andersen <tycho.andersen@canonical.com>, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-4.4-stable review patch.  If anyone has any objections, please let me know.
+3.18-stable review patch.  If anyone has any objections, please let me know.
 
 ------------------
 
@@ -70,7 +70,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 
 --- a/Documentation/filesystems/proc.txt
 +++ b/Documentation/filesystems/proc.txt
-@@ -383,32 +383,6 @@ is not associated with a file:
+@@ -371,32 +371,6 @@ is not associated with a file:
  
   or if empty, the mapping is anonymous.
  
@@ -105,7 +105,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  is a series of lines such as the following:
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
-@@ -253,24 +253,15 @@ static int do_maps_open(struct inode *in
+@@ -248,24 +248,15 @@ static int do_maps_open(struct inode *in
   * /proc/PID/maps that is the stack of the main task.
   */
  static int is_stack(struct proc_maps_private *priv,
@@ -138,7 +138,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  }
  
  static void
-@@ -337,7 +328,7 @@ show_map_vma(struct seq_file *m, struct
+@@ -332,7 +323,7 @@ show_map_vma(struct seq_file *m, struct
  			goto done;
  		}
  
@@ -147,8 +147,8 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
  			name = "[stack]";
  	}
  
-@@ -1560,7 +1551,7 @@ static int show_numa_map(struct seq_file
- 		seq_file_path(m, file, "\n\t= ");
+@@ -1501,7 +1492,7 @@ static int show_numa_map(struct seq_file
+ 		seq_path(m, &file->f_path, "\n\t= ");
  	} else if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
  		seq_puts(m, " heap");
 -	} else if (is_stack(proc_priv, vma, is_pid)) {
@@ -195,7 +195,7 @@ Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 @@ -184,7 +176,7 @@ static int nommu_vma_show(struct seq_fil
  	if (file) {
  		seq_pad(m, ' ');
- 		seq_file_path(m, file, "");
+ 		seq_path(m, &file->f_path, "");
 -	} else if (mm && is_stack(priv, vma, is_pid)) {
 +	} else if (mm && is_stack(priv, vma)) {
  		seq_pad(m, ' ');
