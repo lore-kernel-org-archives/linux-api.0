@@ -1,57 +1,40 @@
 From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: [PATCH 5/6] aio: implement IOCB_CMD_FSYNC and IOCB_CMD_FDSYNC
-Date: Fri, 6 Apr 2018 03:59:48 +0100
-Message-ID: <20180406025948.GT30522@ZenIV.linux.org.uk>
+Subject: Re: io_pgetevents & aio fsync V2
+Date: Fri, 6 Apr 2018 04:16:30 +0100
+Message-ID: <20180406031630.GU30522@ZenIV.linux.org.uk>
 References: <20180328072639.16885-1-hch@lst.de>
- <20180328072639.16885-6-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180328072639.16885-6-hch@lst.de>
+In-Reply-To: <20180328072639.16885-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 28, 2018 at 09:26:38AM +0200, Christoph Hellwig wrote:
-> +static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
-> +{
-> +	int ret;
-> +
-> +	if (iocb->aio_buf)
-> +		return -EINVAL;
-> +	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
-> +		return -EINVAL;
-> +
-> +	req->file = fget(iocb->aio_fildes);
-> +	if (unlikely(!req->file))
-> +		return -EBADF;
-> +
-> +	ret = -EINVAL;
-> +	if (!req->file->f_op->fsync)
-> +		goto out_fput;
-> +
-> +	req->datasync = datasync;
-> +	INIT_WORK(&req->work, aio_fsync_work);
-> +	schedule_work(&req->work);
-> +	return -EIOCBQUEUED;
-> +out_fput:
-> +	if (unlikely(ret && ret != -EIOCBQUEUED))
+On Wed, Mar 28, 2018 at 09:26:33AM +0200, Christoph Hellwig wrote:
+> Hi all,
+> 
+> this patch adds workqueue based fsync offload.  Version of this
+> patch have been floating around for a couple years, but we now
+> have a user with seastar used by ScyllaDB (who sponsored this
+> work) that really wants this in addition to the aio poll support.
+> More details are in the patch itself.
+> 
+> Because the iocb types have been defined sine day one (and probably
+> were supported by RHEL3) libaio already supports these calls as-is.
+> 
+> This also pulls in the aio cleanups and io_pgetevents support previously
+> submitted and review as part of the aio poll series.  The aio poll
+> series will be resubmitted on top of this series
 
-Really?  The only way to get there is if we got NULL ->f_op->fsync.
-So this "if (unlikely(...))" is actually if (true) and I'm not
-sure we want that separated anyway - simply
-
-	if (unlikely(!req->file->f_op->fsync)) {
-		fput(req->file);
-		return -EINVAL;
-	}
-
-> +		fput(req->file);
-
-> +	return ret;
-> +}
+BTW, this is only tangentially related, but... does *anything* call
+io_submit() for huge amounts of iocb?  Check in do_io_submit() is
+insane - "no more than MAX_LONG total of _pointers_".  Compat variant
+goes for "no more than a page worth of pointers" and there's
+a hard limit in ioctx_alloc() - we can't ever get more than
+8M slots in ring buffer...
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
