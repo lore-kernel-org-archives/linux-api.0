@@ -1,30 +1,44 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: io_pgetevents & aio fsync V2
-Date: Fri, 6 Apr 2018 08:27:00 +0200
-Message-ID: <20180406062700.GA20714@lst.de>
-References: <20180328072639.16885-1-hch@lst.de> <20180406031630.GU30522@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 3/6] aio: refactor read/write iocb setup
+Date: Fri, 6 Apr 2018 09:10:11 +0200
+Message-ID: <20180406071011.GA21308@lst.de>
+References: <20180328072639.16885-1-hch@lst.de> <20180328072639.16885-4-hch@lst.de> <20180406032146.GV30522@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20180406031630.GU30522@ZenIV.linux.org.uk>
+In-Reply-To: <20180406032146.GV30522@ZenIV.linux.org.uk>
 Sender: owner-linux-aio@kvack.org
 To: Al Viro <viro@ZenIV.linux.org.uk>
 Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 06, 2018 at 04:16:30AM +0100, Al Viro wrote:
-> BTW, this is only tangentially related, but... does *anything* call
-> io_submit() for huge amounts of iocb?  Check in do_io_submit() is
-> insane - "no more than MAX_LONG total of _pointers_".  Compat variant
-> goes for "no more than a page worth of pointers" and there's
-> a hard limit in ioctx_alloc() - we can't ever get more than
-> 8M slots in ring buffer...
+On Fri, Apr 06, 2018 at 04:21:46AM +0100, Al Viro wrote:
+> On Wed, Mar 28, 2018 at 09:26:36AM +0200, Christoph Hellwig wrote:
+> > +		struct inode *inode = file_inode(file);
+> > +
+> >  		req->ki_flags |= IOCB_WRITE;
+> >  		file_start_write(file);
+> > -		ret = aio_ret(req, call_write_iter(file, req, &iter));
+> > +		ret = aio_rw_ret(req, call_write_iter(file, req, &iter));
+> >  		/*
+> > -		 * We release freeze protection in aio_complete().  Fool lockdep
+> > -		 * by telling it the lock got released so that it doesn't
+> > -		 * complain about held lock when we return to userspace.
+> > +		 * We release freeze protection in aio_complete_rw().  Fool
+> > +		 * lockdep by telling it the lock got released so that it
+> > +		 * doesn't complain about held lock when we return to userspace.
+> >  		 */
+> > -		if (S_ISREG(file_inode(file)->i_mode))
+> > -			__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
+> > +		if (S_ISREG(inode->i_mode))
+> 
+> ... and that's another use-after-free, since we might've already done fput() of
+> that sucker by that point.
 
-Logical upper bound for io_submit is nr_events passed to io_setup(),
-which is bound by aio_max_nr.  Except that we never actually check
-against nr_events (or max_reqs as it is known in kernel) in io_submit.
-Sigh..
+Indeed.  Not in any way new in this patch, this is an existing issue
+dating way back that needs to be fixed, which will be rather annoying
+without taking an extra reference to the inode or at least sb.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
