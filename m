@@ -1,105 +1,103 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v4 10/24] fpga: dfl: add FPGA Management Engine driver
- basic framework
-Date: Fri, 6 Apr 2018 19:04:39 +0800
-Message-ID: <20180406110439.GB32345@hao-dev>
+Subject: Re: [PATCH v4 20/24] fpga: dfl: add FPGA Accelerated Function Unit
+ driver basic framework
+Date: Fri, 6 Apr 2018 19:05:36 +0800
+Message-ID: <20180406110536.GC32345@hao-dev>
 References: <1518513893-4719-1-git-send-email-hao.wu@intel.com>
- <1518513893-4719-11-git-send-email-hao.wu@intel.com>
- <CANk1AXQidwWhHfHd-usQVdK3jZbJuB3y8=NK7y5K_h_8eJhjAg@mail.gmail.com>
+ <1518513893-4719-21-git-send-email-hao.wu@intel.com>
+ <CANk1AXSgd4ySjCqiTyMA4vaOq4jByhLOot02GCLMmgoQSye49Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXQidwWhHfHd-usQVdK3jZbJuB3y8=NK7y5K_h_8eJhjAg@mail.gmail.com>
+In-Reply-To: <CANk1AXSgd4ySjCqiTyMA4vaOq4jByhLOot02GCLMmgoQSye49Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alan Tull <atull@kernel.org>
 Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 05, 2018 at 01:35:24PM -0500, Alan Tull wrote:
+On Thu, Apr 05, 2018 at 01:26:57PM -0500, Alan Tull wrote:
 > On Tue, Feb 13, 2018 at 3:24 AM, Wu Hao <hao.wu@intel.com> wrote:
 > 
 > Hi Hao,
 > 
-> > From: Kang Luwei <luwei.kang@intel.com>
+> One minor thing below.
+> 
+> > On DFL FPGA devices, the Accelerated Function Unit (AFU), can be
+> > reprogrammed for different functions. It connects to the FPGA
+> > infrastructure("blue bistream") via a Port. Port CSRs are implemented
+> > separately from the AFU CSRs to provide control and status of the Port.
+> > Once valid green bitstream is programmed into the AFU, it allows access
+> > to the AFU CSRs in the AFU MMIO space.
 > >
-> > The FPGA Management Engine (FME) provides power, thermal management,
-> > performance counters, partial reconfiguration and other functions. For each
-> > function, it is packaged into a private feature linked to the FME feature
-> > device in the 'Device Feature List'. It's a platform device created by
-> > DFL framework.
-> >
-> > This patch adds the basic framework of FME platform driver. It defines
-> > sub feature drivers to handle the different sub features, including init,
-> > uinit and ioctl. It also registers the file operations for the device file.
+> > This patch only implements basic driver framework for AFU, including
+> > device file operation framework.
 > >
 > > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 > > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
 > > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
 > > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> > Signed-off-by: Kang Luwei <luwei.kang@intel.com>
 > > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 > > Signed-off-by: Wu Hao <hao.wu@intel.com>
 > > ---
-> > v3: rename driver from intel-fpga-fme to dfl-fme
-> >     rename Kconfig from INTEL_FPGA_FME to FPGA_DFL_FME
-> > v4: fix SPDX license issue, use dfl-fme as module name
+> > v3: rename driver to dfl-afu-main.c
+> > v4: rename to dfl-port and fix SPDX license issue.
 > > ---
-> >  drivers/fpga/Kconfig        |  10 +++
-> >  drivers/fpga/Makefile       |   3 +
-> >  drivers/fpga/dfl-fme-main.c | 158 ++++++++++++++++++++++++++++++++++++++++++++
-> >  3 files changed, 171 insertions(+)
-> >  create mode 100644 drivers/fpga/dfl-fme-main.c
+> >  drivers/fpga/Kconfig        |   9 +++
+> >  drivers/fpga/Makefile       |   2 +
+> >  drivers/fpga/dfl-afu-main.c | 159 ++++++++++++++++++++++++++++++++++++++++++++
+> >  3 files changed, 170 insertions(+)
+> >  create mode 100644 drivers/fpga/dfl-afu-main.c
 > >
 > > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> > index 87f3d44..103d5e2 100644
+> > index 65d54a4..4c6b45f 100644
 > > --- a/drivers/fpga/Kconfig
 > > +++ b/drivers/fpga/Kconfig
-> > @@ -140,6 +140,16 @@ config FPGA_DFL
-> >           Gate Array (FPGA) solutions which implement Device Feature List.
-> >           It provides enumeration APIs, and feature device infrastructure.
+> > @@ -168,6 +168,15 @@ config FPGA_DFL_FME_REGION
+> >         help
+> >           Say Y to enable FPGA Region driver for FPGA Management Engine.
 > >
-> > +config FPGA_DFL_FME
-> > +       tristate "FPGA DFL FME Driver"
+> > +config FPGA_DFL_AFU
+> > +       tristate "FPGA DFL AFU Driver"
 > > +       depends on FPGA_DFL
 > > +       help
-> > +         The FPGA Management Engine (FME) is a feature device implemented
-> > +         under Device Feature List (DFL) framework. Select this option to
-> > +         enable the platform device driver for FME which implements all
-> > +         FPGA platform level management features. There shall be 1 FME
-> > +         per DFL based FPGA device.
+> > +         This is the driver for FPGA Accelerated Function Unit (AFU) which
+> > +         implements AFU and Port management features. A User AFU connects
+> > +         to the FPGA infrastructure via a Port. There may be more than 1
+> > +         Port/AFU per DFL based FPGA device.
 > > +
 > >  config FPGA_DFL_PCI
 > >         tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
 > >         depends on PCI && FPGA_DFL
 > > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> > index 4375630..fbd1c85 100644
+> > index 163894e..5c9607b 100644
 > > --- a/drivers/fpga/Makefile
 > > +++ b/drivers/fpga/Makefile
-> > @@ -30,6 +30,9 @@ obj-$(CONFIG_OF_FPGA_REGION)          += of-fpga-region.o
+> > @@ -34,8 +34,10 @@ obj-$(CONFIG_FPGA_DFL_FME)           += dfl-fme.o
+> >  obj-$(CONFIG_FPGA_DFL_FME_MGR)         += dfl-fme-mgr.o
+> >  obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)      += dfl-fme-br.o
+> >  obj-$(CONFIG_FPGA_DFL_FME_REGION)      += dfl-fme-region.o
+> > +obj-$(CONFIG_FPGA_DFL_AFU)             += dfl-afu.o
 > >
-> >  # FPGA Device Feature List Support
-> >  obj-$(CONFIG_FPGA_DFL)                 += dfl.o
-> > +obj-$(CONFIG_FPGA_DFL_FME)             += dfl-fme.o
-> > +
-> > +dfl-fme-objs := dfl-fme-main.o
+> >  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
+> > +dfl-afu-objs := dfl-afu-main.o
 > >
 > >  # Drivers for FPGAs which implement DFL
 > >  obj-$(CONFIG_FPGA_DFL_PCI)             += dfl-pci.o
-> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+> > diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
 > > new file mode 100644
-> > index 0000000..ebe6b52
+> > index 0000000..70db28c
 > > --- /dev/null
-> > +++ b/drivers/fpga/dfl-fme-main.c
-> > @@ -0,0 +1,158 @@
+> > +++ b/drivers/fpga/dfl-afu-main.c
+> > @@ -0,0 +1,159 @@
 > > +// SPDX-License-Identifier: GPL-2.0
 > > +/*
-> > + * Driver for FPGA Management Engine (FME)
+> > + * Driver for FPGA Accelerated Function Unit (AFU)
 > > + *
 > > + * Copyright (C) 2017 Intel Corporation, Inc.
 > > + *
 > > + * Authors:
-> > + *   Kang Luwei <luwei.kang@intel.com>
+> > + *   Wu Hao <hao.wu@intel.com>
 > > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
 > > + *   Joseph Grecco <joe.grecco@intel.com>
 > > + *   Enno Luebbers <enno.luebbers@intel.com>
@@ -113,39 +111,41 @@ On Thu, Apr 05, 2018 at 01:35:24PM -0500, Alan Tull wrote:
 > > +
 > > +#include "dfl.h"
 > > +
-> > +static int fme_hdr_init(struct platform_device *pdev, struct feature *feature)
+> > +static int port_hdr_init(struct platform_device *pdev, struct feature *feature)
 > > +{
-> > +       dev_dbg(&pdev->dev, "FME HDR Init.\n");
+> > +       dev_dbg(&pdev->dev, "PORT HDR Init.\n");
 > > +
 > > +       return 0;
 > > +}
 > > +
-> > +static void fme_hdr_uinit(struct platform_device *pdev, struct feature *feature)
+> > +static void port_hdr_uinit(struct platform_device *pdev,
+> > +                          struct feature *feature)
 > > +{
-> > +       dev_dbg(&pdev->dev, "FME HDR UInit.\n");
+> > +       dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
 > > +}
 > > +
-> > +static const struct feature_ops fme_hdr_ops = {
-> > +       .init = fme_hdr_init,
-> > +       .uinit = fme_hdr_uinit,
+> > +static const struct feature_ops port_hdr_ops = {
+> > +       .init = port_hdr_init,
+> > +       .uinit = port_hdr_uinit,
 > > +};
 > > +
-> > +static struct feature_driver fme_feature_drvs[] = {
+> > +static struct feature_driver port_feature_drvs[] = {
 > > +       {
-> > +               .id = FME_FEATURE_ID_HEADER,
-> > +               .ops = &fme_hdr_ops,
+> > +               .id = PORT_FEATURE_ID_HEADER,
+> > +               .ops = &port_hdr_ops,
 > > +       },
 > > +       {
 > > +               .ops = NULL,
-> > +       },
+> > +       }
 > > +};
 > > +
-> > +static int fme_open(struct inode *inode, struct file *filp)
+> > +static int afu_open(struct inode *inode, struct file *filp)
 > > +{
 > > +       struct platform_device *fdev = fpga_inode_to_feature_dev(inode);
-> > +       struct feature_platform_data *pdata = dev_get_platdata(&fdev->dev);
+> > +       struct feature_platform_data *pdata;
 > > +       int ret;
 > > +
+> > +       pdata = dev_get_platdata(&fdev->dev);
 > > +       if (WARN_ON(!pdata))
 > > +               return -ENODEV;
 > > +
@@ -154,26 +154,27 @@ On Thu, Apr 05, 2018 at 01:35:24PM -0500, Alan Tull wrote:
 > > +               return ret;
 > > +
 > > +       dev_dbg(&fdev->dev, "Device File Open\n");
-> > +       filp->private_data = pdata;
+> > +       filp->private_data = fdev;
 > > +
 > > +       return 0;
 > > +}
 > > +
-> > +static int fme_release(struct inode *inode, struct file *filp)
+> > +static int afu_release(struct inode *inode, struct file *filp)
 > > +{
-> > +       struct feature_platform_data *pdata = filp->private_data;
-> > +       struct platform_device *pdev = pdata->dev;
+> > +       struct platform_device *pdev = filp->private_data;
+> > +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
 > > +
 > > +       dev_dbg(&pdev->dev, "Device File Release\n");
+> > +
 > > +       feature_dev_use_end(pdata);
 > > +
 > > +       return 0;
 > > +}
 > > +
-> > +static long fme_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> > +static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 > > +{
-> > +       struct feature_platform_data *pdata = filp->private_data;
-> > +       struct platform_device *pdev = pdata->dev;
+> > +       struct platform_device *pdev = filp->private_data;
+> > +       struct feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
 > > +       struct feature *f;
 > > +       long ret;
 > > +
@@ -187,7 +188,7 @@ On Thu, Apr 05, 2018 at 01:35:24PM -0500, Alan Tull wrote:
 > > +                * handled in this sub feature, and returns 0 and other
 > > +                * error code if cmd is handled.
 > > +                */
-> > +               fpga_dev_for_each_feature(pdata, f) {
+> > +               fpga_dev_for_each_feature(pdata, f)
 > > +                       if (f->ops && f->ops->ioctl) {
 > > +                               ret = f->ops->ioctl(pdev, f, cmd, arg);
 > > +                               if (ret == -ENODEV)
@@ -195,83 +196,72 @@ On Thu, Apr 05, 2018 at 01:35:24PM -0500, Alan Tull wrote:
 > > +                               else
 > > +                                       return ret;
 > 
-> continue and else aren't needed.  Could be
-> 
+> The continue..else isn't needed.  Could just be
 > if (ret != -ENODEV)
 >         return ret;
 
-Hi Alan
+Agree, will fix this in the next version. Thanks.
 
-Thanks for the review and comments.
-
-I agree with you, will fix this in the next version.
-
-Thanks
 Hao
 
 > 
+> Thanks,
 > Alan
 > 
 > > +                       }
-> > +               }
 > > +       }
 > > +
 > > +       return -EINVAL;
 > > +}
 > > +
-> > +static const struct file_operations fme_fops = {
-> > +       .owner          = THIS_MODULE,
-> > +       .open           = fme_open,
-> > +       .release        = fme_release,
-> > +       .unlocked_ioctl = fme_ioctl,
+> > +static const struct file_operations afu_fops = {
+> > +       .owner = THIS_MODULE,
+> > +       .open = afu_open,
+> > +       .release = afu_release,
+> > +       .unlocked_ioctl = afu_ioctl,
 > > +};
 > > +
-> > +static int fme_probe(struct platform_device *pdev)
+> > +static int afu_probe(struct platform_device *pdev)
 > > +{
 > > +       int ret;
 > > +
-> > +       ret = fpga_dev_feature_init(pdev, fme_feature_drvs);
+> > +       dev_dbg(&pdev->dev, "%s\n", __func__);
+> > +
+> > +       ret = fpga_dev_feature_init(pdev, port_feature_drvs);
 > > +       if (ret)
-> > +               goto exit;
+> > +               return ret;
 > > +
-> > +       ret = fpga_register_dev_ops(pdev, &fme_fops, THIS_MODULE);
+> > +       ret = fpga_register_dev_ops(pdev, &afu_fops, THIS_MODULE);
 > > +       if (ret)
-> > +               goto feature_uinit;
+> > +               fpga_dev_feature_uinit(pdev);
 > > +
-> > +       return 0;
-> > +
-> > +feature_uinit:
-> > +       fpga_dev_feature_uinit(pdev);
-> > +exit:
 > > +       return ret;
 > > +}
 > > +
-> > +static int fme_remove(struct platform_device *pdev)
+> > +static int afu_remove(struct platform_device *pdev)
 > > +{
+> > +       dev_dbg(&pdev->dev, "%s\n", __func__);
+> > +
 > > +       fpga_dev_feature_uinit(pdev);
 > > +       fpga_unregister_dev_ops(pdev);
 > > +
 > > +       return 0;
 > > +}
 > > +
-> > +static struct platform_driver fme_driver = {
+> > +static struct platform_driver afu_driver = {
 > > +       .driver = {
-> > +               .name    = FPGA_FEATURE_DEV_FME,
+> > +               .name    = FPGA_FEATURE_DEV_PORT,
 > > +       },
-> > +       .probe   = fme_probe,
-> > +       .remove  = fme_remove,
+> > +       .probe   = afu_probe,
+> > +       .remove  = afu_remove,
 > > +};
 > > +
-> > +module_platform_driver(fme_driver);
+> > +module_platform_driver(afu_driver);
 > > +
-> > +MODULE_DESCRIPTION("FPGA Management Engine driver");
+> > +MODULE_DESCRIPTION("FPGA Accelerated Function Unit driver");
 > > +MODULE_AUTHOR("Intel Corporation");
 > > +MODULE_LICENSE("GPL v2");
-> > +MODULE_ALIAS("platform:dfl-fme");
+> > +MODULE_ALIAS("platform:dfl-port");
 > > --
 > > 2.7.4
 > >
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
