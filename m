@@ -1,66 +1,86 @@
-From: joeyli <jlee@suse.com>
+From: Pavel Machek <pavel@ucw.cz>
 Subject: Re: [GIT PULL] Kernel lockdown for secure boot
-Date: Sun, 8 Apr 2018 16:07:42 +0800
-Message-ID: <20180408080742.GE7362@linux-l9pv.suse>
-References: <CAADnVQLu5EZLJ1C9-dd4=K+sed6+38oy047+nqCMfuPFB=wttw@mail.gmail.com>
+Date: Sun, 8 Apr 2018 10:10:50 +0200
+Message-ID: <20180408081050.GA4965@amd>
+References: <4136.1522452584@warthog.procyon.org.uk>
+ <alpine.LRH.2.21.1803311145180.7769@namei.org>
+ <186aeb7e-1225-4bb8-3ff5-863a1cde86de@kernel.org>
+ <30459.1522739219@warthog.procyon.org.uk>
+ <CALCETrUFOdrH5ShCCd8yguGjC2NtG8fJY7AW26HH467-02UVGA@mail.gmail.com>
+ <CACdnJut31+ZtiR40nkOjm89cfUxS0EM=w-oG69PtWHbXYJQxPg@mail.gmail.com>
+ <CA+55aFy5EPxAyqyGGaYUUyakuLbjXHiseWCkz-oNdo=Y-878tg@mail.gmail.com>
+ <CACdnJuuXOP5T-BRAwMvc7XF8S49wyvp4ZYgcU=EZkaGNgPAQig@mail.gmail.com>
+ <CA+55aFzGFZT68ih446DeQbB69Fyk_wT6b7PGq0iz-gctUGQq_A@mail.gmail.com>
+ <CACdnJuvheCbuvTLyDWMQWcUytc4EvuSUaEKywfEX8Kp6qYL9dg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="17pEHd4RhPHOinZp"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAADnVQLu5EZLJ1C9-dd4=K+sed6+38oy047+nqCMfuPFB=wttw@mail.gmail.com>
+In-Reply-To: <CACdnJuvheCbuvTLyDWMQWcUytc4EvuSUaEKywfEX8Kp6qYL9dg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, James Morris <jmorris@namei.org>, One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, Matthew Garrett <mjg59@google.com>, Greg KH <gregkh@linuxfoundation.org>, LKML <linux-kernel@vger.kernel.org>, Justin Forbes <jforbes@redhat.com>, linux-man <linux-man@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
+To: Matthew Garrett <mjg59@google.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, jlee@suse.com, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 03, 2018 at 07:34:25PM -0700, Alexei Starovoitov wrote:
-> On Tue, Apr 3, 2018 at 9:26 AM, Andy Lutomirski <luto@kernel.org> wrote:
-> > On Tue, Apr 3, 2018 at 8:41 AM, Alexei Starovoitov
-> > <alexei.starovoitov@gmail.com> wrote:
-> >> On Tue, Apr 03, 2018 at 08:11:07AM -0700, Andy Lutomirski wrote:
-> >>> >
-> >>> >> "bpf: Restrict kernel image access functions when the kernel is locked down":
-> >>> >> This patch just sucks in general.
-> >>> >
-> >>> > Yes - but that's what Alexei Starovoitov specified.  bpf kind of sucks since
-> >>> > it gives you unrestricted access to the kernel.
-> >>>
-> >>> bpf, in certain contexts, gives you unrestricted access to *reading*
-> >>> kernel memory.  bpf should, under no circumstances, let you write to
-> >>> the kernel unless you're using fault injection or similar.
-> >>>
-> >>> I'm surprised that Alexei acked this patch.  If something like XDP or
-> >>> bpfilter starts becoming widely used, this patch will require a lot of
-> >>> reworking to avoid breaking standard distros.
-> >>
-> >> my understanding was that this lockdown set attemps to disallow _reads_
-> >> of kernel memory from anything, so first version of patch was adding
-> >> run-time checks for bpf_probe_read() which is no-go
-> >> and without this helper the bpf for tracing is losing a lot of its power,
-> >> so the easiest is to disable it all.
-> >
-> > Fair enough.
-> 
-> Actually looking at the patch again:
-> https://git.kernel.org/pub/scm/linux/kernel/git/dhowells/linux-fs.git/commit/?h=efi-lock-down&id=78bb0059c3b8304a8d124b55feebc780fb3e0500
-> 
 
-The bpf is totally disabled in this patch.
+--17pEHd4RhPHOinZp
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> If the only thing that folks are paranoid about is reading
-> arbitrary kernel memory with bpf_probe_read() helper
-> then preferred patch would be to disable it during verification
-> when in lockdown mode
+On Tue 2018-04-03 21:08:54, Matthew Garrett wrote:
+> On Tue, Apr 3, 2018 at 2:01 PM Linus Torvalds
+> <torvalds@linux-foundation.org>
+> wrote:
+>=20
+> > On Tue, Apr 3, 2018 at 1:54 PM, Matthew Garrett <mjg59@google.com> wrot=
+e:
+> > >
+> > >> .. maybe you don't *want* secure boot, but it's been pushed in your
+> > >> face by people with an agenda?
+> > >
+> > > Then turn it off, or build a self-signed kernel that doesn't do this?
+>=20
+> > Umm. So you asked a question, and then when you got an answer you said
+> > "don't do that then".
+>=20
+> > The fact is, some hardware pushes secure boot pretty hard. That has
+> > *nothing* to do with some "lockdown" mode.
+>=20
+> Secure Boot ensures that the firmware will only load signed bootloaders. =
+If
+> a signed bootloader loads a kernel that's effectively an unsigned
+> bootloader, there's no point in using Secure Boot - you should just turn =
+it
+> off instead, because it's not giving you any meaningful
+> security. Andy's
 
-Sorry for I didn't fully understand your idea...
-Do you mean that using bpf verifier to filter out bpf program that
-uses bpf_probe_read()?
-.
-> No run-time overhead and android folks will be happy
-> that lockdown doesn't break their work.
-> They converted out-of-tree networking accounting
-> module and corresponding user daemon to use bpf:
-> https://www.linuxplumbersconf.org/2017/ocw/system/presentations/4791/original/eBPF%20cgroup%20filters%20for%20data%20usage%20accounting%20on%20Android.pdf
+Not true.
 
-Thanks
-Joey Lee
+I have kernel with printk() enabled. Yes, once userland is started,
+you can boot another kernel, maybe.
+
+Maybe my kernel is locked down with exception of kexec, and it does
+printk(KERN_CRIT "kexecing") followed by mdelay(5000). That's pretty
+good security.
+
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--17pEHd4RhPHOinZp
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlrJzooACgkQMOfwapXb+vJyawCgucLLA8QbmX8zLUT7nIWXw5P+
+p/sAoI5s8z1MIYAXdUMjuXLq63vVHR7v
+=llcn
+-----END PGP SIGNATURE-----
+
+--17pEHd4RhPHOinZp--
