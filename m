@@ -1,203 +1,54 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 3.18 84/93] fs/proc: Stop trying to report thread stacks
-Date: Fri,  6 Apr 2018 15:23:53 +0200
-Message-ID: <20180406084228.851219946@linuxfoundation.org>
-References: <20180406084224.918716300@linuxfoundation.org>
+From: joeyli <jlee@suse.com>
+Subject: Re: [GIT PULL] Kernel lockdown for secure boot
+Date: Sun, 8 Apr 2018 15:44:09 +0800
+Message-ID: <20180408074409.GD7362@linux-l9pv.suse>
+References: <CAADnVQLu5EZLJ1C9-dd4=K+sed6+38oy047+nqCMfuPFB=wttw@mail.gmail.com>
+ <CACdnJuv8t3kS5BCowWQ7rMjL2K73913wX2-bb5HF0ddY3iaBHg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180406084224.918716300@linuxfoundation.org>
+Content-Disposition: inline
+In-Reply-To: <CACdnJuv8t3kS5BCowWQ7rMjL2K73913wX2-bb5HF0ddY3iaBHg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Jann Horn <jann@thejh.net>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>, Johannes Weiner <hannes@cmpxchg.org>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Tycho Andersen <tycho.andersen@canonical.com>, Ingo Molnar <mingo@kernel.org>
+To: Matthew Garrett <mjg59@google.com>
+Cc: alexei.starovoitov@gmail.com, luto@kernel.org, David Howells <dhowells@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, jmorris@namei.org, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, jforbes@redhat.com, linux-man@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, linux-api@vger.kernel.org, Kees Cook <keescook@chromium.org>, linux-efi <linux-efi@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-3.18-stable review patch.  If anyone has any objections, please let me know.
+On Wed, Apr 04, 2018 at 04:31:46AM +0000, Matthew Garrett wrote:
+> On Tue, Apr 3, 2018 at 7:34 PM Alexei Starovoitov <
+> alexei.starovoitov@gmail.com> wrote:
+> > If the only thing that folks are paranoid about is reading
+> > arbitrary kernel memory with bpf_probe_read() helper
+> > then preferred patch would be to disable it during verification
+> > when in lockdown mode.
+> > No run-time overhead and android folks will be happy
+> > that lockdown doesn't break their work.
+> > They converted out-of-tree networking accounting
+> > module and corresponding user daemon to use bpf:
+> 
+> https://www.linuxplumbersconf.org/2017/ocw/system/presentations/4791/original/eBPF%20cgroup%20filters%20for%20data%20usage%20accounting%20on%20Android.pdf
+> 
+> An alternative would be to only disable kernel reads if the kernel contains
+> secrets that aren't supposed to be readable by root. If the keyring is
+> configured such that root can read everything, it seems like less of a
+> concern?
 
-------------------
+Currently the KMK (kernel master key) can be a trusted key (TPM sealed) or a
+user key (plaintext). The EVM keeps a key (plaintext) in memory that
+it is decrypted from a KMK encrypted key. Those kernel reads functions should
+be disabled when the KMK be loaded to keyring.
 
-From: Andy Lutomirski <luto@kernel.org>
+You idea is good that kernel can keep those reads functions enabled until KMK
+be loaded. Which means those functions are still available before user enables
+KMK and EVM.
 
-commit b18cb64ead400c01bf1580eeba330ace51f8087d upstream.
+There have another idea is using a tree to register all sensitive data
+then blanking them when reading. Here is a very early developing version:
 
-This reverts more of:
+https://github.com/joeyli/linux-sensitive_data/commits/sensitive-data-tree-v0.1-v4.15
 
-  b76437579d13 ("procfs: mark thread stack correctly in proc/<pid>/maps")
+But this approach causes runtime overhead and all sensitive data address must
+be found and registered (e.g. plaintext in encryption module)
 
-... which was partially reverted by:
-
-  65376df58217 ("proc: revert /proc/<pid>/maps [stack:TID] annotation")
-
-Originally, /proc/PID/task/TID/maps was the same as /proc/TID/maps.
-
-In current kernels, /proc/PID/maps (or /proc/TID/maps even for
-threads) shows "[stack]" for VMAs in the mm's stack address range.
-
-In contrast, /proc/PID/task/TID/maps uses KSTK_ESP to guess the
-target thread's stack's VMA.  This is racy, probably returns garbage
-and, on arches with CONFIG_TASK_INFO_IN_THREAD=y, is also crash-prone:
-KSTK_ESP is not safe to use on tasks that aren't known to be running
-ordinary process-context kernel code.
-
-This patch removes the difference and just shows "[stack]" for VMAs
-in the mm's stack range.  This is IMO much more sensible -- the
-actual "stack" address really is treated specially by the VM code,
-and the current thread stack isn't even well-defined for programs
-that frequently switch stacks on their own.
-
-Reported-by: Jann Horn <jann@thejh.net>
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
-Acked-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Brian Gerst <brgerst@gmail.com>
-Cc: Johannes Weiner <hannes@cmpxchg.org>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Linux API <linux-api@vger.kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Tycho Andersen <tycho.andersen@canonical.com>
-Link: http://lkml.kernel.org/r/3e678474ec14e0a0ec34c611016753eea2e1b8ba.1475257877.git.luto@kernel.org
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
----
- Documentation/filesystems/proc.txt |   26 --------------------------
- fs/proc/task_mmu.c                 |   29 ++++++++++-------------------
- fs/proc/task_nommu.c               |   26 +++++++++-----------------
- 3 files changed, 19 insertions(+), 62 deletions(-)
-
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -371,32 +371,6 @@ is not associated with a file:
- 
-  or if empty, the mapping is anonymous.
- 
--The /proc/PID/task/TID/maps is a view of the virtual memory from the viewpoint
--of the individual tasks of a process. In this file you will see a mapping marked
--as [stack] if that task sees it as a stack. Hence, for the example above, the
--task-level map, i.e. /proc/PID/task/TID/maps for thread 1001 will look like this:
--
--08048000-08049000 r-xp 00000000 03:00 8312       /opt/test
--08049000-0804a000 rw-p 00001000 03:00 8312       /opt/test
--0804a000-0806b000 rw-p 00000000 00:00 0          [heap]
--a7cb1000-a7cb2000 ---p 00000000 00:00 0
--a7cb2000-a7eb2000 rw-p 00000000 00:00 0
--a7eb2000-a7eb3000 ---p 00000000 00:00 0
--a7eb3000-a7ed5000 rw-p 00000000 00:00 0          [stack]
--a7ed5000-a8008000 r-xp 00000000 03:00 4222       /lib/libc.so.6
--a8008000-a800a000 r--p 00133000 03:00 4222       /lib/libc.so.6
--a800a000-a800b000 rw-p 00135000 03:00 4222       /lib/libc.so.6
--a800b000-a800e000 rw-p 00000000 00:00 0
--a800e000-a8022000 r-xp 00000000 03:00 14462      /lib/libpthread.so.0
--a8022000-a8023000 r--p 00013000 03:00 14462      /lib/libpthread.so.0
--a8023000-a8024000 rw-p 00014000 03:00 14462      /lib/libpthread.so.0
--a8024000-a8027000 rw-p 00000000 00:00 0
--a8027000-a8043000 r-xp 00000000 03:00 8317       /lib/ld-linux.so.2
--a8043000-a8044000 r--p 0001b000 03:00 8317       /lib/ld-linux.so.2
--a8044000-a8045000 rw-p 0001c000 03:00 8317       /lib/ld-linux.so.2
--aff35000-aff4a000 rw-p 00000000 00:00 0
--ffffe000-fffff000 r-xp 00000000 00:00 0          [vdso]
--
- The /proc/PID/smaps is an extension based on maps, showing the memory
- consumption for each of the process's mappings. For each of mappings there
- is a series of lines such as the following:
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -248,24 +248,15 @@ static int do_maps_open(struct inode *in
-  * /proc/PID/maps that is the stack of the main task.
-  */
- static int is_stack(struct proc_maps_private *priv,
--		    struct vm_area_struct *vma, int is_pid)
-+		    struct vm_area_struct *vma)
- {
--	int stack = 0;
--
--	if (is_pid) {
--		stack = vma->vm_start <= vma->vm_mm->start_stack &&
--			vma->vm_end >= vma->vm_mm->start_stack;
--	} else {
--		struct inode *inode = priv->inode;
--		struct task_struct *task;
--
--		rcu_read_lock();
--		task = pid_task(proc_pid(inode), PIDTYPE_PID);
--		if (task)
--			stack = vma_is_stack_for_task(vma, task);
--		rcu_read_unlock();
--	}
--	return stack;
-+	/*
-+	 * We make no effort to guess what a given thread considers to be
-+	 * its "stack".  It's not even well-defined for programs written
-+	 * languages like Go.
-+	 */
-+	return vma->vm_start <= vma->vm_mm->start_stack &&
-+		vma->vm_end >= vma->vm_mm->start_stack;
- }
- 
- static void
-@@ -332,7 +323,7 @@ show_map_vma(struct seq_file *m, struct
- 			goto done;
- 		}
- 
--		if (is_stack(priv, vma, is_pid))
-+		if (is_stack(priv, vma))
- 			name = "[stack]";
- 	}
- 
-@@ -1501,7 +1492,7 @@ static int show_numa_map(struct seq_file
- 		seq_path(m, &file->f_path, "\n\t= ");
- 	} else if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
- 		seq_puts(m, " heap");
--	} else if (is_stack(proc_priv, vma, is_pid)) {
-+	} else if (is_stack(proc_priv, vma)) {
- 		seq_puts(m, " stack");
- 	}
- 
---- a/fs/proc/task_nommu.c
-+++ b/fs/proc/task_nommu.c
-@@ -124,25 +124,17 @@ unsigned long task_statm(struct mm_struc
- }
- 
- static int is_stack(struct proc_maps_private *priv,
--		    struct vm_area_struct *vma, int is_pid)
-+		    struct vm_area_struct *vma)
- {
- 	struct mm_struct *mm = vma->vm_mm;
--	int stack = 0;
- 
--	if (is_pid) {
--		stack = vma->vm_start <= mm->start_stack &&
--			vma->vm_end >= mm->start_stack;
--	} else {
--		struct inode *inode = priv->inode;
--		struct task_struct *task;
--
--		rcu_read_lock();
--		task = pid_task(proc_pid(inode), PIDTYPE_PID);
--		if (task)
--			stack = vma_is_stack_for_task(vma, task);
--		rcu_read_unlock();
--	}
--	return stack;
-+	/*
-+	 * We make no effort to guess what a given thread considers to be
-+	 * its "stack".  It's not even well-defined for programs written
-+	 * languages like Go.
-+	 */
-+	return vma->vm_start <= mm->start_stack &&
-+		vma->vm_end >= mm->start_stack;
- }
- 
- /*
-@@ -184,7 +176,7 @@ static int nommu_vma_show(struct seq_fil
- 	if (file) {
- 		seq_pad(m, ' ');
- 		seq_path(m, &file->f_path, "");
--	} else if (mm && is_stack(priv, vma, is_pid)) {
-+	} else if (mm && is_stack(priv, vma)) {
- 		seq_pad(m, ' ');
- 		seq_printf(m, "[stack]");
- 	}
+Thanks a lot!
+Joey Lee 
