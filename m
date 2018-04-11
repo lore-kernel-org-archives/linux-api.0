@@ -1,103 +1,76 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH] mmap.2: document new MAP_FIXED_NOREPLACE flag
-Date: Wed, 11 Apr 2018 18:40:09 +0200
-Message-ID: <CAG48ez2wYqxJEHgZCz5g6ZYBY4_qDcYWSGAErC8pUzmrW62rug@mail.gmail.com>
-References: <20180411120452.1736-1-mhocko@kernel.org> <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
- <20180411163631.GL23400@dhcp22.suse.cz>
+Subject: Re: [PATCH 01/24] Add the ability to lock down access to the running
+ kernel image
+Date: Wed, 11 Apr 2018 18:44:54 +0200
+Message-ID: <CAG48ez3U3pf4O8Yc1y-+T=Dcc-N-KP0Zd_1GS44p--zxockJ1Q@mail.gmail.com>
+References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180411163631.GL23400@dhcp22.suse.cz>
+In-Reply-To: <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, kernel list <linux-kernel@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 11, 2018 at 6:36 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> On Wed 11-04-18 17:37:46, Jann Horn wrote:
->> On Wed, Apr 11, 2018 at 2:04 PM,  <mhocko@kernel.org> wrote:
->> > From: Michal Hocko <mhocko@suse.com>
->> >
->> > 4.17+ kernels offer a new MAP_FIXED_NOREPLACE flag which allows the caller to
->> > atomicaly probe for a given address range.
->> >
->> > [wording heavily updated by John Hubbard <jhubbard@nvidia.com>]
->> > Signed-off-by: Michal Hocko <mhocko@suse.com>
->> > ---
->> > Hi,
->> > Andrew's sent the MAP_FIXED_NOREPLACE to Linus for the upcoming merge
->> > window. So here we go with the man page update.
->> >
->> >  man2/mmap.2 | 27 +++++++++++++++++++++++++++
->> >  1 file changed, 27 insertions(+)
->> >
->> > diff --git a/man2/mmap.2 b/man2/mmap.2
->> > index ea64eb8f0dcc..f702f3e4eba2 100644
->> > --- a/man2/mmap.2
->> > +++ b/man2/mmap.2
->> > @@ -261,6 +261,27 @@ Examples include
->> >  and the PAM libraries
->> >  .UR http://www.linux-pam.org
->> >  .UE .
->> > +Newer kernels
->> > +(Linux 4.17 and later) have a
->> > +.B MAP_FIXED_NOREPLACE
->> > +option that avoids the corruption problem; if available, MAP_FIXED_NOREPLACE
->> > +should be preferred over MAP_FIXED.
->>
->> This still looks wrong to me. There are legitimate uses for MAP_FIXED,
->> and for most users of MAP_FIXED that I'm aware of, MAP_FIXED_NOREPLACE
->> wouldn't work while MAP_FIXED works perfectly well.
->>
->> MAP_FIXED is for when you have already reserved the targeted memory
->> area using another VMA; MAP_FIXED_NOREPLACE is for when you haven't.
->> Please don't make it sound as if MAP_FIXED is always wrong.
+On Wed, Apr 11, 2018 at 6:24 PM, David Howells <dhowells@redhat.com> wrote:
+> Provide a single call to allow kernel code to determine whether the system
+> should be locked down, thereby disallowing various accesses that might
+> allow the running kernel image to be changed, including:
 >
-> Well, this was suggested by John. I think, nobody is objecting that
-> MAP_FIXED has legitimate usecases. The above text just follows up on
-> the previous section which emphasises the potential memory corruption
-> problems and it suggests that a new flag is safe with that regards.
+>  - /dev/mem and similar
+>  - Loading of unauthorised modules
+>  - Fiddling with MSR registers
+>  - Suspend to disk managed by the kernel
+>  - Use of device DMA
 >
-> If you have specific wording that would be better I am open for changes.
+> Two kernel configuration options are provided:
+>
+>  (*) CONFIG_LOCK_DOWN_KERNEL
+>
+>      This makes lockdown available and applies it to all the points that
+>      need to be locked down if the mode is set.  Lockdown mode can be
+>      enabled by providing:
+>
+>         lockdown=1
+>
+>      on the command line.
+>
+>  (*) CONFIG_LOCK_DOWN_MANDATORY
+>
+>      This forces lockdown on at compile time, overriding the command line
+>      option.
+>
+> init_lockdown() is used as a hook from which lockdown can be managed in
+> future.  It has to be called from arch setup code before things like ACPI
+> are enabled.
+>
+> Note that, with the other changes in this series, if lockdown mode is
+> enabled, the kernel will not be able to use certain drivers as the ability
+> to manually configure hardware parameters would then be prohibited.  This
+> primarily applies to ISA hardware devices.
+>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> ---
+[...]
+> diff --git a/security/lock_down.c b/security/lock_down.c
+> new file mode 100644
+> index 000000000000..f35ffdd096ad
+> --- /dev/null
+> +++ b/security/lock_down.c
+[...]
+> +/*
+> + * Lock the kernel down from very early in the arch setup.  This must happen
+> + * prior to things like ACPI being initialised.
+> + */
 
-I guess I'd probably also want to change the previous text; so I
-should probably send a followup patch once this one has landed.
+Pedantic nit: I think this comment is wrong now? This function
+actually just prints stuff.
 
->> > +.TP
->> > +.BR MAP_FIXED_NOREPLACE " (since Linux 4.17)"
->> > +Similar to MAP_FIXED with respect to the
->> > +.I
->> > +addr
->> > +enforcement, but different in that MAP_FIXED_NOREPLACE never clobbers a pre-existing
->> > +mapped range. If the requested range would collide with an existing
->> > +mapping, then this call fails with
->> > +.B EEXIST.
->> > +This flag can therefore be used as a way to atomically (with respect to other
->> > +threads) attempt to map an address range: one thread will succeed; all others
->> > +will report failure. Please note that older kernels which do not recognize this
->> > +flag will typically (upon detecting a collision with a pre-existing mapping)
->> > +fall back to a "non-MAP_FIXED" type of behavior: they will return an address that
->> > +is different than the requested one. Therefore, backward-compatible software
->> > +should check the returned address against the requested address.
->> >  .TP
->> >  .B MAP_GROWSDOWN
->> >  This flag is used for stacks.
->> > @@ -487,6 +508,12 @@ is not a valid file descriptor (and
->> >  .B MAP_ANONYMOUS
->> >  was not set).
->> >  .TP
->> > +.B EEXIST
->> > +range covered by
->> > +.IR addr ,
->> > +.IR length
->> > +is clashing with an existing mapping.
->>
->> Maybe add something like ", and MAP_FIXED_NOREPLACE was specified"? I
->> think most manpages explicitly document which error conditions can be
->> triggered by which flags.
->
-> sure, no objection from me.
->
-> --
-> Michal Hocko
-> SUSE Labs
+> +void __init init_lockdown(void)
+> +{
+> +#ifdef CONFIG_LOCK_DOWN_MANDATORY
+> +       pr_notice("Kernel is locked down from config; see man kernel_lockdown.7\n");
+> +#endif
+> +}
