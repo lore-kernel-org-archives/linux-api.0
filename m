@@ -1,67 +1,69 @@
-From: Justin Forbes <jmforbes@linuxtx.org>
-Subject: Re: [PATCH 01/24] Add the ability to lock down access to the running
- kernel image
-Date: Wed, 11 Apr 2018 13:35:29 -0500
-Message-ID: <CAFxkdApe5gFJC2RZi-aQ0jTMDabi3QR5AnJde5QT7aVfTvzoNQ@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 06/24] kexec_load: Disable at runtime if the kernel is locked down
+Date: Wed, 11 Apr 2018 14:00:17 -0500
+Message-ID: <87po35k1q6.fsf@xmission.com>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
- <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk> <CA+55aFzPo-dip8dgyo0U+g5qai9SAJU+D1c+AFJ0zV9_PBAB8Q@mail.gmail.com>
+        <152346391877.4030.6270466586590461223.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFzPo-dip8dgyo0U+g5qai9SAJU+D1c+AFJ0zV9_PBAB8Q@mail.gmail.com>
+In-Reply-To: <152346391877.4030.6270466586590461223.stgit@warthog.procyon.org.uk>
+        (David Howells's message of "Wed, 11 Apr 2018 17:25:18 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: David Howells <dhowells@redhat.com>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 11, 2018 at 1:09 PM, Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> On Wed, Apr 11, 2018 at 9:24 AM, David Howells <dhowells@redhat.com> wrote:
->> Provide a single call to allow kernel code to determine whether the system
->> should be locked down, thereby disallowing various accesses that might
->> allow the running kernel image to be changed, including:
->>
->>  - /dev/mem and similar
->>  - Loading of unauthorised modules
->>  - Fiddling with MSR registers
->>  - Suspend to disk managed by the kernel
->>  - Use of device DMA
->
-> So what I stlll absolutely detest about  this series is that I think
-> many of these things should simply be done as separate config options.
->
-> For example, if the distro is sure that it doesn't need /dev/mem, then
-> why the hell is  this tied to "lockdown" that then may have to be
-> disabled because *other* changes may not be acceptable (eg people may
-> need that device DMA, or whatever).
->
-> If that /dev/mem access prevention was just instead done as an even
-> stricter mode of the existing CONFIG_STRICT_DEVMEM, it could just be
-> enabled unconditionally.
->
-> So none of these patches raise my hackles per se. But what continues
-> to makes me very very uncomfortable is how this is all tied together.
->
-> Why is this one magical mode that then - because it has such a big
-> impact - has to be enabled/disabled as a single magical mode and with
-> very odd rules?
->
-> I think a lot of people would be happier if this wasn't so incestuous
-> and mixing together independent things under one name, and one flag.
->
-> I think a lot of the secure boot problems were exacerbated by that mixup.
->
-> So I would seriously ask that the distros that have been using these
-> patches look at which parts of lockdown they could make unconditional
-> (because it doesn't break machines), and which ones need that escape
-> clause.
->
+David Howells <dhowells@redhat.com> writes:
 
-Optionally, it might make sense to add separate config options for
-each of these pieces which can be unconditionally enabled, and a
-separate option for secure boot which selects all of them? As much as
-I hate select, it might make sense here.  Of course the flip side to
-that, is users no longer have one big switch "turn off secure boot"
-which turns it all off in case of trouble.
+> From: Matthew Garrett <mjg59@srcf.ucam.org>
+>
+> The kexec_load() syscall permits the loading and execution of arbitrary
+> code in ring 0, which is something that lock-down is meant to prevent. It
+> makes sense to disable kexec_load() in this situation.
+>
+> This does not affect kexec_file_load() syscall which can check for a
+> signature on the image to be booted.
 
-Justin
+Maybing I am missing it but I am not seeing anything that would require
+kexec_file_load be configured such that it checks the loaded kernel.
+
+Without that I don't see the point of disabling kexec_load.
+
+Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
+
+
+Eric
+
+
+
+
+> Signed-off-by: Matthew Garrett <mjg59@srcf.ucam.org>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> Acked-by: Dave Young <dyoung@redhat.com>
+> Reviewed-by: "Lee, Chun-Yi" <jlee@suse.com>
+> Reviewed-by: James Morris <james.l.morris@oracle.com>
+> cc: kexec@lists.infradead.org
+> ---
+>
+>  kernel/kexec.c |    7 +++++++
+>  1 file changed, 7 insertions(+)
+>
+> diff --git a/kernel/kexec.c b/kernel/kexec.c
+> index aed8fb2564b3..1553ac765e73 100644
+> --- a/kernel/kexec.c
+> +++ b/kernel/kexec.c
+> @@ -199,6 +199,13 @@ static inline int kexec_load_check(unsigned long nr_segments,
+>  	if (!capable(CAP_SYS_BOOT) || kexec_load_disabled)
+>  		return -EPERM;
+>  
+> +	/*
+> +	 * kexec can be used to circumvent module loading restrictions, so
+> +	 * prevent loading in that case
+> +	 */
+> +	if (kernel_is_locked_down("kexec of unsigned images"))
+> +		return -EPERM;
+> +
+>  	/*
+>  	 * Verify we have a legal set of flags
+>  	 * This leaves us room for future extensions.
