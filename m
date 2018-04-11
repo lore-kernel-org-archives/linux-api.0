@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 10/24] x86: Lock down IO port access when the kernel is
+Subject: [PATCH 11/24] x86/msr: Restrict MSR access when the kernel is
  locked down
-Date: Wed, 11 Apr 2018 17:25:44 +0100
-Message-ID: <152346394480.4030.1320576522708821046.stgit@warthog.procyon.org.uk>
+Date: Wed, 11 Apr 2018 17:25:51 +0100
+Message-ID: <152346395124.4030.8504337214384655170.stgit@warthog.procyon.org.uk>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -16,45 +16,49 @@ List-Id: linux-api@vger.kernel.org
 
 From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-IO port access would permit users to gain access to PCI configuration
-registers, which in turn (on a lot of hardware) give access to MMIO
-register space. This would potentially permit root to trigger arbitrary
-DMA, so lock it down by default.
+Writing to MSRs should not be allowed if the kernel is locked down, since
+it could lead to execution of arbitrary code in kernel mode.  Based on a
+patch by Kees Cook.
 
-This also implicitly locks down the KDADDIO, KDDELIO, KDENABIO and
-KDDISABIO console ioctls.
+MSR accesses are logged for the purposes of building up a whitelist as per
+Alan Cox's suggestion.
 
 Signed-off-by: Matthew Garrett <mjg59@srcf.ucam.org>
 Signed-off-by: David Howells <dhowells@redhat.com>
+Acked-by: Kees Cook <keescook@chromium.org>
 Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
 Reviewed-by: "Lee, Chun-Yi" <jlee@suse.com>
 cc: x86@kernel.org
 ---
 
- arch/x86/kernel/ioport.c |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ arch/x86/kernel/msr.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/arch/x86/kernel/ioport.c b/arch/x86/kernel/ioport.c
-index 0fe1c8782208..abc702a6ae9c 100644
---- a/arch/x86/kernel/ioport.c
-+++ b/arch/x86/kernel/ioport.c
-@@ -31,7 +31,8 @@ long ksys_ioperm(unsigned long from, unsigned long num, int turn_on)
+diff --git a/arch/x86/kernel/msr.c b/arch/x86/kernel/msr.c
+index ef688804f80d..dfb61d358196 100644
+--- a/arch/x86/kernel/msr.c
++++ b/arch/x86/kernel/msr.c
+@@ -84,6 +84,11 @@ static ssize_t msr_write(struct file *file, const char __user *buf,
+ 	int err = 0;
+ 	ssize_t bytes = 0;
  
- 	if ((from + num <= from) || (from + num > IO_BITMAP_BITS))
- 		return -EINVAL;
--	if (turn_on && !capable(CAP_SYS_RAWIO))
-+	if (turn_on && (!capable(CAP_SYS_RAWIO) ||
-+			kernel_is_locked_down("ioperm")))
- 		return -EPERM;
++	if (kernel_is_locked_down("Direct MSR access")) {
++		pr_info("Direct access to MSR %x\n", reg);
++		return -EPERM;
++	}
++
+ 	if (count % 8)
+ 		return -EINVAL;	/* Invalid chunk size */
  
- 	/*
-@@ -126,7 +127,8 @@ SYSCALL_DEFINE1(iopl, unsigned int, level)
- 		return -EINVAL;
- 	/* Trying to gain more privileges? */
- 	if (level > old) {
--		if (!capable(CAP_SYS_RAWIO))
-+		if (!capable(CAP_SYS_RAWIO) ||
-+		    kernel_is_locked_down("iopl"))
- 			return -EPERM;
- 	}
- 	regs->flags = (regs->flags & ~X86_EFLAGS_IOPL) |
+@@ -135,6 +140,11 @@ static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
+ 			err = -EFAULT;
+ 			break;
+ 		}
++		if (kernel_is_locked_down("Direct MSR access")) {
++			pr_info("Direct access to MSR %x\n", regs[1]); /* Display %ecx */
++			err = -EPERM;
++			break;
++		}
+ 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
+ 		if (err)
+ 			break;
