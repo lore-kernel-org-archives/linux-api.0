@@ -1,8 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 18/24] Lock down module params that specify hardware
- parameters (eg. ioport)
-Date: Wed, 11 Apr 2018 17:26:36 +0100
-Message-ID: <152346399627.4030.8043878470312297727.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 19/24] x86/mmiotrace: Lock down the testmmiotrace module
+Date: Wed, 11 Apr 2018 17:26:42 +0100
+Message-ID: <152346400272.4030.10900275407737137506.stgit@warthog.procyon.org.uk>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,78 +13,32 @@ To: torvalds@linux-foundation.org
 Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Provided an annotation for module parameters that specify hardware
-parameters (such as io ports, iomem addresses, irqs, dma channels, fixed
-dma buffers and other types).
+The testmmiotrace module shouldn't be permitted when the kernel is locked
+down as it can be used to arbitrarily read and write MMIO space.
 
-Suggested-by: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
-Signed-off-by: David Howells <dhowells@redhat.com>
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: David Howells <dhowells@redhat.com
+cc: Thomas Gleixner <tglx@linutronix.de>
+cc: Steven Rostedt <rostedt@goodmis.org>
+cc: Ingo Molnar <mingo@kernel.org>
+cc: "H. Peter Anvin" <hpa@zytor.com>
+cc: x86@kernel.org
 ---
 
- kernel/params.c |   26 +++++++++++++++++++++-----
- 1 file changed, 21 insertions(+), 5 deletions(-)
+ arch/x86/mm/testmmiotrace.c |    3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/kernel/params.c b/kernel/params.c
-index cc9108c2a1fd..2c08c4aa376b 100644
---- a/kernel/params.c
-+++ b/kernel/params.c
-@@ -108,13 +108,19 @@ bool parameq(const char *a, const char *b)
- 	return parameqn(a, b, strlen(a)+1);
- }
- 
--static void param_check_unsafe(const struct kernel_param *kp)
-+static bool param_check_unsafe(const struct kernel_param *kp,
-+			       const char *doing)
+diff --git a/arch/x86/mm/testmmiotrace.c b/arch/x86/mm/testmmiotrace.c
+index f6ae6830b341..bbaad357f5d7 100644
+--- a/arch/x86/mm/testmmiotrace.c
++++ b/arch/x86/mm/testmmiotrace.c
+@@ -115,6 +115,9 @@ static int __init init(void)
  {
- 	if (kp->flags & KERNEL_PARAM_FL_UNSAFE) {
- 		pr_warn("Setting dangerous option %s - tainting kernel\n",
- 			kp->name);
- 		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
- 	}
+ 	unsigned long size = (read_far) ? (8 << 20) : (16 << 10);
+ 
++	if (kernel_is_locked_down("MMIO trace testing"))
++		return -EPERM;
 +
-+	if (kp->flags & KERNEL_PARAM_FL_HWPARAM &&
-+	    kernel_is_locked_down("Command line-specified device addresses, irqs and dma channels"))
-+		return false;
-+	return true;
- }
- 
- static int parse_one(char *param,
-@@ -144,8 +150,10 @@ static int parse_one(char *param,
- 			pr_debug("handling %s with %p\n", param,
- 				params[i].ops->set);
- 			kernel_param_lock(params[i].mod);
--			param_check_unsafe(&params[i]);
--			err = params[i].ops->set(val, &params[i]);
-+			if (param_check_unsafe(&params[i], doing))
-+				err = params[i].ops->set(val, &params[i]);
-+			else
-+				err = -EPERM;
- 			kernel_param_unlock(params[i].mod);
- 			return err;
- 		}
-@@ -553,6 +561,12 @@ static ssize_t param_attr_show(struct module_attribute *mattr,
- 	return count;
- }
- 
-+#ifdef CONFIG_MODULES
-+#define mod_name(mod) (mod)->name
-+#else
-+#define mod_name(mod) "unknown"
-+#endif
-+
- /* sysfs always hands a nul-terminated string in buf.  We rely on that. */
- static ssize_t param_attr_store(struct module_attribute *mattr,
- 				struct module_kobject *mk,
-@@ -565,8 +579,10 @@ static ssize_t param_attr_store(struct module_attribute *mattr,
- 		return -EPERM;
- 
- 	kernel_param_lock(mk->mod);
--	param_check_unsafe(attribute->param);
--	err = attribute->param->ops->set(buf, attribute->param);
-+	if (param_check_unsafe(attribute->param, mod_name(mk->mod)))
-+		err = attribute->param->ops->set(buf, attribute->param);
-+	else
-+		err = -EPERM;
- 	kernel_param_unlock(mk->mod);
- 	if (!err)
- 		return len;
+ 	if (mmio_address == 0) {
+ 		pr_err("you have to use the module argument mmio_address.\n");
+ 		pr_err("DO NOT LOAD THIS MODULE UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!\n");
