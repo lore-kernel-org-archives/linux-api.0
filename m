@@ -1,30 +1,73 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 02/24] Add a SysRq option to lift kernel lockdown
-Date: Wed, 11 Apr 2018 19:05:56 +0200
-Message-ID: <CAG48ez2TN_fLgyiOZn5aTpKp9UTbJShO4iM=jHo3SJ7s6CW4Xg@mail.gmail.com>
-References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
- <152346389240.4030.11187964053014260180.stgit@warthog.procyon.org.uk>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mmap.2: document new MAP_FIXED_NOREPLACE flag
+Date: Wed, 11 Apr 2018 19:06:38 +0200
+Message-ID: <20180411170356.GM23400@dhcp22.suse.cz>
+References: <20180411120452.1736-1-mhocko@kernel.org>
+ <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
+ <20180411163631.GL23400@dhcp22.suse.cz>
+ <CAG48ez2wYqxJEHgZCz5g6ZYBY4_qDcYWSGAErC8pUzmrW62rug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <152346389240.4030.11187964053014260180.stgit@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez2wYqxJEHgZCz5g6ZYBY4_qDcYWSGAErC8pUzmrW62rug@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, kernel list <linux-kernel@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>
+To: Jann Horn <jannh@google.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 11, 2018 at 6:24 PM, David Howells <dhowells@redhat.com> wrote:
-> From: Kyle McMartin <kyle@redhat.com>
->
-> Make an option to provide a sysrq key that will lift the kernel lockdown,
-> thereby allowing the running kernel image to be accessed and modified.
->
-> On x86 this is triggered with SysRq+x, but this key may not be available on
-> all arches, so it is set by setting LOCKDOWN_LIFT_KEY in asm/setup.h.
-> Since this macro must be defined in an arch to be able to use this facility
-> for that arch, the Kconfig option is restricted to arches that support it.
+On Wed 11-04-18 18:40:09, Jann Horn wrote:
+> On Wed, Apr 11, 2018 at 6:36 PM, Michal Hocko <mhocko@kernel.org> wrote:
+> > On Wed 11-04-18 17:37:46, Jann Horn wrote:
+> >> On Wed, Apr 11, 2018 at 2:04 PM,  <mhocko@kernel.org> wrote:
+> >> > From: Michal Hocko <mhocko@suse.com>
+> >> >
+> >> > 4.17+ kernels offer a new MAP_FIXED_NOREPLACE flag which allows the caller to
+> >> > atomicaly probe for a given address range.
+> >> >
+> >> > [wording heavily updated by John Hubbard <jhubbard@nvidia.com>]
+> >> > Signed-off-by: Michal Hocko <mhocko@suse.com>
+> >> > ---
+> >> > Hi,
+> >> > Andrew's sent the MAP_FIXED_NOREPLACE to Linus for the upcoming merge
+> >> > window. So here we go with the man page update.
+> >> >
+> >> >  man2/mmap.2 | 27 +++++++++++++++++++++++++++
+> >> >  1 file changed, 27 insertions(+)
+> >> >
+> >> > diff --git a/man2/mmap.2 b/man2/mmap.2
+> >> > index ea64eb8f0dcc..f702f3e4eba2 100644
+> >> > --- a/man2/mmap.2
+> >> > +++ b/man2/mmap.2
+> >> > @@ -261,6 +261,27 @@ Examples include
+> >> >  and the PAM libraries
+> >> >  .UR http://www.linux-pam.org
+> >> >  .UE .
+> >> > +Newer kernels
+> >> > +(Linux 4.17 and later) have a
+> >> > +.B MAP_FIXED_NOREPLACE
+> >> > +option that avoids the corruption problem; if available, MAP_FIXED_NOREPLACE
+> >> > +should be preferred over MAP_FIXED.
+> >>
+> >> This still looks wrong to me. There are legitimate uses for MAP_FIXED,
+> >> and for most users of MAP_FIXED that I'm aware of, MAP_FIXED_NOREPLACE
+> >> wouldn't work while MAP_FIXED works perfectly well.
+> >>
+> >> MAP_FIXED is for when you have already reserved the targeted memory
+> >> area using another VMA; MAP_FIXED_NOREPLACE is for when you haven't.
+> >> Please don't make it sound as if MAP_FIXED is always wrong.
+> >
+> > Well, this was suggested by John. I think, nobody is objecting that
+> > MAP_FIXED has legitimate usecases. The above text just follows up on
+> > the previous section which emphasises the potential memory corruption
+> > problems and it suggests that a new flag is safe with that regards.
+> >
+> > If you have specific wording that would be better I am open for changes.
+> 
+> I guess I'd probably also want to change the previous text; so I
+> should probably send a followup patch once this one has landed.
 
-In the current form, this is probably incompatible with USB/IP (which
-Debian seems to be shipping as a module by default), right? And
-perhaps also with dummy_hcd (if I understand correctly what it's
-doing)?
+yeah, that sounds like a better plan.
+-- 
+Michal Hocko
+SUSE Labs
