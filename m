@@ -1,45 +1,56 @@
-From: Mimi Zohar <zohar@linux.vnet.ibm.com>
-Subject: Re: [PATCH 06/24] kexec_load: Disable at runtime if the kernel is
- locked down
-Date: Wed, 11 Apr 2018 16:09:35 -0400
-Message-ID: <1523477375.5268.78.camel@linux.vnet.ibm.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is locked down
+Date: Wed, 11 Apr 2018 13:50:12 -0500
+Message-ID: <87zi29k26z.fsf@xmission.com>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
-         <152346391877.4030.6270466586590461223.stgit@warthog.procyon.org.uk>
-         <87po35k1q6.fsf@xmission.com>
+        <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87po35k1q6.fsf@xmission.com>
+In-Reply-To: <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
+        (David Howells's message of "Wed, 11 Apr 2018 17:27:16 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, David Howells <dhowells@redhat.com>
+To: David Howells <dhowells@redhat.com>
 Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2018-04-11 at 14:00 -0500, Eric W. Biederman wrote:
-> David Howells <dhowells@redhat.com> writes:
-> 
-> > From: Matthew Garrett <mjg59@srcf.ucam.org>
-> >
-> > The kexec_load() syscall permits the loading and execution of arbitrary
-> > code in ring 0, which is something that lock-down is meant to prevent. It
-> > makes sense to disable kexec_load() in this situation.
-> >
-> > This does not affect kexec_file_load() syscall which can check for a
-> > signature on the image to be booted.
-> 
-> Maybing I am missing it but I am not seeing anything that would require
-> kexec_file_load be configured such that it checks the loaded kernel.
-> 
-> Without that I don't see the point of disabling kexec_load.
-> 
-> Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
+David Howells <dhowells@redhat.com> writes:
 
-The IMA "secure boot" policy requires the kexec image to be signed.
- This call to kernel_is_locked_down() could be replaced with a call
-to security_kernel_read_file(NULL, READING_KEXEC_IMAGE).
+> Disallow opening of debugfs files that might be used to muck around when
+> the kernel is locked down as various drivers give raw access to hardware
+> through debugfs.  Given the effort of auditing all 2000 or so files and
+> manually fixing each one as necessary, I've chosen to apply a heuristic
+> instead.  The following changes are made:
+>
+>  (1) chmod and chown are disallowed on debugfs objects (though the root dir
+>      can be modified by mount and remount, but I'm not worried about that).
+>
+>  (2) When the kernel is locked down, only files with the following criteria
+>      are permitted to be opened:
+>
+> 	- The file must have mode 00444
+> 	- The file must not have ioctl methods
+> 	- The file must not have mmap
+>
+>  (3) When the kernel is locked down, files may only be opened for reading.
+>
+> Normal device interaction should be done through configfs, sysfs or a
+> miscdev, not debugfs.
 
-It would be similar to the existing init_module syscall calling
-security_kernel_read_file().
+> Note that this makes it unnecessary to specifically lock down show_dsts(),
+> show_devs() and show_call() in the asus-wmi driver.
+>
+> I would actually prefer to lock down all files by default and have the
+> the files unlocked by the creator.  This is tricky to manage correctly,
+> though, as there are 19 creation functions and ~1600 call sites (some of
+> them in loops scanning tables).
 
-Mimi
+Why is mounting debugfs allowed at all?  Last I checked (it has been a while)
+the code quality of debugfs was fine for debugging but debugfs was not
+safe to mount on a production system.
+
+Maybe the code quality is better now but for a filesystem that is
+not supposed to be needed for developers letting us mount debugfs
+seems odd.
+
+Eric
