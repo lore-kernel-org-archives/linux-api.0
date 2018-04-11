@@ -1,69 +1,44 @@
-From: John Hubbard <jhubbard@nvidia.com>
-Subject: Re: [PATCH] mmap.2: document new MAP_FIXED_NOREPLACE flag
-Date: Wed, 11 Apr 2018 13:36:21 -0700
-Message-ID: <827ead33-5d93-7696-9c5e-1cd04f772476@nvidia.com>
-References: <20180411120452.1736-1-mhocko@kernel.org>
- <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is
+ locked down
+Date: Wed, 11 Apr 2018 22:33:08 +0200
+Message-ID: <20180411203308.GA10167@kroah.com>
+References: <20180411195436.GA7126@kroah.com>
+ <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
+ <12769.1523477356@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <12769.1523477356@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>, Michal Hocko <mhocko@kernel.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
+To: David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 04/11/2018 08:37 AM, Jann Horn wrote:
-> On Wed, Apr 11, 2018 at 2:04 PM,  <mhocko@kernel.org> wrote:
->> From: Michal Hocko <mhocko@suse.com>
->>
->> 4.17+ kernels offer a new MAP_FIXED_NOREPLACE flag which allows the caller to
->> atomicaly probe for a given address range.
->>
->> [wording heavily updated by John Hubbard <jhubbard@nvidia.com>]
->> Signed-off-by: Michal Hocko <mhocko@suse.com>
->> ---
->> Hi,
->> Andrew's sent the MAP_FIXED_NOREPLACE to Linus for the upcoming merge
->> window. So here we go with the man page update.
->>
->>  man2/mmap.2 | 27 +++++++++++++++++++++++++++
->>  1 file changed, 27 insertions(+)
->>
->> diff --git a/man2/mmap.2 b/man2/mmap.2
->> index ea64eb8f0dcc..f702f3e4eba2 100644
->> --- a/man2/mmap.2
->> +++ b/man2/mmap.2
->> @@ -261,6 +261,27 @@ Examples include
->>  and the PAM libraries
->>  .UR http://www.linux-pam.org
->>  .UE .
->> +Newer kernels
->> +(Linux 4.17 and later) have a
->> +.B MAP_FIXED_NOREPLACE
->> +option that avoids the corruption problem; if available, MAP_FIXED_NOREPLACE
->> +should be preferred over MAP_FIXED.
+On Wed, Apr 11, 2018 at 09:09:16PM +0100, David Howells wrote:
+> Greg KH <greg@kroah.com> wrote:
 > 
-> This still looks wrong to me. There are legitimate uses for MAP_FIXED,
-> and for most users of MAP_FIXED that I'm aware of, MAP_FIXED_NOREPLACE
-> wouldn't work while MAP_FIXED works perfectly well.
+> > Why not just disable debugfs entirely?  This half-hearted way to sorta
+> > lock it down is odd, it is meant to not be there at all, nothing in your
+> > normal system should ever depend on it.
+> > 
+> > So again just don't allow it to be mounted at all, much simpler and more
+> > obvious as to what is going on.
 > 
-> MAP_FIXED is for when you have already reserved the targeted memory
-> area using another VMA; MAP_FIXED_NOREPLACE is for when you haven't.
+> Yeah, I agree - and then I got complaints because it seems that it's been
+> abused to allow drivers and userspace components to communicate.
 
-That's a nice summary, I hope it shows up in your upcoming patch. I recall
-that we went back and forth, trying to find a balance of explaining
-this feature, without providing overly-elaborate examples (which I tend
-toward).
+With in-kernel code?  Please let me know and I'll go fix it up to not
+allow that, as that is not ok.
 
-> Please don't make it sound as if MAP_FIXED is always wrong.
-> 
+I do know of some bad examples of out-of-tree code abusing debugfs to do
+crazy things (battery level monitoring?), but that's their own fault...
 
-Agreed.
+debugfs is for DEBUGGING!  For anything you all feel should be "secure",
+then just disable it entirely.
 
 thanks,
--- 
-John Hubbard
-NVIDIA
+
+greg k-h
