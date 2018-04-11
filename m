@@ -1,73 +1,66 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] mmap.2: document new MAP_FIXED_NOREPLACE flag
-Date: Wed, 11 Apr 2018 19:06:38 +0200
-Message-ID: <20180411170356.GM23400@dhcp22.suse.cz>
-References: <20180411120452.1736-1-mhocko@kernel.org>
- <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
- <20180411163631.GL23400@dhcp22.suse.cz>
- <CAG48ez2wYqxJEHgZCz5g6ZYBY4_qDcYWSGAErC8pUzmrW62rug@mail.gmail.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH 18/24] Lock down module params that specify hardware
+ parameters (eg. ioport)
+Date: Wed, 11 Apr 2018 10:22:46 -0700
+Message-ID: <17b6d3ad-367c-be6f-40d8-a9f60c7edae3@infradead.org>
+References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346399627.4030.8043878470312297727.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez2wYqxJEHgZCz5g6ZYBY4_qDcYWSGAErC8pUzmrW62rug@mail.gmail.com>
+In-Reply-To: <152346399627.4030.8043878470312297727.stgit@warthog.procyon.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>, torvalds@linux-foundation.org
+Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 11-04-18 18:40:09, Jann Horn wrote:
-> On Wed, Apr 11, 2018 at 6:36 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> > On Wed 11-04-18 17:37:46, Jann Horn wrote:
-> >> On Wed, Apr 11, 2018 at 2:04 PM,  <mhocko@kernel.org> wrote:
-> >> > From: Michal Hocko <mhocko@suse.com>
-> >> >
-> >> > 4.17+ kernels offer a new MAP_FIXED_NOREPLACE flag which allows the caller to
-> >> > atomicaly probe for a given address range.
-> >> >
-> >> > [wording heavily updated by John Hubbard <jhubbard@nvidia.com>]
-> >> > Signed-off-by: Michal Hocko <mhocko@suse.com>
-> >> > ---
-> >> > Hi,
-> >> > Andrew's sent the MAP_FIXED_NOREPLACE to Linus for the upcoming merge
-> >> > window. So here we go with the man page update.
-> >> >
-> >> >  man2/mmap.2 | 27 +++++++++++++++++++++++++++
-> >> >  1 file changed, 27 insertions(+)
-> >> >
-> >> > diff --git a/man2/mmap.2 b/man2/mmap.2
-> >> > index ea64eb8f0dcc..f702f3e4eba2 100644
-> >> > --- a/man2/mmap.2
-> >> > +++ b/man2/mmap.2
-> >> > @@ -261,6 +261,27 @@ Examples include
-> >> >  and the PAM libraries
-> >> >  .UR http://www.linux-pam.org
-> >> >  .UE .
-> >> > +Newer kernels
-> >> > +(Linux 4.17 and later) have a
-> >> > +.B MAP_FIXED_NOREPLACE
-> >> > +option that avoids the corruption problem; if available, MAP_FIXED_NOREPLACE
-> >> > +should be preferred over MAP_FIXED.
-> >>
-> >> This still looks wrong to me. There are legitimate uses for MAP_FIXED,
-> >> and for most users of MAP_FIXED that I'm aware of, MAP_FIXED_NOREPLACE
-> >> wouldn't work while MAP_FIXED works perfectly well.
-> >>
-> >> MAP_FIXED is for when you have already reserved the targeted memory
-> >> area using another VMA; MAP_FIXED_NOREPLACE is for when you haven't.
-> >> Please don't make it sound as if MAP_FIXED is always wrong.
-> >
-> > Well, this was suggested by John. I think, nobody is objecting that
-> > MAP_FIXED has legitimate usecases. The above text just follows up on
-> > the previous section which emphasises the potential memory corruption
-> > problems and it suggests that a new flag is safe with that regards.
-> >
-> > If you have specific wording that would be better I am open for changes.
+On 04/11/2018 09:26 AM, David Howells wrote:
+> Provided an annotation for module parameters that specify hardware
+> parameters (such as io ports, iomem addresses, irqs, dma channels, fixed
+> dma buffers and other types).
 > 
-> I guess I'd probably also want to change the previous text; so I
-> should probably send a followup patch once this one has landed.
+> Suggested-by: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> ---
+> 
+>  kernel/params.c |   26 +++++++++++++++++++++-----
+>  1 file changed, 21 insertions(+), 5 deletions(-)
+> 
+> diff --git a/kernel/params.c b/kernel/params.c
+> index cc9108c2a1fd..2c08c4aa376b 100644
+> --- a/kernel/params.c
+> +++ b/kernel/params.c
+> @@ -108,13 +108,19 @@ bool parameq(const char *a, const char *b)
+>  	return parameqn(a, b, strlen(a)+1);
+>  }
+>  
+> -static void param_check_unsafe(const struct kernel_param *kp)
+> +static bool param_check_unsafe(const struct kernel_param *kp,
+> +			       const char *doing)
+>  {
+>  	if (kp->flags & KERNEL_PARAM_FL_UNSAFE) {
+>  		pr_warn("Setting dangerous option %s - tainting kernel\n",
+>  			kp->name);
+>  		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
+>  	}
+> +
+> +	if (kp->flags & KERNEL_PARAM_FL_HWPARAM &&
+> +	    kernel_is_locked_down("Command line-specified device addresses, irqs and dma channels"))
 
-yeah, that sounds like a better plan.
+s/dma/DMA/
+
+Other patches use PCI instead of pci, CIS instead of cis, MMIO instead of mmio,
+BPF instead of bpf, MSR instead of msr, etc...
+
+
+> +		return false;
+> +	return true;
+>  }
+>  
+>  static int parse_one(char *param,
+
+
 -- 
-Michal Hocko
-SUSE Labs
+~Randy
