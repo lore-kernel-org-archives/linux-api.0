@@ -1,56 +1,41 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is locked down
-Date: Wed, 11 Apr 2018 13:50:12 -0500
-Message-ID: <87zi29k26z.fsf@xmission.com>
+From: Miguel Ojeda <miguel.ojeda.sandonis@gmail.com>
+Subject: Re: [PATCH 01/24] Add the ability to lock down access to the running
+ kernel image
+Date: Wed, 11 Apr 2018 20:50:00 +0200
+Message-ID: <CANiq72n=b3ghgHzknhY=fNP9=f8fi8OuW7OPQHXQGJH_aWrT-w@mail.gmail.com>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
-        <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
+ <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk> <6a37b428-d9fb-12d5-8d36-8a032984af8c@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
-        (David Howells's message of "Wed, 11 Apr 2018 17:27:16 +0100")
+In-Reply-To: <6a37b428-d9fb-12d5-8d36-8a032984af8c@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-David Howells <dhowells@redhat.com> writes:
+On Wed, Apr 11, 2018 at 7:37 PM, Randy Dunlap <rdunlap@infradead.org> wrote:
+> On 04/11/2018 09:24 AM, David Howells wrote:
+>
+>> diff --git a/security/lock_down.c b/security/lock_down.c
+>> new file mode 100644
+>> index 000000000000..f35ffdd096ad
+>> --- /dev/null
+>> +++ b/security/lock_down.c
+>> @@ -0,0 +1,65 @@
+>> +/* Lock down the kernel
+>> + *
+>> + * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
+>> + * Written by David Howells (dhowells@redhat.com)
+>> + *
+>> + * This program is free software; you can redistribute it and/or
+>> + * modify it under the terms of the GNU General Public Licence
+>> + * as published by the Free Software Foundation; either version
+>> + * 2 of the Licence, or (at your option) any later version.
+>
+> fsf.org spells that Licence word as License. :)
 
-> Disallow opening of debugfs files that might be used to muck around when
-> the kernel is locked down as various drivers give raw access to hardware
-> through debugfs.  Given the effort of auditing all 2000 or so files and
-> manually fixing each one as necessary, I've chosen to apply a heuristic
-> instead.  The following changes are made:
->
->  (1) chmod and chown are disallowed on debugfs objects (though the root dir
->      can be modified by mount and remount, but I'm not worried about that).
->
->  (2) When the kernel is locked down, only files with the following criteria
->      are permitted to be opened:
->
-> 	- The file must have mode 00444
-> 	- The file must not have ioctl methods
-> 	- The file must not have mmap
->
->  (3) When the kernel is locked down, files may only be opened for reading.
->
-> Normal device interaction should be done through configfs, sysfs or a
-> miscdev, not debugfs.
+Given this is a new file, simply use the SPF identifier on top.
 
-> Note that this makes it unnecessary to specifically lock down show_dsts(),
-> show_devs() and show_call() in the asus-wmi driver.
->
-> I would actually prefer to lock down all files by default and have the
-> the files unlocked by the creator.  This is tricky to manage correctly,
-> though, as there are 19 creation functions and ~1600 call sites (some of
-> them in loops scanning tables).
-
-Why is mounting debugfs allowed at all?  Last I checked (it has been a while)
-the code quality of debugfs was fine for debugging but debugfs was not
-safe to mount on a production system.
-
-Maybe the code quality is better now but for a filesystem that is
-not supposed to be needed for developers letting us mount debugfs
-seems odd.
-
-Eric
+Cheers,
+Miguel
