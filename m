@@ -1,69 +1,57 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 06/24] kexec_load: Disable at runtime if the kernel is locked down
-Date: Wed, 11 Apr 2018 14:00:17 -0500
-Message-ID: <87po35k1q6.fsf@xmission.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is
+ locked down
+Date: Wed, 11 Apr 2018 21:54:36 +0200
+Message-ID: <20180411195436.GA7126@kroah.com>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
-        <152346391877.4030.6270466586590461223.stgit@warthog.procyon.org.uk>
+ <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <152346391877.4030.6270466586590461223.stgit@warthog.procyon.org.uk>
-        (David Howells's message of "Wed, 11 Apr 2018 17:25:18 +0100")
+Content-Disposition: inline
+In-Reply-To: <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Howells <dhowells@redhat.com>
 Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-David Howells <dhowells@redhat.com> writes:
+On Wed, Apr 11, 2018 at 05:27:16PM +0100, David Howells wrote:
+> Disallow opening of debugfs files that might be used to muck around when
+> the kernel is locked down as various drivers give raw access to hardware
+> through debugfs.  Given the effort of auditing all 2000 or so files and
+> manually fixing each one as necessary, I've chosen to apply a heuristic
+> instead.  The following changes are made:
+> 
+>  (1) chmod and chown are disallowed on debugfs objects (though the root dir
+>      can be modified by mount and remount, but I'm not worried about that).
+> 
+>  (2) When the kernel is locked down, only files with the following criteria
+>      are permitted to be opened:
+> 
+> 	- The file must have mode 00444
+> 	- The file must not have ioctl methods
+> 	- The file must not have mmap
+> 
+>  (3) When the kernel is locked down, files may only be opened for reading.
+> 
+> Normal device interaction should be done through configfs, sysfs or a
+> miscdev, not debugfs.
+> 
+> Note that this makes it unnecessary to specifically lock down show_dsts(),
+> show_devs() and show_call() in the asus-wmi driver.
+> 
+> I would actually prefer to lock down all files by default and have the
+> the files unlocked by the creator.  This is tricky to manage correctly,
+> though, as there are 19 creation functions and ~1600 call sites (some of
+> them in loops scanning tables).
 
-> From: Matthew Garrett <mjg59@srcf.ucam.org>
->
-> The kexec_load() syscall permits the loading and execution of arbitrary
-> code in ring 0, which is something that lock-down is meant to prevent. It
-> makes sense to disable kexec_load() in this situation.
->
-> This does not affect kexec_file_load() syscall which can check for a
-> signature on the image to be booted.
+Why not just disable debugfs entirely?  This half-hearted way to sorta
+lock it down is odd, it is meant to not be there at all, nothing in your
+normal system should ever depend on it.
 
-Maybing I am missing it but I am not seeing anything that would require
-kexec_file_load be configured such that it checks the loaded kernel.
+So again just don't allow it to be mounted at all, much simpler and more
+obvious as to what is going on.
 
-Without that I don't see the point of disabling kexec_load.
+thanks,
 
-Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
-
-
-Eric
-
-
-
-
-> Signed-off-by: Matthew Garrett <mjg59@srcf.ucam.org>
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> Acked-by: Dave Young <dyoung@redhat.com>
-> Reviewed-by: "Lee, Chun-Yi" <jlee@suse.com>
-> Reviewed-by: James Morris <james.l.morris@oracle.com>
-> cc: kexec@lists.infradead.org
-> ---
->
->  kernel/kexec.c |    7 +++++++
->  1 file changed, 7 insertions(+)
->
-> diff --git a/kernel/kexec.c b/kernel/kexec.c
-> index aed8fb2564b3..1553ac765e73 100644
-> --- a/kernel/kexec.c
-> +++ b/kernel/kexec.c
-> @@ -199,6 +199,13 @@ static inline int kexec_load_check(unsigned long nr_segments,
->  	if (!capable(CAP_SYS_BOOT) || kexec_load_disabled)
->  		return -EPERM;
->  
-> +	/*
-> +	 * kexec can be used to circumvent module loading restrictions, so
-> +	 * prevent loading in that case
-> +	 */
-> +	if (kernel_is_locked_down("kexec of unsigned images"))
-> +		return -EPERM;
-> +
->  	/*
->  	 * Verify we have a legal set of flags
->  	 * This leaves us room for future extensions.
+greg k-h
