@@ -1,172 +1,100 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is locked
- down
-Date: Wed, 11 Apr 2018 17:27:16 +0100
-Message-ID: <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
-References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mmap.2: document new MAP_FIXED_NOREPLACE flag
+Date: Wed, 11 Apr 2018 18:36:31 +0200
+Message-ID: <20180411163631.GL23400@dhcp22.suse.cz>
+References: <20180411120452.1736-1-mhocko@kernel.org>
+ <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez3BS5EtnrhFQUGYY9MKGOUHzFbhauJQd361uTwy2pBEeg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-security-module@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Disallow opening of debugfs files that might be used to muck around when
-the kernel is locked down as various drivers give raw access to hardware
-through debugfs.  Given the effort of auditing all 2000 or so files and
-manually fixing each one as necessary, I've chosen to apply a heuristic
-instead.  The following changes are made:
+On Wed 11-04-18 17:37:46, Jann Horn wrote:
+> On Wed, Apr 11, 2018 at 2:04 PM,  <mhocko@kernel.org> wrote:
+> > From: Michal Hocko <mhocko@suse.com>
+> >
+> > 4.17+ kernels offer a new MAP_FIXED_NOREPLACE flag which allows the caller to
+> > atomicaly probe for a given address range.
+> >
+> > [wording heavily updated by John Hubbard <jhubbard@nvidia.com>]
+> > Signed-off-by: Michal Hocko <mhocko@suse.com>
+> > ---
+> > Hi,
+> > Andrew's sent the MAP_FIXED_NOREPLACE to Linus for the upcoming merge
+> > window. So here we go with the man page update.
+> >
+> >  man2/mmap.2 | 27 +++++++++++++++++++++++++++
+> >  1 file changed, 27 insertions(+)
+> >
+> > diff --git a/man2/mmap.2 b/man2/mmap.2
+> > index ea64eb8f0dcc..f702f3e4eba2 100644
+> > --- a/man2/mmap.2
+> > +++ b/man2/mmap.2
+> > @@ -261,6 +261,27 @@ Examples include
+> >  and the PAM libraries
+> >  .UR http://www.linux-pam.org
+> >  .UE .
+> > +Newer kernels
+> > +(Linux 4.17 and later) have a
+> > +.B MAP_FIXED_NOREPLACE
+> > +option that avoids the corruption problem; if available, MAP_FIXED_NOREPLACE
+> > +should be preferred over MAP_FIXED.
+> 
+> This still looks wrong to me. There are legitimate uses for MAP_FIXED,
+> and for most users of MAP_FIXED that I'm aware of, MAP_FIXED_NOREPLACE
+> wouldn't work while MAP_FIXED works perfectly well.
+> 
+> MAP_FIXED is for when you have already reserved the targeted memory
+> area using another VMA; MAP_FIXED_NOREPLACE is for when you haven't.
+> Please don't make it sound as if MAP_FIXED is always wrong.
 
- (1) chmod and chown are disallowed on debugfs objects (though the root dir
-     can be modified by mount and remount, but I'm not worried about that).
+Well, this was suggested by John. I think, nobody is objecting that
+MAP_FIXED has legitimate usecases. The above text just follows up on
+the previous section which emphasises the potential memory corruption
+problems and it suggests that a new flag is safe with that regards.
 
- (2) When the kernel is locked down, only files with the following criteria
-     are permitted to be opened:
+If you have specific wording that would be better I am open for changes.
 
-	- The file must have mode 00444
-	- The file must not have ioctl methods
-	- The file must not have mmap
+> > +.TP
+> > +.BR MAP_FIXED_NOREPLACE " (since Linux 4.17)"
+> > +Similar to MAP_FIXED with respect to the
+> > +.I
+> > +addr
+> > +enforcement, but different in that MAP_FIXED_NOREPLACE never clobbers a pre-existing
+> > +mapped range. If the requested range would collide with an existing
+> > +mapping, then this call fails with
+> > +.B EEXIST.
+> > +This flag can therefore be used as a way to atomically (with respect to other
+> > +threads) attempt to map an address range: one thread will succeed; all others
+> > +will report failure. Please note that older kernels which do not recognize this
+> > +flag will typically (upon detecting a collision with a pre-existing mapping)
+> > +fall back to a "non-MAP_FIXED" type of behavior: they will return an address that
+> > +is different than the requested one. Therefore, backward-compatible software
+> > +should check the returned address against the requested address.
+> >  .TP
+> >  .B MAP_GROWSDOWN
+> >  This flag is used for stacks.
+> > @@ -487,6 +508,12 @@ is not a valid file descriptor (and
+> >  .B MAP_ANONYMOUS
+> >  was not set).
+> >  .TP
+> > +.B EEXIST
+> > +range covered by
+> > +.IR addr ,
+> > +.IR length
+> > +is clashing with an existing mapping.
+> 
+> Maybe add something like ", and MAP_FIXED_NOREPLACE was specified"? I
+> think most manpages explicitly document which error conditions can be
+> triggered by which flags.
 
- (3) When the kernel is locked down, files may only be opened for reading.
+sure, no objection from me.
 
-Normal device interaction should be done through configfs, sysfs or a
-miscdev, not debugfs.
-
-Note that this makes it unnecessary to specifically lock down show_dsts(),
-show_devs() and show_call() in the asus-wmi driver.
-
-I would actually prefer to lock down all files by default and have the
-the files unlocked by the creator.  This is tricky to manage correctly,
-though, as there are 19 creation functions and ~1600 call sites (some of
-them in loops scanning tables).
-
-Signed-off-by: David Howells <dhowells@redhat.com>
-cc: Andy Shevchenko <andy.shevchenko@gmail.com>
-cc: acpi4asus-user@lists.sourceforge.net
-cc: platform-driver-x86@vger.kernel.org
-cc: Matthew Garrett <mjg59@srcf.ucam.org>
-cc: Thomas Gleixner <tglx@linutronix.de>
----
-
- fs/debugfs/file.c  |   28 ++++++++++++++++++++++++++++
- fs/debugfs/inode.c |   30 ++++++++++++++++++++++++++++--
- 2 files changed, 56 insertions(+), 2 deletions(-)
-
-diff --git a/fs/debugfs/file.c b/fs/debugfs/file.c
-index 1f99678ff5d3..51cb894c21f2 100644
---- a/fs/debugfs/file.c
-+++ b/fs/debugfs/file.c
-@@ -136,6 +136,25 @@ void debugfs_file_put(struct dentry *dentry)
- }
- EXPORT_SYMBOL_GPL(debugfs_file_put);
- 
-+/*
-+ * Only permit access to world-readable files when the kernel is locked down.
-+ * We also need to exclude any file that has ways to write or alter it as root
-+ * can bypass the permissions check.
-+ */
-+static bool debugfs_is_locked_down(struct inode *inode,
-+				   struct file *filp,
-+				   const struct file_operations *real_fops)
-+{
-+	if ((inode->i_mode & 07777) == 0444 &&
-+	    !(filp->f_mode & FMODE_WRITE) &&
-+	    !real_fops->unlocked_ioctl &&
-+	    !real_fops->compat_ioctl &&
-+	    !real_fops->mmap)
-+		return false;
-+
-+	return kernel_is_locked_down("debugfs");
-+}
-+
- static int open_proxy_open(struct inode *inode, struct file *filp)
- {
- 	struct dentry *dentry = F_DENTRY(filp);
-@@ -147,6 +166,11 @@ static int open_proxy_open(struct inode *inode, struct file *filp)
- 		return r == -EIO ? -ENOENT : r;
- 
- 	real_fops = debugfs_real_fops(filp);
-+
-+	r = -EPERM;
-+	if (debugfs_is_locked_down(inode, filp, real_fops))
-+		goto out;
-+
- 	real_fops = fops_get(real_fops);
- 	if (!real_fops) {
- 		/* Huh? Module did not clean up after itself at exit? */
-@@ -272,6 +296,10 @@ static int full_proxy_open(struct inode *inode, struct file *filp)
- 		return r == -EIO ? -ENOENT : r;
- 
- 	real_fops = debugfs_real_fops(filp);
-+	r = -EPERM;
-+	if (debugfs_is_locked_down(inode, filp, real_fops))
-+		goto out;
-+
- 	real_fops = fops_get(real_fops);
- 	if (!real_fops) {
- 		/* Huh? Module did not cleanup after itself at exit? */
-diff --git a/fs/debugfs/inode.c b/fs/debugfs/inode.c
-index 13b01351dd1c..4daec17b8215 100644
---- a/fs/debugfs/inode.c
-+++ b/fs/debugfs/inode.c
-@@ -32,6 +32,31 @@ static struct vfsmount *debugfs_mount;
- static int debugfs_mount_count;
- static bool debugfs_registered;
- 
-+/*
-+ * Don't allow access attributes to be changed whilst the kernel is locked down
-+ * so that we can use the file mode as part of a heuristic to determine whether
-+ * to lock down individual files.
-+ */
-+static int debugfs_setattr(struct dentry *dentry, struct iattr *ia)
-+{
-+	if ((ia->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID)) &&
-+	    kernel_is_locked_down("debugfs"))
-+		return -EPERM;
-+	return simple_setattr(dentry, ia);
-+}
-+
-+static const struct inode_operations debugfs_file_inode_operations = {
-+	.setattr	= debugfs_setattr,
-+};
-+static const struct inode_operations debugfs_dir_inode_operations = {
-+	.lookup		= simple_lookup,
-+	.setattr	= debugfs_setattr,
-+};
-+static const struct inode_operations debugfs_symlink_inode_operations = {
-+	.get_link	= simple_get_link,
-+	.setattr	= debugfs_setattr,
-+};
-+
- static struct inode *debugfs_get_inode(struct super_block *sb)
- {
- 	struct inode *inode = new_inode(sb);
-@@ -356,6 +381,7 @@ static struct dentry *__debugfs_create_file(const char *name, umode_t mode,
- 	inode->i_mode = mode;
- 	inode->i_private = data;
- 
-+	inode->i_op = &debugfs_file_inode_operations;
- 	inode->i_fop = proxy_fops;
- 	dentry->d_fsdata = (void *)((unsigned long)real_fops |
- 				DEBUGFS_FSDATA_IS_REAL_FOPS_BIT);
-@@ -513,7 +539,7 @@ struct dentry *debugfs_create_dir(const char *name, struct dentry *parent)
- 		return failed_creating(dentry);
- 
- 	inode->i_mode = S_IFDIR | S_IRWXU | S_IRUGO | S_IXUGO;
--	inode->i_op = &simple_dir_inode_operations;
-+	inode->i_op = &debugfs_dir_inode_operations;
- 	inode->i_fop = &simple_dir_operations;
- 
- 	/* directory inodes start off with i_nlink == 2 (for "." entry) */
-@@ -608,7 +634,7 @@ struct dentry *debugfs_create_symlink(const char *name, struct dentry *parent,
- 		return failed_creating(dentry);
- 	}
- 	inode->i_mode = S_IFLNK | S_IRWXUGO;
--	inode->i_op = &simple_symlink_inode_operations;
-+	inode->i_op = &debugfs_symlink_inode_operations;
- 	inode->i_link = link;
- 	d_instantiate(dentry, inode);
- 	return end_creating(dentry);
+-- 
+Michal Hocko
+SUSE Labs
