@@ -1,138 +1,239 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 00/24] security: Add kernel lockdown
-Date: Wed, 11 Apr 2018 17:24:39 +0100
-Message-ID: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 01/24] Add the ability to lock down access to the running
+ kernel image
+Date: Wed, 11 Apr 2018 17:24:45 +0100
+Message-ID: <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk>
+References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: torvalds@linux-foundation.org
 Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Provide a single call to allow kernel code to determine whether the system
+should be locked down, thereby disallowing various accesses that might
+allow the running kernel image to be changed, including:
 
-Hi Linus,
+ - /dev/mem and similar
+ - Loading of unauthorised modules
+ - Fiddling with MSR registers
+ - Suspend to disk managed by the kernel
+ - Use of device DMA
 
-I've modified my lockdown mode patches to remove the EFI/secure-boot
-interaction and to ignore kexec.  Would you be willing to accept this?
+Two kernel configuration options are provided:
 
-David
+ (*) CONFIG_LOCK_DOWN_KERNEL
+
+     This makes lockdown available and applies it to all the points that
+     need to be locked down if the mode is set.  Lockdown mode can be
+     enabled by providing:
+
+	lockdown=1
+
+     on the command line.
+
+ (*) CONFIG_LOCK_DOWN_MANDATORY
+
+     This forces lockdown on at compile time, overriding the command line
+     option.
+
+init_lockdown() is used as a hook from which lockdown can be managed in
+future.  It has to be called from arch setup code before things like ACPI
+are enabled.
+
+Note that, with the other changes in this series, if lockdown mode is
+enabled, the kernel will not be able to use certain drivers as the ability
+to manually configure hardware parameters would then be prohibited.  This
+primarily applies to ISA hardware devices.
+
+Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
-Here's a set of patches to institute a "locked-down mode" in the kernel.
-If enabled, the lockdown can be triggered either by configuration (in which
-case it cannot be lifted) or by command line (lockdown=1).  In the latter
-case, there's an option to allow it to be lifted by a SysRq key on an
-attached keyboard.
-
-Three config options are provided:
-
- (1) CONFIG_LOCK_DOWN_KERNEL makes lockdown mode available.
-
- (2) CONFIG_LOCK_DOWN_MANDATORY builds the kernel with lockdown mode
-     enabled at compile time and removes the ability to disable it.
-
- (3) CONFIG_ALLOW_LOCKDOWN_LIFT_BY_SYSRQ will allow a SysRq combination to
-     lift the lockdown.  On x86 this is SysRq+x.  The keys must be pressed
-     on an attached keyboard.  Echoing into the trigger file won't work.
-
-Inside the kernel, kernel_is_locked_down() is used to check if the kernel
-is in lockdown mode.
-
-For the moment, there is only one mode that locks everything down.  Andy
-would prefer that there be two modes, one of which allows the kernel to be
-read, but not modified and the other which allows neither.  Modifying this
-later to allow what Andy wants wouldn't be particularly hard as there isn't
-much additional functionality that this would enable (ie. /dev/kmem,
-/dev/kcore, bpf and perf).
-
-A manual page, kernel_lockdown.7, is proposed, to which people will be
-directed by messages in dmesg.  This lists the features that are restricted
-amongst other things.
-
-The patches are tagged here:
-
-	git://git.kernel.org/pub/scm/linux/kernel/git/dhowells/linux-fs.git
-	tags/lockdown-20180410
-	
-The patches can be found here also:
-
-	http://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=lockdown
-
----
-David Howells (11):
-      Add the ability to lock down access to the running kernel image
-      Enforce module signatures if the kernel is locked down
-      Prohibit PCMCIA CIS storage when the kernel is locked down
-      Lock down TIOCSSERIAL
-      Lock down module params that specify hardware parameters (eg. ioport)
-      x86/mmiotrace: Lock down the testmmiotrace module
-      Lock down /proc/kcore
-      Lock down kprobes
-      bpf: Restrict kernel image access functions when the kernel is locked down
-      Lock down perf
-      debugfs: Restrict debugfs when the kernel is locked down
-
-Josh Boyer (2):
-      hibernate: Disable when the kernel is locked down
-      acpi: Ignore acpi_rsdp kernel param when the kernel has been locked down
-
-Kyle McMartin (1):
-      Add a SysRq option to lift kernel lockdown
-
-Linn Crosetto (2):
-      acpi: Disable ACPI table override if the kernel is locked down
-      acpi: Disable APEI error injection if the kernel is locked down
-
-Matthew Garrett (7):
-      Restrict /dev/{mem,kmem,port} when the kernel is locked down
-      kexec_load: Disable at runtime if the kernel is locked down
-      uswsusp: Disable when the kernel is locked down
-      PCI: Lock down BAR access when the kernel is locked down
-      x86: Lock down IO port access when the kernel is locked down
-      x86/msr: Restrict MSR access when the kernel is locked down
-      ACPI: Limit access to custom_method when the kernel is locked down
-
-Mimi Zohar (1):
-      ima: require secure_boot rules in lockdown mode
-
-
- arch/x86/include/asm/setup.h        |    2 +
- arch/x86/kernel/ioport.c            |    6 +-
- arch/x86/kernel/msr.c               |   10 +++
- arch/x86/kernel/setup.c             |    2 +
- arch/x86/mm/testmmiotrace.c         |    3 +
- drivers/acpi/apei/einj.c            |    3 +
- drivers/acpi/custom_method.c        |    3 +
- drivers/acpi/osl.c                  |    2 -
- drivers/acpi/tables.c               |    5 ++
- drivers/char/mem.c                  |    2 +
- drivers/input/misc/uinput.c         |    1 
- drivers/pci/pci-sysfs.c             |    9 +++
- drivers/pci/proc.c                  |    9 +++
- drivers/pci/syscall.c               |    3 +
- drivers/pcmcia/cistpl.c             |    3 +
- drivers/tty/serial/serial_core.c    |    6 ++
- drivers/tty/sysrq.c                 |   19 ++++--
- fs/debugfs/file.c                   |   28 +++++++++
- fs/debugfs/inode.c                  |   30 +++++++++
- fs/proc/kcore.c                     |    2 +
- include/linux/input.h               |    5 ++
- include/linux/kernel.h              |   32 ++++++++++
- include/linux/sysrq.h               |    8 ++-
- kernel/bpf/syscall.c                |    3 +
- kernel/debug/kdb/kdb_main.c         |    2 -
- kernel/events/core.c                |    5 ++
- kernel/kexec.c                      |    7 ++
- kernel/kprobes.c                    |    3 +
- kernel/module.c                     |   56 +++++++++++++-----
- kernel/params.c                     |   26 +++++++-
- kernel/power/hibernate.c            |    2 -
- kernel/power/user.c                 |    3 +
- security/Kconfig                    |   34 ++++++++++-
- security/Makefile                   |    3 +
- security/integrity/ima/ima_policy.c |   39 +++++++++---
- security/lock_down.c                |  112 +++++++++++++++++++++++++++++++++++
- 36 files changed, 443 insertions(+), 45 deletions(-)
+ arch/x86/kernel/setup.c |    2 +
+ include/linux/kernel.h  |   32 +++++++++++++++++++++++
+ security/Kconfig        |   23 ++++++++++++++++-
+ security/Makefile       |    3 ++
+ security/lock_down.c    |   65 +++++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 124 insertions(+), 1 deletion(-)
  create mode 100644 security/lock_down.c
+
+diff --git a/arch/x86/kernel/setup.c b/arch/x86/kernel/setup.c
+index 6285697b6e56..566f0f447053 100644
+--- a/arch/x86/kernel/setup.c
++++ b/arch/x86/kernel/setup.c
+@@ -996,6 +996,8 @@ void __init setup_arch(char **cmdline_p)
+ 	if (efi_enabled(EFI_BOOT))
+ 		efi_init();
+ 
++	init_lockdown();
++
+ 	dmi_scan_machine();
+ 	dmi_memdev_walk();
+ 	dmi_set_dump_stack_arch_desc();
+diff --git a/include/linux/kernel.h b/include/linux/kernel.h
+index 4ae1dfd9bf05..7d085cca9cee 100644
+--- a/include/linux/kernel.h
++++ b/include/linux/kernel.h
+@@ -306,6 +306,38 @@ static inline void refcount_error_report(struct pt_regs *regs, const char *err)
+ { }
+ #endif
+ 
++#ifdef CONFIG_LOCK_DOWN_KERNEL
++extern void __init init_lockdown(void);
++extern bool __kernel_is_locked_down(const char *what, bool first);
++
++#ifndef CONFIG_LOCK_DOWN_MANDATORY
++#define kernel_is_locked_down(what)					\
++	({								\
++		static bool message_given;				\
++		bool locked_down = __kernel_is_locked_down(what, !message_given); \
++		message_given = true;					\
++		locked_down;						\
++	})
++#else
++#define kernel_is_locked_down(what)					\
++	({								\
++		static bool message_given;				\
++		__kernel_is_locked_down(what, !message_given);		\
++		message_given = true;					\
++		true;							\
++	})
++#endif
++#else
++static inline void __init init_lockdown(void)
++{
++}
++static inline bool __kernel_is_locked_down(const char *what, bool first)
++{
++	return false;
++}
++#define kernel_is_locked_down(what) ({ false; })
++#endif
++
+ /* Internal, do not use. */
+ int __must_check _kstrtoul(const char *s, unsigned int base, unsigned long *res);
+ int __must_check _kstrtol(const char *s, unsigned int base, long *res);
+diff --git a/security/Kconfig b/security/Kconfig
+index c4302067a3ad..a68e5bdebad5 100644
+--- a/security/Kconfig
++++ b/security/Kconfig
+@@ -231,6 +231,28 @@ config STATIC_USERMODEHELPER_PATH
+ 	  If you wish for all usermode helper programs to be disabled,
+ 	  specify an empty string here (i.e. "").
+ 
++config LOCK_DOWN_KERNEL
++	bool "Allow the kernel to be 'locked down'"
++	help
++	  Allow the kernel to be locked down.  Locking down the kernel turns
++	  off various features that might otherwise allow access to the kernel
++	  image (eg. setting MSR registers).
++
++	  Note, however, that locking down your kernel will prevent some
++	  drivers from functioning because allowing manual configuration of
++	  hardware parameters is forbidden, lest a device be used to access the
++	  kernel by DMA.  This mostly applies to ISA devices.
++
++	  The kernel lockdown can be triggered by adding lockdown=1 to the
++	  kernel command line.
++
++config LOCK_DOWN_MANDATORY
++	bool "Make kernel lockdown mandatory"
++	depends on LOCK_DOWN_KERNEL
++	help
++	  Makes the lockdown non-negotiable.  It is always on and cannot be
++	  disabled.
++
+ source security/selinux/Kconfig
+ source security/smack/Kconfig
+ source security/tomoyo/Kconfig
+@@ -278,4 +300,3 @@ config DEFAULT_SECURITY
+ 	default "" if DEFAULT_SECURITY_DAC
+ 
+ endmenu
+-
+diff --git a/security/Makefile b/security/Makefile
+index 4d2d3782ddef..507ac8c520ce 100644
+--- a/security/Makefile
++++ b/security/Makefile
+@@ -30,3 +30,6 @@ obj-$(CONFIG_CGROUP_DEVICE)		+= device_cgroup.o
+ # Object integrity file lists
+ subdir-$(CONFIG_INTEGRITY)		+= integrity
+ obj-$(CONFIG_INTEGRITY)			+= integrity/
++
++# Allow the kernel to be locked down
++obj-$(CONFIG_LOCK_DOWN_KERNEL)		+= lock_down.o
+diff --git a/security/lock_down.c b/security/lock_down.c
+new file mode 100644
+index 000000000000..f35ffdd096ad
+--- /dev/null
++++ b/security/lock_down.c
+@@ -0,0 +1,65 @@
++/* Lock down the kernel
++ *
++ * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
++ * Written by David Howells (dhowells@redhat.com)
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public Licence
++ * as published by the Free Software Foundation; either version
++ * 2 of the Licence, or (at your option) any later version.
++ */
++
++#include <linux/export.h>
++#include <linux/sched.h>
++
++#ifndef CONFIG_LOCK_DOWN_MANDATORY
++static __ro_after_init bool kernel_locked_down;
++#else
++#define kernel_locked_down true
++#endif
++
++/*
++ * Put the kernel into lock-down mode.
++ */
++static void __init lock_kernel_down(const char *where)
++{
++#ifndef CONFIG_LOCK_DOWN_MANDATORY
++	if (!kernel_locked_down) {
++		kernel_locked_down = true;
++		pr_notice("Kernel is locked down from %s; see man kernel_lockdown.7\n",
++			  where);
++	}
++#endif
++}
++
++static int __init lockdown_param(char *ignored)
++{
++	lock_kernel_down("command line");
++	return 0;
++}
++
++early_param("lockdown", lockdown_param);
++
++/*
++ * Lock the kernel down from very early in the arch setup.  This must happen
++ * prior to things like ACPI being initialised.
++ */
++void __init init_lockdown(void)
++{
++#ifdef CONFIG_LOCK_DOWN_MANDATORY
++	pr_notice("Kernel is locked down from config; see man kernel_lockdown.7\n");
++#endif
++}
++
++/**
++ * kernel_is_locked_down - Find out if the kernel is locked down
++ * @what: Tag to use in notice generated if lockdown is in effect
++ */
++bool __kernel_is_locked_down(const char *what, bool first)
++{
++	if (what && first && kernel_locked_down)
++		pr_notice("Lockdown: %s: %s is restricted; see man kernel_lockdown.7\n",
++			  current->comm, what);
++	return kernel_locked_down;
++}
++EXPORT_SYMBOL(__kernel_is_locked_down);
