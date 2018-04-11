@@ -1,7 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 21/24] Lock down kprobes
-Date: Wed, 11 Apr 2018 17:26:55 +0100
-Message-ID: <152346401560.4030.11136333491983876306.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 22/24] bpf: Restrict kernel image access functions when the
+ kernel is locked down
+Date: Wed, 11 Apr 2018 17:27:03 +0100
+Message-ID: <152346402306.4030.13915529680179697046.stgit@warthog.procyon.org.uk>
 References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,28 +14,34 @@ To: torvalds@linux-foundation.org
 Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Disallow the creation of kprobes when the kernel is locked down by
-preventing their registration.  This prevents kprobes from being used to
-access kernel memory, either to make modifications or to steal crypto data.
+There are some bpf functions can be used to read kernel memory:
+bpf_probe_read, bpf_probe_write_user and bpf_trace_printk.  These allow
+private keys in kernel memory (e.g. the hibernation image signing key) to
+be read by an eBPF program.
 
-Reported-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Completely prohibit the use of BPF when the kernel is locked down.
+
+Suggested-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
+cc: netdev@vger.kernel.org
+cc: Chun-Yi Lee <jlee@suse.com>
+cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>
 ---
 
- kernel/kprobes.c |    3 +++
+ kernel/bpf/syscall.c |    3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/kernel/kprobes.c b/kernel/kprobes.c
-index 102160ff5c66..4f5757732553 100644
---- a/kernel/kprobes.c
-+++ b/kernel/kprobes.c
-@@ -1561,6 +1561,9 @@ int register_kprobe(struct kprobe *p)
- 	struct module *probed_mod;
- 	kprobe_opcode_t *addr;
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index 0244973ee544..7457f2676c6d 100644
+--- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -2031,6 +2031,9 @@ SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, siz
+ 	if (sysctl_unprivileged_bpf_disabled && !capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
  
-+	if (kernel_is_locked_down("Use of kprobes"))
++	if (kernel_is_locked_down("BPF"))
 +		return -EPERM;
 +
- 	/* Adjust probe address from symbol */
- 	addr = kprobe_addr(p);
- 	if (IS_ERR(addr))
+ 	err = check_uarg_tail_zero(uattr, sizeof(attr), size);
+ 	if (err)
+ 		return err;
