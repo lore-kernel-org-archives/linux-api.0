@@ -1,39 +1,49 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH 01/24] Add the ability to lock down access to the running
- kernel image
-Date: Thu, 12 Apr 2018 09:52:54 -0700
-Message-ID: <CA+55aFyEaNGLoSL2SJZkcvApPJQFo1mK9KW6g-_FdAm1KSqGEw@mail.gmail.com>
-References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
- <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk>
- <CA+55aFzPo-dip8dgyo0U+g5qai9SAJU+D1c+AFJ0zV9_PBAB8Q@mail.gmail.com>
- <8z0aRQyD-6Krqntk8UD9WQjK5JSqEai2Pt5oeFU2EplgxoWiHlX5nlJXwCDHQ1WcS1oIprXimgz7UvwHCWDB9Z3dYFrEmZmtkEJSqaYMel8=@protonmail.ch>
- <CA+55aFzvnf=4OeBy5vQQ6HQoCsgCkAJw1LhSBOTkDWm3ck1pZA@mail.gmail.com> <CAFxkdAr5c_bKEKqV2t-PKAo3iSvEkpqO1p+RPg9t-sW4yEUOnw@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH manpages] membarrier.2: New membarrier commands introduced
+ in 4.16
+Date: Thu, 12 Apr 2018 20:14:39 +0200
+Message-ID: <b03422f8-53c3-97c5-32b6-de8f9fb63e2f@gmail.com>
+References: <20180212195549.11485-1-mathieu.desnoyers@efficios.com>
+ <CAKgNAkiGXL6Th4DGS_OD0MuwCtM6f7_nAehOVcbpU=u5L9atKA@mail.gmail.com>
+ <1431121546.8624.1523535608737.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAFxkdAr5c_bKEKqV2t-PKAo3iSvEkpqO1p+RPg9t-sW4yEUOnw@mail.gmail.com>
+In-Reply-To: <1431121546.8624.1523535608737.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Justin Forbes <jmforbes@linuxtx.org>
-Cc: Jordan Glover <Golden_Miller83@protonmail.ch>, David Howells <dhowells@redhat.com>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: mtk.manpages@gmail.com, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackm>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 12, 2018 at 6:09 AM, Justin Forbes <jmforbes@linuxtx.org> wrote:
-> On Wed, Apr 11, 2018, 5:38 PM Linus Torvalds
-> <torvalds@linux-foundation.org> wrote:
+On 04/12/2018 02:20 PM, Mathieu Desnoyers wrote:
+> ----- On Apr 12, 2018, at 7:42 AM, Michael Kerrisk mtk.manpages@gmail.com wrote:
+> 
+> Hi Michael,
+> 
+> [...]
 >>
->> So it's really the whole claim that distributions have been running
->> for this for the last five years that I wonder about, and how often
->> people end up being told: "just disable secure boot":.
->
-> Very rarely in my experience.
+>> I have applied the above patch, and done quite a bit of tweaking, and
+>> pushed the results to the git repo.
+>>
+>> I would be grateful if you would read the entire manual page as it
+>> currently stands, to see if anything needs improving. I isolated some
+>> of the more significant changes into a simple patch, shown below, and
+>> especially I'd like your confirmation that all of those changes are
+>> okay.
+> 
+> Thanks for applying my membarrier man pages updates. I've reviewed the
+> result and it is all good.
 
-Good. Do you have a handle on the reasons?
+Thanks Mathieu!
 
-Because I'm assuming it's not /dev/{mem,kmem,port}? Because I'd really
-be happier if we just say "those are legacy, don't enable them at all
-for modern distros".
+Cheers,
 
-That way they'd _stay_ disabled even if somebody cannot handle the
-other limitations, like DMA etc.
+Michael
 
-                 Linus
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
