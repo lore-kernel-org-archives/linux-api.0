@@ -1,83 +1,33 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 03/23] arm: Add restartable sequences support
-Date: Thu, 12 Apr 2018 15:27:40 -0400
-Message-ID: <20180412192800.15708-4-mathieu.desnoyers@efficios.com>
-References: <20180412192800.15708-1-mathieu.desnoyers@efficios.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH for 4.18 12/23] cpu_opv: Provide cpu_opv system call (v7)
+Date: Thu, 12 Apr 2018 12:43:27 -0700
+Message-ID: <CA+55aFxcJ2V_1BoW0Cct=Kkp7REkgiU_BTimGdmoFmWHaWaZ-g@mail.gmail.com>
+References: <20180412192800.15708-1-mathieu.desnoyers@efficios.com> <20180412192800.15708-13-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180412192800.15708-1-mathieu.desnoyers@efficios.com>
+In-Reply-To: <20180412192800.15708-13-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-Call the rseq_handle_notify_resume() function on return to
-userspace if TIF_NOTIFY_RESUME thread flag is set.
+On Thu, Apr 12, 2018 at 12:27 PM, Mathieu Desnoyers
+<mathieu.desnoyers@efficios.com> wrote:
+> The cpu_opv system call executes a vector of operations on behalf of
+> user-space on a specific CPU with preemption disabled. It is inspired
+> by readv() and writev() system calls which take a "struct iovec"
+> array as argument.
 
-Perform fixup on the pre-signal frame when a signal is delivered on top
-of a restartable sequence critical section.
+Do we really want the page pinning?
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
----
- arch/arm/Kconfig         | 1 +
- arch/arm/kernel/signal.c | 7 +++++++
- 2 files changed, 8 insertions(+)
+This whole cpu_opv thing is the most questionable part of the series,
+and the page pinning is the most questionable part of cpu_opv for me.
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 7e3d53575486..1897d40ddd87 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -90,6 +90,7 @@ config ARM
- 	select HAVE_PERF_USER_STACK_DUMP
- 	select HAVE_RCU_TABLE_FREE if (SMP && ARM_LPAE)
- 	select HAVE_REGS_AND_STACK_ACCESS_API
-+	select HAVE_RSEQ
- 	select HAVE_SYSCALL_TRACEPOINTS
- 	select HAVE_UID16
- 	select HAVE_VIRT_CPU_ACCOUNTING_GEN
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index bd8810d4acb3..5879ab3f53c1 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -541,6 +541,12 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
- 	int ret;
- 
- 	/*
-+	 * Increment event counter and perform fixup for the pre-signal
-+	 * frame.
-+	 */
-+	rseq_signal_deliver(regs);
-+
-+	/*
- 	 * Set up the stack frame
- 	 */
- 	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-@@ -660,6 +666,7 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
- 			} else {
- 				clear_thread_flag(TIF_NOTIFY_RESUME);
- 				tracehook_notify_resume(regs);
-+				rseq_handle_notify_resume(regs);
- 			}
- 		}
- 		local_irq_disable();
--- 
-2.11.0
+Can we plan on merging just the plain rseq parts *without* this all
+first, and then see the cpu_opv thing as a "maybe future expansion"
+part.
+
+I think that would make Andy happier too.
+
+             Linus
