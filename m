@@ -1,57 +1,49 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is
+From: Mimi Zohar <zohar@linux.vnet.ibm.com>
+Subject: Re: [PATCH 06/24] kexec_load: Disable at runtime if the kernel is
  locked down
-Date: Thu, 12 Apr 2018 10:23:13 +0200
-Message-ID: <20180412082313.GA6054@kroah.com>
-References: <20180411195436.GA7126@kroah.com>
- <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
- <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
- <12769.1523477356@warthog.procyon.org.uk>
- <20180411203308.GA10167@kroah.com>
- <CALCETrWynogzZcaKMLWKce1rMvAC_sViReBDyiEWL-rm21HvAg@mail.gmail.com>
+Date: Thu, 12 Apr 2018 07:38:17 -0400
+Message-ID: <1523533097.31852.11.camel@linux.vnet.ibm.com>
+References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+         <152346391877.4030.6270466586590461223.stgit@warthog.procyon.org.uk>
+         <87po35k1q6.fsf@xmission.com> <1523477375.5268.78.camel@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrWynogzZcaKMLWKce1rMvAC_sViReBDyiEWL-rm21HvAg@mail.gmail.com>
+In-Reply-To: <1523477375.5268.78.camel@linux.vnet.ibm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, LKML <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>, David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 11, 2018 at 07:54:12PM -0700, Andy Lutomirski wrote:
-> On Wed, Apr 11, 2018 at 1:33 PM, Greg KH <greg@kroah.com> wrote:
-> > On Wed, Apr 11, 2018 at 09:09:16PM +0100, David Howells wrote:
-> >> Greg KH <greg@kroah.com> wrote:
-> >>
-> >> > Why not just disable debugfs entirely?  This half-hearted way to sorta
-> >> > lock it down is odd, it is meant to not be there at all, nothing in your
-> >> > normal system should ever depend on it.
-> >> >
-> >> > So again just don't allow it to be mounted at all, much simpler and more
-> >> > obvious as to what is going on.
-> >>
-> >> Yeah, I agree - and then I got complaints because it seems that it's been
-> >> abused to allow drivers and userspace components to communicate.
-> >
-> > With in-kernel code?  Please let me know and I'll go fix it up to not
-> > allow that, as that is not ok.
-> >
-> > I do know of some bad examples of out-of-tree code abusing debugfs to do
-> > crazy things (battery level monitoring?), but that's their own fault...
-> >
-> > debugfs is for DEBUGGING!  For anything you all feel should be "secure",
-> > then just disable it entirely.
-> >
+On Wed, 2018-04-11 at 16:09 -0400, Mimi Zohar wrote:
+> On Wed, 2018-04-11 at 14:00 -0500, Eric W. Biederman wrote:
+> > David Howells <dhowells@redhat.com> writes:
+> > 
+> > > From: Matthew Garrett <mjg59@srcf.ucam.org>
+> > >
+> > > The kexec_load() syscall permits the loading and execution of arbitrary
+> > > code in ring 0, which is something that lock-down is meant to prevent. It
+> > > makes sense to disable kexec_load() in this situation.
+> > >
+> > > This does not affect kexec_file_load() syscall which can check for a
+> > > signature on the image to be booted.
+> > 
+> > Maybing I am missing it but I am not seeing anything that would require
+> > kexec_file_load be configured such that it checks the loaded kernel.
+> > 
+> > Without that I don't see the point of disabling kexec_load.
+> > 
+> > Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
 > 
-> Debugfs is very, very useful for, ahem, debugging.  I really think
-> this is an example of why we should split lockdown into the read and
-> write varieties and allow mounting and reading debugfs when only write
-> is locked down.
+> The IMA "secure boot" policy requires the kexec image to be signed.
+>  This call to kernel_is_locked_down() could be replaced with a call
+> to security_kernel_read_file(NULL, READING_KEXEC_IMAGE).
+> 
+> It would be similar to the existing init_module syscall calling
+> security_kernel_read_file().
 
-Ok, but be sure that there are no "secrets" in those debugging files if
-you really buy into the whole "lock down" mess...
+David, enabling the IMA-appraisal "secure boot" policy should probably
+not be dependent on lockdown either.
 
-Really, it's easier to just disable the whole thing.
-
-greg k-h
+Mimi
