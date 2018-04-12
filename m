@@ -1,78 +1,160 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is locked down
-Date: Thu, 12 Apr 2018 07:19:35 -0700
-Message-ID: <CALCETrVm8c0dN=kymg=5-TQEWbL_zk9yCr4Bv4PKJXNC=6j=Fw@mail.gmail.com>
-References: <20180411195436.GA7126@kroah.com> <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
- <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
- <12769.1523477356@warthog.procyon.org.uk> <20180411203308.GA10167@kroah.com>
- <CALCETrWynogzZcaKMLWKce1rMvAC_sViReBDyiEWL-rm21HvAg@mail.gmail.com> <20180412082313.GA6054@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH v2 00/13] y2038: convert IPC syscalls
+Date: Thu, 12 Apr 2018 16:20:11 +0200
+Message-ID: <20180412142024.853892-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180412082313.GA6054@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <greg@kroah.com>
-Cc: Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, LKML <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
+Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 12, 2018 at 1:23 AM, Greg KH <greg@kroah.com> wrote:
-> On Wed, Apr 11, 2018 at 07:54:12PM -0700, Andy Lutomirski wrote:
->> On Wed, Apr 11, 2018 at 1:33 PM, Greg KH <greg@kroah.com> wrote:
->> > On Wed, Apr 11, 2018 at 09:09:16PM +0100, David Howells wrote:
->> >> Greg KH <greg@kroah.com> wrote:
->> >>
->> >> > Why not just disable debugfs entirely?  This half-hearted way to sorta
->> >> > lock it down is odd, it is meant to not be there at all, nothing in your
->> >> > normal system should ever depend on it.
->> >> >
->> >> > So again just don't allow it to be mounted at all, much simpler and more
->> >> > obvious as to what is going on.
->> >>
->> >> Yeah, I agree - and then I got complaints because it seems that it's been
->> >> abused to allow drivers and userspace components to communicate.
->> >
->> > With in-kernel code?  Please let me know and I'll go fix it up to not
->> > allow that, as that is not ok.
->> >
->> > I do know of some bad examples of out-of-tree code abusing debugfs to do
->> > crazy things (battery level monitoring?), but that's their own fault...
->> >
->> > debugfs is for DEBUGGING!  For anything you all feel should be "secure",
->> > then just disable it entirely.
->> >
->>
->> Debugfs is very, very useful for, ahem, debugging.  I really think
->> this is an example of why we should split lockdown into the read and
->> write varieties and allow mounting and reading debugfs when only write
->> is locked down.
->
-> Ok, but be sure that there are no "secrets" in those debugging files if
-> you really buy into the whole "lock down" mess...
->
-> Really, it's easier to just disable the whole thing.
->
+This is an update of a series I posted a long time ago [1], updating
+the IPC subsystem to pass down 64-bit time stamps to user space.
 
-I mostly agree with your sentiment.  I'm saying that, for most uses, I
-*don't* buy into the idea that a normal secure-boot-supporting distro
-should block debugfs.  I sometimes like to ask people who report
-problems to send me the contents of such-and-such file in debugfs, and
-I think it should keep working.  Blocking write access to debugfs is
-mostly sensible for a lockdown system, but blocking read only makes
-sense if you're worried about straight-up bugs or if you think that
-debugfs contains protection-worthy secrets.
+In particular, for sys_msgctl, sys_semctl and sys_shmctl, I do not
+introduce a completely new set of replacement system calls, but instead
+extend the existing ones to return data in the reserved fields of the
+normal data structure.
 
-What I want to see is:
+This should be completely transparent to any existing user space, and
+only after the 32-bit time_t wraps, it will make a difference in the
+returned data.
 
-lockdown=protect_integrity: debugfs is read-only, bpf and perf are
-unrestricted, iopl and ioperm are disabled, etc.
+libc implementations will consequently have to provide their own data
+structures when they move to 64-bit time_t, and convert the structures
+in user space from the ones returned by the kernel.
 
-lockdown=protect_integrity_and_secrecy: debugfs is gone, bpf and perf
-are restricted, plus all the restrictions from
-lockdown=protect_integrity
+There are three cases here:
 
-Distros should strongly prefer lockdown=protect_integrity (or
-lockdown=off) by default.  lockdown=protect_integrity_and_secrecy is
-for custom setups, embedded applications, etc.
+- little-endian architectures (except powerpc and mips) can use
+  the normal layout and just cast the data structure to the user space
+  type that contains 64-bit numbers.
 
+- parisc and sparc can do the same thing with big-endian user space
 
---Andy
+- little-endian powerpc and most big-endian architectures have
+  to flip the upper and lower 32-bit halves of the time_t value in memory,
+  but can otherwise keep using the normal layout
+
+- mips and big-endian xtensa need to be more careful because
+  they are not consistent in their definitions, and they have to provide
+  custom libc implementations for the system calls to use 64-bit time_t.
+
+Changes to the previous version include
+
+- Rebased to the latest kernel (4.17-rc)
+
+- Dropped changes for removed architectures
+
+- Simplified the IPC code changes, based on prior work from
+  both Deepa and Eric
+
+- Fixed a few bugs that I found during rebasing, in parcular the
+  sparc version was incorrect.
+
+If everyone agrees with the series, I'd like to have it merged through
+the tip tree once Deepa's earlier syscall series in there (I have both
+in my y2038 tree [2]).
+
+    Arnd
+
+[1] https://lkml.org/lkml/2015/5/20/605
+[2] git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git y2038-next
+
+Arnd Bergmann (13):
+  y2038: asm-generic: extend sysvipc data structures
+  y2038: alpha: remove unneeded ipc uapi header files
+  y2038: ia64: remove unneeded ipc uapi header files
+  y2038: s390: remove unneeded ipc uapi header files
+  y2038: arm64: extend sysvipc compat data structures
+  y2038: mips: extend sysvipc data structures
+  y2038: x86: extend sysvipc data structures
+  y2038: parisc: extend sysvipc data structures
+  y2038: sparc: extend sysvipc data structures
+  y2038: powerpc: extend sysvipc data structures
+  y2038: xtensa: extend sysvipc data structures
+  y2038: ipc: use ktime_get_real_seconds consistently
+  y2038: ipc: report long times to user space
+
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: libc-alpha@sourceware.org
+Cc: tglx@linutronix.de
+Cc: deepa.kernel@gmail.com
+Cc: viro@zeniv.linux.org.uk
+Cc: ebiederm@xmission.com
+Cc: albert.aribaud@3adev.fr
+Cc: linux-s390@vger.kernel.org
+Cc: schwidefsky@de.ibm.com
+Cc: x86@kernel.org
+Cc: catalin.marinas@arm.com
+Cc: will.deacon@arm.com
+Cc: linux-mips@linux-mips.org
+Cc: jhogan@kernel.org
+Cc: ralf@linux-mips.org
+Cc: linuxppc-dev@lists.ozlabs.org
+Cc: sparclinux@vger.kernel.org
+
+ arch/alpha/include/asm/Kbuild          |  4 +++
+ arch/alpha/include/uapi/asm/ipcbuf.h   |  2 --
+ arch/alpha/include/uapi/asm/msgbuf.h   | 28 -----------------
+ arch/alpha/include/uapi/asm/sembuf.h   | 23 --------------
+ arch/alpha/include/uapi/asm/shmbuf.h   | 39 -----------------------
+ arch/arm64/include/asm/compat.h        | 32 +++++++++----------
+ arch/ia64/include/asm/Kbuild           |  4 +++
+ arch/ia64/include/uapi/asm/ipcbuf.h    |  2 --
+ arch/ia64/include/uapi/asm/msgbuf.h    | 28 -----------------
+ arch/ia64/include/uapi/asm/sembuf.h    | 23 --------------
+ arch/ia64/include/uapi/asm/shmbuf.h    | 39 -----------------------
+ arch/mips/include/asm/compat.h         | 38 ++++++++++++-----------
+ arch/mips/include/uapi/asm/msgbuf.h    | 57 ++++++++++++++++++++++------------
+ arch/mips/include/uapi/asm/sembuf.h    | 15 +++++++--
+ arch/mips/include/uapi/asm/shmbuf.h    | 23 ++++++++++++--
+ arch/parisc/include/asm/compat.h       | 32 +++++++++----------
+ arch/parisc/include/uapi/asm/msgbuf.h  | 33 ++++++++++----------
+ arch/parisc/include/uapi/asm/sembuf.h  | 16 +++++-----
+ arch/parisc/include/uapi/asm/shmbuf.h  | 19 +++++-------
+ arch/powerpc/include/asm/compat.h      | 32 +++++++++----------
+ arch/powerpc/include/uapi/asm/msgbuf.h | 18 +++++------
+ arch/powerpc/include/uapi/asm/sembuf.h | 14 ++++-----
+ arch/powerpc/include/uapi/asm/shmbuf.h | 19 +++++-------
+ arch/s390/include/asm/Kbuild           |  3 ++
+ arch/s390/include/asm/compat.h         | 32 +++++++++----------
+ arch/s390/include/uapi/asm/msgbuf.h    | 38 -----------------------
+ arch/s390/include/uapi/asm/sembuf.h    | 30 ------------------
+ arch/s390/include/uapi/asm/shmbuf.h    | 49 -----------------------------
+ arch/sparc/include/asm/compat.h        | 32 +++++++++----------
+ arch/sparc/include/uapi/asm/msgbuf.h   | 22 ++++++-------
+ arch/sparc/include/uapi/asm/sembuf.h   | 16 +++++-----
+ arch/sparc/include/uapi/asm/shmbuf.h   | 21 ++++++-------
+ arch/x86/include/asm/compat.h          | 32 +++++++++----------
+ arch/x86/include/uapi/asm/Kbuild       |  5 ++-
+ arch/x86/include/uapi/asm/msgbuf.h     |  1 -
+ arch/x86/include/uapi/asm/sembuf.h     | 11 ++++++-
+ arch/x86/include/uapi/asm/shmbuf.h     |  1 -
+ arch/xtensa/include/uapi/asm/msgbuf.h  | 25 +++++++--------
+ arch/xtensa/include/uapi/asm/sembuf.h  | 17 +++++-----
+ arch/xtensa/include/uapi/asm/shmbuf.h  | 37 +++++-----------------
+ include/uapi/asm-generic/msgbuf.h      | 17 +++++-----
+ include/uapi/asm-generic/sembuf.h      | 26 ++++++++++------
+ include/uapi/asm-generic/shmbuf.h      | 17 +++++-----
+ ipc/msg.c                              | 20 ++++++++----
+ ipc/sem.c                              | 20 ++++++++----
+ ipc/shm.c                              | 14 +++++++--
+ 46 files changed, 393 insertions(+), 633 deletions(-)
+ delete mode 100644 arch/alpha/include/uapi/asm/ipcbuf.h
+ delete mode 100644 arch/alpha/include/uapi/asm/msgbuf.h
+ delete mode 100644 arch/alpha/include/uapi/asm/sembuf.h
+ delete mode 100644 arch/alpha/include/uapi/asm/shmbuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/ipcbuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/msgbuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/sembuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/shmbuf.h
+ delete mode 100644 arch/s390/include/uapi/asm/msgbuf.h
+ delete mode 100644 arch/s390/include/uapi/asm/sembuf.h
+ delete mode 100644 arch/s390/include/uapi/asm/shmbuf.h
+ delete mode 100644 arch/x86/include/uapi/asm/msgbuf.h
+ delete mode 100644 arch/x86/include/uapi/asm/shmbuf.h
+
+-- 
+2.9.0
