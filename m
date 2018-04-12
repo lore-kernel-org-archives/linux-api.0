@@ -1,125 +1,72 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
- MAP_SYNC
-Date: Thu, 12 Apr 2018 15:00:49 +0200
-Message-ID: <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA@mail.gmail.com>
-References: <20171101153648.30166-1-jack@suse.cz>
- <20171101153648.30166-20-jack@suse.cz>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Justin Forbes <jmforbes@linuxtx.org>
+Subject: Re: [PATCH 01/24] Add the ability to lock down access to the running
+ kernel image
+Date: Thu, 12 Apr 2018 08:09:10 -0500
+Message-ID: <CAFxkdAr5c_bKEKqV2t-PKAo3iSvEkpqO1p+RPg9t-sW4yEUOnw@mail.gmail.com>
+References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346388583.4030.15146667041427303547.stgit@warthog.procyon.org.uk>
+ <CA+55aFzPo-dip8dgyo0U+g5qai9SAJU+D1c+AFJ0zV9_PBAB8Q@mail.gmail.com>
+ <8z0aRQyD-6Krqntk8UD9WQjK5JSqEai2Pt5oeFU2EplgxoWiHlX5nlJXwCDHQ1WcS1oIprXimgz7UvwHCWDB9Z3dYFrEmZmtkEJSqaYMel8=@protonmail.ch>
+ <CA+55aFzvnf=4OeBy5vQQ6HQoCsgCkAJw1LhSBOTkDWm3ck1pZA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20171101153648.30166-20-jack-AlSwsSmVLrQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CA+55aFzvnf=4OeBy5vQQ6HQoCsgCkAJw1LhSBOTkDWm3ck1pZA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Jordan Glover <Golden_Miller83@protonmail.ch>, David Howells <dhowells@redhat.com>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Jan,
-
-I have applied your patch, and tweaked the text a little, and pushed
-the result to the git repo.
-
-On 1 November 2017 at 16:36, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-
-I have a question below.
-
-> ---
->  man2/mmap.2 | 35 ++++++++++++++++++++++++++++++++++-
->  1 file changed, 34 insertions(+), 1 deletion(-)
+On Wed, Apr 11, 2018, 5:38 PM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
 >
-> diff --git a/man2/mmap.2 b/man2/mmap.2
-> index 47c3148653be..b38ee6809327 100644
-> --- a/man2/mmap.2
-> +++ b/man2/mmap.2
-> @@ -125,6 +125,21 @@ are carried through to the underlying file.
->  to the underlying file requires the use of
->  .BR msync (2).)
->  .TP
-> +.BR MAP_SHARED_VALIDATE " (since Linux 4.15)"
-> +The same as
-> +.B MAP_SHARED
-> +except that
-> +.B MAP_SHARED
-> +mappings ignore unknown flags in
-> +.IR flags .
-> +In contrast when creating mapping of
-> +.B MAP_SHARED_VALIDATE
-> +mapping type, the kernel verifies all passed flags are known and fails the
-> +mapping with
-> +.BR EOPNOTSUPP
-> +otherwise. This mapping type is also required to be able to use some mapping
-> +flags.
-> +.TP
->  .B MAP_PRIVATE
->  Create a private copy-on-write mapping.
->  Updates to the mapping are not visible to other processes
-> @@ -134,7 +149,10 @@ It is unspecified whether changes made to the file after the
->  .BR mmap ()
->  call are visible in the mapped region.
->  .PP
-> -Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
-> +.B MAP_SHARED
-> +and
-> +.B MAP_PRIVATE
-> +are described in POSIX.1-2001 and POSIX.1-2008.
->  .PP
->  In addition, zero or more of the following values can be ORed in
->  .IR flags :
-> @@ -352,6 +370,21 @@ option.
->  Because of the security implications,
->  that option is normally enabled only on embedded devices
->  (i.e., devices where one has complete control of the contents of user memory).
-> +.TP
-> +.BR MAP_SYNC " (since Linux 4.15)"
-> +This flags is available only with
-> +.B MAP_SHARED_VALIDATE
-> +mapping type. Mappings of
-> +.B MAP_SHARED
-> +type will silently ignore this flag.
-> +This flag is supported only for files supporting DAX (direct mapping of persistent
-> +memory). For other files, creating mapping with this flag results in
-> +.B EOPNOTSUPP
-> +error. Shared file mappings with this flag provide the guarantee that while
-> +some memory is writeably mapped in the address space of the process, it will
-> +be visible in the same file at the same offset even after the system crashes or
-> +is rebooted. This allows users of such mappings to make data modifications
-> +persistent in a more efficient way using appropriate CPU instructions.
+> On Wed, Apr 11, 2018 at 2:05 PM, Jordan Glover
+> <Golden_Miller83@protonmail.ch> wrote:
+> >>
+> >> If that /dev/mem access prevention was just instead done as an even
+> >> stricter mode of the existing CONFIG_STRICT_DEVMEM, it could just be
+> >> enabled unconditionally.
+> >
+> > CONFIG_DEVMEM=n
+>
+> It's actually CONFIG_DEVMEM, CONFIG_DEVKMEM and CONFIG_DEVPORT, it's
+> just not obvious from the patch.
+>
+> But the important part is this part:
+>
+> >> So I would seriously ask that the distros that have been using these
+> >> patches look at which parts of lockdown they could make unconditional
+> >> (because it doesn't break machines), and which ones need that escape
+> >> clause.
+>
+> .. because I get the feeling that not a lot of people have actually
+> been testing this, because "turn off secure boot" is such a universal
+> thing when people boot Linux.
+>
+> So it's really the whole claim that distributions have been running
+> for this for the last five years that I wonder about, and how often
+> people end up being told: "just disable secure boot":.
 
-It feels like there's a word missing/unclear wording in the previous
-line, before "using". Without that word, the sentence feels a bit
-ambiguous.
+Very rarely in my experience. And the one time that we sent a kernel
+to updates-testing that was signed with the test key instead of the
+real key, we had a surprisingly high number of reports from users that
+it was broken before the update even got synched to mirrors.  So we
+don't have actual numbers of users running active secure boot with
+Fedora, but we do know it is more than we expected.  The majority of
+people who do run into issues are those running out of tree modules,
+who haven't imported any sort of key for local signing.  This isn't
+like SELinux was at launch where it was so invasive that a large
+number of users instinctively turned it off with every installation, I
+would guess even people who turned it off in the past, don't even
+think about it when they get a new machine and leave it on.
 
-Should it be:
-
-persistent in a more efficient way *through the use of* appropriate
-CPU instructions.
-
-or:
-
-persistent in a more efficient way *than using* appropriate CPU instructions.
-
-?
-
-Is suspect the first is correct, but need to check.
-
-Cheers,
-
-Michael
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+> But if people really don't need DEVMEM/DEVKMEM/DEVPORT, maybe we
+> should just disable them in the default configs, and consider them
+> legacy.
+>
+> I'm just surprised. I suspect a lot of people end up actually using
+> devmem as a fallback for dmidecode etc. Maybe those people don't boot
+> with EFI secure mode, but if so that just shows that this whole
+> "hardening" is just security theater.
+>
+>               Linus
