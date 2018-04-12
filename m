@@ -1,23 +1,20 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+From: John Hubbard <jhubbard@nvidia.com>
 Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been
  reserved
-Date: Thu, 12 Apr 2018 20:32:40 +0200
-Message-ID: <3ff7472c-23c8-402b-ddfb-871a749c5016@gmail.com>
+Date: Thu, 12 Apr 2018 11:33:04 -0700
+Message-ID: <b617740b-fd07-e248-2ba0-9e99b0240594@nvidia.com>
 References: <20180412153941.170849-1-jannh@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180412153941.170849-1-jannh@google.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>, linux-man@vger.kernel.org, mhocko@kernel.org, jhubbard@nvidia.com, akpm@linux-foundation.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: mtk.manpages@gmail.com
+To: Jann Horn <jannh@google.com>, mtk.manpages@gmail.com, linux-man@vger.kernel.org, mhocko@kernel.org, akpm@linux-foundation.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Jann,
-
-On 04/12/2018 05:39 PM, Jann Horn wrote:
+On 04/12/2018 08:39 AM, Jann Horn wrote:
 > Clarify that MAP_FIXED is appropriate if the specified address range has
 > been reserved using an existing mapping, but shouldn't be used otherwise.
 > 
@@ -40,6 +37,9 @@ On 04/12/2018 05:39 PM, Jann Horn wrote:
 > +already been reserved using another mapping; otherwise, it is extremely
 > +hazardous because it forcibly removes preexisting mappings,
 >  making it easy for a multithreaded process to corrupt its own address space.
+
+Yes, that's clearer and provides more information than before.
+
 >  .IP
 >  For example, suppose that thread A looks through
 > @@ -284,13 +285,15 @@ and the PAM libraries
@@ -59,21 +59,19 @@ On 04/12/2018 05:39 PM, Jann Horn wrote:
 > +.I addr
 > +as a hint (without
 > +.BR MAP_FIXED )
+
+Here, I got lost: the sentence suddenly jumps into explaining non-MAP_FIXED
+behavior, in the MAP_FIXED section. Maybe if you break up the sentence, and
+possibly omit non-MAP_FIXED discussion, it will help. 
+
 > +and take appropriate action if the kernel places the new mapping at a
 > +different address.
 >  .TP
 >  .BR MAP_FIXED_NOREPLACE " (since Linux 4.17)"
 >  .\" commit a4ff8e8620d3f4f50ac4b41e8067b7d395056843
+> 
 
-Thanks! Nice patch! Applied.
-
-Cheers,
-
-Michael
-
-
-
+thanks,
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+John Hubbard
+NVIDIA
