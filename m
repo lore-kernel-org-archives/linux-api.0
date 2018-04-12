@@ -1,71 +1,68 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
- MAP_SYNC
-Date: Thu, 12 Apr 2018 16:22:14 +0200
-Message-ID: <20180412142214.fcxw3g2jxv6bvn7d@quack2.suse.cz>
-References: <20171101153648.30166-1-jack@suse.cz>
- <20171101153648.30166-20-jack@suse.cz>
- <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA@mail.gmail.com>
+From: Roman Gushchin <guro@fb.com>
+Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
+Date: Thu, 12 Apr 2018 15:38:33 +0100
+Message-ID: <20180412143826.GA30714@castle.DHCP.thefacebook.com>
+References: <20180305133743.12746-1-guro@fb.com>
+ <20180305133743.12746-2-guro@fb.com>
+ <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
+ <20180411135624.GA24260@castle.DHCP.thefacebook.com>
+ <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
+ <20180412115217.GC23400@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180412115217.GC23400@dhcp22.suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Michael!
-
-On Thu 12-04-18 15:00:49, Michael Kerrisk (man-pages) wrote:
-> Hello Jan,
+On Thu, Apr 12, 2018 at 01:52:17PM +0200, Michal Hocko wrote:
+> On Thu 12-04-18 08:52:52, Vlastimil Babka wrote:
+> > On 04/11/2018 03:56 PM, Roman Gushchin wrote:
+> > > On Wed, Apr 11, 2018 at 03:16:08PM +0200, Vlastimil Babka wrote:
+> [...]
+> > >> With that in mind, can we at least for now put the (manually maintained)
+> > >> byte counter in a variable that's not directly exposed via /proc/vmstat,
+> > >> and then when printing nr_slab_reclaimable, simply add the value
+> > >> (divided by PAGE_SIZE), and when printing nr_slab_unreclaimable,
+> > >> subtract the same value. This way we would be simply making the existing
+> > >> counters more precise, in line with their semantics.
+> > > 
+> > > Idk, I don't like the idea of adding a counter outside of the vm counters
+> > > infrastructure, and I definitely wouldn't touch the exposed
+> > > nr_slab_reclaimable and nr_slab_unreclaimable fields.
 > 
-> I have applied your patch, and tweaked the text a little, and pushed
-> the result to the git repo.
+> Why?
+
+Both nr_slab_reclaimable and nr_slab_unreclaimable have a very simple
+meaning: they are numbers of pages used by corresponding slab caches.
+
+In the answer to the very first version of this patchset
+Andrew suggested to generalize the idea to allow further
+accounting of non-kmalloc() allocations.
+I like the idea, even if don't have a good example right now.
+
+The problem with external names existed for many years before
+we've accidentally hit it, so if we don't have other examples
+right now, it doesn't mean that we wouldn't have them in the future.
+
+> 
+> > We would be just making the reported values more precise wrt reality.
+> 
+> I was suggesting something similar in an earlier discussion. I am not
+> really happy about the new exposed counter either. It is just arbitrary
+> by name yet very specific for this particular usecase.
+> 
+> What is a poor user supposed to do with the new counter? Can this be
+> used for any calculations?
+
+For me the most important part is to fix the overcommit logic, because it's
+a real security and production issue. Adjusting MemAvailable is important too.
+
+I really open here for any concrete suggestions on how to do it without exporting
+of a new value, and without adding too much complexity to the code
+(e.g. skipping this particular mm counter on printing will be quite messy).
 
 Thanks!
-
-> > +.B MAP_SHARED
-> > +type will silently ignore this flag.
-> > +This flag is supported only for files supporting DAX (direct mapping of persistent
-> > +memory). For other files, creating mapping with this flag results in
-> > +.B EOPNOTSUPP
-> > +error. Shared file mappings with this flag provide the guarantee that while
-> > +some memory is writeably mapped in the address space of the process, it will
-> > +be visible in the same file at the same offset even after the system crashes or
-> > +is rebooted. This allows users of such mappings to make data modifications
-> > +persistent in a more efficient way using appropriate CPU instructions.
-> 
-> It feels like there's a word missing/unclear wording in the previous
-> line, before "using". Without that word, the sentence feels a bit
-> ambiguous.
-> 
-> Should it be:
-> 
-> persistent in a more efficient way *through the use of* appropriate
-> CPU instructions.
-> 
-> or:
-> 
-> persistent in a more efficient way *than using* appropriate CPU instructions.
-> 
-> ?
-> 
-> Is suspect the first is correct, but need to check.
-
-Yes, the first is correct.
-
-								Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
