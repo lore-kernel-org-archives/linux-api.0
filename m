@@ -1,271 +1,84 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 23/23] rseq: selftests: Provide Makefile, scripts, gitignore
-Date: Thu, 12 Apr 2018 15:28:00 -0400
-Message-ID: <20180412192800.15708-24-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 08/23] powerpc: Wire up restartable sequences
+ system call
+Date: Thu, 12 Apr 2018 15:27:45 -0400
+Message-ID: <20180412192800.15708-9-mathieu.desnoyers@efficios.com>
 References: <20180412192800.15708-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 In-Reply-To: <20180412192800.15708-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kselftest@vger.kerne
+Cc: Will Deacon <will.deacon@arm.com>, Andi Kleen <andi@firstfloor.org>, Paul Mackerras <paulus@samba.org>, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Ingo Molnar <mingo@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Catalin Marinas <catalin.marinas@arm.com>, Paul Turner <pjt@google.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-A run_param_test.sh script runs many variants of the parametrizable
-tests.
+From: Boqun Feng <boqun.feng@gmail.com>
 
-Wire up the rseq Makefile, add directory entry into MAINTAINERS file.
+Wire up the rseq system call on powerpc.
 
+This provides an ABI improving the speed of a user-space getcpu
+operation on powerpc by skipping the getcpu system call on the fast
+path, as well as improving the speed of user-space operations on per-cpu
+data compared to using load-reservation/store-conditional atomics.
+
+TODO: wire up rseq_syscall() on return from system call. It is used with
+CONFIG_DEBUG_RSEQ=y to ensure system calls are not issued within rseq critical
+section
+
+Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Shuah Khan <shuahkh@osg.samsung.com>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
+CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+CC: Paul Mackerras <paulus@samba.org>
+CC: Michael Ellerman <mpe@ellerman.id.au>
 CC: Peter Zijlstra <peterz@infradead.org>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-kselftest@vger.kernel.org
-CC: linux-api@vger.kernel.org
+CC: linuxppc-dev@lists.ozlabs.org
 ---
- MAINTAINERS                                    |   1 +
- tools/testing/selftests/Makefile               |   1 +
- tools/testing/selftests/rseq/.gitignore        |   7 ++
- tools/testing/selftests/rseq/Makefile          |  37 +++++++
- tools/testing/selftests/rseq/run_param_test.sh | 131 +++++++++++++++++++++++++
- 5 files changed, 177 insertions(+)
- create mode 100644 tools/testing/selftests/rseq/.gitignore
- create mode 100644 tools/testing/selftests/rseq/Makefile
- create mode 100755 tools/testing/selftests/rseq/run_param_test.sh
+ arch/powerpc/include/asm/systbl.h      | 1 +
+ arch/powerpc/include/asm/unistd.h      | 2 +-
+ arch/powerpc/include/uapi/asm/unistd.h | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index adbe93ed27b9..7cf7e43db81f 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -11831,6 +11831,7 @@ S:	Supported
- F:	kernel/rseq.c
- F:	include/uapi/linux/rseq.h
- F:	include/trace/events/rseq.h
-+F:	tools/testing/selftests/rseq/
+diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
+index d61f9c96d916..45d4d37495fd 100644
+--- a/arch/powerpc/include/asm/systbl.h
++++ b/arch/powerpc/include/asm/systbl.h
+@@ -392,3 +392,4 @@ SYSCALL(statx)
+ SYSCALL(pkey_alloc)
+ SYSCALL(pkey_free)
+ SYSCALL(pkey_mprotect)
++SYSCALL(rseq)
+diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
+index daf1ba97a00c..1e9708632dce 100644
+--- a/arch/powerpc/include/asm/unistd.h
++++ b/arch/powerpc/include/asm/unistd.h
+@@ -12,7 +12,7 @@
+ #include <uapi/asm/unistd.h>
  
- RFKILL
- M:	Johannes Berg <johannes@sipsolutions.net>
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 1322e63f5963..c1c9323d4e50 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -26,6 +26,7 @@ TARGETS += nsfs
- TARGETS += powerpc
- TARGETS += pstore
- TARGETS += ptrace
-+TARGETS += rseq
- TARGETS += seccomp
- TARGETS += sigaltstack
- TARGETS += size
-diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
-new file mode 100644
-index 000000000000..73dcf05b69fd
---- /dev/null
-+++ b/tools/testing/selftests/rseq/.gitignore
-@@ -0,0 +1,7 @@
-+basic_percpu_ops_test
-+basic_test
-+basic_rseq_op_test
-+param_test
-+param_test_benchmark
-+param_test_compare_twice
-+param_test_skip_fastpath
-diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
-new file mode 100644
-index 000000000000..69f90d718774
---- /dev/null
-+++ b/tools/testing/selftests/rseq/Makefile
-@@ -0,0 +1,37 @@
-+CFLAGS += -O2 -Wall -g -I./ -I../cpu-opv/ -I../../../../usr/include/ -L./ -Wl,-rpath=./
-+LDLIBS += -lpthread
-+
-+# Own dependencies because we only want to build against 1st prerequisite, but
-+# still track changes to header files and depend on shared object.
-+OVERRIDE_TARGETS = 1
-+
-+TEST_GEN_PROGS = basic_test basic_percpu_ops_test \
-+		param_test param_test_skip_fastpath \
-+		param_test_benchmark param_test_compare_twice
-+
-+TEST_GEN_PROGS_EXTENDED = librseq.so libcpu-op.so
-+
-+TEST_PROGS = run_param_test.sh
-+
-+include ../lib.mk
-+
-+$(OUTPUT)/librseq.so: rseq.c rseq.h rseq-*.h
-+	$(CC) $(CFLAGS) -shared -fPIC $< $(LDLIBS) -o $@
-+
-+$(OUTPUT)/libcpu-op.so: ../cpu-opv/cpu-op.c ../cpu-opv/cpu-op.h
-+	$(CC) $(CFLAGS) -shared -fPIC $< $(LDLIBS) -o $@
-+
-+$(OUTPUT)/%: %.c $(TEST_GEN_PROGS_EXTENDED) rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
-+	$(CC) $(CFLAGS) $< $(LDLIBS) -lrseq -lcpu-op -o $@
-+
-+$(OUTPUT)/param_test_skip_fastpath: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
-+					rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
-+	$(CC) $(CFLAGS) -DRSEQ_SKIP_FASTPATH $< $(LDLIBS) -lrseq -lcpu-op -o $@
-+
-+$(OUTPUT)/param_test_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
-+					rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
-+	$(CC) $(CFLAGS) -DBENCHMARK $< $(LDLIBS) -lrseq -lcpu-op -o $@
-+
-+$(OUTPUT)/param_test_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
-+					rseq.h rseq-*.h ../cpu-opv/cpu-op.h percpu-op.h
-+	$(CC) $(CFLAGS) -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -lcpu-op -o $@
-diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
-new file mode 100755
-index 000000000000..15c64ecc5eb4
---- /dev/null
-+++ b/tools/testing/selftests/rseq/run_param_test.sh
-@@ -0,0 +1,131 @@
-+#!/bin/bash
-+
-+EXTRA_ARGS=${@}
-+
-+OLDIFS="$IFS"
-+IFS=$'\n'
-+TEST_LIST=(
-+	"-T s"
-+	"-T l"
-+	"-T b"
-+	"-T b -M"
-+	"-T m"
-+	"-T m -M"
-+	"-T i"
-+)
-+
-+TEST_NAME=(
-+	"spinlock"
-+	"list"
-+	"buffer"
-+	"buffer with barrier"
-+	"memcpy"
-+	"memcpy with barrier"
-+	"increment"
-+)
-+IFS="$OLDIFS"
-+
-+REPS=1000
-+SLOW_REPS=100
-+
-+function do_tests()
-+{
-+	local i=0
-+	while [ "$i" -lt "${#TEST_LIST[@]}" ]; do
-+		echo "Running test ${TEST_NAME[$i]}"
-+		./param_test ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		echo "Running skip fast-path test ${TEST_NAME[$i]}"
-+		./param_test_skip_fastpath ${TEST_LIST[$i]} -r ${SLOW_REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		echo "Running compare-twice test ${TEST_NAME[$i]}"
-+		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		let "i++"
-+	done
-+}
-+
-+echo "Default parameters"
-+do_tests
-+
-+echo "Loop injection: 10000 loops"
-+
-+OLDIFS="$IFS"
-+IFS=$'\n'
-+INJECT_LIST=(
-+	"1"
-+	"2"
-+	"3"
-+	"4"
-+	"5"
-+	"6"
-+	"7"
-+	"8"
-+	"9"
-+)
-+IFS="$OLDIFS"
-+
-+NR_LOOPS=10000
-+
-+i=0
-+while [ "$i" -lt "${#INJECT_LIST[@]}" ]; do
-+	echo "Injecting at <${INJECT_LIST[$i]}>"
-+	do_tests -${INJECT_LIST[i]} ${NR_LOOPS}
-+	let "i++"
-+done
-+NR_LOOPS=
-+
-+function inject_blocking()
-+{
-+	OLDIFS="$IFS"
-+	IFS=$'\n'
-+	INJECT_LIST=(
-+		"7"
-+		"8"
-+		"9"
-+	)
-+	IFS="$OLDIFS"
-+
-+	NR_LOOPS=-1
-+
-+	i=0
-+	while [ "$i" -lt "${#INJECT_LIST[@]}" ]; do
-+		echo "Injecting at <${INJECT_LIST[$i]}>"
-+		do_tests -${INJECT_LIST[i]} -1 ${@}
-+		let "i++"
-+	done
-+	NR_LOOPS=
-+}
-+
-+echo "Yield injection (25%)"
-+inject_blocking -m 4 -y
-+
-+echo "Yield injection (50%)"
-+inject_blocking -m 2 -y
-+
-+echo "Yield injection (100%)"
-+inject_blocking -m 1 -y
-+
-+echo "Kill injection (25%)"
-+inject_blocking -m 4 -k
-+
-+echo "Kill injection (50%)"
-+inject_blocking -m 2 -k
-+
-+echo "Kill injection (100%)"
-+inject_blocking -m 1 -k
-+
-+echo "Sleep injection (1ms, 25%)"
-+inject_blocking -m 4 -s 1
-+
-+echo "Sleep injection (1ms, 50%)"
-+inject_blocking -m 2 -s 1
-+
-+echo "Sleep injection (1ms, 100%)"
-+inject_blocking -m 1 -s 1
-+
-+echo "Disable rseq for 25% threads"
-+do_tests -D 4
-+
-+echo "Disable rseq for 50% threads"
-+do_tests -D 2
-+
-+echo "Disable rseq"
-+do_tests -d
+ 
+-#define NR_syscalls		387
++#define NR_syscalls		388
+ 
+ #define __NR__exit __NR_exit
+ 
+diff --git a/arch/powerpc/include/uapi/asm/unistd.h b/arch/powerpc/include/uapi/asm/unistd.h
+index 389c36fd8299..ac5ba55066dd 100644
+--- a/arch/powerpc/include/uapi/asm/unistd.h
++++ b/arch/powerpc/include/uapi/asm/unistd.h
+@@ -398,5 +398,6 @@
+ #define __NR_pkey_alloc		384
+ #define __NR_pkey_free		385
+ #define __NR_pkey_mprotect	386
++#define __NR_rseq		387
+ 
+ #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
 -- 
 2.11.0
