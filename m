@@ -1,133 +1,60 @@
-From: Roman Gushchin <guro@fb.com>
-Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
-Date: Thu, 12 Apr 2018 15:57:03 +0100
-Message-ID: <20180412145702.GB30714@castle.DHCP.thefacebook.com>
-References: <20180305133743.12746-1-guro@fb.com>
- <20180305133743.12746-2-guro@fb.com>
- <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
- <20180411135624.GA24260@castle.DHCP.thefacebook.com>
- <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
+From: Jann Horn <jannh@google.com>
+Subject: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been reserved
+Date: Thu, 12 Apr 2018 17:39:41 +0200
+Message-ID: <20180412153941.170849-1-jannh@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
+To: mtk.manpages@gmail.com, jannh@google.com
+Cc: linux-man@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, John Hubbard <jhubbard@nvidia.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 12, 2018 at 08:52:52AM +0200, Vlastimil Babka wrote:
-> On 04/11/2018 03:56 PM, Roman Gushchin wrote:
-> > On Wed, Apr 11, 2018 at 03:16:08PM +0200, Vlastimil Babka wrote:
-> >> [+CC linux-api]
-> >>
-> >> On 03/05/2018 02:37 PM, Roman Gushchin wrote:
-> >>> This patch introduces a concept of indirectly reclaimable memory
-> >>> and adds the corresponding memory counter and /proc/vmstat item.
-> >>>
-> >>> Indirectly reclaimable memory is any sort of memory, used by
-> >>> the kernel (except of reclaimable slabs), which is actually
-> >>> reclaimable, i.e. will be released under memory pressure.
-> >>>
-> >>> The counter is in bytes, as it's not always possible to
-> >>> count such objects in pages. The name contains BYTES
-> >>> by analogy to NR_KERNEL_STACK_KB.
-> >>>
-> >>> Signed-off-by: Roman Gushchin <guro@fb.com>
-> >>> Cc: Andrew Morton <akpm@linux-foundation.org>
-> >>> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-> >>> Cc: Michal Hocko <mhocko@suse.com>
-> >>> Cc: Johannes Weiner <hannes@cmpxchg.org>
-> >>> Cc: linux-fsdevel@vger.kernel.org
-> >>> Cc: linux-kernel@vger.kernel.org
-> >>> Cc: linux-mm@kvack.org
-> >>> Cc: kernel-team@fb.com
-> >>
-> >> Hmm, looks like I'm late and this user-visible API change was just
-> >> merged. But it's for rc1, so we can still change it, hopefully?
-> >>
-> >> One problem I see with the counter is that it's in bytes, but among
-> >> counters that use pages, and the name doesn't indicate it.
-> > 
-> > Here I just followed "nr_kernel_stack" path, which is measured in kB,
-> > but this is not mentioned in the field name.
-> 
-> Oh, didn't know. Bad example to follow :P
-> 
-> >> Then, I don't
-> >> see why users should care about the "indirectly" part, as that's just an
-> >> implementation detail. It is reclaimable and that's what matters, right?
-> >> (I also wanted to complain about lack of Documentation/... update, but
-> >> looks like there's no general file about vmstat, ugh)
-> > 
-> > I agree, that it's a bit weird, and it's probably better to not expose
-> > it at all; but this is how all vm counters work. We do expose them all
-> > in /proc/vmstat. A good number of them is useless until you are not a
-> > mm developer, so it's arguable more "debug info" rather than "api".
-> 
-> Yeah the problem is that once tools start rely on them, they fall under
-> the "do not break userspace" rule, however we call them. So being
-> cautious and conservative can't hurt.
-> 
-> > It's definitely not a reason to make them messy.
-> > Does "nr_indirectly_reclaimable_bytes" look better to you?
-> 
-> It still has has the "indirecly" part and feels arbitrary :/
-> 
-> >>
-> >> I also kind of liked the idea from v1 rfc posting that there would be a
-> >> separate set of reclaimable kmalloc-X caches for these kind of
-> >> allocations. Besides accounting, it should also help reduce memory
-> >> fragmentation. The right variant of cache would be detected via
-> >> __GFP_RECLAIMABLE.
-> > 
-> > Well, the downside is that we have to introduce X new caches
-> > just for this particular problem. I'm not strictly against the idea,
-> > but not convinced that it's much better.
-> 
-> Maybe we can find more cases that would benefit from it. Heck, even slab
-> itself allocates some management structures from the generic kmalloc
-> caches, and if they are used for reclaimable caches, they could be
-> tracked as reclaimable as well.
+Clarify that MAP_FIXED is appropriate if the specified address range has
+been reserved using an existing mapping, but shouldn't be used otherwise.
 
-This is a good catch!
+Signed-off-by: Jann Horn <jannh@google.com>
+---
+ man2/mmap.2 | 19 +++++++++++--------
+ 1 file changed, 11 insertions(+), 8 deletions(-)
 
-> 
-> >>
-> >> With that in mind, can we at least for now put the (manually maintained)
-> >> byte counter in a variable that's not directly exposed via /proc/vmstat,
-> >> and then when printing nr_slab_reclaimable, simply add the value
-> >> (divided by PAGE_SIZE), and when printing nr_slab_unreclaimable,
-> >> subtract the same value. This way we would be simply making the existing
-> >> counters more precise, in line with their semantics.
-> > 
-> > Idk, I don't like the idea of adding a counter outside of the vm counters
-> > infrastructure, and I definitely wouldn't touch the exposed
-> > nr_slab_reclaimable and nr_slab_unreclaimable fields.
-> 
-> We would be just making the reported values more precise wrt reality.
-
-It depends on if we believe that only slab memory can be reclaimable
-or not. If yes, this is true, otherwise not.
-
-My guess is that some drivers (e.g. networking) might have buffers,
-which are reclaimable under mempressure, and are allocated using
-the page allocator. But I have to look closer...
-
-> > We do have some stats in /proc/slabinfo, /proc/meminfo and /sys/kernel/slab
-> > and I think that we should keep it consistent.
-> 
-> Right, meminfo would be adjusted the same. slabinfo doesn't indicate
-> which caches are reclaimable, so there will be no change.
-> /sys/kernel/slab/cache/reclaim_account does, but I doubt anything will
-> break.
-
-It also can be found out of the corresponding directory name in sysfs:
-$ ls -la /sys/kernel/slab/dentr*
-lrwxrwxrwx. 1 root root 0 Apr 11 14:45 /sys/kernel/slab/dentry -> :aA-0000192
-                                                                   ^
-						this is the "reclaimable" flag
-Not saying that something will break.
-
-Thanks!
+diff --git a/man2/mmap.2 b/man2/mmap.2
+index bef8b4432..80c9ec285 100644
+--- a/man2/mmap.2
++++ b/man2/mmap.2
+@@ -253,8 +253,9 @@ Software that aspires to be portable should use this option with care,
+ keeping in mind that the exact layout of a process's memory mappings
+ is allowed to change significantly between kernel versions,
+ C library versions, and operating system releases.
+-Furthermore, this option is extremely hazardous (when used on its own),
+-because it forcibly removes preexisting mappings,
++This option should only be used when the specified memory region has
++already been reserved using another mapping; otherwise, it is extremely
++hazardous because it forcibly removes preexisting mappings,
+ making it easy for a multithreaded process to corrupt its own address space.
+ .IP
+ For example, suppose that thread A looks through
+@@ -284,13 +285,15 @@ and the PAM libraries
+ .UR http://www.linux-pam.org
+ .UE .
+ .IP
+-Newer kernels
+-(Linux 4.17 and later) have a
++For cases in which the specified memory region has not been reserved using an
++existing mapping, newer kernels (Linux 4.17 and later) provide an option
+ .B MAP_FIXED_NOREPLACE
+-option that avoids the corruption problem; if available,
+-.B MAP_FIXED_NOREPLACE
+-should be preferred over
+-.BR MAP_FIXED .
++that should be used instead; older kernels require the caller to use
++.I addr
++as a hint (without
++.BR MAP_FIXED )
++and take appropriate action if the kernel places the new mapping at a
++different address.
+ .TP
+ .BR MAP_FIXED_NOREPLACE " (since Linux 4.17)"
+ .\" commit a4ff8e8620d3f4f50ac4b41e8067b7d395056843
+-- 
+2.17.0.484.g0c8726318c-goog
