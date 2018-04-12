@@ -1,65 +1,79 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
- MAP_SYNC
-Date: Thu, 12 Apr 2018 20:20:12 +0200
-Message-ID: <CAKgNAkgtVryFb81QgzwPq8SD241yKDN1xNxOWUUQH9QBYV13SA@mail.gmail.com>
-References: <20171101153648.30166-1-jack@suse.cz>
- <20171101153648.30166-20-jack@suse.cz>
- <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA@mail.gmail.com>
- <20180412142214.fcxw3g2jxv6bvn7d@quack2.suse.cz>
-Reply-To: mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been
+ reserved
+Date: Thu, 12 Apr 2018 20:32:40 +0200
+Message-ID: <3ff7472c-23c8-402b-ddfb-871a749c5016@gmail.com>
+References: <20180412153941.170849-1-jannh@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20180412142214.fcxw3g2jxv6bvn7d-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180412153941.170849-1-jannh@google.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>, linux-man@vger.kernel.org, mhocko@kernel.org, jhubbard@nvidia.com, akpm@linux-foundation.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: mtk.manpages@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-SmFuLCBSb3NzLgoKT24gMTIgQXByaWwgMjAxOCBhdCAxNjoyMiwgSmFuIEthcmEgPGphY2tAc3Vz
-ZS5jej4gd3JvdGU6Cj4gSGVsbG8gTWljaGFlbCEKPgo+IE9uIFRodSAxMi0wNC0xOCAxNTowMDo0
-OSwgTWljaGFlbCBLZXJyaXNrIChtYW4tcGFnZXMpIHdyb3RlOgo+PiBIZWxsbyBKYW4sCj4+Cj4+
-IEkgaGF2ZSBhcHBsaWVkIHlvdXIgcGF0Y2gsIGFuZCB0d2Vha2VkIHRoZSB0ZXh0IGEgbGl0dGxl
-LCBhbmQgcHVzaGVkCj4+IHRoZSByZXN1bHQgdG8gdGhlIGdpdCByZXBvLgo+Cj4gVGhhbmtzIQo+
-Cj4+ID4gKy5CIE1BUF9TSEFSRUQKPj4gPiArdHlwZSB3aWxsIHNpbGVudGx5IGlnbm9yZSB0aGlz
-IGZsYWcuCj4+ID4gK1RoaXMgZmxhZyBpcyBzdXBwb3J0ZWQgb25seSBmb3IgZmlsZXMgc3VwcG9y
-dGluZyBEQVggKGRpcmVjdCBtYXBwaW5nIG9mIHBlcnNpc3RlbnQKPj4gPiArbWVtb3J5KS4gRm9y
-IG90aGVyIGZpbGVzLCBjcmVhdGluZyBtYXBwaW5nIHdpdGggdGhpcyBmbGFnIHJlc3VsdHMgaW4K
-Pj4gPiArLkIgRU9QTk9UU1VQUAo+PiA+ICtlcnJvci4gU2hhcmVkIGZpbGUgbWFwcGluZ3Mgd2l0
-aCB0aGlzIGZsYWcgcHJvdmlkZSB0aGUgZ3VhcmFudGVlIHRoYXQgd2hpbGUKPj4gPiArc29tZSBt
-ZW1vcnkgaXMgd3JpdGVhYmx5IG1hcHBlZCBpbiB0aGUgYWRkcmVzcyBzcGFjZSBvZiB0aGUgcHJv
-Y2VzcywgaXQgd2lsbAo+PiA+ICtiZSB2aXNpYmxlIGluIHRoZSBzYW1lIGZpbGUgYXQgdGhlIHNh
-bWUgb2Zmc2V0IGV2ZW4gYWZ0ZXIgdGhlIHN5c3RlbSBjcmFzaGVzIG9yCj4+ID4gK2lzIHJlYm9v
-dGVkLiBUaGlzIGFsbG93cyB1c2VycyBvZiBzdWNoIG1hcHBpbmdzIHRvIG1ha2UgZGF0YSBtb2Rp
-ZmljYXRpb25zCj4+ID4gK3BlcnNpc3RlbnQgaW4gYSBtb3JlIGVmZmljaWVudCB3YXkgdXNpbmcg
-YXBwcm9wcmlhdGUgQ1BVIGluc3RydWN0aW9ucy4KPj4KPj4gSXQgZmVlbHMgbGlrZSB0aGVyZSdz
-IGEgd29yZCBtaXNzaW5nL3VuY2xlYXIgd29yZGluZyBpbiB0aGUgcHJldmlvdXMKPj4gbGluZSwg
-YmVmb3JlICJ1c2luZyIuIFdpdGhvdXQgdGhhdCB3b3JkLCB0aGUgc2VudGVuY2UgZmVlbHMgYSBi
-aXQKPj4gYW1iaWd1b3VzLgo+Pgo+PiBTaG91bGQgaXQgYmU6Cj4+Cj4+IHBlcnNpc3RlbnQgaW4g
-YSBtb3JlIGVmZmljaWVudCB3YXkgKnRocm91Z2ggdGhlIHVzZSBvZiogYXBwcm9wcmlhdGUKPj4g
-Q1BVIGluc3RydWN0aW9ucy4KPj4KPj4gb3I6Cj4+Cj4+IHBlcnNpc3RlbnQgaW4gYSBtb3JlIGVm
-ZmljaWVudCB3YXkgKnRoYW4gdXNpbmcqIGFwcHJvcHJpYXRlIENQVSBpbnN0cnVjdGlvbnMuCj4+
-Cj4+ID8KPj4KPj4gSXMgc3VzcGVjdCB0aGUgZmlyc3QgaXMgY29ycmVjdCwgYnV0IG5lZWQgdG8g
-Y2hlY2suCj4KPiBZZXMsIHRoZSBmaXJzdCBpcyBjb3JyZWN0LgoKVGhhbmtzIGZvciBib3RoIGNo
-ZWNraW5nIHRoYXQgcGhyYXNpbmcuIEluIHRoZSBlbmQgSSBkZWNpZGVkIHRvIHJld29yZAp0aGUg
-c2VudGVuY2UgYSBib3QgbW9yZSBzdWJzdGFudGlhbGx5OgoKICAgICAgICAgICAgICBJbiAgY29u
-anVuY3Rpb24gIHdpdGggIHRoZSAgdXNlIG9mIGFwcHJvcHJpYXRlIENQVQogICAgICAgICAgICAg
-IGluc3RydWN0aW9ucywgdGhpcyBwcm92aWRlcyB1c2VycyBvZiBzdWNoIG1hcHBpbmdzCiAgICAg
-ICAgICAgICAgd2l0aCBhIG1vcmUgZWZmaWNpZW50IHdheSBvZiBtYWtpbmcgZGF0YSBtb2RpZmlj
-YeKAkAogICAgICAgICAgICAgIHRpb25zIHBlcnNpc3RlbnQuCgpUaGFua3MsCgpNaWNoYWVsCgot
-LSAKTWljaGFlbCBLZXJyaXNrCkxpbnV4IG1hbi1wYWdlcyBtYWludGFpbmVyOyBodHRwOi8vd3d3
-Lmtlcm5lbC5vcmcvZG9jL21hbi1wYWdlcy8KTGludXgvVU5JWCBTeXN0ZW0gUHJvZ3JhbW1pbmcg
-VHJhaW5pbmc6IGh0dHA6Ly9tYW43Lm9yZy90cmFpbmluZy8KX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX18KTGludXgtbnZkaW1tIG1haWxpbmcgbGlzdApMaW51
-eC1udmRpbW1AbGlzdHMuMDEub3JnCmh0dHBzOi8vbGlzdHMuMDEub3JnL21haWxtYW4vbGlzdGlu
-Zm8vbGludXgtbnZkaW1tCg==
+Hello Jann,
+
+On 04/12/2018 05:39 PM, Jann Horn wrote:
+> Clarify that MAP_FIXED is appropriate if the specified address range has
+> been reserved using an existing mapping, but shouldn't be used otherwise.
+> 
+> Signed-off-by: Jann Horn <jannh@google.com>
+> ---
+>  man2/mmap.2 | 19 +++++++++++--------
+>  1 file changed, 11 insertions(+), 8 deletions(-)
+> 
+> diff --git a/man2/mmap.2 b/man2/mmap.2
+> index bef8b4432..80c9ec285 100644
+> --- a/man2/mmap.2
+> +++ b/man2/mmap.2
+> @@ -253,8 +253,9 @@ Software that aspires to be portable should use this option with care,
+>  keeping in mind that the exact layout of a process's memory mappings
+>  is allowed to change significantly between kernel versions,
+>  C library versions, and operating system releases.
+> -Furthermore, this option is extremely hazardous (when used on its own),
+> -because it forcibly removes preexisting mappings,
+> +This option should only be used when the specified memory region has
+> +already been reserved using another mapping; otherwise, it is extremely
+> +hazardous because it forcibly removes preexisting mappings,
+>  making it easy for a multithreaded process to corrupt its own address space.
+>  .IP
+>  For example, suppose that thread A looks through
+> @@ -284,13 +285,15 @@ and the PAM libraries
+>  .UR http://www.linux-pam.org
+>  .UE .
+>  .IP
+> -Newer kernels
+> -(Linux 4.17 and later) have a
+> +For cases in which the specified memory region has not been reserved using an
+> +existing mapping, newer kernels (Linux 4.17 and later) provide an option
+>  .B MAP_FIXED_NOREPLACE
+> -option that avoids the corruption problem; if available,
+> -.B MAP_FIXED_NOREPLACE
+> -should be preferred over
+> -.BR MAP_FIXED .
+> +that should be used instead; older kernels require the caller to use
+> +.I addr
+> +as a hint (without
+> +.BR MAP_FIXED )
+> +and take appropriate action if the kernel places the new mapping at a
+> +different address.
+>  .TP
+>  .BR MAP_FIXED_NOREPLACE " (since Linux 4.17)"
+>  .\" commit a4ff8e8620d3f4f50ac4b41e8067b7d395056843
+
+Thanks! Nice patch! Applied.
+
+Cheers,
+
+Michael
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
