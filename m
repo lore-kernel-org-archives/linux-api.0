@@ -1,49 +1,40 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] mm/page_alloc: don't reserve ZONE_HIGHMEM for
- ZONE_MOVABLE request
-Date: Thu, 12 Apr 2018 14:01:33 +0200
-Message-ID: <20180412120133.GD23400@dhcp22.suse.cz>
-References: <1504672525-17915-1-git-send-email-iamjoonsoo.kim@lge.com>
- <20170914132452.d5klyizce72rhjaa@dhcp22.suse.cz>
- <CAAmzW4NGv7RyCYyokPoj4aR3ySKub4jaBZ3k=pt_YReFbByvsw@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH manpages] membarrier.2: New membarrier commands
+ introduced in 4.16
+Date: Thu, 12 Apr 2018 08:20:08 -0400 (EDT)
+Message-ID: <1431121546.8624.1523535608737.JavaMail.zimbra@efficios.com>
+References: <20180212195549.11485-1-mathieu.desnoyers@efficios.com> <CAKgNAkiGXL6Th4DGS_OD0MuwCtM6f7_nAehOVcbpU=u5L9atKA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAAmzW4NGv7RyCYyokPoj4aR3ySKub4jaBZ3k=pt_YReFbByvsw@mail.gmail.com>
+In-Reply-To: <CAKgNAkiGXL6Th4DGS_OD0MuwCtM6f7_nAehOVcbpU=u5L9atKA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joonsoo Kim <js1304@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Mel Gorman <mgorman@techsingularity.net>, Johannes Weiner <hannes@cmpxchg.org>, "Aneesh Kumar K . V" <aneesh.kumar@linux.vnet.ibm.com>, Minchan Kim <minchan@kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, linux-api@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@kernel.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andrew Hunter <ahh@google.com>, maged michael <maged.michael@gmail.com>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Dave Watson <davejwatson@fb.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrea Parri <parri.andrea@gmail.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Greg Hackmann <ghackmann@google.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-On Wed 04-04-18 09:24:06, Joonsoo Kim wrote:
-> 2017-09-14 22:24 GMT+09:00 Michal Hocko <mhocko@kernel.org>:
-> > [Sorry for a later reply]
-> >
-> > On Wed 06-09-17 13:35:25, Joonsoo Kim wrote:
-> >> From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-> >>
-> >> Freepage on ZONE_HIGHMEM doesn't work for kernel memory so it's not that
-> >> important to reserve.
-> >
-> > I am still not convinced this is a good idea. I do agree that reserving
-> > memory in both HIGHMEM and MOVABLE is just wasting memory but removing
-> > the reserve from the highmem as well will result that an oom victim will
-> > allocate from lower zones and that might have unexpected side effects.
-> 
-> Looks like you are confused.
-> 
-> This patch only affects the situation that ZONE_HIGHMEM and ZONE_MOVABLE is
-> used at the same time. In that case, before this patch, ZONE_HIGHMEM has
-> reserve for GFP_HIGHMEM | GFP_MOVABLE request, but, with this patch,  no reserve
-> in ZONE_HIGHMEM for GFP_HIGHMEM | GFP_MOVABLE request. This perfectly
-> matchs with your hope. :)
+----- On Apr 12, 2018, at 7:42 AM, Michael Kerrisk mtk.manpages@gmail.com wrote:
 
-I have forgot all the details but my vague recollection is that the
-concern was that GFP_HIGHUSER_MOVABLE etc. wouldn't keep any reserve in
-the highmem zone and so emergency allocations - e.g. those during OOM
-will have to fallback to kernel zones and might lead to hard to predict
-results. Am I still confused and this will not happen after the patch?
+Hi Michael,
+
+[...]
+> 
+> I have applied the above patch, and done quite a bit of tweaking, and
+> pushed the results to the git repo.
+> 
+> I would be grateful if you would read the entire manual page as it
+> currently stands, to see if anything needs improving. I isolated some
+> of the more significant changes into a simple patch, shown below, and
+> especially I'd like your confirmation that all of those changes are
+> okay.
+
+Thanks for applying my membarrier man pages updates. I've reviewed the
+result and it is all good.
+
+Mathieu
+
 -- 
-Michal Hocko
-SUSE Labs
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
