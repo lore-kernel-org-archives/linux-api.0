@@ -1,119 +1,78 @@
-From: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
- MAP_SYNC
-Date: Thu, 12 Apr 2018 08:00:59 -0600
-Message-ID: <20180412140059.GA7992@linux.intel.com>
-References: <20171101153648.30166-1-jack@suse.cz>
- <20171101153648.30166-20-jack@suse.cz>
- <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is locked down
+Date: Thu, 12 Apr 2018 07:19:35 -0700
+Message-ID: <CALCETrVm8c0dN=kymg=5-TQEWbL_zk9yCr4Bv4PKJXNC=6j=Fw@mail.gmail.com>
+References: <20180411195436.GA7126@kroah.com> <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
+ <12769.1523477356@warthog.procyon.org.uk> <20180411203308.GA10167@kroah.com>
+ <CALCETrWynogzZcaKMLWKce1rMvAC_sViReBDyiEWL-rm21HvAg@mail.gmail.com> <20180412082313.GA6054@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180412082313.GA6054@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <greg@kroah.com>
+Cc: Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, James Morris <jmorris@namei.org>, LKML <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 12, 2018 at 03:00:49PM +0200, Michael Kerrisk (man-pages) wrote:
-> Hello Jan,
-> 
-> I have applied your patch, and tweaked the text a little, and pushed
-> the result to the git repo.
-> 
-> On 1 November 2017 at 16:36, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > Reviewed-by: Ross Zwisler <ross.zwisler-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>
-> > Signed-off-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-> 
-> I have a question below.
-> 
-> > ---
-> >  man2/mmap.2 | 35 ++++++++++++++++++++++++++++++++++-
-> >  1 file changed, 34 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/man2/mmap.2 b/man2/mmap.2
-> > index 47c3148653be..b38ee6809327 100644
-> > --- a/man2/mmap.2
-> > +++ b/man2/mmap.2
-> > @@ -125,6 +125,21 @@ are carried through to the underlying file.
-> >  to the underlying file requires the use of
-> >  .BR msync (2).)
-> >  .TP
-> > +.BR MAP_SHARED_VALIDATE " (since Linux 4.15)"
-> > +The same as
-> > +.B MAP_SHARED
-> > +except that
-> > +.B MAP_SHARED
-> > +mappings ignore unknown flags in
-> > +.IR flags .
-> > +In contrast when creating mapping of
-> > +.B MAP_SHARED_VALIDATE
-> > +mapping type, the kernel verifies all passed flags are known and fails the
-> > +mapping with
-> > +.BR EOPNOTSUPP
-> > +otherwise. This mapping type is also required to be able to use some mapping
-> > +flags.
-> > +.TP
-> >  .B MAP_PRIVATE
-> >  Create a private copy-on-write mapping.
-> >  Updates to the mapping are not visible to other processes
-> > @@ -134,7 +149,10 @@ It is unspecified whether changes made to the file after the
-> >  .BR mmap ()
-> >  call are visible in the mapped region.
-> >  .PP
-> > -Both of these flags are described in POSIX.1-2001 and POSIX.1-2008.
-> > +.B MAP_SHARED
-> > +and
-> > +.B MAP_PRIVATE
-> > +are described in POSIX.1-2001 and POSIX.1-2008.
-> >  .PP
-> >  In addition, zero or more of the following values can be ORed in
-> >  .IR flags :
-> > @@ -352,6 +370,21 @@ option.
-> >  Because of the security implications,
-> >  that option is normally enabled only on embedded devices
-> >  (i.e., devices where one has complete control of the contents of user memory).
-> > +.TP
-> > +.BR MAP_SYNC " (since Linux 4.15)"
-> > +This flags is available only with
-> > +.B MAP_SHARED_VALIDATE
-> > +mapping type. Mappings of
-> > +.B MAP_SHARED
-> > +type will silently ignore this flag.
-> > +This flag is supported only for files supporting DAX (direct mapping of persistent
-> > +memory). For other files, creating mapping with this flag results in
-> > +.B EOPNOTSUPP
-> > +error. Shared file mappings with this flag provide the guarantee that while
-> > +some memory is writeably mapped in the address space of the process, it will
-> > +be visible in the same file at the same offset even after the system crashes or
-> > +is rebooted. This allows users of such mappings to make data modifications
-> > +persistent in a more efficient way using appropriate CPU instructions.
-> 
-> It feels like there's a word missing/unclear wording in the previous
-> line, before "using". Without that word, the sentence feels a bit
-> ambiguous.
-> 
-> Should it be:
-> 
-> persistent in a more efficient way *through the use of* appropriate
-> CPU instructions.
-> 
-> or:
-> 
-> persistent in a more efficient way *than using* appropriate CPU instructions.
-> 
-> ?
-> 
-> Is suspect the first is correct, but need to check.
+On Thu, Apr 12, 2018 at 1:23 AM, Greg KH <greg@kroah.com> wrote:
+> On Wed, Apr 11, 2018 at 07:54:12PM -0700, Andy Lutomirski wrote:
+>> On Wed, Apr 11, 2018 at 1:33 PM, Greg KH <greg@kroah.com> wrote:
+>> > On Wed, Apr 11, 2018 at 09:09:16PM +0100, David Howells wrote:
+>> >> Greg KH <greg@kroah.com> wrote:
+>> >>
+>> >> > Why not just disable debugfs entirely?  This half-hearted way to sorta
+>> >> > lock it down is odd, it is meant to not be there at all, nothing in your
+>> >> > normal system should ever depend on it.
+>> >> >
+>> >> > So again just don't allow it to be mounted at all, much simpler and more
+>> >> > obvious as to what is going on.
+>> >>
+>> >> Yeah, I agree - and then I got complaints because it seems that it's been
+>> >> abused to allow drivers and userspace components to communicate.
+>> >
+>> > With in-kernel code?  Please let me know and I'll go fix it up to not
+>> > allow that, as that is not ok.
+>> >
+>> > I do know of some bad examples of out-of-tree code abusing debugfs to do
+>> > crazy things (battery level monitoring?), but that's their own fault...
+>> >
+>> > debugfs is for DEBUGGING!  For anything you all feel should be "secure",
+>> > then just disable it entirely.
+>> >
+>>
+>> Debugfs is very, very useful for, ahem, debugging.  I really think
+>> this is an example of why we should split lockdown into the read and
+>> write varieties and allow mounting and reading debugfs when only write
+>> is locked down.
+>
+> Ok, but be sure that there are no "secrets" in those debugging files if
+> you really buy into the whole "lock down" mess...
+>
+> Really, it's easier to just disable the whole thing.
+>
 
-You're right, the first one is correct.
+I mostly agree with your sentiment.  I'm saying that, for most uses, I
+*don't* buy into the idea that a normal secure-boot-supporting distro
+should block debugfs.  I sometimes like to ask people who report
+problems to send me the contents of such-and-such file in debugfs, and
+I think it should keep working.  Blocking write access to debugfs is
+mostly sensible for a lockdown system, but blocking read only makes
+sense if you're worried about straight-up bugs or if you think that
+debugfs contains protection-worthy secrets.
+
+What I want to see is:
+
+lockdown=protect_integrity: debugfs is read-only, bpf and perf are
+unrestricted, iopl and ioperm are disabled, etc.
+
+lockdown=protect_integrity_and_secrecy: debugfs is gone, bpf and perf
+are restricted, plus all the restrictions from
+lockdown=protect_integrity
+
+Distros should strongly prefer lockdown=protect_integrity (or
+lockdown=off) by default.  lockdown=protect_integrity_and_secrecy is
+for custom setups, embedded applications, etc.
+
+
+--Andy
