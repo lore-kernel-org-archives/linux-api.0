@@ -1,43 +1,41 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
-Date: Fri, 13 Apr 2018 08:59:44 +0200
-Message-ID: <20180413065944.GE17484@dhcp22.suse.cz>
-References: <20180305133743.12746-1-guro@fb.com>
- <20180305133743.12746-2-guro@fb.com>
- <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
- <20180411135624.GA24260@castle.DHCP.thefacebook.com>
- <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
- <20180412145702.GB30714@castle.DHCP.thefacebook.com>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH] mmap.2: Add description of MAP_SHARED_VALIDATE and
+ MAP_SYNC
+Date: Fri, 13 Apr 2018 13:17:48 +0200
+Message-ID: <20180413111748.pnusziuap54hknrm@quack2.suse.cz>
+References: <20171101153648.30166-1-jack@suse.cz>
+ <20171101153648.30166-20-jack@suse.cz>
+ <CAKgNAkhsFrcdkXNA2cw3o0gJV0uLRtBg9ybaCe5xy1QBC2PgqA@mail.gmail.com>
+ <20180412142214.fcxw3g2jxv6bvn7d@quack2.suse.cz>
+ <CAKgNAkgtVryFb81QgzwPq8SD241yKDN1xNxOWUUQH9QBYV13SA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180412145702.GB30714@castle.DHCP.thefacebook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <CAKgNAkgtVryFb81QgzwPq8SD241yKDN1xNxOWUUQH9QBYV13SA-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "Darrick J . Wong" <darrick.wong-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux-MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, "linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 12-04-18 15:57:03, Roman Gushchin wrote:
-> On Thu, Apr 12, 2018 at 08:52:52AM +0200, Vlastimil Babka wrote:
-[...]
-> > We would be just making the reported values more precise wrt reality.
-> 
-> It depends on if we believe that only slab memory can be reclaimable
-> or not. If yes, this is true, otherwise not.
-> 
-> My guess is that some drivers (e.g. networking) might have buffers,
-> which are reclaimable under mempressure, and are allocated using
-> the page allocator. But I have to look closer...
-
-Well, we have many direct page allocator users which are not accounted
-in vmstat. Some of those use their specific accounting (e.g. network
-buffers, some fs metadata a many others). In the ideal world MM layer
-would know about those but...
-
-Anyway, this particular case is quite clear, no? We _use_ kmalloc so
-this is slab allocator. We just misaccount it.
-
--- 
-Michal Hocko
-SUSE Labs
+T24gVGh1IDEyLTA0LTE4IDIwOjIwOjEyLCBNaWNoYWVsIEtlcnJpc2sgKG1hbi1wYWdlcykgd3Jv
+dGU6Cj4gCj4gVGhhbmtzIGZvciBib3RoIGNoZWNraW5nIHRoYXQgcGhyYXNpbmcuIEluIHRoZSBl
+bmQgSSBkZWNpZGVkIHRvIHJld29yZAo+IHRoZSBzZW50ZW5jZSBhIGJvdCBtb3JlIHN1YnN0YW50
+aWFsbHk6Cj4gCj4gICAgICAgICAgICAgICBJbiAgY29uanVuY3Rpb24gIHdpdGggIHRoZSAgdXNl
+IG9mIGFwcHJvcHJpYXRlIENQVQo+ICAgICAgICAgICAgICAgaW5zdHJ1Y3Rpb25zLCB0aGlzIHBy
+b3ZpZGVzIHVzZXJzIG9mIHN1Y2ggbWFwcGluZ3MKPiAgICAgICAgICAgICAgIHdpdGggYSBtb3Jl
+IGVmZmljaWVudCB3YXkgb2YgbWFraW5nIGRhdGEgbW9kaWZpY2HigJAKPiAgICAgICAgICAgICAg
+IHRpb25zIHBlcnNpc3RlbnQuCgpHcmVhdCwgdGhhbmtzIGZvciB0aGUgaW1wcm92ZW1lbnQhCgoJ
+CQkJCQkJCUhvbnphCi0tIApKYW4gS2FyYSA8amFja0BzdXNlLmNvbT4KU1VTRSBMYWJzLCBDUgpf
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eC1udmRp
+bW0gbWFpbGluZyBsaXN0CkxpbnV4LW52ZGltbUBsaXN0cy4wMS5vcmcKaHR0cHM6Ly9saXN0cy4w
+MS5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1udmRpbW0K
