@@ -1,56 +1,85 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.18 12/23] cpu_opv: Provide cpu_opv system call
- (v7)
-Date: Fri, 13 Apr 2018 14:06:27 -0400 (EDT)
-Message-ID: <1111249972.9907.1523642787504.JavaMail.zimbra@efficios.com>
-References: <20180412192800.15708-1-mathieu.desnoyers@efficios.com> <20180412192800.15708-13-mathieu.desnoyers@efficios.com> <CA+55aFxcJ2V_1BoW0Cct=Kkp7REkgiU_BTimGdmoFmWHaWaZ-g@mail.gmail.com> <1580648199.9463.1523563167045.JavaMail.zimbra@efficios.com> <CA+55aFwFUeNA6_0a1MOU-7VGzCw5T99cfVCPiyTpZQJdd6z=bw@mail.gmail.com> <625160026.9658.1523621809662.JavaMail.zimbra@efficios.com> <CA+55aFwXCnnfrOjPj5SB=G34xgveo1jqNyf23YNt6jOKX_VdGw@mail.gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 02/24] Add a SysRq option to lift kernel lockdown
+Date: Fri, 13 Apr 2018 22:22:23 +0200
+Message-ID: <20180413202222.GA4396@amd>
+References: <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346389240.4030.11187964053014260180.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="bg08WKrSYDhXBjb5"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFwXCnnfrOjPj5SB=G34xgveo1jqNyf23YNt6jOKX_VdGw@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <152346389240.4030.11187964053014260180.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@a>
+To: David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 13, 2018, at 12:37 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
 
-> On Fri, Apr 13, 2018 at 5:16 AM, Mathieu Desnoyers
-> <mathieu.desnoyers@efficios.com> wrote:
->> The vmalloc space needed by cpu_opv is bound by the number of pages
->> a cpu_opv call can touch.
-> 
-> No it's not.
-> 
-> You can have a thousand different processes doing cpu_opv at the same time.
-> 
-> A *single* cpu_opv may me limited toi "only" a megabyte, but I'm not
-> seeing any global limit anywhere.
-> 
-> In short, this looks like a guaranteed DoS approach to me.
+--bg08WKrSYDhXBjb5
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Right, so one simple approach to solve this is to limit to the number
-of concurrent cpu_opv executed at any given time.
+On Wed 2018-04-11 17:24:52, David Howells wrote:
+> From: Kyle McMartin <kyle@redhat.com>
+>=20
+> Make an option to provide a sysrq key that will lift the kernel lockdown,
+> thereby allowing the running kernel image to be accessed and modified.
+>=20
+> On x86 this is triggered with SysRq+x, but this key may not be available =
+on
+> all arches, so it is set by setting LOCKDOWN_LIFT_KEY in asm/setup.h.
+> Since this macro must be defined in an arch to be able to use this facili=
+ty
+> for that arch, the Kconfig option is restricted to arches that support it.
+>=20
+> Signed-off-by: Kyle McMartin <kyle@redhat.com>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> cc: x86@kernel.org
 
-Considering that cpu_opv is a slow path, we can limit the number
-of concurrent cpu_opv executions by protecting this with a global
-mutex, or a semaphore if we want the number of concurrent executions
-to be greater than 1.
+Is that good idea? Magic sysrq was meant for debugging, not for
+toggling options like that. Distros are expected to turn it off.
 
-Another approach if we want to be fancier is to keep track of the
-amount of vma address space currently used by all in-flight cpu_opv.
-Beyond a given threshold, further execution of additional cpu_opv
-instances would block, awaiting to be woken up when vmalloc address
-space is freed when in-flight cpu_opv complete.
+It also works over serial consoles etc, being able to toggle security
+options from serial is surprising...
 
-What global vmalloc address-space budget should we aim for ?
+> --- a/drivers/tty/sysrq.c
+> +++ b/drivers/tty/sysrq.c
+> @@ -487,6 +487,7 @@ static struct sysrq_key_op *sysrq_key_table[36] =3D {
+>  	/* x: May be registered on mips for TLB dump */
+>  	/* x: May be registered on ppc/powerpc for xmon */
+>  	/* x: May be registered on sparc64 for global PMU dump */
+> +	/* x: May be registered on x86_64 for disabling secure boot */
+>  	NULL,				/* x */
 
-Thanks,
+What about x86-32?
 
-Mathieu
+> +static struct sysrq_key_op lockdown_lift_sysrq_op =3D {
+> +	.handler	=3D sysrq_handle_lockdown_lift,
+> +	.help_msg	=3D "unSB(x)",
+> +	.action_msg	=3D "Disabling Secure Boot restrictions",
+> +	.enable_mask	=3D SYSRQ_DISABLE_USERSPACE,
+> +};
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+I'd remove secure boot mentions here.
+								Pavel
+
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--bg08WKrSYDhXBjb5
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlrREX4ACgkQMOfwapXb+vLYtgCfRYyFGIL5TIvishDq7IHED0qR
+epcAnR6WOidNb9YAVPgOJSkYW2tiiKVf
+=oF26
+-----END PGP SIGNATURE-----
+
+--bg08WKrSYDhXBjb5--
