@@ -1,49 +1,39 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/7] aio: remove an outdated BUG_ON and comment in aio_complete
-Date: Sun, 15 Apr 2018 17:01:03 +0200
-Message-ID: <20180415150108.1341-3-hch@lst.de>
+Subject: [PATCH 1/7] aio: don't print the page size at boot time
+Date: Sun, 15 Apr 2018 17:01:02 +0200
+Message-ID: <20180415150108.1341-2-hch@lst.de>
 References: <20180415150108.1341-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180415150108.1341-1-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-These days we don't treat sync iocbs special in the aio completion code as
-they never use it.  Remove the old comment and BUG_ON given that the
-current definition of is_sync_kiocb makes it impossible to hit.
+The page size is in no way related to the aio code, and printing it in
+the (debug) dmesg at every boot serves no purpose.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Jeff Moyer <jmoyer@redhat.com>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/aio.c | 9 ---------
- 1 file changed, 9 deletions(-)
+ fs/aio.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index add46b06be86..7c1855afd723 100644
+index 88d7927ffbc6..add46b06be86 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -1107,15 +1107,6 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
- 		file_end_write(file);
- 	}
+@@ -264,9 +264,6 @@ static int __init aio_setup(void)
  
--	/*
--	 * Special case handling for sync iocbs:
--	 *  - events go directly into the iocb for fast handling
--	 *  - the sync task with the iocb in its stack holds the single iocb
--	 *    ref, no other paths have a way to get another ref
--	 *  - the sync task helpfully left a reference to itself in the iocb
--	 */
--	BUG_ON(is_sync_kiocb(kiocb));
+ 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+ 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
 -
- 	if (iocb->ki_list.next) {
- 		unsigned long flags;
- 
+-	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
+-
+ 	return 0;
+ }
+ __initcall(aio_setup);
 -- 
 2.17.0
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
