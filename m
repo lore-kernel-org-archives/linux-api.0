@@ -1,39 +1,73 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 1/7] aio: don't print the page size at boot time
-Date: Sun, 15 Apr 2018 17:01:02 +0200
-Message-ID: <20180415150108.1341-2-hch@lst.de>
+Subject: [PATCH 3/7] aio: sanitize ki_list handling
+Date: Sun, 15 Apr 2018 17:01:04 +0200
+Message-ID: <20180415150108.1341-4-hch@lst.de>
 References: <20180415150108.1341-1-hch@lst.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180415150108.1341-1-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The page size is in no way related to the aio code, and printing it in
-the (debug) dmesg at every boot serves no purpose.
+Instead of handcoded non-null checks always initialize ki_list to an
+empty list and use list_empty / list_empty_careful on it.  While we're
+at it also error out on a double call to kiocb_set_cancel_fn instead
+of ignoring it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Acked-by: Jeff Moyer <jmoyer@redhat.com>
 Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/aio.c | 3 ---
- 1 file changed, 3 deletions(-)
+ fs/aio.c | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index 88d7927ffbc6..add46b06be86 100644
+index 7c1855afd723..18507743757a 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -264,9 +264,6 @@ static int __init aio_setup(void)
+@@ -553,13 +553,12 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+ 	struct kioctx *ctx = req->ki_ctx;
+ 	unsigned long flags;
  
- 	kiocb_cachep = KMEM_CACHE(aio_kiocb, SLAB_HWCACHE_ALIGN|SLAB_PANIC);
- 	kioctx_cachep = KMEM_CACHE(kioctx,SLAB_HWCACHE_ALIGN|SLAB_PANIC);
+-	spin_lock_irqsave(&ctx->ctx_lock, flags);
 -
--	pr_debug("sizeof(struct page) = %zu\n", sizeof(struct page));
+-	if (!req->ki_list.next)
+-		list_add(&req->ki_list, &ctx->active_reqs);
++	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
++		return;
+ 
++	spin_lock_irqsave(&ctx->ctx_lock, flags);
++	list_add_tail(&req->ki_list, &ctx->active_reqs);
+ 	req->ki_cancel = cancel;
 -
- 	return 0;
+ 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
  }
- __initcall(aio_setup);
+ EXPORT_SYMBOL(kiocb_set_cancel_fn);
+@@ -1039,7 +1038,7 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
+ 		goto out_put;
+ 
+ 	percpu_ref_get(&ctx->reqs);
+-
++	INIT_LIST_HEAD(&req->ki_list);
+ 	req->ki_ctx = ctx;
+ 	return req;
+ out_put:
+@@ -1107,7 +1106,7 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
+ 		file_end_write(file);
+ 	}
+ 
+-	if (iocb->ki_list.next) {
++	if (!list_empty_careful(&iocb->ki_list)) {
+ 		unsigned long flags;
+ 
+ 		spin_lock_irqsave(&ctx->ctx_lock, flags);
 -- 
 2.17.0
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
