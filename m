@@ -1,78 +1,65 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been reserved
-Date: Mon, 16 Apr 2018 22:17:40 +0200
-Message-ID: <CAG48ez1bV_zZP3Y2ioDndP+H8mLCcxOtU1vCbWe7Q8myEGfXQQ@mail.gmail.com>
-References: <9c714917-fc29-4d12-b5e8-cff28761a2c1@gmail.com>
- <20180413064917.GC17484@dhcp22.suse.cz> <CAG48ez2w+3FDh9LM3+P2EHowicjM2Xw6giR6uq=26JfWHYsTAQ@mail.gmail.com>
- <20180413160435.GA17484@dhcp22.suse.cz> <CAG48ez3-xtmAt2EpRFR8GNKKPcsDsyg7XdwQ=D5w3Ym6w4Krjw@mail.gmail.com>
- <CAG48ez1PdzMs8hkatbzSLBWYucjTc75o8ovSmeC66+e9mLvSfA@mail.gmail.com>
- <20180416100736.GG17484@dhcp22.suse.cz> <CAG48ez3DwRXMtiinUWKnan6hAppLYLdx-w+VzXG6ubioZUacQg@mail.gmail.com>
- <20180416191805.GS17484@dhcp22.suse.cz> <CAG48ez1nf96nHj8a+aZy22RwqYTUZBGrsGFcz=ZhZBUWzaEZ9w@mail.gmail.com>
- <20180416195726.GT17484@dhcp22.suse.cz>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.18 12/23] cpu_opv: Provide cpu_opv system call
+ (v7)
+Date: Mon, 16 Apr 2018 16:58:37 -0400 (EDT)
+Message-ID: <1248652824.11527.1523912317964.JavaMail.zimbra@efficios.com>
+References: <20180412192800.15708-1-mathieu.desnoyers@efficios.com> <20180412192800.15708-13-mathieu.desnoyers@efficios.com> <CA+55aFxcJ2V_1BoW0Cct=Kkp7REkgiU_BTimGdmoFmWHaWaZ-g@mail.gmail.com> <CALCETrVvaMWUJKx+bxXdEm3oVBzn2r5RuJ4JcXNzOPSgJAC5PA@mail.gmail.com> <542721578.11358.1523903708510.JavaMail.zimbra@efficios.com> <CA+55aFzZtY5ELKc+TGf9BA6px300BNzedadm_yNXzODTKN=HgQ@mail.gmail.com> <435471300.11403.1523906479091.JavaMail.zimbra@efficios.com> <CA+55aFxtZXi05UNLmtbKcZ=2N_ROE5pLnu9+v6FaXiuK=VbErA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180416195726.GT17484@dhcp22.suse.cz>
+In-Reply-To: <CA+55aFxtZXi05UNLmtbKcZ=2N_ROE5pLnu9+v6FaXiuK=VbErA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, linux-man <linux-man@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@a>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 16, 2018 at 9:57 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> On Mon 16-04-18 21:30:09, Jann Horn wrote:
->> On Mon, Apr 16, 2018 at 9:18 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> [...]
->> > Yes, reasonably well written application will not have this problem.
->> > That, however, requires an external synchronization and that's why
->> > called it error prone and racy. I guess that was the main motivation for
->> > that part of the man page.
+----- On Apr 16, 2018, at 3:26 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
+
+> On Mon, Apr 16, 2018 at 12:21 PM, Mathieu Desnoyers
+> <mathieu.desnoyers@efficios.com> wrote:
 >>
->> What requires external synchronization? I still don't understand at
->> all what you're talking about.
->>
->> The following code:
->>
->> void *try_to_alloc_addr(void *hint, size_t len) {
->>   char *x = mmap(hint, len, ...);
->>   if (x == MAP_FAILED) return NULL;
->>   if (x == hint) return x;
->
-> Any other thread can modify the address space at this moment.
+>> And I try very hard to avoid being told I'm the one breaking
+>> user-space. ;-)
+> 
+> You *can't* be breaking user space. User space doesn't use this yet.
+> 
+> That's actually why I'd like to start with the minimal set - to make
+> sure we don't introduce features that will come back to bite us later.
+> 
+> The one compelling use case I saw was a memory allocator that used
+> this for getting per-CPU (vs per-thread) memory scaling.
+> 
+> That code didn't need the cpu_opv system call at all.
+> 
+> And if somebody does a ldload of a malloc library, and then wants to
+> analyze the behavior of a program, maybe they should ldload their own
+> malloc routines first? That's pretty much par for the course for those
+> kinds of projects.
+> 
+> So I'd much rather we first merge the non-contentious parts that
+> actually have some numbers for "this improves performance and makes a
+> nice fancy malloc possible".
+> 
+> As it is, the cpu_opv seems to be all about theory, not about actual need.
 
-But not parts of the address space that were returned by this mmap() call.
+I fully get your point about getting the minimal feature in. So let's focus
+on rseq only.
 
-> Just
-> consider that another thread would does mmap(x, MAP_FIXED) (or any other
-> address overlapping [x, x+len] range)
+I will rework the patchset so the rseq selftests don't depend on cpu_opv,
+and remove the cpu_opv stuff. I think it would be a good start for the
+Facebook guys (jemalloc), given that just rseq seems to be enough for them
+for now. It should be enough for the arm64 performance counters as well.
 
-If the other thread does that without previously having created a
-mapping covering the area in question, that would be a bug in the
-other thread. MAP_FIXED on an unmapped address is almost always a bug
-(excluding single-threaded cases with no library code, and even then
-it's quite weird) - for example, any malloc() call could also cause
-libc to start using the memory range you're trying to map with
-MAP_FIXED.
+Then we'll figure out what is needed to make other projects use it based on
+their needs (e.g. lttng-ust, liburcu, glibc malloc), and whether jemalloc
+end up requiring cpu_opv for memory migration between per-cpu pools after all.
 
-> becaus it is seemingly safe as x
-> != hint.
+Thanks,
 
-I don't understand this part. Are you talking about a hypothetical
-scenario in which a programmer attempts to segment the virtual memory
-space into areas that are exclusively used by threads without creating
-memory mappings for those areas?
+Mathieu
 
-> This will succeed and ...
->>   munmap(x, len);
-> ... now you are munmaping somebody's else memory range
->
->>   return NULL;
->
-> Do code _is_ buggy but it is not obvious at all.
->
->> }
->>
->> has no need for any form of external synchronization.
->
-> If the above mmap/munmap section was protected by a lock and _all_ other
-> mmaps (direct or indirect) would use the same lock then you are safe
-> against that.
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
