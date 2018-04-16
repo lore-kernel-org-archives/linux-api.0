@@ -1,84 +1,49 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been reserved
-Date: Mon, 16 Apr 2018 15:55:36 +0200
-Message-ID: <CAG48ez3DwRXMtiinUWKnan6hAppLYLdx-w+VzXG6ubioZUacQg@mail.gmail.com>
-References: <CAG48ez2NtCr8+HqnKJTFBcLW+kCKUa=2pz=7HD9p9u1p-MfJqw@mail.gmail.com>
- <13801e2a-c44d-e940-f872-890a0612a483@nvidia.com> <CAG48ez085cASur3kZTRkdJY20dFZ4Yqc1KVOHxnCAn58_NtW8w@mail.gmail.com>
- <cfbbbe06-5e63-e43c-fb28-c5afef9e1e1d@nvidia.com> <9c714917-fc29-4d12-b5e8-cff28761a2c1@gmail.com>
- <20180413064917.GC17484@dhcp22.suse.cz> <CAG48ez2w+3FDh9LM3+P2EHowicjM2Xw6giR6uq=26JfWHYsTAQ@mail.gmail.com>
- <20180413160435.GA17484@dhcp22.suse.cz> <CAG48ez3-xtmAt2EpRFR8GNKKPcsDsyg7XdwQ=D5w3Ym6w4Krjw@mail.gmail.com>
- <CAG48ez1PdzMs8hkatbzSLBWYucjTc75o8ovSmeC66+e9mLvSfA@mail.gmail.com> <20180416100736.GG17484@dhcp22.suse.cz>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.18 12/23] cpu_opv: Provide cpu_opv system call
+ (v7)
+Date: Mon, 16 Apr 2018 12:28:14 -0400 (EDT)
+Message-ID: <751033048.11156.1523896094938.JavaMail.zimbra@efficios.com>
+References: <20180412192800.15708-1-mathieu.desnoyers@efficios.com> <20180412192800.15708-13-mathieu.desnoyers@efficios.com> <CA+55aFxcJ2V_1BoW0Cct=Kkp7REkgiU_BTimGdmoFmWHaWaZ-g@mail.gmail.com> <20180412202302.xnw5jdl3upl46ywt@two.firstfloor.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180416100736.GG17484@dhcp22.suse.cz>
+In-Reply-To: <20180412202302.xnw5jdl3upl46ywt@two.firstfloor.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, linux-man <linux-man@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Andi Kleen <andi@firstfloor.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 16, 2018 at 12:07 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> On Fri 13-04-18 18:17:36, Jann Horn wrote:
->> On Fri, Apr 13, 2018 at 6:05 PM, Jann Horn <jannh@google.com> wrote:
->> > On Fri, Apr 13, 2018 at 6:04 PM, Michal Hocko <mhocko@kernel.org> wrote:
->> >> On Fri 13-04-18 17:04:09, Jann Horn wrote:
->> >>> On Fri, Apr 13, 2018 at 8:49 AM, Michal Hocko <mhocko@kernel.org> wrote:
->> >>> > On Fri 13-04-18 08:43:27, Michael Kerrisk wrote:
->> >>> > [...]
->> >>> >> So, you mean remove this entire paragraph:
->> >>> >>
->> >>> >>               For cases in which the specified memory region has not been
->> >>> >>               reserved using an existing mapping,  newer  kernels  (Linux
->> >>> >>               4.17  and later) provide an option MAP_FIXED_NOREPLACE that
->> >>> >>               should be used instead; older kernels require the caller to
->> >>> >>               use addr as a hint (without MAP_FIXED) and take appropriate
->> >>> >>               action if the kernel places the new mapping at a  different
->> >>> >>               address.
->> >>> >>
->> >>> >> It seems like some version of the first half of the paragraph is worth
->> >>> >> keeping, though, so as to point the reader in the direction of a remedy.
->> >>> >> How about replacing that text with the following:
->> >>> >>
->> >>> >>               Since  Linux 4.17, the MAP_FIXED_NOREPLACE flag can be used
->> >>> >>               in a multithreaded program to avoid  the  hazard  described
->> >>> >>               above.
->> >>> >
->> >>> > Yes, that sounds reasonable to me.
->> >>>
->> >>> But that kind of sounds as if you can't avoid it before Linux 4.17,
->> >>> when actually, you just have to call mmap() with the address as hint,
->> >>> and if mmap() returns a different address, munmap() it and go on your
->> >>> normal error path.
->> >>
->> >> This is still racy in multithreaded application which is the main point
->> >> of the whole section, no?
->> >
->> > No, it isn't.
->
-> I could have been more specific, sorry.
->
->> mmap() with a hint (without MAP_FIXED) will always non-racily allocate
->> a memory region for you or return an error code. If it does allocate a
->> memory region, it belongs to you until you deallocate it. It might be
->> at a different address than you requested -
->
-> Yes, this all is true. Except the atomicity is guaranteed only for the
-> syscall. Once you return to the userspace any error handling is error
-> prone and racy because your mapping might change under you feet. So...
+----- On Apr 12, 2018, at 4:23 PM, Andi Kleen andi@firstfloor.org wrote:
 
-Can you please elaborate on why you think anything could change the
-mapping returned by mmap() under the caller's feet?
-When mmap() returns a memory area to the caller, that memory area
-belongs to the caller. No unrelated code will touch it, unless that
-code is buggy.
+>> Can we plan on merging just the plain rseq parts *without* this all
+>> first, and then see the cpu_opv thing as a "maybe future expansion"
+>> part.
+> 
+> That would be the right way to go. I doubt anybody really needs cpu_opv.
+> We already have other code (e.g. vgettimeofday) which cannot
+> be single stepped, and so far it never was a problem.
 
->> in that case you can
->> emulate MAP_FIXED_NOREPLACE by calling munmap() and treating it as an
->> error; or you can do something else with it.
->>
->> MAP_FIXED_NOREPLACE is just a performance optimization.
->
-> This is not quite true because you get _your_ area or _an error_
-> atomically which is not possible with 2 syscalls.
+Single-stepping is only a subset of the rseq limitations addressed
+by cpu_opv. Anoher major limitation is algorithms requiring data
+migration between per-cpu data structures safely against CPU hotplug,
+and without having to change the cpu affinity mask. This is the case
+for memory allocators and userspace task schedulers which require
+cpu_opv for migration between per-cpu memory pools and scheduler
+runqueues.
 
-Why not?
+About the vgettimeofday and general handling of vDSO by gdb, gdb's
+approach only takes care of line-by-line single-stepping by hiding
+Linux' vdso mapping so users cannot target source code lines within
+that shared object. However, it breaks instruction-level single-stepping.
+I reported this issue to you back in Nov. 2017:
+https://lkml.org/lkml/2017/11/20/803
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
