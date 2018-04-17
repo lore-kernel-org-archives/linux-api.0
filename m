@@ -1,92 +1,140 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been reserved
-Date: Mon, 16 Apr 2018 23:12:48 +0200
-Message-ID: <CAG48ez2fXcQS7sw_aCC6_wBKjYphOxFRN4rrRzSk2+-T_mFaxw@mail.gmail.com>
-References: <CAG48ez2w+3FDh9LM3+P2EHowicjM2Xw6giR6uq=26JfWHYsTAQ@mail.gmail.com>
- <20180413160435.GA17484@dhcp22.suse.cz> <CAG48ez3-xtmAt2EpRFR8GNKKPcsDsyg7XdwQ=D5w3Ym6w4Krjw@mail.gmail.com>
- <CAG48ez1PdzMs8hkatbzSLBWYucjTc75o8ovSmeC66+e9mLvSfA@mail.gmail.com>
- <20180416100736.GG17484@dhcp22.suse.cz> <CAG48ez3DwRXMtiinUWKnan6hAppLYLdx-w+VzXG6ubioZUacQg@mail.gmail.com>
- <20180416191805.GS17484@dhcp22.suse.cz> <CAG48ez1nf96nHj8a+aZy22RwqYTUZBGrsGFcz=ZhZBUWzaEZ9w@mail.gmail.com>
- <20180416195726.GT17484@dhcp22.suse.cz> <CAG48ez1bV_zZP3Y2ioDndP+H8mLCcxOtU1vCbWe7Q8myEGfXQQ@mail.gmail.com>
- <20180416211115.GU17484@dhcp22.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [PATCH 3/3] mm/hugetlb: use find_alloc_contig_pages() to allocate gigantic pages
+Date: Mon, 16 Apr 2018 19:09:15 -0700
+Message-ID: <20180417020915.11786-4-mike.kravetz@oracle.com>
+References: <20180417020915.11786-1-mike.kravetz@oracle.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180416211115.GU17484@dhcp22.suse.cz>
+In-Reply-To: <20180417020915.11786-1-mike.kravetz@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, linux-man <linux-man@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, Vlastimil Babka <vbabka@suse.cz>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 16, 2018 at 11:11 PM, Michal Hocko <mhocko@kernel.org> wrote:
-> On Mon 16-04-18 22:17:40, Jann Horn wrote:
->> On Mon, Apr 16, 2018 at 9:57 PM, Michal Hocko <mhocko@kernel.org> wrote:
->> > On Mon 16-04-18 21:30:09, Jann Horn wrote:
->> >> On Mon, Apr 16, 2018 at 9:18 PM, Michal Hocko <mhocko@kernel.org> wrote:
->> > [...]
->> >> > Yes, reasonably well written application will not have this problem.
->> >> > That, however, requires an external synchronization and that's why
->> >> > called it error prone and racy. I guess that was the main motivation for
->> >> > that part of the man page.
->> >>
->> >> What requires external synchronization? I still don't understand at
->> >> all what you're talking about.
->> >>
->> >> The following code:
->> >>
->> >> void *try_to_alloc_addr(void *hint, size_t len) {
->> >>   char *x = mmap(hint, len, ...);
->> >>   if (x == MAP_FAILED) return NULL;
->> >>   if (x == hint) return x;
->> >
->> > Any other thread can modify the address space at this moment.
->>
->> But not parts of the address space that were returned by this mmap() call.
-> ?
->> > Just
->> > consider that another thread would does mmap(x, MAP_FIXED) (or any other
->> > address overlapping [x, x+len] range)
->>
->> If the other thread does that without previously having created a
->> mapping covering the area in question, that would be a bug in the
->> other thread.
->
-> MAP_FIXED is sometimes used without preallocated address ranges.
+Use the new find_alloc_contig_pages() interface for the allocation of
+gigantic pages and remove associated code in hugetlb.c.
 
-Wow, really? Can you point to an example?
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+---
+ mm/hugetlb.c | 87 +++++-------------------------------------------------------
+ 1 file changed, 6 insertions(+), 81 deletions(-)
 
->> MAP_FIXED on an unmapped address is almost always a bug
->> (excluding single-threaded cases with no library code, and even then
->> it's quite weird) - for example, any malloc() call could also cause
->> libc to start using the memory range you're trying to map with
->> MAP_FIXED.
->
-> Yeah and that's why we there is such a large paragraph in the man page
-> ;)
->
->> > becaus it is seemingly safe as x
->> > != hint.
->>
->> I don't understand this part. Are you talking about a hypothetical
->> scenario in which a programmer attempts to segment the virtual memory
->> space into areas that are exclusively used by threads without creating
->> memory mappings for those areas?
->
-> Yeah, that doesn't sound all that over-exaggerated, right? And yes,
-> such a code would be subtle and most probably buggy. I am not trying to
-> argue for those hypothetical cases. All I am saying is that MAP_FIXED is
-> subtle.
->
-> I _do_ agree that using it solely on the preallocated and _properly_
-> managed address ranges is safe. I still maintain my position on error
-> prone though. And besides that there are usecases which do not operate
-> on preallocated address ranges so people really have to be careful.
->
-> I do not really care what is the form. I find the current wording quite
-> informative and showing examples of how things might be broken. I do
-> agree with your remark that "MAP_FIXED on preallocated ranges is safe"
-> should be added. But MAP_FIXED is dangerous API and should have few big
-> fat warnings.
-> --
-> Michal Hocko
-> SUSE Labs
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index c81072ce7510..a209767cb808 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -1053,91 +1053,16 @@ static void destroy_compound_gigantic_page(struct page *page,
+ 	__ClearPageHead(page);
+ }
+ 
+-static void free_gigantic_page(struct page *page, unsigned int order)
++static void free_gigantic_page(struct page *page, struct hstate *h)
+ {
+-	free_contig_range(page_to_pfn(page), 1UL << order);
+-}
+-
+-static int __alloc_gigantic_page(unsigned long start_pfn,
+-				unsigned long nr_pages, gfp_t gfp_mask)
+-{
+-	unsigned long end_pfn = start_pfn + nr_pages;
+-	return alloc_contig_range(start_pfn, end_pfn, MIGRATE_MOVABLE,
+-				  gfp_mask);
+-}
+-
+-static bool pfn_range_valid_gigantic(struct zone *z,
+-			unsigned long start_pfn, unsigned long nr_pages)
+-{
+-	unsigned long i, end_pfn = start_pfn + nr_pages;
+-	struct page *page;
+-
+-	for (i = start_pfn; i < end_pfn; i++) {
+-		if (!pfn_valid(i))
+-			return false;
+-
+-		page = pfn_to_page(i);
+-
+-		if (page_zone(page) != z)
+-			return false;
+-
+-		if (PageReserved(page))
+-			return false;
+-
+-		if (page_count(page) > 0)
+-			return false;
+-
+-		if (PageHuge(page))
+-			return false;
+-	}
+-
+-	return true;
+-}
+-
+-static bool zone_spans_last_pfn(const struct zone *zone,
+-			unsigned long start_pfn, unsigned long nr_pages)
+-{
+-	unsigned long last_pfn = start_pfn + nr_pages - 1;
+-	return zone_spans_pfn(zone, last_pfn);
++	free_contig_pages(page, (unsigned long)pages_per_huge_page(h));
+ }
+ 
+ static struct page *alloc_gigantic_page(struct hstate *h, gfp_t gfp_mask,
+ 		int nid, nodemask_t *nodemask)
+ {
+-	unsigned int order = huge_page_order(h);
+-	unsigned long nr_pages = 1 << order;
+-	unsigned long ret, pfn, flags;
+-	struct zonelist *zonelist;
+-	struct zone *zone;
+-	struct zoneref *z;
+-
+-	zonelist = node_zonelist(nid, gfp_mask);
+-	for_each_zone_zonelist_nodemask(zone, z, zonelist, gfp_zone(gfp_mask), nodemask) {
+-		spin_lock_irqsave(&zone->lock, flags);
+-
+-		pfn = ALIGN(zone->zone_start_pfn, nr_pages);
+-		while (zone_spans_last_pfn(zone, pfn, nr_pages)) {
+-			if (pfn_range_valid_gigantic(zone, pfn, nr_pages)) {
+-				/*
+-				 * We release the zone lock here because
+-				 * alloc_contig_range() will also lock the zone
+-				 * at some point. If there's an allocation
+-				 * spinning on this lock, it may win the race
+-				 * and cause alloc_contig_range() to fail...
+-				 */
+-				spin_unlock_irqrestore(&zone->lock, flags);
+-				ret = __alloc_gigantic_page(pfn, nr_pages, gfp_mask);
+-				if (!ret)
+-					return pfn_to_page(pfn);
+-				spin_lock_irqsave(&zone->lock, flags);
+-			}
+-			pfn += nr_pages;
+-		}
+-
+-		spin_unlock_irqrestore(&zone->lock, flags);
+-	}
+-
+-	return NULL;
++	return find_alloc_contig_pages(huge_page_order(h), gfp_mask, nid,
++					nodemask);
+ }
+ 
+ static void prep_new_huge_page(struct hstate *h, struct page *page, int nid);
+@@ -1147,7 +1072,7 @@ static void prep_compound_gigantic_page(struct page *page, unsigned int order);
+ static inline bool gigantic_page_supported(void) { return false; }
+ static struct page *alloc_gigantic_page(struct hstate *h, gfp_t gfp_mask,
+ 		int nid, nodemask_t *nodemask) { return NULL; }
+-static inline void free_gigantic_page(struct page *page, unsigned int order) { }
++static inline void free_gigantic_page(struct page *page, struct hstate *h) { }
+ static inline void destroy_compound_gigantic_page(struct page *page,
+ 						unsigned int order) { }
+ #endif
+@@ -1172,7 +1097,7 @@ static void update_and_free_page(struct hstate *h, struct page *page)
+ 	set_page_refcounted(page);
+ 	if (hstate_is_gigantic(h)) {
+ 		destroy_compound_gigantic_page(page, huge_page_order(h));
+-		free_gigantic_page(page, huge_page_order(h));
++		free_gigantic_page(page, h);
+ 	} else {
+ 		__free_pages(page, huge_page_order(h));
+ 	}
+-- 
+2.13.6
