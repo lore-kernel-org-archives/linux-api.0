@@ -1,44 +1,76 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: [PATCH 0/3] Interface for higher order contiguous allocations
-Date: Mon, 16 Apr 2018 19:09:12 -0700
-Message-ID: <20180417020915.11786-1-mike.kravetz@oracle.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been
+ reserved
+Date: Tue, 17 Apr 2018 08:23:10 +0200
+Message-ID: <20180417062310.GW17484@dhcp22.suse.cz>
+References: <CAG48ez3-xtmAt2EpRFR8GNKKPcsDsyg7XdwQ=D5w3Ym6w4Krjw@mail.gmail.com>
+ <CAG48ez1PdzMs8hkatbzSLBWYucjTc75o8ovSmeC66+e9mLvSfA@mail.gmail.com>
+ <20180416100736.GG17484@dhcp22.suse.cz>
+ <CAG48ez3DwRXMtiinUWKnan6hAppLYLdx-w+VzXG6ubioZUacQg@mail.gmail.com>
+ <20180416191805.GS17484@dhcp22.suse.cz>
+ <CAG48ez1nf96nHj8a+aZy22RwqYTUZBGrsGFcz=ZhZBUWzaEZ9w@mail.gmail.com>
+ <20180416195726.GT17484@dhcp22.suse.cz>
+ <CAG48ez1bV_zZP3Y2ioDndP+H8mLCcxOtU1vCbWe7Q8myEGfXQQ@mail.gmail.com>
+ <20180416211115.GU17484@dhcp22.suse.cz>
+ <CAG48ez2fXcQS7sw_aCC6_wBKjYphOxFRN4rrRzSk2+-T_mFaxw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez2fXcQS7sw_aCC6_wBKjYphOxFRN4rrRzSk2+-T_mFaxw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, Vlastimil Babka <vbabka@suse.cz>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Mike Kravetz <mike.kravetz@oracle.com>
+To: Jann Horn <jannh@google.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, John Hubbard <jhubbard@nvidia.com>, linux-man <linux-man@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-These patches came out of the "[RFC] mmap(MAP_CONTIG)" discussions at:
-http://lkml.kernel.org/r/21f1ec96-2822-1189-1c95-79a2bb491571@oracle.com
+On Mon 16-04-18 23:12:48, Jann Horn wrote:
+> On Mon, Apr 16, 2018 at 11:11 PM, Michal Hocko <mhocko@kernel.org> wrote:
+> > On Mon 16-04-18 22:17:40, Jann Horn wrote:
+> >> On Mon, Apr 16, 2018 at 9:57 PM, Michal Hocko <mhocko@kernel.org> wrote:
+> >> > On Mon 16-04-18 21:30:09, Jann Horn wrote:
+> >> >> On Mon, Apr 16, 2018 at 9:18 PM, Michal Hocko <mhocko@kernel.org> wrote:
+> >> > [...]
+> >> >> > Yes, reasonably well written application will not have this problem.
+> >> >> > That, however, requires an external synchronization and that's why
+> >> >> > called it error prone and racy. I guess that was the main motivation for
+> >> >> > that part of the man page.
+> >> >>
+> >> >> What requires external synchronization? I still don't understand at
+> >> >> all what you're talking about.
+> >> >>
+> >> >> The following code:
+> >> >>
+> >> >> void *try_to_alloc_addr(void *hint, size_t len) {
+> >> >>   char *x = mmap(hint, len, ...);
+> >> >>   if (x == MAP_FAILED) return NULL;
+> >> >>   if (x == hint) return x;
+> >> >
+> >> > Any other thread can modify the address space at this moment.
+> >>
+> >> But not parts of the address space that were returned by this mmap() call.
+> > ?
+> >> > Just
+> >> > consider that another thread would does mmap(x, MAP_FIXED) (or any other
+> >> > address overlapping [x, x+len] range)
+> >>
+> >> If the other thread does that without previously having created a
+> >> mapping covering the area in question, that would be a bug in the
+> >> other thread.
+> >
+> > MAP_FIXED is sometimes used without preallocated address ranges.
+> 
+> Wow, really? Can you point to an example?
 
-One suggestion in that thread was to create a friendlier interface that
-could be used by drivers and others outside core mm code to allocate a
-contiguous set of pages.  The alloc_contig_range() interface is used for
-this purpose today by CMA and gigantic page allocation.  However, this is
-not a general purpose interface.  So, wrap alloc_contig_range() in the
-more general interface:
+Just from top of my head.
 
-struct page *find_alloc_contig_pages(unsigned int order, gfp_t gfp, int nid,
-                                        nodemask_t *nodemask)
+Some of that is for historical reasons because the hint address used to
+be ignored on some operating systems so MAP_FIXED had to be used.
 
-This interface is essentially the same functionality provided by the
-hugetlb specific routine alloc_gigantic_page().  After creating the
-interface, change alloc_gigantic_page() to call find_alloc_contig_pages()
-and delete all the supporting code in hugetlb.c.
+Currently not user I guess but MAP_FIXED for addresses above 47b address
+space AFAIR.
 
-A new use case for allocating contiguous memory has been identified in
-Intel(R) Resource Director Technology Cache Pseudo-Locking.
-
-Mike Kravetz (3):
-  mm: change type of free_contig_range(nr_pages) to unsigned long
-  mm: add find_alloc_contig_pages() interface
-  mm/hugetlb: use find_alloc_contig_pages() to allocate gigantic pages
-
- include/linux/gfp.h | 14 +++++++-
- mm/cma.c            |  2 +-
- mm/hugetlb.c        | 87 ++++--------------------------------------------
- mm/page_alloc.c     | 95 ++++++++++++++++++++++++++++++++++++++++++++++++++---
- 4 files changed, 110 insertions(+), 88 deletions(-)
-
+And I am pretty sure there would be much more if you actually browsed
+code search.
 -- 
-2.13.6
+Michal Hocko
+SUSE Labs
