@@ -1,208 +1,93 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH 2/3] mm: add find_alloc_contig_pages() interface
-Date: Tue, 17 Apr 2018 18:39:03 -0700
-Message-ID: <b340fd3f-9400-8d47-2125-6c51e26f583c@oracle.com>
-References: <20180417020915.11786-3-mike.kravetz@oracle.com>
- <201804172011.K5f3XeGz%fengguang.wu@intel.com>
+From: Stefan Berger <stefanb@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH V1 01/12] audit: add container id
+Date: Wed, 18 Apr 2018 14:45:14 -0400
+Message-ID: <f966fa52-da4b-3d74-0848-1f0b08e57fd9@linux.vnet.ibm.com>
+References: <cover.1519930146.git.rgb@redhat.com>
+ <2e5d93ee46feca915a101c2fc3062da674a98223.1519930146.git.rgb@redhat.com>
+ <216d1ab1-531b-9185-2e31-34f162f08aad@linux.vnet.ibm.com>
+ <20180316035837.ddnqvbyrbp3fdk7e@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201804172011.K5f3XeGz%fengguang.wu@intel.com>
-Content-Language: en-US
+In-Reply-To: <20180316035837.ddnqvbyrbp3fdk7e@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: kbuild test robot <lkp@intel.com>
-Cc: kbuild-all@01.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, Vlastimil Babka <vbabka@suse.cz>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, mszeredi@redhat.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, viro@zeniv.linux.org.uk, dhowells@redhat.com, simo@redhat.com, trondmy@primarydata.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, madzcar@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On 04/17/2018 05:10 AM, kbuild test robot wrote:
-> All errors (new ones prefixed by >>):
-> 
->    In file included from include/linux/slab.h:15:0,
->                     from include/linux/crypto.h:24,
->                     from arch/x86/kernel/asm-offsets.c:9:
->>> include/linux/gfp.h:580:15: error: unknown type name 'page'
->     static inline page *find_alloc_contig_pages(unsigned int order, gfp_t gfp,
->                   ^~~~
->    include/linux/gfp.h:585:13: warning: 'free_contig_pages' defined but not used [-Wunused-function]
->     static void free_contig_pages(struct page *page, unsigned long nr_pages)
->                 ^~~~~~~~~~~~~~~~~
+On 03/15/2018 11:58 PM, Richard Guy Briggs wrote:
+> On 2018-03-15 16:27, Stefan Berger wrote:
+>> On 03/01/2018 02:41 PM, Richard Guy Briggs wrote:
+>>> Implement the proc fs write to set the audit container ID of a process,
+>>> emitting an AUDIT_CONTAINER record to document the event.
+>>>
+>>> This is a write from the container orchestrator task to a proc entry of
+>>> the form /proc/PID/containerid where PID is the process ID of the newly
+>>> created task that is to become the first task in a container, or an
+>>> additional task added to a container.
+>>>
+>>> The write expects up to a u64 value (unset: 18446744073709551615).
+>>>
+>>> This will produce a record such as this:
+>>> type=UNKNOWN[1333] msg=audit(1519903238.968:261): op=set pid=596 uid=0 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 auid=0 tty=pts0 ses=1 opid=596 old-contid=18446744073709551615 contid=123455 res=0
+>>>
+>>> The "op" field indicates an initial set.  The "pid" to "ses" fields are
+>>> the orchestrator while the "opid" field is the object's PID, the process
+>>> being "contained".  Old and new container ID values are given in the
+>>> "contid" fields, while res indicates its success.
+>>>
+>>> It is not permitted to self-set, unset or re-set the container ID.  A
+>>> child inherits its parent's container ID, but then can be set only once
+>>> after.
+>>>
+>>> See: https://github.com/linux-audit/audit-kernel/issues/32
+>>>
+>>>
+>>>    /* audit_rule_data supports filter rules with both integer and string
+>>>     * fields.  It corresponds with AUDIT_ADD_RULE, AUDIT_DEL_RULE and
+>>> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+>>> index 4e0a4ac..0ee1e59 100644
+>>> --- a/kernel/auditsc.c
+>>> +++ b/kernel/auditsc.c
+>>> @@ -2073,6 +2073,92 @@ int audit_set_loginuid(kuid_t loginuid)
+>>>    	return rc;
+>>>    }
+>>>
+>>> +static int audit_set_containerid_perm(struct task_struct *task, u64 containerid)
+>>> +{
+>>> +	struct task_struct *parent;
+>>> +	u64 pcontainerid, ccontainerid;
+>>> +	pid_t ppid;
+>>> +
+>>> +	/* Don't allow to set our own containerid */
+>>> +	if (current == task)
+>>> +		return -EPERM;
+>>> +	/* Don't allow the containerid to be unset */
+>>> +	if (!cid_valid(containerid))
+>>> +		return -EINVAL;
+>>> +	/* if we don't have caps, reject */
+>>> +	if (!capable(CAP_AUDIT_CONTROL))
+>>> +		return -EPERM;
+>>> +	/* if containerid is unset, allow */
+>>> +	if (!audit_containerid_set(task))
+>>> +		return 0;
+>> I am wondering whether there should be a check for the target process that
+>> will receive the containerid to not have CAP_SYS_ADMIN that would otherwise
+>> allow it to arbitrarily unshare()/clone() and leave the set of namespaces
+>> that may make up the container whose containerid we assign here?
+> This is a reasonable question.  This has been debated and I understood
+> the conclusion was that without a clear definition of a "container", the
+> task still remains in that container that just now has more
+> sub-namespaces (in the case of hierarchical namespaces), we don't want
+> to restrict it in such a way and that allows it to create nested
+> containers.  I see setns being more problematic if it could switch to
+> another existing namespace that was set up by the orchestrator for a
+> different container.  The coming v2 patchset acknowledges this situation
+> with the network namespace being potentially shared by multiple
+> containers.
 
-Build issues fixed in updated patch below,
+Are you going to post v2 soon? We would like to build on top of it for 
+IMA namespacing and auditing inside of IMA namespaces.
 
->From 28efabb5625c079573a821c8c5cfc19cc73a86bd Mon Sep 17 00:00:00 2001
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Date: Mon, 16 Apr 2018 18:41:36 -0700
-Subject: [PATCH 2/3] mm: add find_alloc_contig_pages() interface
-
-find_alloc_contig_pages() is a new interface that attempts to locate
-and allocate a contiguous range of pages.  It is provided as a more
-convenient interface than alloc_contig_range() which is currently
-used by CMA and gigantic huge pages.
-
-When attempting to allocate a range of pages, migration is employed
-if possible.  There is no guarantee that the routine will succeed.
-So, the user must be prepared for failure and have a fall back plan.
-
-Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
----
- include/linux/gfp.h | 12 ++++++++
- mm/page_alloc.c     | 89 +++++++++++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 99 insertions(+), 2 deletions(-)
-
-diff --git a/include/linux/gfp.h b/include/linux/gfp.h
-index 86a0d06463ab..7d1ea4e659dc 100644
---- a/include/linux/gfp.h
-+++ b/include/linux/gfp.h
-@@ -573,6 +573,18 @@ static inline bool pm_suspended_storage(void)
- extern int alloc_contig_range(unsigned long start, unsigned long end,
- 			      unsigned migratetype, gfp_t gfp_mask);
- extern void free_contig_range(unsigned long pfn, unsigned long nr_pages);
-+extern struct page *find_alloc_contig_pages(unsigned int order, gfp_t gfp,
-+						int nid, nodemask_t *nodemask);
-+extern void free_contig_pages(struct page *page, unsigned long nr_pages);
-+#else
-+static inline struct page *find_alloc_contig_pages(unsigned int order,
-+				gfp_t gfp, int nid, nodemask_t *nodemask)
-+{
-+	return NULL;
-+}
-+static inline void free_contig_pages(struct page *page, unsigned long nr_pages)
-+{
-+}
- #endif
- 
- #ifdef CONFIG_CMA
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 0fd5e8e2456e..81070fe55c44 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -67,6 +67,7 @@
- #include <linux/ftrace.h>
- #include <linux/lockdep.h>
- #include <linux/nmi.h>
-+#include <linux/mmzone.h>
- 
- #include <asm/sections.h>
- #include <asm/tlbflush.h>
-@@ -2010,9 +2011,13 @@ static __always_inline struct page *__rmqueue_cma_fallback(struct zone *zone,
- {
- 	return __rmqueue_smallest(zone, order, MIGRATE_CMA);
- }
-+#define contig_alloc_migratetype_ok(migratetype) \
-+	((migratetype) == MIGRATE_CMA || (migratetype) == MIGRATE_MOVABLE)
- #else
- static inline struct page *__rmqueue_cma_fallback(struct zone *zone,
- 					unsigned int order) { return NULL; }
-+#define contig_alloc_migratetype_ok(migratetype) \
-+	((migratetype) == MIGRATE_MOVABLE)
- #endif
- 
- /*
-@@ -7822,6 +7827,9 @@ int alloc_contig_range(unsigned long start, unsigned long end,
- 	};
- 	INIT_LIST_HEAD(&cc.migratepages);
- 
-+	if (!contig_alloc_migratetype_ok(migratetype))
-+		return -EINVAL;
-+
- 	/*
- 	 * What we do here is we mark all pageblocks in range as
- 	 * MIGRATE_ISOLATE.  Because pageblock and max order pages may
-@@ -7912,8 +7920,9 @@ int alloc_contig_range(unsigned long start, unsigned long end,
- 
- 	/* Make sure the range is really isolated. */
- 	if (test_pages_isolated(outer_start, end, false)) {
--		pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
--			__func__, outer_start, end);
-+		if (!(migratetype == MIGRATE_MOVABLE)) /* only print for CMA */
-+			pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
-+				__func__, outer_start, end);
- 		ret = -EBUSY;
- 		goto done;
- 	}
-@@ -7949,6 +7958,82 @@ void free_contig_range(unsigned long pfn, unsigned long nr_pages)
- 	}
- 	WARN(count != 0, "%ld pages are still in use!\n", count);
- }
-+
-+static bool contig_pfn_range_valid(struct zone *z, unsigned long start_pfn,
-+					unsigned long nr_pages)
-+{
-+	unsigned long i, end_pfn = start_pfn + nr_pages;
-+	struct page *page;
-+
-+	for (i = start_pfn; i < end_pfn; i++) {
-+		if (!pfn_valid(i))
-+			return false;
-+
-+		page = pfn_to_page(i);
-+
-+		if (page_zone(page) != z)
-+			return false;
-+
-+	}
-+
-+	return true;
-+}
-+
-+/**
-+ * find_alloc_contig_pages() -- attempt to find and allocate a contiguous
-+ *				range of pages
-+ * @order:	number of pages
-+ * @gfp:	gfp mask used to limit search as well as during compaction
-+ * @nid:	target node
-+ * @nodemask:	mask of other possible nodes
-+ *
-+ * Pages can be freed with a call to free_contig_pages(), or by manually
-+ * calling __free_page() for each page allocated.
-+ *
-+ * Return: pointer to 'order' pages on success, or NULL if not successful.
-+ */
-+struct page *find_alloc_contig_pages(unsigned int order, gfp_t gfp,
-+					int nid, nodemask_t *nodemask)
-+{
-+	unsigned long pfn, nr_pages, flags;
-+	struct page *ret_page = NULL;
-+	struct zonelist *zonelist;
-+	struct zoneref *z;
-+	struct zone *zone;
-+	int rc;
-+
-+	nr_pages = 1 << order;
-+	zonelist = node_zonelist(nid, gfp);
-+	for_each_zone_zonelist_nodemask(zone, z, zonelist, gfp_zone(gfp),
-+					nodemask) {
-+		spin_lock_irqsave(&zone->lock, flags);
-+		pfn = ALIGN(zone->zone_start_pfn, nr_pages);
-+		while (zone_spans_pfn(zone, pfn + nr_pages - 1)) {
-+			if (contig_pfn_range_valid(zone, pfn, nr_pages)) {
-+				spin_unlock_irqrestore(&zone->lock, flags);
-+
-+				rc = alloc_contig_range(pfn, pfn + nr_pages,
-+							MIGRATE_MOVABLE, gfp);
-+				if (!rc) {
-+					ret_page = pfn_to_page(pfn);
-+					return ret_page;
-+				}
-+				spin_lock_irqsave(&zone->lock, flags);
-+			}
-+			pfn += nr_pages;
-+		}
-+		spin_unlock_irqrestore(&zone->lock, flags);
-+	}
-+
-+	return ret_page;
-+}
-+EXPORT_SYMBOL_GPL(find_alloc_contig_pages);
-+
-+void free_contig_pages(struct page *page, unsigned long nr_pages)
-+{
-+	free_contig_range(page_to_pfn(page), nr_pages);
-+}
-+EXPORT_SYMBOL_GPL(free_contig_pages);
- #endif
- 
- #if defined CONFIG_MEMORY_HOTPLUG || defined CONFIG_CMA
--- 
-2.13.6
+    Stefan
