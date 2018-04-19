@@ -1,160 +1,165 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 04/17] y2038: s390: Remove unneeded ipc uapi
-	header files
-Date: Thu, 19 Apr 2018 16:37:24 +0200
-Message-ID: <20180419143737.606138-5-arnd@arndb.de>
+Subject: [PATCH v3 03/17] y2038: ia64: Remove unneeded ipc uapi header files
+Date: Thu, 19 Apr 2018 16:37:23 +0200
+Message-ID: <20180419143737.606138-4-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180419143737.606138-1-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, ebiederm@xmission.com, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, linux-mips@linux-mips.org, linux-api@vger.kernel.org, x86@kernel.org, will.deacon@arm.com, ralf@linux-mips.org, jhogan@kernel.org, albert.aribaud@3adev.fr, sparclinux@vger.kernel.org, deepa.kernel@gmail.com, catalin.marinas@arm.com, schwidefsky@de.ibm.com, tglx@linutronix.de, linuxppc-dev@lists.ozlabs.org, viro@zeniv.linux.org.uk
+Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-VGhlIHMzOTAgbXNnYnVmL3NlbWJ1Zi9zaG1idWYgaGVhZGVyIGZpbGVzIGFyZSBhbGwgaWRlbnRp
-Y2FsIHRvIHRoZQp2ZXJzaW9uIGZyb20gYXNtLWdlbmVyaWMuCgpUaGlzIHBhdGNoIHJlbW92ZXMg
-dGhlIGZpbGVzIGFuZCByZXBsYWNlcyB0aGVtIHdpdGggJ2dlbmVyaWMteScKc3RhdGVtZW50cywg
-dG8gYXZvaWQgaGF2aW5nIHRvIG1vZGlmeSBlYWNoIGNvcHkgd2hlbiB3ZSBleHRlbmQgc3lzdmlw
-Ywp0byBkZWFsIHdpdGggNjQtYml0IHRpbWVfdCBpbiAzMi1iaXQgdXNlciBzcGFjZS4KCk5vdGUg
-dGhhdCB1bmxpa2UgYWxwaGEgYW5kIGlhNjQsIHRoZSBpcGNidWYuaCBoZWFkZXIgZmlsZSBpcyBz
-bGlnaHRseQpkaWZmZXJlbnQgaGVyZSwgc28gSSdtIGxlYXZpbmcgdGhlIHByaXZhdGUgY29weS4K
-ClRvIGRlYWwgd2l0aCAzMi1iaXQgY29tcGF0IHRhc2tzLCB3ZSBhbHNvIGhhdmUgdG8gYWRhcHQg
-dGhlIGRlZmluaXRpb25zCm9mIGNvbXBhdF97c2htLHNlbSxtc2d9aWRfZHMgdG8gbWF0Y2ggdGhl
-IGNoYW5nZXMgdG8gdGhlIHJlc3BlY3RpdmUKYXNtLWdlbmVyaWMgZmlsZXMuCgpTaWduZWQtb2Zm
-LWJ5OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPgotLS0KIGFyY2gvczM5MC9pbmNsdWRl
-L2FzbS9jb21wYXQuaCAgICAgIHwgMzIgKysrKysrKysrKysrLS0tLS0tLS0tLS0tCiBhcmNoL3Mz
-OTAvaW5jbHVkZS91YXBpL2FzbS9LYnVpbGQgICB8ICAzICsrKwogYXJjaC9zMzkwL2luY2x1ZGUv
-dWFwaS9hc20vbXNnYnVmLmggfCAzOCAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiBhcmNo
-L3MzOTAvaW5jbHVkZS91YXBpL2FzbS9zZW1idWYuaCB8IDMwIC0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tCiBhcmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9zaG1idWYuaCB8IDQ5IC0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIDUgZmlsZXMgY2hhbmdlZCwgMTkgaW5zZXJ0aW9u
-cygrKSwgMTMzIGRlbGV0aW9ucygtKQogZGVsZXRlIG1vZGUgMTAwNjQ0IGFyY2gvczM5MC9pbmNs
-dWRlL3VhcGkvYXNtL21zZ2J1Zi5oCiBkZWxldGUgbW9kZSAxMDA2NDQgYXJjaC9zMzkwL2luY2x1
-ZGUvdWFwaS9hc20vc2VtYnVmLmgKIGRlbGV0ZSBtb2RlIDEwMDY0NCBhcmNoL3MzOTAvaW5jbHVk
-ZS91YXBpL2FzbS9zaG1idWYuaAoKZGlmZiAtLWdpdCBhL2FyY2gvczM5MC9pbmNsdWRlL2FzbS9j
-b21wYXQuaCBiL2FyY2gvczM5MC9pbmNsdWRlL2FzbS9jb21wYXQuaAppbmRleCA1MDFhYWZmODUz
-MDQuLjk3ZGIyZmJhNTQ2YSAxMDA2NDQKLS0tIGEvYXJjaC9zMzkwL2luY2x1ZGUvYXNtL2NvbXBh
-dC5oCisrKyBiL2FyY2gvczM5MC9pbmNsdWRlL2FzbS9jb21wYXQuaApAQCAtMjMyLDEwICsyMzIs
-MTAgQEAgc3RydWN0IGNvbXBhdF9pcGM2NF9wZXJtIHsKIAogc3RydWN0IGNvbXBhdF9zZW1pZDY0
-X2RzIHsKIAlzdHJ1Y3QgY29tcGF0X2lwYzY0X3Blcm0gc2VtX3Blcm07Ci0JY29tcGF0X3RpbWVf
-dCAgc2VtX290aW1lOwotCWNvbXBhdF91bG9uZ190IF9fcGFkMTsKLQljb21wYXRfdGltZV90ICBz
-ZW1fY3RpbWU7Ci0JY29tcGF0X3Vsb25nX3QgX19wYWQyOworCWNvbXBhdF91bG9uZ190IHNlbV9v
-dGltZTsKKwljb21wYXRfdWxvbmdfdCBzZW1fb3RpbWVfaGlnaDsKKwljb21wYXRfdWxvbmdfdCBz
-ZW1fY3RpbWU7CisJY29tcGF0X3Vsb25nX3Qgc2VtX2N0aW1lX2hpZ2g7CiAJY29tcGF0X3Vsb25n
-X3Qgc2VtX25zZW1zOwogCWNvbXBhdF91bG9uZ190IF9fdW51c2VkMTsKIAljb21wYXRfdWxvbmdf
-dCBfX3VudXNlZDI7CkBAIC0yNDMsMTIgKzI0MywxMiBAQCBzdHJ1Y3QgY29tcGF0X3NlbWlkNjRf
-ZHMgewogCiBzdHJ1Y3QgY29tcGF0X21zcWlkNjRfZHMgewogCXN0cnVjdCBjb21wYXRfaXBjNjRf
-cGVybSBtc2dfcGVybTsKLQljb21wYXRfdGltZV90ICAgbXNnX3N0aW1lOwotCWNvbXBhdF91bG9u
-Z190IF9fcGFkMTsKLQljb21wYXRfdGltZV90ICAgbXNnX3J0aW1lOwotCWNvbXBhdF91bG9uZ190
-IF9fcGFkMjsKLQljb21wYXRfdGltZV90ICAgbXNnX2N0aW1lOwotCWNvbXBhdF91bG9uZ190IF9f
-cGFkMzsKKwljb21wYXRfdWxvbmdfdCBtc2dfc3RpbWU7CisJY29tcGF0X3Vsb25nX3QgbXNnX3N0
-aW1lX2hpZ2g7CisJY29tcGF0X3Vsb25nX3QgbXNnX3J0aW1lOworCWNvbXBhdF91bG9uZ190IG1z
-Z19ydGltZV9oaWdoOworCWNvbXBhdF91bG9uZ190IG1zZ19jdGltZTsKKwljb21wYXRfdWxvbmdf
-dCBtc2dfY3RpbWVfaGlnaDsKIAljb21wYXRfdWxvbmdfdCBtc2dfY2J5dGVzOwogCWNvbXBhdF91
-bG9uZ190IG1zZ19xbnVtOwogCWNvbXBhdF91bG9uZ190IG1zZ19xYnl0ZXM7CkBAIC0yNjEsMTIg
-KzI2MSwxMiBAQCBzdHJ1Y3QgY29tcGF0X21zcWlkNjRfZHMgewogc3RydWN0IGNvbXBhdF9zaG1p
-ZDY0X2RzIHsKIAlzdHJ1Y3QgY29tcGF0X2lwYzY0X3Blcm0gc2htX3Blcm07CiAJY29tcGF0X3Np
-emVfdCAgc2htX3NlZ3N6OwotCWNvbXBhdF90aW1lX3QgIHNobV9hdGltZTsKLQljb21wYXRfdWxv
-bmdfdCBfX3BhZDE7Ci0JY29tcGF0X3RpbWVfdCAgc2htX2R0aW1lOwotCWNvbXBhdF91bG9uZ190
-IF9fcGFkMjsKLQljb21wYXRfdGltZV90ICBzaG1fY3RpbWU7Ci0JY29tcGF0X3Vsb25nX3QgX19w
-YWQzOworCWNvbXBhdF91bG9uZ190IHNobV9hdGltZTsKKwljb21wYXRfdWxvbmdfdCBzaG1fYXRp
-bWVfaGlnaDsKKwljb21wYXRfdWxvbmdfdCBzaG1fZHRpbWU7CisJY29tcGF0X3Vsb25nX3Qgc2ht
-X2R0aW1lX2hpZ2g7CisJY29tcGF0X3Vsb25nX3Qgc2htX2N0aW1lOworCWNvbXBhdF91bG9uZ190
-IHNobV9jdGltZV9oaWdoOwogCWNvbXBhdF9waWRfdCAgIHNobV9jcGlkOwogCWNvbXBhdF9waWRf
-dCAgIHNobV9scGlkOwogCWNvbXBhdF91bG9uZ190IHNobV9uYXR0Y2g7CmRpZmYgLS1naXQgYS9h
-cmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9LYnVpbGQgYi9hcmNoL3MzOTAvaW5jbHVkZS91YXBp
-L2FzbS9LYnVpbGQKaW5kZXggZmFlZjNmN2U4MzUzLi5lMzY0ODczZTBkMTAgMTAwNjQ0Ci0tLSBh
-L2FyY2gvczM5MC9pbmNsdWRlL3VhcGkvYXNtL0tidWlsZAorKysgYi9hcmNoL3MzOTAvaW5jbHVk
-ZS91YXBpL2FzbS9LYnVpbGQKQEAgLTksOSArOSwxMiBAQCBnZW5lcmljLXkgKz0gZXJybm8uaAog
-Z2VuZXJpYy15ICs9IGZjbnRsLmgKIGdlbmVyaWMteSArPSBpb2N0bC5oCiBnZW5lcmljLXkgKz0g
-bW1hbi5oCitnZW5lcmljLXkgKz0gbXNnYnVmLmgKIGdlbmVyaWMteSArPSBwYXJhbS5oCiBnZW5l
-cmljLXkgKz0gcG9sbC5oCiBnZW5lcmljLXkgKz0gcmVzb3VyY2UuaAorZ2VuZXJpYy15ICs9IHNl
-bWJ1Zi5oCitnZW5lcmljLXkgKz0gc2htYnVmLmgKIGdlbmVyaWMteSArPSBzb2NraW9zLmgKIGdl
-bmVyaWMteSArPSBzd2FiLmgKIGdlbmVyaWMteSArPSB0ZXJtYml0cy5oCmRpZmYgLS1naXQgYS9h
-cmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9tc2didWYuaCBiL2FyY2gvczM5MC9pbmNsdWRlL3Vh
-cGkvYXNtL21zZ2J1Zi5oCmRlbGV0ZWQgZmlsZSBtb2RlIDEwMDY0NAppbmRleCA2MDRmODQ3Y2Q2
-OGMuLjAwMDAwMDAwMDAwMAotLS0gYS9hcmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9tc2didWYu
-aAorKysgL2Rldi9udWxsCkBAIC0xLDM4ICswLDAgQEAKLS8qIFNQRFgtTGljZW5zZS1JZGVudGlm
-aWVyOiBHUEwtMi4wIFdJVEggTGludXgtc3lzY2FsbC1ub3RlICovCi0jaWZuZGVmIF9TMzkwX01T
-R0JVRl9ICi0jZGVmaW5lIF9TMzkwX01TR0JVRl9ICi0KLS8qIAotICogVGhlIG1zcWlkNjRfZHMg
-c3RydWN0dXJlIGZvciBTLzM5MCBhcmNoaXRlY3R1cmUuCi0gKiBOb3RlIGV4dHJhIHBhZGRpbmcg
-YmVjYXVzZSB0aGlzIHN0cnVjdHVyZSBpcyBwYXNzZWQgYmFjayBhbmQgZm9ydGgKLSAqIGJldHdl
-ZW4ga2VybmVsIGFuZCB1c2VyIHNwYWNlLgotICoKLSAqIFBhZCBzcGFjZSBpcyBsZWZ0IGZvcjoK
-LSAqIC0gNjQtYml0IHRpbWVfdCB0byBzb2x2ZSB5MjAzOCBwcm9ibGVtCi0gKiAtIDIgbWlzY2Vs
-bGFuZW91cyAzMi1iaXQgdmFsdWVzCi0gKi8KLQotc3RydWN0IG1zcWlkNjRfZHMgewotCXN0cnVj
-dCBpcGM2NF9wZXJtIG1zZ19wZXJtOwotCV9fa2VybmVsX3RpbWVfdCBtc2dfc3RpbWU7CS8qIGxh
-c3QgbXNnc25kIHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0JdW5zaWduZWQgbG9uZwlfX3Vu
-dXNlZDE7Ci0jZW5kaWYgLyogISBfX3MzOTB4X18gKi8KLQlfX2tlcm5lbF90aW1lX3QgbXNnX3J0
-aW1lOwkvKiBsYXN0IG1zZ3JjdiB0aW1lICovCi0jaWZuZGVmIF9fczM5MHhfXwotCXVuc2lnbmVk
-IGxvbmcJX191bnVzZWQyOwotI2VuZGlmIC8qICEgX19zMzkweF9fICovCi0JX19rZXJuZWxfdGlt
-ZV90IG1zZ19jdGltZTsJLyogbGFzdCBjaGFuZ2UgdGltZSAqLwotI2lmbmRlZiBfX3MzOTB4X18K
-LQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMzsKLSNlbmRpZiAvKiAhIF9fczM5MHhfXyAqLwotCXVu
-c2lnbmVkIGxvbmcgIG1zZ19jYnl0ZXM7CS8qIGN1cnJlbnQgbnVtYmVyIG9mIGJ5dGVzIG9uIHF1
-ZXVlICovCi0JdW5zaWduZWQgbG9uZyAgbXNnX3FudW07CS8qIG51bWJlciBvZiBtZXNzYWdlcyBp
-biBxdWV1ZSAqLwotCXVuc2lnbmVkIGxvbmcgIG1zZ19xYnl0ZXM7CS8qIG1heCBudW1iZXIgb2Yg
-Ynl0ZXMgb24gcXVldWUgKi8KLQlfX2tlcm5lbF9waWRfdCBtc2dfbHNwaWQ7CS8qIHBpZCBvZiBs
-YXN0IG1zZ3NuZCAqLwotCV9fa2VybmVsX3BpZF90IG1zZ19scnBpZDsJLyogbGFzdCByZWNlaXZl
-IHBpZCAqLwotCXVuc2lnbmVkIGxvbmcgIF9fdW51c2VkNDsKLQl1bnNpZ25lZCBsb25nICBfX3Vu
-dXNlZDU7Ci19OwotCi0jZW5kaWYgLyogX1MzOTBfTVNHQlVGX0ggKi8KZGlmZiAtLWdpdCBhL2Fy
-Y2gvczM5MC9pbmNsdWRlL3VhcGkvYXNtL3NlbWJ1Zi5oIGIvYXJjaC9zMzkwL2luY2x1ZGUvdWFw
-aS9hc20vc2VtYnVmLmgKZGVsZXRlZCBmaWxlIG1vZGUgMTAwNjQ0CmluZGV4IDNlOTE3Njk3YjY2
-OC4uMDAwMDAwMDAwMDAwCi0tLSBhL2FyY2gvczM5MC9pbmNsdWRlL3VhcGkvYXNtL3NlbWJ1Zi5o
-CisrKyAvZGV2L251bGwKQEAgLTEsMzAgKzAsMCBAQAotLyogU1BEWC1MaWNlbnNlLUlkZW50aWZp
-ZXI6IEdQTC0yLjAgV0lUSCBMaW51eC1zeXNjYWxsLW5vdGUgKi8KLSNpZm5kZWYgX1MzOTBfU0VN
-QlVGX0gKLSNkZWZpbmUgX1MzOTBfU0VNQlVGX0gKLQotLyogCi0gKiBUaGUgc2VtaWQ2NF9kcyBz
-dHJ1Y3R1cmUgZm9yIFMvMzkwIGFyY2hpdGVjdHVyZS4KLSAqIE5vdGUgZXh0cmEgcGFkZGluZyBi
-ZWNhdXNlIHRoaXMgc3RydWN0dXJlIGlzIHBhc3NlZCBiYWNrIGFuZCBmb3J0aAotICogYmV0d2Vl
-biBrZXJuZWwgYW5kIHVzZXIgc3BhY2UuCi0gKgotICogUGFkIHNwYWNlIGlzIGxlZnQgZm9yOgot
-ICogLSA2NC1iaXQgdGltZV90IHRvIHNvbHZlIHkyMDM4IHByb2JsZW0gKGZvciAhX19zMzkweF9f
-KQotICogLSAyIG1pc2NlbGxhbmVvdXMgMzItYml0IHZhbHVlcwotICovCi0KLXN0cnVjdCBzZW1p
-ZDY0X2RzIHsKLQlzdHJ1Y3QgaXBjNjRfcGVybSBzZW1fcGVybTsJCS8qIHBlcm1pc3Npb25zIC4u
-IHNlZSBpcGMuaCAqLwotCV9fa2VybmVsX3RpbWVfdAlzZW1fb3RpbWU7CQkvKiBsYXN0IHNlbW9w
-IHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0JdW5zaWduZWQgbG9uZwlfX3VudXNlZDE7Ci0j
-ZW5kaWYgLyogISBfX3MzOTB4X18gKi8KLQlfX2tlcm5lbF90aW1lX3QJc2VtX2N0aW1lOwkJLyog
-bGFzdCBjaGFuZ2UgdGltZSAqLwotI2lmbmRlZiBfX3MzOTB4X18KLQl1bnNpZ25lZCBsb25nCV9f
-dW51c2VkMjsKLSNlbmRpZiAvKiAhIF9fczM5MHhfXyAqLwotCXVuc2lnbmVkIGxvbmcJc2VtX25z
-ZW1zOwkJLyogbm8uIG9mIHNlbWFwaG9yZXMgaW4gYXJyYXkgKi8KLQl1bnNpZ25lZCBsb25nCV9f
-dW51c2VkMzsKLQl1bnNpZ25lZCBsb25nCV9fdW51c2VkNDsKLX07Ci0KLSNlbmRpZiAvKiBfUzM5
-MF9TRU1CVUZfSCAqLwpkaWZmIC0tZ2l0IGEvYXJjaC9zMzkwL2luY2x1ZGUvdWFwaS9hc20vc2ht
-YnVmLmggYi9hcmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9zaG1idWYuaApkZWxldGVkIGZpbGUg
-bW9kZSAxMDA2NDQKaW5kZXggOWNkY2U4ZDdjZTYwLi4wMDAwMDAwMDAwMDAKLS0tIGEvYXJjaC9z
-MzkwL2luY2x1ZGUvdWFwaS9hc20vc2htYnVmLmgKKysrIC9kZXYvbnVsbApAQCAtMSw0OSArMCww
-IEBACi0vKiBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogR1BMLTIuMCBXSVRIIExpbnV4LXN5c2Nh
-bGwtbm90ZSAqLwotI2lmbmRlZiBfUzM5MF9TSE1CVUZfSAotI2RlZmluZSBfUzM5MF9TSE1CVUZf
-SAotCi0vKiAKLSAqIFRoZSBzaG1pZDY0X2RzIHN0cnVjdHVyZSBmb3IgUy8zOTAgYXJjaGl0ZWN0
-dXJlLgotICogTm90ZSBleHRyYSBwYWRkaW5nIGJlY2F1c2UgdGhpcyBzdHJ1Y3R1cmUgaXMgcGFz
-c2VkIGJhY2sgYW5kIGZvcnRoCi0gKiBiZXR3ZWVuIGtlcm5lbCBhbmQgdXNlciBzcGFjZS4KLSAq
-Ci0gKiBQYWQgc3BhY2UgaXMgbGVmdCBmb3I6Ci0gKiAtIDY0LWJpdCB0aW1lX3QgdG8gc29sdmUg
-eTIwMzggcHJvYmxlbSAoZm9yICFfX3MzOTB4X18pCi0gKiAtIDIgbWlzY2VsbGFuZW91cyAzMi1i
-aXQgdmFsdWVzCi0gKi8KLQotc3RydWN0IHNobWlkNjRfZHMgewotCXN0cnVjdCBpcGM2NF9wZXJt
-CXNobV9wZXJtOwkvKiBvcGVyYXRpb24gcGVybXMgKi8KLQlzaXplX3QJCQlzaG1fc2Vnc3o7CS8q
-IHNpemUgb2Ygc2VnbWVudCAoYnl0ZXMpICovCi0JX19rZXJuZWxfdGltZV90CQlzaG1fYXRpbWU7
-CS8qIGxhc3QgYXR0YWNoIHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0JdW5zaWduZWQgbG9u
-ZwkJX191bnVzZWQxOwotI2VuZGlmIC8qICEgX19zMzkweF9fICovCi0JX19rZXJuZWxfdGltZV90
-CQlzaG1fZHRpbWU7CS8qIGxhc3QgZGV0YWNoIHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0J
-dW5zaWduZWQgbG9uZwkJX191bnVzZWQyOwotI2VuZGlmIC8qICEgX19zMzkweF9fICovCi0JX19r
-ZXJuZWxfdGltZV90CQlzaG1fY3RpbWU7CS8qIGxhc3QgY2hhbmdlIHRpbWUgKi8KLSNpZm5kZWYg
-X19zMzkweF9fCi0JdW5zaWduZWQgbG9uZwkJX191bnVzZWQzOwotI2VuZGlmIC8qICEgX19zMzkw
-eF9fICovCi0JX19rZXJuZWxfcGlkX3QJCXNobV9jcGlkOwkvKiBwaWQgb2YgY3JlYXRvciAqLwot
-CV9fa2VybmVsX3BpZF90CQlzaG1fbHBpZDsJLyogcGlkIG9mIGxhc3Qgb3BlcmF0b3IgKi8KLQl1
-bnNpZ25lZCBsb25nCQlzaG1fbmF0dGNoOwkvKiBuby4gb2YgY3VycmVudCBhdHRhY2hlcyAqLwot
-CXVuc2lnbmVkIGxvbmcJCV9fdW51c2VkNDsKLQl1bnNpZ25lZCBsb25nCQlfX3VudXNlZDU7Ci19
-OwotCi1zdHJ1Y3Qgc2htaW5mbzY0IHsKLQl1bnNpZ25lZCBsb25nCXNobW1heDsKLQl1bnNpZ25l
-ZCBsb25nCXNobW1pbjsKLQl1bnNpZ25lZCBsb25nCXNobW1uaTsKLQl1bnNpZ25lZCBsb25nCXNo
-bXNlZzsKLQl1bnNpZ25lZCBsb25nCXNobWFsbDsKLQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMTsK
-LQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMjsKLQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMzsKLQl1
-bnNpZ25lZCBsb25nCV9fdW51c2VkNDsKLX07Ci0KLSNlbmRpZiAvKiBfUzM5MF9TSE1CVUZfSCAq
-LwotLSAKMi45LjAKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlz
-dHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
+The ia64 ipcbuf/msgbuf/sembuf/shmbuf header files are all identical
+to the version from asm-generic.
+
+This patch removes the files and replaces them with 'generic-y'
+statements as part of the y2038 changes. While ia64 no longer has
+a compat mode and doesn't need the file any more, it seem nicer
+to clean this up anyway.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/ia64/include/uapi/asm/Kbuild   |  4 ++++
+ arch/ia64/include/uapi/asm/ipcbuf.h |  2 --
+ arch/ia64/include/uapi/asm/msgbuf.h | 28 --------------------------
+ arch/ia64/include/uapi/asm/sembuf.h | 23 ----------------------
+ arch/ia64/include/uapi/asm/shmbuf.h | 39 -------------------------------------
+ 5 files changed, 4 insertions(+), 92 deletions(-)
+ delete mode 100644 arch/ia64/include/uapi/asm/ipcbuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/msgbuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/sembuf.h
+ delete mode 100644 arch/ia64/include/uapi/asm/shmbuf.h
+
+diff --git a/arch/ia64/include/uapi/asm/Kbuild b/arch/ia64/include/uapi/asm/Kbuild
+index c0527cfc48f0..3982e673e967 100644
+--- a/arch/ia64/include/uapi/asm/Kbuild
++++ b/arch/ia64/include/uapi/asm/Kbuild
+@@ -2,5 +2,9 @@
+ include include/uapi/asm-generic/Kbuild.asm
+ 
+ generic-y += bpf_perf_event.h
++generic-y += ipcbuf.h
+ generic-y += kvm_para.h
++generic-y += msgbuf.h
+ generic-y += poll.h
++generic-y += sembuf.h
++generic-y += shmbuf.h
+diff --git a/arch/ia64/include/uapi/asm/ipcbuf.h b/arch/ia64/include/uapi/asm/ipcbuf.h
+deleted file mode 100644
+index 90d6445a14df..000000000000
+--- a/arch/ia64/include/uapi/asm/ipcbuf.h
++++ /dev/null
+@@ -1,2 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#include <asm-generic/ipcbuf.h>
+diff --git a/arch/ia64/include/uapi/asm/msgbuf.h b/arch/ia64/include/uapi/asm/msgbuf.h
+deleted file mode 100644
+index aa25df92d9dc..000000000000
+--- a/arch/ia64/include/uapi/asm/msgbuf.h
++++ /dev/null
+@@ -1,28 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_IA64_MSGBUF_H
+-#define _ASM_IA64_MSGBUF_H
+-
+-/*
+- * The msqid64_ds structure for IA-64 architecture.
+- * Note extra padding because this structure is passed back and forth
+- * between kernel and user space.
+- *
+- * Pad space is left for:
+- * - 2 miscellaneous 64-bit values
+- */
+-
+-struct msqid64_ds {
+-	struct ipc64_perm msg_perm;
+-	__kernel_time_t msg_stime;	/* last msgsnd time */
+-	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-	__kernel_time_t msg_ctime;	/* last change time */
+-	unsigned long  msg_cbytes;	/* current number of bytes on queue */
+-	unsigned long  msg_qnum;	/* number of messages in queue */
+-	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+-	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
+-	__kernel_pid_t msg_lrpid;	/* last receive pid */
+-	unsigned long  __unused1;
+-	unsigned long  __unused2;
+-};
+-
+-#endif /* _ASM_IA64_MSGBUF_H */
+diff --git a/arch/ia64/include/uapi/asm/sembuf.h b/arch/ia64/include/uapi/asm/sembuf.h
+deleted file mode 100644
+index 6ed058760afc..000000000000
+--- a/arch/ia64/include/uapi/asm/sembuf.h
++++ /dev/null
+@@ -1,23 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_IA64_SEMBUF_H
+-#define _ASM_IA64_SEMBUF_H
+-
+-/*
+- * The semid64_ds structure for IA-64 architecture.
+- * Note extra padding because this structure is passed back and forth
+- * between kernel and user space.
+- *
+- * Pad space is left for:
+- * - 2 miscellaneous 64-bit values
+- */
+-
+-struct semid64_ds {
+-	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
+-	__kernel_time_t	sem_otime;		/* last semop time */
+-	__kernel_time_t	sem_ctime;		/* last change time */
+-	unsigned long	sem_nsems;		/* no. of semaphores in array */
+-	unsigned long	__unused1;
+-	unsigned long	__unused2;
+-};
+-
+-#endif /* _ASM_IA64_SEMBUF_H */
+diff --git a/arch/ia64/include/uapi/asm/shmbuf.h b/arch/ia64/include/uapi/asm/shmbuf.h
+deleted file mode 100644
+index 6ef57cb70dee..000000000000
+--- a/arch/ia64/include/uapi/asm/shmbuf.h
++++ /dev/null
+@@ -1,39 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+-#ifndef _ASM_IA64_SHMBUF_H
+-#define _ASM_IA64_SHMBUF_H
+-
+-/*
+- * The shmid64_ds structure for IA-64 architecture.
+- * Note extra padding because this structure is passed back and forth
+- * between kernel and user space.
+- *
+- * Pad space is left for:
+- * - 2 miscellaneous 64-bit values
+- */
+-
+-struct shmid64_ds {
+-	struct ipc64_perm	shm_perm;	/* operation perms */
+-	size_t			shm_segsz;	/* size of segment (bytes) */
+-	__kernel_time_t		shm_atime;	/* last attach time */
+-	__kernel_time_t		shm_dtime;	/* last detach time */
+-	__kernel_time_t		shm_ctime;	/* last change time */
+-	__kernel_pid_t		shm_cpid;	/* pid of creator */
+-	__kernel_pid_t		shm_lpid;	/* pid of last operator */
+-	unsigned long		shm_nattch;	/* no. of current attaches */
+-	unsigned long		__unused1;
+-	unsigned long		__unused2;
+-};
+-
+-struct shminfo64 {
+-	unsigned long	shmmax;
+-	unsigned long	shmmin;
+-	unsigned long	shmmni;
+-	unsigned long	shmseg;
+-	unsigned long	shmall;
+-	unsigned long	__unused1;
+-	unsigned long	__unused2;
+-	unsigned long	__unused3;
+-	unsigned long	__unused4;
+-};
+-
+-#endif /* _ASM_IA64_SHMBUF_H */
+-- 
+2.9.0
