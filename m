@@ -1,75 +1,54 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v3 01/17] y2038: asm-generic: Extend sysvipc data structures
-Date: Thu, 19 Apr 2018 17:20:26 +0200
-Message-ID: <CAK8P3a196QYoM1egagMuZw4WhiwRiO83Qpj0CxoCeVQBEaj-gw@mail.gmail.com>
-References: <20180419143737.606138-1-arnd@arndb.de> <20180419143737.606138-2-arnd@arndb.de>
- <87efjbnswr.fsf@xmission.com>
+From: Zack Weinberg <zackw@panix.com>
+Subject: Re: [PATCH v3 01/17] y2038: asm-generic: Extend sysvipc
+	data structures
+Date: Thu, 19 Apr 2018 11:30:34 -0400
+Message-ID: <CAKCAbMiaX31mpfEMRQrQbPO+kTfowA6=_KhBSs56=zZ1s0aXhw@mail.gmail.com>
+References: <20180419143737.606138-1-arnd@arndb.de>
+ <20180419143737.606138-2-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87efjbnswr.fsf@xmission.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, GNU C Library <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Albert ARIBAUD <albert.aribaud@3adev.fr>, linux-s390 <linux-s390@vger.kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, the arch/x86 maintainers <x86@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "open list:RALINK MIPS ARCHITECTURE" <linux-mips@linux-mips.org>, James Hogan <jhogan@kernel.org>, Ralf Baechle <ralf@linux-mips.org>, linuxppc-dev <linuxppc-dev@lists.o>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <20180419143737.606138-2-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, GNU C Library <libc-alpha@sourceware.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 19, 2018 at 4:59 PM, Eric W. Biederman
-<ebiederm@xmission.com> wrote:
-> Arnd Bergmann <arnd@arndb.de> writes:
->>
->>  struct msqid64_ds {
->>       struct ipc64_perm msg_perm;
->> +#if __BITS_PER_LONG == 64
->>       __kernel_time_t msg_stime;      /* last msgsnd time */
->> -#if __BITS_PER_LONG != 64
->> -     unsigned long   __unused1;
->> -#endif
->>       __kernel_time_t msg_rtime;      /* last msgrcv time */
->> -#if __BITS_PER_LONG != 64
->> -     unsigned long   __unused2;
->> -#endif
->>       __kernel_time_t msg_ctime;      /* last change time */
->> -#if __BITS_PER_LONG != 64
->> -     unsigned long   __unused3;
->> +#else
->> +     unsigned long   msg_stime;      /* last msgsnd time */
->> +     unsigned long   msg_stime_high;
->> +     unsigned long   msg_rtime;      /* last msgrcv time */
->> +     unsigned long   msg_rtime_high;
->> +     unsigned long   msg_ctime;      /* last change time */
->> +     unsigned long   msg_ctime_high;
->>  #endif
->
-> I suspect you want to use __kernel_ulong_t here instead of a raw
-> unsigned long.  If nothing else it seems inconsistent to use typedefs
-> in one half of the structure and no typedefs in the other half.
-
-Good catch, there is definitely something wrong here, but I think using
-__kernel_ulong_t for all members would also be wrong, as that
-still changes the layout on x32, which effectively is
-
-struct msqid64_ds {
-     ipc64_perm msg_perm;
-     u64 msg_stime;
-     u32 __unused1;
-     /* 32 bit implict padding */
-     u64 msg_rtime;
-     u32 __unused2;
-     /* 32 bit implict padding */
-     u64 msg_ctime;
-     u32 __unused3;
-     /* 32 bit implict padding */
-     __kernel_pid_t          shm_cpid;       /* pid of creator */
-     __kernel_pid_t          shm_lpid;       /* pid of last operator */
-     ....
-};
-
-The choices here would be to either use a mix of
-__kernel_ulong_t and unsigned long, or taking the x32
-version back into arch/x86/include/uapi/asm/ so the
-generic version at least makes some sense.
-
-I can't use __kernel_time_t for the lower half on 32-bit
-since it really should be unsigned.
-
-        Arnd
+T24gVGh1LCBBcHIgMTksIDIwMTggYXQgMTA6MzcgQU0sIEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
+ZGIuZGU+IHdyb3RlOgo+IE1vc3QgYXJjaGl0ZWN0dXJlcyBub3cgdXNlIHRoZSBhc20tZ2VuZXJp
+YyBjb3B5IG9mIHRoZSBzeXN2aXBjIGRhdGEKPiBzdHJ1Y3R1cmVzIChtc3FpZDY0X2RzLCBzZW1p
+ZDY0X2RzLCBzaG1pZDY0X2RzKSwgd2hpY2ggdXNlIDMyLWJpdAo+IF9fa2VybmVsX3RpbWVfdCBv
+biAzMi1iaXQgYXJjaGl0ZWN0dXJlcyBidXQgaGF2ZSBwYWRkaW5nIGJlaGluZCB0aGVtIHRvCj4g
+YWxsb3cgZXh0ZW5kaW5nIHRoZSB0eXBlIHRvIDY0LWJpdC4KPgo+IFVuZm9ydHVuYXRlbHksIHRo
+YXQgZmFpbHMgb24gYWxsIGJpZy1lbmRpYW4gYXJjaGl0ZWN0dXJlcywgd2hpY2ggaGF2ZSB0aGUK
+PiBwYWRkaW5nIG9uIHRoZSB3cm9uZyBzaWRlLiBBcyBzbyBtYW55IG9mIHRoZW0gZ2V0IGl0IHdy
+b25nLCB3ZSBkZWNpZGVkIHRvCj4gbm90IGJvdGhlciBldmVuIHRyeWluZyB0byBmaXggaXQgdXAg
+d2hlbiB3ZSBpbnRyb2R1Y2VkIHRoZSBhc20tZ2VuZXJpYwo+IGNvcHkuIEluc3RlYWQgd2UgYWx3
+YXlzIHVzZSB0aGUgcGFkZGluZyB3b3JkIG5vdyB0byBwcm92aWRlIHRoZSB1cHBlcgo+IDMyIGJp
+dHMgb2YgdGhlIHNlY29uZHMgdmFsdWUsIHJlZ2FyZGxlc3Mgb2YgdGhlIGVuZGlhbmVzcy4KPgo+
+IEEgbGliYyBpbXBsZW1lbnRhdGlvbiBvbiBhIHR5cGljYWwgYmlnLWVuZGlhbiBzeXN0ZW0gY2Fu
+IGRlYWwgd2l0aAo+IHRoaXMgYnkgcHJvdmlkaW5nIGl0cyBvd24gY29weSBvZiB0aGUgc3RydWN0
+dXJlIGRlZmluaXRpb24gdG8gdXNlcgo+IHNwYWNlLCBhbmQgc3dhcHBpbmcgdGhlIHR3byAzMi1i
+aXQgd29yZHMgYmVmb3JlIHJldHVybmluZyBmcm9tIHRoZQo+IHNlbWN0bC9zaG1jdGwvbXNnY3Rs
+IHN5c3RlbSBjYWxscy4KClRoaXMgc2VlbXMgZ2VuZXJhbGx5IGxpa2UgYSBzb3VuZCBhcHByb2Fj
+aCwgYnV0IEkgbmVlZCB0byBhc2sgd2hldGhlcgphbnkgb2YgdGhlIHN0cnVjdHVyZXMgaW52b2x2
+ZWQgY2FuIGV2ZXIgYXBwZWFyIGluIGEgc2VuZG1zZygpIGNvbnRyb2wKbWVzc2FnZSAodGhhdCBp
+cywgaW4gdGhlIGRhdGEgcG9pbnRlZCB0byBieSBtc2dfY29udHJvbCksIG9yIGFuCkFGX05FVExJ
+TksgbWVzc2FnZSwgb3IgYW55IG90aGVyIHNpdHVhdGlvbiB3aGVyZSB0aGUga2VybmVsCmNvbW11
+bmljYXRlcyBhIHN0cnVjdHVyZWQgbWVzc2FnZSBvZiBhcmJpdHJhcnkgc2l6ZSB0byB1c2VyIHNw
+YWNlIG9yCnZpY2UgdmVyc2EuICBsaWJjIGNhbid0IG11bmdlIHRob3NlIG1lc3NhZ2VzLCBiZWNh
+dXNlIG5ldyBtZXNzYWdlCnR5cGVzIGNhbiBiZSBhZGRlZCBmYXN0ZXIgdGhhbiBsaWJjIGNhbiBr
+ZWVwIHVwIHdpdGggdGhlbSwgYW5kIGJlY2F1c2UKSS9PIHByaW1pdGl2ZXMgbGlrZSBzZW5kbXNn
+KCkgZ2VuZXJhbGx5IGFyZW4ndCBhbGxvd2VkIHRvIGFsbG9jYXRlCmFyYml0cmFyaWx5LWxhcmdl
+IHNjcmF0Y2ggYnVmZmVycy4KCnp3Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0
+dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
