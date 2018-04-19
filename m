@@ -1,158 +1,170 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 01/17] y2038: asm-generic: Extend sysvipc data structures
-Date: Thu, 19 Apr 2018 16:37:21 +0200
-Message-ID: <20180419143737.606138-2-arnd@arndb.de>
+Subject: [PATCH v3 15/17] y2038: ipc: Enable COMPAT_32BIT_TIME
+Date: Thu, 19 Apr 2018 16:37:35 +0200
+Message-ID: <20180419143737.606138-16-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-91714-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <20180419143737.606138-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Most architectures now use the asm-generic copy of the sysvipc data
-structures (msqid64_ds, semid64_ds, shmid64_ds), which use 32-bit
-__kernel_time_t on 32-bit architectures but have padding behind them to
-allow extending the type to 64-bit.
+Three ipc syscalls (mq_timedsend, mq_timedreceive and and semtimedop)
+take a timespec argument. After we move 32-bit architectures over to
+useing 64-bit time_t based syscalls, we need seperate entry points for
+the old 32-bit based interfaces.
 
-Unfortunately, that fails on all big-endian architectures, which have the
-padding on the wrong side. As so many of them get it wrong, we decided to
-not bother even trying to fix it up when we introduced the asm-generic
-copy. Instead we always use the padding word now to provide the upper
-32 bits of the seconds value, regardless of the endianess.
-
-A libc implementation on a typical big-endian system can deal with
-this by providing its own copy of the structure definition to user
-space, and swapping the two 32-bit words before returning from the
-semctl/shmctl/msgctl system calls.
-
-ARM64 and s/390 are architectures that use these generic headers and
-also provide support for compat mode on 64-bit kernels, so we adapt
-their copies here as well.
+This changes the #ifdef guards for the existing 32-bit compat syscalls
+to check for CONFIG_COMPAT_32BIT_TIME instead, which will then be
+enabled on all existing 32-bit architectures.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/uapi/asm-generic/msgbuf.h | 17 ++++++++---------
- include/uapi/asm-generic/sembuf.h | 26 ++++++++++++++++----------
- include/uapi/asm-generic/shmbuf.h | 17 ++++++++---------
- 3 files changed, 32 insertions(+), 28 deletions(-)
+ ipc/mqueue.c | 80 +++++++++++++++++++++++++++++++-----------------------------
+ ipc/sem.c    |  3 ++-
+ ipc/util.h   |  2 +-
+ 3 files changed, 44 insertions(+), 41 deletions(-)
 
-diff --git a/include/uapi/asm-generic/msgbuf.h b/include/uapi/asm-generic/msgbuf.h
-index fb306ebdb36f..d2169cae93b8 100644
---- a/include/uapi/asm-generic/msgbuf.h
-+++ b/include/uapi/asm-generic/msgbuf.h
-@@ -18,23 +18,22 @@
-  * On big-endian systems, the padding is in the wrong place.
-  *
-  * Pad space is left for:
-- * - 64-bit time_t to solve y2038 problem
-  * - 2 miscellaneous 32-bit values
+diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+index 9610afcfa2e5..c0d58f390c3b 100644
+--- a/ipc/mqueue.c
++++ b/ipc/mqueue.c
+@@ -1420,6 +1420,47 @@ COMPAT_SYSCALL_DEFINE4(mq_open, const char __user *, u_name,
+ 	return do_mq_open(u_name, oflag, mode, p);
+ }
+ 
++COMPAT_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
++		       const struct compat_sigevent __user *, u_notification)
++{
++	struct sigevent n, *p = NULL;
++	if (u_notification) {
++		if (get_compat_sigevent(&n, u_notification))
++			return -EFAULT;
++		if (n.sigev_notify == SIGEV_THREAD)
++			n.sigev_value.sival_ptr = compat_ptr(n.sigev_value.sival_int);
++		p = &n;
++	}
++	return do_mq_notify(mqdes, p);
++}
++
++COMPAT_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
++		       const struct compat_mq_attr __user *, u_mqstat,
++		       struct compat_mq_attr __user *, u_omqstat)
++{
++	int ret;
++	struct mq_attr mqstat, omqstat;
++	struct mq_attr *new = NULL, *old = NULL;
++
++	if (u_mqstat) {
++		new = &mqstat;
++		if (get_compat_mq_attr(new, u_mqstat))
++			return -EFAULT;
++	}
++	if (u_omqstat)
++		old = &omqstat;
++
++	ret = do_mq_getsetattr(mqdes, new, old);
++	if (ret || !old)
++		return ret;
++
++	if (put_compat_mq_attr(old, u_omqstat))
++		return -EFAULT;
++	return 0;
++}
++#endif
++
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ static int compat_prepare_timeout(const struct compat_timespec __user *p,
+ 				   struct timespec64 *ts)
+ {
+@@ -1459,45 +1500,6 @@ COMPAT_SYSCALL_DEFINE5(mq_timedreceive, mqd_t, mqdes,
+ 	}
+ 	return do_mq_timedreceive(mqdes, u_msg_ptr, msg_len, u_msg_prio, p);
+ }
+-
+-COMPAT_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
+-		       const struct compat_sigevent __user *, u_notification)
+-{
+-	struct sigevent n, *p = NULL;
+-	if (u_notification) {
+-		if (get_compat_sigevent(&n, u_notification))
+-			return -EFAULT;
+-		if (n.sigev_notify == SIGEV_THREAD)
+-			n.sigev_value.sival_ptr = compat_ptr(n.sigev_value.sival_int);
+-		p = &n;
+-	}
+-	return do_mq_notify(mqdes, p);
+-}
+-
+-COMPAT_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
+-		       const struct compat_mq_attr __user *, u_mqstat,
+-		       struct compat_mq_attr __user *, u_omqstat)
+-{
+-	int ret;
+-	struct mq_attr mqstat, omqstat;
+-	struct mq_attr *new = NULL, *old = NULL;
+-
+-	if (u_mqstat) {
+-		new = &mqstat;
+-		if (get_compat_mq_attr(new, u_mqstat))
+-			return -EFAULT;
+-	}
+-	if (u_omqstat)
+-		old = &omqstat;
+-
+-	ret = do_mq_getsetattr(mqdes, new, old);
+-	if (ret || !old)
+-		return ret;
+-
+-	if (put_compat_mq_attr(old, u_omqstat))
+-		return -EFAULT;
+-	return 0;
+-}
+ #endif
+ 
+ static const struct inode_operations mqueue_dir_inode_operations = {
+diff --git a/ipc/sem.c b/ipc/sem.c
+index b951e25ba2db..cfd94d48a9aa 100644
+--- a/ipc/sem.c
++++ b/ipc/sem.c
+@@ -70,6 +70,7 @@
+  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
   */
  
- struct msqid64_ds {
- 	struct ipc64_perm msg_perm;
-+#if __BITS_PER_LONG == 64
- 	__kernel_time_t msg_stime;	/* last msgsnd time */
--#if __BITS_PER_LONG != 64
--	unsigned long	__unused1;
--#endif
- 	__kernel_time_t msg_rtime;	/* last msgrcv time */
--#if __BITS_PER_LONG != 64
--	unsigned long	__unused2;
--#endif
- 	__kernel_time_t msg_ctime;	/* last change time */
--#if __BITS_PER_LONG != 64
--	unsigned long	__unused3;
-+#else
-+	unsigned long	msg_stime;	/* last msgsnd time */
-+	unsigned long	msg_stime_high;
-+	unsigned long	msg_rtime;	/* last msgrcv time */
-+	unsigned long	msg_rtime_high;
-+	unsigned long	msg_ctime;	/* last change time */
-+	unsigned long	msg_ctime_high;
- #endif
- 	__kernel_ulong_t msg_cbytes;	/* current number of bytes on queue */
- 	__kernel_ulong_t msg_qnum;	/* number of messages in queue */
-diff --git a/include/uapi/asm-generic/sembuf.h b/include/uapi/asm-generic/sembuf.h
-index cbf9cfe977d6..0bae010f1b64 100644
---- a/include/uapi/asm-generic/sembuf.h
-+++ b/include/uapi/asm-generic/sembuf.h
-@@ -13,23 +13,29 @@
-  * everyone just ended up making identical copies without specific
-  * optimizations, so we may just as well all use the same one.
-  *
-- * 64 bit architectures typically define a 64 bit __kernel_time_t,
-+ * 64 bit architectures use a 64-bit __kernel_time_t here, while
-+ * 32 bit architectures have a pair of unsigned long values.
-  * so they do not need the first two padding words.
-- * On big-endian systems, the padding is in the wrong place.
-  *
-- * Pad space is left for:
-- * - 64-bit time_t to solve y2038 problem
-- * - 2 miscellaneous 32-bit values
-+ * On big-endian systems, the padding is in the wrong place for
-+ * historic reasons, so user space has to reconstruct a time_t
-+ * value using
-+ *
-+ * user_semid_ds.sem_otime = kernel_semid64_ds.sem_otime +
-+ *		((long long)kernel_semid64_ds.sem_otime_high << 32)
-+ *
-+ * Pad space is left for 2 miscellaneous 32-bit values
-  */
- struct semid64_ds {
- 	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
-+#if __BITS_PER_LONG == 64
- 	__kernel_time_t	sem_otime;	/* last semop time */
--#if __BITS_PER_LONG != 64
--	unsigned long	__unused1;
--#endif
- 	__kernel_time_t	sem_ctime;	/* last change time */
--#if __BITS_PER_LONG != 64
--	unsigned long	__unused2;
-+#else
-+	unsigned long	sem_otime;	/* last semop time */
-+	unsigned long	sem_otime_high;
-+	unsigned long	sem_ctime;	/* last change time */
-+	unsigned long	sem_ctime_high;
- #endif
- 	unsigned long	sem_nsems;	/* no. of semaphores in array */
- 	unsigned long	__unused3;
-diff --git a/include/uapi/asm-generic/shmbuf.h b/include/uapi/asm-generic/shmbuf.h
-index 2b6c3bb97f97..602f1b5b462b 100644
---- a/include/uapi/asm-generic/shmbuf.h
-+++ b/include/uapi/asm-generic/shmbuf.h
-@@ -19,24 +19,23 @@
-  *
-  *
-  * Pad space is left for:
-- * - 64-bit time_t to solve y2038 problem
-  * - 2 miscellaneous 32-bit values
-  */
++#include <linux/compat.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ #include <linux/init.h>
+@@ -2193,7 +2194,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
+ 	return ksys_semtimedop(semid, tsops, nsops, timeout);
+ }
  
- struct shmid64_ds {
- 	struct ipc64_perm	shm_perm;	/* operation perms */
- 	size_t			shm_segsz;	/* size of segment (bytes) */
-+#if __BITS_PER_LONG == 64
- 	__kernel_time_t		shm_atime;	/* last attach time */
--#if __BITS_PER_LONG != 64
--	unsigned long		__unused1;
--#endif
- 	__kernel_time_t		shm_dtime;	/* last detach time */
--#if __BITS_PER_LONG != 64
--	unsigned long		__unused2;
--#endif
- 	__kernel_time_t		shm_ctime;	/* last change time */
--#if __BITS_PER_LONG != 64
--	unsigned long		__unused3;
-+#else
-+	unsigned long		shm_atime;	/* last attach time */
-+	unsigned long		shm_atime_high;
-+	unsigned long		shm_dtime;	/* last detach time */
-+	unsigned long		shm_dtime_high;
-+	unsigned long		shm_ctime;	/* last change time */
-+	unsigned long		shm_ctime_high;
- #endif
- 	__kernel_pid_t		shm_cpid;	/* pid of creator */
- 	__kernel_pid_t		shm_lpid;	/* pid of last operator */
+-#ifdef CONFIG_COMPAT
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
+ 			    unsigned int nsops,
+ 			    const struct compat_timespec __user *timeout)
+diff --git a/ipc/util.h b/ipc/util.h
+index 975c6de2df9d..0aba3230d007 100644
+--- a/ipc/util.h
++++ b/ipc/util.h
+@@ -265,10 +265,10 @@ long ksys_shmdt(char __user *shmaddr);
+ long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
+ 
+ /* for CONFIG_ARCH_WANT_OLD_COMPAT_IPC */
+-#ifdef CONFIG_COMPAT
+ long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
+ 			    unsigned int nsops,
+ 			    const struct compat_timespec __user *timeout);
++#ifdef CONFIG_COMPAT
+ long compat_ksys_semctl(int semid, int semnum, int cmd, int arg);
+ long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr);
+ long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
 -- 
 2.9.0
