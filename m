@@ -1,54 +1,79 @@
-From: Zack Weinberg <zackw@panix.com>
-Subject: Re: [PATCH v3 01/17] y2038: asm-generic: Extend sysvipc
-	data structures
-Date: Thu, 19 Apr 2018 11:30:34 -0400
-Message-ID: <CAKCAbMiaX31mpfEMRQrQbPO+kTfowA6=_KhBSs56=zZ1s0aXhw@mail.gmail.com>
-References: <20180419143737.606138-1-arnd@arndb.de>
- <20180419143737.606138-2-arnd@arndb.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 01/17] y2038: asm-generic: Extend sysvipc data structures
+Date: Thu, 19 Apr 2018 17:51:23 +0200
+Message-ID: <CAK8P3a0psMUhA-wzNmTnrcgrhmHY=n-u9kp23aEKVQ9wxcf3zg@mail.gmail.com>
+References: <20180419143737.606138-1-arnd@arndb.de> <20180419143737.606138-2-arnd@arndb.de>
+ <CAKCAbMiaX31mpfEMRQrQbPO+kTfowA6=_KhBSs56=zZ1s0aXhw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20180419143737.606138-2-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, GNU C Library <libc-alpha@sourceware.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKCAbMiaX31mpfEMRQrQbPO+kTfowA6=_KhBSs56=zZ1s0aXhw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Zack Weinberg <zackw@panix.com>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, GNU C Library <libc-alpha@sourceware.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBBcHIgMTksIDIwMTggYXQgMTA6MzcgQU0sIEFybmQgQmVyZ21hbm4gPGFybmRAYXJu
-ZGIuZGU+IHdyb3RlOgo+IE1vc3QgYXJjaGl0ZWN0dXJlcyBub3cgdXNlIHRoZSBhc20tZ2VuZXJp
-YyBjb3B5IG9mIHRoZSBzeXN2aXBjIGRhdGEKPiBzdHJ1Y3R1cmVzIChtc3FpZDY0X2RzLCBzZW1p
-ZDY0X2RzLCBzaG1pZDY0X2RzKSwgd2hpY2ggdXNlIDMyLWJpdAo+IF9fa2VybmVsX3RpbWVfdCBv
-biAzMi1iaXQgYXJjaGl0ZWN0dXJlcyBidXQgaGF2ZSBwYWRkaW5nIGJlaGluZCB0aGVtIHRvCj4g
-YWxsb3cgZXh0ZW5kaW5nIHRoZSB0eXBlIHRvIDY0LWJpdC4KPgo+IFVuZm9ydHVuYXRlbHksIHRo
-YXQgZmFpbHMgb24gYWxsIGJpZy1lbmRpYW4gYXJjaGl0ZWN0dXJlcywgd2hpY2ggaGF2ZSB0aGUK
-PiBwYWRkaW5nIG9uIHRoZSB3cm9uZyBzaWRlLiBBcyBzbyBtYW55IG9mIHRoZW0gZ2V0IGl0IHdy
-b25nLCB3ZSBkZWNpZGVkIHRvCj4gbm90IGJvdGhlciBldmVuIHRyeWluZyB0byBmaXggaXQgdXAg
-d2hlbiB3ZSBpbnRyb2R1Y2VkIHRoZSBhc20tZ2VuZXJpYwo+IGNvcHkuIEluc3RlYWQgd2UgYWx3
-YXlzIHVzZSB0aGUgcGFkZGluZyB3b3JkIG5vdyB0byBwcm92aWRlIHRoZSB1cHBlcgo+IDMyIGJp
-dHMgb2YgdGhlIHNlY29uZHMgdmFsdWUsIHJlZ2FyZGxlc3Mgb2YgdGhlIGVuZGlhbmVzcy4KPgo+
-IEEgbGliYyBpbXBsZW1lbnRhdGlvbiBvbiBhIHR5cGljYWwgYmlnLWVuZGlhbiBzeXN0ZW0gY2Fu
-IGRlYWwgd2l0aAo+IHRoaXMgYnkgcHJvdmlkaW5nIGl0cyBvd24gY29weSBvZiB0aGUgc3RydWN0
-dXJlIGRlZmluaXRpb24gdG8gdXNlcgo+IHNwYWNlLCBhbmQgc3dhcHBpbmcgdGhlIHR3byAzMi1i
-aXQgd29yZHMgYmVmb3JlIHJldHVybmluZyBmcm9tIHRoZQo+IHNlbWN0bC9zaG1jdGwvbXNnY3Rs
-IHN5c3RlbSBjYWxscy4KClRoaXMgc2VlbXMgZ2VuZXJhbGx5IGxpa2UgYSBzb3VuZCBhcHByb2Fj
-aCwgYnV0IEkgbmVlZCB0byBhc2sgd2hldGhlcgphbnkgb2YgdGhlIHN0cnVjdHVyZXMgaW52b2x2
-ZWQgY2FuIGV2ZXIgYXBwZWFyIGluIGEgc2VuZG1zZygpIGNvbnRyb2wKbWVzc2FnZSAodGhhdCBp
-cywgaW4gdGhlIGRhdGEgcG9pbnRlZCB0byBieSBtc2dfY29udHJvbCksIG9yIGFuCkFGX05FVExJ
-TksgbWVzc2FnZSwgb3IgYW55IG90aGVyIHNpdHVhdGlvbiB3aGVyZSB0aGUga2VybmVsCmNvbW11
-bmljYXRlcyBhIHN0cnVjdHVyZWQgbWVzc2FnZSBvZiBhcmJpdHJhcnkgc2l6ZSB0byB1c2VyIHNw
-YWNlIG9yCnZpY2UgdmVyc2EuICBsaWJjIGNhbid0IG11bmdlIHRob3NlIG1lc3NhZ2VzLCBiZWNh
-dXNlIG5ldyBtZXNzYWdlCnR5cGVzIGNhbiBiZSBhZGRlZCBmYXN0ZXIgdGhhbiBsaWJjIGNhbiBr
-ZWVwIHVwIHdpdGggdGhlbSwgYW5kIGJlY2F1c2UKSS9PIHByaW1pdGl2ZXMgbGlrZSBzZW5kbXNn
-KCkgZ2VuZXJhbGx5IGFyZW4ndCBhbGxvd2VkIHRvIGFsbG9jYXRlCmFyYml0cmFyaWx5LWxhcmdl
-IHNjcmF0Y2ggYnVmZmVycy4KCnp3Cl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0
-dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
+On Thu, Apr 19, 2018 at 5:30 PM, Zack Weinberg <zackw@panix.com> wrote:
+> On Thu, Apr 19, 2018 at 10:37 AM, Arnd Bergmann <arnd@arndb.de> wrote:
+>> Most architectures now use the asm-generic copy of the sysvipc data
+>> structures (msqid64_ds, semid64_ds, shmid64_ds), which use 32-bit
+>> __kernel_time_t on 32-bit architectures but have padding behind them to
+>> allow extending the type to 64-bit.
+>>
+>> Unfortunately, that fails on all big-endian architectures, which have the
+>> padding on the wrong side. As so many of them get it wrong, we decided to
+>> not bother even trying to fix it up when we introduced the asm-generic
+>> copy. Instead we always use the padding word now to provide the upper
+>> 32 bits of the seconds value, regardless of the endianess.
+>>
+>> A libc implementation on a typical big-endian system can deal with
+>> this by providing its own copy of the structure definition to user
+>> space, and swapping the two 32-bit words before returning from the
+>> semctl/shmctl/msgctl system calls.
+>
+> This seems generally like a sound approach, but I need to ask whether
+> any of the structures involved can ever appear in a sendmsg() control
+> message (that is, in the data pointed to by msg_control), or an
+> AF_NETLINK message, or any other situation where the kernel
+> communicates a structured message of arbitrary size to user space or
+> vice versa.  libc can't munge those messages, because new message
+> types can be added faster than libc can keep up with them, and because
+> I/O primitives like sendmsg() generally aren't allowed to allocate
+> arbitrarily-large scratch buffers.
+
+I'm fairly sure that the sysvipc data structures are entirely distinct from
+the structures that get passed over sockets, so the question of socket
+data is unrelated to this series and will be addressed in a separate
+series.
+
+To give some background on what needs to be done for sockets, the
+only incompatibility I'm aware of are socket timestamps that
+get enabled with SO_TIMESTAMP, SO_TIMESTAMPNS or
+SO_TIMESTAMPING and get passed from kernel to user space
+as SCM_TIMESTAMP/SCM_TIMESTAMPNS/SCM_TIMESTAMPING
+cmsg data.
+
+We already have code for handling 32-bit compat applications
+on 64-bit kernels, but that cannot work for 32-bit applications
+if the kernel has no idea whether the application uses 32-bit or
+64-bit time_t, and we don't have a function like in_compat_syscall()
+that we can use to find that out.
+
+Our plan here is to change asm/socket.h to have three additional
+timestamp flags that correspond to the existing SO_TIMESTAMP*
+flags but signify that user space expects the new structure layout
+(which is compatible with the existing layout on 64-bit kernels).
+For each flag, the kernel then defines a wrapper that (on 32-bit
+user space) looks like
+
+#define SO_TIMESTAMP (sizeof(time_t) > sizeof(__kernel_long_t) ? \
+             SO_TIMESTAMP_TIME64 : SO_TIMESTAMP_OLD)
+
+Any application asking for SO_TIMESTAMP_OLD will get the
+traditional behavior, while applications that are built with a
+64-bit time_t will pass SO_TIMESTAMP_TIME64 into
+setsockopts, causing the kernel to use the new behavior.
+In 64-bit tasks, we probably want to define both to have existing
+behavior even though one would never see the new macro.
+
+         Arnd
