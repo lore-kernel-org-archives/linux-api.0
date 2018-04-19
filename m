@@ -1,183 +1,160 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 00/17] y2038: Convert IPC syscalls
-Date: Thu, 19 Apr 2018 16:37:20 +0200
-Message-ID: <20180419143737.606138-1-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH v3 04/17] y2038: s390: Remove unneeded ipc uapi
+	header files
+Date: Thu, 19 Apr 2018 16:37:24 +0200
+Message-ID: <20180419143737.606138-5-arnd@arndb.de>
+References: <20180419143737.606138-1-arnd@arndb.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <20180419143737.606138-1-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
+Cc: linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, ebiederm@xmission.com, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, linux-mips@linux-mips.org, linux-api@vger.kernel.org, x86@kernel.org, will.deacon@arm.com, ralf@linux-mips.org, jhogan@kernel.org, albert.aribaud@3adev.fr, sparclinux@vger.kernel.org, deepa.kernel@gmail.com, catalin.marinas@arm.com, schwidefsky@de.ibm.com, tglx@linutronix.de, linuxppc-dev@lists.ozlabs.org, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-This is an update of a series I posted a long time ago [1], updating
-the IPC subsystem to pass down 64-bit time stamps to user space.
-
-In particular, for sys_msgctl, sys_semctl and sys_shmctl, I do not
-introduce a completely new set of replacement system calls, but instead
-extend the existing ones to return data in the reserved fields of the
-normal data structure.
-
-This should be completely transparent to any existing user space, and
-only after the 32-bit time_t wraps, it will make a difference in the
-returned data.
-
-libc implementations will consequently have to provide their own data
-structures when they move to 64-bit time_t, and convert the structures
-in user space from the ones returned by the kernel.
-
-In contrast, mq_timedsend, mq_timedreceive and and semtimedop all do
-need to change because having a libc redefine the timespec type
-breaks the ABI, so with this series, there will be two separate entry
-points for 32-bit architectures.
-
-There are three cases here:
-
-- little-endian architectures (except powerpc and mips) can use
-  the normal layout and just cast the data structure to the user space
-  type that contains 64-bit numbers.
-
-- parisc and sparc can do the same thing with big-endian user space
-
-- little-endian powerpc and most big-endian architectures have
-  to flip the upper and lower 32-bit halves of the time_t value in memory,
-  but can otherwise keep using the normal layout
-
-- mips and big-endian xtensa need to be more careful because
-  they are not consistent in their definitions, and they have to provide
-  custom libc implementations for the system calls to use 64-bit time_t.
-
-Changes to v2 [2]:
-- added patches for mq_timedsend, mq_timedreceive and and semtimedop
-  system calls
-- add asm-generic/compat.h changes to prepare for actually using those
-  on 32-bit.
-- fix 'make headers_install' as reported by Heiko Carstens
-- fix MIPS build as reported by build bot
-- Cc everyone on all patches as originally intended, not just on the
-  cover letter.
-
-Changes to v1 [1]:
-- Rebased to the latest kernel (4.17-rc)
-- Dropped changes for removed architectures
-- Simplified the IPC code changes, based on prior work from
-  both Deepa and Eric
-- Fixed a few bugs that I found during rebasing, in parcular the
-  sparc version was incorrect.
-
-I haven't seen any objections to v1 and will send a pull request
-to Thomas Gleixner after Deepa's first patches are all merged there.
-There are a few more patches in my tree [3] now, I'm still testing
-those and should be able to send the next batch next week.
-
-    Arnd
-
-[1] https://lkml.org/lkml/2015/5/20/605
-[2] https://lwn.net/Articles/751676/
-[3] git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git y2038-next
-
-Arnd Bergmann (17):
-  y2038: asm-generic: Extend sysvipc data structures
-  y2038: alpha: Remove unneeded ipc uapi header files
-  y2038: ia64: Remove unneeded ipc uapi header files
-  y2038: s390: Remove unneeded ipc uapi header files
-  y2038: arm64: Extend sysvipc compat data structures
-  y2038: mips: Extend sysvipc data structures
-  y2038: x86: Extend sysvipc data structures
-  y2038: parisc: Extend sysvipc data structures
-  y2038: sparc: Extend sysvipc data structures
-  y2038: powerpc: Extend sysvipc data structures
-  y2038: xtensa: Extend sysvipc data structures
-  y2038: ipc: Use ktime_get_real_seconds consistently
-  y2038: ipc: Report long times to user space
-  y2038: ipc: Use __kernel_timespec
-  y2038: ipc: Enable COMPAT_32BIT_TIME
-  y2038: ipc: Redirect ipc(SEMTIMEDOP, ...) to compat_ksys_semtimedop
-  y2038: compat: Move common compat types to asm-generic/compat.h
-
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: libc-alpha@sourceware.org
-Cc: tglx@linutronix.de
-Cc: deepa.kernel@gmail.com
-Cc: viro@zeniv.linux.org.uk
-Cc: ebiederm@xmission.com
-Cc: albert.aribaud@3adev.fr
-Cc: linux-s390@vger.kernel.org
-Cc: schwidefsky@de.ibm.com
-Cc: x86@kernel.org
-Cc: catalin.marinas@arm.com
-Cc: will.deacon@arm.com
-Cc: linux-mips@linux-mips.org
-Cc: jhogan@kernel.org
-Cc: ralf@linux-mips.org
-Cc: linuxppc-dev@lists.ozlabs.org
-Cc: sparclinux@vger.kernel.org
-
- arch/alpha/include/uapi/asm/Kbuild     |  4 ++
- arch/alpha/include/uapi/asm/ipcbuf.h   |  2 -
- arch/alpha/include/uapi/asm/msgbuf.h   | 28 -----------
- arch/alpha/include/uapi/asm/sembuf.h   | 23 ---------
- arch/alpha/include/uapi/asm/shmbuf.h   | 39 ---------------
- arch/arm64/include/asm/compat.h        | 52 +++++++-------------
- arch/ia64/include/uapi/asm/Kbuild      |  4 ++
- arch/ia64/include/uapi/asm/ipcbuf.h    |  2 -
- arch/ia64/include/uapi/asm/msgbuf.h    | 28 -----------
- arch/ia64/include/uapi/asm/sembuf.h    | 23 ---------
- arch/ia64/include/uapi/asm/shmbuf.h    | 39 ---------------
- arch/mips/include/asm/compat.h         | 58 +++++++++--------------
- arch/mips/include/uapi/asm/msgbuf.h    | 57 ++++++++++++++--------
- arch/mips/include/uapi/asm/sembuf.h    | 15 +++++-
- arch/mips/include/uapi/asm/shmbuf.h    | 23 ++++++++-
- arch/parisc/include/asm/compat.h       | 50 +++++++-------------
- arch/parisc/include/uapi/asm/msgbuf.h  | 33 +++++++------
- arch/parisc/include/uapi/asm/sembuf.h  | 16 +++----
- arch/parisc/include/uapi/asm/shmbuf.h  | 19 ++++----
- arch/powerpc/include/asm/compat.h      | 50 +++++++-------------
- arch/powerpc/include/uapi/asm/msgbuf.h | 18 +++----
- arch/powerpc/include/uapi/asm/sembuf.h | 14 +++---
- arch/powerpc/include/uapi/asm/shmbuf.h | 19 ++++----
- arch/s390/include/asm/compat.h         | 50 +++++++-------------
- arch/s390/include/uapi/asm/Kbuild      |  3 ++
- arch/s390/include/uapi/asm/msgbuf.h    | 38 ---------------
- arch/s390/include/uapi/asm/sembuf.h    | 30 ------------
- arch/s390/include/uapi/asm/shmbuf.h    | 49 -------------------
- arch/sparc/include/asm/compat.h        | 51 +++++++-------------
- arch/sparc/include/uapi/asm/msgbuf.h   | 22 ++++-----
- arch/sparc/include/uapi/asm/sembuf.h   | 16 +++----
- arch/sparc/include/uapi/asm/shmbuf.h   | 21 ++++-----
- arch/x86/include/asm/compat.h          | 51 +++++++-------------
- arch/x86/include/uapi/asm/Kbuild       |  5 +-
- arch/x86/include/uapi/asm/msgbuf.h     |  1 -
- arch/x86/include/uapi/asm/sembuf.h     | 11 ++++-
- arch/x86/include/uapi/asm/shmbuf.h     |  1 -
- arch/xtensa/include/uapi/asm/msgbuf.h  | 25 +++++-----
- arch/xtensa/include/uapi/asm/sembuf.h  | 17 ++++---
- arch/xtensa/include/uapi/asm/shmbuf.h  | 37 ++++-----------
- include/asm-generic/compat.h           | 24 +++++++++-
- include/linux/compat.h                 |  2 -
- include/linux/syscalls.h               |  6 +--
- include/uapi/asm-generic/msgbuf.h      | 17 ++++---
- include/uapi/asm-generic/sembuf.h      | 26 ++++++----
- include/uapi/asm-generic/shmbuf.h      | 17 ++++---
- ipc/mqueue.c                           | 86 +++++++++++++++++-----------------
- ipc/msg.c                              | 20 +++++---
- ipc/sem.c                              | 27 +++++++----
- ipc/shm.c                              | 14 ++++--
- ipc/syscall.c                          | 13 +++--
- ipc/util.h                             |  4 +-
- 52 files changed, 493 insertions(+), 807 deletions(-)
- delete mode 100644 arch/alpha/include/uapi/asm/ipcbuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/sembuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/shmbuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/ipcbuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/sembuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/shmbuf.h
- delete mode 100644 arch/s390/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/s390/include/uapi/asm/sembuf.h
- delete mode 100644 arch/s390/include/uapi/asm/shmbuf.h
- delete mode 100644 arch/x86/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/x86/include/uapi/asm/shmbuf.h
-
--- 
-2.9.0
+VGhlIHMzOTAgbXNnYnVmL3NlbWJ1Zi9zaG1idWYgaGVhZGVyIGZpbGVzIGFyZSBhbGwgaWRlbnRp
+Y2FsIHRvIHRoZQp2ZXJzaW9uIGZyb20gYXNtLWdlbmVyaWMuCgpUaGlzIHBhdGNoIHJlbW92ZXMg
+dGhlIGZpbGVzIGFuZCByZXBsYWNlcyB0aGVtIHdpdGggJ2dlbmVyaWMteScKc3RhdGVtZW50cywg
+dG8gYXZvaWQgaGF2aW5nIHRvIG1vZGlmeSBlYWNoIGNvcHkgd2hlbiB3ZSBleHRlbmQgc3lzdmlw
+Ywp0byBkZWFsIHdpdGggNjQtYml0IHRpbWVfdCBpbiAzMi1iaXQgdXNlciBzcGFjZS4KCk5vdGUg
+dGhhdCB1bmxpa2UgYWxwaGEgYW5kIGlhNjQsIHRoZSBpcGNidWYuaCBoZWFkZXIgZmlsZSBpcyBz
+bGlnaHRseQpkaWZmZXJlbnQgaGVyZSwgc28gSSdtIGxlYXZpbmcgdGhlIHByaXZhdGUgY29weS4K
+ClRvIGRlYWwgd2l0aCAzMi1iaXQgY29tcGF0IHRhc2tzLCB3ZSBhbHNvIGhhdmUgdG8gYWRhcHQg
+dGhlIGRlZmluaXRpb25zCm9mIGNvbXBhdF97c2htLHNlbSxtc2d9aWRfZHMgdG8gbWF0Y2ggdGhl
+IGNoYW5nZXMgdG8gdGhlIHJlc3BlY3RpdmUKYXNtLWdlbmVyaWMgZmlsZXMuCgpTaWduZWQtb2Zm
+LWJ5OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPgotLS0KIGFyY2gvczM5MC9pbmNsdWRl
+L2FzbS9jb21wYXQuaCAgICAgIHwgMzIgKysrKysrKysrKysrLS0tLS0tLS0tLS0tCiBhcmNoL3Mz
+OTAvaW5jbHVkZS91YXBpL2FzbS9LYnVpbGQgICB8ICAzICsrKwogYXJjaC9zMzkwL2luY2x1ZGUv
+dWFwaS9hc20vbXNnYnVmLmggfCAzOCAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiBhcmNo
+L3MzOTAvaW5jbHVkZS91YXBpL2FzbS9zZW1idWYuaCB8IDMwIC0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tCiBhcmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9zaG1idWYuaCB8IDQ5IC0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIDUgZmlsZXMgY2hhbmdlZCwgMTkgaW5zZXJ0aW9u
+cygrKSwgMTMzIGRlbGV0aW9ucygtKQogZGVsZXRlIG1vZGUgMTAwNjQ0IGFyY2gvczM5MC9pbmNs
+dWRlL3VhcGkvYXNtL21zZ2J1Zi5oCiBkZWxldGUgbW9kZSAxMDA2NDQgYXJjaC9zMzkwL2luY2x1
+ZGUvdWFwaS9hc20vc2VtYnVmLmgKIGRlbGV0ZSBtb2RlIDEwMDY0NCBhcmNoL3MzOTAvaW5jbHVk
+ZS91YXBpL2FzbS9zaG1idWYuaAoKZGlmZiAtLWdpdCBhL2FyY2gvczM5MC9pbmNsdWRlL2FzbS9j
+b21wYXQuaCBiL2FyY2gvczM5MC9pbmNsdWRlL2FzbS9jb21wYXQuaAppbmRleCA1MDFhYWZmODUz
+MDQuLjk3ZGIyZmJhNTQ2YSAxMDA2NDQKLS0tIGEvYXJjaC9zMzkwL2luY2x1ZGUvYXNtL2NvbXBh
+dC5oCisrKyBiL2FyY2gvczM5MC9pbmNsdWRlL2FzbS9jb21wYXQuaApAQCAtMjMyLDEwICsyMzIs
+MTAgQEAgc3RydWN0IGNvbXBhdF9pcGM2NF9wZXJtIHsKIAogc3RydWN0IGNvbXBhdF9zZW1pZDY0
+X2RzIHsKIAlzdHJ1Y3QgY29tcGF0X2lwYzY0X3Blcm0gc2VtX3Blcm07Ci0JY29tcGF0X3RpbWVf
+dCAgc2VtX290aW1lOwotCWNvbXBhdF91bG9uZ190IF9fcGFkMTsKLQljb21wYXRfdGltZV90ICBz
+ZW1fY3RpbWU7Ci0JY29tcGF0X3Vsb25nX3QgX19wYWQyOworCWNvbXBhdF91bG9uZ190IHNlbV9v
+dGltZTsKKwljb21wYXRfdWxvbmdfdCBzZW1fb3RpbWVfaGlnaDsKKwljb21wYXRfdWxvbmdfdCBz
+ZW1fY3RpbWU7CisJY29tcGF0X3Vsb25nX3Qgc2VtX2N0aW1lX2hpZ2g7CiAJY29tcGF0X3Vsb25n
+X3Qgc2VtX25zZW1zOwogCWNvbXBhdF91bG9uZ190IF9fdW51c2VkMTsKIAljb21wYXRfdWxvbmdf
+dCBfX3VudXNlZDI7CkBAIC0yNDMsMTIgKzI0MywxMiBAQCBzdHJ1Y3QgY29tcGF0X3NlbWlkNjRf
+ZHMgewogCiBzdHJ1Y3QgY29tcGF0X21zcWlkNjRfZHMgewogCXN0cnVjdCBjb21wYXRfaXBjNjRf
+cGVybSBtc2dfcGVybTsKLQljb21wYXRfdGltZV90ICAgbXNnX3N0aW1lOwotCWNvbXBhdF91bG9u
+Z190IF9fcGFkMTsKLQljb21wYXRfdGltZV90ICAgbXNnX3J0aW1lOwotCWNvbXBhdF91bG9uZ190
+IF9fcGFkMjsKLQljb21wYXRfdGltZV90ICAgbXNnX2N0aW1lOwotCWNvbXBhdF91bG9uZ190IF9f
+cGFkMzsKKwljb21wYXRfdWxvbmdfdCBtc2dfc3RpbWU7CisJY29tcGF0X3Vsb25nX3QgbXNnX3N0
+aW1lX2hpZ2g7CisJY29tcGF0X3Vsb25nX3QgbXNnX3J0aW1lOworCWNvbXBhdF91bG9uZ190IG1z
+Z19ydGltZV9oaWdoOworCWNvbXBhdF91bG9uZ190IG1zZ19jdGltZTsKKwljb21wYXRfdWxvbmdf
+dCBtc2dfY3RpbWVfaGlnaDsKIAljb21wYXRfdWxvbmdfdCBtc2dfY2J5dGVzOwogCWNvbXBhdF91
+bG9uZ190IG1zZ19xbnVtOwogCWNvbXBhdF91bG9uZ190IG1zZ19xYnl0ZXM7CkBAIC0yNjEsMTIg
+KzI2MSwxMiBAQCBzdHJ1Y3QgY29tcGF0X21zcWlkNjRfZHMgewogc3RydWN0IGNvbXBhdF9zaG1p
+ZDY0X2RzIHsKIAlzdHJ1Y3QgY29tcGF0X2lwYzY0X3Blcm0gc2htX3Blcm07CiAJY29tcGF0X3Np
+emVfdCAgc2htX3NlZ3N6OwotCWNvbXBhdF90aW1lX3QgIHNobV9hdGltZTsKLQljb21wYXRfdWxv
+bmdfdCBfX3BhZDE7Ci0JY29tcGF0X3RpbWVfdCAgc2htX2R0aW1lOwotCWNvbXBhdF91bG9uZ190
+IF9fcGFkMjsKLQljb21wYXRfdGltZV90ICBzaG1fY3RpbWU7Ci0JY29tcGF0X3Vsb25nX3QgX19w
+YWQzOworCWNvbXBhdF91bG9uZ190IHNobV9hdGltZTsKKwljb21wYXRfdWxvbmdfdCBzaG1fYXRp
+bWVfaGlnaDsKKwljb21wYXRfdWxvbmdfdCBzaG1fZHRpbWU7CisJY29tcGF0X3Vsb25nX3Qgc2ht
+X2R0aW1lX2hpZ2g7CisJY29tcGF0X3Vsb25nX3Qgc2htX2N0aW1lOworCWNvbXBhdF91bG9uZ190
+IHNobV9jdGltZV9oaWdoOwogCWNvbXBhdF9waWRfdCAgIHNobV9jcGlkOwogCWNvbXBhdF9waWRf
+dCAgIHNobV9scGlkOwogCWNvbXBhdF91bG9uZ190IHNobV9uYXR0Y2g7CmRpZmYgLS1naXQgYS9h
+cmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9LYnVpbGQgYi9hcmNoL3MzOTAvaW5jbHVkZS91YXBp
+L2FzbS9LYnVpbGQKaW5kZXggZmFlZjNmN2U4MzUzLi5lMzY0ODczZTBkMTAgMTAwNjQ0Ci0tLSBh
+L2FyY2gvczM5MC9pbmNsdWRlL3VhcGkvYXNtL0tidWlsZAorKysgYi9hcmNoL3MzOTAvaW5jbHVk
+ZS91YXBpL2FzbS9LYnVpbGQKQEAgLTksOSArOSwxMiBAQCBnZW5lcmljLXkgKz0gZXJybm8uaAog
+Z2VuZXJpYy15ICs9IGZjbnRsLmgKIGdlbmVyaWMteSArPSBpb2N0bC5oCiBnZW5lcmljLXkgKz0g
+bW1hbi5oCitnZW5lcmljLXkgKz0gbXNnYnVmLmgKIGdlbmVyaWMteSArPSBwYXJhbS5oCiBnZW5l
+cmljLXkgKz0gcG9sbC5oCiBnZW5lcmljLXkgKz0gcmVzb3VyY2UuaAorZ2VuZXJpYy15ICs9IHNl
+bWJ1Zi5oCitnZW5lcmljLXkgKz0gc2htYnVmLmgKIGdlbmVyaWMteSArPSBzb2NraW9zLmgKIGdl
+bmVyaWMteSArPSBzd2FiLmgKIGdlbmVyaWMteSArPSB0ZXJtYml0cy5oCmRpZmYgLS1naXQgYS9h
+cmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9tc2didWYuaCBiL2FyY2gvczM5MC9pbmNsdWRlL3Vh
+cGkvYXNtL21zZ2J1Zi5oCmRlbGV0ZWQgZmlsZSBtb2RlIDEwMDY0NAppbmRleCA2MDRmODQ3Y2Q2
+OGMuLjAwMDAwMDAwMDAwMAotLS0gYS9hcmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9tc2didWYu
+aAorKysgL2Rldi9udWxsCkBAIC0xLDM4ICswLDAgQEAKLS8qIFNQRFgtTGljZW5zZS1JZGVudGlm
+aWVyOiBHUEwtMi4wIFdJVEggTGludXgtc3lzY2FsbC1ub3RlICovCi0jaWZuZGVmIF9TMzkwX01T
+R0JVRl9ICi0jZGVmaW5lIF9TMzkwX01TR0JVRl9ICi0KLS8qIAotICogVGhlIG1zcWlkNjRfZHMg
+c3RydWN0dXJlIGZvciBTLzM5MCBhcmNoaXRlY3R1cmUuCi0gKiBOb3RlIGV4dHJhIHBhZGRpbmcg
+YmVjYXVzZSB0aGlzIHN0cnVjdHVyZSBpcyBwYXNzZWQgYmFjayBhbmQgZm9ydGgKLSAqIGJldHdl
+ZW4ga2VybmVsIGFuZCB1c2VyIHNwYWNlLgotICoKLSAqIFBhZCBzcGFjZSBpcyBsZWZ0IGZvcjoK
+LSAqIC0gNjQtYml0IHRpbWVfdCB0byBzb2x2ZSB5MjAzOCBwcm9ibGVtCi0gKiAtIDIgbWlzY2Vs
+bGFuZW91cyAzMi1iaXQgdmFsdWVzCi0gKi8KLQotc3RydWN0IG1zcWlkNjRfZHMgewotCXN0cnVj
+dCBpcGM2NF9wZXJtIG1zZ19wZXJtOwotCV9fa2VybmVsX3RpbWVfdCBtc2dfc3RpbWU7CS8qIGxh
+c3QgbXNnc25kIHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0JdW5zaWduZWQgbG9uZwlfX3Vu
+dXNlZDE7Ci0jZW5kaWYgLyogISBfX3MzOTB4X18gKi8KLQlfX2tlcm5lbF90aW1lX3QgbXNnX3J0
+aW1lOwkvKiBsYXN0IG1zZ3JjdiB0aW1lICovCi0jaWZuZGVmIF9fczM5MHhfXwotCXVuc2lnbmVk
+IGxvbmcJX191bnVzZWQyOwotI2VuZGlmIC8qICEgX19zMzkweF9fICovCi0JX19rZXJuZWxfdGlt
+ZV90IG1zZ19jdGltZTsJLyogbGFzdCBjaGFuZ2UgdGltZSAqLwotI2lmbmRlZiBfX3MzOTB4X18K
+LQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMzsKLSNlbmRpZiAvKiAhIF9fczM5MHhfXyAqLwotCXVu
+c2lnbmVkIGxvbmcgIG1zZ19jYnl0ZXM7CS8qIGN1cnJlbnQgbnVtYmVyIG9mIGJ5dGVzIG9uIHF1
+ZXVlICovCi0JdW5zaWduZWQgbG9uZyAgbXNnX3FudW07CS8qIG51bWJlciBvZiBtZXNzYWdlcyBp
+biBxdWV1ZSAqLwotCXVuc2lnbmVkIGxvbmcgIG1zZ19xYnl0ZXM7CS8qIG1heCBudW1iZXIgb2Yg
+Ynl0ZXMgb24gcXVldWUgKi8KLQlfX2tlcm5lbF9waWRfdCBtc2dfbHNwaWQ7CS8qIHBpZCBvZiBs
+YXN0IG1zZ3NuZCAqLwotCV9fa2VybmVsX3BpZF90IG1zZ19scnBpZDsJLyogbGFzdCByZWNlaXZl
+IHBpZCAqLwotCXVuc2lnbmVkIGxvbmcgIF9fdW51c2VkNDsKLQl1bnNpZ25lZCBsb25nICBfX3Vu
+dXNlZDU7Ci19OwotCi0jZW5kaWYgLyogX1MzOTBfTVNHQlVGX0ggKi8KZGlmZiAtLWdpdCBhL2Fy
+Y2gvczM5MC9pbmNsdWRlL3VhcGkvYXNtL3NlbWJ1Zi5oIGIvYXJjaC9zMzkwL2luY2x1ZGUvdWFw
+aS9hc20vc2VtYnVmLmgKZGVsZXRlZCBmaWxlIG1vZGUgMTAwNjQ0CmluZGV4IDNlOTE3Njk3YjY2
+OC4uMDAwMDAwMDAwMDAwCi0tLSBhL2FyY2gvczM5MC9pbmNsdWRlL3VhcGkvYXNtL3NlbWJ1Zi5o
+CisrKyAvZGV2L251bGwKQEAgLTEsMzAgKzAsMCBAQAotLyogU1BEWC1MaWNlbnNlLUlkZW50aWZp
+ZXI6IEdQTC0yLjAgV0lUSCBMaW51eC1zeXNjYWxsLW5vdGUgKi8KLSNpZm5kZWYgX1MzOTBfU0VN
+QlVGX0gKLSNkZWZpbmUgX1MzOTBfU0VNQlVGX0gKLQotLyogCi0gKiBUaGUgc2VtaWQ2NF9kcyBz
+dHJ1Y3R1cmUgZm9yIFMvMzkwIGFyY2hpdGVjdHVyZS4KLSAqIE5vdGUgZXh0cmEgcGFkZGluZyBi
+ZWNhdXNlIHRoaXMgc3RydWN0dXJlIGlzIHBhc3NlZCBiYWNrIGFuZCBmb3J0aAotICogYmV0d2Vl
+biBrZXJuZWwgYW5kIHVzZXIgc3BhY2UuCi0gKgotICogUGFkIHNwYWNlIGlzIGxlZnQgZm9yOgot
+ICogLSA2NC1iaXQgdGltZV90IHRvIHNvbHZlIHkyMDM4IHByb2JsZW0gKGZvciAhX19zMzkweF9f
+KQotICogLSAyIG1pc2NlbGxhbmVvdXMgMzItYml0IHZhbHVlcwotICovCi0KLXN0cnVjdCBzZW1p
+ZDY0X2RzIHsKLQlzdHJ1Y3QgaXBjNjRfcGVybSBzZW1fcGVybTsJCS8qIHBlcm1pc3Npb25zIC4u
+IHNlZSBpcGMuaCAqLwotCV9fa2VybmVsX3RpbWVfdAlzZW1fb3RpbWU7CQkvKiBsYXN0IHNlbW9w
+IHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0JdW5zaWduZWQgbG9uZwlfX3VudXNlZDE7Ci0j
+ZW5kaWYgLyogISBfX3MzOTB4X18gKi8KLQlfX2tlcm5lbF90aW1lX3QJc2VtX2N0aW1lOwkJLyog
+bGFzdCBjaGFuZ2UgdGltZSAqLwotI2lmbmRlZiBfX3MzOTB4X18KLQl1bnNpZ25lZCBsb25nCV9f
+dW51c2VkMjsKLSNlbmRpZiAvKiAhIF9fczM5MHhfXyAqLwotCXVuc2lnbmVkIGxvbmcJc2VtX25z
+ZW1zOwkJLyogbm8uIG9mIHNlbWFwaG9yZXMgaW4gYXJyYXkgKi8KLQl1bnNpZ25lZCBsb25nCV9f
+dW51c2VkMzsKLQl1bnNpZ25lZCBsb25nCV9fdW51c2VkNDsKLX07Ci0KLSNlbmRpZiAvKiBfUzM5
+MF9TRU1CVUZfSCAqLwpkaWZmIC0tZ2l0IGEvYXJjaC9zMzkwL2luY2x1ZGUvdWFwaS9hc20vc2ht
+YnVmLmggYi9hcmNoL3MzOTAvaW5jbHVkZS91YXBpL2FzbS9zaG1idWYuaApkZWxldGVkIGZpbGUg
+bW9kZSAxMDA2NDQKaW5kZXggOWNkY2U4ZDdjZTYwLi4wMDAwMDAwMDAwMDAKLS0tIGEvYXJjaC9z
+MzkwL2luY2x1ZGUvdWFwaS9hc20vc2htYnVmLmgKKysrIC9kZXYvbnVsbApAQCAtMSw0OSArMCww
+IEBACi0vKiBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogR1BMLTIuMCBXSVRIIExpbnV4LXN5c2Nh
+bGwtbm90ZSAqLwotI2lmbmRlZiBfUzM5MF9TSE1CVUZfSAotI2RlZmluZSBfUzM5MF9TSE1CVUZf
+SAotCi0vKiAKLSAqIFRoZSBzaG1pZDY0X2RzIHN0cnVjdHVyZSBmb3IgUy8zOTAgYXJjaGl0ZWN0
+dXJlLgotICogTm90ZSBleHRyYSBwYWRkaW5nIGJlY2F1c2UgdGhpcyBzdHJ1Y3R1cmUgaXMgcGFz
+c2VkIGJhY2sgYW5kIGZvcnRoCi0gKiBiZXR3ZWVuIGtlcm5lbCBhbmQgdXNlciBzcGFjZS4KLSAq
+Ci0gKiBQYWQgc3BhY2UgaXMgbGVmdCBmb3I6Ci0gKiAtIDY0LWJpdCB0aW1lX3QgdG8gc29sdmUg
+eTIwMzggcHJvYmxlbSAoZm9yICFfX3MzOTB4X18pCi0gKiAtIDIgbWlzY2VsbGFuZW91cyAzMi1i
+aXQgdmFsdWVzCi0gKi8KLQotc3RydWN0IHNobWlkNjRfZHMgewotCXN0cnVjdCBpcGM2NF9wZXJt
+CXNobV9wZXJtOwkvKiBvcGVyYXRpb24gcGVybXMgKi8KLQlzaXplX3QJCQlzaG1fc2Vnc3o7CS8q
+IHNpemUgb2Ygc2VnbWVudCAoYnl0ZXMpICovCi0JX19rZXJuZWxfdGltZV90CQlzaG1fYXRpbWU7
+CS8qIGxhc3QgYXR0YWNoIHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0JdW5zaWduZWQgbG9u
+ZwkJX191bnVzZWQxOwotI2VuZGlmIC8qICEgX19zMzkweF9fICovCi0JX19rZXJuZWxfdGltZV90
+CQlzaG1fZHRpbWU7CS8qIGxhc3QgZGV0YWNoIHRpbWUgKi8KLSNpZm5kZWYgX19zMzkweF9fCi0J
+dW5zaWduZWQgbG9uZwkJX191bnVzZWQyOwotI2VuZGlmIC8qICEgX19zMzkweF9fICovCi0JX19r
+ZXJuZWxfdGltZV90CQlzaG1fY3RpbWU7CS8qIGxhc3QgY2hhbmdlIHRpbWUgKi8KLSNpZm5kZWYg
+X19zMzkweF9fCi0JdW5zaWduZWQgbG9uZwkJX191bnVzZWQzOwotI2VuZGlmIC8qICEgX19zMzkw
+eF9fICovCi0JX19rZXJuZWxfcGlkX3QJCXNobV9jcGlkOwkvKiBwaWQgb2YgY3JlYXRvciAqLwot
+CV9fa2VybmVsX3BpZF90CQlzaG1fbHBpZDsJLyogcGlkIG9mIGxhc3Qgb3BlcmF0b3IgKi8KLQl1
+bnNpZ25lZCBsb25nCQlzaG1fbmF0dGNoOwkvKiBuby4gb2YgY3VycmVudCBhdHRhY2hlcyAqLwot
+CXVuc2lnbmVkIGxvbmcJCV9fdW51c2VkNDsKLQl1bnNpZ25lZCBsb25nCQlfX3VudXNlZDU7Ci19
+OwotCi1zdHJ1Y3Qgc2htaW5mbzY0IHsKLQl1bnNpZ25lZCBsb25nCXNobW1heDsKLQl1bnNpZ25l
+ZCBsb25nCXNobW1pbjsKLQl1bnNpZ25lZCBsb25nCXNobW1uaTsKLQl1bnNpZ25lZCBsb25nCXNo
+bXNlZzsKLQl1bnNpZ25lZCBsb25nCXNobWFsbDsKLQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMTsK
+LQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMjsKLQl1bnNpZ25lZCBsb25nCV9fdW51c2VkMzsKLQl1
+bnNpZ25lZCBsb25nCV9fdW51c2VkNDsKLX07Ci0KLSNlbmRpZiAvKiBfUzM5MF9TSE1CVUZfSCAq
+LwotLSAKMi45LjAKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlz
+dHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
