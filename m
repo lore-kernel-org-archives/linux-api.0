@@ -1,9 +1,9 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 15/17] y2038: ipc: Enable COMPAT_32BIT_TIME
-Date: Thu, 19 Apr 2018 16:37:35 +0200
-Message-ID: <20180419143737.606138-16-arnd@arndb.de>
+Subject: [PATCH v3 17/17] y2038: compat: Move common compat types to asm-generic/compat.h
+Date: Thu, 19 Apr 2018 16:37:37 +0200
+Message-ID: <20180419143737.606138-18-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
-Return-path: <libc-alpha-return-91714-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-91717-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -15,156 +15,411 @@ To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Three ipc syscalls (mq_timedsend, mq_timedreceive and and semtimedop)
-take a timespec argument. After we move 32-bit architectures over to
-useing 64-bit time_t based syscalls, we need seperate entry points for
-the old 32-bit based interfaces.
+The architectures that support 32-bit compat mode define a number
+of simple types for use in compat handlers. About half of those
+are identical between architectures, and some of those are also
+required now by handlers shared with CONFIG_COMPAT_32BIT_TIME
+functions on 32-bit architectures.
 
-This changes the #ifdef guards for the existing 32-bit compat syscalls
-to check for CONFIG_COMPAT_32BIT_TIME instead, which will then be
-enabled on all existing 32-bit architectures.
+Let's move all the identical ones into asm-generic/compat.h to avoid
+having to add even more identical definitions of those types.
+
+For unknown reasons, mips defines __compat_gid32_t, __compat_uid32_t
+and compat_caddr_t as signed, while all others have them unsigned.
+This seems to be a mistake, but I'm leaving it alone here. The other
+types all differ by size or alignment on at least on architecture.
+
+compat_aio_context_t is currently defined in linux/compat.h but
+also needed for compat_sys_io_getevents(), so let's move it into
+the same place.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- ipc/mqueue.c | 80 +++++++++++++++++++++++++++++++-----------------------------
- ipc/sem.c    |  3 ++-
- ipc/util.h   |  2 +-
- 3 files changed, 44 insertions(+), 41 deletions(-)
+ arch/arm64/include/asm/compat.h   | 20 ++------------------
+ arch/mips/include/asm/compat.h    | 22 ++--------------------
+ arch/parisc/include/asm/compat.h  | 18 ++----------------
+ arch/powerpc/include/asm/compat.h | 18 ++----------------
+ arch/s390/include/asm/compat.h    | 18 ++----------------
+ arch/sparc/include/asm/compat.h   | 19 ++-----------------
+ arch/x86/include/asm/compat.h     | 19 ++-----------------
+ include/asm-generic/compat.h      | 24 +++++++++++++++++++++++-
+ include/linux/compat.h            |  2 --
+ 9 files changed, 37 insertions(+), 123 deletions(-)
 
-diff --git a/ipc/mqueue.c b/ipc/mqueue.c
-index 9610afcfa2e5..c0d58f390c3b 100644
---- a/ipc/mqueue.c
-+++ b/ipc/mqueue.c
-@@ -1420,6 +1420,47 @@ COMPAT_SYSCALL_DEFINE4(mq_open, const char __user *, u_name,
- 	return do_mq_open(u_name, oflag, mode, p);
- }
+diff --git a/arch/arm64/include/asm/compat.h b/arch/arm64/include/asm/compat.h
+index 1a037b94eba1..a4c79f9e856d 100644
+--- a/arch/arm64/include/asm/compat.h
++++ b/arch/arm64/include/asm/compat.h
+@@ -25,6 +25,8 @@
+ #include <linux/sched.h>
+ #include <linux/sched/task_stack.h>
  
-+COMPAT_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
-+		       const struct compat_sigevent __user *, u_notification)
-+{
-+	struct sigevent n, *p = NULL;
-+	if (u_notification) {
-+		if (get_compat_sigevent(&n, u_notification))
-+			return -EFAULT;
-+		if (n.sigev_notify == SIGEV_THREAD)
-+			n.sigev_value.sival_ptr = compat_ptr(n.sigev_value.sival_int);
-+		p = &n;
-+	}
-+	return do_mq_notify(mqdes, p);
-+}
++#include <asm-generic/compat.h>
 +
-+COMPAT_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
-+		       const struct compat_mq_attr __user *, u_mqstat,
-+		       struct compat_mq_attr __user *, u_omqstat)
-+{
-+	int ret;
-+	struct mq_attr mqstat, omqstat;
-+	struct mq_attr *new = NULL, *old = NULL;
-+
-+	if (u_mqstat) {
-+		new = &mqstat;
-+		if (get_compat_mq_attr(new, u_mqstat))
-+			return -EFAULT;
-+	}
-+	if (u_omqstat)
-+		old = &omqstat;
-+
-+	ret = do_mq_getsetattr(mqdes, new, old);
-+	if (ret || !old)
-+		return ret;
-+
-+	if (put_compat_mq_attr(old, u_omqstat))
-+		return -EFAULT;
-+	return 0;
-+}
-+#endif
-+
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- static int compat_prepare_timeout(const struct compat_timespec __user *p,
- 				   struct timespec64 *ts)
- {
-@@ -1459,45 +1500,6 @@ COMPAT_SYSCALL_DEFINE5(mq_timedreceive, mqd_t, mqdes,
- 	}
- 	return do_mq_timedreceive(mqdes, u_msg_ptr, msg_len, u_msg_prio, p);
- }
--
--COMPAT_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
--		       const struct compat_sigevent __user *, u_notification)
--{
--	struct sigevent n, *p = NULL;
--	if (u_notification) {
--		if (get_compat_sigevent(&n, u_notification))
--			return -EFAULT;
--		if (n.sigev_notify == SIGEV_THREAD)
--			n.sigev_value.sival_ptr = compat_ptr(n.sigev_value.sival_int);
--		p = &n;
--	}
--	return do_mq_notify(mqdes, p);
--}
--
--COMPAT_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
--		       const struct compat_mq_attr __user *, u_mqstat,
--		       struct compat_mq_attr __user *, u_omqstat)
--{
--	int ret;
--	struct mq_attr mqstat, omqstat;
--	struct mq_attr *new = NULL, *old = NULL;
--
--	if (u_mqstat) {
--		new = &mqstat;
--		if (get_compat_mq_attr(new, u_mqstat))
--			return -EFAULT;
--	}
--	if (u_omqstat)
--		old = &omqstat;
--
--	ret = do_mq_getsetattr(mqdes, new, old);
--	if (ret || !old)
--		return ret;
--
--	if (put_compat_mq_attr(old, u_omqstat))
--		return -EFAULT;
--	return 0;
--}
+ #define COMPAT_USER_HZ		100
+ #ifdef __AARCH64EB__
+ #define COMPAT_UTS_MACHINE	"armv8b\0\0"
+@@ -32,10 +34,6 @@
+ #define COMPAT_UTS_MACHINE	"armv8l\0\0"
  #endif
  
- static const struct inode_operations mqueue_dir_inode_operations = {
-diff --git a/ipc/sem.c b/ipc/sem.c
-index b951e25ba2db..cfd94d48a9aa 100644
---- a/ipc/sem.c
-+++ b/ipc/sem.c
-@@ -70,6 +70,7 @@
-  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
+-typedef u32		compat_size_t;
+-typedef s32		compat_ssize_t;
+-typedef s32		compat_clock_t;
+-typedef s32		compat_pid_t;
+ typedef u16		__compat_uid_t;
+ typedef u16		__compat_gid_t;
+ typedef u16		__compat_uid16_t;
+@@ -43,27 +41,13 @@ typedef u16		__compat_gid16_t;
+ typedef u32		__compat_uid32_t;
+ typedef u32		__compat_gid32_t;
+ typedef u16		compat_mode_t;
+-typedef u32		compat_ino_t;
+ typedef u32		compat_dev_t;
+-typedef s32		compat_off_t;
+-typedef s64		compat_loff_t;
+ typedef s32		compat_nlink_t;
+ typedef u16		compat_ipc_pid_t;
+-typedef s32		compat_daddr_t;
+ typedef u32		compat_caddr_t;
+ typedef __kernel_fsid_t	compat_fsid_t;
+-typedef s32		compat_key_t;
+-typedef s32		compat_timer_t;
+-
+-typedef s16		compat_short_t;
+-typedef s32		compat_int_t;
+-typedef s32		compat_long_t;
+ typedef s64		compat_s64;
+-typedef u16		compat_ushort_t;
+-typedef u32		compat_uint_t;
+-typedef u32		compat_ulong_t;
+ typedef u64		compat_u64;
+-typedef u32		compat_uptr_t;
+ 
+ struct compat_stat {
+ #ifdef __AARCH64EB__
+diff --git a/arch/mips/include/asm/compat.h b/arch/mips/include/asm/compat.h
+index 78675f19440f..7033a7c93b48 100644
+--- a/arch/mips/include/asm/compat.h
++++ b/arch/mips/include/asm/compat.h
+@@ -9,43 +9,25 @@
+ #include <asm/page.h>
+ #include <asm/ptrace.h>
+ 
++#include <asm-generic/compat.h>
++
+ #define COMPAT_USER_HZ		100
+ #define COMPAT_UTS_MACHINE	"mips\0\0\0"
+ 
+-typedef u32		compat_size_t;
+-typedef s32		compat_ssize_t;
+-typedef s32		compat_clock_t;
+-typedef s32		compat_suseconds_t;
+-
+-typedef s32		compat_pid_t;
+ typedef s32		__compat_uid_t;
+ typedef s32		__compat_gid_t;
+ typedef __compat_uid_t	__compat_uid32_t;
+ typedef __compat_gid_t	__compat_gid32_t;
+ typedef u32		compat_mode_t;
+-typedef u32		compat_ino_t;
+ typedef u32		compat_dev_t;
+-typedef s32		compat_off_t;
+-typedef s64		compat_loff_t;
+ typedef u32		compat_nlink_t;
+ typedef s32		compat_ipc_pid_t;
+-typedef s32		compat_daddr_t;
+ typedef s32		compat_caddr_t;
+ typedef struct {
+ 	s32	val[2];
+ } compat_fsid_t;
+-typedef s32		compat_timer_t;
+-typedef s32		compat_key_t;
+-
+-typedef s16		compat_short_t;
+-typedef s32		compat_int_t;
+-typedef s32		compat_long_t;
+ typedef s64		compat_s64;
+-typedef u16		compat_ushort_t;
+-typedef u32		compat_uint_t;
+-typedef u32		compat_ulong_t;
+ typedef u64		compat_u64;
+-typedef u32		compat_uptr_t;
+ 
+ struct compat_stat {
+ 	compat_dev_t	st_dev;
+diff --git a/arch/parisc/include/asm/compat.h b/arch/parisc/include/asm/compat.h
+index ab8a54771507..f707e025f89b 100644
+--- a/arch/parisc/include/asm/compat.h
++++ b/arch/parisc/include/asm/compat.h
+@@ -8,36 +8,22 @@
+ #include <linux/sched.h>
+ #include <linux/thread_info.h>
+ 
++#include <asm-generic/compat.h>
++
+ #define COMPAT_USER_HZ 		100
+ #define COMPAT_UTS_MACHINE	"parisc\0\0"
+ 
+-typedef u32	compat_size_t;
+-typedef s32	compat_ssize_t;
+-typedef s32	compat_clock_t;
+-typedef s32	compat_pid_t;
+ typedef u32	__compat_uid_t;
+ typedef u32	__compat_gid_t;
+ typedef u32	__compat_uid32_t;
+ typedef u32	__compat_gid32_t;
+ typedef u16	compat_mode_t;
+-typedef u32	compat_ino_t;
+ typedef u32	compat_dev_t;
+-typedef s32	compat_off_t;
+-typedef s64	compat_loff_t;
+ typedef u16	compat_nlink_t;
+ typedef u16	compat_ipc_pid_t;
+-typedef s32	compat_daddr_t;
+ typedef u32	compat_caddr_t;
+-typedef s32	compat_key_t;
+-typedef s32	compat_timer_t;
+-
+-typedef s32	compat_int_t;
+-typedef s32	compat_long_t;
+ typedef s64	compat_s64;
+-typedef u32	compat_uint_t;
+-typedef u32	compat_ulong_t;
+ typedef u64	compat_u64;
+-typedef u32	compat_uptr_t;
+ 
+ struct compat_stat {
+ 	compat_dev_t		st_dev;	/* dev_t is 32 bits on parisc */
+diff --git a/arch/powerpc/include/asm/compat.h b/arch/powerpc/include/asm/compat.h
+index 85c8af2bb272..036b210b1582 100644
+--- a/arch/powerpc/include/asm/compat.h
++++ b/arch/powerpc/include/asm/compat.h
+@@ -8,6 +8,8 @@
+ #include <linux/types.h>
+ #include <linux/sched.h>
+ 
++#include <asm-generic/compat.h>
++
+ #define COMPAT_USER_HZ		100
+ #ifdef __BIG_ENDIAN__
+ #define COMPAT_UTS_MACHINE	"ppc\0\0"
+@@ -15,34 +17,18 @@
+ #define COMPAT_UTS_MACHINE	"ppcle\0\0"
+ #endif
+ 
+-typedef u32		compat_size_t;
+-typedef s32		compat_ssize_t;
+-typedef s32		compat_clock_t;
+-typedef s32		compat_pid_t;
+ typedef u32		__compat_uid_t;
+ typedef u32		__compat_gid_t;
+ typedef u32		__compat_uid32_t;
+ typedef u32		__compat_gid32_t;
+ typedef u32		compat_mode_t;
+-typedef u32		compat_ino_t;
+ typedef u32		compat_dev_t;
+-typedef s32		compat_off_t;
+-typedef s64		compat_loff_t;
+ typedef s16		compat_nlink_t;
+ typedef u16		compat_ipc_pid_t;
+-typedef s32		compat_daddr_t;
+ typedef u32		compat_caddr_t;
+ typedef __kernel_fsid_t	compat_fsid_t;
+-typedef s32		compat_key_t;
+-typedef s32		compat_timer_t;
+-
+-typedef s32		compat_int_t;
+-typedef s32		compat_long_t;
+ typedef s64		compat_s64;
+-typedef u32		compat_uint_t;
+-typedef u32		compat_ulong_t;
+ typedef u64		compat_u64;
+-typedef u32		compat_uptr_t;
+ 
+ struct compat_stat {
+ 	compat_dev_t	st_dev;
+diff --git a/arch/s390/include/asm/compat.h b/arch/s390/include/asm/compat.h
+index 97db2fba546a..63b46e30b2c3 100644
+--- a/arch/s390/include/asm/compat.h
++++ b/arch/s390/include/asm/compat.h
+@@ -9,6 +9,8 @@
+ #include <linux/sched/task_stack.h>
+ #include <linux/thread_info.h>
+ 
++#include <asm-generic/compat.h>
++
+ #define __TYPE_IS_PTR(t) (!__builtin_types_compatible_p( \
+ 				typeof(0?(__force t)0:0ULL), u64))
+ 
+@@ -51,34 +53,18 @@
+ #define COMPAT_USER_HZ		100
+ #define COMPAT_UTS_MACHINE	"s390\0\0\0\0"
+ 
+-typedef u32		compat_size_t;
+-typedef s32		compat_ssize_t;
+-typedef s32		compat_clock_t;
+-typedef s32		compat_pid_t;
+ typedef u16		__compat_uid_t;
+ typedef u16		__compat_gid_t;
+ typedef u32		__compat_uid32_t;
+ typedef u32		__compat_gid32_t;
+ typedef u16		compat_mode_t;
+-typedef u32		compat_ino_t;
+ typedef u16		compat_dev_t;
+-typedef s32		compat_off_t;
+-typedef s64		compat_loff_t;
+ typedef u16		compat_nlink_t;
+ typedef u16		compat_ipc_pid_t;
+-typedef s32		compat_daddr_t;
+ typedef u32		compat_caddr_t;
+ typedef __kernel_fsid_t	compat_fsid_t;
+-typedef s32		compat_key_t;
+-typedef s32		compat_timer_t;
+-
+-typedef s32		compat_int_t;
+-typedef s32		compat_long_t;
+ typedef s64		compat_s64;
+-typedef u32		compat_uint_t;
+-typedef u32		compat_ulong_t;
+ typedef u64		compat_u64;
+-typedef u32		compat_uptr_t;
+ 
+ typedef struct {
+ 	u32 mask;
+diff --git a/arch/sparc/include/asm/compat.h b/arch/sparc/include/asm/compat.h
+index 4eb51d2dae98..985286b79891 100644
+--- a/arch/sparc/include/asm/compat.h
++++ b/arch/sparc/include/asm/compat.h
+@@ -6,38 +6,23 @@
   */
+ #include <linux/types.h>
  
-+#include <linux/compat.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
- #include <linux/init.h>
-@@ -2193,7 +2194,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
- 	return ksys_semtimedop(semid, tsops, nsops, timeout);
- }
++#include <asm-generic/compat.h>
++
+ #define COMPAT_USER_HZ		100
+ #define COMPAT_UTS_MACHINE	"sparc\0\0"
  
--#ifdef CONFIG_COMPAT
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
- 			    unsigned int nsops,
- 			    const struct compat_timespec __user *timeout)
-diff --git a/ipc/util.h b/ipc/util.h
-index 975c6de2df9d..0aba3230d007 100644
---- a/ipc/util.h
-+++ b/ipc/util.h
-@@ -265,10 +265,10 @@ long ksys_shmdt(char __user *shmaddr);
- long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
+-typedef u32		compat_size_t;
+-typedef s32		compat_ssize_t;
+-typedef s32		compat_clock_t;
+-typedef s32		compat_pid_t;
+ typedef u16		__compat_uid_t;
+ typedef u16		__compat_gid_t;
+ typedef u32		__compat_uid32_t;
+ typedef u32		__compat_gid32_t;
+ typedef u16		compat_mode_t;
+-typedef u32		compat_ino_t;
+ typedef u16		compat_dev_t;
+-typedef s32		compat_off_t;
+-typedef s64		compat_loff_t;
+ typedef s16		compat_nlink_t;
+ typedef u16		compat_ipc_pid_t;
+-typedef s32		compat_daddr_t;
+ typedef u32		compat_caddr_t;
+ typedef __kernel_fsid_t	compat_fsid_t;
+-typedef s32		compat_key_t;
+-typedef s32		compat_timer_t;
+-
+-typedef s32		compat_int_t;
+-typedef s32		compat_long_t;
+ typedef s64		compat_s64;
+-typedef u32		compat_uint_t;
+-typedef u32		compat_ulong_t;
+ typedef u64		compat_u64;
+-typedef u32		compat_uptr_t;
+-
+ struct compat_stat {
+ 	compat_dev_t	st_dev;
+ 	compat_ino_t	st_ino;
+diff --git a/arch/x86/include/asm/compat.h b/arch/x86/include/asm/compat.h
+index fb97cf7c4137..0ce6f452d334 100644
+--- a/arch/x86/include/asm/compat.h
++++ b/arch/x86/include/asm/compat.h
+@@ -12,38 +12,23 @@
+ #include <asm/user32.h>
+ #include <asm/unistd.h>
  
- /* for CONFIG_ARCH_WANT_OLD_COMPAT_IPC */
--#ifdef CONFIG_COMPAT
- long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
- 			    unsigned int nsops,
- 			    const struct compat_timespec __user *timeout);
-+#ifdef CONFIG_COMPAT
- long compat_ksys_semctl(int semid, int semnum, int cmd, int arg);
- long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr);
- long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
++#include <asm-generic/compat.h>
++
+ #define COMPAT_USER_HZ		100
+ #define COMPAT_UTS_MACHINE	"i686\0\0"
+ 
+-typedef u32		compat_size_t;
+-typedef s32		compat_ssize_t;
+-typedef s32		compat_clock_t;
+-typedef s32		compat_pid_t;
+ typedef u16		__compat_uid_t;
+ typedef u16		__compat_gid_t;
+ typedef u32		__compat_uid32_t;
+ typedef u32		__compat_gid32_t;
+ typedef u16		compat_mode_t;
+-typedef u32		compat_ino_t;
+ typedef u16		compat_dev_t;
+-typedef s32		compat_off_t;
+-typedef s64		compat_loff_t;
+ typedef u16		compat_nlink_t;
+ typedef u16		compat_ipc_pid_t;
+-typedef s32		compat_daddr_t;
+ typedef u32		compat_caddr_t;
+ typedef __kernel_fsid_t	compat_fsid_t;
+-typedef s32		compat_timer_t;
+-typedef s32		compat_key_t;
+-
+-typedef s32		compat_int_t;
+-typedef s32		compat_long_t;
+ typedef s64 __attribute__((aligned(4))) compat_s64;
+-typedef u32		compat_uint_t;
+-typedef u32		compat_ulong_t;
+-typedef u32		compat_u32;
+ typedef u64 __attribute__((aligned(4))) compat_u64;
+-typedef u32		compat_uptr_t;
+ 
+ struct compat_stat {
+ 	compat_dev_t	st_dev;
+diff --git a/include/asm-generic/compat.h b/include/asm-generic/compat.h
+index 28819451b6d1..a86f65bffab8 100644
+--- a/include/asm-generic/compat.h
++++ b/include/asm-generic/compat.h
+@@ -1,3 +1,25 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
++#ifndef __ASM_GENERIC_COMPAT_H
++#define __ASM_GENERIC_COMPAT_H
+ 
+-/* This is an empty stub for 32-bit-only architectures */
++/* These types are common across all compat ABIs */
++typedef u32 compat_size_t;
++typedef s32 compat_ssize_t;
++typedef s32 compat_clock_t;
++typedef s32 compat_pid_t;
++typedef u32 compat_ino_t;
++typedef s32 compat_off_t;
++typedef s64 compat_loff_t;
++typedef s32 compat_daddr_t;
++typedef s32 compat_timer_t;
++typedef s32 compat_key_t;
++typedef s16 compat_short_t;
++typedef s32 compat_int_t;
++typedef s32 compat_long_t;
++typedef u16 compat_ushort_t;
++typedef u32 compat_uint_t;
++typedef u32 compat_ulong_t;
++typedef u32 compat_uptr_t;
++typedef u32 compat_aio_context_t;
++
++#endif
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index cfc1b6383ae0..af5ac9de4bdf 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -104,8 +104,6 @@ typedef struct compat_sigaltstack {
+ typedef __compat_uid32_t	compat_uid_t;
+ typedef __compat_gid32_t	compat_gid_t;
+ 
+-typedef	compat_ulong_t		compat_aio_context_t;
+-
+ struct compat_sel_arg_struct;
+ struct rusage;
+ 
 -- 
 2.9.0
