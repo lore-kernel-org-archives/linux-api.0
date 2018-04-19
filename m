@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 03/17] y2038: ia64: Remove unneeded ipc uapi header files
-Date: Thu, 19 Apr 2018 16:37:23 +0200
-Message-ID: <20180419143737.606138-4-arnd@arndb.de>
+Subject: [PATCH v3 11/17] y2038: xtensa: Extend sysvipc data structures
+Date: Thu, 19 Apr 2018 16:37:31 +0200
+Message-ID: <20180419143737.606138-12-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180419143737.606138-1-arnd@arndb.de>
@@ -10,156 +10,175 @@ To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The ia64 ipcbuf/msgbuf/sembuf/shmbuf header files are all identical
-to the version from asm-generic.
+xtensa, uses a nonstandard variation of the generic sysvipc
+data structures, intended to have the padding moved around
+so it can deal with big-endian 32-bit user space that has
+64-bit time_t.
 
-This patch removes the files and replaces them with 'generic-y'
-statements as part of the y2038 changes. While ia64 no longer has
-a compat mode and doesn't need the file any more, it seem nicer
-to clean this up anyway.
+xtensa tries hard to define the structures so they work
+in both big-endian and little-endian systems with padding
+on the right side.
+However, they only succeeded for for two of the three structures,
+and their struct shmid64_ds ended up being defined in two
+identical copies, and the big-endian one is wrong.
+
+This takes just take the same approach here that we have for
+the asm-generic headers and adds separate 32-bit fields for the
+upper halves of the timestamps, to let libc deal with the mess
+in user space.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/ia64/include/uapi/asm/Kbuild   |  4 ++++
- arch/ia64/include/uapi/asm/ipcbuf.h |  2 --
- arch/ia64/include/uapi/asm/msgbuf.h | 28 --------------------------
- arch/ia64/include/uapi/asm/sembuf.h | 23 ----------------------
- arch/ia64/include/uapi/asm/shmbuf.h | 39 -------------------------------------
- 5 files changed, 4 insertions(+), 92 deletions(-)
- delete mode 100644 arch/ia64/include/uapi/asm/ipcbuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/sembuf.h
- delete mode 100644 arch/ia64/include/uapi/asm/shmbuf.h
+ arch/xtensa/include/uapi/asm/msgbuf.h | 25 ++++++++++++-----------
+ arch/xtensa/include/uapi/asm/sembuf.h | 17 ++++++++--------
+ arch/xtensa/include/uapi/asm/shmbuf.h | 37 ++++++++---------------------------
+ 3 files changed, 28 insertions(+), 51 deletions(-)
 
-diff --git a/arch/ia64/include/uapi/asm/Kbuild b/arch/ia64/include/uapi/asm/Kbuild
-index c0527cfc48f0..3982e673e967 100644
---- a/arch/ia64/include/uapi/asm/Kbuild
-+++ b/arch/ia64/include/uapi/asm/Kbuild
-@@ -2,5 +2,9 @@
- include include/uapi/asm-generic/Kbuild.asm
- 
- generic-y += bpf_perf_event.h
-+generic-y += ipcbuf.h
- generic-y += kvm_para.h
-+generic-y += msgbuf.h
- generic-y += poll.h
-+generic-y += sembuf.h
-+generic-y += shmbuf.h
-diff --git a/arch/ia64/include/uapi/asm/ipcbuf.h b/arch/ia64/include/uapi/asm/ipcbuf.h
-deleted file mode 100644
-index 90d6445a14df..000000000000
---- a/arch/ia64/include/uapi/asm/ipcbuf.h
-+++ /dev/null
-@@ -1,2 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#include <asm-generic/ipcbuf.h>
-diff --git a/arch/ia64/include/uapi/asm/msgbuf.h b/arch/ia64/include/uapi/asm/msgbuf.h
-deleted file mode 100644
-index aa25df92d9dc..000000000000
---- a/arch/ia64/include/uapi/asm/msgbuf.h
-+++ /dev/null
-@@ -1,28 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ASM_IA64_MSGBUF_H
--#define _ASM_IA64_MSGBUF_H
--
--/*
-- * The msqid64_ds structure for IA-64 architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct msqid64_ds {
--	struct ipc64_perm msg_perm;
+diff --git a/arch/xtensa/include/uapi/asm/msgbuf.h b/arch/xtensa/include/uapi/asm/msgbuf.h
+index 36e2e103ca38..d6915e9f071c 100644
+--- a/arch/xtensa/include/uapi/asm/msgbuf.h
++++ b/arch/xtensa/include/uapi/asm/msgbuf.h
+@@ -7,7 +7,6 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  *
+  * This file is subject to the terms and conditions of the GNU General
+@@ -21,19 +20,19 @@
+ struct msqid64_ds {
+ 	struct ipc64_perm msg_perm;
+ #ifdef __XTENSA_EB__
+-	unsigned int	__unused1;
 -	__kernel_time_t msg_stime;	/* last msgsnd time */
+-	unsigned int	__unused2;
 -	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-	unsigned int	__unused3;
 -	__kernel_time_t msg_ctime;	/* last change time */
--	unsigned long  msg_cbytes;	/* current number of bytes on queue */
--	unsigned long  msg_qnum;	/* number of messages in queue */
--	unsigned long  msg_qbytes;	/* max number of bytes on queue */
--	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
--	__kernel_pid_t msg_lrpid;	/* last receive pid */
--	unsigned long  __unused1;
--	unsigned long  __unused2;
--};
--
--#endif /* _ASM_IA64_MSGBUF_H */
-diff --git a/arch/ia64/include/uapi/asm/sembuf.h b/arch/ia64/include/uapi/asm/sembuf.h
-deleted file mode 100644
-index 6ed058760afc..000000000000
---- a/arch/ia64/include/uapi/asm/sembuf.h
-+++ /dev/null
-@@ -1,23 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ASM_IA64_SEMBUF_H
--#define _ASM_IA64_SEMBUF_H
--
--/*
-- * The semid64_ds structure for IA-64 architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct semid64_ds {
--	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
++	unsigned long  msg_stime_high;
++	unsigned long  msg_stime;	/* last msgsnd time */
++	unsigned long  msg_rtime_high;
++	unsigned long  msg_rtime;	/* last msgrcv time */
++	unsigned long  msg_ctime_high;
++	unsigned long  msg_ctime;	/* last change time */
+ #elif defined(__XTENSA_EL__)
+-	__kernel_time_t msg_stime;	/* last msgsnd time */
+-	unsigned int	__unused1;
+-	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-	unsigned int	__unused2;
+-	__kernel_time_t msg_ctime;	/* last change time */
+-	unsigned int	__unused3;
++	unsigned long  msg_stime;	/* last msgsnd time */
++	unsigned long  msg_stime_high;
++	unsigned long  msg_rtime;	/* last msgrcv time */
++	unsigned long  msg_rtime_high;
++	unsigned long  msg_ctime;	/* last change time */
++	unsigned long  msg_ctime_high;
+ #else
+ # error processor byte order undefined!
+ #endif
+diff --git a/arch/xtensa/include/uapi/asm/sembuf.h b/arch/xtensa/include/uapi/asm/sembuf.h
+index f61b6331a10c..09f348d643f1 100644
+--- a/arch/xtensa/include/uapi/asm/sembuf.h
++++ b/arch/xtensa/include/uapi/asm/sembuf.h
+@@ -14,7 +14,6 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  *
+  */
+@@ -27,15 +26,15 @@
+ struct semid64_ds {
+ 	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
+ #ifdef __XTENSA_EL__
 -	__kernel_time_t	sem_otime;		/* last semop time */
--	__kernel_time_t	sem_ctime;		/* last change time */
--	unsigned long	sem_nsems;		/* no. of semaphores in array */
 -	unsigned long	__unused1;
+-	__kernel_time_t	sem_ctime;		/* last change time */
 -	unsigned long	__unused2;
--};
--
--#endif /* _ASM_IA64_SEMBUF_H */
-diff --git a/arch/ia64/include/uapi/asm/shmbuf.h b/arch/ia64/include/uapi/asm/shmbuf.h
-deleted file mode 100644
-index 6ef57cb70dee..000000000000
---- a/arch/ia64/include/uapi/asm/shmbuf.h
-+++ /dev/null
-@@ -1,39 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ASM_IA64_SHMBUF_H
--#define _ASM_IA64_SHMBUF_H
--
--/*
-- * The shmid64_ds structure for IA-64 architecture.
-- * Note extra padding because this structure is passed back and forth
++	unsigned long	sem_otime;		/* last semop time */
++	unsigned long	sem_otime_high;
++	unsigned long	sem_ctime;		/* last change time */
++	unsigned long	sem_ctime_high;
+ #else
+-	unsigned long	__unused1;
+-	__kernel_time_t	sem_otime;		/* last semop time */
+-	unsigned long	__unused2;
+-	__kernel_time_t	sem_ctime;		/* last change time */
++	unsigned long	sem_otime_high;
++	unsigned long	sem_otime;		/* last semop time */
++	unsigned long	sem_ctime_high;
++	unsigned long	sem_ctime;		/* last change time */
+ #endif
+ 	unsigned long	sem_nsems;		/* no. of semaphores in array */
+ 	unsigned long	__unused3;
+diff --git a/arch/xtensa/include/uapi/asm/shmbuf.h b/arch/xtensa/include/uapi/asm/shmbuf.h
+index 26550bdc8430..554a57a6a90f 100644
+--- a/arch/xtensa/include/uapi/asm/shmbuf.h
++++ b/arch/xtensa/include/uapi/asm/shmbuf.h
+@@ -4,10 +4,10 @@
+  *
+  * The shmid64_ds structure for Xtensa architecture.
+  * Note extra padding because this structure is passed back and forth
 - * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
++ * between kernel and user space, but the padding is on the wrong
++ * side for big-endian xtensa, for historic reasons.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  *
+  * This file is subject to the terms and conditions of the GNU General Public
+@@ -20,42 +20,21 @@
+ #ifndef _XTENSA_SHMBUF_H
+ #define _XTENSA_SHMBUF_H
+ 
+-#if defined (__XTENSA_EL__)
+ struct shmid64_ds {
+ 	struct ipc64_perm	shm_perm;	/* operation perms */
+ 	size_t			shm_segsz;	/* size of segment (bytes) */
+-	__kernel_time_t		shm_atime;	/* last attach time */
+-	unsigned long		__unused1;
+-	__kernel_time_t		shm_dtime;	/* last detach time */
+-	unsigned long		__unused2;
+-	__kernel_time_t		shm_ctime;	/* last change time */
+-	unsigned long		__unused3;
++	unsigned long		shm_atime;	/* last attach time */
++	unsigned long		shm_atime_high;
++	unsigned long		shm_dtime;	/* last detach time */
++	unsigned long		shm_dtime_high;
++	unsigned long		shm_ctime;	/* last change time */
++	unsigned long		shm_ctime_high;
+ 	__kernel_pid_t		shm_cpid;	/* pid of creator */
+ 	__kernel_pid_t		shm_lpid;	/* pid of last operator */
+ 	unsigned long		shm_nattch;	/* no. of current attaches */
+ 	unsigned long		__unused4;
+ 	unsigned long		__unused5;
+ };
+-#elif defined (__XTENSA_EB__)
 -struct shmid64_ds {
 -	struct ipc64_perm	shm_perm;	/* operation perms */
 -	size_t			shm_segsz;	/* size of segment (bytes) */
 -	__kernel_time_t		shm_atime;	/* last attach time */
+-	unsigned long		__unused1;
 -	__kernel_time_t		shm_dtime;	/* last detach time */
+-	unsigned long		__unused2;
 -	__kernel_time_t		shm_ctime;	/* last change time */
+-	unsigned long		__unused3;
 -	__kernel_pid_t		shm_cpid;	/* pid of creator */
 -	__kernel_pid_t		shm_lpid;	/* pid of last operator */
 -	unsigned long		shm_nattch;	/* no. of current attaches */
--	unsigned long		__unused1;
--	unsigned long		__unused2;
+-	unsigned long		__unused4;
+-	unsigned long		__unused5;
 -};
+-#else
+-# error endian order not defined
+-#endif
 -
--struct shminfo64 {
--	unsigned long	shmmax;
--	unsigned long	shmmin;
--	unsigned long	shmmni;
--	unsigned long	shmseg;
--	unsigned long	shmall;
--	unsigned long	__unused1;
--	unsigned long	__unused2;
--	unsigned long	__unused3;
--	unsigned long	__unused4;
--};
--
--#endif /* _ASM_IA64_SHMBUF_H */
+ 
+ struct shminfo64 {
+ 	unsigned long	shmmax;
 -- 
 2.9.0
