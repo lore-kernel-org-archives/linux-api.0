@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 02/17] y2038: alpha: Remove unneeded ipc uapi header files
-Date: Thu, 19 Apr 2018 16:37:22 +0200
-Message-ID: <20180419143737.606138-3-arnd@arndb.de>
+Subject: [PATCH v3 14/17] y2038: ipc: Use __kernel_timespec
+Date: Thu, 19 Apr 2018 16:37:34 +0200
+Message-ID: <20180419143737.606138-15-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180419143737.606138-1-arnd@arndb.de>
@@ -10,155 +10,110 @@ To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The alpha ipcbuf/msgbuf/sembuf/shmbuf header files are all identical
-to the version from asm-generic.
+This is a preparatation for changing over __kernel_timespec to 64-bit
+times, which involves assigning new system call numbers for mq_timedsend(),
+mq_timedreceive() and semtimedop() for compatibility with future y2038
+proof user space.
 
-This patch removes the files and replaces them with 'generic-y'
-statements as part of the y2038 series. Since there is no 32-bit
-syscall support for alpha, we don't need the other changes, but
-it's good to have clean this up anyway.
+The existing ABIs will remain available through compat code.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/alpha/include/uapi/asm/Kbuild   |  4 ++++
- arch/alpha/include/uapi/asm/ipcbuf.h |  2 --
- arch/alpha/include/uapi/asm/msgbuf.h | 28 --------------------------
- arch/alpha/include/uapi/asm/sembuf.h | 23 ---------------------
- arch/alpha/include/uapi/asm/shmbuf.h | 39 ------------------------------------
- 5 files changed, 4 insertions(+), 92 deletions(-)
- delete mode 100644 arch/alpha/include/uapi/asm/ipcbuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/sembuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/shmbuf.h
+ include/linux/syscalls.h | 6 +++---
+ ipc/mqueue.c             | 6 +++---
+ ipc/sem.c                | 4 ++--
+ ipc/util.h               | 2 +-
+ 4 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/Kbuild b/arch/alpha/include/uapi/asm/Kbuild
-index 9afaba5e5503..1a5b75310cf4 100644
---- a/arch/alpha/include/uapi/asm/Kbuild
-+++ b/arch/alpha/include/uapi/asm/Kbuild
-@@ -2,4 +2,8 @@
- include include/uapi/asm-generic/Kbuild.asm
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index c9a2a2601852..b92cb79d38c3 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -680,8 +680,8 @@ asmlinkage long sys_sysinfo(struct sysinfo __user *info);
+ /* ipc/mqueue.c */
+ asmlinkage long sys_mq_open(const char __user *name, int oflag, umode_t mode, struct mq_attr __user *attr);
+ asmlinkage long sys_mq_unlink(const char __user *name);
+-asmlinkage long sys_mq_timedsend(mqd_t mqdes, const char __user *msg_ptr, size_t msg_len, unsigned int msg_prio, const struct timespec __user *abs_timeout);
+-asmlinkage long sys_mq_timedreceive(mqd_t mqdes, char __user *msg_ptr, size_t msg_len, unsigned int __user *msg_prio, const struct timespec __user *abs_timeout);
++asmlinkage long sys_mq_timedsend(mqd_t mqdes, const char __user *msg_ptr, size_t msg_len, unsigned int msg_prio, const struct __kernel_timespec __user *abs_timeout);
++asmlinkage long sys_mq_timedreceive(mqd_t mqdes, char __user *msg_ptr, size_t msg_len, unsigned int __user *msg_prio, const struct __kernel_timespec __user *abs_timeout);
+ asmlinkage long sys_mq_notify(mqd_t mqdes, const struct sigevent __user *notification);
+ asmlinkage long sys_mq_getsetattr(mqd_t mqdes, const struct mq_attr __user *mqstat, struct mq_attr __user *omqstat);
  
- generic-y += bpf_perf_event.h
-+generic-y += ipcbuf.h
-+generic-y += msgbuf.h
- generic-y += poll.h
-+generic-y += sembuf.h
-+generic-y += shmbuf.h
-diff --git a/arch/alpha/include/uapi/asm/ipcbuf.h b/arch/alpha/include/uapi/asm/ipcbuf.h
-deleted file mode 100644
-index 90d6445a14df..000000000000
---- a/arch/alpha/include/uapi/asm/ipcbuf.h
-+++ /dev/null
-@@ -1,2 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#include <asm-generic/ipcbuf.h>
-diff --git a/arch/alpha/include/uapi/asm/msgbuf.h b/arch/alpha/include/uapi/asm/msgbuf.h
-deleted file mode 100644
-index 8c5d4d8c1b16..000000000000
---- a/arch/alpha/include/uapi/asm/msgbuf.h
-+++ /dev/null
-@@ -1,28 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ALPHA_MSGBUF_H
--#define _ALPHA_MSGBUF_H
--
--/* 
-- * The msqid64_ds structure for alpha architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct msqid64_ds {
--	struct ipc64_perm msg_perm;
--	__kernel_time_t msg_stime;	/* last msgsnd time */
--	__kernel_time_t msg_rtime;	/* last msgrcv time */
--	__kernel_time_t msg_ctime;	/* last change time */
--	unsigned long  msg_cbytes;	/* current number of bytes on queue */
--	unsigned long  msg_qnum;	/* number of messages in queue */
--	unsigned long  msg_qbytes;	/* max number of bytes on queue */
--	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
--	__kernel_pid_t msg_lrpid;	/* last receive pid */
--	unsigned long  __unused1;
--	unsigned long  __unused2;
--};
--
--#endif /* _ALPHA_MSGBUF_H */
-diff --git a/arch/alpha/include/uapi/asm/sembuf.h b/arch/alpha/include/uapi/asm/sembuf.h
-deleted file mode 100644
-index f28ffa668b2f..000000000000
---- a/arch/alpha/include/uapi/asm/sembuf.h
-+++ /dev/null
-@@ -1,23 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ALPHA_SEMBUF_H
--#define _ALPHA_SEMBUF_H
--
--/* 
-- * The semid64_ds structure for alpha architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct semid64_ds {
--	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
--	__kernel_time_t	sem_otime;		/* last semop time */
--	__kernel_time_t	sem_ctime;		/* last change time */
--	unsigned long	sem_nsems;		/* no. of semaphores in array */
--	unsigned long	__unused1;
--	unsigned long	__unused2;
--};
--
--#endif /* _ALPHA_SEMBUF_H */
-diff --git a/arch/alpha/include/uapi/asm/shmbuf.h b/arch/alpha/include/uapi/asm/shmbuf.h
-deleted file mode 100644
-index 7e041ca2eb40..000000000000
---- a/arch/alpha/include/uapi/asm/shmbuf.h
-+++ /dev/null
-@@ -1,39 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ALPHA_SHMBUF_H
--#define _ALPHA_SHMBUF_H
--
--/* 
-- * The shmid64_ds structure for alpha architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct shmid64_ds {
--	struct ipc64_perm	shm_perm;	/* operation perms */
--	size_t			shm_segsz;	/* size of segment (bytes) */
--	__kernel_time_t		shm_atime;	/* last attach time */
--	__kernel_time_t		shm_dtime;	/* last detach time */
--	__kernel_time_t		shm_ctime;	/* last change time */
--	__kernel_pid_t		shm_cpid;	/* pid of creator */
--	__kernel_pid_t		shm_lpid;	/* pid of last operator */
--	unsigned long		shm_nattch;	/* no. of current attaches */
--	unsigned long		__unused1;
--	unsigned long		__unused2;
--};
--
--struct shminfo64 {
--	unsigned long	shmmax;
--	unsigned long	shmmin;
--	unsigned long	shmmni;
--	unsigned long	shmseg;
--	unsigned long	shmall;
--	unsigned long	__unused1;
--	unsigned long	__unused2;
--	unsigned long	__unused3;
--	unsigned long	__unused4;
--};
--
--#endif /* _ALPHA_SHMBUF_H */
+@@ -698,7 +698,7 @@ asmlinkage long sys_semget(key_t key, int nsems, int semflg);
+ asmlinkage long sys_semctl(int semid, int semnum, int cmd, unsigned long arg);
+ asmlinkage long sys_semtimedop(int semid, struct sembuf __user *sops,
+ 				unsigned nsops,
+-				const struct timespec __user *timeout);
++				const struct __kernel_timespec __user *timeout);
+ asmlinkage long sys_semop(int semid, struct sembuf __user *sops,
+ 				unsigned nsops);
+ 
+diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+index a808f29d4c5a..9610afcfa2e5 100644
+--- a/ipc/mqueue.c
++++ b/ipc/mqueue.c
+@@ -691,7 +691,7 @@ static void __do_notify(struct mqueue_inode_info *info)
+ 	wake_up(&info->wait_q);
+ }
+ 
+-static int prepare_timeout(const struct timespec __user *u_abs_timeout,
++static int prepare_timeout(const struct __kernel_timespec __user *u_abs_timeout,
+ 			   struct timespec64 *ts)
+ {
+ 	if (get_timespec64(ts, u_abs_timeout))
+@@ -1128,7 +1128,7 @@ static int do_mq_timedreceive(mqd_t mqdes, char __user *u_msg_ptr,
+ 
+ SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqdes, const char __user *, u_msg_ptr,
+ 		size_t, msg_len, unsigned int, msg_prio,
+-		const struct timespec __user *, u_abs_timeout)
++		const struct __kernel_timespec __user *, u_abs_timeout)
+ {
+ 	struct timespec64 ts, *p = NULL;
+ 	if (u_abs_timeout) {
+@@ -1142,7 +1142,7 @@ SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqdes, const char __user *, u_msg_ptr,
+ 
+ SYSCALL_DEFINE5(mq_timedreceive, mqd_t, mqdes, char __user *, u_msg_ptr,
+ 		size_t, msg_len, unsigned int __user *, u_msg_prio,
+-		const struct timespec __user *, u_abs_timeout)
++		const struct __kernel_timespec __user *, u_abs_timeout)
+ {
+ 	struct timespec64 ts, *p = NULL;
+ 	if (u_abs_timeout) {
+diff --git a/ipc/sem.c b/ipc/sem.c
+index 8935cd8cf166..b951e25ba2db 100644
+--- a/ipc/sem.c
++++ b/ipc/sem.c
+@@ -2176,7 +2176,7 @@ static long do_semtimedop(int semid, struct sembuf __user *tsops,
+ }
+ 
+ long ksys_semtimedop(int semid, struct sembuf __user *tsops,
+-		     unsigned int nsops, const struct timespec __user *timeout)
++		     unsigned int nsops, const struct __kernel_timespec __user *timeout)
+ {
+ 	if (timeout) {
+ 		struct timespec64 ts;
+@@ -2188,7 +2188,7 @@ long ksys_semtimedop(int semid, struct sembuf __user *tsops,
+ }
+ 
+ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
+-		unsigned int, nsops, const struct timespec __user *, timeout)
++		unsigned int, nsops, const struct __kernel_timespec __user *, timeout)
+ {
+ 	return ksys_semtimedop(semid, tsops, nsops, timeout);
+ }
+diff --git a/ipc/util.h b/ipc/util.h
+index acc5159e96d0..975c6de2df9d 100644
+--- a/ipc/util.h
++++ b/ipc/util.h
+@@ -251,7 +251,7 @@ static inline int compat_ipc_parse_version(int *cmd)
+ /* for __ARCH_WANT_SYS_IPC */
+ long ksys_semtimedop(int semid, struct sembuf __user *tsops,
+ 		     unsigned int nsops,
+-		     const struct timespec __user *timeout);
++		     const struct __kernel_timespec __user *timeout);
+ long ksys_semget(key_t key, int nsems, int semflg);
+ long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg);
+ long ksys_msgget(key_t key, int msgflg);
 -- 
 2.9.0
