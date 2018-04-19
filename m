@@ -1,9 +1,9 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 16/17] y2038: ipc: Redirect ipc(SEMTIMEDOP, ...) to compat_ksys_semtimedop
-Date: Thu, 19 Apr 2018 16:37:36 +0200
-Message-ID: <20180419143737.606138-17-arnd@arndb.de>
+Subject: [PATCH v3 09/17] y2038: sparc: Extend sysvipc data structures
+Date: Thu, 19 Apr 2018 16:37:29 +0200
+Message-ID: <20180419143737.606138-10-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
-Return-path: <libc-alpha-return-91712-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-91713-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -15,58 +15,211 @@ To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-32-bit architectures implementing 64BIT_TIME and COMPAT_32BIT_TIME
-need to have the traditional semtimedop() behavior with 32-bit timestamps
-for sys_ipc() by calling compat_ksys_semtimedop(), while those that
-are not yet converted need to keep using ksys_semtimedop() like
-64-bit architectures do.
+sparc, uses a nonstandard variation of the generic sysvipc
+data structures, intended to have the padding moved around
+so it can deal with big-endian 32-bit user space that has
+64-bit time_t.
 
-Note that I chose to not implement a new SEMTIMEDOP64 function that
-corresponds to the new sys_semtimedop() with 64-bit timeouts. The reason
-here is that sys_ipc() should no longer be used for new system calls,
-and libc should just call the semtimedop syscall directly.
+Unlike most architectures, sparc actually succeeded in
+defining this right for big-endian CPUs, but as everyone else
+got it wrong, we just use the same hack everywhere.
 
-One open question remain to whether we want to completely avoid the
-sys_ipc() system call for architectures that do not yet have all the
-individual calls as they get converted to 64-bit time_t. Doing that
-would require adding several extra system calls on m68k, mips, powerpc,
-s390, sh, sparc, and x86-32.
+This takes just take the same approach here that we have for
+the asm-generic headers and adds separate 32-bit fields for the
+upper halves of the timestamps, to let libc deal with the mess
+in user space.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- ipc/syscall.c | 13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+ arch/sparc/include/asm/compat.h      | 32 ++++++++++++++++----------------
+ arch/sparc/include/uapi/asm/msgbuf.h | 22 +++++++++-------------
+ arch/sparc/include/uapi/asm/sembuf.h | 16 +++++++---------
+ arch/sparc/include/uapi/asm/shmbuf.h | 21 +++++++++------------
+ 4 files changed, 41 insertions(+), 50 deletions(-)
 
-diff --git a/ipc/syscall.c b/ipc/syscall.c
-index 77a883ef2eca..65d405f1ba0c 100644
---- a/ipc/syscall.c
-+++ b/ipc/syscall.c
-@@ -30,9 +30,14 @@ SYSCALL_DEFINE6(ipc, unsigned int, call, int, first, unsigned long, second,
- 		return ksys_semtimedop(first, (struct sembuf __user *)ptr,
- 				       second, NULL);
- 	case SEMTIMEDOP:
--		return ksys_semtimedop(first, (struct sembuf __user *)ptr,
--				       second,
--				       (const struct timespec __user *)fifth);
-+		if (IS_ENABLED(CONFIG_64BIT) || !IS_ENABLED(CONFIG_64BIT_TIME))
-+			return ksys_semtimedop(first, ptr, second,
-+			        (const struct __kernel_timespec __user *)fifth);
-+		else if (IS_ENABLED(CONFIG_COMPAT_32BIT_TIME))
-+			return compat_ksys_semtimedop(first, ptr, second,
-+			        (const struct compat_timespec __user *)fifth);
-+		else
-+			return -ENOSYS;
+diff --git a/arch/sparc/include/asm/compat.h b/arch/sparc/include/asm/compat.h
+index 1910c44521e3..4eb51d2dae98 100644
+--- a/arch/sparc/include/asm/compat.h
++++ b/arch/sparc/include/asm/compat.h
+@@ -192,10 +192,10 @@ struct compat_ipc64_perm {
  
- 	case SEMGET:
- 		return ksys_semget(first, second, third);
-@@ -130,6 +135,8 @@ COMPAT_SYSCALL_DEFINE6(ipc, u32, call, int, first, int, second,
- 		/* struct sembuf is the same on 32 and 64bit :)) */
- 		return ksys_semtimedop(first, compat_ptr(ptr), second, NULL);
- 	case SEMTIMEDOP:
-+		if (!IS_ENABLED(CONFIG_COMPAT_32BIT_TIME))
-+			return -ENOSYS;
- 		return compat_ksys_semtimedop(first, compat_ptr(ptr), second,
- 						compat_ptr(fifth));
- 	case SEMGET:
+ struct compat_semid64_ds {
+ 	struct compat_ipc64_perm sem_perm;
+-	unsigned int	__pad1;
+-	compat_time_t	sem_otime;
+-	unsigned int	__pad2;
+-	compat_time_t	sem_ctime;
++	unsigned int	sem_otime_high;
++	unsigned int	sem_otime;
++	unsigned int	sem_ctime_high;
++	unsigned int	sem_ctime;
+ 	u32		sem_nsems;
+ 	u32		__unused1;
+ 	u32		__unused2;
+@@ -203,12 +203,12 @@ struct compat_semid64_ds {
+ 
+ struct compat_msqid64_ds {
+ 	struct compat_ipc64_perm msg_perm;
+-	unsigned int	__pad1;
+-	compat_time_t	msg_stime;
+-	unsigned int	__pad2;
+-	compat_time_t	msg_rtime;
+-	unsigned int	__pad3;
+-	compat_time_t	msg_ctime;
++	unsigned int	msg_stime_high;
++	unsigned int	msg_stime;
++	unsigned int	msg_rtime_high;
++	unsigned int	msg_rtime;
++	unsigned int	msg_ctime_high;
++	unsigned int	msg_ctime;
+ 	unsigned int	msg_cbytes;
+ 	unsigned int	msg_qnum;
+ 	unsigned int	msg_qbytes;
+@@ -220,12 +220,12 @@ struct compat_msqid64_ds {
+ 
+ struct compat_shmid64_ds {
+ 	struct compat_ipc64_perm shm_perm;
+-	unsigned int	__pad1;
+-	compat_time_t	shm_atime;
+-	unsigned int	__pad2;
+-	compat_time_t	shm_dtime;
+-	unsigned int	__pad3;
+-	compat_time_t	shm_ctime;
++	unsigned int	shm_atime_high;
++	unsigned int	shm_atime;
++	unsigned int	shm_dtime_high;
++	unsigned int	shm_dtime;
++	unsigned int	shm_ctime_high;
++	unsigned int	shm_ctime;
+ 	compat_size_t	shm_segsz;
+ 	compat_pid_t	shm_cpid;
+ 	compat_pid_t	shm_lpid;
+diff --git a/arch/sparc/include/uapi/asm/msgbuf.h b/arch/sparc/include/uapi/asm/msgbuf.h
+index b601c4f4d956..ffc46c211d6d 100644
+--- a/arch/sparc/include/uapi/asm/msgbuf.h
++++ b/arch/sparc/include/uapi/asm/msgbuf.h
+@@ -8,25 +8,22 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  */
+-
+-#if defined(__sparc__) && defined(__arch64__)
+-# define PADDING(x)
+-#else
+-# define PADDING(x) unsigned int x;
+-#endif
+-
+-
+ struct msqid64_ds {
+ 	struct ipc64_perm msg_perm;
+-	PADDING(__pad1)
++#if defined(__sparc__) && defined(__arch64__)
+ 	__kernel_time_t msg_stime;	/* last msgsnd time */
+-	PADDING(__pad2)
+ 	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-	PADDING(__pad3)
+ 	__kernel_time_t msg_ctime;	/* last change time */
++#else
++	unsigned long msg_stime_high;
++	unsigned long msg_stime;	/* last msgsnd time */
++	unsigned long msg_rtime_high;
++	unsigned long msg_rtime;	/* last msgrcv time */
++	unsigned long msg_ctime_high;
++	unsigned long msg_ctime;	/* last change time */
++#endif
+ 	unsigned long  msg_cbytes;	/* current number of bytes on queue */
+ 	unsigned long  msg_qnum;	/* number of messages in queue */
+ 	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+@@ -35,5 +32,4 @@ struct msqid64_ds {
+ 	unsigned long  __unused1;
+ 	unsigned long  __unused2;
+ };
+-#undef PADDING
+ #endif /* _SPARC_MSGBUF_H */
+diff --git a/arch/sparc/include/uapi/asm/sembuf.h b/arch/sparc/include/uapi/asm/sembuf.h
+index f49b0ffa0ab8..f3d309c2e1cd 100644
+--- a/arch/sparc/include/uapi/asm/sembuf.h
++++ b/arch/sparc/include/uapi/asm/sembuf.h
+@@ -8,25 +8,23 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  */
+-#if defined(__sparc__) && defined(__arch64__)
+-# define PADDING(x)
+-#else
+-# define PADDING(x) unsigned int x;
+-#endif
+ 
+ struct semid64_ds {
+ 	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
+-	PADDING(__pad1)
++#if defined(__sparc__) && defined(__arch64__)
+ 	__kernel_time_t	sem_otime;		/* last semop time */
+-	PADDING(__pad2)
+ 	__kernel_time_t	sem_ctime;		/* last change time */
++#else
++	unsigned long	sem_otime_high;
++	unsigned long	sem_otime;		/* last semop time */
++	unsigned long	sem_ctime_high;
++	unsigned long	sem_ctime;		/* last change time */
++#endif
+ 	unsigned long	sem_nsems;		/* no. of semaphores in array */
+ 	unsigned long	__unused1;
+ 	unsigned long	__unused2;
+ };
+-#undef PADDING
+ 
+ #endif /* _SPARC64_SEMBUF_H */
+diff --git a/arch/sparc/include/uapi/asm/shmbuf.h b/arch/sparc/include/uapi/asm/shmbuf.h
+index 286631db705c..06618b84822d 100644
+--- a/arch/sparc/include/uapi/asm/shmbuf.h
++++ b/arch/sparc/include/uapi/asm/shmbuf.h
+@@ -8,24 +8,23 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  */
+ 
+-#if defined(__sparc__) && defined(__arch64__)
+-# define PADDING(x)
+-#else
+-# define PADDING(x) unsigned int x;
+-#endif
+-
+ struct shmid64_ds {
+ 	struct ipc64_perm	shm_perm;	/* operation perms */
+-	PADDING(__pad1)
++#if defined(__sparc__) && defined(__arch64__)
+ 	__kernel_time_t		shm_atime;	/* last attach time */
+-	PADDING(__pad2)
+ 	__kernel_time_t		shm_dtime;	/* last detach time */
+-	PADDING(__pad3)
+ 	__kernel_time_t		shm_ctime;	/* last change time */
++#else
++	unsigned long		shm_atime_high;
++	unsigned long		shm_atime;	/* last attach time */
++	unsigned long		shm_dtime_high;
++	unsigned long		shm_dtime;	/* last detach time */
++	unsigned long		shm_ctime_high;
++	unsigned long		shm_ctime;	/* last change time */
++#endif
+ 	size_t			shm_segsz;	/* size of segment (bytes) */
+ 	__kernel_pid_t		shm_cpid;	/* pid of creator */
+ 	__kernel_pid_t		shm_lpid;	/* pid of last operator */
+@@ -46,6 +45,4 @@ struct shminfo64 {
+ 	unsigned long	__unused4;
+ };
+ 
+-#undef PADDING
+-
+ #endif /* _SPARC_SHMBUF_H */
 -- 
 2.9.0
