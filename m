@@ -1,88 +1,195 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 12/17] y2038: ipc: Use ktime_get_real_seconds consistently
-Date: Thu, 19 Apr 2018 16:37:32 +0200
-Message-ID: <20180419143737.606138-13-arnd@arndb.de>
+Subject: [PATCH v3 10/17] y2038: powerpc: Extend sysvipc data structures
+Date: Thu, 19 Apr 2018 16:37:30 +0200
+Message-ID: <20180419143737.606138-11-arnd@arndb.de>
 References: <20180419143737.606138-1-arnd@arndb.de>
-Return-path: <libc-alpha-return-91707-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180419143737.606138-1-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-In some places, we still used get_seconds() instead of
-ktime_get_real_seconds(), and I'm changing the remaining ones now to
-all use ktime_get_real_seconds() so we use the full available range for
-timestamps instead of overflowing the 'unsigned long' return value in
-year 2106 on 32-bit kernels.
+powerpc, uses a nonstandard variation of the generic sysvipc
+data structures, intended to have the padding moved around
+so it can deal with big-endian 32-bit user space that has
+64-bit time_t.
+
+powerpc has the same definition as parisc and sparc, but now also
+supports little-endian mode, which is now wrong because the
+padding is made for big-endian user space.
+
+This takes just take the same approach here that we have for
+the asm-generic headers and adds separate 32-bit fields for the
+upper halves of the timestamps, to let libc deal with the mess
+in user space.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- ipc/msg.c | 6 +++---
- ipc/sem.c | 6 +++---
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ arch/powerpc/include/asm/compat.h      | 32 ++++++++++++++++----------------
+ arch/powerpc/include/uapi/asm/msgbuf.h | 18 +++++++++---------
+ arch/powerpc/include/uapi/asm/sembuf.h | 14 +++++++-------
+ arch/powerpc/include/uapi/asm/shmbuf.h | 19 ++++++++-----------
+ 4 files changed, 40 insertions(+), 43 deletions(-)
 
-diff --git a/ipc/msg.c b/ipc/msg.c
-index 56fd1c73eedc..574f76c9a2ff 100644
---- a/ipc/msg.c
-+++ b/ipc/msg.c
-@@ -758,7 +758,7 @@ static inline int pipelined_send(struct msg_queue *msq, struct msg_msg *msg,
- 				WRITE_ONCE(msr->r_msg, ERR_PTR(-E2BIG));
- 			} else {
- 				ipc_update_pid(&msq->q_lrpid, task_pid(msr->r_tsk));
--				msq->q_rtime = get_seconds();
-+				msq->q_rtime = ktime_get_real_seconds();
+diff --git a/arch/powerpc/include/asm/compat.h b/arch/powerpc/include/asm/compat.h
+index b4773c81f7d5..85c8af2bb272 100644
+--- a/arch/powerpc/include/asm/compat.h
++++ b/arch/powerpc/include/asm/compat.h
+@@ -162,10 +162,10 @@ struct compat_ipc64_perm {
  
- 				wake_q_add(wake_q, msr->r_tsk);
- 				WRITE_ONCE(msr->r_msg, msg);
-@@ -859,7 +859,7 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
- 	}
+ struct compat_semid64_ds {
+ 	struct compat_ipc64_perm sem_perm;
+-	unsigned int __unused1;
+-	compat_time_t sem_otime;
+-	unsigned int __unused2;
+-	compat_time_t sem_ctime;
++	unsigned int sem_otime_high;
++	unsigned int sem_otime;
++	unsigned int sem_ctime_high;
++	unsigned int sem_ctime;
+ 	compat_ulong_t sem_nsems;
+ 	compat_ulong_t __unused3;
+ 	compat_ulong_t __unused4;
+@@ -173,12 +173,12 @@ struct compat_semid64_ds {
  
- 	ipc_update_pid(&msq->q_lspid, task_tgid(current));
--	msq->q_stime = get_seconds();
-+	msq->q_stime = ktime_get_real_seconds();
+ struct compat_msqid64_ds {
+ 	struct compat_ipc64_perm msg_perm;
+-	unsigned int __unused1;
+-	compat_time_t msg_stime;
+-	unsigned int __unused2;
+-	compat_time_t msg_rtime;
+-	unsigned int __unused3;
+-	compat_time_t msg_ctime;
++	unsigned int msg_stime_high;
++	unsigned int msg_stime;
++	unsigned int msg_rtime_high;
++	unsigned int msg_rtime;
++	unsigned int msg_ctime_high;
++	unsigned int msg_ctime;
+ 	compat_ulong_t msg_cbytes;
+ 	compat_ulong_t msg_qnum;
+ 	compat_ulong_t msg_qbytes;
+@@ -190,12 +190,12 @@ struct compat_msqid64_ds {
  
- 	if (!pipelined_send(msq, msg, &wake_q)) {
- 		/* no one is waiting for this message, enqueue it */
-@@ -1087,7 +1087,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
+ struct compat_shmid64_ds {
+ 	struct compat_ipc64_perm shm_perm;
+-	unsigned int __unused1;
+-	compat_time_t shm_atime;
+-	unsigned int __unused2;
+-	compat_time_t shm_dtime;
+-	unsigned int __unused3;
+-	compat_time_t shm_ctime;
++	unsigned int shm_atime_high;
++	unsigned int shm_atime;
++	unsigned int shm_dtime_high;
++	unsigned int shm_dtime;
++	unsigned int shm_ctime_high;
++	unsigned int shm_ctime;
+ 	unsigned int __unused4;
+ 	compat_size_t shm_segsz;
+ 	compat_pid_t shm_cpid;
+diff --git a/arch/powerpc/include/uapi/asm/msgbuf.h b/arch/powerpc/include/uapi/asm/msgbuf.h
+index 65beb0942500..2b1b37797a47 100644
+--- a/arch/powerpc/include/uapi/asm/msgbuf.h
++++ b/arch/powerpc/include/uapi/asm/msgbuf.h
+@@ -10,18 +10,18 @@
  
- 			list_del(&msg->m_list);
- 			msq->q_qnum--;
--			msq->q_rtime = get_seconds();
-+			msq->q_rtime = ktime_get_real_seconds();
- 			ipc_update_pid(&msq->q_lrpid, task_tgid(current));
- 			msq->q_cbytes -= msg->m_ts;
- 			atomic_sub(msg->m_ts, &ns->msg_bytes);
-diff --git a/ipc/sem.c b/ipc/sem.c
-index 06be75d9217a..c6a8a971769d 100644
---- a/ipc/sem.c
-+++ b/ipc/sem.c
-@@ -104,7 +104,7 @@ struct sem {
- 					/* that alter the semaphore */
- 	struct list_head pending_const; /* pending single-sop operations */
- 					/* that do not alter the semaphore*/
--	time_t	sem_otime;	/* candidate for sem_otime */
-+	time64_t	 sem_otime;	/* candidate for sem_otime */
- } ____cacheline_aligned_in_smp;
+ struct msqid64_ds {
+ 	struct ipc64_perm msg_perm;
+-#ifndef __powerpc64__
+-	unsigned int	__unused1;
+-#endif
++#ifdef __powerpc64__
+ 	__kernel_time_t msg_stime;	/* last msgsnd time */
+-#ifndef __powerpc64__
+-	unsigned int	__unused2;
+-#endif
+ 	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-#ifndef __powerpc64__
+-	unsigned int	__unused3;
+-#endif
+ 	__kernel_time_t msg_ctime;	/* last change time */
++#else
++	unsigned long  msg_stime_high;
++	unsigned long  msg_stime;	/* last msgsnd time */
++	unsigned long  msg_rtime_high;
++	unsigned long  msg_rtime;	/* last msgrcv time */
++	unsigned long  msg_ctime_high;
++	unsigned long  msg_ctime;	/* last change time */
++#endif
+ 	unsigned long  msg_cbytes;	/* current number of bytes on queue */
+ 	unsigned long  msg_qnum;	/* number of messages in queue */
+ 	unsigned long  msg_qbytes;	/* max number of bytes on queue */
+diff --git a/arch/powerpc/include/uapi/asm/sembuf.h b/arch/powerpc/include/uapi/asm/sembuf.h
+index 8f393d60f02d..3f60946f77e3 100644
+--- a/arch/powerpc/include/uapi/asm/sembuf.h
++++ b/arch/powerpc/include/uapi/asm/sembuf.h
+@@ -15,20 +15,20 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+- * - 2 miscellaneous 32-bit values
++ * - 2 miscellaneous 32/64-bit values
+  */
  
- /* One sem_array data structure for each set of semaphores in the system. */
-@@ -984,10 +984,10 @@ static int update_queue(struct sem_array *sma, int semnum, struct wake_q_head *w
- static void set_semotime(struct sem_array *sma, struct sembuf *sops)
- {
- 	if (sops == NULL) {
--		sma->sems[0].sem_otime = get_seconds();
-+		sma->sems[0].sem_otime = ktime_get_real_seconds();
- 	} else {
- 		sma->sems[sops[0].sem_num].sem_otime =
--							get_seconds();
-+						ktime_get_real_seconds();
- 	}
- }
+ struct semid64_ds {
+ 	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
+ #ifndef __powerpc64__
+-	unsigned long	__unused1;
+-#endif
++	unsigned long	sem_otime_high;
++	unsigned long	sem_otime;	/* last semop time */
++	unsigned long	sem_ctime_high;
++	unsigned long	sem_ctime;	/* last change time */
++#else
+ 	__kernel_time_t	sem_otime;	/* last semop time */
+-#ifndef __powerpc64__
+-	unsigned long	__unused2;
+-#endif
+ 	__kernel_time_t	sem_ctime;	/* last change time */
++#endif
+ 	unsigned long	sem_nsems;	/* no. of semaphores in array */
+ 	unsigned long	__unused3;
+ 	unsigned long	__unused4;
+diff --git a/arch/powerpc/include/uapi/asm/shmbuf.h b/arch/powerpc/include/uapi/asm/shmbuf.h
+index deb1c3e503d3..b591c4d7e4c5 100644
+--- a/arch/powerpc/include/uapi/asm/shmbuf.h
++++ b/arch/powerpc/include/uapi/asm/shmbuf.h
+@@ -16,25 +16,22 @@
+  * between kernel and user space.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  */
  
+ struct shmid64_ds {
+ 	struct ipc64_perm	shm_perm;	/* operation perms */
+-#ifndef __powerpc64__
+-	unsigned long		__unused1;
+-#endif
++#ifdef __powerpc64__
+ 	__kernel_time_t		shm_atime;	/* last attach time */
+-#ifndef __powerpc64__
+-	unsigned long		__unused2;
+-#endif
+ 	__kernel_time_t		shm_dtime;	/* last detach time */
+-#ifndef __powerpc64__
+-	unsigned long		__unused3;
+-#endif
+ 	__kernel_time_t		shm_ctime;	/* last change time */
+-#ifndef __powerpc64__
++#else
++	unsigned long		shm_atime_high;
++	unsigned long		shm_atime;	/* last attach time */
++	unsigned long		shm_dtime_high;
++	unsigned long		shm_dtime;	/* last detach time */
++	unsigned long		shm_ctime_high;
++	unsigned long		shm_ctime;	/* last change time */
+ 	unsigned long		__unused4;
+ #endif
+ 	size_t			shm_segsz;	/* size of segment (bytes) */
 -- 
 2.9.0
