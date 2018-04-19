@@ -1,136 +1,95 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak32 V2 05/13] audit: add containerid support for
- ptrace and signals
-Date: Wed, 18 Apr 2018 20:32:15 -0400
-Message-ID: <CAHC9VhTy4fX1hYfD5tppbP-fRaVRMXOfeJ=Et96J_rc7Jw12Bw@mail.gmail.com>
-References: <cover.1521179281.git.rgb@redhat.com> <8c7ff567377f4a83edac48e962c1b5b824b523c8.1521179281.git.rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 06/13] audit: add support for non-syscall
+ auxiliary records
+Date: Wed, 18 Apr 2018 20:39:12 -0400
+Message-ID: <CAHC9VhQbPbnrbxCD1fyTSxWgrXXXYnZw_=nbOhfMCO5Q5eSsWQ@mail.gmail.com>
+References: <cover.1521179281.git.rgb@redhat.com> <ee2a945fb09a939b3c214f45e49dab6a770d83e6.1521179281.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8c7ff567377f4a83edac48e962c1b5b824b523c8.1521179281.git.rgb@redhat.com>
+In-Reply-To: <ee2a945fb09a939b3c214f45e49dab6a770d83e6.1521179281.git.rgb@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
 Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> Add container ID support to ptrace and signals.  In particular, the "op"
-> field provides a way to label the auxiliary record to which it is
-> associated.
+> Standalone audit records have the timestamp and serial number generated
+> on the fly and as such are unique, making them standalone.  This new
+> function audit_alloc_local() generates a local audit context that will
+> be used only for a standalone record and its auxiliary record(s).  The
+> context is discarded immediately after the local associated records are
+> produced.
 >
 > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > ---
->  include/linux/audit.h | 16 +++++++++++-----
->  kernel/audit.c        | 12 ++++++++----
->  kernel/audit.h        |  2 ++
->  kernel/auditsc.c      | 19 +++++++++++++++----
->  4 files changed, 36 insertions(+), 13 deletions(-)
-
-...
-
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index a12f21f..b238be5 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -142,6 +142,7 @@ struct audit_net {
->  kuid_t         audit_sig_uid = INVALID_UID;
->  pid_t          audit_sig_pid = -1;
->  u32            audit_sig_sid = 0;
-> +u64            audit_sig_cid = INVALID_CID;
+>  include/linux/audit.h |  8 ++++++++
+>  kernel/auditsc.c      | 20 +++++++++++++++++++-
+>  2 files changed, 27 insertions(+), 1 deletion(-)
 >
->  /* Records can be lost in several ways:
->     0) [suppressed in audit_alloc]
-> @@ -1438,6 +1439,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                         memcpy(sig_data->ctx, ctx, len);
->                         security_release_secctx(ctx, len);
->                 }
-> +               sig_data->cid = audit_sig_cid;
->                 audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO, 0, 0,
->                                  sig_data, sizeof(*sig_data) + len);
->                 kfree(sig_data);
-> @@ -2051,20 +2053,22 @@ void audit_log_session_info(struct audit_buffer *ab)
->
->  /*
->   * audit_log_container_info - report container info
-> - * @tsk: task to be recorded
->   * @context: task or local context for record
-> + * @op: containerid string description
-> + * @containerid: container ID to report
->   */
-> -int audit_log_container_info(struct task_struct *tsk, struct audit_context *context)
-> +int audit_log_container_info(struct audit_context *context,
-> +                             char *op, u64 containerid)
+> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> index ed16bb6..c0b83cb 100644
+> --- a/include/linux/audit.h
+> +++ b/include/linux/audit.h
+> @@ -227,7 +227,9 @@ static inline int audit_log_container_info(struct audit_context *context,
+>  /* These are defined in auditsc.c */
+>                                 /* Public API */
+>  extern int  audit_alloc(struct task_struct *task);
+> +extern struct audit_context *audit_alloc_local(void);
+>  extern void __audit_free(struct task_struct *task);
+> +extern void audit_free_context(struct audit_context *context);
+>  extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
+>                                   unsigned long a2, unsigned long a3);
+>  extern void __audit_syscall_exit(int ret_success, long ret_value);
+> @@ -472,6 +474,12 @@ static inline int audit_alloc(struct task_struct *task)
 >  {
->         struct audit_buffer *ab;
->
-> -       if (!audit_containerid_set(tsk))
-> +       if (!cid_valid(containerid))
->                 return 0;
->         /* Generate AUDIT_CONTAINER_INFO with container ID */
->         ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_INFO);
->         if (!ab)
->                 return -ENOMEM;
-> -       audit_log_format(ab, "contid=%llu", audit_get_containerid(tsk));
-> +       audit_log_format(ab, "op=%s contid=%llu", op, containerid);
->         audit_log_end(ab);
 >         return 0;
 >  }
-
-Let's get these changes into the first patch where
-audit_log_container_info() is defined.  Why?  This inserts a new field
-into the record which is a no-no.  Yes, it is one single patchset, but
-they are still separate patches and who knows which patches a given
-distribution and/or tree may decide to backport.
-
+> +static inline struct audit_context *audit_alloc_local(void)
+> +{
+> +       return NULL;
+> +}
+> +static inline void audit_free_context(struct audit_context *context)
+> +{ }
+>  static inline void audit_free(struct task_struct *task)
+>  { }
+>  static inline void audit_syscall_entry(int major, unsigned long a0,
 > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index 2bba324..2932ef1 100644
+> index 2932ef1..7103d23 100644
 > --- a/kernel/auditsc.c
 > +++ b/kernel/auditsc.c
-> @@ -113,6 +113,7 @@ struct audit_aux_data_pids {
->         kuid_t                  target_uid[AUDIT_AUX_PIDS];
->         unsigned int            target_sessionid[AUDIT_AUX_PIDS];
->         u32                     target_sid[AUDIT_AUX_PIDS];
-> +       u64                     target_cid[AUDIT_AUX_PIDS];
->         char                    target_comm[AUDIT_AUX_PIDS][TASK_COMM_LEN];
->         int                     pid_count;
->  };
-> @@ -1422,21 +1423,27 @@ static void audit_log_exit(struct audit_context *context, struct task_struct *ts
->         for (aux = context->aux_pids; aux; aux = aux->next) {
->                 struct audit_aux_data_pids *axs = (void *)aux;
+> @@ -959,8 +959,26 @@ int audit_alloc(struct task_struct *tsk)
+>         return 0;
+>  }
 >
-> -               for (i = 0; i < axs->pid_count; i++)
-> +               for (i = 0; i < axs->pid_count; i++) {
-> +                       char axsn[sizeof("aux0xN ")];
+> -static inline void audit_free_context(struct audit_context *context)
+> +struct audit_context *audit_alloc_local(void)
+>  {
+> +       struct audit_context *context;
 > +
-> +                       sprintf(axsn, "aux0x%x", i);
->                         if (audit_log_pid_context(context, axs->target_pid[i],
->                                                   axs->target_auid[i],
->                                                   axs->target_uid[i],
->                                                   axs->target_sessionid[i],
->                                                   axs->target_sid[i],
-> -                                                 axs->target_comm[i]))
-> +                                                 axs->target_comm[i])
-> +                           && audit_log_container_info(context, axsn, axs->target_cid[i]))
+> +       if (!audit_ever_enabled)
+> +               return NULL; /* Return if not auditing. */
+> +
+> +       context = audit_alloc_context(AUDIT_RECORD_CONTEXT);
+> +       if (!context)
+> +               return NULL;
+> +       context->serial = audit_serial();
+> +       context->ctime = current_kernel_time64();
+> +       context->in_syscall = 1;
+> +       return context;
+> +}
+> +
+> +inline void audit_free_context(struct audit_context *context)
+> +{
+> +       if (!context)
+> +               return;
+>         audit_free_names(context);
+>         unroll_tree_refs(context, NULL, 0);
+>         free_tree_refs(context);
 
-Shouldn't this be an OR instead of an AND?
-
->                                 call_panic = 1;
-> +               }
->         }
->
->         if (context->target_pid &&
->             audit_log_pid_context(context, context->target_pid,
->                                   context->target_auid, context->target_uid,
->                                   context->target_sessionid,
-> -                                 context->target_sid, context->target_comm))
-> +                                 context->target_sid, context->target_comm)
-> +           && audit_log_container_info(context, "target", context->target_cid))
-
-Same question.
-
->                         call_panic = 1;
->
->         if (context->pwd.dentry && context->pwd.mnt) {
+I'm reserving the option to comment on this idea further as I make my
+way through the patchset, but audit_free_context() definitely
+shouldn't be declared as an inline function.
 
 -- 
 paul moore
