@@ -1,261 +1,77 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak32 V2 09/13] audit: add containerid support for
- config/feature/user records
-Date: Wed, 18 Apr 2018 21:27:34 -0400
-Message-ID: <CAHC9VhQ-i5oA48sXXnN2fP06t5=9-NMoY0bKcGXorQw2k=CK0Q@mail.gmail.com>
-References: <cover.1521179281.git.rgb@redhat.com> <c34a7a95eb045a62e2443457979db9d7afbd9aee.1521179281.git.rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 10/13] audit: add containerid support for
+ seccomp and anom_abend records
+Date: Wed, 18 Apr 2018 21:31:50 -0400
+Message-ID: <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com>
+References: <cover.1521179281.git.rgb@redhat.com> <11174597083f89352f1d6491ec94e27f882625d9.1521179281.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c34a7a95eb045a62e2443457979db9d7afbd9aee.1521179281.git.rgb@redhat.com>
+In-Reply-To: <11174597083f89352f1d6491ec94e27f882625d9.1521179281.git.rgb@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
 Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> Add container ID auxiliary records to configuration change, feature set change
-> and user generated standalone records.
+> Add container ID auxiliary records to secure computing and abnormal end
+> standalone records.
 >
 > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > ---
->  kernel/audit.c       | 50 ++++++++++++++++++++++++++++++++++++++++----------
->  kernel/auditfilter.c |  5 ++++-
->  2 files changed, 44 insertions(+), 11 deletions(-)
+>  kernel/auditsc.c | 10 ++++++++--
+>  1 file changed, 8 insertions(+), 2 deletions(-)
 >
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index b238be5..08662b4 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -400,8 +400,9 @@ static int audit_log_config_change(char *function_name, u32 new, u32 old,
->  {
->         struct audit_buffer *ab;
->         int rc = 0;
-> +       struct audit_context *context = audit_alloc_local();
-
-We should be able to use current->audit_context here right?  If we
-can't for every caller, perhaps we pass an audit_context as an
-argument and only allocate a local context when the passed
-audit_context is NULL.
-
-Also, if you're not comfortable always using current, just pass the
-audit_context as you do with audit_log_common_recv_msg().
-
-> -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
-> +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
->         if (unlikely(!ab))
->                 return rc;
->         audit_log_format(ab, "%s=%u old=%u", function_name, new, old);
-> @@ -411,6 +412,8 @@ static int audit_log_config_change(char *function_name, u32 new, u32 old,
->                 allow_changes = 0; /* Something weird, deny request */
->         audit_log_format(ab, " res=%d", allow_changes);
->         audit_log_end(ab);
-> +       audit_log_container_info(context, "config", audit_get_containerid(current));
-> +       audit_free_context(context);
->         return rc;
->  }
->
-> @@ -1058,7 +1061,8 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
->         return err;
->  }
->
-> -static void audit_log_common_recv_msg(struct audit_buffer **ab, u16 msg_type)
-> +static void audit_log_common_recv_msg(struct audit_context *context,
-> +                                     struct audit_buffer **ab, u16 msg_type)
->  {
->         uid_t uid = from_kuid(&init_user_ns, current_uid());
->         pid_t pid = task_tgid_nr(current);
-> @@ -1068,7 +1072,7 @@ static void audit_log_common_recv_msg(struct audit_buffer **ab, u16 msg_type)
->                 return;
->         }
->
-> -       *ab = audit_log_start(NULL, GFP_KERNEL, msg_type);
-> +       *ab = audit_log_start(context, GFP_KERNEL, msg_type);
->         if (unlikely(!*ab))
->                 return;
->         audit_log_format(*ab, "pid=%d uid=%u", pid, uid);
-> @@ -1097,11 +1101,12 @@ static void audit_log_feature_change(int which, u32 old_feature, u32 new_feature
->                                      u32 old_lock, u32 new_lock, int res)
+> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+> index 7103d23..2f02ed9 100644
+> --- a/kernel/auditsc.c
+> +++ b/kernel/auditsc.c
+> @@ -2571,6 +2571,7 @@ static void audit_log_task(struct audit_buffer *ab)
+>  void audit_core_dumps(long signr)
 >  {
 >         struct audit_buffer *ab;
 > +       struct audit_context *context = audit_alloc_local();
 
-So I know based on the other patch we are currently discussing that we
-can use current here ...
+Looking quickly at do_coredump() I *believe* we can use current here.
 
->         if (audit_enabled == AUDIT_OFF)
->                 return;
->
-> -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_FEATURE_CHANGE);
-> +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_FEATURE_CHANGE);
->         if (!ab)
->                 return;
->         audit_log_task_info(ab, current);
-> @@ -1109,6 +1114,8 @@ static void audit_log_feature_change(int which, u32 old_feature, u32 new_feature
->                          audit_feature_names[which], !!old_feature, !!new_feature,
->                          !!old_lock, !!new_lock, res);
->         audit_log_end(ab);
-> +       audit_log_container_info(context, "feature", audit_get_containerid(current));
-> +       audit_free_context(context);
->  }
->
->  static int audit_set_feature(struct sk_buff *skb)
-> @@ -1337,13 +1344,15 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->
->                 err = audit_filter(msg_type, AUDIT_FILTER_USER);
->                 if (err == 1) { /* match or error */
-> +                       struct audit_context *context = audit_alloc_local();
-
-I'm pretty sure we can use current here.
-
->                         err = 0;
->                         if (msg_type == AUDIT_USER_TTY) {
->                                 err = tty_audit_push();
->                                 if (err)
->                                         break;
->                         }
-> -                       audit_log_common_recv_msg(&ab, msg_type);
-> +                       audit_log_common_recv_msg(context, &ab, msg_type);
->                         if (msg_type != AUDIT_USER_TTY)
->                                 audit_log_format(ab, " msg='%.*s'",
->                                                  AUDIT_MESSAGE_TEXT_MAX,
-> @@ -1359,6 +1368,9 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                                 audit_log_n_untrustedstring(ab, data, size);
->                         }
->                         audit_log_end(ab);
-> +                       audit_log_container_info(context, "user",
-> +                                                audit_get_containerid(current));
-> +                       audit_free_context(context);
->                 }
->                 break;
->         case AUDIT_ADD_RULE:
-> @@ -1366,9 +1378,14 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                 if (nlmsg_len(nlh) < sizeof(struct audit_rule_data))
->                         return -EINVAL;
->                 if (audit_enabled == AUDIT_LOCKED) {
-> -                       audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-> +                       struct audit_context *context = audit_alloc_local();
-
-Pretty sure current can be used here too.  In fact I think everywhere
-where we are processing commands from netlink we can use current as I
-believe the entire netlink stack is processed in the context of the
-caller.
-
-> +                       audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
->                         audit_log_format(ab, " audit_enabled=%d res=0", audit_enabled);
->                         audit_log_end(ab);
-> +                       audit_log_container_info(context, "config",
-> +                                                audit_get_containerid(current));
-> +                       audit_free_context(context);
->                         return -EPERM;
->                 }
->                 err = audit_rule_change(msg_type, seq, data, nlmsg_len(nlh));
-> @@ -1376,17 +1393,23 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->         case AUDIT_LIST_RULES:
->                 err = audit_list_rules_send(skb, seq);
->                 break;
-> -       case AUDIT_TRIM:
-> +       case AUDIT_TRIM: {
-> +               struct audit_context *context = audit_alloc_local();
-
-Same.
-
->                 audit_trim_trees();
-> -               audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-> +               audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
->                 audit_log_format(ab, " op=trim res=1");
->                 audit_log_end(ab);
-> +               audit_log_container_info(context, "config",
-> +                                        audit_get_containerid(current));
-> +               audit_free_context(context);
->                 break;
-> +       }
->         case AUDIT_MAKE_EQUIV: {
->                 void *bufp = data;
->                 u32 sizes[2];
->                 size_t msglen = nlmsg_len(nlh);
->                 char *old, *new;
-> +               struct audit_context *context = audit_alloc_local();
-
-Same.
-
->                 err = -EINVAL;
->                 if (msglen < 2 * sizeof(u32))
-> @@ -1408,7 +1431,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                 /* OK, here comes... */
->                 err = audit_tag_tree(old, new);
->
-> -               audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-> +               audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
->
->                 audit_log_format(ab, " op=make_equiv old=");
->                 audit_log_untrustedstring(ab, old);
-> @@ -1418,6 +1441,9 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                 audit_log_end(ab);
->                 kfree(old);
->                 kfree(new);
-> +               audit_log_container_info(context, "config",
-> +                                        audit_get_containerid(current));
-> +               audit_free_context(context);
->                 break;
->         }
->         case AUDIT_SIGNAL_INFO:
-> @@ -1459,6 +1485,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                 struct audit_tty_status s, old;
->                 struct audit_buffer     *ab;
->                 unsigned int t;
-> +               struct audit_context *context = audit_alloc_local();
-
-Same.
-
->                 memset(&s, 0, sizeof(s));
->                 /* guard against past and future API changes */
-> @@ -1477,12 +1504,15 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                 old.enabled = t & AUDIT_TTY_ENABLE;
->                 old.log_passwd = !!(t & AUDIT_TTY_LOG_PASSWD);
->
-> -               audit_log_common_recv_msg(&ab, AUDIT_CONFIG_CHANGE);
-> +               audit_log_common_recv_msg(context, &ab, AUDIT_CONFIG_CHANGE);
->                 audit_log_format(ab, " op=tty_set old-enabled=%d new-enabled=%d"
->                                  " old-log_passwd=%d new-log_passwd=%d res=%d",
->                                  old.enabled, s.enabled, old.log_passwd,
->                                  s.log_passwd, !err);
->                 audit_log_end(ab);
-> +               audit_log_container_info(context, "config",
-> +                                        audit_get_containerid(current));
-> +               audit_free_context(context);
->                 break;
->         }
->         default:
-> diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
-> index c4c8746..5f7f4d6 100644
-> --- a/kernel/auditfilter.c
-> +++ b/kernel/auditfilter.c
-> @@ -1109,11 +1109,12 @@ static void audit_log_rule_change(char *action, struct audit_krule *rule, int re
->         struct audit_buffer *ab;
->         uid_t loginuid = from_kuid(&init_user_ns, audit_get_loginuid(current));
->         unsigned int sessionid = audit_get_sessionid(current);
-> +       struct audit_context *context = audit_alloc_local();
->
 >         if (!audit_enabled)
 >                 return;
-
-Well, first I think we should be able to get rid of the local context,
-but if for some reason we can't use current->audit_context then do the
-allocation after the audit_enabled check.
-
-> -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
-> +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONFIG_CHANGE);
->         if (!ab)
+> @@ -2578,19 +2579,22 @@ void audit_core_dumps(long signr)
+>         if (signr == SIGQUIT)   /* don't care for those */
 >                 return;
->         audit_log_format(ab, "auid=%u ses=%u" ,loginuid, sessionid);
-> @@ -1122,6 +1123,8 @@ static void audit_log_rule_change(char *action, struct audit_krule *rule, int re
->         audit_log_key(ab, rule->filterkey);
->         audit_log_format(ab, " list=%d res=%d", rule->listnr, res);
+>
+> -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_ANOM_ABEND);
+> +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_ANOM_ABEND);
+>         if (unlikely(!ab))
+>                 return;
+>         audit_log_task(ab);
+>         audit_log_format(ab, " sig=%ld res=1", signr);
 >         audit_log_end(ab);
-> +       audit_log_container_info(context, "config", audit_get_containerid(current));
+> +       audit_log_container_info(context, "abend", audit_get_containerid(current));
 > +       audit_free_context(context);
 >  }
+>
+>  void __audit_seccomp(unsigned long syscall, long signr, int code)
+>  {
+>         struct audit_buffer *ab;
+> +       struct audit_context *context = audit_alloc_local();
+
+We can definitely use current here.
+
+> -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_SECCOMP);
+> +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_SECCOMP);
+>         if (unlikely(!ab))
+>                 return;
+>         audit_log_task(ab);
+> @@ -2598,6 +2602,8 @@ void __audit_seccomp(unsigned long syscall, long signr, int code)
+>                          signr, syscall_get_arch(), syscall,
+>                          in_compat_syscall(), KSTK_EIP(current), code);
+>         audit_log_end(ab);
+> +       audit_log_container_info(context, "seccomp", audit_get_containerid(current));
+> +       audit_free_context(context);
+>  }
+>
+>  struct list_head *audit_killed_trees(void)
 
 -- 
 paul moore
