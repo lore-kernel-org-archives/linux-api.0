@@ -1,81 +1,63 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [REVIEW][PATCH 11/17] signal/alpha: Replace FPE_FIXME with FPE_FLTUNK
-Date: Thu, 19 Apr 2018 20:04:02 -0500
-Message-ID: <20180420010408.24438-11-ebiederm@xmission.com>
+Subject: [REVIEW][PATCH 15/17] signal: Add TRAP_UNK si_code for undiagnosted trap exceptions
+Date: Thu, 19 Apr 2018 20:04:06 -0500
+Message-ID: <20180420010408.24438-15-ebiederm@xmission.com>
 References: <878t9ilmhv.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <878t9ilmhv.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-arch@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Helge Deller <deller@gmx.de>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, linux-alpha@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, linux-alpha@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-Using an si_code of 0 that aliases with SI_USER is clearly the wrong
-thing todo, and causes problems in interesting ways.
+Both powerpc and alpha have cases where they wronly set si_code to 0
+in combination with SIGTRAP and don't mean SI_USER.
 
-The newly defined FPE_FLTUNK semantically appears to fit the bill so
-use it instead.
+About half the time this is because the architecture can not report
+accurately what kind of trap exception triggered the trap exception.
+The other half the time it looks like no one has bothered to
+figure out an appropriate si_code.
 
-Given recent experience in this area odds are it will not break
-anything.  Fixing it removes a hazard to kernel maintenance.
+For the cases where the architecture does not have enough information
+or is too lazy to figure out exactly what kind of trap exception
+it is define TRAP_UNK.
 
-Cc: Helge Deller <deller@gmx.de>
-Cc: Richard Henderson <rth@twiddle.net>
-Cc: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
-Cc: Matt Turner <mattst88@gmail.com>
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
 Cc: linux-alpha@vger.kernel.org
-History Tree: https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
-Fixes: 0a635c7a84cf ("Fill in siginfo_t.")
+Cc: linuxppc-dev@lists.ozlabs.org
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/alpha/include/uapi/asm/siginfo.h | 7 -------
- arch/alpha/kernel/osf_sys.c           | 2 +-
- arch/alpha/kernel/traps.c             | 2 +-
- 3 files changed, 2 insertions(+), 9 deletions(-)
+ arch/x86/kernel/signal_compat.c    | 2 +-
+ include/uapi/asm-generic/siginfo.h | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/siginfo.h b/arch/alpha/include/uapi/asm/siginfo.h
-index 0cf3b527b274..3ebbb1e17902 100644
---- a/arch/alpha/include/uapi/asm/siginfo.h
-+++ b/arch/alpha/include/uapi/asm/siginfo.h
-@@ -7,13 +7,6 @@
+diff --git a/arch/x86/kernel/signal_compat.c b/arch/x86/kernel/signal_compat.c
+index 14c057f29979..9ccbf0576cd0 100644
+--- a/arch/x86/kernel/signal_compat.c
++++ b/arch/x86/kernel/signal_compat.c
+@@ -29,7 +29,7 @@ static inline void signal_compat_build_tests(void)
+ 	BUILD_BUG_ON(NSIGFPE  != 15);
+ 	BUILD_BUG_ON(NSIGSEGV != 7);
+ 	BUILD_BUG_ON(NSIGBUS  != 5);
+-	BUILD_BUG_ON(NSIGTRAP != 4);
++	BUILD_BUG_ON(NSIGTRAP != 5);
+ 	BUILD_BUG_ON(NSIGCHLD != 6);
+ 	BUILD_BUG_ON(NSIGSYS  != 1);
  
- #include <asm-generic/siginfo.h>
+diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
+index 558b902f18d4..80e2a7227205 100644
+--- a/include/uapi/asm-generic/siginfo.h
++++ b/include/uapi/asm-generic/siginfo.h
+@@ -249,7 +249,8 @@ typedef struct siginfo {
+ #define TRAP_TRACE	2	/* process trace trap */
+ #define TRAP_BRANCH     3	/* process taken branch trap */
+ #define TRAP_HWBKPT     4	/* hardware breakpoint/watchpoint */
+-#define NSIGTRAP	4
++#define TRAP_UNK	5	/* undiagnosed trap */
++#define NSIGTRAP	5
  
--/*
-- * SIGFPE si_codes
-- */
--#ifdef __KERNEL__
--#define FPE_FIXME	0	/* Broken dup of SI_USER */
--#endif /* __KERNEL__ */
--
  /*
-  * SIGTRAP si_codes
-  */
-diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
-index f5f154942aab..bb3619118926 100644
---- a/arch/alpha/kernel/osf_sys.c
-+++ b/arch/alpha/kernel/osf_sys.c
-@@ -872,7 +872,7 @@ SYSCALL_DEFINE5(osf_setsysinfo, unsigned long, op, void __user *, buffer,
- 		fex = (exc >> IEEE_STATUS_TO_EXCSUM_SHIFT) & swcr;
-  		if (fex) {
- 			siginfo_t info;
--			int si_code = FPE_FIXME;
-+			int si_code = FPE_FLTUNK;
- 
- 			if (fex & IEEE_TRAP_ENABLE_DNO) si_code = FPE_FLTUND;
- 			if (fex & IEEE_TRAP_ENABLE_INE) si_code = FPE_FLTRES;
-diff --git a/arch/alpha/kernel/traps.c b/arch/alpha/kernel/traps.c
-index 91636765dd6d..422b676b28f2 100644
---- a/arch/alpha/kernel/traps.c
-+++ b/arch/alpha/kernel/traps.c
-@@ -328,7 +328,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
- 			break;
- 		case GEN_ROPRAND:
- 			signo = SIGFPE;
--			code = FPE_FIXME;
-+			code = FPE_FLTUNK;
- 			break;
- 
- 		case GEN_DECOVF:
+  * There is an additional set of SIGTRAP si_codes used by ptrace
 -- 
 2.14.1
