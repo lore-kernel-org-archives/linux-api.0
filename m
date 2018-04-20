@@ -1,85 +1,73 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [REVIEW][PATCH 17/17] signal/powerpc: Replace TRAP_FIXME with TRAP_UNK
-Date: Thu, 19 Apr 2018 20:04:08 -0500
-Message-ID: <20180420010408.24438-17-ebiederm@xmission.com>
+Subject: [REVIEW][PATCH 14/17] signal/unicore32: Use FPE_FLTUNK instead of 0 in ucf64_raise_sigfpe
+Date: Thu, 19 Apr 2018 20:04:05 -0500
+Message-ID: <20180420010408.24438-14-ebiederm@xmission.com>
 References: <878t9ilmhv.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <878t9ilmhv.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-arch@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Paul Mackerras <paulus@samba.org>, Kumar Gala <kumar.gala@freescale.com>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, linuxppc-dev@lists.ozlabs.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Guan Xuetao <gxt@mprc.pku.edu.cn>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-Using an si_code of 0 that aliases with SI_USER is clearly the wrong
-thing todo, and causes problems in interesting ways.
+The si_code of 0 (aka SI_USER) has fields si_pid and si_uid not
+si_addr so it so only by luck would the appropriate fields by copied
+to userspace by copy_siginfo_to_user.
 
-For use in unknown_exception the recently defined TRAP_UNK
-semantically is a perfect fit.  For use in RunModeException it looks
-like something more specific than TRAP_UNK could be used.  No one has
-bothered to find a better fit than the broken si_code of 0 in all of
-these years and I don't see an obvious better fit so TRAP_UNK is
-switching RunModeException to return TRAP_UNK is clearly an
-improvement.
+This is just broken and wrong.
 
-Recent history suggests no actually cares about crazy corner
-cases of the kernel behavior like this so I don't expect any
-regressions from changing this.  However if something does
-happen this change is easy to revert.
+Make it obvious what is happening by moving the si_code from a
+parameter of the one call to ucf64_raise_sigfpe to a constant value
+that info.si_code gets set to.
 
-Though I wonder if SIGKILL might not be a better fit.
+Explicitly set the si_code to FPE_FLTUNK the newly reserved floating
+point si_code for an unknown floating point exception.
 
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: Kumar Gala <kumar.gala@freescale.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: linuxppc-dev@lists.ozlabs.org
-Fixes: 9bad068c24d7 ("[PATCH] ppc32: support for e500 and 85xx")
-Fixes: 0ed70f6105ef ("PPC32: Provide proper siginfo information on various exceptions.")
-History Tree: https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
+It looks like there is a fair chance that this is a code path that has
+never been used in real life on unicore32.  The bad si_code and the
+print statement that calls it an unhandled exception.  So I really
+don't expect anyone will mind if this just gets fixed.
+
+In similar situations on more popular architectures the conclusion was
+just fix it.
+
+Cc: Guan Xuetao <gxt@mprc.pku.edu.cn>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Fixes: d9bc15794d12 ("unicore32 additional architecture files: float point handling")
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/powerpc/include/uapi/asm/siginfo.h | 8 --------
- arch/powerpc/kernel/traps.c             | 4 ++--
- 2 files changed, 2 insertions(+), 10 deletions(-)
+ arch/unicore32/kernel/fpu-ucf64.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/arch/powerpc/include/uapi/asm/siginfo.h b/arch/powerpc/include/uapi/asm/siginfo.h
-index 0437afc9ef3c..1d51d9b88221 100644
---- a/arch/powerpc/include/uapi/asm/siginfo.h
-+++ b/arch/powerpc/include/uapi/asm/siginfo.h
-@@ -15,12 +15,4 @@
- 
- #include <asm-generic/siginfo.h>
- 
--/*
-- * SIGTRAP si_codes
-- */
--#ifdef __KERNEL__
--#define TRAP_FIXME	0	/* Broken dup of SI_USER */
--#endif /* __KERNEL__ */
--
--
- #endif	/* _ASM_POWERPC_SIGINFO_H */
-diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
-index fdf9400beec8..0e17dcb48720 100644
---- a/arch/powerpc/kernel/traps.c
-+++ b/arch/powerpc/kernel/traps.c
-@@ -969,7 +969,7 @@ void unknown_exception(struct pt_regs *regs)
- 	printk("Bad trap at PC: %lx, SR: %lx, vector=%lx\n",
- 	       regs->nip, regs->msr, regs->trap);
- 
--	_exception(SIGTRAP, regs, TRAP_FIXME, 0);
-+	_exception(SIGTRAP, regs, TRAP_UNK, 0);
- 
- 	exception_exit(prev_state);
- }
-@@ -991,7 +991,7 @@ void instruction_breakpoint_exception(struct pt_regs *regs)
- 
- void RunModeException(struct pt_regs *regs)
+diff --git a/arch/unicore32/kernel/fpu-ucf64.c b/arch/unicore32/kernel/fpu-ucf64.c
+index d785955e1c29..8594b168f25e 100644
+--- a/arch/unicore32/kernel/fpu-ucf64.c
++++ b/arch/unicore32/kernel/fpu-ucf64.c
+@@ -52,14 +52,14 @@
+  * Raise a SIGFPE for the current process.
+  * sicode describes the signal being raised.
+  */
+-void ucf64_raise_sigfpe(unsigned int sicode, struct pt_regs *regs)
++void ucf64_raise_sigfpe(struct pt_regs *regs)
  {
--	_exception(SIGTRAP, regs, TRAP_FIXME, 0);
-+	_exception(SIGTRAP, regs, TRAP_UNK, 0);
- }
+ 	siginfo_t info;
  
- void single_step_exception(struct pt_regs *regs)
+ 	clear_siginfo(&info);
+ 
+ 	info.si_signo = SIGFPE;
+-	info.si_code = sicode;
++	info.si_code = FPE_FLTUNK;
+ 	info.si_addr = (void __user *)(instruction_pointer(regs) - 4);
+ 
+ 	/*
+@@ -94,7 +94,7 @@ void ucf64_exchandler(u32 inst, u32 fpexc, struct pt_regs *regs)
+ 		pr_debug("UniCore-F64 FPSCR 0x%08x INST 0x%08x\n",
+ 				cff(FPSCR), inst);
+ 
+-		ucf64_raise_sigfpe(0, regs);
++		ucf64_raise_sigfpe(regs);
+ 		return;
+ 	}
+ 
 -- 
 2.14.1
