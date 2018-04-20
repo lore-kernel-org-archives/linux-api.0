@@ -1,158 +1,52 @@
-From: Jeffrey Walton <noloader@gmail.com>
-Subject: Re: [PATCH] x86: ipc: fix x32 version of shmid64_ds and msqid64_ds
-Date: Fri, 20 Apr 2018 09:53:05 -0400
-Message-ID: <CAH8yC8mnfNnG86kgjnfwiZJ0=qN+w=5PVcLcxddaJdDtYbSanA@mail.gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] x86: ipc: fix x32 version of shmid64_ds and
+	msqid64_ds
+Date: Fri, 20 Apr 2018 16:38:29 +0200
+Message-ID: <CAK8P3a0nL4B+t6BMRhr36RrZ_jDgwnY1BviNPD+cFzsUGeppmA@mail.gmail.com>
 References: <CAK8P3a3qAoR1afmTTK1CAp1L81dzwtBL+SKj=QMqD=dBr_8oRQ@mail.gmail.com>
  <20180420130346.3178914-1-arnd@arndb.de>
-Reply-To: noloader@gmail.com
+ <CAH8yC8mnfNnG86kgjnfwiZJ0=qN+w=5PVcLcxddaJdDtYbSanA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20180420130346.3178914-1-arnd@arndb.de>
-Sender: stable-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: x86@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, ebiederm@xmission.com, y2038 Mailman List <y2038@lists.linaro.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, Deepa Dinamani <deepa.kernel@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Albert ARIBAUD <albert.aribaud@3adev.fr>, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, linux-mips@linux-mips.org, jhogan@kernel.org, Ralf Baechle <ralf@linux-mips.org>, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, Ben Hutchings <ben@decadent.org.uk>, Daniel Schepler <dschepler@gmail.com>, "H . J . Lu" <hjl.tools@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <CAH8yC8mnfNnG86kgjnfwiZJ0=qN+w=5PVcLcxddaJdDtYbSanA@mail.gmail.com>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Jeffrey Walton <noloader@gmail.com>
+Cc: "open list:RALINK MIPS ARCHITECTURE" <linux-mips@linux-mips.org>, Adam Borowski <kilobyte@angband.pl>, James Hogan <jhogan@kernel.org>, Will Deacon <will.deacon@arm.com>, Albert ARIBAUD <albert.aribaud@3adev.fr>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, the arch/x86 maintainers <x86@kernel.org>, Ingo Molnar <mingo@redhat.com>, tg@mirbsd.de, Catalin Marinas <catalin.marinas@arm.com>, Ben Hutchings <ben@decadent.org.uk>, "H . J . Lu" <hjl.tools@gmail.com>, Daniel Schepler <dschepler@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>, Thomas Gleixner <tglx@linutronix.de>, GNU C Library <libc-alpha@sourceware.org>, Linux
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
-
-One comment here:
-
-> +#if !defined(__x86_64__) || !defined(__ilp32__)
->  #include <asm-generic/msgbuf.h>
-> +#else
-
-I understand there's some progress having Clang compile the kernel.
-Clang treats __ILP32__ and friends differently than GCC. I believe
-ILP32 shows up just about everywhere there are 32-bit ints, longs and
-pointers. You might find it on Aarch64 or you might find it on MIPS64
-when using Clang.
-
-I think that means this may be a little suspicious:
-
-    > +#if !defined(__x86_64__) || !defined(__ilp32__)
-
-I kind of felt LLVM was wandering away from the x32 ABI, but the LLVM
-devs insisted they were within their purview. Also see
-https://lists.llvm.org/pipermail/cfe-dev/2015-December/046300.html.
-
-Sorry about the top-post. I just wanted to pick out that one piece.
-
-Jeff
-
-On Fri, Apr 20, 2018 at 9:03 AM, Arnd Bergmann <arnd@arndb.de> wrote:
-> A bugfix broke the x32 shmid64_ds and msqid64_ds data structure layout
-> (as seen from user space)  a few years ago: Originally, __BITS_PER_LONG
-> was defined as 64 on x32, so we did not have padding after the 64-bit
-> __kernel_time_t fields, After __BITS_PER_LONG got changed to 32,
-> applications would observe extra padding.
->
-> In other parts of the uapi headers we seem to have a mix of those
-> expecting either 32 or 64 on x32 applications, so we can't easily revert
-> the path that broke these two structures.
->
-> Instead, this patch decouples x32 from the other architectures and moves
-> it back into arch specific headers, partially reverting the even older
-> commit 73a2d096fdf2 ("x86: remove all now-duplicate header files").
->
-> It's not clear whether this ever made any difference, since at least
-> glibc carries its own (correct) copy of both of these header files,
-> so possibly no application has ever observed the definitions here.
->
-> There are other UAPI interfaces that depend on __BITS_PER_LONG and
-> that might suffer from the same problem on x32, but I have not tried to
-> analyse them in enough detail to be sure. If anyone still cares about x32,
-> that may be a useful thing to do.
->
-> Fixes: f4b4aae18288 ("x86/headers/uapi: Fix __BITS_PER_LONG value for x32 builds")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
-> This came out of the y2038 ipc syscall series but can be applied
-> and backported independently.
-> ---
->  arch/x86/include/uapi/asm/msgbuf.h | 29 +++++++++++++++++++++++++++
->  arch/x86/include/uapi/asm/shmbuf.h | 40 ++++++++++++++++++++++++++++++++++++++
->  2 files changed, 69 insertions(+)
->
-> diff --git a/arch/x86/include/uapi/asm/msgbuf.h b/arch/x86/include/uapi/asm/msgbuf.h
-> index 809134c644a6..5f1604961e6d 100644
-> --- a/arch/x86/include/uapi/asm/msgbuf.h
-> +++ b/arch/x86/include/uapi/asm/msgbuf.h
-> @@ -1 +1,30 @@
-> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-> +#ifndef __ASM_X64_MSGBUF_H
-> +#define __ASM_X64_MSGBUF_H
-> +
-> +#if !defined(__x86_64__) || !defined(__ilp32__)
->  #include <asm-generic/msgbuf.h>
-> +#else
-> +/*
-> + * The msqid64_ds structure for x86 architecture with x32 ABI.
-> + *
-> + * On x86-32 and x86-64 we can just use the generic definition, but
-> + * x32 uses the same binary layout as x86_64, which is differnet
-> + * from other 32-bit architectures.
-> + */
-> +
-> +struct msqid64_ds {
-> +       struct ipc64_perm msg_perm;
-> +       __kernel_time_t msg_stime;      /* last msgsnd time */
-> +       __kernel_time_t msg_rtime;      /* last msgrcv time */
-> +       __kernel_time_t msg_ctime;      /* last change time */
-> +       __kernel_ulong_t msg_cbytes;    /* current number of bytes on queue */
-> +       __kernel_ulong_t msg_qnum;      /* number of messages in queue */
-> +       __kernel_ulong_t msg_qbytes;    /* max number of bytes on queue */
-> +       __kernel_pid_t msg_lspid;       /* pid of last msgsnd */
-> +       __kernel_pid_t msg_lrpid;       /* last receive pid */
-> +       __kernel_ulong_t __unused4;
-> +       __kernel_ulong_t __unused5;
-> +};
-> +
-> +#endif /* __ASM_GENERIC_MSGBUF_H */
-> diff --git a/arch/x86/include/uapi/asm/shmbuf.h b/arch/x86/include/uapi/asm/shmbuf.h
-> index 83c05fc2de38..cdd7eec878fa 100644
-> --- a/arch/x86/include/uapi/asm/shmbuf.h
-> +++ b/arch/x86/include/uapi/asm/shmbuf.h
-> @@ -1 +1,41 @@
-> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-> +#ifndef __ASM_X86_SHMBUF_H
-> +#define __ASM_X86_SHMBUF_H
-> +
-> +#if !defined(__x86_64__) || !defined(__ilp32__)
->  #include <asm-generic/shmbuf.h>
-> +#else
-> +/*
-> + * The shmid64_ds structure for x86 architecture with x32 ABI.
-> + *
-> + * On x86-32 and x86-64 we can just use the generic definition, but
-> + * x32 uses the same binary layout as x86_64, which is differnet
-> + * from other 32-bit architectures.
-> + */
-> +
-> +struct shmid64_ds {
-> +       struct ipc64_perm       shm_perm;       /* operation perms */
-> +       size_t                  shm_segsz;      /* size of segment (bytes) */
-> +       __kernel_time_t         shm_atime;      /* last attach time */
-> +       __kernel_time_t         shm_dtime;      /* last detach time */
-> +       __kernel_time_t         shm_ctime;      /* last change time */
-> +       __kernel_pid_t          shm_cpid;       /* pid of creator */
-> +       __kernel_pid_t          shm_lpid;       /* pid of last operator */
-> +       __kernel_ulong_t        shm_nattch;     /* no. of current attaches */
-> +       __kernel_ulong_t        __unused4;
-> +       __kernel_ulong_t        __unused5;
-> +};
-> +
-> +struct shminfo64 {
-> +       __kernel_ulong_t        shmmax;
-> +       __kernel_ulong_t        shmmin;
-> +       __kernel_ulong_t        shmmni;
-> +       __kernel_ulong_t        shmseg;
-> +       __kernel_ulong_t        shmall;
-> +       __kernel_ulong_t        __unused1;
-> +       __kernel_ulong_t        __unused2;
-> +       __kernel_ulong_t        __unused3;
-> +       __kernel_ulong_t        __unused4;
-> +};
-> +
-> +#endif /* __ASM_X86_SHMBUF_H */
+T24gRnJpLCBBcHIgMjAsIDIwMTggYXQgMzo1MyBQTSwgSmVmZnJleSBXYWx0b24gPG5vbG9hZGVy
+QGdtYWlsLmNvbT4gd3JvdGU6Cj4+ICsjaWYgIWRlZmluZWQoX194ODZfNjRfXykgfHwgIWRlZmlu
+ZWQoX19pbHAzMl9fKQo+PiAgI2luY2x1ZGUgPGFzbS1nZW5lcmljL21zZ2J1Zi5oPgo+PiArI2Vs
+c2UKPgo+IEkgdW5kZXJzdGFuZCB0aGVyZSdzIHNvbWUgcHJvZ3Jlc3MgaGF2aW5nIENsYW5nIGNv
+bXBpbGUgdGhlIGtlcm5lbC4KPiBDbGFuZyB0cmVhdHMgX19JTFAzMl9fIGFuZCBmcmllbmRzIGRp
+ZmZlcmVudGx5IHRoYW4gR0NDLiBJIGJlbGlldmUKPiBJTFAzMiBzaG93cyB1cCBqdXN0IGFib3V0
+IGV2ZXJ5d2hlcmUgdGhlcmUgYXJlIDMyLWJpdCBpbnRzLCBsb25ncyBhbmQKPiBwb2ludGVycy4g
+WW91IG1pZ2h0IGZpbmQgaXQgb24gQWFyY2g2NCBvciB5b3UgbWlnaHQgZmluZCBpdCBvbiBNSVBT
+NjQKPiB3aGVuIHVzaW5nIENsYW5nLgo+Cj4gSSB0aGluayB0aGF0IG1lYW5zIHRoaXMgbWF5IGJl
+IGEgbGl0dGxlIHN1c3BpY2lvdXM6Cj4KPiAgICAgPiArI2lmICFkZWZpbmVkKF9feDg2XzY0X18p
+IHx8ICFkZWZpbmVkKF9faWxwMzJfXykKPgo+IEkga2luZCBvZiBmZWx0IExMVk0gd2FzIHdhbmRl
+cmluZyBhd2F5IGZyb20gdGhlIHgzMiBBQkksIGJ1dCB0aGUgTExWTQo+IGRldnMgaW5zaXN0ZWQg
+dGhleSB3ZXJlIHdpdGhpbiB0aGVpciBwdXJ2aWV3LiBBbHNvIHNlZQo+IGh0dHBzOi8vbGlzdHMu
+bGx2bS5vcmcvcGlwZXJtYWlsL2NmZS1kZXYvMjAxNS1EZWNlbWJlci8wNDYzMDAuaHRtbC4KPgo+
+IFNvcnJ5IGFib3V0IHRoZSB0b3AtcG9zdC4gSSBqdXN0IHdhbnRlZCB0byBwaWNrIG91dCB0aGF0
+IG9uZSBwaWVjZS4KCkl0IHNlZW1zIEkgbWFkZSBhIHR5cG8gYW5kIGl0IG5lZWRzIHRvIGJlIF9f
+SUxQMzJfXyByYXRoZXIgdGhhbgpfX2lscDMyX18gKGNvcnJlY3RlZCB0aGF0IGxvY2FsbHksIHdp
+bGwgcmVzZW5kIG9uY2Ugd2UgaGF2ZSByZXNvbHZlZAp0aGlzKS4KCkFzaWRlIGZyb20gdGhhdCwg
+dGhlICNpZiBjaGVjayBzZWVtcyB0byBiZSBjb3JyZWN0IHRvIG1lOiB0aGlzCmlzIGFuIHg4Ni1z
+cGVjaWZpYyBoZWFkZXIsIHNvIGl0IHdvbid0IGV2ZXIgYmUgc2VlbiBvbiBvdGhlcgphcmNoaXRl
+Y3R1cmVzLiBPbiB4ODYtMzIsIF9feDg2XzY0X18gaXNuJ3Qgc2V0LCBzbyB3ZSBkb24ndCBjYXJl
+CmFib3V0IHdoZXRoZXIgX19pbHAzMl9fIGlzIHNldCBvciBub3QsIGFuZCBvbiB4ODYtNjQgKGxw
+NjQpLApfX2lscDMyX18gaXMgbmV2ZXIgc2V0LCBzbyB3ZSBzdGlsbCBnZXQgdGhlIGFzbS1nZW5l
+cmljIGhlYWRlci4KCiAgICAgIEFybmQKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcK
+aHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8veTIwMzgK
