@@ -1,61 +1,65 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [REVIEW][PATCH 03/17] signal/sh: Use force_sig_fault in hw_breakpoint_handler
-Date: Thu, 19 Apr 2018 20:03:54 -0500
-Message-ID: <20180420010408.24438-3-ebiederm@xmission.com>
+Subject: [REVIEW][PATCH 04/17] signal/nds32: Use force_sig in unhandled_interruption and unhandled_exceptions
+Date: Thu, 19 Apr 2018 20:03:55 -0500
+Message-ID: <20180420010408.24438-4-ebiederm@xmission.com>
 References: <878t9ilmhv.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <878t9ilmhv.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-arch@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, Paul Mundt <lethal@linux-sh.org>, linux-sh@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-The call chain is:
-breakpoint
-  notify_die
-    hw_breakpoint_exceptions_notify
-      hw_breakpoint_handler
+Neither unhandled_interrupt nor unhandled_exceptions fills in any of the
+siginfo fields whend sending SIGKILL.  Further because it is SIGKILL
+even if all of the fields were filled out appropriately it would be impossible
+for the process to read any of the siginfo fields.  So simplfy things and
+just use force_sig instead of force_sig_info.
 
-So the signal number can only be SIGTRAP.
-
-In hw_breakpoint_handler rc is either NOTIFY_STOP or NOTIF_DONE
-both of which notifier_to_errno converts to 0.  So si_errno is 0.
-
-Historically si_addr was left unitialized in struct siginfo which is a
-bug.  There appears to be no consensus among the various architectures
-which value should be in si_addr.  So since no usable value has
-been returned up to this point return NULL in si_addr.
-
-Fixes: 4352fc1b12fa ("sh: Abstracted SH-4A UBC support on hw-breakpoint core.")
-Fixes: 34d0b5af50a0 ("sh: Convert ptrace to hw_breakpoint API.")
-Cc: Yoshinori Sato <ysato@users.sourceforge.jp>
-Cc: Rich Felker <dalias@libc.org>
-Cc: Paul Mundt <lethal@linux-sh.org>
-Cc: linux-sh@vger.kernel.org
+Fixes: 2923f5ea7738 ("nds32: Exception handling")
+Cc: Vincent Chen <vincentc@andestech.com>
+Cc: Greentime Hu <greentime@andestech.com>
+Cc: Arnd Bergmann <arnd@arndb.de>
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/sh/kernel/hw_breakpoint.c | 9 ++-------
- 1 file changed, 2 insertions(+), 7 deletions(-)
+ arch/nds32/kernel/traps.c | 11 ++---------
+ 1 file changed, 2 insertions(+), 9 deletions(-)
 
-diff --git a/arch/sh/kernel/hw_breakpoint.c b/arch/sh/kernel/hw_breakpoint.c
-index afe965712a69..8648ed05ccf0 100644
---- a/arch/sh/kernel/hw_breakpoint.c
-+++ b/arch/sh/kernel/hw_breakpoint.c
-@@ -347,13 +347,8 @@ static int __kprobes hw_breakpoint_handler(struct die_args *args)
+diff --git a/arch/nds32/kernel/traps.c b/arch/nds32/kernel/traps.c
+index 6e34eb9824a4..65961bf91d64 100644
+--- a/arch/nds32/kernel/traps.c
++++ b/arch/nds32/kernel/traps.c
+@@ -318,29 +318,22 @@ void do_debug_trap(unsigned long entry, unsigned long addr,
  
- 		/* Deliver the signal to userspace */
- 		if (!arch_check_bp_in_kernelspace(bp)) {
--			siginfo_t info;
--
--			info.si_signo = args->signr;
--			info.si_errno = notifier_to_errno(rc);
--			info.si_code = TRAP_HWBKPT;
--
--			force_sig_info(args->signr, &info, current);
-+			force_sig_fault(SIGTRAP, TRAP_HWBKPT,
-+					(void __user *)NULL, current);
- 		}
+ void unhandled_interruption(struct pt_regs *regs)
+ {
+-	siginfo_t si;
+ 	pr_emerg("unhandled_interruption\n");
+ 	show_regs(regs);
+ 	if (!user_mode(regs))
+ 		do_exit(SIGKILL);
+-	si.si_signo = SIGKILL;
+-	si.si_errno = 0;
+-	force_sig_info(SIGKILL, &si, current);
++	force_sig(SIGKILL, current);
+ }
  
- 		rcu_read_unlock();
+ void unhandled_exceptions(unsigned long entry, unsigned long addr,
+ 			  unsigned long type, struct pt_regs *regs)
+ {
+-	siginfo_t si;
+ 	pr_emerg("Unhandled Exception: entry: %lx addr:%lx itype:%lx\n", entry,
+ 		 addr, type);
+ 	show_regs(regs);
+ 	if (!user_mode(regs))
+ 		do_exit(SIGKILL);
+-	si.si_signo = SIGKILL;
+-	si.si_errno = 0;
+-	si.si_addr = (void *)addr;
+-	force_sig_info(SIGKILL, &si, current);
++	force_sig(SIGKILL, current);
+ }
+ 
+ extern int do_page_fault(unsigned long entry, unsigned long addr,
 -- 
 2.14.1
