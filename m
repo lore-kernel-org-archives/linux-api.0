@@ -1,99 +1,132 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak32 V2 10/13] audit: add containerid support for
- seccomp and anom_abend records
-Date: Thu, 19 Apr 2018 20:42:18 -0400
-Message-ID: <20180420004218.tgndd474wgueyjzk@madcap2.tricolour.ca>
-References: <cover.1521179281.git.rgb@redhat.com>
- <11174597083f89352f1d6491ec94e27f882625d9.1521179281.git.rgb@redhat.com>
- <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: [REVIEW][PATCH 00/17] siginfo bugfixes and cleanups
+Date: Thu, 19 Apr 2018 20:01:16 -0500
+Message-ID: <878t9ilmhv.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: simo@redhat.com, jlayton@redhat.com, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, cgroups@vger.kernel.org, serge@hallyn.com, viro@zeniv.linux.org.uk
+To: linux-arch@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Helge Deller <deller@gmx.de>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, David Miller <davem@davemloft.net>, Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, Paul Mundt <lethal@linux-sh.org>, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Paul Mackerras <paulus@samba.org>, Kumar Gala <kumar.gala@freescale.com>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Guan Xuetao <gxt@mprc.pku.edu.cn>
 List-Id: linux-api@vger.kernel.org
 
-On 2018-04-18 21:31, Paul Moore wrote:
-> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Add container ID auxiliary records to secure computing and abnormal end
-> > standalone records.
-> >
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > ---
-> >  kernel/auditsc.c | 10 ++++++++--
-> >  1 file changed, 8 insertions(+), 2 deletions(-)
-> >
-> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> > index 7103d23..2f02ed9 100644
-> > --- a/kernel/auditsc.c
-> > +++ b/kernel/auditsc.c
-> > @@ -2571,6 +2571,7 @@ static void audit_log_task(struct audit_buffer *ab)
-> >  void audit_core_dumps(long signr)
-> >  {
-> >         struct audit_buffer *ab;
-> > +       struct audit_context *context = audit_alloc_local();
-> 
-> Looking quickly at do_coredump() I *believe* we can use current here.
-> 
-> >         if (!audit_enabled)
-> >                 return;
-> > @@ -2578,19 +2579,22 @@ void audit_core_dumps(long signr)
-> >         if (signr == SIGQUIT)   /* don't care for those */
-> >                 return;
-> >
-> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_ANOM_ABEND);
-> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_ANOM_ABEND);
-> >         if (unlikely(!ab))
-> >                 return;
-> >         audit_log_task(ab);
-> >         audit_log_format(ab, " sig=%ld res=1", signr);
-> >         audit_log_end(ab);
-> > +       audit_log_container_info(context, "abend", audit_get_containerid(current));
-> > +       audit_free_context(context);
-> >  }
-> >
-> >  void __audit_seccomp(unsigned long syscall, long signr, int code)
-> >  {
-> >         struct audit_buffer *ab;
-> > +       struct audit_context *context = audit_alloc_local();
-> 
-> We can definitely use current here.
 
-Ok, so both syscall aux records.  That elimintes this patch from the
-set, can go in independently.
+Mostly this dealing with aliases of SI_USER, that make it impossible for
+userspace to tell what kind of siginfo it has received.
 
-> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_SECCOMP);
-> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_SECCOMP);
-> >         if (unlikely(!ab))
-> >                 return;
-> >         audit_log_task(ab);
-> > @@ -2598,6 +2602,8 @@ void __audit_seccomp(unsigned long syscall, long signr, int code)
-> >                          signr, syscall_get_arch(), syscall,
-> >                          in_compat_syscall(), KSTK_EIP(current), code);
-> >         audit_log_end(ab);
-> > +       audit_log_container_info(context, "seccomp", audit_get_containerid(current));
-> > +       audit_free_context(context);
-> >  }
-> >
-> >  struct list_head *audit_killed_trees(void)
-> 
-> -- 
-> paul moore
-> www.paul-moore.com
-> 
-> --
-> Linux-audit mailing list
-> Linux-audit@redhat.com
-> https://www.redhat.com/mailman/listinfo/linux-audit
+Also in this series is the change to ensure we have siginfo initialized
+so I can rip out the switch in copy_siginfo_to_user for better
+performance, and to ensure better backwards compatibility as siginfo as
+generated in the callers is passed to userspace.
 
-- RGB
+There are also fixes for a few other siginfo bugs I have found.
 
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+There are cleanups of ifdefs on SEGV_BNDERR and BUS_MCERR_AX that are no
+longer necessary.
+
+I plan to merge these bug fixes through my siginfo tree, but if you
+object to them or would prefer to have them go through your arch tree
+please let me know.
+
+The changes are avaiable as a totality at:
+    git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git siginfo-review
+    
+Dmitry V. Levin (1):
+      sparc: fix compat siginfo ABI regression
+
+Eric W. Biederman (16):
+      signal/alpha: Document a conflict with SI_USER for SIGFPE
+      signal/sh: Use force_sig_fault in hw_breakpoint_handler
+      signal/nds32: Use force_sig in unhandled_interruption and unhandled_exceptions
+      signal/nds32: Use force_sig(SIGILL) in do_revisn
+      signal: Ensure every siginfo we send has all bits initialized
+      signal: Reduce copy_siginfo_to_user to just copy_to_user
+      signal: Stop special casing TRAP_FIXME and FPE_FIXME in siginfo_layout
+      signal: Remove SEGV_BNDERR ifdefs
+      signal: Remove ifdefs for BUS_MCEERR_AR and BUS_MCEERR_AO
+      signal/alpha: Replace FPE_FIXME with FPE_FLTUNK
+      signal/ia64: Replace FPE_FIXME with FPE_FLTUNK
+      signal/powerpc: Replace FPE_FIXME with FPE_FLTUNK
+      signal/unicore32: Use FPE_FLTUNK instead of 0 in ucf64_raise_sigfpe
+      signal: Add TRAP_UNK si_code for undiagnosted trap exceptions
+      signal/alpha:  Replace TRAP_FIXME with TRAP_UNK
+      signal/powerpc: Replace TRAP_FIXME with TRAP_UNK
+
+ arch/alpha/include/uapi/asm/siginfo.h     |  14 ----
+ arch/alpha/kernel/osf_sys.c               |   3 +-
+ arch/alpha/kernel/signal.c                |   2 +
+ arch/alpha/kernel/traps.c                 |  11 ++-
+ arch/alpha/mm/fault.c                     |   2 +
+ arch/arc/mm/fault.c                       |   2 +
+ arch/arm/kernel/ptrace.c                  |   1 +
+ arch/arm/kernel/swp_emulate.c             |   1 +
+ arch/arm/kernel/traps.c                   |   5 ++
+ arch/arm/mm/alignment.c                   |   1 +
+ arch/arm/mm/fault.c                       |   4 +
+ arch/arm/vfp/vfpmodule.c                  |   3 +-
+ arch/arm64/kernel/fpsimd.c                |   2 +-
+ arch/arm64/kernel/sys_compat.c            |   1 +
+ arch/arm64/kernel/traps.c                 |   1 +
+ arch/arm64/mm/fault.c                     |  18 +++--
+ arch/c6x/kernel/traps.c                   |   1 +
+ arch/hexagon/kernel/traps.c               |   1 +
+ arch/hexagon/mm/vm_fault.c                |   1 +
+ arch/ia64/include/uapi/asm/siginfo.h      |   7 --
+ arch/ia64/kernel/brl_emu.c                |   1 +
+ arch/ia64/kernel/signal.c                 |   2 +
+ arch/ia64/kernel/traps.c                  |  31 ++++++--
+ arch/ia64/kernel/unaligned.c              |   1 +
+ arch/ia64/mm/fault.c                      |   4 +-
+ arch/m68k/kernel/traps.c                  |   2 +
+ arch/microblaze/kernel/exceptions.c       |   1 +
+ arch/microblaze/mm/fault.c                |   4 +-
+ arch/mips/mm/fault.c                      |   1 +
+ arch/nds32/kernel/traps.c                 |  19 ++---
+ arch/nds32/mm/fault.c                     |   1 +
+ arch/nios2/kernel/traps.c                 |   1 +
+ arch/openrisc/kernel/traps.c              |   5 +-
+ arch/openrisc/mm/fault.c                  |   1 +
+ arch/parisc/kernel/ptrace.c               |   1 +
+ arch/parisc/kernel/traps.c                |   2 +
+ arch/parisc/kernel/unaligned.c            |   1 +
+ arch/parisc/math-emu/driver.c             |   1 +
+ arch/parisc/mm/fault.c                    |   1 +
+ arch/powerpc/include/uapi/asm/siginfo.h   |  15 ----
+ arch/powerpc/kernel/process.c             |   1 +
+ arch/powerpc/kernel/traps.c               |  13 ++--
+ arch/powerpc/mm/fault.c                   |   1 +
+ arch/powerpc/platforms/cell/spufs/fault.c |   2 +-
+ arch/riscv/kernel/traps.c                 |   1 +
+ arch/s390/kernel/traps.c                  |   5 +-
+ arch/s390/mm/fault.c                      |   2 +
+ arch/sh/kernel/hw_breakpoint.c            |   9 +--
+ arch/sh/kernel/traps_32.c                 |   2 +
+ arch/sh/math-emu/math.c                   |   1 +
+ arch/sh/mm/fault.c                        |   1 +
+ arch/sparc/include/uapi/asm/siginfo.h     |   7 --
+ arch/sparc/kernel/process_64.c            |   1 +
+ arch/sparc/kernel/sys_sparc_32.c          |   1 +
+ arch/sparc/kernel/traps_32.c              |  12 ++-
+ arch/sparc/kernel/traps_64.c              |  16 +++-
+ arch/sparc/kernel/unaligned_32.c          |   1 +
+ arch/sparc/mm/fault_32.c                  |   1 +
+ arch/sparc/mm/fault_64.c                  |   1 +
+ arch/um/kernel/trap.c                     |   2 +
+ arch/unicore32/kernel/fpu-ucf64.c         |   8 +-
+ arch/unicore32/mm/fault.c                 |   3 +
+ arch/x86/entry/vsyscall/vsyscall_64.c     |   2 +-
+ arch/x86/kernel/ptrace.c                  |   2 +-
+ arch/x86/kernel/signal_compat.c           |   2 +-
+ arch/x86/kernel/traps.c                   |   3 +
+ arch/x86/kernel/umip.c                    |   1 +
+ arch/x86/kvm/mmu.c                        |   1 +
+ arch/x86/mm/fault.c                       |   1 +
+ arch/xtensa/kernel/traps.c                |   1 +
+ arch/xtensa/mm/fault.c                    |   1 +
+ fs/signalfd.c                             |  15 +---
+ include/linux/ptrace.h                    |   1 -
+ include/linux/tracehook.h                 |   1 +
+ include/uapi/asm-generic/siginfo.h        |   3 +-
+ kernel/signal.c                           | 123 +++---------------------------
+ virt/kvm/arm/mmu.c                        |   1 +
+ 77 files changed, 194 insertions(+), 231 deletions(-)
