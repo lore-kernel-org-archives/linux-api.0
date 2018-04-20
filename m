@@ -1,77 +1,63 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak32 V2 10/13] audit: add containerid support for
- seccomp and anom_abend records
-Date: Fri, 20 Apr 2018 12:11:09 -0400
-Message-ID: <CAHC9VhS+QgCqdSvZuBY_wTqGK245BY8txFUugy=bx9K5aSroCQ@mail.gmail.com>
-References: <cover.1521179281.git.rgb@redhat.com> <11174597083f89352f1d6491ec94e27f882625d9.1521179281.git.rgb@redhat.com>
- <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com> <20180420004218.tgndd474wgueyjzk@madcap2.tricolour.ca>
+Subject: Re: [RFC PATCH ghak32 V2 05/13] audit: add containerid support for
+ ptrace and signals
+Date: Fri, 20 Apr 2018 12:13:37 -0400
+Message-ID: <CAHC9VhREkg3uEkhMdKTM0S9-jXTR4LF_T5R2rgdNyfCo_4Meow@mail.gmail.com>
+References: <cover.1521179281.git.rgb@redhat.com> <8c7ff567377f4a83edac48e962c1b5b824b523c8.1521179281.git.rgb@redhat.com>
+ <CAHC9VhTy4fX1hYfD5tppbP-fRaVRMXOfeJ=Et96J_rc7Jw12Bw@mail.gmail.com> <20180420010320.panie6mtdafxl65y@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180420004218.tgndd474wgueyjzk@madcap2.tricolour.ca>
+In-Reply-To: <20180420010320.panie6mtdafxl65y@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
-Cc: simo@redhat.com, jlayton@redhat.com, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, cgroups@vger.kernel.org, serge@hallyn.com, viro@zeniv.linux.org.uk
+Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 19, 2018 at 8:42 PM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2018-04-18 21:31, Paul Moore wrote:
+On Thu, Apr 19, 2018 at 9:03 PM, Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2018-04-18 20:32, Paul Moore wrote:
 >> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
->> > Add container ID auxiliary records to secure computing and abnormal end
->> > standalone records.
->> >
->> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
->> > ---
->> >  kernel/auditsc.c | 10 ++++++++--
->> >  1 file changed, 8 insertions(+), 2 deletions(-)
->> >
->> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
->> > index 7103d23..2f02ed9 100644
->> > --- a/kernel/auditsc.c
->> > +++ b/kernel/auditsc.c
->> > @@ -2571,6 +2571,7 @@ static void audit_log_task(struct audit_buffer *ab)
->> >  void audit_core_dumps(long signr)
+
+...
+
+>> >  /*
+>> >   * audit_log_container_info - report container info
+>> > - * @tsk: task to be recorded
+>> >   * @context: task or local context for record
+>> > + * @op: containerid string description
+>> > + * @containerid: container ID to report
+>> >   */
+>> > -int audit_log_container_info(struct task_struct *tsk, struct audit_context *context)
+>> > +int audit_log_container_info(struct audit_context *context,
+>> > +                             char *op, u64 containerid)
 >> >  {
 >> >         struct audit_buffer *ab;
->> > +       struct audit_context *context = audit_alloc_local();
->>
->> Looking quickly at do_coredump() I *believe* we can use current here.
->>
->> >         if (!audit_enabled)
->> >                 return;
->> > @@ -2578,19 +2579,22 @@ void audit_core_dumps(long signr)
->> >         if (signr == SIGQUIT)   /* don't care for those */
->> >                 return;
 >> >
->> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_ANOM_ABEND);
->> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_ANOM_ABEND);
->> >         if (unlikely(!ab))
->> >                 return;
->> >         audit_log_task(ab);
->> >         audit_log_format(ab, " sig=%ld res=1", signr);
+>> > -       if (!audit_containerid_set(tsk))
+>> > +       if (!cid_valid(containerid))
+>> >                 return 0;
+>> >         /* Generate AUDIT_CONTAINER_INFO with container ID */
+>> >         ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_INFO);
+>> >         if (!ab)
+>> >                 return -ENOMEM;
+>> > -       audit_log_format(ab, "contid=%llu", audit_get_containerid(tsk));
+>> > +       audit_log_format(ab, "op=%s contid=%llu", op, containerid);
 >> >         audit_log_end(ab);
->> > +       audit_log_container_info(context, "abend", audit_get_containerid(current));
->> > +       audit_free_context(context);
+>> >         return 0;
 >> >  }
->> >
->> >  void __audit_seccomp(unsigned long syscall, long signr, int code)
->> >  {
->> >         struct audit_buffer *ab;
->> > +       struct audit_context *context = audit_alloc_local();
 >>
->> We can definitely use current here.
+>> Let's get these changes into the first patch where
+>> audit_log_container_info() is defined.  Why?  This inserts a new field
+>> into the record which is a no-no.  Yes, it is one single patchset, but
+>> they are still separate patches and who knows which patches a given
+>> distribution and/or tree may decide to backport.
 >
-> Ok, so both syscall aux records.  That elimintes this patch from the
-> set, can go in independently.
+> Fair enough.  That first thought went through my mind...  Would it be
+> sufficient to move that field addition to the first patch and leave the
+> rest here to support trace and signals?
 
-Yep.  It should help shrink the audit container ID patchset and
-perhaps more importantly it should put some distance between the
-connected-record debate and the audit container ID debate.
-
-I understand we are going to need a "local" context for some things,
-the network packets are probably the best example, but whenever
-possible I would like to connect these records back to a task's
-context.
+I should have been more clear ... yes, that's what I was thinking; the
+record format is the important part as it's user visible.
 
 -- 
 paul moore
