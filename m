@@ -1,158 +1,95 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak32 V2 05/13] audit: add containerid support for
- ptrace and signals
-Date: Thu, 19 Apr 2018 21:03:20 -0400
-Message-ID: <20180420010320.panie6mtdafxl65y@madcap2.tricolour.ca>
-References: <cover.1521179281.git.rgb@redhat.com>
- <8c7ff567377f4a83edac48e962c1b5b824b523c8.1521179281.git.rgb@redhat.com>
- <CAHC9VhTy4fX1hYfD5tppbP-fRaVRMXOfeJ=Et96J_rc7Jw12Bw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: "Eric W. Biederman" <ebiederm@xmission.com>
+Subject: [REVIEW][PATCH 02/17] sparc: fix compat siginfo ABI regression
+Date: Thu, 19 Apr 2018 20:03:53 -0500
+Message-ID: <20180420010408.24438-2-ebiederm@xmission.com>
+References: <878t9ilmhv.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhTy4fX1hYfD5tppbP-fRaVRMXOfeJ=Et96J_rc7Jw12Bw@mail.gmail.com>
+In-Reply-To: <878t9ilmhv.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+To: linux-arch@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Dmitry V. Levin" <ldv@altlinux.org>, David Miller <davem@davemloft.net>, sparclinux@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2018-04-18 20:32, Paul Moore wrote:
-> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Add container ID support to ptrace and signals.  In particular, the "op"
-> > field provides a way to label the auxiliary record to which it is
-> > associated.
-> >
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > ---
-> >  include/linux/audit.h | 16 +++++++++++-----
-> >  kernel/audit.c        | 12 ++++++++----
-> >  kernel/audit.h        |  2 ++
-> >  kernel/auditsc.c      | 19 +++++++++++++++----
-> >  4 files changed, 36 insertions(+), 13 deletions(-)
-> 
-> ...
-> 
-> > diff --git a/kernel/audit.c b/kernel/audit.c
-> > index a12f21f..b238be5 100644
-> > --- a/kernel/audit.c
-> > +++ b/kernel/audit.c
-> > @@ -142,6 +142,7 @@ struct audit_net {
-> >  kuid_t         audit_sig_uid = INVALID_UID;
-> >  pid_t          audit_sig_pid = -1;
-> >  u32            audit_sig_sid = 0;
-> > +u64            audit_sig_cid = INVALID_CID;
-> >
-> >  /* Records can be lost in several ways:
-> >     0) [suppressed in audit_alloc]
-> > @@ -1438,6 +1439,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
-> >                         memcpy(sig_data->ctx, ctx, len);
-> >                         security_release_secctx(ctx, len);
-> >                 }
-> > +               sig_data->cid = audit_sig_cid;
-> >                 audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO, 0, 0,
-> >                                  sig_data, sizeof(*sig_data) + len);
-> >                 kfree(sig_data);
-> > @@ -2051,20 +2053,22 @@ void audit_log_session_info(struct audit_buffer *ab)
-> >
-> >  /*
-> >   * audit_log_container_info - report container info
-> > - * @tsk: task to be recorded
-> >   * @context: task or local context for record
-> > + * @op: containerid string description
-> > + * @containerid: container ID to report
-> >   */
-> > -int audit_log_container_info(struct task_struct *tsk, struct audit_context *context)
-> > +int audit_log_container_info(struct audit_context *context,
-> > +                             char *op, u64 containerid)
-> >  {
-> >         struct audit_buffer *ab;
-> >
-> > -       if (!audit_containerid_set(tsk))
-> > +       if (!cid_valid(containerid))
-> >                 return 0;
-> >         /* Generate AUDIT_CONTAINER_INFO with container ID */
-> >         ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_INFO);
-> >         if (!ab)
-> >                 return -ENOMEM;
-> > -       audit_log_format(ab, "contid=%llu", audit_get_containerid(tsk));
-> > +       audit_log_format(ab, "op=%s contid=%llu", op, containerid);
-> >         audit_log_end(ab);
-> >         return 0;
-> >  }
-> 
-> Let's get these changes into the first patch where
-> audit_log_container_info() is defined.  Why?  This inserts a new field
-> into the record which is a no-no.  Yes, it is one single patchset, but
-> they are still separate patches and who knows which patches a given
-> distribution and/or tree may decide to backport.
+From: "Dmitry V. Levin" <ldv@altlinux.org>
 
-Fair enough.  That first thought went through my mind...  Would it be
-sufficient to move that field addition to the first patch and leave the
-rest here to support trace and signals?
+Starting with commit v4.14-rc1~60^2^2~1, a SIGFPE signal sent via kill
+results to wrong values in si_pid and si_uid fields of compat siginfo_t.
 
-> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> > index 2bba324..2932ef1 100644
-> > --- a/kernel/auditsc.c
-> > +++ b/kernel/auditsc.c
-> > @@ -113,6 +113,7 @@ struct audit_aux_data_pids {
-> >         kuid_t                  target_uid[AUDIT_AUX_PIDS];
-> >         unsigned int            target_sessionid[AUDIT_AUX_PIDS];
-> >         u32                     target_sid[AUDIT_AUX_PIDS];
-> > +       u64                     target_cid[AUDIT_AUX_PIDS];
-> >         char                    target_comm[AUDIT_AUX_PIDS][TASK_COMM_LEN];
-> >         int                     pid_count;
-> >  };
-> > @@ -1422,21 +1423,27 @@ static void audit_log_exit(struct audit_context *context, struct task_struct *ts
-> >         for (aux = context->aux_pids; aux; aux = aux->next) {
-> >                 struct audit_aux_data_pids *axs = (void *)aux;
-> >
-> > -               for (i = 0; i < axs->pid_count; i++)
-> > +               for (i = 0; i < axs->pid_count; i++) {
-> > +                       char axsn[sizeof("aux0xN ")];
-> > +
-> > +                       sprintf(axsn, "aux0x%x", i);
-> >                         if (audit_log_pid_context(context, axs->target_pid[i],
-> >                                                   axs->target_auid[i],
-> >                                                   axs->target_uid[i],
-> >                                                   axs->target_sessionid[i],
-> >                                                   axs->target_sid[i],
-> > -                                                 axs->target_comm[i]))
-> > +                                                 axs->target_comm[i])
-> > +                           && audit_log_container_info(context, axsn, axs->target_cid[i]))
-> 
-> Shouldn't this be an OR instead of an AND?
+This happens due to FPE_FIXME being defined to 0 for sparc, and at the
+same time siginfo_layout() introduced by the same commit returns
+SIL_FAULT for SIGFPE if si_code == SI_USER and FPE_FIXME is defined to 0.
 
-Yes.  Bash-brain...
+Fix this regression by removing FPE_FIXME macro and changing all its users
+to assign FPE_FLTUNK to si_code instead of FPE_FIXME.
 
-> >                                 call_panic = 1;
-> > +               }
-> >         }
-> >
-> >         if (context->target_pid &&
-> >             audit_log_pid_context(context, context->target_pid,
-> >                                   context->target_auid, context->target_uid,
-> >                                   context->target_sessionid,
-> > -                                 context->target_sid, context->target_comm))
-> > +                                 context->target_sid, context->target_comm)
-> > +           && audit_log_container_info(context, "target", context->target_cid))
-> 
-> Same question.
+Note that FPE_FLTUNK is a new macro introduced by commit
+266da65e9156d93e1126e185259a4aae68188d0e.
 
-Yes.
+Tested with commit v4.16-11958-g16e205cf42da.
 
-> >                         call_panic = 1;
-> >
-> >         if (context->pwd.dentry && context->pwd.mnt) {
-> 
-> -- 
-> paul moore
-> www.paul-moore.com
+This bug was found by strace test suite.
 
-- RGB
+In the discussion about FPE_FLTUNK on sparc David Miller said:
+> Eric, feel free to do something similar on Sparc.
 
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+Link: https://github.com/strace/strace/issues/21
+Fixes: cc731525f26a ("signal: Remove kernel interal si_code magic")
+Fixes: 2.3.41
+Cc: David Miller <davem@davemloft.net>
+Cc: sparclinux@vger.kernel.org
+Conceptually-Acked-By: David Miller <davem@davemloft.net>
+Thanks-to: Anatoly Pugachev <matorola@gmail.com>
+Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
+---
+ arch/sparc/include/uapi/asm/siginfo.h | 7 -------
+ arch/sparc/kernel/traps_32.c          | 2 +-
+ arch/sparc/kernel/traps_64.c          | 2 +-
+ 3 files changed, 2 insertions(+), 9 deletions(-)
+
+diff --git a/arch/sparc/include/uapi/asm/siginfo.h b/arch/sparc/include/uapi/asm/siginfo.h
+index 896ce447d16a..e7049550ac82 100644
+--- a/arch/sparc/include/uapi/asm/siginfo.h
++++ b/arch/sparc/include/uapi/asm/siginfo.h
+@@ -17,13 +17,6 @@
+ 
+ #define SI_NOINFO	32767		/* no information in siginfo_t */
+ 
+-/*
+- * SIGFPE si_codes
+- */
+-#ifdef __KERNEL__
+-#define FPE_FIXME	0	/* Broken dup of SI_USER */
+-#endif /* __KERNEL__ */
+-
+ /*
+  * SIGEMT si_codes
+  */
+diff --git a/arch/sparc/kernel/traps_32.c b/arch/sparc/kernel/traps_32.c
+index b1ed763e4787..33cd35bf3dc8 100644
+--- a/arch/sparc/kernel/traps_32.c
++++ b/arch/sparc/kernel/traps_32.c
+@@ -307,7 +307,7 @@ void do_fpe_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
+ 	info.si_errno = 0;
+ 	info.si_addr = (void __user *)pc;
+ 	info.si_trapno = 0;
+-	info.si_code = FPE_FIXME;
++	info.si_code = FPE_FLTUNK;
+ 	if ((fsr & 0x1c000) == (1 << 14)) {
+ 		if (fsr & 0x10)
+ 			info.si_code = FPE_FLTINV;
+diff --git a/arch/sparc/kernel/traps_64.c b/arch/sparc/kernel/traps_64.c
+index 462a21abd105..e81072ac52c3 100644
+--- a/arch/sparc/kernel/traps_64.c
++++ b/arch/sparc/kernel/traps_64.c
+@@ -2372,7 +2372,7 @@ static void do_fpe_common(struct pt_regs *regs)
+ 		info.si_errno = 0;
+ 		info.si_addr = (void __user *)regs->tpc;
+ 		info.si_trapno = 0;
+-		info.si_code = FPE_FIXME;
++		info.si_code = FPE_FLTUNK;
+ 		if ((fsr & 0x1c000) == (1 << 14)) {
+ 			if (fsr & 0x10)
+ 				info.si_code = FPE_FLTINV;
+-- 
+2.14.1
