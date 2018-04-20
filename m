@@ -1,59 +1,42 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [REVIEW][PATCH 02/17] sparc: fix compat siginfo ABI regression
-Date: Thu, 19 Apr 2018 20:03:53 -0500
-Message-ID: <20180420010408.24438-2-ebiederm@xmission.com>
+Subject: [REVIEW][PATCH 13/17] signal/powerpc: Replace FPE_FIXME with FPE_FLTUNK
+Date: Thu, 19 Apr 2018 20:04:04 -0500
+Message-ID: <20180420010408.24438-13-ebiederm@xmission.com>
 References: <878t9ilmhv.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <878t9ilmhv.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-arch@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Dmitry V. Levin" <ldv@altlinux.org>, David Miller <davem@davemloft.net>, sparclinux@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Paul Mackerras <paulus@samba.org>, Kumar Gala <kumar.gala@freescale.com>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-From: "Dmitry V. Levin" <ldv@altlinux.org>
+Using an si_code of 0 that aliases with SI_USER is clearly the
+wrong thing todo, and causes problems in interesting ways.
 
-Starting with commit v4.14-rc1~60^2^2~1, a SIGFPE signal sent via kill
-results to wrong values in si_pid and si_uid fields of compat siginfo_t.
+The newly defined FPE_FLTUNK semantically appears to fit the
+bill so use it instead.
 
-This happens due to FPE_FIXME being defined to 0 for sparc, and at the
-same time siginfo_layout() introduced by the same commit returns
-SIL_FAULT for SIGFPE if si_code == SI_USER and FPE_FIXME is defined to 0.
-
-Fix this regression by removing FPE_FIXME macro and changing all its users
-to assign FPE_FLTUNK to si_code instead of FPE_FIXME.
-
-Note that FPE_FLTUNK is a new macro introduced by commit
-266da65e9156d93e1126e185259a4aae68188d0e.
-
-Tested with commit v4.16-11958-g16e205cf42da.
-
-This bug was found by strace test suite.
-
-In the discussion about FPE_FLTUNK on sparc David Miller said:
-> Eric, feel free to do something similar on Sparc.
-
-Link: https://github.com/strace/strace/issues/21
-Fixes: cc731525f26a ("signal: Remove kernel interal si_code magic")
-Fixes: 2.3.41
-Cc: David Miller <davem@davemloft.net>
-Cc: sparclinux@vger.kernel.org
-Conceptually-Acked-By: David Miller <davem@davemloft.net>
-Thanks-to: Anatoly Pugachev <matorola@gmail.com>
-Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
-Signed-off-by: Eric W. Biederman <ebiederm@xmission.com>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: Kumar Gala <kumar.gala@freescale.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>
+Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Cc:  linuxppc-dev@lists.ozlabs.org
+Fixes: 9bad068c24d7 ("[PATCH] ppc32: support for e500 and 85xx")
+Fixes: 0ed70f6105ef ("PPC32: Provide proper siginfo information on various exceptions.")
+History Tree: https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
+Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/sparc/include/uapi/asm/siginfo.h | 7 -------
- arch/sparc/kernel/traps_32.c          | 2 +-
- arch/sparc/kernel/traps_64.c          | 2 +-
- 3 files changed, 2 insertions(+), 9 deletions(-)
+ arch/powerpc/include/uapi/asm/siginfo.h | 7 -------
+ arch/powerpc/kernel/traps.c             | 6 +++---
+ 2 files changed, 3 insertions(+), 10 deletions(-)
 
-diff --git a/arch/sparc/include/uapi/asm/siginfo.h b/arch/sparc/include/uapi/asm/siginfo.h
-index 896ce447d16a..e7049550ac82 100644
---- a/arch/sparc/include/uapi/asm/siginfo.h
-+++ b/arch/sparc/include/uapi/asm/siginfo.h
-@@ -17,13 +17,6 @@
+diff --git a/arch/powerpc/include/uapi/asm/siginfo.h b/arch/powerpc/include/uapi/asm/siginfo.h
+index 9f142451a01f..0437afc9ef3c 100644
+--- a/arch/powerpc/include/uapi/asm/siginfo.h
++++ b/arch/powerpc/include/uapi/asm/siginfo.h
+@@ -15,13 +15,6 @@
  
- #define SI_NOINFO	32767		/* no information in siginfo_t */
+ #include <asm-generic/siginfo.h>
  
 -/*
 - * SIGFPE si_codes
@@ -63,33 +46,38 @@ index 896ce447d16a..e7049550ac82 100644
 -#endif /* __KERNEL__ */
 -
  /*
-  * SIGEMT si_codes
+  * SIGTRAP si_codes
   */
-diff --git a/arch/sparc/kernel/traps_32.c b/arch/sparc/kernel/traps_32.c
-index b1ed763e4787..33cd35bf3dc8 100644
---- a/arch/sparc/kernel/traps_32.c
-+++ b/arch/sparc/kernel/traps_32.c
-@@ -307,7 +307,7 @@ void do_fpe_trap(struct pt_regs *regs, unsigned long pc, unsigned long npc,
- 	info.si_errno = 0;
- 	info.si_addr = (void __user *)pc;
- 	info.si_trapno = 0;
--	info.si_code = FPE_FIXME;
-+	info.si_code = FPE_FLTUNK;
- 	if ((fsr & 0x1c000) == (1 << 14)) {
- 		if (fsr & 0x10)
- 			info.si_code = FPE_FLTINV;
-diff --git a/arch/sparc/kernel/traps_64.c b/arch/sparc/kernel/traps_64.c
-index 462a21abd105..e81072ac52c3 100644
---- a/arch/sparc/kernel/traps_64.c
-+++ b/arch/sparc/kernel/traps_64.c
-@@ -2372,7 +2372,7 @@ static void do_fpe_common(struct pt_regs *regs)
- 		info.si_errno = 0;
- 		info.si_addr = (void __user *)regs->tpc;
- 		info.si_trapno = 0;
--		info.si_code = FPE_FIXME;
-+		info.si_code = FPE_FLTUNK;
- 		if ((fsr & 0x1c000) == (1 << 14)) {
- 			if (fsr & 0x10)
- 				info.si_code = FPE_FLTINV;
+diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
+index 087855caf6a9..fdf9400beec8 100644
+--- a/arch/powerpc/kernel/traps.c
++++ b/arch/powerpc/kernel/traps.c
+@@ -1031,7 +1031,7 @@ static void emulate_single_step(struct pt_regs *regs)
+ 
+ static inline int __parse_fpscr(unsigned long fpscr)
+ {
+-	int ret = FPE_FIXME;
++	int ret = FPE_FLTUNK;
+ 
+ 	/* Invalid operation */
+ 	if ((fpscr & FPSCR_VE) && (fpscr & FPSCR_VX))
+@@ -1972,7 +1972,7 @@ void SPEFloatingPointException(struct pt_regs *regs)
+ 	extern int do_spe_mathemu(struct pt_regs *regs);
+ 	unsigned long spefscr;
+ 	int fpexc_mode;
+-	int code = FPE_FIXME;
++	int code = FPE_FLTUNK;
+ 	int err;
+ 
+ 	flush_spe_to_thread(current);
+@@ -2041,7 +2041,7 @@ void SPEFloatingPointRoundException(struct pt_regs *regs)
+ 		printk(KERN_ERR "unrecognized spe instruction "
+ 		       "in %s at %lx\n", current->comm, regs->nip);
+ 	} else {
+-		_exception(SIGFPE, regs, FPE_FIXME, regs->nip);
++		_exception(SIGFPE, regs, FPE_FLTUNK, regs->nip);
+ 		return;
+ 	}
+ }
 -- 
 2.14.1
