@@ -1,115 +1,192 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak32 V2 06/13] audit: add support for non-syscall
- auxiliary records
-Date: Fri, 20 Apr 2018 12:21:33 -0400
-Message-ID: <CAHC9VhRe2UMmwcdPfDs5wLdg8JjL7U+711LAR=URS=7rBGjw2A@mail.gmail.com>
-References: <cover.1521179281.git.rgb@redhat.com> <ee2a945fb09a939b3c214f45e49dab6a770d83e6.1521179281.git.rgb@redhat.com>
- <CAHC9VhQbPbnrbxCD1fyTSxWgrXXXYnZw_=nbOhfMCO5Q5eSsWQ@mail.gmail.com> <20180420012346.udnga5pfdjoazcfc@madcap2.tricolour.ca>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 11/13] audit: add support for containerid
+ to network namespaces
+Date: Fri, 20 Apr 2018 16:02:26 -0400
+Message-ID: <20180420200226.7tyxzuovdbgclw3m@madcap2.tricolour.ca>
+References: <cover.1521179281.git.rgb@redhat.com>
+ <11b43a498e768a14764594c808a96b34d52be0af.1521179281.git.rgb@redhat.com>
+ <CAHC9VhRkstDMjd5T3w+iOUDjzDAs1AOm0xd3p6v_xn6fNGYQhA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180420012346.udnga5pfdjoazcfc@madcap2.tricolour.ca>
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhRkstDMjd5T3w+iOUDjzDAs1AOm0xd3p6v_xn6fNGYQhA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
+To: Paul Moore <paul@paul-moore.com>
 Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 19, 2018 at 9:23 PM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2018-04-18 20:39, Paul Moore wrote:
->> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
->> > Standalone audit records have the timestamp and serial number generated
->> > on the fly and as such are unique, making them standalone.  This new
->> > function audit_alloc_local() generates a local audit context that will
->> > be used only for a standalone record and its auxiliary record(s).  The
->> > context is discarded immediately after the local associated records are
->> > produced.
->> >
->> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
->> > ---
->> >  include/linux/audit.h |  8 ++++++++
->> >  kernel/auditsc.c      | 20 +++++++++++++++++++-
->> >  2 files changed, 27 insertions(+), 1 deletion(-)
->> >
->> > diff --git a/include/linux/audit.h b/include/linux/audit.h
->> > index ed16bb6..c0b83cb 100644
->> > --- a/include/linux/audit.h
->> > +++ b/include/linux/audit.h
->> > @@ -227,7 +227,9 @@ static inline int audit_log_container_info(struct audit_context *context,
->> >  /* These are defined in auditsc.c */
->> >                                 /* Public API */
->> >  extern int  audit_alloc(struct task_struct *task);
->> > +extern struct audit_context *audit_alloc_local(void);
->> >  extern void __audit_free(struct task_struct *task);
->> > +extern void audit_free_context(struct audit_context *context);
->> >  extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
->> >                                   unsigned long a2, unsigned long a3);
->> >  extern void __audit_syscall_exit(int ret_success, long ret_value);
->> > @@ -472,6 +474,12 @@ static inline int audit_alloc(struct task_struct *task)
->> >  {
->> >         return 0;
->> >  }
->> > +static inline struct audit_context *audit_alloc_local(void)
->> > +{
->> > +       return NULL;
->> > +}
->> > +static inline void audit_free_context(struct audit_context *context)
->> > +{ }
->> >  static inline void audit_free(struct task_struct *task)
->> >  { }
->> >  static inline void audit_syscall_entry(int major, unsigned long a0,
->> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
->> > index 2932ef1..7103d23 100644
->> > --- a/kernel/auditsc.c
->> > +++ b/kernel/auditsc.c
->> > @@ -959,8 +959,26 @@ int audit_alloc(struct task_struct *tsk)
->> >         return 0;
->> >  }
->> >
->> > -static inline void audit_free_context(struct audit_context *context)
->> > +struct audit_context *audit_alloc_local(void)
->> >  {
->> > +       struct audit_context *context;
->> > +
->> > +       if (!audit_ever_enabled)
->> > +               return NULL; /* Return if not auditing. */
->> > +
->> > +       context = audit_alloc_context(AUDIT_RECORD_CONTEXT);
->> > +       if (!context)
->> > +               return NULL;
->> > +       context->serial = audit_serial();
->> > +       context->ctime = current_kernel_time64();
->> > +       context->in_syscall = 1;
->> > +       return context;
->> > +}
->> > +
->> > +inline void audit_free_context(struct audit_context *context)
->> > +{
->> > +       if (!context)
->> > +               return;
->> >         audit_free_names(context);
->> >         unroll_tree_refs(context, NULL, 0);
->> >         free_tree_refs(context);
->>
->> I'm reserving the option to comment on this idea further as I make my
->> way through the patchset, but audit_free_context() definitely
->> shouldn't be declared as an inline function.
->
-> Ok, I think I follow.  When it wasn't exported, inline was fine, but now
-> that it has been exported, it should no longer be inlined ...
+On 2018-04-18 21:46, Paul Moore wrote:
+> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
+> > Audit events could happen in a network namespace outside of a task
+> > context due to packets received from the net that trigger an auditing
+> > rule prior to being associated with a running task.  The network
+> > namespace could in use by multiple containers by association to the
+> > tasks in that network namespace.  We still want a way to attribute
+> > these events to any potential containers.  Keep a list per network
+> > namespace to track these container identifiiers.
+> >
+> > Add/increment the container identifier on:
+> > - initial setting of the container id via /proc
+> > - clone/fork call that inherits a container identifier
+> > - unshare call that inherits a container identifier
+> > - setns call that inherits a container identifier
+> > Delete/decrement the container identifier on:
+> > - an inherited container id dropped when child set
+> > - process exit
+> > - unshare call that drops a net namespace
+> > - setns call that drops a net namespace
+> >
+> > See: https://github.com/linux-audit/audit-kernel/issues/32
+> > See: https://github.com/linux-audit/audit-testsuite/issues/64
+> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > ---
+> >  include/linux/audit.h       |  7 +++++++
+> >  include/net/net_namespace.h | 12 ++++++++++++
+> >  kernel/auditsc.c            |  9 ++++++---
+> >  kernel/nsproxy.c            |  6 ++++++
+> >  net/core/net_namespace.c    | 45 +++++++++++++++++++++++++++++++++++++++++++++
+> >  5 files changed, 76 insertions(+), 3 deletions(-)
+> 
+> ...
+> 
+> > diff --git a/include/net/net_namespace.h b/include/net/net_namespace.h
+> > index 0490084..343a428 100644
+> > --- a/include/net/net_namespace.h
+> > +++ b/include/net/net_namespace.h
+> > @@ -33,6 +33,7 @@
+> >  #include <linux/ns_common.h>
+> >  #include <linux/idr.h>
+> >  #include <linux/skbuff.h>
+> > +#include <linux/audit.h>
+> >
+> >  struct user_namespace;
+> >  struct proc_dir_entry;
+> > @@ -150,6 +151,7 @@ struct net {
+> >  #endif
+> >         struct sock             *diag_nlsk;
+> >         atomic_t                fnhe_genid;
+> > +       struct list_head        audit_containerid;
+> >  } __randomize_layout;
+> 
+> We talked about this briefly off-list, you should be using audit_net
+> and the net_generic mechanism instead of this.
+> 
+> >  #include <linux/seq_file_net.h>
+> > @@ -301,6 +303,16 @@ static inline struct net *read_pnet(const possible_net_t *pnet)
+> >  #define __net_initconst        __initconst
+> >  #endif
+> >
+> > +#ifdef CONFIG_NET_NS
+> > +void net_add_audit_containerid(struct net *net, u64 containerid);
+> > +void net_del_audit_containerid(struct net *net, u64 containerid);
+> > +#else
+> > +static inline void net_add_audit_containerid(struct net *, u64)
+> > +{ }
+> > +static inline void net_del_audit_containerid(struct net *, u64)
+> > +{ }
+> > +#endif
+> > +
+> >  int peernet2id_alloc(struct net *net, struct net *peer);
+> >  int peernet2id(struct net *net, struct net *peer);
+> >  bool peernet_has_id(struct net *net, struct net *peer);
+> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+> > index 2f02ed9..208da962 100644
+> > --- a/kernel/auditsc.c
+> > +++ b/kernel/auditsc.c
+> > @@ -75,6 +75,7 @@
+> >  #include <linux/uaccess.h>
+> >  #include <linux/fsnotify_backend.h>
+> >  #include <uapi/linux/limits.h>
+> > +#include <net/net_namespace.h>
+> >
+> >  #include "audit.h"
+> >
+> > @@ -2175,16 +2176,18 @@ static void audit_log_set_containerid(struct task_struct *task, u64 oldcontainer
+> >   */
+> >  int audit_set_containerid(struct task_struct *task, u64 containerid)
+> >  {
+> > -       u64 oldcontainerid;
+> > +       u64 oldcontainerid = audit_get_containerid(task);
+> >         int rc;
+> > -
+> > -       oldcontainerid = audit_get_containerid(task);
+> > +       struct net *net = task->nsproxy->net_ns;
+> >
+> >         rc = audit_set_containerid_perm(task, containerid);
+> >         if (!rc) {
+> > +               if (cid_valid(oldcontainerid))
+> > +                       net_del_audit_containerid(net, oldcontainerid);
+> 
+> Using audit_net we can handle this internal to audit, which is a Good Thing.
 
-Pretty much.  Based on a few comments I've seen by compiler folks over
-the years, my current thinking is that we shouldn't worry about
-explicit inlining static functions in C files (header files are a
-different story).  The basic idea being that the compiler almost
-always does a better job than us stupid developers.
+No problem, done.
 
-> ... or should use
-> an intermediate function name to export so that local uses of it can
-> remain inline.
+> >                 task_lock(task);
+> >                 task->containerid = containerid;
+> >                 task_unlock(task);
+> > +               net_add_audit_containerid(net, containerid);
+> 
+> Same.
+> 
+> >         }
+> >
+> >         audit_log_set_containerid(task, oldcontainerid, containerid, rc);
+> > diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+> > index f6c5d33..d9f1090 100644
+> > --- a/kernel/nsproxy.c
+> > +++ b/kernel/nsproxy.c
+> > @@ -140,6 +140,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
+> >         struct nsproxy *old_ns = tsk->nsproxy;
+> >         struct user_namespace *user_ns = task_cred_xxx(tsk, user_ns);
+> >         struct nsproxy *new_ns;
+> > +       u64 containerid = audit_get_containerid(tsk);
+> >
+> >         if (likely(!(flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+> >                               CLONE_NEWPID | CLONE_NEWNET |
+> > @@ -167,6 +168,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
+> >                 return  PTR_ERR(new_ns);
+> >
+> >         tsk->nsproxy = new_ns;
+> > +       net_add_audit_containerid(new_ns->net_ns, containerid);
+> >         return 0;
+> >  }
+> 
+> Hopefully we can handle this in audit_net_init(), we just need to
+> figure out where we can get the correct task_struct for the audit
+> container ID (some backpointer in the net struct?).
 
-Possibly, but my guess is that the compiler could (will?) do that by
-itself for code that lives in the same file.
+I don't follow.  This needs to happen on every task startup.
+audit_net_init() is only called when a new network namespace starts up.
 
--- 
-paul moore
-www.paul-moore.com
+> > @@ -217,6 +219,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
+> >  void switch_task_namespaces(struct task_struct *p, struct nsproxy *new)
+> >  {
+> >         struct nsproxy *ns;
+> > +       u64 containerid = audit_get_containerid(p);
+> >
+> >         might_sleep();
+> >
+> > @@ -224,6 +227,9 @@ void switch_task_namespaces(struct task_struct *p, struct nsproxy *new)
+> >         ns = p->nsproxy;
+> >         p->nsproxy = new;
+> >         task_unlock(p);
+> > +       net_del_audit_containerid(ns->net_ns, containerid);
+> > +       if (new)
+> > +               net_add_audit_containerid(new->net_ns, containerid);
+> 
+> Okay, we might need a hook here for switching namespaces, but I would
+> much rather it be a generic audit hook that calls directly into audit.
+
+Trivial, done.
+
+> paul moore
+
+- RGB
+
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
