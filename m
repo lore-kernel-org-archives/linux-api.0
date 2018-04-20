@@ -1,40 +1,43 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [REVIEW][PATCH 13/17] signal/powerpc: Replace FPE_FIXME with FPE_FLTUNK
-Date: Thu, 19 Apr 2018 20:04:04 -0500
-Message-ID: <20180420010408.24438-13-ebiederm@xmission.com>
+Subject: [REVIEW][PATCH 11/17] signal/alpha: Replace FPE_FIXME with FPE_FLTUNK
+Date: Thu, 19 Apr 2018 20:04:02 -0500
+Message-ID: <20180420010408.24438-11-ebiederm@xmission.com>
 References: <878t9ilmhv.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <878t9ilmhv.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-arch@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Paul Mackerras <paulus@samba.org>, Kumar Gala <kumar.gala@freescale.com>, Michael Ellerman <mpe@ellerman.id.au>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, linuxppc-dev@lists.ozlabs.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Helge Deller <deller@gmx.de>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, linux-alpha@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Using an si_code of 0 that aliases with SI_USER is clearly the
-wrong thing todo, and causes problems in interesting ways.
+Using an si_code of 0 that aliases with SI_USER is clearly the wrong
+thing todo, and causes problems in interesting ways.
 
-The newly defined FPE_FLTUNK semantically appears to fit the
-bill so use it instead.
+The newly defined FPE_FLTUNK semantically appears to fit the bill so
+use it instead.
 
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: Kumar Gala <kumar.gala@freescale.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc:  linuxppc-dev@lists.ozlabs.org
-Fixes: 9bad068c24d7 ("[PATCH] ppc32: support for e500 and 85xx")
-Fixes: 0ed70f6105ef ("PPC32: Provide proper siginfo information on various exceptions.")
+Given recent experience in this area odds are it will not break
+anything.  Fixing it removes a hazard to kernel maintenance.
+
+Cc: Helge Deller <deller@gmx.de>
+Cc: Richard Henderson <rth@twiddle.net>
+Cc: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
+Cc: Matt Turner <mattst88@gmail.com>
+Cc: linux-alpha@vger.kernel.org
 History Tree: https://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
+Fixes: 0a635c7a84cf ("Fill in siginfo_t.")
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/powerpc/include/uapi/asm/siginfo.h | 7 -------
- arch/powerpc/kernel/traps.c             | 6 +++---
- 2 files changed, 3 insertions(+), 10 deletions(-)
+ arch/alpha/include/uapi/asm/siginfo.h | 7 -------
+ arch/alpha/kernel/osf_sys.c           | 2 +-
+ arch/alpha/kernel/traps.c             | 2 +-
+ 3 files changed, 2 insertions(+), 9 deletions(-)
 
-diff --git a/arch/powerpc/include/uapi/asm/siginfo.h b/arch/powerpc/include/uapi/asm/siginfo.h
-index 9f142451a01f..0437afc9ef3c 100644
---- a/arch/powerpc/include/uapi/asm/siginfo.h
-+++ b/arch/powerpc/include/uapi/asm/siginfo.h
-@@ -15,13 +15,6 @@
+diff --git a/arch/alpha/include/uapi/asm/siginfo.h b/arch/alpha/include/uapi/asm/siginfo.h
+index 0cf3b527b274..3ebbb1e17902 100644
+--- a/arch/alpha/include/uapi/asm/siginfo.h
++++ b/arch/alpha/include/uapi/asm/siginfo.h
+@@ -7,13 +7,6 @@
  
  #include <asm-generic/siginfo.h>
  
@@ -48,36 +51,31 @@ index 9f142451a01f..0437afc9ef3c 100644
  /*
   * SIGTRAP si_codes
   */
-diff --git a/arch/powerpc/kernel/traps.c b/arch/powerpc/kernel/traps.c
-index 087855caf6a9..fdf9400beec8 100644
---- a/arch/powerpc/kernel/traps.c
-+++ b/arch/powerpc/kernel/traps.c
-@@ -1031,7 +1031,7 @@ static void emulate_single_step(struct pt_regs *regs)
+diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
+index f5f154942aab..bb3619118926 100644
+--- a/arch/alpha/kernel/osf_sys.c
++++ b/arch/alpha/kernel/osf_sys.c
+@@ -872,7 +872,7 @@ SYSCALL_DEFINE5(osf_setsysinfo, unsigned long, op, void __user *, buffer,
+ 		fex = (exc >> IEEE_STATUS_TO_EXCSUM_SHIFT) & swcr;
+  		if (fex) {
+ 			siginfo_t info;
+-			int si_code = FPE_FIXME;
++			int si_code = FPE_FLTUNK;
  
- static inline int __parse_fpscr(unsigned long fpscr)
- {
--	int ret = FPE_FIXME;
-+	int ret = FPE_FLTUNK;
+ 			if (fex & IEEE_TRAP_ENABLE_DNO) si_code = FPE_FLTUND;
+ 			if (fex & IEEE_TRAP_ENABLE_INE) si_code = FPE_FLTRES;
+diff --git a/arch/alpha/kernel/traps.c b/arch/alpha/kernel/traps.c
+index 91636765dd6d..422b676b28f2 100644
+--- a/arch/alpha/kernel/traps.c
++++ b/arch/alpha/kernel/traps.c
+@@ -328,7 +328,7 @@ do_entIF(unsigned long type, struct pt_regs *regs)
+ 			break;
+ 		case GEN_ROPRAND:
+ 			signo = SIGFPE;
+-			code = FPE_FIXME;
++			code = FPE_FLTUNK;
+ 			break;
  
- 	/* Invalid operation */
- 	if ((fpscr & FPSCR_VE) && (fpscr & FPSCR_VX))
-@@ -1972,7 +1972,7 @@ void SPEFloatingPointException(struct pt_regs *regs)
- 	extern int do_spe_mathemu(struct pt_regs *regs);
- 	unsigned long spefscr;
- 	int fpexc_mode;
--	int code = FPE_FIXME;
-+	int code = FPE_FLTUNK;
- 	int err;
- 
- 	flush_spe_to_thread(current);
-@@ -2041,7 +2041,7 @@ void SPEFloatingPointRoundException(struct pt_regs *regs)
- 		printk(KERN_ERR "unrecognized spe instruction "
- 		       "in %s at %lx\n", current->comm, regs->nip);
- 	} else {
--		_exception(SIGFPE, regs, FPE_FIXME, regs->nip);
-+		_exception(SIGFPE, regs, FPE_FLTUNK, regs->nip);
- 		return;
- 	}
- }
+ 		case GEN_DECOVF:
 -- 
 2.14.1
