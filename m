@@ -1,52 +1,78 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] x86: ipc: fix x32 version of shmid64_ds and
-	msqid64_ds
-Date: Fri, 20 Apr 2018 16:38:29 +0200
-Message-ID: <CAK8P3a0nL4B+t6BMRhr36RrZ_jDgwnY1BviNPD+cFzsUGeppmA@mail.gmail.com>
-References: <CAK8P3a3qAoR1afmTTK1CAp1L81dzwtBL+SKj=QMqD=dBr_8oRQ@mail.gmail.com>
- <20180420130346.3178914-1-arnd@arndb.de>
- <CAH8yC8mnfNnG86kgjnfwiZJ0=qN+w=5PVcLcxddaJdDtYbSanA@mail.gmail.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [RFC PATCH ghak32 V2 10/13] audit: add containerid support for
+ seccomp and anom_abend records
+Date: Fri, 20 Apr 2018 12:11:09 -0400
+Message-ID: <CAHC9VhS+QgCqdSvZuBY_wTqGK245BY8txFUugy=bx9K5aSroCQ@mail.gmail.com>
+References: <cover.1521179281.git.rgb@redhat.com> <11174597083f89352f1d6491ec94e27f882625d9.1521179281.git.rgb@redhat.com>
+ <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com> <20180420004218.tgndd474wgueyjzk@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <CAH8yC8mnfNnG86kgjnfwiZJ0=qN+w=5PVcLcxddaJdDtYbSanA@mail.gmail.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Jeffrey Walton <noloader@gmail.com>
-Cc: "open list:RALINK MIPS ARCHITECTURE" <linux-mips@linux-mips.org>, Adam Borowski <kilobyte@angband.pl>, James Hogan <jhogan@kernel.org>, Will Deacon <will.deacon@arm.com>, Albert ARIBAUD <albert.aribaud@3adev.fr>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, the arch/x86 maintainers <x86@kernel.org>, Ingo Molnar <mingo@redhat.com>, tg@mirbsd.de, Catalin Marinas <catalin.marinas@arm.com>, Ben Hutchings <ben@decadent.org.uk>, "H . J . Lu" <hjl.tools@gmail.com>, Daniel Schepler <dschepler@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>, Thomas Gleixner <tglx@linutronix.de>, GNU C Library <libc-alpha@sourceware.org>, Linux
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180420004218.tgndd474wgueyjzk@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: simo@redhat.com, jlayton@redhat.com, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, cgroups@vger.kernel.org, serge@hallyn.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCBBcHIgMjAsIDIwMTggYXQgMzo1MyBQTSwgSmVmZnJleSBXYWx0b24gPG5vbG9hZGVy
-QGdtYWlsLmNvbT4gd3JvdGU6Cj4+ICsjaWYgIWRlZmluZWQoX194ODZfNjRfXykgfHwgIWRlZmlu
-ZWQoX19pbHAzMl9fKQo+PiAgI2luY2x1ZGUgPGFzbS1nZW5lcmljL21zZ2J1Zi5oPgo+PiArI2Vs
-c2UKPgo+IEkgdW5kZXJzdGFuZCB0aGVyZSdzIHNvbWUgcHJvZ3Jlc3MgaGF2aW5nIENsYW5nIGNv
-bXBpbGUgdGhlIGtlcm5lbC4KPiBDbGFuZyB0cmVhdHMgX19JTFAzMl9fIGFuZCBmcmllbmRzIGRp
-ZmZlcmVudGx5IHRoYW4gR0NDLiBJIGJlbGlldmUKPiBJTFAzMiBzaG93cyB1cCBqdXN0IGFib3V0
-IGV2ZXJ5d2hlcmUgdGhlcmUgYXJlIDMyLWJpdCBpbnRzLCBsb25ncyBhbmQKPiBwb2ludGVycy4g
-WW91IG1pZ2h0IGZpbmQgaXQgb24gQWFyY2g2NCBvciB5b3UgbWlnaHQgZmluZCBpdCBvbiBNSVBT
-NjQKPiB3aGVuIHVzaW5nIENsYW5nLgo+Cj4gSSB0aGluayB0aGF0IG1lYW5zIHRoaXMgbWF5IGJl
-IGEgbGl0dGxlIHN1c3BpY2lvdXM6Cj4KPiAgICAgPiArI2lmICFkZWZpbmVkKF9feDg2XzY0X18p
-IHx8ICFkZWZpbmVkKF9faWxwMzJfXykKPgo+IEkga2luZCBvZiBmZWx0IExMVk0gd2FzIHdhbmRl
-cmluZyBhd2F5IGZyb20gdGhlIHgzMiBBQkksIGJ1dCB0aGUgTExWTQo+IGRldnMgaW5zaXN0ZWQg
-dGhleSB3ZXJlIHdpdGhpbiB0aGVpciBwdXJ2aWV3LiBBbHNvIHNlZQo+IGh0dHBzOi8vbGlzdHMu
-bGx2bS5vcmcvcGlwZXJtYWlsL2NmZS1kZXYvMjAxNS1EZWNlbWJlci8wNDYzMDAuaHRtbC4KPgo+
-IFNvcnJ5IGFib3V0IHRoZSB0b3AtcG9zdC4gSSBqdXN0IHdhbnRlZCB0byBwaWNrIG91dCB0aGF0
-IG9uZSBwaWVjZS4KCkl0IHNlZW1zIEkgbWFkZSBhIHR5cG8gYW5kIGl0IG5lZWRzIHRvIGJlIF9f
-SUxQMzJfXyByYXRoZXIgdGhhbgpfX2lscDMyX18gKGNvcnJlY3RlZCB0aGF0IGxvY2FsbHksIHdp
-bGwgcmVzZW5kIG9uY2Ugd2UgaGF2ZSByZXNvbHZlZAp0aGlzKS4KCkFzaWRlIGZyb20gdGhhdCwg
-dGhlICNpZiBjaGVjayBzZWVtcyB0byBiZSBjb3JyZWN0IHRvIG1lOiB0aGlzCmlzIGFuIHg4Ni1z
-cGVjaWZpYyBoZWFkZXIsIHNvIGl0IHdvbid0IGV2ZXIgYmUgc2VlbiBvbiBvdGhlcgphcmNoaXRl
-Y3R1cmVzLiBPbiB4ODYtMzIsIF9feDg2XzY0X18gaXNuJ3Qgc2V0LCBzbyB3ZSBkb24ndCBjYXJl
-CmFib3V0IHdoZXRoZXIgX19pbHAzMl9fIGlzIHNldCBvciBub3QsIGFuZCBvbiB4ODYtNjQgKGxw
-NjQpLApfX2lscDMyX18gaXMgbmV2ZXIgc2V0LCBzbyB3ZSBzdGlsbCBnZXQgdGhlIGFzbS1nZW5l
-cmljIGhlYWRlci4KCiAgICAgIEFybmQKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcK
-aHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8veTIwMzgK
+On Thu, Apr 19, 2018 at 8:42 PM, Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2018-04-18 21:31, Paul Moore wrote:
+>> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
+>> > Add container ID auxiliary records to secure computing and abnormal end
+>> > standalone records.
+>> >
+>> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+>> > ---
+>> >  kernel/auditsc.c | 10 ++++++++--
+>> >  1 file changed, 8 insertions(+), 2 deletions(-)
+>> >
+>> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+>> > index 7103d23..2f02ed9 100644
+>> > --- a/kernel/auditsc.c
+>> > +++ b/kernel/auditsc.c
+>> > @@ -2571,6 +2571,7 @@ static void audit_log_task(struct audit_buffer *ab)
+>> >  void audit_core_dumps(long signr)
+>> >  {
+>> >         struct audit_buffer *ab;
+>> > +       struct audit_context *context = audit_alloc_local();
+>>
+>> Looking quickly at do_coredump() I *believe* we can use current here.
+>>
+>> >         if (!audit_enabled)
+>> >                 return;
+>> > @@ -2578,19 +2579,22 @@ void audit_core_dumps(long signr)
+>> >         if (signr == SIGQUIT)   /* don't care for those */
+>> >                 return;
+>> >
+>> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_ANOM_ABEND);
+>> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_ANOM_ABEND);
+>> >         if (unlikely(!ab))
+>> >                 return;
+>> >         audit_log_task(ab);
+>> >         audit_log_format(ab, " sig=%ld res=1", signr);
+>> >         audit_log_end(ab);
+>> > +       audit_log_container_info(context, "abend", audit_get_containerid(current));
+>> > +       audit_free_context(context);
+>> >  }
+>> >
+>> >  void __audit_seccomp(unsigned long syscall, long signr, int code)
+>> >  {
+>> >         struct audit_buffer *ab;
+>> > +       struct audit_context *context = audit_alloc_local();
+>>
+>> We can definitely use current here.
+>
+> Ok, so both syscall aux records.  That elimintes this patch from the
+> set, can go in independently.
+
+Yep.  It should help shrink the audit container ID patchset and
+perhaps more importantly it should put some distance between the
+connected-record debate and the audit container ID debate.
+
+I understand we are going to need a "local" context for some things,
+the network packets are probably the best example, but whenever
+possible I would like to connect these records back to a task's
+context.
+
+-- 
+paul moore
+www.paul-moore.com
