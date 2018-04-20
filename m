@@ -1,84 +1,99 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH v3 01/17] y2038: asm-generic: Extend sysvipc data structures
-Date: Thu, 19 Apr 2018 17:12:46 -0500
-Message-ID: <87k1t2n8v5.fsf@xmission.com>
-References: <20180419143737.606138-1-arnd@arndb.de>
-        <20180419143737.606138-2-arnd@arndb.de> <87efjbnswr.fsf@xmission.com>
-        <CAK8P3a196QYoM1egagMuZw4WhiwRiO83Qpj0CxoCeVQBEaj-gw@mail.gmail.com>
-        <CAK8P3a2KR+0ZE5jHSmO6pSuiRPH83p75KetuQuHL1atChcTJGA@mail.gmail.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 10/13] audit: add containerid support for
+ seccomp and anom_abend records
+Date: Thu, 19 Apr 2018 20:42:18 -0400
+Message-ID: <20180420004218.tgndd474wgueyjzk@madcap2.tricolour.ca>
+References: <cover.1521179281.git.rgb@redhat.com>
+ <11174597083f89352f1d6491ec94e27f882625d9.1521179281.git.rgb@redhat.com>
+ <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a2KR+0ZE5jHSmO6pSuiRPH83p75KetuQuHL1atChcTJGA@mail.gmail.com>
-        (Arnd Bergmann's message of "Thu, 19 Apr 2018 23:24:36 +0200")
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhS6MKoLkzpfcmYBSNnvrtbL2FOF5PX9uOfivSVEWykkQg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, GNU C Library <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Albert ARIBAUD <albert.aribaud@3adev.fr>, linux-s390 <linux-s390@vger.kernel.org>, Martin Schwidefsky <schwidefsky@de.ibm.com>, the arch/x86 maintainers <x86@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, "open list:RALINK MIPS ARCHITECTURE" <linux-mips@linux-mips.org>, James Hogan <jhogan@kernel.org>, Ralf Baechle <ralf@linux-mips.org>, linuxppc-dev <linuxppc-dev@lists>
+To: Paul Moore <paul@paul-moore.com>
+Cc: simo@redhat.com, jlayton@redhat.com, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, Eric Paris <eparis@parisplace.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, cgroups@vger.kernel.org, serge@hallyn.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-Arnd Bergmann <arnd@arndb.de> writes:
+On 2018-04-18 21:31, Paul Moore wrote:
+> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
+> > Add container ID auxiliary records to secure computing and abnormal end
+> > standalone records.
+> >
+> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > ---
+> >  kernel/auditsc.c | 10 ++++++++--
+> >  1 file changed, 8 insertions(+), 2 deletions(-)
+> >
+> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+> > index 7103d23..2f02ed9 100644
+> > --- a/kernel/auditsc.c
+> > +++ b/kernel/auditsc.c
+> > @@ -2571,6 +2571,7 @@ static void audit_log_task(struct audit_buffer *ab)
+> >  void audit_core_dumps(long signr)
+> >  {
+> >         struct audit_buffer *ab;
+> > +       struct audit_context *context = audit_alloc_local();
+> 
+> Looking quickly at do_coredump() I *believe* we can use current here.
+> 
+> >         if (!audit_enabled)
+> >                 return;
+> > @@ -2578,19 +2579,22 @@ void audit_core_dumps(long signr)
+> >         if (signr == SIGQUIT)   /* don't care for those */
+> >                 return;
+> >
+> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_ANOM_ABEND);
+> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_ANOM_ABEND);
+> >         if (unlikely(!ab))
+> >                 return;
+> >         audit_log_task(ab);
+> >         audit_log_format(ab, " sig=%ld res=1", signr);
+> >         audit_log_end(ab);
+> > +       audit_log_container_info(context, "abend", audit_get_containerid(current));
+> > +       audit_free_context(context);
+> >  }
+> >
+> >  void __audit_seccomp(unsigned long syscall, long signr, int code)
+> >  {
+> >         struct audit_buffer *ab;
+> > +       struct audit_context *context = audit_alloc_local();
+> 
+> We can definitely use current here.
 
-> On Thu, Apr 19, 2018 at 5:20 PM, Arnd Bergmann <arnd@arndb.de> wrote:
->> On Thu, Apr 19, 2018 at 4:59 PM, Eric W. Biederman <ebiederm@xmission.com> wrote:
->>> I suspect you want to use __kernel_ulong_t here instead of a raw
->>> unsigned long.  If nothing else it seems inconsistent to use typedefs
->>> in one half of the structure and no typedefs in the other half.
->>
->> Good catch, there is definitely something wrong here, but I think using
->> __kernel_ulong_t for all members would also be wrong, as that
->> still changes the layout on x32, which effectively is
->>
->> struct msqid64_ds {
->>      ipc64_perm msg_perm;
->>      u64 msg_stime;
->>      u32 __unused1;
->>      /* 32 bit implict padding */
->>      u64 msg_rtime;
->>      u32 __unused2;
->>      /* 32 bit implict padding */
->>      u64 msg_ctime;
->>      u32 __unused3;
->>      /* 32 bit implict padding */
->>      __kernel_pid_t          shm_cpid;       /* pid of creator */
->>      __kernel_pid_t          shm_lpid;       /* pid of last operator */
->>      ....
->> };
->>
->> The choices here would be to either use a mix of
->> __kernel_ulong_t and unsigned long, or taking the x32
->> version back into arch/x86/include/uapi/asm/ so the
->> generic version at least makes some sense.
->>
->> I can't use __kernel_time_t for the lower half on 32-bit
->> since it really should be unsigned.
->
-> After thinking about it some more, I conclude that the structure is simply
-> incorrect on x32: The __kernel_ulong_t usage was introduced in 2013
-> in commit b9cd5ca22d67 ("uapi: Use __kernel_ulong_t in struct
-> msqid64_ds") and apparently was correct initially as __BITS_PER_LONG
-> evaluated to 64, but it broke with commit f4b4aae18288 ("x86/headers/uapi:
-> Fix __BITS_PER_LONG value for x32 builds") that changed the value
-> of __BITS_PER_LONG and introduced the extra padding in 2015.
->
-> The same change apparently also broke a lot of other definitions, e.g.
->
-> $ echo "#include <linux/types.h>" | gcc -mx32 -E -xc - | grep -A3
-> __kernel_size_t
-> typedef unsigned int __kernel_size_t;
-> typedef int __kernel_ssize_t;
-> typedef int __kernel_ptrdiff_t;
->
-> Those used to be defined as 'unsigned long long' and 'long long'
-> respectively, so now all kernel interfaces using those on x32
-> became incompatible!
+Ok, so both syscall aux records.  That elimintes this patch from the
+set, can go in independently.
 
-That seems like a real mess.
+> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_SECCOMP);
+> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_SECCOMP);
+> >         if (unlikely(!ab))
+> >                 return;
+> >         audit_log_task(ab);
+> > @@ -2598,6 +2602,8 @@ void __audit_seccomp(unsigned long syscall, long signr, int code)
+> >                          signr, syscall_get_arch(), syscall,
+> >                          in_compat_syscall(), KSTK_EIP(current), code);
+> >         audit_log_end(ab);
+> > +       audit_log_container_info(context, "seccomp", audit_get_containerid(current));
+> > +       audit_free_context(context);
+> >  }
+> >
+> >  struct list_head *audit_killed_trees(void)
+> 
+> -- 
+> paul moore
+> www.paul-moore.com
+> 
+> --
+> Linux-audit mailing list
+> Linux-audit@redhat.com
+> https://www.redhat.com/mailman/listinfo/linux-audit
 
-Is this just for the uapi header as seen by userspace?  I expect we are
-using the a normal kernel interface with 64bit longs and 64bit pointers
-when we build the kernel.
+- RGB
 
-If this is just a header as seen from userspace mess it seems
-unfortunate but fixable.
-
-Eric
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
