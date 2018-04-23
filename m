@@ -1,97 +1,74 @@
-From: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
-Date: Mon, 23 Apr 2018 10:37:02 -0700
-Message-ID: <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
-References: <152286911105.615669.14053871624892399807.stgit@buzz>
- <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
- <87h8oqhagl.fsf@xmission.com>
- <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH net-next 0/4] mm,tcp: provide mmap_hook to solve lockdep
+ issue
+Date: Mon, 23 Apr 2018 14:14:33 -0700
+Message-ID: <9ed6083f-d731-945c-dbcd-f977c5600b03@kernel.org>
+References: <20180420155542.122183-1-edumazet@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+In-Reply-To: <20180420155542.122183-1-edumazet@google.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Eric Dumazet <edumazet@google.com>, "David S . Miller" <davem@davemloft.net>
+Cc: netdev <netdev@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Soheil Hassas Yeganeh <soheil@google.com>, Eric Dumazet <eric.dumazet@gmail.com>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On 04/20/2018 08:55 AM, Eric Dumazet wrote:
+> This patch series provide a new mmap_hook to fs willing to grab
+> a mutex before mm->mmap_sem is taken, to ensure lockdep sanity.
+> 
+> This hook allows us to shorten tcp_mmap() execution time (while mmap_sem
+> is held), and improve multi-threading scalability.
+> 
 
+I think that the right solution is to rework mmap() on TCP sockets a 
+bit.  The current approach in net-next is very strange for a few reasons:
 
-On 04/05/2018 12:02 AM, Konstantin Khlebnikov wrote:
-> On 05.04.2018 01:29, Eric W. Biederman wrote:
->> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
->>
->>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
->>>> Each process have different pids, one for each pid namespace it 
->>>> belongs.
->>>> When interaction happens within single pid-ns translation isn't 
->>>> required.
->>>> More complicated scenarios needs special handling.
->>>>
->>>> For example:
->>>> - reading pid-files or logs written inside container with pid 
->>>> namespace
->>>> - attaching with ptrace to tasks from different pid namespace
->>>> - passing pids across pid namespaces in any kind of API
->>>>
->>>> Currently there are several interfaces that could be used here:
->>>>
->>>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
->>
->> Using the inode number in interfaces is not an option. Especially not
->> withou referencing the device number for the filesystem as well.
->
-> This is supposed to be single-instance fs,
-> not part of proc but referenced but its magic "symlinks".
->
-> Device numbers are not mentioned in "man namespaces".
->
->>
->>>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
->>>> In some cases conversion pid -> vpid could be easily done using this
->>>> information, but backward translation requires scanning all tasks.
->>>>
->>>> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
->>>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
->>>> into pid namespace, this expose process and could be insecure.
->>>>
->>>> This patch adds new syscall for converting pids between pid 
->>>> namespaces:
->>>>
->>>> pid_t translate_pid(pid_t pid, int source_type, int source,
->>>>                                  int target_type, int target);
->>>>
->>>> @source_type and @target_type defines type of following arguments:
->>>>
->>>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is 
->>>> unused
->>>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
->>>
->>> I believe using pid to represent the namespace has been already
->>> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
->>> after which we moved on to fd based version of this interface.
->>
->> Or in short why is the case of pids important?
->>
->> You Konstantin you almost said why they were important in your message
->> saying you were going to send this one.  However you don't explain in
->> your description why you want to identify pid namespaces by pid.
->>
->
-> Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
-> pid based variant doesn't have such restrictions.
+1. It uses mmap() as an operation that has side effects besides just 
+creating a mapping.  If nothing else, it's surprising, since mmap() 
+doesn't usually do that.  But it's also causing problems like what 
+you're seeing.
 
-Can you provide more information on usecase requiring PID translation 
-but not used for tracing related purposes?
-On a side note, can we have the types TRANSLATE_PID_CURRENT_PIDNS and 
-TRANSLATE_PID_FD_PIDNS integrated first and then possibly extend the 
-interface to include TRANSLATE_PID_TASK_PIDNS in future?
+2. The performance is worse than it needs to be.  mmap() is slow, and I 
+doubt you'll find many mm developers who consider this particular abuse 
+of mmap() to be a valid thing to optimize for.
 
-Thanks,
-Nagarathnam.
-> Most pid-based syscalls are racy in some cases but they are
-> here for decades and everybody knowns how to deal with it.
-> So, I've decided to merge both worlds in one interface which clearly 
-> tells what to expect.
+3. I'm not at all convinced the accounting is sane.  As far as I can 
+tell, you're allowing unprivileged users to increment the count on 
+network-owned pages, limited only by available virtual memory, without 
+obviously charging it to the socket buffer limits.  It looks like a 
+program that simply forgot to call munmap() would cause the system to 
+run out of memory, and I see no reason to expect the OOM killer to have 
+any real chance of killing the right task.
+
+4. Error handling sucks.  If I try to mmap() a large range (which is the 
+whole point -- using a small range will kill performance) and not quite 
+all of it can be mapped, then I waste a bunch of time in the kernel and 
+get *none* of the range mapped.
+
+I would suggest that you rework the interface a bit.  First a user would 
+call mmap() on a TCP socket, which would create an empty VMA.  (It would 
+set vm_ops to point to tcp_vm_ops or similar so that the TCP code could 
+recognize it, but it would have no effect whatsoever on the TCP state 
+machine.  Reading the VMA would get SIGBUS.)  Then a user would call a 
+new ioctl() or setsockopt() function and pass something like:
+
+struct tcp_zerocopy_receive {
+   void *address;
+   size_t length;
+};
+
+The kernel would verify that [address, address+length) is entirely 
+inside a single TCP VMA and then would do the vm_insert_range magic.  On 
+success, length is changed to the length that actually got mapped.  The 
+kernel could do this while holding mmap_sem for *read*, and it could get 
+the lock ordering right.  If and when mm range locks ever get merged, it 
+could switch to using a range lock.
+
+Then you could use MADV_DONTNEED or another ioctl/setsockopt to zap the 
+part of the mapping that you're done with.
+
+Does this seem reasonable?  It should involve very little code change, 
+it will run faster, it will scale better, and it is much less weird IMO.
