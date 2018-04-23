@@ -1,189 +1,97 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH 2/3] mm: add find_alloc_contig_pages() interface
-Date: Sun, 22 Apr 2018 21:22:07 -0700
-Message-ID: <fc28bcb7-8f9a-e841-0fdf-8636523ebc2a@oracle.com>
-References: <20180417020915.11786-1-mike.kravetz@oracle.com>
- <20180417020915.11786-3-mike.kravetz@oracle.com>
- <20180423000943.GO17484@dhcp22.suse.cz>
+From: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
+Date: Mon, 23 Apr 2018 10:37:02 -0700
+Message-ID: <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
+References: <152286911105.615669.14053871624892399807.stgit@buzz>
+ <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
+ <87h8oqhagl.fsf@xmission.com>
+ <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180423000943.GO17484@dhcp22.suse.cz>
+In-Reply-To: <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Reinette Chatre <reinette.chatre@intel.com>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, Vlastimil Babka <vbabka@suse.cz>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/22/2018 05:09 PM, Michal Hocko wrote:
-> On Mon 16-04-18 19:09:14, Mike Kravetz wrote:
-> [...]
->> @@ -2010,9 +2011,13 @@ static __always_inline struct page *__rmqueue_cma_fallback(struct zone *zone,
->>  {
->>  	return __rmqueue_smallest(zone, order, MIGRATE_CMA);
->>  }
->> +#define contig_alloc_migratetype_ok(migratetype) \
->> +	((migratetype) == MIGRATE_CMA || (migratetype) == MIGRATE_MOVABLE)
->>  #else
->>  static inline struct page *__rmqueue_cma_fallback(struct zone *zone,
->>  					unsigned int order) { return NULL; }
->> +#define contig_alloc_migratetype_ok(migratetype) \
->> +	((migratetype) == MIGRATE_MOVABLE)
->>  #endif
->>  
->>  /*
->> @@ -7822,6 +7827,9 @@ int alloc_contig_range(unsigned long start, unsigned long end,
->>  	};
->>  	INIT_LIST_HEAD(&cc.migratepages);
->>  
->> +	if (!contig_alloc_migratetype_ok(migratetype))
->> +		return -EINVAL;
->> +
+
+
+On 04/05/2018 12:02 AM, Konstantin Khlebnikov wrote:
+> On 05.04.2018 01:29, Eric W. Biederman wrote:
+>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
 >>
->>  	/*
->>  	 * What we do here is we mark all pageblocks in range as
->>  	 * MIGRATE_ISOLATE.  Because pageblock and max order pages may
->> @@ -7912,8 +7920,9 @@ int alloc_contig_range(unsigned long start, unsigned long end,
->>  
->>  	/* Make sure the range is really isolated. */
->>  	if (test_pages_isolated(outer_start, end, false)) {
->> -		pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
->> -			__func__, outer_start, end);
->> +		if (!(migratetype == MIGRATE_MOVABLE)) /* only print for CMA */
->> +			pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
->> +				__func__, outer_start, end);
->>  		ret = -EBUSY;
->>  		goto done;
->>  	}
-> 
-> This probably belongs to a separate patch. I would be tempted to say
-> that we should get rid of this migratetype thingy altogether. I confess
-> I have forgot everything about why this is required actually but it is
-> ugly as hell. Not your fault of course.
-> 
->> @@ -7949,6 +7958,82 @@ void free_contig_range(unsigned long pfn, unsigned long nr_pages)
->>  	}
->>  	WARN(count != 0, "%ld pages are still in use!\n", count);
->>  }
->> +
->> +static bool contig_pfn_range_valid(struct zone *z, unsigned long start_pfn,
->> +					unsigned long nr_pages)
->> +{
->> +	unsigned long i, end_pfn = start_pfn + nr_pages;
->> +	struct page *page;
->> +
->> +	for (i = start_pfn; i < end_pfn; i++) {
->> +		if (!pfn_valid(i))
->> +			return false;
->> +
->> +		page = pfn_to_page(i);
-> 
-> It believe we want pfn_to_online_page here. The old giga pages code is
-> buggy in that regard but nothing really critical because the
-> alloc_contig_range will notice that.
+>>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
+>>>> Each process have different pids, one for each pid namespace it 
+>>>> belongs.
+>>>> When interaction happens within single pid-ns translation isn't 
+>>>> required.
+>>>> More complicated scenarios needs special handling.
+>>>>
+>>>> For example:
+>>>> - reading pid-files or logs written inside container with pid 
+>>>> namespace
+>>>> - attaching with ptrace to tasks from different pid namespace
+>>>> - passing pids across pid namespaces in any kind of API
+>>>>
+>>>> Currently there are several interfaces that could be used here:
+>>>>
+>>>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
+>>
+>> Using the inode number in interfaces is not an option. Especially not
+>> withou referencing the device number for the filesystem as well.
+>
+> This is supposed to be single-instance fs,
+> not part of proc but referenced but its magic "symlinks".
+>
+> Device numbers are not mentioned in "man namespaces".
+>
+>>
+>>>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
+>>>> In some cases conversion pid -> vpid could be easily done using this
+>>>> information, but backward translation requires scanning all tasks.
+>>>>
+>>>> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
+>>>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+>>>> into pid namespace, this expose process and could be insecure.
+>>>>
+>>>> This patch adds new syscall for converting pids between pid 
+>>>> namespaces:
+>>>>
+>>>> pid_t translate_pid(pid_t pid, int source_type, int source,
+>>>>                                  int target_type, int target);
+>>>>
+>>>> @source_type and @target_type defines type of following arguments:
+>>>>
+>>>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is 
+>>>> unused
+>>>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
+>>>
+>>> I believe using pid to represent the namespace has been already
+>>> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
+>>> after which we moved on to fd based version of this interface.
+>>
+>> Or in short why is the case of pids important?
+>>
+>> You Konstantin you almost said why they were important in your message
+>> saying you were going to send this one.  However you don't explain in
+>> your description why you want to identify pid namespaces by pid.
+>>
+>
+> Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
+> pid based variant doesn't have such restrictions.
 
-Ok
+Can you provide more information on usecase requiring PID translation 
+but not used for tracing related purposes?
+On a side note, can we have the types TRANSLATE_PID_CURRENT_PIDNS and 
+TRANSLATE_PID_FD_PIDNS integrated first and then possibly extend the 
+interface to include TRANSLATE_PID_TASK_PIDNS in future?
 
-> Also do we want to check other usual suspects? E.g. PageReserved? And
-> generally migrateable pages if page count > 0. Or do we want to leave
-> everything to the alloc_contig_range?
-
-I think you proposed something like the above with limited checking at
-some time in the past.  In my testing, allocations were more likely to
-succeed if we did limited testing here and let alloc_contig_range take
-a shot at migration/allocation.  There really are two ways to approach
-this, do as much checking up front or let it be handled by alloc_contig_range.
-
->> +
->> +		if (page_zone(page) != z)
->> +			return false;
->> +
->> +	}
->> +
->> +	return true;
->> +}
->> +
->> +/**
->> + * find_alloc_contig_pages() -- attempt to find and allocate a contiguous
->> + *				range of pages
->> + * @order:	number of pages
->> + * @gfp:	gfp mask used to limit search as well as during compaction
->> + * @nid:	target node
->> + * @nodemask:	mask of other possible nodes
->> + *
->> + * Pages can be freed with a call to free_contig_pages(), or by manually
->> + * calling __free_page() for each page allocated.
->> + *
->> + * Return: pointer to 'order' pages on success, or NULL if not successful.
->> + */
->> +struct page *find_alloc_contig_pages(unsigned int order, gfp_t gfp,
->> +					int nid, nodemask_t *nodemask)
-> 
-> Vlastimil asked about this but I would even say that we do not want to
-> make this order based. Why would we want to restrict the api to 2^order
-> sizes in the first place? What if somebody wants to allocate 123 pages?
-
-After Vlastimil's question and again here, I realized that this routine
-has a HUGE gap.  For allocation sizes less than MAX_ORDER, it should be
-using the traditional paga allocation routines.  It is only when allocation
-size is greater than MAX_ORDER that we need to call into alloc_contig_range.
-
-Unless I am missing something, calls to alloc_contig range need to have
-a size that is a multiple of page block.  This is because isolation needs
-to take place at a page block level.  We can easily 'round up' and release
-excess pages.
-
-Using number of pages instead of order makes sense.   I will rewrite with
-this in mind as well as taking the other issues into account.
-
-> 
->> +{
->> +	unsigned long pfn, nr_pages, flags;
->> +	struct page *ret_page = NULL;
->> +	struct zonelist *zonelist;
->> +	struct zoneref *z;
->> +	struct zone *zone;
->> +	int rc;
->> +
->> +	nr_pages = 1 << order;
->> +	zonelist = node_zonelist(nid, gfp);
->> +	for_each_zone_zonelist_nodemask(zone, z, zonelist, gfp_zone(gfp),
->> +					nodemask) {
->> +		spin_lock_irqsave(&zone->lock, flags);
->> +		pfn = ALIGN(zone->zone_start_pfn, nr_pages);
->> +		while (zone_spans_pfn(zone, pfn + nr_pages - 1)) {
->> +			if (contig_pfn_range_valid(zone, pfn, nr_pages)) {
->> +				spin_unlock_irqrestore(&zone->lock, flags);
-> 
-> I know that the giga page allocation does use the zone lock but why? I
-> suspect it wants to stabilize zone_start_pfn but zone lock doesn't do
-> that.
-> 
-
-I am not sure.  As you suspected, this was copied from the giga page
-allocation code.  I'll look into it.
-
->> +
->> +				rc = alloc_contig_range(pfn, pfn + nr_pages,
->> +							MIGRATE_MOVABLE, gfp);
->> +				if (!rc) {
->> +					ret_page = pfn_to_page(pfn);
->> +					return ret_page;
->> +				}
->> +				spin_lock_irqsave(&zone->lock, flags);
->> +			}
->> +			pfn += nr_pages;
->> +		}
->> +		spin_unlock_irqrestore(&zone->lock, flags);
->> +	}
-> 
-> Other than that this API looks much saner than alloc_contig_range. We
-> still need to sort out some details (e.g. alignment) but it should be an
-> improvement.
-
-Ok, I will continue to refine.  We now have at least one immediate use
-case for this type of functionality.
-
--- 
-Mike Kravetz
+Thanks,
+Nagarathnam.
+> Most pid-based syscalls are racy in some cases but they are
+> here for decades and everybody knowns how to deal with it.
+> So, I've decided to merge both worlds in one interface which clearly 
+> tells what to expect.
