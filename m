@@ -1,118 +1,48 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [PATCH net-next 0/4] mm,tcp: provide mmap_hook to solve lockdep
- issue
-Date: Mon, 23 Apr 2018 21:30:34 -0700
-Message-ID: <e494c904-bdd0-8c6c-0592-c4960dcf2865@gmail.com>
-References: <20180420155542.122183-1-edumazet@google.com>
- <9ed6083f-d731-945c-dbcd-f977c5600b03@kernel.org>
- <d5b4dc70-6f17-d2be-a519-5ebc3f812f57@gmail.com>
- <CALCETrWOLU+P_jVpuOUQT2e_5ZShAP3OM0yJZMbC=pv5La9Cvg@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 2/3] mm: add find_alloc_contig_pages() interface
+Date: Tue, 24 Apr 2018 07:37:40 -0600
+Message-ID: <20180424133740.GH17484@dhcp22.suse.cz>
+References: <20180417020915.11786-1-mike.kravetz@oracle.com>
+ <20180417020915.11786-3-mike.kravetz@oracle.com>
+ <20180423000943.GO17484@dhcp22.suse.cz>
+ <fc28bcb7-8f9a-e841-0fdf-8636523ebc2a@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWOLU+P_jVpuOUQT2e_5ZShAP3OM0yJZMbC=pv5La9Cvg@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <fc28bcb7-8f9a-e841-0fdf-8636523ebc2a@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>, Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Eric Dumazet <edumazet@google.com>, "David S . Miller" <davem@davemloft.net>, netdev <netdev@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Soheil Hassas Yeganeh <soheil@google.com>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
+To: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Reinette Chatre <reinette.chatre@intel.com>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, Vlastimil Babka <vbabka@suse.cz>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
+On Sun 22-04-18 21:22:07, Mike Kravetz wrote:
+> On 04/22/2018 05:09 PM, Michal Hocko wrote:
+[...
+> > Also do we want to check other usual suspects? E.g. PageReserved? And
+> > generally migrateable pages if page count > 0. Or do we want to leave
+> > everything to the alloc_contig_range?
+> 
+> I think you proposed something like the above with limited checking at
+> some time in the past.  In my testing, allocations were more likely to
+> succeed if we did limited testing here and let alloc_contig_range take
+> a shot at migration/allocation.  There really are two ways to approach
+> this, do as much checking up front or let it be handled by alloc_contig_range.
 
+OK, it would be great to have a comment mentioning that. The discrepancy
+will just hit eyes 
 
-On 04/23/2018 07:04 PM, Andy Lutomirski wrote:
-> On Mon, Apr 23, 2018 at 2:38 PM, Eric Dumazet <eric.dumazet@gmail.com> wrote:
->> Hi Andy
->>
->> On 04/23/2018 02:14 PM, Andy Lutomirski wrote:
-> 
->>> I would suggest that you rework the interface a bit.  First a user would call mmap() on a TCP socket, which would create an empty VMA.  (It would set vm_ops to point to tcp_vm_ops or similar so that the TCP code could recognize it, but it would have no effect whatsoever on the TCP state machine.  Reading the VMA would get SIGBUS.)  Then a user would call a new ioctl() or setsockopt() function and pass something like:
->>
->>
->>>
->>> struct tcp_zerocopy_receive {
->>>   void *address;
->>>   size_t length;
->>> };
->>>
->>> The kernel would verify that [address, address+length) is entirely inside a single TCP VMA and then would do the vm_insert_range magic.
->>
->> I have no idea what is the proper API for that.
->> Where the TCP VMA(s) would be stored ?
->> In TCP socket, or MM layer ?
-> 
-> MM layer.  I haven't tested this at all, and the error handling is
-> totally wrong, but I think you'd do something like:
-> 
-> len = get_user(...);
-> 
-> down_read(&current->mm->mmap_sem);
-> 
-> vma = find_vma(mm, start);
-> if (!vma || vma->vm_start > start)
->   return -EFAULT;
-> 
-> /* This is buggy.  You also need to check that the file is a socket.
-> This is probably trivial. */
-> if (vma->vm_file->private_data != sock)
->   return -EINVAL;
-> 
-> if (len > vma->vm_end - start)
->   return -EFAULT;  /* too big a request. */
-> 
-> and now you'd do the vm_insert_page() dance, except that you don't
-> have to abort the whole procedure if you discover that something isn't
-> aligned right.  Instead you'd just stop and tell the caller that you
-> didn't map the full requested size.  You might also need to add some
-> code to charge the caller for the pages that get pinned, but that's an
-> orthogonal issue.
-> 
-> You also need to provide some way for user programs to signal that
-> they're done with the page in question.  MADV_DONTNEED might be
-> sufficient.
-> 
-> In the mmap() helper, you might want to restrict the mapped size to
-> something reasonable.  And it might be nice to hook mremap() to
-> prevent user code from causing too much trouble.
-> 
-> With my x86-writer-of-TLB-code hat on, I expect the major performance
-> costs to be the generic costs of mmap() and munmap() (which only
-> happen once per socket instead of once per read if you like my idea),
-> the cost of a TLB miss when the data gets read (really not so bad on
-> modern hardware), and the cost of the TLB invalidation when user code
-> is done with the buffers.  The latter is awful, especially in
-> multithreaded programs.  In fact, it's so bad that it might be worth
-> mentioning in the documentation for this code that it just shouldn't
-> be used in multithreaded processes.  (Also, on non-PCID hardware,
-> there's an annoying situation in which a recently-migrated thread that
-> removes a mapping sends an IPI to the CPU that the thread used to be
-> on.  I thought I had a clever idea to get rid of that IPI once, but it
-> turned out to be wrong.)
-> 
-> Architectures like ARM that have superior TLB handling primitives will
-> not be hurt as badly if this is used my a multithreaded program.
-> 
->>
->>
->> And I am not sure why the error handling would be better (point 4), unless we can return smaller @length than requested maybe ?
-> 
-> Exactly.  If I request 10MB mapped and only the first 9MB are aligned
-> right, I still want the first 9 MB.
-> 
->>
->> Also how the VMA space would be accounted (point 3) when creating an empty VMA (no pages in there yet)
-> 
-> There's nothing to account.  It's the same as mapping /dev/null or
-> similar -- the mm core should take care of it for you.
-> 
+[...]
+> Unless I am missing something, calls to alloc_contig range need to have
+> a size that is a multiple of page block.  This is because isolation needs
+> to take place at a page block level.  We can easily 'round up' and release
+> excess pages.
 
-Thanks Andy, I am working on all this, and initial patch looks sane enough.
+I am not sure but can we simply leave a part of the page block behind? I
+mean it might have a misleading migrate type but that shouldn't matter
+much, no?
 
- include/uapi/linux/tcp.h |    7 +
- net/ipv4/tcp.c           |  175 +++++++++++++++++++++++------------------------
- 2 files changed, 93 insertions(+), 89 deletions(-)
-
-
-I will test all this before sending for review asap.
-
-( I have not done the compat code yet, this can be done later I guess)
+Thanks!
+-- 
+Michal Hocko
+SUSE Labs
