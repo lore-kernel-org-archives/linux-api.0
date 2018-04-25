@@ -1,9 +1,9 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v4 10/16] y2038: powerpc: Extend sysvipc data structures
-Date: Wed, 25 Apr 2018 17:06:00 +0200
-Message-ID: <20180425150606.954771-10-arnd@arndb.de>
+Subject: [PATCH v4 15/16] y2038: ipc: Enable COMPAT_32BIT_TIME
+Date: Wed, 25 Apr 2018 17:06:05 +0200
+Message-ID: <20180425150606.954771-15-arnd@arndb.de>
 References: <20180425132242.1500539-1-arnd@arndb.de>
-Return-path: <libc-alpha-return-91826-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-91827-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -15,186 +15,156 @@ To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, zackw@panix.com, noloader@gmail.com, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-powerpc, uses a nonstandard variation of the generic sysvipc
-data structures, intended to have the padding moved around
-so it can deal with big-endian 32-bit user space that has
-64-bit time_t.
+Three ipc syscalls (mq_timedsend, mq_timedreceive and and semtimedop)
+take a timespec argument. After we move 32-bit architectures over to
+useing 64-bit time_t based syscalls, we need seperate entry points for
+the old 32-bit based interfaces.
 
-powerpc has the same definition as parisc and sparc, but now also
-supports little-endian mode, which is now wrong because the
-padding is made for big-endian user space.
-
-This takes just take the same approach here that we have for
-the asm-generic headers and adds separate 32-bit fields for the
-upper halves of the timestamps, to let libc deal with the mess
-in user space.
+This changes the #ifdef guards for the existing 32-bit compat syscalls
+to check for CONFIG_COMPAT_32BIT_TIME instead, which will then be
+enabled on all existing 32-bit architectures.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/powerpc/include/asm/compat.h      | 32 ++++++++++++++++----------------
- arch/powerpc/include/uapi/asm/msgbuf.h | 18 +++++++++---------
- arch/powerpc/include/uapi/asm/sembuf.h | 14 +++++++-------
- arch/powerpc/include/uapi/asm/shmbuf.h | 19 ++++++++-----------
- 4 files changed, 40 insertions(+), 43 deletions(-)
+ ipc/mqueue.c | 80 +++++++++++++++++++++++++++++++-----------------------------
+ ipc/sem.c    |  3 ++-
+ ipc/util.h   |  2 +-
+ 3 files changed, 44 insertions(+), 41 deletions(-)
 
-diff --git a/arch/powerpc/include/asm/compat.h b/arch/powerpc/include/asm/compat.h
-index b4773c81f7d5..85c8af2bb272 100644
---- a/arch/powerpc/include/asm/compat.h
-+++ b/arch/powerpc/include/asm/compat.h
-@@ -162,10 +162,10 @@ struct compat_ipc64_perm {
+diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+index 9610afcfa2e5..c0d58f390c3b 100644
+--- a/ipc/mqueue.c
++++ b/ipc/mqueue.c
+@@ -1420,6 +1420,47 @@ COMPAT_SYSCALL_DEFINE4(mq_open, const char __user *, u_name,
+ 	return do_mq_open(u_name, oflag, mode, p);
+ }
  
- struct compat_semid64_ds {
- 	struct compat_ipc64_perm sem_perm;
--	unsigned int __unused1;
--	compat_time_t sem_otime;
--	unsigned int __unused2;
--	compat_time_t sem_ctime;
-+	unsigned int sem_otime_high;
-+	unsigned int sem_otime;
-+	unsigned int sem_ctime_high;
-+	unsigned int sem_ctime;
- 	compat_ulong_t sem_nsems;
- 	compat_ulong_t __unused3;
- 	compat_ulong_t __unused4;
-@@ -173,12 +173,12 @@ struct compat_semid64_ds {
- 
- struct compat_msqid64_ds {
- 	struct compat_ipc64_perm msg_perm;
--	unsigned int __unused1;
--	compat_time_t msg_stime;
--	unsigned int __unused2;
--	compat_time_t msg_rtime;
--	unsigned int __unused3;
--	compat_time_t msg_ctime;
-+	unsigned int msg_stime_high;
-+	unsigned int msg_stime;
-+	unsigned int msg_rtime_high;
-+	unsigned int msg_rtime;
-+	unsigned int msg_ctime_high;
-+	unsigned int msg_ctime;
- 	compat_ulong_t msg_cbytes;
- 	compat_ulong_t msg_qnum;
- 	compat_ulong_t msg_qbytes;
-@@ -190,12 +190,12 @@ struct compat_msqid64_ds {
- 
- struct compat_shmid64_ds {
- 	struct compat_ipc64_perm shm_perm;
--	unsigned int __unused1;
--	compat_time_t shm_atime;
--	unsigned int __unused2;
--	compat_time_t shm_dtime;
--	unsigned int __unused3;
--	compat_time_t shm_ctime;
-+	unsigned int shm_atime_high;
-+	unsigned int shm_atime;
-+	unsigned int shm_dtime_high;
-+	unsigned int shm_dtime;
-+	unsigned int shm_ctime_high;
-+	unsigned int shm_ctime;
- 	unsigned int __unused4;
- 	compat_size_t shm_segsz;
- 	compat_pid_t shm_cpid;
-diff --git a/arch/powerpc/include/uapi/asm/msgbuf.h b/arch/powerpc/include/uapi/asm/msgbuf.h
-index 65beb0942500..2b1b37797a47 100644
---- a/arch/powerpc/include/uapi/asm/msgbuf.h
-+++ b/arch/powerpc/include/uapi/asm/msgbuf.h
-@@ -10,18 +10,18 @@
- 
- struct msqid64_ds {
- 	struct ipc64_perm msg_perm;
--#ifndef __powerpc64__
--	unsigned int	__unused1;
--#endif
-+#ifdef __powerpc64__
- 	__kernel_time_t msg_stime;	/* last msgsnd time */
--#ifndef __powerpc64__
--	unsigned int	__unused2;
--#endif
- 	__kernel_time_t msg_rtime;	/* last msgrcv time */
--#ifndef __powerpc64__
--	unsigned int	__unused3;
--#endif
- 	__kernel_time_t msg_ctime;	/* last change time */
-+#else
-+	unsigned long  msg_stime_high;
-+	unsigned long  msg_stime;	/* last msgsnd time */
-+	unsigned long  msg_rtime_high;
-+	unsigned long  msg_rtime;	/* last msgrcv time */
-+	unsigned long  msg_ctime_high;
-+	unsigned long  msg_ctime;	/* last change time */
++COMPAT_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
++		       const struct compat_sigevent __user *, u_notification)
++{
++	struct sigevent n, *p = NULL;
++	if (u_notification) {
++		if (get_compat_sigevent(&n, u_notification))
++			return -EFAULT;
++		if (n.sigev_notify == SIGEV_THREAD)
++			n.sigev_value.sival_ptr = compat_ptr(n.sigev_value.sival_int);
++		p = &n;
++	}
++	return do_mq_notify(mqdes, p);
++}
++
++COMPAT_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
++		       const struct compat_mq_attr __user *, u_mqstat,
++		       struct compat_mq_attr __user *, u_omqstat)
++{
++	int ret;
++	struct mq_attr mqstat, omqstat;
++	struct mq_attr *new = NULL, *old = NULL;
++
++	if (u_mqstat) {
++		new = &mqstat;
++		if (get_compat_mq_attr(new, u_mqstat))
++			return -EFAULT;
++	}
++	if (u_omqstat)
++		old = &omqstat;
++
++	ret = do_mq_getsetattr(mqdes, new, old);
++	if (ret || !old)
++		return ret;
++
++	if (put_compat_mq_attr(old, u_omqstat))
++		return -EFAULT;
++	return 0;
++}
 +#endif
- 	unsigned long  msg_cbytes;	/* current number of bytes on queue */
- 	unsigned long  msg_qnum;	/* number of messages in queue */
- 	unsigned long  msg_qbytes;	/* max number of bytes on queue */
-diff --git a/arch/powerpc/include/uapi/asm/sembuf.h b/arch/powerpc/include/uapi/asm/sembuf.h
-index 8f393d60f02d..3f60946f77e3 100644
---- a/arch/powerpc/include/uapi/asm/sembuf.h
-+++ b/arch/powerpc/include/uapi/asm/sembuf.h
-@@ -15,20 +15,20 @@
-  * between kernel and user space.
-  *
-  * Pad space is left for:
-- * - 64-bit time_t to solve y2038 problem
-- * - 2 miscellaneous 32-bit values
-+ * - 2 miscellaneous 32/64-bit values
-  */
- 
- struct semid64_ds {
- 	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
- #ifndef __powerpc64__
--	unsigned long	__unused1;
--#endif
-+	unsigned long	sem_otime_high;
-+	unsigned long	sem_otime;	/* last semop time */
-+	unsigned long	sem_ctime_high;
-+	unsigned long	sem_ctime;	/* last change time */
-+#else
- 	__kernel_time_t	sem_otime;	/* last semop time */
--#ifndef __powerpc64__
--	unsigned long	__unused2;
--#endif
- 	__kernel_time_t	sem_ctime;	/* last change time */
-+#endif
- 	unsigned long	sem_nsems;	/* no. of semaphores in array */
- 	unsigned long	__unused3;
- 	unsigned long	__unused4;
-diff --git a/arch/powerpc/include/uapi/asm/shmbuf.h b/arch/powerpc/include/uapi/asm/shmbuf.h
-index deb1c3e503d3..b591c4d7e4c5 100644
---- a/arch/powerpc/include/uapi/asm/shmbuf.h
-+++ b/arch/powerpc/include/uapi/asm/shmbuf.h
-@@ -16,25 +16,22 @@
-  * between kernel and user space.
-  *
-  * Pad space is left for:
-- * - 64-bit time_t to solve y2038 problem
-  * - 2 miscellaneous 32-bit values
-  */
- 
- struct shmid64_ds {
- 	struct ipc64_perm	shm_perm;	/* operation perms */
--#ifndef __powerpc64__
--	unsigned long		__unused1;
--#endif
-+#ifdef __powerpc64__
- 	__kernel_time_t		shm_atime;	/* last attach time */
--#ifndef __powerpc64__
--	unsigned long		__unused2;
--#endif
- 	__kernel_time_t		shm_dtime;	/* last detach time */
--#ifndef __powerpc64__
--	unsigned long		__unused3;
--#endif
- 	__kernel_time_t		shm_ctime;	/* last change time */
--#ifndef __powerpc64__
-+#else
-+	unsigned long		shm_atime_high;
-+	unsigned long		shm_atime;	/* last attach time */
-+	unsigned long		shm_dtime_high;
-+	unsigned long		shm_dtime;	/* last detach time */
-+	unsigned long		shm_ctime_high;
-+	unsigned long		shm_ctime;	/* last change time */
- 	unsigned long		__unused4;
++
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ static int compat_prepare_timeout(const struct compat_timespec __user *p,
+ 				   struct timespec64 *ts)
+ {
+@@ -1459,45 +1500,6 @@ COMPAT_SYSCALL_DEFINE5(mq_timedreceive, mqd_t, mqdes,
+ 	}
+ 	return do_mq_timedreceive(mqdes, u_msg_ptr, msg_len, u_msg_prio, p);
+ }
+-
+-COMPAT_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
+-		       const struct compat_sigevent __user *, u_notification)
+-{
+-	struct sigevent n, *p = NULL;
+-	if (u_notification) {
+-		if (get_compat_sigevent(&n, u_notification))
+-			return -EFAULT;
+-		if (n.sigev_notify == SIGEV_THREAD)
+-			n.sigev_value.sival_ptr = compat_ptr(n.sigev_value.sival_int);
+-		p = &n;
+-	}
+-	return do_mq_notify(mqdes, p);
+-}
+-
+-COMPAT_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
+-		       const struct compat_mq_attr __user *, u_mqstat,
+-		       struct compat_mq_attr __user *, u_omqstat)
+-{
+-	int ret;
+-	struct mq_attr mqstat, omqstat;
+-	struct mq_attr *new = NULL, *old = NULL;
+-
+-	if (u_mqstat) {
+-		new = &mqstat;
+-		if (get_compat_mq_attr(new, u_mqstat))
+-			return -EFAULT;
+-	}
+-	if (u_omqstat)
+-		old = &omqstat;
+-
+-	ret = do_mq_getsetattr(mqdes, new, old);
+-	if (ret || !old)
+-		return ret;
+-
+-	if (put_compat_mq_attr(old, u_omqstat))
+-		return -EFAULT;
+-	return 0;
+-}
  #endif
- 	size_t			shm_segsz;	/* size of segment (bytes) */
+ 
+ static const struct inode_operations mqueue_dir_inode_operations = {
+diff --git a/ipc/sem.c b/ipc/sem.c
+index b951e25ba2db..cfd94d48a9aa 100644
+--- a/ipc/sem.c
++++ b/ipc/sem.c
+@@ -70,6 +70,7 @@
+  *   The worst-case behavior is nevertheless O(N^2) for N wakeups.
+  */
+ 
++#include <linux/compat.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ #include <linux/init.h>
+@@ -2193,7 +2194,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
+ 	return ksys_semtimedop(semid, tsops, nsops, timeout);
+ }
+ 
+-#ifdef CONFIG_COMPAT
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
+ 			    unsigned int nsops,
+ 			    const struct compat_timespec __user *timeout)
+diff --git a/ipc/util.h b/ipc/util.h
+index 975c6de2df9d..0aba3230d007 100644
+--- a/ipc/util.h
++++ b/ipc/util.h
+@@ -265,10 +265,10 @@ long ksys_shmdt(char __user *shmaddr);
+ long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
+ 
+ /* for CONFIG_ARCH_WANT_OLD_COMPAT_IPC */
+-#ifdef CONFIG_COMPAT
+ long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
+ 			    unsigned int nsops,
+ 			    const struct compat_timespec __user *timeout);
++#ifdef CONFIG_COMPAT
+ long compat_ksys_semctl(int semid, int semnum, int cmd, int arg);
+ long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr);
+ long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
 -- 
 2.9.0
