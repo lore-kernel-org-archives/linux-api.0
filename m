@@ -1,164 +1,72 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v4 03/16] y2038: alpha: Remove unneeded ipc uapi header files
-Date: Wed, 25 Apr 2018 17:05:53 +0200
-Message-ID: <20180425150606.954771-3-arnd@arndb.de>
+Subject: [PATCH v4 16/16] y2038: ipc: Redirect ipc(SEMTIMEDOP, ...) to compat_ksys_semtimedop
+Date: Wed, 25 Apr 2018 17:06:06 +0200
+Message-ID: <20180425150606.954771-16-arnd@arndb.de>
 References: <20180425132242.1500539-1-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-91830-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <20180425132242.1500539-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, zackw@panix.com, noloader@gmail.com, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-The alpha ipcbuf/msgbuf/sembuf/shmbuf header files are all identical
-to the version from asm-generic.
+32-bit architectures implementing 64BIT_TIME and COMPAT_32BIT_TIME
+need to have the traditional semtimedop() behavior with 32-bit timestamps
+for sys_ipc() by calling compat_ksys_semtimedop(), while those that
+are not yet converted need to keep using ksys_semtimedop() like
+64-bit architectures do.
 
-This patch removes the files and replaces them with 'generic-y'
-statements as part of the y2038 series. Since there is no 32-bit
-syscall support for alpha, we don't need the other changes, but
-it's good to have clean this up anyway.
+Note that I chose to not implement a new SEMTIMEDOP64 function that
+corresponds to the new sys_semtimedop() with 64-bit timeouts. The reason
+here is that sys_ipc() should no longer be used for new system calls,
+and libc should just call the semtimedop syscall directly.
+
+One open question remain to whether we want to completely avoid the
+sys_ipc() system call for architectures that do not yet have all the
+individual calls as they get converted to 64-bit time_t. Doing that
+would require adding several extra system calls on m68k, mips, powerpc,
+s390, sh, sparc, and x86-32.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/alpha/include/uapi/asm/Kbuild   |  4 ++++
- arch/alpha/include/uapi/asm/ipcbuf.h |  2 --
- arch/alpha/include/uapi/asm/msgbuf.h | 28 --------------------------
- arch/alpha/include/uapi/asm/sembuf.h | 23 ---------------------
- arch/alpha/include/uapi/asm/shmbuf.h | 39 ------------------------------------
- 5 files changed, 4 insertions(+), 92 deletions(-)
- delete mode 100644 arch/alpha/include/uapi/asm/ipcbuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/msgbuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/sembuf.h
- delete mode 100644 arch/alpha/include/uapi/asm/shmbuf.h
+ ipc/syscall.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/Kbuild b/arch/alpha/include/uapi/asm/Kbuild
-index 9afaba5e5503..1a5b75310cf4 100644
---- a/arch/alpha/include/uapi/asm/Kbuild
-+++ b/arch/alpha/include/uapi/asm/Kbuild
-@@ -2,4 +2,8 @@
- include include/uapi/asm-generic/Kbuild.asm
+diff --git a/ipc/syscall.c b/ipc/syscall.c
+index 77a883ef2eca..65d405f1ba0c 100644
+--- a/ipc/syscall.c
++++ b/ipc/syscall.c
+@@ -30,9 +30,14 @@ SYSCALL_DEFINE6(ipc, unsigned int, call, int, first, unsigned long, second,
+ 		return ksys_semtimedop(first, (struct sembuf __user *)ptr,
+ 				       second, NULL);
+ 	case SEMTIMEDOP:
+-		return ksys_semtimedop(first, (struct sembuf __user *)ptr,
+-				       second,
+-				       (const struct timespec __user *)fifth);
++		if (IS_ENABLED(CONFIG_64BIT) || !IS_ENABLED(CONFIG_64BIT_TIME))
++			return ksys_semtimedop(first, ptr, second,
++			        (const struct __kernel_timespec __user *)fifth);
++		else if (IS_ENABLED(CONFIG_COMPAT_32BIT_TIME))
++			return compat_ksys_semtimedop(first, ptr, second,
++			        (const struct compat_timespec __user *)fifth);
++		else
++			return -ENOSYS;
  
- generic-y += bpf_perf_event.h
-+generic-y += ipcbuf.h
-+generic-y += msgbuf.h
- generic-y += poll.h
-+generic-y += sembuf.h
-+generic-y += shmbuf.h
-diff --git a/arch/alpha/include/uapi/asm/ipcbuf.h b/arch/alpha/include/uapi/asm/ipcbuf.h
-deleted file mode 100644
-index 90d6445a14df..000000000000
---- a/arch/alpha/include/uapi/asm/ipcbuf.h
-+++ /dev/null
-@@ -1,2 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#include <asm-generic/ipcbuf.h>
-diff --git a/arch/alpha/include/uapi/asm/msgbuf.h b/arch/alpha/include/uapi/asm/msgbuf.h
-deleted file mode 100644
-index 8c5d4d8c1b16..000000000000
---- a/arch/alpha/include/uapi/asm/msgbuf.h
-+++ /dev/null
-@@ -1,28 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ALPHA_MSGBUF_H
--#define _ALPHA_MSGBUF_H
--
--/* 
-- * The msqid64_ds structure for alpha architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct msqid64_ds {
--	struct ipc64_perm msg_perm;
--	__kernel_time_t msg_stime;	/* last msgsnd time */
--	__kernel_time_t msg_rtime;	/* last msgrcv time */
--	__kernel_time_t msg_ctime;	/* last change time */
--	unsigned long  msg_cbytes;	/* current number of bytes on queue */
--	unsigned long  msg_qnum;	/* number of messages in queue */
--	unsigned long  msg_qbytes;	/* max number of bytes on queue */
--	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
--	__kernel_pid_t msg_lrpid;	/* last receive pid */
--	unsigned long  __unused1;
--	unsigned long  __unused2;
--};
--
--#endif /* _ALPHA_MSGBUF_H */
-diff --git a/arch/alpha/include/uapi/asm/sembuf.h b/arch/alpha/include/uapi/asm/sembuf.h
-deleted file mode 100644
-index f28ffa668b2f..000000000000
---- a/arch/alpha/include/uapi/asm/sembuf.h
-+++ /dev/null
-@@ -1,23 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ALPHA_SEMBUF_H
--#define _ALPHA_SEMBUF_H
--
--/* 
-- * The semid64_ds structure for alpha architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct semid64_ds {
--	struct ipc64_perm sem_perm;		/* permissions .. see ipc.h */
--	__kernel_time_t	sem_otime;		/* last semop time */
--	__kernel_time_t	sem_ctime;		/* last change time */
--	unsigned long	sem_nsems;		/* no. of semaphores in array */
--	unsigned long	__unused1;
--	unsigned long	__unused2;
--};
--
--#endif /* _ALPHA_SEMBUF_H */
-diff --git a/arch/alpha/include/uapi/asm/shmbuf.h b/arch/alpha/include/uapi/asm/shmbuf.h
-deleted file mode 100644
-index 7e041ca2eb40..000000000000
---- a/arch/alpha/include/uapi/asm/shmbuf.h
-+++ /dev/null
-@@ -1,39 +0,0 @@
--/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
--#ifndef _ALPHA_SHMBUF_H
--#define _ALPHA_SHMBUF_H
--
--/* 
-- * The shmid64_ds structure for alpha architecture.
-- * Note extra padding because this structure is passed back and forth
-- * between kernel and user space.
-- *
-- * Pad space is left for:
-- * - 2 miscellaneous 64-bit values
-- */
--
--struct shmid64_ds {
--	struct ipc64_perm	shm_perm;	/* operation perms */
--	size_t			shm_segsz;	/* size of segment (bytes) */
--	__kernel_time_t		shm_atime;	/* last attach time */
--	__kernel_time_t		shm_dtime;	/* last detach time */
--	__kernel_time_t		shm_ctime;	/* last change time */
--	__kernel_pid_t		shm_cpid;	/* pid of creator */
--	__kernel_pid_t		shm_lpid;	/* pid of last operator */
--	unsigned long		shm_nattch;	/* no. of current attaches */
--	unsigned long		__unused1;
--	unsigned long		__unused2;
--};
--
--struct shminfo64 {
--	unsigned long	shmmax;
--	unsigned long	shmmin;
--	unsigned long	shmmni;
--	unsigned long	shmseg;
--	unsigned long	shmall;
--	unsigned long	__unused1;
--	unsigned long	__unused2;
--	unsigned long	__unused3;
--	unsigned long	__unused4;
--};
--
--#endif /* _ALPHA_SHMBUF_H */
+ 	case SEMGET:
+ 		return ksys_semget(first, second, third);
+@@ -130,6 +135,8 @@ COMPAT_SYSCALL_DEFINE6(ipc, u32, call, int, first, int, second,
+ 		/* struct sembuf is the same on 32 and 64bit :)) */
+ 		return ksys_semtimedop(first, compat_ptr(ptr), second, NULL);
+ 	case SEMTIMEDOP:
++		if (!IS_ENABLED(CONFIG_COMPAT_32BIT_TIME))
++			return -ENOSYS;
+ 		return compat_ksys_semtimedop(first, compat_ptr(ptr), second,
+ 						compat_ptr(fifth));
+ 	case SEMGET:
 -- 
 2.9.0
