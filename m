@@ -1,72 +1,60 @@
-From: Vincent Chen <deanbo422@gmail.com>
-Subject: Re: [REVIEW][PATCH 04/17] signal/nds32: Use force_sig in
- unhandled_interruption and unhandled_exceptions
-Date: Wed, 25 Apr 2018 20:14:25 +0800
-Message-ID: <CAJsyPhySxu=zhZVFr-7j4w6CmyDNKLUg=zMBvQ0pAdmYD=39Lg@mail.gmail.com>
-References: <878t9ilmhv.fsf@xmission.com> <20180420010408.24438-4-ebiederm@xmission.com>
+From: Roman Gushchin <guro@fb.com>
+Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
+Date: Wed, 25 Apr 2018 13:52:12 +0100
+Message-ID: <20180425125211.GB3410@castle>
+References: <20180305133743.12746-1-guro@fb.com>
+ <20180305133743.12746-2-guro@fb.com>
+ <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
+ <20180411135624.GA24260@castle.DHCP.thefacebook.com>
+ <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
+ <20180412145702.GB30714@castle.DHCP.thefacebook.com>
+ <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
+ <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180420010408.24438-4-ebiederm@xmission.com>
+Content-Disposition: inline
+In-Reply-To: <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>
+To: Vijayanand Jitta <vjitta@codeaurora.org>
+Cc: vinayak menon <vinayakm.list@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-2018-04-20 9:03 GMT+08:00 Eric W. Biederman <ebiederm@xmission.com>:
-> Neither unhandled_interrupt nor unhandled_exceptions fills in any of the
-> siginfo fields whend sending SIGKILL.  Further because it is SIGKILL
-> even if all of the fields were filled out appropriately it would be impossible
-> for the process to read any of the siginfo fields.  So simplfy things and
-> just use force_sig instead of force_sig_info.
->
-> Fixes: 2923f5ea7738 ("nds32: Exception handling")
-> Cc: Vincent Chen <vincentc@andestech.com>
-> Cc: Greentime Hu <greentime@andestech.com>
-> Cc: Arnd Bergmann <arnd@arndb.de>
-> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> ---
->  arch/nds32/kernel/traps.c | 11 ++---------
->  1 file changed, 2 insertions(+), 9 deletions(-)
->
-> diff --git a/arch/nds32/kernel/traps.c b/arch/nds32/kernel/traps.c
-> index 6e34eb9824a4..65961bf91d64 100644
-> --- a/arch/nds32/kernel/traps.c
-> +++ b/arch/nds32/kernel/traps.c
-> @@ -318,29 +318,22 @@ void do_debug_trap(unsigned long entry, unsigned long addr,
->
->  void unhandled_interruption(struct pt_regs *regs)
->  {
-> -       siginfo_t si;
->         pr_emerg("unhandled_interruption\n");
->         show_regs(regs);
->         if (!user_mode(regs))
->                 do_exit(SIGKILL);
-> -       si.si_signo = SIGKILL;
-> -       si.si_errno = 0;
-> -       force_sig_info(SIGKILL, &si, current);
-> +       force_sig(SIGKILL, current);
->  }
->
->  void unhandled_exceptions(unsigned long entry, unsigned long addr,
->                           unsigned long type, struct pt_regs *regs)
->  {
-> -       siginfo_t si;
->         pr_emerg("Unhandled Exception: entry: %lx addr:%lx itype:%lx\n", entry,
->                  addr, type);
->         show_regs(regs);
->         if (!user_mode(regs))
->                 do_exit(SIGKILL);
-> -       si.si_signo = SIGKILL;
-> -       si.si_errno = 0;
-> -       si.si_addr = (void *)addr;
-> -       force_sig_info(SIGKILL, &si, current);
-> +       force_sig(SIGKILL, current);
->  }
->
->  extern int do_page_fault(unsigned long entry, unsigned long addr,
-> --
-> 2.14.1
->
+On Wed, Apr 25, 2018 at 09:19:29AM +0530, Vijayanand Jitta wrote:
+> >>>> Idk, I don't like the idea of adding a counter outside of the vm counters
+> >>>> infrastructure, and I definitely wouldn't touch the exposed
+> >>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
+> >>>
+> >>> We would be just making the reported values more precise wrt reality.
+> >>
+> >> It depends on if we believe that only slab memory can be reclaimable
+> >> or not. If yes, this is true, otherwise not.
+> >>
+> >> My guess is that some drivers (e.g. networking) might have buffers,
+> >> which are reclaimable under mempressure, and are allocated using
+> >> the page allocator. But I have to look closer...
+> >>
+> > 
+> > One such case I have encountered is that of the ION page pool. The page pool
+> > registers a shrinker. When not in any memory pressure page pool can go high
+> > and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
+> > a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
 
-Acked-by Vincent Chen
+Perfect!
+This is exactly what I've expected.
+
+> > 
+> > Thanks,
+> > Vinayak
+> > 
+> 
+> As Vinayak mentioned NR_INDIRECTLY_RECLAIMABLE_BYTES can be used to solve the issue
+> with ION page pool when OVERCOMMIT_GUESS is set, the patch for the same can be 
+> found here https://lkml.org/lkml/2018/4/24/1288
+
+This makes perfect sense to me.
+
+Please, fell free to add:
+Acked-by: Roman Gushchin <guro@fb.com>
+
+Thank you!
