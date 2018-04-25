@@ -1,71 +1,53 @@
-From: Roman Gushchin <guro@fb.com>
-Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
-Date: Wed, 25 Apr 2018 18:23:04 +0100
-Message-ID: <20180425172258.GA8052@castle>
-References: <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
- <20180411135624.GA24260@castle.DHCP.thefacebook.com>
- <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
- <20180412145702.GB30714@castle.DHCP.thefacebook.com>
- <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
- <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
- <20180425125211.GB3410@castle>
- <db71bf8f-0c76-e304-25c3-d22f1e0d71e5@suse.cz>
- <20180425164845.GA7223@castle>
- <7fc2986e-b867-eb32-9124-d10ef6c1a3a3@suse.cz>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Subject: Re: [PATCH 02/17] y2038: Remove newstat family from default
+	syscall set
+Date: Wed, 25 Apr 2018 20:36:15 +0200
+Message-ID: <CAMuHMdVThd7nV=EsSSZ1puC6b8V85pWHDSGvJpLaeeafo-vRaw@mail.gmail.com>
+References: <20180425160311.2718314-1-arnd@arndb.de>
+ <20180425160311.2718314-3-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <7fc2986e-b867-eb32-9124-d10ef6c1a3a3@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Vijayanand Jitta <vjitta@codeaurora.org>, vinayak menon <vinayakm.list@gmail.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <20180425160311.2718314-3-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Linux-Arch <linux-arch@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, libc-alpha <libc-alpha@sourceware.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, "Albert ARIBAUD (3ADEV)" <albert.aribaud@3adev.fr>, Peter Zijlstra <peterz@infradead.org>, Deepa Dinamani <deepa.kernel@gmail.com>, netdev <netdev@vger.kernel.org>, Darren Hart <dvhart@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 25, 2018 at 07:02:42PM +0200, Vlastimil Babka wrote:
-> On 04/25/2018 06:48 PM, Roman Gushchin wrote:
-> > On Wed, Apr 25, 2018 at 05:47:26PM +0200, Vlastimil Babka wrote:
-> >> On 04/25/2018 02:52 PM, Roman Gushchin wrote:
-> >>> On Wed, Apr 25, 2018 at 09:19:29AM +0530, Vijayanand Jitta wrote:
-> >>>>>>>> Idk, I don't like the idea of adding a counter outside of the vm counters
-> >>>>>>>> infrastructure, and I definitely wouldn't touch the exposed
-> >>>>>>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
-> >>>>>>>
-> >>>>>>> We would be just making the reported values more precise wrt reality.
-> >>>>>>
-> >>>>>> It depends on if we believe that only slab memory can be reclaimable
-> >>>>>> or not. If yes, this is true, otherwise not.
-> >>>>>>
-> >>>>>> My guess is that some drivers (e.g. networking) might have buffers,
-> >>>>>> which are reclaimable under mempressure, and are allocated using
-> >>>>>> the page allocator. But I have to look closer...
-> >>>>>>
-> >>>>>
-> >>>>> One such case I have encountered is that of the ION page pool. The page pool
-> >>>>> registers a shrinker. When not in any memory pressure page pool can go high
-> >>>>> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
-> >>>>> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
-> >>
-> >> FYI, we have discussed this at LSF/MM and agreed to try the kmalloc
-> >> reclaimable caches idea. The existing counter could then remain for page
-> >> allocator users such as ION. It's a bit weird to have it in bytes and
-> >> not pages then, IMHO. What if we hid it from /proc/vmstat now so it
-> >> doesn't become ABI, and later convert it to page granularity and expose
-> >> it under a name such as "nr_other_reclaimable" ?
-> > 
-> > I've nothing against hiding it from /proc/vmstat, as long as we keep
-> > the counter in place and the main issue resolved.
-> 
-> Sure.
-> 
-> > Maybe it's better to add nr_reclaimable = nr_slab_reclaimable + nr_other_reclaimable,
-> > which will have a simpler meaning that nr_other_reclaimable (what is other?).
-> 
-> "other" can be changed, sure. nr_reclaimable is possible if we change
-> slab to adjust that counter as well - vmstat code doesn't support
-> arbitrary calculations when printing.
-
-Sure, but even just hiding a value isn't that easy now.
-So we have to touch the vmstat printing code anyway.
-
-Thanks!
+T24gV2VkLCBBcHIgMjUsIDIwMTggYXQgNjowMiBQTSwgQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5k
+Yi5kZT4gd3JvdGU6Cj4gV2UgaGF2ZSBmb3VyIGdlbmVyYXRpb25zIG9mIHN0YXQoKSBzeXNjYWxs
+czoKPiAtIHRoZSBvbGRzdGF0IHN5c2NhbGxzIHRoYXQgYXJlIG9ubHkgdXNlZCBvbiB0aGUgb2xk
+ZXIgYXJjaGl0ZWN0dXJlcwo+IC0gdGhlIG5ld3N0YXQgZmFtaWx5IHRoYXQgaXMgdXNlZCBvbiBh
+bGwgNjQtYml0IGFyY2hpdGVjdHVyZXMgYnV0Cj4gICBsYWNrZWQgc3VwcG9ydCBmb3IgbGFyZ2Ug
+ZmlsZXMgb24gMzItYml0IGFyY2hpdGVjdHVyZXMuCj4gLSB0aGUgc3RhdDY0IGZhbWlseSB0aGF0
+IGlzIHVzZWQgbW9zdGx5IG9uIDMyLWJpdCBhcmNoaXRlY3R1cmVzIHRvCj4gICByZXBsYWNlIG5l
+d3N0YXQKPiAtIHN0YXR4KCkgdG8gcmVwbGFjZSBhbGwgb2YgdGhlIGFib3ZlLCBhZGRpbmcgNjQt
+Yml0IHRpbWVzdGFtcHMgYW1vbmcKPiAgIG90aGVyIHRoaW5ncy4KPgo+IFdlIGFscmVhZHkgY29t
+cGlsZSBzdGF0NjQgb25seSBvbiB0aG9zZSBhcmNoaXRlY3R1cmVzIHRoYXQgbmVlZCBpdCwKPiBi
+dXQgbmV3c3RhdCBpcyBhbHdheXMgYnVpbHQsIGluY2x1ZGluZyBvbiB0aG9zZSB0aGF0IGRvbid0
+IHJlZmVyZW5jZQo+IGl0LiBUaGlzIGFkZHMgYSBuZXcgX19BUkNIX1dBTlRfTkVXX1NUQVQgc3lt
+Ym9sIGFsb25nIHRoZSBsaW5lcyBvZgo+IF9fQVJDSF9XQU5UX09MRF9TVEFUIGFuZCBfX0FSQ0hf
+V0FOVF9TVEFUNjQgdG8gY29udHJvbCBjb21waWxhdGlvbiBvZgo+IG5ld3N0YXQuIEFsbCBhcmNo
+aXRlY3R1cmVzIHRoYXQgbmVlZCBpdCB1c2UgYW4gZXhwbGljdCBkZWZpbmUsIHRoZQo+IG90aGVy
+cyBub3cgZ2V0IGEgbGl0dGxlIGJpdCBzbWFsbGVyLCBhbmQgZnV0dXJlIGFyY2hpdGVjdHVyZSAo
+aW5jbHVkaW5nCj4gNjQtYml0IHRhcmdldHMpIHdvbid0IGV2ZXIgc2VlIGl0Lgo+Cj4gU2lnbmVk
+LW9mZi1ieTogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4KCkZvciBtNjhrOgpBY2tlZC1i
+eTogR2VlcnQgVXl0dGVyaG9ldmVuIDxnZWVydEBsaW51eC1tNjhrLm9yZz4KCkdye29ldGplLGVl
+dGluZ31zLAoKICAgICAgICAgICAgICAgICAgICAgICAgR2VlcnQKCi0tIApHZWVydCBVeXR0ZXJo
+b2V2ZW4gLS0gVGhlcmUncyBsb3RzIG9mIExpbnV4IGJleW9uZCBpYTMyIC0tIGdlZXJ0QGxpbnV4
+LW02OGsub3JnCgpJbiBwZXJzb25hbCBjb252ZXJzYXRpb25zIHdpdGggdGVjaG5pY2FsIHBlb3Bs
+ZSwgSSBjYWxsIG15c2VsZiBhIGhhY2tlci4gQnV0CndoZW4gSSdtIHRhbGtpbmcgdG8gam91cm5h
+bGlzdHMgSSBqdXN0IHNheSAicHJvZ3JhbW1lciIgb3Igc29tZXRoaW5nIGxpa2UgdGhhdC4KICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAtLSBMaW51cyBUb3J2YWxkcwpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QK
+WTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9s
+aXN0aW5mby95MjAzOAo=
