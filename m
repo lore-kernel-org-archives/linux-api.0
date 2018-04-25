@@ -1,319 +1,137 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak32 V2 01/13] audit: add container id
-Date: Tue, 24 Apr 2018 20:40:31 -0400
-Message-ID: <20180425004031.zutsno6hvmpq3crd@madcap2.tricolour.ca>
-References: <cover.1521179281.git.rgb@redhat.com>
- <e284617ad667ad8f17958dd8babb87fe1b4d7205.1521179281.git.rgb@redhat.com>
- <CAHC9VhTyvxxj2e2Gn+iyW6iLLeYB7hp8a+JvfeMmJ2nUPqtEaw@mail.gmail.com>
- <20180421143443.faaput5g2rn6ul7p@madcap2.tricolour.ca>
- <CAHC9VhQkJBU-f-AuEnGF1BA2QW6nCJ_yr_EqBR02-1y9+XQZ5A@mail.gmail.com>
- <20180424020200.imonhbkwtb73luxl@madcap2.tricolour.ca>
- <CAHC9VhSZd7V9avx6K5g6CQ7mkj1T8ti7Nqq=OoWVwPznkesD1w@mail.gmail.com>
+From: Vijayanand Jitta <vjitta@codeaurora.org>
+Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
+Date: Wed, 25 Apr 2018 09:19:29 +0530
+Message-ID: <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
+References: <20180305133743.12746-1-guro@fb.com>
+ <20180305133743.12746-2-guro@fb.com>
+ <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
+ <20180411135624.GA24260@castle.DHCP.thefacebook.com>
+ <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
+ <20180412145702.GB30714@castle.DHCP.thefacebook.com>
+ <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhSZd7V9avx6K5g6CQ7mkj1T8ti7Nqq=OoWVwPznkesD1w@mail.gmail.com>
+In-Reply-To: <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+To: vinayak menon <vinayakm.list@gmail.com>, Roman Gushchin <guro@fb.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2018-04-24 15:01, Paul Moore wrote:
-> On Mon, Apr 23, 2018 at 10:02 PM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> > On 2018-04-23 19:15, Paul Moore wrote:
-> >> On Sat, Apr 21, 2018 at 10:34 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> > On 2018-04-18 19:47, Paul Moore wrote:
-> >> >> On Fri, Mar 16, 2018 at 5:00 AM, Richard Guy Briggs <rgb@redhat.com> wrote:
-> >> >> > Implement the proc fs write to set the audit container ID of a process,
-> >> >> > emitting an AUDIT_CONTAINER record to document the event.
-> >> >> >
-> >> >> > This is a write from the container orchestrator task to a proc entry of
-> >> >> > the form /proc/PID/containerid where PID is the process ID of the newly
-> >> >> > created task that is to become the first task in a container, or an
-> >> >> > additional task added to a container.
-> >> >> >
-> >> >> > The write expects up to a u64 value (unset: 18446744073709551615).
-> >> >> >
-> >> >> > This will produce a record such as this:
-> >> >> > type=CONTAINER msg=audit(1519903238.968:261): op=set pid=596 uid=0 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 auid=0 tty=pts0 ses=1 opid=596 old-contid=18446744073709551615 contid=123455 res=0
-> >> >> >
-> >> >> > The "op" field indicates an initial set.  The "pid" to "ses" fields are
-> >> >> > the orchestrator while the "opid" field is the object's PID, the process
-> >> >> > being "contained".  Old and new container ID values are given in the
-> >> >> > "contid" fields, while res indicates its success.
-> >> >> >
-> >> >> > It is not permitted to self-set, unset or re-set the container ID.  A
-> >> >> > child inherits its parent's container ID, but then can be set only once
-> >> >> > after.
-> >> >> >
-> >> >> > See: https://github.com/linux-audit/audit-kernel/issues/32
-> >> >> >
-> >> >> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> >> >> > ---
-> >> >> >  fs/proc/base.c             | 37 ++++++++++++++++++++
-> >> >> >  include/linux/audit.h      | 16 +++++++++
-> >> >> >  include/linux/init_task.h  |  4 ++-
-> >> >> >  include/linux/sched.h      |  1 +
-> >> >> >  include/uapi/linux/audit.h |  2 ++
-> >> >> >  kernel/auditsc.c           | 84 ++++++++++++++++++++++++++++++++++++++++++++++
-> >> >> >  6 files changed, 143 insertions(+), 1 deletion(-)
+
+
+On 4/13/2018 5:43 PM, vinayak menon wrote:
+> On Thu, Apr 12, 2018 at 8:27 PM, Roman Gushchin <guro@fb.com> wrote:
+>> On Thu, Apr 12, 2018 at 08:52:52AM +0200, Vlastimil Babka wrote:
+>>> On 04/11/2018 03:56 PM, Roman Gushchin wrote:
+>>>> On Wed, Apr 11, 2018 at 03:16:08PM +0200, Vlastimil Babka wrote:
+>>>>> [+CC linux-api]
+>>>>>
+>>>>> On 03/05/2018 02:37 PM, Roman Gushchin wrote:
+>>>>>> This patch introduces a concept of indirectly reclaimable memory
+>>>>>> and adds the corresponding memory counter and /proc/vmstat item.
+>>>>>>
+>>>>>> Indirectly reclaimable memory is any sort of memory, used by
+>>>>>> the kernel (except of reclaimable slabs), which is actually
+>>>>>> reclaimable, i.e. will be released under memory pressure.
+>>>>>>
+>>>>>> The counter is in bytes, as it's not always possible to
+>>>>>> count such objects in pages. The name contains BYTES
+>>>>>> by analogy to NR_KERNEL_STACK_KB.
+>>>>>>
+>>>>>> Signed-off-by: Roman Gushchin <guro@fb.com>
+>>>>>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>>>>>> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+>>>>>> Cc: Michal Hocko <mhocko@suse.com>
+>>>>>> Cc: Johannes Weiner <hannes@cmpxchg.org>
+>>>>>> Cc: linux-fsdevel@vger.kernel.org
+>>>>>> Cc: linux-kernel@vger.kernel.org
+>>>>>> Cc: linux-mm@kvack.org
+>>>>>> Cc: kernel-team@fb.com
+>>>>>
+>>>>> Hmm, looks like I'm late and this user-visible API change was just
+>>>>> merged. But it's for rc1, so we can still change it, hopefully?
+>>>>>
+>>>>> One problem I see with the counter is that it's in bytes, but among
+>>>>> counters that use pages, and the name doesn't indicate it.
+>>>>
+>>>> Here I just followed "nr_kernel_stack" path, which is measured in kB,
+>>>> but this is not mentioned in the field name.
+>>>
+>>> Oh, didn't know. Bad example to follow :P
+>>>
+>>>>> Then, I don't
+>>>>> see why users should care about the "indirectly" part, as that's just an
+>>>>> implementation detail. It is reclaimable and that's what matters, right?
+>>>>> (I also wanted to complain about lack of Documentation/... update, but
+>>>>> looks like there's no general file about vmstat, ugh)
+>>>>
+>>>> I agree, that it's a bit weird, and it's probably better to not expose
+>>>> it at all; but this is how all vm counters work. We do expose them all
+>>>> in /proc/vmstat. A good number of them is useless until you are not a
+>>>> mm developer, so it's arguable more "debug info" rather than "api".
+>>>
+>>> Yeah the problem is that once tools start rely on them, they fall under
+>>> the "do not break userspace" rule, however we call them. So being
+>>> cautious and conservative can't hurt.
+>>>
+>>>> It's definitely not a reason to make them messy.
+>>>> Does "nr_indirectly_reclaimable_bytes" look better to you?
+>>>
+>>> It still has has the "indirecly" part and feels arbitrary :/
+>>>
+>>>>>
+>>>>> I also kind of liked the idea from v1 rfc posting that there would be a
+>>>>> separate set of reclaimable kmalloc-X caches for these kind of
+>>>>> allocations. Besides accounting, it should also help reduce memory
+>>>>> fragmentation. The right variant of cache would be detected via
+>>>>> __GFP_RECLAIMABLE.
+>>>>
+>>>> Well, the downside is that we have to introduce X new caches
+>>>> just for this particular problem. I'm not strictly against the idea,
+>>>> but not convinced that it's much better.
+>>>
+>>> Maybe we can find more cases that would benefit from it. Heck, even slab
+>>> itself allocates some management structures from the generic kmalloc
+>>> caches, and if they are used for reclaimable caches, they could be
+>>> tracked as reclaimable as well.
+>>
+>> This is a good catch!
+>>
+>>>
+>>>>>
+>>>>> With that in mind, can we at least for now put the (manually maintained)
+>>>>> byte counter in a variable that's not directly exposed via /proc/vmstat,
+>>>>> and then when printing nr_slab_reclaimable, simply add the value
+>>>>> (divided by PAGE_SIZE), and when printing nr_slab_unreclaimable,
+>>>>> subtract the same value. This way we would be simply making the existing
+>>>>> counters more precise, in line with their semantics.
+>>>>
+>>>> Idk, I don't like the idea of adding a counter outside of the vm counters
+>>>> infrastructure, and I definitely wouldn't touch the exposed
+>>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
+>>>
+>>> We would be just making the reported values more precise wrt reality.
+>>
+>> It depends on if we believe that only slab memory can be reclaimable
+>> or not. If yes, this is true, otherwise not.
+>>
+>> My guess is that some drivers (e.g. networking) might have buffers,
+>> which are reclaimable under mempressure, and are allocated using
+>> the page allocator. But I have to look closer...
+>>
 > 
-> ...
+> One such case I have encountered is that of the ION page pool. The page pool
+> registers a shrinker. When not in any memory pressure page pool can go high
+> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
+> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
 > 
-> >> >> >  /* audit_rule_data supports filter rules with both integer and string
-> >> >> >   * fields.  It corresponds with AUDIT_ADD_RULE, AUDIT_DEL_RULE and
-> >> >> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> >> >> > index 4e0a4ac..29c8482 100644
-> >> >> > --- a/kernel/auditsc.c
-> >> >> > +++ b/kernel/auditsc.c
-> >> >> > @@ -2073,6 +2073,90 @@ int audit_set_loginuid(kuid_t loginuid)
-> >> >> >         return rc;
-> >> >> >  }
-> >> >> >
-> >> >> > +static int audit_set_containerid_perm(struct task_struct *task, u64 containerid)
-> >> >> > +{
-> >> >> > +       struct task_struct *parent;
-> >> >> > +       u64 pcontainerid, ccontainerid;
-> >> >> > +
-> >> >> > +       /* Don't allow to set our own containerid */
-> >> >> > +       if (current == task)
-> >> >> > +               return -EPERM;
-> >> >>
-> >> >> Why not?  Is there some obvious security concern that I missing?
-> >> >
-> >> > We then lose the distinction in the AUDIT_CONTAINER record between the
-> >> > initiating PID and the target PID.  This was outlined in the proposal.
-> >>
-> >> I just went back and reread the v3 proposal and I still don't see a
-> >> good explanation of this.  Why is this bad?  What's the security
-> >> concern?
-> >
-> > I don't remember, specifically.  Maybe this has been addressed by the
-> > check for children/threads or identical parent container ID.  So, I'm
-> > reluctantly willing to remove that check for now.
+> Thanks,
+> Vinayak
 > 
-> Okay.  For the record, if someone can explain to me why this
-> restriction saves us from some terrible situation I'm all for leaving
-> it.  I'm just opposed to restrictions without solid reasoning behind
-> them.
-> 
-> >> > Having said that, I'm still not sure we have protected sufficiently from
-> >> > a child turning around and setting it's parent's as yet unset or
-> >> > inherited audit container ID.
-> >>
-> >> Yes, I believe we only want to let a task set the audit container for
-> >> it's children (or itself/threads if we decide to allow that, see
-> >> above).  There *has* to be a function to check to see if a task if a
-> >> child of a given task ... right? ... although this is likely to be a
-> >> pointer traversal and locking nightmare ... hmmm.
-> >
-> > Isn't that just (struct task_struct)parent == (struct
-> > task_struct)child->parent (or ->real_parent)?
-> >
-> > And now that I say that, it is covered by the following patch's child
-> > check, so as long as we keep that, we should be fine.
-> 
-> I was thinking of checking not just current's immediate children, but
-> any of it's descendants as I believe that is what we want to limit,
-> yes?  I just worry that it isn't really practical to perform that
-> check.
 
-The child check I'm talking about prevents setting a task's audit
-container ID if it *has* any children or threads, so if it has children
-it is automatically disqualified and its grandchildren are irrelevant.
-
-> >> >> I ask because I suppose it might be possible for some container
-> >> >> runtime to do a fork, setup some of the environment and them exec the
-> >> >> container (before you answer the obvious "namespaces!" please remember
-> >> >> we're not trying to define containers).
-> >> >
-> >> > I don't think namespaces have any bearing on this concern since none are
-> >> > required.
-> >> >
-> >> >> > +       /* Don't allow the containerid to be unset */
-> >> >> > +       if (!cid_valid(containerid))
-> >> >> > +               return -EINVAL;
-> >> >> > +       /* if we don't have caps, reject */
-> >> >> > +       if (!capable(CAP_AUDIT_CONTROL))
-> >> >> > +               return -EPERM;
-> >> >> > +       /* if containerid is unset, allow */
-> >> >> > +       if (!audit_containerid_set(task))
-> >> >> > +               return 0;
-> >> >> > +       /* it is already set, and not inherited from the parent, reject */
-> >> >> > +       ccontainerid = audit_get_containerid(task);
-> >> >> > +       rcu_read_lock();
-> >> >> > +       parent = rcu_dereference(task->real_parent);
-> >> >> > +       rcu_read_unlock();
-> >> >> > +       task_lock(parent);
-> >> >> > +       pcontainerid = audit_get_containerid(parent);
-> >> >> > +       task_unlock(parent);
-> >> >> > +       if (ccontainerid != pcontainerid)
-> >> >> > +               return -EPERM;
-> >> >> > +       return 0;
-> 
-> I'm looking at the parent checks again and I wonder if the logic above
-> is what we really want.  Maybe it is, but I'm not sure.
-> 
-> Things I'm wondering about:
-> 
-> * "ccontainerid" and "containerid" are too close in name, I kept
-> confusing myself when looking at this code.  Please change one.  Bonus
-> points if it is shorter.
-
-Would c_containerid and p_containerid be ok?  child_cid and parent_cid?
-I'd really like it to have the same root as the parameter handed in so
-teh code is easier to follow.  It would be nice to have that across
-caller to local, but that's challenging.
-
-I've been tempted to use contid or even cid everywhere instead of
-containerid.  Perhaps the longer name doesn't bother me because I
-like its uniqueness and I learned touch-typing in grade 9 and I like
-100+ character wide terminals?  ;-)
-
-> * What if the orchestrator wants to move the task to a new container?
-> Right now it looks like you can only do that once, then then the
-> task's audit container ID will no longer be the same as real_parent
-
-A task's audit container ID can be unset or inherited, and then set
-only once.  After that, if you want it moved to a new container you
-can't and your only option is to spawn another peer to that task or a
-child of it and set that new task's audit container ID.
-
-Currently, the method of detecting if its audit container ID has been
-set (rather than inherited) was to check its parent's audit container
-ID.  The only reason to change this might be if the audit container ID
-were not inheritable, but then we lose the accountability of a task
-spawning another process and being able to leave its child's audit
-container ID unset and unaccountable to any existing container.  I think
-the relationship to the parent is crucial, and if something wants to
-change audit container ID it can, by spawning childrent and leaving a
-trail of container IDs in its parent processes.  (So what if a parent
-dies?)
-
-> ... or does the orchestrator change that?  *Can* the orchestrator
-> change real_parent (I suspect the answer is "no")?
-
-I don't think the orchestrator is able to change real_parent.  I've
-forgotten why there is a ->parent and ->real_parent and how they can
-change.  One is for the wait signal.  I don't remember the purpose of
-the other.
-
-If the parent dies before the child, the child will be re-parented on
-its grandparent if the parent doesn't hang around zombified, if I
-understand correctly.  If anything, a parent dying would likely further
-restrict the ability to set a task's audit container ID because a parent
-with an identical ID could vanish.
-
-> * I think the key is the relationship between current and task, not
-> between task and task->real_parent.  I believe what we really care
-> about is that task is a descendant of current.  We might also want to
-> allow current to change the audit container ID if it holds
-> CAP_AUDIT_CONTROL, regardless of it's relationship with task.
-
-Currently, a process with CAP_AUDIT_CONTROL can set the audit container
-ID of any task that hasn't got children or threads, isn't itself, and
-its audit container ID is inherited or unset.  This was to try to
-prevent games with parents and children scratching each other's backs.
-
-I would feel more comfortable if only descendants were settable, so
-adding that restriction sounds like a good idea to me other than the
-tree-climbing excercise and overhead involved.
-
-> >> >> > +static void audit_log_set_containerid(struct task_struct *task, u64 oldcontainerid,
-> >> >> > +                                     u64 containerid, int rc)
-> >> >> > +{
-> >> >> > +       struct audit_buffer *ab;
-> >> >> > +       uid_t uid;
-> >> >> > +       struct tty_struct *tty;
-> >> >> > +
-> >> >> > +       if (!audit_enabled)
-> >> >> > +               return;
-> >> >> > +
-> >> >> > +       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONTAINER);
-> >> >> > +       if (!ab)
-> >> >> > +               return;
-> >> >> > +
-> >> >> > +       uid = from_kuid(&init_user_ns, task_uid(current));
-> >> >> > +       tty = audit_get_tty(current);
-> >> >> > +
-> >> >> > +       audit_log_format(ab, "op=set pid=%d uid=%u", task_tgid_nr(current), uid);
-> >> >> > +       audit_log_task_context(ab);
-> >> >> > +       audit_log_format(ab, " auid=%u tty=%s ses=%u opid=%d old-contid=%llu contid=%llu res=%d",
-> >> >> > +                        from_kuid(&init_user_ns, audit_get_loginuid(current)),
-> >> >> > +                        tty ? tty_name(tty) : "(none)", audit_get_sessionid(current),
-> >> >> > +                        task_tgid_nr(task), oldcontainerid, containerid, !rc);
-> >> >> > +
-> >> >> > +       audit_put_tty(tty);
-> >> >> > +       audit_log_end(ab);
-> >> >> > +}
-> >> >> > +
-> >> >> > +/**
-> >> >> > + * audit_set_containerid - set current task's audit_context containerid
-> >> >> > + * @containerid: containerid value
-> >> >> > + *
-> >> >> > + * Returns 0 on success, -EPERM on permission failure.
-> >> >> > + *
-> >> >> > + * Called (set) from fs/proc/base.c::proc_containerid_write().
-> >> >> > + */
-> >> >> > +int audit_set_containerid(struct task_struct *task, u64 containerid)
-> >> >> > +{
-> >> >> > +       u64 oldcontainerid;
-> >> >> > +       int rc;
-> >> >> > +
-> >> >> > +       oldcontainerid = audit_get_containerid(task);
-> >> >> > +
-> >> >> > +       rc = audit_set_containerid_perm(task, containerid);
-> >> >> > +       if (!rc) {
-> >> >> > +               task_lock(task);
-> >> >> > +               task->containerid = containerid;
-> >> >> > +               task_unlock(task);
-> >> >> > +       }
-> >> >> > +
-> >> >> > +       audit_log_set_containerid(task, oldcontainerid, containerid, rc);
-> >> >> > +       return rc;
-> >> >>
-> >> >> Why are audit_set_containerid_perm() and audit_log_containerid()
-> >> >> separate functions?
-> >> >
-> >> > (I assume you mean audit_log_set_containerid()?)
-> >>
-> >> Yep.  My fingers got tired typing in that function name and decided a
-> >> shortcut was necessary.
-> >>
-> >> > It seemed clearer that all the permission checking was in one function
-> >> > and its return code could be used to report the outcome when logging the
-> >> > (attempted) action.  This is the same structure as audit_set_loginuid()
-> >> > and it made sense.
-> >>
-> >> When possible I really like it when the permission checks are in the
-> >> same function as the code which does the work; it's less likely to get
-> >> abused that way (you have to willfully bypass the access checks).  The
-> >> exceptions might be if you wanted to reuse the access control code, or
-> >> insert a modular access mechanism (e.g. LSMs).
-> >
-> > I don't follow how it could be abused.  The return code from the perm
-> > check gates setting the value and is used in the success field in the
-> > log.
-> 
-> If the permission checks are in the same function body as the code
-> which does the work you have to either split the function, or rewrite
-> it, if you want to bypass the permission checks.  It may be more of a
-> style issue than an actual safety issue, but the comments about
-> single-use functions in the same scope is the tie breaker.
-
-Perhaps I'm just being quite dense, but I just don't follow what the
-problem is and how you suggest fixing it.  A bunch of gotos to a label
-such as "out:" to log the refused action?  That seems messy and
-unstructured.
-
-> paul moore
-
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+As Vinayak mentioned NR_INDIRECTLY_RECLAIMABLE_BYTES can be used to solve the issue
+with ION page pool when OVERCOMMIT_GUESS is set, the patch for the same can be 
+found here https://lkml.org/lkml/2018/4/24/1288
