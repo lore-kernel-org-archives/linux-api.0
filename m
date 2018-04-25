@@ -1,197 +1,239 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 07/17] y2038: Compile utimes()/futimesat() conditionally
-Date: Wed, 25 Apr 2018 18:03:01 +0200
-Message-ID: <20180425160311.2718314-8-arnd@arndb.de>
+Subject: [PATCH 02/17] y2038: Remove newstat family from default syscall set
+Date: Wed, 25 Apr 2018 18:02:56 +0200
+Message-ID: <20180425160311.2718314-3-arnd@arndb.de>
 References: <20180425160311.2718314-1-arnd@arndb.de>
-Return-path: <libc-alpha-return-91849-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180425160311.2718314-1-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, netdev@vger.kernel.org, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, albert.aribaud@3adev.fr, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@infradead.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Dominik Brodowski <linux@dominikbrodowski.net>
 List-Id: linux-api@vger.kernel.org
 
-There are four generations of utimes() syscalls: utime(), utimes(),
-futimesat() and utimensat(), each one being a superset of the previous
-one. For y2038 support, we have to add another one, which is the same
-as the existing utimensat() but always passes 64-bit times_t based
-timespec values.
+We have four generations of stat() syscalls:
+- the oldstat syscalls that are only used on the older architectures
+- the newstat family that is used on all 64-bit architectures but
+  lacked support for large files on 32-bit architectures.
+- the stat64 family that is used mostly on 32-bit architectures to
+  replace newstat
+- statx() to replace all of the above, adding 64-bit timestamps among
+  other things.
 
-There are currently 10 architectures that only use utimensat(), two
-that use utimes(), futimesat() and utimensat() but not utime(), and 11
-architectures that have all four, and those define __ARCH_WANT_SYS_UTIME
-in order to get a sys_utime implementation. Since all the new
-architectures only want utimensat(), moving all the legacy entry points
-into a common __ARCH_WANT_SYS_UTIME guard simplifies the logic. Only alpha
-and ia64 grow a tiny bit as they now also get an unused sys_utime(),
-but it didn't seem worth the extra complexity of adding yet another
-ifdef for those.
+We already compile stat64 only on those architectures that need it,
+but newstat is always built, including on those that don't reference
+it. This adds a new __ARCH_WANT_NEW_STAT symbol along the lines of
+__ARCH_WANT_OLD_STAT and __ARCH_WANT_STAT64 to control compilation of
+newstat. All architectures that need it use an explict define, the
+others now get a little bit smaller, and future architecture (including
+64-bit targets) won't ever see it.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/alpha/include/asm/unistd.h |  1 +
- arch/arm/include/asm/unistd.h   |  2 +-
- arch/ia64/include/asm/unistd.h  |  1 +
- fs/utimes.c                     | 51 ++++++++++++++++++-----------------------
- include/linux/syscalls.h        | 10 ++++----
- 5 files changed, 31 insertions(+), 34 deletions(-)
+ arch/alpha/include/asm/unistd.h      | 1 +
+ arch/arm/include/asm/unistd.h        | 1 +
+ arch/arm64/include/uapi/asm/unistd.h | 1 +
+ arch/ia64/include/asm/unistd.h       | 2 ++
+ arch/m68k/include/asm/unistd.h       | 1 +
+ arch/microblaze/include/asm/unistd.h | 1 +
+ arch/mips/include/asm/unistd.h       | 1 +
+ arch/parisc/include/asm/unistd.h     | 1 +
+ arch/powerpc/include/asm/unistd.h    | 1 +
+ arch/s390/include/asm/unistd.h       | 1 +
+ arch/sh/include/asm/unistd.h         | 1 +
+ arch/sparc/include/asm/unistd.h      | 1 +
+ arch/x86/include/asm/unistd.h        | 1 +
+ arch/xtensa/include/asm/unistd.h     | 1 +
+ fs/stat.c                            | 3 +++
+ 15 files changed, 18 insertions(+)
 
 diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
-index edc090470023..9ff37aa1165f 100644
+index d6e29a1de4cc..edc090470023 100644
 --- a/arch/alpha/include/asm/unistd.h
 +++ b/arch/alpha/include/asm/unistd.h
-@@ -14,6 +14,7 @@
- #define __ARCH_WANT_SYS_GETPGRP
- #define __ARCH_WANT_SYS_OLDUMOUNT
- #define __ARCH_WANT_SYS_SIGPENDING
-+#define __ARCH_WANT_SYS_UTIME
- #define __ARCH_WANT_SYS_FORK
- #define __ARCH_WANT_SYS_VFORK
- #define __ARCH_WANT_SYS_CLONE
+@@ -6,6 +6,7 @@
+ 
+ #define NR_SYSCALLS			523
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_GETHOSTNAME
 diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
-index 8f1159c26f20..88ef2ce1f69a 100644
+index 076090d2dbf5..07e58010d597 100644
 --- a/arch/arm/include/asm/unistd.h
 +++ b/arch/arm/include/asm/unistd.h
-@@ -26,13 +26,13 @@
- #define __ARCH_WANT_SYS_SIGPROCMASK
- #define __ARCH_WANT_SYS_OLD_MMAP
- #define __ARCH_WANT_SYS_OLD_SELECT
-+#define __ARCH_WANT_SYS_UTIME
+@@ -16,6 +16,7 @@
+ #include <uapi/asm/unistd.h>
+ #include <asm/unistd-nr.h>
  
- #if !defined(CONFIG_AEABI) || defined(CONFIG_OABI_COMPAT)
- #define __ARCH_WANT_SYS_TIME
- #define __ARCH_WANT_SYS_IPC
- #define __ARCH_WANT_SYS_OLDUMOUNT
- #define __ARCH_WANT_SYS_ALARM
--#define __ARCH_WANT_SYS_UTIME
- #define __ARCH_WANT_SYS_OLD_GETRLIMIT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_SYS_SOCKETCALL
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+ #define __ARCH_WANT_SYS_PAUSE
+diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
+index 5072cbd15c82..dae1584cf017 100644
+--- a/arch/arm64/include/uapi/asm/unistd.h
++++ b/arch/arm64/include/uapi/asm/unistd.h
+@@ -16,5 +16,6 @@
+  */
+ 
+ #define __ARCH_WANT_RENAMEAT
++#define __ARCH_WANT_NEW_STAT
+ 
+ #include <asm-generic/unistd.h>
 diff --git a/arch/ia64/include/asm/unistd.h b/arch/ia64/include/asm/unistd.h
-index c5b2620c4a4c..49e34db2529c 100644
+index ffb705dc9c13..c5b2620c4a4c 100644
 --- a/arch/ia64/include/asm/unistd.h
 +++ b/arch/ia64/include/asm/unistd.h
-@@ -29,6 +29,7 @@
+@@ -28,6 +28,8 @@
+ #define __IGNORE_vfork		/* clone() */
  #define __IGNORE_umount2	/* umount() */
  
- #define __ARCH_WANT_NEW_STAT
-+#define __ARCH_WANT_SYS_UTIME
- 
++#define __ARCH_WANT_NEW_STAT
++
  #if !defined(__ASSEMBLY__) && !defined(ASSEMBLER)
  
-diff --git a/fs/utimes.c b/fs/utimes.c
-index ca2c02a7985c..ebc7fb713d91 100644
---- a/fs/utimes.c
-+++ b/fs/utimes.c
-@@ -8,35 +8,6 @@
- #include <linux/compat.h>
- #include <asm/unistd.h>
+ #include <linux/types.h>
+diff --git a/arch/m68k/include/asm/unistd.h b/arch/m68k/include/asm/unistd.h
+index 30d0d3fbd4ef..db22cdadc38a 100644
+--- a/arch/m68k/include/asm/unistd.h
++++ b/arch/m68k/include/asm/unistd.h
+@@ -7,6 +7,7 @@
  
--#ifdef __ARCH_WANT_SYS_UTIME
--
--/*
-- * sys_utime() can be implemented in user-level using sys_utimes().
-- * Is this for backwards compatibility?  If so, why not move it
-- * into the appropriate arch directory (for those architectures that
-- * need it).
-- */
--
--/* If times==NULL, set access and modification to current time,
-- * must be owner or have write permission.
-- * Else, update from *times, must be owner or super user.
-- */
--SYSCALL_DEFINE2(utime, char __user *, filename, struct utimbuf __user *, times)
--{
--	struct timespec64 tv[2];
--
--	if (times) {
--		if (get_user(tv[0].tv_sec, &times->actime) ||
--		    get_user(tv[1].tv_sec, &times->modtime))
--			return -EFAULT;
--		tv[0].tv_nsec = 0;
--		tv[1].tv_nsec = 0;
--	}
--	return do_utimes(AT_FDCWD, filename, times ? tv : NULL, 0);
--}
--
--#endif
--
- static bool nsec_valid(long nsec)
- {
- 	if (nsec == UTIME_OMIT || nsec == UTIME_NOW)
-@@ -184,6 +155,13 @@ SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
- 	return do_utimes(dfd, filename, utimes ? tstimes : NULL, flags);
+ #define NR_syscalls		380
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_OLD_STAT
+ #define __ARCH_WANT_STAT64
+diff --git a/arch/microblaze/include/asm/unistd.h b/arch/microblaze/include/asm/unistd.h
+index 9774e1d9507b..62ee12c247c1 100644
+--- a/arch/microblaze/include/asm/unistd.h
++++ b/arch/microblaze/include/asm/unistd.h
+@@ -15,6 +15,7 @@
+ 
+ /* #define __ARCH_WANT_OLD_READDIR */
+ /* #define __ARCH_WANT_OLD_STAT */
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/mips/include/asm/unistd.h b/arch/mips/include/asm/unistd.h
+index 3c09450908aa..d7878b3e16d8 100644
+--- a/arch/mips/include/asm/unistd.h
++++ b/arch/mips/include/asm/unistd.h
+@@ -24,6 +24,7 @@
+ 
+ #ifndef __ASSEMBLY__
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_SYS_ALARM
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/parisc/include/asm/unistd.h b/arch/parisc/include/asm/unistd.h
+index 3d507d04eb4c..b36273bacca7 100644
+--- a/arch/parisc/include/asm/unistd.h
++++ b/arch/parisc/include/asm/unistd.h
+@@ -141,6 +141,7 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5)	\
+     return K_INLINE_SYSCALL(name, 5, arg1, arg2, arg3, arg4, arg5);	\
  }
  
-+#ifdef __ARCH_WANT_SYS_UTIME
-+/*
-+ * futimesat(), utimes() and utime() are older versions of utimensat()
-+ * that are provided for compatibility with traditional C libraries.
-+ * On modern architectures, we always use libc wrappers around
-+ * utimensat() instead.
-+ */
- static long do_futimesat(int dfd, const char __user *filename,
- 			 struct timeval __user *utimes)
- {
-@@ -225,6 +203,21 @@ SYSCALL_DEFINE2(utimes, char __user *, filename,
- 	return do_futimesat(AT_FDCWD, filename, utimes);
- }
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
+index daf1ba97a00c..d78c1f49272d 100644
+--- a/arch/powerpc/include/asm/unistd.h
++++ b/arch/powerpc/include/asm/unistd.h
+@@ -22,6 +22,7 @@
+ #include <linux/compiler.h>
+ #include <linux/linkage.h>
  
-+SYSCALL_DEFINE2(utime, char __user *, filename, struct utimbuf __user *, times)
-+{
-+	struct timespec64 tv[2];
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
+index fd79c0d35dc4..1d181373288a 100644
+--- a/arch/s390/include/asm/unistd.h
++++ b/arch/s390/include/asm/unistd.h
+@@ -15,6 +15,7 @@
+ #define __IGNORE_pkey_alloc
+ #define __IGNORE_pkey_free
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_SYS_ALARM
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/sh/include/asm/unistd.h b/arch/sh/include/asm/unistd.h
+index b36200af9ce7..a845b57eac69 100644
+--- a/arch/sh/include/asm/unistd.h
++++ b/arch/sh/include/asm/unistd.h
+@@ -5,6 +5,7 @@
+ #  include <asm/unistd_64.h>
+ # endif
+ 
++# define __ARCH_WANT_NEW_STAT
+ # define __ARCH_WANT_OLD_READDIR
+ # define __ARCH_WANT_OLD_STAT
+ # define __ARCH_WANT_STAT64
+diff --git a/arch/sparc/include/asm/unistd.h b/arch/sparc/include/asm/unistd.h
+index b2a6a955113e..3544244685e1 100644
+--- a/arch/sparc/include/asm/unistd.h
++++ b/arch/sparc/include/asm/unistd.h
+@@ -21,6 +21,7 @@
+ #else
+ #define __NR_time		231 /* Linux sparc32                               */
+ #endif
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/x86/include/asm/unistd.h b/arch/x86/include/asm/unistd.h
+index 51c4eee00732..35b66bbf8028 100644
+--- a/arch/x86/include/asm/unistd.h
++++ b/arch/x86/include/asm/unistd.h
+@@ -31,6 +31,7 @@
+ 
+ # endif
+ 
++# define __ARCH_WANT_NEW_STAT
+ # define __ARCH_WANT_OLD_READDIR
+ # define __ARCH_WANT_OLD_STAT
+ # define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/xtensa/include/asm/unistd.h b/arch/xtensa/include/asm/unistd.h
+index ed66db3bc9bb..0d532ab60b37 100644
+--- a/arch/xtensa/include/asm/unistd.h
++++ b/arch/xtensa/include/asm/unistd.h
+@@ -5,6 +5,7 @@
+ #define __ARCH_WANT_SYS_CLONE
+ #include <uapi/asm/unistd.h>
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_UTIME
+ #define __ARCH_WANT_SYS_LLSEEK
+diff --git a/fs/stat.c b/fs/stat.c
+index f8e6fb2c3657..adbfcd86c81b 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -280,6 +280,8 @@ SYSCALL_DEFINE2(fstat, unsigned int, fd, struct __old_kernel_stat __user *, stat
+ 
+ #endif /* __ARCH_WANT_OLD_STAT */
+ 
++#ifdef __ARCH_WANT_NEW_STAT
 +
-+	if (times) {
-+		if (get_user(tv[0].tv_sec, &times->actime) ||
-+		    get_user(tv[1].tv_sec, &times->modtime))
-+			return -EFAULT;
-+		tv[0].tv_nsec = 0;
-+		tv[1].tv_nsec = 0;
-+	}
-+	return do_utimes(AT_FDCWD, filename, times ? tv : NULL, 0);
-+}
+ #if BITS_PER_LONG == 32
+ #  define choose_32_64(a,b) a
+ #else
+@@ -378,6 +380,7 @@ SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
+ 
+ 	return error;
+ }
 +#endif
-+
- #ifdef CONFIG_COMPAT
- /*
-  * Not all architectures have sys_utime, so implement this in terms
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 3d7dd665cdeb..d2b19e814218 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -941,8 +941,6 @@ asmlinkage long sys_access(const char __user *filename, int mode);
- asmlinkage long sys_rename(const char __user *oldname,
- 				const char __user *newname);
- asmlinkage long sys_symlink(const char __user *old, const char __user *new);
--asmlinkage long sys_utimes(char __user *filename,
--				struct timeval __user *utimes);
- #if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
- asmlinkage long sys_stat64(const char __user *filename,
- 				struct stat64 __user *statbuf);
-@@ -972,14 +970,18 @@ asmlinkage long sys_alarm(unsigned int seconds);
- asmlinkage long sys_getpgrp(void);
- asmlinkage long sys_pause(void);
- asmlinkage long sys_time(time_t __user *tloc);
-+#ifdef __ARCH_WANT_SYS_UTIME
- asmlinkage long sys_utime(char __user *filename,
- 				struct utimbuf __user *times);
-+asmlinkage long sys_utimes(char __user *filename,
-+				struct timeval __user *utimes);
-+asmlinkage long sys_futimesat(int dfd, const char __user *filename,
-+			      struct timeval __user *utimes);
-+#endif
- asmlinkage long sys_creat(const char __user *pathname, umode_t mode);
- asmlinkage long sys_getdents(unsigned int fd,
- 				struct linux_dirent __user *dirent,
- 				unsigned int count);
--asmlinkage long sys_futimesat(int dfd, const char __user *filename,
--			      struct timeval __user *utimes);
- asmlinkage long sys_select(int n, fd_set __user *inp, fd_set __user *outp,
- 			fd_set __user *exp, struct timeval __user *tvp);
- asmlinkage long sys_poll(struct pollfd __user *ufds, unsigned int nfds,
+ 
+ static int do_readlinkat(int dfd, const char __user *pathname,
+ 			 char __user *buf, int bufsiz)
 -- 
 2.9.0
