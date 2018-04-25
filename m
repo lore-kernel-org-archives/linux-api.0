@@ -1,101 +1,64 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
-Date: Wed, 25 Apr 2018 08:36:51 +0300
-Message-ID: <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
-References: <152286911105.615669.14053871624892399807.stgit@buzz>
- <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
- <87h8oqhagl.fsf@xmission.com>
- <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
- <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
+From: Vincent Chen <deanbo422@gmail.com>
+Subject: Re: [REVIEW][PATCH 05/17] signal/nds32: Use force_sig(SIGILL) in do_revisn
+Date: Wed, 25 Apr 2018 20:10:22 +0800
+Message-ID: <CAJsyPhyDeafwUQxXgnZ9Rfj6nwYrU_Kgyfv8DQ2q0BkwW25BBw@mail.gmail.com>
+References: <878t9ilmhv.fsf@xmission.com> <20180420010408.24438-5-ebiederm@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
-Content-Language: ru-RU
+In-Reply-To: <20180420010408.24438-5-ebiederm@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-On 23.04.2018 20:37, Nagarathnam Muthusamy wrote:
-> 
-> 
-> On 04/05/2018 12:02 AM, Konstantin Khlebnikov wrote:
->> On 05.04.2018 01:29, Eric W. Biederman wrote:
->>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
->>>
->>>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
->>>>> Each process have different pids, one for each pid namespace it belongs.
->>>>> When interaction happens within single pid-ns translation isn't required.
->>>>> More complicated scenarios needs special handling.
->>>>>
->>>>> For example:
->>>>> - reading pid-files or logs written inside container with pid namespace
->>>>> - attaching with ptrace to tasks from different pid namespace
->>>>> - passing pids across pid namespaces in any kind of API
->>>>>
->>>>> Currently there are several interfaces that could be used here:
->>>>>
->>>>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
->>>
->>> Using the inode number in interfaces is not an option. Especially not
->>> withou referencing the device number for the filesystem as well.
->>
->> This is supposed to be single-instance fs,
->> not part of proc but referenced but its magic "symlinks".
->>
->> Device numbers are not mentioned in "man namespaces".
->>
->>>
->>>>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
->>>>> In some cases conversion pid -> vpid could be easily done using this
->>>>> information, but backward translation requires scanning all tasks.
->>>>>
->>>>> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
->>>>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
->>>>> into pid namespace, this expose process and could be insecure.
->>>>>
->>>>> This patch adds new syscall for converting pids between pid namespaces:
->>>>>
->>>>> pid_t translate_pid(pid_t pid, int source_type, int source,
->>>>>                                  int target_type, int target);
->>>>>
->>>>> @source_type and @target_type defines type of following arguments:
->>>>>
->>>>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is unused
->>>>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
->>>>
->>>> I believe using pid to represent the namespace has been already
->>>> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
->>>> after which we moved on to fd based version of this interface.
->>>
->>> Or in short why is the case of pids important?
->>>
->>> You Konstantin you almost said why they were important in your message
->>> saying you were going to send this one.  However you don't explain in
->>> your description why you want to identify pid namespaces by pid.
->>>
->>
->> Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
->> pid based variant doesn't have such restrictions.
-> 
-> Can you provide more information on usecase requiring PID translation but not used for tracing related purposes?
+2018-04-20 9:03 GMT+08:00 Eric W. Biederman <ebiederm@xmission.com>:
+> As originally committed do_revisn would deliver a siginfo for SIGILL
+> with an si_code composed of random stack contents.  That makes no
+> sense and is not something userspace can depend on.  So simplify
+> the code and just use "force_sig(SIG_ILL, current)" instead.
+>
+> Fixes: 2923f5ea7738 ("nds32: Exception handling")
+> Cc: Vincent Chen <vincentc@andestech.com>
+> Cc: Greentime Hu <greentime@andestech.com>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> ---
+>  arch/nds32/kernel/traps.c | 5 +----
+>  1 file changed, 1 insertion(+), 4 deletions(-)
+>
+> diff --git a/arch/nds32/kernel/traps.c b/arch/nds32/kernel/traps.c
+> index 65961bf91d64..8e9a5b1f6234 100644
+> --- a/arch/nds32/kernel/traps.c
+> +++ b/arch/nds32/kernel/traps.c
+> @@ -356,14 +356,11 @@ void do_dispatch_tlb_misc(unsigned long entry, unsigned long addr,
+>
+>  void do_revinsn(struct pt_regs *regs)
+>  {
+> -       siginfo_t si;
+>         pr_emerg("Reserved Instruction\n");
+>         show_regs(regs);
+>         if (!user_mode(regs))
+>                 do_exit(SIGILL);
+> -       si.si_signo = SIGILL;
+> -       si.si_errno = 0;
+> -       force_sig_info(SIGILL, &si, current);
+> +       force_sig(SIGILL, current);
+>  }
+>
+>  #ifdef CONFIG_ALIGNMENT_TRAP
+> --
+> 2.14.1
+>
 
-Any introspection for [nested] containers. It's easier to work when you have all information when you don't have any.
-For example our CMS https://github.com/yandex/porto allows to start nested sub-container (or even deeper) by request from any container and 
-have to tell back which pid task is have. And it could translate any pid inside into accessible by client and vice versa.
+You are right we do not store any valuable information in sigingo_t now.
+However, We hope more information can be recorded by force_sig_fault()
+as below instead of calling force_sig() directly.
 
-> On a side note, can we have the types TRANSLATE_PID_CURRENT_PIDNS and TRANSLATE_PID_FD_PIDNS integrated first and then possibly extend the 
-> interface to include TRANSLATE_PID_TASK_PIDNS in future?
+-        force_sig(SIGILL, current);
++        force_sig_fault(SIGILL, ILL_ILLTRP,
++                        (void __user *)instruction_pointer(regs), current);
 
-I don't see reason for this separation.
-Pids and pid namespaces are part of the API for a long time.
+Thanks
 
-> 
-> Thanks,
-> Nagarathnam.
->> Most pid-based syscalls are racy in some cases but they are
->> here for decades and everybody knowns how to deal with it.
->> So, I've decided to merge both worlds in one interface which clearly tells what to expect.
-> 
+Vincent Chen
