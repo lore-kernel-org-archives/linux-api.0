@@ -1,30 +1,27 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [PATCH] mm: don't show nr_indirectly_reclaimable in
- /proc/vmstat
-Date: Wed, 25 Apr 2018 12:37:26 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1804251235330.151692@chino.kir.corp.google.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] mm: don't show nr_indirectly_reclaimable in /proc/vmstat
+Date: Wed, 25 Apr 2018 21:36:35 +0200
+Message-ID: <a2206b6a-1492-39dc-101f-118060083206@suse.cz>
 References: <20180425191422.9159-1-guro@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180425191422.9159-1-guro@fb.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>
+To: Roman Gushchin <guro@fb.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Matthew Wilcox <willy@infradead.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 25 Apr 2018, Roman Gushchin wrote:
-
+On 04/25/2018 09:14 PM, Roman Gushchin wrote:
 > Don't show nr_indirectly_reclaimable in /proc/vmstat,
 > because there is no need in exporting this vm counter
 > to the userspace, and some changes are expected
 > in reclaimable object accounting, which can alter
 > this counter.
-> 
 
-I don't think it should be a per-node vmstat, in this case.  It appears 
-only to be used for the global context.  Shouldn't this be handled like 
-totalram_pages, total_swap_pages, totalreserve_pages, etc?
+Oh, you beat me to it, thanks.
 
 > Signed-off-by: Roman Gushchin <guro@fb.com>
 > Cc: Vlastimil Babka <vbabka@suse.cz>
@@ -33,6 +30,15 @@ totalram_pages, total_swap_pages, totalreserve_pages, etc?
 > Cc: Alexander Viro <viro@zeniv.linux.org.uk>
 > Cc: Michal Hocko <mhocko@suse.com>
 > Cc: Johannes Weiner <hannes@cmpxchg.org>
+
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+
+Andrew, can you send this to Linus before the current rc period ends,
+please?
+
+Thanks,
+Vlastimil
+
 > ---
 >  mm/vmstat.c | 6 +++++-
 >  1 file changed, 5 insertions(+), 1 deletion(-)
@@ -61,3 +67,4 @@ totalram_pages, total_swap_pages, totalreserve_pages, etc?
 >  	seq_puts(m, vmstat_text[off]);
 >  	seq_put_decimal_ull(m, " ", *l);
 >  	seq_putc(m, '\n');
+> 
