@@ -1,137 +1,101 @@
-From: Vijayanand Jitta <vjitta@codeaurora.org>
-Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
-Date: Wed, 25 Apr 2018 09:19:29 +0530
-Message-ID: <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
-References: <20180305133743.12746-1-guro@fb.com>
- <20180305133743.12746-2-guro@fb.com>
- <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
- <20180411135624.GA24260@castle.DHCP.thefacebook.com>
- <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
- <20180412145702.GB30714@castle.DHCP.thefacebook.com>
- <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
+Date: Wed, 25 Apr 2018 08:36:51 +0300
+Message-ID: <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
+References: <152286911105.615669.14053871624892399807.stgit@buzz>
+ <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
+ <87h8oqhagl.fsf@xmission.com>
+ <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+ <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
+Content-Language: ru-RU
 Sender: linux-kernel-owner@vger.kernel.org
-To: vinayak menon <vinayakm.list@gmail.com>, Roman Gushchin <guro@fb.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
+To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 4/13/2018 5:43 PM, vinayak menon wrote:
-> On Thu, Apr 12, 2018 at 8:27 PM, Roman Gushchin <guro@fb.com> wrote:
->> On Thu, Apr 12, 2018 at 08:52:52AM +0200, Vlastimil Babka wrote:
->>> On 04/11/2018 03:56 PM, Roman Gushchin wrote:
->>>> On Wed, Apr 11, 2018 at 03:16:08PM +0200, Vlastimil Babka wrote:
->>>>> [+CC linux-api]
->>>>>
->>>>> On 03/05/2018 02:37 PM, Roman Gushchin wrote:
->>>>>> This patch introduces a concept of indirectly reclaimable memory
->>>>>> and adds the corresponding memory counter and /proc/vmstat item.
->>>>>>
->>>>>> Indirectly reclaimable memory is any sort of memory, used by
->>>>>> the kernel (except of reclaimable slabs), which is actually
->>>>>> reclaimable, i.e. will be released under memory pressure.
->>>>>>
->>>>>> The counter is in bytes, as it's not always possible to
->>>>>> count such objects in pages. The name contains BYTES
->>>>>> by analogy to NR_KERNEL_STACK_KB.
->>>>>>
->>>>>> Signed-off-by: Roman Gushchin <guro@fb.com>
->>>>>> Cc: Andrew Morton <akpm@linux-foundation.org>
->>>>>> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
->>>>>> Cc: Michal Hocko <mhocko@suse.com>
->>>>>> Cc: Johannes Weiner <hannes@cmpxchg.org>
->>>>>> Cc: linux-fsdevel@vger.kernel.org
->>>>>> Cc: linux-kernel@vger.kernel.org
->>>>>> Cc: linux-mm@kvack.org
->>>>>> Cc: kernel-team@fb.com
->>>>>
->>>>> Hmm, looks like I'm late and this user-visible API change was just
->>>>> merged. But it's for rc1, so we can still change it, hopefully?
->>>>>
->>>>> One problem I see with the counter is that it's in bytes, but among
->>>>> counters that use pages, and the name doesn't indicate it.
->>>>
->>>> Here I just followed "nr_kernel_stack" path, which is measured in kB,
->>>> but this is not mentioned in the field name.
->>>
->>> Oh, didn't know. Bad example to follow :P
->>>
->>>>> Then, I don't
->>>>> see why users should care about the "indirectly" part, as that's just an
->>>>> implementation detail. It is reclaimable and that's what matters, right?
->>>>> (I also wanted to complain about lack of Documentation/... update, but
->>>>> looks like there's no general file about vmstat, ugh)
->>>>
->>>> I agree, that it's a bit weird, and it's probably better to not expose
->>>> it at all; but this is how all vm counters work. We do expose them all
->>>> in /proc/vmstat. A good number of them is useless until you are not a
->>>> mm developer, so it's arguable more "debug info" rather than "api".
->>>
->>> Yeah the problem is that once tools start rely on them, they fall under
->>> the "do not break userspace" rule, however we call them. So being
->>> cautious and conservative can't hurt.
->>>
->>>> It's definitely not a reason to make them messy.
->>>> Does "nr_indirectly_reclaimable_bytes" look better to you?
->>>
->>> It still has has the "indirecly" part and feels arbitrary :/
->>>
->>>>>
->>>>> I also kind of liked the idea from v1 rfc posting that there would be a
->>>>> separate set of reclaimable kmalloc-X caches for these kind of
->>>>> allocations. Besides accounting, it should also help reduce memory
->>>>> fragmentation. The right variant of cache would be detected via
->>>>> __GFP_RECLAIMABLE.
->>>>
->>>> Well, the downside is that we have to introduce X new caches
->>>> just for this particular problem. I'm not strictly against the idea,
->>>> but not convinced that it's much better.
->>>
->>> Maybe we can find more cases that would benefit from it. Heck, even slab
->>> itself allocates some management structures from the generic kmalloc
->>> caches, and if they are used for reclaimable caches, they could be
->>> tracked as reclaimable as well.
->>
->> This is a good catch!
->>
->>>
->>>>>
->>>>> With that in mind, can we at least for now put the (manually maintained)
->>>>> byte counter in a variable that's not directly exposed via /proc/vmstat,
->>>>> and then when printing nr_slab_reclaimable, simply add the value
->>>>> (divided by PAGE_SIZE), and when printing nr_slab_unreclaimable,
->>>>> subtract the same value. This way we would be simply making the existing
->>>>> counters more precise, in line with their semantics.
->>>>
->>>> Idk, I don't like the idea of adding a counter outside of the vm counters
->>>> infrastructure, and I definitely wouldn't touch the exposed
->>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
->>>
->>> We would be just making the reported values more precise wrt reality.
->>
->> It depends on if we believe that only slab memory can be reclaimable
->> or not. If yes, this is true, otherwise not.
->>
->> My guess is that some drivers (e.g. networking) might have buffers,
->> which are reclaimable under mempressure, and are allocated using
->> the page allocator. But I have to look closer...
->>
+On 23.04.2018 20:37, Nagarathnam Muthusamy wrote:
 > 
-> One such case I have encountered is that of the ION page pool. The page pool
-> registers a shrinker. When not in any memory pressure page pool can go high
-> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
-> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
+> 
+> On 04/05/2018 12:02 AM, Konstantin Khlebnikov wrote:
+>> On 05.04.2018 01:29, Eric W. Biederman wrote:
+>>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
+>>>
+>>>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
+>>>>> Each process have different pids, one for each pid namespace it belongs.
+>>>>> When interaction happens within single pid-ns translation isn't required.
+>>>>> More complicated scenarios needs special handling.
+>>>>>
+>>>>> For example:
+>>>>> - reading pid-files or logs written inside container with pid namespace
+>>>>> - attaching with ptrace to tasks from different pid namespace
+>>>>> - passing pids across pid namespaces in any kind of API
+>>>>>
+>>>>> Currently there are several interfaces that could be used here:
+>>>>>
+>>>>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
+>>>
+>>> Using the inode number in interfaces is not an option. Especially not
+>>> withou referencing the device number for the filesystem as well.
+>>
+>> This is supposed to be single-instance fs,
+>> not part of proc but referenced but its magic "symlinks".
+>>
+>> Device numbers are not mentioned in "man namespaces".
+>>
+>>>
+>>>>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
+>>>>> In some cases conversion pid -> vpid could be easily done using this
+>>>>> information, but backward translation requires scanning all tasks.
+>>>>>
+>>>>> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
+>>>>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+>>>>> into pid namespace, this expose process and could be insecure.
+>>>>>
+>>>>> This patch adds new syscall for converting pids between pid namespaces:
+>>>>>
+>>>>> pid_t translate_pid(pid_t pid, int source_type, int source,
+>>>>>                                  int target_type, int target);
+>>>>>
+>>>>> @source_type and @target_type defines type of following arguments:
+>>>>>
+>>>>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is unused
+>>>>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
+>>>>
+>>>> I believe using pid to represent the namespace has been already
+>>>> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
+>>>> after which we moved on to fd based version of this interface.
+>>>
+>>> Or in short why is the case of pids important?
+>>>
+>>> You Konstantin you almost said why they were important in your message
+>>> saying you were going to send this one.  However you don't explain in
+>>> your description why you want to identify pid namespaces by pid.
+>>>
+>>
+>> Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
+>> pid based variant doesn't have such restrictions.
+> 
+> Can you provide more information on usecase requiring PID translation but not used for tracing related purposes?
+
+Any introspection for [nested] containers. It's easier to work when you have all information when you don't have any.
+For example our CMS https://github.com/yandex/porto allows to start nested sub-container (or even deeper) by request from any container and 
+have to tell back which pid task is have. And it could translate any pid inside into accessible by client and vice versa.
+
+> On a side note, can we have the types TRANSLATE_PID_CURRENT_PIDNS and TRANSLATE_PID_FD_PIDNS integrated first and then possibly extend the 
+> interface to include TRANSLATE_PID_TASK_PIDNS in future?
+
+I don't see reason for this separation.
+Pids and pid namespaces are part of the API for a long time.
+
 > 
 > Thanks,
-> Vinayak
+> Nagarathnam.
+>> Most pid-based syscalls are racy in some cases but they are
+>> here for decades and everybody knowns how to deal with it.
+>> So, I've decided to merge both worlds in one interface which clearly tells what to expect.
 > 
-
-As Vinayak mentioned NR_INDIRECTLY_RECLAIMABLE_BYTES can be used to solve the issue
-with ION page pool when OVERCOMMIT_GUESS is set, the patch for the same can be 
-found here https://lkml.org/lkml/2018/4/24/1288
