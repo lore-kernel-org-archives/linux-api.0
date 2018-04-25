@@ -1,63 +1,73 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: [PATCH] signal/nds32: More information in do_revinsn
-Date: Wed, 25 Apr 2018 11:13:45 -0500
-Message-ID: <87in8fuuva.fsf_-_@xmission.com>
-References: <878t9ilmhv.fsf@xmission.com>
-        <20180420010408.24438-5-ebiederm@xmission.com>
-        <CAJsyPhyDeafwUQxXgnZ9Rfj6nwYrU_Kgyfv8DQ2q0BkwW25BBw@mail.gmail.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
+Date: Wed, 25 Apr 2018 17:47:26 +0200
+Message-ID: <db71bf8f-0c76-e304-25c3-d22f1e0d71e5@suse.cz>
+References: <20180305133743.12746-1-guro@fb.com>
+ <20180305133743.12746-2-guro@fb.com>
+ <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
+ <20180411135624.GA24260@castle.DHCP.thefacebook.com>
+ <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
+ <20180412145702.GB30714@castle.DHCP.thefacebook.com>
+ <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
+ <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
+ <20180425125211.GB3410@castle>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJsyPhyDeafwUQxXgnZ9Rfj6nwYrU_Kgyfv8DQ2q0BkwW25BBw@mail.gmail.com>
-        (Vincent Chen's message of "Wed, 25 Apr 2018 20:10:22 +0800")
+In-Reply-To: <20180425125211.GB3410@castle>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vincent Chen <deanbo422@gmail.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>
+To: Roman Gushchin <guro@fb.com>, Vijayanand Jitta <vjitta@codeaurora.org>
+Cc: vinayak menon <vinayakm.list@gmail.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On 04/25/2018 02:52 PM, Roman Gushchin wrote:
+> On Wed, Apr 25, 2018 at 09:19:29AM +0530, Vijayanand Jitta wrote:
+>>>>>> Idk, I don't like the idea of adding a counter outside of the vm counters
+>>>>>> infrastructure, and I definitely wouldn't touch the exposed
+>>>>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
+>>>>>
+>>>>> We would be just making the reported values more precise wrt reality.
+>>>>
+>>>> It depends on if we believe that only slab memory can be reclaimable
+>>>> or not. If yes, this is true, otherwise not.
+>>>>
+>>>> My guess is that some drivers (e.g. networking) might have buffers,
+>>>> which are reclaimable under mempressure, and are allocated using
+>>>> the page allocator. But I have to look closer...
+>>>>
+>>>
+>>> One such case I have encountered is that of the ION page pool. The page pool
+>>> registers a shrinker. When not in any memory pressure page pool can go high
+>>> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
+>>> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
 
-While reviewing f6ed1ecad56f ("signal/nds32: Use force_sig(SIGILL) in do_revisn")
-Vincent Chen asked if it was possible to provide more information in do_revinsn
-with force_sig_fault.
+FYI, we have discussed this at LSF/MM and agreed to try the kmalloc
+reclaimable caches idea. The existing counter could then remain for page
+allocator users such as ION. It's a bit weird to have it in bytes and
+not pages then, IMHO. What if we hid it from /proc/vmstat now so it
+doesn't become ABI, and later convert it to page granularity and expose
+it under a name such as "nr_other_reclaimable" ?
 
-That seems reasonable and the appropirate si_code appears to be
-ILL_ILLOPC (illegal opcode) as the printk indicates this code path
-is triggered when a reserved instruction is exectured.
+Vlastimil
 
-So update do_revinsn to use force_sig_fault(SIGILL, ILL_ILLOPC, ...).
-Giving userspace a much better experience when soemone attempts
-to execute a reserved instruction.
-
-Cc: Greentime Hu <green.hu@gmail.com>
-Cc: Vincent Chen <deanbo422@gmail.com>
-Suggested-by: Vincent Chen <deanbo422@gmail.com>
-Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
----
-
-Vincent I have updated this from your suggestion to use
-ILL_ILLOPC as that appears the more appropriate si_code.
-Normally I expect you could just update your nds32 tree and
-make this kind of change but since I am touching this code anyway I will
-be happy to take this change along with the others.
-
-Does this look good to you?
-
- arch/nds32/kernel/traps.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/arch/nds32/kernel/traps.c b/arch/nds32/kernel/traps.c
-index a6205fd4db52..5c2f61835ab9 100644
---- a/arch/nds32/kernel/traps.c
-+++ b/arch/nds32/kernel/traps.c
-@@ -349,7 +349,8 @@ void do_revinsn(struct pt_regs *regs)
- 	show_regs(regs);
- 	if (!user_mode(regs))
- 		do_exit(SIGILL);
--	force_sig(SIGILL, current);
-+	force_sig_fault(SIGILL, ILL_ILLOPC,
-+			(void __user *)instruction_pointer(regs), current);
- }
- 
- #ifdef CONFIG_ALIGNMENT_TRAP
--- 
-2.14.1
+> Perfect!
+> This is exactly what I've expected.
+> 
+>>>
+>>> Thanks,
+>>> Vinayak
+>>>
+>>
+>> As Vinayak mentioned NR_INDIRECTLY_RECLAIMABLE_BYTES can be used to solve the issue
+>> with ION page pool when OVERCOMMIT_GUESS is set, the patch for the same can be 
+>> found here https://lkml.org/lkml/2018/4/24/1288
+> 
+> This makes perfect sense to me.
+> 
+> Please, fell free to add:
+> Acked-by: Roman Gushchin <guro@fb.com>
+> 
+> Thank you!
+> 
