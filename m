@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 02/17] y2038: Remove newstat family from default syscall set
-Date: Wed, 25 Apr 2018 18:02:56 +0200
-Message-ID: <20180425160311.2718314-3-arnd@arndb.de>
+Subject: [PATCH 04/17] asm-generic: Remove unneeded __ARCH_WANT_SYS_LLSEEK macro
+Date: Wed, 25 Apr 2018 18:02:58 +0200
+Message-ID: <20180425160311.2718314-5-arnd@arndb.de>
 References: <20180425160311.2718314-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180425160311.2718314-1-arnd@arndb.de>
@@ -10,230 +10,210 @@ To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, netdev@vger.kernel.org, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, albert.aribaud@3adev.fr, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@infradead.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Dominik Brodowski <linux@dominikbrodowski.net>
 List-Id: linux-api@vger.kernel.org
 
-We have four generations of stat() syscalls:
-- the oldstat syscalls that are only used on the older architectures
-- the newstat family that is used on all 64-bit architectures but
-  lacked support for large files on 32-bit architectures.
-- the stat64 family that is used mostly on 32-bit architectures to
-  replace newstat
-- statx() to replace all of the above, adding 64-bit timestamps among
-  other things.
+The sys_llseek sytem call is needed on all 32-bit architectures and
+none of the 64-bit ones, so we can remove the __ARCH_WANT_SYS_LLSEEK guard
+and simplify the include/asm-generic/unistd.h header further.
 
-We already compile stat64 only on those architectures that need it,
-but newstat is always built, including on those that don't reference
-it. This adds a new __ARCH_WANT_NEW_STAT symbol along the lines of
-__ARCH_WANT_OLD_STAT and __ARCH_WANT_STAT64 to control compilation of
-newstat. All architectures that need it use an explict define, the
-others now get a little bit smaller, and future architecture (including
-64-bit targets) won't ever see it.
+Since 32-bit tasks can run either natively or in compat mode on 64-bit
+architectures, we have to check for both !CONFIG_64BIT and CONFIG_COMPAT.
+
+There are a few 64-bit architectures that also reference sys_llseek
+in their 64-bit ABI (e.g. sparc), but I verified that those all
+select CONFIG_COMPAT, so the #if check is still correct here. It's
+a bit odd to include it in the syscall table though, as it's the
+same as sys_lseek() on 64-bit, but with strange calling conventions.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- arch/alpha/include/asm/unistd.h      | 1 +
- arch/arm/include/asm/unistd.h        | 1 +
- arch/arm64/include/uapi/asm/unistd.h | 1 +
- arch/ia64/include/asm/unistd.h       | 2 ++
- arch/m68k/include/asm/unistd.h       | 1 +
- arch/microblaze/include/asm/unistd.h | 1 +
- arch/mips/include/asm/unistd.h       | 1 +
- arch/parisc/include/asm/unistd.h     | 1 +
- arch/powerpc/include/asm/unistd.h    | 1 +
- arch/s390/include/asm/unistd.h       | 1 +
- arch/sh/include/asm/unistd.h         | 1 +
- arch/sparc/include/asm/unistd.h      | 1 +
- arch/x86/include/asm/unistd.h        | 1 +
- arch/xtensa/include/asm/unistd.h     | 1 +
- fs/stat.c                            | 3 +++
- 15 files changed, 18 insertions(+)
+ arch/arm/include/asm/unistd.h        | 1 -
+ arch/arm64/include/asm/unistd.h      | 1 -
+ arch/m68k/include/asm/unistd.h       | 1 -
+ arch/microblaze/include/asm/unistd.h | 1 -
+ arch/mips/include/asm/unistd.h       | 1 -
+ arch/parisc/include/asm/unistd.h     | 1 -
+ arch/powerpc/include/asm/unistd.h    | 1 -
+ arch/s390/include/asm/unistd.h       | 1 -
+ arch/sh/include/asm/unistd.h         | 1 -
+ arch/sparc/include/asm/unistd.h      | 1 -
+ arch/x86/include/asm/unistd.h        | 1 -
+ arch/xtensa/include/asm/unistd.h     | 1 -
+ fs/read_write.c                      | 2 +-
+ include/asm-generic/unistd.h         | 9 ---------
+ 14 files changed, 1 insertion(+), 22 deletions(-)
 
-diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
-index d6e29a1de4cc..edc090470023 100644
---- a/arch/alpha/include/asm/unistd.h
-+++ b/arch/alpha/include/asm/unistd.h
-@@ -6,6 +6,7 @@
- 
- #define NR_SYSCALLS			523
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_GETHOSTNAME
 diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
-index 076090d2dbf5..07e58010d597 100644
+index 07e58010d597..8f1159c26f20 100644
 --- a/arch/arm/include/asm/unistd.h
 +++ b/arch/arm/include/asm/unistd.h
-@@ -16,6 +16,7 @@
- #include <uapi/asm/unistd.h>
- #include <asm/unistd-nr.h>
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_STAT64
+@@ -21,7 +21,6 @@
  #define __ARCH_WANT_SYS_GETHOSTNAME
  #define __ARCH_WANT_SYS_PAUSE
-diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
-index 5072cbd15c82..dae1584cf017 100644
---- a/arch/arm64/include/uapi/asm/unistd.h
-+++ b/arch/arm64/include/uapi/asm/unistd.h
-@@ -16,5 +16,6 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_NEW_STAT
- 
- #include <asm-generic/unistd.h>
-diff --git a/arch/ia64/include/asm/unistd.h b/arch/ia64/include/asm/unistd.h
-index ffb705dc9c13..c5b2620c4a4c 100644
---- a/arch/ia64/include/asm/unistd.h
-+++ b/arch/ia64/include/asm/unistd.h
-@@ -28,6 +28,8 @@
- #define __IGNORE_vfork		/* clone() */
- #define __IGNORE_umount2	/* umount() */
- 
-+#define __ARCH_WANT_NEW_STAT
-+
- #if !defined(__ASSEMBLY__) && !defined(ASSEMBLER)
- 
- #include <linux/types.h>
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_SIGPENDING
+ #define __ARCH_WANT_SYS_SIGPROCMASK
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index a0baa9af5487..5c3c1398c62e 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -18,7 +18,6 @@
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+ #define __ARCH_WANT_SYS_PAUSE
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_SIGPENDING
+ #define __ARCH_WANT_SYS_SIGPROCMASK
 diff --git a/arch/m68k/include/asm/unistd.h b/arch/m68k/include/asm/unistd.h
-index 30d0d3fbd4ef..db22cdadc38a 100644
+index db22cdadc38a..e680031bda7b 100644
 --- a/arch/m68k/include/asm/unistd.h
 +++ b/arch/m68k/include/asm/unistd.h
-@@ -7,6 +7,7 @@
- 
- #define NR_syscalls		380
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_OLD_STAT
- #define __ARCH_WANT_STAT64
+@@ -22,7 +22,6 @@
+ #define __ARCH_WANT_SYS_SOCKETCALL
+ #define __ARCH_WANT_SYS_FADVISE64
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_OLD_GETRLIMIT
+ #define __ARCH_WANT_SYS_OLD_MMAP
 diff --git a/arch/microblaze/include/asm/unistd.h b/arch/microblaze/include/asm/unistd.h
-index 9774e1d9507b..62ee12c247c1 100644
+index 62ee12c247c1..8921ba34d733 100644
 --- a/arch/microblaze/include/asm/unistd.h
 +++ b/arch/microblaze/include/asm/unistd.h
-@@ -15,6 +15,7 @@
- 
- /* #define __ARCH_WANT_OLD_READDIR */
- /* #define __ARCH_WANT_OLD_STAT */
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
- #define __ARCH_WANT_SYS_GETHOSTNAME
+@@ -27,7 +27,6 @@
+ #define __ARCH_WANT_SYS_SOCKETCALL
+ #define __ARCH_WANT_SYS_FADVISE64
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ /* #define __ARCH_WANT_SYS_OLD_GETRLIMIT */
+ #define __ARCH_WANT_SYS_OLDUMOUNT
 diff --git a/arch/mips/include/asm/unistd.h b/arch/mips/include/asm/unistd.h
-index 3c09450908aa..d7878b3e16d8 100644
+index d7878b3e16d8..c2174b80e50e 100644
 --- a/arch/mips/include/asm/unistd.h
 +++ b/arch/mips/include/asm/unistd.h
-@@ -24,6 +24,7 @@
- 
- #ifndef __ASSEMBLY__
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_SYS_ALARM
- #define __ARCH_WANT_SYS_GETHOSTNAME
+@@ -34,7 +34,6 @@
+ #define __ARCH_WANT_SYS_WAITPID
+ #define __ARCH_WANT_SYS_SOCKETCALL
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_OLD_UNAME
+ #define __ARCH_WANT_SYS_OLDUMOUNT
 diff --git a/arch/parisc/include/asm/unistd.h b/arch/parisc/include/asm/unistd.h
-index 3d507d04eb4c..b36273bacca7 100644
+index b36273bacca7..a0c38374fff0 100644
 --- a/arch/parisc/include/asm/unistd.h
 +++ b/arch/parisc/include/asm/unistd.h
-@@ -141,6 +141,7 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5)	\
-     return K_INLINE_SYSCALL(name, 5, arg1, arg2, arg3, arg4, arg5);	\
- }
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
+@@ -156,7 +156,6 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5)	\
+ #define __ARCH_WANT_SYS_SOCKETCALL
+ #define __ARCH_WANT_SYS_FADVISE64
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_OLDUMOUNT
+ #define __ARCH_WANT_SYS_SIGPENDING
 diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index daf1ba97a00c..d78c1f49272d 100644
+index d78c1f49272d..fb8fb304ceaf 100644
 --- a/arch/powerpc/include/asm/unistd.h
 +++ b/arch/powerpc/include/asm/unistd.h
-@@ -22,6 +22,7 @@
- #include <linux/compiler.h>
- #include <linux/linkage.h>
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
+@@ -36,7 +36,6 @@
+ #define __ARCH_WANT_SYS_SOCKETCALL
+ #define __ARCH_WANT_SYS_FADVISE64
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_OLD_GETRLIMIT
+ #define __ARCH_WANT_SYS_OLD_UNAME
 diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
-index fd79c0d35dc4..1d181373288a 100644
+index 1d181373288a..a2d583ea526d 100644
 --- a/arch/s390/include/asm/unistd.h
 +++ b/arch/s390/include/asm/unistd.h
-@@ -15,6 +15,7 @@
- #define __IGNORE_pkey_alloc
- #define __IGNORE_pkey_free
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_SYS_ALARM
- #define __ARCH_WANT_SYS_GETHOSTNAME
+@@ -26,7 +26,6 @@
+ #define __ARCH_WANT_SYS_IPC
+ #define __ARCH_WANT_SYS_FADVISE64
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_OLD_GETRLIMIT
+ #define __ARCH_WANT_SYS_OLD_MMAP
 diff --git a/arch/sh/include/asm/unistd.h b/arch/sh/include/asm/unistd.h
-index b36200af9ce7..a845b57eac69 100644
+index a845b57eac69..a99234b61051 100644
 --- a/arch/sh/include/asm/unistd.h
 +++ b/arch/sh/include/asm/unistd.h
-@@ -5,6 +5,7 @@
- #  include <asm/unistd_64.h>
- # endif
- 
-+# define __ARCH_WANT_NEW_STAT
- # define __ARCH_WANT_OLD_READDIR
- # define __ARCH_WANT_OLD_STAT
- # define __ARCH_WANT_STAT64
+@@ -20,7 +20,6 @@
+ # define __ARCH_WANT_SYS_SOCKETCALL
+ # define __ARCH_WANT_SYS_FADVISE64
+ # define __ARCH_WANT_SYS_GETPGRP
+-# define __ARCH_WANT_SYS_LLSEEK
+ # define __ARCH_WANT_SYS_NICE
+ # define __ARCH_WANT_SYS_OLD_GETRLIMIT
+ # define __ARCH_WANT_SYS_OLD_UNAME
 diff --git a/arch/sparc/include/asm/unistd.h b/arch/sparc/include/asm/unistd.h
-index b2a6a955113e..3544244685e1 100644
+index 3544244685e1..f7514d3eae7b 100644
 --- a/arch/sparc/include/asm/unistd.h
 +++ b/arch/sparc/include/asm/unistd.h
-@@ -21,6 +21,7 @@
- #else
- #define __NR_time		231 /* Linux sparc32                               */
- #endif
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
+@@ -34,7 +34,6 @@
+ #define __ARCH_WANT_SYS_SOCKETCALL
+ #define __ARCH_WANT_SYS_FADVISE64
+ #define __ARCH_WANT_SYS_GETPGRP
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_NICE
+ #define __ARCH_WANT_SYS_OLDUMOUNT
+ #define __ARCH_WANT_SYS_SIGPENDING
 diff --git a/arch/x86/include/asm/unistd.h b/arch/x86/include/asm/unistd.h
-index 51c4eee00732..35b66bbf8028 100644
+index 35b66bbf8028..153d2a5e6b02 100644
 --- a/arch/x86/include/asm/unistd.h
 +++ b/arch/x86/include/asm/unistd.h
-@@ -31,6 +31,7 @@
- 
- # endif
- 
-+# define __ARCH_WANT_NEW_STAT
- # define __ARCH_WANT_OLD_READDIR
- # define __ARCH_WANT_OLD_STAT
- # define __ARCH_WANT_SYS_ALARM
+@@ -38,7 +38,6 @@
+ # define __ARCH_WANT_SYS_FADVISE64
+ # define __ARCH_WANT_SYS_GETHOSTNAME
+ # define __ARCH_WANT_SYS_GETPGRP
+-# define __ARCH_WANT_SYS_LLSEEK
+ # define __ARCH_WANT_SYS_NICE
+ # define __ARCH_WANT_SYS_OLDUMOUNT
+ # define __ARCH_WANT_SYS_OLD_GETRLIMIT
 diff --git a/arch/xtensa/include/asm/unistd.h b/arch/xtensa/include/asm/unistd.h
-index ed66db3bc9bb..0d532ab60b37 100644
+index 0d532ab60b37..574e5520968c 100644
 --- a/arch/xtensa/include/asm/unistd.h
 +++ b/arch/xtensa/include/asm/unistd.h
-@@ -5,6 +5,7 @@
- #define __ARCH_WANT_SYS_CLONE
- #include <uapi/asm/unistd.h>
- 
-+#define __ARCH_WANT_NEW_STAT
+@@ -8,7 +8,6 @@
+ #define __ARCH_WANT_NEW_STAT
  #define __ARCH_WANT_STAT64
  #define __ARCH_WANT_SYS_UTIME
- #define __ARCH_WANT_SYS_LLSEEK
-diff --git a/fs/stat.c b/fs/stat.c
-index f8e6fb2c3657..adbfcd86c81b 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -280,6 +280,8 @@ SYSCALL_DEFINE2(fstat, unsigned int, fd, struct __old_kernel_stat __user *, stat
+-#define __ARCH_WANT_SYS_LLSEEK
+ #define __ARCH_WANT_SYS_GETPGRP
  
- #endif /* __ARCH_WANT_OLD_STAT */
- 
-+#ifdef __ARCH_WANT_NEW_STAT
-+
- #if BITS_PER_LONG == 32
- #  define choose_32_64(a,b) a
- #else
-@@ -378,6 +380,7 @@ SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
- 
- 	return error;
+ /* 
+diff --git a/fs/read_write.c b/fs/read_write.c
+index c4eabbfc90df..8f50b5f9bbd6 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -331,7 +331,7 @@ COMPAT_SYSCALL_DEFINE3(lseek, unsigned int, fd, compat_off_t, offset, unsigned i
  }
-+#endif
+ #endif
  
- static int do_readlinkat(int dfd, const char __user *pathname,
- 			 char __user *buf, int bufsiz)
+-#ifdef __ARCH_WANT_SYS_LLSEEK
++#if !defined(CONFIG_64BIT) || defined(CONFIG_COMPAT)
+ SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
+ 		unsigned long, offset_low, loff_t __user *, result,
+ 		unsigned int, whence)
+diff --git a/include/asm-generic/unistd.h b/include/asm-generic/unistd.h
+index ea74eca8463f..71d2fcf9dbcd 100644
+--- a/include/asm-generic/unistd.h
++++ b/include/asm-generic/unistd.h
+@@ -1,12 +1,3 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
+ #include <uapi/asm-generic/unistd.h>
+ #include <linux/export.h>
+-
+-/*
+- * These are required system calls, we should
+- * invert the logic eventually and let them
+- * be selected by default.
+- */
+-#if __BITS_PER_LONG == 32
+-#define __ARCH_WANT_SYS_LLSEEK
+-#endif
 -- 
 2.9.0
