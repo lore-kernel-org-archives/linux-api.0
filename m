@@ -1,78 +1,203 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: y2038 kernel status update
-Date: Wed, 25 Apr 2018 16:00:33 +0200
-Message-ID: <CAK8P3a2fJODEHVJ1jfTsX9DGQAPh=FipUDHTqJhRRARXv5JDvQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Subject: [PATCH v4 01/16] y2038: asm-generic: Extend sysvipc data structures
+Date: Wed, 25 Apr 2018 17:05:51 +0200
+Message-ID: <20180425150606.954771-1-arnd@arndb.de>
+References: <20180425132242.1500539-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180425132242.1500539-1-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: y2038 Mailman List <y2038@lists.linaro.org>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Baolin Wang <baolin.wang@linaro.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, Firoz Khan <firoz.khan@linaro.org>, RISC-V SW Dev <sw-dev@groups.riscv.org>, Linux API <linux-api@vger.kernel.org>, Private Kernel Alias <private-kwg@linaro.org>
+To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, zackw@panix.com, noloader@gmail.com, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-Hi everyone,
+Most architectures now use the asm-generic copy of the sysvipc data
+structures (msqid64_ds, semid64_ds, shmid64_ds), which use 32-bit
+__kernel_time_t on 32-bit architectures but have padding behind them to
+allow extending the type to 64-bit.
 
-A lot of things have happened in the move to make the kernel y2038
-ready in recent times. I've sent out new patches recently but will be
-on vacation for the next few weeks, so here's a quick update on where
-we are today with recent changes and work in progress:
+Unfortunately, that fails on all big-endian architectures, which have the
+padding on the wrong side. As so many of them get it wrong, we decided to
+not bother even trying to fix it up when we introduced the asm-generic
+copy. Instead we always use the padding word now to provide the upper
+32 bits of the seconds value, regardless of the endianess.
 
-- A large number of small driver fixes got merged into linux-4.16.
-  Many of these were old patches I had done a while ago but that had
-  not made it in yet. There are a few dozen more of these coming, but
-  those have some dependency.
+A libc implementation on a typical big-endian system can deal with
+this by providing its own copy of the structure definition to user
+space, and swapping the two 32-bit words before returning from the
+semctl/shmctl/msgctl system calls.
 
-- Deepa Dinamani has done a lot of the groundwork for the system
-  call conversion. Her latest patch series that got merged now finally
-  adds new system call entry points for timekeeping related syscalls. They
-  are not wired up yet, but now we have a template for the remaining ones,
-  and we have sorted out the header file dependencies.
+Note that msqid64_ds and shmid64_ds were broken on x32 since commit
+f4b4aae18288 ("x86/headers/uapi: Fix __BITS_PER_LONG value for x32
+builds"). I have sent a separate fix for that, but as we no longer
+have to worry about x32 here, I no longer worry about x32 here and
+use 'unsigned long' instead of __kernel_ulong_t.
 
-- I just sent a pull request for a second chunk of system calls:
-  The sysvipc semtimedop, semctl/shmctl/msgctl and
-  mq_timedsend/mq_timedreceive calls. I have more patches for most of
-  the remaining calls, and they should be simpler (this one was rather
-  tricky). A full list can be found in a spreadsheet I made[2].
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ include/uapi/asm-generic/msgbuf.h | 27 +++++++++++++-------------
+ include/uapi/asm-generic/sembuf.h | 26 +++++++++++++++----------
+ include/uapi/asm-generic/shmbuf.h | 41 +++++++++++++++++++--------------------
+ 3 files changed, 49 insertions(+), 45 deletions(-)
 
-- Baolin Wang has worked on RTC related issues and most recently
-  posted a series to convert the user space ABI for ALSA. This is
-  currently under discussion.
-
-- The most complicated remaining part is the conversion of
-  the VFS layer. Deepa is getting a new series for this ready after
-  having done some groundwork over the past years.  The current idea is
-  to have a flag-day patch using coccinelle to change the inode, iattr
-  and kstat structures over at the same time. Many file systems will
-  require further changes after that, but those can be done individually
-  through their respective maintainers.
-
-- Firoz Khan has started looking at the system call entry
-  points in the architectures. We want to add the new system calls to
-  all 32-bit architectures at once, in order to have a baseline release
-  that C libraries can rely on for implementing 64-bit time_t on all
-  architectures.  Even after the architecture removal series, we still
-  have over a dozen different syscall tables and each one is laid out
-  slightly differently, which makes it hard to change.  To improve this,
-  Firoz is preparing a series that changes
-  all architectures to use a common table format as used by x86, arm
-  and s390 today.
-
-- I have collected all those patches in a git tree [1] for testing.
-  This currently has updated system call entry points for 32-bit ARM
-  and x86, but no others so far.  The system call numbers *will* change
-  before it gets merged, so be careful when building user space based
-  on this, but it should be a starting point for testing. I definitely
-  expect this to contain bugs still, especially to the end of the series,
-  but the start of it should be fairly solid. Some patches are marked
-  as work-in-progress or don't contain a proper changelog text. Those
-  will still get reworked before a first version is posted to the
-  mainling lists.
-
-- There are two notable areas not included in that tree today:
-  v4l and socket timestamps. I've had patches for both in the past but
-  they need to be reworked.
-
-        Arnd
-
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git/log/?h=y2038-next
-[2] https://docs.google.com/spreadsheets/d/1HCYwHXxs48TsTb6IGUduNjQnmfRvMPzCN6T_0YiQwis/
+diff --git a/include/uapi/asm-generic/msgbuf.h b/include/uapi/asm-generic/msgbuf.h
+index fb306ebdb36f..9fe4881557cb 100644
+--- a/include/uapi/asm-generic/msgbuf.h
++++ b/include/uapi/asm-generic/msgbuf.h
+@@ -18,31 +18,30 @@
+  * On big-endian systems, the padding is in the wrong place.
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  */
+ 
+ struct msqid64_ds {
+ 	struct ipc64_perm msg_perm;
++#if __BITS_PER_LONG == 64
+ 	__kernel_time_t msg_stime;	/* last msgsnd time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long	__unused1;
+-#endif
+ 	__kernel_time_t msg_rtime;	/* last msgrcv time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long	__unused2;
+-#endif
+ 	__kernel_time_t msg_ctime;	/* last change time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long	__unused3;
++#else
++	unsigned long	msg_stime;	/* last msgsnd time */
++	unsigned long	msg_stime_high;
++	unsigned long	msg_rtime;	/* last msgrcv time */
++	unsigned long	msg_rtime_high;
++	unsigned long	msg_ctime;	/* last change time */
++	unsigned long	msg_ctime_high;
+ #endif
+-	__kernel_ulong_t msg_cbytes;	/* current number of bytes on queue */
+-	__kernel_ulong_t msg_qnum;	/* number of messages in queue */
+-	__kernel_ulong_t msg_qbytes;	/* max number of bytes on queue */
++	unsigned long	msg_cbytes;	/* current number of bytes on queue */
++	unsigned long	msg_qnum;	/* number of messages in queue */
++	unsigned long	 msg_qbytes;	/* max number of bytes on queue */
+ 	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
+ 	__kernel_pid_t msg_lrpid;	/* last receive pid */
+-	__kernel_ulong_t __unused4;
+-	__kernel_ulong_t __unused5;
++	unsigned long	 __unused4;
++	unsigned long	 __unused5;
+ };
+ 
+ #endif /* __ASM_GENERIC_MSGBUF_H */
+diff --git a/include/uapi/asm-generic/sembuf.h b/include/uapi/asm-generic/sembuf.h
+index cbf9cfe977d6..0bae010f1b64 100644
+--- a/include/uapi/asm-generic/sembuf.h
++++ b/include/uapi/asm-generic/sembuf.h
+@@ -13,23 +13,29 @@
+  * everyone just ended up making identical copies without specific
+  * optimizations, so we may just as well all use the same one.
+  *
+- * 64 bit architectures typically define a 64 bit __kernel_time_t,
++ * 64 bit architectures use a 64-bit __kernel_time_t here, while
++ * 32 bit architectures have a pair of unsigned long values.
+  * so they do not need the first two padding words.
+- * On big-endian systems, the padding is in the wrong place.
+  *
+- * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+- * - 2 miscellaneous 32-bit values
++ * On big-endian systems, the padding is in the wrong place for
++ * historic reasons, so user space has to reconstruct a time_t
++ * value using
++ *
++ * user_semid_ds.sem_otime = kernel_semid64_ds.sem_otime +
++ *		((long long)kernel_semid64_ds.sem_otime_high << 32)
++ *
++ * Pad space is left for 2 miscellaneous 32-bit values
+  */
+ struct semid64_ds {
+ 	struct ipc64_perm sem_perm;	/* permissions .. see ipc.h */
++#if __BITS_PER_LONG == 64
+ 	__kernel_time_t	sem_otime;	/* last semop time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long	__unused1;
+-#endif
+ 	__kernel_time_t	sem_ctime;	/* last change time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long	__unused2;
++#else
++	unsigned long	sem_otime;	/* last semop time */
++	unsigned long	sem_otime_high;
++	unsigned long	sem_ctime;	/* last change time */
++	unsigned long	sem_ctime_high;
+ #endif
+ 	unsigned long	sem_nsems;	/* no. of semaphores in array */
+ 	unsigned long	__unused3;
+diff --git a/include/uapi/asm-generic/shmbuf.h b/include/uapi/asm-generic/shmbuf.h
+index 2b6c3bb97f97..e504422fc501 100644
+--- a/include/uapi/asm-generic/shmbuf.h
++++ b/include/uapi/asm-generic/shmbuf.h
+@@ -19,42 +19,41 @@
+  *
+  *
+  * Pad space is left for:
+- * - 64-bit time_t to solve y2038 problem
+  * - 2 miscellaneous 32-bit values
+  */
+ 
+ struct shmid64_ds {
+ 	struct ipc64_perm	shm_perm;	/* operation perms */
+ 	size_t			shm_segsz;	/* size of segment (bytes) */
++#if __BITS_PER_LONG == 64
+ 	__kernel_time_t		shm_atime;	/* last attach time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long		__unused1;
+-#endif
+ 	__kernel_time_t		shm_dtime;	/* last detach time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long		__unused2;
+-#endif
+ 	__kernel_time_t		shm_ctime;	/* last change time */
+-#if __BITS_PER_LONG != 64
+-	unsigned long		__unused3;
++#else
++	unsigned long		shm_atime;	/* last attach time */
++	unsigned long		shm_atime_high;
++	unsigned long		shm_dtime;	/* last detach time */
++	unsigned long		shm_dtime_high;
++	unsigned long		shm_ctime;	/* last change time */
++	unsigned long		shm_ctime_high;
+ #endif
+ 	__kernel_pid_t		shm_cpid;	/* pid of creator */
+ 	__kernel_pid_t		shm_lpid;	/* pid of last operator */
+-	__kernel_ulong_t	shm_nattch;	/* no. of current attaches */
+-	__kernel_ulong_t	__unused4;
+-	__kernel_ulong_t	__unused5;
++	unsigned long		shm_nattch;	/* no. of current attaches */
++	unsigned long		__unused4;
++	unsigned long		__unused5;
+ };
+ 
+ struct shminfo64 {
+-	__kernel_ulong_t	shmmax;
+-	__kernel_ulong_t	shmmin;
+-	__kernel_ulong_t	shmmni;
+-	__kernel_ulong_t	shmseg;
+-	__kernel_ulong_t	shmall;
+-	__kernel_ulong_t	__unused1;
+-	__kernel_ulong_t	__unused2;
+-	__kernel_ulong_t	__unused3;
+-	__kernel_ulong_t	__unused4;
++	unsigned long		shmmax;
++	unsigned long		shmmin;
++	unsigned long		shmmni;
++	unsigned long		shmseg;
++	unsigned long		shmall;
++	unsigned long		__unused1;
++	unsigned long		__unused2;
++	unsigned long		__unused3;
++	unsigned long		__unused4;
+ };
+ 
+ #endif /* __ASM_GENERIC_SHMBUF_H */
+-- 
+2.9.0
