@@ -1,88 +1,29 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v4 06/16] y2038: arm64: Extend sysvipc compat data structures
-Date: Wed, 25 Apr 2018 17:05:56 +0200
-Message-ID: <20180425150606.954771-6-arnd@arndb.de>
-References: <20180425132242.1500539-1-arnd@arndb.de>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
+Date: Wed, 25 Apr 2018 08:55:39 -0700
+Message-ID: <20180425155539.GB8546@bombadil.infradead.org>
+References: <20180305133743.12746-1-guro@fb.com>
+ <20180305133743.12746-2-guro@fb.com>
+ <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
+ <20180411135624.GA24260@castle.DHCP.thefacebook.com>
+ <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
+ <20180412145702.GB30714@castle.DHCP.thefacebook.com>
+ <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180425132242.1500539-1-arnd@arndb.de>
+Content-Disposition: inline
+In-Reply-To: <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, ebiederm@xmission.com, albert.aribaud@3adev.fr, linux-s390@vger.kernel.org, schwidefsky@de.ibm.com, x86@kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@linux-mips.org, jhogan@kernel.org, ralf@linux-mips.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, zackw@panix.com, noloader@gmail.com, Arnd Bergmann <arnd@arndb.de>
+To: vinayak menon <vinayakm.list@gmail.com>
+Cc: Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Both 32-bit amd 64-bit ARM use the asm-generic header files for their
-sysvipc data structures, so no special care is needed to make those
-work beyond y2038, with the one exception of compat mode: Since there
-is no asm-generic definition of the compat mode IPC structures, ARM64
-provides its own copy, and we make those match the changes in the native
-asm-generic header files.
+On Fri, Apr 13, 2018 at 05:43:39PM +0530, vinayak menon wrote:
+> One such case I have encountered is that of the ION page pool. The page pool
+> registers a shrinker. When not in any memory pressure page pool can go high
+> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
+> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
 
-There is sufficient padding in these data structures to extend all
-timestamps to 64 bit, but on big-endian ARM kernels, the padding
-is in the wrong place, so the C library has to ensure it reassembles
-a 64-bit time_t correctly.
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- arch/arm64/include/asm/compat.h | 32 ++++++++++++++++----------------
- 1 file changed, 16 insertions(+), 16 deletions(-)
-
-diff --git a/arch/arm64/include/asm/compat.h b/arch/arm64/include/asm/compat.h
-index 0030f79808b3..1a037b94eba1 100644
---- a/arch/arm64/include/asm/compat.h
-+++ b/arch/arm64/include/asm/compat.h
-@@ -181,10 +181,10 @@ struct compat_ipc64_perm {
- 
- struct compat_semid64_ds {
- 	struct compat_ipc64_perm sem_perm;
--	compat_time_t  sem_otime;
--	compat_ulong_t __unused1;
--	compat_time_t  sem_ctime;
--	compat_ulong_t __unused2;
-+	compat_ulong_t sem_otime;
-+	compat_ulong_t sem_otime_high;
-+	compat_ulong_t sem_ctime;
-+	compat_ulong_t sem_ctime_high;
- 	compat_ulong_t sem_nsems;
- 	compat_ulong_t __unused3;
- 	compat_ulong_t __unused4;
-@@ -192,12 +192,12 @@ struct compat_semid64_ds {
- 
- struct compat_msqid64_ds {
- 	struct compat_ipc64_perm msg_perm;
--	compat_time_t  msg_stime;
--	compat_ulong_t __unused1;
--	compat_time_t  msg_rtime;
--	compat_ulong_t __unused2;
--	compat_time_t  msg_ctime;
--	compat_ulong_t __unused3;
-+	compat_ulong_t msg_stime;
-+	compat_ulong_t msg_stime_high;
-+	compat_ulong_t msg_rtime;
-+	compat_ulong_t msg_rtime_high;
-+	compat_ulong_t msg_ctime;
-+	compat_ulong_t msg_ctime_high;
- 	compat_ulong_t msg_cbytes;
- 	compat_ulong_t msg_qnum;
- 	compat_ulong_t msg_qbytes;
-@@ -210,12 +210,12 @@ struct compat_msqid64_ds {
- struct compat_shmid64_ds {
- 	struct compat_ipc64_perm shm_perm;
- 	compat_size_t  shm_segsz;
--	compat_time_t  shm_atime;
--	compat_ulong_t __unused1;
--	compat_time_t  shm_dtime;
--	compat_ulong_t __unused2;
--	compat_time_t  shm_ctime;
--	compat_ulong_t __unused3;
-+	compat_ulong_t shm_atime;
-+	compat_ulong_t shm_atime_high;
-+	compat_ulong_t shm_dtime;
-+	compat_ulong_t shm_dtime_high;
-+	compat_ulong_t shm_ctime;
-+	compat_ulong_t shm_ctime_high;
- 	compat_pid_t   shm_cpid;
- 	compat_pid_t   shm_lpid;
- 	compat_ulong_t shm_nattch;
--- 
-2.9.0
+Why not just account them as NR_SLAB_RECLAIMABLE?  I know it's not slab, but
+other than that mis-naming, it seems like it'll do the right thing.
