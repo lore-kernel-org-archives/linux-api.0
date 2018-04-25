@@ -1,64 +1,66 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 12/17] y2038: aio: Prepare sys_io_getevents for __kernel_timespec
-Date: Wed, 25 Apr 2018 18:03:06 +0200
-Message-ID: <20180425160311.2718314-13-arnd@arndb.de>
+Subject: [PATCH 06/17] y2038: Change sys_utimensat() to use __kernel_timespec
+Date: Wed, 25 Apr 2018 18:03:00 +0200
+Message-ID: <20180425160311.2718314-7-arnd@arndb.de>
 References: <20180425160311.2718314-1-arnd@arndb.de>
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-91845-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <20180425160311.2718314-1-arnd@arndb.de>
-Sender: netdev-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-kernel@vger.kernel.org
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, tglx@linutronix.de, netdev@vger.kernel.org, deepa.kernel@gmail.com, viro@zeniv.linux.org.uk, albert.aribaud@3adev.fr, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@infradead.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Dominik Brodowski <linux@dominikbrodowski.net>
 List-Id: linux-api@vger.kernel.org
 
-This is a preparation patch for converting sys_io_getevents to
-work with 64-bit time_t on 32-bit architectures. The 'timeout' argument
-is changed to struct __kernel_timespec, which will be redefined using
-64-bit time_t in the future. The compat version of the system call in
-turn is enabled for compilation with CONFIG_COMPAT_32BIT_TIME so
-the individual 32-bit architectures can share the handling of the
-traditional argument with 64-bit architectures providing it for their
-compat mode.
+When 32-bit architectures get changed to support 64-bit time_t,
+utimensat() needs to use the new __kernel_timespec structure as its
+argument.
+
+The older utime(), utimes() and futimesat() system calls don't need a
+corresponding change as they are no longer used on C libraries that have
+64-bit time support.
+
+As we do for the other syscalls that have timespec arguments, we reuse
+the 'compat' syscall entry points to implement the traditional four
+interfaces, and only leave the new utimensat() as a native handler,
+so that the same code gets used on both 32-bit and 64-bit kernels
+on each syscall.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- fs/aio.c                 | 4 ++--
- include/linux/syscalls.h | 2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ fs/utimes.c              | 2 +-
+ include/linux/syscalls.h | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 88d7927ffbc6..64fea8c27b16 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1858,7 +1858,7 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 		long, min_nr,
- 		long, nr,
- 		struct io_event __user *, events,
--		struct timespec __user *, timeout)
-+		struct __kernel_timespec __user *, timeout)
- {
- 	struct timespec64	ts;
- 
-@@ -1870,7 +1870,7 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 	return do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
+diff --git a/fs/utimes.c b/fs/utimes.c
+index 69d4b6ba1bfb..ca2c02a7985c 100644
+--- a/fs/utimes.c
++++ b/fs/utimes.c
+@@ -166,7 +166,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
  }
  
--#ifdef CONFIG_COMPAT
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 		       compat_long_t, min_nr,
- 		       compat_long_t, nr,
+ SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
+-		struct timespec __user *, utimes, int, flags)
++		struct __kernel_timespec __user *, utimes, int, flags)
+ {
+ 	struct timespec64 tstimes[2];
+ 
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 2619678359ee..ffd8674e9df7 100644
+index b92cb79d38c3..3d7dd665cdeb 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -289,7 +289,7 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
- 				long min_nr,
- 				long nr,
- 				struct io_event __user *events,
--				struct timespec __user *timeout);
-+				struct __kernel_timespec __user *timeout);
+@@ -500,7 +500,8 @@ asmlinkage long sys_timerfd_gettime(int ufd, struct itimerspec __user *otmr);
  
- /* fs/xattr.c */
- asmlinkage long sys_setxattr(const char __user *path, const char __user *name,
+ /* fs/utimes.c */
+ asmlinkage long sys_utimensat(int dfd, const char __user *filename,
+-				struct timespec __user *utimes, int flags);
++				struct __kernel_timespec __user *utimes,
++				int flags);
+ 
+ /* kernel/acct.c */
+ asmlinkage long sys_acct(const char __user *name);
 -- 
 2.9.0
