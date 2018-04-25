@@ -1,69 +1,71 @@
-From: Vlastimil Babka <vbabka@suse.cz>
+From: Roman Gushchin <guro@fb.com>
 Subject: Re: [PATCH 1/3] mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES
-Date: Wed, 25 Apr 2018 19:02:42 +0200
-Message-ID: <7fc2986e-b867-eb32-9124-d10ef6c1a3a3@suse.cz>
-References: <20180305133743.12746-1-guro@fb.com>
- <20180305133743.12746-2-guro@fb.com>
- <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
+Date: Wed, 25 Apr 2018 18:23:04 +0100
+Message-ID: <20180425172258.GA8052@castle>
+References: <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
  <20180411135624.GA24260@castle.DHCP.thefacebook.com>
  <46dbe2a5-e65f-8b72-f835-0210bc445e52@suse.cz>
  <20180412145702.GB30714@castle.DHCP.thefacebook.com>
  <CAOaiJ-=JtFWNPqdtf+5uim0-LcPE9zSDZmocAa_6K3yGpW2fCQ@mail.gmail.com>
  <69b4dcd8-1925-e0e8-d9b4-776f3405b769@codeaurora.org>
- <20180425125211.GB3410@castle> <db71bf8f-0c76-e304-25c3-d22f1e0d71e5@suse.cz>
+ <20180425125211.GB3410@castle>
+ <db71bf8f-0c76-e304-25c3-d22f1e0d71e5@suse.cz>
  <20180425164845.GA7223@castle>
+ <7fc2986e-b867-eb32-9124-d10ef6c1a3a3@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180425164845.GA7223@castle>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <7fc2986e-b867-eb32-9124-d10ef6c1a3a3@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
+To: Vlastimil Babka <vbabka@suse.cz>
 Cc: Vijayanand Jitta <vjitta@codeaurora.org>, vinayak menon <vinayakm.list@gmail.com>, linux-mm@kvack.org, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/25/2018 06:48 PM, Roman Gushchin wrote:
-> On Wed, Apr 25, 2018 at 05:47:26PM +0200, Vlastimil Babka wrote:
->> On 04/25/2018 02:52 PM, Roman Gushchin wrote:
->>> On Wed, Apr 25, 2018 at 09:19:29AM +0530, Vijayanand Jitta wrote:
->>>>>>>> Idk, I don't like the idea of adding a counter outside of the vm counters
->>>>>>>> infrastructure, and I definitely wouldn't touch the exposed
->>>>>>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
->>>>>>>
->>>>>>> We would be just making the reported values more precise wrt reality.
->>>>>>
->>>>>> It depends on if we believe that only slab memory can be reclaimable
->>>>>> or not. If yes, this is true, otherwise not.
->>>>>>
->>>>>> My guess is that some drivers (e.g. networking) might have buffers,
->>>>>> which are reclaimable under mempressure, and are allocated using
->>>>>> the page allocator. But I have to look closer...
->>>>>>
->>>>>
->>>>> One such case I have encountered is that of the ION page pool. The page pool
->>>>> registers a shrinker. When not in any memory pressure page pool can go high
->>>>> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
->>>>> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
->>
->> FYI, we have discussed this at LSF/MM and agreed to try the kmalloc
->> reclaimable caches idea. The existing counter could then remain for page
->> allocator users such as ION. It's a bit weird to have it in bytes and
->> not pages then, IMHO. What if we hid it from /proc/vmstat now so it
->> doesn't become ABI, and later convert it to page granularity and expose
->> it under a name such as "nr_other_reclaimable" ?
+On Wed, Apr 25, 2018 at 07:02:42PM +0200, Vlastimil Babka wrote:
+> On 04/25/2018 06:48 PM, Roman Gushchin wrote:
+> > On Wed, Apr 25, 2018 at 05:47:26PM +0200, Vlastimil Babka wrote:
+> >> On 04/25/2018 02:52 PM, Roman Gushchin wrote:
+> >>> On Wed, Apr 25, 2018 at 09:19:29AM +0530, Vijayanand Jitta wrote:
+> >>>>>>>> Idk, I don't like the idea of adding a counter outside of the vm counters
+> >>>>>>>> infrastructure, and I definitely wouldn't touch the exposed
+> >>>>>>>> nr_slab_reclaimable and nr_slab_unreclaimable fields.
+> >>>>>>>
+> >>>>>>> We would be just making the reported values more precise wrt reality.
+> >>>>>>
+> >>>>>> It depends on if we believe that only slab memory can be reclaimable
+> >>>>>> or not. If yes, this is true, otherwise not.
+> >>>>>>
+> >>>>>> My guess is that some drivers (e.g. networking) might have buffers,
+> >>>>>> which are reclaimable under mempressure, and are allocated using
+> >>>>>> the page allocator. But I have to look closer...
+> >>>>>>
+> >>>>>
+> >>>>> One such case I have encountered is that of the ION page pool. The page pool
+> >>>>> registers a shrinker. When not in any memory pressure page pool can go high
+> >>>>> and thus cause an mmap to fail when OVERCOMMIT_GUESS is set. I can send
+> >>>>> a patch to account ION page pool pages in NR_INDIRECTLY_RECLAIMABLE_BYTES.
+> >>
+> >> FYI, we have discussed this at LSF/MM and agreed to try the kmalloc
+> >> reclaimable caches idea. The existing counter could then remain for page
+> >> allocator users such as ION. It's a bit weird to have it in bytes and
+> >> not pages then, IMHO. What if we hid it from /proc/vmstat now so it
+> >> doesn't become ABI, and later convert it to page granularity and expose
+> >> it under a name such as "nr_other_reclaimable" ?
+> > 
+> > I've nothing against hiding it from /proc/vmstat, as long as we keep
+> > the counter in place and the main issue resolved.
 > 
-> I've nothing against hiding it from /proc/vmstat, as long as we keep
-> the counter in place and the main issue resolved.
-
-Sure.
-
-> Maybe it's better to add nr_reclaimable = nr_slab_reclaimable + nr_other_reclaimable,
-> which will have a simpler meaning that nr_other_reclaimable (what is other?).
-
-"other" can be changed, sure. nr_reclaimable is possible if we change
-slab to adjust that counter as well - vmstat code doesn't support
-arbitrary calculations when printing.
-
-> Thanks!
+> Sure.
 > 
+> > Maybe it's better to add nr_reclaimable = nr_slab_reclaimable + nr_other_reclaimable,
+> > which will have a simpler meaning that nr_other_reclaimable (what is other?).
+> 
+> "other" can be changed, sure. nr_reclaimable is possible if we change
+> slab to adjust that counter as well - vmstat code doesn't support
+> arbitrary calculations when printing.
+
+Sure, but even just hiding a value isn't that easy now.
+So we have to touch the vmstat printing code anyway.
+
+Thanks!
