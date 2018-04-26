@@ -1,36 +1,82 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [PATCH] mm: don't show nr_indirectly_reclaimable in
- /proc/vmstat
-Date: Wed, 25 Apr 2018 14:20:07 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1804251419040.166306@chino.kir.corp.google.com>
-References: <20180425191422.9159-1-guro@fb.com> <alpine.DEB.2.21.1804251235330.151692@chino.kir.corp.google.com> <20180425210143.GA10277@castle>
+From: Vincent Chen <deanbo422@gmail.com>
+Subject: Re: [PATCH] signal/nds32: More information in do_revinsn
+Date: Thu, 26 Apr 2018 11:02:54 +0800
+Message-ID: <CAJsyPhzSgPebAtP7m8Dsidy+2Lj6mKb7J-dPqHmFVzWv6Q55YQ@mail.gmail.com>
+References: <878t9ilmhv.fsf@xmission.com> <20180420010408.24438-5-ebiederm@xmission.com>
+ <CAJsyPhyDeafwUQxXgnZ9Rfj6nwYrU_Kgyfv8DQ2q0BkwW25BBw@mail.gmail.com> <87in8fuuva.fsf_-_@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180425210143.GA10277@castle>
+In-Reply-To: <87in8fuuva.fsf_-_@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 25 Apr 2018, Roman Gushchin wrote:
+2018-04-26 0:13 GMT+08:00 Eric W. Biederman <ebiederm@xmission.com>:
+>
+> While reviewing f6ed1ecad56f ("signal/nds32: Use force_sig(SIGILL) in do_revisn")
+> Vincent Chen asked if it was possible to provide more information in do_revinsn
+> with force_sig_fault.
+>
+> That seems reasonable and the appropirate si_code appears to be
+> ILL_ILLOPC (illegal opcode) as the printk indicates this code path
+> is triggered when a reserved instruction is exectured.
+>
 
-> > > Don't show nr_indirectly_reclaimable in /proc/vmstat,
-> > > because there is no need in exporting this vm counter
-> > > to the userspace, and some changes are expected
-> > > in reclaimable object accounting, which can alter
-> > > this counter.
-> > > 
-> > 
-> > I don't think it should be a per-node vmstat, in this case.  It appears 
-> > only to be used for the global context.  Shouldn't this be handled like 
-> > totalram_pages, total_swap_pages, totalreserve_pages, etc?
-> 
-> Hi, David!
-> 
-> I don't see any reasons why re-using existing infrastructure for
-> fast vm counters is bad, and why should we re-invent it for this case.
-> 
+I think error code is set as ILL_ILLOPC is a good choice for normal
+reserved instruction
+but it seems a little bit inappropriate for nds32. For nds32 reserved
+exception, It is possibly
+triggered by illegal opcode, operand and immediate. Unfortunately,
+do_revisn() can not
+identify the actual reason now. Therefore, I chose ILLTRAP to avoid
+confusing user when
+the reserved exception is cauesd by wrong immediate or operand.
 
-Because now you have to modify the existing infrastructure for something 
-that shouldn't be a vmstat in the first place?
+
+
+> So update do_revinsn to use force_sig_fault(SIGILL, ILL_ILLOPC, ...).
+> Giving userspace a much better experience when soemone attempts
+> to execute a reserved instruction.
+>
+> Cc: Greentime Hu <green.hu@gmail.com>
+> Cc: Vincent Chen <deanbo422@gmail.com>
+> Suggested-by: Vincent Chen <deanbo422@gmail.com>
+> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> ---
+>
+> Vincent I have updated this from your suggestion to use
+> ILL_ILLOPC as that appears the more appropriate si_code.
+> Normally I expect you could just update your nds32 tree and
+> make this kind of change but since I am touching this code anyway I will
+> be happy to take this change along with the others.
+>
+> Does this look good to you?
+>
+
+It is fine to commit this change along with the others.
+
+Vincent Chen
+
+
+>  arch/nds32/kernel/traps.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+>
+> diff --git a/arch/nds32/kernel/traps.c b/arch/nds32/kernel/traps.c
+> index a6205fd4db52..5c2f61835ab9 100644
+> --- a/arch/nds32/kernel/traps.c
+> +++ b/arch/nds32/kernel/traps.c
+> @@ -349,7 +349,8 @@ void do_revinsn(struct pt_regs *regs)
+>         show_regs(regs);
+>         if (!user_mode(regs))
+>                 do_exit(SIGILL);
+> -       force_sig(SIGILL, current);
+> +       force_sig_fault(SIGILL, ILL_ILLOPC,
+> +                       (void __user *)instruction_pointer(regs), current);
+>  }
+>
+>  #ifdef CONFIG_ALIGNMENT_TRAP
+> --
+> 2.14.1
+>
