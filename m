@@ -1,82 +1,66 @@
-From: Vincent Chen <deanbo422@gmail.com>
-Subject: Re: [PATCH] signal/nds32: More information in do_revinsn
-Date: Thu, 26 Apr 2018 11:02:54 +0800
-Message-ID: <CAJsyPhzSgPebAtP7m8Dsidy+2Lj6mKb7J-dPqHmFVzWv6Q55YQ@mail.gmail.com>
-References: <878t9ilmhv.fsf@xmission.com> <20180420010408.24438-5-ebiederm@xmission.com>
- <CAJsyPhyDeafwUQxXgnZ9Rfj6nwYrU_Kgyfv8DQ2q0BkwW25BBw@mail.gmail.com> <87in8fuuva.fsf_-_@xmission.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 07/24] hibernate: Disable when the kernel is locked down
+Date: Thu, 26 Apr 2018 09:26:46 +0200
+Message-ID: <20180426072646.GA31822@amd>
+References: <20180413202234.GA4484@amd>
+ <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346392521.4030.5108539377959227838.stgit@warthog.procyon.org.uk>
+ <27926.1524148733@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="x+6KMIRAuhnl3hBn"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87in8fuuva.fsf_-_@xmission.com>
+Content-Disposition: inline
+In-Reply-To: <27926.1524148733@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Vincent Chen <vincentc@andestech.com>, Greentime Hu <greentime@andestech.com>, Arnd Bergmann <arnd@arndb.de>
+To: David Howells <dhowells@redhat.com>, jikos@suse.cz
+Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-2018-04-26 0:13 GMT+08:00 Eric W. Biederman <ebiederm@xmission.com>:
->
-> While reviewing f6ed1ecad56f ("signal/nds32: Use force_sig(SIGILL) in do_revisn")
-> Vincent Chen asked if it was possible to provide more information in do_revinsn
-> with force_sig_fault.
->
-> That seems reasonable and the appropirate si_code appears to be
-> ILL_ILLOPC (illegal opcode) as the printk indicates this code path
-> is triggered when a reserved instruction is exectured.
->
 
-I think error code is set as ILL_ILLOPC is a good choice for normal
-reserved instruction
-but it seems a little bit inappropriate for nds32. For nds32 reserved
-exception, It is possibly
-triggered by illegal opcode, operand and immediate. Unfortunately,
-do_revisn() can not
-identify the actual reason now. Therefore, I chose ILLTRAP to avoid
-confusing user when
-the reserved exception is cauesd by wrong immediate or operand.
+--x+6KMIRAuhnl3hBn
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
+On Thu 2018-04-19 15:38:53, David Howells wrote:
+> Pavel Machek <pavel@ucw.cz> wrote:
+>=20
+> > > There is currently no way to verify the resume image when returning
+> > > from hibernate.  This might compromise the signed modules trust model,
+> > > so until we can work with signed hibernate images we disable it when =
+the
+> > > kernel is locked down.
+> >=20
+> > I'd rather see hibernation fixed than disabled like this.
+>=20
+> The problem is that you have to store the hibernated kernel image encrypt=
+ed,
+> but you can't store the decryption key on disk unencrypted or you've just
+> wasted the effort.
 
+That's not how the crypto needs to work. Talk to Jiri Kosina, ok?
 
-> So update do_revinsn to use force_sig_fault(SIGILL, ILL_ILLOPC, ...).
-> Giving userspace a much better experience when soemone attempts
-> to execute a reserved instruction.
->
-> Cc: Greentime Hu <green.hu@gmail.com>
-> Cc: Vincent Chen <deanbo422@gmail.com>
-> Suggested-by: Vincent Chen <deanbo422@gmail.com>
-> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> ---
->
-> Vincent I have updated this from your suggestion to use
-> ILL_ILLOPC as that appears the more appropriate si_code.
-> Normally I expect you could just update your nds32 tree and
-> make this kind of change but since I am touching this code anyway I will
-> be happy to take this change along with the others.
->
-> Does this look good to you?
->
+Firmware gives you a key, you keep it secret, use it to sign the
+hibernation image on suspend, and verify the signature on resume. Or
+something like that.
 
-It is fine to commit this change along with the others.
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-Vincent Chen
+--x+6KMIRAuhnl3hBn
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
->  arch/nds32/kernel/traps.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
->
-> diff --git a/arch/nds32/kernel/traps.c b/arch/nds32/kernel/traps.c
-> index a6205fd4db52..5c2f61835ab9 100644
-> --- a/arch/nds32/kernel/traps.c
-> +++ b/arch/nds32/kernel/traps.c
-> @@ -349,7 +349,8 @@ void do_revinsn(struct pt_regs *regs)
->         show_regs(regs);
->         if (!user_mode(regs))
->                 do_exit(SIGILL);
-> -       force_sig(SIGILL, current);
-> +       force_sig_fault(SIGILL, ILL_ILLOPC,
-> +                       (void __user *)instruction_pointer(regs), current);
->  }
->
->  #ifdef CONFIG_ALIGNMENT_TRAP
-> --
-> 2.14.1
->
+iEYEARECAAYFAlrhfzYACgkQMOfwapXb+vKUbACffzbN2YGUihEbD3PcpM1b3kG9
+rwAAoMO4Nkw+49H7bkdJebvsBuJXZDeP
+=wRwy
+-----END PGP SIGNATURE-----
+
+--x+6KMIRAuhnl3hBn--
