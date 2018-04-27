@@ -1,81 +1,31 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
-Date: Fri, 27 Apr 2018 14:15:01 +0200
-Message-ID: <71d8d32b-0f59-d418-0ee4-fcc7782646ae@gmail.com>
-References: <152286911105.615669.14053871624892399807.stgit@buzz>
- <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
- <87h8oqhagl.fsf@xmission.com>
- <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [PATCH] mm: don't show nr_indirectly_reclaimable in
+ /proc/vmstat
+Date: Fri, 27 Apr 2018 11:41:31 -0700 (PDT)
+Message-ID: <alpine.DEB.2.21.1804271139500.152082@chino.kir.corp.google.com>
+References: <20180425191422.9159-1-guro@fb.com> <20180426200331.GZ17484@dhcp22.suse.cz> <alpine.DEB.2.21.1804261453460.238822@chino.kir.corp.google.com> <99208563-1171-b7e7-a0d7-b47b6c5e2307@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
-Content-Language: en-US
+In-Reply-To: <99208563-1171-b7e7-a0d7-b47b6c5e2307@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "Eric W. Biederman" <ebiederm@xmission.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Cc: mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, Roman Gushchin <guro@fb.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Matthew Wilcox <willy@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Johannes Weiner <hannes@cmpxchg.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/05/2018 09:02 AM, Konstantin Khlebnikov wrote:
-> On 05.04.2018 01:29, Eric W. Biederman wrote:
->> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
->>
->>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
->>>> Each process have different pids, one for each pid namespace it belongs.
->>>> When interaction happens within single pid-ns translation isn't required.
->>>> More complicated scenarios needs special handling.
->>>>
->>>> For example:
->>>> - reading pid-files or logs written inside container with pid namespace
->>>> - attaching with ptrace to tasks from different pid namespace
->>>> - passing pids across pid namespaces in any kind of API
->>>>
->>>> Currently there are several interfaces that could be used here:
->>>>
->>>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
->>
->> Using the inode number in interfaces is not an option.  Especially not
->> withou referencing the device number for the filesystem as well.
+On Fri, 27 Apr 2018, Vlastimil Babka wrote:
+
+> It was in the original thread, see e.g.
+> <08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
 > 
-> This is supposed to be single-instance fs,
-> not part of proc but referenced but its magic "symlinks".
+> However it will take some time to get that in mainline, and meanwhile
+> the current implementation does prevent a DOS. So I doubt it can be
+> fully reverted - as a compromise I just didn't want the counter to
+> become ABI. TBH though, other people at LSF/MM didn't seem concerned
+> that /proc/vmstat is an ABI that we can't change (i.e. counters have
+> been presumably removed in the past already).
 > 
-> Device numbers are not mentioned in "man namespaces".
 
-Thanks for the heads-up!
-
-That was a bug in the man-page. ioctl_ns(2) already says the right thing.
-Now I patches namespaces(7), as below.
-
-Cheers,
-
-Michael
-
-diff --git a/man7/namespaces.7 b/man7/namespaces.7
-index 725ebaff6..3c155de7e 100644
---- a/man7/namespaces.7
-+++ b/man7/namespaces.7
-@@ -154,11 +154,14 @@ In Linux 3.7 and earlier, these files were visible as hard links.
- Since Linux 3.8,
- .\" commit bf056bfa80596a5d14b26b17276a56a0dcb080e5
- they appear as symbolic links.
--If two processes are in the same namespace, then the inode numbers of their
-+If two processes are in the same namespace,
-+then the device IDs and inode numbers of their
- .IR /proc/[pid]/ns/xxx
- symbolic links will be the same; an application can check this using the
-+.I stat.st_dev
-+and
- .I stat.st_ino
--field returned by
-+fields returned by
- .BR stat (2).
- The content of this symbolic link is a string containing
- the namespace type and inode number as in the following example:
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+What prevents this from being a simple atomic_t that gets added to in 
+__d_alloc(), subtracted from in __d_free_external_name(), and read in 
+si_mem_available() and __vm_enough_memory()?
