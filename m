@@ -1,124 +1,53 @@
-From: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Subject: [RFC] vfs: skip extra attributes check on removal for symlinks
-Date: Thu, 26 Apr 2018 16:46:39 -0700
-Message-ID: <20180426234639.12480-1-mcgrof@kernel.org>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] mm: don't show nr_indirectly_reclaimable in /proc/vmstat
+Date: Fri, 27 Apr 2018 11:17:01 +0200
+Message-ID: <99208563-1171-b7e7-a0d7-b47b6c5e2307@suse.cz>
+References: <20180425191422.9159-1-guro@fb.com>
+ <20180426200331.GZ17484@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1804261453460.238822@chino.kir.corp.google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.21.1804261453460.238822@chino.kir.corp.google.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: sandeen@sandeen.net, darrick.wong@oracle.com, dhowells@redhat.com, tytso@mit.edu, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@kernel.org>
+To: David Rientjes <rientjes@google.com>, Michal Hocko <mhocko@kernel.org>
+Cc: Roman Gushchin <guro@fb.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, Matthew Wilcox <willy@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Johannes Weiner <hannes@cmpxchg.org>
 List-Id: linux-api@vger.kernel.org
 
-Linux filesystems cannot set extra file attributes (stx_attributes as per
-statx(2)) on a symbolic link. To set extra file attributes you issue
-ioctl(2) with FS_IOC_SETFLAGS, *all* ioctl(2) calls on a symbolic link
-yield EBADF.
+On 04/26/2018 11:55 PM, David Rientjes wrote:
+> On Thu, 26 Apr 2018, Michal Hocko wrote:
+> 
+>>> Don't show nr_indirectly_reclaimable in /proc/vmstat,
+>>> because there is no need in exporting this vm counter
+>>> to the userspace, and some changes are expected
+>>> in reclaimable object accounting, which can alter
+>>> this counter.
+>>>
+>>> Signed-off-by: Roman Gushchin <guro@fb.com>
+>>> Cc: Vlastimil Babka <vbabka@suse.cz>
+>>> Cc: Matthew Wilcox <willy@infradead.org>
+>>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>>> Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+>>> Cc: Michal Hocko <mhocko@suse.com>
+>>> Cc: Johannes Weiner <hannes@cmpxchg.org>
+>>
+>> This is quite a hack. I would much rather revert the counter and fixed
+>> it the way Vlastimil has proposed. But if there is a strong opposition
+>> to the revert then this is probably the simples thing to do. Therefore
+>>
+> 
+> Implementing this counter as a vmstat doesn't make much sense based on how 
+> it's used.  Do you have a link to what Vlastimil proposed?  I haven't seen 
+> mention of alternative ideas.
 
-This is because ioctl(2) tries to obtain struct fd from the symbolic link
-file descriptor passed using fdget(), fdget() in turn always returns no
-file set when a file descriptor is open with O_PATH. As per symlink(2)
-O_PATH and O_NOFOLLOW must *always* be used when you want to get the file
-descriptor of a symbolic link, and this holds true for Linux, as such extra
-file attributes cannot possibly be set on symbolic links on Linux.
+It was in the original thread, see e.g.
+<08524819-14ef-81d0-fa90-d7af13c6b9d5@suse.cz>
 
-Filesystems repair utilities should be updated to detect this as
-corruption and correct this, however, the VFS *does* respect these
-extra attributes on symlinks for removal.
-
-Since we cannot set these attributes we should special-case the
-immutable/append on delete for symlinks, this would be consistent with
-what we *do* allow on Linux for all filesystems.
-
-The userspace utility chattr(1) cannot set these attributes on symlinks
-*and* other special files as well:
-
-	# chattr -a symlink
-	chattr: Operation not supported while reading flags on b
-
-The reason for this is different though. Refer to commit 023d111e92195
-("chattr.1.in: Document the compression attribute flags E, X, and ...")
-merged on e2fsprogs v1.28 since August 2002. This commit prevented
-issuing the ioctl() for symlink *and* special files in consideration for
-a buggy DRM driver where issuing lsattr on their special files crashed
-the system. For details refer to Debian bug 152029 [0].
-
-You can craft your own tool to query the extra file attributes with
-the new shiny statx(2) tool, statx(2) will list the attributes if
-they were set for instance on a corrupt filesystem. However statx(2)
-is only used for *querying* -- not for setting the attributes.
-
-If you implement issuing your own ioctl() for FS_IOC_FSGETXATTR or
-FS_IOC_FSSETXATTR on special files (block, char, fifo) it will fail
-returning -1 and errno is set to ENOTTY (Inappropriate ioctl for
-device). The reason for this is different than for symlinks.
-For special files this fails on vfs_ioctl() when the filesystem
-f_op callbacks are not set for these special files:
-
-long vfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	int error = -ENOTTY;
-
-        if (!filp->f_op->unlocked_ioctl)
-		goto out;
-
-	error = filp->f_op->unlocked_ioctl(filp, cmd, arg);
-	if (error == -ENOIOCTLCMD)
-		error = -ENOTTY;
-out:
-	return error;
-}
-
-The same applies to PF_LOCAL named sockets. Since this varies by
-filesystem for special files, only make a special rule to respect
-the immutable and append attribute on symlinks.
-
-[0] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=152029
-
-Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
----
-
-As discussed at LSF/MM -- I'd follow up on this low hanging fruit as
-the discussion had stalled on linux-xfs on review of the respective
-xfs_repair changes. This addresses the general API question, and
-as such I think could help establish order in how we split up patches
-for those changes.
-
-This requires some other eyeballs, and it also requires a putting it through
-xfstests which I can do in the next few days, hence the RFC. But better put it
-out for review already. I'd also like feedback from the linux-api folks to
-see if this matches their own known / documented expectations.
-
- fs/namei.c | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
-
-diff --git a/fs/namei.c b/fs/namei.c
-index 186bd2464fd5..0f9069468cfb 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -2719,6 +2719,14 @@ int __check_sticky(struct inode *dir, struct inode *inode)
- }
- EXPORT_SYMBOL(__check_sticky);
- 
-+/* Process extra file attributes only when they make sense */
-+static bool may_delete_stx_attributes(struct inode *inode)
-+{
-+	if (!S_ISLNK(inode->i_mode) && (IS_APPEND(inode) || IS_IMMUTABLE(inode)))
-+		return false;
-+	return  true;
-+}
-+
- /*
-  *	Check whether we can remove a link victim from directory dir, check
-  *  whether the type of victim is right.
-@@ -2757,8 +2765,8 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
- 	if (IS_APPEND(dir))
- 		return -EPERM;
- 
--	if (check_sticky(dir, inode) || IS_APPEND(inode) ||
--	    IS_IMMUTABLE(inode) || IS_SWAPFILE(inode) || HAS_UNMAPPED_ID(inode))
-+	if (check_sticky(dir, inode) || !may_delete_stx_attributes(inode) ||
-+	    IS_SWAPFILE(inode) || HAS_UNMAPPED_ID(inode))
- 		return -EPERM;
- 	if (isdir) {
- 		if (!d_is_dir(victim))
--- 
-2.17.0
+However it will take some time to get that in mainline, and meanwhile
+the current implementation does prevent a DOS. So I doubt it can be
+fully reverted - as a compromise I just didn't want the counter to
+become ABI. TBH though, other people at LSF/MM didn't seem concerned
+that /proc/vmstat is an ABI that we can't change (i.e. counters have
+been presumably removed in the past already).
