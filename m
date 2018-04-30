@@ -1,77 +1,67 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 07/14] powerpc: Add support for restartable sequences
-Date: Mon, 30 Apr 2018 18:44:26 -0400
-Message-ID: <20180430224433.17407-8-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 09/14] selftests: lib.mk: Introduce OVERRIDE_TARGETS
+Date: Mon, 30 Apr 2018 18:44:28 -0400
+Message-ID: <20180430224433.17407-10-mathieu.desnoyers@efficios.com>
 References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
-Cc: Joel Fernandes <joelaf@google.com>, Will Deacon <will.deacon@arm.com>, Andi Kleen <andi@firstfloor.org>, Paul Mackerras <paulus@samba.org>, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Ingo Molnar <mingo@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Catalin Marinas <catalin.marinas@arm.com>, Paul Turner <pjt@google.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, linux-kselftest@vger.kernel.
 List-Id: linux-api@vger.kernel.org
 
-From: Boqun Feng <boqun.feng@gmail.com>
+Introduce OVERRIDE_TARGETS to allow tests to express dependencies on
+header files and .so, which require to override the selftests lib.mk
+targets.
 
-Call the rseq_handle_notify_resume() function on return to userspace if
-TIF_NOTIFY_RESUME thread flag is set.
-
-Perform fixup on the pre-signal when a signal is delivered on top of a
-restartable sequence critical section.
-
-Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-CC: Paul Mackerras <paulus@samba.org>
-CC: Michael Ellerman <mpe@ellerman.id.au>
+Acked-by: Shuah Khan <shuahkh@osg.samsung.com>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Paul Turner <pjt@google.com>
+CC: Andrew Hunter <ahh@google.com>
 CC: Peter Zijlstra <peterz@infradead.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: linuxppc-dev@lists.ozlabs.org
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-kselftest@vger.kernel.org
+CC: linux-api@vger.kernel.org
 ---
- arch/powerpc/Kconfig         | 1 +
- arch/powerpc/kernel/signal.c | 3 +++
- 2 files changed, 4 insertions(+)
+ tools/testing/selftests/lib.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
-index c32a181a7cbb..ed21a777e8c6 100644
---- a/arch/powerpc/Kconfig
-+++ b/arch/powerpc/Kconfig
-@@ -223,6 +223,7 @@ config PPC
- 	select HAVE_SYSCALL_TRACEPOINTS
- 	select HAVE_VIRT_CPU_ACCOUNTING
- 	select HAVE_IRQ_TIME_ACCOUNTING
-+	select HAVE_RSEQ
- 	select IRQ_DOMAIN
- 	select IRQ_FORCED_THREADING
- 	select MODULES_USE_ELF_RELA
-diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
-index 61db86ecd318..d3bb3aaaf5ac 100644
---- a/arch/powerpc/kernel/signal.c
-+++ b/arch/powerpc/kernel/signal.c
-@@ -133,6 +133,8 @@ static void do_signal(struct task_struct *tsk)
- 	/* Re-enable the breakpoints for the signal stack */
- 	thread_change_pc(tsk, tsk->thread.regs);
+diff --git a/tools/testing/selftests/lib.mk b/tools/testing/selftests/lib.mk
+index 195e9d4739a9..9fd57efae439 100644
+--- a/tools/testing/selftests/lib.mk
++++ b/tools/testing/selftests/lib.mk
+@@ -106,6 +106,9 @@ COMPILE.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+ LINK.S = $(CC) $(ASFLAGS) $(CPPFLAGS) $(LDFLAGS) $(TARGET_ARCH)
+ endif
  
-+	rseq_signal_deliver(tsk->thread.regs);
-+
- 	if (is32) {
-         	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
- 			ret = handle_rt_signal32(&ksig, oldset, tsk);
-@@ -164,6 +166,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long thread_info_flags)
- 	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
- 		clear_thread_flag(TIF_NOTIFY_RESUME);
- 		tracehook_notify_resume(regs);
-+		rseq_handle_notify_resume(regs);
- 	}
++# Selftest makefiles can override those targets by setting
++# OVERRIDE_TARGETS = 1.
++ifeq ($(OVERRIDE_TARGETS),)
+ $(OUTPUT)/%:%.c
+ 	$(LINK.c) $^ $(LDLIBS) -o $@
  
- 	user_enter();
+@@ -114,5 +117,6 @@ $(OUTPUT)/%.o:%.S
+ 
+ $(OUTPUT)/%:%.S
+ 	$(LINK.S) $^ $(LDLIBS) -o $@
++endif
+ 
+ .PHONY: run_tests all clean install emit_tests
 -- 
 2.11.0
