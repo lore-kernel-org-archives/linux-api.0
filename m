@@ -1,152 +1,108 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 00/14] Restartable Sequences
-Date: Mon, 30 Apr 2018 18:44:19 -0400
-Message-ID: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Subject: [PATCH 05/14] x86: Add support for restartable sequences (v2)
+Date: Mon, 30 Apr 2018 18:44:24 -0400
+Message-ID: <20180430224433.17407-6-mathieu.desnoyers@efficios.com>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Call the rseq_handle_notify_resume() function on return to userspace if
+TIF_NOTIFY_RESUME thread flag is set.
 
-Here is an updated RFC round of the Restartable Sequences patchset
-based on kernel 4.17-rc3. Based on feedback from Linus, I'm introducing
-only the rseq system call, keeping the rest for later.
+Perform fixup on the pre-signal frame when a signal is delivered on top
+of a restartable sequence critical section.
 
-This already enables speeding up the Facebook jemalloc and arm64 PMC
-read from user-space use-cases, as well as speedup of use-cases relying
-on getting the current cpu number from user-space. We'll have to wait
-until a more complete solution is introduced before the LTTng-UST
-tracer can replace its ring buffer atomic instructions with rseq
-though. But let's proceed one step at a time.
+Check that system calls are not invoked from within rseq critical
+sections by invoking rseq_signal() from syscall_return_slowpath().
+With CONFIG_DEBUG_RSEQ, such behavior results in termination of the
+process with SIGSEGV.
 
-The main change introduced by the removal of cpu_opv from this series
-in terms of library use from user-space is that APIs that previously
-took a CPU number as argument now only act on the current CPU.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Paul Turner <pjt@google.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
 
-So for instance, this turns:
+---
 
-  int cpu = rseq_per_cpu_lock(lock, target_cpu);
-  [...]
-  rseq_per_cpu_unlock(lock, cpu);
+Changes since v1:
+- Call rseq_signal() when returning from a system call.
+---
+ arch/x86/Kconfig         | 1 +
+ arch/x86/entry/common.c  | 3 +++
+ arch/x86/kernel/signal.c | 6 ++++++
+ 3 files changed, 10 insertions(+)
 
-into
-
-  int cpu = rseq_this_cpu_lock(lock);
-  [...]
-  rseq_per_cpu_unlock(lock, cpu);
-
-and:
-
-  per_cpu_list_push(list, node, target_cpu);
-  [...]
-  per_cpu_list_pop(list, node, target_cpu);
-
-into
-
-  this_cpu_list_push(list, node, &cpu);  /* cpu is an output parameter. */
-  [...]
-  node = this_cpu_list_pop(list, &cpu);  /* cpu is an output parameter. */
-
-Eventually integrating cpu_opv or some alternative will allow passing
-the cpu number as parameter rather than requiring the algorithm to work
-on the current CPU.
-
-The second effect of not having the cpu_opv fallback is that
-line and instruction single-stepping with a debugger transforms rseq
-critical sections based on retry loops into never-ending loops.
-Debuggers need to use the __rseq_table section to skip those critical
-sections in order to correctly behave when single-stepping a thread
-which uses rseq in a retry loop. However, applications which use an
-alternative fallback method rather than retrying on rseq fast-path abort
-won't be affected by this kind of single-stepping issue.
-
-Feedback is welcome!
-
-Thanks,
-
-Mathieu
-
-Boqun Feng (2):
-  powerpc: Add support for restartable sequences
-  powerpc: Wire up restartable sequences system call
-
-Mathieu Desnoyers (12):
-  uapi headers: Provide types_32_64.h (v2)
-  rseq: Introduce restartable sequences system call (v13)
-  arm: Add restartable sequences support
-  arm: Wire up restartable sequences system call
-  x86: Add support for restartable sequences (v2)
-  x86: Wire up restartable sequence system call
-  selftests: lib.mk: Introduce OVERRIDE_TARGETS
-  rseq: selftests: Provide rseq library (v5)
-  rseq: selftests: Provide basic test
-  rseq: selftests: Provide basic percpu ops test (v2)
-  rseq: selftests: Provide parametrized tests (v2)
-  rseq: selftests: Provide Makefile, scripts, gitignore (v2)
-
- MAINTAINERS                                        |   12 +
- arch/Kconfig                                       |    7 +
- arch/arm/Kconfig                                   |    1 +
- arch/arm/kernel/signal.c                           |    7 +
- arch/arm/tools/syscall.tbl                         |    1 +
- arch/powerpc/Kconfig                               |    1 +
- arch/powerpc/include/asm/systbl.h                  |    1 +
- arch/powerpc/include/asm/unistd.h                  |    2 +-
- arch/powerpc/include/uapi/asm/unistd.h             |    1 +
- arch/powerpc/kernel/signal.c                       |    3 +
- arch/x86/Kconfig                                   |    1 +
- arch/x86/entry/common.c                            |    3 +
- arch/x86/entry/syscalls/syscall_32.tbl             |    1 +
- arch/x86/entry/syscalls/syscall_64.tbl             |    1 +
- arch/x86/kernel/signal.c                           |    6 +
- fs/exec.c                                          |    1 +
- include/linux/sched.h                              |  134 +++
- include/linux/syscalls.h                           |    4 +-
- include/trace/events/rseq.h                        |   56 +
- include/uapi/linux/rseq.h                          |  150 +++
- include/uapi/linux/types_32_64.h                   |   67 ++
- init/Kconfig                                       |   23 +
- kernel/Makefile                                    |    1 +
- kernel/fork.c                                      |    2 +
- kernel/rseq.c                                      |  366 ++++++
- kernel/sched/core.c                                |    2 +
- kernel/sys_ni.c                                    |    3 +
- tools/testing/selftests/Makefile                   |    1 +
- tools/testing/selftests/lib.mk                     |    4 +
- tools/testing/selftests/rseq/.gitignore            |    6 +
- tools/testing/selftests/rseq/Makefile              |   29 +
- .../testing/selftests/rseq/basic_percpu_ops_test.c |  312 +++++
- tools/testing/selftests/rseq/basic_test.c          |   55 +
- tools/testing/selftests/rseq/param_test.c          | 1259 ++++++++++++++++++++
- tools/testing/selftests/rseq/rseq-arm.h            |  732 ++++++++++++
- tools/testing/selftests/rseq/rseq-ppc.h            |  688 +++++++++++
- tools/testing/selftests/rseq/rseq-skip.h           |   82 ++
- tools/testing/selftests/rseq/rseq-x86.h            | 1149 ++++++++++++++++++
- tools/testing/selftests/rseq/rseq.c                |  116 ++
- tools/testing/selftests/rseq/rseq.h                |  164 +++
- tools/testing/selftests/rseq/run_param_test.sh     |  120 ++
- 41 files changed, 5572 insertions(+), 2 deletions(-)
- create mode 100644 include/trace/events/rseq.h
- create mode 100644 include/uapi/linux/rseq.h
- create mode 100644 include/uapi/linux/types_32_64.h
- create mode 100644 kernel/rseq.c
- create mode 100644 tools/testing/selftests/rseq/.gitignore
- create mode 100644 tools/testing/selftests/rseq/Makefile
- create mode 100644 tools/testing/selftests/rseq/basic_percpu_ops_test.c
- create mode 100644 tools/testing/selftests/rseq/basic_test.c
- create mode 100644 tools/testing/selftests/rseq/param_test.c
- create mode 100644 tools/testing/selftests/rseq/rseq-arm.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc.h
- create mode 100644 tools/testing/selftests/rseq/rseq-skip.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86.h
- create mode 100644 tools/testing/selftests/rseq/rseq.c
- create mode 100644 tools/testing/selftests/rseq/rseq.h
- create mode 100755 tools/testing/selftests/rseq/run_param_test.sh
-
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index c07f492b871a..62e00a1a7cf7 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -180,6 +180,7 @@ config X86
+ 	select HAVE_REGS_AND_STACK_ACCESS_API
+ 	select HAVE_RELIABLE_STACKTRACE		if X86_64 && UNWINDER_FRAME_POINTER && STACK_VALIDATION
+ 	select HAVE_STACK_VALIDATION		if X86_64
++	select HAVE_RSEQ
+ 	select HAVE_SYSCALL_TRACEPOINTS
+ 	select HAVE_UNSTABLE_SCHED_CLOCK
+ 	select HAVE_USER_RETURN_NOTIFIER
+diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
+index fbf6a6c3fd2d..92190879b228 100644
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -164,6 +164,7 @@ static void exit_to_usermode_loop(struct pt_regs *regs, u32 cached_flags)
+ 		if (cached_flags & _TIF_NOTIFY_RESUME) {
+ 			clear_thread_flag(TIF_NOTIFY_RESUME);
+ 			tracehook_notify_resume(regs);
++			rseq_handle_notify_resume(regs);
+ 		}
+ 
+ 		if (cached_flags & _TIF_USER_RETURN_NOTIFY)
+@@ -254,6 +255,8 @@ __visible inline void syscall_return_slowpath(struct pt_regs *regs)
+ 	    WARN(irqs_disabled(), "syscall %ld left IRQs disabled", regs->orig_ax))
+ 		local_irq_enable();
+ 
++	rseq_syscall(regs);
++
+ 	/*
+ 	 * First do one-time work.  If these work items are enabled, we
+ 	 * want to run them exactly once per syscall exit with IRQs on.
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index da270b95fe4d..445ca11ff863 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -688,6 +688,12 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
+ 	sigset_t *set = sigmask_to_save();
+ 	compat_sigset_t *cset = (compat_sigset_t *) set;
+ 
++	/*
++	 * Increment event counter and perform fixup for the pre-signal
++	 * frame.
++	 */
++	rseq_signal_deliver(regs);
++
+ 	/* Set up the stack frame */
+ 	if (is_ia32_frame(ksig)) {
+ 		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
 -- 
 2.11.0
