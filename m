@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 03/14] arm: Add restartable sequences support
-Date: Mon, 30 Apr 2018 18:44:22 -0400
-Message-ID: <20180430224433.17407-4-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 01/14] uapi headers: Provide types_32_64.h (v2)
+Date: Mon, 30 Apr 2018 18:44:20 -0400
+Message-ID: <20180430224433.17407-2-mathieu.desnoyers@efficios.com>
 References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
@@ -10,74 +10,103 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-Call the rseq_handle_notify_resume() function on return to
-userspace if TIF_NOTIFY_RESUME thread flag is set.
-
-Perform fixup on the pre-signal frame when a signal is delivered on top
-of a restartable sequence critical section.
+Provide helper macros for fields which represent pointers in
+kernel-userspace ABI. This facilitates handling of 32-bit
+user-space by 64-bit kernels by defining those fields as
+32-bit 0-padding and 32-bit integer on 32-bit architectures,
+which allows the kernel to treat those as 64-bit integers.
+The order of padding and 32-bit integer depends on the
+endianness.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Paul Turner <pjt@google.com>
-CC: Andrew Hunter <ahh@google.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andrew Hunter <ahh@google.com>
 CC: Andy Lutomirski <luto@amacapital.net>
 CC: Andi Kleen <andi@firstfloor.org>
 CC: Dave Watson <davejwatson@fb.com>
 CC: Chris Lameter <cl@linux.com>
 CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
 CC: Ben Maurer <bmaurer@fb.com>
 CC: Steven Rostedt <rostedt@goodmis.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 CC: Josh Triplett <josh@joshtriplett.org>
 CC: Linus Torvalds <torvalds@linux-foundation.org>
 CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
----
- arch/arm/Kconfig         | 1 +
- arch/arm/kernel/signal.c | 7 +++++++
- 2 files changed, 8 insertions(+)
 
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index a7f8e7f4b88f..4f5c386631d4 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -91,6 +91,7 @@ config ARM
- 	select HAVE_PERF_USER_STACK_DUMP
- 	select HAVE_RCU_TABLE_FREE if (SMP && ARM_LPAE)
- 	select HAVE_REGS_AND_STACK_ACCESS_API
-+	select HAVE_RSEQ
- 	select HAVE_SYSCALL_TRACEPOINTS
- 	select HAVE_UID16
- 	select HAVE_VIRT_CPU_ACCOUNTING_GEN
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index bd8810d4acb3..5879ab3f53c1 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -541,6 +541,12 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
- 	int ret;
- 
- 	/*
-+	 * Increment event counter and perform fixup for the pre-signal
-+	 * frame.
-+	 */
-+	rseq_signal_deliver(regs);
+---
+
+Changes since v1:
+- Public uapi headers use __u32 and __u64 rather than uint32_t and
+  uint64_t.
+---
+ include/uapi/linux/types_32_64.h | 50 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
+ create mode 100644 include/uapi/linux/types_32_64.h
+
+diff --git a/include/uapi/linux/types_32_64.h b/include/uapi/linux/types_32_64.h
+new file mode 100644
+index 000000000000..0a87ace34a57
+--- /dev/null
++++ b/include/uapi/linux/types_32_64.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
++#ifndef _UAPI_LINUX_TYPES_32_64_H
++#define _UAPI_LINUX_TYPES_32_64_H
 +
-+	/*
- 	 * Set up the stack frame
- 	 */
- 	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-@@ -660,6 +666,7 @@ do_work_pending(struct pt_regs *regs, unsigned int thread_flags, int syscall)
- 			} else {
- 				clear_thread_flag(TIF_NOTIFY_RESUME);
- 				tracehook_notify_resume(regs);
-+				rseq_handle_notify_resume(regs);
- 			}
- 		}
- 		local_irq_disable();
++/*
++ * linux/types_32_64.h
++ *
++ * Integer type declaration for pointers across 32-bit and 64-bit systems.
++ *
++ * Copyright (c) 2015-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++ */
++
++#ifdef __KERNEL__
++# include <linux/types.h>
++#else
++# include <stdint.h>
++#endif
++
++#include <asm/byteorder.h>
++
++#ifdef __BYTE_ORDER
++# if (__BYTE_ORDER == __BIG_ENDIAN)
++#  define LINUX_BYTE_ORDER_BIG_ENDIAN
++# else
++#  define LINUX_BYTE_ORDER_LITTLE_ENDIAN
++# endif
++#else
++# ifdef __BIG_ENDIAN
++#  define LINUX_BYTE_ORDER_BIG_ENDIAN
++# else
++#  define LINUX_BYTE_ORDER_LITTLE_ENDIAN
++# endif
++#endif
++
++#ifdef __LP64__
++# define LINUX_FIELD_u32_u64(field)			__u64 field
++# define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	field = (intptr_t)v
++#else
++# ifdef LINUX_BYTE_ORDER_BIG_ENDIAN
++#  define LINUX_FIELD_u32_u64(field)	__u32 field ## _padding, field
++#  define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	\
++	field ## _padding = 0, field = (intptr_t)v
++# else
++#  define LINUX_FIELD_u32_u64(field)	__u32 field, field ## _padding
++#  define LINUX_FIELD_u32_u64_INIT_ONSTACK(field, v)	\
++	field = (intptr_t)v, field ## _padding = 0
++# endif
++#endif
++
++#endif /* _UAPI_LINUX_TYPES_32_64_H */
 -- 
 2.11.0
