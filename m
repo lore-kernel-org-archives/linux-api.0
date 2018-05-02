@@ -1,105 +1,222 @@
-From: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Subject: Re: [RFC] vfs: skip extra attributes check on removal for symlinks
-Date: Tue, 1 May 2018 17:45:12 +0000
-Message-ID: <20180501174512.GA27853@wotan.suse.de>
-References: <20180426234639.12480-1-mcgrof@kernel.org>
- <20180501172319.GK4127@magnolia>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v5 00/28] FPGA Device Feature List (DFL) Device Drivers
+Date: Wed,  2 May 2018 10:50:03 +0800
+Message-ID: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180501172319.GK4127@magnolia>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, sandeen@sandeen.net, dhowells@redhat.com, tytso@mit.edu, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 01, 2018 at 10:23:19AM -0700, Darrick J. Wong wrote:
-> On Thu, Apr 26, 2018 at 04:46:39PM -0700, Luis R. Rodriguez wrote:
-> > Linux filesystems cannot set extra file attributes (stx_attributes as per
-> > statx(2)) on a symbolic link. To set extra file attributes you issue
-> > ioctl(2) with FS_IOC_SETFLAGS, *all* ioctl(2) calls on a symbolic link
-> > yield EBADF.
-> > 
-> > This is because ioctl(2) tries to obtain struct fd from the symbolic link
-> > file descriptor passed using fdget(), fdget() in turn always returns no
-> > file set when a file descriptor is open with O_PATH. As per symlink(2)
-> > O_PATH and O_NOFOLLOW must *always* be used when you want to get the file
-> > descriptor of a symbolic link, and this holds true for Linux, as such extra
-> > file attributes cannot possibly be set on symbolic links on Linux.
-> > 
-> > Filesystems repair utilities should be updated to detect this as
-> > corruption and correct this, however, the VFS *does* respect these
-> > extra attributes on symlinks for removal.
-> > 
-> > Since we cannot set these attributes we should special-case the
-> > immutable/append on delete for symlinks, this would be consistent with
-> > what we *do* allow on Linux for all filesystems.
-> 
-> Ah, ok, so the problem here is that you can't rm an "immutable" symlink
-> nor can you clear the immutable flag on such a beast, so therefore
-> ignore the immutable (and append) flags if we're trying to delete a
-> symlink?
+Hi All,
 
-Yup.
+Here is v5 patch-series adding drivers for FPGA DFL devices.
 
-> I think we ought to teach the xfs inode verifier to check for
-> immutable/append symlinks and return error so that we don't end up with
-> such things in core in the first place,
+This patch series provides a common framework to support FPGA Device Feature
+List (DFL), and also feature dev drivers under this DFL framework to provide
+interfaces for userspace applications to configure, enumerate, open, and
+access FPGA accelerators on DFL based FPGA device and enables system level
+management functions such as FPGA partial reconfiguration, power management
+and virtualization.
 
-Agreed. But note that one way to end up with these things is through
-corruption. Once a user finds this the first signs they'll run into
-(unless they have the awesome new online scrubber) is they cannot delete
-some odd file and not know why. And then they'll see they cannot change
-or remove either the immutable or append flag. The immutable attribute
-is known to not let you delete the file, but its less known that the
-append attribute implies the same. Folks would scratch their heads.
+This patch series only adds the basic functions for FPGA accelerators and
+partial reconfiguration. Patches for more functions, e.g power management
+and virtualization, will be submitted after this series gets reviewed.
 
-Since one cannot *set* these attributes on symlinks on Linux, other than
-ignoring such attributes perhaps we should warn about it? As the only
-way you could end up with that is if your filesystem got corrupted.
+Note this patch series is only verified on DFL based Intel(R) FPGA PCIe
+devices (e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
+Acceleration Cards).
 
-But without filesystems having a fix for that merged users can't do anything.
+Patch 1: add a document for FPGA DFL framework driver overview, including
+Device Feature List (DFL) introduction, the HW architecture, driver
+organization, device enumeration and opens.
 
-> and fix xfs_repair to zap such things.
+Patch 2: add region_id for fpga_image_info data structure, which allows
+driver to pass region id information to fpga-mgr for FPGA reconfiguration
+function. (Used by Patch 17)
 
-This is what my patch for xfs_repair does, which is pending review.
+Patch 3: add a 'status' sysfs interface to fpga-mgr class, it reflects
+the status of the fpga-mgr including reconfiguration errors. (Used by
+Patch 18)
 
-But note that special files are handled differently, I explain the logic on the
-RFC commit log, which is why I suggested splitting up adding a fix for special
-files as a separate patch.
+Patch 4-5: add compat_id support in fpga manager and region, this compat
+id is used for compatibility check before further actions (e.g partial
+reconfiguration). (Used by Patch 19 and 22)
 
-> That said, for the filesystems that aren't going to check their inodes,
-> I guess this is a (hackish) way to avoid presenting undeletable gunk in
-> the fs to the user...
+Patch 6-11: add FPGA device feature list support, it provides common
+enumeration interfaces which creates container device (FPGA base region)
+and all feature devices by walking through all the 'Device Feature Lists'
+provided low level drivers. A global list is added to DFL framework to
+manage port ops from different ports.
 
-That's why its RFC. What is the right thing to do here?
+Patch 12-13: implement FPGA PCIe device driver. It locates all 'Device
+Feature Lists' in PCIe device memory and invokes common interfaces from
+above device feature list framework to finish the enumeration.
 
-My own logic here was since we cannot possibly allow extended attributes on
-symlinks is to not use them then as well, in this case for delete.
+Patch 14-17: implement FPGA Management Engine (FME) driver. It's a
+platform driver matching with the FME platform device created by above
+device feature list framework during enumeration. Sysfs and device file
+ioctls are exposed as user interfaces to allow partial reconfiguration
+to Accelerated Function Units (AFUs) from user space applications.
 
-> (Were it up to me I'd make a common vfs_check_inode() to reject
-> struct inode containing garbage that the vfs won't deal with,
+Patch 18-22: implement FPGA manager/bridge/region platform drivers for
+Intel FPGA Management Engine (FME). These platform drivers match with
+platform devices created by above FME driver, they use the generic
+fpga-mgr/bridge/region class infrastructure to implement FPGA partial
+reconfiguration function.
 
-There certainly are cases that we could come up with for the VFS where
-if such things are found, regardless of the filesystem, we're very sure
-its a corruption. This is just one example, as you note.
+Patch 23-28: implement FPGA Accelerated Function Unit (AFU) driver.
+It's a platform driver matching with AFU platform device created by above
+device feature list framework during enumeration. It provides user
+interfaces to expose the AFU MMIO region, map/unmap dma buffer, and
+control the port which AFU connects to.
 
-So it is correct that there are two things here:
+Changes from v4:
+- Update the dfl.txt documentation, remove descriptions for the APIs and
+  features which are not implemented in this patch series.
+- Add DFL_ / dfl_ prefix for APIs and data structure, to avoid directly
+  using DFL_ / fpga_xxx naming.
+- Use "static region" and "PR bistream" instead of "blue bitstream" and
+  "green bistream" terminology in description to avoid misunderstanding.
+- Fix building issues caused by BIT() on 64bit register definition and
+  missing correct header file for readq and writeq.
+- Remove port specific code in DFL framework, and introduce port ops support
+  to resolve the dependency issue between FME driver module and Port driver
+  module. (more details in Patch 10).
+- Add compat id to fpga manager, as in case some hardware implements the
+  compat id in fpga manager's register, not register belongs to fpga region,
+  and its value is shared by all related fpga regions.
+- Pass mapped ioaddr to fme manager platform device from dfl-fme-pr via pdata.
+- Move PR hardware register definition to dfl-fme-mgr.c.
+- Fix other comments from Alan and Moritz, including description improvement,
+  coding style issue and etc.
 
-1) Do we respect the attribute for symlink on delete
-2) Do we warn to users of the fact that the inode is very likely corrupted
-   regardless of the filesystem?
+Changes from v3:
+- Fix SPDX license issue.
+- Rename documentation to dfl.txt, add introduction for Device Feature List
+  (DFL) and re-organize the content.
+- Rename to FPGA Device Feature List (DFL) drivers from Intel FPGA device
+  drivers for better reuse purposes. Unified driver and files to dfl-*.*
+- Remove static feature_info table from common enumeration code, and switch
+  to use feature id for sub feature driver matching.
+- Remove next_afu register checking for AFU from common enumeration code.
+- Remove interface_id sysfs for dfl-fme-mgr and use per fpga-region
+  compat_id instead. (new patch 13, 15, 19).
+- Add more comments for driver data structures and functions.
+- Fix typos, issues in debug message/commit message and other places.
 
-This patch only addresses 1) and makes it match the VFS expectation, and
-I think this is safe if we're not doing 2). This is why I'm also looking
-for feedback from linux-api folks.
+Changes from v2:
+- Split common enumeration code from pcie driver to a separated module
+  which for device feature list support.
+- Drop fpga-dev class and switch to use fpga base region as container.
+- Update the intel-fpga.txt documentation for new driver organization.
+- Rename feature device drivers for future code reuse.
+- Rebase code due to fpga APIs changes
+- replace bitfields with marco and shift.
+- fix typos, checkpatch issue and other comments.
 
-This is one of those odd corner cases we run into, and very likely not
-well documented anywhere.
+Changes from v1:
+- Use GPLv2 license instead of Dual BSD/GPL.
+- Move the code to drivers/fpga folder.
+- Update the intel-fpga.txt documentation for new driver organization.
+- Add documentation for new sysfs interfaces.
+- Switch to use common fpga-region interface for partial reconfiguration
+  (PR) function in FME. It creates fpga-region/fpga-mgr/fpga-bridge
+  platform devices and leave the implementation to their platform drivers.
+- Add platform drivers for FME fpga-mgr/bridge/region platform devices.
+- Fix kbuild warnings, typos and other comments.
 
-> and teach the filesystems to use it;
+This patch series depends on the below patchset from Alan Tull.
+[PATCH v4 0/4] fpga: change api, don't use drive data[1]
 
-Or the VFS uses it.
+[1] https://marc.info/?l=linux-fpga&m=152356504900466&w=2
 
-  Luis
+Kang Luwei (3):
+  fpga: dfl: add FPGA Management Engine driver basic framework
+  fpga: dfl: fme: add header sub feature support
+  fpga: dfl: fme: add partial reconfiguration sub feature support
+
+Wu Hao (22):
+  docs: fpga: add a document for FPGA Device Feature List (DFL)
+    Framework Overview
+  fpga: mgr: add region_id to fpga_image_info
+  fpga: mgr: add status for fpga-manager
+  fpga: mgr: add compat_id support
+  fpga: region: add compat_id support
+  fpga: add device feature list support
+  fpga: dfl: add chardev support for feature devices
+  fpga: dfl: add dfl_fpga_cdev_find_port
+  fpga: dfl: add dfl_fpga_port_ops support.
+  fpga: dfl: add dfl_fpga_check_port_id function.
+  fpga: dfl-pci: add enumeration for feature devices
+  fpga: dfl: fme: add DFL_FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
+    support
+  fpga: dfl: add fpga manager platform driver for FME
+  fpga: dfl: fme-mgr: add compat_id support
+  fpga: dfl: add fpga bridge platform driver for FME
+  fpga: dfl: add fpga region platform driver for FME
+  fpga: dfl: fme-region: add support for compat_id
+  fpga: dfl: add FPGA Accelerated Function Unit driver basic framework
+  fpga: dfl: afu: add port ops support
+  fpga: dfl: afu: add header sub feature support
+  fpga: dfl: afu: add DFL_FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
+    support
+  fpga: dfl: afu: add DFL_FPGA_PORT_DMA_MAP/UNMAP ioctls support
+
+Xiao Guangrong (2):
+  fpga: dfl: add feature device infrastructure
+  fpga: dfl: afu: add afu sub feature support
+
+Zhang Yi (1):
+  fpga: add FPGA DFL PCIe device driver
+
+ Documentation/ABI/testing/sysfs-class-fpga-manager |   24 +
+ Documentation/ABI/testing/sysfs-class-fpga-region  |    9 +
+ Documentation/ABI/testing/sysfs-platform-dfl-fme   |   23 +
+ Documentation/ABI/testing/sysfs-platform-dfl-port  |   16 +
+ Documentation/fpga/dfl.txt                         |  285 ++++++
+ Documentation/ioctl/ioctl-number.txt               |    1 +
+ drivers/fpga/Kconfig                               |   68 ++
+ drivers/fpga/Makefile                              |   14 +
+ drivers/fpga/dfl-afu-dma-region.c                  |  463 +++++++++
+ drivers/fpga/dfl-afu-main.c                        |  636 +++++++++++++
+ drivers/fpga/dfl-afu-region.c                      |  166 ++++
+ drivers/fpga/dfl-afu.h                             |  100 ++
+ drivers/fpga/dfl-fme-br.c                          |  114 +++
+ drivers/fpga/dfl-fme-main.c                        |  279 ++++++
+ drivers/fpga/dfl-fme-mgr.c                         |  349 +++++++
+ drivers/fpga/dfl-fme-pr.c                          |  474 ++++++++++
+ drivers/fpga/dfl-fme-pr.h                          |   84 ++
+ drivers/fpga/dfl-fme-region.c                      |   89 ++
+ drivers/fpga/dfl-fme.h                             |   38 +
+ drivers/fpga/dfl-pci.c                             |  310 ++++++
+ drivers/fpga/dfl.c                                 | 1000 ++++++++++++++++++++
+ drivers/fpga/dfl.h                                 |  416 ++++++++
+ drivers/fpga/fpga-mgr.c                            |   28 +
+ drivers/fpga/fpga-region.c                         |   22 +
+ include/linux/fpga/fpga-mgr.h                      |   24 +
+ include/linux/fpga/fpga-region.h                   |    2 +
+ include/uapi/linux/fpga-dfl.h                      |  178 ++++
+ 27 files changed, 5212 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-fme
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-port
+ create mode 100644 Documentation/fpga/dfl.txt
+ create mode 100644 drivers/fpga/dfl-afu-dma-region.c
+ create mode 100644 drivers/fpga/dfl-afu-main.c
+ create mode 100644 drivers/fpga/dfl-afu-region.c
+ create mode 100644 drivers/fpga/dfl-afu.h
+ create mode 100644 drivers/fpga/dfl-fme-br.c
+ create mode 100644 drivers/fpga/dfl-fme-main.c
+ create mode 100644 drivers/fpga/dfl-fme-mgr.c
+ create mode 100644 drivers/fpga/dfl-fme-pr.c
+ create mode 100644 drivers/fpga/dfl-fme-pr.h
+ create mode 100644 drivers/fpga/dfl-fme-region.c
+ create mode 100644 drivers/fpga/dfl-fme.h
+ create mode 100644 drivers/fpga/dfl-pci.c
+ create mode 100644 drivers/fpga/dfl.c
+ create mode 100644 drivers/fpga/dfl.h
+ create mode 100644 include/uapi/linux/fpga-dfl.h
+
+-- 
+1.8.3.1
