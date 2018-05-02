@@ -1,28 +1,56 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
-Date: Wed, 2 May 2018 10:43:28 +0200
-Message-ID: <20180502084328.GE12180@hirez.programming.kicks-ass.net>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
- <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
+From: Jesper Dangaard Brouer <brouer@redhat.com>
+Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
+ binaries
+Date: Wed, 2 May 2018 11:12:27 +0200
+Message-ID: <20180502111227.346f355e@redhat.com>
+References: <20180306013457.1955486-1-ast@kernel.org>
+        <CA+55aFx5Q8D3cmuoXJFV9Ok_vc3fd3rNP-5onqFTPTtfZgi=HQ@mail.gmail.com>
+        <EED9C7CB-BC5D-4E2D-B0CC-0003F682C73B@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
+In-Reply-To: <EED9C7CB-BC5D-4E2D-B0CC-0003F682C73B@fb.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: mathieu.desnoyers@efficios.com, paulmck@linux.vnet.ibm.com, boqun.feng@gmail.com, luto@amacapital.net, davejwatson@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, pjt@google.com, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, Andrew Hunter <ahh@google.com>, andi@firstfloor.org, cl@linux.com, bmaurer@fb.com, rostedt@goodmis.org, josh@joshtriplett.org, torvalds@linux-foundation.org, catalin.marinas@arm.com, will.deacon@arm.com, mtk.manpages@gmail.com, Joel Fernandes <joelaf@google.com>
+To: Chris Mason <clm@fb.com>
+Cc: brouer@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, David Miller <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 02, 2018 at 03:53:47AM +0000, Daniel Colascione wrote:
-> The usual approach to "better" is an "adaptive mutex". Such a thing, when
-> it attempts to acquire a lock another thread owns, spins for some number of
-> iterations, then falls back to futex. I guess that's a little better than
-> immediately jumping to futex, but it's not optimal. We can still spin when
-> the lock owner isn't scheduled, and the spin count is usually some guess
-> (either specified manually or estimated statistically) that's not
-> guaranteed to produce decent results. Even if we do pick a good spin count,
-> we run a very good chance of under- or over-spinning on any given
-> lock-acquire. We always want to sleep when spinning would be pointless.
 
-Look for the FUTEX_LOCK patches from Waiman.
+On Tue, 6 Mar 2018 15:42:41 -0800 Chris Mason <clm@fb.com> wrote:
+> On 6 Mar 2018, at 11:12, Linus Torvalds wrote:
+> 
+[...]
+> >
+> > I do *not* want this to be a magical way to hide things.  
+> 
+> Especially early on, this makes a lot of sense.  But I wanted to plug 
+> bps and the hopefully growing set of bpf introspection tools:
+> 
+> https://github.com/iovisor/bcc/blob/master/introspection/bps_example.txt
+> 
+> Long term these are probably a good place to tell the admin what's going 
+> on.
+(related to bpf itself not modprobe subject)
+
+Hi Chris,
+
+I just want to point out that the tool 'bpftool', is currently the
+dominating tool for eBPF introspection.  And the 'bps' tool you mention
+seems to have gained less (open source) traction.
+
+The bpftool is part of the kernel git-tree: tools/bpf/bpftool
+ https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/
+
+And it even have bash-completion and man-pages in RST format so they
+even render nicely when viewed via github:
+
+ https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/Documentation/bpftool.rst
+ https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/Documentation/bpftool-prog.rst
+ https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/Documentation/bpftool-map.rst
+
+-- 
+Best regards,
+  Jesper Dangaard Brouer
+  MSc.CS, Principal Kernel Engineer at Red Hat
+  LinkedIn: http://www.linkedin.com/in/brouer
