@@ -1,56 +1,109 @@
-From: Jesper Dangaard Brouer <brouer@redhat.com>
-Subject: Re: [PATCH net-next] modules: allow modprobe load regular elf
- binaries
-Date: Wed, 2 May 2018 11:12:27 +0200
-Message-ID: <20180502111227.346f355e@redhat.com>
-References: <20180306013457.1955486-1-ast@kernel.org>
-        <CA+55aFx5Q8D3cmuoXJFV9Ok_vc3fd3rNP-5onqFTPTtfZgi=HQ@mail.gmail.com>
-        <EED9C7CB-BC5D-4E2D-B0CC-0003F682C73B@fb.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been
+ reserved
+Date: Wed, 2 May 2018 15:06:34 +0200
+Message-ID: <43db1d63-fa64-4b4a-f3c3-edc73892bd23@gmail.com>
+References: <CAG48ez2w+3FDh9LM3+P2EHowicjM2Xw6giR6uq=26JfWHYsTAQ@mail.gmail.com>
+ <20180413160435.GA17484@dhcp22.suse.cz>
+ <CAG48ez3-xtmAt2EpRFR8GNKKPcsDsyg7XdwQ=D5w3Ym6w4Krjw@mail.gmail.com>
+ <CAG48ez1PdzMs8hkatbzSLBWYucjTc75o8ovSmeC66+e9mLvSfA@mail.gmail.com>
+ <20180416100736.GG17484@dhcp22.suse.cz>
+ <CAG48ez3DwRXMtiinUWKnan6hAppLYLdx-w+VzXG6ubioZUacQg@mail.gmail.com>
+ <20180416191805.GS17484@dhcp22.suse.cz>
+ <CAG48ez1nf96nHj8a+aZy22RwqYTUZBGrsGFcz=ZhZBUWzaEZ9w@mail.gmail.com>
+ <20180416195726.GT17484@dhcp22.suse.cz>
+ <CAG48ez1bV_zZP3Y2ioDndP+H8mLCcxOtU1vCbWe7Q8myEGfXQQ@mail.gmail.com>
+ <20180416211115.GU17484@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <EED9C7CB-BC5D-4E2D-B0CC-0003F682C73B@fb.com>
+In-Reply-To: <20180416211115.GU17484@dhcp22.suse.cz>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Mason <clm@fb.com>
-Cc: brouer@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, David Miller <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Network Development <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Michal Hocko <mhocko@kernel.org>, Jann Horn <jannh@google.com>
+Cc: mtk.manpages@gmail.com, John Hubbard <jhubbard@nvidia.com>, linux-man <linux-man@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+Jann, Micha,
 
-On Tue, 6 Mar 2018 15:42:41 -0800 Chris Mason <clm@fb.com> wrote:
-> On 6 Mar 2018, at 11:12, Linus Torvalds wrote:
+On 04/16/2018 11:11 PM, Michal Hocko wrote:
+> On Mon 16-04-18 22:17:40, Jann Horn wrote:
+>> On Mon, Apr 16, 2018 at 9:57 PM, Michal Hocko <mhocko@kernel.org> wrote:
+>>> On Mon 16-04-18 21:30:09, Jann Horn wrote:
+>>>> On Mon, Apr 16, 2018 at 9:18 PM, Michal Hocko <mhocko@kernel.org> wrote:
+>>> [...]
+>>>>> Yes, reasonably well written application will not have this problem.
+>>>>> That, however, requires an external synchronization and that's why
+>>>>> called it error prone and racy. I guess that was the main motivation for
+>>>>> that part of the man page.
+>>>>
+>>>> What requires external synchronization? I still don't understand at
+>>>> all what you're talking about.
+>>>>
+>>>> The following code:
+>>>>
+>>>> void *try_to_alloc_addr(void *hint, size_t len) {
+>>>>   char *x = mmap(hint, len, ...);
+>>>>   if (x == MAP_FAILED) return NULL;
+>>>>   if (x == hint) return x;
+>>>
+>>> Any other thread can modify the address space at this moment.
+>>
+>> But not parts of the address space that were returned by this mmap() call.
+> ?
+>>> Just
+>>> consider that another thread would does mmap(x, MAP_FIXED) (or any other
+>>> address overlapping [x, x+len] range)
+>>
+>> If the other thread does that without previously having created a
+>> mapping covering the area in question, that would be a bug in the
+>> other thread.
 > 
-[...]
-> >
-> > I do *not* want this to be a magical way to hide things.  
+> MAP_FIXED is sometimes used without preallocated address ranges.
 > 
-> Especially early on, this makes a lot of sense.  But I wanted to plug 
-> bps and the hopefully growing set of bpf introspection tools:
+>> MAP_FIXED on an unmapped address is almost always a bug
+>> (excluding single-threaded cases with no library code, and even then
+>> it's quite weird) - for example, any malloc() call could also cause
+>> libc to start using the memory range you're trying to map with
+>> MAP_FIXED.
 > 
-> https://github.com/iovisor/bcc/blob/master/introspection/bps_example.txt
+> Yeah and that's why we there is such a large paragraph in the man page
+> ;)
 > 
-> Long term these are probably a good place to tell the admin what's going 
-> on.
-(related to bpf itself not modprobe subject)
+>>> becaus it is seemingly safe as x
+>>> != hint.
+>>
+>> I don't understand this part. Are you talking about a hypothetical
+>> scenario in which a programmer attempts to segment the virtual memory
+>> space into areas that are exclusively used by threads without creating
+>> memory mappings for those areas?
+> 
+> Yeah, that doesn't sound all that over-exaggerated, right? And yes,
+> such a code would be subtle and most probably buggy. I am not trying to
+> argue for those hypothetical cases. All I am saying is that MAP_FIXED is
+> subtle.
+> 
+> I _do_ agree that using it solely on the preallocated and _properly_
+> managed address ranges is safe. I still maintain my position on error
+> prone though. And besides that there are usecases which do not operate
+> on preallocated address ranges so people really have to be careful.
+> 
+> I do not really care what is the form. I find the current wording quite
+> informative and showing examples of how things might be broken. I do
+> agree with your remark that "MAP_FIXED on preallocated ranges is safe"
+> should be added. But MAP_FIXED is dangerous API and should have few big
+> fat warnings.
 
-Hi Chris,
+So, at this stage, is any further patch needed to the text describing
+MAP_FIXED/MAP_FIXED_REPLACE?
 
-I just want to point out that the tool 'bpftool', is currently the
-dominating tool for eBPF introspection.  And the 'bps' tool you mention
-seems to have gained less (open source) traction.
+Cheers,
 
-The bpftool is part of the kernel git-tree: tools/bpf/bpftool
- https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/
+Michael
 
-And it even have bash-completion and man-pages in RST format so they
-even render nicely when viewed via github:
-
- https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/Documentation/bpftool.rst
- https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/Documentation/bpftool-prog.rst
- https://github.com/torvalds/linux/blob/master/tools/bpf/bpftool/Documentation/bpftool-map.rst
 
 -- 
-Best regards,
-  Jesper Dangaard Brouer
-  MSc.CS, Principal Kernel Engineer at Red Hat
-  LinkedIn: http://www.linkedin.com/in/brouer
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
