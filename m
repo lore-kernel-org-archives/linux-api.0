@@ -1,70 +1,70 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
-Date: Wed, 02 May 2018 20:37:13 +0000
-Message-ID: <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
- <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
- <20180502172218.GL12180@hirez.programming.kicks-ass.net> <CAKOZuesjF8QxfphgsyRKctO89jR9VAM727dspTe7PX1z8KFpyw@mail.gmail.com>
- <20180502202233.GV12217@hirez.programming.kicks-ass.net>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: Re: [PATCH 2/3] mm: add find_alloc_contig_pages() interface
+Date: Wed, 2 May 2018 14:13:32 -0700
+Message-ID: <af56d281-fea1-2bd7-aff1-108fa1d9f3be@oracle.com>
+References: <20180417020915.11786-1-mike.kravetz@oracle.com>
+ <20180417020915.11786-3-mike.kravetz@oracle.com>
+ <deb9dd1d-84bf-75c7-2880-a7bcec880d47@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180502202233.GV12217@hirez.programming.kicks-ass.net>
+In-Reply-To: <deb9dd1d-84bf-75c7-2880-a7bcec880d47@suse.cz>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul McKenney <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, luto@amacapital.net, davejwatson@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, Andrew Hunter <ahh@google.com>, andi@firstfloor.org, cl@linux.com, bmaurer@fb.com, rostedt@goodmis.org, josh@joshtriplett.org, torvalds@linux-foundation.org, catalin.marinas@arm.com, will.deacon@arm.com, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>
+To: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 2, 2018 at 1:23 PM Peter Zijlstra <peterz@infradead.org> wrote:
+On 04/21/2018 09:16 AM, Vlastimil Babka wrote:
+> On 04/17/2018 04:09 AM, Mike Kravetz wrote:
+>> find_alloc_contig_pages() is a new interface that attempts to locate
+>> and allocate a contiguous range of pages.  It is provided as a more
+>> convenient interface than alloc_contig_range() which is currently
+>> used by CMA and gigantic huge pages.
+>>
+>> When attempting to allocate a range of pages, migration is employed
+>> if possible.  There is no guarantee that the routine will succeed.
+>> So, the user must be prepared for failure and have a fall back plan.
+>>
+>> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+> 
+> Hi, just two quick observations, maybe discussion pointers for the
+> LSF/MM session:
+> - it's weird that find_alloc_contig_pages() takes an order, and
+> free_contig_pages() takes a nr_pages. I suspect the interface would be
+> more future-proof with both using nr_pages? Perhaps also minimum
+> alignment for the allocation side? Order is fine for hugetlb, but what
+> about other potential users?
 
-> On Wed, May 02, 2018 at 06:27:22PM +0000, Daniel Colascione wrote:
-> > On Wed, May 2, 2018 at 10:22 AM Peter Zijlstra <peterz@infradead.org>
-wrote:
-> > >> On Wed, May 02, 2018 at 03:53:47AM +0000, Daniel Colascione wrote:
-> > > > Suppose we make a userspace mutex implemented with a lock word
-having
-> > three
-> > > > bits: acquired, sleep_mode, and wait_pending, with the rest of the
-word
-> > not
-> > > > being relevant at the moment.
-> >
-> > > So ideally we'd kill FUTEX_WAIT/FUTEX_WAKE for mutexes entirely, and
-go
-> > > with FUTEX_LOCK/FUTEX_UNLOCK that have the same semantics as the
-> > > existing FUTEX_LOCK_PI/FUTEX_UNLOCK_PI, namely, the word contains the
-> > > owner TID.
-> >
-> > That doesn't work if you want to use the rest of the word for something
-> > else, like a recursion count. With FUTEX_WAIT and FUTEX_WAKE, you can
-make
-> > a lock with two bits.
+Agreed, and I am changing this to nr_pages and adding alignment.
 
-> Recursive locks are teh most horrible crap ever. And having the tid in
+> - contig_alloc_migratetype_ok() says that MIGRATE_CMA blocks are OK to
+> allocate from. This silently assumes that everything allocated by this
+> will be migratable itself, or it might eat CMA reserves. Is it the case?
+> Also you then call alloc_contig_range() with MIGRATE_MOVABLE, so it will
+> skip/fail on MIGRATE_CMA anyway IIRC.
 
-What happened to providing mechanism, not policy?
+When looking closer at the code, alloc_contig_range currently has comments
+saying migratetype must be MIGRATE_MOVABLE or MIGRATE_CMA.  However, this
+is not checked/enforced anywhere in the code (that I can see).  The
+migratetype passed to alloc_contig_range() will be used to set the migrate
+type of all pageblocks in the range.  If there is an error, one side effect
+is that some pageblocks may have their migrate type changed to migratetype.
+Depending on how far we got before hitting the error, the number of pageblocks
+changed is unknown.  This actually can happen at the lower level routine
+start_isolate_page_range().
 
-You can't wish away recursive locking. It's baked into Java and the CLR,
-and it's enshrined in POSIX. It's not going away, and there's no reason not
-to support it efficiently.
+My first thought was to make start_isolate_page_range/set_migratetype_isolate
+check that the migrate type of a pageblock was migratetype before isolating.
+This would work for CMA, and I could make it work for the new allocator.
+However, offline_pages also calls start_isolate_page_range and I believe we
+do not want to enforce such a rule (all pageblocks must be of the same migrate
+type) for memory hotplug/offline?
 
-> the word allows things like kernel based optimistic spins and possibly
-> PI related things.
+Should we be concerned at all about this potential changing of migrate type
+on error?  The only way I can think to avoid this is to save the original
+migrate type before isolation.
 
-Sure. A lot of people don't want PI though, or at least they want to opt
-into it. And we shouldn't require an entry into the kernel for what we can
-in principle do efficiently in userspace.
-
-> > > As brought up in the last time we talked about spin loops, why do we
-> > > care if the spin loop is in userspace or not? Aside from the whole PTI
-> > > thing, the syscall cost was around 150 cycle or so, while a LOCK
-CMPXCHG
-> > > is around 20 cycles. So ~7 spins gets you the cost of entry.
-> >
-> > That's pre-KPTI, isn't it?
-
-> Yes, and once the hardware gets sorted, we'll be there again. I don't
-> think we should design interfaces for 'broken' hardware.
-
-It would be a mistake to design interfaces under the assumption that
-everyone has fast permission level transitions.
+-- 
+Mike Kravetz
