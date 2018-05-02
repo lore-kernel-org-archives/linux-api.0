@@ -1,44 +1,95 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/7] aio: remove an outdated BUG_ON and comment in aio_complete
-Date: Wed,  2 May 2018 23:14:43 +0200
-Message-ID: <20180502211448.18276-3-hch@lst.de>
-References: <20180502211448.18276-1-hch@lst.de>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node
+ information
+Date: Wed, 2 May 2018 14:33:23 -0700
+Message-ID: <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180502211448.18276-1-hch@lst.de>
+In-Reply-To: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>, Dave Hansen <dave.hansen@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-These days we don't treat sync iocbs special in the aio completion code as
-they never use it.  Remove the old comment and BUG_ON given that the
-current definition of is_sync_kiocb makes it impossible to hit.
+On Tue,  1 May 2018 22:58:06 -0700 Prakash Sangappa <prakash.sangappa@oracle.com> wrote:
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- fs/aio.c | 9 ---------
- 1 file changed, 9 deletions(-)
+> For analysis purpose it is useful to have numa node information
+> corresponding mapped address ranges of the process. Currently
+> /proc/<pid>/numa_maps provides list of numa nodes from where pages are
+> allocated per VMA of the process. This is not useful if an user needs to
+> determine which numa node the mapped pages are allocated from for a
+> particular address range. It would have helped if the numa node information
+> presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
+> exact numa node from where the pages have been allocated.
+> 
+> The format of /proc/<pid>/numa_maps file content is dependent on
+> /proc/<pid>/maps file content as mentioned in the manpage. i.e one line
+> entry for every VMA corresponding to entries in /proc/<pids>/maps file.
+> Therefore changing the output of /proc/<pid>/numa_maps may not be possible.
+> 
+> Hence, this patch proposes adding file /proc/<pid>/numa_vamaps which will
+> provide proper break down of VA ranges by numa node id from where the mapped
+> pages are allocated. For Address ranges not having any pages mapped, a '-'
+> is printed instead of numa node id. In addition, this file will include most
+> of the other information currently presented in /proc/<pid>/numa_maps. The
+> additional information included is for convenience. If this is not
+> preferred, the patch could be modified to just provide VA range to numa node
+> information as the rest of the information is already available thru
+> /proc/<pid>/numa_maps file.
+> 
+> Since the VA range to numa node information does not include page's PFN,
+> reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
+> 
+> Here is the snippet from the new file content showing the format.
+> 
+> 00400000-00401000 N0=1 kernelpagesize_kB=4 mapped=1 file=/tmp/hmap2
+> 00600000-00601000 N0=1 kernelpagesize_kB=4 anon=1 dirty=1 file=/tmp/hmap2
+> 00601000-00602000 N0=1 kernelpagesize_kB=4 anon=1 dirty=1 file=/tmp/hmap2
+> 7f0215600000-7f0215800000 N0=1 kernelpagesize_kB=2048 dirty=1 file=/mnt/f1
+> 7f0215800000-7f0215c00000 -  file=/mnt/f1
+> 7f0215c00000-7f0215e00000 N0=1 kernelpagesize_kB=2048 dirty=1 file=/mnt/f1
+> 7f0215e00000-7f0216200000 -  file=/mnt/f1
+> ..
+> 7f0217ecb000-7f0217f20000 N0=85 kernelpagesize_kB=4 mapped=85 mapmax=51
+>    file=/usr/lib64/libc-2.17.so
+> 7f0217f20000-7f0217f30000 -  file=/usr/lib64/libc-2.17.so
+> 7f0217f30000-7f0217f90000 N0=96 kernelpagesize_kB=4 mapped=96 mapmax=51
+>    file=/usr/lib64/libc-2.17.so
+> 7f0217f90000-7f0217fb0000 -  file=/usr/lib64/libc-2.17.so
+> ..
+> 
+> The 'pmap' command can be enhanced to include an option to show numa node
+> information which it can read from this new proc file. This will be a
+> follow on proposal.
 
-diff --git a/fs/aio.c b/fs/aio.c
-index add46b06be86..7c1855afd723 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1107,15 +1107,6 @@ static void aio_complete(struct kiocb *kiocb, long res, long res2)
- 		file_end_write(file);
- 	}
- 
--	/*
--	 * Special case handling for sync iocbs:
--	 *  - events go directly into the iocb for fast handling
--	 *  - the sync task with the iocb in its stack holds the single iocb
--	 *    ref, no other paths have a way to get another ref
--	 *  - the sync task helpfully left a reference to itself in the iocb
--	 */
--	BUG_ON(is_sync_kiocb(kiocb));
--
- 	if (iocb->ki_list.next) {
- 		unsigned long flags;
- 
--- 
-2.17.0
+I'd like to hear rather more about the use-cases for this new
+interface.  Why do people need it, what is the end-user benefit, etc?
+
+> There have been couple of previous patch proposals to provide numa node
+> information based on pfn or physical address. They seem to have not made
+> progress. Also it would appear reading numa node information based on PFN
+> or physical address will require privileges(CAP_SYS_ADMIN) similar to
+> reading PFN info from /proc/<pid>/pagemap.
+> 
+> See
+> https://marc.info/?t=139630938200001&r=1&w=2
+> 
+> https://marc.info/?t=139718724400001&r=1&w=2
+
+OK, let's hope that these people will be able to provide their review,
+feedback, testing, etc.  You missed a couple (Dave, Naoya).
+
+>  fs/proc/base.c     |   2 +
+>  fs/proc/internal.h |   3 +
+>  fs/proc/task_mmu.c | 299 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
+
+Some Documentation/ updates seem appropriate.  I suggest you grep the
+directory for "numa_maps" to find suitable locations.
+
+And a quick build check shows that `size fs/proc/task_mmu.o' gets quite
+a bit larger when CONFIG_SMP=n and CONFIG_NUMA=n.  That seems wrong -
+please see if you can eliminate the bloat from systems which don't need
+this feature.
