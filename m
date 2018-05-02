@@ -1,189 +1,37 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v5 20/28] fpga: dfl: add fpga bridge platform driver for FME
-Date: Wed,  2 May 2018 10:50:23 +0800
-Message-ID: <1525229431-3087-21-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v5 22/28] fpga: dfl: fme-region: add support for compat_id
+Date: Wed,  2 May 2018 10:50:25 +0800
+Message-ID: <1525229431-3087-23-git-send-email-hao.wu@intel.com>
 References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-This patch adds fpga bridge platform driver for FPGA Management Engine.
-It implements the enable_set callback for fpga bridge.
+This patch adds compat_id support, it reuses fme manager's
+compat id, as the per region compat id is actually from the
+fme manager's register.
 
-Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v3: rename driver to fpga-dfl-fme-br
-    remove useless dev_dbg in probe function.
-    rebased due to fpga api change.
-v4: rename to dfl-fme-br and fix SPDX license issue
-    include dfl-fme-pr.h instead of dfl-fme.h
-    add Acked-by from Alan and Moritz
-v5: rebase due to API changes.
-    defer port and its ops finding when really need.
+v5: reuse fme manager's compat_id as per region compat_id
 ---
- drivers/fpga/Kconfig      |   6 +++
- drivers/fpga/Makefile     |   1 +
- drivers/fpga/dfl-fme-br.c | 114 ++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 121 insertions(+)
- create mode 100644 drivers/fpga/dfl-fme-br.c
+ drivers/fpga/dfl-fme-region.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index 89f76e8..a8f939a 100644
---- a/drivers/fpga/Kconfig
-+++ b/drivers/fpga/Kconfig
-@@ -156,6 +156,12 @@ config FPGA_DFL_FME_MGR
- 	help
- 	  Say Y to enable FPGA Manager driver for FPGA Management Engine.
+diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
+index 696b313..b82a381 100644
+--- a/drivers/fpga/dfl-fme-region.c
++++ b/drivers/fpga/dfl-fme-region.c
+@@ -45,6 +45,7 @@ static int fme_region_probe(struct platform_device *pdev)
+ 	}
  
-+config FPGA_DFL_FME_BRIDGE
-+	tristate "FPGA DFL FME Bridge Driver"
-+	depends on FPGA_DFL_FME
-+	help
-+	  Say Y to enable FPGA Bridge driver for FPGA Management Engine.
-+
- config FPGA_DFL_PCI
- 	tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
- 	depends on PCI && FPGA_DFL
-diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index f82814a..75096e9 100644
---- a/drivers/fpga/Makefile
-+++ b/drivers/fpga/Makefile
-@@ -32,6 +32,7 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
- obj-$(CONFIG_FPGA_DFL)			+= dfl.o
- obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
- obj-$(CONFIG_FPGA_DFL_FME_MGR)		+= dfl-fme-mgr.o
-+obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
+ 	region->priv = pdata;
++	region->compat_id = mgr->compat_id;
+ 	platform_set_drvdata(pdev, region);
  
- dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
- 
-diff --git a/drivers/fpga/dfl-fme-br.c b/drivers/fpga/dfl-fme-br.c
-new file mode 100644
-index 0000000..5c51b08
---- /dev/null
-+++ b/drivers/fpga/dfl-fme-br.c
-@@ -0,0 +1,114 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * FPGA Bridge Driver for FPGA Management Engine (FME)
-+ *
-+ * Copyright (C) 2017 Intel Corporation, Inc.
-+ *
-+ * Authors:
-+ *   Wu Hao <hao.wu@intel.com>
-+ *   Joseph Grecco <joe.grecco@intel.com>
-+ *   Enno Luebbers <enno.luebbers@intel.com>
-+ *   Tim Whisonant <tim.whisonant@intel.com>
-+ *   Ananda Ravuri <ananda.ravuri@intel.com>
-+ *   Henry Mitchel <henry.mitchel@intel.com>
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/fpga/fpga-bridge.h>
-+
-+#include "dfl.h"
-+#include "dfl-fme-pr.h"
-+
-+struct fme_br_priv {
-+	struct dfl_fme_br_pdata *pdata;
-+	struct dfl_fpga_port_ops *port_ops;
-+	struct platform_device *port_pdev;
-+};
-+
-+static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
-+{
-+	struct fme_br_priv *priv = bridge->priv;
-+	struct platform_device *port_pdev;
-+	struct dfl_fpga_port_ops *ops;
-+
-+	if (!priv->port_pdev) {
-+		port_pdev = dfl_fpga_cdev_find_port(priv->pdata->cdev,
-+						    &priv->pdata->port_id,
-+						    dfl_fpga_check_port_id);
-+		if (!port_pdev)
-+			return -ENODEV;
-+
-+		priv->port_pdev = port_pdev;
-+	}
-+
-+	if (priv->port_pdev && !priv->port_ops) {
-+		ops = dfl_fpga_get_port_ops(priv->port_pdev);
-+		if (!ops || !ops->enable_set)
-+			return -ENOENT;
-+
-+		priv->port_ops = ops;
-+	}
-+
-+	return priv->port_ops->enable_set(priv->port_pdev, enable);
-+}
-+
-+static const struct fpga_bridge_ops fme_bridge_ops = {
-+	.enable_set = fme_bridge_enable_set,
-+};
-+
-+static int fme_br_probe(struct platform_device *pdev)
-+{
-+	struct device *dev = &pdev->dev;
-+	struct fme_br_priv *priv;
-+	struct fpga_bridge *br;
-+	int ret;
-+
-+	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-+	if (!priv)
-+		return -ENOMEM;
-+
-+	priv->pdata = dev_get_platdata(dev);
-+
-+	br = fpga_bridge_create(dev, "DFL FPGA FME Bridge",
-+				&fme_bridge_ops, priv);
-+	if (!br)
-+		return -ENOMEM;
-+
-+	platform_set_drvdata(pdev, br);
-+
-+	ret = fpga_bridge_register(br);
-+	if (ret)
-+		fpga_bridge_free(br);
-+
-+	return ret;
-+}
-+
-+static int fme_br_remove(struct platform_device *pdev)
-+{
-+	struct fpga_bridge *br = platform_get_drvdata(pdev);
-+	struct fme_br_priv *priv = br->priv;
-+
-+	fpga_bridge_unregister(br);
-+
-+	if (priv->port_pdev)
-+		put_device(&priv->port_pdev->dev);
-+	if (priv->port_ops)
-+		dfl_fpga_put_port_ops(priv->port_ops);
-+
-+	return 0;
-+}
-+
-+static struct platform_driver fme_br_driver = {
-+	.driver	= {
-+		.name    = DFL_FPGA_FME_BRIDGE,
-+	},
-+	.probe   = fme_br_probe,
-+	.remove  = fme_br_remove,
-+};
-+
-+module_platform_driver(fme_br_driver);
-+
-+MODULE_DESCRIPTION("FPGA Bridge for DFL FPGA Management Engine");
-+MODULE_AUTHOR("Intel Corporation");
-+MODULE_LICENSE("GPL v2");
-+MODULE_ALIAS("platform:dfl-fme-bridge");
+ 	ret = fpga_region_register(region);
 -- 
 1.8.3.1
