@@ -1,109 +1,53 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH] mmap.2: MAP_FIXED is okay if the address range has been
- reserved
-Date: Wed, 2 May 2018 15:06:34 +0200
-Message-ID: <43db1d63-fa64-4b4a-f3c3-edc73892bd23@gmail.com>
-References: <CAG48ez2w+3FDh9LM3+P2EHowicjM2Xw6giR6uq=26JfWHYsTAQ@mail.gmail.com>
- <20180413160435.GA17484@dhcp22.suse.cz>
- <CAG48ez3-xtmAt2EpRFR8GNKKPcsDsyg7XdwQ=D5w3Ym6w4Krjw@mail.gmail.com>
- <CAG48ez1PdzMs8hkatbzSLBWYucjTc75o8ovSmeC66+e9mLvSfA@mail.gmail.com>
- <20180416100736.GG17484@dhcp22.suse.cz>
- <CAG48ez3DwRXMtiinUWKnan6hAppLYLdx-w+VzXG6ubioZUacQg@mail.gmail.com>
- <20180416191805.GS17484@dhcp22.suse.cz>
- <CAG48ez1nf96nHj8a+aZy22RwqYTUZBGrsGFcz=ZhZBUWzaEZ9w@mail.gmail.com>
- <20180416195726.GT17484@dhcp22.suse.cz>
- <CAG48ez1bV_zZP3Y2ioDndP+H8mLCcxOtU1vCbWe7Q8myEGfXQQ@mail.gmail.com>
- <20180416211115.GU17484@dhcp22.suse.cz>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
+Date: Wed, 2 May 2018 12:03:08 -0400 (EDT)
+Message-ID: <660904075.9201.1525276988842.JavaMail.zimbra@efficios.com>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com> <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180416211115.GU17484@dhcp22.suse.cz>
-Content-Language: en-US
+In-Reply-To: <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, Jann Horn <jannh@google.com>
-Cc: mtk.manpages@gmail.com, John Hubbard <jhubbard@nvidia.com>, linux-man <linux-man@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>, lkml <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
 List-Id: linux-api@vger.kernel.org
 
-Jann, Micha,
+----- On May 1, 2018, at 11:53 PM, Daniel Colascione dancol@google.com wrote:
+[...]
+> 
+> I think a small enhancement to rseq would let us build a perfect userspace
+> mutex, one that spins on lock-acquire only when the lock owner is running
+> and that sleeps otherwise, freeing userspace from both specifying ad-hoc
+> spin counts and from trying to detect situations in which spinning is
+> generally pointless.
+> 
+> It'd work like this: in the per-thread rseq data structure, we'd include a
+> description of a futex operation for the kernel would perform (in the
+> context of the preempted thread) upon preemption, immediately before
+> schedule(). If the futex operation itself sleeps, that's no problem: we
+> will have still accomplished our goal of running some other thread instead
+> of the preempted thread.
 
-On 04/16/2018 11:11 PM, Michal Hocko wrote:
-> On Mon 16-04-18 22:17:40, Jann Horn wrote:
->> On Mon, Apr 16, 2018 at 9:57 PM, Michal Hocko <mhocko@kernel.org> wrote:
->>> On Mon 16-04-18 21:30:09, Jann Horn wrote:
->>>> On Mon, Apr 16, 2018 at 9:18 PM, Michal Hocko <mhocko@kernel.org> wrote:
->>> [...]
->>>>> Yes, reasonably well written application will not have this problem.
->>>>> That, however, requires an external synchronization and that's why
->>>>> called it error prone and racy. I guess that was the main motivation for
->>>>> that part of the man page.
->>>>
->>>> What requires external synchronization? I still don't understand at
->>>> all what you're talking about.
->>>>
->>>> The following code:
->>>>
->>>> void *try_to_alloc_addr(void *hint, size_t len) {
->>>>   char *x = mmap(hint, len, ...);
->>>>   if (x == MAP_FAILED) return NULL;
->>>>   if (x == hint) return x;
->>>
->>> Any other thread can modify the address space at this moment.
->>
->> But not parts of the address space that were returned by this mmap() call.
-> ?
->>> Just
->>> consider that another thread would does mmap(x, MAP_FIXED) (or any other
->>> address overlapping [x, x+len] range)
->>
->> If the other thread does that without previously having created a
->> mapping covering the area in question, that would be a bug in the
->> other thread.
-> 
-> MAP_FIXED is sometimes used without preallocated address ranges.
-> 
->> MAP_FIXED on an unmapped address is almost always a bug
->> (excluding single-threaded cases with no library code, and even then
->> it's quite weird) - for example, any malloc() call could also cause
->> libc to start using the memory range you're trying to map with
->> MAP_FIXED.
-> 
-> Yeah and that's why we there is such a large paragraph in the man page
-> ;)
-> 
->>> becaus it is seemingly safe as x
->>> != hint.
->>
->> I don't understand this part. Are you talking about a hypothetical
->> scenario in which a programmer attempts to segment the virtual memory
->> space into areas that are exclusively used by threads without creating
->> memory mappings for those areas?
-> 
-> Yeah, that doesn't sound all that over-exaggerated, right? And yes,
-> such a code would be subtle and most probably buggy. I am not trying to
-> argue for those hypothetical cases. All I am saying is that MAP_FIXED is
-> subtle.
-> 
-> I _do_ agree that using it solely on the preallocated and _properly_
-> managed address ranges is safe. I still maintain my position on error
-> prone though. And besides that there are usecases which do not operate
-> on preallocated address ranges so people really have to be careful.
-> 
-> I do not really care what is the form. I find the current wording quite
-> informative and showing examples of how things might be broken. I do
-> agree with your remark that "MAP_FIXED on preallocated ranges is safe"
-> should be added. But MAP_FIXED is dangerous API and should have few big
-> fat warnings.
+Hi Daniel,
 
-So, at this stage, is any further patch needed to the text describing
-MAP_FIXED/MAP_FIXED_REPLACE?
+I agree that the problem you are aiming to solve is important. Let's see
+what prevents the proposed rseq implementation from doing what you envision.
 
-Cheers,
+The main issue here is touching userspace immediately before schedule().
+At that specific point, it's not possible to take a page fault. In the proposed
+rseq implementation, we get away with it by raising a task struct flag, and using
+it in a return to userspace notifier (where we can actually take a fault), where
+we touch the userspace TLS area.
 
-Michael
+If we can find a way to solve this limitation, then the rest of your design
+makes sense to me.
 
+Thanks!
+
+Mathieu
 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
