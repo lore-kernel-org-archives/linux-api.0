@@ -1,31 +1,36 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v5 28/28] fpga: dfl: afu: add DFL_FPGA_PORT_DMA_MAP/UNMAP ioctls support
-Date: Wed,  2 May 2018 10:50:31 +0800
-Message-ID: <1525229431-3087-29-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v5 27/28] fpga: dfl: afu: add afu sub feature support
+Date: Wed,  2 May 2018 10:50:30 +0800
+Message-ID: <1525229431-3087-28-git-send-email-hao.wu@intel.com>
 References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-DMA memory regions are required for Accelerated Function Unit (AFU) usage.
-These two ioctls allow user space applications to map user memory regions
-for dma, and unmap them after use. Iova is returned from driver to user
-space application via DFL_FPGA_PORT_DMA_MAP ioctl. Application needs to unmap
-it after use, otherwise, driver will unmap them in device file release
-operation.
+From: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 
-Each AFU has its own rb tree to keep track of its mapped DMA regions.
+User Accelerated Function Unit sub feature exposes the MMIO region of
+the AFU. After valid PR bitstream is programmed and the port is enabled,
+then this MMIO region could be accessed.
+
+This patch adds support to enumerate the AFU MMIO region and expose it
+to userspace via mmap file operation. Below interfaces are exposed to user:
+
+Sysfs interface:
+* /sys/class/fpga_region/<regionX>/<dfl-port.x>/afu_id
+  Read-only. Indicate which PR bitstream is programmed to this AFU.
 
 Ioctl interfaces:
-* DFL_FPGA_PORT_DMA_MAP
-  Do the dma mapping per user_addr and length which provided by user.
-  Return iova in provided struct dfl_fpga_port_dma_map.
+* DFL_FPGA_PORT_GET_INFO
+  Provide info to userspace on the number of supported region.
+  Only UAFU region is supported now.
 
-* DFL_FPGA_PORT_DMA_UNMAP
-  Unmap the dma region per iova provided by user.
+* DFL_FPGA_PORT_GET_REGION_INFO
+  Provide region information, including access permission, region size,
+  offset from the start of device fd.
 
 Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
@@ -40,38 +45,359 @@ v2: moved the code to drivers/fpga folder as suggested by Alan Tull.
 v3: improved commit description and fixed coding style issues.
     replaced fpga_pdata_to_pcidev with fpga_pdata_to_fpga_cdev
 v4: rebase and fix SPDX license issue
-v5: rebase, and add DFL_ prefix to IOCTL APIs.
+v5: rebase, due to DFL framework naming changes.
+    add DFL_ prefix to IOCTL API.
+    remove "user" afu, and replace "green bitstream" terminology.
+    add "mmio" to afu region functions and data structures.
 ---
- drivers/fpga/Makefile             |   2 +-
- drivers/fpga/dfl-afu-dma-region.c | 463 ++++++++++++++++++++++++++++++++++++++
- drivers/fpga/dfl-afu-main.c       |  61 ++++-
- drivers/fpga/dfl-afu.h            |  31 ++-
- include/uapi/linux/fpga-dfl.h     |  37 +++
- 5 files changed, 591 insertions(+), 3 deletions(-)
- create mode 100644 drivers/fpga/dfl-afu-dma-region.c
+ Documentation/ABI/testing/sysfs-platform-dfl-port |   9 +
+ drivers/fpga/Makefile                             |   2 +-
+ drivers/fpga/dfl-afu-main.c                       | 219 +++++++++++++++++++++-
+ drivers/fpga/dfl-afu-region.c                     | 166 ++++++++++++++++
+ drivers/fpga/dfl-afu.h                            |  71 +++++++
+ include/uapi/linux/fpga-dfl.h                     |  48 +++++
+ 6 files changed, 508 insertions(+), 7 deletions(-)
+ create mode 100644 drivers/fpga/dfl-afu-region.c
+ create mode 100644 drivers/fpga/dfl-afu.h
 
+diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
+index eb1f02d..739a3fb 100644
+--- a/Documentation/ABI/testing/sysfs-platform-dfl-port
++++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
+@@ -5,3 +5,12 @@ Contact:	Wu Hao <hao.wu@intel.com>
+ Description:	Read-only. It returns id of this port. One DFL FPGA device
+ 		may have more than one port. Userspace could use this id to
+ 		distinguish different ports under same FPGA device.
++
++What:		/sys/bus/platform/devices/dfl-port.0/afu_id
++Date:		May 2018
++KernelVersion:	4.17
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. User can program different PR bitstreams to FPGA
++		Accelerator Function Unit (AFU) for different functions. It
++		returns uuid which could be used to identify which PR bitstream
++		is programmed in this AFU.
 diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 041e3cd1..dd454ab 100644
+index 5c9607b..041e3cd1 100644
 --- a/drivers/fpga/Makefile
 +++ b/drivers/fpga/Makefile
 @@ -37,7 +37,7 @@ obj-$(CONFIG_FPGA_DFL_FME_REGION)	+= dfl-fme-region.o
  obj-$(CONFIG_FPGA_DFL_AFU)		+= dfl-afu.o
  
  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
--dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o
-+dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o dfl-afu-dma-region.o
+-dfl-afu-objs := dfl-afu-main.o
++dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o
  
  # Drivers for FPGAs which implement DFL
  obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
-diff --git a/drivers/fpga/dfl-afu-dma-region.c b/drivers/fpga/dfl-afu-dma-region.c
+diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+index 57bb726..e7024dd 100644
+--- a/drivers/fpga/dfl-afu-main.c
++++ b/drivers/fpga/dfl-afu-main.c
+@@ -16,18 +16,18 @@
+ 
+ #include <linux/kernel.h>
+ #include <linux/module.h>
++#include <linux/uaccess.h>
+ #include <linux/fpga-dfl.h>
+ 
+-#include "dfl.h"
++#include "dfl-afu.h"
+ 
+ /**
+  * port_enable - enable a port
+  * @pdev: port platform device.
+  *
+  * Enable Port by clear the port soft reset bit, which is set by default.
+- * The User AFU is unable to respond to any MMIO access while in reset.
+- * port_enable function should only be used after port_disable
+- * function.
++ * The AFU is unable to respond to any MMIO access while in reset.
++ * port_enable function should only be used after port_disable function.
+  */
+ static void port_enable(struct platform_device *pdev)
+ {
+@@ -191,12 +191,75 @@ static void port_hdr_uinit(struct platform_device *pdev,
+ 	.ioctl = port_hdr_ioctl,
+ };
+ 
++static ssize_t
++afu_id_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 guidl, guidh;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_AFU);
++
++	mutex_lock(&pdata->lock);
++	if (pdata->disable_count) {
++		mutex_unlock(&pdata->lock);
++		return -EBUSY;
++	}
++
++	guidl = readq(base + GUID_L);
++	guidh = readq(base + GUID_H);
++	mutex_unlock(&pdata->lock);
++
++	return scnprintf(buf, PAGE_SIZE, "%016llx%016llx\n", guidh, guidl);
++}
++static DEVICE_ATTR_RO(afu_id);
++
++static const struct attribute *port_afu_attrs[] = {
++	&dev_attr_afu_id.attr,
++	NULL
++};
++
++static int port_afu_init(struct platform_device *pdev,
++			 struct dfl_feature *feature)
++{
++	struct resource *res = &pdev->resource[feature->resource_index];
++	int ret;
++
++	dev_dbg(&pdev->dev, "PORT AFU Init.\n");
++
++	ret = afu_mmio_region_add(dev_get_platdata(&pdev->dev),
++				  DFL_PORT_REGION_INDEX_AFU, resource_size(res),
++				  res->start, DFL_PORT_REGION_READ |
++				  DFL_PORT_REGION_WRITE | DFL_PORT_REGION_MMAP);
++	if (ret)
++		return ret;
++
++	return sysfs_create_files(&pdev->dev.kobj, port_afu_attrs);
++}
++
++static void port_afu_uinit(struct platform_device *pdev,
++			   struct dfl_feature *feature)
++{
++	dev_dbg(&pdev->dev, "PORT AFU UInit.\n");
++
++	sysfs_remove_files(&pdev->dev.kobj, port_afu_attrs);
++}
++
++static const struct dfl_feature_ops port_afu_ops = {
++	.init = port_afu_init,
++	.uinit = port_afu_uinit,
++};
++
+ static struct dfl_feature_driver port_feature_drvs[] = {
+ 	{
+ 		.id = PORT_FEATURE_ID_HEADER,
+ 		.ops = &port_hdr_ops,
+ 	},
+ 	{
++		.id = PORT_FEATURE_ID_AFU,
++		.ops = &port_afu_ops,
++	},
++	{
+ 		.ops = NULL,
+ 	}
+ };
+@@ -243,6 +306,64 @@ static long afu_ioctl_check_extension(struct dfl_feature_platform_data *pdata,
+ 	return 0;
+ }
+ 
++static long
++afu_ioctl_get_info(struct dfl_feature_platform_data *pdata, void __user *arg)
++{
++	struct dfl_fpga_port_info info;
++	struct dfl_afu *afu;
++	unsigned long minsz;
++
++	minsz = offsetofend(struct dfl_fpga_port_info, num_umsgs);
++
++	if (copy_from_user(&info, arg, minsz))
++		return -EFAULT;
++
++	if (info.argsz < minsz)
++		return -EINVAL;
++
++	mutex_lock(&pdata->lock);
++	afu = dfl_fpga_pdata_get_private(pdata);
++	info.flags = 0;
++	info.num_regions = afu->num_regions;
++	info.num_umsgs = afu->num_umsgs;
++	mutex_unlock(&pdata->lock);
++
++	if (copy_to_user(arg, &info, sizeof(info)))
++		return -EFAULT;
++
++	return 0;
++}
++
++static long afu_ioctl_get_region_info(struct dfl_feature_platform_data *pdata,
++				      void __user *arg)
++{
++	struct dfl_fpga_port_region_info rinfo;
++	struct dfl_afu_mmio_region region;
++	unsigned long minsz;
++	long ret;
++
++	minsz = offsetofend(struct dfl_fpga_port_region_info, offset);
++
++	if (copy_from_user(&rinfo, arg, minsz))
++		return -EFAULT;
++
++	if (rinfo.argsz < minsz || rinfo.padding)
++		return -EINVAL;
++
++	ret = afu_mmio_region_get_by_index(pdata, rinfo.index, &region);
++	if (ret)
++		return ret;
++
++	rinfo.flags = region.flags;
++	rinfo.size = region.size;
++	rinfo.offset = region.offset;
++
++	if (copy_to_user(arg, &rinfo, sizeof(rinfo)))
++		return -EFAULT;
++
++	return 0;
++}
++
+ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+ 	struct platform_device *pdev = filp->private_data;
+@@ -259,6 +380,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 		return DFL_FPGA_API_VERSION;
+ 	case DFL_FPGA_CHECK_EXTENSION:
+ 		return afu_ioctl_check_extension(pdata, arg);
++	case DFL_FPGA_PORT_GET_INFO:
++		return afu_ioctl_get_info(pdata, (void __user *)arg);
++	case DFL_FPGA_PORT_GET_REGION_INFO:
++		return afu_ioctl_get_region_info(pdata, (void __user *)arg);
+ 	default:
+ 		/*
+ 		 * Let sub-feature's ioctl function to handle the cmd
+@@ -277,13 +402,83 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	return -EINVAL;
+ }
+ 
++static int afu_mmap(struct file *filp, struct vm_area_struct *vma)
++{
++	struct platform_device *pdev = filp->private_data;
++	struct dfl_feature_platform_data *pdata;
++	u64 size = vma->vm_end - vma->vm_start;
++	struct dfl_afu_mmio_region region;
++	u64 offset;
++	int ret;
++
++	if (!(vma->vm_flags & VM_SHARED))
++		return -EINVAL;
++
++	pdata = dev_get_platdata(&pdev->dev);
++
++	offset = vma->vm_pgoff << PAGE_SHIFT;
++	ret = afu_mmio_region_get_by_offset(pdata, offset, size, &region);
++	if (ret)
++		return ret;
++
++	if (!(region.flags & DFL_PORT_REGION_MMAP))
++		return -EINVAL;
++
++	if ((vma->vm_flags & VM_READ) && !(region.flags & DFL_PORT_REGION_READ))
++		return -EPERM;
++
++	if ((vma->vm_flags & VM_WRITE) &&
++	    !(region.flags & DFL_PORT_REGION_WRITE))
++		return -EPERM;
++
++	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
++
++	return remap_pfn_range(vma, vma->vm_start,
++			(region.phys + (offset - region.offset)) >> PAGE_SHIFT,
++			size, vma->vm_page_prot);
++}
++
+ static const struct file_operations afu_fops = {
+ 	.owner = THIS_MODULE,
+ 	.open = afu_open,
+ 	.release = afu_release,
+ 	.unlocked_ioctl = afu_ioctl,
++	.mmap = afu_mmap,
+ };
+ 
++static int afu_dev_init(struct platform_device *pdev)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
++	struct dfl_afu *afu;
++
++	afu = devm_kzalloc(&pdev->dev, sizeof(*afu), GFP_KERNEL);
++	if (!afu)
++		return -ENOMEM;
++
++	afu->pdata = pdata;
++
++	mutex_lock(&pdata->lock);
++	dfl_fpga_pdata_set_private(pdata, afu);
++	afu_mmio_region_init(pdata);
++	mutex_unlock(&pdata->lock);
++
++	return 0;
++}
++
++static int afu_dev_destroy(struct platform_device *pdev)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
++	struct dfl_afu *afu;
++
++	mutex_lock(&pdata->lock);
++	afu = dfl_fpga_pdata_get_private(pdata);
++	afu_mmio_region_destroy(pdata);
++	dfl_fpga_pdata_set_private(pdata, NULL);
++	mutex_unlock(&pdata->lock);
++
++	return 0;
++}
++
+ static int port_enable_set(struct platform_device *pdev, bool enable)
+ {
+ 	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+@@ -312,14 +507,25 @@ static int afu_probe(struct platform_device *pdev)
+ 
+ 	dev_dbg(&pdev->dev, "%s\n", __func__);
+ 
++	ret = afu_dev_init(pdev);
++	if (ret)
++		goto exit;
++
+ 	ret = dfl_fpga_dev_feature_init(pdev, port_feature_drvs);
+ 	if (ret)
+-		return ret;
++		goto dev_destroy;
+ 
+ 	ret = dfl_fpga_register_dev_ops(pdev, &afu_fops, THIS_MODULE);
+-	if (ret)
++	if (ret) {
+ 		dfl_fpga_dev_feature_uinit(pdev);
++		goto dev_destroy;
++	}
++
++	return 0;
+ 
++dev_destroy:
++	afu_dev_destroy(pdev);
++exit:
+ 	return ret;
+ }
+ 
+@@ -329,6 +535,7 @@ static int afu_remove(struct platform_device *pdev)
+ 
+ 	dfl_fpga_unregister_dev_ops(pdev);
+ 	dfl_fpga_dev_feature_uinit(pdev);
++	afu_dev_destroy(pdev);
+ 
+ 	return 0;
+ }
+diff --git a/drivers/fpga/dfl-afu-region.c b/drivers/fpga/dfl-afu-region.c
 new file mode 100644
-index 0000000..600fd0c
+index 0000000..2f34f92
 --- /dev/null
-+++ b/drivers/fpga/dfl-afu-dma-region.c
-@@ -0,0 +1,463 @@
++++ b/drivers/fpga/dfl-afu-region.c
+@@ -0,0 +1,166 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Driver for FPGA Accelerated Function Unit (AFU) DMA Region Management
++ * Driver for FPGA Accelerated Function Unit (AFU) MMIO Region Management
 + *
 + * Copyright (C) 2017 Intel Corporation, Inc.
 + *
@@ -79,661 +405,294 @@ index 0000000..600fd0c
 + *   Wu Hao <hao.wu@intel.com>
 + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
 + */
-+
-+#include <linux/dma-mapping.h>
-+#include <linux/sched/signal.h>
-+#include <linux/uaccess.h>
-+
 +#include "dfl-afu.h"
 +
-+static void put_all_pages(struct page **pages, int npages)
-+{
-+	int i;
-+
-+	for (i = 0; i < npages; i++)
-+		if (pages[i])
-+			put_page(pages[i]);
-+}
-+
-+void afu_dma_region_init(struct dfl_feature_platform_data *pdata)
++/**
++ * afu_mmio_region_init - init function for afu mmio region support
++ * @pdata: afu platform device's pdata.
++ */
++void afu_mmio_region_init(struct dfl_feature_platform_data *pdata)
 +{
 +	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
 +
-+	afu->dma_regions = RB_ROOT;
++	INIT_LIST_HEAD(&afu->regions);
 +}
 +
-+/**
-+ * afu_dma_adjust_locked_vm - adjust locked memory
-+ * @dev: port device
-+ * @npages: number of pages
-+ * @incr: increase or decrease locked memory
-+ *
-+ * Increase or decrease the locked memory size with npages input.
-+ *
-+ * Return 0 on success.
-+ * Return -ENOMEM if locked memory size is over the limit and no CAP_IPC_LOCK.
-+ */
-+static int afu_dma_adjust_locked_vm(struct device *dev, long npages, bool incr)
++#define for_each_region(region, afu)	\
++	list_for_each_entry((region), &(afu)->regions, node)
++
++static struct dfl_afu_mmio_region *get_region_by_index(struct dfl_afu *afu,
++						       u32 region_index)
 +{
-+	unsigned long locked, lock_limit;
-+	int ret = 0;
++	struct dfl_afu_mmio_region *region;
 +
-+	/* the task is exiting. */
-+	if (!current->mm)
-+		return 0;
-+
-+	down_write(&current->mm->mmap_sem);
-+
-+	if (incr) {
-+		locked = current->mm->locked_vm + npages;
-+		lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
-+
-+		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
-+			ret = -ENOMEM;
-+		else
-+			current->mm->locked_vm += npages;
-+	} else {
-+		if (WARN_ON_ONCE(npages > current->mm->locked_vm))
-+			npages = current->mm->locked_vm;
-+		current->mm->locked_vm -= npages;
-+	}
-+
-+	dev_dbg(dev, "[%d] RLIMIT_MEMLOCK %c%ld %ld/%ld%s\n", current->pid,
-+		incr ? '+' : '-', npages << PAGE_SHIFT,
-+		current->mm->locked_vm << PAGE_SHIFT, rlimit(RLIMIT_MEMLOCK),
-+		ret ? "- execeeded" : "");
-+
-+	up_write(&current->mm->mmap_sem);
-+
-+	return ret;
-+}
-+
-+/**
-+ * afu_dma_pin_pages - pin pages of given dma memory region
-+ * @pdata: feature device platform data
-+ * @region: dma memory region to be pinned
-+ *
-+ * Pin all the pages of given dfl_afu_dma_region.
-+ * Return 0 for success or negative error code.
-+ */
-+static int afu_dma_pin_pages(struct dfl_feature_platform_data *pdata,
-+			     struct dfl_afu_dma_region *region)
-+{
-+	int npages = region->length >> PAGE_SHIFT;
-+	struct device *dev = &pdata->dev->dev;
-+	int ret, pinned;
-+
-+	ret = afu_dma_adjust_locked_vm(dev, npages, true);
-+	if (ret)
-+		return ret;
-+
-+	region->pages = kcalloc(npages, sizeof(struct page *), GFP_KERNEL);
-+	if (!region->pages) {
-+		ret = -ENOMEM;
-+		goto unlock_vm;
-+	}
-+
-+	pinned = get_user_pages_fast(region->user_addr, npages, 1,
-+				     region->pages);
-+	if (pinned < 0) {
-+		ret = pinned;
-+		goto put_pages;
-+	} else if (pinned != npages) {
-+		ret = -EFAULT;
-+		goto free_pages;
-+	}
-+
-+	dev_dbg(dev, "%d pages pinned\n", pinned);
-+
-+	return 0;
-+
-+put_pages:
-+	put_all_pages(region->pages, pinned);
-+free_pages:
-+	kfree(region->pages);
-+unlock_vm:
-+	afu_dma_adjust_locked_vm(dev, npages, false);
-+	return ret;
-+}
-+
-+/**
-+ * afu_dma_unpin_pages - unpin pages of given dma memory region
-+ * @pdata: feature device platform data
-+ * @region: dma memory region to be unpinned
-+ *
-+ * Unpin all the pages of given dfl_afu_dma_region.
-+ * Return 0 for success or negative error code.
-+ */
-+static void afu_dma_unpin_pages(struct dfl_feature_platform_data *pdata,
-+				struct dfl_afu_dma_region *region)
-+{
-+	long npages = region->length >> PAGE_SHIFT;
-+	struct device *dev = &pdata->dev->dev;
-+
-+	put_all_pages(region->pages, npages);
-+	kfree(region->pages);
-+	afu_dma_adjust_locked_vm(dev, npages, false);
-+
-+	dev_dbg(dev, "%ld pages unpinned\n", npages);
-+}
-+
-+/**
-+ * afu_dma_check_continuous_pages - check if pages are continuous
-+ * @region: dma memory region
-+ *
-+ * Return true if pages of given dma memory region have continuous physical
-+ * address, otherwise return false.
-+ */
-+static bool afu_dma_check_continuous_pages(struct dfl_afu_dma_region *region)
-+{
-+	int npages = region->length >> PAGE_SHIFT;
-+	int i;
-+
-+	for (i = 0; i < npages - 1; i++)
-+		if (page_to_pfn(region->pages[i]) + 1 !=
-+				page_to_pfn(region->pages[i + 1]))
-+			return false;
-+
-+	return true;
-+}
-+
-+/**
-+ * dma_region_check_iova - check if memory area is fully contained in the region
-+ * @region: dma memory region
-+ * @iova: address of the dma memory area
-+ * @size: size of the dma memory area
-+ *
-+ * Compare the dma memory area defined by @iova and @size with given dma region.
-+ * Return true if memory area is fully contained in the region, otherwise false.
-+ */
-+static bool dma_region_check_iova(struct dfl_afu_dma_region *region,
-+				  u64 iova, u64 size)
-+{
-+	if (!size && region->iova != iova)
-+		return false;
-+
-+	return (region->iova <= iova) &&
-+		(region->length + region->iova >= iova + size);
-+}
-+
-+/**
-+ * afu_dma_region_add - add given dma region to rbtree
-+ * @pdata: feature device platform data
-+ * @region: dma region to be added
-+ *
-+ * Return 0 for success, -EEXIST if dma region has already been added.
-+ *
-+ * Needs to be called with pdata->lock heold.
-+ */
-+static int afu_dma_region_add(struct dfl_feature_platform_data *pdata,
-+			      struct dfl_afu_dma_region *region)
-+{
-+	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
-+	struct rb_node **new, *parent = NULL;
-+
-+	dev_dbg(&pdata->dev->dev, "add region (iova = %llx)\n",
-+		(unsigned long long)region->iova);
-+
-+	new = &afu->dma_regions.rb_node;
-+
-+	while (*new) {
-+		struct dfl_afu_dma_region *this;
-+
-+		this = container_of(*new, struct dfl_afu_dma_region, node);
-+
-+		parent = *new;
-+
-+		if (dma_region_check_iova(this, region->iova, region->length))
-+			return -EEXIST;
-+
-+		if (region->iova < this->iova)
-+			new = &((*new)->rb_left);
-+		else if (region->iova > this->iova)
-+			new = &((*new)->rb_right);
-+		else
-+			return -EEXIST;
-+	}
-+
-+	rb_link_node(&region->node, parent, new);
-+	rb_insert_color(&region->node, &afu->dma_regions);
-+
-+	return 0;
-+}
-+
-+/**
-+ * afu_dma_region_remove - remove given dma region from rbtree
-+ * @pdata: feature device platform data
-+ * @region: dma region to be removed
-+ *
-+ * Needs to be called with pdata->lock heold.
-+ */
-+static void afu_dma_region_remove(struct dfl_feature_platform_data *pdata,
-+				  struct dfl_afu_dma_region *region)
-+{
-+	struct dfl_afu *afu;
-+
-+	dev_dbg(&pdata->dev->dev, "del region (iova = %llx)\n",
-+		(unsigned long long)region->iova);
-+
-+	afu = dfl_fpga_pdata_get_private(pdata);
-+	rb_erase(&region->node, &afu->dma_regions);
-+}
-+
-+/**
-+ * afu_dma_region_destroy - destroy all regions in rbtree
-+ * @pdata: feature device platform data
-+ *
-+ * Needs to be called with pdata->lock heold.
-+ */
-+void afu_dma_region_destroy(struct dfl_feature_platform_data *pdata)
-+{
-+	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
-+	struct rb_node *node = rb_first(&afu->dma_regions);
-+	struct dfl_afu_dma_region *region;
-+
-+	while (node) {
-+		region = container_of(node, struct dfl_afu_dma_region, node);
-+
-+		dev_dbg(&pdata->dev->dev, "del region (iova = %llx)\n",
-+			(unsigned long long)region->iova);
-+
-+		rb_erase(node, &afu->dma_regions);
-+
-+		if (region->iova)
-+			dma_unmap_page(dfl_fpga_pdata_to_parent(pdata),
-+				       region->iova, region->length,
-+				       DMA_BIDIRECTIONAL);
-+
-+		if (region->pages)
-+			afu_dma_unpin_pages(pdata, region);
-+
-+		node = rb_next(node);
-+		kfree(region);
-+	}
-+}
-+
-+/**
-+ * afu_dma_region_find - find the dma region from rbtree based on iova and size
-+ * @pdata: feature device platform data
-+ * @iova: address of the dma memory area
-+ * @size: size of the dma memory area
-+ *
-+ * It finds the dma region from the rbtree based on @iova and @size:
-+ * - if @size == 0, it finds the dma region which starts from @iova
-+ * - otherwise, it finds the dma region which fully contains
-+ *   [@iova, @iova+size)
-+ * If nothing is matched returns NULL.
-+ *
-+ * Needs to be called with pdata->lock held.
-+ */
-+struct dfl_afu_dma_region *
-+afu_dma_region_find(struct dfl_feature_platform_data *pdata, u64 iova, u64 size)
-+{
-+	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
-+	struct rb_node *node = afu->dma_regions.rb_node;
-+	struct device *dev = &pdata->dev->dev;
-+
-+	while (node) {
-+		struct dfl_afu_dma_region *region;
-+
-+		region = container_of(node, struct dfl_afu_dma_region, node);
-+
-+		if (dma_region_check_iova(region, iova, size)) {
-+			dev_dbg(dev, "find region (iova = %llx)\n",
-+				(unsigned long long)region->iova);
++	for_each_region(region, afu)
++		if (region->index == region_index)
 +			return region;
-+		}
-+
-+		if (iova < region->iova)
-+			node = node->rb_left;
-+		else if (iova > region->iova)
-+			node = node->rb_right;
-+		else
-+			/* the iova region is not fully covered. */
-+			break;
-+	}
-+
-+	dev_dbg(dev, "region with iova %llx and size %llx is not found\n",
-+		(unsigned long long)iova, (unsigned long long)size);
 +
 +	return NULL;
 +}
 +
 +/**
-+ * afu_dma_region_find_iova - find the dma region from rbtree by iova
-+ * @pdata: feature device platform data
-+ * @iova: address of the dma region
++ * afu_mmio_region_add - add a mmio region to given feature dev.
 + *
-+ * Needs to be called with pdata->lock held.
-+ */
-+static struct dfl_afu_dma_region *
-+afu_dma_region_find_iova(struct dfl_feature_platform_data *pdata, u64 iova)
-+{
-+	return afu_dma_region_find(pdata, iova, 0);
-+}
-+
-+/**
-+ * afu_dma_map_region - map memory region for dma
-+ * @pdata: feature device platform data
-+ * @user_addr: address of the memory region
-+ * @length: size of the memory region
-+ * @iova: pointer of iova address
++ * @region_index: region index.
++ * @region_size: region size.
++ * @phys: region's physical address of this region.
++ * @flags: region flags (access permission).
 + *
-+ * Map memory region defined by @user_addr and @length, and return dma address
-+ * of the memory region via @iova.
-+ * Return 0 for success, otherwise error code.
++ * Return: 0 on success, negative error code otherwise.
 + */
-+int afu_dma_map_region(struct dfl_feature_platform_data *pdata,
-+		       u64 user_addr, u64 length, u64 *iova)
++int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
++			u32 region_index, u64 region_size, u64 phys, u32 flags)
 +{
-+	struct dfl_afu_dma_region *region;
-+	int ret;
++	struct dfl_afu_mmio_region *region;
++	struct dfl_afu *afu;
++	int ret = 0;
 +
-+	/*
-+	 * Check Inputs, only accept page-aligned user memory region with
-+	 * valid length.
-+	 */
-+	if (!PAGE_ALIGNED(user_addr) || !PAGE_ALIGNED(length) || !length)
-+		return -EINVAL;
-+
-+	/* Check overflow */
-+	if (user_addr + length < user_addr)
-+		return -EINVAL;
-+
-+	if (!access_ok(VERIFY_WRITE, (void __user *)(unsigned long)user_addr,
-+		       length))
-+		return -EINVAL;
-+
-+	region = kzalloc(sizeof(*region), GFP_KERNEL);
++	region = devm_kzalloc(&pdata->dev->dev, sizeof(*region), GFP_KERNEL);
 +	if (!region)
 +		return -ENOMEM;
 +
-+	region->user_addr = user_addr;
-+	region->length = length;
-+
-+	/* Pin the user memory region */
-+	ret = afu_dma_pin_pages(pdata, region);
-+	if (ret) {
-+		dev_err(&pdata->dev->dev, "failed to pin memory region\n");
-+		goto free_region;
-+	}
-+
-+	/* Only accept continuous pages, return error else */
-+	if (!afu_dma_check_continuous_pages(region)) {
-+		dev_err(&pdata->dev->dev, "pages are not continuous\n");
-+		ret = -EINVAL;
-+		goto unpin_pages;
-+	}
-+
-+	/* As pages are continuous then start to do DMA mapping */
-+	region->iova = dma_map_page(dfl_fpga_pdata_to_parent(pdata),
-+				    region->pages[0], 0,
-+				    region->length,
-+				    DMA_BIDIRECTIONAL);
-+	if (dma_mapping_error(&pdata->dev->dev, region->iova)) {
-+		dev_err(&pdata->dev->dev, "failed to map for dma\n");
-+		ret = -EFAULT;
-+		goto unpin_pages;
-+	}
-+
-+	*iova = region->iova;
++	region->index = region_index;
++	region->size = region_size;
++	region->phys = phys;
++	region->flags = flags;
 +
 +	mutex_lock(&pdata->lock);
-+	ret = afu_dma_region_add(pdata, region);
-+	mutex_unlock(&pdata->lock);
-+	if (ret) {
-+		dev_err(&pdata->dev->dev, "failed to add dma region\n");
-+		goto unmap_dma;
++
++	afu = dfl_fpga_pdata_get_private(pdata);
++
++	/* check if @index already exists */
++	if (get_region_by_index(afu, region_index)) {
++		mutex_unlock(&pdata->lock);
++		ret = -EEXIST;
++		goto exit;
 +	}
++
++	region_size = PAGE_ALIGN(region_size);
++	region->offset = afu->region_cur_offset;
++	list_add(&region->node, &afu->regions);
++
++	afu->region_cur_offset += region_size;
++	afu->num_regions++;
++	mutex_unlock(&pdata->lock);
 +
 +	return 0;
 +
-+unmap_dma:
-+	dma_unmap_page(dfl_fpga_pdata_to_parent(pdata),
-+		       region->iova, region->length, DMA_BIDIRECTIONAL);
-+unpin_pages:
-+	afu_dma_unpin_pages(pdata, region);
-+free_region:
-+	kfree(region);
++exit:
++	devm_kfree(&pdata->dev->dev, region);
 +	return ret;
 +}
 +
 +/**
-+ * afu_dma_unmap_region - unmap dma memory region
-+ * @pdata: feature device platform data
-+ * @iova: dma address of the region
-+ *
-+ * Unmap dma memory region based on @iova.
-+ * Return 0 for success, otherwise error code.
++ * afu_mmio_region_destroy - destroy all mmio regions under given feature dev.
++ * @pdata: afu platform device's pdata.
 + */
-+int afu_dma_unmap_region(struct dfl_feature_platform_data *pdata, u64 iova)
++void afu_mmio_region_destroy(struct dfl_feature_platform_data *pdata)
 +{
-+	struct dfl_afu_dma_region *region;
++	struct dfl_afu *afu = dfl_fpga_pdata_get_private(pdata);
++	struct dfl_afu_mmio_region *tmp, *region;
++
++	list_for_each_entry_safe(region, tmp, &afu->regions, node)
++		devm_kfree(&pdata->dev->dev, region);
++}
++
++/**
++ * afu_mmio_region_get_by_index - find an afu region by index.
++ * @pdata: afu platform device's pdata.
++ * @region_index: region index.
++ * @pregion: ptr to region for result.
++ *
++ * Return: 0 on success, negative error code otherwise.
++ */
++int afu_mmio_region_get_by_index(struct dfl_feature_platform_data *pdata,
++				 u32 region_index,
++				 struct dfl_afu_mmio_region *pregion)
++{
++	struct dfl_afu_mmio_region *region;
++	struct dfl_afu *afu;
++	int ret = 0;
 +
 +	mutex_lock(&pdata->lock);
-+	region = afu_dma_region_find_iova(pdata, iova);
++	afu = dfl_fpga_pdata_get_private(pdata);
++	region = get_region_by_index(afu, region_index);
 +	if (!region) {
-+		mutex_unlock(&pdata->lock);
-+		return -EINVAL;
++		ret = -EINVAL;
++		goto exit;
 +	}
-+
-+	if (region->in_use) {
-+		mutex_unlock(&pdata->lock);
-+		return -EBUSY;
-+	}
-+
-+	afu_dma_region_remove(pdata, region);
++	*pregion = *region;
++exit:
 +	mutex_unlock(&pdata->lock);
-+
-+	dma_unmap_page(dfl_fpga_pdata_to_parent(pdata),
-+		       region->iova, region->length, DMA_BIDIRECTIONAL);
-+	afu_dma_unpin_pages(pdata, region);
-+	kfree(region);
-+
-+	return 0;
-+}
-diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-index e7024dd..56241b8 100644
---- a/drivers/fpga/dfl-afu-main.c
-+++ b/drivers/fpga/dfl-afu-main.c
-@@ -293,7 +293,11 @@ static int afu_release(struct inode *inode, struct file *filp)
- 
- 	pdata = dev_get_platdata(&pdev->dev);
- 
--	port_reset(pdev);
-+	mutex_lock(&pdata->lock);
-+	__port_reset(pdev);
-+	afu_dma_region_destroy(pdata);
-+	mutex_unlock(&pdata->lock);
-+
- 	dfl_feature_dev_use_end(pdata);
- 
- 	return 0;
-@@ -364,6 +368,55 @@ static long afu_ioctl_get_region_info(struct dfl_feature_platform_data *pdata,
- 	return 0;
- }
- 
-+static long
-+afu_ioctl_dma_map(struct dfl_feature_platform_data *pdata, void __user *arg)
-+{
-+	struct dfl_fpga_port_dma_map map;
-+	unsigned long minsz;
-+	long ret;
-+
-+	minsz = offsetofend(struct dfl_fpga_port_dma_map, iova);
-+
-+	if (copy_from_user(&map, arg, minsz))
-+		return -EFAULT;
-+
-+	if (map.argsz < minsz || map.flags)
-+		return -EINVAL;
-+
-+	ret = afu_dma_map_region(pdata, map.user_addr, map.length, &map.iova);
-+	if (ret)
-+		return ret;
-+
-+	if (copy_to_user(arg, &map, sizeof(map))) {
-+		afu_dma_unmap_region(pdata, map.iova);
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(&pdata->dev->dev, "dma map: ua=%llx, len=%llx, iova=%llx\n",
-+		(unsigned long long)map.user_addr,
-+		(unsigned long long)map.length,
-+		(unsigned long long)map.iova);
-+
-+	return 0;
++	return ret;
 +}
 +
-+static long
-+afu_ioctl_dma_unmap(struct dfl_feature_platform_data *pdata, void __user *arg)
-+{
-+	struct dfl_fpga_port_dma_unmap unmap;
-+	unsigned long minsz;
-+
-+	minsz = offsetofend(struct dfl_fpga_port_dma_unmap, iova);
-+
-+	if (copy_from_user(&unmap, arg, minsz))
-+		return -EFAULT;
-+
-+	if (unmap.argsz < minsz || unmap.flags)
-+		return -EINVAL;
-+
-+	return afu_dma_unmap_region(pdata, unmap.iova);
-+}
-+
- static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- {
- 	struct platform_device *pdev = filp->private_data;
-@@ -384,6 +437,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return afu_ioctl_get_info(pdata, (void __user *)arg);
- 	case DFL_FPGA_PORT_GET_REGION_INFO:
- 		return afu_ioctl_get_region_info(pdata, (void __user *)arg);
-+	case DFL_FPGA_PORT_DMA_MAP:
-+		return afu_ioctl_dma_map(pdata, (void __user *)arg);
-+	case DFL_FPGA_PORT_DMA_UNMAP:
-+		return afu_ioctl_dma_unmap(pdata, (void __user *)arg);
- 	default:
- 		/*
- 		 * Let sub-feature's ioctl function to handle the cmd
-@@ -460,6 +517,7 @@ static int afu_dev_init(struct platform_device *pdev)
- 	mutex_lock(&pdata->lock);
- 	dfl_fpga_pdata_set_private(pdata, afu);
- 	afu_mmio_region_init(pdata);
-+	afu_dma_region_init(pdata);
- 	mutex_unlock(&pdata->lock);
- 
- 	return 0;
-@@ -473,6 +531,7 @@ static int afu_dev_destroy(struct platform_device *pdev)
- 	mutex_lock(&pdata->lock);
- 	afu = dfl_fpga_pdata_get_private(pdata);
- 	afu_mmio_region_destroy(pdata);
-+	afu_dma_region_destroy(pdata);
- 	dfl_fpga_pdata_set_private(pdata, NULL);
- 	mutex_unlock(&pdata->lock);
- 
-diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
-index 7376af9..42d26b9 100644
---- a/drivers/fpga/dfl-afu.h
-+++ b/drivers/fpga/dfl-afu.h
-@@ -41,11 +41,31 @@ struct dfl_afu_mmio_region {
- };
- 
- /**
-+ * struct fpga_afu_dma_region - afu DMA region data structure
++/**
++ * afu_mmio_region_get_by_offset - find an afu mmio region by offset and size
 + *
-+ * @user_addr: region userspace virtual address.
-+ * @length: region length.
-+ * @iova: region IO virtual address.
-+ * @pages: ptr to pages of this region.
-+ * @node: rb tree node.
-+ * @in_use: flag to indicate if this region is in_use.
++ * @pdata: afu platform device's pdata.
++ * @offset: region offset from start of the device fd.
++ * @size: region size.
++ * @pregion: ptr to region for result.
++ *
++ * Find the region which fully contains the region described by input
++ * parameters (offset and size) from the feature dev's region link list.
++ *
++ * Return: 0 on success, negative error code otherwise.
 + */
-+struct dfl_afu_dma_region {
-+	u64 user_addr;
-+	u64 length;
-+	u64 iova;
-+	struct page **pages;
-+	struct rb_node node;
-+	bool in_use;
++int afu_mmio_region_get_by_offset(struct dfl_feature_platform_data *pdata,
++				  u64 offset, u64 size,
++				  struct dfl_afu_mmio_region *pregion)
++{
++	struct dfl_afu_mmio_region *region;
++	struct dfl_afu *afu;
++	int ret = 0;
++
++	mutex_lock(&pdata->lock);
++	afu = dfl_fpga_pdata_get_private(pdata);
++	for_each_region(region, afu)
++		if (region->offset <= offset &&
++		    region->offset + region->size >= offset + size) {
++			*pregion = *region;
++			goto exit;
++		}
++	ret = -EINVAL;
++exit:
++	mutex_unlock(&pdata->lock);
++	return ret;
++}
+diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
+new file mode 100644
+index 0000000..7376af9
+--- /dev/null
++++ b/drivers/fpga/dfl-afu.h
+@@ -0,0 +1,71 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Header file for FPGA Accelerated Function Unit (AFU) Driver
++ *
++ * Copyright (C) 2017 Intel Corporation, Inc.
++ *
++ * Authors:
++ *     Wu Hao <hao.wu@intel.com>
++ *     Xiao Guangrong <guangrong.xiao@linux.intel.com>
++ *     Joseph Grecco <joe.grecco@intel.com>
++ *     Enno Luebbers <enno.luebbers@intel.com>
++ *     Tim Whisonant <tim.whisonant@intel.com>
++ *     Ananda Ravuri <ananda.ravuri@intel.com>
++ *     Henry Mitchel <henry.mitchel@intel.com>
++ */
++
++#ifndef __DFL_AFU_H
++#define __DFL_AFU_H
++
++#include <linux/mm.h>
++
++#include "dfl.h"
++
++/**
++ * struct dfl_afu_mmio_region - afu mmio region data structure
++ *
++ * @index: region index.
++ * @flags: region flags (access permission).
++ * @size: region size.
++ * @offset: region offset from start of the device fd.
++ * @phys: region's physical address.
++ * @node: node to add to afu feature dev's region list.
++ */
++struct dfl_afu_mmio_region {
++	u32 index;
++	u32 flags;
++	u64 size;
++	u64 offset;
++	u64 phys;
++	struct list_head node;
 +};
 +
 +/**
-  * struct dfl_afu - afu device data structure
-  *
-  * @region_cur_offset: current region offset from start to the device fd.
-  * @num_regions: num of mmio regions.
-  * @regions: the mmio region link list of this afu feature device.
-+ * @dma_regions: root of dma regions rb tree.
-  * @num_umsgs: num of umsgs.
-  * @pdata: afu platform device's pdata.
-  */
-@@ -54,6 +74,7 @@ struct dfl_afu {
- 	int num_regions;
- 	u8 num_umsgs;
- 	struct list_head regions;
-+	struct rb_root dma_regions;
- 
- 	struct dfl_feature_platform_data *pdata;
- };
-@@ -68,4 +89,12 @@ int afu_mmio_region_get_by_index(struct dfl_feature_platform_data *pdata,
- int afu_mmio_region_get_by_offset(struct dfl_feature_platform_data *pdata,
- 				  u64 offset, u64 size,
- 				  struct dfl_afu_mmio_region *pregion);
--#endif
-+void afu_dma_region_init(struct dfl_feature_platform_data *pdata);
-+void afu_dma_region_destroy(struct dfl_feature_platform_data *pdata);
-+int afu_dma_map_region(struct dfl_feature_platform_data *pdata,
-+		       u64 user_addr, u64 length, u64 *iova);
-+int afu_dma_unmap_region(struct dfl_feature_platform_data *pdata, u64 iova);
-+struct dfl_afu_dma_region *
-+afu_dma_region_find(struct dfl_feature_platform_data *pdata,
-+		    u64 iova, u64 size);
-+#endif /* __DFL_AFU_H */
++ * struct dfl_afu - afu device data structure
++ *
++ * @region_cur_offset: current region offset from start to the device fd.
++ * @num_regions: num of mmio regions.
++ * @regions: the mmio region link list of this afu feature device.
++ * @num_umsgs: num of umsgs.
++ * @pdata: afu platform device's pdata.
++ */
++struct dfl_afu {
++	u64 region_cur_offset;
++	int num_regions;
++	u8 num_umsgs;
++	struct list_head regions;
++
++	struct dfl_feature_platform_data *pdata;
++};
++
++void afu_mmio_region_init(struct dfl_feature_platform_data *pdata);
++int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
++			u32 region_index, u64 region_size, u64 phys, u32 flags);
++void afu_mmio_region_destroy(struct dfl_feature_platform_data *pdata);
++int afu_mmio_region_get_by_index(struct dfl_feature_platform_data *pdata,
++				 u32 region_index,
++				 struct dfl_afu_mmio_region *pregion);
++int afu_mmio_region_get_by_offset(struct dfl_feature_platform_data *pdata,
++				  u64 offset, u64 size,
++				  struct dfl_afu_mmio_region *pregion);
++#endif
 diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
-index 8a7dd5e..77af6c1 100644
+index 777d6ac..8a7dd5e 100644
 --- a/include/uapi/linux/fpga-dfl.h
 +++ b/include/uapi/linux/fpga-dfl.h
-@@ -113,6 +113,43 @@ struct dfl_fpga_port_region_info {
+@@ -65,6 +65,54 @@
  
- #define DFL_FPGA_PORT_GET_REGION_INFO	_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 2)
+ #define DFL_FPGA_PORT_RESET		_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 0)
  
 +/**
-+ * DFL_FPGA_PORT_DMA_MAP - _IOWR(DFL_FPGA_MAGIC, DFL_PORT_BASE + 3,
-+ *						struct dfl_fpga_port_dma_map)
++ * DFL_FPGA_PORT_GET_INFO - _IOR(DFL_FPGA_MAGIC, DFL_PORT_BASE + 1,
++ *						struct dfl_fpga_port_info)
 + *
-+ * Map the dma memory per user_addr and length which are provided by caller.
-+ * Driver fills the iova in provided struct afu_port_dma_map.
-+ * This interface only accepts page-size aligned user memory for dma mapping.
++ * Retrieve information about the fpga port.
++ * Driver fills the info in provided struct dfl_fpga_port_info.
 + * Return: 0 on success, -errno on failure.
 + */
-+struct dfl_fpga_port_dma_map {
++struct dfl_fpga_port_info {
 +	/* Input */
 +	__u32 argsz;		/* Structure length */
-+	__u32 flags;		/* Zero for now */
-+	__u64 user_addr;        /* Process virtual address */
-+	__u64 length;           /* Length of mapping (bytes)*/
 +	/* Output */
-+	__u64 iova;             /* IO virtual address */
++	__u32 flags;		/* Zero for now */
++	__u32 num_regions;	/* The number of supported regions */
++	__u32 num_umsgs;	/* The number of allocated umsgs */
 +};
 +
-+#define DFL_FPGA_PORT_DMA_MAP		_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 3)
++#define DFL_FPGA_PORT_GET_INFO		_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 1)
 +
 +/**
-+ * DFL_FPGA_PORT_DMA_UNMAP - _IOW(FPGA_MAGIC, PORT_BASE + 4,
-+ *						struct dfl_fpga_port_dma_unmap)
++ * FPGA_PORT_GET_REGION_INFO - _IOWR(FPGA_MAGIC, PORT_BASE + 2,
++ *					struct dfl_fpga_port_region_info)
 + *
-+ * Unmap the dma memory per iova provided by caller.
++ * Retrieve information about a device memory region.
++ * Caller provides struct dfl_fpga_port_region_info with index value set.
++ * Driver returns the region info in other fields.
 + * Return: 0 on success, -errno on failure.
 + */
-+struct dfl_fpga_port_dma_unmap {
-+	/* Input */
++struct dfl_fpga_port_region_info {
++	/* input */
 +	__u32 argsz;		/* Structure length */
-+	__u32 flags;		/* Zero for now */
-+	__u64 iova;		/* IO virtual address */
++	/* Output */
++	__u32 flags;		/* Access permission */
++#define DFL_PORT_REGION_READ	(1 << 0)	/* Region is readable */
++#define DFL_PORT_REGION_WRITE	(1 << 1)	/* Region is writable */
++#define DFL_PORT_REGION_MMAP	(1 << 2)	/* Can be mmaped to userspace */
++	/* Input */
++	__u32 index;		/* Region index */
++#define DFL_PORT_REGION_INDEX_AFU	0	/* AFU */
++#define DFL_PORT_REGION_INDEX_STP	1	/* Signal Tap */
++	__u32 padding;
++	/* Output */
++	__u64 size;		/* Region size (bytes) */
++	__u64 offset;		/* Region offset from start of device fd */
 +};
 +
-+#define DFL_FPGA_PORT_DMA_UNMAP		_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 4)
++#define DFL_FPGA_PORT_GET_REGION_INFO	_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 2)
 +
  /* IOCTLs for FME file descriptor */
  
