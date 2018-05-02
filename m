@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 4/7] aio: remove the extra get_file/fput pair in io_submit_one
-Date: Wed,  2 May 2018 23:14:45 +0200
-Message-ID: <20180502211448.18276-5-hch@lst.de>
+Subject: [PATCH 6/7] aio: implement IOCB_CMD_FSYNC and IOCB_CMD_FDSYNC
+Date: Wed,  2 May 2018 23:14:47 +0200
+Message-ID: <20180502211448.18276-7-hch@lst.de>
 References: <20180502211448.18276-1-hch@lst.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180502211448.18276-1-hch@lst.de>
@@ -10,69 +10,90 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-If we release the lockdep write protection token before calling into
-->write_iter and thus never access the file pointer after an -EIOCBQUEUED
-return from ->write_iter or ->read_iter we don't need this extra
-reference.
+Simple workqueue offload for now, but prepared for adding a real aio_fsync
+method if the need arises.  Based on an earlier patch from Dave Chinner.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- fs/aio.c | 25 ++++++++++++++++---------
- 1 file changed, 16 insertions(+), 9 deletions(-)
+ fs/aio.c | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index 18507743757a..e5866e2fc331 100644
+index d07c27b3fe88..61d2e6942951 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -1515,16 +1515,19 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
- 		return ret;
- 	ret = rw_verify_area(WRITE, file, &req->ki_pos, iov_iter_count(&iter));
- 	if (!ret) {
--		req->ki_flags |= IOCB_WRITE;
--		file_start_write(file);
--		ret = aio_ret(req, call_write_iter(file, req, &iter));
- 		/*
--		 * We release freeze protection in aio_complete().  Fool lockdep
--		 * by telling it the lock got released so that it doesn't
--		 * complain about held lock when we return to userspace.
-+		 * Open-code file_start_write here to grab freeze protection,
-+		 * which will be released by another thread in aio_complete().
-+		 * Fool lockdep by telling it the lock got released so that it
-+		 * doesn't complain about the held lock when we return to
-+		 * userspace.
- 		 */
--		if (S_ISREG(file_inode(file)->i_mode))
-+		if (S_ISREG(file_inode(file)->i_mode)) {
-+			__sb_start_write(file_inode(file)->i_sb, SB_FREEZE_WRITE, true);
- 			__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
-+		}
-+		req->ki_flags |= IOCB_WRITE;
-+		ret = aio_ret(req, call_write_iter(file, req, &iter));
- 	}
- 	kfree(iovec);
+@@ -156,6 +156,12 @@ struct kioctx {
+ 	unsigned		id;
+ };
+ 
++struct fsync_iocb {
++	struct work_struct	work;
++	struct file		*file;
++	bool			datasync;
++};
++
+ /*
+  * We use ki_cancel == KIOCB_CANCELLED to indicate that a kiocb has been either
+  * cancelled or completed (this makes a certain amount of sense because
+@@ -172,6 +178,7 @@ struct kioctx {
+ struct aio_kiocb {
+ 	union {
+ 		struct kiocb		rw;
++		struct fsync_iocb	fsync;
+ 	};
+ 
+ 	struct kioctx		*ki_ctx;
+@@ -1573,6 +1580,36 @@ static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
  	return ret;
-@@ -1599,7 +1602,6 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 	req->ki_user_iocb = user_iocb;
- 	req->ki_user_data = iocb->aio_data;
+ }
  
--	get_file(file);
- 	switch (iocb->aio_lio_opcode) {
- 	case IOCB_CMD_PREAD:
- 		ret = aio_read(&req->common, iocb, false, compat);
-@@ -1618,8 +1620,13 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
- 		ret = -EINVAL;
++static void aio_fsync_work(struct work_struct *work)
++{
++	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
++	int ret;
++
++	ret = vfs_fsync(req->file, req->datasync);
++	fput(req->file);
++	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
++}
++
++static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
++{
++	if (unlikely(iocb->aio_buf || iocb->aio_offset || iocb->aio_nbytes ||
++			iocb->aio_rw_flags))
++		return -EINVAL;
++
++	req->file = fget(iocb->aio_fildes);
++	if (unlikely(!req->file))
++		return -EBADF;
++	if (unlikely(!req->file->f_op->fsync)) {
++		fput(req->file);
++		return -EINVAL;
++	}
++
++	req->datasync = datasync;
++	INIT_WORK(&req->work, aio_fsync_work);
++	schedule_work(&req->work);
++	return -EIOCBQUEUED;
++}
++
+ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 			 struct iocb *iocb, bool compat)
+ {
+@@ -1636,6 +1673,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 	case IOCB_CMD_PWRITEV:
+ 		ret = aio_write(&req->rw, iocb, true, compat);
  		break;
- 	}
--	fput(file);
- 
-+	/*
-+	 * If ret is -EIOCBQUEUED, ownership of the file reference acquired
-+	 * above passed to the file system, which at this point might have
-+	 * dropped the reference, so we must be careful to not reference it
-+	 * once we have called into the file system.
-+	 */
- 	if (ret && ret != -EIOCBQUEUED)
- 		goto out_put_req;
- 	return 0;
++	case IOCB_CMD_FSYNC:
++		ret = aio_fsync(&req->fsync, iocb, false);
++		break;
++	case IOCB_CMD_FDSYNC:
++		ret = aio_fsync(&req->fsync, iocb, true);
++		break;
+ 	default:
+ 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
+ 		ret = -EINVAL;
 -- 
 2.17.0
