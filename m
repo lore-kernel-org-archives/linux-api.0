@@ -1,49 +1,30 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: [PATCH 0/6 resend] statfs: handle mount propagation
-Date: Wed, 2 May 2018 17:09:39 +0100
-Message-ID: <20180502160939.GU30522@ZenIV.linux.org.uk>
-References: <20180502154239.14013-1-christian.brauner@ubuntu.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
+Date: Wed, 2 May 2018 12:42:53 -0400
+Message-ID: <20180502124253.145253cb@gandalf.local.home>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
+        <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
+        <660904075.9201.1525276988842.JavaMail.zimbra@efficios.com>
+        <CAKOZueu_7Ha_WXMyxqMEScXo1aHWr9qYRxqyb-Rpd4k1JP3xHA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180502154239.14013-1-christian.brauner@ubuntu.com>
+In-Reply-To: <CAKOZueu_7Ha_WXMyxqMEScXo1aHWr9qYRxqyb-Rpd4k1JP3xHA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, hch@infradead.org, tglx@linutronix.de, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, pombredanne@nexb.com, linux-api@vger.kernel.org
+To: Daniel Colascione <dancol@google.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, luto@amacapital.net, davejwatson@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, Andrew Hunter <ahh@google.com>, andi@firstfloor.org, cl@linux.com, bmaurer@fb.com, josh@joshtriplett.org, torvalds@linux-foundation.org, catalin.marinas@arm.com, will.deacon@arm.com, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 02, 2018 at 05:42:33PM +0200, Christian Brauner wrote:
-> Hey,
-> 
-> This is the second resend of this patchset. I'm not sure whether it has
-> simply been overlooked but the number of people get_maintainer.pl was
-> rather small and seemed a little random so I added Linus and Christoph,
-> two people I know that do look at VFS stuff at least from time to time,
-> although they weren't listed by get_maintainer.pl. I hope that's ok.
-> 
-> This little series
-> - unifies the definition of constants in statfs.h and fs.h
->   *Note, that Andreas has expressed doubts whether this unification is
->   useful. Please see https://lkml.org/lkml/2018/4/13/571 . I still think
->   it is but I'm happy to drop these two patches if others agree.*
-> - extends statfs to handle mount propagation. This will let userspace
->   easily query a given mountpoint for MS_UNBINDABLE, MS_SHARED,
->   MS_PRIVATE and MS_SLAVE without always having to do costly parsing of
->   /proc/<pid>/mountinfo.
->   To this end the flags:
->   - ST_UNBINDABLE
->   - ST_SHARED
->   - ST_PRIVATE
->   - ST_SLAVE
->   are added. They have the same value as their MS_* counterparts.
+On Wed, 02 May 2018 16:07:48 +0000
+Daniel Colascione <dancol@google.com> wrote:
 
-How about some rationale for that in the first place?  statfs() looks like
-a bad match for that - not to mention anything else, there's no way to
-get anything beyond "it is a peer of something", not even "do these two
-get propagation between them".  What would be using that, what would the
-userland side of users look like, etc...
+> Why couldn't we take a page fault just before schedule? The reason we can't
+> take a page fault in atomic context is that doing so might call schedule.
+> Here, we're about to call schedule _anyway_, so what harm does it do to
+> call something that might call schedule? If we schedule via that call, we
+> can skip the manual schedule we were going to perform.
 
-And in any case linux-api should've been Cc'd.  I'm not saying that this
-(or something similar) would be an inherently bad idea, but the question
-"why this way?" deserves a bit more than "parsing is costly"...
+Another issue is slowing down something that is considered a fast path.
+
+-- Steve
