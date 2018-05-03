@@ -1,86 +1,45 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
-Date: Wed, 2 May 2018 21:15:36 -0400
-Message-ID: <20180502211536.44b560c7@vmware.local.home>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
-        <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
-        <20180502172218.GL12180@hirez.programming.kicks-ass.net>
-        <CAKOZuesjF8QxfphgsyRKctO89jR9VAM727dspTe7PX1z8KFpyw@mail.gmail.com>
-        <20180502202233.GV12217@hirez.programming.kicks-ass.net>
-        <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
+From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Thu, 3 May 2018 14:16:02 +0530
+Message-ID: <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+ <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
+ <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
+In-Reply-To: <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul McKenney <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, luto@amacapital.net, davejwatson@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, Andrew Hunter <ahh@google.com>, andi@firstfloor.org, cl@linux.com, bmaurer@fb.com, josh@joshtriplett.org, torvalds@linux-foundation.org, catalin.marinas@arm.com, will.deacon@arm.com, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Robert Haas <robertmhaas@gmail.com>
+To: Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 02 May 2018 20:37:13 +0000
-Daniel Colascione <dancol@google.com> wrote:
+On 05/03/2018 03:58 AM, Dave Hansen wrote:
+> On 05/02/2018 02:33 PM, Andrew Morton wrote:
+>> On Tue,  1 May 2018 22:58:06 -0700 Prakash Sangappa <prakash.sangappa@oracle.com> wrote:
+>>> For analysis purpose it is useful to have numa node information
+>>> corresponding mapped address ranges of the process. Currently
+>>> /proc/<pid>/numa_maps provides list of numa nodes from where pages are
+>>> allocated per VMA of the process. This is not useful if an user needs to
+>>> determine which numa node the mapped pages are allocated from for a
+>>> particular address range. It would have helped if the numa node information
+>>> presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
+>>> exact numa node from where the pages have been allocated.
+> 
+> I'm finding myself a little lost in figuring out what this does.  Today,
+> numa_maps might us that a 3-page VMA has 1 page from Node 0 and 2 pages
+> from Node 1.  We group *entirely* by VMA:
+> 
+> 1000-4000 N0=1 N1=2
+> 
+> We don't want that.  We want to tell exactly where each node's memory is
+> despite if they are in the same VMA, like this:
+> 
+> 1000-2000 N1=1
+> 2000-3000 N0=1
+> 3000-4000 N1=1
 
-> On Wed, May 2, 2018 at 1:23 PM Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > On Wed, May 02, 2018 at 06:27:22PM +0000, Daniel Colascione wrote:  
-> > > On Wed, May 2, 2018 at 10:22 AM Peter Zijlstra <peterz@infradead.org>  
-> wrote:
-> > > >> On Wed, May 02, 2018 at 03:53:47AM +0000, Daniel Colascione wrote:
-> > > > > Suppose we make a userspace mutex implemented with a lock word  
-> having
-> > > three  
-> > > > > bits: acquired, sleep_mode, and wait_pending, with the rest of the  
-> word
-> > > not  
-> > > > > being relevant at the moment.  
-> > >  
-> > > > So ideally we'd kill FUTEX_WAIT/FUTEX_WAKE for mutexes entirely, and  
-> go
-> > > > with FUTEX_LOCK/FUTEX_UNLOCK that have the same semantics as the
-> > > > existing FUTEX_LOCK_PI/FUTEX_UNLOCK_PI, namely, the word contains the
-> > > > owner TID.  
-> > >
-> > > That doesn't work if you want to use the rest of the word for something
-> > > else, like a recursion count. With FUTEX_WAIT and FUTEX_WAKE, you can  
-> make
-> > > a lock with two bits.  
-> 
-> > Recursive locks are teh most horrible crap ever. And having the tid in  
-> 
-> What happened to providing mechanism, not policy?
-> 
-> You can't wish away recursive locking. It's baked into Java and the CLR,
-> and it's enshrined in POSIX. It's not going away, and there's no reason not
-> to support it efficiently.
-> 
-> > the word allows things like kernel based optimistic spins and possibly
-> > PI related things.  
-> 
-> Sure. A lot of people don't want PI though, or at least they want to opt
-> into it. And we shouldn't require an entry into the kernel for what we can
-> in principle do efficiently in userspace.
-> 
-> > > > As brought up in the last time we talked about spin loops, why do we
-> > > > care if the spin loop is in userspace or not? Aside from the whole PTI
-> > > > thing, the syscall cost was around 150 cycle or so, while a LOCK  
-> CMPXCHG
-> > > > is around 20 cycles. So ~7 spins gets you the cost of entry. 
-
-What about exit?
- 
-> > >
-> > > That's pre-KPTI, isn't it?  
-> 
-> > Yes, and once the hardware gets sorted, we'll be there again. I don't
-> > think we should design interfaces for 'broken' hardware.  
-> 
-> It would be a mistake to design interfaces under the assumption that
-> everyone has fast permission level transitions.
-
-Note, Robert Haas told me a few years ago at a plumbers conference that
-postgresql implements their own user space spin locks because anything
-that goes into the kernel has killed the performance. And they tried to
-use futex but that still didn't beat out plain userspace locks.
-
--- Steve
+I am kind of wondering on a big memory system how many lines of output
+we might have for a large (consuming lets say 80 % of system RAM) VMA
+in interleave policy. Is not that a problem ?
