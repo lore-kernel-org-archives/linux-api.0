@@ -1,66 +1,96 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v2] fs: Add aio iopriority support for block_dev
-Date: Thu, 3 May 2018 16:53:19 -0600
-Message-ID: <b74a5202-7078-88e8-6b30-7cad0c123703@kernel.dk>
-References: <20180503182114.2797-1-adam.manzanares@wdc.com>
- <20180503183353.GC1562@bombadil.infradead.org>
- <47e0a519-37b4-f5e7-0616-8659d11c2b69@wdc.com>
- <18300bdb-a12f-0b6c-1317-6db3e4391d57@kernel.dk>
- <20180503224308.GA30823@bombadil.infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180503224308.GA30823@bombadil.infradead.org>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Adam Manzanares <Adam.Manzanares@wdc.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "bcrl@kvack.org" <bcrl@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+From: Mike Kravetz <mike.kravetz@oracle.com>
+Subject: [PATCH v2 1/4] mm: change type of free_contig_range(nr_pages) to unsigned long
+Date: Thu,  3 May 2018 16:29:32 -0700
+Message-ID: <20180503232935.22539-2-mike.kravetz@oracle.com>
+References: <20180503232935.22539-1-mike.kravetz@oracle.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180503232935.22539-1-mike.kravetz@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, Vlastimil Babka <vbabka@suse.cz>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On 5/3/18 4:43 PM, Matthew Wilcox wrote:
-> On Thu, May 03, 2018 at 02:24:58PM -0600, Jens Axboe wrote:
->> On 5/3/18 2:15 PM, Adam Manzanares wrote:
->>> On 5/3/18 11:33 AM, Matthew Wilcox wrote:
->>>> Or we could just make ki_hint a u8 or u16 ... seems unlikely we'll need
->>>> 32 bits of ki_hint.  (currently defined values are 1-5)
->>>
->>> I like the approach of using a u16 for the ki_hint. I'll update and 
->>> resubmit.
->>
->> It's intended to be a mask. If you do shrink it for now, then we need some
->> guard code to ensure it can always carry what it needs to.
-> 
-> ummm ...
-> 
-> enum rw_hint {
->         WRITE_LIFE_NOT_SET      = 0,
->         WRITE_LIFE_NONE         = RWH_WRITE_LIFE_NONE,
->         WRITE_LIFE_SHORT        = RWH_WRITE_LIFE_SHORT,
-> ...
-> 
->                 .ki_hint = file_write_hint(filp),
-> 
-> static inline enum rw_hint file_write_hint(struct file *file)
-> 
-> #define RWF_WRITE_LIFE_NOT_SET  0
-> #define RWH_WRITE_LIFE_NONE     1
-> #define RWH_WRITE_LIFE_SHORT    2
-> #define RWH_WRITE_LIFE_MEDIUM   3
-> #define RWH_WRITE_LIFE_LONG     4
-> #define RWH_WRITE_LIFE_EXTREME  5
-> 
-> It doesn't look like it's being used as a mask.
+free_contig_range() is currently defined as:
+void free_contig_range(unsigned long pfn, unsigned nr_pages);
+change to,
+void free_contig_range(unsigned long pfn, unsigned long nr_pages);
 
-Right, currently it only supports the life time hint. I'm saying the
-intent is, for when it's being expanded to cover other hints, is to
-split up the value into maskable sections.
+Some callers are passing a truncated unsigned long today.  It is
+highly unlikely that these values will overflow an unsigned int.
+However, this should be changed to an unsigned long to be consistent
+with other page counts.
 
+Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
+---
+ include/linux/gfp.h | 2 +-
+ mm/cma.c            | 2 +-
+ mm/hugetlb.c        | 2 +-
+ mm/page_alloc.c     | 6 +++---
+ 4 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/include/linux/gfp.h b/include/linux/gfp.h
+index 1a4582b44d32..86a0d06463ab 100644
+--- a/include/linux/gfp.h
++++ b/include/linux/gfp.h
+@@ -572,7 +572,7 @@ static inline bool pm_suspended_storage(void)
+ /* The below functions must be run on a range from a single zone. */
+ extern int alloc_contig_range(unsigned long start, unsigned long end,
+ 			      unsigned migratetype, gfp_t gfp_mask);
+-extern void free_contig_range(unsigned long pfn, unsigned nr_pages);
++extern void free_contig_range(unsigned long pfn, unsigned long nr_pages);
+ #endif
+ 
+ #ifdef CONFIG_CMA
+diff --git a/mm/cma.c b/mm/cma.c
+index aa40e6c7b042..f473fc2b7cbd 100644
+--- a/mm/cma.c
++++ b/mm/cma.c
+@@ -563,7 +563,7 @@ bool cma_release(struct cma *cma, const struct page *pages, unsigned int count)
+ 
+ 	VM_BUG_ON(pfn + count > cma->base_pfn + cma->count);
+ 
+-	free_contig_range(pfn, count);
++	free_contig_range(pfn, (unsigned long)count);
+ 	cma_clear_bitmap(cma, pfn, count);
+ 	trace_cma_release(pfn, pages, count);
+ 
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index 218679138255..c81072ce7510 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -1055,7 +1055,7 @@ static void destroy_compound_gigantic_page(struct page *page,
+ 
+ static void free_gigantic_page(struct page *page, unsigned int order)
+ {
+-	free_contig_range(page_to_pfn(page), 1 << order);
++	free_contig_range(page_to_pfn(page), 1UL << order);
+ }
+ 
+ static int __alloc_gigantic_page(unsigned long start_pfn,
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 905db9d7962f..0fd5e8e2456e 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -7937,9 +7937,9 @@ int alloc_contig_range(unsigned long start, unsigned long end,
+ 	return ret;
+ }
+ 
+-void free_contig_range(unsigned long pfn, unsigned nr_pages)
++void free_contig_range(unsigned long pfn, unsigned long nr_pages)
+ {
+-	unsigned int count = 0;
++	unsigned long count = 0;
+ 
+ 	for (; nr_pages--; pfn++) {
+ 		struct page *page = pfn_to_page(pfn);
+@@ -7947,7 +7947,7 @@ void free_contig_range(unsigned long pfn, unsigned nr_pages)
+ 		count += page_count(page) != 1;
+ 		__free_page(page);
+ 	}
+-	WARN(count != 0, "%d pages are still in use!\n", count);
++	WARN(count != 0, "%ld pages are still in use!\n", count);
+ }
+ #endif
+ 
 -- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+2.13.6
