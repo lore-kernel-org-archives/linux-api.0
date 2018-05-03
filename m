@@ -1,98 +1,42 @@
-From: Adam Manzanares <Adam.Manzanares@wdc.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH v2] fs: Add aio iopriority support for block_dev
-Date: Thu, 3 May 2018 20:24:29 +0000
-Message-ID: <002c2c33-2b22-01a2-dc26-4ca19ac4ac24@wdc.com>
+Date: Thu, 3 May 2018 14:24:58 -0600
+Message-ID: <18300bdb-a12f-0b6c-1317-6db3e4391d57@kernel.dk>
 References: <20180503182114.2797-1-adam.manzanares@wdc.com>
- <x49po2cr3hc.fsf@segfault.boston.devel.redhat.com>
+ <20180503183353.GC1562@bombadil.infradead.org>
+ <47e0a519-37b4-f5e7-0616-8659d11c2b69@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <x49po2cr3hc.fsf@segfault.boston.devel.redhat.com>
+In-Reply-To: <47e0a519-37b4-f5e7-0616-8659d11c2b69@wdc.com>
 Content-Language: en-US
-Content-ID: <99A997E4068F4D45B1B099E9C5021693@namprd04.prod.outlook.com>
 Sender: owner-linux-aio@kvack.org
-To: Jeff Moyer <jmoyer@redhat.com>
+To: Adam Manzanares <Adam.Manzanares@wdc.com>, Matthew Wilcox <willy@infradead.org>
 Cc: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "bcrl@kvack.org" <bcrl@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-DQoNCk9uIDUvMy8xOCAxMTozNiBBTSwgSmVmZiBNb3llciB3cm90ZToNCj4gSGksIEFkYW0sDQoN
-CkhlbGxvIEplZmYsDQoNCj4gDQo+IGFkYW0ubWFuemFuYXJlc0B3ZGMuY29tIHdyaXRlczoNCj4g
-DQo+PiBGcm9tOiBBZGFtIE1hbnphbmFyZXMgPGFkYW0ubWFuemFuYXJlc0B3ZGMuY29tPg0KPj4N
-Cj4+IFRoaXMgaXMgdGhlIHBlci1JL08gZXF1aXZhbGVudCBvZiB0aGUgaW9wcmlvX3NldCBzeXN0
-ZW0gY2FsbC4NCj4+DQo+PiBXaGVuIElPQ0JfRkxBR19JT1BSSU8gaXMgc2V0IG9uIHRoZSBpb2Ni
-IGFpb19mbGFncyBmaWVsZCwgdGhlbiB3ZSBzZXQgdGhlDQo+PiBuZXdseSBhZGRlZCBraW9jYiBr
-aV9pb3ByaW8gZmllbGQgdG8gdGhlIHZhbHVlIGluIHRoZSBpb2NiIGFpb19yZXFwcmlvIGZpZWxk
-Lg0KPj4NCj4+IFdoZW4gYSBiaW8gaXMgY3JlYXRlZCBmb3IgYW4gYWlvIHJlcXVlc3QgYnkgdGhl
-IGJsb2NrIGRldiB3ZSBzZXQgdGhlIHByaW9yaXR5DQo+PiB2YWx1ZSBvZiB0aGUgYmlvIHRvIHRo
-ZSB1c2VyIHN1cHBsaWVkIHZhbHVlLg0KPj4NCj4+IFNlZSB0aGUgZm9sbG93aW5nIGxpbmsgZm9y
-IHBlcmZvcm1hbmNlIGltcGxpY2F0aW9ucyBvbiBhIFNBVEEgSEREOg0KPj4gaHR0cHM6Ly9sa21s
-Lm9yZy9sa21sLzIwMTYvMTIvNi80OTUNCj4+DQo+PiBHaXZlbiB0aGF0IFdSUiBzdXBwb3J0IGZv
-ciBOVk1FIGRldmljZXMgaGFzIHBhdGNoZXMgZmxvYXRpbmcgYXJvdW5kIGFuZCBpdCB3YXMNCj4+
-IGRpc2N1c3NlZCBhdCBMU0ZNTSwgd2UgbWF5IHNvb24gaGF2ZSBhIGxvd2VyIGxhdGVuY3kgc3Rv
-cmFnZSBkZXZpY2UgdGhhdCBjYW4NCj4+IG1ha2UgdXNlIG9mIGlvcHJpb3JpdGllcy4gQSBwZXIg
-Y29tbWFuZCBpb3ByaW9yaXR5IGludGVyZmFjZSBzZWVtcyB0aW1lbHkNCj4+IGdpdmVuIHRoZXNl
-IGRldmVsb3BtZW50cy4NCj4+DQo+PiBJZiB3ZSB3YW50IHRvIGF2b2lkIGJsb2F0aW5nIHN0cnVj
-dCBraW9jYiwgSSBzdWdnZXN0IHdlIHR1cm4gdGhlIHByaXZhdGUgZmllbGQNCj4+IGludG8gYSB1
-bmlvbiBvZiB0aGUgcHJpdmF0ZSBhbmQga2lfaW9wcmlvIGZpZWxkLiBJdCBzZWVtcyBsaWtlIHRo
-ZSB1c2VycyBvZg0KPj4gdGhlIHByaXZhdGUgZmllbGQgYWxsIHVzZSBpdCBhdCBhIHBvaW50IHdo
-ZXJlIHdlIGNhbiB5YW5rIHRoZSBwcmlvcml0eSBmcm9tDQo+PiB0aGUga2lvY2IgYmVmb3JlIHRo
-ZSBwcml2YXRlIGZpZWxkIGlzIHVzZWQuIENvbW1lbnRzIGFuZCBzdWdnZXN0aW9ucyB3ZWxjb21l
-Lg0KPiANCj4gVGhlIGlvcHJpb19zZXQgc3lzdGVtIGNhbGwgcmVxdWlyZXMgQ0FQX1NZU19BRE1J
-TiBmb3Igc2V0dGluZw0KPiBJT1BSSU9fQ0xBU1NfUlQuICBJIHRoaW5rIHdlIG5lZWQgc2ltaWxh
-ciBjaGVja3MgaGVyZS4NCg0KSSBmb3Jnb3QgaG93IGRhbmdlcm91cyBJT1BSSU9fQ0xBU1NfUlQg
-Y2FuIGJlIDopLiBJIHdpbGwgbWFrZSBhIG5ldyANCmZ1bmN0aW9uIGJhc2VkIG9uIHRoZSBjaGVj
-a3MgaW4gaW9wcmlvLmMgYW5kIHJldXNlLg0KDQpUaGFua3MsDQpBZGFtDQoNCj4gDQo+IC1KZWZm
-DQo+IA0KPj4NCj4+IHYyOiBtZXJnZSBwYXRjaGVzDQo+PiAgICAgIHVzZSBJT0NCX0ZMQUdfSU9Q
-UklPDQo+PiAgICAgIHZhbGlkYXRlIGludGVuZGVkIHVzZSB3aXRoIElPQ0JfSU9QUklPDQo+PiAg
-ICAgIGFkZCBsaW51eC1hcGkgYW5kIGxpbnV4LWJsb2NrIHRvIGNjDQo+Pg0KPj4gU2lnbmVkLW9m
-Zi1ieTogQWRhbSBNYW56YW5hcmVzIDxhZGFtLm1hbnphbmFyZXNAd2RjLmNvbT4NCj4+IC0tLQ0K
-Pj4gICBmcy9haW8uYyAgICAgICAgICAgICAgICAgICAgIHwgMTAgKysrKysrKysrKw0KPj4gICBm
-cy9ibG9ja19kZXYuYyAgICAgICAgICAgICAgIHwgIDIgKysNCj4+ICAgaW5jbHVkZS9saW51eC9m
-cy5oICAgICAgICAgICB8ICAyICsrDQo+PiAgIGluY2x1ZGUvdWFwaS9saW51eC9haW9fYWJpLmgg
-fCAgMSArDQo+PiAgIDQgZmlsZXMgY2hhbmdlZCwgMTUgaW5zZXJ0aW9ucygrKQ0KPj4NCj4+IGRp
-ZmYgLS1naXQgYS9mcy9haW8uYyBiL2ZzL2Fpby5jDQo+PiBpbmRleCA4OGQ3OTI3ZmZiYzYuLmYz
-NjYzNmQ4ZmYyYyAxMDA2NDQNCj4+IC0tLSBhL2ZzL2Fpby5jDQo+PiArKysgYi9mcy9haW8uYw0K
-Pj4gQEAgLTE1OTcsNiArMTU5NywxNiBAQCBzdGF0aWMgaW50IGlvX3N1Ym1pdF9vbmUoc3RydWN0
-IGtpb2N0eCAqY3R4LCBzdHJ1Y3QgaW9jYiBfX3VzZXIgKnVzZXJfaW9jYiwNCj4+ICAgCQlyZXEt
-PmNvbW1vbi5raV9mbGFncyB8PSBJT0NCX0VWRU5URkQ7DQo+PiAgIAl9DQo+PiAgIA0KPj4gKwlp
-ZiAoaW9jYi0+YWlvX2ZsYWdzICYgSU9DQl9GTEFHX0lPUFJJTykgew0KPj4gKwkJLyoNCj4+ICsJ
-CSAqIElmIHRoZSBJT0NCX0ZMQUdfSU9QUklPIGZsYWcgb2YgYWlvX2ZsYWdzIGlzIHNldCwgdGhl
-bg0KPj4gKwkJICogYWlvX3JlcXByaW8gaXMgaW50ZXJwcmV0ZWQgYXMgYW4gSS9PIHNjaGVkdWxp
-bmcNCj4+ICsJCSAqIGNsYXNzIGFuZCBwcmlvcml0eS4NCj4+ICsJCSAqLw0KPj4gKwkJcmVxLT5j
-b21tb24ua2lfaW9wcmlvID0gaW9jYi0+YWlvX3JlcXByaW87DQo+PiArCQlyZXEtPmNvbW1vbi5r
-aV9mbGFncyB8PSBJT0NCX0lPUFJJTzsNCj4+ICsJfQ0KPj4gKw0KPj4gICAJcmV0ID0ga2lvY2Jf
-c2V0X3J3X2ZsYWdzKCZyZXEtPmNvbW1vbiwgaW9jYi0+YWlvX3J3X2ZsYWdzKTsNCj4+ICAgCWlm
-ICh1bmxpa2VseShyZXQpKSB7DQo+PiAgIAkJcHJfZGVidWcoIkVJTlZBTDogYWlvX3J3X2ZsYWdz
-XG4iKTsNCj4+IGRpZmYgLS1naXQgYS9mcy9ibG9ja19kZXYuYyBiL2ZzL2Jsb2NrX2Rldi5jDQo+
-PiBpbmRleCA3ZWM5MjBlMjcwNjUuLjk3MGJlZjc5Y2FhNiAxMDA2NDQNCj4+IC0tLSBhL2ZzL2Js
-b2NrX2Rldi5jDQo+PiArKysgYi9mcy9ibG9ja19kZXYuYw0KPj4gQEAgLTM1NSw2ICszNTUsOCBA
-QCBfX2Jsa2Rldl9kaXJlY3RfSU8oc3RydWN0IGtpb2NiICppb2NiLCBzdHJ1Y3QgaW92X2l0ZXIg
-Kml0ZXIsIGludCBucl9wYWdlcykNCj4+ICAgCQliaW8tPmJpX3dyaXRlX2hpbnQgPSBpb2NiLT5r
-aV9oaW50Ow0KPj4gICAJCWJpby0+YmlfcHJpdmF0ZSA9IGRpbzsNCj4+ICAgCQliaW8tPmJpX2Vu
-ZF9pbyA9IGJsa2Rldl9iaW9fZW5kX2lvOw0KPj4gKwkJaWYgKGlvY2ItPmtpX2ZsYWdzICYgSU9D
-Ql9JT1BSSU8pDQo+PiArCQkJYmlvLT5iaV9pb3ByaW8gPSBpb2NiLT5raV9pb3ByaW87DQo+PiAg
-IA0KPj4gICAJCXJldCA9IGJpb19pb3ZfaXRlcl9nZXRfcGFnZXMoYmlvLCBpdGVyKTsNCj4+ICAg
-CQlpZiAodW5saWtlbHkocmV0KSkgew0KPj4gZGlmZiAtLWdpdCBhL2luY2x1ZGUvbGludXgvZnMu
-aCBiL2luY2x1ZGUvbGludXgvZnMuaA0KPj4gaW5kZXggNzYwZDhkYTFiNmM3Li5hYjYzY2U3MjAz
-MDUgMTAwNjQ0DQo+PiAtLS0gYS9pbmNsdWRlL2xpbnV4L2ZzLmgNCj4+ICsrKyBiL2luY2x1ZGUv
-bGludXgvZnMuaA0KPj4gQEAgLTI5Miw2ICsyOTIsNyBAQCBlbnVtIHJ3X2hpbnQgew0KPj4gICAj
-ZGVmaW5lIElPQ0JfU1lOQwkJKDEgPDwgNSkNCj4+ICAgI2RlZmluZSBJT0NCX1dSSVRFCQkoMSA8
-PCA2KQ0KPj4gICAjZGVmaW5lIElPQ0JfTk9XQUlUCQkoMSA8PCA3KQ0KPj4gKyNkZWZpbmUgSU9D
-Ql9JT1BSSU8JCSgxIDw8IDgpDQo+PiAgIA0KPj4gICBzdHJ1Y3Qga2lvY2Igew0KPj4gICAJc3Ry
-dWN0IGZpbGUJCSpraV9maWxwOw0KPj4gQEAgLTMwMCw2ICszMDEsNyBAQCBzdHJ1Y3Qga2lvY2Ig
-ew0KPj4gICAJdm9pZAkJCSpwcml2YXRlOw0KPj4gICAJaW50CQkJa2lfZmxhZ3M7DQo+PiAgIAll
-bnVtIHJ3X2hpbnQJCWtpX2hpbnQ7DQo+PiArCXUxNgkJCWtpX2lvcHJpbzsgLyogU2VlIGxpbnV4
-L2lvcHJpby5oICovDQo+PiAgIH0gX19yYW5kb21pemVfbGF5b3V0Ow0KPj4gICANCj4+ICAgc3Rh
-dGljIGlubGluZSBib29sIGlzX3N5bmNfa2lvY2Ioc3RydWN0IGtpb2NiICpraW9jYikNCj4+IGRp
-ZmYgLS1naXQgYS9pbmNsdWRlL3VhcGkvbGludXgvYWlvX2FiaS5oIGIvaW5jbHVkZS91YXBpL2xp
-bnV4L2Fpb19hYmkuaA0KPj4gaW5kZXggYTA0YWRiYzcwZGRmLi5kNDU5M2E2MDYyZWYgMTAwNjQ0
-DQo+PiAtLS0gYS9pbmNsdWRlL3VhcGkvbGludXgvYWlvX2FiaS5oDQo+PiArKysgYi9pbmNsdWRl
-L3VhcGkvbGludXgvYWlvX2FiaS5oDQo+PiBAQCAtNTQsNiArNTQsNyBAQCBlbnVtIHsNCj4+ICAg
-ICogICAgICAgICAgICAgICAgICAgaXMgdmFsaWQuDQo+PiAgICAqLw0KPj4gICAjZGVmaW5lIElP
-Q0JfRkxBR19SRVNGRAkJKDEgPDwgMCkNCj4+ICsjZGVmaW5lIElPQ0JfRkxBR19JT1BSSU8JKDEg
-PDwgMSkNCj4+ICAgDQo+PiAgIC8qIHJlYWQoKSBmcm9tIC9kZXYvYWlvIHJldHVybnMgdGhlc2Ug
-c3RydWN0dXJlcy4gKi8NCj4+ICAgc3RydWN0IGlvX2V2ZW50IHs=
+On 5/3/18 2:15 PM, Adam Manzanares wrote:
+> 
+> 
+> On 5/3/18 11:33 AM, Matthew Wilcox wrote:
+>> On Thu, May 03, 2018 at 11:21:14AM -0700, adam.manzanares@wdc.com wrote:
+>>> If we want to avoid bloating struct kiocb, I suggest we turn the private field
+>>> into a union of the private and ki_ioprio field. It seems like the users of
+>>> the private field all use it at a point where we can yank the priority from
+>>> the kiocb before the private field is used. Comments and suggestions welcome.
+>>
+>> Or we could just make ki_hint a u8 or u16 ... seems unlikely we'll need
+>> 32 bits of ki_hint.  (currently defined values are 1-5)
+> 
+> I like the approach of using a u16 for the ki_hint. I'll update and 
+> resubmit.
+
+It's intended to be a mask. If you do shrink it for now, then we need some
+guard code to ensure it can always carry what it needs to.
+
+-- 
+Jens Axboe
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
