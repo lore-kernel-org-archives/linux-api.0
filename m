@@ -1,41 +1,56 @@
-From: "prakash.sangappa" <prakash.sangappa@oracle.com>
-Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
-Date: Thu, 3 May 2018 15:39:49 -0700
-Message-ID: <c80ee329-084b-367f-1937-3175c178e978@oracle.com>
-References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
- <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake>
-Reply-To: prakash.sangappa@oracle.com
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [PATCH v2] fs: Add aio iopriority support for block_dev
+Date: Thu, 3 May 2018 15:43:08 -0700
+Message-ID: <20180503224308.GA30823@bombadil.infradead.org>
+References: <20180503182114.2797-1-adam.manzanares@wdc.com>
+ <20180503183353.GC1562@bombadil.infradead.org>
+ <47e0a519-37b4-f5e7-0616-8659d11c2b69@wdc.com>
+ <18300bdb-a12f-0b6c-1317-6db3e4391d57@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christopher Lameter <cl@linux.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <18300bdb-a12f-0b6c-1317-6db3e4391d57@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Adam Manzanares <Adam.Manzanares@wdc.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "bcrl@kvack.org" <bcrl@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, May 03, 2018 at 02:24:58PM -0600, Jens Axboe wrote:
+> On 5/3/18 2:15 PM, Adam Manzanares wrote:
+> > On 5/3/18 11:33 AM, Matthew Wilcox wrote:
+> >> Or we could just make ki_hint a u8 or u16 ... seems unlikely we'll need
+> >> 32 bits of ki_hint.  (currently defined values are 1-5)
+> > 
+> > I like the approach of using a u16 for the ki_hint. I'll update and 
+> > resubmit.
+> 
+> It's intended to be a mask. If you do shrink it for now, then we need some
+> guard code to ensure it can always carry what it needs to.
 
+ummm ...
 
-On 05/03/2018 11:03 AM, Christopher Lameter wrote:
-> On Tue, 1 May 2018, Prakash Sangappa wrote:
->
->> For analysis purpose it is useful to have numa node information
->> corresponding mapped address ranges of the process. Currently
->> /proc/<pid>/numa_maps provides list of numa nodes from where pages are
->> allocated per VMA of the process. This is not useful if an user needs to
->> determine which numa node the mapped pages are allocated from for a
->> particular address range. It would have helped if the numa node information
->> presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
->> exact numa node from where the pages have been allocated.
-> Cant you write a small script that scans the information in numa_maps and
-> then displays the total pages per NUMA node and then a list of which
-> ranges have how many pages on a particular node?
+enum rw_hint {
+        WRITE_LIFE_NOT_SET      = 0,
+        WRITE_LIFE_NONE         = RWH_WRITE_LIFE_NONE,
+        WRITE_LIFE_SHORT        = RWH_WRITE_LIFE_SHORT,
+...
 
-Don't think we can determine which numa node a given user process
-address range has pages from, based on the existing 'numa_maps' file.
+                .ki_hint = file_write_hint(filp),
 
->> reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
-> So a prime motivator here is security restricted access to numa_maps?
-No it is the opposite. A regular user should be able to determine
-numa node information.
+static inline enum rw_hint file_write_hint(struct file *file)
+
+#define RWF_WRITE_LIFE_NOT_SET  0
+#define RWH_WRITE_LIFE_NONE     1
+#define RWH_WRITE_LIFE_SHORT    2
+#define RWH_WRITE_LIFE_MEDIUM   3
+#define RWH_WRITE_LIFE_LONG     4
+#define RWH_WRITE_LIFE_EXTREME  5
+
+It doesn't look like it's being used as a mask.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
