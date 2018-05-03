@@ -1,56 +1,57 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v2] fs: Add aio iopriority support for block_dev
-Date: Thu, 3 May 2018 15:20:26 -0600
-Message-ID: <9e3ba3eb-9c41-3b5d-dc12-f9ef573ab53f@kernel.dk>
-References: <20180503182114.2797-1-adam.manzanares@wdc.com>
- <20180503183353.GC1562@bombadil.infradead.org>
- <47e0a519-37b4-f5e7-0616-8659d11c2b69@wdc.com>
- <18300bdb-a12f-0b6c-1317-6db3e4391d57@kernel.dk>
- <e81c74fd-a4a2-80e0-476c-6ff35f158abf@wdc.com>
+From: "prakash.sangappa" <prakash.sangappa@oracle.com>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Thu, 3 May 2018 15:27:57 -0700
+Message-ID: <82d2b35c-272a-ad02-692f-2c109aacdfb6@oracle.com>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+ <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
+ <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
+ <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
+Reply-To: prakash.sangappa@oracle.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <e81c74fd-a4a2-80e0-476c-6ff35f158abf@wdc.com>
-Content-Language: en-US
+In-Reply-To: <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Adam Manzanares <Adam.Manzanares@wdc.com>, Matthew Wilcox <willy@infradead.org>
-Cc: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "bcrl@kvack.org" <bcrl@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+To: Anshuman Khandual <khandual@linux.vnet.ibm.com>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 5/3/18 2:58 PM, Adam Manzanares wrote:
-> 
-> 
-> On 5/3/18 1:24 PM, Jens Axboe wrote:
->> On 5/3/18 2:15 PM, Adam Manzanares wrote:
->>>
->>>
->>> On 5/3/18 11:33 AM, Matthew Wilcox wrote:
->>>> On Thu, May 03, 2018 at 11:21:14AM -0700, adam.manzanares@wdc.com wrote:
->>>>> If we want to avoid bloating struct kiocb, I suggest we turn the private field
->>>>> into a union of the private and ki_ioprio field. It seems like the users of
->>>>> the private field all use it at a point where we can yank the priority from
->>>>> the kiocb before the private field is used. Comments and suggestions welcome.
->>>>
->>>> Or we could just make ki_hint a u8 or u16 ... seems unlikely we'll need
->>>> 32 bits of ki_hint.  (currently defined values are 1-5)
->>>
->>> I like the approach of using a u16 for the ki_hint. I'll update and
->>> resubmit.
->>
->> It's intended to be a mask. If you do shrink it for now, then we need some
->> guard code to ensure it can always carry what it needs to.
->>
-> 
-> Got it, I'll add the guard to rw_hint_valid along with a comment about 
-> being limited by the size of ki_hint in case we get to a situation where 
-> 16 bits is not enough.
 
-Other way around - the API should not be limited by the fact that some
-smaller type was chosen for an internal structure. Hence the guard/check
-should not be in rw_hint_valid, but rather around where you assign
-ki_hint. If/when we do extend the read/write hints, then we'll
-potentially need to bump ki_hint to accommodate it.
 
--- 
-Jens Axboe
+On 05/03/2018 01:46 AM, Anshuman Khandual wrote:
+> On 05/03/2018 03:58 AM, Dave Hansen wrote:
+>> On 05/02/2018 02:33 PM, Andrew Morton wrote:
+>>> On Tue,  1 May 2018 22:58:06 -0700 Prakash Sangappa <prakash.sangappa@oracle.com> wrote:
+>>>> For analysis purpose it is useful to have numa node information
+>>>> corresponding mapped address ranges of the process. Currently
+>>>> /proc/<pid>/numa_maps provides list of numa nodes from where pages are
+>>>> allocated per VMA of the process. This is not useful if an user needs to
+>>>> determine which numa node the mapped pages are allocated from for a
+>>>> particular address range. It would have helped if the numa node information
+>>>> presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
+>>>> exact numa node from where the pages have been allocated.
+>> I'm finding myself a little lost in figuring out what this does.  Today,
+>> numa_maps might us that a 3-page VMA has 1 page from Node 0 and 2 pages
+>> from Node 1.  We group *entirely* by VMA:
+>>
+>> 1000-4000 N0=1 N1=2
+>>
+>> We don't want that.  We want to tell exactly where each node's memory is
+>> despite if they are in the same VMA, like this:
+>>
+>> 1000-2000 N1=1
+>> 2000-3000 N0=1
+>> 3000-4000 N1=1
+> I am kind of wondering on a big memory system how many lines of output
+> we might have for a large (consuming lets say 80 % of system RAM) VMA
+> in interleave policy. Is not that a problem ?
+>
+If each consecutive page comes from different node, yes in
+the extreme case is this file will have a lot of lines. All the lines
+are generated at the time file is read. The amount of data read will be
+limited to the user read buffer size used in the read.
+
+/proc/<pid>/pagemap also has kind of  similar issue. There is 1 64 bit 
+value
+for each user page.
