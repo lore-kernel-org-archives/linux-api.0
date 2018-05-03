@@ -1,58 +1,85 @@
-From: Christian Brauner <christian.brauner@canonical.com>
-Subject: Re: [PATCH 0/6 resend] statfs: handle mount propagation
-Date: Thu, 3 May 2018 15:57:41 +0200
-Message-ID: <CAPP7u0Vy8KL1GMSFuH4UYV5JFYLLz8iJvNtq2Pp84UjmvkuNYw@mail.gmail.com>
-References: <20180502154239.14013-1-christian.brauner@ubuntu.com>
- <20180502160939.GU30522@ZenIV.linux.org.uk> <CAPP7u0VPyWAsL_kkb4JnJHMmK=kM0m4zRjVjst1iHDd6V=t0mQ@mail.gmail.com>
- <20180503134317.GA30522@ZenIV.linux.org.uk>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
+Date: Thu, 3 May 2018 12:12:21 -0400 (EDT)
+Message-ID: <1718748931.10084.1525363941807.JavaMail.zimbra@efficios.com>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com> <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com> <660904075.9201.1525276988842.JavaMail.zimbra@efficios.com> <CAKOZueu_7Ha_WXMyxqMEScXo1aHWr9qYRxqyb-Rpd4k1JP3xHA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180503134317.GA30522@ZenIV.linux.org.uk>
+In-Reply-To: <CAKOZueu_7Ha_WXMyxqMEScXo1aHWr9qYRxqyb-Rpd4k1JP3xHA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Christian Brauner <christian.brauner@canonical.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Christoph Hellwig <hch@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Kate Stewart <kstewart@linuxfoundation.org>, Greg KH <gregkh@linuxfoundation.org>, Philippe Ombredanne <pombredanne@nexb.com>, Linux API <linux-api@vger.kernel.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 03, 2018 at 02:43:17PM +0100, Al Viro wrote:
-> On Thu, May 03, 2018 at 03:04:36PM +0200, Christian Brauner wrote:
->
-> > >From a userspace perspective we often run into the case where we simply
-> > want to know whether a given mountpoint is MS_SHARED or is MS_SLAVE.
-> > If it is we remount it as MS_PRIVATE to prevent any propagation from
-> > happening. We don't care about the peer relationship or how the
-> > propagation is exactly setup. We only want to prevent any propagation
-> > from happening.
->
-> So what's to stop you from doing exactly that --
-> mount(NULL, "/", NULL, MS_PRIVATE | MS_REC, NULL)
-> without bothering with statfs() in the first place?  It's not like the
-> damn thing had been costly - it's O(mounts in your namespace) with not
-> to high constant, and in any case cheaper than allocating all of them
-> back when you did clone(2).  Confused...
+----- On May 2, 2018, at 12:07 PM, Daniel Colascione dancol@google.com wrote:
 
-That's the case for the whole rootfs. But there are cases where I want
-to leave the rootfs itself alone and only remount some paths.
+> On Wed, May 2, 2018 at 9:03 AM Mathieu Desnoyers <
+> mathieu.desnoyers@efficios.com> wrote:
+> 
+>> ----- On May 1, 2018, at 11:53 PM, Daniel Colascione dancol@google.com
+> wrote:
+>> [...]
+>> >
+>> > I think a small enhancement to rseq would let us build a perfect
+> userspace
+>> > mutex, one that spins on lock-acquire only when the lock owner is
+> running
+>> > and that sleeps otherwise, freeing userspace from both specifying ad-hoc
+>> > spin counts and from trying to detect situations in which spinning is
+>> > generally pointless.
+>> >
+>> > It'd work like this: in the per-thread rseq data structure, we'd
+> include a
+>> > description of a futex operation for the kernel would perform (in the
+>> > context of the preempted thread) upon preemption, immediately before
+>> > schedule(). If the futex operation itself sleeps, that's no problem: we
+>> > will have still accomplished our goal of running some other thread
+> instead
+>> > of the preempted thread.
+> 
+>> Hi Daniel,
+> 
+>> I agree that the problem you are aiming to solve is important. Let's see
+>> what prevents the proposed rseq implementation from doing what you
+> envision.
+> 
+>> The main issue here is touching userspace immediately before schedule().
+>> At that specific point, it's not possible to take a page fault. In the
+> proposed
+>> rseq implementation, we get away with it by raising a task struct flag,
+> and using
+>> it in a return to userspace notifier (where we can actually take a
+> fault), where
+>> we touch the userspace TLS area.
+> 
+>> If we can find a way to solve this limitation, then the rest of your
+> design
+>> makes sense to me.
+> 
+> Thanks for taking a look!
+> 
+> Why couldn't we take a page fault just before schedule? The reason we can't
+> take a page fault in atomic context is that doing so might call schedule.
+> Here, we're about to call schedule _anyway_, so what harm does it do to
+> call something that might call schedule? If we schedule via that call, we
+> can skip the manual schedule we were going to perform.
 
->
-> > The above case is what I see most often. A more specific use-case is to
-> > differentiate between MS_SLAVE and MS_SHARED mountpoints.
-> > Mountpoints that are MS_SLAVE are kept intact and mountpoints that are
-> > MS_SHARED are made MS_PRIVATE.
-> >
-> > For both cases the only way to do this right now is by parsing
-> > /proc/<pid>/mountinfo. Yes, it is doable but still it is somewhat costly
-> > and annoying as e.g. those mount propagation fields are optional.
->
-> Umm...  And how would you get the list of mountpoints to feed to statfs()
-> if not by parsing mountinfo?  IDGI...
+By the way, if we eventually find a way to enhance user-space mutexes in the
+fashion you describe here, it would belong to another TLS area, and would
+be registered by another system call than rseq. I proposed a more generic
+"TLS area registration" system call a few years ago, but Linus told me he
+wanted a system call that was specific to rseq. If we need to implement
+other use-cases in a TLS area shared between kernel and user-space in a
+similar fashion, the plan is to do it in a distinct system call.
 
-There are cases where you have list of known-mountpoints or paths to
-check but you don't necessarily know whether they are MS_SHARED or
-MS_SLAVE.
+Thanks,
 
-There's also a case where I send a list of fds via SCM_RIGHTS to an
-isolated process that calls fstatvfs() on these fds to determine their
-mount flags without changing them but cache this info.
+Mathieu
 
-Christian
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
