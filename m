@@ -1,258 +1,56 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v5 00/28] FPGA Device Feature List (DFL) Device Drivers
-Date: Thu, 3 May 2018 16:14:48 -0500
-Message-ID: <CANk1AXSFQzBoZWQu4R9aYQSXFbr76UQ_-39ENe5hSOncKuDq+A@mail.gmail.com>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v2] fs: Add aio iopriority support for block_dev
+Date: Thu, 3 May 2018 15:20:26 -0600
+Message-ID: <9e3ba3eb-9c41-3b5d-dc12-f9ef573ab53f@kernel.dk>
+References: <20180503182114.2797-1-adam.manzanares@wdc.com>
+ <20180503183353.GC1562@bombadil.infradead.org>
+ <47e0a519-37b4-f5e7-0616-8659d11c2b69@wdc.com>
+ <18300bdb-a12f-0b6c-1317-6db3e4391d57@kernel.dk>
+ <e81c74fd-a4a2-80e0-476c-6ff35f158abf@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
+In-Reply-To: <e81c74fd-a4a2-80e0-476c-6ff35f158abf@wdc.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+To: Adam Manzanares <Adam.Manzanares@wdc.com>, Matthew Wilcox <willy@infradead.org>
+Cc: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "bcrl@kvack.org" <bcrl@kvack.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
-> Hi All,
->
-> Here is v5 patch-series adding drivers for FPGA DFL devices.
->
-> This patch series provides a common framework to support FPGA Device Feature
-> List (DFL), and also feature dev drivers under this DFL framework to provide
-> interfaces for userspace applications to configure, enumerate, open, and
-> access FPGA accelerators on DFL based FPGA device and enables system level
-> management functions such as FPGA partial reconfiguration, power management
-> and virtualization.
+On 5/3/18 2:58 PM, Adam Manzanares wrote:
+> 
+> 
+> On 5/3/18 1:24 PM, Jens Axboe wrote:
+>> On 5/3/18 2:15 PM, Adam Manzanares wrote:
+>>>
+>>>
+>>> On 5/3/18 11:33 AM, Matthew Wilcox wrote:
+>>>> On Thu, May 03, 2018 at 11:21:14AM -0700, adam.manzanares@wdc.com wrote:
+>>>>> If we want to avoid bloating struct kiocb, I suggest we turn the private field
+>>>>> into a union of the private and ki_ioprio field. It seems like the users of
+>>>>> the private field all use it at a point where we can yank the priority from
+>>>>> the kiocb before the private field is used. Comments and suggestions welcome.
+>>>>
+>>>> Or we could just make ki_hint a u8 or u16 ... seems unlikely we'll need
+>>>> 32 bits of ki_hint.  (currently defined values are 1-5)
+>>>
+>>> I like the approach of using a u16 for the ki_hint. I'll update and
+>>> resubmit.
+>>
+>> It's intended to be a mask. If you do shrink it for now, then we need some
+>> guard code to ensure it can always carry what it needs to.
+>>
+> 
+> Got it, I'll add the guard to rw_hint_valid along with a comment about 
+> being limited by the size of ki_hint in case we get to a situation where 
+> 16 bits is not enough.
 
-Hi Hao,
+Other way around - the API should not be limited by the fact that some
+smaller type was chosen for an internal structure. Hence the guard/check
+should not be in rw_hint_valid, but rather around where you assign
+ki_hint. If/when we do extend the read/write hints, then we'll
+potentially need to bump ki_hint to accommodate it.
 
-I've started looking at your v5 here.  It's 5212 lines of code, so
-it's not tiny.
-
-I see a lot of renaming from 'fpga' to 'dfl', thanks for doing that.
-
-The main thing that stands out at first look is a new method of
-registering port ops.  It would be better if the fpga bridge framework
-were expanded or changed somehow to do that.  It's like we have two
-bridge frameworks now.
-
-I see that there isn't a way of specifying which FPGA mgr driver to
-use, so dfl-fme-mgr.c is tied to dfl-fme-pr.c.  It would be better if
-the DFL could specify which fpga manager driver to use.
-
-Maybe I'm repeating myself here, the biggest question I'm asking
-myself is: If someone had a different FPGA or a different static
-region, how much of this code can be reused?  I would hope that all of
-it could except for the fpga manager/bridge drivers.  That was the
-intent of the original FPGA framework.  I'll have more time next week
-to look in more depth.
-
-Alan
-
->
-> This patch series only adds the basic functions for FPGA accelerators and
-> partial reconfiguration. Patches for more functions, e.g power management
-> and virtualization, will be submitted after this series gets reviewed.
->
-> Note this patch series is only verified on DFL based Intel(R) FPGA PCIe
-> devices (e.g Intel Server Platform with In-package FPGA and Intel FPGA PCIe
-> Acceleration Cards).
->
-> Patch 1: add a document for FPGA DFL framework driver overview, including
-> Device Feature List (DFL) introduction, the HW architecture, driver
-> organization, device enumeration and opens.
->
-> Patch 2: add region_id for fpga_image_info data structure, which allows
-> driver to pass region id information to fpga-mgr for FPGA reconfiguration
-> function. (Used by Patch 17)
->
-> Patch 3: add a 'status' sysfs interface to fpga-mgr class, it reflects
-> the status of the fpga-mgr including reconfiguration errors. (Used by
-> Patch 18)
->
-> Patch 4-5: add compat_id support in fpga manager and region, this compat
-> id is used for compatibility check before further actions (e.g partial
-> reconfiguration). (Used by Patch 19 and 22)
->
-> Patch 6-11: add FPGA device feature list support, it provides common
-> enumeration interfaces which creates container device (FPGA base region)
-> and all feature devices by walking through all the 'Device Feature Lists'
-> provided low level drivers. A global list is added to DFL framework to
-> manage port ops from different ports.
->
-> Patch 12-13: implement FPGA PCIe device driver. It locates all 'Device
-> Feature Lists' in PCIe device memory and invokes common interfaces from
-> above device feature list framework to finish the enumeration.
->
-> Patch 14-17: implement FPGA Management Engine (FME) driver. It's a
-> platform driver matching with the FME platform device created by above
-> device feature list framework during enumeration. Sysfs and device file
-> ioctls are exposed as user interfaces to allow partial reconfiguration
-> to Accelerated Function Units (AFUs) from user space applications.
->
-> Patch 18-22: implement FPGA manager/bridge/region platform drivers for
-> Intel FPGA Management Engine (FME). These platform drivers match with
-> platform devices created by above FME driver, they use the generic
-> fpga-mgr/bridge/region class infrastructure to implement FPGA partial
-> reconfiguration function.
->
-> Patch 23-28: implement FPGA Accelerated Function Unit (AFU) driver.
-> It's a platform driver matching with AFU platform device created by above
-> device feature list framework during enumeration. It provides user
-> interfaces to expose the AFU MMIO region, map/unmap dma buffer, and
-> control the port which AFU connects to.
->
-> Changes from v4:
-> - Update the dfl.txt documentation, remove descriptions for the APIs and
->   features which are not implemented in this patch series.
-> - Add DFL_ / dfl_ prefix for APIs and data structure, to avoid directly
->   using DFL_ / fpga_xxx naming.
-> - Use "static region" and "PR bistream" instead of "blue bitstream" and
->   "green bistream" terminology in description to avoid misunderstanding.
-> - Fix building issues caused by BIT() on 64bit register definition and
->   missing correct header file for readq and writeq.
-> - Remove port specific code in DFL framework, and introduce port ops support
->   to resolve the dependency issue between FME driver module and Port driver
->   module. (more details in Patch 10).
-> - Add compat id to fpga manager, as in case some hardware implements the
->   compat id in fpga manager's register, not register belongs to fpga region,
->   and its value is shared by all related fpga regions.
-> - Pass mapped ioaddr to fme manager platform device from dfl-fme-pr via pdata.
-> - Move PR hardware register definition to dfl-fme-mgr.c.
-> - Fix other comments from Alan and Moritz, including description improvement,
->   coding style issue and etc.
->
-> Changes from v3:
-> - Fix SPDX license issue.
-> - Rename documentation to dfl.txt, add introduction for Device Feature List
->   (DFL) and re-organize the content.
-> - Rename to FPGA Device Feature List (DFL) drivers from Intel FPGA device
->   drivers for better reuse purposes. Unified driver and files to dfl-*.*
-> - Remove static feature_info table from common enumeration code, and switch
->   to use feature id for sub feature driver matching.
-> - Remove next_afu register checking for AFU from common enumeration code.
-> - Remove interface_id sysfs for dfl-fme-mgr and use per fpga-region
->   compat_id instead. (new patch 13, 15, 19).
-> - Add more comments for driver data structures and functions.
-> - Fix typos, issues in debug message/commit message and other places.
->
-> Changes from v2:
-> - Split common enumeration code from pcie driver to a separated module
->   which for device feature list support.
-> - Drop fpga-dev class and switch to use fpga base region as container.
-> - Update the intel-fpga.txt documentation for new driver organization.
-> - Rename feature device drivers for future code reuse.
-> - Rebase code due to fpga APIs changes
-> - replace bitfields with marco and shift.
-> - fix typos, checkpatch issue and other comments.
->
-> Changes from v1:
-> - Use GPLv2 license instead of Dual BSD/GPL.
-> - Move the code to drivers/fpga folder.
-> - Update the intel-fpga.txt documentation for new driver organization.
-> - Add documentation for new sysfs interfaces.
-> - Switch to use common fpga-region interface for partial reconfiguration
->   (PR) function in FME. It creates fpga-region/fpga-mgr/fpga-bridge
->   platform devices and leave the implementation to their platform drivers.
-> - Add platform drivers for FME fpga-mgr/bridge/region platform devices.
-> - Fix kbuild warnings, typos and other comments.
->
-> This patch series depends on the below patchset from Alan Tull.
-> [PATCH v4 0/4] fpga: change api, don't use drive data[1]
->
-> [1] https://marc.info/?l=linux-fpga&m=152356504900466&w=2
->
-> Kang Luwei (3):
->   fpga: dfl: add FPGA Management Engine driver basic framework
->   fpga: dfl: fme: add header sub feature support
->   fpga: dfl: fme: add partial reconfiguration sub feature support
->
-> Wu Hao (22):
->   docs: fpga: add a document for FPGA Device Feature List (DFL)
->     Framework Overview
->   fpga: mgr: add region_id to fpga_image_info
->   fpga: mgr: add status for fpga-manager
->   fpga: mgr: add compat_id support
->   fpga: region: add compat_id support
->   fpga: add device feature list support
->   fpga: dfl: add chardev support for feature devices
->   fpga: dfl: add dfl_fpga_cdev_find_port
->   fpga: dfl: add dfl_fpga_port_ops support.
->   fpga: dfl: add dfl_fpga_check_port_id function.
->   fpga: dfl-pci: add enumeration for feature devices
->   fpga: dfl: fme: add DFL_FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
->     support
->   fpga: dfl: add fpga manager platform driver for FME
->   fpga: dfl: fme-mgr: add compat_id support
->   fpga: dfl: add fpga bridge platform driver for FME
->   fpga: dfl: add fpga region platform driver for FME
->   fpga: dfl: fme-region: add support for compat_id
->   fpga: dfl: add FPGA Accelerated Function Unit driver basic framework
->   fpga: dfl: afu: add port ops support
->   fpga: dfl: afu: add header sub feature support
->   fpga: dfl: afu: add DFL_FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls
->     support
->   fpga: dfl: afu: add DFL_FPGA_PORT_DMA_MAP/UNMAP ioctls support
->
-> Xiao Guangrong (2):
->   fpga: dfl: add feature device infrastructure
->   fpga: dfl: afu: add afu sub feature support
->
-> Zhang Yi (1):
->   fpga: add FPGA DFL PCIe device driver
->
->  Documentation/ABI/testing/sysfs-class-fpga-manager |   24 +
->  Documentation/ABI/testing/sysfs-class-fpga-region  |    9 +
->  Documentation/ABI/testing/sysfs-platform-dfl-fme   |   23 +
->  Documentation/ABI/testing/sysfs-platform-dfl-port  |   16 +
->  Documentation/fpga/dfl.txt                         |  285 ++++++
->  Documentation/ioctl/ioctl-number.txt               |    1 +
->  drivers/fpga/Kconfig                               |   68 ++
->  drivers/fpga/Makefile                              |   14 +
->  drivers/fpga/dfl-afu-dma-region.c                  |  463 +++++++++
->  drivers/fpga/dfl-afu-main.c                        |  636 +++++++++++++
->  drivers/fpga/dfl-afu-region.c                      |  166 ++++
->  drivers/fpga/dfl-afu.h                             |  100 ++
->  drivers/fpga/dfl-fme-br.c                          |  114 +++
->  drivers/fpga/dfl-fme-main.c                        |  279 ++++++
->  drivers/fpga/dfl-fme-mgr.c                         |  349 +++++++
->  drivers/fpga/dfl-fme-pr.c                          |  474 ++++++++++
->  drivers/fpga/dfl-fme-pr.h                          |   84 ++
->  drivers/fpga/dfl-fme-region.c                      |   89 ++
->  drivers/fpga/dfl-fme.h                             |   38 +
->  drivers/fpga/dfl-pci.c                             |  310 ++++++
->  drivers/fpga/dfl.c                                 | 1000 ++++++++++++++++++++
->  drivers/fpga/dfl.h                                 |  416 ++++++++
->  drivers/fpga/fpga-mgr.c                            |   28 +
->  drivers/fpga/fpga-region.c                         |   22 +
->  include/linux/fpga/fpga-mgr.h                      |   24 +
->  include/linux/fpga/fpga-region.h                   |    2 +
->  include/uapi/linux/fpga-dfl.h                      |  178 ++++
->  27 files changed, 5212 insertions(+)
->  create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
->  create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-fme
->  create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-port
->  create mode 100644 Documentation/fpga/dfl.txt
->  create mode 100644 drivers/fpga/dfl-afu-dma-region.c
->  create mode 100644 drivers/fpga/dfl-afu-main.c
->  create mode 100644 drivers/fpga/dfl-afu-region.c
->  create mode 100644 drivers/fpga/dfl-afu.h
->  create mode 100644 drivers/fpga/dfl-fme-br.c
->  create mode 100644 drivers/fpga/dfl-fme-main.c
->  create mode 100644 drivers/fpga/dfl-fme-mgr.c
->  create mode 100644 drivers/fpga/dfl-fme-pr.c
->  create mode 100644 drivers/fpga/dfl-fme-pr.h
->  create mode 100644 drivers/fpga/dfl-fme-region.c
->  create mode 100644 drivers/fpga/dfl-fme.h
->  create mode 100644 drivers/fpga/dfl-pci.c
->  create mode 100644 drivers/fpga/dfl.c
->  create mode 100644 drivers/fpga/dfl.h
->  create mode 100644 include/uapi/linux/fpga-dfl.h
->
-> --
-> 1.8.3.1
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Jens Axboe
