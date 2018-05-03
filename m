@@ -1,106 +1,86 @@
-From: "prakash.sangappa" <prakash.sangappa@oracle.com>
-Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
-Date: Wed, 2 May 2018 16:43:58 -0700
-Message-ID: <cac754ee-efb9-0259-a50b-4efa11783058@oracle.com>
-References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
- <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
-Reply-To: prakash.sangappa@oracle.com
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
+Date: Wed, 2 May 2018 21:15:36 -0400
+Message-ID: <20180502211536.44b560c7@vmware.local.home>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
+        <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
+        <20180502172218.GL12180@hirez.programming.kicks-ass.net>
+        <CAKOZuesjF8QxfphgsyRKctO89jR9VAM727dspTe7PX1z8KFpyw@mail.gmail.com>
+        <20180502202233.GV12217@hirez.programming.kicks-ass.net>
+        <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
+In-Reply-To: <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>, Dave Hansen <dave.hansen@intel.com>
+To: Daniel Colascione <dancol@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul McKenney <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, luto@amacapital.net, davejwatson@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, Andrew Hunter <ahh@google.com>, andi@firstfloor.org, cl@linux.com, bmaurer@fb.com, josh@joshtriplett.org, torvalds@linux-foundation.org, catalin.marinas@arm.com, will.deacon@arm.com, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Robert Haas <robertmhaas@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, 02 May 2018 20:37:13 +0000
+Daniel Colascione <dancol@google.com> wrote:
 
+> On Wed, May 2, 2018 at 1:23 PM Peter Zijlstra <peterz@infradead.org> wrote:
+> 
+> > On Wed, May 02, 2018 at 06:27:22PM +0000, Daniel Colascione wrote:  
+> > > On Wed, May 2, 2018 at 10:22 AM Peter Zijlstra <peterz@infradead.org>  
+> wrote:
+> > > >> On Wed, May 02, 2018 at 03:53:47AM +0000, Daniel Colascione wrote:
+> > > > > Suppose we make a userspace mutex implemented with a lock word  
+> having
+> > > three  
+> > > > > bits: acquired, sleep_mode, and wait_pending, with the rest of the  
+> word
+> > > not  
+> > > > > being relevant at the moment.  
+> > >  
+> > > > So ideally we'd kill FUTEX_WAIT/FUTEX_WAKE for mutexes entirely, and  
+> go
+> > > > with FUTEX_LOCK/FUTEX_UNLOCK that have the same semantics as the
+> > > > existing FUTEX_LOCK_PI/FUTEX_UNLOCK_PI, namely, the word contains the
+> > > > owner TID.  
+> > >
+> > > That doesn't work if you want to use the rest of the word for something
+> > > else, like a recursion count. With FUTEX_WAIT and FUTEX_WAKE, you can  
+> make
+> > > a lock with two bits.  
+> 
+> > Recursive locks are teh most horrible crap ever. And having the tid in  
+> 
+> What happened to providing mechanism, not policy?
+> 
+> You can't wish away recursive locking. It's baked into Java and the CLR,
+> and it's enshrined in POSIX. It's not going away, and there's no reason not
+> to support it efficiently.
+> 
+> > the word allows things like kernel based optimistic spins and possibly
+> > PI related things.  
+> 
+> Sure. A lot of people don't want PI though, or at least they want to opt
+> into it. And we shouldn't require an entry into the kernel for what we can
+> in principle do efficiently in userspace.
+> 
+> > > > As brought up in the last time we talked about spin loops, why do we
+> > > > care if the spin loop is in userspace or not? Aside from the whole PTI
+> > > > thing, the syscall cost was around 150 cycle or so, while a LOCK  
+> CMPXCHG
+> > > > is around 20 cycles. So ~7 spins gets you the cost of entry. 
 
-On 05/02/2018 02:33 PM, Andrew Morton wrote:
-> On Tue,  1 May 2018 22:58:06 -0700 Prakash Sangappa <prakash.sangappa@oracle.com> wrote:
->
->> For analysis purpose it is useful to have numa node information
->> corresponding mapped address ranges of the process. Currently
->> /proc/<pid>/numa_maps provides list of numa nodes from where pages are
->> allocated per VMA of the process. This is not useful if an user needs to
->> determine which numa node the mapped pages are allocated from for a
->> particular address range. It would have helped if the numa node information
->> presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
->> exact numa node from where the pages have been allocated.
->>
->> The format of /proc/<pid>/numa_maps file content is dependent on
->> /proc/<pid>/maps file content as mentioned in the manpage. i.e one line
->> entry for every VMA corresponding to entries in /proc/<pids>/maps file.
->> Therefore changing the output of /proc/<pid>/numa_maps may not be possible.
->>
->> Hence, this patch proposes adding file /proc/<pid>/numa_vamaps which will
->> provide proper break down of VA ranges by numa node id from where the mapped
->> pages are allocated. For Address ranges not having any pages mapped, a '-'
->> is printed instead of numa node id. In addition, this file will include most
->> of the other information currently presented in /proc/<pid>/numa_maps. The
->> additional information included is for convenience. If this is not
->> preferred, the patch could be modified to just provide VA range to numa node
->> information as the rest of the information is already available thru
->> /proc/<pid>/numa_maps file.
->>
->> Since the VA range to numa node information does not include page's PFN,
->> reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
->>
->> Here is the snippet from the new file content showing the format.
->>
->> 00400000-00401000 N0=1 kernelpagesize_kB=4 mapped=1 file=/tmp/hmap2
->> 00600000-00601000 N0=1 kernelpagesize_kB=4 anon=1 dirty=1 file=/tmp/hmap2
->> 00601000-00602000 N0=1 kernelpagesize_kB=4 anon=1 dirty=1 file=/tmp/hmap2
->> 7f0215600000-7f0215800000 N0=1 kernelpagesize_kB=2048 dirty=1 file=/mnt/f1
->> 7f0215800000-7f0215c00000 -  file=/mnt/f1
->> 7f0215c00000-7f0215e00000 N0=1 kernelpagesize_kB=2048 dirty=1 file=/mnt/f1
->> 7f0215e00000-7f0216200000 -  file=/mnt/f1
->> ..
->> 7f0217ecb000-7f0217f20000 N0=85 kernelpagesize_kB=4 mapped=85 mapmax=51
->>     file=/usr/lib64/libc-2.17.so
->> 7f0217f20000-7f0217f30000 -  file=/usr/lib64/libc-2.17.so
->> 7f0217f30000-7f0217f90000 N0=96 kernelpagesize_kB=4 mapped=96 mapmax=51
->>     file=/usr/lib64/libc-2.17.so
->> 7f0217f90000-7f0217fb0000 -  file=/usr/lib64/libc-2.17.so
->> ..
->>
->> The 'pmap' command can be enhanced to include an option to show numa node
->> information which it can read from this new proc file. This will be a
->> follow on proposal.
-> I'd like to hear rather more about the use-cases for this new
-> interface.  Why do people need it, what is the end-user benefit, etc?
+What about exit?
+ 
+> > >
+> > > That's pre-KPTI, isn't it?  
+> 
+> > Yes, and once the hardware gets sorted, we'll be there again. I don't
+> > think we should design interfaces for 'broken' hardware.  
+> 
+> It would be a mistake to design interfaces under the assumption that
+> everyone has fast permission level transitions.
 
-This is mainly for debugging / performance analysis. Oracle Database
-team is looking to use this information.
+Note, Robert Haas told me a few years ago at a plumbers conference that
+postgresql implements their own user space spin locks because anything
+that goes into the kernel has killed the performance. And they tried to
+use futex but that still didn't beat out plain userspace locks.
 
->> There have been couple of previous patch proposals to provide numa node
->> information based on pfn or physical address. They seem to have not made
->> progress. Also it would appear reading numa node information based on PFN
->> or physical address will require privileges(CAP_SYS_ADMIN) similar to
->> reading PFN info from /proc/<pid>/pagemap.
->>
->> See
->> https://marc.info/?t=139630938200001&r=1&w=2
->>
->> https://marc.info/?t=139718724400001&r=1&w=2
-> OK, let's hope that these people will be able to provide their review,
-> feedback, testing, etc.  You missed a couple (Dave, Naoya).
->
->>   fs/proc/base.c     |   2 +
->>   fs/proc/internal.h |   3 +
->>   fs/proc/task_mmu.c | 299 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
-> Some Documentation/ updates seem appropriate.  I suggest you grep the
-> directory for "numa_maps" to find suitable locations.
-
-Sure, I can update Documentation/filesystems/proc.txt file which is
-where 'numa_maps' is documented.
-
->
-> And a quick build check shows that `size fs/proc/task_mmu.o' gets quite
-> a bit larger when CONFIG_SMP=n and CONFIG_NUMA=n.  That seems wrong -
-> please see if you can eliminate the bloat from systems which don't need
-> this feature.
->
->
-Ok will take a look.
+-- Steve
