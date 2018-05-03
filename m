@@ -1,45 +1,42 @@
-From: Anshuman Khandual <khandual@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
-Date: Thu, 3 May 2018 14:16:02 +0530
-Message-ID: <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
-References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
- <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
- <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC PATCH for 4.18 00/14] Restartable Sequences
+Date: Thu, 3 May 2018 10:49:06 +0200
+Message-ID: <20180503084906.GW12217@hirez.programming.kicks-ass.net>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
+ <CAKOZuesa338sc_=w6-wvro25idrSN_zx_zrHFyo-bDiORs7FZw@mail.gmail.com>
+ <20180502172218.GL12180@hirez.programming.kicks-ass.net>
+ <CAKOZuesjF8QxfphgsyRKctO89jR9VAM727dspTe7PX1z8KFpyw@mail.gmail.com>
+ <20180502202233.GV12217@hirez.programming.kicks-ass.net>
+ <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
+Content-Disposition: inline
+In-Reply-To: <CAKOZuevUq-XsT632VHU1TQQ5_rGqNROXiZAqv7S+ky=-wcQ3bQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>
+To: Daniel Colascione <dancol@google.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul McKenney <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, luto@amacapital.net, davejwatson@fb.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, Andrew Hunter <ahh@google.com>, andi@firstfloor.org, cl@linux.com, bmaurer@fb.com, rostedt@goodmis.org, josh@joshtriplett.org, torvalds@linux-foundation.org, catalin.marinas@arm.com, will.deacon@arm.com, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 05/03/2018 03:58 AM, Dave Hansen wrote:
-> On 05/02/2018 02:33 PM, Andrew Morton wrote:
->> On Tue,  1 May 2018 22:58:06 -0700 Prakash Sangappa <prakash.sangappa@oracle.com> wrote:
->>> For analysis purpose it is useful to have numa node information
->>> corresponding mapped address ranges of the process. Currently
->>> /proc/<pid>/numa_maps provides list of numa nodes from where pages are
->>> allocated per VMA of the process. This is not useful if an user needs to
->>> determine which numa node the mapped pages are allocated from for a
->>> particular address range. It would have helped if the numa node information
->>> presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
->>> exact numa node from where the pages have been allocated.
+On Wed, May 02, 2018 at 08:37:13PM +0000, Daniel Colascione wrote:
+> > Recursive locks are teh most horrible crap ever. And having the tid in
 > 
-> I'm finding myself a little lost in figuring out what this does.  Today,
-> numa_maps might us that a 3-page VMA has 1 page from Node 0 and 2 pages
-> from Node 1.  We group *entirely* by VMA:
+> What happened to providing mechanism, not policy?
 > 
-> 1000-4000 N0=1 N1=2
-> 
-> We don't want that.  We want to tell exactly where each node's memory is
-> despite if they are in the same VMA, like this:
-> 
-> 1000-2000 N1=1
-> 2000-3000 N0=1
-> 3000-4000 N1=1
+> You can't wish away recursive locking. It's baked into Java and the CLR,
+> and it's enshrined in POSIX. It's not going away, and there's no reason not
+> to support it efficiently.
 
-I am kind of wondering on a big memory system how many lines of output
-we might have for a large (consuming lets say 80 % of system RAM) VMA
-in interleave policy. Is not that a problem ?
+You can implement recursive locks just fine with a TID based word, just
+keep the recursion counter external to the futex word. If owner==self,
+increment etc..
+
+> > the word allows things like kernel based optimistic spins and possibly
+> > PI related things.
+> 
+> Sure. A lot of people don't want PI though, or at least they want to opt
+> into it. And we shouldn't require an entry into the kernel for what we can
+> in principle do efficiently in userspace.
+
+Any additional PI would certainly be opt-in, but the kernel based
+spinning might make sense unconditionally.
