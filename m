@@ -1,96 +1,102 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v5 00/28] FPGA Device Feature List (DFL) Device Drivers
-Date: Fri, 4 May 2018 08:15:28 +0800
-Message-ID: <20180504001528.GA31101@hao-dev>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
- <CANk1AXSFQzBoZWQu4R9aYQSXFbr76UQ_-39ENe5hSOncKuDq+A@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Fri, 4 May 2018 13:10:22 +0200
+Message-ID: <20180504111022.GN4535@dhcp22.suse.cz>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+ <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
+ <cac754ee-efb9-0259-a50b-4efa11783058@oracle.com>
+ <20180503085741.GD4535@dhcp22.suse.cz>
+ <40be68bb-8322-2bef-f454-22e1ab9029da@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXSFQzBoZWQu4R9aYQSXFbr76UQ_-39ENe5hSOncKuDq+A@mail.gmail.com>
+In-Reply-To: <40be68bb-8322-2bef-f454-22e1ab9029da@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+To: "prakash.sangappa" <prakash.sangappa@oracle.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>, Dave Hansen <dave.hansen@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 03, 2018 at 04:14:48PM -0500, Alan Tull wrote:
-> On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
-> > Hi All,
-> >
-> > Here is v5 patch-series adding drivers for FPGA DFL devices.
-> >
-> > This patch series provides a common framework to support FPGA Device Feature
-> > List (DFL), and also feature dev drivers under this DFL framework to provide
-> > interfaces for userspace applications to configure, enumerate, open, and
-> > access FPGA accelerators on DFL based FPGA device and enables system level
-> > management functions such as FPGA partial reconfiguration, power management
-> > and virtualization.
+On Thu 03-05-18 15:37:39, prakash.sangappa wrote:
 > 
-> Hi Hao,
 > 
-
-Hi Alan,
-
-Thanks for your review on this patch set.
-
-> I've started looking at your v5 here.  It's 5212 lines of code, so
-> it's not tiny.
+> On 05/03/2018 01:57 AM, Michal Hocko wrote:
+> > On Wed 02-05-18 16:43:58, prakash.sangappa wrote:
+> > > 
+> > > On 05/02/2018 02:33 PM, Andrew Morton wrote:
+> > > > On Tue,  1 May 2018 22:58:06 -0700 Prakash Sangappa <prakash.sangappa@oracle.com> wrote:
+> > > > 
+> > > > > For analysis purpose it is useful to have numa node information
+> > > > > corresponding mapped address ranges of the process. Currently
+> > > > > /proc/<pid>/numa_maps provides list of numa nodes from where pages are
+> > > > > allocated per VMA of the process. This is not useful if an user needs to
+> > > > > determine which numa node the mapped pages are allocated from for a
+> > > > > particular address range. It would have helped if the numa node information
+> > > > > presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
+> > > > > exact numa node from where the pages have been allocated.
+> > > > > 
+> > > > > The format of /proc/<pid>/numa_maps file content is dependent on
+> > > > > /proc/<pid>/maps file content as mentioned in the manpage. i.e one line
+> > > > > entry for every VMA corresponding to entries in /proc/<pids>/maps file.
+> > > > > Therefore changing the output of /proc/<pid>/numa_maps may not be possible.
+> > > > > 
+> > > > > Hence, this patch proposes adding file /proc/<pid>/numa_vamaps which will
+> > > > > provide proper break down of VA ranges by numa node id from where the mapped
+> > > > > pages are allocated. For Address ranges not having any pages mapped, a '-'
+> > > > > is printed instead of numa node id. In addition, this file will include most
+> > > > > of the other information currently presented in /proc/<pid>/numa_maps. The
+> > > > > additional information included is for convenience. If this is not
+> > > > > preferred, the patch could be modified to just provide VA range to numa node
+> > > > > information as the rest of the information is already available thru
+> > > > > /proc/<pid>/numa_maps file.
+> > > > > 
+> > > > > Since the VA range to numa node information does not include page's PFN,
+> > > > > reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
+> > > > > 
+> > > > > Here is the snippet from the new file content showing the format.
+> > > > > 
+> > > > > 00400000-00401000 N0=1 kernelpagesize_kB=4 mapped=1 file=/tmp/hmap2
+> > > > > 00600000-00601000 N0=1 kernelpagesize_kB=4 anon=1 dirty=1 file=/tmp/hmap2
+> > > > > 00601000-00602000 N0=1 kernelpagesize_kB=4 anon=1 dirty=1 file=/tmp/hmap2
+> > > > > 7f0215600000-7f0215800000 N0=1 kernelpagesize_kB=2048 dirty=1 file=/mnt/f1
+> > > > > 7f0215800000-7f0215c00000 -  file=/mnt/f1
+> > > > > 7f0215c00000-7f0215e00000 N0=1 kernelpagesize_kB=2048 dirty=1 file=/mnt/f1
+> > > > > 7f0215e00000-7f0216200000 -  file=/mnt/f1
+> > > > > ..
+> > > > > 7f0217ecb000-7f0217f20000 N0=85 kernelpagesize_kB=4 mapped=85 mapmax=51
+> > > > >      file=/usr/lib64/libc-2.17.so
+> > > > > 7f0217f20000-7f0217f30000 -  file=/usr/lib64/libc-2.17.so
+> > > > > 7f0217f30000-7f0217f90000 N0=96 kernelpagesize_kB=4 mapped=96 mapmax=51
+> > > > >      file=/usr/lib64/libc-2.17.so
+> > > > > 7f0217f90000-7f0217fb0000 -  file=/usr/lib64/libc-2.17.so
+> > > > > ..
+> > > > > 
+> > > > > The 'pmap' command can be enhanced to include an option to show numa node
+> > > > > information which it can read from this new proc file. This will be a
+> > > > > follow on proposal.
+> > > > I'd like to hear rather more about the use-cases for this new
+> > > > interface.  Why do people need it, what is the end-user benefit, etc?
+> > > This is mainly for debugging / performance analysis. Oracle Database
+> > > team is looking to use this information.
+> > But we do have an interface to query (e.g. move_pages) that your
+> > application can use. I am really worried that the broken out per node
+> > data can be really large (just take a large vma with interleaved policy
+> > as an example). So is this really worth adding as a general purpose proc
+> > interface?
 > 
-> I see a lot of renaming from 'fpga' to 'dfl', thanks for doing that.
-> 
-> The main thing that stands out at first look is a new method of
-> registering port ops.  It would be better if the fpga bridge framework
-> were expanded or changed somehow to do that.  It's like we have two
-> bridge frameworks now.
+> I guess move_pages could be useful. There needs to be a tool or
+> command which can read the numa node information using move_pages
+> to be used to observe another process.
 
-I only limit this change in DFL framework, because introduce a port ops
-here to DFL framework is to resolve the hard dependency between DFL
-driver modules (e.g DFL FME and port), this sounds like a DFL specific
-thing, and I am not sure if there is some real need or benefit for other
-non-DFL module, so i didn't modify the common fpga bridge code.
+That should be trivial. You can get vma ranges of interest from /proc/maps
+and then use move_pages to get a more detailed information.
 
-> 
-> I see that there isn't a way of specifying which FPGA mgr driver to
-> use, so dfl-fme-mgr.c is tied to dfl-fme-pr.c.  It would be better if
-> the DFL could specify which fpga manager driver to use.
+> From an observability point of view, one of the use of the proposed
+> new file 'numa_vamaps' was to modify  'pmap' command to display numa
+> node information broken down by address ranges.  Would having pmap
+> show numa node information be useful?
 
-Hm.. I think we discussed this against v4. It could be a different sub
-feature with different id to support different PR hardware.  In that
-case, we could still reuse sub feature driver provided by dfl-fme-pr.c
-(specify a new id which reuses the same pr_mgmt_ops)
-
-        {
-                 .id = FME_FEATURE_ID_PR_MGMT,
-                 .ops = &pr_mgmt_ops,
-        },
-
-Inside dfl-fme-pr.c, it could parse the different id to create different
-platform devices for different FPGA mgrs.
-
-Could we leave this a later change? as i don't have a different hardware
-like this at this moment (maybe future) and I don't see current framework
-block us on reusing these code.
-
-> 
-> Maybe I'm repeating myself here, the biggest question I'm asking
-> region, how much of this code can be reused?  I would hope that all of
-> it could except for the fpga manager/bridge drivers.  That was the
-> intent of the original FPGA framework.  
-
-I fully understand that it's better to make code reusable, this is what
-we are trying to do in these patchsets. But it's still not very clear that
-who others or which products will use this DFL framework and how, what's
-the difficulty they will face and what kind of help or changes we could
-provide. so maybe we could defer some work when people really need it, if
-there is no hard blocking issue on architecture level.
-
-> I'll have more time next week to look in more depth.
-
-Looking forward to your feedback. Thanks again for your review. :)
-
-Hao
-
-> 
-> Alan
-> 
+I do not have a usecase for that.
+-- 
+Michal Hocko
+SUSE Labs
