@@ -1,74 +1,95 @@
 From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH 1/6 v1] fs: use << for MS_* flags
-Date: Mon,  7 May 2018 00:46:59 +0200
-Message-ID: <20180506224704.14669-2-christian.brauner@ubuntu.com>
-References: <20180506224704.14669-1-christian.brauner@ubuntu.com>
+Subject: [PATCH 0/6 v1] statfs: handle mount propagation
+Date: Mon,  7 May 2018 00:46:58 +0200
+Message-ID: <20180506224704.14669-1-christian.brauner@ubuntu.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180506224704.14669-1-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 Cc: torvalds@linux-foundation.org, tglx@linutronix.de, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, pombredanne@nexb.com, linux-api@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-The definitions for MS_* flags are currently a mixture between hex values
-and bit-shifts. All higher values are already initialized with bit-shifts
-for MS_* constants starting with (1<<16).
-This patch switches the definitions for MS_* constants over to uniformly
-use bit-shifts.
-Note that the BIT() macro cannot be used as it is not exported to uapi
-files as was pointed out by gregkh.
+Hey,
 
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
-v0->v1:
-* non-functional changes: extend commit message
----
+This is v1 of this patchset. All changes from v0 to v1 are non-functional.
+Specifically, the commit messages and justification have been extended as
+requested by Linus and Al.
+
+This little series does the following:
+
+- unify the definition of constants in statfs.h and fs.h:
+  The definitions for MS_* flags are currently a mixture between hex values
+  and bit-shifts. All higher values are already initialized with bit-shifts
+  for MS_* constants starting with (1<<16). This patch switches the
+  definitions for MS_* constants over to uniformly use bit-shifts and
+  alignes the definitions of ST_* flags too.
+  Initializing them identically let's userspace easily detect when flags
+  indicate the same property but use a different value in doing so.
+
+- extend statfs to handle mount propagation:
+  For all cases the only way to do this right now is by parsing
+  /proc/<pid>/mountinfo. Yes, it is doable but still it is somewhat costly
+  and annoying as e.g. those mount propagation fields are optional.
+  1. prevent propagation from happening:
+     From a userspace perspective we often run into the case where we
+     simply want to know whether a given mountpoint is MS_SHARED or is
+     MS_SLAVE. If it is we remount it as MS_PRIVATE to prevent any
+     propagation from happening. We don't care about the peer
+     relationship or how the propagation is exactly setup. We only want
+     to prevent any propagation from happening.
+     These mountpoints might be known in advance so parsing
+     /proc/<pid>/mountinfo should not be needed.
+  2. differentiate between MS_SLAVE and MS_SHARED mountpoints:
+     Mountpoints that are MS_SLAVE are kept intact and mountpoints that
+     are MS_SHARED are made MS_PRIVATE. These mountpoint might be known in
+     advance so parsing /proc/<pid>/mountinfo should not be needed.
+  3. retrieve propagation properties when procfs is not mounted:
+     When the set of interesting mountpoints is known and /proc is not
+     mounted calling statfs() is the only good way to reliably determine
+     the propagation property of a mountpoint.
+  4. inspecting file descriptors to mountpoints for propagation
+     properties:
+     When file descriptors to mountpoints are passed around between
+     processes it is useful to have fstatvfs() handle mount propagation
+     properties too.
+  To this end the flags:
+  - ST_UNBINDABLE
+  - ST_SHARED
+  - ST_PRIVATE
+  - ST_SLAVE
+  are added. They have the same value as their MS_* counterparts.
+
+- Testing:
+  I verified that now userspace can do e.g.
+
+  int ret;
+  char *s = "/some/path";
+  struct statvfs sb;
+
+  ret = statvfs(s, &sb);
+  if (ret < 0)
+          return false;
+
+  if (sb.f_flag & ST_SHARED) {
+          ret = mount("", s, NULL, MS_SLAVE | MS_REC, NULL);
+          if (ret < 0)
+                  return -1;
+  }
+
+Thanks!
+Christian
+
+Christian Brauner (6):
+  fs: use << for MS_* flags
+  statfs: use << to align with fs header
+  statfs: add ST_UNBINDABLE
+  statfs: add ST_SHARED
+  statfs: add ST_SLAVE
+  statfs: add ST_PRIVATE
+
+ fs/statfs.c             | 16 +++++++++++++++-
+ include/linux/statfs.h  | 30 +++++++++++++++++-------------
  include/uapi/linux/fs.h | 33 +++++++++++++++++----------------
- 1 file changed, 17 insertions(+), 16 deletions(-)
+ 3 files changed, 49 insertions(+), 30 deletions(-)
 
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index d2a8313fabd7..9662790a657c 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -105,22 +105,23 @@ struct inodes_stat_t {
- /*
-  * These are the fs-independent mount-flags: up to 32 flags are supported
-  */
--#define MS_RDONLY	 1	/* Mount read-only */
--#define MS_NOSUID	 2	/* Ignore suid and sgid bits */
--#define MS_NODEV	 4	/* Disallow access to device special files */
--#define MS_NOEXEC	 8	/* Disallow program execution */
--#define MS_SYNCHRONOUS	16	/* Writes are synced at once */
--#define MS_REMOUNT	32	/* Alter flags of a mounted FS */
--#define MS_MANDLOCK	64	/* Allow mandatory locks on an FS */
--#define MS_DIRSYNC	128	/* Directory modifications are synchronous */
--#define MS_NOATIME	1024	/* Do not update access times. */
--#define MS_NODIRATIME	2048	/* Do not update directory access times */
--#define MS_BIND		4096
--#define MS_MOVE		8192
--#define MS_REC		16384
--#define MS_VERBOSE	32768	/* War is peace. Verbosity is silence.
--				   MS_VERBOSE is deprecated. */
--#define MS_SILENT	32768
-+#define MS_RDONLY	(1<<0)	/* Mount read-only */
-+#define MS_NOSUID	(1<<1)	/* Ignore suid and sgid bits */
-+#define MS_NODEV	(1<<2)	/* Disallow access to device special files */
-+#define MS_NOEXEC	(1<<3)	/* Disallow program execution */
-+#define MS_SYNCHRONOUS	(1<<4)	/* Writes are synced at once */
-+#define MS_REMOUNT	(1<<5)	/* Alter flags of a mounted FS */
-+#define MS_MANDLOCK	(1<<6)	/* Allow mandatory locks on an FS */
-+#define MS_DIRSYNC	(1<<7)	/* Directory modifications are synchronous */
-+#define MS_NOATIME	(1<<10)	/* Do not update access times. */
-+#define MS_NODIRATIME	(1<<11)	/* Do not update directory access times */
-+#define MS_BIND		(1<<12)
-+#define MS_MOVE		(1<<13)
-+#define MS_REC		(1<<14)
-+#define MS_VERBOSE	(1<<15)	/* War is peace. Verbosity is silence.
-+				 * MS_VERBOSE is deprecated.
-+				 */
-+#define MS_SILENT	(1<<15)
- #define MS_POSIXACL	(1<<16)	/* VFS does not apply the umask */
- #define MS_UNBINDABLE	(1<<17)	/* change to unbindable */
- #define MS_PRIVATE	(1<<18)	/* change to private */
 -- 
 2.17.0
