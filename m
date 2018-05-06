@@ -1,7 +1,7 @@
 From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH 5/6 v1] statfs: add ST_SLAVE
-Date: Mon,  7 May 2018 00:47:03 +0200
-Message-ID: <20180506224704.14669-6-christian.brauner@ubuntu.com>
+Subject: [PATCH 2/6 v1] statfs: use << to align with fs header
+Date: Mon,  7 May 2018 00:47:00 +0200
+Message-ID: <20180506224704.14669-3-christian.brauner@ubuntu.com>
 References: <20180506224704.14669-1-christian.brauner@ubuntu.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180506224704.14669-1-christian.brauner@ubuntu.com>
@@ -10,64 +10,53 @@ To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-kernel@vger.ke
 Cc: torvalds@linux-foundation.org, tglx@linutronix.de, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, pombredanne@nexb.com, linux-api@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-Currently userspace can only determine whether a mountpoint is slave
-by parsing /proc/<pid>/mountinfo. It would be convenient to simply retrieve
-this property with a statvfs() call.
-This let's userspace avoid costly parsing, supports cases where /proc is
-not mounted, and supports usecases where file descriptors to mountpoints
-are passed between processes that are inspected via fstatvfs().
-This is especially helpful in all cases where userspace is not interested
-in specific propagation properties our peer group layouts but rather just
-wants to either turn on or turn off propagation for specific mountpoints.
+After switching to using bit-shifts to define MS_* flags switch over ST_*
+flags too. ST_* and MS_* flags generally have the exact same value.
+Initializing them identically let's userspace easily detect when flags
+indicate the same property but use a different value in doing so.
 
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 v0->v1:
 * non-functional changes: extend commit message
 ---
- fs/statfs.c            | 10 +++++++++-
- include/linux/statfs.h |  1 +
- 2 files changed, 10 insertions(+), 1 deletion(-)
+ include/linux/statfs.h | 26 +++++++++++++-------------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/fs/statfs.c b/fs/statfs.c
-index 2fc6f9c3793c..35ad0402c9a3 100644
---- a/fs/statfs.c
-+++ b/fs/statfs.c
-@@ -10,6 +10,7 @@
- #include <linux/uaccess.h>
- #include <linux/compat.h>
- #include "internal.h"
-+#include "pnode.h"
- 
- static int flags_by_mnt(int mnt_flags)
- {
-@@ -50,8 +51,15 @@ static int flags_by_sb(int s_flags)
- 
- static int calculate_f_flags(struct vfsmount *mnt)
- {
--	return ST_VALID | flags_by_mnt(mnt->mnt_flags) |
-+	int flags = 0;
-+
-+	flags = ST_VALID | flags_by_mnt(mnt->mnt_flags) |
- 		flags_by_sb(mnt->mnt_sb->s_flags);
-+
-+	if (IS_MNT_SLAVE(real_mount(mnt)))
-+		flags |= ST_SLAVE;
-+
-+	return flags;
- }
- 
- static int statfs_by_dentry(struct dentry *dentry, struct kstatfs *buf)
 diff --git a/include/linux/statfs.h b/include/linux/statfs.h
-index 5416b2936dd9..048127effaad 100644
+index 3142e98546ac..b336c04e793c 100644
 --- a/include/linux/statfs.h
 +++ b/include/linux/statfs.h
-@@ -41,6 +41,7 @@ struct kstatfs {
- #define ST_NODIRATIME	(1<<11) /* do not update directory access times */
- #define ST_RELATIME	(1<<12) /* update atime relative to mtime/ctime */
- #define ST_UNBINDABLE	(1<<17)	/* change to unbindable */
-+#define ST_SLAVE	(1<<19)	/* change to slave */
- #define ST_SHARED	(1<<20)	/* change to shared */
+@@ -27,18 +27,18 @@ struct kstatfs {
+  * ABI.  The exception is ST_VALID which has the same value as MS_REMOUNT
+  * which doesn't make any sense for statfs.
+  */
+-#define ST_RDONLY	0x0001	/* mount read-only */
+-#define ST_NOSUID	0x0002	/* ignore suid and sgid bits */
+-#define ST_NODEV	0x0004	/* disallow access to device special files */
+-#define ST_NOEXEC	0x0008	/* disallow program execution */
+-#define ST_SYNCHRONOUS	0x0010	/* writes are synced at once */
+-#define ST_VALID	0x0020	/* f_flags support is implemented */
+-#define ST_MANDLOCK	0x0040	/* allow mandatory locks on an FS */
+-/* 0x0080 used for ST_WRITE in glibc */
+-/* 0x0100 used for ST_APPEND in glibc */
+-/* 0x0200 used for ST_IMMUTABLE in glibc */
+-#define ST_NOATIME	0x0400	/* do not update access times */
+-#define ST_NODIRATIME	0x0800	/* do not update directory access times */
+-#define ST_RELATIME	0x1000	/* update atime relative to mtime/ctime */
++#define ST_RDONLY	(1<<0) /* mount read-only */
++#define ST_NOSUID	(1<<1) /* ignore suid and sgid bits */
++#define ST_NODEV	(1<<2) /* disallow access to device special files */
++#define ST_NOEXEC	(1<<3) /* disallow program execution */
++#define ST_SYNCHRONOUS	(1<<4) /* writes are synced at once */
++#define ST_VALID	(1<<5) /* f_flags support is implemented */
++#define ST_MANDLOCK	(1<<6) /* allow mandatory locks on an FS */
++/* (1<<7) used for ST_WRITE in glibc */
++/* (1<<8) used for ST_APPEND in glibc */
++/* (1<<9) used for ST_IMMUTABLE in glibc */
++#define ST_NOATIME	(1<<10) /* do not update access times */
++#define ST_NODIRATIME	(1<<11) /* do not update directory access times */
++#define ST_RELATIME	(1<<12) /* update atime relative to mtime/ctime */
  
  #endif
 -- 
