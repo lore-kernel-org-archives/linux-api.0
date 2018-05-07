@@ -1,46 +1,44 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v5 22/28] fpga: dfl: fme-region: add support for compat_id
-Date: Mon, 7 May 2018 16:12:53 -0500
-Message-ID: <CANk1AXRzjFibdiO=kxDNOkUyrwQ9ASo1h=aHdMRNMXuGd7iW3g@mail.gmail.com>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com> <1525229431-3087-23-git-send-email-hao.wu@intel.com>
+From: "prakash.sangappa" <prakash.sangappa@oracle.com>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Mon, 7 May 2018 15:50:30 -0700
+Message-ID: <a61bc7b6-ed98-045d-95c0-b6c91fc8d1da@oracle.com>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+ <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake>
+ <c80ee329-084b-367f-1937-3175c178e978@oracle.com>
+ <alpine.DEB.2.21.1805040955550.10847@nuc-kabylake>
+ <98e34010-d55a-5f2d-7d98-cba424de2e74@oracle.com>
+ <alpine.DEB.2.21.1805070945200.21162@nuc-kabylake>
+Reply-To: prakash.sangappa@oracle.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1525229431-3087-23-git-send-email-hao.wu@intel.com>
+In-Reply-To: <alpine.DEB.2.21.1805070945200.21162@nuc-kabylake>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+To: Christopher Lameter <cl@linux.com>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
 
-Hi Hao,
 
-> This patch adds compat_id support, it reuses fme manager's
-> compat id, as the per region compat id is actually from the
-> fme manager's register.
->
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Alan Tull <atull@kernel.org>
+On 05/07/2018 07:47 AM, Christopher Lameter wrote:
+> On Fri, 4 May 2018, Prakash Sangappa wrote:
+>> Currently 'numa_maps' gives a list of numa nodes, memory is allocated per
+>> VMA.
+>> Ex. we get something like from numa_maps.
+>>
+>> 04000  N0=1,N2=2 kernelpagesize_KB=4
+>>
+>> First is the start address of a VMA. This VMA could be much larger then 3 4k
+>> pages.
+>> It does not say which address in the VMA has the pages mapped.
+> Not precise. First the address is there as you already said. That is the
+> virtual address of the beginning of the VMA. What is missing? You need
 
-> ---
-> v5: reuse fme manager's compat_id as per region compat_id
-> ---
->  drivers/fpga/dfl-fme-region.c | 1 +
->  1 file changed, 1 insertion(+)
->
-> diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
-> index 696b313..b82a381 100644
-> --- a/drivers/fpga/dfl-fme-region.c
-> +++ b/drivers/fpga/dfl-fme-region.c
-> @@ -45,6 +45,7 @@ static int fme_region_probe(struct platform_device *pdev)
->         }
->
->         region->priv = pdata;
-> +       region->compat_id = mgr->compat_id;
->         platform_set_drvdata(pdev, region);
->
->         ret = fpga_region_register(region);
-> --
-> 1.8.3.1
->
+Yes,
+
+> each address for each page? Length of the VMA segment?
+> Physical address?
+
+Need numa node information for each virtual address with pages mapped.
+No need of physical address.
