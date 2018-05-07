@@ -1,40 +1,72 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node
- information
-Date: Mon, 7 May 2018 09:47:17 -0500 (CDT)
-Message-ID: <alpine.DEB.2.21.1805070945200.21162@nuc-kabylake>
-References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com> <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake> <c80ee329-084b-367f-1937-3175c178e978@oracle.com> <alpine.DEB.2.21.1805040955550.10847@nuc-kabylake>
- <98e34010-d55a-5f2d-7d98-cba424de2e74@oracle.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v5 04/28] fpga: mgr: add compat_id support
+Date: Mon, 7 May 2018 16:09:06 -0500
+Message-ID: <CANk1AXRsWsd++wjWH44CCWN+cmscy_WjLJhaGGgxmmNe-u1OLw@mail.gmail.com>
+References: <1525229431-3087-1-git-send-email-hao.wu@intel.com> <1525229431-3087-5-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="8323329-764230289-1525704437=:21162"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <98e34010-d55a-5f2d-7d98-cba424de2e74@oracle.com>
+In-Reply-To: <1525229431-3087-5-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
 
---8323329-764230289-1525704437=:21162
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Hi Hao,
 
-On Fri, 4 May 2018, Prakash Sangappa wrote:
-> Currently 'numa_maps' gives a list of numa nodes, memory is allocated per
-> VMA.
-> Ex. we get something like from numa_maps.
+Looks good!
+
+> This patch introduces compat_id support to fpga manager, it adds
+> a fpga_compat_id pointer to fpga manager data structure to allow
+> fpga manager drivers to save the compatibility id. This compat_id
+> could be used for compatibility checking before doing partial
+> reconfiguration to associated fpga regions.
 >
-> 04000  N0=1,N2=2 kernelpagesize_KB=4
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+Acked-by: Alan Tull <atull@kernel.org>
+
+> ---
+>  include/linux/fpga/fpga-mgr.h | 13 +++++++++++++
+>  1 file changed, 13 insertions(+)
 >
-> First is the start address of a VMA. This VMA could be much larger then 3 4k
-> pages.
-> It does not say which address in the VMA has the pages mapped.
-
-Not precise. First the address is there as you already said. That is the
-virtual address of the beginning of the VMA. What is missing? You need
-each address for each page? Length of the VMA segment?
-Physical address?
-
---8323329-764230289-1525704437=:21162--
+> diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
+> index 802eac8..f163f22 100644
+> --- a/include/linux/fpga/fpga-mgr.h
+> +++ b/include/linux/fpga/fpga-mgr.h
+> @@ -147,11 +147,23 @@ struct fpga_manager_ops {
+>  #define FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR      BIT(4)
+>
+>  /**
+> + * struct fpga_compat_id - id for compatibility check
+> + *
+> + * @id_h: high 64bit of the compat_id
+> + * @id_l: low 64bit of the compat_id
+> + */
+> +struct fpga_compat_id {
+> +       u64 id_h;
+> +       u64 id_l;
+> +};
+> +
+> +/**
+>   * struct fpga_manager - fpga manager structure
+>   * @name: name of low level fpga manager
+>   * @dev: fpga manager device
+>   * @ref_mutex: only allows one reference to fpga manager
+>   * @state: state of fpga manager
+> + * @compat_id: FPGA manager id for compatibility check.
+>   * @mops: pointer to struct of fpga manager ops
+>   * @priv: low level driver private date
+>   */
+> @@ -160,6 +172,7 @@ struct fpga_manager {
+>         struct device dev;
+>         struct mutex ref_mutex;
+>         enum fpga_mgr_states state;
+> +       struct fpga_compat_id *compat_id;
+>         const struct fpga_manager_ops *mops;
+>         void *priv;
+>  };
+> --
+> 1.8.3.1
+>
