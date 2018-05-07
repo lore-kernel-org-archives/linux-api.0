@@ -1,12 +1,12 @@
 From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v5 19/28] fpga: dfl: fme-mgr: add compat_id support
-Date: Mon, 7 May 2018 16:12:17 -0500
-Message-ID: <CANk1AXRjZMnAtFMxka-O+AgMedGrbXNYZsNH7cLx=yJwmhFm=g@mail.gmail.com>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com> <1525229431-3087-20-git-send-email-hao.wu@intel.com>
+Subject: Re: [PATCH v5 22/28] fpga: dfl: fme-region: add support for compat_id
+Date: Mon, 7 May 2018 16:12:53 -0500
+Message-ID: <CANk1AXRzjFibdiO=kxDNOkUyrwQ9ASo1h=aHdMRNMXuGd7iW3g@mail.gmail.com>
+References: <1525229431-3087-1-git-send-email-hao.wu@intel.com> <1525229431-3087-23-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1525229431-3087-20-git-send-email-hao.wu@intel.com>
+In-Reply-To: <1525229431-3087-23-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Wu Hao <hao.wu@intel.com>
 Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
@@ -16,58 +16,31 @@ On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
 
 Hi Hao,
 
-> This patch adds compat_id support to fme manager driver, it
-> reads the ID from the hardware register. And it could be used
-> for compatibility check before partial reconfiguration.
+> This patch adds compat_id support, it reuses fme manager's
+> compat id, as the per region compat id is actually from the
+> fme manager's register.
 >
 > Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
 
 > ---
->  drivers/fpga/dfl-fme-mgr.c | 15 +++++++++++++++
->  1 file changed, 15 insertions(+)
+> v5: reuse fme manager's compat_id as per region compat_id
+> ---
+>  drivers/fpga/dfl-fme-region.c | 1 +
+>  1 file changed, 1 insertion(+)
 >
-> diff --git a/drivers/fpga/dfl-fme-mgr.c b/drivers/fpga/dfl-fme-mgr.c
-> index 1c5bc5a..afcdb39 100644
-> --- a/drivers/fpga/dfl-fme-mgr.c
-> +++ b/drivers/fpga/dfl-fme-mgr.c
-> @@ -272,9 +272,17 @@ static u64 fme_mgr_status(struct fpga_manager *mgr)
->         .status = fme_mgr_status,
->  };
->
-> +static void fme_mgr_get_compat_id(void __iomem *fme_pr,
-> +                                 struct fpga_compat_id *id)
-> +{
-> +       id->id_l = readq(fme_pr + FME_PR_INTFC_ID_L);
-> +       id->id_h = readq(fme_pr + FME_PR_INTFC_ID_H);
-> +}
-> +
->  static int fme_mgr_probe(struct platform_device *pdev)
->  {
->         struct dfl_fme_mgr_pdata *pdata = dev_get_platdata(&pdev->dev);
-> +       struct fpga_compat_id *compat_id;
->         struct device *dev = &pdev->dev;
->         struct fme_mgr_priv *priv;
->         struct fpga_manager *mgr;
-> @@ -295,11 +303,18 @@ static int fme_mgr_probe(struct platform_device *pdev)
->                         return PTR_ERR(priv->ioaddr);
+> diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
+> index 696b313..b82a381 100644
+> --- a/drivers/fpga/dfl-fme-region.c
+> +++ b/drivers/fpga/dfl-fme-region.c
+> @@ -45,6 +45,7 @@ static int fme_region_probe(struct platform_device *pdev)
 >         }
 >
-> +       compat_id = devm_kzalloc(dev, sizeof(*compat_id), GFP_KERNEL);
-> +       if (!compat_id)
-> +               return -ENOMEM;
-> +
-> +       fme_mgr_get_compat_id(priv->ioaddr, compat_id);
-> +
->         mgr = fpga_mgr_create(dev, "DFL FME FPGA Manager",
->                               &fme_mgr_ops, priv);
->         if (!mgr)
->                 return -ENOMEM;
+>         region->priv = pdata;
+> +       region->compat_id = mgr->compat_id;
+>         platform_set_drvdata(pdev, region);
 >
-> +       mgr->compat_id = compat_id;
->         platform_set_drvdata(pdev, mgr);
->
->         ret = fpga_mgr_register(mgr);
+>         ret = fpga_region_register(region);
 > --
 > 1.8.3.1
 >
