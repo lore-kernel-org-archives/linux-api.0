@@ -1,12 +1,12 @@
 From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v5 04/28] fpga: mgr: add compat_id support
-Date: Mon, 7 May 2018 16:09:06 -0500
-Message-ID: <CANk1AXRsWsd++wjWH44CCWN+cmscy_WjLJhaGGgxmmNe-u1OLw@mail.gmail.com>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com> <1525229431-3087-5-git-send-email-hao.wu@intel.com>
+Subject: Re: [PATCH v5 05/28] fpga: region: add compat_id support
+Date: Mon, 7 May 2018 16:09:58 -0500
+Message-ID: <CANk1AXQ91JVPB4p+VbVv+1GssT9sP9XF6_7fwZ9kH6oFYESjyQ@mail.gmail.com>
+References: <1525229431-3087-1-git-send-email-hao.wu@intel.com> <1525229431-3087-6-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1525229431-3087-5-git-send-email-hao.wu@intel.com>
+In-Reply-To: <1525229431-3087-6-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Wu Hao <hao.wu@intel.com>
 Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
@@ -16,56 +16,99 @@ On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
 
 Hi Hao,
 
-Looks good!
+Thanks for making the requested changes.  Looks good.
 
-> This patch introduces compat_id support to fpga manager, it adds
-> a fpga_compat_id pointer to fpga manager data structure to allow
-> fpga manager drivers to save the compatibility id. This compat_id
-> could be used for compatibility checking before doing partial
-> reconfiguration to associated fpga regions.
+> This patch introduces a compat_id pointer member and sysfs interface
+> for each fpga region, similar as compat_id for fpga manager, it allows
+> applications to read the per region compat_id for compatibility
+> checking before other actions on this fpga-region (e.g PR).
 >
 > Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
 
 > ---
->  include/linux/fpga/fpga-mgr.h | 13 +++++++++++++
->  1 file changed, 13 insertions(+)
+> v5: use pointer for compat_id as it's optional to implement.
+> ---
+>  Documentation/ABI/testing/sysfs-class-fpga-region |  9 +++++++++
+>  drivers/fpga/fpga-region.c                        | 22 ++++++++++++++++++++++
+>  include/linux/fpga/fpga-region.h                  |  2 ++
+>  3 files changed, 33 insertions(+)
+>  create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
 >
-> diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
-> index 802eac8..f163f22 100644
-> --- a/include/linux/fpga/fpga-mgr.h
-> +++ b/include/linux/fpga/fpga-mgr.h
-> @@ -147,11 +147,23 @@ struct fpga_manager_ops {
->  #define FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR      BIT(4)
+> diff --git a/Documentation/ABI/testing/sysfs-class-fpga-region b/Documentation/ABI/testing/sysfs-class-fpga-region
+> new file mode 100644
+> index 0000000..9618f74
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-class-fpga-region
+> @@ -0,0 +1,9 @@
+> +What:          /sys/class/fpga_region/<region>/compat_id
+> +Date:          May 2018
+> +KernelVersion: 4.17
+> +Contact:       Wu Hao <hao.wu@intel.com>
+> +Description:   FPGA region id for compatibility check, e.g compatibility
+> +               of the FPGA reconfiguration hardware and image. This value
+> +               is defined or calculated by the layer that is creating the
+> +               FPGA region. This interface returns the compat_id value or
+> +               just error code -ENOENT in case compat_id is not used.
+> diff --git a/drivers/fpga/fpga-region.c b/drivers/fpga/fpga-region.c
+> index d6a9dd2..6929178 100644
+> --- a/drivers/fpga/fpga-region.c
+> +++ b/drivers/fpga/fpga-region.c
+> @@ -162,6 +162,27 @@ int fpga_region_program_fpga(struct fpga_region *region)
+>  }
+>  EXPORT_SYMBOL_GPL(fpga_region_program_fpga);
 >
->  /**
-> + * struct fpga_compat_id - id for compatibility check
-> + *
-> + * @id_h: high 64bit of the compat_id
-> + * @id_l: low 64bit of the compat_id
-> + */
-> +struct fpga_compat_id {
-> +       u64 id_h;
-> +       u64 id_l;
-> +};
+> +static ssize_t compat_id_show(struct device *dev,
+> +                             struct device_attribute *attr, char *buf)
+> +{
+> +       struct fpga_region *region = to_fpga_region(dev);
 > +
-> +/**
->   * struct fpga_manager - fpga manager structure
->   * @name: name of low level fpga manager
->   * @dev: fpga manager device
->   * @ref_mutex: only allows one reference to fpga manager
->   * @state: state of fpga manager
-> + * @compat_id: FPGA manager id for compatibility check.
->   * @mops: pointer to struct of fpga manager ops
->   * @priv: low level driver private date
+> +       if (!region->compat_id)
+> +               return -ENOENT;
+> +
+> +       return sprintf(buf, "%016llx%016llx\n",
+> +                      (unsigned long long)region->compat_id->id_h,
+> +                      (unsigned long long)region->compat_id->id_l);
+> +}
+> +
+> +static DEVICE_ATTR_RO(compat_id);
+> +
+> +static struct attribute *fpga_region_attrs[] = {
+> +       &dev_attr_compat_id.attr,
+> +       NULL,
+> +};
+> +ATTRIBUTE_GROUPS(fpga_region);
+> +
+>  /**
+>   * fpga_region_create - alloc and init a struct fpga_region
+>   * @dev: device parent
+> @@ -262,6 +283,7 @@ static int __init fpga_region_init(void)
+>         if (IS_ERR(fpga_region_class))
+>                 return PTR_ERR(fpga_region_class);
+>
+> +       fpga_region_class->dev_groups = fpga_region_groups;
+>         fpga_region_class->dev_release = fpga_region_dev_release;
+>
+>         return 0;
+> diff --git a/include/linux/fpga/fpga-region.h b/include/linux/fpga/fpga-region.h
+> index f2e215b..e8ad979 100644
+> --- a/include/linux/fpga/fpga-region.h
+> +++ b/include/linux/fpga/fpga-region.h
+> @@ -12,6 +12,7 @@
+>   * @bridge_list: list of FPGA bridges specified in region
+>   * @mgr: FPGA manager
+>   * @info: FPGA image info
+> + * @compat_id: FPGA region id for compatibility check.
+>   * @priv: private data
+>   * @get_bridges: optional function to get bridges to a list
 >   */
-> @@ -160,6 +172,7 @@ struct fpga_manager {
->         struct device dev;
->         struct mutex ref_mutex;
->         enum fpga_mgr_states state;
+> @@ -21,6 +22,7 @@ struct fpga_region {
+>         struct list_head bridge_list;
+>         struct fpga_manager *mgr;
+>         struct fpga_image_info *info;
 > +       struct fpga_compat_id *compat_id;
->         const struct fpga_manager_ops *mops;
 >         void *priv;
+>         int (*get_bridges)(struct fpga_region *region);
 >  };
 > --
 > 1.8.3.1
