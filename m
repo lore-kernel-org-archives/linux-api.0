@@ -1,43 +1,74 @@
-From: "prakash.sangappa" <prakash.sangappa@oracle.com>
-Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
-Date: Mon, 7 May 2018 18:16:13 -0700
-Message-ID: <addeaadc-5ab2-f0c9-2194-dd100ae90f3a@oracle.com>
-References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
- <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
- <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
- <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
- <82d2b35c-272a-ad02-692f-2c109aacdfb6@oracle.com>
- <8569dabb-4930-aa20-6249-72457e2df51e@intel.com>
- <51145ccb-fc0d-0281-9757-fb8a5112ec24@oracle.com>
- <c72fea44-59f3-b106-8311-b5eae2d254e7@intel.com>
-Reply-To: prakash.sangappa@oracle.com
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH] pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
+ signal semantics
+Date: Tue, 08 May 2018 02:49:01 +0000
+Message-ID: <CALCETrX46wR_MDW=m9SVm=ejQmPAmD3+2oC3iapf75bPhnEAWQ@mail.gmail.com>
+References: <20180502132751.05B9F401F3041@oldenburg.str.redhat.com>
+ <248faadb-e484-806f-1485-c34a72a9ca0b@intel.com>
+ <822a28c9-5405-68c2-11bf-0c282887466d@redhat.com>
+ <57459C6F-C8BA-4E2D-99BA-64F35C11FC05@amacapital.net>
+ <6286ba0a-7e09-b4ec-e31f-bd091f5940ff@redhat.com>
+ <CALCETrVrm6yGiv6_z7RqdeB-324RoeMmjpf1EHsrGOh+iKb7+A@mail.gmail.com>
+ <b2df1386-9df9-2db8-0a25-51bf5ff63592@redhat.com>
+ <CALCETrW_Dt-HoG4keFJd8DSD=tvyR+bBCFrBDYdym4GQbfng4A@mail.gmail.com>
+ <20180503021058.GA5670@ram.oc3035372033.ibm.com>
+ <CALCETrXRQF08exQVZqtTLOKbC8Ywq5x4EYH_1D7r5v9bdOSwbg@mail.gmail.com>
+ <927c8325-4c98-d7af-b921-6aafcf8fe992@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c72fea44-59f3-b106-8311-b5eae2d254e7@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <927c8325-4c98-d7af-b921-6aafcf8fe992@redhat.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linuxram@us.ibm.com, Dave Hansen <dave.hansen@intel.com>, linux-x86_64@vger.kernel.org, Andrew Lutomirski <luto@kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, May 7, 2018 at 2:48 AM Florian Weimer <fweimer@redhat.com> wrote:
 
+> On 05/03/2018 06:05 AM, Andy Lutomirski wrote:
+> > On Wed, May 2, 2018 at 7:11 PM Ram Pai <linuxram@us.ibm.com> wrote:
+> >
+> >> On Wed, May 02, 2018 at 09:23:49PM +0000, Andy Lutomirski wrote:
+> >>>
+> >>>> If I recall correctly, the POWER maintainer did express a strong
+> > desire
+> >>>> back then for (what is, I believe) their current semantics, which my
+> >>>> PKEY_ALLOC_SIGNALINHERIT patch implements for x86, too.
+> >>>
+> >>> Ram, I really really don't like the POWER semantics.  Can you give
+some
+> >>> justification for them?  Does POWER at least have an atomic way for
+> >>> userspace to modify just the key it wants to modify or, even better,
+> >>> special load and store instructions to use alternate keys?
+> >
+> >> I wouldn't call it POWER semantics. The way I implemented it on power
+> >> lead to the semantics, given that nothing was explicitly stated
+> >> about how the semantics should work within a signal handler.
+> >
+> > I think that this is further evidence that we should introduce a new
+> > pkey_alloc() mode and deprecate the old.  To the extent possible, this
+> > thing should work the same way on x86 and POWER.
 
-On 05/07/2018 05:05 PM, Dave Hansen wrote:
-> On 05/07/2018 04:22 PM, prakash.sangappa wrote:
->> However, with the proposed new file, we could allow seeking to
->> specified virtual address. The lseek offset in this case would
->> represent the virtual address of the process. Subsequent read from
->> the file would provide VA range to numa node information starting
->> from that VA. In case the VA seek'ed to is invalid, it will start
->> from the next valid mapped VA of the process. The implementation
->> would not be based on seq_file.
-> So you're proposing a new /proc/<pid> file that appears next to and is
-> named very similarly to the exiting /proc/<pid>, but which has entirely
-> different behavior?
+> Do you propose to change POWER or to change x86?
 
-It will be /proc/<pid>/numa_vamaps. Yes, the behavior will be
-different with respect to seeking. Output will still be text and
-the format will be same.
+Sorry for being slow to reply.  I propose to introduce a new
+PKEY_ALLOC_something variant on x86 and POWER and to make the behavior
+match on both.  It should at least update the values loaded when a signal
+is delivered and it should probably also update it for new threads.
 
-I want to get feedback on this approach.
+For glibc, for example, I assume that you want signals to be delivered with
+write access disabled to the GOT.  Otherwise you would fail to protect
+against exploits that occur in signal context.  Glibc controls thread
+creation, so the initial state on thread startup doesn't really matter, but
+there will be more users than just glibc.
+
+--Andy
