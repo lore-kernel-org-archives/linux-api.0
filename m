@@ -1,128 +1,43 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [RFC] vfs: skip extra attributes check on removal for symlinks
-Date: Mon, 7 May 2018 17:30:55 -0700
-Message-ID: <20180508003055.GC11261@magnolia>
-References: <20180426234639.12480-1-mcgrof@kernel.org>
- <20180501172319.GK4127@magnolia>
- <20180501174512.GA27853@wotan.suse.de>
+From: "prakash.sangappa" <prakash.sangappa@oracle.com>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Mon, 7 May 2018 18:16:13 -0700
+Message-ID: <addeaadc-5ab2-f0c9-2194-dd100ae90f3a@oracle.com>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+ <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
+ <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
+ <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
+ <82d2b35c-272a-ad02-692f-2c109aacdfb6@oracle.com>
+ <8569dabb-4930-aa20-6249-72457e2df51e@intel.com>
+ <51145ccb-fc0d-0281-9757-fb8a5112ec24@oracle.com>
+ <c72fea44-59f3-b106-8311-b5eae2d254e7@intel.com>
+Reply-To: prakash.sangappa@oracle.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180501174512.GA27853@wotan.suse.de>
+In-Reply-To: <c72fea44-59f3-b106-8311-b5eae2d254e7@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Cc: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, sandeen@sandeen.net, dhowells@redhat.com, tytso@mit.edu, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Dave Hansen <dave.hansen@intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 01, 2018 at 05:45:12PM +0000, Luis R. Rodriguez wrote:
-> On Tue, May 01, 2018 at 10:23:19AM -0700, Darrick J. Wong wrote:
-> > On Thu, Apr 26, 2018 at 04:46:39PM -0700, Luis R. Rodriguez wrote:
-> > > Linux filesystems cannot set extra file attributes (stx_attributes as per
-> > > statx(2)) on a symbolic link. To set extra file attributes you issue
-> > > ioctl(2) with FS_IOC_SETFLAGS, *all* ioctl(2) calls on a symbolic link
-> > > yield EBADF.
-> > > 
-> > > This is because ioctl(2) tries to obtain struct fd from the symbolic link
-> > > file descriptor passed using fdget(), fdget() in turn always returns no
-> > > file set when a file descriptor is open with O_PATH. As per symlink(2)
-> > > O_PATH and O_NOFOLLOW must *always* be used when you want to get the file
-> > > descriptor of a symbolic link, and this holds true for Linux, as such extra
-> > > file attributes cannot possibly be set on symbolic links on Linux.
-> > > 
-> > > Filesystems repair utilities should be updated to detect this as
-> > > corruption and correct this, however, the VFS *does* respect these
-> > > extra attributes on symlinks for removal.
-> > > 
-> > > Since we cannot set these attributes we should special-case the
-> > > immutable/append on delete for symlinks, this would be consistent with
-> > > what we *do* allow on Linux for all filesystems.
-> > 
-> > Ah, ok, so the problem here is that you can't rm an "immutable" symlink
-> > nor can you clear the immutable flag on such a beast, so therefore
-> > ignore the immutable (and append) flags if we're trying to delete a
-> > symlink?
-> 
-> Yup.
-> 
-> > I think we ought to teach the xfs inode verifier to check for
-> > immutable/append symlinks and return error so that we don't end up with
-> > such things in core in the first place,
-> 
-> Agreed. But note that one way to end up with these things is through
-> corruption. Once a user finds this the first signs they'll run into
-> (unless they have the awesome new online scrubber) is they cannot delete
-> some odd file and not know why. And then they'll see they cannot change
-> or remove either the immutable or append flag. The immutable attribute
-> is known to not let you delete the file, but its less known that the
-> append attribute implies the same. Folks would scratch their heads.
-> 
-> Since one cannot *set* these attributes on symlinks on Linux, other than
-> ignoring such attributes perhaps we should warn about it? As the only
-> way you could end up with that is if your filesystem got corrupted.
-> 
-> But without filesystems having a fix for that merged users can't do anything.
-> 
-> > and fix xfs_repair to zap such things.
-> 
-> This is what my patch for xfs_repair does, which is pending review.
-> 
-> But note that special files are handled differently, I explain the logic on the
-> RFC commit log, which is why I suggested splitting up adding a fix for special
-> files as a separate patch.
-> 
-> > That said, for the filesystems that aren't going to check their inodes,
-> > I guess this is a (hackish) way to avoid presenting undeletable gunk in
-> > the fs to the user...
-> 
-> That's why its RFC. What is the right thing to do here?
 
-Ideally, none of the filesystems should ever feed garbage to the vfs,
-but it's not all that obvious exactly what things the vfs will trip over.
-And knowing that a lot of the filesystems do minimal checking if any, I
-guess I'll just say that...
 
-...XFS (and probably ext4) should catch immutable symlinks in the inode
-verifiers so that xfs_iget returns -EFSCORRUPTED.  For the rest of the
-filesystems, it's probably fine to let them delete the symlink since the
-user wants to kill it anyway.
+On 05/07/2018 05:05 PM, Dave Hansen wrote:
+> On 05/07/2018 04:22 PM, prakash.sangappa wrote:
+>> However, with the proposed new file, we could allow seeking to
+>> specified virtual address. The lseek offset in this case would
+>> represent the virtual address of the process. Subsequent read from
+>> the file would provide VA range to numa node information starting
+>> from that VA. In case the VA seek'ed to is invalid, it will start
+>> from the next valid mapped VA of the process. The implementation
+>> would not be based on seq_file.
+> So you're proposing a new /proc/<pid> file that appears next to and is
+> named very similarly to the exiting /proc/<pid>, but which has entirely
+> different behavior?
 
-> My own logic here was since we cannot possibly allow extended attributes on
-> symlinks is to not use them then as well, in this case for delete.
-> 
-> > (Were it up to me I'd make a common vfs_check_inode() to reject
-> > struct inode containing garbage that the vfs won't deal with,
-> 
-> There certainly are cases that we could come up with for the VFS where
-> if such things are found, regardless of the filesystem, we're very sure
-> its a corruption. This is just one example, as you note.
-> 
-> So it is correct that there are two things here:
-> 
-> 1) Do we respect the attribute for symlink on delete
-> 2) Do we warn to users of the fact that the inode is very likely corrupted
->    regardless of the filesystem?
+It will be /proc/<pid>/numa_vamaps. Yes, the behavior will be
+different with respect to seeking. Output will still be text and
+the format will be same.
 
-But I suppose we could WARN_ON_ONCE to state that we're allowing
-deletion of an immutable symlink that we couldn't possibly have set.
-Anyway, couple this patch with a second one to fix the xfs verifier and
-I'll be happy.
-
---D
-
-> This patch only addresses 1) and makes it match the VFS expectation, and
-> I think this is safe if we're not doing 2). This is why I'm also looking
-> for feedback from linux-api folks.
-> 
-> This is one of those odd corner cases we run into, and very likely not
-> well documented anywhere.
-> 
-> > and teach the filesystems to use it;
-> 
-> Or the VFS uses it.
-> 
->   Luis
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I want to get feedback on this approach.
