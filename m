@@ -1,83 +1,54 @@
 From: adam.manzanares@wdc.com
-Subject: [PATCH v3 1/3] block: add ioprio_check_cap function
-Date: Tue,  8 May 2018 10:42:00 -0700
-Message-ID: <20180508174202.2537-2-adam.manzanares@wdc.com>
-References: <20180508174202.2537-1-adam.manzanares@wdc.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180508174202.2537-1-adam.manzanares@wdc.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH v3 0/3] AIO add per-command iopriority
+Date: Tue,  8 May 2018 10:41:59 -0700
+Message-ID: <20180508174202.2537-1-adam.manzanares@wdc.com>
+Return-path: <owner-linux-aio@kvack.org>
+Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk, bcrl@kvack.org
 Cc: linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, Adam Manzanares <adam.manzanares@wdc.com>
 List-Id: linux-api@vger.kernel.org
 
 From: Adam Manzanares <adam.manzanares@wdc.com>
 
-Aio per command iopriority support introduces a second interface between
-userland and the kernel capable of passing iopriority. The aio interface also
-needs the ability to verify that the submitting context has sufficient
-priviledges to submit IOPRIO_RT commands. This patch creates the
-ioprio_check_cap function to be used by the ioprio_set system call and also by
-the aio interface.
+This is the per-I/O equivalent of the ioprio_set system call.
+See the following link for performance implications on a SATA HDD:
+https://lkml.org/lkml/2016/12/6/495
 
-Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
----
- block/ioprio.c         | 22 ++++++++++++++++------
- include/linux/ioprio.h |  2 ++
- 2 files changed, 18 insertions(+), 6 deletions(-)
+First patch factors ioprio_check_cap function out of ioprio_set system call to 
+also be used by the aio ioprio interface.
 
-diff --git a/block/ioprio.c b/block/ioprio.c
-index 6f5d0b6625e3..f9821080c92c 100644
---- a/block/ioprio.c
-+++ b/block/ioprio.c
-@@ -61,15 +61,10 @@ int set_task_ioprio(struct task_struct *task, int ioprio)
- }
- EXPORT_SYMBOL_GPL(set_task_ioprio);
- 
--SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
-+int ioprio_check_cap(int ioprio)
- {
- 	int class = IOPRIO_PRIO_CLASS(ioprio);
- 	int data = IOPRIO_PRIO_DATA(ioprio);
--	struct task_struct *p, *g;
--	struct user_struct *user;
--	struct pid *pgrp;
--	kuid_t uid;
--	int ret;
- 
- 	switch (class) {
- 		case IOPRIO_CLASS_RT:
-@@ -92,6 +87,21 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
- 			return -EINVAL;
- 	}
- 
-+	return 0;
-+}
-+
-+SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
-+{
-+	struct task_struct *p, *g;
-+	struct user_struct *user;
-+	struct pid *pgrp;
-+	kuid_t uid;
-+	int ret;
-+
-+	ret = ioprio_check_cap(ioprio);
-+	if (ret)
-+		return ret;
-+
- 	ret = -ESRCH;
- 	rcu_read_lock();
- 	switch (which) {
-diff --git a/include/linux/ioprio.h b/include/linux/ioprio.h
-index 627efac73e6d..4a28cec49ec3 100644
---- a/include/linux/ioprio.h
-+++ b/include/linux/ioprio.h
-@@ -77,4 +77,6 @@ extern int ioprio_best(unsigned short aprio, unsigned short bprio);
- 
- extern int set_task_ioprio(struct task_struct *task, int ioprio);
- 
-+extern int ioprio_check_cap(int ioprio);
-+
- #endif
+Second patch converts kiocb ki_hint field to a u16 to avoid kiocb bloat.
+
+Third patch passes ioprio hint from aio iocb to kiocb and enables block_dev 
+usage of the per I/O ioprio feature.
+
+v2: merge patches
+    use IOCB_FLAG_IOPRIO
+    validate intended use with IOCB_IOPRIO
+    add linux-api and linux-block to cc
+
+v3: add ioprio_check_cap function
+    convert kiocb ki_hint to u16
+    use ioprio_check_cap when adding ioprio to kiocb in aio.c
+
+Adam Manzanares (3):
+  block: add ioprio_check_cap function
+  fs: Convert kiocb rw_hint from enum to u16
+  fs: Add aio iopriority support for block_dev
+
+ block/ioprio.c               | 22 ++++++++++++++++------
+ fs/aio.c                     | 16 ++++++++++++++++
+ fs/block_dev.c               |  2 ++
+ include/linux/fs.h           | 17 +++++++++++++++--
+ include/linux/ioprio.h       |  2 ++
+ include/uapi/linux/aio_abi.h |  1 +
+ 6 files changed, 52 insertions(+), 8 deletions(-)
+
 -- 
 2.15.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
