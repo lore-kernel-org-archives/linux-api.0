@@ -1,7 +1,8 @@
 From: Eric Sandeen <sandeen@sandeen.net>
-Subject: [PATCH 1/2] fs: hoist BTRFS_IOC_[SG]ET_FSLABEL to vfs
-Date: Wed, 9 May 2018 11:01:21 -0500
-Message-ID: <b8c7feca-68ce-b1a8-3a96-a99b50457a84@sandeen.net>
+Subject: [PATCH 2/2] man2: New page documenting filesystem get/set label
+ ioctls
+Date: Wed, 9 May 2018 11:04:03 -0500
+Message-ID: <708b8e2a-2bc2-df38-ec9c-c605203052b5@sandeen.net>
 References: <d2979d75-5e45-b145-9ca5-2c315d8ead9c@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -10,94 +11,120 @@ Return-path: <linux-btrfs-owner@vger.kernel.org>
 In-Reply-To: <d2979d75-5e45-b145-9ca5-2c315d8ead9c@redhat.com>
 Content-Language: en-US
 Sender: linux-btrfs-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@redhat.com>, fsdevel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Eric Sandeen <sandeen@redhat.com>, fsdevel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Move the btrfs label ioctls up to the vfs for general use.
-
-This retains 256 chars as the maximum size through the interface, which
-is the btrfs limit and AFAIK exceeds any other filesystem's maximum
-label size.
+This documents the proposed new vfs-level ioctls which can
+get or set a mounted filesytem's label.
 
 Signed-off-by: Eric Sandeen <sandeen@redhat.com>
 ---
 
-Let the bikeshedding on the exact ioctl name begin ;)
+btrfs folks, please verify that this accurately describes your
+current behavior, thanks.
 
- fs/btrfs/ioctl.c           | 8 ++++----
- include/uapi/linux/btrfs.h | 6 ++----
- include/uapi/linux/fs.h    | 8 ++++++--
- 3 files changed, 12 insertions(+), 10 deletions(-)
+diff --git a/man2/ioctl_fslabel.2 b/man2/ioctl_fslabel.2
+new file mode 100644
+index 0000000..150aa53
+--- /dev/null
++++ b/man2/ioctl_fslabel.2
+@@ -0,0 +1,83 @@
++.\" Copyright (c) 2018, Red Hat, Inc.  All rights reserved.
++.\"
++.\" %%%LICENSE_START(GPLv2+_DOC_FULL)
++.\" This is free documentation; you can redistribute it and/or
++.\" modify it under the terms of the GNU General Public License as
++.\" published by the Free Software Foundation; either version 2 of
++.\" the License, or (at your option) any later version.
++.\"
++.\" The GNU General Public License's references to "object code"
++.\" and "executables" are to be interpreted as the output of any
++.\" document formatting or typesetting system, including
++.\" intermediate and printed output.
++.\"
++.\" This manual is distributed in the hope that it will be useful,
++.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
++.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++.\" GNU General Public License for more details.
++.\"
++.\" You should have received a copy of the GNU General Public
++.\" License along with this manual; if not, see
++.\" <http://www.gnu.org/licenses/>.
++.\" %%%LICENSE_END
++.TH IOCTL-FSLABEL 2 2018-05-02 "Linux" "Linux Programmer's Manual"
++.SH NAME
++ioctl_fslabel \- get or set a filesystem label
++.SH SYNOPSIS
++.br
++.B #include <sys/ioctl.h>
++.br
++.B #include <linux/fs.h>
++.sp
++.BI "int ioctl(int " fd ", FS_IOC_GETFSLABEL, char " label [FSLABEL_MAX]);
++.br
++.BI "int ioctl(int " fd ", FS_IOC_SETFSLABEL, char " label [FSLABEL_MAX]);
++.SH DESCRIPTION
++If a filesystem supports online label manipulation, these
++.BR ioctl (2)
++operations can be used to get or set the filesystem label for the filesystem
++on which
++.B fd
++resides.
++.SH RETURN VALUE
++On success zero is returned.  On error, \-1 is returned, and
++.I errno
++is set to indicate the error.
++.PP
++.SH ERRORS
++Error codes can be one of, but are not limited to, the following:
++.TP
++.B EINVAL
++The specified label exceeds the maximum label length for the filesystem.
++.TP
++.B ENOTTY
++This can appear if the filesystem does not support online label manipulation.
++.TP
++.B EPERM
++The calling process does not have sufficient permissions to set the label.
++.TP
++.B EFAULT
++.I label
++references an inaccessible memory area.
++.SH VERSIONS
++These ioctl operations first appeared in Linux 4.18.
++They were previously known as
++.B BTRFS_IOC_GET_FSLABEL
++and
++.B BTRFS_IOC_SET_FSLABEL
++and were private to Btrfs.
++.SH CONFORMING TO
++This API is Linux-specific.
++.SH NOTES
++The maximum string length for this interface is
++.BR FSLABEL_MAX ,
++including the terminating null byte (\(aq\\0\(aq).
++Filesystems have differing maximum label lengths, which may or
++may not include the terminating null.  The string provided to
++.B FS_IOC_SETFSLABEL
++must always be null-terminated, and the string returned by
++.B FS_IOC_GETFSLABEL
++will always be null-terminated.
++.SH SEE ALSO
++.BR ioctl (2),
++.BR blkid (8)
+diff --git a/man2/ioctl_getfslabel.2 b/man2/ioctl_getfslabel.2
+new file mode 100644
+index 0000000..bfa8dca
+--- /dev/null
++++ b/man2/ioctl_getfslabel.2
+@@ -0,0 +1 @@
++.so man2/ioctl_fslabel.2
+diff --git a/man2/ioctl_setfslabel.2 b/man2/ioctl_setfslabel.2
+new file mode 100644
+index 0000000..bfa8dca
+--- /dev/null
++++ b/man2/ioctl_setfslabel.2
+@@ -0,0 +1 @@
++.so man2/ioctl_fslabel.2
 
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index 632e26d..2dd4cdf 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -5444,6 +5444,10 @@ long btrfs_ioctl(struct file *file, unsigned int
- 		return btrfs_ioctl_setflags(file, argp);
- 	case FS_IOC_GETVERSION:
- 		return btrfs_ioctl_getversion(file, argp);
-+	case FS_IOC_GETFSLABEL:
-+		return btrfs_ioctl_get_fslabel(file, argp);
-+	case FS_IOC_SETFSLABEL:
-+		return btrfs_ioctl_set_fslabel(file, argp);
- 	case FITRIM:
- 		return btrfs_ioctl_fitrim(file, argp);
- 	case BTRFS_IOC_SNAP_CREATE:
-@@ -5555,10 +5559,6 @@ long btrfs_ioctl(struct file *file, unsigned int
- 		return btrfs_ioctl_quota_rescan_wait(file, argp);
- 	case BTRFS_IOC_DEV_REPLACE:
- 		return btrfs_ioctl_dev_replace(fs_info, argp);
--	case BTRFS_IOC_GET_FSLABEL:
--		return btrfs_ioctl_get_fslabel(file, argp);
--	case BTRFS_IOC_SET_FSLABEL:
--		return btrfs_ioctl_set_fslabel(file, argp);
- 	case BTRFS_IOC_GET_SUPPORTED_FEATURES:
- 		return btrfs_ioctl_get_supported_features(argp);
- 	case BTRFS_IOC_GET_FEATURES:
-diff --git a/include/uapi/linux/btrfs.h b/include/uapi/linux/btrfs.h
-index c8d99b9..ec611c8 100644
---- a/include/uapi/linux/btrfs.h
-+++ b/include/uapi/linux/btrfs.h
-@@ -823,10 +823,8 @@ enum btrfs_err_code {
- #define BTRFS_IOC_QUOTA_RESCAN_STATUS _IOR(BTRFS_IOCTL_MAGIC, 45, \
- 			       struct btrfs_ioctl_quota_rescan_args)
- #define BTRFS_IOC_QUOTA_RESCAN_WAIT _IO(BTRFS_IOCTL_MAGIC, 46)
--#define BTRFS_IOC_GET_FSLABEL _IOR(BTRFS_IOCTL_MAGIC, 49, \
--				   char[BTRFS_LABEL_SIZE])
--#define BTRFS_IOC_SET_FSLABEL _IOW(BTRFS_IOCTL_MAGIC, 50, \
--				   char[BTRFS_LABEL_SIZE])
-+#define BTRFS_IOC_GET_FSLABEL 	FS_IOC_GETFSLABEL
-+#define BTRFS_IOC_SET_FSLABEL	FS_IOC_SETFSLABEL
- #define BTRFS_IOC_GET_DEV_STATS _IOWR(BTRFS_IOCTL_MAGIC, 52, \
- 				      struct btrfs_ioctl_get_dev_stats)
- #define BTRFS_IOC_DEV_REPLACE _IOWR(BTRFS_IOCTL_MAGIC, 53, \
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index d2a8313..1df3707 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -242,6 +242,8 @@ struct fsxattr {
- #define FICLONERANGE	_IOW(0x94, 13, struct file_clone_range)
- #define FIDEDUPERANGE	_IOWR(0x94, 54, struct file_dedupe_range)
- 
-+#define FSLABEL_MAX 256	/* Max chars for the interface; each fs may differ */
-+
- #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
- #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
- #define	FS_IOC_GETVERSION		_IOR('v', 1, long)
-@@ -251,8 +253,10 @@ struct fsxattr {
- #define FS_IOC32_SETFLAGS		_IOW('f', 2, int)
- #define FS_IOC32_GETVERSION		_IOR('v', 1, int)
- #define FS_IOC32_SETVERSION		_IOW('v', 2, int)
--#define FS_IOC_FSGETXATTR		_IOR ('X', 31, struct fsxattr)
--#define FS_IOC_FSSETXATTR		_IOW ('X', 32, struct fsxattr)
-+#define FS_IOC_FSGETXATTR		_IOR('X', 31, struct fsxattr)
-+#define FS_IOC_FSSETXATTR		_IOW('X', 32, struct fsxattr)
-+#define FS_IOC_GETFSLABEL		_IOR(0x94, 49, char[FSLABEL_MAX])
-+#define FS_IOC_SETFSLABEL		_IOW(0x94, 50, char[FSLABEL_MAX])
- 
- /*
-  * File system encryption support
--- 
-1.8.3.1
 
