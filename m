@@ -1,67 +1,66 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
-Date: Thu, 10 May 2018 09:42:54 +0200
-Message-ID: <20180510074254.GE32366@dhcp22.suse.cz>
-References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
- <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake>
- <c80ee329-084b-367f-1937-3175c178e978@oracle.com>
- <20180504111211.GO4535@dhcp22.suse.cz>
- <de18dc06-6448-d6e5-fa80-c6065edd3aa4@oracle.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 24/24] debugfs: Restrict debugfs when the kernel is
+ locked down
+Date: Thu, 10 May 2018 13:01:13 +0200
+Message-ID: <20180510110113.GA6977@amd>
+References: <20180413202241.GB4484@amd>
+ <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346403637.4030.15247096217928429102.stgit@warthog.procyon.org.uk>
+ <27818.1524148547@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="KsGdsel6WgEHnImy"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <de18dc06-6448-d6e5-fa80-c6065edd3aa4@oracle.com>
+In-Reply-To: <27818.1524148547@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Prakash Sangappa <prakash.sangappa@oracle.com>
-Cc: Christopher Lameter <cl@linux.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com
+To: David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri 04-05-18 09:18:11, Prakash Sangappa wrote:
-> 
-> 
-> On 5/4/18 4:12 AM, Michal Hocko wrote:
-> > On Thu 03-05-18 15:39:49, prakash.sangappa wrote:
-> > > 
-> > > On 05/03/2018 11:03 AM, Christopher Lameter wrote:
-> > > > On Tue, 1 May 2018, Prakash Sangappa wrote:
-> > > > 
-> > > > > For analysis purpose it is useful to have numa node information
-> > > > > corresponding mapped address ranges of the process. Currently
-> > > > > /proc/<pid>/numa_maps provides list of numa nodes from where pages are
-> > > > > allocated per VMA of the process. This is not useful if an user needs to
-> > > > > determine which numa node the mapped pages are allocated from for a
-> > > > > particular address range. It would have helped if the numa node information
-> > > > > presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
-> > > > > exact numa node from where the pages have been allocated.
-> > > > Cant you write a small script that scans the information in numa_maps and
-> > > > then displays the total pages per NUMA node and then a list of which
-> > > > ranges have how many pages on a particular node?
-> > > Don't think we can determine which numa node a given user process
-> > > address range has pages from, based on the existing 'numa_maps' file.
-> > yes we have. See move_pages...
-> 
-> Sure using move_pages, not based on just 'numa_maps'.
-> 
-> > > > > reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
-> > > > So a prime motivator here is security restricted access to numa_maps?
-> > > No it is the opposite. A regular user should be able to determine
-> > > numa node information.
-> > Well, that breaks the layout randomization, doesn't it?
-> 
-> Exposing numa node information itself should not break randomization right?
 
-I thought you planned to expose address ranges for each numa node as
-well. /me confused.
+--KsGdsel6WgEHnImy
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> It would be upto the application. In case of randomization, the application
-> could generate  address range traces of interest for debugging and then
-> using numa node information one could determine where the memory is laid
-> out for analysis.
+On Thu 2018-04-19 15:35:47, David Howells wrote:
+> Pavel Machek <pavel@ucw.cz> wrote:
+>=20
+> > >  (1) chmod and chown are disallowed on debugfs objects (though the ro=
+ot dir
+> > >      can be modified by mount and remount, but I'm not worried about =
+that).
+> >=20
+> > This has nothing to do with the lockdown goals, right? I find chown of
+> > such files quite nice, to allow debugging without doing sudo all the ti=
+me.
+>=20
+> It allows someone to give everyone access to files that should perhaps on=
+ly be
+> accessible by root.  Besides, if you disable lockdown then you can do thi=
+s if
+> you want.
 
-... even more confused
+As I said this has nothing to do with lockdown, so does not belong in
+this series. (And besides, it is bad idea.)
 
--- 
-Michal Hocko
-SUSE Labs
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--KsGdsel6WgEHnImy
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlr0JnkACgkQMOfwapXb+vKsZwCfVdFRRD0vggdq5dy87grncAKq
+zooAn1UP9zxiDCMEYTDHNkNjszBUVend
+=+dt4
+-----END PGP SIGNATURE-----
+
+--KsGdsel6WgEHnImy--
