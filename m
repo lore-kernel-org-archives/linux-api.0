@@ -1,41 +1,67 @@
-From: Dave Hansen <dave.hansen@intel.com>
+From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
-Date: Wed, 9 May 2018 16:31:22 -0700
-Message-ID: <aaca3180-7510-c008-3e12-8bbe92344ef4@intel.com>
+Date: Thu, 10 May 2018 09:42:54 +0200
+Message-ID: <20180510074254.GE32366@dhcp22.suse.cz>
 References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
- <20180502143323.1c723ccb509c3497050a2e0a@linux-foundation.org>
- <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
- <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com>
- <82d2b35c-272a-ad02-692f-2c109aacdfb6@oracle.com>
- <8569dabb-4930-aa20-6249-72457e2df51e@intel.com>
- <51145ccb-fc0d-0281-9757-fb8a5112ec24@oracle.com>
- <c72fea44-59f3-b106-8311-b5eae2d254e7@intel.com>
- <addeaadc-5ab2-f0c9-2194-dd100ae90f3a@oracle.com>
+ <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake>
+ <c80ee329-084b-367f-1937-3175c178e978@oracle.com>
+ <20180504111211.GO4535@dhcp22.suse.cz>
+ <de18dc06-6448-d6e5-fa80-c6065edd3aa4@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <addeaadc-5ab2-f0c9-2194-dd100ae90f3a@oracle.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <de18dc06-6448-d6e5-fa80-c6065edd3aa4@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: prakash.sangappa@oracle.com, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, mhocko@suse.com, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com, Naoya Horiguchi <nao.horiguchi@gmail.com>
+To: Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: Christopher Lameter <cl@linux.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com
 List-Id: linux-api@vger.kernel.org
 
-On 05/07/2018 06:16 PM, prakash.sangappa wrote:
-> It will be /proc/<pid>/numa_vamaps. Yes, the behavior will be
-> different with respect to seeking. Output will still be text and
-> the format will be same.
+On Fri 04-05-18 09:18:11, Prakash Sangappa wrote:
 > 
-> I want to get feedback on this approach.
+> 
+> On 5/4/18 4:12 AM, Michal Hocko wrote:
+> > On Thu 03-05-18 15:39:49, prakash.sangappa wrote:
+> > > 
+> > > On 05/03/2018 11:03 AM, Christopher Lameter wrote:
+> > > > On Tue, 1 May 2018, Prakash Sangappa wrote:
+> > > > 
+> > > > > For analysis purpose it is useful to have numa node information
+> > > > > corresponding mapped address ranges of the process. Currently
+> > > > > /proc/<pid>/numa_maps provides list of numa nodes from where pages are
+> > > > > allocated per VMA of the process. This is not useful if an user needs to
+> > > > > determine which numa node the mapped pages are allocated from for a
+> > > > > particular address range. It would have helped if the numa node information
+> > > > > presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
+> > > > > exact numa node from where the pages have been allocated.
+> > > > Cant you write a small script that scans the information in numa_maps and
+> > > > then displays the total pages per NUMA node and then a list of which
+> > > > ranges have how many pages on a particular node?
+> > > Don't think we can determine which numa node a given user process
+> > > address range has pages from, based on the existing 'numa_maps' file.
+> > yes we have. See move_pages...
+> 
+> Sure using move_pages, not based on just 'numa_maps'.
+> 
+> > > > > reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
+> > > > So a prime motivator here is security restricted access to numa_maps?
+> > > No it is the opposite. A regular user should be able to determine
+> > > numa node information.
+> > Well, that breaks the layout randomization, doesn't it?
+> 
+> Exposing numa node information itself should not break randomization right?
 
-I think it would be really great if you can write down a list of the
-things you actually want to accomplish.  Dare I say: you need a
-requirements list.
+I thought you planned to expose address ranges for each numa node as
+well. /me confused.
 
-The numa_vamaps approach continues down the path of an ever-growing list
-of highly-specialized /proc/<pid> files.  I don't think that is
-sustainable, even if it has been our trajectory for many years.
+> It would be upto the application. In case of randomization, the application
+> could generate  address range traces of interest for debugging and then
+> using numa node information one could determine where the memory is laid
+> out for analysis.
 
-Pagemap wasn't exactly a shining example of us getting new ABIs right,
-but it sounds like something along those is what we need.
+... even more confused
+
+-- 
+Michal Hocko
+SUSE Labs
