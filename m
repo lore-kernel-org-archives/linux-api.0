@@ -1,93 +1,95 @@
-From: Oleksandr Shamray <oleksandrs@mellanox.com>
-Subject: [patch v19 3/4] Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx families JTAG master driver
-Date: Thu, 10 May 2018 18:44:23 +0300
-Message-ID: <1525967064-10760-4-git-send-email-oleksandrs@mellanox.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [patch v19 1/4] drivers: jtag: Add JTAG core driver
+Date: Thu, 10 May 2018 09:09:45 -0700
+Message-ID: <a6ff3a11-3fe5-311e-3097-d6477ed86015@infradead.org>
 References: <1525967064-10760-1-git-send-email-oleksandrs@mellanox.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1525967064-10760-1-git-send-email-oleksandrs@mellanox.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, arnd@arndb.de
-Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>, Jiri Pirko <jiri@mellanox.com>
+ <1525967064-10760-2-git-send-email-oleksandrs@mellanox.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <1525967064-10760-2-git-send-email-oleksandrs@mellanox.com>
+Content-Language: en-US
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Oleksandr Shamray <oleksandrs@mellanox.com>, gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: system-sw-low-level@mellanox.com, devicetree@vger.kernel.org, jiri@resnulli.us, vadimp@mellanox.com, linux-api@vger.kernel.org, openbmc@lists.ozlabs.org, linux-kernel@vger.kernel.org, openocd-devel-owner@lists.sourceforge.net, Jiri Pirko <jiri@mellanox.com>, robh+dt@kernel.org, joel@jms.id.au, linux-serial@vger.kernel.org, tklauser@distanz.ch, mchehab@kernel.org, davem@davemloft.net, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-It has been tested on Mellanox system with BMC equipped with
-Aspeed 2520 SoC for programming CPLD devices.
+On 05/10/2018 08:44 AM, Oleksandr Shamray wrote:
+> Initial patch for JTAG driver
+> JTAG class driver provide infrastructure to support hardware/software
+> JTAG platform drivers. It provide user layer API interface for flashing
+> and debugging external devices which equipped with JTAG interface
+> using standard transactions.
 
-Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
-Signed-off-by: Jiri Pirko <jiri@mellanox.com>
-Acked-by: Rob Herring <robh@kernel.org>
----
-v17->v19
-v17->v18
-v16->v17
-v15->v16
-Comments pointed by Joel Stanley <joel.stan@gmail.com>
-- change clocks = <&clk_apb> to proper clocks = <&syscon ASPEED_CLK_APB>
-- add reset descriptions in bndings file
+> ---
+>  Documentation/ioctl/ioctl-number.txt |    2 +
+>  MAINTAINERS                          |   10 ++
+>  drivers/Kconfig                      |    2 +
+>  drivers/Makefile                     |    1 +
+>  drivers/jtag/Kconfig                 |   16 ++
+>  drivers/jtag/Makefile                |    1 +
+>  drivers/jtag/jtag.c                  |  273 ++++++++++++++++++++++++++++++++++
+>  include/linux/jtag.h                 |   41 +++++
+>  include/uapi/linux/jtag.h            |  105 +++++++++++++
+>  9 files changed, 451 insertions(+), 0 deletions(-)
+>  create mode 100644 drivers/jtag/Kconfig
+>  create mode 100644 drivers/jtag/Makefile
+>  create mode 100644 drivers/jtag/jtag.c
+>  create mode 100644 include/linux/jtag.h
+>  create mode 100644 include/uapi/linux/jtag.h
+> 
+> diff --git a/drivers/jtag/Kconfig b/drivers/jtag/Kconfig
+> new file mode 100644
+> index 0000000..5e2c75b
+> --- /dev/null
+> +++ b/drivers/jtag/Kconfig
+> @@ -0,0 +1,16 @@
+> +menuconfig JTAG
+> +	tristate "JTAG support"
+> +	help
+> +	  This provides basic core functionality support for jtag class devices
 
-v14->v15
-v13->v14
-v12->v13
-v11->v12
-v10->v11
-v9->v10
-v8->v9
-v7->v8
-Comments pointed by pointed by Joel Stanley <joel.stan@gmail.com>
-- Change compatible string to ast2400 and ast2000
+	                                                     JTAG class devices.
 
-V6->v7
-Comments pointed by Tobias Klauser <tklauser@distanz.ch>
- - Fix spell "Doccumentation" -> "Documentation"
+> +	  Hardware equipped with JTAG microcontroller which can be built
 
-v5->v6
-Comments pointed by Tobias Klauser <tklauser@distanz.ch>
-- Small nit: s/documentation/Documentation/
+I'm having problems understanding the line above + first 1/2 of the line below.
+Maybe something like:
 
-v4->v5
+	  Hardware that is equipped with a JTAG microcontroller can be
+	  supported by using this driver's interfaces.
 
-V3->v4
-Comments pointed by Rob Herring <robh@kernel.org>
-- delete unnecessary "status" and "reg-shift" descriptions in
-  bndings file
+> +	  on top of this drivers. Driver exposes the set of IOCTL to the
 
-v2->v3
-Comments pointed by Rob Herring <robh@kernel.org>
-- split Aspeed jtag driver and binding to sepatrate patches
-- delete unnecessary "status" and "reg-shift" descriptions in
-  bndings file
----
- .../devicetree/bindings/jtag/aspeed-jtag.txt       |   22 ++++++++++++++++++++
- 1 files changed, 22 insertions(+), 0 deletions(-)
- create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+	                          This driver exposes a set of IOCTLs to
 
-diff --git a/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
-new file mode 100644
-index 0000000..7c36eb6
---- /dev/null
-+++ b/Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
-@@ -0,0 +1,22 @@
-+Aspeed JTAG driver for ast2400 and ast2500 SoC
-+
-+Required properties:
-+- compatible:		Should be one of
-+      - "aspeed,ast2400-jtag"
-+      - "aspeed,ast2500-jtag"
-+- reg			contains the offset and length of the JTAG memory
-+			region
-+- clocks		root clock of bus, should reference the APB
-+			clock in the second cell
-+- resets		phandle to reset controller with the reset number in
-+			the second cell
-+- interrupts		should contain JTAG controller interrupt
-+
-+Example:
-+jtag: jtag@1e6e4000 {
-+	compatible = "aspeed,ast2500-jtag";
-+	reg = <0x1e6e4000 0x1c>;
-+	clocks = <&syscon ASPEED_CLK_APB>;
-+	resets = <&syscon ASPEED_RESET_JTAG_MASTER>;
-+	interrupts = <43>;
-+};
+> +	  user space for:
+
+> +	  SIR (Scan Instruction Register, IEEE 1149.1 Data Register scan);
+
+	                                              ^^^^? Instruction?
+
+> +	  SDR (Scan Data Register, IEEE 1149.1 Instruction Register scan);
+
+	                                       ^^^^^^^^^^^? Data?
+
+> +	  RUNTEST (Forces IEEE 1149.1 bus to a run state for specified
+> +	  number of clocks).
+> +
+> +	  If you want this support, you should say Y here.
+> +
+> +	  To compile this driver as a module, choose M here: the module will
+> +	  be called jtag.
+
+
 -- 
-1.7.1
+~Randy
