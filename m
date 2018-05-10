@@ -1,29 +1,27 @@
 From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: [PATCH 1/2 V2] fs: hoist BTRFS_IOC_[SG]ET_FSLABEL to vfs
-Date: Thu, 10 May 2018 20:16:09 +0100
-Message-ID: <20180510191608.GR30522@ZenIV.linux.org.uk>
-References: <d2979d75-5e45-b145-9ca5-2c315d8ead9c@redhat.com>
- <b8c7feca-68ce-b1a8-3a96-a99b50457a84@sandeen.net>
- <4a4f33c3-2173-9795-f4e4-1e9d338fd9a7@sandeen.net>
+Subject: Re: [RFC] vfs: skip extra attributes check on removal for symlinks
+Date: Thu, 10 May 2018 21:48:07 +0100
+Message-ID: <20180510204807.GV30522@ZenIV.linux.org.uk>
+References: <20180426234639.12480-1-mcgrof@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4a4f33c3-2173-9795-f4e4-1e9d338fd9a7@sandeen.net>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@sandeen.net>
-Cc: Eric Sandeen <sandeen@redhat.com>, fsdevel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20180426234639.12480-1-mcgrof@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Luis R. Rodriguez" <mcgrof@kernel.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, sandeen@sandeen.net, darrick.wong@oracle.com, dhowells@redhat.com, tytso@mit.edu, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 10, 2018 at 01:13:57PM -0500, Eric Sandeen wrote:
-> Move the btrfs label ioctls up to the vfs for general use.
-> 
-> This retains 256 chars as the maximum size through the interface, which
-> is the btrfs limit and AFAIK exceeds any other filesystem's maximum
-> label size.
-> 
-> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
-> Reviewed-by: Andreas Dilger <adilger@dilger.ca>
-> Reviewed-by: David Sterba <dsterba@suse.com>
+On Thu, Apr 26, 2018 at 04:46:39PM -0700, Luis R. Rodriguez wrote:
 
-No objections (and it obviously ought to go through btrfs tree).
+> Since we cannot set these attributes we should special-case the
+> immutable/append on delete for symlinks, this would be consistent with
+> what we *do* allow on Linux for all filesystems.
+
+Er...  So why not simply sanity-check it in places that set it on
+inodes?  If anything, I would suggest
+	* converting all places that set those in ->i_flags to
+inode_set_flags()
+	* making inode_set_flags() check and return an error on
+that...
