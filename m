@@ -1,43 +1,51 @@
 From: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Subject: [RFC v2 4/4] btrfs: verify symlinks with append/immutable flags
-Date: Thu, 10 May 2018 16:13:59 -0700
-Message-ID: <20180510231359.16899-5-mcgrof@kernel.org>
-References: <20180510231359.16899-1-mcgrof@kernel.org>
+Subject: [RFC v2 0/4] vfs: detect symlink corruption with attributes
+Date: Thu, 10 May 2018 16:13:55 -0700
+Message-ID: <20180510231359.16899-1-mcgrof@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180510231359.16899-1-mcgrof@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk, darrick.wong@oracle.com, tytso@mit.edu, adilger.kernel@dilger.ca, clm@fb.com, jbacik@fb.com, dsterba@suse.com
 Cc: sandeen@sandeen.net, dhowells@redhat.com, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, "Luis R. Rodriguez" <mcgrof@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The Linux VFS does not allow a way to set append/immuttable
-attributes to symlinks, this is just not possible. If this is
-detected inform the user as the filesystem must be corrupted.
+Filesystems which detect symlinks with append/immutable should inform
+users their filesystem is corrupted and their respective filesystem
+checker tool should fix this.
 
-Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
----
- fs/btrfs/inode.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+In lieu of this though users may be stuck with pesky files or
+directories which they cannot remove. We cannot expect all filesystems
+to be updated to address this, so since the VFS does not let filesystems
+set these attributes -- let the VFS enable users to remove symlink with
+these attributes, but also provide a fallback warning, in case the
+users's own filesystem does not catch it.
 
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index c4bdb597b323..d9c786be408c 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -3933,6 +3933,15 @@ static int btrfs_read_locked_inode(struct inode *inode)
- 		inode->i_op = &btrfs_dir_inode_operations;
- 		break;
- 	case S_IFLNK:
-+		/* VFS does not allow setting these so must be corruption */
-+		if (IS_APPEND(inode) || IS_IMMUTABLE(inode)) {
-+			ret = -EUCLEAN;
-+			btrfs_crit(fs_info,
-+				  "corrupt symlink with append/immutable ino=%llu root=%llu\n",
-+				  btrfs_ino(BTRFS_I(inode)),
-+				  root->root_key.objectid);
-+			goto make_bad;
-+		}
- 		inode->i_op = &btrfs_symlink_inode_operations;
- 		inode_nohighmem(inode);
- 		inode->i_mapping->a_ops = &btrfs_symlink_aops;
+Sending again as RFC as this just goes compile tested so far, and it
+is still unclear if this is the direction we want to go with this.
+
+v2:
+
+As per Darrick, even though the VFS should probably allow not so popular
+filesystems to delete corrupt symlinks with append/immutable -- popular
+filesystems should check for this themselves and inform the users of
+corruption. These filesystems should have their respective filesystem
+checker tools updated to correct this as well.
+
+v1:
+
+Sent out a single patch just to ignore the append/immutable attributes
+set on symlinks.
+
+Luis R. Rodriguez (4):
+  vfs: skip extra attributes check on removal for symlinks
+  xfs: add verifier check for symlink with append/immutable flags
+  ext4: add verifier check for symlink with append/immutable flags
+  btrfs: verify symlinks with append/immutable flags
+
+ fs/btrfs/inode.c                   |  9 +++++++++
+ fs/ext4/inode.c                    |  7 +++++++
+ fs/namei.c                         | 24 ++++++++++++++++++++++--
+ fs/xfs/libxfs/xfs_symlink_remote.c |  5 +++++
+ 4 files changed, 43 insertions(+), 2 deletions(-)
+
 -- 
 2.17.0
