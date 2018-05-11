@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/32] aio: simplify KIOCB_KEY handling
-Date: Fri, 11 May 2018 13:07:37 +0200
-Message-ID: <20180511110803.10910-7-hch@lst.de>
+Subject: [PATCH 07/32] aio: simplify cancellation
+Date: Fri, 11 May 2018 13:07:38 +0200
+Message-ID: <20180511110803.10910-8-hch@lst.de>
 References: <20180511110803.10910-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180511110803.10910-1-hch@lst.de>
@@ -10,82 +10,111 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-No need to pass the key field to lookup_iocb to compare it with KIOCB_KEY,
-as we can do that right after retrieving it from userspace.  Also move the
-KIOCB_KEY definition to aio.c as it is an internal value not used by any
-other place in the kernel.
+With the current aio code there is no need for the magic KIOCB_CANCELLED
+value, as a cancelation just kicks the driver to queue the completion
+ASAP, with all actual completion handling done in another thread. Given
+that both the completion path and cancelation take the context lock there
+is no need for magic cmpxchg loops either.  If we remove iocbs from the
+active list before calling ->ki_cancel we can also rely on the invariant
+thay anything found on the list has a ->ki_cancel callback and can be
+cancelled, further simplifing the code.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/aio.c            | 14 +++++++-------
- include/linux/aio.h |  2 --
- 2 files changed, 7 insertions(+), 9 deletions(-)
+ fs/aio.c | 49 ++++++-------------------------------------------
+ 1 file changed, 6 insertions(+), 43 deletions(-)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index f3eae5d5771b..2e0bc04f7920 100644
+index 2e0bc04f7920..8991baa38d5d 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -46,6 +46,8 @@
+@@ -164,19 +164,6 @@ struct fsync_iocb {
+ 	bool			datasync;
+ };
  
- #include "internal.h"
- 
-+#define KIOCB_KEY		0
-+
- #define AIO_RING_MAGIC			0xa10a10a1
- #define AIO_RING_COMPAT_FEATURES	1
- #define AIO_RING_INCOMPAT_FEATURES	0
-@@ -1812,15 +1814,12 @@ COMPAT_SYSCALL_DEFINE3(io_submit, compat_aio_context_t, ctx_id,
-  *	Finds a given iocb for cancellation.
-  */
- static struct aio_kiocb *
--lookup_kiocb(struct kioctx *ctx, struct iocb __user *iocb, u32 key)
-+lookup_kiocb(struct kioctx *ctx, struct iocb __user *iocb)
- {
- 	struct aio_kiocb *kiocb;
- 
- 	assert_spin_locked(&ctx->ctx_lock);
- 
--	if (key != KIOCB_KEY)
--		return NULL;
+-/*
+- * We use ki_cancel == KIOCB_CANCELLED to indicate that a kiocb has been either
+- * cancelled or completed (this makes a certain amount of sense because
+- * successful cancellation - io_cancel() - does deliver the completion to
+- * userspace).
+- *
+- * And since most things don't implement kiocb cancellation and we'd really like
+- * kiocb completion to be lockless when possible, we use ki_cancel to
+- * synchronize cancellation and completion - we only set it to KIOCB_CANCELLED
+- * with xchg() or cmpxchg(), see batch_complete_aio() and kiocb_cancel().
+- */
+-#define KIOCB_CANCELLED		((void *) (~0ULL))
 -
- 	/* TODO: use a hash or array, this sucks. */
- 	list_for_each_entry(kiocb, &ctx->active_reqs, ki_list) {
- 		if (kiocb->ki_user_iocb == iocb)
-@@ -1847,9 +1846,10 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ struct aio_kiocb {
+ 	union {
+ 		struct kiocb		rw;
+@@ -574,27 +561,6 @@ void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+ }
+ EXPORT_SYMBOL(kiocb_set_cancel_fn);
+ 
+-static int kiocb_cancel(struct aio_kiocb *kiocb)
+-{
+-	kiocb_cancel_fn *old, *cancel;
+-
+-	/*
+-	 * Don't want to set kiocb->ki_cancel = KIOCB_CANCELLED unless it
+-	 * actually has a cancel function, hence the cmpxchg()
+-	 */
+-
+-	cancel = READ_ONCE(kiocb->ki_cancel);
+-	do {
+-		if (!cancel || cancel == KIOCB_CANCELLED)
+-			return -EINVAL;
+-
+-		old = cancel;
+-		cancel = cmpxchg(&kiocb->ki_cancel, old, KIOCB_CANCELLED);
+-	} while (cancel != old);
+-
+-	return cancel(&kiocb->rw);
+-}
+-
+ /*
+  * free_ioctx() should be RCU delayed to synchronize against the RCU
+  * protected lookup_ioctx() and also needs process context to call
+@@ -641,9 +607,8 @@ static void free_ioctx_users(struct percpu_ref *ref)
+ 	while (!list_empty(&ctx->active_reqs)) {
+ 		req = list_first_entry(&ctx->active_reqs,
+ 				       struct aio_kiocb, ki_list);
+-
+ 		list_del_init(&req->ki_list);
+-		kiocb_cancel(req);
++		req->ki_cancel(&req->rw);
+ 	}
+ 
+ 	spin_unlock_irq(&ctx->ctx_lock);
+@@ -1843,8 +1808,8 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ {
+ 	struct kioctx *ctx;
+ 	struct aio_kiocb *kiocb;
++	int ret = -EINVAL;
  	u32 key;
- 	int ret;
+-	int ret;
  
--	ret = get_user(key, &iocb->aio_key);
--	if (unlikely(ret))
-+	if (unlikely(get_user(key, &iocb->aio_key)))
+ 	if (unlikely(get_user(key, &iocb->aio_key)))
  		return -EFAULT;
-+	if (unlikely(key != KIOCB_KEY))
-+		return -EINVAL;
- 
- 	ctx = lookup_ioctx(ctx_id);
- 	if (unlikely(!ctx))
-@@ -1857,7 +1857,7 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+@@ -1856,13 +1821,11 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 		return -EINVAL;
  
  	spin_lock_irq(&ctx->ctx_lock);
- 
--	kiocb = lookup_kiocb(ctx, iocb, key);
-+	kiocb = lookup_kiocb(ctx, iocb);
- 	if (kiocb)
- 		ret = kiocb_cancel(kiocb);
- 	else
-diff --git a/include/linux/aio.h b/include/linux/aio.h
-index 9d8aabecfe2d..b83e68dd006f 100644
---- a/include/linux/aio.h
-+++ b/include/linux/aio.h
-@@ -8,8 +8,6 @@ struct kioctx;
- struct kiocb;
- struct mm_struct;
- 
--#define KIOCB_KEY		0
 -
- typedef int (kiocb_cancel_fn)(struct kiocb *);
+ 	kiocb = lookup_kiocb(ctx, iocb);
+-	if (kiocb)
+-		ret = kiocb_cancel(kiocb);
+-	else
+-		ret = -EINVAL;
+-
++	if (kiocb) {
++		list_del_init(&kiocb->ki_list);
++		ret = kiocb->ki_cancel(&kiocb->rw);
++	}
+ 	spin_unlock_irq(&ctx->ctx_lock);
  
- /* prototypes */
+ 	if (!ret) {
 -- 
 2.17.0
 
