@@ -1,92 +1,86 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: aio poll and a new in-kernel poll API V10
-Date: Fri, 11 May 2018 13:07:31 +0200
-Message-ID: <20180511110803.10910-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
-Sender: owner-linux-aio@kvack.org
+Subject: [PATCH 02/32] fs: cleanup do_pollfd
+Date: Fri, 11 May 2018 13:07:33 +0200
+Message-ID: <20180511110803.10910-3-hch@lst.de>
+References: <20180511110803.10910-1-hch@lst.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180511110803.10910-1-hch@lst.de>
+Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+Use straightline code with failure handling gotos instead of a lot
+of nested conditionals.
 
-this series adds support for the IOCB_CMD_POLL operation to poll for the
-readyness of file descriptors using the aio subsystem.  The API is based
-on patches that existed in RHAS2.1 and RHEL3, which means it already is
-supported by libaio.  To implement the poll support efficiently new
-methods to poll are introduced in struct file_operations:  get_poll_head
-and poll_mask.  The first one returns a wait_queue_head to wait on
-(lifetime is bound by the file), and the second does a non-blocking
-check for the POLL* events.  This allows aio poll to work without
-any additional context switches, unlike epoll.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ fs/select.c | 48 +++++++++++++++++++++++-------------------------
+ 1 file changed, 23 insertions(+), 25 deletions(-)
 
-This series sits on top of the aio-fsync series that also includes
-support for io_pgetevents.
-
-The changes were sponsored by Scylladb, and improve performance
-of the seastar framework up to 10%, while also removing the need
-for a privileged SCHED_FIFO epoll listener thread.
-
-    git://git.infradead.org/users/hch/vfs.git aio-poll.10
-
-Gitweb:
-
-    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.10
-
-Libaio changes:
-
-    https://pagure.io/libaio.git io-poll
-
-Seastar changes (not updated for the new io_pgetevens ABI yet):
-
-    https://github.com/avikivity/seastar/commits/aio
-
-
-Changes since v9:
- - add to the delayed_cancel_reqs earlier to avoid a race
- - get rid of POLL_TO_PTR magic
-
-Changes since v8:
- - make delayed cancellation conditional again
- - add a cancel_kiocb file operation to split delayed vs normal cancel
-
-Changes since v7:
- - make delayed cancellation safe and unconditional
-
-Changes since v6:
- - reworked cancellation
-
-Changes since v5:
- - small changelog updates
- - rebased on top of the aio-fsync changes
-
-Changes since v4:
- - rebased ontop of Linux 4.16-rc4
-
-Changes since v3:
- - remove the pre-sleep ->poll_mask call in vfs_poll,
-   allow ->get_poll_head to return POLL* values.
-
-Changes since v2:
- - removed a double initialization
- - new vfs_get_poll_head helper
- - document that ->get_poll_head can return NULL
- - call ->poll_mask before sleeping
- - various ACKs
- - add conversion of random to ->poll_mask
- - add conversion of af_alg to ->poll_mask
- - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
- - reshuffled the series so that prep patches and everything not
-   requiring the new in-kernel poll API is in the beginning
-
-Changes since v1:
- - handle the NULL ->poll case in vfs_poll
- - dropped the file argument to the ->poll_mask socket operation
- - replace the ->pre_poll socket operation with ->get_poll_head as
-   in the file operations
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+diff --git a/fs/select.c b/fs/select.c
+index a87f396f0313..25da26253485 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -812,34 +812,32 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+ 				     bool *can_busy_poll,
+ 				     __poll_t busy_flag)
+ {
+-	__poll_t mask;
+-	int fd;
+-
+-	mask = 0;
+-	fd = pollfd->fd;
+-	if (fd >= 0) {
+-		struct fd f = fdget(fd);
+-		mask = EPOLLNVAL;
+-		if (f.file) {
+-			/* userland u16 ->events contains POLL... bitmap */
+-			__poll_t filter = demangle_poll(pollfd->events) |
+-						EPOLLERR | EPOLLHUP;
+-			mask = DEFAULT_POLLMASK;
+-			if (f.file->f_op->poll) {
+-				pwait->_key = filter;
+-				pwait->_key |= busy_flag;
+-				mask = f.file->f_op->poll(f.file, pwait);
+-				if (mask & busy_flag)
+-					*can_busy_poll = true;
+-			}
+-			/* Mask out unneeded events. */
+-			mask &= filter;
+-			fdput(f);
+-		}
++	int fd = pollfd->fd;
++	__poll_t mask = 0, filter;
++	struct fd f;
++
++	if (fd < 0)
++		goto out;
++	mask = EPOLLNVAL;
++	f = fdget(fd);
++	if (!f.file)
++		goto out;
++
++	/* userland u16 ->events contains POLL... bitmap */
++	filter = demangle_poll(pollfd->events) | EPOLLERR | EPOLLHUP;
++	mask = DEFAULT_POLLMASK;
++	if (f.file->f_op->poll) {
++		pwait->_key = filter | busy_flag;
++		mask = f.file->f_op->poll(f.file, pwait);
++		if (mask & busy_flag)
++			*can_busy_poll = true;
+ 	}
++	mask &= filter;		/* Mask out unneeded events. */
++	fdput(f);
++
++out:
+ 	/* ... and so does ->revents */
+ 	pollfd->revents = mangle_poll(mask);
+-
+ 	return mask;
+ }
+ 
+-- 
+2.17.0
