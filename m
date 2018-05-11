@@ -1,143 +1,114 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: [PATCH 14/32] net/tcp: convert to ->poll_mask
-Date: Fri, 11 May 2018 06:13:11 -0700
-Message-ID: <96284b0e-0d4e-a944-4fd5-933d12cf53cb@gmail.com>
-References: <20180511110803.10910-1-hch@lst.de>
- <20180511110803.10910-15-hch@lst.de>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v5 1/7] proc: add proc_fs_info struct to store proc information
+Date: Fri, 11 May 2018 15:49:13 +0200
+Message-ID: <CAG48ez3xYHsKMkPJhjq-yrrTxMHmrHDov-P7bTy8T2xf_7=OAQ@mail.gmail.com>
+References: <20180511093445.GA1008@comp-core-i7-2640m-0182e6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180511110803.10910-15-hch@lst.de>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180511093445.GA1008@comp-core-i7-2640m-0182e6>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Gladkov <gladkov.alexey@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jon
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 05/11/2018 04:07 AM, Christoph Hellwig wrote:
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On Fri, May 11, 2018 at 11:34 AM, Alexey Gladkov
+<gladkov.alexey@gmail.com> wrote:
+> From: Djalal Harouni <tixxdz@gmail.com>
+>
+> This is a preparation patch that adds proc_fs_info to be able to store
+> different procfs options and informations. Right now some mount options
+> are stored inside the pid namespace which makes it hard to change or
+> modernize procfs without affecting pid namespaces. Plus we do want to
+> treat proc as more of a real mount point and filesystem. procfs is part
+> of Linux API where it offers some features using filesystem syscalls and
+> in order to support some features where we are able to have multiple
+> instances of procfs, each one with its mount options inside the same pid
+> namespace, we have to separate these procfs instances.
+>
+> This is the same feature that was also added to other Linux interfaces
+> like devpts in order to support containers, sandboxes, and to have
+> multiple instances of devpts filesystem [1].
+>
+> [1] http://lxr.free-electrons.com/source/Documentation/filesystems/devpts.txt?v=3.14
+>
+> Cc: Kees Cook <keescook@chromium.org>
+> Suggested-by: Andy Lutomirski <luto@kernel.org>
+> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
+> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 > ---
->  include/net/tcp.h   |  4 ++--
->  net/ipv4/af_inet.c  |  3 ++-
->  net/ipv4/tcp.c      | 31 ++++++++++++++-----------------
->  net/ipv6/af_inet6.c |  3 ++-
->  4 files changed, 20 insertions(+), 21 deletions(-)
-> 
-> diff --git a/include/net/tcp.h b/include/net/tcp.h
-> index 9c9b3768b350..d4d72ea9128d 100644
-> --- a/include/net/tcp.h
-> +++ b/include/net/tcp.h
-> @@ -388,8 +388,8 @@ bool tcp_peer_is_proven(struct request_sock *req, struct dst_entry *dst);
->  void tcp_close(struct sock *sk, long timeout);
->  void tcp_init_sock(struct sock *sk);
->  void tcp_init_transfer(struct sock *sk, int bpf_op);
-> -__poll_t tcp_poll(struct file *file, struct socket *sock,
-> -		      struct poll_table_struct *wait);
-> +struct wait_queue_head *tcp_get_poll_head(struct socket *sock, __poll_t events);
-> +__poll_t tcp_poll_mask(struct socket *sock, __poll_t events);
->  int tcp_getsockopt(struct sock *sk, int level, int optname,
->  		   char __user *optval, int __user *optlen);
->  int tcp_setsockopt(struct sock *sk, int level, int optname,
-> diff --git a/net/ipv4/af_inet.c b/net/ipv4/af_inet.c
-> index eaed0367e669..220b51347526 100644
-> --- a/net/ipv4/af_inet.c
-> +++ b/net/ipv4/af_inet.c
-> @@ -986,7 +986,8 @@ const struct proto_ops inet_stream_ops = {
->  	.socketpair	   = sock_no_socketpair,
->  	.accept		   = inet_accept,
->  	.getname	   = inet_getname,
-> -	.poll		   = tcp_poll,
-> +	.get_poll_head	   = tcp_get_poll_head,
-> +	.poll_mask	   = tcp_poll_mask,
->  	.ioctl		   = inet_ioctl,
->  	.listen		   = inet_listen,
->  	.shutdown	   = inet_shutdown,
-> diff --git a/net/ipv4/tcp.c b/net/ipv4/tcp.c
-> index 9ce1c726185e..6ec0e7a13581 100644
-> --- a/net/ipv4/tcp.c
-> +++ b/net/ipv4/tcp.c
-> @@ -493,33 +493,30 @@ static inline bool tcp_stream_is_readable(const struct tcp_sock *tp,
->  		sk->sk_prot->stream_memory_read(sk) : false);
->  }
->  
-> +struct wait_queue_head *tcp_get_poll_head(struct socket *sock, __poll_t events)
-> +{
-> +	sock_poll_busy_loop(sock, events);
-> +	sock_rps_record_flow(sock->sk);
-
-Why are you adding sock_rps_record_flow() ?
-
-
-
-> +	return sk_sleep(sock->sk);
-> +}
-> +EXPORT_SYMBOL(tcp_get_poll_head);
+[...]
+>  static struct dentry *proc_mount(struct file_system_type *fs_type,
+>         int flags, const char *dev_name, void *data)
+>  {
+> +       int error;
+> +       struct super_block *sb;
+>         struct pid_namespace *ns;
+> +       struct proc_fs_info *fs_info;
 > +
->  /*
-> - *	Wait for a TCP event.
-> - *
-> - *	Note that we don't need to lock the socket, as the upper poll layers
-> - *	take care of normal races (between the test and the event) and we don't
-> - *	go look at any of the socket buffers directly.
-> + * Socket is not locked. We are protected from async events by poll logic and
-> + * correct handling of state changes made by other threads is impossible in
-> + * any case.
->   */
-> -__poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
-> +__poll_t tcp_poll_mask(struct socket *sock, __poll_t events)
->  {
-> -	__poll_t mask;
->  	struct sock *sk = sock->sk;
->  	const struct tcp_sock *tp = tcp_sk(sk);
-> +	__poll_t mask = 0;
->  	int state;
->  
-> -	sock_poll_wait(file, sk_sleep(sk), wait);
-> -
->  	state = inet_sk_state_load(sk);
->  	if (state == TCP_LISTEN)
->  		return inet_csk_listen_poll(sk);
->  
-> -	/* Socket is not locked. We are protected from async events
-> -	 * by poll logic and correct handling of state changes
-> -	 * made by other threads is impossible in any case.
-> -	 */
-> -
-> -	mask = 0;
-> -
->  	/*
->  	 * EPOLLHUP is certainly not done right. But poll() doesn't
->  	 * have a notion of HUP in just one direction, and for a
-> @@ -600,7 +597,7 @@ __poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
->  
->  	return mask;
->  }
-> -EXPORT_SYMBOL(tcp_poll);
-> +EXPORT_SYMBOL(tcp_poll_mask);
->  
->  int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
->  {
-> diff --git a/net/ipv6/af_inet6.c b/net/ipv6/af_inet6.c
-> index 8da0b513f188..a43d967eeca5 100644
-> --- a/net/ipv6/af_inet6.c
-> +++ b/net/ipv6/af_inet6.c
-> @@ -571,7 +571,8 @@ const struct proto_ops inet6_stream_ops = {
->  	.socketpair	   = sock_no_socketpair,	/* a do nothing	*/
->  	.accept		   = inet_accept,		/* ok		*/
->  	.getname	   = inet6_getname,
-> -	.poll		   = tcp_poll,			/* ok		*/
-> +	.get_poll_head	   = tcp_get_poll_head,
-> +	.poll_mask	   = tcp_poll_mask,		/* ok		*/
->  	.ioctl		   = inet6_ioctl,		/* must change  */
->  	.listen		   = inet_listen,		/* ok		*/
->  	.shutdown	   = inet_shutdown,		/* ok		*/
-> 
+> +       /*
+> +        * Don't allow mounting unless the caller has CAP_SYS_ADMIN over
+> +        * the namespace.
+> +        */
+> +       if (!(flags & MS_KERNMOUNT) && !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+> +               return ERR_PTR(-EPERM);
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Is this correct?
+
+The old code invoked a check with the same comment through mount_ns();
+however, this patch changes the semantics of the check.
+The old code checked that the caller has privileges over the user
+namespace that contains the PID namespace; in other words, it checked
+that the caller has privileges over the PID namespace. The current
+code just checks that the caller is privileged over its own user
+namespace.
+
+As far as I can tell, this means that by doing something like this:
+
+    unshare(CLONE_NEWNS|CLONE_NEWUSER);
+    mount("none", "/", NULL, MS_REC|MS_PRIVATE, NULL);
+    mount("proc", "/proc", "proc", 0, "newinstance,pids=all");
+
+any process could create a new unrestricted procfs mount for its PID
+namespace, even if it is only supposed to have access to a more
+restricted procfs mount.
+
+> +       fs_info = kzalloc(sizeof(*fs_info), GFP_NOFS);
+> +       if (!fs_info)
+> +               return ERR_PTR(-ENOMEM);
+>
+>         if (flags & SB_KERNMOUNT) {
+>                 ns = data;
+> @@ -98,20 +128,47 @@ static struct dentry *proc_mount(struct file_system_type *fs_type,
+>                 ns = task_active_pid_ns(current);
+>         }
+>
+> -       return mount_ns(fs_type, flags, data, ns, ns->user_ns, proc_fill_super);
+> +       fs_info->pid_ns = ns;
+> +
+> +       sb = sget_userns(fs_type, proc_test_super, proc_set_super, flags,
+> +                        ns->user_ns, fs_info);
+> +       if (IS_ERR(sb)) {
+> +               error = PTR_ERR(sb);
+> +               goto error_fs_info;
+> +       }
+> +
+> +       if (sb->s_root) {
+> +               kfree(fs_info);
+> +       } else {
+> +               error = proc_fill_super(sb, data, flags & MS_SILENT ? 1 : 0);
+> +               if (error) {
+> +                       deactivate_locked_super(sb);
+> +                       goto error;
+> +               }
+> +
+> +               sb->s_flags |= MS_ACTIVE;
+> +       }
+> +
+> +       return dget(sb->s_root);
+> +
+> +error_fs_info:
+> +       kfree(fs_info);
+> +error:
+> +       return ERR_PTR(error);
+>  }
