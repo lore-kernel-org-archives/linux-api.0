@@ -1,41 +1,26 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH v5 5/7] proc: instantiate only pids that we can ptrace on
- 'limit_pids=1' mount option
-Date: Fri, 11 May 2018 09:09:04 -0700
-Message-ID: <7c638a92-8c40-fa15-8c63-777232588137@infradead.org>
-References: <20180511093613.GA1330@comp-core-i7-2640m-0182e6>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v5 0/7] proc: modernize proc to support multiple private instances
+Date: Fri, 11 May 2018 09:39:23 -0700
+Message-ID: <CA+55aFwZK+BMsm19sK-Wmfta6PcdvW6z-ghuKsb4PAwk19nRVg@mail.gmail.com>
+References: <20180511093221.GA902@comp-core-i7-2640m-0182e6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <kernel-hardening-return-13283-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20180511093613.GA1330@comp-core-i7-2640m-0182e6>
-Content-Language: en-US
-To: Alexey Gladkov <gladkov.alexey@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, bfields@fieldses.org, Stephen Rothwell <sfr@canb.auug.org.au>, solar@openwall.com, "Dmitry V. Levin" <ldv@altlinux.org>, Djalal Harouni <tixxdz@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180511093221.GA902@comp-core-i7-2640m-0182e6>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gladkov.alexey@gmail.com, Al Viro <viro@zeniv.linux.org.uk>
+Cc: Kees Cook <keescook@chromium.org>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, "J. Bruce Fields" <bfields@fieldses.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/11/2018 02:36 AM, Alexey Gladkov wrote:
-> From: Djalal Harouni <tixxdz@gmail.com>
-> 
-> If "limit_pids=1" mount option is set then do not instantiate pids that
-> we can not ptrace. "limit_pids=1" means that procfs should only contain
-> pids that the caller can ptrace.
+On Fri, May 11, 2018 at 2:42 AM Alexey Gladkov <gladkov.alexey@gmail.com>
+wrote:
 
-Where can I find documentation on these mount options (pidonly, limit_pids)?
+> This is RFC v5 to modernize procfs and make it able to support multiple
+> private instances per the same pid namespace.
 
-Thanks.
+So I have no big objections, but I would *really* like this to go through
+Al's vfs tree.
 
-> Cc: Kees Cook <keescook@chromium.org>
-> Cc: Andy Lutomirski <luto@kernel.org>
-> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
-> ---
->  fs/proc/base.c | 9 +++++++++
->  1 file changed, 9 insertions(+)
+Al? Have you looked at this series?
 
-
--- 
-~Randy
+                  Linus
