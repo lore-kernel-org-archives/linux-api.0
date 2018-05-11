@@ -1,55 +1,37 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [RFC v2 2/4] xfs: add verifier check for symlink with
- append/immutable flags
-Date: Thu, 10 May 2018 19:20:20 -0700
-Message-ID: <20180511022020.GG11261@magnolia>
-References: <20180510231359.16899-1-mcgrof@kernel.org>
- <20180510231359.16899-3-mcgrof@kernel.org>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [RFC] vfs: skip extra attributes check on removal for symlinks
+Date: Fri, 11 May 2018 03:42:35 +0100
+Message-ID: <20180511024234.GA30522@ZenIV.linux.org.uk>
+References: <20180426234639.12480-1-mcgrof@kernel.org>
+ <20180510204807.GV30522@ZenIV.linux.org.uk>
+ <20180510230551.GE27853@wotan.suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180510231359.16899-3-mcgrof@kernel.org>
+In-Reply-To: <20180510230551.GE27853@wotan.suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Cc: viro@zeniv.linux.org.uk, tytso@mit.edu, adilger.kernel@dilger.ca, clm@fb.com, jbacik@fb.com, dsterba@suse.com, sandeen@sandeen.net, dhowells@redhat.com, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, sandeen@sandeen.net, darrick.wong@oracle.com, dhowells@redhat.com, tytso@mit.edu, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 10, 2018 at 04:13:57PM -0700, Luis R. Rodriguez wrote:
-> The Linux VFS does not allow a way to set append/immuttable attributes
-> to symlinks, this is just not possible. If this is detected we can
-> correct this with xfs_repair, so inform the user.
+On Thu, May 10, 2018 at 11:05:51PM +0000, Luis R. Rodriguez wrote:
+> On Thu, May 10, 2018 at 09:48:07PM +0100, Al Viro wrote:
+> > On Thu, Apr 26, 2018 at 04:46:39PM -0700, Luis R. Rodriguez wrote:
+> > 
+> > > Since we cannot set these attributes we should special-case the
+> > > immutable/append on delete for symlinks, this would be consistent with
+> > > what we *do* allow on Linux for all filesystems.
+> > 
+> > Er...  So why not simply sanity-check it in places that set it on
+> > inodes? 
 > 
-> Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
-> ---
->  fs/xfs/libxfs/xfs_symlink_remote.c | 5 +++++
->  1 file changed, 5 insertions(+)
-> 
-> diff --git a/fs/xfs/libxfs/xfs_symlink_remote.c b/fs/xfs/libxfs/xfs_symlink_remote.c
-> index 5ef5f354587e..42dd81ede3d6 100644
-> --- a/fs/xfs/libxfs/xfs_symlink_remote.c
-> +++ b/fs/xfs/libxfs/xfs_symlink_remote.c
-> @@ -242,5 +242,10 @@ xfs_symlink_shortform_verify(
->  	/* We /did/ null-terminate the buffer, right? */
->  	if (*endp != 0)
->  		return __this_address;
-> +
-> +	/* Immutable and append flags are not allowed on symlinks */
-> +	if (ip->i_d.di_flags & (XFS_DIFLAG_APPEND | XFS_DIFLAG_IMMUTABLE))
-> +		return __this_address;
+> The patch is not about sanity-checks on setters though as *that* is in place
+> already. Its about the case where the filesystem gets corrupted and the VFS
+> *still* does process these attributes for symlinks and still prevents
+> deletion because of these attributes.
 
-This belongs in xfs_dinode_verify so that it checks all symlinks, not
-just the one shortform ones.
-
---D
-
-> +
->  	return NULL;
->  }
-> -- 
-> 2.17.0
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-xfs" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+... and this corrupted fs ends up setting those flags on in-core inodes.
+Which is where we ought to block that.  Seriously, let's make sure that
+->i_flags manipulations are done by inode_set_flags() (e.g. btrfs open-codes
+that, apparently) and let's make _that_ check and reject those.
