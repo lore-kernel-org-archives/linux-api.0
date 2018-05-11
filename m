@@ -1,37 +1,73 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: [RFC] vfs: skip extra attributes check on removal for symlinks
-Date: Fri, 11 May 2018 03:42:35 +0100
-Message-ID: <20180511024234.GA30522@ZenIV.linux.org.uk>
-References: <20180426234639.12480-1-mcgrof@kernel.org>
- <20180510204807.GV30522@ZenIV.linux.org.uk>
- <20180510230551.GE27853@wotan.suse.de>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Fri, 11 May 2018 08:39:52 +0200
+Message-ID: <20180511063952.GA23231@dhcp22.suse.cz>
+References: <1525240686-13335-1-git-send-email-prakash.sangappa@oracle.com>
+ <alpine.DEB.2.21.1805031259210.7831@nuc-kabylake>
+ <c80ee329-084b-367f-1937-3175c178e978@oracle.com>
+ <20180504111211.GO4535@dhcp22.suse.cz>
+ <de18dc06-6448-d6e5-fa80-c6065edd3aa4@oracle.com>
+ <20180510074254.GE32366@dhcp22.suse.cz>
+ <ce2c36aa-8c03-63d6-e1ce-031197f45a5d@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180510230551.GE27853@wotan.suse.de>
+In-Reply-To: <ce2c36aa-8c03-63d6-e1ce-031197f45a5d@oracle.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, sandeen@sandeen.net, darrick.wong@oracle.com, dhowells@redhat.com, tytso@mit.edu, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Prakash Sangappa <prakash.sangappa@oracle.com>
+Cc: Christopher Lameter <cl@linux.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, akpm@linux-foundation.org, kirill.shutemov@linux.intel.com, n-horiguchi@ah.jp.nec.com, drepper@gmail.com, rientjes@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 10, 2018 at 11:05:51PM +0000, Luis R. Rodriguez wrote:
-> On Thu, May 10, 2018 at 09:48:07PM +0100, Al Viro wrote:
-> > On Thu, Apr 26, 2018 at 04:46:39PM -0700, Luis R. Rodriguez wrote:
-> > 
-> > > Since we cannot set these attributes we should special-case the
-> > > immutable/append on delete for symlinks, this would be consistent with
-> > > what we *do* allow on Linux for all filesystems.
-> > 
-> > Er...  So why not simply sanity-check it in places that set it on
-> > inodes? 
+On Thu 10-05-18 09:00:24, Prakash Sangappa wrote:
 > 
-> The patch is not about sanity-checks on setters though as *that* is in place
-> already. Its about the case where the filesystem gets corrupted and the VFS
-> *still* does process these attributes for symlinks and still prevents
-> deletion because of these attributes.
+> 
+> On 5/10/18 12:42 AM, Michal Hocko wrote:
+> > On Fri 04-05-18 09:18:11, Prakash Sangappa wrote:
+> > > 
+> > > On 5/4/18 4:12 AM, Michal Hocko wrote:
+> > > > On Thu 03-05-18 15:39:49, prakash.sangappa wrote:
+> > > > > On 05/03/2018 11:03 AM, Christopher Lameter wrote:
+> > > > > > On Tue, 1 May 2018, Prakash Sangappa wrote:
+> > > > > > 
+> > > > > > > For analysis purpose it is useful to have numa node information
+> > > > > > > corresponding mapped address ranges of the process. Currently
+> > > > > > > /proc/<pid>/numa_maps provides list of numa nodes from where pages are
+> > > > > > > allocated per VMA of the process. This is not useful if an user needs to
+> > > > > > > determine which numa node the mapped pages are allocated from for a
+> > > > > > > particular address range. It would have helped if the numa node information
+> > > > > > > presented in /proc/<pid>/numa_maps was broken down by VA ranges showing the
+> > > > > > > exact numa node from where the pages have been allocated.
+> > > > > > Cant you write a small script that scans the information in numa_maps and
+> > > > > > then displays the total pages per NUMA node and then a list of which
+> > > > > > ranges have how many pages on a particular node?
+> > > > > Don't think we can determine which numa node a given user process
+> > > > > address range has pages from, based on the existing 'numa_maps' file.
+> > > > yes we have. See move_pages...
+> > > Sure using move_pages, not based on just 'numa_maps'.
+> > > 
+> > > > > > > reading this file will not be restricted(i.e requiring CAP_SYS_ADMIN).
+> > > > > > So a prime motivator here is security restricted access to numa_maps?
+> > > > > No it is the opposite. A regular user should be able to determine
+> > > > > numa node information.
+> > > > Well, that breaks the layout randomization, doesn't it?
+> > > Exposing numa node information itself should not break randomization right?
+> > I thought you planned to expose address ranges for each numa node as
+> > well. /me confused.
+> 
+> Yes, are you suggesting this information should not be available to a
+> regular
+> user?
 
-... and this corrupted fs ends up setting those flags on in-core inodes.
-Which is where we ought to block that.  Seriously, let's make sure that
-->i_flags manipulations are done by inode_set_flags() (e.g. btrfs open-codes
-that, apparently) and let's make _that_ check and reject those.
+absolutely. We do check ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)
+to make sure the access is authorised.
+> 
+> Is it not possible to get that same information using the move_pages() api
+> as a regular
+> user, although one / set of pages at a time?
+
+No, see PTRACE_MODE_READ_REALCREDS check in move_pages.
+
+-- 
+Michal Hocko
+SUSE Labs
