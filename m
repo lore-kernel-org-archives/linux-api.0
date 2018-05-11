@@ -1,172 +1,243 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 05/32] fs: introduce new ->get_poll_head and ->poll_mask methods
-Date: Fri, 11 May 2018 13:07:36 +0200
-Message-ID: <20180511110803.10910-6-hch@lst.de>
+Subject: [PATCH 08/32] aio: replace kiocb_set_cancel_fn with a cancel_kiocb file operation
+Date: Fri, 11 May 2018 13:07:39 +0200
+Message-ID: <20180511110803.10910-9-hch@lst.de>
 References: <20180511110803.10910-1-hch@lst.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180511110803.10910-1-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-->get_poll_head returns the waitqueue that the poll operation is going
-to sleep on.  Note that this means we can only use a single waitqueue
-for the poll, unlike some current drivers that use two waitqueues for
-different events.  But now that we have keyed wakeups and heavily use
-those for poll there aren't that many good reason left to keep the
-multiple waitqueues, and if there are any ->poll is still around, the
-driver just won't support aio poll.
+The current kiocb_set_cancel_fn implementation assumes the kiocb is
+embedded into an aio_kiocb, which is fundamentally unsafe as it might
+have been submitted by non-aio callers.  Instead add a cancel_kiocb
+file operation that replaced the ki_cancel function pointer set by
+kiocb_set_cancel_fn, and only adds iocbs to the active list when
+the read/write_iter methods return -EIOCBQUEUED and the file has
+a cancel_kiocb method.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- Documentation/filesystems/Locking |  7 ++++++-
- Documentation/filesystems/vfs.txt | 13 +++++++++++++
- fs/select.c                       | 23 +++++++++++++++++++++++
- include/linux/fs.h                |  2 ++
- include/linux/poll.h              | 12 ++++++------
- 5 files changed, 50 insertions(+), 7 deletions(-)
+ drivers/usb/gadget/function/f_fs.c | 10 ++--------
+ drivers/usb/gadget/legacy/inode.c  |  5 ++---
+ fs/aio.c                           | 31 ++++++++++++------------------
+ fs/orangefs/orangefs-kernel.h      |  1 -
+ include/linux/aio.h                |  7 -------
+ include/linux/fs.h                 |  1 +
+ 6 files changed, 17 insertions(+), 38 deletions(-)
 
-diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-index 220bba28f72b..6d227f9d7bd9 100644
---- a/Documentation/filesystems/Locking
-+++ b/Documentation/filesystems/Locking
-@@ -440,6 +440,8 @@ prototypes:
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-+	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-+	__poll_t (*poll_mask) (struct file *, __poll_t);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-@@ -470,7 +472,7 @@ prototypes:
+diff --git a/drivers/usb/gadget/function/f_fs.c b/drivers/usb/gadget/function/f_fs.c
+index 0294e4f18873..531a7206407b 100644
+--- a/drivers/usb/gadget/function/f_fs.c
++++ b/drivers/usb/gadget/function/f_fs.c
+@@ -26,7 +26,6 @@
+ #include <linux/usb/composite.h>
+ #include <linux/usb/functionfs.h>
+ 
+-#include <linux/aio.h>
+ #include <linux/mmu_context.h>
+ #include <linux/poll.h>
+ #include <linux/eventfd.h>
+@@ -1072,7 +1071,7 @@ ffs_epfile_open(struct inode *inode, struct file *file)
+ 	return 0;
+ }
+ 
+-static int ffs_aio_cancel(struct kiocb *kiocb)
++static int ffs_epfile_cancel_kiocb(struct kiocb *kiocb)
+ {
+ 	struct ffs_io_data *io_data = kiocb->private;
+ 	struct ffs_epfile *epfile = kiocb->ki_filp->private_data;
+@@ -1115,9 +1114,6 @@ static ssize_t ffs_epfile_write_iter(struct kiocb *kiocb, struct iov_iter *from)
+ 
+ 	kiocb->private = p;
+ 
+-	if (p->aio)
+-		kiocb_set_cancel_fn(kiocb, ffs_aio_cancel);
+-
+ 	res = ffs_epfile_io(kiocb->ki_filp, p);
+ 	if (res == -EIOCBQUEUED)
+ 		return res;
+@@ -1160,9 +1156,6 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
+ 
+ 	kiocb->private = p;
+ 
+-	if (p->aio)
+-		kiocb_set_cancel_fn(kiocb, ffs_aio_cancel);
+-
+ 	res = ffs_epfile_io(kiocb->ki_filp, p);
+ 	if (res == -EIOCBQUEUED)
+ 		return res;
+@@ -1274,6 +1267,7 @@ static const struct file_operations ffs_epfile_operations = {
+ 	.read_iter =	ffs_epfile_read_iter,
+ 	.release =	ffs_epfile_release,
+ 	.unlocked_ioctl =	ffs_epfile_ioctl,
++	.cancel_kiocb = ffs_epfile_cancel_kiocb,
  };
  
- locking rules:
--	All may block.
-+	All except for ->poll_mask may block.
  
- ->llseek() locking has moved from llseek to the individual llseek
- implementations.  If your fs is not using generic_file_llseek, you
-@@ -498,6 +500,9 @@ in sys_read() and friends.
- the lease within the individual filesystem to record the result of the
- operation
+diff --git a/drivers/usb/gadget/legacy/inode.c b/drivers/usb/gadget/legacy/inode.c
+index 37ca0e669bd8..02ea83c8861a 100644
+--- a/drivers/usb/gadget/legacy/inode.c
++++ b/drivers/usb/gadget/legacy/inode.c
+@@ -21,7 +21,6 @@
+ #include <linux/slab.h>
+ #include <linux/poll.h>
+ #include <linux/mmu_context.h>
+-#include <linux/aio.h>
+ #include <linux/uio.h>
+ #include <linux/refcount.h>
+ #include <linux/delay.h>
+@@ -435,7 +434,7 @@ struct kiocb_priv {
+ 	unsigned		actual;
+ };
  
-+->poll_mask can be called with or without the waitqueue lock for the waitqueue
-+returned from ->get_poll_head.
-+
- --------------------------- dquot_operations -------------------------------
- prototypes:
- 	int (*write_dquot) (struct dquot *);
-diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-index f608180ad59d..829a7b7857a4 100644
---- a/Documentation/filesystems/vfs.txt
-+++ b/Documentation/filesystems/vfs.txt
-@@ -857,6 +857,8 @@ struct file_operations {
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-+	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-+	__poll_t (*poll_mask) (struct file *, __poll_t);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-@@ -901,6 +903,17 @@ otherwise noted.
- 	activity on this file and (optionally) go to sleep until there
- 	is activity. Called by the select(2) and poll(2) system calls
+-static int ep_aio_cancel(struct kiocb *iocb)
++static int ep_cancel_kiocb(struct kiocb *iocb)
+ {
+ 	struct kiocb_priv	*priv = iocb->private;
+ 	struct ep_data		*epdata;
+@@ -528,7 +527,6 @@ static ssize_t ep_aio(struct kiocb *iocb,
+ 	iocb->private = priv;
+ 	priv->iocb = iocb;
  
-+  get_poll_head: Returns the struct wait_queue_head that callers can
-+  wait on.  Callers need to check the returned events using ->poll_mask
-+  once woken.  Can return NULL to indicate polling is not supported,
-+  or any error code using the ERR_PTR convention to indicate that a
-+  grave error occured and ->poll_mask shall not be called.
-+
-+  poll_mask: return the mask of EPOLL* values describing the file descriptor
-+  state.  Called either before going to sleep on the waitqueue returned by
-+  get_poll_head, or after it has been woken.  If ->get_poll_head and
-+  ->poll_mask are implemented ->poll does not need to be implement.
-+
-   unlocked_ioctl: called by the ioctl(2) system call.
+-	kiocb_set_cancel_fn(iocb, ep_aio_cancel);
+ 	get_ep(epdata);
+ 	priv->epdata = epdata;
+ 	priv->actual = 0;
+@@ -700,6 +698,7 @@ static const struct file_operations ep_io_operations = {
+ 	.unlocked_ioctl = ep_ioctl,
+ 	.read_iter =	ep_read_iter,
+ 	.write_iter =	ep_write_iter,
++	.cancel_kiocb = ep_cancel_kiocb,
+ };
  
-   compat_ioctl: called by the ioctl(2) system call when 32 bit system calls
-diff --git a/fs/select.c b/fs/select.c
-index e30def680b2e..bc3cc0f98896 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -34,6 +34,29 @@
+ /* ENDPOINT INITIALIZATION
+diff --git a/fs/aio.c b/fs/aio.c
+index 8991baa38d5d..be10dde20c8e 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -171,7 +171,6 @@ struct aio_kiocb {
+ 	};
  
- #include <linux/uaccess.h>
+ 	struct kioctx		*ki_ctx;
+-	kiocb_cancel_fn		*ki_cancel;
  
-+__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-+{
-+	if (file->f_op->poll) {
-+		return file->f_op->poll(file, pt);
-+	} else if (file_has_poll_mask(file)) {
-+		unsigned int events = poll_requested_events(pt);
-+		struct wait_queue_head *head;
-+
-+		if (pt && pt->_qproc) {
-+			head = file->f_op->get_poll_head(file, events);
-+			if (!head)
-+				return DEFAULT_POLLMASK;
-+			if (IS_ERR(head))
-+				return EPOLLERR;
-+			pt->_qproc(file, head, pt);
-+		}
-+
-+		return file->f_op->poll_mask(file, events);
-+	} else {
-+		return DEFAULT_POLLMASK;
-+	}
-+}
-+EXPORT_SYMBOL_GPL(vfs_poll);
+ 	struct iocb __user	*ki_user_iocb;	/* user's aiocb */
+ 	__u64			ki_user_data;	/* user's data for completion */
+@@ -545,22 +544,6 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
+ #define AIO_EVENTS_FIRST_PAGE	((PAGE_SIZE - sizeof(struct aio_ring)) / sizeof(struct io_event))
+ #define AIO_EVENTS_OFFSET	(AIO_EVENTS_PER_PAGE - AIO_EVENTS_FIRST_PAGE)
  
+-void kiocb_set_cancel_fn(struct kiocb *iocb, kiocb_cancel_fn *cancel)
+-{
+-	struct aio_kiocb *req = container_of(iocb, struct aio_kiocb, rw);
+-	struct kioctx *ctx = req->ki_ctx;
+-	unsigned long flags;
+-
+-	if (WARN_ON_ONCE(!list_empty(&req->ki_list)))
+-		return;
+-
+-	spin_lock_irqsave(&ctx->ctx_lock, flags);
+-	list_add_tail(&req->ki_list, &ctx->active_reqs);
+-	req->ki_cancel = cancel;
+-	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
+-}
+-EXPORT_SYMBOL(kiocb_set_cancel_fn);
+-
  /*
-  * Estimate expected accuracy in ns from a timeval.
+  * free_ioctx() should be RCU delayed to synchronize against the RCU
+  * protected lookup_ioctx() and also needs process context to call
+@@ -608,7 +591,7 @@ static void free_ioctx_users(struct percpu_ref *ref)
+ 		req = list_first_entry(&ctx->active_reqs,
+ 				       struct aio_kiocb, ki_list);
+ 		list_del_init(&req->ki_list);
+-		req->ki_cancel(&req->rw);
++		req->rw.ki_filp->f_op->cancel_kiocb(&req->rw);
+ 	}
+ 
+ 	spin_unlock_irq(&ctx->ctx_lock);
+@@ -1447,6 +1430,16 @@ static inline ssize_t aio_rw_ret(struct kiocb *req, ssize_t ret)
+ {
+ 	switch (ret) {
+ 	case -EIOCBQUEUED:
++		if (req->ki_filp->f_op->cancel_kiocb) {
++			struct aio_kiocb *iocb =
++				container_of(req, struct aio_kiocb, rw);
++			struct kioctx *ctx = iocb->ki_ctx;
++			unsigned long flags;
++
++			spin_lock_irqsave(&ctx->ctx_lock, flags);
++			list_add_tail(&iocb->ki_list, &ctx->active_reqs);
++			spin_unlock_irqrestore(&ctx->ctx_lock, flags);
++		}
+ 		return ret;
+ 	case -ERESTARTSYS:
+ 	case -ERESTARTNOINTR:
+@@ -1824,7 +1817,7 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 	kiocb = lookup_kiocb(ctx, iocb);
+ 	if (kiocb) {
+ 		list_del_init(&kiocb->ki_list);
+-		ret = kiocb->ki_cancel(&kiocb->rw);
++		ret = kiocb->rw.ki_filp->f_op->cancel_kiocb(&kiocb->rw);
+ 	}
+ 	spin_unlock_irq(&ctx->ctx_lock);
+ 
+diff --git a/fs/orangefs/orangefs-kernel.h b/fs/orangefs/orangefs-kernel.h
+index c29bb0ebc6bb..5cd598c59bdc 100644
+--- a/fs/orangefs/orangefs-kernel.h
++++ b/fs/orangefs/orangefs-kernel.h
+@@ -34,7 +34,6 @@
+ #include <linux/fs.h>
+ #include <linux/vmalloc.h>
+ 
+-#include <linux/aio.h>
+ #include <linux/posix_acl.h>
+ #include <linux/posix_acl_xattr.h>
+ #include <linux/compat.h>
+diff --git a/include/linux/aio.h b/include/linux/aio.h
+index b83e68dd006f..42e3cc953005 100644
+--- a/include/linux/aio.h
++++ b/include/linux/aio.h
+@@ -4,20 +4,13 @@
+ 
+ #include <linux/aio_abi.h>
+ 
+-struct kioctx;
+-struct kiocb;
+ struct mm_struct;
+ 
+-typedef int (kiocb_cancel_fn)(struct kiocb *);
+-
+ /* prototypes */
+ #ifdef CONFIG_AIO
+ extern void exit_aio(struct mm_struct *mm);
+-void kiocb_set_cancel_fn(struct kiocb *req, kiocb_cancel_fn *cancel);
+ #else
+ static inline void exit_aio(struct mm_struct *mm) { }
+-static inline void kiocb_set_cancel_fn(struct kiocb *req,
+-				       kiocb_cancel_fn *cancel) { }
+ #endif /* CONFIG_AIO */
+ 
+ /* for sysctl: */
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 760d8da1b6c7..4b6045ebb2f2 100644
+index 4b6045ebb2f2..7fe64df9eb09 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -1711,6 +1711,8 @@ struct file_operations {
- 	int (*iterate) (struct file *, struct dir_context *);
- 	int (*iterate_shared) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-+	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-+	__poll_t (*poll_mask) (struct file *, __poll_t);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-diff --git a/include/linux/poll.h b/include/linux/poll.h
-index 7e0fdcf905d2..fdf86b4cbc71 100644
---- a/include/linux/poll.h
-+++ b/include/linux/poll.h
-@@ -74,18 +74,18 @@ static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
- 	pt->_key   = ~(__poll_t)0; /* all events enabled */
- }
+@@ -1742,6 +1742,7 @@ struct file_operations {
+ 			u64);
+ 	ssize_t (*dedupe_file_range)(struct file *, u64, u64, struct file *,
+ 			u64);
++	int (*cancel_kiocb)(struct kiocb *);
+ } __randomize_layout;
  
--static inline bool file_can_poll(struct file *file)
-+static inline bool file_has_poll_mask(struct file *file)
- {
--	return file->f_op->poll;
-+	return file->f_op->get_poll_head && file->f_op->poll_mask;
- }
- 
--static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-+static inline bool file_can_poll(struct file *file)
- {
--	if (unlikely(!file->f_op->poll))
--		return DEFAULT_POLLMASK;
--	return file->f_op->poll(file, pt);
-+	return file->f_op->poll || file_has_poll_mask(file);
- }
- 
-+__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt);
-+
- struct poll_table_entry {
- 	struct file *filp;
- 	__poll_t key;
+ struct inode_operations {
 -- 
 2.17.0
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
