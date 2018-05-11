@@ -1,22 +1,60 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v5 7/7] proc: add option to mount only a pids subset
-Date: Fri, 11 May 2018 15:58:39 +0200
-Message-ID: <CAG48ez0bXvp1iF=HqyhEP1p5B6PRR07_j0qRoypJqs8x3Z+=mw@mail.gmail.com>
-References: <20180511093707.GA1403@comp-core-i7-2640m-0182e6>
+From: David Sterba <dsterba@suse.cz>
+Subject: Re: [RFC v2 4/4] btrfs: verify symlinks with append/immutable flags
+Date: Fri, 11 May 2018 16:04:51 +0200
+Message-ID: <20180511140451.GY6649@twin.jikos.cz>
+References: <20180510231359.16899-1-mcgrof@kernel.org>
+ <20180510231359.16899-5-mcgrof@kernel.org>
+Reply-To: dsterba@suse.cz
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180511093707.GA1403@comp-core-i7-2640m-0182e6>
+Content-Disposition: inline
+In-Reply-To: <20180510231359.16899-5-mcgrof@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jon
+To: "Luis R. Rodriguez" <mcgrof@kernel.org>
+Cc: viro@zeniv.linux.org.uk, darrick.wong@oracle.com, tytso@mit.edu, adilger.kernel@dilger.ca, clm@fb.com, jbacik@fb.com, dsterba@suse.com, sandeen@sandeen.net, dhowells@redhat.com, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 11, 2018 at 11:37 AM, Alexey Gladkov
-<gladkov.alexey@gmail.com> wrote:
-> This allows to hide all files and directories in the procfs that are not
-> related to tasks.
+On Thu, May 10, 2018 at 04:13:59PM -0700, Luis R. Rodriguez wrote:
+> The Linux VFS does not allow a way to set append/immuttable
+                                                   ^^^^^^^^^^
 
-/proc/$pid/net and /proc/$pid/task/$tid/net aren't in scope for this
-protection, even though they contain information about the whole
-network namespace of the task, right?
+Typo, in all 3 patches.
+
+> attributes to symlinks, this is just not possible. If this is
+> detected inform the user as the filesystem must be corrupted.
+> 
+> Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
+> ---
+>  fs/btrfs/inode.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
+> 
+> diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+> index c4bdb597b323..d9c786be408c 100644
+> --- a/fs/btrfs/inode.c
+> +++ b/fs/btrfs/inode.c
+> @@ -3933,6 +3933,15 @@ static int btrfs_read_locked_inode(struct inode *inode)
+>  		inode->i_op = &btrfs_dir_inode_operations;
+>  		break;
+>  	case S_IFLNK:
+> +		/* VFS does not allow setting these so must be corruption */
+> +		if (IS_APPEND(inode) || IS_IMMUTABLE(inode)) {
+> +			ret = -EUCLEAN;
+> +			btrfs_crit(fs_info,
+> +				  "corrupt symlink with append/immutable ino=%llu root=%llu\n",
+
+no "\n" and please un-indent the string so it fits 80 columns.
+
+> +				  btrfs_ino(BTRFS_I(inode)),
+> +				  root->root_key.objectid);
+> +			goto make_bad;
+
+I found some error handling issues, before the switch, there's
+btrfs_free_path and there's one more at the make_bad label.
+
+To fix that, please set path = NULL after the first btrfs_free_path, it
+can handle a NULL when it's called again.
+
+Next thing I'm not sure about are the ACLs that get initialized in some
+cases. There's cache_no_acl() that only resets the inode::i_acl and
+inode::i_default_acl, so I think this should be called too. Thanks.
