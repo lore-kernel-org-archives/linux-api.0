@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 30/32] eventfd: switch to ->poll_mask
-Date: Fri, 11 May 2018 13:08:01 +0200
-Message-ID: <20180511110803.10910-31-hch@lst.de>
+Subject: [PATCH 31/32] timerfd: convert to ->poll_mask
+Date: Fri, 11 May 2018 13:08:02 +0200
+Message-ID: <20180511110803.10910-32-hch@lst.de>
 References: <20180511110803.10910-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180511110803.10910-1-hch@lst.de>
@@ -12,47 +12,54 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/eventfd.c | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ fs/timerfd.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/fs/eventfd.c b/fs/eventfd.c
-index 08d3bd602f73..61c9514da5e9 100644
---- a/fs/eventfd.c
-+++ b/fs/eventfd.c
-@@ -101,14 +101,20 @@ static int eventfd_release(struct inode *inode, struct file *file)
+diff --git a/fs/timerfd.c b/fs/timerfd.c
+index cdad49da3ff7..d84a2bee4f82 100644
+--- a/fs/timerfd.c
++++ b/fs/timerfd.c
+@@ -226,21 +226,20 @@ static int timerfd_release(struct inode *inode, struct file *file)
+ 	kfree_rcu(ctx, rcu);
  	return 0;
  }
- 
--static __poll_t eventfd_poll(struct file *file, poll_table *wait)
-+static struct wait_queue_head *
-+eventfd_get_poll_head(struct file *file, __poll_t events)
-+{
-+	struct eventfd_ctx *ctx = file->private_data;
-+
-+	return &ctx->wqh;
-+}
-+
-+static __poll_t eventfd_poll_mask(struct file *file, __poll_t eventmask)
+-
+-static __poll_t timerfd_poll(struct file *file, poll_table *wait)
++	
++static struct wait_queue_head *timerfd_get_poll_head(struct file *file,
++		__poll_t eventmask)
  {
- 	struct eventfd_ctx *ctx = file->private_data;
- 	__poll_t events = 0;
- 	u64 count;
+ 	struct timerfd_ctx *ctx = file->private_data;
+-	__poll_t events = 0;
+-	unsigned long flags;
  
 -	poll_wait(file, &ctx->wqh, wait);
--
- 	/*
- 	 * All writes to ctx->count occur within ctx->wqh.lock.  This read
- 	 * can be done outside ctx->wqh.lock because we know that poll_wait
-@@ -305,7 +311,8 @@ static const struct file_operations eventfd_fops = {
- 	.show_fdinfo	= eventfd_show_fdinfo,
- #endif
- 	.release	= eventfd_release,
--	.poll		= eventfd_poll,
-+	.get_poll_head	= eventfd_get_poll_head,
-+	.poll_mask	= eventfd_poll_mask,
- 	.read		= eventfd_read,
- 	.write		= eventfd_write,
++	return &ctx->wqh;
++}
+ 
+-	spin_lock_irqsave(&ctx->wqh.lock, flags);
+-	if (ctx->ticks)
+-		events |= EPOLLIN;
+-	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
++static __poll_t timerfd_poll_mask(struct file *file, __poll_t eventmask)
++{
++	struct timerfd_ctx *ctx = file->private_data;
+ 
+-	return events;
++	return ctx->ticks ? EPOLLIN : 0;
+ }
+ 
+ static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
+@@ -364,7 +363,8 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
+ 
+ static const struct file_operations timerfd_fops = {
+ 	.release	= timerfd_release,
+-	.poll		= timerfd_poll,
++	.get_poll_head	= timerfd_get_poll_head,
++	.poll_mask	= timerfd_poll_mask,
+ 	.read		= timerfd_read,
  	.llseek		= noop_llseek,
+ 	.show_fdinfo	= timerfd_show,
 -- 
 2.17.0
 
