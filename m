@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 28/32] crypto: af_alg: convert to ->poll_mask
-Date: Fri, 11 May 2018 13:07:59 +0200
-Message-ID: <20180511110803.10910-29-hch@lst.de>
+Subject: [PATCH 25/32] net/phonet: convert to ->poll_mask
+Date: Fri, 11 May 2018 13:07:56 +0200
+Message-ID: <20180511110803.10910-26-hch@lst.de>
 References: <20180511110803.10910-1-hch@lst.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180511110803.10910-1-hch@lst.de>
@@ -12,104 +12,38 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- crypto/af_alg.c         | 13 +++----------
- crypto/algif_aead.c     |  4 ++--
- crypto/algif_skcipher.c |  4 ++--
- include/crypto/if_alg.h |  3 +--
- 4 files changed, 8 insertions(+), 16 deletions(-)
+ net/phonet/socket.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-index 80838c1cef94..89ed613c017e 100644
---- a/crypto/af_alg.c
-+++ b/crypto/af_alg.c
-@@ -1060,19 +1060,12 @@ void af_alg_async_cb(struct crypto_async_request *_req, int err)
+diff --git a/net/phonet/socket.c b/net/phonet/socket.c
+index 9ecf02def928..ea2bfc3aafb9 100644
+--- a/net/phonet/socket.c
++++ b/net/phonet/socket.c
+@@ -340,15 +340,12 @@ static int pn_socket_getname(struct socket *sock, struct sockaddr *addr,
+ 	return sizeof(struct sockaddr_pn);
  }
- EXPORT_SYMBOL_GPL(af_alg_async_cb);
  
--/**
-- * af_alg_poll - poll system call handler
-- */
--__poll_t af_alg_poll(struct file *file, struct socket *sock,
--			 poll_table *wait)
-+__poll_t af_alg_poll_mask(struct socket *sock, __poll_t events)
+-static __poll_t pn_socket_poll(struct file *file, struct socket *sock,
+-					poll_table *wait)
++static __poll_t pn_socket_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct alg_sock *ask = alg_sk(sk);
- 	struct af_alg_ctx *ctx = ask->private;
--	__poll_t mask;
+ 	struct pep_sock *pn = pep_sk(sk);
+ 	__poll_t mask = 0;
+ 
+-	poll_wait(file, sk_sleep(sk), wait);
 -
--	sock_poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	__poll_t mask = 0;
- 
- 	if (!ctx->more || ctx->used)
- 		mask |= EPOLLIN | EPOLLRDNORM;
-@@ -1082,7 +1075,7 @@ __poll_t af_alg_poll(struct file *file, struct socket *sock,
- 
- 	return mask;
- }
--EXPORT_SYMBOL_GPL(af_alg_poll);
-+EXPORT_SYMBOL_GPL(af_alg_poll_mask);
- 
- /**
-  * af_alg_alloc_areq - allocate struct af_alg_async_req
-diff --git a/crypto/algif_aead.c b/crypto/algif_aead.c
-index 4b07edd5a9ff..330cf9f2b767 100644
---- a/crypto/algif_aead.c
-+++ b/crypto/algif_aead.c
-@@ -375,7 +375,7 @@ static struct proto_ops algif_aead_ops = {
- 	.sendmsg	=	aead_sendmsg,
- 	.sendpage	=	af_alg_sendpage,
- 	.recvmsg	=	aead_recvmsg,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static int aead_check_key(struct socket *sock)
-@@ -471,7 +471,7 @@ static struct proto_ops algif_aead_ops_nokey = {
- 	.sendmsg	=	aead_sendmsg_nokey,
- 	.sendpage	=	aead_sendpage_nokey,
- 	.recvmsg	=	aead_recvmsg_nokey,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static void *aead_bind(const char *name, u32 type, u32 mask)
-diff --git a/crypto/algif_skcipher.c b/crypto/algif_skcipher.c
-index c4e885df4564..15cf3c5222e0 100644
---- a/crypto/algif_skcipher.c
-+++ b/crypto/algif_skcipher.c
-@@ -205,7 +205,7 @@ static struct proto_ops algif_skcipher_ops = {
- 	.sendmsg	=	skcipher_sendmsg,
- 	.sendpage	=	af_alg_sendpage,
- 	.recvmsg	=	skcipher_recvmsg,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static int skcipher_check_key(struct socket *sock)
-@@ -301,7 +301,7 @@ static struct proto_ops algif_skcipher_ops_nokey = {
- 	.sendmsg	=	skcipher_sendmsg_nokey,
- 	.sendpage	=	skcipher_sendpage_nokey,
- 	.recvmsg	=	skcipher_recvmsg_nokey,
--	.poll		=	af_alg_poll,
-+	.poll_mask	=	af_alg_poll_mask,
- };
- 
- static void *skcipher_bind(const char *name, u32 type, u32 mask)
-diff --git a/include/crypto/if_alg.h b/include/crypto/if_alg.h
-index 482461d8931d..cc414db9da0a 100644
---- a/include/crypto/if_alg.h
-+++ b/include/crypto/if_alg.h
-@@ -245,8 +245,7 @@ ssize_t af_alg_sendpage(struct socket *sock, struct page *page,
- 			int offset, size_t size, int flags);
- void af_alg_free_resources(struct af_alg_async_req *areq);
- void af_alg_async_cb(struct crypto_async_request *_req, int err);
--__poll_t af_alg_poll(struct file *file, struct socket *sock,
--			 poll_table *wait);
-+__poll_t af_alg_poll_mask(struct socket *sock, __poll_t events);
- struct af_alg_async_req *af_alg_alloc_areq(struct sock *sk,
- 					   unsigned int areqlen);
- int af_alg_get_rsgl(struct sock *sk, struct msghdr *msg, int flags,
+ 	if (sk->sk_state == TCP_CLOSE)
+ 		return EPOLLERR;
+ 	if (!skb_queue_empty(&sk->sk_receive_queue))
+@@ -473,7 +470,7 @@ const struct proto_ops phonet_stream_ops = {
+ 	.socketpair	= sock_no_socketpair,
+ 	.accept		= pn_socket_accept,
+ 	.getname	= pn_socket_getname,
+-	.poll		= pn_socket_poll,
++	.poll_mask	= pn_socket_poll_mask,
+ 	.ioctl		= pn_socket_ioctl,
+ 	.listen		= pn_socket_listen,
+ 	.shutdown	= sock_no_shutdown,
 -- 
 2.17.0
