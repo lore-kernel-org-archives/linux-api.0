@@ -1,58 +1,41 @@
-From: David Sterba <dsterba@suse.cz>
-Subject: Re: [PATCH 1/2 V2] hoist BTRFS_IOC_[SG]ET_FSLABEL to vfs
-Date: Fri, 11 May 2018 16:41:45 +0200
-Message-ID: <20180511144145.GA6649@twin.jikos.cz>
-References: <d2979d75-5e45-b145-9ca5-2c315d8ead9c@redhat.com>
- <b8c7feca-68ce-b1a8-3a96-a99b50457a84@sandeen.net>
- <4a4f33c3-2173-9795-f4e4-1e9d338fd9a7@sandeen.net>
- <20180510191608.GR30522@ZenIV.linux.org.uk>
- <20180511141017.GZ6649@twin.jikos.cz>
- <9F0DCA90-AD82-4179-B50A-F112CF966CCB@fb.com>
- <94b5a947-d7f5-19e7-fb2b-161a5c20e85e@sandeen.net>
-Reply-To: dsterba@suse.cz
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH v5 5/7] proc: instantiate only pids that we can ptrace on
+ 'limit_pids=1' mount option
+Date: Fri, 11 May 2018 09:09:04 -0700
+Message-ID: <7c638a92-8c40-fa15-8c63-777232588137@infradead.org>
+References: <20180511093613.GA1330@comp-core-i7-2640m-0182e6>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <94b5a947-d7f5-19e7-fb2b-161a5c20e85e@sandeen.net>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@sandeen.net>
-Cc: Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.cz>, Al Viro <viro@ZenIV.linux.org.uk>, Eric Sandeen <sandeen@redhat.com>, fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <kernel-hardening-return-13283-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20180511093613.GA1330@comp-core-i7-2640m-0182e6>
+Content-Language: en-US
+To: Alexey Gladkov <gladkov.alexey@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, bfields@fieldses.org, Stephen Rothwell <sfr@canb.auug.org.au>, solar@openwall.com, "Dmitry V. Levin" <ldv@altlinux.org>, Djalal Harouni <tixxdz@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 11, 2018 at 09:36:09AM -0500, Eric Sandeen wrote:
-> On 5/11/18 9:32 AM, Chris Mason wrote:
-> > On 11 May 2018, at 10:10, David Sterba wrote:
-> > 
-> >> On Thu, May 10, 2018 at 08:16:09PM +0100, Al Viro wrote:
-> >>> On Thu, May 10, 2018 at 01:13:57PM -0500, Eric Sandeen wrote:
-> >>>> Move the btrfs label ioctls up to the vfs for general use.
-> >>>>
-> >>>> This retains 256 chars as the maximum size through the interface, which
-> >>>> is the btrfs limit and AFAIK exceeds any other filesystem's maximum
-> >>>> label size.
-> >>>>
-> >>>> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
-> >>>> Reviewed-by: Andreas Dilger <adilger@dilger.ca>
-> >>>> Reviewed-by: David Sterba <dsterba@suse.com>
-> >>>
-> >>> No objections (and it obviously ought to go through btrfs tree).
-> >>
-> >> I can take it through my tree, but Eric mentioned that there's a patch
-> >> for xfs that depends on it. In this case it would make sense to take
-> >> both patches at once via the xfs tree. There are no pending conflicting
-> >> changes in btrfs.
-> > 
-> > Probably easiest to just have a separate pull dedicated just for this series.  That way it doesn't really matter which tree it goes through.
+On 05/11/2018 02:36 AM, Alexey Gladkov wrote:
+> From: Djalal Harouni <tixxdz@gmail.com>
 > 
-> Actually, I just realized that the changes to include/uapi/linux/fs.h are completely
-> independent of any btrfs changes, right - there's nothing wrong w/ redefining
-> the common ioctl under a different name in btrfs.  So the fs.h patch could go first,
-> through the xfs tree since it'll be using it.
-> 
-> Once the common ioctl definition goes in, then btrfs can change to define its ioctls to
-> the common ioctls, or act on them directly as my patch did, etc.  Would that be
-> a better plan?  IOWs there's no urgent need to coordinate a btrfs change.
+> If "limit_pids=1" mount option is set then do not instantiate pids that
+> we can not ptrace. "limit_pids=1" means that procfs should only contain
+> pids that the caller can ptrace.
 
-Agreed, I like that plan.
+Where can I find documentation on these mount options (pidonly, limit_pids)?
+
+Thanks.
+
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Andy Lutomirski <luto@kernel.org>
+> Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
+> ---
+>  fs/proc/base.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
+
+
+-- 
+~Randy
