@@ -1,58 +1,64 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [RFC v2 3/4] ext4: add verifier check for symlink with
- append/immutable flags
-Date: Fri, 11 May 2018 23:12:18 +0200
-Message-ID: <20180511211218.rs365ftuw53c4qj2@quack2.suse.cz>
-References: <20180510231359.16899-1-mcgrof@kernel.org>
- <20180510231359.16899-4-mcgrof@kernel.org>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [PATCH 1/2 V2] hoist BTRFS_IOC_[SG]ET_FSLABEL to vfs
+Date: Fri, 11 May 2018 17:20:49 -0700
+Message-ID: <20180512002049.GH9510@magnolia>
+References: <d2979d75-5e45-b145-9ca5-2c315d8ead9c@redhat.com>
+ <b8c7feca-68ce-b1a8-3a96-a99b50457a84@sandeen.net>
+ <4a4f33c3-2173-9795-f4e4-1e9d338fd9a7@sandeen.net>
+ <20180510191608.GR30522@ZenIV.linux.org.uk>
+ <20180511141017.GZ6649@twin.jikos.cz>
+ <9F0DCA90-AD82-4179-B50A-F112CF966CCB@fb.com>
+ <94b5a947-d7f5-19e7-fb2b-161a5c20e85e@sandeen.net>
+ <20180511144145.GA6649@twin.jikos.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180510231359.16899-4-mcgrof@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Luis R. Rodriguez" <mcgrof@kernel.org>
-Cc: viro@zeniv.linux.org.uk, darrick.wong@oracle.com, tytso@mit.edu, adilger.kernel@dilger.ca, clm@fb.com, jbacik@fb.com, dsterba@suse.com, sandeen@sandeen.net, dhowells@redhat.com, fliu@suse.com, jack@suse.cz, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20180511144145.GA6649@twin.jikos.cz>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: dsterba@suse.cz, Eric Sandeen <sandeen@sandeen.net>, Chris Mason <clm@fb.com>, Al Viro <viro@ZenIV.linux.org.uk>, Eric Sandeen <sandeen@redhat.com>, fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 10-05-18 16:13:58, Luis R. Rodriguez wrote:
-> The Linux VFS does not allow a way to set append/immuttable
-> attributes to symlinks, this is just not possible. If this is
-> detected inform the user as the filesystem must be corrupted.
+On Fri, May 11, 2018 at 04:41:45PM +0200, David Sterba wrote:
+> On Fri, May 11, 2018 at 09:36:09AM -0500, Eric Sandeen wrote:
+> > On 5/11/18 9:32 AM, Chris Mason wrote:
+> > > On 11 May 2018, at 10:10, David Sterba wrote:
+> > > 
+> > >> On Thu, May 10, 2018 at 08:16:09PM +0100, Al Viro wrote:
+> > >>> On Thu, May 10, 2018 at 01:13:57PM -0500, Eric Sandeen wrote:
+> > >>>> Move the btrfs label ioctls up to the vfs for general use.
+> > >>>>
+> > >>>> This retains 256 chars as the maximum size through the interface, which
+> > >>>> is the btrfs limit and AFAIK exceeds any other filesystem's maximum
+> > >>>> label size.
+> > >>>>
+> > >>>> Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+> > >>>> Reviewed-by: Andreas Dilger <adilger@dilger.ca>
+> > >>>> Reviewed-by: David Sterba <dsterba@suse.com>
+> > >>>
+> > >>> No objections (and it obviously ought to go through btrfs tree).
+> > >>
+> > >> I can take it through my tree, but Eric mentioned that there's a patch
+> > >> for xfs that depends on it. In this case it would make sense to take
+> > >> both patches at once via the xfs tree. There are no pending conflicting
+> > >> changes in btrfs.
+> > > 
+> > > Probably easiest to just have a separate pull dedicated just for this series.  That way it doesn't really matter which tree it goes through.
+> > 
+> > Actually, I just realized that the changes to include/uapi/linux/fs.h are completely
+> > independent of any btrfs changes, right - there's nothing wrong w/ redefining
+> > the common ioctl under a different name in btrfs.  So the fs.h patch could go first,
+> > through the xfs tree since it'll be using it.
+> > 
+> > Once the common ioctl definition goes in, then btrfs can change to define its ioctls to
+> > the common ioctls, or act on them directly as my patch did, etc.  Would that be
+> > a better plan?  IOWs there's no urgent need to coordinate a btrfs change.
 > 
-> Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
+> Agreed, I like that plan.
 
-Looks good to me. You can add:
+Ok, I'll await a new series with all the patches that Eric wants to
+squeeze through the xfs tree.  I don't mind carrying the btrfs changes
+too, so long as they're one-liners and the btrfs maintainers ack/rvb it.
 
-Reviewed-by: Jan Kara <jack@suse.cz>
-
-								Honza
-
-> ---
->  fs/ext4/inode.c | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-> index 37a2f7a2b66a..6acf0dd6b6e6 100644
-> --- a/fs/ext4/inode.c
-> +++ b/fs/ext4/inode.c
-> @@ -4947,6 +4947,13 @@ struct inode *ext4_iget(struct super_block *sb, unsigned long ino)
->  		inode->i_op = &ext4_dir_inode_operations;
->  		inode->i_fop = &ext4_dir_operations;
->  	} else if (S_ISLNK(inode->i_mode)) {
-> +		/* VFS does not allow setting these so must be corruption */
-> +		if (IS_APPEND(inode) || IS_IMMUTABLE(inode)) {
-> +			EXT4_ERROR_INODE(inode,
-> +			  "immutable or append flags not allowed on symlinks");
-> +			ret = -EFSCORRUPTED;
-> +			goto bad_inode;
-> +		}
->  		if (ext4_encrypted_inode(inode)) {
->  			inode->i_op = &ext4_encrypted_symlink_inode_operations;
->  			ext4_set_aops(inode);
-> -- 
-> 2.17.0
-> 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+--D
