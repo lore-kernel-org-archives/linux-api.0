@@ -1,33 +1,43 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 14/32] net/tcp: convert to ->poll_mask
-Date: Sat, 12 May 2018 12:09:50 +0200
-Message-ID: <20180512100950.GA5954@lst.de>
-References: <20180511110803.10910-1-hch@lst.de> <20180511110803.10910-15-hch@lst.de> <96284b0e-0d4e-a944-4fd5-933d12cf53cb@gmail.com>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
+Subject: Re: [RFC v2 3/4] ext4: add verifier check for symlink with
+ append/immutable flags
+Date: Sun, 13 May 2018 16:51:32 -0400
+Message-ID: <20180513205132.GG14763@thunk.org>
+References: <20180510231359.16899-1-mcgrof@kernel.org>
+ <20180510231359.16899-4-mcgrof@kernel.org>
+ <20180511211218.rs365ftuw53c4qj2@quack2.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <96284b0e-0d4e-a944-4fd5-933d12cf53cb@gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: Eric Dumazet <eric.dumazet@gmail.com>
-Cc: Christoph Hellwig <hch@lst.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <20180511211218.rs365ftuw53c4qj2@quack2.suse.cz>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Jan Kara <jack@suse.cz>
+Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, viro@zeniv.linux.org.uk, darrick.wong@oracle.com, adilger.kernel@dilger.ca, clm@fb.com, jbacik@fb.com, dsterba@suse.com, sandeen@sandeen.net, dhowells@redhat.com, fliu@suse.com, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 11, 2018 at 06:13:11AM -0700, Eric Dumazet wrote:
-> > +struct wait_queue_head *tcp_get_poll_head(struct socket *sock, __poll_t events)
-> > +{
-> > +	sock_poll_busy_loop(sock, events);
-> > +	sock_rps_record_flow(sock->sk);
+On Fri, May 11, 2018 at 11:12:18PM +0200, Jan Kara wrote:
+> On Thu 10-05-18 16:13:58, Luis R. Rodriguez wrote:
+> > The Linux VFS does not allow a way to set append/immuttable
+> > attributes to symlinks, this is just not possible. If this is
+> > detected inform the user as the filesystem must be corrupted.
+> > 
+> > Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
 > 
-> Why are you adding sock_rps_record_flow() ?
+> Looks good to me. You can add:
+> 
+> Reviewed-by: Jan Kara <jack@suse.cz>
 
-Because I mismerged the removal of it from tcp_poll in
-'net: revert "Update RFS target at poll for tcp/udp"'
+Applied into the ext4 tree after verifying that e2fsck already handles
+this case:
 
-Thanks for the headsup, this will be removed for the next version.
+% e2fsck -fy /tmp/foo.img
+e2fsck 1.44.1 (24-Mar-2018)
+Pass 1: Checking inodes, blocks, and sizes
+Special (device/socket/fifo/symlink) file (inode 13) has immutable
+or append-only flag set.  Clear? yes
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+(The btrfs and xfs maintainers might want to make a similar check
+before accepting their respective patches.)
+
+						- Ted
