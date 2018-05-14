@@ -1,43 +1,40 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [RFC v2 3/4] ext4: add verifier check for symlink with
- append/immutable flags
-Date: Sun, 13 May 2018 16:51:32 -0400
-Message-ID: <20180513205132.GG14763@thunk.org>
-References: <20180510231359.16899-1-mcgrof@kernel.org>
- <20180510231359.16899-4-mcgrof@kernel.org>
- <20180511211218.rs365ftuw53c4qj2@quack2.suse.cz>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: Re: [PATCH v5 5/7] proc: instantiate only pids that we can ptrace on
+ 'limit_pids=1' mount option
+Date: Mon, 14 May 2018 10:29:08 +0200
+Message-ID: <20180514082908.GA28179@comp-core-i7-2640m-0182e6>
+References: <20180511093613.GA1330@comp-core-i7-2640m-0182e6>
+ <CA+55aFxYwH6dw=bsQJHEgkM_iZfVNerqn+RAXrrY2iufJag6Qw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180511211218.rs365ftuw53c4qj2@quack2.suse.cz>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: "Luis R. Rodriguez" <mcgrof@kernel.org>, viro@zeniv.linux.org.uk, darrick.wong@oracle.com, adilger.kernel@dilger.ca, clm@fb.com, jbacik@fb.com, dsterba@suse.com, sandeen@sandeen.net, dhowells@redhat.com, fliu@suse.com, jeffm@suse.com, nborisov@suse.com, jake.norris@suse.com, mtk.manpages@gmail.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <CA+55aFxYwH6dw=bsQJHEgkM_iZfVNerqn+RAXrrY2iufJag6Qw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Kees Cook <keescook@chromium.org>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, J.
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 11, 2018 at 11:12:18PM +0200, Jan Kara wrote:
-> On Thu 10-05-18 16:13:58, Luis R. Rodriguez wrote:
-> > The Linux VFS does not allow a way to set append/immuttable
-> > attributes to symlinks, this is just not possible. If this is
-> > detected inform the user as the filesystem must be corrupted.
-> > 
-> > Signed-off-by: Luis R. Rodriguez <mcgrof@kernel.org>
+On Fri, May 11, 2018 at 09:45:33AM -0700, Linus Torvalds wrote:
+> On Fri, May 11, 2018 at 2:46 AM Alexey Gladkov <gladkov.alexey@gmail.com>
+> wrote:
 > 
-> Looks good to me. You can add:
+> > +       /* Limit procfs to only ptracable tasks */
+> > +       if (limit_pids == PROC_LIMIT_PIDS_PTRACE) {
+> > +               cond_resched();
+> > +               if (!has_pid_permissions(fs_info, task,
+> HIDEPID_NO_ACCESS))
+> > +                       goto out_put_task;
+> > +       }
 > 
-> Reviewed-by: Jan Kara <jack@suse.cz>
+> Where did that "cond_resched()" come from? That doesn't seem to make a lot
+> of sense.
 
-Applied into the ext4 tree after verifying that e2fsck already handles
-this case:
+This call came along with has_pid_permissions from proc_pid_readdir [1]. It
+seems to me that proc_pid_readdir and proc_pid_lookup should act in a
+similar way in this case.
 
-% e2fsck -fy /tmp/foo.img
-e2fsck 1.44.1 (24-Mar-2018)
-Pass 1: Checking inodes, blocks, and sizes
-Special (device/socket/fifo/symlink) file (inode 13) has immutable
-or append-only flag set.  Clear? yes
+[1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=3ba4bceef23206349d4130ddf140819b365de7c8
 
-(The btrfs and xfs maintainers might want to make a similar check
-before accepting their respective patches.)
-
-						- Ted
+-- 
+Rgrds, legion
