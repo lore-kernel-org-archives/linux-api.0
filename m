@@ -1,32 +1,34 @@
 From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: Re: [PATCH v5 5/7] proc: instantiate only pids that we can ptrace on
- 'limit_pids=1' mount option
-Date: Mon, 14 May 2018 10:34:39 +0200
-Message-ID: <20180514083439.GB28179@comp-core-i7-2640m-0182e6>
-References: <20180511093613.GA1330@comp-core-i7-2640m-0182e6>
- <7c638a92-8c40-fa15-8c63-777232588137@infradead.org>
+Subject: Re: [PATCH v5 7/7] proc: add option to mount only a pids subset
+Date: Mon, 14 May 2018 11:01:17 +0200
+Message-ID: <20180514090117.GC28179@comp-core-i7-2640m-0182e6>
+References: <20180511093707.GA1403@comp-core-i7-2640m-0182e6>
+ <CAG48ez0bXvp1iF=HqyhEP1p5B6PRR07_j0qRoypJqs8x3Z+=mw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <7c638a92-8c40-fa15-8c63-777232588137@infradead.org>
+In-Reply-To: <CAG48ez0bXvp1iF=HqyhEP1p5B6PRR07_j0qRoypJqs8x3Z+=mw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-hardening@lists.openwall.com, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jonathan Corbet <corbet@lwn.net>, bfields@fieldses.org, Stephen Rothwell <sfr@ca>
+To: Jann Horn <jannh@google.com>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jon
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 11, 2018 at 09:09:04AM -0700, Randy Dunlap wrote:
-> On 05/11/2018 02:36 AM, Alexey Gladkov wrote:
-> > From: Djalal Harouni <tixxdz@gmail.com>
-> > 
-> > If "limit_pids=1" mount option is set then do not instantiate pids that
-> > we can not ptrace. "limit_pids=1" means that procfs should only contain
-> > pids that the caller can ptrace.
+On Fri, May 11, 2018 at 03:58:39PM +0200, Jann Horn wrote:
+> On Fri, May 11, 2018 at 11:37 AM, Alexey Gladkov
+> <gladkov.alexey@gmail.com> wrote:
+> > This allows to hide all files and directories in the procfs that are not
+> > related to tasks.
 > 
-> Where can I find documentation on these mount options (pidonly, limit_pids)?
+> /proc/$pid/net and /proc/$pid/task/$tid/net aren't in scope for this
+> protection, even though they contain information about the whole
+> network namespace of the task, right?
 
-The documentation is not ready yet. It will be added in the next version
-of the patchset.
+Yes. The pidonly makes visible only pids subset. You can still access the
+process namespaces via /proc/$pid/ns.
+
+We can think of additional constraints since the parameters are not
+stored in the pid namespace anymore.
 
 -- 
 Rgrds, legion
