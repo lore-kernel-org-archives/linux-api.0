@@ -1,8 +1,8 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Florian Weimer <fweimer@redhat.com>
 Subject: Re: [PATCH] pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
  signal semantics
-Date: Mon, 14 May 2018 08:32:54 -0700
-Message-ID: <E77C6E12-EF2A-435A-AAD4-1554459606F1@amacapital.net>
+Date: Mon, 14 May 2018 17:34:07 +0200
+Message-ID: <c727a0da-dd5b-4ca2-375c-773ec550ab25@redhat.com>
 References: <20180502132751.05B9F401F3041@oldenburg.str.redhat.com>
  <248faadb-e484-806f-1485-c34a72a9ca0b@intel.com>
  <822a28c9-5405-68c2-11bf-0c282887466d@redhat.com>
@@ -18,12 +18,13 @@ References: <20180502132751.05B9F401F3041@oldenburg.str.redhat.com>
  <314e1a48-db94-9b37-8793-a95a2082c9e2@redhat.com>
  <CALCETrUGjN8mhOaLqGcau-pPKm9TQW8k05hZrh52prRNdC5yQQ@mail.gmail.com>
  <008010c1-20a1-c307-25ac-8a69d672d031@redhat.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-	charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+ <E77C6E12-EF2A-435A-AAD4-1554459606F1@amacapital.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <008010c1-20a1-c307-25ac-8a69d672d031@redhat.com>
+In-Reply-To: <E77C6E12-EF2A-435A-AAD4-1554459606F1@amacapital.net>
+Content-Language: en-US
 List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
  <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
 List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
@@ -34,27 +35,30 @@ List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
 Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
 Sender: "Linuxppc-dev"
  <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Florian Weimer <fweimer@redhat.com>
+To: Andy Lutomirski <luto@amacapital.net>
 Cc: linux-arch <linux-arch@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linuxram@us.ibm.com, Dave Hansen <dave.hansen@intel.com>, linux-x86_64@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
 List-Id: linux-api@vger.kernel.org
 
+On 05/14/2018 05:32 PM, Andy Lutomirski wrote:
+> 
+> 
+> 
+>> On May 14, 2018, at 5:01 AM, Florian Weimer <fweimer@redhat.com> wrote:
+>>
+>>> One thing we could do, though: the current initual state on process
+>>> creation is all access blocked on all keys.  We could change it so that
+>>> half the keys are fully blocked and half are read-only.  Then we could add
+>>> a PKEY_ALLOC_STRICT or similar that allocates a key with the correct
+>>> initial state*and*  does the setsignal thing.  If there are no keys left
+>>> with the correct initial state, then it fails.
+>>
+>> The initial PKRU value can currently be configured by the system administrator.  I fear this approach has too many moving parts to be viable.
+>>
+>>
+> 
+> Honestly, I think we should drop that option. I don’t see how we can expect an administrator to do this usefully.
 
+I don't disagree—it makes things way less predictable in practice.
 
-
-> On May 14, 2018, at 5:01 AM, Florian Weimer <fweimer@redhat.com> wrote:
->=20
->> One thing we could do, though: the current initual state on process
->> creation is all access blocked on all keys.  We could change it so that
->> half the keys are fully blocked and half are read-only.  Then we could ad=
-d
->> a PKEY_ALLOC_STRICT or similar that allocates a key with the correct
->> initial state*and*  does the setsignal thing.  If there are no keys left
->> with the correct initial state, then it fails.
->=20
-> The initial PKRU value can currently be configured by the system administr=
-ator.  I fear this approach has too many moving parts to be viable.
->=20
->=20
-
-Honestly, I think we should drop that option. I don=E2=80=99t see how we can=
- expect an administrator to do this usefully.=
+Thanks,
+Florian
