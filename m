@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 25/32] net/phonet: convert to ->poll_mask
-Date: Tue, 15 May 2018 21:48:26 +0200
-Message-ID: <20180515194833.6906-26-hch@lst.de>
+Subject: [PATCH 26/32] net/iucv: convert to ->poll_mask
+Date: Tue, 15 May 2018 21:48:27 +0200
+Message-ID: <20180515194833.6906-27-hch@lst.de>
 References: <20180515194833.6906-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180515194833.6906-1-hch@lst.de>
@@ -12,39 +12,52 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/phonet/socket.c | 7 ++-----
- 1 file changed, 2 insertions(+), 5 deletions(-)
+ include/net/iucv/af_iucv.h | 2 --
+ net/iucv/af_iucv.c         | 7 ++-----
+ 2 files changed, 2 insertions(+), 7 deletions(-)
 
-diff --git a/net/phonet/socket.c b/net/phonet/socket.c
-index 9ecf02def928..ea2bfc3aafb9 100644
---- a/net/phonet/socket.c
-+++ b/net/phonet/socket.c
-@@ -340,15 +340,12 @@ static int pn_socket_getname(struct socket *sock, struct sockaddr *addr,
- 	return sizeof(struct sockaddr_pn);
+diff --git a/include/net/iucv/af_iucv.h b/include/net/iucv/af_iucv.h
+index f4c21b5a1242..b0eaeb02d46d 100644
+--- a/include/net/iucv/af_iucv.h
++++ b/include/net/iucv/af_iucv.h
+@@ -153,8 +153,6 @@ struct iucv_sock_list {
+ 	atomic_t	  autobind_name;
+ };
+ 
+-__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+-			    poll_table *wait);
+ void iucv_sock_link(struct iucv_sock_list *l, struct sock *s);
+ void iucv_sock_unlink(struct iucv_sock_list *l, struct sock *s);
+ void iucv_accept_enqueue(struct sock *parent, struct sock *sk);
+diff --git a/net/iucv/af_iucv.c b/net/iucv/af_iucv.c
+index 893a022f9620..68e86257a549 100644
+--- a/net/iucv/af_iucv.c
++++ b/net/iucv/af_iucv.c
+@@ -1488,14 +1488,11 @@ static inline __poll_t iucv_accept_poll(struct sock *parent)
+ 	return 0;
  }
  
--static __poll_t pn_socket_poll(struct file *file, struct socket *sock,
--					poll_table *wait)
-+static __poll_t pn_socket_poll_mask(struct socket *sock, __poll_t events)
+-__poll_t iucv_sock_poll(struct file *file, struct socket *sock,
+-			    poll_table *wait)
++static __poll_t iucv_sock_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct pep_sock *pn = pep_sk(sk);
  	__poll_t mask = 0;
  
--	poll_wait(file, sk_sleep(sk), wait);
+-	sock_poll_wait(file, sk_sleep(sk), wait);
 -
- 	if (sk->sk_state == TCP_CLOSE)
- 		return EPOLLERR;
- 	if (!skb_queue_empty(&sk->sk_receive_queue))
-@@ -473,7 +470,7 @@ const struct proto_ops phonet_stream_ops = {
+ 	if (sk->sk_state == IUCV_LISTEN)
+ 		return iucv_accept_poll(sk);
+ 
+@@ -2388,7 +2385,7 @@ static const struct proto_ops iucv_sock_ops = {
+ 	.getname	= iucv_sock_getname,
+ 	.sendmsg	= iucv_sock_sendmsg,
+ 	.recvmsg	= iucv_sock_recvmsg,
+-	.poll		= iucv_sock_poll,
++	.poll_mask	= iucv_sock_poll_mask,
+ 	.ioctl		= sock_no_ioctl,
+ 	.mmap		= sock_no_mmap,
  	.socketpair	= sock_no_socketpair,
- 	.accept		= pn_socket_accept,
- 	.getname	= pn_socket_getname,
--	.poll		= pn_socket_poll,
-+	.poll_mask	= pn_socket_poll_mask,
- 	.ioctl		= pn_socket_ioctl,
- 	.listen		= pn_socket_listen,
- 	.shutdown	= sock_no_shutdown,
 -- 
 2.17.0
 
