@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 21/32] net/sctp: convert to ->poll_mask
-Date: Tue, 15 May 2018 21:48:22 +0200
-Message-ID: <20180515194833.6906-22-hch@lst.de>
+Subject: [PATCH 22/32] net/bluetooth: convert to ->poll_mask
+Date: Tue, 15 May 2018 21:48:23 +0200
+Message-ID: <20180515194833.6906-23-hch@lst.de>
 References: <20180515194833.6906-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180515194833.6906-1-hch@lst.de>
@@ -12,72 +12,96 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/sctp/sctp.h | 3 +--
- net/sctp/ipv6.c         | 2 +-
- net/sctp/protocol.c     | 2 +-
- net/sctp/socket.c       | 4 +---
- 4 files changed, 4 insertions(+), 7 deletions(-)
+ include/net/bluetooth/bluetooth.h | 2 +-
+ net/bluetooth/af_bluetooth.c      | 7 ++-----
+ net/bluetooth/l2cap_sock.c        | 2 +-
+ net/bluetooth/rfcomm/sock.c       | 2 +-
+ net/bluetooth/sco.c               | 2 +-
+ 5 files changed, 6 insertions(+), 9 deletions(-)
 
-diff --git a/include/net/sctp/sctp.h b/include/net/sctp/sctp.h
-index 28b996d63490..206100cc665b 100644
---- a/include/net/sctp/sctp.h
-+++ b/include/net/sctp/sctp.h
-@@ -107,8 +107,7 @@ int sctp_backlog_rcv(struct sock *sk, struct sk_buff *skb);
- int sctp_inet_listen(struct socket *sock, int backlog);
- void sctp_write_space(struct sock *sk);
- void sctp_data_ready(struct sock *sk);
--__poll_t sctp_poll(struct file *file, struct socket *sock,
--		poll_table *wait);
-+__poll_t sctp_poll_mask(struct socket *sock, __poll_t events);
- void sctp_sock_rfree(struct sk_buff *skb);
- void sctp_copy_sock(struct sock *newsk, struct sock *sk,
- 		    struct sctp_association *asoc);
-diff --git a/net/sctp/ipv6.c b/net/sctp/ipv6.c
-index 2e3f7b75a8ec..d52eaf1881af 100644
---- a/net/sctp/ipv6.c
-+++ b/net/sctp/ipv6.c
-@@ -1007,7 +1007,7 @@ static const struct proto_ops inet6_seqpacket_ops = {
- 	.socketpair	   = sock_no_socketpair,
- 	.accept		   = inet_accept,
- 	.getname	   = sctp_getname,
--	.poll		   = sctp_poll,
-+	.poll_mask	   = sctp_poll_mask,
- 	.ioctl		   = inet6_ioctl,
- 	.listen		   = sctp_inet_listen,
- 	.shutdown	   = inet_shutdown,
-diff --git a/net/sctp/protocol.c b/net/sctp/protocol.c
-index d685f8456762..a1d2ea3ff4c9 100644
---- a/net/sctp/protocol.c
-+++ b/net/sctp/protocol.c
-@@ -1016,7 +1016,7 @@ static const struct proto_ops inet_seqpacket_ops = {
- 	.socketpair	   = sock_no_socketpair,
- 	.accept		   = inet_accept,
- 	.getname	   = inet_getname,	/* Semantics are different.  */
--	.poll		   = sctp_poll,
-+	.poll_mask	   = sctp_poll_mask,
- 	.ioctl		   = inet_ioctl,
- 	.listen		   = sctp_inet_listen,
- 	.shutdown	   = inet_shutdown,	/* Looks harmless.  */
-diff --git a/net/sctp/socket.c b/net/sctp/socket.c
-index 80835ac26d2c..f6bb1b89525c 100644
---- a/net/sctp/socket.c
-+++ b/net/sctp/socket.c
-@@ -7701,14 +7701,12 @@ int sctp_inet_listen(struct socket *sock, int backlog)
-  * here, again, by modeling the current TCP/UDP code.  We don't have
-  * a good way to test with it yet.
-  */
--__poll_t sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
-+__poll_t sctp_poll_mask(struct socket *sock, __poll_t events)
+diff --git a/include/net/bluetooth/bluetooth.h b/include/net/bluetooth/bluetooth.h
+index ec9d6bc65855..53ce8176c313 100644
+--- a/include/net/bluetooth/bluetooth.h
++++ b/include/net/bluetooth/bluetooth.h
+@@ -271,7 +271,7 @@ int  bt_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
+ 		     int flags);
+ int  bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,
+ 			    size_t len, int flags);
+-__poll_t bt_sock_poll(struct file *file, struct socket *sock, poll_table *wait);
++__poll_t bt_sock_poll_mask(struct socket *sock, __poll_t events);
+ int  bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+ int  bt_sock_wait_state(struct sock *sk, int state, unsigned long timeo);
+ int  bt_sock_wait_ready(struct sock *sk, unsigned long flags);
+diff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
+index 84d92a077834..80033a7e1de2 100644
+--- a/net/bluetooth/af_bluetooth.c
++++ b/net/bluetooth/af_bluetooth.c
+@@ -437,16 +437,13 @@ static inline __poll_t bt_accept_poll(struct sock *parent)
+ 	return 0;
+ }
+ 
+-__poll_t bt_sock_poll(struct file *file, struct socket *sock,
+-			  poll_table *wait)
++__poll_t bt_sock_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	struct sctp_sock *sp = sctp_sk(sk);
- 	__poll_t mask;
+ 	__poll_t mask = 0;
+ 
+ 	BT_DBG("sock %p, sk %p", sock, sk);
  
 -	poll_wait(file, sk_sleep(sk), wait);
 -
- 	sock_rps_record_flow(sk);
+ 	if (sk->sk_state == BT_LISTEN)
+ 		return bt_accept_poll(sk);
  
- 	/* A TCP-style listening socket becomes readable when the accept queue
+@@ -478,7 +475,7 @@ __poll_t bt_sock_poll(struct file *file, struct socket *sock,
+ 
+ 	return mask;
+ }
+-EXPORT_SYMBOL(bt_sock_poll);
++EXPORT_SYMBOL(bt_sock_poll_mask);
+ 
+ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
+ {
+diff --git a/net/bluetooth/l2cap_sock.c b/net/bluetooth/l2cap_sock.c
+index 686bdc6b35b0..742a190034e6 100644
+--- a/net/bluetooth/l2cap_sock.c
++++ b/net/bluetooth/l2cap_sock.c
+@@ -1653,7 +1653,7 @@ static const struct proto_ops l2cap_sock_ops = {
+ 	.getname	= l2cap_sock_getname,
+ 	.sendmsg	= l2cap_sock_sendmsg,
+ 	.recvmsg	= l2cap_sock_recvmsg,
+-	.poll		= bt_sock_poll,
++	.poll_mask	= bt_sock_poll_mask,
+ 	.ioctl		= bt_sock_ioctl,
+ 	.mmap		= sock_no_mmap,
+ 	.socketpair	= sock_no_socketpair,
+diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
+index d606e9212291..1cf57622473a 100644
+--- a/net/bluetooth/rfcomm/sock.c
++++ b/net/bluetooth/rfcomm/sock.c
+@@ -1049,7 +1049,7 @@ static const struct proto_ops rfcomm_sock_ops = {
+ 	.setsockopt	= rfcomm_sock_setsockopt,
+ 	.getsockopt	= rfcomm_sock_getsockopt,
+ 	.ioctl		= rfcomm_sock_ioctl,
+-	.poll		= bt_sock_poll,
++	.poll_mask	= bt_sock_poll_mask,
+ 	.socketpair	= sock_no_socketpair,
+ 	.mmap		= sock_no_mmap
+ };
+diff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c
+index 413b8ee49fec..d60dbc61d170 100644
+--- a/net/bluetooth/sco.c
++++ b/net/bluetooth/sco.c
+@@ -1197,7 +1197,7 @@ static const struct proto_ops sco_sock_ops = {
+ 	.getname	= sco_sock_getname,
+ 	.sendmsg	= sco_sock_sendmsg,
+ 	.recvmsg	= sco_sock_recvmsg,
+-	.poll		= bt_sock_poll,
++	.poll_mask	= bt_sock_poll_mask,
+ 	.ioctl		= bt_sock_ioctl,
+ 	.mmap		= sock_no_mmap,
+ 	.socketpair	= sock_no_socketpair,
 -- 
 2.17.0
 
