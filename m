@@ -1,85 +1,117 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: Re: [PATCH v5 1/7] proc: add proc_fs_info struct to store proc
- information
-Date: Tue, 15 May 2018 09:21:54 +0200
-Message-ID: <20180515072153.GD28179@comp-core-i7-2640m-0182e6>
-References: <20180511093445.GA1008@comp-core-i7-2640m-0182e6>
- <CAG48ez3xYHsKMkPJhjq-yrrTxMHmrHDov-P7bTy8T2xf_7=OAQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: [patch v21 0/4] JTAG driver introduction
+Date: Tue, 15 May 2018 17:21:31 +0300
+Message-ID: <1526394095-5069-1-git-send-email-oleksandrs@mellanox.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez3xYHsKMkPJhjq-yrrTxMHmrHDov-P7bTy8T2xf_7=OAQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jon
+To: gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 11, 2018 at 03:49:13PM +0200, Jann Horn wrote:
-> On Fri, May 11, 2018 at 11:34 AM, Alexey Gladkov
-> <gladkov.alexey@gmail.com> wrote:
-> > From: Djalal Harouni <tixxdz@gmail.com>
-> >
-> > This is a preparation patch that adds proc_fs_info to be able to store
-> > different procfs options and informations. Right now some mount options
-> > are stored inside the pid namespace which makes it hard to change or
-> > modernize procfs without affecting pid namespaces. Plus we do want to
-> > treat proc as more of a real mount point and filesystem. procfs is part
-> > of Linux API where it offers some features using filesystem syscalls and
-> > in order to support some features where we are able to have multiple
-> > instances of procfs, each one with its mount options inside the same pid
-> > namespace, we have to separate these procfs instances.
-> >
-> > This is the same feature that was also added to other Linux interfaces
-> > like devpts in order to support containers, sandboxes, and to have
-> > multiple instances of devpts filesystem [1].
-> >
-> > [1] http://lxr.free-electrons.com/source/Documentation/filesystems/devpts.txt?v=3.14
-> >
-> > Cc: Kees Cook <keescook@chromium.org>
-> > Suggested-by: Andy Lutomirski <luto@kernel.org>
-> > Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
-> > Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-> > ---
-> [...]
-> >  static struct dentry *proc_mount(struct file_system_type *fs_type,
-> >         int flags, const char *dev_name, void *data)
-> >  {
-> > +       int error;
-> > +       struct super_block *sb;
-> >         struct pid_namespace *ns;
-> > +       struct proc_fs_info *fs_info;
-> > +
-> > +       /*
-> > +        * Don't allow mounting unless the caller has CAP_SYS_ADMIN over
-> > +        * the namespace.
-> > +        */
-> > +       if (!(flags & MS_KERNMOUNT) && !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
-> > +               return ERR_PTR(-EPERM);
-> 
-> Is this correct?
-> 
-> The old code invoked a check with the same comment through mount_ns();
-> however, this patch changes the semantics of the check.
-> The old code checked that the caller has privileges over the user
-> namespace that contains the PID namespace; in other words, it checked
-> that the caller has privileges over the PID namespace. The current
-> code just checks that the caller is privileged over its own user
-> namespace.
-> 
-> As far as I can tell, this means that by doing something like this:
-> 
->     unshare(CLONE_NEWNS|CLONE_NEWUSER);
->     mount("none", "/", NULL, MS_REC|MS_PRIVATE, NULL);
->     mount("proc", "/proc", "proc", 0, "newinstance,pids=all");
-> 
-> any process could create a new unrestricted procfs mount for its PID
-> namespace, even if it is only supposed to have access to a more
-> restricted procfs mount.
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-Hm... let me investigate this. It looks like mount with "newinstance"
-option should fail if pid namespace is the same and the current and parent
-user namespace do not match.
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
--- 
-Rgrds, legion
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
+
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
+
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
+
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
+
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
+
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Instruction Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Data Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
+
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
+
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
+
+ Documentation/ABI/testing/jtag-dev                 |   27 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   22 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ Documentation/jtag/overview                        |   28 +
+ Documentation/jtag/transactions                    |  109 +++
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   32 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  786 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  274 +++++++
+ include/linux/jtag.h                               |   41 +
+ include/uapi/linux/jtag.h                          |  105 +++
+ 14 files changed, 1441 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jtag-dev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 Documentation/jtag/overview
+ create mode 100644 Documentation/jtag/transactions
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
