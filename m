@@ -1,195 +1,204 @@
-From: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
-Date: Tue, 15 May 2018 10:44:59 -0700
-Message-ID: <32016c04-8835-bf8f-74c7-254e28d815aa@oracle.com>
-References: <152286911105.615669.14053871624892399807.stgit@buzz>
- <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
- <87h8oqhagl.fsf@xmission.com>
- <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
- <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
- <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
- <e3a1076d-cfd7-a034-dd08-2d74fbf751f3@oracle.com>
- <3e2c285a-1bf8-f71d-1b74-4d6465c29a54@yandex-team.ru>
- <4b21a648-0abc-e92d-ec37-681dff63bb55@oracle.com>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: [PATCH v9 00/24] ILP32 for ARM64
+Date: Tue, 15 May 2018 22:11:50 +0300
+Message-ID: <20180515191214.5045-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4b21a648-0abc-e92d-ec37-681dff63bb55@oracle.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Yury Norov <ynorov@caviumnetworks.com>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>, James Morse <james.morse@arm.com>, Joseph Myers <joseph@codesourcery.com>, Lin Yongting <linyongting@huawei.com>, Manuel Montezelo <manuel.montezelo@gmail.>
 List-Id: linux-api@vger.kernel.org
 
+This series enables AARCH64 with ILP32 mode.
 
+As supporting work, it introduces ARCH_32BIT_OFF_T configuration
+option that is enabled for existing 32-bit architectures but disabled
+for new arches (so 64-bit off_t userspace type is used by new userspace).
+Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
 
-On 05/15/2018 10:40 AM, Nagarathnam Muthusamy wrote:
->
->
-> On 05/15/2018 10:36 AM, Konstantin Khlebnikov wrote:
->>
->>
->> On 15.05.2018 20:19, Nagarathnam Muthusamy wrote:
->>>
->>>
->>> On 04/24/2018 10:36 PM, Konstantin Khlebnikov wrote:
->>>> On 23.04.2018 20:37, Nagarathnam Muthusamy wrote:
->>>>>
->>>>>
->>>>> On 04/05/2018 12:02 AM, Konstantin Khlebnikov wrote:
->>>>>> On 05.04.2018 01:29, Eric W. Biederman wrote:
->>>>>>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
->>>>>>>
->>>>>>>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
->>>>>>>>> Each process have different pids, one for each pid namespace 
->>>>>>>>> it belongs.
->>>>>>>>> When interaction happens within single pid-ns translation 
->>>>>>>>> isn't required.
->>>>>>>>> More complicated scenarios needs special handling.
->>>>>>>>>
->>>>>>>>> For example:
->>>>>>>>> - reading pid-files or logs written inside container with pid 
->>>>>>>>> namespace
->>>>>>>>> - attaching with ptrace to tasks from different pid namespace
->>>>>>>>> - passing pids across pid namespaces in any kind of API
->>>>>>>>>
->>>>>>>>> Currently there are several interfaces that could be used here:
->>>>>>>>>
->>>>>>>>> Pid namespaces are identified by inode number of 
->>>>>>>>> /proc/[pid]/ns/pid.
->>>>>>>
->>>>>>> Using the inode number in interfaces is not an option. 
->>>>>>> Especially not
->>>>>>> withou referencing the device number for the filesystem as well.
->>>>>>
->>>>>> This is supposed to be single-instance fs,
->>>>>> not part of proc but referenced but its magic "symlinks".
->>>>>>
->>>>>> Device numbers are not mentioned in "man namespaces".
->>>>>>
->>>>>>>
->>>>>>>>> Pids for nested Pid namespaces are shown in file 
->>>>>>>>> /proc/[pid]/status.
->>>>>>>>> In some cases conversion pid -> vpid could be easily done 
->>>>>>>>> using this
->>>>>>>>> information, but backward translation requires scanning all 
->>>>>>>>> tasks.
->>>>>>>>>
->>>>>>>>> Unix socket automatically translates pid attached to 
->>>>>>>>> SCM_CREDENTIALS.
->>>>>>>>> This requires CAP_SYS_ADMIN for sending arbitrary pids and 
->>>>>>>>> entering
->>>>>>>>> into pid namespace, this expose process and could be insecure.
->>>>>>>>>
->>>>>>>>> This patch adds new syscall for converting pids between pid 
->>>>>>>>> namespaces:
->>>>>>>>>
->>>>>>>>> pid_t translate_pid(pid_t pid, int source_type, int source,
->>>>>>>>>                                  int target_type, int target);
->>>>>>>>>
->>>>>>>>> @source_type and @target_type defines type of following 
->>>>>>>>> arguments:
->>>>>>>>>
->>>>>>>>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument 
->>>>>>>>> is unused
->>>>>>>>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
->>>>>>>>
->>>>>>>> I believe using pid to represent the namespace has been already
->>>>>>>> discussed in V1 of this patch in 
->>>>>>>> https://lkml.org/lkml/2015/9/22/1087
->>>>>>>> after which we moved on to fd based version of this interface.
->>>>>>>
->>>>>>> Or in short why is the case of pids important?
->>>>>>>
->>>>>>> You Konstantin you almost said why they were important in your 
->>>>>>> message
->>>>>>> saying you were going to send this one.  However you don't 
->>>>>>> explain in
->>>>>>> your description why you want to identify pid namespaces by pid.
->>>>>>>
->>>>>>
->>>>>> Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
->>>>>> pid based variant doesn't have such restrictions.
->>>>>
->>>>> Can you provide more information on usecase requiring PID 
->>>>> translation but not used for tracing related purposes?
->>>>
->>>> Any introspection for [nested] containers. It's easier to work when 
->>>> you have all information when you don't have any.
->>>> For example our CMS https://github.com/yandex/porto allows to start 
->>>> nested sub-container (or even deeper) by request from any container 
->>>> and have to tell back which pid task is have. And it could 
->>>> translate any pid inside into accessible by client and vice versa.
->>>>
->>>
->>> I still dont get the exact reason why PID based approach to identify 
->>> the namespace during pid translation process is absolutely required 
->>> compared to fd based approach. 
->>
->> As I told open(/proc/%d/ns/pid) have security restrictions - same 
->> uid/CAP_SYS_PTRACE/whatever
->> Pidns-fd holds pid-namespace and without restrictions could be abused.
->> Pid based API is racy but always available without any restrictions.
->
-> I get that Pid based API is available without any restrictions but do 
-> we have any existing usecase which requires Pid based API but cannot 
-> use Pidns-fd based API? Most of the usecases discussed in this thread 
-> deals with introspection of a process by another process and I believe 
-> that security requirement for opening (/proc/%d/ns/pid) is required 
-> for all such usecases. In other words, Why would a process which does 
-> not belong to same uid 
+Based on kernel v4.16. Tested with LTP, glibc testsuite, trinity, lmbench,
+CPUSpec.
 
-Typo: inspection of a process by another process
+This series on github: 
+https://github.com/norov/linux/tree/ilp32-4.16
+Linaro toolchain:
+http://snapshots.linaro.org/components/toolchain/binaries/7.3-2018.04-rc1/aarch64-linux-gnu_ilp32/
+Debian repo:
+http://people.linaro.org/~wookey/ilp32/
+OpenSUSE repo:
+https://build.opensuse.org/project/show/devel:ARM:Factory:Contrib:ILP32
 
-Thanks,
-Nagarathnam.
+Changes:
+v3: https://lkml.org/lkml/2014/9/3/704
+v4: https://lkml.org/lkml/2015/4/13/691
+v5: https://lkml.org/lkml/2015/9/29/911
+v6: https://lkml.org/lkml/2016/5/23/661
+v7: https://lkml.org/lkml/2017/1/9/213
+v8: https://lkml.org/lkml/2017/6/19/624
+v9: - rebased on top of v4.16;
+    - signal subsystem reworked to avoid code duplication, as requested
+      by Dave Martin (patches 18 and 20);
+    - new files introduced in series use SPDX notation for license;
+    - linux-api and linux-arch CCed as the series changes kernel ABI;
+    - checkpatch and other minor fixes.
 
-> of the process observed or have CAP_SYS_PTRACE be allowed to translate 
-> PID?
->
-> Thanks,
-> Nagarathnam.
->>
->>
->>> From your version of TranslatePid in
->>>
->>> https://github.com/yandex/porto/blob/0d7e6e7e1830dcd0038a057b2ab9964cec5b8fab/src/util/unix.cpp 
->>>
->>>
->>> I see that you are going through the trouble of forking a process 
->>> and sending SMC_CREDENTIALS for pid translation. Even your existing 
->>> API could be extremely simplified if translate_pid based on file 
->>> descriptors make it to the gate and I believe from the last 
->>> discussion it was almost there 
->>> https://patchwork.kernel.org/patch/10305439/
->>>
->>>
->>>>> On a side note, can we have the types TRANSLATE_PID_CURRENT_PIDNS 
->>>>> and TRANSLATE_PID_FD_PIDNS integrated first and then possibly 
->>>>> extend the interface to include TRANSLATE_PID_TASK_PIDNS in future?
->>>>
->>>> I don't see reason for this separation.
->>>> Pids and pid namespaces are part of the API for a long time.
->>>
->>> If you are talking about the translate_pid API proposed, I believe 
->>> the V4 proposed under https://patchwork.kernel.org/patch/10003935/ 
->>> had only fd based API before a mix of PID and fd based is proposed 
->>> in V5. Again, I was just wondering if we can get the FD based 
->>> approach in first and then extend the API to include PID based 
->>> approach later as fd based approach could provide a lot of immediate 
->>> benefits?
->>>
->>> Thanks,
->>> Nagarathnam.
->>>>
->>>>>
->>>>> Thanks,
->>>>> Nagarathnam.
->>>>>> Most pid-based syscalls are racy in some cases but they are
->>>>>> here for decades and everybody knowns how to deal with it.
->>>>>> So, I've decided to merge both worlds in one interface which 
->>>>>> clearly tells what to expect.
->>>>>
->>>
->
+Andrew Pinski (4):
+  arm64: rename COMPAT to AARCH32_EL0 in Kconfig
+  arm64:uapi: set __BITS_PER_LONG correctly for ILP32 and LP64
+  arm64: ilp32: add sys_ilp32.c and a separate table (in entry.S) to use
+    it
+  arm64:ilp32: add ARM64_ILP32 to Kconfig
+
+Catalin Marinas (1):
+  arm64: ilp32: Make the Kconfig option default y
+
+Dave Martin (1):
+  arm64: signal: Make parse_user_sigframe() independent of rt_sigframe
+    layout
+
+James Morse (1):
+  ptrace: Add compat PTRACE_{G,S}ETSIGMASK handlers
+
+Philipp Tomsich (1):
+  arm64:ilp32: add vdso-ilp32 and use for signal return
+
+Yury Norov (16):
+  compat ABI: use non-compat openat and open_by_handle_at variants
+  32-bit userspace ABI: introduce ARCH_32BIT_OFF_T config option
+  asm-generic: Drop getrlimit and setrlimit syscalls from default list
+  thread: move thread bits accessors to separated file
+  arm64: ilp32: add documentation on the ILP32 ABI for ARM64
+  arm64: rename functions that reference compat term
+  arm64: introduce is_a32_task and is_a32_thread (for AArch32 compat)
+  arm64: ilp32: add is_ilp32_compat_{task,thread} and TIF_32BIT_AARCH64
+  arm64: introduce binfmt_elf32.c
+  arm64: change compat_elf_hwcap and compat_elf_hwcap2 prefix to a32
+  arm64: ilp32: introduce binfmt_ilp32.c
+  arm64: ilp32: share aarch32 syscall handlers
+  arm64: signal: share lp64 signal structures and routines to ilp32
+  arm64: signal32: move ilp32 and aarch32 common code to separated file
+  arm64: ilp32: introduce ilp32-specific sigframe and ucontext
+  arm64: ptrace: handle ptrace_request differently for aarch32 and ilp32
+
+ Documentation/arm64/ilp32.txt                 |  45 +++
+ arch/Kconfig                                  |  15 +
+ arch/arc/Kconfig                              |   1 +
+ arch/arc/include/uapi/asm/unistd.h            |   1 +
+ arch/arm/Kconfig                              |   1 +
+ arch/arm64/Kconfig                            |  18 +-
+ arch/arm64/Makefile                           |   3 +
+ arch/arm64/include/asm/compat.h               |  19 +-
+ arch/arm64/include/asm/elf.h                  |  36 +-
+ arch/arm64/include/asm/fpsimd.h               |   2 +-
+ arch/arm64/include/asm/ftrace.h               |   2 +-
+ arch/arm64/include/asm/hwcap.h                |   8 +-
+ arch/arm64/include/asm/is_compat.h            |  78 ++++
+ arch/arm64/include/asm/processor.h            |  15 +-
+ arch/arm64/include/asm/ptrace.h               |  12 +-
+ arch/arm64/include/asm/seccomp.h              |   2 +-
+ arch/arm64/include/asm/signal32.h             |  19 +-
+ arch/arm64/include/asm/signal32_common.h      |  13 +
+ arch/arm64/include/asm/signal_common.h        | 306 +++++++++++++++
+ arch/arm64/include/asm/signal_ilp32.h         |  23 ++
+ arch/arm64/include/asm/syscall.h              |   2 +-
+ arch/arm64/include/asm/thread_info.h          |   4 +-
+ arch/arm64/include/asm/unistd.h               |   6 +-
+ arch/arm64/include/asm/vdso.h                 |   6 +
+ arch/arm64/include/uapi/asm/bitsperlong.h     |   9 +-
+ arch/arm64/include/uapi/asm/unistd.h          |  13 +
+ arch/arm64/kernel/Makefile                    |   8 +-
+ arch/arm64/kernel/armv8_deprecated.c          |   6 +-
+ arch/arm64/kernel/asm-offsets.c               |   9 +-
+ arch/arm64/kernel/binfmt_elf32.c              |  35 ++
+ arch/arm64/kernel/binfmt_ilp32.c              |  87 +++++
+ arch/arm64/kernel/cpufeature.c                |  28 +-
+ arch/arm64/kernel/cpuinfo.c                   |  18 +-
+ arch/arm64/kernel/debug-monitors.c            |   4 +-
+ arch/arm64/kernel/entry.S                     |  37 +-
+ arch/arm64/kernel/entry32.S                   |  80 ----
+ arch/arm64/kernel/entry32_common.S            |  97 +++++
+ arch/arm64/kernel/entry_ilp32.S               |  12 +
+ arch/arm64/kernel/head.S                      |   2 +-
+ arch/arm64/kernel/hw_breakpoint.c             |   8 +-
+ arch/arm64/kernel/perf_callchain.c            |  28 +-
+ arch/arm64/kernel/perf_regs.c                 |   4 +-
+ arch/arm64/kernel/process.c                   |  11 +-
+ arch/arm64/kernel/ptrace.c                    |  36 +-
+ arch/arm64/kernel/signal.c                    | 352 +++---------------
+ arch/arm64/kernel/signal32.c                  | 111 +++---
+ arch/arm64/kernel/signal32_common.c           |  37 ++
+ arch/arm64/kernel/signal_ilp32.c              |  65 ++++
+ arch/arm64/kernel/sys_compat.c                |  10 +-
+ arch/arm64/kernel/sys_ilp32.c                 |  90 +++++
+ arch/arm64/kernel/traps.c                     |  11 +-
+ arch/arm64/kernel/vdso-ilp32/.gitignore       |   2 +
+ arch/arm64/kernel/vdso-ilp32/Makefile         |  82 ++++
+ arch/arm64/kernel/vdso-ilp32/vdso-ilp32.S     |  22 ++
+ arch/arm64/kernel/vdso-ilp32/vdso-ilp32.lds.S |  84 +++++
+ arch/arm64/kernel/vdso.c                      |  65 +++-
+ arch/arm64/kernel/vdso/gettimeofday.S         |  20 +-
+ arch/arm64/kernel/vdso/vdso.S                 |   6 +-
+ arch/arm64/mm/mmap.c                          |   2 +-
+ arch/blackfin/Kconfig                         |   1 +
+ arch/c6x/include/uapi/asm/unistd.h            |   1 +
+ arch/cris/Kconfig                             |   1 +
+ arch/frv/Kconfig                              |   1 +
+ arch/h8300/Kconfig                            |   1 +
+ arch/h8300/include/uapi/asm/unistd.h          |   1 +
+ arch/hexagon/Kconfig                          |   1 +
+ arch/hexagon/include/uapi/asm/unistd.h        |   1 +
+ arch/m32r/Kconfig                             |   1 +
+ arch/m68k/Kconfig                             |   1 +
+ arch/metag/Kconfig                            |   1 +
+ arch/metag/include/uapi/asm/unistd.h          |   1 +
+ arch/microblaze/Kconfig                       |   1 +
+ arch/mips/Kconfig                             |   1 +
+ arch/mn10300/Kconfig                          |   1 +
+ arch/nios2/Kconfig                            |   1 +
+ arch/nios2/include/uapi/asm/unistd.h          |   1 +
+ arch/openrisc/Kconfig                         |   1 +
+ arch/openrisc/include/uapi/asm/unistd.h       |   1 +
+ arch/parisc/Kconfig                           |   1 +
+ arch/powerpc/Kconfig                          |   1 +
+ arch/score/Kconfig                            |   1 +
+ arch/score/include/uapi/asm/unistd.h          |   1 +
+ arch/sh/Kconfig                               |   1 +
+ arch/sparc/Kconfig                            |   1 +
+ arch/tile/Kconfig                             |   1 +
+ arch/tile/include/uapi/asm/unistd.h           |   1 +
+ arch/tile/kernel/compat.c                     |   3 +
+ arch/unicore32/Kconfig                        |   1 +
+ arch/unicore32/include/uapi/asm/unistd.h      |   1 +
+ arch/x86/Kconfig                              |   1 +
+ arch/x86/um/Kconfig                           |   1 +
+ arch/xtensa/Kconfig                           |   1 +
+ drivers/clocksource/arm_arch_timer.c          |   4 +-
+ include/linux/fcntl.h                         |   2 +-
+ include/linux/sched.h                         |   1 +
+ include/linux/thread_bits.h                   |  76 ++++
+ include/linux/thread_info.h                   |  64 +---
+ include/uapi/asm-generic/unistd.h             |  10 +-
+ kernel/ptrace.c                               |  48 ++-
+ scripts/checksyscalls.sh                      |   5 +
+ 100 files changed, 1675 insertions(+), 698 deletions(-)
+ create mode 100644 Documentation/arm64/ilp32.txt
+ create mode 100644 arch/arm64/include/asm/is_compat.h
+ create mode 100644 arch/arm64/include/asm/signal32_common.h
+ create mode 100644 arch/arm64/include/asm/signal_common.h
+ create mode 100644 arch/arm64/include/asm/signal_ilp32.h
+ create mode 100644 arch/arm64/kernel/binfmt_elf32.c
+ create mode 100644 arch/arm64/kernel/binfmt_ilp32.c
+ create mode 100644 arch/arm64/kernel/entry32_common.S
+ create mode 100644 arch/arm64/kernel/entry_ilp32.S
+ create mode 100644 arch/arm64/kernel/signal32_common.c
+ create mode 100644 arch/arm64/kernel/signal_ilp32.c
+ create mode 100644 arch/arm64/kernel/sys_ilp32.c
+ create mode 100644 arch/arm64/kernel/vdso-ilp32/.gitignore
+ create mode 100644 arch/arm64/kernel/vdso-ilp32/Makefile
+ create mode 100644 arch/arm64/kernel/vdso-ilp32/vdso-ilp32.S
+ create mode 100644 arch/arm64/kernel/vdso-ilp32/vdso-ilp32.lds.S
+ create mode 100644 include/linux/thread_bits.h
+
+-- 
+2.17.0
