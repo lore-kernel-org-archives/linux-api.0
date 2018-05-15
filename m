@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 24/32] net/nfc: convert to ->poll_mask
-Date: Tue, 15 May 2018 21:48:25 +0200
-Message-ID: <20180515194833.6906-25-hch@lst.de>
+Subject: [PATCH 25/32] net/phonet: convert to ->poll_mask
+Date: Tue, 15 May 2018 21:48:26 +0200
+Message-ID: <20180515194833.6906-26-hch@lst.de>
 References: <20180515194833.6906-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180515194833.6906-1-hch@lst.de>
@@ -12,49 +12,39 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/nfc/llcp_sock.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ net/phonet/socket.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-diff --git a/net/nfc/llcp_sock.c b/net/nfc/llcp_sock.c
-index ea0c0c6f1874..ab5bb14b49af 100644
---- a/net/nfc/llcp_sock.c
-+++ b/net/nfc/llcp_sock.c
-@@ -548,16 +548,13 @@ static inline __poll_t llcp_accept_poll(struct sock *parent)
- 	return 0;
+diff --git a/net/phonet/socket.c b/net/phonet/socket.c
+index 9ecf02def928..ea2bfc3aafb9 100644
+--- a/net/phonet/socket.c
++++ b/net/phonet/socket.c
+@@ -340,15 +340,12 @@ static int pn_socket_getname(struct socket *sock, struct sockaddr *addr,
+ 	return sizeof(struct sockaddr_pn);
  }
  
--static __poll_t llcp_sock_poll(struct file *file, struct socket *sock,
--				   poll_table *wait)
-+static __poll_t llcp_sock_poll_mask(struct socket *sock, __poll_t events)
+-static __poll_t pn_socket_poll(struct file *file, struct socket *sock,
+-					poll_table *wait)
++static __poll_t pn_socket_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
+ 	struct pep_sock *pn = pep_sk(sk);
  	__poll_t mask = 0;
  
- 	pr_debug("%p\n", sk);
- 
--	sock_poll_wait(file, sk_sleep(sk), wait);
+-	poll_wait(file, sk_sleep(sk), wait);
 -
- 	if (sk->sk_state == LLCP_LISTEN)
- 		return llcp_accept_poll(sk);
- 
-@@ -899,7 +896,7 @@ static const struct proto_ops llcp_sock_ops = {
- 	.socketpair     = sock_no_socketpair,
- 	.accept         = llcp_sock_accept,
- 	.getname        = llcp_sock_getname,
--	.poll           = llcp_sock_poll,
-+	.poll_mask      = llcp_sock_poll_mask,
- 	.ioctl          = sock_no_ioctl,
- 	.listen         = llcp_sock_listen,
- 	.shutdown       = sock_no_shutdown,
-@@ -919,7 +916,7 @@ static const struct proto_ops llcp_rawsock_ops = {
- 	.socketpair     = sock_no_socketpair,
- 	.accept         = sock_no_accept,
- 	.getname        = llcp_sock_getname,
--	.poll           = llcp_sock_poll,
-+	.poll_mask      = llcp_sock_poll_mask,
- 	.ioctl          = sock_no_ioctl,
- 	.listen         = sock_no_listen,
- 	.shutdown       = sock_no_shutdown,
+ 	if (sk->sk_state == TCP_CLOSE)
+ 		return EPOLLERR;
+ 	if (!skb_queue_empty(&sk->sk_receive_queue))
+@@ -473,7 +470,7 @@ const struct proto_ops phonet_stream_ops = {
+ 	.socketpair	= sock_no_socketpair,
+ 	.accept		= pn_socket_accept,
+ 	.getname	= pn_socket_getname,
+-	.poll		= pn_socket_poll,
++	.poll_mask	= pn_socket_poll_mask,
+ 	.ioctl		= pn_socket_ioctl,
+ 	.listen		= pn_socket_listen,
+ 	.shutdown	= sock_no_shutdown,
 -- 
 2.17.0
 
