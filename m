@@ -1,118 +1,264 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 32/32] random: convert to ->poll_mask
-Date: Tue, 15 May 2018 21:48:33 +0200
-Message-ID: <20180515194833.6906-33-hch@lst.de>
-References: <20180515194833.6906-1-hch@lst.de>
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180515194833.6906-1-hch@lst.de>
-Sender: owner-linux-aio@kvack.org
-To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+From: Andy Shevchenko <andy.shevchenko@gmail.com>
+Subject: Re: [patch v21 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
+ families JTAG master driver
+Date: Wed, 16 May 2018 00:00:00 +0300
+Message-ID: <CAHp75Ve7EYiWBiE73i0CmyJhPMOdSKsGzCr0SUvta3Uya=Ov1Q@mail.gmail.com>
+References: <1526394095-5069-1-git-send-email-oleksandrs@mellanox.com> <1526394095-5069-3-git-send-email-oleksandrs@mellanox.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1526394095-5069-3-git-send-email-oleksandrs@mellanox.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleksandr Shamray <oleksandrs@mellanox.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arm Mailing List <linux-arm-kernel@lists.infradead.org>, devicetree <devicetree@vger.kernel.org>, openbmc@lists.ozlabs.org, Joel Stanley <joel@jms.id.au>, =?UTF-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri@resnulli.us>, Tobias Klauser <tklauser@distanz.ch>, "open list:SERIAL DRIVERS" <linux-serial@vger.kernel.org>, Vadim Pasternak <vadimp@mellanox.com>, system-sw-low-level@mellanox.com, Rob Herring <robh+dt@kernel.org>, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, "David S. Miller" <davem@davemloft.net>, Mauro Carvalho Chehab <mchehab@kernel.org>, Jiri Pirko <jiri@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-The big change is that random_read_wait and random_write_wait are merged
-into a single waitqueue that uses keyed wakeups.  Because wait_event_*
-doesn't know about that this will lead to occassional spurious wakeups
-in _random_read and add_hwgenerator_randomness, but wait_event_* is
-designed to handle these and were are not in a a hot path there.
+On Tue, May 15, 2018 at 5:21 PM, Oleksandr Shamray
+<oleksandrs@mellanox.com> wrote:
+> Driver adds support of Aspeed 2500/2400 series SOC JTAG master controller.
+>
+> Driver implements the following jtag ops:
+> - freq_get;
+> - freq_set;
+> - status_get;
+> - idle;
+> - xfer;
+>
+> It has been tested on Mellanox system with BMC equipped with
+> Aspeed 2520 SoC for programming CPLD devices.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Theodore Ts'o <tytso@mit.edu>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
----
- drivers/char/random.c | 29 ++++++++++++++++-------------
- 1 file changed, 16 insertions(+), 13 deletions(-)
+> +#define ASPEED_JTAG_DATA               0x00
+> +#define ASPEED_JTAG_INST               0x04
+> +#define ASPEED_JTAG_CTRL               0x08
+> +#define ASPEED_JTAG_ISR                        0x0C
+> +#define ASPEED_JTAG_SW                 0x10
+> +#define ASPEED_JTAG_TCK                        0x14
+> +#define ASPEED_JTAG_EC                 0x18
+> +
+> +#define ASPEED_JTAG_DATA_MSB           0x01
+> +#define ASPEED_JTAG_DATA_CHUNK_SIZE    0x20
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index cd888d4ee605..a8fb0020ba5c 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -402,8 +402,7 @@ static struct poolinfo {
- /*
-  * Static global variables
-  */
--static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
--static DECLARE_WAIT_QUEUE_HEAD(random_write_wait);
-+static DECLARE_WAIT_QUEUE_HEAD(random_wait);
- static struct fasync_struct *fasync;
- 
- static DEFINE_SPINLOCK(random_ready_list_lock);
-@@ -722,8 +721,8 @@ static void credit_entropy_bits(struct entropy_store *r, int nbits)
- 
- 		/* should we wake readers? */
- 		if (entropy_bits >= random_read_wakeup_bits &&
--		    wq_has_sleeper(&random_read_wait)) {
--			wake_up_interruptible(&random_read_wait);
-+		    wq_has_sleeper(&random_wait)) {
-+			wake_up_interruptible_poll(&random_wait, POLLIN);
- 			kill_fasync(&fasync, SIGIO, POLL_IN);
- 		}
- 		/* If the input pool is getting full, send some
-@@ -1397,7 +1396,7 @@ static size_t account(struct entropy_store *r, size_t nbytes, int min,
- 	trace_debit_entropy(r->name, 8 * ibytes);
- 	if (ibytes &&
- 	    (r->entropy_count >> ENTROPY_SHIFT) < random_write_wakeup_bits) {
--		wake_up_interruptible(&random_write_wait);
-+		wake_up_interruptible_poll(&random_wait, POLLOUT);
- 		kill_fasync(&fasync, SIGIO, POLL_OUT);
- 	}
- 
-@@ -1839,7 +1838,7 @@ _random_read(int nonblock, char __user *buf, size_t nbytes)
- 		if (nonblock)
- 			return -EAGAIN;
- 
--		wait_event_interruptible(random_read_wait,
-+		wait_event_interruptible(random_wait,
- 			ENTROPY_BITS(&input_pool) >=
- 			random_read_wakeup_bits);
- 		if (signal_pending(current))
-@@ -1876,14 +1875,17 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
- 	return ret;
- }
- 
-+static struct wait_queue_head *
-+random_get_poll_head(struct file *file, __poll_t events)
-+{
-+	return &random_wait;
-+}
-+
- static __poll_t
--random_poll(struct file *file, poll_table * wait)
-+random_poll_mask(struct file *file, __poll_t events)
- {
--	__poll_t mask;
-+	__poll_t mask = 0;
- 
--	poll_wait(file, &random_read_wait, wait);
--	poll_wait(file, &random_write_wait, wait);
--	mask = 0;
- 	if (ENTROPY_BITS(&input_pool) >= random_read_wakeup_bits)
- 		mask |= EPOLLIN | EPOLLRDNORM;
- 	if (ENTROPY_BITS(&input_pool) < random_write_wakeup_bits)
-@@ -1990,7 +1992,8 @@ static int random_fasync(int fd, struct file *filp, int on)
- const struct file_operations random_fops = {
- 	.read  = random_read,
- 	.write = random_write,
--	.poll  = random_poll,
-+	.get_poll_head  = random_get_poll_head,
-+	.poll_mask  = random_poll_mask,
- 	.unlocked_ioctl = random_ioctl,
- 	.fasync = random_fasync,
- 	.llseek = noop_llseek,
-@@ -2323,7 +2326,7 @@ void add_hwgenerator_randomness(const char *buffer, size_t count,
- 	 * We'll be woken up again once below random_write_wakeup_thresh,
- 	 * or when the calling thread is about to terminate.
- 	 */
--	wait_event_interruptible(random_write_wait, kthread_should_stop() ||
-+	wait_event_interruptible(random_wait, kthread_should_stop() ||
- 			ENTROPY_BITS(&input_pool) <= random_write_wakeup_bits);
- 	mix_pool_bytes(poolp, buffer, count);
- 	credit_entropy_bits(poolp, entropy);
+
+> +#define ASPEED_JTAG_IOUT_LEN(len)      (ASPEED_JTAG_CTL_ENG_EN |\
+> +                                        ASPEED_JTAG_CTL_ENG_OUT_EN |\
+> +                                        ASPEED_JTAG_CTL_INST_LEN(len))
+
+Better to read
+
+#define MY_COOL_CONST_OR_MACRO(xxx) \
+ ...
+
+> +#define ASPEED_JTAG_DOUT_LEN(len)      (ASPEED_JTAG_CTL_ENG_EN |\
+> +                                        ASPEED_JTAG_CTL_ENG_OUT_EN |\
+> +                                        ASPEED_JTAG_CTL_DATA_LEN(len))
+
+Ditto.
+
+> +static char *end_status_str[] = {"idle", "ir pause", "drpause"};
+
+> +static int aspeed_jtag_freq_set(struct jtag *jtag, u32 freq)
+> +{
+> +       struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
+> +       unsigned long apb_frq;
+> +       u32 tck_val;
+> +       u16 div;
+> +
+> +       apb_frq = clk_get_rate(aspeed_jtag->pclk);
+
+> +       div = (apb_frq % freq == 0) ? (apb_frq / freq) - 1 : (apb_frq / freq);
+
+Isn't it the same as
+
+div = (apb_frq - 1) / freq;
+
+?
+
+> +       tck_val = aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_TCK);
+> +       aspeed_jtag_write(aspeed_jtag,
+> +                         (tck_val & ASPEED_JTAG_TCK_DIVISOR_MASK) | div,
+> +                         ASPEED_JTAG_TCK);
+> +       return 0;
+> +}
+
+> +static void aspeed_jtag_sw_delay(struct aspeed_jtag *aspeed_jtag, int cnt)
+> +{
+> +       int i;
+> +
+> +       for (i = 0; i < cnt; i++)
+> +               aspeed_jtag_read(aspeed_jtag, ASPEED_JTAG_SW);
+
+Isn't it readsl() (or how it's called, I don't remember).
+
+> +}
+
+> +static void aspeed_jtag_wait_instruction_pause(struct aspeed_jtag *aspeed_jtag)
+> +{
+> +       wait_event_interruptible(aspeed_jtag->jtag_wq, aspeed_jtag->flag &
+> +                                ASPEED_JTAG_ISR_INST_PAUSE);
+
+In such cases I prefer to see a new line with a parameter in full.
+Check all places.
+
+> +       aspeed_jtag->flag &= ~ASPEED_JTAG_ISR_INST_PAUSE;
+> +}
+
+> +static void aspeed_jtag_sm_cycle(struct aspeed_jtag *aspeed_jtag, const u8 *tms,
+> +                                int len)
+> +{
+> +       int i;
+> +
+> +       for (i = 0; i < len; i++)
+> +               aspeed_jtag_tck_cycle(aspeed_jtag, tms[i], 0);
+> +}
+> +
+> +static void aspeed_jtag_run_test_idle_sw(struct aspeed_jtag *aspeed_jtag,
+> +                                        struct jtag_run_test_idle *runtest)
+> +{
+> +       static const u8 sm_pause_irpause[] = {1, 1, 1, 1, 0, 1, 0};
+> +       static const u8 sm_pause_drpause[] = {1, 1, 1, 0, 1, 0};
+> +       static const u8 sm_idle_irpause[] = {1, 1, 0, 1, 0};
+> +       static const u8 sm_idle_drpause[] = {1, 0, 1, 0};
+> +       static const u8 sm_pause_idle[] = {1, 1, 0};
+> +       int i;
+> +
+> +       /* SW mode from idle/pause-> to pause/idle */
+> +       if (runtest->reset) {
+> +               for (i = 0; i < ASPEED_JTAG_RESET_CNTR; i++)
+> +                       aspeed_jtag_tck_cycle(aspeed_jtag, 1, 0);
+> +       }
+
+I would rather split this big switch to a few helper functions per
+each status of surrounding switch.
+
+> +
+> +       /* Stay on IDLE for at least  TCK cycle */
+> +       for (i = 0; i < runtest->tck; i++)
+> +               aspeed_jtag_tck_cycle(aspeed_jtag, 0, 0);
+> +}
+
+
+> +/**
+> + * aspeed_jtag_run_test_idle:
+> + * JTAG reset: generates at least 9 TMS high and 1 TMS low to force
+> + * devices into Run-Test/Idle State.
+> + */
+
+It's rather broken kernel doc.
+
+> +               aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_CTL_ENG_EN |
+> +                                 ASPEED_JTAG_CTL_ENG_OUT_EN |
+> +                                 ASPEED_JTAG_CTL_FORCE_TMS, ASPEED_JTAG_CTRL);
+
+> +               aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_EC_GO_IDLE,
+> +                                 ASPEED_JTAG_EC);
+
+> +       aspeed_jtag_write(aspeed_jtag, ASPEED_JTAG_SW_MODE_EN |
+> +                         ASPEED_JTAG_SW_MODE_TDIO, ASPEED_JTAG_SW);
+
+Here you have permutations of flag some of which are repeatetive in
+the code. Perhaps make additional definitions instead.
+Check other similar places.
+
+
+> +       char          tdo;
+
+Indentation.
+
+> +       if (xfer->direction == JTAG_READ_XFER)
+> +               tdi = UINT_MAX;
+> +       else
+> +               tdi = data[index];
+
+> +                       if (xfer->direction == JTAG_READ_XFER)
+> +                               tdi = UINT_MAX;
+> +                       else
+> +                               tdi = data[index];
+
+Take your time to think how the above duplication can be avoided.
+
+> +               }
+> +       }
+> +
+> +       tdo = aspeed_jtag_tck_cycle(aspeed_jtag, 1, tdi & ASPEED_JTAG_DATA_MSB);
+> +       data[index] |= tdo << (shift_bits % ASPEED_JTAG_DATA_CHUNK_SIZE);
+> +}
+
+
+> +       if (endstate != JTAG_STATE_IDLE) {
+
+Why not to use positive check?
+
+> +       int i;
+> +
+> +       for (i = 0; i <= xfer->length / BITS_PER_BYTE; i++) {
+> +               pos += snprintf(&dbg_str[pos], sizeof(dbg_str) - pos,
+> +                               "0x%02x ", xfer_data[i]);
+> +       }
+
+Oh, NO! Consider reading printk-formats (for %*ph) and other
+documentation about available APIs.
+
+> +       if (!(aspeed_jtag->mode & JTAG_XFER_HW_MODE)) {
+> +               /* SW mode */
+
+This is rather too complex to be in one function.
+
+> +       } else {
+
+> +               /* hw mode */
+> +               aspeed_jtag_write(aspeed_jtag, 0, ASPEED_JTAG_SW);
+> +               aspeed_jtag_xfer_hw(aspeed_jtag, xfer, data);
+
+For symmetry it might be another function.
+
+> +       }
+
+> +       dev_dbg(aspeed_jtag->dev, "status %x\n", status);
+
+Perhaps someone should become familiar with tracepoints?
+
+> +               dev_err(aspeed_jtag->dev, "irq status:%x\n",
+> +                       status);
+
+
+Huh, really?! SPAM.
+
+(I would drop it completely, though you may use ratelimited variant)
+
+> +               ret = IRQ_NONE;
+> +       }
+> +       return ret;
+> +}
+
+> +       clk_prepare_enable(aspeed_jtag->pclk);
+
+This might fail.
+
+> +       dev_dbg(&pdev->dev, "IRQ %d.\n", aspeed_jtag->irq);
+
+Noise even for debug.
+
+> +       err = jtag_register(jtag);
+
+Perhaps we might have devm_ variant of this. Check how SPI framework
+deal with a such.
+
+> +static int aspeed_jtag_remove(struct platform_device *pdev)
+> +{
+
+> +       struct jtag *jtag;
+> +
+> +       jtag = platform_get_drvdata(pdev);
+
+Usually we put this on one line
+
+> +       aspeed_jtag_deinit(pdev, jtag_priv(jtag));
+> +       jtag_unregister(jtag);
+> +       jtag_free(jtag);
+> +       return 0;
+> +}
+
+
 -- 
-2.17.0
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+With Best Regards,
+Andy Shevchenko
