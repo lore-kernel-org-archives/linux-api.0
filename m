@@ -1,91 +1,141 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v5 1/7] proc: add proc_fs_info struct to store proc information
-Date: Tue, 15 May 2018 18:19:18 +0200
-Message-ID: <CAG48ez1T5v=iryQk0fPkUr2umRpfMrSPJ2pYcB5HDbc3-kYBUw@mail.gmail.com>
-References: <20180511093445.GA1008@comp-core-i7-2640m-0182e6>
- <CAG48ez3xYHsKMkPJhjq-yrrTxMHmrHDov-P7bTy8T2xf_7=OAQ@mail.gmail.com> <20180515072153.GD28179@comp-core-i7-2640m-0182e6>
+From: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
+Date: Tue, 15 May 2018 10:19:03 -0700
+Message-ID: <e3a1076d-cfd7-a034-dd08-2d74fbf751f3@oracle.com>
+References: <152286911105.615669.14053871624892399807.stgit@buzz>
+ <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
+ <87h8oqhagl.fsf@xmission.com>
+ <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+ <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
+ <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180515072153.GD28179@comp-core-i7-2640m-0182e6>
+In-Reply-To: <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Akinobu Mita <akinobu.mita@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Jeff Layton <jlayton@poochiereds.net>, Ingo Molnar <mingo@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, aniel Micay <danielmicay@gmail.com>, Jon
+To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 15, 2018 at 9:21 AM, Alexey Gladkov
-<gladkov.alexey@gmail.com> wrote:
-> On Fri, May 11, 2018 at 03:49:13PM +0200, Jann Horn wrote:
->> On Fri, May 11, 2018 at 11:34 AM, Alexey Gladkov
->> <gladkov.alexey@gmail.com> wrote:
->> > From: Djalal Harouni <tixxdz@gmail.com>
->> >
->> > This is a preparation patch that adds proc_fs_info to be able to store
->> > different procfs options and informations. Right now some mount options
->> > are stored inside the pid namespace which makes it hard to change or
->> > modernize procfs without affecting pid namespaces. Plus we do want to
->> > treat proc as more of a real mount point and filesystem. procfs is part
->> > of Linux API where it offers some features using filesystem syscalls and
->> > in order to support some features where we are able to have multiple
->> > instances of procfs, each one with its mount options inside the same pid
->> > namespace, we have to separate these procfs instances.
->> >
->> > This is the same feature that was also added to other Linux interfaces
->> > like devpts in order to support containers, sandboxes, and to have
->> > multiple instances of devpts filesystem [1].
->> >
->> > [1] http://lxr.free-electrons.com/source/Documentation/filesystems/devpts.txt?v=3.14
->> >
->> > Cc: Kees Cook <keescook@chromium.org>
->> > Suggested-by: Andy Lutomirski <luto@kernel.org>
->> > Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
->> > Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
->> > ---
->> [...]
->> >  static struct dentry *proc_mount(struct file_system_type *fs_type,
->> >         int flags, const char *dev_name, void *data)
->> >  {
->> > +       int error;
->> > +       struct super_block *sb;
->> >         struct pid_namespace *ns;
->> > +       struct proc_fs_info *fs_info;
->> > +
->> > +       /*
->> > +        * Don't allow mounting unless the caller has CAP_SYS_ADMIN over
->> > +        * the namespace.
->> > +        */
->> > +       if (!(flags & MS_KERNMOUNT) && !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
->> > +               return ERR_PTR(-EPERM);
+
+
+On 04/24/2018 10:36 PM, Konstantin Khlebnikov wrote:
+> On 23.04.2018 20:37, Nagarathnam Muthusamy wrote:
 >>
->> Is this correct?
 >>
->> The old code invoked a check with the same comment through mount_ns();
->> however, this patch changes the semantics of the check.
->> The old code checked that the caller has privileges over the user
->> namespace that contains the PID namespace; in other words, it checked
->> that the caller has privileges over the PID namespace. The current
->> code just checks that the caller is privileged over its own user
->> namespace.
+>> On 04/05/2018 12:02 AM, Konstantin Khlebnikov wrote:
+>>> On 05.04.2018 01:29, Eric W. Biederman wrote:
+>>>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
+>>>>
+>>>>> On 04/04/2018 12:11 PM, Konstantin Khlebnikov wrote:
+>>>>>> Each process have different pids, one for each pid namespace it 
+>>>>>> belongs.
+>>>>>> When interaction happens within single pid-ns translation isn't 
+>>>>>> required.
+>>>>>> More complicated scenarios needs special handling.
+>>>>>>
+>>>>>> For example:
+>>>>>> - reading pid-files or logs written inside container with pid 
+>>>>>> namespace
+>>>>>> - attaching with ptrace to tasks from different pid namespace
+>>>>>> - passing pids across pid namespaces in any kind of API
+>>>>>>
+>>>>>> Currently there are several interfaces that could be used here:
+>>>>>>
+>>>>>> Pid namespaces are identified by inode number of /proc/[pid]/ns/pid.
+>>>>
+>>>> Using the inode number in interfaces is not an option. Especially not
+>>>> withou referencing the device number for the filesystem as well.
+>>>
+>>> This is supposed to be single-instance fs,
+>>> not part of proc but referenced but its magic "symlinks".
+>>>
+>>> Device numbers are not mentioned in "man namespaces".
+>>>
+>>>>
+>>>>>> Pids for nested Pid namespaces are shown in file /proc/[pid]/status.
+>>>>>> In some cases conversion pid -> vpid could be easily done using this
+>>>>>> information, but backward translation requires scanning all tasks.
+>>>>>>
+>>>>>> Unix socket automatically translates pid attached to 
+>>>>>> SCM_CREDENTIALS.
+>>>>>> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+>>>>>> into pid namespace, this expose process and could be insecure.
+>>>>>>
+>>>>>> This patch adds new syscall for converting pids between pid 
+>>>>>> namespaces:
+>>>>>>
+>>>>>> pid_t translate_pid(pid_t pid, int source_type, int source,
+>>>>>>                                  int target_type, int target);
+>>>>>>
+>>>>>> @source_type and @target_type defines type of following arguments:
+>>>>>>
+>>>>>> TRANSLATE_PID_CURRENT_PIDNS  - current pid namespace, argument is 
+>>>>>> unused
+>>>>>> TRANSLATE_PID_TASK_PIDNS     - task pid-ns, argument is task pid
+>>>>>
+>>>>> I believe using pid to represent the namespace has been already
+>>>>> discussed in V1 of this patch in https://lkml.org/lkml/2015/9/22/1087
+>>>>> after which we moved on to fd based version of this interface.
+>>>>
+>>>> Or in short why is the case of pids important?
+>>>>
+>>>> You Konstantin you almost said why they were important in your message
+>>>> saying you were going to send this one.  However you don't explain in
+>>>> your description why you want to identify pid namespaces by pid.
+>>>>
+>>>
+>>> Open of /proc/[pid]/ns/pid requires same permissions as ptrace,
+>>> pid based variant doesn't have such restrictions.
 >>
->> As far as I can tell, this means that by doing something like this:
->>
->>     unshare(CLONE_NEWNS|CLONE_NEWUSER);
->>     mount("none", "/", NULL, MS_REC|MS_PRIVATE, NULL);
->>     mount("proc", "/proc", "proc", 0, "newinstance,pids=all");
->>
->> any process could create a new unrestricted procfs mount for its PID
->> namespace, even if it is only supposed to have access to a more
->> restricted procfs mount.
+>> Can you provide more information on usecase requiring PID translation 
+>> but not used for tracing related purposes?
 >
-> Hm... let me investigate this. It looks like mount with "newinstance"
-> option should fail if pid namespace is the same and the current and parent
-> user namespace do not match.
+> Any introspection for [nested] containers. It's easier to work when 
+> you have all information when you don't have any.
+> For example our CMS https://github.com/yandex/porto allows to start 
+> nested sub-container (or even deeper) by request from any container 
+> and have to tell back which pid task is have. And it could translate 
+> any pid inside into accessible by client and vice versa.
+>
 
-I don't understand that last sentence. What does "if pid namespace is
-the same" mean, and what does "current and parent user namespace do
-not match" mean?
+I still dont get the exact reason why PID based approach to identify the 
+namespace during pid translation process is absolutely required compared 
+to fd based approach. From your version of TranslatePid in
 
-Just changing "ns_capable(current_user_ns(), CAP_SYS_ADMIN)" to
-"ns_capable(task_active_pid_ns(current)->user_ns, CAP_SYS_ADMIN)"
-should be enough to get the old semantics again: It checks whether the
-current task is capable over its PID namespace.
+https://github.com/yandex/porto/blob/0d7e6e7e1830dcd0038a057b2ab9964cec5b8fab/src/util/unix.cpp
+
+I see that you are going through the trouble of forking a process and 
+sending SMC_CREDENTIALS for pid translation. Even your existing API 
+could be extremely simplified if translate_pid based on file descriptors 
+make it to the gate and I believe from the last discussion it was almost 
+there https://patchwork.kernel.org/patch/10305439/
+
+
+>> On a side note, can we have the types TRANSLATE_PID_CURRENT_PIDNS and 
+>> TRANSLATE_PID_FD_PIDNS integrated first and then possibly extend the 
+>> interface to include TRANSLATE_PID_TASK_PIDNS in future?
+>
+> I don't see reason for this separation.
+> Pids and pid namespaces are part of the API for a long time.
+
+If you are talking about the translate_pid API proposed, I believe the 
+V4 proposed under https://patchwork.kernel.org/patch/10003935/ had only 
+fd based API before a mix of PID and fd based is proposed in V5. Again, 
+I was just wondering if we can get the FD based approach in first and 
+then extend the API to include PID based approach later as fd based 
+approach could provide a lot of immediate benefits?
+
+Thanks,
+Nagarathnam.
+>
+>>
+>> Thanks,
+>> Nagarathnam.
+>>> Most pid-based syscalls are racy in some cases but they are
+>>> here for decades and everybody knowns how to deal with it.
+>>> So, I've decided to merge both worlds in one interface which clearly 
+>>> tells what to expect.
+>>
