@@ -1,7 +1,7 @@
 From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: [PATCH 01/24] arm64: signal: Make parse_user_sigframe() independent of rt_sigframe layout
-Date: Tue, 15 May 2018 22:11:51 +0300
-Message-ID: <20180515191214.5045-2-ynorov@caviumnetworks.com>
+Subject: [PATCH 02/24] ptrace: Add compat PTRACE_{G,S}ETSIGMASK handlers
+Date: Tue, 15 May 2018 22:11:52 +0300
+Message-ID: <20180515191214.5045-3-ynorov@caviumnetworks.com>
 References: <20180515191214.5045-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,73 +12,116 @@ To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, li
 Cc: Yury Norov <ynorov@caviumnetworks.com>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>, James Morse <james.morse@arm.com>, Joseph Myers <joseph@codesourcery.com>, Lin Yongting <linyongting@huawei.com>, Manuel Montezelo <manuel.montezelo@gmail.>
 List-Id: linux-api@vger.kernel.org
 
-From: Dave Martin <Dave.Martin@arm.com>
+From: James Morse <james.morse@arm.com>
 
-ILP32 uses the same struct sigcontext as the native ABI (i.e.,
-LP64), but a different layout for the rest of the signal frame (since
-siginfo_t and ucontext_t are both ABI-dependent).
+compat_ptrace_request() lacks handlers for PTRACE_{G,S}ETSIGMASK,
+instead using those in ptrace_request(). The compat variant should
+read a compat_sigset_t from userspace instead of ptrace_request()s
+sigset_t.
 
-Since the purpose of parse_user_sigframe() is really to parse sigcontext
-and not the whole signal frame, the function does not need to depend
-on the layout of rt_sigframe -- the only purpose of the rt_sigframe
-pointer is for use as a base to measure the signal frame size.
+While compat_sigset_t is the same size as sigset_t, it is defined as
+2xu32, instead of a single u64. On a big-endian CPU this means that
+compat_sigset_t is passed to user-space using middle-endianness,
+where the least-significant u32 is written most significant byte
+first.
 
-So, this patch renames the function to make it clear that only the
-sigcontext is really being parsed, and makes the sigframe base pointer
-generic.  A macro is defined to provide a suitable duck-typed interface
-that can be used with both sigframe definitions.
+If ptrace_request()s code is used userspace will read the most
+significant u32 where it expected the least significant.
 
-Suggested-by: Yury Norov <ynorov@caviumnetworks.com>
-Signed-off-by: Dave Martin <Dave.Martin@arm.com>
+Instead of duplicating ptrace_request()s code as a special case in
+the arch code, handle it here.
+
+Fixes: 29000caecbe87 ("ptrace: add ability to get/set signal-blocked mask")
+CC: Andrey Vagin <avagin@openvz.org>
+Reported-by: Zhou Chengming <zhouchengming1@huawei.com>
+Signed-off-by: James Morse <james.morse@arm.com>
+
+Yury:
+Replace sigset_{to,from}_compat() with new {get,put}_compat_sigset()
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
- arch/arm64/kernel/signal.c | 14 ++++++++------
- 1 file changed, 8 insertions(+), 6 deletions(-)
+ kernel/ptrace.c | 48 ++++++++++++++++++++++++++++++++++++------------
+ 1 file changed, 36 insertions(+), 12 deletions(-)
 
-diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index f60c052e8d1c..65406218743c 100644
---- a/arch/arm64/kernel/signal.c
-+++ b/arch/arm64/kernel/signal.c
-@@ -334,17 +334,16 @@ extern int restore_sve_fpsimd_context(struct user_ctxs *user);
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 21fec73d45d4..214944d7c268 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -880,6 +880,22 @@ static int ptrace_regset(struct task_struct *task, int req, unsigned int type,
+ EXPORT_SYMBOL_GPL(task_user_regset_view);
+ #endif
  
- #endif /* ! CONFIG_ARM64_SVE */
- 
--
--static int parse_user_sigframe(struct user_ctxs *user,
--			       struct rt_sigframe __user *sf)
-+static int __parse_user_sigcontext(struct user_ctxs *user,
-+				   struct sigcontext __user const *sc,
-+				   void __user const *sigframe_base)
- {
--	struct sigcontext __user *const sc = &sf->uc.uc_mcontext;
- 	struct _aarch64_ctx __user *head;
- 	char __user *base = (char __user *)&sc->__reserved;
- 	size_t offset = 0;
- 	size_t limit = sizeof(sc->__reserved);
- 	bool have_extra_context = false;
--	char const __user *const sfp = (char const __user *)sf;
-+	char const __user *const sfp = (char const __user *)sigframe_base;
- 
- 	user->fpsimd = NULL;
- 	user->sve = NULL;
-@@ -493,6 +492,9 @@ static int parse_user_sigframe(struct user_ctxs *user,
- 	return -EINVAL;
- }
- 
-+#define parse_user_sigcontext(user, sf)					\
-+	__parse_user_sigcontext(user, &(sf)->uc.uc_mcontext, sf)
++static int ptrace_setsigmask(struct task_struct *child, sigset_t *new_set)
++{
++	sigdelsetmask(new_set, sigmask(SIGKILL)|sigmask(SIGSTOP));
 +
- static int restore_sigframe(struct pt_regs *regs,
- 			    struct rt_sigframe __user *sf)
++	/*
++	 * Every thread does recalc_sigpending() after resume, so
++	 * retarget_shared_pending() and recalc_sigpending() are not
++	 * called here.
++	 */
++	spin_lock_irq(&child->sighand->siglock);
++	child->blocked = *new_set;
++	spin_unlock_irq(&child->sighand->siglock);
++
++	return 0;
++}
++
+ int ptrace_request(struct task_struct *child, long request,
+ 		   unsigned long addr, unsigned long data)
  {
-@@ -518,7 +520,7 @@ static int restore_sigframe(struct pt_regs *regs,
+@@ -951,18 +967,7 @@ int ptrace_request(struct task_struct *child, long request,
+ 			break;
+ 		}
  
- 	err |= !valid_user_regs(&regs->user_regs, current);
- 	if (err == 0)
--		err = parse_user_sigframe(&user, sf);
-+		err = parse_user_sigcontext(&user, sf);
+-		sigdelsetmask(&new_set, sigmask(SIGKILL)|sigmask(SIGSTOP));
+-
+-		/*
+-		 * Every thread does recalc_sigpending() after resume, so
+-		 * retarget_shared_pending() and recalc_sigpending() are not
+-		 * called here.
+-		 */
+-		spin_lock_irq(&child->sighand->siglock);
+-		child->blocked = new_set;
+-		spin_unlock_irq(&child->sighand->siglock);
+-
+-		ret = 0;
++		ret = ptrace_setsigmask(child, &new_set);
+ 		break;
+ 	}
  
- 	if (err == 0) {
- 		if (!user.fpsimd)
+@@ -1181,6 +1186,7 @@ int compat_ptrace_request(struct task_struct *child, compat_long_t request,
+ {
+ 	compat_ulong_t __user *datap = compat_ptr(data);
+ 	compat_ulong_t word;
++	sigset_t new_set;
+ 	siginfo_t siginfo;
+ 	int ret;
+ 
+@@ -1221,6 +1227,24 @@ int compat_ptrace_request(struct task_struct *child, compat_long_t request,
+ 		else
+ 			ret = ptrace_setsiginfo(child, &siginfo);
+ 		break;
++	case PTRACE_GETSIGMASK:
++		if (addr != sizeof(compat_sigset_t))
++			return -EINVAL;
++
++		ret = put_compat_sigset((compat_sigset_t __user *) datap,
++				&child->blocked, sizeof(compat_sigset_t));
++		break;
++	case PTRACE_SETSIGMASK:
++		if (addr != sizeof(compat_sigset_t))
++			return -EINVAL;
++
++		ret = get_compat_sigset(&new_set,
++				(compat_sigset_t __user *) datap);
++		if (ret)
++			break;
++
++		ret = ptrace_setsigmask(child, &new_set);
++		break;
+ #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
+ 	case PTRACE_GETREGSET:
+ 	case PTRACE_SETREGSET:
 -- 
 2.17.0
