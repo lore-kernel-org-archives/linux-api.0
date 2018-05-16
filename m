@@ -1,7 +1,7 @@
 From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: [PATCH 12/24] arm64: ilp32: add is_ilp32_compat_{task,thread} and TIF_32BIT_AARCH64
-Date: Wed, 16 May 2018 11:18:57 +0300
-Message-ID: <20180516081910.10067-13-ynorov@caviumnetworks.com>
+Subject: [PATCH 13/24] arm64: introduce binfmt_elf32.c
+Date: Wed, 16 May 2018 11:18:58 +0300
+Message-ID: <20180516081910.10067-14-ynorov@caviumnetworks.com>
 References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,114 +12,142 @@ To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, li
 Cc: Yury Norov <ynorov@caviumnetworks.com>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>, James Morse <james.morse@arm.com>, Joseph Myers <joseph@codesourcery.com>, Lin Yongting <linyongting@huawei.com>, Manuel Montezelo <manuel.montezelo@gmail.>
 List-Id: linux-api@vger.kernel.org
 
-ILP32 tasks are needed to be distinguished from LP64 and AARCH32.
-This patch adds helper functions is_ilp32_compat_{task,thread} and
-thread flag TIF_32BIT_AARCH64 to address it. This is a preparation
-for following patches in ILP32 patchset.
+As we support more than one compat formats, it looks more reasonable
+to not use fs/compat_binfmt.c. Custom binfmt_elf32.c allows to move aarch32
+specific definitions there and make code more maintainable and readable.
 
-For consistency, SET_PERSONALITY is changed here accordingly.
-
-Signed-off-by: Andrew Pinski <Andrew.Pinski@caviumnetworks.com>
-Signed-off-by: Philipp Tomsich <philipp.tomsich@theobroma-systems.com>
-Signed-off-by: Christoph Muellner <christoph.muellner@theobroma-systems.com>
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
-Reviewed-by: David Daney <ddaney@caviumnetworks.com>
 ---
- arch/arm64/include/asm/elf.h         |  2 ++
- arch/arm64/include/asm/is_compat.h   | 30 ++++++++++++++++++++++++++--
- arch/arm64/include/asm/thread_info.h |  2 ++
- 3 files changed, 32 insertions(+), 2 deletions(-)
+ arch/arm64/Kconfig               |  1 -
+ arch/arm64/include/asm/elf.h     | 26 +++---------------------
+ arch/arm64/include/asm/hwcap.h   |  2 --
+ arch/arm64/kernel/Makefile       |  2 +-
+ arch/arm64/kernel/binfmt_elf32.c | 35 ++++++++++++++++++++++++++++++++
+ 5 files changed, 39 insertions(+), 27 deletions(-)
+ create mode 100644 arch/arm64/kernel/binfmt_elf32.c
 
+diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
+index a16916be20f5..0685754a9f7b 100644
+--- a/arch/arm64/Kconfig
++++ b/arch/arm64/Kconfig
+@@ -1232,7 +1232,6 @@ config AARCH32_EL0
+ 	bool "Kernel support for 32-bit EL0"
+ 	def_bool y
+ 	depends on ARM64_4K_PAGES || EXPERT
+-	select COMPAT_BINFMT_ELF if BINFMT_ELF
+ 	select HAVE_UID16
+ 	select OLD_SIGSUSPEND3
+ 	select COMPAT_OLD_SIGACTION
 diff --git a/arch/arm64/include/asm/elf.h b/arch/arm64/include/asm/elf.h
-index b4b10eefc667..023b2fbc1454 100644
+index 023b2fbc1454..f04b27bd9bb6 100644
 --- a/arch/arm64/include/asm/elf.h
 +++ b/arch/arm64/include/asm/elf.h
-@@ -143,6 +143,7 @@ typedef struct user_fpsimd_state elf_fpregset_t;
+@@ -175,36 +175,16 @@ extern int arch_setup_additional_pages(struct linux_binprm *bprm,
  
- #define SET_PERSONALITY(ex)						\
- ({									\
+ /* PIE load location for compat arm. Must match ARM ELF_ET_DYN_BASE. */
+ #define COMPAT_ELF_ET_DYN_BASE		0x000400000UL
++#endif /*CONFIG_COMPAT */
+ 
++#ifdef CONFIG_AARCH32_EL0
+ /* AArch32 registers. */
+ #define COMPAT_ELF_NGREG		18
+ typedef unsigned int			compat_elf_greg_t;
+ typedef compat_elf_greg_t		compat_elf_gregset_t[COMPAT_ELF_NGREG];
+-
+-/* AArch32 EABI. */
+-#define EF_ARM_EABI_MASK		0xff000000
+-#define compat_elf_check_arch(x)	(system_supports_32bit_el0() && \
+-					 ((x)->e_machine == EM_ARM) && \
+-					 ((x)->e_flags & EF_ARM_EABI_MASK))
+-
+-#define compat_start_thread		compat_start_thread
+-/*
+- * Unlike the native SET_PERSONALITY macro, the compat version maintains
+- * READ_IMPLIES_EXEC across an execve() since this is the behaviour on
+- * arch/arm/.
+- */
+-#define COMPAT_SET_PERSONALITY(ex)					\
+-({									\
+-	clear_thread_flag(TIF_32BIT_AARCH64);				\
+-	set_thread_flag(TIF_32BIT);					\
+- })
+-#define COMPAT_ARCH_DLINFO
+ extern int aarch32_setup_vectors_page(struct linux_binprm *bprm,
+ 				      int uses_interp);
+-#define compat_arch_setup_additional_pages \
+-					aarch32_setup_vectors_page
+-
+-#endif /* CONFIG_COMPAT */
++#endif /* CONFIG_AARCH32_EL0 */
+ 
+ #endif /* !__ASSEMBLY__ */
+ 
+diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
+index 2c7fc5d89813..99dfd9277559 100644
+--- a/arch/arm64/include/asm/hwcap.h
++++ b/arch/arm64/include/asm/hwcap.h
+@@ -47,8 +47,6 @@
+ #define ELF_HWCAP		(elf_hwcap)
+ 
+ #ifdef CONFIG_AARCH32_EL0
+-#define COMPAT_ELF_HWCAP	(compat_elf_hwcap)
+-#define COMPAT_ELF_HWCAP2	(compat_elf_hwcap2)
+ extern unsigned int compat_elf_hwcap, compat_elf_hwcap2;
+ #endif
+ 
+diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
+index cff1a78bdf4c..c63e0164fc12 100644
+--- a/arch/arm64/kernel/Makefile
++++ b/arch/arm64/kernel/Makefile
+@@ -27,7 +27,7 @@ $(obj)/%.stub.o: $(obj)/%.o FORCE
+ 	$(call if_changed,objcopy)
+ 
+ arm64-obj-$(CONFIG_AARCH32_EL0)		+= sys32.o kuser32.o signal32.o 	\
+-					   sys_compat.o entry32.o
++					   sys_compat.o entry32.o binfmt_elf32.o
+ arm64-obj-$(CONFIG_FUNCTION_TRACER)	+= ftrace.o entry-ftrace.o
+ arm64-obj-$(CONFIG_MODULES)		+= arm64ksyms.o module.o
+ arm64-obj-$(CONFIG_ARM64_MODULE_PLTS)	+= module-plts.o
+diff --git a/arch/arm64/kernel/binfmt_elf32.c b/arch/arm64/kernel/binfmt_elf32.c
+new file mode 100644
+index 000000000000..440fa84f62b3
+--- /dev/null
++++ b/arch/arm64/kernel/binfmt_elf32.c
+@@ -0,0 +1,35 @@
++// SPDX-License-Identifier: GPL-2.0+
++
++/*
++ * Support for AArch32 Linux ELF binaries.
++ */
++
++/* AArch32 EABI. */
++#define EF_ARM_EABI_MASK		0xff000000
++
++#define compat_start_thread		compat_start_thread
++/*
++ * Unlike the native SET_PERSONALITY macro, the compat version inherits
++ * READ_IMPLIES_EXEC across a fork() since this is the behaviour on
++ * arch/arm/.
++ */
++#define COMPAT_SET_PERSONALITY(ex)					\
++({									\
 +	clear_thread_flag(TIF_32BIT_AARCH64);				\
- 	clear_thread_flag(TIF_32BIT);					\
- 	current->personality &= ~READ_IMPLIES_EXEC;			\
- })
-@@ -194,6 +195,7 @@ typedef compat_elf_greg_t		compat_elf_gregset_t[COMPAT_ELF_NGREG];
-  */
- #define COMPAT_SET_PERSONALITY(ex)					\
- ({									\
-+	clear_thread_flag(TIF_32BIT_AARCH64);				\
- 	set_thread_flag(TIF_32BIT);					\
-  })
- #define COMPAT_ARCH_DLINFO
-diff --git a/arch/arm64/include/asm/is_compat.h b/arch/arm64/include/asm/is_compat.h
-index 19868588fbef..484c01def030 100644
---- a/arch/arm64/include/asm/is_compat.h
-+++ b/arch/arm64/include/asm/is_compat.h
-@@ -33,18 +33,44 @@ static inline int is_a32_compat_thread(struct thread_info *thread)
- 
- #endif /* CONFIG_AARCH32_EL0 */
- 
-+#ifdef CONFIG_ARM64_ILP32
++	set_thread_flag(TIF_32BIT);					\
++})
 +
-+static inline int is_ilp32_compat_task(void)
-+{
-+	return test_thread_flag(TIF_32BIT_AARCH64);
-+}
++#define COMPAT_ARCH_DLINFO
++#define COMPAT_ELF_HWCAP		(compat_elf_hwcap)
++#define COMPAT_ELF_HWCAP2		(compat_elf_hwcap2)
 +
-+static inline int is_ilp32_compat_thread(struct thread_info *thread)
-+{
-+	return test_ti_thread_flag(thread, TIF_32BIT_AARCH64);
-+}
++#define compat_arch_setup_additional_pages \
++					aarch32_setup_vectors_page
 +
-+#else
++/* AArch32 EABI. */
++#define compat_elf_check_arch(x)	(system_supports_32bit_el0() && \
++					 ((x)->e_machine == EM_ARM) && \
++					 ((x)->e_flags & EF_ARM_EABI_MASK))
 +
-+static inline int is_ilp32_compat_task(void)
-+{
-+	return 0;
-+}
 +
-+static inline int is_ilp32_compat_thread(struct thread_info *thread)
-+{
-+	return 0;
-+}
-+
-+#endif /* CONFIG_ARM64_ILP32 */
-+
- #ifdef CONFIG_COMPAT
- 
- static inline int is_compat_task(void)
- {
--	return is_a32_compat_task();
-+	return is_a32_compat_task() || is_ilp32_compat_task();
- }
- 
- #endif /* CONFIG_COMPAT */
- 
- static inline int is_compat_thread(struct thread_info *thread)
- {
--	return is_a32_compat_thread(thread);
-+	return is_a32_compat_thread(thread) || is_ilp32_compat_thread(thread);
- }
- 
- 
-diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
-index 6d2d58daa9d7..8ed56630e6a5 100644
---- a/arch/arm64/include/asm/thread_info.h
-+++ b/arch/arm64/include/asm/thread_info.h
-@@ -94,6 +94,7 @@ void arch_release_task_struct(struct task_struct *tsk);
- #define TIF_32BIT		22	/* AARCH32 process */
- #define TIF_SVE			23	/* Scalable Vector Extension in use */
- #define TIF_SVE_VL_INHERIT	24	/* Inherit sve_vl_onexec across exec */
-+#define TIF_32BIT_AARCH64	25	/* 32 bit process on AArch64(ILP32) */
- 
- #define _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
- #define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
-@@ -108,6 +109,7 @@ void arch_release_task_struct(struct task_struct *tsk);
- #define _TIF_FSCHECK		(1 << TIF_FSCHECK)
- #define _TIF_32BIT		(1 << TIF_32BIT)
- #define _TIF_SVE		(1 << TIF_SVE)
-+#define _TIF_32BIT_AARCH64	(1 << TIF_32BIT_AARCH64)
- 
- #define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
- 				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE | \
++#include "../../../fs/compat_binfmt_elf.c"
 -- 
 2.17.0
