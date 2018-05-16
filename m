@@ -1,7 +1,7 @@
 From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: [PATCH 16/24] arm64: ilp32: share aarch32 syscall handlers
-Date: Wed, 16 May 2018 11:19:01 +0300
-Message-ID: <20180516081910.10067-17-ynorov@caviumnetworks.com>
+Subject: [PATCH 14/24] arm64: change compat_elf_hwcap and compat_elf_hwcap2 prefix to a32
+Date: Wed, 16 May 2018 11:18:59 +0300
+Message-ID: <20180516081910.10067-15-ynorov@caviumnetworks.com>
 References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -12,220 +12,147 @@ To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, li
 Cc: Yury Norov <ynorov@caviumnetworks.com>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>, James Morse <james.morse@arm.com>, Joseph Myers <joseph@codesourcery.com>, Lin Yongting <linyongting@huawei.com>, Manuel Montezelo <manuel.montezelo@gmail.>
 List-Id: linux-api@vger.kernel.org
 
-According to userspace/kernel ABI, userspace off_t is  passed in register
-pair just like in aarch32. In this patch corresponding aarch32 handlers
-are shared to ilp32 code.
+ILP32 patch series introduces new type of binaries which is also compat.
+So rename existung aarch32 compat_elf_hwcap's helps to avoid confusing.
 
 Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
 ---
- arch/arm64/kernel/Makefile         |  1 +
- arch/arm64/kernel/entry32.S        | 80 ------------------------
- arch/arm64/kernel/entry32_common.S | 97 ++++++++++++++++++++++++++++++
- 3 files changed, 98 insertions(+), 80 deletions(-)
- create mode 100644 arch/arm64/kernel/entry32_common.S
+ arch/arm64/include/asm/hwcap.h       |  2 +-
+ arch/arm64/kernel/binfmt_elf32.c     |  4 ++--
+ arch/arm64/kernel/cpufeature.c       | 14 +++++++-------
+ arch/arm64/kernel/cpuinfo.c          | 10 +++++-----
+ drivers/clocksource/arm_arch_timer.c |  2 +-
+ 5 files changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
-index 3114191750ae..2dde9ae508ec 100644
---- a/arch/arm64/kernel/Makefile
-+++ b/arch/arm64/kernel/Makefile
-@@ -29,6 +29,7 @@ $(obj)/%.stub.o: $(obj)/%.o FORCE
- arm64-obj-$(CONFIG_AARCH32_EL0)		+= sys32.o kuser32.o signal32.o 	\
- 					   sys_compat.o entry32.o binfmt_elf32.o
- arm64-obj-$(CONFIG_ARM64_ILP32)		+= binfmt_ilp32.o
-+arm64-obj-$(CONFIG_COMPAT)		+= entry32_common.o
- arm64-obj-$(CONFIG_FUNCTION_TRACER)	+= ftrace.o entry-ftrace.o
- arm64-obj-$(CONFIG_MODULES)		+= arm64ksyms.o module.o
- arm64-obj-$(CONFIG_ARM64_MODULE_PLTS)	+= module-plts.o
-diff --git a/arch/arm64/kernel/entry32.S b/arch/arm64/kernel/entry32.S
-index f332d5d1f6b4..4bede0324440 100644
---- a/arch/arm64/kernel/entry32.S
-+++ b/arch/arm64/kernel/entry32.S
-@@ -39,83 +39,3 @@ ENTRY(compat_sys_rt_sigreturn_wrapper)
- 	mov	x0, sp
- 	b	compat_sys_rt_sigreturn
- ENDPROC(compat_sys_rt_sigreturn_wrapper)
--
--ENTRY(compat_sys_statfs64_wrapper)
--	mov	w3, #84
--	cmp	w1, #88
--	csel	w1, w3, w1, eq
--	b	compat_sys_statfs64
--ENDPROC(compat_sys_statfs64_wrapper)
--
--ENTRY(compat_sys_fstatfs64_wrapper)
--	mov	w3, #84
--	cmp	w1, #88
--	csel	w1, w3, w1, eq
--	b	compat_sys_fstatfs64
--ENDPROC(compat_sys_fstatfs64_wrapper)
--
--/*
-- * Note: off_4k (w5) is always in units of 4K. If we can't do the
-- * requested offset because it is not page-aligned, we return -EINVAL.
-- */
--ENTRY(compat_sys_mmap2_wrapper)
--#if PAGE_SHIFT > 12
--	tst	w5, #~PAGE_MASK >> 12
--	b.ne	1f
--	lsr	w5, w5, #PAGE_SHIFT - 12
--#endif
--	b	sys_mmap_pgoff
--1:	mov	x0, #-EINVAL
--	ret
--ENDPROC(compat_sys_mmap2_wrapper)
--
--/*
-- * Wrappers for AArch32 syscalls that either take 64-bit parameters
-- * in registers or that take 32-bit parameters which require sign
-- * extension.
-- */
--ENTRY(compat_sys_pread64_wrapper)
--	regs_to_64	x3, x4, x5
--	b	sys_pread64
--ENDPROC(compat_sys_pread64_wrapper)
--
--ENTRY(compat_sys_pwrite64_wrapper)
--	regs_to_64	x3, x4, x5
--	b	sys_pwrite64
--ENDPROC(compat_sys_pwrite64_wrapper)
--
--ENTRY(compat_sys_truncate64_wrapper)
--	regs_to_64	x1, x2, x3
--	b	sys_truncate
--ENDPROC(compat_sys_truncate64_wrapper)
--
--ENTRY(compat_sys_ftruncate64_wrapper)
--	regs_to_64	x1, x2, x3
--	b	sys_ftruncate
--ENDPROC(compat_sys_ftruncate64_wrapper)
--
--ENTRY(compat_sys_readahead_wrapper)
--	regs_to_64	x1, x2, x3
--	mov	w2, w4
--	b	sys_readahead
--ENDPROC(compat_sys_readahead_wrapper)
--
--ENTRY(compat_sys_fadvise64_64_wrapper)
--	mov	w6, w1
--	regs_to_64	x1, x2, x3
--	regs_to_64	x2, x4, x5
--	mov	w3, w6
--	b	sys_fadvise64_64
--ENDPROC(compat_sys_fadvise64_64_wrapper)
--
--ENTRY(compat_sys_sync_file_range2_wrapper)
--	regs_to_64	x2, x2, x3
--	regs_to_64	x3, x4, x5
--	b	sys_sync_file_range2
--ENDPROC(compat_sys_sync_file_range2_wrapper)
--
--ENTRY(compat_sys_fallocate_wrapper)
--	regs_to_64	x2, x2, x3
--	regs_to_64	x3, x4, x5
--	b	sys_fallocate
--ENDPROC(compat_sys_fallocate_wrapper)
-diff --git a/arch/arm64/kernel/entry32_common.S b/arch/arm64/kernel/entry32_common.S
-new file mode 100644
-index 000000000000..6ef4752162d0
---- /dev/null
-+++ b/arch/arm64/kernel/entry32_common.S
-@@ -0,0 +1,97 @@
-+/* SPDX-License-Identifier: GPL-2.0+ */
-+
-+/*
-+ * Compat system call wrappers
-+ *
-+ * Copyright (C) 2012 ARM Ltd.
-+ * Authors: Will Deacon <will.deacon@arm.com>
-+ *	    Catalin Marinas <catalin.marinas@arm.com>
-+ */
-+
-+#include <linux/linkage.h>
-+#include <linux/const.h>
-+
-+#include <asm/assembler.h>
-+#include <asm/asm-offsets.h>
-+#include <asm/errno.h>
-+#include <asm/page.h>
-+
-+/*
-+ * Note: off_4k (w5) is always in units of 4K. If we can't do the
-+ * requested offset because it is not page-aligned, we return -EINVAL.
-+ */
-+ENTRY(compat_sys_mmap2_wrapper)
-+#if PAGE_SHIFT > 12
-+	tst	w5, #~PAGE_MASK >> 12
-+	b.ne	1f
-+	lsr	w5, w5, #PAGE_SHIFT - 12
-+#endif
-+	b	sys_mmap_pgoff
-+1:	mov	x0, #-EINVAL
-+	ret
-+ENDPROC(compat_sys_mmap2_wrapper)
-+
-+/*
-+ * Wrappers for AArch32 syscalls that either take 64-bit parameters
-+ * in registers or that take 32-bit parameters which require sign
-+ * extension.
-+ */
-+ENTRY(compat_sys_pread64_wrapper)
-+	regs_to_64	x3, x4, x5
-+	b	sys_pread64
-+ENDPROC(compat_sys_pread64_wrapper)
-+
-+ENTRY(compat_sys_pwrite64_wrapper)
-+	regs_to_64	x3, x4, x5
-+	b	sys_pwrite64
-+ENDPROC(compat_sys_pwrite64_wrapper)
-+
-+ENTRY(compat_sys_truncate64_wrapper)
-+	regs_to_64	x1, x2, x3
-+	b	sys_truncate
-+ENDPROC(compat_sys_truncate64_wrapper)
-+
-+ENTRY(compat_sys_ftruncate64_wrapper)
-+	regs_to_64	x1, x2, x3
-+	b	sys_ftruncate
-+ENDPROC(compat_sys_ftruncate64_wrapper)
-+
-+ENTRY(compat_sys_readahead_wrapper)
-+	regs_to_64	x1, x2, x3
-+	mov	w2, w4
-+	b	sys_readahead
-+ENDPROC(compat_sys_readahead_wrapper)
-+
-+ENTRY(compat_sys_fadvise64_64_wrapper)
-+	mov	w6, w1
-+	regs_to_64	x1, x2, x3
-+	regs_to_64	x2, x4, x5
-+	mov	w3, w6
-+	b	sys_fadvise64_64
-+ENDPROC(compat_sys_fadvise64_64_wrapper)
-+
-+ENTRY(compat_sys_sync_file_range2_wrapper)
-+	regs_to_64	x2, x2, x3
-+	regs_to_64	x3, x4, x5
-+	b	sys_sync_file_range2
-+ENDPROC(compat_sys_sync_file_range2_wrapper)
-+
-+ENTRY(compat_sys_fallocate_wrapper)
-+	regs_to_64	x2, x2, x3
-+	regs_to_64	x3, x4, x5
-+	b	sys_fallocate
-+ENDPROC(compat_sys_fallocate_wrapper)
-+
-+ENTRY(compat_sys_statfs64_wrapper)
-+	mov	w3, #84
-+	cmp	w1, #88
-+	csel	w1, w3, w1, eq
-+	b	compat_sys_statfs64
-+ENDPROC(compat_sys_statfs64_wrapper)
-+
-+ENTRY(compat_sys_fstatfs64_wrapper)
-+	mov	w3, #84
-+	cmp	w1, #88
-+	csel	w1, w3, w1, eq
-+	b	compat_sys_fstatfs64
-+ENDPROC(compat_sys_fstatfs64_wrapper)
+diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
+index 99dfd9277559..428b745b5386 100644
+--- a/arch/arm64/include/asm/hwcap.h
++++ b/arch/arm64/include/asm/hwcap.h
+@@ -47,7 +47,7 @@
+ #define ELF_HWCAP		(elf_hwcap)
+ 
+ #ifdef CONFIG_AARCH32_EL0
+-extern unsigned int compat_elf_hwcap, compat_elf_hwcap2;
++extern unsigned int a32_elf_hwcap, a32_elf_hwcap2;
+ #endif
+ 
+ enum {
+diff --git a/arch/arm64/kernel/binfmt_elf32.c b/arch/arm64/kernel/binfmt_elf32.c
+index 440fa84f62b3..2b49d2a40d8b 100644
+--- a/arch/arm64/kernel/binfmt_elf32.c
++++ b/arch/arm64/kernel/binfmt_elf32.c
+@@ -20,8 +20,8 @@
+ })
+ 
+ #define COMPAT_ARCH_DLINFO
+-#define COMPAT_ELF_HWCAP		(compat_elf_hwcap)
+-#define COMPAT_ELF_HWCAP2		(compat_elf_hwcap2)
++#define COMPAT_ELF_HWCAP		(a32_elf_hwcap)
++#define COMPAT_ELF_HWCAP2		(a32_elf_hwcap2)
+ 
+ #define compat_arch_setup_additional_pages \
+ 					aarch32_setup_vectors_page
+diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
+index 28b7bc582334..4867fb142e86 100644
+--- a/arch/arm64/kernel/cpufeature.c
++++ b/arch/arm64/kernel/cpufeature.c
+@@ -38,15 +38,15 @@ unsigned long elf_hwcap __read_mostly;
+ EXPORT_SYMBOL_GPL(elf_hwcap);
+ 
+ #ifdef CONFIG_AARCH32_EL0
+-#define COMPAT_ELF_HWCAP_DEFAULT	\
++#define AARCH32_EL0_ELF_HWCAP_DEFAULT	\
+ 				(COMPAT_HWCAP_HALF|COMPAT_HWCAP_THUMB|\
+ 				 COMPAT_HWCAP_FAST_MULT|COMPAT_HWCAP_EDSP|\
+ 				 COMPAT_HWCAP_TLS|COMPAT_HWCAP_VFP|\
+ 				 COMPAT_HWCAP_VFPv3|COMPAT_HWCAP_VFPv4|\
+ 				 COMPAT_HWCAP_NEON|COMPAT_HWCAP_IDIV|\
+ 				 COMPAT_HWCAP_LPAE)
+-unsigned int compat_elf_hwcap __read_mostly = COMPAT_ELF_HWCAP_DEFAULT;
+-unsigned int compat_elf_hwcap2 __read_mostly;
++unsigned int a32_elf_hwcap __read_mostly = AARCH32_EL0_ELF_HWCAP_DEFAULT;
++unsigned int a32_elf_hwcap2 __read_mostly;
+ #endif
+ 
+ DECLARE_BITMAP(cpu_hwcaps, ARM64_NCAPS);
+@@ -1151,10 +1151,10 @@ static void __init cap_set_elf_hwcap(const struct arm64_cpu_capabilities *cap)
+ 		break;
+ #ifdef CONFIG_AARCH32_EL0
+ 	case CAP_COMPAT_HWCAP:
+-		compat_elf_hwcap |= (u32)cap->hwcap;
++		a32_elf_hwcap |= (u32)cap->hwcap;
+ 		break;
+ 	case CAP_COMPAT_HWCAP2:
+-		compat_elf_hwcap2 |= (u32)cap->hwcap;
++		a32_elf_hwcap2 |= (u32)cap->hwcap;
+ 		break;
+ #endif
+ 	default:
+@@ -1174,10 +1174,10 @@ static bool cpus_have_elf_hwcap(const struct arm64_cpu_capabilities *cap)
+ 		break;
+ #ifdef CONFIG_AARCH32_EL0
+ 	case CAP_COMPAT_HWCAP:
+-		rc = (compat_elf_hwcap & (u32)cap->hwcap) != 0;
++		rc = (a32_elf_hwcap & (u32)cap->hwcap) != 0;
+ 		break;
+ 	case CAP_COMPAT_HWCAP2:
+-		rc = (compat_elf_hwcap2 & (u32)cap->hwcap) != 0;
++		rc = (a32_elf_hwcap2 & (u32)cap->hwcap) != 0;
+ 		break;
+ #endif
+ 	default:
+diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
+index 23fdf30dc0a3..a57a6fd0afab 100644
+--- a/arch/arm64/kernel/cpuinfo.c
++++ b/arch/arm64/kernel/cpuinfo.c
+@@ -120,7 +120,7 @@ static const char *const compat_hwcap2_str[] = {
+ static int c_show(struct seq_file *m, void *v)
+ {
+ 	int i, j;
+-	bool compat = personality(current->personality) == PER_LINUX32;
++	bool aarch32 = personality(current->personality) == PER_LINUX32;
+ 
+ 	for_each_online_cpu(i) {
+ 		struct cpuinfo_arm64 *cpuinfo = &per_cpu(cpu_data, i);
+@@ -132,7 +132,7 @@ static int c_show(struct seq_file *m, void *v)
+ 		 * "processor".  Give glibc what it expects.
+ 		 */
+ 		seq_printf(m, "processor\t: %d\n", i);
+-		if (compat)
++		if (aarch32)
+ 			seq_printf(m, "model name\t: ARMv8 Processor rev %d (%s)\n",
+ 				   MIDR_REVISION(midr), COMPAT_ELF_PLATFORM);
+ 
+@@ -147,14 +147,14 @@ static int c_show(struct seq_file *m, void *v)
+ 		 * software which does already (at least for 32-bit).
+ 		 */
+ 		seq_puts(m, "Features\t:");
+-		if (compat) {
++		if (aarch32) {
+ #ifdef CONFIG_AARCH32_EL0
+ 			for (j = 0; compat_hwcap_str[j]; j++)
+-				if (compat_elf_hwcap & (1 << j))
++				if (a32_elf_hwcap & (1 << j))
+ 					seq_printf(m, " %s", compat_hwcap_str[j]);
+ 
+ 			for (j = 0; compat_hwcap2_str[j]; j++)
+-				if (compat_elf_hwcap2 & (1 << j))
++				if (a32_elf_hwcap2 & (1 << j))
+ 					seq_printf(m, " %s", compat_hwcap2_str[j]);
+ #endif /* CONFIG_AARCH32_EL0 */
+ 		} else {
+diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
+index c3c6a8d48adc..d8b12b9be97b 100644
+--- a/drivers/clocksource/arm_arch_timer.c
++++ b/drivers/clocksource/arm_arch_timer.c
+@@ -765,7 +765,7 @@ static void arch_timer_evtstrm_enable(int divider)
+ 	arch_timer_set_cntkctl(cntkctl);
+ 	elf_hwcap |= HWCAP_EVTSTRM;
+ #ifdef CONFIG_AARCH32_EL0
+-	compat_elf_hwcap |= COMPAT_HWCAP_EVTSTRM;
++	a32_elf_hwcap |= COMPAT_HWCAP_EVTSTRM;
+ #endif
+ 	cpumask_set_cpu(smp_processor_id(), &evtstrm_available);
+ }
 -- 
 2.17.0
