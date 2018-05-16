@@ -1,249 +1,361 @@
-From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: [PATCH 05/24] asm-generic: Drop getrlimit and setrlimit syscalls from
- default list
-Date: Wed, 16 May 2018 11:18:50 +0300
-Message-ID: <20180516081910.10067-6-ynorov@caviumnetworks.com>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-snps-arc-bounces+gla-linux-snps-arc=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-snps-arc>,
- <mailto:linux-snps-arc-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-snps-arc/>
-List-Post: <mailto:linux-snps-arc@lists.infradead.org>
-List-Help: <mailto:linux-snps-arc-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-snps-arc>,
- <mailto:linux-snps-arc-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-snps-arc" <linux-snps-arc-bounces@lists.infradead.org>
-Errors-To: linux-snps-arc-bounces+gla-linux-snps-arc=m.gmane.org@lists.infradead.org
-To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Aurelien Jacquiot <a-jacquiot@ti.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yury Norov <ynorov@caviumnetworks.com>, linux@lists.openrisc.net, linux-hexagon@vger.kernel.org, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, Jonas Bonn <jonas@southpole.se>, Chen Liqin <liqin.linux@gmail.com>, Guan Xuetao <gxt@mprc.pku.edu.cn>, Steve Ellcey <sellcey@caviumnetworks.com>, linux-c6x-dev@linux-c6x.org, Yoshinori Sato <ysato@users.sourceforge.jp>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Lennox Wu <lennox.wu@gmail.com>, Mark Salter <msalter@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, linux-snps-arc@lists.infradead.org, Dave Martin <Dave.Martin@arm.com>, uclinux-h
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: [RFC PATCH] UAPI: Document auxvec AT_* namespace policy and note reservations
+Date: Wed, 16 May 2018 15:20:47 +0100
+Message-ID: <1526480447-18185-1-git-send-email-Dave.Martin@arm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Michal Simek <monstr@monstr.eu>, Ralf Baechle <ralf@linux-mips.org>, James Hogan <jhogan@kernel.org>, Greentime Hu <green.hu@gmail.com>, Vincent Chen <deanbo422@gmail.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Palmer Dabbelt <palmer@sifive.com>, Albert Ou <albert@sifive.com>, Martin
 List-Id: linux-api@vger.kernel.org
 
-The newer prlimit64 syscall provides all the functionality provided by
-getrlimit and setrlimit syscalls and adds the pid of target process, so
-future architectures won't need to include getrlimit and setrlimit.
+There are constraints on defining AT_* auxvec tags that are not
+obvious to the casual maintainer of either the global
+<uapi/linux/auxvec.h> or the arch-specific headers.  This is likely
+to lead to mistakes.  (I certainly fell foul of it...)
 
-Therefore drop getrlimit and setrlimit syscalls from the generic syscall
-list unless __ARCH_WANT_SET_GET_RLIMIT is defined by the architecture's
-unistd.h prior to including asm-generic/unistd.h, and adjust all
-architectures using the generic syscall list to define it so that no
-in-tree architectures are affected.
+For the benefit of future maintainers, this patch collects the
+relevant information in one place, documenting how the namespace
+needs to be managed, and noting all the values currently in use.
 
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: James Hogan <james.hogan@imgtec.com>
-Cc: linux-arch@vger.kernel.org
-Cc: linux-snps-arc@lists.infradead.org
+Maintaining a global list may result in some merge conflicts, but
+AT_* values are not added frequently.  I'm open to suggestions on
+the best approach.
+
+I also assume that values 38 and 39 may have been used for
+historical purposes, such as an architecture that is no longer
+supported.  If they have definitely never been used for anything,
+they could be removed from the "reserved" list.
+
+Signed-off-by: Dave Martin <Dave.Martin@arm.com>
+Cc: Richard Henderson <rth@twiddle.net>
+Cc: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
+Cc: Matt Turner <mattst88@gmail.com>
+Cc: Russell King <linux@armlinux.org.uk>
 Cc: Catalin Marinas <catalin.marinas@arm.com>
 Cc: Will Deacon <will.deacon@arm.com>
-Cc: linux-arm-kernel@lists.infradead.org
-Cc: Mark Salter <msalter@redhat.com>
-Cc: Aurelien Jacquiot <a-jacquiot@ti.com>
-Cc: linux-c6x-dev@linux-c6x.org
-Cc: Richard Kuo <rkuo@codeaurora.org>
-Cc: linux-hexagon@vger.kernel.org
-Cc: linux-metag@vger.kernel.org
-Cc: Jonas Bonn <jonas@southpole.se>
-Cc: linux@lists.openrisc.net
-Cc: Chen Liqin <liqin.linux@gmail.com>
-Cc: Lennox Wu <lennox.wu@gmail.com>
-Cc: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Guan Xuetao <gxt@mprc.pku.edu.cn>
-Cc: Ley Foon Tan <lftan@altera.com>
-Cc: nios2-dev@lists.rocketboards.org
+Cc: Tony Luck <tony.luck@intel.com>
+Cc: Fenghua Yu <fenghua.yu@intel.com>
+Cc: Michal Simek <monstr@monstr.eu>
+Cc: Ralf Baechle <ralf@linux-mips.org>
+Cc: James Hogan <jhogan@kernel.org>
+Cc: Greentime Hu <green.hu@gmail.com>
+Cc: Vincent Chen <deanbo422@gmail.com>
+Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+Cc: Paul Mackerras <paulus@samba.org>
+Cc: Michael Ellerman <mpe@ellerman.id.au>
+Cc: Palmer Dabbelt <palmer@sifive.com>
+Cc: Albert Ou <albert@sifive.com>
+Cc: Martin Schwidefsky <schwidefsky@de.ibm.com>
+Cc: Heiko Carstens <heiko.carstens@de.ibm.com>
 Cc: Yoshinori Sato <ysato@users.sourceforge.jp>
-Cc: uclinux-h8-devel@lists.sourceforge.jp
-Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
-Acked-by: Arnd Bergmann <arnd@arndb.de>
-Acked-by: Mark Salter <msalter@redhat.com> [c6x]
-Acked-by: James Hogan <james.hogan@imgtec.com> [metag]
-Acked-by: Ley Foon Tan <lftan@altera.com> [nios2]
-Acked-by: Stafford Horne <shorne@gmail.com> [openrisc]
-Acked-by: Will Deacon <will.deacon@arm.com> [arm64]
-Acked-by: Vineet Gupta <vgupta@synopsys.com> #arch/arc bits
+Cc: Rich Felker <dalias@libc.org>
+Cc: "David S. Miller" <davem@davemloft.net>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Chris Zankel <chris@zankel.net>
+Cc: Max Filippov <jcmvbkbc@gmail.com>
 ---
- arch/arc/include/uapi/asm/unistd.h       | 1 +
- arch/arm64/include/uapi/asm/unistd.h     | 1 +
- arch/c6x/include/uapi/asm/unistd.h       | 1 +
- arch/h8300/include/uapi/asm/unistd.h     | 1 +
- arch/hexagon/include/uapi/asm/unistd.h   | 1 +
- arch/metag/include/uapi/asm/unistd.h     | 1 +
- arch/nios2/include/uapi/asm/unistd.h     | 1 +
- arch/openrisc/include/uapi/asm/unistd.h  | 1 +
- arch/score/include/uapi/asm/unistd.h     | 1 +
- arch/tile/include/uapi/asm/unistd.h      | 1 +
- arch/unicore32/include/uapi/asm/unistd.h | 1 +
- include/uapi/asm-generic/unistd.h        | 5 +++++
- scripts/checksyscalls.sh                 | 5 +++++
- 13 files changed, 21 insertions(+)
+ arch/alpha/include/uapi/asm/auxvec.h      |  5 ++++
+ arch/arm/include/uapi/asm/auxvec.h        |  5 ++++
+ arch/arm64/include/uapi/asm/auxvec.h      |  5 ++++
+ arch/ia64/include/uapi/asm/auxvec.h       |  5 ++++
+ arch/microblaze/include/uapi/asm/auxvec.h |  4 ++++
+ arch/mips/include/uapi/asm/auxvec.h       |  5 ++++
+ arch/nds32/include/uapi/asm/auxvec.h      |  5 ++++
+ arch/powerpc/include/uapi/asm/auxvec.h    |  5 ++++
+ arch/riscv/include/uapi/asm/auxvec.h      |  5 ++++
+ arch/s390/include/uapi/asm/auxvec.h       |  5 ++++
+ arch/sh/include/uapi/asm/auxvec.h         |  5 ++++
+ arch/sparc/include/uapi/asm/auxvec.h      |  8 ++++---
+ arch/x86/include/uapi/asm/auxvec.h        |  5 ++++
+ arch/xtensa/include/uapi/asm/auxvec.h     |  5 ++++
+ include/uapi/linux/auxvec.h               | 40 ++++++++++++++++++++++++++++---
+ 15 files changed, 106 insertions(+), 6 deletions(-)
 
-diff --git a/arch/arc/include/uapi/asm/unistd.h b/arch/arc/include/uapi/asm/unistd.h
-index 517178b1daef..660dbb2e799c 100644
---- a/arch/arc/include/uapi/asm/unistd.h
-+++ b/arch/arc/include/uapi/asm/unistd.h
-@@ -17,6 +17,7 @@
- #define _UAPI_ASM_ARC_UNISTD_H
+diff --git a/arch/alpha/include/uapi/asm/auxvec.h b/arch/alpha/include/uapi/asm/auxvec.h
+index 57cae87..9370d78 100644
+--- a/arch/alpha/include/uapi/asm/auxvec.h
++++ b/arch/alpha/include/uapi/asm/auxvec.h
+@@ -22,6 +22,11 @@
+ #define AT_L2_CACHESHAPE	36
+ #define AT_L3_CACHESHAPE	37
  
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- #define __ARCH_WANT_SYS_EXECVE
- #define __ARCH_WANT_SYS_CLONE
- #define __ARCH_WANT_SYS_VFORK
-diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
-index 5072cbd15c82..439b1c55c827 100644
---- a/arch/arm64/include/uapi/asm/unistd.h
-+++ b/arch/arm64/include/uapi/asm/unistd.h
-@@ -16,5 +16,6 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- 
- #include <asm-generic/unistd.h>
-diff --git a/arch/c6x/include/uapi/asm/unistd.h b/arch/c6x/include/uapi/asm/unistd.h
-index 0d2daf7f9809..df40dc128ba9 100644
---- a/arch/c6x/include/uapi/asm/unistd.h
-+++ b/arch/c6x/include/uapi/asm/unistd.h
-@@ -16,6 +16,7 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- #define __ARCH_WANT_SYS_CLONE
- 
- /* Use the standard ABI for syscalls. */
-diff --git a/arch/h8300/include/uapi/asm/unistd.h b/arch/h8300/include/uapi/asm/unistd.h
-index 7dd20ef7625a..2f98394b77d4 100644
---- a/arch/h8300/include/uapi/asm/unistd.h
-+++ b/arch/h8300/include/uapi/asm/unistd.h
-@@ -1,5 +1,6 @@
- #define __ARCH_NOMMU
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- 
- #include <asm-generic/unistd.h>
-diff --git a/arch/hexagon/include/uapi/asm/unistd.h b/arch/hexagon/include/uapi/asm/unistd.h
-index ea181e79162e..c9eb56ed5744 100644
---- a/arch/hexagon/include/uapi/asm/unistd.h
-+++ b/arch/hexagon/include/uapi/asm/unistd.h
-@@ -29,6 +29,7 @@
- 
- #define sys_mmap2 sys_mmap_pgoff
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- #define __ARCH_WANT_SYS_EXECVE
- #define __ARCH_WANT_SYS_CLONE
- #define __ARCH_WANT_SYS_VFORK
-diff --git a/arch/metag/include/uapi/asm/unistd.h b/arch/metag/include/uapi/asm/unistd.h
-index 9f72c4cfcfb5..ca34435878dc 100644
---- a/arch/metag/include/uapi/asm/unistd.h
-+++ b/arch/metag/include/uapi/asm/unistd.h
-@@ -9,6 +9,7 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- 
- /* Use the standard ABI for syscalls. */
- #include <asm-generic/unistd.h>
-diff --git a/arch/nios2/include/uapi/asm/unistd.h b/arch/nios2/include/uapi/asm/unistd.h
-index b6bdae04bc84..aa4e90e00885 100644
---- a/arch/nios2/include/uapi/asm/unistd.h
-+++ b/arch/nios2/include/uapi/asm/unistd.h
-@@ -19,6 +19,7 @@
-  #define sys_mmap2 sys_mmap_pgoff
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- 
- /* Use the standard ABI for syscalls */
- #include <asm-generic/unistd.h>
-diff --git a/arch/openrisc/include/uapi/asm/unistd.h b/arch/openrisc/include/uapi/asm/unistd.h
-index 9a3ee389631e..8e838aa4fcd8 100644
---- a/arch/openrisc/include/uapi/asm/unistd.h
-+++ b/arch/openrisc/include/uapi/asm/unistd.h
-@@ -22,6 +22,7 @@
- #define sys_mmap2 sys_mmap_pgoff
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- #define __ARCH_WANT_SYS_FORK
- #define __ARCH_WANT_SYS_CLONE
- 
-diff --git a/arch/score/include/uapi/asm/unistd.h b/arch/score/include/uapi/asm/unistd.h
-index 04da47bd3d46..a64e6f131434 100644
---- a/arch/score/include/uapi/asm/unistd.h
-+++ b/arch/score/include/uapi/asm/unistd.h
-@@ -2,6 +2,7 @@
- #define __ARCH_HAVE_MMU
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- #define __ARCH_WANT_SYSCALL_NO_AT
- #define __ARCH_WANT_SYSCALL_NO_FLAGS
- #define __ARCH_WANT_SYSCALL_OFF_T
-diff --git a/arch/tile/include/uapi/asm/unistd.h b/arch/tile/include/uapi/asm/unistd.h
-index 1a169ec92ef8..57ab278fe26f 100644
---- a/arch/tile/include/uapi/asm/unistd.h
-+++ b/arch/tile/include/uapi/asm/unistd.h
-@@ -14,6 +14,7 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- #if !defined(__LP64__) || defined(__SYSCALL_COMPAT)
- /* Use the flavor of this syscall that matches the 32-bit API better. */
- #define __ARCH_WANT_SYNC_FILE_RANGE2
-diff --git a/arch/unicore32/include/uapi/asm/unistd.h b/arch/unicore32/include/uapi/asm/unistd.h
-index 65856eaab163..0314f7894375 100644
---- a/arch/unicore32/include/uapi/asm/unistd.h
-+++ b/arch/unicore32/include/uapi/asm/unistd.h
-@@ -12,6 +12,7 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_SET_GET_RLIMIT
- 
- /* Use the standard ABI for syscalls. */
- #include <asm-generic/unistd.h>
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 426a1a496d9d..a460e9a9b42d 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -465,10 +465,15 @@ __SYSCALL(__NR_uname, sys_newuname)
- __SYSCALL(__NR_sethostname, sys_sethostname)
- #define __NR_setdomainname 162
- __SYSCALL(__NR_setdomainname, sys_setdomainname)
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
 +
-+#ifdef __ARCH_WANT_SET_GET_RLIMIT
-+/* getrlimit and setrlimit are superseded with prlimit64 */
- #define __NR_getrlimit 163
- __SC_COMP(__NR_getrlimit, sys_getrlimit, compat_sys_getrlimit)
- #define __NR_setrlimit 164
- __SC_COMP(__NR_setrlimit, sys_setrlimit, compat_sys_setrlimit)
-+#endif
+ #define AT_VECTOR_SIZE_ARCH 4 /* entries in ARCH_DLINFO */
+ 
+ #endif /* __ASM_ALPHA_AUXVEC_H */
+diff --git a/arch/arm/include/uapi/asm/auxvec.h b/arch/arm/include/uapi/asm/auxvec.h
+index 5c09da5..b5cfba2 100644
+--- a/arch/arm/include/uapi/asm/auxvec.h
++++ b/arch/arm/include/uapi/asm/auxvec.h
+@@ -5,4 +5,9 @@
+ /* VDSO location */
+ #define AT_SYSINFO_EHDR	33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
 +
- #define __NR_getrusage 165
- __SC_COMP(__NR_getrusage, sys_getrusage, compat_sys_getrusage)
- #define __NR_umask 166
-diff --git a/scripts/checksyscalls.sh b/scripts/checksyscalls.sh
-index ee3dfb5be6cd..5717766c5b4a 100755
---- a/scripts/checksyscalls.sh
-+++ b/scripts/checksyscalls.sh
-@@ -38,6 +38,11 @@ cat << EOF
- #define __IGNORE_lstat64	/* fstatat64 */
  #endif
+diff --git a/arch/arm64/include/uapi/asm/auxvec.h b/arch/arm64/include/uapi/asm/auxvec.h
+index ec0a86d..3da03fc 100644
+--- a/arch/arm64/include/uapi/asm/auxvec.h
++++ b/arch/arm64/include/uapi/asm/auxvec.h
+@@ -20,6 +20,11 @@
+ /* vDSO location */
+ #define AT_SYSINFO_EHDR	33
  
-+#ifndef __ARCH_WANT_SET_GET_RLIMIT
-+#define __IGNORE_getrlimit	/* getrlimit */
-+#define __IGNORE_setrlimit	/* setrlimit */
-+#endif
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
 +
- /* Missing flags argument */
- #define __IGNORE_renameat	/* renameat2 */
+ #define AT_VECTOR_SIZE_ARCH 1 /* entries in ARCH_DLINFO */
  
+ #endif
+diff --git a/arch/ia64/include/uapi/asm/auxvec.h b/arch/ia64/include/uapi/asm/auxvec.h
+index 09969a5..a81aec5 100644
+--- a/arch/ia64/include/uapi/asm/auxvec.h
++++ b/arch/ia64/include/uapi/asm/auxvec.h
+@@ -9,6 +9,11 @@
+ #define AT_SYSINFO	32
+ #define AT_SYSINFO_EHDR	33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH 2 /* entries in ARCH_DLINFO */
+ 
+ #endif /* _ASM_IA64_AUXVEC_H */
+diff --git a/arch/microblaze/include/uapi/asm/auxvec.h b/arch/microblaze/include/uapi/asm/auxvec.h
+index 93dd07b..b08c6dc 100644
+--- a/arch/microblaze/include/uapi/asm/auxvec.h
++++ b/arch/microblaze/include/uapi/asm/auxvec.h
+@@ -1,2 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
+diff --git a/arch/mips/include/uapi/asm/auxvec.h b/arch/mips/include/uapi/asm/auxvec.h
+index 612c2c4..ee94899 100644
+--- a/arch/mips/include/uapi/asm/auxvec.h
++++ b/arch/mips/include/uapi/asm/auxvec.h
+@@ -15,6 +15,11 @@
+ /* Location of VDSO image. */
+ #define AT_SYSINFO_EHDR		33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH 1 /* entries in ARCH_DLINFO */
+ 
+ #endif /* __ASM_AUXVEC_H */
+diff --git a/arch/nds32/include/uapi/asm/auxvec.h b/arch/nds32/include/uapi/asm/auxvec.h
+index 56043ce..0173da1 100644
+--- a/arch/nds32/include/uapi/asm/auxvec.h
++++ b/arch/nds32/include/uapi/asm/auxvec.h
+@@ -7,6 +7,11 @@
+ /* VDSO location */
+ #define AT_SYSINFO_EHDR	33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH 1
+ 
+ #endif
+diff --git a/arch/powerpc/include/uapi/asm/auxvec.h b/arch/powerpc/include/uapi/asm/auxvec.h
+index 7af21dc..3da0713 100644
+--- a/arch/powerpc/include/uapi/asm/auxvec.h
++++ b/arch/powerpc/include/uapi/asm/auxvec.h
+@@ -48,6 +48,11 @@
+ #define AT_L3_CACHESIZE		46
+ #define AT_L3_CACHEGEOMETRY	47
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH	14 /* entries in ARCH_DLINFO */
+ 
+ #endif
+diff --git a/arch/riscv/include/uapi/asm/auxvec.h b/arch/riscv/include/uapi/asm/auxvec.h
+index 1376515..0dd7983 100644
+--- a/arch/riscv/include/uapi/asm/auxvec.h
++++ b/arch/riscv/include/uapi/asm/auxvec.h
+@@ -21,4 +21,9 @@
+ /* vDSO location */
+ #define AT_SYSINFO_EHDR 33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #endif /* _UAPI_ASM_RISCV_AUXVEC_H */
+diff --git a/arch/s390/include/uapi/asm/auxvec.h b/arch/s390/include/uapi/asm/auxvec.h
+index a056c46..c30090a 100644
+--- a/arch/s390/include/uapi/asm/auxvec.h
++++ b/arch/s390/include/uapi/asm/auxvec.h
+@@ -4,6 +4,11 @@
+ 
+ #define AT_SYSINFO_EHDR		33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH 1 /* entries in ARCH_DLINFO */
+ 
+ #endif
+diff --git a/arch/sh/include/uapi/asm/auxvec.h b/arch/sh/include/uapi/asm/auxvec.h
+index 8eb47ed..e5b6ebc 100644
+--- a/arch/sh/include/uapi/asm/auxvec.h
++++ b/arch/sh/include/uapi/asm/auxvec.h
+@@ -34,6 +34,11 @@
+ #define AT_L1D_CACHESHAPE	35
+ #define AT_L2_CACHESHAPE	36
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH 5 /* entries in ARCH_DLINFO */
+ 
+ #endif /* __ASM_SH_AUXVEC_H */
+diff --git a/arch/sparc/include/uapi/asm/auxvec.h b/arch/sparc/include/uapi/asm/auxvec.h
+index ab8780f..76aba18 100644
+--- a/arch/sparc/include/uapi/asm/auxvec.h
++++ b/arch/sparc/include/uapi/asm/auxvec.h
+@@ -3,13 +3,15 @@
+ 
+ #define AT_SYSINFO_EHDR		33
+ 
+-/* Avoid overlap with other AT_* values since they are consolidated in
+- * glibc and any overlaps can cause problems
+- */
+ #define AT_ADI_BLKSZ	48
+ #define AT_ADI_NBITS	49
+ #define AT_ADI_UEONADI	50
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #define AT_VECTOR_SIZE_ARCH	4
+ 
+ #endif /* !(__ASMSPARC_AUXVEC_H) */
+diff --git a/arch/x86/include/uapi/asm/auxvec.h b/arch/x86/include/uapi/asm/auxvec.h
+index 580e3c5..700c0fc 100644
+--- a/arch/x86/include/uapi/asm/auxvec.h
++++ b/arch/x86/include/uapi/asm/auxvec.h
+@@ -10,6 +10,11 @@
+ #endif
+ #define AT_SYSINFO_EHDR		33
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ /* entries in ARCH_DLINFO: */
+ #if defined(CONFIG_IA32_EMULATION) || !defined(CONFIG_X86_64)
+ # define AT_VECTOR_SIZE_ARCH 2
+diff --git a/arch/xtensa/include/uapi/asm/auxvec.h b/arch/xtensa/include/uapi/asm/auxvec.h
+index 257dec7..995bbd8 100644
+--- a/arch/xtensa/include/uapi/asm/auxvec.h
++++ b/arch/xtensa/include/uapi/asm/auxvec.h
+@@ -1,4 +1,9 @@
+ #ifndef __XTENSA_AUXVEC_H
+ #define __XTENSA_AUXVEC_H
+ 
++/*
++ * Do not add new AT_* definitions here without coordinating with
++ * <uapi/linux/auxvec.h>
++ */
++
+ #endif
+diff --git a/include/uapi/linux/auxvec.h b/include/uapi/linux/auxvec.h
+index abe5f2b..c19c043 100644
+--- a/include/uapi/linux/auxvec.h
++++ b/include/uapi/linux/auxvec.h
+@@ -4,8 +4,19 @@
+ 
+ #include <asm/auxvec.h>
+ 
+-/* Symbolic values for the entries in the auxiliary table
+-   put on the initial stack */
++/*
++ * Symbolic values for the entries in the auxiliary table
++ * put on the initial stack.
++ *
++ * Values with definitions here are common to all architectures.
++ * Individual architectures may define additional values in their
++ * <uapi/asm/auxvec.h>.
++ *
++ * NOTE: Userspace may treat these numbers as a global namespace.
++ * Any per-architecture definition must not overlap with these or with
++ * any other architecture's definitions, unless it has identical name
++ * and number and compatible meaning.
++ */
+ #define AT_NULL   0	/* end of vector */
+ #define AT_IGNORE 1	/* entry should be ignored */
+ #define AT_EXECFD 2	/* file descriptor of program */
+@@ -24,7 +35,11 @@
+ #define AT_PLATFORM 15  /* string identifying CPU for optimizations */
+ #define AT_HWCAP  16    /* arch dependent hints at CPU capabilities */
+ #define AT_CLKTCK 17	/* frequency at which times() increments */
+-/* AT_* values 18 through 22 are reserved */
++/* 18 reserved for AT_FPUCW		(sh) */
++/* 19 reserved for AT_DCACHEBSIZE	(powerpc) */
++/* 20 reserved for AT_ICACHEBSIZE	(powerpc) */
++/* 21 reserved for AT_UCACHEBSIZE	(powerpc) */
++/* 22 reserved for AT_IGNOREPPC		(powerpc) */
+ #define AT_SECURE 23   /* secure mode boolean */
+ #define AT_BASE_PLATFORM 24	/* string identifying real platform, may
+ 				 * differ from AT_PLATFORM. */
+@@ -33,5 +48,24 @@
+ 
+ #define AT_EXECFN  31	/* filename of program */
+ 
++/* 32 reserved for AT_SYSINFO		(alpha ia64 um x86) */
++/* 33 reserved for AT_SYSINFO_EHDR	(various architectures) */
++/* 34 reserved for AT_L1I_CACHESHAPE	(alpha sh) */
++/* 35 reserved for AT_L1D_CACHESHAPE	(alpha sh) */
++/* 36 reserved for AT_L2_CACHESHAPE	(alpha sh) */
++/* 37 reserved for AT_L3_CACHESHAPE	(alpha) */
++/* 38 reserved, do not allocate */
++/* 39 reserved, do not allocate */
++/* 40 reserved for AT_L1I_CACHESIZE	(powerpc) */
++/* 41 reserved for AT_L1I_CACHEGEOMETRY	(powerpc) */
++/* 42 reserved for AT_L1D_CACHESIZE	(powerpc) */
++/* 43 reserved for AT_L1D_CACHEGEOMETRY	(powerpc) */
++/* 44 reserved for AT_L2_CACHESIZE	(powerpc) */
++/* 45 reserved for AT_L2_CACHEGEOMETRY	(powerpc) */
++/* 46 reserved for AT_L3_CACHESIZE	(powerpc) */
++/* 47 reserved for AT_L3_CACHEGEOMETRY	(powerpc) */
++/* 48 reserved for AT_ADI_BLKSZ		(sparc) */
++/* 49 reserved for AT_ADI_NBITS		(sparc) */
++/* 50 reserved for AT_ADI_UEONADI	(sparc) */
+ 
+ #endif /* _UAPI_LINUX_AUXVEC_H */
 -- 
-2.17.0
+2.1.4
