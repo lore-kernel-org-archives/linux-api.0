@@ -1,44 +1,55 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 02/14] rseq: Introduce restartable sequences system call
- (v13)
-Date: Wed, 16 May 2018 18:24:54 +0200
-Message-ID: <20180516162454.GJ12198@hirez.programming.kicks-ass.net>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
- <20180430224433.17407-3-mathieu.desnoyers@efficios.com>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [PATCH] pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
+ signal semantics
+Date: Wed, 16 May 2018 10:01:59 -0700
+Message-ID: <36f7fb7b-9b78-cb41-c59a-8346b8d7509b@intel.com>
+References: <20180502132751.05B9F401F3041@oldenburg.str.redhat.com>
+ <248faadb-e484-806f-1485-c34a72a9ca0b@intel.com>
+ <822a28c9-5405-68c2-11bf-0c282887466d@redhat.com>
+ <57459C6F-C8BA-4E2D-99BA-64F35C11FC05@amacapital.net>
+ <6286ba0a-7e09-b4ec-e31f-bd091f5940ff@redhat.com>
+ <CALCETrVrm6yGiv6_z7RqdeB-324RoeMmjpf1EHsrGOh+iKb7+A@mail.gmail.com>
+ <b2df1386-9df9-2db8-0a25-51bf5ff63592@redhat.com>
+ <CALCETrW_Dt-HoG4keFJd8DSD=tvyR+bBCFrBDYdym4GQbfng4A@mail.gmail.com>
+ <20180503021058.GA5670@ram.oc3035372033.ibm.com>
+ <CALCETrXRQF08exQVZqtTLOKbC8Ywq5x4EYH_1D7r5v9bdOSwbg@mail.gmail.com>
+ <927c8325-4c98-d7af-b921-6aafcf8fe992@redhat.com>
+ <CALCETrX46wR_MDW=m9SVm=ejQmPAmD3+2oC3iapf75bPhnEAWQ@mail.gmail.com>
+ <314e1a48-db94-9b37-8793-a95a2082c9e2@redhat.com>
+ <CALCETrUGjN8mhOaLqGcau-pPKm9TQW8k05hZrh52prRNdC5yQQ@mail.gmail.com>
+ <008010c1-20a1-c307-25ac-8a69d672d031@redhat.com>
+ <E77C6E12-EF2A-435A-AAD4-1554459606F1@amacapital.net>
+ <c727a0da-dd5b-4ca2-375c-773ec550ab25@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180430224433.17407-3-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <c727a0da-dd5b-4ca2-375c-773ec550ab25@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linuxram@us.ibm.com, Linux-MM <linux-mm@kvack.org>, linux-x86_64@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 30, 2018 at 06:44:21PM -0400, Mathieu Desnoyers wrote:
-> Expose a new system call allowing each thread to register one userspace
-> memory area to be used as an ABI between kernel and user-space for two
-> purposes: user-space restartable sequences and quick access to read the
-> current CPU number value from user-space.
-
-> ---
->  MAINTAINERS                 |  11 ++
->  arch/Kconfig                |   7 +
->  fs/exec.c                   |   1 +
->  include/linux/sched.h       | 134 +++++++++++++++++
->  include/linux/syscalls.h    |   4 +-
->  include/trace/events/rseq.h |  57 +++++++
->  include/uapi/linux/rseq.h   | 133 +++++++++++++++++
->  init/Kconfig                |  23 +++
->  kernel/Makefile             |   1 +
->  kernel/fork.c               |   2 +
->  kernel/rseq.c               | 357 ++++++++++++++++++++++++++++++++++++++++++++
->  kernel/sched/core.c         |   2 +
->  kernel/sys_ni.c             |   3 +
->  13 files changed, 734 insertions(+), 1 deletion(-)
->  create mode 100644 include/trace/events/rseq.h
->  create mode 100644 include/uapi/linux/rseq.h
->  create mode 100644 kernel/rseq.c
+On 05/14/2018 08:34 AM, Florian Weimer wrote:
+>>> The initial PKRU value can currently be configured by the system
+>>> administrator.  I fear this approach has too many moving parts to be
+>>> viable.
+>>
+>> Honestly, I think we should drop that option. I don’t see how we can
+>> expect an administrator to do this usefully.
 > 
+> I don't disagree—it makes things way less predictable in practice.
 
-Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+I originally put that thing in there to make Andy happy with the initial
+permissions, and give us a way to back it out if something went wrong.
+I have no objections to removing it either.
