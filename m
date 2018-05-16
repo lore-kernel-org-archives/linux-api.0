@@ -1,115 +1,30 @@
-From: Ram Pai <linuxram@us.ibm.com>
-Subject: Re: [PATCH] pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
- signal semantics
-Date: Wed, 16 May 2018 14:07:45 -0700
-Message-ID: <20180516210745.GC5479@ram.oc3035372033.ibm.com>
-References: <CALCETrVrm6yGiv6_z7RqdeB-324RoeMmjpf1EHsrGOh+iKb7+A@mail.gmail.com>
- <b2df1386-9df9-2db8-0a25-51bf5ff63592@redhat.com>
- <CALCETrW_Dt-HoG4keFJd8DSD=tvyR+bBCFrBDYdym4GQbfng4A@mail.gmail.com>
- <20180503021058.GA5670@ram.oc3035372033.ibm.com>
- <CALCETrXRQF08exQVZqtTLOKbC8Ywq5x4EYH_1D7r5v9bdOSwbg@mail.gmail.com>
- <927c8325-4c98-d7af-b921-6aafcf8fe992@redhat.com>
- <CALCETrX46wR_MDW=m9SVm=ejQmPAmD3+2oC3iapf75bPhnEAWQ@mail.gmail.com>
- <314e1a48-db94-9b37-8793-a95a2082c9e2@redhat.com>
- <20180516203534.GA5479@ram.oc3035372033.ibm.com>
- <CALCETrVQs=ix-w9_MLJWikzmBG-e2Fzg61TrZLNVv5R3XFOs=g@mail.gmail.com>
-Reply-To: Ram Pai <linuxram@us.ibm.com>
+From: "H. Peter Anvin" <hpa@zytor.com>
+Subject: Re: [RFC PATCH] UAPI: Document auxvec AT_* namespace policy and note
+ reservations
+Date: Wed, 16 May 2018 16:09:29 -0700
+Message-ID: <3e291fda-b27b-7002-9374-23196f18a38f@zytor.com>
+References: <1526480447-18185-1-git-send-email-Dave.Martin@arm.com>
+ <20180516152913.GY1392@brightrain.aerifal.cx>
+ <20180516154957.GT7753@e103592.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <CALCETrVQs=ix-w9_MLJWikzmBG-e2Fzg61TrZLNVv5R3XFOs=g@mail.gmail.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Florian Weimer <fweimer@redhat.com>, linux-arch <linux-arch@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, Dave Hansen <dave.hansen@intel.com>, linux-x86_64@vger.kernel.org, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180516154957.GT7753@e103592.cambridge.arm.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dave Martin <Dave.Martin@arm.com>, Rich Felker <dalias@libc.org>
+Cc: linux-kernel@vger.kernel.org, x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Michal Simek <monstr@monstr.eu>, Ralf Baechle <ralf@linux-mips.org>, James Hogan <jhogan@kernel.org>, Greentime Hu <green.hu@gmail.com>, Vincent Chen <deanbo422@gmail.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Palmer Dabbelt <palmer@sifive.com>, Albert
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 16, 2018 at 01:37:46PM -0700, Andy Lutomirski wrote:
-> On Wed, May 16, 2018 at 1:35 PM Ram Pai <linuxram@us.ibm.com> wrote:
+On 05/16/18 08:49, Dave Martin wrote:
 > 
-> > On Tue, May 08, 2018 at 02:40:46PM +0200, Florian Weimer wrote:
-> > > On 05/08/2018 04:49 AM, Andy Lutomirski wrote:
-> > > >On Mon, May 7, 2018 at 2:48 AM Florian Weimer <fweimer@redhat.com>
-> wrote:
-> > > >
-> > > >>On 05/03/2018 06:05 AM, Andy Lutomirski wrote:
-> > > >>>On Wed, May 2, 2018 at 7:11 PM Ram Pai <linuxram@us.ibm.com> wrote:
-> > > >>>
-> > > >>>>On Wed, May 02, 2018 at 09:23:49PM +0000, Andy Lutomirski wrote:
-> > > >>>>>
-> > > >>>>>>If I recall correctly, the POWER maintainer did express a strong
-> > > >>>desire
-> > > >>>>>>back then for (what is, I believe) their current semantics, which
-> my
-> > > >>>>>>PKEY_ALLOC_SIGNALINHERIT patch implements for x86, too.
-> > > >>>>>
-> > > >>>>>Ram, I really really don't like the POWER semantics.  Can you give
-> > > >some
-> > > >>>>>justification for them?  Does POWER at least have an atomic way for
-> > > >>>>>userspace to modify just the key it wants to modify or, even
-> better,
-> > > >>>>>special load and store instructions to use alternate keys?
-> > > >>>
-> > > >>>>I wouldn't call it POWER semantics. The way I implemented it on
-> power
-> > > >>>>lead to the semantics, given that nothing was explicitly stated
-> > > >>>>about how the semantics should work within a signal handler.
-> > > >>>
-> > > >>>I think that this is further evidence that we should introduce a new
-> > > >>>pkey_alloc() mode and deprecate the old.  To the extent possible,
-> this
-> > > >>>thing should work the same way on x86 and POWER.
-> > > >
-> > > >>Do you propose to change POWER or to change x86?
-> > > >
-> > > >Sorry for being slow to reply.  I propose to introduce a new
-> > > >PKEY_ALLOC_something variant on x86 and POWER and to make the behavior
-> > > >match on both.
-> > >
-> > > So basically implement PKEY_ALLOC_SETSIGNAL for POWER, and keep the
-> > > existing (different) behavior without the flag?
-> > >
-> > > Ram, would you be okay with that?  Could you give me a hand if
-> > > necessary?  (I assume we have silicon in-house because it's a
-> > > long-standing feature of the POWER platform which was simply dormant
-> > > on Linux until now.)
+> Since <linux/auxvec.h> only contains #defines, it may be enough for arch
+> <asm/auxvec.h> headers to include <linux/auxvec.h>.
 > 
-> > Yes. I can help you with that.
-> 
-> > So let me see if I understand the overall idea.
-> 
-> > Application can allocate new keys through a new syscall
-> > sys_pkey_alloc_1(flags, init_val, sig_init_val)
-> 
-> > 'sig_init_val' is the permission-state of the key in signal context.
-> 
-> > The kernel will set the permission of each keys to their
-> > corresponding values when entering the signal handler and revert
-> > on return from the signal handler.
-> 
-> > just like init_val, sig_init_val also percolates to children threads.
-> 
-> 
-> I was imagining it would be just pkey_alloc(SOME_NEW_FLAG, init_val); and
-> the init val would be used for the current thread and for signal handlers.
 
-what would change the key-permission-values enforced in signal-handler
-context?  Or can it never be changed, ones set through sys_pkey_alloc()?
+<asm/auxvec.h> doesn't seem to have any reason to exist at all. If
+anyone includes it now, they are Doing It Wrong[TM] since
+<linux/auxvec.h> includes <asm/auxvec.h>.
 
-I suppose key-permission-values change done in non-signal-handler context,
-will not apply to those in signal-handler context.
-
-Can the signal handler change the key-permission-values from the
-signal-handler context?
-
-RP
+	-hpa
