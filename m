@@ -1,104 +1,85 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 03/14] arm: Add restartable sequences support
-Date: Thu, 17 May 2018 11:30:01 -0400 (EDT)
-Message-ID: <2135166002.2147.1526571001678.JavaMail.zimbra@efficios.com>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com> <20180430224433.17407-4-mathieu.desnoyers@efficios.com> <20180516161809.GH12198@hirez.programming.kicks-ass.net> <670368504.1912.1526501593893.JavaMail.zimbra@efficios.com> <20180517133230.GA2688@arm.com>
+From: Yann Droneaud <ydroneaud@opteya.com>
+Subject: Re: [RFC PATCH] UAPI: Document auxvec AT_* namespace policy and
+ note reservations
+Date: Thu, 17 May 2018 18:00:28 +0200
+Message-ID: <a30a44883d7cf06c4bb06feb33784905497b234c.camel@opteya.com>
+References: <1526480447-18185-1-git-send-email-Dave.Martin@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180517133230.GA2688@arm.com>
+In-Reply-To: <1526480447-18185-1-git-send-email-Dave.Martin@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
+To: Dave Martin <Dave.Martin@arm.com>, linux-kernel@vger.kernel.org
+Cc: x86@kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Michal Simek <monstr@monstr.eu>, Ralf Baechle <ralf@linux-mips.org>, James Hogan <jhogan@kernel.org>, Greentime Hu <green.hu@gmail.com>, Vincent Chen <deanbo422@gmail.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, Palmer Dabbelt <palmer@sifive.com>, Albert Ou <albert@sifive.com>, Martin
 List-Id: linux-api@vger.kernel.org
 
------ On May 17, 2018, at 9:32 AM, Will Deacon will.deacon@arm.com wrote:
+Hi,
 
-> On Wed, May 16, 2018 at 04:13:13PM -0400, Mathieu Desnoyers wrote:
->> ----- On May 16, 2018, at 12:18 PM, Peter Zijlstra peterz@infradead.org wrote:
->> 
->> > On Mon, Apr 30, 2018 at 06:44:22PM -0400, Mathieu Desnoyers wrote:
->> >> diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
->> >> index a7f8e7f4b88f..4f5c386631d4 100644
->> >> --- a/arch/arm/Kconfig
->> >> +++ b/arch/arm/Kconfig
->> >> @@ -91,6 +91,7 @@ config ARM
->> >>  	select HAVE_PERF_USER_STACK_DUMP
->> >>  	select HAVE_RCU_TABLE_FREE if (SMP && ARM_LPAE)
->> >>  	select HAVE_REGS_AND_STACK_ACCESS_API
->> >> +	select HAVE_RSEQ
->> >>  	select HAVE_SYSCALL_TRACEPOINTS
->> >>  	select HAVE_UID16
->> >>  	select HAVE_VIRT_CPU_ACCOUNTING_GEN
->> >> diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
->> >> index bd8810d4acb3..5879ab3f53c1 100644
->> >> --- a/arch/arm/kernel/signal.c
->> >> +++ b/arch/arm/kernel/signal.c
->> >> @@ -541,6 +541,12 @@ static void handle_signal(struct ksignal *ksig, struct
->> >> pt_regs *regs)
->> >>  	int ret;
->> >>  
->> >>  	/*
->> >> +	 * Increment event counter and perform fixup for the pre-signal
->> >> +	 * frame.
->> >> +	 */
->> >> +	rseq_signal_deliver(regs);
->> >> +
->> >> +	/*
->> >>  	 * Set up the stack frame
->> >>  	 */
->> >>  	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
->> >> @@ -660,6 +666,7 @@ do_work_pending(struct pt_regs *regs, unsigned int
->> >> thread_flags, int syscall)
->> >>  			} else {
->> >>  				clear_thread_flag(TIF_NOTIFY_RESUME);
->> >>  				tracehook_notify_resume(regs);
->> >> +				rseq_handle_notify_resume(regs);
->> >>  			}
->> >>  		}
->> >>  		local_irq_disable();
->> > 
->> > I think you forgot to hook up rseq_syscall() checking.
->> 
->> Considering that rseq_syscall is implemented as follows:
->> 
->> +void rseq_syscall(struct pt_regs *regs)
->> +{
->> +       unsigned long ip = instruction_pointer(regs);
->> +       struct task_struct *t = current;
->> +       struct rseq_cs rseq_cs;
->> +
->> +       if (!t->rseq)
->> +               return;
->> +       if (!access_ok(VERIFY_READ, t->rseq, sizeof(*t->rseq)) ||
->> +           rseq_get_rseq_cs(t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
->> +               force_sig(SIGSEGV, t);
->> +}
->> 
->> and that x86 calls it from syscall_return_slowpath() (which AFAIU is
->> now used in the fast-path since KPTI), I wonder where we should call
->> this on ARM ? I was under the impression that ARM return to userspace
->> fast-path was not calling C code unless work flags were set, but I might
->> be wrong.
->> 
->> Thoughts ?
+Le mercredi 16 mai 2018 à 15:20 +0100, Dave Martin a écrit :
+> There are constraints on defining AT_* auxvec tags that are not
+> obvious to the casual maintainer of either the global
+> <uapi/linux/auxvec.h> or the arch-specific headers.  This is likely
+> to lead to mistakes.  (I certainly fell foul of it...)
 > 
-> Since this only matters for CONFIG_DEBUG_RSEQ, can we just force the
-> slowpath for rseq tasks when that option is set?
-
-Or as proposed by Boqun, we can simply call rseq_syscall in a CONFIG_DEBUG_RSEQ
-ifdef. Given that this is a debug option, is it worth it to add the current->rseq
-test for NULL in assembly before the call, or do we want to favor simplicity ?
-
-Thanks,
-
-Mathieu
-
+> For the benefit of future maintainers, this patch collects the
+> relevant information in one place, documenting how the namespace
+> needs to be managed, and noting all the values currently in use.
 > 
-> Will
+> Maintaining a global list may result in some merge conflicts, but
+> AT_* values are not added frequently.  I'm open to suggestions on
+> the best approach.
+> 
+> I also assume that values 38 and 39 may have been used for
+> historical purposes, such as an architecture that is no longer
+> supported.  If they have definitely never been used for anything,
+> they could be removed from the "reserved" list.
+> 
+
+Some of those AT_* values are described in getauxval(3) man-page:
+
+http://man7.org/linux/man-pages/man3/getauxval.3.html
+
+https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/tree/man3/g
+etauxval.3?id=4eae8eb731386d81797d5c30365426722410874e
+
+And glibc provides <elf.h> with definitions for almost all AT_*,
+regardless of the current target architecture:
+
+https://sourceware.org/git/?p=glibc.git;a=blob;f=elf/elf.h;h=954f3266f7
+11ab83996670ea504a17dcf668e061;hb=23158b08a0908f381459f273a984c6fd32836
+3cb#l1135
+
+Also, despite not being listed as a reserved namespace by POSIX, one
+should try to avoid name collision with other AT_ constants,
+those used with *at() functions (openat(), etc.):
+
+- AT_EACCESS 
+- AT_EMPTY_PATH
+- AT_FDCWD
+- AT_NO_AUTOMOUNT
+- AT_REMOVEDIR
+- AT_STATX_DONT_SYNC
+- AT_STATX_FORCE_SYNC
+- AT_STATX_SYNC_AS_STAT
+- AT_SYMLINK_FOLLOW
+- AT_SYMLINK_NOFOLLOW
+
+http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/fcntl.h.html
+
+http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.htm
+l#tag_15_02_02
+
+https://sourceware.org/git/?p=glibc.git;a=blob;f=io/fcntl.h;h=3d239e8f0
+9f7ce0a3106621be327e1ea4cd1a3e7;hb=23158b08a0908f381459f273a984c6fd3283
+63cb#l142
+
+And there's also AT_ANYNET and AT_ANYNODE from ddp (aka. AppleTalk)
+
+http://man7.org/linux/man-pages/man7/ddp.7.html
+
+Regards.
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Yann Droneaud
+OPTEYA
