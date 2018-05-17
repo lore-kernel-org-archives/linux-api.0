@@ -1,8 +1,10 @@
 From: adam.manzanares@wdc.com
-Subject: [PATCH v4 0/3] AIO add per-command iopriority
-Date: Thu, 17 May 2018 13:38:00 -0700
-Message-ID: <20180517203803.2664-1-adam.manzanares@wdc.com>
+Subject: [PATCH v4 2/3] fs: Convert kiocb rw_hint from enum to u16
+Date: Thu, 17 May 2018 13:38:02 -0700
+Message-ID: <20180517203803.2664-3-adam.manzanares@wdc.com>
+References: <20180517203803.2664-1-adam.manzanares@wdc.com>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180517203803.2664-1-adam.manzanares@wdc.com>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, bcrl@kvack.org
 Cc: mingo@kernel.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, Adam Manzanares <adam.manzanares@wdc.com>
@@ -10,43 +12,59 @@ List-Id: linux-api@vger.kernel.org
 
 From: Adam Manzanares <adam.manzanares@wdc.com>
 
-This is the per-I/O equivalent of the ioprio_set system call.
-See the following link for performance implications on a SATA HDD:
-https://lkml.org/lkml/2016/12/6/495
+In order to avoid kiocb bloat for per command iopriority support, rw_hint
+is converted from enum to a u16. Added a guard around ki_hint assigment.
 
-First patch factors ioprio_check_cap function out of ioprio_set system call to
-also be used by the aio ioprio interface.
+Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+---
+ include/linux/fs.h | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
 
-Second patch converts kiocb ki_hint field to a u16 to avoid kiocb bloat.
-
-Third patch passes ioprio hint from aio iocb to kiocb and enables block_dev
-usage of the per I/O ioprio feature.
-
-v2: merge patches
-    use IOCB_FLAG_IOPRIO
-    validate intended use with IOCB_IOPRIO
-    add linux-api and linux-block to cc
-
-v3: add ioprio_check_cap function
-    convert kiocb ki_hint to u16
-    use ioprio_check_cap when adding ioprio to kiocb in aio.c
-
-v4: handle IOCB_IOPRIO in aio_prep_rw
-    note patch 3 depends on patch 1 in commit msg
-
-Adam Manzanares (3):
-  block: add ioprio_check_cap function
-  fs: Convert kiocb rw_hint from enum to u16
-  fs: Add aio iopriority support for block_dev
-
- block/ioprio.c               | 22 ++++++++++++++++------
- fs/aio.c                     | 16 ++++++++++++++++
- fs/block_dev.c               |  2 ++
- include/linux/fs.h           | 17 +++++++++++++++--
- include/linux/ioprio.h       |  2 ++
- include/uapi/linux/aio_abi.h |  1 +
- 6 files changed, 52 insertions(+), 8 deletions(-)
-
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 760d8da1b6c7..7a90ce387e00 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -284,6 +284,8 @@ enum rw_hint {
+ 	WRITE_LIFE_EXTREME	= RWH_WRITE_LIFE_EXTREME,
+ };
+ 
++#define MAX_KI_HINT		((1 << 16) - 1) /* ki_hint type is u16 */
++
+ #define IOCB_EVENTFD		(1 << 0)
+ #define IOCB_APPEND		(1 << 1)
+ #define IOCB_DIRECT		(1 << 2)
+@@ -299,7 +301,7 @@ struct kiocb {
+ 	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
+ 	void			*private;
+ 	int			ki_flags;
+-	enum rw_hint		ki_hint;
++	u16			ki_hint;
+ } __randomize_layout;
+ 
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+@@ -1927,12 +1929,21 @@ static inline enum rw_hint file_write_hint(struct file *file)
+ 
+ static inline int iocb_flags(struct file *file);
+ 
++/* ki_hint changed from enum to u16, make sure rw_hint fits into u16 */
++static inline u16 ki_hint_valid(enum rw_hint hint)
++{
++	if (hint > MAX_KI_HINT)
++		return 0;
++
++	return hint;
++}
++
+ static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
+ {
+ 	*kiocb = (struct kiocb) {
+ 		.ki_filp = filp,
+ 		.ki_flags = iocb_flags(filp),
+-		.ki_hint = file_write_hint(filp),
++		.ki_hint = ki_hint_valid(file_write_hint(filp)),
+ 	};
+ }
+ 
 -- 
 2.15.1
 
