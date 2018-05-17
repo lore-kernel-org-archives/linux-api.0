@@ -1,51 +1,91 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
- signal semantics
-Date: Thu, 17 May 2018 12:11:15 +0200
-Message-ID: <9c7b1c17-5c0e-11aa-0803-a0f503087b37@redhat.com>
-References: <57459C6F-C8BA-4E2D-99BA-64F35C11FC05@amacapital.net>
- <6286ba0a-7e09-b4ec-e31f-bd091f5940ff@redhat.com>
- <CALCETrVrm6yGiv6_z7RqdeB-324RoeMmjpf1EHsrGOh+iKb7+A@mail.gmail.com>
- <b2df1386-9df9-2db8-0a25-51bf5ff63592@redhat.com>
- <CALCETrW_Dt-HoG4keFJd8DSD=tvyR+bBCFrBDYdym4GQbfng4A@mail.gmail.com>
- <20180503021058.GA5670@ram.oc3035372033.ibm.com>
- <CALCETrXRQF08exQVZqtTLOKbC8Ywq5x4EYH_1D7r5v9bdOSwbg@mail.gmail.com>
- <927c8325-4c98-d7af-b921-6aafcf8fe992@redhat.com>
- <CALCETrX46wR_MDW=m9SVm=ejQmPAmD3+2oC3iapf75bPhnEAWQ@mail.gmail.com>
- <314e1a48-db94-9b37-8793-a95a2082c9e2@redhat.com>
- <20180516203534.GA5479@ram.oc3035372033.ibm.com>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [PATCH 03/14] arm: Add restartable sequences support
+Date: Thu, 17 May 2018 14:32:31 +0100
+Message-ID: <20180517133230.GA2688@arm.com>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
+ <20180430224433.17407-4-mathieu.desnoyers@efficios.com>
+ <20180516161809.GH12198@hirez.programming.kicks-ass.net>
+ <670368504.1912.1526501593893.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20180516203534.GA5479@ram.oc3035372033.ibm.com>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Ram Pai <linuxram@us.ibm.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, Dave Hansen <dave.hansen@intel.com>, linux-x86_64@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <670368504.1912.1526501593893.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
 List-Id: linux-api@vger.kernel.org
 
-On 05/16/2018 10:35 PM, Ram Pai wrote:
-> So let me see if I understand the overall idea.
+On Wed, May 16, 2018 at 04:13:13PM -0400, Mathieu Desnoyers wrote:
+> ----- On May 16, 2018, at 12:18 PM, Peter Zijlstra peterz@infradead.org wrote:
 > 
-> Application can allocate new keys through a new syscall
-> sys_pkey_alloc_1(flags, init_val, sig_init_val)
+> > On Mon, Apr 30, 2018 at 06:44:22PM -0400, Mathieu Desnoyers wrote:
+> >> diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+> >> index a7f8e7f4b88f..4f5c386631d4 100644
+> >> --- a/arch/arm/Kconfig
+> >> +++ b/arch/arm/Kconfig
+> >> @@ -91,6 +91,7 @@ config ARM
+> >>  	select HAVE_PERF_USER_STACK_DUMP
+> >>  	select HAVE_RCU_TABLE_FREE if (SMP && ARM_LPAE)
+> >>  	select HAVE_REGS_AND_STACK_ACCESS_API
+> >> +	select HAVE_RSEQ
+> >>  	select HAVE_SYSCALL_TRACEPOINTS
+> >>  	select HAVE_UID16
+> >>  	select HAVE_VIRT_CPU_ACCOUNTING_GEN
+> >> diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
+> >> index bd8810d4acb3..5879ab3f53c1 100644
+> >> --- a/arch/arm/kernel/signal.c
+> >> +++ b/arch/arm/kernel/signal.c
+> >> @@ -541,6 +541,12 @@ static void handle_signal(struct ksignal *ksig, struct
+> >> pt_regs *regs)
+> >>  	int ret;
+> >>  
+> >>  	/*
+> >> +	 * Increment event counter and perform fixup for the pre-signal
+> >> +	 * frame.
+> >> +	 */
+> >> +	rseq_signal_deliver(regs);
+> >> +
+> >> +	/*
+> >>  	 * Set up the stack frame
+> >>  	 */
+> >>  	if (ksig->ka.sa.sa_flags & SA_SIGINFO)
+> >> @@ -660,6 +666,7 @@ do_work_pending(struct pt_regs *regs, unsigned int
+> >> thread_flags, int syscall)
+> >>  			} else {
+> >>  				clear_thread_flag(TIF_NOTIFY_RESUME);
+> >>  				tracehook_notify_resume(regs);
+> >> +				rseq_handle_notify_resume(regs);
+> >>  			}
+> >>  		}
+> >>  		local_irq_disable();
+> > 
+> > I think you forgot to hook up rseq_syscall() checking.
 > 
-> 'sig_init_val' is the permission-state of the key in signal context.
+> Considering that rseq_syscall is implemented as follows:
+> 
+> +void rseq_syscall(struct pt_regs *regs)
+> +{
+> +       unsigned long ip = instruction_pointer(regs);
+> +       struct task_struct *t = current;
+> +       struct rseq_cs rseq_cs;
+> +
+> +       if (!t->rseq)
+> +               return;
+> +       if (!access_ok(VERIFY_READ, t->rseq, sizeof(*t->rseq)) ||
+> +           rseq_get_rseq_cs(t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
+> +               force_sig(SIGSEGV, t);
+> +}
+> 
+> and that x86 calls it from syscall_return_slowpath() (which AFAIU is
+> now used in the fast-path since KPTI), I wonder where we should call
+> this on ARM ? I was under the impression that ARM return to userspace
+> fast-path was not calling C code unless work flags were set, but I might
+> be wrong.
+> 
+> Thoughts ?
 
-I would keep the existing system call and just add a flag, say 
-PKEY_ALLOC_SETSIGNAL.  If the current thread needs different access 
-rights, it can set those rights just after pkey_alloc returns.  There is 
-no race that matters here, I think.
+Since this only matters for CONFIG_DEBUG_RSEQ, can we just force the
+slowpath for rseq tasks when that option is set?
 
-Thanks,
-Florian
+Will
