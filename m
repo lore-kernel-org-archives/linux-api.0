@@ -1,64 +1,63 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
-Date: Thu, 17 May 2018 09:43:14 +0200
-Message-ID: <20180517074313.GK12217@hirez.programming.kicks-ass.net>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
- <20180430224433.17407-8-mathieu.desnoyers@efficios.com>
- <20180516161837.GI12198@hirez.programming.kicks-ass.net>
- <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com>
- <20180517011949.GA1121@tardis>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] pkeys: Introduce PKEY_ALLOC_SIGNALINHERIT and change
+ signal semantics
+Date: Thu, 17 May 2018 12:09:36 +0200
+Message-ID: <1a46685f-1ca7-d215-455c-c75254959684@redhat.com>
+References: <CALCETrVrm6yGiv6_z7RqdeB-324RoeMmjpf1EHsrGOh+iKb7+A@mail.gmail.com>
+ <b2df1386-9df9-2db8-0a25-51bf5ff63592@redhat.com>
+ <CALCETrW_Dt-HoG4keFJd8DSD=tvyR+bBCFrBDYdym4GQbfng4A@mail.gmail.com>
+ <20180503021058.GA5670@ram.oc3035372033.ibm.com>
+ <CALCETrXRQF08exQVZqtTLOKbC8Ywq5x4EYH_1D7r5v9bdOSwbg@mail.gmail.com>
+ <927c8325-4c98-d7af-b921-6aafcf8fe992@redhat.com>
+ <CALCETrX46wR_MDW=m9SVm=ejQmPAmD3+2oC3iapf75bPhnEAWQ@mail.gmail.com>
+ <314e1a48-db94-9b37-8793-a95a2082c9e2@redhat.com>
+ <20180516203534.GA5479@ram.oc3035372033.ibm.com>
+ <CALCETrVQs=ix-w9_MLJWikzmBG-e2Fzg61TrZLNVv5R3XFOs=g@mail.gmail.com>
+ <20180516210745.GC5479@ram.oc3035372033.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180517011949.GA1121@tardis>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Boqun Feng <boqun.feng@gmail.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <20180516210745.GC5479@ram.oc3035372033.ibm.com>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Ram Pai <linuxram@us.ibm.com>, Andy Lutomirski <luto@kernel.org>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, Dave Hansen <dave.hansen@intel.com>, linux-x86_64@vger.kernel.org, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 17, 2018 at 09:19:49AM +0800, Boqun Feng wrote:
-> On Wed, May 16, 2018 at 04:13:16PM -0400, Mathieu Desnoyers wrote:
+On 05/16/2018 11:07 PM, Ram Pai wrote:
 
-> > and that x86 calls it from syscall_return_slowpath() (which AFAIU is
-> > now used in the fast-path since KPTI), I wonder where we should call
-> 
-> So we actually detect this after the syscall takes effect, right? I
-> wonder whether this could be problematic, because "disallowing syscall"
-> in rseq areas may means the syscall won't take effect to some people, I
-> guess?
+> what would change the key-permission-values enforced in signal-handler
+> context?  Or can it never be changed, ones set through sys_pkey_alloc()?
 
-It doesn't really matter I suspect, the important part is the program
-getting killed.
+The access rights can only be set by pkey_alloc and are unchanged after 
+that (so we do not have to discuss whether the signal handler access 
+rights are per-thread or not).
 
-I agree that doing it on sysenter is slightly nicer, but I'll take
-sysexit if that's what it takes.
+> I suppose key-permission-values change done in non-signal-handler context,
+> will not apply to those in signal-handler context.
 
-> > this on PowerPC ?  I was under the impression that PowerPC return to
-> > userspace fast-path was not calling C code unless work flags were set,
-> > but I might be wrong.
-> > 
-> 
-> I think you're right. So we have to introduce callsite to rseq_syscall()
-> in syscall path, something like:
-> 
-> diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
-> index 51695608c68b..a25734a96640 100644
-> --- a/arch/powerpc/kernel/entry_64.S
-> +++ b/arch/powerpc/kernel/entry_64.S
-> @@ -222,6 +222,9 @@ system_call_exit:
->  	mtmsrd	r11,1
->  #endif /* CONFIG_PPC_BOOK3E */
->  
-> +	addi    r3,r1,STACK_FRAME_OVERHEAD
-> +	bl	rseq_syscall
-> +
->  	ld	r9,TI_FLAGS(r12)
->  	li	r11,-MAX_ERRNO
->  	andi.	r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
-> 
-> But I think it's important for us to first decide where (before or after
-> the syscall) we do the detection.
+Correct, that is the plan.
 
-The important thing is the processed getting very dead. Either sysenter
-or sysexit gets that done.
+> Can the signal handler change the key-permission-values from the
+> signal-handler context?
+
+Yes, changes are possible.  The access rights given to pkey_alloc only 
+specify the initial access rights when the signal handler is entered.
+
+We need to decide if we should restore it on exit from the signal 
+handler.  There is also the matter of siglongjmp, which currently does 
+not restore the current thread's access rights.  In general, this might 
+be difficult to implement because of the limited space in jmp_buf.
+
+Thanks,
+Florian
