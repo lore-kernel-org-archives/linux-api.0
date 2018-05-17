@@ -1,62 +1,123 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCHSET] workqueue: Show the latest workqueue name in /proc/PID/{comm,stat,status}
-Date: Wed, 16 May 2018 21:34:42 -0700
-Message-ID: <20180517043448.3152269-1-tj@kernel.org>
+Subject: [PATCH 1/6] proc: Don't allow empty /proc/PID/cmdline for user tasks
+Date: Wed, 16 May 2018 21:34:43 -0700
+Message-ID: <20180517043448.3152269-2-tj@kernel.org>
+References: <20180517043448.3152269-1-tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180517043448.3152269-1-tj@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: torvalds@linux-foundation.org, jiangshanlai@gmail.com, akpm@linux-foundation.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, csmall@enc.com.au
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, csmall@enc.com.au, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-There can be a lot of workqueue workers and they all show up with the
-cryptic kworker/* names making it difficult to understand which is
-doing what and how they came to be.
+Kernel threads have empty /proc/PID/cmdline and some userland tools
+including ps(1) and older versions of systemd use this to detect
+kernel threads.  However, any userland program can emulate the
+behavior by making its argvs unavailable and trick the affected tools
+into thinking that the task is a kernel thread.  Linus's reproducer
+follows.
 
- # ps -ef | grep kworker
- root           4       2  0 Feb25 ?        00:00:00 [kworker/0:0H]
- root           6       2  0 Feb25 ?        00:00:00 [kworker/u112:0]
- root          19       2  0 Feb25 ?        00:00:00 [kworker/1:0H]
- root          25       2  0 Feb25 ?        00:00:00 [kworker/2:0H]
- root          31       2  0 Feb25 ?        00:00:00 [kworker/3:0H]
- ...
+  #include <sys/prctl.h>
+  #include <sys/mman.h>
 
-This patchset makes workqueue workers report the latest workqueue it
-was executing for through /proc/PID/{comm,stat,status}.  The extra
-information is appended to the kthread name with intervening '+' if
-currently executing, otherwise '-'.
+  int main(void)
+  {
+	  char empty[16384];
+	  unsigned long ptr;
 
- # cat /proc/25/comm
- kworker/2:0-events_power_efficient
- # cat /proc/25/stat
- 25 (kworker/2:0-events_power_efficient) I 2 0 0 0 -1 69238880 0 0...
- # grep Name /proc/25/status
- Name:   kworker/2:0-events_power_efficient
+	  asm volatile("" :"=r" (ptr) : "0" (empty):"memory");
+	  ptr = (ptr+4095) & ~4095;
+	  munmap((void *)ptr, 32768);
 
-For details on the design decisions, please refer to the following
-thread.
+	  sleep(1000);
+	  return 0;
+  }
 
- http://lkml.kernel.org/r/20180516153939.GH2368884@devbig577.frc2.facebook.com
+Compiling the above program into nullcmdline and running it on an
+unpatche kernel shows the following behavior.
 
-This patchset contains the following six patches.
+  $ ./nullcmdline &
+  [1] 2382031
+  [devbig577 ~/tmp]$ hexdump -C /proc/2382031/comm
+  00000000  6e 75 6c 6c 63 6d 64 6c  69 6e 65 0a              |nullcmdline.|
+  0000000c
+  $ hexdump -C /proc/2382031/cmdline
+  $ ps 2382031
+      PID TTY      STAT   TIME COMMAND
+  2382031 pts/2    S      0:00 [nullcmdline]
 
- 0001-proc-Don-t-allow-empty-proc-PID-cmdline-for-user-tas.patch
- 0002-workqueue-Replace-pool-attach_mutex-with-global-wq_p.patch
- 0003-workqueue-Make-worker_attach-detach_pool-update-work.patch
- 0004-workqueue-Set-worker-desc-to-workqueue-name-by-defau.patch
- 0005-proc-Consolidate-task-comm-formatting-into-proc_task.patch
- 0006-workqueue-Show-the-latest-workqueue-name-in-proc-PID.patch
+The empty cmdline makes ps(1) think that nullcmdline is a kernel
+thread and put brackets around its name (comm), which is mostly a
+nuisance but it's possible that this confusion can lead to more
+harmful confusions.
 
-I'm applying the patches to wq/for-4.18.  Please let me know if the
-patchset need updates (the branch doesn't have any other changes
-anyway).  diffstat follows.  Thanks.
+This patch fixes the issue by making proc_pid_cmdline_read() never
+return empty string for user tasks.  If the result is empty for
+whatever reason, comm string is returned.  Even when the comm string
+is empty, it still returns the null termnation character.  On a
+patched kernel, running the same command as above gives us.
 
- fs/proc/array.c             |   33 +++++++-----
- fs/proc/base.c              |   27 +++++++---
- fs/proc/internal.h          |    2 
- include/linux/workqueue.h   |    1 
- kernel/workqueue.c          |  117 ++++++++++++++++++++++++++++----------------
- kernel/workqueue_internal.h |    3 -
- 6 files changed, 122 insertions(+), 61 deletions(-)
+  $ ./nullcmdline &
+  [1] 2317
+  [test ~]# hexdump -C /proc/2317/comm
+  00000000  6e 75 6c 6c 63 6d 64 6c  69 6e 65 0a              |nullcmdline.|
+  0000000c
+  $ hexdump -C /proc/2317/cmdline
+  00000000  6e 75 6c 6c 63 6d 64 6c  69 6e 65 00              |nullcmdline.|
+  0000000c
+  $ ps 2317
+    PID TTY      STAT   TIME COMMAND
+   2317 pts/0    S      0:00 nullcmdline
 
---
-tejun
+Note that cmdline is a dup of comm and ps(1) is no longer confused.
+
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ fs/proc/base.c | 22 +++++++++++++++++++---
+ 1 file changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 1b2ede6..2eee4d7 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -224,9 +224,10 @@ static ssize_t proc_pid_cmdline_read(struct file *file, char __user *buf,
+ 	if (!tsk)
+ 		return -ESRCH;
+ 	mm = get_task_mm(tsk);
+-	put_task_struct(tsk);
+-	if (!mm)
+-		return 0;
++	if (!mm) {
++		rv = 0;
++		goto out_put_task;
++	}
+ 	/* Check if process spawned far enough to have cmdline. */
+ 	if (!mm->env_end) {
+ 		rv = 0;
+@@ -367,8 +368,23 @@ static ssize_t proc_pid_cmdline_read(struct file *file, char __user *buf,
+ 	free_page((unsigned long)page);
+ out_mmput:
+ 	mmput(mm);
++out_put_task:
++	/*
++	 * Some userland tools use empty cmdline to distinguish kthreads.
++	 * Avoid empty cmdline for user tasks by returning tsk->comm with
++	 * \0 termination when empty.
++	 */
++	if (*pos == 0 && rv == 0 && !(tsk->flags & PF_KTHREAD)) {
++		char tcomm[TASK_COMM_LEN];
++
++		get_task_comm(tcomm, tsk);
++		rv = min(strlen(tcomm) + 1, count);
++		if (copy_to_user(buf, tsk->comm, rv))
++			rv = -EFAULT;
++	}
+ 	if (rv > 0)
+ 		*pos += rv;
++	put_task_struct(tsk);
+ 	return rv;
+ }
+ 
+-- 
+2.9.5
