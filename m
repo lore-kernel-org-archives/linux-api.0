@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 6/6] workqueue: Show the latest workqueue name in /proc/PID/{comm,stat,status}
-Date: Wed, 16 May 2018 21:34:48 -0700
-Message-ID: <20180517043448.3152269-7-tj@kernel.org>
+Subject: [PATCH 3/6] workqueue: Make worker_attach/detach_pool() update worker->pool
+Date: Wed, 16 May 2018 21:34:45 -0700
+Message-ID: <20180517043448.3152269-4-tj@kernel.org>
 References: <20180517043448.3152269-1-tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180517043448.3152269-1-tj@kernel.org>
@@ -10,129 +10,109 @@ To: torvalds@linux-foundation.org, jiangshanlai@gmail.com, akpm@linux-foundation
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, csmall@enc.com.au, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-There can be a lot of workqueue workers and they all show up with the
-cryptic kworker/* names making it difficult to understand which is
-doing what and how they came to be.
+For historical reasons, the worker attach/detach functions don't
+currently manage worker->pool and the callers are manually and
+inconsistently updating it.
 
-  # ps -ef | grep kworker
-  root           4       2  0 Feb25 ?        00:00:00 [kworker/0:0H]
-  root           6       2  0 Feb25 ?        00:00:00 [kworker/u112:0]
-  root          19       2  0 Feb25 ?        00:00:00 [kworker/1:0H]
-  root          25       2  0 Feb25 ?        00:00:00 [kworker/2:0H]
-  root          31       2  0 Feb25 ?        00:00:00 [kworker/3:0H]
-  ...
+This patch moves worker->pool updates into the worker attach/detach
+functions.  This makes worker->pool consistent and clearly defines how
+worker->pool updates are synchronized.
 
-This patch makes workqueue workers report the latest workqueue it was
-executing for through /proc/PID/{comm,stat,status}.  The extra
-information is appended to the kthread name with intervening '+' if
-currently executing, otherwise '-'.
-
-  # cat /proc/25/comm
-  kworker/2:0-events_power_efficient
-  # cat /proc/25/stat
-  25 (kworker/2:0-events_power_efficient) I 2 0 0 0 -1 69238880 0 0...
-  # grep Name /proc/25/status
-  Name:   kworker/2:0-events_power_efficient
-
-Unfortunately, ps(1) truncates comm to 15 characters,
-
-  # ps 25
-    PID TTY      STAT   TIME COMMAND
-     25 ?        I      0:00 [kworker/2:0-eve]
-
-making it a lot less useful; however, this should be an easy fix from
-ps(1) side.
+This will help later workqueue visibility improvements by allowing
+safe access to workqueue information from worker->task.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Craig Small <csmall@enc.com.au>
 ---
- fs/proc/array.c           |  7 +++++--
- include/linux/workqueue.h |  1 +
- kernel/workqueue.c        | 39 +++++++++++++++++++++++++++++++++++++++
- 3 files changed, 45 insertions(+), 2 deletions(-)
+ kernel/workqueue.c          | 16 ++++++++--------
+ kernel/workqueue_internal.h |  2 +-
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index f29221e..bb1d361 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -99,10 +99,13 @@ void proc_task_name(struct seq_file *m, struct task_struct *p, bool escape)
- {
- 	char *buf;
- 	size_t size;
--	char tcomm[sizeof(p->comm)];
-+	char tcomm[64];
- 	int ret;
- 
--	get_task_comm(tcomm, p);
-+	if (p->flags & PF_WQ_WORKER)
-+		wq_worker_comm(tcomm, sizeof(tcomm), p);
-+	else
-+		__get_task_comm(tcomm, sizeof(tcomm), p);
- 
- 	size = seq_get_buf(m, &buf);
- 	if (escape) {
-diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
-index 39a0e21..60d673e 100644
---- a/include/linux/workqueue.h
-+++ b/include/linux/workqueue.h
-@@ -494,6 +494,7 @@ extern unsigned int work_busy(struct work_struct *work);
- extern __printf(1, 2) void set_worker_desc(const char *fmt, ...);
- extern void print_worker_info(const char *log_lvl, struct task_struct *task);
- extern void show_workqueue_state(void);
-+extern void wq_worker_comm(char *buf, size_t size, struct task_struct *task);
- 
- /**
-  * queue_work - queue work on a workqueue
 diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 3fbe007..b4a39a1 100644
+index 91fe0a6..2fde50f 100644
 --- a/kernel/workqueue.c
 +++ b/kernel/workqueue.c
-@@ -4577,6 +4577,45 @@ void show_workqueue_state(void)
- 	rcu_read_unlock_sched();
- }
+@@ -1741,6 +1741,7 @@ static void worker_attach_to_pool(struct worker *worker,
+ 		worker->flags |= WORKER_UNBOUND;
  
-+/* used to show worker information through /proc/PID/{comm,stat,status} */
-+void wq_worker_comm(char *buf, size_t size, struct task_struct *task)
-+{
-+	struct worker *worker;
-+	struct worker_pool *pool;
-+	int off;
-+
-+	/* always show the actual comm */
-+	off = strscpy(buf, task->comm, size);
-+	if (off < 0)
-+		return;
-+
-+	/* stabilize worker pool association */
-+	mutex_lock(&wq_pool_attach_mutex);
-+
-+	worker = kthread_data(task);
-+	pool = worker->pool;
-+
-+	if (pool) {
-+		spin_lock_irq(&pool->lock);
-+		/*
-+		 * ->desc tracks information (wq name or set_worker_desc())
-+		 * for the latest execution.  If current, prepend '+',
-+		 * otherwise '-'.
-+		 */
-+		if (worker->desc[0] != '\0') {
-+			if (worker->current_work)
-+				scnprintf(buf + off, size - off, "+%s",
-+					  worker->desc);
-+			else
-+				scnprintf(buf + off, size - off, "-%s",
-+					  worker->desc);
-+		}
-+		spin_unlock_irq(&pool->lock);
-+	}
-+
-+	mutex_unlock(&wq_pool_attach_mutex);
-+}
-+
- /*
-  * CPU hotplug.
+ 	list_add_tail(&worker->node, &pool->workers);
++	worker->pool = pool;
+ 
+ 	mutex_unlock(&wq_pool_attach_mutex);
+ }
+@@ -1748,19 +1749,21 @@ static void worker_attach_to_pool(struct worker *worker,
+ /**
+  * worker_detach_from_pool() - detach a worker from its pool
+  * @worker: worker which is attached to its pool
+- * @pool: the pool @worker is attached to
   *
+  * Undo the attaching which had been done in worker_attach_to_pool().  The
+  * caller worker shouldn't access to the pool after detached except it has
+  * other reference to the pool.
+  */
+-static void worker_detach_from_pool(struct worker *worker,
+-				    struct worker_pool *pool)
++static void worker_detach_from_pool(struct worker *worker)
+ {
++	struct worker_pool *pool = worker->pool;
+ 	struct completion *detach_completion = NULL;
+ 
+ 	mutex_lock(&wq_pool_attach_mutex);
++
+ 	list_del(&worker->node);
++	worker->pool = NULL;
++
+ 	if (list_empty(&pool->workers))
+ 		detach_completion = pool->detach_completion;
+ 	mutex_unlock(&wq_pool_attach_mutex);
+@@ -1799,7 +1802,6 @@ static struct worker *create_worker(struct worker_pool *pool)
+ 	if (!worker)
+ 		goto fail;
+ 
+-	worker->pool = pool;
+ 	worker->id = id;
+ 
+ 	if (pool->cpu >= 0)
+@@ -2236,7 +2238,7 @@ static int worker_thread(void *__worker)
+ 
+ 		set_task_comm(worker->task, "kworker/dying");
+ 		ida_simple_remove(&pool->worker_ida, worker->id);
+-		worker_detach_from_pool(worker, pool);
++		worker_detach_from_pool(worker);
+ 		kfree(worker);
+ 		return 0;
+ 	}
+@@ -2367,7 +2369,6 @@ static int rescuer_thread(void *__rescuer)
+ 		worker_attach_to_pool(rescuer, pool);
+ 
+ 		spin_lock_irq(&pool->lock);
+-		rescuer->pool = pool;
+ 
+ 		/*
+ 		 * Slurp in all works issued via this workqueue and
+@@ -2417,10 +2418,9 @@ static int rescuer_thread(void *__rescuer)
+ 		if (need_more_worker(pool))
+ 			wake_up_worker(pool);
+ 
+-		rescuer->pool = NULL;
+ 		spin_unlock_irq(&pool->lock);
+ 
+-		worker_detach_from_pool(rescuer, pool);
++		worker_detach_from_pool(rescuer);
+ 
+ 		spin_lock_irq(&wq_mayday_lock);
+ 	}
+diff --git a/kernel/workqueue_internal.h b/kernel/workqueue_internal.h
+index d390d1b..4a182e0 100644
+--- a/kernel/workqueue_internal.h
++++ b/kernel/workqueue_internal.h
+@@ -37,7 +37,7 @@ struct worker {
+ 	/* 64 bytes boundary on 64bit, 32 on 32bit */
+ 
+ 	struct task_struct	*task;		/* I: worker task */
+-	struct worker_pool	*pool;		/* I: the associated pool */
++	struct worker_pool	*pool;		/* A: the associated pool */
+ 						/* L: for rescuers */
+ 	struct list_head	node;		/* A: anchored at pool->workers */
+ 						/* A: runs through worker->node */
 -- 
 2.9.5
