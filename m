@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 4/6] workqueue: Set worker->desc to workqueue name by default
-Date: Wed, 16 May 2018 21:34:46 -0700
-Message-ID: <20180517043448.3152269-5-tj@kernel.org>
+Subject: [PATCH 5/6] proc: Consolidate task->comm formatting into proc_task_name()
+Date: Wed, 16 May 2018 21:34:47 -0700
+Message-ID: <20180517043448.3152269-6-tj@kernel.org>
 References: <20180517043448.3152269-1-tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180517043448.3152269-1-tj@kernel.org>
@@ -10,104 +10,122 @@ To: torvalds@linux-foundation.org, jiangshanlai@gmail.com, akpm@linux-foundation
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, csmall@enc.com.au, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Work functions can use set_worker_desc() to improve the visibility of
-what the worker task is doing.  Currently, the desc field is unset at
-the beginning of each execution and there is a separate field to track
-the field is set during the current execution.
+proc shows task->comm in three places - comm, stat, status - and each
+is fetching and formatting task->comm slighly differently.  This patch
+renames task_name() to proc_task_name(), makes it more generic, and
+updates all three paths to use it.
 
-Instead of leaving empty till desc is set, worker->desc can be used to
-remember the last workqueue the worker worked on by default and users
-that use set_worker_desc() can override it to something more
-informative as necessary.
-
-This simplifies desc handling and helps tracking the last workqueue
-that the worker exected on to improve visibility.
+This will enable expanding comm reporting for workqueue workers.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
 ---
- kernel/workqueue.c          | 21 ++++++++++-----------
- kernel/workqueue_internal.h |  1 -
- 2 files changed, 10 insertions(+), 12 deletions(-)
+ fs/proc/array.c    | 26 +++++++++++++++-----------
+ fs/proc/base.c     |  5 ++---
+ fs/proc/internal.h |  2 ++
+ 3 files changed, 19 insertions(+), 14 deletions(-)
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 2fde50f..3fbe007 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -2088,6 +2088,12 @@ __acquires(&pool->lock)
- 	worker->current_pwq = pwq;
- 	work_color = get_work_color(work);
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index ae2c807..f29221e 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -95,7 +95,7 @@
+ #include <asm/processor.h>
+ #include "internal.h"
  
-+	/*
-+	 * Record wq name for cmdline and debug reporting, may get
-+	 * overridden through set_worker_desc().
-+	 */
-+	strscpy(worker->desc, pwq->wq->name, WORKER_DESC_LEN);
-+
- 	list_del_init(&work->entry);
+-static inline void task_name(struct seq_file *m, struct task_struct *p)
++void proc_task_name(struct seq_file *m, struct task_struct *p, bool escape)
+ {
+ 	char *buf;
+ 	size_t size;
+@@ -104,13 +104,17 @@ static inline void task_name(struct seq_file *m, struct task_struct *p)
  
- 	/*
-@@ -2183,7 +2189,6 @@ __acquires(&pool->lock)
- 	worker->current_work = NULL;
- 	worker->current_func = NULL;
- 	worker->current_pwq = NULL;
--	worker->desc_valid = false;
- 	pwq_dec_nr_in_flight(pwq, work_color);
- }
+ 	get_task_comm(tcomm, p);
  
-@@ -4346,7 +4351,6 @@ void set_worker_desc(const char *fmt, ...)
- 		va_start(args, fmt);
- 		vsnprintf(worker->desc, sizeof(worker->desc), fmt, args);
- 		va_end(args);
--		worker->desc_valid = true;
- 	}
- }
- 
-@@ -4370,7 +4374,6 @@ void print_worker_info(const char *log_lvl, struct task_struct *task)
- 	char desc[WORKER_DESC_LEN] = { };
- 	struct pool_workqueue *pwq = NULL;
- 	struct workqueue_struct *wq = NULL;
--	bool desc_valid = false;
- 	struct worker *worker;
- 
- 	if (!(task->flags & PF_WQ_WORKER))
-@@ -4383,22 +4386,18 @@ void print_worker_info(const char *log_lvl, struct task_struct *task)
- 	worker = kthread_probe_data(task);
- 
- 	/*
--	 * Carefully copy the associated workqueue's workfn and name.  Keep
--	 * the original last '\0' in case the original contains garbage.
-+	 * Carefully copy the associated workqueue's workfn, name and desc.
-+	 * Keep the original last '\0' in case the original is garbage.
- 	 */
- 	probe_kernel_read(&fn, &worker->current_func, sizeof(fn));
- 	probe_kernel_read(&pwq, &worker->current_pwq, sizeof(pwq));
- 	probe_kernel_read(&wq, &pwq->wq, sizeof(wq));
- 	probe_kernel_read(name, wq->name, sizeof(name) - 1);
+-	seq_puts(m, "Name:\t");
 -
--	/* copy worker description */
--	probe_kernel_read(&desc_valid, &worker->desc_valid, sizeof(desc_valid));
--	if (desc_valid)
--		probe_kernel_read(desc, worker->desc, sizeof(desc) - 1);
-+	probe_kernel_read(desc, worker->desc, sizeof(desc) - 1);
+ 	size = seq_get_buf(m, &buf);
+-	ret = string_escape_str(tcomm, buf, size, ESCAPE_SPACE | ESCAPE_SPECIAL, "\n\\");
+-	seq_commit(m, ret < size ? ret : -1);
++	if (escape) {
++		ret = string_escape_str(tcomm, buf, size,
++					ESCAPE_SPACE | ESCAPE_SPECIAL, "\n\\");
++		if (ret >= size)
++			ret = -1;
++	} else {
++		ret = strscpy(buf, tcomm, size);
++	}
  
- 	if (fn || name[0] || desc[0]) {
- 		printk("%sWorkqueue: %s %pf", log_lvl, name, fn);
--		if (desc[0])
-+		if (strcmp(name, desc))
- 			pr_cont(" (%s)", desc);
- 		pr_cont("\n");
+-	seq_putc(m, '\n');
++	seq_commit(m, ret);
+ }
+ 
+ /*
+@@ -365,7 +369,10 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+ {
+ 	struct mm_struct *mm = get_task_mm(task);
+ 
+-	task_name(m, task);
++	seq_puts(m, "Name:\t");
++	proc_task_name(m, task, true);
++	seq_putc(m, '\n');
++
+ 	task_state(m, ns, pid, task);
+ 
+ 	if (mm) {
+@@ -400,7 +407,6 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+ 	u64 cutime, cstime, utime, stime;
+ 	u64 cgtime, gtime;
+ 	unsigned long rsslim = 0;
+-	char tcomm[sizeof(task->comm)];
+ 	unsigned long flags;
+ 
+ 	state = *get_task_state(task);
+@@ -427,8 +433,6 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+ 		}
  	}
-diff --git a/kernel/workqueue_internal.h b/kernel/workqueue_internal.h
-index 4a182e0..66fbb5a 100644
---- a/kernel/workqueue_internal.h
-+++ b/kernel/workqueue_internal.h
-@@ -31,7 +31,6 @@ struct worker {
- 	struct work_struct	*current_work;	/* L: work being processed */
- 	work_func_t		current_func;	/* L: current_work's fn */
- 	struct pool_workqueue	*current_pwq; /* L: current_work's pwq */
--	bool			desc_valid;	/* ->desc is valid */
- 	struct list_head	scheduled;	/* L: scheduled works */
  
- 	/* 64 bytes boundary on 64bit, 32 on 32bit */
+-	get_task_comm(tcomm, task);
+-
+ 	sigemptyset(&sigign);
+ 	sigemptyset(&sigcatch);
+ 	cutime = cstime = utime = stime = 0;
+@@ -495,7 +499,7 @@ static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
+ 
+ 	seq_put_decimal_ull(m, "", pid_nr_ns(pid, ns));
+ 	seq_puts(m, " (");
+-	seq_puts(m, tcomm);
++	proc_task_name(m, task, false);
+ 	seq_puts(m, ") ");
+ 	seq_putc(m, state);
+ 	seq_put_decimal_ll(m, " ", ppid);
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 2eee4d7..eb17917ca 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -1581,9 +1581,8 @@ static int comm_show(struct seq_file *m, void *v)
+ 	if (!p)
+ 		return -ESRCH;
+ 
+-	task_lock(p);
+-	seq_printf(m, "%s\n", p->comm);
+-	task_unlock(p);
++	proc_task_name(m, p, false);
++	seq_putc(m, '\n');
+ 
+ 	put_task_struct(p);
+ 
+diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+index 0f1692e..b823fac62 100644
+--- a/fs/proc/internal.h
++++ b/fs/proc/internal.h
+@@ -131,6 +131,8 @@ unsigned name_to_int(const struct qstr *qstr);
+  */
+ extern const struct file_operations proc_tid_children_operations;
+ 
++extern void proc_task_name(struct seq_file *m, struct task_struct *p,
++			   bool escape);
+ extern int proc_tid_stat(struct seq_file *, struct pid_namespace *,
+ 			 struct pid *, struct task_struct *);
+ extern int proc_tgid_stat(struct seq_file *, struct pid_namespace *,
 -- 
 2.9.5
