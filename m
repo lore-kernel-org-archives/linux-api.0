@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 1/6] proc: Don't allow empty /proc/PID/cmdline for user tasks
-Date: Wed, 16 May 2018 21:34:43 -0700
-Message-ID: <20180517043448.3152269-2-tj@kernel.org>
+Subject: [PATCH 4/6] workqueue: Set worker->desc to workqueue name by default
+Date: Wed, 16 May 2018 21:34:46 -0700
+Message-ID: <20180517043448.3152269-5-tj@kernel.org>
 References: <20180517043448.3152269-1-tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180517043448.3152269-1-tj@kernel.org>
@@ -10,114 +10,104 @@ To: torvalds@linux-foundation.org, jiangshanlai@gmail.com, akpm@linux-foundation
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@fb.com, csmall@enc.com.au, Tejun Heo <tj@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Kernel threads have empty /proc/PID/cmdline and some userland tools
-including ps(1) and older versions of systemd use this to detect
-kernel threads.  However, any userland program can emulate the
-behavior by making its argvs unavailable and trick the affected tools
-into thinking that the task is a kernel thread.  Linus's reproducer
-follows.
+Work functions can use set_worker_desc() to improve the visibility of
+what the worker task is doing.  Currently, the desc field is unset at
+the beginning of each execution and there is a separate field to track
+the field is set during the current execution.
 
-  #include <sys/prctl.h>
-  #include <sys/mman.h>
+Instead of leaving empty till desc is set, worker->desc can be used to
+remember the last workqueue the worker worked on by default and users
+that use set_worker_desc() can override it to something more
+informative as necessary.
 
-  int main(void)
-  {
-	  char empty[16384];
-	  unsigned long ptr;
-
-	  asm volatile("" :"=r" (ptr) : "0" (empty):"memory");
-	  ptr = (ptr+4095) & ~4095;
-	  munmap((void *)ptr, 32768);
-
-	  sleep(1000);
-	  return 0;
-  }
-
-Compiling the above program into nullcmdline and running it on an
-unpatche kernel shows the following behavior.
-
-  $ ./nullcmdline &
-  [1] 2382031
-  [devbig577 ~/tmp]$ hexdump -C /proc/2382031/comm
-  00000000  6e 75 6c 6c 63 6d 64 6c  69 6e 65 0a              |nullcmdline.|
-  0000000c
-  $ hexdump -C /proc/2382031/cmdline
-  $ ps 2382031
-      PID TTY      STAT   TIME COMMAND
-  2382031 pts/2    S      0:00 [nullcmdline]
-
-The empty cmdline makes ps(1) think that nullcmdline is a kernel
-thread and put brackets around its name (comm), which is mostly a
-nuisance but it's possible that this confusion can lead to more
-harmful confusions.
-
-This patch fixes the issue by making proc_pid_cmdline_read() never
-return empty string for user tasks.  If the result is empty for
-whatever reason, comm string is returned.  Even when the comm string
-is empty, it still returns the null termnation character.  On a
-patched kernel, running the same command as above gives us.
-
-  $ ./nullcmdline &
-  [1] 2317
-  [test ~]# hexdump -C /proc/2317/comm
-  00000000  6e 75 6c 6c 63 6d 64 6c  69 6e 65 0a              |nullcmdline.|
-  0000000c
-  $ hexdump -C /proc/2317/cmdline
-  00000000  6e 75 6c 6c 63 6d 64 6c  69 6e 65 00              |nullcmdline.|
-  0000000c
-  $ ps 2317
-    PID TTY      STAT   TIME COMMAND
-   2317 pts/0    S      0:00 nullcmdline
-
-Note that cmdline is a dup of comm and ps(1) is no longer confused.
+This simplifies desc handling and helps tracking the last workqueue
+that the worker exected on to improve visibility.
 
 Signed-off-by: Tejun Heo <tj@kernel.org>
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
 ---
- fs/proc/base.c | 22 +++++++++++++++++++---
- 1 file changed, 19 insertions(+), 3 deletions(-)
+ kernel/workqueue.c          | 21 ++++++++++-----------
+ kernel/workqueue_internal.h |  1 -
+ 2 files changed, 10 insertions(+), 12 deletions(-)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 1b2ede6..2eee4d7 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -224,9 +224,10 @@ static ssize_t proc_pid_cmdline_read(struct file *file, char __user *buf,
- 	if (!tsk)
- 		return -ESRCH;
- 	mm = get_task_mm(tsk);
--	put_task_struct(tsk);
--	if (!mm)
--		return 0;
-+	if (!mm) {
-+		rv = 0;
-+		goto out_put_task;
-+	}
- 	/* Check if process spawned far enough to have cmdline. */
- 	if (!mm->env_end) {
- 		rv = 0;
-@@ -367,8 +368,23 @@ static ssize_t proc_pid_cmdline_read(struct file *file, char __user *buf,
- 	free_page((unsigned long)page);
- out_mmput:
- 	mmput(mm);
-+out_put_task:
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 2fde50f..3fbe007 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -2088,6 +2088,12 @@ __acquires(&pool->lock)
+ 	worker->current_pwq = pwq;
+ 	work_color = get_work_color(work);
+ 
 +	/*
-+	 * Some userland tools use empty cmdline to distinguish kthreads.
-+	 * Avoid empty cmdline for user tasks by returning tsk->comm with
-+	 * \0 termination when empty.
++	 * Record wq name for cmdline and debug reporting, may get
++	 * overridden through set_worker_desc().
 +	 */
-+	if (*pos == 0 && rv == 0 && !(tsk->flags & PF_KTHREAD)) {
-+		char tcomm[TASK_COMM_LEN];
++	strscpy(worker->desc, pwq->wq->name, WORKER_DESC_LEN);
 +
-+		get_task_comm(tcomm, tsk);
-+		rv = min(strlen(tcomm) + 1, count);
-+		if (copy_to_user(buf, tsk->comm, rv))
-+			rv = -EFAULT;
-+	}
- 	if (rv > 0)
- 		*pos += rv;
-+	put_task_struct(tsk);
- 	return rv;
+ 	list_del_init(&work->entry);
+ 
+ 	/*
+@@ -2183,7 +2189,6 @@ __acquires(&pool->lock)
+ 	worker->current_work = NULL;
+ 	worker->current_func = NULL;
+ 	worker->current_pwq = NULL;
+-	worker->desc_valid = false;
+ 	pwq_dec_nr_in_flight(pwq, work_color);
  }
  
+@@ -4346,7 +4351,6 @@ void set_worker_desc(const char *fmt, ...)
+ 		va_start(args, fmt);
+ 		vsnprintf(worker->desc, sizeof(worker->desc), fmt, args);
+ 		va_end(args);
+-		worker->desc_valid = true;
+ 	}
+ }
+ 
+@@ -4370,7 +4374,6 @@ void print_worker_info(const char *log_lvl, struct task_struct *task)
+ 	char desc[WORKER_DESC_LEN] = { };
+ 	struct pool_workqueue *pwq = NULL;
+ 	struct workqueue_struct *wq = NULL;
+-	bool desc_valid = false;
+ 	struct worker *worker;
+ 
+ 	if (!(task->flags & PF_WQ_WORKER))
+@@ -4383,22 +4386,18 @@ void print_worker_info(const char *log_lvl, struct task_struct *task)
+ 	worker = kthread_probe_data(task);
+ 
+ 	/*
+-	 * Carefully copy the associated workqueue's workfn and name.  Keep
+-	 * the original last '\0' in case the original contains garbage.
++	 * Carefully copy the associated workqueue's workfn, name and desc.
++	 * Keep the original last '\0' in case the original is garbage.
+ 	 */
+ 	probe_kernel_read(&fn, &worker->current_func, sizeof(fn));
+ 	probe_kernel_read(&pwq, &worker->current_pwq, sizeof(pwq));
+ 	probe_kernel_read(&wq, &pwq->wq, sizeof(wq));
+ 	probe_kernel_read(name, wq->name, sizeof(name) - 1);
+-
+-	/* copy worker description */
+-	probe_kernel_read(&desc_valid, &worker->desc_valid, sizeof(desc_valid));
+-	if (desc_valid)
+-		probe_kernel_read(desc, worker->desc, sizeof(desc) - 1);
++	probe_kernel_read(desc, worker->desc, sizeof(desc) - 1);
+ 
+ 	if (fn || name[0] || desc[0]) {
+ 		printk("%sWorkqueue: %s %pf", log_lvl, name, fn);
+-		if (desc[0])
++		if (strcmp(name, desc))
+ 			pr_cont(" (%s)", desc);
+ 		pr_cont("\n");
+ 	}
+diff --git a/kernel/workqueue_internal.h b/kernel/workqueue_internal.h
+index 4a182e0..66fbb5a 100644
+--- a/kernel/workqueue_internal.h
++++ b/kernel/workqueue_internal.h
+@@ -31,7 +31,6 @@ struct worker {
+ 	struct work_struct	*current_work;	/* L: work being processed */
+ 	work_func_t		current_func;	/* L: current_work's fn */
+ 	struct pool_workqueue	*current_pwq; /* L: current_work's pwq */
+-	bool			desc_valid;	/* ->desc is valid */
+ 	struct list_head	scheduled;	/* L: scheduled works */
+ 
+ 	/* 64 bytes boundary on 64bit, 32 on 32bit */
 -- 
 2.9.5
