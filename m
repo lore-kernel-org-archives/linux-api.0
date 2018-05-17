@@ -1,384 +1,175 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak32 V2 01/13] audit: add container id
-Date: Thu, 17 May 2018 17:56:00 -0400
-Message-ID: <20180517215600.dyswlkvqdtgjwr5y@madcap2.tricolour.ca>
-References: <cover.1521179281.git.rgb@redhat.com>
- <e284617ad667ad8f17958dd8babb87fe1b4d7205.1521179281.git.rgb@redhat.com>
- <20180517170053.7d4afa87@ivy-bridge>
+From: Boqun Feng <boqun.feng@gmail.com>
+Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
+Date: Fri, 18 May 2018 07:50:43 +0800
+Message-ID: <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
+ <20180430224433.17407-8-mathieu.desnoyers@efficios.com>
+ <20180516161837.GI12198@hirez.programming.kicks-ass.net>
+ <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com>
+ <20180517011949.GA1121@tardis>
+ <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180517170053.7d4afa87@ivy-bridge>
+In-Reply-To: <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Steve Grubb <sgrubb@redhat.com>
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Will Deacon <will.deacon@arm.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Michael
 List-Id: linux-api@vger.kernel.org
 
-On 2018-05-17 17:00, Steve Grubb wrote:
-> On Fri, 16 Mar 2018 05:00:28 -0400
-> Richard Guy Briggs <rgb@redhat.com> wrote:
+
+
+On Thu, May 17, 2018, at 11:28 PM, Mathieu Desnoyers wrote:
+> ----- On May 16, 2018, at 9:19 PM, Boqun Feng boqun.feng@gmail.com wrote:
 > 
-> > Implement the proc fs write to set the audit container ID of a
-> > process, emitting an AUDIT_CONTAINER record to document the event.
+> > On Wed, May 16, 2018 at 04:13:16PM -0400, Mathieu Desnoyers wrote:
+> >> ----- On May 16, 2018, at 12:18 PM, Peter Zijlstra peterz@infradead.org wrote:
+> >> 
+> >> > On Mon, Apr 30, 2018 at 06:44:26PM -0400, Mathieu Desnoyers wrote:
+> >> >> diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
+> >> >> index c32a181a7cbb..ed21a777e8c6 100644
+> >> >> --- a/arch/powerpc/Kconfig
+> >> >> +++ b/arch/powerpc/Kconfig
+> >> >> @@ -223,6 +223,7 @@ config PPC
+> >> >>  	select HAVE_SYSCALL_TRACEPOINTS
+> >> >>  	select HAVE_VIRT_CPU_ACCOUNTING
+> >> >>  	select HAVE_IRQ_TIME_ACCOUNTING
+> >> >> +	select HAVE_RSEQ
+> >> >>  	select IRQ_DOMAIN
+> >> >>  	select IRQ_FORCED_THREADING
+> >> >>  	select MODULES_USE_ELF_RELA
+> >> >> diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
+> >> >> index 61db86ecd318..d3bb3aaaf5ac 100644
+> >> >> --- a/arch/powerpc/kernel/signal.c
+> >> >> +++ b/arch/powerpc/kernel/signal.c
+> >> >> @@ -133,6 +133,8 @@ static void do_signal(struct task_struct *tsk)
+> >> >>  	/* Re-enable the breakpoints for the signal stack */
+> >> >>  	thread_change_pc(tsk, tsk->thread.regs);
+> >> >>  
+> >> >> +	rseq_signal_deliver(tsk->thread.regs);
+> >> >> +
+> >> >>  	if (is32) {
+> >> >>          	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
+> >> >>  			ret = handle_rt_signal32(&ksig, oldset, tsk);
+> >> >> @@ -164,6 +166,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long
+> >> >> thread_info_flags)
+> >> >>  	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
+> >> >>  		clear_thread_flag(TIF_NOTIFY_RESUME);
+> >> >>  		tracehook_notify_resume(regs);
+> >> >> +		rseq_handle_notify_resume(regs);
+> >> >>  	}
+> >> >>  
+> >> >>  	user_enter();
+> >> > 
+> >> > Again no rseq_syscall().
+> >> 
+> >> Same question for PowerPC as for ARM:
+> >> 
+> >> Considering that rseq_syscall is implemented as follows:
+> >> 
+> >> +void rseq_syscall(struct pt_regs *regs)
+> >> +{
+> >> +       unsigned long ip = instruction_pointer(regs);
+> >> +       struct task_struct *t = current;
+> >> +       struct rseq_cs rseq_cs;
+> >> +
+> >> +       if (!t->rseq)
+> >> +               return;
+> >> +       if (!access_ok(VERIFY_READ, t->rseq, sizeof(*t->rseq)) ||
+> >> +           rseq_get_rseq_cs(t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
+> >> +               force_sig(SIGSEGV, t);
+> >> +}
+> >> 
+> >> and that x86 calls it from syscall_return_slowpath() (which AFAIU is
+> >> now used in the fast-path since KPTI), I wonder where we should call
 > > 
-> > This is a write from the container orchestrator task to a proc entry
-> > of the form /proc/PID/containerid where PID is the process ID of the
-> > newly created task that is to become the first task in a container,
-> > or an additional task added to a container.
+> > So we actually detect this after the syscall takes effect, right? I
+> > wonder whether this could be problematic, because "disallowing syscall"
+> > in rseq areas may means the syscall won't take effect to some people, I
+> > guess?
 > > 
-> > The write expects up to a u64 value (unset: 18446744073709551615).
+> >> this on PowerPC ?  I was under the impression that PowerPC return to
+> >> userspace fast-path was not calling C code unless work flags were set,
+> >> but I might be wrong.
+> >> 
 > > 
-> > This will produce a record such as this:
-> > type=CONTAINER msg=audit(1519903238.968:261): op=set pid=596 uid=0
-> > subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 auid=0
-> > tty=pts0 ses=1 opid=596 old-contid=18446744073709551615 contid=123455
-> > res=0
+> > I think you're right. So we have to introduce callsite to rseq_syscall()
+> > in syscall path, something like:
+> > 
+> > diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+> > index 51695608c68b..a25734a96640 100644
+> > --- a/arch/powerpc/kernel/entry_64.S
+> > +++ b/arch/powerpc/kernel/entry_64.S
+> > @@ -222,6 +222,9 @@ system_call_exit:
+> > 	mtmsrd	r11,1
+> > #endif /* CONFIG_PPC_BOOK3E */
+> > 
+> > +	addi    r3,r1,STACK_FRAME_OVERHEAD
+> > +	bl	rseq_syscall
+> > +
+> > 	ld	r9,TI_FLAGS(r12)
+> > 	li	r11,-MAX_ERRNO
+> > 	andi.
+> > 		r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
+> > 
+> > But I think it's important for us to first decide where (before or after
+> > the syscall) we do the detection.
 > 
-> The was one thing I was wondering about. Currently when we set the
-> loginuid, the record is AUDIT_LOGINUID. The corollary is that when we
-> set the container id, the event should be AUDIT_CONTAINERID or
-> AUDIT_CONTAINER_ID.
+> As Peter said, we don't really care whether it's on syscall entry or 
+> exit, as
+> long as the process gets killed when the erroneous use is detected. I 
+> think doing
+> it on syscall exit is a bit easier because we can clearly access the 
+> userspace
+> TLS, which AFAIU may be less straightforward on syscall entry.
+>
 
-The record type is actually AUDIT_LOGIN.  The field type is
-AUDIT_LOGINUID.  Given that correction, I think we're fine and could
-potentially violently agree.  The existing naming is consistent.
-
-> During syscall events, the path info is returned in a a record simply
-> called AUDIT_PATH, cwd info is returned in AUDIT_CWD. So, rather than
-> calling the record that gets attached to everything
-> AUDIT_CONTAINER_INFO, how about simply AUDIT_CONTAINER.
-
-Considering the container initiation record is different than the record
-to document the container involved in an otherwise normal syscall, we
-need two names.  I don't have a strong opinion what they are.
-
-I'd prefer AUDIT_CONTAINER and AUDIT_CONTAINER_INFO so that the two are
-different enough to be visually distinct while leaving
-AUDIT_CONTAINERID for the field type in patch 4 ("audit: add containerid
-filtering")
-
-> > The "op" field indicates an initial set.  The "pid" to "ses" fields
-> > are the orchestrator while the "opid" field is the object's PID, the
-> > process being "contained".  Old and new container ID values are given
-> > in the "contid" fields, while res indicates its success.
-> > 
-> > It is not permitted to self-set, unset or re-set the container ID.  A
-> > child inherits its parent's container ID, but then can be set only
-> > once after.
-> > 
-> > See: https://github.com/linux-audit/audit-kernel/issues/32
-> > 
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > ---
-> >  fs/proc/base.c             | 37 ++++++++++++++++++++
-> >  include/linux/audit.h      | 16 +++++++++
-> >  include/linux/init_task.h  |  4 ++-
-> >  include/linux/sched.h      |  1 +
-> >  include/uapi/linux/audit.h |  2 ++
-> >  kernel/auditsc.c           | 84
-> > ++++++++++++++++++++++++++++++++++++++++++++++ 6 files changed, 143
-> > insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/fs/proc/base.c b/fs/proc/base.c
-> > index 60316b5..6ce4fbe 100644
-> > --- a/fs/proc/base.c
-> > +++ b/fs/proc/base.c
-> > @@ -1299,6 +1299,41 @@ static ssize_t proc_sessionid_read(struct file
-> > * file, char __user * buf, .read		= proc_sessionid_read,
-> >  	.llseek		= generic_file_llseek,
-> >  };
-> > +
-> > +static ssize_t proc_containerid_write(struct file *file, const char
-> > __user *buf,
-> > +				   size_t count, loff_t *ppos)
-> > +{
-> > +	struct inode *inode = file_inode(file);
-> > +	u64 containerid;
-> > +	int rv;
-> > +	struct task_struct *task = get_proc_task(inode);
-> > +
-> > +	if (!task)
-> > +		return -ESRCH;
-> > +	if (*ppos != 0) {
-> > +		/* No partial writes. */
-> > +		put_task_struct(task);
-> > +		return -EINVAL;
-> > +	}
-> > +
-> > +	rv = kstrtou64_from_user(buf, count, 10, &containerid);
-> > +	if (rv < 0) {
-> > +		put_task_struct(task);
-> > +		return rv;
-> > +	}
-> > +
-> > +	rv = audit_set_containerid(task, containerid);
-> > +	put_task_struct(task);
-> > +	if (rv < 0)
-> > +		return rv;
-> > +	return count;
-> > +}
-> > +
-> > +static const struct file_operations proc_containerid_operations = {
-> > +	.write		= proc_containerid_write,
-> > +	.llseek		= generic_file_llseek,
-> > +};
-> > +
-> >  #endif
-> >  
-> >  #ifdef CONFIG_FAULT_INJECTION
-> > @@ -2961,6 +2996,7 @@ static int proc_pid_patch_state(struct seq_file
-> > *m, struct pid_namespace *ns, #ifdef CONFIG_AUDITSYSCALL
-> >  	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
-> >  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
-> > +	REG("containerid", S_IWUSR, proc_containerid_operations),
-> >  #endif
-> >  #ifdef CONFIG_FAULT_INJECTION
-> >  	REG("make-it-fail", S_IRUGO|S_IWUSR,
-> > proc_fault_inject_operations), @@ -3355,6 +3391,7 @@ static int
-> > proc_tid_comm_permission(struct inode *inode, int mask) #ifdef
-> > CONFIG_AUDITSYSCALL REG("loginuid",  S_IWUSR|S_IRUGO,
-> > proc_loginuid_operations), REG("sessionid",  S_IRUGO,
-> > proc_sessionid_operations),
-> > +	REG("containerid", S_IWUSR, proc_containerid_operations),
-> >  #endif
-> >  #ifdef CONFIG_FAULT_INJECTION
-> >  	REG("make-it-fail", S_IRUGO|S_IWUSR,
-> > proc_fault_inject_operations), diff --git a/include/linux/audit.h
-> > b/include/linux/audit.h index af410d9..fe4ba3f 100644
-> > --- a/include/linux/audit.h
-> > +++ b/include/linux/audit.h
-> > @@ -29,6 +29,7 @@
-> >  
-> >  #define AUDIT_INO_UNSET ((unsigned long)-1)
-> >  #define AUDIT_DEV_UNSET ((dev_t)-1)
-> > +#define INVALID_CID AUDIT_CID_UNSET
-> >  
-> >  struct audit_sig_info {
-> >  	uid_t		uid;
-> > @@ -321,6 +322,7 @@ static inline void audit_ptrace(struct
-> > task_struct *t) extern int auditsc_get_stamp(struct audit_context
-> > *ctx, struct timespec64 *t, unsigned int *serial);
-> >  extern int audit_set_loginuid(kuid_t loginuid);
-> > +extern int audit_set_containerid(struct task_struct *tsk, u64
-> > containerid); 
-> >  static inline kuid_t audit_get_loginuid(struct task_struct *tsk)
-> >  {
-> > @@ -332,6 +334,11 @@ static inline unsigned int
-> > audit_get_sessionid(struct task_struct *tsk) return tsk->sessionid;
-> >  }
-> >  
-> > +static inline u64 audit_get_containerid(struct task_struct *tsk)
-> > +{
-> > +	return tsk->containerid;
-> > +}
-> > +
-> >  extern void __audit_ipc_obj(struct kern_ipc_perm *ipcp);
-> >  extern void __audit_ipc_set_perm(unsigned long qbytes, uid_t uid,
-> > gid_t gid, umode_t mode); extern void __audit_bprm(struct
-> > linux_binprm *bprm); @@ -517,6 +524,10 @@ static inline unsigned int
-> > audit_get_sessionid(struct task_struct *tsk) {
-> >  	return -1;
-> >  }
-> > +static inline kuid_t audit_get_containerid(struct task_struct *tsk)
-> > +{
-> > +	return INVALID_CID;
-> > +}
-> >  static inline void audit_ipc_obj(struct kern_ipc_perm *ipcp)
-> >  { }
-> >  static inline void audit_ipc_set_perm(unsigned long qbytes, uid_t
-> > uid, @@ -581,6 +592,11 @@ static inline bool
-> > audit_loginuid_set(struct task_struct *tsk) return
-> > uid_valid(audit_get_loginuid(tsk)); }
-> >  
-> > +static inline bool audit_containerid_set(struct task_struct *tsk)
-> > +{
-> > +	return audit_get_containerid(tsk) != INVALID_CID;
-> > +}
-> > +
-> >  static inline void audit_log_string(struct audit_buffer *ab, const
-> > char *buf) {
-> >  	audit_log_n_string(ab, buf, strlen(buf));
-> > diff --git a/include/linux/init_task.h b/include/linux/init_task.h
-> > index 6a53262..046bd0a 100644
-> > --- a/include/linux/init_task.h
-> > +++ b/include/linux/init_task.h
-> > @@ -18,6 +18,7 @@
-> >  #include <linux/sched/rt.h>
-> >  #include <linux/livepatch.h>
-> >  #include <linux/mm_types.h>
-> > +#include <linux/audit.h>
-> >  
-> >  #include <asm/thread_info.h>
-> >  
-> > @@ -120,7 +121,8 @@
-> >  #ifdef CONFIG_AUDITSYSCALL
-> >  #define INIT_IDS \
-> >  	.loginuid = INVALID_UID, \
-> > -	.sessionid = (unsigned int)-1,
-> > +	.sessionid = (unsigned int)-1, \
-> > +	.containerid = INVALID_CID,
-> >  #else
-> >  #define INIT_IDS
-> >  #endif
-> > diff --git a/include/linux/sched.h b/include/linux/sched.h
-> > index d258826..1b82191 100644
-> > --- a/include/linux/sched.h
-> > +++ b/include/linux/sched.h
-> > @@ -796,6 +796,7 @@ struct task_struct {
-> >  #ifdef CONFIG_AUDITSYSCALL
-> >  	kuid_t				loginuid;
-> >  	unsigned int			sessionid;
-> > +	u64				containerid;
-> >  #endif
-> >  	struct seccomp			seccomp;
-> >  
-> > diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-> > index 4e61a9e..921a71f 100644
-> > --- a/include/uapi/linux/audit.h
-> > +++ b/include/uapi/linux/audit.h
-> > @@ -71,6 +71,7 @@
-> >  #define AUDIT_TTY_SET		1017	/* Set TTY auditing
-> > status */ #define AUDIT_SET_FEATURE	1018	/* Turn an
-> > audit feature on or off */ #define AUDIT_GET_FEATURE
-> > 1019	/* Get which features are enabled */ +#define
-> > AUDIT_CONTAINER		1020	/* Define the container id
-> > and information */ #define AUDIT_FIRST_USER_MSG	1100	/*
-> > Userspace messages mostly uninteresting to kernel */ #define
-> > AUDIT_USER_AVC		1107	/* We filter this
-> > differently */ @@ -465,6 +466,7 @@ struct audit_tty_status { };
-> >  
-> >  #define AUDIT_UID_UNSET (unsigned int)-1
-> > +#define AUDIT_CID_UNSET ((u64)-1)
-> >  
-> >  /* audit_rule_data supports filter rules with both integer and string
-> >   * fields.  It corresponds with AUDIT_ADD_RULE, AUDIT_DEL_RULE and
-> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> > index 4e0a4ac..29c8482 100644
-> > --- a/kernel/auditsc.c
-> > +++ b/kernel/auditsc.c
-> > @@ -2073,6 +2073,90 @@ int audit_set_loginuid(kuid_t loginuid)
-> >  	return rc;
-> >  }
-> >  
-> > +static int audit_set_containerid_perm(struct task_struct *task, u64
-> > containerid) +{
-> > +	struct task_struct *parent;
-> > +	u64 pcontainerid, ccontainerid;
-> > +
-> > +	/* Don't allow to set our own containerid */
-> > +	if (current == task)
-> > +		return -EPERM;
-> > +	/* Don't allow the containerid to be unset */
-> > +	if (!cid_valid(containerid))
-> > +		return -EINVAL;
-> > +	/* if we don't have caps, reject */
-> > +	if (!capable(CAP_AUDIT_CONTROL))
-> > +		return -EPERM;
-> > +	/* if containerid is unset, allow */
-> > +	if (!audit_containerid_set(task))
-> > +		return 0;
-> > +	/* it is already set, and not inherited from the parent,
-> > reject */
-> > +	ccontainerid = audit_get_containerid(task);
-> > +	rcu_read_lock();
-> > +	parent = rcu_dereference(task->real_parent);
-> > +	rcu_read_unlock();
-> > +	task_lock(parent);
-> > +	pcontainerid = audit_get_containerid(parent);
-> > +	task_unlock(parent);
-> > +	if (ccontainerid != pcontainerid)
-> > +		return -EPERM;
-> > +	return 0;
-> > +}
-> > +
-> > +static void audit_log_set_containerid(struct task_struct *task, u64
-> > oldcontainerid,
-> > +				      u64 containerid, int rc)
-> > +{
-> > +	struct audit_buffer *ab;
-> > +	uid_t uid;
-> > +	struct tty_struct *tty;
-> > +
-> > +	if (!audit_enabled)
-> > +		return;
-> > +
-> > +	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONTAINER);
-> > +	if (!ab)
-> > +		return;
-> > +
-> > +	uid = from_kuid(&init_user_ns, task_uid(current));
-> > +	tty = audit_get_tty(current);
-> > +
-> > +	audit_log_format(ab, "op=set pid=%d uid=%u",
-> > task_tgid_nr(current), uid);
-> > +	audit_log_task_context(ab);
-> > +	audit_log_format(ab, " auid=%u tty=%s ses=%u opid=%d
-> > old-contid=%llu contid=%llu res=%d",
+Fair enough.
+ 
+> We may want to add #ifdef CONFIG_DEBUG_RSEQ / #endif around the code you
+> proposed above, so it's only compiled in if CONFIG_DEBUG_RSEQ=y.
 > 
-> The preferred ordering would be: op, opid, old-contid, contid, pid, uid,
-> tty, ses, subj, comm, exe, res. This groups the searchable fields
-> together using the most common ordering so that parsing is simple.
 
-There has been a suggestion to make this a syscall-connected record, and
-if that is the case, we'd simply drop all the fields that would be
-duplicated by the syscall record.  Otherwise, I'll use your suggested
-order.
+OK.
 
-As you may recall this suggestion was also made for the AUDIT_LOGIN
-record.
+> On the ARM leg of the email thread, Will Deacon suggests to test whether 
+> current->rseq
+> is non-NULL before calling rseq_syscall(). I wonder if this added check 
+> is justified
+> as the assembly level, considering that this is just a debugging option. 
+> We already do
+> that check at the very beginning of rseq_syscall().
+> 
 
+Yes, I think it's better to do the check in rseq_syscall(), leaving the asm
+code a bit cleaner.
+
+Regards,
+Boqun
+
+> Thoughts ?
+> 
 > Thanks,
-> -Steve
 > 
-> > +			 from_kuid(&init_user_ns,
-> > audit_get_loginuid(current)),
-> > +			 tty ? tty_name(tty) : "(none)",
-> > audit_get_sessionid(current),
-> > +			 task_tgid_nr(task), oldcontainerid,
-> > containerid, !rc); +
-> > +	audit_put_tty(tty);
-> > +	audit_log_end(ab);
-> > +}
-> > +
-> > +/**
-> > + * audit_set_containerid - set current task's audit_context
-> > containerid
-> > + * @containerid: containerid value
-> > + *
-> > + * Returns 0 on success, -EPERM on permission failure.
-> > + *
-> > + * Called (set) from fs/proc/base.c::proc_containerid_write().
-> > + */
-> > +int audit_set_containerid(struct task_struct *task, u64 containerid)
-> > +{
-> > +	u64 oldcontainerid;
-> > +	int rc;
-> > +
-> > +	oldcontainerid = audit_get_containerid(task);
-> > +
-> > +	rc = audit_set_containerid_perm(task, containerid);
-> > +	if (!rc) {
-> > +		task_lock(task);
-> > +		task->containerid = containerid;
-> > +		task_unlock(task);
-> > +	}
-> > +
-> > +	audit_log_set_containerid(task, oldcontainerid, containerid,
-> > rc);
-> > +	return rc;
-> > +}
-> > +
-> >  /**
-> >   * __audit_mq_open - record audit data for a POSIX MQ open
-> >   * @oflag: open flag
+> Mathieu
 > 
-
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+> > 
+> > Regards,
+> > Boqun
+> > 
+> >> Thoughts ?
+> >> 
+> >> Thanks!
+> >> 
+> >> Mathieu
+> >> 
+> >> --
+> >> Mathieu Desnoyers
+> >> EfficiOS Inc.
+> > > http://www.efficios.com
+> 
+> -- 
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
