@@ -1,66 +1,72 @@
-From: Adam Manzanares <Adam.Manzanares@wdc.com>
-Subject: Re: [PATCH v4 3/3] fs: Add aio iopriority support for block_dev
-Date: Fri, 18 May 2018 15:29:21 +0000
-Message-ID: <c2055f86-08f8-582f-7055-23f272f057c4@wdc.com>
-References: <20180517203803.2664-1-adam.manzanares@wdc.com>
- <20180517203803.2664-4-adam.manzanares@wdc.com>
- <51cbf2e9-1ff9-b9e7-fb68-055a64d54da5@kernel.dk>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 01/13] audit: add container id
+Date: Fri, 18 May 2018 11:38:25 -0400
+Message-ID: <20180518113825.4ceeadf6@ivy-bridge>
+References: <cover.1521179281.git.rgb@redhat.com>
+        <e284617ad667ad8f17958dd8babb87fe1b4d7205.1521179281.git.rgb@redhat.com>
+        <20180517170053.7d4afa87@ivy-bridge>
+        <20180517215600.dyswlkvqdtgjwr5y@madcap2.tricolour.ca>
+        <20180518095636.56ff322d@ivy-bridge>
+        <20180518152106.do5b3mu6e6eyvo7q@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <51cbf2e9-1ff9-b9e7-fb68-055a64d54da5@kernel.dk>
-Content-Language: en-US
-Content-ID: <771CC1CDFD8CCF41B6F8F04E18BDB6A4@namprd04.prod.outlook.com>
-Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "bcrl@kvack.org" <bcrl@kvack.org>
-Cc: "mingo@kernel.org" <mingo@kernel.org>, "peterz@infradead.org" <peterz@infradead.org>, "pombredanne@nexb.com" <pombredanne@nexb.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "bigeasy@linutronix.de" <bigeasy@linutronix.de>, "rgoldwyn@suse.com" <rgoldwyn@suse.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180518152106.do5b3mu6e6eyvo7q@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-DQoNCk9uIDUvMTgvMTggODoxNCBBTSwgSmVucyBBeGJvZSB3cm90ZToNCj4gT24gNS8xNy8xOCAy
-OjM4IFBNLCBhZGFtLm1hbnphbmFyZXNAd2RjLmNvbSB3cm90ZToNCj4+IEZyb206IEFkYW0gTWFu
-emFuYXJlcyA8YWRhbS5tYW56YW5hcmVzQHdkYy5jb20+DQo+Pg0KPj4gVGhpcyBpcyB0aGUgcGVy
-LUkvTyBlcXVpdmFsZW50IG9mIHRoZSBpb3ByaW9fc2V0IHN5c3RlbSBjYWxsLg0KPj4NCj4+IFdo
-ZW4gSU9DQl9GTEFHX0lPUFJJTyBpcyBzZXQgb24gdGhlIGlvY2IgYWlvX2ZsYWdzIGZpZWxkLCB0
-aGVuIHdlIHNldCB0aGUNCj4+IG5ld2x5IGFkZGVkIGtpb2NiIGtpX2lvcHJpbyBmaWVsZCB0byB0
-aGUgdmFsdWUgaW4gdGhlIGlvY2IgYWlvX3JlcXByaW8gZmllbGQuDQo+Pg0KPj4gV2hlbiBhIGJp
-byBpcyBjcmVhdGVkIGZvciBhbiBhaW8gcmVxdWVzdCBieSB0aGUgYmxvY2sgZGV2IHdlIHNldCB0
-aGUgcHJpb3JpdHkNCj4+IHZhbHVlIG9mIHRoZSBiaW8gdG8gdGhlIHVzZXIgc3VwcGxpZWQgdmFs
-dWUuDQo+Pg0KPj4gVGhpcyBwYXRjaCBkZXBlbmRzIG9uIGJsb2NrOiBhZGQgaW9wcmlvX2NoZWNr
-X2NhcCBmdW5jdGlvbg0KPiANCj4gQWN0dWFsbHksIG9uZSBjb21tZW50IG9uIHRoaXMgb25lOg0K
-PiANCj4+IGRpZmYgLS1naXQgYS9mcy9haW8uYyBiL2ZzL2Fpby5jDQo+PiBpbmRleCBmM2VhZTVk
-NTc3MWIuLmZmMzEwN2FhODJkNSAxMDA2NDQNCj4+IC0tLSBhL2ZzL2Fpby5jDQo+PiArKysgYi9m
-cy9haW8uYw0KPj4gQEAgLTE0NTEsNiArMTQ1MSwyMiBAQCBzdGF0aWMgaW50IGFpb19wcmVwX3J3
-KHN0cnVjdCBraW9jYiAqcmVxLCBzdHJ1Y3QgaW9jYiAqaW9jYikNCj4+ICAgCWlmIChpb2NiLT5h
-aW9fZmxhZ3MgJiBJT0NCX0ZMQUdfUkVTRkQpDQo+PiAgIAkJcmVxLT5raV9mbGFncyB8PSBJT0NC
-X0VWRU5URkQ7DQo+PiAgIAlyZXEtPmtpX2hpbnQgPSBmaWxlX3dyaXRlX2hpbnQocmVxLT5raV9m
-aWxwKTsNCj4+ICsJaWYgKGlvY2ItPmFpb19mbGFncyAmIElPQ0JfRkxBR19JT1BSSU8pIHsNCj4+
-ICsJCS8qDQo+PiArCQkgKiBJZiB0aGUgSU9DQl9GTEFHX0lPUFJJTyBmbGFnIG9mIGFpb19mbGFn
-cyBpcyBzZXQsIHRoZW4NCj4+ICsJCSAqIGFpb19yZXFwcmlvIGlzIGludGVycHJldGVkIGFzIGFu
-IEkvTyBzY2hlZHVsaW5nDQo+PiArCQkgKiBjbGFzcyBhbmQgcHJpb3JpdHkuDQo+PiArCQkgKi8N
-Cj4+ICsJCXJldCA9IGlvcHJpb19jaGVja19jYXAoaW9jYi0+YWlvX3JlcXByaW8pOw0KPj4gKwkJ
-aWYgKHJldCkgew0KPj4gKwkJCXByX2RlYnVnKCJhaW8gaW9wcmlvIGNoZWNrIGNhcCBlcnJvclxu
-Iik7DQo+PiArCQkJcmV0dXJuIC1FSU5WQUw7DQo+PiArCQl9DQo+PiArDQo+PiArCQlyZXEtPmtp
-X2lvcHJpbyA9IGlvY2ItPmFpb19yZXFwcmlvOw0KPj4gKwkJcmVxLT5raV9mbGFncyB8PSBJT0NC
-X0lPUFJJTzsNCj4+ICsJfQ0KPiANCj4gRG8gd2UgcmVhbGx5IG5lZWQgSU9DQl9JT1BSSU8/IEFs
-bCB6ZXJvZXMgaXMgbm8gcHJpb3JpdHkgc2V0IGFueXdheSwNCj4gc28gd2Ugc2hvdWxkIGJlIGFi
-bGUgdG8gZ2V0IGJ5IHdpdGgganVzdCBzZXR0aW5nIC0+a2lfaW9wcmlvIHRvIGVpdGhlcg0KPiB0
-aGUgcHJpb3JpdHksIG9yIDAuDQo+IA0KPj4gZGlmZiAtLWdpdCBhL2ZzL2Jsb2NrX2Rldi5jIGIv
-ZnMvYmxvY2tfZGV2LmMNCj4+IGluZGV4IDdlYzkyMGUyNzA2NS4uOTcwYmVmNzljYWE2IDEwMDY0
-NA0KPj4gLS0tIGEvZnMvYmxvY2tfZGV2LmMNCj4+ICsrKyBiL2ZzL2Jsb2NrX2Rldi5jDQo+PiBA
-QCAtMzU1LDYgKzM1NSw4IEBAIF9fYmxrZGV2X2RpcmVjdF9JTyhzdHJ1Y3Qga2lvY2IgKmlvY2Is
-IHN0cnVjdCBpb3ZfaXRlciAqaXRlciwgaW50IG5yX3BhZ2VzKQ0KPj4gICAJCWJpby0+Ymlfd3Jp
-dGVfaGludCA9IGlvY2ItPmtpX2hpbnQ7DQo+PiAgIAkJYmlvLT5iaV9wcml2YXRlID0gZGlvOw0K
-Pj4gICAJCWJpby0+YmlfZW5kX2lvID0gYmxrZGV2X2Jpb19lbmRfaW87DQo+PiArCQlpZiAoaW9j
-Yi0+a2lfZmxhZ3MgJiBJT0NCX0lPUFJJTykNCj4+ICsJCQliaW8tPmJpX2lvcHJpbyA9IGlvY2It
-PmtpX2lvcHJpbzsNCj4gDQo+IEFuZCB0aGVuIHRoaXMgYXNzaWdubWVudCBjYW4ganVzdCBoYXBw
-ZW4gdW5jb25kaXRpb25hbGx5Lg0KDQpUaGF0IGlzIGEgY2xlYW5lciB3YXkgb2YgZ3VhcmFudGVl
-aW5nIHRoZSBpb3ByaW8gc2V0IG9uIHRoZSBraW9jYiBpcyANCm9ubHkgc2V0IHdoZW4gdGhlIHVz
-ZXIgaW50ZW5kcyB0byB1c2UgdGhlIGlvcHJpbyBmcm9tIHRoZSBpb2NiLg0KDQpJJ2xsIHJlc2Vu
-ZCB0aGUgc2VyaWVzLg0KDQoNCj4g
+On Fri, 18 May 2018 11:21:06 -0400
+Richard Guy Briggs <rgb@redhat.com> wrote:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+> On 2018-05-18 09:56, Steve Grubb wrote:
+> > On Thu, 17 May 2018 17:56:00 -0400
+> > Richard Guy Briggs <rgb@redhat.com> wrote:
+> >   
+> > > > During syscall events, the path info is returned in a a record
+> > > > simply called AUDIT_PATH, cwd info is returned in AUDIT_CWD. So,
+> > > > rather than calling the record that gets attached to everything
+> > > > AUDIT_CONTAINER_INFO, how about simply AUDIT_CONTAINER.    
+> > > 
+> > > Considering the container initiation record is different than the
+> > > record to document the container involved in an otherwise normal
+> > > syscall, we need two names.  I don't have a strong opinion what
+> > > they are.
+> > > 
+> > > I'd prefer AUDIT_CONTAIN and AUDIT_CONTAINER_INFO so that the two
+> > > are different enough to be visually distinct while leaving
+> > > AUDIT_CONTAINERID for the field type in patch 4 ("audit: add
+> > > containerid filtering")  
+> 
+> (Sorry, I had intended AUDIT_CONTAINER for the first in that paragraph
+> above.)
+> 
+> > How about AUDIT_CONTAINER for the auxiliary record? The one that
+> > starts the container, I don't have a strong opinion on. Could be
+> > AUDIT_CONTAINER_INIT, AUDIT_CONTAINER_START, AUDIT_CONTAINERID,
+> > AUDIT_CONTAINER_ID, or something else. The API call that sets the ID
+> > for filtering could be AUDIT_CID or AUDIT_CONTID if that helps
+> > decide what the initial event might be. Normally, it should match
+> > the field being filtered.  
+> 
+> Ok, I had shortened the record field name to "contid=" to be unique
+> enough while not using too much netlink bandwidth.  I could have used
+> "cid=" but that could be unobvious or ambiguous.  I didn't want to use
+> the full "containerid=" due to that.  I suppose I could change the
+> field name macro to AUDIT_CONTID.
+> 
+> For the one that starts the container, I'd prefer to leave the name a
+> bit more general than "_INIT", "_START", so maybe I'll swap them
+> around and use AUDIT_CONTAINER_INFO for the startup record, and use
+> AUDIT_CONTAINER for the syscall auxiliary record.
+> 
+> Does that work?
+
+I'll go along with that. Thanks. But making that swap frees up
+AUDIT_CONTAINER_ID which could be the first event. But
+AUDIT_CONTAINER_INFO is also fine with me.
+
+Best Regards,
+-Steve
