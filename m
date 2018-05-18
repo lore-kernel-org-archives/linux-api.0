@@ -1,61 +1,71 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v4 0/3] AIO add per-command iopriority
-Date: Thu, 17 May 2018 20:41:32 -0600
-Message-ID: <3ec960cf-e14c-6ff6-3356-186136f43df7@kernel.dk>
-References: <20180517203803.2664-1-adam.manzanares@wdc.com>
+From: James Hogan <jhogan@kernel.org>
+Subject: Re: [PATCH 7/7] aio: implement io_pgetevents
+Date: Fri, 18 May 2018 09:28:38 +0100
+Message-ID: <20180518082837.GA3264@jamesdev>
+References: <20180502211448.18276-1-hch@lst.de>
+ <20180502211448.18276-8-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180517203803.2664-1-adam.manzanares@wdc.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, bcrl@kvack.org
-Cc: mingo@kernel.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="vtzGhvizbBRQ85DL"
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180502211448.18276-8-hch@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/17/18 2:38 PM, adam.manzanares@wdc.com wrote:
-> From: Adam Manzanares <adam.manzanares@wdc.com>
-> 
-> This is the per-I/O equivalent of the ioprio_set system call.
-> See the following link for performance implications on a SATA HDD:
-> https://lkml.org/lkml/2016/12/6/495
-> 
-> First patch factors ioprio_check_cap function out of ioprio_set system call to
-> also be used by the aio ioprio interface.
-> 
-> Second patch converts kiocb ki_hint field to a u16 to avoid kiocb bloat.
-> 
-> Third patch passes ioprio hint from aio iocb to kiocb and enables block_dev
-> usage of the per I/O ioprio feature.
-> 
-> v2: merge patches
->     use IOCB_FLAG_IOPRIO
->     validate intended use with IOCB_IOPRIO
->     add linux-api and linux-block to cc
-> 
-> v3: add ioprio_check_cap function
->     convert kiocb ki_hint to u16
->     use ioprio_check_cap when adding ioprio to kiocb in aio.c
-> 
-> v4: handle IOCB_IOPRIO in aio_prep_rw
->     note patch 3 depends on patch 1 in commit msg
-> 
-> Adam Manzanares (3):
->   block: add ioprio_check_cap function
->   fs: Convert kiocb rw_hint from enum to u16
->   fs: Add aio iopriority support for block_dev
-> 
->  block/ioprio.c               | 22 ++++++++++++++++------
->  fs/aio.c                     | 16 ++++++++++++++++
->  fs/block_dev.c               |  2 ++
->  include/linux/fs.h           | 17 +++++++++++++++--
->  include/linux/ioprio.h       |  2 ++
->  include/uapi/linux/aio_abi.h |  1 +
->  6 files changed, 52 insertions(+), 8 deletions(-)
 
-This looks fine to me now. I can pick up #1 for 4.18 - and 2+3 as well,
-unless someone else wants to take them.
+--vtzGhvizbBRQ85DL
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 
--- 
-Jens Axboe
+Given this:
+
+On Wed, May 02, 2018 at 11:14:48PM +0200, Christoph Hellwig wrote:
+> +struct __aio_sigset {
+> +	sigset_t __user	*sigmask;
+> +	size_t		sigsetsize;
+> +};
+
+and:
+
+> +asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
+> +				long min_nr,
+> +				long nr,
+> +				struct io_event __user *events,
+> +				struct timespec __user *timeout,
+> +				const struct __aio_sigset *sig);
+
+The following paragraph in the commit message would appear to be
+misleading since __aio_sigset contains a size:
+
+> Note that unlike many other signal related calls we do not pass a sigmask
+> size, as that would get us to 7 arguments, which aren't easily supported
+> by the syscall infrastructure.  It seems a lot less painful to just add a
+> new syscall variant in the unlikely case we're going to increase the
+> sigset size.
+
+Is it possible to correct it before this gets merged?
+
+Thanks
+James
+
+--vtzGhvizbBRQ85DL
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYIAB0WIQS7lRNBWUYtqfDOVL41zuSGKxAj8gUCWv6OtAAKCRA1zuSGKxAj
+8nzxAQC7f4RLhmqTHYo86l9+4h8Ta0h4zflObA+py2hwfuGW2wD/a+C9QJzr4ybw
+XxWoWxP/rKTTnqobNheJw5wH6+HiqgQ=
+=7rhk
+-----END PGP SIGNATURE-----
+
+--vtzGhvizbBRQ85DL--
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
