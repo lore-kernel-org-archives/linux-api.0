@@ -1,175 +1,61 @@
-From: Boqun Feng <boqun.feng@gmail.com>
-Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
-Date: Fri, 18 May 2018 07:50:43 +0800
-Message-ID: <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
- <20180430224433.17407-8-mathieu.desnoyers@efficios.com>
- <20180516161837.GI12198@hirez.programming.kicks-ass.net>
- <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com>
- <20180517011949.GA1121@tardis>
- <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH v4 0/3] AIO add per-command iopriority
+Date: Thu, 17 May 2018 20:41:32 -0600
+Message-ID: <3ec960cf-e14c-6ff6-3356-186136f43df7@kernel.dk>
+References: <20180517203803.2664-1-adam.manzanares@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20180517203803.2664-1-adam.manzanares@wdc.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Will Deacon <will.deacon@arm.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Michael
+To: adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, bcrl@kvack.org
+Cc: mingo@kernel.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-
-
-On Thu, May 17, 2018, at 11:28 PM, Mathieu Desnoyers wrote:
-> ----- On May 16, 2018, at 9:19 PM, Boqun Feng boqun.feng@gmail.com wrote:
+On 5/17/18 2:38 PM, adam.manzanares@wdc.com wrote:
+> From: Adam Manzanares <adam.manzanares@wdc.com>
 > 
-> > On Wed, May 16, 2018 at 04:13:16PM -0400, Mathieu Desnoyers wrote:
-> >> ----- On May 16, 2018, at 12:18 PM, Peter Zijlstra peterz@infradead.org wrote:
-> >> 
-> >> > On Mon, Apr 30, 2018 at 06:44:26PM -0400, Mathieu Desnoyers wrote:
-> >> >> diff --git a/arch/powerpc/Kconfig b/arch/powerpc/Kconfig
-> >> >> index c32a181a7cbb..ed21a777e8c6 100644
-> >> >> --- a/arch/powerpc/Kconfig
-> >> >> +++ b/arch/powerpc/Kconfig
-> >> >> @@ -223,6 +223,7 @@ config PPC
-> >> >>  	select HAVE_SYSCALL_TRACEPOINTS
-> >> >>  	select HAVE_VIRT_CPU_ACCOUNTING
-> >> >>  	select HAVE_IRQ_TIME_ACCOUNTING
-> >> >> +	select HAVE_RSEQ
-> >> >>  	select IRQ_DOMAIN
-> >> >>  	select IRQ_FORCED_THREADING
-> >> >>  	select MODULES_USE_ELF_RELA
-> >> >> diff --git a/arch/powerpc/kernel/signal.c b/arch/powerpc/kernel/signal.c
-> >> >> index 61db86ecd318..d3bb3aaaf5ac 100644
-> >> >> --- a/arch/powerpc/kernel/signal.c
-> >> >> +++ b/arch/powerpc/kernel/signal.c
-> >> >> @@ -133,6 +133,8 @@ static void do_signal(struct task_struct *tsk)
-> >> >>  	/* Re-enable the breakpoints for the signal stack */
-> >> >>  	thread_change_pc(tsk, tsk->thread.regs);
-> >> >>  
-> >> >> +	rseq_signal_deliver(tsk->thread.regs);
-> >> >> +
-> >> >>  	if (is32) {
-> >> >>          	if (ksig.ka.sa.sa_flags & SA_SIGINFO)
-> >> >>  			ret = handle_rt_signal32(&ksig, oldset, tsk);
-> >> >> @@ -164,6 +166,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long
-> >> >> thread_info_flags)
-> >> >>  	if (thread_info_flags & _TIF_NOTIFY_RESUME) {
-> >> >>  		clear_thread_flag(TIF_NOTIFY_RESUME);
-> >> >>  		tracehook_notify_resume(regs);
-> >> >> +		rseq_handle_notify_resume(regs);
-> >> >>  	}
-> >> >>  
-> >> >>  	user_enter();
-> >> > 
-> >> > Again no rseq_syscall().
-> >> 
-> >> Same question for PowerPC as for ARM:
-> >> 
-> >> Considering that rseq_syscall is implemented as follows:
-> >> 
-> >> +void rseq_syscall(struct pt_regs *regs)
-> >> +{
-> >> +       unsigned long ip = instruction_pointer(regs);
-> >> +       struct task_struct *t = current;
-> >> +       struct rseq_cs rseq_cs;
-> >> +
-> >> +       if (!t->rseq)
-> >> +               return;
-> >> +       if (!access_ok(VERIFY_READ, t->rseq, sizeof(*t->rseq)) ||
-> >> +           rseq_get_rseq_cs(t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
-> >> +               force_sig(SIGSEGV, t);
-> >> +}
-> >> 
-> >> and that x86 calls it from syscall_return_slowpath() (which AFAIU is
-> >> now used in the fast-path since KPTI), I wonder where we should call
-> > 
-> > So we actually detect this after the syscall takes effect, right? I
-> > wonder whether this could be problematic, because "disallowing syscall"
-> > in rseq areas may means the syscall won't take effect to some people, I
-> > guess?
-> > 
-> >> this on PowerPC ?  I was under the impression that PowerPC return to
-> >> userspace fast-path was not calling C code unless work flags were set,
-> >> but I might be wrong.
-> >> 
-> > 
-> > I think you're right. So we have to introduce callsite to rseq_syscall()
-> > in syscall path, something like:
-> > 
-> > diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
-> > index 51695608c68b..a25734a96640 100644
-> > --- a/arch/powerpc/kernel/entry_64.S
-> > +++ b/arch/powerpc/kernel/entry_64.S
-> > @@ -222,6 +222,9 @@ system_call_exit:
-> > 	mtmsrd	r11,1
-> > #endif /* CONFIG_PPC_BOOK3E */
-> > 
-> > +	addi    r3,r1,STACK_FRAME_OVERHEAD
-> > +	bl	rseq_syscall
-> > +
-> > 	ld	r9,TI_FLAGS(r12)
-> > 	li	r11,-MAX_ERRNO
-> > 	andi.
-> > 		r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
-> > 
-> > But I think it's important for us to first decide where (before or after
-> > the syscall) we do the detection.
+> This is the per-I/O equivalent of the ioprio_set system call.
+> See the following link for performance implications on a SATA HDD:
+> https://lkml.org/lkml/2016/12/6/495
 > 
-> As Peter said, we don't really care whether it's on syscall entry or 
-> exit, as
-> long as the process gets killed when the erroneous use is detected. I 
-> think doing
-> it on syscall exit is a bit easier because we can clearly access the 
-> userspace
-> TLS, which AFAIU may be less straightforward on syscall entry.
->
+> First patch factors ioprio_check_cap function out of ioprio_set system call to
+> also be used by the aio ioprio interface.
+> 
+> Second patch converts kiocb ki_hint field to a u16 to avoid kiocb bloat.
+> 
+> Third patch passes ioprio hint from aio iocb to kiocb and enables block_dev
+> usage of the per I/O ioprio feature.
+> 
+> v2: merge patches
+>     use IOCB_FLAG_IOPRIO
+>     validate intended use with IOCB_IOPRIO
+>     add linux-api and linux-block to cc
+> 
+> v3: add ioprio_check_cap function
+>     convert kiocb ki_hint to u16
+>     use ioprio_check_cap when adding ioprio to kiocb in aio.c
+> 
+> v4: handle IOCB_IOPRIO in aio_prep_rw
+>     note patch 3 depends on patch 1 in commit msg
+> 
+> Adam Manzanares (3):
+>   block: add ioprio_check_cap function
+>   fs: Convert kiocb rw_hint from enum to u16
+>   fs: Add aio iopriority support for block_dev
+> 
+>  block/ioprio.c               | 22 ++++++++++++++++------
+>  fs/aio.c                     | 16 ++++++++++++++++
+>  fs/block_dev.c               |  2 ++
+>  include/linux/fs.h           | 17 +++++++++++++++--
+>  include/linux/ioprio.h       |  2 ++
+>  include/uapi/linux/aio_abi.h |  1 +
+>  6 files changed, 52 insertions(+), 8 deletions(-)
 
-Fair enough.
- 
-> We may want to add #ifdef CONFIG_DEBUG_RSEQ / #endif around the code you
-> proposed above, so it's only compiled in if CONFIG_DEBUG_RSEQ=y.
-> 
+This looks fine to me now. I can pick up #1 for 4.18 - and 2+3 as well,
+unless someone else wants to take them.
 
-OK.
-
-> On the ARM leg of the email thread, Will Deacon suggests to test whether 
-> current->rseq
-> is non-NULL before calling rseq_syscall(). I wonder if this added check 
-> is justified
-> as the assembly level, considering that this is just a debugging option. 
-> We already do
-> that check at the very beginning of rseq_syscall().
-> 
-
-Yes, I think it's better to do the check in rseq_syscall(), leaving the asm
-code a bit cleaner.
-
-Regards,
-Boqun
-
-> Thoughts ?
-> 
-> Thanks,
-> 
-> Mathieu
-> 
-> > 
-> > Regards,
-> > Boqun
-> > 
-> >> Thoughts ?
-> >> 
-> >> Thanks!
-> >> 
-> >> Mathieu
-> >> 
-> >> --
-> >> Mathieu Desnoyers
-> >> EfficiOS Inc.
-> > > http://www.efficios.com
-> 
-> -- 
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+-- 
+Jens Axboe
