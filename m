@@ -1,81 +1,72 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v4 3/3] fs: Add aio iopriority support for block_dev
-Date: Fri, 18 May 2018 09:14:07 -0600
-Message-ID: <51cbf2e9-1ff9-b9e7-fb68-055a64d54da5@kernel.dk>
-References: <20180517203803.2664-1-adam.manzanares@wdc.com>
- <20180517203803.2664-4-adam.manzanares@wdc.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 01/13] audit: add container id
+Date: Fri, 18 May 2018 11:21:06 -0400
+Message-ID: <20180518152106.do5b3mu6e6eyvo7q@madcap2.tricolour.ca>
+References: <cover.1521179281.git.rgb@redhat.com>
+ <e284617ad667ad8f17958dd8babb87fe1b4d7205.1521179281.git.rgb@redhat.com>
+ <20180517170053.7d4afa87@ivy-bridge>
+ <20180517215600.dyswlkvqdtgjwr5y@madcap2.tricolour.ca>
+ <20180518095636.56ff322d@ivy-bridge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180517203803.2664-4-adam.manzanares@wdc.com>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, bcrl@kvack.org
-Cc: mingo@kernel.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180518095636.56ff322d@ivy-bridge>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Steve Grubb <sgrubb@redhat.com>
+Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On 5/17/18 2:38 PM, adam.manzanares@wdc.com wrote:
-> From: Adam Manzanares <adam.manzanares@wdc.com>
+On 2018-05-18 09:56, Steve Grubb wrote:
+> On Thu, 17 May 2018 17:56:00 -0400
+> Richard Guy Briggs <rgb@redhat.com> wrote:
 > 
-> This is the per-I/O equivalent of the ioprio_set system call.
-> 
-> When IOCB_FLAG_IOPRIO is set on the iocb aio_flags field, then we set the
-> newly added kiocb ki_ioprio field to the value in the iocb aio_reqprio field.
-> 
-> When a bio is created for an aio request by the block dev we set the priority
-> value of the bio to the user supplied value.
-> 
-> This patch depends on block: add ioprio_check_cap function
+> > > During syscall events, the path info is returned in a a record
+> > > simply called AUDIT_PATH, cwd info is returned in AUDIT_CWD. So,
+> > > rather than calling the record that gets attached to everything
+> > > AUDIT_CONTAINER_INFO, how about simply AUDIT_CONTAINER.  
+> > 
+> > Considering the container initiation record is different than the
+> > record to document the container involved in an otherwise normal
+> > syscall, we need two names.  I don't have a strong opinion what they
+> > are.
+> > 
+> > I'd prefer AUDIT_CONTAIN and AUDIT_CONTAINER_INFO so that the two
+> > are different enough to be visually distinct while leaving
+> > AUDIT_CONTAINERID for the field type in patch 4 ("audit: add
+> > containerid filtering")
 
-Actually, one comment on this one:
+(Sorry, I had intended AUDIT_CONTAINER for the first in that paragraph
+above.)
 
-> diff --git a/fs/aio.c b/fs/aio.c
-> index f3eae5d5771b..ff3107aa82d5 100644
-> --- a/fs/aio.c
-> +++ b/fs/aio.c
-> @@ -1451,6 +1451,22 @@ static int aio_prep_rw(struct kiocb *req, struct iocb *iocb)
->  	if (iocb->aio_flags & IOCB_FLAG_RESFD)
->  		req->ki_flags |= IOCB_EVENTFD;
->  	req->ki_hint = file_write_hint(req->ki_filp);
-> +	if (iocb->aio_flags & IOCB_FLAG_IOPRIO) {
-> +		/*
-> +		 * If the IOCB_FLAG_IOPRIO flag of aio_flags is set, then
-> +		 * aio_reqprio is interpreted as an I/O scheduling
-> +		 * class and priority.
-> +		 */
-> +		ret = ioprio_check_cap(iocb->aio_reqprio);
-> +		if (ret) {
-> +			pr_debug("aio ioprio check cap error\n");
-> +			return -EINVAL;
-> +		}
-> +
-> +		req->ki_ioprio = iocb->aio_reqprio;
-> +		req->ki_flags |= IOCB_IOPRIO;
-> +	}
+> How about AUDIT_CONTAINER for the auxiliary record? The one that starts
+> the container, I don't have a strong opinion on. Could be
+> AUDIT_CONTAINER_INIT, AUDIT_CONTAINER_START, AUDIT_CONTAINERID,
+> AUDIT_CONTAINER_ID, or something else. The API call that sets the ID
+> for filtering could be AUDIT_CID or AUDIT_CONTID if that helps decide
+> what the initial event might be. Normally, it should match the field
+> being filtered.
 
-Do we really need IOCB_IOPRIO? All zeroes is no priority set anyway,
-so we should be able to get by with just setting ->ki_ioprio to either
-the priority, or 0.
+Ok, I had shortened the record field name to "contid=" to be unique
+enough while not using too much netlink bandwidth.  I could have used
+"cid=" but that could be unobvious or ambiguous.  I didn't want to use
+the full "containerid=" due to that.  I suppose I could change the
+field name macro to AUDIT_CONTID.
 
-> diff --git a/fs/block_dev.c b/fs/block_dev.c
-> index 7ec920e27065..970bef79caa6 100644
-> --- a/fs/block_dev.c
-> +++ b/fs/block_dev.c
-> @@ -355,6 +355,8 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
->  		bio->bi_write_hint = iocb->ki_hint;
->  		bio->bi_private = dio;
->  		bio->bi_end_io = blkdev_bio_end_io;
-> +		if (iocb->ki_flags & IOCB_IOPRIO)
-> +			bio->bi_ioprio = iocb->ki_ioprio;
+For the one that starts the container, I'd prefer to leave the name a
+bit more general than "_INIT", "_START", so maybe I'll swap them around
+and use AUDIT_CONTAINER_INFO for the startup record, and use
+AUDIT_CONTAINER for the syscall auxiliary record.
 
-And then this assignment can just happen unconditionally.
+Does that work?
 
--- 
-Jens Axboe
+> -Steve
+
+- RGB
 
 --
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
