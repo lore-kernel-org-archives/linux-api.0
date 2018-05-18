@@ -1,51 +1,27 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
-Date: Fri, 18 May 2018 14:17:17 -0400 (EDT)
-Message-ID: <418003803.516.1526667437396.JavaMail.zimbra@efficios.com>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com> <20180430224433.17407-8-mathieu.desnoyers@efficios.com> <20180516161837.GI12198@hirez.programming.kicks-ass.net> <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com> <20180517011949.GA1121@tardis> <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com> <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com>
+From: Adam Manzanares <Adam.Manzanares@wdc.com>
+Subject: Re: [PATCH v4 2/3] fs: Convert kiocb rw_hint from enum to u16
+Date: Fri, 18 May 2018 19:53:36 +0000
+Message-ID: <db91bfca-4ec9-726d-aac1-fa5979c65692@wdc.com>
+References: <20180517203803.2664-1-adam.manzanares@wdc.com>
+ <20180517203803.2664-3-adam.manzanares@wdc.com>
+ <20180518160512.GG22791@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com>
+In-Reply-To: <20180518160512.GG22791@infradead.org>
+Content-Language: en-US
+Content-ID: <B812D3DA2D2F624ABD22CF050A2AD410@namprd04.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Boqun Feng <boqun.feng@gmail.com>
-Cc: Will Deacon <will.deacon@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>, "bcrl@kvack.org" <bcrl@kvack.org>, "mingo@kernel.org" <mingo@kernel.org>, "peterz@infradead.org" <peterz@infradead.org>, "pombredanne@nexb.com" <pombredanne@nexb.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "bigeasy@linutronix.de" <bigeasy@linutronix.de>, "rgoldwyn@suse.com" <rgoldwyn@suse.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On May 17, 2018, at 7:50 PM, Boqun Feng boqun.feng@gmail.com wrote:
-[...]
->> > I think you're right. So we have to introduce callsite to rseq_syscall()
->> > in syscall path, something like:
->> > 
->> > diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
->> > index 51695608c68b..a25734a96640 100644
->> > --- a/arch/powerpc/kernel/entry_64.S
->> > +++ b/arch/powerpc/kernel/entry_64.S
->> > @@ -222,6 +222,9 @@ system_call_exit:
->> > 	mtmsrd	r11,1
->> > #endif /* CONFIG_PPC_BOOK3E */
->> > 
->> > +	addi    r3,r1,STACK_FRAME_OVERHEAD
->> > +	bl	rseq_syscall
->> > +
->> > 	ld	r9,TI_FLAGS(r12)
->> > 	li	r11,-MAX_ERRNO
->> > 	andi.
->> > 		r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
->> > 
-
-By the way, I think this is not the right spot to call rseq_syscall, because
-interrupts are disabled. I think we should move this hunk right after system_call_exit.
-
-Would you like to implement and test an updated patch adding those calls for ppc 32 and 64 ?
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+DQoNCk9uIDUvMTgvMTggOTowNSBBTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6DQo+PiArLyog
+a2lfaGludCBjaGFuZ2VkIGZyb20gZW51bSB0byB1MTYsIG1ha2Ugc3VyZSByd19oaW50IGZpdHMg
+aW50byB1MTYgKi8NCj4gDQo+IEkgZG9uJ3QgdGhpbmsgdGhpcyBjb21tZW50IGlzIHZlcnkgdXNl
+ZnVsLg0KPiANCj4+ICtzdGF0aWMgaW5saW5lIHUxNiBraV9oaW50X3ZhbGlkKGVudW0gcndfaGlu
+dCBoaW50KQ0KPiANCj4gSSdkIGNhbGwgdGhpcyBraV9oaW50X3ZhbGlkYXRlLg0KPiANCj4+ICt7
+DQo+PiArCWlmIChoaW50ID4gTUFYX0tJX0hJTlQpDQo+PiArCQlyZXR1cm4gMDsNCj4+ICsNCj4+
+ICsJcmV0dXJuIGhpbnQ7DQo+IA0KPiBOaXQ6IGtpbGwgdGhlIGVtcHR5IGxpbmUuDQo+IA0KDQpJ
+J2xsIGNsZWFuIHRoaXMgdXAgaW4gdGhlIG5leHQgcmV2aXNpb24u
