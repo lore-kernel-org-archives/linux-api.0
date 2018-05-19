@@ -1,147 +1,135 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH v2 1/4] mm: change type of free_contig_range(nr_pages) to
- unsigned long
-Date: Fri, 18 May 2018 15:01:20 -0700
-Message-ID: <87943a21-4465-31bd-ed37-69253879ec47@oracle.com>
-References: <20180503232935.22539-1-mike.kravetz@oracle.com>
- <20180503232935.22539-2-mike.kravetz@oracle.com>
- <87d74ce0-b135-064d-a589-64235e44c388@suse.cz>
+From: Lai Jiangshan <jiangshanlai@gmail.com>
+Subject: Re: [PATCH 3/6] workqueue: Make worker_attach/detach_pool() update worker->pool
+Date: Sat, 19 May 2018 14:44:39 +0800
+Message-ID: <CAJhGHyC8pZvy3cmT-n6aFy0KQVJ0je6LwUKZf2Z1Rdvq--vFVw@mail.gmail.com>
+References: <20180517043448.3152269-1-tj@kernel.org> <20180517043448.3152269-4-tj@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87d74ce0-b135-064d-a589-64235e44c388@suse.cz>
-Content-Language: en-US
+In-Reply-To: <20180517043448.3152269-4-tj@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Marek Szyprowski <m.szyprowski@samsung.com>
+To: Tejun Heo <tj@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Craig Small <csmall@enc.com.au>
 List-Id: linux-api@vger.kernel.org
 
-On 05/18/2018 02:12 AM, Vlastimil Babka wrote:
-> On 05/04/2018 01:29 AM, Mike Kravetz wrote:
->> free_contig_range() is currently defined as:
->> void free_contig_range(unsigned long pfn, unsigned nr_pages);
->> change to,
->> void free_contig_range(unsigned long pfn, unsigned long nr_pages);
->>
->> Some callers are passing a truncated unsigned long today.  It is
->> highly unlikely that these values will overflow an unsigned int.
->> However, this should be changed to an unsigned long to be consistent
->> with other page counts.
->>
->> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
->> ---
->>  include/linux/gfp.h | 2 +-
->>  mm/cma.c            | 2 +-
->>  mm/hugetlb.c        | 2 +-
->>  mm/page_alloc.c     | 6 +++---
->>  4 files changed, 6 insertions(+), 6 deletions(-)
->>
->> diff --git a/include/linux/gfp.h b/include/linux/gfp.h
->> index 1a4582b44d32..86a0d06463ab 100644
->> --- a/include/linux/gfp.h
->> +++ b/include/linux/gfp.h
->> @@ -572,7 +572,7 @@ static inline bool pm_suspended_storage(void)
->>  /* The below functions must be run on a range from a single zone. */
->>  extern int alloc_contig_range(unsigned long start, unsigned long end,
->>  			      unsigned migratetype, gfp_t gfp_mask);
->> -extern void free_contig_range(unsigned long pfn, unsigned nr_pages);
->> +extern void free_contig_range(unsigned long pfn, unsigned long nr_pages);
->>  #endif
->>  
->>  #ifdef CONFIG_CMA
->> diff --git a/mm/cma.c b/mm/cma.c
->> index aa40e6c7b042..f473fc2b7cbd 100644
->> --- a/mm/cma.c
->> +++ b/mm/cma.c
->> @@ -563,7 +563,7 @@ bool cma_release(struct cma *cma, const struct page *pages, unsigned int count)
->>  
->>  	VM_BUG_ON(pfn + count > cma->base_pfn + cma->count);
->>  
->> -	free_contig_range(pfn, count);
->> +	free_contig_range(pfn, (unsigned long)count);
-> 
-> I guess this cast from uint to ulong doesn't need to be explicit? But
-> instead, cma_release() signature could be also changed to ulong, because
-> some of its callers do pass those?
+On Thu, May 17, 2018 at 12:34 PM, Tejun Heo <tj@kernel.org> wrote:
+> For historical reasons, the worker attach/detach functions don't
+> currently manage worker->pool and the callers are manually and
+> inconsistently updating it.
+>
+> This patch moves worker->pool updates into the worker attach/detach
+> functions.  This makes worker->pool consistent and clearly defines how
+> worker->pool updates are synchronized.
+>
+> This will help later workqueue visibility improvements by allowing
+> safe access to workqueue information from worker->task.
+>
+> Signed-off-by: Tejun Heo <tj@kernel.org>
+> ---
+>  kernel/workqueue.c          | 16 ++++++++--------
+>  kernel/workqueue_internal.h |  2 +-
+>  2 files changed, 9 insertions(+), 9 deletions(-)
+>
+> diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+> index 91fe0a6..2fde50f 100644
+> --- a/kernel/workqueue.c
+> +++ b/kernel/workqueue.c
+> @@ -1741,6 +1741,7 @@ static void worker_attach_to_pool(struct worker *worker,
+>                 worker->flags |= WORKER_UNBOUND;
+>
+>         list_add_tail(&worker->node, &pool->workers);
+> +       worker->pool = pool;
+>
+>         mutex_unlock(&wq_pool_attach_mutex);
+>  }
+> @@ -1748,19 +1749,21 @@ static void worker_attach_to_pool(struct worker *worker,
+>  /**
+>   * worker_detach_from_pool() - detach a worker from its pool
+>   * @worker: worker which is attached to its pool
+> - * @pool: the pool @worker is attached to
+>   *
+>   * Undo the attaching which had been done in worker_attach_to_pool().  The
+>   * caller worker shouldn't access to the pool after detached except it has
+>   * other reference to the pool.
+>   */
+> -static void worker_detach_from_pool(struct worker *worker,
+> -                                   struct worker_pool *pool)
+> +static void worker_detach_from_pool(struct worker *worker)
+>  {
+> +       struct worker_pool *pool = worker->pool;
+>         struct completion *detach_completion = NULL;
+>
+>         mutex_lock(&wq_pool_attach_mutex);
+> +
+>         list_del(&worker->node);
+> +       worker->pool = NULL;
+> +
+>         if (list_empty(&pool->workers))
+>                 detach_completion = pool->detach_completion;
+>         mutex_unlock(&wq_pool_attach_mutex);
+> @@ -1799,7 +1802,6 @@ static struct worker *create_worker(struct worker_pool *pool)
+>         if (!worker)
+>                 goto fail;
+>
+> -       worker->pool = pool;
+>         worker->id = id;
+>
+>         if (pool->cpu >= 0)
+> @@ -2236,7 +2238,7 @@ static int worker_thread(void *__worker)
+>
+>                 set_task_comm(worker->task, "kworker/dying");
+>                 ida_simple_remove(&pool->worker_ida, worker->id);
+> -               worker_detach_from_pool(worker, pool);
+> +               worker_detach_from_pool(worker);
+>                 kfree(worker);
+>                 return 0;
+>         }
+> @@ -2367,7 +2369,6 @@ static int rescuer_thread(void *__rescuer)
+>                 worker_attach_to_pool(rescuer, pool);
+>
+>                 spin_lock_irq(&pool->lock);
+> -               rescuer->pool = pool;
+>
+>                 /*
+>                  * Slurp in all works issued via this workqueue and
+> @@ -2417,10 +2418,9 @@ static int rescuer_thread(void *__rescuer)
+>                 if (need_more_worker(pool))
+>                         wake_up_worker(pool);
+>
+> -               rescuer->pool = NULL;
+>                 spin_unlock_irq(&pool->lock);
+>
+> -               worker_detach_from_pool(rescuer, pool);
+> +               worker_detach_from_pool(rescuer);
+>
+>                 spin_lock_irq(&wq_mayday_lock);
+>         }
+> diff --git a/kernel/workqueue_internal.h b/kernel/workqueue_internal.h
+> index d390d1b..4a182e0 100644
+> --- a/kernel/workqueue_internal.h
+> +++ b/kernel/workqueue_internal.h
+> @@ -37,7 +37,7 @@ struct worker {
+>         /* 64 bytes boundary on 64bit, 32 on 32bit */
+>
+>         struct task_struct      *task;          /* I: worker task */
+> -       struct worker_pool      *pool;          /* I: the associated pool */
+> +       struct worker_pool      *pool;          /* A: the associated pool */
+>                                                 /* L: for rescuers */
 
-Correct, that cast is not needed.
+I guess ` /* L: for rescuers */ ` needed to be removed.
 
-I like the idea of changing cma_release() to take ulong.  Until you mentioned
-this, I did not realize that some callers were passing in a truncated ulong.
-As noted in my commit message, this truncation is unlikely to be an issue.
-But, I think we should 'fix' them if we can.
+And there are many usages of worker->pool without attached_mutex
+heled. The only locking annotation "A:" is not enough. Additional
+comment is needed too.
 
-I'll spin another version with this change.
+1) called from the worker(including rescuer) task: it is safe because only
+    the worker task itself can call the attach()/detach().
 
-> 
->>  	cma_clear_bitmap(cma, pfn, count);
->>  	trace_cma_release(pfn, pages, count);
->>  
->> diff --git a/mm/hugetlb.c b/mm/hugetlb.c
->> index 218679138255..c81072ce7510 100644
->> --- a/mm/hugetlb.c
->> +++ b/mm/hugetlb.c
->> @@ -1055,7 +1055,7 @@ static void destroy_compound_gigantic_page(struct page *page,
->>  
->>  static void free_gigantic_page(struct page *page, unsigned int order)
->>  {
->> -	free_contig_range(page_to_pfn(page), 1 << order);
->> +	free_contig_range(page_to_pfn(page), 1UL << order);
->>  }
->>  
->>  static int __alloc_gigantic_page(unsigned long start_pfn,
->> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
->> index 905db9d7962f..0fd5e8e2456e 100644
->> --- a/mm/page_alloc.c
->> +++ b/mm/page_alloc.c
->> @@ -7937,9 +7937,9 @@ int alloc_contig_range(unsigned long start, unsigned long end,
->>  	return ret;
->>  }
->>  
->> -void free_contig_range(unsigned long pfn, unsigned nr_pages)
->> +void free_contig_range(unsigned long pfn, unsigned long nr_pages)
->>  {
->> -	unsigned int count = 0;
->> +	unsigned long count = 0;
->>  
->>  	for (; nr_pages--; pfn++) {
->>  		struct page *page = pfn_to_page(pfn);
->> @@ -7947,7 +7947,7 @@ void free_contig_range(unsigned long pfn, unsigned nr_pages)
->>  		count += page_count(page) != 1;
->>  		__free_page(page);
->>  	}
->> -	WARN(count != 0, "%d pages are still in use!\n", count);
->> +	WARN(count != 0, "%ld pages are still in use!\n", count);
-> 
-> Maybe change to %lu while at it?
+2) called from the destroy_worker() (only normal worker): it is safe
+    because it is immutable before the worker detaches itself.
 
-Yes
-
-> BTW, this warning can theoretically produce false positives, because
-> page users have to deal with page_count() being incremented by e.g.
-> parallel pfn scanners using get_page_unless_zero(). We also don't detect
-> refcount leaks in general. Should we remove it or change it to VM_WARN
-> if it's still useful for debugging?
-
-Added Marek on Cc: as he is the one who originally added this message (although
-it has been a long time).  I do not know what specific issue he was concerned
-with.  A search found a few bug reports related to this warning.  In these
-cases, it clearly was not a false positive but some other issue.  It 'appears'
-the message helped in those cases.
-
-However, I would hate for a support organization to spend a bunch of time
-doing investigation for a false positive.  At the very least, I think we
-should add a message/comment about the possibility of false positives in the
-code.  I would be inclined to change it to VM_WARN, but it would be good
-to get input from others who might find it useful as it.
-
--- 
-Mike Kravetz
-
-> 
->>  }
->>  #endif
->>  
->>
-> 
+>         struct list_head        node;           /* A: anchored at pool->workers */
+>                                                 /* A: runs through worker->node */
+> --
+> 2.9.5
+>
