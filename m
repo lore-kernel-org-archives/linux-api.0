@@ -1,109 +1,44 @@
-From: Boqun Feng <boqun.feng@gmail.com>
-Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
-Date: Sun, 20 May 2018 22:08:11 +0800
-Message-ID: <20180520140811.GB1121@tardis>
-References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com>
- <20180430224433.17407-8-mathieu.desnoyers@efficios.com>
- <20180516161837.GI12198@hirez.programming.kicks-ass.net>
- <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com>
- <20180517011949.GA1121@tardis>
- <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com>
- <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com>
- <418003803.516.1526667437396.JavaMail.zimbra@efficios.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 10/32] aio: implement IOCB_CMD_POLL
+Date: Sun, 20 May 2018 19:32:28 +0200
+Message-ID: <20180520173228.GA864@lst.de>
+References: <20180515194833.6906-1-hch@lst.de> <20180515194833.6906-11-hch@lst.de> <20180520053219.GZ30522@ZenIV.linux.org.uk> <20180520073332.GA30522@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <418003803.516.1526667437396.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20180520073332.GA30522@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Will Deacon <will.deacon@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 18, 2018 at 02:17:17PM -0400, Mathieu Desnoyers wrote:
-> ----- On May 17, 2018, at 7:50 PM, Boqun Feng boqun.feng@gmail.com wrote:
-> [...]
-> >> > I think you're right. So we have to introduce callsite to rseq_syscall()
-> >> > in syscall path, something like:
-> >> > 
-> >> > diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
-> >> > index 51695608c68b..a25734a96640 100644
-> >> > --- a/arch/powerpc/kernel/entry_64.S
-> >> > +++ b/arch/powerpc/kernel/entry_64.S
-> >> > @@ -222,6 +222,9 @@ system_call_exit:
-> >> > 	mtmsrd	r11,1
-> >> > #endif /* CONFIG_PPC_BOOK3E */
-> >> > 
-> >> > +	addi    r3,r1,STACK_FRAME_OVERHEAD
-> >> > +	bl	rseq_syscall
-> >> > +
-> >> > 	ld	r9,TI_FLAGS(r12)
-> >> > 	li	r11,-MAX_ERRNO
-> >> > 	andi.
-> >> > 		r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
-> >> > 
+On Sun, May 20, 2018 at 08:33:39AM +0100, Al Viro wrote:
+> > ... get buggered on attempt to dereference a pointer fetched from freed and
+> > reused object.
 > 
-> By the way, I think this is not the right spot to call rseq_syscall, because
-> interrupts are disabled. I think we should move this hunk right after system_call_exit.
+> FWIW, how painful would it be to pull the following trick:
+> 	* insert into wait queue under ->ctx_lock
+> 	* have wakeup do schedule_work() with aio_complete() done from that
+> 	* have ->ki_cancel() grab queue lock, remove from queue and use
+> the same schedule_work()
 > 
-
-Good point.
-
-> Would you like to implement and test an updated patch adding those calls for ppc 32 and 64 ?
+> That way you'd get ->ki_cancel() with the same semantics as originally for
+> everything - "ask politely to finish ASAP", and called in the same locking
+> environment for everyone - under ->ctx_lock, that is.  queue lock nests
+> inside ->ctx_lock; no magical flags, etc.
 > 
+> The cost is schedule_work() for each async poll-related completion as you
+> have for fsync.  I don't know whether that's too costly or not; it certainly
+> simplifies the things, but whether it's OK performance-wise...
 
-I'd like to help, but I don't have a handy ppc environment for test...
-So I made the below patch which has only been build-tested, hope it
-could be somewhat helpful.
+I think it is doable:
 
-Regards,
-Boqun
+	http://git.infradead.org/users/hch/vfs.git/commitdiff/c441130e405465268ea10c9ddd5639c155f779e8
 
---------------------------------->8
-Subject: [PATCH] powerpc: Add syscall detection for restartable sequences
+downside is that sizeof(struct aio_kiocb) grows a bit.
 
-Syscalls are not allowed inside restartable sequences, so add a call to
-rseq_syscall() at the very beginning of system call exiting path for
-CONFIG_DEBUG_RSEQ=y kernel. This could help us to detect whether there
-is a syscall issued inside restartable sequences.
+For the completion performance we can use a spin_trylock to still avoid
+the context switch for the common case:
 
-Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
----
- arch/powerpc/kernel/entry_32.S | 5 +++++
- arch/powerpc/kernel/entry_64.S | 5 +++++
- 2 files changed, 10 insertions(+)
-
-diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
-index eb8d01bae8c6..2f134eebe7ed 100644
---- a/arch/powerpc/kernel/entry_32.S
-+++ b/arch/powerpc/kernel/entry_32.S
-@@ -365,6 +365,11 @@ syscall_dotrace_cont:
- 	blrl			/* Call handler */
- 	.globl	ret_from_syscall
- ret_from_syscall:
-+#ifdef CONFIG_DEBUG_RSEQ
-+	/* Check whether the syscall is issued inside a restartable sequence */
-+	addi    r3,r1,STACK_FRAME_OVERHEAD
-+	bl      rseq_syscall
-+#endif
- 	mr	r6,r3
- 	CURRENT_THREAD_INFO(r12, r1)
- 	/* disable interrupts so current_thread_info()->flags can't change */
-diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
-index 2cb5109a7ea3..2e2d59bb45d0 100644
---- a/arch/powerpc/kernel/entry_64.S
-+++ b/arch/powerpc/kernel/entry_64.S
-@@ -204,6 +204,11 @@ system_call:			/* label this so stack traces look sane */
-  * This is blacklisted from kprobes further below with _ASM_NOKPROBE_SYMBOL().
-  */
- system_call_exit:
-+#ifdef CONFIG_DEBUG_RSEQ
-+	/* Check whether the syscall is issued inside a restartable sequence */
-+	addi    r3,r1,STACK_FRAME_OVERHEAD
-+	bl      rseq_syscall
-+#endif
- 	/*
- 	 * Disable interrupts so current_thread_info()->flags can't change,
- 	 * and so that we don't get interrupted after loading SRR0/1.
--- 
-2.16.2
+	http://git.infradead.org/users/hch/vfs.git/commitdiff/6cc1827afbea87c52fe425cf533bfcf5f3308163
