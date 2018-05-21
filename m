@@ -1,276 +1,274 @@
 From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH v2 2/4] mm: check for proper migrate type during isolation
-Date: Mon, 21 May 2018 16:10:10 -0700
-Message-ID: <f50d6814-8bc6-80cd-c0e5-b2cfa4f9e576@oracle.com>
+Subject: Re: [PATCH v2 3/4] mm: add find_alloc_contig_pages() interface
+Date: Mon, 21 May 2018 16:48:43 -0700
+Message-ID: <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
 References: <20180503232935.22539-1-mike.kravetz@oracle.com>
- <20180503232935.22539-3-mike.kravetz@oracle.com>
- <0a74f688-74fb-b841-4782-f9c96b1b9cfc@suse.cz>
+ <20180503232935.22539-4-mike.kravetz@oracle.com>
+ <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0a74f688-74fb-b841-4782-f9c96b1b9cfc@suse.cz>
+In-Reply-To: <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 05/18/2018 03:32 AM, Vlastimil Babka wrote:
+On 05/21/2018 01:54 AM, Vlastimil Babka wrote:
 > On 05/04/2018 01:29 AM, Mike Kravetz wrote:
->> The routine start_isolate_page_range and alloc_contig_range have
->> comments saying that migratetype must be either MIGRATE_MOVABLE or
->> MIGRATE_CMA.  However, this is not enforced.
+>> find_alloc_contig_pages() is a new interface that attempts to locate
+>> and allocate a contiguous range of pages.  It is provided as a more
 > 
-> Enforced, no. But if the pageblocks really were as such, it used to
-> shortcut has_unmovable_pages(). This was wrong and removed in
-> d7b236e10ced ("mm: drop migrate type checks from has_unmovable_pages")
-> plus 4da2ce250f98 ("mm: distinguish CMA and MOVABLE isolation in
-> has_unmovable_pages()").
+> How about dropping the 'find_' from the name, so it's more like other
+> allocator functions? All of them have to 'find' the free pages in some
+> sense.
+
+Sure
+
 > 
-> 
->   What is important is
->> that that all pageblocks in the range are of type migratetype.
->                                                the same
->> This is because blocks will be set to migratetype on error.
-> 
-> Strictly speaking this is true only for the CMA case. For other cases,
-> the best thing actually would be to employ the same heuristics as page
-> allocation migratetype fallbacks, and count how many pages are free and
-> how many appear to be movable, see how steal_suitable_fallback() uses
-> the last parameter of move_freepages_block().
-> 
->> Add a boolean argument enforce_migratetype to the routine
->> start_isolate_page_range.  If set, it will check that all pageblocks
->> in the range have the passed migratetype.  Return -EINVAL is pageblock
->                                                             if
->> is wrong type is found in range.
->   of
+>> convenient interface than alloc_contig_range() which is currently
+>> used by CMA and gigantic huge pages.
 >>
->> A boolean is used for enforce_migratetype as there are two primary
->> users.  Contiguous range allocation which wants to enforce migration
->> type checking.  Memory offline (hotplug) which is not concerned about
->> type checking.
-> 
-> This is missing some high-level result. The end change is that CMA is
-> now enforcing. So we are making it more robust when it's called on
-> non-CMA pageblocks by mistake? (BTW I still do hope we can remove
-> MIGRATE_CMA soon after Joonsoo's ZONE_MOVABLE CMA conversion. Combined
-> with my suggestion above we could hopefully get rid of the migratetype
-> parameter completely instead of enforcing it?). Is this also a
-> preparation for introducing find_alloc_contig_pages() which will be
-> enforcing? (I guess, and will find out shortly, but it should be stated
-> here)
-
-Thank you for looking at these patches Vlastimil.
-
-My primary motivation for this patch was the 'error recovery' in
-start_isolate_page_range.  It takes a range and attempts to set
-all pageblocks to MIGRATE_ISOLATE.  If it encounters an error after
-setting some blocks to isolate, it will 'clean up' by setting the
-migrate type of previously modified blocks to the passed migratetype.
-
-So, one possible side effect of an error in start_isolate_page_range
-is that the migrate type of some pageblocks could be modified.  Thinking
-about it more now, that may be OK.  It just does not seem like the
-right thing to do, especially with comments saying "migratetype must
-be either MIGRATE_MOVABLE or MIGRATE_CMA".  I'm fine with leaving the
-code as is and just cleaning up the comments if you think that may
-be better.
-
-> 
-> Thanks,
-> Vlastimil
-> 
+>> When attempting to allocate a range of pages, migration is employed
+>> if possible.  There is no guarantee that the routine will succeed.
+>> So, the user must be prepared for failure and have a fall back plan.
+>>
 >> Signed-off-by: Mike Kravetz <mike.kravetz@oracle.com>
 >> ---
->>  include/linux/page-isolation.h |  8 +++-----
->>  mm/memory_hotplug.c            |  2 +-
->>  mm/page_alloc.c                | 17 +++++++++--------
->>  mm/page_isolation.c            | 40 ++++++++++++++++++++++++++++++----------
->>  4 files changed, 43 insertions(+), 24 deletions(-)
+>>  include/linux/gfp.h |  12 +++++
+>>  mm/page_alloc.c     | 136 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+>>  2 files changed, 146 insertions(+), 2 deletions(-)
 >>
->> diff --git a/include/linux/page-isolation.h b/include/linux/page-isolation.h
->> index 4ae347cbc36d..2ab7e5a399ac 100644
->> --- a/include/linux/page-isolation.h
->> +++ b/include/linux/page-isolation.h
->> @@ -38,8 +38,6 @@ int move_freepages_block(struct zone *zone, struct page *page,
+>> diff --git a/include/linux/gfp.h b/include/linux/gfp.h
+>> index 86a0d06463ab..b0d11777d487 100644
+>> --- a/include/linux/gfp.h
+>> +++ b/include/linux/gfp.h
+>> @@ -573,6 +573,18 @@ static inline bool pm_suspended_storage(void)
+>>  extern int alloc_contig_range(unsigned long start, unsigned long end,
+>>  			      unsigned migratetype, gfp_t gfp_mask);
+>>  extern void free_contig_range(unsigned long pfn, unsigned long nr_pages);
+>> +extern struct page *find_alloc_contig_pages(unsigned long nr_pages, gfp_t gfp,
+>> +						int nid, nodemask_t *nodemask);
+>> +extern void free_contig_pages(struct page *page, unsigned long nr_pages);
+>> +#else
+>> +static inline struct page *find_alloc_contig_pages(unsigned long nr_pages,
+>> +				gfp_t gfp, int nid, nodemask_t *nodemask)
+>> +{
+>> +	return NULL;
+>> +}
+>> +static inline void free_contig_pages(struct page *page, unsigned long nr_pages)
+>> +{
+>> +}
+>>  #endif
 >>  
->>  /*
->>   * Changes migrate type in [start_pfn, end_pfn) to be MIGRATE_ISOLATE.
->> - * If specified range includes migrate types other than MOVABLE or CMA,
->> - * this will fail with -EBUSY.
->>   *
->>   * For isolating all pages in the range finally, the caller have to
->>   * free all pages in the range. test_page_isolated() can be used for
->> @@ -47,11 +45,11 @@ int move_freepages_block(struct zone *zone, struct page *page,
->>   */
->>  int
->>  start_isolate_page_range(unsigned long start_pfn, unsigned long end_pfn,
->> -			 unsigned migratetype, bool skip_hwpoisoned_pages);
->> +			 unsigned migratetype, bool skip_hwpoisoned_pages,
->> +			 bool enforce_migratetype);
->>  
->>  /*
->> - * Changes MIGRATE_ISOLATE to MIGRATE_MOVABLE.
->> - * target range is [start_pfn, end_pfn)
->> + * Changes MIGRATE_ISOLATE to migratetype for range [start_pfn, end_pfn)
->>   */
->>  int
->>  undo_isolate_page_range(unsigned long start_pfn, unsigned long end_pfn,
->> diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
->> index f74826cdceea..ebc1c8c330e2 100644
->> --- a/mm/memory_hotplug.c
->> +++ b/mm/memory_hotplug.c
->> @@ -1601,7 +1601,7 @@ static int __ref __offline_pages(unsigned long start_pfn,
->>  
->>  	/* set above range as isolated */
->>  	ret = start_isolate_page_range(start_pfn, end_pfn,
->> -				       MIGRATE_MOVABLE, true);
->> +				       MIGRATE_MOVABLE, true, false);
->>  	if (ret)
->>  		return ret;
->>  
+>>  #ifdef CONFIG_CMA
 >> diff --git a/mm/page_alloc.c b/mm/page_alloc.c
->> index 0fd5e8e2456e..cb1a5e0be6ee 100644
+>> index cb1a5e0be6ee..d0a2d0da9eae 100644
 >> --- a/mm/page_alloc.c
 >> +++ b/mm/page_alloc.c
->> @@ -7787,9 +7787,10 @@ static int __alloc_contig_migrate_range(struct compact_control *cc,
->>   * alloc_contig_range() -- tries to allocate given range of pages
->>   * @start:	start PFN to allocate
->>   * @end:	one-past-the-last PFN to allocate
->> - * @migratetype:	migratetype of the underlaying pageblocks (either
->> - *			#MIGRATE_MOVABLE or #MIGRATE_CMA).  All pageblocks
->> - *			in range must have the same migratetype and it must
->> + * @migratetype:	migratetype of the underlaying pageblocks.  All
->> + *			pageblocks in range must have the same migratetype.
->> + *			migratetype is typically MIGRATE_MOVABLE or
->> + *			MIGRATE_CMA, but this is not a requirement.
->>   *			be either of the two.
->>   * @gfp_mask:	GFP mask to use during compaction
->>   *
->> @@ -7840,15 +7841,15 @@ int alloc_contig_range(unsigned long start, unsigned long end,
->>  	 * allocator removing them from the buddy system.  This way
->>  	 * page allocator will never consider using them.
->>  	 *
->> -	 * This lets us mark the pageblocks back as
->> -	 * MIGRATE_CMA/MIGRATE_MOVABLE so that free pages in the
->> -	 * aligned range but not in the unaligned, original range are
->> -	 * put back to page allocator so that buddy can use them.
->> +	 * This lets us mark the pageblocks back as their original
->> +	 * migrate type so that free pages in the  aligned range but
->> +	 * not in the unaligned, original range are put back to page
->> +	 * allocator so that buddy can use them.
->>  	 */
+>> @@ -67,6 +67,7 @@
+>>  #include <linux/ftrace.h>
+>>  #include <linux/lockdep.h>
+>>  #include <linux/nmi.h>
+>> +#include <linux/mmzone.h>
 >>  
->>  	ret = start_isolate_page_range(pfn_max_align_down(start),
->>  				       pfn_max_align_up(end), migratetype,
->> -				       false);
->> +				       false, true);
->>  	if (ret)
->>  		return ret;
+>>  #include <asm/sections.h>
+>>  #include <asm/tlbflush.h>
+>> @@ -7913,8 +7914,12 @@ int alloc_contig_range(unsigned long start, unsigned long end,
 >>  
->> diff --git a/mm/page_isolation.c b/mm/page_isolation.c
->> index 43e085608846..472191cc1909 100644
->> --- a/mm/page_isolation.c
->> +++ b/mm/page_isolation.c
->> @@ -16,7 +16,8 @@
->>  #include <trace/events/page_isolation.h>
->>  
->>  static int set_migratetype_isolate(struct page *page, int migratetype,
->> -				bool skip_hwpoisoned_pages)
->> +				bool skip_hwpoisoned_pages,
->> +				bool enforce_migratetype)
->>  {
->>  	struct zone *zone;
->>  	unsigned long flags, pfn;
->> @@ -36,6 +37,17 @@ static int set_migratetype_isolate(struct page *page, int migratetype,
->>  	if (is_migrate_isolate_page(page))
->>  		goto out;
->>  
->> +	/*
->> +	 * If requested, check migration type of pageblock and make sure
->> +	 * it matches migratetype
->> +	 */
->> +	if (enforce_migratetype) {
->> +		if (get_pageblock_migratetype(page) != migratetype) {
->> +			ret = -EINVAL;
->> +			goto out;
->> +		}
->> +	}
->> +
->>  	pfn = page_to_pfn(page);
->>  	arg.start_pfn = pfn;
->>  	arg.nr_pages = pageblock_nr_pages;
->> @@ -167,14 +179,16 @@ __first_valid_page(unsigned long pfn, unsigned long nr_pages)
->>   * to be MIGRATE_ISOLATE.
->>   * @start_pfn: The lower PFN of the range to be isolated.
->>   * @end_pfn: The upper PFN of the range to be isolated.
->> - * @migratetype: migrate type to set in error recovery.
->> + * @migratetype: migrate type of all blocks in range.
->>   *
->>   * Making page-allocation-type to be MIGRATE_ISOLATE means free pages in
->>   * the range will never be allocated. Any free pages and pages freed in the
->>   * future will not be allocated again.
->>   *
->>   * start_pfn/end_pfn must be aligned to pageblock_order.
->> - * Return 0 on success and -EBUSY if any part of range cannot be isolated.
->> + * Return 0 on success or error returned by set_migratetype_isolate.  Typical
->> + * errors are -EBUSY if any part of range cannot be isolated or -EINVAL if
->> + * any page block is not of migratetype.
->>   *
->>   * There is no high level synchronization mechanism that prevents two threads
->>   * from trying to isolate overlapping ranges.  If this happens, one thread
->> @@ -185,11 +199,13 @@ __first_valid_page(unsigned long pfn, unsigned long nr_pages)
->>   * prevents two threads from simultaneously working on overlapping ranges.
->>   */
->>  int start_isolate_page_range(unsigned long start_pfn, unsigned long end_pfn,
->> -			     unsigned migratetype, bool skip_hwpoisoned_pages)
->> +			     unsigned migratetype, bool skip_hwpoisoned_pages,
->> +			     bool enforce_migratetype)
->>  {
->>  	unsigned long pfn;
->>  	unsigned long undo_pfn;
->>  	struct page *page;
->> +	int ret = 0;
->>  
->>  	BUG_ON(!IS_ALIGNED(start_pfn, pageblock_nr_pages));
->>  	BUG_ON(!IS_ALIGNED(end_pfn, pageblock_nr_pages));
->> @@ -198,13 +214,17 @@ int start_isolate_page_range(unsigned long start_pfn, unsigned long end_pfn,
->>  	     pfn < end_pfn;
->>  	     pfn += pageblock_nr_pages) {
->>  		page = __first_valid_page(pfn, pageblock_nr_pages);
->> -		if (page &&
->> -		    set_migratetype_isolate(page, migratetype, skip_hwpoisoned_pages)) {
->> -			undo_pfn = pfn;
->> -			goto undo;
->> +		if (page) {
->> +			ret = set_migratetype_isolate(page, migratetype,
->> +							skip_hwpoisoned_pages,
->> +							enforce_migratetype);
->> +			if (ret) {
->> +				undo_pfn = pfn;
->> +				goto undo;
->> +			}
->>  		}
->>  	}
->> -	return 0;
->> +	return ret;
->>  undo:
->>  	for (pfn = start_pfn;
->>  	     pfn < undo_pfn;
->> @@ -215,7 +235,7 @@ int start_isolate_page_range(unsigned long start_pfn, unsigned long end_pfn,
->>  		unset_migratetype_isolate(page, migratetype);
->>  	}
->>  
->> -	return -EBUSY;
->> +	return ret;
->>  }
->>  
->>  /*
->>
+>>  	/* Make sure the range is really isolated. */
+>>  	if (test_pages_isolated(outer_start, end, false)) {
+>> -		pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
+>> -			__func__, outer_start, end);
+>> +#ifdef MIGRATE_CMA
+>> +		/* Only print messages for CMA allocations */
+>> +		if (migratetype == MIGRATE_CMA)
+> 
+> I think is_migrate_cma() can be used to avoid the #ifdef.
 > 
 
+Thanks.  I missed that and did not want to create something new.
 
+>> +			pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
+>> +				__func__, outer_start, end);
+>> +#endif
+>>  		ret = -EBUSY;
+>>  		goto done;
+>>  	}
+>> @@ -7950,6 +7955,133 @@ void free_contig_range(unsigned long pfn, unsigned long nr_pages)
+>>  	}
+>>  	WARN(count != 0, "%ld pages are still in use!\n", count);
+>>  }
+>> +
+>> +/*
+>> + * Only check for obvious pfn/pages which can not be used/migrated.  The
+>> + * migration code will do the final check.  Under stress, this minimal set
+>> + * has been observed to provide the best results.  The checks can be expanded
+>> + * if needed.
+> 
+> Hm I kind of doubt this is optimal, it doesn't test almost anything
+> besides basic validity, so it won't exclude ranges where the allocation
+> will fail. I will write more in a reply to the header where complexity
+> is discussed.
+> 
+
+Ok.  This 'appeared' to work best in testing where I had all CPUs in tight
+loops calling this new interface to allocate and then free contiguous pages.
+I was somewhat surprised at the result, and it may just be due to the nature
+of my testing.
+
+>> + */
+>> +static bool contig_pfn_range_valid(struct zone *z, unsigned long start_pfn,
+>> +					unsigned long nr_pages)
+>> +{
+>> +	unsigned long i, end_pfn = start_pfn + nr_pages;
+>> +	struct page *page;
+>> +
+>> +	for (i = start_pfn; i < end_pfn; i++) {
+>> +		if (!pfn_valid(i))
+>> +			return false;
+>> +
+>> +		page = pfn_to_online_page(i);
+>> +
+>> +		if (page_zone(page) != z)
+>> +			return false;
+>> +
+>> +	}
+>> +
+>> +	return true;
+>> +}
+>> +
+>> +/*
+>> + * Search for and attempt to allocate contiguous allocations greater than
+>> + * MAX_ORDER.
+>> + */
+>> +static struct page *__alloc_contig_pages_nodemask(gfp_t gfp,
+>> +						unsigned long order,
+>> +						int nid, nodemask_t *nodemask)
+>> +{
+>> +	unsigned long nr_pages, pfn, flags;
+>> +	struct page *ret_page = NULL;
+>> +	struct zonelist *zonelist;
+>> +	struct zoneref *z;
+>> +	struct zone *zone;
+>> +	int rc;
+>> +
+>> +	nr_pages = 1 << order;
+>> +	zonelist = node_zonelist(nid, gfp);
+>> +	for_each_zone_zonelist_nodemask(zone, z, zonelist, gfp_zone(gfp),
+>> +					nodemask) {
+>> +		pgdat_resize_lock(zone->zone_pgdat, &flags);
+>> +		pfn = ALIGN(zone->zone_start_pfn, nr_pages);
+>> +		while (zone_spans_pfn(zone, pfn + nr_pages - 1)) {
+>> +			if (contig_pfn_range_valid(zone, pfn, nr_pages)) {
+>> +				struct page *page = pfn_to_online_page(pfn);
+>> +				unsigned int migratetype;
+>> +
+>> +				/*
+>> +				 * All pageblocks in range must be of same
+>> +				 * migrate type.
+>> +				 */
+>> +				migratetype = get_pageblock_migratetype(page);
+>> +				pgdat_resize_unlock(zone->zone_pgdat, &flags);
+>> +
+>> +				rc = alloc_contig_range(pfn, pfn + nr_pages,
+>> +						migratetype, gfp);
+>> +				if (!rc) {
+>> +					ret_page = pfn_to_page(pfn);
+>> +					return ret_page;
+>> +				}
+>> +				pgdat_resize_lock(zone->zone_pgdat, &flags);
+>> +			}
+>> +			pfn += nr_pages;
+>> +		}
+>> +		pgdat_resize_unlock(zone->zone_pgdat, &flags);
+>> +	}
+>> +
+>> +	return ret_page;
+>> +}
+>> +
+>> +/**
+>> + * find_alloc_contig_pages() -- attempt to find and allocate a contiguous
+>> + *				range of pages
+>> + * @nr_pages:	number of pages to find/allocate
+>> + * @gfp:	gfp mask used to limit search as well as during compaction
+>> + * @nid:	target node
+>> + * @nodemask:	mask of other possible nodes
+>> + *
+>> + * Pages can be freed with a call to free_contig_pages(), or by manually
+>> + * calling __free_page() for each page allocated.
+>> + *
+>> + * Return: pointer to 'order' pages on success, or NULL if not successful.
+>> + */
+>> +struct page *find_alloc_contig_pages(unsigned long nr_pages, gfp_t gfp,
+>> +					int nid, nodemask_t *nodemask)
+>> +{
+>> +	unsigned long i, alloc_order, order_pages;
+>> +	struct page *pages;
+>> +
+>> +	/*
+>> +	 * Underlying allocators perform page order sized allocations.
+>> +	 */
+>> +	alloc_order = get_count_order(nr_pages);
+> 
+> So if takes arbitrary nr_pages but convert it to order anyway? I think
+> that's rather suboptimal and wasteful... e.g. a range could be skipped
+> because some of the pages added by rounding cannot be migrated away.
+
+Yes.  My idea with this series was to use existing allocators which are
+all order based.  Let me think about how to do allocation for arbitrary
+number of allocations.
+- For less than MAX_ORDER size we rely on the buddy allocator, so we are
+  pretty much stuck with order sized allocation.  However, allocations of
+  this size are not really interesting as you can call existing routines
+  directly.
+- For sizes greater than MAX_ORDER, we know that the allocation size will
+  be at least pageblock sized.  So, the isolate/migrate scheme can still
+  be used for full pageblocks.  We can then use direct migration for the
+  remaining pages.  This does complicate things a bit.
+
+I'm guessing that most (?all?) allocations will be order based.  The use
+cases I am aware of (hugetlbfs, Intel Cache Pseudo-Locking, RDMA) are all
+order based.  However, as commented in previous version taking arbitrary
+nr_pages makes interface more future proof.
 -- 
 Mike Kravetz
+
+> 
+> Vlastimil
+> 
+>> +	if (alloc_order < MAX_ORDER) {
+>> +		pages = __alloc_pages_nodemask(gfp, (unsigned int)alloc_order,
+>> +						nid, nodemask);
+>> +		split_page(pages, alloc_order);
+>> +	} else {
+>> +		pages = __alloc_contig_pages_nodemask(gfp, alloc_order, nid,
+>> +							nodemask);
+>> +	}
+>> +
+>> +	if (pages) {
+>> +		/*
+>> +		 * More pages than desired could have been allocated due to
+>> +		 * rounding up to next page order.  Free any excess pages.
+>> +		 */
+>> +		order_pages = 1UL << alloc_order;
+>> +		for (i = nr_pages; i < order_pages; i++)
+>> +			__free_page(pages + i);
+>> +	}
+>> +
+>> +	return pages;
+>> +}
+>> +EXPORT_SYMBOL_GPL(find_alloc_contig_pages);
+>> +
+>> +void free_contig_pages(struct page *page, unsigned long nr_pages)
+>> +{
+>> +	free_contig_range(page_to_pfn(page), nr_pages);
+>> +}
+>> +EXPORT_SYMBOL_GPL(free_contig_pages);
+>>  #endif
+>>  
+>>  #if defined CONFIG_MEMORY_HOTPLUG || defined CONFIG_CMA
+>>
+> 
