@@ -1,70 +1,90 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v2 0/4] Interface for higher order contiguous allocations
-Date: Mon, 21 May 2018 14:00:04 +0200
-Message-ID: <8ce9884c-36b0-68ea-45a4-06177c41af4a@suse.cz>
-References: <20180503232935.22539-1-mike.kravetz@oracle.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180503232935.22539-1-mike.kravetz@oracle.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+From: adam.manzanares@wdc.com
+Subject: [PATCH v5 1/5] block: add ioprio_check_cap function
+Date: Mon, 21 May 2018 09:01:43 -0700
+Message-ID: <20180521160147.2372-2-adam.manzanares@wdc.com>
+References: <20180521160147.2372-1-adam.manzanares@wdc.com>
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180521160147.2372-1-adam.manzanares@wdc.com>
+Sender: owner-linux-aio@kvack.org
+To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, bcrl@kvack.org
+Cc: tglx@linutronix.de, mingo@kernel.org, pombredanne@nexb.com, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, bigeasy@linutronix.de, jack@suse.cz, darrick.wong@oracle.com, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, hch@infradread.org, Adam Manzanares <adam.manzanares@wdc.com>
 List-Id: linux-api@vger.kernel.org
 
-On 05/04/2018 01:29 AM, Mike Kravetz wrote:
-> Vlastimil and Michal brought up the issue of allocation alignment.  The
-> routine will currently align to 'nr_pages' (which is the requested size
-> argument).  It does this by examining and trying to allocate the first
-> nr_pages aligned/nr_pages sized range.  If this fails, it moves on to the
-> next nr_pages aligned/nr_pages sized range until success or all potential
-> ranges are exhausted.
+From: Adam Manzanares <adam.manzanares@wdc.com>
 
-As I've noted in my patch 3/4 review, in fact nr_pages is first rounded
-up to an order, which makes this simpler, but suboptimal. I think we
-could perhaps assume that nr_pages that's a power of two should be
-aligned as such, and other values of nr_pages need no alignment? This
-should fit existing users, and can be extended to explicit alignment
-when such user appears?
+Aio per command iopriority support introduces a second interface between
+userland and the kernel capable of passing iopriority. The aio interface also
+needs the ability to verify that the submitting context has sufficient
+priviledges to submit IOPRIO_RT commands. This patch creates the
+ioprio_check_cap function to be used by the ioprio_set system call and also by
+the aio interface.
 
-> If we allow an alignment to be specified, we will
-> need to potentially check all alignment aligned/nr_pages sized ranges.
-> In the worst case where alignment = PAGE_SIZE, this could result in huge
-> increase in the number of ranges to check.
-> To help cut down on the number of ranges to check, we could identify the
-> first page that causes a range allocation failure and start the next
-> range at the next aligned boundary.  I tried this, and we still end up
-> with a huge number of ranges and wasted CPU cycles.
+Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+---
+ block/ioprio.c         | 22 ++++++++++++++++------
+ include/linux/ioprio.h |  2 ++
+ 2 files changed, 18 insertions(+), 6 deletions(-)
 
-I think the wasted cycle issues is due to the current code structure,
-which is based on the CMA use-case, which assumes that the allocations
-will succeed, because the areas are reserved and may contain only
-movable allocations
+diff --git a/block/ioprio.c b/block/ioprio.c
+index 6f5d0b6625e3..f9821080c92c 100644
+--- a/block/ioprio.c
++++ b/block/ioprio.c
+@@ -61,15 +61,10 @@ int set_task_ioprio(struct task_struct *task, int ioprio)
+ }
+ EXPORT_SYMBOL_GPL(set_task_ioprio);
+ 
+-SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
++int ioprio_check_cap(int ioprio)
+ {
+ 	int class = IOPRIO_PRIO_CLASS(ioprio);
+ 	int data = IOPRIO_PRIO_DATA(ioprio);
+-	struct task_struct *p, *g;
+-	struct user_struct *user;
+-	struct pid *pgrp;
+-	kuid_t uid;
+-	int ret;
+ 
+ 	switch (class) {
+ 		case IOPRIO_CLASS_RT:
+@@ -92,6 +87,21 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
+ 			return -EINVAL;
+ 	}
+ 
++	return 0;
++}
++
++SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
++{
++	struct task_struct *p, *g;
++	struct user_struct *user;
++	struct pid *pgrp;
++	kuid_t uid;
++	int ret;
++
++	ret = ioprio_check_cap(ioprio);
++	if (ret)
++		return ret;
++
+ 	ret = -ESRCH;
+ 	rcu_read_lock();
+ 	switch (which) {
+diff --git a/include/linux/ioprio.h b/include/linux/ioprio.h
+index 627efac73e6d..4a28cec49ec3 100644
+--- a/include/linux/ioprio.h
++++ b/include/linux/ioprio.h
+@@ -77,4 +77,6 @@ extern int ioprio_best(unsigned short aprio, unsigned short bprio);
+ 
+ extern int set_task_ioprio(struct task_struct *task, int ioprio);
+ 
++extern int ioprio_check_cap(int ioprio);
++
+ #endif
+-- 
+2.15.1
 
-find_alloc_contig_pages()
-  __alloc_contig_pages_nodemask()
-    contig_pfn_range_valid()
-      - performs only very basic pfn validity and belongs-to-zone checks
-    alloc_contig_range()
-      start_isolate_page_range()
-       for (pfn per pageblock) - the main cycle
-         set_migratetype_isolate()
-           has_unmovable_pages() - cancel if yes
-           move_freepages_block() - expensive!
-      __alloc_contig_migrate_range()
-etc (not important)
-
-So I think the problem is that in the main cycle we might do a number of
-expensive move_freepages_block() operations, then hit a block where
-has_unmovable_pages() is true, cancel and do more expensive
-undo_isolate_page_range() operations.
-
-If we instead first scanned the range with has_unmovable_pages() and
-only start doing the expensive work when we find a large enough (aligned
-or not depending on caller) range, it should be much faster and there
-should be no algorithmic difference between aligned and non-aligned case.
-
-Thanks,
-Vlastimil
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
