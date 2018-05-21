@@ -1,66 +1,85 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v5 04/28] fpga: mgr: add compat_id support
-Date: Mon, 21 May 2018 12:33:05 -0500
-Message-ID: <CANk1AXTDgVONiaECNOnwj26vCxJSi7ixvD_QcB4VmEo7P_cUMA@mail.gmail.com>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
- <1525229431-3087-5-git-send-email-hao.wu@intel.com> <CANk1AXRsWsd++wjWH44CCWN+cmscy_WjLJhaGGgxmmNe-u1OLw@mail.gmail.com>
- <20180521030307.GA26500@hao-dev>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 13/13] debug audit: read container ID of a process
+Date: Mon, 21 May 2018 15:16:01 -0400
+Message-ID: <3001737.MkQ41rgtZF@x2>
+References: <cover.1521179281.git.rgb@redhat.com> <1081821010c124fe4e35984ec3dac1654453bb7c.1521179281.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180521030307.GA26500@hao-dev>
+In-Reply-To: <1081821010c124fe4e35984ec3dac1654453bb7c.1521179281.git.rgb@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, "Liu, Song" <song.liu@intel.com>
+To: linux-audit@redhat.com
+Cc: Richard Guy Briggs <rgb@redhat.com>, cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 20, 2018 at 10:03 PM, Wu Hao <hao.wu@intel.com> wrote:
-> On Mon, May 07, 2018 at 04:09:06PM -0500, Alan Tull wrote:
->> On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
->>
->> Hi Hao,
->>
->> Looks good!
->>
->> > This patch introduces compat_id support to fpga manager, it adds
->> > a fpga_compat_id pointer to fpga manager data structure to allow
->> > fpga manager drivers to save the compatibility id. This compat_id
->> > could be used for compatibility checking before doing partial
->> > reconfiguration to associated fpga regions.
->> >
->> > Signed-off-by: Wu Hao <hao.wu@intel.com>
->> Acked-by: Alan Tull <atull@kernel.org>
->
-> Hi Alan
->
-> Thanks a lot for the acked-by.
->
-> Did you get a chance to look into other patches?
+On Friday, March 16, 2018 5:00:40 AM EDT Richard Guy Briggs wrote:
+> Add support for reading the container ID from the proc filesystem.
 
-What I'm looking for mostly is: is it clear that this code was written
-to be reused.  What do you think?  Was it?  Is there a way that intent
-could be made clear in the code?  This patchset has a history of being
-a one-off solution for a single platform, doing things to work around
-the FPGA framework instead of doing what the framework was intended to
-do.  The FPGA framework was written so that any FPGA could be used
-with interface.  Currently in the upstream that means any of the
-supported FPGAs can be programmed with the same of-fpga-region code.
-It didn't have to get rewritten for each fpga.
+I think this could be useful in general. Please consider this to be part of 
+the full patch set and not something merely used to debug the patches.
 
-This patchset adds 5000 lines and I understand that another 4000 is
-coming to add to this.  Has that been written so that the upper layer
-can be reused?  Or will the 'reusable' version be another huge
-patchset?  Do you see my point?  Up to this point I've been trying to
-help figure out what changes could make this reusable.  If you could
-get with someone to take responsibility for architecting this patchset
-to be clearly reusable, that could speed things up.
+-Steve
 
-If there are improvements to the current FPGA framework that can help
-this work, I'm interested and open to suggestions/code in that
-direction..
-
-Alan
-
->
-> Thanks
-> Hao
+> This is a read from the proc entry of the form /proc/PID/containerid
+> where PID is the process ID of the task whose container ID is sought.
+> 
+> The read expects up to a u64 value (unset: 18446744073709551615).
+> 
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> ---
+>  fs/proc/base.c | 20 ++++++++++++++++++--
+>  1 file changed, 18 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 6ce4fbe..f66d1e2 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -1300,6 +1300,21 @@ static ssize_t proc_sessionid_read(struct file *
+> file, char __user * buf, .llseek		= generic_file_llseek,
+>  };
+> 
+> +static ssize_t proc_containerid_read(struct file *file, char __user *buf,
+> +				  size_t count, loff_t *ppos)
+> +{
+> +	struct inode *inode = file_inode(file);
+> +	struct task_struct *task = get_proc_task(inode);
+> +	ssize_t length;
+> +	char tmpbuf[TMPBUFLEN*2];
+> +
+> +	if (!task)
+> +		return -ESRCH;
+> +	length = scnprintf(tmpbuf, TMPBUFLEN*2, "%llu",
+> audit_get_containerid(task)); +	put_task_struct(task);
+> +	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
+> +}
+> +
+>  static ssize_t proc_containerid_write(struct file *file, const char __user
+> *buf, size_t count, loff_t *ppos)
+>  {
+> @@ -1330,6 +1345,7 @@ static ssize_t proc_containerid_write(struct file
+> *file, const char __user *buf, }
+> 
+>  static const struct file_operations proc_containerid_operations = {
+> +	.read		= proc_containerid_read,
+>  	.write		= proc_containerid_write,
+>  	.llseek		= generic_file_llseek,
+>  };
+> @@ -2996,7 +3012,7 @@ static int proc_pid_patch_state(struct seq_file *m,
+> struct pid_namespace *ns, #ifdef CONFIG_AUDITSYSCALL
+>  	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
+>  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> -	REG("containerid", S_IWUSR, proc_containerid_operations),
+> +	REG("containerid", S_IWUSR|S_IRUSR, proc_containerid_operations),
+>  #endif
+>  #ifdef CONFIG_FAULT_INJECTION
+>  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+> @@ -3391,7 +3407,7 @@ static int proc_tid_comm_permission(struct inode
+> *inode, int mask) #ifdef CONFIG_AUDITSYSCALL
+>  	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
+>  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> -	REG("containerid", S_IWUSR, proc_containerid_operations),
+> +	REG("containerid", S_IWUSR|S_IRUSR, proc_containerid_operations),
+>  #endif
+>  #ifdef CONFIG_FAULT_INJECTION
+>  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
