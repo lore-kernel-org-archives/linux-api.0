@@ -1,44 +1,41 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 10/32] aio: implement IOCB_CMD_POLL
-Date: Sun, 20 May 2018 19:32:28 +0200
-Message-ID: <20180520173228.GA864@lst.de>
-References: <20180515194833.6906-1-hch@lst.de> <20180515194833.6906-11-hch@lst.de> <20180520053219.GZ30522@ZenIV.linux.org.uk> <20180520073332.GA30522@ZenIV.linux.org.uk>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH v5 04/28] fpga: mgr: add compat_id support
+Date: Mon, 21 May 2018 11:03:07 +0800
+Message-ID: <20180521030307.GA26500@hao-dev>
+References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
+ <1525229431-3087-5-git-send-email-hao.wu@intel.com>
+ <CANk1AXRsWsd++wjWH44CCWN+cmscy_WjLJhaGGgxmmNe-u1OLw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180520073332.GA30522@ZenIV.linux.org.uk>
+In-Reply-To: <CANk1AXRsWsd++wjWH44CCWN+cmscy_WjLJhaGGgxmmNe-u1OLw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Christoph Hellwig <hch@lst.de>, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Alan Tull <atull@kernel.org>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, song.liu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 20, 2018 at 08:33:39AM +0100, Al Viro wrote:
-> > ... get buggered on attempt to dereference a pointer fetched from freed and
-> > reused object.
+On Mon, May 07, 2018 at 04:09:06PM -0500, Alan Tull wrote:
+> On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
 > 
-> FWIW, how painful would it be to pull the following trick:
-> 	* insert into wait queue under ->ctx_lock
-> 	* have wakeup do schedule_work() with aio_complete() done from that
-> 	* have ->ki_cancel() grab queue lock, remove from queue and use
-> the same schedule_work()
+> Hi Hao,
 > 
-> That way you'd get ->ki_cancel() with the same semantics as originally for
-> everything - "ask politely to finish ASAP", and called in the same locking
-> environment for everyone - under ->ctx_lock, that is.  queue lock nests
-> inside ->ctx_lock; no magical flags, etc.
+> Looks good!
 > 
-> The cost is schedule_work() for each async poll-related completion as you
-> have for fsync.  I don't know whether that's too costly or not; it certainly
-> simplifies the things, but whether it's OK performance-wise...
+> > This patch introduces compat_id support to fpga manager, it adds
+> > a fpga_compat_id pointer to fpga manager data structure to allow
+> > fpga manager drivers to save the compatibility id. This compat_id
+> > could be used for compatibility checking before doing partial
+> > reconfiguration to associated fpga regions.
+> >
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> Acked-by: Alan Tull <atull@kernel.org>
 
-I think it is doable:
+Hi Alan
 
-	http://git.infradead.org/users/hch/vfs.git/commitdiff/c441130e405465268ea10c9ddd5639c155f779e8
+Thanks a lot for the acked-by.
 
-downside is that sizeof(struct aio_kiocb) grows a bit.
+Did you get a chance to look into other patches?
 
-For the completion performance we can use a spin_trylock to still avoid
-the context switch for the common case:
-
-	http://git.infradead.org/users/hch/vfs.git/commitdiff/6cc1827afbea87c52fe425cf533bfcf5f3308163
+Thanks
+Hao
