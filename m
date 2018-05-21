@@ -1,7 +1,7 @@
 From: adam.manzanares@wdc.com
-Subject: [PATCH v5 1/5] block: add ioprio_check_cap function
-Date: Mon, 21 May 2018 09:01:43 -0700
-Message-ID: <20180521160147.2372-2-adam.manzanares@wdc.com>
+Subject: [PATCH v5 4/5] fs: blkdev set bio prio from kiocb prio
+Date: Mon, 21 May 2018 09:01:46 -0700
+Message-ID: <20180521160147.2372-5-adam.manzanares@wdc.com>
 References: <20180521160147.2372-1-adam.manzanares@wdc.com>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180521160147.2372-1-adam.manzanares@wdc.com>
@@ -12,74 +12,26 @@ List-Id: linux-api@vger.kernel.org
 
 From: Adam Manzanares <adam.manzanares@wdc.com>
 
-Aio per command iopriority support introduces a second interface between
-userland and the kernel capable of passing iopriority. The aio interface also
-needs the ability to verify that the submitting context has sufficient
-priviledges to submit IOPRIO_RT commands. This patch creates the
-ioprio_check_cap function to be used by the ioprio_set system call and also by
-the aio interface.
+Now that kiocb has an ioprio field copy this over to the bio when it is
+created from the kiocb.
 
 Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- block/ioprio.c         | 22 ++++++++++++++++------
- include/linux/ioprio.h |  2 ++
- 2 files changed, 18 insertions(+), 6 deletions(-)
+ fs/block_dev.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/block/ioprio.c b/block/ioprio.c
-index 6f5d0b6625e3..f9821080c92c 100644
---- a/block/ioprio.c
-+++ b/block/ioprio.c
-@@ -61,15 +61,10 @@ int set_task_ioprio(struct task_struct *task, int ioprio)
- }
- EXPORT_SYMBOL_GPL(set_task_ioprio);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 7ec920e27065..da1e94d2bb75 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -355,6 +355,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 		bio->bi_write_hint = iocb->ki_hint;
+ 		bio->bi_private = dio;
+ 		bio->bi_end_io = blkdev_bio_end_io;
++		bio->bi_ioprio = iocb->ki_ioprio;
  
--SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
-+int ioprio_check_cap(int ioprio)
- {
- 	int class = IOPRIO_PRIO_CLASS(ioprio);
- 	int data = IOPRIO_PRIO_DATA(ioprio);
--	struct task_struct *p, *g;
--	struct user_struct *user;
--	struct pid *pgrp;
--	kuid_t uid;
--	int ret;
- 
- 	switch (class) {
- 		case IOPRIO_CLASS_RT:
-@@ -92,6 +87,21 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
- 			return -EINVAL;
- 	}
- 
-+	return 0;
-+}
-+
-+SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
-+{
-+	struct task_struct *p, *g;
-+	struct user_struct *user;
-+	struct pid *pgrp;
-+	kuid_t uid;
-+	int ret;
-+
-+	ret = ioprio_check_cap(ioprio);
-+	if (ret)
-+		return ret;
-+
- 	ret = -ESRCH;
- 	rcu_read_lock();
- 	switch (which) {
-diff --git a/include/linux/ioprio.h b/include/linux/ioprio.h
-index 627efac73e6d..4a28cec49ec3 100644
---- a/include/linux/ioprio.h
-+++ b/include/linux/ioprio.h
-@@ -77,4 +77,6 @@ extern int ioprio_best(unsigned short aprio, unsigned short bprio);
- 
- extern int set_task_ioprio(struct task_struct *task, int ioprio);
- 
-+extern int ioprio_check_cap(int ioprio);
-+
- #endif
+ 		ret = bio_iov_iter_get_pages(bio, iter);
+ 		if (unlikely(ret)) {
 -- 
 2.15.1
 
