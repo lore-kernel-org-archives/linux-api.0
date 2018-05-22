@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 16/31] net/dccp: convert to ->poll_mask
-Date: Tue, 22 May 2018 13:30:53 +0200
-Message-ID: <20180522113108.25713-17-hch@lst.de>
+Subject: [PATCH 17/31] net/atm: convert to ->poll_mask
+Date: Tue, 22 May 2018 13:30:54 +0200
+Message-ID: <20180522113108.25713-18-hch@lst.de>
 References: <20180522113108.25713-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180522113108.25713-1-hch@lst.de>
@@ -12,87 +12,75 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/dccp/dccp.h  |  3 +--
- net/dccp/ipv4.c  |  2 +-
- net/dccp/ipv6.c  |  2 +-
- net/dccp/proto.c | 13 ++-----------
- 4 files changed, 5 insertions(+), 15 deletions(-)
+ net/atm/common.c | 11 +++--------
+ net/atm/common.h |  2 +-
+ net/atm/pvc.c    |  2 +-
+ net/atm/svc.c    |  2 +-
+ 4 files changed, 6 insertions(+), 11 deletions(-)
 
-diff --git a/net/dccp/dccp.h b/net/dccp/dccp.h
-index f91e3816806b..0ea2ee56ac1b 100644
---- a/net/dccp/dccp.h
-+++ b/net/dccp/dccp.h
-@@ -316,8 +316,7 @@ int dccp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
- 		 int flags, int *addr_len);
- void dccp_shutdown(struct sock *sk, int how);
- int inet_dccp_listen(struct socket *sock, int backlog);
--__poll_t dccp_poll(struct file *file, struct socket *sock,
--		       poll_table *wait);
-+__poll_t dccp_poll_mask(struct socket *sock, __poll_t events);
- int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len);
- void dccp_req_err(struct sock *sk, u64 seq);
- 
-diff --git a/net/dccp/ipv4.c b/net/dccp/ipv4.c
-index b08feb219b44..a9e478cd3787 100644
---- a/net/dccp/ipv4.c
-+++ b/net/dccp/ipv4.c
-@@ -984,7 +984,7 @@ static const struct proto_ops inet_dccp_ops = {
- 	.accept		   = inet_accept,
- 	.getname	   = inet_getname,
- 	/* FIXME: work on tcp_poll to rename it to inet_csk_poll */
--	.poll		   = dccp_poll,
-+	.poll_mask	   = dccp_poll_mask,
- 	.ioctl		   = inet_ioctl,
- 	/* FIXME: work on inet_listen to rename it to sock_common_listen */
- 	.listen		   = inet_dccp_listen,
-diff --git a/net/dccp/ipv6.c b/net/dccp/ipv6.c
-index 6344f1b18a6a..17fc4e0166ba 100644
---- a/net/dccp/ipv6.c
-+++ b/net/dccp/ipv6.c
-@@ -1070,7 +1070,7 @@ static const struct proto_ops inet6_dccp_ops = {
- 	.socketpair	   = sock_no_socketpair,
- 	.accept		   = inet_accept,
- 	.getname	   = inet6_getname,
--	.poll		   = dccp_poll,
-+	.poll_mask	   = dccp_poll_mask,
- 	.ioctl		   = inet6_ioctl,
- 	.listen		   = inet_dccp_listen,
- 	.shutdown	   = inet_shutdown,
-diff --git a/net/dccp/proto.c b/net/dccp/proto.c
-index 84cd4e3fd01b..88b668db244b 100644
---- a/net/dccp/proto.c
-+++ b/net/dccp/proto.c
-@@ -314,20 +314,11 @@ int dccp_disconnect(struct sock *sk, int flags)
- 
- EXPORT_SYMBOL_GPL(dccp_disconnect);
- 
--/*
-- *	Wait for a DCCP event.
-- *
-- *	Note that we don't need to lock the socket, as the upper poll layers
-- *	take care of normal races (between the test and the event) and we don't
-- *	go look at any of the socket buffers directly.
-- */
--__poll_t dccp_poll(struct file *file, struct socket *sock,
--		       poll_table *wait)
-+__poll_t dccp_poll_mask(struct socket *sock, __poll_t events)
- {
- 	__poll_t mask;
- 	struct sock *sk = sock->sk;
- 
--	sock_poll_wait(file, sk_sleep(sk), wait);
- 	if (sk->sk_state == DCCP_LISTEN)
- 		return inet_csk_listen_poll(sk);
- 
-@@ -369,7 +360,7 @@ __poll_t dccp_poll(struct file *file, struct socket *sock,
- 	return mask;
+diff --git a/net/atm/common.c b/net/atm/common.c
+index fc78a0508ae1..1f2af59935db 100644
+--- a/net/atm/common.c
++++ b/net/atm/common.c
+@@ -648,16 +648,11 @@ int vcc_sendmsg(struct socket *sock, struct msghdr *m, size_t size)
+ 	return error;
  }
  
--EXPORT_SYMBOL_GPL(dccp_poll);
-+EXPORT_SYMBOL_GPL(dccp_poll_mask);
- 
- int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg)
+-__poll_t vcc_poll(struct file *file, struct socket *sock, poll_table *wait)
++__poll_t vcc_poll_mask(struct socket *sock, __poll_t events)
  {
+ 	struct sock *sk = sock->sk;
+-	struct atm_vcc *vcc;
+-	__poll_t mask;
+-
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
+-
+-	vcc = ATM_SD(sock);
++	struct atm_vcc *vcc = ATM_SD(sock);
++	__poll_t mask = 0;
+ 
+ 	/* exceptional events */
+ 	if (sk->sk_err)
+diff --git a/net/atm/common.h b/net/atm/common.h
+index 5850649068bb..526796ad230f 100644
+--- a/net/atm/common.h
++++ b/net/atm/common.h
+@@ -17,7 +17,7 @@ int vcc_connect(struct socket *sock, int itf, short vpi, int vci);
+ int vcc_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
+ 		int flags);
+ int vcc_sendmsg(struct socket *sock, struct msghdr *m, size_t total_len);
+-__poll_t vcc_poll(struct file *file, struct socket *sock, poll_table *wait);
++__poll_t vcc_poll_mask(struct socket *sock, __poll_t events);
+ int vcc_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+ int vcc_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
+ int vcc_setsockopt(struct socket *sock, int level, int optname,
+diff --git a/net/atm/pvc.c b/net/atm/pvc.c
+index 2cb10af16afc..9f75092fe778 100644
+--- a/net/atm/pvc.c
++++ b/net/atm/pvc.c
+@@ -113,7 +113,7 @@ static const struct proto_ops pvc_proto_ops = {
+ 	.socketpair =	sock_no_socketpair,
+ 	.accept =	sock_no_accept,
+ 	.getname =	pvc_getname,
+-	.poll =		vcc_poll,
++	.poll_mask =	vcc_poll_mask,
+ 	.ioctl =	vcc_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl = vcc_compat_ioctl,
+diff --git a/net/atm/svc.c b/net/atm/svc.c
+index 2f91b766ac42..53f4ad7087b1 100644
+--- a/net/atm/svc.c
++++ b/net/atm/svc.c
+@@ -636,7 +636,7 @@ static const struct proto_ops svc_proto_ops = {
+ 	.socketpair =	sock_no_socketpair,
+ 	.accept =	svc_accept,
+ 	.getname =	svc_getname,
+-	.poll =		vcc_poll,
++	.poll_mask =	vcc_poll_mask,
+ 	.ioctl =	svc_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl =	svc_compat_ioctl,
 -- 
 2.17.0
 
