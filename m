@@ -1,8 +1,10 @@
 From: adam.manzanares@wdc.com
-Subject: [PATCH v7 0/5] AIO add per-command iopriority
-Date: Tue, 22 May 2018 10:52:16 -0700
-Message-ID: <20180522175221.2391-1-adam.manzanares@wdc.com>
+Subject: [PATCH v7 2/5] fs: Convert kiocb rw_hint from enum to u16
+Date: Tue, 22 May 2018 10:52:18 -0700
+Message-ID: <20180522175221.2391-3-adam.manzanares@wdc.com>
+References: <20180522175221.2391-1-adam.manzanares@wdc.com>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180522175221.2391-1-adam.manzanares@wdc.com>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, bcrl@kvack.org
 Cc: mingo@kernel.org, tglx@linutronix.de, kstewart@linuxfoundation.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, hch@infradread.org, jmoyer@redhat.com, Adam Manzanares <adam.manzanares@wdc.com>
@@ -10,63 +12,64 @@ List-Id: linux-api@vger.kernel.org
 
 From: Adam Manzanares <adam.manzanares@wdc.com>
 
-This is the per-I/O equivalent of the ioprio_set system call.
-See the following link for performance implications on a SATA HDD:
-https://lkml.org/lkml/2016/12/6/495
+In order to avoid kiocb bloat for per command iopriority support, rw_hint
+is converted from enum to a u16. Added a guard around ki_hint assignment.
 
-First patch factors ioprio_check_cap function out of ioprio_set system call to
-also be used by the aio ioprio interface.
+Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+---
+ fs/aio.c           |  2 +-
+ include/linux/fs.h | 13 +++++++++++--
+ 2 files changed, 12 insertions(+), 3 deletions(-)
 
-Second patch converts kiocb ki_hint field to a u16 to avoid kiocb bloat.
-
-Third patch passes ioprio hint from aio iocb to kiocb and initializes kiocb
-ioprio value appropriately when it is not explicitly set.
-
-Fourth patch enables the feature for blkdev.
-
-Fifth patch enables the feature for iomap direct IO
-
-Note: this work is based on top of linux-vfs/for-next
-
-v2: merge patches
-    use IOCB_FLAG_IOPRIO
-    validate intended use with IOCB_IOPRIO
-    add linux-api and linux-block to cc
-
-v3: add ioprio_check_cap function
-    convert kiocb ki_hint to u16
-    use ioprio_check_cap when adding ioprio to kiocb in aio.c
-
-v4: handle IOCB_IOPRIO in aio_prep_rw
-    note patch 3 depends on patch 1 in commit msg
-
-v5: rename ki_hint_valid -> ki_hint_validate
-    remove ki_hint_validate comment and whitespace
-    remove IOCB_IOPRIO flag
-    initialize kiocb to have no priority
-
-v6: add __blkdev_direct_IO_simple ioprio support
-
-v7: Tie ki_hint_validate to kiocb ki_hint type
-    Add additional ki_hint_validate check
-
-Adam Manzanares (5):
-  block: add ioprio_check_cap function
-  fs: Convert kiocb rw_hint from enum to u16
-  fs: Add aio iopriority support
-  fs: blkdev set bio prio from kiocb prio
-  fs: iomap dio set bio prio from kiocb prio
-
- block/ioprio.c               | 22 ++++++++++++++++------
- drivers/block/loop.c         |  3 +++
- fs/aio.c                     | 18 +++++++++++++++++-
- fs/block_dev.c               |  2 ++
- fs/iomap.c                   |  1 +
- include/linux/fs.h           | 16 ++++++++++++++--
- include/linux/ioprio.h       |  2 ++
- include/uapi/linux/aio_abi.h |  1 +
- 8 files changed, 56 insertions(+), 9 deletions(-)
-
+diff --git a/fs/aio.c b/fs/aio.c
+index 755d3f57bcc8..87d8939bb1e4 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -1450,7 +1450,7 @@ static int aio_prep_rw(struct kiocb *req, struct iocb *iocb)
+ 	req->ki_flags = iocb_flags(req->ki_filp);
+ 	if (iocb->aio_flags & IOCB_FLAG_RESFD)
+ 		req->ki_flags |= IOCB_EVENTFD;
+-	req->ki_hint = file_write_hint(req->ki_filp);
++	req->ki_hint = ki_hint_validate(file_write_hint(req->ki_filp));
+ 	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
+ 	if (unlikely(ret))
+ 		fput(req->ki_filp);
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 7f07977bdfd7..9b76ee73af14 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -299,7 +299,7 @@ struct kiocb {
+ 	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
+ 	void			*private;
+ 	int			ki_flags;
+-	enum rw_hint		ki_hint;
++	u16			ki_hint;
+ } __randomize_layout;
+ 
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+@@ -1927,12 +1927,21 @@ static inline enum rw_hint file_write_hint(struct file *file)
+ 
+ static inline int iocb_flags(struct file *file);
+ 
++static inline u16 ki_hint_validate(enum rw_hint hint)
++{
++	typeof(((struct kiocb *)0)->ki_hint) max_hint = -1;
++
++	if (hint <= max_hint)
++		return hint;
++	return 0;
++}
++
+ static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
+ {
+ 	*kiocb = (struct kiocb) {
+ 		.ki_filp = filp,
+ 		.ki_flags = iocb_flags(filp),
+-		.ki_hint = file_write_hint(filp),
++		.ki_hint = ki_hint_validate(file_write_hint(filp)),
+ 	};
+ }
+ 
 -- 
 2.15.1
 
