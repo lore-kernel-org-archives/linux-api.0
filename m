@@ -1,91 +1,73 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH v2 3/4] mm: add find_alloc_contig_pages() interface
-Date: Tue, 22 May 2018 13:35:49 -0700
-Message-ID: <652bb498-8393-4738-a987-9bed31786261@oracle.com>
-References: <20180503232935.22539-1-mike.kravetz@oracle.com>
- <20180503232935.22539-4-mike.kravetz@oracle.com>
- <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
- <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
- <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 08/31] aio: implement IOCB_CMD_POLL
+Date: Tue, 22 May 2018 23:05:24 +0100
+Message-ID: <20180522220524.GE30522@ZenIV.linux.org.uk>
+References: <20180522113108.25713-1-hch@lst.de>
+ <20180522113108.25713-9-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Reinette Chatre <reinette.chatre@intel.com>, Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180522113108.25713-9-hch@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 05/22/2018 09:41 AM, Reinette Chatre wrote:
-> On 5/21/2018 4:48 PM, Mike Kravetz wrote:
->> On 05/21/2018 01:54 AM, Vlastimil Babka wrote:
->>> On 05/04/2018 01:29 AM, Mike Kravetz wrote:
->>>> +/**
->>>> + * find_alloc_contig_pages() -- attempt to find and allocate a contiguous
->>>> + *				range of pages
->>>> + * @nr_pages:	number of pages to find/allocate
->>>> + * @gfp:	gfp mask used to limit search as well as during compaction
->>>> + * @nid:	target node
->>>> + * @nodemask:	mask of other possible nodes
->>>> + *
->>>> + * Pages can be freed with a call to free_contig_pages(), or by manually
->>>> + * calling __free_page() for each page allocated.
->>>> + *
->>>> + * Return: pointer to 'order' pages on success, or NULL if not successful.
->>>> + */
->>>> +struct page *find_alloc_contig_pages(unsigned long nr_pages, gfp_t gfp,
->>>> +					int nid, nodemask_t *nodemask)
->>>> +{
->>>> +	unsigned long i, alloc_order, order_pages;
->>>> +	struct page *pages;
->>>> +
->>>> +	/*
->>>> +	 * Underlying allocators perform page order sized allocations.
->>>> +	 */
->>>> +	alloc_order = get_count_order(nr_pages);
->>>
->>> So if takes arbitrary nr_pages but convert it to order anyway? I think
->>> that's rather suboptimal and wasteful... e.g. a range could be skipped
->>> because some of the pages added by rounding cannot be migrated away.
->>
->> Yes.  My idea with this series was to use existing allocators which are
->> all order based.  Let me think about how to do allocation for arbitrary
->> number of allocations.
->> - For less than MAX_ORDER size we rely on the buddy allocator, so we are
->>   pretty much stuck with order sized allocation.  However, allocations of
->>   this size are not really interesting as you can call existing routines
->>   directly.
->> - For sizes greater than MAX_ORDER, we know that the allocation size will
->>   be at least pageblock sized.  So, the isolate/migrate scheme can still
->>   be used for full pageblocks.  We can then use direct migration for the
->>   remaining pages.  This does complicate things a bit.
->>
->> I'm guessing that most (?all?) allocations will be order based.  The use
->> cases I am aware of (hugetlbfs, Intel Cache Pseudo-Locking, RDMA) are all
->> order based.  However, as commented in previous version taking arbitrary
->> nr_pages makes interface more future proof.
->>
-> 
-> I noticed this Cache Pseudo-Locking statement and would like to clarify.
-> I have not been following this thread in detail so I would like to
-> apologize first if my comments are out of context.
-> 
-> Currently the Cache Pseudo-Locking allocations are order based because I
-> assumed it was required by the allocator. The contiguous regions needed
-> by Cache Pseudo-Locking will not always be order based - instead it is
-> based on the granularity of the cache allocation. One example is a
-> platform with 55MB L3 cache that can be divided into 20 equal portions.
-> To support Cache Pseudo-Locking on this platform we need to be able to
-> allocate contiguous regions at increments of 2816KB (the size of each
-> portion). In support of this example platform regions needed would thus
-> be 2816KB, 5632KB, 8448KB, etc.
+On Tue, May 22, 2018 at 01:30:45PM +0200, Christoph Hellwig wrote:
 
-Thank you Reinette.  I was not aware of these details.  Yours is the most
-concrete new use case.
+> +static inline void __aio_poll_complete(struct poll_iocb *req, __poll_t mask)
+> +{
+> +	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
+> +
+> +	fput(req->file);
+> +	aio_complete(iocb, mangle_poll(mask), 0);
+> +}
 
-This certainly makes more of a case for arbitrary sized allocations.
+Careful.
 
--- 
-Mike Kravetz
+> +static int aio_poll_cancel(struct kiocb *iocb)
+> +{
+> +	struct aio_kiocb *aiocb = container_of(iocb, struct aio_kiocb, rw);
+> +	struct poll_iocb *req = &aiocb->poll;
+> +	struct wait_queue_head *head = req->head;
+> +	bool found = false;
+> +
+> +	spin_lock(&head->lock);
+> +	found = __aio_poll_remove(req);
+> +	spin_unlock(&head->lock);
+
+What's to guarantee that req->head has not been freed by that point?
+Look: wakeup finds ->ctx_lock held, so it leaves the sucker on the
+list, removes it from queue and schedules the call of __aio_poll_complete().
+Which gets executed just as we hit aio_poll_cancel(), starting with fput().
+
+You really want to do aio_complete() before fput().  That way you know that
+req->wait is alive and well at least until iocb gets removed from the list.
+
+> +	req->events = demangle_poll(iocb->aio_buf) | POLLERR | POLLHUP;
+
+EPOLLERR | EPOLLHUP, please.  The values are equal to POLLERR and POLLHUP on
+all architectures, but let's avoid misannotations.
+
+> +	spin_lock_irq(&ctx->ctx_lock);
+> +	list_add_tail(&aiocb->ki_list, &ctx->active_reqs);
+> +
+> +	spin_lock(&req->head->lock);
+> +	mask = req->file->f_op->poll_mask(req->file, req->events);
+> +	if (!mask)
+> +		__add_wait_queue(req->head, &req->wait);
+
+ITYM
+	if (!mask) {
+		__add_wait_queue(req->head, &req->wait);
+		list_add_tail(&aiocb->ki_list, &ctx->active_reqs);
+	}
+What's the point of exposing it to aio_poll_cancel() when it has
+never been on waitqueue?
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
