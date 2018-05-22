@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 18/31] net/vmw_vsock: convert to ->poll_mask
-Date: Tue, 22 May 2018 13:30:55 +0200
-Message-ID: <20180522113108.25713-19-hch@lst.de>
+Subject: [PATCH 19/31] net/tipc: convert to ->poll_mask
+Date: Tue, 22 May 2018 13:30:56 +0200
+Message-ID: <20180522113108.25713-20-hch@lst.de>
 References: <20180522113108.25713-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180522113108.25713-1-hch@lst.de>
@@ -12,54 +12,69 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- net/vmw_vsock/af_vsock.c | 19 ++++++-------------
- 1 file changed, 6 insertions(+), 13 deletions(-)
+ net/tipc/socket.c | 14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index c1076c19b858..bb5d5fa68c35 100644
---- a/net/vmw_vsock/af_vsock.c
-+++ b/net/vmw_vsock/af_vsock.c
-@@ -850,18 +850,11 @@ static int vsock_shutdown(struct socket *sock, int mode)
- 	return err;
+diff --git a/net/tipc/socket.c b/net/tipc/socket.c
+index 252a52ae0893..58549338582a 100644
+--- a/net/tipc/socket.c
++++ b/net/tipc/socket.c
+@@ -692,10 +692,9 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
  }
  
--static __poll_t vsock_poll(struct file *file, struct socket *sock,
--			       poll_table *wait)
-+static __poll_t vsock_poll_mask(struct socket *sock, __poll_t events)
+ /**
+- * tipc_poll - read and possibly block on pollmask
++ * tipc_poll - read pollmask
+  * @file: file structure associated with the socket
+  * @sock: socket for which to calculate the poll bits
+- * @wait: ???
+  *
+  * Returns pollmask value
+  *
+@@ -709,15 +708,12 @@ static int tipc_getname(struct socket *sock, struct sockaddr *uaddr,
+  * imply that the operation will succeed, merely that it should be performed
+  * and will not block.
+  */
+-static __poll_t tipc_poll(struct file *file, struct socket *sock,
+-			      poll_table *wait)
++static __poll_t tipc_poll_mask(struct socket *sock, __poll_t events)
  {
--	struct sock *sk;
--	__poll_t mask;
--	struct vsock_sock *vsk;
--
--	sk = sock->sk;
--	vsk = vsock_sk(sk);
--
--	poll_wait(file, sk_sleep(sk), wait);
--	mask = 0;
-+	struct sock *sk = sock->sk;
-+	struct vsock_sock *vsk = vsock_sk(sk);
-+	__poll_t mask = 0;
+ 	struct sock *sk = sock->sk;
+ 	struct tipc_sock *tsk = tipc_sk(sk);
+ 	__poll_t revents = 0;
  
- 	if (sk->sk_err)
- 		/* Signify that there has been an error on this socket. */
-@@ -1091,7 +1084,7 @@ static const struct proto_ops vsock_dgram_ops = {
- 	.socketpair = sock_no_socketpair,
- 	.accept = sock_no_accept,
- 	.getname = vsock_getname,
--	.poll = vsock_poll,
-+	.poll_mask = vsock_poll_mask,
- 	.ioctl = sock_no_ioctl,
- 	.listen = sock_no_listen,
- 	.shutdown = vsock_shutdown,
-@@ -1849,7 +1842,7 @@ static const struct proto_ops vsock_stream_ops = {
- 	.socketpair = sock_no_socketpair,
- 	.accept = vsock_accept,
- 	.getname = vsock_getname,
--	.poll = vsock_poll,
-+	.poll_mask = vsock_poll_mask,
- 	.ioctl = sock_no_ioctl,
- 	.listen = vsock_listen,
- 	.shutdown = vsock_shutdown,
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-
+ 	if (sk->sk_shutdown & RCV_SHUTDOWN)
+ 		revents |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
+ 	if (sk->sk_shutdown == SHUTDOWN_MASK)
+@@ -3027,7 +3023,7 @@ static const struct proto_ops msg_ops = {
+ 	.socketpair	= tipc_socketpair,
+ 	.accept		= sock_no_accept,
+ 	.getname	= tipc_getname,
+-	.poll		= tipc_poll,
++	.poll_mask	= tipc_poll_mask,
+ 	.ioctl		= tipc_ioctl,
+ 	.listen		= sock_no_listen,
+ 	.shutdown	= tipc_shutdown,
+@@ -3048,7 +3044,7 @@ static const struct proto_ops packet_ops = {
+ 	.socketpair	= tipc_socketpair,
+ 	.accept		= tipc_accept,
+ 	.getname	= tipc_getname,
+-	.poll		= tipc_poll,
++	.poll_mask	= tipc_poll_mask,
+ 	.ioctl		= tipc_ioctl,
+ 	.listen		= tipc_listen,
+ 	.shutdown	= tipc_shutdown,
+@@ -3069,7 +3065,7 @@ static const struct proto_ops stream_ops = {
+ 	.socketpair	= tipc_socketpair,
+ 	.accept		= tipc_accept,
+ 	.getname	= tipc_getname,
+-	.poll		= tipc_poll,
++	.poll_mask	= tipc_poll_mask,
+ 	.ioctl		= tipc_ioctl,
+ 	.listen		= tipc_listen,
+ 	.shutdown	= tipc_shutdown,
 -- 
 2.17.0
 
