@@ -1,58 +1,63 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v7 0/5] AIO add per-command iopriority
-Date: Tue, 22 May 2018 12:30:53 -0600
-Message-ID: <4b8732e8-1c51-3181-56a1-d03f7b229f63@kernel.dk>
-References: <20180522175221.2391-1-adam.manzanares@wdc.com>
- <da84d129-4dcd-c861-bfc4-62cd425e60e3@kernel.dk>
- <20180522183019.GD30522@ZenIV.linux.org.uk>
+From: Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>
+Subject: Re: [RFC PATCH ghak32 V2 13/13] debug audit: read container ID of a
+	process
+Date: Tue, 22 May 2018 14:59:38 -0400
+Message-ID: <CAHC9VhS_jMHv4g_A6kPWohOU0LNJ5-ntcf7Xu_xEv6NTXu3yyw@mail.gmail.com>
+References: <cover.1521179281.git.rgb@redhat.com>
+	<1081821010c124fe4e35984ec3dac1654453bb7c.1521179281.git.rgb@redhat.com>
+	<3001737.MkQ41rgtZF@x2> <87muwshl4z.fsf@xmission.com>
+	<CAHC9VhQruN88t-R9Qo3e4hwCZ58RAyrmEmH1nY4RR6NZaiBzGQ@mail.gmail.com>
+	<20180522173541.slcdszumi7q6c4id@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180522183019.GD30522@ZenIV.linux.org.uk>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: adam.manzanares@wdc.com, linux-fsdevel@vger.kernel.org, bcrl@kvack.org, mingo@kernel.org, tglx@linutronix.de, kstewart@linuxfoundation.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, hch@infradread.org, jmoyer@redhat.com
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20180522173541.slcdszumi7q6c4id-bcJWsdo4jJjeVoXN4CMphl7TgLCtbB0G@public.gmane.org>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/containers/>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, jlayton-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, carlos-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-audit-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, simo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eric Paris <eparis-FjpueFixGhCM4zKIHC2jIg@public.gmane.org>, Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/22/18 12:30 PM, Al Viro wrote:
-> On Tue, May 22, 2018 at 11:55:04AM -0600, Jens Axboe wrote:
->> On 5/22/18 11:52 AM, adam.manzanares@wdc.com wrote:
->>> From: Adam Manzanares <adam.manzanares@wdc.com>
->>>
->>> This is the per-I/O equivalent of the ioprio_set system call.
->>> See the following link for performance implications on a SATA HDD:
->>> https://lkml.org/lkml/2016/12/6/495
->>>
->>> First patch factors ioprio_check_cap function out of ioprio_set system call to
->>> also be used by the aio ioprio interface.
->>>
->>> Second patch converts kiocb ki_hint field to a u16 to avoid kiocb bloat.
->>>
->>> Third patch passes ioprio hint from aio iocb to kiocb and initializes kiocb
->>> ioprio value appropriately when it is not explicitly set.
->>>
->>> Fourth patch enables the feature for blkdev.
->>>
->>> Fifth patch enables the feature for iomap direct IO
+On Tue, May 22, 2018 at 1:35 PM, Richard Guy Briggs <rgb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On 2018-05-21 16:06, Paul Moore wrote:
+>> On Mon, May 21, 2018 at 3:19 PM, Eric W. Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> wrote:
+>> > Steve Grubb <sgrubb-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+>> >> On Friday, March 16, 2018 5:00:40 AM EDT Richard Guy Briggs wrote:
+>> >>> Add support for reading the container ID from the proc filesystem.
+>> >>
+>> >> I think this could be useful in general. Please consider this to be part of
+>> >> the full patch set and not something merely used to debug the patches.
+>> >
+>> > Only with an audit specific name.
+>> >
+>> > As it is:
+>> >
+>> > Nacked-by: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
+>> >
+>> > The truth is the containerid name really stinks and is quite confusing
+>> > and does not imply that the label applies only to audit.  And little
+>> > things like this make me extremely uncofortable with it.
 >>
->> LGTM, you can add:
->>
->> Reviewed-by: Jens Axboe <axboe@kernel.dk>
->>
->> Al, are you picking this series up, or should I?
-> 
-> Probably better if I do, once I finish reviewing Christoph's patchset -
-> we already have a bunch of stuff around fs/aio.c in this cycle...
+>> It also makes the audit container ID (notice how I *always* call it
+>> the *audit* container ID? that is not an accident) available for
+>> userspace applications to abuse.  Perhaps in the future we can look at
+>> ways to make this more available to applications, but this patch is
+>> not the answer.
+>
+> Do you have a productive suggestion?
 
-Alright, sounds good, thanks Al.
+I haven't given it much thought beyond our discussions and until we
+get the basic audit container ID support in place (all the other parts
+of this patchset) I doubt I'll be giving it much thought.
 
 -- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+paul moore
+www.paul-moore.com
