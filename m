@@ -1,91 +1,85 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v6 2/5] fs: Convert kiocb rw_hint from enum to u16
-Date: Tue, 22 May 2018 10:30:36 -0600
-Message-ID: <58087b03-a3c7-93fd-d1ad-de77181e8806@kernel.dk>
-References: <20180522150737.9893-1-adam.manzanares@wdc.com>
- <20180522150737.9893-3-adam.manzanares@wdc.com>
- <11fb2ee5-8352-2d35-3154-68637d99b096@kernel.dk>
- <084d253c-52ab-7b23-521c-28602c56153b@suse.de>
+From: Reinette Chatre <reinette.chatre@intel.com>
+Subject: Re: [PATCH v2 3/4] mm: add find_alloc_contig_pages() interface
+Date: Tue, 22 May 2018 09:41:09 -0700
+Message-ID: <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
+References: <20180503232935.22539-1-mike.kravetz@oracle.com>
+ <20180503232935.22539-4-mike.kravetz@oracle.com>
+ <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
+ <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <084d253c-52ab-7b23-521c-28602c56153b@suse.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
 Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Goldwyn Rodrigues <rgoldwyn@suse.de>, adam.manzanares@wdc.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, bcrl@kvack.org
-Cc: tglx@linutronix.de, mingo@kernel.org, pombredanne@nexb.com, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, bigeasy@linutronix.de, jack@suse.cz, darrick.wong@oracle.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, hch@infradread.org, jmoyer@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mike Kravetz <mike.kravetz@oracle.com>, Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 5/22/18 10:24 AM, Goldwyn Rodrigues wrote:
-> 
-> 
-> On 05/22/2018 10:32 AM, Jens Axboe wrote:
->> On 5/22/18 9:07 AM, adam.manzanares@wdc.com wrote:
->>> From: Adam Manzanares <adam.manzanares@wdc.com>
->>>
->>> In order to avoid kiocb bloat for per command iopriority support, rw_hint
->>> is converted from enum to a u16. Added a guard around ki_hint assignment.
->>>
->>> Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
->>> Reviewed-by: Christoph Hellwig <hch@lst.de>
->>> ---
->>>  include/linux/fs.h | 13 +++++++++++--
->>>  1 file changed, 11 insertions(+), 2 deletions(-)
->>>
->>> diff --git a/include/linux/fs.h b/include/linux/fs.h
->>> index 7f07977bdfd7..50de40dbbb85 100644
->>> --- a/include/linux/fs.h
->>> +++ b/include/linux/fs.h
->>> @@ -284,6 +284,8 @@ enum rw_hint {
->>>  	WRITE_LIFE_EXTREME	= RWH_WRITE_LIFE_EXTREME,
->>>  };
->>>  
->>> +#define MAX_KI_HINT		((1 << 16) - 1) /* ki_hint type is u16 */
+On 5/21/2018 4:48 PM, Mike Kravetz wrote:
+> On 05/21/2018 01:54 AM, Vlastimil Babka wrote:
+>> On 05/04/2018 01:29 AM, Mike Kravetz wrote:
+>>> +/**
+>>> + * find_alloc_contig_pages() -- attempt to find and allocate a contiguous
+>>> + *				range of pages
+>>> + * @nr_pages:	number of pages to find/allocate
+>>> + * @gfp:	gfp mask used to limit search as well as during compaction
+>>> + * @nid:	target node
+>>> + * @nodemask:	mask of other possible nodes
+>>> + *
+>>> + * Pages can be freed with a call to free_contig_pages(), or by manually
+>>> + * calling __free_page() for each page allocated.
+>>> + *
+>>> + * Return: pointer to 'order' pages on success, or NULL if not successful.
+>>> + */
+>>> +struct page *find_alloc_contig_pages(unsigned long nr_pages, gfp_t gfp,
+>>> +					int nid, nodemask_t *nodemask)
+>>> +{
+>>> +	unsigned long i, alloc_order, order_pages;
+>>> +	struct page *pages;
+>>> +
+>>> +	/*
+>>> +	 * Underlying allocators perform page order sized allocations.
+>>> +	 */
+>>> +	alloc_order = get_count_order(nr_pages);
 >>
->> Instead of having to do this and now rely on those now being synced,
->> how about something like the below.
->>
->> diff --git a/include/linux/fs.h b/include/linux/fs.h
->> index 760d8da1b6c7..070438d0b62d 100644
->> --- a/include/linux/fs.h
->> +++ b/include/linux/fs.h
->> @@ -299,7 +299,7 @@ struct kiocb {
->>  	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
->>  	void			*private;
->>  	int			ki_flags;
->> -	enum rw_hint		ki_hint;
->> +	u16			ki_hint;
->>  } __randomize_layout;
->>  
->>  static inline bool is_sync_kiocb(struct kiocb *kiocb)
->> @@ -1927,12 +1927,22 @@ static inline enum rw_hint file_write_hint(struct file *file)
->>  
->>  static inline int iocb_flags(struct file *file);
->>  
->> +static inline u16 ki_hint_validate(enum rw_hint hint)
->> +{
->> +	typeof(((struct kiocb *)0)->ki_hint) max_hint = -1;
+>> So if takes arbitrary nr_pages but convert it to order anyway? I think
+>> that's rather suboptimal and wasteful... e.g. a range could be skipped
+>> because some of the pages added by rounding cannot be migrated away.
 > 
-> This looks complex to me. Would force a reader to lookback at what
-> datatype ki_hint is. I'd prefer to declare it as u16 max_hint = -1, or
-> even the previous #define MAX_KI_HINT format is easier to read. Just a
-> program reading style you are comfortable with though.
+> Yes.  My idea with this series was to use existing allocators which are
+> all order based.  Let me think about how to do allocation for arbitrary
+> number of allocations.
+> - For less than MAX_ORDER size we rely on the buddy allocator, so we are
+>   pretty much stuck with order sized allocation.  However, allocations of
+>   this size are not really interesting as you can call existing routines
+>   directly.
+> - For sizes greater than MAX_ORDER, we know that the allocation size will
+>   be at least pageblock sized.  So, the isolate/migrate scheme can still
+>   be used for full pageblocks.  We can then use direct migration for the
+>   remaining pages.  This does complicate things a bit.
+> 
+> I'm guessing that most (?all?) allocations will be order based.  The use
+> cases I am aware of (hugetlbfs, Intel Cache Pseudo-Locking, RDMA) are all
+> order based.  However, as commented in previous version taking arbitrary
+> nr_pages makes interface more future proof.
+> 
 
-How is it complex? It's defining a type that'll be the same as ki_hint
-in the kiocb, which is _exactly_ what we care about. Any sort of other
-definition will rely on those two locations now being synced. The
-above will never break.
+I noticed this Cache Pseudo-Locking statement and would like to clarify.
+I have not been following this thread in detail so I would like to
+apologize first if my comments are out of context.
 
-So I strongly disagree. The above will _never_ require the reader to
-figure out what the type is. Any other variant will _always_ require
-the reader to check if they are the same.
+Currently the Cache Pseudo-Locking allocations are order based because I
+assumed it was required by the allocator. The contiguous regions needed
+by Cache Pseudo-Locking will not always be order based - instead it is
+based on the granularity of the cache allocation. One example is a
+platform with 55MB L3 cache that can be divided into 20 equal portions.
+To support Cache Pseudo-Locking on this platform we need to be able to
+allocate contiguous regions at increments of 2816KB (the size of each
+portion). In support of this example platform regions needed would thus
+be 2816KB, 5632KB, 8448KB, etc.
 
--- 
-Jens Axboe
+Regards,
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Reinette
