@@ -1,78 +1,92 @@
-From: Mike Kravetz <mike.kravetz@oracle.com>
-Subject: Re: [PATCH v2 0/4] Interface for higher order contiguous allocations
-Date: Mon, 21 May 2018 17:15:06 -0700
-Message-ID: <8c3906cf-ffd3-00fe-b690-2902fc5b4e5a@oracle.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v2 2/4] mm: check for proper migrate type during isolation
+Date: Tue, 22 May 2018 09:07:56 +0200
+Message-ID: <a9816b88-015e-7e44-cbb8-a7ff04453870@suse.cz>
 References: <20180503232935.22539-1-mike.kravetz@oracle.com>
- <8ce9884c-36b0-68ea-45a4-06177c41af4a@suse.cz>
+ <20180503232935.22539-3-mike.kravetz@oracle.com>
+ <0a74f688-74fb-b841-4782-f9c96b1b9cfc@suse.cz>
+ <f50d6814-8bc6-80cd-c0e5-b2cfa4f9e576@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8ce9884c-36b0-68ea-45a4-06177c41af4a@suse.cz>
+In-Reply-To: <f50d6814-8bc6-80cd-c0e5-b2cfa4f9e576@oracle.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Reinette Chatre <reinette.chatre@intel.com>, Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, Joonsoo Kim <iamjoonsoo.kim@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-On 05/21/2018 05:00 AM, Vlastimil Babka wrote:
-> On 05/04/2018 01:29 AM, Mike Kravetz wrote:
->> Vlastimil and Michal brought up the issue of allocation alignment.  The
->> routine will currently align to 'nr_pages' (which is the requested size
->> argument).  It does this by examining and trying to allocate the first
->> nr_pages aligned/nr_pages sized range.  If this fails, it moves on to the
->> next nr_pages aligned/nr_pages sized range until success or all potential
->> ranges are exhausted.
+On 05/22/2018 01:10 AM, Mike Kravetz wrote:
+> On 05/18/2018 03:32 AM, Vlastimil Babka wrote:
+>> On 05/04/2018 01:29 AM, Mike Kravetz wrote:
+>>> The routine start_isolate_page_range and alloc_contig_range have
+>>> comments saying that migratetype must be either MIGRATE_MOVABLE or
+>>> MIGRATE_CMA.  However, this is not enforced.
+>>
+>> Enforced, no. But if the pageblocks really were as such, it used to
+>> shortcut has_unmovable_pages(). This was wrong and removed in
+>> d7b236e10ced ("mm: drop migrate type checks from has_unmovable_pages")
+>> plus 4da2ce250f98 ("mm: distinguish CMA and MOVABLE isolation in
+>> has_unmovable_pages()").
+>>
+>>
+>>   What is important is
+>>> that that all pageblocks in the range are of type migratetype.
+>>                                                the same
+>>> This is because blocks will be set to migratetype on error.
+>>
+>> Strictly speaking this is true only for the CMA case. For other cases,
+>> the best thing actually would be to employ the same heuristics as page
+>> allocation migratetype fallbacks, and count how many pages are free and
+>> how many appear to be movable, see how steal_suitable_fallback() uses
+>> the last parameter of move_freepages_block().
+>>
+>>> Add a boolean argument enforce_migratetype to the routine
+>>> start_isolate_page_range.  If set, it will check that all pageblocks
+>>> in the range have the passed migratetype.  Return -EINVAL is pageblock
+>>                                                             if
+>>> is wrong type is found in range.
+>>   of
+>>>
+>>> A boolean is used for enforce_migratetype as there are two primary
+>>> users.  Contiguous range allocation which wants to enforce migration
+>>> type checking.  Memory offline (hotplug) which is not concerned about
+>>> type checking.
+>>
+>> This is missing some high-level result. The end change is that CMA is
+>> now enforcing. So we are making it more robust when it's called on
+>> non-CMA pageblocks by mistake? (BTW I still do hope we can remove
+>> MIGRATE_CMA soon after Joonsoo's ZONE_MOVABLE CMA conversion. Combined
+>> with my suggestion above we could hopefully get rid of the migratetype
+>> parameter completely instead of enforcing it?). Is this also a
+>> preparation for introducing find_alloc_contig_pages() which will be
+>> enforcing? (I guess, and will find out shortly, but it should be stated
+>> here)
 > 
-> As I've noted in my patch 3/4 review, in fact nr_pages is first rounded
-> up to an order, which makes this simpler, but suboptimal. I think we
-> could perhaps assume that nr_pages that's a power of two should be
-> aligned as such, and other values of nr_pages need no alignment? This
-> should fit existing users, and can be extended to explicit alignment
-> when such user appears?
+> Thank you for looking at these patches Vlastimil.
+> 
+> My primary motivation for this patch was the 'error recovery' in
+> start_isolate_page_range.  It takes a range and attempts to set
+> all pageblocks to MIGRATE_ISOLATE.  If it encounters an error after
+> setting some blocks to isolate, it will 'clean up' by setting the
+> migrate type of previously modified blocks to the passed migratetype.
 
-I'm good with that.  I do believe that minimum alignment will be
-pageblock size alignment (for > MAX_ORDER allocations).
+Right.
 
->> If we allow an alignment to be specified, we will
->> need to potentially check all alignment aligned/nr_pages sized ranges.
->> In the worst case where alignment = PAGE_SIZE, this could result in huge
->> increase in the number of ranges to check.
->> To help cut down on the number of ranges to check, we could identify the
->> first page that causes a range allocation failure and start the next
->> range at the next aligned boundary.  I tried this, and we still end up
->> with a huge number of ranges and wasted CPU cycles.
-> 
-> I think the wasted cycle issues is due to the current code structure,
-> which is based on the CMA use-case, which assumes that the allocations
-> will succeed, because the areas are reserved and may contain only
-> movable allocations
-> 
-> find_alloc_contig_pages()
->   __alloc_contig_pages_nodemask()
->     contig_pfn_range_valid()
->       - performs only very basic pfn validity and belongs-to-zone checks
->     alloc_contig_range()
->       start_isolate_page_range()
->        for (pfn per pageblock) - the main cycle
->          set_migratetype_isolate()
->            has_unmovable_pages() - cancel if yes
->            move_freepages_block() - expensive!
->       __alloc_contig_migrate_range()
-> etc (not important)
-> 
-> So I think the problem is that in the main cycle we might do a number of
-> expensive move_freepages_block() operations, then hit a block where
-> has_unmovable_pages() is true, cancel and do more expensive
-> undo_isolate_page_range() operations.
-> 
-> If we instead first scanned the range with has_unmovable_pages() and
-> only start doing the expensive work when we find a large enough (aligned
-> or not depending on caller) range, it should be much faster and there
-> should be no algorithmic difference between aligned and non-aligned case.
+> So, one possible side effect of an error in start_isolate_page_range
+> is that the migrate type of some pageblocks could be modified.  Thinking
+> about it more now, that may be OK.
 
-Ok, I will give that a try.
+It would be definitely OK if the migratetype was changed similarly as
+steal_suitable_fallback() does it, as I've said above.
 
-Thanks again for looking at these.
--- 
-Mike Kravetz
+> It just does not seem like the
+> right thing to do, especially with comments saying "migratetype must
+> be either MIGRATE_MOVABLE or MIGRATE_CMA".  I'm fine with leaving the
+> code as is and just cleaning up the comments if you think that may
+> be better.
+
+That's also possible, especially when the code is restructured as I've
+suggested in the other reply, which should significantly reduce the
+amount of error recoveries.
