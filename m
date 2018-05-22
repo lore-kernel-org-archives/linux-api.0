@@ -1,7 +1,7 @@
 From: adam.manzanares@wdc.com
-Subject: [PATCH v7 2/5] fs: Convert kiocb rw_hint from enum to u16
-Date: Tue, 22 May 2018 10:52:18 -0700
-Message-ID: <20180522175221.2391-3-adam.manzanares@wdc.com>
+Subject: [PATCH v7 4/5] fs: blkdev set bio prio from kiocb prio
+Date: Tue, 22 May 2018 10:52:20 -0700
+Message-ID: <20180522175221.2391-5-adam.manzanares@wdc.com>
 References: <20180522175221.2391-1-adam.manzanares@wdc.com>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180522175221.2391-1-adam.manzanares@wdc.com>
@@ -12,64 +12,35 @@ List-Id: linux-api@vger.kernel.org
 
 From: Adam Manzanares <adam.manzanares@wdc.com>
 
-In order to avoid kiocb bloat for per command iopriority support, rw_hint
-is converted from enum to a u16. Added a guard around ki_hint assignment.
+Now that kiocb has an ioprio field copy this over to the bio when it is
+created from the kiocb.
 
 Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
 ---
- fs/aio.c           |  2 +-
- include/linux/fs.h | 13 +++++++++++--
- 2 files changed, 12 insertions(+), 3 deletions(-)
+ fs/block_dev.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 755d3f57bcc8..87d8939bb1e4 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1450,7 +1450,7 @@ static int aio_prep_rw(struct kiocb *req, struct iocb *iocb)
- 	req->ki_flags = iocb_flags(req->ki_filp);
- 	if (iocb->aio_flags & IOCB_FLAG_RESFD)
- 		req->ki_flags |= IOCB_EVENTFD;
--	req->ki_hint = file_write_hint(req->ki_filp);
-+	req->ki_hint = ki_hint_validate(file_write_hint(req->ki_filp));
- 	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 7ec920e27065..11ba99e79d2a 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -216,6 +216,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 	bio.bi_write_hint = iocb->ki_hint;
+ 	bio.bi_private = current;
+ 	bio.bi_end_io = blkdev_bio_end_io_simple;
++	bio.bi_ioprio = iocb->ki_ioprio;
+ 
+ 	ret = bio_iov_iter_get_pages(&bio, iter);
  	if (unlikely(ret))
- 		fput(req->ki_filp);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 7f07977bdfd7..9b76ee73af14 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -299,7 +299,7 @@ struct kiocb {
- 	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
- 	void			*private;
- 	int			ki_flags;
--	enum rw_hint		ki_hint;
-+	u16			ki_hint;
- } __randomize_layout;
+@@ -355,6 +356,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 		bio->bi_write_hint = iocb->ki_hint;
+ 		bio->bi_private = dio;
+ 		bio->bi_end_io = blkdev_bio_end_io;
++		bio->bi_ioprio = iocb->ki_ioprio;
  
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-@@ -1927,12 +1927,21 @@ static inline enum rw_hint file_write_hint(struct file *file)
- 
- static inline int iocb_flags(struct file *file);
- 
-+static inline u16 ki_hint_validate(enum rw_hint hint)
-+{
-+	typeof(((struct kiocb *)0)->ki_hint) max_hint = -1;
-+
-+	if (hint <= max_hint)
-+		return hint;
-+	return 0;
-+}
-+
- static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
- {
- 	*kiocb = (struct kiocb) {
- 		.ki_filp = filp,
- 		.ki_flags = iocb_flags(filp),
--		.ki_hint = file_write_hint(filp),
-+		.ki_hint = ki_hint_validate(file_write_hint(filp)),
- 	};
- }
- 
+ 		ret = bio_iov_iter_get_pages(bio, iter);
+ 		if (unlikely(ret)) {
 -- 
 2.15.1
 
