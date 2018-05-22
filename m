@@ -1,7 +1,7 @@
 From: adam.manzanares@wdc.com
-Subject: [PATCH v6 2/5] fs: Convert kiocb rw_hint from enum to u16
-Date: Tue, 22 May 2018 08:07:34 -0700
-Message-ID: <20180522150737.9893-3-adam.manzanares@wdc.com>
+Subject: [PATCH v6 5/5] fs: iomap dio set bio prio from kiocb prio
+Date: Tue, 22 May 2018 08:07:37 -0700
+Message-ID: <20180522150737.9893-6-adam.manzanares@wdc.com>
 References: <20180522150737.9893-1-adam.manzanares@wdc.com>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180522150737.9893-1-adam.manzanares@wdc.com>
@@ -12,57 +12,27 @@ List-Id: linux-api@vger.kernel.org
 
 From: Adam Manzanares <adam.manzanares@wdc.com>
 
-In order to avoid kiocb bloat for per command iopriority support, rw_hint
-is converted from enum to a u16. Added a guard around ki_hint assignment.
+Now that kiocb has an ioprio field copy this over to the bio when it is
+created from the kiocb during direct IO.
 
 Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
 Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/fs.h | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+ fs/iomap.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 7f07977bdfd7..50de40dbbb85 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -284,6 +284,8 @@ enum rw_hint {
- 	WRITE_LIFE_EXTREME	= RWH_WRITE_LIFE_EXTREME,
- };
- 
-+#define MAX_KI_HINT		((1 << 16) - 1) /* ki_hint type is u16 */
-+
- #define IOCB_EVENTFD		(1 << 0)
- #define IOCB_APPEND		(1 << 1)
- #define IOCB_DIRECT		(1 << 2)
-@@ -299,7 +301,7 @@ struct kiocb {
- 	void (*ki_complete)(struct kiocb *iocb, long ret, long ret2);
- 	void			*private;
- 	int			ki_flags;
--	enum rw_hint		ki_hint;
-+	u16			ki_hint;
- } __randomize_layout;
- 
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-@@ -1927,12 +1929,19 @@ static inline enum rw_hint file_write_hint(struct file *file)
- 
- static inline int iocb_flags(struct file *file);
- 
-+static inline u16 ki_hint_validate(enum rw_hint hint)
-+{
-+	if (hint > MAX_KI_HINT)
-+		return 0;
-+	return hint;
-+}
-+
- static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
- {
- 	*kiocb = (struct kiocb) {
- 		.ki_filp = filp,
- 		.ki_flags = iocb_flags(filp),
--		.ki_hint = file_write_hint(filp),
-+		.ki_hint = ki_hint_validate(file_write_hint(filp)),
- 	};
- }
+diff --git a/fs/iomap.c b/fs/iomap.c
+index afd163586aa0..65aae194aeca 100644
+--- a/fs/iomap.c
++++ b/fs/iomap.c
+@@ -919,6 +919,7 @@ iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
+ 		bio->bi_iter.bi_sector =
+ 			(iomap->addr + pos - iomap->offset) >> 9;
+ 		bio->bi_write_hint = dio->iocb->ki_hint;
++		bio->bi_ioprio = dio->iocb->ki_ioprio;
+ 		bio->bi_private = dio;
+ 		bio->bi_end_io = iomap_dio_bio_end_io;
  
 -- 
 2.15.1
