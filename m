@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 21/31] net/bluetooth: convert to ->poll_mask
-Date: Tue, 22 May 2018 13:30:58 +0200
-Message-ID: <20180522113108.25713-22-hch@lst.de>
+Subject: [PATCH 22/31] net/caif: convert to ->poll_mask
+Date: Tue, 22 May 2018 13:30:59 +0200
+Message-ID: <20180522113108.25713-23-hch@lst.de>
 References: <20180522113108.25713-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180522113108.25713-1-hch@lst.de>
@@ -12,96 +12,49 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/bluetooth/bluetooth.h | 2 +-
- net/bluetooth/af_bluetooth.c      | 7 ++-----
- net/bluetooth/l2cap_sock.c        | 2 +-
- net/bluetooth/rfcomm/sock.c       | 2 +-
- net/bluetooth/sco.c               | 2 +-
- 5 files changed, 6 insertions(+), 9 deletions(-)
+ net/caif/caif_socket.c | 12 ++++--------
+ 1 file changed, 4 insertions(+), 8 deletions(-)
 
-diff --git a/include/net/bluetooth/bluetooth.h b/include/net/bluetooth/bluetooth.h
-index ec9d6bc65855..53ce8176c313 100644
---- a/include/net/bluetooth/bluetooth.h
-+++ b/include/net/bluetooth/bluetooth.h
-@@ -271,7 +271,7 @@ int  bt_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
- 		     int flags);
- int  bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,
- 			    size_t len, int flags);
--__poll_t bt_sock_poll(struct file *file, struct socket *sock, poll_table *wait);
-+__poll_t bt_sock_poll_mask(struct socket *sock, __poll_t events);
- int  bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg);
- int  bt_sock_wait_state(struct sock *sk, int state, unsigned long timeo);
- int  bt_sock_wait_ready(struct sock *sk, unsigned long flags);
-diff --git a/net/bluetooth/af_bluetooth.c b/net/bluetooth/af_bluetooth.c
-index 84d92a077834..80033a7e1de2 100644
---- a/net/bluetooth/af_bluetooth.c
-+++ b/net/bluetooth/af_bluetooth.c
-@@ -437,16 +437,13 @@ static inline __poll_t bt_accept_poll(struct sock *parent)
- 	return 0;
+diff --git a/net/caif/caif_socket.c b/net/caif/caif_socket.c
+index a6fb1b3bcad9..c7991867d622 100644
+--- a/net/caif/caif_socket.c
++++ b/net/caif/caif_socket.c
+@@ -934,15 +934,11 @@ static int caif_release(struct socket *sock)
  }
  
--__poll_t bt_sock_poll(struct file *file, struct socket *sock,
--			  poll_table *wait)
-+__poll_t bt_sock_poll_mask(struct socket *sock, __poll_t events)
+ /* Copied from af_unix.c:unix_poll(), added CAIF tx_flow handling */
+-static __poll_t caif_poll(struct file *file,
+-			      struct socket *sock, poll_table *wait)
++static __poll_t caif_poll_mask(struct socket *sock, __poll_t events)
  {
  	struct sock *sk = sock->sk;
- 	__poll_t mask = 0;
- 
- 	BT_DBG("sock %p, sk %p", sock, sk);
- 
--	poll_wait(file, sk_sleep(sk), wait);
+-	__poll_t mask;
+ 	struct caifsock *cf_sk = container_of(sk, struct caifsock, sk);
 -
- 	if (sk->sk_state == BT_LISTEN)
- 		return bt_accept_poll(sk);
+-	sock_poll_wait(file, sk_sleep(sk), wait);
+-	mask = 0;
++	__poll_t mask = 0;
  
-@@ -478,7 +475,7 @@ __poll_t bt_sock_poll(struct file *file, struct socket *sock,
- 
- 	return mask;
- }
--EXPORT_SYMBOL(bt_sock_poll);
-+EXPORT_SYMBOL(bt_sock_poll_mask);
- 
- int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
- {
-diff --git a/net/bluetooth/l2cap_sock.c b/net/bluetooth/l2cap_sock.c
-index 686bdc6b35b0..742a190034e6 100644
---- a/net/bluetooth/l2cap_sock.c
-+++ b/net/bluetooth/l2cap_sock.c
-@@ -1653,7 +1653,7 @@ static const struct proto_ops l2cap_sock_ops = {
- 	.getname	= l2cap_sock_getname,
- 	.sendmsg	= l2cap_sock_sendmsg,
- 	.recvmsg	= l2cap_sock_recvmsg,
--	.poll		= bt_sock_poll,
-+	.poll_mask	= bt_sock_poll_mask,
- 	.ioctl		= bt_sock_ioctl,
- 	.mmap		= sock_no_mmap,
- 	.socketpair	= sock_no_socketpair,
-diff --git a/net/bluetooth/rfcomm/sock.c b/net/bluetooth/rfcomm/sock.c
-index d606e9212291..1cf57622473a 100644
---- a/net/bluetooth/rfcomm/sock.c
-+++ b/net/bluetooth/rfcomm/sock.c
-@@ -1049,7 +1049,7 @@ static const struct proto_ops rfcomm_sock_ops = {
- 	.setsockopt	= rfcomm_sock_setsockopt,
- 	.getsockopt	= rfcomm_sock_getsockopt,
- 	.ioctl		= rfcomm_sock_ioctl,
--	.poll		= bt_sock_poll,
-+	.poll_mask	= bt_sock_poll_mask,
- 	.socketpair	= sock_no_socketpair,
- 	.mmap		= sock_no_mmap
- };
-diff --git a/net/bluetooth/sco.c b/net/bluetooth/sco.c
-index 413b8ee49fec..d60dbc61d170 100644
---- a/net/bluetooth/sco.c
-+++ b/net/bluetooth/sco.c
-@@ -1197,7 +1197,7 @@ static const struct proto_ops sco_sock_ops = {
- 	.getname	= sco_sock_getname,
- 	.sendmsg	= sco_sock_sendmsg,
- 	.recvmsg	= sco_sock_recvmsg,
--	.poll		= bt_sock_poll,
-+	.poll_mask	= bt_sock_poll_mask,
- 	.ioctl		= bt_sock_ioctl,
- 	.mmap		= sock_no_mmap,
- 	.socketpair	= sock_no_socketpair,
+ 	/* exceptional events? */
+ 	if (sk->sk_err)
+@@ -976,7 +972,7 @@ static const struct proto_ops caif_seqpacket_ops = {
+ 	.socketpair = sock_no_socketpair,
+ 	.accept = sock_no_accept,
+ 	.getname = sock_no_getname,
+-	.poll = caif_poll,
++	.poll_mask = caif_poll_mask,
+ 	.ioctl = sock_no_ioctl,
+ 	.listen = sock_no_listen,
+ 	.shutdown = sock_no_shutdown,
+@@ -997,7 +993,7 @@ static const struct proto_ops caif_stream_ops = {
+ 	.socketpair = sock_no_socketpair,
+ 	.accept = sock_no_accept,
+ 	.getname = sock_no_getname,
+-	.poll = caif_poll,
++	.poll_mask = caif_poll_mask,
+ 	.ioctl = sock_no_ioctl,
+ 	.listen = sock_no_listen,
+ 	.shutdown = sock_no_shutdown,
 -- 
 2.17.0
 
