@@ -1,138 +1,91 @@
-From: Oleksandr Shamray <oleksandrs@mellanox.com>
-Subject: RE: [patch v21 1/4] drivers: jtag: Add JTAG core driver
-Date: Tue, 22 May 2018 15:00:19 +0000
-Message-ID: <AM5PR0501MB2449FE5F9439B6C6E7396DFBB1940@AM5PR0501MB2449.eurprd05.prod.outlook.com>
-References: <1526394095-5069-1-git-send-email-oleksandrs@mellanox.com>
- <1526394095-5069-2-git-send-email-oleksandrs@mellanox.com>
- <CAHp75VctG5RBtLF3nT5e_j7_e9O12u=5gerJ6OMxWbABM9ft2w@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHp75VctG5RBtLF3nT5e_j7_e9O12u=5gerJ6OMxWbABM9ft2w@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arnd Bergmann <arnd@arndb.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arm Mailing List <linux-arm-kernel@lists.infradead.org>, devicetree <devicetree@vger.kernel.org>, "openbmc@lists.ozlabs.org" <openbmc@lists.ozlabs.org>, Joel Stanley <joel@jms.id.au>, =?utf-8?B?SmnFmcOtIFDDrXJrbw==?= <jiri@resnulli.us>, Tobias Klauser <tklauser@distanz.ch>, "open list:SERIAL DRIVERS" <linux-serial@vger.kernel.org>, Vadim Pasternak <vadimp@mellanox.com>, system-sw-low-level <system-sw-low-level@mellanox.com>, Rob Herring <robh+dt@kernel.org>, "openocd-devel-owner@lists.sourceforge.net" <openocd-devel-owner@lists.sourceforge.net>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, David S. Mill
+From: adam.manzanares@wdc.com
+Subject: [PATCH v6 1/5] block: add ioprio_check_cap function
+Date: Tue, 22 May 2018 08:07:33 -0700
+Message-ID: <20180522150737.9893-2-adam.manzanares@wdc.com>
+References: <20180522150737.9893-1-adam.manzanares@wdc.com>
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180522150737.9893-1-adam.manzanares@wdc.com>
+Sender: owner-linux-aio@kvack.org
+To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, axboe@kernel.dk, bcrl@kvack.org
+Cc: tglx@linutronix.de, mingo@kernel.org, pombredanne@nexb.com, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, bigeasy@linutronix.de, jack@suse.cz, darrick.wong@oracle.com, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, hch@infradread.org, jmoyer@redhat.com, Adam Manzanares <adam.manzanares@wdc.com>
 List-Id: linux-api@vger.kernel.org
 
-SGkgQW5keS4gDQpUaGFua3MgZm9yIHJldmlldy4NCg0KUGxlYXNlIHJlYWQgbXkgYW5zd2VycyBp
-bmxpbmUuDQoNCj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogQW5keSBTaGV2
-Y2hlbmtvIFttYWlsdG86YW5keS5zaGV2Y2hlbmtvQGdtYWlsLmNvbV0NCj4gU2VudDogMTYg0LzQ
-sNGPIDIwMTgg0LMuIDA6MjINCj4gVG86IE9sZWtzYW5kciBTaGFtcmF5IDxvbGVrc2FuZHJzQG1l
-bGxhbm94LmNvbT4NCj4gQ2M6IEdyZWcgS3JvYWgtSGFydG1hbiA8Z3JlZ2toQGxpbnV4Zm91bmRh
-dGlvbi5vcmc+OyBBcm5kIEJlcmdtYW5uIA0KPiA8YXJuZEBhcm5kYi5kZT47IExpbnV4IEtlcm5l
-bCBNYWlsaW5nIExpc3QgDQo+IDxsaW51eC1rZXJuZWxAdmdlci5rZXJuZWwub3JnPjsgbGludXgt
-YXJtIE1haWxpbmcgTGlzdCANCj4gPGxpbnV4LWFybS1rZXJuZWxAbGlzdHMuaW5mcmFkZWFkLm9y
-Zz47IGRldmljZXRyZWUgDQo+IDxkZXZpY2V0cmVlQHZnZXIua2VybmVsLm9yZz47IG9wZW5ibWNA
-bGlzdHMub3psYWJzLm9yZzsgSm9lbCBTdGFubGV5IA0KPiA8am9lbEBqbXMuaWQuYXU+OyBKacWZ
-w60gUMOtcmtvIDxqaXJpQHJlc251bGxpLnVzPjsgVG9iaWFzIEtsYXVzZXIgDQo+IDx0a2xhdXNl
-ckBkaXN0YW56LmNoPjsgb3BlbiBsaXN0OlNFUklBTCBEUklWRVJTIDxsaW51eC0gDQo+IHNlcmlh
-bEB2Z2VyLmtlcm5lbC5vcmc+OyBWYWRpbSBQYXN0ZXJuYWsgPHZhZGltcEBtZWxsYW5veC5jb20+
-OyANCj4gc3lzdGVtLXN3LWxvdy1sZXZlbCA8c3lzdGVtLXN3LWxvdy1sZXZlbEBtZWxsYW5veC5j
-b20+OyBSb2IgSGVycmluZyANCj4gPHJvYmgrZHRAa2VybmVsLm9yZz47IG9wZW5vY2QtZGV2ZWwt
-b3duZXJAbGlzdHMuc291cmNlZm9yZ2UubmV0OyANCj4gbGludXgtIGFwaUB2Z2VyLmtlcm5lbC5v
-cmc7IERhdmlkIFMuIE1pbGxlciA8ZGF2ZW1AZGF2ZW1sb2Z0Lm5ldD47IA0KPiBNYXVybyBDYXJ2
-YWxobyBDaGVoYWIgPG1jaGVoYWJAa2VybmVsLm9yZz47IEppcmkgUGlya28gDQo+IDxqaXJpQG1l
-bGxhbm94LmNvbT4NCj4gU3ViamVjdDogUmU6IFtwYXRjaCB2MjEgMS80XSBkcml2ZXJzOiBqdGFn
-OiBBZGQgSlRBRyBjb3JlIGRyaXZlcg0KPiANCj4gT24gVHVlLCBNYXkgMTUsIDIwMTggYXQgNToy
-MSBQTSwgT2xla3NhbmRyIFNoYW1yYXkgDQo+IDxvbGVrc2FuZHJzQG1lbGxhbm94LmNvbT4gd3Jv
-dGU6DQo+ID4gSW5pdGlhbCBwYXRjaCBmb3IgSlRBRyBkcml2ZXINCj4gPiBKVEFHIGNsYXNzIGRy
-aXZlciBwcm92aWRlIGluZnJhc3RydWN0dXJlIHRvIHN1cHBvcnQgDQo+ID4gaGFyZHdhcmUvc29m
-dHdhcmUgSlRBRyBwbGF0Zm9ybSBkcml2ZXJzLiBJdCBwcm92aWRlIHVzZXIgbGF5ZXIgQVBJIA0K
-PiA+IGludGVyZmFjZSBmb3IgZmxhc2hpbmcgYW5kIGRlYnVnZ2luZyBleHRlcm5hbCBkZXZpY2Vz
-IHdoaWNoIGVxdWlwcGVkIA0KPiA+IHdpdGggSlRBRyBpbnRlcmZhY2UgdXNpbmcgc3RhbmRhcmQg
-dHJhbnNhY3Rpb25zLg0KPiA+DQo+ID4gRHJpdmVyIGV4cG9zZXMgc2V0IG9mIElPQ1RMIHRvIHVz
-ZXIgc3BhY2UgZm9yOg0KPiA+IC0gWEZFUjoNCj4gPiAtIFNJUiAoU2NhbiBJbnN0cnVjdGlvbiBS
-ZWdpc3RlciwgSUVFRSAxMTQ5LjEgRGF0YSBSZWdpc3RlciBzY2FuKTsNCj4gPiAtIFNEUiAoU2Nh
-biBEYXRhIFJlZ2lzdGVyLCBJRUVFIDExNDkuMSBJbnN0cnVjdGlvbiBSZWdpc3RlciBzY2FuKTsN
-Cj4gPiAtIFJVTlRFU1QgKEZvcmNlcyB0aGUgSUVFRSAxMTQ5LjEgYnVzIHRvIGEgcnVuIHN0YXRl
-IGZvciBhIHNwZWNpZmllZA0KPiA+ICAgbnVtYmVyIG9mIGNsb2NrcykuDQo+ID4gLSBTSU9DRlJF
-US9HSU9DRlJFUSBmb3Igc2V0dGluZyBhbmQgcmVhZGluZyBKVEFHIGZyZXF1ZW5jeS4NCj4gPg0K
-PiA+IERyaXZlciBjb3JlIHByb3ZpZGVzIHNldCBvZiBpbnRlcm5hbCBBUElzIGZvciBhbGxvY2F0
-aW9uIGFuZA0KPiA+IHJlZ2lzdHJhdGlvbjoNCj4gPiAtIGp0YWdfcmVnaXN0ZXI7DQo+ID4gLSBq
-dGFnX3VucmVnaXN0ZXI7DQo+ID4gLSBqdGFnX2FsbG9jOw0KPiA+IC0ganRhZ19mcmVlOw0KPiA+
-DQo+ID4gUGxhdGZvcm0gZHJpdmVyIG9uIHJlZ2lzdHJhdGlvbiB3aXRoIGp0YWctY29yZSBjcmVh
-dGVzIHRoZSBuZXh0IA0KPiA+IGVudHJ5IGluIGRldiBmb2xkZXI6DQo+ID4gL2Rldi9qdGFnWA0K
-PiANCj4gPiAgMHhCMCAgIGFsbCAgICAgUkFUSU8gZGV2aWNlcyAgICAgICAgICAgaW4gZGV2ZWxv
-cG1lbnQ6DQo+ID4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxtYWls
-dG86dmdvQHJhdGlvLmRlPg0KPiA+ICAweEIxICAgMDAtMUYgICBQUFBvWCAgICAgICAgICAgICAg
-ICAgICA8bWFpbHRvOm1vc3Ryb3dzQHN0eXgudXdhdGVybG9vLmNhPg0KPiA+ICsweEIyICAgMDAt
-MGYgICBsaW51eC9qdGFnLmggICAgICAgICAgICBKVEFHIGRyaXZlcg0KPiA+ICsNCj4gPiArPG1h
-aWx0bzpvbGVrc2FuZHJzQG1lbGxhbm94LmNvbT4NCj4gDQo+IENvbnNpZGVyIHRvIHByZXNlcnZl
-IHN0eWxlICh1cHBlciB2cy4gbG93ZXIpLg0KDQpKVEFHIGluIGNvZGUgaXMgbG93ZXIgKGp0YWcp
-IGNhbmUgYnV0IGluIGRlc2NyaXB0aW9ucyBhbmQgbm90ZXMgaXQgIGlzIHVwcGVyIChKVEFHKS4N
-CkluIGFsbCBwbGFjZXMgd2hpY2ggZG8gbm90IGNvcnJlc3BvbmQgdG8gdGhpcyBJIHdpbGwgZml4
-LiANCg0KPiANCj4gPiArICAgICAgICAgVGhpcyBwcm92aWRlcyBiYXNpYyBjb3JlIGZ1bmN0aW9u
-YWxpdHkgc3VwcG9ydCBmb3IgSlRBRyBjbGFzcyBkZXZpY2VzLg0KPiA+ICsgICAgICAgICBIYXJk
-d2FyZSB0aGF0IGlzIGVxdWlwcGVkIHdpdGggYSBKVEFHIG1pY3JvY29udHJvbGxlciBjYW4gYmUN
-Cj4gPiArICAgICAgICAgc3VwcG9ydGVkIGJ5IHVzaW5nIHRoaXMgZHJpdmVyJ3MgaW50ZXJmYWNl
-cy4NCj4gPiArICAgICAgICAgVGhpcyBkcml2ZXIgZXhwb3NlcyBhIHNldCBvZiBJT0NUTHMgdG8g
-dGhlIHVzZXIgc3BhY2UgZm9yDQo+ID4gKyAgICAgICAgIHRoZSBmb2xsb3dpbmcgY29tbWFuZHM6
-DQo+ID4gKyAgICAgICAgIFNEUjogKFNjYW4gRGF0YSBSZWdpc3RlcikgUGVyZm9ybXMgYW4gSUVF
-RSAxMTQ5LjEgRGF0YSBSZWdpc3RlciBzY2FuDQo+ID4gKyAgICAgICAgIFNJUjogKFNjYW4gSW5z
-dHJ1Y3Rpb24gUmVnaXN0ZXIpIFBlcmZvcm1zIGFuIElFRUUgMTE0OS4xIEluc3RydWN0aW9uDQo+
-ID4gKyAgICAgICAgIFJlZ2lzdGVyIHNjYW4uDQo+ID4gKyAgICAgICAgIFJVTlRFU1Q6IEZvcmNl
-cyB0aGUgSUVFRSAxMTQ5LjEgYnVzIHRvIGEgcnVuIHN0YXRlIGZvciBhIHNwZWNpZmllZA0KPiA+
-ICsgICAgICAgICBudW1iZXIgb2YgY2xvY2tzIG9yIGEgc3BlY2lmaWVkIHRpbWUgcGVyaW9kLg0K
-PiANCj4gU29tZXRoaW5nIGZlZWxzIHdyb25nIHdpdGggZm9ybWF0dGluZyBoZXJlLg0KPiANCg0K
-V2lsbCBmaXgNCg0KPiA+ICsjZGVmaW5lIE1BWF9KVEFHX05BTUVfTEVOIChzaXplb2YoImp0YWci
-KSArIDUpDQo+IA0KPiBJbnRlcmVzdGluZyBkZWZpbml0aW9uLiBXaHkgbm90IHRvIHNldCB0byAx
-MCBleHBsaWNpdGx5PyBBbmQgd2h5IDEwPw0KPiAoMTYgc291bmRzIGJldHRlcikNCj4gDQo1IC0g
-aXMgYSBtYXggbGVuIG9mIEpUQUcgZGV2aWNlIGlkIGluIGRldmljZSBuYW1lLiBJIHdpbGwgYWRk
-IGRlZmluZSB0byBpdC4NCg0KSW4gZ2VuZXJhbCBJIGRvbid0IHNlZSB0aGUgY2FzZSBmb3IgdGhl
-IHN5c3RlbSB3aXRoIGh1bmRyZWRzIEpUQUcgaW50ZXJmYWNlcy4NCkkgd2lsbCBsaW1pdCBtYXhp
-bXVtIGp0YWcgbWFzdGVyIHRvIDI1NSBkZXZpY2VzIGFuZCBjaGFuZ2UgIGlkIGxlbiB0byAzDQoN
-CiNkZWZpbmUgTUFYX0pUQUdfSURfU1RSX0xFTiA1DQojZGVmaW5lIE1BWF9KVEFHX05BTUVfTEVO
-IChzaXplb2YoImp0YWciKSArIE1BWF9KVEFHX0lEX1NUUl9MRU4pDQoNCj4gPiArc3RydWN0IGp0
-YWcgew0KPiA+ICsgICAgICAgc3RydWN0IG1pc2NkZXZpY2UgbWlzY2RldjsNCj4gDQo+ID4gKyAg
-ICAgICBzdHJ1Y3QgZGV2aWNlICpkZXY7DQo+IA0KPiBEb2Vzbid0IG1pc2NkZXYgcGFyZW50IGNv
-bnRhaW4gZXhhY3RseSB0aGlzIG9uZT8NCg0KWWVzLiANCldpbGwgZml4Lg0KDQo+IA0KPiA+ICsg
-ICAgICAgY29uc3Qgc3RydWN0IGp0YWdfb3BzICpvcHM7DQo+ID4gKyAgICAgICBpbnQgaWQ7DQo+
-ID4gKyAgICAgICBib29sIG9wZW5lZDsNCj4gPiArICAgICAgIHN0cnVjdCBtdXRleCBvcGVuX2xv
-Y2s7DQo+ID4gKyAgICAgICB1bnNpZ25lZCBsb25nIHByaXZbMF07DQo+ID4gK307DQo+IA0KPiA+
-ICsgICAgICAgICAgICAgICBlcnIgPSBjb3B5X3RvX3VzZXIodTY0X3RvX3VzZXJfcHRyKHhmZXIu
-dGRpbyksDQo+ID4gKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAodm9pZCAqKSh4
-ZmVyX2RhdGEpLCBkYXRhX3NpemUpOw0KPiANCj4gUmVkdW5kYW50IHBhcmVucyBpbiBvbmUgY2Fz
-ZS4gQ2hlY2sgdGhlIHJlc3Qgc2ltaWxhciBwbGFjZXMuDQo+IA0KDQpZZXMuDQoNCj4gPiArc3Rh
-dGljIGludCBqdGFnX29wZW4oc3RydWN0IGlub2RlICppbm9kZSwgc3RydWN0IGZpbGUgKmZpbGUp
-IHsNCj4gDQo+ID4gKyAgICAgICBzdHJ1Y3QganRhZyAqanRhZyA9IGNvbnRhaW5lcl9vZihmaWxl
-LT5wcml2YXRlX2RhdGEsIHN0cnVjdCBqdGFnLA0KPiA+ICsgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgbWlzY2Rldik7DQo+IA0KPiBJIHdvdWxkIGRvbid0IGNhcmUgYWJv
-dXQgbGVuZ3RoIGFuZCBwdXQgaXQgb24gb25lIGxpbmUuDQo+IA0KDQpCdXQgZm9sbG93aW5nIHRv
-IExJTlVYIGtlcm5lbCBzdHlsZSwgaXQgc2hvdWxkIGJlIG5vIGxvbmdlciB0aGFuIDgwIHN5bWJv
-bHMuIA0KSXQgd2lsbCBub3QgcGFzcyBieSAgLi9zY3JpcHRzL2NoZWNrcGF0Y2gucGwNCg0KV2ls
-bCBpdCBiZSBPSyB0byBzZW5kIGEgcGF0Y2ggd2hpY2ggZmFpbGVkIDgwIHN5bWJvbHMgbGltaXRh
-dGlvbiBjaGVjaz8NCg0KPiA+ICsgICAgICAgaWYgKGp0YWctPm9wZW5lZCkgew0KPiA+ICsgICAg
-ICAganRhZy0+b3BlbmVkID0gdHJ1ZTsNCj4gPiArICAgICAgIGp0YWctPm9wZW5lZCA9IGZhbHNl
-Ow0KPiANCj4gQ2FuIGl0IGJlIG9wZW5lZCBub24gZXhjbHVzaXZlbHkgc2V2ZXJhbCB0aW1lcz8g
-SWYgc28sIHRoaXMgbmVlZHMgdG8gDQo+IGJlIGEgcmVmIGNvdW50ZXIgaW5zdGVhZC4NCg0KSXQg
-Y2FuIGJlIG9wZW5lZCBvbmx5IG9uY2UuDQoNCj4gDQo+ID4gKyAgICAgICBpZiAoIW9wcy0+aWRs
-ZSB8fCAhb3BzLT5tb2RlX3NldCB8fCAhb3BzLT5zdGF0dXNfZ2V0IHx8ICFvcHMtPnhmZXIpDQo+
-ID4gKyAgICAgICAgICAgICAgIHJldHVybiBOVUxMOw0KPiANCj4gQXJlIGFsbCBvZiB0aGVtIG1h
-bmRhdG9yeT8NCj4gDQoNClllcywgZXhjZXB0ICJtb2RlX3NldCINCldpbGwgcmVtb3ZlIG1vZGVf
-c2V0IGZyb20gY2hlY2sNCg0KPiA+ICtpbnQganRhZ19yZWdpc3RlcihzdHJ1Y3QganRhZyAqanRh
-ZykNCj4gDQo+IFBlcmhhcHMgZGV2bV8gdmFyaWFudC4NCg0KSnRhZyBkcml2ZXIgdXNlcyBtaXNj
-ZGV2aWNlIGFuZCByZWxhdGVkICBtaXNjX3JlZ2lzdGVyIGFuZCBtaXNjX2RlcmVnaXN0ZXIgDQpj
-YWxscyBmb3IgY3JlYXRpb24gYW5kIGRlc3RydWN0aW9uLiBUaGVyZSBpcyBubyBkZXZpY2Ugb2Jq
-ZWN0IHByaW9yIHRvIA0KY2FsbCB0byAgbWlzY19yZWdpc3Rlciwgd2hpY2ggY291bGQgYmUgdXNl
-ZCBpbiBkZXZtX2p0YWdfcmVnaXN0ZXIuDQoNCj4gDQo+ID4gKyNkZWZpbmUganRhZ191NjRfdG9f
-cHRyKGFyZykgKCh2b2lkICopKHVpbnRwdHJfdClhcmcpDQo+IA0KDQpSZWR1bmRhbnQuIFJlbW92
-ZWQuDQoNCj4gV2hlcmUgaXMgdGhpcyB1c2VkIG9yIHN1cHBvc2VkIHRvIGJlIHVzZWQ/DQo+IA0K
-PiA+ICsjZGVmaW5lIEpUQUdfTUFYX1hGRVJfREFUQV9MRU4gNjU1MzUNCj4gDQo+IElzIHRoaXMg
-bGltaXRhdGlvbiBmcm9tIHNvbWUgc3BlYz8NCj4gT3RoZXJ3aXNlIHdoeSBub3QgdG8gYWxsb3cg
-NjRLPw0KPiANCg0KSXQgbm90IGxpbWl0ZWQgYnkgc3BlY2lmaWNhdGlvbi4gIA0KQnV0IHdlIGVu
-Zm9yY2UgYW4gdXBwZXIgYm91bmQgZm9yIHRoZSBsZW5ndGggaGVyZSwgdG8gcHJldmVudCB1c2Vy
-cyBmcm9tIGRyYWluaW5nIA0Ka2VybmVsIG1lbW9yeSB3aXRoIGdpYW50IGJ1ZmZlcnMuDQpTbyBp
-dCB3YXMgbGltaXRlZCBieSAgc2l6ZSBvZiB1bnNpZ25lZCBzaG9ydCBpbnQgKDY1NTM1KQ0KDQo+
-ID4gKy8qKg0KPiA+ICsgKiBzdHJ1Y3QganRhZ19vcHMgLSBjYWxsYmFja3MgZm9yIGp0YWcgY29u
-dHJvbCBmdW5jdGlvbnM6DQo+ID4gKyAqDQo+ID4gKyAqIEBmcmVxX2dldDogZ2V0IGZyZXF1ZW5j
-eSBmdW5jdGlvbi4gRmlsbGVkIGJ5IGRldmljZSBkcml2ZXINCj4gPiArICogQGZyZXFfc2V0OiBz
-ZXQgZnJlcXVlbmN5IGZ1bmN0aW9uLiBGaWxsZWQgYnkgZGV2aWNlIGRyaXZlcg0KPiA+ICsgKiBA
-c3RhdHVzX2dldDogc2V0IHN0YXR1cyBmdW5jdGlvbi4gRmlsbGVkIGJ5IGRldmljZSBkcml2ZXIN
-Cj4gPiArICogQGlkbGU6IHNldCBKVEFHIHRvIGlkbGUgc3RhdGUgZnVuY3Rpb24uIEZpbGxlZCBi
-eSBkZXZpY2UgZHJpdmVyDQo+ID4gKyAqIEB4ZmVyOiBzZW5kIEpUQUcgeGZlciBmdW5jdGlvbi4g
-RmlsbGVkIGJ5IGRldmljZSBkcml2ZXIgICovDQo+IA0KPiBQZXJoYXBzIHlvdSBuZWVkIHRvIGRl
-c2NyaWJlIHdoaWNoIG9mIHRoZW0gYXJlIF9yZWFsbHlfIG1hbmRhdG9yeSBhbmQgDQo+IHdoaWNo
-IGFyZSBvcHRpb25hbC4NCj4gDQoNCk9rDQoNCj4gLS0NCj4gV2l0aCBCZXN0IFJlZ2FyZHMsDQo+
-IEFuZHkgU2hldmNoZW5rbw0KDQpCZXN0IFJlZ2FyZHMsDQpPbGVrc2FuZHIgU2hhbXJheQ0KDQo=
+From: Adam Manzanares <adam.manzanares@wdc.com>
+
+Aio per command iopriority support introduces a second interface between
+userland and the kernel capable of passing iopriority. The aio interface also
+needs the ability to verify that the submitting context has sufficient
+privileges to submit IOPRIO_RT commands. This patch creates the
+ioprio_check_cap function to be used by the ioprio_set system call and also by
+the aio interface.
+
+Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Jeff Moyer <jmoyer@redhat.com>
+---
+ block/ioprio.c         | 22 ++++++++++++++++------
+ include/linux/ioprio.h |  2 ++
+ 2 files changed, 18 insertions(+), 6 deletions(-)
+
+diff --git a/block/ioprio.c b/block/ioprio.c
+index 6f5d0b6625e3..f9821080c92c 100644
+--- a/block/ioprio.c
++++ b/block/ioprio.c
+@@ -61,15 +61,10 @@ int set_task_ioprio(struct task_struct *task, int ioprio)
+ }
+ EXPORT_SYMBOL_GPL(set_task_ioprio);
+ 
+-SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
++int ioprio_check_cap(int ioprio)
+ {
+ 	int class = IOPRIO_PRIO_CLASS(ioprio);
+ 	int data = IOPRIO_PRIO_DATA(ioprio);
+-	struct task_struct *p, *g;
+-	struct user_struct *user;
+-	struct pid *pgrp;
+-	kuid_t uid;
+-	int ret;
+ 
+ 	switch (class) {
+ 		case IOPRIO_CLASS_RT:
+@@ -92,6 +87,21 @@ SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
+ 			return -EINVAL;
+ 	}
+ 
++	return 0;
++}
++
++SYSCALL_DEFINE3(ioprio_set, int, which, int, who, int, ioprio)
++{
++	struct task_struct *p, *g;
++	struct user_struct *user;
++	struct pid *pgrp;
++	kuid_t uid;
++	int ret;
++
++	ret = ioprio_check_cap(ioprio);
++	if (ret)
++		return ret;
++
+ 	ret = -ESRCH;
+ 	rcu_read_lock();
+ 	switch (which) {
+diff --git a/include/linux/ioprio.h b/include/linux/ioprio.h
+index 627efac73e6d..4a28cec49ec3 100644
+--- a/include/linux/ioprio.h
++++ b/include/linux/ioprio.h
+@@ -77,4 +77,6 @@ extern int ioprio_best(unsigned short aprio, unsigned short bprio);
+ 
+ extern int set_task_ioprio(struct task_struct *task, int ioprio);
+ 
++extern int ioprio_check_cap(int ioprio);
++
+ #endif
+-- 
+2.15.1
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
