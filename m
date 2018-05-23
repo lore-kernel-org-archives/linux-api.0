@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 12/33] net: refactor socket_poll
-Date: Wed, 23 May 2018 21:20:01 +0200
-Message-ID: <20180523192022.1703-13-hch@lst.de>
+Subject: [PATCH 13/33] net: add support for ->poll_mask in proto_ops
+Date: Wed, 23 May 2018 21:20:02 +0200
+Message-ID: <20180523192022.1703-14-hch@lst.de>
 References: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180523192022.1703-1-hch@lst.de>
@@ -10,72 +10,102 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Factor out two busy poll related helpers for late reuse, and remove
-a command that isn't very helpful, especially with the __poll_t
-annotations in place.
+The socket file operations still implement ->poll until all protocols are
+switched over.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/net/busy_poll.h | 15 +++++++++++++++
- net/socket.c            | 21 ++++-----------------
- 2 files changed, 19 insertions(+), 17 deletions(-)
+ include/linux/net.h |  1 +
+ net/socket.c        | 48 ++++++++++++++++++++++++++++++++++++++++-----
+ 2 files changed, 44 insertions(+), 5 deletions(-)
 
-diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
-index 71c72a939bf8..c5187438af38 100644
---- a/include/net/busy_poll.h
-+++ b/include/net/busy_poll.h
-@@ -121,6 +121,21 @@ static inline void sk_busy_loop(struct sock *sk, int nonblock)
- #endif
- }
- 
-+static inline void sock_poll_busy_loop(struct socket *sock, __poll_t events)
-+{
-+	if (sk_can_busy_loop(sock->sk) &&
-+	    events && (events & POLL_BUSY_LOOP)) {
-+		/* once, only if requested by syscall */
-+		sk_busy_loop(sock->sk, 1);
-+	}
-+}
-+
-+/* if this socket can poll_ll, tell the system call */
-+static inline __poll_t sock_poll_busy_flag(struct socket *sock)
-+{
-+	return sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0;
-+}
-+
- /* used in the NIC receive handler to mark the skb */
- static inline void skb_mark_napi_id(struct sk_buff *skb,
- 				    struct napi_struct *napi)
+diff --git a/include/linux/net.h b/include/linux/net.h
+index 2248a052061d..3fd9d8c16581 100644
+--- a/include/linux/net.h
++++ b/include/linux/net.h
+@@ -147,6 +147,7 @@ struct proto_ops {
+ 	int		(*getname)   (struct socket *sock,
+ 				      struct sockaddr *addr,
+ 				      int peer);
++	__poll_t	(*poll_mask) (struct socket *sock, __poll_t events);
+ 	__poll_t	(*poll)	     (struct file *file, struct socket *sock,
+ 				      struct poll_table_struct *wait);
+ 	int		(*ioctl)     (struct socket *sock, unsigned int cmd,
 diff --git a/net/socket.c b/net/socket.c
-index f10f1d947c78..571ee4005192 100644
+index 571ee4005192..2d752e9eb3f9 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -1117,24 +1117,11 @@ EXPORT_SYMBOL(sock_create_lite);
+@@ -117,8 +117,10 @@ static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
+ static int sock_mmap(struct file *file, struct vm_area_struct *vma);
+ 
+ static int sock_close(struct inode *inode, struct file *file);
+-static __poll_t sock_poll(struct file *file,
+-			      struct poll_table_struct *wait);
++static struct wait_queue_head *sock_get_poll_head(struct file *file,
++		__poll_t events);
++static __poll_t sock_poll_mask(struct file *file, __poll_t);
++static __poll_t sock_poll(struct file *file, struct poll_table_struct *wait);
+ static long sock_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
+ #ifdef CONFIG_COMPAT
+ static long compat_sock_ioctl(struct file *file,
+@@ -141,6 +143,8 @@ static const struct file_operations socket_file_ops = {
+ 	.llseek =	no_llseek,
+ 	.read_iter =	sock_read_iter,
+ 	.write_iter =	sock_write_iter,
++	.get_poll_head = sock_get_poll_head,
++	.poll_mask =	sock_poll_mask,
+ 	.poll =		sock_poll,
+ 	.unlocked_ioctl = sock_ioctl,
+ #ifdef CONFIG_COMPAT
+@@ -1114,14 +1118,48 @@ int sock_create_lite(int family, int type, int protocol, struct socket **res)
+ }
+ EXPORT_SYMBOL(sock_create_lite);
+ 
++static struct wait_queue_head *sock_get_poll_head(struct file *file,
++		__poll_t events)
++{
++	struct socket *sock = file->private_data;
++
++	if (!sock->ops->poll_mask)
++		return NULL;
++	sock_poll_busy_loop(sock, events);
++	return sk_sleep(sock->sk);
++}
++
++static __poll_t sock_poll_mask(struct file *file, __poll_t events)
++{
++	struct socket *sock = file->private_data;
++
++	/*
++	 * We need to be sure we are in sync with the socket flags modification.
++	 *
++	 * This memory barrier is paired in the wq_has_sleeper.
++	 */
++	smp_mb();
++
++	/* this socket can poll_ll so tell the system call */
++	return sock->ops->poll_mask(sock, events) |
++		(sk_can_busy_loop(sock->sk) ? POLL_BUSY_LOOP : 0);
++}
++
  /* No kernel lock held - perfect */
  static __poll_t sock_poll(struct file *file, poll_table *wait)
  {
--	__poll_t busy_flag = 0;
--	struct socket *sock;
--
--	/*
--	 *      We can't return errors to poll, so it's either yes or no.
--	 */
--	sock = file->private_data;
--
--	if (sk_can_busy_loop(sock->sk)) {
--		/* this socket can poll_ll so tell the system call */
--		busy_flag = POLL_BUSY_LOOP;
--
--		/* once, only if requested by syscall */
--		if (wait && (wait->_key & POLL_BUSY_LOOP))
--			sk_busy_loop(sock->sk, 1);
--	}
-+	struct socket *sock = file->private_data;
-+	__poll_t events = poll_requested_events(wait);
+ 	struct socket *sock = file->private_data;
+-	__poll_t events = poll_requested_events(wait);
++	__poll_t events = poll_requested_events(wait), mask = 0;
  
--	return busy_flag | sock->ops->poll(file, sock, wait);
-+	sock_poll_busy_loop(sock, events);
-+	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
+-	sock_poll_busy_loop(sock, events);
+-	return sock->ops->poll(file, sock, wait) | sock_poll_busy_flag(sock);
++	if (sock->ops->poll) {
++		sock_poll_busy_loop(sock, events);
++		mask = sock->ops->poll(file, sock, wait);
++	} else if (sock->ops->poll_mask) {
++		sock_poll_wait(file, sock_get_poll_head(file, events), wait);
++		mask = sock->ops->poll_mask(sock, events);
++	}
++
++	return mask | sock_poll_busy_flag(sock);
  }
  
  static int sock_mmap(struct file *file, struct vm_area_struct *vma)
