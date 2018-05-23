@@ -1,50 +1,80 @@
-From: Adam Manzanares <Adam.Manzanares@wdc.com>
-Subject: Re: [PATCH v7 0/5] AIO add per-command iopriority
-Date: Tue, 22 May 2018 22:31:27 +0000
-Message-ID: <30e8e33f-8e66-2fb3-977a-ee6fe04f1d3c@wdc.com>
-References: <20180522175221.2391-1-adam.manzanares@wdc.com>
- <da84d129-4dcd-c861-bfc4-62cd425e60e3@kernel.dk>
- <20180522183019.GD30522@ZenIV.linux.org.uk>
- <4b8732e8-1c51-3181-56a1-d03f7b229f63@kernel.dk>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 08/31] aio: implement IOCB_CMD_POLL
+Date: Wed, 23 May 2018 01:45:30 +0100
+Message-ID: <20180523004530.GG30522@ZenIV.linux.org.uk>
+References: <20180522113108.25713-1-hch@lst.de>
+ <20180522113108.25713-9-hch@lst.de>
+ <20180522220524.GE30522@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <4b8732e8-1c51-3181-56a1-d03f7b229f63@kernel.dk>
-Content-Language: en-US
-Content-ID: <B3D9CD9C2C2F2D47BBAA699DC67CB5F0@namprd04.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <20180522220524.GE30522@ZenIV.linux.org.uk>
 Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>, Al Viro <viro@ZenIV.linux.org.uk>
-Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "bcrl@kvack.org" <bcrl@kvack.org>, "mingo@kernel.org" <mingo@kernel.org>, "tglx@linutronix.de" <tglx@linutronix.de>, "kstewart@linuxfoundation.org" <kstewart@linuxfoundation.org>, "peterz@infradead.org" <peterz@infradead.org>, "pombredanne@nexb.com" <pombredanne@nexb.com>, "gregkh@linuxfoundation.org" <gregkh@linuxfoundation.org>, "bigeasy@linutronix.de" <bigeasy@linutronix.de>, "rgoldwyn@suse.com" <rgoldwyn@suse.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "hch@infradread.org" <hch@infradread.org>, "jmoyer@redhat.com" <jmoyer@redhat.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-DQoNCk9uIDUvMjIvMTggMTE6MzAgQU0sIEplbnMgQXhib2Ugd3JvdGU6DQo+IE9uIDUvMjIvMTgg
-MTI6MzAgUE0sIEFsIFZpcm8gd3JvdGU6DQo+PiBPbiBUdWUsIE1heSAyMiwgMjAxOCBhdCAxMTo1
-NTowNEFNIC0wNjAwLCBKZW5zIEF4Ym9lIHdyb3RlOg0KPj4+IE9uIDUvMjIvMTggMTE6NTIgQU0s
-IGFkYW0ubWFuemFuYXJlc0B3ZGMuY29tIHdyb3RlOg0KPj4+PiBGcm9tOiBBZGFtIE1hbnphbmFy
-ZXMgPGFkYW0ubWFuemFuYXJlc0B3ZGMuY29tPg0KPj4+Pg0KPj4+PiBUaGlzIGlzIHRoZSBwZXIt
-SS9PIGVxdWl2YWxlbnQgb2YgdGhlIGlvcHJpb19zZXQgc3lzdGVtIGNhbGwuDQo+Pj4+IFNlZSB0
-aGUgZm9sbG93aW5nIGxpbmsgZm9yIHBlcmZvcm1hbmNlIGltcGxpY2F0aW9ucyBvbiBhIFNBVEEg
-SEREOg0KPj4+PiBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxNi8xMi82LzQ5NQ0KPj4+Pg0KPj4+
-PiBGaXJzdCBwYXRjaCBmYWN0b3JzIGlvcHJpb19jaGVja19jYXAgZnVuY3Rpb24gb3V0IG9mIGlv
-cHJpb19zZXQgc3lzdGVtIGNhbGwgdG8NCj4+Pj4gYWxzbyBiZSB1c2VkIGJ5IHRoZSBhaW8gaW9w
-cmlvIGludGVyZmFjZS4NCj4+Pj4NCj4+Pj4gU2Vjb25kIHBhdGNoIGNvbnZlcnRzIGtpb2NiIGtp
-X2hpbnQgZmllbGQgdG8gYSB1MTYgdG8gYXZvaWQga2lvY2IgYmxvYXQuDQo+Pj4+DQo+Pj4+IFRo
-aXJkIHBhdGNoIHBhc3NlcyBpb3ByaW8gaGludCBmcm9tIGFpbyBpb2NiIHRvIGtpb2NiIGFuZCBp
-bml0aWFsaXplcyBraW9jYg0KPj4+PiBpb3ByaW8gdmFsdWUgYXBwcm9wcmlhdGVseSB3aGVuIGl0
-IGlzIG5vdCBleHBsaWNpdGx5IHNldC4NCj4+Pj4NCj4+Pj4gRm91cnRoIHBhdGNoIGVuYWJsZXMg
-dGhlIGZlYXR1cmUgZm9yIGJsa2Rldi4NCj4+Pj4NCj4+Pj4gRmlmdGggcGF0Y2ggZW5hYmxlcyB0
-aGUgZmVhdHVyZSBmb3IgaW9tYXAgZGlyZWN0IElPDQo+Pj4NCj4+PiBMR1RNLCB5b3UgY2FuIGFk
-ZDoNCj4+Pg0KPj4+IFJldmlld2VkLWJ5OiBKZW5zIEF4Ym9lIDxheGJvZUBrZXJuZWwuZGs+DQo+
-Pj4NCj4+PiBBbCwgYXJlIHlvdSBwaWNraW5nIHRoaXMgc2VyaWVzIHVwLCBvciBzaG91bGQgST8N
-Cj4+DQo+PiBQcm9iYWJseSBiZXR0ZXIgaWYgSSBkbywgb25jZSBJIGZpbmlzaCByZXZpZXdpbmcg
-Q2hyaXN0b3BoJ3MgcGF0Y2hzZXQgLQ0KPj4gd2UgYWxyZWFkeSBoYXZlIGEgYnVuY2ggb2Ygc3R1
-ZmYgYXJvdW5kIGZzL2Fpby5jIGluIHRoaXMgY3ljbGUuLi4NCj4gDQo+IEFscmlnaHQsIHNvdW5k
-cyBnb29kLCB0aGFua3MgQWwuDQo+IA0KDQpJIHdhcyB3b3JraW5nIG9uIHRoZSBtYW4gcGFnZSB1
-cGRhdGUgZm9yIHRoaXMgZmVhdHVyZSBhbmQgbm90aWNlZCBJIA0KY291bGQgYmUgYml0IG1vcmUg
-aW5mb3JtYXRpdmUgb24gZXJyb3IgaWYgSSByZXR1cm4gdGhlIGVycm9yIHZhbHVlIA0KcmV0dXJu
-ZWQgYnkgaW9wcmlvX2NoZWNrX2NhcCBpbiBmcy9haW8uYy4NCg0KU2hvdWxkIEkgcmVzZW5kIHRo
-ZSB3aG9sZSBzZXJpZXM/
+On Tue, May 22, 2018 at 11:05:24PM +0100, Al Viro wrote:
+> > +{
+> > +	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
+> > +
+> > +	fput(req->file);
+> > +	aio_complete(iocb, mangle_poll(mask), 0);
+> > +}
+> 
+> Careful.
+> 
+> > +static int aio_poll_cancel(struct kiocb *iocb)
+> > +{
+> > +	struct aio_kiocb *aiocb = container_of(iocb, struct aio_kiocb, rw);
+> > +	struct poll_iocb *req = &aiocb->poll;
+> > +	struct wait_queue_head *head = req->head;
+> > +	bool found = false;
+> > +
+> > +	spin_lock(&head->lock);
+> > +	found = __aio_poll_remove(req);
+> > +	spin_unlock(&head->lock);
+> 
+> What's to guarantee that req->head has not been freed by that point?
+> Look: wakeup finds ->ctx_lock held, so it leaves the sucker on the
+> list, removes it from queue and schedules the call of __aio_poll_complete().
+> Which gets executed just as we hit aio_poll_cancel(), starting with fput().
+> 
+> You really want to do aio_complete() before fput().  That way you know that
+> req->wait is alive and well at least until iocb gets removed from the list.
+
+Oh, bugger...
+
+wakeup
+	removed from queue
+	schedule __aio_poll_complete()
+
+cancel
+	grab ctx->lock
+	remove from list
+work
+	aio_complete()
+		check if it's in the list
+		it isn't, move on to free the sucker
+cancel
+	call ->ki_cancel()
+	BOOM
+
+Looks like we want to call ->ki_cancel() *BEFORE* removing from the list,
+as well as doing fput() after aio_complete().  The same ordering, BTW, goes
+for aio_read() et.al.
+
+Look:
+CPU1:	io_cancel() grabs ->ctx_lock, finds iocb and removes it from the list.
+CPU2:	aio_rw_complete() on that iocb.  Since the sucker is not in the list
+anymore, we do NOT spin on ->ctx_lock and proceed to free iocb
+CPU1:	pass freed iocb to ->ki_cancel().  BOOM.
+
+and if we have fput() done first (in aio_rw_complete()) we are vulnerable to
+CPU1:	io_cancel() grabs ->ctx_lock, finds iocb and removes it from the list.
+CPU2:	aio_rw_complete() on that iocb. fput() done, opening us to rmmod.
+CPU1:	call ->ki_cancel(), which points to freed memory now.  BOOM.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
