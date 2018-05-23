@@ -1,104 +1,38 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: aio poll and a new in-kernel poll API V13
-Date: Wed, 23 May 2018 21:19:49 +0200
-Message-ID: <20180523192022.1703-1-hch@lst.de>
+Subject: [PATCH 02/33] uapi: turn __poll_t sparse checkin on by default
+Date: Wed, 23 May 2018 21:19:51 +0200
+Message-ID: <20180523192022.1703-3-hch@lst.de>
+References: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180523192022.1703-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ include/uapi/linux/types.h | 4 ----
+ 1 file changed, 4 deletions(-)
 
-this series adds support for the IOCB_CMD_POLL operation to poll for the
-readyness of file descriptors using the aio subsystem.  The API is based
-on patches that existed in RHAS2.1 and RHEL3, which means it already is
-supported by libaio.  To implement the poll support efficiently new
-methods to poll are introduced in struct file_operations:  get_poll_head
-and poll_mask.  The first one returns a wait_queue_head to wait on
-(lifetime is bound by the file), and the second does a non-blocking
-check for the POLL* events.  This allows aio poll to work without
-any additional context switches, unlike epoll.
-
-This series sits on top of the aio-fsync series that also includes
-support for io_pgetevents.
-
-The changes were sponsored by Scylladb, and improve performance
-of the seastar framework up to 10%, while also removing the need
-for a privileged SCHED_FIFO epoll listener thread.
-
-    git://git.infradead.org/users/hch/vfs.git aio-poll.13
-
-Gitweb:
-
-    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.13
-
-Libaio changes:
-
-    https://pagure.io/libaio.git io-poll
-
-Seastar changes (not updated for the new io_pgetevens ABI yet):
-
-    https://github.com/avikivity/seastar/commits/aio
-
-Changes since v12:
- - remove iocb from ki_list only after ki_cancel has completed
- - fix __poll_t annotations
- - turn __poll_t sparse checkin on by default
- - call fput after aio_complete
- - only add the iocb to active_reqs if we wait for it
-
-Changes since v11:
- - simplify cancellation by completion poll requests from a workqueue
-   if we can't take the ctx_lock
-
-Changes since v10:
- - fixed a mismerge that let a sock_rps_record_flow sneak into
-   tcp_poll_mask
- - remove the now unused struct proto_ops get_poll_head method
-
-Changes since v9:
- - add to the delayed_cancel_reqs earlier to avoid a race
- - get rid of POLL_TO_PTR magic
-
-Changes since v8:
- - make delayed cancellation conditional again
- - add a cancel_kiocb file operation to split delayed vs normal cancel
-
-Changes since v7:
- - make delayed cancellation safe and unconditional
-
-Changes since v6:
- - reworked cancellation
-
-Changes since v5:
- - small changelog updates
- - rebased on top of the aio-fsync changes
-
-Changes since v4:
- - rebased ontop of Linux 4.16-rc4
-
-Changes since v3:
- - remove the pre-sleep ->poll_mask call in vfs_poll,
-   allow ->get_poll_head to return POLL* values.
-
-Changes since v2:
- - removed a double initialization
- - new vfs_get_poll_head helper
- - document that ->get_poll_head can return NULL
- - call ->poll_mask before sleeping
- - various ACKs
- - add conversion of random to ->poll_mask
- - add conversion of af_alg to ->poll_mask
- - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
- - reshuffled the series so that prep patches and everything not
-   requiring the new in-kernel poll API is in the beginning
-
-Changes since v1:
- - handle the NULL ->poll case in vfs_poll
- - dropped the file argument to the ->poll_mask socket operation
- - replace the ->pre_poll socket operation with ->get_poll_head as
-   in the file operations
+diff --git a/include/uapi/linux/types.h b/include/uapi/linux/types.h
+index cd4f0b897a48..2fce8b6876e9 100644
+--- a/include/uapi/linux/types.h
++++ b/include/uapi/linux/types.h
+@@ -49,11 +49,7 @@ typedef __u32 __bitwise __wsum;
+ #define __aligned_be64 __be64 __attribute__((aligned(8)))
+ #define __aligned_le64 __le64 __attribute__((aligned(8)))
+ 
+-#ifdef __CHECK_POLL
+ typedef unsigned __bitwise __poll_t;
+-#else
+-typedef unsigned __poll_t;
+-#endif
+ 
+ #endif /*  __ASSEMBLY__ */
+ #endif /* _UAPI_LINUX_TYPES_H */
+-- 
+2.17.0
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
