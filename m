@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 07/33] fs: introduce new ->get_poll_head and ->poll_mask methods
-Date: Wed, 23 May 2018 21:19:56 +0200
-Message-ID: <20180523192022.1703-8-hch@lst.de>
+Subject: [PATCH 10/33] aio: implement IOCB_CMD_POLL
+Date: Wed, 23 May 2018 21:19:59 +0200
+Message-ID: <20180523192022.1703-11-hch@lst.de>
 References: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180523192022.1703-1-hch@lst.de>
@@ -10,164 +10,216 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-->get_poll_head returns the waitqueue that the poll operation is going
-to sleep on.  Note that this means we can only use a single waitqueue
-for the poll, unlike some current drivers that use two waitqueues for
-different events.  But now that we have keyed wakeups and heavily use
-those for poll there aren't that many good reason left to keep the
-multiple waitqueues, and if there are any ->poll is still around, the
-driver just won't support aio poll.
+Simple one-shot poll through the io_submit() interface.  To poll for
+a file descriptor the application should submit an iocb of type
+IOCB_CMD_POLL.  It will poll the fd for the events specified in the
+the first 32 bits of the aio_buf field of the iocb.
+
+Unlike poll or epoll without EPOLLONESHOT this interface always works
+in one shot mode, that is once the iocb is completed, it will have to be
+resubmitted.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
 ---
- Documentation/filesystems/Locking |  7 ++++++-
- Documentation/filesystems/vfs.txt | 13 +++++++++++++
- fs/select.c                       | 23 +++++++++++++++++++++++
- include/linux/fs.h                |  2 ++
- include/linux/poll.h              | 12 ++++++------
- 5 files changed, 50 insertions(+), 7 deletions(-)
+ fs/aio.c                     | 134 ++++++++++++++++++++++++++++++++++-
+ include/uapi/linux/aio_abi.h |   6 +-
+ 2 files changed, 135 insertions(+), 5 deletions(-)
 
-diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-index 220bba28f72b..6d227f9d7bd9 100644
---- a/Documentation/filesystems/Locking
-+++ b/Documentation/filesystems/Locking
-@@ -440,6 +440,8 @@ prototypes:
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-+	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-+	__poll_t (*poll_mask) (struct file *, __poll_t);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-@@ -470,7 +472,7 @@ prototypes:
+diff --git a/fs/aio.c b/fs/aio.c
+index 0633cf3b325c..bd711cfa4a1f 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -5,6 +5,7 @@
+  *	Implements an efficient asynchronous io interface.
+  *
+  *	Copyright 2000, 2001, 2002 Red Hat, Inc.  All Rights Reserved.
++ *	Copyright 2018 Christoph Hellwig.
+  *
+  *	See ../COPYING for licensing terms.
+  */
+@@ -164,10 +165,22 @@ struct fsync_iocb {
+ 	bool			datasync;
  };
  
- locking rules:
--	All may block.
-+	All except for ->poll_mask may block.
- 
- ->llseek() locking has moved from llseek to the individual llseek
- implementations.  If your fs is not using generic_file_llseek, you
-@@ -498,6 +500,9 @@ in sys_read() and friends.
- the lease within the individual filesystem to record the result of the
- operation
- 
-+->poll_mask can be called with or without the waitqueue lock for the waitqueue
-+returned from ->get_poll_head.
++struct poll_iocb {
++	struct file		*file;
++	__poll_t		events;
++	struct wait_queue_head	*head;
 +
- --------------------------- dquot_operations -------------------------------
- prototypes:
- 	int (*write_dquot) (struct dquot *);
-diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-index f608180ad59d..829a7b7857a4 100644
---- a/Documentation/filesystems/vfs.txt
-+++ b/Documentation/filesystems/vfs.txt
-@@ -857,6 +857,8 @@ struct file_operations {
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-+	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-+	__poll_t (*poll_mask) (struct file *, __poll_t);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-@@ -901,6 +903,17 @@ otherwise noted.
- 	activity on this file and (optionally) go to sleep until there
- 	is activity. Called by the select(2) and poll(2) system calls
- 
-+  get_poll_head: Returns the struct wait_queue_head that callers can
-+  wait on.  Callers need to check the returned events using ->poll_mask
-+  once woken.  Can return NULL to indicate polling is not supported,
-+  or any error code using the ERR_PTR convention to indicate that a
-+  grave error occured and ->poll_mask shall not be called.
++	union {
++		struct wait_queue_entry	wait;
++		struct work_struct	work;
++	};
++};
 +
-+  poll_mask: return the mask of EPOLL* values describing the file descriptor
-+  state.  Called either before going to sleep on the waitqueue returned by
-+  get_poll_head, or after it has been woken.  If ->get_poll_head and
-+  ->poll_mask are implemented ->poll does not need to be implement.
-+
-   unlocked_ioctl: called by the ioctl(2) system call.
+ struct aio_kiocb {
+ 	union {
+ 		struct kiocb		rw;
+ 		struct fsync_iocb	fsync;
++		struct poll_iocb	poll;
+ 	};
  
-   compat_ioctl: called by the ioctl(2) system call when 32 bit system calls
-diff --git a/fs/select.c b/fs/select.c
-index e30def680b2e..bc3cc0f98896 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -34,6 +34,29 @@
+ 	struct kioctx		*ki_ctx;
+@@ -1558,7 +1571,6 @@ static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
+ 	if (unlikely(iocb->aio_buf || iocb->aio_offset || iocb->aio_nbytes ||
+ 			iocb->aio_rw_flags))
+ 		return -EINVAL;
+-
+ 	req->file = fget(iocb->aio_fildes);
+ 	if (unlikely(!req->file))
+ 		return -EBADF;
+@@ -1573,6 +1585,124 @@ static int aio_fsync(struct fsync_iocb *req, struct iocb *iocb, bool datasync)
+ 	return -EIOCBQUEUED;
+ }
  
- #include <linux/uaccess.h>
- 
-+__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
++/* need to use list_del_init so we can check if item was present */
++static inline bool __aio_poll_remove(struct poll_iocb *req)
 +{
-+	if (file->f_op->poll) {
-+		return file->f_op->poll(file, pt);
-+	} else if (file_has_poll_mask(file)) {
-+		unsigned int events = poll_requested_events(pt);
-+		struct wait_queue_head *head;
-+
-+		if (pt && pt->_qproc) {
-+			head = file->f_op->get_poll_head(file, events);
-+			if (!head)
-+				return DEFAULT_POLLMASK;
-+			if (IS_ERR(head))
-+				return EPOLLERR;
-+			pt->_qproc(file, head, pt);
-+		}
-+
-+		return file->f_op->poll_mask(file, events);
-+	} else {
-+		return DEFAULT_POLLMASK;
-+	}
++	if (list_empty(&req->wait.entry))
++		return false;
++	list_del_init(&req->wait.entry);
++	return true;
 +}
-+EXPORT_SYMBOL_GPL(vfs_poll);
- 
- /*
-  * Estimate expected accuracy in ns from a timeval.
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 7f07977bdfd7..d467bd7b35b7 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1711,6 +1711,8 @@ struct file_operations {
- 	int (*iterate) (struct file *, struct dir_context *);
- 	int (*iterate_shared) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-+	struct wait_queue_head * (*get_poll_head)(struct file *, __poll_t);
-+	__poll_t (*poll_mask) (struct file *, __poll_t);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-diff --git a/include/linux/poll.h b/include/linux/poll.h
-index 7e0fdcf905d2..fdf86b4cbc71 100644
---- a/include/linux/poll.h
-+++ b/include/linux/poll.h
-@@ -74,18 +74,18 @@ static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
- 	pt->_key   = ~(__poll_t)0; /* all events enabled */
- }
- 
--static inline bool file_can_poll(struct file *file)
-+static inline bool file_has_poll_mask(struct file *file)
- {
--	return file->f_op->poll;
-+	return file->f_op->get_poll_head && file->f_op->poll_mask;
- }
- 
--static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-+static inline bool file_can_poll(struct file *file)
- {
--	if (unlikely(!file->f_op->poll))
--		return DEFAULT_POLLMASK;
--	return file->f_op->poll(file, pt);
-+	return file->f_op->poll || file_has_poll_mask(file);
- }
- 
-+__poll_t vfs_poll(struct file *file, struct poll_table_struct *pt);
 +
- struct poll_table_entry {
- 	struct file *filp;
- 	__poll_t key;
++static inline void __aio_poll_complete(struct poll_iocb *req, __poll_t mask)
++{
++	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, poll);
++	struct file *file = req->file;
++
++	aio_complete(iocb, mangle_poll(mask), 0);
++	fput(file);
++}
++
++static void aio_poll_work(struct work_struct *work)
++{
++	struct poll_iocb *req = container_of(work, struct poll_iocb, work);
++
++	__aio_poll_complete(req, req->events);
++}
++
++static int aio_poll_cancel(struct kiocb *iocb)
++{
++	struct aio_kiocb *aiocb = container_of(iocb, struct aio_kiocb, rw);
++	struct poll_iocb *req = &aiocb->poll;
++	struct wait_queue_head *head = req->head;
++	bool found = false;
++
++	spin_lock(&head->lock);
++	found = __aio_poll_remove(req);
++	spin_unlock(&head->lock);
++
++	if (found) {
++		req->events = 0;
++		INIT_WORK(&req->work, aio_poll_work);
++		schedule_work(&req->work);
++	}
++	return 0;
++}
++
++static int aio_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
++		void *key)
++{
++	struct poll_iocb *req = container_of(wait, struct poll_iocb, wait);
++	struct file *file = req->file;
++	__poll_t mask = key_to_poll(key);
++
++	assert_spin_locked(&req->head->lock);
++
++	/* for instances that support it check for an event match first: */
++	if (mask && !(mask & req->events))
++		return 0;
++
++	mask = file->f_op->poll_mask(file, req->events);
++	if (!mask)
++		return 0;
++
++	__aio_poll_remove(req);
++
++	req->events = mask;
++	INIT_WORK(&req->work, aio_poll_work);
++	schedule_work(&req->work);
++	return 1;
++}
++
++static ssize_t aio_poll(struct aio_kiocb *aiocb, struct iocb *iocb)
++{
++	struct kioctx *ctx = aiocb->ki_ctx;
++	struct poll_iocb *req = &aiocb->poll;
++	__poll_t mask;
++
++	/* reject any unknown events outside the normal event mask. */
++	if ((u16)iocb->aio_buf != iocb->aio_buf)
++		return -EINVAL;
++	/* reject fields that are not defined for poll */
++	if (iocb->aio_offset || iocb->aio_nbytes || iocb->aio_rw_flags)
++		return -EINVAL;
++
++	req->events = demangle_poll(iocb->aio_buf) | EPOLLERR | EPOLLHUP;
++	req->file = fget(iocb->aio_fildes);
++	if (unlikely(!req->file))
++		return -EBADF;
++	if (!file_has_poll_mask(req->file))
++		goto out_fail;
++
++	req->head = req->file->f_op->get_poll_head(req->file, req->events);
++	if (!req->head)
++		goto out_fail;
++	if (IS_ERR(req->head)) {
++		mask = EPOLLERR;
++		goto done;
++	}
++
++	init_waitqueue_func_entry(&req->wait, aio_poll_wake);
++	aiocb->ki_cancel = aio_poll_cancel;
++
++	spin_lock_irq(&ctx->ctx_lock);
++	spin_lock(&req->head->lock);
++	mask = req->file->f_op->poll_mask(req->file, req->events);
++	if (!mask) {
++		__add_wait_queue(req->head, &req->wait);
++		list_add_tail(&aiocb->ki_list, &ctx->active_reqs);
++	}
++	spin_unlock(&req->head->lock);
++	spin_unlock_irq(&ctx->ctx_lock);
++done:
++	if (mask)
++		__aio_poll_complete(req, mask);
++	return -EIOCBQUEUED;
++out_fail:
++	fput(req->file);
++	return -EINVAL; /* same as no support for IOCB_CMD_POLL */
++}
++
+ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 			 struct iocb *iocb, bool compat)
+ {
+@@ -1641,6 +1771,8 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
+ 		break;
+ 	case IOCB_CMD_FDSYNC:
+ 		ret = aio_fsync(&req->fsync, iocb, true);
++	case IOCB_CMD_POLL:
++		ret = aio_poll(req, iocb);
+ 		break;
+ 	default:
+ 		pr_debug("invalid aio operation %d\n", iocb->aio_lio_opcode);
+diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+index 2c0a3415beee..ed0185945bb2 100644
+--- a/include/uapi/linux/aio_abi.h
++++ b/include/uapi/linux/aio_abi.h
+@@ -39,10 +39,8 @@ enum {
+ 	IOCB_CMD_PWRITE = 1,
+ 	IOCB_CMD_FSYNC = 2,
+ 	IOCB_CMD_FDSYNC = 3,
+-	/* These two are experimental.
+-	 * IOCB_CMD_PREADX = 4,
+-	 * IOCB_CMD_POLL = 5,
+-	 */
++	/* 4 was the experimental IOCB_CMD_PREADX */
++	IOCB_CMD_POLL = 5,
+ 	IOCB_CMD_NOOP = 6,
+ 	IOCB_CMD_PREADV = 7,
+ 	IOCB_CMD_PWRITEV = 8,
 -- 
 2.17.0
 
