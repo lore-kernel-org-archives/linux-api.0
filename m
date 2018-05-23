@@ -1,53 +1,104 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 01/33] fix io_destroy()/aio_complete() race
-Date: Wed, 23 May 2018 21:19:50 +0200
-Message-ID: <20180523192022.1703-2-hch@lst.de>
-References: <20180523192022.1703-1-hch@lst.de>
+Subject: aio poll and a new in-kernel poll API V13
+Date: Wed, 23 May 2018 21:19:49 +0200
+Message-ID: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180523192022.1703-1-hch@lst.de>
 Sender: owner-linux-aio@kvack.org
 To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, stable@kernel.org
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Al Viro <viro@zeniv.linux.org.uk>
+Hi all,
 
-If io_destroy() gets to cancelling everything that can be cancelled and
-gets to kiocb_cancel() calling the function driver has left in ->ki_cancel,
-it becomes vulnerable to a race with IO completion.  At that point req
-is already taken off the list and aio_complete() does *NOT* spin until
-we (in free_ioctx_users()) releases ->ctx_lock.  As the result, it proceeds
-to kiocb_free(), freing req just it gets passed to ->ki_cancel().
+this series adds support for the IOCB_CMD_POLL operation to poll for the
+readyness of file descriptors using the aio subsystem.  The API is based
+on patches that existed in RHAS2.1 and RHEL3, which means it already is
+supported by libaio.  To implement the poll support efficiently new
+methods to poll are introduced in struct file_operations:  get_poll_head
+and poll_mask.  The first one returns a wait_queue_head to wait on
+(lifetime is bound by the file), and the second does a non-blocking
+check for the POLL* events.  This allows aio poll to work without
+any additional context switches, unlike epoll.
 
-Fix is simple - remove from the list after the call of kiocb_cancel().  All
-instances of ->ki_cancel() already have to cope with the being called with
-iocb still on list - that's what happens in io_cancel(2).
+This series sits on top of the aio-fsync series that also includes
+support for io_pgetevents.
 
-Cc: stable@kernel.org
-Fixes: 0460fef2a921 "aio: use cancellation list lazily"
-Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/aio.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+The changes were sponsored by Scylladb, and improve performance
+of the seastar framework up to 10%, while also removing the need
+for a privileged SCHED_FIFO epoll listener thread.
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 755d3f57bcc8..1c383bb44b2d 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -639,9 +639,8 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	while (!list_empty(&ctx->active_reqs)) {
- 		req = list_first_entry(&ctx->active_reqs,
- 				       struct aio_kiocb, ki_list);
--
--		list_del_init(&req->ki_list);
- 		kiocb_cancel(req);
-+		list_del_init(&req->ki_list);
- 	}
- 
- 	spin_unlock_irq(&ctx->ctx_lock);
--- 
-2.17.0
+    git://git.infradead.org/users/hch/vfs.git aio-poll.13
+
+Gitweb:
+
+    http://git.infradead.org/users/hch/vfs.git/shortlog/refs/heads/aio-poll.13
+
+Libaio changes:
+
+    https://pagure.io/libaio.git io-poll
+
+Seastar changes (not updated for the new io_pgetevens ABI yet):
+
+    https://github.com/avikivity/seastar/commits/aio
+
+Changes since v12:
+ - remove iocb from ki_list only after ki_cancel has completed
+ - fix __poll_t annotations
+ - turn __poll_t sparse checkin on by default
+ - call fput after aio_complete
+ - only add the iocb to active_reqs if we wait for it
+
+Changes since v11:
+ - simplify cancellation by completion poll requests from a workqueue
+   if we can't take the ctx_lock
+
+Changes since v10:
+ - fixed a mismerge that let a sock_rps_record_flow sneak into
+   tcp_poll_mask
+ - remove the now unused struct proto_ops get_poll_head method
+
+Changes since v9:
+ - add to the delayed_cancel_reqs earlier to avoid a race
+ - get rid of POLL_TO_PTR magic
+
+Changes since v8:
+ - make delayed cancellation conditional again
+ - add a cancel_kiocb file operation to split delayed vs normal cancel
+
+Changes since v7:
+ - make delayed cancellation safe and unconditional
+
+Changes since v6:
+ - reworked cancellation
+
+Changes since v5:
+ - small changelog updates
+ - rebased on top of the aio-fsync changes
+
+Changes since v4:
+ - rebased ontop of Linux 4.16-rc4
+
+Changes since v3:
+ - remove the pre-sleep ->poll_mask call in vfs_poll,
+   allow ->get_poll_head to return POLL* values.
+
+Changes since v2:
+ - removed a double initialization
+ - new vfs_get_poll_head helper
+ - document that ->get_poll_head can return NULL
+ - call ->poll_mask before sleeping
+ - various ACKs
+ - add conversion of random to ->poll_mask
+ - add conversion of af_alg to ->poll_mask
+ - lacking ->poll_mask support now returns -EINVAL for IOCB_CMD_POLL
+ - reshuffled the series so that prep patches and everything not
+   requiring the new in-kernel poll API is in the beginning
+
+Changes since v1:
+ - handle the NULL ->poll case in vfs_poll
+ - dropped the file argument to the ->poll_mask socket operation
+ - replace the ->pre_poll socket operation with ->get_poll_head as
+   in the file operations
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
