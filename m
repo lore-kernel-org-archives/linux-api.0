@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 02/33] uapi: turn __poll_t sparse checkin on by default
-Date: Wed, 23 May 2018 21:19:51 +0200
-Message-ID: <20180523192022.1703-3-hch@lst.de>
+Subject: [PATCH 03/33] fs: unexport poll_schedule_timeout
+Date: Wed, 23 May 2018 21:19:52 +0200
+Message-ID: <20180523192022.1703-4-hch@lst.de>
 References: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180523192022.1703-1-hch@lst.de>
@@ -10,27 +10,50 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- include/uapi/linux/types.h | 4 ----
- 1 file changed, 4 deletions(-)
+No users outside of select.c.
 
-diff --git a/include/uapi/linux/types.h b/include/uapi/linux/types.h
-index cd4f0b897a48..2fce8b6876e9 100644
---- a/include/uapi/linux/types.h
-+++ b/include/uapi/linux/types.h
-@@ -49,11 +49,7 @@ typedef __u32 __bitwise __wsum;
- #define __aligned_be64 __be64 __attribute__((aligned(8)))
- #define __aligned_le64 __le64 __attribute__((aligned(8)))
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+---
+ fs/select.c          | 3 +--
+ include/linux/poll.h | 2 --
+ 2 files changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/fs/select.c b/fs/select.c
+index ba879c51288f..a87f396f0313 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -233,7 +233,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
+ 	add_wait_queue(wait_address, &entry->wait);
+ }
  
--#ifdef __CHECK_POLL
- typedef unsigned __bitwise __poll_t;
--#else
--typedef unsigned __poll_t;
--#endif
+-int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
++static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+ 			  ktime_t *expires, unsigned long slack)
+ {
+ 	int rc = -EINTR;
+@@ -258,7 +258,6 @@ int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
  
- #endif /*  __ASSEMBLY__ */
- #endif /* _UAPI_LINUX_TYPES_H */
+ 	return rc;
+ }
+-EXPORT_SYMBOL(poll_schedule_timeout);
+ 
+ /**
+  * poll_select_set_timeout - helper function to setup the timeout value
+diff --git a/include/linux/poll.h b/include/linux/poll.h
+index f45ebd017eaa..a3576da63377 100644
+--- a/include/linux/poll.h
++++ b/include/linux/poll.h
+@@ -96,8 +96,6 @@ struct poll_wqueues {
+ 
+ extern void poll_initwait(struct poll_wqueues *pwq);
+ extern void poll_freewait(struct poll_wqueues *pwq);
+-extern int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
+-				 ktime_t *expires, unsigned long slack);
+ extern u64 select_estimate_accuracy(struct timespec64 *tv);
+ 
+ #define MAX_INT64_SECONDS (((s64)(~((u64)0)>>1)/HZ)-1)
 -- 
 2.17.0
 
