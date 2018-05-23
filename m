@@ -1,57 +1,46 @@
-From: Johannes Berg <johannes-cdvu00un1VgdHxzADdlk8Q@public.gmane.org>
-Subject: Re: [v8, bpf-next, 4/9] net/wireless/iwlwifi: fix
- iwlwifi_dev_ucode_error tracepoint
-Date: Wed, 23 May 2018 13:03:08 +0200
-Message-ID: <1527073388.3759.21.camel@sipsolutions.net>
-References: <20180328190540.370956-5-ast@kernel.org>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v2 3/4] mm: add find_alloc_contig_pages() interface
+Date: Wed, 23 May 2018 13:18:10 +0200
+Message-ID: <01793788-1870-858e-2061-a0e6ef3a3171@suse.cz>
+References: <20180503232935.22539-1-mike.kravetz@oracle.com>
+ <20180503232935.22539-4-mike.kravetz@oracle.com>
+ <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
+ <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
+ <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20180328190540.370956-5-ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Alexei Starovoitov <ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, davem-fT/PcQaiUtIeIZ0/mPfg9Q@public.gmane.org
-Cc: daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mathieu.desnoyers-vg+e7yoeK/dWk0Htik3J/w@public.gmane.org, netdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kernel-team-b10kYP2dOMg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Reinette Chatre <reinette.chatre@intel.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2018-03-28 at 12:05 -0700, Alexei Starovoitov wrote:
-> fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
-> instead of all 17 arguments by value.
-> dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
-> defined with very similar yet subtly different fields and offsets.
-> tracepoint is still common and using definition of 'struct iwl_error_event_table'
-> from dvm/commands.h while copying fields.
-> Long term this tracepoint probably should be split into two.
+On 05/22/2018 06:41 PM, Reinette Chatre wrote:
+> On 5/21/2018 4:48 PM, Mike Kravetz wrote:
+>> I'm guessing that most (?all?) allocations will be order based.  The use
+>> cases I am aware of (hugetlbfs, Intel Cache Pseudo-Locking, RDMA) are all
+>> order based.  However, as commented in previous version taking arbitrary
+>> nr_pages makes interface more future proof.
+>>
+> 
+> I noticed this Cache Pseudo-Locking statement and would like to clarify.
+> I have not been following this thread in detail so I would like to
+> apologize first if my comments are out of context.
+> 
+> Currently the Cache Pseudo-Locking allocations are order based because I
+> assumed it was required by the allocator. The contiguous regions needed
+> by Cache Pseudo-Locking will not always be order based - instead it is
+> based on the granularity of the cache allocation. One example is a
+> platform with 55MB L3 cache that can be divided into 20 equal portions.
+> To support Cache Pseudo-Locking on this platform we need to be able to
+> allocate contiguous regions at increments of 2816KB (the size of each
+> portion). In support of this example platform regions needed would thus
+> be 2816KB, 5632KB, 8448KB, etc.
 
-It would've been nice to CC the wireless list for wireless related
-patches ...
+Will there be any alignment requirements for these allocations e.g. for
+minimizing conflict misses?
 
-> --- a/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-> +++ b/drivers/net/wireless/intel/iwlwifi/iwl-devtrace.c
-> @@ -30,6 +30,7 @@
->  #ifndef __CHECKER__
->  #include "iwl-trans.h"
->  
-> +#include "dvm/commands.h"
-
-In particular, this breaks the whole driver abstraction.
-
-> +++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-> @@ -549,12 +549,7 @@ static void iwl_mvm_dump_lmac_error_log(struct iwl_mvm *mvm, u32 base)
->  
->         IWL_ERR(mvm, "Loaded firmware version: %s\n", mvm->fw->fw_version);
->  
-> -       trace_iwlwifi_dev_ucode_error(trans->dev, table.error_id, table.tsf_low,
-> -                                     table.data1, table.data2, table.data3,
-> -                                     table.blink2, table.ilink1,
-> -                                     table.ilink2, table.bcon_time, table.gp1,
-> -                                     table.gp2, table.fw_rev_type, table.major,
-> -                                     table.minor, table.hw_ver, table.brd_ver);
-> +       trace_iwlwifi_dev_ucode_error(trans->dev, &table, table.hw_ver, table.brd_ver);
-
-This is also utterly wrong because mvm has - for better or worse - a
-different type "struct iwl_error_event_table" in this file ...
-
-This really should never have gotten into the tree.
-
-johannes
+Vlastimil
