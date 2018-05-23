@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 05/33] fs: update documentation to mention __poll_t and match the code
-Date: Wed, 23 May 2018 21:19:54 +0200
-Message-ID: <20180523192022.1703-6-hch@lst.de>
+Subject: [PATCH 08/33] aio: simplify KIOCB_KEY handling
+Date: Wed, 23 May 2018 21:19:57 +0200
+Message-ID: <20180523192022.1703-9-hch@lst.de>
 References: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180523192022.1703-1-hch@lst.de>
@@ -10,40 +10,82 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
----
- Documentation/filesystems/Locking | 2 +-
- Documentation/filesystems/vfs.txt | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+No need to pass the key field to lookup_iocb to compare it with KIOCB_KEY,
+as we can do that right after retrieving it from userspace.  Also move the
+KIOCB_KEY definition to aio.c as it is an internal value not used by any
+other place in the kernel.
 
-diff --git a/Documentation/filesystems/Locking b/Documentation/filesystems/Locking
-index 75d2d57e2c44..220bba28f72b 100644
---- a/Documentation/filesystems/Locking
-+++ b/Documentation/filesystems/Locking
-@@ -439,7 +439,7 @@ prototypes:
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
--	unsigned int (*poll) (struct file *, struct poll_table_struct *);
-+	__poll_t (*poll) (struct file *, struct poll_table_struct *);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
-diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-index 5fd325df59e2..f608180ad59d 100644
---- a/Documentation/filesystems/vfs.txt
-+++ b/Documentation/filesystems/vfs.txt
-@@ -856,7 +856,7 @@ struct file_operations {
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
- 	int (*iterate) (struct file *, struct dir_context *);
--	unsigned int (*poll) (struct file *, struct poll_table_struct *);
-+	__poll_t (*poll) (struct file *, struct poll_table_struct *);
- 	long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
- 	long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
- 	int (*mmap) (struct file *, struct vm_area_struct *);
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ fs/aio.c            | 14 +++++++-------
+ include/linux/aio.h |  2 --
+ 2 files changed, 7 insertions(+), 9 deletions(-)
+
+diff --git a/fs/aio.c b/fs/aio.c
+index 1c383bb44b2d..50a90e5581ed 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -46,6 +46,8 @@
+ 
+ #include "internal.h"
+ 
++#define KIOCB_KEY		0
++
+ #define AIO_RING_MAGIC			0xa10a10a1
+ #define AIO_RING_COMPAT_FEATURES	1
+ #define AIO_RING_INCOMPAT_FEATURES	0
+@@ -1811,15 +1813,12 @@ COMPAT_SYSCALL_DEFINE3(io_submit, compat_aio_context_t, ctx_id,
+  *	Finds a given iocb for cancellation.
+  */
+ static struct aio_kiocb *
+-lookup_kiocb(struct kioctx *ctx, struct iocb __user *iocb, u32 key)
++lookup_kiocb(struct kioctx *ctx, struct iocb __user *iocb)
+ {
+ 	struct aio_kiocb *kiocb;
+ 
+ 	assert_spin_locked(&ctx->ctx_lock);
+ 
+-	if (key != KIOCB_KEY)
+-		return NULL;
+-
+ 	/* TODO: use a hash or array, this sucks. */
+ 	list_for_each_entry(kiocb, &ctx->active_reqs, ki_list) {
+ 		if (kiocb->ki_user_iocb == iocb)
+@@ -1846,9 +1845,10 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 	u32 key;
+ 	int ret;
+ 
+-	ret = get_user(key, &iocb->aio_key);
+-	if (unlikely(ret))
++	if (unlikely(get_user(key, &iocb->aio_key)))
+ 		return -EFAULT;
++	if (unlikely(key != KIOCB_KEY))
++		return -EINVAL;
+ 
+ 	ctx = lookup_ioctx(ctx_id);
+ 	if (unlikely(!ctx))
+@@ -1856,7 +1856,7 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+ 
+ 	spin_lock_irq(&ctx->ctx_lock);
+ 
+-	kiocb = lookup_kiocb(ctx, iocb, key);
++	kiocb = lookup_kiocb(ctx, iocb);
+ 	if (kiocb)
+ 		ret = kiocb_cancel(kiocb);
+ 	else
+diff --git a/include/linux/aio.h b/include/linux/aio.h
+index 9d8aabecfe2d..b83e68dd006f 100644
+--- a/include/linux/aio.h
++++ b/include/linux/aio.h
+@@ -8,8 +8,6 @@ struct kioctx;
+ struct kiocb;
+ struct mm_struct;
+ 
+-#define KIOCB_KEY		0
+-
+ typedef int (kiocb_cancel_fn)(struct kiocb *);
+ 
+ /* prototypes */
 -- 
 2.17.0
 
