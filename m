@@ -1,229 +1,127 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 06/33] fs: add new vfs_poll and file_can_poll helpers
-Date: Wed, 23 May 2018 21:19:55 +0200
-Message-ID: <20180523192022.1703-7-hch@lst.de>
-References: <20180523192022.1703-1-hch@lst.de>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
+Date: Wed, 23 May 2018 16:14:39 -0400 (EDT)
+Message-ID: <1928158599.1541.1527106479862.JavaMail.zimbra@efficios.com>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com> <20180516161837.GI12198@hirez.programming.kicks-ass.net> <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com> <20180517011949.GA1121@tardis> <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com> <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com> <418003803.516.1526667437396.JavaMail.zimbra@efficios.com> <20180520140811.GB1121@tardis>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180523192022.1703-1-hch@lst.de>
+In-Reply-To: <20180520140811.GB1121@tardis>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Boqun Feng <boqun.feng@gmail.com>
+Cc: Will Deacon <will.deacon@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
 List-Id: linux-api@vger.kernel.org
 
-These abstract out calls to the poll method in preparation for changes
-in how we poll.
+----- On May 20, 2018, at 10:08 AM, Boqun Feng boqun.feng@gmail.com wrote:
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
----
- drivers/staging/comedi/drivers/serial2002.c |  4 ++--
- drivers/vfio/virqfd.c                       |  2 +-
- drivers/vhost/vhost.c                       |  2 +-
- fs/eventpoll.c                              |  5 ++---
- fs/select.c                                 | 23 +++++++--------------
- include/linux/poll.h                        | 12 +++++++++++
- mm/memcontrol.c                             |  2 +-
- net/9p/trans_fd.c                           | 18 ++++------------
- virt/kvm/eventfd.c                          |  2 +-
- 9 files changed, 32 insertions(+), 38 deletions(-)
+> On Fri, May 18, 2018 at 02:17:17PM -0400, Mathieu Desnoyers wrote:
+>> ----- On May 17, 2018, at 7:50 PM, Boqun Feng boqun.feng@gmail.com wrote:
+>> [...]
+>> >> > I think you're right. So we have to introduce callsite to rseq_syscall()
+>> >> > in syscall path, something like:
+>> >> > 
+>> >> > diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+>> >> > index 51695608c68b..a25734a96640 100644
+>> >> > --- a/arch/powerpc/kernel/entry_64.S
+>> >> > +++ b/arch/powerpc/kernel/entry_64.S
+>> >> > @@ -222,6 +222,9 @@ system_call_exit:
+>> >> > 	mtmsrd	r11,1
+>> >> > #endif /* CONFIG_PPC_BOOK3E */
+>> >> > 
+>> >> > +	addi    r3,r1,STACK_FRAME_OVERHEAD
+>> >> > +	bl	rseq_syscall
+>> >> > +
+>> >> > 	ld	r9,TI_FLAGS(r12)
+>> >> > 	li	r11,-MAX_ERRNO
+>> >> > 	andi.
+>> >> > 		r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP|_TIF_USER_WORK_MASK|_TIF_PERSYSCALL_MASK)
+>> >> > 
+>> 
+>> By the way, I think this is not the right spot to call rseq_syscall, because
+>> interrupts are disabled. I think we should move this hunk right after
+>> system_call_exit.
+>> 
+> 
+> Good point.
+> 
+>> Would you like to implement and test an updated patch adding those calls for ppc
+>> 32 and 64 ?
+>> 
+> 
+> I'd like to help, but I don't have a handy ppc environment for test...
+> So I made the below patch which has only been build-tested, hope it
+> could be somewhat helpful.
 
-diff --git a/drivers/staging/comedi/drivers/serial2002.c b/drivers/staging/comedi/drivers/serial2002.c
-index b3f3b4a201af..5471b2212a62 100644
---- a/drivers/staging/comedi/drivers/serial2002.c
-+++ b/drivers/staging/comedi/drivers/serial2002.c
-@@ -113,7 +113,7 @@ static void serial2002_tty_read_poll_wait(struct file *f, int timeout)
- 		long elapsed;
- 		__poll_t mask;
- 
--		mask = f->f_op->poll(f, &table.pt);
-+		mask = vfs_poll(f, &table.pt);
- 		if (mask & (EPOLLRDNORM | EPOLLRDBAND | EPOLLIN |
- 			    EPOLLHUP | EPOLLERR)) {
- 			break;
-@@ -136,7 +136,7 @@ static int serial2002_tty_read(struct file *f, int timeout)
- 
- 	result = -1;
- 	if (!IS_ERR(f)) {
--		if (f->f_op->poll) {
-+		if (file_can_poll(f)) {
- 			serial2002_tty_read_poll_wait(f, timeout);
- 
- 			if (kernel_read(f, &ch, 1, &pos) == 1)
-diff --git a/drivers/vfio/virqfd.c b/drivers/vfio/virqfd.c
-index 085700f1be10..2a1be859ee71 100644
---- a/drivers/vfio/virqfd.c
-+++ b/drivers/vfio/virqfd.c
-@@ -166,7 +166,7 @@ int vfio_virqfd_enable(void *opaque,
- 	init_waitqueue_func_entry(&virqfd->wait, virqfd_wakeup);
- 	init_poll_funcptr(&virqfd->pt, virqfd_ptable_queue_proc);
- 
--	events = irqfd.file->f_op->poll(irqfd.file, &virqfd->pt);
-+	events = vfs_poll(irqfd.file, &virqfd->pt);
- 
- 	/*
- 	 * Check if there was an event already pending on the eventfd
-diff --git a/drivers/vhost/vhost.c b/drivers/vhost/vhost.c
-index f3bd8e941224..f6022881f147 100644
---- a/drivers/vhost/vhost.c
-+++ b/drivers/vhost/vhost.c
-@@ -208,7 +208,7 @@ int vhost_poll_start(struct vhost_poll *poll, struct file *file)
- 	if (poll->wqh)
- 		return 0;
- 
--	mask = file->f_op->poll(file, &poll->table);
-+	mask = vfs_poll(file, &poll->table);
- 	if (mask)
- 		vhost_poll_wakeup(&poll->wait, 0, 0, poll_to_key(mask));
- 	if (mask & EPOLLERR) {
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index 602ca4285b2e..67db22fe99c5 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -884,8 +884,7 @@ static __poll_t ep_item_poll(const struct epitem *epi, poll_table *pt,
- 
- 	pt->_key = epi->event.events;
- 	if (!is_file_epoll(epi->ffd.file))
--		return epi->ffd.file->f_op->poll(epi->ffd.file, pt) &
--		       epi->event.events;
-+		return vfs_poll(epi->ffd.file, pt) & epi->event.events;
- 
- 	ep = epi->ffd.file->private_data;
- 	poll_wait(epi->ffd.file, &ep->poll_wait, pt);
-@@ -2025,7 +2024,7 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
- 
- 	/* The target file descriptor must support poll */
- 	error = -EPERM;
--	if (!tf.file->f_op->poll)
-+	if (!file_can_poll(tf.file))
- 		goto error_tgt_fput;
- 
- 	/* Check if EPOLLWAKEUP is allowed */
-diff --git a/fs/select.c b/fs/select.c
-index 25da26253485..e30def680b2e 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -502,14 +502,10 @@ static int do_select(int n, fd_set_bits *fds, struct timespec64 *end_time)
- 					continue;
- 				f = fdget(i);
- 				if (f.file) {
--					const struct file_operations *f_op;
--					f_op = f.file->f_op;
--					mask = DEFAULT_POLLMASK;
--					if (f_op->poll) {
--						wait_key_set(wait, in, out,
--							     bit, busy_flag);
--						mask = (*f_op->poll)(f.file, wait);
--					}
-+					wait_key_set(wait, in, out, bit,
-+						     busy_flag);
-+					mask = vfs_poll(f.file, wait);
-+
- 					fdput(f);
- 					if ((mask & POLLIN_SET) && (in & bit)) {
- 						res_in |= bit;
-@@ -825,13 +821,10 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
- 
- 	/* userland u16 ->events contains POLL... bitmap */
- 	filter = demangle_poll(pollfd->events) | EPOLLERR | EPOLLHUP;
--	mask = DEFAULT_POLLMASK;
--	if (f.file->f_op->poll) {
--		pwait->_key = filter | busy_flag;
--		mask = f.file->f_op->poll(f.file, pwait);
--		if (mask & busy_flag)
--			*can_busy_poll = true;
--	}
-+	pwait->_key = filter | busy_flag;
-+	mask = vfs_poll(f.file, pwait);
-+	if (mask & busy_flag)
-+		*can_busy_poll = true;
- 	mask &= filter;		/* Mask out unneeded events. */
- 	fdput(f);
- 
-diff --git a/include/linux/poll.h b/include/linux/poll.h
-index a3576da63377..7e0fdcf905d2 100644
---- a/include/linux/poll.h
-+++ b/include/linux/poll.h
-@@ -74,6 +74,18 @@ static inline void init_poll_funcptr(poll_table *pt, poll_queue_proc qproc)
- 	pt->_key   = ~(__poll_t)0; /* all events enabled */
- }
- 
-+static inline bool file_can_poll(struct file *file)
-+{
-+	return file->f_op->poll;
-+}
-+
-+static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
-+{
-+	if (unlikely(!file->f_op->poll))
-+		return DEFAULT_POLLMASK;
-+	return file->f_op->poll(file, pt);
-+}
-+
- struct poll_table_entry {
- 	struct file *filp;
- 	__poll_t key;
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 2bd3df3d101a..1695f38630f1 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -3849,7 +3849,7 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
- 	if (ret)
- 		goto out_put_css;
- 
--	efile.file->f_op->poll(efile.file, &event->pt);
-+	vfs_poll(efile.file, &event->pt);
- 
- 	spin_lock(&memcg->event_list_lock);
- 	list_add(&event->list, &memcg->event_list);
-diff --git a/net/9p/trans_fd.c b/net/9p/trans_fd.c
-index 848969fe7979..588bf88c3305 100644
---- a/net/9p/trans_fd.c
-+++ b/net/9p/trans_fd.c
-@@ -231,7 +231,7 @@ static void p9_conn_cancel(struct p9_conn *m, int err)
- static __poll_t
- p9_fd_poll(struct p9_client *client, struct poll_table_struct *pt, int *err)
- {
--	__poll_t ret, n;
-+	__poll_t ret;
- 	struct p9_trans_fd *ts = NULL;
- 
- 	if (client && client->status == Connected)
-@@ -243,19 +243,9 @@ p9_fd_poll(struct p9_client *client, struct poll_table_struct *pt, int *err)
- 		return EPOLLERR;
- 	}
- 
--	if (!ts->rd->f_op->poll)
--		ret = DEFAULT_POLLMASK;
--	else
--		ret = ts->rd->f_op->poll(ts->rd, pt);
--
--	if (ts->rd != ts->wr) {
--		if (!ts->wr->f_op->poll)
--			n = DEFAULT_POLLMASK;
--		else
--			n = ts->wr->f_op->poll(ts->wr, pt);
--		ret = (ret & ~EPOLLOUT) | (n & ~EPOLLIN);
--	}
--
-+	ret = vfs_poll(ts->rd, pt);
-+	if (ts->rd != ts->wr)
-+		ret = (ret & ~EPOLLOUT) | (vfs_poll(ts->wr, pt) & ~EPOLLIN);
- 	return ret;
- }
- 
-diff --git a/virt/kvm/eventfd.c b/virt/kvm/eventfd.c
-index 6e865e8b5b10..90d30fbe95ae 100644
---- a/virt/kvm/eventfd.c
-+++ b/virt/kvm/eventfd.c
-@@ -397,7 +397,7 @@ kvm_irqfd_assign(struct kvm *kvm, struct kvm_irqfd *args)
- 	 * Check if there was an event already pending on the eventfd
- 	 * before we registered, and trigger it as if we didn't miss it.
- 	 */
--	events = f.file->f_op->poll(f.file, &irqfd->pt);
-+	events = vfs_poll(f.file, &irqfd->pt);
- 
- 	if (events & EPOLLIN)
- 		schedule_work(&irqfd->inject);
+Hi Boqun,
+
+I tried your patch in a ppc64 le environment, and it does not survive boot
+with CONFIG_DEBUG_RSEQ=y. init gets killed right away.
+
+Moreover, I'm not sure that the r3 register don't contain something worth
+saving before the call on ppc32. Just after there is a "mr" instruction
+which AFAIU takes r3 as input register.
+
+Can you look into it ?
+
+Thanks,
+
+Mathieu
+
+> 
+> Regards,
+> Boqun
+> 
+> --------------------------------->8
+> Subject: [PATCH] powerpc: Add syscall detection for restartable sequences
+> 
+> Syscalls are not allowed inside restartable sequences, so add a call to
+> rseq_syscall() at the very beginning of system call exiting path for
+> CONFIG_DEBUG_RSEQ=y kernel. This could help us to detect whether there
+> is a syscall issued inside restartable sequences.
+> 
+> Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
+> ---
+> arch/powerpc/kernel/entry_32.S | 5 +++++
+> arch/powerpc/kernel/entry_64.S | 5 +++++
+> 2 files changed, 10 insertions(+)
+> 
+> diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
+> index eb8d01bae8c6..2f134eebe7ed 100644
+> --- a/arch/powerpc/kernel/entry_32.S
+> +++ b/arch/powerpc/kernel/entry_32.S
+> @@ -365,6 +365,11 @@ syscall_dotrace_cont:
+> 	blrl			/* Call handler */
+> 	.globl	ret_from_syscall
+> ret_from_syscall:
+> +#ifdef CONFIG_DEBUG_RSEQ
+> +	/* Check whether the syscall is issued inside a restartable sequence */
+> +	addi    r3,r1,STACK_FRAME_OVERHEAD
+> +	bl      rseq_syscall
+> +#endif
+> 	mr	r6,r3
+> 	CURRENT_THREAD_INFO(r12, r1)
+> 	/* disable interrupts so current_thread_info()->flags can't change */
+> diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+> index 2cb5109a7ea3..2e2d59bb45d0 100644
+> --- a/arch/powerpc/kernel/entry_64.S
+> +++ b/arch/powerpc/kernel/entry_64.S
+> @@ -204,6 +204,11 @@ system_call:			/* label this so stack traces look sane */
+>  * This is blacklisted from kprobes further below with _ASM_NOKPROBE_SYMBOL().
+>  */
+> system_call_exit:
+> +#ifdef CONFIG_DEBUG_RSEQ
+> +	/* Check whether the syscall is issued inside a restartable sequence */
+> +	addi    r3,r1,STACK_FRAME_OVERHEAD
+> +	bl      rseq_syscall
+> +#endif
+> 	/*
+> 	 * Disable interrupts so current_thread_info()->flags can't change,
+> 	 * and so that we don't get interrupted after loading SRR0/1.
+> --
+> 2.16.2
+
 -- 
-2.17.0
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
