@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 32/33] timerfd: convert to ->poll_mask
-Date: Wed, 23 May 2018 21:20:21 +0200
-Message-ID: <20180523192022.1703-33-hch@lst.de>
+Subject: [PATCH 33/33] random: convert to ->poll_mask
+Date: Wed, 23 May 2018 21:20:22 +0200
+Message-ID: <20180523192022.1703-34-hch@lst.de>
 References: <20180523192022.1703-1-hch@lst.de>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20180523192022.1703-1-hch@lst.de>
@@ -10,56 +10,104 @@ To: viro@zeniv.linux.org.uk
 Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- fs/timerfd.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+The big change is that random_read_wait and random_write_wait are merged
+into a single waitqueue that uses keyed wakeups.  Because wait_event_*
+doesn't know about that this will lead to occassional spurious wakeups
+in _random_read and add_hwgenerator_randomness, but wait_event_* is
+designed to handle these and were are not in a a hot path there.
 
-diff --git a/fs/timerfd.c b/fs/timerfd.c
-index cdad49da3ff7..d84a2bee4f82 100644
---- a/fs/timerfd.c
-+++ b/fs/timerfd.c
-@@ -226,21 +226,20 @@ static int timerfd_release(struct inode *inode, struct file *file)
- 	kfree_rcu(ctx, rcu);
- 	return 0;
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Theodore Ts'o <tytso@mit.edu>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+---
+ drivers/char/random.c | 29 ++++++++++++++++-------------
+ 1 file changed, 16 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index cd888d4ee605..a8fb0020ba5c 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -402,8 +402,7 @@ static struct poolinfo {
+ /*
+  * Static global variables
+  */
+-static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
+-static DECLARE_WAIT_QUEUE_HEAD(random_write_wait);
++static DECLARE_WAIT_QUEUE_HEAD(random_wait);
+ static struct fasync_struct *fasync;
+ 
+ static DEFINE_SPINLOCK(random_ready_list_lock);
+@@ -722,8 +721,8 @@ static void credit_entropy_bits(struct entropy_store *r, int nbits)
+ 
+ 		/* should we wake readers? */
+ 		if (entropy_bits >= random_read_wakeup_bits &&
+-		    wq_has_sleeper(&random_read_wait)) {
+-			wake_up_interruptible(&random_read_wait);
++		    wq_has_sleeper(&random_wait)) {
++			wake_up_interruptible_poll(&random_wait, POLLIN);
+ 			kill_fasync(&fasync, SIGIO, POLL_IN);
+ 		}
+ 		/* If the input pool is getting full, send some
+@@ -1397,7 +1396,7 @@ static size_t account(struct entropy_store *r, size_t nbytes, int min,
+ 	trace_debit_entropy(r->name, 8 * ibytes);
+ 	if (ibytes &&
+ 	    (r->entropy_count >> ENTROPY_SHIFT) < random_write_wakeup_bits) {
+-		wake_up_interruptible(&random_write_wait);
++		wake_up_interruptible_poll(&random_wait, POLLOUT);
+ 		kill_fasync(&fasync, SIGIO, POLL_OUT);
+ 	}
+ 
+@@ -1839,7 +1838,7 @@ _random_read(int nonblock, char __user *buf, size_t nbytes)
+ 		if (nonblock)
+ 			return -EAGAIN;
+ 
+-		wait_event_interruptible(random_read_wait,
++		wait_event_interruptible(random_wait,
+ 			ENTROPY_BITS(&input_pool) >=
+ 			random_read_wakeup_bits);
+ 		if (signal_pending(current))
+@@ -1876,14 +1875,17 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
+ 	return ret;
  }
--
--static __poll_t timerfd_poll(struct file *file, poll_table *wait)
-+	
-+static struct wait_queue_head *timerfd_get_poll_head(struct file *file,
-+		__poll_t eventmask)
- {
- 	struct timerfd_ctx *ctx = file->private_data;
--	__poll_t events = 0;
--	unsigned long flags;
  
--	poll_wait(file, &ctx->wqh, wait);
-+	return &ctx->wqh;
-+}
- 
--	spin_lock_irqsave(&ctx->wqh.lock, flags);
--	if (ctx->ticks)
--		events |= EPOLLIN;
--	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
-+static __poll_t timerfd_poll_mask(struct file *file, __poll_t eventmask)
++static struct wait_queue_head *
++random_get_poll_head(struct file *file, __poll_t events)
 +{
-+	struct timerfd_ctx *ctx = file->private_data;
++	return &random_wait;
++}
++
+ static __poll_t
+-random_poll(struct file *file, poll_table * wait)
++random_poll_mask(struct file *file, __poll_t events)
+ {
+-	__poll_t mask;
++	__poll_t mask = 0;
  
--	return events;
-+	return ctx->ticks ? EPOLLIN : 0;
- }
- 
- static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
-@@ -364,7 +363,8 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
- 
- static const struct file_operations timerfd_fops = {
- 	.release	= timerfd_release,
--	.poll		= timerfd_poll,
-+	.get_poll_head	= timerfd_get_poll_head,
-+	.poll_mask	= timerfd_poll_mask,
- 	.read		= timerfd_read,
- 	.llseek		= noop_llseek,
- 	.show_fdinfo	= timerfd_show,
+-	poll_wait(file, &random_read_wait, wait);
+-	poll_wait(file, &random_write_wait, wait);
+-	mask = 0;
+ 	if (ENTROPY_BITS(&input_pool) >= random_read_wakeup_bits)
+ 		mask |= EPOLLIN | EPOLLRDNORM;
+ 	if (ENTROPY_BITS(&input_pool) < random_write_wakeup_bits)
+@@ -1990,7 +1992,8 @@ static int random_fasync(int fd, struct file *filp, int on)
+ const struct file_operations random_fops = {
+ 	.read  = random_read,
+ 	.write = random_write,
+-	.poll  = random_poll,
++	.get_poll_head  = random_get_poll_head,
++	.poll_mask  = random_poll_mask,
+ 	.unlocked_ioctl = random_ioctl,
+ 	.fasync = random_fasync,
+ 	.llseek = noop_llseek,
+@@ -2323,7 +2326,7 @@ void add_hwgenerator_randomness(const char *buffer, size_t count,
+ 	 * We'll be woken up again once below random_write_wakeup_thresh,
+ 	 * or when the calling thread is about to terminate.
+ 	 */
+-	wait_event_interruptible(random_write_wait, kthread_should_stop() ||
++	wait_event_interruptible(random_wait, kthread_should_stop() ||
+ 			ENTROPY_BITS(&input_pool) <= random_write_wakeup_bits);
+ 	mix_pool_bytes(poolp, buffer, count);
+ 	credit_entropy_bits(poolp, entropy);
 -- 
 2.17.0
 
