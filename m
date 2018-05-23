@@ -1,46 +1,71 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v2 3/4] mm: add find_alloc_contig_pages() interface
-Date: Wed, 23 May 2018 13:18:10 +0200
-Message-ID: <01793788-1870-858e-2061-a0e6ef3a3171@suse.cz>
-References: <20180503232935.22539-1-mike.kravetz@oracle.com>
- <20180503232935.22539-4-mike.kravetz@oracle.com>
- <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
- <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
- <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 07/24] arm64: ilp32: add documentation on the ILP32 ABI
+ for ARM64
+Date: Wed, 23 May 2018 16:06:20 +0200
+Message-ID: <20180523140620.GA27215@amd>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20180516081910.10067-8-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="gBBFr7Ir9EOA20Yy"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180516081910.10067-8-ynorov@caviumnetworks.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Reinette Chatre <reinette.chatre@intel.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <jame>
 List-Id: linux-api@vger.kernel.org
 
-On 05/22/2018 06:41 PM, Reinette Chatre wrote:
-> On 5/21/2018 4:48 PM, Mike Kravetz wrote:
->> I'm guessing that most (?all?) allocations will be order based.  The use
->> cases I am aware of (hugetlbfs, Intel Cache Pseudo-Locking, RDMA) are all
->> order based.  However, as commented in previous version taking arbitrary
->> nr_pages makes interface more future proof.
->>
-> 
-> I noticed this Cache Pseudo-Locking statement and would like to clarify.
-> I have not been following this thread in detail so I would like to
-> apologize first if my comments are out of context.
-> 
-> Currently the Cache Pseudo-Locking allocations are order based because I
-> assumed it was required by the allocator. The contiguous regions needed
-> by Cache Pseudo-Locking will not always be order based - instead it is
-> based on the granularity of the cache allocation. One example is a
-> platform with 55MB L3 cache that can be divided into 20 equal portions.
-> To support Cache Pseudo-Locking on this platform we need to be able to
-> allocate contiguous regions at increments of 2816KB (the size of each
-> portion). In support of this example platform regions needed would thus
-> be 2816KB, 5632KB, 8448KB, etc.
 
-Will there be any alignment requirements for these allocations e.g. for
-minimizing conflict misses?
+--gBBFr7Ir9EOA20Yy
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Vlastimil
+On Wed 2018-05-16 11:18:52, Yury Norov wrote:
+> Based on Andrew Pinski's patch-series.
+>=20
+> Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
+
+So Andrew's signoff should be here?
+
+> ---
+>  Documentation/arm64/ilp32.txt | 45 +++++++++++++++++++++++++++++++++++
+>  1 file changed, 45 insertions(+)
+>  create mode 100644 Documentation/arm64/ilp32.txt
+>=20
+> diff --git a/Documentation/arm64/ilp32.txt b/Documentation/arm64/ilp32.txt
+> new file mode 100644
+> index 000000000000..d0fd5109c4b2
+> --- /dev/null
+> +++ b/Documentation/arm64/ilp32.txt
+> @@ -0,0 +1,45 @@
+> +ILP32 AARCH64 SYSCALL ABI
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D
+> +
+> +This document describes the ILP32 syscall ABI and where it differs
+> +from the generic compat linux syscall interface.
+
+I was hoping to learn what ILP32 is / what is it good for, but no,
+this does not tell me... it would be good to do a short explanation
+here, and maybe reference it from cover letter of the series...
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--gBBFr7Ir9EOA20Yy
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlsFdVwACgkQMOfwapXb+vIqwQCfYjjsUAivfLJZGZGD+OxZQomb
+x7kAoKfYf3WV9YCXwGsSlCM1C9pUE3kr
+=dVu7
+-----END PGP SIGNATURE-----
+
+--gBBFr7Ir9EOA20Yy--
