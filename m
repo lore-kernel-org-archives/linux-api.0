@@ -1,78 +1,82 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: YAaioRace (was Re: [PATCH 08/31] aio: implement IOCB_CMD_POLL)
-Date: Wed, 23 May 2018 02:43:18 +0100
-Message-ID: <20180523014318.GI30522@ZenIV.linux.org.uk>
-References: <20180522113108.25713-1-hch@lst.de>
- <20180522113108.25713-9-hch@lst.de>
- <20180522220524.GE30522@ZenIV.linux.org.uk>
- <20180523004530.GG30522@ZenIV.linux.org.uk>
- <20180523004904.GH30522@ZenIV.linux.org.uk>
+From: joeyli <jlee@suse.com>
+Subject: Re: [PATCH 07/24] hibernate: Disable when the kernel is locked down
+Date: Wed, 23 May 2018 16:46:03 +0800
+Message-ID: <20180523084603.GD7474@linux-l9pv.suse>
+References: <20180413202234.GA4484@amd>
+ <152346387861.4030.4408662483445703127.stgit@warthog.procyon.org.uk>
+ <152346392521.4030.5108539377959227838.stgit@warthog.procyon.org.uk>
+ <27926.1524148733@warthog.procyon.org.uk>
+ <20180426072646.GA31822@amd>
+ <nycvar.YFH.7.76.1804261018030.28147@cbobk.fhfr.pm>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180523004904.GH30522@ZenIV.linux.org.uk>
-Sender: owner-linux-aio@kvack.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Kent Overstreet <kent.overstreet@gmail.com>, Christoph Hellwig <hch@lst.de>
+In-Reply-To: <nycvar.YFH.7.76.1804261018030.28147@cbobk.fhfr.pm>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jiri Kosina <jikos@kernel.org>
+Cc: Pavel Machek <pavel@ucw.cz>, David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 23, 2018 at 01:49:04AM +0100, Al Viro wrote:
+Hi experts, 
 
-> > Looks like we want to call ->ki_cancel() *BEFORE* removing from the list,
-> > as well as doing fput() after aio_complete().  The same ordering, BTW, goes
-> > for aio_read() et.al.
-> > 
-> > Look:
-> > CPU1:	io_cancel() grabs ->ctx_lock, finds iocb and removes it from the list.
-> > CPU2:	aio_rw_complete() on that iocb.  Since the sucker is not in the list
-> > anymore, we do NOT spin on ->ctx_lock and proceed to free iocb
-> > CPU1:	pass freed iocb to ->ki_cancel().  BOOM.
+Sorry for I missed this discussion...
+
+On Thu, Apr 26, 2018 at 10:20:29AM +0200, Jiri Kosina wrote:
+> On Thu, 26 Apr 2018, Pavel Machek wrote:
 > 
-> BTW, it seems that the mainline is vulnerable to this one.  I might be
-> missing something, but...
+> > That's not how the crypto needs to work. Talk to Jiri Kosina, ok?
+> 
+> Yeah, Joey Lee (adding to CC) implemented it here:
+> 
+> 	https://lkml.org/lkml/2015/8/11/47
+> 
+> I think there have been more respins, Joey definitely knows more details 
+> and status quo.
+> 
+> The design is specifically tailored for secure-boot environments though.
+>
 
-It is, but with a different attack vector - io_cancel(2) won't do it (it
-does not remove from the list at all), but io_destroy(2) bloody well will.
+I am working on the next version of hibernation encryption and authentication:
+    https://github.com/joeyli/linux-s4sign/wiki 
 
-IMO, we need this in mainline; unless somebody has a problem with it, to
-#fixes it goes:
+My plan is:
 
-fix io_destroy()/aio_complete() race
+- Hibernation encryption:
+  There is a draft patch to encrypt image by ctr(aes). This patch works
+  with the first version of hibernation verification:
+  https://github.com/joeyli/linux-s4sign/commit/6a9a0113bb221c036ebd0f6321b7191283fe4929
 
-If io_destroy() gets to cancelling everything that can be cancelled and
-gets to kiocb_cancel() calling the function driver has left in ->ki_cancel,
-it becomes vulnerable to a race with IO completion.  At that point req
-is already taken off the list and aio_complete() does *NOT* spin until
-we (in free_ioctx_users()) releases ->ctx_lock.  As the result, it proceeds
-to kiocb_free(), freing req just it gets passed to ->ki_cancel().
+- Adapt hibernation to key retention service:
+    - Using the encrypted key to derive encrypt key and auth key to
+      encrypt and hmac snapshot image. Put the encrypted key in the image
+      header of snapshot.
+    - The encrypted key will be encrypted by KMK (kernel master key). Either
+      trusted key(sealed by TPM) or EFI key (explain in later) can be the KMK.
+      If there have appropriate UI support in initrd, user key can also be
+      the KMK.
+    - Similar with the enrolling EVM key, but more earler:
+      The systemd and dracut must be changed for enrolling kernel master key
+      before the swap partition be mounted.
 
-Fix is simple - remove from the list after the call of kiocb_cancel().  All
-instances of ->ki_cancel() already have to cope with the being called with
-iocb still on list - that's what happens in io_cancel(2).
+- EFI key:
+    - A new master key type to key retention service.
+	- It can be a new option beyond trusted key(TPM) and user key.
+    - EFI stub generates a random key and stores in EFI boot service
+      variable:
+	- This random key in boot variable can be called ERK (EFI Root Key)
+	- The ERK is secure when secure boot enabled.
+	    - User must aware and enable secure boot by themself if they want.
+	- ERK can be a secret to encrypt a random number for generate a EFI key
+	   - The EFI key can be used by hibernation encryption/authentication.
+	   - The EFI key can be a master key to generate a encrypted key for EVM.
+    - Rescue mechanism for ERK:
+	- The ERK may be regenerated after the old ERK be erased by firmware update
+	  or firmware recovery.
+	- Current idea is using the public key in first/second trusted keyring
+	  to encrypt the ERK for backup. User can enroll the EFI key with old ERK to
+	  request kernel to re-encrypt the EFI key with new ERK.
 
-Cc: stable@kernel.org
-Fixes: 0460fef2a921 "aio: use cancellation list lazily"
-Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
----
-diff --git a/fs/aio.c b/fs/aio.c
-index 8061d9787e54..49f53516eef0 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -634,9 +634,8 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	while (!list_empty(&ctx->active_reqs)) {
- 		req = list_first_entry(&ctx->active_reqs,
- 				       struct aio_kiocb, ki_list);
--
--		list_del_init(&req->ki_list);
- 		kiocb_cancel(req);
-+		list_del_init(&req->ki_list);
- 	}
- 
- 	spin_unlock_irq(&ctx->ctx_lock);
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Thanks a lot!
+Joey Lee
