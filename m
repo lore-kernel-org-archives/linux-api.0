@@ -1,113 +1,56 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: [PATCH 4/6] ipc: get rid of ids->tables_initialized hack
-Date: Thu, 24 May 2018 14:11:33 -0700
-Message-ID: <20180524211135.27760-5-dave@stgolabs.net>
-References: <20180524211135.27760-1-dave@stgolabs.net>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 3/6] lib/bucket_locks: use kvmalloc_array()
+Date: Thu, 24 May 2018 14:37:36 -0700
+Message-ID: <CA+55aFxvNCEBQsxfr=yL3jgxiC8M8wY2MHwVBH+T8qSWyP-WPg@mail.gmail.com>
+References: <20180524211135.27760-1-dave@stgolabs.net> <20180524211135.27760-4-dave@stgolabs.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180524211135.27760-1-dave@stgolabs.net>
+In-Reply-To: <20180524211135.27760-4-dave@stgolabs.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, torvalds@linux-foundation.org
-Cc: tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dave@stgolabs.net>, Davidlohr Bueso <dbueso@suse.de>
+To: Davidlohr Bueso <dave@stgolabs.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Thomas Graf <tgraf@suug.ch>, Herbert Xu <herbert@gondor.apana.org.au>, Manfred Spraul <manfred@colorfullife.com>, guillaume.knispel@supersonicimagine.com, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-In sysvipc we have an ids->tables_initialized regarding the
-rhashtable, introduced in:
+On Thu, May 24, 2018 at 2:28 PM Davidlohr Bueso <dave@stgolabs.net> wrote:
 
-    0cfb6aee70b (ipc: optimize semget/shmget/msgget for lots of keys).
+>                  if (gfpflags_allow_blocking(gfp))
+> -                       tlocks = kvmalloc(size * sizeof(spinlock_t), gfp);
+> +                       tlocks = kvmalloc_array(size, sizeof(spinlock_t),
+gfp);
+>                  else
+>                          tlocks = kmalloc_array(size, sizeof(spinlock_t),
+gfp);
 
-It's there, specifically, to prevent nil pointer dereferences,
-from using an uninitialized api. Considering how rhashtable_init()
-can fail (probably due to ENOMEM, if anything), this made the
-overall ipc initialization capable of failure as well. That alone
-is ugly, but fine, however I've spotted a few issues regarding the
-semantics of tables_initialized (however unlikely they may be):
+Side note: how about we just move that "gfpflags_allow_blocking()" into
+kvmalloc() instead, and make kvmalloc() generally usable?
 
-- There is inconsistency in what we return to userspace: ipc_addid()
-returns ENOSPC which is certainly _wrong_, while ipc_obtain_object_idr()
-returns EINVAL.
+Now we have that really odd situation where kvmalloc() takes gfp flags, but
+to quote the comment:
 
-- After we started using rhashtables, ipc_findkey() can return nil upon
-!tables_initialized, but the caller expects nil for when the ipc structure
-isn't found, and can therefore call into ipcget() callbacks.
+  * Any use of gfp flags outside of GFP_KERNEL should be consulted with mm
+people.
 
-Now that rhashtable initialization cannot fail, we can properly
-get rid of the hack altogether.
+and the code:
 
-Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
----
- include/linux/ipc_namespace.h |  1 -
- ipc/util.c                    | 23 ++++++++---------------
- 2 files changed, 8 insertions(+), 16 deletions(-)
+         /*
+          * vmalloc uses GFP_KERNEL for some internal allocations (e.g page
+tables)
+          * so the given set of flags has to be compatible.
+          */
+         WARN_ON_ONCE((flags & GFP_KERNEL) != GFP_KERNEL);
 
-diff --git a/include/linux/ipc_namespace.h b/include/linux/ipc_namespace.h
-index b5630c8eb2f3..37f3a4b7c637 100644
---- a/include/linux/ipc_namespace.h
-+++ b/include/linux/ipc_namespace.h
-@@ -16,7 +16,6 @@ struct user_namespace;
- struct ipc_ids {
- 	int in_use;
- 	unsigned short seq;
--	bool tables_initialized;
- 	struct rw_semaphore rwsem;
- 	struct idr ipcs_idr;
- 	int max_id;
-diff --git a/ipc/util.c b/ipc/util.c
-index 4e81182fa0ac..823e09e72c58 100644
---- a/ipc/util.c
-+++ b/ipc/util.c
-@@ -125,7 +125,6 @@ int ipc_init_ids(struct ipc_ids *ids)
- 	if (err)
- 		return err;
- 	idr_init(&ids->ipcs_idr);
--	ids->tables_initialized = true;
- 	ids->max_id = -1;
- #ifdef CONFIG_CHECKPOINT_RESTORE
- 	ids->next_id = -1;
-@@ -178,19 +177,16 @@ void __init ipc_init_proc_interface(const char *path, const char *header,
-  */
- static struct kern_ipc_perm *ipc_findkey(struct ipc_ids *ids, key_t key)
- {
--	struct kern_ipc_perm *ipcp = NULL;
-+	struct kern_ipc_perm *ipcp;
- 
--	if (likely(ids->tables_initialized))
--		ipcp = rhashtable_lookup_fast(&ids->key_ht, &key,
-+	ipcp = rhashtable_lookup_fast(&ids->key_ht, &key,
- 					      ipc_kht_params);
-+	if (!ipcp)
-+		return NULL;
- 
--	if (ipcp) {
--		rcu_read_lock();
--		ipc_lock_object(ipcp);
--		return ipcp;
--	}
--
--	return NULL;
-+	rcu_read_lock();
-+	ipc_lock_object(ipcp);
-+	return ipcp;
- }
- 
- #ifdef CONFIG_CHECKPOINT_RESTORE
-@@ -255,7 +251,7 @@ int ipc_addid(struct ipc_ids *ids, struct kern_ipc_perm *new, int limit)
- 	if (limit > IPCMNI)
- 		limit = IPCMNI;
- 
--	if (!ids->tables_initialized || ids->in_use >= limit)
-+	if (ids->in_use >= limit)
- 		return -ENOSPC;
- 
- 	idr_preload(GFP_KERNEL);
-@@ -566,9 +562,6 @@ struct kern_ipc_perm *ipc_obtain_object_idr(struct ipc_ids *ids, int id)
- 	struct kern_ipc_perm *out;
- 	int lid = ipcid_to_idx(id);
- 
--	if (unlikely(!ids->tables_initialized))
--		return ERR_PTR(-EINVAL);
--
- 	out = idr_find(&ids->ipcs_idr, lid);
- 	if (!out)
- 		return ERR_PTR(-EINVAL);
--- 
-2.13.6
+which isn't really all that helpful. Do mm people really want to be
+consulted about random uses?
+
+Maybe we could just make the rule for kvmalloc() be to only fall back on
+vmalloc for allocations that are
+
+  - larger than page size
+
+  - blocking and allow GFP_KERNEL (so basically that WARN_ON_ONCE() logic in
+kvmalloc_node).
+
+Hmm? Isn't that what everybody really *wants* kvmalloc() and friends to do?
+
+              Linus
