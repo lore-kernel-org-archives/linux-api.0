@@ -1,277 +1,90 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v5 20/28] fpga: dfl: add fpga bridge platform driver for
- FME
-Date: Thu, 24 May 2018 07:42:13 +0800
-Message-ID: <20180523234213.GA24455@hao-dev>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
- <1525229431-3087-21-git-send-email-hao.wu@intel.com>
- <CANk1AXS3M=GyTtdk=YYMadD22VqDPbB_XRYrnoue6nXrNQqqkQ@mail.gmail.com>
- <20180523152841.GA23834@hao-dev>
- <CANk1AXR-0=O2Ypyxn+wnyPmfdqG7Rmk_oK9et0YLkAkNHzbqLw@mail.gmail.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH 07/14] powerpc: Add support for restartable sequences
+Date: Thu, 24 May 2018 11:03:29 +1000
+Message-ID: <87o9h5sw4e.fsf@concordia.ellerman.id.au>
+References: <20180430224433.17407-1-mathieu.desnoyers@efficios.com> <112970629.1913.1526501596485.JavaMail.zimbra@efficios.com> <20180517011949.GA1121@tardis> <277374719.2144.1526570889798.JavaMail.zimbra@efficios.com> <1526601043.1338308.1376191416.0444B8C5@webmail.messagingengine.com> <418003803.516.1526667437396.JavaMail.zimbra@efficios.com> <20180520140811.GB1121@tardis> <1928158599.1541.1527106479862.JavaMail.zimbra@efficios.com> <37442352.1577.1527110985175.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXR-0=O2Ypyxn+wnyPmfdqG7Rmk_oK9et0YLkAkNHzbqLw@mail.gmail.com>
+In-Reply-To: <37442352.1577.1527110985175.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Boqun Feng <boqun.feng@gmail.com>
+Cc: Will Deacon <will.deacon@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 23, 2018 at 04:06:17PM -0500, Alan Tull wrote:
-> On Wed, May 23, 2018 at 10:28 AM, Wu Hao <hao.wu@intel.com> wrote:
-> > On Wed, May 23, 2018 at 10:15:00AM -0500, Alan Tull wrote:
-> >> On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
-> >>
-> >> Hi Hao,
-> >>
-> >> > This patch adds fpga bridge platform driver for FPGA Management Engine.
-> >> > It implements the enable_set callback for fpga bridge.
-> >> >
-> >> > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-> >> > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-> >> > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-> >> > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-> >> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> >> > Acked-by: Alan Tull <atull@kernel.org>
-> >> > Acked-by: Moritz Fischer <mdf@kernel.org>
-> >> > ---
-> >> > v3: rename driver to fpga-dfl-fme-br
-> >> >     remove useless dev_dbg in probe function.
-> >> >     rebased due to fpga api change.
-> >> > v4: rename to dfl-fme-br and fix SPDX license issue
-> >> >     include dfl-fme-pr.h instead of dfl-fme.h
-> >> >     add Acked-by from Alan and Moritz
-> >> > v5: rebase due to API changes.
-> >> >     defer port and its ops finding when really need.
-> >> > ---
-> >> >  drivers/fpga/Kconfig      |   6 +++
-> >> >  drivers/fpga/Makefile     |   1 +
-> >> >  drivers/fpga/dfl-fme-br.c | 114 ++++++++++++++++++++++++++++++++++++++++++++++
-> >> >  3 files changed, 121 insertions(+)
-> >> >  create mode 100644 drivers/fpga/dfl-fme-br.c
-> >> >
-> >> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> >> > index 89f76e8..a8f939a 100644
-> >> > --- a/drivers/fpga/Kconfig
-> >> > +++ b/drivers/fpga/Kconfig
-> >> > @@ -156,6 +156,12 @@ config FPGA_DFL_FME_MGR
-> >> >         help
-> >> >           Say Y to enable FPGA Manager driver for FPGA Management Engine.
-> >> >
-> >> > +config FPGA_DFL_FME_BRIDGE
-> >> > +       tristate "FPGA DFL FME Bridge Driver"
-> >> > +       depends on FPGA_DFL_FME
-> >> > +       help
-> >> > +         Say Y to enable FPGA Bridge driver for FPGA Management Engine.
-> >> > +
-> >> >  config FPGA_DFL_PCI
-> >> >         tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
-> >> >         depends on PCI && FPGA_DFL
-> >> > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-> >> > index f82814a..75096e9 100644
-> >> > --- a/drivers/fpga/Makefile
-> >> > +++ b/drivers/fpga/Makefile
-> >> > @@ -32,6 +32,7 @@ obj-$(CONFIG_OF_FPGA_REGION)          += of-fpga-region.o
-> >> >  obj-$(CONFIG_FPGA_DFL)                 += dfl.o
-> >> >  obj-$(CONFIG_FPGA_DFL_FME)             += dfl-fme.o
-> >> >  obj-$(CONFIG_FPGA_DFL_FME_MGR)         += dfl-fme-mgr.o
-> >> > +obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)      += dfl-fme-br.o
-> >> >
-> >> >  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
-> >> >
-> >> > diff --git a/drivers/fpga/dfl-fme-br.c b/drivers/fpga/dfl-fme-br.c
-> >> > new file mode 100644
-> >> > index 0000000..5c51b08
-> >> > --- /dev/null
-> >> > +++ b/drivers/fpga/dfl-fme-br.c
-> >> > @@ -0,0 +1,114 @@
-> >> > +// SPDX-License-Identifier: GPL-2.0
-> >> > +/*
-> >> > + * FPGA Bridge Driver for FPGA Management Engine (FME)
-> >> > + *
-> >> > + * Copyright (C) 2017 Intel Corporation, Inc.
-> >> > + *
-> >> > + * Authors:
-> >> > + *   Wu Hao <hao.wu@intel.com>
-> >> > + *   Joseph Grecco <joe.grecco@intel.com>
-> >> > + *   Enno Luebbers <enno.luebbers@intel.com>
-> >> > + *   Tim Whisonant <tim.whisonant@intel.com>
-> >> > + *   Ananda Ravuri <ananda.ravuri@intel.com>
-> >> > + *   Henry Mitchel <henry.mitchel@intel.com>
-> >> > + */
-> >> > +
-> >> > +#include <linux/module.h>
-> >> > +#include <linux/fpga/fpga-bridge.h>
-> >> > +
-> >> > +#include "dfl.h"
-> >> > +#include "dfl-fme-pr.h"
-> >> > +
-> >> > +struct fme_br_priv {
-> >> > +       struct dfl_fme_br_pdata *pdata;
-> >> > +       struct dfl_fpga_port_ops *port_ops;
-> >> > +       struct platform_device *port_pdev;
-> >> > +};
-> >> > +
-> >> > +static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
-> >> > +{
-> >> > +       struct fme_br_priv *priv = bridge->priv;
-> >> > +       struct platform_device *port_pdev;
-> >> > +       struct dfl_fpga_port_ops *ops;
-> >> > +
-> >> > +       if (!priv->port_pdev) {
-> >> > +               port_pdev = dfl_fpga_cdev_find_port(priv->pdata->cdev,
-> >> > +                                                   &priv->pdata->port_id,
-> >> > +                                                   dfl_fpga_check_port_id);
-> >> > +               if (!port_pdev)
-> >> > +                       return -ENODEV;
-> >> > +
-> >> > +               priv->port_pdev = port_pdev;
-> >> > +       }
-> >> > +
-> >> > +       if (priv->port_pdev && !priv->port_ops) {
-> >> > +               ops = dfl_fpga_get_port_ops(priv->port_pdev);
-> >> > +               if (!ops || !ops->enable_set)
-> >> > +                       return -ENOENT;
-> >> > +
-> >> > +               priv->port_ops = ops;
-> >> > +       }
-> >>
-> >> This is saving some pointers.  Is it possible that the port_pdev or
-> >> port_ops could go away?
-> >
-> > Hi Alan
-> >
-> > Thanks for the comments.
-> >
-> > The find_port function will get the port device to prevent that.
-> > You can see put device in remove function. And it's similar for the
-> > port ops. In dfl_fpga_get_port_ops function, it will prevent unexpected
-> > port ops removing by try module get.
-> 
-> OK, good, and I see the find_port function documents that put_device
-> is needed, so that's good too.
-> 
-> When we previously discussed this [1] you described a procedure of
-> hot-unplugging the VF AFU from the VM and turning it back to PF before
-> doing the FPGA programming.   Some comments on that would be helpful,
-> maybe located with the port_ops functions.
-> 
-
-Hi Alan
-
-Actually I plan to add those descriptions about virtualization in the
-documenation/fpga/dfl.txt, together with the patch which enables the
-virtualization support for Intel FPGA device (e.g Intel PAC card). I
-think dfl.txt is a better place to have that procedure documented.
-How do you think?
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
+> ----- On May 23, 2018, at 4:14 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+...
+>> 
+>> Hi Boqun,
+>> 
+>> I tried your patch in a ppc64 le environment, and it does not survive boot
+>> with CONFIG_DEBUG_RSEQ=y. init gets killed right away.
 
 
-> [1] https://lkml.org/lkml/2018/4/6/180
-> 
-> >
-> >>
-> >> Also, the port ops routines probably should be named
-> >> dfl_fpga_port_ops_get/find_port/etc
-> >>
-> >
-> > Hm.. as I see there are functions named as get_device(), put_device(), so
-> > I just name it as ..._get_port_ops and ..._put_port_ops in similar way. :)
-> > If you think that could be a better name, it's fine for me to change them.
-> 
-> Yes, I've seen that too.  I think keeping the prefix the same helps to
-> organize the namespace.  Plus :) if I'm grepping through the code, I
-> can be lazy and not have to use a regex to find the port ops
-> functions.
+Sorry this code is super gross and hard to deal with.
 
-so we good with current naming?
+> The following fixup gets ppc64 to work:
+>
+> --- a/arch/powerpc/kernel/entry_64.S
+> +++ b/arch/powerpc/kernel/entry_64.S
+> @@ -208,6 +208,7 @@ system_call_exit:
+>         /* Check whether the syscall is issued inside a restartable sequence */
+>         addi    r3,r1,STACK_FRAME_OVERHEAD
+>         bl      rseq_syscall
+> +       ld      r3,RESULT(r1)
+>  #endif
+>         /*
+>          * Disable interrupts so current_thread_info()->flags can't change,
 
-some places we find it's get_device() and put_device(), but other functions
-like device_add(), device_del(). actually it's not a big problem I think, :)
-currently port_ops has a unified style ..._add/del/get/put_port_ops. I am
-fine with both kind of naming, if you prefer ...port_ops_add/del/get/put
-style, please let me know, I can change them in the next version.
+I don't think that's safe.
 
-Thanks
-Hao
+If you look above that, we have r3, r8 and r12 all live:
 
-> 
-> Alan
-> 
-> >
-> > Thanks
-> > Hao
-> >
-> >> Alan
-> >>
-> >> > +
-> >> > +       return priv->port_ops->enable_set(priv->port_pdev, enable);
-> >> > +}
-> >> > +
-> >> > +static const struct fpga_bridge_ops fme_bridge_ops = {
-> >> > +       .enable_set = fme_bridge_enable_set,
-> >> > +};
-> >> > +
-> >> > +static int fme_br_probe(struct platform_device *pdev)
-> >> > +{
-> >> > +       struct device *dev = &pdev->dev;
-> >> > +       struct fme_br_priv *priv;
-> >> > +       struct fpga_bridge *br;
-> >> > +       int ret;
-> >> > +
-> >> > +       priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-> >> > +       if (!priv)
-> >> > +               return -ENOMEM;
-> >> > +
-> >> > +       priv->pdata = dev_get_platdata(dev);
-> >> > +
-> >> > +       br = fpga_bridge_create(dev, "DFL FPGA FME Bridge",
-> >> > +                               &fme_bridge_ops, priv);
-> >> > +       if (!br)
-> >> > +               return -ENOMEM;
-> >> > +
-> >> > +       platform_set_drvdata(pdev, br);
-> >> > +
-> >> > +       ret = fpga_bridge_register(br);
-> >> > +       if (ret)
-> >> > +               fpga_bridge_free(br);
-> >> > +
-> >> > +       return ret;
-> >> > +}
-> >> > +
-> >> > +static int fme_br_remove(struct platform_device *pdev)
-> >> > +{
-> >> > +       struct fpga_bridge *br = platform_get_drvdata(pdev);
-> >> > +       struct fme_br_priv *priv = br->priv;
-> >> > +
-> >> > +       fpga_bridge_unregister(br);
-> >> > +
-> >> > +       if (priv->port_pdev)
-> >> > +               put_device(&priv->port_pdev->dev);
-> >> > +       if (priv->port_ops)
-> >> > +               dfl_fpga_put_port_ops(priv->port_ops);
-> >> > +
-> >> > +       return 0;
-> >> > +}
-> >> > +
-> >> > +static struct platform_driver fme_br_driver = {
-> >> > +       .driver = {
-> >> > +               .name    = DFL_FPGA_FME_BRIDGE,
-> >> > +       },
-> >> > +       .probe   = fme_br_probe,
-> >> > +       .remove  = fme_br_remove,
-> >> > +};
-> >> > +
-> >> > +module_platform_driver(fme_br_driver);
-> >> > +
-> >> > +MODULE_DESCRIPTION("FPGA Bridge for DFL FPGA Management Engine");
-> >> > +MODULE_AUTHOR("Intel Corporation");
-> >> > +MODULE_LICENSE("GPL v2");
-> >> > +MODULE_ALIAS("platform:dfl-fme-bridge");
-> >> > --
-> >> > 1.8.3.1
-> >> >
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+.Lsyscall_exit:
+	std	r3,RESULT(r1)
+	CURRENT_THREAD_INFO(r12, r1)
+
+	ld	r8,_MSR(r1)
+#ifdef CONFIG_PPC_BOOK3S
+	/* No MSR:RI on BookE */
+	andi.	r10,r8,MSR_RI
+	beq-	.Lunrecov_restore
+#endif
+
+
+They're all volatile across function calls:
+
+  http://openpowerfoundation.org/wp-content/uploads/resources/leabi/content/dbdoclet.50655240_68174.html
+
+
+The system_call_exit symbol is actually there for kprobes and cosmetic
+purposes. The actual syscall return flow starts at .Lsyscall_exit.
+
+So I think this would work:
+
+diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+index db4df061c33a..e19f377a25e0 100644
+--- a/arch/powerpc/kernel/entry_64.S
++++ b/arch/powerpc/kernel/entry_64.S
+@@ -184,6 +184,14 @@ system_call:			/* label this so stack traces look sane */
+ 
+ .Lsyscall_exit:
+ 	std	r3,RESULT(r1)
++
++#ifdef CONFIG_DEBUG_RSEQ
++	/* Check whether the syscall is issued inside a restartable sequence */
++	addi    r3,r1,STACK_FRAME_OVERHEAD
++	bl      rseq_syscall
++	ld	r3,RESULT(r1)
++#endif
++
+ 	CURRENT_THREAD_INFO(r12, r1)
+ 
+ 	ld	r8,_MSR(r1)
+
+
+I'll try and get this series into my test setup at some point, been a
+bit busy lately :)
+
+cheers
