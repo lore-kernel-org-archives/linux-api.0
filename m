@@ -1,73 +1,77 @@
-From: Roman Gushchin <guro@fb.com>
-Subject: Re: [RFC PATCH 0/5] kmalloc-reclaimable caches
-Date: Thu, 24 May 2018 13:13:52 +0100
-Message-ID: <20180524121347.GA10763@castle.DHCP.thefacebook.com>
-References: <20180524110011.1940-1-vbabka@suse.cz>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH 07/24] arm64: ilp32: add documentation on the ILP32 ABI
+ for ARM64
+Date: Thu, 24 May 2018 15:15:24 +0300
+Message-ID: <20180524121524.GA3873@yury-thinkpad>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20180516081910.10067-8-ynorov@caviumnetworks.com>
+ <20180523140620.GA27215@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180524110011.1940-1-vbabka@suse.cz>
+In-Reply-To: <20180523140620.GA27215@amd>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: linux-mm@kvack.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Vijayanand Jitta <vjitta@codeaurora.org>
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <jame>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 24, 2018 at 01:00:06PM +0200, Vlastimil Babka wrote:
-> Hi,
-> 
-> as discussed at LSF/MM [1] here's a RFC patchset that introduces
-> kmalloc-reclaimable caches (more details in the first patch) and uses them
-> for SLAB freelists and dcache external names. The latter allows us to
-> repurpose the NR_INDIRECTLY_RECLAIMABLE_BYTES counter later in the series.
-> 
-> This is how /proc/slabinfo looks like after booting in virtme:
-> 
-> ...
-> kmalloc-reclaimable-4194304      0      0 4194304    1 1024 : tunables    1    1    0 : slabdata      0      0      0
-> ...
-> kmalloc-reclaimable-96     17     64    128   32    1 : tunables  120   60    8 : slabdata      2      2      0
-> kmalloc-reclaimable-64     50    128     64   64    1 : tunables  120   60    8 : slabdata      2      2      6
-> kmalloc-reclaimable-32      0      0     32  124    1 : tunables  120   60    8 : slabdata      0      0      0
-> kmalloc-4194304        0      0 4194304    1 1024 : tunables    1    1    0 : slabdata      0      0      0
-> ...
-> kmalloc-64          2888   2944     64   64    1 : tunables  120   60    8 : slabdata     46     46    454
-> kmalloc-32          4325   4712     32  124    1 : tunables  120   60    8 : slabdata     38     38    563
-> kmalloc-128         1178   1216    128   32    1 : tunables  120   60    8 : slabdata     38     38    114
-> ...
-> 
-> /proc/vmstat with new/renamed nr_reclaimable counter (patch 4):
-> 
-> ...
-> nr_slab_reclaimable 2817
-> nr_slab_unreclaimable 1781
-> ...
-> nr_reclaimable 2817
-> ...
-> 
-> /proc/meminfo with exposed nr_reclaimable counter (patch 5):
-> 
-> ...
-> AnonPages:          8624 kB
-> Mapped:             3340 kB
-> Shmem:               564 kB
-> Reclaimable:       11272 kB
-> Slab:              18368 kB
-> SReclaimable:      11272 kB
-> SUnreclaim:         7096 kB
-> KernelStack:        1168 kB
-> PageTables:          448 kB
-> ...
-> 
-> Now for the issues a.k.a. why RFC:
-> 
-> - I haven't find any other obvious users for reclaimable kmalloc (yet)
+Hi Pavel,
 
-As I remember, ION memory allocator was discussed related to this theme:
-https://lkml.org/lkml/2018/4/24/1288
+On Wed, May 23, 2018 at 04:06:20PM +0200, Pavel Machek wrote:
+> On Wed 2018-05-16 11:18:52, Yury Norov wrote:
+> > Based on Andrew Pinski's patch-series.
+> > 
+> > Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
+> 
+> So Andrew's signoff should be here?
 
-> I did a superset as IIRC somebody suggested that in the older threads or at LSF.
+Yes it should, but it lost since v4. I'll restore it.
+ 
+> > ---
+> >  Documentation/arm64/ilp32.txt | 45 +++++++++++++++++++++++++++++++++++
+> >  1 file changed, 45 insertions(+)
+> >  create mode 100644 Documentation/arm64/ilp32.txt
+> > 
+> > diff --git a/Documentation/arm64/ilp32.txt b/Documentation/arm64/ilp32.txt
+> > new file mode 100644
+> > index 000000000000..d0fd5109c4b2
+> > --- /dev/null
+> > +++ b/Documentation/arm64/ilp32.txt
+> > @@ -0,0 +1,45 @@
+> > +ILP32 AARCH64 SYSCALL ABI
+> > +=========================
+> > +
+> > +This document describes the ILP32 syscall ABI and where it differs
+> > +from the generic compat linux syscall interface.
+> 
+> I was hoping to learn what ILP32 is / what is it good for, but no,
+> this does not tell me... it would be good to do a short explanation
+> here, and maybe reference it from cover letter of the series...
+> 								Pavel
 
-This looks nice to me!
+ILP32 is ABI acronym that means "Integers, Longs and Pointers are 32-bit".
+And LP64 means "Longs and Pointers are 64-bit".
 
-Thanks!
+There's AN490 - "ILP32 for AArch64 Whitepaper" from ARM which covers
+the topic:
+http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0490a/ar01s01.html
+
+And some talks:
+http://connect.linaro.org/resource/bkk16/bkk16-305b/
+
+Briefly, ILP32 is 32-bit ABI that works with AARCH64 instruction set. It looks
+better in some performance tests, and is useful for compatibility with 32-bit
+legacy code.
+
+If you're more familiar with x86 terminology, in ARM world LP64 corresponds
+to x86_64, AARCH32_EL0 corresponds to x86_32, and ILP32 corresponds to x32
+ABI.
+
+I'll add link to AN490 in next submission.
+
+Yury
+
+> -- 
+> (english) http://www.livejournal.com/~pavelmachek
+> (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
