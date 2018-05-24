@@ -1,44 +1,85 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: semantics of rhashtable and sysvipc
-Date: Thu, 24 May 2018 10:53:26 -0700
-Message-ID: <CA+55aFwhkOnHngHpQ3wif5iy7PtOAVdjTcwce=kgBq0TCgmfJA@mail.gmail.com>
-References: <20180523172500.anfvmjtumww65ief@linux-n805> <CA+55aFwAtfiMa22-OFGf1dNR8CNzSKjjLLj5UL-HqgapV7Tf1A@mail.gmail.com>
- <20180524170700.wblnybinjzx5rwky@linux-n805>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [RFC PATCH 0/5] kmalloc-reclaimable caches
+Date: Thu, 24 May 2018 11:40:59 -0700
+Message-ID: <cfb7c8df-2a6a-bf84-8a30-df97c58c9c47@infradead.org>
+References: <20180524110011.1940-1-vbabka@suse.cz>
+ <20180524114350.GA10323@bombadil.infradead.org>
+ <0944e1ed-60fe-36ce-ea06-936b3f595d5f@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180524170700.wblnybinjzx5rwky@linux-n805>
+In-Reply-To: <0944e1ed-60fe-36ce-ea06-936b3f595d5f@infradead.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <dave@stgolabs.net>
-Cc: Thomas Graf <tgraf@suug.ch>, Herbert Xu <herbert@gondor.apana.org.au>, Andrew Morton <akpm@linux-foundation.org>, Manfred Spraul <manfred@colorfullife.com>, guillaume.knispel@supersonicimagine.com, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>
+Cc: linux-mm@kvack.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Vijayanand Jitta <vjitta@codeaurora.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 24, 2018 at 10:23 AM Davidlohr Bueso <dave@stgolabs.net> wrote:
+On 05/24/2018 09:18 AM, Randy Dunlap wrote:
+> On 05/24/2018 04:43 AM, Matthew Wilcox wrote:
+>> On Thu, May 24, 2018 at 01:00:06PM +0200, Vlastimil Babka wrote:
+>>> Now for the issues a.k.a. why RFC:
+>>>
+>>> - I haven't find any other obvious users for reclaimable kmalloc (yet)
+>>
+>> Is that a problem?  This sounds like it's enough to solve Facebook's
+>> problem.
+>>
+>>> - the name of caches kmalloc-reclaimable-X is rather long
+>>
+>> Yes; Christoph and I were talking about restricting slab names to 16 bytes
+>> just to make /proc/slabinfo easier to read.  How about
+>>
+>> kmalloc-rec-128k
+>> 1234567890123456
+>>
+>> Just makes it ;-)
+>>
+>> Of course, somebody needs to do the work to use k/M instead of 4194304.
+>> We also need to bikeshed about when to switch; should it be:
+>>
+>> kmalloc-rec-512
+>> kmalloc-rec-1024
+>> kmalloc-rec-2048
+>> kmalloc-rec-4096
+>> kmalloc-rec-8192
+>> kmalloc-rec-16k
+>>
+>> or should it be
+>>
+>> kmalloc-rec-512
+>> kmalloc-rec-1k
+>> kmalloc-rec-2k
+>> kmalloc-rec-4k
+>> kmalloc-rec-8k
+>> kmalloc-rec-16k
+>>
+>> I slightly favour the latter as it'll be easier to implement.  Something like
+> 
+> Yes, agree, start using the suffix early.
+> 
+>>
+>> 	static const char suffixes[3] = ' kM';
+>> 	int idx = 0;
+>>
+>> 	while (size > 1024) {
 
->          tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
-> -       if (tbl == NULL)
-> -               return -ENOMEM;
-> +       if (unlikely(tbl == NULL)) {
-> +               size = min(size, HASH_DEFAULT_SIZE) / 2;
-> +
-> +               tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
-> +               if (tbl == NULL)
-> +                       tbl = bucket_table_alloc_retry(ht, size,
-GFP_KERNEL);
-> +       }
+I would use   (size >= 1024)
+so that 1M is printed instead of 1024K.
 
-This doesn't seem to be taking 'param->min_size' into account.
+>> 		size /= 1024;
+>> 		idx++;
+>> 	}
+>>
+>> 	sprintf("%d%c", size, suffices[idx]);
+> 
+> 	                      suffixes
+>>
+>> --
+> 
+> 
 
-I'm not sure that matters, but right now, if you have nelem_hint set and a
-min_size, the min_size is honored (if you have just min_size it's already
-ignored because the rhashtable always starts with HASH_DEFAULT_SIZE). So I
-could imagine that somebody uses it to guarantee something. The docs say
-that "min_size" is the minimum size for *shrinking* not for initializing,
-so I guess it's debatable.
 
-Also, wouldn't it make sense to make this all be a while loop? Or are you
-just depending on the knowledge that HASH_DEFAULT_SIZE / 2 is already
-guaranteed to be so small that there's no point? A comment to that effect
-would be good, perhaps.
-
-                    Linus
+-- 
+~Randy
