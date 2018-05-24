@@ -1,135 +1,295 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: semantics of rhashtable and sysvipc
-Date: Thu, 24 May 2018 10:07:00 -0700
-Message-ID: <20180524170700.wblnybinjzx5rwky@linux-n805>
-References: <20180523172500.anfvmjtumww65ief@linux-n805>
- <CA+55aFwAtfiMa22-OFGf1dNR8CNzSKjjLLj5UL-HqgapV7Tf1A@mail.gmail.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v5 20/28] fpga: dfl: add fpga bridge platform driver for FME
+Date: Thu, 24 May 2018 12:26:09 -0500
+Message-ID: <CANk1AXRSVsC6uQkQsxzRYAB2U+119W6iP=vwPWA2X1R6xwYTzQ@mail.gmail.com>
+References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
+ <1525229431-3087-21-git-send-email-hao.wu@intel.com> <CANk1AXS3M=GyTtdk=YYMadD22VqDPbB_XRYrnoue6nXrNQqqkQ@mail.gmail.com>
+ <20180523152841.GA23834@hao-dev> <CANk1AXR-0=O2Ypyxn+wnyPmfdqG7Rmk_oK9et0YLkAkNHzbqLw@mail.gmail.com>
+ <20180523234213.GA24455@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFwAtfiMa22-OFGf1dNR8CNzSKjjLLj5UL-HqgapV7Tf1A@mail.gmail.com>
+In-Reply-To: <20180523234213.GA24455@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Thomas Graf <tgraf@suug.ch>, Herbert Xu <herbert@gondor.apana.org.au>, Andrew Morton <akpm@linux-foundation.org>, Manfred Spraul <manfred@colorfullife.com>, guillaume.knispel@supersonicimagine.com, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 23 May 2018, Linus Torvalds wrote:
+On Wed, May 23, 2018 at 6:42 PM, Wu Hao <hao.wu@intel.com> wrote:
+> On Wed, May 23, 2018 at 04:06:17PM -0500, Alan Tull wrote:
+>> On Wed, May 23, 2018 at 10:28 AM, Wu Hao <hao.wu@intel.com> wrote:
+>> > On Wed, May 23, 2018 at 10:15:00AM -0500, Alan Tull wrote:
+>> >> On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
+>> >>
+>> >> Hi Hao,
+>> >>
+>> >> > This patch adds fpga bridge platform driver for FPGA Management Engine.
+>> >> > It implements the enable_set callback for fpga bridge.
+>> >> >
+>> >> > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+>> >> > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+>> >> > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+>> >> > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+>> >> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+>> >> > Acked-by: Alan Tull <atull@kernel.org>
+>> >> > Acked-by: Moritz Fischer <mdf@kernel.org>
+>> >> > ---
+>> >> > v3: rename driver to fpga-dfl-fme-br
+>> >> >     remove useless dev_dbg in probe function.
+>> >> >     rebased due to fpga api change.
+>> >> > v4: rename to dfl-fme-br and fix SPDX license issue
+>> >> >     include dfl-fme-pr.h instead of dfl-fme.h
+>> >> >     add Acked-by from Alan and Moritz
+>> >> > v5: rebase due to API changes.
+>> >> >     defer port and its ops finding when really need.
+>> >> > ---
+>> >> >  drivers/fpga/Kconfig      |   6 +++
+>> >> >  drivers/fpga/Makefile     |   1 +
+>> >> >  drivers/fpga/dfl-fme-br.c | 114 ++++++++++++++++++++++++++++++++++++++++++++++
+>> >> >  3 files changed, 121 insertions(+)
+>> >> >  create mode 100644 drivers/fpga/dfl-fme-br.c
+>> >> >
+>> >> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+>> >> > index 89f76e8..a8f939a 100644
+>> >> > --- a/drivers/fpga/Kconfig
+>> >> > +++ b/drivers/fpga/Kconfig
+>> >> > @@ -156,6 +156,12 @@ config FPGA_DFL_FME_MGR
+>> >> >         help
+>> >> >           Say Y to enable FPGA Manager driver for FPGA Management Engine.
+>> >> >
+>> >> > +config FPGA_DFL_FME_BRIDGE
+>> >> > +       tristate "FPGA DFL FME Bridge Driver"
+>> >> > +       depends on FPGA_DFL_FME
+>> >> > +       help
+>> >> > +         Say Y to enable FPGA Bridge driver for FPGA Management Engine.
+>> >> > +
+>> >> >  config FPGA_DFL_PCI
+>> >> >         tristate "FPGA Device Feature List (DFL) PCIe Device Driver"
+>> >> >         depends on PCI && FPGA_DFL
+>> >> > diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+>> >> > index f82814a..75096e9 100644
+>> >> > --- a/drivers/fpga/Makefile
+>> >> > +++ b/drivers/fpga/Makefile
+>> >> > @@ -32,6 +32,7 @@ obj-$(CONFIG_OF_FPGA_REGION)          += of-fpga-region.o
+>> >> >  obj-$(CONFIG_FPGA_DFL)                 += dfl.o
+>> >> >  obj-$(CONFIG_FPGA_DFL_FME)             += dfl-fme.o
+>> >> >  obj-$(CONFIG_FPGA_DFL_FME_MGR)         += dfl-fme-mgr.o
+>> >> > +obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)      += dfl-fme-br.o
+>> >> >
+>> >> >  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
+>> >> >
+>> >> > diff --git a/drivers/fpga/dfl-fme-br.c b/drivers/fpga/dfl-fme-br.c
+>> >> > new file mode 100644
+>> >> > index 0000000..5c51b08
+>> >> > --- /dev/null
+>> >> > +++ b/drivers/fpga/dfl-fme-br.c
+>> >> > @@ -0,0 +1,114 @@
+>> >> > +// SPDX-License-Identifier: GPL-2.0
+>> >> > +/*
+>> >> > + * FPGA Bridge Driver for FPGA Management Engine (FME)
+>> >> > + *
+>> >> > + * Copyright (C) 2017 Intel Corporation, Inc.
+>> >> > + *
+>> >> > + * Authors:
+>> >> > + *   Wu Hao <hao.wu@intel.com>
+>> >> > + *   Joseph Grecco <joe.grecco@intel.com>
+>> >> > + *   Enno Luebbers <enno.luebbers@intel.com>
+>> >> > + *   Tim Whisonant <tim.whisonant@intel.com>
+>> >> > + *   Ananda Ravuri <ananda.ravuri@intel.com>
+>> >> > + *   Henry Mitchel <henry.mitchel@intel.com>
+>> >> > + */
+>> >> > +
+>> >> > +#include <linux/module.h>
+>> >> > +#include <linux/fpga/fpga-bridge.h>
+>> >> > +
+>> >> > +#include "dfl.h"
+>> >> > +#include "dfl-fme-pr.h"
+>> >> > +
+>> >> > +struct fme_br_priv {
+>> >> > +       struct dfl_fme_br_pdata *pdata;
+>> >> > +       struct dfl_fpga_port_ops *port_ops;
+>> >> > +       struct platform_device *port_pdev;
+>> >> > +};
+>> >> > +
+>> >> > +static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
+>> >> > +{
+>> >> > +       struct fme_br_priv *priv = bridge->priv;
+>> >> > +       struct platform_device *port_pdev;
+>> >> > +       struct dfl_fpga_port_ops *ops;
+>> >> > +
+>> >> > +       if (!priv->port_pdev) {
+>> >> > +               port_pdev = dfl_fpga_cdev_find_port(priv->pdata->cdev,
+>> >> > +                                                   &priv->pdata->port_id,
+>> >> > +                                                   dfl_fpga_check_port_id);
+>> >> > +               if (!port_pdev)
+>> >> > +                       return -ENODEV;
+>> >> > +
+>> >> > +               priv->port_pdev = port_pdev;
+>> >> > +       }
+>> >> > +
+>> >> > +       if (priv->port_pdev && !priv->port_ops) {
+>> >> > +               ops = dfl_fpga_get_port_ops(priv->port_pdev);
+>> >> > +               if (!ops || !ops->enable_set)
+>> >> > +                       return -ENOENT;
+>> >> > +
+>> >> > +               priv->port_ops = ops;
+>> >> > +       }
+>> >>
+>> >> This is saving some pointers.  Is it possible that the port_pdev or
+>> >> port_ops could go away?
+>> >
+>> > Hi Alan
+>> >
+>> > Thanks for the comments.
+>> >
+>> > The find_port function will get the port device to prevent that.
+>> > You can see put device in remove function. And it's similar for the
+>> > port ops. In dfl_fpga_get_port_ops function, it will prevent unexpected
+>> > port ops removing by try module get.
+>>
+>> OK, good, and I see the find_port function documents that put_device
+>> is needed, so that's good too.
+>>
+>> When we previously discussed this [1] you described a procedure of
+>> hot-unplugging the VF AFU from the VM and turning it back to PF before
+>> doing the FPGA programming.   Some comments on that would be helpful,
+>> maybe located with the port_ops functions.
+>>
+>
+> Hi Alan
+>
+> Actually I plan to add those descriptions about virtualization in the
+> documenation/fpga/dfl.txt, together with the patch which enables the
+> virtualization support for Intel FPGA device (e.g Intel PAC card).
 
->One option is to make rhashtable_alloc() shrink the allocation and try
->again if it fails, and then you *can* do __GFP_NOFAIL eventually.
+Great
 
-The below attempts to implements this, along with converting the EINVAL cases
-to WARN_ON().
+> I
+> think dfl.txt is a better place to have that procedure documented.
+> How do you think?
 
-I've refactored bucket_table_alloc() to add a 'retry' param which always
-ends up doing GFP_KERNEL|__GFP_NOFAIL for both the tbl as well as
-alloc_bucket_spinlocks(). I've arbitrarily shrunk the size in half upon
-initial allocation failure. So we default from 64 to 32 buckets, and if
-the user is hinting at larger nelems, we simply disregard that and retry
-with 32. Similarly, smaller values are also cut in half.
-
-In addition, I think we can also get rid of explicitly passing the gfp flags
-to bucket_table_alloc() (we only do GFP_KERNEL or GFP_ATOMIC), and leave it
-up to __bucket_table_alloc() by adding a new bucket_table_alloc_noblock() or
-something for GFP_ATOMIC.
+If it is only in the dff.txt, it may remain unclear (in the code) that
+that is an issue that the code is working around.
 
 >
->In fact, it can validly be argued that rhashtable_init() is just buggy
->as-is. The whole *point* olf that function is to size things appropriately,
->and returning -ENOMEM obviously means that it didn't do its job.
+>
+>> [1] https://lkml.org/lkml/2018/4/6/180
+>>
+>> >
+>> >>
+>> >> Also, the port ops routines probably should be named
+>> >> dfl_fpga_port_ops_get/find_port/etc
+>> >>
+>> >
+>> > Hm.. as I see there are functions named as get_device(), put_device(), so
+>> > I just name it as ..._get_port_ops and ..._put_port_ops in similar way. :)
+>> > If you think that could be a better name, it's fine for me to change them.
+>>
+>> Yes, I've seen that too.  I think keeping the prefix the same helps to
+>> organize the namespace.  Plus :) if I'm grepping through the code, I
+>> can be lazy and not have to use a regex to find the port ops
+>> functions.
+>
+> so we good with current naming?
 
-diff --git a/lib/rhashtable.c b/lib/rhashtable.c
-index 9427b5766134..e86a396aebcf 100644
---- a/lib/rhashtable.c
-+++ b/lib/rhashtable.c
-@@ -166,16 +166,21 @@ static struct bucket_table *nested_bucket_table_alloc(struct rhashtable *ht,
- 	return tbl;
- }
- 
--static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
--					       size_t nbuckets,
--					       gfp_t gfp)
-+static struct bucket_table *__bucket_table_alloc(struct rhashtable *ht,
-+						 size_t nbuckets,
-+						 gfp_t gfp, bool retry)
- {
- 	struct bucket_table *tbl = NULL;
- 	size_t size, max_locks;
- 	int i;
- 
- 	size = sizeof(*tbl) + nbuckets * sizeof(tbl->buckets[0]);
--	if (gfp != GFP_KERNEL)
-+	if (retry) {
-+		gfp |= __GFP_NOFAIL;
-+		tbl = kzalloc(size, gfp);
-+	}
-+
-+	else if (gfp != GFP_KERNEL)
- 		tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
- 	else
- 		tbl = kvzalloc(size, gfp);
-@@ -211,6 +216,20 @@ static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
- 	return tbl;
- }
- 
-+static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
-+					       size_t nbuckets,
-+					       gfp_t gfp)
-+{
-+	return __bucket_table_alloc(ht, nbuckets, gfp, false);
-+}
-+
-+static struct bucket_table *bucket_table_alloc_retry(struct rhashtable *ht,
-+						     size_t nbuckets,
-+						     gfp_t gfp)
-+{
-+	return __bucket_table_alloc(ht, nbuckets, gfp, true);
-+}
-+
- static struct bucket_table *rhashtable_last_table(struct rhashtable *ht,
- 						  struct bucket_table *tbl)
- {
-@@ -1024,12 +1043,11 @@ int rhashtable_init(struct rhashtable *ht,
- 
- 	size = HASH_DEFAULT_SIZE;
- 
--	if ((!params->key_len && !params->obj_hashfn) ||
--	    (params->obj_hashfn && !params->obj_cmpfn))
--		return -EINVAL;
-+	WARN_ON((!params->key_len && !params->obj_hashfn) ||
-+		(params->obj_hashfn && !params->obj_cmpfn));
- 
--	if (params->nulls_base && params->nulls_base < (1U << RHT_BASE_SHIFT))
--		return -EINVAL;
-+	WARN_ON(params->nulls_base &&
-+		params->nulls_base < (1U << RHT_BASE_SHIFT));
- 
- 	memset(ht, 0, sizeof(*ht));
- 	mutex_init(&ht->mutex);
-@@ -1068,9 +1086,23 @@ int rhashtable_init(struct rhashtable *ht,
- 		}
- 	}
- 
-+	/*
-+	 * This is api initialization. We need to guarantee the initial
-+	 * rhashtable allocation. Upon failure, retry with a smaller size,
-+	 * otherwise we exhaust our options with __GFP_NOFAIL.
-+	 *
-+	 * The size of the table is shrunk to at least half the original
-+	 * value. Users that use large nelem_hint values are lowered to 32
-+	 * buckets.
-+	 */
- 	tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
--	if (tbl == NULL)
--		return -ENOMEM;
-+	if (unlikely(tbl == NULL)) {
-+		size = min(size, HASH_DEFAULT_SIZE) / 2;
-+
-+		tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
-+		if (tbl == NULL)
-+			tbl = bucket_table_alloc_retry(ht, size, GFP_KERNEL);
-+	}
- 
- 	atomic_set(&ht->nelems, 0);
- 
+Recently GregKH give us some guidance about using a common prefix [2].
+
+>
+> some places we find it's get_device() and put_device(), but other functions
+> like device_add(), device_del(). actually it's not a big problem I think, :)
+> currently port_ops has a unified style ..._add/del/get/put_port_ops. I am
+> fine with both kind of naming, if you prefer ...port_ops_add/del/get/put
+> style, please let me know, I can change them in the next version.
+
+Since you have struct dfl_fpga_port_ops, you can just add _{action} to
+the name of the struct and you have dfl_fpga_port_ops_add/del/get/pu
+
+Thanks,
+Alan
+
+[2] https://lkml.org/lkml/2018/3/15/709
+
+>
+> Thanks
+> Hao
+>
+>>
+>> Alan
+>>
+>> >
+>> > Thanks
+>> > Hao
+>> >
+>> >> Alan
+>> >>
+>> >> > +
+>> >> > +       return priv->port_ops->enable_set(priv->port_pdev, enable);
+>> >> > +}
+>> >> > +
+>> >> > +static const struct fpga_bridge_ops fme_bridge_ops = {
+>> >> > +       .enable_set = fme_bridge_enable_set,
+>> >> > +};
+>> >> > +
+>> >> > +static int fme_br_probe(struct platform_device *pdev)
+>> >> > +{
+>> >> > +       struct device *dev = &pdev->dev;
+>> >> > +       struct fme_br_priv *priv;
+>> >> > +       struct fpga_bridge *br;
+>> >> > +       int ret;
+>> >> > +
+>> >> > +       priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
+>> >> > +       if (!priv)
+>> >> > +               return -ENOMEM;
+>> >> > +
+>> >> > +       priv->pdata = dev_get_platdata(dev);
+>> >> > +
+>> >> > +       br = fpga_bridge_create(dev, "DFL FPGA FME Bridge",
+>> >> > +                               &fme_bridge_ops, priv);
+>> >> > +       if (!br)
+>> >> > +               return -ENOMEM;
+>> >> > +
+>> >> > +       platform_set_drvdata(pdev, br);
+>> >> > +
+>> >> > +       ret = fpga_bridge_register(br);
+>> >> > +       if (ret)
+>> >> > +               fpga_bridge_free(br);
+>> >> > +
+>> >> > +       return ret;
+>> >> > +}
+>> >> > +
+>> >> > +static int fme_br_remove(struct platform_device *pdev)
+>> >> > +{
+>> >> > +       struct fpga_bridge *br = platform_get_drvdata(pdev);
+>> >> > +       struct fme_br_priv *priv = br->priv;
+>> >> > +
+>> >> > +       fpga_bridge_unregister(br);
+>> >> > +
+>> >> > +       if (priv->port_pdev)
+>> >> > +               put_device(&priv->port_pdev->dev);
+>> >> > +       if (priv->port_ops)
+>> >> > +               dfl_fpga_put_port_ops(priv->port_ops);
+>> >> > +
+>> >> > +       return 0;
+>> >> > +}
+>> >> > +
+>> >> > +static struct platform_driver fme_br_driver = {
+>> >> > +       .driver = {
+>> >> > +               .name    = DFL_FPGA_FME_BRIDGE,
+>> >> > +       },
+>> >> > +       .probe   = fme_br_probe,
+>> >> > +       .remove  = fme_br_remove,
+>> >> > +};
+>> >> > +
+>> >> > +module_platform_driver(fme_br_driver);
+>> >> > +
+>> >> > +MODULE_DESCRIPTION("FPGA Bridge for DFL FPGA Management Engine");
+>> >> > +MODULE_AUTHOR("Intel Corporation");
+>> >> > +MODULE_LICENSE("GPL v2");
+>> >> > +MODULE_ALIAS("platform:dfl-fme-bridge");
+>> >> > --
+>> >> > 1.8.3.1
+>> >> >
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
