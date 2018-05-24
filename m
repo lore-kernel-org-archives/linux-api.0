@@ -1,41 +1,56 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: semantics of rhashtable and sysvipc
-Date: Thu, 24 May 2018 12:17:48 -0700
-Message-ID: <CA+55aFzfEsC9op0UzYte7OaWnvv9Czqr-0owFo0FGDqPcfGiKQ@mail.gmail.com>
-References: <20180523172500.anfvmjtumww65ief@linux-n805> <CA+55aFwAtfiMa22-OFGf1dNR8CNzSKjjLLj5UL-HqgapV7Tf1A@mail.gmail.com>
- <20180524170700.wblnybinjzx5rwky@linux-n805> <CA+55aFwhkOnHngHpQ3wif5iy7PtOAVdjTcwce=kgBq0TCgmfJA@mail.gmail.com>
- <20180524185155.3bx4ujgz5f5g3epi@linux-n805>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Davidlohr Bueso <dave@stgolabs.net>
+Subject: [PATCH -next 0/6] rhashtable: guarantee first allocation
+Date: Thu, 24 May 2018 14:11:29 -0700
+Message-ID: <20180524211135.27760-1-dave@stgolabs.net>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180524185155.3bx4ujgz5f5g3epi@linux-n805>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <dave@stgolabs.net>
-Cc: Thomas Graf <tgraf@suug.ch>, Herbert Xu <herbert@gondor.apana.org.au>, Andrew Morton <akpm@linux-foundation.org>, Manfred Spraul <manfred@colorfullife.com>, guillaume.knispel@supersonicimagine.com, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: akpm@linux-foundation.org, torvalds@linux-foundation.org
+Cc: tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dave@stgolabs.net>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 24, 2018 at 12:08 PM Davidlohr Bueso <dave@stgolabs.net> wrote:
+Hi,
 
+This series is the result of the discussion with Linus around ipc
+subsystem initialization and how it behaves with error return when
+calling rhashtable_init()[1]. Instead of caring about the error
+or calling the infamous BUG_ON, Linus suggested we guarantee the
+rhashtable allocation.
 
-> However, after how about the resize being based on HASH_MIN_SIZE instead
-of
-> HASH_DEFAULT_SIZE?
+First two patches modify rhashtable_init() to just return 0, future
+patches I guess can update more callers.
 
-I think that sounds reasonable. We wouldn't expect this to ever happen in
-practice, and as you say, if it *does* happen, the size of the hash array
-is the last of our problems.
+patch 3 is a nit I found while reading the code and just makes use
+kvmalloc_array().
 
-> Considering that some users set p.min_size to be rather large-ish (up to
-1024
-> buckets afaict), we'd need the following:
+patch 4+5 remove some ipc hacks we no longer need.
 
->          size = min(ht->p.min_size, HASH_MIN_SIZE);
+patch 6 updates the rhashtable test module. Trivial.
 
-Bah, let's just go for simplicity, and just make it HASH_MIN_SIZE
-unconditionally, and just have a single fallback: if the first "normal"
-allocation fails, do one single unconditional allocation with HASH_MIN_SIZE
-and GFP_NOFAIL.
+Please consider for v4.18.
 
-I think that should work fine.
+Thanks!
 
-                Linus
+[0] https://lkml.org/lkml/2018/5/23/758
+
+Davidlohr Bueso (6):
+  lib/rhashtable: convert param sanitations to WARN_ON
+  lib/rhashtable: guarantee initial hashtable allocation
+  lib/bucket_locks: use kvmalloc_array()
+  ipc: get rid of ids->tables_initialized hack
+  ipc: simplify ipc initialization
+  lib/test_rhashtable: rhashtable_init() can no longer fail
+
+ include/linux/ipc_namespace.h |  1 -
+ ipc/msg.c                     |  9 ++++----
+ ipc/namespace.c               | 20 ++++--------------
+ ipc/sem.c                     | 10 ++++-----
+ ipc/shm.c                     |  9 ++++----
+ ipc/util.c                    | 41 ++++++++++++------------------------
+ ipc/util.h                    | 18 ++++++++--------
+ lib/bucket_locks.c            |  2 +-
+ lib/rhashtable.c              | 49 ++++++++++++++++++++++++++++++++++---------
+ lib/test_rhashtable.c         |  6 +-----
+ 10 files changed, 79 insertions(+), 86 deletions(-)
+
+-- 
+2.13.6
