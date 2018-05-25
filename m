@@ -1,43 +1,61 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH -next 0/6] rhashtable: guarantee first allocation
-Date: Thu, 24 May 2018 20:34:27 -0700
-Message-ID: <20180525033427.ydkkmadagerkzove@linux-n805>
-References: <20180524211135.27760-1-dave@stgolabs.net>
- <CA+55aFxnrwFniJq6nCFn4pWRHLH-Wac9bVFKieBC-TixTsFg=Q@mail.gmail.com>
+From: Kalle Valo <kvalo@codeaurora.org>
+Subject: Re: [v8, bpf-next, 4/9] net/wireless/iwlwifi: fix iwlwifi_dev_ucode_error tracepoint
+Date: Fri, 25 May 2018 13:48:02 +0300
+Message-ID: <87zi0oko4d.fsf@purkki.adurom.net>
+References: <20180328190540.370956-5-ast@kernel.org>
+        <1527073388.3759.21.camel@sipsolutions.net>
+        <20180524232837.24jvdsdiohkpj7fs@ast-mbp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CA+55aFxnrwFniJq6nCFn4pWRHLH-Wac9bVFKieBC-TixTsFg=Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Thomas Graf <tgraf@suug.ch>, Herbert Xu <herbert@gondor.apana.org.au>, Manfred Spraul <manfred@colorfullife.com>, guillaume.knispel@supersonicimagine.com, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180524232837.24jvdsdiohkpj7fs@ast-mbp> (Alexei Starovoitov's
+        message of "Thu, 24 May 2018 16:28:39 -0700")
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Johannes Berg <johannes@sipsolutions.net>, Alexei Starovoitov <ast@kernel.org>, davem@davemloft.net, daniel@iogearbox.net, torvalds@linux-foundation.org, peterz@infradead.org, rostedt@goodmis.org, mathieu.desnoyers@efficios.com, netdev@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, linux-wireless@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 24 May 2018, Linus Torvalds wrote:
+Alexei Starovoitov <alexei.starovoitov@gmail.com> writes:
 
->On Thu, May 24, 2018 at 2:28 PM Davidlohr Bueso <dave@stgolabs.net> wrote:
->>   10 files changed, 79 insertions(+), 86 deletions(-)
+> On Wed, May 23, 2018 at 01:03:08PM +0200, Johannes Berg wrote:
+>> On Wed, 2018-03-28 at 12:05 -0700, Alexei Starovoitov wrote:
+>> > fix iwlwifi_dev_ucode_error tracepoint to pass pointer to a table
+>> > instead of all 17 arguments by value.
+>> > dvm/main.c and mvm/utils.c have 'struct iwl_error_event_table'
+>> > defined with very similar yet subtly different fields and offsets.
+>> > tracepoint is still common and using definition of 'struct iwl_error_event_table'
+>> > from dvm/commands.h while copying fields.
+>> > Long term this tracepoint probably should be split into two.
+>> 
+>> It would've been nice to CC the wireless list for wireless related
+>> patches ...
 >
->I certainly can't complain about this small code removal, but I think if we
->did the kvmalloc_node() cleanup, we'd be able to get rid of even more.
->
->For example, bucket_table_alloc() does that
->
->         if (gfp != GFP_KERNEL)
->                 tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
->         else
->                 tbl = kvzalloc(size, gfp);
->
->purely due to the kvalloc_node() oddity. Wouldn't it be nice to just write
->it as
->
->         tbl = kvzalloc(size, gfp);
->
->knowing that the whole point of all the kv*alloc*() functions is to "just
->do the right thing given size, gpf mask, and ease of allocation".
+> Ohh. I didn't realize that networking wireless doesn't fall under netdev.
+> I thought wireless folks are silent because they are embarrassed
+> by a function with 17 arguments.
 
-Yes this makes a lot of sense. I'll see about adding it on top.
+Really, this is the level of discussion now? You don't even bother to CC
+the driver maintainers and your first reaction is that they are just too
+embarrassed to answer? Oh man...
 
-Thanks,
-Davidlohr
+But if you continue doing these kind of "drive-by cleanups" to a
+subsystem you are not familiar with, at least don't assume anything and
+instead use get_maintainer script to find the maintainers so that the
+patches get reviewed and applied to the correct tree:
+
+$ scripts/get_maintainer.pl --no-rolestats --no-git -f drivers/net/wireless/intel/iwlwifi/dvm/main.c
+Johannes Berg <johannes.berg@intel.com>
+Emmanuel Grumbach <emmanuel.grumbach@intel.com>
+Luca Coelho <luciano.coelho@intel.com>
+Intel Linux Wireless <linuxwifi@intel.com>
+Kalle Valo <kvalo@codeaurora.org>
+"David S. Miller" <davem@davemloft.net>
+Daniel Borkmann <daniel@iogearbox.net>
+Alexei Starovoitov <ast@kernel.org>
+Kees Cook <keescook@chromium.org>
+linux-wireless@vger.kernel.org
+netdev@vger.kernel.org
+linux-kernel@vger.kernel.org
+
+-- 
+Kalle Valo
