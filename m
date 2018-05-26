@@ -1,37 +1,42 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [RFC PATCH 4/5] mm: rename and change semantics of
- nr_indirectly_reclaimable_bytes
-Date: Fri, 25 May 2018 15:59:42 +0000
-Message-ID: <010001639806f32c-c18e739a-feac-4c6d-bce0-61c410579310-000000@email.amazonses.com>
-References: <20180524110011.1940-1-vbabka@suse.cz> <20180524110011.1940-5-vbabka@suse.cz>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: aio poll and a new in-kernel poll API V13
+Date: Sat, 26 May 2018 01:11:11 +0100
+Message-ID: <20180526001111.GL30522@ZenIV.linux.org.uk>
+References: <20180523192022.1703-1-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180524110011.1940-5-vbabka@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: linux-mm@kvack.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Vijayanand Jitta <vjitta@codeaurora.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180523192022.1703-1-hch@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 24 May 2018, Vlastimil Babka wrote:
+On Wed, May 23, 2018 at 09:19:49PM +0200, Christoph Hellwig wrote:
+> Hi all,
+> 
+> this series adds support for the IOCB_CMD_POLL operation to poll for the
+> readyness of file descriptors using the aio subsystem.  The API is based
+> on patches that existed in RHAS2.1 and RHEL3, which means it already is
+> supported by libaio.  To implement the poll support efficiently new
+> methods to poll are introduced in struct file_operations:  get_poll_head
+> and poll_mask.  The first one returns a wait_queue_head to wait on
+> (lifetime is bound by the file), and the second does a non-blocking
+> check for the POLL* events.  This allows aio poll to work without
+> any additional context switches, unlike epoll.
+> 
+> This series sits on top of the aio-fsync series that also includes
+> support for io_pgetevents.
 
-> diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-> index 32699b2dc52a..4343948f33e5 100644
-> --- a/include/linux/mmzone.h
-> +++ b/include/linux/mmzone.h
-> @@ -180,7 +180,7 @@ enum node_stat_item {
->  	NR_VMSCAN_IMMEDIATE,	/* Prioritise for reclaim when writeback ends */
->  	NR_DIRTIED,		/* page dirtyings since bootup */
->  	NR_WRITTEN,		/* page writings since bootup */
-> -	NR_INDIRECTLY_RECLAIMABLE_BYTES, /* measured in bytes */
-> +	NR_RECLAIMABLE,         /* all reclaimable pages, including slab */
->  	NR_VM_NODE_STAT_ITEMS
+OK, I can live with that, except for one problem - the first patch shouldn't
+be sitting on top of arseloads of next window fodder.
 
-We already have NR_SLAB_RECLAIMABLE and NR_RECLAIMABLE now counts what
-NR_SLAB_RECLAIMABLE counts plus something else. THis means updating
-two counters in parallel.
+Please, rebase the rest of the series on top of merge of vfs.git#fixes
+(4faa99965e02) with your aio-fsync.4 and tell me what to pull.
 
-Could keep the existing counter and just account
-for those non slab things you mentioned? Avoid counting twice and may
-provide unique insides into those non slab reclaimable objects. I'd like
-to see this.
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
