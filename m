@@ -1,71 +1,37 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC PATCH 1/5] mm, slab/slub: introduce kmalloc-reclaimable
- caches
-Date: Mon, 28 May 2018 10:03:48 +0200
-Message-ID: <99bb1e0c-15e2-7f8a-19ea-7cf9f49551b1@suse.cz>
-References: <20180524110011.1940-1-vbabka@suse.cz>
- <20180524110011.1940-2-vbabka@suse.cz>
- <0100016397ffdbf2-dc8a305f-efa8-4771-9f2a-3a7568693db4-000000@email.amazonses.com>
+From: Davidlohr Bueso <dave@stgolabs.net>
+Subject: Re: [PATCH 1/6] lib/rhashtable: convert param sanitations to WARN_ON
+Date: Mon, 28 May 2018 08:51:12 -0700
+Message-ID: <20180528155112.iqsw6x3cdy5piaro@linux-n805>
+References: <20180524211135.27760-1-dave@stgolabs.net>
+ <20180524211135.27760-2-dave@stgolabs.net>
+ <20180528094048.etqeu2ubc227qrxf@gondor.apana.org.au>
+ <20180528131209.mt4ythkapvfvykc7@linux-n805>
+ <20180528155414.mbwyldat7mn6ro2j@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0100016397ffdbf2-dc8a305f-efa8-4771-9f2a-3a7568693db4-000000@email.amazonses.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180528155414.mbwyldat7mn6ro2j@gondor.apana.org.au>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christopher Lameter <cl@linux.com>
-Cc: linux-mm@kvack.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Vijayanand Jitta <vjitta@codeaurora.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, manfred@colorfullife.com, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-On 05/25/2018 05:51 PM, Christopher Lameter wrote:
-> On Thu, 24 May 2018, Vlastimil Babka wrote:
-> 
->> diff --git a/include/linux/slab.h b/include/linux/slab.h
->> index 9ebe659bd4a5..5bff0571b360 100644
->> --- a/include/linux/slab.h
->> +++ b/include/linux/slab.h
->> @@ -296,11 +296,16 @@ static inline void __check_heap_object(const void *ptr, unsigned long n,
->>                                 (KMALLOC_MIN_SIZE) : 16)
->>
->>  #ifndef CONFIG_SLOB
->> -extern struct kmem_cache *kmalloc_caches[KMALLOC_SHIFT_HIGH + 1];
->> +extern struct kmem_cache *kmalloc_caches[2][KMALLOC_SHIFT_HIGH + 1];
->>  #ifdef CONFIG_ZONE_DMA
->>  extern struct kmem_cache *kmalloc_dma_caches[KMALLOC_SHIFT_HIGH + 1];
->>  #endif
-> 
-> In the existing code we used a different array name for the DMA caches.
-> This is a similar situation.
-> 
-> I would suggest to use
-> 
-> kmalloc_reclaimable_caches[]
-> 
-> or make it consistent by folding the DMA caches into the array too (but
-> then note the issues below).
-> 
->> @@ -536,12 +541,13 @@ static __always_inline void *kmalloc(size_t size, gfp_t flags)
->>  #ifndef CONFIG_SLOB
->>  		if (!(flags & GFP_DMA)) {
->>  			unsigned int index = kmalloc_index(size);
->> +			unsigned int recl = kmalloc_reclaimable(flags);
-> 
-> This is a hotpath reserved for regular allocations. The reclaimable slabs
-> need to be handled like the DMA slabs.  So check for GFP_DMA plus the
-> reclaimable flags.
+On Mon, 28 May 2018, Herbert Xu wrote:
 
-Yeah I thought that by doing reclaimable via array index manipulation
-and not a branch, there would be no noticeable overhead. And GFP_DMA
-should go away eventually. I will see if I can convert GFP_DMA to
-another index, and completely remove the branch quoted above.
-
->> @@ -588,12 +594,13 @@ static __always_inline void *kmalloc_node(size_t size, gfp_t flags, int node)
->>  	if (__builtin_constant_p(size) &&
->>  		size <= KMALLOC_MAX_CACHE_SIZE && !(flags & GFP_DMA)) {
->>  		unsigned int i = kmalloc_index(size);
->> +		unsigned int recl = kmalloc_reclaimable(flags);
+>On Mon, May 28, 2018 at 06:12:09AM -0700, Davidlohr Bueso wrote:
 >>
-> 
-> 
-> Same situation here and additional times below.
-> 
+>> Well, I don't really _want_ them; nor does the ipc code which already
+>> does a WARN_ON() (but that goes away in future patches). What I want
+>> is to get rid of the return path. So I don't really care if we convert
+>> them to WARN or remove them altogether. Would you be happy with the
+>> later?
+>
+>It has nothing to do with the error return path.  Assuming you
+>remove the allocation failure path, then this error path can never
+>trigger for *your* use-case. 
+
+Why would this be triggered by any use case if the developer setup the
+params correctly...? I don't see the point of not getting rid of the
+EINVAL or wrapping around warning around it. Ultimately it would be
+good to just have rhashtable_init() return void.
