@@ -1,31 +1,60 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH 1/6] lib/rhashtable: convert param sanitations to WARN_ON
-Date: Mon, 28 May 2018 06:12:09 -0700
-Message-ID: <20180528131209.mt4ythkapvfvykc7@linux-n805>
-References: <20180524211135.27760-1-dave@stgolabs.net>
- <20180524211135.27760-2-dave@stgolabs.net>
- <20180528094048.etqeu2ubc227qrxf@gondor.apana.org.au>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v2 3/4] mm: add find_alloc_contig_pages() interface
+Date: Mon, 28 May 2018 15:12:09 +0200
+Message-ID: <d1d29bca-afa5-0ab8-6efc-1e9f5a1ddaf6@suse.cz>
+References: <20180503232935.22539-1-mike.kravetz@oracle.com>
+ <20180503232935.22539-4-mike.kravetz@oracle.com>
+ <eaa40ac0-365b-fd27-e096-b171ed28888f@suse.cz>
+ <57dfd52c-22a5-5546-f8f3-848f21710cc1@oracle.com>
+ <c7972da1-a908-7550-7253-9de9a963174c@intel.com>
+ <01793788-1870-858e-2061-a0e6ef3a3171@suse.cz>
+ <0db4cd65-8b03-fea5-0a30-512f10241d54@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180528094048.etqeu2ubc227qrxf@gondor.apana.org.au>
+In-Reply-To: <0db4cd65-8b03-fea5-0a30-512f10241d54@intel.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Herbert Xu <herbert@gondor.apana.org.au>
-Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, manfred@colorfullife.com, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
+To: Reinette Chatre <reinette.chatre@intel.com>, Mike Kravetz <mike.kravetz@oracle.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Michal Hocko <mhocko@kernel.org>, Christopher Lameter <cl@linux.com>, Guy Shattah <sguy@mellanox.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Michal Nazarewicz <mina86@mina86.com>, David Nellans <dnellans@nvidia.com>, Laura Abbott <labbott@redhat.com>, Pavel Machek <pavel@ucw.cz>, Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 28 May 2018, Herbert Xu wrote:
->I don't really see why we need these WARN_ONs.  The problem should
->be quite obvious when you're writing your code.
->
->If you really want them perhaps add them to the ipc code instead?
+On 05/23/2018 08:07 PM, Reinette Chatre wrote:
+> On 5/23/2018 4:18 AM, Vlastimil Babka wrote:
+>> On 05/22/2018 06:41 PM, Reinette Chatre wrote:
+>>> Currently the Cache Pseudo-Locking allocations are order based because I
+>>> assumed it was required by the allocator. The contiguous regions needed
+>>> by Cache Pseudo-Locking will not always be order based - instead it is
+>>> based on the granularity of the cache allocation. One example is a
+>>> platform with 55MB L3 cache that can be divided into 20 equal portions.
+>>> To support Cache Pseudo-Locking on this platform we need to be able to
+>>> allocate contiguous regions at increments of 2816KB (the size of each
+>>> portion). In support of this example platform regions needed would thus
+>>> be 2816KB, 5632KB, 8448KB, etc.
+>>
+>> Will there be any alignment requirements for these allocations e.g. for
+>> minimizing conflict misses?
+> 
+> Two views on the usage of the allocated memory are: On the user space
+> side, the kernel memory is mapped to userspace (using remap_pfn_range())
+> and thus need to be page aligned. On the kernel side the memory is
+> loaded into the cache and it is here where the requirement originates
+> for it to be contiguous. The memory being contiguous reduces the
+> likelihood of physical addresses from the allocated memory mapping to
+> the same cache line and thus cause cache evictions of memory we are
+> trying to load into the cache.
 
-Well, I don't really _want_ them; nor does the ipc code which already
-does a WARN_ON() (but that goes away in future patches). What I want
-is to get rid of the return path. So I don't really care if we convert
-them to WARN or remove them altogether. Would you be happy with the
-later?
+Hi, yeah that's what I've been thinking, and I guess page alignment is
+enough for that after all. I'm just not used to cache sizes and ways
+that are not power of two :)
 
-Thanks,
-Davidlohr
+> I hope I answered your question, if not, please let me know which parts
+> I missed and I will try again.
+
+Thanks!
+
+Vlastimil
+
+> Reinette
+> 
