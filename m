@@ -1,51 +1,74 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [patch v23 2/4] drivers: jtag: Add Aspeed SoC 24xx and 25xx
- families JTAG master driver
-Date: Tue, 29 May 2018 15:11:09 +0200
-Message-ID: <20180529131109.GD30119@kroah.com>
-References: <1527594545-19870-1-git-send-email-oleksandrs@mellanox.com>
- <1527594545-19870-3-git-send-email-oleksandrs@mellanox.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 3/6] lib/bucket_locks: use kvmalloc_array()
+Date: Tue, 29 May 2018 16:43:17 +0200
+Message-ID: <20180529144317.GA20910@dhcp22.suse.cz>
+References: <20180524211135.27760-1-dave@stgolabs.net>
+ <20180524211135.27760-4-dave@stgolabs.net>
+ <CA+55aFxvNCEBQsxfr=yL3jgxiC8M8wY2MHwVBH+T8qSWyP-WPg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1527594545-19870-3-git-send-email-oleksandrs@mellanox.com>
+In-Reply-To: <CA+55aFxvNCEBQsxfr=yL3jgxiC8M8wY2MHwVBH+T8qSWyP-WPg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Shamray <oleksandrs@mellanox.com>
-Cc: arnd@arndb.de, linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Davidlohr Bueso <dave@stgolabs.net>, Andrew Morton <akpm@linux-foundation.org>, Thomas Graf <tgraf@suug.ch>, Herbert Xu <herbert@gondor.apana.org.au>, Manfred Spraul <manfred@colorfullife.com>, guillaume.knispel@supersonicimagine.com, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 29, 2018 at 02:49:03PM +0300, Oleksandr Shamray wrote:
-> +static int aspeed_jtag_idle(struct jtag *jtag,
-> +			    struct jtag_run_test_idle *runtest)
-> +{
-> +	struct aspeed_jtag *aspeed_jtag = jtag_priv(jtag);
-> +
-> +	dev_dbg(aspeed_jtag->dev, "runtest, status:%d, mode:%s, state:%s, reset:%d, tck:%d\n",
-> +		aspeed_jtag->status,
-> +		aspeed_jtag->mode & JTAG_XFER_HW_MODE ? "HW" : "SW",
-> +		end_status_str[runtest->endstate], runtest->reset,
-> +		runtest->tck);
+On Thu 24-05-18 14:37:36, Linus Torvalds wrote:
+> On Thu, May 24, 2018 at 2:28 PM Davidlohr Bueso <dave@stgolabs.net> wrote:
+> 
+> >                  if (gfpflags_allow_blocking(gfp))
+> > -                       tlocks = kvmalloc(size * sizeof(spinlock_t), gfp);
+> > +                       tlocks = kvmalloc_array(size, sizeof(spinlock_t),
+> gfp);
+> >                  else
+> >                          tlocks = kmalloc_array(size, sizeof(spinlock_t),
+> gfp);
+> 
+> Side note: how about we just move that "gfpflags_allow_blocking()" into
+> kvmalloc() instead, and make kvmalloc() generally usable?
+> 
+> Now we have that really odd situation where kvmalloc() takes gfp flags, but
+> to quote the comment:
+> 
+>   * Any use of gfp flags outside of GFP_KERNEL should be consulted with mm
+> people.
+> 
+> and the code:
+> 
+>          /*
+>           * vmalloc uses GFP_KERNEL for some internal allocations (e.g page
+> tables)
+>           * so the given set of flags has to be compatible.
+>           */
+>          WARN_ON_ONCE((flags & GFP_KERNEL) != GFP_KERNEL);
+> 
+> which isn't really all that helpful. Do mm people really want to be
+> consulted about random uses?
 
-You have dev_dbg() lines all over the place.  They can all be removed
-now, right?  ftrace works well, and if you really want to do this
-properly, use tracepoints in the jtag core code so that you can get the
-information for all devices as needed.
+The purpose was to have a clean usage base after the conversion. If we
+are growing a non-trivial use base which wants to use GFP_NOWAIT semantic
+then sure we can make kvmalloc never fallback to vmallock. But see
+below...
 
-But don't put them all over the driver, now that it's all working,
-there's no need, right?
+> Maybe we could just make the rule for kvmalloc() be to only fall back on
+> vmalloc for allocations that are
+> 
+>   - larger than page size
+> 
+>   - blocking and allow GFP_KERNEL (so basically that WARN_ON_ONCE() logic in
+> kvmalloc_node).
+> 
+> Hmm? Isn't that what everybody really *wants* kvmalloc() and friends to do?
 
-> +static void aspeed_jtag_xfer_push_data_last(struct aspeed_jtag *aspeed_jtag,
-> +					    enum jtag_xfer_type type,
-> +					    u32 shift_bits,
-> +					    enum jtag_endstate endstate)
-> +{
-> +	if (endstate == JTAG_STATE_IDLE) {
-> +		if (type == JTAG_SIR_XFER) {
-> +			dev_dbg(aspeed_jtag->dev, "IR Keep Pause\n");
-
-Like this, doesn't provide much info, does it?
-
-thanks,
-
-greg k-h
+... Well, there are users who would like to use kvmalloc for
+GFP_NOFS/GFP_NOIO context. Do we want them to fail more likely for
+larger order rather than have them fixed (to either drop the NOFS
+because it just has been blindly copied from a different code without
+too much thinking or use the scope NOFS/NOIO API)? A warn_on tends to be
+rather harsh but effective way to push maintainers fix their broken
+code...
+-- 
+Michal Hocko
+SUSE Labs
