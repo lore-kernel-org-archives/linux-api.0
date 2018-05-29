@@ -1,204 +1,107 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [patch v22 4/4] Documentation: jtag: Add ABI documentation
-Date: Mon, 28 May 2018 13:32:05 -0700
-Message-ID: <a2645e23-d50a-02c6-02a9-4570f0c5ba65@infradead.org>
-References: <1527508827-30724-1-git-send-email-oleksandrs@mellanox.com>
- <1527508827-30724-5-git-send-email-oleksandrs@mellanox.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [patch v22 1/4] drivers: jtag: Add JTAG core driver
+Date: Tue, 29 May 2018 09:16:33 +0200
+Message-ID: <20180529071633.GB20427@kroah.com>
+References: <1527503652-21975-1-git-send-email-oleksandrs@mellanox.com>
+ <1527503652-21975-2-git-send-email-oleksandrs@mellanox.com>
+ <20180528123527.GA17613@kroah.com>
+ <AM5PR0501MB24490173AD50A2E478DFCF35B16E0@AM5PR0501MB2449.eurprd05.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1527508827-30724-5-git-send-email-oleksandrs@mellanox.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <AM5PR0501MB24490173AD50A2E478DFCF35B16E0@AM5PR0501MB2449.eurprd05.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Shamray <oleksandrs@mellanox.com>, gregkh@linuxfoundation.org, arnd@arndb.de
-Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org
+To: Oleksandr Shamray <oleksandrs@mellanox.com>
+Cc: "arnd@arndb.de" <arnd@arndb.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "openbmc@lists.ozlabs.org" <openbmc@lists.ozlabs.org>, "joel@jms.id.au" <joel@jms.id.au>, "jiri@resnulli.us" <jiri@resnulli.us>, "tklauser@distanz.ch" <tklauser@distanz.ch>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, Vadim Pasternak <vadimp@mellanox.com>, system-sw-low-level <system-sw-low-level@mellanox.com>, "robh+dt@kernel.org" <robh+dt@kernel.org>, "openocd-devel-owner@lists.sourceforge.net" <openocd-devel-owner@lists.sourceforge.net>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, davem@dave
 List-Id: linux-api@vger.kernel.org
 
-On 05/28/2018 05:00 AM, Oleksandr Shamray wrote:
-> Added document that describe the ABI for JTAG class drivrer
+On Mon, May 28, 2018 at 03:59:46PM +0000, Oleksandr Shamray wrote:
+> > > +	const struct jtag_ops *ops;
+> > > +	int id;
+> > > +	bool opened;
+> > 
+> > You shouldn't care about this, but ok...
 > 
-> Signed-off-by: Oleksandr Shamray <oleksandrs@mellanox.com>
-> Acked-by: Arnd Bergmann <arnd@arndb.de>
-> ---
+> Jtag HW not support to using with multiple requests from different users. So we prohibit this.
 
-> ---
->  Documentation/ABI/testing/jtag-dev |   27 +++++++++
->  Documentation/jtag/overview        |   28 +++++++++
->  Documentation/jtag/transactions    |  109 ++++++++++++++++++++++++++++++++++++
->  MAINTAINERS                        |    1 +
->  4 files changed, 165 insertions(+), 0 deletions(-)
->  create mode 100644 Documentation/ABI/testing/jtag-dev
->  create mode 100644 Documentation/jtag/overview
->  create mode 100644 Documentation/jtag/transactions
+Ok, but then that's a userspace problem, not your driver's problem.
+Serial ports can't handle multiple requests in a sane way either, and so
+it's a userspace bug if they do that.  It's not up to the kernel to try
+to prevent it, and really, you are not preventing this from happening at
+all, you are only keeping more than one open() call from happening.  You
+aren't serializing the device access at all.
+
+So you are giving yourself a false sense of "We are protecting the
+device" here.  Just drop the whole "only one open() call" logic
+entirely.  It will make your kernel code simpler and you aren't giving
+yourself false-hope that you really prevented userspace from doing
+something stupid :)
+
+> > > +	case JTAG_IOCRUNTEST:
+> > > +		if (copy_from_user(&idle, (const void __user *)arg,
+> > > +				   sizeof(struct jtag_run_test_idle)))
+> > > +			return -EFAULT;
+> > > +
+> > > +		if (idle.endstate > JTAG_STATE_PAUSEDR)
+> > > +			return -EINVAL;
+> > 
+> > No validation that idle contains sane values?  Don't make every jtag driver
+> > have to do this type of validation please.
+> > 
 > 
+> I have partially validation of idle structure  (if (idle.endstate > JTAG_STATE_PAUSEDR)).
+> But I will add more validation.
 
-> diff --git a/Documentation/jtag/overview b/Documentation/jtag/overview
-> new file mode 100644
-> index 0000000..42b487a
-> --- /dev/null
-> +++ b/Documentation/jtag/overview
-> @@ -0,0 +1,28 @@
-> +Linux kernel JTAG support
-> +=========================
-> +
-> +The JTAG is an industry standard for verifying hardware.
+Go to the nearest whiteboard and write this at the top:
+	ALL INPUT IS EVIL
 
-JTAG is an
+Don't erase it.  You have to validate all the things, otherwise
+something bad will happen, I guarantee it.  Wait until the syzbot gets
+ahold of this layer if you don't believe me :)
 
-> +JTAG provides access to many logic signals of a complex integrated circuit,
-> +including the device pins.
-> +
-> +A JTAG interface is a special interface added to a chip.
-> +Depending on the version of JTAG, two, four, or five pins are added.
-> +
-> +The connector pins are:
-> +	TDI (Test Data In)
-> +	TDO (Test Data Out)
-> +	TCK (Test Clock)
-> +	TMS (Test Mode Select)
-> +	TRST (Test Reset) optional
-> +
-> +JTAG interface is designed to have two parts - basic core driver and
-> +hardware specific driver. The basic driver introduces a general interface
-> +which is not dependent of specific hardware. It provides communication
-> +between user space and hardware specific driver.
-> +Each JTAG device is represented as a char device from (jtag0, jtag1, ...).
-> +Access to a JTAG device is performed through IOCTL calls.
-> +
-> +Call flow example:
-> +User: open  -> /dev/jatgX
-> +User: ioctl -> /dev/jtagX -> JTAG core driver -> JTAG hardware specific driver
-> +User: close -> /dev/jatgX
-> diff --git a/Documentation/jtag/transactions b/Documentation/jtag/transactions
-> new file mode 100644
-> index 0000000..2abf833
-> --- /dev/null
-> +++ b/Documentation/jtag/transactions
-> @@ -0,0 +1,109 @@
-> +The JTAG API
-> +=============
-> +
-> +JTAG master devices can be accessed through a character misc-device.
-> +Each JTAG master interface can be accessed by using /dev/jtagN.
-> +
-> +JTAG system calls set:
-> +- SIR (Scan Instruction Register, IEEE 1149.1 Instruction Register scan);
-> +- SDR (Scan Data Register, IEEE 1149.1 Data Register scan);
-> +- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
-> +number of clocks.
-> +
-> +open(), close()
-> +-------
-> +open() opens JTAG device. Only one open operation per JTAG device
-> +can be performed. Two or more open for one device will return error.
-> +
-> +Open/Close  device:
-> +- jtag_fd = open("/dev/jtag0", O_RDWR);
-> +- close(jtag_fd);
-> +
-> +ioctl()
-> +-------
-> +All access operations to JTAG devices performed through ioctl interface.
+> > > +static int jtag_open(struct inode *inode, struct file *file) {
+> > > +	struct jtag *jtag = container_of(file->private_data, struct jtag,
+> > > +miscdev);
+> > > +
+> > > +	if (mutex_lock_interruptible(&jtag->open_lock))
+> > > +		return -ERESTARTSYS;
+> > 
+> > Why restart?  Just grab the lock, you don't want to have to do restartable
+> > logic in userspace, right?
+> 
+> Will change like:
+> 
+> ret = mutex_lock_interruptible(&jtag->open_lock);
+> if (ret)
+> 	return ret;
 
-                         to JTAG devices are performed through
+No, what's wrong with a simple:
+	mutex_lock();
+?
 
-> +The IOCTL interface supports these requests:
-> +	JTAG_IOCRUNTEST - Force JTAG state machine to RUN_TEST/IDLE state
-> +	JTAG_SIOCFREQ - Set JTAG TCK frequency
-> +	JTAG_GIOCFREQ - Get JTAG TCK frequency
-> +	JTAG_IOCXFER - send JTAG data Xfer
-> +	JTAG_GIOCSTATUS - get current JTAG TAP status
-> +	JTAG_SIOCMODE - set JTAG mode flags.
-> +
-> +JTAG_SIOCFREQ, JTAG_GIOCFREQ
-> +------
-> +Set/Get JTAG clock speed:
-> +
-> +	unsigned int jtag_fd;
-> +	ioctl(jtag_fd, JTAG_SIOCFREQ, &frq);
-> +	ioctl(jtag_fd, JTAG_GIOCFREQ, &frq);
-> +
-> +JTAG_IOCRUNTEST
-> +------
-> +Force JTAG state machine to RUN_TEST/IDLE state
-> +
-> +struct jtag_run_test_idle {
-> +	__u8	reset;
-> +	__u8	endstate;
-> +	__u8	tck;
-> +};
-> +
-> +reset: 0 - run IDLE/PAUSE from current state
-> +	   1 - go through TEST_LOGIC/RESET state before  IDLE/PAUSE
+You are only holding it for a very short time, people can wait, there is
+no rush here or "fast path" happening.
 
-	                                         before IDLE/PAUSE
+Anyway, this whole lock should just go away entirely, due to the lack of
+needing to track open() calls.  But in the future, keep locks simple, no
+need to add complexity when it is not warranted.
 
+> > > +	if (jtag->opened) {
+> > > +		mutex_unlock(&jtag->open_lock);
+> > > +		return -EBUSY;
+> > 
+> > Why do you care about only 1 userspace open call?  What does that buy you?
+> > Userspace can always pass around that file descriptor and use it in multiple
+> > places, so you are not really "protecting" yourself from anything.
+> > 
+> 
+> Accessing to JTAG HW from multiple processes will make confusion in the work of the JTAG protocol.
+> And I want to prohibit this.
 
-> +endstate: completion flag
-> +tck: clock counter
-> +
-> +Example:
-> +	struct jtag_run_test_idle runtest;
-> +
-> +	runtest.endstate = JTAG_STATE_IDLE;
-> +	runtest.reset = 0;
-> +	runtest.tck = data_p->tck;
-> +	usleep(25 * 1000);
-> +	ioctl(jtag_fd, JTAG_IOCRUNTEST, &runtest);
-> +
-> +JTAG_IOCXFER
-> +------
-> +Send SDR/SIR transaction
-> +
-> +struct jtag_xfer {
-> +	__u8	type;
-> +	__u8	direction;
-> +	__u8	endstate;
-> +	__u8	padding;
-> +	__u32	length;
-> +	__u64	tdio;
-> +};
-> +
-> +type: transfer type - JTAG_SIR_XFER/JTAG_SDR_XFER
-> +direction: xfer direction - JTAG_SIR_XFER/JTAG_SDR_XFER,
+See my previous comments for why your attempt at protecting open() does
+not prevent this from happening.  Hint, you forgot about dup(3) :(
 
-              drop ending comma                           ^
+thanks,
 
-> +length: xfer data len in bits
-
-s/len/length/
-
-> +tdio : xfer data array
-> +endstate: xfer end state after transaction finish
-> +	   can be: JTAG_STATE_IDLE/JTAG_STATE_PAUSEIR/JTAG_STATE_PAUSEDR
-> +
-> +Example:
-> +	struct jtag_xfer xfer;
-> +	static char buf[64];
-> +	static unsigned int buf_len = 0;
-> +	[...]
-> +	xfer.type = JTAG_SDR_XFER;
-> +	xfer.tdio = (__u64)buf;
-> +	xfer.length = buf_len;
-> +	xfer.endstate = JTAG_STATE_IDLE;
-> +
-> +	if (is_read)
-> +		xfer.direction = JTAG_READ_XFER;
-> +	else
-> +		xfer.direction = JTAG_WRITE_XFER;
-> +
-> +	ioctl(jtag_fd, JTAG_IOCXFER, &xfer);
-> +
-> +JTAG_SIOCMODE
-> +------
-> +If hardware driver can support different running modes you can change it.
-> +
-> +Example:
-> +	unsigned int mode;
-> +	mode = JTAG_XFER_HW_MODE;
-> +	ioctl(jtag_fd, JTAG_SIOCMODE, &mode);
-
-
--- 
-~Randy
+greg k-h
