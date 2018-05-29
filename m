@@ -1,107 +1,119 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [patch v22 1/4] drivers: jtag: Add JTAG core driver
-Date: Tue, 29 May 2018 09:16:33 +0200
-Message-ID: <20180529071633.GB20427@kroah.com>
-References: <1527503652-21975-1-git-send-email-oleksandrs@mellanox.com>
- <1527503652-21975-2-git-send-email-oleksandrs@mellanox.com>
- <20180528123527.GA17613@kroah.com>
- <AM5PR0501MB24490173AD50A2E478DFCF35B16E0@AM5PR0501MB2449.eurprd05.prod.outlook.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: [patch v23 0/4] JTAG driver introduction
+Date: Tue, 29 May 2018 14:49:01 +0300
+Message-ID: <1527594545-19870-1-git-send-email-oleksandrs@mellanox.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <AM5PR0501MB24490173AD50A2E478DFCF35B16E0@AM5PR0501MB2449.eurprd05.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Shamray <oleksandrs@mellanox.com>
-Cc: "arnd@arndb.de" <arnd@arndb.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>, "openbmc@lists.ozlabs.org" <openbmc@lists.ozlabs.org>, "joel@jms.id.au" <joel@jms.id.au>, "jiri@resnulli.us" <jiri@resnulli.us>, "tklauser@distanz.ch" <tklauser@distanz.ch>, "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>, Vadim Pasternak <vadimp@mellanox.com>, system-sw-low-level <system-sw-low-level@mellanox.com>, "robh+dt@kernel.org" <robh+dt@kernel.org>, "openocd-devel-owner@lists.sourceforge.net" <openocd-devel-owner@lists.sourceforge.net>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, davem@dave
+To: gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 28, 2018 at 03:59:46PM +0000, Oleksandr Shamray wrote:
-> > > +	const struct jtag_ops *ops;
-> > > +	int id;
-> > > +	bool opened;
-> > 
-> > You shouldn't care about this, but ok...
-> 
-> Jtag HW not support to using with multiple requests from different users. So we prohibit this.
+JTAG driver introduction
 
-Ok, but then that's a userspace problem, not your driver's problem.
-Serial ports can't handle multiple requests in a sane way either, and so
-it's a userspace bug if they do that.  It's not up to the kernel to try
-to prevent it, and really, you are not preventing this from happening at
-all, you are only keeping more than one open() call from happening.  You
-aren't serializing the device access at all.
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-So you are giving yourself a false sense of "We are protecting the
-device" here.  Just drop the whole "only one open() call" logic
-entirely.  It will make your kernel code simpler and you aren't giving
-yourself false-hope that you really prevented userspace from doing
-something stupid :)
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
-> > > +	case JTAG_IOCRUNTEST:
-> > > +		if (copy_from_user(&idle, (const void __user *)arg,
-> > > +				   sizeof(struct jtag_run_test_idle)))
-> > > +			return -EFAULT;
-> > > +
-> > > +		if (idle.endstate > JTAG_STATE_PAUSEDR)
-> > > +			return -EINVAL;
-> > 
-> > No validation that idle contains sane values?  Don't make every jtag driver
-> > have to do this type of validation please.
-> > 
-> 
-> I have partially validation of idle structure  (if (idle.endstate > JTAG_STATE_PAUSEDR)).
-> But I will add more validation.
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
 
-Go to the nearest whiteboard and write this at the top:
-	ALL INPUT IS EVIL
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
 
-Don't erase it.  You have to validate all the things, otherwise
-something bad will happen, I guarantee it.  Wait until the syzbot gets
-ahold of this layer if you don't believe me :)
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
 
-> > > +static int jtag_open(struct inode *inode, struct file *file) {
-> > > +	struct jtag *jtag = container_of(file->private_data, struct jtag,
-> > > +miscdev);
-> > > +
-> > > +	if (mutex_lock_interruptible(&jtag->open_lock))
-> > > +		return -ERESTARTSYS;
-> > 
-> > Why restart?  Just grab the lock, you don't want to have to do restartable
-> > logic in userspace, right?
-> 
-> Will change like:
-> 
-> ret = mutex_lock_interruptible(&jtag->open_lock);
-> if (ret)
-> 	return ret;
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
 
-No, what's wrong with a simple:
-	mutex_lock();
-?
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
 
-You are only holding it for a very short time, people can wait, there is
-no rush here or "fast path" happening.
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Instruction Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Data Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
 
-Anyway, this whole lock should just go away entirely, due to the lack of
-needing to track open() calls.  But in the future, keep locks simple, no
-need to add complexity when it is not warranted.
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
 
-> > > +	if (jtag->opened) {
-> > > +		mutex_unlock(&jtag->open_lock);
-> > > +		return -EBUSY;
-> > 
-> > Why do you care about only 1 userspace open call?  What does that buy you?
-> > Userspace can always pass around that file descriptor and use it in multiple
-> > places, so you are not really "protecting" yourself from anything.
-> > 
-> 
-> Accessing to JTAG HW from multiple processes will make confusion in the work of the JTAG protocol.
-> And I want to prohibit this.
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
 
-See my previous comments for why your attempt at protecting open() does
-not prevent this from happening.  Hint, you forgot about dup(3) :(
-
-thanks,
-
-greg k-h
+ Documentation/ABI/testing/jtag-dev                 |   27 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   22 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ Documentation/jtag/overview                        |   27 +
+ Documentation/jtag/transactions                    |  109 +++
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   31 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  769 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  279 +++++++
+ include/linux/jtag.h                               |   40 +
+ include/uapi/linux/jtag.h                          |  109 +++
+ 14 files changed, 1430 insertions(+), 0 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jtag-dev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 Documentation/jtag/overview
+ create mode 100644 Documentation/jtag/transactions
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
