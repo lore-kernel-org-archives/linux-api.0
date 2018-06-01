@@ -1,61 +1,52 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH 1/5] lib/rhashtable: convert param sanitations to WARN_ON
-Date: Sat, 2 Jun 2018 00:09:44 +0800
-Message-ID: <20180601160944.ji2gsp3pyunlj476@gondor.apana.org.au>
-References: <20180601160125.30031-1-dave@stgolabs.net>
- <20180601160125.30031-2-dave@stgolabs.net>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
+Date: Fri, 01 Jun 2018 11:14:34 -0500
+Message-ID: <87r2lqv5zp.fsf@xmission.com>
+References: <152286911105.615669.14053871624892399807.stgit@buzz>
+        <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
+        <87h8oqhagl.fsf@xmission.com>
+        <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+        <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
+        <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
+        <e3a1076d-cfd7-a034-dd08-2d74fbf751f3@oracle.com>
+        <3e2c285a-1bf8-f71d-1b74-4d6465c29a54@yandex-team.ru>
+        <3bdd6b27-0a46-5802-8671-07268cecc1c7@oracle.com>
+        <87po1bd7ky.fsf@xmission.com>
+        <CALYGNiPyjJQ2dZHtF+Ug5TFjEcK2O9anLDDDG0JftXtykPAoEg@mail.gmail.com>
+        <2cc8a788-56ec-8e30-be04-d5d0e0791f90@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180601160125.30031-2-dave@stgolabs.net>
+In-Reply-To: <2cc8a788-56ec-8e30-be04-d5d0e0791f90@oracle.com> (NAGARATHNAM
+        MUTHUSAMY's message of "Fri, 1 Jun 2018 08:55:43 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <dave@stgolabs.net>
-Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
+To: NAGARATHNAM MUTHUSAMY <nagarathnam.muthusamy@oracle.com>
+Cc: Konstantin Khlebnikov <koct9i@gmail.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 01, 2018 at 09:01:21AM -0700, Davidlohr Bueso wrote:
-> For the purpose of making rhashtable_init() unable to fail,
-> we can replace the returning -EINVAL with WARN_ONs whenever
-> the caller passes bogus parameters during initialization.
-> 
-> Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
-> ---
->  lib/rhashtable.c | 9 ++++-----
->  1 file changed, 4 insertions(+), 5 deletions(-)
-> 
-> diff --git a/lib/rhashtable.c b/lib/rhashtable.c
-> index 9427b5766134..05a4b1b8b8ce 100644
-> --- a/lib/rhashtable.c
-> +++ b/lib/rhashtable.c
-> @@ -1024,12 +1024,11 @@ int rhashtable_init(struct rhashtable *ht,
->  
->  	size = HASH_DEFAULT_SIZE;
->  
-> -	if ((!params->key_len && !params->obj_hashfn) ||
-> -	    (params->obj_hashfn && !params->obj_cmpfn))
-> -		return -EINVAL;
-> +	WARN_ON((!params->key_len && !params->obj_hashfn) ||
-> +		(params->obj_hashfn && !params->obj_cmpfn));
->  
-> -	if (params->nulls_base && params->nulls_base < (1U << RHT_BASE_SHIFT))
-> -		return -EINVAL;
-> +	WARN_ON(params->nulls_base &&
-> +		params->nulls_base < (1U << RHT_BASE_SHIFT));
+NAGARATHNAM MUTHUSAMY <nagarathnam.muthusamy@oracle.com> writes:
 
-I still don't like this.
+> On 5/31/2018 11:58 PM, Konstantin Khlebnikov wrote:
+>> On Thu, May 31, 2018 at 9:05 PM, Eric W. Biederman
+>> <ebiederm@xmission.com> wrote:
+>>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
+>>>
+>>>> Ping? Any additional comments on this patch?
+>>> Konstantin's v5 no.
+>>>
+>>>    I am uncomfortable with unnecessary flexibility.  I don't want to
+>>>    encourage the increased usage of pids to identify namespaces.  I saw
+>>>    no arguments in favor of pids to identify namespaces from Konstantin.
+>>>
+>>> Your v4 updated to reflect Andrew Morton's concerns in the changelog
+>>> yes.
+>> Ok, whatever. If I the only blocker then let it be v4 design.
+>
+> Thanks! I will resend the V4 patch with a plain text man page for
+> translate_pid.
 
-Yes for your use-case you will never crash and a WARN_ON is fine.
-However, rhashtable is used in all sorts of contexts and returning
-an error makes sense for quite a number of them.
+I believe Andrew was also asking for the motivating use case in the
+description of the patch.
 
-So if you really want just add the WARN_ON to your own code:
-
-	err = rhashtable_init(...)
-	WARN_ON(err);
-
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Thank you,
+Eric
