@@ -1,37 +1,31 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
-Date: Thu, 31 May 2018 13:05:17 -0500
-Message-ID: <87po1bd7ky.fsf@xmission.com>
-References: <152286911105.615669.14053871624892399807.stgit@buzz>
-        <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
-        <87h8oqhagl.fsf@xmission.com>
-        <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
-        <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
-        <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
-        <e3a1076d-cfd7-a034-dd08-2d74fbf751f3@oracle.com>
-        <3e2c285a-1bf8-f71d-1b74-4d6465c29a54@yandex-team.ru>
-        <3bdd6b27-0a46-5802-8671-07268cecc1c7@oracle.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 30/32] vfs: Allow cloning of a mount tree with
+ open(O_PATH|O_CLONE_MOUNT) [ver #8]
+Date: Thu, 31 May 2018 23:26:54 -0700
+Message-ID: <20180601062654.GA32397@infradead.org>
+References: <152720672288.9073.9868393448836301272.stgit@warthog.procyon.org.uk>
+ <152720691829.9073.10564431140980997005.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3bdd6b27-0a46-5802-8671-07268cecc1c7@oracle.com> (Nagarathnam
-        Muthusamy's message of "Thu, 31 May 2018 10:41:20 -0700")
+Content-Disposition: inline
+In-Reply-To: <152720691829.9073.10564431140980997005.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
+On Fri, May 25, 2018 at 01:08:38AM +0100, David Howells wrote:
+> Make it possible to clone a mount tree with a new pair of open flags that
+> are used in conjunction with O_PATH:
+> 
+>  (1) O_CLONE_MOUNT - Clone the mount or mount tree at the path.
+> 
+>  (2) O_NON_RECURSIVE - Don't clone recursively.
 
-> Ping? Any additional comments on this patch?
+Err.  I don't think we should use up two O_* flags for something
+only useful for your new mount API.  Don't we have a better place
+to for these flags?
 
-Konstantin's v5 no.
-
-  I am uncomfortable with unnecessary flexibility.  I don't want to
-  encourage the increased usage of pids to identify namespaces.  I saw
-  no arguments in favor of pids to identify namespaces from Konstantin.
-
-Your v4 updated to reflect Andrew Morton's concerns in the changelog
-yes.
-
-Eric
+Instead of overloading this on open having a specific syscalls just
+seems like a much saner idea.
