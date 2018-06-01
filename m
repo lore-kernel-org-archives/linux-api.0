@@ -1,56 +1,55 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 30/32] vfs: Allow cloning of a mount tree with open(O_PATH|O_CLONE_MOUNT) [ver #8]
-Date: Fri, 01 Jun 2018 09:42:15 +0100
-Message-ID: <7264.1527842535@warthog.procyon.org.uk>
-References: <CAOQ4uxjbZEyqNPwE8m0QmCU7OG831r4Lpg+M1RWCOxDrsgErnA@mail.gmail.com> <152720672288.9073.9868393448836301272.stgit@warthog.procyon.org.uk> <152720691829.9073.10564431140980997005.stgit@warthog.procyon.org.uk>
+From: NAGARATHNAM MUTHUSAMY <nagarathnam.muthusamy@oracle.com>
+Subject: Re: [PATCH RFC v5] pidns: introduce syscall translate_pid
+Date: Fri, 1 Jun 2018 08:55:43 -0700
+Message-ID: <2cc8a788-56ec-8e30-be04-d5d0e0791f90@oracle.com>
+References: <152286911105.615669.14053871624892399807.stgit@buzz>
+ <ba7b704f-1fc4-a08d-e7cf-2766160bd419@oracle.com>
+ <87h8oqhagl.fsf@xmission.com>
+ <112c7cac-1982-3a2e-ffc0-878bc5ae4bb6@yandex-team.ru>
+ <e1402871-77a5-6a0f-a75c-ccad77b93f49@oracle.com>
+ <778ab3d0-b6bc-fdb5-669a-40222e5020d4@yandex-team.ru>
+ <e3a1076d-cfd7-a034-dd08-2d74fbf751f3@oracle.com>
+ <3e2c285a-1bf8-f71d-1b74-4d6465c29a54@yandex-team.ru>
+ <3bdd6b27-0a46-5802-8671-07268cecc1c7@oracle.com>
+ <87po1bd7ky.fsf@xmission.com>
+ <CALYGNiPyjJQ2dZHtF+Ug5TFjEcK2O9anLDDDG0JftXtykPAoEg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOQ4uxjbZEyqNPwE8m0QmCU7OG831r4Lpg+M1RWCOxDrsgErnA@mail.gmail.com>
-Content-ID: <7263.1527842535.1@warthog.procyon.org.uk>
+In-Reply-To: <CALYGNiPyjJQ2dZHtF+Ug5TFjEcK2O9anLDDDG0JftXtykPAoEg@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Amir Goldstein <amir73il@gmail.com>
-Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-afs@lists.infradead.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+To: Konstantin Khlebnikov <koct9i@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Prakash Sangappa <prakash.sangappa@oracle.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Amir Goldstein <amir73il@gmail.com> wrote:
 
-> Reject O_NON_RECURSIVE without O_CLONE_MOUNT?
 
-Yes, I should add that.
+On 5/31/2018 11:58 PM, Konstantin Khlebnikov wrote:
+> On Thu, May 31, 2018 at 9:05 PM, Eric W. Biederman
+> <ebiederm@xmission.com> wrote:
+>> Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com> writes:
+>>
+>>> Ping? Any additional comments on this patch?
+>> Konstantin's v5 no.
+>>
+>>    I am uncomfortable with unnecessary flexibility.  I don't want to
+>>    encourage the increased usage of pids to identify namespaces.  I saw
+>>    no arguments in favor of pids to identify namespaces from Konstantin.
+>>
+>> Your v4 updated to reflect Andrew Morton's concerns in the changelog
+>> yes.
+> Ok, whatever. If I the only blocker then let it be v4 design.
 
-> I am not sure what are the consequences of opening O_PATH with old kernel
-> and getting an open file, can't think of anything bad.
-> Can the same be claimed for O_PATH|O_CLONE_MOUNT?
+Thanks! I will resend the V4 patch with a plain text man page for 
+translate_pid.
 
-Yes, actually, there can be consequences.  Some files have side effects.
-Think open("/dev/foobar", O_PATH).
-
-> Wouldn't it be better to apply the O_TMPFILE kludge to the new
-> open flag, so that apps can check if O_CLONE_MOUNT feature is supported
-> by kernel?
-
-Ugh.  The problem is that the O_TMPFILE kludge can't be done because O_PATH
-currently just masks off any bits it's not interested in rather than giving an
-error.
-
-Even the O_TMPFILE kludge doesn't protect you against someone having set
-random unassigned bits when testing on a kernel that didn't support it.
-
-And this bit:
-
-	/*
-	 * Clear out all open flags we don't know about so that we don't report
-	 * them in fcntl(F_GETFD) or similar interfaces.
-	 */
-	flags &= VALID_OPEN_FLAGS;
-
-is just plain wrong.  Effectively, it allows userspace to set random reserved
-bits without consequences.  It should give an error instead.
-
-Probably we should really replace open() and openat() both before we can
-allocate any further open flags.
-
-</grumble>
-
-David
+Thanks,
+Nagarathnam.
+>
+>> Eric
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
