@@ -1,294 +1,371 @@
-From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Subject: [PATCH v6] pidns: introduce syscall translate_pid
-Date: Fri, 01 Jun 2018 22:18:02 +0300
-Message-ID: <152788068212.768348.15192457501079586650.stgit@buzz>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak32 V2 01/13] audit: add container id
+Date: Fri, 1 Jun 2018 17:04:55 -0400
+Message-ID: <20180601210455.boz3tjqeqcx3kucg@madcap2.tricolour.ca>
+References: <cover.1521179281.git.rgb@redhat.com>
+ <e284617ad667ad8f17958dd8babb87fe1b4d7205.1521179281.git.rgb@redhat.com>
+ <20180517170053.7d4afa87@ivy-bridge>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180517170053.7d4afa87@ivy-bridge>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Prakash Sangappa <prakash.sangappa@oracle.com>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+To: Steve Grubb <sgrubb@redhat.com>
+Cc: linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, eparis@parisplace.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-Each process have different pids, one for each pid namespace it belongs.
-When interaction happens within single pid-ns translation isn't required.
-More complicated scenarios needs special handling.
+On 2018-05-17 17:00, Steve Grubb wrote:
+> On Fri, 16 Mar 2018 05:00:28 -0400
+> Richard Guy Briggs <rgb@redhat.com> wrote:
+> 
+> > Implement the proc fs write to set the audit container ID of a
+> > process, emitting an AUDIT_CONTAINER record to document the event.
+> > 
+> > This is a write from the container orchestrator task to a proc entry
+> > of the form /proc/PID/containerid where PID is the process ID of the
+> > newly created task that is to become the first task in a container,
+> > or an additional task added to a container.
+> > 
+> > The write expects up to a u64 value (unset: 18446744073709551615).
+> > 
+> > This will produce a record such as this:
+> > type=CONTAINER msg=audit(1519903238.968:261): op=set pid=596 uid=0
+> > subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 auid=0
+> > tty=pts0 ses=1 opid=596 old-contid=18446744073709551615 contid=123455
+> > res=0
+> 
+> The was one thing I was wondering about. Currently when we set the
+> loginuid, the record is AUDIT_LOGINUID. The corollary is that when we
+> set the container id, the event should be AUDIT_CONTAINERID or
+> AUDIT_CONTAINER_ID.
+> 
+> During syscall events, the path info is returned in a a record simply
+> called AUDIT_PATH, cwd info is returned in AUDIT_CWD. So, rather than
+> calling the record that gets attached to everything
+> AUDIT_CONTAINER_INFO, how about simply AUDIT_CONTAINER.
+> 
+> 
+> > The "op" field indicates an initial set.  The "pid" to "ses" fields
+> > are the orchestrator while the "opid" field is the object's PID, the
+> > process being "contained".  Old and new container ID values are given
+> > in the "contid" fields, while res indicates its success.
+> > 
+> > It is not permitted to self-set, unset or re-set the container ID.  A
+> > child inherits its parent's container ID, but then can be set only
+> > once after.
+> > 
+> > See: https://github.com/linux-audit/audit-kernel/issues/32
+> > 
+> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > ---
+> >  fs/proc/base.c             | 37 ++++++++++++++++++++
+> >  include/linux/audit.h      | 16 +++++++++
+> >  include/linux/init_task.h  |  4 ++-
+> >  include/linux/sched.h      |  1 +
+> >  include/uapi/linux/audit.h |  2 ++
+> >  kernel/auditsc.c           | 84
+> > ++++++++++++++++++++++++++++++++++++++++++++++ 6 files changed, 143
+> > insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/fs/proc/base.c b/fs/proc/base.c
+> > index 60316b5..6ce4fbe 100644
+> > --- a/fs/proc/base.c
+> > +++ b/fs/proc/base.c
+> > @@ -1299,6 +1299,41 @@ static ssize_t proc_sessionid_read(struct file
+> > * file, char __user * buf, .read		= proc_sessionid_read,
+> >  	.llseek		= generic_file_llseek,
+> >  };
+> > +
+> > +static ssize_t proc_containerid_write(struct file *file, const char
+> > __user *buf,
+> > +				   size_t count, loff_t *ppos)
+> > +{
+> > +	struct inode *inode = file_inode(file);
+> > +	u64 containerid;
+> > +	int rv;
+> > +	struct task_struct *task = get_proc_task(inode);
+> > +
+> > +	if (!task)
+> > +		return -ESRCH;
+> > +	if (*ppos != 0) {
+> > +		/* No partial writes. */
+> > +		put_task_struct(task);
+> > +		return -EINVAL;
+> > +	}
+> > +
+> > +	rv = kstrtou64_from_user(buf, count, 10, &containerid);
+> > +	if (rv < 0) {
+> > +		put_task_struct(task);
+> > +		return rv;
+> > +	}
+> > +
+> > +	rv = audit_set_containerid(task, containerid);
+> > +	put_task_struct(task);
+> > +	if (rv < 0)
+> > +		return rv;
+> > +	return count;
+> > +}
+> > +
+> > +static const struct file_operations proc_containerid_operations = {
+> > +	.write		= proc_containerid_write,
+> > +	.llseek		= generic_file_llseek,
+> > +};
+> > +
+> >  #endif
+> >  
+> >  #ifdef CONFIG_FAULT_INJECTION
+> > @@ -2961,6 +2996,7 @@ static int proc_pid_patch_state(struct seq_file
+> > *m, struct pid_namespace *ns, #ifdef CONFIG_AUDITSYSCALL
+> >  	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
+> >  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> > +	REG("containerid", S_IWUSR, proc_containerid_operations),
+> >  #endif
+> >  #ifdef CONFIG_FAULT_INJECTION
+> >  	REG("make-it-fail", S_IRUGO|S_IWUSR,
+> > proc_fault_inject_operations), @@ -3355,6 +3391,7 @@ static int
+> > proc_tid_comm_permission(struct inode *inode, int mask) #ifdef
+> > CONFIG_AUDITSYSCALL REG("loginuid",  S_IWUSR|S_IRUGO,
+> > proc_loginuid_operations), REG("sessionid",  S_IRUGO,
+> > proc_sessionid_operations),
+> > +	REG("containerid", S_IWUSR, proc_containerid_operations),
+> >  #endif
+> >  #ifdef CONFIG_FAULT_INJECTION
+> >  	REG("make-it-fail", S_IRUGO|S_IWUSR,
+> > proc_fault_inject_operations), diff --git a/include/linux/audit.h
+> > b/include/linux/audit.h index af410d9..fe4ba3f 100644
+> > --- a/include/linux/audit.h
+> > +++ b/include/linux/audit.h
+> > @@ -29,6 +29,7 @@
+> >  
+> >  #define AUDIT_INO_UNSET ((unsigned long)-1)
+> >  #define AUDIT_DEV_UNSET ((dev_t)-1)
+> > +#define INVALID_CID AUDIT_CID_UNSET
+> >  
+> >  struct audit_sig_info {
+> >  	uid_t		uid;
+> > @@ -321,6 +322,7 @@ static inline void audit_ptrace(struct
+> > task_struct *t) extern int auditsc_get_stamp(struct audit_context
+> > *ctx, struct timespec64 *t, unsigned int *serial);
+> >  extern int audit_set_loginuid(kuid_t loginuid);
+> > +extern int audit_set_containerid(struct task_struct *tsk, u64
+> > containerid); 
+> >  static inline kuid_t audit_get_loginuid(struct task_struct *tsk)
+> >  {
+> > @@ -332,6 +334,11 @@ static inline unsigned int
+> > audit_get_sessionid(struct task_struct *tsk) return tsk->sessionid;
+> >  }
+> >  
+> > +static inline u64 audit_get_containerid(struct task_struct *tsk)
+> > +{
+> > +	return tsk->containerid;
+> > +}
+> > +
+> >  extern void __audit_ipc_obj(struct kern_ipc_perm *ipcp);
+> >  extern void __audit_ipc_set_perm(unsigned long qbytes, uid_t uid,
+> > gid_t gid, umode_t mode); extern void __audit_bprm(struct
+> > linux_binprm *bprm); @@ -517,6 +524,10 @@ static inline unsigned int
+> > audit_get_sessionid(struct task_struct *tsk) {
+> >  	return -1;
+> >  }
+> > +static inline kuid_t audit_get_containerid(struct task_struct *tsk)
+> > +{
+> > +	return INVALID_CID;
+> > +}
+> >  static inline void audit_ipc_obj(struct kern_ipc_perm *ipcp)
+> >  { }
+> >  static inline void audit_ipc_set_perm(unsigned long qbytes, uid_t
+> > uid, @@ -581,6 +592,11 @@ static inline bool
+> > audit_loginuid_set(struct task_struct *tsk) return
+> > uid_valid(audit_get_loginuid(tsk)); }
+> >  
+> > +static inline bool audit_containerid_set(struct task_struct *tsk)
+> > +{
+> > +	return audit_get_containerid(tsk) != INVALID_CID;
+> > +}
+> > +
+> >  static inline void audit_log_string(struct audit_buffer *ab, const
+> > char *buf) {
+> >  	audit_log_n_string(ab, buf, strlen(buf));
+> > diff --git a/include/linux/init_task.h b/include/linux/init_task.h
+> > index 6a53262..046bd0a 100644
+> > --- a/include/linux/init_task.h
+> > +++ b/include/linux/init_task.h
+> > @@ -18,6 +18,7 @@
+> >  #include <linux/sched/rt.h>
+> >  #include <linux/livepatch.h>
+> >  #include <linux/mm_types.h>
+> > +#include <linux/audit.h>
+> >  
+> >  #include <asm/thread_info.h>
+> >  
+> > @@ -120,7 +121,8 @@
+> >  #ifdef CONFIG_AUDITSYSCALL
+> >  #define INIT_IDS \
+> >  	.loginuid = INVALID_UID, \
+> > -	.sessionid = (unsigned int)-1,
+> > +	.sessionid = (unsigned int)-1, \
+> > +	.containerid = INVALID_CID,
+> >  #else
+> >  #define INIT_IDS
+> >  #endif
+> > diff --git a/include/linux/sched.h b/include/linux/sched.h
+> > index d258826..1b82191 100644
+> > --- a/include/linux/sched.h
+> > +++ b/include/linux/sched.h
+> > @@ -796,6 +796,7 @@ struct task_struct {
+> >  #ifdef CONFIG_AUDITSYSCALL
+> >  	kuid_t				loginuid;
+> >  	unsigned int			sessionid;
+> > +	u64				containerid;
+> >  #endif
+> >  	struct seccomp			seccomp;
+> >  
+> > diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> > index 4e61a9e..921a71f 100644
+> > --- a/include/uapi/linux/audit.h
+> > +++ b/include/uapi/linux/audit.h
+> > @@ -71,6 +71,7 @@
+> >  #define AUDIT_TTY_SET		1017	/* Set TTY auditing
+> > status */ #define AUDIT_SET_FEATURE	1018	/* Turn an
+> > audit feature on or off */ #define AUDIT_GET_FEATURE
+> > 1019	/* Get which features are enabled */ +#define
+> > AUDIT_CONTAINER		1020	/* Define the container id
+> > and information */ #define AUDIT_FIRST_USER_MSG	1100	/*
+> > Userspace messages mostly uninteresting to kernel */ #define
+> > AUDIT_USER_AVC		1107	/* We filter this
+> > differently */ @@ -465,6 +466,7 @@ struct audit_tty_status { };
+> >  
+> >  #define AUDIT_UID_UNSET (unsigned int)-1
+> > +#define AUDIT_CID_UNSET ((u64)-1)
+> >  
+> >  /* audit_rule_data supports filter rules with both integer and string
+> >   * fields.  It corresponds with AUDIT_ADD_RULE, AUDIT_DEL_RULE and
+> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+> > index 4e0a4ac..29c8482 100644
+> > --- a/kernel/auditsc.c
+> > +++ b/kernel/auditsc.c
+> > @@ -2073,6 +2073,90 @@ int audit_set_loginuid(kuid_t loginuid)
+> >  	return rc;
+> >  }
+> >  
+> > +static int audit_set_containerid_perm(struct task_struct *task, u64
+> > containerid) +{
+> > +	struct task_struct *parent;
+> > +	u64 pcontainerid, ccontainerid;
+> > +
+> > +	/* Don't allow to set our own containerid */
+> > +	if (current == task)
+> > +		return -EPERM;
+> > +	/* Don't allow the containerid to be unset */
+> > +	if (!cid_valid(containerid))
+> > +		return -EINVAL;
+> > +	/* if we don't have caps, reject */
+> > +	if (!capable(CAP_AUDIT_CONTROL))
+> > +		return -EPERM;
+> > +	/* if containerid is unset, allow */
+> > +	if (!audit_containerid_set(task))
+> > +		return 0;
+> > +	/* it is already set, and not inherited from the parent,
+> > reject */
+> > +	ccontainerid = audit_get_containerid(task);
+> > +	rcu_read_lock();
+> > +	parent = rcu_dereference(task->real_parent);
+> > +	rcu_read_unlock();
+> > +	task_lock(parent);
+> > +	pcontainerid = audit_get_containerid(parent);
+> > +	task_unlock(parent);
+> > +	if (ccontainerid != pcontainerid)
+> > +		return -EPERM;
+> > +	return 0;
+> > +}
+> > +
+> > +static void audit_log_set_containerid(struct task_struct *task, u64
+> > oldcontainerid,
+> > +				      u64 containerid, int rc)
+> > +{
+> > +	struct audit_buffer *ab;
+> > +	uid_t uid;
+> > +	struct tty_struct *tty;
+> > +
+> > +	if (!audit_enabled)
+> > +		return;
+> > +
+> > +	ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_CONTAINER);
+> > +	if (!ab)
+> > +		return;
+> > +
+> > +	uid = from_kuid(&init_user_ns, task_uid(current));
+> > +	tty = audit_get_tty(current);
+> > +
+> > +	audit_log_format(ab, "op=set pid=%d uid=%u",
+> > task_tgid_nr(current), uid);
+> > +	audit_log_task_context(ab);
+> > +	audit_log_format(ab, " auid=%u tty=%s ses=%u opid=%d
+> > old-contid=%llu contid=%llu res=%d",
+> 
+> The preferred ordering would be: op, opid, old-contid, contid, pid, uid,
+> tty, ses, subj, comm, exe, res. This groups the searchable fields
+> together using the most common ordering so that parsing is simple.
 
-For example:
-- reading pid-files or logs written inside container with pid namespace
-- writing logs with internal pids outside container for pushing them into
-- attaching with ptrace to tasks from different pid namespace
+Where would you like auid?  It appears that just before uid would be the
+right place, if not in place of uid, but this is just a guess since it
+isn't consistent.
 
-Generally speaking, any cross pid-ns API with pids needs translation.
+> -Steve
+> 
+> > +			 from_kuid(&init_user_ns,
+> > audit_get_loginuid(current)),
+> > +			 tty ? tty_name(tty) : "(none)",
+> > audit_get_sessionid(current),
+> > +			 task_tgid_nr(task), oldcontainerid,
+> > containerid, !rc); +
+> > +	audit_put_tty(tty);
+> > +	audit_log_end(ab);
+> > +}
+> > +
+> > +/**
+> > + * audit_set_containerid - set current task's audit_context
+> > containerid
+> > + * @containerid: containerid value
+> > + *
+> > + * Returns 0 on success, -EPERM on permission failure.
+> > + *
+> > + * Called (set) from fs/proc/base.c::proc_containerid_write().
+> > + */
+> > +int audit_set_containerid(struct task_struct *task, u64 containerid)
+> > +{
+> > +	u64 oldcontainerid;
+> > +	int rc;
+> > +
+> > +	oldcontainerid = audit_get_containerid(task);
+> > +
+> > +	rc = audit_set_containerid_perm(task, containerid);
+> > +	if (!rc) {
+> > +		task_lock(task);
+> > +		task->containerid = containerid;
+> > +		task_unlock(task);
+> > +	}
+> > +
+> > +	audit_log_set_containerid(task, oldcontainerid, containerid,
+> > rc);
+> > +	return rc;
+> > +}
+> > +
+> >  /**
+> >   * __audit_mq_open - record audit data for a POSIX MQ open
+> >   * @oflag: open flag
+> 
+> --
+> Linux-audit mailing list
+> Linux-audit@redhat.com
+> https://www.redhat.com/mailman/listinfo/linux-audit
 
-Currently there are several interfaces that could be used here:
+- RGB
 
-Pid namespaces are identified by device and inode of /proc/[pid]/ns/pid.
-
-Pids for nested pid namespaces are shown in file /proc/[pid]/status.
-In some cases pid translation could be easily done using this information.
-Backward translation requires scanning all tasks and becomes really
-complicated for deeper namespace nesting.
-
-Unix socket automatically translates pid attached to SCM_CREDENTIALS.
-This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
-into pid namespace, this expose process and could be insecure.
-
-This patch adds new syscall for converting pids between pid namespaces:
-
-pid_t translate_pid(pid_t pid, int source, int target);
-
-Pid-namespaces are referred file descriptors opened to proc files
-/proc/[pid]/ns/pid or /proc/[pid]/ns/pid_for_children.
-Negative argument points to current pid namespace.
-
-Syscall returns pid in target pid-ns or zero if task have no pid there.
-
-Error codes:
-EBADF    - file descriptor is closed
-EINVAL   - file descriptor isn't pid namespace
-ESRCH    - task not found in @source namespace
-
-Translation could breach pid-ns isolation and return pids from outer pid
-namespaces iff process already has file descriptor for these namespaces.
-
-Examples:
-translate_pid(pid, ns, -1)      - get pid in our pid namespace
-translate_pid(pid, -1, ns)      - get pid in other pid namespace
-translate_pid(1, ns, -1)        - get pid of init task for namespace
-translate_pid(pid, -1, ns) > 0  - is pid is reachable from ns?
-translate_pid(1, ns1, ns2) > 0  - is ns1 inside ns2?
-translate_pid(1, ns1, ns2) == 0 - is ns1 outside ns2?
-translate_pid(1, ns1, ns2) == 1 - is ns1 equal ns2?
-
-Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Reanimated-by: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-
----
-
-v1: https://lkml.org/lkml/2015/9/15/411
-v2: https://lkml.org/lkml/2015/9/24/278
- * use namespace-fd as second/third argument
- * add -pid for getting parent pid
- * move code into kernel/sys.c next to getppid
- * drop ifdef CONFIG_PID_NS
- * add generic syscall
-v3: https://lkml.org/lkml/2015/9/28/3
- * use proc_ns_fdget()
- * update description
- * rebase to next-20150925
- * fix conflict with mlock2
-v4: https://lkml.org/lkml/2017/10/13/177
- * rename from getvpid() into translate_pid()
- * remove syscall if CONFIG_PID_NS=n
- * drop -pid for parent task
- * drop fget-fdget optimizations
- * add helper get_pid_ns_by_fd()
- * wire only into x86
-v5: https://lkml.org/lkml/2018/4/4/677
- * rewrite commit message
- * resolve pidns by task pid or by pidns fd
- * add arguments source_type and target_type
-v6:
- * revert back minimized v4 design
- * rebase to next-20180601
- * fix COND_SYSCALL stub
- * use next syscall number, old used for io_pgetevents
-
---- sample tool ---
-
-#define _GNU_SOURCE
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <err.h>
-
-#ifndef SYS_translate_pid
-#ifdef __x86_64__
-#define SYS_translate_pid 334
-#elif defined __i386__
-#define SYS_translate_pid 386
-#endif
-#endif
-
-pid_t translate_pid(pid_t pid, int source, int target) {
-	return syscall(SYS_translate_pid, pid, source, target);
-}
-
-int main(int argc, char **argv) {
-	int pid, source, target;
-	char buf[64];
-
-	if (argc != 4)
-		errx(1, "usage: %s <pid> <source> <target>", argv[0]);
-
-	pid = atoi(argv[1]);
-	source = atoi(argv[2]);
-	target = atoi(argv[3]);
-
-	if (source > 0) {
-		snprintf(buf, sizeof(buf), "/proc/%d/ns/pid", source);
-		source = open(buf, O_RDONLY);
-		if (source < 0)
-			err(2, "open source %s", buf);
-	}
-
-	if (target > 0) {
-		snprintf(buf, sizeof(buf), "/proc/%d/ns/pid", target);
-		target = open(buf, O_RDONLY);
-		if (target < 0)
-			err(2, "open target %s", buf);
-	}
-
-	pid = translate_pid(pid, source, target);
-	if (pid < 0)
-		err(2, "translate_pid");
-
-	printf("%d\n", pid);
-	return 0;
-}
-
----
----
- arch/x86/entry/syscalls/syscall_32.tbl |    1 
- arch/x86/entry/syscalls/syscall_64.tbl |    1 
- include/linux/syscalls.h               |    1 
- kernel/pid_namespace.c                 |   66 ++++++++++++++++++++++++++++++++
- kernel/sys_ni.c                        |    3 +
- 5 files changed, 72 insertions(+)
-
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 14a2f996e543..e70685750d43 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -397,3 +397,4 @@
- 383	i386	statx			sys_statx			__ia32_sys_statx
- 384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
- 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
-+386	i386	translate_pid		sys_translate_pid		__ia32_sys_translate_pid
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index cd36232ab62f..ebfd89055424 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -342,6 +342,7 @@
- 331	common	pkey_free		__x64_sys_pkey_free
- 332	common	statx			__x64_sys_statx
- 333	common	io_pgetevents		__x64_sys_io_pgetevents
-+334	common	translate_pid		__x64_sys_translate_pid
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 390e814fdc8d..3f33971cf1c8 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -843,6 +843,7 @@ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
- 				struct timex __user *tx);
- asmlinkage long sys_syncfs(int fd);
- asmlinkage long sys_setns(int fd, int nstype);
-+asmlinkage long sys_translate_pid(pid_t pid, int source, int target);
- asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
- 			     unsigned int vlen, unsigned flags);
- asmlinkage long sys_process_vm_readv(pid_t pid,
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 2a2ac53d8b8b..3b872cbbe264 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -13,6 +13,7 @@
- #include <linux/user_namespace.h>
- #include <linux/syscalls.h>
- #include <linux/cred.h>
-+#include <linux/file.h>
- #include <linux/err.h>
- #include <linux/acct.h>
- #include <linux/slab.h>
-@@ -380,6 +381,71 @@ static void pidns_put(struct ns_common *ns)
- 	put_pid_ns(to_pid_ns(ns));
- }
- 
-+static struct pid_namespace *get_pid_ns_by_fd(int fd)
-+{
-+	struct pid_namespace *pidns;
-+	struct ns_common *ns;
-+	struct file *file;
-+
-+	file = proc_ns_fget(fd);
-+	if (IS_ERR(file))
-+		return ERR_CAST(file);
-+
-+	ns = get_proc_ns(file_inode(file));
-+	if (ns->ops->type == CLONE_NEWPID)
-+		pidns = get_pid_ns(to_pid_ns(ns));
-+	else
-+		pidns = ERR_PTR(-EINVAL);
-+
-+	fput(file);
-+	return pidns;
-+}
-+
-+/*
-+ * translate_pid - convert pid in source pid-ns into target pid-ns.
-+ * @pid:    pid for translation
-+ * @source: pid-ns file descriptor or -1 for active namespace
-+ * @target: pid-ns file descriptor or -1 for active namesapce
-+ *
-+ * Returns pid in @target pid-ns, zero if task have no pid there,
-+ * or -ESRCH if task with @pid does not found in @source pid-ns.
-+ */
-+SYSCALL_DEFINE3(translate_pid, pid_t, pid, int, source, int, target)
-+{
-+	struct pid_namespace *source_ns, *target_ns;
-+	struct pid *struct_pid;
-+	pid_t result;
-+
-+	if (source >= 0) {
-+		source_ns = get_pid_ns_by_fd(source);
-+		result = PTR_ERR(source_ns);
-+		if (IS_ERR(source_ns))
-+			goto err_source;
-+	} else
-+		source_ns = task_active_pid_ns(current);
-+
-+	if (target >= 0) {
-+		target_ns = get_pid_ns_by_fd(target);
-+		result = PTR_ERR(target_ns);
-+		if (IS_ERR(target_ns))
-+			goto err_target;
-+	} else
-+		target_ns = task_active_pid_ns(current);
-+
-+	rcu_read_lock();
-+	struct_pid = find_pid_ns(pid, source_ns);
-+	result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
-+	rcu_read_unlock();
-+
-+	if (target >= 0)
-+		put_pid_ns(target_ns);
-+err_target:
-+	if (source >= 0)
-+		put_pid_ns(source_ns);
-+err_source:
-+	return result;
-+}
-+
- static int pidns_install(struct nsproxy *nsproxy, struct ns_common *ns)
- {
- 	struct pid_namespace *active = task_active_pid_ns(current);
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 06b4ccee0047..bf276e9ace9a 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -153,6 +153,9 @@ COND_SYSCALL_COMPAT(kexec_load);
- COND_SYSCALL(init_module);
- COND_SYSCALL(delete_module);
- 
-+/* kernel/pid_namespace.c */
-+COND_SYSCALL(translate_pid);
-+
- /* kernel/posix-timers.c */
- 
- /* kernel/printk.c */
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
