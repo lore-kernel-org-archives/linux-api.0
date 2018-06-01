@@ -1,66 +1,61 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: [PATCH 2/5] lib/rhashtable: guarantee initial hashtable allocation
-Date: Fri,  1 Jun 2018 09:01:22 -0700
-Message-ID: <20180601160125.30031-3-dave@stgolabs.net>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH 1/5] lib/rhashtable: convert param sanitations to WARN_ON
+Date: Sat, 2 Jun 2018 00:09:44 +0800
+Message-ID: <20180601160944.ji2gsp3pyunlj476@gondor.apana.org.au>
 References: <20180601160125.30031-1-dave@stgolabs.net>
+ <20180601160125.30031-2-dave@stgolabs.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180601160125.30031-1-dave@stgolabs.net>
+Content-Disposition: inline
+In-Reply-To: <20180601160125.30031-2-dave@stgolabs.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, torvalds@linux-foundation.org
-Cc: tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dave@stgolabs.net>, Davidlohr Bueso <dbueso@suse.de>
+To: Davidlohr Bueso <dave@stgolabs.net>
+Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-rhashtable_init() may fail due to -ENOMEM, thus making the
-entire api unusable. This patch removes this scenario,
-however unlikely. In order to guarantee memory allocation,
-this patch always ends up doing GFP_KERNEL|__GFP_NOFAIL
-for both the tbl as well as alloc_bucket_spinlocks().
+On Fri, Jun 01, 2018 at 09:01:21AM -0700, Davidlohr Bueso wrote:
+> For the purpose of making rhashtable_init() unable to fail,
+> we can replace the returning -EINVAL with WARN_ONs whenever
+> the caller passes bogus parameters during initialization.
+> 
+> Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
+> ---
+>  lib/rhashtable.c | 9 ++++-----
+>  1 file changed, 4 insertions(+), 5 deletions(-)
+> 
+> diff --git a/lib/rhashtable.c b/lib/rhashtable.c
+> index 9427b5766134..05a4b1b8b8ce 100644
+> --- a/lib/rhashtable.c
+> +++ b/lib/rhashtable.c
+> @@ -1024,12 +1024,11 @@ int rhashtable_init(struct rhashtable *ht,
+>  
+>  	size = HASH_DEFAULT_SIZE;
+>  
+> -	if ((!params->key_len && !params->obj_hashfn) ||
+> -	    (params->obj_hashfn && !params->obj_cmpfn))
+> -		return -EINVAL;
+> +	WARN_ON((!params->key_len && !params->obj_hashfn) ||
+> +		(params->obj_hashfn && !params->obj_cmpfn));
+>  
+> -	if (params->nulls_base && params->nulls_base < (1U << RHT_BASE_SHIFT))
+> -		return -EINVAL;
+> +	WARN_ON(params->nulls_base &&
+> +		params->nulls_base < (1U << RHT_BASE_SHIFT));
 
-Upon the first table allocation failure, we shrink the
-size to the smallest value that makes sense retry with
-__GFP_NOFAIL semantics. With the defaults, this means that
-from 64 buckets, we retry with only 4. Any later issues
-regarding performance due to collisions or larger table
-resizing (when more memory becomes available) is the last
-of our problems.
+I still don't like this.
 
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
----
- lib/rhashtable.c | 13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+Yes for your use-case you will never crash and a WARN_ON is fine.
+However, rhashtable is used in all sorts of contexts and returning
+an error makes sense for quite a number of them.
 
-diff --git a/lib/rhashtable.c b/lib/rhashtable.c
-index 05a4b1b8b8ce..ae17da6f0c75 100644
---- a/lib/rhashtable.c
-+++ b/lib/rhashtable.c
-@@ -175,7 +175,7 @@ static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
- 	int i;
- 
- 	size = sizeof(*tbl) + nbuckets * sizeof(tbl->buckets[0]);
--	if (gfp != GFP_KERNEL)
-+	if ((gfp & ~__GFP_NOFAIL) != GFP_KERNEL)
- 		tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
- 	else
- 		tbl = kvzalloc(size, gfp);
-@@ -1067,9 +1067,16 @@ int rhashtable_init(struct rhashtable *ht,
- 		}
- 	}
- 
-+	/*
-+	 * This is api initialization and thus we need to guarantee the
-+	 * initial rhashtable allocation. Upon failure, retry with the
-+	 * smallest possible size with __GFP_NOFAIL semantics.
-+	 */
- 	tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
--	if (tbl == NULL)
--		return -ENOMEM;
-+	if (unlikely(tbl == NULL)) {
-+		size = min_t(u16, ht->p.min_size, HASH_MIN_SIZE);
-+		tbl = bucket_table_alloc(ht, size, GFP_KERNEL | __GFP_NOFAIL);
-+	}
- 
- 	atomic_set(&ht->nelems, 0);
- 
+So if you really want just add the WARN_ON to your own code:
+
+	err = rhashtable_init(...)
+	WARN_ON(err);
+
+Cheers,
 -- 
-2.16.3
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
