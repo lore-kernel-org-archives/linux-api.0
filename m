@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 10/16] powerpc: Wire up restartable sequences system call
-Date: Sat,  2 Jun 2018 08:44:02 -0400
-Message-ID: <20180602124408.8430-11-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 09/16] powerpc: Add syscall detection for restartable sequences
+Date: Sat,  2 Jun 2018 08:44:01 -0400
+Message-ID: <20180602124408.8430-10-mathieu.desnoyers@efficios.com>
 References: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
@@ -12,12 +12,13 @@ List-Id: linux-api@vger.kernel.org
 
 From: Boqun Feng <boqun.feng@gmail.com>
 
-Wire up the rseq system call on powerpc.
+Syscalls are not allowed inside restartable sequences, so add a call to
+rseq_syscall() at the very beginning of system call exiting path for
+CONFIG_DEBUG_RSEQ=y kernel. This could help us to detect whether there
+is a syscall issued inside restartable sequences.
 
-This provides an ABI improving the speed of a user-space getcpu
-operation on powerpc by skipping the getcpu system call on the fast
-path, as well as improving the speed of user-space operations on per-cpu
-data compared to using load-reservation/store-conditional atomics.
+[ Tested on 64-bit powerpc kernel by Mathieu Desnoyers. Still needs to
+  be tested on 32-bit powerpc kernel. ]
 
 Signed-off-by: Boqun Feng <boqun.feng@gmail.com>
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
@@ -28,43 +29,46 @@ CC: Peter Zijlstra <peterz@infradead.org>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 CC: linuxppc-dev@lists.ozlabs.org
 ---
- arch/powerpc/include/asm/systbl.h      | 1 +
- arch/powerpc/include/asm/unistd.h      | 2 +-
- arch/powerpc/include/uapi/asm/unistd.h | 1 +
- 3 files changed, 3 insertions(+), 1 deletion(-)
+ arch/powerpc/kernel/entry_32.S | 7 +++++++
+ arch/powerpc/kernel/entry_64.S | 8 ++++++++
+ 2 files changed, 15 insertions(+)
 
-diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
-index d61f9c96d916..45d4d37495fd 100644
---- a/arch/powerpc/include/asm/systbl.h
-+++ b/arch/powerpc/include/asm/systbl.h
-@@ -392,3 +392,4 @@ SYSCALL(statx)
- SYSCALL(pkey_alloc)
- SYSCALL(pkey_free)
- SYSCALL(pkey_mprotect)
-+SYSCALL(rseq)
-diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index daf1ba97a00c..1e9708632dce 100644
---- a/arch/powerpc/include/asm/unistd.h
-+++ b/arch/powerpc/include/asm/unistd.h
-@@ -12,7 +12,7 @@
- #include <uapi/asm/unistd.h>
+diff --git a/arch/powerpc/kernel/entry_32.S b/arch/powerpc/kernel/entry_32.S
+index eb8d01bae8c6..973577f2141c 100644
+--- a/arch/powerpc/kernel/entry_32.S
++++ b/arch/powerpc/kernel/entry_32.S
+@@ -365,6 +365,13 @@ syscall_dotrace_cont:
+ 	blrl			/* Call handler */
+ 	.globl	ret_from_syscall
+ ret_from_syscall:
++#ifdef CONFIG_DEBUG_RSEQ
++	/* Check whether the syscall is issued inside a restartable sequence */
++	stw	r3,GPR3(r1)
++	addi    r3,r1,STACK_FRAME_OVERHEAD
++	bl      rseq_syscall
++	lwz	r3,GPR3(r1)
++#endif
+ 	mr	r6,r3
+ 	CURRENT_THREAD_INFO(r12, r1)
+ 	/* disable interrupts so current_thread_info()->flags can't change */
+diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+index 51695608c68b..1c374387656a 100644
+--- a/arch/powerpc/kernel/entry_64.S
++++ b/arch/powerpc/kernel/entry_64.S
+@@ -184,6 +184,14 @@ system_call:			/* label this so stack traces look sane */
  
+ .Lsyscall_exit:
+ 	std	r3,RESULT(r1)
++
++#ifdef CONFIG_DEBUG_RSEQ
++	/* Check whether the syscall is issued inside a restartable sequence */
++	addi    r3,r1,STACK_FRAME_OVERHEAD
++	bl      rseq_syscall
++	ld	r3,RESULT(r1)
++#endif
++
+ 	CURRENT_THREAD_INFO(r12, r1)
  
--#define NR_syscalls		387
-+#define NR_syscalls		388
- 
- #define __NR__exit __NR_exit
- 
-diff --git a/arch/powerpc/include/uapi/asm/unistd.h b/arch/powerpc/include/uapi/asm/unistd.h
-index 389c36fd8299..ac5ba55066dd 100644
---- a/arch/powerpc/include/uapi/asm/unistd.h
-+++ b/arch/powerpc/include/uapi/asm/unistd.h
-@@ -398,5 +398,6 @@
- #define __NR_pkey_alloc		384
- #define __NR_pkey_free		385
- #define __NR_pkey_mprotect	386
-+#define __NR_rseq		387
- 
- #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
+ 	ld	r8,_MSR(r1)
 -- 
 2.11.0
