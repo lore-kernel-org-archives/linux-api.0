@@ -1,29 +1,36 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [PATCH 5/5] lib/test_rhashtable: rhashtable_init() can no longer
- fail
-Date: Sat, 2 Jun 2018 12:42:21 +0800
-Message-ID: <20180602044221.vroio5xqkro5athb@gondor.apana.org.au>
+From: Davidlohr Bueso <dave@stgolabs.net>
+Subject: Re: [PATCH 2/5] lib/rhashtable: guarantee initial hashtable
+ allocation
+Date: Fri, 1 Jun 2018 22:41:31 -0700
+Message-ID: <20180602054131.ta7ligrfwbgvemfv@linux-r8p5>
 References: <20180601160125.30031-1-dave@stgolabs.net>
- <20180601160125.30031-6-dave@stgolabs.net>
+ <20180601160125.30031-3-dave@stgolabs.net>
+ <20180602044150.xpazuhpxbwt37xmu@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180601160125.30031-6-dave@stgolabs.net>
+In-Reply-To: <20180602044150.xpazuhpxbwt37xmu@gondor.apana.org.au>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <dave@stgolabs.net>
+To: Herbert Xu <herbert@gondor.apana.org.au>
 Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 01, 2018 at 09:01:25AM -0700, Davidlohr Bueso wrote:
-> Update the test module as such.
-> 
-> Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
+On Sat, 02 Jun 2018, Herbert Xu wrote:
+>>  	tbl = bucket_table_alloc(ht, size, GFP_KERNEL);
+>> -	if (tbl == NULL)
+>> -		return -ENOMEM;
+>> +	if (unlikely(tbl == NULL)) {
+>> +		size = min_t(u16, ht->p.min_size, HASH_MIN_SIZE);
+>
+>You mean max_t?
 
-Please drop this patch.
+Not really. I considered some of the users to set quite a large min_size
+(such as 1024 buckets). The min() makes sense to me in that it's the smallest
+possible value. If memory later becomes available and the hashtable is resized
+to a more appropriate value, couldn't any issues regarding collisions not be dealt
+with organically? And we've agreed that allocating a tiny table is the
+least of our problems.
 
 Thanks,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Davidlohr
