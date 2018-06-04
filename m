@@ -1,40 +1,23 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH 2/5] lib/rhashtable: guarantee initial hashtable
- allocation
-Date: Mon, 4 Jun 2018 13:46:22 +0200
-Message-ID: <20180604114622.GK19202@dhcp22.suse.cz>
-References: <20180601160125.30031-1-dave@stgolabs.net>
- <20180601160125.30031-3-dave@stgolabs.net>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH][RFC] open_tree(2) (was Re: [PATCH 30/32] vfs: Allow cloning of a mount tree with open(O_PATH|O_CLONE_MOUNT) [ver #8])
+Date: Mon, 04 Jun 2018 16:27:01 +0100
+Message-ID: <26844.1528126021@warthog.procyon.org.uk>
+References: <CAELBmZCXMkCY+Lkz2xmhUiK_5oDctZzozHP-cXv9vp7qWsOtVQ@mail.gmail.com> <20180602040434.GW30522@ZenIV.linux.org.uk> <20180601063928.GS30522@ZenIV.linux.org.uk> <152720672288.9073.9868393448836301272.stgit@warthog.procyon.org.uk> <152720691829.9073.10564431140980997005.stgit@warthog.procyon.org.uk> <20180601062654.GA32397@infradead.org> <7067.1527841663@warthog.procyon.org.uk> <20180602030913.GU30522@ZenIV.linux.org.uk> <20180602034255.GV30522@ZenIV.linux.org.uk> <21804.1527954321@warthog.procyon.org.uk> <20180602174957.GX30522@ZenIV.linux.org.uk> <20180603005532.GZ30522@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180601160125.30031-3-dave@stgolabs.net>
+In-Reply-To: <CAELBmZCXMkCY+Lkz2xmhUiK_5oDctZzozHP-cXv9vp7qWsOtVQ@mail.gmail.com>
+Content-ID: <26843.1528126021.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Davidlohr Bueso <dave@stgolabs.net>
-Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
+To: Miklos Szeredi <miklos@szeredi.hu>
+Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-afs@lists.infradead.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 01-06-18 09:01:22, Davidlohr Bueso wrote:
-[...]
-> diff --git a/lib/rhashtable.c b/lib/rhashtable.c
-> index 05a4b1b8b8ce..ae17da6f0c75 100644
-> --- a/lib/rhashtable.c
-> +++ b/lib/rhashtable.c
-> @@ -175,7 +175,7 @@ static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
->  	int i;
->  
->  	size = sizeof(*tbl) + nbuckets * sizeof(tbl->buckets[0]);
-> -	if (gfp != GFP_KERNEL)
-> +	if ((gfp & ~__GFP_NOFAIL) != GFP_KERNEL)
->  		tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
->  	else
->  		tbl = kvzalloc(size, gfp);
+Miklos Szeredi <miklos@szeredi.hu> wrote:
 
-Just a heads up. This is not longer needed after
-http://lkml.kernel.org/r/20180601115329.27807-1-mhocko@kernel.org
-is applied. Moreover it will conflict at that spot.
+> fsinfo = info from path
 
--- 
-Michal Hocko
-SUSE Labs
+Actually, I was thinking of making fsinfo() detect if it's been given an fsfd
+and go through an fs_context operation instead in that case.
+
+David
