@@ -1,48 +1,46 @@
-From: Al Viro <viro@ZenIV.linux.org.uk>
-Subject: Re: [PATCH][RFC] open_tree(2) (was Re: [PATCH 30/32] vfs: Allow
- cloning of a mount tree with open(O_PATH|O_CLONE_MOUNT) [ver #8])
-Date: Mon, 4 Jun 2018 18:35:08 +0100
-Message-ID: <20180604173508.GJ30522@ZenIV.linux.org.uk>
-References: <152720672288.9073.9868393448836301272.stgit@warthog.procyon.org.uk>
- <152720691829.9073.10564431140980997005.stgit@warthog.procyon.org.uk>
- <20180601062654.GA32397@infradead.org>
- <7067.1527841663@warthog.procyon.org.uk>
- <20180602030913.GU30522@ZenIV.linux.org.uk>
- <20180602034255.GV30522@ZenIV.linux.org.uk>
- <21804.1527954321@warthog.procyon.org.uk>
- <20180602174957.GX30522@ZenIV.linux.org.uk>
- <20180603005532.GZ30522@ZenIV.linux.org.uk>
- <20180604171630.GA29059@bombadil.infradead.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180604171630.GA29059@bombadil.infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: David Howells <dhowells@redhat.com>, Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-afs@lists.infradead.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: adam.manzanares@wdc.com
+Subject: [PATCH 1/2] fs: aio ioprio add explicit block layer dependence
+Date: Mon,  4 Jun 2018 10:59:56 -0700
+Message-ID: <20180604175957.2647-1-adam.manzanares@wdc.com>
+Return-path: <owner-linux-aio@kvack.org>
+Sender: owner-linux-aio@kvack.org
+To: viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org
+Cc: axboe@kernel.dk, bcrl@kvack.org, mingo@kernel.org, tglx@linutronix.de, kstewart@linuxfoundation.org, peterz@infradead.org, pombredanne@nexb.com, gregkh@linuxfoundation.org, bigeasy@linutronix.de, rgoldwyn@suse.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, linux-aio@kvack.org, linux-api@vger.kernel.org, hch@infradread.org, jmoyer@redhat.com, willy@infradead.org, smfrench@gmail.com, Adam Manzanares <adam.manzanares@wdc.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 04, 2018 at 10:16:30AM -0700, Matthew Wilcox wrote:
-> On Sun, Jun 03, 2018 at 01:55:37AM +0100, Al Viro wrote:
-> > +SYSCALL_DEFINE3(open_tree, int, dfd, const char *, filename, unsigned, flags)
-> > +{
-> > +	struct file *file;
-> > +	struct path path;
-> > +	int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
-> > +	bool detached = flags & OPEN_TREE_CLONE;
-> > +	int error;
-> > +	int fd;
-> > +
-> > +	BUILD_BUG_ON(OPEN_TREE_CLOEXEC != O_CLOEXEC);
-> 
-> Why do we need OPEN_TREE_CLOEXEC?  Wouldn't we be better off just making
-> the fd returned by open_tree implicitly close-on-exec?  I can think of
-> no good reason for these file descriptors to be inherited across exec()
+From: Adam Manzanares <adam.manzanares@wdc.com>
 
-How are they different from any file descriptor?  It's not as if it was
-something usable only for mounting stuff - again, you can use them
-with any ...at() syscalls.
+Previously, the ioprio_check_cap function was only defined when CONFIG_BLOCK
+was set. Make this relationship explicit and add a stub for !CONFIG_BLOCK.
 
-> and if someone comes up with such a reason, fcntl(F_SETFD) is not an
-> expensive call to make.
+Signed-off-by: Adam Manzanares <adam.manzanares@wdc.com>
+---
+ include/linux/ioprio.h | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/include/linux/ioprio.h b/include/linux/ioprio.h
+index 4a28cec49ec3..9e30ed6443db 100644
+--- a/include/linux/ioprio.h
++++ b/include/linux/ioprio.h
+@@ -77,6 +77,13 @@ extern int ioprio_best(unsigned short aprio, unsigned short bprio);
+ 
+ extern int set_task_ioprio(struct task_struct *task, int ioprio);
+ 
++#ifdef CONFIG_BLOCK
+ extern int ioprio_check_cap(int ioprio);
++#else
++static inline int ioprio_check_cap(int ioprio)
++{
++	return -ENOTBLK;
++}
++#endif /* CONFIG_BLOCK */
+ 
+ #endif
+-- 
+2.17.0
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
