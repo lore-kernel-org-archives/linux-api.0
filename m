@@ -1,248 +1,241 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v5 07/28] fpga: dfl: add chardev support for feature
- devices
-Date: Wed, 6 Jun 2018 20:24:57 +0800
-Message-ID: <20180606122457.GB7681@hao-dev>
+Subject: Re: [PATCH v5 09/28] fpga: dfl: add feature device infrastructure
+Date: Wed, 6 Jun 2018 20:33:26 +0800
+Message-ID: <20180606123326.GC7681@hao-dev>
 References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
- <1525229431-3087-8-git-send-email-hao.wu@intel.com>
- <CANk1AXRQx=QtwmSKuWiGprMcfjNnUWcBHNy-hTfP+JaQZsJLLA@mail.gmail.com>
+ <1525229431-3087-10-git-send-email-hao.wu@intel.com>
+ <CANk1AXRyqn_Y26HZiYkFQUoWUVzc89F-znVNWQXGAk+arNB6XA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXRQx=QtwmSKuWiGprMcfjNnUWcBHNy-hTfP+JaQZsJLLA@mail.gmail.com>
+In-Reply-To: <CANk1AXRyqn_Y26HZiYkFQUoWUVzc89F-znVNWQXGAk+arNB6XA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 05, 2018 at 03:21:48PM -0500, Alan Tull wrote:
+On Tue, Jun 05, 2018 at 04:14:43PM -0500, Alan Tull wrote:
 > On Tue, May 1, 2018 at 9:50 PM, Wu Hao <hao.wu@intel.com> wrote:
 > 
 > Hi Hao,
 > 
-> > For feature devices drivers, both the FPGA Management Engine (FME) and
-> > Accelerated Function Unit (AFU) driver need to expose user interfaces via
-> > the device file, for example, mmap and ioctls.
+> Some minor things, otherwise looks fine.
+> 
+> > From: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 > >
-> > This patch adds chardev support in the dfl driver for feature devices,
-> > FME and AFU. It reserves the chardev regions for FME and AFU, and provide
-> > interfaces for FME and AFU driver to register their device file operations.
+> > This patch abstracts the common operations of the sub features, and defines
+> > the feature_ops data structure, including init, uinit and ioctl function
+> > pointers. And this patch adds some common helper functions for FME and AFU
+> > drivers, e.g dfl_feature_dev_use_begin/end which are used to ensure
+> > exclusive usage of the feature device file.
 > >
 > > Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 > > Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
 > > Signed-off-by: Shiva Rao <shiva.rao@intel.com>
 > > Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+> > Signed-off-by: Kang Luwei <luwei.kang@intel.com>
 > > Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
 > > Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 > > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> Acked-by: Alan Tull <atull@kernel.org>
+> 
 > > ---
 > > v2: rebased
-> > v3: move chardev support to fpga-dfl framework
-> > v4: rebase, and add more comments in code.
-> > v5: rebase, and add dfl_ prefix to APIs and data structures.
+> > v3: use const for feature_ops.
+> >     replace pci related function.
+> > v4: rebase and add more comments in code.
+> > v5: remove useless WARN_ON().
+> >     reorder declarations in functions per suggestion from Moritz.
+> >     add "dfl_" prefix to functions and data structure.
 > > ---
-> >  drivers/fpga/dfl.c | 104 ++++++++++++++++++++++++++++++++++++++++++++++++++++-
-> >  drivers/fpga/dfl.h |  14 ++++++++
-> >  2 files changed, 117 insertions(+), 1 deletion(-)
+> >  drivers/fpga/dfl.c | 57 +++++++++++++++++++++++++++++++++++++
+> >  drivers/fpga/dfl.h | 82 +++++++++++++++++++++++++++++++++++++++++++++++++++++-
+> >  2 files changed, 138 insertions(+), 1 deletion(-)
 > >
 > > diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-> > index c1462e9..18aba02 100644
+> > index 1e06efb..c4c47d6 100644
 > > --- a/drivers/fpga/dfl.c
 > > +++ b/drivers/fpga/dfl.c
-> > @@ -74,6 +74,96 @@ static enum dfl_id_type feature_dev_id_type(struct platform_device *pdev)
+> > @@ -74,6 +74,63 @@ static enum dfl_id_type feature_dev_id_type(struct platform_device *pdev)
 > >         return DFL_ID_MAX;
 > >  }
 > >
-> > +struct dfl_chardev_info {
-> > +       const char *name;
-> > +       dev_t devt;
-> > +};
-> > +
-> > +/* indexed by enum dfl_fpga_devt_type */
-> > +struct dfl_chardev_info dfl_chrdevs[] = {
-> > +       {.name = DFL_FPGA_FEATURE_DEV_FME},     /* DFL_FPGA_DEVT_FME */
-> > +       {.name = DFL_FPGA_FEATURE_DEV_PORT},    /* DFL_FPGA_DEVT_AFU */
-> > +};
-> 
-> If this were added in the initial dfl.c patch, it could be used by
-> build_info_create_dev to get the name.
-
-Sure, will fix this.
-
-> 
-> > +
-> > +static void dfl_chardev_uinit(void)
+> > +void dfl_fpga_dev_feature_uinit(struct platform_device *pdev)
 > > +{
-> > +       int i;
+> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+> > +       struct dfl_feature *feature;
 > > +
-> > +       for (i = 0; i < DFL_FPGA_DEVT_MAX; i++)
-> > +               if (MAJOR(dfl_chrdevs[i].devt)) {
-> > +                       unregister_chrdev_region(dfl_chrdevs[i].devt,
-> > +                                                MINORMASK);
-> > +                       dfl_chrdevs[i].devt = MKDEV(0, 0);
+> > +       dfl_fpga_dev_for_each_feature(pdata, feature)
+> > +               if (feature->ops) {
+> > +                       feature->ops->uinit(pdev, feature);
+> > +                       feature->ops = NULL;
 > > +               }
 > > +}
+> > +EXPORT_SYMBOL_GPL(dfl_fpga_dev_feature_uinit);
+> 
+> Please add kernel-doc for functions that are exported to recommend and
+> guide their usage.
+
+Sorry, I missed uinit and init functions. will add them in v6.
+
+> 
 > > +
-> > +static int dfl_chardev_init(void)
+> > +static int dfl_feature_instance_init(struct platform_device *pdev,
+> > +                                    struct dfl_feature_platform_data *pdata,
+> > +                                    struct dfl_feature *feature,
+> > +                                    struct dfl_feature_driver *drv)
 > > +{
-> > +       int i, ret;
+> > +       int ret;
 > > +
-> > +       for (i = 0; i < DFL_FPGA_DEVT_MAX; i++) {
-> > +               ret = alloc_chrdev_region(&dfl_chrdevs[i].devt, 0, MINORMASK,
-> > +                                         dfl_chrdevs[i].name);
-> > +               if (ret)
-> > +                       goto exit;
+> > +       ret = drv->ops->init(pdev, feature);
+> > +       if (ret)
+> > +               return ret;
+> > +
+> > +       feature->ops = drv->ops;
+> > +
+> > +       return ret;
+> > +}
+> > +
+> > +int dfl_fpga_dev_feature_init(struct platform_device *pdev,
+> > +                             struct dfl_feature_driver *feature_drvs)
+> > +{
+> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+> > +       struct dfl_feature_driver *drv = feature_drvs;
+> > +       struct dfl_feature *feature;
+> > +       int ret;
+> > +
+> > +       while (drv->ops) {
+> > +               dfl_fpga_dev_for_each_feature(pdata, feature) {
+> > +                       /* match feature and drv using id */
+> > +                       if (feature->id == drv->id) {
+> > +                               ret = dfl_feature_instance_init(pdev, pdata,
+> > +                                                               feature, drv);
+> > +                               if (ret)
+> > +                                       goto exit;
+> > +                       }
+> > +               }
+> > +               drv++;
 > > +       }
 > > +
 > > +       return 0;
-> > +
 > > +exit:
-> > +       dfl_chardev_uinit();
+> > +       dfl_fpga_dev_feature_uinit(pdev);
 > > +       return ret;
 > > +}
+> > +EXPORT_SYMBOL_GPL(dfl_fpga_dev_feature_init);
 > > +
-> > +static dev_t dfl_get_devt(enum dfl_fpga_devt_type type, int id)
-> > +{
-> > +       WARN_ON(type >= DFL_FPGA_DEVT_MAX);
-> > +
-> > +       return MKDEV(MAJOR(dfl_chrdevs[type].devt), id);
-> > +}
-> > +
-> > +/**
-> > + * dfl_fpga_register_dev_ops - register cdev ops for feature dev
-> > + *
-> > + * @pdev: feature dev.
-> > + * @fops: file operations for feature dev's cdev.
-> > + * @owner: owning module/driver.
-> > + *
-> > + * Return: 0 on success, negative error code otherwise.
-> > + */
-> > +int dfl_fpga_register_dev_ops(struct platform_device *pdev,
-> > +                             const struct file_operations *fops,
-> > +                             struct module *owner)
-> > +{
-> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> > +
-> > +       cdev_init(&pdata->cdev, fops);
-> > +       pdata->cdev.owner = owner;
-> > +
-> > +       /*
-> > +        * set parent to the feature device so that its refcount is
-> > +        * decreased after the last refcount of cdev is gone, that
-> > +        * makes sure the feature device is valid during device
-> > +        * file's life-cycle.
-> > +        */
-> > +       pdata->cdev.kobj.parent = &pdev->dev.kobj;
-> > +
-> > +       return cdev_add(&pdata->cdev, pdev->dev.devt, 1);
-> > +}
-> > +EXPORT_SYMBOL_GPL(dfl_fpga_register_dev_ops);
-> > +
-> > +/**
-> > + * dfl_fpga_unregister_dev_ops - unregister cdev ops for feature dev
-> > + * @pdev: feature dev.
-> > + */
-> > +void dfl_fpga_unregister_dev_ops(struct platform_device *pdev)
-> > +{
-> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> > +
-> > +       cdev_del(&pdata->cdev);
-> > +}
-> > +EXPORT_SYMBOL_GPL(dfl_fpga_unregister_dev_ops);
-> > +
-> >  /**
-> >   * struct build_feature_devs_info - info collected during feature dev build.
-> >   *
-> > @@ -208,9 +298,13 @@ static int build_info_commit_dev(struct build_feature_devs_info *binfo)
-> >                       enum dfl_id_type type, const char *name,
-> >                       void __iomem *ioaddr)
-> >  {
-> > +       enum dfl_fpga_devt_type devt_type = DFL_FPGA_DEVT_FME;
-> >         struct platform_device *fdev;
-> >         int ret;
-> >
-> > +       if (type == PORT_ID)
-> > +               devt_type = DFL_FPGA_DEVT_PORT;
-> > +
-> >         /* we will create a new device, commit current device first */
-> >         ret = build_info_commit_dev(binfo);
-> >         if (ret)
-> > @@ -234,6 +328,7 @@ static int build_info_commit_dev(struct build_feature_devs_info *binfo)
-> >                 return fdev->id;
-> >
-> >         fdev->dev.parent = &binfo->cdev->region->dev;
-> > +       fdev->dev.devt = dfl_get_devt(devt_type, fdev->id);
-> >
-> >         return 0;
-> >  }
-> > @@ -702,13 +797,20 @@ void dfl_fpga_remove_feature_devs(struct dfl_fpga_cdev *cdev)
-> >
-> >  static int __init dfl_fpga_init(void)
-> >  {
-> > +       int ret;
-> > +
-> >         dfl_ids_init();
-> >
-> > -       return 0;
-> > +       ret = dfl_chardev_init();
-> > +       if (ret)
-> > +               dfl_ids_destroy();
-> > +
-> > +       return ret;
-> >  }
-> >
-> >  static void __exit dfl_fpga_exit(void)
-> >  {
-> > +       dfl_chardev_uinit();
-> >         dfl_ids_destroy();
-> >  }
-> >
+> >  struct dfl_chardev_info {
+> >         const char *name;
+> >         dev_t devt;
 > > diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-> > index 2ede915..5fcb1a1 100644
+> > index 2b6aaef..27f7a74 100644
 > > --- a/drivers/fpga/dfl.h
 > > +++ b/drivers/fpga/dfl.h
-> > @@ -15,6 +15,7 @@
-> >  #define __FPGA_DFL_H
+> > @@ -132,6 +132,17 @@
+> >  #define PORT_CTRL_SFTRST_ACK   BIT_ULL(4)              /* HW ack for reset */
 > >
-> >  #include <linux/bitfield.h>
-> > +#include <linux/cdev.h>
-> >  #include <linux/delay.h>
-> >  #include <linux/fs.h>
-> >  #include <linux/iopoll.h>
-> > @@ -150,6 +151,7 @@ struct dfl_feature {
+> >  /**
+> > + * struct dfl_feature_driver - sub feature's driver
+> > + *
+> > + * @id: sub feature id.
+> > + * @ops: ops of this sub feature.
+> > + */
+> > +struct dfl_feature_driver {
+> > +       u64 id;
+> > +       const struct dfl_feature_ops *ops;
+> > +};
+> > +
+> > +/**
+> >   * struct dfl_feature - sub feature of the feature devices
 > >   *
-> >   * @node: node to link feature devs to container device's port_dev_list.
-> >   * @lock: mutex to protect platform data.
-> > + * @cdev: cdev of feature dev.
-> >   * @dev: ptr to platform device linked with this platform data.
+> >   * @id: sub feature id.
+> > @@ -139,13 +150,17 @@
+> >   *                 this index is used to find its mmio resource from the
+> >   *                 feature dev (platform device)'s reources.
+> >   * @ioaddr: mapped mmio resource address.
+> > + * @ops: ops of this sub feature.
+> >   */
+> >  struct dfl_feature {
+> >         u64 id;
+> >         int resource_index;
+> >         void __iomem *ioaddr;
+> > +       const struct dfl_feature_ops *ops;
+> >  };
+> >
+> > +#define DEV_STATUS_IN_USE      0
+> > +
+> >  /**
+> >   * struct dfl_feature_platform_data - platform data for feature devices
+> >   *
+> > @@ -156,6 +171,8 @@ struct dfl_feature {
 > >   * @dfl_cdev: ptr to container device.
 > >   * @disable_count: count for port disable.
-> > @@ -159,6 +161,7 @@ struct dfl_feature {
+> >   * @num: number for sub features.
+> > + * @dev_status: dev status (e.g DEV_STATUS_IN_USE).
+> > + * @private: ptr to feature dev private data.
+> >   * @features: sub features of this feature dev.
+> >   */
 > >  struct dfl_feature_platform_data {
-> >         struct list_head node;
-> >         struct mutex lock;
-> > +       struct cdev cdev;
+> > @@ -165,11 +182,49 @@ struct dfl_feature_platform_data {
 > >         struct platform_device *dev;
 > >         struct dfl_fpga_cdev *dfl_cdev;
 > >         unsigned int disable_count;
-> > @@ -176,6 +179,17 @@ static inline int dfl_feature_platform_data_size(const int num)
-> >                 num * sizeof(struct dfl_feature);
-> >  }
+> > -
+> > +       unsigned long dev_status;
+> > +       void *private;
+> >         int num;
+> >         struct dfl_feature features[0];
+> >  };
 > >
-> > +enum dfl_fpga_devt_type {
-> > +       DFL_FPGA_DEVT_FME,
-> > +       DFL_FPGA_DEVT_PORT,
-> > +       DFL_FPGA_DEVT_MAX,
+> > +static inline
+> > +int dfl_feature_dev_use_begin(struct dfl_feature_platform_data *pdata)
+> > +{
+> > +       /* Test and set IN_USE flags to ensure file is exclusively used */
+> > +       if (test_and_set_bit_lock(DEV_STATUS_IN_USE, &pdata->dev_status))
+> > +               return -EBUSY;
+> > +
+> > +       return 0;
+> > +}
+> > +
+> > +static inline
+> > +void dfl_feature_dev_use_end(struct dfl_feature_platform_data *pdata)
+> > +{
+> > +       clear_bit_unlock(DEV_STATUS_IN_USE, &pdata->dev_status);
+> > +}
+> > +
+> > +static inline
+> > +void dfl_fpga_pdata_set_private(struct dfl_feature_platform_data *pdata,
+> > +                               void *private)
+> > +{
+> > +       pdata->private = private;
+> > +}
+> > +
+> > +static inline
+> > +void *dfl_fpga_pdata_get_private(struct dfl_feature_platform_data *pdata)
+> > +{
+> > +       return pdata->private;
+> > +}
+> > +
+> > +struct dfl_feature_ops {
+> > +       int (*init)(struct platform_device *pdev, struct dfl_feature *feature);
+> > +       void (*uinit)(struct platform_device *pdev,
+> > +                     struct dfl_feature *feature);
+> > +       long (*ioctl)(struct platform_device *pdev, struct dfl_feature *feature,
+> > +                     unsigned int cmd, unsigned long arg);
 > > +};
+> > +
+> >  #define DFL_FPGA_FEATURE_DEV_FME               "dfl-fme"
+> >  #define DFL_FPGA_FEATURE_DEV_PORT              "dfl-port"
 > 
-> Could you move this enum to be close to other similar enums (like
-> dfl_id_type)?  The dfl code has a few enums that are similar, and may
-> need updating (or not) as feature are added.  Putting them close
-> together with appropriate comments would be helpful to keep them all
-> straight.
+> Please move these to the same place as other things that will need to
+> be added to as feature devices are added as noted in the other reviews
+> today.
 
-Agree, I will fix this in v6.
-Thanks for the review.
+as these two strings are used as platform device name, so I think we need to
+keep them in the dfl.h file, because platform driver could reuse the same.
+But I will add detailed comments to guide others to put name string for new
+feature device (platform device) in the dfl.h file together with above ones.
 
+Thanks a lot for the review.
 Hao
