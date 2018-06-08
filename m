@@ -1,89 +1,48 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v5 07/28] fpga: dfl: add chardev support for feature
- devices
-Date: Fri, 8 Jun 2018 08:11:08 +0800
-Message-ID: <20180608001108.GA20571@hao-dev>
-References: <1525229431-3087-1-git-send-email-hao.wu@intel.com>
- <1525229431-3087-8-git-send-email-hao.wu@intel.com>
- <CANk1AXRQx=QtwmSKuWiGprMcfjNnUWcBHNy-hTfP+JaQZsJLLA@mail.gmail.com>
- <20180606122457.GB7681@hao-dev>
- <CANk1AXTmpa1P55qCwZhyn=CGoa3v_hJ-KFCQsy7kMTBpULc6hQ@mail.gmail.com>
+From: Catalin Marinas <catalin.marinas@arm.com>
+Subject: Re: [PATCH 04/24] 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T
+ config option
+Date: Fri, 8 Jun 2018 18:32:07 +0100
+Message-ID: <20180608173207.nwoi25jee52gpdwy@armageddon.cambridge.arm.com>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20180516081910.10067-5-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXTmpa1P55qCwZhyn=CGoa3v_hJ-KFCQsy7kMTBpULc6hQ@mail.gmail.com>
+In-Reply-To: <20180516081910.10067-5-ynorov@caviumnetworks.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Szabolcs Nagy <szabolcs.nagy@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.com>, James Hogan <james.hogan@imgtec.com>, Ch
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 07, 2018 at 01:03:18PM -0500, Alan Tull wrote:
-> On Wed, Jun 6, 2018 at 7:24 AM, Wu Hao <hao.wu@intel.com> wrote:
-> 
-> Hi Hao,
-> 
-> One more...
-> 
-> >> > +static dev_t dfl_get_devt(enum dfl_fpga_devt_type type, int id)
-> >> > +{
-> >> > +       WARN_ON(type >= DFL_FPGA_DEVT_MAX);
-> >> > +
-> >> > +       return MKDEV(MAJOR(dfl_chrdevs[type].devt), id);
-> >> > +}
-> >> > +
-> >> > +/**
-> >> > + * dfl_fpga_register_dev_ops - register cdev ops for feature dev
-> >> > + *
-> >> > + * @pdev: feature dev.
-> >> > + * @fops: file operations for feature dev's cdev.
-> >> > + * @owner: owning module/driver.
-> >> > + *
-> >> > + * Return: 0 on success, negative error code otherwise.
-> >> > + */
-> >> > +int dfl_fpga_register_dev_ops(struct platform_device *pdev,
-> >> > +                             const struct file_operations *fops,
-> >> > +                             struct module *owner)
-> >> > +{
-> >> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> >> > +
-> >> > +       cdev_init(&pdata->cdev, fops);
-> >> > +       pdata->cdev.owner = owner;
-> >> > +
-> >> > +       /*
-> >> > +        * set parent to the feature device so that its refcount is
-> >> > +        * decreased after the last refcount of cdev is gone, that
-> >> > +        * makes sure the feature device is valid during device
-> >> > +        * file's life-cycle.
-> >> > +        */
-> >> > +       pdata->cdev.kobj.parent = &pdev->dev.kobj;
-> >> > +
-> >> > +       return cdev_add(&pdata->cdev, pdev->dev.devt, 1);
-> >> > +}
-> >> > +EXPORT_SYMBOL_GPL(dfl_fpga_register_dev_ops);
-> >> > +
-> >> > +/**
-> >> > + * dfl_fpga_unregister_dev_ops - unregister cdev ops for feature dev
-> >> > + * @pdev: feature dev.
-> >> > + */
-> >> > +void dfl_fpga_unregister_dev_ops(struct platform_device *pdev)
-> >> > +{
-> >> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> >> > +
-> >> > +       cdev_del(&pdata->cdev);
-> >> > +}
-> >> > +EXPORT_SYMBOL_GPL(dfl_fpga_unregister_dev_ops);
-> 
-> How about dfl_fpga_dev_ops_register/unregister?
+On Wed, May 16, 2018 at 11:18:49AM +0300, Yury Norov wrote:
+> diff --git a/arch/Kconfig b/arch/Kconfig
+> index 76c0b54443b1..ee079244dc3c 100644
+> --- a/arch/Kconfig
+> +++ b/arch/Kconfig
+> @@ -264,6 +264,21 @@ config ARCH_THREAD_STACK_ALLOCATOR
+>  config ARCH_WANTS_DYNAMIC_TASK_STRUCT
+>  	bool
+>  
+> +config ARCH_32BIT_OFF_T
+> +	bool
+> +	depends on !64BIT
+> +	help
+> +	  All new 32-bit architectures should have 64-bit off_t type on
+> +	  userspace side which corresponds to the loff_t kernel type. This
+> +	  is the requirement for modern ABIs. Some existing architectures
+> +	  already have 32-bit off_t. This option is enabled for all such
+> +	  architectures explicitly. Namely: arc, arm, blackfin, cris, frv,
+> +	  h8300, hexagon, m32r, m68k, metag, microblaze, mips32, mn10300,
+> +	  nios2, openrisc, parisc32, powerpc32, score, sh, sparc, tile32,
+> +	  unicore32, x86_32 and xtensa. This is the complete list. Any
+> +	  new 32-bit architecture should declare 64-bit off_t type on user
+> +	  side and so should not enable this option.
 
-Sure, will fix this in the v6. Thanks.
+Do you know if this is the case for riscv and nds32, merged in the
+meantime? If not, I suggest you drop this patch altogether and just
+define force_o_largefile() for arm64/ilp32 as we don't seem to stick to
+"all new 32-bit architectures should have 64-bit off_t".
 
-Hao
-
-> 
-> Thanks,
-> Alan
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Catalin
