@@ -1,78 +1,61 @@
-From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: Re: [PATCH 04/24] 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T
- config option
-Date: Mon, 11 Jun 2018 14:27:36 +0300
-Message-ID: <20180611112736.GA19952@yury-thinkpad>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20180516081910.10067-5-ynorov@caviumnetworks.com>
- <20180608173207.nwoi25jee52gpdwy@armageddon.cambridge.arm.com>
- <20180609074227.GA6810@yury-thinkpad>
- <CAK8P3a16ByPtCwKbdLQRDRni3qV9DXLNYZ9QJUH6uHaZYHr34g@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
+ MLOCK_ONFAULT
+Date: Mon, 11 Jun 2018 17:03:30 +0200
+Message-ID: <20180611150330.GQ13364@dhcp22.suse.cz>
+References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
+ <20180611072005.GC13364@dhcp22.suse.cz>
+ <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAK8P3a16ByPtCwKbdLQRDRni3qV9DXLNYZ9QJUH6uHaZYHr34g@mail.gmail.com>
+In-Reply-To: <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Linux ARM <linux-arm-kernel@lists.infradead.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilo>
+To: Jason Baron <jbaron@akamai.com>
+Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 11, 2018 at 09:48:02AM +0200, Arnd Bergmann wrote:
-> On Sat, Jun 9, 2018 at 9:42 AM, Yury Norov <ynorov@caviumnetworks.com> wrote:
-> > On Fri, Jun 08, 2018 at 06:32:07PM +0100, Catalin Marinas wrote:
-> >> On Wed, May 16, 2018 at 11:18:49AM +0300, Yury Norov wrote:
-> >> > diff --git a/arch/Kconfig b/arch/Kconfig
-> >> > index 76c0b54443b1..ee079244dc3c 100644
-> >> > --- a/arch/Kconfig
-> >> > +++ b/arch/Kconfig
-> >> > @@ -264,6 +264,21 @@ config ARCH_THREAD_STACK_ALLOCATOR
-> >> >  config ARCH_WANTS_DYNAMIC_TASK_STRUCT
-> >> >     bool
-> >> >
-> >> > +config ARCH_32BIT_OFF_T
-> >> > +   bool
-> >> > +   depends on !64BIT
-> >> > +   help
-> >> > +     All new 32-bit architectures should have 64-bit off_t type on
-> >> > +     userspace side which corresponds to the loff_t kernel type. This
-> >> > +     is the requirement for modern ABIs. Some existing architectures
-> >> > +     already have 32-bit off_t. This option is enabled for all such
-> >> > +     architectures explicitly. Namely: arc, arm, blackfin, cris, frv,
-> >> > +     h8300, hexagon, m32r, m68k, metag, microblaze, mips32, mn10300,
-> >> > +     nios2, openrisc, parisc32, powerpc32, score, sh, sparc, tile32,
-> >> > +     unicore32, x86_32 and xtensa. This is the complete list. Any
-> >> > +     new 32-bit architecture should declare 64-bit off_t type on user
-> >> > +     side and so should not enable this option.
+On Mon 11-06-18 10:51:44, Jason Baron wrote:
+> On 06/11/2018 03:20 AM, Michal Hocko wrote:
+> > [CCing linux-api - please make sure to CC this mailing list anytime you
+> >  are touching user visible apis]
+> > 
+> > On Fri 08-06-18 14:56:52, Jason Baron wrote:
+> >> In order to free memory that is marked MLOCK_ONFAULT, the memory region
+> >> needs to be first unlocked, before calling MADV_DONTNEED. And if the region
+> >> is to be reused as MLOCK_ONFAULT, we require another call to mlock2() with
+> >> the MLOCK_ONFAULT flag.
 > >>
-> >> Do you know if this is the case for riscv and nds32, merged in the
-> >> meantime? If not, I suggest you drop this patch altogether and just
-> >> define force_o_largefile() for arm64/ilp32 as we don't seem to stick to
-> >> "all new 32-bit architectures should have 64-bit off_t".
+> >> Let's simplify freeing memory that is set MLOCK_ONFAULT, by allowing
+> >> MADV_DONTNEED to work directly for memory that is set MLOCK_ONFAULT.
+> > 
+> > I do not understand the point here. How is MLOCK_ONFAULT any different
+> > from the regular mlock here? If you want to free mlocked memory then
+> > fine but the behavior should be consistent. MLOCK_ONFAULT is just a way
+> > to say that we do not want to pre-populate the mlocked area and do that
+> > lazily on the page fault time. madvise should make any difference here.
 > >
-> > I wrote this patch at request of Arnd Bergmann. This is actually his
-> > words that all new 32-bit architectures should have 64-bit off_t. So
-> > I was surprized when riscv was merged with 32-bit off_t (and I didn't
-> > follow nds32).
-> >
-> > If this rule is still in force, we'd better add new exceptions to this
-> > patch. Otherwise, we can drop it.
-> >
-> > Arnd, could you please comment it?
 > 
-> I completely forgot about it and had assumed that it was merged long
-> ago, sorry about that.
+> The difference for me is after the page has been freed, MLOCK_ONFAULT
+> will re-populate the range if its accessed again. Whereas with regular
+> mlock I don't think it will because its normally done at mlock() or
+> mmap() time.
 
-Hi Arnd,
+The vma would still be locked so we would effectively turn it into
+ONFAULT IIRC.
 
-There are 3 patches like this in ILP32 series that change ABI for new
-targets. I've submitted them in separated series:
-https://lkml.org/lkml/2017/9/25/574
+> In any case, the state of a region being locked with
+> regular mlock and pages not present does not currently exist, whereas it
+> does for MLOCK_ONFAULT, so it seems more natural to do it only for
+> MLOCK_ONFAULT. Finally, the use-case we had for this, didn't need
+> regular mlock().
 
-They all seems to be acked by you. If you ready to upstream the
-series, I can rebase it and add riscv32 and nds32 exceptions.
-
-If Palmer and riscv people will decide to follow new rules, we can
-easily drop the exception.
-
-Yury
+So can we start discussing whether we want to allow MADV_DONTNEED on
+mlocked areas and what downsides it might have? Sure it would turn the
+strong mlock guarantee to have the whole vma resident but is this
+acceptable for something that is an explicit request from the owner of
+the memory?
+-- 
+Michal Hocko
+SUSE Labs
