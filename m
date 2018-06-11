@@ -1,79 +1,65 @@
-From: Jason Baron <jbaron@akamai.com>
-Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
- MLOCK_ONFAULT
-Date: Mon, 11 Jun 2018 12:23:58 -0400
-Message-ID: <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
-References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
- <20180611072005.GC13364@dhcp22.suse.cz>
- <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
- <20180611150330.GQ13364@dhcp22.suse.cz>
+From: Stafford Horne <shorne@gmail.com>
+Subject: Re: [PATCH 2/2] [RFC] disable -Wattribute-alias warning for
+ SYSCALL_DEFINEx()
+Date: Tue, 12 Jun 2018 06:19:53 +0900
+Message-ID: <20180611211953.GJ3652@lianli.shorne-pla.net>
+References: <20171205153259.2522368-1-arnd@arndb.de>
+ <20171205160651.2920270-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180611150330.GQ13364@dhcp22.suse.cz>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20171205160651.2920270-1-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-kbuild@vger.kernel.org, Michal Marek <michal.lkml@markovi.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, Douglas Anderson <dianders@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Heiko Carstens <heiko.carstens@de.ibm.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Matthew Wilcox <matthew@wil.cx>, Matthias Kaehlcke <mka@chromium.org>, Deepa Dinamani <deepa.kernel@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, Stephan Mueller <smueller@chronox.de>, "David S. Miller" <davem@davemloft.net>, Yonghong Song <yhs@fb.com>, Thomas Garnier <thgarnie@google.com>, David Howells <dhowells@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-
-
-On 06/11/2018 11:03 AM, Michal Hocko wrote:
-> On Mon 11-06-18 10:51:44, Jason Baron wrote:
->> On 06/11/2018 03:20 AM, Michal Hocko wrote:
->>> [CCing linux-api - please make sure to CC this mailing list anytime you
->>>  are touching user visible apis]
->>>
->>> On Fri 08-06-18 14:56:52, Jason Baron wrote:
->>>> In order to free memory that is marked MLOCK_ONFAULT, the memory region
->>>> needs to be first unlocked, before calling MADV_DONTNEED. And if the region
->>>> is to be reused as MLOCK_ONFAULT, we require another call to mlock2() with
->>>> the MLOCK_ONFAULT flag.
->>>>
->>>> Let's simplify freeing memory that is set MLOCK_ONFAULT, by allowing
->>>> MADV_DONTNEED to work directly for memory that is set MLOCK_ONFAULT.
->>>
->>> I do not understand the point here. How is MLOCK_ONFAULT any different
->>> from the regular mlock here? If you want to free mlocked memory then
->>> fine but the behavior should be consistent. MLOCK_ONFAULT is just a way
->>> to say that we do not want to pre-populate the mlocked area and do that
->>> lazily on the page fault time. madvise should make any difference here.
->>>
->>
->> The difference for me is after the page has been freed, MLOCK_ONFAULT
->> will re-populate the range if its accessed again. Whereas with regular
->> mlock I don't think it will because its normally done at mlock() or
->> mmap() time.
+On Tue, Dec 05, 2017 at 05:06:31PM +0100, Arnd Bergmann wrote:
+> gcc-8 warns for every single definition of a system call entry
+> point, e.g.:
 > 
-> The vma would still be locked so we would effectively turn it into
-> ONFAULT IIRC.
->
-
-Indeed. I just tried allowing MADV_DONTNEED against regular mlock() and
-in my brief testing it seemed to work as expected against both anonymous
-and file back pages. I am certainly not against allowing it for regular
-mlock() as well, if you think that makes it more consistent.
-
-
->> In any case, the state of a region being locked with
->> regular mlock and pages not present does not currently exist, whereas it
->> does for MLOCK_ONFAULT, so it seems more natural to do it only for
->> MLOCK_ONFAULT. Finally, the use-case we had for this, didn't need
->> regular mlock().
+> include/linux/compat.h:56:18: error: 'compat_sys_rt_sigprocmask' alias between functions of incompatible types 'long int(int,  compat_sigset_t *, compat_sigset_t *, compat_size_t)' {aka 'long int(int,  struct <anonymous> *, struct <anonymous> *, unsigned int)'} and 'long int(long int,  long int,  long int,  long int)' [-Werror=attribute-alias]
+>   asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))\
+>                   ^~~~~~~~~~
+> include/linux/compat.h:45:2: note: in expansion of macro 'COMPAT_SYSCALL_DEFINEx'
+>   COMPAT_SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
+>   ^~~~~~~~~~~~~~~~~~~~~~
+> kernel/signal.c:2601:1: note: in expansion of macro 'COMPAT_SYSCALL_DEFINE4'
+>  COMPAT_SYSCALL_DEFINE4(rt_sigprocmask, int, how, compat_sigset_t __user *, nset,
+>  ^~~~~~~~~~~~~~~~~~~~~~
+> include/linux/compat.h:60:18: note: aliased declaration here
+>   asmlinkage long compat_SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))\
+>                   ^~~~~~~~~~
 > 
-> So can we start discussing whether we want to allow MADV_DONTNEED on
-> mlocked areas and what downsides it might have? Sure it would turn the
-> strong mlock guarantee to have the whole vma resident but is this
-> acceptable for something that is an explicit request from the owner of
-> the memory?
+> The new warning seems reasonable in principle, but it doesn't
+> help us here, since we rely on the type mismatch to sanitize the
+> system call arguments. After I reported this as GCC PR82435, a new
+> -Wno-attribute-alias option was added that could be used to turn the
+> warning off globally on the command line, but I'd prefer to do it a
+> little more fine-grained.
 > 
+> Interestingly, turning a warning off and on again inside of
+> a single macro doesn't always work, in this case I had to add
+> an extra statement inbetween and decided to copy the __SC_TEST
+> one from the native syscall to the compat syscall macro.  See
+> https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83256 for more details
+> about this.
+> 
+> Link: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82435
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 
-If its being explicity requested by the owner it makes sense to me. I
-guess there could be a concern about this breaking some userspace that
-relied on MADV_DONTNEED not freeing locked memory?
+Hi Arnd,
 
-Thanks,
+What ever happened to this patch?  I am compiline the kernel with the new
+OpenRISC GCC backend port https://github.com/stffrdhrn/gcc/commits/or1k-port,
+which is based on gcc 9.0.0 and seeing similar 'alias between functions of
+incompatible types' warnings.
 
--Jason
+I found this old patch which seems will fix the issue, but it seems to not have
+been merged.  Did we find another solution?
+
+Case in point, when I build x86 64 on gcc 8.1.1, I am not seeing the warnings.
+Is this not an issue for x86?
+
+-Stafford
