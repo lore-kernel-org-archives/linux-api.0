@@ -1,7 +1,7 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v6 24/29] fpga: dfl: afu: add port ops support
-Date: Tue, 12 Jun 2018 18:10:38 +0800
-Message-ID: <1528798243-2029-25-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v6 22/29] fpga: dfl: fme-region: add support for compat_id
+Date: Tue, 12 Jun 2018 18:10:36 +0800
+Message-ID: <1528798243-2029-23-git-send-email-hao.wu@intel.com>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
@@ -10,165 +10,30 @@ To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@v
 Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-This patch registers the port ops into the global list in the DFL
-framework, and it allows other modules to use the port ops. And
-This patch includes the implementation of the get_id and enable_set
-ops too.
+This patch adds compat_id support, it reuses fme manager's
+compat id, as the per region compat id is actually from the
+fme manager's register.
 
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
 ---
+v5: reuse fme manager's compat_id as per region compat_id
 v6: rebase, fix copyright time and add Acked-by from Alan.
 ---
- drivers/fpga/dfl-afu-main.c | 122 +++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 121 insertions(+), 1 deletion(-)
+ drivers/fpga/dfl-fme-region.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-index 08f88cd..a38d6a8 100644
---- a/drivers/fpga/dfl-afu-main.c
-+++ b/drivers/fpga/dfl-afu-main.c
-@@ -19,6 +19,83 @@
+diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
+index a6e0bde..0b7e19c 100644
+--- a/drivers/fpga/dfl-fme-region.c
++++ b/drivers/fpga/dfl-fme-region.c
+@@ -45,6 +45,7 @@ static int fme_region_probe(struct platform_device *pdev)
+ 	}
  
- #include "dfl.h"
+ 	region->priv = pdata;
++	region->compat_id = mgr->compat_id;
+ 	platform_set_drvdata(pdev, region);
  
-+/**
-+ * port_enable - enable a port
-+ * @pdev: port platform device.
-+ *
-+ * Enable Port by clear the port soft reset bit, which is set by default.
-+ * The User AFU is unable to respond to any MMIO access while in reset.
-+ * port_enable function should only be used after port_disable
-+ * function.
-+ */
-+static void port_enable(struct platform_device *pdev)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+	void __iomem *base;
-+	u64 v;
-+
-+	WARN_ON(!pdata->disable_count);
-+
-+	if (--pdata->disable_count != 0)
-+		return;
-+
-+	base = dfl_get_feature_ioaddr_by_id(&pdev->dev, PORT_FEATURE_ID_HEADER);
-+
-+	/* Clear port soft reset */
-+	v = readq(base + PORT_HDR_CTRL);
-+	v &= ~PORT_CTRL_SFTRST;
-+	writeq(v, base + PORT_HDR_CTRL);
-+}
-+
-+#define RST_POLL_INVL 10 /* us */
-+#define RST_POLL_TIMEOUT 1000 /* us */
-+
-+/**
-+ * port_disable - disable a port
-+ * @pdev: port platform device.
-+ *
-+ * Disable Port by setting the port soft reset bit, it puts the port into
-+ * reset.
-+ */
-+static int port_disable(struct platform_device *pdev)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+	void __iomem *base;
-+	u64 v;
-+
-+	if (pdata->disable_count++ != 0)
-+		return 0;
-+
-+	base = dfl_get_feature_ioaddr_by_id(&pdev->dev, PORT_FEATURE_ID_HEADER);
-+
-+	/* Set port soft reset */
-+	v = readq(base + PORT_HDR_CTRL);
-+	v |= PORT_CTRL_SFTRST;
-+	writeq(v, base + PORT_HDR_CTRL);
-+
-+	/*
-+	 * HW sets ack bit to 1 when all outstanding requests have been drained
-+	 * on this port and minimum soft reset pulse width has elapsed.
-+	 * Driver polls port_soft_reset_ack to determine if reset done by HW.
-+	 */
-+	if (readq_poll_timeout(base + PORT_HDR_CTRL, v, v & PORT_CTRL_SFTRST,
-+			       RST_POLL_INVL, RST_POLL_TIMEOUT)) {
-+		dev_err(&pdev->dev, "timeout, fail to reset device\n");
-+		return -ETIMEDOUT;
-+	}
-+
-+	return 0;
-+}
-+
-+static int port_get_id(struct platform_device *pdev)
-+{
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(&pdev->dev, PORT_FEATURE_ID_HEADER);
-+
-+	return FIELD_GET(PORT_CAP_PORT_NUM, readq(base + PORT_HDR_CAP));
-+}
-+
- static int port_hdr_init(struct platform_device *pdev,
- 			 struct dfl_feature *feature)
- {
-@@ -119,6 +196,28 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	.unlocked_ioctl = afu_ioctl,
- };
- 
-+static int port_enable_set(struct platform_device *pdev, bool enable)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+	int ret = 0;
-+
-+	mutex_lock(&pdata->lock);
-+	if (enable)
-+		port_enable(pdev);
-+	else
-+		ret = port_disable(pdev);
-+	mutex_unlock(&pdata->lock);
-+
-+	return ret;
-+}
-+
-+static struct dfl_fpga_port_ops afu_port_ops = {
-+	.name = DFL_FPGA_FEATURE_DEV_PORT,
-+	.owner = THIS_MODULE,
-+	.get_id = port_get_id,
-+	.enable_set = port_enable_set,
-+};
-+
- static int afu_probe(struct platform_device *pdev)
- {
- 	int ret;
-@@ -154,7 +253,28 @@ static int afu_remove(struct platform_device *pdev)
- 	.remove  = afu_remove,
- };
- 
--module_platform_driver(afu_driver);
-+static int __init afu_init(void)
-+{
-+	int ret;
-+
-+	dfl_fpga_port_ops_add(&afu_port_ops);
-+
-+	ret = platform_driver_register(&afu_driver);
-+	if (ret)
-+		dfl_fpga_port_ops_del(&afu_port_ops);
-+
-+	return ret;
-+}
-+
-+static void __exit afu_exit(void)
-+{
-+	platform_driver_unregister(&afu_driver);
-+
-+	dfl_fpga_port_ops_del(&afu_port_ops);
-+}
-+
-+module_init(afu_init);
-+module_exit(afu_exit);
- 
- MODULE_DESCRIPTION("FPGA Accelerated Function Unit driver");
- MODULE_AUTHOR("Intel Corporation");
+ 	ret = fpga_region_register(region);
 -- 
 1.8.3.1
