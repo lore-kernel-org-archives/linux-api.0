@@ -1,14 +1,14 @@
 From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH v6 06/29] fpga: add device feature list support
-Date: Tue, 12 Jun 2018 08:27:09 -0700
-Message-ID: <e4e6c6b4-bf85-64e0-5d4b-f0816c2f941c@infradead.org>
+Subject: [PATCH v6 12/29] fpga: add FPGA DFL PCIe device driver
+Date: Tue, 12 Jun 2018 08:27:27 -0700
+Message-ID: <87a783f1-9db8-e56d-c4c4-1802c29c416a@infradead.org>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
- <1528798243-2029-7-git-send-email-hao.wu@intel.com>
+ <1528798243-2029-13-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1528798243-2029-7-git-send-email-hao.wu@intel.com>
+In-Reply-To: <1528798243-2029-13-git-send-email-hao.wu@intel.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Wu Hao <hao.wu@intel.com>, atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
@@ -18,40 +18,36 @@ List-Id: linux-api@vger.kernel.org
 Hi,
 
 On 06/12/2018 03:10 AM, Wu Hao wrote:
-
+> From: Zhang Yi <yi.z.zhang@intel.com>
 > 
 > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> index ee9c542..4052532 100644
+> index 4052532..5faab48 100644
 > --- a/drivers/fpga/Kconfig
 > +++ b/drivers/fpga/Kconfig
-> @@ -130,4 +130,20 @@ config OF_FPGA_REGION
->  	  Support for loading FPGA images by applying a Device Tree
->  	  overlay.
+> @@ -146,4 +146,19 @@ config FPGA_DFL
+>  	  Gate Array (FPGA) solutions which implement Device Feature List.
+>  	  It provides enumeration APIs, and feature device infrastructure.
 >  
-> +config FPGA_DFL
-> +	tristate "FPGA Device Feature List (DFL) support"
-> +	select FPGA_BRIDGE
-> +	select FPGA_REGION
+> +config FPGA_DFL_PCI
+> +	tristate "FPGA DFL PCIe Device Driver"
+> +	depends on PCI && FPGA_DFL
 > +	help
-> +	  Device Feature List (DFL) defines a feature list structure that
-> +	  creates a link list of feature headers within the MMIO space
+> +	  Select this option to enable PCIe driver for PCIe based
 
-	          a linked list
+	                                               PCIe-based
 
-> +	  to provide an extensible way of adding features for FPGA.
-> +	  Driver can walk through the feature headers to enumerate feature
-> +	  devices (e.g FPGA Management Engine, Port and Accelerator
+> +	  Field-Programmable Gate Array (FPGA) solutions which implemented
 
-	          (e.g.
+	                                                 which implement
 
-> +	  Function Unit) and their private features for target FPGA devices.
+> +	  the Device Feature List (DFL). This driver provides interfaces
+> +	  for userspace applications to configure, enumerate, open and access
+> +	  FPGA accelerators on the FPGA DFL devices, enables system level
+> +	  management functions such as FPGA partial reconfiguration, power
+> +	  management, and virtualization with DFL framework and DFL feature
+> +	  device drivers.
 > +
-> +	  Select this option to enable common support for Field-Programmable
-> +	  Gate Array (FPGA) solutions which implement Device Feature List.
-> +	  It provides enumeration APIs, and feature device infrastructure.
-
-	                              ^no comma
-
+> +	  To compile this as a module, choose M here.
 > +
 >  endif # FPGA
 
