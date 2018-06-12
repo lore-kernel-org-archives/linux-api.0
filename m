@@ -1,7 +1,7 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v6 16/29] fpga: dfl: fme: add DFL_FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls support
-Date: Tue, 12 Jun 2018 18:10:30 +0800
-Message-ID: <1528798243-2029-17-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v6 14/29] fpga: dfl: add FPGA Management Engine driver basic framework
+Date: Tue, 12 Jun 2018 18:10:28 +0800
+Message-ID: <1528798243-2029-15-git-send-email-hao.wu@intel.com>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
@@ -10,140 +10,239 @@ To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@v
 Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-DFL_FPGA_GET_API_VERSION and DFL_FPGA_CHECK_EXTENSION ioctls are common
-ones which need to be supported by all feature devices drivers including
-FME and AFU. Userspace application can use these ioctl interfaces to get
-the API info and check if specific extension is supported or not in
-current driver.
+From: Kang Luwei <luwei.kang@intel.com>
 
-This patch implements above 2 ioctls in FPGA Management Engine (FME)
-driver.
+The FPGA Management Engine (FME) provides power, thermal management,
+performance counters, partial reconfiguration and other functions. For each
+function, it is packaged into a private feature linked to the FME feature
+device in the 'Device Feature List'. It's a platform device created by
+DFL framework.
+
+This patch adds the basic framework of FME platform driver. It defines
+sub feature drivers to handle the different sub features, including init,
+uinit and ioctl. It also registers the file operations for the device file.
 
 Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
 Signed-off-by: Shiva Rao <shiva.rao@intel.com>
 Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+Signed-off-by: Kang Luwei <luwei.kang@intel.com>
 Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v2: switched to GPLv2 license.
-v3: rename intel-fpga.h to fpga-dfl.h and rebased.
-v4: fix SPDX license issue.
-    add Acked-by from Alan and Moritz.
-v5: rebase due to DFL framework API naming changes.
-    add DFL_ prefix to IOCTL APIs.
-v6: rebase and fix copyright time.
+v3: rename driver from intel-fpga-fme to dfl-fme
+    rename Kconfig from INTEL_FPGA_FME to FPGA_DFL_FME
+v4: fix SPDX license issue, use dfl-fme as module name
+v5: rebase, due to DFL framework naming changes on functions and data structures.
+    fix uinit order in remove function.
+    remove else block in fme_ioctl function per suggestion from Alan.
+v6: fix copyright time, rebase and add Acked-by from Alan.
 ---
- Documentation/ioctl/ioctl-number.txt |  1 +
- drivers/fpga/dfl-fme-main.c          | 12 +++++++++
- include/uapi/linux/fpga-dfl.h        | 48 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 61 insertions(+)
- create mode 100644 include/uapi/linux/fpga-dfl.h
+ drivers/fpga/Kconfig        |  10 +++
+ drivers/fpga/Makefile       |   3 +
+ drivers/fpga/dfl-fme-main.c | 158 ++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 171 insertions(+)
+ create mode 100644 drivers/fpga/dfl-fme-main.c
 
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index a12488d..4b9afe4 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -322,6 +322,7 @@ Code  Seq#(hex)	Include File		Comments
- 0xB3	00	linux/mmc/ioctl.h
- 0xB4	00-0F	linux/gpio.h		<mailto:linux-gpio@vger.kernel.org>
- 0xB5	00-0F	uapi/linux/rpmsg.h	<mailto:linux-remoteproc@vger.kernel.org>
-+0xB6	all	linux/fpga-dfl.h
- 0xC0	00-0F	linux/usb/iowarrior.h
- 0xCA	00-0F	uapi/misc/cxl.h
- 0xCA	10-2F	uapi/misc/ocxl.h
-diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-index 77d9ffc..889d669 100644
---- a/drivers/fpga/dfl-fme-main.c
-+++ b/drivers/fpga/dfl-fme-main.c
-@@ -16,6 +16,7 @@
+diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+index 5faab48..45e9220 100644
+--- a/drivers/fpga/Kconfig
++++ b/drivers/fpga/Kconfig
+@@ -146,6 +146,16 @@ config FPGA_DFL
+ 	  Gate Array (FPGA) solutions which implement Device Feature List.
+ 	  It provides enumeration APIs, and feature device infrastructure.
  
- #include <linux/kernel.h>
- #include <linux/module.h>
-+#include <linux/fpga-dfl.h>
- 
- #include "dfl.h"
- 
-@@ -116,6 +117,13 @@ static void fme_hdr_uinit(struct platform_device *pdev,
- 	},
- };
- 
-+static long fme_ioctl_check_extension(struct dfl_feature_platform_data *pdata,
-+				      unsigned long arg)
-+{
-+	/* No extension support for now */
-+	return 0;
-+}
++config FPGA_DFL_FME
++	tristate "FPGA DFL FME Driver"
++	depends on FPGA_DFL
++	help
++	  The FPGA Management Engine (FME) is a feature device implemented
++	  under Device Feature List (DFL) framework. Select this option to
++	  enable the platform device driver for FME which implements all
++	  FPGA platform level management features. There shall be 1 FME
++	  per DFL based FPGA device.
 +
- static int fme_open(struct inode *inode, struct file *filp)
- {
- 	struct platform_device *fdev = dfl_fpga_inode_to_feature_dev(inode);
-@@ -156,6 +164,10 @@ static long fme_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
+ config FPGA_DFL_PCI
+ 	tristate "FPGA DFL PCIe Device Driver"
+ 	depends on PCI && FPGA_DFL
+diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+index 02e0253..db11f34 100644
+--- a/drivers/fpga/Makefile
++++ b/drivers/fpga/Makefile
+@@ -31,6 +31,9 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
  
- 	switch (cmd) {
-+	case DFL_FPGA_GET_API_VERSION:
-+		return DFL_FPGA_API_VERSION;
-+	case DFL_FPGA_CHECK_EXTENSION:
-+		return fme_ioctl_check_extension(pdata, arg);
- 	default:
- 		/*
- 		 * Let sub-feature's ioctl function to handle the cmd
-diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
+ # FPGA Device Feature List Support
+ obj-$(CONFIG_FPGA_DFL)			+= dfl.o
++obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
++
++dfl-fme-objs := dfl-fme-main.o
+ 
+ # Drivers for FPGAs which implement DFL
+ obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
+diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
 new file mode 100644
-index 0000000..9ff26cb
+index 0000000..a2ae9b3
 --- /dev/null
-+++ b/include/uapi/linux/fpga-dfl.h
-@@ -0,0 +1,48 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++++ b/drivers/fpga/dfl-fme-main.c
+@@ -0,0 +1,158 @@
++// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Header File for FPGA DFL User API
++ * Driver for FPGA Management Engine (FME)
 + *
 + * Copyright (C) 2017-2018 Intel Corporation, Inc.
 + *
 + * Authors:
 + *   Kang Luwei <luwei.kang@intel.com>
-+ *   Zhang Yi <yi.z.zhang@intel.com>
-+ *   Wu Hao <hao.wu@intel.com>
 + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
++ *   Joseph Grecco <joe.grecco@intel.com>
++ *   Enno Luebbers <enno.luebbers@intel.com>
++ *   Tim Whisonant <tim.whisonant@intel.com>
++ *   Ananda Ravuri <ananda.ravuri@intel.com>
++ *   Henry Mitchel <henry.mitchel@intel.com>
 + */
 +
-+#ifndef _UAPI_LINUX_FPGA_DFL_H
-+#define _UAPI_LINUX_FPGA_DFL_H
++#include <linux/kernel.h>
++#include <linux/module.h>
 +
-+#define DFL_FPGA_API_VERSION 0
++#include "dfl.h"
 +
-+/*
-+ * The IOCTL interface for DFL based FPGA is designed for extensibility by
-+ * embedding the structure length (argsz) and flags into structures passed
-+ * between kernel and userspace. This design referenced the VFIO IOCTL
-+ * interface (include/uapi/linux/vfio.h).
-+ */
++static int fme_hdr_init(struct platform_device *pdev,
++			struct dfl_feature *feature)
++{
++	dev_dbg(&pdev->dev, "FME HDR Init.\n");
 +
-+#define DFL_FPGA_MAGIC 0xB6
++	return 0;
++}
 +
-+#define DFL_FPGA_BASE 0
++static void fme_hdr_uinit(struct platform_device *pdev,
++			  struct dfl_feature *feature)
++{
++	dev_dbg(&pdev->dev, "FME HDR UInit.\n");
++}
 +
-+/**
-+ * DFL_FPGA_GET_API_VERSION - _IO(DFL_FPGA_MAGIC, DFL_FPGA_BASE + 0)
-+ *
-+ * Report the version of the driver API.
-+ * Return: Driver API Version.
-+ */
++static const struct dfl_feature_ops fme_hdr_ops = {
++	.init = fme_hdr_init,
++	.uinit = fme_hdr_uinit,
++};
 +
-+#define DFL_FPGA_GET_API_VERSION	_IO(DFL_FPGA_MAGIC, DFL_FPGA_BASE + 0)
++static struct dfl_feature_driver fme_feature_drvs[] = {
++	{
++		.id = FME_FEATURE_ID_HEADER,
++		.ops = &fme_hdr_ops,
++	},
++	{
++		.ops = NULL,
++	},
++};
 +
-+/**
-+ * DFL_FPGA_CHECK_EXTENSION - _IO(DFL_FPGA_MAGIC, DFL_FPGA_BASE + 1)
-+ *
-+ * Check whether an extension is supported.
-+ * Return: 0 if not supported, otherwise the extension is supported.
-+ */
++static int fme_open(struct inode *inode, struct file *filp)
++{
++	struct platform_device *fdev = dfl_fpga_inode_to_feature_dev(inode);
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(&fdev->dev);
++	int ret;
 +
-+#define DFL_FPGA_CHECK_EXTENSION	_IO(DFL_FPGA_MAGIC, DFL_FPGA_BASE + 1)
++	if (WARN_ON(!pdata))
++		return -ENODEV;
 +
-+#endif /* _UAPI_LINUX_FPGA_DFL_H */
++	ret = dfl_feature_dev_use_begin(pdata);
++	if (ret)
++		return ret;
++
++	dev_dbg(&fdev->dev, "Device File Open\n");
++	filp->private_data = pdata;
++
++	return 0;
++}
++
++static int fme_release(struct inode *inode, struct file *filp)
++{
++	struct dfl_feature_platform_data *pdata = filp->private_data;
++	struct platform_device *pdev = pdata->dev;
++
++	dev_dbg(&pdev->dev, "Device File Release\n");
++	dfl_feature_dev_use_end(pdata);
++
++	return 0;
++}
++
++static long fme_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
++{
++	struct dfl_feature_platform_data *pdata = filp->private_data;
++	struct platform_device *pdev = pdata->dev;
++	struct dfl_feature *f;
++	long ret;
++
++	dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
++
++	switch (cmd) {
++	default:
++		/*
++		 * Let sub-feature's ioctl function to handle the cmd
++		 * Sub-feature's ioctl returns -ENODEV when cmd is not
++		 * handled in this sub feature, and returns 0 and other
++		 * error code if cmd is handled.
++		 */
++		dfl_fpga_dev_for_each_feature(pdata, f) {
++			if (f->ops && f->ops->ioctl) {
++				ret = f->ops->ioctl(pdev, f, cmd, arg);
++				if (ret != -ENODEV)
++					return ret;
++			}
++		}
++	}
++
++	return -EINVAL;
++}
++
++static const struct file_operations fme_fops = {
++	.owner		= THIS_MODULE,
++	.open		= fme_open,
++	.release	= fme_release,
++	.unlocked_ioctl = fme_ioctl,
++};
++
++static int fme_probe(struct platform_device *pdev)
++{
++	int ret;
++
++	ret = dfl_fpga_dev_feature_init(pdev, fme_feature_drvs);
++	if (ret)
++		goto exit;
++
++	ret = dfl_fpga_dev_ops_register(pdev, &fme_fops, THIS_MODULE);
++	if (ret)
++		goto feature_uinit;
++
++	return 0;
++
++feature_uinit:
++	dfl_fpga_dev_feature_uinit(pdev);
++exit:
++	return ret;
++}
++
++static int fme_remove(struct platform_device *pdev)
++{
++	dfl_fpga_dev_ops_unregister(pdev);
++	dfl_fpga_dev_feature_uinit(pdev);
++
++	return 0;
++}
++
++static struct platform_driver fme_driver = {
++	.driver	= {
++		.name    = DFL_FPGA_FEATURE_DEV_FME,
++	},
++	.probe   = fme_probe,
++	.remove  = fme_remove,
++};
++
++module_platform_driver(fme_driver);
++
++MODULE_DESCRIPTION("FPGA Management Engine driver");
++MODULE_AUTHOR("Intel Corporation");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:dfl-fme");
 -- 
 1.8.3.1
