@@ -1,67 +1,163 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v6 19/29] fpga: dfl: fme-mgr: add compat_id support
-Date: Tue, 12 Jun 2018 18:10:33 +0800
-Message-ID: <1528798243-2029-20-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v6 21/29] fpga: dfl: add fpga region platform driver for FME
+Date: Tue, 12 Jun 2018 18:10:35 +0800
+Message-ID: <1528798243-2029-22-git-send-email-hao.wu@intel.com>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds compat_id support to fme manager driver, it
-reads the ID from the hardware register. And it could be used
-for compatibility check before partial reconfiguration.
+This patch adds fpga region platform driver for FPGA Management Engine.
+It register an fpga region with given fpga manager / bridge device.
 
+Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v6: add Acked-by from Alan.
+v3: rename driver to fpga-dfl-fme-region
+    fix fpga_mgr_put order problem in remove function.
+    rebased due to fpga api changes.
+v4: rename to dfl-fme-region, fix SPDX license issue
+    include dfl-fme-pr.h instead of dfl-fme.h and dfl.h
+    add Acked-by from Alan and Moritz
+v5: rebase, due to fpga region api changes.
+v6: rebase, and fix copyright time.
 ---
- drivers/fpga/dfl-fme-mgr.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ drivers/fpga/Kconfig          |  6 +++
+ drivers/fpga/Makefile         |  1 +
+ drivers/fpga/dfl-fme-region.c | 88 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 95 insertions(+)
+ create mode 100644 drivers/fpga/dfl-fme-region.c
 
-diff --git a/drivers/fpga/dfl-fme-mgr.c b/drivers/fpga/dfl-fme-mgr.c
-index be0060a..691761f 100644
---- a/drivers/fpga/dfl-fme-mgr.c
-+++ b/drivers/fpga/dfl-fme-mgr.c
-@@ -272,9 +272,17 @@ static u64 fme_mgr_status(struct fpga_manager *mgr)
- 	.status = fme_mgr_status,
- };
+diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+index c933d67..a0aa163 100644
+--- a/drivers/fpga/Kconfig
++++ b/drivers/fpga/Kconfig
+@@ -168,6 +168,12 @@ config FPGA_DFL_FME_BRIDGE
+ 	help
+ 	  Say Y to enable FPGA Bridge driver for FPGA Management Engine.
  
-+static void fme_mgr_get_compat_id(void __iomem *fme_pr,
-+				  struct fpga_compat_id *id)
++config FPGA_DFL_FME_REGION
++	tristate "FPGA DFL FME Region Driver"
++	depends on FPGA_DFL_FME
++	help
++	  Say Y to enable FPGA Region driver for FPGA Management Engine.
++
+ config FPGA_DFL_PCI
+ 	tristate "FPGA DFL PCIe Device Driver"
+ 	depends on PCI && FPGA_DFL
+diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+index cda0551..637c275 100644
+--- a/drivers/fpga/Makefile
++++ b/drivers/fpga/Makefile
+@@ -34,6 +34,7 @@ obj-$(CONFIG_FPGA_DFL)			+= dfl.o
+ obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
+ obj-$(CONFIG_FPGA_DFL_FME_MGR)		+= dfl-fme-mgr.o
+ obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
++obj-$(CONFIG_FPGA_DFL_FME_REGION)	+= dfl-fme-region.o
+ 
+ dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
+ 
+diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
+new file mode 100644
+index 0000000..a6e0bde
+--- /dev/null
++++ b/drivers/fpga/dfl-fme-region.c
+@@ -0,0 +1,88 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * FPGA Region Driver for FPGA Management Engine (FME)
++ *
++ * Copyright (C) 2017-2018 Intel Corporation, Inc.
++ *
++ * Authors:
++ *   Wu Hao <hao.wu@intel.com>
++ *   Joseph Grecco <joe.grecco@intel.com>
++ *   Enno Luebbers <enno.luebbers@intel.com>
++ *   Tim Whisonant <tim.whisonant@intel.com>
++ *   Ananda Ravuri <ananda.ravuri@intel.com>
++ *   Henry Mitchel <henry.mitchel@intel.com>
++ */
++
++#include <linux/module.h>
++#include <linux/fpga/fpga-region.h>
++
++#include "dfl-fme-pr.h"
++
++static int fme_region_get_bridges(struct fpga_region *region)
 +{
-+	id->id_l = readq(fme_pr + FME_PR_INTFC_ID_L);
-+	id->id_h = readq(fme_pr + FME_PR_INTFC_ID_H);
++	struct dfl_fme_region_pdata *pdata = region->priv;
++	struct device *dev = &pdata->br->dev;
++
++	return fpga_bridge_get_to_list(dev, region->info, &region->bridge_list);
 +}
 +
- static int fme_mgr_probe(struct platform_device *pdev)
- {
- 	struct dfl_fme_mgr_pdata *pdata = dev_get_platdata(&pdev->dev);
-+	struct fpga_compat_id *compat_id;
- 	struct device *dev = &pdev->dev;
- 	struct fme_mgr_priv *priv;
- 	struct fpga_manager *mgr;
-@@ -295,11 +303,18 @@ static int fme_mgr_probe(struct platform_device *pdev)
- 			return PTR_ERR(priv->ioaddr);
- 	}
- 
-+	compat_id = devm_kzalloc(dev, sizeof(*compat_id), GFP_KERNEL);
-+	if (!compat_id)
-+		return -ENOMEM;
++static int fme_region_probe(struct platform_device *pdev)
++{
++	struct dfl_fme_region_pdata *pdata = dev_get_platdata(&pdev->dev);
++	struct device *dev = &pdev->dev;
++	struct fpga_region *region;
++	struct fpga_manager *mgr;
++	int ret;
 +
-+	fme_mgr_get_compat_id(priv->ioaddr, compat_id);
++	mgr = fpga_mgr_get(&pdata->mgr->dev);
++	if (IS_ERR(mgr))
++		return -EPROBE_DEFER;
 +
- 	mgr = fpga_mgr_create(dev, "DFL FME FPGA Manager",
- 			      &fme_mgr_ops, priv);
- 	if (!mgr)
- 		return -ENOMEM;
- 
-+	mgr->compat_id = compat_id;
- 	platform_set_drvdata(pdev, mgr);
- 
- 	ret = fpga_mgr_register(mgr);
++	region = fpga_region_create(dev, mgr, fme_region_get_bridges);
++	if (!region) {
++		ret = -ENOMEM;
++		goto eprobe_mgr_put;
++	}
++
++	region->priv = pdata;
++	platform_set_drvdata(pdev, region);
++
++	ret = fpga_region_register(region);
++	if (ret)
++		goto region_free;
++
++	dev_dbg(dev, "DFL FME FPGA Region probed\n");
++
++	return 0;
++
++region_free:
++	fpga_region_free(region);
++eprobe_mgr_put:
++	fpga_mgr_put(mgr);
++	return ret;
++}
++
++static int fme_region_remove(struct platform_device *pdev)
++{
++	struct fpga_region *region = dev_get_drvdata(&pdev->dev);
++
++	fpga_region_unregister(region);
++	fpga_mgr_put(region->mgr);
++
++	return 0;
++}
++
++static struct platform_driver fme_region_driver = {
++	.driver	= {
++		.name    = DFL_FPGA_FME_REGION,
++	},
++	.probe   = fme_region_probe,
++	.remove  = fme_region_remove,
++};
++
++module_platform_driver(fme_region_driver);
++
++MODULE_DESCRIPTION("FPGA Region for DFL FPGA Management Engine");
++MODULE_AUTHOR("Intel Corporation");
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS("platform:dfl-fme-region");
 -- 
 1.8.3.1
