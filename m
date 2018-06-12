@@ -1,95 +1,85 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v6 23/29] fpga: dfl: add FPGA Accelerated Function Unit driver basic framework
-Date: Tue, 12 Jun 2018 18:10:37 +0800
-Message-ID: <1528798243-2029-24-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v6 20/29] fpga: dfl: add fpga bridge platform driver for FME
+Date: Tue, 12 Jun 2018 18:10:34 +0800
+Message-ID: <1528798243-2029-21-git-send-email-hao.wu@intel.com>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On DFL FPGA devices, the Accelerated Function Unit (AFU), can be
-reprogrammed for different functions. It connects to the FPGA
-infrastructure (static FPGA region) via a Port. Port CSRs are
-implemented separately from the AFU CSRs to provide control and
-status of the Port. Once valid PR bitstream is programmed into
-the AFU, it allows access to the AFU CSRs in the AFU MMIO space.
-
-This patch only implements basic driver framework for AFU, including
-device file operation framework.
+This patch adds fpga bridge platform driver for FPGA Management Engine.
+It implements the enable_set callback for fpga bridge.
 
 Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
 Signed-off-by: Shiva Rao <shiva.rao@intel.com>
 Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v3: rename driver to dfl-afu-main.c
-v4: rename to dfl-port and fix SPDX license issue.
-v5: rebase, and add Acked-by from Alan.
-    fix uinit order in remove function.
-v6: rebase, and fix copyright time.
+v3: rename driver to fpga-dfl-fme-br
+    remove useless dev_dbg in probe function.
+    rebased due to fpga api change.
+v4: rename to dfl-fme-br and fix SPDX license issue
+    include dfl-fme-pr.h instead of dfl-fme.h
+    add Acked-by from Alan and Moritz
+v5: rebase due to API changes.
+    defer port and its ops finding when really need.
+v6: reabse, and fix copyright time.
 ---
- drivers/fpga/Kconfig        |   9 +++
- drivers/fpga/Makefile       |   2 +
- drivers/fpga/dfl-afu-main.c | 162 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 173 insertions(+)
- create mode 100644 drivers/fpga/dfl-afu-main.c
+ drivers/fpga/Kconfig      |   6 +++
+ drivers/fpga/Makefile     |   1 +
+ drivers/fpga/dfl-fme-br.c | 114 ++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 121 insertions(+)
+ create mode 100644 drivers/fpga/dfl-fme-br.c
 
 diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index a0aa163..e3b140e 100644
+index ca97f3c..c933d67 100644
 --- a/drivers/fpga/Kconfig
 +++ b/drivers/fpga/Kconfig
-@@ -174,6 +174,15 @@ config FPGA_DFL_FME_REGION
+@@ -162,6 +162,12 @@ config FPGA_DFL_FME_MGR
  	help
- 	  Say Y to enable FPGA Region driver for FPGA Management Engine.
+ 	  Say Y to enable FPGA Manager driver for FPGA Management Engine.
  
-+config FPGA_DFL_AFU
-+	tristate "FPGA DFL AFU Driver"
-+	depends on FPGA_DFL
++config FPGA_DFL_FME_BRIDGE
++	tristate "FPGA DFL FME Bridge Driver"
++	depends on FPGA_DFL_FME
 +	help
-+	  This is the driver for FPGA Accelerated Function Unit (AFU) which
-+	  implements AFU and Port management features. A User AFU connects
-+	  to the FPGA infrastructure via a Port. There may be more than 1
-+	  Port/AFU per DFL based FPGA device.
++	  Say Y to enable FPGA Bridge driver for FPGA Management Engine.
 +
  config FPGA_DFL_PCI
  	tristate "FPGA DFL PCIe Device Driver"
  	depends on PCI && FPGA_DFL
 diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 637c275..1ac7749 100644
+index 23f41b0..cda0551 100644
 --- a/drivers/fpga/Makefile
 +++ b/drivers/fpga/Makefile
-@@ -35,8 +35,10 @@ obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
+@@ -33,6 +33,7 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
+ obj-$(CONFIG_FPGA_DFL)			+= dfl.o
+ obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
  obj-$(CONFIG_FPGA_DFL_FME_MGR)		+= dfl-fme-mgr.o
- obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
- obj-$(CONFIG_FPGA_DFL_FME_REGION)	+= dfl-fme-region.o
-+obj-$(CONFIG_FPGA_DFL_AFU)		+= dfl-afu.o
++obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
  
  dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
-+dfl-afu-objs := dfl-afu-main.o
  
- # Drivers for FPGAs which implement DFL
- obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
-diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+diff --git a/drivers/fpga/dfl-fme-br.c b/drivers/fpga/dfl-fme-br.c
 new file mode 100644
-index 0000000..08f88cd
+index 0000000..7cc041d
 --- /dev/null
-+++ b/drivers/fpga/dfl-afu-main.c
-@@ -0,0 +1,162 @@
++++ b/drivers/fpga/dfl-fme-br.c
+@@ -0,0 +1,114 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Driver for FPGA Accelerated Function Unit (AFU)
++ * FPGA Bridge Driver for FPGA Management Engine (FME)
 + *
 + * Copyright (C) 2017-2018 Intel Corporation, Inc.
 + *
 + * Authors:
 + *   Wu Hao <hao.wu@intel.com>
-+ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
 + *   Joseph Grecco <joe.grecco@intel.com>
 + *   Enno Luebbers <enno.luebbers@intel.com>
 + *   Tim Whisonant <tim.whisonant@intel.com>
@@ -97,151 +87,104 @@ index 0000000..08f88cd
 + *   Henry Mitchel <henry.mitchel@intel.com>
 + */
 +
-+#include <linux/kernel.h>
 +#include <linux/module.h>
++#include <linux/fpga/fpga-bridge.h>
 +
 +#include "dfl.h"
++#include "dfl-fme-pr.h"
 +
-+static int port_hdr_init(struct platform_device *pdev,
-+			 struct dfl_feature *feature)
-+{
-+	dev_dbg(&pdev->dev, "PORT HDR Init.\n");
-+
-+	return 0;
-+}
-+
-+static void port_hdr_uinit(struct platform_device *pdev,
-+			   struct dfl_feature *feature)
-+{
-+	dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
-+}
-+
-+static const struct dfl_feature_ops port_hdr_ops = {
-+	.init = port_hdr_init,
-+	.uinit = port_hdr_uinit,
++struct fme_br_priv {
++	struct dfl_fme_br_pdata *pdata;
++	struct dfl_fpga_port_ops *port_ops;
++	struct platform_device *port_pdev;
 +};
 +
-+static struct dfl_feature_driver port_feature_drvs[] = {
-+	{
-+		.id = PORT_FEATURE_ID_HEADER,
-+		.ops = &port_hdr_ops,
-+	},
-+	{
-+		.ops = NULL,
-+	}
-+};
-+
-+static int afu_open(struct inode *inode, struct file *filp)
++static int fme_bridge_enable_set(struct fpga_bridge *bridge, bool enable)
 +{
-+	struct platform_device *fdev = dfl_fpga_inode_to_feature_dev(inode);
-+	struct dfl_feature_platform_data *pdata;
-+	int ret;
++	struct fme_br_priv *priv = bridge->priv;
++	struct platform_device *port_pdev;
++	struct dfl_fpga_port_ops *ops;
 +
-+	pdata = dev_get_platdata(&fdev->dev);
-+	if (WARN_ON(!pdata))
-+		return -ENODEV;
++	if (!priv->port_pdev) {
++		port_pdev = dfl_fpga_cdev_find_port(priv->pdata->cdev,
++						    &priv->pdata->port_id,
++						    dfl_fpga_check_port_id);
++		if (!port_pdev)
++			return -ENODEV;
 +
-+	ret = dfl_feature_dev_use_begin(pdata);
-+	if (ret)
-+		return ret;
-+
-+	dev_dbg(&fdev->dev, "Device File Open\n");
-+	filp->private_data = fdev;
-+
-+	return 0;
-+}
-+
-+static int afu_release(struct inode *inode, struct file *filp)
-+{
-+	struct platform_device *pdev = filp->private_data;
-+	struct dfl_feature_platform_data *pdata;
-+
-+	dev_dbg(&pdev->dev, "Device File Release\n");
-+
-+	pdata = dev_get_platdata(&pdev->dev);
-+
-+	dfl_feature_dev_use_end(pdata);
-+
-+	return 0;
-+}
-+
-+static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-+{
-+	struct platform_device *pdev = filp->private_data;
-+	struct dfl_feature_platform_data *pdata;
-+	struct dfl_feature *f;
-+	long ret;
-+
-+	dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
-+
-+	pdata = dev_get_platdata(&pdev->dev);
-+
-+	switch (cmd) {
-+	default:
-+		/*
-+		 * Let sub-feature's ioctl function to handle the cmd
-+		 * Sub-feature's ioctl returns -ENODEV when cmd is not
-+		 * handled in this sub feature, and returns 0 and other
-+		 * error code if cmd is handled.
-+		 */
-+		dfl_fpga_dev_for_each_feature(pdata, f)
-+			if (f->ops && f->ops->ioctl) {
-+				ret = f->ops->ioctl(pdev, f, cmd, arg);
-+				if (ret != -ENODEV)
-+					return ret;
-+			}
++		priv->port_pdev = port_pdev;
 +	}
 +
-+	return -EINVAL;
++	if (priv->port_pdev && !priv->port_ops) {
++		ops = dfl_fpga_port_ops_get(priv->port_pdev);
++		if (!ops || !ops->enable_set)
++			return -ENOENT;
++
++		priv->port_ops = ops;
++	}
++
++	return priv->port_ops->enable_set(priv->port_pdev, enable);
 +}
 +
-+static const struct file_operations afu_fops = {
-+	.owner = THIS_MODULE,
-+	.open = afu_open,
-+	.release = afu_release,
-+	.unlocked_ioctl = afu_ioctl,
++static const struct fpga_bridge_ops fme_bridge_ops = {
++	.enable_set = fme_bridge_enable_set,
 +};
 +
-+static int afu_probe(struct platform_device *pdev)
++static int fme_br_probe(struct platform_device *pdev)
 +{
++	struct device *dev = &pdev->dev;
++	struct fme_br_priv *priv;
++	struct fpga_bridge *br;
 +	int ret;
 +
-+	dev_dbg(&pdev->dev, "%s\n", __func__);
++	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
 +
-+	ret = dfl_fpga_dev_feature_init(pdev, port_feature_drvs);
-+	if (ret)
-+		return ret;
++	priv->pdata = dev_get_platdata(dev);
 +
-+	ret = dfl_fpga_dev_ops_register(pdev, &afu_fops, THIS_MODULE);
++	br = fpga_bridge_create(dev, "DFL FPGA FME Bridge",
++				&fme_bridge_ops, priv);
++	if (!br)
++		return -ENOMEM;
++
++	platform_set_drvdata(pdev, br);
++
++	ret = fpga_bridge_register(br);
 +	if (ret)
-+		dfl_fpga_dev_feature_uinit(pdev);
++		fpga_bridge_free(br);
 +
 +	return ret;
 +}
 +
-+static int afu_remove(struct platform_device *pdev)
++static int fme_br_remove(struct platform_device *pdev)
 +{
-+	dev_dbg(&pdev->dev, "%s\n", __func__);
++	struct fpga_bridge *br = platform_get_drvdata(pdev);
++	struct fme_br_priv *priv = br->priv;
 +
-+	dfl_fpga_dev_ops_unregister(pdev);
-+	dfl_fpga_dev_feature_uinit(pdev);
++	fpga_bridge_unregister(br);
++
++	if (priv->port_pdev)
++		put_device(&priv->port_pdev->dev);
++	if (priv->port_ops)
++		dfl_fpga_port_ops_put(priv->port_ops);
 +
 +	return 0;
 +}
 +
-+static struct platform_driver afu_driver = {
++static struct platform_driver fme_br_driver = {
 +	.driver	= {
-+		.name    = DFL_FPGA_FEATURE_DEV_PORT,
++		.name    = DFL_FPGA_FME_BRIDGE,
 +	},
-+	.probe   = afu_probe,
-+	.remove  = afu_remove,
++	.probe   = fme_br_probe,
++	.remove  = fme_br_remove,
 +};
 +
-+module_platform_driver(afu_driver);
++module_platform_driver(fme_br_driver);
 +
-+MODULE_DESCRIPTION("FPGA Accelerated Function Unit driver");
++MODULE_DESCRIPTION("FPGA Bridge for DFL FPGA Management Engine");
 +MODULE_AUTHOR("Intel Corporation");
 +MODULE_LICENSE("GPL v2");
-+MODULE_ALIAS("platform:dfl-port");
++MODULE_ALIAS("platform:dfl-fme-bridge");
 -- 
 1.8.3.1
