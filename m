@@ -1,163 +1,228 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v6 21/29] fpga: dfl: add fpga region platform driver for FME
-Date: Tue, 12 Jun 2018 18:10:35 +0800
-Message-ID: <1528798243-2029-22-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v6 25/29] fpga: dfl: afu: add header sub feature support
+Date: Tue, 12 Jun 2018 18:10:39 +0800
+Message-ID: <1528798243-2029-26-git-send-email-hao.wu@intel.com>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds fpga region platform driver for FPGA Management Engine.
-It register an fpga region with given fpga manager / bridge device.
+The port header register set is always present for port, it is mainly
+for capability, control and status of the ports that AFU connected to.
+
+This patch implements header sub feature support. Below user interfaces
+are created by this patch.
+
+Sysfs interface:
+* /sys/class/fpga_region/<regionX>/<dfl-port.x>/id
+  Read-only. Port ID.
+
+Ioctl interface:
+* DFL_FPGA_PORT_RESET
+  Reset the FPGA Port and its AFU.
 
 Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
 Signed-off-by: Shiva Rao <shiva.rao@intel.com>
 Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v3: rename driver to fpga-dfl-fme-region
-    fix fpga_mgr_put order problem in remove function.
-    rebased due to fpga api changes.
-v4: rename to dfl-fme-region, fix SPDX license issue
-    include dfl-fme-pr.h instead of dfl-fme.h and dfl.h
-    add Acked-by from Alan and Moritz
-v5: rebase, due to fpga region api changes.
-v6: rebase, and fix copyright time.
+v3: rename driver name to fpga-dfl-afu
+    add more description for reset ioctl.
+    fix some checkpatch issues.
+v4: rebase.
+    add Acked-by from Alan.
+v5: rebase, and merge port functions from DFL framework code.
+    add DFL_ prefix to APIs.
+v6: rebase.
 ---
- drivers/fpga/Kconfig          |  6 +++
- drivers/fpga/Makefile         |  1 +
- drivers/fpga/dfl-fme-region.c | 88 +++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 95 insertions(+)
- create mode 100644 drivers/fpga/dfl-fme-region.c
+ Documentation/ABI/testing/sysfs-platform-dfl-port |  7 ++
+ drivers/fpga/dfl-afu-main.c                       | 79 ++++++++++++++++++++++-
+ include/uapi/linux/fpga-dfl.h                     | 17 +++++
+ 3 files changed, 102 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-platform-dfl-port
 
-diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index c933d67..a0aa163 100644
---- a/drivers/fpga/Kconfig
-+++ b/drivers/fpga/Kconfig
-@@ -168,6 +168,12 @@ config FPGA_DFL_FME_BRIDGE
- 	help
- 	  Say Y to enable FPGA Bridge driver for FPGA Management Engine.
- 
-+config FPGA_DFL_FME_REGION
-+	tristate "FPGA DFL FME Region Driver"
-+	depends on FPGA_DFL_FME
-+	help
-+	  Say Y to enable FPGA Region driver for FPGA Management Engine.
-+
- config FPGA_DFL_PCI
- 	tristate "FPGA DFL PCIe Device Driver"
- 	depends on PCI && FPGA_DFL
-diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index cda0551..637c275 100644
---- a/drivers/fpga/Makefile
-+++ b/drivers/fpga/Makefile
-@@ -34,6 +34,7 @@ obj-$(CONFIG_FPGA_DFL)			+= dfl.o
- obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
- obj-$(CONFIG_FPGA_DFL_FME_MGR)		+= dfl-fme-mgr.o
- obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
-+obj-$(CONFIG_FPGA_DFL_FME_REGION)	+= dfl-fme-region.o
- 
- dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
- 
-diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
+diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
 new file mode 100644
-index 0000000..a6e0bde
+index 0000000..17c72d5
 --- /dev/null
-+++ b/drivers/fpga/dfl-fme-region.c
-@@ -0,0 +1,88 @@
-+// SPDX-License-Identifier: GPL-2.0
++++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
+@@ -0,0 +1,7 @@
++What:		/sys/bus/platform/devices/dfl-port.0/id
++Date:		June 2018
++KernelVersion:	4.18
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. It returns id of this port. One DFL FPGA device
++		may have more than one port. Userspace could use this id to
++		distinguish different ports under same FPGA device.
+diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+index a38d6a8..30a6937 100644
+--- a/drivers/fpga/dfl-afu-main.c
++++ b/drivers/fpga/dfl-afu-main.c
+@@ -16,6 +16,7 @@
+ 
+ #include <linux/kernel.h>
+ #include <linux/module.h>
++#include <linux/fpga-dfl.h>
+ 
+ #include "dfl.h"
+ 
+@@ -87,6 +88,41 @@ static int port_disable(struct platform_device *pdev)
+ 	return 0;
+ }
+ 
 +/*
-+ * FPGA Region Driver for FPGA Management Engine (FME)
++ * This function resets the FPGA Port and its accelerator (AFU) by function
++ * __port_disable and __port_enable (set port soft reset bit and then clear
++ * it). Userspace can do Port reset at any time, e.g during DMA or Partial
++ * Reconfiguration. But it should never cause any system level issue, only
++ * functional failure (e.g DMA or PR operation failure) and be recoverable
++ * from the failure.
 + *
-+ * Copyright (C) 2017-2018 Intel Corporation, Inc.
-+ *
-+ * Authors:
-+ *   Wu Hao <hao.wu@intel.com>
-+ *   Joseph Grecco <joe.grecco@intel.com>
-+ *   Enno Luebbers <enno.luebbers@intel.com>
-+ *   Tim Whisonant <tim.whisonant@intel.com>
-+ *   Ananda Ravuri <ananda.ravuri@intel.com>
-+ *   Henry Mitchel <henry.mitchel@intel.com>
++ * Note: the accelerator (AFU) is not accessible when its port is in reset
++ * (disabled). Any attempts on MMIO access to AFU while in reset, will
++ * result errors reported via port error reporting sub feature (if present).
 + */
-+
-+#include <linux/module.h>
-+#include <linux/fpga/fpga-region.h>
-+
-+#include "dfl-fme-pr.h"
-+
-+static int fme_region_get_bridges(struct fpga_region *region)
++static int __port_reset(struct platform_device *pdev)
 +{
-+	struct dfl_fme_region_pdata *pdata = region->priv;
-+	struct device *dev = &pdata->br->dev;
-+
-+	return fpga_bridge_get_to_list(dev, region->info, &region->bridge_list);
-+}
-+
-+static int fme_region_probe(struct platform_device *pdev)
-+{
-+	struct dfl_fme_region_pdata *pdata = dev_get_platdata(&pdev->dev);
-+	struct device *dev = &pdev->dev;
-+	struct fpga_region *region;
-+	struct fpga_manager *mgr;
 +	int ret;
 +
-+	mgr = fpga_mgr_get(&pdata->mgr->dev);
-+	if (IS_ERR(mgr))
-+		return -EPROBE_DEFER;
++	ret = port_disable(pdev);
++	if (!ret)
++		port_enable(pdev);
 +
-+	region = fpga_region_create(dev, mgr, fme_region_get_bridges);
-+	if (!region) {
-+		ret = -ENOMEM;
-+		goto eprobe_mgr_put;
-+	}
-+
-+	region->priv = pdata;
-+	platform_set_drvdata(pdev, region);
-+
-+	ret = fpga_region_register(region);
-+	if (ret)
-+		goto region_free;
-+
-+	dev_dbg(dev, "DFL FME FPGA Region probed\n");
-+
-+	return 0;
-+
-+region_free:
-+	fpga_region_free(region);
-+eprobe_mgr_put:
-+	fpga_mgr_put(mgr);
 +	return ret;
 +}
 +
-+static int fme_region_remove(struct platform_device *pdev)
++static int port_reset(struct platform_device *pdev)
 +{
-+	struct fpga_region *region = dev_get_drvdata(&pdev->dev);
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
++	int ret;
 +
-+	fpga_region_unregister(region);
-+	fpga_mgr_put(region->mgr);
++	mutex_lock(&pdata->lock);
++	ret = __port_reset(pdev);
++	mutex_unlock(&pdata->lock);
 +
-+	return 0;
++	return ret;
 +}
 +
-+static struct platform_driver fme_region_driver = {
-+	.driver	= {
-+		.name    = DFL_FPGA_FME_REGION,
-+	},
-+	.probe   = fme_region_probe,
-+	.remove  = fme_region_remove,
+ static int port_get_id(struct platform_device *pdev)
+ {
+ 	void __iomem *base;
+@@ -96,23 +132,63 @@ static int port_get_id(struct platform_device *pdev)
+ 	return FIELD_GET(PORT_CAP_PORT_NUM, readq(base + PORT_HDR_CAP));
+ }
+ 
++static ssize_t
++id_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	int id = port_get_id(to_platform_device(dev));
++
++	return scnprintf(buf, PAGE_SIZE, "%d\n", id);
++}
++static DEVICE_ATTR_RO(id);
++
++static const struct attribute *port_hdr_attrs[] = {
++	&dev_attr_id.attr,
++	NULL,
 +};
 +
-+module_platform_driver(fme_region_driver);
+ static int port_hdr_init(struct platform_device *pdev,
+ 			 struct dfl_feature *feature)
+ {
+ 	dev_dbg(&pdev->dev, "PORT HDR Init.\n");
+ 
+-	return 0;
++	port_reset(pdev);
 +
-+MODULE_DESCRIPTION("FPGA Region for DFL FPGA Management Engine");
-+MODULE_AUTHOR("Intel Corporation");
-+MODULE_LICENSE("GPL v2");
-+MODULE_ALIAS("platform:dfl-fme-region");
++	return sysfs_create_files(&pdev->dev.kobj, port_hdr_attrs);
+ }
+ 
+ static void port_hdr_uinit(struct platform_device *pdev,
+ 			   struct dfl_feature *feature)
+ {
+ 	dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
++
++	sysfs_remove_files(&pdev->dev.kobj, port_hdr_attrs);
++}
++
++static long
++port_hdr_ioctl(struct platform_device *pdev, struct dfl_feature *feature,
++	       unsigned int cmd, unsigned long arg)
++{
++	long ret;
++
++	switch (cmd) {
++	case DFL_FPGA_PORT_RESET:
++		if (!arg)
++			ret = port_reset(pdev);
++		else
++			ret = -EINVAL;
++		break;
++	default:
++		dev_dbg(&pdev->dev, "%x cmd not handled", cmd);
++		ret = -ENODEV;
++	}
++
++	return ret;
+ }
+ 
+ static const struct dfl_feature_ops port_hdr_ops = {
+ 	.init = port_hdr_init,
+ 	.uinit = port_hdr_uinit,
++	.ioctl = port_hdr_ioctl,
+ };
+ 
+ static struct dfl_feature_driver port_feature_drvs[] = {
+@@ -154,6 +230,7 @@ static int afu_release(struct inode *inode, struct file *filp)
+ 
+ 	pdata = dev_get_platdata(&pdev->dev);
+ 
++	port_reset(pdev);
+ 	dfl_feature_dev_use_end(pdata);
+ 
+ 	return 0;
+diff --git a/include/uapi/linux/fpga-dfl.h b/include/uapi/linux/fpga-dfl.h
+index 9abfc1d..542f093 100644
+--- a/include/uapi/linux/fpga-dfl.h
++++ b/include/uapi/linux/fpga-dfl.h
+@@ -28,8 +28,11 @@
+ #define DFL_FPGA_MAGIC 0xB6
+ 
+ #define DFL_FPGA_BASE 0
++#define DFL_PORT_BASE 0x40
+ #define DFL_FME_BASE 0x80
+ 
++/* Common IOCTLs for both FME and AFU file descriptor */
++
+ /**
+  * DFL_FPGA_GET_API_VERSION - _IO(DFL_FPGA_MAGIC, DFL_FPGA_BASE + 0)
+  *
+@@ -48,6 +51,20 @@
+ 
+ #define DFL_FPGA_CHECK_EXTENSION	_IO(DFL_FPGA_MAGIC, DFL_FPGA_BASE + 1)
+ 
++/* IOCTLs for AFU file descriptor */
++
++/**
++ * DFL_FPGA_PORT_RESET - _IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 0)
++ *
++ * Reset the FPGA Port and its AFU. No parameters are supported.
++ * Userspace can do Port reset at any time, e.g during DMA or PR. But
++ * it should never cause any system level issue, only functional failure
++ * (e.g DMA or PR operation failure) and be recoverable from the failure.
++ * Return: 0 on success, -errno of failure
++ */
++
++#define DFL_FPGA_PORT_RESET		_IO(DFL_FPGA_MAGIC, DFL_PORT_BASE + 0)
++
+ /* IOCTLs for FME file descriptor */
+ 
+ /**
 -- 
 1.8.3.1
