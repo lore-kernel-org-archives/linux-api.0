@@ -1,65 +1,48 @@
-From: Stafford Horne <shorne@gmail.com>
-Subject: Re: [PATCH 2/2] [RFC] disable -Wattribute-alias warning for
- SYSCALL_DEFINEx()
-Date: Tue, 12 Jun 2018 06:19:53 +0900
-Message-ID: <20180611211953.GJ3652@lianli.shorne-pla.net>
-References: <20171205153259.2522368-1-arnd@arndb.de>
- <20171205160651.2920270-1-arnd@arndb.de>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
+ MLOCK_ONFAULT
+Date: Tue, 12 Jun 2018 09:46:46 +0200
+Message-ID: <20180612074646.GS13364@dhcp22.suse.cz>
+References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
+ <20180611072005.GC13364@dhcp22.suse.cz>
+ <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
+ <20180611150330.GQ13364@dhcp22.suse.cz>
+ <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20171205160651.2920270-1-arnd@arndb.de>
+In-Reply-To: <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-kbuild@vger.kernel.org, Michal Marek <michal.lkml@markovi.net>, Masahiro Yamada <yamada.masahiro@socionext.com>, Douglas Anderson <dianders@chromium.org>, Al Viro <viro@zeniv.linux.org.uk>, Heiko Carstens <heiko.carstens@de.ibm.com>, Mauro Carvalho Chehab <mchehab@kernel.org>, Matthew Wilcox <matthew@wil.cx>, Matthias Kaehlcke <mka@chromium.org>, Deepa Dinamani <deepa.kernel@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Frederic Weisbecker <fweisbec@gmail.com>, Stephan Mueller <smueller@chronox.de>, "David S. Miller" <davem@davemloft.net>, Yonghong Song <yhs@fb.com>, Thomas Garnier <thgarnie@google.com>, David Howells <dhowells@redhat.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Jason Baron <jbaron@akamai.com>
+Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 05, 2017 at 05:06:31PM +0100, Arnd Bergmann wrote:
-> gcc-8 warns for every single definition of a system call entry
-> point, e.g.:
+On Mon 11-06-18 12:23:58, Jason Baron wrote:
+> On 06/11/2018 11:03 AM, Michal Hocko wrote:
+> > So can we start discussing whether we want to allow MADV_DONTNEED on
+> > mlocked areas and what downsides it might have? Sure it would turn the
+> > strong mlock guarantee to have the whole vma resident but is this
+> > acceptable for something that is an explicit request from the owner of
+> > the memory?
+> > 
 > 
-> include/linux/compat.h:56:18: error: 'compat_sys_rt_sigprocmask' alias between functions of incompatible types 'long int(int,  compat_sigset_t *, compat_sigset_t *, compat_size_t)' {aka 'long int(int,  struct <anonymous> *, struct <anonymous> *, unsigned int)'} and 'long int(long int,  long int,  long int,  long int)' [-Werror=attribute-alias]
->   asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))\
->                   ^~~~~~~~~~
-> include/linux/compat.h:45:2: note: in expansion of macro 'COMPAT_SYSCALL_DEFINEx'
->   COMPAT_SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
->   ^~~~~~~~~~~~~~~~~~~~~~
-> kernel/signal.c:2601:1: note: in expansion of macro 'COMPAT_SYSCALL_DEFINE4'
->  COMPAT_SYSCALL_DEFINE4(rt_sigprocmask, int, how, compat_sigset_t __user *, nset,
->  ^~~~~~~~~~~~~~~~~~~~~~
-> include/linux/compat.h:60:18: note: aliased declaration here
->   asmlinkage long compat_SyS##name(__MAP(x,__SC_LONG,__VA_ARGS__))\
->                   ^~~~~~~~~~
-> 
-> The new warning seems reasonable in principle, but it doesn't
-> help us here, since we rely on the type mismatch to sanitize the
-> system call arguments. After I reported this as GCC PR82435, a new
-> -Wno-attribute-alias option was added that could be used to turn the
-> warning off globally on the command line, but I'd prefer to do it a
-> little more fine-grained.
-> 
-> Interestingly, turning a warning off and on again inside of
-> a single macro doesn't always work, in this case I had to add
-> an extra statement inbetween and decided to copy the __SC_TEST
-> one from the native syscall to the compat syscall macro.  See
-> https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83256 for more details
-> about this.
-> 
-> Link: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=82435
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> If its being explicity requested by the owner it makes sense to me. I
+> guess there could be a concern about this breaking some userspace that
+> relied on MADV_DONTNEED not freeing locked memory?
 
-Hi Arnd,
+Yes, this is always the fear when changing user visible behavior.  I can
+imagine that a userspace allocator calling MADV_DONTNEED on free could
+break. The same would apply to MLOCK_ONFAULT/MCL_ONFAULT though. We
+have the new flag much shorter so the probability is smaller but the
+problem is very same. So I _think_ we should treat both the same because
+semantically they are indistinguishable from the MADV_DONTNEED POV. Both
+remove faulted and mlocked pages. Mlock, once applied, should guarantee
+no later major fault and MADV_DONTNEED breaks that obviously.
 
-What ever happened to this patch?  I am compiline the kernel with the new
-OpenRISC GCC backend port https://github.com/stffrdhrn/gcc/commits/or1k-port,
-which is based on gcc 9.0.0 and seeing similar 'alias between functions of
-incompatible types' warnings.
-
-I found this old patch which seems will fix the issue, but it seems to not have
-been merged.  Did we find another solution?
-
-Case in point, when I build x86 64 on gcc 8.1.1, I am not seeing the warnings.
-Is this not an issue for x86?
-
--Stafford
+So the more I think about it the more I am worried about this but I am
+more and more convinced that making ONFAULT special is just a wrong way
+around this.
+-- 
+Michal Hocko
+SUSE Labs
