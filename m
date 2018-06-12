@@ -1,44 +1,65 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v6 00/29] FPGA Device Feature List (DFL) Device Drivers
-Date: Wed, 13 Jun 2018 07:37:38 +0800
-Message-ID: <20180612233738.GA8459@hao-dev>
+Subject: Re: [PATCH v6 12/29] fpga: add FPGA DFL PCIe device driver
+Date: Wed, 13 Jun 2018 07:42:39 +0800
+Message-ID: <20180612234239.GB8459@hao-dev>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
- <CANk1AXSPd10twvT0tXKBxb9Cc2bK_TrVdZ6gnLKkB_ujCcD8wQ@mail.gmail.com>
+ <1528798243-2029-13-git-send-email-hao.wu@intel.com>
+ <87a783f1-9db8-e56d-c4c4-1802c29c416a@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CANk1AXSPd10twvT0tXKBxb9Cc2bK_TrVdZ6gnLKkB_ujCcD8wQ@mail.gmail.com>
+In-Reply-To: <87a783f1-9db8-e56d-c4c4-1802c29c416a@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 12, 2018 at 12:33:42PM -0500, Alan Tull wrote:
-> On Tue, Jun 12, 2018 at 5:10 AM, Wu Hao <hao.wu@intel.com> wrote:
-> > Hi All,
-> >
-> > Here is v6 patch-series adding drivers for FPGA DFL devices.
+On Tue, Jun 12, 2018 at 08:27:27AM -0700, Randy Dunlap wrote:
+> Hi,
 > 
-> I pushed this patchset to a branch on my linux-fpga kernel.org git
-> repo for the robots to test.
+> On 06/12/2018 03:10 AM, Wu Hao wrote:
+> > From: Zhang Yi <yi.z.zhang@intel.com>
+> > 
+> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+> > index 4052532..5faab48 100644
+> > --- a/drivers/fpga/Kconfig
+> > +++ b/drivers/fpga/Kconfig
+> > @@ -146,4 +146,19 @@ config FPGA_DFL
+> >  	  Gate Array (FPGA) solutions which implement Device Feature List.
+> >  	  It provides enumeration APIs, and feature device infrastructure.
+> >  
+> > +config FPGA_DFL_PCI
+> > +	tristate "FPGA DFL PCIe Device Driver"
+> > +	depends on PCI && FPGA_DFL
+> > +	help
+> > +	  Select this option to enable PCIe driver for PCIe based
+> 
+> 	                                               PCIe-based
+> 
+> > +	  Field-Programmable Gate Array (FPGA) solutions which implemented
+> 
+> 	                                                 which implement
 
-Hi Alan
+Hi Randy
 
-Thanks a lot for review, will update target kernel version to 4.19 in sysfs
-documentation, fix Kconfig description per comments from Randy and also one
-improvement reported by kbuild in v7.
+Thanks for the comments on these patches, I will fix them all in the next
+version.
 
-Thanks
 Hao
 
 > 
-> Alan
+> > +	  the Device Feature List (DFL). This driver provides interfaces
+> > +	  for userspace applications to configure, enumerate, open and access
+> > +	  FPGA accelerators on the FPGA DFL devices, enables system level
+> > +	  management functions such as FPGA partial reconfiguration, power
+> > +	  management, and virtualization with DFL framework and DFL feature
+> > +	  device drivers.
+> > +
+> > +	  To compile this as a module, choose M here.
+> > +
+> >  endif # FPGA
 > 
-> >
-> > This patch series provides a common framework to support FPGA Device Feature
-> > List (DFL), and also feature dev drivers under this DFL framework to provide
-> > interfaces for userspace applications to configure, enumerate, open, and
-> > access FPGA accelerators on DFL based FPGA device and enables system level
-> > management functions such as FPGA partial reconfiguration, power management
-> > and virtualization.
+> 
+> -- 
+> ~Randy
