@@ -1,115 +1,167 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v6 08/29] fpga: dfl: add dfl_fpga_cdev_find_port
-Date: Tue, 12 Jun 2018 18:10:22 +0800
-Message-ID: <1528798243-2029-9-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v6 10/29] fpga: dfl: add dfl_fpga_port_ops support.
+Date: Tue, 12 Jun 2018 18:10:24 +0800
+Message-ID: <1528798243-2029-11-git-send-email-hao.wu@intel.com>
 References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-For feature devices, we need a method to find the port dedicated
-to the device. This patch adds a function dfl_fpga_cdev_find_port
-for this purpose. e.g FPGA Management Engine (FME) Partial
-Reconfiguration sub feature, it uses this function to find
-dedicated port on the device for PR function implementation.
+In some cases, other DFL driver modules may need to access some port
+operations, e.g disable / enable port for partial reconfiguration in
+FME module. In order to avoid dependency between port and FME modules,
+this patch introduces the dfl_fpga_port_ops support in DFL framework.
+A global dfl_fpga_port_ops list is added in the DFL framework, and
+it allows other DFL modules to use these port operations registered
+to this list, even in virtualization case, the port platform device
+is turned into VF / guest VM and hidden in host, the registered
+port_ops is still usable. It resolves the dependency issues between
+modules, but once get port ops API returns a valid port ops, that
+means related port driver module has been module_get to prevent from
+unexpected unload, and put port ops API must be invoked after use.
 
-Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+These APIs introduced by this patch is listed below:
+ * dfl_fpga_port_ops_add
+   add one port ops to the global list.
+
+ * dfl_fpga_port_ops_del
+   del one port ops from the global list.
+
+ * dfl_fpga_port_ops_get / dfl_fpga_port_ops_put
+   get/put the port ops before/after use.
+
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v3: s/fpga_for_each_port/fpga_cdev_find_port/
-    move fpga_cdev_find_port to fpga-dfl module.
-v4: improve description in commit message.
-    add comments to remind user to put_device after use this function.
-v5: add "dfl_" prefix to functions.
-    improve function comments per suggestion from Alan Tull.
-    add Acked-by from Alan and Moritz.
-v6: reabse.
+v6: add more comments and improve API naming to dfl_fpga_port_xxx.
+    add Acked-by from Alan.
 ---
- drivers/fpga/dfl.c | 32 ++++++++++++++++++++++++++++++++
- drivers/fpga/dfl.h | 21 +++++++++++++++++++++
- 2 files changed, 53 insertions(+)
+ drivers/fpga/dfl.c | 77 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/fpga/dfl.h | 21 +++++++++++++++
+ 2 files changed, 98 insertions(+)
 
 diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-index 702b3ce..5db4d11 100644
+index e8bd331..789da5b 100644
 --- a/drivers/fpga/dfl.c
 +++ b/drivers/fpga/dfl.c
-@@ -813,6 +813,38 @@ void dfl_fpga_feature_devs_remove(struct dfl_fpga_cdev *cdev)
+@@ -136,6 +136,83 @@ static enum dfl_id_type dfh_id_to_type(u32 id)
+ 	return DFL_ID_MAX;
  }
- EXPORT_SYMBOL_GPL(dfl_fpga_feature_devs_remove);
- 
-+/**
-+ * __dfl_fpga_cdev_find_port - find a port under given container device
-+ *
-+ * @cdev: container device
-+ * @data: data passed to match function
-+ * @match: match function used to find specific port from the port device list
-+ *
-+ * Find a port device under container device. This function needs to be
-+ * invoked with lock held.
-+ *
-+ * Return: pointer to port's platform device if successful, NULL otherwise.
-+ *
-+ * NOTE: you will need to drop the device reference with put_device() after use.
-+ */
-+struct platform_device *
-+__dfl_fpga_cdev_find_port(struct dfl_fpga_cdev *cdev, void *data,
-+			  int (*match)(struct platform_device *, void *))
-+{
-+	struct dfl_feature_platform_data *pdata;
-+	struct platform_device *port_dev;
-+
-+	list_for_each_entry(pdata, &cdev->port_dev_list, node) {
-+		port_dev = pdata->dev;
-+
-+		if (match(port_dev, data) && get_device(&port_dev->dev))
-+			return port_dev;
-+	}
-+
-+	return NULL;
-+}
-+EXPORT_SYMBOL_GPL(__dfl_fpga_cdev_find_port);
-+
- static int __init dfl_fpga_init(void)
- {
- 	int ret;
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index 66c2ade..b4f6525 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -284,4 +284,25 @@ struct dfl_fpga_cdev *
- dfl_fpga_feature_devs_enumerate(struct dfl_fpga_enum_info *info);
- void dfl_fpga_feature_devs_remove(struct dfl_fpga_cdev *cdev);
  
 +/*
-+ * need to drop the device reference with put_device() after use port platform
-+ * device returned by __dfl_fpga_cdev_find_port and dfl_fpga_cdev_find_port
-+ * functions.
++ * introduce a global port_ops list, it allows port drivers to register ops
++ * in such list, then other feature devices (e.g FME), could use the port
++ * functions even related port platform device is hidden. Below is one example,
++ * in virtualization case of PCIe based FPGA DFL device, when SRIOV is
++ * enabled, port (and it's AFU) is turned into VF and port platform device
++ * is hidden from system but it's still required to access port to finish FPGA
++ * reconfiguration function in FME.
 + */
-+struct platform_device *
-+__dfl_fpga_cdev_find_port(struct dfl_fpga_cdev *cdev, void *data,
-+			  int (*match)(struct platform_device *, void *));
 +
-+static inline struct platform_device *
-+dfl_fpga_cdev_find_port(struct dfl_fpga_cdev *cdev, void *data,
-+			int (*match)(struct platform_device *, void *))
++static DEFINE_MUTEX(dfl_port_ops_mutex);
++static LIST_HEAD(dfl_port_ops_list);
++
++/**
++ * dfl_fpga_port_ops_get - get matched port ops from the global list
++ * @pdev: platform device to match with associated port ops.
++ * Return: matched port ops on success, NULL otherwise.
++ *
++ * Please note that must dfl_fpga_port_ops_put after use the port_ops.
++ */
++struct dfl_fpga_port_ops *dfl_fpga_port_ops_get(struct platform_device *pdev)
 +{
-+	struct platform_device *pdev;
++	struct dfl_fpga_port_ops *ops = NULL;
 +
-+	mutex_lock(&cdev->lock);
-+	pdev = __dfl_fpga_cdev_find_port(cdev, data, match);
-+	mutex_unlock(&cdev->lock);
++	mutex_lock(&dfl_port_ops_mutex);
++	if (list_empty(&dfl_port_ops_list))
++		goto done;
 +
-+	return pdev;
++	list_for_each_entry(ops, &dfl_port_ops_list, node) {
++		/* match port_ops using the name of platform device */
++		if (!strcmp(pdev->name, ops->name)) {
++			if (!try_module_get(ops->owner))
++				ops = NULL;
++			goto done;
++		}
++	}
++done:
++	mutex_unlock(&dfl_port_ops_mutex);
++	return ops;
 +}
- #endif /* __FPGA_DFL_H */
++EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_get);
++
++/**
++ * dfl_fpga_port_ops_put - put port ops
++ * @ops: port ops.
++ */
++void dfl_fpga_port_ops_put(struct dfl_fpga_port_ops *ops)
++{
++	if (ops && ops->owner)
++		module_put(ops->owner);
++}
++EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_put);
++
++/**
++ * dfl_fpga_port_ops_add - add port_ops to global list
++ * @ops: port ops to add.
++ */
++void dfl_fpga_port_ops_add(struct dfl_fpga_port_ops *ops)
++{
++	mutex_lock(&dfl_port_ops_mutex);
++	list_add_tail(&ops->node, &dfl_port_ops_list);
++	mutex_unlock(&dfl_port_ops_mutex);
++}
++EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_add);
++
++/**
++ * dfl_fpga_port_ops_del - remove port_ops from global list
++ * @ops: port ops to del.
++ */
++void dfl_fpga_port_ops_del(struct dfl_fpga_port_ops *ops)
++{
++	mutex_lock(&dfl_port_ops_mutex);
++	list_del(&ops->node);
++	mutex_unlock(&dfl_port_ops_mutex);
++}
++EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_del);
++
+ /**
+  * dfl_fpga_dev_feature_uinit - uinit for sub features of dfl feature device
+  * @pdev: feature device.
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 974d603..4048110 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -130,6 +130,27 @@
+ /* Latency tolerance reporting. '1' >= 40us, '0' < 40us.*/
+ #define PORT_CTRL_LATENCY	BIT_ULL(2)
+ #define PORT_CTRL_SFTRST_ACK	BIT_ULL(4)		/* HW ack for reset */
++/**
++ * struct dfl_fpga_port_ops - port ops
++ *
++ * @name: name of this port ops, to match with port platform device.
++ * @owner: pointer to the module which owns this port ops.
++ * @node: node to link port ops to global list.
++ * @get_id: get port id from hardware.
++ * @enable_set: enable/disable the port.
++ */
++struct dfl_fpga_port_ops {
++	const char *name;
++	struct module *owner;
++	struct list_head node;
++	int (*get_id)(struct platform_device *pdev);
++	int (*enable_set)(struct platform_device *pdev, bool enable);
++};
++
++void dfl_fpga_port_ops_add(struct dfl_fpga_port_ops *ops);
++void dfl_fpga_port_ops_del(struct dfl_fpga_port_ops *ops);
++struct dfl_fpga_port_ops *dfl_fpga_port_ops_get(struct platform_device *pdev);
++void dfl_fpga_port_ops_put(struct dfl_fpga_port_ops *ops);
+ 
+ /**
+  * struct dfl_feature_driver - sub feature's driver
 -- 
 1.8.3.1
