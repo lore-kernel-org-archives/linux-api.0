@@ -1,43 +1,50 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
- MLOCK_ONFAULT
-Date: Wed, 13 Jun 2018 11:13:55 +0200
-Message-ID: <20180613091355.GI13364@dhcp22.suse.cz>
-References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
- <20180611072005.GC13364@dhcp22.suse.cz>
- <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
- <20180611150330.GQ13364@dhcp22.suse.cz>
- <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
- <20180612074646.GS13364@dhcp22.suse.cz>
- <5a9398f4-453c-5cb5-6bbc-f20c3affc96a@akamai.com>
+From: Moritz Fischer <mdf@kernel.org>
+Subject: Re: [PATCH v6 29/29] MAINTAINERS: add entry for FPGA DFL drivers
+Date: Wed, 13 Jun 2018 06:50:55 -0700
+Message-ID: <20180613135055.GA3866@archbook>
+References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
+ <1528798243-2029-30-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5a9398f4-453c-5cb5-6bbc-f20c3affc96a@akamai.com>
+In-Reply-To: <1528798243-2029-30-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jason Baron <jbaron@akamai.com>
-Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
+To: Wu Hao <hao.wu@intel.com>
+Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue 12-06-18 10:11:33, Jason Baron wrote:
-[...]
-> Ok, I share the concern that there is a chance that userspace is relying
-> on MADV_DONTNEED not free'ing locked memory. In that case, what if we
-> introduce a MADV_DONTNEED_FORCE, which does everything that
-> MADV_DONTNEED currently does but in addition will also free mlock areas.
+On Tue, Jun 12, 2018 at 06:10:43PM +0800, Wu Hao wrote:
+> Add entry for FPGA Device Feature List (DFL) drivers.
+> 
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+Acked-by: Moritz Fischer <mdf@kernel.org>
+> ---
+>  MAINTAINERS | 8 ++++++++
+>  1 file changed, 8 insertions(+)
+> 
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 448957c..98fc5ea 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -5619,6 +5619,14 @@ F:	drivers/fpga/
+>  F:	include/linux/fpga/
+>  W:	http://www.rocketboards.org
+>  
+> +FPGA DFL DRIVERS
+> +M:	Wu Hao <hao.wu@intel.com>
+> +L:	linux-fpga@vger.kernel.org
+> +S:	Maintained
+> +F:	Documentation/fpga/dfl.txt
+> +F:	include/uapi/linux/fpga-dfl.h
+> +F:	drivers/fpga/dfl*
+> +
+>  FPU EMULATOR
+>  M:	Bill Metzenthen <billm@melbpc.org.au>
+>  W:	http://floatingpoint.sourceforge.net/emulator/index.html
+> -- 
+> 1.8.3.1
+> 
 
-What about other types of vmas that are not allowed to MADV_DONTNEED?
-_FORCE suggests that the user of the API know what he is doing so why
-shouldn't we allow unmapping hugetlb pages or special PFNMAPS? Or do we
-want to add MADV_DONTNEED_FORCE_FOR_REAL when somebody comes with
-another usecase?
-
-I agree with Vlastimil that adding new madvise mode for niche case
-sounds like a bad idea so we should better be sure that a new flag has
-a reasonable semantic. Just allow mlocked pages is more of a tweak than
-a proper semantic. So making it force for real requires to analyze what
-that would mean for other vmas which are excluded now.
--- 
-Michal Hocko
-SUSE Labs
+Thanks,
+Moritz
