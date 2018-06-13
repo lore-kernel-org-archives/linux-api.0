@@ -1,46 +1,38 @@
-From: Moritz Fischer <mdf@kernel.org>
-Subject: Re: [PATCH v6 22/29] fpga: dfl: fme-region: add support for compat_id
-Date: Wed, 13 Jun 2018 07:18:56 -0700
-Message-ID: <20180613141856.GD3866@archbook>
-References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
- <1528798243-2029-23-git-send-email-hao.wu@intel.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 0/6 v1 resend] statfs: handle mount propagation
+Date: Wed, 13 Jun 2018 16:24:54 +0200
+Message-ID: <20180613142454.GA1845@kroah.com>
+References: <20180525124825.23875-1-christian@brauner.io>
+ <20180613140625.GA31082@mailbox.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1528798243-2029-23-git-send-email-hao.wu@intel.com>
+In-Reply-To: <20180613140625.GA31082@mailbox.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com
+To: Christian Brauner <christian@brauner.io>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, tglx@linutronix.de, kstewart@linuxfoundation.org, pombredanne@nexb.com, linux-api@vger.kernel.org, ebiederm@xmission.com, seth.forshee@canonical.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 12, 2018 at 06:10:36PM +0800, Wu Hao wrote:
-> This patch adds compat_id support, it reuses fme manager's
-> compat id, as the per region compat id is actually from the
-> fme manager's register.
+On Wed, Jun 13, 2018 at 04:06:25PM +0200, Christian Brauner wrote:
+> On Fri, May 25, 2018 at 02:48:19PM +0200, Christian Brauner wrote:
+> > From: Christian Brauner <christian.brauner@ubuntu.com>
+> > 
+> > Hey,
+> > 
+> > This is v1 of this patchset. All changes from v0 to v1 are non-functional.
+> > Specifically, the commit messages and justification have been extended as
+> > requested by Linus and Al.
 > 
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-> Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
-> ---
-> v5: reuse fme manager's compat_id as per region compat_id
-> v6: rebase, fix copyright time and add Acked-by from Alan.
-> ---
->  drivers/fpga/dfl-fme-region.c | 1 +
->  1 file changed, 1 insertion(+)
+> Hey everyone,
 > 
-> diff --git a/drivers/fpga/dfl-fme-region.c b/drivers/fpga/dfl-fme-region.c
-> index a6e0bde..0b7e19c 100644
-> --- a/drivers/fpga/dfl-fme-region.c
-> +++ b/drivers/fpga/dfl-fme-region.c
-> @@ -45,6 +45,7 @@ static int fme_region_probe(struct platform_device *pdev)
->  	}
->  
->  	region->priv = pdata;
-> +	region->compat_id = mgr->compat_id;
->  	platform_set_drvdata(pdev, region);
->  
->  	ret = fpga_region_register(region);
-> -- 
-> 1.8.3.1
-> 
+> Just a ping whether the requested changes have made this series suitable
+> for inclusion. Would be excellent if someone could do another review. :)
+
+It's the middle of the merge window, no new code gets accepted right
+now, so just wait until next week at the _earliest_ before worrying
+about someone reviewing this.
+
+thanks,
+
+greg k-h
