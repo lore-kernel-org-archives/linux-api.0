@@ -1,8 +1,8 @@
 From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
  MLOCK_ONFAULT
-Date: Wed, 13 Jun 2018 10:37:07 +0200
-Message-ID: <20180613083707.GE13364@dhcp22.suse.cz>
+Date: Wed, 13 Jun 2018 11:13:55 +0200
+Message-ID: <20180613091355.GI13364@dhcp22.suse.cz>
 References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
  <20180611072005.GC13364@dhcp22.suse.cz>
  <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
@@ -10,39 +10,34 @@ References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
  <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
  <20180612074646.GS13364@dhcp22.suse.cz>
  <5a9398f4-453c-5cb5-6bbc-f20c3affc96a@akamai.com>
- <0daccb7c-f642-c5ce-ca7a-3b3e69025a1e@suse.cz>
- <20180613071552.GD13364@dhcp22.suse.cz>
- <5eb9a018-d5ac-5732-04f1-222c343b840a@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5eb9a018-d5ac-5732-04f1-222c343b840a@suse.cz>
+In-Reply-To: <5a9398f4-453c-5cb5-6bbc-f20c3affc96a@akamai.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Jason Baron <jbaron@akamai.com>, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
+To: Jason Baron <jbaron@akamai.com>
+Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Vlastimil Babka <vbabka@suse.cz>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
 List-Id: linux-api@vger.kernel.org
 
-On Wed 13-06-18 09:51:23, Vlastimil Babka wrote:
-> On 06/13/2018 09:15 AM, Michal Hocko wrote:
-> > On Wed 13-06-18 08:32:19, Vlastimil Babka wrote:
+On Tue 12-06-18 10:11:33, Jason Baron wrote:
 [...]
-> >> I think more concerning than guaranteeing no later major fault is
-> >> possible data loss, e.g. replacing data with zero-filled pages.
-> > 
-> > But MADV_DONTNEED is an explicit call for data loss. Or do I miss your
-> > point?
-> 
-> My point is that if somebody is relying on MADV_DONTNEED not affecting
-> mlocked pages, the consequences will be unexpected data loss, not just
-> extra page faults.
+> Ok, I share the concern that there is a chance that userspace is relying
+> on MADV_DONTNEED not free'ing locked memory. In that case, what if we
+> introduce a MADV_DONTNEED_FORCE, which does everything that
+> MADV_DONTNEED currently does but in addition will also free mlock areas.
 
-OK, I see your point now. I would consider this an application bug
-though. Calling MADV_DONTNEED and wondering that the content is gone is,
-ehm, questionable at best. Why would anybody do that in the first place?
+What about other types of vmas that are not allowed to MADV_DONTNEED?
+_FORCE suggests that the user of the API know what he is doing so why
+shouldn't we allow unmapping hugetlb pages or special PFNMAPS? Or do we
+want to add MADV_DONTNEED_FORCE_FOR_REAL when somebody comes with
+another usecase?
 
-Anyway, I think that we cannot change the behavior because of mlockall
-semantic as mentioned earlier.
+I agree with Vlastimil that adding new madvise mode for niche case
+sounds like a bad idea so we should better be sure that a new flag has
+a reasonable semantic. Just allow mlocked pages is more of a tweak than
+a proper semantic. So making it force for real requires to analyze what
+that would mean for other vmas which are excluded now.
 -- 
 Michal Hocko
 SUSE Labs
