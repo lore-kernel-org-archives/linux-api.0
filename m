@@ -1,114 +1,258 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 0/6 v1 resend] statfs: handle mount propagation
-Date: Wed, 13 Jun 2018 16:06:25 +0200
-Message-ID: <20180613140625.GA31082@mailbox.org>
-References: <20180525124825.23875-1-christian@brauner.io>
+From: Moritz Fischer <mdf@kernel.org>
+Subject: Re: [PATCH v6 14/29] fpga: dfl: add FPGA Management Engine driver
+ basic framework
+Date: Wed, 13 Jun 2018 07:13:04 -0700
+Message-ID: <20180613141304.GC3866@archbook>
+References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
+ <1528798243-2029-15-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180525124825.23875-1-christian@brauner.io>
+In-Reply-To: <1528798243-2029-15-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Cc: torvalds@linux-foundation.org, tglx@linutronix.de, kstewart@linuxfoundation.org, gregkh@linuxfoundation.org, pombredanne@nexb.com, linux-api@vger.kernel.org, ebiederm@xmission.com, seth.forshee@canonical.com, viro@zeniv.linux.org.uk
+To: Wu Hao <hao.wu@intel.com>
+Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 25, 2018 at 02:48:19PM +0200, Christian Brauner wrote:
-> From: Christian Brauner <christian.brauner@ubuntu.com>
+On Tue, Jun 12, 2018 at 06:10:28PM +0800, Wu Hao wrote:
+> From: Kang Luwei <luwei.kang@intel.com>
 > 
-> Hey,
+> The FPGA Management Engine (FME) provides power, thermal management,
+> performance counters, partial reconfiguration and other functions. For each
+> function, it is packaged into a private feature linked to the FME feature
+> device in the 'Device Feature List'. It's a platform device created by
+> DFL framework.
 > 
-> This is v1 of this patchset. All changes from v0 to v1 are non-functional.
-> Specifically, the commit messages and justification have been extended as
-> requested by Linus and Al.
-
-Hey everyone,
-
-Just a ping whether the requested changes have made this series suitable
-for inclusion. Would be excellent if someone could do another review. :)
-
-Thanks!
-Christian
-
-
+> This patch adds the basic framework of FME platform driver. It defines
+> sub feature drivers to handle the different sub features, including init,
+> uinit and ioctl. It also registers the file operations for the device file.
 > 
-> This little series does the following:
+> Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+> Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+> Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+> Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+> Signed-off-by: Kang Luwei <luwei.kang@intel.com>
+> Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+> Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
+> ---
+> v3: rename driver from intel-fpga-fme to dfl-fme
+>     rename Kconfig from INTEL_FPGA_FME to FPGA_DFL_FME
+> v4: fix SPDX license issue, use dfl-fme as module name
+> v5: rebase, due to DFL framework naming changes on functions and data structures.
+>     fix uinit order in remove function.
+>     remove else block in fme_ioctl function per suggestion from Alan.
+> v6: fix copyright time, rebase and add Acked-by from Alan.
+> ---
+>  drivers/fpga/Kconfig        |  10 +++
+>  drivers/fpga/Makefile       |   3 +
+>  drivers/fpga/dfl-fme-main.c | 158 ++++++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 171 insertions(+)
+>  create mode 100644 drivers/fpga/dfl-fme-main.c
 > 
-> - unify the definition of constants in statfs.h and fs.h:
->   The definitions for MS_* flags are currently a mixture between hex values
->   and bit-shifts. All higher values are already initialized with bit-shifts
->   for MS_* constants starting with (1<<16). This patch switches the
->   definitions for MS_* constants over to uniformly use bit-shifts and
->   alignes the definitions of ST_* flags too.
->   Initializing them identically let's userspace easily detect when flags
->   indicate the same property but use a different value in doing so.
-> 
-> - extend statfs to handle mount propagation:
->   For all cases the only way to do this right now is by parsing
->   /proc/<pid>/mountinfo. Yes, it is doable but still it is somewhat costly
->   and annoying as e.g. those mount propagation fields are optional.
->   1. prevent propagation from happening:
->      From a userspace perspective we often run into the case where we
->      simply want to know whether a given mountpoint is MS_SHARED or is
->      MS_SLAVE. If it is we remount it as MS_PRIVATE to prevent any
->      propagation from happening. We don't care about the peer
->      relationship or how the propagation is exactly setup. We only want
->      to prevent any propagation from happening.
->      These mountpoints might be known in advance so parsing
->      /proc/<pid>/mountinfo should not be needed.
->   2. differentiate between MS_SLAVE and MS_SHARED mountpoints:
->      Mountpoints that are MS_SLAVE are kept intact and mountpoints that
->      are MS_SHARED are made MS_PRIVATE. These mountpoint might be known in
->      advance so parsing /proc/<pid>/mountinfo should not be needed.
->   3. retrieve propagation properties when procfs is not mounted:
->      When the set of interesting mountpoints is known and /proc is not
->      mounted calling statfs() is the only good way to reliably determine
->      the propagation property of a mountpoint.
->   4. inspecting file descriptors to mountpoints for propagation
->      properties:
->      When file descriptors to mountpoints are passed around between
->      processes it is useful to have fstatvfs() handle mount propagation
->      properties too.
->   To this end the flags:
->   - ST_UNBINDABLE
->   - ST_SHARED
->   - ST_PRIVATE
->   - ST_SLAVE
->   are added. They have the same value as their MS_* counterparts.
-> 
-> - Testing:
->   I verified that now userspace can do e.g.
-> 
->   int ret;
->   char *s = "/some/path";
->   struct statvfs sb;
-> 
->   ret = statvfs(s, &sb);
->   if (ret < 0)
->           return false;
-> 
->   if (sb.f_flag & ST_SHARED) {
->           ret = mount("", s, NULL, MS_SLAVE | MS_REC, NULL);
->           if (ret < 0)
->                   return -1;
->   }
-> 
-> Thanks!
-> Christian
-> 
-> Christian Brauner (6):
->   fs: use << for MS_* flags
->   statfs: use << to align with fs header
->   statfs: add ST_UNBINDABLE
->   statfs: add ST_SHARED
->   statfs: add ST_SLAVE
->   statfs: add ST_PRIVATE
-> 
->  fs/statfs.c             | 16 +++++++++++++++-
->  include/linux/statfs.h  | 30 +++++++++++++++++-------------
->  include/uapi/linux/fs.h | 33 +++++++++++++++++----------------
->  3 files changed, 49 insertions(+), 30 deletions(-)
-> 
+> diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+> index 5faab48..45e9220 100644
+> --- a/drivers/fpga/Kconfig
+> +++ b/drivers/fpga/Kconfig
+> @@ -146,6 +146,16 @@ config FPGA_DFL
+>  	  Gate Array (FPGA) solutions which implement Device Feature List.
+>  	  It provides enumeration APIs, and feature device infrastructure.
+>  
+> +config FPGA_DFL_FME
+> +	tristate "FPGA DFL FME Driver"
+> +	depends on FPGA_DFL
+> +	help
+> +	  The FPGA Management Engine (FME) is a feature device implemented
+> +	  under Device Feature List (DFL) framework. Select this option to
+> +	  enable the platform device driver for FME which implements all
+> +	  FPGA platform level management features. There shall be 1 FME
+> +	  per DFL based FPGA device.
+> +
+>  config FPGA_DFL_PCI
+>  	tristate "FPGA DFL PCIe Device Driver"
+>  	depends on PCI && FPGA_DFL
+> diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+> index 02e0253..db11f34 100644
+> --- a/drivers/fpga/Makefile
+> +++ b/drivers/fpga/Makefile
+> @@ -31,6 +31,9 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
+>  
+>  # FPGA Device Feature List Support
+>  obj-$(CONFIG_FPGA_DFL)			+= dfl.o
+> +obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
+> +
+> +dfl-fme-objs := dfl-fme-main.o
+>  
+>  # Drivers for FPGAs which implement DFL
+>  obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
+> diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+> new file mode 100644
+> index 0000000..a2ae9b3
+> --- /dev/null
+> +++ b/drivers/fpga/dfl-fme-main.c
+> @@ -0,0 +1,158 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Driver for FPGA Management Engine (FME)
+> + *
+> + * Copyright (C) 2017-2018 Intel Corporation, Inc.
+> + *
+> + * Authors:
+> + *   Kang Luwei <luwei.kang@intel.com>
+> + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
+> + *   Joseph Grecco <joe.grecco@intel.com>
+> + *   Enno Luebbers <enno.luebbers@intel.com>
+> + *   Tim Whisonant <tim.whisonant@intel.com>
+> + *   Ananda Ravuri <ananda.ravuri@intel.com>
+> + *   Henry Mitchel <henry.mitchel@intel.com>
+> + */
+> +
+> +#include <linux/kernel.h>
+> +#include <linux/module.h>
+> +
+> +#include "dfl.h"
+> +
+> +static int fme_hdr_init(struct platform_device *pdev,
+> +			struct dfl_feature *feature)
+> +{
+> +	dev_dbg(&pdev->dev, "FME HDR Init.\n");
+> +
+> +	return 0;
+> +}
+> +
+> +static void fme_hdr_uinit(struct platform_device *pdev,
+> +			  struct dfl_feature *feature)
+> +{
+> +	dev_dbg(&pdev->dev, "FME HDR UInit.\n");
+> +}
+> +
+> +static const struct dfl_feature_ops fme_hdr_ops = {
+> +	.init = fme_hdr_init,
+> +	.uinit = fme_hdr_uinit,
+> +};
+> +
+> +static struct dfl_feature_driver fme_feature_drvs[] = {
+> +	{
+> +		.id = FME_FEATURE_ID_HEADER,
+> +		.ops = &fme_hdr_ops,
+> +	},
+> +	{
+> +		.ops = NULL,
+> +	},
+> +};
+> +
+> +static int fme_open(struct inode *inode, struct file *filp)
+> +{
+> +	struct platform_device *fdev = dfl_fpga_inode_to_feature_dev(inode);
+> +	struct dfl_feature_platform_data *pdata = dev_get_platdata(&fdev->dev);
+> +	int ret;
+> +
+> +	if (WARN_ON(!pdata))
+> +		return -ENODEV;
+> +
+> +	ret = dfl_feature_dev_use_begin(pdata);
+> +	if (ret)
+> +		return ret;
+> +
+> +	dev_dbg(&fdev->dev, "Device File Open\n");
+> +	filp->private_data = pdata;
+> +
+> +	return 0;
+> +}
+> +
+> +static int fme_release(struct inode *inode, struct file *filp)
+> +{
+> +	struct dfl_feature_platform_data *pdata = filp->private_data;
+> +	struct platform_device *pdev = pdata->dev;
+> +
+> +	dev_dbg(&pdev->dev, "Device File Release\n");
+> +	dfl_feature_dev_use_end(pdata);
+> +
+> +	return 0;
+> +}
+> +
+> +static long fme_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+> +{
+> +	struct dfl_feature_platform_data *pdata = filp->private_data;
+> +	struct platform_device *pdev = pdata->dev;
+> +	struct dfl_feature *f;
+> +	long ret;
+> +
+> +	dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
+> +
+> +	switch (cmd) {
+> +	default:
+> +		/*
+> +		 * Let sub-feature's ioctl function to handle the cmd
+> +		 * Sub-feature's ioctl returns -ENODEV when cmd is not
+> +		 * handled in this sub feature, and returns 0 and other
+> +		 * error code if cmd is handled.
+> +		 */
+> +		dfl_fpga_dev_for_each_feature(pdata, f) {
+> +			if (f->ops && f->ops->ioctl) {
+> +				ret = f->ops->ioctl(pdev, f, cmd, arg);
+> +				if (ret != -ENODEV)
+> +					return ret;
+> +			}
+> +		}
+> +	}
+> +
+> +	return -EINVAL;
+> +}
+> +
+> +static const struct file_operations fme_fops = {
+> +	.owner		= THIS_MODULE,
+> +	.open		= fme_open,
+> +	.release	= fme_release,
+> +	.unlocked_ioctl = fme_ioctl,
+> +};
+> +
+> +static int fme_probe(struct platform_device *pdev)
+> +{
+> +	int ret;
+> +
+> +	ret = dfl_fpga_dev_feature_init(pdev, fme_feature_drvs);
+> +	if (ret)
+> +		goto exit;
+> +
+> +	ret = dfl_fpga_dev_ops_register(pdev, &fme_fops, THIS_MODULE);
+> +	if (ret)
+> +		goto feature_uinit;
+> +
+> +	return 0;
+> +
+> +feature_uinit:
+> +	dfl_fpga_dev_feature_uinit(pdev);
+> +exit:
+> +	return ret;
+> +}
+> +
+> +static int fme_remove(struct platform_device *pdev)
+> +{
+> +	dfl_fpga_dev_ops_unregister(pdev);
+> +	dfl_fpga_dev_feature_uinit(pdev);
+> +
+> +	return 0;
+> +}
+> +
+> +static struct platform_driver fme_driver = {
+> +	.driver	= {
+> +		.name    = DFL_FPGA_FEATURE_DEV_FME,
+> +	},
+> +	.probe   = fme_probe,
+> +	.remove  = fme_remove,
+> +};
+> +
+> +module_platform_driver(fme_driver);
+> +
+> +MODULE_DESCRIPTION("FPGA Management Engine driver");
+> +MODULE_AUTHOR("Intel Corporation");
+> +MODULE_LICENSE("GPL v2");
+> +MODULE_ALIAS("platform:dfl-fme");
 > -- 
-> 2.17.0
+> 1.8.3.1
 > 
+Thanks,
+Moritz
