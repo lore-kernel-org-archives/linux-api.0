@@ -1,168 +1,118 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v6 17/29] fpga: dfl: fme: add partial reconfiguration sub
- feature support
-Date: Fri, 15 Jun 2018 13:52:46 +0800
-Message-ID: <20180615055246.GA27304@hao-dev>
-References: <1528798243-2029-1-git-send-email-hao.wu@intel.com>
- <1528798243-2029-18-git-send-email-hao.wu@intel.com>
- <20180614010713.fivl64pirawrnrhc@derp-derp.local>
- <CANk1AXRU9yXhgWu9_CZLLRQfNKedR22ghoPLGeTRUeTX24XtWw@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Oleksandr Shamray <oleksandrs@mellanox.com>
+Subject: [patch v26 0/4] JTAG driver introduction
+Date: Fri, 15 Jun 2018 19:45:19 +0300
+Message-ID: <1529081123-30873-1-git-send-email-oleksandrs@mellanox.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXRU9yXhgWu9_CZLLRQfNKedR22ghoPLGeTRUeTX24XtWw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+To: gregkh@linuxfoundation.org, arnd@arndb.de
+Cc: linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, openbmc@lists.ozlabs.org, joel@jms.id.au, jiri@resnulli.us, tklauser@distanz.ch, linux-serial@vger.kernel.org, vadimp@mellanox.com, system-sw-low-level@mellanox.com, robh+dt@kernel.org, openocd-devel-owner@lists.sourceforge.net, linux-api@vger.kernel.org, davem@davemloft.net, mchehab@kernel.org, Oleksandr Shamray <oleksandrs@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 14, 2018 at 11:33:00AM -0500, Alan Tull wrote:
-> On Wed, Jun 13, 2018 at 8:07 PM, Moritz Fischer <mdf@kernel.org> wrote:
-> 
-> Hellooo,
-> 
-> This probably could use a comment, please see below.
-> 
-> > Hi,
-> >
-> > quick question for Alan inline below.
-> >
-> 
-> >> +static int fme_pr(struct platform_device *pdev, unsigned long arg)
-> >> +{
-> >> +     struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-> >> +     void __user *argp = (void __user *)arg;
-> >> +     struct dfl_fpga_fme_port_pr port_pr;
-> >> +     struct fpga_image_info *info;
-> >> +     struct fpga_region *region;
-> >> +     void __iomem *fme_hdr;
-> >> +     struct dfl_fme *fme;
-> >> +     unsigned long minsz;
-> >> +     void *buf = NULL;
-> >> +     int ret = 0;
-> >> +     u64 v;
-> >> +
-> >> +     minsz = offsetofend(struct dfl_fpga_fme_port_pr, buffer_address);
-> >> +
-> >> +     if (copy_from_user(&port_pr, argp, minsz))
-> >> +             return -EFAULT;
-> >> +
-> >> +     if (port_pr.argsz < minsz || port_pr.flags)
-> >> +             return -EINVAL;
-> >> +
-> >> +     if (!IS_ALIGNED(port_pr.buffer_size, 4))
-> >> +             return -EINVAL;
-> >> +
-> >> +     /* get fme header region */
-> >> +     fme_hdr = dfl_get_feature_ioaddr_by_id(&pdev->dev,
-> >> +                                            FME_FEATURE_ID_HEADER);
-> >> +
-> >> +     /* check port id */
-> >> +     v = readq(fme_hdr + FME_HDR_CAP);
-> >> +     if (port_pr.port_id >= FIELD_GET(FME_CAP_NUM_PORTS, v)) {
-> >> +             dev_dbg(&pdev->dev, "port number more than maximum\n");
-> >> +             return -EINVAL;
-> >> +     }
-> >> +
-> >> +     if (!access_ok(VERIFY_READ,
-> >> +                    (void __user *)(unsigned long)port_pr.buffer_address,
-> >> +                    port_pr.buffer_size))
-> >> +             return -EFAULT;
-> >> +
-> >> +     buf = vmalloc(port_pr.buffer_size);
-> >> +     if (!buf)
-> >> +             return -ENOMEM;
-> >> +
-> >> +     if (copy_from_user(buf,
-> >> +                        (void __user *)(unsigned long)port_pr.buffer_address,
-> >> +                        port_pr.buffer_size)) {
-> >> +             ret = -EFAULT;
-> >> +             goto free_exit;
-> >> +     }
-> >> +
-> >> +     /* prepare fpga_image_info for PR */
-> >> +     info = fpga_image_info_alloc(&pdev->dev);
-> >> +     if (!info) {
-> >> +             ret = -ENOMEM;
-> >> +             goto free_exit;
-> >> +     }
-> >> +
-> >> +     info->flags |= FPGA_MGR_PARTIAL_RECONFIG;
-> >> +
-> >> +     mutex_lock(&pdata->lock);
-> >> +     fme = dfl_fpga_pdata_get_private(pdata);
-> >> +     /* fme device has been unregistered. */
-> >> +     if (!fme) {
-> >> +             ret = -EINVAL;
-> >> +             goto unlock_exit;
-> >> +     }
-> >> +
-> >> +     region = dfl_fme_region_find(fme, port_pr.port_id);
-> >> +     if (!region) {
-> >> +             ret = -EINVAL;
-> >> +             goto unlock_exit;
-> >> +     }
-> >> +
-> >> +     fpga_image_info_free(region->info);
-> >> +
-> >> +     info->buf = buf;
-> >> +     info->count = port_pr.buffer_size;
-> >> +     info->region_id = port_pr.port_id;
-> >> +     region->info = info;
-> >> +
-> >> +     ret = fpga_region_program_fpga(region);
-> >> +
-> >> +     if (region->get_bridges)
-> >> +             fpga_bridges_put(&region->bridge_list);
-> >
-> > I'm wondering if this should not be done as part of
-> > fpga_region_program_fpga() (It's not at the moment).
-> >
-> > Alan, am I missing something obvious? :)
-> 
-> It is up to the caller of  fpga_region_program_fpga to put the bridges
-> before programming again.  That prevents something other than the
-> caller from reprogramming a partial region or messing with the bridges
-> until the caller puts the bridges.
-> 
-> For example, for DT support, applying an overlay calls
-> fpga_region_program_fpga() which gets the bridges, disables them, does
-> the programming, and reenables the bridges.  Then the bridges are
-> held, preventing anything else from disabling the bridges until the
-> overlay is removed.  This was important in the DT case since the
-> overlay could include child nodes for hardware in the FPGA.   Allowing
-> anyone else to play with the bridges while those drivers were
-> expecting hardware access could be bad.
-> 
-> I can't remember for certain, but I think this code has to put the
-> bridges here because this patch set allows userspace to reset the PR
-> region's logic by disabling/reenabling the bridge to clear things out
-> between acceleration runs (which Hao promises is OK to do, it's
-> documented elsewhere in the pachset).  It probably could use a comment
-> right here to explain why the bridges are put here so future
-> generations know not to break this.
+When a need raise up to use JTAG interface for system's devices
+programming or CPU debugging, usually the user layer
+application implements jtag protocol by bit-bang or using a 
+proprietary connection to vendor hardware.
+This method can be slow and not generic.
+ 
+We propose to implement general JTAG interface and infrastructure
+to communicate with user layer application. In such way, we can
+have the standard JTAG interface core part and separation from
+specific HW implementation.
+This allow new capability to debug the CPU or program system's 
+device via BMC without additional devices nor cost. 
 
-Yes, it's correct. I can add some comments here in the next version.
+This patch purpose is to add JTAG master core infrastructure by 
+defining new JTAG class and provide generic JTAG interface
+to allow hardware specific drivers to connect this interface.
+This will enable all JTAG drivers to use the common interface
+part and will have separate for hardware implementation.
 
-Thanks
-Hao
+The JTAG (Joint Test Action Group) core driver provides minimal generic
+JTAG interface, which can be used by hardware specific JTAG master
+controllers. By providing common interface for the JTAG controllers,
+user space device programing is hardware independent.
+ 
+Modern SoC which in use for embedded system' equipped with
+internal JTAG master interface.
+This interface is used for programming and debugging system's
+hardware components, like CPLD, FPGA, CPU, voltage and
+industrial controllers.
+Firmware for such devices can be upgraded through JTAG interface during
+Runtime. The JTAG standard support for multiple devices programming,
+is in case their lines are daisy-chained together.
 
-> 
-> Alan
-> 
-> >> +
-> >> +     put_device(&region->dev);
-> >> +unlock_exit:
-> >> +     mutex_unlock(&pdata->lock);
-> >> +free_exit:
-> >> +     vfree(buf);
-> >> +     if (copy_to_user((void __user *)arg, &port_pr, minsz))
-> >> +             return -EFAULT;
-> >> +
-> >> +     return ret;
-> >> +}
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-fpga" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+For example, systems which equipped with host CPU, BMC SoC or/and 
+number of programmable devices are capable to connect a pin and
+select system components dynamically for programming and debugging,
+This is using by the BMC which is equipped with internal SoC master
+controller.
+For example:
+
+BMC JTAG master --> pin selected to CPLDs chain for programming (filed
+upgrade, production) 
+BMC JTAG master --> pin selected to voltage monitors for programming 
+(field upgrade, production) 
+BMC JTAG master --> pin selected to host CPU (on-site debugging 
+and developers debugging)
+
+For example, we can have application in user space which using calls
+to JTAG driver executes CPLD programming directly from SVF file
+ 
+The JTAG standard (IEEE 1149.1) defines the next connector pins:
+- TDI (Test Data In);
+- TDO (Test Data Out);
+- TCK (Test Clock);
+- TMS (Test Mode Select);
+- TRST (Test Reset) (Optional);
+
+The SoC equipped with JTAG master controller, performs
+device programming on command or vector level. For example
+a file in a standard SVF (Serial Vector Format) that contains
+boundary scan vectors, can be used by sending each vector
+to the JTAG interface and the JTAG controller will execute
+the programming.
+
+Initial version provides the system calls set for:
+- SIR (Scan Instruction Register, IEEE 1149.1 Instruction Register scan);
+- SDR (Scan Data Register, IEEE 1149.1 Data Register scan);
+- RUNTEST (Forces the IEEE 1149.1 bus to a run state for a specified
+  number of clocks.
+
+SoC which are not equipped with JTAG master interface, can be built
+on top of JTAG core driver infrastructure, by applying bit-banging of
+TDI, TDO, TCK and TMS pins within the hardware specific driver.
+
+Oleksandr Shamray (4):
+  drivers: jtag: Add JTAG core driver
+  drivers: jtag: Add Aspeed SoC 24xx and 25xx families JTAG master
+    driver
+  Documentation: jtag: Add bindings for Aspeed SoC 24xx and 25xx
+    families     JTAG master driver
+  Documentation: jtag: Add ABI documentation
+
+ Documentation/ABI/testing/gpio-cdev                |    1 -
+ Documentation/ABI/testing/jtag-dev                 |   23 +
+ .../devicetree/bindings/jtag/aspeed-jtag.txt       |   22 +
+ Documentation/ioctl/ioctl-number.txt               |    2 +
+ Documentation/jtag/overview                        |   27 +
+ Documentation/jtag/transactions                    |  109 +++
+ MAINTAINERS                                        |   10 +
+ drivers/Kconfig                                    |    2 +
+ drivers/Makefile                                   |    1 +
+ drivers/jtag/Kconfig                               |   31 +
+ drivers/jtag/Makefile                              |    2 +
+ drivers/jtag/jtag-aspeed.c                         |  756 ++++++++++++++++++++
+ drivers/jtag/jtag.c                                |  274 +++++++
+ include/linux/jtag.h                               |   41 ++
+ include/uapi/linux/jtag.h                          |  109 +++
+ 15 files changed, 1409 insertions(+), 1 deletions(-)
+ create mode 100644 Documentation/ABI/testing/jtag-dev
+ create mode 100644 Documentation/devicetree/bindings/jtag/aspeed-jtag.txt
+ create mode 100644 Documentation/jtag/overview
+ create mode 100644 Documentation/jtag/transactions
+ create mode 100644 drivers/jtag/Kconfig
+ create mode 100644 drivers/jtag/Makefile
+ create mode 100644 drivers/jtag/jtag-aspeed.c
+ create mode 100644 drivers/jtag/jtag.c
+ create mode 100644 include/linux/jtag.h
+ create mode 100644 include/uapi/linux/jtag.h
