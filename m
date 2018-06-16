@@ -1,104 +1,50 @@
-From: Jason Baron <jbaron@akamai.com>
-Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
- MLOCK_ONFAULT
-Date: Fri, 15 Jun 2018 15:36:07 -0400
-Message-ID: <7a671035-92dc-f9c0-aa7b-ff916d556e82@akamai.com>
-References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
- <20180611072005.GC13364@dhcp22.suse.cz>
- <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
- <20180611150330.GQ13364@dhcp22.suse.cz>
- <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
- <20180612074646.GS13364@dhcp22.suse.cz>
- <5a9398f4-453c-5cb5-6bbc-f20c3affc96a@akamai.com>
- <0daccb7c-f642-c5ce-ca7a-3b3e69025a1e@suse.cz>
- <20180613071552.GD13364@dhcp22.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 1/2] rseq/selftests: run_param_test.sh should be executable
+Date: Sat, 16 Jun 2018 15:44:55 -0400
+Message-ID: <20180616194456.26159-2-mathieu.desnoyers@efficios.com>
+References: <20180616194456.26159-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180613071552.GD13364@dhcp22.suse.cz>
-Content-Language: en-US
+In-Reply-To: <20180616194456.26159-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>
-Cc: akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Joel Fernandes <joelaf@google.com>, Peter Zijlstra <peterz@infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Shuah Khan <shuahkh@osg.samsung.com>, Andi Kleen <andi@firstfloor.org>, linux-kselftest@vger.kernel.org, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
+The executable bit of the run_param_test.sh script got lost in
+the merge.
 
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Joel Fernandes <joelaf@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Catalin Marinas <catalin.marinas@arm.com>
+Cc: Dave Watson <davejwatson@fb.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: Andi Kleen <andi@firstfloor.org>
+Cc: linux-kselftest@vger.kernel.org
+Cc: "H . Peter Anvin" <hpa@zytor.com>
+Cc: Chris Lameter <cl@linux.com>
+Cc: Russell King <linux@arm.linux.org.uk>
+Cc: Andrew Hunter <ahh@google.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: Paul Turner <pjt@google.com>
+Cc: Boqun Feng <boqun.feng@gmail.com>
+Cc: Josh Triplett <josh@joshtriplett.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ben Maurer <bmaurer@fb.com>
+Cc: linux-api@vger.kernel.org
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ tools/testing/selftests/rseq/run_param_test.sh | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 tools/testing/selftests/rseq/run_param_test.sh
 
-On 06/13/2018 03:15 AM, Michal Hocko wrote:
-> On Wed 13-06-18 08:32:19, Vlastimil Babka wrote:
->> On 06/12/2018 04:11 PM, Jason Baron wrote:
->>>
->>>
->>> On 06/12/2018 03:46 AM, Michal Hocko wrote:
->>>> On Mon 11-06-18 12:23:58, Jason Baron wrote:
->>>>> On 06/11/2018 11:03 AM, Michal Hocko wrote:
->>>>>> So can we start discussing whether we want to allow MADV_DONTNEED on
->>>>>> mlocked areas and what downsides it might have? Sure it would turn the
->>>>>> strong mlock guarantee to have the whole vma resident but is this
->>>>>> acceptable for something that is an explicit request from the owner of
->>>>>> the memory?
->>>>>>
->>>>>
->>>>> If its being explicity requested by the owner it makes sense to me. I
->>>>> guess there could be a concern about this breaking some userspace that
->>>>> relied on MADV_DONTNEED not freeing locked memory?
->>>>
->>>> Yes, this is always the fear when changing user visible behavior.  I can
->>>> imagine that a userspace allocator calling MADV_DONTNEED on free could
->>>> break. The same would apply to MLOCK_ONFAULT/MCL_ONFAULT though. We
->>>> have the new flag much shorter so the probability is smaller but the
->>>> problem is very same. So I _think_ we should treat both the same because
->>>> semantically they are indistinguishable from the MADV_DONTNEED POV. Both
->>>> remove faulted and mlocked pages. Mlock, once applied, should guarantee
->>>> no later major fault and MADV_DONTNEED breaks that obviously.
->>
->> I think more concerning than guaranteeing no later major fault is
->> possible data loss, e.g. replacing data with zero-filled pages.
-> 
-> But MADV_DONTNEED is an explicit call for data loss. Or do I miss your
-> point?
-> 
->> The madvise manpage is also quite specific about not allowing
->> MADV_DONTNEED and MADV_FREE for locked pages.
-> 
-> Yeah, but that seems to describe the state of the art rather than
-> explain why.
-> 
->> So I don't think we should risk changing that for all mlocked pages.
->> Maybe we can risk MCL_ONFAULT, since it's relatively new and has few users?
-> 
-> That is what Jason wanted but I argued that the two are the same from
-> MADV_DONTNEED point of view. I do not see how treating them differently
-> would be less confusing or error prone. It's new so we can make it
-> behave differently is certainly not an argument.
-> 
->>>> So the more I think about it the more I am worried about this but I am
->>>> more and more convinced that making ONFAULT special is just a wrong way
->>>> around this.
->>>>
->>>
->>> Ok, I share the concern that there is a chance that userspace is relying
->>> on MADV_DONTNEED not free'ing locked memory. In that case, what if we
->>> introduce a MADV_DONTNEED_FORCE, which does everything that
->>> MADV_DONTNEED currently does but in addition will also free mlock areas.
->>> That way there is no concern about breaking something.
->>
->> A new niche case flag? Sad :(
->>
->> BTW I didn't get why we should allow this for MADV_DONTNEED but not
->> MADV_FREE. Can you expand on that?
-> 
-> Well, I wanted to bring this up as well. I guess this would require some
-> more hacks to handle the reclaim path correctly because we do rely on
-> VM_LOCK at many places for the lazy mlock pages culling.
-> 
-
-The point of not allowing MADV_FREE on mlock'd pages for me was that
-with mlock and even MLOCK_ON_FAULT, one can always can always determine
-if a page is present or not (and thus avoid the major fault). Allowing
-MADV_FREE on lock'd pages breaks that assumption.
-
-Thanks,
-
--Jason
+diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
+old mode 100644
+new mode 100755
+-- 
+2.11.0
