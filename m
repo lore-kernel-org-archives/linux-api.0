@@ -1,68 +1,44 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18] rseq: cleanup: no need to abort rseq c.s. in child on fork
-Date: Sat, 16 Jun 2018 16:20:13 -0400
-Message-ID: <20180616202013.32354-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: [PATCH 0/3] time: Add y2038 safe struct __kernel_itimerspec
+Date: Sat, 16 Jun 2018 22:11:41 -0700
+Message-ID: <20180617051144.29756-1-deepa.kernel@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: arnd@arndb.de, tglx@linutronix.de, linux-kernel@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, viro@zeniv.linux.org.uk, y2038@lists.linaro.org
 List-Id: linux-api@vger.kernel.org
 
-Considering that we explicitly forbid system calls in rseq critical
-sections, it is not valid to issue a fork or clone system call within a
-rseq critical section, so rseq_fork() is not required to restart an
-active rseq c.s. in the child process.
-
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Joel Fernandes <joelaf@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Watson <davejwatson@fb.com>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Andi Kleen <andi@firstfloor.org>
-Cc: linux-kselftest@vger.kernel.org
-Cc: "H . Peter Anvin" <hpa@zytor.com>
-Cc: Chris Lameter <cl@linux.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Paul Turner <pjt@google.com>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: Josh Triplett <josh@joshtriplett.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ben Maurer <bmaurer@fb.com>
-Cc: linux-api@vger.kernel.org
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
----
- include/linux/sched.h | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
-
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 87bf02d93a27..c1882643d455 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1831,9 +1831,7 @@ static inline void rseq_migrate(struct task_struct *t)
- 
- /*
-  * If parent process has a registered restartable sequences area, the
-- * child inherits. Only applies when forking a process, not a thread. In
-- * case a parent fork() in the middle of a restartable sequence, set the
-- * resume notifier to force the child to retry.
-+ * child inherits. Only applies when forking a process, not a thread.
-  */
- static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
- {
-@@ -1847,7 +1845,6 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
- 		t->rseq_len = current->rseq_len;
- 		t->rseq_sig = current->rseq_sig;
- 		t->rseq_event_mask = current->rseq_event_mask;
--		rseq_preempt(t);
- 	}
- }
- 
--- 
-2.11.0
+VGhlIHNlcmllcyBhaW1zIGF0IGFkZGluZyBhIG5ldyB5MjAzOC1zYWZlIHN0cnVjdCBfX2tlcm5l
+bF9pdGltZXJzcGVjLgpUaGlzIGlzIGludGVuZGVkIHRvIHJlcGxhY2UgdGhlIHN0cnVjdCBpdGlt
+ZXJzcGVjIGF0IEFCSSBsZXZlbC4KClRoZSBzZXJpZXMgaXMgYSBjb250aW51YXRpb24gb2YgZWZm
+b3J0cyB0byBjb252ZXJ0IGFsbCBzeXNjYWxscyB3aXRoCnRpbWVfdCBvciB0aW1lX3QtZGVyaXZl
+ZCBzdHJ1Y3R1cmVzIHRvIGJlIHkyMDM4LXNhZmUuCgpBcm5kLCBtYXliZSB0aGlzIHNlcmllcyBj
+YW4gZ28gYWxvbmcgd2l0aCB0aGUgcmVzdCBvZiBzeXNjYWxscyB0aGF0IHlvdQpoYXZlIGluIHlv
+dXIgeTIwMzggdHJlZT8KCkRlZXBhIERpbmFtYW5pICgzKToKICB0aW1lOiBJbnRyb2R1Y2Ugc3Ry
+dWN0IF9fa2VybmVsX2l0aW1lcnNwZWMKICB0aW1lOiBFbmFibGUgZ2V0L3B1dF9jb21wYXRfaXRp
+bWVyc3BlYzY0IGFsd2F5cwogIHRpbWU6IENoYW5nZSB0eXBlcyB0byBuZXcgeTIwMzggc2FmZSBf
+X2tlcm5lbF9pdGltZXJzcGVjCgogZnMvdGltZXJmZC5jICAgICAgICAgICAgICAgIHwgIDggKysr
+Ky0tLS0KIGluY2x1ZGUvbGludXgvY29tcGF0LmggICAgICB8ICA5IC0tLS0tLS0tLQogaW5jbHVk
+ZS9saW51eC9jb21wYXRfdGltZS5oIHwgIDkgKysrKysrKysrCiBpbmNsdWRlL2xpbnV4L3N5c2Nh
+bGxzLmggICAgfCAxMCArKysrKy0tLS0tCiBpbmNsdWRlL2xpbnV4L3RpbWUuaCAgICAgICAgfCAg
+NCArKy0tCiBpbmNsdWRlL2xpbnV4L3RpbWU2NC5oICAgICAgfCAgMSArCiBpbmNsdWRlL3VhcGkv
+bGludXgvdGltZS5oICAgfCAgNyArKysrKysrCiBrZXJuZWwvY29tcGF0LmMgICAgICAgICAgICAg
+fCAyOSAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoga2VybmVsL3RpbWUvcG9zaXgtdGlt
+ZXJzLmMgIHwgMTIgKysrKysrKy0tLS0tCiBrZXJuZWwvdGltZS90aW1lLmMgICAgICAgICAgfCAy
+NSArKysrKysrKysrKysrKysrKysrKysrKy0tCiAxMCBmaWxlcyBjaGFuZ2VkLCA1OCBpbnNlcnRp
+b25zKCspLCA1NiBkZWxldGlvbnMoLSkKCgpiYXNlLWNvbW1pdDogNGIzNzNmOTRmZWU1YWNmMmZm
+NGMxZWZiYjNmNzAyMDYwMzc5ZGYxZgotLSAKMi4xNy4xCgpfX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMu
+bGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAz
+OAo=
