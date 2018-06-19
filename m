@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 4.18 2/3] rseq/selftests: arm: align struct rseq_cs on 32 bytes
-Date: Tue, 19 Jun 2018 09:32:29 -0400
-Message-ID: <20180619133230.4087-3-mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 4.18 3/3] rseq: cleanup: no need to abort rseq c.s. in child on fork
+Date: Tue, 19 Jun 2018 09:32:30 -0400
+Message-ID: <20180619133230.4087-4-mathieu.desnoyers@efficios.com>
 References: <20180619133230.4087-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180619133230.4087-1-mathieu.desnoyers@efficios.com>
@@ -10,9 +10,10 @@ To: Thomas Gleixner <tglx@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-uapi/linux/rseq.h aligns struct rseq_cs on 32 bytes. Satisfy this
-alignment requirement in its definition within the rseq-arm.h
-inline assembly.
+Considering that we explicitly forbid system calls in rseq critical
+sections, it is not valid to issue a fork or clone system call within a
+rseq critical section, so rseq_fork() is not required to restart an
+active rseq c.s. in the child process.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
@@ -27,7 +28,6 @@ Cc: linux-kselftest@vger.kernel.org
 Cc: "H . Peter Anvin" <hpa@zytor.com>
 Cc: Chris Lameter <cl@linux.com>
 Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Andrew Hunter <ahh@google.com>
 Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
 Cc: Paul Turner <pjt@google.com>
@@ -40,20 +40,31 @@ Cc: Andy Lutomirski <luto@amacapital.net>
 Cc: Andrew Morton <akpm@linux-foundation.org>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>
 ---
- tools/testing/selftests/rseq/rseq-arm.h | 1 +
- 1 file changed, 1 insertion(+)
+ include/linux/sched.h | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
-index 3b055f9aeaab..3cea19877227 100644
---- a/tools/testing/selftests/rseq/rseq-arm.h
-+++ b/tools/testing/selftests/rseq/rseq-arm.h
-@@ -57,6 +57,7 @@ do {									\
- #define __RSEQ_ASM_DEFINE_ABORT(table_label, label, teardown,		\
- 				abort_label, version, flags,		\
- 				start_ip, post_commit_offset, abort_ip)	\
-+		".balign 32\n\t"					\
- 		__rseq_str(table_label) ":\n\t"				\
- 		".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
- 		".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(abort_ip) ", 0x0\n\t" \
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 87bf02d93a27..c1882643d455 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1831,9 +1831,7 @@ static inline void rseq_migrate(struct task_struct *t)
+ 
+ /*
+  * If parent process has a registered restartable sequences area, the
+- * child inherits. Only applies when forking a process, not a thread. In
+- * case a parent fork() in the middle of a restartable sequence, set the
+- * resume notifier to force the child to retry.
++ * child inherits. Only applies when forking a process, not a thread.
+  */
+ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
+ {
+@@ -1847,7 +1845,6 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
+ 		t->rseq_len = current->rseq_len;
+ 		t->rseq_sig = current->rseq_sig;
+ 		t->rseq_event_mask = current->rseq_event_mask;
+-		rseq_preempt(t);
+ 	}
+ }
+ 
 -- 
 2.11.0
