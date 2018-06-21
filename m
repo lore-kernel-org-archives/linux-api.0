@@ -1,77 +1,51 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 2/2] rusage: allow 64-bit times
-	ru_utime/ru_stime
-Date: Thu, 21 Jun 2018 18:25:33 +0200
-Message-ID: <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
-References: <20180420120605.1612248-1-arnd@arndb.de>
- <20180420120605.1612248-2-arnd@arndb.de>
- <20180621154915.GA31947@gmail.com>
- <CAK8P3a1QYTfRNQt2+a29BpvgYM_pnSFrO=NBvVo=BdUa2q9ngQ@mail.gmail.com>
- <20180621161121.GB7222@gmail.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH 1/4] lib/rhashtable: simplify bucket_table_alloc()
+Date: Thu, 21 Jun 2018 14:33:07 -0700
+Message-ID: <ff55aedf-615e-04f0-db21-a115b3475a9d@infradead.org>
+References: <20180621212825.3059-1-dave@stgolabs.net>
+ <20180621212825.3059-2-dave@stgolabs.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20180621161121.GB7222@gmail.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Ingo Molnar <mingo@kernel.org>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, Dominik Brodowski <linux@dominikbrodowski.net>, Andrew Morton <akpm@linux-foundation.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Deepa Dinamani <deepa.kernel@gmail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, "Eric W . Biederman" <ebiederm@xmission.com>, linux-alpha@vger.kernel.org, Matt Turner <mattst88@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Richard Henderson <rth@twiddle.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180621212825.3059-2-dave@stgolabs.net>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Davidlohr Bueso <dave@stgolabs.net>, akpm@linux-foundation.org, torvalds@linux-foundation.org
+Cc: tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBKdW4gMjEsIDIwMTggYXQgNjoxMSBQTSwgSW5nbyBNb2xuYXIgPG1pbmdvQGtlcm5l
-bC5vcmc+IHdyb3RlOgo+Cj4gKiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPiB3cm90ZToK
-Pgo+PiBTdXJlLCBubyBwcm9ibGVtLiBEbyB5b3UgaGF2ZSBhbiBvcGluaW9uIG9uIHRoZSBxdWVz
-dGlvbiBJIHJhaXNlZCBpbiB0aGUKPj4gZmlyc3QgcGF0Y2ggWzFdLCBpLmUuIHdoZXRoZXIgd2Ug
-YWN0dWFsbHkgd2FudCB0aGlzIHRvIGJlIGRvbmUgdGhpcyB3YXkgaW4gdGhlCj4+IGtlcm5lbCwg
-b3Igb25lIG9mIHRoZSBvdGhlciBhcHByb2FjaGVzIEkgZGVzY3JpYmVkIHRoZXJlPwo+Cj4gU28g
-dGhpcyBsb29rcyBsaWtlIHRoZSBtb3N0IGZvcndhcmQgbG9va2luZyB2YXJpYW50Ogo+Cj4+IGEp
-IGRlcHJlY2F0ZSB0aGUgd2FpdDQoKSBhbmQgZ2V0cnVzYWdlKCkgc3lzdGVtIGNhbGxzLCBhbmQg
-Y3JlYXRlCj4+ICAgIGEgc2V0IG9mIGtlcm5lbCBpbnRlcmZhY2VzIGJhc2VkIGFyb3VuZCBhIG5l
-d2x5IGRlZmluZWQgc3RydWN0dXJlIHRoYXQKPj4gICAgY291bGQgc29sdmUgbXVsdGlwbGUgcHJv
-YmxlbXMgYXQgb25jZSwgZS5nLiBwcm92aWRlIG1vcmUgZmluZS1ncmFpbmVkCj4+ICAgIHRpbWVz
-dGFtcHMuIFRoZSBDIGxpYnJhcnkgY291bGQgdGhlbiBpbXBsZW1lbnQgdGhlIHBvc2l4IGludGVy
-ZmFjZXMKPj4gICAgb24gdG9wIG9mIHRoZSBuZXcgc3lzdGVtIGNhbGxzLgo+Cj4gLi4uIGJ1dCBn
-aXZlbiB0aGUgcHJldHR5IGxvbmcgcHJvcGFnYXRpb24gdGltZSBvZiBuZXcgQUJJcywgaXMgdGhp
-cyBhIGdvb2QKPiBzb2x1dGlvbj8gV2hhdCB3b3VsZCB0aGUgbGltaXRhdGlvbnMvdHJhZGUtb2Zm
-cyBiZSBvbiBvbGQtQUJJIHN5c3RlbXM/CgpUaGUgbWFpbiBwdXJwb3NlIG9mIHRoaXMgaXMgdG8g
-ZW5hYmxlIGNvbnNpc3RlbnQgNjQtYml0IHRpbWVfdCBpbnRlcmZhY2VzIGluCnVzZXIgc3BhY2Us
-IGFuZCBmb3IgbW9zdCB1c2VycyB0aGlzIHdvdWxkIG5vdCBjaGFuZ2UgYW55dGhpbmcgYXMgdGhl
-CmV4aXN0aW5nIGdsaWJjIChib3RoIDY0LWJpdCBhbmQgMzItYml0KSBjYW4gY29udGludWUgY2Fs
-bGluZyB0aGUgc2FtZQppbnRlcmZhY2VzIGFzIGJlZm9yZS4KCkZvciB0aG9zZSB1c2VycyB0aGF0
-IGFyZSBpbnRlcmVzdGVkIGluIDY0LWJpdCB0aW1lX3Qgb24gMzItYml0IGJpbmFyaWVzLAp0aGUg
-Zmlyc3Qgc3RlcCB3b3VsZCBiZSB0byBjaGFuZ2UgdGhlIGdsaWJjIGltcGxlbWVudGF0aW9uIHRv
-IGVtdWxhdGUKdGhlIGV4aXN0aW5nIGludGVyZmFjZXMgd2l0aCB0aGUgbmV3IHRpbWVfdCBvbiB0
-b3Agb2YgdGhlIG5ldyBzeXNjYWxsCnJhdGhlciB0aGFuIHRoZSBvbGQgKHVuc2FmZSkgc3lzY2Fs
-bC4gVGhvc2UgdXNlcnMgYWxyZWFkeSByZXF1aXJlIGJvdGgKYSBuZXcga2VybmVsIGFuZCBhIG5l
-dyBnbGliYyB2ZXJzaW9uLgoKSWYgdGhlIG5ldyBrZXJuZWwgaW50ZXJmYWNlcyBvZmZlciBhIHJl
-YWwgYmVuZWZpdCwgb3RoZXJzIGNvdWxkIHN0YXJ0CnVzaW5nIHRoZW0gZGlyZWN0bHkgYXMgc29v
-biBhcyB0aGV5IGhhdmUgdXBkYXRlZCB0aGUgbGliYyB2ZXJzaW9uLgpOb3RlIHRoYXQgZ2xpYmMg
-aGFzIG5vdCB1cGRhdGVkIHRoZWlyIGtlcm5lbCBoZWFkZXJzIHZlcnNpb24gZm9yCmEgbG9uZyB0
-aW1lLCB0aGV5IHN0aWxsIGFsbG93IGJ1aWxkaW5nIHdpdGggbGludXgtMy4yIGhlYWRlciBmaWxl
-cy4KSG93ZXZlciwgdGhlIGdsaWJjIG1haW50YWluZXJzIGhhdmUgaW5kaWNhdGVkIHRoYXQgdGhl
-eSB3b3VsZApwcm9iYWJseSB1cGRhdGUgdGhhdCByZXF1aXJlbWVudCB0byB0aGUgdGhlbi1sYXRl
-c3QgdmVyc2lvbgp3aGVuIGFkZGluZyBzdXBwb3J0IHRvIHRoZSBuZXcgNjQtYml0IHRpbWVfdCBz
-eXNjYWxscywgc28gdGhpcwp3b3VsZCBiZWNvbWUgYXZhaWxhYmxlIGltbWVkaWF0ZWx5IHRvIGFs
-bCB1c2VycyBvZiB0aGUgbmV3IGdsaWJjCnZlcnNpb24uCgpIb3dldmVyLCB0aGUgb3RoZXIgcXVl
-c3Rpb24gdGhhdCBoYXMgdG8gYmUgYXNrZWQgdGhlbiBpcyB3aGV0aGVyCnRoZXJlIGlzIGFueXRo
-aW5nIHdyb25nIHdpdGggd2FpdDQoKS93YWl0aWQoKSBhbmQgZ2V0cnVzdWFnZSgpIHRoYXQKd2Ug
-d2FudCB0byBjaGFuZ2UgYmV5b25kIHRoZSB0aW1lIHZhbHVlIHBhc3NpbmcuIFdlIGhhdmUKYW5z
-d2VyZWQgYSBzaW1pbGFyIHF1ZXN0aW9uIHdpdGggJ3llcycgZm9yIHN0YXQoKSwgd2hpY2ggaGFz
-IGxlZAp0byB0aGUgaW50cm9kdWN0aW9uIG9mIHN0YXR4KCksIGJ1dCBzbyBmYXIgSSBleHBlY3Qg
-YWxsIG90aGVyIHN5c2NhbGxzCnRvIHN0YXJ0IGNvbXBhdGlibGUuIFNlZSBbMV0gZm9yIG15IGN1
-cnJlbnQgbGlzdC4gSW4gdGhhdCBsaXN0LCBJIGhhdmUKY3VycmVudGx5IG1hcmtlZCB3YWl0aWQo
-KSBhbmQgZ2V0cnVzdWFnZSgpIGFzIG5vdCB0byBiZSBhZGRyZXNzZWQsCmkuZS4gbXkgYXBwcm9h
-Y2ggYykgb2YgYXBwbHlpbmcgb25seSB0aGUgZmlyc3Qgb2YgdGhlIHR3byBwYXRjaGVzIGJ1dApu
-b3QgdGhlIHNlY29uZC4KCiAgICAgICBBcm5kCgpbMV0gaHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20v
-c3ByZWFkc2hlZXRzL2QvMUhDWXdIWHhzNDhUc1RiNklHVWR1TmpRbm1mUnZNUHpDTjZUXzBZaVF3
-aXMvZWRpdCNnaWQ9MApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xp
-c3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+On 06/21/2018 02:28 PM, Davidlohr Bueso wrote:
+> As of ce91f6ee5 (mm: kvmalloc does not fallback to vmalloc for incompatible gfp flag),
+> we can simplify the caller and trust kvzalloc() to just do the right thing.
+
+Hi,
+JFYI, we are using 12-digit (12-character) commit IDs nowadays...
+
+
+> Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
+> ---
+>  lib/rhashtable.c | 5 +----
+>  1 file changed, 1 insertion(+), 4 deletions(-)
+> 
+> diff --git a/lib/rhashtable.c b/lib/rhashtable.c
+> index 9427b5766134..26c9cd8a985a 100644
+> --- a/lib/rhashtable.c
+> +++ b/lib/rhashtable.c
+> @@ -175,10 +175,7 @@ static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
+>  	int i;
+>  
+>  	size = sizeof(*tbl) + nbuckets * sizeof(tbl->buckets[0]);
+> -	if (gfp != GFP_KERNEL)
+> -		tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
+> -	else
+> -		tbl = kvzalloc(size, gfp);
+> +	tbl = kvzalloc(size, gfp);
+>  
+>  	size = nbuckets;
+>  
+> 
+
+
+-- 
+~Randy
