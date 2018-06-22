@@ -1,68 +1,41 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH 1/4] lib/rhashtable: simplify bucket_table_alloc()
-Date: Thu, 21 Jun 2018 23:36:13 -0700
-Message-ID: <20180622063613.kcnkrfpyszphnf46@linux-r8p5>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [PATCH 2/4] lib/rhashtable: guarantee initial hashtable
+ allocation
+Date: Fri, 22 Jun 2018 14:54:07 +0800
+Message-ID: <20180622065407.jqi3mvuzsj2jotbt@gondor.apana.org.au>
 References: <20180621212825.3059-1-dave@stgolabs.net>
- <20180621212825.3059-2-dave@stgolabs.net>
- <87sh5fbbma.fsf@notabene.neil.brown.name>
+ <20180621212825.3059-3-dave@stgolabs.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="wctdmjbevz3t7pte"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87sh5fbbma.fsf@notabene.neil.brown.name>
+In-Reply-To: <20180621212825.3059-3-dave@stgolabs.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: NeilBrown <neilb@suse.com>
-Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
+To: Davidlohr Bueso <dave@stgolabs.net>
+Cc: akpm@linux-foundation.org, torvalds@linux-foundation.org, tgraf@suug.ch, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Jun 21, 2018 at 02:28:23PM -0700, Davidlohr Bueso wrote:
+> rhashtable_init() may fail due to -ENOMEM, thus making the
+> entire api unusable. This patch removes this scenario,
+> however unlikely. In order to guarantee memory allocation,
+> this patch always ends up doing GFP_KERNEL|__GFP_NOFAIL
+> for both the tbl as well as alloc_bucket_spinlocks().
+> 
+> Upon the first table allocation failure, we shrink the
+> size to the smallest value that makes sense and retry with
+> __GFP_NOFAIL semantics. With the defaults, this means that
+> from 64 buckets, we retry with only 4. Any later issues
+> regarding performance due to collisions or larger table
+> resizing (when more memory becomes available) is the least
+> of our problems.
+> 
+> Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
 
---wctdmjbevz3t7pte
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Disposition: inline
-
-On Fri, 22 Jun 2018, NeilBrown wrote:
-
->On Thu, Jun 21 2018, Davidlohr Bueso wrote:
->
->> As of ce91f6ee5 (mm: kvmalloc does not fallback to vmalloc for incompatible gfp flag),
->> we can simplify the caller and trust kvzalloc() to just do the right thing.
->
->Hi,
-> it isn't clear to me that this is true.
-> With this change we lose __GFP_NOWARN and __GFP_NORETRY.
-> I doubt the NORETRY is particularly important as this is if it
-> isn't GFP_KERNEL, then it is GFP_ATOMIC which doesn't retry anyway.
-> However I cannot see why this patch won't result in warnings when the
-> kzalloc() fails.
-> What am I missing?
-
-You're right, it might be too agressive to get rid of the GFP_NOWARN for
-the callers that do GFP_ATOMIC.
-
-I'll send a new version of this patch along with a better changelog.
+Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
 
 Thanks,
-Davidlohr
---wctdmjbevz3t7pte
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEdfFmxIPSv0bNouB8XTxsx2rK+gIFAlssmNMACgkQXTxsx2rK
-+gIwow/8CXXnyoNLG+1OxngkGkphoIlpPy3H+ghSa094MS3CBJfQ3lEkxejDODm4
-Jk4TXOSXJaCUqler7JZJdL9O+SH/H258gbJiKMqbxSFqvD57BzyYN6eoI8sBT916
-dUdJcpfEarEq+w8Zc1qpZu9rxEQdKrV8LnooOkUrSKY8u3aMbSDhffXp4tDP5FGz
-GHgg/VZPHsi4rZ91vbgl2FzOM92IDgp+eKLeTg6ncAxaf/uuoptFjSlPucfdVaqf
-lujkgBuBdmTCkHL6C0orZN5Onn/xXt0O5IfA/wfC/pkTdaya8619OC6ZVDZQbU2x
-DwWk1BtUqTaYuY9HkcPyrNNLxWFa0xsswRmcw9oawAiYyYYPvYzkf9IlxDNse6HH
-oGQ1iyEAvMjkou1BfGGyCTdrxl9lu0oH/YxvwTIGGpDGy7aF082IXa+A0P7UVOiW
-2Miw8N5L4wE1tFfiQ+UQHXYzapBXQzl6rIPeibd0ruYFyCMhDGRxJBdbSLbnfqU2
-PW4mdfaAMkLPdS9G6+cNg+yPGjfWMqJ2IgFe9CABAKKYbWroZT6fjYGa7/ypSQL7
-F5SF2dAygxJV2dK+r0arGKwBYlSaVbtYhaJHz5+nIUZQ8IhwyLGxnAgM7xDicQNS
-qWiTbehv1V7Qut63bUgE3+pAKlO3SGNV/U7YDHf2fS28EIUu+FE=
-=mzhl
------END PGP SIGNATURE-----
-
---wctdmjbevz3t7pte--
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
