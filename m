@@ -1,52 +1,42 @@
-From: Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH v2 1/4] lib/rhashtable: simplify bucket_table_alloc()
-Date: Fri, 22 Jun 2018 11:35:02 -0700
-Message-ID: <20180622183502.i5dv4d3tbwh5sw6u@linux-r8p5>
-References: <20180621212825.3059-1-dave@stgolabs.net>
- <20180621212825.3059-2-dave@stgolabs.net>
- <20180622181540.5gul4lx5dteqzzk3@linux-r8p5>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v4 1/4] seccomp: add a return code to trap to userspace
+Date: Fri, 22 Jun 2018 14:51:23 -0700
+Message-ID: <CAGXu5jKWQCDzXPdTz=+bxT9+4enaBvgYfMseUiGti+t1KwZT8g@mail.gmail.com>
+References: <20180621220416.5412-1-tycho@tycho.ws> <20180621220416.5412-2-tycho@tycho.ws>
+ <CAG48ez3Ek_KG54ejR=Q=XtW_HDs8hQ+cgFODzn4rQ0nVDVpODg@mail.gmail.com>
+ <20180622151514.GM3992@cisco> <E8029AD7-7009-4CBF-911E-186328237176@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180622181540.5gul4lx5dteqzzk3@linux-r8p5>
+In-Reply-To: <E8029AD7-7009-4CBF-911E-186328237176@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, torvalds@linux-foundation.org
-Cc: tgraf@suug.ch, herbert@gondor.apana.org.au, manfred@colorfullife.com, mhocko@kernel.org, guillaume.knispel@supersonicimagine.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Davidlohr Bueso <dbueso@suse.de>, neilb@suse.com
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, kernel list <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, "Tobin C. Harding" <me@tobin.cc>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 22 Jun 2018, Davidlohr Bueso wrote:
+On Fri, Jun 22, 2018 at 11:09 AM, Andy Lutomirski <luto@amacapital.net> wro=
+te:
+> One possible extra issue: IIRC /proc/.../mem uses FOLL_FORCE, which is no=
+t what we want here.
+>
+> How about just adding an explicit =E2=80=9Cread/write the seccomp-trapped=
+ task=E2=80=99s memory=E2=80=9D primitive?  That should be easier than a =
+=E2=80=9Copen mem fd=E2=80=9D primitive.
 
->This slightly changes the gfp flags passed on to nested_table_alloc() as it will now
->also use GFP_ATOMIC | __GFP_NOWARN. However, I consider this a positive consequence
->as for the same reasons we want nowarn semantics in bucket_table_alloc().
+Uuugh. Can we avoid adding another "read/write remote process memory"
+interface? The point of this series was to provide a lightweight
+approach to what should normally be possible via the existing
+seccomp+ptrace interface. I do like Jann's context idea, but I agree
+with Andy: it can't be a handle to /proc/$pid/mem, since it's
+FOLL_FORCE. Is there any other kind of process context id we can use
+for this instead of pid? There was once an idea of pid-fd but it never
+landed... This would let us get rid of the "id" in the structure too.
+And if that existed, we could make process_vm_*v() safer too (taking a
+pid-fd instead of a pid).
 
-If this is not acceptable, we can just keep the caller's current semantics - the
-atomic flag could also be labeled 'rehash' or something considering that it comes
-only from insert_rehash() when we get EAGAIN after trying to insert the first time:
+-Kees
 
-diff --git a/lib/rhashtable.c b/lib/rhashtable.c
-index 9427b5766134..18740b052aec 100644
---- a/lib/rhashtable.c
-+++ b/lib/rhashtable.c
-@@ -172,17 +172,15 @@ static struct bucket_table *bucket_table_alloc(struct rhashtable *ht,
- {
- 	struct bucket_table *tbl = NULL;
- 	size_t size, max_locks;
-+	bool atomic = (gfp == GFP_ATOMIC);
- 	int i;
- 
- 	size = sizeof(*tbl) + nbuckets * sizeof(tbl->buckets[0]);
--	if (gfp != GFP_KERNEL)
--		tbl = kzalloc(size, gfp | __GFP_NOWARN | __GFP_NORETRY);
--	else
--		tbl = kvzalloc(size, gfp);
-+	tbl = kvzalloc(size, atomic ? gfp | __GFP_NOWARN : gfp);
- 
- 	size = nbuckets;
- 
--	if (tbl == NULL && gfp != GFP_KERNEL) {
-+	if (tbl == NULL && atomic) {
- 		tbl = nested_bucket_table_alloc(ht, nbuckets, gfp);
- 		nbuckets = 0;
- 	}
+--=20
+Kees Cook
+Pixel Security
