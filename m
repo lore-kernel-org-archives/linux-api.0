@@ -1,110 +1,66 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v4 1/4] seccomp: add a return code to trap to userspace
-Date: Thu, 21 Jun 2018 19:39:14 -0600
-Message-ID: <20180622013914.GL3992@cisco>
-References: <20180621220416.5412-1-tycho@tycho.ws>
- <20180621220416.5412-2-tycho@tycho.ws>
- <CAG48ez2-vK57HfbRs94YLiz3SVJ7u4tTrxtAmbRepDqk6m-c_A@mail.gmail.com>
- <20180622005829.GK3992@cisco>
- <CAG48ez1Wob-CrbrPfgP_OBoG7zas4bJwFdLFFQLtgQAkj+HEOQ@mail.gmail.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH v2 2/2] rusage: allow 64-bit times ru_utime/ru_stime
+Date: Fri, 22 Jun 2018 04:16:36 +0200
+Message-ID: <20180622021636.GA11266@gmail.com>
+References: <20180420120605.1612248-1-arnd@arndb.de>
+ <20180420120605.1612248-2-arnd@arndb.de>
+ <20180621154915.GA31947@gmail.com>
+ <CAK8P3a1QYTfRNQt2+a29BpvgYM_pnSFrO=NBvVo=BdUa2q9ngQ@mail.gmail.com>
+ <20180621161121.GB7222@gmail.com>
+ <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez1Wob-CrbrPfgP_OBoG7zas4bJwFdLFFQLtgQAkj+HEOQ@mail.gmail.com>
+In-Reply-To: <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, "Tobin C. Harding" <me@tobin.cc>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, "Eric W . Biederman" <ebiederm@xmission.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Dominik Brodowski <linux@dominikbrodowski.net>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, linux-alpha@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 22, 2018 at 03:28:24AM +0200, Jann Horn wrote:
-> On Fri, Jun 22, 2018 at 2:58 AM Tycho Andersen <tycho@tycho.ws> wrote:
-> >
-> > On Fri, Jun 22, 2018 at 01:21:47AM +0200, Jann Horn wrote:
-> > > On Fri, Jun 22, 2018 at 12:05 AM Tycho Andersen <tycho@tycho.ws> wrote:
-> > > [...]
-> > > > +
-> > > > +static void seccomp_do_user_notification(int this_syscall,
-> > > > +                                        struct seccomp_filter *match,
-> > > > +                                        const struct seccomp_data *sd)
-> > > > +{
-> > > > +       int err;
-> > > > +       long ret = 0;
-> > > > +       struct seccomp_knotif n = {};
-> > > > +
-> > > > +       mutex_lock(&match->notify_lock);
-> > > > +       err = -ENOSYS;
-> > > > +       if (!match->has_listener)
-> > > > +               goto out;
-> > > > +
-> > > > +       n.pid = task_pid(current);
-> > > > +       n.state = SECCOMP_NOTIFY_INIT;
-> > > > +       n.data = sd;
-> > > > +       n.id = seccomp_next_notify_id(match);
-> > > > +       init_completion(&n.ready);
-> > > > +
-> > > > +       list_add(&n.list, &match->notifications);
-> > > > +       wake_up_poll(&match->wqh, EPOLLIN | EPOLLRDNORM);
-> > > > +
-> > > > +       mutex_unlock(&match->notify_lock);
-> > > > +       up(&match->request);
-> > > > +
-> > > > +       err = wait_for_completion_interruptible(&n.ready);
-> > > > +       mutex_lock(&match->notify_lock);
-> > > > +
-> > > > +       /*
-> > > > +        * Here it's possible we got a signal and then had to wait on the mutex
-> > > > +        * while the reply was sent, so let's be sure there wasn't a response
-> > > > +        * in the meantime.
-> > > > +        */
-> > > > +       if (err < 0 && n.state != SECCOMP_NOTIFY_REPLIED) {
-> > > > +               /*
-> > > > +                * We got a signal. Let's tell userspace about it (potentially
-> > > > +                * again, if we had already notified them about the first one).
-> > > > +                */
-> > > > +               if (n.state == SECCOMP_NOTIFY_SENT) {
-> > > > +                       n.state = SECCOMP_NOTIFY_INIT;
-> > > > +                       up(&match->request);
-> > > > +               }
-> > > > +               mutex_unlock(&match->notify_lock);
-> > > > +               err = wait_for_completion_killable(&n.ready);
-> > >
-> > > Does this mean that when you get a signal that isn't SIGKILL,
-> > > wait_for_completion_interruptible() will bail out with -ERESTARTSYS,
-> > > but then you hang on this wait_for_completion_killable()? I don't
-> > > understand what's going on here. What's the point of using
-> > > wait_for_completion_interruptible() when you'll just hang on another
-> > > wait on the same "struct completion"?
-> >
-> > This is the implementation of this suggestion by Andy:
-> > https://lkml.org/lkml/2018/3/15/1122
-> >
-> > The idea is to alert the listener that there was a signal exactly
-> > once, in case it's in the middle of processing a request it could bail
-> > out and do something else. So the killable wait is intended to ignore
-> > other (non-fatal) signals after the first one and wait for whatever
-> > the handler decides to do with the signal it received.
-> 
-> How can the listener tell that a signal arrived? When the first
-> non-fatal signal comes in, you just set the state to
-> SECCOMP_NOTIFY_INIT if it was SECCOMP_NOTIFY_SENT, right? So the
-> listener will potentially see the request twice, but with no
-> additional indicator that a signal arrived? And in particular, if the
-> listener doesn't read the request before the signal arrives, it will
-> only see the request once, just as if it was a normal request with no
-> signals involved?
 
-I was thinking just parsing /proc/pid/status (given that people are
-already going to be mapping things in /proc/pid/map_files to read
-arguments and stuff, I didn't think too much of it),
+* Arnd Bergmann <arnd@arndb.de> wrote:
 
-> Would it perhaps make sense to add a field to struct seccomp_notif
-> that indicates whether the notification is for a normal syscall or a
-> canceled syscall?
+> However, the other question that has to be asked then is whether
+> there is anything wrong with wait4()/waitid() and getrusuage() that
+> we want to change beyond the time value passing. We have
+> answered a similar question with 'yes' for stat(), which has led
+> to the introduction of statx(),
 
-Sure, I'll add a __u32 signal and set it to the value of the signal if
-we got one.
+So we are thinking about adding wait5() in essence, right?
 
-Thanks!
+One thing we might want to look into whether the wait4() and waitid() ABIs could 
+be 'merged', by making wait4() essentially a natural special case of waitid().
 
-Tycho
+This would mean that the only new system call we'd have to add is waitid2() in 
+essence, which would solve both the rusage layout problem and would offer a 
+unified ABI.
+
+If that makes sense (it might not!!), then I'd also modernize waitid2() by making 
+it attribute structure based, have a length field and make the ABI extensible from 
+now on going forward without having to introduce a new syscall variant every time 
+we come up with something new...
+
+I.e. how the perf syscall does ABI extensions: we've had dozens of ABI extensions, 
+some of them pretty complex, and not a single time did we have to modify glibc and 
+tooling was able to adapt quickly yet in a both backwards and forwards compatible 
+fashion.
+
+Another, simpler example is the new sys_sched_setattr() syscall, that too is using 
+the perf_copy_attr() ABI method, via sched_copy_attr(). (With a minor 
+compatibility quirk of SCHED_ATTR_SIZE_VER0 that a new wait ABI wouldn't have to 
+do - i.e. it could be made even simpler.)
+
+This way we only have:
+
+SYSCALL_DEFINE3(sched_setattr, pid_t, pid, struct sched_attr __user *, uattr, unsigned int, flags)
+
+But even 'pid' and 'flags' could have been part of the attribute, i.e. one we pick 
+up an attribute structure from user-space we can have really low argument count 
+system calls. This also concentrates all the compat concerns into handling the 
+attribute structure properly - no weird per-arch artifacts and quirks with 4-5-6 
+system call arguments.
+
+Thanks,
+
+	Ingo
