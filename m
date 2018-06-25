@@ -1,69 +1,94 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 2/2] rusage: allow 64-bit times
-	ru_utime/ru_stime
-Date: Mon, 25 Jun 2018 13:42:19 +0200
-Message-ID: <CAK8P3a0G-MHA=buSL3Ymp3=-+=qgJWw1N3NtPQNr9wmpXV2cmA@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH v2 2/2] rusage: allow 64-bit times ru_utime/ru_stime
+Date: Mon, 25 Jun 2018 11:21:59 -0500
+Message-ID: <874lhqzviw.fsf@xmission.com>
 References: <20180420120605.1612248-1-arnd@arndb.de>
- <20180420120605.1612248-2-arnd@arndb.de>
- <20180621154915.GA31947@gmail.com>
- <CAK8P3a1QYTfRNQt2+a29BpvgYM_pnSFrO=NBvVo=BdUa2q9ngQ@mail.gmail.com>
- <20180621161121.GB7222@gmail.com>
- <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
- <20180622021636.GA11266@gmail.com> <87a7rm3eb5.fsf@xmission.com>
+        <20180420120605.1612248-2-arnd@arndb.de>
+        <20180621154915.GA31947@gmail.com>
+        <CAK8P3a1QYTfRNQt2+a29BpvgYM_pnSFrO=NBvVo=BdUa2q9ngQ@mail.gmail.com>
+        <20180621161121.GB7222@gmail.com>
+        <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
+        <20180622021636.GA11266@gmail.com> <87a7rm3eb5.fsf@xmission.com>
+        <20180624071258.GB29407@gmail.com> <87y3f31wsv.fsf@xmission.com>
+        <20180625091426.GA18351@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <87a7rm3eb5.fsf@xmission.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Deepa Dinamani <deepa.kernel@gmail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Al Viro <viro@zeniv.linux.org.uk>, linux-alpha@vger.kernel.org, Matt Turner <mattst88@gmail.com>, Ingo Molnar <mingo@kernel.org>, Richard Henderson <rth@twiddle.net>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180625091426.GA18351@gmail.com> (Ingo Molnar's message of
+        "Mon, 25 Jun 2018 11:14:26 +0200")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Dominik Brodowski <linux@dominikbrodowski.net>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, linux-alpha@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCBKdW4gMjIsIDIwMTggYXQgNzo0NSBQTSwgRXJpYyBXLiBCaWVkZXJtYW4KPGViaWVk
-ZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4gSW5nbyBNb2xuYXIgPG1pbmdvQGtlcm5lbC5vcmc+
-IHdyaXRlczoKPgo+IFNvIEkgc3VzcGVjdCB0aGUgc2ltcGxlc3QgdGhpbmcgdG8gZG8gd291bGQg
-YmUgdG8gc2V0IGEgZmxhZyBpbiB0aGUKPiBpZHR5cGUgbWVtYmVyIG9mIHdhaXRpZCB0aGF0IHNh
-eXMgZ2l2ZSBtZSBydXNhZ2U2NCBhbmQgdGhlbiB3ZSB3b3VsZAo+IGJlIGRvbmUuCgpJdCB3b3Vs
-ZCBoYXZlIHRvIGJlIGEgZmxhZyBpbiBib3RoIHRoZSAnaWR0eXBlJyBmaWVsZCBvZiB3YWl0aWQo
-KSwgYW5kIGFsc28KJ3dobycgZmllbGQgb2YgZ2V0cnVzYWdlKCksIHdoaWNoIHVuZm9ydHVuYXRl
-bHkgdXNlcyBhIHNlcGFyYXRlIHNldCBvZgpmbGFncy4gTm90IGhhcmQgdG8gZG8sIGJ1dCBzdGls
-bCBhIGJpdCBtb3JlIGNvbXBsZXhpdHkuCgo+IEFsdGVybmF0ZWx5IHdlIGNvdWxkIHVzZSB0aGUg
-bG93IGJpdHMgb2YgdGhlIHJlc291cmNlIHVzYWdlCj4gcG9pbnRlci4gIEFzc3VtaW5nIHdlIGRv
-bid0IHdhbnQgdG8gaW50cm9kdWNlIGFub3RoZXIgc3lzY2FsbCB0aGF0IGlzLgo+IEkgcmVhbGx5
-IGRvbid0IHNlZSBtdWNoIGluY3JlbWVudGFsIGV4dGVuc2liaWxpdHkgcG90ZW50aWFsIGluIHRo
-ZSB3YWl0Cj4gb3IgcnVzYWdlIGludGVyZmFjZSByaWdodCBub3cuCgpUaGlzIGlzIGFsc28gbXkg
-Y29uY2x1c2lvbiBhZnRlciBsb29raW5nIGF0IGhvdyB2YXJpb3VzIG90aGVyCm9wZXJhdGluZyBz
-eXN0ZW1zIGltcGxlbWVudCBnZXRydXNhZ2UoKSBhbmQgd2FpdDQoKSB0b2RheS4KSXQgc2VlbXMg
-dGhhdCB0aGlzIGlzIG9uZSBvZiB0aGUgbW9zdCBzdGFibGUgQVBJcywgZXZlcnlvbmUgdXNlcwpl
-eGFjdGx5IHRoZSBzYW1lIHN0cnVjdHVyZSBsYXlvdXQgKExpbnV4L3gzMiBiZWluZyBvbmUgZXhj
-ZXB0aW9uLAp0aGV5IGhhdmUgdGhlIDY0LWJpdCBMaW51eCBjb21wYXRpYmxlIGxheW91dCB1c2lu
-ZyBfX3M2NCBpbnN0ZWFkIG9mCmxvbmcgbWVtYmVycykuCgpGb3IgdGhlIG90aGVyIH4yMCBzeXN0
-ZW0gY2FsbHMgd2UgaW50cm9kdWNlIGZvciB5MjAzOCwgdGhlIGdlbmVyYWwKaWRlYSBoYXMgYmVl
-biB0byBzdGF5IG1vc3RseSBjb21wYXRpYmxlIHdpdGggdGhlIHNvdXJjZSBsZXZlbCBpbnRlcmZh
-Y2UsCmp1c3QgdXNpbmcgYSBuZXcgc3lzY2FsbCBudW1iZXIuIHN0YXR4KCkgaXMgYSBub3RhYmxl
-IGV4Y2VwdGlvbiBoZXJlLAp3aXRoIGNsb2NrX2FkanRpbWUoKSBhbmQgZ2V0aXRpbWVyKCkvc2V0
-aXRpbWVyKCkgc3RpbGwgYmVpbmcgdW5kZWNpZGVkLgoKSWYgd2UgZG9uJ3QgZG8gYW4gZXh0ZW5z
-aWJsZSBsYXlvdXQgb3IgYW55IG90aGVyIG5ldyBmaWVsZHMsIHRoZXJlCmFyZSBzdGlsbCB0aGUg
-b3BlbiBxdWVzdGlvbnMgYWJvdXQgd2hldGhlciBhbnkgdHlwZXMgc2hvdWxkIGNoYW5nZToKCi0g
-Y2hhbmdpbmcgZXZlcnl0aGluZyB0byA2NC1iaXQgd291bGQgYWxsb3cgc2hhcmluZyB0aGUga2Vy
-bmVsCiAgY29kZSBiZXR3ZWVuIGNvbXBhdCBhbmQgbmF0aXZlCi0gY2hhbmdpbmcgb25seSBfX29s
-ZF9rZXJuZWxfdGltZXZhbCB0byBuZXcgNjQtYml0IHRpbWV2YWwgd291bGQKICBiZSB0aGUgc2lt
-cGxlc3QgdXNlciBzcGFjZSBjaGFuZ2UgKG9ubHkgdGhlIHN5c2NhbGwgbnVtYmVyCiAgY2hhbmdl
-cyB3aXRoIHNpemVvZih0aW1lX3QpKSwgYXZvaWRpbmcgYW4gZXh0cmEgY29weSB0aG9yb3VnaAog
-IHRoZSB1c2VyIHNwYWNlIHN0YWNrLgotIGNoYW5naW5nIHRpbWV2YWwgdG8gKDY0LWJpdCkgdGlt
-ZXNwZWMgd291bGQgc2VlbSB0aGUgbW9zdAogIHNlbnNpYmxlIHVwZGF0ZSwgc2luY2UgaXQgYXZv
-aWRzIHRoZSBzaWxseSBuYW5vc2Vjb25kLXRvLQogIG1pY3Jvc2Vjb25kIGNvbnZlcnNpb24gaW4g
-dGhlIGtlcm5lbCAoZ2xpYmMgd291bGQgc3RpbGwgbmVlZAogIHRvIGRvIGl0IGZvciBjb21wYXRp
-YmlsaXR5KS4gVGhpcyBpcyB3aGF0IEknbSBjb25zaWRlcmluZyBmb3IKICBnZXRpdGltZXIvc2V0
-aXRpbWVyLCAgdG9vLgoKICAgICAgICAgQXJuZApfX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJv
-Lm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+Ingo Molnar <mingo@kernel.org> writes:
+
+> * Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+>> Ingo Molnar <mingo@kernel.org> writes:
+>> 
+>> > * Eric W. Biederman <ebiederm@xmission.com> wrote:
+>> >
+>> >> The trouble with attributes is that means you can't filter your system
+>> >> call arguments with seccomp. [...]
+>> >
+>> > There's nothing keeping seccomp from securely fetching those arguments and 
+>> > extending filtering to them as well ...
+>> >
+>> > Allowing that would make sense for a lot of other system calls as
+>> > well.
+>> 
+>> Possibly.  The challenge is that if the fetch for the kernel to use
+>> those arguments is different from the fetch of seccomp to test those
+>> arguments you have a time of test vs time of use race.
+>
+> Those fetched values should obviously then be used to call permitted
+> system calls.
+
+Agreed.  To my knowledge no one has figured out how to make that work
+yet.  For the most part it has been unnecessary.
+
+>> Given the location of the seccomp hook at the kernel user space border
+>> there is no easy way for seccomp to share the fetch with the system
+>> call itself.
+>> 
+>> So I don't see how seccomp could perform the fetch securely.
+>
+> Looks like more of a seccomp mis-design/mis-implementation than some fundamental 
+> problem.
+
+Frankly.  Given that there are some very good solutions in other
+operating systems, I think the misdesign is in unix/linux not providing
+a good answer to what to do when you need more than 6 arguments to a
+system call.
+
+> Mis-designed security features should not hinder system call design.
+
+I certainly agree that seccomp should not be the sole reason for not
+doing something.  However there are lots of reasons to avoid
+extensibility in general.
+
+Excess extensibility has been the cause of more than one security issue.
+
+Lots of flexibility comes at the price of lots of conditional execution
+which tends to explode the test matrix of possibilities to test, with
+the result that some combinations are never thought about or tested
+because they don't make sense to combine.  Then someone with
+mischievious intent see that combination and thinks what happens when I
+do this.
+
+Further that conditional execution can frequently be the cause of slow
+code as well.
+
+So while there are many nice features of tagged values.  I don't think
+they are a general solution.  The lack of seccomp support (today) is
+just one downside among many.
+
+
+I do think it would be nice to have a general pattern for those
+system calls that require extensibility.  My gut feel says something
+like the L4 pseudo registers (to give a maxium request size)
+combined with something like netlink encoding would make a very
+nice template for making fast and flexible system calls.
+
+Eric
