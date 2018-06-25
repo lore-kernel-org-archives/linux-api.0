@@ -1,49 +1,80 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH v2 2/2] rusage: allow 64-bit times
-	ru_utime/ru_stime
-Date: Sun, 24 Jun 2018 20:26:08 -0500
-Message-ID: <87y3f31wsv.fsf@xmission.com>
-References: <20180420120605.1612248-1-arnd@arndb.de>
- <20180420120605.1612248-2-arnd@arndb.de>
- <20180621154915.GA31947@gmail.com>
- <CAK8P3a1QYTfRNQt2+a29BpvgYM_pnSFrO=NBvVo=BdUa2q9ngQ@mail.gmail.com>
- <20180621161121.GB7222@gmail.com>
- <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
- <20180622021636.GA11266@gmail.com> <87a7rm3eb5.fsf@xmission.com>
- <20180624071258.GB29407@gmail.com>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH 04/24] 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T
+ config option
+Date: Mon, 25 Jun 2018 09:19:50 +0300
+Message-ID: <20180625061950.GB23998@yury-thinkpad>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20180516081910.10067-5-ynorov@caviumnetworks.com>
+ <20180608173207.nwoi25jee52gpdwy@armageddon.cambridge.arm.com>
+ <20180609074227.GA6810@yury-thinkpad>
+ <CAK8P3a16ByPtCwKbdLQRDRni3qV9DXLNYZ9QJUH6uHaZYHr34g@mail.gmail.com>
+ <20180611112736.GA19952@yury-thinkpad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20180624071258.GB29407@gmail.com> (Ingo Molnar's message of
- "Sun, 24 Jun 2018 09:12:58 +0200")
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Ingo Molnar <mingo@kernel.org>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Deepa Dinamani <deepa.kernel@gmail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Al Viro <viro@zeniv.linux.org.uk>, linux-alpha@vger.kernel.org, Matt Turner <mattst88@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Richard Henderson <rth@twiddle.net>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180611112736.GA19952@yury-thinkpad>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, linux-arch <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Bamvor Zhangjian <bamv2005@gmail.com>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.com>, James Hogan <james.hogan@imgtec.com>, Chris Metcalf <cmetcalf@mellanox.com>
 List-Id: linux-api@vger.kernel.org
 
-SW5nbyBNb2xuYXIgPG1pbmdvQGtlcm5lbC5vcmc+IHdyaXRlczoKCj4gKiBFcmljIFcuIEJpZWRl
-cm1hbiA8ZWJpZWRlcm1AeG1pc3Npb24uY29tPiB3cm90ZToKPgo+PiBUaGUgdHJvdWJsZSB3aXRo
-IGF0dHJpYnV0ZXMgaXMgdGhhdCBtZWFucyB5b3UgY2FuJ3QgZmlsdGVyIHlvdXIgc3lzdGVtCj4+
-IGNhbGwgYXJndW1lbnRzIHdpdGggc2VjY29tcC4gWy4uLl0KPgo+IFRoZXJlJ3Mgbm90aGluZyBr
-ZWVwaW5nIHNlY2NvbXAgZnJvbSBzZWN1cmVseSBmZXRjaGluZyB0aG9zZSBhcmd1bWVudHMgYW5k
-IAo+IGV4dGVuZGluZyBmaWx0ZXJpbmcgdG8gdGhlbSBhcyB3ZWxsIC4uLgo+Cj4gQWxsb3dpbmcg
-dGhhdCB3b3VsZCBtYWtlIHNlbnNlIGZvciBhIGxvdCBvZiBvdGhlciBzeXN0ZW0gY2FsbHMgYXMK
-PiB3ZWxsLgoKUG9zc2libHkuICBUaGUgY2hhbGxlbmdlIGlzIHRoYXQgaWYgdGhlIGZldGNoIGZv
-ciB0aGUga2VybmVsIHRvIHVzZQp0aG9zZSBhcmd1bWVudHMgaXMgZGlmZmVyZW50IGZyb20gdGhl
-IGZldGNoIG9mIHNlY2NvbXAgdG8gdGVzdCB0aG9zZQphcmd1bWVudHMgeW91IGhhdmUgYSB0aW1l
-IG9mIHRlc3QgdnMgdGltZSBvZiB1c2UgcmFjZS4KCkdpdmVuIHRoZSBsb2NhdGlvbiBvZiB0aGUg
-c2VjY29tcCBob29rIGF0IHRoZSBrZXJuZWwgdXNlciBzcGFjZSBib3JkZXIKdGhlcmUgaXMgbm8g
-ZWFzeSB3YXkgZm9yIHNlY2NvbXAgdG8gc2hhcmUgdGhlIGZldGNoIHdpdGggdGhlIHN5c3RlbQpj
-YWxsIGl0c2VsZi4KClNvIEkgZG9uJ3Qgc2VlIGhvdyBzZWNjb21wIGNvdWxkIHBlcmZvcm0gdGhl
-IGZldGNoIHNlY3VyZWx5LgoKRXJpYwpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpo
-dHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+On Mon, Jun 11, 2018 at 02:27:36PM +0300, Yury Norov wrote:
+> On Mon, Jun 11, 2018 at 09:48:02AM +0200, Arnd Bergmann wrote:
+> > On Sat, Jun 9, 2018 at 9:42 AM, Yury Norov <ynorov@caviumnetworks.com> wrote:
+> > > On Fri, Jun 08, 2018 at 06:32:07PM +0100, Catalin Marinas wrote:
+> > >> On Wed, May 16, 2018 at 11:18:49AM +0300, Yury Norov wrote:
+> > >> > diff --git a/arch/Kconfig b/arch/Kconfig
+> > >> > index 76c0b54443b1..ee079244dc3c 100644
+> > >> > --- a/arch/Kconfig
+> > >> > +++ b/arch/Kconfig
+> > >> > @@ -264,6 +264,21 @@ config ARCH_THREAD_STACK_ALLOCATOR
+> > >> >  config ARCH_WANTS_DYNAMIC_TASK_STRUCT
+> > >> >     bool
+> > >> >
+> > >> > +config ARCH_32BIT_OFF_T
+> > >> > +   bool
+> > >> > +   depends on !64BIT
+> > >> > +   help
+> > >> > +     All new 32-bit architectures should have 64-bit off_t type on
+> > >> > +     userspace side which corresponds to the loff_t kernel type. This
+> > >> > +     is the requirement for modern ABIs. Some existing architectures
+> > >> > +     already have 32-bit off_t. This option is enabled for all such
+> > >> > +     architectures explicitly. Namely: arc, arm, blackfin, cris, frv,
+> > >> > +     h8300, hexagon, m32r, m68k, metag, microblaze, mips32, mn10300,
+> > >> > +     nios2, openrisc, parisc32, powerpc32, score, sh, sparc, tile32,
+> > >> > +     unicore32, x86_32 and xtensa. This is the complete list. Any
+> > >> > +     new 32-bit architecture should declare 64-bit off_t type on user
+> > >> > +     side and so should not enable this option.
+> > >>
+> > >> Do you know if this is the case for riscv and nds32, merged in the
+> > >> meantime? If not, I suggest you drop this patch altogether and just
+> > >> define force_o_largefile() for arm64/ilp32 as we don't seem to stick to
+> > >> "all new 32-bit architectures should have 64-bit off_t".
+> > >
+> > > I wrote this patch at request of Arnd Bergmann. This is actually his
+> > > words that all new 32-bit architectures should have 64-bit off_t. So
+> > > I was surprized when riscv was merged with 32-bit off_t (and I didn't
+> > > follow nds32).
+> > >
+> > > If this rule is still in force, we'd better add new exceptions to this
+> > > patch. Otherwise, we can drop it.
+> > >
+> > > Arnd, could you please comment it?
+> > 
+> > I completely forgot about it and had assumed that it was merged long
+> > ago, sorry about that.
+> 
+> Hi Arnd,
+> 
+> There are 3 patches like this in ILP32 series that change ABI for new
+> targets. I've submitted them in separated series:
+> https://lkml.org/lkml/2017/9/25/574
+> 
+> They all seems to be acked by you. If you ready to upstream the
+> series, I can rebase it and add riscv32 and nds32 exceptions.
+> 
+> If Palmer and riscv people will decide to follow new rules, we can
+> easily drop the exception.
+
+Ping?
