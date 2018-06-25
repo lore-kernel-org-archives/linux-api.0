@@ -1,8 +1,8 @@
-From: Ingo Molnar <mingo@kernel.org>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH v2 2/2] rusage: allow 64-bit times
 	ru_utime/ru_stime
-Date: Mon, 25 Jun 2018 11:14:26 +0200
-Message-ID: <20180625091426.GA18351@gmail.com>
+Date: Mon, 25 Jun 2018 13:42:19 +0200
+Message-ID: <CAK8P3a0G-MHA=buSL3Ymp3=-+=qgJWw1N3NtPQNr9wmpXV2cmA@mail.gmail.com>
 References: <20180420120605.1612248-1-arnd@arndb.de>
  <20180420120605.1612248-2-arnd@arndb.de>
  <20180621154915.GA31947@gmail.com>
@@ -10,13 +10,11 @@ References: <20180420120605.1612248-1-arnd@arndb.de>
  <20180621161121.GB7222@gmail.com>
  <CAK8P3a1mx16S+DhEMQA6WBJ7efdhN5YaKKVHU6n+E6kfifM-Qg@mail.gmail.com>
  <20180622021636.GA11266@gmail.com> <87a7rm3eb5.fsf@xmission.com>
- <20180624071258.GB29407@gmail.com> <87y3f31wsv.fsf@xmission.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <y2038-bounces@lists.linaro.org>
-Content-Disposition: inline
-In-Reply-To: <87y3f31wsv.fsf@xmission.com>
+In-Reply-To: <87a7rm3eb5.fsf@xmission.com>
 List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
  <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
 List-Archive: <http://lists.linaro.org/pipermail/y2038/>
@@ -27,29 +25,45 @@ List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
 Errors-To: y2038-bounces@lists.linaro.org
 Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Deepa Dinamani <deepa.kernel@gmail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Al Viro <viro@zeniv.linux.org.uk>, linux-alpha@vger.kernel.org, Matt Turner <mattst88@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Richard Henderson <rth@twiddle.net>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Paul Eggert <eggert@cs.ucla.edu>, Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Deepa Dinamani <deepa.kernel@gmail.com>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Al Viro <viro@zeniv.linux.org.uk>, linux-alpha@vger.kernel.org, Matt Turner <mattst88@gmail.com>, Ingo Molnar <mingo@kernel.org>, Richard Henderson <rth@twiddle.net>
 List-Id: linux-api@vger.kernel.org
 
-CiogRXJpYyBXLiBCaWVkZXJtYW4gPGViaWVkZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cgo+IElu
-Z28gTW9sbmFyIDxtaW5nb0BrZXJuZWwub3JnPiB3cml0ZXM6Cj4gCj4gPiAqIEVyaWMgVy4gQmll
-ZGVybWFuIDxlYmllZGVybUB4bWlzc2lvbi5jb20+IHdyb3RlOgo+ID4KPiA+PiBUaGUgdHJvdWJs
-ZSB3aXRoIGF0dHJpYnV0ZXMgaXMgdGhhdCBtZWFucyB5b3UgY2FuJ3QgZmlsdGVyIHlvdXIgc3lz
-dGVtCj4gPj4gY2FsbCBhcmd1bWVudHMgd2l0aCBzZWNjb21wLiBbLi4uXQo+ID4KPiA+IFRoZXJl
-J3Mgbm90aGluZyBrZWVwaW5nIHNlY2NvbXAgZnJvbSBzZWN1cmVseSBmZXRjaGluZyB0aG9zZSBh
-cmd1bWVudHMgYW5kIAo+ID4gZXh0ZW5kaW5nIGZpbHRlcmluZyB0byB0aGVtIGFzIHdlbGwgLi4u
-Cj4gPgo+ID4gQWxsb3dpbmcgdGhhdCB3b3VsZCBtYWtlIHNlbnNlIGZvciBhIGxvdCBvZiBvdGhl
-ciBzeXN0ZW0gY2FsbHMgYXMKPiA+IHdlbGwuCj4gCj4gUG9zc2libHkuICBUaGUgY2hhbGxlbmdl
-IGlzIHRoYXQgaWYgdGhlIGZldGNoIGZvciB0aGUga2VybmVsIHRvIHVzZQo+IHRob3NlIGFyZ3Vt
-ZW50cyBpcyBkaWZmZXJlbnQgZnJvbSB0aGUgZmV0Y2ggb2Ygc2VjY29tcCB0byB0ZXN0IHRob3Nl
-Cj4gYXJndW1lbnRzIHlvdSBoYXZlIGEgdGltZSBvZiB0ZXN0IHZzIHRpbWUgb2YgdXNlIHJhY2Uu
-CgpUaG9zZSBmZXRjaGVkIHZhbHVlcyBzaG91bGQgb2J2aW91c2x5IHRoZW4gYmUgdXNlZCB0byBj
-YWxsIHBlcm1pdHRlZCBzeXN0ZW0gY2FsbHMuCgo+IEdpdmVuIHRoZSBsb2NhdGlvbiBvZiB0aGUg
-c2VjY29tcCBob29rIGF0IHRoZSBrZXJuZWwgdXNlciBzcGFjZSBib3JkZXIKPiB0aGVyZSBpcyBu
-byBlYXN5IHdheSBmb3Igc2VjY29tcCB0byBzaGFyZSB0aGUgZmV0Y2ggd2l0aCB0aGUgc3lzdGVt
-Cj4gY2FsbCBpdHNlbGYuCj4gCj4gU28gSSBkb24ndCBzZWUgaG93IHNlY2NvbXAgY291bGQgcGVy
-Zm9ybSB0aGUgZmV0Y2ggc2VjdXJlbHkuCgpMb29rcyBsaWtlIG1vcmUgb2YgYSBzZWNjb21wIG1p
-cy1kZXNpZ24vbWlzLWltcGxlbWVudGF0aW9uIHRoYW4gc29tZSBmdW5kYW1lbnRhbCAKcHJvYmxl
-bS4KCk1pcy1kZXNpZ25lZCBzZWN1cml0eSBmZWF0dXJlcyBzaG91bGQgbm90IGhpbmRlciBzeXN0
-ZW0gY2FsbCBkZXNpZ24uCgpUaGFua3MsCgoJSW5nbwpfX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGlu
-YXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+T24gRnJpLCBKdW4gMjIsIDIwMTggYXQgNzo0NSBQTSwgRXJpYyBXLiBCaWVkZXJtYW4KPGViaWVk
+ZXJtQHhtaXNzaW9uLmNvbT4gd3JvdGU6Cj4gSW5nbyBNb2xuYXIgPG1pbmdvQGtlcm5lbC5vcmc+
+IHdyaXRlczoKPgo+IFNvIEkgc3VzcGVjdCB0aGUgc2ltcGxlc3QgdGhpbmcgdG8gZG8gd291bGQg
+YmUgdG8gc2V0IGEgZmxhZyBpbiB0aGUKPiBpZHR5cGUgbWVtYmVyIG9mIHdhaXRpZCB0aGF0IHNh
+eXMgZ2l2ZSBtZSBydXNhZ2U2NCBhbmQgdGhlbiB3ZSB3b3VsZAo+IGJlIGRvbmUuCgpJdCB3b3Vs
+ZCBoYXZlIHRvIGJlIGEgZmxhZyBpbiBib3RoIHRoZSAnaWR0eXBlJyBmaWVsZCBvZiB3YWl0aWQo
+KSwgYW5kIGFsc28KJ3dobycgZmllbGQgb2YgZ2V0cnVzYWdlKCksIHdoaWNoIHVuZm9ydHVuYXRl
+bHkgdXNlcyBhIHNlcGFyYXRlIHNldCBvZgpmbGFncy4gTm90IGhhcmQgdG8gZG8sIGJ1dCBzdGls
+bCBhIGJpdCBtb3JlIGNvbXBsZXhpdHkuCgo+IEFsdGVybmF0ZWx5IHdlIGNvdWxkIHVzZSB0aGUg
+bG93IGJpdHMgb2YgdGhlIHJlc291cmNlIHVzYWdlCj4gcG9pbnRlci4gIEFzc3VtaW5nIHdlIGRv
+bid0IHdhbnQgdG8gaW50cm9kdWNlIGFub3RoZXIgc3lzY2FsbCB0aGF0IGlzLgo+IEkgcmVhbGx5
+IGRvbid0IHNlZSBtdWNoIGluY3JlbWVudGFsIGV4dGVuc2liaWxpdHkgcG90ZW50aWFsIGluIHRo
+ZSB3YWl0Cj4gb3IgcnVzYWdlIGludGVyZmFjZSByaWdodCBub3cuCgpUaGlzIGlzIGFsc28gbXkg
+Y29uY2x1c2lvbiBhZnRlciBsb29raW5nIGF0IGhvdyB2YXJpb3VzIG90aGVyCm9wZXJhdGluZyBz
+eXN0ZW1zIGltcGxlbWVudCBnZXRydXNhZ2UoKSBhbmQgd2FpdDQoKSB0b2RheS4KSXQgc2VlbXMg
+dGhhdCB0aGlzIGlzIG9uZSBvZiB0aGUgbW9zdCBzdGFibGUgQVBJcywgZXZlcnlvbmUgdXNlcwpl
+eGFjdGx5IHRoZSBzYW1lIHN0cnVjdHVyZSBsYXlvdXQgKExpbnV4L3gzMiBiZWluZyBvbmUgZXhj
+ZXB0aW9uLAp0aGV5IGhhdmUgdGhlIDY0LWJpdCBMaW51eCBjb21wYXRpYmxlIGxheW91dCB1c2lu
+ZyBfX3M2NCBpbnN0ZWFkIG9mCmxvbmcgbWVtYmVycykuCgpGb3IgdGhlIG90aGVyIH4yMCBzeXN0
+ZW0gY2FsbHMgd2UgaW50cm9kdWNlIGZvciB5MjAzOCwgdGhlIGdlbmVyYWwKaWRlYSBoYXMgYmVl
+biB0byBzdGF5IG1vc3RseSBjb21wYXRpYmxlIHdpdGggdGhlIHNvdXJjZSBsZXZlbCBpbnRlcmZh
+Y2UsCmp1c3QgdXNpbmcgYSBuZXcgc3lzY2FsbCBudW1iZXIuIHN0YXR4KCkgaXMgYSBub3RhYmxl
+IGV4Y2VwdGlvbiBoZXJlLAp3aXRoIGNsb2NrX2FkanRpbWUoKSBhbmQgZ2V0aXRpbWVyKCkvc2V0
+aXRpbWVyKCkgc3RpbGwgYmVpbmcgdW5kZWNpZGVkLgoKSWYgd2UgZG9uJ3QgZG8gYW4gZXh0ZW5z
+aWJsZSBsYXlvdXQgb3IgYW55IG90aGVyIG5ldyBmaWVsZHMsIHRoZXJlCmFyZSBzdGlsbCB0aGUg
+b3BlbiBxdWVzdGlvbnMgYWJvdXQgd2hldGhlciBhbnkgdHlwZXMgc2hvdWxkIGNoYW5nZToKCi0g
+Y2hhbmdpbmcgZXZlcnl0aGluZyB0byA2NC1iaXQgd291bGQgYWxsb3cgc2hhcmluZyB0aGUga2Vy
+bmVsCiAgY29kZSBiZXR3ZWVuIGNvbXBhdCBhbmQgbmF0aXZlCi0gY2hhbmdpbmcgb25seSBfX29s
+ZF9rZXJuZWxfdGltZXZhbCB0byBuZXcgNjQtYml0IHRpbWV2YWwgd291bGQKICBiZSB0aGUgc2lt
+cGxlc3QgdXNlciBzcGFjZSBjaGFuZ2UgKG9ubHkgdGhlIHN5c2NhbGwgbnVtYmVyCiAgY2hhbmdl
+cyB3aXRoIHNpemVvZih0aW1lX3QpKSwgYXZvaWRpbmcgYW4gZXh0cmEgY29weSB0aG9yb3VnaAog
+IHRoZSB1c2VyIHNwYWNlIHN0YWNrLgotIGNoYW5naW5nIHRpbWV2YWwgdG8gKDY0LWJpdCkgdGlt
+ZXNwZWMgd291bGQgc2VlbSB0aGUgbW9zdAogIHNlbnNpYmxlIHVwZGF0ZSwgc2luY2UgaXQgYXZv
+aWRzIHRoZSBzaWxseSBuYW5vc2Vjb25kLXRvLQogIG1pY3Jvc2Vjb25kIGNvbnZlcnNpb24gaW4g
+dGhlIGtlcm5lbCAoZ2xpYmMgd291bGQgc3RpbGwgbmVlZAogIHRvIGRvIGl0IGZvciBjb21wYXRp
+YmlsaXR5KS4gVGhpcyBpcyB3aGF0IEknbSBjb25zaWRlcmluZyBmb3IKICBnZXRpdGltZXIvc2V0
+aXRpbWVyLCAgdG9vLgoKICAgICAgICAgQXJuZApfX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJv
+Lm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
