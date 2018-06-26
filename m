@@ -1,27 +1,26 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 2/2] rseq: compat: clear high bits of rseq_cs fields
-Date: Tue, 26 Jun 2018 17:16:17 -0400
-Message-ID: <20180626211617.8933-2-mathieu.desnoyers@efficios.com>
-References: <20180626211617.8933-1-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 1/2] compat: Introduce is_compat_frame
+Date: Tue, 26 Jun 2018 17:16:16 -0400
+Message-ID: <20180626211617.8933-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180626211617.8933-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Joel Fernandes <joelaf@google.com>, Peter Zijlstra <peterz@infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Andi Kleen <andi@firstfloor.org>, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api@vger.kernel.org, linux-arch@vger.kernel.
 List-Id: linux-api@vger.kernel.org
 
-Make the behavior rseq on compat tasks more robust by ensuring that
-kernel/rseq.c:rseq_get_rseq_cs() clears the high bits of
-rseq_cs->abort_ip, rseq_cs->start_ip and rseq_cs->post_commit_offset
-when a 32-bit binary is run on a 64-bit kernel.
+x86 is moving from is_compat_task() to in_compat_syscall(). However,
+in_compat_syscall cannot be used to check whether a signal is being
+delivered on a compat task.
 
-The intent here is that if user-space has garbage rather than zeroes
-in its struct rseq_cs fields padding, the behavior will be the same
-whether the binary is run on 32-bit or 64-bit kernels.
+Introduce is_compat_frame to allow performing this check from
+architecture agnostic code. On all architectures except x86, it
+invokes is_compat_task(). On x86, it uses is_ia32_frame() and
+is_x32_frame() to check whether the signal frame is 32-bit.
 
-Use in_compat_syscall() when rseq_get_rseq_cs() is invoked from
-system call context, and use is_compat_frame() when invoked from
-signal delivery.
+This is needed by restartable sequences to detect whether it needs
+to clear the top bits of the start_ip, abort_ip, and post_commit_offset
+rseq_cs fields on signal delivery, thus ensuring identical behavior
+for a 32-bit binary executed on 32-bit and 64-bit kernels.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
@@ -49,88 +48,113 @@ Cc: Andy Lutomirski <luto@amacapital.net>
 Cc: Andrew Morton <akpm@linux-foundation.org>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>
 ---
- kernel/rseq.c | 28 +++++++++++++++++++++++-----
- 1 file changed, 23 insertions(+), 5 deletions(-)
+ arch/x86/include/asm/compat.h | 24 ++++++++++++++++++++++++
+ arch/x86/kernel/signal.c      | 17 -----------------
+ include/linux/compat.h        | 17 +++++++++++++++++
+ 3 files changed, 41 insertions(+), 17 deletions(-)
 
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 22b6acf1ad63..7b1d51b965fc 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -13,6 +13,7 @@
- #include <linux/syscalls.h>
- #include <linux/rseq.h>
+diff --git a/arch/x86/include/asm/compat.h b/arch/x86/include/asm/compat.h
+index fb97cf7c4137..1405a8df5215 100644
+--- a/arch/x86/include/asm/compat.h
++++ b/arch/x86/include/asm/compat.h
+@@ -8,6 +8,7 @@
  #include <linux/types.h>
-+#include <linux/compat.h>
- #include <asm/ptrace.h>
+ #include <linux/sched.h>
+ #include <linux/sched/task_stack.h>
++#include <linux/signal.h>
+ #include <asm/processor.h>
+ #include <asm/user32.h>
+ #include <asm/unistd.h>
+@@ -242,4 +243,27 @@ struct compat_siginfo;
+ int __copy_siginfo_to_user32(struct compat_siginfo __user *to,
+ 		const siginfo_t *from, bool x32_ABI);
  
- #define CREATE_TRACE_POINTS
-@@ -112,7 +113,23 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
++static inline int is_ia32_compat_frame(struct ksignal *ksig)
++{
++	return IS_ENABLED(CONFIG_IA32_EMULATION) &&
++		ksig->ka.sa.sa_flags & SA_IA32_ABI;
++}
++
++static inline int is_ia32_frame(struct ksignal *ksig)
++{
++	return IS_ENABLED(CONFIG_X86_32) || is_ia32_compat_frame(ksig);
++}
++
++static inline int is_x32_frame(struct ksignal *ksig)
++{
++	return IS_ENABLED(CONFIG_X86_X32_ABI) &&
++		ksig->ka.sa.sa_flags & SA_X32_ABI;
++}
++
++static inline bool is_compat_frame(struct ksignal *ksig)
++{
++	return is_ia32_frame(ksig) || is_x32_frame(ksig);
++}
++#define is_compat_frame	is_compat_frame		/* override the generic impl */
++
+ #endif /* _ASM_X86_COMPAT_H */
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index 92a3b312a53c..cb488e3e952d 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -664,23 +664,6 @@ SYSCALL_DEFINE0(rt_sigreturn)
  	return 0;
  }
  
--static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
-+#ifdef CONFIG_COMPAT
-+static void rseq_cs_compat(struct ksignal *ksig, struct rseq_cs *rseq_cs)
-+{
-+	if (!(ksig ? is_compat_frame(ksig) : in_compat_syscall()))
-+		return;
+-static inline int is_ia32_compat_frame(struct ksignal *ksig)
+-{
+-	return IS_ENABLED(CONFIG_IA32_EMULATION) &&
+-		ksig->ka.sa.sa_flags & SA_IA32_ABI;
+-}
+-
+-static inline int is_ia32_frame(struct ksignal *ksig)
+-{
+-	return IS_ENABLED(CONFIG_X86_32) || is_ia32_compat_frame(ksig);
+-}
+-
+-static inline int is_x32_frame(struct ksignal *ksig)
+-{
+-	return IS_ENABLED(CONFIG_X86_X32_ABI) &&
+-		ksig->ka.sa.sa_flags & SA_X32_ABI;
+-}
+-
+ static int
+ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
+ {
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index b1a5562b3215..2e1ffba65117 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -1022,6 +1022,19 @@ static inline struct compat_timeval ns_to_compat_timeval(s64 nsec)
+ 	return ctv;
+ }
+ 
++/*
++ * For most but not all architectures, "is this a compat sigframe?" and
++ * "am I a compat task?" are the same question.  For architectures on which
++ * they aren't the same question, arch code can override is_compat_frame.
++ */
 +
-+	rseq_cs->abort_ip = (compat_uptr_t) rseq_cs->abort_ip;
-+	rseq_cs->start_ip = (compat_uptr_t) rseq_cs->start_ip;
-+	rseq_cs->post_commit_offset =
-+		(compat_uptr_t) rseq_cs->post_commit_offset;
++#ifndef is_compat_frame
++static inline bool is_compat_frame(struct ksignal *ksig)
++{
++	return is_compat_task();
 +}
-+#else
-+static void rseq_cs_compat(struct ksignal *ksig, struct rseq_cs *rseq_cs) { }
 +#endif
 +
-+static int rseq_get_rseq_cs(struct ksignal *ksig, struct task_struct *t,
-+			    struct rseq_cs *rseq_cs)
- {
- 	struct rseq_cs __user *urseq_cs;
- 	unsigned long ptr;
-@@ -132,6 +149,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
- 		return -EFAULT;
- 	if (rseq_cs->version > 0)
- 		return -EINVAL;
-+	rseq_cs_compat(ksig, rseq_cs);
+ #else /* !CONFIG_COMPAT */
  
- 	/* Ensure that abort_ip is not in the critical section. */
- 	if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
-@@ -209,14 +227,14 @@ static bool in_rseq_cs(unsigned long ip, struct rseq_cs *rseq_cs)
- 	return ip - rseq_cs->start_ip < rseq_cs->post_commit_offset;
- }
+ #define is_compat_task() (0)
+@@ -1029,6 +1042,10 @@ static inline struct compat_timeval ns_to_compat_timeval(s64 nsec)
+ static inline bool in_compat_syscall(void) { return false; }
+ #endif
  
--static int rseq_ip_fixup(struct pt_regs *regs)
-+static int rseq_ip_fixup(struct ksignal *ksig, struct pt_regs *regs)
- {
- 	unsigned long ip = instruction_pointer(regs);
- 	struct task_struct *t = current;
- 	struct rseq_cs rseq_cs;
- 	int ret;
++#ifndef is_compat_frame
++static inline bool is_compat_frame(struct ksignal *ksig) { return false; }
++#endif
++
+ #endif /* CONFIG_COMPAT */
  
--	ret = rseq_get_rseq_cs(t, &rseq_cs);
-+	ret = rseq_get_rseq_cs(ksig, t, &rseq_cs);
- 	if (ret)
- 		return ret;
- 
-@@ -260,7 +278,7 @@ void __rseq_handle_notify_resume(struct ksignal *ksig, struct pt_regs *regs)
- 		return;
- 	if (unlikely(!access_ok(VERIFY_WRITE, t->rseq, sizeof(*t->rseq))))
- 		goto error;
--	ret = rseq_ip_fixup(regs);
-+	ret = rseq_ip_fixup(ksig, regs);
- 	if (unlikely(ret < 0))
- 		goto error;
- 	if (unlikely(rseq_update_cpu_id(t)))
-@@ -287,7 +305,7 @@ void rseq_syscall(struct pt_regs *regs)
- 	if (!t->rseq)
- 		return;
- 	if (!access_ok(VERIFY_READ, t->rseq, sizeof(*t->rseq)) ||
--	    rseq_get_rseq_cs(t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
-+	    rseq_get_rseq_cs(NULL, t, &rseq_cs) || in_rseq_cs(ip, &rseq_cs))
- 		force_sig(SIGSEGV, t);
- }
- 
+ #endif /* _LINUX_COMPAT_H */
 -- 
 2.11.0
