@@ -1,57 +1,99 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC PATCH for 4.18 2/2] rseq: compat: clear high bits of rseq_cs
- fields
-Date: Thu, 28 Jun 2018 10:04:51 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1806281002280.1778@nanos.tec.linutronix.de>
-References: <20180626211617.8933-1-mathieu.desnoyers@efficios.com> <20180626211617.8933-2-mathieu.desnoyers@efficios.com> <D9B93DE9-F61C-4488-B109-432C2DFDCEC2@amacapital.net>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="8323329-627297609-1530173097=:1778"
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 1/2] rseq: validate rseq_cs fields are < TASK_SIZE
+Date: Thu, 28 Jun 2018 12:23:58 -0400
+Message-ID: <20180628162359.9054-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <D9B93DE9-F61C-4488-B109-432C2DFDCEC2@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, linux-kernel@vger.kernel.org, Joel Fernandes <joelaf@google.com>, Peter Zijlstra <peterz@infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Andi Kleen <andi@firstfloor.org>, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, x86
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Validating the abort_ip field of rseq_cs ensures that the kernel don't
+return to an invalid address when returning to userspace after an abort.
+I don't fully trust each architecture code to cleanly deal with invalid
+return addresses.
 
---8323329-627297609-1530173097=:1778
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Validating the range [ start_ip, start_ip + post_commit_offset ] is an
+extra validation step ensuring that userspace provides valid values to
+describe the critical section.
 
-On Tue, 26 Jun 2018, Andy Lutomirski wrote:
-> > On Jun 26, 2018, at 2:16 PM, Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
-> > 
-> > Make the behavior rseq on compat tasks more robust by ensuring that
-> > kernel/rseq.c:rseq_get_rseq_cs() clears the high bits of
-> > rseq_cs->abort_ip, rseq_cs->start_ip and rseq_cs->post_commit_offset
-> > when a 32-bit binary is run on a 64-bit kernel.
-> > 
-> > The intent here is that if user-space has garbage rather than zeroes
-> > in its struct rseq_cs fields padding, the behavior will be the same
-> > whether the binary is run on 32-bit or 64-bit kernels.
-> > 
-> > Use in_compat_syscall() when rseq_get_rseq_cs() is invoked from
-> > system call context, and use is_compat_frame() when invoked from
-> > signal delivery.
-> > 
-> 
-> And when it’s invoked due to preemption unrelated to a syscall or signal,
-> you malfunction?
->
-> I think the only sane solution is to make these fields be u64, delete the
-> LINUX_FIELD_ macros, and possibly teach the x86 slowpath return to inject
-> a signal if it’s trying to return to a 32-bit context with garbage in the
-> high bits of regs->ip so that we determistically fail if the user screws
-> up.
+If validation fails, the process is killed with a segmentation fault.
 
-Right. That's the only sane solution. Trying to play games with 32/64bit
-for a dubious value is going to bite us within no time and just create ugly
-workarounds left and right. Forcing a clear handling upfront avoids all of
-that.
+Change the rseq ABI so rseq_cs start_ip, post_commit_offset and abort_ip
+fields are seen as 64-bit fields by both 32-bit and 64-bit kernels rather
+that ignoring the 32 upper bits on 32-bit kernels. This ensures we have
+a consistent behavior for a 32-bit binary executed on 32-bit kernels and
+in compat mode on 64-bit kernels.
 
-Thanks,
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ include/uapi/linux/rseq.h | 6 +++---
+ kernel/rseq.c             | 7 +++++--
+ 2 files changed, 8 insertions(+), 5 deletions(-)
 
-	tglx
---8323329-627297609-1530173097=:1778--
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index d620fa43756c..519ad6e176d1 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -52,10 +52,10 @@ struct rseq_cs {
+ 	__u32 version;
+ 	/* enum rseq_cs_flags */
+ 	__u32 flags;
+-	LINUX_FIELD_u32_u64(start_ip);
++	__u64 start_ip;
+ 	/* Offset from start_ip. */
+-	LINUX_FIELD_u32_u64(post_commit_offset);
+-	LINUX_FIELD_u32_u64(abort_ip);
++	__u64 post_commit_offset;
++	__u64 abort_ip;
+ } __attribute__((aligned(4 * sizeof(__u64))));
+ 
+ /*
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 22b6acf1ad63..4ba582046fcd 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -128,7 +128,10 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 		return 0;
+ 	}
+ 	urseq_cs = (struct rseq_cs __user *)ptr;
+-	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
++	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)) ||
++	    rseq_cs->abort_ip >= TASK_SIZE ||
++	    rseq_cs->start_ip >= TASK_SIZE ||
++	    rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE)
+ 		return -EFAULT;
+ 	if (rseq_cs->version > 0)
+ 		return -EINVAL;
+@@ -137,7 +140,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 	if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
+ 		return -EINVAL;
+ 
+-	usig = (u32 __user *)(rseq_cs->abort_ip - sizeof(u32));
++	usig = (u32 __user *)(unsigned long)(rseq_cs->abort_ip - sizeof(u32));
+ 	ret = get_user(sig, usig);
+ 	if (ret)
+ 		return ret;
+-- 
+2.11.0
