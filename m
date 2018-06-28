@@ -1,55 +1,57 @@
-From: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH] mm: reject MAP_SHARED_VALIDATE without new flags
-Date: Wed, 27 Jun 2018 23:18:30 -0500
-Message-ID: <52d82353-2746-269a-c1e3-e4aec4fbf0f9@redhat.com>
-References: <60052659-7b37-cb69-bf9f-1683caa46219@redhat.com>
- <CA+55aFzeA7N3evSF2jKHu8JoTQuKDLCMKx7RiPhmym97-8HY7A@mail.gmail.com>
- <1e2ad827-6ff4-4b1e-c4d9-79ca4e432a6c@sandeen.net>
- <CA+55aFxs7Cc30fCiENw0R+XDJhUJ-w=z=NLLzYfT5gF2Qh-60Q@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC PATCH for 4.18 2/2] rseq: compat: clear high bits of rseq_cs
+ fields
+Date: Thu, 28 Jun 2018 10:04:51 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1806281002280.1778@nanos.tec.linutronix.de>
+References: <20180626211617.8933-1-mathieu.desnoyers@efficios.com> <20180626211617.8933-2-mathieu.desnoyers@efficios.com> <D9B93DE9-F61C-4488-B109-432C2DFDCEC2@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <CA+55aFxs7Cc30fCiENw0R+XDJhUJ-w=z=NLLzYfT5gF2Qh-60Q-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Eric Sandeen <sandeen-+82itfer+wXR7s880joybQ@public.gmane.org>
-Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, "linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org" <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, zhibli-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/mixed; boundary="8323329-627297609-1530173097=:1778"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <D9B93DE9-F61C-4488-B109-432C2DFDCEC2@amacapital.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, linux-kernel@vger.kernel.org, Joel Fernandes <joelaf@google.com>, Peter Zijlstra <peterz@infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Andi Kleen <andi@firstfloor.org>, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, x86
 List-Id: linux-api@vger.kernel.org
 
-On 6/27/18 9:37 PM, Linus Torvalds wrote:
-> On Wed, Jun 27, 2018 at 7:17 PM Eric Sandeen <sandeen-+82itfer+wXR7s880joybQ@public.gmane.org> wrote:
->>
->> What broke is that mmap(MAP_SHARED|MAP_PRIVATE) now succeeds without error,
->> whereas before it rightly returned -EINVAL.
-> 
-> You're still confusing *behavior* with breakage.
-> 
-> Yes. New *behavior* is that MAP_SHARED|MAP_PRIVATE is now a valid
-> thing. It means "MAP_SHARED_VALIDATE".
-> 
-> Behavior changed.  That's normal. Every single time we add a system
-> call, behavior changes: a system call that used to return -ENOSYS now
-> returns something else.
-> 
-> That's not breakage, that's just intentional new behavior.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-*shrug* semantics aside, the new behavior is out there in a public
-API, so I guess there's nothing to do at this point other than
-to document the change more clearly.  It's true that my patch could
-possibly break existing users.
+--8323329-627297609-1530173097=:1778
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 
-The man page is clearly wrong at this point, both in terms of the
-error code section, and the claim that MAP_SHARED and MAP_PRIVATE
-behave as described in POSIX (because POSIX states that these
-two flags may not be specified together.)
+On Tue, 26 Jun 2018, Andy Lutomirski wrote:
+> > On Jun 26, 2018, at 2:16 PM, Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+> > 
+> > Make the behavior rseq on compat tasks more robust by ensuring that
+> > kernel/rseq.c:rseq_get_rseq_cs() clears the high bits of
+> > rseq_cs->abort_ip, rseq_cs->start_ip and rseq_cs->post_commit_offset
+> > when a 32-bit binary is run on a 64-bit kernel.
+> > 
+> > The intent here is that if user-space has garbage rather than zeroes
+> > in its struct rseq_cs fields padding, the behavior will be the same
+> > whether the binary is run on 32-bit or 64-bit kernels.
+> > 
+> > Use in_compat_syscall() when rseq_get_rseq_cs() is invoked from
+> > system call context, and use is_compat_frame() when invoked from
+> > signal delivery.
+> > 
+> 
+> And when it’s invoked due to preemption unrelated to a syscall or signal,
+> you malfunction?
+>
+> I think the only sane solution is to make these fields be u64, delete the
+> LINUX_FIELD_ macros, and possibly teach the x86 slowpath return to inject
+> a signal if it’s trying to return to a 32-bit context with garbage in the
+> high bits of regs->ip so that we determistically fail if the user screws
+> up.
 
--Eric
+Right. That's the only sane solution. Trying to play games with 32/64bit
+for a dubious value is going to bite us within no time and just create ugly
+workarounds left and right. Forcing a clear handling upfront avoids all of
+that.
+
+Thanks,
+
+	tglx
+--8323329-627297609-1530173097=:1778--
