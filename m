@@ -1,95 +1,70 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.18 2/2] rseq: compat: clear high bits of
- rseq_cs fields
-Date: Tue, 26 Jun 2018 18:17:22 -0400 (EDT)
-Message-ID: <107389573.6464.1530051442686.JavaMail.zimbra@efficios.com>
-References: <20180626211617.8933-1-mathieu.desnoyers@efficios.com> <20180626211617.8933-2-mathieu.desnoyers@efficios.com> <D9B93DE9-F61C-4488-B109-432C2DFDCEC2@amacapital.net>
+From: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH] mm: reject MAP_SHARED_VALIDATE without new flags
+Date: Wed, 27 Jun 2018 20:45:00 -0500
+Message-ID: <60052659-7b37-cb69-bf9f-1683caa46219@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <D9B93DE9-F61C-4488-B109-432C2DFDCEC2@amacapital.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Peter Zijlstra <peterz@infradead.org>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Andi Kleen <andi@firstfloor.org>, "H. Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Andrew Hunter <ahh@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api <linux-api@vger.kernel.org>linux-arch <linux-a>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, "linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Cc: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Zhibin Li <zhibli-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jun 26, 2018, at 5:58 PM, Andy Lutomirski luto@amacapital.net wrot=
-e:
+mmap(2) says the syscall will return EINVAL if "flags contained neither
+MAP_PRIVATE or MAP_SHARED, or contained both of these values."
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+However, commit 
+1c972597 ("mm: introduce MAP_SHARED_VALIDATE ...")
+introduced a new flag, MAP_SHARED_VALIDATE, with a value of 0x3,
+which is indistinguishable from (MAP_SHARED|MAP_PRIVATE).
 
->> On Jun 26, 2018, at 2:16 PM, Mathieu Desnoyers <mathieu.desnoyers@effici=
-os.com>
->> wrote:
->>=20
->> Make the behavior rseq on compat tasks more robust by ensuring that
->> kernel/rseq.c:rseq_get_rseq_cs() clears the high bits of
->> rseq_cs->abort_ip, rseq_cs->start_ip and rseq_cs->post_commit_offset
->> when a 32-bit binary is run on a 64-bit kernel.
->>=20
->> The intent here is that if user-space has garbage rather than zeroes
->> in its struct rseq_cs fields padding, the behavior will be the same
->> whether the binary is run on 32-bit or 64-bit kernels.
->>=20
->> Use in_compat_syscall() when rseq_get_rseq_cs() is invoked from
->> system call context, and use is_compat_frame() when invoked from
->> signal delivery.
->>=20
->=20
-> And when it=E2=80=99s invoked due to preemption unrelated to a syscall or=
- signal, you
-> malfunction?
+Thus the invalid flag combination of (MAP_SHARED|MAP_PRIVATE) now
+passes without error, which is a regression.
 
-Fair point! Hence the "RFC". ;)
+I'm not sure of the best way out of this, other than to change the
+API description to say that MAP_SHARED_VALIDATE is only allowed in
+combination with "new" flags, and reject it if it's used only with
+flags contained in LEGACY_MAP_MASK.
 
-So I understand better your intent to use the pt_regs to figure out whether=
- it
-is compat or not. My is_compat_frame()+in_compat_syscall() approach does no=
-t
-handle this correctly.
+This will require the mmap(2) manpage to enumerate which flags don't
+require validation, as well, so the user knows when to use the
+VALIDATE flag.
 
->=20
-> I think the only sane solution is to make these fields be u64,
+I'm not super happy with this, because it also means that code
+which explicitly asks for mmap(MAP_SHARED|MAP_PRIVATE|MAP_SYNC) will
+also pass, but I'm not sure there's anything to do about that.
 
-I'm OK with turning the rseq_cs start_ip, post_commit_offset, and abort_ip
-fields into normal u64.
+Reported-by: Zhibin Li <zhibli-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Eric Sandeen <sandeen-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+---
 
-> delete the
-> LINUX_FIELD_ macros,
-
-The LINUX_FIELD_ macros are still needed to ensure single-copy updates of
-the (struct rseq *__tls_abi)->rseq_cs pointer by 32-bit user-space.
-
-> and possibly teach the x86 slowpath return to inject a
-> signal if it=E2=80=99s trying to return to a 32-bit context with garbage =
-in the high
-> bits of regs->ip so that we determistically fail if the user screws up.
-
-I like the approach of dealing with the rseq_cs fields as u64 even on 32-bi=
-t
-architectures. As a downside, it will require 32-bit architectures to do
-arithmetic on 64-bit values, but it's not a fast-path. As you point out, th=
-e
-tricky bit is to decide what happens when architecture code returns to
-userspace with regs->ip containing garbage in the high bits.
-
-An alternative approach is to ensure the high bits are cleared when returni=
-ng
-to an IP with garbage in the high bits.
-
-> Rseq is brand new. It should not need compat code at all.
-
-Dealing with u64 for start_ip, post_commit_offset, and abort_ip at the kern=
-el
-level would indeed provide this characteristic. However, I'm uneasy adding
-64-bit arithmetic on operations really caring about 32 bits on 32-bit archs=
-,
-even though those are not fast paths.
-
-Thanks,
-
-Mathieu
-
---=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+diff --git a/mm/mmap.c b/mm/mmap.c
+index d1eb87ef4b1a..b1dc84466365 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1440,6 +1440,16 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 
+ 		if (!file_mmap_ok(file, inode, pgoff, len))
+ 			return -EOVERFLOW;
++		/*
++		 * MAP_SHARED_VALIDATE is indistinguishable from
++		 * (MAP_SHARED|MAP_PRIVATE) which must return -EINVAL.
++		 * If the flags contain MAP_SHARED_VALIDATE and none of the
++		 * non-legacy flags, the user gets EINVAL.
++		 */
++		if (((flags & MAP_SHARED_VALIDATE) == MAP_SHARED_VALIDATE) &&
++		    !(flags & ~LEGACY_MAP_MASK)) {
++			return -EINVAL;
++		}
+ 
+ 		flags_mask = LEGACY_MAP_MASK | file->f_op->mmap_supported_flags;
