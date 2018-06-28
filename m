@@ -1,96 +1,67 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [RFC PATCH for 4.18 2/2] rseq: check that rseq->rseq_cs padding
- is zero
-Date: Thu, 28 Jun 2018 17:53:48 +0100
-Message-ID: <20180628165348.GE10751@arm.com>
-References: <20180628162359.9054-1-mathieu.desnoyers@efficios.com>
- <20180628162359.9054-2-mathieu.desnoyers@efficios.com>
+From: Jason Baron <jbaron@akamai.com>
+Subject: Re: [PATCH] mm/madvise: allow MADV_DONTNEED to free memory that is
+ MLOCK_ONFAULT
+Date: Thu, 28 Jun 2018 16:20:54 -0400
+Message-ID: <4ab6d77a-3032-3ffb-d556-b736f6b983e6@akamai.com>
+References: <1528484212-7199-1-git-send-email-jbaron@akamai.com>
+ <20180611072005.GC13364@dhcp22.suse.cz>
+ <4c4de46d-c55a-99a8-469f-e1e634fb8525@akamai.com>
+ <20180611150330.GQ13364@dhcp22.suse.cz>
+ <775adf2d-140c-1460-857f-2de7b24bafe7@akamai.com>
+ <20180612074646.GS13364@dhcp22.suse.cz>
+ <5a9398f4-453c-5cb5-6bbc-f20c3affc96a@akamai.com>
+ <0daccb7c-f642-c5ce-ca7a-3b3e69025a1e@suse.cz>
+ <20180613071552.GD13364@dhcp22.suse.cz>
+ <7a671035-92dc-f9c0-aa7b-ff916d556e82@akamai.com>
+ <20180620110022.GK13685@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180628162359.9054-2-mathieu.desnoyers@efficios.com>
+In-Reply-To: <20180620110022.GK13685@dhcp22.suse.cz>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Michael Kerrisk <mtk.manpages@gmail.>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@suse.de>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-api@vger.kernel.org, emunson@mgebm.net
 List-Id: linux-api@vger.kernel.org
 
-Hi Mathieu,
 
-On Thu, Jun 28, 2018 at 12:23:59PM -0400, Mathieu Desnoyers wrote:
-> On 32-bit kernels, the rseq->rseq_cs_padding field is never read by the
-> kernel. However, 64-bit kernels dealing with 32-bit compat tasks read the
-> full 64-bit in its entirety, and terminates the offending process with
-> a segmentation fault if the upper 32 bits are set due to failure of
-> copy_from_user().
+
+On 06/20/2018 07:00 AM, Michal Hocko wrote:
+> On Fri 15-06-18 15:36:07, Jason Baron wrote:
+>>
+>>
+>> On 06/13/2018 03:15 AM, Michal Hocko wrote:
+>>> On Wed 13-06-18 08:32:19, Vlastimil Babka wrote:
+> [...]
+>>>> BTW I didn't get why we should allow this for MADV_DONTNEED but not
+>>>> MADV_FREE. Can you expand on that?
+>>>
+>>> Well, I wanted to bring this up as well. I guess this would require some
+>>> more hacks to handle the reclaim path correctly because we do rely on
+>>> VM_LOCK at many places for the lazy mlock pages culling.
+>>>
+>>
+>> The point of not allowing MADV_FREE on mlock'd pages for me was that
+>> with mlock and even MLOCK_ON_FAULT, one can always can always determine
+>> if a page is present or not (and thus avoid the major fault). Allowing
+>> MADV_FREE on lock'd pages breaks that assumption.
 > 
-> Ensure that both 32-bit and 64-bit kernels dealing with 32-bit tasks end
-> up terminating offending tasks with a segmentation fault if the upper
-> 32-bit padding bits (rseq->rseq_cs_padding) are set by adding an explicit
-> check that padding is zero on 32-bit kernels.
+> But once you have called MADV_FREE you cannot assume anything about the
+> content until you touch the memory again. So you can safely assume a
+> major fault for the worst case. Btw. why knowing whether you major fault
+> is important in the first place? What is an application going to do
+> about that information?
 > 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-> CC: Peter Zijlstra <peterz@infradead.org>
-> CC: Paul Turner <pjt@google.com>
-> CC: Thomas Gleixner <tglx@linutronix.de>
-> CC: Andy Lutomirski <luto@amacapital.net>
-> CC: Andi Kleen <andi@firstfloor.org>
-> CC: Dave Watson <davejwatson@fb.com>
-> CC: Chris Lameter <cl@linux.com>
-> CC: Ingo Molnar <mingo@redhat.com>
-> CC: "H. Peter Anvin" <hpa@zytor.com>
-> CC: Ben Maurer <bmaurer@fb.com>
-> CC: Steven Rostedt <rostedt@goodmis.org>
-> CC: Josh Triplett <josh@joshtriplett.org>
-> CC: Linus Torvalds <torvalds@linux-foundation.org>
-> CC: Andrew Morton <akpm@linux-foundation.org>
-> CC: Russell King <linux@arm.linux.org.uk>
-> CC: Catalin Marinas <catalin.marinas@arm.com>
-> CC: Will Deacon <will.deacon@arm.com>
-> CC: Michael Kerrisk <mtk.manpages@gmail.com>
-> CC: Boqun Feng <boqun.feng@gmail.com>
-> CC: linux-api@vger.kernel.org
-> ---
->  kernel/rseq.c | 25 +++++++++++++++++++++++++
->  1 file changed, 25 insertions(+)
-> 
-> diff --git a/kernel/rseq.c b/kernel/rseq.c
-> index 4ba582046fcd..b038f35a60d6 100644
-> --- a/kernel/rseq.c
-> +++ b/kernel/rseq.c
-> @@ -112,6 +112,29 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
->  	return 0;
->  }
->  
-> +#ifndef __LP64__
-> +/*
-> + * Ensure that padding is zero.
-> + */
-> +static int check_rseq_cs_padding(struct task_struct *t)
-> +{
-> +	unsigned long pad;
-> +	int ret;
-> +
-> +	ret = __get_user(pad, &t->rseq->rseq_cs_padding);
-> +	if (ret)
-> +		return ret;
-> +	if (pad)
-> +		return -EFAULT;
-> +	return 0;
-> +}
-> +#else
-> +static int check_rseq_cs_padding(struct task_struct *t)
-> +{
-> +	return 0;
-> +}
-> +#endif
 
-I'm still not sure how this works with a 64-bit kernel and a compat (32-bit)
-task. The check_rseq_cs_padding() will return 0 regardless of the upper bits
-of the rseq_cs field, whereas a native 32-bit kernel would actually go and
-check them.
+Fair enough, I think that means you end up with a MADV_FREE_FORCE to
+support that case? As I said I worked around this by using tmpfs and
+fallocate(FALLOC_FL_PUNCH_HOLE). However, I still think there is a
+use-case for doing this for anonymous memory, to avoid the unlock() calls.
 
-What am I missing here?
+The use-case I had in mind was simply an application that has a fast
+path for when it knows that the requested item is locked in memory.
 
-Will
+Thanks,
+
+-Jason
