@@ -1,198 +1,57 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
- nr_indirectly_reclaimable_bytes
-Date: Fri, 29 Jun 2018 17:37:02 +0200
-Message-ID: <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
-References: <20180618091808.4419-6-vbabka@suse.cz>
- <201806201923.mC5ZpigB%fengguang.wu@intel.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH for 4.18 1/2] rseq: validate rseq_cs fields are < TASK_SIZE
+Date: Fri, 29 Jun 2018 08:54:05 -0700
+Message-ID: <CA+55aFwJWxsE_LL=-8WgB7uH_mYeMSu=boWF4N5KdOW673g4hA@mail.gmail.com>
+References: <20180628162359.9054-1-mathieu.desnoyers@efficios.com>
+ <CA+55aFxZrv9koOGKNzpBjcpzwaKQBg9ybqcvQ9u=5d94y1F+mQ@mail.gmail.com>
+ <CALCETrUrXk3wRg8SKhWf98v8jK=HwX9XLvP+Ypi+TktZoNx_Jg@mail.gmail.com>
+ <CA+55aFzxCjkSbfRUeX3W_oXSJ6LMUdRVYB=DR2b3rUNkiixM1A@mail.gmail.com>
+ <9200ED2A-AE4B-4094-81C9-E92240B4840F@amacapital.net> <CA+55aFzpD5xF80iiFNd+EMkJnRQdKPumM5p24Sr+LeBt8Gg=wg@mail.gmail.com>
+ <1706339668.9644.1530281144560.JavaMail.zimbra@efficios.com>
+ <CA+55aFxRJWjbgLeSQ_swi3F5nF1SYgZnC-R7QsOvZdcuSaWeaw@mail.gmail.com>
+ <729451355.9702.1530284622326.JavaMail.zimbra@efficios.com> <CA+55aFw==YnFJn7iGnKMW=RbPT74YHNa0QDF96mEdMPA2oX9SA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201806201923.mC5ZpigB%fengguang.wu@intel.com>
-Content-Language: en-US
+In-Reply-To: <CA+55aFw==YnFJn7iGnKMW=RbPT74YHNa0QDF96mEdMPA2oX9SA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: kbuild test robot <lkp@intel.com>
-Cc: kbuild-all@01.org, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, Peter Anvin <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Christoph Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 06/20/2018 01:23 PM, kbuild test robot wrote:
-> Hi Vlastimil,
-> 
-> Thank you for the patch! Yet something to improve:
-> 
-> [auto build test ERROR on mmotm/master]
-> [also build test ERROR on v4.18-rc1 next-20180619]
-> [if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
-> 
-> url:    https://github.com/0day-ci/linux/commits/Vlastimil-Babka/kmalloc-reclaimable-caches/20180618-172912
-> base:   git://git.cmpxchg.org/linux-mmotm.git master
-> config: x86_64-allmodconfig (attached as .config)
-> compiler: gcc-7 (Debian 7.3.0-16) 7.3.0
-> reproduce:
->         # save the attached .config to linux build tree
->         make ARCH=x86_64 
-> 
-> All errors (new ones prefixed by >>):
-> 
->    drivers/staging//android/ion/ion_page_pool.c: In function 'ion_page_pool_remove':
->>> drivers/staging//android/ion/ion_page_pool.c:56:40: error: 'NR_INDIRECTLY_RECLAIMABLE_BYTES' undeclared (first use in this function)
->      mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
->                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
->    drivers/staging//android/ion/ion_page_pool.c:56:40: note: each undeclared identifier is reported only once for each function it appears in
-> 
-> vim +/NR_INDIRECTLY_RECLAIMABLE_BYTES +56 drivers/staging//android/ion/ion_page_pool.c
+On Fri, Jun 29, 2018 at 8:27 AM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+>
+> You simply can't have it both ways.
 
-Looks like I missed a hunk, updated patch below.
+Put another way.
 
-----8<----
->From a0053c64c72d7e094252d0d7462de8569d87c543 Mon Sep 17 00:00:00 2001
-From: Vlastimil Babka <vbabka@suse.cz>
-Date: Tue, 22 May 2018 16:10:10 +0200
-Subject: [PATCH v3 5/7] mm: rename and change semantics of
- nr_indirectly_reclaimable_bytes
+This is ok in the native path:
 
-The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
-eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
-accounting objects that can be reclaimed, but cannot be allocated via a
-SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
-__GFP_RECLAIMABLE flag, and the dcache external names user is converted.
+        if ((unsigned long) rseq_cs->abort_ip != rseq_cs->abort_ip)
+                return -EINVAL;
 
-The counter is however still useful for accounting direct page allocations
-(i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
+because it's checking that the value fits in the native register size
+(and it also ends up being a no-op if the native size is the same size
+as abort_ip).
 
-- change granularity to pages to be more like other counters; sub-page
-  allocations should be able to use kmalloc
-- rename the counter to NR_KERNEL_MISC_RECLAIMABLE
-- expose the counter again in vmstat as "nr_kernel_misc_reclaimable"; we can
-  again remove the check for not printing "hidden" counters
+And this is very much ok in a compat syscall:
 
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Cc: Vijayanand Jitta <vjitta@codeaurora.org>
-Cc: Laura Abbott <labbott@redhat.com>
-Cc: Sumit Semwal <sumit.semwal@linaro.org>
----
- drivers/staging/android/ion/ion_page_pool.c |  8 ++++----
- include/linux/mmzone.h                      |  2 +-
- mm/page_alloc.c                             | 19 +++++++------------
- mm/util.c                                   |  3 +--
- mm/vmstat.c                                 |  6 +-----
- 5 files changed, 14 insertions(+), 24 deletions(-)
+        if (rseq_cs->abort_ip & ~(unsigned long)-1u)
+                return -EINVAL;
 
-diff --git a/drivers/staging/android/ion/ion_page_pool.c b/drivers/staging/android/ion/ion_page_pool.c
-index 9bc56eb48d2a..0d2a95957ee8 100644
---- a/drivers/staging/android/ion/ion_page_pool.c
-+++ b/drivers/staging/android/ion/ion_page_pool.c
-@@ -33,8 +33,8 @@ static void ion_page_pool_add(struct ion_page_pool *pool, struct page *page)
- 		pool->low_count++;
- 	}
- 
--	mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
--			    (1 << (PAGE_SHIFT + pool->order)));
-+	mod_node_page_state(page_pgdat(page), NR_KERNEL_MISC_RECLAIMABLE,
-+							1 << pool->order);
- 	mutex_unlock(&pool->mutex);
- }
- 
-@@ -53,8 +53,8 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high)
- 	}
- 
- 	list_del(&page->lru);
--	mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
--			    -(1 << (PAGE_SHIFT + pool->order)));
-+	mod_node_page_state(page_pgdat(page), NR_KERNEL_MISC_RECLAIMABLE,
-+							-(1 << pool->order));
- 	return page;
- }
- 
-diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-index 32699b2dc52a..c2f6bc4c9e8a 100644
---- a/include/linux/mmzone.h
-+++ b/include/linux/mmzone.h
-@@ -180,7 +180,7 @@ enum node_stat_item {
- 	NR_VMSCAN_IMMEDIATE,	/* Prioritise for reclaim when writeback ends */
- 	NR_DIRTIED,		/* page dirtyings since bootup */
- 	NR_WRITTEN,		/* page writings since bootup */
--	NR_INDIRECTLY_RECLAIMABLE_BYTES, /* measured in bytes */
-+	NR_KERNEL_MISC_RECLAIMABLE,	/* reclaimable non-slab kernel pages */
- 	NR_VM_NODE_STAT_ITEMS
- };
- 
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 1521100f1e63..8ceb45e11b97 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -4704,6 +4704,7 @@ long si_mem_available(void)
- 	unsigned long pagecache;
- 	unsigned long wmark_low = 0;
- 	unsigned long pages[NR_LRU_LISTS];
-+	unsigned long reclaimable;
- 	struct zone *zone;
- 	int lru;
- 
-@@ -4729,19 +4730,13 @@ long si_mem_available(void)
- 	available += pagecache;
- 
- 	/*
--	 * Part of the reclaimable slab consists of items that are in use,
--	 * and cannot be freed. Cap this estimate at the low watermark.
-+	 * Part of the reclaimable slab and other kernel memory consists of
-+	 * items that are in use, and cannot be freed. Cap this estimate at the
-+	 * low watermark.
- 	 */
--	available += global_node_page_state(NR_SLAB_RECLAIMABLE) -
--		     min(global_node_page_state(NR_SLAB_RECLAIMABLE) / 2,
--			 wmark_low);
--
--	/*
--	 * Part of the kernel memory, which can be released under memory
--	 * pressure.
--	 */
--	available += global_node_page_state(NR_INDIRECTLY_RECLAIMABLE_BYTES) >>
--		PAGE_SHIFT;
-+	reclaimable = global_node_page_state(NR_SLAB_RECLAIMABLE) +
-+			global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE);
-+	available += reclaimable - min(reclaimable / 2, wmark_low);
- 
- 	if (available < 0)
- 		available = 0;
-diff --git a/mm/util.c b/mm/util.c
-index 3351659200e6..891f0654e7b5 100644
---- a/mm/util.c
-+++ b/mm/util.c
-@@ -675,8 +675,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
- 		 * Part of the kernel memory, which can be released
- 		 * under memory pressure.
- 		 */
--		free += global_node_page_state(
--			NR_INDIRECTLY_RECLAIMABLE_BYTES) >> PAGE_SHIFT;
-+		free += global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE);
- 
- 		/*
- 		 * Leave reserved pages. The pages are not for anonymous pages.
-diff --git a/mm/vmstat.c b/mm/vmstat.c
-index 75eda9c2b260..7c677d3a61ec 100644
---- a/mm/vmstat.c
-+++ b/mm/vmstat.c
-@@ -1161,7 +1161,7 @@ const char * const vmstat_text[] = {
- 	"nr_vmscan_immediate_reclaim",
- 	"nr_dirtied",
- 	"nr_written",
--	"", /* nr_indirectly_reclaimable */
-+	"nr_kernel_misc_reclaimable",
- 
- 	/* enum writeback_stat_item counters */
- 	"nr_dirty_threshold",
-@@ -1704,10 +1704,6 @@ static int vmstat_show(struct seq_file *m, void *arg)
- 	unsigned long *l = arg;
- 	unsigned long off = l - (unsigned long *)m->private;
- 
--	/* Skip hidden vmstat items. */
--	if (*vmstat_text[off] == '\0')
--		return 0;
--
- 	seq_puts(m, vmstat_text[off]);
- 	seq_put_decimal_ull(m, " ", *l);
- 	seq_putc(m, '\n');
--- 
-2.17.1
+because it's checking that the pointer doesn't have (invalid in
+compat) high bits set.
+
+But it is NOT OK to say "the rseq system call doesn't have any compat
+syscall, but we'll do that compat check in the native case, because we
+worry about compat issues".
+
+See what I'm saying? Either you worry about compat issues (and have a
+compat syscall), or you don't.
+
+The whole "let's not do a compat syscall, but then check compat issues
+at run-time in the native system call because compat processes will
+use it" is braindamage.
+
+                   Linus
