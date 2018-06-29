@@ -1,44 +1,66 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC PATCH for 4.18 1/2] rseq: validate rseq_cs fields are < TASK_SIZE
-Date: Fri, 29 Jun 2018 13:39:20 -0700
-Message-ID: <CALCETrXqjrCoHX1KyL0iKGBaAZSGJb1cVdNN1gNigJ8DW9LF8w@mail.gmail.com>
-References: <20180628162359.9054-1-mathieu.desnoyers@efficios.com>
- <1706339668.9644.1530281144560.JavaMail.zimbra@efficios.com>
- <CA+55aFxRJWjbgLeSQ_swi3F5nF1SYgZnC-R7QsOvZdcuSaWeaw@mail.gmail.com>
- <729451355.9702.1530284622326.JavaMail.zimbra@efficios.com>
- <CA+55aFw==YnFJn7iGnKMW=RbPT74YHNa0QDF96mEdMPA2oX9SA@mail.gmail.com>
- <CA+55aFwJWxsE_LL=-8WgB7uH_mYeMSu=boWF4N5KdOW673g4hA@mail.gmail.com>
- <247789350.9741.1530288432573.JavaMail.zimbra@efficios.com>
- <CA+55aFz8KyVqFsVnp-6g+thz7vmm5nK_FSdRTPSks7gsNVNRdQ@mail.gmail.com> <184287091.10022.1530301738384.JavaMail.zimbra@efficios.com>
+From: Roman Gushchin <guro@fb.com>
+Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
+ nr_indirectly_reclaimable_bytes
+Date: Fri, 29 Jun 2018 14:12:05 -0700
+Message-ID: <20180629211201.GA14897@castle.DHCP.thefacebook.com>
+References: <20180618091808.4419-6-vbabka@suse.cz>
+ <201806201923.mC5ZpigB%fengguang.wu@intel.com>
+ <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <184287091.10022.1530301738384.JavaMail.zimbra@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>Will Deacon <w>
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: kbuild test robot <lkp@intel.com>, kbuild-all@01.org, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 29, 2018 at 12:48 PM, Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
-> There are two aspects I'm concerned about here:
->
-> 1) security: we don't want 32-bit user-space to feed a 64-bit value over 4GB
->    as abort_ip that may end up causing OOPSes on architectures that would
->    lack proper validation of those values on return to userspace.
+On Fri, Jun 29, 2018 at 05:37:02PM +0200, Vlastimil Babka wrote:
+> On 06/20/2018 01:23 PM, kbuild test robot wrote:
+> > Hi Vlastimil,
+> > 
+> > Thank you for the patch! Yet something to improve:
+> > 
+> > [auto build test ERROR on mmotm/master]
+> > [also build test ERROR on v4.18-rc1 next-20180619]
+> > [if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+> > 
+> > url:    https://github.com/0day-ci/linux/commits/Vlastimil-Babka/kmalloc-reclaimable-caches/20180618-172912
+> > base:   git://git.cmpxchg.org/linux-mmotm.git master
+> > config: x86_64-allmodconfig (attached as .config)
+> > compiler: gcc-7 (Debian 7.3.0-16) 7.3.0
+> > reproduce:
+> >         # save the attached .config to linux build tree
+> >         make ARCH=x86_64 
+> > 
+> > All errors (new ones prefixed by >>):
+> > 
+> >    drivers/staging//android/ion/ion_page_pool.c: In function 'ion_page_pool_remove':
+> >>> drivers/staging//android/ion/ion_page_pool.c:56:40: error: 'NR_INDIRECTLY_RECLAIMABLE_BYTES' undeclared (first use in this function)
+> >      mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
+> >                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+> >    drivers/staging//android/ion/ion_page_pool.c:56:40: note: each undeclared identifier is reported only once for each function it appears in
+> > 
+> > vim +/NR_INDIRECTLY_RECLAIMABLE_BYTES +56 drivers/staging//android/ion/ion_page_pool.c
+> 
+> Looks like I missed a hunk, updated patch below.
+> 
+> ----8<----
+> From a0053c64c72d7e094252d0d7462de8569d87c543 Mon Sep 17 00:00:00 2001
+> From: Vlastimil Babka <vbabka@suse.cz>
+> Date: Tue, 22 May 2018 16:10:10 +0200
+> Subject: [PATCH v3 5/7] mm: rename and change semantics of
+>  nr_indirectly_reclaimable_bytes
+> 
+> The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
+> eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
+> accounting objects that can be reclaimed, but cannot be allocated via a
+> SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
+> __GFP_RECLAIMABLE flag, and the dcache external names user is converted.
+> 
+> The counter is however still useful for accounting direct page allocations
+> (i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
 
-I'm not too worried about this.  As long as you're doing it from
-signal-delivery context (which you are AFAICT) you're fine.
-
-But I re-read the code and I think I have a really straightforward
-solution.  Two choices:
-
-(1) Change instruction_pointer_set() to return an error code if the
-address passed in is garbage in a way that could cause unexpected
-behavior (like >=2^32 on x86_64 if regs->cs is 32-bit).  It has very
-very few callers.
-
-(2) Add instruction_pointer_validate() to go along with
-instruction_pointer_set().
-
-That should be enough to solve the problem, right?
+Btw, it looks like I've another example of usefulness of this counter:
+dynamic per-cpu data.
