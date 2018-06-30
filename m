@@ -1,170 +1,197 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v7 10/29] fpga: dfl: add dfl_fpga_port_ops support.
-Date: Sat, 30 Jun 2018 08:53:17 +0800
-Message-ID: <1530320016-24712-11-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v7 12/29] fpga: add FPGA DFL PCIe device driver
+Date: Sat, 30 Jun 2018 08:53:19 +0800
+Message-ID: <1530320016-24712-13-git-send-email-hao.wu@intel.com>
 References: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-In some cases, other DFL driver modules may need to access some port
-operations, e.g. disable / enable port for partial reconfiguration in
-FME module. In order to avoid dependency between port and FME modules,
-this patch introduces the dfl_fpga_port_ops support in DFL framework.
-A global dfl_fpga_port_ops list is added in the DFL framework, and
-it allows other DFL modules to use these port operations registered
-to this list, even in virtualization case, the port platform device
-is turned into VF / guest VM and hidden in host, the registered
-port_ops is still usable. It resolves the dependency issues between
-modules, but once get port ops API returns a valid port ops, that
-means related port driver module has been module_get to prevent from
-unexpected unload, and put port ops API must be invoked after use.
+From: Zhang Yi <yi.z.zhang@intel.com>
 
-These APIs introduced by this patch is listed below:
- * dfl_fpga_port_ops_add
-   add one port ops to the global list.
+This patch implements the basic framework of the driver for FPGA PCIe
+device which implements the Device Feature List (DFL) in its MMIO space.
+This driver is verified on Intel(R) PCIe-based FPGA DFL devices, including
+both integrated (e.g. Intel Server Platform with In-package FPGA) and
+discrete (e.g. Intel FPGA PCIe Acceleration Cards) solutions.
 
- * dfl_fpga_port_ops_del
-   del one port ops from the global list.
-
- * dfl_fpga_port_ops_get / dfl_fpga_port_ops_put
-   get/put the port ops before/after use.
-
+Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
+Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
+Signed-off-by: Shiva Rao <shiva.rao@intel.com>
+Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
+Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
+Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v6: add more comments and improve API naming to dfl_fpga_port_xxx.
-    add Acked-by from Alan.
-v7: fix kbuild issue and typos.
+v2: move the code to drivers/fpga folder as suggested by Alan Tull.
+    switch to GPLv2 license.
+    fix comments from Moritz Fischer.
+v3: switch to pci_set_dma_mask/consistent_dma_mask() function.
+    remove pci_save_state() in probe function.
+    rename driver to INTEL_FPGA_DFL_PCI and intel-dfl-pci.c to indicate
+    this driver supports Intel FPGA PCI devices which implement DFL.
+    improve Kconfig description for INTEL_FPGA_DFL_PCI
+v4: rename to FPGA_DFL_PCI (dfl-pci.c) for better reuse.
+    fix SPDX license issue.
+v5: use module_pci_driver() instead.
+    add Acked-by from Alan and Moritz.
+v6: rebase and unify naming in Kconfig.
+v7: fix typos and switch to pcim_enable_device().
 ---
- drivers/fpga/dfl.c | 79 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/fpga/dfl.h | 21 +++++++++++++++
- 2 files changed, 100 insertions(+)
+ drivers/fpga/Kconfig   |  15 +++++++
+ drivers/fpga/Makefile  |   3 ++
+ drivers/fpga/dfl-pci.c | 103 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 121 insertions(+)
+ create mode 100644 drivers/fpga/dfl-pci.c
 
-diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-index e2c72c5..421668a 100644
---- a/drivers/fpga/dfl.c
-+++ b/drivers/fpga/dfl.c
-@@ -136,6 +136,85 @@ static enum dfl_id_type dfh_id_to_type(u32 id)
- 	return DFL_ID_MAX;
- }
+diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+index 4880fd6..f2659f1 100644
+--- a/drivers/fpga/Kconfig
++++ b/drivers/fpga/Kconfig
+@@ -146,4 +146,19 @@ config FPGA_DFL
+ 	  Gate Array (FPGA) solutions which implement Device Feature List.
+ 	  It provides enumeration APIs and feature device infrastructure.
  
++config FPGA_DFL_PCI
++	tristate "FPGA DFL PCIe Device Driver"
++	depends on PCI && FPGA_DFL
++	help
++	  Select this option to enable PCIe driver for PCIe-based
++	  Field-Programmable Gate Array (FPGA) solutions which implement
++	  the Device Feature List (DFL). This driver provides interfaces
++	  for userspace applications to configure, enumerate, open and access
++	  FPGA accelerators on the FPGA DFL devices, enables system level
++	  management functions such as FPGA partial reconfiguration, power
++	  management and virtualization with DFL framework and DFL feature
++	  device drivers.
++
++	  To compile this as a module, choose M here.
++
+ endif # FPGA
+diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
+index 7a7a117..02e0253 100644
+--- a/drivers/fpga/Makefile
++++ b/drivers/fpga/Makefile
+@@ -31,3 +31,6 @@ obj-$(CONFIG_OF_FPGA_REGION)		+= of-fpga-region.o
+ 
+ # FPGA Device Feature List Support
+ obj-$(CONFIG_FPGA_DFL)			+= dfl.o
++
++# Drivers for FPGAs which implement DFL
++obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
+diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
+new file mode 100644
+index 0000000..e1e1f0f
+--- /dev/null
++++ b/drivers/fpga/dfl-pci.c
+@@ -0,0 +1,103 @@
++// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * introduce a global port_ops list, it allows port drivers to register ops
-+ * in such list, then other feature devices (e.g. FME), could use the port
-+ * functions even related port platform device is hidden. Below is one example,
-+ * in virtualization case of PCIe-based FPGA DFL device, when SRIOV is
-+ * enabled, port (and it's AFU) is turned into VF and port platform device
-+ * is hidden from system but it's still required to access port to finish FPGA
-+ * reconfiguration function in FME.
-+ */
-+
-+static DEFINE_MUTEX(dfl_port_ops_mutex);
-+static LIST_HEAD(dfl_port_ops_list);
-+
-+/**
-+ * dfl_fpga_port_ops_get - get matched port ops from the global list
-+ * @pdev: platform device to match with associated port ops.
-+ * Return: matched port ops on success, NULL otherwise.
++ * Driver for FPGA Device Feature List (DFL) PCIe device
 + *
-+ * Please note that must dfl_fpga_port_ops_put after use the port_ops.
++ * Copyright (C) 2017-2018 Intel Corporation, Inc.
++ *
++ * Authors:
++ *   Zhang Yi <Yi.Z.Zhang@intel.com>
++ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
++ *   Joseph Grecco <joe.grecco@intel.com>
++ *   Enno Luebbers <enno.luebbers@intel.com>
++ *   Tim Whisonant <tim.whisonant@intel.com>
++ *   Ananda Ravuri <ananda.ravuri@intel.com>
++ *   Henry Mitchel <henry.mitchel@intel.com>
 + */
-+struct dfl_fpga_port_ops *dfl_fpga_port_ops_get(struct platform_device *pdev)
++
++#include <linux/pci.h>
++#include <linux/types.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/stddef.h>
++#include <linux/errno.h>
++#include <linux/aer.h>
++
++#define DRV_VERSION	"0.8"
++#define DRV_NAME	"dfl-pci"
++
++/* PCI Device ID */
++#define PCIE_DEVICE_ID_PF_INT_5_X	0xBCBD
++#define PCIE_DEVICE_ID_PF_INT_6_X	0xBCC0
++#define PCIE_DEVICE_ID_PF_DSC_1_X	0x09C4
++/* VF Device */
++#define PCIE_DEVICE_ID_VF_INT_5_X	0xBCBF
++#define PCIE_DEVICE_ID_VF_INT_6_X	0xBCC1
++#define PCIE_DEVICE_ID_VF_DSC_1_X	0x09C5
++
++static struct pci_device_id cci_pcie_id_tbl[] = {
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_INT_5_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_INT_5_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_INT_6_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_INT_6_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_PF_DSC_1_X),},
++	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCIE_DEVICE_ID_VF_DSC_1_X),},
++	{0,}
++};
++MODULE_DEVICE_TABLE(pci, cci_pcie_id_tbl);
++
++static
++int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
 +{
-+	struct dfl_fpga_port_ops *ops = NULL;
++	int ret;
 +
-+	mutex_lock(&dfl_port_ops_mutex);
-+	if (list_empty(&dfl_port_ops_list))
-+		goto done;
-+
-+	list_for_each_entry(ops, &dfl_port_ops_list, node) {
-+		/* match port_ops using the name of platform device */
-+		if (!strcmp(pdev->name, ops->name)) {
-+			if (!try_module_get(ops->owner))
-+				ops = NULL;
-+			goto done;
-+		}
++	ret = pcim_enable_device(pcidev);
++	if (ret < 0) {
++		dev_err(&pcidev->dev, "Failed to enable device %d.\n", ret);
++		return ret;
 +	}
 +
-+	ops = NULL;
-+done:
-+	mutex_unlock(&dfl_port_ops_mutex);
-+	return ops;
-+}
-+EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_get);
++	ret = pci_enable_pcie_error_reporting(pcidev);
++	if (ret && ret != -EINVAL)
++		dev_info(&pcidev->dev, "PCIE AER unavailable %d.\n", ret);
 +
-+/**
-+ * dfl_fpga_port_ops_put - put port ops
-+ * @ops: port ops.
-+ */
-+void dfl_fpga_port_ops_put(struct dfl_fpga_port_ops *ops)
++	pci_set_master(pcidev);
++
++	if (!pci_set_dma_mask(pcidev, DMA_BIT_MASK(64))) {
++		ret = pci_set_consistent_dma_mask(pcidev, DMA_BIT_MASK(64));
++		if (ret)
++			goto disable_error_report_exit;
++	} else if (!pci_set_dma_mask(pcidev, DMA_BIT_MASK(32))) {
++		ret = pci_set_consistent_dma_mask(pcidev, DMA_BIT_MASK(32));
++		if (ret)
++			goto disable_error_report_exit;
++	} else {
++		ret = -EIO;
++		dev_err(&pcidev->dev, "No suitable DMA support available.\n");
++		goto disable_error_report_exit;
++	}
++
++	/* TODO: create and add the platform device per feature list */
++	return 0;
++
++disable_error_report_exit:
++	pci_disable_pcie_error_reporting(pcidev);
++	return ret;
++}
++
++static void cci_pci_remove(struct pci_dev *pcidev)
 +{
-+	if (ops && ops->owner)
-+		module_put(ops->owner);
++	pci_disable_pcie_error_reporting(pcidev);
 +}
-+EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_put);
 +
-+/**
-+ * dfl_fpga_port_ops_add - add port_ops to global list
-+ * @ops: port ops to add.
-+ */
-+void dfl_fpga_port_ops_add(struct dfl_fpga_port_ops *ops)
-+{
-+	mutex_lock(&dfl_port_ops_mutex);
-+	list_add_tail(&ops->node, &dfl_port_ops_list);
-+	mutex_unlock(&dfl_port_ops_mutex);
-+}
-+EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_add);
-+
-+/**
-+ * dfl_fpga_port_ops_del - remove port_ops from global list
-+ * @ops: port ops to del.
-+ */
-+void dfl_fpga_port_ops_del(struct dfl_fpga_port_ops *ops)
-+{
-+	mutex_lock(&dfl_port_ops_mutex);
-+	list_del(&ops->node);
-+	mutex_unlock(&dfl_port_ops_mutex);
-+}
-+EXPORT_SYMBOL_GPL(dfl_fpga_port_ops_del);
-+
- /**
-  * dfl_fpga_dev_feature_uinit - uinit for sub features of dfl feature device
-  * @pdev: feature device.
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index 14d4731..654e0f6 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -130,6 +130,27 @@
- /* Latency tolerance reporting. '1' >= 40us, '0' < 40us.*/
- #define PORT_CTRL_LATENCY	BIT_ULL(2)
- #define PORT_CTRL_SFTRST_ACK	BIT_ULL(4)		/* HW ack for reset */
-+/**
-+ * struct dfl_fpga_port_ops - port ops
-+ *
-+ * @name: name of this port ops, to match with port platform device.
-+ * @owner: pointer to the module which owns this port ops.
-+ * @node: node to link port ops to global list.
-+ * @get_id: get port id from hardware.
-+ * @enable_set: enable/disable the port.
-+ */
-+struct dfl_fpga_port_ops {
-+	const char *name;
-+	struct module *owner;
-+	struct list_head node;
-+	int (*get_id)(struct platform_device *pdev);
-+	int (*enable_set)(struct platform_device *pdev, bool enable);
++static struct pci_driver cci_pci_driver = {
++	.name = DRV_NAME,
++	.id_table = cci_pcie_id_tbl,
++	.probe = cci_pci_probe,
++	.remove = cci_pci_remove,
 +};
 +
-+void dfl_fpga_port_ops_add(struct dfl_fpga_port_ops *ops);
-+void dfl_fpga_port_ops_del(struct dfl_fpga_port_ops *ops);
-+struct dfl_fpga_port_ops *dfl_fpga_port_ops_get(struct platform_device *pdev);
-+void dfl_fpga_port_ops_put(struct dfl_fpga_port_ops *ops);
- 
- /**
-  * struct dfl_feature_driver - sub feature's driver
++module_pci_driver(cci_pci_driver);
++
++MODULE_DESCRIPTION("FPGA DFL PCIe Device Driver");
++MODULE_AUTHOR("Intel Corporation");
++MODULE_LICENSE("GPL v2");
 -- 
 1.8.3.1
