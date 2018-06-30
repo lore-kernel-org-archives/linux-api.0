@@ -1,64 +1,36 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v7 04/29] fpga: mgr: add compat_id support
-Date: Sat, 30 Jun 2018 08:53:11 +0800
-Message-ID: <1530320016-24712-5-git-send-email-hao.wu@intel.com>
-References: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
+ nr_indirectly_reclaimable_bytes
+Date: Sat, 30 Jun 2018 12:09:27 +0200
+Message-ID: <ef2dea13-0102-c4bc-a28f-c1b2408f0753@suse.cz>
+References: <20180618091808.4419-6-vbabka@suse.cz>
+ <201806201923.mC5ZpigB%fengguang.wu@intel.com>
+ <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
+ <20180629211201.GA14897@castle.DHCP.thefacebook.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
+In-Reply-To: <20180629211201.GA14897@castle.DHCP.thefacebook.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
+To: Roman Gushchin <guro@fb.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-This patch introduces compat_id support to fpga manager, it adds
-a fpga_compat_id pointer to fpga manager data structure to allow
-fpga manager drivers to save the compatibility id. This compat_id
-could be used for compatibility checking before doing partial
-reconfiguration to associated fpga regions.
+On 06/29/2018 11:12 PM, Roman Gushchin wrote:
+>>
+>> The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
+>> eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
+>> accounting objects that can be reclaimed, but cannot be allocated via a
+>> SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
+>> __GFP_RECLAIMABLE flag, and the dcache external names user is converted.
+>>
+>> The counter is however still useful for accounting direct page allocations
+>> (i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
+> 
+> Btw, it looks like I've another example of usefulness of this counter:
+> dynamic per-cpu data.
 
-Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Alan Tull <atull@kernel.org>
----
-v6: add Acked-by from Alan.
----
- include/linux/fpga/fpga-mgr.h | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-
-diff --git a/include/linux/fpga/fpga-mgr.h b/include/linux/fpga/fpga-mgr.h
-index e249b72..8942e61 100644
---- a/include/linux/fpga/fpga-mgr.h
-+++ b/include/linux/fpga/fpga-mgr.h
-@@ -136,11 +136,23 @@ struct fpga_manager_ops {
- #define FPGA_MGR_STATUS_FIFO_OVERFLOW_ERR	BIT(4)
- 
- /**
-+ * struct fpga_compat_id - id for compatibility check
-+ *
-+ * @id_h: high 64bit of the compat_id
-+ * @id_l: low 64bit of the compat_id
-+ */
-+struct fpga_compat_id {
-+	u64 id_h;
-+	u64 id_l;
-+};
-+
-+/**
-  * struct fpga_manager - fpga manager structure
-  * @name: name of low level fpga manager
-  * @dev: fpga manager device
-  * @ref_mutex: only allows one reference to fpga manager
-  * @state: state of fpga manager
-+ * @compat_id: FPGA manager id for compatibility check.
-  * @mops: pointer to struct of fpga manager ops
-  * @priv: low level driver private date
-  */
-@@ -149,6 +161,7 @@ struct fpga_manager {
- 	struct device dev;
- 	struct mutex ref_mutex;
- 	enum fpga_mgr_states state;
-+	struct fpga_compat_id *compat_id;
- 	const struct fpga_manager_ops *mops;
- 	void *priv;
- };
--- 
-1.8.3.1
+Hmm, but are those reclaimable? Most likely not in general? Do you have
+examples that are?
