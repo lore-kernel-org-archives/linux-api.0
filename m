@@ -1,7 +1,7 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v7 23/29] fpga: dfl: add FPGA Accelerated Function Unit driver basic framework
-Date: Sat, 30 Jun 2018 08:53:30 +0800
-Message-ID: <1530320016-24712-24-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v7 26/29] fpga: dfl: afu: add DFL_FPGA_GET_API_VERSION/CHECK_EXTENSION ioctls support
+Date: Sat, 30 Jun 2018 08:53:33 +0800
+Message-ID: <1530320016-24712-27-git-send-email-hao.wu@intel.com>
 References: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
@@ -10,15 +10,10 @@ To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@v
 Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On DFL FPGA devices, the Accelerated Function Unit (AFU), can be
-reprogrammed for different functions. It connects to the FPGA
-infrastructure (static FPGA region) via a Port. Port CSRs are
-implemented separately from the AFU CSRs to provide control and
-status of the Port. Once valid PR bitstream is programmed into
-the AFU, it allows access to the AFU CSRs in the AFU MMIO space.
-
-This patch only implements basic driver framework for AFU, including
-device file operation framework.
+DFL_FPGA_GET_API_VERSION and DFL_FPGA_CHECK_EXTENSION ioctls are common
+ones which need to be supported by all feature devices drivers including
+FME and AFU. This patch implements above 2 ioctls in FPGA Accelerated
+Function Unit (AFU) driver.
 
 Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
 Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
@@ -27,222 +22,46 @@ Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
 Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v3: rename driver to dfl-afu-main.c
-v4: rename to dfl-port and fix SPDX license issue.
-v5: rebase and add Acked-by from Alan.
-    fix uinit order in remove function.
-v6: rebase and fix copyright time.
-v7: improve kconfig description.
+v2: rebased
+v3: rebased as driver renamed to fpga-dfl-afu
+    fix one checkpatch issue
+v4: add Acked-by from Alan and Moritz.
+v5: rebase and add DFL_ prefix to APIs.
+v6: rebase.
 ---
- drivers/fpga/Kconfig        |   9 +++
- drivers/fpga/Makefile       |   2 +
- drivers/fpga/dfl-afu-main.c | 162 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 173 insertions(+)
- create mode 100644 drivers/fpga/dfl-afu-main.c
+ drivers/fpga/dfl-afu-main.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index f99f422..1ebcef4 100644
---- a/drivers/fpga/Kconfig
-+++ b/drivers/fpga/Kconfig
-@@ -174,6 +174,15 @@ config FPGA_DFL_FME_REGION
- 	help
- 	  Say Y to enable FPGA Region driver for FPGA Management Engine.
- 
-+config FPGA_DFL_AFU
-+	tristate "FPGA DFL AFU Driver"
-+	depends on FPGA_DFL
-+	help
-+	  This is the driver for FPGA Accelerated Function Unit (AFU) which
-+	  implements AFU and Port management features. A User AFU connects
-+	  to the FPGA infrastructure via a Port. There may be more than one
-+	  Port/AFU per DFL based FPGA device.
-+
- config FPGA_DFL_PCI
- 	tristate "FPGA DFL PCIe Device Driver"
- 	depends on PCI && FPGA_DFL
-diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 637c275..1ac7749 100644
---- a/drivers/fpga/Makefile
-+++ b/drivers/fpga/Makefile
-@@ -35,8 +35,10 @@ obj-$(CONFIG_FPGA_DFL_FME)		+= dfl-fme.o
- obj-$(CONFIG_FPGA_DFL_FME_MGR)		+= dfl-fme-mgr.o
- obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
- obj-$(CONFIG_FPGA_DFL_FME_REGION)	+= dfl-fme-region.o
-+obj-$(CONFIG_FPGA_DFL_AFU)		+= dfl-afu.o
- 
- dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
-+dfl-afu-objs := dfl-afu-main.o
- 
- # Drivers for FPGAs which implement DFL
- obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
 diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-new file mode 100644
-index 0000000..08f88cd
---- /dev/null
+index d36b3e9..4074b97 100644
+--- a/drivers/fpga/dfl-afu-main.c
 +++ b/drivers/fpga/dfl-afu-main.c
-@@ -0,0 +1,162 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Driver for FPGA Accelerated Function Unit (AFU)
-+ *
-+ * Copyright (C) 2017-2018 Intel Corporation, Inc.
-+ *
-+ * Authors:
-+ *   Wu Hao <hao.wu@intel.com>
-+ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-+ *   Joseph Grecco <joe.grecco@intel.com>
-+ *   Enno Luebbers <enno.luebbers@intel.com>
-+ *   Tim Whisonant <tim.whisonant@intel.com>
-+ *   Ananda Ravuri <ananda.ravuri@intel.com>
-+ *   Henry Mitchel <henry.mitchel@intel.com>
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+
-+#include "dfl.h"
-+
-+static int port_hdr_init(struct platform_device *pdev,
-+			 struct dfl_feature *feature)
+@@ -236,6 +236,13 @@ static int afu_release(struct inode *inode, struct file *filp)
+ 	return 0;
+ }
+ 
++static long afu_ioctl_check_extension(struct dfl_feature_platform_data *pdata,
++				      unsigned long arg)
 +{
-+	dev_dbg(&pdev->dev, "PORT HDR Init.\n");
-+
++	/* No extension support for now */
 +	return 0;
 +}
 +
-+static void port_hdr_uinit(struct platform_device *pdev,
-+			   struct dfl_feature *feature)
-+{
-+	dev_dbg(&pdev->dev, "PORT HDR UInit.\n");
-+}
-+
-+static const struct dfl_feature_ops port_hdr_ops = {
-+	.init = port_hdr_init,
-+	.uinit = port_hdr_uinit,
-+};
-+
-+static struct dfl_feature_driver port_feature_drvs[] = {
-+	{
-+		.id = PORT_FEATURE_ID_HEADER,
-+		.ops = &port_hdr_ops,
-+	},
-+	{
-+		.ops = NULL,
-+	}
-+};
-+
-+static int afu_open(struct inode *inode, struct file *filp)
-+{
-+	struct platform_device *fdev = dfl_fpga_inode_to_feature_dev(inode);
-+	struct dfl_feature_platform_data *pdata;
-+	int ret;
-+
-+	pdata = dev_get_platdata(&fdev->dev);
-+	if (WARN_ON(!pdata))
-+		return -ENODEV;
-+
-+	ret = dfl_feature_dev_use_begin(pdata);
-+	if (ret)
-+		return ret;
-+
-+	dev_dbg(&fdev->dev, "Device File Open\n");
-+	filp->private_data = fdev;
-+
-+	return 0;
-+}
-+
-+static int afu_release(struct inode *inode, struct file *filp)
-+{
-+	struct platform_device *pdev = filp->private_data;
-+	struct dfl_feature_platform_data *pdata;
-+
-+	dev_dbg(&pdev->dev, "Device File Release\n");
-+
-+	pdata = dev_get_platdata(&pdev->dev);
-+
-+	dfl_feature_dev_use_end(pdata);
-+
-+	return 0;
-+}
-+
-+static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-+{
-+	struct platform_device *pdev = filp->private_data;
-+	struct dfl_feature_platform_data *pdata;
-+	struct dfl_feature *f;
-+	long ret;
-+
-+	dev_dbg(&pdev->dev, "%s cmd 0x%x\n", __func__, cmd);
-+
-+	pdata = dev_get_platdata(&pdev->dev);
-+
-+	switch (cmd) {
-+	default:
-+		/*
-+		 * Let sub-feature's ioctl function to handle the cmd
-+		 * Sub-feature's ioctl returns -ENODEV when cmd is not
-+		 * handled in this sub feature, and returns 0 and other
-+		 * error code if cmd is handled.
-+		 */
-+		dfl_fpga_dev_for_each_feature(pdata, f)
-+			if (f->ops && f->ops->ioctl) {
-+				ret = f->ops->ioctl(pdev, f, cmd, arg);
-+				if (ret != -ENODEV)
-+					return ret;
-+			}
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+static const struct file_operations afu_fops = {
-+	.owner = THIS_MODULE,
-+	.open = afu_open,
-+	.release = afu_release,
-+	.unlocked_ioctl = afu_ioctl,
-+};
-+
-+static int afu_probe(struct platform_device *pdev)
-+{
-+	int ret;
-+
-+	dev_dbg(&pdev->dev, "%s\n", __func__);
-+
-+	ret = dfl_fpga_dev_feature_init(pdev, port_feature_drvs);
-+	if (ret)
-+		return ret;
-+
-+	ret = dfl_fpga_dev_ops_register(pdev, &afu_fops, THIS_MODULE);
-+	if (ret)
-+		dfl_fpga_dev_feature_uinit(pdev);
-+
-+	return ret;
-+}
-+
-+static int afu_remove(struct platform_device *pdev)
-+{
-+	dev_dbg(&pdev->dev, "%s\n", __func__);
-+
-+	dfl_fpga_dev_ops_unregister(pdev);
-+	dfl_fpga_dev_feature_uinit(pdev);
-+
-+	return 0;
-+}
-+
-+static struct platform_driver afu_driver = {
-+	.driver	= {
-+		.name    = DFL_FPGA_FEATURE_DEV_PORT,
-+	},
-+	.probe   = afu_probe,
-+	.remove  = afu_remove,
-+};
-+
-+module_platform_driver(afu_driver);
-+
-+MODULE_DESCRIPTION("FPGA Accelerated Function Unit driver");
-+MODULE_AUTHOR("Intel Corporation");
-+MODULE_LICENSE("GPL v2");
-+MODULE_ALIAS("platform:dfl-port");
+ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ {
+ 	struct platform_device *pdev = filp->private_data;
+@@ -248,6 +255,10 @@ static long afu_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	pdata = dev_get_platdata(&pdev->dev);
+ 
+ 	switch (cmd) {
++	case DFL_FPGA_GET_API_VERSION:
++		return DFL_FPGA_API_VERSION;
++	case DFL_FPGA_CHECK_EXTENSION:
++		return afu_ioctl_check_extension(pdata, arg);
+ 	default:
+ 		/*
+ 		 * Let sub-feature's ioctl function to handle the cmd
 -- 
 1.8.3.1
