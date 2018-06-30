@@ -1,268 +1,108 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v7 07/29] fpga: dfl: add chardev support for feature devices
-Date: Sat, 30 Jun 2018 08:53:14 +0800
-Message-ID: <1530320016-24712-8-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v7 05/29] fpga: region: add compat_id support
+Date: Sat, 30 Jun 2018 08:53:12 +0800
+Message-ID: <1530320016-24712-6-git-send-email-hao.wu@intel.com>
 References: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com, Tim Whisonant <tim.whisonant@intel.com>, Enno Luebbers <enno.luebbers@intel.com>, Shiva Rao <shiva.rao@intel.com>, Christopher Rauer <christopher.rauer@intel.com>, Xiao Guangrong <guangrong.xiao@linux.intel.com>
+Cc: linux-api@vger.kernel.org, luwei.kang@intel.com, yi.z.zhang@intel.com, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-For feature devices drivers, both the FPGA Management Engine (FME) and
-Accelerated Function Unit (AFU) driver need to expose user interfaces via
-the device file, for example, mmap and ioctls.
+This patch introduces a compat_id pointer member and sysfs interface
+for each fpga region, similar as compat_id for fpga manager, it allows
+applications to read the per region compat_id for compatibility
+checking before other actions on this fpga-region (e.g. PR).
 
-This patch adds chardev support in the dfl driver for feature devices,
-FME and AFU. It reserves the chardev regions for FME and AFU and provide
-interfaces for FME and AFU driver to register their device file operations.
-
-Signed-off-by: Tim Whisonant <tim.whisonant@intel.com>
-Signed-off-by: Enno Luebbers <enno.luebbers@intel.com>
-Signed-off-by: Shiva Rao <shiva.rao@intel.com>
-Signed-off-by: Christopher Rauer <christopher.rauer@intel.com>
-Signed-off-by: Zhang Yi <yi.z.zhang@intel.com>
-Signed-off-by: Xiao Guangrong <guangrong.xiao@linux.intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
 ---
-v2: rebased
-v3: move chardev support to fpga-dfl framework
-v4: rebase and add more comments in code.
-v5: rebase and add dfl_ prefix to APIs and data structures.
-v6: add index in dfl_devs to link to dfl_chrdevs.
-    improve naming on APIs.
-v7: make dfl_chrdevs table static.
-    fix typos and add Acked-by from Alan.
+v5: use pointer for compat_id as it's optional to implement.
+v6: add Acked-by from Alan.
+v7: update kernelversion in sysfs doc and add Acked-by from Moritz.
 ---
- drivers/fpga/dfl.c | 125 +++++++++++++++++++++++++++++++++++++++++++++++++++--
- drivers/fpga/dfl.h |   8 ++++
- 2 files changed, 130 insertions(+), 3 deletions(-)
+ Documentation/ABI/testing/sysfs-class-fpga-region |  9 +++++++++
+ drivers/fpga/fpga-region.c                        | 22 ++++++++++++++++++++++
+ include/linux/fpga/fpga-region.h                  |  2 ++
+ 3 files changed, 33 insertions(+)
+ create mode 100644 Documentation/ABI/testing/sysfs-class-fpga-region
 
-diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-index d1dff36..b56933c 100644
---- a/drivers/fpga/dfl.c
-+++ b/drivers/fpga/dfl.c
-@@ -22,6 +22,11 @@
-  * dfl_devs table which is indexed by dfl_id_type, e.g. name string used for
-  * platform device creation (define name strings in dfl.h, as they could be
-  * reused by platform device drivers).
-+ *
-+ * if the new feature dev needs chardev support, then it's required to add
-+ * a new item in dfl_chardevs table and configure dfl_devs[i].devt_type as
-+ * index to dfl_chardevs table. If no chardev support just set devt_type
-+ * as one invalid index (DFL_FPGA_DEVT_MAX).
-  */
- enum dfl_id_type {
- 	FME_ID,		/* fme id allocation and mapping */
-@@ -29,22 +34,48 @@ enum dfl_id_type {
- 	DFL_ID_MAX,
- };
- 
-+enum dfl_fpga_devt_type {
-+	DFL_FPGA_DEVT_FME,
-+	DFL_FPGA_DEVT_PORT,
-+	DFL_FPGA_DEVT_MAX,
-+};
-+
- /**
-  * dfl_dev_info - dfl feature device information.
-  * @name: name string of the feature platform device.
-  * @dfh_id: id value in Device Feature Header (DFH) register by DFL spec.
-  * @id: idr id of the feature dev.
-+ * @devt_type: index to dfl_chrdevs[].
-  */
- struct dfl_dev_info {
- 	const char *name;
- 	u32 dfh_id;
- 	struct idr id;
-+	enum dfl_fpga_devt_type devt_type;
- };
- 
- /* it is indexed by dfl_id_type */
- static struct dfl_dev_info dfl_devs[] = {
--	{.name = DFL_FPGA_FEATURE_DEV_FME, .dfh_id = DFH_ID_FIU_FME},
--	{.name = DFL_FPGA_FEATURE_DEV_PORT, .dfh_id = DFH_ID_FIU_PORT},
-+	{.name = DFL_FPGA_FEATURE_DEV_FME, .dfh_id = DFH_ID_FIU_FME,
-+	 .devt_type = DFL_FPGA_DEVT_FME},
-+	{.name = DFL_FPGA_FEATURE_DEV_PORT, .dfh_id = DFH_ID_FIU_PORT,
-+	 .devt_type = DFL_FPGA_DEVT_PORT},
-+};
-+
-+/**
-+ * dfl_chardev_info - chardev information of dfl feature device
-+ * @name: nmae string of the char device.
-+ * @devt: devt of the char device.
-+ */
-+struct dfl_chardev_info {
-+	const char *name;
-+	dev_t devt;
-+};
-+
-+/* indexed by enum dfl_fpga_devt_type */
-+static struct dfl_chardev_info dfl_chrdevs[] = {
-+	{.name = DFL_FPGA_FEATURE_DEV_FME},
-+	{.name = DFL_FPGA_FEATURE_DEV_PORT},
- };
- 
- static void dfl_ids_init(void)
-@@ -105,6 +136,86 @@ static enum dfl_id_type dfh_id_to_type(u32 id)
- 	return DFL_ID_MAX;
+diff --git a/Documentation/ABI/testing/sysfs-class-fpga-region b/Documentation/ABI/testing/sysfs-class-fpga-region
+new file mode 100644
+index 0000000..bc7ec644
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-class-fpga-region
+@@ -0,0 +1,9 @@
++What:		/sys/class/fpga_region/<region>/compat_id
++Date:		June 2018
++KernelVersion:	4.19
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	FPGA region id for compatibility check, e.g. compatibility
++		of the FPGA reconfiguration hardware and image. This value
++		is defined or calculated by the layer that is creating the
++		FPGA region. This interface returns the compat_id value or
++		just error code -ENOENT in case compat_id is not used.
+diff --git a/drivers/fpga/fpga-region.c b/drivers/fpga/fpga-region.c
+index 6d214d7..0d65220 100644
+--- a/drivers/fpga/fpga-region.c
++++ b/drivers/fpga/fpga-region.c
+@@ -158,6 +158,27 @@ int fpga_region_program_fpga(struct fpga_region *region)
  }
+ EXPORT_SYMBOL_GPL(fpga_region_program_fpga);
  
-+static void dfl_chardev_uinit(void)
++static ssize_t compat_id_show(struct device *dev,
++			      struct device_attribute *attr, char *buf)
 +{
-+	int i;
++	struct fpga_region *region = to_fpga_region(dev);
 +
-+	for (i = 0; i < DFL_FPGA_DEVT_MAX; i++)
-+		if (MAJOR(dfl_chrdevs[i].devt)) {
-+			unregister_chrdev_region(dfl_chrdevs[i].devt,
-+						 MINORMASK);
-+			dfl_chrdevs[i].devt = MKDEV(0, 0);
-+		}
++	if (!region->compat_id)
++		return -ENOENT;
++
++	return sprintf(buf, "%016llx%016llx\n",
++		       (unsigned long long)region->compat_id->id_h,
++		       (unsigned long long)region->compat_id->id_l);
 +}
 +
-+static int dfl_chardev_init(void)
-+{
-+	int i, ret;
++static DEVICE_ATTR_RO(compat_id);
 +
-+	for (i = 0; i < DFL_FPGA_DEVT_MAX; i++) {
-+		ret = alloc_chrdev_region(&dfl_chrdevs[i].devt, 0, MINORMASK,
-+					  dfl_chrdevs[i].name);
-+		if (ret)
-+			goto exit;
-+	}
-+
-+	return 0;
-+
-+exit:
-+	dfl_chardev_uinit();
-+	return ret;
-+}
-+
-+static dev_t dfl_get_devt(enum dfl_fpga_devt_type type, int id)
-+{
-+	if (type >= DFL_FPGA_DEVT_MAX)
-+		return 0;
-+
-+	return MKDEV(MAJOR(dfl_chrdevs[type].devt), id);
-+}
-+
-+/**
-+ * dfl_fpga_dev_ops_register - register cdev ops for feature dev
-+ *
-+ * @pdev: feature dev.
-+ * @fops: file operations for feature dev's cdev.
-+ * @owner: owning module/driver.
-+ *
-+ * Return: 0 on success, negative error code otherwise.
-+ */
-+int dfl_fpga_dev_ops_register(struct platform_device *pdev,
-+			      const struct file_operations *fops,
-+			      struct module *owner)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+
-+	cdev_init(&pdata->cdev, fops);
-+	pdata->cdev.owner = owner;
-+
-+	/*
-+	 * set parent to the feature device so that its refcount is
-+	 * decreased after the last refcount of cdev is gone, that
-+	 * makes sure the feature device is valid during device
-+	 * file's life-cycle.
-+	 */
-+	pdata->cdev.kobj.parent = &pdev->dev.kobj;
-+
-+	return cdev_add(&pdata->cdev, pdev->dev.devt, 1);
-+}
-+EXPORT_SYMBOL_GPL(dfl_fpga_dev_ops_register);
-+
-+/**
-+ * dfl_fpga_dev_ops_unregister - unregister cdev ops for feature dev
-+ * @pdev: feature dev.
-+ */
-+void dfl_fpga_dev_ops_unregister(struct platform_device *pdev)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+
-+	cdev_del(&pdata->cdev);
-+}
-+EXPORT_SYMBOL_GPL(dfl_fpga_dev_ops_unregister);
++static struct attribute *fpga_region_attrs[] = {
++	&dev_attr_compat_id.attr,
++	NULL,
++};
++ATTRIBUTE_GROUPS(fpga_region);
 +
  /**
-  * struct build_feature_devs_info - info collected during feature dev build.
-  *
-@@ -266,6 +377,7 @@ static int build_info_commit_dev(struct build_feature_devs_info *binfo)
- 		return fdev->id;
+  * fpga_region_create - alloc and init a struct fpga_region
+  * @dev: device parent
+@@ -258,6 +279,7 @@ static int __init fpga_region_init(void)
+ 	if (IS_ERR(fpga_region_class))
+ 		return PTR_ERR(fpga_region_class);
  
- 	fdev->dev.parent = &binfo->cdev->region->dev;
-+	fdev->dev.devt = dfl_get_devt(dfl_devs[type].devt_type, fdev->id);
++	fpga_region_class->dev_groups = fpga_region_groups;
+ 	fpga_region_class->dev_release = fpga_region_dev_release;
  
  	return 0;
- }
-@@ -703,13 +815,20 @@ void dfl_fpga_feature_devs_remove(struct dfl_fpga_cdev *cdev)
- 
- static int __init dfl_fpga_init(void)
- {
-+	int ret;
-+
- 	dfl_ids_init();
- 
--	return 0;
-+	ret = dfl_chardev_init();
-+	if (ret)
-+		dfl_ids_destroy();
-+
-+	return ret;
- }
- 
- static void __exit dfl_fpga_exit(void)
- {
-+	dfl_chardev_uinit();
- 	dfl_ids_destroy();
- }
- 
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index 47ecb3b..66c2ade 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -15,6 +15,7 @@
- #define __FPGA_DFL_H
- 
- #include <linux/bitfield.h>
-+#include <linux/cdev.h>
- #include <linux/delay.h>
- #include <linux/fs.h>
- #include <linux/iopoll.h>
-@@ -150,6 +151,7 @@ struct dfl_feature {
-  *
-  * @node: node to link feature devs to container device's port_dev_list.
-  * @lock: mutex to protect platform data.
-+ * @cdev: cdev of feature dev.
-  * @dev: ptr to platform device linked with this platform data.
-  * @dfl_cdev: ptr to container device.
-  * @disable_count: count for port disable.
-@@ -159,6 +161,7 @@ struct dfl_feature {
- struct dfl_feature_platform_data {
- 	struct list_head node;
- 	struct mutex lock;
-+	struct cdev cdev;
- 	struct platform_device *dev;
- 	struct dfl_fpga_cdev *dfl_cdev;
- 	unsigned int disable_count;
-@@ -176,6 +179,11 @@ static inline int dfl_feature_platform_data_size(const int num)
- 		num * sizeof(struct dfl_feature);
- }
- 
-+int dfl_fpga_dev_ops_register(struct platform_device *pdev,
-+			      const struct file_operations *fops,
-+			      struct module *owner);
-+void dfl_fpga_dev_ops_unregister(struct platform_device *pdev);
-+
- #define dfl_fpga_dev_for_each_feature(pdata, feature)			    \
- 	for ((feature) = (pdata)->features;				    \
- 	   (feature) < (pdata)->features + (pdata)->num; (feature)++)
+diff --git a/include/linux/fpga/fpga-region.h b/include/linux/fpga/fpga-region.h
+index d7071cd..0521b7f 100644
+--- a/include/linux/fpga/fpga-region.h
++++ b/include/linux/fpga/fpga-region.h
+@@ -14,6 +14,7 @@
+  * @bridge_list: list of FPGA bridges specified in region
+  * @mgr: FPGA manager
+  * @info: FPGA image info
++ * @compat_id: FPGA region id for compatibility check.
+  * @priv: private data
+  * @get_bridges: optional function to get bridges to a list
+  */
+@@ -23,6 +24,7 @@ struct fpga_region {
+ 	struct list_head bridge_list;
+ 	struct fpga_manager *mgr;
+ 	struct fpga_image_info *info;
++	struct fpga_compat_id *compat_id;
+ 	void *priv;
+ 	int (*get_bridges)(struct fpga_region *region);
+ };
 -- 
 1.8.3.1
