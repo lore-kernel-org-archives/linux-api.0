@@ -1,103 +1,165 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.18 1/2] rseq: use __u64 for rseq_cs fields,
- validate abort_ip < TASK_SIZE
-Date: Mon, 2 Jul 2018 18:16:45 -0400 (EDT)
-Message-ID: <1051917568.10818.1530569805468.JavaMail.zimbra@efficios.com>
-References: <20180702204058.819-1-mathieu.desnoyers@efficios.com> <CA+55aFzH+4=Aeh_P1ptFn5nVm7yFuEGpxUJ0kNB-sUHVOv8rcw@mail.gmail.com> <1307337131.10790.1530565424717.JavaMail.zimbra@efficios.com> <CA+55aFwuBef8ajmeE-mw=6YHwYOQdnCMir7h2ebWxOzNrSQQFw@mail.gmail.com> <522686232.10814.1530569002544.JavaMail.zimbra@efficios.com> <CA+55aFz5cq5uP7VFwAmo3BimHyMdu_FQnbxZG3i66_qZXCkjNg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Subject: [RFC PATCH for 4.18] rseq: use __u64 for rseq_cs fields, validate user inputs
+Date: Mon,  2 Jul 2018 18:31:43 -0400
+Message-ID: <20180702223143.4663-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFz5cq5uP7VFwAmo3BimHyMdu_FQnbxZG3i66_qZXCkjNg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.ma>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 2, 2018, at 6:08 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
+Change the rseq ABI so rseq_cs start_ip, post_commit_offset and abort_ip
+fields are seen as 64-bit fields by both 32-bit and 64-bit kernels rather
+that ignoring the 32 upper bits on 32-bit kernels. This ensures we have a
+consistent behavior for a 32-bit binary executed on 32-bit kernels and in
+compat mode on 64-bit kernels.
 
-> On Mon, Jul 2, 2018 at 3:03 PM Mathieu Desnoyers
-> <mathieu.desnoyers@efficios.com> wrote:
->>
->>         if (__get_user(ptr, &t->rseq->rseq_cs))
->>                 return -EINVAL;
->>         if (check_rseq_cs_padding(t))
->>                 return -EINVAL;
-> 
-> Small nit.
-> 
-> I think the _actual_ user access faults should return -EFAULT, and
-> then the *validation* checks should return -EINVAL.
-> 
-> So when the "copy_from_user()" fails, that's -EFAULT, but when you
-> have (rseq_cs->start_ip >= TASK_SIZE), that's -EINVAL.
+Validating the value of abort_ip field to be below TASK_SIZE ensures the
+kernel don't return to an invalid address when returning to userspace
+after an abort. I don't fully trust each architecture code to consistently
+deal with invalid return addresses.
 
-Fair enough.
+Validating the value of the start_ip and post_commit_offset fields
+prevents overflow on arithmetic performed on those values, used to
+check whether abort_ip is within the rseq critical section.
 
-> 
-> That said, nothing actually cares or exposes the error number, I
-> think. Afaik, all the callers just check "did it work" or not.
+On 32-bit kernels, the rseq->rseq_cs_padding field is never read by the
+kernel. However, 64-bit kernels dealing with 32-bit compat tasks read the
+full 64-bit in its entirety, and terminates the offending process with
+a segmentation fault if the upper 32 bits are set due to failure of
+copy_from_user().
 
-Indeed, it's a static function and callers just check for zero/nonzero.
+Ensure that both 32-bit and 64-bit kernels dealing with 32-bit tasks end
+up terminating offending tasks with a segmentation fault if the upper
+32-bit padding bits (rseq->rseq_cs_padding) are set by explicitly ensuring
+that padding is zero on 32-bit kernels.
 
-> 
-> So this is more a "let's be consistent" than anything that matters.
+If validation fails, the process is killed with a segmentation fault.
 
-Allright, here is the function updated accordingly:
+When the signature encountered before abort_ip does not match the expected
+signature, return -EINVAL rather than -EPERM to be consistent with other
+input validation return codes from rseq_get_rseq_cs().
 
-static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
-{
-        struct rseq_cs __user *urseq_cs;
-        unsigned long ptr;
-        u32 __user *usig;
-        u32 sig;
-        int ret;
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ include/uapi/linux/rseq.h |  6 +++---
+ kernel/rseq.c             | 39 +++++++++++++++++++++++++++++++++++----
+ 2 files changed, 38 insertions(+), 7 deletions(-)
 
-        ret = __get_user(ptr, &t->rseq->rseq_cs);
-        if (ret)
-                return ret;
-        if (check_rseq_cs_padding(t))
-                return -EINVAL;
-        if (!ptr) {
-                memset(rseq_cs, 0, sizeof(*rseq_cs));
-                return 0;
-        }
-        urseq_cs = (struct rseq_cs __user *)ptr;
-        if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
-                return -EFAULT;
-
-        if (rseq_cs->start_ip >= TASK_SIZE ||
-            rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE ||
-            rseq_cs->abort_ip >= TASK_SIZE ||
-            rseq_cs->version > 0)
-                return -EINVAL;
-        /* Check for overflow. */
-        if (rseq_cs->start_ip + rseq_cs->post_commit_offset < rseq_cs->start_ip)
-                return -EINVAL;
-        /* Ensure that abort_ip is not in the critical section. */
-        if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
-                return -EINVAL;
-
-        usig = (u32 __user *)(unsigned long)(rseq_cs->abort_ip - sizeof(u32));
-        ret = get_user(sig, usig);
-        if (ret)
-                return ret;
-
-        if (current->rseq_sig != sig) {
-                printk_ratelimited(KERN_WARNING
-                        "Possible attack attempt. Unexpected rseq signature 0x%x, expecting 0x%x (pid=%d, addr=%p).\n",
-                        sig, current->rseq_sig, current->pid, usig);
-                return -EINVAL;
-        }
-        return 0;
-}
-
-Thanks for the feedback!
-
-Mathieu
-
-
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index d620fa43756c..519ad6e176d1 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -52,10 +52,10 @@ struct rseq_cs {
+ 	__u32 version;
+ 	/* enum rseq_cs_flags */
+ 	__u32 flags;
+-	LINUX_FIELD_u32_u64(start_ip);
++	__u64 start_ip;
+ 	/* Offset from start_ip. */
+-	LINUX_FIELD_u32_u64(post_commit_offset);
+-	LINUX_FIELD_u32_u64(abort_ip);
++	__u64 post_commit_offset;
++	__u64 abort_ip;
+ } __attribute__((aligned(4 * sizeof(__u64))));
+ 
+ /*
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 22b6acf1ad63..1d1dd6aa43f8 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -112,6 +112,29 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
+ 	return 0;
+ }
+ 
++#ifndef __LP64__
++/*
++ * Check that padding is zero.
++ */
++static int check_rseq_cs_padding(struct task_struct *t)
++{
++	u32 pad;
++	int ret;
++
++	ret = __get_user(pad, &t->rseq->rseq_cs_padding);
++	if (ret)
++		return ret;
++	if (pad)
++		return -EINVAL;
++	return 0;
++}
++#else
++static int check_rseq_cs_padding(struct task_struct *t)
++{
++	return 0;
++}
++#endif
++
+ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ {
+ 	struct rseq_cs __user *urseq_cs;
+@@ -123,6 +146,8 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 	ret = __get_user(ptr, &t->rseq->rseq_cs);
+ 	if (ret)
+ 		return ret;
++	if (check_rseq_cs_padding(t))
++		return -EINVAL;
+ 	if (!ptr) {
+ 		memset(rseq_cs, 0, sizeof(*rseq_cs));
+ 		return 0;
+@@ -130,14 +155,20 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 	urseq_cs = (struct rseq_cs __user *)ptr;
+ 	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
+ 		return -EFAULT;
+-	if (rseq_cs->version > 0)
+-		return -EINVAL;
+ 
++	if (rseq_cs->start_ip >= TASK_SIZE ||
++	    rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE ||
++	    rseq_cs->abort_ip >= TASK_SIZE ||
++	    rseq_cs->version > 0)
++		return -EINVAL;
++	/* Check for overflow. */
++	if (rseq_cs->start_ip + rseq_cs->post_commit_offset < rseq_cs->start_ip)
++		return -EINVAL;
+ 	/* Ensure that abort_ip is not in the critical section. */
+ 	if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
+ 		return -EINVAL;
+ 
+-	usig = (u32 __user *)(rseq_cs->abort_ip - sizeof(u32));
++	usig = (u32 __user *)(unsigned long)(rseq_cs->abort_ip - sizeof(u32));
+ 	ret = get_user(sig, usig);
+ 	if (ret)
+ 		return ret;
+@@ -146,7 +177,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 		printk_ratelimited(KERN_WARNING
+ 			"Possible attack attempt. Unexpected rseq signature 0x%x, expecting 0x%x (pid=%d, addr=%p).\n",
+ 			sig, current->rseq_sig, current->pid, usig);
+-		return -EPERM;
++		return -EINVAL;
+ 	}
+ 	return 0;
+ }
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+2.11.0
