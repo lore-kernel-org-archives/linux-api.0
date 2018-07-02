@@ -1,110 +1,109 @@
-From: Thomas Lindroth <thomas.lindroth@gmail.com>
-Subject: [REGRESSION] "Locked" and "Pss" in /proc/*/smaps are the same
-Date: Sun, 1 Jul 2018 20:31:30 +0200
-Message-ID: <69eb77f7-c8cc-fdee-b44f-ad7e522b8467@gmail.com>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH] Add renameat2 function [BZ #17662]
+Date: Mon, 2 Jul 2018 11:46:22 +0300
+Message-ID: <20180702084622.GA15274@yury-thinkpad>
+References: <20180630121447.E4C8643994575@oldenburg.str.redhat.com>
+ <20180701214901.GA32498@yury-thinkpad>
+ <60505ccf-a399-6320-74f5-e2e17965d25c@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: dancol@google.com
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-93898-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+In-Reply-To: <60505ccf-a399-6320-74f5-e2e17965d25c@redhat.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: libc-alpha@sourceware.org, Alexander Viro <viro@zeniv.linux.org.uk>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-While looking around in /proc on my v4.14.52 system I noticed that
-all processes got a lot of "Locked" memory in /proc/*/smaps. A lot
-more memory than a regular user can usually lock with mlock().
++ Alexander Viro <viro@zeniv.linux.org.uk>, kernel maillists. 
 
-commit 493b0e9d945fa9dfe96be93ae41b4ca4b6fdb317 (v4.14-rc1) seems
-to have changed the behavior of "Locked".
+On Mon, Jul 02, 2018 at 08:48:36AM +0200, Florian Weimer wrote:
+> On 07/01/2018 11:49 PM, Yury Norov wrote:
+> 
+> > > +#ifdef __USE_GNU
+> > > +/* Flags for renameat.  */
+> > 
+> > Flags for renameat2, right?
+> 
+> Thanks, fixed.
+> 
+> > > +# define RENAME_NOREPLACE (1 << 0)
+> > > +# define RENAME_EXCHANGE (1 << 1)
+> > > +# define RENAME_WHITEOUT (1 << 2)
+> > 
+> > I really don't understand how it works. Could you / somebody explain me?
+> > 
+> > include/uapi/linux/fs.h in kernel sources already defines this flags,
+> > and this file is usually available in Linux distribution. So I don't
+> > understand what for it is duplicated here. If you keep in mind
+> > old linux headers or non-linux systems, I think it should be protected
+> > with #ifndef guards.
+> 
+> <linux/fs.h> undefines and defines macros not mentioned in the standards
+> (and it even contains a few unrelated structs), so we cannot include it
+> without _GNU_SOURCE.
+> 
+> It might be possible to include it only for _GNU_SOURCE, but there are a
+> lot of things in <linux/fs.h>, so that does not seem to be particularly
+> advisable.
+> 
+> We still support building glibc with 3.2 kernel headers, and if the
+> definitions you quoted above are not available, building the test case
+> would fail.
 
-commit 493b0e9d945fa9dfe96be93ae41b4ca4b6fdb317
-Author: Daniel Colascione <dancol@google.com>
-Date:   Wed Sep 6 16:25:08 2017 -0700
+Is my understanding correct that glibc community finds <linux/fs.h>
+inappropriate for their use, and prefer to re-introduce (duplicate)
+its functionality locally? I think it's wrong. The right way to go
+is to make kernel headers comfortable for users instead of ignoring
+it.
 
-    mm: add /proc/pid/smaps_rollup
+Are you OK to switch to kernel RENAME_* definitions if they will be
+located in separated small file? Like in the patch below.
 
-Before that commit the code was like this. Notice the VM_LOCKED
-check.
+Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
+---
+ include/uapi/linux/fs.h     |  4 +---
+ include/uapi/linux/rename.h | 12 ++++++++++++
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+ create mode 100644 include/uapi/linux/rename.h
 
-seq_printf(m,
-           "Size:           %8lu kB\n"
-           "Rss:            %8lu kB\n"
-           "Pss:            %8lu kB\n"
-           "Shared_Clean:   %8lu kB\n"
-           "Shared_Dirty:   %8lu kB\n"
-           "Private_Clean:  %8lu kB\n"
-           "Private_Dirty:  %8lu kB\n"
-           "Referenced:     %8lu kB\n"
-           "Anonymous:      %8lu kB\n"
-           "LazyFree:       %8lu kB\n"
-           "AnonHugePages:  %8lu kB\n"
-           "ShmemPmdMapped: %8lu kB\n"
-           "Shared_Hugetlb: %8lu kB\n"
-           "Private_Hugetlb: %7lu kB\n"
-           "Swap:           %8lu kB\n"
-           "SwapPss:        %8lu kB\n"
-           "KernelPageSize: %8lu kB\n"
-           "MMUPageSize:    %8lu kB\n"
-           "Locked:         %8lu kB\n",
-           (vma->vm_end - vma->vm_start) >> 10,
-           mss.resident >> 10,
-           (unsigned long)(mss.pss >> (10 + PSS_SHIFT)),
-           mss.shared_clean  >> 10,
-           mss.shared_dirty  >> 10,
-           mss.private_clean >> 10,
-           mss.private_dirty >> 10,
-           mss.referenced >> 10,
-           mss.anonymous >> 10,
-           mss.lazyfree >> 10,
-           mss.anonymous_thp >> 10,
-           mss.shmem_thp >> 10,
-           mss.shared_hugetlb >> 10,
-           mss.private_hugetlb >> 10,
-           mss.swap >> 10,
-           (unsigned long)(mss.swap_pss >> (10 + PSS_SHIFT)),
-           vma_kernel_pagesize(vma) >> 10,
-           vma_mmu_pagesize(vma) >> 10,
-           (vma->vm_flags & VM_LOCKED) ?
-                (unsigned long)(mss.pss >> (10 + PSS_SHIFT)) : 0);
-
-After that commit Locked is now the same as Pss. This looks like a
-mistake.
-
-seq_printf(m,
-           "Rss:            %8lu kB\n"
-           "Pss:            %8lu kB\n"
-           "Shared_Clean:   %8lu kB\n"
-           "Shared_Dirty:   %8lu kB\n"
-           "Private_Clean:  %8lu kB\n"
-           "Private_Dirty:  %8lu kB\n"
-           "Referenced:     %8lu kB\n"
-           "Anonymous:      %8lu kB\n"
-           "LazyFree:       %8lu kB\n"
-           "AnonHugePages:  %8lu kB\n"
-           "ShmemPmdMapped: %8lu kB\n"
-           "Shared_Hugetlb: %8lu kB\n"
-           "Private_Hugetlb: %7lu kB\n"
-           "Swap:           %8lu kB\n"
-           "SwapPss:        %8lu kB\n"
-           "Locked:         %8lu kB\n",
-           mss->resident >> 10,
-           (unsigned long)(mss->pss >> (10 + PSS_SHIFT)),
-           mss->shared_clean  >> 10,
-           mss->shared_dirty  >> 10,
-           mss->private_clean >> 10,
-           mss->private_dirty >> 10,
-           mss->referenced >> 10,
-           mss->anonymous >> 10,
-           mss->lazyfree >> 10,
-           mss->anonymous_thp >> 10,
-           mss->shmem_thp >> 10,
-           mss->shared_hugetlb >> 10,
-           mss->private_hugetlb >> 10,
-           mss->swap >> 10,
-           (unsigned long)(mss->swap_pss >> (10 + PSS_SHIFT)),
-           (unsigned long)(mss->pss >> (10 + PSS_SHIFT)));
-
-The latest git has changed a bit but the functionality is the
-same.
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index c27576d471c2..46c03ea31a76 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -44,9 +44,7 @@
+ #define SEEK_HOLE	4	/* seek to the next hole */
+ #define SEEK_MAX	SEEK_HOLE
+ 
+-#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
+-#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
+-#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
++#include <linux/rename.h>
+ 
+ struct file_clone_range {
+ 	__s64 src_fd;
+diff --git a/include/uapi/linux/rename.h b/include/uapi/linux/rename.h
+new file mode 100644
+index 000000000000..7178f0565657
+--- /dev/null
++++ b/include/uapi/linux/rename.h
+@@ -0,0 +1,12 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef _UAPI_LINUX_RENAME_H
++#define _UAPI_LINUX_RENAME_H
++
++/*
++ * Definitions for rename syscall family.
++ */
++#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
++#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
++#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
++
++#endif /* _UAPI_LINUX_RENAME_H */
+-- 
+2.17.1
