@@ -1,50 +1,116 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.18] rseq: use __u64 for rseq_cs fields,
- validate user inputs
-Date: Mon, 2 Jul 2018 19:25:53 -0400 (EDT)
-Message-ID: <321013411.10852.1530573953298.JavaMail.zimbra@efficios.com>
-References: <20180702223143.4663-1-mathieu.desnoyers@efficios.com> <CA+55aFxrX+wRoe+5HDaTrRXg1K-Qpks4jJ9Buc_OevoG8hoGFw@mail.gmail.com> <415287289.10831.1530572418907.JavaMail.zimbra@efficios.com> <CA+55aFzZYOatOtjrm7fD7878_SzCAmEoEu74n0+pgd7faH-sTQ@mail.gmail.com> <825871008.10839.1530573419561.JavaMail.zimbra@efficios.com> <CA+55aFyQwfXxMnx2WQadfZKAnEfkoT+zomrRRToZz8-uWzUccQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH for 4.18] rseq: use __u64 for rseq_cs fields, validate user inputs
+Date: Mon, 2 Jul 2018 16:37:55 -0700
+Message-ID: <8B2E4CEB-3080-4602-8B62-774E400892EB@amacapital.net>
+References: <20180702223143.4663-1-mathieu.desnoyers@efficios.com> <CA+55aFxrX+wRoe+5HDaTrRXg1K-Qpks4jJ9Buc_OevoG8hoGFw@mail.gmail.com> <415287289.10831.1530572418907.JavaMail.zimbra@efficios.com> <CA+55aFzZYOatOtjrm7fD7878_SzCAmEoEu74n0+pgd7faH-sTQ@mail.gmail.com> <825871008.10839.1530573419561.JavaMail.zimbra@efficios.com> <1959930320.10843.1530573742647.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CA+55aFyQwfXxMnx2WQadfZKAnEfkoT+zomrRRToZz8-uWzUccQ@mail.gmail.com>
+In-Reply-To: <1959930320.10843.1530573742647.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.ma>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 2, 2018, at 7:22 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
 
-> On Mon, Jul 2, 2018 at 4:17 PM Mathieu Desnoyers
-> <mathieu.desnoyers@efficios.com> wrote:
->>
->> Are there any kind of guarantees that a __u64 update on a 32-bit architecture
->> won't be torn into something daft like byte-per-byte stores when performed
+
+> On Jul 2, 2018, at 4:22 PM, Mathieu Desnoyers <mathieu.desnoyers@efficios.=
+com> wrote:
+>=20
+> ----- On Jul 2, 2018, at 7:16 PM, Mathieu Desnoyers mathieu.desnoyers@effi=
+cios.com wrote:
+>=20
+>> ----- On Jul 2, 2018, at 7:06 PM, Linus Torvalds torvalds@linux-foundatio=
+n.org
+>> wrote:
+>>=20
+>>> On Mon, Jul 2, 2018 at 4:00 PM Mathieu Desnoyers
+>>> <mathieu.desnoyers@efficios.com> wrote:
+>>>>=20
+>>>> Unfortunately, that rseq->rseq_cs field needs to be updated by user-spa=
+ce
+>>>> with single-copy atomicity. Therefore, we want 32-bit user-space to ini=
+tialize
+>>>> the padding with 0, and only update the low bits with single-copy atomi=
+city.
+>>>=20
+>>> Well... It's actually still single-copy atomicity as a 64-bit value.
+>>>=20
+>>> Why? Because it doesn't matter how you write the upper bits. You'll be
+>>> writing the same value to them (zero) anyway.
+>>>=20
+>>> So who cares if the write ends up being two instructions, because the
+>>> write to the upper bits doesn't actually *do* anything.
+>>>=20
+>>> Hmm?
+>>=20
+>> Are there any kind of guarantees that a __u64 update on a 32-bit architec=
+ture
+>> won't be torn into something daft like byte-per-byte stores when performe=
+d
 >> from C code ?
-> 
-> Guarantees? No. Not that there are any guarantees that the same won't
-> happen for a plain 32-bit value either.
-> 
-> Will compilers generate that kind of code? I guess some crazy compiler
-> could simply be really bad at handling 64-bit values, and just happen
-> to handle 32-bit values better. So in that sense a 64-bit entity is
-> certainly a bit riskier. But that would be a really bad compiler, I
-> have to say.
+>>=20
+>> I don't worry whether the upper bits get updated or how, but I really car=
+e
+>> about not having store tearing of the low bits update.
+>=20
+> For the records, most updates of those low bits are done in assembly
+> from critical sections, for which we control exactly how the update is
+> performed.
+>=20
+> However, there is one helper function in user-space that updates that valu=
+e
+> from C through a volatile store, e.g.:
+>=20
+> static inline void rseq_prepare_unload(void)
+> {
+>        __rseq_abi.rseq_cs =3D 0;
+> }
 
-Given that the only C code updating that field is rseq_prepare_unload()
-(the rest is only ever updated from assembly), we could perhaps mandate
-that user-space always update it from assembly, and therefore implement
-rseq_prepare_unload as an inline asm which clears rseq->rseq_cs.
+How about making the field be:
 
-Does it sound better than the LINUX_FIELD_u32_u64 macro ?
+union {
+ __u64 rseq_cs;
+ struct {
+   __u32 rseq_cs_low;
+   __u32 rseq_cs_high;
+ };
+};
 
-Thanks,
+32-bit user code that cares about performance can just write to rseq_cs_low b=
+ecause it already knows that rseq_cs_high =3D=3D 0.
 
-Mathieu
+The header could even supply a static inline helper write_rseq_cs() that ato=
+mically writes a pointer and just does the right thing for 64-bit, for 32-bi=
+t BE, and for 32-bit LE.
 
+I think the union really is needed because we can=E2=80=99t rely on user cod=
+e being built with -fno-strict-aliasing.  Or the helper could use inline asm=
+.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Anyway, the point is that we get optimal code generation (a single instructi=
+on write of the correct number of bits) without any compat magic in the kern=
+el.
+
+>=20
+> Thanks,
+>=20
+> Mathieu
+>=20
+>>=20
+>> Thanks,
+>>=20
+>> Mathieu
+>>=20
+>>=20
+>> --
+>> Mathieu Desnoyers
+>> EfficiOS Inc.
+>> http://www.efficios.com
+>=20
+> --=20
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
