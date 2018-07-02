@@ -1,70 +1,93 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH for 4.18 1/2] rseq: validate rseq_cs fields are < TASK_SIZE
-Date: Mon, 2 Jul 2018 13:22:49 -0700
-Message-ID: <CA+55aFwvsNY7eLm3OevWQvijPN_HQA4KgfZ5k-RTVPjD8MKppg@mail.gmail.com>
-References: <20180628162359.9054-1-mathieu.desnoyers@efficios.com>
- <CA+55aFwJWxsE_LL=-8WgB7uH_mYeMSu=boWF4N5KdOW673g4hA@mail.gmail.com>
- <247789350.9741.1530288432573.JavaMail.zimbra@efficios.com>
- <CA+55aFz8KyVqFsVnp-6g+thz7vmm5nK_FSdRTPSks7gsNVNRdQ@mail.gmail.com>
- <184287091.10022.1530301738384.JavaMail.zimbra@efficios.com>
- <CALCETrXqjrCoHX1KyL0iKGBaAZSGJb1cVdNN1gNigJ8DW9LF8w@mail.gmail.com>
- <1527399163.10673.1530541966296.JavaMail.zimbra@efficios.com>
- <CALCETrVeu_V-3K8OfKv9QixrWBJs+q866yb=e96sC76SS4hxYg@mail.gmail.com>
- <84003252.10754.1530558015813.JavaMail.zimbra@efficios.com>
- <CALCETrVMhU8SrZBXOXxJerrZpQ71A_f_cRBCU=Lmj_KPV0+rRA@mail.gmail.com>
- <CA+55aFy2rxnLhbqGtz0wxW_u=x_A1zHZBNP8ZC5P12_AHyb3PA@mail.gmail.com> <CALCETrWps4Bvd_hGviEZ+60nQFr5ovp2A0+afDWg-QOHB9x7cA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 1/2] rseq: use __u64 for rseq_cs fields, validate abort_ip < TASK_SIZE
+Date: Mon,  2 Jul 2018 16:40:57 -0400
+Message-ID: <20180702204058.819-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWps4Bvd_hGviEZ+60nQFr5ovp2A0+afDWg-QOHB9x7cA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Lutomirski <luto@kernel.org>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, Peter Anvin <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Christoph Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@ar>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 2, 2018 at 1:13 PM Andy Lutomirski <luto@kernel.org> wrote:
->
-> Like this:
->
-> diff --git a/arch/x86/entry/common.c b/arch/x86/entry/common.c
-> index 3b2490b81918..ec40223c8856 100644
-> --- a/arch/x86/entry/common.c
-> +++ b/arch/x86/entry/common.c
-> @@ -170,6 +170,26 @@ static void exit_to_usermode_loop(struct pt_regs
-> *regs, u32 cached_flags)
->          if (cached_flags & _TIF_USER_RETURN_NOTIFY)
->              fire_user_return_notifiers();
->
-> +        if (unlikely(!user_64bit_mode(regs) &&
-> +                 (regs->ip & 0xffffffff00000000ull))) {
+Change the rseq ABI so rseq_cs start_ip, post_commit_offset and abort_ip
+fields are seen as 64-bit fields by both 32-bit and 64-bit kernels rather
+that ignoring the 32 upper bits on 32-bit kernels. This ensures we have a
+consistent behavior for a 32-bit binary executed on 32-bit kernels and in
+compat mode on 64-bit kernels.
 
-I'd be afraid that code generation is atrocious. So more something like this:
+Validating the value of abort_ip field to be below TASK_SIZE ensures the
+kernel don't return to an invalid address when returning to userspace
+after an abort. I don't fully trust each architecture code to consistently
+deal with invalid return addresses.
 
-    static noinline send_sigsegv(..) { }
+If validation fails, the process is killed with a segmentation fault.
 
-    ...
-    if (unlikely(!user_64bit_mode(regs)) {
-        if (unlikely(*(1+(u32 *)&regs->ip)))
-            send_sigsegv(tsk);
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ include/uapi/linux/rseq.h | 6 +++---
+ kernel/rseq.c             | 5 +++--
+ 2 files changed, 6 insertions(+), 5 deletions(-)
 
-to make sure it doesn't do crazy big constants in the normal path, and
-doesn't allocate silly stack frames.
-
-But as mentioned, I'm not entirely convinced this is worth it. But I
-wasn't sure it's worth it for rseq.
-
-So basically, *if* we do these kinds of checks, I'd personally rather
-do a *generic* "we don't return to garbage 64-bit values in compat
-mode" than have special case code that is only for rseq and is truly
-irrelevant to all normal cases.
-
-The generic case might even be worth a test-case. And if we do that,
-we should probably check that we don't do something odd like
-sign-extending the %rip value we load from stack for signal return
-etc, that just happens to work because nobody cared about the upper
-bits.
-
-So there's a lot of these kinds of small details that are of
-questionable importance, but might in theory be worth it.
-
-                  Linus
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index d620fa43756c..519ad6e176d1 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -52,10 +52,10 @@ struct rseq_cs {
+ 	__u32 version;
+ 	/* enum rseq_cs_flags */
+ 	__u32 flags;
+-	LINUX_FIELD_u32_u64(start_ip);
++	__u64 start_ip;
+ 	/* Offset from start_ip. */
+-	LINUX_FIELD_u32_u64(post_commit_offset);
+-	LINUX_FIELD_u32_u64(abort_ip);
++	__u64 post_commit_offset;
++	__u64 abort_ip;
+ } __attribute__((aligned(4 * sizeof(__u64))));
+ 
+ /*
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 22b6acf1ad63..2e5d88f09baf 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -128,7 +128,8 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 		return 0;
+ 	}
+ 	urseq_cs = (struct rseq_cs __user *)ptr;
+-	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
++	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)) ||
++	    rseq_cs->abort_ip >= TASK_SIZE)
+ 		return -EFAULT;
+ 	if (rseq_cs->version > 0)
+ 		return -EINVAL;
+@@ -137,7 +138,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 	if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
+ 		return -EINVAL;
+ 
+-	usig = (u32 __user *)(rseq_cs->abort_ip - sizeof(u32));
++	usig = (u32 __user *)(unsigned long)(rseq_cs->abort_ip - sizeof(u32));
+ 	ret = get_user(sig, usig);
+ 	if (ret)
+ 		return ret;
+-- 
+2.11.0
