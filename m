@@ -1,48 +1,43 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.18 1/2] rseq: validate rseq_cs fields are <
- TASK_SIZE
-Date: Mon, 2 Jul 2018 12:04:20 -0400 (EDT)
-Message-ID: <4741715.10696.1530547460698.JavaMail.zimbra@efficios.com>
-References: <20180628162359.9054-1-mathieu.desnoyers@efficios.com> <CA+55aFw==YnFJn7iGnKMW=RbPT74YHNa0QDF96mEdMPA2oX9SA@mail.gmail.com> <CA+55aFwJWxsE_LL=-8WgB7uH_mYeMSu=boWF4N5KdOW673g4hA@mail.gmail.com> <247789350.9741.1530288432573.JavaMail.zimbra@efficios.com> <CA+55aFz8KyVqFsVnp-6g+thz7vmm5nK_FSdRTPSks7gsNVNRdQ@mail.gmail.com> <184287091.10022.1530301738384.JavaMail.zimbra@efficios.com> <CALCETrXqjrCoHX1KyL0iKGBaAZSGJb1cVdNN1gNigJ8DW9LF8w@mail.gmail.com> <1527399163.10673.1530541966296.JavaMail.zimbra@efficios.com>
+From: Roman Gushchin <guro@fb.com>
+Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
+ nr_indirectly_reclaimable_bytes
+Date: Mon, 2 Jul 2018 09:52:27 -0700
+Message-ID: <20180702165223.GA17295@castle.DHCP.thefacebook.com>
+References: <20180618091808.4419-6-vbabka@suse.cz>
+ <201806201923.mC5ZpigB%fengguang.wu@intel.com>
+ <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
+ <20180629211201.GA14897@castle.DHCP.thefacebook.com>
+ <ef2dea13-0102-c4bc-a28f-c1b2408f0753@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1527399163.10673.1530541966296.JavaMail.zimbra@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <ef2dea13-0102-c4bc-a28f-c1b2408f0753@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>Will Deacon <w>
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jul 2, 2018, at 10:32 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
-[...]
+On Sat, Jun 30, 2018 at 12:09:27PM +0200, Vlastimil Babka wrote:
+> On 06/29/2018 11:12 PM, Roman Gushchin wrote:
+> >>
+> >> The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
+> >> eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
+> >> accounting objects that can be reclaimed, but cannot be allocated via a
+> >> SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
+> >> __GFP_RECLAIMABLE flag, and the dcache external names user is converted.
+> >>
+> >> The counter is however still useful for accounting direct page allocations
+> >> (i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
+> > 
+> > Btw, it looks like I've another example of usefulness of this counter:
+> > dynamic per-cpu data.
 > 
-> But rather than trying to play games with input validation, I would
-> favor an approach that would allow rseq to validate all its inputs
-> straightforwardly. Introducing user_64bit_mode(struct pt_regs *)
-> across all architectures would allow doing just that. rseq signal
-> delivery and return to usermode code could then ensure that high bits are
-> cleared by 32-bit tasks for all fields and thus provide a consistent
-> behavior for 32-bit tasks running on 32-bit and 64-bit kernels.
+> Hmm, but are those reclaimable? Most likely not in general? Do you have
+> examples that are?
 
-AFAIU this could be achieved by re-introducing is_compat_task() on x86 as:
+If these per-cpu data is something like per-cpu refcounters,
+which are using to manage reclaimable objects (e.g. cgroup css objects).
+Of course, they are not always reclaimable, but in certain states.
 
-#ifdef CONFIG_COMPAT
-static bool is_compat_task(void)
-{
-        return user_64bit_mode(current_pt_regs()));
-}
-#else
-static bool is_compat_task(void) { return false; };
-#endif
-
-Or am I missing something ?
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Thanks!
