@@ -1,8 +1,8 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [RFC PATCH for 4.18] rseq: use __u64 for rseq_cs fields, validate
  user inputs
-Date: Mon, 2 Jul 2018 19:33:46 -0700
-Message-ID: <CALCETrU0M1keBqeDyOsAEmgjY3p=JjD_rnt1Afnsdx2w3RE3hQ@mail.gmail.com>
+Date: Mon, 2 Jul 2018 19:44:23 -0700
+Message-ID: <CA+55aFytFfjRSdWapQ0F6RjuFgy9oSHjMtFpDPwAh4G9QRfUNw@mail.gmail.com>
 References: <20180702223143.4663-1-mathieu.desnoyers@efficios.com>
  <CA+55aFzZYOatOtjrm7fD7878_SzCAmEoEu74n0+pgd7faH-sTQ@mail.gmail.com>
  <825871008.10839.1530573419561.JavaMail.zimbra@efficios.com>
@@ -16,35 +16,26 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1776351430.10902.1530585009519.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael
+Cc: Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, Peter Anvin <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Christoph Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 2, 2018 at 7:30 PM, Mathieu Desnoyers
+On Mon, Jul 2, 2018 at 7:30 PM Mathieu Desnoyers
 <mathieu.desnoyers@efficios.com> wrote:
-> ----- On Jul 2, 2018, at 10:18 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
 >
->> On Mon, Jul 2, 2018 at 7:01 PM Mathieu Desnoyers
->> <mathieu.desnoyers@efficios.com> wrote:
->>>
->>> One thing to consider is how we will implement the load of that pointer
->>> on the kernel side.
->>
->> Use "get_user()". It works for 64-bit objects too, and it will be
->> atomic in the 32-bit sub-parts on a 32-bit architecture.
 >
 > Is it really ? Last time we had this discussion, not all architectures
 > guaranteed that reading a 64-bit integer would happen in two atomic
-> 32-bit sub-parts. This was the main motivation for the LINUX_FIELD_u32_u64()
-> macro as it stands today (rather than using a union).
->
+> 32-bit sub-parts.
 
-If you're nervous, you could do this by open-coding:
+All architectures that matter do.
 
-#if BITS_PER_LONG == 64
-get_user(...)
-#else
-get_user(...);
-get_user(...);
-#endif
+Please don't overdesign this, or try to make a problem out of
+something that isn't a problem.
 
-No need to make the header more complicated just for this.
+Sure, maybe some toy architecture does a 8-byte "get_user()" as a
+"copy_from_user()" one byte at a time, because that's the best way to
+do unaligned accesses.
+
+But nobody will ever care about rseq on such a thing anyway. Let it go.
+
+               Linus
