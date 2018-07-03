@@ -1,41 +1,57 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH for 4.18] rseq: use __u64 for rseq_cs fields, validate
- user inputs
-Date: Mon, 2 Jul 2018 19:44:23 -0700
-Message-ID: <CA+55aFytFfjRSdWapQ0F6RjuFgy9oSHjMtFpDPwAh4G9QRfUNw@mail.gmail.com>
-References: <20180702223143.4663-1-mathieu.desnoyers@efficios.com>
- <CA+55aFzZYOatOtjrm7fD7878_SzCAmEoEu74n0+pgd7faH-sTQ@mail.gmail.com>
- <825871008.10839.1530573419561.JavaMail.zimbra@efficios.com>
- <1959930320.10843.1530573742647.JavaMail.zimbra@efficios.com>
- <8B2E4CEB-3080-4602-8B62-774E400892EB@amacapital.net> <459661281.10865.1530580742205.JavaMail.zimbra@efficios.com>
- <858886246.10882.1530583291379.JavaMail.zimbra@efficios.com>
- <CA+55aFxWMjwx-4TGBHt0H6bh6FXC3NKMsjp=eKGw5cgA4wMBUA@mail.gmail.com> <1776351430.10902.1530585009519.JavaMail.zimbra@efficios.com>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: [PATCH 0/6] Introduce struct __kernel_timex
+Date: Mon,  2 Jul 2018 22:44:16 -0700
+Message-ID: <20180703054422.12089-1-deepa.kernel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1776351430.10902.1530585009519.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, Peter Anvin <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Christoph Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: tglx@linutronix.de, linux-kernel@vger.kernel.org
+Cc: linux-arch@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, catalin.marinas@arm.com, linux-alpha@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 2, 2018 at 7:30 PM Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
->
->
-> Is it really ? Last time we had this discussion, not all architectures
-> guaranteed that reading a 64-bit integer would happen in two atomic
-> 32-bit sub-parts.
-
-All architectures that matter do.
-
-Please don't overdesign this, or try to make a problem out of
-something that isn't a problem.
-
-Sure, maybe some toy architecture does a 8-byte "get_user()" as a
-"copy_from_user()" one byte at a time, because that's the best way to
-do unaligned accesses.
-
-But nobody will ever care about rseq on such a thing anyway. Let it go.
-
-               Linus
+VGhlIHNlcmllcyBpbnRyb2R1Y2VzIHN0cnVjdCBfX2tlcm5lbF90aW1leCBhcyBhIHN1YnN0aXR1
+dGUgZm9yCnRoZSBub24geTIwMzggc2FmZSBzdHJ1Y3QgdGltZXguCgpUaGUgc2VyaWVzIGlzIGJh
+c2VkIG9uIHRoZSBvcmlnaW5hbCBzZXJpZXMgcG9zdGVkIGJ5IEFybmQgQmVyZ21hbm4KaW4gWzFd
+LgoKVGhlIG92ZXJ2aWV3IG9mIHRoZSBzZXJpZXMgaXMgYXMgYmVsb3c6CjEuIFByZXBhcmUgZm9y
+IHRoZSBjb21wYXQgdGltZXggaW50ZXJmYWNlcyB0byBiZSB1c2VkIHVuY29uZGl0aW9uYWxseS4K
+Mi4gSW50cm9kdWNlIHN0cnVjdCBfX2tlcm5lbF90aW1leC4KMy4gVXNlIHN0cnVjdCBfX2tlcm5l
+bF90aW1leCBpbiBwbGFjZSBvZiBzdHJ1Y3QgdGltZXguCjQuIFN3aXRjaCBzeXNjYWxscyB0byB1
+c2Ugc3RydWN0IF9fa2VybmVsX3RpbWV4LgoKRGVlcGEgRGluYW1hbmkgKDYpOgogIGFybTY0OiBN
+YWtlIGJhc2ljIGNvbXBhdF8qIHR5cGVzIGFsd2F5cyBhdmFpbGFibGUKICBzcGFyYzogTWFrZSB0
+aHJlYWRfaW5mby5oIGF2YWlsYWJsZSBkaXJlY3RseQogIHRpbWV4OiBwcmVwYXJlIGNvbXBhdCBo
+ZWxwZXJzIGZvciB5MjAzOCBjaGFuZ2VzCiAgdGltZTogQWRkIHN0cnVjdCBfX2tlcm5lbF90aW1l
+eAogIHRpbWV4OiB1c2UgX19rZXJuZWxfdGltZXggaW50ZXJuYWxseQogIHRpbWV4OiBjaGFuZ2Ug
+c3lzY2FsbHMgdG8gdXNlIHN0cnVjdCBfX2tlcm5lbF90aW1leAoKIGFyY2gvYWxwaGEva2VybmVs
+L29zZl9zeXMuYyAgICAgfCAgMiArLQogYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9jb21wYXQuaCB8
+IDIyICsrKystLS0tLQogYXJjaC9zcGFyYy9pbmNsdWRlL2FzbS9jb21wYXQuaCB8ICAyICsKIGRy
+aXZlcnMvcHRwL3B0cF9jbG9jay5jICAgICAgICAgfCAgMiArLQogaW5jbHVkZS9hc20tZ2VuZXJp
+Yy9jb21wYXQuaCAgICB8ICA4ICsrKy0KIGluY2x1ZGUvbGludXgvY29tcGF0LmggICAgICAgICAg
+fCAzMyAtLS0tLS0tLS0tLS0tLQogaW5jbHVkZS9saW51eC9jb21wYXRfdGltZS5oICAgICB8IDM0
+ICsrKysrKysrKysrKysrCiBpbmNsdWRlL2xpbnV4L3Bvc2l4LWNsb2NrLmggICAgIHwgIDIgKy0K
+IGluY2x1ZGUvbGludXgvc3lzY2FsbHMuaCAgICAgICAgfCAgNSArLS0KIGluY2x1ZGUvbGludXgv
+dGltZXguaCAgICAgICAgICAgfCAgOSArKystCiBpbmNsdWRlL3VhcGkvbGludXgvdGltZXguaCAg
+ICAgIHwgNDEgKysrKysrKysrKysrKysrKysKIGtlcm5lbC9jb21wYXQuYyAgICAgICAgICAgICAg
+ICAgfCA2MyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoga2VybmVsL3RpbWUvbnRwLmMgICAg
+ICAgICAgICAgICB8IDEyICsrLS0tCiBrZXJuZWwvdGltZS9udHBfaW50ZXJuYWwuaCAgICAgIHwg
+IDIgKy0KIGtlcm5lbC90aW1lL3Bvc2l4LWNsb2NrLmMgICAgICAgfCAgMiArLQoga2VybmVsL3Rp
+bWUvcG9zaXgtdGltZXJzLmMgICAgICB8IDE0ICsrLS0tLQoga2VybmVsL3RpbWUvcG9zaXgtdGlt
+ZXJzLmggICAgICB8ICAyICstCiBrZXJuZWwvdGltZS90aW1lLmMgICAgICAgICAgICAgIHwgODAg
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tCiBrZXJuZWwvdGltZS90aW1la2VlcGlu
+Zy5jICAgICAgIHwgIDQgKy0KIDE5IGZpbGVzIGNoYW5nZWQsIDE5OCBpbnNlcnRpb25zKCspLCAx
+NDEgZGVsZXRpb25zKC0pCgoKYmFzZS1jb21taXQ6IDY5ODc3ZjA2OTE1ZjFjN2E5ZjE3MDQ0NDI5
+OTNiY2MxMmMxM2FjZTIKLS0gCjIuMTcuMQoKQ2M6IGNhdGFsaW4ubWFyaW5hc0Bhcm0uY29tCkNj
+OiBkYXZlbUBkYXZlbWxvZnQubmV0CkNjOiBsaW51eC1hbHBoYUB2Z2VyLmtlcm5lbC5vcmcKQ2M6
+IGxpbnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmcKQ2M6IGxpbnV4LWFyY2hAdmdlci5rZXJuZWwub3Jn
+CkNjOiBuZXRkZXZAdmdlci5rZXJuZWwub3JnCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8u
+b3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
