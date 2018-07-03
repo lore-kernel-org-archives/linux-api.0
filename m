@@ -1,120 +1,169 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH 6/6] timex: change syscalls to use struct __kernel_timex
-Date: Mon,  2 Jul 2018 22:44:22 -0700
-Message-ID: <20180703054422.12089-7-deepa.kernel@gmail.com>
-References: <20180703054422.12089-1-deepa.kernel@gmail.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [REGRESSION] "Locked" and "Pss" in /proc/*/smaps are the same
+Date: Tue, 3 Jul 2018 09:36:45 +0200
+Message-ID: <ebf6c7fb-fec3-6a26-544f-710ed193c154@suse.cz>
+References: <69eb77f7-c8cc-fdee-b44f-ad7e522b8467@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180703054422.12089-1-deepa.kernel@gmail.com>
+In-Reply-To: <69eb77f7-c8cc-fdee-b44f-ad7e522b8467@gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: tglx@linutronix.de, linux-kernel@vger.kernel.org
-Cc: arnd@arndb.de, y2038@lists.linaro.org, linux-api@vger.kernel.org
+To: Thomas Lindroth <thomas.lindroth@gmail.com>, dancol@google.com, Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm <linux-mm@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-struct timex is not y2038 safe.
-Switch all the syscall apis to use y2038 safe __kernel_timex.
++CC
 
-Note that sys_adjtimex() does not have a y2038 safe solution.
-The api is meant to be deprecated on 32 bit machines after y2038.
+On 07/01/2018 08:31 PM, Thomas Lindroth wrote:
+> While looking around in /proc on my v4.14.52 system I noticed that
+> all processes got a lot of "Locked" memory in /proc/*/smaps. A lot
+> more memory than a regular user can usually lock with mlock().
+> 
+> commit 493b0e9d945fa9dfe96be93ae41b4ca4b6fdb317 (v4.14-rc1) seems
+> to have changed the behavior of "Locked".
+> 
+> commit 493b0e9d945fa9dfe96be93ae41b4ca4b6fdb317
+> Author: Daniel Colascione <dancol@google.com>
+> Date:   Wed Sep 6 16:25:08 2017 -0700
+> 
+>     mm: add /proc/pid/smaps_rollup
+> 
+> Before that commit the code was like this. Notice the VM_LOCKED
+> check.
+> 
+> seq_printf(m,
+>            "Size:           %8lu kB\n"
+>            "Rss:            %8lu kB\n"
+>            "Pss:            %8lu kB\n"
+>            "Shared_Clean:   %8lu kB\n"
+>            "Shared_Dirty:   %8lu kB\n"
+>            "Private_Clean:  %8lu kB\n"
+>            "Private_Dirty:  %8lu kB\n"
+>            "Referenced:     %8lu kB\n"
+>            "Anonymous:      %8lu kB\n"
+>            "LazyFree:       %8lu kB\n"
+>            "AnonHugePages:  %8lu kB\n"
+>            "ShmemPmdMapped: %8lu kB\n"
+>            "Shared_Hugetlb: %8lu kB\n"
+>            "Private_Hugetlb: %7lu kB\n"
+>            "Swap:           %8lu kB\n"
+>            "SwapPss:        %8lu kB\n"
+>            "KernelPageSize: %8lu kB\n"
+>            "MMUPageSize:    %8lu kB\n"
+>            "Locked:         %8lu kB\n",
+>            (vma->vm_end - vma->vm_start) >> 10,
+>            mss.resident >> 10,
+>            (unsigned long)(mss.pss >> (10 + PSS_SHIFT)),
+>            mss.shared_clean  >> 10,
+>            mss.shared_dirty  >> 10,
+>            mss.private_clean >> 10,
+>            mss.private_dirty >> 10,
+>            mss.referenced >> 10,
+>            mss.anonymous >> 10,
+>            mss.lazyfree >> 10,
+>            mss.anonymous_thp >> 10,
+>            mss.shmem_thp >> 10,
+>            mss.shared_hugetlb >> 10,
+>            mss.private_hugetlb >> 10,
+>            mss.swap >> 10,
+>            (unsigned long)(mss.swap_pss >> (10 + PSS_SHIFT)),
+>            vma_kernel_pagesize(vma) >> 10,
+>            vma_mmu_pagesize(vma) >> 10,
+>            (vma->vm_flags & VM_LOCKED) ?
+>                 (unsigned long)(mss.pss >> (10 + PSS_SHIFT)) : 0);
+> 
+> After that commit Locked is now the same as Pss. This looks like a
+> mistake.
+> 
+> seq_printf(m,
+>            "Rss:            %8lu kB\n"
+>            "Pss:            %8lu kB\n"
+>            "Shared_Clean:   %8lu kB\n"
+>            "Shared_Dirty:   %8lu kB\n"
+>            "Private_Clean:  %8lu kB\n"
+>            "Private_Dirty:  %8lu kB\n"
+>            "Referenced:     %8lu kB\n"
+>            "Anonymous:      %8lu kB\n"
+>            "LazyFree:       %8lu kB\n"
+>            "AnonHugePages:  %8lu kB\n"
+>            "ShmemPmdMapped: %8lu kB\n"
+>            "Shared_Hugetlb: %8lu kB\n"
+>            "Private_Hugetlb: %7lu kB\n"
+>            "Swap:           %8lu kB\n"
+>            "SwapPss:        %8lu kB\n"
+>            "Locked:         %8lu kB\n",
+>            mss->resident >> 10,
+>            (unsigned long)(mss->pss >> (10 + PSS_SHIFT)),
+>            mss->shared_clean  >> 10,
+>            mss->shared_dirty  >> 10,
+>            mss->private_clean >> 10,
+>            mss->private_dirty >> 10,
+>            mss->referenced >> 10,
+>            mss->anonymous >> 10,
+>            mss->lazyfree >> 10,
+>            mss->anonymous_thp >> 10,
+>            mss->shmem_thp >> 10,
+>            mss->shared_hugetlb >> 10,
+>            mss->private_hugetlb >> 10,
+>            mss->swap >> 10,
+>            (unsigned long)(mss->swap_pss >> (10 + PSS_SHIFT)),
+>            (unsigned long)(mss->pss >> (10 + PSS_SHIFT)));
+> 
+> The latest git has changed a bit but the functionality is the
+> same.
 
-Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
-Cc: linux-api@vger.kernel.org
+----8<----
+>From fa721521c981167c24ac8f4be446443d293d741e Mon Sep 17 00:00:00 2001
+From: Vlastimil Babka <vbabka@suse.cz>
+Date: Tue, 3 Jul 2018 09:24:27 +0200
+Subject: [PATCH] mm: fix Locked field in /proc/pid/smaps*
+
+Thomas reports:
+
+: While looking around in /proc on my v4.14.52 system I noticed that
+: all processes got a lot of "Locked" memory in /proc/*/smaps. A lot
+: more memory than a regular user can usually lock with mlock().
+:
+: commit 493b0e9d945fa9dfe96be93ae41b4ca4b6fdb317 (v4.14-rc1) seems
+: to have changed the behavior of "Locked".
+:
+: Before that commit the code was like this. Notice the VM_LOCKED
+: check.
+:
+:          (vma->vm_flags & VM_LOCKED) ?
+:               (unsigned long)(mss.pss >> (10 + PSS_SHIFT)) : 0);
+:
+: After that commit Locked is now the same as Pss. This looks like a
+: mistake.
+:
+: (unsigned long)(mss->pss >> (10 + PSS_SHIFT)));
+
+Indeed, the commit has added mss->pss_locked with the correct value that
+depends on VM_LOCKED, but forgot to actually use it. Fix it.
+
+Fixes: 493b0e9d945f ("mm: add /proc/pid/smaps_rollup")
+Reported-by: Thomas Lindroth <thomas.lindroth@gmail.com>
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+Cc: stable@vger.kernel.org
 ---
- include/linux/syscalls.h   |  5 ++---
- kernel/time/posix-timers.c | 10 +---------
- kernel/time/time.c         |  9 +++++++--
- 3 files changed, 10 insertions(+), 14 deletions(-)
+ fs/proc/task_mmu.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 3ee3b3f1302f..54688c7b4dae 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -54,7 +54,6 @@ struct __sysctl_args;
- struct sysinfo;
- struct timespec;
- struct timeval;
--struct timex;
- struct timezone;
- struct tms;
- struct utimbuf;
-@@ -677,7 +676,7 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv,
- 				struct timezone __user *tz);
- asmlinkage long sys_settimeofday(struct timeval __user *tv,
- 				struct timezone __user *tz);
--asmlinkage long sys_adjtimex(struct timex __user *txc_p);
-+asmlinkage long sys_adjtimex(struct __kernel_timex __user *txc_p);
- 
- /* kernel/timer.c */
- asmlinkage long sys_getpid(void);
-@@ -846,7 +845,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
- 				      struct file_handle __user *handle,
- 				      int flags);
- asmlinkage long sys_clock_adjtime(clockid_t which_clock,
--				struct timex __user *tx);
-+				struct __kernel_timex __user *tx);
- asmlinkage long sys_syncfs(int fd);
- asmlinkage long sys_setns(int fd, int nstype);
- asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 640e30792413..8ae5d73ecee3 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1075,7 +1075,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
- }
- 
- SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
--		struct timex __user *, utx)
-+		struct __kernel_timex __user *, utx)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct __kernel_timex ktx;
-@@ -1150,10 +1150,6 @@ COMPAT_SYSCALL_DEFINE2(clock_gettime, clockid_t, which_clock,
- 	return err;
- }
- 
--#endif
--
--#ifdef CONFIG_COMPAT
--
- COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
- 		       struct compat_timex __user *, utp)
- {
-@@ -1178,10 +1174,6 @@ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
- 	return err;
- }
- 
--#endif
--
--#ifdef CONFIG_COMPAT_32BIT_TIME
--
- COMPAT_SYSCALL_DEFINE2(clock_getres, clockid_t, which_clock,
- 		       struct compat_timespec __user *, tp)
- {
-diff --git a/kernel/time/time.c b/kernel/time/time.c
-index 2c5afb008b14..a374fdbb368b 100644
---- a/kernel/time/time.c
-+++ b/kernel/time/time.c
-@@ -263,7 +263,10 @@ COMPAT_SYSCALL_DEFINE2(settimeofday, struct compat_timeval __user *, tv,
- }
- #endif
- 
--SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
-+
-+#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-+
-+SYSCALL_DEFINE1(adjtimex, struct __kernel_timex __user *, txc_p)
- {
- 	struct __kernel_timex txc;		/* Local copy of parameter */
- 	int ret;
-@@ -278,7 +281,9 @@ SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
- 	return copy_to_user(txc_p, &txc, sizeof(struct __kernel_timex)) ? -EFAULT : ret;
- }
- 
--#ifdef CONFIG_COMPAT
-+#endif
-+
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- 
- COMPAT_SYSCALL_DEFINE1(adjtimex, struct compat_timex __user *, utp)
- {
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index e9679016271f..dfd73a4616ce 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -831,7 +831,8 @@ static int show_smap(struct seq_file *m, void *v, int is_pid)
+ 		SEQ_PUT_DEC(" kB\nSwap:           ", mss->swap);
+ 		SEQ_PUT_DEC(" kB\nSwapPss:        ",
+ 						mss->swap_pss >> PSS_SHIFT);
+-		SEQ_PUT_DEC(" kB\nLocked:         ", mss->pss >> PSS_SHIFT);
++		SEQ_PUT_DEC(" kB\nLocked:         ",
++						mss->pss_locked >> PSS_SHIFT);
+ 		seq_puts(m, " kB\n");
+ 	}
+ 	if (!rollup_mode) {
 -- 
-2.17.1
+2.18.0
