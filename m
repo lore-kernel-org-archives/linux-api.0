@@ -1,57 +1,120 @@
 From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH 0/6] Introduce struct __kernel_timex
-Date: Mon,  2 Jul 2018 22:44:16 -0700
-Message-ID: <20180703054422.12089-1-deepa.kernel@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Subject: [PATCH 6/6] timex: change syscalls to use struct __kernel_timex
+Date: Mon,  2 Jul 2018 22:44:22 -0700
+Message-ID: <20180703054422.12089-7-deepa.kernel@gmail.com>
+References: <20180703054422.12089-1-deepa.kernel@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180703054422.12089-1-deepa.kernel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: tglx@linutronix.de, linux-kernel@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, catalin.marinas@arm.com, linux-alpha@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, davem@davemloft.net
+Cc: arnd@arndb.de, y2038@lists.linaro.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-VGhlIHNlcmllcyBpbnRyb2R1Y2VzIHN0cnVjdCBfX2tlcm5lbF90aW1leCBhcyBhIHN1YnN0aXR1
-dGUgZm9yCnRoZSBub24geTIwMzggc2FmZSBzdHJ1Y3QgdGltZXguCgpUaGUgc2VyaWVzIGlzIGJh
-c2VkIG9uIHRoZSBvcmlnaW5hbCBzZXJpZXMgcG9zdGVkIGJ5IEFybmQgQmVyZ21hbm4KaW4gWzFd
-LgoKVGhlIG92ZXJ2aWV3IG9mIHRoZSBzZXJpZXMgaXMgYXMgYmVsb3c6CjEuIFByZXBhcmUgZm9y
-IHRoZSBjb21wYXQgdGltZXggaW50ZXJmYWNlcyB0byBiZSB1c2VkIHVuY29uZGl0aW9uYWxseS4K
-Mi4gSW50cm9kdWNlIHN0cnVjdCBfX2tlcm5lbF90aW1leC4KMy4gVXNlIHN0cnVjdCBfX2tlcm5l
-bF90aW1leCBpbiBwbGFjZSBvZiBzdHJ1Y3QgdGltZXguCjQuIFN3aXRjaCBzeXNjYWxscyB0byB1
-c2Ugc3RydWN0IF9fa2VybmVsX3RpbWV4LgoKRGVlcGEgRGluYW1hbmkgKDYpOgogIGFybTY0OiBN
-YWtlIGJhc2ljIGNvbXBhdF8qIHR5cGVzIGFsd2F5cyBhdmFpbGFibGUKICBzcGFyYzogTWFrZSB0
-aHJlYWRfaW5mby5oIGF2YWlsYWJsZSBkaXJlY3RseQogIHRpbWV4OiBwcmVwYXJlIGNvbXBhdCBo
-ZWxwZXJzIGZvciB5MjAzOCBjaGFuZ2VzCiAgdGltZTogQWRkIHN0cnVjdCBfX2tlcm5lbF90aW1l
-eAogIHRpbWV4OiB1c2UgX19rZXJuZWxfdGltZXggaW50ZXJuYWxseQogIHRpbWV4OiBjaGFuZ2Ug
-c3lzY2FsbHMgdG8gdXNlIHN0cnVjdCBfX2tlcm5lbF90aW1leAoKIGFyY2gvYWxwaGEva2VybmVs
-L29zZl9zeXMuYyAgICAgfCAgMiArLQogYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9jb21wYXQuaCB8
-IDIyICsrKystLS0tLQogYXJjaC9zcGFyYy9pbmNsdWRlL2FzbS9jb21wYXQuaCB8ICAyICsKIGRy
-aXZlcnMvcHRwL3B0cF9jbG9jay5jICAgICAgICAgfCAgMiArLQogaW5jbHVkZS9hc20tZ2VuZXJp
-Yy9jb21wYXQuaCAgICB8ICA4ICsrKy0KIGluY2x1ZGUvbGludXgvY29tcGF0LmggICAgICAgICAg
-fCAzMyAtLS0tLS0tLS0tLS0tLQogaW5jbHVkZS9saW51eC9jb21wYXRfdGltZS5oICAgICB8IDM0
-ICsrKysrKysrKysrKysrCiBpbmNsdWRlL2xpbnV4L3Bvc2l4LWNsb2NrLmggICAgIHwgIDIgKy0K
-IGluY2x1ZGUvbGludXgvc3lzY2FsbHMuaCAgICAgICAgfCAgNSArLS0KIGluY2x1ZGUvbGludXgv
-dGltZXguaCAgICAgICAgICAgfCAgOSArKystCiBpbmNsdWRlL3VhcGkvbGludXgvdGltZXguaCAg
-ICAgIHwgNDEgKysrKysrKysrKysrKysrKysKIGtlcm5lbC9jb21wYXQuYyAgICAgICAgICAgICAg
-ICAgfCA2MyAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoga2VybmVsL3RpbWUvbnRwLmMgICAg
-ICAgICAgICAgICB8IDEyICsrLS0tCiBrZXJuZWwvdGltZS9udHBfaW50ZXJuYWwuaCAgICAgIHwg
-IDIgKy0KIGtlcm5lbC90aW1lL3Bvc2l4LWNsb2NrLmMgICAgICAgfCAgMiArLQoga2VybmVsL3Rp
-bWUvcG9zaXgtdGltZXJzLmMgICAgICB8IDE0ICsrLS0tLQoga2VybmVsL3RpbWUvcG9zaXgtdGlt
-ZXJzLmggICAgICB8ICAyICstCiBrZXJuZWwvdGltZS90aW1lLmMgICAgICAgICAgICAgIHwgODAg
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tCiBrZXJuZWwvdGltZS90aW1la2VlcGlu
-Zy5jICAgICAgIHwgIDQgKy0KIDE5IGZpbGVzIGNoYW5nZWQsIDE5OCBpbnNlcnRpb25zKCspLCAx
-NDEgZGVsZXRpb25zKC0pCgoKYmFzZS1jb21taXQ6IDY5ODc3ZjA2OTE1ZjFjN2E5ZjE3MDQ0NDI5
-OTNiY2MxMmMxM2FjZTIKLS0gCjIuMTcuMQoKQ2M6IGNhdGFsaW4ubWFyaW5hc0Bhcm0uY29tCkNj
-OiBkYXZlbUBkYXZlbWxvZnQubmV0CkNjOiBsaW51eC1hbHBoYUB2Z2VyLmtlcm5lbC5vcmcKQ2M6
-IGxpbnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmcKQ2M6IGxpbnV4LWFyY2hAdmdlci5rZXJuZWwub3Jn
-CkNjOiBuZXRkZXZAdmdlci5rZXJuZWwub3JnCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8u
-b3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
+struct timex is not y2038 safe.
+Switch all the syscall apis to use y2038 safe __kernel_timex.
+
+Note that sys_adjtimex() does not have a y2038 safe solution.
+The api is meant to be deprecated on 32 bit machines after y2038.
+
+Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
+Cc: linux-api@vger.kernel.org
+---
+ include/linux/syscalls.h   |  5 ++---
+ kernel/time/posix-timers.c | 10 +---------
+ kernel/time/time.c         |  9 +++++++--
+ 3 files changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 3ee3b3f1302f..54688c7b4dae 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -54,7 +54,6 @@ struct __sysctl_args;
+ struct sysinfo;
+ struct timespec;
+ struct timeval;
+-struct timex;
+ struct timezone;
+ struct tms;
+ struct utimbuf;
+@@ -677,7 +676,7 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv,
+ 				struct timezone __user *tz);
+ asmlinkage long sys_settimeofday(struct timeval __user *tv,
+ 				struct timezone __user *tz);
+-asmlinkage long sys_adjtimex(struct timex __user *txc_p);
++asmlinkage long sys_adjtimex(struct __kernel_timex __user *txc_p);
+ 
+ /* kernel/timer.c */
+ asmlinkage long sys_getpid(void);
+@@ -846,7 +845,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
+ 				      struct file_handle __user *handle,
+ 				      int flags);
+ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
+-				struct timex __user *tx);
++				struct __kernel_timex __user *tx);
+ asmlinkage long sys_syncfs(int fd);
+ asmlinkage long sys_setns(int fd, int nstype);
+ asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 640e30792413..8ae5d73ecee3 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -1075,7 +1075,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+ }
+ 
+ SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
+-		struct timex __user *, utx)
++		struct __kernel_timex __user *, utx)
+ {
+ 	const struct k_clock *kc = clockid_to_kclock(which_clock);
+ 	struct __kernel_timex ktx;
+@@ -1150,10 +1150,6 @@ COMPAT_SYSCALL_DEFINE2(clock_gettime, clockid_t, which_clock,
+ 	return err;
+ }
+ 
+-#endif
+-
+-#ifdef CONFIG_COMPAT
+-
+ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
+ 		       struct compat_timex __user *, utp)
+ {
+@@ -1178,10 +1174,6 @@ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
+ 	return err;
+ }
+ 
+-#endif
+-
+-#ifdef CONFIG_COMPAT_32BIT_TIME
+-
+ COMPAT_SYSCALL_DEFINE2(clock_getres, clockid_t, which_clock,
+ 		       struct compat_timespec __user *, tp)
+ {
+diff --git a/kernel/time/time.c b/kernel/time/time.c
+index 2c5afb008b14..a374fdbb368b 100644
+--- a/kernel/time/time.c
++++ b/kernel/time/time.c
+@@ -263,7 +263,10 @@ COMPAT_SYSCALL_DEFINE2(settimeofday, struct compat_timeval __user *, tv,
+ }
+ #endif
+ 
+-SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
++
++#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
++
++SYSCALL_DEFINE1(adjtimex, struct __kernel_timex __user *, txc_p)
+ {
+ 	struct __kernel_timex txc;		/* Local copy of parameter */
+ 	int ret;
+@@ -278,7 +281,9 @@ SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
+ 	return copy_to_user(txc_p, &txc, sizeof(struct __kernel_timex)) ? -EFAULT : ret;
+ }
+ 
+-#ifdef CONFIG_COMPAT
++#endif
++
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ 
+ COMPAT_SYSCALL_DEFINE1(adjtimex, struct compat_timex __user *, utp)
+ {
+-- 
+2.17.1
