@@ -1,51 +1,78 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [REGRESSION] "Locked" and "Pss" in /proc/*/smaps are the same
-Date: Wed, 4 Jul 2018 10:46:52 +0200
-Message-ID: <f31b26d0-b94e-b545-8776-a4494179149d@suse.cz>
-References: <69eb77f7-c8cc-fdee-b44f-ad7e522b8467@gmail.com>
- <ebf6c7fb-fec3-6a26-544f-710ed193c154@suse.cz>
- <CAKOZuev9K0EMpqBoie4H7XduB63KayORxO=JEZvS9rv_4PVsqQ@mail.gmail.com>
+From: Adrian Reber <adrian@lisas.de>
+Subject: Re: [PATCH 7/7] aio: implement io_pgetevents
+Date: Wed, 4 Jul 2018 16:21:16 +0200
+Message-ID: <20180704142116.GM17048@lisas.de>
+References: <20180502211448.18276-1-hch@lst.de>
+ <20180502211448.18276-8-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuev9K0EMpqBoie4H7XduB63KayORxO=JEZvS9rv_4PVsqQ@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Thomas Lindroth <thomas.lindroth@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm <linux-mm@kvack.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180502211448.18276-8-hch@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/03/2018 06:20 PM, Daniel Colascione wrote:
-> On Tue, Jul 3, 2018 at 12:36 AM, Vlastimil Babka <vbabka@suse.cz> wrote:
->> +CC
->>
->> On 07/01/2018 08:31 PM, Thomas Lindroth wrote:
->>> While looking around in /proc on my v4.14.52 system I noticed that
->>> all processes got a lot of "Locked" memory in /proc/*/smaps. A lot
->>> more memory than a regular user can usually lock with mlock().
->>>
->>> commit 493b0e9d945fa9dfe96be93ae41b4ca4b6fdb317 (v4.14-rc1) seems
->>> to have changed the behavior of "Locked".
+On Wed, May 02, 2018 at 11:14:48PM +0200, Christoph Hellwig wrote:
+> This is the io_getevents equivalent of ppoll/pselect and allows to
+> properly mix signals and aio completions (especially with IOCB_CMD_POLL)
+> and atomically executes the following sequence:
 > 
-> Thanks for fixing that. I submitted a patch [1] for this bug and some
-> others a while ago, but the patch didn't make it into the tree because
-> or wasn't split up correctly or something, and I had to do other work.
-
-Hmm I see. I pondered about the patch and wondered if the scenarios it
-fixes are really possible for smaps_rollup. Did you observe them in
-practice? Namely:
-- when seq_file starts and stops multiple times on a single open file
-description
-- when it issues multiple show calls for the same iterator value
-
-I don't think it can happen when all positions but the last one just
-return SEQ_SKIP.
-
-Anyway I think the seq_file iterator API usage for smaps_rollup is
-unnecessary. Semantically the file shows only one "element" and that's
-the set of rollup values for all vmas. Letting seq_file do the iteration
-over vmas brings only complications?
-
-> [1] https://marc.info/?l=linux-mm&m=151927723128134&w=2
+> 	sigset_t origmask;
 > 
+> 	pthread_sigmask(SIG_SETMASK, &sigmask, &origmask);
+> 	ret = io_getevents(ctx, min_nr, nr, events, timeout);
+> 	pthread_sigmask(SIG_SETMASK, &origmask, NULL);
+> 
+> Note that unlike many other signal related calls we do not pass a sigmask
+> size, as that would get us to 7 arguments, which aren't easily supported
+> by the syscall infrastructure.  It seems a lot less painful to just add a
+> new syscall variant in the unlikely case we're going to increase the
+> sigset size.
+
+Starting with this commit following code does not compile for me
+anymore:
+
+#include <signal.h>
+#include <linux/aio_abi.h>
+
+int main()
+{
+        return 0;
+}
+
+In file included from /usr/include/linux/signal.h:5,
+                 from /usr/include/linux/aio_abi.h:32,
+                 from include.c:2:
+/usr/include/asm/signal.h:16:23: error: conflicting types for ‘sigset_t’
+ typedef unsigned long sigset_t;
+                       ^~~~~~~~
+In file included from /usr/include/signal.h:35,
+                 from include.c:1:
+/usr/include/bits/types/sigset_t.h:7:20: note: previous declaration of ‘sigset_t’ was here
+ typedef __sigset_t sigset_t;
+                    ^~~~~~~~
+In file included from /usr/include/linux/signal.h:5,
+                 from /usr/include/linux/aio_abi.h:32,
+                 from include.c:2:
+/usr/include/asm/signal.h:115:8: error: redefinition of ‘struct sigaction’
+ struct sigaction {
+        ^~~~~~~~~
+In file included from /usr/include/signal.h:226,
+                 from include.c:1:
+/usr/include/bits/sigaction.h:27:8: note: originally defined here
+ struct sigaction
+        ^~~~~~~~~
+[and much more]
+
+Before this commit it compiles without errors.
+
+		Adrian
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
