@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 2/5] rseq: uapi: update uapi comments
-Date: Thu,  5 Jul 2018 14:05:58 -0400
-Message-ID: <20180705180601.18423-3-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.18 3/5] rseq: uapi: declare rseq_cs field as union, update includes
+Date: Thu,  5 Jul 2018 14:05:59 -0400
+Message-ID: <20180705180601.18423-4-mathieu.desnoyers@efficios.com>
 References: <20180705180601.18423-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180705180601.18423-1-mathieu.desnoyers@efficios.com>
@@ -10,15 +10,21 @@ To: Thomas Gleixner <tglx@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-Update rseq uapi header comments to reflect that user-space need to do
-thread-local loads/stores from/to the struct rseq fields.
+Declaring the rseq_cs field as a union between __u64 and two __u32
+allows both 32-bit and 64-bit kernels to read the full __u64, and
+therefore validate that a 32-bit user-space cleared the upper 32
+bits, thus ensuring a consistent behavior between native 32-bit
+kernels and 32-bit compat tasks on 64-bit kernels.
 
-As a consequence of this added requirement, the kernel does not need
-to perform loads/stores with single-copy atomicity.
+Check that the rseq_cs value read is < TASK_SIZE.
 
-Update the comment associated to the "flags" fields to describe
-more accurately that it's only useful to facilitate single-stepping
-through rseq critical sections with debuggers.
+The asm/byteorder.h header needs to be included by rseq.h, now
+that it is not using linux/types_32_64.h anymore.
+
+Considering that only __32 and __u64 types are declared in linux/rseq.h,
+the linux/types.h header should always be included for both kernel and
+user-space code: including stdint.h is just for u64 and u32, which are
+not used in this header at all.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -43,105 +49,125 @@ CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- include/uapi/linux/rseq.h | 69 ++++++++++++++++++++++++-----------------------
- 1 file changed, 36 insertions(+), 33 deletions(-)
+ include/uapi/linux/rseq.h           | 27 +++++++++++++++++++--------
+ kernel/rseq.c                       | 12 +++++++-----
+ tools/testing/selftests/rseq/rseq.h | 11 ++++++++++-
+ 3 files changed, 36 insertions(+), 14 deletions(-)
 
 diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index 519ad6e176d1..bf4188c13bec 100644
+index bf4188c13bec..9a402fdb60e9 100644
 --- a/include/uapi/linux/rseq.h
 +++ b/include/uapi/linux/rseq.h
-@@ -67,28 +67,30 @@ struct rseq_cs {
- struct rseq {
- 	/*
- 	 * Restartable sequences cpu_id_start field. Updated by the
--	 * kernel, and read by user-space with single-copy atomicity
--	 * semantics. Aligned on 32-bit. Always contains a value in the
--	 * range of possible CPUs, although the value may not be the
--	 * actual current CPU (e.g. if rseq is not initialized). This
--	 * CPU number value should always be compared against the value
--	 * of the cpu_id field before performing a rseq commit or
--	 * returning a value read from a data structure indexed using
--	 * the cpu_id_start value.
-+	 * kernel. Read by user-space with single-copy atomicity
-+	 * semantics. This field should only be read by the thread which
-+	 * registered this data structure. Aligned on 32-bit. Always
-+	 * contains a value in the range of possible CPUs, although the
-+	 * value may not be the actual current CPU (e.g. if rseq is not
-+	 * initialized). This CPU number value should always be compared
-+	 * against the value of the cpu_id field before performing a rseq
-+	 * commit or returning a value read from a data structure indexed
-+	 * using the cpu_id_start value.
+@@ -10,13 +10,8 @@
+  * Copyright (c) 2015-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+  */
+ 
+-#ifdef __KERNEL__
+-# include <linux/types.h>
+-#else
+-# include <stdint.h>
+-#endif
+-
+-#include <linux/types_32_64.h>
++#include <linux/types.h>
++#include <asm/byteorder.h>
+ 
+ enum rseq_cpu_id_state {
+ 	RSEQ_CPU_ID_UNINITIALIZED		= -1,
+@@ -111,7 +106,23 @@ struct rseq {
+ 	 * atomicity semantics. This field should only be updated by the
+ 	 * thread which registered this data structure. Aligned on 64-bit.
  	 */
- 	__u32 cpu_id_start;
+-	LINUX_FIELD_u32_u64(rseq_cs);
++	union {
++		__u64 ptr64;
++#ifdef __LP64__
++		__u64 ptr;
++#else
++		struct {
++#if (defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN)) || defined(__BIG_ENDIAN)
++			__u32 padding;		/* Initialized to zero. */
++			__u32 ptr32;
++#else /* LITTLE */
++			__u32 ptr32;
++			__u32 padding;		/* Initialized to zero. */
++#endif /* ENDIAN */
++		} ptr;
++#endif
++	} rseq_cs;
++
  	/*
--	 * Restartable sequences cpu_id field. Updated by the kernel,
--	 * and read by user-space with single-copy atomicity semantics.
--	 * Aligned on 32-bit. Values RSEQ_CPU_ID_UNINITIALIZED and
--	 * RSEQ_CPU_ID_REGISTRATION_FAILED have a special semantic: the
--	 * former means "rseq uninitialized", and latter means "rseq
--	 * initialization failed". This value is meant to be read within
--	 * rseq critical sections and compared with the cpu_id_start
--	 * value previously read, before performing the commit instruction,
--	 * or read and compared with the cpu_id_start value before returning
--	 * a value loaded from a data structure indexed using the
--	 * cpu_id_start value.
-+	 * Restartable sequences cpu_id field. Updated by the kernel.
-+	 * Read by user-space with single-copy atomicity semantics. This
-+	 * field should only be read by the thread which registered this
-+	 * data structure. Aligned on 32-bit. Values
-+	 * RSEQ_CPU_ID_UNINITIALIZED and RSEQ_CPU_ID_REGISTRATION_FAILED
-+	 * have a special semantic: the former means "rseq uninitialized",
-+	 * and latter means "rseq initialization failed". This value is
-+	 * meant to be read within rseq critical sections and compared
-+	 * with the cpu_id_start value previously read, before performing
-+	 * the commit instruction, or read and compared with the
-+	 * cpu_id_start value before returning a value loaded from a data
-+	 * structure indexed using the cpu_id_start value.
- 	 */
- 	__u32 cpu_id;
- 	/*
-@@ -105,27 +107,28 @@ struct rseq {
- 	 * targeted by the rseq_cs. Also needs to be set to NULL by user-space
- 	 * before reclaiming memory that contains the targeted struct rseq_cs.
+ 	 * Restartable sequences flags field.
  	 *
--	 * Read and set by the kernel with single-copy atomicity semantics.
--	 * Set by user-space with single-copy atomicity semantics. Aligned
--	 * on 64-bit.
-+	 * Read and set by the kernel. Set by user-space with single-copy
-+	 * atomicity semantics. This field should only be updated by the
-+	 * thread which registered this data structure. Aligned on 64-bit.
- 	 */
- 	LINUX_FIELD_u32_u64(rseq_cs);
- 	/*
--	 * - RSEQ_DISABLE flag:
-+	 * Restartable sequences flags field.
-+	 *
-+	 * This field should only be updated by the thread which
-+	 * registered this data structure. Read by the kernel.
-+	 * Mainly used for single-stepping through rseq critical sections
-+	 * with debuggers.
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 16b38c5342f9..3081e6783cce 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -115,19 +115,21 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
+ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ {
+ 	struct rseq_cs __user *urseq_cs;
+-	unsigned long ptr;
++	u64 ptr;
+ 	u32 __user *usig;
+ 	u32 sig;
+ 	int ret;
+ 
+-	ret = __get_user(ptr, &t->rseq->rseq_cs);
++	ret = __get_user(ptr, &t->rseq->rseq_cs.ptr64);
+ 	if (ret)
+ 		return ret;
+ 	if (!ptr) {
+ 		memset(rseq_cs, 0, sizeof(*rseq_cs));
+ 		return 0;
+ 	}
+-	urseq_cs = (struct rseq_cs __user *)ptr;
++	if (ptr >= TASK_SIZE)
++		return -EINVAL;
++	urseq_cs = (struct rseq_cs __user *)(unsigned long)ptr;
+ 	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
+ 		return -EFAULT;
+ 
+@@ -201,9 +203,9 @@ static int clear_rseq_cs(struct task_struct *t)
+ 	 * of code outside of the rseq assembly block. This performs
+ 	 * a lazy clear of the rseq_cs field.
  	 *
--	 * Fallback fast-track flag for single-stepping.
--	 * Set by user-space if lack of progress is detected.
--	 * Cleared by user-space after rseq finish.
--	 * Read by the kernel.
- 	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
--	 *     Inhibit instruction sequence block restart and event
--	 *     counter increment on preemption for this thread.
-+	 *     Inhibit instruction sequence block restart on preemption
-+	 *     for this thread.
- 	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
--	 *     Inhibit instruction sequence block restart and event
--	 *     counter increment on signal delivery for this thread.
-+	 *     Inhibit instruction sequence block restart on signal
-+	 *     delivery for this thread.
- 	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
--	 *     Inhibit instruction sequence block restart and event
--	 *     counter increment on migration for this thread.
-+	 *     Inhibit instruction sequence block restart on migration for
-+	 *     this thread.
+-	 * Set rseq_cs to NULL with single-copy atomicity.
++	 * Set rseq_cs to NULL.
  	 */
- 	__u32 flags;
- } __attribute__((aligned(4 * sizeof(__u64))));
+-	return __put_user(0UL, &t->rseq->rseq_cs);
++	return __put_user(0ULL, &t->rseq->rseq_cs.ptr64);
+ }
+ 
+ /*
+diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
+index a4684112676c..f2073cfa4448 100644
+--- a/tools/testing/selftests/rseq/rseq.h
++++ b/tools/testing/selftests/rseq/rseq.h
+@@ -133,6 +133,15 @@ static inline uint32_t rseq_current_cpu(void)
+ 	return cpu;
+ }
+ 
++static inline void rseq_clear_rseq_cs(void)
++{
++#ifdef __LP64__
++	__rseq_abi.rseq_cs.ptr = 0;
++#else
++	__rseq_abi.rseq_cs.ptr.ptr32 = 0;
++#endif
++}
++
+ /*
+  * rseq_prepare_unload() should be invoked by each thread using rseq_finish*()
+  * at least once between their last rseq_finish*() and library unload of the
+@@ -143,7 +152,7 @@ static inline uint32_t rseq_current_cpu(void)
+  */
+ static inline void rseq_prepare_unload(void)
+ {
+-	__rseq_abi.rseq_cs = 0;
++	rseq_clear_rseq_cs();
+ }
+ 
+ #endif  /* RSEQ_H_ */
 -- 
 2.11.0
