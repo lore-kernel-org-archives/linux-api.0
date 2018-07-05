@@ -1,71 +1,120 @@
 From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v2 0/7] Introduce struct __kernel_timex
-Date: Thu,  5 Jul 2018 14:35:57 -0700
-Message-ID: <20180705213604.18883-1-deepa.kernel@gmail.com>
+Subject: [PATCH v2 7/7] timex: change syscalls to use struct __kernel_timex
+Date: Thu,  5 Jul 2018 14:36:04 -0700
+Message-ID: <20180705213604.18883-8-deepa.kernel@gmail.com>
+References: <20180705213604.18883-1-deepa.kernel@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180705213604.18883-1-deepa.kernel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: tglx@linutronix.de, linux-kernel@vger.kernel.org
-Cc: arnd@arndb.de, y2038@lists.linaro.org, catalin.marinas@arm.com, davem@davemloft.net, linux-alpha@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-riscv@lists.infradead.org, netdev@vger.kernel.org, palmer@sifive.com
+Cc: arnd@arndb.de, y2038@lists.linaro.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The series introduces struct __kernel_timex as a substitute for
-the non y2038 safe struct timex.
+struct timex is not y2038 safe.
+Switch all the syscall apis to use y2038 safe __kernel_timex.
 
-The series is based on the original series posted by Arnd Bergmann
-in [1].
+Note that sys_adjtimex() does not have a y2038 safe solution.
+The api is meant to be deprecated on 32 bit machines after y2038.
 
-The overview of the series is as below:
-1. Prepare for the compat timex interfaces to be used unconditionally.
-2. Introduce struct __kernel_timex.
-3. Use struct __kernel_timex in place of struct timex.
-4. Switch syscalls to use struct __kernel_timex.
+Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
+Cc: linux-api@vger.kernel.org
+---
+ include/linux/syscalls.h   |  5 ++---
+ kernel/time/posix-timers.c | 10 +---------
+ kernel/time/time.c         |  9 +++++++--
+ 3 files changed, 10 insertions(+), 14 deletions(-)
 
-[1] https://sourceware.org/ml/libc-alpha/2015-05/msg00070.html
-
-Changes since v1:
-* Fix riscv asm/compat.h to pick up generic compat types
-
-Deepa Dinamani (7):
-  arm64: Make basic compat_* types always available
-  sparc: Make thread_info.h available directly
-  riscv: Include asm-generic/compat.h
-  timex: prepare compat helpers for y2038 changes
-  time: Add struct __kernel_timex
-  timex: use __kernel_timex internally
-  timex: change syscalls to use struct __kernel_timex
-
- arch/alpha/kernel/osf_sys.c     |  2 +-
- arch/arm64/include/asm/compat.h | 22 ++++-----
- arch/riscv/include/asm/compat.h |  3 ++
- arch/sparc/include/asm/compat.h |  2 +
- drivers/ptp/ptp_clock.c         |  2 +-
- include/asm-generic/compat.h    |  8 +++-
- include/linux/compat.h          | 33 --------------
- include/linux/compat_time.h     | 34 ++++++++++++++
- include/linux/posix-clock.h     |  2 +-
- include/linux/syscalls.h        |  5 +--
- include/linux/timex.h           |  9 +++-
- include/uapi/linux/timex.h      | 41 +++++++++++++++++
- kernel/compat.c                 | 63 --------------------------
- kernel/time/ntp.c               | 12 ++---
- kernel/time/ntp_internal.h      |  2 +-
- kernel/time/posix-clock.c       |  2 +-
- kernel/time/posix-timers.c      | 14 ++----
- kernel/time/posix-timers.h      |  2 +-
- kernel/time/time.c              | 80 ++++++++++++++++++++++++++++++---
- kernel/time/timekeeping.c       |  4 +-
- 20 files changed, 201 insertions(+), 141 deletions(-)
-
-
-base-commit: e30b8745c892204095c0a8b69405868f63ddcce1
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 3ee3b3f1302f..54688c7b4dae 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -54,7 +54,6 @@ struct __sysctl_args;
+ struct sysinfo;
+ struct timespec;
+ struct timeval;
+-struct timex;
+ struct timezone;
+ struct tms;
+ struct utimbuf;
+@@ -677,7 +676,7 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv,
+ 				struct timezone __user *tz);
+ asmlinkage long sys_settimeofday(struct timeval __user *tv,
+ 				struct timezone __user *tz);
+-asmlinkage long sys_adjtimex(struct timex __user *txc_p);
++asmlinkage long sys_adjtimex(struct __kernel_timex __user *txc_p);
+ 
+ /* kernel/timer.c */
+ asmlinkage long sys_getpid(void);
+@@ -846,7 +845,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
+ 				      struct file_handle __user *handle,
+ 				      int flags);
+ asmlinkage long sys_clock_adjtime(clockid_t which_clock,
+-				struct timex __user *tx);
++				struct __kernel_timex __user *tx);
+ asmlinkage long sys_syncfs(int fd);
+ asmlinkage long sys_setns(int fd, int nstype);
+ asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index a2595cb0cb16..1b485422f9f3 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -1084,7 +1084,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+ }
+ 
+ SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
+-		struct timex __user *, utx)
++		struct __kernel_timex __user *, utx)
+ {
+ 	const struct k_clock *kc = clockid_to_kclock(which_clock);
+ 	struct __kernel_timex ktx;
+@@ -1159,10 +1159,6 @@ COMPAT_SYSCALL_DEFINE2(clock_gettime, clockid_t, which_clock,
+ 	return err;
+ }
+ 
+-#endif
+-
+-#ifdef CONFIG_COMPAT
+-
+ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
+ 		       struct compat_timex __user *, utp)
+ {
+@@ -1187,10 +1183,6 @@ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
+ 	return err;
+ }
+ 
+-#endif
+-
+-#ifdef CONFIG_COMPAT_32BIT_TIME
+-
+ COMPAT_SYSCALL_DEFINE2(clock_getres, clockid_t, which_clock,
+ 		       struct compat_timespec __user *, tp)
+ {
+diff --git a/kernel/time/time.c b/kernel/time/time.c
+index 2c5afb008b14..a374fdbb368b 100644
+--- a/kernel/time/time.c
++++ b/kernel/time/time.c
+@@ -263,7 +263,10 @@ COMPAT_SYSCALL_DEFINE2(settimeofday, struct compat_timeval __user *, tv,
+ }
+ #endif
+ 
+-SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
++
++#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
++
++SYSCALL_DEFINE1(adjtimex, struct __kernel_timex __user *, txc_p)
+ {
+ 	struct __kernel_timex txc;		/* Local copy of parameter */
+ 	int ret;
+@@ -278,7 +281,9 @@ SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
+ 	return copy_to_user(txc_p, &txc, sizeof(struct __kernel_timex)) ? -EFAULT : ret;
+ }
+ 
+-#ifdef CONFIG_COMPAT
++#endif
++
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ 
+ COMPAT_SYSCALL_DEFINE1(adjtimex, struct compat_timex __user *, utp)
+ {
 -- 
 2.17.1
-
-Cc: catalin.marinas@arm.com
-Cc: davem@davemloft.net
-Cc: linux-alpha@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org
-Cc: linux-riscv@lists.infradead.org
-Cc: netdev@vger.kernel.org
-Cc: palmer@sifive.com
