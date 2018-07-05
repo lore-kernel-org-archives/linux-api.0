@@ -1,173 +1,71 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.18 3/5] rseq: uapi: declare rseq_cs field as union, update includes
-Date: Thu,  5 Jul 2018 14:05:59 -0400
-Message-ID: <20180705180601.18423-4-mathieu.desnoyers@efficios.com>
-References: <20180705180601.18423-1-mathieu.desnoyers@efficios.com>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: [PATCH v2 0/7] Introduce struct __kernel_timex
+Date: Thu,  5 Jul 2018 14:35:57 -0700
+Message-ID: <20180705213604.18883-1-deepa.kernel@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180705180601.18423-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
+To: tglx@linutronix.de, linux-kernel@vger.kernel.org
+Cc: arnd@arndb.de, y2038@lists.linaro.org, catalin.marinas@arm.com, davem@davemloft.net, linux-alpha@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-riscv@lists.infradead.org, netdev@vger.kernel.org, palmer@sifive.com
 List-Id: linux-api@vger.kernel.org
 
-Declaring the rseq_cs field as a union between __u64 and two __u32
-allows both 32-bit and 64-bit kernels to read the full __u64, and
-therefore validate that a 32-bit user-space cleared the upper 32
-bits, thus ensuring a consistent behavior between native 32-bit
-kernels and 32-bit compat tasks on 64-bit kernels.
+The series introduces struct __kernel_timex as a substitute for
+the non y2038 safe struct timex.
 
-Check that the rseq_cs value read is < TASK_SIZE.
+The series is based on the original series posted by Arnd Bergmann
+in [1].
 
-The asm/byteorder.h header needs to be included by rseq.h, now
-that it is not using linux/types_32_64.h anymore.
+The overview of the series is as below:
+1. Prepare for the compat timex interfaces to be used unconditionally.
+2. Introduce struct __kernel_timex.
+3. Use struct __kernel_timex in place of struct timex.
+4. Switch syscalls to use struct __kernel_timex.
 
-Considering that only __32 and __u64 types are declared in linux/rseq.h,
-the linux/types.h header should always be included for both kernel and
-user-space code: including stdint.h is just for u64 and u32, which are
-not used in this header at all.
+[1] https://sourceware.org/ml/libc-alpha/2015-05/msg00070.html
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul Turner <pjt@google.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
----
- include/uapi/linux/rseq.h           | 27 +++++++++++++++++++--------
- kernel/rseq.c                       | 12 +++++++-----
- tools/testing/selftests/rseq/rseq.h | 11 ++++++++++-
- 3 files changed, 36 insertions(+), 14 deletions(-)
+Changes since v1:
+* Fix riscv asm/compat.h to pick up generic compat types
 
-diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index bf4188c13bec..9a402fdb60e9 100644
---- a/include/uapi/linux/rseq.h
-+++ b/include/uapi/linux/rseq.h
-@@ -10,13 +10,8 @@
-  * Copyright (c) 2015-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-  */
- 
--#ifdef __KERNEL__
--# include <linux/types.h>
--#else
--# include <stdint.h>
--#endif
--
--#include <linux/types_32_64.h>
-+#include <linux/types.h>
-+#include <asm/byteorder.h>
- 
- enum rseq_cpu_id_state {
- 	RSEQ_CPU_ID_UNINITIALIZED		= -1,
-@@ -111,7 +106,23 @@ struct rseq {
- 	 * atomicity semantics. This field should only be updated by the
- 	 * thread which registered this data structure. Aligned on 64-bit.
- 	 */
--	LINUX_FIELD_u32_u64(rseq_cs);
-+	union {
-+		__u64 ptr64;
-+#ifdef __LP64__
-+		__u64 ptr;
-+#else
-+		struct {
-+#if (defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN)) || defined(__BIG_ENDIAN)
-+			__u32 padding;		/* Initialized to zero. */
-+			__u32 ptr32;
-+#else /* LITTLE */
-+			__u32 ptr32;
-+			__u32 padding;		/* Initialized to zero. */
-+#endif /* ENDIAN */
-+		} ptr;
-+#endif
-+	} rseq_cs;
-+
- 	/*
- 	 * Restartable sequences flags field.
- 	 *
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 16b38c5342f9..3081e6783cce 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -115,19 +115,21 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
- static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
- {
- 	struct rseq_cs __user *urseq_cs;
--	unsigned long ptr;
-+	u64 ptr;
- 	u32 __user *usig;
- 	u32 sig;
- 	int ret;
- 
--	ret = __get_user(ptr, &t->rseq->rseq_cs);
-+	ret = __get_user(ptr, &t->rseq->rseq_cs.ptr64);
- 	if (ret)
- 		return ret;
- 	if (!ptr) {
- 		memset(rseq_cs, 0, sizeof(*rseq_cs));
- 		return 0;
- 	}
--	urseq_cs = (struct rseq_cs __user *)ptr;
-+	if (ptr >= TASK_SIZE)
-+		return -EINVAL;
-+	urseq_cs = (struct rseq_cs __user *)(unsigned long)ptr;
- 	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
- 		return -EFAULT;
- 
-@@ -201,9 +203,9 @@ static int clear_rseq_cs(struct task_struct *t)
- 	 * of code outside of the rseq assembly block. This performs
- 	 * a lazy clear of the rseq_cs field.
- 	 *
--	 * Set rseq_cs to NULL with single-copy atomicity.
-+	 * Set rseq_cs to NULL.
- 	 */
--	return __put_user(0UL, &t->rseq->rseq_cs);
-+	return __put_user(0ULL, &t->rseq->rseq_cs.ptr64);
- }
- 
- /*
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-index a4684112676c..f2073cfa4448 100644
---- a/tools/testing/selftests/rseq/rseq.h
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -133,6 +133,15 @@ static inline uint32_t rseq_current_cpu(void)
- 	return cpu;
- }
- 
-+static inline void rseq_clear_rseq_cs(void)
-+{
-+#ifdef __LP64__
-+	__rseq_abi.rseq_cs.ptr = 0;
-+#else
-+	__rseq_abi.rseq_cs.ptr.ptr32 = 0;
-+#endif
-+}
-+
- /*
-  * rseq_prepare_unload() should be invoked by each thread using rseq_finish*()
-  * at least once between their last rseq_finish*() and library unload of the
-@@ -143,7 +152,7 @@ static inline uint32_t rseq_current_cpu(void)
-  */
- static inline void rseq_prepare_unload(void)
- {
--	__rseq_abi.rseq_cs = 0;
-+	rseq_clear_rseq_cs();
- }
- 
- #endif  /* RSEQ_H_ */
+Deepa Dinamani (7):
+  arm64: Make basic compat_* types always available
+  sparc: Make thread_info.h available directly
+  riscv: Include asm-generic/compat.h
+  timex: prepare compat helpers for y2038 changes
+  time: Add struct __kernel_timex
+  timex: use __kernel_timex internally
+  timex: change syscalls to use struct __kernel_timex
+
+ arch/alpha/kernel/osf_sys.c     |  2 +-
+ arch/arm64/include/asm/compat.h | 22 ++++-----
+ arch/riscv/include/asm/compat.h |  3 ++
+ arch/sparc/include/asm/compat.h |  2 +
+ drivers/ptp/ptp_clock.c         |  2 +-
+ include/asm-generic/compat.h    |  8 +++-
+ include/linux/compat.h          | 33 --------------
+ include/linux/compat_time.h     | 34 ++++++++++++++
+ include/linux/posix-clock.h     |  2 +-
+ include/linux/syscalls.h        |  5 +--
+ include/linux/timex.h           |  9 +++-
+ include/uapi/linux/timex.h      | 41 +++++++++++++++++
+ kernel/compat.c                 | 63 --------------------------
+ kernel/time/ntp.c               | 12 ++---
+ kernel/time/ntp_internal.h      |  2 +-
+ kernel/time/posix-clock.c       |  2 +-
+ kernel/time/posix-timers.c      | 14 ++----
+ kernel/time/posix-timers.h      |  2 +-
+ kernel/time/time.c              | 80 ++++++++++++++++++++++++++++++---
+ kernel/time/timekeeping.c       |  4 +-
+ 20 files changed, 201 insertions(+), 141 deletions(-)
+
+
+base-commit: e30b8745c892204095c0a8b69405868f63ddcce1
 -- 
-2.11.0
+2.17.1
+
+Cc: catalin.marinas@arm.com
+Cc: davem@davemloft.net
+Cc: linux-alpha@vger.kernel.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-riscv@lists.infradead.org
+Cc: netdev@vger.kernel.org
+Cc: palmer@sifive.com
