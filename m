@@ -1,120 +1,114 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v3 7/7] timex: change syscalls to use struct __kernel_timex
-Date: Fri,  6 Jul 2018 22:42:47 -0700
-Message-ID: <20180707054247.19802-8-deepa.kernel@gmail.com>
-References: <20180707054247.19802-1-deepa.kernel@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180707054247.19802-1-deepa.kernel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: tglx@linutronix.de, linux-kernel@vger.kernel.org
-Cc: arnd@arndb.de, y2038@lists.linaro.org, linux-api@vger.kernel.org
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH] mtdchar: fix overflows in adjustment of `count`
+Date: Sat, 7 Jul 2018 11:03:00 +0200
+Message-ID: <CAG48ez3MUm=0iJSY21BNOFBJt=gWgGAQTwM8cz5d_wNwpMyQeg@mail.gmail.com>
+References: <20180707033722.219468-1-jannh@google.com>
+ <20180707104412.1580a285@bbrezillon>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+In-Reply-To: <20180707104412.1580a285@bbrezillon>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: boris.brezillon@bootlin.com
+Cc: richard@nod.at, kernel list <linux-kernel@vger.kernel.org>, marek.vasut@gmail.com, linux-mtd@lists.infradead.org, Linux API <linux-api@vger.kernel.org>, computersforpeace@gmail.com, dwmw2@infradead.org
 List-Id: linux-api@vger.kernel.org
 
-struct timex is not y2038 safe.
-Switch all the syscall apis to use y2038 safe __kernel_timex.
++cc linux-api
 
-Note that sys_adjtimex() does not have a y2038 safe solution.
-The api is meant to be deprecated on 32 bit machines after y2038.
+On Sat, Jul 7, 2018 at 10:44 AM Boris Brezillon
+<boris.brezillon@bootlin.com> wrote:
+>
+> On Sat,  7 Jul 2018 05:37:22 +0200
+> Jann Horn <jannh@google.com> wrote:
+>
+> > The first checks in mtdchar_read() and mtdchar_write() attempt to limit
+> > `count` such that `*ppos + count <= mtd->size`. However, they ignore the
+> > possibility of `*ppos > mtd->size`, allowing the calculation of `count` to
+> > wrap around. `mtdchar_lseek()` prevents seeking beyond mtd->size, but the
+> > pread/pwrite syscalls bypass this.
+> >
+> > I haven't found any codepath on which this actually causes dangerous
+> > behavior, but it seems like a sensible change anyway.
+> >
+> > Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+> > Signed-off-by: Jann Horn <jannh@google.com>
+> > ---
+> >  drivers/mtd/mtdchar.c | 10 +++++++---
+> >  1 file changed, 7 insertions(+), 3 deletions(-)
+> >
+> > diff --git a/drivers/mtd/mtdchar.c b/drivers/mtd/mtdchar.c
+> > index cd67c85cc87d..02389528f622 100644
+> > --- a/drivers/mtd/mtdchar.c
+> > +++ b/drivers/mtd/mtdchar.c
+> > @@ -160,8 +160,12 @@ static ssize_t mtdchar_read(struct file *file, char __user *buf, size_t count,
+> >
+> >       pr_debug("MTD_read\n");
+> >
+> > -     if (*ppos + count > mtd->size)
+> > -             count = mtd->size - *ppos;
+> > +     if (*ppos + count > mtd->size) {
+> > +             if (*ppos < mtd->size)
+> > +                     count = mtd->size - *ppos;
+> > +             else
+> > +                     count = 0;
+> > +     }
+>
+> Hm, shouldn't we return -ERANGE or -EINVAL if *ppos >= mtd->size?
 
-Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
-Cc: linux-api@vger.kernel.org
----
- include/linux/syscalls.h   |  5 ++---
- kernel/time/posix-timers.c | 10 +---------
- kernel/time/time.c         |  9 +++++++--
- 3 files changed, 10 insertions(+), 14 deletions(-)
+Hmm, good question.
+The pread() manpage says that pread() can return the same errors as
+lseek(), and the lseek() manpage says that -EINVAL is for when you're
+trying to seek beyond the end of a seekable device. So from the
+documentation, it sounds as if you're right.
+But testing pread() beyond end of file for various things on my
+machine seems to just return 0:
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 3ee3b3f1302f..54688c7b4dae 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -54,7 +54,6 @@ struct __sysctl_args;
- struct sysinfo;
- struct timespec;
- struct timeval;
--struct timex;
- struct timezone;
- struct tms;
- struct utimbuf;
-@@ -677,7 +676,7 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv,
- 				struct timezone __user *tz);
- asmlinkage long sys_settimeofday(struct timeval __user *tv,
- 				struct timezone __user *tz);
--asmlinkage long sys_adjtimex(struct timex __user *txc_p);
-+asmlinkage long sys_adjtimex(struct __kernel_timex __user *txc_p);
- 
- /* kernel/timer.c */
- asmlinkage long sys_getpid(void);
-@@ -846,7 +845,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
- 				      struct file_handle __user *handle,
- 				      int flags);
- asmlinkage long sys_clock_adjtime(clockid_t which_clock,
--				struct timex __user *tx);
-+				struct __kernel_timex __user *tx);
- asmlinkage long sys_syncfs(int fd);
- asmlinkage long sys_setns(int fd, int nstype);
- asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index a2595cb0cb16..1b485422f9f3 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1084,7 +1084,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
- }
- 
- SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
--		struct timex __user *, utx)
-+		struct __kernel_timex __user *, utx)
- {
- 	const struct k_clock *kc = clockid_to_kclock(which_clock);
- 	struct __kernel_timex ktx;
-@@ -1159,10 +1159,6 @@ COMPAT_SYSCALL_DEFINE2(clock_gettime, clockid_t, which_clock,
- 	return err;
- }
- 
--#endif
--
--#ifdef CONFIG_COMPAT
--
- COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
- 		       struct compat_timex __user *, utp)
- {
-@@ -1187,10 +1183,6 @@ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
- 	return err;
- }
- 
--#endif
--
--#ifdef CONFIG_COMPAT_32BIT_TIME
--
- COMPAT_SYSCALL_DEFINE2(clock_getres, clockid_t, which_clock,
- 		       struct compat_timespec __user *, tp)
- {
-diff --git a/kernel/time/time.c b/kernel/time/time.c
-index 2c5afb008b14..a374fdbb368b 100644
---- a/kernel/time/time.c
-+++ b/kernel/time/time.c
-@@ -263,7 +263,10 @@ COMPAT_SYSCALL_DEFINE2(settimeofday, struct compat_timeval __user *, tv,
- }
- #endif
- 
--SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
-+
-+#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-+
-+SYSCALL_DEFINE1(adjtimex, struct __kernel_timex __user *, txc_p)
- {
- 	struct __kernel_timex txc;		/* Local copy of parameter */
- 	int ret;
-@@ -278,7 +281,9 @@ SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
- 	return copy_to_user(txc_p, &txc, sizeof(struct __kernel_timex)) ? -EFAULT : ret;
- }
- 
--#ifdef CONFIG_COMPAT
-+#endif
-+
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- 
- COMPAT_SYSCALL_DEFINE1(adjtimex, struct compat_timex __user *, utp)
- {
--- 
-2.17.1
+# cat pread.c
+#include <unistd.h>
+#include <stdlib.h>
+int main(int argc, char **argv) {
+  char buf[0x1000];
+  off_t off = strtoul(argv[1], NULL, 0);
+  pread(0, buf, 0x1000, off);
+}
+# gcc -o pread pread.c
+# strace -e trace=pread64 ./pread 200000000 < /dev/sda1
+pread64(0, "", 4096, 200000000)         = 0
++++ exited with 0 +++
+# strace -e trace=pread64 ./pread 100000 <
+/sys/kernel/debug/x86/tlb_single_page_flush_ceiling
+pread64(0, "", 4096, 100000)            = 0
++++ exited with 0 +++
+# strace -e trace=pread64 ./pread 20000000000 < /dev/dm-2
+pread64(0, "", 4096, 20000000000)       = 0
++++ exited with 0 +++
+
+Do you know of precedent for returning -EINVAL if *ppos is beyond the
+end of the device?
+
+> >
+> >       if (!count)
+> >               return 0;
+> > @@ -246,7 +250,7 @@ static ssize_t mtdchar_write(struct file *file, const char __user *buf, size_t c
+> >
+> >       pr_debug("MTD_write\n");
+> >
+> > -     if (*ppos == mtd->size)
+> > +     if (*ppos >= mtd->size)
+> >               return -ENOSPC;
+> >
+> >       if (*ppos + count > mtd->size)
+>
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
