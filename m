@@ -1,47 +1,65 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH for 4.18 3/5] rseq: uapi: declare rseq_cs field as
- union, update includes
-Date: Fri, 6 Jul 2018 12:56:58 -0700
-Message-ID: <CA+55aFzuxGtPE2NnL9+K4=OQ=-9oAXSqX-mP_QiHpzBz7zrq6A@mail.gmail.com>
-References: <20180705180601.18423-1-mathieu.desnoyers@efficios.com>
- <20180705180601.18423-4-mathieu.desnoyers@efficios.com> <1846432971.1245.1530892973439.JavaMail.zimbra@efficios.com>
- <436937568.1359.1530905019620.JavaMail.zimbra@efficios.com>
- <CA+55aFzz1CC6son0T2nD-Yqhy0_yC5nBer2XSH9kqe5x3N26Ug@mail.gmail.com>
- <1913049637.1366.1530905741745.JavaMail.zimbra@efficios.com> <131696830.1369.1530905931822.JavaMail.zimbra@efficios.com>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: [PATCH v3 0/7] Introduce struct __kernel_timex
+Date: Fri,  6 Jul 2018 22:42:40 -0700
+Message-ID: <20180707054247.19802-1-deepa.kernel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <131696830.1369.1530905931822.JavaMail.zimbra@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King - ARM Linux <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, Peter Anvin <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Christoph Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: tglx@linutronix.de, linux-kernel@vger.kernel.org
+Cc: linux-arch@vger.kernel.org, palmer@sifive.com, arnd@arndb.de, y2038@lists.linaro.org, catalin.marinas@arm.com, linux-alpha@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, linux-riscv@lists.infradead.org, davem@davemloft.net
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 6, 2018 at 12:38 PM Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
->
-> Should I change all 4 bytes __get_user()/__put_user() in kernel/rseq.c
-> for get_user()/put_user() to ensure consistency ?
-
-Probably.
-
-*If* this actually turns out to be somethinig that shows up on
-profiles, it's almost certainly going to be the STAC/CLAC instructions
-("perf report" tends to report them as three one-byte nop's because
-that's how they look before instruction replacement).
-
-And then it's not __get/put_user() that will improve things, but doing a
-
-        user_access_begin();
-
-        .. do unsafe_get/put_user() ..
-
-        user_access_end();
-
-that will improve performance.
-
-But it is *very* seldom useful. We have it in a handful of places in
-the kernel, and the most noticeable one is
-lib/{strnlen,strncpy_from}_user.c
-
-                       Linus
+VGhlIHNlcmllcyBpbnRyb2R1Y2VzIHN0cnVjdCBfX2tlcm5lbF90aW1leCBhcyBhIHN1YnN0aXR1
+dGUgZm9yCnRoZSBub24geTIwMzggc2FmZSBzdHJ1Y3QgdGltZXguCgpUaGUgc2VyaWVzIGlzIGJh
+c2VkIG9uIHRoZSBvcmlnaW5hbCBzZXJpZXMgcG9zdGVkIGJ5IEFybmQgQmVyZ21hbm4KaW4gWzFd
+LgoKVGhlIG92ZXJ2aWV3IG9mIHRoZSBzZXJpZXMgaXMgYXMgYmVsb3c6CjEuIFByZXBhcmUgZm9y
+IHRoZSBjb21wYXQgdGltZXggaW50ZXJmYWNlcyB0byBiZSB1c2VkIHVuY29uZGl0aW9uYWxseS4K
+Mi4gSW50cm9kdWNlIHN0cnVjdCBfX2tlcm5lbF90aW1leC4KMy4gVXNlIHN0cnVjdCBfX2tlcm5l
+bF90aW1leCBpbiBwbGFjZSBvZiBzdHJ1Y3QgdGltZXguCjQuIFN3aXRjaCBzeXNjYWxscyB0byB1
+c2Ugc3RydWN0IF9fa2VybmVsX3RpbWV4LgoKWzFdIGh0dHBzOi8vc291cmNld2FyZS5vcmcvbWwv
+bGliYy1hbHBoYS8yMDE1LTA1L21zZzAwMDcwLmh0bWwKCkNoYW5nZXMgc2luY2UgdjI6CiogVXNl
+IG9ubHkgZ2VuZXJpYyBjb21wYXQuaCBmb3IgcmlzY3YKQ2hhbmdlcyBzaW5jZSB2MToKKiBGaXgg
+cmlzY3YgYXNtL2NvbXBhdC5oIHRvIHBpY2sgdXAgZ2VuZXJpYyBjb21wYXQgdHlwZXMKCkRlZXBh
+IERpbmFtYW5pICg3KToKICBhcm02NDogTWFrZSBiYXNpYyBjb21wYXRfKiB0eXBlcyBhbHdheXMg
+YXZhaWxhYmxlCiAgc3BhcmM6IE1ha2UgdGhyZWFkX2luZm8uaCBhdmFpbGFibGUgZGlyZWN0bHkK
+ICByaXNjdjogRGVsZXRlIGFzbS9jb21wYXQuaAogIHRpbWV4OiBwcmVwYXJlIGNvbXBhdCBoZWxw
+ZXJzIGZvciB5MjAzOCBjaGFuZ2VzCiAgdGltZTogQWRkIHN0cnVjdCBfX2tlcm5lbF90aW1leAog
+IHRpbWV4OiB1c2UgX19rZXJuZWxfdGltZXggaW50ZXJuYWxseQogIHRpbWV4OiBjaGFuZ2Ugc3lz
+Y2FsbHMgdG8gdXNlIHN0cnVjdCBfX2tlcm5lbF90aW1leAoKIGFyY2gvYWxwaGEva2VybmVsL29z
+Zl9zeXMuYyAgICAgfCAgMiArLQogYXJjaC9hcm02NC9pbmNsdWRlL2FzbS9jb21wYXQuaCB8IDIy
+ICsrKystLS0tLQogYXJjaC9yaXNjdi9pbmNsdWRlL2FzbS9LYnVpbGQgICB8ICAxICsKIGFyY2gv
+cmlzY3YvaW5jbHVkZS9hc20vY29tcGF0LmggfCAyOSAtLS0tLS0tLS0tLS0KIGFyY2gvc3BhcmMv
+aW5jbHVkZS9hc20vY29tcGF0LmggfCAgMiArCiBkcml2ZXJzL3B0cC9wdHBfY2xvY2suYyAgICAg
+ICAgIHwgIDIgKy0KIGluY2x1ZGUvYXNtLWdlbmVyaWMvY29tcGF0LmggICAgfCAgOCArKystCiBp
+bmNsdWRlL2xpbnV4L2NvbXBhdC5oICAgICAgICAgIHwgMzMgLS0tLS0tLS0tLS0tLS0KIGluY2x1
+ZGUvbGludXgvY29tcGF0X3RpbWUuaCAgICAgfCAzNCArKysrKysrKysrKysrKwogaW5jbHVkZS9s
+aW51eC9wb3NpeC1jbG9jay5oICAgICB8ICAyICstCiBpbmNsdWRlL2xpbnV4L3N5c2NhbGxzLmgg
+ICAgICAgIHwgIDUgKy0tCiBpbmNsdWRlL2xpbnV4L3RpbWV4LmggICAgICAgICAgIHwgIDkgKysr
+LQogaW5jbHVkZS91YXBpL2xpbnV4L3RpbWV4LmggICAgICB8IDQxICsrKysrKysrKysrKysrKysr
+CiBrZXJuZWwvY29tcGF0LmMgICAgICAgICAgICAgICAgIHwgNjMgLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0KIGtlcm5lbC90aW1lL250cC5jICAgICAgICAgICAgICAgfCAxMiArKy0tLQoga2Vy
+bmVsL3RpbWUvbnRwX2ludGVybmFsLmggICAgICB8ICAyICstCiBrZXJuZWwvdGltZS9wb3NpeC1j
+bG9jay5jICAgICAgIHwgIDIgKy0KIGtlcm5lbC90aW1lL3Bvc2l4LXRpbWVycy5jICAgICAgfCAx
+NCArKy0tLS0KIGtlcm5lbC90aW1lL3Bvc2l4LXRpbWVycy5oICAgICAgfCAgMiArLQoga2VybmVs
+L3RpbWUvdGltZS5jICAgICAgICAgICAgICB8IDgwICsrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKy0tLQoga2VybmVsL3RpbWUvdGltZWtlZXBpbmcuYyAgICAgICB8ICA0ICstCiAyMSBmaWxl
+cyBjaGFuZ2VkLCAxOTkgaW5zZXJ0aW9ucygrKSwgMTcwIGRlbGV0aW9ucygtKQogZGVsZXRlIG1v
+ZGUgMTAwNjQ0IGFyY2gvcmlzY3YvaW5jbHVkZS9hc20vY29tcGF0LmgKCgpiYXNlLWNvbW1pdDog
+NTI2Njc0NTM2MzYwYTRjNTA4ZTg0ZjY3MzE0YzIwMjhlNDVlMWJmMgotLSAKMi4xNy4xCgpDYzog
+Y2F0YWxpbi5tYXJpbmFzQGFybS5jb20KQ2M6IGRhdmVtQGRhdmVtbG9mdC5uZXQKQ2M6IGxpbnV4
+LWFscGhhQHZnZXIua2VybmVsLm9yZwpDYzogbGludXgtYXBpQHZnZXIua2VybmVsLm9yZwpDYzog
+bGludXgtYXJjaEB2Z2VyLmtlcm5lbC5vcmcKQ2M6IGxpbnV4LXJpc2N2QGxpc3RzLmluZnJhZGVh
+ZC5vcmcKQ2M6IG5ldGRldkB2Z2VyLmtlcm5lbC5vcmcKQ2M6IHBhbG1lckBzaWZpdmUuY29tCl9f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxp
+bmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9t
+YWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
