@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 4.18 2/6] rseq: use get_user/put_user rather than __get_user/__put_user
-Date: Sun,  8 Jul 2018 17:03:26 -0400
-Message-ID: <20180708210330.27324-3-mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 4.18 1/6] rseq: use __u64 for rseq_cs fields, validate user inputs
+Date: Sun,  8 Jul 2018 17:03:25 -0400
+Message-ID: <20180708210330.27324-2-mathieu.desnoyers@efficios.com>
 References: <20180708210330.27324-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180708210330.27324-1-mathieu.desnoyers@efficios.com>
@@ -10,107 +10,108 @@ To: Thomas Gleixner <tglx@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-In preparation to use __u64 for the rseq_cs pointer field, 32-bit
-architectures need to read this 64-bit value located in user-space
-addresses.
+Change the rseq ABI so rseq_cs start_ip, post_commit_offset and abort_ip
+fields are seen as 64-bit fields by both 32-bit and 64-bit kernels rather
+that ignoring the 32 upper bits on 32-bit kernels. This ensures we have a
+consistent behavior for a 32-bit binary executed on 32-bit kernels and in
+compat mode on 64-bit kernels.
 
-__get_user is used to read this value, given that its access check has
-already been performed with access_ok() on rseq registration.
+Validating the value of abort_ip field to be below TASK_SIZE ensures the
+kernel don't return to an invalid address when returning to userspace
+after an abort. I don't fully trust each architecture code to consistently
+deal with invalid return addresses.
 
-arm does not implement 8-byte __get_user. Rather than trying to
-improve __get_user on ARM, use get_user/put_user across rseq instead.
+Validating the value of the start_ip and post_commit_offset fields
+prevents overflow on arithmetic performed on those values, used to
+check whether abort_ip is within the rseq critical section.
 
-If those end up showing up in benchmarks, the proper approach would be to
-use user_access_begin() / unsafe_get/put_user() / user_access_end()
-anyway.
+If validation fails, the process is killed with a segmentation fault.
+
+When the signature encountered before abort_ip does not match the expected
+signature, return -EINVAL rather than -EPERM to be consistent with other
+input validation return codes from rseq_get_rseq_cs().
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
 CC: Thomas Gleixner <tglx@linutronix.de>
-Cc: Joel Fernandes <joelaf@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Watson <davejwatson@fb.com>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: Andi Kleen <andi@firstfloor.org>
-Cc: "H . Peter Anvin" <hpa@zytor.com>
-Cc: Chris Lameter <cl@linux.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Andrew Hunter <ahh@google.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Paul Turner <pjt@google.com>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: Josh Triplett <josh@joshtriplett.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ben Maurer <bmaurer@fb.com>
-Cc: linux-api@vger.kernel.org
-CC: linux-arm-kernel@lists.infradead.org
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
 ---
- kernel/rseq.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ include/uapi/linux/rseq.h |  6 +++---
+ kernel/rseq.c             | 14 ++++++++++----
+ 2 files changed, 13 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 16b38c5342f9..2c8463acb50d 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -85,9 +85,9 @@ static int rseq_update_cpu_id(struct task_struct *t)
- {
- 	u32 cpu_id = raw_smp_processor_id();
- 
--	if (__put_user(cpu_id, &t->rseq->cpu_id_start))
-+	if (put_user(cpu_id, &t->rseq->cpu_id_start))
- 		return -EFAULT;
--	if (__put_user(cpu_id, &t->rseq->cpu_id))
-+	if (put_user(cpu_id, &t->rseq->cpu_id))
- 		return -EFAULT;
- 	trace_rseq_update(t);
- 	return 0;
-@@ -100,14 +100,14 @@ static int rseq_reset_rseq_cpu_id(struct task_struct *t)
- 	/*
- 	 * Reset cpu_id_start to its initial state (0).
- 	 */
--	if (__put_user(cpu_id_start, &t->rseq->cpu_id_start))
-+	if (put_user(cpu_id_start, &t->rseq->cpu_id_start))
- 		return -EFAULT;
- 	/*
- 	 * Reset cpu_id to RSEQ_CPU_ID_UNINITIALIZED, so any user coming
- 	 * in after unregistration can figure out that rseq needs to be
- 	 * registered again.
- 	 */
--	if (__put_user(cpu_id, &t->rseq->cpu_id))
-+	if (put_user(cpu_id, &t->rseq->cpu_id))
- 		return -EFAULT;
- 	return 0;
- }
-@@ -120,7 +120,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
- 	u32 sig;
- 	int ret;
- 
--	ret = __get_user(ptr, &t->rseq->rseq_cs);
-+	ret = get_user(ptr, &t->rseq->rseq_cs);
- 	if (ret)
- 		return ret;
- 	if (!ptr) {
-@@ -163,7 +163,7 @@ static int rseq_need_restart(struct task_struct *t, u32 cs_flags)
- 	int ret;
- 
- 	/* Get thread flags. */
--	ret = __get_user(flags, &t->rseq->flags);
-+	ret = get_user(flags, &t->rseq->flags);
- 	if (ret)
- 		return ret;
- 
-@@ -203,7 +203,7 @@ static int clear_rseq_cs(struct task_struct *t)
- 	 *
- 	 * Set rseq_cs to NULL with single-copy atomicity.
- 	 */
--	return __put_user(0UL, &t->rseq->rseq_cs);
-+	return put_user(0UL, &t->rseq->rseq_cs);
- }
+diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+index d620fa43756c..519ad6e176d1 100644
+--- a/include/uapi/linux/rseq.h
++++ b/include/uapi/linux/rseq.h
+@@ -52,10 +52,10 @@ struct rseq_cs {
+ 	__u32 version;
+ 	/* enum rseq_cs_flags */
+ 	__u32 flags;
+-	LINUX_FIELD_u32_u64(start_ip);
++	__u64 start_ip;
+ 	/* Offset from start_ip. */
+-	LINUX_FIELD_u32_u64(post_commit_offset);
+-	LINUX_FIELD_u32_u64(abort_ip);
++	__u64 post_commit_offset;
++	__u64 abort_ip;
+ } __attribute__((aligned(4 * sizeof(__u64))));
  
  /*
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 22b6acf1ad63..16b38c5342f9 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -130,14 +130,20 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 	urseq_cs = (struct rseq_cs __user *)ptr;
+ 	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
+ 		return -EFAULT;
+-	if (rseq_cs->version > 0)
+-		return -EINVAL;
+ 
++	if (rseq_cs->start_ip >= TASK_SIZE ||
++	    rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE ||
++	    rseq_cs->abort_ip >= TASK_SIZE ||
++	    rseq_cs->version > 0)
++		return -EINVAL;
++	/* Check for overflow. */
++	if (rseq_cs->start_ip + rseq_cs->post_commit_offset < rseq_cs->start_ip)
++		return -EINVAL;
+ 	/* Ensure that abort_ip is not in the critical section. */
+ 	if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
+ 		return -EINVAL;
+ 
+-	usig = (u32 __user *)(rseq_cs->abort_ip - sizeof(u32));
++	usig = (u32 __user *)(unsigned long)(rseq_cs->abort_ip - sizeof(u32));
+ 	ret = get_user(sig, usig);
+ 	if (ret)
+ 		return ret;
+@@ -146,7 +152,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
+ 		printk_ratelimited(KERN_WARNING
+ 			"Possible attack attempt. Unexpected rseq signature 0x%x, expecting 0x%x (pid=%d, addr=%p).\n",
+ 			sig, current->rseq_sig, current->pid, usig);
+-		return -EPERM;
++		return -EINVAL;
+ 	}
+ 	return 0;
+ }
 -- 
 2.11.0
