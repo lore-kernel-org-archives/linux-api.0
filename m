@@ -1,26 +1,69 @@
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: [RFC PATCH v2 23/27] mm/mmap: Add IBT bitmap size to address
- space limit check
-Date: Tue, 10 Jul 2018 16:57:39 -0700
-Message-ID: <7cdadb28-a9aa-550b-9e31-30691b64b504@linux.intel.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-24-yu-cheng.yu@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
+Date: Tue, 10 Jul 2018 16:59:34 -0700
+Message-ID: <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net>
+References: <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180710222639.8241-24-yu-cheng.yu@intel.com>
-Content-Language: en-US
+In-Reply-To: <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, jannh@google.com
 List-Id: linux-api@vger.kernel.org
 
-On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
-> The indirect branch tracking legacy bitmap takes a large address
-> space.  This causes may_expand_vm() failure on the address limit
-> check.  For a IBT-enabled task, add the bitmap size to the
-> address limit.
+[cc Jann - you love this stuff]
 
-This appears to require that we set up
-current->thread.cet.ibt_bitmap_size _before_ calling may_expand_vm().
-What keeps the ibt_mmap() itself from hitting the address limit?
+> On Jul 10, 2018, at 3:44 PM, David Howells <dhowells@redhat.com> wrote:
+>=20
+> Provide an fsopen() system call that starts the process of preparing to
+> create a superblock that will then be mountable, using an fd as a context
+> handle.  fsopen() is given the name of the filesystem that will be used:
+>=20
+>    int mfd =3D fsopen(const char *fsname, unsigned int flags);
+
+This is great in principle, but I think you=E2=80=99re seriously playing wit=
+h fire with the API.=20
+
+>=20
+> where flags can be 0 or FSOPEN_CLOEXEC.
+>=20
+> For example:
+>=20
+>    sfd =3D fsopen("ext4", FSOPEN_CLOEXEC);
+>    write(sfd, "s /dev/sdb1"); // note I'm ignoring write's length arg
+
+Imagine some malicious program passes sfd as stdout to a setuid program. Tha=
+t program gets persuaded to write =E2=80=9Cs /etc/shadow=E2=80=9D.  What hap=
+pens?  You=E2=80=99re okay as long as *every single fs* gets it right, but t=
+hat=E2=80=99s asking a lot.
+
+>    write(sfd, "o noatime");
+>    write(sfd, "o acl");
+>    write(sfd, "o user_attr");
+>    write(sfd, "o iversion");
+>    write(sfd, "o ");
+>    write(sfd, "r /my/container"); // root inside the fs
+>    write(sfd, "x create"); // create the superblock
+
+=46rom cursory inspection of a bunch of the code, I think the expectation is=
+ that the actual device access happens in the =E2=80=9Cx=E2=80=9D action. Th=
+is is not okay. You can=E2=80=99t do this kind of thing in a write() handler=
+, unless you somehow make every single access using f_cred, which is a real p=
+ain.
+
+I think the right solution is one of:
+
+(a) Pass a netlink-formatted blob to fsopen() and do the whole thing in one s=
+yscall. I don=E2=80=99t mean using netlink sockets =E2=80=94 just the nlattr=
+ format.  Or you could use a different format. The part that matters is usin=
+g just one syscall to do the whole thing.
+
+(b) Keep the current structure but use a new syscall instead of write().
+
+(c) Keep using write() but literally just buffer the data. Then have a new s=
+yscall to commit it.  In other words, replace =E2=80=9Cx=E2=80=9D with a sys=
+call and call all the fs_context_operations helpers in that context instead o=
+f from write().=
