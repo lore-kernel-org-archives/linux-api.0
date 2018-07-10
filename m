@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 12/27] x86/mm: Shadow stack page fault error checking
-Date: Tue, 10 Jul 2018 15:26:24 -0700
-Message-ID: <20180710222639.8241-13-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 07/27] x86/cet/shstk: Add Kconfig option for user-mode shadow stack
+Date: Tue, 10 Jul 2018 15:26:19 -0700
+Message-ID: <20180710222639.8241-8-yu-cheng.yu@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
@@ -10,59 +10,84 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-If a page fault is triggered by a shadow stack access (e.g.
-call/ret) or shadow stack management instructions (e.g.
-wrussq), then bit[6] of the page fault error code is set.
+Introduce Kconfig option X86_INTEL_SHADOW_STACK_USER.
 
-In access_error(), we check if a shadow stack page fault
-is within a shadow stack memory area.
+An application has shadow stack protection when all the following are
+true:
+
+  (1) The kernel has X86_INTEL_SHADOW_STACK_USER enabled,
+  (2) The running processor supports the shadow stack,
+  (3) The application is built with shadow stack enabled tools & libs
+      and, and at runtime, all dependent shared libs can support shadow
+      stack.
+
+If this kernel config option is enabled, but (2) or (3) above is not
+true, the application runs without the shadow stack protection.
+Existing legacy applications will continue to work without the shadow
+stack protection.
+
+The user-mode shadow stack protection is only implemented for the
+64-bit kernel.  Thirty-two bit applications are supported under the
+compatibility mode.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/traps.h |  2 ++
- arch/x86/mm/fault.c          | 11 +++++++++++
- 2 files changed, 13 insertions(+)
+ arch/x86/Kconfig  | 24 ++++++++++++++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 31 insertions(+)
 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 5196050ff3d5..58ea2f5722e9 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -157,6 +157,7 @@ enum {
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  */
- enum x86_pf_error_code {
- 	X86_PF_PROT	=		1 << 0,
-@@ -165,5 +166,6 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- };
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index 2aafa6ab6103..fcd5739151f9 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1163,6 +1163,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index f1dbb4ee19d7..44af5e1aaa4a 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1917,6 +1917,30 @@ config X86_INTEL_MEMORY_PROTECTION_KEYS
  
-+	/*
-+	 * Verify X86_PF_SHSTK is within a shadow stack VMA.
-+	 * It is always an error if there is a shadow stack
-+	 * fault outside a shadow stack VMA.
-+	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHSTK))
-+			return 1;
-+		return 0;
-+	}
+ 	  If unsure, say y.
+ 
++config X86_INTEL_CET
++	def_bool n
 +
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
++config ARCH_HAS_SHSTK
++	def_bool n
++
++config X86_INTEL_SHADOW_STACK_USER
++	prompt "Intel Shadow Stack for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	select ARCH_HAS_SHSTK
++	---help---
++	  Shadow stack provides hardware protection against program stack
++	  corruption.  Only when all the following are true will an application
++	  have the shadow stack protection: the kernel supports it (i.e. this
++	  feature is enabled), the application is compiled and linked with
++	  shadow stack enabled, and the processor supports this feature.
++	  When the kernel has this configuration enabled, existing non shadow
++	  stack applications will continue to work, but without shadow stack
++	  protection.
++
++	  If unsure, say y.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index a08e82856563..ad1314e5ef65 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -157,6 +157,13 @@ ifdef CONFIG_X86_X32
+ endif
+ export CONFIG_X86_X32_ABI
+ 
++# Check assembler shadow stack suppot
++ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++  ifeq ($(call as-instr, saveprevssp, y),)
++      $(error CONFIG_X86_INTEL_SHADOW_STACK_USER not supported by the assembler)
++  endif
++endif
++
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.17.1
