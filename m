@@ -1,39 +1,53 @@
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: [RFC PATCH v2 15/27] mm/mprotect: Prevent mprotect from changing
- shadow stack
-Date: Tue, 10 Jul 2018 16:10:08 -0700
-Message-ID: <04800c52-1f86-c485-ba7c-2216d8c4966f@linux.intel.com>
+From: Nadav Amit <nadav.amit@gmail.com>
+Subject: Re: [RFC PATCH v2 11/27] x86/mm: Modify ptep_set_wrprotect and
+ pmdp_set_wrprotect for _PAGE_DIRTY_SW
+Date: Tue, 10 Jul 2018 19:23:04 -0400
+Message-ID: <DDFF4AF4-51D2-44F5-8B63-E8454F712EC6@gmail.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-16-yu-cheng.yu@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+ <20180710222639.8241-12-yu-cheng.yu@intel.com>
+ <fbf45667-5388-44a6-1f22-07bcc03e1804@linux.intel.com>
+Mime-Version: 1.0 (Mac OS X Mail 11.4 \(3445.8.2\))
+Content-Type: text/plain;
+        charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180710222639.8241-16-yu-cheng.yu@intel.com>
-Content-Language: en-US
+In-Reply-To: <fbf45667-5388-44a6-1f22-07bcc03e1804@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
+To: Dave Hansen <dave.hansen@linux.intel.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+Cc: X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+at 6:44 PM, Dave Hansen <dave.hansen@linux.intel.com> wrote:
 
-This still needs a changelog, even if you think it's simple.
-> --- a/mm/mprotect.c
-> +++ b/mm/mprotect.c
-> @@ -446,6 +446,15 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
->  	error = -ENOMEM;
->  	if (!vma)
->  		goto out;
-> +
-> +	/*
-> +	 * Do not allow changing shadow stack memory.
-> +	 */
-> +	if (vma->vm_flags & VM_SHSTK) {
-> +		error = -EINVAL;
-> +		goto out;
-> +	}
-> +
+> On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
+>> +	/*
+>> +	 * On platforms before CET, other threads could race to
+>> +	 * create a RO and _PAGE_DIRTY_HW PMD again.  However,
+>> +	 * on CET platforms, this is safe without a TLB flush.
+>> +	 */
+> 
+> If I didn't work for Intel, I'd wonder what the heck CET is and what the
+> heck it has to do with _PAGE_DIRTY_HW.  I think we need a better comment
+> than this.  How about:
+> 
+> 	Some processors can _start_ a write, but end up seeing
+> 	a read-only PTE by the time they get to getting the
+> 	Dirty bit.  In this case, they will set the Dirty bit,
+> 	leaving a read-only, Dirty PTE which looks like a Shadow
+> 	Stack PTE.
+> 
+> 	However, this behavior has been improved and will *not* occur on
+> 	processors supporting Shadow Stacks.  Without this guarantee, a
+> 	transition to a non-present PTE and flush the TLB would be
+> 	needed.
 
-I think this is a _bit_ draconian.  Why shouldn't we be able to use
-protection keys with a shadow stack?  Or, set it to PROT_NONE?
+Interesting. Does that regard the knights landing bug or something more
+general?
+
+Will the write succeed or trigger a page-fault in this case?
+
+[ I know it is not related to the patch, but I would appreciate if you share
+your knowledge ]
+
+Regards,
+Nadav
