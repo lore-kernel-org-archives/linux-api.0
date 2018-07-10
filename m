@@ -1,53 +1,40 @@
-From: Nadav Amit <nadav.amit@gmail.com>
-Subject: Re: [RFC PATCH v2 11/27] x86/mm: Modify ptep_set_wrprotect and
- pmdp_set_wrprotect for _PAGE_DIRTY_SW
-Date: Tue, 10 Jul 2018 19:23:04 -0400
-Message-ID: <DDFF4AF4-51D2-44F5-8B63-E8454F712EC6@gmail.com>
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [RFC PATCH v2 12/27] x86/mm: Shadow stack page fault error
+ checking
+Date: Tue, 10 Jul 2018 16:24:41 -0700
+Message-ID: <175662bd-f979-ac5f-b78e-480608bdbf55@linux.intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-12-yu-cheng.yu@intel.com>
- <fbf45667-5388-44a6-1f22-07bcc03e1804@linux.intel.com>
-Mime-Version: 1.0 (Mac OS X Mail 11.4 \(3445.8.2\))
-Content-Type: text/plain;
-        charset=us-ascii
-Content-Transfer-Encoding: 7bit
+ <20180710222639.8241-13-yu-cheng.yu@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fbf45667-5388-44a6-1f22-07bcc03e1804@linux.intel.com>
+In-Reply-To: <20180710222639.8241-13-yu-cheng.yu@intel.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
-Cc: X86 ML <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
 List-Id: linux-api@vger.kernel.org
 
-at 6:44 PM, Dave Hansen <dave.hansen@linux.intel.com> wrote:
+On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
+> +	/*
+> +	 * Verify X86_PF_SHSTK is within a shadow stack VMA.
+> +	 * It is always an error if there is a shadow stack
+> +	 * fault outside a shadow stack VMA.
+> +	 */
+> +	if (error_code & X86_PF_SHSTK) {
+> +		if (!(vma->vm_flags & VM_SHSTK))
+> +			return 1;
+> +		return 0;
+> +	}
 
-> On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
->> +	/*
->> +	 * On platforms before CET, other threads could race to
->> +	 * create a RO and _PAGE_DIRTY_HW PMD again.  However,
->> +	 * on CET platforms, this is safe without a TLB flush.
->> +	 */
-> 
-> If I didn't work for Intel, I'd wonder what the heck CET is and what the
-> heck it has to do with _PAGE_DIRTY_HW.  I think we need a better comment
-> than this.  How about:
-> 
-> 	Some processors can _start_ a write, but end up seeing
-> 	a read-only PTE by the time they get to getting the
-> 	Dirty bit.  In this case, they will set the Dirty bit,
-> 	leaving a read-only, Dirty PTE which looks like a Shadow
-> 	Stack PTE.
-> 
-> 	However, this behavior has been improved and will *not* occur on
-> 	processors supporting Shadow Stacks.  Without this guarantee, a
-> 	transition to a non-present PTE and flush the TLB would be
-> 	needed.
+It turns out that a X86_PF_SHSTK just means that the processor faulted
+while doing access to something it thinks should be a shadow-stack
+virtual address.
 
-Interesting. Does that regard the knights landing bug or something more
-general?
+But, we *can* have faults on shadow stack accesses for non-shadow-stack
+reasons.
 
-Will the write succeed or trigger a page-fault in this case?
-
-[ I know it is not related to the patch, but I would appreciate if you share
-your knowledge ]
-
-Regards,
-Nadav
+I think you need to remove the 'return 0' and let it fall through to the
+other access checks that we might be failing.  If it's a shadow stack
+access, it has to be a shadow stack VMA.  But, a shadow-stack access
+fault to a shadow stack VMA isn't _necessarily_ OK.
