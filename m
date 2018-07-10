@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 08/27] mm: Introduce VM_SHSTK for shadow stack memory
-Date: Tue, 10 Jul 2018 15:26:20 -0700
-Message-ID: <20180710222639.8241-9-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 16/27] mm: Modify can_follow_write_pte/pmd for shadow stack
+Date: Tue, 10 Jul 2018 15:26:28 -0700
+Message-ID: <20180710222639.8241-17-yu-cheng.yu@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
@@ -10,70 +10,91 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-VM_SHSTK indicates a shadow stack memory area.
+There are three possible shadow stack PTE settings:
 
-A shadow stack PTE must be read-only and dirty.  For non shadow
-stack, we use a spare bit of the 64-bit PTE for dirty.  The PTE
-changes are in the next patch.
+  Normal SHSTK PTE: (R/O + DIRTY_HW)
+  SHSTK PTE COW'ed: (R/O + DIRTY_HW)
+  SHSTK PTE shared as R/O data: (R/O + DIRTY_SW)
 
-There is no more spare bit in the 32-bit PTE (except for PAE) and
-the shadow stack is not implemented for the 32-bit kernel.
+Update can_follow_write_pte/pmd for the shadow stack.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- include/linux/mm.h | 8 ++++++++
- mm/internal.h      | 8 ++++++++
- 2 files changed, 16 insertions(+)
+ mm/gup.c         | 11 ++++++++---
+ mm/huge_memory.c | 10 +++++++---
+ 2 files changed, 15 insertions(+), 6 deletions(-)
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index a0fbb9ffe380..d7b338b41593 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -222,11 +222,13 @@ extern unsigned int kobjsize(const void *objp);
- #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
-+#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
- #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
- #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
- #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
- #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
-+#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
- #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
- 
- #ifdef CONFIG_ARCH_HAS_PKEYS
-@@ -264,6 +266,12 @@ extern unsigned int kobjsize(const void *objp);
- # define VM_MPX		VM_NONE
- #endif
- 
-+#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-+# define VM_SHSTK	VM_HIGH_ARCH_5
-+#else
-+# define VM_SHSTK	VM_NONE
-+#endif
+diff --git a/mm/gup.c b/mm/gup.c
+index b70d7ba7cc13..00171ee847af 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -64,10 +64,13 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
+  * FOLL_FORCE can write to even unwritable pte's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
++static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
++					bool shstk)
+ {
++	bool pte_cowed = shstk ? is_shstk_pte(pte):pte_dirty(pte);
 +
- #ifndef VM_GROWSUP
- # define VM_GROWSUP	VM_NONE
- #endif
-diff --git a/mm/internal.h b/mm/internal.h
-index 9e3654d70289..b09c29762d85 100644
---- a/mm/internal.h
-+++ b/mm/internal.h
-@@ -280,6 +280,14 @@ static inline bool is_data_mapping(vm_flags_t flags)
- 	return (flags & (VM_WRITE | VM_SHARED | VM_STACK)) == VM_WRITE;
+ 	return pte_write(pte) ||
+-		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
++		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_cowed);
  }
  
-+/*
-+ * Shadow stack area
-+ */
-+static inline bool is_shstk_mapping(vm_flags_t flags)
-+{
-+	return (flags & VM_SHSTK);
-+}
+ static struct page *follow_page_pte(struct vm_area_struct *vma,
+@@ -78,7 +81,9 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
+ 	struct page *page;
+ 	spinlock_t *ptl;
+ 	pte_t *ptep, pte;
++	bool shstk;
+ 
++	shstk = is_shstk_mapping(vma->vm_flags);
+ retry:
+ 	if (unlikely(pmd_bad(*pmd)))
+ 		return no_page_table(vma, flags);
+@@ -105,7 +110,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
+ 	}
+ 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
+ 		goto no_page;
+-	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
++	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags, shstk)) {
+ 		pte_unmap_unlock(ptep, ptl);
+ 		return NULL;
+ 	}
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 7f3e11d3b64a..db4c689a960a 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1389,10 +1389,13 @@ int do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+  * FOLL_FORCE can write to even unwritable pmd's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
++static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags,
++					bool shstk)
+ {
++	bool pmd_cowed = shstk ? is_shstk_pmd(pmd):pmd_dirty(pmd);
 +
- /* mm/util.c */
- void __vma_link_list(struct mm_struct *mm, struct vm_area_struct *vma,
- 		struct vm_area_struct *prev, struct rb_node *rb_parent);
+ 	return pmd_write(pmd) ||
+-	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
++	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_cowed);
+ }
+ 
+ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+@@ -1402,10 +1405,11 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
+ 	struct page *page = NULL;
++	bool shstk = is_shstk_mapping(vma->vm_flags);
+ 
+ 	assert_spin_locked(pmd_lockptr(mm, pmd));
+ 
+-	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
++	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags, shstk))
+ 		goto out;
+ 
+ 	/* Avoid dumping huge zero page */
 -- 
 2.17.1
