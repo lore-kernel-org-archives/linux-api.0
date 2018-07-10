@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 21/27] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-Date: Tue, 10 Jul 2018 15:26:33 -0700
-Message-ID: <20180710222639.8241-22-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 08/27] mm: Introduce VM_SHSTK for shadow stack memory
+Date: Tue, 10 Jul 2018 15:26:20 -0700
+Message-ID: <20180710222639.8241-9-yu-cheng.yu@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
@@ -10,57 +10,70 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The user-mode indirect branch tracking support is done mostly by
-GCC to insert ENDBR64/ENDBR32 instructions at branch targets.
-The kernel provides CPUID enumeration, feature MSR setup and
-the allocation of legacy bitmap.
+VM_SHSTK indicates a shadow stack memory area.
+
+A shadow stack PTE must be read-only and dirty.  For non shadow
+stack, we use a spare bit of the 64-bit PTE for dirty.  The PTE
+changes are in the next patch.
+
+There is no more spare bit in the 32-bit PTE (except for PAE) and
+the shadow stack is not implemented for the 32-bit kernel.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig  | 12 ++++++++++++
- arch/x86/Makefile |  7 +++++++
- 2 files changed, 19 insertions(+)
+ include/linux/mm.h | 8 ++++++++
+ mm/internal.h      | 8 ++++++++
+ 2 files changed, 16 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 768343768643..01de9743efe6 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1945,6 +1945,18 @@ config X86_INTEL_SHADOW_STACK_USER
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index a0fbb9ffe380..d7b338b41593 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -222,11 +222,13 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
++#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
+ #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
+ #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+ #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+ #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
++#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
+ #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
  
- 	  If unsure, say y.
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+@@ -264,6 +266,12 @@ extern unsigned int kobjsize(const void *objp);
+ # define VM_MPX		VM_NONE
+ #endif
  
-+config X86_INTEL_BRANCH_TRACKING_USER
-+	prompt "Intel Indirect Branch Tracking for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	select X86_INTEL_CET
-+	select ARCH_HAS_PROGRAM_PROPERTIES
-+	---help---
-+	  Indirect Branch Tracking provides hardware protection against return-/jmp-
-+	  oriented programing attacks.
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++# define VM_SHSTK	VM_HIGH_ARCH_5
++#else
++# define VM_SHSTK	VM_NONE
++#endif
 +
-+	  If unsure, say y
-+
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index ad1314e5ef65..a7913de34866 100644
---- a/arch/x86/Makefile
-+++ b/arch/x86/Makefile
-@@ -164,6 +164,13 @@ ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-   endif
- endif
+ #ifndef VM_GROWSUP
+ # define VM_GROWSUP	VM_NONE
+ #endif
+diff --git a/mm/internal.h b/mm/internal.h
+index 9e3654d70289..b09c29762d85 100644
+--- a/mm/internal.h
++++ b/mm/internal.h
+@@ -280,6 +280,14 @@ static inline bool is_data_mapping(vm_flags_t flags)
+ 	return (flags & (VM_WRITE | VM_SHARED | VM_STACK)) == VM_WRITE;
+ }
  
-+# Check compiler ibt support
-+ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+  ifeq ($(call cc-option-yn, -fcf-protection=branch), n)
-+      $(error CONFIG_X86_INTEL_BRANCH_TRACKING_USER not supported by compiler)
-+  endif
-+endif
++/*
++ * Shadow stack area
++ */
++static inline bool is_shstk_mapping(vm_flags_t flags)
++{
++	return (flags & VM_SHSTK);
++}
 +
- #
- # If the function graph tracer is used with mcount instead of fentry,
- # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
+ /* mm/util.c */
+ void __vma_link_list(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		struct vm_area_struct *prev, struct rb_node *rb_parent);
 -- 
 2.17.1
