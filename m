@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 13/27] mm: Handle shadow stack page fault
-Date: Tue, 10 Jul 2018 15:26:25 -0700
-Message-ID: <20180710222639.8241-14-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
+Date: Tue, 10 Jul 2018 15:26:30 -0700
+Message-ID: <20180710222639.8241-19-yu-cheng.yu@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
@@ -10,85 +10,135 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-When a task does fork(), its shadow stack must be duplicated for
-the child.  However, the child may not actually use all pages of
-of the copied shadow stack.  This patch implements a flow that
-is similar to copy-on-write of an anonymous page, but for shadow
-stack memory.  A shadow stack PTE needs to be RO and dirty.  We
-use this dirty bit requirement to effect the copying of shadow
-stack pages.
+WRUSS is a new kernel-mode instruction but writes directly
+to user shadow stack memory.  This is used to construct
+a return address on the shadow stack for the signal
+handler.
 
-In copy_one_pte(), we clear the dirty bit from the shadow stack
-PTE.  On the next shadow stack access to the PTE, a page fault
-occurs.  At that time, we then copy/re-use the page and fix the
-PTE.
+This instruction can fault if the user shadow stack is
+invalid shadow stack memory.  In that case, the kernel does
+fixup.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- mm/memory.c | 30 ++++++++++++++++++++++++++++--
- 1 file changed, 28 insertions(+), 2 deletions(-)
+ arch/x86/include/asm/special_insns.h          | 45 +++++++++++++++++++
+ arch/x86/lib/x86-opcode-map.txt               |  2 +-
+ arch/x86/mm/fault.c                           | 13 +++++-
+ tools/objtool/arch/x86/lib/x86-opcode-map.txt |  2 +-
+ 4 files changed, 59 insertions(+), 3 deletions(-)
 
-diff --git a/mm/memory.c b/mm/memory.c
-index 7206a634270b..a2695dbc0418 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -2453,7 +2453,13 @@ static inline void wp_page_reuse(struct vm_fault *vmf)
+diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
+index 317fc59b512c..c69d8d6b457f 100644
+--- a/arch/x86/include/asm/special_insns.h
++++ b/arch/x86/include/asm/special_insns.h
+@@ -237,6 +237,51 @@ static inline void clwb(volatile void *__p)
+ 		: [pax] "a" (p));
+ }
  
- 	flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
- 	entry = pte_mkyoung(vmf->orig_pte);
--	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++#ifdef CONFIG_X86_INTEL_CET
 +
-+	if (is_shstk_mapping(vma->vm_flags))
-+		entry = pte_mkdirty_shstk(entry);
-+	else
-+		entry = pte_mkdirty(entry);
++#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	int err;
 +
-+	entry = maybe_mkwrite(entry, vma);
- 	if (ptep_set_access_flags(vma, vmf->address, vmf->pte, entry, 1))
- 		update_mmu_cache(vma, vmf->address, vmf->pte);
- 	pte_unmap_unlock(vmf->pte, vmf->ptl);
-@@ -2526,7 +2532,11 @@ static int wp_page_copy(struct vm_fault *vmf)
- 		}
- 		flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
- 		entry = mk_pte(new_page, vma->vm_page_prot);
--		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+		if (is_shstk_mapping(vma->vm_flags))
-+			entry = pte_mkdirty_shstk(entry);
-+		else
-+			entry = pte_mkdirty(entry);
-+		entry = maybe_mkwrite(entry, vma);
++	asm volatile("1: wrussd %[val], (%[addr])\n"
++		     "xor %[err], %[err]\n"
++		     "2:\n"
++		     ".section .fixup,\"ax\"\n"
++		     "3: mov $-1, %[err]; jmp 2b\n"
++		     ".previous\n"
++		     _ASM_EXTABLE(1b, 3b)
++		     : [err] "=a" (err)
++		     : [val] "S" (val), [addr] "D" (addr));
++
++	return err;
++}
++#else
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	BUG();
++	return 0;
++}
++#endif
++
++static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
++{
++	int err = 0;
++
++	asm volatile("1: wrussq %[val], (%[addr])\n"
++		     "xor %[err], %[err]\n"
++		     "2:\n"
++		     ".section .fixup,\"ax\"\n"
++		     "3: mov $-1, %[err]; jmp 2b\n"
++		     ".previous\n"
++		     _ASM_EXTABLE(1b, 3b)
++		     : [err] "=a" (err)
++		     : [val] "S" (val), [addr] "D" (addr));
++
++	return err;
++}
++#endif /* CONFIG_X86_INTEL_CET */
++
+ #define nop() asm volatile ("nop")
+ 
+ 
+diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
+index e0b85930dd77..72bb7c48a7df 100644
+--- a/arch/x86/lib/x86-opcode-map.txt
++++ b/arch/x86/lib/x86-opcode-map.txt
+@@ -789,7 +789,7 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
+ f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
+ f2: ANDN Gy,By,Ey (v)
+ f3: Grp17 (1A)
+-f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
++f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
+ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
+ f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+ EndTable
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index fcd5739151f9..92f178b8b598 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -641,6 +641,17 @@ static int is_f00f_bug(struct pt_regs *regs, unsigned long address)
+ 	return 0;
+ }
+ 
++/*
++ * WRUSS is a kernel instrcution and but writes to user
++ * shadow stack memory.  When a fault occurs, both
++ * X86_PF_USER and X86_PF_SHSTK are set.
++ */
++static int is_wruss(struct pt_regs *regs, unsigned long error_code)
++{
++	return (((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
++		(X86_PF_USER | X86_PF_SHSTK)) && !user_mode(regs));
++}
++
+ static void
+ show_fault_oops(struct pt_regs *regs, unsigned long error_code,
+ 		unsigned long address)
+@@ -848,7 +859,7 @@ __bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
+ 	struct task_struct *tsk = current;
+ 
+ 	/* User mode accesses just cause a SIGSEGV */
+-	if (error_code & X86_PF_USER) {
++	if ((error_code & X86_PF_USER) && !is_wruss(regs, error_code)) {
  		/*
- 		 * Clear the pte entry and flush it first, before updating the
- 		 * pte with the new entry. This will avoid a race condition
-@@ -3201,6 +3211,14 @@ static int do_anonymous_page(struct vm_fault *vmf)
- 	mem_cgroup_commit_charge(page, memcg, false, false);
- 	lru_cache_add_active_or_unevictable(page, vma);
- setpte:
-+	/*
-+	 * If this is within a shadow stack mapping, mark
-+	 * the PTE dirty.  We don't use pte_mkdirty(),
-+	 * because the PTE must have _PAGE_DIRTY_HW set.
-+	 */
-+	if (is_shstk_mapping(vma->vm_flags))
-+		entry = pte_mkdirty_shstk(entry);
-+
- 	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, entry);
- 
- 	/* No need to invalidate - it was non-present before */
-@@ -3983,6 +4001,14 @@ static int handle_pte_fault(struct vm_fault *vmf)
- 	entry = vmf->orig_pte;
- 	if (unlikely(!pte_same(*vmf->pte, entry)))
- 		goto unlock;
-+
-+	/*
-+	 * Shadow stack PTEs are copy-on-access, so do_wp_page()
-+	 * handling on them no matter if we have write fault or not.
-+	 */
-+	if (is_shstk_mapping(vmf->vma->vm_flags))
-+		return do_wp_page(vmf);
-+
- 	if (vmf->flags & FAULT_FLAG_WRITE) {
- 		if (!pte_write(entry))
- 			return do_wp_page(vmf);
+ 		 * It's possible to have interrupts off here:
+ 		 */
+diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+index e0b85930dd77..72bb7c48a7df 100644
+--- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
++++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+@@ -789,7 +789,7 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
+ f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
+ f2: ANDN Gy,By,Ey (v)
+ f3: Grp17 (1A)
+-f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
++f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
+ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
+ f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+ EndTable
 -- 
 2.17.1
