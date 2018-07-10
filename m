@@ -1,138 +1,86 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 00/27] Control Flow Enforcement (CET)
-Date: Tue, 10 Jul 2018 15:26:12 -0700
-Message-ID: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 14/27] mm: Handle THP/HugeTLB shadow stack page fault
+Date: Tue, 10 Jul 2018 15:26:26 -0700
+Message-ID: <20180710222639.8241-15-yu-cheng.yu@intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The first version of CET patches were divided into four series.
-They can be found in the following links.
+This patch implements THP shadow stack memory copying in the same
+way as the previous patch for regular PTE.
 
-  https://lkml.org/lkml/2018/6/7/795
-  https://lkml.org/lkml/2018/6/7/782
-  https://lkml.org/lkml/2018/6/7/771
-  https://lkml.org/lkml/2018/6/7/739
+In copy_huge_pmd(), we clear the dirty bit from the PMD.  On the
+next shadow stack access to the PMD, a page fault occurs.  At
+that time, the page is copied/re-used and the PMD is fixed.
 
-Summary of changes in v2:
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ mm/huge_memory.c | 8 ++++++++
+ mm/memory.c      | 8 +++++++-
+ 2 files changed, 15 insertions(+), 1 deletion(-)
 
-  Small fixes in the XSAVES patches.
-  Improve: Documentation/x86/intel_cet.txt.
-  Remove TLB flushing from ptep/pmdp_set_wrprotect for SHSTK.
-  Use shadow stack restore token for signals; save SHSTK pointer after FPU.
-  Rewrite ELF header parsing.
-  Backward compatibility is now handled from GLIBC tunables.
-  Add a new patch to can_follow_write_pte/pmd, for SHSTK.
-  Remove blocking of mremap/madvice/munmap.
-  Add Makefile checking CET support of assembler/compiler.
-
-H.J. Lu (1):
-  x86: Insert endbr32/endbr64 to vDSO
-
-Yu-cheng Yu (26):
-  x86/cpufeatures: Add CPUIDs for Control-flow Enforcement Technology
-    (CET)
-  x86/fpu/xstate: Change some names to separate XSAVES system and user
-    states
-  x86/fpu/xstate: Enable XSAVES system states
-  x86/fpu/xstate: Add XSAVES system states for shadow stack
-  Documentation/x86: Add CET description
-  x86/cet: Control protection exception handler
-  x86/cet/shstk: Add Kconfig option for user-mode shadow stack
-  mm: Introduce VM_SHSTK for shadow stack memory
-  x86/mm: Change _PAGE_DIRTY to _PAGE_DIRTY_HW
-  x86/mm: Introduce _PAGE_DIRTY_SW
-  x86/mm: Modify ptep_set_wrprotect and pmdp_set_wrprotect for
-    _PAGE_DIRTY_SW
-  x86/mm: Shadow stack page fault error checking
-  mm: Handle shadow stack page fault
-  mm: Handle THP/HugeTLB shadow stack page fault
-  mm/mprotect: Prevent mprotect from changing shadow stack
-  mm: Modify can_follow_write_pte/pmd for shadow stack
-  x86/cet/shstk: User-mode shadow stack support
-  x86/cet/shstk: Introduce WRUSS instruction
-  x86/cet/shstk: Signal handling for shadow stack
-  x86/cet/shstk: ELF header parsing of CET
-  x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-  x86/cet/ibt: User-mode indirect branch tracking support
-  mm/mmap: Add IBT bitmap size to address space limit check
-  x86/cet: Add PTRACE interface for CET
-  x86/cet/shstk: Handle thread shadow stack
-  x86/cet: Add arch_prctl functions for CET
-
- .../admin-guide/kernel-parameters.txt         |   6 +
- Documentation/x86/intel_cet.txt               | 250 ++++++++++++
- arch/x86/Kconfig                              |  40 ++
- arch/x86/Makefile                             |  14 +
- arch/x86/entry/entry_64.S                     |   2 +-
- arch/x86/entry/vdso/.gitignore                |   4 +
- arch/x86/entry/vdso/Makefile                  |  12 +-
- arch/x86/entry/vdso/vdso-layout.lds.S         |   1 +
- arch/x86/ia32/ia32_signal.c                   |  13 +
- arch/x86/include/asm/cet.h                    |  50 +++
- arch/x86/include/asm/cpufeatures.h            |   2 +
- arch/x86/include/asm/disabled-features.h      |  16 +-
- arch/x86/include/asm/elf.h                    |   5 +
- arch/x86/include/asm/fpu/internal.h           |   6 +-
- arch/x86/include/asm/fpu/regset.h             |   7 +-
- arch/x86/include/asm/fpu/types.h              |  22 +
- arch/x86/include/asm/fpu/xstate.h             |  31 +-
- arch/x86/include/asm/mmu_context.h            |   3 +
- arch/x86/include/asm/msr-index.h              |  14 +
- arch/x86/include/asm/pgtable.h                | 135 ++++++-
- arch/x86/include/asm/pgtable_types.h          |  31 +-
- arch/x86/include/asm/processor.h              |   5 +
- arch/x86/include/asm/sighandling.h            |   5 +
- arch/x86/include/asm/special_insns.h          |  45 +++
- arch/x86/include/asm/traps.h                  |   5 +
- arch/x86/include/uapi/asm/elf_property.h      |  16 +
- arch/x86/include/uapi/asm/prctl.h             |   6 +
- arch/x86/include/uapi/asm/processor-flags.h   |   2 +
- arch/x86/include/uapi/asm/resource.h          |   5 +
- arch/x86/include/uapi/asm/sigcontext.h        |  17 +
- arch/x86/kernel/Makefile                      |   4 +
- arch/x86/kernel/cet.c                         | 375 ++++++++++++++++++
- arch/x86/kernel/cet_prctl.c                   | 141 +++++++
- arch/x86/kernel/cpu/common.c                  |  42 ++
- arch/x86/kernel/cpu/scattered.c               |   1 +
- arch/x86/kernel/elf.c                         | 280 +++++++++++++
- arch/x86/kernel/fpu/core.c                    |  11 +-
- arch/x86/kernel/fpu/init.c                    |  10 -
- arch/x86/kernel/fpu/regset.c                  |  41 ++
- arch/x86/kernel/fpu/signal.c                  |   6 +-
- arch/x86/kernel/fpu/xstate.c                  | 152 ++++---
- arch/x86/kernel/idt.c                         |   4 +
- arch/x86/kernel/process.c                     |  10 +
- arch/x86/kernel/process_64.c                  |   7 +
- arch/x86/kernel/ptrace.c                      |  16 +
- arch/x86/kernel/relocate_kernel_64.S          |   2 +-
- arch/x86/kernel/signal.c                      |  96 +++++
- arch/x86/kernel/traps.c                       |  58 +++
- arch/x86/kvm/vmx.c                            |   2 +-
- arch/x86/lib/x86-opcode-map.txt               |   2 +-
- arch/x86/mm/fault.c                           |  24 +-
- fs/binfmt_elf.c                               |  16 +
- fs/proc/task_mmu.c                            |   3 +
- include/asm-generic/pgtable.h                 |  21 +
- include/linux/mm.h                            |   8 +
- include/uapi/asm-generic/resource.h           |   3 +
- include/uapi/linux/elf.h                      |   2 +
- mm/gup.c                                      |  11 +-
- mm/huge_memory.c                              |  18 +-
- mm/internal.h                                 |   8 +
- mm/memory.c                                   |  38 +-
- mm/mmap.c                                     |  12 +-
- mm/mprotect.c                                 |   9 +
- tools/objtool/arch/x86/lib/x86-opcode-map.txt |   2 +-
- 64 files changed, 2070 insertions(+), 135 deletions(-)
- create mode 100644 Documentation/x86/intel_cet.txt
- create mode 100644 arch/x86/include/asm/cet.h
- create mode 100644 arch/x86/include/uapi/asm/elf_property.h
- create mode 100644 arch/x86/kernel/cet.c
- create mode 100644 arch/x86/kernel/cet_prctl.c
- create mode 100644 arch/x86/kernel/elf.c
-
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 1cd7c1a57a14..7f3e11d3b64a 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -597,6 +597,8 @@ static int __do_huge_pmd_anonymous_page(struct vm_fault *vmf, struct page *page,
+ 
+ 		entry = mk_huge_pmd(page, vma->vm_page_prot);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
++		if (is_shstk_mapping(vma->vm_flags))
++			entry = pmd_mkdirty_shstk(entry);
+ 		page_add_new_anon_rmap(page, vma, haddr, true);
+ 		mem_cgroup_commit_charge(page, memcg, false, true);
+ 		lru_cache_add_active_or_unevictable(page, vma);
+@@ -1193,6 +1195,8 @@ static int do_huge_pmd_wp_page_fallback(struct vm_fault *vmf, pmd_t orig_pmd,
+ 		pte_t entry;
+ 		entry = mk_pte(pages[i], vma->vm_page_prot);
+ 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++		if (is_shstk_mapping(vma->vm_flags))
++			entry = pte_mkdirty_shstk(entry);
+ 		memcg = (void *)page_private(pages[i]);
+ 		set_page_private(pages[i], 0);
+ 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
+@@ -1277,6 +1281,8 @@ int do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+ 		pmd_t entry;
+ 		entry = pmd_mkyoung(orig_pmd);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
++		if (is_shstk_mapping(vma->vm_flags))
++			entry = pmd_mkdirty_shstk(entry);
+ 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
+ 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
+ 		ret |= VM_FAULT_WRITE;
+@@ -1347,6 +1353,8 @@ int do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+ 		pmd_t entry;
+ 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
++		if (is_shstk_mapping(vma->vm_flags))
++			entry = pmd_mkdirty_shstk(entry);
+ 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
+ 		page_add_new_anon_rmap(new_page, vma, haddr, true);
+ 		mem_cgroup_commit_charge(new_page, memcg, false, true);
+diff --git a/mm/memory.c b/mm/memory.c
+index a2695dbc0418..f7c46d61eaea 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -4108,7 +4108,13 @@ static int __handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
+ 			if (pmd_protnone(orig_pmd) && vma_is_accessible(vma))
+ 				return do_huge_pmd_numa_page(&vmf, orig_pmd);
+ 
+-			if (dirty && !pmd_write(orig_pmd)) {
++			/*
++			 * Shadow stack trans huge PMDs are copy-on-access,
++			 * so wp_huge_pmd() on them no mater if we have a
++			 * write fault or not.
++			 */
++			if (is_shstk_mapping(vma->vm_flags) ||
++			    (dirty && !pmd_write(orig_pmd))) {
+ 				ret = wp_huge_pmd(&vmf, orig_pmd);
+ 				if (!(ret & VM_FAULT_FALLBACK))
+ 					return ret;
 -- 
 2.17.1
