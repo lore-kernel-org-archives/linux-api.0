@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 14/27] mm: Handle THP/HugeTLB shadow stack page fault
-Date: Tue, 10 Jul 2018 15:26:26 -0700
-Message-ID: <20180710222639.8241-15-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 13/27] mm: Handle shadow stack page fault
+Date: Tue, 10 Jul 2018 15:26:25 -0700
+Message-ID: <20180710222639.8241-14-yu-cheng.yu@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
@@ -10,77 +10,85 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch implements THP shadow stack memory copying in the same
-way as the previous patch for regular PTE.
+When a task does fork(), its shadow stack must be duplicated for
+the child.  However, the child may not actually use all pages of
+of the copied shadow stack.  This patch implements a flow that
+is similar to copy-on-write of an anonymous page, but for shadow
+stack memory.  A shadow stack PTE needs to be RO and dirty.  We
+use this dirty bit requirement to effect the copying of shadow
+stack pages.
 
-In copy_huge_pmd(), we clear the dirty bit from the PMD.  On the
-next shadow stack access to the PMD, a page fault occurs.  At
-that time, the page is copied/re-used and the PMD is fixed.
+In copy_one_pte(), we clear the dirty bit from the shadow stack
+PTE.  On the next shadow stack access to the PTE, a page fault
+occurs.  At that time, we then copy/re-use the page and fix the
+PTE.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- mm/huge_memory.c | 8 ++++++++
- mm/memory.c      | 8 +++++++-
- 2 files changed, 15 insertions(+), 1 deletion(-)
+ mm/memory.c | 30 ++++++++++++++++++++++++++++--
+ 1 file changed, 28 insertions(+), 2 deletions(-)
 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 1cd7c1a57a14..7f3e11d3b64a 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -597,6 +597,8 @@ static int __do_huge_pmd_anonymous_page(struct vm_fault *vmf, struct page *page,
- 
- 		entry = mk_huge_pmd(page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		if (is_shstk_mapping(vma->vm_flags))
-+			entry = pmd_mkdirty_shstk(entry);
- 		page_add_new_anon_rmap(page, vma, haddr, true);
- 		mem_cgroup_commit_charge(page, memcg, false, true);
- 		lru_cache_add_active_or_unevictable(page, vma);
-@@ -1193,6 +1195,8 @@ static int do_huge_pmd_wp_page_fallback(struct vm_fault *vmf, pmd_t orig_pmd,
- 		pte_t entry;
- 		entry = mk_pte(pages[i], vma->vm_page_prot);
- 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+		if (is_shstk_mapping(vma->vm_flags))
-+			entry = pte_mkdirty_shstk(entry);
- 		memcg = (void *)page_private(pages[i]);
- 		set_page_private(pages[i], 0);
- 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
-@@ -1277,6 +1281,8 @@ int do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = pmd_mkyoung(orig_pmd);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		if (is_shstk_mapping(vma->vm_flags))
-+			entry = pmd_mkdirty_shstk(entry);
- 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
- 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 		ret |= VM_FAULT_WRITE;
-@@ -1347,6 +1353,8 @@ int do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		if (is_shstk_mapping(vma->vm_flags))
-+			entry = pmd_mkdirty_shstk(entry);
- 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
- 		page_add_new_anon_rmap(new_page, vma, haddr, true);
- 		mem_cgroup_commit_charge(new_page, memcg, false, true);
 diff --git a/mm/memory.c b/mm/memory.c
-index a2695dbc0418..f7c46d61eaea 100644
+index 7206a634270b..a2695dbc0418 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -4108,7 +4108,13 @@ static int __handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
- 			if (pmd_protnone(orig_pmd) && vma_is_accessible(vma))
- 				return do_huge_pmd_numa_page(&vmf, orig_pmd);
+@@ -2453,7 +2453,13 @@ static inline void wp_page_reuse(struct vm_fault *vmf)
  
--			if (dirty && !pmd_write(orig_pmd)) {
-+			/*
-+			 * Shadow stack trans huge PMDs are copy-on-access,
-+			 * so wp_huge_pmd() on them no mater if we have a
-+			 * write fault or not.
-+			 */
-+			if (is_shstk_mapping(vma->vm_flags) ||
-+			    (dirty && !pmd_write(orig_pmd))) {
- 				ret = wp_huge_pmd(&vmf, orig_pmd);
- 				if (!(ret & VM_FAULT_FALLBACK))
- 					return ret;
+ 	flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+ 	entry = pte_mkyoung(vmf->orig_pte);
+-	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++
++	if (is_shstk_mapping(vma->vm_flags))
++		entry = pte_mkdirty_shstk(entry);
++	else
++		entry = pte_mkdirty(entry);
++
++	entry = maybe_mkwrite(entry, vma);
+ 	if (ptep_set_access_flags(vma, vmf->address, vmf->pte, entry, 1))
+ 		update_mmu_cache(vma, vmf->address, vmf->pte);
+ 	pte_unmap_unlock(vmf->pte, vmf->ptl);
+@@ -2526,7 +2532,11 @@ static int wp_page_copy(struct vm_fault *vmf)
+ 		}
+ 		flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+ 		entry = mk_pte(new_page, vma->vm_page_prot);
+-		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++		if (is_shstk_mapping(vma->vm_flags))
++			entry = pte_mkdirty_shstk(entry);
++		else
++			entry = pte_mkdirty(entry);
++		entry = maybe_mkwrite(entry, vma);
+ 		/*
+ 		 * Clear the pte entry and flush it first, before updating the
+ 		 * pte with the new entry. This will avoid a race condition
+@@ -3201,6 +3211,14 @@ static int do_anonymous_page(struct vm_fault *vmf)
+ 	mem_cgroup_commit_charge(page, memcg, false, false);
+ 	lru_cache_add_active_or_unevictable(page, vma);
+ setpte:
++	/*
++	 * If this is within a shadow stack mapping, mark
++	 * the PTE dirty.  We don't use pte_mkdirty(),
++	 * because the PTE must have _PAGE_DIRTY_HW set.
++	 */
++	if (is_shstk_mapping(vma->vm_flags))
++		entry = pte_mkdirty_shstk(entry);
++
+ 	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, entry);
+ 
+ 	/* No need to invalidate - it was non-present before */
+@@ -3983,6 +4001,14 @@ static int handle_pte_fault(struct vm_fault *vmf)
+ 	entry = vmf->orig_pte;
+ 	if (unlikely(!pte_same(*vmf->pte, entry)))
+ 		goto unlock;
++
++	/*
++	 * Shadow stack PTEs are copy-on-access, so do_wp_page()
++	 * handling on them no matter if we have write fault or not.
++	 */
++	if (is_shstk_mapping(vmf->vma->vm_flags))
++		return do_wp_page(vmf);
++
+ 	if (vmf->flags & FAULT_FLAG_WRITE) {
+ 		if (!pte_write(entry))
+ 			return do_wp_page(vmf);
 -- 
 2.17.1
