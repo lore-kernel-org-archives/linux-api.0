@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 02/32] vfs: syscall: Add move_mount(2) to move mounts around
- [ver #9]
-Date: Tue, 10 Jul 2018 23:41:42 +0100
-Message-ID: <153126250231.14533.13065444526745629563.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock
+ creation [ver #9]
+Date: Tue, 10 Jul 2018 23:44:09 +0100
+Message-ID: <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
 References: <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,14 +14,57 @@ To: viro@zeniv.linux.org.uk
 Cc: dhowells@redhat.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add a move_mount() system call that will move a mount from one place to
-another and, in the next commit, allow to attach an unattached mount tree.
+Provide an fsopen() system call that starts the process of preparing to
+create a superblock that will then be mountable, using an fd as a context
+handle.  fsopen() is given the name of the filesystem that will be used:
 
-The new system call looks like the following:
+	int mfd = fsopen(const char *fsname, unsigned int flags);
 
-	int move_mount(int from_dfd, const char *from_path,
-		       int to_dfd, const char *to_path,
-		       unsigned int flags);
+where flags can be 0 or FSOPEN_CLOEXEC.
+
+For example:
+
+	sfd = fsopen("ext4", FSOPEN_CLOEXEC);
+	write(sfd, "s /dev/sdb1"); // note I'm ignoring write's length arg
+	write(sfd, "o noatime");
+	write(sfd, "o acl");
+	write(sfd, "o user_attr");
+	write(sfd, "o iversion");
+	write(sfd, "o ");
+	write(sfd, "r /my/container"); // root inside the fs
+	write(sfd, "x create"); // create the superblock
+	fsinfo(sfd, NULL, ...); // query new superblock attributes
+	mfd = fsmount(sfd, FSMOUNT_CLOEXEC, MS_RELATIME);
+	move_mount(mfd, "", sfd, AT_FDCWD, "/mnt", MOVE_MOUNT_F_EMPTY_PATH);
+
+	sfd = fsopen("afs", -1);
+	write(sfd, "s %grand.central.org:root.cell");
+	write(sfd, "o cell=grand.central.org");
+	write(sfd, "r /");
+	write(sfd, "x create");
+	mfd = fsmount(sfd, 0, MS_NODEV);
+	move_mount(mfd, "", sfd, AT_FDCWD, "/mnt", MOVE_MOUNT_F_EMPTY_PATH);
+
+If an error is reported at any step, an error message may be available to be
+read() back (ENODATA will be reported if there isn't an error available) in
+the form:
+
+	"e <subsys>:<problem>"
+	"e SELinux:Mount on mountpoint not permitted"
+
+Once fsmount() has been called, further write() calls will incur EBUSY,
+even if the fsmount() fails.  read() is still possible to retrieve error
+information.
+
+The fsopen() syscall creates a mount context and hangs it of the fd that it
+returns.
+
+Netlink is not used because it is optional and would make the core VFS
+dependent on the networking layer and also potentially add network
+namespace issues.
+
+Note that, for the moment, the caller must have SYS_CAP_ADMIN to use
+fsopen().
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 cc: linux-api@vger.kernel.org
@@ -29,300 +72,329 @@ cc: linux-api@vger.kernel.org
 
  arch/x86/entry/syscalls/syscall_32.tbl |    1 
  arch/x86/entry/syscalls/syscall_64.tbl |    1 
- fs/namespace.c                         |  102 ++++++++++++++++++++++++++------
- include/linux/lsm_hooks.h              |    6 ++
- include/linux/security.h               |    7 ++
- include/linux/syscalls.h               |    3 +
- include/uapi/linux/mount.h             |   11 +++
- security/security.c                    |    5 ++
- 8 files changed, 118 insertions(+), 18 deletions(-)
+ fs/Makefile                            |    2 
+ fs/fs_context.c                        |    4 +
+ fs/fsopen.c                            |  209 ++++++++++++++++++++++++++++++++
+ include/linux/fs_context.h             |    2 
+ include/linux/syscalls.h               |    1 
+ include/uapi/linux/fs.h                |    5 +
+ 8 files changed, 224 insertions(+), 1 deletion(-)
+ create mode 100644 fs/fsopen.c
 
 diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index ea1b413afd47..76d092b7d1b0 100644
+index 76d092b7d1b0..1647fefd2969 100644
 --- a/arch/x86/entry/syscalls/syscall_32.tbl
 +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -399,3 +399,4 @@
- 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+@@ -400,3 +400,4 @@
  386	i386	rseq			sys_rseq			__ia32_sys_rseq
  387	i386	open_tree		sys_open_tree			__ia32_sys_open_tree
-+388	i386	move_mount		sys_move_mount			__ia32_sys_move_mount
+ 388	i386	move_mount		sys_move_mount			__ia32_sys_move_mount
++389	i386	fsopen			sys_fsopen			__ia32_sys_fsopen
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 0545bed581dc..37ba4e65eee6 100644
+index 37ba4e65eee6..235d33dbccb2 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -344,6 +344,7 @@
- 333	common	io_pgetevents		__x64_sys_io_pgetevents
+@@ -345,6 +345,7 @@
  334	common	rseq			__x64_sys_rseq
  335	common	open_tree		__x64_sys_open_tree
-+336	common	move_mount		__x64_sys_move_mount
+ 336	common	move_mount		__x64_sys_move_mount
++337	common	fsopen			__x64_sys_fsopen
  
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/namespace.c b/fs/namespace.c
-index b355a555b4db..e95b2bc8fcfe 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -2446,43 +2446,37 @@ static inline int tree_contains_unbindable(struct mount *mnt)
- 	return 0;
- }
+diff --git a/fs/Makefile b/fs/Makefile
+index 7e9ca59ac3a7..d3b33798998e 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -13,7 +13,7 @@ obj-y :=	open.o read_write.o file_table.o super.o \
+ 		seq_file.o xattr.o libfs.o fs-writeback.o \
+ 		pnode.o splice.o sync.o utimes.o d_path.o \
+ 		stack.o fs_struct.o statfs.o fs_pin.o nsfs.o \
+-		fs_context.o
++		fs_context.o fsopen.o
  
--static int do_move_mount(struct path *path, const char *old_name)
-+static int do_move_mount(struct path *old_path, struct path *new_path)
- {
--	struct path old_path, parent_path;
-+	struct path parent_path = {.mnt = NULL, .dentry = NULL};
- 	struct mount *p;
- 	struct mount *old;
- 	struct mountpoint *mp;
- 	int err;
--	if (!old_name || !*old_name)
--		return -EINVAL;
--	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
--	if (err)
--		return err;
+ ifeq ($(CONFIG_BLOCK),y)
+ obj-y +=	buffer.o block_dev.o direct-io.o mpage.o
+diff --git a/fs/fs_context.c b/fs/fs_context.c
+index b7c84e0aa2f9..a2d745e6d356 100644
+--- a/fs/fs_context.c
++++ b/fs/fs_context.c
+@@ -251,6 +251,8 @@ struct fs_context *vfs_new_fs_context(struct file_system_type *fs_type,
+ 	fc->fs_type	= get_filesystem(fs_type);
+ 	fc->cred	= get_current_cred();
  
--	mp = lock_mount(path);
-+	mp = lock_mount(new_path);
- 	err = PTR_ERR(mp);
- 	if (IS_ERR(mp))
- 		goto out;
- 
--	old = real_mount(old_path.mnt);
--	p = real_mount(path->mnt);
-+	old = real_mount(old_path->mnt);
-+	p = real_mount(new_path->mnt);
- 
- 	err = -EINVAL;
- 	if (!check_mnt(p) || !check_mnt(old))
- 		goto out1;
- 
--	if (old->mnt.mnt_flags & MNT_LOCKED)
-+	if (!mnt_has_parent(old))
- 		goto out1;
- 
--	err = -EINVAL;
--	if (old_path.dentry != old_path.mnt->mnt_root)
-+	if (old->mnt.mnt_flags & MNT_LOCKED)
- 		goto out1;
- 
--	if (!mnt_has_parent(old))
-+	if (old_path->dentry != old_path->mnt->mnt_root)
- 		goto out1;
- 
--	if (d_is_dir(path->dentry) !=
--	      d_is_dir(old_path.dentry))
-+	if (d_is_dir(new_path->dentry) !=
-+	    d_is_dir(old_path->dentry))
- 		goto out1;
- 	/*
- 	 * Don't move a mount residing in a shared parent.
-@@ -2500,7 +2494,8 @@ static int do_move_mount(struct path *path, const char *old_name)
- 		if (p == old)
- 			goto out1;
- 
--	err = attach_recursive_mnt(old, real_mount(path->mnt), mp, &parent_path);
-+	err = attach_recursive_mnt(old, real_mount(new_path->mnt), mp,
-+				   &parent_path);
- 	if (err)
- 		goto out1;
- 
-@@ -2512,6 +2507,22 @@ static int do_move_mount(struct path *path, const char *old_name)
- out:
- 	if (!err)
- 		path_put(&parent_path);
-+	return err;
-+}
++	mutex_init(&fc->uapi_mutex);
 +
-+static int do_move_mount_old(struct path *path, const char *old_name)
-+{
-+	struct path old_path;
-+	int err;
-+
-+	if (!old_name || !*old_name)
-+		return -EINVAL;
-+
-+	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
-+	if (err)
-+		return err;
-+
-+	err = do_move_mount(&old_path, path);
- 	path_put(&old_path);
- 	return err;
- }
-@@ -2931,7 +2942,7 @@ long do_mount(const char *dev_name, const char __user *dir_name,
- 	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
- 		retval = do_change_type(&path, flags);
- 	else if (flags & MS_MOVE)
--		retval = do_move_mount(&path, dev_name);
-+		retval = do_move_mount_old(&path, dev_name);
- 	else
- 		retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
- 				      dev_name, data_page);
-@@ -3166,6 +3177,61 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
- 	return ksys_mount(dev_name, dir_name, type, flags, data);
- }
+ 	switch (purpose) {
+ 	case FS_CONTEXT_FOR_KERNEL_MOUNT:
+ 		fc->sb_flags |= SB_KERNMOUNT;
+@@ -335,6 +337,8 @@ struct fs_context *vfs_dup_fs_context(struct fs_context *src_fc)
+ 	if (!fc)
+ 		return ERR_PTR(-ENOMEM);
  
-+/*
-+ * Move a mount from one place to another.
++	mutex_init(&fc->uapi_mutex);
++
+ 	fc->fs_private	= NULL;
+ 	fc->s_fs_info	= NULL;
+ 	fc->source	= NULL;
+diff --git a/fs/fsopen.c b/fs/fsopen.c
+new file mode 100644
+index 000000000000..28bb72bda163
+--- /dev/null
++++ b/fs/fsopen.c
+@@ -0,0 +1,209 @@
++/* Filesystem access-by-fd.
 + *
-+ * Note the flags value is a combination of MOVE_MOUNT_* flags.
++ * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
++ * Written by David Howells (dhowells@redhat.com)
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public Licence
++ * as published by the Free Software Foundation; either version
++ * 2 of the Licence, or (at your option) any later version.
 + */
-+SYSCALL_DEFINE5(move_mount,
-+		int, from_dfd, const char *, from_pathname,
-+		int, to_dfd, const char *, to_pathname,
-+		unsigned int, flags)
++
++#include <linux/fs_context.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/syscalls.h>
++#include <linux/security.h>
++#include <linux/anon_inodes.h>
++#include "mount.h"
++
++/*
++ * Userspace writes configuration data and commands to the fd and we parse it
++ * here.  For the moment, we assume a single option or command per write.  Each
++ * line written is of the form
++ *
++ *	<command_type><space><stuff...>
++ *
++ *	s /dev/sda1				-- Source device
++ *	o noatime				-- Option without value
++ *	o cell=grand.central.org		-- Option with value
++ *	x create				-- Create a superblock
++ *	x reconfigure				-- Reconfigure a superblock
++ */
++static ssize_t fscontext_write(struct file *file,
++			       const char __user *_buf, size_t len, loff_t *pos)
 +{
-+	struct path from_path, to_path;
-+	unsigned int lflags;
-+	int ret = 0;
++	struct fs_context *fc = file->private_data;
++	char opt[2], *data;
++	ssize_t ret;
 +
-+	if (!may_mount())
-+		return -EPERM;
-+
-+	if (flags & ~MOVE_MOUNT__MASK)
++	if (len < 3 || len > 4095)
 +		return -EINVAL;
 +
-+	/* If someone gives a pathname, they aren't permitted to move
-+	 * from an fd that requires unmount as we can't get at the flag
-+	 * to clear it afterwards.
++	if (copy_from_user(opt, _buf, 2) != 0)
++		return -EFAULT;
++	switch (opt[0]) {
++	case 's':
++	case 'o':
++	case 'x':
++		break;
++	default:
++		return -EINVAL;
++	}
++	if (opt[1] != ' ')
++		return -EINVAL;
++
++	data = memdup_user_nul(_buf + 2, len - 2);
++	if (IS_ERR(data))
++		return PTR_ERR(data);
++
++	/* From this point onwards we need to lock the fd against someone
++	 * trying to mount it.
 +	 */
-+	lflags = 0;
-+	if (flags & MOVE_MOUNT_F_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-+	if (flags & MOVE_MOUNT_F_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-+	if (flags & MOVE_MOUNT_F_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
-+
-+	ret = user_path_at(from_dfd, from_pathname, lflags, &from_path);
++	ret = mutex_lock_interruptible(&fc->uapi_mutex);
 +	if (ret < 0)
-+		return ret;
++		goto err_free;
 +
-+	lflags = 0;
-+	if (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-+	if (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-+	if (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
++	if (fc->phase == FS_CONTEXT_AWAITING_RECONF) {
++		if (fc->fs_type->init_fs_context) {
++			ret = fc->fs_type->init_fs_context(fc, fc->root);
++			if (ret < 0) {
++				fc->phase = FS_CONTEXT_FAILED;
++				goto err_unlock;
++			}
++		} else {
++			/* Leave legacy context ops in place */
++		}
 +
-+	ret = user_path_at(to_dfd, to_pathname, lflags, &to_path);
-+	if (ret < 0)
-+		goto out_from;
++		/* Do the security check last because ->init_fs_context may
++		 * change the namespace subscriptions.
++		 */
++		ret = security_fs_context_alloc(fc, fc->root);
++		if (ret < 0) {
++			fc->phase = FS_CONTEXT_FAILED;
++			goto err_unlock;
++		}
 +
-+	ret = security_move_mount(&from_path, &to_path);
-+	if (ret < 0)
-+		goto out_to;
++		fc->phase = FS_CONTEXT_RECONF_PARAMS;
++	}
 +
-+	ret = do_move_mount(&from_path, &to_path);
++	ret = -EINVAL;
++	switch (opt[0]) {
++	case 's':
++		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
++		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
++			goto wrong_phase;
++		ret = vfs_set_fs_source(fc, data, len - 2);
++		if (ret < 0)
++			goto err_unlock;
++		break;
 +
-+out_to:
-+	path_put(&to_path);
-+out_from:
-+	path_put(&from_path);
++	case 'o':
++		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
++		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
++			goto wrong_phase;
++		ret = vfs_parse_fs_option(fc, data, len - 2);
++		if (ret < 0)
++			goto err_unlock;
++		break;
++
++	case 'x':
++		if (strcmp(data, "create") == 0) {
++			if (fc->phase != FS_CONTEXT_CREATE_PARAMS)
++				goto wrong_phase;
++			fc->phase = FS_CONTEXT_CREATING;
++			ret = vfs_get_tree(fc);
++			if (ret == 0)
++				fc->phase = FS_CONTEXT_AWAITING_MOUNT;
++			else
++				fc->phase = FS_CONTEXT_FAILED;
++		} else {
++			ret = -EOPNOTSUPP;
++		}
++		if (ret < 0)
++			goto err_unlock;
++		break;
++
++	default:
++		goto err_unlock;
++	}
++
++	ret = len;
++err_unlock:
++	mutex_unlock(&fc->uapi_mutex);
++err_free:
++	kfree(data);
 +	return ret;
++
++wrong_phase:
++	ret = -EBUSY;
++	goto err_unlock;
 +}
 +
- /*
-  * Return true if path is reachable from root
-  *
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index 8f1131c8dd54..926607defd83 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -144,6 +144,10 @@
-  *	Parse a string of security data filling in the opts structure
-  *	@options string containing all mount options known by the LSM
-  *	@opts binary data structure usable by the LSM
-+ * @move_mount:
-+ *	Check permission before a mount is moved.
-+ *	@from_path indicates the mount that is going to be moved.
-+ *	@to_path indicates the mountpoint that will be mounted upon.
-  * @dentry_init_security:
-  *	Compute a context for a dentry as the inode is not yet available
-  *	since NFSv4 has no label backed by an EA anyway.
-@@ -1475,6 +1479,7 @@ union security_list_options {
- 					unsigned long kern_flags,
- 					unsigned long *set_kern_flags);
- 	int (*sb_parse_opts_str)(char *options, struct security_mnt_opts *opts);
-+	int (*move_mount)(const struct path *from_path, const struct path *to_path);
- 	int (*dentry_init_security)(struct dentry *dentry, int mode,
- 					const struct qstr *name, void **ctx,
- 					u32 *ctxlen);
-@@ -1806,6 +1811,7 @@ struct security_hook_heads {
- 	struct hlist_head sb_set_mnt_opts;
- 	struct hlist_head sb_clone_mnt_opts;
- 	struct hlist_head sb_parse_opts_str;
-+	struct hlist_head move_mount;
- 	struct hlist_head dentry_init_security;
- 	struct hlist_head dentry_create_files_as;
- #ifdef CONFIG_SECURITY_PATH
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 63030c85ee19..15d121f156b3 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -245,6 +245,7 @@ int security_sb_clone_mnt_opts(const struct super_block *oldsb,
- 				unsigned long kern_flags,
- 				unsigned long *set_kern_flags);
- int security_sb_parse_opts_str(char *options, struct security_mnt_opts *opts);
-+int security_move_mount(const struct path *from_path, const struct path *to_path);
- int security_dentry_init_security(struct dentry *dentry, int mode,
- 					const struct qstr *name, void **ctx,
- 					u32 *ctxlen);
-@@ -598,6 +599,12 @@ static inline int security_sb_parse_opts_str(char *options, struct security_mnt_
- 	return 0;
- }
- 
-+static inline int security_move_mount(const struct path *from_path,
-+				      const struct path *to_path)
++static int fscontext_release(struct inode *inode, struct file *file)
 +{
++	struct fs_context *fc = file->private_data;
++
++	if (fc) {
++		file->private_data = NULL;
++		put_fs_context(fc);
++	}
 +	return 0;
 +}
 +
- static inline int security_inode_alloc(struct inode *inode)
- {
- 	return 0;
++const struct file_operations fscontext_fs_fops = {
++	.write		= fscontext_write,
++	.release	= fscontext_release,
++	.llseek		= no_llseek,
++};
++
++/*
++ * Attach a filesystem context to a file and an fd.
++ */
++static int fscontext_create_fd(struct fs_context *fc, unsigned int o_flags)
++{
++	int fd;
++
++	fd = anon_inode_getfd("fscontext", &fscontext_fs_fops, fc,
++			      O_RDWR | o_flags);
++	if (fd < 0)
++		put_fs_context(fc);
++	return fd;
++}
++
++/*
++ * Open a filesystem by name so that it can be configured for mounting.
++ *
++ * We are allowed to specify a container in which the filesystem will be
++ * opened, thereby indicating which namespaces will be used (notably, which
++ * network namespace will be used for network filesystems).
++ */
++SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
++{
++	struct file_system_type *fs_type;
++	struct fs_context *fc;
++	const char *fs_name;
++
++	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
++		return -EPERM;
++
++	if (flags & ~FSOPEN_CLOEXEC)
++		return -EINVAL;
++
++	fs_name = strndup_user(_fs_name, PAGE_SIZE);
++	if (IS_ERR(fs_name))
++		return PTR_ERR(fs_name);
++
++	fs_type = get_fs_type(fs_name);
++	kfree(fs_name);
++	if (!fs_type)
++		return -ENODEV;
++
++	fc = vfs_new_fs_context(fs_type, NULL, 0, FS_CONTEXT_FOR_USER_MOUNT);
++	put_filesystem(fs_type);
++	if (IS_ERR(fc))
++		return PTR_ERR(fc);
++
++	fc->phase = FS_CONTEXT_CREATE_PARAMS;
++	return fscontext_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
++}
+diff --git a/include/linux/fs_context.h b/include/linux/fs_context.h
+index f157ff935a1e..387f25d7acc4 100644
+--- a/include/linux/fs_context.h
++++ b/include/linux/fs_context.h
+@@ -14,6 +14,7 @@
+ 
+ #include <linux/kernel.h>
+ #include <linux/errno.h>
++#include <linux/mutex.h>
+ 
+ struct cred;
+ struct dentry;
+@@ -58,6 +59,7 @@ enum fs_context_phase {
+  */
+ struct fs_context {
+ 	const struct fs_context_operations *ops;
++	struct mutex		uapi_mutex;	/* Userspace access mutex */
+ 	struct file_system_type	*fs_type;
+ 	void			*fs_private;	/* The filesystem's context */
+ 	struct dentry		*root;		/* The root and superblock */
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 3cc6b8f8bd2f..3c0855d9b105 100644
+index 3c0855d9b105..ad6c7ff33c01 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -901,6 +901,9 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
- asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
- 			 int flags, uint32_t sig);
- asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
-+asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
-+			       int to_dfd, const char __user *to_path,
-+			       unsigned int ms_flags);
+@@ -904,6 +904,7 @@ asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
+ asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
+ 			       int to_dfd, const char __user *to_path,
+ 			       unsigned int ms_flags);
++asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags);
  
  /*
   * Architecture-specific system calls
-diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
-index e8db2911adca..89adf0d731ab 100644
---- a/include/uapi/linux/mount.h
-+++ b/include/uapi/linux/mount.h
-@@ -7,4 +7,15 @@
- #define OPEN_TREE_CLONE		1		/* Clone the target tree and attach the clone */
- #define OPEN_TREE_CLOEXEC	O_CLOEXEC	/* Close the file on execve() */
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 1c982eb44ff4..f8818e6cddd6 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -344,4 +344,9 @@ typedef int __bitwise __kernel_rwf_t;
+ #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
+ 			 RWF_APPEND)
  
 +/*
-+ * move_mount() flags.
++ * Flags for fsopen() and co.
 + */
-+#define MOVE_MOUNT_F_SYMLINKS		0x00000001 /* Follow symlinks on from path */
-+#define MOVE_MOUNT_F_AUTOMOUNTS		0x00000002 /* Follow automounts on from path */
-+#define MOVE_MOUNT_F_EMPTY_PATH		0x00000004 /* Empty from path permitted */
-+#define MOVE_MOUNT_T_SYMLINKS		0x00000010 /* Follow symlinks on to path */
-+#define MOVE_MOUNT_T_AUTOMOUNTS		0x00000020 /* Follow automounts on to path */
-+#define MOVE_MOUNT_T_EMPTY_PATH		0x00000040 /* Empty to path permitted */
-+#define MOVE_MOUNT__MASK		0x00000077
++#define FSOPEN_CLOEXEC		0x00000001
 +
- #endif /* _UAPI_LINUX_MOUNT_H */
-diff --git a/security/security.c b/security/security.c
-index 68f46d849abe..c4cbdb7d3a5f 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -437,6 +437,11 @@ int security_sb_parse_opts_str(char *options, struct security_mnt_opts *opts)
- }
- EXPORT_SYMBOL(security_sb_parse_opts_str);
- 
-+int security_move_mount(const struct path *from_path, const struct path *to_path)
-+{
-+	return call_int_hook(move_mount, 0, from_path, to_path);
-+}
-+
- int security_inode_alloc(struct inode *inode)
- {
- 	inode->i_security = NULL;
+ #endif /* _UAPI_LINUX_FS_H */
