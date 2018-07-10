@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
-Date: Tue, 10 Jul 2018 15:26:30 -0700
-Message-ID: <20180710222639.8241-19-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v2 22/27] x86/cet/ibt: User-mode indirect branch tracking support
+Date: Tue, 10 Jul 2018 15:26:34 -0700
+Message-ID: <20180710222639.8241-23-yu-cheng.yu@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180710222639.8241-1-yu-cheng.yu@intel.com>
@@ -10,135 +10,265 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-WRUSS is a new kernel-mode instruction but writes directly
-to user shadow stack memory.  This is used to construct
-a return address on the shadow stack for the signal
-handler.
+Add user-mode indirect branch tracking enabling/disabling
+and supporting routines.
 
-This instruction can fault if the user shadow stack is
-invalid shadow stack memory.  In that case, the kernel does
-fixup.
-
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/special_insns.h          | 45 +++++++++++++++++++
- arch/x86/lib/x86-opcode-map.txt               |  2 +-
- arch/x86/mm/fault.c                           | 13 +++++-
- tools/objtool/arch/x86/lib/x86-opcode-map.txt |  2 +-
- 4 files changed, 59 insertions(+), 3 deletions(-)
+ arch/x86/include/asm/cet.h               |  8 +++
+ arch/x86/include/asm/disabled-features.h |  8 ++-
+ arch/x86/kernel/cet.c                    | 73 ++++++++++++++++++++++++
+ arch/x86/kernel/cpu/common.c             | 20 ++++++-
+ arch/x86/kernel/elf.c                    | 16 +++++-
+ arch/x86/kernel/process.c                |  1 +
+ 6 files changed, 123 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
-index 317fc59b512c..c69d8d6b457f 100644
---- a/arch/x86/include/asm/special_insns.h
-+++ b/arch/x86/include/asm/special_insns.h
-@@ -237,6 +237,51 @@ static inline void clwb(volatile void *__p)
- 		: [pax] "a" (p));
- }
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index d9ae3d86cdd7..71da2cccba16 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -12,7 +12,10 @@ struct task_struct;
+ struct cet_status {
+ 	unsigned long	shstk_base;
+ 	unsigned long	shstk_size;
++	unsigned long	ibt_bitmap_addr;
++	unsigned long	ibt_bitmap_size;
+ 	unsigned int	shstk_enabled:1;
++	unsigned int	ibt_enabled:1;
+ };
  
-+#ifdef CONFIG_X86_INTEL_CET
-+
-+#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
-+static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
-+{
-+	int err;
-+
-+	asm volatile("1: wrussd %[val], (%[addr])\n"
-+		     "xor %[err], %[err]\n"
-+		     "2:\n"
-+		     ".section .fixup,\"ax\"\n"
-+		     "3: mov $-1, %[err]; jmp 2b\n"
-+		     ".previous\n"
-+		     _ASM_EXTABLE(1b, 3b)
-+		     : [err] "=a" (err)
-+		     : [val] "S" (val), [addr] "D" (addr));
-+
-+	return err;
-+}
+ #ifdef CONFIG_X86_INTEL_CET
+@@ -21,6 +24,9 @@ void cet_disable_shstk(void);
+ void cet_disable_free_shstk(struct task_struct *p);
+ int cet_restore_signal(unsigned long ssp);
+ int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
++int cet_setup_ibt(void);
++int cet_setup_ibt_bitmap(void);
++void cet_disable_ibt(void);
+ #else
+ static inline int cet_setup_shstk(void) { return 0; }
+ static inline void cet_disable_shstk(void) {}
+@@ -28,6 +34,8 @@ static inline void cet_disable_free_shstk(struct task_struct *p) {}
+ static inline int cet_restore_signal(unsigned long ssp) { return 0; }
+ static inline int cet_setup_signal(bool ia32, unsigned long rstor,
+ 				   unsigned long *new_ssp) { return 0; }
++static inline int cet_setup_ibt(void) { return 0; }
++static inline void cet_disable_ibt(void) {}
+ #endif
+ 
+ #endif /* __ASSEMBLY__ */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 3624a11e5ba6..ce5bdaf0f1ff 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -62,6 +62,12 @@
+ #define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
+ #endif
+ 
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++#define DISABLE_IBT	0
 +#else
-+static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
-+{
-+	BUG();
-+	return 0;
-+}
++#define DISABLE_IBT	(1<<(X86_FEATURE_IBT & 31))
 +#endif
 +
-+static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
-+{
-+	int err = 0;
-+
-+	asm volatile("1: wrussq %[val], (%[addr])\n"
-+		     "xor %[err], %[err]\n"
-+		     "2:\n"
-+		     ".section .fixup,\"ax\"\n"
-+		     "3: mov $-1, %[err]; jmp 2b\n"
-+		     ".previous\n"
-+		     _ASM_EXTABLE(1b, 3b)
-+		     : [err] "=a" (err)
-+		     : [val] "S" (val), [addr] "D" (addr));
-+
-+	return err;
-+}
-+#endif /* CONFIG_X86_INTEL_CET */
-+
- #define nop() asm volatile ("nop")
- 
- 
-diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
-index e0b85930dd77..72bb7c48a7df 100644
---- a/arch/x86/lib/x86-opcode-map.txt
-+++ b/arch/x86/lib/x86-opcode-map.txt
-@@ -789,7 +789,7 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
- f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
- f2: ANDN Gy,By,Ey (v)
- f3: Grp17 (1A)
--f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
-+f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
- f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index fcd5739151f9..92f178b8b598 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -641,6 +641,17 @@ static int is_f00f_bug(struct pt_regs *regs, unsigned long address)
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -72,7 +78,7 @@
+ #define DISABLED_MASK4	(DISABLE_PCID)
+ #define DISABLED_MASK5	0
+ #define DISABLED_MASK6	0
+-#define DISABLED_MASK7	(DISABLE_PTI)
++#define DISABLED_MASK7	(DISABLE_PTI|DISABLE_IBT)
+ #define DISABLED_MASK8	0
+ #define DISABLED_MASK9	(DISABLE_MPX)
+ #define DISABLED_MASK10	0
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 4eba7790c4e4..8bbd63e1a2ba 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -12,6 +12,8 @@
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
+ #include <linux/sched/signal.h>
++#include <linux/vmalloc.h>
++#include <linux/bitops.h>
+ #include <asm/msr.h>
+ #include <asm/user.h>
+ #include <asm/fpu/xstate.h>
+@@ -241,3 +243,74 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr,
+ 	set_shstk_ptr(ssp);
  	return 0;
  }
- 
-+/*
-+ * WRUSS is a kernel instrcution and but writes to user
-+ * shadow stack memory.  When a fault occurs, both
-+ * X86_PF_USER and X86_PF_SHSTK are set.
-+ */
-+static int is_wruss(struct pt_regs *regs, unsigned long error_code)
++
++static unsigned long ibt_mmap(unsigned long addr, unsigned long len)
 +{
-+	return (((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
-+		(X86_PF_USER | X86_PF_SHSTK)) && !user_mode(regs));
++	struct mm_struct *mm = current->mm;
++	unsigned long populate;
++
++	down_write(&mm->mmap_sem);
++	addr = do_mmap(NULL, addr, len, PROT_READ | PROT_WRITE,
++		       MAP_ANONYMOUS | MAP_PRIVATE,
++		       VM_DONTDUMP, 0, &populate, NULL);
++	up_write(&mm->mmap_sem);
++
++	if (populate)
++		mm_populate(addr, populate);
++
++	return addr;
 +}
 +
- static void
- show_fault_oops(struct pt_regs *regs, unsigned long error_code,
- 		unsigned long address)
-@@ -848,7 +859,7 @@ __bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
- 	struct task_struct *tsk = current;
++int cet_setup_ibt(void)
++{
++	u64 r;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return -EOPNOTSUPP;
++
++	rdmsrl(MSR_IA32_U_CET, r);
++	r |= (MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_NO_TRACK_EN);
++	wrmsrl(MSR_IA32_U_CET, r);
++	current->thread.cet.ibt_enabled = 1;
++	return 0;
++}
++
++int cet_setup_ibt_bitmap(void)
++{
++	u64 r;
++	unsigned long bitmap;
++	unsigned long size;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return -EOPNOTSUPP;
++
++	size = TASK_SIZE_MAX / PAGE_SIZE / BITS_PER_BYTE;
++	bitmap = ibt_mmap(0, size);
++
++	if (bitmap >= TASK_SIZE_MAX)
++		return -ENOMEM;
++
++	bitmap &= PAGE_MASK;
++
++	rdmsrl(MSR_IA32_U_CET, r);
++	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
++	wrmsrl(MSR_IA32_U_CET, r);
++
++	current->thread.cet.ibt_bitmap_addr = bitmap;
++	current->thread.cet.ibt_bitmap_size = size;
++	return 0;
++}
++
++void cet_disable_ibt(void)
++{
++	u64 r;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return;
++
++	rdmsrl(MSR_IA32_U_CET, r);
++	r &= ~(MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_LEG_IW_EN |
++	       MSR_IA32_CET_NO_TRACK_EN);
++	wrmsrl(MSR_IA32_U_CET, r);
++	current->thread.cet.ibt_enabled = 0;
++}
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index 705467839ce8..c609c9ce5691 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -413,7 +413,8 @@ __setup("nopku", setup_disable_pku);
  
- 	/* User mode accesses just cause a SIGSEGV */
--	if (error_code & X86_PF_USER) {
-+	if ((error_code & X86_PF_USER) && !is_wruss(regs, error_code)) {
- 		/*
- 		 * It's possible to have interrupts off here:
- 		 */
-diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-index e0b85930dd77..72bb7c48a7df 100644
---- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-+++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-@@ -789,7 +789,7 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
- f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
- f2: ANDN Gy,By,Ey (v)
- f3: Grp17 (1A)
--f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
-+f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
- f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
+ static __always_inline void setup_cet(struct cpuinfo_x86 *c)
+ {
+-	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK) ||
++	    cpu_feature_enabled(X86_FEATURE_IBT))
+ 		cr4_set_bits(X86_CR4_CET);
+ }
+ 
+@@ -434,6 +435,23 @@ static __init int setup_disable_shstk(char *s)
+ __setup("no_cet_shstk", setup_disable_shstk);
+ #endif
+ 
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++static __init int setup_disable_ibt(char *s)
++{
++	/* require an exact match without trailing characters */
++	if (strlen(s))
++		return 0;
++
++	if (!boot_cpu_has(X86_FEATURE_IBT))
++		return 1;
++
++	setup_clear_cpu_cap(X86_FEATURE_IBT);
++	pr_info("x86: 'no_cet_ibt' specified, disabling Branch Tracking\n");
++	return 1;
++}
++__setup("no_cet_ibt", setup_disable_ibt);
++#endif
++
+ /*
+  * Some CPU features depend on higher CPUID levels, which may not always
+  * be available due to CPUID level capping or broken virtualization
+diff --git a/arch/x86/kernel/elf.c b/arch/x86/kernel/elf.c
+index 233f6dad9c1f..42e08d3b573e 100644
+--- a/arch/x86/kernel/elf.c
++++ b/arch/x86/kernel/elf.c
+@@ -15,6 +15,7 @@
+ #include <linux/fs.h>
+ #include <linux/uaccess.h>
+ #include <linux/string.h>
++#include <linux/compat.h>
+ 
+ /*
+  * The .note.gnu.property layout:
+@@ -222,7 +223,8 @@ int arch_setup_features(void *ehdr_p, void *phdr_p,
+ 
+ 	struct elf64_hdr *ehdr64 = ehdr_p;
+ 
+-	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
++	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) &&
++	    !cpu_feature_enabled(X86_FEATURE_IBT))
+ 		return 0;
+ 
+ 	if (ehdr64->e_ident[EI_CLASS] == ELFCLASS64) {
+@@ -250,6 +252,9 @@ int arch_setup_features(void *ehdr_p, void *phdr_p,
+ 	current->thread.cet.shstk_enabled = 0;
+ 	current->thread.cet.shstk_base = 0;
+ 	current->thread.cet.shstk_size = 0;
++	current->thread.cet.ibt_enabled = 0;
++	current->thread.cet.ibt_bitmap_addr = 0;
++	current->thread.cet.ibt_bitmap_size = 0;
+ 	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
+ 		if (shstk) {
+ 			err = cet_setup_shstk();
+@@ -257,6 +262,15 @@ int arch_setup_features(void *ehdr_p, void *phdr_p,
+ 				goto out;
+ 		}
+ 	}
++
++	if (cpu_feature_enabled(X86_FEATURE_IBT)) {
++		if (ibt) {
++			err = cet_setup_ibt();
++			if (err < 0)
++				goto out;
++		}
++	}
++
+ out:
+ 	return err;
+ }
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index b3b0b482983a..309ebb7f9d8d 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -138,6 +138,7 @@ void flush_thread(void)
+ 	memset(tsk->thread.tls_array, 0, sizeof(tsk->thread.tls_array));
+ 
+ 	cet_disable_shstk();
++	cet_disable_ibt();
+ 	fpu__clear(&tsk->thread.fpu);
+ }
+ 
 -- 
 2.17.1
