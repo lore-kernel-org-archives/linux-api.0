@@ -1,161 +1,86 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 4.18 3/6] rseq: uapi: update uapi comments
-Date: Mon,  9 Jul 2018 15:51:52 -0400
-Message-ID: <20180709195155.7654-4-mathieu.desnoyers@efficios.com>
-References: <20180709195155.7654-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180709195155.7654-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
+From: Andrei Vagin <avagin@virtuozzo.com>
+Subject: Re: [PATCH 7/7] aio: implement io_pgetevents
+Date: Mon, 9 Jul 2018 22:11:42 -0700
+Message-ID: <20180710051141.GB21096@outlook.office365.com>
+References: <20180502211448.18276-1-hch@lst.de>
+ <20180502211448.18276-8-hch@lst.de>
+ <20180704142116.GM17048@lisas.de>
+ <20180708204359.GA19198@lst.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180708204359.GA19198@lst.de>
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Adrian Reber <adrian@lisas.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Update rseq uapi header comments to reflect that user-space need to do
-thread-local loads/stores from/to the struct rseq fields.
+On Sun, Jul 08, 2018 at 10:44:00PM +0200, Christoph Hellwig wrote:
+> On Wed, Jul 04, 2018 at 04:21:16PM +0200, Adrian Reber wrote:
+> > In file included from /usr/include/linux/signal.h:5,
+> >                  from /usr/include/linux/aio_abi.h:32,
+> >                  from include.c:2:
+> > /usr/include/asm/signal.h:16:23: error: conflicting types for ‘sigset_t’
+> >  typedef unsigned long sigset_t;
+> >                        ^~~~~~~~
+> > In file included from /usr/include/signal.h:35,
+> >                  from include.c:1:
+> > /usr/include/bits/types/sigset_t.h:7:20: note: previous declaration of ‘sigset_t’ was here
+> >  typedef __sigset_t sigset_t;
+> 
+> I guess we could do something like the patch below, although it is
+> rather ugly:
+> 
+> diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
+> index 75846164290e..b7705ad66d78 100644
+> --- a/include/uapi/linux/aio_abi.h
+> +++ b/include/uapi/linux/aio_abi.h
+> @@ -29,7 +29,11 @@
+>  
+>  #include <linux/types.h>
+>  #include <linux/fs.h>
+> +#ifdef __KERNEL__
+>  #include <linux/signal.h>
+> +#else
+> +#include <signal.h>
+> +#endif
 
-As a consequence of this added requirement, the kernel does not need
-to perform loads/stores with single-copy atomicity.
+I think we can not do this because this header specifies the kernel
+API, but signal.h is provided by libc and sigset_t can be defined
+differently there:
 
-Update the comment associated to the "flags" fields to describe
-more accurately that it's only useful to facilitate single-stepping
-through rseq critical sections with debuggers.
+[avagin@laptop ~]$ cat test.c 
+#ifdef TEST_LINUX_SIGNAL
+#  include <glob.h>
+#  include <linux/signal.h>
+#else
+#  include <signal.h>
+#endif
+#include <stdio.h>
+int main()
+{
+	printf("sizeof(sigset_t) = %d\n", sizeof(sigset_t));
+	return 0;
+}
+[avagin@laptop ~]$ gcc -DTEST_LINUX_SIGNAL test.c && ./a.out
+sizeof(sigset_t) = 8
+[avagin@laptop ~]$ gcc test.c && ./a.out
+sizeof(sigset_t) = 128
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul Turner <pjt@google.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
----
- include/uapi/linux/rseq.h | 69 ++++++++++++++++++++++++-----------------------
- kernel/rseq.c             |  2 +-
- 2 files changed, 37 insertions(+), 34 deletions(-)
+[avagin@laptop include]$ rpm -qf /usr/include/signal.h 
+glibc-headers-2.27-8.fc28.i686
+glibc-headers-2.27-8.fc28.x86_64
+[avagin@laptop include]$ rpm -qf /usr/include/linux/signal.h 
+kernel-headers-4.16.5-300.fc28.x86_64
 
-diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index 519ad6e176d1..bf4188c13bec 100644
---- a/include/uapi/linux/rseq.h
-+++ b/include/uapi/linux/rseq.h
-@@ -67,28 +67,30 @@ struct rseq_cs {
- struct rseq {
- 	/*
- 	 * Restartable sequences cpu_id_start field. Updated by the
--	 * kernel, and read by user-space with single-copy atomicity
--	 * semantics. Aligned on 32-bit. Always contains a value in the
--	 * range of possible CPUs, although the value may not be the
--	 * actual current CPU (e.g. if rseq is not initialized). This
--	 * CPU number value should always be compared against the value
--	 * of the cpu_id field before performing a rseq commit or
--	 * returning a value read from a data structure indexed using
--	 * the cpu_id_start value.
-+	 * kernel. Read by user-space with single-copy atomicity
-+	 * semantics. This field should only be read by the thread which
-+	 * registered this data structure. Aligned on 32-bit. Always
-+	 * contains a value in the range of possible CPUs, although the
-+	 * value may not be the actual current CPU (e.g. if rseq is not
-+	 * initialized). This CPU number value should always be compared
-+	 * against the value of the cpu_id field before performing a rseq
-+	 * commit or returning a value read from a data structure indexed
-+	 * using the cpu_id_start value.
- 	 */
- 	__u32 cpu_id_start;
- 	/*
--	 * Restartable sequences cpu_id field. Updated by the kernel,
--	 * and read by user-space with single-copy atomicity semantics.
--	 * Aligned on 32-bit. Values RSEQ_CPU_ID_UNINITIALIZED and
--	 * RSEQ_CPU_ID_REGISTRATION_FAILED have a special semantic: the
--	 * former means "rseq uninitialized", and latter means "rseq
--	 * initialization failed". This value is meant to be read within
--	 * rseq critical sections and compared with the cpu_id_start
--	 * value previously read, before performing the commit instruction,
--	 * or read and compared with the cpu_id_start value before returning
--	 * a value loaded from a data structure indexed using the
--	 * cpu_id_start value.
-+	 * Restartable sequences cpu_id field. Updated by the kernel.
-+	 * Read by user-space with single-copy atomicity semantics. This
-+	 * field should only be read by the thread which registered this
-+	 * data structure. Aligned on 32-bit. Values
-+	 * RSEQ_CPU_ID_UNINITIALIZED and RSEQ_CPU_ID_REGISTRATION_FAILED
-+	 * have a special semantic: the former means "rseq uninitialized",
-+	 * and latter means "rseq initialization failed". This value is
-+	 * meant to be read within rseq critical sections and compared
-+	 * with the cpu_id_start value previously read, before performing
-+	 * the commit instruction, or read and compared with the
-+	 * cpu_id_start value before returning a value loaded from a data
-+	 * structure indexed using the cpu_id_start value.
- 	 */
- 	__u32 cpu_id;
- 	/*
-@@ -105,27 +107,28 @@ struct rseq {
- 	 * targeted by the rseq_cs. Also needs to be set to NULL by user-space
- 	 * before reclaiming memory that contains the targeted struct rseq_cs.
- 	 *
--	 * Read and set by the kernel with single-copy atomicity semantics.
--	 * Set by user-space with single-copy atomicity semantics. Aligned
--	 * on 64-bit.
-+	 * Read and set by the kernel. Set by user-space with single-copy
-+	 * atomicity semantics. This field should only be updated by the
-+	 * thread which registered this data structure. Aligned on 64-bit.
- 	 */
- 	LINUX_FIELD_u32_u64(rseq_cs);
- 	/*
--	 * - RSEQ_DISABLE flag:
-+	 * Restartable sequences flags field.
-+	 *
-+	 * This field should only be updated by the thread which
-+	 * registered this data structure. Read by the kernel.
-+	 * Mainly used for single-stepping through rseq critical sections
-+	 * with debuggers.
- 	 *
--	 * Fallback fast-track flag for single-stepping.
--	 * Set by user-space if lack of progress is detected.
--	 * Cleared by user-space after rseq finish.
--	 * Read by the kernel.
- 	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
--	 *     Inhibit instruction sequence block restart and event
--	 *     counter increment on preemption for this thread.
-+	 *     Inhibit instruction sequence block restart on preemption
-+	 *     for this thread.
- 	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
--	 *     Inhibit instruction sequence block restart and event
--	 *     counter increment on signal delivery for this thread.
-+	 *     Inhibit instruction sequence block restart on signal
-+	 *     delivery for this thread.
- 	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
--	 *     Inhibit instruction sequence block restart and event
--	 *     counter increment on migration for this thread.
-+	 *     Inhibit instruction sequence block restart on migration for
-+	 *     this thread.
- 	 */
- 	__u32 flags;
- } __attribute__((aligned(4 * sizeof(__u64))));
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 2c8463acb50d..2a7748675be7 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -201,7 +201,7 @@ static int clear_rseq_cs(struct task_struct *t)
- 	 * of code outside of the rseq assembly block. This performs
- 	 * a lazy clear of the rseq_cs field.
- 	 *
--	 * Set rseq_cs to NULL with single-copy atomicity.
-+	 * Set rseq_cs to NULL.
- 	 */
- 	return put_user(0UL, &t->rseq->rseq_cs);
- }
--- 
-2.11.0
+>  #include <asm/byteorder.h>
+>  
+>  typedef __kernel_ulong_t aio_context_t;
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
