@@ -1,86 +1,55 @@
-From: Andrei Vagin <avagin@virtuozzo.com>
-Subject: Re: [PATCH 7/7] aio: implement io_pgetevents
-Date: Mon, 9 Jul 2018 22:11:42 -0700
-Message-ID: <20180710051141.GB21096@outlook.office365.com>
-References: <20180502211448.18276-1-hch@lst.de>
- <20180502211448.18276-8-hch@lst.de>
- <20180704142116.GM17048@lisas.de>
- <20180708204359.GA19198@lst.de>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH for 4.18 2/6] rseq: use get_user/put_user rather than __get_user/__put_user
+Date: Tue, 10 Jul 2018 16:16:28 +1000
+Message-ID: <87tvp7mx8j.fsf@concordia.ellerman.id.au>
+References: <20180708210330.27324-1-mathieu.desnoyers@efficios.com> <20180708210330.27324-3-mathieu.desnoyers@efficios.com> <854203778.2272.1531157327328.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20180708204359.GA19198@lst.de>
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Adrian Reber <adrian@lisas.de>, viro@zeniv.linux.org.uk, Avi Kivity <avi@scylladb.com>, linux-aio@kvack.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <854203778.2272.1531157327328.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jul 08, 2018 at 10:44:00PM +0200, Christoph Hellwig wrote:
-> On Wed, Jul 04, 2018 at 04:21:16PM +0200, Adrian Reber wrote:
-> > In file included from /usr/include/linux/signal.h:5,
-> >                  from /usr/include/linux/aio_abi.h:32,
-> >                  from include.c:2:
-> > /usr/include/asm/signal.h:16:23: error: conflicting types for ‘sigset_t’
-> >  typedef unsigned long sigset_t;
-> >                        ^~~~~~~~
-> > In file included from /usr/include/signal.h:35,
-> >                  from include.c:1:
-> > /usr/include/bits/types/sigset_t.h:7:20: note: previous declaration of ‘sigset_t’ was here
-> >  typedef __sigset_t sigset_t;
-> 
-> I guess we could do something like the patch below, although it is
-> rather ugly:
-> 
-> diff --git a/include/uapi/linux/aio_abi.h b/include/uapi/linux/aio_abi.h
-> index 75846164290e..b7705ad66d78 100644
-> --- a/include/uapi/linux/aio_abi.h
-> +++ b/include/uapi/linux/aio_abi.h
-> @@ -29,7 +29,11 @@
->  
->  #include <linux/types.h>
->  #include <linux/fs.h>
-> +#ifdef __KERNEL__
->  #include <linux/signal.h>
-> +#else
-> +#include <signal.h>
-> +#endif
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
+> ----- On Jul 8, 2018, at 5:03 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+>
+>> In preparation to use __u64 for the rseq_cs pointer field, 32-bit
+>> architectures need to read this 64-bit value located in user-space
+>> addresses.
+>> 
+>> __get_user is used to read this value, given that its access check has
+>> already been performed with access_ok() on rseq registration.
+>> 
+>> arm does not implement 8-byte __get_user. Rather than trying to
+>> improve __get_user on ARM, use get_user/put_user across rseq instead.
+>> 
+>> If those end up showing up in benchmarks, the proper approach would be to
+>> use user_access_begin() / unsafe_get/put_user() / user_access_end()
+>> anyway.
+>
+> So, another twist to this story: ppc32 does not implement u64 get_user().
 
-I think we can not do this because this header specifies the kernel
-API, but signal.h is provided by libc and sigset_t can be defined
-differently there:
+Or __get_user() for that matter.
 
-[avagin@laptop ~]$ cat test.c 
-#ifdef TEST_LINUX_SIGNAL
-#  include <glob.h>
-#  include <linux/signal.h>
-#else
-#  include <signal.h>
-#endif
-#include <stdio.h>
-int main()
-{
-	printf("sizeof(sigset_t) = %d\n", sizeof(sigset_t));
-	return 0;
-}
-[avagin@laptop ~]$ gcc -DTEST_LINUX_SIGNAL test.c && ./a.out
-sizeof(sigset_t) = 8
-[avagin@laptop ~]$ gcc test.c && ./a.out
-sizeof(sigset_t) = 128
+But we should just fix it.
 
-[avagin@laptop include]$ rpm -qf /usr/include/signal.h 
-glibc-headers-2.27-8.fc28.i686
-glibc-headers-2.27-8.fc28.x86_64
-[avagin@laptop include]$ rpm -qf /usr/include/linux/signal.h 
-kernel-headers-4.16.5-300.fc28.x86_64
+We have the asm to do it, it's just the fact that __gu_val is unsigned
+long causes the size > sizeof(x) check here to fail:
 
->  #include <asm/byteorder.h>
->  
->  typedef __kernel_ulong_t aio_context_t;
+#define __get_user_size(x, ptr, size, retval)			\
+do {								\
+	retval = 0;						\
+	__chk_user_ptr(ptr);					\
+	if (size > sizeof(x))					\
+		(x) = __get_user_bad();				\
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+
+
+We seem to be able to fix that with the __inttype() trick that x86 uses.
+
+That's probably not 4.18 material though. But if you want to go with
+copy_from_user() for now you could then switch to get_user() for 4.19.
+
+cheers
