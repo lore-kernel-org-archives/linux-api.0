@@ -1,41 +1,32 @@
-From: Eric Biggers <ebiggers3@gmail.com>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for
- superblock creation [ver #9]
-Date: Wed, 11 Jul 2018 09:38:35 -0700
-Message-ID: <20180711163835.GB27454@gmail.com>
-References: <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net>
- <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
- <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
- <22370.1531293761@warthog.procyon.org.uk>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v2 23/27] mm/mmap: Add IBT bitmap size to address
+ space limit check
+Date: Wed, 11 Jul 2018 09:56:27 -0700
+Message-ID: <1531328187.13297.35.camel@intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+         <20180710222639.8241-24-yu-cheng.yu@intel.com>
+         <7cdadb28-a9aa-550b-9e31-30691b64b504@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <22370.1531293761@warthog.procyon.org.uk>
+In-Reply-To: <7cdadb28-a9aa-550b-9e31-30691b64b504@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, jannh@google.com
+To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 11, 2018 at 08:22:41AM +0100, David Howells wrote:
-> Andy Lutomirski <luto@amacapital.net> wrote:
-> 
-> > >    sfd = fsopen("ext4", FSOPEN_CLOEXEC);
-> > >    write(sfd, "s /dev/sdb1"); // note I'm ignoring write's length arg
+On Tue, 2018-07-10 at 16:57 -0700, Dave Hansen wrote:
+> On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
 > > 
-> > Imagine some malicious program passes sfd as stdout to a setuid
-> > program. That program gets persuaded to write "s /etc/shadow".  What
-> > happens?  You’re okay as long as *every single fs* gets it right, but that’s
-> > asking a lot.
-> 
-> Do note that you must already have CAP_SYS_ADMIN to be able to call fsopen().
-> 
-> David
+> > The indirect branch tracking legacy bitmap takes a large address
+> > space.  This causes may_expand_vm() failure on the address limit
+> > check.  For a IBT-enabled task, add the bitmap size to the
+> > address limit.
+> This appears to require that we set up
+> current->thread.cet.ibt_bitmap_size _before_ calling may_expand_vm().
+> What keeps the ibt_mmap() itself from hitting the address limit?
 
-Not really, by default an unprivileged user can still do:
+Yes, that is overlooked.  I will fix it.
 
-	unshare(CLONE_NEWUSER|CLONE_NEWNS);
-	syscall(__NR_fsopen, "ext4", 0);
-
-- Eric
+Thanks,
+Yu-cheng
