@@ -1,86 +1,114 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC PATCH v2 17/27] x86/cet/shstk: User-mode shadow stack support
-Date: Wed, 11 Jul 2018 15:21:58 -0700
-Message-ID: <A034EC34-13E7-4AEF-BB3C-FEF14143B601@amacapital.net>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com> <20180710222639.8241-18-yu-cheng.yu@intel.com> <CAG48ez1ytOfQyNZMNPFp7XqKcpd7_aRai9G5s7rx0V=8ZG+r2A@mail.gmail.com> <6F5FEFFD-0A9A-4181-8D15-5FC323632BA6@amacapital.net> <CAG48ez1OwQMmhQfHaauo+vneywsQ_ERKr4uVcQebC=GbdqZWtA@mail.gmail.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [RFC PATCH v2 22/27] x86/cet/ibt: User-mode indirect branch
+ tracking support
+Date: Wed, 11 Jul 2018 15:40:46 -0700
+Message-ID: <f97ce234-52fa-e666-2250-098925cf3c39@linux.intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+ <20180710222639.8241-23-yu-cheng.yu@intel.com>
+ <3a7e9ce4-03c6-cc28-017b-d00108459e94@linux.intel.com>
+ <1531347019.15351.89.camel@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez1OwQMmhQfHaauo+vneywsQ_ERKr4uVcQebC=GbdqZWtA@mail.gmail.com>
+In-Reply-To: <1531347019.15351.89.camel@intel.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: yu-cheng.yu@intel.com, the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, bsingharora@gmail.com, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, keescook@chromiun.org, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <peterz@infra>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
 List-Id: linux-api@vger.kernel.org
 
+On 07/11/2018 03:10 PM, Yu-cheng Yu wrote:
+> On Tue, 2018-07-10 at 17:11 -0700, Dave Hansen wrote:
+>> Is this feature *integral* to shadow stacks?  Or, should it just be
+>> in a
+>> different series?
+> 
+> The whole CET series is mostly about SHSTK and only a minority for IBT.
+> IBT changes cannot be applied by itself without first applying SHSTK
+> changes.  Would the titles help, e.g. x86/cet/ibt, x86/cet/shstk, etc.?
 
-> On Jul 11, 2018, at 2:51 PM, Jann Horn <jannh@google.com> wrote:
->=20
-> On Wed, Jul 11, 2018 at 2:34 PM Andy Lutomirski <luto@amacapital.net> wrot=
-e:
->>> On Jul 11, 2018, at 2:10 PM, Jann Horn <jannh@google.com> wrote:
->>>=20
->>>> On Tue, Jul 10, 2018 at 3:31 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wro=
-te:
->>>>=20
->>>> This patch adds basic shadow stack enabling/disabling routines.
->>>> A task's shadow stack is allocated from memory with VM_SHSTK
->>>> flag set and read-only protection.  The shadow stack is
->>>> allocated to a fixed size.
->>>>=20
->>>> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
->>> [...]
->>>> diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
->>>> new file mode 100644
->>>> index 000000000000..96bf69db7da7
->>>> --- /dev/null
->>>> +++ b/arch/x86/kernel/cet.c
->>> [...]
->>>> +static unsigned long shstk_mmap(unsigned long addr, unsigned long len)=
+That doesn't really answer what I asked, though.
 
->>>> +{
->>>> +       struct mm_struct *mm =3D current->mm;
->>>> +       unsigned long populate;
->>>> +
->>>> +       down_write(&mm->mmap_sem);
->>>> +       addr =3D do_mmap(NULL, addr, len, PROT_READ,
->>>> +                      MAP_ANONYMOUS | MAP_PRIVATE, VM_SHSTK,
->>>> +                      0, &populate, NULL);
->>>> +       up_write(&mm->mmap_sem);
->>>> +
->>>> +       if (populate)
->>>> +               mm_populate(addr, populate);
->>>> +
->>>> +       return addr;
->>>> +}
-> [...]
->>> Should the kernel enforce that two shadow stacks must have a guard
->>> page between them so that they can not be directly adjacent, so that
->>> if you have too much recursion, you can't end up corrupting an
->>> adjacent shadow stack?
->>=20
->> I think the answer is a qualified =E2=80=9Cno=E2=80=9D. I would like to i=
-nstead enforce a general guard page on all mmaps that don=E2=80=99t use MAP_=
-FORCE. We *might* need to exempt any mmap with an address hint for compatibi=
-lity.
->=20
-> I like this idea a lot.
->=20
->> My commercial software has been manually adding guard pages on every sing=
-le mmap done by tcmalloc for years, and it has caught a couple bugs and cost=
-s essentially nothing.
->>=20
->> Hmm. Linux should maybe add something like Windows=E2=80=99 =E2=80=9Crese=
-rved=E2=80=9D virtual memory. It=E2=80=99s basically a way to ask for a VA r=
-ange that explicitly contains nothing and can be subsequently be turned into=
- something useful with the equivalent of MAP_FORCE.
->=20
-> What's the benefit over creating an anonymous PROT_NONE region? That
-> the kernel won't have to scan through the corresponding PTEs when
-> tearing down the mapping?
+Do shadow stacks *require* IBT?  Or, should we concentrate on merging
+shadow stacks themselves first and then do IBT at a later time, in a
+different patch series?
 
-Make it more obvious what=E2=80=99s happening and avoid accounting issues?  W=
-hat I=E2=80=99ve actually used is MAP_NORESERVE | PROT_NONE, but I think thi=
-s still counts against the VA rlimit. But maybe that=E2=80=99s actually the d=
-esired behavior.
+But, yes, better patch titles would help, although I'm not sure that's
+quite the format that Ingo and Thomas prefer.
+
+>>> +int cet_setup_ibt_bitmap(void)
+>>> +{
+>>> +	u64 r;
+>>> +	unsigned long bitmap;
+>>> +	unsigned long size;
+>>> +
+>>> +	if (!cpu_feature_enabled(X86_FEATURE_IBT))
+>>> +		return -EOPNOTSUPP;
+>>> +
+>>> +	size = TASK_SIZE_MAX / PAGE_SIZE / BITS_PER_BYTE;
+>> Just a note: this table is going to be gigantic on 5-level paging
+>> systems, and userspace won't, by default use any of that extra
+>> address
+>> space.  I think it ends up being a 512GB allocation in a 128TB
+>> address
+>> space.
+>>
+>> Is that a problem?
+>> 
+>> On 5-level paging systems, maybe we should just stick it up in the 
+>> high part of the address space.
+> 
+> We do not know in advance if dlopen() needs to create the bitmap.  Do
+> we always reserve high address or force legacy libs to low address?
+
+Does it matter?  Does code ever get pointers to this area?  Might they
+be depending on high address bits for the IBT being clear?
+
+
+>>> +	bitmap = ibt_mmap(0, size);
+>>> +
+>>> +	if (bitmap >= TASK_SIZE_MAX)
+>>> +		return -ENOMEM;
+>>> +
+>>> +	bitmap &= PAGE_MASK;
+>> We're page-aligning the result of an mmap()?  Why?
+> 
+> This may not be necessary.  The lower bits of MSR_IA32_U_CET are
+> settings and not part of the bitmap address.  Is this is safer?
+
+No.  If we have mmap() returning non-page-aligned addresses, we have
+bigger problems.  Worst-case, do
+
+	WARN_ON_ONCE(bitmap & ~PAGE_MASK);
+
+>>> +	current->thread.cet.ibt_bitmap_addr = bitmap;
+>>> +	current->thread.cet.ibt_bitmap_size = size;
+>>> +	return 0;
+>>> +}
+>>> +
+>>> +void cet_disable_ibt(void)
+>>> +{
+>>> +	u64 r;
+>>> +
+>>> +	if (!cpu_feature_enabled(X86_FEATURE_IBT))
+>>> +		return;
+>> Does this need a check for being already disabled?
+> 
+> We need that.  We cannot write to those MSRs if the CPU does not
+> support it.
+
+No, I mean for code doing cet_disable_ibt() twice in a row.
+
+>>> +	rdmsrl(MSR_IA32_U_CET, r);
+>>> +	r &= ~(MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_LEG_IW_EN |
+>>> +	       MSR_IA32_CET_NO_TRACK_EN);
+>>> +	wrmsrl(MSR_IA32_U_CET, r);
+>>> +	current->thread.cet.ibt_enabled = 0;
+>>> +}
+>> What's the locking for current->thread.cet?
+> 
+> Now CET is not locked until the application calls ARCH_CET_LOCK.
+
+No, I mean what is the in-kernel locking for the current->thread.cet
+data structure?  Is there none because it's only every modified via
+current->thread and it's entirely thread-local?
