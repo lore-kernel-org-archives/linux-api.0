@@ -1,32 +1,36 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v2 23/27] mm/mmap: Add IBT bitmap size to address
- space limit check
-Date: Wed, 11 Jul 2018 09:56:27 -0700
-Message-ID: <1531328187.13297.35.camel@intel.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
-         <20180710222639.8241-24-yu-cheng.yu@intel.com>
-         <7cdadb28-a9aa-550b-9e31-30691b64b504@linux.intel.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for
+ superblock creation [ver #9]
+Date: Wed, 11 Jul 2018 10:06:39 -0700
+Message-ID: <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com>
+References: <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
+ <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
+ <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7cdadb28-a9aa-550b-9e31-30691b64b504@linux.intel.com>
+In-Reply-To: <22370.1531293761@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2018-07-10 at 16:57 -0700, Dave Hansen wrote:
-> On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
-> > 
-> > The indirect branch tracking legacy bitmap takes a large address
-> > space.  This causes may_expand_vm() failure on the address limit
-> > check.  For a IBT-enabled task, add the bitmap size to the
-> > address limit.
-> This appears to require that we set up
-> current->thread.cet.ibt_bitmap_size _before_ calling may_expand_vm().
-> What keeps the ibt_mmap() itself from hitting the address limit?
+> On Jul 11, 2018, at 12:22 AM, David Howells <dhowells@redhat.com> wrote:
+>
+> Andy Lutomirski <luto@amacapital.net> wrote:
+>
+>>>   sfd =3D fsopen("ext4", FSOPEN_CLOEXEC);
+>>>   write(sfd, "s /dev/sdb1"); // note I'm ignoring write's length arg
+>>
+>> Imagine some malicious program passes sfd as stdout to a setuid
+>> program. That program gets persuaded to write "s /etc/shadow".  What
+>> happens?  You=E2=80=99re okay as long as *every single fs* gets it right=
+, but that=E2=80=99s
+>> asking a lot.
+>
+> Do note that you must already have CAP_SYS_ADMIN to be able to call fsope=
+n().
 
-Yes, that is overlooked.  I will fix it.
-
-Thanks,
-Yu-cheng
+If you=E2=80=99re not allowing it already, someone will want user namespace
+root to be able to use this very, very soon.
