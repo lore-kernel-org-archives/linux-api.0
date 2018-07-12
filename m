@@ -1,31 +1,69 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
-Date: Thu, 12 Jul 2018 16:50:13 -0700
-Message-ID: <3236C75A-5D74-4BB4-A1EC-06F6E22D810C@amacapital.net>
-References: <611054C7-D6E8-4C89-958E-3128C9305E1E@amacapital.net> <20180712223223.GA28610@thunk.org> <CA+55aFw1WyKY+-2dg62M-QT_F0-waCTCrba1DW4dStYz-f_fjA@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk> <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <7002.1531407244@warthog.procyon.org.uk> <CA+55aFx+xm333ZZ7d2Z39QuhDu=0XM6nTMChbHvWQOXNk32yxw@mail.gmail.com> <16699.1531426991@warthog.procyon.org.uk> <18233.1531430797@warthog.procyon.org.uk> <22105.1531436081@warthog.procyon.org.uk> <23894.1531438559@warthog.procyon.org.uk>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
+Date: Thu, 12 Jul 2018 16:49:56 -0700
+Message-ID: <46784af0-6fbb-522d-6acb-c6248e5e0e0d@linux.intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+ <20180710222639.8241-19-yu-cheng.yu@intel.com>
+ <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
+ <1531436398.2965.18.camel@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <23894.1531438559@warthog.procyon.org.uk>
+In-Reply-To: <1531436398.2965.18.camel@intel.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: "Theodore Y. Ts'o" <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
 List-Id: linux-api@vger.kernel.org
 
+On 07/12/2018 03:59 PM, Yu-cheng Yu wrote:
+> On Tue, 2018-07-10 at 16:48 -0700, Dave Hansen wrote:
+>>>
+>>> +/*
+>>> + * WRUSS is a kernel instrcution and but writes to user
+>>> + * shadow stack memory.  When a fault occurs, both
+>>> + * X86_PF_USER and X86_PF_SHSTK are set.
+>>> + */
+>>> +static int is_wruss(struct pt_regs *regs, unsigned long error_code)
+>>> +{
+>>> +	return (((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
+>>> +		(X86_PF_USER | X86_PF_SHSTK)) && !user_mode(regs));
+>>> +}
+>> I thought X86_PF_USER was set based on the mode in which the fault
+>> occurred.  Does this mean that the architecture of this bit is different
+>> now?
+> 
+> Yes.
+> 
+>> That seems like something we need to call out if so.  It also means we
+>> need to update the SDM because some of the text is wrong.
+> 
+> It needs to mention the WRUSS case.
 
+Ugh.  The documentation for this is not pretty.  But, I guess this is
+not fundamentally different from access to U=1 pages when SMAP is in
+place and we've set EFLAGS.AC=1.
 
-> On Jul 12, 2018, at 4:35 PM, David Howells <dhowells@redhat.com> wrote:
->=20
-> Andy Lutomirski <luto@amacapital.net> wrote:
->=20
->> I tend to think that this *should* fail using the new API.  The semantics=
- of
->> the second mount request are bizarre at best.
->=20
-> You still have to support existing behaviour lest you break userspace.
->=20
+But, sheesh, we need to call this out really explicitly and make it
+crystal clear what is going on.
 
-I assume the existing behavior is that a bind mount is created?  If so, the n=
-ew mount(8) tool could do it in user code.=
+We need to go through the page fault code very carefully and audit all
+the X86_PF_USER spots and make sure there's no impact to those.  SMAP
+should mean that we already dealt with these, but we still need an audit.
+
+The docs[1] are clear as mud on this though: "Page entry has user
+privilege (U=1) for a supervisor-level shadow-stack-load,
+shadow-stack-store-intent or shadow-stack-store access except those that
+originate from the WRUSS instruction."
+
+Or, in short:
+
+	"Page has U=1 ... except those that originate from the WRUSS 	
+	instruction."
+
+Which is backwards from what you said.  I really wish those docs had
+reused the established SDM language instead of reinventing their own way
+of saying things.
+
+1.
+https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf
