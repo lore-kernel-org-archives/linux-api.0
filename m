@@ -1,32 +1,56 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
-Date: Thu, 12 Jul 2018 23:54:41 +0100
-Message-ID: <22105.1531436081@warthog.procyon.org.uk>
-References: <20180712223223.GA28610@thunk.org> <CA+55aFw1WyKY+-2dg62M-QT_F0-waCTCrba1DW4dStYz-f_fjA@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk> <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <7002.1531407244@warthog.procyon.org.uk> <CA+55aFx+xm333ZZ7d2Z39QuhDu=0XM6nTMChbHvWQOXNk32yxw@mail.gmail.com> <16699.1531426991@warthog.procyon.org.uk> <18233.1531430797@warthog.procyon.org.uk>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
+Date: Thu, 12 Jul 2018 15:59:58 -0700
+Message-ID: <1531436398.2965.18.camel@intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+         <20180710222639.8241-19-yu-cheng.yu@intel.com>
+         <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180712223223.GA28610@thunk.org>
-Content-ID: <22104.1531436081.1@warthog.procyon.org.uk>
+In-Reply-To: <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Theodore Y. Ts'o" <tytso@mit.edu>
-Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
+To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-Theodore Y. Ts'o <tytso@mit.edu> wrote:
+On Tue, 2018-07-10 at 16:48 -0700, Dave Hansen wrote:
+> > 
+> > +/*
+> > + * WRUSS is a kernel instrcution and but writes to user
+> > + * shadow stack memory.  When a fault occurs, both
+> > + * X86_PF_USER and X86_PF_SHSTK are set.
+> > + */
+> > +static int is_wruss(struct pt_regs *regs, unsigned long error_code)
+> > +{
+> > +	return (((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
+> > +		(X86_PF_USER | X86_PF_SHSTK)) && !user_mode(regs));
+> > +}
+> I thought X86_PF_USER was set based on the mode in which the fault
+> occurred.  Does this mean that the architecture of this bit is different
+> now?
 
-> So maybe the answer is that you open /dev/sda1 and /dev/sda2 and then
-> pass the file descriptors to the fsopen object?  We can require that
-> the fd's be opened with O_RDWR and O_EXCL, which has the benefit where
-> if you have multiple block devices, you know *which* block device had
-> a problem with being grabbed for an exclusive open.
+Yes.
 
-Would that mean then that doing:
+> That seems like something we need to call out if so.  It also means we
+> need to update the SDM because some of the text is wrong.
 
-	mount /dev/sda3 /a
-	mount /dev/sda3 /b
+It needs to mention the WRUSS case.
 
-would then fail on the second command because /dev/sda3 is already open
-exclusively?
+> 
+> > 
+> >  static void
+> >  show_fault_oops(struct pt_regs *regs, unsigned long error_code,
+> >  		unsigned long address)
+> > @@ -848,7 +859,7 @@ __bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
+> >  	struct task_struct *tsk = current;
+> >  
+> >  	/* User mode accesses just cause a SIGSEGV */
+> > -	if (error_code & X86_PF_USER) {
+> > +	if ((error_code & X86_PF_USER) && !is_wruss(regs, error_code)) {
+> >  		/*
+> >  		 * It's possible to have interrupts off here:
+> >  		 */
+> This needs commenting about why is_wruss() is special.
 
-David
+Ok.
