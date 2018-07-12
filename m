@@ -1,48 +1,53 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
-Date: Thu, 12 Jul 2018 15:54:04 +0100
-Message-ID: <7002.1531407244@warthog.procyon.org.uk>
-References: <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for
+ superblock creation [ver #9]
+Date: Thu, 12 Jul 2018 08:50:46 -0700
+Message-ID: <CA+55aFx+xm333ZZ7d2Z39QuhDu=0XM6nTMChbHvWQOXNk32yxw@mail.gmail.com>
+References: <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
+ <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
+ <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk>
+ <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <7002.1531407244@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com>
+In-Reply-To: <7002.1531407244@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
+To: David Howells <dhowells@redhat.com>
+Cc: Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto@kernel.org> wrote:
+On Thu, Jul 12, 2018 at 7:54 AM David Howells <dhowells@redhat.com> wrote:
+>
+> I think we *have* to open the source files/devices with the creds of whoever
+> called fsopen() or fspick() - that way you can't upgrade your privs by passing
+> your context fd to a suid program.  To enforce this, I think it's simplest for
+> fscontext_write() to call override_creds() right after taking the uapi_mutex
+> and then call revert_creds() right before dropping the mutex.
 
-> > On Jul 11, 2018, at 12:22 AM, David Howells <dhowells@redhat.com> wrote:
-> >
-> > Andy Lutomirski <luto@amacapital.net> wrote:
-> >
-> >>>   sfd = fsopen("ext4", FSOPEN_CLOEXEC);
-> >>>   write(sfd, "s /dev/sdb1"); // note I'm ignoring write's length arg
-> >>
-> >> Imagine some malicious program passes sfd as stdout to a setuid
-> >> program. That program gets persuaded to write "s /etc/shadow".  What
-> >> happens?  You’re okay as long as *every single fs* gets it right, but
-> >> that’s asking a lot.
-> >
-> > Do note that you must already have CAP_SYS_ADMIN to be able to call
-> > fsopen().
-> 
-> If you're not allowing it already, someone will want user namespace
-> root to be able to use this very, very soon.
+No.
 
-Yeah, I'm sure.  And I've been thinking on how to deal with it.
+Don't play games with override_creds. It's wrong.
 
-I think we *have* to open the source files/devices with the creds of whoever
-called fsopen() or fspick() - that way you can't upgrade your privs by passing
-your context fd to a suid program.  To enforce this, I think it's simplest for
-fscontext_write() to call override_creds() right after taking the uapi_mutex
-and then call revert_creds() right before dropping the mutex.
+You have to use file->f_creds - no games, no garbage.
 
-Another thing we might want to look at is to allow a supervisory process to
-examine the context before permitting the create/reconfigure action to
-proceed.  It might also be possible to do this through the LSM.
+But "write()" simply is *NOT* a good "command" interface. If you want
+to send a command, use an ioctl or a system call.
 
-David
+Because it's not just about credentials. It's not just about fooling a
+suid app into writing an error message to a descriptor you wrote. It's
+also about things like "splice()", which can write to your target
+using a kernel buffer, and thus trick you into doing a command while
+we have the context set to kernel addresses.
+
+Are we trying to get away from that issue? Yes. But it's just another
+example of why "write()" IS NOT TO BE USED FOR COMMANDS.
+
+Only use write() for data.
+
+That's final. We're not adding yet another clueless fuck-up of an
+interface just because people cannot understand this very simple rule:
+"write()" is for data, not for commands.
+
+No more excuses.
+
+                 Linus
