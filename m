@@ -1,56 +1,58 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
-Date: Thu, 12 Jul 2018 15:59:58 -0700
-Message-ID: <1531436398.2965.18.camel@intel.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
-         <20180710222639.8241-19-yu-cheng.yu@intel.com>
-         <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC PATCH v2 25/27] x86/cet: Add PTRACE interface for CET
+Date: Fri, 13 Jul 2018 01:08:23 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1807130102470.1597@nanos.tec.linutronix.de>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>  <20180710222639.8241-26-yu-cheng.yu@intel.com>  <20180711102035.GB8574@gmail.com> <1531323638.13297.24.camel@intel.com>  <20180712140327.GA7810@gmail.com> <1531435034.2965.15.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/mixed; boundary="8323329-1575887918-1531436904=:1597"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
+In-Reply-To: <1531435034.2965.15.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Ingo Molnar <mingo@kernel.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <peterz@infr>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2018-07-10 at 16:48 -0700, Dave Hansen wrote:
-> > 
-> > +/*
-> > + * WRUSS is a kernel instrcution and but writes to user
-> > + * shadow stack memory.  When a fault occurs, both
-> > + * X86_PF_USER and X86_PF_SHSTK are set.
-> > + */
-> > +static int is_wruss(struct pt_regs *regs, unsigned long error_code)
-> > +{
-> > +	return (((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
-> > +		(X86_PF_USER | X86_PF_SHSTK)) && !user_mode(regs));
-> > +}
-> I thought X86_PF_USER was set based on the mode in which the fault
-> occurred.  Does this mean that the architecture of this bit is different
-> now?
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Yes.
+--8323329-1575887918-1531436904=:1597
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-> That seems like something we need to call out if so.  It also means we
-> need to update the SDM because some of the text is wrong.
-
-It needs to mention the WRUSS case.
-
+On Thu, 12 Jul 2018, Yu-cheng Yu wrote:
+> On Thu, 2018-07-12 at 16:03 +0200, Ingo Molnar wrote:
+> > * Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > > > > diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
+> > > > > index e2ee403865eb..ac2bc3a18427 100644
+> > > > > --- a/arch/x86/kernel/ptrace.c
+> > > > > +++ b/arch/x86/kernel/ptrace.c
+> > > > > @@ -49,7 +49,9 @@ enum x86_regset {
+> > > > >  	REGSET_IOPERM64 = REGSET_XFP,
+> > > > >  	REGSET_XSTATE,
+> > > > >  	REGSET_TLS,
+> > > > > +	REGSET_CET64 = REGSET_TLS,
+> > > > >  	REGSET_IOPERM32,
+> > > > > +	REGSET_CET32,
+> > > > >  };
+> > > > Why does REGSET_CET64 alias on REGSET_TLS?
+> > > In x86_64_regsets[], there is no [REGSET_TLS].  The core dump code
+> > > cannot handle holes in the array.
+> > Is there a fundamental (ABI) reason for that?
 > 
-> > 
-> >  static void
-> >  show_fault_oops(struct pt_regs *regs, unsigned long error_code,
-> >  		unsigned long address)
-> > @@ -848,7 +859,7 @@ __bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
-> >  	struct task_struct *tsk = current;
-> >  
-> >  	/* User mode accesses just cause a SIGSEGV */
-> > -	if (error_code & X86_PF_USER) {
-> > +	if ((error_code & X86_PF_USER) && !is_wruss(regs, error_code)) {
-> >  		/*
-> >  		 * It's possible to have interrupts off here:
-> >  		 */
-> This needs commenting about why is_wruss() is special.
+> What I did was, ran Linux with 'slub_debug', and forced a core dump
+> (kill -abrt <pid>), then there was a red zone warning in the dmesg.
+> My feeling is there could be issues in the core dump code.  These
 
-Ok.
+Kernel development is not about feelings.
+
+Either you can track down the root cause or you cannot. There is no place
+for feelings and no place in between. And if you cannot track down the root
+cause and explain it proper then the resulting patch is just papering over
+the symptoms and will come back to hunt you (or others) sooner than later.
+
+No if, no could, no feelings. Facts is what matters. Really.
+
+Thanks,
+
+	tglx
+--8323329-1575887918-1531436904=:1597--
