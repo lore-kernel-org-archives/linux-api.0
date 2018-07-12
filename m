@@ -1,94 +1,56 @@
-From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: Re: [PATCH v16 00/13] support "task_isolation" mode
-Date: Thu, 12 Jul 2018 15:29:01 +0300
-Message-ID: <20180712122901.GA5049@yury-thinkpad>
-References: <1509728692-10460-1-git-send-email-cmetcalf@mellanox.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC PATCH v2 25/27] x86/cet: Add PTRACE interface for CET
+Date: Thu, 12 Jul 2018 16:03:27 +0200
+Message-ID: <20180712140327.GA7810@gmail.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+ <20180710222639.8241-26-yu-cheng.yu@intel.com>
+ <20180711102035.GB8574@gmail.com>
+ <1531323638.13297.24.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1509728692-10460-1-git-send-email-cmetcalf@mellanox.com>
+In-Reply-To: <1531323638.13297.24.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Metcalf <cmetcalf@mellanox.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Rik van Riel <riel@redhat.com>, Tejun Heo <tj@kernel.org>, Frederic Weisbecker <fweisbec@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Christoph Lameter <cl@linux.com>, Viresh Kumar <viresh.kumar@linaro.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Andy Lutomirski <luto@amacapital.net>, Daniel Lezcano <daniel.lezcano@linaro.org>, Francis Giraldeau <francis.giraldeau@gmail.com>, Sunil Goutham <sgoutham@cavium.com>, linux-mm@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.k
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 03, 2017 at 01:04:39PM -0400, Chris Metcalf wrote:
-> Here, finally, is a new spin of the task isolation work (v16), with
-> changes based on the issues that were raised at last year's Linux
-> Plumbers Conference and in the email discussion that followed.
 
-Hi Chris,
+* Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
 
-There's another possible way to break task isolation, by net subsystem.
-See patch below.
+> > > diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
+> > > index e2ee403865eb..ac2bc3a18427 100644
+> > > --- a/arch/x86/kernel/ptrace.c
+> > > +++ b/arch/x86/kernel/ptrace.c
+> > > @@ -49,7 +49,9 @@ enum x86_regset {
+> > >  	REGSET_IOPERM64 = REGSET_XFP,
+> > >  	REGSET_XSTATE,
+> > >  	REGSET_TLS,
+> > > +	REGSET_CET64 = REGSET_TLS,
+> > >  	REGSET_IOPERM32,
+> > > +	REGSET_CET32,
+> > >  };
+> > Why does REGSET_CET64 alias on REGSET_TLS?
+> 
+> In x86_64_regsets[], there is no [REGSET_TLS].  The core dump code
+> cannot handle holes in the array.
 
-Yury
+Is there a fundamental (ABI) reason for that?
 
+> > to "CET" (which is a well-known acronym for "Central European Time"),
+> > not to CFE?
+> > 
+> 
+> I don't know if I can change that, will find out.
 
->From 8025e9330bf06ce146d4ba96833aad6eafe24759 Mon Sep 17 00:00:00 2001
-From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Sun, 8 Jul 2018 00:40:46 +0300
-Subject: [PATCH] net: don't let user assign task isolation CPUs for RPS
+So what I'd suggest is something pretty simple: to use CFT/cft in kernel internal 
+names, except for the Intel feature bit and any MSR enumeration which can be CET 
+if Intel named it that way, and a short comment explaining the acronym difference.
 
-Receive Packet Steering (RPS) subsystem distributes network traffic
-handling to CPUs defined by user in
-/sys/class/net/<dev>/queues/rx-<n>/rps_cpus.
+Or something like that.
 
-If rps_cpus intersects with task_isolation_map, RPS may break task
-isolation by assigning RPS work to CPU that runs isolated task.
+Thanks,
 
-In this patch user-provided rps_cpus map filtered to avoid that.
-
-Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
----
- include/linux/isolation.h |  2 ++
- net/core/net-sysfs.c      | 13 +++++++++++++
- 2 files changed, 15 insertions(+)
-
-diff --git a/include/linux/isolation.h b/include/linux/isolation.h
-index f467545ad37d..b7f0a9085b13 100644
---- a/include/linux/isolation.h
-+++ b/include/linux/isolation.h
-@@ -14,6 +14,8 @@ struct task_struct;
- 
- #ifdef CONFIG_TASK_ISOLATION
- 
-+extern cpumask_var_t task_isolation_map;
-+
- /**
-  * task_isolation_request() - prctl hook to request task isolation
-  * @flags:	Flags from <linux/prctl.h> PR_TASK_ISOLATION_xxx.
-diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
-index 927a6dcbad96..18e576893984 100644
---- a/net/core/net-sysfs.c
-+++ b/net/core/net-sysfs.c
-@@ -11,6 +11,7 @@
- 
- #include <linux/capability.h>
- #include <linux/kernel.h>
-+#include <linux/isolation.h>
- #include <linux/netdevice.h>
- #include <net/switchdev.h>
- #include <linux/if_arp.h>
-@@ -727,6 +728,18 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
- 		return err;
- 	}
- 
-+#ifdef CONFIG_TASK_ISOLATION
-+	if (cpumask_intersects(mask, task_isolation_map)) {
-+		char tmp[256];
-+
-+		pr_warn("RPS is not allowed on CPUs allocated for isolated tasks\n");
-+
-+		cpumask_andnot(mask, mask, task_isolation_map);
-+		cpumap_print_to_pagebuf(1, tmp, mask);
-+		pr_warn("RPS CPUs list is reduced to: %s\n", tmp);
-+	}
-+#endif
-+
- 	map = kzalloc(max_t(unsigned int,
- 			    RPS_MAP_SIZE(cpumask_weight(mask)), L1_CACHE_BYTES),
- 		      GFP_KERNEL);
--- 
-2.17.1
+	Ingo
