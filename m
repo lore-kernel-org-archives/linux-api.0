@@ -1,8 +1,8 @@
 From: Al Viro <viro@ZenIV.linux.org.uk>
 Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for
  superblock creation [ver #9]
-Date: Thu, 12 Jul 2018 17:41:10 +0100
-Message-ID: <20180712164110.GX30522@ZenIV.linux.org.uk>
+Date: Thu, 12 Jul 2018 17:58:21 +0100
+Message-ID: <20180712165821.GY30522@ZenIV.linux.org.uk>
 References: <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com>
  <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
  <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
@@ -22,20 +22,31 @@ Cc: David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, Linu
 List-Id: linux-api@vger.kernel.org
 
 On Thu, Jul 12, 2018 at 09:23:22AM -0700, Andy Lutomirski wrote:
+ 
+> As a straw man, I suggest:
+> 
+> fsconfigure(contextfd, ADD_BLOCKDEV, dfd, path, flags);
+> 
+> fsconfigure(contextfd, ADD_OPTION, 0, “foo=bar”, flags);
 
-> If you make a syscall that attaches a block device to an fscontext, you don’t need any of this.  Heck, someone might actually *want* to grab a block device from a different namespace.
+Bollocks.  First of all, block device *IS* a fucking option.
+Always had been.  It's not even that it's passed as a separate
+argument for historical reasons - just look at NFS.  That argument
+is a detached part of options, parsed (yes, *parsed*) by filesystem
+in question in whatever way it prefers.
 
-Fuck, NO.  The whole notion of "block device of filesystem" is fucking
-garbage.  It's up to filesystem driver whether it uses any block
-devices.  For backing store or otherwise.  Single or multiple.  Moreover,
-it's up to filesystem driver whether it cares if backing store is
-a block device, or mtd device, or...
+Look at the things like e.g. cramfs.  That argument is interpreted
+as pathname of block device.  Or that of mtd device.  Or the magic
+string "mtd" followed by mtd number.
 
-Repeat after me: syscall that attaches a block device to an fscontext
-makes as much sense as a syscall that attaches a charset name to the
-same.  With a special syscall for attaching a timestamp granularity,
-and another for selecting GID semantics on subdirectory creation.
+What's more, filesystems can and do live on more than one device.
+Like e.g. btrfs.  Or like something journalled with the journal
+on separate device.  So you do *NOT* get away from the need to
+open stuff while doing mount - not unless you introduce arseloads
+of ADD_... shite in your scheme.  And create a huge centralized
+pile of code dealing with it.  ADD_NFS_IPV4_SERVER_AND_PATH, etc.?
 
-Commit vs. write separation is one thing; fuckloads of special syscalls
-for passing vaguely defined classes of mount options (which device
-name *is*) is quite different.
+You can't avoid parsing stuff.  It's one thing to argue at which
+*point* you prefer doing that, but it has to be done kernel-side.
+Format of filesystem options is fundamentally up to filesystem,
+whichever syscall you use.
