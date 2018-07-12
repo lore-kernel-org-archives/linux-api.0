@@ -1,56 +1,51 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [RFC PATCH v2 25/27] x86/cet: Add PTRACE interface for CET
-Date: Thu, 12 Jul 2018 16:03:27 +0200
-Message-ID: <20180712140327.GA7810@gmail.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-26-yu-cheng.yu@intel.com>
- <20180711102035.GB8574@gmail.com>
- <1531323638.13297.24.camel@intel.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 7/7] timex: change syscalls to use struct __kernel_timex
+Date: Thu, 12 Jul 2018 16:40:42 +0200
+Message-ID: <CAK8P3a0CHHTg+ccQc1VViRW8pmd7Rx+BsnGX8FWDQd3CK1BY1g@mail.gmail.com>
+References: <20180707054247.19802-1-deepa.kernel@gmail.com>
+ <20180707054247.19802-8-deepa.kernel@gmail.com> <20180712082956.GD8802@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1531323638.13297.24.camel@intel.com>
+In-Reply-To: <20180712082956.GD8802@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Deepa Dinamani <deepa.kernel@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Jul 12, 2018 at 10:29 AM, Christoph Hellwig <hch@infradead.org> wrote:
+> On Fri, Jul 06, 2018 at 10:42:47PM -0700, Deepa Dinamani wrote:
+>
+>> -#ifdef CONFIG_COMPAT
+>> -
+>>  COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
+>>                      struct compat_timex __user *, utp)
+>>  {
+>> @@ -1187,10 +1183,6 @@ COMPAT_SYSCALL_DEFINE2(clock_adjtime, clockid_t, which_clock,
+>>       return err;
+>>  }
+>>
+>> -#endif
+>
+> And this unconditionally defines clock_adjtime, but doesn't actually
+> seem to add callers, which looks rather odd.  Same for other bits
+> in the patch.
 
-* Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+It really just moves compat_sys_clock_adjtime() into the same
+#ifdef CONFIG_COMPAT_32BIT_TIME that hides the surrounding
+functions.
 
-> > > diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-> > > index e2ee403865eb..ac2bc3a18427 100644
-> > > --- a/arch/x86/kernel/ptrace.c
-> > > +++ b/arch/x86/kernel/ptrace.c
-> > > @@ -49,7 +49,9 @@ enum x86_regset {
-> > >  	REGSET_IOPERM64 = REGSET_XFP,
-> > >  	REGSET_XSTATE,
-> > >  	REGSET_TLS,
-> > > +	REGSET_CET64 = REGSET_TLS,
-> > >  	REGSET_IOPERM32,
-> > > +	REGSET_CET32,
-> > >  };
-> > Why does REGSET_CET64 alias on REGSET_TLS?
-> 
-> In x86_64_regsets[], there is no [REGSET_TLS].  The core dump code
-> cannot handle holes in the array.
+Currently CONFIG_COMPAT_32BIT_TIME is used only as a subset
+of CONFIG_COMPAT, and the plan was to have 32-bit architectures
+enable it later so they could get access to all the functions
+implementing 32-bit time with a patch similar to what I'm testing
+with, see https://pastebin.com/F3QZdyin for the current draft that
+I use for testing.
 
-Is there a fundamental (ABI) reason for that?
+We already spent several review rounds coming just discussing the
+naming of the macros etc before we decided on the
+CONFIG_64BIT_TIME and CONFIG_COMPAT_32BIT_TIME
+symbol, but if you have a better suggestion (as part of moving
+away from the compat_ naming), we can change all that again.
 
-> > to "CET" (which is a well-known acronym for "Central European Time"),
-> > not to CFE?
-> > 
-> 
-> I don't know if I can change that, will find out.
-
-So what I'd suggest is something pretty simple: to use CFT/cft in kernel internal 
-names, except for the Intel feature bit and any MSR enumeration which can be CET 
-if Intel named it that way, and a short comment explaining the acronym difference.
-
-Or something like that.
-
-Thanks,
-
-	Ingo
+      Arnd
