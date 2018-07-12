@@ -1,54 +1,61 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
-Date: Thu, 12 Jul 2018 10:54:36 -0700
-Message-ID: <719E8034-2E07-45C0-9B04-838431F5309F@amacapital.net>
-References: <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk> <7002.1531407244@warthog.procyon.org.uk> <338BC3C4-F3E7-48F0-A82E-2C7295B6640E@amacapital.net> <20180712165821.GY30522@ZenIV.linux.org.uk>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for
+ superblock creation [ver #9]
+Date: Thu, 12 Jul 2018 20:03:04 +0200
+Message-ID: <20180712180304.GA27758@kroah.com>
+References: <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
+ <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
+ <20180712171505.GA23780@kroah.com>
+ <20180712172024.GZ30522@ZenIV.linux.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180712165821.GY30522@ZenIV.linux.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20180712172024.GZ30522@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, tycho@tycho.ws
+Cc: David Howells <dhowells@redhat.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Jul 12, 2018 at 06:20:24PM +0100, Al Viro wrote:
+> On Thu, Jul 12, 2018 at 07:15:05PM +0200, Greg KH wrote:
+> > On Tue, Jul 10, 2018 at 11:44:09PM +0100, David Howells wrote:
+> > > Provide an fsopen() system call that starts the process of preparing to
+> > > create a superblock that will then be mountable, using an fd as a context
+> > > handle.  fsopen() is given the name of the filesystem that will be used:
+> > > 
+> > > 	int mfd = fsopen(const char *fsname, unsigned int flags);
+> > > 
+> > > where flags can be 0 or FSOPEN_CLOEXEC.
+> > > 
+> > > For example:
+> > > 
+> > > 	sfd = fsopen("ext4", FSOPEN_CLOEXEC);
+> > > 	write(sfd, "s /dev/sdb1"); // note I'm ignoring write's length arg
+> > > 	write(sfd, "o noatime");
+> > > 	write(sfd, "o acl");
+> > > 	write(sfd, "o user_attr");
+> > > 	write(sfd, "o iversion");
+> > > 	write(sfd, "o ");
+> > > 	write(sfd, "r /my/container"); // root inside the fs
+> > > 	write(sfd, "x create"); // create the superblock
+> > 
+> > Ugh, creating configfs again in a syscall form?  I know people love
+> > file descriptors, but can't you do this with a configfs entry instead if
+> > you really want to do this type of thing from userspace in this type of
+> > "style"?
+> > 
+> > Why reinvent the wheel again?
+> 
+> The damn thing REALLY, REALLY depends upon the fs type.  How would
+> you map it on configfs?
 
+/sys/kernel/config/fs/ext4/ would work, right?  Each fs "type" would be
+listed there.
 
-> On Jul 12, 2018, at 9:58 AM, Al Viro <viro@ZenIV.linux.org.uk> wrote:
->=20
->> On Thu, Jul 12, 2018 at 09:23:22AM -0700, Andy Lutomirski wrote:
->>=20
->> As a straw man, I suggest:
->>=20
->> fsconfigure(contextfd, ADD_BLOCKDEV, dfd, path, flags);
->>=20
->> fsconfigure(contextfd, ADD_OPTION, 0, =E2=80=9Cfoo=3Dbar=E2=80=9D, flags)=
-;
->=20
-> Bollocks.  First of all, block device *IS* a fucking option.
-> Always had been.  It's not even that it's passed as a separate
-> argument for historical reasons - just look at NFS.  That argument
-> is a detached part of options, parsed (yes, *parsed*) by filesystem
-> in question in whatever way it prefers.
+Anyway, the whole "write a bunch of options and then do a 'create'" is
+exactly the way configfs works.  Why not use that?
 
-Fine, then generalize it. fsconfigure(context, ADD_FD, =E2=80=9Csome fs-spec=
-ific string explaining what=E2=80=99s going on=E2=80=9D, fd);  The point bei=
-ng that there are tons of cases where the filesystem wants to identify some b=
-acking store by some device node, and it seems like we should support someth=
-ing along the lines of a modern *at interface.
+thanks,
 
-If I=E2=80=99m writing a daemon that deals with filesystems, I don=E2=80=99t=
- want an API that looks like do_god_knows_what(context, =E2=80=9Cfilesystem s=
-pecific string that may contain a path to a device node or a network address=
-=E2=80=9D). That API will be a pain to use, since that opaque string may com=
-e from some random config file and I have no clue what it does. If I want to=
- pass a device node or other object to a filesystem, I want to pass an fd (s=
-o I can use openat, SCM_CREDS, etc), and I want it to be crystal clear that I=
-=E2=80=99m passing some object in. And if I tell a filesystem to access the n=
-etwork, I want it to be entirely clear which network namespace is in use.
-
-I realize that doing this right is tricky when there are lots of legacy file=
-systems that parse opaque strings. That=E2=80=99s fine. We can convert thing=
-s slowly.
+greg k-h
