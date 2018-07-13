@@ -1,38 +1,29 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for
- superblock creation [ver #9]
-Date: Thu, 12 Jul 2018 22:35:55 -0400
-Message-ID: <20180713023555.GE28610@thunk.org>
-References: <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
- <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
- <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net>
- <22370.1531293761@warthog.procyon.org.uk>
- <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com>
- <7002.1531407244@warthog.procyon.org.uk>
- <CA+55aFx+xm333ZZ7d2Z39QuhDu=0XM6nTMChbHvWQOXNk32yxw@mail.gmail.com>
- <16699.1531426991@warthog.procyon.org.uk>
- <18233.1531430797@warthog.procyon.org.uk>
- <22105.1531436081@warthog.procyon.org.uk>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
+Date: Thu, 12 Jul 2018 21:16:46 -0700
+Message-ID: <66016722-9872-a3f9-f88b-37397f9b6979@intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+ <20180710222639.8241-19-yu-cheng.yu@intel.com>
+ <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
+ <1531436398.2965.18.camel@intel.com>
+ <46784af0-6fbb-522d-6acb-c6248e5e0e0d@linux.intel.com>
+ <167645aa-f1c7-bd6a-c7e0-2da317cbbaba@intel.com>
+ <55A0592D-0E8D-4BC5-BA4B-E82E92EEA36A@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <22105.1531436081@warthog.procyon.org.uk>
+In-Reply-To: <55A0592D-0E8D-4BC5-BA4B-E82E92EEA36A@amacapital.net>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 12, 2018 at 11:54:41PM +0100, David Howells wrote:
-> 
-> Would that mean then that doing:
-> 
-> 	mount /dev/sda3 /a
-> 	mount /dev/sda3 /b
-> 
-> would then fail on the second command because /dev/sda3 is already open
-> exclusively?
+On 07/12/2018 07:21 PM, Andy Lutomirski wrote:
+> I am tempted to suggest that the whole series not be merged until
+> there are actual docs. It’s not a fantastic precedent.
 
-Good point.  One workaround would be to require an open with O_PATH instead.
-
-     	     	 	    	     	- Ted
+Do you mean Documentation or manpages, or are you talking about hardware
+documentation?
+https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf
