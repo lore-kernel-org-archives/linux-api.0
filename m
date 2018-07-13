@@ -1,46 +1,32 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [RFC PATCH v2 25/27] x86/cet: Add PTRACE interface for CET
-Date: Fri, 13 Jul 2018 15:33:58 +0200
-Message-ID: <20180713133357.GB13602@gmail.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-26-yu-cheng.yu@intel.com>
- <20180711102035.GB8574@gmail.com>
- <1531323638.13297.24.camel@intel.com>
- <20180712140327.GA7810@gmail.com>
- <20180713062804.GA6905@amd>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
+Date: Fri, 13 Jul 2018 08:01:56 -0700
+Message-ID: <F80F34FD-CFD3-4A53-AECC-AEC8D9EF3EAE@amacapital.net>
+References: <CA+55aFzaTQJp6aHG_9+W2ShxeZncq7k9G3FkVFjFm7W=ECUiMw@mail.gmail.com> <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk> <7002.1531407244@warthog.procyon.org.uk> <338BC3C4-F3E7-48F0-A82E-2C7295B6640E@amacapital.net> <17749.1531429218@warthog.procyon.org.uk> <21131.1531488422@warthog.procyon.org.uk>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180713062804.GA6905@amd>
+In-Reply-To: <21131.1531488422@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>
+To: David Howells <dhowells@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
 
-* Pavel Machek <pavel@ucw.cz> wrote:
 
-> 
-> > > > to "CET" (which is a well-known acronym for "Central European Time"),
-> > > > not to CFE?
-> > > > 
-> > > 
-> > > I don't know if I can change that, will find out.
-> > 
-> > So what I'd suggest is something pretty simple: to use CFT/cft in kernel internal 
-> > names, except for the Intel feature bit and any MSR enumeration which can be CET 
-> > if Intel named it that way, and a short comment explaining the acronym difference.
-> > 
-> > Or something like that.
-> 
-> Actually, I don't think CFT is much better -- there's limited number
-> of TLAs (*). "ENFORCE_FLOW"? "FLOWE"? "EFLOW"?
+> On Jul 13, 2018, at 6:27 AM, David Howells <dhowells@redhat.com> wrote:
+>=20
+> Whilst I'm at it, do we want the option of doing the equivalent of mountat=
+()?
+> I.e. offering the option to open all the device files used by a superblock=
 
-Erm, I wanted to say 'CFE', i.e. the abbreviation of 'Control Flow Enforcement'.
+> with dfd and AT_* flags in combination with the filename?
+>=20
 
-But I guess I can live with CET as well ...
+Isn=E2=80=99t that more or less what I was suggesting?  I suggested dfd and p=
+ath and I also suggested just an fd and letting the caller open the file its=
+elf.
 
-Thanks,
-
-	Ingo
+> David
