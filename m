@@ -1,63 +1,45 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Subject: Re: [RFC PATCH v2 18/27] x86/cet/shstk: Introduce WRUSS instruction
-Date: Fri, 13 Jul 2018 10:37:10 -0700
-Message-ID: <1531503430.11680.2.camel@intel.com>
+Date: Fri, 13 Jul 2018 10:39:05 -0700
+Message-ID: <1531503545.11680.4.camel@intel.com>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
          <20180710222639.8241-19-yu-cheng.yu@intel.com>
-         <166536e2-b296-7be5-d1b7-982cf56f1f9b@linux.intel.com>
+         <bbb487cc-ac1c-f734-eee3-2463a0ba7efc@linux.intel.com>
+         <1531436398.2965.18.camel@intel.com>
+         <46784af0-6fbb-522d-6acb-c6248e5e0e0d@linux.intel.com>
+         <167645aa-f1c7-bd6a-c7e0-2da317cbbaba@intel.com>
+         <55A0592D-0E8D-4BC5-BA4B-E82E92EEA36A@amacapital.net>
+         <66016722-9872-a3f9-f88b-37397f9b6979@intel.com>
+         <8bd46e0e-5418-0b22-d471-092d31c78320@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <166536e2-b296-7be5-d1b7-982cf56f1f9b@linux.intel.com>
+In-Reply-To: <8bd46e0e-5418-0b22-d471-092d31c78320@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <peterz@infradead.org>, "Ravi V. Shankar" <ravi.v.shankar@intel.com>, Vedvyas
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2018-07-13 at 05:12 -0700, Dave Hansen wrote:
-> On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
+On Thu, 2018-07-12 at 21:18 -0700, Dave Hansen wrote:
+> On 07/12/2018 09:16 PM, Dave Hansen wrote:
 > > 
-> > +static int is_wruss(struct pt_regs *regs, unsigned long error_code)
-> > +{
-> > +	return (((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
-> > +		(X86_PF_USER | X86_PF_SHSTK)) && !user_mode(regs));
-> > +}
-> > +
-> >  static void
-> >  show_fault_oops(struct pt_regs *regs, unsigned long error_code,
-> >  		unsigned long address)
-> > @@ -848,7 +859,7 @@ __bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
-> >  	struct task_struct *tsk = current;
-> >  
-> >  	/* User mode accesses just cause a SIGSEGV */
-> > -	if (error_code & X86_PF_USER) {
-> > +	if ((error_code & X86_PF_USER) && !is_wruss(regs, error_code)) {
-> >  		/*
-> >  		 * It's possible to have interrupts off here:
-> >  		 */
-> Please don't do it this way.
+> > On 07/12/2018 07:21 PM, Andy Lutomirski wrote:
+> > > 
+> > > I am tempted to suggest that the whole series not be merged until
+> > > there are actual docs. It’s not a fantastic precedent.
+> > Do you mean Documentation or manpages, or are you talking about hardware
+> > documentation?
+> > https://software.intel.com/sites/default/files/managed/4d/2a/control-flow-enforcement-technology-preview.pdf
+> Hit send too soon...
 > 
-> We have two styles of page fault:
-> 1. User page faults: find a VMA, try to handle (allocate memory et al.),
->    kill process if we can't handle.
-> 2. Kernel page faults: search for a *discrete* set of conditions that
->    can be handled, including faults in instructions marked in exception
->    tables.
+> We do need manpages a well.  If I had to do it for protection keys,
+> everyone else has to suffer too. :)
 > 
-> X86_PF_USER *means*: do user page fault handling.  In the places where
-> the hardware doesn't set it, but we still want user page fault handling,
-> we manually set it, like this where we "downgrade" an implicit
-> supervisor access to a user access:
+> Yu-cheng, I really do think selftests are a necessity before this gets
+> merged.
 > 
->         if (user_mode(regs)) {
->                 local_irq_enable();
->                 error_code |= X86_PF_USER;
->                 flags |= FAULT_FLAG_USER;
-> 
-> So, just please *clear* X86_PF_USER if !user_mode(regs) and X86_PF_SS.
-> We do not want user page fault handling, thus we should not keep the bit
-> set.
 
-Agree.  I will change that.
+We already have some.  I will put those in patches.
 
 Yu-cheng
