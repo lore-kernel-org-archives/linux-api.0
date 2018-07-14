@@ -1,51 +1,79 @@
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: [RFC PATCH v2 16/27] mm: Modify can_follow_write_pte/pmd for
- shadow stack
-Date: Fri, 13 Jul 2018 11:26:46 -0700
-Message-ID: <45a85b01-e005-8cb6-af96-b23ce9b5fca7@linux.intel.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [RFC PATCH v2 25/27] x86/cet: Add PTRACE interface for CET
+Date: Sat, 14 Jul 2018 08:27:37 +0200
+Message-ID: <20180714062737.GA13242@amd>
 References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-17-yu-cheng.yu@intel.com>
- <de510df6-7ea9-edc6-9c49-2f80f16472b4@linux.intel.com>
- <1531328731.15351.3.camel@intel.com>
+ <20180710222639.8241-26-yu-cheng.yu@intel.com>
+ <20180711102035.GB8574@gmail.com>
+ <1531323638.13297.24.camel@intel.com>
+ <20180712140327.GA7810@gmail.com>
+ <20180713062804.GA6905@amd>
+ <20180713133357.GB13602@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="ikeVEW9yuYc//A+q"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1531328731.15351.3.camel@intel.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20180713133357.GB13602@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
+To: Ingo Molnar <mingo@kernel.org>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On 07/11/2018 10:05 AM, Yu-cheng Yu wrote:
-> My understanding is that we don't want to follow write pte if the page
-> is shared as read-only.  For a SHSTK page, that is (R/O + DIRTY_SW),
-> which means the SHSTK page has not been COW'ed.  Is that right?
 
-Let's look at the code again:
+--ikeVEW9yuYc//A+q
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> -static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-> +static inline bool can_follow_write_pte(pte_t pte, unsigned int flags,
-> +					bool shstk)
->  {
-> +	bool pte_cowed = shstk ? is_shstk_pte(pte):pte_dirty(pte);
-> +
->  	return pte_write(pte) ||
-> -		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-> +		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_cowed);
->  }
+On Fri 2018-07-13 15:33:58, Ingo Molnar wrote:
+>=20
+> * Pavel Machek <pavel@ucw.cz> wrote:
+>=20
+> >=20
+> > > > > to "CET" (which is a well-known acronym for "Central European Tim=
+e"),
+> > > > > not to CFE?
+> > > > >=20
+> > > >=20
+> > > > I don't know if I can change that, will find out.
+> > >=20
+> > > So what I'd suggest is something pretty simple: to use CFT/cft in ker=
+nel internal=20
+> > > names, except for the Intel feature bit and any MSR enumeration which=
+ can be CET=20
+> > > if Intel named it that way, and a short comment explaining the acrony=
+m difference.
+> > >=20
+> > > Or something like that.
+> >=20
+> > Actually, I don't think CFT is much better -- there's limited number
+> > of TLAs (*). "ENFORCE_FLOW"? "FLOWE"? "EFLOW"?
+>=20
+> Erm, I wanted to say 'CFE', i.e. the abbreviation of 'Control Flow Enforc=
+ement'.
+>=20
+> But I guess I can live with CET as well ...
 
-This is another case where the naming of pte_*() is biting us vs. the
-perversion of the PTE bits.  The lack of comments and explanation inthe
-patch is compounding the confusion.
+Yeah, and I am trying to say that perhaps we should use something
+longer than three letters. It will make code longer but easier to
+read.
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
-We need to find a way to differentiate "someone can write to this PTE"
-from "the write bit is set in this PTE".
+--ikeVEW9yuYc//A+q
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-In this particular hunk, we need to make it clear that pte_write() is
-*never* true for shadowstack PTEs.  In other words, shadow stack VMAs
-will (should?) never even *see* a pte_write() PTE.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-I think this is a case where you just need to bite the bullet and
-bifurcate can_follow_write_pte().  Just separate the shadowstack and
-non-shadowstack parts.
+iEYEARECAAYFAltJl9kACgkQMOfwapXb+vJ/zwCglPFXsNNzgW0ML/M0vPlj5C0a
+To0AoJ4qd5n1bRykjwlqyW6Hs34O+tnJ
+=7LRO
+-----END PGP SIGNATURE-----
+
+--ikeVEW9yuYc//A+q--
