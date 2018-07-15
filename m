@@ -1,22 +1,29 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: Re: [PATCH] [RFC] y2038: globally rename compat_time to old_time32
-Date: Sat, 14 Jul 2018 08:54:17 -0700
-Message-ID: <CABeXuvphoYM+KOGPgtsuxzS1_XDSOO0Ta5hr3sA7gYtt-78wtQ@mail.gmail.com>
-References: <20180713133204.3123939-1-arnd@arndb.de>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v7 00/29] FPGA Device Feature List (DFL) Device Drivers
+Date: Sun, 15 Jul 2018 14:01:30 +0200
+Message-ID: <20180715120130.GA20467@kroah.com>
+References: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
+ <CANk1AXQ0crNX2u_=XLEakhhfO8dcTED0OO6fHU10uAx0yOJewg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180713133204.3123939-1-arnd@arndb.de>
+Content-Disposition: inline
+In-Reply-To: <CANk1AXQ0crNX2u_=XLEakhhfO8dcTED0OO6fHU10uAx0yOJewg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, geert@linux-m68k.org, Christoph Hellwig <hch@infradead.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arm-kernel@lists.infradead.org, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-xfs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, alsa-devel@alsa-project.org
+To: Alan Tull <atull@kernel.org>
+Cc: Wu Hao <hao.wu@intel.com>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Right now we only have compat syscalls and native syscalls.
-Until we transition all the architectures to use the new syscalls,
-wouldn't it be the same sort of confusion as exists today?
-These structures today are still used by compat entry points.
-I'm trying to understand why such a cleanup would make sense today
-rather than at the end of the transition.
+On Mon, Jul 09, 2018 at 11:34:20AM -0500, Alan Tull wrote:
+> On Fri, Jun 29, 2018 at 7:53 PM, Wu Hao <hao.wu@intel.com> wrote:
+> > Hi All,
+> >
+> > Here is v7 patch-series adding drivers for FPGA DFL devices.
+> 
+> Hi Greg,
+> 
+> Could you please take this v7 patchset for 4.19?
 
--Deepa
+All now queued up, thanks.
+
+greg k-h
