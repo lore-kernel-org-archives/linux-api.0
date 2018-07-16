@@ -1,34 +1,35 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v7 00/29] FPGA Device Feature List (DFL) Device Drivers
-Date: Mon, 16 Jul 2018 09:55:50 -0500
-Message-ID: <CANk1AXSBY+vwFCNPjXGAzjx_0rGzYmFnOVkx_6maPetuXAqmXQ@mail.gmail.com>
-References: <1530320016-24712-1-git-send-email-hao.wu@intel.com>
- <CANk1AXQ0crNX2u_=XLEakhhfO8dcTED0OO6fHU10uAx0yOJewg@mail.gmail.com> <20180715120130.GA20467@kroah.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180715120130.GA20467@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Wu Hao <hao.wu@intel.com>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Kang, Luwei" <luwei.kang@intel.com>, "Zhang, Yi Z" <yi.z.zhang@intel.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH v2 05/17] asm-generic: Remove empty asm/unistd.h
+Date: Mon, 16 Jul 2018 18:10:51 +0200
+Message-ID: <20180716161103.16239-6-arnd@arndb.de>
+References: <20180716161103.16239-1-arnd@arndb.de>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180716161103.16239-1-arnd@arndb.de>
+Sender: netdev-owner@vger.kernel.org
+To: tglx@linutronix.de
+Cc: y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jul 15, 2018 at 7:01 AM, Greg Kroah-Hartman
-<gregkh@linuxfoundation.org> wrote:
-> On Mon, Jul 09, 2018 at 11:34:20AM -0500, Alan Tull wrote:
->> On Fri, Jun 29, 2018 at 7:53 PM, Wu Hao <hao.wu@intel.com> wrote:
->> > Hi All,
->> >
->> > Here is v7 patch-series adding drivers for FPGA DFL devices.
->>
->> Hi Greg,
->>
->> Could you please take this v7 patchset for 4.19?
->
-> All now queued up, thanks.
->
-> greg k-h
+Nothing is left in asm/unistd.h except for the redirect to
+uapi/asm/unistd.h, so removing the file simply leads to that one being
+used directly.  The linux/export.h inclusion is a leftover from commit
+e1b5bb6d1236 ("consolidate cond_syscall and SYSCALL_ALIAS declarations")
+and should not be used anyway.
 
-Thanks!
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ include/asm-generic/unistd.h | 3 ---
+ 1 file changed, 3 deletions(-)
+ delete mode 100644 include/asm-generic/unistd.h
 
-Alan
+diff --git a/include/asm-generic/unistd.h b/include/asm-generic/unistd.h
+deleted file mode 100644
+index 71d2fcf9dbcd..000000000000
+--- a/include/asm-generic/unistd.h
++++ /dev/null
+@@ -1,3 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0 */
+-#include <uapi/asm-generic/unistd.h>
+-#include <linux/export.h>
+-- 
+2.9.0
