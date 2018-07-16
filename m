@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 15/17] y2038: signal: Change rt_sigtimedwait to use __kernel_timespec
-Date: Mon, 16 Jul 2018 18:11:01 +0200
-Message-ID: <20180716161103.16239-16-arnd@arndb.de>
+Subject: [PATCH v2 10/17] y2038: futex: Add support for __kernel_timespec
+Date: Mon, 16 Jul 2018 18:10:56 +0200
+Message-ID: <20180716161103.16239-11-arnd@arndb.de>
 References: <20180716161103.16239-1-arnd@arndb.de>
 Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20180716161103.16239-1-arnd@arndb.de>
@@ -10,97 +10,105 @@ To: tglx@linutronix.de
 Cc: y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-This changes sys_rt_sigtimedwait() to use get_timespec64(), changing
-the timeout type to __kernel_timespec, which will be changed to use
-a 64-bit time_t in the future. Since the do_sigtimedwait() core
-function changes, we also have to modify the compat version of this
-system call in the same way.
+This prepares sys_futex for y2038 safe calling: the native
+syscall is changed to receive a __kernel_timespec argument, which
+will be switched to 64-bit time_t in the future. All the internal
+time handling gets changed to timespec64, and the compat_sys_futex
+entry point is moved under the CONFIG_COMPAT_32BIT_TIME check
+to provide compatibility for existing 32-bit architectures.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
  include/linux/syscalls.h |  2 +-
- kernel/signal.c          | 17 +++++++++--------
- 2 files changed, 10 insertions(+), 9 deletions(-)
+ kernel/futex.c           | 22 ++++++++++++----------
+ 2 files changed, 13 insertions(+), 11 deletions(-)
 
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 6871f6901a70..9c1da8752724 100644
+index 312c248f1fe6..fc98024d3b5e 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -635,7 +635,7 @@ asmlinkage long sys_rt_sigprocmask(int how, sigset_t __user *set,
- asmlinkage long sys_rt_sigpending(sigset_t __user *set, size_t sigsetsize);
- asmlinkage long sys_rt_sigtimedwait(const sigset_t __user *uthese,
- 				siginfo_t __user *uinfo,
--				const struct timespec __user *uts,
-+				const struct __kernel_timespec __user *uts,
- 				size_t sigsetsize);
- asmlinkage long sys_rt_sigqueueinfo(pid_t pid, int sig, siginfo_t __user *uinfo);
+@@ -541,7 +541,7 @@ asmlinkage long sys_unshare(unsigned long unshare_flags);
  
-diff --git a/kernel/signal.c b/kernel/signal.c
-index 786bacc60649..0418a499b9f3 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -3036,7 +3036,7 @@ int copy_siginfo_from_user32(struct siginfo *to,
-  *  @ts: upper bound on process time suspension
-  */
- static int do_sigtimedwait(const sigset_t *which, siginfo_t *info,
--		    const struct timespec *ts)
-+		    const struct timespec64 *ts)
+ /* kernel/futex.c */
+ asmlinkage long sys_futex(u32 __user *uaddr, int op, u32 val,
+-			struct timespec __user *utime, u32 __user *uaddr2,
++			struct __kernel_timespec __user *utime, u32 __user *uaddr2,
+ 			u32 val3);
+ asmlinkage long sys_get_robust_list(int pid,
+ 				    struct robust_list_head __user * __user *head_ptr,
+diff --git a/kernel/futex.c b/kernel/futex.c
+index e9013d1e65a1..129555a3b64d 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -3556,10 +3556,10 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
+ 
+ 
+ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+-		struct timespec __user *, utime, u32 __user *, uaddr2,
++		struct __kernel_timespec __user *, utime, u32 __user *, uaddr2,
+ 		u32, val3)
  {
- 	ktime_t *to = NULL, timeout = KTIME_MAX;
- 	struct task_struct *tsk = current;
-@@ -3044,9 +3044,9 @@ static int do_sigtimedwait(const sigset_t *which, siginfo_t *info,
- 	int sig, ret = 0;
- 
- 	if (ts) {
--		if (!timespec_valid(ts))
-+		if (!timespec64_valid(ts))
- 			return -EINVAL;
--		timeout = timespec_to_ktime(*ts);
-+		timeout = timespec64_to_ktime(*ts);
- 		to = &timeout;
- 	}
- 
-@@ -3094,11 +3094,12 @@ static int do_sigtimedwait(const sigset_t *which, siginfo_t *info,
-  *  @sigsetsize: size of sigset_t type
-  */
- SYSCALL_DEFINE4(rt_sigtimedwait, const sigset_t __user *, uthese,
--		siginfo_t __user *, uinfo, const struct timespec __user *, uts,
-+		siginfo_t __user *, uinfo,
-+		const struct __kernel_timespec __user *, uts,
- 		size_t, sigsetsize)
- {
- 	sigset_t these;
 -	struct timespec ts;
 +	struct timespec64 ts;
- 	siginfo_t info;
- 	int ret;
- 
-@@ -3110,7 +3111,7 @@ SYSCALL_DEFINE4(rt_sigtimedwait, const sigset_t __user *, uthese,
- 		return -EFAULT;
- 
- 	if (uts) {
--		if (copy_from_user(&ts, uts, sizeof(ts)))
-+		if (get_timespec64(&ts, uts))
+ 	ktime_t t, *tp = NULL;
+ 	u32 val2 = 0;
+ 	int cmd = op & FUTEX_CMD_MASK;
+@@ -3569,12 +3569,12 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+ 		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
+ 		if (unlikely(should_fail_futex(!(op & FUTEX_PRIVATE_FLAG))))
  			return -EFAULT;
- 	}
+-		if (copy_from_user(&ts, utime, sizeof(ts)) != 0)
++		if (get_timespec64(&ts, utime))
+ 			return -EFAULT;
+-		if (!timespec_valid(&ts))
++		if (!timespec64_valid(&ts))
+ 			return -EINVAL;
  
-@@ -3130,7 +3131,7 @@ COMPAT_SYSCALL_DEFINE4(rt_sigtimedwait, compat_sigset_t __user *, uthese,
- 		struct compat_timespec __user *, uts, compat_size_t, sigsetsize)
+-		t = timespec_to_ktime(ts);
++		t = timespec64_to_ktime(ts);
+ 		if (cmd == FUTEX_WAIT)
+ 			t = ktime_add_safe(ktime_get(), t);
+ 		tp = &t;
+@@ -3745,12 +3745,14 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
+ 
+ 	return ret;
+ }
++#endif /* CONFIG_COMPAT */
+ 
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+ 		struct compat_timespec __user *, utime, u32 __user *, uaddr2,
+ 		u32, val3)
  {
- 	sigset_t s;
--	struct timespec t;
-+	struct timespec64 t;
- 	siginfo_t info;
- 	long ret;
- 
-@@ -3141,7 +3142,7 @@ COMPAT_SYSCALL_DEFINE4(rt_sigtimedwait, compat_sigset_t __user *, uthese,
- 		return -EFAULT;
- 
- 	if (uts) {
--		if (compat_get_timespec(&t, uts))
-+		if (compat_get_timespec64(&t, uts))
+-	struct timespec ts;
++	struct timespec64 ts;
+ 	ktime_t t, *tp = NULL;
+ 	int val2 = 0;
+ 	int cmd = op & FUTEX_CMD_MASK;
+@@ -3758,12 +3760,12 @@ COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+ 	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
+ 		      cmd == FUTEX_WAIT_BITSET ||
+ 		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
+-		if (compat_get_timespec(&ts, utime))
++		if (compat_get_timespec64(&ts, utime))
  			return -EFAULT;
- 	}
+-		if (!timespec_valid(&ts))
++		if (!timespec64_valid(&ts))
+ 			return -EINVAL;
  
+-		t = timespec_to_ktime(ts);
++		t = timespec64_to_ktime(ts);
+ 		if (cmd == FUTEX_WAIT)
+ 			t = ktime_add_safe(ktime_get(), t);
+ 		tp = &t;
+@@ -3774,7 +3776,7 @@ COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+ 
+ 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
+ }
+-#endif /* CONFIG_COMPAT */
++#endif /* CONFIG_COMPAT_32BIT_TIME */
+ 
+ static void __init futex_detect_cmpxchg(void)
+ {
 -- 
 2.9.0
