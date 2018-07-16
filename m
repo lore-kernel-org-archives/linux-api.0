@@ -1,177 +1,160 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 12/17] y2038: aio: Prepare sys_io_{p,}getevents for __kernel_timespec
-Date: Mon, 16 Jul 2018 18:10:58 +0200
-Message-ID: <20180716161103.16239-13-arnd@arndb.de>
-References: <20180716161103.16239-1-arnd@arndb.de>
+Subject: [PATCH v2 00/17] y2038: system calls, part 3
+Date: Mon, 16 Jul 2018 18:10:46 +0200
+Message-ID: <20180716161103.16239-1-arnd@arndb.de>
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180716161103.16239-1-arnd@arndb.de>
 Sender: netdev-owner@vger.kernel.org
 To: tglx@linutronix.de
 Cc: y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-This is a preparation patch for converting sys_io_pgetevents to
-work with 64-bit time_t on 32-bit architectures. The 'timeout' argument
-is changed to struct __kernel_timespec, which will be redefined using
-64-bit time_t in the future. The compat version of the system call in
-turn is enabled for compilation with CONFIG_COMPAT_32BIT_TIME so
-the individual 32-bit architectures can share the handling of the
-traditional argument with 64-bit architectures providing it for their
-compat mode.
+This is a mostly unchanged copy of a series I sent back in April for
+an initial review. All the earlier syscall patches that Deepa or I sent
+got merged now, and this is the largest chunk of remaining patches.
 
-We now have five entry points into do_io_getevents(). Until we set
-CONFIG_64BIT_TIME, the arguments are
+Changes this time are:
 
-sys_io_getevents():	    native aio_context_t, old-style timespec
-sys_io_pgetevents():	    like sys_io_getevents(), but with added
-			    aio_sigset argument
-compat_sys_io_getevents():  32-bit aio_context_t, 32-bit timespec
-compat_sys_io_pgetevents(): like compat_sys_io_getevents(), but with
-			    added aio_sigset argument
-compat_sys_io_pgetevents_time64(): like compat_sys_io_pgetevents(),
-			    but with 64-bit timespec
+- This is actually tested with the LTP syscalls test suite,
+  both before and after the CONFIG_64BIT_TIME change (which is not
+  included here). I have created a patch series for musl libc to use
+  64-bit time_t and change all the system calls over to the new entry
+  points for this. The only bugs I found during that testing were in
+  later parts of the conversion that I have not posted yet.
 
-Once a 32-bit architecture sets CONFIG_64BIT_TIME, sys_io_getevents()
-is no longer available, and sys_io_pgetevents() takes a 64-bit timespec
-argument, whiel compat_sys_io_getevents() and compat_sys_io_pgetevents()
-implement the traditional behavior. compat_sys_io_pgetevents_time64()
-is only used on 64-bit architectures, to provide compatibility with
-the new 32-bit version of sys_io_pgetevents() taking a 64-bit timespec
-combined with a __compat_aio_sigset.
+- I rewrote the sys_io_getevents conversion after the
+  introduction of sys_sys_io_getevents. We obviously don't need to have
+  two of each, so we will only provide sys_io_pgetevents() with 64-bit
+  time_t but not sys_io_getevents(), which the libc can implement on
+  top of the former.
 
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+- While we have Deepa's POSIX timer conversion merged now, we
+  still need to decide on how we want to do the replacement
+  ABI for getitimer()/setitimer(). Like getrusage()/waitid() and
+  clock_adjtime() and unlike the system calls I'm posting here,
+  there is no one obvious ABI.
+
+- For ppoll()/pselect6(), the ABI is fairly clear, but the
+  implementation still needs to be done. I tested with a simple
+  prototype based on the existing compat code, but we can
+  probably improve that. This is something that Deepa still
+  wants to work on.
+
+- Finally, Christoph Hellwig objected to the idea of reusing the
+  compat_ namespace for the 32-bit native case. Changing that
+  would be a departure from our plans so far[2], and would make
+  some things end up differently. Until we have decided on how this
+  is to be done, I've decided to not change the code for this
+  post. We can clearly rename all the symbols and I've implemented
+  that in [3] for the current linux-next (not including the
+  series here). This is something we can definitely do, but I'd
+  need to know soon whether we can merge this series unchanged
+  for 4.19 or if I should rebase it on top of that patch with the
+  alternative naming.
+
+      Arnd
+
 ---
- fs/aio.c                 | 77 +++++++++++++++++++++++++++++++++++++++++++-----
- include/linux/syscalls.h |  4 +--
- 2 files changed, 71 insertions(+), 10 deletions(-)
+Previous cover letter announcement below, see [4] for the full
+series:
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 76def7523ece..f306a48b0a9f 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1869,7 +1869,7 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 		long, min_nr,
- 		long, nr,
- 		struct io_event __user *, events,
--		struct timespec __user *, timeout)
-+		struct __kernel_timespec __user *, timeout)
- {
- 	struct timespec64	ts;
- 	int			ret;
-@@ -1888,7 +1888,7 @@ SYSCALL_DEFINE6(io_pgetevents,
- 		long, min_nr,
- 		long, nr,
- 		struct io_event __user *, events,
--		struct timespec __user *, timeout,
-+		struct __kernel_timespec __user *, timeout,
- 		const struct __aio_sigset __user *, usig)
- {
- 	struct __aio_sigset	ksig = { NULL, };
-@@ -1929,6 +1929,73 @@ SYSCALL_DEFINE6(io_pgetevents,
- }
- 
- #ifdef CONFIG_COMPAT
-+struct __compat_aio_sigset {
-+	compat_sigset_t __user	*sigmask;
-+	compat_size_t		sigsetsize;
-+};
-+
-+COMPAT_SYSCALL_DEFINE6(io_pgetevents_time64,
-+		compat_aio_context_t, ctx_id,
-+		compat_long_t, min_nr,
-+		compat_long_t, nr,
-+		struct io_event __user *, events,
-+		struct __kernel_timespec __user *, timeout,
-+		const struct __compat_aio_sigset __user *, usig)
-+{
-+	struct __compat_aio_sigset ksig = { NULL, };
-+	sigset_t ksigmask, sigsaved;
-+	struct timespec64 t;
-+	int ret;
-+
-+	if (timeout && get_timespec64(&t, timeout))
-+		return -EFAULT;
-+
-+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
-+		return -EFAULT;
-+
-+	if (ksig.sigmask) {
-+		if (ksig.sigsetsize != sizeof(compat_sigset_t))
-+			return -EINVAL;
-+		if (get_compat_sigset(&ksigmask, ksig.sigmask))
-+			return -EFAULT;
-+		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
-+		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
-+	}
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	if (signal_pending(current)) {
-+		if (ksig.sigmask) {
-+			current->saved_sigmask = sigsaved;
-+			set_restore_sigmask();
-+		}
-+		if (!ret)
-+			ret = -ERESTARTNOHAND;
-+	} else {
-+		if (ksig.sigmask)
-+			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
-+	}
-+
-+	return ret;
-+}
-+#endif
-+
-+#ifdef CONFIG_COMPAT_32BIT_TIME
-+#ifndef CONFIG_COMPAT
-+#define compat_sigset_t sigset_t
-+struct __compat_aio_sigset {
-+	compat_sigset_t __user	*sigmask;
-+	compat_size_t		sigsetsize;
-+};
-+
-+static inline int get_compat_sigset(sigset_t *set, const sigset_t __user *compat)
-+{
-+        if (copy_from_user(set, compat, sizeof *set))
-+                return -EFAULT;
-+
-+        return 0;
-+}
-+#endif
-+
- COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 		       compat_long_t, min_nr,
- 		       compat_long_t, nr,
-@@ -1947,12 +2014,6 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 	return ret;
- }
- 
--
--struct __compat_aio_sigset {
--	compat_sigset_t __user	*sigmask;
--	compat_size_t		sigsetsize;
--};
--
- COMPAT_SYSCALL_DEFINE6(io_pgetevents,
- 		compat_aio_context_t, ctx_id,
- 		compat_long_t, min_nr,
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 1a22bb4285bf..4fc93fbc0d00 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -296,12 +296,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
- 				long min_nr,
- 				long nr,
- 				struct io_event __user *events,
--				struct timespec __user *timeout);
-+				struct __kernel_timespec __user *timeout);
- asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
- 				long min_nr,
- 				long nr,
- 				struct io_event __user *events,
--				struct timespec __user *timeout,
-+				struct __kernel_timespec __user *timeout,
- 				const struct __aio_sigset *sig);
- 
- /* fs/xattr.c */
+After the first timekeeping series from Deepa (merged into -tip now)
+and my follow-up for IPC system calls, this is a third set of system
+call conversions following the same principle.
+
+Most of the changes are straightforward, so I'm grouping them into a
+larger series even though the system calls are mostly unrelated to one
+another. After this series, the remaining calls that need to be changed
+are getrusage()/waitid(), pselect6/ppoll(), timer{,fd}_{get,set}time()
+and getitimer()/setitimer(). Those will be sent separately, once they
+are matured enough.
+
+To put the changes into perspective, a list of all system calls that
+require changes is available in a spreadsheet[5] and I have made
+another experimental patch that changes over x86[6] and arm[7] to
+actually use them.
+
+Link [1] https://lore.kernel.org/lkml/20180712082034.GA8802@infradead.org/
+Link [2] https://lwn.net/Articles/643234/
+Link [3] https://lore.kernel.org/lkml/20180713133204.3123939-1-arnd@arndb.de/
+Link [4] https://lore.kernel.org/lkml/20180425160311.2718314-1-arnd@arndb.de/
+Link [5] https://docs.google.com/spreadsheets/d/1HCYwHXxs48TsTb6IGUduNjQnmfRvMPzCN6T_0YiQwis
+Link [6] https://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git/commit/?h=y2038-4.18-rc5-next&id=2c995de3bdd5
+Link [7] https://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git/commit/?h=y2038-4.18-rc5-next&id=e73061da2f80
+
+
+
+Arnd Bergmann (17):
+  y2038: compat: Move common compat types to asm-generic/compat.h
+  y2038: Remove newstat family from default syscall set
+  y2038: Remove stat64 family from default syscall set
+  asm-generic: Remove unneeded __ARCH_WANT_SYS_LLSEEK macro
+  asm-generic: Remove empty asm/unistd.h
+  y2038: Change sys_utimensat() to use __kernel_timespec
+  y2038: Compile utimes()/futimesat() conditionally
+  y2038: utimes: Rework #ifdef guards for compat syscalls
+  y2038: futex: Move compat implementation into futex.c
+  y2038: futex: Add support for __kernel_timespec
+  y2038: Prepare sched_rr_get_interval for __kernel_timespec
+  y2038: aio: Prepare sys_io_{p,}getevents for __kernel_timespec
+  y2038: socket: Convert recvmmsg to __kernel_timespec
+  y2038: socket: Add compat_sys_recvmmsg_time64
+  y2038: signal: Change rt_sigtimedwait to use __kernel_timespec
+  y2038: Make compat_sys_rt_sigtimedwait usable on 32-bit
+  y2038: signal: Add compat_sys_rt_sigtimedwait_time64
+
+ arch/alpha/include/asm/unistd.h          |   2 +
+ arch/arc/include/uapi/asm/unistd.h       |   1 +
+ arch/arm/include/asm/unistd.h            |   4 +-
+ arch/arm64/include/asm/compat.h          |  20 +--
+ arch/arm64/include/asm/unistd.h          |   2 +-
+ arch/arm64/include/uapi/asm/unistd.h     |   1 +
+ arch/c6x/include/uapi/asm/unistd.h       |   1 +
+ arch/h8300/include/uapi/asm/unistd.h     |   1 +
+ arch/hexagon/include/uapi/asm/unistd.h   |   1 +
+ arch/ia64/include/asm/unistd.h           |   3 +
+ arch/m68k/include/asm/unistd.h           |   2 +-
+ arch/microblaze/include/asm/unistd.h     |   2 +-
+ arch/mips/include/asm/compat.h           |  22 +---
+ arch/mips/include/asm/unistd.h           |   3 +-
+ arch/nds32/include/uapi/asm/unistd.h     |   1 +
+ arch/nios2/include/uapi/asm/unistd.h     |   1 +
+ arch/openrisc/include/uapi/asm/unistd.h  |   1 +
+ arch/parisc/include/asm/compat.h         |  18 +--
+ arch/parisc/include/asm/unistd.h         |   3 +-
+ arch/powerpc/include/asm/compat.h        |  18 +--
+ arch/powerpc/include/asm/unistd.h        |   3 +-
+ arch/s390/include/asm/compat.h           |  18 +--
+ arch/s390/include/asm/unistd.h           |   3 +-
+ arch/sh/include/asm/unistd.h             |   2 +-
+ arch/sparc/include/asm/compat.h          |  19 +--
+ arch/sparc/include/asm/unistd.h          |   3 +-
+ arch/unicore32/include/uapi/asm/unistd.h |   1 +
+ arch/x86/include/asm/compat.h            |  19 +--
+ arch/x86/include/asm/unistd.h            |   3 +-
+ arch/xtensa/include/asm/unistd.h         |   2 +-
+ fs/aio.c                                 |  77 ++++++++++--
+ fs/read_write.c                          |   2 +-
+ fs/stat.c                                |   3 +
+ fs/utimes.c                              |  59 +++++----
+ include/asm-generic/compat.h             |  24 +++-
+ include/asm-generic/unistd.h             |  13 --
+ include/linux/compat.h                   |  12 +-
+ include/linux/compat_time.h              |   5 +
+ include/linux/futex.h                    |   8 --
+ include/linux/socket.h                   |  19 ++-
+ include/linux/syscalls.h                 |  25 ++--
+ include/uapi/asm-generic/unistd.h        |   2 +
+ kernel/Makefile                          |   3 -
+ kernel/futex.c                           | 207 +++++++++++++++++++++++++++++--
+ kernel/futex_compat.c                    | 202 ------------------------------
+ kernel/sched/core.c                      |   4 +-
+ kernel/signal.c                          |  68 ++++++++--
+ kernel/sys_ni.c                          |   1 +
+ net/compat.c                             |  16 +--
+ net/socket.c                             |  55 ++++++--
+ 50 files changed, 524 insertions(+), 461 deletions(-)
+ delete mode 100644 include/asm-generic/unistd.h
+ delete mode 100644 kernel/futex_compat.c
+
 -- 
 2.9.0
