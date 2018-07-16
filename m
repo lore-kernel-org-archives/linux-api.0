@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 09/17] y2038: futex: Move compat implementation into futex.c
-Date: Mon, 16 Jul 2018 18:10:55 +0200
-Message-ID: <20180716161103.16239-10-arnd@arndb.de>
+Subject: [PATCH v2 02/17] y2038: Remove newstat family from default syscall set
+Date: Mon, 16 Jul 2018 18:10:48 +0200
+Message-ID: <20180716161103.16239-3-arnd@arndb.de>
 References: <20180716161103.16239-1-arnd@arndb.de>
 Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20180716161103.16239-1-arnd@arndb.de>
@@ -10,508 +10,231 @@ To: tglx@linutronix.de
 Cc: y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-We are going to share the compat_sys_futex() handler between 64-bit
-architectures and 32-bit architectures that need to deal with both 32-bit
-and 64-bit time_t, and this is easier if both entry points are in the
-same file.
+We have four generations of stat() syscalls:
+- the oldstat syscalls that are only used on the older architectures
+- the newstat family that is used on all 64-bit architectures but
+  lacked support for large files on 32-bit architectures.
+- the stat64 family that is used mostly on 32-bit architectures to
+  replace newstat
+- statx() to replace all of the above, adding 64-bit timestamps among
+  other things.
 
-In fact, most other system call handlers do the same thing these days, so
-let's follow the trend here and merge all of futex_compat.c into futex.c.
+We already compile stat64 only on those architectures that need it,
+but newstat is always built, including on those that don't reference
+it. This adds a new __ARCH_WANT_NEW_STAT symbol along the lines of
+__ARCH_WANT_OLD_STAT and __ARCH_WANT_STAT64 to control compilation of
+newstat. All architectures that need it use an explict define, the
+others now get a little bit smaller, and future architecture (including
+64-bit targets) won't ever see it.
 
-In the process, a few minor changes have to be done to make sure everything
-still makes sense: handle_futex_death() and futex_cmpxchg_enabled() become
-local symbol, and the compat version of the fetch_robust_entry() function
-gets renamed to compat_fetch_robust_entry() to avoid a symbol clash.
-
-This is intended as a purely cosmetic patch, no behavior should
-change.
-
+Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
-Regardless of whether we rename all compat time calls or not, moving the
-compat futex code into the main file helps us clean up the implementation.
----
- include/linux/futex.h |   8 --
- kernel/Makefile       |   3 -
- kernel/futex.c        | 195 +++++++++++++++++++++++++++++++++++++++++++++++-
- kernel/futex_compat.c | 202 --------------------------------------------------
- 4 files changed, 192 insertions(+), 216 deletions(-)
- delete mode 100644 kernel/futex_compat.c
+ arch/alpha/include/asm/unistd.h      | 1 +
+ arch/arm/include/asm/unistd.h        | 1 +
+ arch/arm64/include/uapi/asm/unistd.h | 1 +
+ arch/ia64/include/asm/unistd.h       | 2 ++
+ arch/m68k/include/asm/unistd.h       | 1 +
+ arch/microblaze/include/asm/unistd.h | 1 +
+ arch/mips/include/asm/unistd.h       | 1 +
+ arch/parisc/include/asm/unistd.h     | 1 +
+ arch/powerpc/include/asm/unistd.h    | 1 +
+ arch/s390/include/asm/unistd.h       | 1 +
+ arch/sh/include/asm/unistd.h         | 1 +
+ arch/sparc/include/asm/unistd.h      | 1 +
+ arch/x86/include/asm/unistd.h        | 1 +
+ arch/xtensa/include/asm/unistd.h     | 1 +
+ fs/stat.c                            | 3 +++
+ 15 files changed, 18 insertions(+)
 
-diff --git a/include/linux/futex.h b/include/linux/futex.h
-index 821ae502d3d8..ccaef0097785 100644
---- a/include/linux/futex.h
-+++ b/include/linux/futex.h
-@@ -9,9 +9,6 @@ struct inode;
- struct mm_struct;
- struct task_struct;
+diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
+index d6e29a1de4cc..edc090470023 100644
+--- a/arch/alpha/include/asm/unistd.h
++++ b/arch/alpha/include/asm/unistd.h
+@@ -6,6 +6,7 @@
  
--extern int
--handle_futex_death(u32 __user *uaddr, struct task_struct *curr, int pi);
--
- /*
-  * Futexes are matched on equal values of this key.
-  * The key type depends on whether it's a shared or private mapping.
-@@ -55,11 +52,6 @@ extern void exit_robust_list(struct task_struct *curr);
+ #define NR_SYSCALLS			523
  
- long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
- 	      u32 __user *uaddr2, u32 val2, u32 val3);
--#ifdef CONFIG_HAVE_FUTEX_CMPXCHG
--#define futex_cmpxchg_enabled 1
--#else
--extern int futex_cmpxchg_enabled;
--#endif
- #else
- static inline void exit_robust_list(struct task_struct *curr)
- {
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 7343b3a9bff0..8e40a6742d23 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -49,9 +49,6 @@ obj-$(CONFIG_PROFILING) += profile.o
- obj-$(CONFIG_STACKTRACE) += stacktrace.o
- obj-y += time/
- obj-$(CONFIG_FUTEX) += futex.o
--ifeq ($(CONFIG_COMPAT),y)
--obj-$(CONFIG_FUTEX) += futex_compat.o
--endif
- obj-$(CONFIG_GENERIC_ISA_DMA) += dma.o
- obj-$(CONFIG_SMP) += smp.o
- ifneq ($(CONFIG_SMP),y)
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 1f450e092c74..e9013d1e65a1 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -44,6 +44,7 @@
-  *  along with this program; if not, write to the Free Software
-  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-  */
-+#include <linux/compat.h>
- #include <linux/slab.h>
- #include <linux/poll.h>
- #include <linux/fs.h>
-@@ -173,8 +174,10 @@
-  * double_lock_hb() and double_unlock_hb(), respectively.
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
+index 076090d2dbf5..07e58010d597 100644
+--- a/arch/arm/include/asm/unistd.h
++++ b/arch/arm/include/asm/unistd.h
+@@ -16,6 +16,7 @@
+ #include <uapi/asm/unistd.h>
+ #include <asm/unistd-nr.h>
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+ #define __ARCH_WANT_SYS_PAUSE
+diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
+index 5072cbd15c82..dae1584cf017 100644
+--- a/arch/arm64/include/uapi/asm/unistd.h
++++ b/arch/arm64/include/uapi/asm/unistd.h
+@@ -16,5 +16,6 @@
   */
  
--#ifndef CONFIG_HAVE_FUTEX_CMPXCHG
--int __read_mostly futex_cmpxchg_enabled;
-+#ifdef CONFIG_HAVE_FUTEX_CMPXCHG
-+#define futex_cmpxchg_enabled 1
-+#else
-+static int  __read_mostly futex_cmpxchg_enabled;
- #endif
+ #define __ARCH_WANT_RENAMEAT
++#define __ARCH_WANT_NEW_STAT
  
- /*
-@@ -3360,7 +3363,7 @@ SYSCALL_DEFINE3(get_robust_list, int, pid,
-  * Process a futex-list entry, check whether it's owned by the
-  * dying task, and do notification if so:
-  */
--int handle_futex_death(u32 __user *uaddr, struct task_struct *curr, int pi)
-+static int handle_futex_death(u32 __user *uaddr, struct task_struct *curr, int pi)
- {
- 	u32 uval, uninitialized_var(nval), mval;
+ #include <asm-generic/unistd.h>
+diff --git a/arch/ia64/include/asm/unistd.h b/arch/ia64/include/asm/unistd.h
+index ffb705dc9c13..c5b2620c4a4c 100644
+--- a/arch/ia64/include/asm/unistd.h
++++ b/arch/ia64/include/asm/unistd.h
+@@ -28,6 +28,8 @@
+ #define __IGNORE_vfork		/* clone() */
+ #define __IGNORE_umount2	/* umount() */
  
-@@ -3587,6 +3590,192 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
- 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
++#define __ARCH_WANT_NEW_STAT
++
+ #if !defined(__ASSEMBLY__) && !defined(ASSEMBLER)
+ 
+ #include <linux/types.h>
+diff --git a/arch/m68k/include/asm/unistd.h b/arch/m68k/include/asm/unistd.h
+index 30d0d3fbd4ef..db22cdadc38a 100644
+--- a/arch/m68k/include/asm/unistd.h
++++ b/arch/m68k/include/asm/unistd.h
+@@ -7,6 +7,7 @@
+ 
+ #define NR_syscalls		380
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_OLD_STAT
+ #define __ARCH_WANT_STAT64
+diff --git a/arch/microblaze/include/asm/unistd.h b/arch/microblaze/include/asm/unistd.h
+index a62d09420a47..a28dc770c9b2 100644
+--- a/arch/microblaze/include/asm/unistd.h
++++ b/arch/microblaze/include/asm/unistd.h
+@@ -15,6 +15,7 @@
+ 
+ /* #define __ARCH_WANT_OLD_READDIR */
+ /* #define __ARCH_WANT_OLD_STAT */
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/mips/include/asm/unistd.h b/arch/mips/include/asm/unistd.h
+index 3c09450908aa..d7878b3e16d8 100644
+--- a/arch/mips/include/asm/unistd.h
++++ b/arch/mips/include/asm/unistd.h
+@@ -24,6 +24,7 @@
+ 
+ #ifndef __ASSEMBLY__
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_SYS_ALARM
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/parisc/include/asm/unistd.h b/arch/parisc/include/asm/unistd.h
+index 3d507d04eb4c..b36273bacca7 100644
+--- a/arch/parisc/include/asm/unistd.h
++++ b/arch/parisc/include/asm/unistd.h
+@@ -141,6 +141,7 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5)	\
+     return K_INLINE_SYSCALL(name, 5, arg1, arg2, arg3, arg4, arg5);	\
  }
  
-+#ifdef CONFIG_COMPAT
-+/*
-+ * Fetch a robust-list pointer. Bit 0 signals PI futexes:
-+ */
-+static inline int
-+compat_fetch_robust_entry(compat_uptr_t *uentry, struct robust_list __user **entry,
-+		   compat_uptr_t __user *head, unsigned int *pi)
-+{
-+	if (get_user(*uentry, head))
-+		return -EFAULT;
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
+index c19379f0a32e..8b37e01817be 100644
+--- a/arch/powerpc/include/asm/unistd.h
++++ b/arch/powerpc/include/asm/unistd.h
+@@ -22,6 +22,7 @@
+ #include <linux/compiler.h>
+ #include <linux/linkage.h>
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
+index fd79c0d35dc4..1d181373288a 100644
+--- a/arch/s390/include/asm/unistd.h
++++ b/arch/s390/include/asm/unistd.h
+@@ -15,6 +15,7 @@
+ #define __IGNORE_pkey_alloc
+ #define __IGNORE_pkey_free
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_SYS_ALARM
+ #define __ARCH_WANT_SYS_GETHOSTNAME
+diff --git a/arch/sh/include/asm/unistd.h b/arch/sh/include/asm/unistd.h
+index b36200af9ce7..a845b57eac69 100644
+--- a/arch/sh/include/asm/unistd.h
++++ b/arch/sh/include/asm/unistd.h
+@@ -5,6 +5,7 @@
+ #  include <asm/unistd_64.h>
+ # endif
+ 
++# define __ARCH_WANT_NEW_STAT
+ # define __ARCH_WANT_OLD_READDIR
+ # define __ARCH_WANT_OLD_STAT
+ # define __ARCH_WANT_STAT64
+diff --git a/arch/sparc/include/asm/unistd.h b/arch/sparc/include/asm/unistd.h
+index b2a6a955113e..3544244685e1 100644
+--- a/arch/sparc/include/asm/unistd.h
++++ b/arch/sparc/include/asm/unistd.h
+@@ -21,6 +21,7 @@
+ #else
+ #define __NR_time		231 /* Linux sparc32                               */
+ #endif
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/x86/include/asm/unistd.h b/arch/x86/include/asm/unistd.h
+index 51c4eee00732..35b66bbf8028 100644
+--- a/arch/x86/include/asm/unistd.h
++++ b/arch/x86/include/asm/unistd.h
+@@ -31,6 +31,7 @@
+ 
+ # endif
+ 
++# define __ARCH_WANT_NEW_STAT
+ # define __ARCH_WANT_OLD_READDIR
+ # define __ARCH_WANT_OLD_STAT
+ # define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/xtensa/include/asm/unistd.h b/arch/xtensa/include/asm/unistd.h
+index ed66db3bc9bb..0d532ab60b37 100644
+--- a/arch/xtensa/include/asm/unistd.h
++++ b/arch/xtensa/include/asm/unistd.h
+@@ -5,6 +5,7 @@
+ #define __ARCH_WANT_SYS_CLONE
+ #include <uapi/asm/unistd.h>
+ 
++#define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_STAT64
+ #define __ARCH_WANT_SYS_UTIME
+ #define __ARCH_WANT_SYS_LLSEEK
+diff --git a/fs/stat.c b/fs/stat.c
+index f8e6fb2c3657..adbfcd86c81b 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -280,6 +280,8 @@ SYSCALL_DEFINE2(fstat, unsigned int, fd, struct __old_kernel_stat __user *, stat
+ 
+ #endif /* __ARCH_WANT_OLD_STAT */
+ 
++#ifdef __ARCH_WANT_NEW_STAT
 +
-+	*entry = compat_ptr((*uentry) & ~1);
-+	*pi = (unsigned int)(*uentry) & 1;
-+
-+	return 0;
-+}
-+
-+static void __user *futex_uaddr(struct robust_list __user *entry,
-+				compat_long_t futex_offset)
-+{
-+	compat_uptr_t base = ptr_to_compat(entry);
-+	void __user *uaddr = compat_ptr(base + futex_offset);
-+
-+	return uaddr;
-+}
-+
-+/*
-+ * Walk curr->robust_list (very carefully, it's a userspace list!)
-+ * and mark any locks found there dead, and notify any waiters.
-+ *
-+ * We silently return on any sign of list-walking problem.
-+ */
-+void compat_exit_robust_list(struct task_struct *curr)
-+{
-+	struct compat_robust_list_head __user *head = curr->compat_robust_list;
-+	struct robust_list __user *entry, *next_entry, *pending;
-+	unsigned int limit = ROBUST_LIST_LIMIT, pi, pip;
-+	unsigned int uninitialized_var(next_pi);
-+	compat_uptr_t uentry, next_uentry, upending;
-+	compat_long_t futex_offset;
-+	int rc;
-+
-+	if (!futex_cmpxchg_enabled)
-+		return;
-+
-+	/*
-+	 * Fetch the list head (which was registered earlier, via
-+	 * sys_set_robust_list()):
-+	 */
-+	if (compat_fetch_robust_entry(&uentry, &entry, &head->list.next, &pi))
-+		return;
-+	/*
-+	 * Fetch the relative futex offset:
-+	 */
-+	if (get_user(futex_offset, &head->futex_offset))
-+		return;
-+	/*
-+	 * Fetch any possibly pending lock-add first, and handle it
-+	 * if it exists:
-+	 */
-+	if (compat_fetch_robust_entry(&upending, &pending,
-+			       &head->list_op_pending, &pip))
-+		return;
-+
-+	next_entry = NULL;	/* avoid warning with gcc */
-+	while (entry != (struct robust_list __user *) &head->list) {
-+		/*
-+		 * Fetch the next entry in the list before calling
-+		 * handle_futex_death:
-+		 */
-+		rc = compat_fetch_robust_entry(&next_uentry, &next_entry,
-+			(compat_uptr_t __user *)&entry->next, &next_pi);
-+		/*
-+		 * A pending lock might already be on the list, so
-+		 * dont process it twice:
-+		 */
-+		if (entry != pending) {
-+			void __user *uaddr = futex_uaddr(entry, futex_offset);
-+
-+			if (handle_futex_death(uaddr, curr, pi))
-+				return;
-+		}
-+		if (rc)
-+			return;
-+		uentry = next_uentry;
-+		entry = next_entry;
-+		pi = next_pi;
-+		/*
-+		 * Avoid excessively long or circular lists:
-+		 */
-+		if (!--limit)
-+			break;
-+
-+		cond_resched();
-+	}
-+	if (pending) {
-+		void __user *uaddr = futex_uaddr(pending, futex_offset);
-+
-+		handle_futex_death(uaddr, curr, pip);
-+	}
-+}
-+
-+COMPAT_SYSCALL_DEFINE2(set_robust_list,
-+		struct compat_robust_list_head __user *, head,
-+		compat_size_t, len)
-+{
-+	if (!futex_cmpxchg_enabled)
-+		return -ENOSYS;
-+
-+	if (unlikely(len != sizeof(*head)))
-+		return -EINVAL;
-+
-+	current->compat_robust_list = head;
-+
-+	return 0;
-+}
-+
-+COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
-+			compat_uptr_t __user *, head_ptr,
-+			compat_size_t __user *, len_ptr)
-+{
-+	struct compat_robust_list_head __user *head;
-+	unsigned long ret;
-+	struct task_struct *p;
-+
-+	if (!futex_cmpxchg_enabled)
-+		return -ENOSYS;
-+
-+	rcu_read_lock();
-+
-+	ret = -ESRCH;
-+	if (!pid)
-+		p = current;
-+	else {
-+		p = find_task_by_vpid(pid);
-+		if (!p)
-+			goto err_unlock;
-+	}
-+
-+	ret = -EPERM;
-+	if (!ptrace_may_access(p, PTRACE_MODE_READ_REALCREDS))
-+		goto err_unlock;
-+
-+	head = p->compat_robust_list;
-+	rcu_read_unlock();
-+
-+	if (put_user(sizeof(*head), len_ptr))
-+		return -EFAULT;
-+	return put_user(ptr_to_compat(head), head_ptr);
-+
-+err_unlock:
-+	rcu_read_unlock();
-+
-+	return ret;
-+}
-+
-+COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
-+		struct compat_timespec __user *, utime, u32 __user *, uaddr2,
-+		u32, val3)
-+{
-+	struct timespec ts;
-+	ktime_t t, *tp = NULL;
-+	int val2 = 0;
-+	int cmd = op & FUTEX_CMD_MASK;
-+
-+	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
-+		      cmd == FUTEX_WAIT_BITSET ||
-+		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
-+		if (compat_get_timespec(&ts, utime))
-+			return -EFAULT;
-+		if (!timespec_valid(&ts))
-+			return -EINVAL;
-+
-+		t = timespec_to_ktime(ts);
-+		if (cmd == FUTEX_WAIT)
-+			t = ktime_add_safe(ktime_get(), t);
-+		tp = &t;
-+	}
-+	if (cmd == FUTEX_REQUEUE || cmd == FUTEX_CMP_REQUEUE ||
-+	    cmd == FUTEX_CMP_REQUEUE_PI || cmd == FUTEX_WAKE_OP)
-+		val2 = (int) (unsigned long) utime;
-+
-+	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
-+}
-+#endif /* CONFIG_COMPAT */
-+
- static void __init futex_detect_cmpxchg(void)
- {
- #ifndef CONFIG_HAVE_FUTEX_CMPXCHG
-diff --git a/kernel/futex_compat.c b/kernel/futex_compat.c
-deleted file mode 100644
-index 83f830acbb5f..000000000000
---- a/kernel/futex_compat.c
-+++ /dev/null
-@@ -1,202 +0,0 @@
--// SPDX-License-Identifier: GPL-2.0
--/*
-- * linux/kernel/futex_compat.c
-- *
-- * Futex compatibililty routines.
-- *
-- * Copyright 2006, Red Hat, Inc., Ingo Molnar
-- */
--
--#include <linux/linkage.h>
--#include <linux/compat.h>
--#include <linux/nsproxy.h>
--#include <linux/futex.h>
--#include <linux/ptrace.h>
--#include <linux/syscalls.h>
--
--#include <linux/uaccess.h>
--
--
--/*
-- * Fetch a robust-list pointer. Bit 0 signals PI futexes:
-- */
--static inline int
--fetch_robust_entry(compat_uptr_t *uentry, struct robust_list __user **entry,
--		   compat_uptr_t __user *head, unsigned int *pi)
--{
--	if (get_user(*uentry, head))
--		return -EFAULT;
--
--	*entry = compat_ptr((*uentry) & ~1);
--	*pi = (unsigned int)(*uentry) & 1;
--
--	return 0;
--}
--
--static void __user *futex_uaddr(struct robust_list __user *entry,
--				compat_long_t futex_offset)
--{
--	compat_uptr_t base = ptr_to_compat(entry);
--	void __user *uaddr = compat_ptr(base + futex_offset);
--
--	return uaddr;
--}
--
--/*
-- * Walk curr->robust_list (very carefully, it's a userspace list!)
-- * and mark any locks found there dead, and notify any waiters.
-- *
-- * We silently return on any sign of list-walking problem.
-- */
--void compat_exit_robust_list(struct task_struct *curr)
--{
--	struct compat_robust_list_head __user *head = curr->compat_robust_list;
--	struct robust_list __user *entry, *next_entry, *pending;
--	unsigned int limit = ROBUST_LIST_LIMIT, pi, pip;
--	unsigned int uninitialized_var(next_pi);
--	compat_uptr_t uentry, next_uentry, upending;
--	compat_long_t futex_offset;
--	int rc;
--
--	if (!futex_cmpxchg_enabled)
--		return;
--
--	/*
--	 * Fetch the list head (which was registered earlier, via
--	 * sys_set_robust_list()):
--	 */
--	if (fetch_robust_entry(&uentry, &entry, &head->list.next, &pi))
--		return;
--	/*
--	 * Fetch the relative futex offset:
--	 */
--	if (get_user(futex_offset, &head->futex_offset))
--		return;
--	/*
--	 * Fetch any possibly pending lock-add first, and handle it
--	 * if it exists:
--	 */
--	if (fetch_robust_entry(&upending, &pending,
--			       &head->list_op_pending, &pip))
--		return;
--
--	next_entry = NULL;	/* avoid warning with gcc */
--	while (entry != (struct robust_list __user *) &head->list) {
--		/*
--		 * Fetch the next entry in the list before calling
--		 * handle_futex_death:
--		 */
--		rc = fetch_robust_entry(&next_uentry, &next_entry,
--			(compat_uptr_t __user *)&entry->next, &next_pi);
--		/*
--		 * A pending lock might already be on the list, so
--		 * dont process it twice:
--		 */
--		if (entry != pending) {
--			void __user *uaddr = futex_uaddr(entry, futex_offset);
--
--			if (handle_futex_death(uaddr, curr, pi))
--				return;
--		}
--		if (rc)
--			return;
--		uentry = next_uentry;
--		entry = next_entry;
--		pi = next_pi;
--		/*
--		 * Avoid excessively long or circular lists:
--		 */
--		if (!--limit)
--			break;
--
--		cond_resched();
--	}
--	if (pending) {
--		void __user *uaddr = futex_uaddr(pending, futex_offset);
--
--		handle_futex_death(uaddr, curr, pip);
--	}
--}
--
--COMPAT_SYSCALL_DEFINE2(set_robust_list,
--		struct compat_robust_list_head __user *, head,
--		compat_size_t, len)
--{
--	if (!futex_cmpxchg_enabled)
--		return -ENOSYS;
--
--	if (unlikely(len != sizeof(*head)))
--		return -EINVAL;
--
--	current->compat_robust_list = head;
--
--	return 0;
--}
--
--COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
--			compat_uptr_t __user *, head_ptr,
--			compat_size_t __user *, len_ptr)
--{
--	struct compat_robust_list_head __user *head;
--	unsigned long ret;
--	struct task_struct *p;
--
--	if (!futex_cmpxchg_enabled)
--		return -ENOSYS;
--
--	rcu_read_lock();
--
--	ret = -ESRCH;
--	if (!pid)
--		p = current;
--	else {
--		p = find_task_by_vpid(pid);
--		if (!p)
--			goto err_unlock;
--	}
--
--	ret = -EPERM;
--	if (!ptrace_may_access(p, PTRACE_MODE_READ_REALCREDS))
--		goto err_unlock;
--
--	head = p->compat_robust_list;
--	rcu_read_unlock();
--
--	if (put_user(sizeof(*head), len_ptr))
--		return -EFAULT;
--	return put_user(ptr_to_compat(head), head_ptr);
--
--err_unlock:
--	rcu_read_unlock();
--
--	return ret;
--}
--
--COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
--		struct compat_timespec __user *, utime, u32 __user *, uaddr2,
--		u32, val3)
--{
--	struct timespec ts;
--	ktime_t t, *tp = NULL;
--	int val2 = 0;
--	int cmd = op & FUTEX_CMD_MASK;
--
--	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
--		      cmd == FUTEX_WAIT_BITSET ||
--		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
--		if (compat_get_timespec(&ts, utime))
--			return -EFAULT;
--		if (!timespec_valid(&ts))
--			return -EINVAL;
--
--		t = timespec_to_ktime(ts);
--		if (cmd == FUTEX_WAIT)
--			t = ktime_add_safe(ktime_get(), t);
--		tp = &t;
--	}
--	if (cmd == FUTEX_REQUEUE || cmd == FUTEX_CMP_REQUEUE ||
--	    cmd == FUTEX_CMP_REQUEUE_PI || cmd == FUTEX_WAKE_OP)
--		val2 = (int) (unsigned long) utime;
--
--	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
--}
+ #if BITS_PER_LONG == 32
+ #  define choose_32_64(a,b) a
+ #else
+@@ -378,6 +380,7 @@ SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
+ 
+ 	return error;
+ }
++#endif
+ 
+ static int do_readlinkat(int dfd, const char __user *pathname,
+ 			 char __user *buf, int bufsiz)
 -- 
 2.9.0
