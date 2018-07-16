@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 10/17] y2038: futex: Add support for __kernel_timespec
-Date: Mon, 16 Jul 2018 18:10:56 +0200
-Message-ID: <20180716161103.16239-11-arnd@arndb.de>
+Subject: [PATCH v2 12/17] y2038: aio: Prepare sys_io_{p,}getevents for __kernel_timespec
+Date: Mon, 16 Jul 2018 18:10:58 +0200
+Message-ID: <20180716161103.16239-13-arnd@arndb.de>
 References: <20180716161103.16239-1-arnd@arndb.de>
 Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20180716161103.16239-1-arnd@arndb.de>
@@ -10,105 +10,168 @@ To: tglx@linutronix.de
 Cc: y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-This prepares sys_futex for y2038 safe calling: the native
-syscall is changed to receive a __kernel_timespec argument, which
-will be switched to 64-bit time_t in the future. All the internal
-time handling gets changed to timespec64, and the compat_sys_futex
-entry point is moved under the CONFIG_COMPAT_32BIT_TIME check
-to provide compatibility for existing 32-bit architectures.
+This is a preparation patch for converting sys_io_pgetevents to
+work with 64-bit time_t on 32-bit architectures. The 'timeout' argument
+is changed to struct __kernel_timespec, which will be redefined using
+64-bit time_t in the future. The compat version of the system call in
+turn is enabled for compilation with CONFIG_COMPAT_32BIT_TIME so
+the individual 32-bit architectures can share the handling of the
+traditional argument with 64-bit architectures providing it for their
+compat mode.
+
+We now have five entry points into do_io_getevents(). Until we set
+CONFIG_64BIT_TIME, the arguments are
+
+sys_io_getevents():	    native aio_context_t, old-style timespec
+sys_io_pgetevents():	    like sys_io_getevents(), but with added
+			    aio_sigset argument
+compat_sys_io_getevents():  32-bit aio_context_t, 32-bit timespec
+compat_sys_io_pgetevents(): like compat_sys_io_getevents(), but with
+			    added aio_sigset argument
+compat_sys_io_pgetevents_time64(): like compat_sys_io_pgetevents(),
+			    but with 64-bit timespec
+
+Once a 32-bit architecture sets CONFIG_64BIT_TIME, sys_io_getevents()
+is no longer available, and sys_io_pgetevents() takes a 64-bit timespec
+argument, whiel compat_sys_io_getevents() and compat_sys_io_pgetevents()
+implement the traditional behavior. compat_sys_io_pgetevents_time64()
+is only used on 64-bit architectures, to provide compatibility with
+the new 32-bit version of sys_io_pgetevents() taking a 64-bit timespec
+combined with a __compat_aio_sigset.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/linux/syscalls.h |  2 +-
- kernel/futex.c           | 22 ++++++++++++----------
- 2 files changed, 13 insertions(+), 11 deletions(-)
+ fs/aio.c                 | 77 +++++++++++++++++++++++++++++++++++++++++++-----
+ include/linux/syscalls.h |  4 +--
+ 2 files changed, 71 insertions(+), 10 deletions(-)
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 312c248f1fe6..fc98024d3b5e 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -541,7 +541,7 @@ asmlinkage long sys_unshare(unsigned long unshare_flags);
- 
- /* kernel/futex.c */
- asmlinkage long sys_futex(u32 __user *uaddr, int op, u32 val,
--			struct timespec __user *utime, u32 __user *uaddr2,
-+			struct __kernel_timespec __user *utime, u32 __user *uaddr2,
- 			u32 val3);
- asmlinkage long sys_get_robust_list(int pid,
- 				    struct robust_list_head __user * __user *head_ptr,
-diff --git a/kernel/futex.c b/kernel/futex.c
-index e9013d1e65a1..129555a3b64d 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -3556,10 +3556,10 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
- 
- 
- SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
--		struct timespec __user *, utime, u32 __user *, uaddr2,
-+		struct __kernel_timespec __user *, utime, u32 __user *, uaddr2,
- 		u32, val3)
+diff --git a/fs/aio.c b/fs/aio.c
+index 76def7523ece..f306a48b0a9f 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -1869,7 +1869,7 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
+ 		long, min_nr,
+ 		long, nr,
+ 		struct io_event __user *, events,
+-		struct timespec __user *, timeout)
++		struct __kernel_timespec __user *, timeout)
  {
--	struct timespec ts;
-+	struct timespec64 ts;
- 	ktime_t t, *tp = NULL;
- 	u32 val2 = 0;
- 	int cmd = op & FUTEX_CMD_MASK;
-@@ -3569,12 +3569,12 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
- 		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
- 		if (unlikely(should_fail_futex(!(op & FUTEX_PRIVATE_FLAG))))
- 			return -EFAULT;
--		if (copy_from_user(&ts, utime, sizeof(ts)) != 0)
-+		if (get_timespec64(&ts, utime))
- 			return -EFAULT;
--		if (!timespec_valid(&ts))
-+		if (!timespec64_valid(&ts))
- 			return -EINVAL;
+ 	struct timespec64	ts;
+ 	int			ret;
+@@ -1888,7 +1888,7 @@ SYSCALL_DEFINE6(io_pgetevents,
+ 		long, min_nr,
+ 		long, nr,
+ 		struct io_event __user *, events,
+-		struct timespec __user *, timeout,
++		struct __kernel_timespec __user *, timeout,
+ 		const struct __aio_sigset __user *, usig)
+ {
+ 	struct __aio_sigset	ksig = { NULL, };
+@@ -1929,6 +1929,73 @@ SYSCALL_DEFINE6(io_pgetevents,
+ }
  
--		t = timespec_to_ktime(ts);
-+		t = timespec64_to_ktime(ts);
- 		if (cmd == FUTEX_WAIT)
- 			t = ktime_add_safe(ktime_get(), t);
- 		tp = &t;
-@@ -3745,12 +3745,14 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
- 
+ #ifdef CONFIG_COMPAT
++struct __compat_aio_sigset {
++	compat_sigset_t __user	*sigmask;
++	compat_size_t		sigsetsize;
++};
++
++COMPAT_SYSCALL_DEFINE6(io_pgetevents_time64,
++		compat_aio_context_t, ctx_id,
++		compat_long_t, min_nr,
++		compat_long_t, nr,
++		struct io_event __user *, events,
++		struct __kernel_timespec __user *, timeout,
++		const struct __compat_aio_sigset __user *, usig)
++{
++	struct __compat_aio_sigset ksig = { NULL, };
++	sigset_t ksigmask, sigsaved;
++	struct timespec64 t;
++	int ret;
++
++	if (timeout && get_timespec64(&t, timeout))
++		return -EFAULT;
++
++	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
++		return -EFAULT;
++
++	if (ksig.sigmask) {
++		if (ksig.sigsetsize != sizeof(compat_sigset_t))
++			return -EINVAL;
++		if (get_compat_sigset(&ksigmask, ksig.sigmask))
++			return -EFAULT;
++		sigdelsetmask(&ksigmask, sigmask(SIGKILL) | sigmask(SIGSTOP));
++		sigprocmask(SIG_SETMASK, &ksigmask, &sigsaved);
++	}
++
++	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
++	if (signal_pending(current)) {
++		if (ksig.sigmask) {
++			current->saved_sigmask = sigsaved;
++			set_restore_sigmask();
++		}
++		if (!ret)
++			ret = -ERESTARTNOHAND;
++	} else {
++		if (ksig.sigmask)
++			sigprocmask(SIG_SETMASK, &sigsaved, NULL);
++	}
++
++	return ret;
++}
++#endif
++
++#ifdef CONFIG_COMPAT_32BIT_TIME
++#ifndef CONFIG_COMPAT
++#define compat_sigset_t sigset_t
++struct __compat_aio_sigset {
++	compat_sigset_t __user	*sigmask;
++	compat_size_t		sigsetsize;
++};
++
++static inline int get_compat_sigset(sigset_t *set, const sigset_t __user *compat)
++{
++        if (copy_from_user(set, compat, sizeof *set))
++                return -EFAULT;
++
++        return 0;
++}
++#endif
++
+ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
+ 		       compat_long_t, min_nr,
+ 		       compat_long_t, nr,
+@@ -1947,12 +2014,6 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
  	return ret;
  }
-+#endif /* CONFIG_COMPAT */
  
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
- 		struct compat_timespec __user *, utime, u32 __user *, uaddr2,
- 		u32, val3)
- {
--	struct timespec ts;
-+	struct timespec64 ts;
- 	ktime_t t, *tp = NULL;
- 	int val2 = 0;
- 	int cmd = op & FUTEX_CMD_MASK;
-@@ -3758,12 +3760,12 @@ COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
- 	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
- 		      cmd == FUTEX_WAIT_BITSET ||
- 		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
--		if (compat_get_timespec(&ts, utime))
-+		if (compat_get_timespec64(&ts, utime))
- 			return -EFAULT;
--		if (!timespec_valid(&ts))
-+		if (!timespec64_valid(&ts))
- 			return -EINVAL;
+-
+-struct __compat_aio_sigset {
+-	compat_sigset_t __user	*sigmask;
+-	compat_size_t		sigsetsize;
+-};
+-
+ COMPAT_SYSCALL_DEFINE6(io_pgetevents,
+ 		compat_aio_context_t, ctx_id,
+ 		compat_long_t, min_nr,
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 1a22bb4285bf..4fc93fbc0d00 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -296,12 +296,12 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
+ 				long min_nr,
+ 				long nr,
+ 				struct io_event __user *events,
+-				struct timespec __user *timeout);
++				struct __kernel_timespec __user *timeout);
+ asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
+ 				long min_nr,
+ 				long nr,
+ 				struct io_event __user *events,
+-				struct timespec __user *timeout,
++				struct __kernel_timespec __user *timeout,
+ 				const struct __aio_sigset *sig);
  
--		t = timespec_to_ktime(ts);
-+		t = timespec64_to_ktime(ts);
- 		if (cmd == FUTEX_WAIT)
- 			t = ktime_add_safe(ktime_get(), t);
- 		tp = &t;
-@@ -3774,7 +3776,7 @@ COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
- 
- 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
- }
--#endif /* CONFIG_COMPAT */
-+#endif /* CONFIG_COMPAT_32BIT_TIME */
- 
- static void __init futex_detect_cmpxchg(void)
- {
+ /* fs/xattr.c */
 -- 
 2.9.0
