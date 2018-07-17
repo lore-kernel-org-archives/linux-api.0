@@ -1,50 +1,166 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
- nr_indirectly_reclaimable_bytes
-Date: Tue, 17 Jul 2018 21:11:22 +0200
-Message-ID: <0e1e8870-9c98-2330-e978-f927c33eec49@suse.cz>
-References: <20180618091808.4419-6-vbabka@suse.cz>
- <201806201923.mC5ZpigB%fengguang.wu@intel.com>
- <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
- <20180629211201.GA14897@castle.DHCP.thefacebook.com>
- <ef2dea13-0102-c4bc-a28f-c1b2408f0753@suse.cz>
- <20180702165223.GA17295@castle.DHCP.thefacebook.com>
- <bfdb3fb1-5d81-e17c-e456-083cca04e2cc@suse.cz>
- <20180717185451.GA18762@castle.DHCP.thefacebook.com>
+From: Mark Fasheh <mfasheh@suse.de>
+Subject: Re: [RESEND][PATCH v4 0/2] vfs: better dedupe permission check
+Date: Tue, 17 Jul 2018 20:14:17 +0000
+Message-ID: <20180717201417.GE10690@wotan.suse.de>
+References: <20180717190906.31073-1-mfasheh@suse.de>
+ <20180717194818.GV32415@magnolia>
+Reply-To: Mark Fasheh <mfasheh@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180717185451.GA18762@castle.DHCP.thefacebook.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180717194818.GV32415@magnolia>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, David Sterba <dsterba@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/17/2018 08:54 PM, Roman Gushchin wrote:
-> On Tue, Jul 17, 2018 at 10:44:07AM +0200, Vlastimil Babka wrote:
->> On 07/02/2018 06:52 PM, Roman Gushchin wrote:
->>> On Sat, Jun 30, 2018 at 12:09:27PM +0200, Vlastimil Babka wrote:
->>>
->>> If these per-cpu data is something like per-cpu refcounters,
->>> which are using to manage reclaimable objects (e.g. cgroup css objects).
->>> Of course, they are not always reclaimable, but in certain states.
->>
->> BTW, seems you seem interested, could you provide some more formal
->> review as well? Others too. We don't need to cover all use cases
->> immediately, when the patchset is apparently stalled due to lack of
->> review. Thanks!
+CCing Michael Kerrisk and linux-api 
+
+The patch at the end of this e-mail updates our man page for
+ioctl_fideduperange to reflect the changes proposed in this patch series:
+
+https://marc.info/?l=linux-fsdevel&m=153185457324037&w=2
+
+Any feedback would be appreciated. Thanks in advance.
+	--Mark
+
+On Tue, Jul 17, 2018 at 12:48:18PM -0700, Darrick J. Wong wrote:
+> On Tue, Jul 17, 2018 at 12:09:04PM -0700, Mark Fasheh wrote:
+> > Hi Al,
+> > 
+> > The following patches fix a couple of issues with the permission check
+> > we do in vfs_dedupe_file_range(). I sent them out for a few times now,
+> > a changelog is attached. If they look ok to you, I'd appreciate them
+> > being pushed upstream.
+> > 
+> > You can get them from git if you like:
+> > 
+> > git pull https://github.com/markfasheh/linux dedupe-perms
+> > 
+> > I also have a set of patches against 4.17 if you prefer. The code and
+> > testing are identical:
+> > 
+> > git pull https://github.com/markfasheh/linux dedupe-perms-v4.17
+> > 
+> > 
+> > The first patch expands our check to allow dedupe of a file if the
+> > user owns it or otherwise would be allowed to write to it.
+> > 
+> > Current behavior is that we'll allow dedupe only if:
+> > 
+> > - the user is an admin (root)
+> > - the user has the file open for write
+> > 
+> > This makes it impossible for a user to dedupe their own file set
+> > unless they do it as root, or ensure that all files have write
+> > permission. There's a couple of duperemove bugs open for this:
+> > 
+> > https://github.com/markfasheh/duperemove/issues/129
+> > https://github.com/markfasheh/duperemove/issues/86
+> > 
+> > The other problem we have is also related to forcing the user to open
+> > target files for write - A process trying to exec a file currently
+> > being deduped gets ETXTBUSY. The answer (as above) is to allow them to
+> > open the targets ro - root can already do this. There was a patch from
+> > Adam Borowski to fix this back in 2016:
+> > 
+> > https://lkml.org/lkml/2016/7/17/130
+> > 
+> > which I have incorporated into my changes.
+> > 
+> > 
+> > The 2nd patch fixes our return code for permission denied to be
+> > EPERM. For some reason we're returning EINVAL - I think that's
+> > probably my fault. At any rate, we need to be returning something
+> > descriptive of the actual problem, otherwise callers see EINVAL and
+> > can't really make a valid determination of what's gone wrong.
+> > 
+> > This has also popped up in duperemove, mostly in the form of cryptic
+> > error messages. Because this is a code returned to userspace, I did
+> > check the other users of extent-same that I could find. Both 'bees'
+> > and 'rust-btrfs' do the same as duperemove and simply report the error
+> > (as they should).
+> > 
+> > Please apply.
+> > 
+> > Thanks,
+> >   --Mark
+> > 
+> > Changes from V3 to V4:
+> > - Add a patch (below) to ioctl_fideduperange.2 explaining our
+> >   changes. I will send this patch once the kernel update is
+> >   accepted. Thanks to Darrick Wong for this suggestion.
+> > - V3 discussion: https://www.spinics.net/lists/linux-btrfs/msg79135.html
+> > 
+> > Changes from V2 to V3:
+> > - Return bool from allow_file_dedupe
+> > - V2 discussion: https://www.spinics.net/lists/linux-btrfs/msg78421.html
+> > 
+> > Changes from V1 to V2:
+> > - Add inode_permission check as suggested by Adam Borowski
+> > - V1 discussion: https://marc.info/?l=linux-xfs&m=152606684017965&w=2
+> > 
+> > 
+> > From: Mark Fasheh <mfasheh@suse.de>
+> > 
+> > [PATCH] ioctl_fideduperange.2: clarify permission requirements
+> > 
+> > dedupe permission checks were recently relaxed - update our man page to
+> > reflect those changes.
+> > 
+> > Signed-off-by: Mark Fasheh <mfasheh@suse.de>
+> > ---
+> >  man2/ioctl_fideduperange.2 | 8 +++++---
 > 
-> Sure!
-
-Thanks!
-
-> The patchset looks sane at a first glance, but I need some time
-> to dig deeper. Is v2 the final version?
-
-There was a fixlet on top and some added changelog text, so I'll do a v3
-tomorrow incorporating that to make things easier for everyone.
-
-> Thanks!
+> Mmm, man page update, thank you for editing the documentation too!
 > 
+> Please cc linux-api and Michael Kerrisk so this can go upstream.
+
+
+From: Mark Fasheh <mfasheh@suse.de>
+
+[PATCH] ioctl_fideduperange.2: clarify permission requirements
+
+dedupe permission checks were recently relaxed - update our man page to
+reflect those changes.
+
+Signed-off-by: Mark Fasheh <mfasheh@suse.de>
+---
+ man2/ioctl_fideduperange.2 | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
+index 84d20a276..4040ee064 100644
+--- a/man2/ioctl_fideduperange.2
++++ b/man2/ioctl_fideduperange.2
+@@ -105,9 +105,12 @@ The field
+ must be zero.
+ During the call,
+ .IR src_fd
+-must be open for reading and
++must be open for reading.
+ .IR dest_fd
+-must be open for writing.
++can be open for writing, or reading.
++If
++.IR dest_fd
++is open for reading, the user must have write access to the file.
+ The combined size of the struct
+ .IR file_dedupe_range
+ and the struct
+@@ -185,8 +188,8 @@ This can appear if the filesystem does not support deduplicating either file
+ descriptor, or if either file descriptor refers to special inodes.
+ .TP
+ .B EPERM
+-.IR dest_fd
+-is immutable.
++This will be returned if the user lacks permission to dedupe the file referenced by
++.IR dest_fd .
+ .TP
+ .B ETXTBSY
+ One of the files is a swap file.
+-- 
+2.15.1
+
+
