@@ -1,32 +1,57 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] [RFC] y2038: globally rename compat_time to old_time32
-Date: Tue, 17 Jul 2018 18:16:44 +0200
-Message-ID: <CAK8P3a3suHZo25uNKnWRz3MLJOFTBRwixTfTW7fSxG2CNoU-NA@mail.gmail.com>
-References: <20180713133204.3123939-1-arnd@arndb.de> <CABeXuvphoYM+KOGPgtsuxzS1_XDSOO0Ta5hr3sA7gYtt-78wtQ@mail.gmail.com>
- <CAK8P3a2xu4KGVM1BvTjtXKHfXpBQ2PMynAPybW4cRt7FB8ktwg@mail.gmail.com> <20180717125855.GA3681@infradead.org>
+From: Roman Gushchin <guro@fb.com>
+Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
+ nr_indirectly_reclaimable_bytes
+Date: Tue, 17 Jul 2018 11:54:54 -0700
+Message-ID: <20180717185451.GA18762@castle.DHCP.thefacebook.com>
+References: <20180618091808.4419-6-vbabka@suse.cz>
+ <201806201923.mC5ZpigB%fengguang.wu@intel.com>
+ <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
+ <20180629211201.GA14897@castle.DHCP.thefacebook.com>
+ <ef2dea13-0102-c4bc-a28f-c1b2408f0753@suse.cz>
+ <20180702165223.GA17295@castle.DHCP.thefacebook.com>
+ <bfdb3fb1-5d81-e17c-e456-083cca04e2cc@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180717125855.GA3681@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <bfdb3fb1-5d81-e17c-e456-083cca04e2cc@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Deepa Dinamani <deepa.kernel@gmail.com>, y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ARM <linux-arm-kernel@lists.infradead.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, alsa-devel@alsa-project.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 17, 2018 at 2:58 PM, Christoph Hellwig <hch@infradead.org> wrote:
-> On Mon, Jul 16, 2018 at 12:11:53PM +0200, Arnd Bergmann wrote:
->> I don't think it makes a big difference whether we change it now or later,
->> but if Christoph feels that it addresses his concern about the compat_
->> namespace being reused during the transition, doing it earlier would
->> enable us to finish the remaining syscalls.
->
-> Yes, I've been looking at your new series and the reuse of compat_*
-> is really confusing
+On Tue, Jul 17, 2018 at 10:44:07AM +0200, Vlastimil Babka wrote:
+> On 07/02/2018 06:52 PM, Roman Gushchin wrote:
+> > On Sat, Jun 30, 2018 at 12:09:27PM +0200, Vlastimil Babka wrote:
+> >> On 06/29/2018 11:12 PM, Roman Gushchin wrote:
+> >>>>
+> >>>> The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
+> >>>> eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
+> >>>> accounting objects that can be reclaimed, but cannot be allocated via a
+> >>>> SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
+> >>>> __GFP_RECLAIMABLE flag, and the dcache external names user is converted.
+> >>>>
+> >>>> The counter is however still useful for accounting direct page allocations
+> >>>> (i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
+> >>>
+> >>> Btw, it looks like I've another example of usefulness of this counter:
+> >>> dynamic per-cpu data.
+> >>
+> >> Hmm, but are those reclaimable? Most likely not in general? Do you have
+> >> examples that are?
+> > 
+> > If these per-cpu data is something like per-cpu refcounters,
+> > which are using to manage reclaimable objects (e.g. cgroup css objects).
+> > Of course, they are not always reclaimable, but in certain states.
+> 
+> BTW, seems you seem interested, could you provide some more formal
+> review as well? Others too. We don't need to cover all use cases
+> immediately, when the patchset is apparently stalled due to lack of
+> review. Thanks!
 
-Ok, let's do that then. Do you think it's sufficient to change it on top
-of the existing patch series? While I can rebase everything on top of
-the rename, the header file dependencies are a bit tricky and adding
-a patch at the end would make it easier to ensure that I don't
-introduce any bisection issues.
+Sure!
 
-       Arnd
+The patchset looks sane at a first glance, but I need some time
+to dig deeper. Is v2 the final version?
+
+Thanks!
