@@ -1,52 +1,55 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v2 5/7] mm: rename and change semantics of
- nr_indirectly_reclaimable_bytes
-Date: Tue, 17 Jul 2018 10:44:07 +0200
-Message-ID: <bfdb3fb1-5d81-e17c-e456-083cca04e2cc@suse.cz>
-References: <20180618091808.4419-6-vbabka@suse.cz>
- <201806201923.mC5ZpigB%fengguang.wu@intel.com>
- <38c6a6e1-c5e0-fd7d-4baf-1f0f09be5094@suse.cz>
- <20180629211201.GA14897@castle.DHCP.thefacebook.com>
- <ef2dea13-0102-c4bc-a28f-c1b2408f0753@suse.cz>
- <20180702165223.GA17295@castle.DHCP.thefacebook.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
+Date: Tue, 17 Jul 2018 10:40:41 +0100
+Message-ID: <11586.1531820441@warthog.procyon.org.uk>
+References: <F80F34FD-CFD3-4A53-AECC-AEC8D9EF3EAE@amacapital.net> <CA+55aFzaTQJp6aHG_9+W2ShxeZncq7k9G3FkVFjFm7W=ECUiMw@mail.gmail.com> <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk> <7002.1531407244@warthog.procyon.org.uk> <338BC3C4-F3E7-48F0-A82E-2C7295B6640E@amacapital.net> <17749.1531429218@warthog.procyon.org.uk> <21131.1531488422@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180702165223.GA17295@castle.DHCP.thefacebook.com>
-Content-Language: en-US
+In-Reply-To: <F80F34FD-CFD3-4A53-AECC-AEC8D9EF3EAE@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, linux-api@vger.kernel.org, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
-On 07/02/2018 06:52 PM, Roman Gushchin wrote:
-> On Sat, Jun 30, 2018 at 12:09:27PM +0200, Vlastimil Babka wrote:
->> On 06/29/2018 11:12 PM, Roman Gushchin wrote:
->>>>
->>>> The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
->>>> eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
->>>> accounting objects that can be reclaimed, but cannot be allocated via a
->>>> SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
->>>> __GFP_RECLAIMABLE flag, and the dcache external names user is converted.
->>>>
->>>> The counter is however still useful for accounting direct page allocations
->>>> (i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
->>>
->>> Btw, it looks like I've another example of usefulness of this counter:
->>> dynamic per-cpu data.
->>
->> Hmm, but are those reclaimable? Most likely not in general? Do you have
->> examples that are?
-> 
-> If these per-cpu data is something like per-cpu refcounters,
-> which are using to manage reclaimable objects (e.g. cgroup css objects).
-> Of course, they are not always reclaimable, but in certain states.
+Andy Lutomirski <luto@amacapital.net> wrote:
 
-BTW, seems you seem interested, could you provide some more formal
-review as well? Others too. We don't need to cover all use cases
-immediately, when the patchset is apparently stalled due to lack of
-review. Thanks!
-
-> Thanks!
+> > Whilst I'm at it, do we want the option of doing the equivalent of
+> > mountat()?  I.e. offering the option to open all the device files used by
+> > a superblock with dfd and AT_* flags in combination with the filename?
+> > 
 > 
+> Isn’t that more or less what I was suggesting?  I suggested dfd and path and I also suggested just an fd and letting the caller open the file itself.
+
+Do we need AT_* flags?  There are three that we could use:
+
+	AT_SYMLINK_NOFOLLOW
+	AT_NO_AUTOMOUNT
+	AT_EMPTY_PATH
+
+AT_EMPTY_PATH I can see, but I don't see it as likely that we'd want to use
+the other two for selecting a source?  Note that we can always do:
+
+	fsfd = fsopen("ext4");
+	sfd = open("/dev/", O_PATH);
+	fsconfig(fsfd, fsconfig_set_path, "journal_path", "sda1", sfd);
+
+or:
+
+	fsfd = fsopen("ext4");
+	sfd = open("/dev/sda1", O_PATH);
+	fsconfig(fsfd, fsconfig_set_path_empty, "journal_path", "", sfd);
+
+or:
+
+	fsfd = fsopen("ext4");
+	jfd = open("/dev/sda1", O_RDWR);
+	fsconfig(fsfd, fsconfig_set_fd, "journal_path", NULL, jfd);
+
+assuming the open on the latter doesn't exclude the use by the filesystem.
+
+This way I don't need a second syscall or a 6-arg syscall to handle path
+specification.
+
+David
