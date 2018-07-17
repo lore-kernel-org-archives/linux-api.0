@@ -1,166 +1,53 @@
-From: Mark Fasheh <mfasheh@suse.de>
-Subject: Re: [RESEND][PATCH v4 0/2] vfs: better dedupe permission check
-Date: Tue, 17 Jul 2018 20:14:17 +0000
-Message-ID: <20180717201417.GE10690@wotan.suse.de>
-References: <20180717190906.31073-1-mfasheh@suse.de>
- <20180717194818.GV32415@magnolia>
-Reply-To: Mark Fasheh <mfasheh@suse.de>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v2 16/27] mm: Modify can_follow_write_pte/pmd for
+ shadow stack
+Date: Tue, 17 Jul 2018 16:00:35 -0700
+Message-ID: <1531868435.3541.18.camel@intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+         <20180710222639.8241-17-yu-cheng.yu@intel.com>
+         <20180711092951.GW2476@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180717194818.GV32415@magnolia>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, David Sterba <dsterba@suse.cz>, Michael Kerrisk <mtk.manpages@gmail.com>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180711092951.GW2476@hirez.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Ravi V. Shan
 List-Id: linux-api@vger.kernel.org
 
-CCing Michael Kerrisk and linux-api 
-
-The patch at the end of this e-mail updates our man page for
-ioctl_fideduperange to reflect the changes proposed in this patch series:
-
-https://marc.info/?l=linux-fsdevel&m=153185457324037&w=2
-
-Any feedback would be appreciated. Thanks in advance.
-	--Mark
-
-On Tue, Jul 17, 2018 at 12:48:18PM -0700, Darrick J. Wong wrote:
-> On Tue, Jul 17, 2018 at 12:09:04PM -0700, Mark Fasheh wrote:
-> > Hi Al,
+On Wed, 2018-07-11 at 11:29 +0200, Peter Zijlstra wrote:
+> On Tue, Jul 10, 2018 at 03:26:28PM -0700, Yu-cheng Yu wrote:
 > > 
-> > The following patches fix a couple of issues with the permission check
-> > we do in vfs_dedupe_file_range(). I sent them out for a few times now,
-> > a changelog is attached. If they look ok to you, I'd appreciate them
-> > being pushed upstream.
+> > There are three possible shadow stack PTE settings:
 > > 
-> > You can get them from git if you like:
-> > 
-> > git pull https://github.com/markfasheh/linux dedupe-perms
-> > 
-> > I also have a set of patches against 4.17 if you prefer. The code and
-> > testing are identical:
-> > 
-> > git pull https://github.com/markfasheh/linux dedupe-perms-v4.17
-> > 
-> > 
-> > The first patch expands our check to allow dedupe of a file if the
-> > user owns it or otherwise would be allowed to write to it.
-> > 
-> > Current behavior is that we'll allow dedupe only if:
-> > 
-> > - the user is an admin (root)
-> > - the user has the file open for write
-> > 
-> > This makes it impossible for a user to dedupe their own file set
-> > unless they do it as root, or ensure that all files have write
-> > permission. There's a couple of duperemove bugs open for this:
-> > 
-> > https://github.com/markfasheh/duperemove/issues/129
-> > https://github.com/markfasheh/duperemove/issues/86
-> > 
-> > The other problem we have is also related to forcing the user to open
-> > target files for write - A process trying to exec a file currently
-> > being deduped gets ETXTBUSY. The answer (as above) is to allow them to
-> > open the targets ro - root can already do this. There was a patch from
-> > Adam Borowski to fix this back in 2016:
-> > 
-> > https://lkml.org/lkml/2016/7/17/130
-> > 
-> > which I have incorporated into my changes.
-> > 
-> > 
-> > The 2nd patch fixes our return code for permission denied to be
-> > EPERM. For some reason we're returning EINVAL - I think that's
-> > probably my fault. At any rate, we need to be returning something
-> > descriptive of the actual problem, otherwise callers see EINVAL and
-> > can't really make a valid determination of what's gone wrong.
-> > 
-> > This has also popped up in duperemove, mostly in the form of cryptic
-> > error messages. Because this is a code returned to userspace, I did
-> > check the other users of extent-same that I could find. Both 'bees'
-> > and 'rust-btrfs' do the same as duperemove and simply report the error
-> > (as they should).
-> > 
-> > Please apply.
-> > 
-> > Thanks,
-> >   --Mark
-> > 
-> > Changes from V3 to V4:
-> > - Add a patch (below) to ioctl_fideduperange.2 explaining our
-> >   changes. I will send this patch once the kernel update is
-> >   accepted. Thanks to Darrick Wong for this suggestion.
-> > - V3 discussion: https://www.spinics.net/lists/linux-btrfs/msg79135.html
-> > 
-> > Changes from V2 to V3:
-> > - Return bool from allow_file_dedupe
-> > - V2 discussion: https://www.spinics.net/lists/linux-btrfs/msg78421.html
-> > 
-> > Changes from V1 to V2:
-> > - Add inode_permission check as suggested by Adam Borowski
-> > - V1 discussion: https://marc.info/?l=linux-xfs&m=152606684017965&w=2
-> > 
-> > 
-> > From: Mark Fasheh <mfasheh@suse.de>
-> > 
-> > [PATCH] ioctl_fideduperange.2: clarify permission requirements
-> > 
-> > dedupe permission checks were recently relaxed - update our man page to
-> > reflect those changes.
-> > 
-> > Signed-off-by: Mark Fasheh <mfasheh@suse.de>
-> > ---
-> >  man2/ioctl_fideduperange.2 | 8 +++++---
+> >   Normal SHSTK PTE: (R/O + DIRTY_HW)
+> >   SHSTK PTE COW'ed: (R/O + DIRTY_HW)
+> >   SHSTK PTE shared as R/O data: (R/O + DIRTY_SW)
+> I count _2_ distinct states there.
 > 
-> Mmm, man page update, thank you for editing the documentation too!
+> > 
+> > Update can_follow_write_pte/pmd for the shadow stack.
+> So the below disallows can_follow_write when shstk && _PAGE_DIRTY_SW,
+> but this here Changelog doesn't explain why. Doesn't even get close.
+
+Can we add the following to the log:
+
+When a SHSTK PTE is shared, it is (R/O + DIRTY_SW); otherwise it is
+(R/O + DIRTY_HW).
+
+When we (FOLL_WRITE | FOLL_FORCE) on a SHSTK PTE, the following
+must be true:
+
+  - It has been COW'ed at least once (FOLL_COW is set);
+  - It still is not shared, i.e. PTE is (R/O + DIRTY_HW);
+
 > 
-> Please cc linux-api and Michael Kerrisk so this can go upstream.
+> Also, the code is a right mess :/ Can't we try harder to not let this
+> shadow stack stuff escape arch code.
 
+We either check here if the VMA is SHSTK mapping or move the logic
+to pte_dirty().  The latter would be less obvious.  Or can we
+create a can_follow_write_shstk_pte()?
 
-From: Mark Fasheh <mfasheh@suse.de>
-
-[PATCH] ioctl_fideduperange.2: clarify permission requirements
-
-dedupe permission checks were recently relaxed - update our man page to
-reflect those changes.
-
-Signed-off-by: Mark Fasheh <mfasheh@suse.de>
----
- man2/ioctl_fideduperange.2 | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
-
-diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
-index 84d20a276..4040ee064 100644
---- a/man2/ioctl_fideduperange.2
-+++ b/man2/ioctl_fideduperange.2
-@@ -105,9 +105,12 @@ The field
- must be zero.
- During the call,
- .IR src_fd
--must be open for reading and
-+must be open for reading.
- .IR dest_fd
--must be open for writing.
-+can be open for writing, or reading.
-+If
-+.IR dest_fd
-+is open for reading, the user must have write access to the file.
- The combined size of the struct
- .IR file_dedupe_range
- and the struct
-@@ -185,8 +188,8 @@ This can appear if the filesystem does not support deduplicating either file
- descriptor, or if either file descriptor refers to special inodes.
- .TP
- .B EPERM
--.IR dest_fd
--is immutable.
-+This will be returned if the user lacks permission to dedupe the file referenced by
-+.IR dest_fd .
- .TP
- .B ETXTBSY
- One of the files is a swap file.
--- 
-2.15.1
-
-
+Yu-cheng
