@@ -1,36 +1,25 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH v2 06/17] y2038: Change sys_utimensat() to use
- __kernel_timespec
-Date: Tue, 17 Jul 2018 05:52:43 -0700
-Message-ID: <20180717125243.GE25416@infradead.org>
-References: <20180716161103.16239-1-arnd@arndb.de>
- <20180716161103.16239-7-arnd@arndb.de>
+Subject: Re: [PATCH] [RFC] y2038: globally rename compat_time to old_time32
+Date: Tue, 17 Jul 2018 05:58:55 -0700
+Message-ID: <20180717125855.GA3681@infradead.org>
+References: <20180713133204.3123939-1-arnd@arndb.de>
+ <CABeXuvphoYM+KOGPgtsuxzS1_XDSOO0Ta5hr3sA7gYtt-78wtQ@mail.gmail.com>
+ <CAK8P3a2xu4KGVM1BvTjtXKHfXpBQ2PMynAPybW4cRt7FB8ktwg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180716161103.16239-7-arnd@arndb.de>
-Sender: netdev-owner@vger.kernel.org
+In-Reply-To: <CAK8P3a2xu4KGVM1BvTjtXKHfXpBQ2PMynAPybW4cRt7FB8ktwg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Arnd Bergmann <arnd@arndb.de>
-Cc: tglx@linutronix.de, y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net
+Cc: Deepa Dinamani <deepa.kernel@gmail.com>, y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Christoph Hellwig <hch@infradead.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ARM <linux-arm-kernel@lists.infradead.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, alsa-devel@alsa-project.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 16, 2018 at 06:10:52PM +0200, Arnd Bergmann wrote:
-> When 32-bit architectures get changed to support 64-bit time_t,
-> utimensat() needs to use the new __kernel_timespec structure as its
-> argument.
-> 
-> The older utime(), utimes() and futimesat() system calls don't need a
-> corresponding change as they are no longer used on C libraries that have
-> 64-bit time support.
-> 
-> As we do for the other syscalls that have timespec arguments, we reuse
-> the 'compat' syscall entry points to implement the traditional four
-> interfaces, and only leave the new utimensat() as a native handler,
-> so that the same code gets used on both 32-bit and 64-bit kernels
-> on each syscall.
+On Mon, Jul 16, 2018 at 12:11:53PM +0200, Arnd Bergmann wrote:
+> I don't think it makes a big difference whether we change it now or later,
+> but if Christoph feels that it addresses his concern about the compat_
+> namespace being reused during the transition, doing it earlier would
+> enable us to finish the remaining syscalls.
 
-I wonder about the direction here:  wouldn't it be easier to just
-leave th existing syscall names as-is and introduce a new utimesat64
-which uses the new timespec?  We can then drop the old legacy utimesat
-for new architectures added after the cutover.
+Yes, I've been looking at your new series and the reuse of compat_*
+is really confusing
