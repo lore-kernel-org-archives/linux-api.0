@@ -1,55 +1,41 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
-Date: Tue, 17 Jul 2018 10:40:41 +0100
-Message-ID: <11586.1531820441@warthog.procyon.org.uk>
-References: <F80F34FD-CFD3-4A53-AECC-AEC8D9EF3EAE@amacapital.net> <CA+55aFzaTQJp6aHG_9+W2ShxeZncq7k9G3FkVFjFm7W=ECUiMw@mail.gmail.com> <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk> <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net> <22370.1531293761@warthog.procyon.org.uk> <7002.1531407244@warthog.procyon.org.uk> <338BC3C4-F3E7-48F0-A82E-2C7295B6640E@amacapital.net> <17749.1531429218@warthog.procyon.org.uk> <21131.1531488422@warthog.procyon.org.uk>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH v2 01/17] y2038: compat: Move common compat types to
+ asm-generic/compat.h
+Date: Tue, 17 Jul 2018 05:49:25 -0700
+Message-ID: <20180717124925.GA25416@infradead.org>
+References: <20180716161103.16239-1-arnd@arndb.de>
+ <20180716161103.16239-2-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <F80F34FD-CFD3-4A53-AECC-AEC8D9EF3EAE@amacapital.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180716161103.16239-2-arnd@arndb.de>
+Sender: netdev-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: tglx@linutronix.de, y2038@lists.linaro.org, hch@infradead.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, libc-alpha@sourceware.org, albert.aribaud@3adev.fr, netdev@vger.kernel.org, viro@zeniv.linux.org.uk, peterz@infradead.org, dvhart@infradead.org, ebiederm@xmission.com, linux@dominikbrodowski.net
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto@amacapital.net> wrote:
-
-> > Whilst I'm at it, do we want the option of doing the equivalent of
-> > mountat()?  I.e. offering the option to open all the device files used by
-> > a superblock with dfd and AT_* flags in combination with the filename?
-> > 
+On Mon, Jul 16, 2018 at 06:10:47PM +0200, Arnd Bergmann wrote:
+> While converting compat system call handlers to work on 32-bit
+> architectures, I found a number of types used in those handlers
+> that are identical between all architectures.
 > 
-> Isn’t that more or less what I was suggesting?  I suggested dfd and path and I also suggested just an fd and letting the caller open the file itself.
+> Let's move all the identical ones into asm-generic/compat.h to avoid
+> having to add even more identical definitions of those types.
+> 
+> For unknown reasons, mips defines __compat_gid32_t, __compat_uid32_t
+> and compat_caddr_t as signed, while all others have them unsigned.
+> This seems to be a mistake, but I'm leaving it alone here. The other
+> types all differ by size or alignment on at least on architecture.
+> 
+> compat_aio_context_t is currently defined in linux/compat.h but
+> also needed for compat_sys_io_getevents(), so let's move it into
+> the same place.
+> 
+> While we still have not decided whether the 32-bit time handling
+> will always use the compat syscalls, or in which form, I think this
+> is a useful cleanup that we can merge regardless.
 
-Do we need AT_* flags?  There are three that we could use:
+Looks good:
 
-	AT_SYMLINK_NOFOLLOW
-	AT_NO_AUTOMOUNT
-	AT_EMPTY_PATH
-
-AT_EMPTY_PATH I can see, but I don't see it as likely that we'd want to use
-the other two for selecting a source?  Note that we can always do:
-
-	fsfd = fsopen("ext4");
-	sfd = open("/dev/", O_PATH);
-	fsconfig(fsfd, fsconfig_set_path, "journal_path", "sda1", sfd);
-
-or:
-
-	fsfd = fsopen("ext4");
-	sfd = open("/dev/sda1", O_PATH);
-	fsconfig(fsfd, fsconfig_set_path_empty, "journal_path", "", sfd);
-
-or:
-
-	fsfd = fsopen("ext4");
-	jfd = open("/dev/sda1", O_RDWR);
-	fsconfig(fsfd, fsconfig_set_fd, "journal_path", NULL, jfd);
-
-assuming the open on the latter doesn't exclude the use by the filesystem.
-
-This way I don't need a second syscall or a 6-arg syscall to handle path
-specification.
-
-David
+Reviewed-by: Christoph Hellwig <hch@lst.de>
