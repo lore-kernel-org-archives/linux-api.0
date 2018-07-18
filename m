@@ -1,173 +1,321 @@
 From: Tejun Heo <tj@kernel.org>
-Subject: [PATCHSET v3] block: Separating discards from writes in Linux IO statistics
-Date: Wed, 18 Jul 2018 04:47:35 -0700
-Message-ID: <20180718114741.2580313-1-tj@kernel.org>
+Subject: [PATCH 1/6] block: make bdev_ops->rw_page() take a REQ_OP instead of bool
+Date: Wed, 18 Jul 2018 04:47:36 -0700
+Message-ID: <20180718114741.2580313-2-tj@kernel.org>
+References: <20180718114741.2580313-1-tj@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180718114741.2580313-1-tj@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: axboe@kernel.dk
-Cc: michaelcallahan@fb.com, newella@fb.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+Cc: michaelcallahan@fb.com, newella@fb.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Tejun Heo <tj@kernel.org>, Mike Christie <mchristi@redhat.com>, Minchan Kim <minchan@kernel.org>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+c11f0c0b5bb9 ("block/mm: make bdev_ops->rw_page() take a bool for
+read/write") replaced @op with boolean @is_write, which limited the
+amount of information going into ->rw_page() and more importantly
+page_endio(), which removed the need to expose block internals to mm.
 
-Changes from v2: Refreshed on top of for-4.19/block.
+Unfortunately, we want to track discards separately and @is_write
+isn't enough information.  This patch updates bdev_ops->rw_page() to
+take REQ_OP instead but leaves page_endio() to take bool @is_write.
+This allows the block part of operations to have enough information
+while not leaking it to mm.
 
-This patchset was originally posted by Michael Callahan.
+Signed-off-by: Tejun Heo <tj@kernel.org>
+Cc: Mike Christie <mchristi@redhat.com>
+Cc: Minchan Kim <minchan@kernel.org>
+Cc: Dan Williams <dan.j.williams@intel.com>
+---
+ drivers/block/brd.c           | 14 +++++++-------
+ drivers/block/zram/zram_drv.c | 16 ++++++++--------
+ drivers/nvdimm/btt.c          | 12 ++++++------
+ drivers/nvdimm/pmem.c         | 13 ++++++-------
+ fs/block_dev.c                |  6 ++++--
+ fs/mpage.c                    |  4 ++--
+ include/linux/blkdev.h        |  2 +-
+ 7 files changed, 34 insertions(+), 33 deletions(-)
 
-  https://marc.info/?l=linux-block&m=146541910129172&w=2
-
-The patchset is refreshed on top of the current git master
-v4.17-1306-g716a685 and a patch was added to add discard stats for
-cgroup io.stat.  The original patchset description from Michael
-follows.
-
-This patch set separates block layer statistics for discards from
-writes.  Discards are currently bundled with writes in the various
-/sys/block/*/stat files as well as in /proc/diskstats.  However
-discards are nearly always used to mark storage that is no longer in
-use.  There are many reasons having discard not counted with writes is
-useful:
-
-1) For many non volatile memory devices it is just nice to know
-   that discards are enabled and working properly.
-
-2) Discards have different performance characteristics than
-   writes.  They are generally much faster and larger and bundling
-   them makes performance statistics less meaningful.
-
-3) Discards are not writes in terms of tracking device lifetime.
-   If a device supports six device writes per day it is nice to know
-   how many writes have actually been written to the device as
-   discards do not count against that total.
-
-Separation of discard statistics is accomplished by expanding the
-struct diskstat arrays to 3 entries for STAT_READ, STAT_WRITE,
-and STAT_DISCARD.  A new rw_stat_group function is then used to
-convert from rw_flags (cmd_flags from requests, bi_rw from bios)
-into the appropriate stat group which is then tracked as before.
-Lastly the new statistics are appended to the current
-/sys/bloc/*/stat and /proc/diskstats on output such that they are
-the last four entries of each.  These are analogous to the four
-read and write statistics.
-
- * Number of discard ios completed
- * Number of discard ios merged
- * Number of discard sectors completed
- * Milliseconds spent on discard requests.
-
-[before ~]# cat sys/block/nvme0/stat
-296550701        0 2372405688 67317193 19672752        0 7972237312
-9375167        0  2787238 79718726
-
-[after ~]# cat sys/block/nvme0/stat
-296550701        0 2372405688 67317193 18034352        0 4616794112
-9125902        0  2787238 79718726  1638400        0 3355443200
-249265
-
-Note that the discards have moved out of the write fields to the
-end and that the write fields are now smaller by the difference.
-
-Adding the new statistics to the end of /sys/block/*/stat and
-/proc/diskstats is backwards compatible with both iostat and
-vmstat which pick up just the old fields:
-
-[root@after ~]# iostat -x
-Linux 4.5.0_68319_ge5065f4-dirty (##hostname###)        05/17/2016
- _x86_64_        (48 CPU)
-
-avg-cpu:  %user   %nice %system %iowait  %steal   %idle
-           0.41    0.00    0.23    0.01    0.00   99.35
-
-Device:         rrqm/s   wrqm/s     r/s     w/s   rsec/s   wsec/s
-avgrq-sz avgqu-sz   await  svctm  %util
-sda               0.01     7.50    0.20    3.61    16.65   708.41
-190.03     0.09   22.53   1.16   0.44
-nvme0n1           0.00     0.00  587.03   35.70  4696.25  9139.08
-22.22     0.16    0.24   0.01   0.55
-
-
-[root@after ~]# vmstat -d
-disk- ------------reads------------ ------------writes----------- -----IO------
-       total merged sectors      ms  total merged sectors      ms    cur    sec
-ram0       0      0       0       0      0      0       0       0      0      0
-ram1       0      0       0       0      0      0       0       0      0      0
-ram2       0      0       0       0      0      0       0       0      0      0
-ram3       0      0       0       0      0      0       0       0      0      0
-ram4       0      0       0       0      0      0       0       0      0      0
-ram5       0      0       0       0      0      0       0       0      0      0
-ram6       0      0       0       0      0      0       0       0      0      0
-ram7       0      0       0       0      0      0       0       0      0      0
-ram8       0      0       0       0      0      0       0       0      0      0
-ram9       0      0       0       0      0      0       0       0      0      0
-ram10      0      0       0       0      0      0       0       0      0      0
-ram11      0      0       0       0      0      0       0       0      0      0
-ram12      0      0       0       0      0      0       0       0      0      0
-ram13      0      0       0       0      0      0       0       0      0      0
-ram14      0      0       0       0      0      0       0       0      0      0
-ram15      0      0       0       0      0      0       0       0      0      0
-sda   102903   5247 8408420   47424 1820306 3782041 357153613 43320121
-     0   2228
-nvme0n1 145633279      0 1165066312 18981333 13107200      0
-3355443200 6663655      0   1796
-loop0      0      0       0       0      0      0       0       0      0      0
-loop1      0      0       0       0      0      0       0       0      0      0
-  [chop rest of loop devices]
-
-
-[root@after ~]# cat /sys/fs/cgroup/user.slice/io.stat
-8:0 rbytes=3534848 wbytes=4096 rios=723 wios=1 dbytes=20592091136 dios=16189
-
-
-This patchset contains the following six patches.
-
- 0001-block-make-bdev_ops-rw_page-take-a-REQ_OP-instead-of.patch
- 0002-block-Add-part_stat_read_accum-to-read-across-field-.patch
- 0003-block-Define-and-use-STAT_READ-and-STAT_WRITE.patch
- 0004-block-Add-and-use-op_stat_group-for-indexing-disk_st.patch
- 0005-block-Track-DISCARD-statistics-and-output-them-in-st.patch
- 0006-blkcg-Track-DISCARD-statistics-and-output-them-in-cg.patch
-
-and also available in the following git branch.
-
- git://git.kernel.org/pub/scm/linux/kernel/git/tj/misc.git block-discard-stat-v3
-
-diffstat follows.  Thanks.
-
- Documentation/ABI/testing/procfs-diskstats |   10 ++++++++++
- Documentation/admin-guide/cgroup-v2.rst    |   10 ++++++----
- Documentation/block/stat.txt               |   28 ++++++++++++++++------------
- Documentation/iostats.txt                  |   15 +++++++++++++++
- block/bio.c                                |   16 +++++++++-------
- block/blk-cgroup.c                         |   14 ++++++++++----
- block/blk-core.c                           |   12 ++++++------
- block/genhd.c                              |   29 ++++++++++++++++++-----------
- block/partition-generic.c                  |   25 +++++++++++++++----------
- drivers/block/brd.c                        |   14 +++++++-------
- drivers/block/drbd/drbd_receiver.c         |    3 +--
- drivers/block/drbd/drbd_req.c              |    4 ++--
- drivers/block/drbd/drbd_worker.c           |    4 +---
- drivers/block/rsxx/dev.c                   |    6 +++---
- drivers/block/zram/zram_drv.c              |   19 +++++++++----------
- drivers/lightnvm/pblk-cache.c              |    5 +++--
- drivers/lightnvm/pblk-read.c               |    5 +++--
- drivers/md/bcache/request.c                |   13 +++++--------
- drivers/md/dm.c                            |    6 ++++--
- drivers/md/md.c                            |    8 ++++----
- drivers/nvdimm/btt.c                       |   12 ++++++------
- drivers/nvdimm/nd.h                        |    7 +++----
- drivers/nvdimm/pmem.c                      |   13 ++++++-------
- fs/block_dev.c                             |    6 ++++--
- fs/ext4/super.c                            |    5 +++--
- fs/ext4/sysfs.c                            |    6 ++++--
- fs/f2fs/f2fs.h                             |    2 +-
- fs/f2fs/super.c                            |    3 ++-
- fs/mpage.c                                 |    4 ++--
- include/linux/bio.h                        |    4 ++--
- include/linux/blk-cgroup.h                 |    5 ++++-
- include/linux/blk_types.h                  |   20 ++++++++++++++++++++
- include/linux/blkdev.h                     |    2 +-
- include/linux/genhd.h                      |   14 ++++++++++----
- 34 files changed, 215 insertions(+), 134 deletions(-)
-
---
-tejun
+diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+index bb976598ee43..df8103dd40ac 100644
+--- a/drivers/block/brd.c
++++ b/drivers/block/brd.c
+@@ -254,20 +254,20 @@ static void copy_from_brd(void *dst, struct brd_device *brd,
+  * Process a single bvec of a bio.
+  */
+ static int brd_do_bvec(struct brd_device *brd, struct page *page,
+-			unsigned int len, unsigned int off, bool is_write,
++			unsigned int len, unsigned int off, unsigned int op,
+ 			sector_t sector)
+ {
+ 	void *mem;
+ 	int err = 0;
+ 
+-	if (is_write) {
++	if (op_is_write(op)) {
+ 		err = copy_to_brd_setup(brd, sector, len);
+ 		if (err)
+ 			goto out;
+ 	}
+ 
+ 	mem = kmap_atomic(page);
+-	if (!is_write) {
++	if (!op_is_write(op)) {
+ 		copy_from_brd(mem + off, brd, sector, len);
+ 		flush_dcache_page(page);
+ 	} else {
+@@ -296,7 +296,7 @@ static blk_qc_t brd_make_request(struct request_queue *q, struct bio *bio)
+ 		int err;
+ 
+ 		err = brd_do_bvec(brd, bvec.bv_page, len, bvec.bv_offset,
+-					op_is_write(bio_op(bio)), sector);
++				  bio_op(bio), sector);
+ 		if (err)
+ 			goto io_error;
+ 		sector += len >> SECTOR_SHIFT;
+@@ -310,15 +310,15 @@ static blk_qc_t brd_make_request(struct request_queue *q, struct bio *bio)
+ }
+ 
+ static int brd_rw_page(struct block_device *bdev, sector_t sector,
+-		       struct page *page, bool is_write)
++		       struct page *page, unsigned int op)
+ {
+ 	struct brd_device *brd = bdev->bd_disk->private_data;
+ 	int err;
+ 
+ 	if (PageTransHuge(page))
+ 		return -ENOTSUPP;
+-	err = brd_do_bvec(brd, page, PAGE_SIZE, 0, is_write, sector);
+-	page_endio(page, is_write, err);
++	err = brd_do_bvec(brd, page, PAGE_SIZE, 0, op, sector);
++	page_endio(page, op_is_write(op), err);
+ 	return err;
+ }
+ 
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index 7436b2d27fa3..78c29044684a 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -1274,17 +1274,17 @@ static void zram_bio_discard(struct zram *zram, u32 index,
+  * Returns 1 if IO request was successfully submitted.
+  */
+ static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
+-			int offset, bool is_write, struct bio *bio)
++			int offset, unsigned int op, struct bio *bio)
+ {
+ 	unsigned long start_time = jiffies;
+-	int rw_acct = is_write ? REQ_OP_WRITE : REQ_OP_READ;
++	int rw_acct = op_is_write(op) ? REQ_OP_WRITE : REQ_OP_READ;
+ 	struct request_queue *q = zram->disk->queue;
+ 	int ret;
+ 
+ 	generic_start_io_acct(q, rw_acct, bvec->bv_len >> SECTOR_SHIFT,
+ 			&zram->disk->part0);
+ 
+-	if (!is_write) {
++	if (!op_is_write(op)) {
+ 		atomic64_inc(&zram->stats.num_reads);
+ 		ret = zram_bvec_read(zram, bvec, index, offset, bio);
+ 		flush_dcache_page(bvec->bv_page);
+@@ -1300,7 +1300,7 @@ static int zram_bvec_rw(struct zram *zram, struct bio_vec *bvec, u32 index,
+ 	zram_slot_unlock(zram, index);
+ 
+ 	if (unlikely(ret < 0)) {
+-		if (!is_write)
++		if (!op_is_write(op))
+ 			atomic64_inc(&zram->stats.failed_reads);
+ 		else
+ 			atomic64_inc(&zram->stats.failed_writes);
+@@ -1338,7 +1338,7 @@ static void __zram_make_request(struct zram *zram, struct bio *bio)
+ 			bv.bv_len = min_t(unsigned int, PAGE_SIZE - offset,
+ 							unwritten);
+ 			if (zram_bvec_rw(zram, &bv, index, offset,
+-					op_is_write(bio_op(bio)), bio) < 0)
++					 bio_op(bio), bio) < 0)
+ 				goto out;
+ 
+ 			bv.bv_offset += bv.bv_len;
+@@ -1390,7 +1390,7 @@ static void zram_slot_free_notify(struct block_device *bdev,
+ }
+ 
+ static int zram_rw_page(struct block_device *bdev, sector_t sector,
+-		       struct page *page, bool is_write)
++		       struct page *page, unsigned int op)
+ {
+ 	int offset, ret;
+ 	u32 index;
+@@ -1414,7 +1414,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
+ 	bv.bv_len = PAGE_SIZE;
+ 	bv.bv_offset = 0;
+ 
+-	ret = zram_bvec_rw(zram, &bv, index, offset, is_write, NULL);
++	ret = zram_bvec_rw(zram, &bv, index, offset, op, NULL);
+ out:
+ 	/*
+ 	 * If I/O fails, just return error(ie, non-zero) without
+@@ -1429,7 +1429,7 @@ static int zram_rw_page(struct block_device *bdev, sector_t sector,
+ 
+ 	switch (ret) {
+ 	case 0:
+-		page_endio(page, is_write, 0);
++		page_endio(page, op_is_write(op), 0);
+ 		break;
+ 	case 1:
+ 		ret = 0;
+diff --git a/drivers/nvdimm/btt.c b/drivers/nvdimm/btt.c
+index 85de8053aa34..0360c015f658 100644
+--- a/drivers/nvdimm/btt.c
++++ b/drivers/nvdimm/btt.c
+@@ -1423,11 +1423,11 @@ static int btt_write_pg(struct btt *btt, struct bio_integrity_payload *bip,
+ 
+ static int btt_do_bvec(struct btt *btt, struct bio_integrity_payload *bip,
+ 			struct page *page, unsigned int len, unsigned int off,
+-			bool is_write, sector_t sector)
++			unsigned int op, sector_t sector)
+ {
+ 	int ret;
+ 
+-	if (!is_write) {
++	if (!op_is_write(op)) {
+ 		ret = btt_read_pg(btt, bip, page, off, sector, len);
+ 		flush_dcache_page(page);
+ 	} else {
+@@ -1464,7 +1464,7 @@ static blk_qc_t btt_make_request(struct request_queue *q, struct bio *bio)
+ 		}
+ 
+ 		err = btt_do_bvec(btt, bip, bvec.bv_page, len, bvec.bv_offset,
+-				  op_is_write(bio_op(bio)), iter.bi_sector);
++				  bio_op(bio), iter.bi_sector);
+ 		if (err) {
+ 			dev_err(&btt->nd_btt->dev,
+ 					"io error in %s sector %lld, len %d,\n",
+@@ -1483,16 +1483,16 @@ static blk_qc_t btt_make_request(struct request_queue *q, struct bio *bio)
+ }
+ 
+ static int btt_rw_page(struct block_device *bdev, sector_t sector,
+-		struct page *page, bool is_write)
++		struct page *page, unsigned int op)
+ {
+ 	struct btt *btt = bdev->bd_disk->private_data;
+ 	int rc;
+ 	unsigned int len;
+ 
+ 	len = hpage_nr_pages(page) * PAGE_SIZE;
+-	rc = btt_do_bvec(btt, NULL, page, len, 0, is_write, sector);
++	rc = btt_do_bvec(btt, NULL, page, len, 0, op, sector);
+ 	if (rc == 0)
+-		page_endio(page, is_write, 0);
++		page_endio(page, op_is_write(op), 0);
+ 
+ 	return rc;
+ }
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 8b1fd7f1a224..dd17acd8fe68 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -120,7 +120,7 @@ static blk_status_t read_pmem(struct page *page, unsigned int off,
+ }
+ 
+ static blk_status_t pmem_do_bvec(struct pmem_device *pmem, struct page *page,
+-			unsigned int len, unsigned int off, bool is_write,
++			unsigned int len, unsigned int off, unsigned int op,
+ 			sector_t sector)
+ {
+ 	blk_status_t rc = BLK_STS_OK;
+@@ -131,7 +131,7 @@ static blk_status_t pmem_do_bvec(struct pmem_device *pmem, struct page *page,
+ 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
+ 		bad_pmem = true;
+ 
+-	if (!is_write) {
++	if (!op_is_write(op)) {
+ 		if (unlikely(bad_pmem))
+ 			rc = BLK_STS_IOERR;
+ 		else {
+@@ -180,8 +180,7 @@ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *bio)
+ 	do_acct = nd_iostat_start(bio, &start);
+ 	bio_for_each_segment(bvec, bio, iter) {
+ 		rc = pmem_do_bvec(pmem, bvec.bv_page, bvec.bv_len,
+-				bvec.bv_offset, op_is_write(bio_op(bio)),
+-				iter.bi_sector);
++				bvec.bv_offset, bio_op(bio), iter.bi_sector);
+ 		if (rc) {
+ 			bio->bi_status = rc;
+ 			break;
+@@ -198,13 +197,13 @@ static blk_qc_t pmem_make_request(struct request_queue *q, struct bio *bio)
+ }
+ 
+ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+-		       struct page *page, bool is_write)
++		       struct page *page, unsigned int op)
+ {
+ 	struct pmem_device *pmem = bdev->bd_queue->queuedata;
+ 	blk_status_t rc;
+ 
+ 	rc = pmem_do_bvec(pmem, page, hpage_nr_pages(page) * PAGE_SIZE,
+-			  0, is_write, sector);
++			  0, op, sector);
+ 
+ 	/*
+ 	 * The ->rw_page interface is subtle and tricky.  The core
+@@ -213,7 +212,7 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+ 	 * caused by double completion.
+ 	 */
+ 	if (rc == 0)
+-		page_endio(page, is_write, 0);
++		page_endio(page, op_is_write(op), 0);
+ 
+ 	return blk_status_to_errno(rc);
+ }
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 0dd87aaeb39a..496fb51a1e1a 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -665,7 +665,8 @@ int bdev_read_page(struct block_device *bdev, sector_t sector,
+ 	result = blk_queue_enter(bdev->bd_queue, 0);
+ 	if (result)
+ 		return result;
+-	result = ops->rw_page(bdev, sector + get_start_sect(bdev), page, false);
++	result = ops->rw_page(bdev, sector + get_start_sect(bdev), page,
++			      REQ_OP_READ);
+ 	blk_queue_exit(bdev->bd_queue);
+ 	return result;
+ }
+@@ -703,7 +704,8 @@ int bdev_write_page(struct block_device *bdev, sector_t sector,
+ 		return result;
+ 
+ 	set_page_writeback(page);
+-	result = ops->rw_page(bdev, sector + get_start_sect(bdev), page, true);
++	result = ops->rw_page(bdev, sector + get_start_sect(bdev), page,
++			      REQ_OP_WRITE);
+ 	if (result) {
+ 		end_page_writeback(page);
+ 	} else {
+diff --git a/fs/mpage.c b/fs/mpage.c
+index b7e7f570733a..b73638db9866 100644
+--- a/fs/mpage.c
++++ b/fs/mpage.c
+@@ -51,8 +51,8 @@ static void mpage_end_io(struct bio *bio)
+ 
+ 	bio_for_each_segment_all(bv, bio, i) {
+ 		struct page *page = bv->bv_page;
+-		page_endio(page, op_is_write(bio_op(bio)),
+-				blk_status_to_errno(bio->bi_status));
++		page_endio(page, bio_op(bio),
++			   blk_status_to_errno(bio->bi_status));
+ 	}
+ 
+ 	bio_put(bio);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 1939ed95f936..331a6cb8805f 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1943,7 +1943,7 @@ static inline bool integrity_req_gap_front_merge(struct request *req,
+ struct block_device_operations {
+ 	int (*open) (struct block_device *, fmode_t);
+ 	void (*release) (struct gendisk *, fmode_t);
+-	int (*rw_page)(struct block_device *, sector_t, struct page *, bool);
++	int (*rw_page)(struct block_device *, sector_t, struct page *, unsigned int);
+ 	int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+ 	int (*compat_ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+ 	unsigned int (*check_events) (struct gendisk *disk,
+-- 
+2.17.1
