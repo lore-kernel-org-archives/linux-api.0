@@ -1,252 +1,119 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: [PATCH 5/6] block: Track DISCARD statistics and output them in stat and diskstat
-Date: Wed, 18 Jul 2018 04:47:40 -0700
-Message-ID: <20180718114741.2580313-6-tj@kernel.org>
-References: <20180718114741.2580313-1-tj@kernel.org>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: [PATCH v3 4/7] dcache: allocate external names from reclaimable kmalloc caches
+Date: Wed, 18 Jul 2018 15:36:17 +0200
+Message-ID: <20180718133620.6205-5-vbabka@suse.cz>
+References: <20180718133620.6205-1-vbabka@suse.cz>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180718114741.2580313-1-tj@kernel.org>
+In-Reply-To: <20180718133620.6205-1-vbabka@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: axboe@kernel.dk
-Cc: michaelcallahan@fb.com, newella@fb.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org, Tejun Heo <tj@kernel.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-From: Michael Callahan <michaelcallahan@fb.com>
+We can use the newly introduced kmalloc-reclaimable-X caches, to allocate
+external names in dcache, which will take care of the proper accounting
+automatically, and also improve anti-fragmentation page grouping.
 
-Add tracking of REQ_OP_DISCARD ios to the partition statistics and
-append them to the various stat files in /sys as well as
-/proc/diskstats.  These are tracked with the same four stats as reads
-and writes:
+This effectively reverts commit f1782c9bc547 ("dcache: account external names
+as indirectly reclaimable memory") and instead passes __GFP_RECLAIMABLE to
+kmalloc(). The accounting thus moves from NR_INDIRECTLY_RECLAIMABLE_BYTES to
+NR_SLAB_RECLAIMABLE, which is also considered in MemAvailable calculation and
+overcommit decisions.
 
-Number of discard ios completed.
-Number of discard ios merged
-Number of discard sectors completed
-Milliseconds spent on discard requests
-
-This is done via adding a new STAT_DISCARD define to genhd.h and then
-using it to index that stat field for discard requests.
-
-tj: Refreshed on top of v4.17 and other previous updates.
-
-Signed-off-by: Michael Callahan <michaelcallahan@fb.com>
-Signed-off-by: Tejun Heo <tj@kernel.org>
-Cc: Andy Newell <newella@fb.com>
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 ---
- Documentation/ABI/testing/procfs-diskstats | 10 ++++++++
- Documentation/block/stat.txt               | 28 ++++++++++++----------
- Documentation/iostats.txt                  | 15 ++++++++++++
- block/genhd.c                              | 13 +++++++---
- block/partition-generic.c                  |  9 +++++--
- include/linux/blk_types.h                  |  8 +++++++
- include/linux/genhd.h                      |  3 ++-
- 7 files changed, 68 insertions(+), 18 deletions(-)
+ fs/dcache.c | 38 +++++++++-----------------------------
+ 1 file changed, 9 insertions(+), 29 deletions(-)
 
-diff --git a/Documentation/ABI/testing/procfs-diskstats b/Documentation/ABI/testing/procfs-diskstats
-index f91a973a37fe..abac31d216de 100644
---- a/Documentation/ABI/testing/procfs-diskstats
-+++ b/Documentation/ABI/testing/procfs-diskstats
-@@ -5,6 +5,7 @@ Contact:	Jerome Marchand <jmarchan@redhat.com>
- 		The /proc/diskstats file displays the I/O statistics
- 		of block devices. Each line contains the following 14
- 		fields:
-+
- 		 1 - major number
- 		 2 - minor mumber
- 		 3 - device name
-@@ -19,4 +20,13 @@ Contact:	Jerome Marchand <jmarchan@redhat.com>
- 		12 - I/Os currently in progress
- 		13 - time spent doing I/Os (ms)
- 		14 - weighted time spent doing I/Os (ms)
-+
-+		Kernel 4.18+ appends four more fields for discard
-+		tracking putting the total at 18:
-+
-+		15 - discards completed successfully
-+		16 - discards merged
-+		17 - sectors discarded
-+		18 - time spent discarding
-+
- 		For more details refer to Documentation/iostats.txt
-diff --git a/Documentation/block/stat.txt b/Documentation/block/stat.txt
-index 0dbc946de2ea..0aace9cc536c 100644
---- a/Documentation/block/stat.txt
-+++ b/Documentation/block/stat.txt
-@@ -31,28 +31,32 @@ write ticks     milliseconds  total wait time for write requests
- in_flight       requests      number of I/Os currently in flight
- io_ticks        milliseconds  total time this block device has been active
- time_in_queue   milliseconds  total wait time for all requests
-+discard I/Os    requests      number of discard I/Os processed
-+discard merges  requests      number of discard I/Os merged with in-queue I/O
-+discard sectors sectors       number of sectors discarded
-+discard ticks   milliseconds  total wait time for discard requests
- 
--read I/Os, write I/Os
--=====================
-+read I/Os, write I/Os, discard I/0s
-+===================================
- 
- These values increment when an I/O request completes.
- 
--read merges, write merges
--=========================
-+read merges, write merges, discard merges
-+=========================================
- 
- These values increment when an I/O request is merged with an
- already-queued I/O request.
- 
--read sectors, write sectors
--===========================
-+read sectors, write sectors, discard_sectors
-+============================================
- 
--These values count the number of sectors read from or written to this
--block device.  The "sectors" in question are the standard UNIX 512-byte
--sectors, not any device- or filesystem-specific block size.  The
--counters are incremented when the I/O completes.
-+These values count the number of sectors read from, written to, or
-+discarded from this block device.  The "sectors" in question are the
-+standard UNIX 512-byte sectors, not any device- or filesystem-specific
-+block size.  The counters are incremented when the I/O completes.
- 
--read ticks, write ticks
--=======================
-+read ticks, write ticks, discard ticks
-+======================================
- 
- These values count the number of milliseconds that I/O requests have
- waited on this block device.  If there are multiple I/O requests waiting,
-diff --git a/Documentation/iostats.txt b/Documentation/iostats.txt
-index 04d394a2e06c..49df45f90e8a 100644
---- a/Documentation/iostats.txt
-+++ b/Documentation/iostats.txt
-@@ -31,6 +31,9 @@ and so should not differ.
-       3    0   hda 446216 784926 9550688 4382310 424847 312726 5922052 19310380 0 3376340 23705160
-       3    1   hda1 35486 38030 38030 38030
- 
-+   4.18+ diskstats:
-+      3    0   hda 446216 784926 9550688 4382310 424847 312726 5922052 19310380 0 3376340 23705160 0 0 0 0
-+
- On 2.4 you might execute ``grep 'hda ' /proc/partitions``. On 2.6+, you have
- a choice of ``cat /sys/block/hda/stat`` or ``grep 'hda ' /proc/diskstats``.
- 
-@@ -101,6 +104,18 @@ Field 11 -- weighted # of milliseconds spent doing I/Os
-     last update of this field.  This can provide an easy measure of both
-     I/O completion time and the backlog that may be accumulating.
- 
-+Field 12 -- # of discards completed
-+    This is the total number of discards completed successfully.
-+
-+Field 13 -- # of discards merged
-+    See the description of field 2
-+
-+Field 14 -- # of sectors discarded
-+    This is the total number of sectors discarded successfully.
-+
-+Field 15 -- # of milliseconds spent discarding
-+    This is the total number of milliseconds spent by all discards (as
-+    measured from __make_request() to end_that_request_last()).
- 
- To avoid introducing performance bottlenecks, no locks are held while
- modifying these counters.  This implies that minor inaccuracies may be
-diff --git a/block/genhd.c b/block/genhd.c
-index 0711a800d0d4..8cc719a37b32 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -1333,8 +1333,11 @@ static int diskstats_show(struct seq_file *seqf, void *v)
- 		part_round_stats(gp->queue, cpu, hd);
- 		part_stat_unlock();
- 		part_in_flight(gp->queue, hd, inflight);
--		seq_printf(seqf, "%4d %7d %s %lu %lu %lu "
--			   "%u %lu %lu %lu %u %u %u %u\n",
-+		seq_printf(seqf, "%4d %7d %s "
-+			   "%lu %lu %lu %u "
-+			   "%lu %lu %lu %u "
-+			   "%u %u %u "
-+			   "%lu %lu %lu %u\n",
- 			   MAJOR(part_devt(hd)), MINOR(part_devt(hd)),
- 			   disk_name(gp, hd->partno, buf),
- 			   part_stat_read(hd, ios[STAT_READ]),
-@@ -1347,7 +1350,11 @@ static int diskstats_show(struct seq_file *seqf, void *v)
- 			   jiffies_to_msecs(part_stat_read(hd, ticks[STAT_WRITE])),
- 			   inflight[0],
- 			   jiffies_to_msecs(part_stat_read(hd, io_ticks)),
--			   jiffies_to_msecs(part_stat_read(hd, time_in_queue))
-+			   jiffies_to_msecs(part_stat_read(hd, time_in_queue)),
-+			   part_stat_read(hd, ios[STAT_DISCARD]),
-+			   part_stat_read(hd, merges[STAT_DISCARD]),
-+			   part_stat_read(hd, sectors[STAT_DISCARD]),
-+			   jiffies_to_msecs(part_stat_read(hd, ticks[STAT_DISCARD]))
- 			);
- 	}
- 	disk_part_iter_exit(&piter);
-diff --git a/block/partition-generic.c b/block/partition-generic.c
-index 0ddb06722162..5a8975a1201c 100644
---- a/block/partition-generic.c
-+++ b/block/partition-generic.c
-@@ -130,7 +130,8 @@ ssize_t part_stat_show(struct device *dev,
- 	return sprintf(buf,
- 		"%8lu %8lu %8llu %8u "
- 		"%8lu %8lu %8llu %8u "
--		"%8u %8u %8u"
-+		"%8u %8u %8u "
-+		"%8lu %8lu %8llu %8u"
- 		"\n",
- 		part_stat_read(p, ios[STAT_READ]),
- 		part_stat_read(p, merges[STAT_READ]),
-@@ -142,7 +143,11 @@ ssize_t part_stat_show(struct device *dev,
- 		jiffies_to_msecs(part_stat_read(p, ticks[STAT_WRITE])),
- 		inflight[0],
- 		jiffies_to_msecs(part_stat_read(p, io_ticks)),
--		jiffies_to_msecs(part_stat_read(p, time_in_queue)));
-+		jiffies_to_msecs(part_stat_read(p, time_in_queue)),
-+		part_stat_read(p, ios[STAT_DISCARD]),
-+		part_stat_read(p, merges[STAT_DISCARD]),
-+		(unsigned long long)part_stat_read(p, sectors[STAT_DISCARD]),
-+		jiffies_to_msecs(part_stat_read(p, ticks[STAT_DISCARD])));
+diff --git a/fs/dcache.c b/fs/dcache.c
+index 0e8e5de3c48a..518c9ed8db8c 100644
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -257,24 +257,10 @@ static void __d_free(struct rcu_head *head)
+ 	kmem_cache_free(dentry_cache, dentry); 
  }
  
- ssize_t part_inflight_show(struct device *dev, struct device_attribute *attr,
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 2960a96d833c..f6dfb30737d8 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -360,6 +360,7 @@ enum req_flag_bits {
- enum stat_group {
- 	STAT_READ,
- 	STAT_WRITE,
-+	STAT_DISCARD,
- 
- 	NR_STAT_GROUPS
- };
-@@ -401,8 +402,15 @@ static inline bool op_is_sync(unsigned int op)
- 		(op & (REQ_SYNC | REQ_FUA | REQ_PREFLUSH));
- }
- 
-+static inline bool op_is_discard(unsigned int op)
-+{
-+	return (op & REQ_OP_MASK) == REQ_OP_DISCARD;
-+}
-+
- static inline int op_stat_group(unsigned int op)
+-static void __d_free_external_name(struct rcu_head *head)
+-{
+-	struct external_name *name = container_of(head, struct external_name,
+-						  u.head);
+-
+-	mod_node_page_state(page_pgdat(virt_to_page(name)),
+-			    NR_INDIRECTLY_RECLAIMABLE_BYTES,
+-			    -ksize(name));
+-
+-	kfree(name);
+-}
+-
+ static void __d_free_external(struct rcu_head *head)
  {
-+	if (op_is_discard(op))
-+		return STAT_DISCARD;
- 	return op_is_write(op);
+ 	struct dentry *dentry = container_of(head, struct dentry, d_u.d_rcu);
+-
+-	__d_free_external_name(&external_name(dentry)->u.head);
+-
++	kfree(external_name(dentry));
+ 	kmem_cache_free(dentry_cache, dentry);
  }
  
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index a75445446974..57864422a2c8 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -356,7 +356,8 @@ static inline void free_part_stats(struct hd_struct *part)
+@@ -305,7 +291,7 @@ void release_dentry_name_snapshot(struct name_snapshot *name)
+ 		struct external_name *p;
+ 		p = container_of(name->name, struct external_name, name[0]);
+ 		if (unlikely(atomic_dec_and_test(&p->u.count)))
+-			call_rcu(&p->u.head, __d_free_external_name);
++			kfree_rcu(p, u.head);
+ 	}
+ }
+ EXPORT_SYMBOL(release_dentry_name_snapshot);
+@@ -1608,7 +1594,6 @@ EXPORT_SYMBOL(d_invalidate);
+  
+ struct dentry *__d_alloc(struct super_block *sb, const struct qstr *name)
+ {
+-	struct external_name *ext = NULL;
+ 	struct dentry *dentry;
+ 	char *dname;
+ 	int err;
+@@ -1629,14 +1614,15 @@ struct dentry *__d_alloc(struct super_block *sb, const struct qstr *name)
+ 		dname = dentry->d_iname;
+ 	} else if (name->len > DNAME_INLINE_LEN-1) {
+ 		size_t size = offsetof(struct external_name, name[1]);
+-
+-		ext = kmalloc(size + name->len, GFP_KERNEL_ACCOUNT);
+-		if (!ext) {
++		struct external_name *p = kmalloc(size + name->len,
++						  GFP_KERNEL_ACCOUNT |
++						  __GFP_RECLAIMABLE);
++		if (!p) {
+ 			kmem_cache_free(dentry_cache, dentry); 
+ 			return NULL;
+ 		}
+-		atomic_set(&ext->u.count, 1);
+-		dname = ext->name;
++		atomic_set(&p->u.count, 1);
++		dname = p->name;
+ 	} else  {
+ 		dname = dentry->d_iname;
+ 	}	
+@@ -1675,12 +1661,6 @@ struct dentry *__d_alloc(struct super_block *sb, const struct qstr *name)
+ 		}
+ 	}
  
- #define part_stat_read_accum(part, field)				\
- 	(part_stat_read(part, field[STAT_READ]) +			\
--	 part_stat_read(part, field[STAT_WRITE]))
-+	 part_stat_read(part, field[STAT_WRITE]) +			\
-+	 part_stat_read(part, field[STAT_DISCARD]))
+-	if (unlikely(ext)) {
+-		pg_data_t *pgdat = page_pgdat(virt_to_page(ext));
+-		mod_node_page_state(pgdat, NR_INDIRECTLY_RECLAIMABLE_BYTES,
+-				    ksize(ext));
+-	}
+-
+ 	this_cpu_inc(nr_dentry);
  
- #define part_stat_add(cpu, part, field, addnd)	do {			\
- 	__part_stat_add((cpu), (part), field, addnd);			\
+ 	return dentry;
+@@ -2761,7 +2741,7 @@ static void copy_name(struct dentry *dentry, struct dentry *target)
+ 		dentry->d_name.hash_len = target->d_name.hash_len;
+ 	}
+ 	if (old_name && likely(atomic_dec_and_test(&old_name->u.count)))
+-		call_rcu(&old_name->u.head, __d_free_external_name);
++		kfree_rcu(old_name, u.head);
+ }
+ 
+ /*
 -- 
-2.17.1
+2.18.0
