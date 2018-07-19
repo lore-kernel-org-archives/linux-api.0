@@ -1,108 +1,128 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v2 16/27] mm: Modify can_follow_write_pte/pmd for
- shadow stack
-Date: Thu, 19 Jul 2018 10:06:03 -0700
-Message-ID: <1532019963.16711.61.camel@intel.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
-         <20180710222639.8241-17-yu-cheng.yu@intel.com>
-         <de510df6-7ea9-edc6-9c49-2f80f16472b4@linux.intel.com>
-         <1531328731.15351.3.camel@intel.com>
-         <45a85b01-e005-8cb6-af96-b23ce9b5fca7@linux.intel.com>
-         <1531868610.3541.21.camel@intel.com>
-         <fa9db8c5-41c8-05e9-ad8d-dc6aaf11cb04@linux.intel.com>
-         <1531944882.10738.1.camel@intel.com>
-         <3f158401-f0b6-7bf7-48ab-2958354b28ad@linux.intel.com>
-         <1531955428.12385.30.camel@intel.com>
-         <f4c90626-51d8-5551-5b77-baaff81f16bb@linux.intel.com>
+From: Roman Gushchin <guro@fb.com>
+Subject: Re: [PATCH v3 2/7] mm, slab/slub: introduce kmalloc-reclaimable
+ caches
+Date: Thu, 19 Jul 2018 11:16:17 -0700
+Message-ID: <20180719181613.GA26595@castle.DHCP.thefacebook.com>
+References: <20180718133620.6205-1-vbabka@suse.cz>
+ <20180718133620.6205-3-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <f4c90626-51d8-5551-5b77-baaff81f16bb@linux.intel.com>
+Content-Disposition: inline
+In-Reply-To: <20180718133620.6205-3-vbabka@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2018-07-18 at 17:06 -0700, Dave Hansen wrote:
-> > 
-> > > 
-> > > > 
-> > > > -static inline bool can_follow_write_pte(pte_t pte, unsigned
-> > > > int flags)
-> > > > +static inline bool can_follow_write(pte_t pte, unsigned int
-> > > > flags,
-> > > > +				    struct vm_area_struct
-> > > > *vma)
-> > > >  {
-> > > > -	return pte_write(pte) ||
-> > > > -		((flags & FOLL_FORCE) && (flags & FOLL_COW)
-> > > > && pte_dirty(pte));
-> > > > +	if (!is_shstk_mapping(vma->vm_flags)) {
-> > > > +		if (pte_write(pte))
-> > > > +			return true;
-> > > Let me see if I can say this another way.
-> > > 
-> > > The bigger issue is that these patches change the semantics of
-> > > pte_write().  Before these patches, it meant that you *MUST*
-> > > have this
-> > > bit set to write to the page controlled by the PTE.  Now, it
-> > > means: you
-> > > can write if this bit is set *OR* the shadowstack bit
-> > > combination is set.
-> > Here, we only figure out (1) if the page is pointed by a writable
-> > PTE; or
-> > (2) if the page is pointed by a RO PTE (data or SHSTK) and it has
-> > been
-> > copied and it still exists.  We are not trying to
-> > determine if the
-> > SHSTK PTE is writable (we know it is not).
-> Please think about the big picture.  I'm not just talking about this
-> patch, but about every use of pte_write() in the kernel.
+On Wed, Jul 18, 2018 at 03:36:15PM +0200, Vlastimil Babka wrote:
+> Kmem caches can be created with a SLAB_RECLAIM_ACCOUNT flag, which indicates
+> they contain objects which can be reclaimed under memory pressure (typically
+> through a shrinker). This makes the slab pages accounted as NR_SLAB_RECLAIMABLE
+> in vmstat, which is reflected also the MemAvailable meminfo counter and in
+> overcommit decisions. The slab pages are also allocated with __GFP_RECLAIMABLE,
+> which is good for anti-fragmentation through grouping pages by mobility.
 > 
-> > 
-> > > 
-> > > That's the fundamental problem.  We need some code in the kernel
-> > > that
-> > > logically represents the concept of "is this PTE a shadowstack
-> > > PTE or a
-> > > PTE with the write bit set", and we will call that pte_write(),
-> > > or maybe
-> > > pte_writable().
-> > > 
-> > > You *have* to somehow rectify this situation.  We can absolutely
-> > > no
-> > > leave pte_write() in its current, ambiguous state where it has
-> > > no real
-> > > meaning or where it is used to mean _both_ things depending on
-> > > context.
-> > True, the processor can always write to a page through a shadow
-> > stack
-> > PTE, but it must do that with a CALL instruction.  Can we define
-> > a 
-> > write operation as: MOV r1, *(r2).  Then we don't have any doubt
-> > on
-> > pte_write() any more.
-> No, we can't just move the target. :)
+> The generic kmalloc-X caches are created without this flag, but sometimes are
+> used also for objects that can be reclaimed, which due to varying size cannot
+> have a dedicated kmem cache with SLAB_RECLAIM_ACCOUNT flag. A prominent example
+> are dcache external names, which prompted the creation of a new, manually
+> managed vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES in commit f1782c9bc547
+> ("dcache: account external names as indirectly reclaimable memory").
 > 
-> You can define it this way, but then you also need to go to every
-> spot
-> in the kernel that calls pte_write() (and _PAGE_RW in fact) and
-> audit it
-> to ensure it means "mov ..." and not push.
+> To better handle this and any other similar cases, this patch introduces
+> SLAB_RECLAIM_ACCOUNT variants of kmalloc caches, named kmalloc-rcl-X.
+> They are used whenever the kmalloc() call passes __GFP_RECLAIMABLE among gfp
+> flags. They are added to the kmalloc_caches array as a new type. Allocations
+> with both __GFP_DMA and __GFP_RECLAIMABLE will use a dma type cache.
+> 
+> This change only applies to SLAB and SLUB, not SLOB. This is fine, since SLOB's
+> target are tiny system and this patch does add some overhead of kmem management
+> objects.
+> 
+> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+> ---
+>  include/linux/slab.h | 16 +++++++++++----
+>  mm/slab_common.c     | 48 ++++++++++++++++++++++++++++----------------
+>  2 files changed, 43 insertions(+), 21 deletions(-)
+> 
+> diff --git a/include/linux/slab.h b/include/linux/slab.h
+> index 4299c59353a1..d89e934e0d8b 100644
+> --- a/include/linux/slab.h
+> +++ b/include/linux/slab.h
+> @@ -296,11 +296,12 @@ static inline void __check_heap_object(const void *ptr, unsigned long n,
+>                                 (KMALLOC_MIN_SIZE) : 16)
+>  
+>  #define KMALLOC_NORMAL	0
+> +#define KMALLOC_RECLAIM	1
+>  #ifdef CONFIG_ZONE_DMA
+> -#define KMALLOC_DMA	1
+> -#define KMALLOC_TYPES	2
+> +#define KMALLOC_DMA	2
+> +#define KMALLOC_TYPES	3
+>  #else
+> -#define KMALLOC_TYPES	1
+> +#define KMALLOC_TYPES	2
+>  #endif
+>  
+>  #ifndef CONFIG_SLOB
+> @@ -309,12 +310,19 @@ extern struct kmem_cache *kmalloc_caches[KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1];
+>  static __always_inline unsigned int kmalloc_type(gfp_t flags)
+>  {
+>  	int is_dma = 0;
+> +	int is_reclaimable;
+>  
+>  #ifdef CONFIG_ZONE_DMA
+>  	is_dma = !!(flags & __GFP_DMA);
+>  #endif
+>  
+> -	return is_dma;
+> +	is_reclaimable = !!(flags & __GFP_RECLAIMABLE);
+> +
+> +	/*
+> +	 * If an allocation is botth __GFP_DMA and __GFP_RECLAIMABLE, return
+                                 ^^
+			       typo
+> +	 * KMALLOC_DMA and effectively ignore __GFP_RECLAIMABLE
+> +	 */
+> +	return (is_dma * 2) + (is_reclaimable & !is_dma);
 
-Which pte_write() do you think is right?
+Maybe
+is_dma * KMALLOC_DMA + (is_reclaimable && !is_dma) * KMALLOC_RECLAIM
+looks better?
 
-bool is_shstk_pte(pte) {
-	return (_PAGE_RW not set) &&
-(_PAGE_DIRTY_HW set);
-}
+>  }
+>  
+>  /*
+> diff --git a/mm/slab_common.c b/mm/slab_common.c
+> index 4614248ca381..614fb7ab8312 100644
+> --- a/mm/slab_common.c
+> +++ b/mm/slab_common.c
+> @@ -1107,10 +1107,21 @@ void __init setup_kmalloc_cache_index_table(void)
+>  	}
+>  }
+>  
+> -static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
+> +static void __init
+> +new_kmalloc_cache(int idx, int type, slab_flags_t flags)
+>  {
+> -	kmalloc_caches[KMALLOC_NORMAL][idx] = create_kmalloc_cache(
+> -					kmalloc_info[idx].name,
+> +	const char *name;
+> +
+> +	if (type == KMALLOC_RECLAIM) {
+> +		flags |= SLAB_RECLAIM_ACCOUNT;
+> +		name = kasprintf(GFP_NOWAIT, "kmalloc-rcl-%u",
+> +						kmalloc_info[idx].size);
+> +		BUG_ON(!name);
 
-int pte_write_1(pte) {
-	return (_PAGE_RW set) && !is_shstk_pte(pte);
-}
+I'd replace this with WARN_ON() and falling back to kmalloc_info[idx].name.
 
-int pte_write_2(pte) {
-	return (_PAGE_RW set) || is_shstk_pte(pte);
-}
-
-Yu-cheng
+> +	} else {
+> +		name = kmalloc_info[idx].name;
+> +	}
+> +
+> +	kmalloc_caches[type][idx] = create_kmalloc_cache(name,
+>  					kmalloc_info[idx].size, flags, 0,
+>  					kmalloc_info[idx].size);
+>  }
