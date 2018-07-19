@@ -1,69 +1,80 @@
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: [RFC PATCH v2 16/27] mm: Modify can_follow_write_pte/pmd for
- shadow stack
-Date: Wed, 18 Jul 2018 17:06:33 -0700
-Message-ID: <f4c90626-51d8-5551-5b77-baaff81f16bb@linux.intel.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
- <20180710222639.8241-17-yu-cheng.yu@intel.com>
- <de510df6-7ea9-edc6-9c49-2f80f16472b4@linux.intel.com>
- <1531328731.15351.3.camel@intel.com>
- <45a85b01-e005-8cb6-af96-b23ce9b5fca7@linux.intel.com>
- <1531868610.3541.21.camel@intel.com>
- <fa9db8c5-41c8-05e9-ad8d-dc6aaf11cb04@linux.intel.com>
- <1531944882.10738.1.camel@intel.com>
- <3f158401-f0b6-7bf7-48ab-2958354b28ad@linux.intel.com>
- <1531955428.12385.30.camel@intel.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 24/32] vfs: syscall: Add fsopen() to prepare for superblock creation [ver #9]
+Date: Wed, 18 Jul 2018 20:30:19 -0500
+Message-ID: <87o9f4f1w4.fsf@xmission.com>
+References: <5A7CC3BF-5F4E-4624-A129-4BD0434D0747@amacapital.net>
+        <3236C75A-5D74-4BB4-A1EC-06F6E22D810C@amacapital.net>
+        <611054C7-D6E8-4C89-958E-3128C9305E1E@amacapital.net>
+        <20180712223223.GA28610@thunk.org>
+        <CA+55aFw1WyKY+-2dg62M-QT_F0-waCTCrba1DW4dStYz-f_fjA@mail.gmail.com>
+        <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk>
+        <153126264966.14533.3388004240803696769.stgit@warthog.procyon.org.uk>
+        <686E805C-81F3-43D0-A096-50C644C57EE3@amacapital.net>
+        <22370.1531293761@warthog.procyon.org.uk>
+        <CALCETrU3kbh-ZRHDj7-Asq+OH-35dQ2p_erpHpYUvN5+BdAoVQ@mail.gmail.com>
+        <7002.1531407244@warthog.procyon.org.uk>
+        <CA+55aFx+xm333ZZ7d2Z39QuhDu=0XM6nTMChbHvWQOXNk32yxw@mail.gmail.com>
+        <16699.1531426991@warthog.procyon.org.uk>
+        <18233.1531430797@warthog.procyon.org.uk>
+        <22105.1531436081@warthog.procyon.org.uk>
+        <23894.1531438559@warthog.procyon.org.uk>
+        <26064.1531440190@warthog.procyon.org.uk>
+        <3429.1531467024@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1531955428.12385.30.camel@intel.com>
-Content-Language: en-US
+In-Reply-To: <3429.1531467024@warthog.procyon.org.uk> (David Howells's message
+        of "Fri, 13 Jul 2018 08:30:24 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
+To: David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, "Theodore Y. Ts'o" <tytso@mit.edu>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
 List-Id: linux-api@vger.kernel.org
 
->>> -static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
->>> +static inline bool can_follow_write(pte_t pte, unsigned int flags,
->>> +				    struct vm_area_struct *vma)
->>>  {
->>> -	return pte_write(pte) ||
->>> -		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
->>> +	if (!is_shstk_mapping(vma->vm_flags)) {
->>> +		if (pte_write(pte))
->>> +			return true;
->> Let me see if I can say this another way.
->>
->> The bigger issue is that these patches change the semantics of
->> pte_write().  Before these patches, it meant that you *MUST* have this
->> bit set to write to the page controlled by the PTE.  Now, it means: you
->> can write if this bit is set *OR* the shadowstack bit combination is set.
-> 
-> Here, we only figure out (1) if the page is pointed by a writable PTE; or
-> (2) if the page is pointed by a RO PTE (data or SHSTK) and it has been
-> copied and it still exists.  We are not trying to
-> determine if the
-> SHSTK PTE is writable (we know it is not).
+David Howells <dhowells@redhat.com> writes:
 
-Please think about the big picture.  I'm not just talking about this
-patch, but about every use of pte_write() in the kernel.
+> Andy Lutomirski <luto@amacapital.net> wrote:
+>
+>> > Also you can't currently directly create a bind mount from userspace as you
+>> > can only bind from another path point - which you may not be able to access
+>> > (either by permission failure or because it's not in your mount namespace).
+>> > 
+>> 
+>> Are you trying to preserve the magic bind semantics with the new API?
+>
+> No, I'm pointing out that you can't emulate this by doing a bind mount from
+> userspace if you can't access the thing you're binding from.
+>
+> Now, we could create a syscall that just picks up an extant superblock using a
+> device and attaches it to a mount for you, but that would have to be at least
+> partially parameterised - which would be very fs-dependent - so that it can
+> know whether or not you're allowed to create another mount to that sb.
+>
+> What you're talking about is emulating sget() in userspace - when we have to
+> do it in the kernel anyway if we still offer mount(2).
 
->> That's the fundamental problem.  We need some code in the kernel that
->> logically represents the concept of "is this PTE a shadowstack PTE or a
->> PTE with the write bit set", and we will call that pte_write(), or maybe
->> pte_writable().
->>
->> You *have* to somehow rectify this situation.  We can absolutely no
->> leave pte_write() in its current, ambiguous state where it has no real
->> meaning or where it is used to mean _both_ things depending on context.
-> 
-> True, the processor can always write to a page through a shadow stack
-> PTE, but it must do that with a CALL instruction.  Can we define a 
-> write operation as: MOV r1, *(r2).  Then we don't have any doubt on
-> pte_write() any more.
+I am just going to chime in and say that it is absolutely a problem in
+the current mount interface that when I mount a filesystem with fresh
+parameters I don't know if it is generates an sget and a new super_block
+or if it just increments the refcount on an existing super_block.
 
-No, we can't just move the target. :)
+It is the kind of problem that is actually security sensitive and has
+resulted in a security issue in the current linux kernel with respect to
+proc.
 
-You can define it this way, but then you also need to go to every spot
-in the kernel that calls pte_write() (and _PAGE_RW in fact) and audit it
-to ensure it means "mov ..." and not push.
+So yes we absolutely need to have a clean way of dealing with:
+
+mount /dev/sda3 /tmp
+mount /dev/sda3 /mnt
+
+So that the second one is forbidden fails.  And userspace has to do the
+equivalent of sget to get a file descriptor it can bind into the mount
+namespace.
+
+The deep problem is that the second mount does not parse the mount
+options and userspace does not know that.  So userspace thinks it is
+getting one kind of mount and in practice it gets another (sometimes
+with different security properties).  Those different security
+properties are an out and out bug.  Although any kind of different and
+unexpected properties can be a problem.
+
+Eric
