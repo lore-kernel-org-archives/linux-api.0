@@ -1,48 +1,63 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH v3 0/7] kmalloc-reclaimable caches
-Date: Fri, 20 Jul 2018 11:45:02 +0200
-Message-ID: <8ed44a53-fa20-a7ff-c662-72de9a9fd9e4@suse.cz>
-References: <20180718133620.6205-1-vbabka@suse.cz>
- <20180719195332.GB26595@castle.DHCP.thefacebook.com>
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Subject: Re: [RFC PATCH v2 14/27] mm: Handle THP/HugeTLB shadow stack page
+ fault
+Date: Fri, 20 Jul 2018 07:20:25 -0700
+Message-ID: <adc8f0b0-e2a5-d3e9-edaf-8d5b3be6a5b6@linux.intel.com>
+References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
+ <20180710222639.8241-15-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180719195332.GB26595@castle.DHCP.thefacebook.com>
+In-Reply-To: <20180710222639.8241-15-yu-cheng.yu@intel.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Gushchin <guro@fb.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>, Vijayanand Jitta <vjitta@codeaurora.org>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <pet>
 List-Id: linux-api@vger.kernel.org
 
-On 07/19/2018 09:53 PM, Roman Gushchin wrote:
->> Vlastimil
-> Overall the patchset looks solid to me.
-> Please, feel free to add
-> Acked-by: Roman Gushchin <guro@fb.com>
+On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
+> @@ -1193,6 +1195,8 @@ static int do_huge_pmd_wp_page_fallback(struct vm_fault *vmf, pmd_t orig_pmd,
+>  		pte_t entry;
+>  		entry = mk_pte(pages[i], vma->vm_page_prot);
+>  		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
+> +		if (is_shstk_mapping(vma->vm_flags))
+> +			entry = pte_mkdirty_shstk(entry);
 
-Thanks!
+Peter Z was pointing out that we should get rid of all this generic code
+manipulation.  We might not easily be able to do it *all*, but we can do
+better than what we've got here.
 
-> Two small nits:
-> 1) The last patch is unrelated to the main idea,
-> and can potentially cause ABI breakage.
+Basically, if you have code outside of arch/x86 in your patch set that
+refers to shadow stacks, you should consider it a bug (for now),
+especially if you have to hack .c files.
 
-Yes, that's why it's last.
+For instance, in the code above, you could move the is_shstk_mapping() into:
 
-> I'd separate it from the rest of the patchset.
+static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+{
+        if (likely(vma->vm_flags & VM_WRITE))
+                pte = pte_mkwrite(pte);
+	
++	pte = arch_pte_mkwrite(pte, vma);
++
+        return pte;
+}
 
-It's not independent though because there would be conflicts. It has to
-be decided if it goes before of after the rest. Putting it last in the
-series makes the order clear and makes it possible to revert it in case
-it does break any users, without disrupting the rest of the series.
+... and add an arch callback that does:
 
-> 2) It's actually re-opening the security issue for SLOB
-> users. Is the memory overhead really big enough to
-> justify that?
+static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
+{
+	if (!is_shstk_mapping(vma->vm_flags))
+		return pte;
 
-I assume that anyone choosing SLOB has a tiny embedded device which runs
-only pre-flashed code, so that's less of an issue. If somebody can
-trigger the issue remotely, there are likely also other ways to exhaust
-the limited memory there?
+	WARN_ON(... pte bits incompatible with shadow stacks?);
 
-> Thanks!
+	/* Lots of comments of course */
+	entry = pte_mkdirty_shstk(entry);
+}
+
+This is just one example.  You are probably going to need a couple of
+similar things.  Just remember: the bar is very high to make changes to
+.c files outside of arch/x86.  You can do a _bit_ more in non-x86
+headers, but you have the most freedom to patch what you want as long as
+it's in arch/x86.
