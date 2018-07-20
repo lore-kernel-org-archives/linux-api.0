@@ -1,85 +1,118 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 03/10] audit: add containerid
- support for ptrace and signals
-Date: Fri, 20 Jul 2018 18:13:47 -0400
-Message-ID: <CAHC9VhRZrGMSdDqQAqEogWOQQfLH26_=30Gh5JVZ4pasdhHUwA@mail.gmail.com>
-References: <cover.1528304203.git.rgb@redhat.com> <29359e0e6bc34c74b3a2c3ce0cdfda77f530cf18.1528304204.git.rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 04/10] audit: add support for
+ non-syscall auxiliary records
+Date: Fri, 20 Jul 2018 18:14:02 -0400
+Message-ID: <CAHC9VhRkH+UaZXfbsmfMsuCO7rQ48R5cBPU__00eG=pyO7AyCw@mail.gmail.com>
+References: <cover.1528304203.git.rgb@redhat.com> <dcd3d6e27c4beb8aec11805faeb4de7013132bd7.1528304204.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <29359e0e6bc34c74b3a2c3ce0cdfda77f530cf18.1528304204.git.rgb@redhat.com>
+In-Reply-To: <dcd3d6e27c4beb8aec11805faeb4de7013132bd7.1528304204.git.rgb@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: rgb@redhat.com
 Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
 On Wed, Jun 6, 2018 at 1:01 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Add audit container identifier support to ptrace and signals.  In
-> particular, the "op" field provides a way to label the auxiliary record
-> to which it is associated.
+> Standalone audit records have the timestamp and serial number generated
+> on the fly and as such are unique, making them standalone.  This new
+> function audit_alloc_local() generates a local audit context that will
+> be used only for a standalone record and its auxiliary record(s).  The
+> context is discarded immediately after the local associated records are
+> produced.
 >
 > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > ---
->  include/linux/audit.h | 11 +++++------
->  kernel/audit.c        | 13 +++++++------
->  kernel/audit.h        |  2 ++
->  kernel/auditsc.c      | 21 ++++++++++++++++-----
->  4 files changed, 30 insertions(+), 17 deletions(-)
+>  include/linux/audit.h |  8 ++++++++
+>  kernel/auditsc.c      | 25 +++++++++++++++++++++++--
+>  2 files changed, 31 insertions(+), 2 deletions(-)
 
 ...
 
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index 5e150c6..ba304a8 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -142,6 +142,7 @@ struct audit_net {
->  kuid_t         audit_sig_uid = INVALID_UID;
->  pid_t          audit_sig_pid = -1;
->  u32            audit_sig_sid = 0;
-> +u64            audit_sig_cid = AUDIT_CID_UNSET;
->
->  /* Records can be lost in several ways:
->     0) [suppressed in audit_alloc]
-> @@ -1437,6 +1438,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                         memcpy(sig_data->ctx, ctx, len);
->                         security_release_secctx(ctx, len);
->                 }
-> +               sig_data->cid = audit_sig_cid;
->                 audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO, 0, 0,
->                                  sig_data, sizeof(*sig_data) + len);
->                 kfree(sig_data);
-> @@ -2050,23 +2052,22 @@ void audit_log_session_info(struct audit_buffer *ab)
->
->  /*
->   * audit_log_contid - report container info
-> - * @tsk: task to be recorded
->   * @context: task or local context for record
->   * @op: contid string description
-> + * @contid: container ID to report
->   */
-> -int audit_log_contid(struct task_struct *tsk,
-> -                            struct audit_context *context, char *op)
-> +int audit_log_contid(struct audit_context *context,
-> +                             char *op, u64 contid)
+> --- a/kernel/auditsc.c
+> +++ b/kernel/auditsc.c
+> @@ -916,8 +916,11 @@ static inline void audit_free_aux(struct audit_context *context)
+>  static inline struct audit_context *audit_alloc_context(enum audit_state state)
 >  {
->         struct audit_buffer *ab;
+>         struct audit_context *context;
+> +       gfp_t gfpflags;
 >
-> -       if (!audit_contid_set(tsk))
-> +       if (!cid_valid(contid))
->                 return 0;
->         /* Generate AUDIT_CONTAINER record with container ID */
->         ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER);
->         if (!ab)
->                 return -ENOMEM;
-> -       audit_log_format(ab, "op=%s contid=%llu",
-> -                        op, audit_get_contid(tsk));
-> +       audit_log_format(ab, "op=%s contid=%llu", op, contid);
->         audit_log_end(ab);
->         return 0;
->  }
+> -       context = kzalloc(sizeof(*context), GFP_KERNEL);
+> +       /* We can be called in atomic context via audit_tg() */
+> +       gfpflags = (in_atomic() || irqs_disabled()) ? GFP_ATOMIC : GFP_KERNEL;
 
-You might as well just make these changes to audit_log_contid() in
-patch 2 when you first define audit_log_contid().
+Instead of trying to guess the proper gfp flags, and likely getting it
+wrong at some point (the in_atomic() comment in preempt.h don't give
+me the warm fuzzies), why not pass the gfp flags as an argument?
+
+Right now it looks like we would only have two callers: audit_alloc()
+and audit_audit_local().  The audit_alloc() invocation would simply
+pass GFP_KERNEL and we could allow the audit_alloc_local() callers to
+specify the gfp flags when calling audit_alloc_local() (although I
+suspect that will always be GFP_ATOMIC since we should only be calling
+audit_alloc_local() from interrupt-like context, in all other cases we
+should use the audit_context from the current task_struct.
+
+> +       context = kzalloc(sizeof(*context), gfpflags);
+>         if (!context)
+>                 return NULL;
+>         context->state = state;
+> @@ -993,8 +996,26 @@ struct audit_task_info init_struct_audit = {
+>         .ctx = NULL,
+>  };
+>
+> -static inline void audit_free_context(struct audit_context *context)
+> +struct audit_context *audit_alloc_local(void)
+>  {
+
+Let's see where this goes, but we may want to rename this slightly to
+indicate that this should only be called from interrupt context when
+we can't rely on current's audit_context.  Bonus points if we can find
+a way to enforce this with a WARN() assertion so we can better catch
+abuse.
+
+> +       struct audit_context *context;
+> +
+> +       if (!audit_ever_enabled)
+> +               return NULL; /* Return if not auditing. */
+> +
+> +       context = audit_alloc_context(AUDIT_RECORD_CONTEXT);
+> +       if (!context)
+> +               return NULL;
+> +       context->serial = audit_serial();
+> +       context->ctime = current_kernel_time64();
+> +       context->in_syscall = 1;
+
+Setting in_syscall is both interesting and a bit troubling, if for no
+other reason than I expect most (all?) callers to be in an interrupt
+context when audit_alloc_local() is called.  Setting in_syscall would
+appear to be conceptually in this case.  Can you help explain why this
+is the right thing to do, or necessary to ensure things are handled
+correctly?
+
+Looking quickly at the audit code, it seems to only be used on record
+and/or syscall termination to end things properly as well as in some
+of the PATH record code paths to limit filename collection to actual
+syscalls.  However, this was just a quick look so I could be missing
+some important points.
+
+> +       return context;
+> +}
+> +
+> +void audit_free_context(struct audit_context *context)
+> +{
+> +       if (!context)
+> +               return;
+>         audit_free_names(context);
+>         unroll_tree_refs(context, NULL, 0);
+>         free_tree_refs(context);
+> --
+> 1.8.3.1
+>
+> --
+> Linux-audit mailing list
+> Linux-audit@redhat.com
+> https://www.redhat.com/mailman/listinfo/linux-audit
 
 --
 paul moore
