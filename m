@@ -1,295 +1,182 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 07/10] audit: add support for
- containerid to network namespaces
-Date: Fri, 20 Jul 2018 18:14:48 -0400
-Message-ID: <CAHC9VhStmCOS=o2aM7zHLGUYyfuCu_d1so4Cp4T-qetGnJpUUg@mail.gmail.com>
-References: <cover.1528304203.git.rgb@redhat.com> <562cfaf7629b64252aac7cf3cecdd70b471af5b5.1528304204.git.rgb@redhat.com>
+Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 08/10] audit: NETFILTER_PKT:
+ record each container ID associated with a netNS
+Date: Fri, 20 Jul 2018 18:15:00 -0400
+Message-ID: <CAHC9VhQCxdOzcYHFtJ8eTLkNQxwvdAnuLOEguqHT_zU4V9d0OA@mail.gmail.com>
+References: <cover.1528304203.git.rgb@redhat.com> <c6b64f6540e2e531636142ced36d51f0744d0e1f.1528304204.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <562cfaf7629b64252aac7cf3cecdd70b471af5b5.1528304204.git.rgb@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <c6b64f6540e2e531636142ced36d51f0744d0e1f.1528304204.git.rgb@redhat.com>
+Sender: netdev-owner@vger.kernel.org
 To: rgb@redhat.com
 Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
 On Wed, Jun 6, 2018 at 1:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Audit events could happen in a network namespace outside of a task
-> context due to packets received from the net that trigger an auditing
-> rule prior to being associated with a running task.  The network
-> namespace could in use by multiple containers by association to the
-> tasks in that network namespace.  We still want a way to attribute
-> these events to any potential containers.  Keep a list per network
-> namespace to track these audit container identifiiers.
+> Add audit container identifier auxiliary record(s) to NETFILTER_PKT
+> event standalone records.  Iterate through all potential audit container
+> identifiers associated with a network namespace.
 >
-> Add/increment the audit container identifier on:
-> - initial setting of the audit container identifier via /proc
-> - clone/fork call that inherits an audit container identifier
-> - unshare call that inherits an audit container identifier
-> - setns call that inherits an audit container identifier
-> Delete/decrement the audit container identifier on:
-> - an inherited audit container identifier dropped when child set
-> - process exit
-> - unshare call that drops a net namespace
-> - setns call that drops a net namespace
->
-> See: https://github.com/linux-audit/audit-kernel/issues/92
-> See: https://github.com/linux-audit/audit-testsuite/issues/64
-> See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > ---
->  include/linux/audit.h | 23 ++++++++++++++++
->  kernel/audit.c        | 72 +++++++++++++++++++++++++++++++++++++++++++++++++++
->  kernel/auditsc.c      |  5 ++++
->  kernel/nsproxy.c      |  4 +++
->  4 files changed, 104 insertions(+)
+>  include/linux/audit.h    |  5 +++++
+>  kernel/audit.c           | 20 +++++++++++++++++++-
+>  kernel/auditsc.c         |  2 ++
+>  net/netfilter/xt_AUDIT.c | 12 ++++++++++--
+>  4 files changed, 36 insertions(+), 3 deletions(-)
 
 ...
 
 > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index 1e37abf..7e2e51c 100644
+> index 7e2e51c..4560a4e 100644
 > --- a/include/linux/audit.h
 > +++ b/include/linux/audit.h
-> @@ -87,6 +88,12 @@ struct audit_field {
->         u32                             op;
->  };
->
-> +struct audit_contid {
-> +       struct list_head        list;
-> +       u64                     id;
-> +       refcount_t              refcount;
-> +};
+> @@ -167,6 +167,8 @@ extern int audit_log_contid(struct audit_context *context,
+>  extern void audit_contid_add(struct net *net, u64 contid);
+>  extern void audit_contid_del(struct net *net, u64 contid);
+>  extern void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p);
+> +extern void audit_log_contid_list(struct net *net,
+> +                                struct audit_context *context);
 
-Do we need to worry about locking the audit container ID list?  Does
-the network namespace code (or some other namespace code) ensure that
-add/deletes are serialized?
+See my comment in previous patches about changing the function name to
+better indicate it's dedicate use for network namespaces.
 
-
-> @@ -156,6 +163,10 @@ extern void audit_log_task_info(struct audit_buffer *ab,
->                                 struct task_struct *tsk);
->  extern int audit_log_contid(struct audit_context *context,
->                                      char *op, u64 contid);
-> +extern struct list_head *audit_get_contid_list(const struct net *net);
-> +extern void audit_contid_add(struct net *net, u64 contid);
-> +extern void audit_contid_del(struct net *net, u64 contid);
-
-I wonder if we should change these function names to indicate that
-they are managing the netns/cid list?  Right now there is no mention
-of networking other than the first parameter.
-
-Maybe audit_netns_contid_*()?
-
-> +extern void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p);
->
 >  extern int                 audit_update_lsm_rules(void);
 >
-> @@ -209,6 +220,18 @@ static inline void audit_log_task_info(struct audit_buffer *ab,
->  static inline int audit_log_contid(struct audit_context *context,
->                                             char *op, u64 contid)
+> @@ -231,6 +233,9 @@ static inline void audit_contid_del(struct net *net, u64 contid)
 >  { }
-> +static inline struct list_head *audit_get_contid_list(const struct net *net)
-> +{
-> +       static LIST_HEAD(list);
-> +       return &list;
-> +}
-
-Why can't we just return NULL here like a normal dummy function?  It's
-only ever used inside audit.  Actually, why is this even in
-include/linux/audit.h, couldn't we put it in kernel/audit.h or even
-just make it a static in audit.c?
-
-> +static inline void audit_contid_add(struct net *net, u64 contid)
+>  static inline void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
+>  { }
+> +static inline void audit_log_contid_list(struct net *net,
+> +                                       struct audit_context *context)
 > +{ }
-> +static inline void audit_contid_del(struct net *net, u64 contid)
-> +{ }
-> +static inline void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
-> +{ }
-> +
+>
 >  #define audit_enabled 0
 >  #endif /* CONFIG_AUDIT */
->
 > diff --git a/kernel/audit.c b/kernel/audit.c
-> index ba304a8..ecd2de4 100644
+> index ecd2de4..8cca41a 100644
 > --- a/kernel/audit.c
 > +++ b/kernel/audit.c
-> @@ -106,6 +106,7 @@
->   */
->  struct audit_net {
->         struct sock *sk;
-> +       struct list_head contid_list;
->  };
->
->  /**
-> @@ -311,6 +312,76 @@ static struct sock *audit_get_sk(const struct net *net)
->         return aunet->sk;
+> @@ -382,6 +382,20 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
+>                 audit_contid_add(new->net_ns, contid);
 >  }
 >
-> +/**
-> + * audit_get_contid_list - Return the audit container ID list for the given network namespace
-> + * @net: the destination network namespace
-> + *
-> + * Description:
-> + * Returns the list pointer if valid, NULL otherwise.  The caller must ensure
-> + * that a reference is held for the network namespace while the sock is in use.
-> + */
-> +struct list_head *audit_get_contid_list(const struct net *net)
+> +void audit_log_contid_list(struct net *net, struct audit_context *context)
 > +{
-> +       struct audit_net *aunet = net_generic(net, audit_net_id);
-> +
-> +       return &aunet->contid_list;
-> +}
-> +
-> +void audit_contid_add(struct net *net, u64 contid)
-> +{
-> +       struct list_head *contid_list = audit_get_contid_list(net);
 > +       struct audit_contid *cont;
+> +       int i = 0;
 > +
-> +       if (!cid_valid(contid))
-> +               return;
-> +       if (!list_empty(contid_list))
-> +               list_for_each_entry(cont, contid_list, list)
-> +                       if (cont->id == contid) {
-> +                               refcount_inc(&cont->refcount);
-> +                               return;
-> +                       }
+> +       list_for_each_entry(cont, audit_get_contid_list(net), list) {
+> +               char buf[14];
+> +
+> +               sprintf(buf, "net%u", i++);
+> +               audit_log_contid(context, buf, cont->id);
 
-<thinking out loud>I think this is fine for right now, but we may need
-to be a bit clever about how we store the IDs - walking an unsorted
-list with lots of entries may prove to be too painful.</thinking out
-loud>
+Hmm.  It looks like this will generate multiple audit container ID
+records with "op=netX contid=Y" (X=netns number, Y=audit container
+ID), is that what we want?  I've mentioned my concern around the "op"
+values in these records earlier in the patchset, that still applies
+here, but now I'm also concerned about the multiple records.  I'm
+thinking we might be better served with a single record with either
+multiple "contid" fields, or a single "contid" field with a set of
+comma separated values (or some other delimiter that Steve's tools
+will tolerate).
 
-> +       cont = kmalloc(sizeof(struct audit_contid), GFP_KERNEL);
-> +       if (!cont)
-> +               return;
-> +       INIT_LIST_HEAD(&cont->list);
-> +       cont->id = contid;
-> +       refcount_set(&cont->refcount, 1);
-> +       list_add(&cont->list, contid_list);
+Steve, thoughts?
+
+> +       }
 > +}
-> +
-> +void audit_contid_del(struct net *net, u64 contid)
-> +{
-> +       struct list_head *contid_list = audit_get_contid_list(net);
-> +       struct audit_contid *cont = NULL;
-> +       int found = 0;
-> +
-> +       if (!cid_valid(contid))
-> +               return;
-> +       if (!list_empty(contid_list))
-> +               list_for_each_entry(cont, contid_list, list)
-> +                       if (cont->id == contid) {
-> +                               found = 1;
-> +                               break;
-
-You don't really need the found variable, you can just move all of the
-work you need to do up into the if statement and return from inside
-the if statement.
-
-> +                       }
-> +       if (!found)
-> +               return;
-> +       list_del(&cont->list);
-> +       if (refcount_dec_and_test(&cont->refcount))
-> +               kfree(cont);
-
-Don't you want to dec_and_test first and only remove it from the list
-if there are no other references?
-
-> +}
->
-> +void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
-> +{
-> +       u64 contid = audit_get_contid(p);
-> +       struct nsproxy *new = p->nsproxy;
-> +
-> +       if (!cid_valid(contid))
-> +               return;
-> +       audit_contid_del(ns->net_ns, contid);
-> +       if (new)
-> +               audit_contid_add(new->net_ns, contid);
-> +}
+> +EXPORT_SYMBOL(audit_log_contid_list);
 > +
 >  void audit_panic(const char *message)
 >  {
 >         switch (audit_failure) {
-> @@ -1550,6 +1621,7 @@ static int __net_init audit_net_init(struct net *net)
->                 return -ENOMEM;
->         }
->         aunet->sk->sk_sndtimeo = MAX_SCHEDULE_TIMEOUT;
-> +       INIT_LIST_HEAD(&aunet->contid_list);
+> @@ -2132,17 +2146,21 @@ int audit_log_contid(struct audit_context *context,
+>                               char *op, u64 contid)
+>  {
+>         struct audit_buffer *ab;
+> +       gfp_t gfpflags;
 >
+>         if (!cid_valid(contid))
+>                 return 0;
+> +       /* We can be called in atomic context via audit_tg() */
+> +       gfpflags = (in_atomic() || irqs_disabled()) ? GFP_ATOMIC : GFP_KERNEL;
+
+See my previous comments in the earlier patches about guessing at
+gfpflags; let's just add a gfpflags parameter to audit_log_contid().
+
+>         /* Generate AUDIT_CONTAINER record with container ID */
+> -       ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER);
+> +       ab = audit_log_start(context, gfpflags, AUDIT_CONTAINER);
+>         if (!ab)
+>                 return -ENOMEM;
+>         audit_log_format(ab, "op=%s contid=%llu", op, contid);
+>         audit_log_end(ab);
 >         return 0;
 >  }
+> +EXPORT_SYMBOL(audit_log_contid);
+
+Move the EXPORT_SYMBOL() to earlier in the patchset when you first
+define audit_log_contid().
+
 > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index ea1ee35..6ab5e5e 100644
+> index 6ab5e5e..e2a16d2 100644
 > --- a/kernel/auditsc.c
 > +++ b/kernel/auditsc.c
-> @@ -75,6 +75,7 @@
->  #include <linux/uaccess.h>
->  #include <linux/fsnotify_backend.h>
->  #include <uapi/linux/limits.h>
-> +#include <net/net_namespace.h>
+> @@ -1015,6 +1015,7 @@ struct audit_context *audit_alloc_local(void)
+>         context->in_syscall = 1;
+>         return context;
+>  }
+> +EXPORT_SYMBOL(audit_alloc_local);
+
+Same as above.
+
+>  void audit_free_context(struct audit_context *context)
+>  {
+> @@ -1029,6 +1030,7 @@ void audit_free_context(struct audit_context *context)
+>         audit_proctitle_free(context);
+>         kfree(context);
+>  }
+> +EXPORT_SYMBOL(audit_free_context);
+
+Same.
+
+>  static int audit_log_pid_context(struct audit_context *context, pid_t pid,
+>                                  kuid_t auid, kuid_t uid, unsigned int sessionid,
+> diff --git a/net/netfilter/xt_AUDIT.c b/net/netfilter/xt_AUDIT.c
+> index f368ee6..10d2707 100644
+> --- a/net/netfilter/xt_AUDIT.c
+> +++ b/net/netfilter/xt_AUDIT.c
+> @@ -71,10 +71,13 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
+>  {
+>         struct audit_buffer *ab;
+>         int fam = -1;
+> +       struct audit_context *context;
+> +       struct net *net;
 >
->  #include "audit.h"
+>         if (audit_enabled == 0)
+> -               goto errout;
+> -       ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
+> +               goto out;
+> +       context = audit_alloc_local();
+> +       ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
+>         if (ab == NULL)
+>                 goto errout;
 >
-> @@ -2165,6 +2166,7 @@ int audit_set_contid(struct task_struct *task, u64 contid)
->         uid_t uid;
->         struct tty_struct *tty;
->         char comm[sizeof(current->comm)];
-> +       struct net *net = task->nsproxy->net_ns;
+> @@ -104,7 +107,12 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
 >
->         /* Can't set if audit disabled */
->         if (!task->audit)
-> @@ -2185,10 +2187,13 @@ int audit_set_contid(struct task_struct *task, u64 contid)
->         else if (cid_valid(oldcontid) && !task->audit->inherited)
->                 rc = -EEXIST;
->         if (!rc) {
-> +               if (cid_valid(oldcontid))
-> +                       audit_contid_del(net, oldcontid);
->                 task_lock(task);
->                 task->audit->contid = contid;
->                 task->audit->inherited = false;
->                 task_unlock(task);
-> +               audit_contid_add(net, contid);
->         }
+>         audit_log_end(ab);
 >
->         if (!audit_enabled)
-> diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-> index f6c5d33..dcb69fe 100644
-> --- a/kernel/nsproxy.c
-> +++ b/kernel/nsproxy.c
-> @@ -27,6 +27,7 @@
->  #include <linux/syscalls.h>
->  #include <linux/cgroup.h>
->  #include <linux/perf_event.h>
-> +#include <linux/audit.h>
->
->  static struct kmem_cache *nsproxy_cachep;
->
-> @@ -140,6 +141,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
->         struct nsproxy *old_ns = tsk->nsproxy;
->         struct user_namespace *user_ns = task_cred_xxx(tsk, user_ns);
->         struct nsproxy *new_ns;
-> +       u64 contid = audit_get_contid(tsk);
->
->         if (likely(!(flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
->                               CLONE_NEWPID | CLONE_NEWNET |
-> @@ -167,6 +169,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
->                 return  PTR_ERR(new_ns);
->
->         tsk->nsproxy = new_ns;
-> +       audit_contid_add(new_ns->net_ns, contid);
->         return 0;
+> +       net = xt_net(par);
+> +       audit_log_contid_list(net, context);
+> +
+>  errout:
+> +       audit_free_context(context);
+> +out:
+>         return XT_CONTINUE;
 >  }
 >
-> @@ -224,6 +227,7 @@ void switch_task_namespaces(struct task_struct *p, struct nsproxy *new)
->         ns = p->nsproxy;
->         p->nsproxy = new;
->         task_unlock(p);
-> +       audit_switch_task_namespaces(ns, p);
->
->         if (ns && atomic_dec_and_test(&ns->count))
->                 free_nsproxy(ns);
 > --
 > 1.8.3.1
 >
@@ -297,7 +184,3 @@ if there are no other references?
 > Linux-audit mailing list
 > Linux-audit@redhat.com
 > https://www.redhat.com/mailman/listinfo/linux-audit
-
---
-paul moore
-www.paul-moore.com
