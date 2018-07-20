@@ -1,23 +1,45 @@
 From: Vlastimil Babka <vbabka@suse.cz>
 Subject: Re: [PATCH v3 2/7] mm, slab/slub: introduce kmalloc-reclaimable
  caches
-Date: Fri, 20 Jul 2018 11:32:28 +0200
-Message-ID: <6981b5a7-470c-ab1d-99dd-23304d81358a@suse.cz>
+Date: Fri, 20 Jul 2018 11:35:04 +0200
+Message-ID: <32c05b49-6703-08c2-bacf-ee070082d5ae@suse.cz>
 References: <20180718133620.6205-1-vbabka@suse.cz>
  <20180718133620.6205-3-vbabka@suse.cz>
- <20180719082319.6jkltwinon3pyzyn@techsingularity.net>
+ <20180719181613.GA26595@castle.DHCP.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180719082319.6jkltwinon3pyzyn@techsingularity.net>
+In-Reply-To: <20180719181613.GA26595@castle.DHCP.thefacebook.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mel Gorman <mgorman@techsingularity.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Matthew Wilcox <willy@infradead.org>
+To: Roman Gushchin <guro@fb.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On 07/19/2018 10:23 AM, Mel Gorman wrote:
+On 07/19/2018 08:16 PM, Roman Gushchin wrote:
+>>  	is_dma = !!(flags & __GFP_DMA);
+>>  #endif
+>>  
+>> -	return is_dma;
+>> +	is_reclaimable = !!(flags & __GFP_RECLAIMABLE);
+>> +
+>> +	/*
+>> +	 * If an allocation is botth __GFP_DMA and __GFP_RECLAIMABLE, return
+>                                  ^^
+> 			       typo
+>> +	 * KMALLOC_DMA and effectively ignore __GFP_RECLAIMABLE
+>> +	 */
+>> +	return (is_dma * 2) + (is_reclaimable & !is_dma);
+> 
+> Maybe
+> is_dma * KMALLOC_DMA + (is_reclaimable && !is_dma) * KMALLOC_RECLAIM
+> looks better?
+
+I think I meant to do that but forgot, thanks.
+
+>>  }
+>>  
 >>  /*
 >> diff --git a/mm/slab_common.c b/mm/slab_common.c
 >> index 4614248ca381..614fb7ab8312 100644
@@ -40,6 +62,14 @@ On 07/19/2018 10:23 AM, Mel Gorman wrote:
 >> +		name = kasprintf(GFP_NOWAIT, "kmalloc-rcl-%u",
 >> +						kmalloc_info[idx].size);
 >> +		BUG_ON(!name);
+> 
+> I'd replace this with WARN_ON() and falling back to kmalloc_info[idx].name.
+
+It's basically a copy/paste of the dma-kmalloc code. If that triggers,
+it means somebody was changing the code and introduced a wrong order (as
+Mel said). A system that genuinely has no memory for that printf at this
+point, would not get very far anyway...
+
 >> +	} else {
 >> +		name = kmalloc_info[idx].name;
 >> +	}
@@ -48,38 +78,3 @@ On 07/19/2018 10:23 AM, Mel Gorman wrote:
 >>  					kmalloc_info[idx].size, flags, 0,
 >>  					kmalloc_info[idx].size);
 >>  }
-> 
-> I was going to query that BUG_ON but if I'm reading it right, we just
-> have to be careful in the future that the "normal" kmalloc cache is always
-> initialised before the reclaimable cache or there will be issues.
-
-Yeah, I was just copying how the dma-kmalloc code does it.
-
->> @@ -1122,22 +1133,25 @@ static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
->>   */
->>  void __init create_kmalloc_caches(slab_flags_t flags)
->>  {
->> -	int i;
->> -	int type = KMALLOC_NORMAL;
->> +	int i, type;
->>  
->> -	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
->> -		if (!kmalloc_caches[type][i])
->> -			new_kmalloc_cache(i, flags);
->> +	for (type = KMALLOC_NORMAL; type <= KMALLOC_RECLAIM; type++) {
->> +		for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
->> +			if (!kmalloc_caches[type][i])
->> +				new_kmalloc_cache(i, type, flags);
->>  
-> 
-> I don't see a problem here as such but the values of the KMALLOC_* types
-> is important both for this function and the kmalloc_type(). It might be
-> worth adding a warning that these functions be examined if updating the
-> types but then again, anyone trying and getting it wrong will have a
-> broken kernel so;
-
-OK
-
-> Acked-by: Mel Gorman <mgorman@techsingularity.net>
-
-Thanks!
