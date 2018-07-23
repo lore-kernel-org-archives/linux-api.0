@@ -1,45 +1,151 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH 0/4] cleanups and refactor of /proc/pid/smaps*
-Date: Mon, 23 Jul 2018 13:19:29 +0200
-Message-ID: <20180723111933.15443-1-vbabka@suse.cz>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Daniel Colascione <dancol@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, linux-api@vger.kernel.org, Vlastimil Babka <vbabka@suse.cz>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 02/10] audit: log container
+ info of syscalls
+Date: Mon, 23 Jul 2018 09:16:25 -0400
+Message-ID: <CAHC9VhSUhSDaXzD9fpxm-oK=U4MieekKwY-pypzT=RA1HBw6+Q@mail.gmail.com>
+References: <cover.1528304203.git.rgb@redhat.com> <b839dc7fb29aae226b2a4602e7ef3c2a406ee90a.1528304203.git.rgb@redhat.com>
+ <CAHC9VhS0-4XSEFFPLrOvAiSYv-XDLG-yGyB4ULRGz=AnwE6diQ@mail.gmail.com> <20180721202930.a7rypxc5rxi3hyiv@madcap2.tricolour.ca>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180721202930.a7rypxc5rxi3hyiv@madcap2.tricolour.ca>
+Sender: netdev-owner@vger.kernel.org
+To: rgb@redhat.com
+Cc: sgrubb@redhat.com, cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-The recent regression in /proc/pid/smaps made me look more into the code.
-Especially the issues with smaps_rollup reported in [1] as explained in
-Patch 4, which fixes them by refactoring the code. Patches 2 and 3 are
-preparations for that. Patch 1 is me realizing that there's a lot of
-boilerplate left from times where we tried (unsuccessfuly) to mark thread
-stacks in the output.
+On Sat, Jul 21, 2018 at 4:32 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2018-07-20 18:13, Paul Moore wrote:
+> > On Wed, Jun 6, 2018 at 1:00 PM Richard Guy Briggs <rgb@redhat.com> wrot=
+e:
+> > > Create a new audit record AUDIT_CONTAINER to document the audit
+> > > container identifier of a process if it is present.
+> > >
+> > > Called from audit_log_exit(), syscalls are covered.
+> > >
+> > > A sample raw event:
+> > > type=3DSYSCALL msg=3Daudit(1519924845.499:257): arch=3Dc000003e sysca=
+ll=3D257 success=3Dyes exit=3D3 a0=3Dffffff9c a1=3D56374e1cef30 a2=3D241 a3=
+=3D1b6 items=3D2 ppid=3D606 pid=3D635 auid=3D0 uid=3D0 gid=3D0 euid=3D0 sui=
+d=3D0 fsuid=3D0 egid=3D0 sgid=3D0 fsgid=3D0 tty=3Dpts0 ses=3D3 comm=3D"bash=
+" exe=3D"/usr/bin/bash" subj=3Dunconfined_u:unconfined_r:unconfined_t:s0-s0=
+:c0.c1023 key=3D"tmpcontainerid"
+> > > type=3DCWD msg=3Daudit(1519924845.499:257): cwd=3D"/root"
+> > > type=3DPATH msg=3Daudit(1519924845.499:257): item=3D0 name=3D"/tmp/" =
+inode=3D13863 dev=3D00:27 mode=3D041777 ouid=3D0 ogid=3D0 rdev=3D00:00 obj=
+=3Dsystem_u:object_r:tmp_t:s0 nametype=3D PARENT cap_fp=3D0000000000000000 =
+cap_fi=3D0000000000000000 cap_fe=3D0 cap_fver=3D0
+> > > type=3DPATH msg=3Daudit(1519924845.499:257): item=3D1 name=3D"/tmp/tm=
+pcontainerid" inode=3D17729 dev=3D00:27 mode=3D0100644 ouid=3D0 ogid=3D0 rd=
+ev=3D00:00 obj=3Dunconfined_u:object_r:user_tmp_t:s0 nametype=3DCREATE cap_=
+fp=3D0000000000000000 cap_fi=3D0000000000000000 cap_fe=3D0 cap_fver=3D0
+> > > type=3DPROCTITLE msg=3Daudit(1519924845.499:257): proctitle=3D6261736=
+8002D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E74=
+61696E65726964
+> > > type=3DCONTAINER msg=3Daudit(1519924845.499:257): op=3Dtask contid=3D=
+123458
+> > >
+> > > See: https://github.com/linux-audit/audit-kernel/issues/90
+> > > See: https://github.com/linux-audit/audit-userspace/issues/51
+> > > See: https://github.com/linux-audit/audit-testsuite/issues/64
+> > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Conta=
+iner-ID
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  include/linux/audit.h      |  7 +++++++
+> > >  include/uapi/linux/audit.h |  1 +
+> > >  kernel/audit.c             | 23 +++++++++++++++++++++++
+> > >  kernel/auditsc.c           |  3 +++
+> > >  4 files changed, 34 insertions(+)
+> >
+> > ...
+> >
+> > > --- a/include/uapi/linux/audit.h
+> > > +++ b/include/uapi/linux/audit.h
+> > > @@ -115,6 +115,7 @@
+> > >  #define AUDIT_REPLACE          1329    /* Replace auditd if this pac=
+ket unanswerd */
+> > >  #define AUDIT_KERN_MODULE      1330    /* Kernel Module events */
+> > >  #define AUDIT_FANOTIFY         1331    /* Fanotify access decision *=
+/
+> > > +#define AUDIT_CONTAINER                1332    /* Container ID */
+> >
+> > I'm not sure I'm completely sold on the AUDIT_CONTAINER_ID and
+> > AUDIT_CONTAINER record type names.  From what I can tell
+> > AUDIT_CONTAINER_ID seems to be used for audit container ID management
+> > operations, e.g. setting the ID, whereas the AUDIT_CONTAINER is used
+> > to tag events with the corresponding audit container ID.  Assuming
+> > that is correct, it seems like AUDIT_CONTAINER might be better served
+> > if it was named AUDIT_CONTAINER_ID and if we could change
+> > AUDIT_CONTAINER_ID to AUDIT_CONTAINER_OP/MGMT/etc.  Thoughts?
+>
+> Please see discussion at:
+>         https://www.redhat.com/archives/linux-audit/2018-May/msg00101.htm=
+l
+>
+> I'm fine with changing AUDIT_CONTAINER_ID to AUDIT_CONTAINER_OP/MGMT/etc.
 
-Originally I had also plans to rework the translation from /proc/pid/*maps*
-file offsets to the internal structures. Now the offset means "vma number",
-which is not really stable (vma's can come and go between read() calls) and
-there's an extra caching of last vma's address. My idea was that offsets would
-be interpreted directly as addresses, which would also allow meaningful seeks
-(see the ugly seek_to_smaps_entry() in tools/testing/selftests/vm/mlock2.h).
-However loff_t is (signed) long long so that might be insufficient somewhere
-for the unsigned long addresses.
+Noted, and while I'm generally a big fan of consistency for things
+like this, I think these things are different enough (the loginuid is
+recorded as a field, the audit container ID is recorded in a dedicated
+record) that we don't need to be bound by LOGINUID's naming
+convention.
 
-So the result is fixed issues with skewed /proc/pid/smaps_rollup results,
-simpler smaps code, and a lot of unused code removed.
+> > >  #define AUDIT_AVC              1400    /* SE Linux avc denial or gra=
+nt */
+> > >  #define AUDIT_SELINUX_ERR      1401    /* Internal SE Linux Errors *=
+/
+> > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > index e7478cb..5e150c6 100644
+> > > --- a/kernel/audit.c
+> > > +++ b/kernel/audit.c
+> > > @@ -2048,6 +2048,29 @@ void audit_log_session_info(struct audit_buffe=
+r *ab)
+> > >         audit_log_format(ab, " auid=3D%u ses=3D%u", auid, sessionid);
+> > >  }
+> > >
+> > > +/*
+> > > + * audit_log_contid - report container info
+> > > + * @tsk: task to be recorded
+> > > + * @context: task or local context for record
+> > > + * @op: contid string description
+> > > + */
+> > > +int audit_log_contid(struct task_struct *tsk,
+> > > +                            struct audit_context *context, char *op)
+> > > +{
+> > > +       struct audit_buffer *ab;
+> > > +
+> > > +       if (!audit_contid_set(tsk))
+> > > +               return 0;
+> > > +       /* Generate AUDIT_CONTAINER record with container ID */
+> > > +       ab =3D audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER);
+> > > +       if (!ab)
+> > > +               return -ENOMEM;
+> > > +       audit_log_format(ab, "op=3D%s contid=3D%llu",
+> > > +                        op, audit_get_contid(tsk));
+> >
+> > Can you explain your reason for including an "op" field in this record
+> > type?  I've been looking at the rest of the patches in this patchset
+> > and it seems to be used more as an indicator of the record's
+> > generating context rather than any sort of audit container ID
+> > operation.
+>
+> "action" might work, but that's netfilter and numeric... "kind"?
+> Nothing else really seems to fit from a field name, type or lack of
+> searchability perspective.
 
-[1] https://marc.info/?l=linux-mm&m=151927723128134&w=2
+My concern isn't so much the name of the "op" field, although that
+does seem wrong, but rather the existence of the field in the first
+place.  This audit container ID record (whatever we end up calling it)
+exists to attach an audit container ID to an audit event, that's it;
+an audit event should have other records which provide the context
+(granted, the exact number of records depends on the event and the
+system's configuration).  If we are relying on this record to provide
+critical information about the audit event other than the audit
+container ID, I believe this is a strong indicator that the existing
+audit records are lacking and should be augmented.
 
-Vlastimil Babka (4):
-  mm: /proc/pid/*maps remove is_pid and related wrappers
-  mm: proc/pid/smaps: factor out mem stats gathering
-  mm: proc/pid/smaps: factor out common stats printing
-  mm: proc/pid/smaps_rollup: convert to single value seq_file
-
- fs/proc/base.c       |   6 +-
- fs/proc/internal.h   |   3 -
- fs/proc/task_mmu.c   | 294 +++++++++++++++++++------------------------
- fs/proc/task_nommu.c |  39 +-----
- 4 files changed, 133 insertions(+), 209 deletions(-)
-
--- 
-2.18.0
+--=20
+paul moore
+www.paul-moore.com
