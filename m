@@ -1,88 +1,34 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 02/10] audit: log container
- info of syscalls
-Date: Mon, 23 Jul 2018 14:31:11 -0400
-Message-ID: <CAHC9VhTkuf+2BwJp399-NzSgQyp21GgY1SZVDboDdXgpvEV=pQ@mail.gmail.com>
-References: <cover.1528304203.git.rgb@redhat.com> <3318670.y8SpQ3RC2W@x2>
- <20180723151148.hyu4jqy2etp5afpt@madcap2.tricolour.ca> <2739536.aL1iVigTi9@x2>
+From: Michael Tirado <mtirado418@gmail.com>
+Subject: Re: [PATCH v6] pidns: introduce syscall translate_pid
+Date: Mon, 23 Jul 2018 20:55:41 +0000
+Message-ID: <CAMkWEXPTb2NJH5rv8WpKWQaZVOJZp91z5Rr-e19UjrwBxB2pNw@mail.gmail.com>
+References: <152788068212.768348.15192457501079586650.stgit@buzz> <db8d560e-47d1-c32f-e4a2-407110f2b5b6@oracle.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <2739536.aL1iVigTi9@x2>
-Sender: netdev-owner@vger.kernel.org
-To: sgrubb@redhat.com, rgb@redhat.com
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <db8d560e-47d1-c32f-e4a2-407110f2b5b6@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Serge Hallyn <serge.hallyn@ubuntu.com>, Prakash Sangappa <prakash.sangappa@oracle.com>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 23, 2018 at 12:48 PM Steve Grubb <sgrubb@redhat.com> wrote:
-> On Monday, July 23, 2018 11:11:48 AM EDT Richard Guy Briggs wrote:
-> > On 2018-07-23 09:19, Steve Grubb wrote:
-> > > On Sunday, July 22, 2018 4:55:10 PM EDT Richard Guy Briggs wrote:
-> > > > On 2018-07-22 09:32, Steve Grubb wrote:
-> > > > > On Saturday, July 21, 2018 4:29:30 PM EDT Richard Guy Briggs wrote:
-> > > > > > > > + * audit_log_contid - report container info
-> > > > > > > > + * @tsk: task to be recorded
-> > > > > > > > + * @context: task or local context for record
-> > > > > > > > + * @op: contid string description
-> > > > > > > > + */
-> > > > > > > > +int audit_log_contid(struct task_struct *tsk,
-> > > > > > > > +                            struct audit_context *context,
-> > > > > > > > char
-> > > > > > > > *op)
-> > > > > > > > +{
-> > > > > > > > +       struct audit_buffer *ab;
-> > > > > > > > +
-> > > > > > > > +       if (!audit_contid_set(tsk))
-> > > > > > > > +               return 0;
-> > > > > > > > +       /* Generate AUDIT_CONTAINER record with container ID */
-> > > > > > > > +       ab = audit_log_start(context, GFP_KERNEL,
-> > > > > > > > AUDIT_CONTAINER);
-> > > > > > > > +       if (!ab)
-> > > > > > > > +               return -ENOMEM;
-> > > > > > > > +       audit_log_format(ab, "op=%s contid=%llu",
-> > > > > > > > +                        op, audit_get_contid(tsk));
-> > > > > > >
-> > > > > > > Can you explain your reason for including an "op" field in this
-> > > > > > > record
-> > > > > > > type?  I've been looking at the rest of the patches in this
-> > > > > > > patchset
-> > > > > > > and it seems to be used more as an indicator of the record's
-> > > > > > > generating context rather than any sort of audit container ID
-> > > > > > > operation.
-> > > > > >
-> > > > > > "action" might work, but that's netfilter and numeric... "kind"?
-> > > > > > Nothing else really seems to fit from a field name, type or lack of
-> > > > > > searchability perspective.
-> > > > > >
-> > > > > > Steve, do you have an opinion?
-> > > > >
-> > > > > We only have 1 sample event where we have op=task. What are the other
-> > > > > possible values?
-> > > >
-> > > > For the AUDIT_CONTAINER record we have op= "task", "target" (from the
-> > > > ptrace and signals patch), "tty".
-> > > >
-> > > > For the AUDIT_CONTAINER_ID record we have "op=set".
-> > >
-> > > Since the purpose of this record is to log the container id, I think that
-> > > is all that is needed. We can get the context from the other records in
-> > > the event. I'd suggest dropping the "op" field.
-> >
-> > Ok, the information above it for two different audit container
-> > identifier records.  Which one should drop the "op=" field?  Both?  Or
-> > just the AUDIT_CONTAINER record?  The AUDIT_CONTAINER_ID record (which
-> > might be renamed) could use it to distinguish a "set" record from a
-> > dropped audit container identifier that is no longer registered by any
-> > task or namespace.
->
-> Neither of them need it. All they need to do is state the container that is
-> being acted upon.
+Hey, I'm not seeing much activity on this so here's my $0.02
 
-I think we should keep the "op" field for audit container ID
-management operations, even though we really only have a "set"
-operation at the moment, but the others should drop the "op" field
-(see my previous emails in this thread).
+> Unix socket automatically translates pid attached to SCM_CREDENTIALS.
+> This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+> into pid namespace, this expose process and could be insecure.
 
--- 
-paul moore
-www.paul-moore.com
+
+Perhaps it would be a good idea to add a sysctl switch that prevents
+credential spoofing over AF_UNIX \by default\ if that is the main
+concern, or is there another concern and I have read this wrong?  I'm
+having trouble thinking of a legitimate use of SCM_CREDENTIALS
+spoofing that isn't in a debugging or troubleshooting context and
+would be more comfortable if it were not possible at all... Anyone
+know of a program that relies on this spoofing functionality?
+
+If you look at socket(7) under SO_PEERCRED there is a way to get
+credentials at time of connect() for an AF_UNIX SOCK_STREAM, or at
+time of socketpair() for a SOCK_DGRAM. I would like to think these
+credentials are reliable, but will probably require some extra daemon
+to proxy a dgram syslog socket.
