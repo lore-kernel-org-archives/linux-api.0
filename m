@@ -1,76 +1,92 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 07/10] audit: add support for
- containerid to network namespaces
-Date: Tue, 24 Jul 2018 16:33:45 -0400
-Message-ID: <CAHC9VhSuczaFi49-3SrVM9vND=vT=U1Aj0G6kOyJ3rAFnvi6VA@mail.gmail.com>
-References: <cover.1528304203.git.rgb@redhat.com> <562cfaf7629b64252aac7cf3cecdd70b471af5b5.1528304204.git.rgb@redhat.com>
- <CAHC9VhStmCOS=o2aM7zHLGUYyfuCu_d1so4Cp4T-qetGnJpUUg@mail.gmail.com> <20180724140309.i6o2yjdoif5krxtw@madcap2.tricolour.ca>
+Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 05/10] audit: add containerid
+ support for tty_audit
+Date: Tue, 24 Jul 2018 16:36:42 -0400
+Message-ID: <CAHC9VhR9EYLfiDK+krfFLM4nSB2FCbyE0f1wFec1iKxg9jAXRQ@mail.gmail.com>
+References: <cover.1528304203.git.rgb@redhat.com> <28ab8ad3c4e5de6f61b928eeb2af030b04a8820b.1528304204.git.rgb@redhat.com>
+ <CAHC9VhTTJVbFq_Cmu8E7EzQD-JXjkbDz7P1EY8ePVrXpQAqPdw@mail.gmail.com> <20180724140721.yyi5e7y3czxsjwug@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180724140309.i6o2yjdoif5krxtw@madcap2.tricolour.ca>
+In-Reply-To: <20180724140721.yyi5e7y3czxsjwug@madcap2.tricolour.ca>
 Sender: netdev-owner@vger.kernel.org
 To: rgb@redhat.com
 Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 24, 2018 at 10:06 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+On Tue, Jul 24, 2018 at 10:10 AM Richard Guy Briggs <rgb@redhat.com> wrote:
 > On 2018-07-20 18:14, Paul Moore wrote:
-> > On Wed, Jun 6, 2018 at 1:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > Audit events could happen in a network namespace outside of a task
-> > > context due to packets received from the net that trigger an auditing
-> > > rule prior to being associated with a running task.  The network
-> > > namespace could in use by multiple containers by association to the
-> > > tasks in that network namespace.  We still want a way to attribute
-> > > these events to any potential containers.  Keep a list per network
-> > > namespace to track these audit container identifiiers.
+> > On Wed, Jun 6, 2018 at 1:04 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > Add audit container identifier auxiliary record to tty logging rule
+> > > event standalone records.
 > > >
-> > > Add/increment the audit container identifier on:
-> > > - initial setting of the audit container identifier via /proc
-> > > - clone/fork call that inherits an audit container identifier
-> > > - unshare call that inherits an audit container identifier
-> > > - setns call that inherits an audit container identifier
-> > > Delete/decrement the audit container identifier on:
-> > > - an inherited audit container identifier dropped when child set
-> > > - process exit
-> > > - unshare call that drops a net namespace
-> > > - setns call that drops a net namespace
-> > >
-> > > See: https://github.com/linux-audit/audit-kernel/issues/92
-> > > See: https://github.com/linux-audit/audit-testsuite/issues/64
-> > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > > > ---
-> > >  include/linux/audit.h | 23 ++++++++++++++++
-> > >  kernel/audit.c        | 72 +++++++++++++++++++++++++++++++++++++++++++++++++++
-> > >  kernel/auditsc.c      |  5 ++++
-> > >  kernel/nsproxy.c      |  4 +++
-> > >  4 files changed, 104 insertions(+)
-
-...
-
-> > > +                       }
-> > > +       if (!found)
-> > > +               return;
-> > > +       list_del(&cont->list);
-> > > +       if (refcount_dec_and_test(&cont->refcount))
-> > > +               kfree(cont);
+> > >  drivers/tty/tty_audit.c | 5 ++++-
+> > >  1 file changed, 4 insertions(+), 1 deletion(-)
+> > >
+> > > diff --git a/drivers/tty/tty_audit.c b/drivers/tty/tty_audit.c
+> > > index e30aa6b..66bd850 100644
+> > > --- a/drivers/tty/tty_audit.c
+> > > +++ b/drivers/tty/tty_audit.c
+> > > @@ -66,8 +66,9 @@ static void tty_audit_log(const char *description, dev_t dev,
+> > >         uid_t uid = from_kuid(&init_user_ns, task_uid(tsk));
+> > >         uid_t loginuid = from_kuid(&init_user_ns, audit_get_loginuid(tsk));
+> > >         unsigned int sessionid = audit_get_sessionid(tsk);
+> > > +       struct audit_context *context = audit_alloc_local();
 > >
-> > Don't you want to dec_and_test first and only remove it from the list
-> > if there are no other references?
+> > We should be using current's audit_context in tty_audit_log().
+> > Actually, we should probably just get rid of the tsk variable in
+> > tty_audit_log() and use current directly to make things a bit more
+> > obvious.
 >
-> I don't think so.  Let me try to describe it in prose to see if I
-> understood this properly and see if this makes more sense: I want to
-> remove this audit_contid list member from this net's audit_contid list
-> and decrement unconditionally this member's refcount so it knows there
-> is one less thing pointing at it and when there is no longer anything
-> pointing at it, free it.
+> Ok, agreed.  At this point, it it current passed in anyways so no harm
+> other than efficiency.
+>
+> > <time passes>
+> >
+> > I did some digging and I have a two year old, half-baked patch that
+> > cleans up this tsk/current usage as well as a few others.  I just
+> > rebased it against audit/next and surprisingly it seems to pass a
+> > basic smoke test (kernel boots and audit-testsuite passes); I'll post
+> > it to the list as a RFC once I'm done reviewing these patches.
+>
+> I'll leave this patch the way it is since there should be no difference
+> and trust this other patch will work its way through the system and
+> solve that.
 
-Yep, sorry, my mistake, I was thinking the other way around (netns
-going away) ... which actually, this patchset doesn't handle that does
-it (I don't see any new code in audit_net_exit())?  Is is in a later
-patch?  If so, it really should be in the same patch as this code to
-prevent bisect nasties.
+Yep, that's a merge issue I'll deal with when we get to that point.
+Although, I would expect that when you post an updated patchset that
+it applies cleanly to the then-current audit/next tree (or Linus'
+tree, but audit/next is preferable).  In other words, please rebase
+your development branch before doing your final dev testing and
+posting.
+
+> > > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_TTY);
+> > > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_TTY);
+> > >         if (ab) {
+> > >                 char name[sizeof(tsk->comm)];
+> > >
+> > > @@ -80,6 +81,8 @@ static void tty_audit_log(const char *description, dev_t dev,
+> > >                 audit_log_n_hex(ab, data, size);
+> > >                 audit_log_end(ab);
+> > >         }
+> > > +       audit_log_contid(context, "tty", audit_get_contid(tsk));
+> > > +       audit_free_context(context);
+> > >  }
+> >
+> > --
+> > paul moore
+> > www.paul-moore.com
+>
+> - RGB
+>
+> --
+> Richard Guy Briggs <rgb@redhat.com>
+> Sr. S/W Engineer, Kernel Security, Base Operating Systems
+> Remote, Ottawa, Red Hat Canada
+> IRC: rgb, SunRaycer
+> Voice: +1.647.777.2635, Internal: (81) 32635
 
 -- 
 paul moore
