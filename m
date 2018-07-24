@@ -1,16 +1,17 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 01/10] audit: add container id
-Date: Tue, 24 Jul 2018 15:06:13 -0400
-Message-ID: <20180724190613.ww6yhsqpa7n4s62k@madcap2.tricolour.ca>
+Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 04/10] audit: add support for
+	non-syscall auxiliary records
+Date: Tue, 24 Jul 2018 15:37:25 -0400
+Message-ID: <20180724193725.k27la4ubg2g2n4qm@madcap2.tricolour.ca>
 References: <cover.1528304203.git.rgb@redhat.com>
-	<0377c3ced6bdbc44fe17f9a5679cb6eda4304024.1528304203.git.rgb@redhat.com>
-	<CAHC9VhRk+qLAyizM9i8D+cjKxyhruuj_Z9N0QRmjM-fjm4hgRw@mail.gmail.com>
+	<dcd3d6e27c4beb8aec11805faeb4de7013132bd7.1528304204.git.rgb@redhat.com>
+	<CAHC9VhRkH+UaZXfbsmfMsuCO7rQ48R5cBPU__00eG=pyO7AyCw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-audit-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <CAHC9VhRk+qLAyizM9i8D+cjKxyhruuj_Z9N0QRmjM-fjm4hgRw@mail.gmail.com>
+In-Reply-To: <CAHC9VhRkH+UaZXfbsmfMsuCO7rQ48R5cBPU__00eG=pyO7AyCw@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
 	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/linux-audit>
@@ -24,219 +25,121 @@ To: Paul Moore <paul@paul-moore.com>
 Cc: simo@redhat.com, jlayton@redhat.com, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, dhowells@redhat.com, linux-audit@redhat.com, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, cgroups@vger.kernel.org, serge@hallyn.com, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On 2018-07-20 18:13, Paul Moore wrote:
-> On Wed, Jun 6, 2018 at 1:00 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Implement the proc fs write to set the audit container identifier of a
-> > process, emitting an AUDIT_CONTAINER_ID record to document the event.
-> >
-> > This is a write from the container orchestrator task to a proc entry of
-> > the form /proc/PID/audit_containerid where PID is the process ID of the
-> > newly created task that is to become the first task in a container, or
-> > an additional task added to a container.
-> >
-> > The write expects up to a u64 value (unset: 18446744073709551615).
-> >
-> > The writer must have capability CAP_AUDIT_CONTROL.
-> >
-> > This will produce a record such as this:
-> >   type=CONTAINER_ID msg=audit(2018-06-06 12:39:29.636:26949) : op=set opid=2209 old-contid=18446744073709551615 contid=123456 pid=628 auid=root uid=root tty=ttyS0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 comm=bash exe=/usr/bin/bash res=yes
-> >
-> > The "op" field indicates an initial set.  The "pid" to "ses" fields are
-> > the orchestrator while the "opid" field is the object's PID, the process
-> > being "contained".  Old and new audit container identifier values are
-> > given in the "contid" fields, while res indicates its success.
-> >
-> > It is not permitted to unset or re-set the audit container identifier.
-> > A child inherits its parent's audit container identifier, but then can
-> > be set only once after.
-> >
-> > See: https://github.com/linux-audit/audit-kernel/issues/90
-> > See: https://github.com/linux-audit/audit-userspace/issues/51
-> > See: https://github.com/linux-audit/audit-testsuite/issues/64
-> > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
+On 2018-07-20 18:14, Paul Moore wrote:
+> On Wed, Jun 6, 2018 at 1:01 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > Standalone audit records have the timestamp and serial number generated
+> > on the fly and as such are unique, making them standalone.  This new
+> > function audit_alloc_local() generates a local audit context that will
+> > be used only for a standalone record and its auxiliary record(s).  The
+> > context is discarded immediately after the local associated records are
+> > produced.
 > >
 > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > > ---
-> >  fs/proc/base.c             | 37 ++++++++++++++++++++++++
-> >  include/linux/audit.h      | 25 ++++++++++++++++
-> >  include/uapi/linux/audit.h |  2 ++
-> >  kernel/auditsc.c           | 71 ++++++++++++++++++++++++++++++++++++++++++++++
-> >  4 files changed, 135 insertions(+)
+> >  include/linux/audit.h |  8 ++++++++
+> >  kernel/auditsc.c      | 25 +++++++++++++++++++++++--
+> >  2 files changed, 31 insertions(+), 2 deletions(-)
 > 
 > ...
 > 
-> > --- a/include/linux/audit.h
-> > +++ b/include/linux/audit.h
-> > @@ -606,6 +621,16 @@ static inline bool audit_loginuid_set(struct task_struct *tsk)
-> >        return uid_valid(audit_get_loginuid(tsk));
-> > }
-> >
-> > +static inline bool cid_valid(u64 contid)
-> > +{
-> > +       return contid != AUDIT_CID_UNSET;
-> > +}
-> > +
-> > +static inline bool audit_contid_set(struct task_struct *tsk)
-> > +{
-> > +       return cid_valid(audit_get_contid(tsk));
-> > +}
-> 
-> For the sake of consistency I think we should rename cid_valid() to
-> audit_contid_valid().
-
-Ok.
-
-> > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> > index 59ef7a81..611e926 100644
 > > --- a/kernel/auditsc.c
 > > +++ b/kernel/auditsc.c
-> > @@ -956,6 +956,8 @@ int audit_alloc(struct task_struct *tsk)
-> >                 return -ENOMEM;
-> >         info->loginuid = audit_get_loginuid(current);
-> >         info->sessionid = audit_get_sessionid(current);
-> > +       info->contid = audit_get_contid(current);
-> > +       info->inherited = true;
-> 
-> First see my others comments in this patch about inheritence, but if
-> we decide that flagging inherited values is important we should
-> probably rename the "inherited" field to indicate that it applies to
-> just the "contid" field.
-
-Ok.
-
-> >         tsk->audit = info;
+> > @@ -916,8 +916,11 @@ static inline void audit_free_aux(struct audit_context *context)
+> >  static inline struct audit_context *audit_alloc_context(enum audit_state state)
+> >  {
+> >         struct audit_context *context;
+> > +       gfp_t gfpflags;
 > >
-> >         if (likely(!audit_ever_enabled))
-> > @@ -985,6 +987,8 @@ int audit_alloc(struct task_struct *tsk)
-> >  struct audit_task_info init_struct_audit = {
-> >         .loginuid = INVALID_UID,
-> >         .sessionid = AUDIT_SID_UNSET,
-> > +       .contid = AUDIT_CID_UNSET,
-> > +       .inherited = true,
+> > -       context = kzalloc(sizeof(*context), GFP_KERNEL);
+> > +       /* We can be called in atomic context via audit_tg() */
+> > +       gfpflags = (in_atomic() || irqs_disabled()) ? GFP_ATOMIC : GFP_KERNEL;
+> 
+> Instead of trying to guess the proper gfp flags, and likely getting it
+> wrong at some point (the in_atomic() comment in preempt.h don't give
+> me the warm fuzzies), why not pass the gfp flags as an argument?
+> 
+> Right now it looks like we would only have two callers: audit_alloc()
+> and audit_audit_local().  The audit_alloc() invocation would simply
+> pass GFP_KERNEL and we could allow the audit_alloc_local() callers to
+> specify the gfp flags when calling audit_alloc_local() (although I
+> suspect that will always be GFP_ATOMIC since we should only be calling
+> audit_alloc_local() from interrupt-like context, in all other cases we
+> should use the audit_context from the current task_struct.
+
+Ok, I'll explicitly pass it in.
+
+> > +       context = kzalloc(sizeof(*context), gfpflags);
+> >         if (!context)
+> >                 return NULL;
+> >         context->state = state;
+> > @@ -993,8 +996,26 @@ struct audit_task_info init_struct_audit = {
 > >         .ctx = NULL,
 > >  };
 > >
-> > @@ -2112,6 +2116,73 @@ int audit_set_loginuid(kuid_t loginuid)
-> >  }
-> >
-> >  /**
-> > + * audit_set_contid - set current task's audit_context contid
-> > + * @contid: contid value
-> > + *
-> > + * Returns 0 on success, -EPERM on permission failure.
-> > + *
-> > + * Called (set) from fs/proc/base.c::proc_contid_write().
-> > + */
-> > +int audit_set_contid(struct task_struct *task, u64 contid)
-> > +{
-> > +       u64 oldcontid;
-> > +       int rc = 0;
-> > +       struct audit_buffer *ab;
-> > +       uid_t uid;
-> > +       struct tty_struct *tty;
-> > +       char comm[sizeof(current->comm)];
+> > -static inline void audit_free_context(struct audit_context *context)
+> > +struct audit_context *audit_alloc_local(void)
+> >  {
+> 
+> Let's see where this goes, but we may want to rename this slightly to
+> indicate that this should only be called from interrupt context when
+> we can't rely on current's audit_context.  Bonus points if we can find
+> a way to enforce this with a WARN() assertion so we can better catch
+> abuse.
+
+I'll see what I can come up with.
+
+> > +       struct audit_context *context;
 > > +
-> > +       /* Can't set if audit disabled */
-> > +       if (!task->audit)
-> > +               return -ENOPROTOOPT;
-> > +       oldcontid = audit_get_contid(task);
-> > +       /* Don't allow the audit containerid to be unset */
-> > +       if (!cid_valid(contid))
-> > +               rc = -EINVAL;
-> > +       /* if we don't have caps, reject */
-> > +       else if (!capable(CAP_AUDIT_CONTROL))
-> > +               rc = -EPERM;
-> > +       /* if task has children or is not single-threaded, deny */
-> > +       else if (!list_empty(&task->children))
-> > +               rc = -EBUSY;
-> 
-> Is this safe without holding tasklist_lock?  I worry we might be
-> vulnerable to a race with fork().
-> 
-> > +       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> > +               rc = -EALREADY;
-> 
-> Similar concern here as well, although related to threads.
-
-I think you are correct here and tasklist_lock should cover both.  Do we
-also want rcu_read_lock() immediately preceeding it?
-
-> > +       /* it is already set, and not inherited from the parent, reject */
-> > +       else if (cid_valid(oldcontid) && !task->audit->inherited)
-> > +               rc = -EEXIST;
-> 
-> Maybe I'm missing something, but why do we care about preventing
-> reassigning the audit container ID in this case?  The task is single
-> threaded and has no descendants at this point so it should be safe,
-> yes?  So long as the task changing the audit container ID has
-> capable(CAP_AUDIT_CONTOL) it shouldn't matter, right?
-
-Because we hammered out this idea 6 months ago in the design phase and I
-thought we all firmly agreed that the audit container identifier could
-only be set once.  Has any significant discussion happenned since then
-to change that wisdom?  I just wonder why this is coming up now.
-
-> Related, I'm questioning if we would ever care if the audit container
-> ID was inherited or not?
-
-We do since that is the only way we can tell if the value has been set
-once already or inherited unless we check if the parent's audit
-container identifier is identical (which tells us it was inherited).
-
-> > +       if (!rc) {
-> > +               task_lock(task);
-> > +               task->audit->contid = contid;
-> > +               task->audit->inherited = false;
-> > +               task_unlock(task);
-> 
-> I suspect the task_lock() may not be what we want here, but if we are
-> using task_lock() to protect the audit fields two things come to mind:
-> 
-> 1. We should update the header comments for task_lock() in task.h to
-> indicate that it also protects ->audit.
-
-Fair enough.
-
-> 2. Where else do we need to worry about taking this lock?  At the very
-> least we should take this lock near the top of this function before we
-> check task->audit and not drop it until after we have set it, or
-> failed the operation for one of the reasons above.
-
-Agreed, since another process on another CPU could race attempting this
-same operation.  However, the task_lock() comment precludes using it
-with write_lock_irq(&task_lock) that might be required above.
-
-> > +       }
+> > +       if (!audit_ever_enabled)
+> > +               return NULL; /* Return if not auditing. */
 > > +
-> > +       if (!audit_enabled)
-> > +               return rc;
-> > +
-> > +       ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_ID);
-> > +       if (!ab)
-> > +               return rc;
-> > +
-> > +       uid = from_kuid(&init_user_ns, task_uid(current));
-> > +       tty = audit_get_tty(current);
-> > +       audit_log_format(ab, "op=set opid=%d old-contid=%llu contid=%llu pid=%d uid=%u auid=%u tty=%s ses=%u",
-> > +                        task_tgid_nr(task), oldcontid, contid,
-> > +                        task_tgid_nr(current), uid
-> > +                        from_kuid(&init_user_ns, audit_get_loginuid(current)),
-> > +                        tty ? tty_name(tty) : "(none)",
-> > +                        audit_get_sessionid(current));
-> > +       audit_put_tty(tty);
-> > +       audit_log_task_context(ab);
-> > +       audit_log_format(ab, " comm=");
-> > +       audit_log_untrustedstring(ab, get_task_comm(comm, current));
-> > +       audit_log_d_path_exe(ab, current->mm);
-> > +       audit_log_format(ab, " res=%d", !rc);
-> > +       audit_log_end(ab);
-> > +       return rc;
+> > +       context = audit_alloc_context(AUDIT_RECORD_CONTEXT);
+> > +       if (!context)
+> > +               return NULL;
+> > +       context->serial = audit_serial();
+> > +       context->ctime = current_kernel_time64();
+> > +       context->in_syscall = 1;
+> 
+> Setting in_syscall is both interesting and a bit troubling, if for no
+> other reason than I expect most (all?) callers to be in an interrupt
+> context when audit_alloc_local() is called.  Setting in_syscall would
+> appear to be conceptually in this case.  Can you help explain why this
+> is the right thing to do, or necessary to ensure things are handled
+> correctly?
+
+I'll admit this is cheating a bit, but seemed harmless.  It is needed so
+that auditsc_get_stamp() from audit_get_stamp() from audit_log_start()
+doesn't bail on me without giving me its already assigned time and
+serial values rather than generating a new one.  I did look to see if
+there were any other undesireable side effects and found none, so I'm
+tmepted to rename the ->in_syscall to something a bit more helpful.  I
+could add a new audit_context structure member to make
+auditsc_get_stamp() co-operative, but this seems wasteful and
+unnecessary.
+
+> Looking quickly at the audit code, it seems to only be used on record
+> and/or syscall termination to end things properly as well as in some
+> of the PATH record code paths to limit filename collection to actual
+> syscalls.  However, this was just a quick look so I could be missing
+> some important points.
+> 
+> > +       return context;
 > > +}
 > > +
-> > +/**
-> >   * __audit_mq_open - record audit data for a POSIX MQ open
-> >   * @oflag: open flag
-> >   * @mode: mode bits
+> > +void audit_free_context(struct audit_context *context)
+> > +{
+> > +       if (!context)
+> > +               return;
+> >         audit_free_names(context);
+> >         unroll_tree_refs(context, NULL, 0);
+> >         free_tree_refs(context);
+> > --
+> > 1.8.3.1
+> >
+> > --
+> > Linux-audit mailing list
+> > Linux-audit@redhat.com
+> > https://www.redhat.com/mailman/listinfo/linux-audit
 > 
 > --
 > paul moore
