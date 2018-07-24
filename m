@@ -1,101 +1,76 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 08/10] audit: NETFILTER_PKT:
- record each container ID associated with a netNS
-Date: Tue, 24 Jul 2018 16:22:00 -0400
-Message-ID: <CAHC9VhRiqp5ttCfh1EttLgbpPowr5P_B7nC6sP4pq=XBfEYqJg@mail.gmail.com>
-References: <cover.1528304203.git.rgb@redhat.com> <c6b64f6540e2e531636142ced36d51f0744d0e1f.1528304204.git.rgb@redhat.com>
- <CAHC9VhQCxdOzcYHFtJ8eTLkNQxwvdAnuLOEguqHT_zU4V9d0OA@mail.gmail.com> <1748819.SHaROlQLoH@x2>
+Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 07/10] audit: add support for
+ containerid to network namespaces
+Date: Tue, 24 Jul 2018 16:33:45 -0400
+Message-ID: <CAHC9VhSuczaFi49-3SrVM9vND=vT=U1Aj0G6kOyJ3rAFnvi6VA@mail.gmail.com>
+References: <cover.1528304203.git.rgb@redhat.com> <562cfaf7629b64252aac7cf3cecdd70b471af5b5.1528304204.git.rgb@redhat.com>
+ <CAHC9VhStmCOS=o2aM7zHLGUYyfuCu_d1so4Cp4T-qetGnJpUUg@mail.gmail.com> <20180724140309.i6o2yjdoif5krxtw@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1748819.SHaROlQLoH@x2>
-Sender: linux-kernel-owner@vger.kernel.org
-To: sgrubb@redhat.com
-Cc: rgb@redhat.com, cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20180724140309.i6o2yjdoif5krxtw@madcap2.tricolour.ca>
+Sender: netdev-owner@vger.kernel.org
+To: rgb@redhat.com
+Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 24, 2018 at 3:48 PM Steve Grubb <sgrubb@redhat.com> wrote:
-> On Friday, July 20, 2018 6:15:00 PM EDT Paul Moore wrote:
+On Tue, Jul 24, 2018 at 10:06 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2018-07-20 18:14, Paul Moore wrote:
 > > On Wed, Jun 6, 2018 at 1:03 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-> > > event standalone records.  Iterate through all potential audit container
-> > > identifiers associated with a network namespace.
+> > > Audit events could happen in a network namespace outside of a task
+> > > context due to packets received from the net that trigger an auditing
+> > > rule prior to being associated with a running task.  The network
+> > > namespace could in use by multiple containers by association to the
+> > > tasks in that network namespace.  We still want a way to attribute
+> > > these events to any potential containers.  Keep a list per network
+> > > namespace to track these audit container identifiiers.
 > > >
+> > > Add/increment the audit container identifier on:
+> > > - initial setting of the audit container identifier via /proc
+> > > - clone/fork call that inherits an audit container identifier
+> > > - unshare call that inherits an audit container identifier
+> > > - setns call that inherits an audit container identifier
+> > > Delete/decrement the audit container identifier on:
+> > > - an inherited audit container identifier dropped when child set
+> > > - process exit
+> > > - unshare call that drops a net namespace
+> > > - setns call that drops a net namespace
+> > >
+> > > See: https://github.com/linux-audit/audit-kernel/issues/92
+> > > See: https://github.com/linux-audit/audit-testsuite/issues/64
+> > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > > > ---
-> > > include/linux/audit.h    |  5 +++++
-> > > kernel/audit.c           | 20 +++++++++++++++++++-
-> > > kernel/auditsc.c         |  2 ++
-> > > net/netfilter/xt_AUDIT.c | 12 ++++++++++--
-> > > 4 files changed, 36 insertions(+), 3 deletions(-)
-> >
-> > ...
-> >
-> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> > > index 7e2e51c..4560a4e 100644
-> > > --- a/include/linux/audit.h
-> > > +++ b/include/linux/audit.h
-> > > @@ -167,6 +167,8 @@ extern int audit_log_contid(struct audit_context
-> > > *context, extern void audit_contid_add(struct net *net, u64 contid);
-> > > extern void audit_contid_del(struct net *net, u64 contid);
-> > > extern void audit_switch_task_namespaces(struct nsproxy *ns, struct
-> > > task_struct *p); +extern void audit_log_contid_list(struct net *net,
-> > > +                                struct audit_context *context);
-> >
-> > See my comment in previous patches about changing the function name to
-> > better indicate it's dedicate use for network namespaces.
-> >
-> > > extern int                 audit_update_lsm_rules(void);
-> > >
-> > > @@ -231,6 +233,9 @@ static inline void audit_contid_del(struct net *net,
-> > > u64 contid) { }
-> > > static inline void audit_switch_task_namespaces(struct nsproxy *ns,
-> > > struct task_struct *p) { }
-> > > +static inline void audit_log_contid_list(struct net *net,
-> > > +                                       struct audit_context *context)
-> > > +{ }
-> > >
-> > > #define audit_enabled 0
-> > > #endif /* CONFIG_AUDIT */
-> > > diff --git a/kernel/audit.c b/kernel/audit.c
-> > > index ecd2de4..8cca41a 100644
-> > > --- a/kernel/audit.c
-> > > +++ b/kernel/audit.c
-> > > @@ -382,6 +382,20 @@ void audit_switch_task_namespaces(struct nsproxy
-> > > *ns, struct task_struct *p) audit_contid_add(new->net_ns, contid);
-> > > }
-> > >
-> > > +void audit_log_contid_list(struct net *net, struct audit_context
-> > > *context) +{
-> > > +       struct audit_contid *cont;
-> > > +       int i = 0;
-> > > +
-> > > +       list_for_each_entry(cont, audit_get_contid_list(net), list) {
-> > > +               char buf[14];
-> > > +
-> > > +               sprintf(buf, "net%u", i++);
-> > > +               audit_log_contid(context, buf, cont->id);
-> >
-> > Hmm.  It looks like this will generate multiple audit container ID
-> > records with "op=netX contid=Y" (X=netns number, Y=audit container
-> > ID), is that what we want?  I've mentioned my concern around the "op"
-> > values in these records earlier in the patchset, that still applies
-> > here, but now I'm also concerned about the multiple records.  I'm
-> > thinking we might be better served with a single record with either
-> > multiple "contid" fields, or a single "contid" field with a set of
-> > comma separated values (or some other delimiter that Steve's tools
-> > will tolerate).
-> >
-> > Steve, thoughts?
->
-> A single record is best. Maybe pattern this after the args listed in an
-> execve record.
+> > >  include/linux/audit.h | 23 ++++++++++++++++
+> > >  kernel/audit.c        | 72 +++++++++++++++++++++++++++++++++++++++++++++++++++
+> > >  kernel/auditsc.c      |  5 ++++
+> > >  kernel/nsproxy.c      |  4 +++
+> > >  4 files changed, 104 insertions(+)
 
-I'm concerned that an execve-like approach might not scale very well
-as would could potentially have a lot of containers sharing a single
-network namespace ("a%d=%d" vs ",%d").  Further, with execve we log
-the argument position in addition to the argument itself, that isn't
-something we need to worry about with the audit container IDs.
+...
+
+> > > +                       }
+> > > +       if (!found)
+> > > +               return;
+> > > +       list_del(&cont->list);
+> > > +       if (refcount_dec_and_test(&cont->refcount))
+> > > +               kfree(cont);
+> >
+> > Don't you want to dec_and_test first and only remove it from the list
+> > if there are no other references?
+>
+> I don't think so.  Let me try to describe it in prose to see if I
+> understood this properly and see if this makes more sense: I want to
+> remove this audit_contid list member from this net's audit_contid list
+> and decrement unconditionally this member's refcount so it knows there
+> is one less thing pointing at it and when there is no longer anything
+> pointing at it, free it.
+
+Yep, sorry, my mistake, I was thinking the other way around (netns
+going away) ... which actually, this patchset doesn't handle that does
+it (I don't see any new code in audit_net_exit())?  Is is in a later
+patch?  If so, it really should be in the same patch as this code to
+prevent bisect nasties.
 
 -- 
 paul moore
