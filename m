@@ -1,83 +1,74 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 05/10] audit: add containerid
- support for tty_audit
-Date: Tue, 24 Jul 2018 10:07:21 -0400
-Message-ID: <20180724140721.yyi5e7y3czxsjwug@madcap2.tricolour.ca>
-References: <cover.1528304203.git.rgb@redhat.com>
- <28ab8ad3c4e5de6f61b928eeb2af030b04a8820b.1528304204.git.rgb@redhat.com>
- <CAHC9VhTTJVbFq_Cmu8E7EzQD-JXjkbDz7P1EY8ePVrXpQAqPdw@mail.gmail.com>
+From: Yury Norov <ynorov@caviumnetworks.com>
+Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
+Date: Tue, 24 Jul 2018 20:39:57 +0300
+Message-ID: <20180724173957.GA22106@yury-thinkpad>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHC9VhTTJVbFq_Cmu8E7EzQD-JXjkbDz7P1EY8ePVrXpQAqPdw@mail.gmail.com>
+In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>, James Morse <james.morse@arm.com>, Joseph Myers <joseph@codesourcery.com>, Lin Yongting <linyongting@huawei.com>, Manuel Montezelo <manuel.montezelo@gmail.com>, Mark Brown <broonie@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2018-07-20 18:14, Paul Moore wrote:
-> On Wed, Jun 6, 2018 at 1:04 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Add audit container identifier auxiliary record to tty logging rule
-> > event standalone records.
-> >
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > ---
-> >  drivers/tty/tty_audit.c | 5 ++++-
-> >  1 file changed, 4 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/drivers/tty/tty_audit.c b/drivers/tty/tty_audit.c
-> > index e30aa6b..66bd850 100644
-> > --- a/drivers/tty/tty_audit.c
-> > +++ b/drivers/tty/tty_audit.c
-> > @@ -66,8 +66,9 @@ static void tty_audit_log(const char *description, dev_t dev,
-> >         uid_t uid = from_kuid(&init_user_ns, task_uid(tsk));
-> >         uid_t loginuid = from_kuid(&init_user_ns, audit_get_loginuid(tsk));
-> >         unsigned int sessionid = audit_get_sessionid(tsk);
-> > +       struct audit_context *context = audit_alloc_local();
+Hi all,
+
++ Pavel Machek, Palmer Dabbelt, Wookey.
+
+On Wed, May 16, 2018 at 11:18:45AM +0300, Yury Norov wrote:
+> This series enables AARCH64 with ILP32 mode.
 > 
-> We should be using current's audit_context in tty_audit_log().
-> Actually, we should probably just get rid of the tsk variable in
-> tty_audit_log() and use current directly to make things a bit more
-> obvious.
-
-Ok, agreed.  At this point, it it current passed in anyways so no harm
-other than efficiency.
-
-> <time passes>
+> As supporting work, it introduces ARCH_32BIT_OFF_T configuration
+> option that is enabled for existing 32-bit architectures but disabled
+> for new arches (so 64-bit off_t userspace type is used by new userspace).
+> Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
 > 
-> I did some digging and I have a two year old, half-baked patch that
-> cleans up this tsk/current usage as well as a few others.  I just
-> rebased it against audit/next and surprisingly it seems to pass a
-> basic smoke test (kernel boots and audit-testsuite passes); I'll post
-> it to the list as a RFC once I'm done reviewing these patches.
-
-I'll leave this patch the way it is since there should be no difference
-and trust this other patch will work its way through the system and
-solve that.
-
-> > -       ab = audit_log_start(NULL, GFP_KERNEL, AUDIT_TTY);
-> > +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_TTY);
-> >         if (ab) {
-> >                 char name[sizeof(tsk->comm)];
-> >
-> > @@ -80,6 +81,8 @@ static void tty_audit_log(const char *description, dev_t dev,
-> >                 audit_log_n_hex(ab, data, size);
-> >                 audit_log_end(ab);
-> >         }
-> > +       audit_log_contid(context, "tty", audit_get_contid(tsk));
-> > +       audit_free_context(context);
-> >  }
+> Based on kernel v4.16. Tested with LTP, glibc testsuite, trinity, lmbench,
+> CPUSpec.
 > 
-> --
-> paul moore
-> www.paul-moore.com
+> This series on github: 
+> https://github.com/norov/linux/tree/ilp32-4.16
+> Linaro toolchain:
+> http://snapshots.linaro.org/components/toolchain/binaries/7.3-2018.04-rc1/aarch64-linux-gnu_ilp32/
+> Debian repo:
+> http://people.linaro.org/~wookey/ilp32/
+> OpenSUSE repo:
+> https://build.opensuse.org/project/show/devel:ARM:Factory:Contrib:ILP32
+> 
+> Changes:
+> v3: https://lkml.org/lkml/2014/9/3/704
+> v4: https://lkml.org/lkml/2015/4/13/691
+> v5: https://lkml.org/lkml/2015/9/29/911
+> v6: https://lkml.org/lkml/2016/5/23/661
+> v7: https://lkml.org/lkml/2017/1/9/213
+> v8: https://lkml.org/lkml/2017/6/19/624
+> v9: - rebased on top of v4.16;
+>     - signal subsystem reworked to avoid code duplication, as requested
+>       by Dave Martin (patches 18 and 20);
+>     - new files introduced in series use SPDX notation for license;
+>     - linux-api and linux-arch CCed as the series changes kernel ABI;
+>     - checkpatch and other minor fixes.
+>     - Zhou Chengming's reported-by for patch 2 and signed-off-by for
+>       patch 21 removed because his email became invalid. Zhou, please
+>       share your new email.
 
-- RGB
+This is the update of the series based on 4.17 kernel
+https://github.com/norov/linux/tree/ilp32-4.17
+with the following non-critical changes:
+ - documentation patch extended with few words about ILP32 in general, and
+   the link to ARM document about it added;
+ - nds32 and riscv32 exceptions added for ARCH_32BIT_OFF_T and
+   {get,set}rlimit (patches 4 and 5).
+ - changes to architectures that are unsupported anymore are dropped.
+ - Chris Metcalf's ack for patch #3 removed, as it is related to
+   tile32 which is unsupported now.
 
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+Reminder to Arnd. There's arch subseries acked by you but still
+without progress. Could you consider taking it upstream?
+[PATCH 03/24] compat ABI: use non-compat openat and open_by_handle_at variants
+[PATCH 04/24] 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T config option
+[PATCH 05/24] asm-generic: Drop getrlimit and setrlimit syscalls from default list
+
+Yury
