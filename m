@@ -1,72 +1,72 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 04/10] audit: add support for
- non-syscall auxiliary records
-Date: Tue, 24 Jul 2018 17:57:02 -0400
-Message-ID: <CAHC9VhTX99Gqnv5SQbm1_3KON7g2R83qSt=bM3KJibDnORBXzQ@mail.gmail.com>
-References: <cover.1528304203.git.rgb@redhat.com> <dcd3d6e27c4beb8aec11805faeb4de7013132bd7.1528304204.git.rgb@redhat.com>
- <CAHC9VhRkH+UaZXfbsmfMsuCO7rQ48R5cBPU__00eG=pyO7AyCw@mail.gmail.com> <20180724193725.k27la4ubg2g2n4qm@madcap2.tricolour.ca>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 4/4] mm: proc/pid/smaps_rollup: convert to single value
+ seq_file
+Date: Wed, 25 Jul 2018 08:53:53 +0200
+Message-ID: <cb1d1965-9a13-e80f-dfde-a5d3bf9f510c@suse.cz>
+References: <20180723111933.15443-1-vbabka@suse.cz>
+ <20180723111933.15443-5-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20180724193725.k27la4ubg2g2n4qm@madcap2.tricolour.ca>
-Sender: netdev-owner@vger.kernel.org
-To: rgb@redhat.com
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180723111933.15443-5-vbabka@suse.cz>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Daniel Colascione <dancol@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 24, 2018 at 3:40 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2018-07-20 18:14, Paul Moore wrote:
-> > On Wed, Jun 6, 2018 at 1:01 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > Standalone audit records have the timestamp and serial number generated
-> > > on the fly and as such are unique, making them standalone.  This new
-> > > function audit_alloc_local() generates a local audit context that will
-> > > be used only for a standalone record and its auxiliary record(s).  The
-> > > context is discarded immediately after the local associated records are
-> > > produced.
-> > >
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > ---
-> > >  include/linux/audit.h |  8 ++++++++
-> > >  kernel/auditsc.c      | 25 +++++++++++++++++++++++--
-> > >  2 files changed, 31 insertions(+), 2 deletions(-)
+I moved the reply to this thread since the "added to -mm tree"
+notification Alexey replied to in <20180724182908.GD27053@avx2> has
+reduced CC list and is not linked to the patch postings.
 
-...
+On 07/24/2018 08:29 PM, Alexey Dobriyan wrote:
+> On Mon, Jul 23, 2018 at 04:55:48PM -0700, akpm@linux-foundation.org wrote:
+>> The patch titled
+>>      Subject: mm: /proc/pid/smaps_rollup: convert to single value seq_file
+>> has been added to the -mm tree.  Its filename is
+>>      mm-proc-pid-smaps_rollup-convert-to-single-value-seq_file.patch
+> 
+>> Subject: mm: /proc/pid/smaps_rollup: convert to single value seq_file
+>>
+>> The /proc/pid/smaps_rollup file is currently implemented via the
+>> m_start/m_next/m_stop seq_file iterators shared with the other maps files,
+>> that iterate over vma's.  However, the rollup file doesn't print anything
+>> for each vma, only accumulate the stats.
+> 
+> What I don't understand why keep seq_ops then and not do all the work in
+> ->show hook.  Currently /proc/*/smaps_rollup is at ~500 bytes so with
+> minimum 1 page seq buffer, no buffer resizing is possible.
 
-> > > +       struct audit_context *context;
-> > > +
-> > > +       if (!audit_ever_enabled)
-> > > +               return NULL; /* Return if not auditing. */
-> > > +
-> > > +       context = audit_alloc_context(AUDIT_RECORD_CONTEXT);
-> > > +       if (!context)
-> > > +               return NULL;
-> > > +       context->serial = audit_serial();
-> > > +       context->ctime = current_kernel_time64();
-> > > +       context->in_syscall = 1;
-> >
-> > Setting in_syscall is both interesting and a bit troubling, if for no
-> > other reason than I expect most (all?) callers to be in an interrupt
-> > context when audit_alloc_local() is called.  Setting in_syscall would
-> > appear to be conceptually in this case.  Can you help explain why this
-> > is the right thing to do, or necessary to ensure things are handled
-> > correctly?
->
-> I'll admit this is cheating a bit, but seemed harmless.  It is needed so
-> that auditsc_get_stamp() from audit_get_stamp() from audit_log_start()
-> doesn't bail on me without giving me its already assigned time and
-> serial values rather than generating a new one.  I did look to see if
-> there were any other undesireable side effects and found none, so I'm
-> tmepted to rename the ->in_syscall to something a bit more helpful.  I
-> could add a new audit_context structure member to make
-> auditsc_get_stamp() co-operative, but this seems wasteful and
-> unnecessary.
+Hmm IIUC seq_file also provides the buffer and handles feeding the data
+from there to the user process, which might have called read() with a smaller
+buffer than that. So I would rather not avoid the seq_file infrastructure.
+Or you're saying it could be converted to single_open()? Maybe, with more work.
 
-That's what I suspected.
+>> +static int show_smaps_rollup(struct seq_file *m, void *v)
+>> +{
+>> +	struct proc_maps_private *priv = m->private;
+>> +	struct mem_size_stats *mss = priv->rollup;
+>> +	struct vm_area_struct *vma;
+>> +
+>> +	/*
+>> +	 * We might be called multiple times when e.g. the seq buffer
+>> +	 * overflows. Gather the stats only once.
+> 
+> It doesn't!
 
-Let's look into renaming the "in_syscall" field, it borderline
-confusing now, and hijacking it for something which is very obviously
-not "in syscall" is A Very Bad Thing.
-
--- 
-paul moore
-www.paul-moore.com
+Because the buffer is 1 page and the data is ~500 bytes as you said above?
+Agreed, but I wouldn't want to depend on data not growing in the future or
+the initial buffer not getting smaller. I could extend the comment that this
+is theoretical for now?
+ 
+>> +	if (!mss->finished) {
+>> +		for (vma = priv->mm->mmap; vma; vma = vma->vm_next) {
+>> +			smap_gather_stats(vma, mss);
+>> +			mss->last_vma_end = vma->vm_end;
+>>  		}
+>> -		last_vma = !m_next_vma(priv, vma);
+>> -	} else {
+>> -		rollup_mode = false;
+>> -		memset(&mss_stack, 0, sizeof(mss_stack));
+>> -		mss = &mss_stack;
