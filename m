@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 01/38] vfs: syscall: Add open_tree(2) to reference or clone
- a mount [ver #10]
-Date: Fri, 27 Jul 2018 18:31:30 +0100
-Message-ID: <153271269067.9458.203758938391920203.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 26/38] vfs: syscall: Add fsopen() to prepare for superblock
+ creation [ver #10]
+Date: Fri, 27 Jul 2018 18:34:16 +0100
+Message-ID: <153271285663.9458.12735854403480633217.stgit@warthog.procyon.org.uk>
 References: <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,363 +14,270 @@ To: viro@zeniv.linux.org.uk
 Cc: linux-api@vger.kernel.org, torvalds@linux-foundation.org, dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Al Viro <viro@zeniv.linux.org.uk>
+Provide an fsopen() system call that starts the process of preparing to
+create a superblock that will then be mountable, using an fd as a context
+handle.  fsopen() is given the name of the filesystem that will be used:
 
-open_tree(dfd, pathname, flags)
+	int mfd = fsopen(const char *fsname, unsigned int flags);
 
-Returns an O_PATH-opened file descriptor or an error.
-dfd and pathname specify the location to open, in usual
-fashion (see e.g. fstatat(2)).  flags should be an OR of
-some of the following:
-	* AT_PATH_EMPTY, AT_NO_AUTOMOUNT, AT_SYMLINK_NOFOLLOW -
-same meanings as usual
-	* OPEN_TREE_CLOEXEC - make the resulting descriptor
-close-on-exec
-	* OPEN_TREE_CLONE or OPEN_TREE_CLONE | AT_RECURSIVE -
-instead of opening the location in question, create a detached
-mount tree matching the subtree rooted at location specified by
-dfd/pathname.  With AT_RECURSIVE the entire subtree is cloned,
-without it - only the part within in the mount containing the
-location in question.  In other words, the same as mount --rbind
-or mount --bind would've taken.  The detached tree will be
-dissolved on the final close of obtained file.  Creation of such
-detached trees requires the same capabilities as doing mount --bind.
+where flags can be 0 or FSOPEN_CLOEXEC.
 
-Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+For example:
+
+	sfd = fsopen("ext4", FSOPEN_CLOEXEC);
+        fsconfig(sfd, fsconfig_set_path, "source", "/dev/sda1", AT_FDCWD);
+        fsconfig(sfd, fsconfig_set_flag, "noatime", NULL, 0);
+        fsconfig(sfd, fsconfig_set_flag, "acl", NULL, 0);
+        fsconfig(sfd, fsconfig_set_flag, "user_xattr", NULL, 0);
+        fsconfig(sfd, fsconfig_set_string, "sb", "1", 0);
+        fsconfig(sfd, fsconfig_cmd_create, NULL, NULL, 0);
+	fsinfo(sfd, NULL, ...); // query new superblock attributes
+	mfd = fsmount(sfd, FSMOUNT_CLOEXEC, MS_RELATIME);
+	move_mount(mfd, "", sfd, AT_FDCWD, "/mnt", MOVE_MOUNT_F_EMPTY_PATH);
+
+	sfd = fsopen("afs", -1);
+        fsconfig(fd, fsconfig_set_string, "source", "#grand.central.org:root.cell", 0);
+        fsconfig(fd, fsconfig_cmd_create, NULL, NULL, 0);
+	mfd = fsmount(sfd, 0, MS_NODEV);
+	move_mount(mfd, "", sfd, AT_FDCWD, "/mnt", MOVE_MOUNT_F_EMPTY_PATH);
+
+If an error is reported at any step, an error message may be available to be
+read() back (ENODATA will be reported if there isn't an error available) in
+the form:
+
+	"e <subsys>:<problem>"
+	"e SELinux:Mount on mountpoint not permitted"
+
+Once fsmount() has been called, further fsconfig() calls will incur EBUSY,
+even if the fsmount() fails.  read() is still possible to retrieve error
+information.
+
+The fsopen() syscall creates a mount context and hangs it of the fd that it
+returns.
+
+Netlink is not used because it is optional and would make the core VFS
+dependent on the networking layer and also potentially add network
+namespace issues.
+
+Note that, for the moment, the caller must have SYS_CAP_ADMIN to use
+fsopen().
+
 Signed-off-by: David Howells <dhowells@redhat.com>
 cc: linux-api@vger.kernel.org
 ---
 
  arch/x86/entry/syscalls/syscall_32.tbl |    1 
  arch/x86/entry/syscalls/syscall_64.tbl |    1 
- fs/file_table.c                        |    9 +-
- fs/internal.h                          |    1 
- fs/namespace.c                         |  132 +++++++++++++++++++++++++++-----
- include/linux/fs.h                     |    3 +
+ fs/Makefile                            |    2 -
+ fs/fs_context.c                        |    4 +
+ fs/fsopen.c                            |   87 ++++++++++++++++++++++++++++++++
+ include/linux/fs_context.h             |    4 +
  include/linux/syscalls.h               |    1 
- include/uapi/linux/fcntl.h             |    2 
- include/uapi/linux/mount.h             |   10 ++
- 9 files changed, 135 insertions(+), 25 deletions(-)
- create mode 100644 include/uapi/linux/mount.h
+ include/uapi/linux/fs.h                |    5 ++
+ 8 files changed, 104 insertions(+), 1 deletion(-)
+ create mode 100644 fs/fsopen.c
 
 diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 3cf7b533b3d1..ea1b413afd47 100644
+index 76d092b7d1b0..1647fefd2969 100644
 --- a/arch/x86/entry/syscalls/syscall_32.tbl
 +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -398,3 +398,4 @@
- 384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
- 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+@@ -400,3 +400,4 @@
  386	i386	rseq			sys_rseq			__ia32_sys_rseq
-+387	i386	open_tree		sys_open_tree			__ia32_sys_open_tree
+ 387	i386	open_tree		sys_open_tree			__ia32_sys_open_tree
+ 388	i386	move_mount		sys_move_mount			__ia32_sys_move_mount
++389	i386	fsopen			sys_fsopen			__ia32_sys_fsopen
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index f0b1709a5ffb..0545bed581dc 100644
+index 37ba4e65eee6..235d33dbccb2 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -343,6 +343,7 @@
- 332	common	statx			__x64_sys_statx
- 333	common	io_pgetevents		__x64_sys_io_pgetevents
+@@ -345,6 +345,7 @@
  334	common	rseq			__x64_sys_rseq
-+335	common	open_tree		__x64_sys_open_tree
+ 335	common	open_tree		__x64_sys_open_tree
+ 336	common	move_mount		__x64_sys_move_mount
++337	common	fsopen			__x64_sys_fsopen
  
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/file_table.c b/fs/file_table.c
-index 7ec0b3e5f05d..7480271a0d21 100644
---- a/fs/file_table.c
-+++ b/fs/file_table.c
-@@ -189,6 +189,7 @@ static void __fput(struct file *file)
- 	struct dentry *dentry = file->f_path.dentry;
- 	struct vfsmount *mnt = file->f_path.mnt;
- 	struct inode *inode = file->f_inode;
-+	fmode_t mode = file->f_mode;
+diff --git a/fs/Makefile b/fs/Makefile
+index ae681523b4b1..e3ea8093b178 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -13,7 +13,7 @@ obj-y :=	open.o read_write.o file_table.o super.o \
+ 		seq_file.o xattr.o libfs.o fs-writeback.o \
+ 		pnode.o splice.o sync.o utimes.o d_path.o \
+ 		stack.o fs_struct.o statfs.o fs_pin.o nsfs.o \
+-		fs_context.o fs_parser.o
++		fs_context.o fs_parser.o fsopen.o
  
- 	might_sleep();
+ ifeq ($(CONFIG_BLOCK),y)
+ obj-y +=	buffer.o block_dev.o direct-io.o mpage.o
+diff --git a/fs/fs_context.c b/fs/fs_context.c
+index c298cbfb62a2..7259caf42c24 100644
+--- a/fs/fs_context.c
++++ b/fs/fs_context.c
+@@ -263,6 +263,8 @@ struct fs_context *vfs_new_fs_context(struct file_system_type *fs_type,
+ 	fc->fs_type	= get_filesystem(fs_type);
+ 	fc->cred	= get_current_cred();
  
-@@ -209,14 +210,14 @@ static void __fput(struct file *file)
- 		file->f_op->release(inode, file);
- 	security_file_free(file);
- 	if (unlikely(S_ISCHR(inode->i_mode) && inode->i_cdev != NULL &&
--		     !(file->f_mode & FMODE_PATH))) {
-+		     !(mode & FMODE_PATH))) {
- 		cdev_put(inode->i_cdev);
- 	}
- 	fops_put(file->f_op);
- 	put_pid(file->f_owner.pid);
--	if ((file->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
-+	if ((mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
- 		i_readcount_dec(inode);
--	if (file->f_mode & FMODE_WRITER) {
-+	if (mode & FMODE_WRITER) {
- 		put_write_access(inode);
- 		__mnt_drop_write(mnt);
- 	}
-@@ -224,6 +225,8 @@ static void __fput(struct file *file)
- 	file->f_path.mnt = NULL;
- 	file->f_inode = NULL;
- 	file_free(file);
-+	if (unlikely(mode & FMODE_NEED_UNMOUNT))
-+		dissolve_on_fput(mnt);
- 	dput(dentry);
- 	mntput(mnt);
- }
-diff --git a/fs/internal.h b/fs/internal.h
-index 56533b08532e..383ee4724f77 100644
---- a/fs/internal.h
-+++ b/fs/internal.h
-@@ -85,6 +85,7 @@ extern void __mnt_drop_write(struct vfsmount *);
- extern void __mnt_drop_write_file(struct file *);
- extern void mnt_drop_write_file_path(struct file *);
++	mutex_init(&fc->uapi_mutex);
++
+ 	switch (purpose) {
+ 	case FS_CONTEXT_FOR_KERNEL_MOUNT:
+ 		fc->sb_flags |= SB_KERNMOUNT;
+@@ -347,6 +349,8 @@ struct fs_context *vfs_dup_fs_context(struct fs_context *src_fc)
+ 	if (!fc)
+ 		return ERR_PTR(-ENOMEM);
  
-+extern void dissolve_on_fput(struct vfsmount *);
- /*
-  * fs_struct.c
-  */
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 03cc3b5bcf00..a4a01ecbcacd 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -20,12 +20,14 @@
- #include <linux/init.h>		/* init_rootfs */
- #include <linux/fs_struct.h>	/* get_fs_root et.al. */
- #include <linux/fsnotify.h>	/* fsnotify_vfsmount_delete */
++	mutex_init(&fc->uapi_mutex);
++
+ 	fc->fs_private	= NULL;
+ 	fc->s_fs_info	= NULL;
+ 	fc->source	= NULL;
+diff --git a/fs/fsopen.c b/fs/fsopen.c
+new file mode 100644
+index 000000000000..f30080e1ebc4
+--- /dev/null
++++ b/fs/fsopen.c
+@@ -0,0 +1,87 @@
++/* Filesystem access-by-fd.
++ *
++ * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
++ * Written by David Howells (dhowells@redhat.com)
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public Licence
++ * as published by the Free Software Foundation; either version
++ * 2 of the Licence, or (at your option) any later version.
++ */
++
++#include <linux/fs_context.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/syscalls.h>
++#include <linux/security.h>
++#include <linux/anon_inodes.h>
++#include <linux/namei.h>
 +#include <linux/file.h>
- #include <linux/uaccess.h>
- #include <linux/proc_ns.h>
- #include <linux/magic.h>
- #include <linux/bootmem.h>
- #include <linux/task_work.h>
- #include <linux/sched/task.h>
-+#include <uapi/linux/mount.h>
- 
- #include "pnode.h"
- #include "internal.h"
-@@ -1840,6 +1842,16 @@ struct vfsmount *collect_mounts(const struct path *path)
- 	return &tree->mnt;
- }
- 
-+void dissolve_on_fput(struct vfsmount *mnt)
++#include "mount.h"
++
++static int fscontext_release(struct inode *inode, struct file *file)
 +{
-+	namespace_lock();
-+	lock_mount_hash();
-+	mntget(mnt);
-+	umount_tree(real_mount(mnt), UMOUNT_SYNC);
-+	unlock_mount_hash();
-+	namespace_unlock();
-+}
++	struct fs_context *fc = file->private_data;
 +
- void drop_collected_mounts(struct vfsmount *mnt)
- {
- 	namespace_lock();
-@@ -2199,6 +2211,30 @@ static bool has_locked_children(struct mount *mnt, struct dentry *dentry)
- 	return false;
- }
- 
-+static struct mount *__do_loopback(struct path *old_path, int recurse)
-+{
-+	struct mount *mnt = ERR_PTR(-EINVAL), *old = real_mount(old_path->mnt);
-+
-+	if (IS_MNT_UNBINDABLE(old))
-+		return mnt;
-+
-+	if (!check_mnt(old) && old_path->dentry->d_op != &ns_dentry_operations)
-+		return mnt;
-+
-+	if (!recurse && has_locked_children(old, old_path->dentry))
-+		return mnt;
-+
-+	if (recurse)
-+		mnt = copy_tree(old, old_path->dentry, CL_COPY_MNT_NS_FILE);
-+	else
-+		mnt = clone_mnt(old, old_path->dentry, 0);
-+
-+	if (!IS_ERR(mnt))
-+		mnt->mnt.mnt_flags &= ~MNT_LOCKED;
-+
-+	return mnt;
-+}
-+
- /*
-  * do loopback mount.
-  */
-@@ -2206,7 +2242,7 @@ static int do_loopback(struct path *path, const char *old_name,
- 				int recurse)
- {
- 	struct path old_path;
--	struct mount *mnt = NULL, *old, *parent;
-+	struct mount *mnt = NULL, *parent;
- 	struct mountpoint *mp;
- 	int err;
- 	if (!old_name || !*old_name)
-@@ -2220,38 +2256,21 @@ static int do_loopback(struct path *path, const char *old_name,
- 		goto out;
- 
- 	mp = lock_mount(path);
--	err = PTR_ERR(mp);
--	if (IS_ERR(mp))
-+	if (IS_ERR(mp)) {
-+		err = PTR_ERR(mp);
- 		goto out;
++	if (fc) {
++		file->private_data = NULL;
++		put_fs_context(fc);
 +	}
- 
--	old = real_mount(old_path.mnt);
- 	parent = real_mount(path->mnt);
--
--	err = -EINVAL;
--	if (IS_MNT_UNBINDABLE(old))
--		goto out2;
--
- 	if (!check_mnt(parent))
- 		goto out2;
- 
--	if (!check_mnt(old) && old_path.dentry->d_op != &ns_dentry_operations)
--		goto out2;
--
--	if (!recurse && has_locked_children(old, old_path.dentry))
--		goto out2;
--
--	if (recurse)
--		mnt = copy_tree(old, old_path.dentry, CL_COPY_MNT_NS_FILE);
--	else
--		mnt = clone_mnt(old, old_path.dentry, 0);
--
-+	mnt = __do_loopback(&old_path, recurse);
- 	if (IS_ERR(mnt)) {
- 		err = PTR_ERR(mnt);
- 		goto out2;
- 	}
- 
--	mnt->mnt.mnt_flags &= ~MNT_LOCKED;
--
- 	err = graft_tree(mnt, parent, mp);
- 	if (err) {
- 		lock_mount_hash();
-@@ -2265,6 +2284,75 @@ static int do_loopback(struct path *path, const char *old_name,
- 	return err;
- }
- 
-+SYSCALL_DEFINE3(open_tree, int, dfd, const char *, filename, unsigned, flags)
++	return 0;
++}
++
++const struct file_operations fscontext_fops = {
++	.release	= fscontext_release,
++	.llseek		= no_llseek,
++};
++
++/*
++ * Attach a filesystem context to a file and an fd.
++ */
++static int fscontext_create_fd(struct fs_context *fc, unsigned int o_flags)
 +{
-+	struct file *file;
-+	struct path path;
-+	int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
-+	bool detached = flags & OPEN_TREE_CLONE;
-+	int error;
 +	int fd;
 +
-+	BUILD_BUG_ON(OPEN_TREE_CLOEXEC != O_CLOEXEC);
-+
-+	if (flags & ~(AT_EMPTY_PATH | AT_NO_AUTOMOUNT | AT_RECURSIVE |
-+		      AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE |
-+		      OPEN_TREE_CLOEXEC))
-+		return -EINVAL;
-+
-+	if ((flags & (AT_RECURSIVE | OPEN_TREE_CLONE)) == AT_RECURSIVE)
-+		return -EINVAL;
-+
-+	if (flags & AT_NO_AUTOMOUNT)
-+		lookup_flags &= ~LOOKUP_AUTOMOUNT;
-+	if (flags & AT_SYMLINK_NOFOLLOW)
-+		lookup_flags &= ~LOOKUP_FOLLOW;
-+	if (flags & AT_EMPTY_PATH)
-+		lookup_flags |= LOOKUP_EMPTY;
-+
-+	if (detached && !may_mount())
-+		return -EPERM;
-+
-+	fd = get_unused_fd_flags(flags & O_CLOEXEC);
++	fd = anon_inode_getfd("fscontext", &fscontext_fops, fc,
++			      O_RDWR | o_flags);
 +	if (fd < 0)
-+		return fd;
-+
-+	error = user_path_at(dfd, filename, lookup_flags, &path);
-+	if (error)
-+		goto out;
-+
-+	if (detached) {
-+		struct mount *mnt = __do_loopback(&path, flags & AT_RECURSIVE);
-+		if (IS_ERR(mnt)) {
-+			error = PTR_ERR(mnt);
-+			goto out2;
-+		}
-+		mntput(path.mnt);
-+		path.mnt = &mnt->mnt;
-+	}
-+
-+	file = dentry_open(&path, O_PATH, current_cred());
-+	if (IS_ERR(file)) {
-+		error = PTR_ERR(file);
-+		goto out3;
-+	}
-+
-+	if (detached)
-+		file->f_mode |= FMODE_NEED_UNMOUNT;
-+	path_put(&path);
-+	fd_install(fd, file);
++		put_fs_context(fc);
 +	return fd;
-+
-+out3:
-+	if (detached)
-+		dissolve_on_fput(path.mnt);
-+out2:
-+	path_put(&path);
-+out:
-+	put_unused_fd(fd);
-+	return error;
 +}
 +
- static int change_mount_flags(struct vfsmount *mnt, int ms_flags)
- {
- 	int error = 0;
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index e3a18cddb74e..067f0e31aec7 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -154,6 +154,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
- /* File is capable of returning -EAGAIN if I/O will block */
- #define FMODE_NOWAIT	((__force fmode_t)0x8000000)
- 
-+/* File represents mount that needs unmounting */
-+#define FMODE_NEED_UNMOUNT     ((__force fmode_t)0x10000000)
++/*
++ * Open a filesystem by name so that it can be configured for mounting.
++ *
++ * We are allowed to specify a container in which the filesystem will be
++ * opened, thereby indicating which namespaces will be used (notably, which
++ * network namespace will be used for network filesystems).
++ */
++SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
++{
++	struct file_system_type *fs_type;
++	struct fs_context *fc;
++	const char *fs_name;
 +
- /*
-  * Flag for rw_copy_check_uvector and compat_rw_copy_check_uvector
-  * that indicates that they should check the contents of the iovec are
++	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
++		return -EPERM;
++
++	if (flags & ~FSOPEN_CLOEXEC)
++		return -EINVAL;
++
++	fs_name = strndup_user(_fs_name, PAGE_SIZE);
++	if (IS_ERR(fs_name))
++		return PTR_ERR(fs_name);
++
++	fs_type = get_fs_type(fs_name);
++	kfree(fs_name);
++	if (!fs_type)
++		return -ENODEV;
++
++	fc = vfs_new_fs_context(fs_type, NULL, 0, FS_CONTEXT_FOR_USER_MOUNT);
++	put_filesystem(fs_type);
++	if (IS_ERR(fc))
++		return PTR_ERR(fc);
++
++	fc->phase = FS_CONTEXT_CREATE_PARAMS;
++	return fscontext_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
++}
+diff --git a/include/linux/fs_context.h b/include/linux/fs_context.h
+index 8d812fcc5f54..488d30de1f4f 100644
+--- a/include/linux/fs_context.h
++++ b/include/linux/fs_context.h
+@@ -14,6 +14,7 @@
+ 
+ #include <linux/kernel.h>
+ #include <linux/errno.h>
++#include <linux/mutex.h>
+ 
+ struct cred;
+ struct dentry;
+@@ -87,6 +88,7 @@ struct fs_parameter {
+  */
+ struct fs_context {
+ 	const struct fs_context_operations *ops;
++	struct mutex		uapi_mutex;	/* Userspace access mutex */
+ 	struct file_system_type	*fs_type;
+ 	void			*fs_private;	/* The filesystem's context */
+ 	struct dentry		*root;		/* The root and superblock */
+@@ -142,6 +144,8 @@ extern int vfs_get_super(struct fs_context *fc,
+ 			 int (*fill_super)(struct super_block *sb,
+ 					   struct fs_context *fc));
+ 
++extern const struct file_operations fscontext_fops;
++
+ #define logfc(FC, FMT, ...) pr_notice(FMT, ## __VA_ARGS__)
+ 
+ /**
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 73810808cdf2..3cc6b8f8bd2f 100644
+index 3c0855d9b105..ad6c7ff33c01 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -900,6 +900,7 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
- 			  unsigned mask, struct statx __user *buffer);
- asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
- 			 int flags, uint32_t sig);
-+asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
+@@ -904,6 +904,7 @@ asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
+ asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
+ 			       int to_dfd, const char __user *to_path,
+ 			       unsigned int ms_flags);
++asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags);
  
  /*
   * Architecture-specific system calls
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index 6448cdd9a350..594b85f7cb86 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -90,5 +90,7 @@
- #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
- #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 1c982eb44ff4..f8818e6cddd6 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -344,4 +344,9 @@ typedef int __bitwise __kernel_rwf_t;
+ #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
+ 			 RWF_APPEND)
  
-+#define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
-+
- 
- #endif /* _UAPI_LINUX_FCNTL_H */
-diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
-new file mode 100644
-index 000000000000..e8db2911adca
---- /dev/null
-+++ b/include/uapi/linux/mount.h
-@@ -0,0 +1,10 @@
-+#ifndef _UAPI_LINUX_MOUNT_H
-+#define _UAPI_LINUX_MOUNT_H
-+
 +/*
-+ * open_tree() flags.
++ * Flags for fsopen() and co.
 + */
-+#define OPEN_TREE_CLONE		1		/* Clone the target tree and attach the clone */
-+#define OPEN_TREE_CLOEXEC	O_CLOEXEC	/* Close the file on execve() */
++#define FSOPEN_CLOEXEC		0x00000001
 +
-+#endif /* _UAPI_LINUX_MOUNT_H */
+ #endif /* _UAPI_LINUX_FS_H */
