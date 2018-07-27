@@ -1,71 +1,87 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 29/38] vfs: syscall: Add fsconfig() for configuring and
- managing a context [ver #10]
-Date: Fri, 27 Jul 2018 14:57:51 -0700
-Message-ID: <CALCETrWDGa+ut=xsoki+XFKzdD7KruJJicfH1tKdBtywLuk7iQ@mail.gmail.com>
-References: <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk>
- <153271287586.9458.6001928723332685410.stgit@warthog.procyon.org.uk>
- <CALCETrUXsOexKcj+K_v_bsW6DkGFgyNOaEs_qVOAcdNGBbEb2w@mail.gmail.com> <7034.1532728300@warthog.procyon.org.uk>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [RFC PATCH for 4.18 00/16] Restartable Sequences
+Date: Sat, 28 Jul 2018 00:01:15 +0200
+Message-ID: <20180727220115.GA18879@amd>
+References: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="2oS5YaxWCcQjTEyO"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7034.1532728300@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 27, 2018 at 2:51 PM, David Howells <dhowells@redhat.com> wrote:
-> Andy Lutomirski <luto@amacapital.net> wrote:
->
->> Unless I'm rather confused, you have two or possibly three ways to
->> pass in an open fd.  Can you clarify what the difference is and/or
->> remove all but one of them?
->
-> No, they're not equivalent.
->
->> >  (*) fsconfig_set_path: A non-empty path is specified.  The parameter must
->> >      be expecting a path object.  value points to a NUL-terminated string
->> >      that is the path and aux is a file descriptor at which to start a
->> >      relative lookup or AT_FDCWD.
->
-> So, an example:
->
->         fsconfig(fd, fsconfig_set_path, "source", "/dev/sda1", AT_FDCWD);
->
-> I don't want to require that the caller open /dev/sda1 and pass in an fd as
-> that might prevent the filesystem from "holding" it exclusively.
->
->> >  (*) fsconfig_set_path_empty: As fsconfig_set_path, but with AT_EMPTY_PATH
->> >      implied.
->
-> You can't do:
->
->         fsconfig(fd, fsconfig_set_path, "source", "", dir_fd);
->
-> because AT_EMPTY_PATH cannot be specified directly[*].  What you do instead is:
->
->         fsconfig(fd, fsconfig_set_path_empty, "source", "", dir_fd);
->
-> [*] Not without a 6-arg syscall or some other way of passing it.
 
-Are there still architectures that have problems with 6-arg syscalls?
+--2oS5YaxWCcQjTEyO
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
->
-> I *could* require that the caller must call open(O_PATH) or openat(O_PATH)
-> before calling fsconfig() - so you don't pass a string, but only a path-fd.
->
->> >  (*) fsconfig_set_fd: An open file descriptor is specified.  value must
->> >      be NULL and aux indicates the file descriptor.
->
-> See fd=%u on fuse.  I think it's cleaner to do:
->
->         fsconfig(fd, fsconfig_set_fd, "source", NULL, control_fd);
->
-> saying explicitly that there's an open file to be passed rather than:
->
->         fsconfig(fd, fsconfig_set_path, "source", NULL, control_fd);
+Hi!
 
-Hmm.  That should probably be clearly documented.  I suppose that, as
-long as there is never a case where fsconfig_set_path and
-fsconfig_set_fd both succeed, then it's not a big deal.
+> So for instance, this turns:
+>=20
+>   int cpu =3D rseq_per_cpu_lock(lock, target_cpu);
+>   [...]
+>   rseq_per_cpu_unlock(lock, cpu);
+>=20
+> into
+>=20
+>   int cpu =3D rseq_this_cpu_lock(lock);
+>   [...]
+>   rseq_per_cpu_unlock(lock, cpu);
+>=20
+> and:
+>=20
+>   per_cpu_list_push(list, node, target_cpu);
+>   [...]
+>   per_cpu_list_pop(list, node, target_cpu);
+>=20
+> into
+>=20
+>   this_cpu_list_push(list, node, &cpu);  /* cpu is an output parameter. */
+>   [...]
+>   node =3D this_cpu_list_pop(list, &cpu);  /* cpu is an output parameter.=
+ */
+>=20
+> Eventually integrating cpu_opv or some alternative will allow passing
+> the cpu number as parameter rather than requiring the algorithm to work
+> on the current CPU.
+>=20
+> The second effect of not having the cpu_opv fallback is that
+> line and instruction single-stepping with a debugger transforms rseq
+> critical sections based on retry loops into never-ending loops.
+> Debuggers need to use the __rseq_table section to skip those critical
+> sections in order to correctly behave when single-stepping a thread
+> which uses rseq in a retry loop. However, applications which use an
+> alternative fallback method rather than retrying on rseq fast-path abort
+> won't be affected by this kind of single-stepping issue.
+>=20
+> Thanks for your feedback!
+
+Would it make sense to include Documentation/ patch? I guess at least
+manpage describing the syscall will be needed....
+
+								Pavel
+
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--2oS5YaxWCcQjTEyO
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAltblisACgkQMOfwapXb+vL/rgCfZ7Mkwq0orl7QcLXXpcrW0uDx
+iagAnicESPLrBH66gbArogSx6wYmXBvs
+=92pi
+-----END PGP SIGNATURE-----
+
+--2oS5YaxWCcQjTEyO--
