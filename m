@@ -1,14 +1,13 @@
 From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 34/38] vfs: syscall: Add fsinfo() to query filesystem information [ver #10]
-Date: Fri, 27 Jul 2018 23:12:25 +0100
-Message-ID: <9462.1532729545@warthog.procyon.org.uk>
-References: <CALCETrW6HQnGnnmzNrNAeEyRZZv9uJFcH92jjofR1Rx5NQTxDQ@mail.gmail.com> <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk> <153271291017.9458.7827028432894772673.stgit@warthog.procyon.org.uk>
+Subject: Re: [PATCH 29/38] vfs: syscall: Add fsconfig() for configuring and managing a context [ver #10]
+Date: Fri, 27 Jul 2018 23:27:34 +0100
+Message-ID: <11038.1532730454@warthog.procyon.org.uk>
+References: <CALCETrWDGa+ut=xsoki+XFKzdD7KruJJicfH1tKdBtywLuk7iQ@mail.gmail.com> <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk> <153271287586.9458.6001928723332685410.stgit@warthog.procyon.org.uk> <CALCETrUXsOexKcj+K_v_bsW6DkGFgyNOaEs_qVOAcdNGBbEb2w@mail.gmail.com> <7034.1532728300@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrW6HQnGnnmzNrNAeEyRZZv9uJFcH92jjofR1Rx5NQTxDQ@mail.gmail.com>
-Content-ID: <9461.1532729545.1@warthog.procyon.org.uk>
+In-Reply-To: <CALCETrWDGa+ut=xsoki+XFKzdD7KruJJicfH1tKdBtywLuk7iQ@mail.gmail.com>
+Content-ID: <11037.1532730454.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andy Lutomirski <luto@amacapital.net>
 Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
@@ -16,24 +15,31 @@ List-Id: linux-api@vger.kernel.org
 
 Andy Lutomirski <luto@amacapital.net> wrote:
 
-> > Add a system call to allow filesystem information to be queried.  A request
-> > value can be given to indicate the desired attribute.  Support is provided
-> > for enumerating multi-value attributes.
+> > [*] Not without a 6-arg syscall or some other way of passing it.
 > 
-> Has anyone seriously reviewed this?
+> Are there still architectures that have problems with 6-arg syscalls?
 
-I don't know.  I've certainly posted it before.
+As I understand it, 6-arg syscalls are frowned upon.
 
-> > params->request indicates the attribute/attributes to be queried.  This can
-> > be one of:
-> >
-> >         fsinfo_attr_statfs              - statfs-style info
-> >         fsinfo_attr_fsinfo              - Information about fsinfo()
-> 
-> Constants are almost always all caps.  Is there any reason these are
-> lowercase?
+> I suppose that, as long as there is never a case where fsconfig_set_path and
+> fsconfig_set_fd both succeed, then it's not a big deal.
 
-It looks better IMO, particularly for enum constants.  I'm not sure if there
-are any rules about this in system vs user definitions.
+fsconfig_set_path/path_empty requires the 'value' argument to point to a
+string, possibly "", and fsconfig_set_fd requires it to be NULL.
+
+I can't stop you from doing:
+
+	fd = open("/some/path", O_PATH);
+	fsconfig(fsfd, fsconfig_set_fd, "fd", NULL, fd);
+
+or:
+
+	fd = open("/dev/sda6", O_RDWR);
+	fsconfig(fsfd, fsconfig_set_path_empty, "foo", "", fd);
+
+The first should fail because I'm using fget() not fget_raw() and the
+second will pass the string and fd number to the filesystem, which will
+presumably then call fs_lookup_param() to invoke pathwalk upon it - which will
+likely also fail.
 
 David
