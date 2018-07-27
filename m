@@ -1,87 +1,54 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [RFC PATCH for 4.18 00/16] Restartable Sequences
-Date: Sat, 28 Jul 2018 00:01:15 +0200
-Message-ID: <20180727220115.GA18879@amd>
-References: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 30/38] vfs: syscall: Add fsmount() to create a mount for a superblock [ver #10]
+Date: Fri, 27 Jul 2018 23:06:19 +0100
+Message-ID: <8835.1532729179@warthog.procyon.org.uk>
+References: <D09916DC-DA22-48AA-A62B-F874BB3C15BC@amacapital.net> <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk> <153271288242.9458.18050138471208178879.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="2oS5YaxWCcQjTEyO"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
+In-Reply-To: <D09916DC-DA22-48AA-A62B-F874BB3C15BC@amacapital.net>
+Content-ID: <8834.1532729179.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Andy Lutomirski <luto@amacapital.net> wrote:
 
---2oS5YaxWCcQjTEyO
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> I have a potentially silly objection. For the old timers, "mount" means to
+> stick a reel of tape or some similar object onto a reader, which seems to
+> imply that "mount" means to start up the filesystem. For younguns, this
+> meaning is probably lost, and the more obvious meaning is to "mount" it into
+> some location in the VFS hierarchy a la vfsmount. The patch description
+> doesn't disambiguate it, and obviously people used to mount(2)/mount(8) are
+> just likely to be confused.
 
-Hi!
+The problem is that inside the kernel it *is* a "mount".
 
-> So for instance, this turns:
->=20
->   int cpu =3D rseq_per_cpu_lock(lock, target_cpu);
->   [...]
->   rseq_per_cpu_unlock(lock, cpu);
->=20
-> into
->=20
->   int cpu =3D rseq_this_cpu_lock(lock);
->   [...]
->   rseq_per_cpu_unlock(lock, cpu);
->=20
-> and:
->=20
->   per_cpu_list_push(list, node, target_cpu);
->   [...]
->   per_cpu_list_pop(list, node, target_cpu);
->=20
-> into
->=20
->   this_cpu_list_push(list, node, &cpu);  /* cpu is an output parameter. */
->   [...]
->   node =3D this_cpu_list_pop(list, &cpu);  /* cpu is an output parameter.=
- */
->=20
-> Eventually integrating cpu_opv or some alternative will allow passing
-> the cpu number as parameter rather than requiring the algorithm to work
-> on the current CPU.
->=20
-> The second effect of not having the cpu_opv fallback is that
-> line and instruction single-stepping with a debugger transforms rseq
-> critical sections based on retry loops into never-ending loops.
-> Debuggers need to use the __rseq_table section to skip those critical
-> sections in order to correctly behave when single-stepping a thread
-> which uses rseq in a retry loop. However, applications which use an
-> alternative fallback method rather than retrying on rseq fast-path abort
-> won't be affected by this kind of single-stepping issue.
->=20
-> Thanks for your feedback!
+How about I change the first paragraph to:
 
-Would it make sense to include Documentation/ patch? I guess at least
-manpage describing the syscall will be needed....
+	Provide a system call by which a filesystem opened with fsopen() and
+	configured by a series of fsconfig() calls can have a detached mount
+	object created for it.  This mount object can then be attached to the
+	VFS mount hierarchy using move_mount() by passing the returned file
+	descriptor as the from directory fd.
 
-								Pavel
+> At the very least, your description should make it absolutely clear what you
+> mean. Even better IMO would be to drop the use of the word "mount" entirely
 
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+I'm not sure that's a reasonable idea, given the "mounting" is how this is
+done.
 
---2oS5YaxWCcQjTEyO
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+Can you suggest a word that encapsulates what it is that fsmount() returns?
+It's almost, but not quite identical with what open(O_PATH) returns, since it
+has to be torn down if not actually mounted somewhere when the fd is closed.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
+> and maybe rename the syscall.
+> 
+> From a very brief reading, I think you are giving it the meaning that would
+> be implied by fsstart(2).
 
-iEYEARECAAYFAltblisACgkQMOfwapXb+vL/rgCfZ7Mkwq0orl7QcLXXpcrW0uDx
-iagAnicESPLrBH66gbArogSx6wYmXBvs
-=92pi
------END PGP SIGNATURE-----
+Do you have a reference for the manpage for that?  Google doesn't seem to find
+it.
 
---2oS5YaxWCcQjTEyO--
+David
