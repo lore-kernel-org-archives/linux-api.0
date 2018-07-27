@@ -1,328 +1,305 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 02/38] vfs: syscall: Add move_mount(2) to move mounts around
- [ver #10]
-Date: Fri, 27 Jul 2018 18:31:37 +0100
-Message-ID: <153271269726.9458.1444064322961471568.stgit@warthog.procyon.org.uk>
-References: <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH 30/38] vfs: syscall: Add fsmount() to create a mount for a superblock [ver #10]
+Date: Fri, 27 Jul 2018 12:27:23 -0700
+Message-ID: <D09916DC-DA22-48AA-A62B-F874BB3C15BC@amacapital.net>
+References: <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk> <153271288242.9458.18050138471208178879.stgit@warthog.procyon.org.uk>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk>
+In-Reply-To: <153271288242.9458.18050138471208178879.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: linux-api@vger.kernel.org, torvalds@linux-foundation.org, dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add a move_mount() system call that will move a mount from one place to
-another and, in the next commit, allow to attach an unattached mount tree.
 
-The new system call looks like the following:
 
-	int move_mount(int from_dfd, const char *from_path,
-		       int to_dfd, const char *to_path,
-		       unsigned int flags);
+> On Jul 27, 2018, at 10:34 AM, David Howells <dhowells@redhat.com> wrote:
+>=20
+> Provide a system call by which a filesystem opened with fsopen() and
+> configured by a series of writes can be mounted:
+>=20
+>    int ret =3D fsmount(int fsfd, unsigned int flags,
+>              unsigned int ms_flags);
+>=20
+> where fsfd is the file descriptor returned by fsopen().  flags can be 0 or=
 
-Signed-off-by: David Howells <dhowells@redhat.com>
-cc: linux-api@vger.kernel.org
----
+> FSMOUNT_CLOEXEC.  ms_flags is a bitwise-OR of the following flags:
 
- arch/x86/entry/syscalls/syscall_32.tbl |    1 
- arch/x86/entry/syscalls/syscall_64.tbl |    1 
- fs/namespace.c                         |  102 ++++++++++++++++++++++++++------
- include/linux/lsm_hooks.h              |    6 ++
- include/linux/security.h               |    7 ++
- include/linux/syscalls.h               |    3 +
- include/uapi/linux/mount.h             |   11 +++
- security/security.c                    |    5 ++
- 8 files changed, 118 insertions(+), 18 deletions(-)
+I have a potentially silly objection. For the old timers, =E2=80=9Cmount=E2=80=
+=9D means to stick a reel of tape or some similar object onto a reader, whic=
+h seems to imply that =E2=80=9Cmount=E2=80=9D means to start up the filesyst=
+em. For younguns, this meaning is probably lost, and the more obvious meanin=
+g is to =E2=80=9Cmount=E2=80=9D it into some location in the VFS hierarchy a=
+ la vfsmount. The patch description doesn=E2=80=99t disambiguate it, and obv=
+iously people used to mount(2)/mount(8) are just likely to be confused.
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index ea1b413afd47..76d092b7d1b0 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -399,3 +399,4 @@
- 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
- 386	i386	rseq			sys_rseq			__ia32_sys_rseq
- 387	i386	open_tree		sys_open_tree			__ia32_sys_open_tree
-+388	i386	move_mount		sys_move_mount			__ia32_sys_move_mount
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 0545bed581dc..37ba4e65eee6 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -344,6 +344,7 @@
- 333	common	io_pgetevents		__x64_sys_io_pgetevents
- 334	common	rseq			__x64_sys_rseq
- 335	common	open_tree		__x64_sys_open_tree
-+336	common	move_mount		__x64_sys_move_mount
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/namespace.c b/fs/namespace.c
-index a4a01ecbcacd..e2934a4f342b 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -2447,43 +2447,37 @@ static inline int tree_contains_unbindable(struct mount *mnt)
- 	return 0;
- }
- 
--static int do_move_mount(struct path *path, const char *old_name)
-+static int do_move_mount(struct path *old_path, struct path *new_path)
- {
--	struct path old_path, parent_path;
-+	struct path parent_path = {.mnt = NULL, .dentry = NULL};
- 	struct mount *p;
- 	struct mount *old;
- 	struct mountpoint *mp;
- 	int err;
--	if (!old_name || !*old_name)
--		return -EINVAL;
--	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
--	if (err)
--		return err;
- 
--	mp = lock_mount(path);
-+	mp = lock_mount(new_path);
- 	err = PTR_ERR(mp);
- 	if (IS_ERR(mp))
- 		goto out;
- 
--	old = real_mount(old_path.mnt);
--	p = real_mount(path->mnt);
-+	old = real_mount(old_path->mnt);
-+	p = real_mount(new_path->mnt);
- 
- 	err = -EINVAL;
- 	if (!check_mnt(p) || !check_mnt(old))
- 		goto out1;
- 
--	if (old->mnt.mnt_flags & MNT_LOCKED)
-+	if (!mnt_has_parent(old))
- 		goto out1;
- 
--	err = -EINVAL;
--	if (old_path.dentry != old_path.mnt->mnt_root)
-+	if (old->mnt.mnt_flags & MNT_LOCKED)
- 		goto out1;
- 
--	if (!mnt_has_parent(old))
-+	if (old_path->dentry != old_path->mnt->mnt_root)
- 		goto out1;
- 
--	if (d_is_dir(path->dentry) !=
--	      d_is_dir(old_path.dentry))
-+	if (d_is_dir(new_path->dentry) !=
-+	    d_is_dir(old_path->dentry))
- 		goto out1;
- 	/*
- 	 * Don't move a mount residing in a shared parent.
-@@ -2501,7 +2495,8 @@ static int do_move_mount(struct path *path, const char *old_name)
- 		if (p == old)
- 			goto out1;
- 
--	err = attach_recursive_mnt(old, real_mount(path->mnt), mp, &parent_path);
-+	err = attach_recursive_mnt(old, real_mount(new_path->mnt), mp,
-+				   &parent_path);
- 	if (err)
- 		goto out1;
- 
-@@ -2513,6 +2508,22 @@ static int do_move_mount(struct path *path, const char *old_name)
- out:
- 	if (!err)
- 		path_put(&parent_path);
-+	return err;
-+}
-+
-+static int do_move_mount_old(struct path *path, const char *old_name)
-+{
-+	struct path old_path;
-+	int err;
-+
-+	if (!old_name || !*old_name)
-+		return -EINVAL;
-+
-+	err = kern_path(old_name, LOOKUP_FOLLOW, &old_path);
-+	if (err)
-+		return err;
-+
-+	err = do_move_mount(&old_path, path);
- 	path_put(&old_path);
- 	return err;
- }
-@@ -2934,7 +2945,7 @@ long do_mount(const char *dev_name, const char __user *dir_name,
- 	else if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
- 		retval = do_change_type(&path, flags);
- 	else if (flags & MS_MOVE)
--		retval = do_move_mount(&path, dev_name);
-+		retval = do_move_mount_old(&path, dev_name);
- 	else
- 		retval = do_new_mount(&path, type_page, sb_flags, mnt_flags,
- 				      dev_name, data_page, data_size);
-@@ -3169,6 +3180,61 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
- 	return ksys_mount(dev_name, dir_name, type, flags, data);
- }
- 
-+/*
-+ * Move a mount from one place to another.
-+ *
-+ * Note the flags value is a combination of MOVE_MOUNT_* flags.
-+ */
-+SYSCALL_DEFINE5(move_mount,
-+		int, from_dfd, const char *, from_pathname,
-+		int, to_dfd, const char *, to_pathname,
-+		unsigned int, flags)
-+{
-+	struct path from_path, to_path;
-+	unsigned int lflags;
-+	int ret = 0;
-+
-+	if (!may_mount())
-+		return -EPERM;
-+
-+	if (flags & ~MOVE_MOUNT__MASK)
-+		return -EINVAL;
-+
-+	/* If someone gives a pathname, they aren't permitted to move
-+	 * from an fd that requires unmount as we can't get at the flag
-+	 * to clear it afterwards.
-+	 */
-+	lflags = 0;
-+	if (flags & MOVE_MOUNT_F_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-+	if (flags & MOVE_MOUNT_F_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-+	if (flags & MOVE_MOUNT_F_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
-+
-+	ret = user_path_at(from_dfd, from_pathname, lflags, &from_path);
-+	if (ret < 0)
-+		return ret;
-+
-+	lflags = 0;
-+	if (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-+	if (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-+	if (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
-+
-+	ret = user_path_at(to_dfd, to_pathname, lflags, &to_path);
-+	if (ret < 0)
-+		goto out_from;
-+
-+	ret = security_move_mount(&from_path, &to_path);
-+	if (ret < 0)
-+		goto out_to;
-+
-+	ret = do_move_mount(&from_path, &to_path);
-+
-+out_to:
-+	path_put(&to_path);
-+out_from:
-+	path_put(&from_path);
-+	return ret;
-+}
-+
- /*
-  * Return true if path is reachable from root
-  *
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index b43bbc893074..924424e7be8f 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -147,6 +147,10 @@
-  *	Parse a string of security data filling in the opts structure
-  *	@options string containing all mount options known by the LSM
-  *	@opts binary data structure usable by the LSM
-+ * @move_mount:
-+ *	Check permission before a mount is moved.
-+ *	@from_path indicates the mount that is going to be moved.
-+ *	@to_path indicates the mountpoint that will be mounted upon.
-  * @dentry_init_security:
-  *	Compute a context for a dentry as the inode is not yet available
-  *	since NFSv4 has no label backed by an EA anyway.
-@@ -1480,6 +1484,7 @@ union security_list_options {
- 					unsigned long kern_flags,
- 					unsigned long *set_kern_flags);
- 	int (*sb_parse_opts_str)(char *options, struct security_mnt_opts *opts);
-+	int (*move_mount)(const struct path *from_path, const struct path *to_path);
- 	int (*dentry_init_security)(struct dentry *dentry, int mode,
- 					const struct qstr *name, void **ctx,
- 					u32 *ctxlen);
-@@ -1811,6 +1816,7 @@ struct security_hook_heads {
- 	struct hlist_head sb_set_mnt_opts;
- 	struct hlist_head sb_clone_mnt_opts;
- 	struct hlist_head sb_parse_opts_str;
-+	struct hlist_head move_mount;
- 	struct hlist_head dentry_init_security;
- 	struct hlist_head dentry_create_files_as;
- #ifdef CONFIG_SECURITY_PATH
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 1498b9e0539b..9bb5bc6d596c 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -245,6 +245,7 @@ int security_sb_clone_mnt_opts(const struct super_block *oldsb,
- 				unsigned long kern_flags,
- 				unsigned long *set_kern_flags);
- int security_sb_parse_opts_str(char *options, struct security_mnt_opts *opts);
-+int security_move_mount(const struct path *from_path, const struct path *to_path);
- int security_dentry_init_security(struct dentry *dentry, int mode,
- 					const struct qstr *name, void **ctx,
- 					u32 *ctxlen);
-@@ -599,6 +600,12 @@ static inline int security_sb_parse_opts_str(char *options, struct security_mnt_
- 	return 0;
- }
- 
-+static inline int security_move_mount(const struct path *from_path,
-+				      const struct path *to_path)
-+{
-+	return 0;
-+}
-+
- static inline int security_inode_alloc(struct inode *inode)
- {
- 	return 0;
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 3cc6b8f8bd2f..3c0855d9b105 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -901,6 +901,9 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
- asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
- 			 int flags, uint32_t sig);
- asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
-+asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
-+			       int to_dfd, const char __user *to_path,
-+			       unsigned int ms_flags);
- 
- /*
-  * Architecture-specific system calls
-diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
-index e8db2911adca..89adf0d731ab 100644
---- a/include/uapi/linux/mount.h
-+++ b/include/uapi/linux/mount.h
-@@ -7,4 +7,15 @@
- #define OPEN_TREE_CLONE		1		/* Clone the target tree and attach the clone */
- #define OPEN_TREE_CLOEXEC	O_CLOEXEC	/* Close the file on execve() */
- 
-+/*
-+ * move_mount() flags.
-+ */
-+#define MOVE_MOUNT_F_SYMLINKS		0x00000001 /* Follow symlinks on from path */
-+#define MOVE_MOUNT_F_AUTOMOUNTS		0x00000002 /* Follow automounts on from path */
-+#define MOVE_MOUNT_F_EMPTY_PATH		0x00000004 /* Empty from path permitted */
-+#define MOVE_MOUNT_T_SYMLINKS		0x00000010 /* Follow symlinks on to path */
-+#define MOVE_MOUNT_T_AUTOMOUNTS		0x00000020 /* Follow automounts on to path */
-+#define MOVE_MOUNT_T_EMPTY_PATH		0x00000040 /* Empty to path permitted */
-+#define MOVE_MOUNT__MASK		0x00000077
-+
- #endif /* _UAPI_LINUX_MOUNT_H */
-diff --git a/security/security.c b/security/security.c
-index 7cafc1c90d16..5149c2cbe8a7 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -439,6 +439,11 @@ int security_sb_parse_opts_str(char *options, struct security_mnt_opts *opts)
- }
- EXPORT_SYMBOL(security_sb_parse_opts_str);
- 
-+int security_move_mount(const struct path *from_path, const struct path *to_path)
-+{
-+	return call_int_hook(move_mount, 0, from_path, to_path);
-+}
-+
- int security_inode_alloc(struct inode *inode)
- {
- 	inode->i_security = NULL;
+At the very least, your description should make it absolutely clear what you=
+ mean. Even better IMO would be to drop the use of the word =E2=80=9Cmount=E2=
+=80=9D entirely and maybe rename the syscall.
+
+=46rom a very brief reading, I think you are giving it the meaning that woul=
+d be implied by fsstart(2).
+
+>=20
+>    MS_RDONLY
+>    MS_NOSUID
+>    MS_NODEV
+>    MS_NOEXEC
+>    MS_NOATIME
+>    MS_NODIRATIME
+>    MS_RELATIME
+>    MS_STRICTATIME
+>=20
+>    MS_UNBINDABLE
+>    MS_PRIVATE
+>    MS_SLAVE
+>    MS_SHARED
+>=20
+> In the event that fsmount() fails, it may be possible to get an error
+> message by calling read() on fsfd.  If no message is available, ENODATA
+> will be reported.
+>=20
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> cc: linux-api@vger.kernel.org
+> ---
+>=20
+> arch/x86/entry/syscalls/syscall_32.tbl |    1=20
+> arch/x86/entry/syscalls/syscall_64.tbl |    1=20
+> fs/namespace.c                         |  140 ++++++++++++++++++++++++++++=
++++-
+> include/linux/syscalls.h               |    1=20
+> include/uapi/linux/fs.h                |    2=20
+> 5 files changed, 141 insertions(+), 4 deletions(-)
+>=20
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/sysca=
+lls/syscall_32.tbl
+> index f9970310c126..c78b68256f8a 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -402,3 +402,4 @@
+> 388    i386    move_mount        sys_move_mount            __ia32_sys_move=
+_mount
+> 389    i386    fsopen            sys_fsopen            __ia32_sys_fsopen
+> 390    i386    fsconfig        sys_fsconfig            __ia32_sys_fsconfig=
+
+> +391    i386    fsmount            sys_fsmount            __ia32_sys_fsmou=
+nt
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/sysca=
+lls/syscall_64.tbl
+> index 4185d36e03bb..d44ead5d4368 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -347,6 +347,7 @@
+> 336    common    move_mount        __x64_sys_move_mount
+> 337    common    fsopen            __x64_sys_fsopen
+> 338    common    fsconfig        __x64_sys_fsconfig
+> +339    common    fsmount            __x64_sys_fsmount
+>=20
+> #
+> # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/fs/namespace.c b/fs/namespace.c
+> index ea07066a2731..b1661b90256d 100644
+> --- a/fs/namespace.c
+> +++ b/fs/namespace.c
+> @@ -2503,7 +2503,7 @@ static int do_move_mount(struct path *old_path, stru=
+ct path *new_path)
+>=20
+>    attached =3D mnt_has_parent(old);
+>    /*
+> -     * We need to allow open_tree(OPEN_TREE_CLONE) followed by
+> +     * We need to allow open_tree(OPEN_TREE_CLONE) or fsmount() followed b=
+y
+>     * move_mount(), but mustn't allow "/" to be moved.
+>     */
+>    if (old->mnt_ns && !attached)
+> @@ -3348,9 +3348,141 @@ struct vfsmount *kern_mount(struct file_system_typ=
+e *type)
+> EXPORT_SYMBOL_GPL(kern_mount);
+>=20
+> /*
+> - * Move a mount from one place to another.
+> - * In combination with open_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can=
+ be
+> - * used to copy a mount subtree.
+> + * Create a kernel mount representation for a new, prepared superblock
+> + * (specified by fs_fd) and attach to an open_tree-like file descriptor.
+> + */
+> +SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags, unsigned int, m=
+s_flags)
+> +{
+> +    struct fs_context *fc;
+> +    struct file *file;
+> +    struct path newmount;
+> +    struct fd f;
+> +    unsigned int mnt_flags =3D 0;
+> +    long ret;
+> +
+> +    if (!may_mount())
+> +        return -EPERM;
+> +
+> +    if ((flags & ~(FSMOUNT_CLOEXEC)) !=3D 0)
+> +        return -EINVAL;
+> +
+> +    if (ms_flags & ~(MS_RDONLY | MS_NOSUID | MS_NODEV | MS_NOEXEC |
+> +             MS_NOATIME | MS_NODIRATIME | MS_RELATIME |
+> +             MS_STRICTATIME))
+> +        return -EINVAL;
+> +
+> +    if (ms_flags & MS_RDONLY)
+> +        mnt_flags |=3D MNT_READONLY;
+> +    if (ms_flags & MS_NOSUID)
+> +        mnt_flags |=3D MNT_NOSUID;
+> +    if (ms_flags & MS_NODEV)
+> +        mnt_flags |=3D MNT_NODEV;
+> +    if (ms_flags & MS_NOEXEC)
+> +        mnt_flags |=3D MNT_NOEXEC;
+> +    if (ms_flags & MS_NODIRATIME)
+> +        mnt_flags |=3D MNT_NODIRATIME;
+> +
+> +    if (ms_flags & MS_STRICTATIME) {
+> +        if (ms_flags & MS_NOATIME)
+> +            return -EINVAL;
+> +    } else if (ms_flags & MS_NOATIME) {
+> +        mnt_flags |=3D MNT_NOATIME;
+> +    } else {
+> +        mnt_flags |=3D MNT_RELATIME;
+> +    }
+> +
+> +    f =3D fdget(fs_fd);
+> +    if (!f.file)
+> +        return -EBADF;
+> +
+> +    ret =3D -EINVAL;
+> +    if (f.file->f_op !=3D &fscontext_fops)
+> +        goto err_fsfd;
+> +
+> +    fc =3D f.file->private_data;
+> +
+> +    /* There must be a valid superblock or we can't mount it */
+> +    ret =3D -EINVAL;
+> +    if (!fc->root)
+> +        goto err_fsfd;
+> +
+> +    ret =3D -EPERM;
+> +    if (mount_too_revealing(fc->root->d_sb, &mnt_flags)) {
+> +        pr_warn("VFS: Mount too revealing\n");
+> +        goto err_fsfd;
+> +    }
+> +
+> +    ret =3D mutex_lock_interruptible(&fc->uapi_mutex);
+> +    if (ret < 0)
+> +        goto err_fsfd;
+> +
+> +    ret =3D -EBUSY;
+> +    if (fc->phase !=3D FS_CONTEXT_AWAITING_MOUNT)
+> +        goto err_unlock;
+> +
+> +    ret =3D -EPERM;
+> +    if ((fc->sb_flags & SB_MANDLOCK) && !may_mandlock())
+> +        goto err_unlock;
+> +
+> +    newmount.mnt =3D vfs_create_mount(fc, mnt_flags);
+> +    if (IS_ERR(newmount.mnt)) {
+> +        ret =3D PTR_ERR(newmount.mnt);
+> +        goto err_unlock;
+> +    }
+> +    newmount.dentry =3D dget(fc->root);
+> +
+> +    /* We've done the mount bit - now move the file context into more or
+> +     * less the same state as if we'd done an fspick().  We don't want to=
+
+> +     * do any memory allocation or anything like that at this point as we=
+
+> +     * don't want to have to handle any errors incurred.
+> +     */
+> +    if (fc->ops && fc->ops->free)
+> +        fc->ops->free(fc);
+> +    fc->fs_private =3D NULL;
+> +    fc->s_fs_info =3D NULL;
+> +    fc->sb_flags =3D 0;
+> +    fc->sloppy =3D false;
+> +    fc->silent =3D false;
+> +    security_fs_context_free(fc);
+> +    fc->security =3D NULL;
+> +    kfree(fc->subtype);
+> +    fc->subtype =3D NULL;
+> +    kfree(fc->source);
+> +    fc->source =3D NULL;
+> +
+> +    fc->purpose =3D FS_CONTEXT_FOR_RECONFIGURE;
+> +    fc->phase =3D FS_CONTEXT_AWAITING_RECONF;
+> +
+> +    /* Attach to an apparent O_PATH fd with a note that we need to unmoun=
+t
+> +     * it, not just simply put it.
+> +     */
+> +    file =3D dentry_open(&newmount, O_PATH, fc->cred);
+> +    if (IS_ERR(file)) {
+> +        ret =3D PTR_ERR(file);
+> +        goto err_path;
+> +    }
+> +    file->f_mode |=3D FMODE_NEED_UNMOUNT;
+> +
+> +    ret =3D get_unused_fd_flags((flags & FSMOUNT_CLOEXEC) ? O_CLOEXEC : 0=
+);
+> +    if (ret >=3D 0)
+> +        fd_install(ret, file);
+> +    else
+> +        fput(file);
+> +
+> +err_path:
+> +    path_put(&newmount);
+> +err_unlock:
+> +    mutex_unlock(&fc->uapi_mutex);
+> +err_fsfd:
+> +    fdput(f);
+> +    return ret;
+> +}
+> +
+> +/*
+> + * Move a mount from one place to another.  In combination with
+> + * fsopen()/fsmount() this is used to install a new mount and in combinat=
+ion
+> + * with open_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can be used to cop=
+y
+> + * a mount subtree.
+>  *
+>  * Note the flags value is a combination of MOVE_MOUNT_* flags.
+>  */
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 9628d14a7ede..65db661cc2da 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -907,6 +907,7 @@ asmlinkage long sys_move_mount(int from_dfd, const cha=
+r __user *from_path,
+> asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags)=
+;
+> asmlinkage long sys_fsconfig(int fs_fd, unsigned int cmd, const char __use=
+r *key,
+>                 const void __user *value, int aux);
+> +asmlinkage long sys_fsmount(int fs_fd, unsigned int flags, unsigned int m=
+s_flags);
+>=20
+> /*
+>  * Architecture-specific system calls
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 7c9e165e8689..297362908d01 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -349,6 +349,8 @@ typedef int __bitwise __kernel_rwf_t;
+>  */
+> #define FSOPEN_CLOEXEC        0x00000001
+>=20
+> +#define FSMOUNT_CLOEXEC        0x00000001
+> +
+> /*
+>  * The type of fsconfig() call made.
+>  */
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
