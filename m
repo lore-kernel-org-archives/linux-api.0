@@ -1,75 +1,89 @@
-From: Anton Altaparmakov <anton@tuxera.com>
-Subject: Re: [PATCH 34/38] vfs: syscall: Add fsinfo() to query filesystem
- information [ver #10]
-Date: Sat, 28 Jul 2018 00:14:14 +0000
-Message-ID: <7C807D58-6B8C-400F-AF67-CD2F38BC0AE4@tuxera.com>
-References: <CAG48ez0SdSPkimsk-MW7oSQO-Y64X-LD4JXnuPsZXKuz=y1_Kg@mail.gmail.com>
- <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk>
- <153271291017.9458.7827028432894772673.stgit@warthog.procyon.org.uk>
- <21395.1532735340@warthog.procyon.org.uk>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.18 00/16] Restartable Sequences
+Date: Sat, 28 Jul 2018 09:49:04 -0400 (EDT)
+Message-ID: <1210024721.6363.1532785744879.JavaMail.zimbra@efficios.com>
+References: <20180602124408.8430-1-mathieu.desnoyers@efficios.com> <20180727220115.GA18879@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <21395.1532735340@warthog.procyon.org.uk>
-Content-Language: en-US
-Content-ID: <752FD3C5BE365846B549589674C7578E@tuxera.com>
+In-Reply-To: <20180727220115.GA18879@amd>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
+To: Pavel Machek <pavel@ucw.cz>, Carlos O'Donell <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cata>
 List-Id: linux-api@vger.kernel.org
 
-Hi David,
+----- On Jul 27, 2018, at 6:01 PM, Pavel Machek pavel@ucw.cz wrote:
 
-> On 28 Jul 2018, at 00:49, David Howells <dhowells@redhat.com> wrote:
-> Jann Horn <jannh@google.com> wrote:
->>> +static int fsinfo_generic_name_encoding(struct dentry *dentry, char *buf)
->>> +{
->>> +       static const char encoding[] = "utf8";
->>> +
->>> +       if (buf)
->>> +               memcpy(buf, encoding, sizeof(encoding) - 1);
->>> +       return sizeof(encoding) - 1;
->>> +}
+> Hi!
+> 
+>> So for instance, this turns:
 >> 
->> Is this meant to be "encoding to be used by userspace" or "encoding of
->> on-disk filenames"?
+>>   int cpu = rseq_per_cpu_lock(lock, target_cpu);
+>>   [...]
+>>   rseq_per_cpu_unlock(lock, cpu);
+>> 
+>> into
+>> 
+>>   int cpu = rseq_this_cpu_lock(lock);
+>>   [...]
+>>   rseq_per_cpu_unlock(lock, cpu);
+>> 
+>> and:
+>> 
+>>   per_cpu_list_push(list, node, target_cpu);
+>>   [...]
+>>   per_cpu_list_pop(list, node, target_cpu);
+>> 
+>> into
+>> 
+>>   this_cpu_list_push(list, node, &cpu);  /* cpu is an output parameter. */
+>>   [...]
+>>   node = this_cpu_list_pop(list, &cpu);  /* cpu is an output parameter. */
+>> 
+>> Eventually integrating cpu_opv or some alternative will allow passing
+>> the cpu number as parameter rather than requiring the algorithm to work
+>> on the current CPU.
+>> 
+>> The second effect of not having the cpu_opv fallback is that
+>> line and instruction single-stepping with a debugger transforms rseq
+>> critical sections based on retry loops into never-ending loops.
+>> Debuggers need to use the __rseq_table section to skip those critical
+>> sections in order to correctly behave when single-stepping a thread
+>> which uses rseq in a retry loop. However, applications which use an
+>> alternative fallback method rather than retrying on rseq fast-path abort
+>> won't be affected by this kind of single-stepping issue.
+>> 
+>> Thanks for your feedback!
 > 
-> The latter.
-> 
->> Are there any plans to create filesystems that behave differently?
-> 
-> isofs, fat, ntfs, cifs for example.
-> 
->> If the latter: This is wrong for e.g. a vfat mount that uses a codepage,
->> right?  Should the default in that case not be "I don't know"?
-> 
-> Quite possibly.  Note that it could also be what you're interpreting it as
-> because the codepage got overridden by a mount parameter rather than what's on
-> the disk (assuming the medium actually records this).
+> Would it make sense to include Documentation/ patch? I guess at least
+> manpage describing the syscall will be needed....
 
-No, nothing like that is recorded on disk.  That would have been way too helpful!  (-;  The only place Windows records such information is, you may have guessed this: in the registry which of course is local to the computer and unrelated to what removable media is attached...
+Hi Pavel,
 
-> One thing I'm confused about is that fat has both a codepage and a charset and
-> I'm not sure of the difference.
+Documentation-wise, I have posted a rseq man page rfc here:
 
-Oh that is quite simple.  (-:
+https://lkml.kernel.org/r/20180616195803.29877-1-mathieu.desnoyers@efficios.com
 
-The codepage is what is used to translate from/to the on-disk DOS 8.3 style names into the kernel's Unicode character representation.  The correct codepage for a particular volume is not stored on disk so it can lead to all sorts of fun if you for example create some names on for example a Japanese Windows on a FAT formatted USB stick and then plug that into a US or European Windows where the default code pages are completely different - all your filenames will appear totally corrupt.  (Note this ONLY affects 8.3 style/DOS/short names or whatever you want to call them.)
+comments are welcome!
 
-The charset on the other hand is what is used to convert strings coming in from/going out to userspace into the kernel's Unicode character representation.
+It does not include any details about user-space library APIs though, as
+this is not the purpose of the syscall documentation.
 
-The one nice thing about VFAT (and there aren't many nice things about it!) is that for long names (i.e. not the 8.3 style/DOS/short names), it actually stores on-disk little-endian UTF-16 (since Windows 2000, before that it used little endian UCS-2 - the change was needed to support things like Emojis and some languages that go outside the UCS-2 range of fixed 16-bit unicode).
+We're currently discussing integration of rseq thread registration into
+glibc.
 
-Hope this clears that up.
+Once this is settled, I plan to provide a librseq which will contain headers
+and documentation on how to use rseq without having to re-create the low-level
+assembly every time.
 
-Best regards,
+Does this plan make sense to you ?
 
-	Anton
+Thanks,
 
-> David
+Mathieu
 
 -- 
-Anton Altaparmakov <anton at tuxera.com> (replace at with @)
-Lead in File System Development, Tuxera Inc., http://www.tuxera.com/
-Linux NTFS maintainer
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
