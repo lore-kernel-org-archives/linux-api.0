@@ -1,166 +1,178 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [RFC PATCH ghak90 (was ghak32) V3 01/10] audit: add container id
-Date: Mon, 30 Jul 2018 14:47:31 -0400
-Message-ID: <20180730184731.aycnmknlew4vhnqe@madcap2.tricolour.ca>
-References: <cover.1528304203.git.rgb@redhat.com>
- <0377c3ced6bdbc44fe17f9a5679cb6eda4304024.1528304203.git.rgb@redhat.com>
- <CAHC9VhRk+qLAyizM9i8D+cjKxyhruuj_Z9N0QRmjM-fjm4hgRw@mail.gmail.com>
- <20180724190613.ww6yhsqpa7n4s62k@madcap2.tricolour.ca>
- <CAHC9VhQ3KwG-YmpJsOa9k=YqQmaQTaJXeB=eM9Fm80hujbngBg@mail.gmail.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [RFC PATCH for 4.18 00/16] Restartable Sequences
+Date: Mon, 30 Jul 2018 21:07:15 +0200
+Message-ID: <20180730190715.GA29926@amd>
+References: <20180602124408.8430-1-mathieu.desnoyers@efficios.com>
+ <20180727220115.GA18879@amd>
+ <1210024721.6363.1532785744879.JavaMail.zimbra@efficios.com>
+ <20180728141314.GA25264@amd>
+ <1005916991.7038.1532976120931.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="dDRMvlgZJXvWKvBx"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHC9VhQ3KwG-YmpJsOa9k=YqQmaQTaJXeB=eM9Fm80hujbngBg@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: cgroups@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, jlayton@redhat.com, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, serge@hallyn.com
+In-Reply-To: <1005916991.7038.1532976120931.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andrew Hunter <ahh@google.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linu
 List-Id: linux-api@vger.kernel.org
 
-On 2018-07-24 17:54, Paul Moore wrote:
-> On Tue, Jul 24, 2018 at 3:09 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > On 2018-07-20 18:13, Paul Moore wrote:
-> > > On Wed, Jun 6, 2018 at 1:00 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > > Implement the proc fs write to set the audit container identifier of a
-> > > > process, emitting an AUDIT_CONTAINER_ID record to document the event.
-> > > >
-> > > > This is a write from the container orchestrator task to a proc entry of
-> > > > the form /proc/PID/audit_containerid where PID is the process ID of the
-> > > > newly created task that is to become the first task in a container, or
-> > > > an additional task added to a container.
-> > > >
-> > > > The write expects up to a u64 value (unset: 18446744073709551615).
-> > > >
-> > > > The writer must have capability CAP_AUDIT_CONTROL.
-> > > >
-> > > > This will produce a record such as this:
-> > > >   type=CONTAINER_ID msg=audit(2018-06-06 12:39:29.636:26949) : op=set opid=2209 old-contid=18446744073709551615 contid=123456 pid=628 auid=root uid=root tty=ttyS0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 comm=bash exe=/usr/bin/bash res=yes
-> > > >
-> > > > The "op" field indicates an initial set.  The "pid" to "ses" fields are
-> > > > the orchestrator while the "opid" field is the object's PID, the process
-> > > > being "contained".  Old and new audit container identifier values are
-> > > > given in the "contid" fields, while res indicates its success.
-> > > >
-> > > > It is not permitted to unset or re-set the audit container identifier.
-> > > > A child inherits its parent's audit container identifier, but then can
-> > > > be set only once after.
-> > > >
-> > > > See: https://github.com/linux-audit/audit-kernel/issues/90
-> > > > See: https://github.com/linux-audit/audit-userspace/issues/51
-> > > > See: https://github.com/linux-audit/audit-testsuite/issues/64
-> > > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> > > >
-> > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > > ---
-> > > >  fs/proc/base.c             | 37 ++++++++++++++++++++++++
-> > > >  include/linux/audit.h      | 25 ++++++++++++++++
-> > > >  include/uapi/linux/audit.h |  2 ++
-> > > >  kernel/auditsc.c           | 71 ++++++++++++++++++++++++++++++++++++++++++++++
-> > > >  4 files changed, 135 insertions(+)
-> 
-> ...
-> 
-> > > > @@ -2112,6 +2116,73 @@ int audit_set_loginuid(kuid_t loginuid)
-> > > >  }
-> > > >
-> > > >  /**
-> > > > + * audit_set_contid - set current task's audit_context contid
-> > > > + * @contid: contid value
-> > > > + *
-> > > > + * Returns 0 on success, -EPERM on permission failure.
-> > > > + *
-> > > > + * Called (set) from fs/proc/base.c::proc_contid_write().
-> > > > + */
-> > > > +int audit_set_contid(struct task_struct *task, u64 contid)
-> > > > +{
-> > > > +       u64 oldcontid;
-> > > > +       int rc = 0;
-> > > > +       struct audit_buffer *ab;
-> > > > +       uid_t uid;
-> > > > +       struct tty_struct *tty;
-> > > > +       char comm[sizeof(current->comm)];
-> > > > +
-> > > > +       /* Can't set if audit disabled */
-> > > > +       if (!task->audit)
-> > > > +               return -ENOPROTOOPT;
-> > > > +       oldcontid = audit_get_contid(task);
-> > > > +       /* Don't allow the audit containerid to be unset */
-> > > > +       if (!cid_valid(contid))
-> > > > +               rc = -EINVAL;
-> > > > +       /* if we don't have caps, reject */
-> > > > +       else if (!capable(CAP_AUDIT_CONTROL))
-> > > > +               rc = -EPERM;
-> > > > +       /* if task has children or is not single-threaded, deny */
-> > > > +       else if (!list_empty(&task->children))
-> > > > +               rc = -EBUSY;
-> > >
-> > > Is this safe without holding tasklist_lock?  I worry we might be
-> > > vulnerable to a race with fork().
-> > >
-> > > > +       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> > > > +               rc = -EALREADY;
-> > >
-> > > Similar concern here as well, although related to threads.
-> >
-> > I think you are correct here and tasklist_lock should cover both.  Do we
-> > also want rcu_read_lock() immediately preceeding it?
-> 
-> You'll need to take a closer look and determine the locking scheme. I
-> simply took a quick look while reviewing this patch to see what of the
-> existing locks, if any, would be most applicable here; tasklist_lock
-> seemed like a good starting point.
-> 
-> It looks like tasklist_lock is defined as a rwlock_t so I'm not sure
-> it would make sense to use it with a RCU protected structure
-> (typically it's RCU+spinlock), but maybe that is the case with a
-> task_struct, you'll need to check.
 
-All I need is a read rather than write tasklist_lock since I'm not
-changing any inter-task relationships, which makes it possible to nest
-it inside or outside the task_lock().  I don't think I need the RCU
-lock.
+--dDRMvlgZJXvWKvBx
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> > > > +       /* it is already set, and not inherited from the parent, reject */
-> > > > +       else if (cid_valid(oldcontid) && !task->audit->inherited)
-> > > > +               rc = -EEXIST;
-> > >
-> > > Maybe I'm missing something, but why do we care about preventing
-> > > reassigning the audit container ID in this case?  The task is single
-> > > threaded and has no descendants at this point so it should be safe,
-> > > yes?  So long as the task changing the audit container ID has
-> > > capable(CAP_AUDIT_CONTOL) it shouldn't matter, right?
-> >
-> > Because we hammered out this idea 6 months ago in the design phase and I
-> > thought we all firmly agreed that the audit container identifier could
-> > only be set once.  Has any significant discussion happenned since then
-> > to change that wisdom?  I just wonder why this is coming up now.
-> 
-> Implementation, and time, can change how one looks at an earlier
-> design.  I believe this is why most well reasoned specifications have
-> a reference design.
-> 
-> Remind me why the design had the restriction of write once for the
-> audit container ID?  At this point given the CAP_AUDIT_CONTROL and the
-> single-thread, no-children restrictions I'm not sure what harm there
-> is in allowing the value to be written multiple times (so long as the
-> changes are audited of course).
+Hi!
 
-Looking back through the conversations, I think you may be right that we
-no longer need it, but it is easy to re-add if we find it necessary.
+> > Thanks for pointer.
+> >=20
+> > +Restartable sequences are atomic with respect to preemption (making
+> > it
+> > +atomic with respect to other threads running on the same CPU), as
+> > well
+> > +as signal delivery (user-space execution contexts nested over the
+> > same
+> > +thread).
+> >=20
+> > So the threads are protected against sigkill when running the
+> > restartable sequence?
+>=20
+> In that scenario, SIGKILL _will_ be delivered, hence execution of the
+> rseq critical section will never reach the commit instruction. This
+> follows the guarantee provided that the rseq c.s. either executes
+> completely "atomically" wrt preemption/signal delivery, *or* gets
+> aborted. In this case, sigkill will reap the entire process, so
 
-> > > Related, I'm questioning if we would ever care if the audit container
-> > > ID was inherited or not?
-> >
-> > We do since that is the only way we can tell if the value has been set
-> > once already or inherited unless we check if the parent's audit
-> > container identifier is identical (which tells us it was inherited).
-> 
-> Tied to the above question.  If we don't care about multiple changes,
-> given the other constraints, we probably don't need the inherited
-> flag.
+The text above does not mention abort -- so I was just making
+sure. Maybe mentioning it would be good idea?
 
-Agreed.
+> > +Restartable sequences must not perform system calls. Doing so may
+> > result
+> > +in termination of the process by a segmentation fault.
+> > +
+> >=20
+> > "may result"? It would be nice to always catch that.
+>=20
+> I would also like this, but unfortunately this check adds overhead to eve=
+ry
+> system call, therefore this is only enforced with CONFIG_DEBUG_RSEQ=3Dy b=
+uilds.
 
-> paul moore
+Makes sense. (But this is probably bad place to talk about
+CONFIG_DEBUG_RSEQ=3Dy. Too bad.)
 
-- RGB
+> > +Optimistic cache of the CPU number on which the current thread is
+> > +running. Its value is guaranteed to always be a possible CPU number,
+> > +even when rseq is not initialized. The value it contains should
+> > always
+> > +be confirmed by reading the cpu_id field.
+> >=20
+> > I'm not sure what "optimistic cache" is...
+>=20
+> Perhaps we can find a better wording.
+>=20
+> It's "optimistic" in the sense that it's always guaranteed to hold a
+> valid CPU number within the range [ 0 .. nr_possible_cpus - 1 ]. It can
+> therefore be loaded by user-space and then used as an offset, without
+> having to check whether it is within valid bounds compared to the number
+> of possible CPUs in the system.
+>=20
+> This works even if the kernel on which the application runs on does not
+> support rseq at all: the __rseq_abi->cpu_id_start field stays initialized=
+ at
+> 0, which is indeed a valid CPU number. It's therefore valid to use it as =
+an
+> offset in per-cpu data structures, and only validate whether it's actuall=
+y the
+> current CPU number by comparing it with the __rseq_abi->cpu_id field
+> within the rseq critical section. If rseq is not available in the kernel,
+> that cpu_id field stays initialized at -1, so the comparison always fails,
+> as intended.
+>=20
+> It's then up to user-space to use a fall-back mechanism, considering that
+> rseq is not available.
+>=20
+> Advice on improved wording would be welcome.
+
+Ok, that makes sense, but I'd not understand it from the man
+page. Perhaps your text should be put there?
+
+> > +Flags indicating the restart behavior for the current thread. This is
+> > +mainly used for debugging purposes. Can be either:
+> > +.IP \[bu]
+> > +RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
+> > +.IP \[bu]
+> > +RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
+> > +.IP \[bu]
+> >=20
+> > Flags tell me there may be more then one, but "can be either" tells me
+> > just one flag is allowed.
+>=20
+> Combining them is allowed. Will fix by saying: "Can be a combination of:".
+
+Thanks.
+
+> > +.B Structure alignment
+> > +This structure is aligned on multiples of 32 bytes.
+> > +.TP
+> > +.B Structure size
+> > +This structure has a fixed size of 32 bytes.
+> > +.B Structure alignment
+> > +This structure is aligned on multiples of 32 bytes.
+> > +.TP
+> > +.B Structure size
+> > +This structure has a fixed size of 32 bytes.
+> >=20
+> > I believe we normally say "is aligned on 32-bytes boundary".
+>=20
+> OK will fix. I think it should then become:
+>=20
+> "is aligned on 32-byte boundary." (no plural for byte)
+
+Thanks.
+
+> > (Will not
+> > this need to be bigger on machines with bigger cache sizes?)
+> >=20
+> > above it says:
+> >=20
+> > +.B Structure size
+> > +This structure is extensible. Its size is passed as parameter to the
+> > +rseq system call.
+> >=20
+> > I'm reading source, so maybe it refers to different structure.
+>=20
+> It can be aligned on a larger multiple. This requirement of 32 bytes
+> is a minimum. Therefore, if we ever extend struct rseq, or if an
+> architecture shows benefit from aligning struct rseq on larger boundaries,
+> it is free to do so. It will still respect the requirement of alignment on
+> 32 bytes boundaries.
+
+Well, elsewhere it said "This structure has a fixed size of 32 bytes."
+Now it says structure size is passed with every syscalls. Now I'm
+confused (but maybe that's caused by reading source, not formatted
+document).
+
+Best regards,
+									Pavel
+
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--dDRMvlgZJXvWKvBx
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAltfYeMACgkQMOfwapXb+vIsnQCgtl3iTr+OMCuaRc7czTu4nJHz
+xV0An2eZzLsGaRdnwYI9e2oEloG41WJM
+=Qcpq
+-----END PGP SIGNATURE-----
+
+--dDRMvlgZJXvWKvBx--
