@@ -1,53 +1,66 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 29/38] vfs: syscall: Add fsconfig() for configuring and
- managing a context [ver #10]
-Date: Sun, 29 Jul 2018 13:14:20 +0200
-Message-ID: <CAG48ez3HY6UuOgo1gM9L=WwyOqifKSs6sFu7f2qqBZQg6hy96g@mail.gmail.com>
-References: <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk>
- <153271287586.9458.6001928723332685410.stgit@warthog.procyon.org.uk>
- <CAG48ez2f+J+UeFN0u1Hpfq3tFXJbi7ckts8sua3eY4jDwnh6-Q@mail.gmail.com> <19865.1532854200@warthog.procyon.org.uk>
+From: =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
+Subject: [PATCH] prctl: add PR_[GS]ET_KILLABLE
+Date: Mon, 30 Jul 2018 09:52:41 +0200
+Message-ID: <20180730075241.24002-1-j@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <19865.1532854200@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jul 29, 2018 at 10:50 AM David Howells <dhowells@redhat.com> wrote:
->
-> Jann Horn <jannh@google.com> wrote:
->
-> > [...]
-> > > +       case fsconfig_set_binary:
-> > > +               param.type = fs_value_is_blob;
-> > > +               param.size = aux;
-> > > +               param.blob = memdup_user_nul(_value, aux);
-> > > +               if (IS_ERR(param.blob)) {
-> > > +                       ret = PTR_ERR(param.blob);
-> > > +                       goto out_key;
-> > > +               }
-> > > +               break;
-> >
-> > This means that a namespace admin (iow, an unprivileged user) can
-> > allocate 1MB of unswappable kmalloc memory per userspace task, right?
-> > Using userfaultfd or FUSE, you can then stall the task as long as you
-> > want while it has that allocation. Is that problematic, or is that
-> > normal?
->
-> That's not exactly the case.  A userspace task can make a temporary
-> allocation, but unless the filesystem grabs it, it's released again on exit
-> from the system call.
+PR_SET_KILLABLE clears the SIGNAL_UNKILLABLE flag. This allows
+CLONE_NEWPID tasks to restore normal signal behavior, opting out of the
+special signal protection for init processes.
 
-That's what I said. Each userspace task can make a 1MB allocation by
-calling this syscall, and this temporary allocation stays allocated
-until the end of the syscall. But the runtime of the syscall is
-unbounded - even just the memdup_user_nul() can stall forever if the
-copy_from_user() call inside it faults on e.g. a userfault region or a
-memory-mapped file from a FUSE filesystem.
+This is required for job control in a shell that uses CLONE_NEWPID for
+child processes.
 
-> Note that I should probably use vmalloc() rather than kmalloc(), but that
-> doesn't really affect your point.  I could also pass the user pointer through
-> to the filesystem instead - I wanted to avoid that for this interface, but it
-> make sense in this instance.
+This prctl does not allow setting the SIGNAL_UNKILLABLE flag, only
+clearing.
+
+Signed-off-by: Jürg Billeter <j@bitron.ch>
+---
+ include/uapi/linux/prctl.h |  4 ++++
+ kernel/sys.c               | 11 +++++++++++
+ 2 files changed, 15 insertions(+)
+
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index c0d7ea0bf5b6..92afb63da727 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -219,4 +219,8 @@ struct prctl_mm_map {
+ # define PR_SPEC_DISABLE		(1UL << 2)
+ # define PR_SPEC_FORCE_DISABLE		(1UL << 3)
+ 
++/* Control SIGNAL_UNKILLABLE */
++#define PR_GET_KILLABLE			54
++#define PR_SET_KILLABLE			55
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 38509dc1f77b..264de630d548 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2484,6 +2484,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 			return -EINVAL;
+ 		error = arch_prctl_spec_ctrl_set(me, arg2, arg3);
+ 		break;
++	case PR_GET_KILLABLE:
++		if (arg3 || arg4 || arg5)
++			return -EINVAL;
++		error = put_user(!(me->signal->flags & SIGNAL_UNKILLABLE),
++				 (int __user *)arg2);
++		break;
++	case PR_SET_KILLABLE:
++		if (arg2 != 1 || arg3 || arg4 || arg5)
++			return -EINVAL;
++		me->signal->flags &= ~SIGNAL_UNKILLABLE;
++		break;
+ 	default:
+ 		error = -EINVAL;
+ 		break;
+-- 
+2.18.0
