@@ -1,66 +1,62 @@
-From: =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
-Subject: [PATCH] prctl: add PR_[GS]ET_KILLABLE
-Date: Mon, 30 Jul 2018 09:52:41 +0200
-Message-ID: <20180730075241.24002-1-j@bitron.ch>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH 2/4] mm: proc/pid/smaps: factor out mem stats gathering
+Date: Mon, 30 Jul 2018 10:45:20 +0200
+Message-ID: <b45f319f-cd04-337b-37f8-77f99786aa8a@suse.cz>
+References: <20180723111933.15443-1-vbabka@suse.cz>
+ <20180723111933.15443-3-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180723111933.15443-3-vbabka@suse.cz>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
+Cc: Daniel Colascione <dancol@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-PR_SET_KILLABLE clears the SIGNAL_UNKILLABLE flag. This allows
-CLONE_NEWPID tasks to restore normal signal behavior, opting out of the
-special signal protection for init processes.
+(moved thread here)
 
-This is required for job control in a shell that uses CLONE_NEWPID for
-child processes.
+On 07/26/2018 06:21 PM, Alexey Dobriyan wrote:
+> On Wed, Jul 25, 2018 at 08:55:17AM +0200, Vlastimil Babka wrote:
+>> On 07/24/2018 08:24 PM, Alexey Dobriyan wrote:
+>>> On Mon, Jul 23, 2018 at 04:55:46PM -0700, akpm@linux-foundation.org wrote:
+>>>> The patch titled
+>>>>      Subject: mm: /proc/pid/smaps: factor out common stats printing
+>>>> has been added to the -mm tree.  Its filename is
+>>>>      mm-proc-pid-smaps-factor-out-common-stats-printing.patch
+>>>> +/* Show the contents common for smaps and smaps_rollup */
+>>>> +static void __show_smap(struct seq_file *m, struct mem_size_stats *mss)
+>>> This can be "const".
+>> What exactly, mss?
+> Yes, of course.
+> seq_file is changed by virtue of priting to it.
 
-This prctl does not allow setting the SIGNAL_UNKILLABLE flag, only
-clearing.
+----8<----
+>From 71a7c912496db1847e3b265cd30922c4e687b7c2 Mon Sep 17 00:00:00 2001
+From: Vlastimil Babka <vbabka@suse.cz>
+Date: Fri, 27 Jul 2018 13:56:00 +0200
+Subject: [PATCH] mm: proc/pid/smaps: factor out common stats printing-fix
 
-Signed-off-by: Jürg Billeter <j@bitron.ch>
+Add const, per Alexey.
+
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 ---
- include/uapi/linux/prctl.h |  4 ++++
- kernel/sys.c               | 11 +++++++++++
- 2 files changed, 15 insertions(+)
+ fs/proc/task_mmu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index c0d7ea0bf5b6..92afb63da727 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -219,4 +219,8 @@ struct prctl_mm_map {
- # define PR_SPEC_DISABLE		(1UL << 2)
- # define PR_SPEC_FORCE_DISABLE		(1UL << 3)
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index 1d6d315fd31b..c47f3cab70a1 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -749,7 +749,7 @@ static void smap_gather_stats(struct vm_area_struct *vma,
+ 		seq_put_decimal_ull_width(m, str, (val) >> 10, 8)
  
-+/* Control SIGNAL_UNKILLABLE */
-+#define PR_GET_KILLABLE			54
-+#define PR_SET_KILLABLE			55
-+
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 38509dc1f77b..264de630d548 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -2484,6 +2484,17 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
- 			return -EINVAL;
- 		error = arch_prctl_spec_ctrl_set(me, arg2, arg3);
- 		break;
-+	case PR_GET_KILLABLE:
-+		if (arg3 || arg4 || arg5)
-+			return -EINVAL;
-+		error = put_user(!(me->signal->flags & SIGNAL_UNKILLABLE),
-+				 (int __user *)arg2);
-+		break;
-+	case PR_SET_KILLABLE:
-+		if (arg2 != 1 || arg3 || arg4 || arg5)
-+			return -EINVAL;
-+		me->signal->flags &= ~SIGNAL_UNKILLABLE;
-+		break;
- 	default:
- 		error = -EINVAL;
- 		break;
+ /* Show the contents common for smaps and smaps_rollup */
+-static void __show_smap(struct seq_file *m, struct mem_size_stats *mss)
++static void __show_smap(struct seq_file *m, const struct mem_size_stats *mss)
+ {
+ 	SEQ_PUT_DEC("Rss:            ", mss->resident);
+ 	SEQ_PUT_DEC(" kB\nPss:            ", mss->pss >> PSS_SHIFT);
 -- 
 2.18.0
