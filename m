@@ -1,89 +1,51 @@
-From: =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
-Subject: [PATCH v2] prctl: add PR_[GS]ET_KILLABLE
-Date: Tue, 31 Jul 2018 09:03:37 +0200
-Message-ID: <20180731070337.61004-1-j@bitron.ch>
-References: <20180730075241.24002-1-j@bitron.ch>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH v3 7/7] mm, slab: shorten kmalloc cache names for large
+ sizes
+Date: Tue, 31 Jul 2018 10:55:39 +0200
+Message-ID: <9e019ae9-b6a8-c824-8913-dd02a8e6e6ce@suse.cz>
+References: <20180718133620.6205-1-vbabka@suse.cz>
+ <20180718133620.6205-8-vbabka@suse.cz>
+ <01000164ebe0d06f-8f639717-8d32-4eb9-9cc1-708332b12ca6-000000@email.amazonses.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180730075241.24002-1-j@bitron.ch>
+In-Reply-To: <01000164ebe0d06f-8f639717-8d32-4eb9-9cc1-708332b12ca6-000000@email.amazonses.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
+To: Christopher Lameter <cl@linux.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-PR_SET_KILLABLE clears the SIGNAL_UNKILLABLE flag. This allows
-CLONE_NEWPID tasks to restore normal signal behavior, opting out of the
-special signal protection for init processes. This prctl does not allow
-setting the SIGNAL_UNKILLABLE flag, only clearing.
+On 07/30/2018 05:48 PM, Christopher Lameter wrote:
+> On Wed, 18 Jul 2018, Vlastimil Babka wrote:
+> 
+>> +static const char *
+>> +kmalloc_cache_name(const char *prefix, unsigned int size)
+>> +{
+>> +
+>> +	static const char units[3] = "\0kM";
+>> +	int idx = 0;
+>> +
+>> +	while (size >= 1024 && (size % 1024 == 0)) {
+>> +		size /= 1024;
+>> +		idx++;
+>> +	}
+>> +
+>> +	return kasprintf(GFP_NOWAIT, "%s-%u%c", prefix, size, units[idx]);
+>> +}
+> 
+> This is likely to occur elsewhere in the kernel. Maybe generalize it a
+> bit?
 
-The SIGNAL_UNKILLABLE flag, which is implicitly set for tasks cloned
-with CLONE_NEWPID, has the effect of ignoring all signals (from
-userspace) if the corresponding handler is set to SIG_DFL. The only
-exceptions are SIGKILL and SIGSTOP and they are only accepted if raised
-from an ancestor namespace.
+I'll try later on top, as that's generic printf code then.
 
-SIGINT, SIGQUIT and SIGTSTP are used in job control for ^C, ^\, ^Z.
-While a task with the SIGNAL_UNKILLABLE flag could install handlers for
-these signals, this is not sufficient to implement a shell that uses
-CLONE_NEWPID for child processes:
+> Acked-by: Christoph Lameter <cl@linux.com>
 
- * As SIGSTOP is ignored when raised from the SIGNAL_UNKILLABLE process
-   itself, it's not possible to implement the stop action in a custom
-   SIGTSTP handler.
- * Many applications do not install handlers for these signals and
-   thus, job control won't work properly with unmodified applications.
+Thanks for all acks.
 
-There are other scenarios besides job control in a shell where
-applications rely on the default actions as described in signal(7) and
-PID isolation may be useful. This new prctl makes the signal protection
-for "init" processes optional, without breaking backward compatibility.
-
-Signed-off-by: Jürg Billeter <j@bitron.ch>
----
- v2: Hold siglock for PR_SET_KILLABLE, expand commit message.
-
- include/uapi/linux/prctl.h |  4 ++++
- kernel/sys.c               | 13 +++++++++++++
- 2 files changed, 17 insertions(+)
-
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index c0d7ea0bf5b6..92afb63da727 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -219,4 +219,8 @@ struct prctl_mm_map {
- # define PR_SPEC_DISABLE		(1UL << 2)
- # define PR_SPEC_FORCE_DISABLE		(1UL << 3)
- 
-+/* Control SIGNAL_UNKILLABLE */
-+#define PR_GET_KILLABLE			54
-+#define PR_SET_KILLABLE			55
-+
- #endif /* _LINUX_PRCTL_H */
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 38509dc1f77b..92c9322cfb98 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -2484,6 +2484,19 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
- 			return -EINVAL;
- 		error = arch_prctl_spec_ctrl_set(me, arg2, arg3);
- 		break;
-+	case PR_GET_KILLABLE:
-+		if (arg3 || arg4 || arg5)
-+			return -EINVAL;
-+		error = put_user(!(me->signal->flags & SIGNAL_UNKILLABLE),
-+				 (int __user *)arg2);
-+		break;
-+	case PR_SET_KILLABLE:
-+		if (arg2 != 1 || arg3 || arg4 || arg5)
-+			return -EINVAL;
-+		spin_lock_irq(&me->sighand->siglock);
-+		me->signal->flags &= ~SIGNAL_UNKILLABLE;
-+		spin_unlock_irq(&me->sighand->siglock);
-+		break;
- 	default:
- 		error = -EINVAL;
- 		break;
--- 
-2.18.0
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-api" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
