@@ -1,7 +1,7 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 (was ghak32) V4 03/10] audit: log container info of syscalls
-Date: Tue, 31 Jul 2018 16:07:38 -0400
-Message-ID: <34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
+Subject: [PATCH ghak90 (was ghak32) V4 05/10] audit: add support for non-syscall auxiliary records
+Date: Tue, 31 Jul 2018 16:07:40 -0400
+Message-ID: <2827530000d6b4972d446b0226adab153ff3b5c5.1533065887.git.rgb@redhat.com>
 References: <cover.1533065887.git.rgb@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1533065887.git.rgb@redhat.com>
@@ -12,122 +12,135 @@ To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audi
 Cc: luto@kernel.org, carlos@redhat.com, viro@zeniv.linux.org.uk, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Create a new audit record AUDIT_CONTAINER to document the audit
-container identifier of a process if it is present.
+Standalone audit records have the timestamp and serial number generated
+on the fly and as such are unique, making them standalone.  This new
+function audit_alloc_local() generates a local audit context that will
+be used only for a standalone record and its auxiliary record(s).  The
+context is discarded immediately after the local associated records are
+produced.
 
-Called from audit_log_exit(), syscalls are covered.
-
-A sample raw event:
-type=SYSCALL msg=audit(1519924845.499:257): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=56374e1cef30 a2=241 a3=1b6 items=2 ppid=606 pid=635 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="tmpcontainerid"
-type=CWD msg=audit(1519924845.499:257): cwd="/root"
-type=PATH msg=audit(1519924845.499:257): item=0 name="/tmp/" inode=13863 dev=00:27 mode=041777 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:tmp_t:s0 nametype= PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
-type=PATH msg=audit(1519924845.499:257): item=1 name="/tmp/tmpcontainerid" inode=17729 dev=00:27 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
-type=PROCTITLE msg=audit(1519924845.499:257): proctitle=62617368002D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E7461696E65726964
-type=CONTAINER msg=audit(1519924845.499:257): op=task contid=123458
-
-See: https://github.com/linux-audit/audit-kernel/issues/90
-See: https://github.com/linux-audit/audit-userspace/issues/51
-See: https://github.com/linux-audit/audit-testsuite/issues/64
-See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 Acked-by: Serge Hallyn <serge@hallyn.com>
-Acked-by: Steve Grubb <sgrubb@redhat.com>
 ---
- include/linux/audit.h      |  7 +++++++
- include/uapi/linux/audit.h |  1 +
- kernel/audit.c             | 24 ++++++++++++++++++++++++
- kernel/auditsc.c           |  3 +++
- 4 files changed, 35 insertions(+)
+ include/linux/audit.h |  8 ++++++++
+ kernel/audit.h        |  1 +
+ kernel/auditsc.c      | 33 ++++++++++++++++++++++++++++-----
+ 3 files changed, 37 insertions(+), 5 deletions(-)
 
 diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 71a6fc6..d5a48dc 100644
+index 4f514ed..1f340ad 100644
 --- a/include/linux/audit.h
 +++ b/include/linux/audit.h
-@@ -155,6 +155,9 @@ extern void		    audit_log_key(struct audit_buffer *ab,
- extern int audit_log_task_context(struct audit_buffer *ab);
- extern void audit_log_task_info(struct audit_buffer *ab,
- 				struct task_struct *tsk);
-+extern int audit_log_contid(struct task_struct *tsk,
-+				    struct audit_context *context,
-+				    char *op);
- 
- extern int		    audit_update_lsm_rules(void);
- 
-@@ -205,6 +208,10 @@ static inline int audit_log_task_context(struct audit_buffer *ab)
- static inline void audit_log_task_info(struct audit_buffer *ab,
- 				       struct task_struct *tsk)
- { }
-+static inline int audit_log_contid(struct task_struct *tsk,
-+					   struct audit_context *context,
-+					   char *op)
-+{ }
- #define audit_enabled AUDIT_OFF
- #endif /* CONFIG_AUDIT */
- 
-diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-index 3474f57..dc259c7 100644
---- a/include/uapi/linux/audit.h
-+++ b/include/uapi/linux/audit.h
-@@ -115,6 +115,7 @@
- #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
- #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
- #define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
-+#define AUDIT_CONTAINER		1332	/* Container ID */
- 
- #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
- #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
-diff --git a/kernel/audit.c b/kernel/audit.c
-index 2a80587..15f54c7 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -2045,6 +2045,30 @@ void audit_log_session_info(struct audit_buffer *ab)
- 	audit_log_format(ab, " auid=%u ses=%u", auid, sessionid);
- }
- 
-+/*
-+ * audit_log_contid - report container info
-+ * @tsk: task to be recorded
-+ * @context: task or local context for record
-+ * @op: contid string description
-+ */
-+int audit_log_contid(struct task_struct *tsk,
-+			     struct audit_context *context, char *op)
-+{
-+	struct audit_buffer *ab;
-+
-+	if (!audit_contid_set(tsk))
-+		return 0;
-+	/* Generate AUDIT_CONTAINER record with container ID */
-+	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER);
-+	if (!ab)
-+		return -ENOMEM;
-+	audit_log_format(ab, "op=%s contid=%llu",
-+			 op, audit_get_contid(tsk));
-+	audit_log_end(ab);
-+	return 0;
-+}
-+EXPORT_SYMBOL(audit_log_contid);
-+
- void audit_log_key(struct audit_buffer *ab, char *key)
+@@ -234,7 +234,9 @@ struct audit_task_info {
+ extern struct audit_task_info init_struct_audit;
+ extern void __init audit_task_init(void);
+ extern int  audit_alloc(struct task_struct *task);
++extern struct audit_context *audit_alloc_local(gfp_t gfpflags);
+ extern void audit_free(struct task_struct *task);
++extern void audit_free_context(struct audit_context *context);
+ extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
+ 				  unsigned long a2, unsigned long a3);
+ extern void __audit_syscall_exit(int ret_success, long ret_value);
+@@ -495,6 +497,12 @@ static inline int audit_alloc(struct task_struct *task)
  {
- 	audit_log_format(ab, " key=");
+ 	return 0;
+ }
++static inline struct audit_context *audit_alloc_local(gfp_t gfpflags)
++{
++	return NULL;
++}
++static inline void audit_free_context(struct audit_context *context)
++{ }
+ static inline void audit_free(struct task_struct *task)
+ { }
+ static inline void audit_syscall_entry(int major, unsigned long a0,
+diff --git a/kernel/audit.h b/kernel/audit.h
+index 1cf1c35..a6d00a5 100644
+--- a/kernel/audit.h
++++ b/kernel/audit.h
+@@ -110,6 +110,7 @@ struct audit_proctitle {
+ struct audit_context {
+ 	int		    dummy;	/* must be the first element */
+ 	int		    in_syscall;	/* 1 if task is in a syscall */
++	bool		    local;	/* local context needed */
+ 	enum audit_state    state, current_state;
+ 	unsigned int	    serial;     /* serial number for record */
+ 	int		    major;      /* syscall number */
 diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index 6125cef..39e5633 100644
+index cdb24cf..7627f21 100644
 --- a/kernel/auditsc.c
 +++ b/kernel/auditsc.c
-@@ -1488,10 +1488,13 @@ static void audit_log_exit(struct audit_context *context, struct task_struct *ts
- 
- 	audit_log_proctitle(tsk, context);
- 
-+	audit_log_contid(tsk, context, "task");
-+
- 	/* Send end of event record to help user space know we are finished */
- 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
- 	if (ab)
- 		audit_log_end(ab);
-+
- 	if (call_panic)
- 		audit_panic("error converting sid to string");
+@@ -913,11 +913,13 @@ static inline void audit_free_aux(struct audit_context *context)
+ 	}
  }
+ 
+-static inline struct audit_context *audit_alloc_context(enum audit_state state)
++static inline struct audit_context *audit_alloc_context(enum audit_state state,
++							gfp_t gfpflags)
+ {
+ 	struct audit_context *context;
+ 
+-	context = kzalloc(sizeof(*context), GFP_KERNEL);
++	/* We can be called in atomic context via audit_tg() */
++	context = kzalloc(sizeof(*context), gfpflags);
+ 	if (!context)
+ 		return NULL;
+ 	context->state = state;
+@@ -970,7 +972,8 @@ int audit_alloc(struct task_struct *tsk)
+ 		return 0;
+ 	}
+ 
+-	if (!(context = audit_alloc_context(state))) {
++	context = audit_alloc_context(state, GFP_KERNEL);
++	if (!(context)) {
+ 		tsk->audit = NULL;
+ 		kmem_cache_free(audit_task_cache, info);
+ 		kfree(key);
+@@ -991,8 +994,27 @@ struct audit_task_info init_struct_audit = {
+ 	.ctx = NULL,
+ };
+ 
+-static inline void audit_free_context(struct audit_context *context)
++struct audit_context *audit_alloc_local(gfp_t gfpflags)
+ {
++	struct audit_context *context;
++
++	if (!audit_ever_enabled)
++		return NULL; /* Return if not auditing. */
++
++	context = audit_alloc_context(AUDIT_RECORD_CONTEXT, gfpflags);
++	if (!context)
++		return NULL;
++	context->serial = audit_serial();
++	context->ctime = current_kernel_time64();
++	context->local = true;
++	return context;
++}
++EXPORT_SYMBOL(audit_alloc_local);
++
++void audit_free_context(struct audit_context *context)
++{
++	if (!context)
++		return;
+ 	audit_free_names(context);
+ 	unroll_tree_refs(context, NULL, 0);
+ 	free_tree_refs(context);
+@@ -1002,6 +1024,7 @@ static inline void audit_free_context(struct audit_context *context)
+ 	audit_proctitle_free(context);
+ 	kfree(context);
+ }
++EXPORT_SYMBOL(audit_free_context);
+ 
+ static int audit_log_pid_context(struct audit_context *context, pid_t pid,
+ 				 kuid_t auid, kuid_t uid, unsigned int sessionid,
+@@ -2024,7 +2047,7 @@ void __audit_inode_child(struct inode *parent,
+ int auditsc_get_stamp(struct audit_context *ctx,
+ 		       struct timespec64 *t, unsigned int *serial)
+ {
+-	if (!ctx->in_syscall)
++	if (!ctx->in_syscall && !ctx->local)
+ 		return 0;
+ 	if (!ctx->serial)
+ 		ctx->serial = audit_serial();
 -- 
 1.8.3.1
