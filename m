@@ -1,151 +1,123 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v4 5/6] mm, proc: add KReclaimable to /proc/meminfo
-Date: Tue, 31 Jul 2018 11:06:48 +0200
-Message-ID: <20180731090649.16028-6-vbabka@suse.cz>
-References: <20180731090649.16028-1-vbabka@suse.cz>
+Subject: [PATCH v4 0/6] kmalloc-reclaimable caches
+Date: Tue, 31 Jul 2018 11:06:43 +0200
+Message-ID: <20180731090649.16028-1-vbabka@suse.cz>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180731090649.16028-1-vbabka@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>, Vijayanand Jitta <vjitta@codeaurora.org>
 List-Id: linux-api@vger.kernel.org
 
-The vmstat NR_KERNEL_MISC_RECLAIMABLE counter is for kernel non-slab
-allocations that can be reclaimed via shrinker. In /proc/meminfo, we can show
-the sum of all reclaimable kernel allocations (including slab) as
-"KReclaimable". Add the same counter also to per-node meminfo under /sys
+v4 changes:
+- drop mm, slab: allocate off-slab freelists as reclaimable when appropriate
+  - per Mel, reclaiming objects from a slab doesn't guarantee that the whole
+    slab page will be freed and freelist reclaimed, so it can do more harm
+    than good
+- change KMALLOC_* constants from #define to enum, per Christoph
+- use the symbolic constants in kmalloc_type(), per Roman
+- add acks from Mel, Roman and Christoph, thanks!
+v3 changes:
+- fix missing hunk in patch 5/7
+- more verbose cover letter and patch 6/7 commit log
+v2 changes:
+- shorten cache names to kmalloc-rcl-<SIZE>
+- last patch shortens <SIZE> for all kmalloc caches to e.g. "1k", "4M"
+- include dma caches to the 2D kmalloc_caches[] array to avoid a branch
+- vmstat counter nr_indirectly_reclaimable_bytes renamed to
+  nr_kernel_misc_reclaimable, doesn't include kmalloc-rcl-*
+- /proc/meminfo counter renamed to KReclaimable, includes kmalloc-rcl*
+  and nr_kernel_misc_reclaimable
 
-With this counter, users will have more complete information about
-kernel memory usage. Non-slab reclaimable pages (currently just the ION
-allocator) will not be missing from /proc/meminfo, making users wonder
-where part of their memory went. More precisely, they already appear in
-MemAvailable, but without the new counter, it's not obvious why the
-value in MemAvailable doesn't fully correspond with the sum of other
-counters participating in it.
+Hi,
 
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Acked-by: Roman Gushchin <guro@fb.com>
----
- Documentation/filesystems/proc.txt |  4 ++++
- drivers/base/node.c                | 19 ++++++++++++-------
- fs/proc/meminfo.c                  | 16 ++++++++--------
- 3 files changed, 24 insertions(+), 15 deletions(-)
+as discussed at LSF/MM [1] here's a patchset that introduces
+kmalloc-reclaimable caches (more details in the second patch) and uses them for
+dcache external names. That allows us to repurpose the
+NR_INDIRECTLY_RECLAIMABLE_BYTES counter later in the series.
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 520f6a84cf50..6a255f960ab5 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -858,6 +858,7 @@ Writeback:           0 kB
- AnonPages:      861800 kB
- Mapped:         280372 kB
- Shmem:             644 kB
-+KReclaimable:   168048 kB
- Slab:           284364 kB
- SReclaimable:   159856 kB
- SUnreclaim:     124508 kB
-@@ -921,6 +922,9 @@ AnonHugePages: Non-file backed huge pages mapped into userspace page tables
- ShmemHugePages: Memory used by shared memory (shmem) and tmpfs allocated
-               with huge pages
- ShmemPmdMapped: Shared memory mapped into userspace with huge pages
-+KReclaimable: Kernel allocations that the kernel will attempt to reclaim
-+              under memory pressure. Includes SReclaimable (below), and other
-+              direct allocations with a shrinker.
-         Slab: in-kernel data structures cache
- SReclaimable: Part of Slab, that might be reclaimed, such as caches
-   SUnreclaim: Part of Slab, that cannot be reclaimed on memory pressure
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index a5e821d09656..81cef8031eae 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -67,8 +67,11 @@ static ssize_t node_read_meminfo(struct device *dev,
- 	int nid = dev->id;
- 	struct pglist_data *pgdat = NODE_DATA(nid);
- 	struct sysinfo i;
-+	unsigned long sreclaimable, sunreclaimable;
- 
- 	si_meminfo_node(&i, nid);
-+	sreclaimable = node_page_state(pgdat, NR_SLAB_RECLAIMABLE);
-+	sunreclaimable = node_page_state(pgdat, NR_SLAB_UNRECLAIMABLE);
- 	n = sprintf(buf,
- 		       "Node %d MemTotal:       %8lu kB\n"
- 		       "Node %d MemFree:        %8lu kB\n"
-@@ -118,6 +121,7 @@ static ssize_t node_read_meminfo(struct device *dev,
- 		       "Node %d NFS_Unstable:   %8lu kB\n"
- 		       "Node %d Bounce:         %8lu kB\n"
- 		       "Node %d WritebackTmp:   %8lu kB\n"
-+		       "Node %d KReclaimable:   %8lu kB\n"
- 		       "Node %d Slab:           %8lu kB\n"
- 		       "Node %d SReclaimable:   %8lu kB\n"
- 		       "Node %d SUnreclaim:     %8lu kB\n"
-@@ -138,20 +142,21 @@ static ssize_t node_read_meminfo(struct device *dev,
- 		       nid, K(node_page_state(pgdat, NR_UNSTABLE_NFS)),
- 		       nid, K(sum_zone_node_page_state(nid, NR_BOUNCE)),
- 		       nid, K(node_page_state(pgdat, NR_WRITEBACK_TEMP)),
--		       nid, K(node_page_state(pgdat, NR_SLAB_RECLAIMABLE) +
--			      node_page_state(pgdat, NR_SLAB_UNRECLAIMABLE)),
--		       nid, K(node_page_state(pgdat, NR_SLAB_RECLAIMABLE)),
-+		       nid, K(sreclaimable +
-+			      node_page_state(pgdat, NR_KERNEL_MISC_RECLAIMABLE)),
-+		       nid, K(sreclaimable + sunreclaimable),
-+		       nid, K(sreclaimable),
-+		       nid, K(sunreclaimable)
- #ifdef CONFIG_TRANSPARENT_HUGEPAGE
--		       nid, K(node_page_state(pgdat, NR_SLAB_UNRECLAIMABLE)),
-+		       ,
- 		       nid, K(node_page_state(pgdat, NR_ANON_THPS) *
- 				       HPAGE_PMD_NR),
- 		       nid, K(node_page_state(pgdat, NR_SHMEM_THPS) *
- 				       HPAGE_PMD_NR),
- 		       nid, K(node_page_state(pgdat, NR_SHMEM_PMDMAPPED) *
--				       HPAGE_PMD_NR));
--#else
--		       nid, K(node_page_state(pgdat, NR_SLAB_UNRECLAIMABLE)));
-+				       HPAGE_PMD_NR)
- #endif
-+		       );
- 	n += hugetlb_report_node_meminfo(nid, buf + n);
- 	return n;
- }
-diff --git a/fs/proc/meminfo.c b/fs/proc/meminfo.c
-index 2fb04846ed11..61a18477bc07 100644
---- a/fs/proc/meminfo.c
-+++ b/fs/proc/meminfo.c
-@@ -37,6 +37,7 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
- 	long cached;
- 	long available;
- 	unsigned long pages[NR_LRU_LISTS];
-+	unsigned long sreclaimable, sunreclaim;
- 	int lru;
- 
- 	si_meminfo(&i);
-@@ -52,6 +53,8 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
- 		pages[lru] = global_node_page_state(NR_LRU_BASE + lru);
- 
- 	available = si_mem_available();
-+	sreclaimable = global_node_page_state(NR_SLAB_RECLAIMABLE);
-+	sunreclaim = global_node_page_state(NR_SLAB_UNRECLAIMABLE);
- 
- 	show_val_kb(m, "MemTotal:       ", i.totalram);
- 	show_val_kb(m, "MemFree:        ", i.freeram);
-@@ -93,14 +96,11 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
- 	show_val_kb(m, "Mapped:         ",
- 		    global_node_page_state(NR_FILE_MAPPED));
- 	show_val_kb(m, "Shmem:          ", i.sharedram);
--	show_val_kb(m, "Slab:           ",
--		    global_node_page_state(NR_SLAB_RECLAIMABLE) +
--		    global_node_page_state(NR_SLAB_UNRECLAIMABLE));
--
--	show_val_kb(m, "SReclaimable:   ",
--		    global_node_page_state(NR_SLAB_RECLAIMABLE));
--	show_val_kb(m, "SUnreclaim:     ",
--		    global_node_page_state(NR_SLAB_UNRECLAIMABLE));
-+	show_val_kb(m, "KReclaimable:   ", sreclaimable +
-+		    global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE));
-+	show_val_kb(m, "Slab:           ", sreclaimable + sunreclaim);
-+	show_val_kb(m, "SReclaimable:   ", sreclaimable);
-+	show_val_kb(m, "SUnreclaim:     ", sunreclaim);
- 	seq_printf(m, "KernelStack:    %8lu kB\n",
- 		   global_zone_page_state(NR_KERNEL_STACK_KB));
- 	show_val_kb(m, "PageTables:     ",
+With patch 3/6, dcache external names are allocated from kmalloc-rcl-*
+caches, eliminating the need for manual accounting. More importantly, it
+also ensures the reclaimable kmalloc allocations are grouped in pages
+separate from the regular kmalloc allocations. The need for proper
+accounting of dcache external names has shown it's easy for misbehaving
+process to allocate lots of them, causing premature OOMs. Without the
+added grouping, it's likely that a similar workload can interleave the
+dcache external names allocations with regular kmalloc allocations
+(note: I haven't searched myself for an example of such regular kmalloc
+allocation, but I would be very surprised if there wasn't some). A
+pathological case would be e.g. one 64byte regular allocations with 63
+external dcache names in a page (64x64=4096), which means the page is
+not freed even after reclaiming after all dcache names, and the process
+can thus "steal" the whole page with single 64byte allocation.
+
+If there other kmalloc users similar to dcache external names become
+identified, they can also benefit from the new functionality simply by
+adding __GFP_RECLAIMABLE to the kmalloc calls.
+
+Side benefits of the patchset (that could be also merged separately)
+include removed branch for detecting __GFP_DMA kmalloc(), and shortening
+kmalloc cache names in /proc/slabinfo output. The latter is potentially
+an ABI break in case there are tools parsing the names and expecting the
+values to be in bytes.
+
+This is how /proc/slabinfo looks like after booting in virtme:
+
+...
+kmalloc-rcl-4M         0      0 4194304    1 1024 : tunables    1    1    0 : slabdata      0      0      0
+...
+kmalloc-rcl-96         7     32    128   32    1 : tunables  120   60    8 : slabdata      1      1      0
+kmalloc-rcl-64        25    128     64   64    1 : tunables  120   60    8 : slabdata      2      2      0
+kmalloc-rcl-32         0      0     32  124    1 : tunables  120   60    8 : slabdata      0      0      0
+kmalloc-4M             0      0 4194304    1 1024 : tunables    1    1    0 : slabdata      0      0      0
+kmalloc-2M             0      0 2097152    1  512 : tunables    1    1    0 : slabdata      0      0      0
+kmalloc-1M             0      0 1048576    1  256 : tunables    1    1    0 : slabdata      0      0      0
+...
+
+/proc/vmstat with renamed nr_indirectly_reclaimable_bytes counter:
+
+...
+nr_slab_reclaimable 2817
+nr_slab_unreclaimable 1781
+...
+nr_kernel_misc_reclaimable 0
+...
+
+/proc/meminfo with new KReclaimable counter:
+
+...
+Shmem:               564 kB
+KReclaimable:      11260 kB
+Slab:              18368 kB
+SReclaimable:      11260 kB
+SUnreclaim:         7108 kB
+KernelStack:        1248 kB
+...
+
+Thanks,
+Vlastimil
+
+Vlastimil Babka (6):
+  mm, slab: combine kmalloc_caches and kmalloc_dma_caches
+  mm, slab/slub: introduce kmalloc-reclaimable caches
+  dcache: allocate external names from reclaimable kmalloc caches
+  mm: rename and change semantics of nr_indirectly_reclaimable_bytes
+  mm, proc: add KReclaimable to /proc/meminfo
+  mm, slab: shorten kmalloc cache names for large sizes
+
+ Documentation/filesystems/proc.txt          |   4 +
+ drivers/base/node.c                         |  19 ++--
+ drivers/staging/android/ion/ion_page_pool.c |   8 +-
+ fs/dcache.c                                 |  38 ++------
+ fs/proc/meminfo.c                           |  16 +--
+ include/linux/mmzone.h                      |   2 +-
+ include/linux/slab.h                        |  56 ++++++++---
+ mm/page_alloc.c                             |  19 ++--
+ mm/slab.c                                   |   4 +-
+ mm/slab_common.c                            | 103 ++++++++++++--------
+ mm/slub.c                                   |  13 +--
+ mm/util.c                                   |   3 +-
+ mm/vmstat.c                                 |   6 +-
+ 13 files changed, 163 insertions(+), 128 deletions(-)
+
 -- 
 2.18.0
