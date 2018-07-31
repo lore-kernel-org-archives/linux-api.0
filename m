@@ -1,123 +1,157 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v4 0/6] kmalloc-reclaimable caches
-Date: Tue, 31 Jul 2018 11:06:43 +0200
-Message-ID: <20180731090649.16028-1-vbabka@suse.cz>
+Subject: [PATCH v4 2/6] mm, slab/slub: introduce kmalloc-reclaimable caches
+Date: Tue, 31 Jul 2018 11:06:45 +0200
+Message-ID: <20180731090649.16028-3-vbabka@suse.cz>
+References: <20180731090649.16028-1-vbabka@suse.cz>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180731090649.16028-1-vbabka@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>, Vijayanand Jitta <vjitta@codeaurora.org>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-v4 changes:
-- drop mm, slab: allocate off-slab freelists as reclaimable when appropriate
-  - per Mel, reclaiming objects from a slab doesn't guarantee that the whole
-    slab page will be freed and freelist reclaimed, so it can do more harm
-    than good
-- change KMALLOC_* constants from #define to enum, per Christoph
-- use the symbolic constants in kmalloc_type(), per Roman
-- add acks from Mel, Roman and Christoph, thanks!
-v3 changes:
-- fix missing hunk in patch 5/7
-- more verbose cover letter and patch 6/7 commit log
-v2 changes:
-- shorten cache names to kmalloc-rcl-<SIZE>
-- last patch shortens <SIZE> for all kmalloc caches to e.g. "1k", "4M"
-- include dma caches to the 2D kmalloc_caches[] array to avoid a branch
-- vmstat counter nr_indirectly_reclaimable_bytes renamed to
-  nr_kernel_misc_reclaimable, doesn't include kmalloc-rcl-*
-- /proc/meminfo counter renamed to KReclaimable, includes kmalloc-rcl*
-  and nr_kernel_misc_reclaimable
+Kmem caches can be created with a SLAB_RECLAIM_ACCOUNT flag, which indicates
+they contain objects which can be reclaimed under memory pressure (typically
+through a shrinker). This makes the slab pages accounted as NR_SLAB_RECLAIMABLE
+in vmstat, which is reflected also the MemAvailable meminfo counter and in
+overcommit decisions. The slab pages are also allocated with __GFP_RECLAIMABLE,
+which is good for anti-fragmentation through grouping pages by mobility.
 
-Hi,
+The generic kmalloc-X caches are created without this flag, but sometimes are
+used also for objects that can be reclaimed, which due to varying size cannot
+have a dedicated kmem cache with SLAB_RECLAIM_ACCOUNT flag. A prominent example
+are dcache external names, which prompted the creation of a new, manually
+managed vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES in commit f1782c9bc547
+("dcache: account external names as indirectly reclaimable memory").
 
-as discussed at LSF/MM [1] here's a patchset that introduces
-kmalloc-reclaimable caches (more details in the second patch) and uses them for
-dcache external names. That allows us to repurpose the
-NR_INDIRECTLY_RECLAIMABLE_BYTES counter later in the series.
+To better handle this and any other similar cases, this patch introduces
+SLAB_RECLAIM_ACCOUNT variants of kmalloc caches, named kmalloc-rcl-X.
+They are used whenever the kmalloc() call passes __GFP_RECLAIMABLE among gfp
+flags. They are added to the kmalloc_caches array as a new type. Allocations
+with both __GFP_DMA and __GFP_RECLAIMABLE will use a dma type cache.
 
-With patch 3/6, dcache external names are allocated from kmalloc-rcl-*
-caches, eliminating the need for manual accounting. More importantly, it
-also ensures the reclaimable kmalloc allocations are grouped in pages
-separate from the regular kmalloc allocations. The need for proper
-accounting of dcache external names has shown it's easy for misbehaving
-process to allocate lots of them, causing premature OOMs. Without the
-added grouping, it's likely that a similar workload can interleave the
-dcache external names allocations with regular kmalloc allocations
-(note: I haven't searched myself for an example of such regular kmalloc
-allocation, but I would be very surprised if there wasn't some). A
-pathological case would be e.g. one 64byte regular allocations with 63
-external dcache names in a page (64x64=4096), which means the page is
-not freed even after reclaiming after all dcache names, and the process
-can thus "steal" the whole page with single 64byte allocation.
+This change only applies to SLAB and SLUB, not SLOB. This is fine, since SLOB's
+target are tiny system and this patch does add some overhead of kmem management
+objects.
 
-If there other kmalloc users similar to dcache external names become
-identified, they can also benefit from the new functionality simply by
-adding __GFP_RECLAIMABLE to the kmalloc calls.
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+Acked-by: Mel Gorman <mgorman@techsingularity.net>
+Acked-by: Christoph Lameter <cl@linux.com>
+Acked-by: Roman Gushchin <guro@fb.com>
+---
+ include/linux/slab.h | 16 ++++++++++++++-
+ mm/slab_common.c     | 48 ++++++++++++++++++++++++++++----------------
+ 2 files changed, 46 insertions(+), 18 deletions(-)
 
-Side benefits of the patchset (that could be also merged separately)
-include removed branch for detecting __GFP_DMA kmalloc(), and shortening
-kmalloc cache names in /proc/slabinfo output. The latter is potentially
-an ABI break in case there are tools parsing the names and expecting the
-values to be in bytes.
-
-This is how /proc/slabinfo looks like after booting in virtme:
-
-...
-kmalloc-rcl-4M         0      0 4194304    1 1024 : tunables    1    1    0 : slabdata      0      0      0
-...
-kmalloc-rcl-96         7     32    128   32    1 : tunables  120   60    8 : slabdata      1      1      0
-kmalloc-rcl-64        25    128     64   64    1 : tunables  120   60    8 : slabdata      2      2      0
-kmalloc-rcl-32         0      0     32  124    1 : tunables  120   60    8 : slabdata      0      0      0
-kmalloc-4M             0      0 4194304    1 1024 : tunables    1    1    0 : slabdata      0      0      0
-kmalloc-2M             0      0 2097152    1  512 : tunables    1    1    0 : slabdata      0      0      0
-kmalloc-1M             0      0 1048576    1  256 : tunables    1    1    0 : slabdata      0      0      0
-...
-
-/proc/vmstat with renamed nr_indirectly_reclaimable_bytes counter:
-
-...
-nr_slab_reclaimable 2817
-nr_slab_unreclaimable 1781
-...
-nr_kernel_misc_reclaimable 0
-...
-
-/proc/meminfo with new KReclaimable counter:
-
-...
-Shmem:               564 kB
-KReclaimable:      11260 kB
-Slab:              18368 kB
-SReclaimable:      11260 kB
-SUnreclaim:         7108 kB
-KernelStack:        1248 kB
-...
-
-Thanks,
-Vlastimil
-
-Vlastimil Babka (6):
-  mm, slab: combine kmalloc_caches and kmalloc_dma_caches
-  mm, slab/slub: introduce kmalloc-reclaimable caches
-  dcache: allocate external names from reclaimable kmalloc caches
-  mm: rename and change semantics of nr_indirectly_reclaimable_bytes
-  mm, proc: add KReclaimable to /proc/meminfo
-  mm, slab: shorten kmalloc cache names for large sizes
-
- Documentation/filesystems/proc.txt          |   4 +
- drivers/base/node.c                         |  19 ++--
- drivers/staging/android/ion/ion_page_pool.c |   8 +-
- fs/dcache.c                                 |  38 ++------
- fs/proc/meminfo.c                           |  16 +--
- include/linux/mmzone.h                      |   2 +-
- include/linux/slab.h                        |  56 ++++++++---
- mm/page_alloc.c                             |  19 ++--
- mm/slab.c                                   |   4 +-
- mm/slab_common.c                            | 103 ++++++++++++--------
- mm/slub.c                                   |  13 +--
- mm/util.c                                   |   3 +-
- mm/vmstat.c                                 |   6 +-
- 13 files changed, 163 insertions(+), 128 deletions(-)
-
+diff --git a/include/linux/slab.h b/include/linux/slab.h
+index f35f2c1f37b9..b79a7cd59875 100644
+--- a/include/linux/slab.h
++++ b/include/linux/slab.h
+@@ -295,8 +295,13 @@ static inline void __check_heap_object(const void *ptr, unsigned long n,
+ #define SLAB_OBJ_MIN_SIZE      (KMALLOC_MIN_SIZE < 16 ? \
+                                (KMALLOC_MIN_SIZE) : 16)
+ 
++/*
++ * Whenever changing this, take care of that kmalloc_type() and
++ * create_kmalloc_caches() still work as intended.
++ */
+ enum kmalloc_cache_type {
+ 	KMALLOC_NORMAL = 0,
++	KMALLOC_RECLAIM,
+ #ifdef CONFIG_ZONE_DMA
+ 	KMALLOC_DMA,
+ #endif
+@@ -310,12 +315,21 @@ kmalloc_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1];
+ static __always_inline enum kmalloc_cache_type kmalloc_type(gfp_t flags)
+ {
+ 	int is_dma = 0;
++	int type_dma = 0;
++	int is_reclaimable;
+ 
+ #ifdef CONFIG_ZONE_DMA
+ 	is_dma = !!(flags & __GFP_DMA);
++	type_dma = is_dma * KMALLOC_DMA;
+ #endif
+ 
+-	return is_dma;
++	is_reclaimable = !!(flags & __GFP_RECLAIMABLE);
++
++	/*
++	 * If an allocation is both __GFP_DMA and __GFP_RECLAIMABLE, return
++	 * KMALLOC_DMA and effectively ignore __GFP_RECLAIMABLE
++	 */
++	return type_dma + (is_reclaimable & !is_dma) * KMALLOC_RECLAIM;
+ }
+ 
+ /*
+diff --git a/mm/slab_common.c b/mm/slab_common.c
+index 4572941440f3..03f40b273ea3 100644
+--- a/mm/slab_common.c
++++ b/mm/slab_common.c
+@@ -1108,10 +1108,21 @@ void __init setup_kmalloc_cache_index_table(void)
+ 	}
+ }
+ 
+-static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
++static void __init
++new_kmalloc_cache(int idx, int type, slab_flags_t flags)
+ {
+-	kmalloc_caches[KMALLOC_NORMAL][idx] = create_kmalloc_cache(
+-					kmalloc_info[idx].name,
++	const char *name;
++
++	if (type == KMALLOC_RECLAIM) {
++		flags |= SLAB_RECLAIM_ACCOUNT;
++		name = kasprintf(GFP_NOWAIT, "kmalloc-rcl-%u",
++						kmalloc_info[idx].size);
++		BUG_ON(!name);
++	} else {
++		name = kmalloc_info[idx].name;
++	}
++
++	kmalloc_caches[type][idx] = create_kmalloc_cache(name,
+ 					kmalloc_info[idx].size, flags, 0,
+ 					kmalloc_info[idx].size);
+ }
+@@ -1123,22 +1134,25 @@ static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
+  */
+ void __init create_kmalloc_caches(slab_flags_t flags)
+ {
+-	int i;
+-	int type = KMALLOC_NORMAL;
++	int i, type;
+ 
+-	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
+-		if (!kmalloc_caches[type][i])
+-			new_kmalloc_cache(i, flags);
++	for (type = KMALLOC_NORMAL; type <= KMALLOC_RECLAIM; type++) {
++		for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
++			if (!kmalloc_caches[type][i])
++				new_kmalloc_cache(i, type, flags);
+ 
+-		/*
+-		 * Caches that are not of the two-to-the-power-of size.
+-		 * These have to be created immediately after the
+-		 * earlier power of two caches
+-		 */
+-		if (KMALLOC_MIN_SIZE <= 32 && !kmalloc_caches[type][1] && i == 6)
+-			new_kmalloc_cache(1, flags);
+-		if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[type][2] && i == 7)
+-			new_kmalloc_cache(2, flags);
++			/*
++			 * Caches that are not of the two-to-the-power-of size.
++			 * These have to be created immediately after the
++			 * earlier power of two caches
++			 */
++			if (KMALLOC_MIN_SIZE <= 32 && i == 6 &&
++					!kmalloc_caches[type][1])
++				new_kmalloc_cache(1, type, flags);
++			if (KMALLOC_MIN_SIZE <= 64 && i == 7 &&
++					!kmalloc_caches[type][2])
++				new_kmalloc_cache(2, type, flags);
++		}
+ 	}
+ 
+ 	/* Kmalloc array is now usable */
 -- 
 2.18.0
