@@ -1,120 +1,88 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 (was ghak32) V4 09/10] audit: NETFILTER_PKT: record each container ID associated with a netNS
-Date: Tue, 31 Jul 2018 16:07:44 -0400
-Message-ID: <3f5edfb0d530d7f0061fe11b817b315b350b9d86.1533065887.git.rgb@redhat.com>
+Subject: [PATCH ghak90 (was ghak32) V4 10/10] debug audit: read container ID of a process
+Date: Tue, 31 Jul 2018 16:07:45 -0400
+Message-ID: <dfe41da856b2ace574be9df3664cfdce9b47adf5.1533065887.git.rgb@redhat.com>
 References: <cover.1533065887.git.rgb@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <cover.1533065887.git.rgb@redhat.com>
 In-Reply-To: <cover.1533065887.git.rgb@redhat.com>
 References: <cover.1533065887.git.rgb@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: netdev-owner@vger.kernel.org
 To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
 Cc: luto@kernel.org, carlos@redhat.com, viro@zeniv.linux.org.uk, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-event standalone records.  Iterate through all potential audit container
-identifiers associated with a network namespace.
+Add support for reading the audit container identifier from the proc
+filesystem.
+
+This is a read from the proc entry of the form
+/proc/PID/audit_containerid where PID is the process ID of the task
+whose audit container identifier is sought.
+
+The read expects up to a u64 value (unset: 18446744073709551615).
+
+This read requires CAP_AUDIT_CONTROL.
 
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+Acked-by: Serge Hallyn <serge@hallyn.com>
 ---
- include/linux/audit.h    |  5 +++++
- kernel/audit.c           | 26 ++++++++++++++++++++++++++
- net/netfilter/xt_AUDIT.c | 12 ++++++++++--
- 3 files changed, 41 insertions(+), 2 deletions(-)
+ fs/proc/base.c | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 9a02095..8755f4d 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -169,6 +169,8 @@ extern int audit_log_contid(struct audit_context *context,
- extern void audit_netns_contid_add(struct net *net, u64 contid);
- extern void audit_netns_contid_del(struct net *net, u64 contid);
- extern void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p);
-+extern void audit_log_netns_contid_list(struct net *net,
-+				 struct audit_context *context);
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 1b3cda1..95fc64a 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -1261,6 +1261,24 @@ static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
+ 	.llseek		= generic_file_llseek,
+ };
  
- extern int		    audit_update_lsm_rules(void);
- 
-@@ -228,6 +230,9 @@ static inline void audit_netns_contid_del(struct net *net, u64 contid)
- { }
- static inline void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
- { }
-+static inline void audit_log_netns_contid_list(struct net *net,
-+					struct audit_context *context)
-+{ }
- 
- #define audit_enabled AUDIT_OFF
- #endif /* CONFIG_AUDIT */
-diff --git a/kernel/audit.c b/kernel/audit.c
-index c5fed3b..b23711c 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -392,6 +392,32 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
- 		audit_netns_contid_add(new->net_ns, contid);
- }
- 
-+void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
++static ssize_t proc_contid_read(struct file *file, char __user *buf,
++				  size_t count, loff_t *ppos)
 +{
-+	spinlock_t *lock = audit_get_netns_contid_list_lock(net);
-+	struct audit_buffer *ab;
-+	struct audit_contid *cont;
-+	bool first = true;
++	struct inode *inode = file_inode(file);
++	struct task_struct *task = get_proc_task(inode);
++	ssize_t length;
++	char tmpbuf[TMPBUFLEN*2];
 +
-+	/* Generate AUDIT_CONTAINER record with container ID CSV list */
-+	ab = audit_log_start(context, GFP_ATOMIC, AUDIT_CONTAINER);
-+	if (!ab) {
-+		audit_log_lost("out of memory in audit_log_netns_contid_list");
-+		return;
-+	}
-+	audit_log_format(ab, "contid=");
-+	spin_lock(lock);
-+	list_for_each_entry(cont, audit_get_netns_contid_list(net), list) {
-+		if (!first)
-+			audit_log_format(ab, ",");
-+		audit_log_format(ab, "%llu", cont->id);
-+		first = false;
-+	}
-+	spin_unlock(lock);
-+	audit_log_end(ab);
++	if (!task)
++		return -ESRCH;
++	/* if we don't have caps, reject */
++	if (!capable(CAP_AUDIT_CONTROL))
++		return -EPERM;
++	length = scnprintf(tmpbuf, TMPBUFLEN*2, "%llu", audit_get_contid(task));
++	put_task_struct(task);
++	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
 +}
-+EXPORT_SYMBOL(audit_log_netns_contid_list);
 +
- void audit_panic(const char *message)
+ static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+ 				   size_t count, loff_t *ppos)
  {
- 	switch (audit_failure) {
-diff --git a/net/netfilter/xt_AUDIT.c b/net/netfilter/xt_AUDIT.c
-index af883f1..44fac3f 100644
---- a/net/netfilter/xt_AUDIT.c
-+++ b/net/netfilter/xt_AUDIT.c
-@@ -71,10 +71,13 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
- {
- 	struct audit_buffer *ab;
- 	int fam = -1;
-+	struct audit_context *context;
-+	struct net *net;
- 
- 	if (audit_enabled == AUDIT_OFF)
--		goto errout;
--	ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-+		goto out;
-+	context = audit_alloc_local(GFP_ATOMIC);
-+	ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
- 	if (ab == NULL)
- 		goto errout;
- 
-@@ -104,7 +107,12 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
- 
- 	audit_log_end(ab);
- 
-+	net = xt_net(par);
-+	audit_log_netns_contid_list(net, context);
-+
- errout:
-+	audit_free_context(context);
-+out:
- 	return XT_CONTINUE;
+@@ -1291,6 +1309,7 @@ static ssize_t proc_contid_write(struct file *file, const char __user *buf,
  }
  
+ static const struct file_operations proc_contid_operations = {
++	.read		= proc_contid_read,
+ 	.write		= proc_contid_write,
+ 	.llseek		= generic_file_llseek,
+ };
+@@ -2987,7 +3006,7 @@ static int proc_pid_patch_state(struct seq_file *m, struct pid_namespace *ns,
+ #ifdef CONFIG_AUDITSYSCALL
+ 	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
+ 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+-	REG("audit_containerid", S_IWUSR, proc_contid_operations),
++	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+ #endif
+ #ifdef CONFIG_FAULT_INJECTION
+ 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+@@ -3373,7 +3392,7 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
+ #ifdef CONFIG_AUDITSYSCALL
+ 	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
+ 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+-	REG("audit_containerid", S_IWUSR, proc_contid_operations),
++	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+ #endif
+ #ifdef CONFIG_FAULT_INJECTION
+ 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
 -- 
 1.8.3.1
