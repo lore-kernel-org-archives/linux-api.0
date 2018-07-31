@@ -1,158 +1,284 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v4 4/6] mm: rename and change semantics of nr_indirectly_reclaimable_bytes
-Date: Tue, 31 Jul 2018 11:06:47 +0200
-Message-ID: <20180731090649.16028-5-vbabka@suse.cz>
+Subject: [PATCH v4 1/6] mm, slab: combine kmalloc_caches and kmalloc_dma_caches
+Date: Tue, 31 Jul 2018 11:06:44 +0200
+Message-ID: <20180731090649.16028-2-vbabka@suse.cz>
 References: <20180731090649.16028-1-vbabka@suse.cz>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180731090649.16028-1-vbabka@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>, Vijayanand Jitta <vjitta@codeaurora.org>, Laura Abbott <labbott@redhat.com>, Sumit Semwal <sumit.semwal@linaro.org>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-The vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES was introduced by commit
-eb59254608bc ("mm: introduce NR_INDIRECTLY_RECLAIMABLE_BYTES") with the goal of
-accounting objects that can be reclaimed, but cannot be allocated via a
-SLAB_RECLAIM_ACCOUNT cache. This is now possible via kmalloc() with
-__GFP_RECLAIMABLE flag, and the dcache external names user is converted.
-
-The counter is however still useful for accounting direct page allocations
-(i.e. not slab) with a shrinker, such as the ION page pool. So keep it, and:
-
-- change granularity to pages to be more like other counters; sub-page
-  allocations should be able to use kmalloc
-- rename the counter to NR_KERNEL_MISC_RECLAIMABLE
-- expose the counter again in vmstat as "nr_kernel_misc_reclaimable"; we can
-  again remove the check for not printing "hidden" counters
+The kmalloc caches currently mainain separate (optional) array
+kmalloc_dma_caches for __GFP_DMA allocations. There are tests for __GFP_DMA in
+the allocation hotpaths. We can avoid the branches by combining kmalloc_caches
+and kmalloc_dma_caches into a single two-dimensional array where the outer
+dimension is cache "type". This will also allow to add kmalloc-reclaimable
+caches as a third type.
 
 Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Cc: Vijayanand Jitta <vjitta@codeaurora.org>
-Cc: Laura Abbott <labbott@redhat.com>
-Cc: Sumit Semwal <sumit.semwal@linaro.org>
+Acked-by: Mel Gorman <mgorman@techsingularity.net>
 Acked-by: Christoph Lameter <cl@linux.com>
 Acked-by: Roman Gushchin <guro@fb.com>
 ---
- drivers/staging/android/ion/ion_page_pool.c |  8 ++++----
- include/linux/mmzone.h                      |  2 +-
- mm/page_alloc.c                             | 19 +++++++------------
- mm/util.c                                   |  3 +--
- mm/vmstat.c                                 |  6 +-----
- 5 files changed, 14 insertions(+), 24 deletions(-)
+ include/linux/slab.h | 42 +++++++++++++++++++++++++++++++-----------
+ mm/slab.c            |  4 ++--
+ mm/slab_common.c     | 31 ++++++++++++-------------------
+ mm/slub.c            | 13 +++++++------
+ 4 files changed, 52 insertions(+), 38 deletions(-)
 
-diff --git a/drivers/staging/android/ion/ion_page_pool.c b/drivers/staging/android/ion/ion_page_pool.c
-index 9bc56eb48d2a..0d2a95957ee8 100644
---- a/drivers/staging/android/ion/ion_page_pool.c
-+++ b/drivers/staging/android/ion/ion_page_pool.c
-@@ -33,8 +33,8 @@ static void ion_page_pool_add(struct ion_page_pool *pool, struct page *page)
- 		pool->low_count++;
+diff --git a/include/linux/slab.h b/include/linux/slab.h
+index 14e3fe4bd6a1..f35f2c1f37b9 100644
+--- a/include/linux/slab.h
++++ b/include/linux/slab.h
+@@ -295,12 +295,29 @@ static inline void __check_heap_object(const void *ptr, unsigned long n,
+ #define SLAB_OBJ_MIN_SIZE      (KMALLOC_MIN_SIZE < 16 ? \
+                                (KMALLOC_MIN_SIZE) : 16)
+ 
++enum kmalloc_cache_type {
++	KMALLOC_NORMAL = 0,
++#ifdef CONFIG_ZONE_DMA
++	KMALLOC_DMA,
++#endif
++	NR_KMALLOC_TYPES
++};
++
+ #ifndef CONFIG_SLOB
+-extern struct kmem_cache *kmalloc_caches[KMALLOC_SHIFT_HIGH + 1];
++extern struct kmem_cache *
++kmalloc_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1];
++
++static __always_inline enum kmalloc_cache_type kmalloc_type(gfp_t flags)
++{
++	int is_dma = 0;
++
+ #ifdef CONFIG_ZONE_DMA
+-extern struct kmem_cache *kmalloc_dma_caches[KMALLOC_SHIFT_HIGH + 1];
++	is_dma = !!(flags & __GFP_DMA);
+ #endif
+ 
++	return is_dma;
++}
++
+ /*
+  * Figure out which kmalloc slab an allocation of a certain size
+  * belongs to.
+@@ -501,18 +518,20 @@ static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
+ static __always_inline void *kmalloc(size_t size, gfp_t flags)
+ {
+ 	if (__builtin_constant_p(size)) {
++#ifndef CONFIG_SLOB
++		unsigned int index;
++#endif
+ 		if (size > KMALLOC_MAX_CACHE_SIZE)
+ 			return kmalloc_large(size, flags);
+ #ifndef CONFIG_SLOB
+-		if (!(flags & GFP_DMA)) {
+-			unsigned int index = kmalloc_index(size);
++		index = kmalloc_index(size);
+ 
+-			if (!index)
+-				return ZERO_SIZE_PTR;
++		if (!index)
++			return ZERO_SIZE_PTR;
+ 
+-			return kmem_cache_alloc_trace(kmalloc_caches[index],
+-					flags, size);
+-		}
++		return kmem_cache_alloc_trace(
++				kmalloc_caches[kmalloc_type(flags)][index],
++				flags, size);
+ #endif
  	}
+ 	return __kmalloc(size, flags);
+@@ -542,13 +561,14 @@ static __always_inline void *kmalloc_node(size_t size, gfp_t flags, int node)
+ {
+ #ifndef CONFIG_SLOB
+ 	if (__builtin_constant_p(size) &&
+-		size <= KMALLOC_MAX_CACHE_SIZE && !(flags & GFP_DMA)) {
++		size <= KMALLOC_MAX_CACHE_SIZE) {
+ 		unsigned int i = kmalloc_index(size);
  
--	mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
--			    (1 << (PAGE_SHIFT + pool->order)));
-+	mod_node_page_state(page_pgdat(page), NR_KERNEL_MISC_RECLAIMABLE,
-+							1 << pool->order);
- 	mutex_unlock(&pool->mutex);
- }
+ 		if (!i)
+ 			return ZERO_SIZE_PTR;
  
-@@ -53,8 +53,8 @@ static struct page *ion_page_pool_remove(struct ion_page_pool *pool, bool high)
+-		return kmem_cache_alloc_node_trace(kmalloc_caches[i],
++		return kmem_cache_alloc_node_trace(
++				kmalloc_caches[kmalloc_type(flags)][i],
+ 						flags, node, size);
  	}
- 
- 	list_del(&page->lru);
--	mod_node_page_state(page_pgdat(page), NR_INDIRECTLY_RECLAIMABLE_BYTES,
--			    -(1 << (PAGE_SHIFT + pool->order)));
-+	mod_node_page_state(page_pgdat(page), NR_KERNEL_MISC_RECLAIMABLE,
-+							-(1 << pool->order));
- 	return page;
- }
- 
-diff --git a/include/linux/mmzone.h b/include/linux/mmzone.h
-index 32699b2dc52a..c2f6bc4c9e8a 100644
---- a/include/linux/mmzone.h
-+++ b/include/linux/mmzone.h
-@@ -180,7 +180,7 @@ enum node_stat_item {
- 	NR_VMSCAN_IMMEDIATE,	/* Prioritise for reclaim when writeback ends */
- 	NR_DIRTIED,		/* page dirtyings since bootup */
- 	NR_WRITTEN,		/* page writings since bootup */
--	NR_INDIRECTLY_RECLAIMABLE_BYTES, /* measured in bytes */
-+	NR_KERNEL_MISC_RECLAIMABLE,	/* reclaimable non-slab kernel pages */
- 	NR_VM_NODE_STAT_ITEMS
- };
- 
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 5d800d61ddb7..91f75bf4404d 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -4704,6 +4704,7 @@ long si_mem_available(void)
- 	unsigned long pagecache;
- 	unsigned long wmark_low = 0;
- 	unsigned long pages[NR_LRU_LISTS];
-+	unsigned long reclaimable;
- 	struct zone *zone;
- 	int lru;
- 
-@@ -4729,19 +4730,13 @@ long si_mem_available(void)
- 	available += pagecache;
- 
- 	/*
--	 * Part of the reclaimable slab consists of items that are in use,
--	 * and cannot be freed. Cap this estimate at the low watermark.
-+	 * Part of the reclaimable slab and other kernel memory consists of
-+	 * items that are in use, and cannot be freed. Cap this estimate at the
-+	 * low watermark.
+ #endif
+diff --git a/mm/slab.c b/mm/slab.c
+index aa76a70e087e..9515798f37b2 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -1288,7 +1288,7 @@ void __init kmem_cache_init(void)
+ 	 * Initialize the caches that provide memory for the  kmem_cache_node
+ 	 * structures first.  Without this, further allocations will bug.
  	 */
--	available += global_node_page_state(NR_SLAB_RECLAIMABLE) -
--		     min(global_node_page_state(NR_SLAB_RECLAIMABLE) / 2,
--			 wmark_low);
--
--	/*
--	 * Part of the kernel memory, which can be released under memory
--	 * pressure.
--	 */
--	available += global_node_page_state(NR_INDIRECTLY_RECLAIMABLE_BYTES) >>
--		PAGE_SHIFT;
-+	reclaimable = global_node_page_state(NR_SLAB_RECLAIMABLE) +
-+			global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE);
-+	available += reclaimable - min(reclaimable / 2, wmark_low);
+-	kmalloc_caches[INDEX_NODE] = create_kmalloc_cache(
++	kmalloc_caches[KMALLOC_NORMAL][INDEX_NODE] = create_kmalloc_cache(
+ 				kmalloc_info[INDEX_NODE].name,
+ 				kmalloc_size(INDEX_NODE), ARCH_KMALLOC_FLAGS,
+ 				0, kmalloc_size(INDEX_NODE));
+@@ -1304,7 +1304,7 @@ void __init kmem_cache_init(void)
+ 		for_each_online_node(nid) {
+ 			init_list(kmem_cache, &init_kmem_cache_node[CACHE_CACHE + nid], nid);
  
- 	if (available < 0)
- 		available = 0;
-diff --git a/mm/util.c b/mm/util.c
-index 3351659200e6..891f0654e7b5 100644
---- a/mm/util.c
-+++ b/mm/util.c
-@@ -675,8 +675,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
- 		 * Part of the kernel memory, which can be released
- 		 * under memory pressure.
- 		 */
--		free += global_node_page_state(
--			NR_INDIRECTLY_RECLAIMABLE_BYTES) >> PAGE_SHIFT;
-+		free += global_node_page_state(NR_KERNEL_MISC_RECLAIMABLE);
+-			init_list(kmalloc_caches[INDEX_NODE],
++			init_list(kmalloc_caches[KMALLOC_NORMAL][INDEX_NODE],
+ 					  &init_kmem_cache_node[SIZE_NODE + nid], nid);
+ 		}
+ 	}
+diff --git a/mm/slab_common.c b/mm/slab_common.c
+index 2296caf87bfb..4572941440f3 100644
+--- a/mm/slab_common.c
++++ b/mm/slab_common.c
+@@ -973,14 +973,10 @@ struct kmem_cache *__init create_kmalloc_cache(const char *name,
+ 	return s;
+ }
+ 
+-struct kmem_cache *kmalloc_caches[KMALLOC_SHIFT_HIGH + 1] __ro_after_init;
++struct kmem_cache *
++kmalloc_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1] __ro_after_init;
+ EXPORT_SYMBOL(kmalloc_caches);
+ 
+-#ifdef CONFIG_ZONE_DMA
+-struct kmem_cache *kmalloc_dma_caches[KMALLOC_SHIFT_HIGH + 1] __ro_after_init;
+-EXPORT_SYMBOL(kmalloc_dma_caches);
+-#endif
+-
+ /*
+  * Conversion table for small slabs sizes / 8 to the index in the
+  * kmalloc array. This is necessary for slabs < 192 since we have non power
+@@ -1040,12 +1036,7 @@ struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags)
+ 	} else
+ 		index = fls(size - 1);
+ 
+-#ifdef CONFIG_ZONE_DMA
+-	if (unlikely((flags & GFP_DMA)))
+-		return kmalloc_dma_caches[index];
+-
+-#endif
+-	return kmalloc_caches[index];
++	return kmalloc_caches[kmalloc_type(flags)][index];
+ }
+ 
+ /*
+@@ -1119,7 +1110,8 @@ void __init setup_kmalloc_cache_index_table(void)
+ 
+ static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
+ {
+-	kmalloc_caches[idx] = create_kmalloc_cache(kmalloc_info[idx].name,
++	kmalloc_caches[KMALLOC_NORMAL][idx] = create_kmalloc_cache(
++					kmalloc_info[idx].name,
+ 					kmalloc_info[idx].size, flags, 0,
+ 					kmalloc_info[idx].size);
+ }
+@@ -1132,9 +1124,10 @@ static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
+ void __init create_kmalloc_caches(slab_flags_t flags)
+ {
+ 	int i;
++	int type = KMALLOC_NORMAL;
+ 
+ 	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
+-		if (!kmalloc_caches[i])
++		if (!kmalloc_caches[type][i])
+ 			new_kmalloc_cache(i, flags);
  
  		/*
- 		 * Leave reserved pages. The pages are not for anonymous pages.
-diff --git a/mm/vmstat.c b/mm/vmstat.c
-index 8ba0870ecddd..c5e52f94ba5f 100644
---- a/mm/vmstat.c
-+++ b/mm/vmstat.c
-@@ -1161,7 +1161,7 @@ const char * const vmstat_text[] = {
- 	"nr_vmscan_immediate_reclaim",
- 	"nr_dirtied",
- 	"nr_written",
--	"", /* nr_indirectly_reclaimable */
-+	"nr_kernel_misc_reclaimable",
+@@ -1142,9 +1135,9 @@ void __init create_kmalloc_caches(slab_flags_t flags)
+ 		 * These have to be created immediately after the
+ 		 * earlier power of two caches
+ 		 */
+-		if (KMALLOC_MIN_SIZE <= 32 && !kmalloc_caches[1] && i == 6)
++		if (KMALLOC_MIN_SIZE <= 32 && !kmalloc_caches[type][1] && i == 6)
+ 			new_kmalloc_cache(1, flags);
+-		if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[2] && i == 7)
++		if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[type][2] && i == 7)
+ 			new_kmalloc_cache(2, flags);
+ 	}
  
- 	/* enum writeback_stat_item counters */
- 	"nr_dirty_threshold",
-@@ -1704,10 +1704,6 @@ static int vmstat_show(struct seq_file *m, void *arg)
- 	unsigned long *l = arg;
- 	unsigned long off = l - (unsigned long *)m->private;
+@@ -1153,7 +1146,7 @@ void __init create_kmalloc_caches(slab_flags_t flags)
  
--	/* Skip hidden vmstat items. */
--	if (*vmstat_text[off] == '\0')
--		return 0;
--
- 	seq_puts(m, vmstat_text[off]);
- 	seq_put_decimal_ull(m, " ", *l);
- 	seq_putc(m, '\n');
+ #ifdef CONFIG_ZONE_DMA
+ 	for (i = 0; i <= KMALLOC_SHIFT_HIGH; i++) {
+-		struct kmem_cache *s = kmalloc_caches[i];
++		struct kmem_cache *s = kmalloc_caches[KMALLOC_NORMAL][i];
+ 
+ 		if (s) {
+ 			unsigned int size = kmalloc_size(i);
+@@ -1161,8 +1154,8 @@ void __init create_kmalloc_caches(slab_flags_t flags)
+ 				 "dma-kmalloc-%u", size);
+ 
+ 			BUG_ON(!n);
+-			kmalloc_dma_caches[i] = create_kmalloc_cache(n,
+-				size, SLAB_CACHE_DMA | flags, 0, 0);
++			kmalloc_caches[KMALLOC_DMA][i] = create_kmalloc_cache(
++				n, size, SLAB_CACHE_DMA | flags, 0, 0);
+ 		}
+ 	}
+ #endif
+diff --git a/mm/slub.c b/mm/slub.c
+index 51258eff4178..a7b4657ea8e0 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -4659,6 +4659,7 @@ static int list_locations(struct kmem_cache *s, char *buf,
+ static void __init resiliency_test(void)
+ {
+ 	u8 *p;
++	int type = KMALLOC_NORMAL;
+ 
+ 	BUILD_BUG_ON(KMALLOC_MIN_SIZE > 16 || KMALLOC_SHIFT_HIGH < 10);
+ 
+@@ -4671,7 +4672,7 @@ static void __init resiliency_test(void)
+ 	pr_err("\n1. kmalloc-16: Clobber Redzone/next pointer 0x12->0x%p\n\n",
+ 	       p + 16);
+ 
+-	validate_slab_cache(kmalloc_caches[4]);
++	validate_slab_cache(kmalloc_caches[type][4]);
+ 
+ 	/* Hmmm... The next two are dangerous */
+ 	p = kzalloc(32, GFP_KERNEL);
+@@ -4680,33 +4681,33 @@ static void __init resiliency_test(void)
+ 	       p);
+ 	pr_err("If allocated object is overwritten then not detectable\n\n");
+ 
+-	validate_slab_cache(kmalloc_caches[5]);
++	validate_slab_cache(kmalloc_caches[type][5]);
+ 	p = kzalloc(64, GFP_KERNEL);
+ 	p += 64 + (get_cycles() & 0xff) * sizeof(void *);
+ 	*p = 0x56;
+ 	pr_err("\n3. kmalloc-64: corrupting random byte 0x56->0x%p\n",
+ 	       p);
+ 	pr_err("If allocated object is overwritten then not detectable\n\n");
+-	validate_slab_cache(kmalloc_caches[6]);
++	validate_slab_cache(kmalloc_caches[type][6]);
+ 
+ 	pr_err("\nB. Corruption after free\n");
+ 	p = kzalloc(128, GFP_KERNEL);
+ 	kfree(p);
+ 	*p = 0x78;
+ 	pr_err("1. kmalloc-128: Clobber first word 0x78->0x%p\n\n", p);
+-	validate_slab_cache(kmalloc_caches[7]);
++	validate_slab_cache(kmalloc_caches[type][7]);
+ 
+ 	p = kzalloc(256, GFP_KERNEL);
+ 	kfree(p);
+ 	p[50] = 0x9a;
+ 	pr_err("\n2. kmalloc-256: Clobber 50th byte 0x9a->0x%p\n\n", p);
+-	validate_slab_cache(kmalloc_caches[8]);
++	validate_slab_cache(kmalloc_caches[type][8]);
+ 
+ 	p = kzalloc(512, GFP_KERNEL);
+ 	kfree(p);
+ 	p[512] = 0xab;
+ 	pr_err("\n3. kmalloc-512: Clobber redzone 0xab->0x%p\n\n", p);
+-	validate_slab_cache(kmalloc_caches[9]);
++	validate_slab_cache(kmalloc_caches[type][9]);
+ }
+ #else
+ #ifdef CONFIG_SYSFS
 -- 
 2.18.0
