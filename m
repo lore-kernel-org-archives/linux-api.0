@@ -1,157 +1,112 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH v4 2/6] mm, slab/slub: introduce kmalloc-reclaimable caches
-Date: Tue, 31 Jul 2018 11:06:45 +0200
-Message-ID: <20180731090649.16028-3-vbabka@suse.cz>
-References: <20180731090649.16028-1-vbabka@suse.cz>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 34/38] vfs: syscall: Add fsinfo() to query filesystem information [ver #10]
+Date: Tue, 31 Jul 2018 13:39:16 +0100
+Message-ID: <1600.1533040756@warthog.procyon.org.uk>
+References: <20180731041642.GH30522@ZenIV.linux.org.uk> <153271267980.9458.7640156373438016898.stgit@warthog.procyon.org.uk> <153271291017.9458.7827028432894772673.stgit@warthog.procyon.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180731090649.16028-1-vbabka@suse.cz>
+In-Reply-To: <20180731041642.GH30522@ZenIV.linux.org.uk>
+Content-ID: <1599.1533040756.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Michal Hocko <mhocko@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Mel Gorman <mgorman@techsingularity.net>, Matthew Wilcox <willy@infradead.org>, Vlastimil Babka <vbabka@suse.cz>
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: dhowells@redhat.com, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Kmem caches can be created with a SLAB_RECLAIM_ACCOUNT flag, which indicates
-they contain objects which can be reclaimed under memory pressure (typically
-through a shrinker). This makes the slab pages accounted as NR_SLAB_RECLAIMABLE
-in vmstat, which is reflected also the MemAvailable meminfo counter and in
-overcommit decisions. The slab pages are also allocated with __GFP_RECLAIMABLE,
-which is good for anti-fragmentation through grouping pages by mobility.
+Al Viro <viro@ZenIV.linux.org.uk> wrote:
 
-The generic kmalloc-X caches are created without this flag, but sometimes are
-used also for objects that can be reclaimed, which due to varying size cannot
-have a dedicated kmem cache with SLAB_RECLAIM_ACCOUNT flag. A prominent example
-are dcache external names, which prompted the creation of a new, manually
-managed vmstat counter NR_INDIRECTLY_RECLAIMABLE_BYTES in commit f1782c9bc547
-("dcache: account external names as indirectly reclaimable memory").
+> Umm...  What's so special about cell/volume/domain/realm?
 
-To better handle this and any other similar cases, this patch introduces
-SLAB_RECLAIM_ACCOUNT variants of kmalloc caches, named kmalloc-rcl-X.
-They are used whenever the kmalloc() call passes __GFP_RECLAIMABLE among gfp
-flags. They are added to the kmalloc_caches array as a new type. Allocations
-with both __GFP_DMA and __GFP_RECLAIMABLE will use a dma type cache.
+Nothing particularly.  But they're something various network filesystems might
+find useful.  cell for AFS, domain for CIFS, realm for things that use
+kerberos.
 
-This change only applies to SLAB and SLUB, not SLOB. This is fine, since SLOB's
-target are tiny system and this patch does add some overhead of kmem management
-objects.
+volume_id/uuid/name would be usable by ext4 too, for example.
 
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Acked-by: Mel Gorman <mgorman@techsingularity.net>
-Acked-by: Christoph Lameter <cl@linux.com>
-Acked-by: Roman Gushchin <guro@fb.com>
----
- include/linux/slab.h | 16 ++++++++++++++-
- mm/slab_common.c     | 48 ++++++++++++++++++++++++++++----------------
- 2 files changed, 46 insertions(+), 18 deletions(-)
+> And what do we do when a random filesystem gets added - should its
+> parameters go into catch-all pile (attr_parameter),
 
-diff --git a/include/linux/slab.h b/include/linux/slab.h
-index f35f2c1f37b9..b79a7cd59875 100644
---- a/include/linux/slab.h
-+++ b/include/linux/slab.h
-@@ -295,8 +295,13 @@ static inline void __check_heap_object(const void *ptr, unsigned long n,
- #define SLAB_OBJ_MIN_SIZE      (KMALLOC_MIN_SIZE < 16 ? \
-                                (KMALLOC_MIN_SIZE) : 16)
- 
-+/*
-+ * Whenever changing this, take care of that kmalloc_type() and
-+ * create_kmalloc_caches() still work as intended.
-+ */
- enum kmalloc_cache_type {
- 	KMALLOC_NORMAL = 0,
-+	KMALLOC_RECLAIM,
- #ifdef CONFIG_ZONE_DMA
- 	KMALLOC_DMA,
- #endif
-@@ -310,12 +315,21 @@ kmalloc_caches[NR_KMALLOC_TYPES][KMALLOC_SHIFT_HIGH + 1];
- static __always_inline enum kmalloc_cache_type kmalloc_type(gfp_t flags)
- {
- 	int is_dma = 0;
-+	int type_dma = 0;
-+	int is_reclaimable;
- 
- #ifdef CONFIG_ZONE_DMA
- 	is_dma = !!(flags & __GFP_DMA);
-+	type_dma = is_dma * KMALLOC_DMA;
- #endif
- 
--	return is_dma;
-+	is_reclaimable = !!(flags & __GFP_RECLAIMABLE);
-+
-+	/*
-+	 * If an allocation is both __GFP_DMA and __GFP_RECLAIMABLE, return
-+	 * KMALLOC_DMA and effectively ignore __GFP_RECLAIMABLE
-+	 */
-+	return type_dma + (is_reclaimable & !is_dma) * KMALLOC_RECLAIM;
- }
- 
- /*
-diff --git a/mm/slab_common.c b/mm/slab_common.c
-index 4572941440f3..03f40b273ea3 100644
---- a/mm/slab_common.c
-+++ b/mm/slab_common.c
-@@ -1108,10 +1108,21 @@ void __init setup_kmalloc_cache_index_table(void)
- 	}
- }
- 
--static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
-+static void __init
-+new_kmalloc_cache(int idx, int type, slab_flags_t flags)
- {
--	kmalloc_caches[KMALLOC_NORMAL][idx] = create_kmalloc_cache(
--					kmalloc_info[idx].name,
-+	const char *name;
-+
-+	if (type == KMALLOC_RECLAIM) {
-+		flags |= SLAB_RECLAIM_ACCOUNT;
-+		name = kasprintf(GFP_NOWAIT, "kmalloc-rcl-%u",
-+						kmalloc_info[idx].size);
-+		BUG_ON(!name);
-+	} else {
-+		name = kmalloc_info[idx].name;
-+	}
-+
-+	kmalloc_caches[type][idx] = create_kmalloc_cache(name,
- 					kmalloc_info[idx].size, flags, 0,
- 					kmalloc_info[idx].size);
- }
-@@ -1123,22 +1134,25 @@ static void __init new_kmalloc_cache(int idx, slab_flags_t flags)
-  */
- void __init create_kmalloc_caches(slab_flags_t flags)
- {
--	int i;
--	int type = KMALLOC_NORMAL;
-+	int i, type;
- 
--	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
--		if (!kmalloc_caches[type][i])
--			new_kmalloc_cache(i, flags);
-+	for (type = KMALLOC_NORMAL; type <= KMALLOC_RECLAIM; type++) {
-+		for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
-+			if (!kmalloc_caches[type][i])
-+				new_kmalloc_cache(i, type, flags);
- 
--		/*
--		 * Caches that are not of the two-to-the-power-of size.
--		 * These have to be created immediately after the
--		 * earlier power of two caches
--		 */
--		if (KMALLOC_MIN_SIZE <= 32 && !kmalloc_caches[type][1] && i == 6)
--			new_kmalloc_cache(1, flags);
--		if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[type][2] && i == 7)
--			new_kmalloc_cache(2, flags);
-+			/*
-+			 * Caches that are not of the two-to-the-power-of size.
-+			 * These have to be created immediately after the
-+			 * earlier power of two caches
-+			 */
-+			if (KMALLOC_MIN_SIZE <= 32 && i == 6 &&
-+					!kmalloc_caches[type][1])
-+				new_kmalloc_cache(1, type, flags);
-+			if (KMALLOC_MIN_SIZE <= 64 && i == 7 &&
-+					!kmalloc_caches[type][2])
-+				new_kmalloc_cache(2, type, flags);
-+		}
- 	}
- 
- 	/* Kmalloc array is now usable */
--- 
-2.18.0
+FSINFO_ATTR_PARAMETER is a way to enumerate the configuration parameters
+passed to mount, as an alternative to parsing /proc/mounts.  So, for example,
+afs has:
+
+	enum afs_param {
+		Opt_autocell,
+		Opt_dyn,
+		Opt_source,
+		nr__afs_params
+	};
+
+	static const struct fs_parameter_spec afs_param_specs[nr__afs_params] = {
+		[Opt_autocell]	= { fs_param_takes_no_value },
+		[Opt_dyn]	= { fs_param_takes_no_value },
+		[Opt_source]	= { fs_param_is_string },
+	};
+
+	static const struct constant_table afs_param_keys[] = {
+		{ "autocell",	Opt_autocell },
+		{ "dyn",	Opt_dyn },
+		{ "source",	Opt_source },
+	};
+
+My thought is that calling fsinfo(..., "/some/afs/file", &params, ...) with:
+
+	struct fsinfo_params params = {
+		.request = FSINFO_ATTR_PARAMETER,
+		.Nth	 = <parameter-number>,
+	};
+
+would get you back, for example:
+
+	Nth	Result
+	=======	==========================================
+	0	"autocell" (or "" if not set)
+	1	"dyn" (or "" if not set)
+	2	"source=%#grand.central.org:root.cell."
+	3+	-ENODATA (ie. there are no more)
+
+where Nth corresponds to the parameter specified by
+FSINFO_ATTR_PARAM_DESCRIPTION and Nth.
+
+Now for some filesystems, cgroups-v1 for example, there are parameters beyond
+the list (the subsystem name) and these can be listed after the predefined
+parameters, eg.:
+
+	Nth	Result
+	=======	==========================================
+	0	"all" or ""
+	1	"clone_children" or ""
+	2	"cpuset_v2_mode" or ""
+	3	"name" or ""
+	4	"none" or ""
+	5	"noprefix" or ""
+	6	"release_agent" or ""
+	7	"xattr" or ""
+	8	"<subsys0>" or ""
+	9	"<subsys1>" or ""
+	10	"<subsys2>" or ""
+	...	-ENODATA
+
+> or should they get classes of their own?
+
+Yes.
+
+> For Cthulhu sake, who's going to maintain that enum in face of
+> random out-of-tree filesystems, each wanting a class or two its own?
+
+They don't get their own numbers unless they're in-tree.  Full stop.  We have
+the same issue with system calls and not-yet-upstream new syscalls.
+
+Note that, as I have the code now, the "type" of return value for each
+attribute must also be declared to the fsinfo() core, and the fsinfo core does
+the copy to/from userspace.
+
+> We'd tried that with device numbers; ask hpa how well has that
+> worked and how much did he love the whole experience...
+
+What would you do instead?  I would prefer to avoid using text strings as keys
+because then I need a big lookup table, and possibly this gets devolved to
+each filesystem to handle - which ends up even more of a mess because then
+there's nothing to hold consistency.
+
+David
