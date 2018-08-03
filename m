@@ -1,61 +1,70 @@
-From: Alan Jenkins <alan.christopher.jenkins@gmail.com>
-Subject: Re: [PATCH 01/33] vfs: syscall: Add open_tree(2) to reference or
- clone a mount [ver #11]
-Date: Fri, 3 Aug 2018 00:46:14 +0100
-Message-ID: <c50af5da-2168-b35a-0d28-5af887cd997a@gmail.com>
-References: <7a292a44-7e17-572b-2d1e-0085ef400010@gmail.com>
- <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <153313705165.13253.4602180607294286849.stgit@warthog.procyon.org.uk>
- <21311.1533246718@warthog.procyon.org.uk>
+From: Maninder Singh <maninder1.s@samsung.com>
+Subject: RE: [PATCH 1/1] selftest/net: fix FILE_SIZE for 32 bit
+ architecture.
+Date: Fri, 03 Aug 2018 09:01:59 +0530
+Message-ID: <20180803033159epcms5p1dd2f5a6834268e9a22efa15421795fa0@epcms5p1>
+References: <4a412194-99aa-7969-54a4-727368fbf82c@gmail.com>
+        <20180802103616epcas5p48ec1e2ea3568b11683aa7b55254dffb0~HCuTv0d7l2131721317epcas5p4u@epcas5p4.samsung.com>
+        <CGME20180802103616epcas5p48ec1e2ea3568b11683aa7b55254dffb0@epcms5p1>
+Reply-To: maninder1.s@samsung.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <21311.1533246718@warthog.procyon.org.uk>
-Content-Language: en-GB
+In-Reply-To: <4a412194-99aa-7969-54a4-727368fbf82c@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Eric Dumazet <eric.dumazet@gmail.com>, "davem@davemloft.net" <davem@davemloft.net>, "shuahkh@osg.samsung.com" <shuahkh@osg.samsung.com>
+Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "edumazet@google.com" <edumazet@google.com>, PANKAJ MISHRA <pankaj.m@samsung.com>, AMIT SAHRAWAT <a.sahrawat@samsung.com>, Vaneet Narang <v.narang@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On 02/08/18 22:51, David Howells wrote:
-> Alan Jenkins <alan.christopher.jenkins@gmail.com> wrote:
->
->> Another closely-related limitation of `mount`, is that it can't atomically set
->> the propagation type at mount time.
-> I want to add a mount_setattr() too at some point:
->
-> 	fd = open_tree(..., OPEN_TREE_CLONE);
-> 	mount_setattr(fd, ...);
-> 	move_mount(fd, ...);
+Hi,
 
-Cool.  Not having to mess with fchdir() sounds nice.  (And as a bonus, 
-being able to avoid the existing multiplexed mount() call, which looks 
-ugly from all the NULL arguments if nothing else).
+>On 08/02/2018 03:31 AM, Maninder Singh wrote:
+>> FILE_SZ is defined as (1UL << 35), it will overflow
+>> for 32 bit system and logic will break.
+>> 
+>> Signed-off-by: Maninder Singh <maninder1.s@samsung.com>
+>> Signed-off-by: Vaneet Narang <v.narang@samsung.com>
+>> ---
+>>  tools/testing/selftests/net/tcp_mmap.c | 8 ++++----
+>>  1 file changed, 4 insertions(+), 4 deletions(-)
+>> 
+>> diff --git a/tools/testing/selftests/net/tcp_mmap.c b/tools/testing/selftests/net/tcp_mmap.c
+>> index e8c5dff..1d6ca12 100644
+>> --- a/tools/testing/selftests/net/tcp_mmap.c
+>> +++ b/tools/testing/selftests/net/tcp_mmap.c
+>> @@ -85,7 +85,7 @@
+>>  #define MSG_ZEROCOPY    0x4000000
+>>  #endif
+>>  
+>> -#define FILE_SZ (1UL << 35)
+>> +#define FILE_SZ (1ULL << 35)
 
-> I'm not sure whether you should be able to fchdir into the cloned tree since
-> it isn't attached to any mount namespace.
->
-> David
+...
+...
+>> @@ -431,7 +431,7 @@ int main(int argc, char *argv[])
+>>                  zflg = 0;
+>>          }
+>>          while (total < FILE_SZ) {
+>> -                long wr = FILE_SZ - total;
+>> +                unsigned long long wr = FILE_SZ - total;
+>>  
+>>                  if (wr > chunk_size)
+>>                          wr = chunk_size;
+>> 
+> 
+>What about using more conventional size_t instead of "unsigned long long" ?
 
-I don't see a check prohibiting it :-). I don't think it's a problem.
+size_t is also equivalent to unsigned long and it will not hold value of (1 << 35) for 32 bit system.
+So we can do two things.
 
-You can already chdir/chroot into a different mount namespace, you just 
-can't do any mount operations on it.  (You said you want to be able to, 
-but so far move_mount() still prohibits it, I guess that's for the future).
+(1) reduce FILE SIZE to (1 << 30), so that UL (size_t) can hold this value.
+It will not show any perofrmance boost with ZEROCOPY. (checked on x86_64)
 
-And you can already do the same into a mount that has been detached, 
-which will have `mount->mnt_ns = NULL` if I'm reading correctly.
+(2) use unsigned long long to work with both 32 and 64 bit system.
+It will show performance boost with ZEROCOPY.(checked on x86_64)
 
-Hmm, there is something that's been nagging at me though.  I'm 
-suspicious about what happens in this series, when you move_mount() from 
-a victim of MNT_DETACH.  I think umount2(MNT_DETACH) sets a flag 
-MNT_UMOUNT.  It's a flag that was added to help correctly handle 
-MNT_LOCKED in the face of umount2(MNT_DETACH).  It's also the point 
-where my understanding of the kernel mount/unmount code breaks down 
-:-).  But it seems to override both IS_MNT_LOCKED() and UMOUNT_CONNECTED 
-in disconnect_mount().  That would give another chance to defeat locked 
-mounts.
+What do you think?
 
-Regards
-Alan
+Thanks and regards,
+Maninder Singh
