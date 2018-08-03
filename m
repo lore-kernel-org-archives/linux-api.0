@@ -1,50 +1,67 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH 1/1] selftest/net: fix FILE_SIZE for 32 bit architecture.
-Date: Fri, 3 Aug 2018 11:12:06 +0000
-Message-ID: <4f2c8d694dce4125a609e8d5383ebe36@AcuMS.aculab.com>
-References: <4a412194-99aa-7969-54a4-727368fbf82c@gmail.com>
-        <20180802103616epcas5p48ec1e2ea3568b11683aa7b55254dffb0~HCuTv0d7l2131721317epcas5p4u@epcas5p4.samsung.com>
-        <CGME20180802103616epcas5p48ec1e2ea3568b11683aa7b55254dffb0@epcms5p1>
- <20180803033159epcms5p1dd2f5a6834268e9a22efa15421795fa0@epcms5p1>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v2] prctl: add PR_[GS]ET_KILLABLE
+Date: Fri, 3 Aug 2018 14:14:07 +0200
+Message-ID: <20180803121406.GB13794@redhat.com>
+References: <20180730075241.24002-1-j@bitron.ch>
+ <20180731070337.61004-1-j@bitron.ch>
+ <20180731143949.GA1890@redhat.com>
+ <f21a22c9730ab455504f58a5fbda72cba0eb1227.camel@bitron.ch>
+ <20180801141914.GA21248@redhat.com>
+ <7f7c57230e0279f4599bf13ae1d1d449d76ac232.camel@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180803033159epcms5p1dd2f5a6834268e9a22efa15421795fa0@epcms5p1>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <7f7c57230e0279f4599bf13ae1d1d449d76ac232.camel@bitron.ch>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "'maninder1.s@samsung.com'" <maninder1.s@samsung.com>, Eric Dumazet <eric.dumazet@gmail.com>, "davem@davemloft.net" <davem@davemloft.net>, "shuahkh@osg.samsung.com" <shuahkh@osg.samsung.com>
-Cc: "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "edumazet@google.com" <edumazet@google.com>, PANKAJ MISHRA <pankaj.m@samsung.com>, AMIT SAHRAWAT <a.sahrawat@samsung.com>, Vaneet Narang <v.narang@samsung.com>
+To: =?iso-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-RnJvbTogTWFuaW5kZXIgU2luZ2gNCj4gU2VudDogMDMgQXVndXN0IDIwMTggMDQ6MzINCj4gPk9u
-IDA4LzAyLzIwMTggMDM6MzEgQU0sIE1hbmluZGVyIFNpbmdoIHdyb3RlOg0KPiA+PiBGSUxFX1Na
-IGlzIGRlZmluZWQgYXMgKDFVTCA8PCAzNSksIGl0IHdpbGwgb3ZlcmZsb3cNCj4gPj4gZm9yIDMy
-IGJpdCBzeXN0ZW0gYW5kIGxvZ2ljIHdpbGwgYnJlYWsuDQo+ID4+DQo+ID4+IFNpZ25lZC1vZmYt
-Ynk6IE1hbmluZGVyIFNpbmdoIDxtYW5pbmRlcjEuc0BzYW1zdW5nLmNvbT4NCj4gPj4gU2lnbmVk
-LW9mZi1ieTogVmFuZWV0IE5hcmFuZyA8di5uYXJhbmdAc2Ftc3VuZy5jb20+DQo+ID4+IC0tLQ0K
-PiA+PiAgdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbmV0L3RjcF9tbWFwLmMgfCA4ICsrKystLS0t
-DQo+ID4+ICAxIGZpbGUgY2hhbmdlZCwgNCBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygtKQ0K
-PiA+Pg0KPiA+PiBkaWZmIC0tZ2l0IGEvdG9vbHMvdGVzdGluZy9zZWxmdGVzdHMvbmV0L3RjcF9t
-bWFwLmMgYi90b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9uZXQvdGNwX21tYXAuYw0KPiA+PiBpbmRl
-eCBlOGM1ZGZmLi4xZDZjYTEyIDEwMDY0NA0KPiA+PiAtLS0gYS90b29scy90ZXN0aW5nL3NlbGZ0
-ZXN0cy9uZXQvdGNwX21tYXAuYw0KPiA+PiArKysgYi90b29scy90ZXN0aW5nL3NlbGZ0ZXN0cy9u
-ZXQvdGNwX21tYXAuYw0KPiA+PiBAQCAtODUsNyArODUsNyBAQA0KPiA+PiAgI2RlZmluZSBNU0df
-WkVST0NPUFkgICAgMHg0MDAwMDAwDQo+ID4+ICAjZW5kaWYNCj4gPj4NCj4gPj4gLSNkZWZpbmUg
-RklMRV9TWiAoMVVMIDw8IDM1KQ0KPiA+PiArI2RlZmluZSBGSUxFX1NaICgxVUxMIDw8IDM1KQ0K
-PiANCj4gLi4uDQo+IC4uLg0KPiA+PiBAQCAtNDMxLDcgKzQzMSw3IEBAIGludCBtYWluKGludCBh
-cmdjLCBjaGFyICphcmd2W10pDQo+ID4+ICAgICAgICAgICAgICAgICAgemZsZyA9IDA7DQo+ID4+
-ICAgICAgICAgIH0NCj4gPj4gICAgICAgICAgd2hpbGUgKHRvdGFsIDwgRklMRV9TWikgew0KPiA+
-PiAtICAgICAgICAgICAgICAgIGxvbmcgd3IgPSBGSUxFX1NaIC0gdG90YWw7DQo+ID4+ICsgICAg
-ICAgICAgICAgICAgdW5zaWduZWQgbG9uZyBsb25nIHdyID0gRklMRV9TWiAtIHRvdGFsOw0KPiA+
-Pg0KPiA+PiAgICAgICAgICAgICAgICAgIGlmICh3ciA+IGNodW5rX3NpemUpDQo+ID4+ICAgICAg
-ICAgICAgICAgICAgICAgICAgICB3ciA9IGNodW5rX3NpemU7DQo+ID4+DQo+ID4NCj4gPldoYXQg
-YWJvdXQgdXNpbmcgbW9yZSBjb252ZW50aW9uYWwgc2l6ZV90IGluc3RlYWQgb2YgInVuc2lnbmVk
-IGxvbmcgbG9uZyIgPw0KPiANCj4gc2l6ZV90IGlzIGFsc28gZXF1aXZhbGVudCB0byB1bnNpZ25l
-ZCBsb25nIGFuZCBpdCB3aWxsIG5vdCBob2xkIHZhbHVlIG9mICgxIDw8IDM1KSBmb3IgMzIgYml0
-IHN5c3RlbS4NCj4gU28gd2UgY2FuIGRvIHR3byB0aGluZ3MuDQoNCldvdWxkbid0IHRoZSAnY29y
-cmVjdCcgdHlwZSBiZSBvZmZfdCA/DQpJbiBhbnkgY2FzZSwgSUlSQywgeW91IGhhdmUgdG8gZG8g
-cmVhbGx5IGhvcnJpZCB0aGluZ3MgaW4gTGludXggdG8NCmFjY2VzcyBmaWxlcyBsYXJnZXIgdGhh
-biAyRyBvbiAzMmJpdCBzeXN0ZW1zLg0KDQoJRGF2aWQNCg0KLQ0KUmVnaXN0ZXJlZCBBZGRyZXNz
-IExha2VzaWRlLCBCcmFtbGV5IFJvYWQsIE1vdW50IEZhcm0sIE1pbHRvbiBLZXluZXMsIE1LMSAx
-UFQsIFVLDQpSZWdpc3RyYXRpb24gTm86IDEzOTczODYgKFdhbGVzKQ0K
+On 08/03, Jürg Billeter wrote:
+>
+> On Wed, 2018-08-01 at 16:19 +0200, Oleg Nesterov wrote:
+> > On 07/31, Jürg Billeter wrote:
+> > >
+> > > > Could you explain your use-case? Why a shell wants to use
+> > > > CLONE_NEWPID?
+> > >
+> > > To guarantee that there won't be any runaway processes, i.e., ensure
+> > > that no descendants (background helper daemons or misbehaving
+> > > processes) survive when the child process is terminated.
+> >
+> > We already have PR_SET_CHILD_SUBREAPER.
+> >
+> > Perhaps we can finally add PR_KILL_MY_DESCENDANTS_ON_EXIT? This was already
+> > discussed some time ago, but I can't find the previous discussion... Simple
+> > to implement.
+>
+> This would definitely be an option. You mentioned it last October in
+> the PR_SET_PDEATHSIG_PROC discussion¹. However, as PID namespaces
+> already exist and appear to be a good fit for the most part,
+
+Sure, if CLONE_NEWPID fits your needs you can use it,
+
+> I think it
+> makes sense to just add the missing pieces to PID namespaces instead of
+> duplicating part of the PID namespace functionality.
+
+Again, I am not arguing with your change.
+
+PR_KILL_MY_DESCENDANTS_ON_EXIT can make sense just like PR_SET_CHILD_SUBREAPER
+even if PID namespace functionality implies both. Simply because CLONE_NEWPID
+is not necessarily the best tool, if nothing else you do not necessarily want
+the pid isolation.
+
+> Also, based on Eric's comment in that other discussion about
+> no_new_privs not being allowed to increase the attack surface,
+> PR_KILL_MY_DESCENDANTS_ON_EXIT might require CAP_SYS_ADMIN as well (due
+> to setuid children).
+
+No, no, the exiting parent should simply do group_send_sig_info(SIGKILL)
+for every descendant and rely on check_kill_permission().
+
+OK, lets forget it for now.
+
+Oleg.
