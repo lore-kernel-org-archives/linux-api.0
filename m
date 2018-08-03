@@ -1,57 +1,88 @@
-From: =?ISO-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>
-Subject: Re: [PATCH v2] prctl: add PR_[GS]ET_KILLABLE
-Date: Fri, 03 Aug 2018 16:39:14 +0200
-Message-ID: <548ab0d300c6b9839ad645655182d0ba26607d47.camel@bitron.ch>
+From: =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
+Subject: [PATCH v3 2/2] prctl: add PR_[GS]ET_KILLABLE
+Date: Fri,  3 Aug 2018 16:40:21 +0200
+Message-ID: <20180803144021.56920-2-j@bitron.ch>
 References: <20180730075241.24002-1-j@bitron.ch>
-         <20180731070337.61004-1-j@bitron.ch> <20180731143949.GA1890@redhat.com>
-         <f21a22c9730ab455504f58a5fbda72cba0eb1227.camel@bitron.ch>
-         <20180801141914.GA21248@redhat.com>
-         <7f7c57230e0279f4599bf13ae1d1d449d76ac232.camel@bitron.ch>
-         <87sh3vd14s.fsf@xmission.com>
+ <20180803144021.56920-1-j@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87sh3vd14s.fsf@xmission.com>
+In-Reply-To: <20180803144021.56920-1-j@bitron.ch>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2018-08-03 at 08:34 -0500, Eric W. Biederman wrote:
-> From the other direction I think we can just go ahead and fix handling
-> of the job control stop signals as well.  As far as I understand it
-> there is a legitimate complaint that SIGTSTP SIGTTIN SIGTTOU do not work
-> on a pid namespace leader.
-> 
-> The current implementation actual overshoots.  We only need to ignore
-> signals from the descendants in the pid namespace.  Ideally signals from
-> other processes are treated like normal.  We have only been able to
-> apply that ideal to SIGSTOP and SIGKILL as we can handle them in
-> prepare_signal.  Other signals can be blocked which means the logic to
-> handle them needs to live in get_signal where we may have no sender
-> information.
+PR_SET_KILLABLE clears the SIGNAL_UNKILLABLE flag. This allows
+CLONE_NEWPID tasks to restore normal signal behavior, opting out of the
+special signal protection for init processes. This prctl does not allow
+setting the SIGNAL_UNKILLABLE flag, only clearing.
 
-SIGINT and SIGQUIT are also relevant for job control. Would the same
-approach be possible for them?
+The SIGNAL_UNKILLABLE flag, which is implicitly set for tasks cloned
+with CLONE_NEWPID, has the effect of ignoring all signals (from
+userspace) if the corresponding handler is set to SIG_DFL. The only
+exceptions are SIGKILL and SIGSTOP and they are only accepted if raised
+from an ancestor namespace.
 
-And I would like to allow regular POSIX signal behavior also for
-signals used outside job control, e.g., SIGTERM, for maximum
-compatibility with existing applications. Furthermore, it would also be
-good to allow a PID namespace leader to send a signal to itself.
+SIGINT, SIGQUIT and SIGTSTP are used in job control for ^C, ^\, ^Z.
+While a task with the SIGNAL_UNKILLABLE flag could install handlers for
+these signals, this is not sufficient to implement a shell that uses
+CLONE_NEWPID for child processes:
 
-Do you think we can and should cover all of the above without a prctl
-by loosening the restrictions imposed by SIGNAL_UNKILLABLE (with
-reasonable effort)?
+ * As SIGSTOP is ignored when raised from the SIGNAL_UNKILLABLE process
+   itself, it's not possible to implement the stop action in a custom
+   SIGTSTP handler.
+ * Many applications do not install handlers for these signals and
+   thus, job control won't work properly with unmodified applications.
 
-In my opinion, my patch still makes sense as it simply allows regular
-POSIX signal behavior for PID namespace leaders and it doesn't risk any
-compatibility issues as the behavior doesn't change at all for
-processes that don't invoke the new prctl. I.e., simple patch, low
-risk, and covers all signals.
+There are other scenarios besides job control in a shell where
+applications rely on the default actions as described in signal(7) and
+PID isolation may be useful. This new prctl makes the signal protection
+for "init" processes optional, without breaking backward compatibility.
 
-In the meantime I've tested the missing patch for copy_process() and
-will send out v3 of the patch in case the new prctl makes sense after
-all.
+Signed-off-by: Jürg Billeter <j@bitron.ch>
+---
+ include/uapi/linux/prctl.h |  4 ++++
+ kernel/sys.c               | 13 +++++++++++++
+ 2 files changed, 17 insertions(+)
 
-Jürg
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index c0d7ea0bf5b6..92afb63da727 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -219,4 +219,8 @@ struct prctl_mm_map {
+ # define PR_SPEC_DISABLE		(1UL << 2)
+ # define PR_SPEC_FORCE_DISABLE		(1UL << 3)
+ 
++/* Control SIGNAL_UNKILLABLE */
++#define PR_GET_KILLABLE			54
++#define PR_SET_KILLABLE			55
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 38509dc1f77b..92c9322cfb98 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2484,6 +2484,19 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 			return -EINVAL;
+ 		error = arch_prctl_spec_ctrl_set(me, arg2, arg3);
+ 		break;
++	case PR_GET_KILLABLE:
++		if (arg3 || arg4 || arg5)
++			return -EINVAL;
++		error = put_user(!(me->signal->flags & SIGNAL_UNKILLABLE),
++				 (int __user *)arg2);
++		break;
++	case PR_SET_KILLABLE:
++		if (arg2 != 1 || arg3 || arg4 || arg5)
++			return -EINVAL;
++		spin_lock_irq(&me->sighand->siglock);
++		me->signal->flags &= ~SIGNAL_UNKILLABLE;
++		spin_unlock_irq(&me->sighand->siglock);
++		break;
+ 	default:
+ 		error = -EINVAL;
+ 		break;
+-- 
+2.18.0
