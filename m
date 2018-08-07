@@ -1,44 +1,59 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH v4 0/4] seccomp trap to userspace
-Date: Tue, 07 Aug 2018 07:34:12 -0700
-Message-ID: <1533652452.5764.2.camel@HansenPartnership.com>
-References: <20180621220416.5412-1-tycho@tycho.ws>
-         <20180807024442.GA12274@cisco.lan>
+From: Dennis Zhou <dennisszhou@gmail.com>
+Subject: Re: [PATCH] proc: add percpu populated pages count to meminfo
+Date: Tue, 7 Aug 2018 08:03:16 -0700
+Message-ID: <20180807150315.GA59704@dennisz-mbp.dhcp.thefacebook.com>
+References: <20180807005607.53950-1-dennisszhou@gmail.com>
+ <3b792413-184b-20b1-9d90-9e69f0df8cc4@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180807024442.GA12274@cisco.lan>
+Content-Disposition: inline
+In-Reply-To: <3b792413-184b-20b1-9d90-9e69f0df8cc4@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>
-Cc: "Tobin C . Harding" <me@tobin.cc>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, linux-kernel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, Roman Gushchin <guro@fb.com>, kernel-team@fb.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2018-08-06 at 20:44 -0600, Tycho Andersen wrote:
-> Hi all,
+Hi Vlastimil,
+
+On Tue, Aug 07, 2018 at 03:18:31PM +0200, Vlastimil Babka wrote:
 > 
-> Dinesh Subhraveti has claimed that some part of this series might be
-> patented. While he has not furnished me with anything to confirm this
-> claim, I'll put this series on hold.
+> Documentation/filesystems/proc.txt should be updated as well
+> 
 
-Just on a general policy for handling things like this.
+Will do.
 
-Firstly, never discuss specifics on a mailing list.  Patents are a
-really tricky area where advice in confidence is needed and lack of
-confidentiality usually only benefits the patent holder.
+> >  
+> > +/*
+> > + * The number of populated pages in use by the allocator, protected by
+> > + * pcpu_lock.  This number is kept per a unit per chunk (i.e. when a page gets
+> > + * allocated/deallocated, it is allocated/deallocated in all units of a chunk
+> > + * and increments/decrements this count by 1).
+> > + */
+> > +static int pcpu_nr_populated;
+> 
+> It better be unsigned long, to match others.
+> 
 
-Secondly, vague threats (like this) can be safely ignored.  Thanks to
-the terms of the GPL and the specific actions of OIN, we legitimately
-have licences to a vast pool of patents, so we should assume for every
-vague threat of the existence of a patent that we do legitimately
-possess a licence until the threat is made specific.
+Yeah that makes sense. I've changed this for v2.
 
-Finally, if the vague threat becomes specific (which means citation of
-patent by number and claim) you need to engage the resources we have at
-our disposal to investigate.  Likely it will be OIN resources that do
-this investigation, but the way to begin is to start with your
-corporate counsel for contributions on behalf of a company.  If they're
-on behalf of you as an individual, you can begin with Counsel which the
-Linux Foundation will provide.
+> > +/*
+> > + * pcpu_nr_populated_pages - calculate total number of populated backing pages
+> > + *
+> > + * This reflects the number of pages populated to back the chunks.
+> > + * Metadata is excluded in the number exposed in meminfo as the number of
+> > + * backing pages scales with the number of cpus and can quickly outweigh the
+> > + * memory used for metadata.  It also keeps this calculation nice and simple.
+> > + *
+> > + * RETURNS:
+> > + * Total number of populated backing pages in use by the allocator.
+> > + */
+> > +int pcpu_nr_populated_pages(void)
+> 
+> Also unsigned long please.
+> 
 
-James
+Changed for v2.
+
+Thanks,
+Dennis
