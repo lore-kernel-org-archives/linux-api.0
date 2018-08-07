@@ -1,159 +1,44 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [PATCH] proc: add percpu populated pages count to meminfo
-Date: Tue, 7 Aug 2018 15:18:31 +0200
-Message-ID: <3b792413-184b-20b1-9d90-9e69f0df8cc4@suse.cz>
-References: <20180807005607.53950-1-dennisszhou@gmail.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [PATCH v4 0/4] seccomp trap to userspace
+Date: Tue, 07 Aug 2018 07:34:12 -0700
+Message-ID: <1533652452.5764.2.camel@HansenPartnership.com>
+References: <20180621220416.5412-1-tycho@tycho.ws>
+         <20180807024442.GA12274@cisco.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180807005607.53950-1-dennisszhou@gmail.com>
-Content-Language: en-US
+In-Reply-To: <20180807024442.GA12274@cisco.lan>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dennis Zhou <dennisszhou@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, Roman Gushchin <guro@fb.com>
-Cc: kernel-team@fb.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+To: Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>
+Cc: "Tobin C . Harding" <me@tobin.cc>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, linux-kernel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-+CC linux-api
-
-On 08/07/2018 02:56 AM, Dennis Zhou wrote:
-> From: "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>
+On Mon, 2018-08-06 at 20:44 -0600, Tycho Andersen wrote:
+> Hi all,
 > 
-> Currently, percpu memory only exposes allocation and utilization
-> information via debugfs. This more or less is only really useful for
-> understanding the fragmentation and allocation information at a
-> per-chunk level with a few global counters. This is also gated behind a
-> config. BPF and cgroup, for example, have seen an increase use causing
-> increased use of percpu memory. Let's make it easier for someone to
-> identify how much memory is being used.
-> 
-> This patch adds the PercpuPopulated stat to meminfo to more easily
-> look up how much percpu memory is in use. This new number includes the
-> cost for all backing pages and not just insight at the a unit, per
-> chunk level. This stat includes only pages used to back the chunks
-> themselves excluding metadata. I think excluding metadata is fair
-> because the backing memory scales with the number of cpus and can
-> quickly outweigh the metadata. It also makes this calculation light.
-> 
-> Signed-off-by: Dennis Zhou <dennisszhou@gmail.com>
+> Dinesh Subhraveti has claimed that some part of this series might be
+> patented. While he has not furnished me with anything to confirm this
+> claim, I'll put this series on hold.
 
-Sounds useful and cheap, so why not, I guess.
+Just on a general policy for handling things like this.
 
-> ---
->  fs/proc/meminfo.c      |  2 ++
->  include/linux/percpu.h |  2 ++
->  mm/percpu.c            | 29 +++++++++++++++++++++++++++++
+Firstly, never discuss specifics on a mailing list.  Patents are a
+really tricky area where advice in confidence is needed and lack of
+confidentiality usually only benefits the patent holder.
 
-Documentation/filesystems/proc.txt should be updated as well
+Secondly, vague threats (like this) can be safely ignored.  Thanks to
+the terms of the GPL and the specific actions of OIN, we legitimately
+have licences to a vast pool of patents, so we should assume for every
+vague threat of the existence of a patent that we do legitimately
+possess a licence until the threat is made specific.
 
->  3 files changed, 33 insertions(+)
-> 
-> diff --git a/fs/proc/meminfo.c b/fs/proc/meminfo.c
-> index 2fb04846ed11..ddd5249692e9 100644
-> --- a/fs/proc/meminfo.c
-> +++ b/fs/proc/meminfo.c
-> @@ -7,6 +7,7 @@
->  #include <linux/mman.h>
->  #include <linux/mmzone.h>
->  #include <linux/proc_fs.h>
-> +#include <linux/percpu.h>
->  #include <linux/quicklist.h>
->  #include <linux/seq_file.h>
->  #include <linux/swap.h>
-> @@ -121,6 +122,7 @@ static int meminfo_proc_show(struct seq_file *m, void *v)
->  		   (unsigned long)VMALLOC_TOTAL >> 10);
->  	show_val_kb(m, "VmallocUsed:    ", 0ul);
->  	show_val_kb(m, "VmallocChunk:   ", 0ul);
-> +	show_val_kb(m, "PercpuPopulated:", pcpu_nr_populated_pages());
->  
->  #ifdef CONFIG_MEMORY_FAILURE
->  	seq_printf(m, "HardwareCorrupted: %5lu kB\n",
-> diff --git a/include/linux/percpu.h b/include/linux/percpu.h
-> index 296bbe49d5d1..1c80be42822c 100644
-> --- a/include/linux/percpu.h
-> +++ b/include/linux/percpu.h
-> @@ -149,4 +149,6 @@ extern phys_addr_t per_cpu_ptr_to_phys(void *addr);
->  	(typeof(type) __percpu *)__alloc_percpu(sizeof(type),		\
->  						__alignof__(type))
->  
-> +extern int pcpu_nr_populated_pages(void);
-> +
->  #endif /* __LINUX_PERCPU_H */
-> diff --git a/mm/percpu.c b/mm/percpu.c
-> index 0b6480979ac7..08a4341f30c5 100644
-> --- a/mm/percpu.c
-> +++ b/mm/percpu.c
-> @@ -169,6 +169,14 @@ static LIST_HEAD(pcpu_map_extend_chunks);
->   */
->  int pcpu_nr_empty_pop_pages;
->  
-> +/*
-> + * The number of populated pages in use by the allocator, protected by
-> + * pcpu_lock.  This number is kept per a unit per chunk (i.e. when a page gets
-> + * allocated/deallocated, it is allocated/deallocated in all units of a chunk
-> + * and increments/decrements this count by 1).
-> + */
-> +static int pcpu_nr_populated;
+Finally, if the vague threat becomes specific (which means citation of
+patent by number and claim) you need to engage the resources we have at
+our disposal to investigate.  Likely it will be OIN resources that do
+this investigation, but the way to begin is to start with your
+corporate counsel for contributions on behalf of a company.  If they're
+on behalf of you as an individual, you can begin with Counsel which the
+Linux Foundation will provide.
 
-It better be unsigned long, to match others.
-
-> +
->  /*
->   * Balance work is used to populate or destroy chunks asynchronously.  We
->   * try to keep the number of populated free pages between
-> @@ -1232,6 +1240,7 @@ static void pcpu_chunk_populated(struct pcpu_chunk *chunk, int page_start,
->  
->  	bitmap_set(chunk->populated, page_start, nr);
->  	chunk->nr_populated += nr;
-> +	pcpu_nr_populated += nr;
->  
->  	if (!for_alloc) {
->  		chunk->nr_empty_pop_pages += nr;
-> @@ -1260,6 +1269,7 @@ static void pcpu_chunk_depopulated(struct pcpu_chunk *chunk,
->  	chunk->nr_populated -= nr;
->  	chunk->nr_empty_pop_pages -= nr;
->  	pcpu_nr_empty_pop_pages -= nr;
-> +	pcpu_nr_populated -= nr;
->  }
->  
->  /*
-> @@ -2176,6 +2186,9 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
->  	pcpu_nr_empty_pop_pages = pcpu_first_chunk->nr_empty_pop_pages;
->  	pcpu_chunk_relocate(pcpu_first_chunk, -1);
->  
-> +	/* include all regions of the first chunk */
-> +	pcpu_nr_populated += PFN_DOWN(size_sum);
-> +
->  	pcpu_stats_chunk_alloc();
->  	trace_percpu_create_chunk(base_addr);
->  
-> @@ -2745,6 +2758,22 @@ void __init setup_per_cpu_areas(void)
->  
->  #endif	/* CONFIG_SMP */
->  
-> +/*
-> + * pcpu_nr_populated_pages - calculate total number of populated backing pages
-> + *
-> + * This reflects the number of pages populated to back the chunks.
-> + * Metadata is excluded in the number exposed in meminfo as the number of
-> + * backing pages scales with the number of cpus and can quickly outweigh the
-> + * memory used for metadata.  It also keeps this calculation nice and simple.
-> + *
-> + * RETURNS:
-> + * Total number of populated backing pages in use by the allocator.
-> + */
-> +int pcpu_nr_populated_pages(void)
-
-Also unsigned long please.
-
-Thanks,
-Vlastimil
-
-> +{
-> +	return pcpu_nr_populated * pcpu_nr_units;
-> +}
-> +
->  /*
->   * Percpu allocator is initialized early during boot when neither slab or
->   * workqueue is available.  Plug async management until everything is up
-> 
+James
