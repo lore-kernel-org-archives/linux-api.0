@@ -1,19 +1,20 @@
-From: David Rientjes <rientjes@google.com>
+From: Vlastimil Babka <vbabka@suse.cz>
 Subject: Re: [PATCH v2] proc: add percpu populated pages count to meminfo
-Date: Tue, 7 Aug 2018 17:12:59 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1808071712310.48479@chino.kir.corp.google.com>
+Date: Wed, 8 Aug 2018 09:53:32 +0200
+Message-ID: <4eb4a0cc-2304-b6e2-06dd-ce0ade5d537e@suse.cz>
 References: <20180807184723.74919-1-dennisszhou@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180807184723.74919-1-dennisszhou@gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dennis Zhou <dennisszhou@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, kernel-team@fb.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+To: Dennis Zhou <dennisszhou@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, Roman Gushchin <guro@fb.com>
+Cc: kernel-team@fb.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 7 Aug 2018, Dennis Zhou wrote:
-
+On 08/07/2018 08:47 PM, Dennis Zhou wrote:
 > From: "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>
 > 
 > Currently, percpu memory only exposes allocation and utilization
@@ -33,4 +34,6 @@ On Tue, 7 Aug 2018, Dennis Zhou wrote:
 > 
 > Signed-off-by: Dennis Zhou <dennisszhou@gmail.com>
 
-Acked-by: David Rientjes <rientjes@google.com>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+
+Thanks.
