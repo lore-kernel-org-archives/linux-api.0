@@ -1,53 +1,36 @@
-From: Adam Borowski <kilobyte@angband.pl>
-Subject: Re: [RESEND][PATCH v5 0/2] vfs: better dedupe permission check
-Date: Wed, 8 Aug 2018 00:21:06 +0200
-Message-ID: <20180807222106.6qfyrivo6y4pzn6a@angband.pl>
-References: <20180807214949.7714-1-mfasheh@suse.de>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [PATCH v2] proc: add percpu populated pages count to meminfo
+Date: Tue, 7 Aug 2018 17:12:59 -0700 (PDT)
+Message-ID: <alpine.DEB.2.21.1808071712310.48479@chino.kir.corp.google.com>
+References: <20180807184723.74919-1-dennisszhou@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180807214949.7714-1-mfasheh@suse.de>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Mark Fasheh <mfasheh@suse.de>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Al Viro <viro@ZenIV.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, David Sterba <dsterba@suse.cz>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180807184723.74919-1-dennisszhou@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dennis Zhou <dennisszhou@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Tejun Heo <tj@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Christoph Lameter <cl@linux.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, kernel-team@fb.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 07, 2018 at 02:49:47PM -0700, Mark Fasheh wrote:
-> Hi Andrew,
+On Tue, 7 Aug 2018, Dennis Zhou wrote:
+
+> From: "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>
 > 
-> Could I please have these patches upstreamed or at least put in a tree for
-> more public testing? They've hit fsdevel a few times now, I have links to
-> the discussions in the change log below.
+> Currently, percpu memory only exposes allocation and utilization
+> information via debugfs. This more or less is only really useful for
+> understanding the fragmentation and allocation information at a
+> per-chunk level with a few global counters. This is also gated behind a
+> config. BPF and cgroup, for example, have seen an increase use causing
+> increased use of percpu memory. Let's make it easier for someone to
+> identify how much memory is being used.
+> 
+> This patch adds the "Percpu" stat to meminfo to more easily look up how
+> much percpu memory is in use. This number includes the cost for all
+> allocated backing pages and not just isnight at the a unit, per chunk
+> level. Metadata is excluded. I think excluding metadata is fair because
+> the backing memory scales with the numbere of cpus and can quickly
+> outweigh the metadata. It also makes this calculation light.
+> 
+> Signed-off-by: Dennis Zhou <dennisszhou@gmail.com>
 
-> The first patch expands our check to allow dedupe of a file if the
-> user owns it or otherwise would be allowed to write to it.
-[...]
-> The other problem we have is also related to forcing the user to open
-> target files for write - A process trying to exec a file currently
-> being deduped gets ETXTBUSY. The answer (as above) is to allow them to
-> open the targets ro - root can already do this. There was a patch from
-> Adam Borowski to fix this back in 2016
-
-> The 2nd patch fixes our return code for permission denied to be
-> EPERM. For some reason we're returning EINVAL - I think that's
-> probably my fault. At any rate, we need to be returning something
-> descriptive of the actual problem, otherwise callers see EINVAL and
-> can't really make a valid determination of what's gone wrong.
-
-Note that the counterpart of these two patches for BTRFS_IOC_DEFRAG, which
-fixes the same issues, is included in btrfs' for-next, slated for 4.19. 
-While technically dedupe and defrag are independent, there would be somewhat
-less confusion if both behave the same in the same kernel version.
-
-Thus, it'd be nice if you would consider taking this.  Should be safe:
-even the permission check is paranoid.
-
-
-Meow!
--- 
-⢀⣴⠾⠻⢶⣦⠀ So a Hungarian gypsy mountainman, lumberjack by day job,
-⣾⠁⢰⠒⠀⣿⡁ brigand by, uhm, hobby, invented a dish: goulash on potato
-⢿⡄⠘⠷⠚⠋⠀ pancakes.  Then the Polish couldn't decide which of his
-⠈⠳⣄⠀⠀⠀⠀ adjectives to use for the dish's name.
+Acked-by: David Rientjes <rientjes@google.com>
