@@ -1,35 +1,45 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 28/33] vfs: syscall: Add fsconfig() for configuring and managing a context [ver #11]
-Date: Thu, 09 Aug 2018 17:33:20 +0100
-Message-ID: <13160.1533832400@warthog.procyon.org.uk>
-References: <CAJfpegvWE9htLjqeR6=2BWBSuvJzJpWcjBC_EmX_k1RCGXTfbw@mail.gmail.com> <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk> <153313723557.13253.9055982745313603422.stgit@warthog.procyon.org.uk> <87in4n9zg0.fsf@xmission.com> <27374.1533824694@warthog.procyon.org.uk>
+From: Dinesh Subhraveti <subhraveti@apporbit.com>
+Subject: Re: [PATCH v4 0/4] seccomp trap to userspace
+Date: Thu, 9 Aug 2018 17:31:57 -0700
+Message-ID: <CAP4sa4+PTxniTjFWGJJjYFJXczgmUnsG2pQU7KuUdeERxxDnnQ@mail.gmail.com>
+References: <20180621220416.5412-1-tycho@tycho.ws> <20180807024442.GA12274@cisco.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJfpegvWE9htLjqeR6=2BWBSuvJzJpWcjBC_EmX_k1RCGXTfbw@mail.gmail.com>
-Content-ID: <13159.1533832400.1@warthog.procyon.org.uk>
+In-Reply-To: <20180807024442.GA12274@cisco.lan>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: dhowells@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Miklos Szeredi <miklos@szeredi.hu> wrote:
-
-> > However, as I have said, I *am* willing to add one of more flags to help
-> > with this, but I can't make any "legacy" fs honour them as this requires
-> > the fs_context to be passed down to sget_fc() and the filesystem - which
-> > is why I was considering leaving it for later.
+On Mon, Aug 6, 2018 at 7:44 PM Tycho Andersen <tycho@tycho.ws> wrote:
 >
-> You can determine at fsopen() time whether the filesystem is able to
-> support the O_EXCL behavior?  If so, then it's trivial to enable this
-> conditionally.  I think that's what Eric is asking for, it's obviously
-> not fair to ask for a change in behavior of the legacy interface.
+> Hi all,
+>
+> Dinesh Subhraveti has claimed that some part of this series might be
+> patented. While he has not furnished me with anything to confirm this
+> claim, I'll put this series on hold.
 
-What do you mean by "enable it conditionally"?  It cannot be enabled for
-filesystems that don't pass fs_context down to sget().
+For the sake of everyone's clarity, there is no patent or intellectual
+property issue here and we'd like to see this feature in the kernel.
+I did indicate that there is a patent related to the mechanism
+underlying this patch set but that is completely incidental to the
+issue here.  We have filed that patent only for the purpose of defense
+and have no interest or resources to go after infringements.  As such,
+I spoke about the approach, it's value for networking and a few
+possible ways of implementing it in the kernel at Linux Plumbers
+Conference 2017.
 
-mount(2) mustn't enable it lest it break userspace.
+As a contractor and a member of our team at AppSwitch (FKA Fermat),
+Tycho Andersen helped implement a fully user space version of system
+call trap mechanism based on seccomp / fd-passing and participated in
+our team discussions about upstreaming a kernel version of the
+feature.  Given that context, we were taken aback that he posted the
+v1 patch set without letting us know and without any mention of
+AppSwitch in the post even though he was still under contract at that
+time.
 
-fsopen(2) can let userspace set a flag to enable it.
+In any case, please note that we will communicate with Tycho directly
+regarding this matter going forward.
 
-David
+--
+Dinesh Subhraveti
