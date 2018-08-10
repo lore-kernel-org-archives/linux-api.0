@@ -1,45 +1,37 @@
-From: Dinesh Subhraveti <subhraveti@apporbit.com>
-Subject: Re: [PATCH v4 0/4] seccomp trap to userspace
-Date: Thu, 9 Aug 2018 17:31:57 -0700
-Message-ID: <CAP4sa4+PTxniTjFWGJJjYFJXczgmUnsG2pQU7KuUdeERxxDnnQ@mail.gmail.com>
-References: <20180621220416.5412-1-tycho@tycho.ws> <20180807024442.GA12274@cisco.lan>
+From: Maninder Singh <maninder1.s@samsung.com>
+Subject: RE: [PATCH 1/1] selftest/net: fix FILE_SIZE for 32 bit
+ architecture.
+Date: Fri, 10 Aug 2018 11:33:41 +0530
+Message-ID: <20180810060341epcms5p4e8defed12cf0adeccd4d8d1e3c93c6b3@epcms5p4>
+References: <4f2c8d694dce4125a609e8d5383ebe36@AcuMS.aculab.com>
+        <4a412194-99aa-7969-54a4-727368fbf82c@gmail.com>
+        <20180802103616epcas5p48ec1e2ea3568b11683aa7b55254dffb0~HCuTv0d7l2131721317epcas5p4u@epcas5p4.samsung.com>
+        <20180803033159epcms5p1dd2f5a6834268e9a22efa15421795fa0@epcms5p1>
+        <CGME20180802103616epcas5p48ec1e2ea3568b11683aa7b55254dffb0@epcms5p4>
+Reply-To: maninder1.s@samsung.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180807024442.GA12274@cisco.lan>
+In-Reply-To: <4f2c8d694dce4125a609e8d5383ebe36@AcuMS.aculab.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: David Laight <David.Laight@ACULAB.COM>, Eric Dumazet <eric.dumazet@gmail.com>, "davem@davemloft.net" <davem@davemloft.net>
+Cc: "shuahkh@osg.samsung.com" <shuahkh@osg.samsung.com>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "edumazet@google.com" <edumazet@google.com>, PANKAJ MISHRA <pankaj.m@samsung.com>, AMIT SAHRAWAT <a.sahrawat@samsung.com>, Vaneet Narang <v.narang@samsung.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 6, 2018 at 7:44 PM Tycho Andersen <tycho@tycho.ws> wrote:
->
-> Hi all,
->
-> Dinesh Subhraveti has claimed that some part of this series might be
-> patented. While he has not furnished me with anything to confirm this
-> claim, I'll put this series on hold.
+>> >
+>> >What about using more conventional size_t instead of "unsigned long long" ?
+>> 
+>> size_t is also equivalent to unsigned long and it will not hold value of (1 << 35) for 32 bit system.
+>> So we can do two things.
+> 
+>Wouldn't the 'correct' type be off_t ?
+>In any case, IIRC, you have to do really horrid things in Linux to
+>access files larger than 2G on 32bit systems.
+> 
+>        David
 
-For the sake of everyone's clarity, there is no patent or intellectual
-property issue here and we'd like to see this feature in the kernel.
-I did indicate that there is a patent related to the mechanism
-underlying this patch set but that is completely incidental to the
-issue here.  We have filed that patent only for the purpose of defense
-and have no interest or resources to go after infringements.  As such,
-I spoke about the approach, it's value for networking and a few
-possible ways of implementing it in the kernel at Linux Plumbers
-Conference 2017.
+Any inputs.
 
-As a contractor and a member of our team at AppSwitch (FKA Fermat),
-Tycho Andersen helped implement a fully user space version of system
-call trap mechanism based on seccomp / fd-passing and participated in
-our team discussions about upstreaming a kernel version of the
-feature.  Given that context, we were taken aback that he posted the
-v1 patch set without letting us know and without any mention of
-AppSwitch in the post even though he was still under contract at that
-time.
-
-In any case, please note that we will communicate with Tycho directly
-regarding this matter going forward.
-
---
-Dinesh Subhraveti
+Thanks,
+Maninder Singh
