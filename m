@@ -1,36 +1,50 @@
-From: David Howells <dhowells@redhat.com>
+From: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
 Subject: Re: BUG: Mount ignores mount options
-Date: Fri, 10 Aug 2018 16:13:11 +0100
-Message-ID: <22558.1533913991@warthog.procyon.org.uk>
-References: <0F2FA70F-8C7E-4D7D-B685-244A76BDB459@amacapital.net> <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk> <87d0uqpba5.fsf@xmission.com>
+Date: Sat, 11 Aug 2018 00:11:47 +0900
+Message-ID: <79f05de7-e600-675d-7bbf-c56faafc3134@i-love.sakura.ne.jp>
+References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+ <87d0uqpba5.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0F2FA70F-8C7E-4D7D-B685-244A76BDB459@amacapital.net>
-Content-ID: <22557.1533913991.1@warthog.procyon.org.uk>
+In-Reply-To: <87d0uqpba5.fsf@xmission.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: dhowells@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.o
+To: "Eric W. Biederman" <ebiederm@xmission.com>, David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Theodore Y. Ts'o" <tytso@mit.edu>, Miklos Szeredi <miklos@szeredi.hu>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto@amacapital.net> wrote:
-
-> > /dev/loop0 /root/loop0-noacl-noquota-nouser_xattr ext4 rw,relatime,nouser_xattr,noacl 0 0
-> > /dev/loop0 /root/loop0-acl-quota-user_xattr ext4 rw,relatime,nouser_xattr,noacl 0 0
+On 2018/08/10 23:05, Eric W. Biederman wrote:
 > 
-> To make sure I understand correctly: the problem is that the second mount
-> ignored the options because the device was already mounted, right?
+> There is a serious problem with mount options today that fsopen does not
+> address.  The problem is that mount options are ignored for block based
+> filesystems, and any other type of filesystem that follows the same
+> pattern.
 > 
-> For the new API, I think the only remotely sane approach is to refuse to
-> mount or init or whatever you call it an already mounted bdev. If user code
-> genuinely needs to bind-mount an existing mount that is known only by its
-> bdev, we can add a specific API just for that.
+> The script below demonstrates this bug.  Showing this bug can cause the
+> ext4 "acl" "quota" and "user_xattr" options to be silently ignored.
+> 
+> fsopen has my nack until it addresses this issue.
+> 
+> I don't know if we can fix this in the context of sys_mount.  But we if
+> we are redoing the option parsing of how we mount filesystems this needs
+> to be fixed before we start worrying about bug compatibility.
+> 
+> Hopefully this report is simple and clear enough that we can at least
+> agree on the problem.
+> 
+> Eric
 
-I'm adding some flags to fsopen() to allow userspace to say whether it wants
-no sharing, same parameters-only sharing or anything-goes sharing (as now).
+This might be related to a problem that syzbot is failing to reproduce a problem.
 
-I'm also adding a flag whereby userspace can forbid anyone else from sharing a
-new superblock it has just set up.
+  https://groups.google.com/forum/#!msg/syzkaller-bugs/R03vI7RCVco/0PijCTrcCgAJ
 
-David
+  syzbot found a reproducer, and the reproducer was working until next-20180803.
+  But the reproducer is failing to reproduce this problem in next-20180806 despite
+  there is no mm related change between next-20180803 and next-20180806.
+
+  Therefore, I suspect that the reproducer is no longer working as intended. And
+  there was parser change (David Howells' patch) between next-20180803 and next-20180806.
+
+I'm waiting for response from David Howells...
