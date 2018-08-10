@@ -1,57 +1,51 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: BUG: Mount ignores mount options
-Date: Fri, 10 Aug 2018 13:00:22 -0500
-Message-ID: <87mutunlu1.fsf@xmission.com>
-References: <87d0uqpba5.fsf@xmission.com>
-        <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
-        <22361.1533913891@warthog.procyon.org.uk>
-        <20180810153902.GH21087@thunk.org>
+Date: Fri, 10 Aug 2018 13:06:54 -0700
+Message-ID: <CALCETrXC8Z-q+PzzqMC-McA7UdmFubVcs2dVsT0Dt+GbSqjF5A@mail.gmail.com>
+References: <20180810153902.GH21087@thunk.org> <87d0uqpba5.fsf@xmission.com>
+ <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+ <22361.1533913891@warthog.procyon.org.uk> <28045.1533916438@warthog.procyon.org.uk>
+ <20180810161400.GA627@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180810153902.GH21087@thunk.org> (Theodore Y. Ts'o's message of
-        "Fri, 10 Aug 2018 11:39:02 -0400")
+In-Reply-To: <20180810161400.GA627@thunk.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Theodore Y. Ts'o" <tytso@mit.edu>
-Cc: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Miklos Szeredi <miklos@szeredi.hu>
+To: "Theodore Y. Ts'o" <tytso@mit.edu>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, SELinux-NSA <selinux@tycho.nsa.gov>, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, Linux API <linux-api@vger.kernel.org>, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, Fenghua Yu <fenghua.yu@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, LSM List <linux-security-module@vger.kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.s
 List-Id: linux-api@vger.kernel.org
 
-"Theodore Y. Ts'o" <tytso@mit.edu> writes:
+On Fri, Aug 10, 2018 at 9:14 AM, Theodore Y. Ts'o <tytso@mit.edu> wrote:
+> And I'm not really sure it helps the container use
+> case, since the whole point is they want their "guest" to be able to
+> blithely run "mount /dev/sda1 -o noxattr /mnt" and not worry about the
+> fact that in some other container, someone had run "mount /dev/sda1 -o
+> xattr /mnt".  But having the second mount fail because of conflicting
+> mount option breaks the illusion that containers are functionally as
+> rich as VM's.
 
-> On Fri, Aug 10, 2018 at 04:11:31PM +0100, David Howells wrote:
->> 
->> Yes.  Since you *absolutely* *insist* on this being fixed *right* *now* *or*
->> *else*, I'm working up a set of additional patches to give userspace the
->> option of whether they want no sharing; sharing, but only with exactly the
->> same parameters; or to ignore the parameter differences and just accept
->> sharing of what's already already mounted (ie. the current behaviour).
->
-> But there's no way to support "no sharing", at least not in the
-> general case.  A file system can only be mounted once, and without
-> file system support, there's no way for a file system to be mounted
-> with the bsddf or minixdf mount simultaneously.
->
-> Even *with* file system support, there's no way today for the VFS to
-> keep track of whether a pathname resolution came through one
-> mountpoint or another, so I can't do something like this:
->
-> 	mount /dev/sdXX -o casefold /android-data
-> 	mount /dev/sdXX -o nocasefold /android-data-2
->
-> Which is a pity, since if we could we could much more easily get rid
-> of the horror which is Android's wrapfs...
->
-> So if the file system has been mounted with one set of mount options,
-> and you want to try to mount it with a conflicting set of mount
-> options and you don't want it to silently ignore the mount options,
-> the *only* thing we can today is to refuse the mount and return an
-> error.  
->
-> I'm not sure Eric would really consider that an improvement for the
-> container use case....
+If the same block device is visible, with rw access, in two different
+containers, I don't see any anything good can happen.  Sure, with the
+current somewhat erratic semantics of mount(2), something kind of sort
+of reasonable happens if they both mount it.  But if one or both of
+them try to use, say, tune2fs or fsck, it's not going to go well.  And
+a situation where they mount with different options and the result
+depends on the order of the mounts is just plain bad.
 
-I think I would consider it an improvement.  I keep running into cases
-where the mount options differed and something was done silently and
-that causes problems.
+I see four sane ways to deal with this:
 
-Eric
+1. Don't put the block device in the container at all.  The container
+manager mounts it.
+
+2. Use seccomp or a similar mechanism to intercept and emulate the
+mount request.
+
+3. Teach the filesystem driver to do something sensible.  This will
+inherently be per-fs, and probably involves some serious magic or
+allowing filesystem-specific vfsmount options.
+
+4. Introduce a concept of a special kind of fake block device that
+refers to an existing superblock, doesn't allow direct read or write,
+and does the right thing when mounted.  Not obviously worth the
+effort.
+
+It seems to me that the current approach mostly involves crossing our fingers.
