@@ -1,61 +1,57 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: BUG: Mount ignores mount options
-Date: Fri, 10 Aug 2018 12:14:00 -0400
-Message-ID: <20180810161400.GA627@thunk.org>
-References: <20180810153902.GH21087@thunk.org>
- <87d0uqpba5.fsf@xmission.com>
- <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <22361.1533913891@warthog.procyon.org.uk>
- <28045.1533916438@warthog.procyon.org.uk>
+Date: Fri, 10 Aug 2018 13:00:22 -0500
+Message-ID: <87mutunlu1.fsf@xmission.com>
+References: <87d0uqpba5.fsf@xmission.com>
+        <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+        <22361.1533913891@warthog.procyon.org.uk>
+        <20180810153902.GH21087@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <28045.1533916438@warthog.procyon.org.uk>
+In-Reply-To: <20180810153902.GH21087@thunk.org> (Theodore Y. Ts'o's message of
+        "Fri, 10 Aug 2018 11:39:02 -0400")
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.orgMiklos Szeredi <m>
+To: "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Miklos Szeredi <miklos@szeredi.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 10, 2018 at 04:53:58PM +0100, David Howells wrote:
-> Theodore Y. Ts'o <tytso@mit.edu> wrote:
-> 
-> > Even *with* file system support, there's no way today for the VFS to
-> > keep track of whether a pathname resolution came through one
-> > mountpoint or another, so I can't do something like this:
-> 
-> Ummm...  Isn't that encoded in the vfsmount pointer in struct path?
+"Theodore Y. Ts'o" <tytso@mit.edu> writes:
 
-Well, yes, and we do use this as a hack to make read-only bind mounts
-work.  But that's done as a special case, and it's for permissions
-checking only.
+> On Fri, Aug 10, 2018 at 04:11:31PM +0100, David Howells wrote:
+>> 
+>> Yes.  Since you *absolutely* *insist* on this being fixed *right* *now* *or*
+>> *else*, I'm working up a set of additional patches to give userspace the
+>> option of whether they want no sharing; sharing, but only with exactly the
+>> same parameters; or to ignore the parameter differences and just accept
+>> sharing of what's already already mounted (ie. the current behaviour).
+>
+> But there's no way to support "no sharing", at least not in the
+> general case.  A file system can only be mounted once, and without
+> file system support, there's no way for a file system to be mounted
+> with the bsddf or minixdf mount simultaneously.
+>
+> Even *with* file system support, there's no way today for the VFS to
+> keep track of whether a pathname resolution came through one
+> mountpoint or another, so I can't do something like this:
+>
+> 	mount /dev/sdXX -o casefold /android-data
+> 	mount /dev/sdXX -o nocasefold /android-data-2
+>
+> Which is a pity, since if we could we could much more easily get rid
+> of the horror which is Android's wrapfs...
+>
+> So if the file system has been mounted with one set of mount options,
+> and you want to try to mount it with a conflicting set of mount
+> options and you don't want it to silently ignore the mount options,
+> the *only* thing we can today is to refuse the mount and return an
+> error.  
+>
+> I'm not sure Eric would really consider that an improvement for the
+> container use case....
 
-The big problem is that there is single dentry cache object regardless
-of which mount point was used to access it.  So that makes it
-impossible to support case folding as a mount-pointism.
+I think I would consider it an improvement.  I keep running into cases
+where the mount options differed and something was done silently and
+that causes problems.
 
-> 
-> However, the case folding stuff - is that a superblockism of a mountpointism?
-
-It's a superblock-ism.  As far as I know the *only* thing that we can
-support as a mount-pointism is the ro flag, and that's handled as a
-special case, and only if the original superblock was mounted
-read/write.  ey That was my point; aside from the ro flag, we can't
-support any other mount options as a per-mount point thing, so the
-only thing we can do is to fail the mount if there are conflicting
-mount options.  And I'm not really sure it helps the container use
-case, since the whole point is they want their "guest" to be able to
-blithely run "mount /dev/sda1 -o noxattr /mnt" and not worry about the
-fact that in some other container, someone had run "mount /dev/sda1 -o
-xattr /mnt".  But having the second mount fail because of conflicting
-mount option breaks the illusion that containers are functionally as
-rich as VM's.
-
-So before you put in lots of work to support rejecting the attmpted
-mount if the mount options conflict, are we sure people will actually
-find this to be useful?  Because it's not only fsopen() work for you,
-but each file system is going to have to implement new functions to
-answer the question "are these mount options conflicting or not?".
-Are we sure it's worth the effort?
-
-					- Ted
+Eric
