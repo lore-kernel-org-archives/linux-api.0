@@ -1,78 +1,25 @@
-From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
-Subject: Re: BUG: Mount ignores mount options
-Date: Sat, 11 Aug 2018 10:47:50 -0700
-Message-ID: <001a1608-d0fa-84c1-9c54-ae36df95fd89@schaufler-ca.com>
-References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <87d0uqpba5.fsf@xmission.com> <20180810151606.GA6515@ZenIV.linux.org.uk>
- <87pnypiufr.fsf@xmission.com> <20180811014619.GA14368@thunk.org>
- <8736vlo6ef.fsf@xmission.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 28/33] vfs: syscall: Add fsconfig() for configuring and managing a context [ver #11]
+Date: Sat, 11 Aug 2018 21:20:08 +0100
+Message-ID: <5152.1534018808@warthog.procyon.org.uk>
+References: <CAJfpegvWE9htLjqeR6=2BWBSuvJzJpWcjBC_EmX_k1RCGXTfbw@mail.gmail.com> <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk> <153313723557.13253.9055982745313603422.stgit@warthog.procyon.org.uk> <87in4n9zg0.fsf@xmission.com> <27374.1533824694@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-In-Reply-To: <8736vlo6ef.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.ubuntu.com/mailman/options/apparmor>,
- <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://lists.ubuntu.com/archives/apparmor>
-List-Post: <mailto:apparmor-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-List-Help: <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.ubuntu.com/mailman/listinfo/apparmor>,
- <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=subscribe>
-Errors-To: apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org
-Sender: "AppArmor" <apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, apparmor-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org, tomoyo-dev-en-5NWGOfrQmneRv+LV9MX5uooqe+aC9MnS@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAJfpegvWE9htLjqeR6=2BWBSuvJzJpWcjBC_EmX_k1RCGXTfbw@mail.gmail.com>
+Content-ID: <5151.1534018808.1@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Miklos Szeredi <miklos@szeredi.hu>
+Cc: dhowells@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-T24gOC8xMC8yMDE4IDk6NDggUE0sIEVyaWMgVy4gQmllZGVybWFuIHdyb3RlOgo+ICJUaGVvZG9y
-ZSBZLiBUcydvIiA8dHl0c29AbWl0LmVkdT4gd3JpdGVzOgo+Cj4+IE9uIEZyaSwgQXVnIDEwLCAy
-MDE4IGF0IDA4OjA1OjQ0UE0gLTA1MDAsIEVyaWMgVy4gQmllZGVybWFuIHdyb3RlOgo+Pj4gTXkg
-Y29tcGxhaW50IGlzIHRoYXQgdGhlIGN1cnJlbnQgaW1wbGVtZW50ZWQgYmVoYXZpb3Igb2YgcHJh
-Y3RpY2FsbHkKPj4+IGV2ZXJ5IGZpbGVzeXN0ZW0gaW4gdGhlIGtlcm5lbCwgaXMgdGhhdCBpdCB3
-aWxsIGlnbm9yZSBtb3VudCBvcHRpb25zCj4+PiB3aGVuIG1vdW50ZWQgYSBzZWNvbmQgdGltZS4K
-Pj4gVGhlIGZpbGUgc3lzdGVtIGlzICoqKm5vdCoqKiBtb3VudGVkIGEgc2Vjb25kIHRpbWUuCj4+
-Cj4+IFRoZSBkZXNpZ24gYnVnIGlzIHRoYXQgd2UgYWxsb3cgYmluZCBtb3VudHMgdG8gYmUgc3Bl
-Y2lmaWVkIHZpYSBhCj4+IGJsb2NrIGRldmljZS4gIEEgYmluZCBtb3VudCBpcyBub3QgImEgc2Vj
-b25kIG1vdW50IiBvZiB0aGUgZmlsZQo+PiBzeXN0ZW0uICBCaW5kIG1vdW50cyAhPSBtb3VudHMu
-Cj4+Cj4+IEkgaGFkIGFzc3VtZWQgd2UgaGFkIGFsbG93ZWQgYmluZCBtb3VudHMgdG8gYmUgc3Bl
-Y2lmaWVkIHZpYSB0aGUgYmxvY2sKPj4gZGV2aWNlIGJlY2F1c2Ugb2YgY29udGFpbmVyIHVzZSBj
-YXNlcy4gIElmIHRoZSBjb250YWluZXIgZm9sa3MgZG9uJ3QKPj4gd2FudCBpdCwgSSB3b3VsZCBi
-ZSBwdXNoaW5nIHRvIHNpbXBseSBub3QgYWxsb3cgYmluZCBtb3VudHMgdG8gYmUKPj4gc3BlY2lm
-aWVkIHZpYSBibG9jayBkZXZpY2UgYXQgYWxsLgo+IE5vIGl0IGlzIG5vdCBhIGNvbnRhaW5lciB0
-aGluZy4KCglJbmlnbzogIkhlbGxvLiBNeSBuYW1lIGlzIEluaWdvIE1vbnRveWEuIFlvdSBraWxs
-ZWQgbXkgZmF0aGVyLiBQcmVwYXJlIHRvIGRpZS4iCglSdWdlbjogIlN0b3Agc2F5aW5nIHRoYXQh
-IgoKCUVyaWM6ICAiSXQgaXMgbm90IGEgY29udGFpbmVyIHRoaW5nLiIKCUNhc2V5OiAiU3RvcCBz
-YXlpbmcgdGhhdCEiCgpZZXMsIFZpcmdpbmlhLCBpdCAqaXMqIGEgY29udGFpbmVyIHRoaW5nLiBZ
-b3VyIGNvbnRhaW5lciBtYW5hZ2VyIGV4cGVjdHMgYWxsCmZpbGVzeXN0ZW1zIHRvIGJlIHNlcnZl
-ci1jbGllbnQgYmFzZWQuIEl0IG1ha2VzIGJhZCBhc3N1bXB0aW9ucy4gSXQgaXMgZG9pbmcKdGhp
-bmdzIHRoYXQgd2Ugd291bGQgZmlyZSBhIHN5c2FkbWluIGZvciBkb2luZy4gRG9uJ3QgYmxhbWUg
-dGhlIGZpbGVzeXN0ZW1zCmZvciBiZWhhdmluZyBhcyBkb2N1bWVudGVkLiBFeHBvcnQgdGhlIGZp
-bGVzeXN0ZW0gdXNpbmcgTkZTIGFuZCBtb3VudCB0aGVtCnVzaW5nIHRoZSBORlMgbWVjaGFuaXNt
-LCB3aGljaCBpcyBkZXNpZ25lZCB0byBkbyB3aGF0IHlvdSdyZSBhc2tpbmcgZm9yLiBUaGUKcHJv
-YmxlbSBpcyBub3QgaW4gdGhlIG1vdW50IG1lY2hhbmlzbSwgaXQncyBpbiB0aGUgd2F5IHlvdSB3
-YW50IHRvIGFidXNlIGl0LgoKPj4gVGhlIG9ubHkgcmVhc29uIHdoeSB3ZSBzaG91bGQgc3VwcG9y
-dCBpdCBpcyBiZWNhdXNlIHdlIGRvbid0IHdhbnQgdG8KPj4gYnJlYWsgc2NyaXB0czsgYW5kIGlm
-IHRoZSBnb2FsIGlzIG5vdCB0byBicmVhayBzY3JpcHRzLCB0aGVuIHdlIGhhdmUKPj4gdG8ga2Vl
-cCB0byB0aGUgY3VycmVudCBzZW1hbnRpY3MsIGhvd2V2ZXIgYnJva2VuIHlvdSB0aGluayBpdCBp
-cy4KPiBCdXQgd2UgZG9uJ3QgaGF2ZSB0byBzdXBwb3J0IHJldHVybmluZyBmaWxlc3lzdGVtcyB3
-aXRoIG1pc21hdGNoZWQgbW91bnQKPiBvcHRpb25zIGluIHRoZSBuZXcgZnNvcGVuIGFwaS4gICBU
-aGF0IGlzIG15IGNvbmNlcm4uICBDb25mdXNpbmcKPiB1c2Vyc3BhY2UgdGhpcyB3YXkgaGFzIGJl
-ZW4gc2hvd24gdG8gYmUgaGFybWZ1bCBsZXQncyBub3Qga2VlcCBkb2luZyBpdC4KCkl0J3Mgbm90
-ICJ1c2Vyc3BhY2UiIHRoYXQncyBjb25mdXNlZC4gRGV2ZWxvcGVycyBvZiB1c2Vyc3BhY2UgY29k
-ZQppbXBsZW1lbnRpbmcgc3lzdGVtIGJlaGF2aW9yIChlLmcuIHN5c3RlbWQsIGNvbnRhaW5lciBt
-YW5hZ2VycykgbmVlZCB0bwp1bmRlcnN0YW5kIGhvdyB0aGUgc3lzdGVtIHdvcmtzLiBUaGUgY29u
-dGFpbmVyIG1hbmFnZXIgbmVlZHMgdG8ga25vdwp0aGF0IGl0IGNhbid0IG1vdW50IGZpbGVzeXN0
-ZW1zIHdpdGggZGlmZmVyZW50IG9wdGlvbnMuIFRoYXQncyB0aGUga2luZApvZiB0aGluZyAibWFu
-YWdlcnMiIGRvLiBJZiBpdCBoYXMgdG8gZ28gdG8gdGhlIG1vdW50IHRhYmxlIGFuZCBjaGVjawpv
-biBob3cgdGhlIGRldmljZSBpcyBhbHJlYWR5IG1vdW50ZWQgYmVmb3JlIGRvaW5nIGEgbW91bnQs
-IHNvIGJlIGl0LgoKVW5sZXNzLCBvZiBjb3Vyc2UsIHlvdSB3YW50IHRoZSBjb25jZXB0IG9mICJj
-b250YWluZXIiIGludHJvZHVjZWQgaW50bwp0aGUga2VybmVsLiBUaGVyZSdzIGEgd2hvbGUgbG90
-IG9mIGZlbGRlcmNhcmIgdGhhdCBjb250YWluZXIgbWFuYWdlcnMKaGF2ZSB0byBkZWFsIHdpdGgg
-dGhhdCB3b3VsZCBiZSBsb3RzIGVhc2llciB0byBkZWFsIHdpdGggZG93biBiZWxvdy4KSSdtIG5v
-dCBhZHZvY2F0aW5nIHRoYXQsIGFuZCBJIHVuZGVyc3RhbmQgdGhlIGFyZ3VtZW50cyBhZ2FpbnN0
-IGl0LgpPbiB0aGUgb3RoZXIgaGFuZCwgaWYgeW91IHdhbnQgYSBwbGF0Zm9ybSB0aGF0IGlzIG9w
-dGltaXplZCBmb3IgYQpjb250YWluZXIgZW52aXJvbm1lbnQgLi4uCgo+IEVyaWMKCgotLSAKQXBw
-QXJtb3IgbWFpbGluZyBsaXN0CkFwcEFybW9yQGxpc3RzLnVidW50dS5jb20KTW9kaWZ5IHNldHRp
-bmdzIG9yIHVuc3Vic2NyaWJlIGF0OiBodHRwczovL2xpc3RzLnVidW50dS5jb20vbWFpbG1hbi9s
-aXN0aW5mby9hcHBhcm1vcgo=
+Miklos Szeredi <miklos@szeredi.hu> wrote:
+
+> You can determine at fsopen() time whether the filesystem is able to
+> support the O_EXCL behavior?  If so, then it's trivial to enable this
+> conditionally.  I think that's what Eric is asking for, it's obviously
+> not fair to ask for a change in behavior of the legacy interface.
+
+It's not trivial, see btrfs and nfs :-/
+
+David
