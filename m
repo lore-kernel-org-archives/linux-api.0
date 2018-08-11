@@ -1,129 +1,52 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: BUG: Mount ignores mount options
-Date: Fri, 10 Aug 2018 20:05:44 -0500
-Message-ID: <87pnypiufr.fsf@xmission.com>
-References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <87d0uqpba5.fsf@xmission.com>
- <20180810151606.GA6515@ZenIV.linux.org.uk>
+Date: Fri, 10 Aug 2018 20:19:25 -0500
+Message-ID: <87pnyphf8i.fsf@xmission.com>
+References: <87d0uqpba5.fsf@xmission.com>
+        <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+        <22361.1533913891@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-In-Reply-To: <20180810151606.GA6515-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org> (Al Viro's message of
- "Fri, 10 Aug 2018 16:16:06 +0100")
-List-Unsubscribe: <https://lists.ubuntu.com/mailman/options/apparmor>,
- <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://lists.ubuntu.com/archives/apparmor>
-List-Post: <mailto:apparmor-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-List-Help: <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.ubuntu.com/mailman/listinfo/apparmor>,
- <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=subscribe>
-Errors-To: apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org
-Sender: "AppArmor" <apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-To: Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Eric Biggers <ebiggers-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tetsuo Handa <penguin-kernel-JPay3/Yim36HaxMnTkn67Xf5DAMn2ifp@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, selinux-+05T5uksL2qpZYMLLGbcSA@public.gmane.org, tomoyo-dev-en-5NWGOfrQmneRv+LV9MX5uooqe+aC9MnS@public.gmane.org, Paul Moore <paul-r2n+y4ga6xFZroRs9YW3xA@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>, fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org, apparmor-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org, Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <22361.1533913891@warthog.procyon.org.uk> (David Howells's
+        message of "Fri, 10 Aug 2018 16:11:31 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, "Theodore Y. Ts'o" <tytso@mit.edu>, Miklos Szeredi <miklos@sze>
 List-Id: linux-api@vger.kernel.org
 
-QWwgVmlybyA8dmlyb0BaZW5JVi5saW51eC5vcmcudWs+IHdyaXRlczoKCj4gT24gRnJpLCBBdWcg
-MTAsIDIwMTggYXQgMDk6MDU6MjJBTSAtMDUwMCwgRXJpYyBXLiBCaWVkZXJtYW4gd3JvdGU6Cj4+
-IAo+PiBUaGVyZSBpcyBhIHNlcmlvdXMgcHJvYmxlbSB3aXRoIG1vdW50IG9wdGlvbnMgdG9kYXkg
-dGhhdCBmc29wZW4gZG9lcyBub3QKPj4gYWRkcmVzcy4gIFRoZSBwcm9ibGVtIGlzIHRoYXQgbW91
-bnQgb3B0aW9ucyBhcmUgaWdub3JlZCBmb3IgYmxvY2sgYmFzZWQKPj4gZmlsZXN5c3RlbXMsIGFu
-ZCBhbnkgb3RoZXIgdHlwZSBvZiBmaWxlc3lzdGVtIHRoYXQgZm9sbG93cyB0aGUgc2FtZQo+PiBw
-YXR0ZXJuLgo+PiAKPj4gVGhlIHNjcmlwdCBiZWxvdyBkZW1vbnN0cmF0ZXMgdGhpcyBidWcuICBT
-aG93aW5nIHRoaXMgYnVnIGNhbiBjYXVzZSB0aGUKPj4gZXh0NCAiYWNsIiAicXVvdGEiIGFuZCAi
-dXNlcl94YXR0ciIgb3B0aW9ucyB0byBiZSBzaWxlbnRseSBpZ25vcmVkLgo+PiAKPj4gZnNvcGVu
-IGhhcyBteSBuYWNrIHVudGlsIGl0IGFkZHJlc3NlcyB0aGlzIGlzc3VlLgo+PiAKPj4gSSBkb24n
-dCBrbm93IGlmIHdlIGNhbiBmaXggdGhpcyBpbiB0aGUgY29udGV4dCBvZiBzeXNfbW91bnQuICBC
-dXQgd2UgaWYKPj4gd2UgYXJlIHJlZG9pbmcgdGhlIG9wdGlvbiBwYXJzaW5nIG9mIGhvdyB3ZSBt
-b3VudCBmaWxlc3lzdGVtcyB0aGlzIG5lZWRzCj4+IHRvIGJlIGZpeGVkIGJlZm9yZSB3ZSBzdGFy
-dCB3b3JyeWluZyBhYm91dCBidWcgY29tcGF0aWJpbGl0eS4KPj4gCj4+IEhvcGVmdWxseSB0aGlz
-IHJlcG9ydCBpcyBzaW1wbGUgYW5kIGNsZWFyIGVub3VnaCB0aGF0IHdlIGNhbiBhdCBsZWFzdAo+
-PiBhZ3JlZSBvbiB0aGUgcHJvYmxlbS4KPgo+IFN1cmUsIGl0IGlzIHNpbXBsZS4gIFNvJ3MgdGhl
-IHNvbHV0aW9uOiBNTlRfVVNFUk5TX1NQRUNJQUxfU0VNQU5USUNTIHRoYXQKPiB3b3VsZCBnZXQg
-cGFzc2VkIHRvIGZpbGVzeXN0ZW1zLCBzbyB0aGF0IEVyaWMgd291bGQgYmUgYWJsZSB0byBpbXBs
-ZW1lbnQKPiBoaXMgbW91bnQoMiktaW5jb21wYXRpYmxlIGJlaGF2aW91ciBhdCBsZWlzdXJlLCB3
-aXRob3V0IHdvcnJ5aW5nIGFib3V0Cj4gY29tcGF0aWJpbGl0eSBpc3N1ZXMuCj4KPiBEb2VzIHRo
-YXQgYWRkcmVzcyB5b3VyIGNvbXBsYWludD8KCkFic29sdXRlbHkgbm90LgoKTXkgY29tcGxhaW50
-IGlzIHRoYXQgdGhlIGN1cnJlbnQgaW1wbGVtZW50ZWQgYmVoYXZpb3Igb2YgcHJhY3RpY2FsbHkK
-ZXZlcnkgZmlsZXN5c3RlbSBpbiB0aGUga2VybmVsLCBpcyB0aGF0IGl0IHdpbGwgaWdub3JlIG1v
-dW50IG9wdGlvbnMKd2hlbiBtb3VudGVkIGEgc2Vjb25kIHRpbWUuICAKCkl0IGlzIG5vdCBzb21l
-IHdlaXJkIHNwZWNpYWwgY2FzZS4KCkl0IGlzIG5vdCBzb21lIGNvbnRhaW5lciB0aGluZy4KCkl0
-IGlzIHRoYXQgdGhlIGJlaGF2aW9yIG9mIG1vdW50KDIpIHdpdGggcHJhY3RpY2FsbHkgZXZlcnkg
-ZmlsZXN5c3RlbQp0eXBlIHdoZW4gdGhhdCBmaWxlc3lzdGVtIGlzIGFscmVhZHkgbW91bnRlZCBz
-b21ld2hlcmUgZWxzZSBiZWhhdmVzCmluIHdheXMgbm8gb25lIHdvdWxkIGV4cGVjdC4KCldpdGgg
-dGhlIG5ldyBmc29wZW4gYXBpIHRoZSBlYXN5IHRoaW5nIHRvIGRvIGlzIHNpbXBseSBoYXZlIENN
-RF9DUkVBVEUKQ01EX0JJTkRfSU5URVJOQUwgYW5kIGJlIGRvbmUgd2l0aCBpdC4gIENNRF9DUkVB
-VEUgZ3VhcmFudGVlIHRoYXQgYSBuZXcKc3VwZXJibG9jayBpcyBjcmVhdGVkLiAgQ01EX0JJTkRf
-SU5URVJOQUwgd291bGQgb25seSB3b3JrIHdpdGggYW4KZXhpc3Rpbmcgc3VwZXJibG9jay4gIFRo
-ZW4gcm9vdCB3b3VsZCBhdCBsZWFzdCBrbm93IHRoYXQgaGUgaXMKY29ubmVjdGluZyB0byBhbiBh
-bHJlYWR5IG1vdW50ZWQgZmlsZXN5c3RlbSBhbmQgY291bGQgbG9vayBhdCB0aGUKb3B0aW9ucyBl
-dGMgYW5kIGZhaWwgaWYgaGUgZGlkbid0IGxpa2Ugd2hhdCBoZSBzYXcuICBObyBzdXJwcmlzZXMs
-IG5vCm11c3MsIG5vIGZ1c3Mgc2ltcGxlLgoKCkJ1dCBJIGhhdmUgYmVlbiB0b2xkIHRoZSBzaW1w
-bGUgc29sdXRpb24gYWJvdmUgaXMgc29tZWhvdyB1bmFjY2VwdGFibGUuCkFuZCBhbiBvcHRpb24g
-dG8gY29tcGFyZSB0aGUgbW91bnQgb3B0aW9ucyBhbmQgc2VlIGlmIHRoZXkgYXJlIHRoZSBzYW1l
-CndhcyBvZmZlcmVkLiAgVGhhdCB3b3VsZCB3aWxsIHdvcmsgdG8uCgpJIGp1c3QgY2FyZSB0aGF0
-IHdlIGRlZmluZSB0aGUgc2VtYW50aWNzIGluIHN1Y2ggYSB3YXkgdGhhdCBpdCBpcyBub3QKZWFz
-eSBmb3Igcm9vdCB0byBnZXQgY29uZnVzZWQgYW5kIGRvIHNvbWV0aGluZyBzdHVwaWQgdGhhdCB3
-aWxsIGJpdGUKbGF0ZXIsIGFuZCB0aGF0IHdlIGJ1aWxkIHRoZSBpbmZyYXN0cnVjdHVyZSBzbyB0
-aGF0IGFsbCBmaWxlc3lzdGVtcwpjYW4gaW1wbGVtZW50IGl0IGVhc2lseS4KClNvIHllcyB0aGlz
-IGlzIDEwMCUgYSBxdWVzdGlvbiBhYm91dCBob3cgZmlsZXN5c3RlbXMgc2hvdWxkIGJlaGF2ZSB3
-aXRoCnJlc3BlY3QgdG8gdGhlaXIgb3B0aW9uIHdoZW4gbW91bnRlZCBmb3IgYSBzZWNvbmQgdGlt
-ZS4gIFRoYXQgaXMgd2hhdApEYXZlIEhvd2VsbHMgcGF0Y2hzZXQgaXMgYWRkcmVzc2luZy4KCj4g
-QmVjYXVzZSBvbmUgdGhpbmcgd2UgYXJlIG5vdCBnb2luZyB0byBkbyBpcyBjaGFuZ2luZyBtb3Vu
-dCgyKQo+IGJlaGF2aW91ci4KCkkgaGF2ZSBub3QgYXNrZWQgZm9yIHRoYXQuICBJIGhhdmUgYXNr
-ZWQgdGhhdCB3ZSBnZXQgaXQgcmlnaHQgZm9yCmZzb3Blbi4KCj4gUmVhc29uOiB1c2VybGFuZC12
-aXNpYmxlIGJlaGF2aW91ciBvZiBoZWxsIGtub3dzIGhvdyBtYW55IGxvY2FsIHNjcmlwdHMuCgoK
-Cj4gQW5vdGhlciB0aGluZyB0aGF0Cj4gaXMgZmxhdC1vdXQgbm90IGZlYXNpYmxlIGlzIHNvbWUg
-a2luZCBvZiBibGFua2V0ICJjb21wYXJlIG9wdGlvbnMiCj4gc3R1ZmY7IGl0ICpjYW4qIGJlIGRv
-bmUgYXMgaGVscGVycyB0byBiZSB1c2VkIGJ5IGZpbGVzeXN0ZW0gd2hlbgo+IGl0IHNlZXMgdGhh
-dCBuZXcgZmxhZywgYnV0IGl0J3Mgc2ltcGx5IG5vdCBnb2luZyB0byB3b3JrIGF0IHRoZQo+IGZz
-LWluZGVwZW5kZW50IGxldmVsLgo+Cj4gVHJpdmlhbCBleGFtcGxlIHdpdGggdGhlIHNhbWUgZXh0
-NDoKPiBtb3VudCAvZGV2L3NkYTEgL21udC9hIC1vIGJzZGRmIHZzLiBtb3VudCAvZGV2L3NkYTEg
-L21udC9iCj4gZXh0NCBjYW4gdGVsbCB0aGF0IHRoZXNlIGFyZSB0aGUgc2FtZS4gIHN5c2NhbGwg
-aXRzZWxmIGhhcyBubwo+IGNsdWUuICBXaGF0J3MgbW9yZSwgaXQncyBub3QganVzdCBleHBsaWNp
-dGx5IHNwZWxsZWQgZGVmYXVsdAo+IG9wdGlvbnMgLSBpdCdzIHRoZSBzdHVmZiB0aGF0IGhhcyBt
-b3JlIHRoYW4gb25lIGZvcm0uICBBbmQgd2hpbGUKPiB3ZSBhcmUgYXQgaXQsIHRoZSB0aGluZ3Mg
-bGlrZSB0d28gTkZTIG1vdW50cyBvZiBkaWZmZXJlbnQgdHJlZXMKPiBmcm9tIHRoZSBzYW1lIHNl
-cnZlcjsgdGhleSBtaWdodCBvciBtaWdodCBub3QgZ2V0IHRoZSBzYW1lIHN1cGVyYmxvY2suCj4g
-RGVwZW5kaW5nIHVwb24gdGhlIG9wdGlvbnMuCj4KPiBDb252ZW5pZW5jZSBoZWxwZXIgdGhhdCB3
-b3VsZCBhbGxvdyBleHQ0IHRvIGNvbXBhcmUgb3B0aW9ucyBhbmQgcmVqZWN0Cj4gdGhlIGluY29t
-cGF0aWJsZSBtb3VudD8gIE5vdCBzdXJlIGhvdyBtdWNoIGV4dDQtc3BlY2lmaWMga25vd2xlZGdl
-Cj4gd291bGQgaGF2ZSB0byBnbyBpbiBpdCwgYnV0IGlmIHlvdSBjYW4gY29tZSB1cCB3aXRoIG9u
-ZSAtIG1vcmUgcG93ZXIKPiB0byB5b3UuICBCdXQgdGhlIGRlY2lzaW9uIHRvIHVzZSBpdCAqbXVz
-dCogYmUgZXh0NC1zcGVjaWZpYy4gIEJlY2F1c2UKPiBmb3IgZS5nLiBORlMgc3VjaCB0aGluZyBh
-cyAtbyBmc2lkPS4uLiwgd2hpbGUgY2VydGFpbmx5IGEgcGFydCBvZgo+IG9wdGlvbnMsIGhhcyBh
-IHZlcnkgZGlmZmVyZW50IG1lYW5pbmcgLSBpdCdzICJ1c2UgYSBzZXBhcmF0ZSBmcyBpbnN0YW5j
-ZSIKPiAoYW5kIGxldCB0aGUgc2VydmVyIGRlYWwgd2l0aCBjb2hlcmVuY3kgaXNzdWVzIG9uIGl0
-cyBlbmQpLgo+Cj4gRGVjaXNpb24gdG8gdXNlIHNnZXQoKSAoYW5kIHRoZSB3YXkgaXQncyB1c2Vk
-KSBpcyB1cCB0byBmaWxlc3lzdGVtLgo+IFdlICpjYW4ndCogbGlmdCB0aGF0IGludG8gc3lzY2Fs
-bC4gIE5vdCB3aXRob3V0IGJyZWFraW5nIHRoZSBmdWNrIG91dAo+IG9mIGV4aXN0aW5nIGJlaGF2
-aW91ci4KCkkgaGF2ZSBuZXZlciBwcm9wb3NlZCB0aGF0LiAgU2VlIGFib3ZlLiAgSSBtYXkgaGF2
-ZSB0YWxrZWQgaW4gdGVybXMKb2Ygd2hhdCBzZ2V0IGRvZXMgYW5kIG11ZGRpZWQgdGhlIHdhdGVy
-cy4gIElmIHNvIEkgYXBvbG9naXplLgoKQWxsIEkgcHJvcG9zZWQgd2FzIHRoYXQgd2UgZGlzdGlu
-Z3Vpc2ggYmV0d2VlbiBhIGZpcnN0IG1vdW50IGFuZCBhbgphZGRpdGlvbmFsIG1vdW50IHNvIHRo
-YXQgdXNlcnNwYWNlIGtub3dzIHRoZSBvcHRpb25zIHdpbGwgYmUgaWdub3JlZC4KClRoZW4gdGhl
-IGNvZGUgdG8gcmVwbGljYXRlIHRoZSBjdXJyZW50IGJlaGF2aW9yIGNhbiBsb29rIGxpa2U6CgoJ
-ZmQgPSBmc29wZW4oLi4uKTsKCWZzY29uZmlnKGZkLCAuLi4pOwoJZnNjb25maWcoZmQsIC4uLik7
-Cglmc2NvbmZpZyhmZCwgLi4uKTsKCWZzY29uZmlnKGZkLCAuLi4pOwoJZnNjb25maWcoZmQsIC4u
-Lik7Cglmc2NvbmZpZyhmZCwgLi4uKTsKCWZzY29uZmlnKGZkLCAuLi4pOwoJCglpZiAoZnNjb25m
-aWcoZmQsIENNRF9DUkVBVEUpID09IC1FQlVTWSkgewogICAgICAgIAlmc2NvbmZpZyhmZCwgQ01E
-X0JJTkRfSU5URVJOQUwpOwogICAgICAgIH0KCkJ1dCB1c2Vyc3BhY2Ugd291bGQgdGhlbiBiZSBm
-cmVlIHRvIGlzc3VlIGEgd2FybmluZyBvciBkbyBzb21ldGhpbmcKZWxzZSBpZiBDTURfQ1JFQVRF
-IHJldHVybnMgLUVCVVNZLgoKSSBkb24ndCBrbm93IGhvdyB0aGUgYWJvdmUgd291bmQgdXAgYmVp
-bmcgY29uc3RydWVkIGFzIGFza2luZyB0aGF0IHRoZQpjb2RlIGNhbGwgc2dldCBkaXJlY3RseSBi
-dXQgdGhhdCBpcyB3aGF0IGhhcyBoYXBwZW5lZC4KCj4gSGF2aW5nIHNvbWV0aGluZyBsaWtlIGEg
-c2Vjb25kIGNhbGxiYWNrIGZvciBtb3VudF9iZGV2KCkgdGhhdCB3b3VsZAo+IGJlIGNhbGxlZCB3
-aGVuIHdlJ2QgZm91bmQgYW4gZXhpc3RpbmcgaW5zdGFuY2UgZm9yIHRoZSBzYW1lIGJsb2NrCj4g
-ZGV2aWNlPyAgU3VyZSwgbm8gcHJvYmxlbS4gIEhhdmluZyBhIGhlbHBlciBmb3IgZG9pbmcgc3Vj
-aCBjb21wYXJpc29uCj4gdGhhdCB3b3VsZCB3b3JrIGluIGVub3VnaCBjYXNlcyB0byBib3RoZXIs
-IHNvIHRoYXQgZGlmZmVyZW50IGZzCj4gY291bGQgYXZvaWQgYm9pbGVycGxhdGUgaW4gdGhhdCBj
-YWxsYmFjaz8gIEFnYWluLCBtb3JlIHBvd2VyIHRvIHlvdS4KCk5vcm1hbCBmb3JtcyBldGMuICBJ
-ZiB3ZSB3YW50IHRvIGRvIHRoYXQgaXQganVzdCByZXF1aXJlcyBhIHdlZSBiaXQgb2YKZGlzY2lw
-bGluZS4gIEFuZCBpZiBhbGwgb2YgdGhlIG9wdGlvbiBwYXJzaW5nIGlzIGJlaW5nIHJld3JpdHRl
-biBhbmQKcmV0ZXN0ZWQgYW55d2F5IEkgZG9uJ3Qgc2VlIHdoeSB3ZSBjYW4ndCBkbyBzb21ldGhp
-bmcgbGlrZSB0aGF0IGFzIHdlbGwuClNvIGl0IGRvZXMgbm90IHNvdW5kIHVucmVhc29uYWJsZSB0
-byBtZS4KCkl0IGRvZXMgc291bmQgbGlrZSBtb3JlIHdvcmsgdGhhbiB3aGF0IEkgd2FzIHByb3Bv
-c2luZy4KCkVyaWMKCi0tIApBcHBBcm1vciBtYWlsaW5nIGxpc3QKQXBwQXJtb3JAbGlzdHMudWJ1
-bnR1LmNvbQpNb2RpZnkgc2V0dGluZ3Mgb3IgdW5zdWJzY3JpYmUgYXQ6IGh0dHBzOi8vbGlzdHMu
-dWJ1bnR1LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2FwcGFybW9yCg==
+David Howells <dhowells@redhat.com> writes:
+
+> Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+>> There is a serious problem with mount options today that fsopen does not
+>> address.  The problem is that mount options are ignored for block based
+>> filesystems, and any other type of filesystem that follows the same
+>> pattern.
+>
+> Yes.  Since you *absolutely* *insist* on this being fixed *right* *now* *or*
+> *else*, I'm working up a set of additional patches to give userspace the
+> option of whether they want no sharing; sharing, but only with exactly the
+> same parameters; or to ignore the parameter differences and just accept
+> sharing of what's already already mounted (ie. the current behaviour).
+>
+> The second option, however, is not trivial as it needs to compare the fs
+> contexts, including the LSM parameters.  To make that work, I really need to
+> remove the old security_mnt_opts stuff - which means I need to port btrfs to
+> the new context stuff.
+>
+> We discussed this yesterday, and I proposed a solution, and I'm working on it.
+
+I repeated this because after some comments from Al on IRC yesterday
+and Miklos's email replay. It appeared clear that I had not specified
+why my issue was clearly enough for people reading the thread to
+understand the problem that I see.
+
+> Yes, I agree it would be nice to have, but it *doesn't* really need supporting
+> right this minute, since what I have now oughtn't to break the current
+> behaviour.
+
+I am really reluctant to endorse anything that propagates the issues of
+the current interface in the new mount interface.
+
+Eric
