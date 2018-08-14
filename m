@@ -1,60 +1,71 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: BUG: Mount ignores mount options
-Date: Mon, 13 Aug 2018 12:20:14 -0700
-Message-ID: <48e443ba-51b5-cf10-3342-cdeabb91b224@schaufler-ca.com>
-References: <20180810153902.GH21087@thunk.org> <87d0uqpba5.fsf@xmission.com>
- <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <22361.1533913891@warthog.procyon.org.uk>
- <28045.1533916438@warthog.procyon.org.uk> <20180810161400.GA627@thunk.org>
- <CALCETrXC8Z-q+PzzqMC-McA7UdmFubVcs2dVsT0Dt+GbSqjF5A@mail.gmail.com>
- <20180813173502.1a7a1d9c@alans-desktop>
- <CALCETrXvtSLjwx0swXo5g-vU3PmF-_6J6j1a_2pAba7bhzO9QQ@mail.gmail.com>
- <20180813172947.GS6515@ZenIV.linux.org.uk>
- <alpine.LRH.2.21.1808140458040.23296@namei.org>
+From: Andrew Lutomirski <luto@kernel.org>
+Subject: Re: Kernel lockdown patch & IPAddressAllow/IPAddressDeny systemd
+ feature with Secure Boot
+Date: Tue, 14 Aug 2018 07:14:00 -0700
+Message-ID: <CAObL_7GOOQ01NPf4y1MqRJh4S=CYV8NPmEGTbkrTcjrfUKc5LA@mail.gmail.com>
+References: <20180807212531.25161.63476@mailman01.phx2.fedoraproject.org> <CALeDE9ORLoyiUcf8Bmwr2rPyo7-3d8Fo54WuPGWtv4ByE_JG=Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.21.1808140458040.23296@namei.org>
-Content-Language: en-US
+In-Reply-To: <CALeDE9ORLoyiUcf8Bmwr2rPyo7-3d8Fo54WuPGWtv4ByE_JG=Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: James Morris <jmorris@namei.org>, Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Andy Lutomirski <luto@kernel.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, "Theodore Y. Ts'o" <tytso@mit.edu>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, SELinux-NSA <selinux@tycho.nsa.gov>, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, Linux API <linux-api@vger.kernel.org>, apparmor@lists.ubuntu.com, Fenghua Yu <fenghua.yu@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, LSM List <linux-security-module@vger.kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.
+To: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, ast@kernel.org, Laura Abbott <labbott@fedoraproject.org>, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+Cc: Kernel Fedora <kernel@lists.fedoraproject.org>
 List-Id: linux-api@vger.kernel.org
 
-On 8/13/2018 12:00 PM, James Morris wrote:
-> On Mon, 13 Aug 2018, Al Viro wrote:
->
->> On Mon, Aug 13, 2018 at 09:48:53AM -0700, Andy Lutomirski wrote:
->>> Are there cases I'm missing?  It sounds like the API could be improved
->>> to fully model the last case, and everything will work nicely.
->> 	You know, that's starting to remind of this little gem of Borges:
->> http://www.alamut.com/subj/artiface/language/johnWilkins.html
->> Especially the delightful (fake) quote contained in there:
->> [...] it is written that the animals are divided into:
->> 	(a) belonging to the emperor,
->> 	(b) embalmed,
->> 	(c) tame,
->> 	(d) sucking pigs,
->> 	(e) sirens,
->> 	(f) fabulous,
->> 	(g) stray dogs,
->> 	(h) included in the present classification,
->> 	(i) frenzied,
->> 	(j) innumerable,
->> 	(k) drawn with a very fine camelhair brush,
->> 	(l) et cetera,
->> 	(m) having just broken the water pitcher,
->> 	(n) that from a long way off look like flies.
->
-> Coincidentally, this was also the model for Linux capabilities.
+[Removed Fedora devel list because it's subscriber-only]
 
-Linux capabilities are POSIX capabilities which are modeled closely
-to accommodate the historical behavior manifest in the P1003.1 specification.
-So except for (c), (f) and (k) you can use this characterization. 
+> On Aug 8, 2018, at 12:29 AM, Peter Robinson <pbrobinson@gmail.com> wrote:
+>
+> Probably a good idea to cc: this to the kernel list :-)
+>
+> I suspect it's intentional but with the planned changes for iptables
+> etc to be backed by bpf in the upstream kernel sometime in the future
+> it's likely going to need to be reviewed.
+>
 
-On a slightly more serious note, there's a lot of Linux, mount semantics
-included, that have grow organically and that aren't quite up to the
-usage models they are being applied to. I applaud David's work in part
-because it may make it possible to accommodate more of those cases going
-forward.
+I thought this got covered in review. I think this part of lockdown
+needs to get reverted or fixed ASAP.
+
+(I definitely brought up multiple issues with the bpf lockdown stuff.
+It's clearly extremely broken right now in the "new kernel breaks
+*current* Linux distro" sense.)
+
+> Peter
+>
+>> On Tue, Aug 7, 2018 at 10:25 PM, Timoth=C3=A9e Ravier <tim@siosm.fr> wro=
+te:
+>> Booting Fedora with Secure Boot enabled will result in Lockdown being en=
+abled at boot time. This will completly disable the BPF system call for all=
+ users [1][2].
+>>
+>> Unfortunately, this breaks the IPAddressAllow & IPAddressDeny systemd fe=
+ature [3][4][5].
+>>
+>> I don't have a solution for this, but as far as I understand, this will =
+also prevent other BPF use-cases (for example: Cilium on Fedora CoreOS).
+>>
+>> [1] https://src.fedoraproject.org/rpms/kernel/blob/master/f/efi-lockdown=
+.patch#_1525
+>> [2] https://git.kernel.org/pub/scm/linux/kernel/git/jforbes/linux.git/co=
+mmit/?h=3Dlockdown&id=3D0eb0d0851747787f7182b3e9d0d38edb5925a678
+>> [3] https://github.com/systemd/systemd/blob/master/src/core/bpf-firewall=
+.c
+>> [4] https://github.com/systemd/systemd/blob/master/NEWS#L1192
+>> [5] https://www.freedesktop.org/software/systemd/man/systemd.resource-co=
+ntrol.html#IPAddressAllow=3DADDRESS%5B/PREFIXLENGTH%5D%E2%80%A6
+>> _______________________________________________
+>> devel mailing list -- devel@lists.fedoraproject.org
+>> To unsubscribe send an email to devel-leave@lists.fedoraproject.org
+>> Fedora Code of Conduct: https://getfedora.org/code-of-conduct.html
+>> List Guidelines: https://fedoraproject.org/wiki/Mailing_list_guidelines
+>> List Archives: https://lists.fedoraproject.org/archives/list/devel@lists=
+.fedoraproject.org/message/ZMEWJMQH6DDMV3AZ4IG7LOYMMIETCH42/
+> _______________________________________________
+> devel mailing list -- devel@lists.fedoraproject.org
+> To unsubscribe send an email to devel-leave@lists.fedoraproject.org
+> Fedora Code of Conduct: https://getfedora.org/code-of-conduct.html
+> List Guidelines: https://fedoraproject.org/wiki/Mailing_list_guidelines
+> List Archives: https://lists.fedoraproject.org/archives/list/devel@lists.=
+fedoraproject.org/message/RUWDEDQHS5I47YBPEZVEKXNU2BAX2SLU/
