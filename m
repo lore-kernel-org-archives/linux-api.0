@@ -1,90 +1,55 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: Should we split the network filesystem setup into two phases?
-Date: Wed, 15 Aug 2018 09:51:36 -0700
-Message-ID: <DCE0E619-68F8-4906-8062-68D63DDED665@amacapital.net>
-References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk> <17763.1534350685@warthog.procyon.org.uk>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: BUG: Mount ignores mount options
+Date: Wed, 15 Aug 2018 18:29:51 -0500
+Message-ID: <20180815232951.GA6891@mail.hallyn.com>
+References: <87d0uqpba5.fsf@xmission.com>
+ <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+ <22361.1533913891@warthog.procyon.org.uk>
+ <28045.1533916438@warthog.procyon.org.uk>
+ <20180810161400.GA627@thunk.org>
+ <CALCETrXC8Z-q+PzzqMC-McA7UdmFubVcs2dVsT0Dt+GbSqjF5A@mail.gmail.com>
+ <20180813173502.1a7a1d9c@alans-desktop>
+ <CALCETrXvtSLjwx0swXo5g-vU3PmF-_6J6j1a_2pAba7bhzO9QQ@mail.gmail.com>
+ <20180813172947.GS6515@ZenIV.linux.org.uk>
+ <alpine.LRH.2.21.1808140458040.23296@namei.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <17763.1534350685@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <alpine.LRH.2.21.1808140458040.23296@namei.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: trond.myklebust@hammerspace.com, anna.schumaker@netapp.com, sfrench@samba.org, steved@redhat.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, "Eric W. Biederman" <ebiederm@redhat.com>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-afs@lists.infradead.org, ceph-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net
+To: James Morris <jmorris@namei.org>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, "Theodore Y. Ts'o" <tytso@mit.edu>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, SELinux-NSA <selinux@tycho.nsa.gov>, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, Linux API <linux-api@vger.kernel.org>, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, Fenghua Yu <fenghua.yu@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, LSM List <linux-security-module@vger.kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Johannes Weiner <hanne>
 List-Id: linux-api@vger.kernel.org
 
+Quoting James Morris (jmorris@namei.org):
+> On Mon, 13 Aug 2018, Al Viro wrote:
+> 
+> > On Mon, Aug 13, 2018 at 09:48:53AM -0700, Andy Lutomirski wrote:
+> 
+> > > Are there cases I'm missing?  It sounds like the API could be improved
+> > > to fully model the last case, and everything will work nicely.
+> > 
+> > 	You know, that's starting to remind of this little gem of Borges:
+> > http://www.alamut.com/subj/artiface/language/johnWilkins.html
+> > Especially the delightful (fake) quote contained in there:
+> > [...] it is written that the animals are divided into:
+> > 	(a) belonging to the emperor,
+> > 	(b) embalmed,
+> > 	(c) tame,
+> > 	(d) sucking pigs,
+> > 	(e) sirens,
+> > 	(f) fabulous,
+> > 	(g) stray dogs,
+> > 	(h) included in the present classification,
+> > 	(i) frenzied,
+> > 	(j) innumerable,
+> > 	(k) drawn with a very fine camelhair brush,
+> > 	(l) et cetera,
+> > 	(m) having just broken the water pitcher,
+> > 	(n) that from a long way off look like flies.
+> 
+> 
+> Coincidentally, this was also the model for Linux capabilities.
 
-
-> On Aug 15, 2018, at 9:31 AM, David Howells <dhowells@redhat.com> wrote:
->=20
-> Having just re-ported NFS on top of the new mount API stuff, I find that I=
-
-> don't really like the idea of superblocks being separated by communication=
-
-> parameters - especially when it might seem reasonable to be able to adjust=
-
-> those parameters.
->=20
-> Does it make sense to abstract out the remote peer and allow (a) that to b=
-e
-> configured separately from any superblocks using it and (b) that to be use=
-d to
-> create superblocks?
->=20
-> Note that what a 'remote peer' is would be different for different
-> filesystems:
-
-...
-
-I think this looks rather nice.  But maybe you should generalize the concept=
- of =E2=80=9Cpeer=E2=80=9D so that it works for btrfs too. In the case where=
- you mount two different subvolumes, you=E2=80=99re creating a *something*, a=
-nd you=E2=80=99re then creating a filesystem that references it. It=E2=80=99=
-s almost the same thing.
-
->=20
->=20
-
-
->=20
->    fs =3D fsopen("nfs", 0);
->    fsconfig(fs, FSCONFIG_SET_PEER, "peer.1", NULL, peer1);
-
-As you mention below, this seems like it might have namespacing issues.
-
->    =20
-
-> In terms of alternative interfaces, I'm not sure how easy it would be to m=
-ake
-> it like cgroups where you go and create a dir in a special filesystem, say=
-,
-> "/sys/peers/nfs", because the peers records and names would have to be net=
-work
-> namespaced.  Also, it might make it more difficult to use to create a root=
- fs.
->=20
-> On the other hand, being able to adjust the peer configuration by:
->=20
->    echo 71 >/sys/peers/nfs/server.home/timeo
->=20
-> does have a certain appeal.
->=20
-> Also, netlink might be the right option, but I'm not sure how you'd pin th=
-e
-> resultant object whilst you make use of it.
->=20
-
-My suggestion would be to avoid giving these things names at all. I think th=
-at referring to them by fd should be sufficient, especially if you allow the=
-m to be reopened based on a mount that uses them and allow them to get bind-=
-mounted somewhere a la namespaces to make them permanent if needed.
-
-> A further thought is that is it worth making this idea more general and
-> encompassing non-network devices also?  This would run into issues of some=
-
-> logical sources being visible across namespaces and but not others.
-
-Indeed :)
-
-It probably pays to rope a btrfs person into this discussion.
+But maybe we want to split the stray dogs up by breed.
