@@ -1,81 +1,61 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v2 13/27] mm: Handle shadow stack page fault
-Date: Tue, 14 Aug 2018 14:28:45 -0700
-Message-ID: <1534282125.24160.9.camel@intel.com>
-References: <20180710222639.8241-1-yu-cheng.yu@intel.com>
-         <20180710222639.8241-14-yu-cheng.yu@intel.com>
-         <2f3ff321-c629-3e00-59f6-8bca510650d4@linux.intel.com>
-         <20180711090656.GS2476@hirez.programming.kicks-ass.net>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: BUG: Mount ignores mount options
+Date: Tue, 14 Aug 2018 23:03:17 -0500
+Message-ID: <87d0ukjmyi.fsf@xmission.com>
+References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+        <87d0uqpba5.fsf@xmission.com>
+        <20180810151606.GA6515@ZenIV.linux.org.uk>
+        <87pnypiufr.fsf@xmission.com> <20180811014619.GA14368@thunk.org>
+        <8736vlo6ef.fsf@xmission.com>
+        <001a1608-d0fa-84c1-9c54-ae36df95fd89@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180711090656.GS2476@hirez.programming.kicks-ass.net>
+In-Reply-To: <001a1608-d0fa-84c1-9c54-ae36df95fd89@schaufler-ca.com> (Casey
+        Schaufler's message of "Sat, 11 Aug 2018 10:47:50 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>, Dave Hansen <dave.hansen@linux.intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, "Ravi V. Shankar" <ravi.v.shankar@intel.com>, Vedvyas
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: "Theodore Y. Ts'o" <tytso@mit.edu>, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Miklos Szeredi <miklo>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2018-07-11 at 11:06 +0200, Peter Zijlstra wrote:
-> On Tue, Jul 10, 2018 at 04:06:25PM -0700, Dave Hansen wrote:
-> > 
-> > On 07/10/2018 03:26 PM, Yu-cheng Yu wrote:
-> > > 
-> > > +	if (is_shstk_mapping(vma->vm_flags))
-> > > +		entry = pte_mkdirty_shstk(entry);
-> > > +	else
-> > > +		entry = pte_mkdirty(entry);
-> > > +
-> > > +	entry = maybe_mkwrite(entry, vma);
-> > >  	if (ptep_set_access_flags(vma, vmf->address, vmf->pte,
-> > > entry, 1))
-> > >  		update_mmu_cache(vma, vmf->address, vmf->pte);
-> > >  	pte_unmap_unlock(vmf->pte, vmf->ptl);
-> > > @@ -2526,7 +2532,11 @@ static int wp_page_copy(struct vm_fault
-> > > *vmf)
-> > >  		}
-> > >  		flush_cache_page(vma, vmf->address,
-> > > pte_pfn(vmf->orig_pte));
-> > >  		entry = mk_pte(new_page, vma->vm_page_prot);
-> > > -		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-> > > +		if (is_shstk_mapping(vma->vm_flags))
-> > > +			entry = pte_mkdirty_shstk(entry);
-> > > +		else
-> > > +			entry = pte_mkdirty(entry);
-> > > +		entry = maybe_mkwrite(entry, vma);
-> > Do we want to lift this hunk of code and put it elsewhere?  Maybe:
-> > 
-> > 	entry = pte_set_vma_features(entry, vma);
-> > 
-> > and then:
-> > 
-> > pte_t pte_set_vma_features(pte_t entry, struct vm_area_struct)
-> > {
-> > 		/*
-> > 		 * Shadow stack PTEs are always dirty and always
-> > 		 * writable.  They have a different encoding for
-> > 		 * this than normal PTEs, though.
-> > 		 */
-> > 		if (is_shstk_mapping(vma->vm_flags))
-> > 			entry = pte_mkdirty_shstk(entry);
-> > 		else
-> > 			entry = pte_mkdirty(entry);
-> > 
-> > 		entry = maybe_mkwrite(entry, vma);
-> > 
-> > 	return entry;
-> > }
-> Yes, that wants a helper like that. Not sold on the name, but
-> whatever.
-> 
-> Is there any way we can hide all the shadow stack magic in arch
-> code?
+Casey Schaufler <casey@schaufler-ca.com> writes:
 
-We use is_shstk_mapping() only to determine PAGE_DIRTY_SW or
-PAGE_DIRTY_HW should be set in a PTE.  One way to remove this shadow
-stack code from generic code is changing pte_mkdirty(pte) to
-pte_mkdirty(pte, vma), and in the arch code we handle shadow stack.
-Is this acceptable?
+> Don't blame the filesystems for behaving as documented.
 
-Thanks,
-Yu-cheng
+No.  This behavior is not documented.  At least I certainly don't see a
+word about this in any of the man pages.  Where does it say mounting a
+filesystem will not honor it's mount options?
+
+It is also rare enough in practice it is something it is reasonable to
+expect people to be surprised by.
+
+> The problem is not in the mount mechanism, it's in the way you want to
+> abuse it.
+
+I am not asking for this behavior.  I am pointing out this behavior
+exists.  I am pointing out this behavior is harmful.  I am asking we
+stop doing this harmful thing in the new API where we don't have a
+chance of breaking anything.
+
+The place where this has bitten the hardest is someone wrote a script to
+do something for Xen in a chroot.  That script involved a chroot that
+mounted devpts and in doing so happend to change the options of the main
+/dev/pts.  Which resulted in ptys created with /dev/ptmx outside the
+chroot with the wrong permissions.  That in turn caused several distros
+to retain the ancient suid pt_chown binary from libc that the devpts
+filesystem was built to make obsolete.  As the world turned that
+pt_chown binary could be confused into chowning the wrong pty if a pty
+from a container was used.
+
+The fix was to mount a new instance of devpts every time mount of devpts
+is called.  That simplified the code, and allowed pt_chown to be removed
+permanently.  The tricky bit was figuring out how keep /dev/ptmx
+working.  I wound up testing on every distribution I could think of to
+ensure no one would notice the slightly changed behavior of the devpts
+filesystem.
+
+The behavior in other filesystems of ignoring the options instead of
+changing them on the filesystem isn't quite as bad.  But it still has
+the potential for a lot of mischief.
+
+Eric
