@@ -1,65 +1,61 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: [PATCH 4/4] mm: proc/pid/smaps_rollup: convert to single value
- seq_file
-Date: Thu, 16 Aug 2018 17:20:44 +0300
-Message-ID: <20180816142044.GB15817@avx2>
-References: <20180723111933.15443-1-vbabka@suse.cz>
- <20180723111933.15443-5-vbabka@suse.cz>
- <cb1d1965-9a13-e80f-dfde-a5d3bf9f510c@suse.cz>
- <20180726162637.GB25227@avx2>
- <bf4525b0-fd5b-4c4c-2cb3-adee3dd95a48@suse.cz>
+From: Steve French <smfrench@gmail.com>
+Subject: Re: Should we split the network filesystem setup into two phases?
+Date: Thu, 16 Aug 2018 11:24:56 -0500
+Message-ID: <CAH2r5muKOWBe9zMM8duNJ3rp1bzQh-mUj5zYoARO5pmc4de_+A@mail.gmail.com>
+References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+ <17763.1534350685@warthog.procyon.org.uk> <87pnyiew8x.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <bf4525b0-fd5b-4c4c-2cb3-adee3dd95a48@suse.cz>
+In-Reply-To: <87pnyiew8x.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Daniel Colascione <dancol@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: David Howells <dhowells@redhat.com>, trond.myklebust@hammerspace.com, Anna Schumaker <anna.schumaker@netapp.com>, Steve French <sfrench@samba.org>, Steve Dickson <steved@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, ebiederm@redhat.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, CIFS <linux-cifs@vger.kernel.org>, linux-afs@lists.infradead.org, ceph-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 30, 2018 at 10:53:53AM +0200, Vlastimil Babka wrote:
-> On 07/26/2018 06:26 PM, Alexey Dobriyan wrote:
-> > On Wed, Jul 25, 2018 at 08:53:53AM +0200, Vlastimil Babka wrote:
-> >> I moved the reply to this thread since the "added to -mm tree"
-> >> notification Alexey replied to in <20180724182908.GD27053@avx2> has
-> >> reduced CC list and is not linked to the patch postings.
-> >>
-> >> On 07/24/2018 08:29 PM, Alexey Dobriyan wrote:
-> >>> On Mon, Jul 23, 2018 at 04:55:48PM -0700, akpm@linux-foundation.org wrote:
-> >>>> The patch titled
-> >>>>      Subject: mm: /proc/pid/smaps_rollup: convert to single value seq_file
-> >>>> has been added to the -mm tree.  Its filename is
-> >>>>      mm-proc-pid-smaps_rollup-convert-to-single-value-seq_file.patch
-> >>>
-> >>>> Subject: mm: /proc/pid/smaps_rollup: convert to single value seq_file
-> >>>>
-> >>>> The /proc/pid/smaps_rollup file is currently implemented via the
-> >>>> m_start/m_next/m_stop seq_file iterators shared with the other maps files,
-> >>>> that iterate over vma's.  However, the rollup file doesn't print anything
-> >>>> for each vma, only accumulate the stats.
-> >>>
-> >>> What I don't understand why keep seq_ops then and not do all the work in
-> >>> ->show hook.  Currently /proc/*/smaps_rollup is at ~500 bytes so with
-> >>> minimum 1 page seq buffer, no buffer resizing is possible.
-> >>
-> >> Hmm IIUC seq_file also provides the buffer and handles feeding the data
-> >> from there to the user process, which might have called read() with a smaller
-> >> buffer than that. So I would rather not avoid the seq_file infrastructure.
-> >> Or you're saying it could be converted to single_open()? Maybe, with more work.
-> > 
-> > Prefereably yes.
-> 
-> OK here it is. Sending as a new patch instead of delta, as that's easier
-> to review - the delta is significant. Line stats wise it's the same.
-> Again a bit less boilerplate thans to no special seq_ops, a bit more
-> copy/paste in the open and release functions. But I guess it's better
-> overall.
-> 
-> ----8>----
-> From c6a2eaf3bb3546509d6b7c42f8bcc56cd7e92f90 Mon Sep 17 00:00:00 2001
-> From: Vlastimil Babka <vbabka@suse.cz>
-> Date: Wed, 18 Jul 2018 13:14:30 +0200
-> Subject: [PATCH] mm: proc/pid/smaps_rollup: convert to single value seq_file
+On Thu, Aug 16, 2018 at 2:56 AM Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+> David Howells <dhowells@redhat.com> writes:
+>
+> > Having just re-ported NFS on top of the new mount API stuff, I find that I
+> > don't really like the idea of superblocks being separated by communication
+> > parameters - especially when it might seem reasonable to be able to adjust
+> > those parameters.
+> >
+> > Does it make sense to abstract out the remote peer and allow (a) that to be
+> > configured separately from any superblocks using it and (b) that to be used to
+> > create superblocks?
+<snip>
+> At least for devpts we always create a new filesystem instance every
+> time mount(2) is called.  NFS seems to have the option to create a new
+> filesystem instance every time mount(2) is called as well, (even if the
+> filesystem parameters are the same).  And depending on the case I can
+> see the attraction for other filesystems as well.
+>
+> So I don't think we can completely abandon the option for filesystems
+> to always create a new filesystem instance when mount(8) is called.
 
-Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
+In cifs we attempt to match new mounts to existing tree connections
+(instances of connections to a \\server\share) from other mount(s)
+based first on whether security settings match (e.g. are both
+Kerberos) and then on whether encryption is on/off and whether this is
+a snapshot mount (smb3 previous versions feature).  If neither is
+mounted with a snaphsot and the encryption settings match then
+we will use the same tree id to talk with the server as the other
+mounts use.  Interesting idea to allow mount to force a new
+tree id.
+
+What was the NFS mount option you were talking about?
+Looking at the nfs man page the only one that looked similar
+was "nosharecache"
+
+> I most definitely support thinking this through and figuring out how it
+> best make sense for the new filesystem API to create new filesystem
+> instances or fail to create new filesystems instances.
+
+Yes - it is an interesting question.
+
+-- 
+Thanks,
+
+Steve
