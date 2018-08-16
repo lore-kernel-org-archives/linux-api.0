@@ -1,57 +1,65 @@
-From: Laura Abbott <labbott@redhat.com>
-Subject: Re: Kernel lockdown patch & IPAddressAllow/IPAddressDeny systemd
- feature with Secure Boot
-Date: Thu, 16 Aug 2018 06:36:26 -0700
-Message-ID: <17c09f82-a32d-fc3b-042b-c44c366f873c@redhat.com>
-References: <20180807212531.25161.63476@mailman01.phx2.fedoraproject.org>
- <CALeDE9ORLoyiUcf8Bmwr2rPyo7-3d8Fo54WuPGWtv4ByE_JG=Q@mail.gmail.com>
- <CAObL_7GOOQ01NPf4y1MqRJh4S=CYV8NPmEGTbkrTcjrfUKc5LA@mail.gmail.com>
- <20180816021037.6yxi5rqolhqxipza@ast-mbp.dhcp.thefacebook.com>
+From: Alexey Dobriyan <adobriyan@gmail.com>
+Subject: Re: [PATCH 4/4] mm: proc/pid/smaps_rollup: convert to single value
+ seq_file
+Date: Thu, 16 Aug 2018 17:20:44 +0300
+Message-ID: <20180816142044.GB15817@avx2>
+References: <20180723111933.15443-1-vbabka@suse.cz>
+ <20180723111933.15443-5-vbabka@suse.cz>
+ <cb1d1965-9a13-e80f-dfde-a5d3bf9f510c@suse.cz>
+ <20180726162637.GB25227@avx2>
+ <bf4525b0-fd5b-4c4c-2cb3-adee3dd95a48@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180816021037.6yxi5rqolhqxipza@ast-mbp.dhcp.thefacebook.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <bf4525b0-fd5b-4c4c-2cb3-adee3dd95a48@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andrew Lutomirski <luto@kernel.org>
-Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, ast@kernel.org, Laura Abbott <labbott@fedoraproject.org>, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Kernel Fedora <kernel@lists.fedoraproject.org>, daniel@iogearbox.net
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Daniel Colascione <dancol@google.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 08/15/2018 07:10 PM, Alexei Starovoitov wrote:
-> On Tue, Aug 14, 2018 at 07:14:00AM -0700, Andrew Lutomirski wrote:
->> [Removed Fedora devel list because it's subscriber-only]
->>
->>> On Aug 8, 2018, at 12:29 AM, Peter Robinson <pbrobinson@gmail.com> wrote:
->>>
->>> Probably a good idea to cc: this to the kernel list :-)
->>>
->>> I suspect it's intentional but with the planned changes for iptables
->>> etc to be backed by bpf in the upstream kernel sometime in the future
->>> it's likely going to need to be reviewed.
->>>
->>
->> I thought this got covered in review. I think this part of lockdown
->> needs to get reverted or fixed ASAP.
+On Mon, Jul 30, 2018 at 10:53:53AM +0200, Vlastimil Babka wrote:
+> On 07/26/2018 06:26 PM, Alexey Dobriyan wrote:
+> > On Wed, Jul 25, 2018 at 08:53:53AM +0200, Vlastimil Babka wrote:
+> >> I moved the reply to this thread since the "added to -mm tree"
+> >> notification Alexey replied to in <20180724182908.GD27053@avx2> has
+> >> reduced CC list and is not linked to the patch postings.
+> >>
+> >> On 07/24/2018 08:29 PM, Alexey Dobriyan wrote:
+> >>> On Mon, Jul 23, 2018 at 04:55:48PM -0700, akpm@linux-foundation.org wrote:
+> >>>> The patch titled
+> >>>>      Subject: mm: /proc/pid/smaps_rollup: convert to single value seq_file
+> >>>> has been added to the -mm tree.  Its filename is
+> >>>>      mm-proc-pid-smaps_rollup-convert-to-single-value-seq_file.patch
+> >>>
+> >>>> Subject: mm: /proc/pid/smaps_rollup: convert to single value seq_file
+> >>>>
+> >>>> The /proc/pid/smaps_rollup file is currently implemented via the
+> >>>> m_start/m_next/m_stop seq_file iterators shared with the other maps files,
+> >>>> that iterate over vma's.  However, the rollup file doesn't print anything
+> >>>> for each vma, only accumulate the stats.
+> >>>
+> >>> What I don't understand why keep seq_ops then and not do all the work in
+> >>> ->show hook.  Currently /proc/*/smaps_rollup is at ~500 bytes so with
+> >>> minimum 1 page seq buffer, no buffer resizing is possible.
+> >>
+> >> Hmm IIUC seq_file also provides the buffer and handles feeding the data
+> >> from there to the user process, which might have called read() with a smaller
+> >> buffer than that. So I would rather not avoid the seq_file infrastructure.
+> >> Or you're saying it could be converted to single_open()? Maybe, with more work.
+> > 
+> > Prefereably yes.
 > 
-> I don't see lockdown in Linus's tree. Is this fedora only issue?
+> OK here it is. Sending as a new patch instead of delta, as that's easier
+> to review - the delta is significant. Line stats wise it's the same.
+> Again a bit less boilerplate thans to no special seq_ops, a bit more
+> copy/paste in the open and release functions. But I guess it's better
+> overall.
 > 
+> ----8>----
+> From c6a2eaf3bb3546509d6b7c42f8bcc56cd7e92f90 Mon Sep 17 00:00:00 2001
+> From: Vlastimil Babka <vbabka@suse.cz>
+> Date: Wed, 18 Jul 2018 13:14:30 +0200
+> Subject: [PATCH] mm: proc/pid/smaps_rollup: convert to single value seq_file
 
-The entire lockdown/secure boot series is out of tree at the moment.
-We're working to get it included.  If you search LWN, you
-can find some articles explaining the long saga of the patch series.
-
->> (I definitely brought up multiple issues with the bpf lockdown stuff.
->> It's clearly extremely broken right now in the "new kernel breaks
->> *current* Linux distro" sense.)
-> 
-> +1
-> 
-
-Yes, we need to review what exactly is in Fedora. It's the merge
-window so this is a good time to do that anyway. We're still
-playing catch up after Flock in Dresden last week. Can you file
-a bugzilla for tracking so we don't forget?
-
-Thanks,
-Laura
+Reviewed-by: Alexey Dobriyan <adobriyan@gmail.com>
