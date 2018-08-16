@@ -1,55 +1,40 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: BUG: Mount ignores mount options
-Date: Wed, 15 Aug 2018 18:29:51 -0500
-Message-ID: <20180815232951.GA6891@mail.hallyn.com>
-References: <87d0uqpba5.fsf@xmission.com>
- <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <22361.1533913891@warthog.procyon.org.uk>
- <28045.1533916438@warthog.procyon.org.uk>
- <20180810161400.GA627@thunk.org>
- <CALCETrXC8Z-q+PzzqMC-McA7UdmFubVcs2dVsT0Dt+GbSqjF5A@mail.gmail.com>
- <20180813173502.1a7a1d9c@alans-desktop>
- <CALCETrXvtSLjwx0swXo5g-vU3PmF-_6J6j1a_2pAba7bhzO9QQ@mail.gmail.com>
- <20180813172947.GS6515@ZenIV.linux.org.uk>
- <alpine.LRH.2.21.1808140458040.23296@namei.org>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: Kernel lockdown patch & IPAddressAllow/IPAddressDeny systemd
+ feature with Secure Boot
+Date: Wed, 15 Aug 2018 19:10:38 -0700
+Message-ID: <20180816021037.6yxi5rqolhqxipza@ast-mbp.dhcp.thefacebook.com>
+References: <20180807212531.25161.63476@mailman01.phx2.fedoraproject.org>
+ <CALeDE9ORLoyiUcf8Bmwr2rPyo7-3d8Fo54WuPGWtv4ByE_JG=Q@mail.gmail.com>
+ <CAObL_7GOOQ01NPf4y1MqRJh4S=CYV8NPmEGTbkrTcjrfUKc5LA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.LRH.2.21.1808140458040.23296@namei.org>
+In-Reply-To: <CAObL_7GOOQ01NPf4y1MqRJh4S=CYV8NPmEGTbkrTcjrfUKc5LA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: James Morris <jmorris@namei.org>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, "Theodore Y. Ts'o" <tytso@mit.edu>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, SELinux-NSA <selinux@tycho.nsa.gov>, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, Linux API <linux-api@vger.kernel.org>, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, Fenghua Yu <fenghua.yu@intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, LSM List <linux-security-module@vger.kernel.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Johannes Weiner <hanne>
+To: Andrew Lutomirski <luto@kernel.org>
+Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, ast@kernel.org, Laura Abbott <labbott@fedoraproject.org>, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Kernel Fedora <kernel@lists.fedoraproject.org>, daniel@iogearbox.net
 List-Id: linux-api@vger.kernel.org
 
-Quoting James Morris (jmorris@namei.org):
-> On Mon, 13 Aug 2018, Al Viro wrote:
+On Tue, Aug 14, 2018 at 07:14:00AM -0700, Andrew Lutomirski wrote:
+> [Removed Fedora devel list because it's subscriber-only]
 > 
-> > On Mon, Aug 13, 2018 at 09:48:53AM -0700, Andy Lutomirski wrote:
+> > On Aug 8, 2018, at 12:29 AM, Peter Robinson <pbrobinson@gmail.com> wrote:
+> >
+> > Probably a good idea to cc: this to the kernel list :-)
+> >
+> > I suspect it's intentional but with the planned changes for iptables
+> > etc to be backed by bpf in the upstream kernel sometime in the future
+> > it's likely going to need to be reviewed.
+> >
 > 
-> > > Are there cases I'm missing?  It sounds like the API could be improved
-> > > to fully model the last case, and everything will work nicely.
-> > 
-> > 	You know, that's starting to remind of this little gem of Borges:
-> > http://www.alamut.com/subj/artiface/language/johnWilkins.html
-> > Especially the delightful (fake) quote contained in there:
-> > [...] it is written that the animals are divided into:
-> > 	(a) belonging to the emperor,
-> > 	(b) embalmed,
-> > 	(c) tame,
-> > 	(d) sucking pigs,
-> > 	(e) sirens,
-> > 	(f) fabulous,
-> > 	(g) stray dogs,
-> > 	(h) included in the present classification,
-> > 	(i) frenzied,
-> > 	(j) innumerable,
-> > 	(k) drawn with a very fine camelhair brush,
-> > 	(l) et cetera,
-> > 	(m) having just broken the water pitcher,
-> > 	(n) that from a long way off look like flies.
-> 
-> 
-> Coincidentally, this was also the model for Linux capabilities.
+> I thought this got covered in review. I think this part of lockdown
+> needs to get reverted or fixed ASAP.
 
-But maybe we want to split the stray dogs up by breed.
+I don't see lockdown in Linus's tree. Is this fedora only issue?
+
+> (I definitely brought up multiple issues with the bpf lockdown stuff.
+> It's clearly extremely broken right now in the "new kernel breaks
+> *current* Linux distro" sense.)
+
++1
