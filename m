@@ -1,152 +1,57 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: Should we split the network filesystem setup into two phases?
-Date: Thu, 16 Aug 2018 00:06:06 -0500
-Message-ID: <87pnyiew8x.fsf@xmission.com>
-References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
-        <17763.1534350685@warthog.procyon.org.uk>
+From: Laura Abbott <labbott@redhat.com>
+Subject: Re: Kernel lockdown patch & IPAddressAllow/IPAddressDeny systemd
+ feature with Secure Boot
+Date: Thu, 16 Aug 2018 06:36:26 -0700
+Message-ID: <17c09f82-a32d-fc3b-042b-c44c366f873c@redhat.com>
+References: <20180807212531.25161.63476@mailman01.phx2.fedoraproject.org>
+ <CALeDE9ORLoyiUcf8Bmwr2rPyo7-3d8Fo54WuPGWtv4ByE_JG=Q@mail.gmail.com>
+ <CAObL_7GOOQ01NPf4y1MqRJh4S=CYV8NPmEGTbkrTcjrfUKc5LA@mail.gmail.com>
+ <20180816021037.6yxi5rqolhqxipza@ast-mbp.dhcp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <17763.1534350685@warthog.procyon.org.uk> (David Howells's
-        message of "Wed, 15 Aug 2018 17:31:25 +0100")
+In-Reply-To: <20180816021037.6yxi5rqolhqxipza@ast-mbp.dhcp.thefacebook.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: trond.myklebust@hammerspace.com, anna.schumaker@netapp.com, sfrench@samba.org, steved@redhat.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, "Eric W. Biederman" <ebiederm@redhat.com>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-afs@lists.infradead.org, ceph-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andrew Lutomirski <luto@kernel.org>
+Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, ast@kernel.org, Laura Abbott <labbott@fedoraproject.org>, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Kernel Fedora <kernel@lists.fedoraproject.org>, daniel@iogearbox.net
 List-Id: linux-api@vger.kernel.org
 
-David Howells <dhowells@redhat.com> writes:
+On 08/15/2018 07:10 PM, Alexei Starovoitov wrote:
+> On Tue, Aug 14, 2018 at 07:14:00AM -0700, Andrew Lutomirski wrote:
+>> [Removed Fedora devel list because it's subscriber-only]
+>>
+>>> On Aug 8, 2018, at 12:29 AM, Peter Robinson <pbrobinson@gmail.com> wrote:
+>>>
+>>> Probably a good idea to cc: this to the kernel list :-)
+>>>
+>>> I suspect it's intentional but with the planned changes for iptables
+>>> etc to be backed by bpf in the upstream kernel sometime in the future
+>>> it's likely going to need to be reviewed.
+>>>
+>>
+>> I thought this got covered in review. I think this part of lockdown
+>> needs to get reverted or fixed ASAP.
+> 
+> I don't see lockdown in Linus's tree. Is this fedora only issue?
+> 
 
-> Having just re-ported NFS on top of the new mount API stuff, I find that I
-> don't really like the idea of superblocks being separated by communication
-> parameters - especially when it might seem reasonable to be able to adjust
-> those parameters.
->
-> Does it make sense to abstract out the remote peer and allow (a) that to be
-> configured separately from any superblocks using it and (b) that to be used to
-> create superblocks?
->
-> Note that what a 'remote peer' is would be different for different
-> filesystems:
->
->  (*) For NFS, it would probably be a named server, with address(es) attached
->      to the name.  In lieu of actually having a name, the initial IP address
->      could be used.
->
->  (*) For CIFS, it would probably be a named server.  I'm not sure if CIFS
->      allows an abstraction for a share that can move about inside a domain.
->
->  (*) For AFS, it would be a cell, I think, where the actual fileserver(s) used
->      are a matter of direction from the Volume Location server.
->
->  (*) For 9P and Ceph, I don't really know.
->
-> What could be configured?  Well, addresses, ports, timeouts.  Maybe protocol
-> level negotiation - though not being able to explicitly specify, say, the
-> particular version and minorversion on an NFS share would be problematic for
-> backward compatibility.
->
-> One advantage it could give us is that it might make it easier if someone asks
-> for server X to query userspace in some way for the default parameters for X
-> are.
->
-> What might this look like in terms of userspace?  Well, we could overload the
-> new mount API:
->
-> 	peer1 = fsopen("nfs", FSOPEN_CREATE_PEER);
-> 	fsconfig(peer1, FSCONFIG_SET_NS, "net", NULL, netns_fd);
-> 	fsconfig(peer1, FSCONFIG_SET_STRING, "peer_name", "server.home");
-> 	fsconfig(peer1, FSCONFIG_SET_STRING, "vers", "4.2");
-> 	fsconfig(peer1, FSCONFIG_SET_STRING, "address", "tcp:192.168.1.1");
-> 	fsconfig(peer1, FSCONFIG_SET_STRING, "address", "tcp:192.168.1.2");
-> 	fsconfig(peer1, FSCONFIG_SET_STRING, "timeo", "122");
-> 	fsconfig(peer1, FSCONFIG_CMD_SET_UP_PEER, NULL, NULL, 0);
->
-> 	peer2 = fsopen("nfs", FSOPEN_CREATE_PEER);
-> 	fsconfig(peer2, FSCONFIG_SET_NS, "net", NULL, netns_fd);
-> 	fsconfig(peer2, FSCONFIG_SET_STRING, "peer_name", "server2.home");
-> 	fsconfig(peer2, FSCONFIG_SET_STRING, "vers", "3");
-> 	fsconfig(peer2, FSCONFIG_SET_STRING, "address", "tcp:192.168.1.3");
-> 	fsconfig(peer2, FSCONFIG_SET_STRING, "address", "udp:192.168.1.4+6001");
-> 	fsconfig(peer2, FSCONFIG_CMD_SET_UP_PEER, NULL, NULL, 0);
->
-> 	fs = fsopen("nfs", 0);
-> 	fsconfig(fs, FSCONFIG_SET_PEER, "peer.1", NULL, peer1);
-> 	fsconfig(fs, FSCONFIG_SET_PEER, "peer.2", NULL, peer2);
-> 	fsconfig(fs, FSCONFIG_SET_STRING, "source", "/home/dhowells", 0);
-> 	m = fsmount(fs, 0, 0);
->
-> [Note that Eric's oft-repeated point about the 'creation' operation altering
->  established parameters still stands here.]
->
-> You could also then reopen it for configuration, maybe by:
->
-> 	peer = fspick(AT_FDCWD, "/mnt", FSPICK_PEER);
->
-> or:
->
-> 	peer = fspick(AT_FDCWD, "nfs:server.home", FSPICK_PEER_BY_NAME);
->
-> though it might be better to give it its own syscall:
->
-> 	peer = fspeer("nfs", "server.home", O_CLOEXEC);
-> 	fsconfig(peer, FSCONFIG_SET_NS, "net", NULL, netns_fd);
-> 	...
-> 	fsconfig(peer, FSCONFIG_CMD_SET_UP_PEER, NULL, NULL, 0);
->
-> In terms of alternative interfaces, I'm not sure how easy it would be to make
-> it like cgroups where you go and create a dir in a special filesystem, say,
-> "/sys/peers/nfs", because the peers records and names would have to be network
-> namespaced.  Also, it might make it more difficult to use to create a root fs.
->
-> On the other hand, being able to adjust the peer configuration by:
->
-> 	echo 71 >/sys/peers/nfs/server.home/timeo
->
-> does have a certain appeal.
->
-> Also, netlink might be the right option, but I'm not sure how you'd pin the
-> resultant object whilst you make use of it.
->
-> A further thought is that is it worth making this idea more general and
-> encompassing non-network devices also?  This would run into issues of some
-> logical sources being visible across namespaces and but not others.
+The entire lockdown/secure boot series is out of tree at the moment.
+We're working to get it included.  If you search LWN, you
+can find some articles explaining the long saga of the patch series.
 
-Even network filesystems are going to have challenges of filesystems
-being visible in some network namespaces and not others.  As some
-filesystems will be visible on the internet and some filesystems will
-only be visible on the appropriate local network.  Network namespaces
-are sometimes used to deal with the case of local networks with
-overlapping ip addresses.
+>> (I definitely brought up multiple issues with the bpf lockdown stuff.
+>> It's clearly extremely broken right now in the "new kernel breaks
+>> *current* Linux distro" sense.)
+> 
+> +1
+> 
 
-I think you are proposing a model for network filesystems that is
-essentially the same situation where we are with most block devices
-filesystems today.  Where some parameters identitify the local
-filesystem instance and some parameters identify how the kernel
-interacts with that filesystem instance.
+Yes, we need to review what exactly is in Fedora. It's the merge
+window so this is a good time to do that anyway. We're still
+playing catch up after Flock in Dresden last week. Can you file
+a bugzilla for tracking so we don't forget?
 
-
-For system efficiency there is a strong argument for having the fewest
-number of filesystem instances we can.  Otherwise we will be caching the
-same data twice and wasting space in RAM etc.
-
-
-So I like the idea.
-
-
-At least for devpts we always create a new filesystem instance every
-time mount(2) is called.  NFS seems to have the option to create a new
-filesystem instance every time mount(2) is called as well, (even if the
-filesystem parameters are the same).  And depending on the case I can
-see the attraction for other filesystems as well.
-
-So I don't think we can completely abandon the option for filesystems
-to always create a new filesystem instance when mount(8) is called.
-
-
-
-I most definitely support thinking this through and figuring out how it
-best make sense for the new filesystem API to create new filesystem
-instances or fail to create new filesystems instances.
-
-
-Eric
+Thanks,
+Laura
