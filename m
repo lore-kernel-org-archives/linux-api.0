@@ -1,38 +1,67 @@
-From: =?utf-8?Q?Aur=C3=A9lien?= Aptel <aaptel@suse.com>
-Subject: Re: Should we split the network filesystem setup into two phases?
-Date: Thu, 16 Aug 2018 19:23:23 +0200
-Message-ID: <87tvnuz0ms.fsf@suse.com>
-References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk> <17763.1534350685@warthog.procyon.org.uk> <87pnyiew8x.fsf@xmission.com> <CAH2r5muKOWBe9zMM8duNJ3rp1bzQh-mUj5zYoARO5pmc4de_+A@mail.gmail.com>
+From: Justin Forbes <jmforbes-a5Mqy2EUIFVAfugRpC6u6w@public.gmane.org>
+Subject: Re: Kernel lockdown patch & IPAddressAllow/IPAddressDeny systemd
+ feature with Secure Boot
+Date: Thu, 16 Aug 2018 12:01:33 -0500
+Message-ID: <CAFxkdAo0YQqU78JqTZp7jBN=xTw+dPK5QKZpwzmeUw_AveXwKw@mail.gmail.com>
+References: <20180807212531.25161.63476@mailman01.phx2.fedoraproject.org>
+ <CALeDE9ORLoyiUcf8Bmwr2rPyo7-3d8Fo54WuPGWtv4ByE_JG=Q@mail.gmail.com>
+ <CAObL_7GOOQ01NPf4y1MqRJh4S=CYV8NPmEGTbkrTcjrfUKc5LA@mail.gmail.com>
+ <20180816021037.6yxi5rqolhqxipza@ast-mbp.dhcp.thefacebook.com> <17c09f82-a32d-fc3b-042b-c44c366f873c@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAH2r5muKOWBe9zMM8duNJ3rp1bzQh-mUj5zYoARO5pmc4de_+A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steve French <smfrench@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: David Howells <dhowells@redhat.com>, trond.myklebust@hammerspace.com, Anna Schumaker <anna.schumaker@netapp.com>, Steve French <sfrench@samba.org>, Steve Dickson <steved@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, ebiederm@redhat.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, CIFS <linux-cifs@vger.kernel.org>, linux-afs@lists.infradead.org, ceph-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <kernel-bounces-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>
+In-Reply-To: <17c09f82-a32d-fc3b-042b-c44c366f873c-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Archive: <https://lists.fedoraproject.org/archives/list/kernel-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org/>
+List-Help: <mailto:kernel-request-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org?subject=help>
+List-Post: <mailto:kernel-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>
+List-Subscribe: <mailto:kernel-join-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>
+List-Unsubscribe: <mailto:kernel-leave-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>
+To: Laura Abbott <labbott-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Andrew Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, ast-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Laura Abbott <labbott-rxtnV0ftBwyoClj4AeEUq9i2O/JbrIOy@public.gmane.org>, Kernel Fedora <kernel-TuqUDEhatI4ANWPb/1PvSmm0pvjS0E/A@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Alexei Starovoitov <alexei.starovoitov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, daniel-FeC+5ew28dpmcu3hnIyYJQ@public.gmane.org, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Steve French <smfrench@gmail.com> writes:
-> In cifs we attempt to match new mounts to existing tree connections
-> (instances of connections to a \\server\share) from other mount(s)
-> based first on whether security settings match (e.g. are both
-> Kerberos) and then on whether encryption is on/off and whether this is
-> a snapshot mount (smb3 previous versions feature).  If neither is
-> mounted with a snaphsot and the encryption settings match then
-> we will use the same tree id to talk with the server as the other
-> mounts use.  Interesting idea to allow mount to force a new
-> tree id.
-
-We actually already have this mount option in cifs.ko, it's "nosharesock".
-
-> What was the NFS mount option you were talking about?
-> Looking at the nfs man page the only one that looked similar
-> was "nosharecache"
-
-Cheers,
--- 
-Aurélien Aptel / SUSE Labs Samba Team
-GPG: 1839 CB5F 9F5B FB9B AA97  8C99 03C8 A49B 521B D5D3
-SUSE Linux GmbH, Maxfeldstraße 5, 90409 Nürnberg, Germany
-GF: Felix Imendörffer, Jane Smithard, Graham Norton, HRB 21284 (AG Nürnberg)
+T24gVGh1LCBBdWcgMTYsIDIwMTggYXQgODozNiBBTSwgTGF1cmEgQWJib3R0IDxsYWJib3R0QHJl
+ZGhhdC5jb20+IHdyb3RlOg0KDQo+IE9uIDA4LzE1LzIwMTggMDc6MTAgUE0sIEFsZXhlaSBTdGFy
+b3ZvaXRvdiB3cm90ZToNCj4NCj4+IE9uIFR1ZSwgQXVnIDE0LCAyMDE4IGF0IDA3OjE0OjAwQU0g
+LTA3MDAsIEFuZHJldyBMdXRvbWlyc2tpIHdyb3RlOg0KPj4NCj4+PiBbUmVtb3ZlZCBGZWRvcmEg
+ZGV2ZWwgbGlzdCBiZWNhdXNlIGl0J3Mgc3Vic2NyaWJlci1vbmx5XQ0KPj4+DQo+Pj4gT24gQXVn
+IDgsIDIwMTgsIGF0IDEyOjI5IEFNLCBQZXRlciBSb2JpbnNvbiA8cGJyb2JpbnNvbkBnbWFpbC5j
+b20+DQo+Pj4+IHdyb3RlOg0KPj4+Pg0KPj4+PiBQcm9iYWJseSBhIGdvb2QgaWRlYSB0byBjYzog
+dGhpcyB0byB0aGUga2VybmVsIGxpc3QgOi0pDQo+Pj4+DQo+Pj4+IEkgc3VzcGVjdCBpdCdzIGlu
+dGVudGlvbmFsIGJ1dCB3aXRoIHRoZSBwbGFubmVkIGNoYW5nZXMgZm9yIGlwdGFibGVzDQo+Pj4+
+IGV0YyB0byBiZSBiYWNrZWQgYnkgYnBmIGluIHRoZSB1cHN0cmVhbSBrZXJuZWwgc29tZXRpbWUg
+aW4gdGhlIGZ1dHVyZQ0KPj4+PiBpdCdzIGxpa2VseSBnb2luZyB0byBuZWVkIHRvIGJlIHJldmll
+d2VkLg0KPj4+Pg0KPj4+Pg0KPj4+IEkgdGhvdWdodCB0aGlzIGdvdCBjb3ZlcmVkIGluIHJldmll
+dy4gSSB0aGluayB0aGlzIHBhcnQgb2YgbG9ja2Rvd24NCj4+PiBuZWVkcyB0byBnZXQgcmV2ZXJ0
+ZWQgb3IgZml4ZWQgQVNBUC4NCj4+Pg0KPj4NCj4+IEkgZG9uJ3Qgc2VlIGxvY2tkb3duIGluIExp
+bnVzJ3MgdHJlZS4gSXMgdGhpcyBmZWRvcmEgb25seSBpc3N1ZT8NCj4+DQo+Pg0KPiBUaGUgZW50
+aXJlIGxvY2tkb3duL3NlY3VyZSBib290IHNlcmllcyBpcyBvdXQgb2YgdHJlZSBhdCB0aGUgbW9t
+ZW50Lg0KPiBXZSdyZSB3b3JraW5nIHRvIGdldCBpdCBpbmNsdWRlZC4gIElmIHlvdSBzZWFyY2gg
+TFdOLCB5b3UNCj4gY2FuIGZpbmQgc29tZSBhcnRpY2xlcyBleHBsYWluaW5nIHRoZSBsb25nIHNh
+Z2Egb2YgdGhlIHBhdGNoIHNlcmllcy4NCj4NCj4gKEkgZGVmaW5pdGVseSBicm91Z2h0IHVwIG11
+bHRpcGxlIGlzc3VlcyB3aXRoIHRoZSBicGYgbG9ja2Rvd24gc3R1ZmYuDQo+Pj4gSXQncyBjbGVh
+cmx5IGV4dHJlbWVseSBicm9rZW4gcmlnaHQgbm93IGluIHRoZSAibmV3IGtlcm5lbCBicmVha3MN
+Cj4+PiAqY3VycmVudCogTGludXggZGlzdHJvIiBzZW5zZS4pDQo+Pj4NCj4+DQo+PiArMQ0KPj4N
+Cj4+DQo+IFllcywgd2UgbmVlZCB0byByZXZpZXcgd2hhdCBleGFjdGx5IGlzIGluIEZlZG9yYS4g
+SXQncyB0aGUgbWVyZ2UNCj4gd2luZG93IHNvIHRoaXMgaXMgYSBnb29kIHRpbWUgdG8gZG8gdGhh
+dCBhbnl3YXkuIFdlJ3JlIHN0aWxsDQo+IHBsYXlpbmcgY2F0Y2ggdXAgYWZ0ZXIgRmxvY2sgaW4g
+RHJlc2RlbiBsYXN0IHdlZWsuIENhbiB5b3UgZmlsZQ0KPiBhIGJ1Z3ppbGxhIGZvciB0cmFja2lu
+ZyBzbyB3ZSBkb24ndCBmb3JnZXQ/DQo+DQo+IEkgdHlwaWNhbGx5IGRvIGEgcmV2aWV3IGFmdGVy
+IGV2ZXJ5IG1ham9yIHJlbGVhc2UgYmVmb3JlIHdlIHJlYmFzZSBzdGFibGUNCmRpc3RyaWJ1dGlv
+bnMuIFRoaXMgaXMgb24gbXkgbGlzdCBvZiB0aGluZ3MgdG8gcmVjdGlmeSBpbiB0aGUgbmV4dCB3
+ZWVrLg0KDQpJdCByZWFsbHkgd291bGQgYmUgbmljZSBpZiB3ZSBjb3VsZCBnZXQgc29tZSBvZiB0
+aGUgYWdyZWVkIHVwb24gbG9ja2Rvd24NCnBpZWNlcyB1cHN0cmVhbS4gSSBkb24ndCBjYXJlIGlm
+IGl0IGlzIHRpZWQgdG8gc2VjdXJlIGJvb3QsIGluIGZhY3QgaXQgZG9lcw0KbWFrZSBzZW5zZSB0
+byBoYXZlIHRoZSBjYXBhYmlsaXR5IG91dHNpZGUgb2Ygc2VjdXJlIGJvb3QgYW5kIGl0IGlzIG11
+Y2gNCmVhc2llciB0byBjYXJyeSBhIHNpbmdsZSBwYXRjaCB0byBzaW1wbHkgdHVybiBvbiBsb2Nr
+ZG93biBiYXNlZCBvbiBVRUZJDQpzZWN1cmUgYm9vdCB0aGFuIGhhdmluZyB0byBjYXJyeSB0aGUg
+ZW50aXJlIGxvY2tkb3duIHNlcmllcy4NCg0KSnVzdGluDQpfX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fXwprZXJuZWwgbWFpbGluZyBsaXN0IC0tIGtlcm5lbEBs
+aXN0cy5mZWRvcmFwcm9qZWN0Lm9yZwpUbyB1bnN1YnNjcmliZSBzZW5kIGFuIGVtYWlsIHRvIGtl
+cm5lbC1sZWF2ZUBsaXN0cy5mZWRvcmFwcm9qZWN0Lm9yZwpGZWRvcmEgQ29kZSBvZiBDb25kdWN0
+OiBodHRwczovL2dldGZlZG9yYS5vcmcvY29kZS1vZi1jb25kdWN0Lmh0bWwKTGlzdCBHdWlkZWxp
+bmVzOiBodHRwczovL2ZlZG9yYXByb2plY3Qub3JnL3dpa2kvTWFpbGluZ19saXN0X2d1aWRlbGlu
+ZXMKTGlzdCBBcmNoaXZlczogaHR0cHM6Ly9saXN0cy5mZWRvcmFwcm9qZWN0Lm9yZy9hcmNoaXZl
+cy9saXN0L2tlcm5lbEBsaXN0cy5mZWRvcmFwcm9qZWN0Lm9yZy9tZXNzYWdlL0xYSVY2TDZVNlhG
+SERMTlhIU0xNNE0yMlJGMk5GTk00Lwo=
