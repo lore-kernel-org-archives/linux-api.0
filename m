@@ -1,59 +1,57 @@
-From: Steve French <smfrench@gmail.com>
+From: Al Viro <viro@ZenIV.linux.org.uk>
 Subject: Re: Should we split the network filesystem setup into two phases?
-Date: Thu, 16 Aug 2018 13:36:13 -0500
-Message-ID: <CAH2r5mvLSf2Cqdi9LwVre2MyiSh+7ZxGgRp_Am3D_090oFDCzw@mail.gmail.com>
+Date: Sat, 18 Aug 2018 00:11:31 +0100
+Message-ID: <20180817231131.GI6515@ZenIV.linux.org.uk>
 References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
- <17763.1534350685@warthog.procyon.org.uk> <87pnyiew8x.fsf@xmission.com>
- <CAH2r5muKOWBe9zMM8duNJ3rp1bzQh-mUj5zYoARO5pmc4de_+A@mail.gmail.com> <87tvnuz0ms.fsf@suse.com>
+ <17763.1534350685@warthog.procyon.org.uk>
+ <87pnyiew8x.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87tvnuz0ms.fsf@suse.com>
+Content-Disposition: inline
+In-Reply-To: <87pnyiew8x.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Aur=C3=A9lien_Aptel?= <aaptel@suse.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, David Howells <dhowells@redhat.com>, trond.myklebust@hammerspace.com, Anna Schumaker <anna.schumaker@netapp.com>, Steve French <sfrench@samba.org>, Steve Dickson <steved@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, ebiederm@redhat.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-nfs@vger.kernel.org, CIFS <linux-cifs@vger.kernel.org>, linux-afs@lists.infradead.org, ceph-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: David Howells <dhowells@redhat.com>, trond.myklebust@hammerspace.com, anna.schumaker@netapp.com, sfrench@samba.org, steved@redhat.com, torvalds@linux-foundation.org, "Eric W. Biederman" <ebiederm@redhat.com>, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-afs@lists.infradead.org, ceph-devel@vger.kernel.org, v9fs-developer@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 16, 2018 at 12:23 PM Aur=C3=A9lien Aptel <aaptel@suse.com> wrot=
-e:
->
-> Steve French <smfrench@gmail.com> writes:
-> > In cifs we attempt to match new mounts to existing tree connections
-> > (instances of connections to a \\server\share) from other mount(s)
-> > based first on whether security settings match (e.g. are both
-> > Kerberos) and then on whether encryption is on/off and whether this is
-> > a snapshot mount (smb3 previous versions feature).  If neither is
-> > mounted with a snaphsot and the encryption settings match then
-> > we will use the same tree id to talk with the server as the other
-> > mounts use.  Interesting idea to allow mount to force a new
-> > tree id.
->
-> We actually already have this mount option in cifs.ko, it's "nosharesock"=
-.
+On Thu, Aug 16, 2018 at 12:06:06AM -0500, Eric W. Biederman wrote:
 
-Yes - good point.  It is very easy to do on cifs.  I mainly use that to sim=
-ulate
-multiple clients for testing servers (so each mount to the same server
-whether or not the share matched, looks like a different client, coming
-from a different socket and thus with different session ids and tree
-ids as well).
+> So I don't think we can completely abandon the option for filesystems
+> to always create a new filesystem instance when mount(8) is called.
 
-It is very useful when trying to simulate multiple clients running to the s=
-ame
-server while using only one client machine (or VM).
+Huh?  If filesystem wants to create a new instance on each ->mount(),
+it can bloody well do so.  Quite a few do - if that fs can handle
+that, more power to it.
 
-> > What was the NFS mount option you were talking about?
-> > Looking at the nfs man page the only one that looked similar
-> > was "nosharecache"
+The problem is what to do with filesystems that *can't* do that.
+You really, really can't have two ext4 (or xfs, etc.) instances over
+the same device at the same time.  Cache coherency, locking, etc.
+will kill you.
 
-The nfs man page apparently discourages its use:
+And that's not to mention the joy of defining the semantics of
+having the same ext4 mounted with two logs at the same time ;-)
 
-"As of kernel 2.6.18, the behavior specified by nosharecache is legacy
-caching behavior. This is  considered  a  data risk"
+I've seen "reject unless the options are compatible/identical/whatever",
+but that ignores the real problem with existing policy.  It's *NOT*
+"I've mounted this and got an existing instance with non-matching
+options".  That's a minor annoyance (and back when that decision
+had been made, mount(2) was very definitly root-only).  The real
+problem is different and much worse - it's remount.
 
+I have asked to mount something and it had already been mounted,
+with identical options.  OK, so what happens if I do mount -o remount
+on my instance?  *IF* we are operating in the "only sysadmin can
+mount new filesystems", it's not a big deal - there are already
+lots of ways you can shoot yourself in the foot and mount(2) is
+certainly a powerful one.  But if we get to "Joe R. Luser can do
+it in his container", we have a big problem.
 
---=20
-Thanks,
-
-Steve
+Decision back then had been mostly for usability reasons - it was
+back in 2001 (well before the containermania, userns or anything
+of that sort) and it was more about "how many hoops does one have
+to jump through to get something mounted, assuming the sanity of
+sysadmin doing that?".  If *anything* like userns had been a concern
+back then, it probably would've been different.  However, it's
+17 years too late and if anyone has a functional TARDIS, I can
+easily think of better uses for it...
