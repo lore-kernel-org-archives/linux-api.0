@@ -1,33 +1,44 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: exporting uuid_t from uapi/linux/uuid.h
-Date: Tue, 21 Aug 2018 23:05:18 -0700
-Message-ID: <20180822060518.GA28873@infradead.org>
-References: <ffc387b8-09f5-537a-c5a9-08ec28e088e0@suse.com>
+From: Miklos Szeredi <miklos@szeredi.hu>
+Subject: Re: [PATCH 30/33] vfs: syscall: Add fspick() to select a superblock
+ for reconfiguration [ver #11]
+Date: Fri, 24 Aug 2018 16:51:22 +0200
+Message-ID: <CAELBmZCv3uAmXiSEk3vdYEy8wn_mP8Rs6qzMqSa56_kPsb_=aA@mail.gmail.com>
+References: <153313703562.13253.5766498657900728120.stgit@warthog.procyon.org.uk>
+ <153313724861.13253.3837522702693613670.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <ffc387b8-09f5-537a-c5a9-08ec28e088e0@suse.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Nikolay Borisov <nborisov@suse.com>
-Cc: linux-api@vger.kernel.org, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, Ted Ts'o <tytso@mit.edu>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <153313724861.13253.3837522702693613670.stgit@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 21, 2018 at 10:25:50PM +0300, Nikolay Borisov wrote:
-> Hello,
-> 
-> I'm doing some refactoring on btrfs and would like to convert some of
-> the "naked" definition of UUID in on-disk object to uuid_t. Since those
-> structs are defined in include/uapi/linux/btrfs_tree.h I naturally would
-> need to expose the kernel uuid_t to the uapi header via
-> include/uapi/linux/uuid.h. The uuid was originally unexported in
-> 60927bc31436 ("uuid: remove uuid_be defintions from the uapi header")
->  but at that time it was called uuid_be. The thing is that btrfs-progs
-> for example uses both btrfs_tree.h uapi header as well as libuuid. THe
-> latter also defines uuid_t. Both the kernel one and libuuid are binary
-> compatible.
-> 
-> So what's the correct way (if any) to expose a kernel type that might
-> have also been defined by a userspace library?
+On Wed, Aug 1, 2018 at 5:29 PM David Howells <dhowells@redhat.com> wrote:
 
-Please just use an raw array of __u8 for your APIs.
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -351,6 +351,11 @@ typedef int __bitwise __kernel_rwf_t;
+>
+>  #define FSMOUNT_CLOEXEC                0x00000001
+>
+> +#define FSPICK_CLOEXEC         0x00000001
+> +#define FSPICK_SYMLINK_NOFOLLOW        0x00000002
+> +#define FSPICK_NO_AUTOMOUNT    0x00000004
+> +#define FSPICK_EMPTY_PATH      0x00000008
+
+This caught my eye:  why aren't we using the AT_ constants?  Adding an
+AT_CLOEXEC sounds less horrible than duplicating all the lookup
+related flags for FSPICK...
+
+Thanks,
+Miklos
+
+
+
+
+> +
+>  /*
+>   * The type of fsconfig() call made.
+>   */
+>
