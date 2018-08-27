@@ -1,164 +1,116 @@
-From: Steve Grubb <sgrubb@redhat.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 03/10] audit: log container info of
-	syscalls
-Date: Fri, 24 Aug 2018 12:01:56 -0400
-Message-ID: <1699902.8vVClggbhl@x2>
-References: <cover.1533065887.git.rgb@redhat.com>
-	<34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-audit-bounces@redhat.com>
-In-Reply-To: <34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-audit>
-List-Post: <mailto:linux-audit@redhat.com>
-List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=subscribe>
-Sender: linux-audit-bounces@redhat.com
-Errors-To: linux-audit-bounces@redhat.com
-To: linux-audit@redhat.com
-Cc: simo@redhat.com, Richard Guy Briggs <rgb@redhat.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, carlos@redhat.com, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, eparis@parisplace.org, serge@hallyn.com, viro@zeniv.linux.org.uk
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 00/14] y2038 syscall changes for 4.20
+Date: Mon, 27 Aug 2018 21:45:17 +0200
+Message-ID: <20180827194531.3796559-1-arnd@arndb.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: tglx@linutronix.de
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, deepa.kernel@gmail.com, linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday, July 31, 2018 4:07:38 PM EDT Richard Guy Briggs wrote:
-> Create a new audit record AUDIT_CONTAINER to document the audit
-> container identifier of a process if it is present.
-> 
-> Called from audit_log_exit(), syscalls are covered.
-> 
-> A sample raw event:
-> type=SYSCALL msg=audit(1519924845.499:257): arch=c000003e syscall=257
-> success=yes exit=3 a0=ffffff9c a1=56374e1cef30 a2=241 a3=1b6 items=2
-> ppid=606 pid=635 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0
-> fsgid=0 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash"
-> subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
-> key="tmpcontainerid" type=CWD msg=audit(1519924845.499:257): cwd="/root"
-> type=PATH msg=audit(1519924845.499:257): item=0 name="/tmp/" inode=13863
-> dev=00:27 mode=041777 ouid=0 ogid=0 rdev=00:00
-> obj=system_u:object_r:tmp_t:s0 nametype= PARENT cap_fp=0000000000000000
-> cap_fi=0000000000000000 cap_fe=0 cap_fver=0 type=PATH
-> msg=audit(1519924845.499:257): item=1 name="/tmp/tmpcontainerid"
-> inode=17729 dev=00:27 mode=0100644 ouid=0 ogid=0 rdev=00:00
-> obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE
-> cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0
-> type=PROCTITLE msg=audit(1519924845.499:257):
-> proctitle=62617368002D6300736C65657020313B206563686F2074657374203E202F746D
-> 702F746D70636F6E7461696E65726964 type=CONTAINER
-> msg=audit(1519924845.499:257): op=task contid=123458
+Hi Thomas,
 
-Ack for the event format.
+I've rebased the syscall changes on top of 4.19-rc1, and the old_time32
+rename. This is the first set of those patches, the ones that I hope
+are all uncontroversial and obvious now. I'm still in the process of
+reorganizing and testing the next set batch top, and plan to send them
+after you've merged these.
 
--Steve
+The first three patches are new here, the other ones have been posted
+before a few times.
 
-> See: https://github.com/linux-audit/audit-kernel/issues/90
-> See: https://github.com/linux-audit/audit-userspace/issues/51
-> See: https://github.com/linux-audit/audit-testsuite/issues/64
-> See:
-> https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> Acked-by: Serge Hallyn <serge@hallyn.com>
-> Acked-by: Steve Grubb <sgrubb@redhat.com>
-> ---
->  include/linux/audit.h      |  7 +++++++
->  include/uapi/linux/audit.h |  1 +
->  kernel/audit.c             | 24 ++++++++++++++++++++++++
->  kernel/auditsc.c           |  3 +++
->  4 files changed, 35 insertions(+)
-> 
-> diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index 71a6fc6..d5a48dc 100644
-> --- a/include/linux/audit.h
-> +++ b/include/linux/audit.h
-> @@ -155,6 +155,9 @@ extern void		    audit_log_key(struct audit_buffer 
-*ab,
-> extern int audit_log_task_context(struct audit_buffer *ab);
->  extern void audit_log_task_info(struct audit_buffer *ab,
->  				struct task_struct *tsk);
-> +extern int audit_log_contid(struct task_struct *tsk,
-> +				    struct audit_context *context,
-> +				    char *op);
-> 
->  extern int		    audit_update_lsm_rules(void);
-> 
-> @@ -205,6 +208,10 @@ static inline int audit_log_task_context(struct
-> audit_buffer *ab) static inline void audit_log_task_info(struct
-> audit_buffer *ab,
->  				       struct task_struct *tsk)
->  { }
-> +static inline int audit_log_contid(struct task_struct *tsk,
-> +					   struct audit_context *context,
-> +					   char *op)
-> +{ }
->  #define audit_enabled AUDIT_OFF
->  #endif /* CONFIG_AUDIT */
-> 
-> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-> index 3474f57..dc259c7 100644
-> --- a/include/uapi/linux/audit.h
-> +++ b/include/uapi/linux/audit.h
-> @@ -115,6 +115,7 @@
->  #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd 
-*/
->  #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
->  #define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
-> +#define AUDIT_CONTAINER		1332	/* Container ID */
-> 
->  #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
->  #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index 2a80587..15f54c7 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -2045,6 +2045,30 @@ void audit_log_session_info(struct audit_buffer *ab)
-> audit_log_format(ab, " auid=%u ses=%u", auid, sessionid);
->  }
-> 
-> +/*
-> + * audit_log_contid - report container info
-> + * @tsk: task to be recorded
-> + * @context: task or local context for record
-> + * @op: contid string description
-> + */
-> +int audit_log_contid(struct task_struct *tsk,
-> +			     struct audit_context *context, char *op)
-> +{
-> +	struct audit_buffer *ab;
-> +
-> +	if (!audit_contid_set(tsk))
-> +		return 0;
-> +	/* Generate AUDIT_CONTAINER record with container ID */
-> +	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER);
-> +	if (!ab)
-> +		return -ENOMEM;
-> +	audit_log_format(ab, "op=%s contid=%llu",
-> +			 op, audit_get_contid(tsk));
-> +	audit_log_end(ab);
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL(audit_log_contid);
-> +
->  void audit_log_key(struct audit_buffer *ab, char *key)
->  {
->  	audit_log_format(ab, " key=");
-> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index 6125cef..39e5633 100644
-> --- a/kernel/auditsc.c
-> +++ b/kernel/auditsc.c
-> @@ -1488,10 +1488,13 @@ static void audit_log_exit(struct audit_context
-> *context, struct task_struct *ts
-> 
->  	audit_log_proctitle(tsk, context);
-> 
-> +	audit_log_contid(tsk, context, "task");
-> +
->  	/* Send end of event record to help user space know we are finished */
->  	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
->  	if (ab)
->  		audit_log_end(ab);
-> +
->  	if (call_panic)
->  		audit_panic("error converting sid to string");
->  }
+      Arnd
+
+Arnd Bergmann (14):
+  y2038: remove unused time interfaces
+  y2038: make do_gettimeofday() and get_seconds() inline
+  y2038: globally rename compat_time to old_time32
+  y2038: Remove newstat family from default syscall set
+  y2038: Remove stat64 family from default syscall set
+  asm-generic: Move common compat types to asm-generic/compat.h
+  asm-generic: Remove unneeded __ARCH_WANT_SYS_LLSEEK macro
+  asm-generic: Remove empty asm/unistd.h
+  y2038: Change sys_utimensat() to use __kernel_timespec
+  y2038: Compile utimes()/futimesat() conditionally
+  y2038: utimes: Rework #ifdef guards for compat syscalls
+  y2038: sched: Change sched_rr_get_interval to use __kernel_timespec
+  y2038: socket: Change recvmmsg to use __kernel_timespec
+  y2038: signal: Change rt_sigtimedwait to use __kernel_timespec
+
+ arch/alpha/include/asm/unistd.h          |   2 +
+ arch/arc/include/uapi/asm/unistd.h       |   1 +
+ arch/arm/include/asm/unistd.h            |   4 +-
+ arch/arm64/include/asm/compat.h          |  26 ++----
+ arch/arm64/include/asm/stat.h            |   2 +-
+ arch/arm64/include/asm/unistd.h          |   2 +-
+ arch/arm64/include/uapi/asm/unistd.h     |   1 +
+ arch/c6x/include/uapi/asm/unistd.h       |   1 +
+ arch/h8300/include/uapi/asm/unistd.h     |   1 +
+ arch/hexagon/include/uapi/asm/unistd.h   |   1 +
+ arch/ia64/include/asm/unistd.h           |   3 +
+ arch/m68k/include/asm/unistd.h           |   2 +-
+ arch/microblaze/include/asm/unistd.h     |   2 +-
+ arch/mips/include/asm/compat.h           |  28 ++-----
+ arch/mips/include/asm/unistd.h           |   3 +-
+ arch/mips/kernel/binfmt_elfn32.c         |  14 ++--
+ arch/mips/kernel/binfmt_elfo32.c         |  14 ++--
+ arch/nds32/include/uapi/asm/unistd.h     |   1 +
+ arch/nios2/include/uapi/asm/unistd.h     |   1 +
+ arch/openrisc/include/uapi/asm/unistd.h  |   1 +
+ arch/parisc/include/asm/compat.h         |  24 ++----
+ arch/parisc/include/asm/unistd.h         |   3 +-
+ arch/powerpc/include/asm/compat.h        |  24 ++----
+ arch/powerpc/include/asm/unistd.h        |   3 +-
+ arch/powerpc/kernel/asm-offsets.c        |   8 +-
+ arch/powerpc/oprofile/backtrace.c        |   2 +-
+ arch/s390/include/asm/compat.h           |  18 +---
+ arch/s390/include/asm/unistd.h           |   3 +-
+ arch/sh/include/asm/unistd.h             |   2 +-
+ arch/sparc/include/asm/compat.h          |  25 ++----
+ arch/sparc/include/asm/unistd.h          |   3 +-
+ arch/unicore32/include/uapi/asm/unistd.h |   1 +
+ arch/x86/include/asm/compat.h            |  19 +----
+ arch/x86/include/asm/unistd.h            |   3 +-
+ arch/xtensa/include/asm/unistd.h         |   2 +-
+ fs/aio.c                                 |   8 +-
+ fs/compat_binfmt_elf.c                   |   2 +-
+ fs/read_write.c                          |   2 +-
+ fs/select.c                              |  20 ++---
+ fs/stat.c                                |   3 +
+ fs/timerfd.c                             |  12 +--
+ fs/utimes.c                              |  73 ++++++++--------
+ include/asm-generic/compat.h             |  24 +++++-
+ include/asm-generic/unistd.h             |  13 ---
+ include/linux/compat.h                   | 101 +++++++++++------------
+ include/linux/compat_time.h              |  32 -------
+ include/linux/elfcore-compat.h           |   8 +-
+ include/linux/restart_block.h            |   4 +-
+ include/linux/socket.h                   |   4 +-
+ include/linux/syscalls.h                 |  21 +++--
+ include/linux/time32.h                   |  78 ++++++++---------
+ include/linux/timekeeping.h              |  12 ---
+ include/linux/timekeeping32.h            |  53 ++----------
+ include/uapi/asm-generic/unistd.h        |   2 +
+ ipc/mqueue.c                             |   8 +-
+ ipc/msg.c                                |   6 +-
+ ipc/sem.c                                |  10 +--
+ ipc/shm.c                                |   6 +-
+ ipc/syscall.c                            |   2 +-
+ ipc/util.h                               |   2 +-
+ kernel/compat.c                          |   8 +-
+ kernel/futex_compat.c                    |   2 +-
+ kernel/sched/core.c                      |   8 +-
+ kernel/signal.c                          |  19 +++--
+ kernel/time/hrtimer.c                    |   8 +-
+ kernel/time/posix-stubs.c                |  18 ++--
+ kernel/time/posix-timers.c               |  30 +++----
+ kernel/time/time.c                       |  97 +++++++++-------------
+ kernel/time/timekeeping.c                |  24 ------
+ net/compat.c                             |  10 +--
+ net/socket.c                             |  18 ++--
+ 71 files changed, 397 insertions(+), 601 deletions(-)
+ delete mode 100644 include/asm-generic/unistd.h
+ delete mode 100644 include/linux/compat_time.h
+
+-- 
+2.18.0
