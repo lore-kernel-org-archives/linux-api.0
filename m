@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 09/14] y2038: Change sys_utimensat() to use __kernel_timespec
-Date: Mon, 27 Aug 2018 21:45:26 +0200
-Message-ID: <20180827194531.3796559-10-arnd@arndb.de>
+Subject: [PATCH 12/14] y2038: sched: Change sched_rr_get_interval to use __kernel_timespec
+Date: Mon, 27 Aug 2018 21:45:29 +0200
+Message-ID: <20180827194531.3796559-13-arnd@arndb.de>
 References: <20180827194531.3796559-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180827194531.3796559-1-arnd@arndb.de>
@@ -10,52 +10,55 @@ To: tglx@linutronix.de
 Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, deepa.kernel@gmail.com, linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-When 32-bit architectures get changed to support 64-bit time_t,
-utimensat() needs to use the new __kernel_timespec structure as its
-argument.
-
-The older utime(), utimes() and futimesat() system calls don't need a
-corresponding change as they are no longer used on C libraries that have
-64-bit time support.
-
-As we do for the other syscalls that have timespec arguments, we reuse
-the 'compat' syscall entry points to implement the traditional four
-interfaces, and only leave the new utimensat() as a native handler,
-so that the same code gets used on both 32-bit and 64-bit kernels
-on each syscall.
+This is a preparation patch for converting sys_sched_rr_get_interval to
+work with 64-bit time_t on 32-bit architectures. The 'interval' argument
+is changed to struct __kernel_timespec, which will be redefined using
+64-bit time_t in the future. The compat version of the system call in
+turn is enabled for compilation with CONFIG_COMPAT_32BIT_TIME so
+the individual 32-bit architectures can share the handling of the
+traditional argument with 64-bit architectures providing it for their
+compat mode.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- fs/utimes.c              | 2 +-
- include/linux/syscalls.h | 3 ++-
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ include/linux/syscalls.h | 2 +-
+ kernel/sched/core.c      | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/fs/utimes.c b/fs/utimes.c
-index 79a65c163f40..d30f409ecc1a 100644
---- a/fs/utimes.c
-+++ b/fs/utimes.c
-@@ -166,7 +166,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
- }
- 
- SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
--		struct timespec __user *, utimes, int, flags)
-+		struct __kernel_timespec __user *, utimes, int, flags)
- {
- 	struct timespec64 tstimes[2];
- 
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index b3e27e5ee322..420ac881a610 100644
+index 95e795fb0593..5642016a312d 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -513,7 +513,8 @@ asmlinkage long sys_timerfd_gettime(int ufd, struct __kernel_itimerspec __user *
+@@ -614,7 +614,7 @@ asmlinkage long sys_sched_yield(void);
+ asmlinkage long sys_sched_get_priority_max(int policy);
+ asmlinkage long sys_sched_get_priority_min(int policy);
+ asmlinkage long sys_sched_rr_get_interval(pid_t pid,
+-					struct timespec __user *interval);
++				struct __kernel_timespec __user *interval);
  
- /* fs/utimes.c */
- asmlinkage long sys_utimensat(int dfd, const char __user *filename,
--				struct timespec __user *utimes, int flags);
-+				struct __kernel_timespec __user *utimes,
-+				int flags);
+ /* kernel/signal.c */
+ asmlinkage long sys_restart_syscall(void);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 8287b75ed961..39af2bec2b39 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -5243,7 +5243,7 @@ static int sched_rr_get_interval(pid_t pid, struct timespec64 *t)
+  * an error code.
+  */
+ SYSCALL_DEFINE2(sched_rr_get_interval, pid_t, pid,
+-		struct timespec __user *, interval)
++		struct __kernel_timespec __user *, interval)
+ {
+ 	struct timespec64 t;
+ 	int retval = sched_rr_get_interval(pid, &t);
+@@ -5254,7 +5254,7 @@ SYSCALL_DEFINE2(sched_rr_get_interval, pid_t, pid,
+ 	return retval;
+ }
  
- /* kernel/acct.c */
- asmlinkage long sys_acct(const char __user *name);
+-#ifdef CONFIG_COMPAT
++#ifdef CONFIG_COMPAT_32BIT_TIME
+ COMPAT_SYSCALL_DEFINE2(sched_rr_get_interval,
+ 		       compat_pid_t, pid,
+ 		       struct old_timespec32 __user *, interval)
 -- 
 2.18.0
