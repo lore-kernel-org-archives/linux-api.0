@@ -1,240 +1,125 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 04/14] y2038: Remove newstat family from default syscall set
-Date: Mon, 27 Aug 2018 21:45:21 +0200
-Message-ID: <20180827194531.3796559-5-arnd@arndb.de>
+Subject: [PATCH 05/14] y2038: Remove stat64 family from default
+	syscall set
+Date: Mon, 27 Aug 2018 21:45:22 +0200
+Message-ID: <20180827194531.3796559-6-arnd@arndb.de>
 References: <20180827194531.3796559-1-arnd@arndb.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
 In-Reply-To: <20180827194531.3796559-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: tglx@linutronix.de
-Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, Christoph Hellwig <hch@lst.de>, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, deepa.kernel@gmail.com, linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
+Cc: linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, deepa.kernel@gmail.com, torvalds@linux-foundation.org, Christoph Hellwig <hch@lst.de>
 List-Id: linux-api@vger.kernel.org
 
-We have four generations of stat() syscalls:
-- the oldstat syscalls that are only used on the older architectures
-- the newstat family that is used on all 64-bit architectures but
-  lacked support for large files on 32-bit architectures.
-- the stat64 family that is used mostly on 32-bit architectures to
-  replace newstat
-- statx() to replace all of the above, adding 64-bit timestamps among
-  other things.
-
-We already compile stat64 only on those architectures that need it,
-but newstat is always built, including on those that don't reference
-it. This adds a new __ARCH_WANT_NEW_STAT symbol along the lines of
-__ARCH_WANT_OLD_STAT and __ARCH_WANT_STAT64 to control compilation of
-newstat. All architectures that need it use an explict define, the
-others now get a little bit smaller, and future architecture (including
-64-bit targets) won't ever see it.
-
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- arch/alpha/include/asm/unistd.h      | 1 +
- arch/arm/include/asm/unistd.h        | 1 +
- arch/arm64/include/uapi/asm/unistd.h | 1 +
- arch/ia64/include/asm/unistd.h       | 2 ++
- arch/m68k/include/asm/unistd.h       | 1 +
- arch/microblaze/include/asm/unistd.h | 1 +
- arch/mips/include/asm/unistd.h       | 1 +
- arch/parisc/include/asm/unistd.h     | 1 +
- arch/powerpc/include/asm/unistd.h    | 1 +
- arch/s390/include/asm/unistd.h       | 1 +
- arch/sh/include/asm/unistd.h         | 1 +
- arch/sparc/include/asm/unistd.h      | 1 +
- arch/x86/include/asm/unistd.h        | 1 +
- arch/xtensa/include/asm/unistd.h     | 1 +
- fs/stat.c                            | 3 +++
- 15 files changed, 18 insertions(+)
-
-diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
-index d6e29a1de4cc..edc090470023 100644
---- a/arch/alpha/include/asm/unistd.h
-+++ b/arch/alpha/include/asm/unistd.h
-@@ -6,6 +6,7 @@
- 
- #define NR_SYSCALLS			523
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_GETHOSTNAME
-diff --git a/arch/arm/include/asm/unistd.h b/arch/arm/include/asm/unistd.h
-index 076090d2dbf5..07e58010d597 100644
---- a/arch/arm/include/asm/unistd.h
-+++ b/arch/arm/include/asm/unistd.h
-@@ -16,6 +16,7 @@
- #include <uapi/asm/unistd.h>
- #include <asm/unistd-nr.h>
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_GETHOSTNAME
- #define __ARCH_WANT_SYS_PAUSE
-diff --git a/arch/arm64/include/uapi/asm/unistd.h b/arch/arm64/include/uapi/asm/unistd.h
-index 5072cbd15c82..dae1584cf017 100644
---- a/arch/arm64/include/uapi/asm/unistd.h
-+++ b/arch/arm64/include/uapi/asm/unistd.h
-@@ -16,5 +16,6 @@
-  */
- 
- #define __ARCH_WANT_RENAMEAT
-+#define __ARCH_WANT_NEW_STAT
- 
- #include <asm-generic/unistd.h>
-diff --git a/arch/ia64/include/asm/unistd.h b/arch/ia64/include/asm/unistd.h
-index ffb705dc9c13..c5b2620c4a4c 100644
---- a/arch/ia64/include/asm/unistd.h
-+++ b/arch/ia64/include/asm/unistd.h
-@@ -28,6 +28,8 @@
- #define __IGNORE_vfork		/* clone() */
- #define __IGNORE_umount2	/* umount() */
- 
-+#define __ARCH_WANT_NEW_STAT
-+
- #if !defined(__ASSEMBLY__) && !defined(ASSEMBLER)
- 
- #include <linux/types.h>
-diff --git a/arch/m68k/include/asm/unistd.h b/arch/m68k/include/asm/unistd.h
-index 30d0d3fbd4ef..db22cdadc38a 100644
---- a/arch/m68k/include/asm/unistd.h
-+++ b/arch/m68k/include/asm/unistd.h
-@@ -7,6 +7,7 @@
- 
- #define NR_syscalls		380
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_OLD_STAT
- #define __ARCH_WANT_STAT64
-diff --git a/arch/microblaze/include/asm/unistd.h b/arch/microblaze/include/asm/unistd.h
-index a62d09420a47..a28dc770c9b2 100644
---- a/arch/microblaze/include/asm/unistd.h
-+++ b/arch/microblaze/include/asm/unistd.h
-@@ -15,6 +15,7 @@
- 
- /* #define __ARCH_WANT_OLD_READDIR */
- /* #define __ARCH_WANT_OLD_STAT */
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
- #define __ARCH_WANT_SYS_GETHOSTNAME
-diff --git a/arch/mips/include/asm/unistd.h b/arch/mips/include/asm/unistd.h
-index 3c09450908aa..d7878b3e16d8 100644
---- a/arch/mips/include/asm/unistd.h
-+++ b/arch/mips/include/asm/unistd.h
-@@ -24,6 +24,7 @@
- 
- #ifndef __ASSEMBLY__
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_SYS_ALARM
- #define __ARCH_WANT_SYS_GETHOSTNAME
-diff --git a/arch/parisc/include/asm/unistd.h b/arch/parisc/include/asm/unistd.h
-index 3d507d04eb4c..b36273bacca7 100644
---- a/arch/parisc/include/asm/unistd.h
-+++ b/arch/parisc/include/asm/unistd.h
-@@ -141,6 +141,7 @@ type name(type1 arg1, type2 arg2, type3 arg3, type4 arg4, type5 arg5)	\
-     return K_INLINE_SYSCALL(name, 5, arg1, arg2, arg3, arg4, arg5);	\
- }
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
-diff --git a/arch/powerpc/include/asm/unistd.h b/arch/powerpc/include/asm/unistd.h
-index c19379f0a32e..8b37e01817be 100644
---- a/arch/powerpc/include/asm/unistd.h
-+++ b/arch/powerpc/include/asm/unistd.h
-@@ -22,6 +22,7 @@
- #include <linux/compiler.h>
- #include <linux/linkage.h>
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
-diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
-index fd79c0d35dc4..1d181373288a 100644
---- a/arch/s390/include/asm/unistd.h
-+++ b/arch/s390/include/asm/unistd.h
-@@ -15,6 +15,7 @@
- #define __IGNORE_pkey_alloc
- #define __IGNORE_pkey_free
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_SYS_ALARM
- #define __ARCH_WANT_SYS_GETHOSTNAME
-diff --git a/arch/sh/include/asm/unistd.h b/arch/sh/include/asm/unistd.h
-index b36200af9ce7..a845b57eac69 100644
---- a/arch/sh/include/asm/unistd.h
-+++ b/arch/sh/include/asm/unistd.h
-@@ -5,6 +5,7 @@
- #  include <asm/unistd_64.h>
- # endif
- 
-+# define __ARCH_WANT_NEW_STAT
- # define __ARCH_WANT_OLD_READDIR
- # define __ARCH_WANT_OLD_STAT
- # define __ARCH_WANT_STAT64
-diff --git a/arch/sparc/include/asm/unistd.h b/arch/sparc/include/asm/unistd.h
-index b2a6a955113e..3544244685e1 100644
---- a/arch/sparc/include/asm/unistd.h
-+++ b/arch/sparc/include/asm/unistd.h
-@@ -21,6 +21,7 @@
- #else
- #define __NR_time		231 /* Linux sparc32                               */
- #endif
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_OLD_READDIR
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_ALARM
-diff --git a/arch/x86/include/asm/unistd.h b/arch/x86/include/asm/unistd.h
-index 51c4eee00732..35b66bbf8028 100644
---- a/arch/x86/include/asm/unistd.h
-+++ b/arch/x86/include/asm/unistd.h
-@@ -31,6 +31,7 @@
- 
- # endif
- 
-+# define __ARCH_WANT_NEW_STAT
- # define __ARCH_WANT_OLD_READDIR
- # define __ARCH_WANT_OLD_STAT
- # define __ARCH_WANT_SYS_ALARM
-diff --git a/arch/xtensa/include/asm/unistd.h b/arch/xtensa/include/asm/unistd.h
-index ed66db3bc9bb..0d532ab60b37 100644
---- a/arch/xtensa/include/asm/unistd.h
-+++ b/arch/xtensa/include/asm/unistd.h
-@@ -5,6 +5,7 @@
- #define __ARCH_WANT_SYS_CLONE
- #include <uapi/asm/unistd.h>
- 
-+#define __ARCH_WANT_NEW_STAT
- #define __ARCH_WANT_STAT64
- #define __ARCH_WANT_SYS_UTIME
- #define __ARCH_WANT_SYS_LLSEEK
-diff --git a/fs/stat.c b/fs/stat.c
-index f8e6fb2c3657..adbfcd86c81b 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -280,6 +280,8 @@ SYSCALL_DEFINE2(fstat, unsigned int, fd, struct __old_kernel_stat __user *, stat
- 
- #endif /* __ARCH_WANT_OLD_STAT */
- 
-+#ifdef __ARCH_WANT_NEW_STAT
-+
- #if BITS_PER_LONG == 32
- #  define choose_32_64(a,b) a
- #else
-@@ -378,6 +380,7 @@ SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
- 
- 	return error;
- }
-+#endif
- 
- static int do_readlinkat(int dfd, const char __user *pathname,
- 			 char __user *buf, int bufsiz)
--- 
-2.18.0
+TmV3IGFyY2hpdGVjdHVyZXMgc2hvdWxkIG5vIGxvbmdlciBuZWVkIHN0YXQ2NCwgd2hpY2ggaXMg
+bm90IHkyMDM4CnNhZmUgYW5kIGhhcyBiZWVuIHJlcGxhY2VkIGJ5IHN0YXR4KCkuIFRoaXMgcmVt
+b3ZlcyB0aGUgJ3NlbGVjdApfX0FSQ0hfV0FOVF9TVEFUNjQnIHN0YXRlbWVudCBmcm9tIGFzbS1n
+ZW5lcmljL3VuaXN0ZC5oIGFuZCBpbnN0ZWFkCm1vdmVzIGl0IGludG8gdGhlIHJlc3BlY3RpdmUg
+YXNtL3VuaXN0ZC5oIFVBUEkgaGVhZGVyIGZpbGVzIGZvciBlYWNoCmFyY2hpdGVjdHVyZSB0aGF0
+IHVzZXMgaXQgdG9kYXkuCgpJbiB0aGUgZ2VuZXJpYyBmaWxlLCB0aGUgc3lzdGVtIGNhbGwgbnVt
+YmVyIGFuZCBlbnRyeSBwb2ludHMgYXJlIG5vdwptYWRlIGNvbmRpdGlvbmFsLCBzbyBuZXdseSBh
+ZGRlZCBhcmNoaXRlY3R1cmVzIChlLmcuIHJpc2N2MzIgb3IgY3NreSkKd2lsbCBuZXZlciBuZWVk
+IHRvIGNhcnJ5IGJhY2t3YXJkcyBjb21wYXRpYmxpdHkgZm9yIGl0LgoKYXJtNjQgaXMgdGhlIG9u
+bHkgNjQtYml0IGFyY2hpdGVjdHVyZSB1c2luZyB0aGUgYXNtLWdlbmVyaWMvdW5pc3RkLmgKZmls
+ZSwgYW5kIGl0IGFscmVhZHkgc2V0cyBfX0FSQ0hfV0FOVF9ORVdfU1RBVCBpbiBpdHMgaGVhZGVy
+cywgYW5kIEkKdXNlIHRoZSBzYW1lICNpZmRlZiBoZXJlOiBmdXR1cmUgNjQtYml0IGFyY2hpdGVj
+dHVyZXMgdGhlcmVmb3JlIHdvbid0CnNlZSBuZXdzdGF0IG9yIHN0YXQ2NCBhbnkgbW9yZS4gVGhl
+eSBkb24ndCBzdWZmZXIgZnJvbSB0aGUgeTIwMzggdGltZV90Cm92ZXJmbG93LCBidXQgZm9yIGNv
+bnNpc3RlbmN5IGl0IHNlZW1zIGJlc3QgdG8gYWxzbyBsZXQgdGhlbSB1c2Ugc3RhdHgoKS4KClNp
+Z25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+Ci0tLQogYXJjaC9hcmMv
+aW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCAgICAgICB8IDEgKwogYXJjaC9jNngvaW5jbHVkZS91
+YXBpL2FzbS91bmlzdGQuaCAgICAgICB8IDEgKwogYXJjaC9oODMwMC9pbmNsdWRlL3VhcGkvYXNt
+L3VuaXN0ZC5oICAgICB8IDEgKwogYXJjaC9oZXhhZ29uL2luY2x1ZGUvdWFwaS9hc20vdW5pc3Rk
+LmggICB8IDEgKwogYXJjaC9uZHMzMi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICAgICB8IDEg
+KwogYXJjaC9uaW9zMi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICAgICB8IDEgKwogYXJjaC9v
+cGVucmlzYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICB8IDEgKwogYXJjaC91bmljb3JlMzIv
+aW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCB8IDEgKwogaW5jbHVkZS9hc20tZ2VuZXJpYy91bmlz
+dGQuaCAgICAgICAgICAgICB8IDEgLQogaW5jbHVkZS91YXBpL2FzbS1nZW5lcmljL3VuaXN0ZC5o
+ICAgICAgICB8IDIgKysKIDEwIGZpbGVzIGNoYW5nZWQsIDEwIGluc2VydGlvbnMoKyksIDEgZGVs
+ZXRpb24oLSkKCmRpZmYgLS1naXQgYS9hcmNoL2FyYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
+IGIvYXJjaC9hcmMvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCA1MTcxNzhiMWRhZWYu
+LjNiMzU0M2ZkMTUxYyAxMDA2NDQKLS0tIGEvYXJjaC9hcmMvaW5jbHVkZS91YXBpL2FzbS91bmlz
+dGQuaAorKysgYi9hcmNoL2FyYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCkBAIC0xNyw2ICsx
+Nyw3IEBACiAjZGVmaW5lIF9VQVBJX0FTTV9BUkNfVU5JU1REX0gKIAogI2RlZmluZSBfX0FSQ0hf
+V0FOVF9SRU5BTUVBVAorI2RlZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQKICNkZWZpbmUgX19BUkNI
+X1dBTlRfU1lTX0VYRUNWRQogI2RlZmluZSBfX0FSQ0hfV0FOVF9TWVNfQ0xPTkUKICNkZWZpbmUg
+X19BUkNIX1dBTlRfU1lTX1ZGT1JLCmRpZmYgLS1naXQgYS9hcmNoL2M2eC9pbmNsdWRlL3VhcGkv
+YXNtL3VuaXN0ZC5oIGIvYXJjaC9jNngvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCAw
+ZDJkYWY3Zjk4MDkuLjZiMmZlNzkyZGU5ZCAxMDA2NDQKLS0tIGEvYXJjaC9jNngvaW5jbHVkZS91
+YXBpL2FzbS91bmlzdGQuaAorKysgYi9hcmNoL2M2eC9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
+CkBAIC0xNiw2ICsxNiw3IEBACiAgKi8KIAogI2RlZmluZSBfX0FSQ0hfV0FOVF9SRU5BTUVBVAor
+I2RlZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQKICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0NMT05F
+CiAKIC8qIFVzZSB0aGUgc3RhbmRhcmQgQUJJIGZvciBzeXNjYWxscy4gKi8KZGlmZiAtLWdpdCBh
+L2FyY2gvaDgzMDAvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCBiL2FyY2gvaDgzMDAvaW5jbHVk
+ZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCA3ZGQyMGVmNzYyNWEuLjYyODE5NTgyMzgxNiAxMDA2
+NDQKLS0tIGEvYXJjaC9oODMwMC9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gv
+aDgzMDAvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaApAQCAtMSw1ICsxLDYgQEAKICNkZWZpbmUg
+X19BUkNIX05PTU1VCiAKICNkZWZpbmUgX19BUkNIX1dBTlRfUkVOQU1FQVQKKyNkZWZpbmUgX19B
+UkNIX1dBTlRfU1RBVDY0CiAKICNpbmNsdWRlIDxhc20tZ2VuZXJpYy91bmlzdGQuaD4KZGlmZiAt
+LWdpdCBhL2FyY2gvaGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oIGIvYXJjaC9oZXhh
+Z29uL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKaW5kZXggZWExODFlNzkxNjJlLi5jOTFjYTdk
+MDI0NjEgMTAwNjQ0Ci0tLSBhL2FyY2gvaGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
+CisrKyBiL2FyY2gvaGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCkBAIC0yOSw2ICsy
+OSw3IEBACiAKICNkZWZpbmUgc3lzX21tYXAyIHN5c19tbWFwX3Bnb2ZmCiAjZGVmaW5lIF9fQVJD
+SF9XQU5UX1JFTkFNRUFUCisjZGVmaW5lIF9fQVJDSF9XQU5UX1NUQVQ2NAogI2RlZmluZSBfX0FS
+Q0hfV0FOVF9TWVNfRVhFQ1ZFCiAjZGVmaW5lIF9fQVJDSF9XQU5UX1NZU19DTE9ORQogI2RlZmlu
+ZSBfX0FSQ0hfV0FOVF9TWVNfVkZPUksKZGlmZiAtLWdpdCBhL2FyY2gvbmRzMzIvaW5jbHVkZS91
+YXBpL2FzbS91bmlzdGQuaCBiL2FyY2gvbmRzMzIvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaApp
+bmRleCA2ZTk1OTAxY2FiZTMuLjYwM2U4MjZlMDQ0OSAxMDA2NDQKLS0tIGEvYXJjaC9uZHMzMi9p
+bmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvbmRzMzIvaW5jbHVkZS91YXBpL2Fz
+bS91bmlzdGQuaApAQCAtMSw2ICsxLDcgQEAKIC8vIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBH
+UEwtMi4wCiAvLyBDb3B5cmlnaHQgKEMpIDIwMDUtMjAxNyBBbmRlcyBUZWNobm9sb2d5IENvcnBv
+cmF0aW9uCiAKKyNkZWZpbmUgX19BUkNIX1dBTlRfU1RBVDY0CiAjZGVmaW5lIF9fQVJDSF9XQU5U
+X1NZTkNfRklMRV9SQU5HRTIKIAogLyogVXNlIHRoZSBzdGFuZGFyZCBBQkkgZm9yIHN5c2NhbGxz
+ICovCmRpZmYgLS1naXQgYS9hcmNoL25pb3MyL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmggYi9h
+cmNoL25pb3MyL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKaW5kZXggYjZiZGFlMDRiYzg0Li5k
+OTk0OGQ4ODc5MGIgMTAwNjQ0Ci0tLSBhL2FyY2gvbmlvczIvaW5jbHVkZS91YXBpL2FzbS91bmlz
+dGQuaAorKysgYi9hcmNoL25pb3MyL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKQEAgLTE5LDYg
+KzE5LDcgQEAKICAjZGVmaW5lIHN5c19tbWFwMiBzeXNfbW1hcF9wZ29mZgogCiAjZGVmaW5lIF9f
+QVJDSF9XQU5UX1JFTkFNRUFUCisjZGVmaW5lIF9fQVJDSF9XQU5UX1NUQVQ2NAogCiAvKiBVc2Ug
+dGhlIHN0YW5kYXJkIEFCSSBmb3Igc3lzY2FsbHMgKi8KICNpbmNsdWRlIDxhc20tZ2VuZXJpYy91
+bmlzdGQuaD4KZGlmZiAtLWdpdCBhL2FyY2gvb3BlbnJpc2MvaW5jbHVkZS91YXBpL2FzbS91bmlz
+dGQuaCBiL2FyY2gvb3BlbnJpc2MvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCAxMWM1
+YTU4YWIzMzMuLmVjMzdkZjE4ZDhlZCAxMDA2NDQKLS0tIGEvYXJjaC9vcGVucmlzYy9pbmNsdWRl
+L3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvb3BlbnJpc2MvaW5jbHVkZS91YXBpL2FzbS91
+bmlzdGQuaApAQCAtMjAsNiArMjAsNyBAQAogI2RlZmluZSBzeXNfbW1hcDIgc3lzX21tYXBfcGdv
+ZmYKIAogI2RlZmluZSBfX0FSQ0hfV0FOVF9SRU5BTUVBVAorI2RlZmluZSBfX0FSQ0hfV0FOVF9T
+VEFUNjQKICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0ZPUksKICNkZWZpbmUgX19BUkNIX1dBTlRf
+U1lTX0NMT05FCiAKZGlmZiAtLWdpdCBhL2FyY2gvdW5pY29yZTMyL2luY2x1ZGUvdWFwaS9hc20v
+dW5pc3RkLmggYi9hcmNoL3VuaWNvcmUzMi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCmluZGV4
+IDY1ODU2ZWFhYjE2My4uMWU4ZmU1OTQxYjhhIDEwMDY0NAotLS0gYS9hcmNoL3VuaWNvcmUzMi9p
+bmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvdW5pY29yZTMyL2luY2x1ZGUvdWFw
+aS9hc20vdW5pc3RkLmgKQEAgLTE1LDQgKzE1LDUgQEAKIAogLyogVXNlIHRoZSBzdGFuZGFyZCBB
+QkkgZm9yIHN5c2NhbGxzLiAqLwogI2luY2x1ZGUgPGFzbS1nZW5lcmljL3VuaXN0ZC5oPgorI2Rl
+ZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQKICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0NMT05FCmRp
+ZmYgLS1naXQgYS9pbmNsdWRlL2FzbS1nZW5lcmljL3VuaXN0ZC5oIGIvaW5jbHVkZS9hc20tZ2Vu
+ZXJpYy91bmlzdGQuaAppbmRleCBjZGY5MDQyNjVjYWYuLmVhNzRlY2E4NDYzZiAxMDA2NDQKLS0t
+IGEvaW5jbHVkZS9hc20tZ2VuZXJpYy91bmlzdGQuaAorKysgYi9pbmNsdWRlL2FzbS1nZW5lcmlj
+L3VuaXN0ZC5oCkBAIC04LDYgKzgsNSBAQAogICogYmUgc2VsZWN0ZWQgYnkgZGVmYXVsdC4KICAq
+LwogI2lmIF9fQklUU19QRVJfTE9ORyA9PSAzMgotI2RlZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQK
+ICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0xMU0VFSwogI2VuZGlmCmRpZmYgLS1naXQgYS9pbmNs
+dWRlL3VhcGkvYXNtLWdlbmVyaWMvdW5pc3RkLmggYi9pbmNsdWRlL3VhcGkvYXNtLWdlbmVyaWMv
+dW5pc3RkLmgKaW5kZXggZGY0YmVkYjliMDFjLi41Mzg1NDZlZGJmYmQgMTAwNjQ0Ci0tLSBhL2lu
+Y2x1ZGUvdWFwaS9hc20tZ2VuZXJpYy91bmlzdGQuaAorKysgYi9pbmNsdWRlL3VhcGkvYXNtLWdl
+bmVyaWMvdW5pc3RkLmgKQEAgLTI0MiwxMCArMjQyLDEyIEBAIF9fU1lTQ0FMTChfX05SX3RlZSwg
+c3lzX3RlZSkKIC8qIGZzL3N0YXQuYyAqLwogI2RlZmluZSBfX05SX3JlYWRsaW5rYXQgNzgKIF9f
+U1lTQ0FMTChfX05SX3JlYWRsaW5rYXQsIHN5c19yZWFkbGlua2F0KQorI2lmIGRlZmluZWQoX19B
+UkNIX1dBTlRfTkVXX1NUQVQpIHx8IGRlZmluZWQoX19BUkNIX1dBTlRfU1RBVDY0KQogI2RlZmlu
+ZSBfX05SMzI2NF9mc3RhdGF0IDc5CiBfX1NDXzMyNjQoX19OUjMyNjRfZnN0YXRhdCwgc3lzX2Zz
+dGF0YXQ2NCwgc3lzX25ld2ZzdGF0YXQpCiAjZGVmaW5lIF9fTlIzMjY0X2ZzdGF0IDgwCiBfX1ND
+XzMyNjQoX19OUjMyNjRfZnN0YXQsIHN5c19mc3RhdDY0LCBzeXNfbmV3ZnN0YXQpCisjZW5kaWYK
+IAogLyogZnMvc3luYy5jICovCiAjZGVmaW5lIF9fTlJfc3luYyA4MQotLSAKMi4xOC4wCgpfX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5n
+IGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFp
+bG1hbi9saXN0aW5mby95MjAzOAo=
