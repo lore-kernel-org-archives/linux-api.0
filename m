@@ -1,125 +1,359 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 05/14] y2038: Remove stat64 family from default
-	syscall set
-Date: Mon, 27 Aug 2018 21:45:22 +0200
-Message-ID: <20180827194531.3796559-6-arnd@arndb.de>
-References: <20180827194531.3796559-1-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20180827194531.3796559-1-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: tglx@linutronix.de
-Cc: linux-arch@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, deepa.kernel@gmail.com, torvalds@linux-foundation.org, Christoph Hellwig <hch@lst.de>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: [PATCH v4 00/16] Add utilization clamping support
+Date: Tue, 28 Aug 2018 14:53:08 +0100
+Message-ID: <20180828135324.21976-1-patrick.bellasi@arm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
+Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Viresh Kumar <viresh.kumar@linaro.org>, Vincent Guittot <vincent.guittot@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-TmV3IGFyY2hpdGVjdHVyZXMgc2hvdWxkIG5vIGxvbmdlciBuZWVkIHN0YXQ2NCwgd2hpY2ggaXMg
-bm90IHkyMDM4CnNhZmUgYW5kIGhhcyBiZWVuIHJlcGxhY2VkIGJ5IHN0YXR4KCkuIFRoaXMgcmVt
-b3ZlcyB0aGUgJ3NlbGVjdApfX0FSQ0hfV0FOVF9TVEFUNjQnIHN0YXRlbWVudCBmcm9tIGFzbS1n
-ZW5lcmljL3VuaXN0ZC5oIGFuZCBpbnN0ZWFkCm1vdmVzIGl0IGludG8gdGhlIHJlc3BlY3RpdmUg
-YXNtL3VuaXN0ZC5oIFVBUEkgaGVhZGVyIGZpbGVzIGZvciBlYWNoCmFyY2hpdGVjdHVyZSB0aGF0
-IHVzZXMgaXQgdG9kYXkuCgpJbiB0aGUgZ2VuZXJpYyBmaWxlLCB0aGUgc3lzdGVtIGNhbGwgbnVt
-YmVyIGFuZCBlbnRyeSBwb2ludHMgYXJlIG5vdwptYWRlIGNvbmRpdGlvbmFsLCBzbyBuZXdseSBh
-ZGRlZCBhcmNoaXRlY3R1cmVzIChlLmcuIHJpc2N2MzIgb3IgY3NreSkKd2lsbCBuZXZlciBuZWVk
-IHRvIGNhcnJ5IGJhY2t3YXJkcyBjb21wYXRpYmxpdHkgZm9yIGl0LgoKYXJtNjQgaXMgdGhlIG9u
-bHkgNjQtYml0IGFyY2hpdGVjdHVyZSB1c2luZyB0aGUgYXNtLWdlbmVyaWMvdW5pc3RkLmgKZmls
-ZSwgYW5kIGl0IGFscmVhZHkgc2V0cyBfX0FSQ0hfV0FOVF9ORVdfU1RBVCBpbiBpdHMgaGVhZGVy
-cywgYW5kIEkKdXNlIHRoZSBzYW1lICNpZmRlZiBoZXJlOiBmdXR1cmUgNjQtYml0IGFyY2hpdGVj
-dHVyZXMgdGhlcmVmb3JlIHdvbid0CnNlZSBuZXdzdGF0IG9yIHN0YXQ2NCBhbnkgbW9yZS4gVGhl
-eSBkb24ndCBzdWZmZXIgZnJvbSB0aGUgeTIwMzggdGltZV90Cm92ZXJmbG93LCBidXQgZm9yIGNv
-bnNpc3RlbmN5IGl0IHNlZW1zIGJlc3QgdG8gYWxzbyBsZXQgdGhlbSB1c2Ugc3RhdHgoKS4KClNp
-Z25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+Ci0tLQogYXJjaC9hcmMv
-aW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCAgICAgICB8IDEgKwogYXJjaC9jNngvaW5jbHVkZS91
-YXBpL2FzbS91bmlzdGQuaCAgICAgICB8IDEgKwogYXJjaC9oODMwMC9pbmNsdWRlL3VhcGkvYXNt
-L3VuaXN0ZC5oICAgICB8IDEgKwogYXJjaC9oZXhhZ29uL2luY2x1ZGUvdWFwaS9hc20vdW5pc3Rk
-LmggICB8IDEgKwogYXJjaC9uZHMzMi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICAgICB8IDEg
-KwogYXJjaC9uaW9zMi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICAgICB8IDEgKwogYXJjaC9v
-cGVucmlzYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICB8IDEgKwogYXJjaC91bmljb3JlMzIv
-aW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCB8IDEgKwogaW5jbHVkZS9hc20tZ2VuZXJpYy91bmlz
-dGQuaCAgICAgICAgICAgICB8IDEgLQogaW5jbHVkZS91YXBpL2FzbS1nZW5lcmljL3VuaXN0ZC5o
-ICAgICAgICB8IDIgKysKIDEwIGZpbGVzIGNoYW5nZWQsIDEwIGluc2VydGlvbnMoKyksIDEgZGVs
-ZXRpb24oLSkKCmRpZmYgLS1naXQgYS9hcmNoL2FyYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
-IGIvYXJjaC9hcmMvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCA1MTcxNzhiMWRhZWYu
-LjNiMzU0M2ZkMTUxYyAxMDA2NDQKLS0tIGEvYXJjaC9hcmMvaW5jbHVkZS91YXBpL2FzbS91bmlz
-dGQuaAorKysgYi9hcmNoL2FyYy9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCkBAIC0xNyw2ICsx
-Nyw3IEBACiAjZGVmaW5lIF9VQVBJX0FTTV9BUkNfVU5JU1REX0gKIAogI2RlZmluZSBfX0FSQ0hf
-V0FOVF9SRU5BTUVBVAorI2RlZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQKICNkZWZpbmUgX19BUkNI
-X1dBTlRfU1lTX0VYRUNWRQogI2RlZmluZSBfX0FSQ0hfV0FOVF9TWVNfQ0xPTkUKICNkZWZpbmUg
-X19BUkNIX1dBTlRfU1lTX1ZGT1JLCmRpZmYgLS1naXQgYS9hcmNoL2M2eC9pbmNsdWRlL3VhcGkv
-YXNtL3VuaXN0ZC5oIGIvYXJjaC9jNngvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCAw
-ZDJkYWY3Zjk4MDkuLjZiMmZlNzkyZGU5ZCAxMDA2NDQKLS0tIGEvYXJjaC9jNngvaW5jbHVkZS91
-YXBpL2FzbS91bmlzdGQuaAorKysgYi9hcmNoL2M2eC9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
-CkBAIC0xNiw2ICsxNiw3IEBACiAgKi8KIAogI2RlZmluZSBfX0FSQ0hfV0FOVF9SRU5BTUVBVAor
-I2RlZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQKICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0NMT05F
-CiAKIC8qIFVzZSB0aGUgc3RhbmRhcmQgQUJJIGZvciBzeXNjYWxscy4gKi8KZGlmZiAtLWdpdCBh
-L2FyY2gvaDgzMDAvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCBiL2FyY2gvaDgzMDAvaW5jbHVk
-ZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCA3ZGQyMGVmNzYyNWEuLjYyODE5NTgyMzgxNiAxMDA2
-NDQKLS0tIGEvYXJjaC9oODMwMC9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gv
-aDgzMDAvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaApAQCAtMSw1ICsxLDYgQEAKICNkZWZpbmUg
-X19BUkNIX05PTU1VCiAKICNkZWZpbmUgX19BUkNIX1dBTlRfUkVOQU1FQVQKKyNkZWZpbmUgX19B
-UkNIX1dBTlRfU1RBVDY0CiAKICNpbmNsdWRlIDxhc20tZ2VuZXJpYy91bmlzdGQuaD4KZGlmZiAt
-LWdpdCBhL2FyY2gvaGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oIGIvYXJjaC9oZXhh
-Z29uL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKaW5kZXggZWExODFlNzkxNjJlLi5jOTFjYTdk
-MDI0NjEgMTAwNjQ0Ci0tLSBhL2FyY2gvaGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5o
-CisrKyBiL2FyY2gvaGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCkBAIC0yOSw2ICsy
-OSw3IEBACiAKICNkZWZpbmUgc3lzX21tYXAyIHN5c19tbWFwX3Bnb2ZmCiAjZGVmaW5lIF9fQVJD
-SF9XQU5UX1JFTkFNRUFUCisjZGVmaW5lIF9fQVJDSF9XQU5UX1NUQVQ2NAogI2RlZmluZSBfX0FS
-Q0hfV0FOVF9TWVNfRVhFQ1ZFCiAjZGVmaW5lIF9fQVJDSF9XQU5UX1NZU19DTE9ORQogI2RlZmlu
-ZSBfX0FSQ0hfV0FOVF9TWVNfVkZPUksKZGlmZiAtLWdpdCBhL2FyY2gvbmRzMzIvaW5jbHVkZS91
-YXBpL2FzbS91bmlzdGQuaCBiL2FyY2gvbmRzMzIvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaApp
-bmRleCA2ZTk1OTAxY2FiZTMuLjYwM2U4MjZlMDQ0OSAxMDA2NDQKLS0tIGEvYXJjaC9uZHMzMi9p
-bmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvbmRzMzIvaW5jbHVkZS91YXBpL2Fz
-bS91bmlzdGQuaApAQCAtMSw2ICsxLDcgQEAKIC8vIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBH
-UEwtMi4wCiAvLyBDb3B5cmlnaHQgKEMpIDIwMDUtMjAxNyBBbmRlcyBUZWNobm9sb2d5IENvcnBv
-cmF0aW9uCiAKKyNkZWZpbmUgX19BUkNIX1dBTlRfU1RBVDY0CiAjZGVmaW5lIF9fQVJDSF9XQU5U
-X1NZTkNfRklMRV9SQU5HRTIKIAogLyogVXNlIHRoZSBzdGFuZGFyZCBBQkkgZm9yIHN5c2NhbGxz
-ICovCmRpZmYgLS1naXQgYS9hcmNoL25pb3MyL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmggYi9h
-cmNoL25pb3MyL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKaW5kZXggYjZiZGFlMDRiYzg0Li5k
-OTk0OGQ4ODc5MGIgMTAwNjQ0Ci0tLSBhL2FyY2gvbmlvczIvaW5jbHVkZS91YXBpL2FzbS91bmlz
-dGQuaAorKysgYi9hcmNoL25pb3MyL2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKQEAgLTE5LDYg
-KzE5LDcgQEAKICAjZGVmaW5lIHN5c19tbWFwMiBzeXNfbW1hcF9wZ29mZgogCiAjZGVmaW5lIF9f
-QVJDSF9XQU5UX1JFTkFNRUFUCisjZGVmaW5lIF9fQVJDSF9XQU5UX1NUQVQ2NAogCiAvKiBVc2Ug
-dGhlIHN0YW5kYXJkIEFCSSBmb3Igc3lzY2FsbHMgKi8KICNpbmNsdWRlIDxhc20tZ2VuZXJpYy91
-bmlzdGQuaD4KZGlmZiAtLWdpdCBhL2FyY2gvb3BlbnJpc2MvaW5jbHVkZS91YXBpL2FzbS91bmlz
-dGQuaCBiL2FyY2gvb3BlbnJpc2MvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaAppbmRleCAxMWM1
-YTU4YWIzMzMuLmVjMzdkZjE4ZDhlZCAxMDA2NDQKLS0tIGEvYXJjaC9vcGVucmlzYy9pbmNsdWRl
-L3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvb3BlbnJpc2MvaW5jbHVkZS91YXBpL2FzbS91
-bmlzdGQuaApAQCAtMjAsNiArMjAsNyBAQAogI2RlZmluZSBzeXNfbW1hcDIgc3lzX21tYXBfcGdv
-ZmYKIAogI2RlZmluZSBfX0FSQ0hfV0FOVF9SRU5BTUVBVAorI2RlZmluZSBfX0FSQ0hfV0FOVF9T
-VEFUNjQKICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0ZPUksKICNkZWZpbmUgX19BUkNIX1dBTlRf
-U1lTX0NMT05FCiAKZGlmZiAtLWdpdCBhL2FyY2gvdW5pY29yZTMyL2luY2x1ZGUvdWFwaS9hc20v
-dW5pc3RkLmggYi9hcmNoL3VuaWNvcmUzMi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCmluZGV4
-IDY1ODU2ZWFhYjE2My4uMWU4ZmU1OTQxYjhhIDEwMDY0NAotLS0gYS9hcmNoL3VuaWNvcmUzMi9p
-bmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvdW5pY29yZTMyL2luY2x1ZGUvdWFw
-aS9hc20vdW5pc3RkLmgKQEAgLTE1LDQgKzE1LDUgQEAKIAogLyogVXNlIHRoZSBzdGFuZGFyZCBB
-QkkgZm9yIHN5c2NhbGxzLiAqLwogI2luY2x1ZGUgPGFzbS1nZW5lcmljL3VuaXN0ZC5oPgorI2Rl
-ZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQKICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0NMT05FCmRp
-ZmYgLS1naXQgYS9pbmNsdWRlL2FzbS1nZW5lcmljL3VuaXN0ZC5oIGIvaW5jbHVkZS9hc20tZ2Vu
-ZXJpYy91bmlzdGQuaAppbmRleCBjZGY5MDQyNjVjYWYuLmVhNzRlY2E4NDYzZiAxMDA2NDQKLS0t
-IGEvaW5jbHVkZS9hc20tZ2VuZXJpYy91bmlzdGQuaAorKysgYi9pbmNsdWRlL2FzbS1nZW5lcmlj
-L3VuaXN0ZC5oCkBAIC04LDYgKzgsNSBAQAogICogYmUgc2VsZWN0ZWQgYnkgZGVmYXVsdC4KICAq
-LwogI2lmIF9fQklUU19QRVJfTE9ORyA9PSAzMgotI2RlZmluZSBfX0FSQ0hfV0FOVF9TVEFUNjQK
-ICNkZWZpbmUgX19BUkNIX1dBTlRfU1lTX0xMU0VFSwogI2VuZGlmCmRpZmYgLS1naXQgYS9pbmNs
-dWRlL3VhcGkvYXNtLWdlbmVyaWMvdW5pc3RkLmggYi9pbmNsdWRlL3VhcGkvYXNtLWdlbmVyaWMv
-dW5pc3RkLmgKaW5kZXggZGY0YmVkYjliMDFjLi41Mzg1NDZlZGJmYmQgMTAwNjQ0Ci0tLSBhL2lu
-Y2x1ZGUvdWFwaS9hc20tZ2VuZXJpYy91bmlzdGQuaAorKysgYi9pbmNsdWRlL3VhcGkvYXNtLWdl
-bmVyaWMvdW5pc3RkLmgKQEAgLTI0MiwxMCArMjQyLDEyIEBAIF9fU1lTQ0FMTChfX05SX3RlZSwg
-c3lzX3RlZSkKIC8qIGZzL3N0YXQuYyAqLwogI2RlZmluZSBfX05SX3JlYWRsaW5rYXQgNzgKIF9f
-U1lTQ0FMTChfX05SX3JlYWRsaW5rYXQsIHN5c19yZWFkbGlua2F0KQorI2lmIGRlZmluZWQoX19B
-UkNIX1dBTlRfTkVXX1NUQVQpIHx8IGRlZmluZWQoX19BUkNIX1dBTlRfU1RBVDY0KQogI2RlZmlu
-ZSBfX05SMzI2NF9mc3RhdGF0IDc5CiBfX1NDXzMyNjQoX19OUjMyNjRfZnN0YXRhdCwgc3lzX2Zz
-dGF0YXQ2NCwgc3lzX25ld2ZzdGF0YXQpCiAjZGVmaW5lIF9fTlIzMjY0X2ZzdGF0IDgwCiBfX1ND
-XzMyNjQoX19OUjMyNjRfZnN0YXQsIHN5c19mc3RhdDY0LCBzeXNfbmV3ZnN0YXQpCisjZW5kaWYK
-IAogLyogZnMvc3luYy5jICovCiAjZGVmaW5lIF9fTlJfc3luYyA4MQotLSAKMi4xOC4wCgpfX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5n
-IGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFp
-bG1hbi9saXN0aW5mby95MjAzOAo=
+This is a respin of:
+
+   https://lore.kernel.org/lkml/20180806163946.28380-1-patrick.bellasi@arm.com/
+
+Which has been rebased on v4.19-rc1.
+
+Thanks for all the valuable comments collected so far!
+Further comments and feedbacks are more than welcome!
+
+Cheers Patrick
+
+
+Main changes in v4
+==================
+
+.:: Fix issues due to limited number of clamp groups
+----------------------------------------------------
+
+As Juri pointed out in:
+
+   https://lore.kernel.org/lkml/20180807123550.GA3062@localhost.localdomain/
+
+we had an issue related to the limited number of supported clamp groups, which
+could have affected both normal users as well as cgroups users.
+
+This problem has been fixed by a couple of new patches:
+
+   [PATCH v4 14/16] sched/core: uclamp: request CAP_SYS_ADMIN by default
+   [PATCH v4 15/16] sched/core: uclamp: add clamp group discretization support
+
+which allows to ensure that only privileged tasks can create clamp groups
+and/or the clamps groups are transformed into buckets to always ensure a
+mapping for each possible userspace request.
+
+
+.:: Better integrate RT tasks
+-----------------------------
+
+Quentin pointed out a change in behavior for RT task in:
+
+   https://lore.kernel.org/lkml/20180809155551.bp46sixk4u3ilcnh@queper01-lin/
+
+which has been fixed by improving this patch:
+
+   [PATCH v4 16/16] sched/cpufreq: uclamp: add utilization clamping for RT tasks
+
+This patch has also been moved to the end of the series since the solution is
+partially based on some bits already added by other patches of this series.
+
+
+.:: Improved refcounting code
+-----------------------------
+
+Pavan reported some code paths not covered by refcounting:
+
+   https://lore.kernel.org/lkml/20180816091348.GD2661@codeaurora.org/
+
+Which translated into a complete review and improvement of the slow-path code
+where we refcount clamp groups availability.
+
+We now properly refcount clamp groups usage for all the main entities, i.e.
+init_task, root_task_group and sysfs defaults.
+The same refcounting code has been properly integrated with fork/exit as well
+as cgroups creation/release code paths.
+
+
+.:: Series Organization
+-----------------------
+
+The series is organized into these main sections:
+
+- Patches [01-05]: Per task (primary) API
+- Patches [06]   : Schedutil integration for CFS tasks
+- Patches [07-13]: Per task group (secondary) API
+- Patches [14-15]: Fix issues related to limited clamp groups
+- Patches [16]   : Schedutil integration for RT tasks
+
+
+Newcomer's Short Abstract (Updated)
+===================================
+
+The Linux scheduler tracks a "utilization" signal for each scheduling entity
+(SE), e.g. tasks, to know how much CPU time they use. This signal allows the
+scheduler to know how "big" a task is and, in principle, it can support
+advanced task placement strategies by selecting the best CPU to run a task.
+Some of these strategies are represented by the Energy Aware scheduler
+extension [1].
+
+When the schedutil cpufreq's governor is in use, the utilization signal allows
+also the Linux scheduler to drive frequency selection. The CPU utilization
+signal, which represents the aggregated utilization of tasks scheduled on that
+CPU, is used to select the frequency which best fits the task's generated
+workload.
+
+However, the current translation of utilization values into a frequency
+selection is pretty simple: we just go to max for RT tasks or to the minimum
+frequency which can accommodate the utilization of DL+FAIR tasks. Regarding
+task placement instead utilization is of limited usage since its value alone is
+not enough to properly describe what's the expected power/performance behaviors
+of each task.
+
+In general, for both RT and FAIR tasks we can aim at better tasks placement and
+frequency selection policies if take into consideration hints coming from
+user-space.
+
+Utilization clamping is a mechanism which allows to "clamp" (i.e. filter) the
+utilization generated by RT and FAIR tasks within a range defined from
+user-space. The clamped utilization value can then be used, for example, to
+enforce a minimum and/or maximum frequency depending on which tasks are
+currently active on a CPU.
+
+The main use-cases for utilization clamping are:
+
+ - boosting: better interactive response for small tasks which
+   are affecting the user experience.
+
+   Consider for example the case of a small control thread for an external
+   accelerator (e.g. GPU, DSP, other devices). In this case, from its
+   utilization the scheduler does not have a complete view of what are the task
+   requirements and, if it's a small utilization task, schedutil will keep
+   selecting a more energy efficient CPU, with smaller capacity and lower
+   frequency, thus affecting the overall time required to complete the task
+   activations.
+
+ - capping: increase energy efficiency for background tasks not directly
+   affecting the user experience.
+
+   Since running on a lower capacity CPU at a lower frequency is in general
+   more energy efficient, when the completion time is not a main goal, then
+   capping the utilization considered for certain (maybe big) tasks can have
+   positive effects, both on energy consumption and thermal stress.
+   Moreover, this last support allows also to make RT tasks more energy
+   friendly on mobile systems, where running them on high capacity CPUs and at
+   the maximum frequency is not strictly required.
+
+>From these two use-cases, it's worth to notice that frequency selection
+biasing, introduced by patches 6 and 16 of this series, is just one possible
+usage of utilization clamping. Another compelling extension of utilization
+clamping is in helping the scheduler on tasks placement decisions.
+
+Utilization is a task specific property which is used by the scheduler to know
+how much CPU bandwidth a task requires (under certain conditions).
+Thus, the utilization clamp values, defined either per-task or via the CPU
+controller, can be used to represent tasks to the scheduler as being bigger
+(or smaller) than what they really are.
+
+Utilization clamping thus ultimately enable interesting additional
+optimizations, especially on asymmetric capacity systems like Arm
+big.LITTLE and DynamIQ CPUs, where:
+
+ - boosting: small tasks are preferably scheduled on higher-capacity CPUs
+   where, despite being less energy efficient, they can complete faster
+
+ - capping: big/background tasks are preferably scheduled on low-capacity CPUs
+   where, being more energy efficient, they can still run but save power and
+   thermal headroom for more important tasks.
+
+This additional usage of the utilization clamping is not presented in this
+series but it's an integral part of the Energy Aware Scheduler (EAS) feature
+set, where [1] is one of its main components. A solution similar to utilization
+clamping, namely SchedTune, is already used on Android kernels to biasing of
+both 'frequency selection' and 'task placement'.
+This series provides the foundation bits to add a similar features to mainline
+by focusing just on schedutil integration.
+
+[1] https://lore.kernel.org/lkml/20180820094420.26590-1-quentin.perret@arm.com/
+
+
+Detailed Changelog
+==================
+
+Changes in v4:
+ Message-ID: <20180809152313.lewfhufidhxb2qrk@darkstar>
+ - implements the idea discussed in this thread
+ Message-ID: <87897157-0b49-a0be-f66c-81cc2942b4dd@infradead.org>
+ - remove not required default setting
+ - fixed some tabs/spaces
+ Message-ID: <20180807095905.GB2288@localhost.localdomain>
+ - replace/rephrase "bandwidth" references to use "capacity"
+ - better stress that this do not enforce any bandwidth requirement
+   but "just" give hints to the scheduler
+ - fixed some typos
+ Message-ID: <20180814112509.GB2661@codeaurora.org>
+ - add uclamp_exit_task() to release clamp refcount from do_exit()
+ Message-ID: <20180816133249.GA2964@e110439-lin>
+ - keep the WARN but beautify a bit that code
+ - keep the WARN in uclamp_cpu_put_id() but beautify a bit that code
+ - add another WARN on the unexpected condition of releasing a refcount
+   from a CPU which has a lower clamp value active
+ Message-ID: <20180413082648.GP4043@hirez.programming.kicks-ass.net>
+ - move uclamp_enabled at the top of sched_class to keep it on the same
+   cache line of other main wakeup time callbacks
+ Message-ID: <20180816132249.GA2960@e110439-lin>
+ - inline uclamp_task_active() code into uclamp_task_update_active()
+ - get rid of the now unused uclamp_task_active()
+ Message-ID: <20180816172016.GG2960@e110439-lin>
+ - ensure to always reset clamp holding on wakeup from IDLE
+ Message-ID: <CAKfTPtC2adLupg7wy1JU9zxKx1466Sza6fSCcr92wcawm1OYkg@mail.gmail.com>
+ - use *rq instead of cpu for both uclamp_util() and uclamp_value()
+ Message-ID: <20180816135300.GC2960@e110439-lin>
+ - remove uclamp_value() which is never used outside CONFIG_UCLAMP_TASK
+ Message-ID: <20180816140731.GD2960@e110439-lin>
+ - add ".effective" attributes to the default hierarchy
+ - reuse already existing:
+     task_struct::uclamp::effective::group_id
+   instead of adding:
+     task_struct::uclamp_group_id
+   to back annotate the effective clamp group in which a task has been
+   refcounted
+ Message-ID: <20180820122728.GM2960@e110439-lin>
+ - fix unwanted reset of clamp values on refcount success
+ Other:
+ - by default all tasks have a UCLAMP_NOT_VALID task specific clamp
+ - always use:
+      p->uclamp[clamp_id].effective.value
+   to track the actual clamp value the task has been refcounted into.
+   This matches with the usage of
+      p->uclamp[clamp_id].effective.group_id
+ - allow to call uclamp_group_get() without a task pointer, which is
+   used to refcount the initial clamp group for all the global objects
+   (init_task, root_task_group and system_defaults)
+ - ensure (and check) that all tasks have a valid group_id at
+   uclamp_cpu_get_id()
+ - rework uclamp_cpu layout to better fit into just 2x64B cache lines
+ - fix some s/SCHED_DEBUG/CONFIG_SCHED_DEBUG/
+ - init uclamp for the init_task and refcount its clamp groups
+ - add uclamp specific fork time code into uclamp_fork
+ - add support for SCHED_FLAG_RESET_ON_FORK
+   default clamps are now set for init_task and inherited/reset at
+   fork time (when then flag is set for the parent)
+ - enable uclamp only for FAIR tasks, RT class will be enabled only
+   by a following patch which also integrate the class to schedutil
+ - define uclamp_maps ____cacheline_aligned_in_smp
+ - in uclamp_group_get() ensure to include uclamp_group_available() and
+   uclamp_group_init() into the atomic section defined by:
+      uc_map[next_group_id].se_lock
+ - do not use mutex_lock(&uclamp_mutex) in uclamp_exit_task
+   which is also not needed since refcounting is already guarded by
+   the uc_map[group_id].se_lock spinlock
+ - consolidate init_uclamp_sched_group() into init_uclamp()
+ - refcount root_task_group's clamp groups from init_uclamp()
+ - small documentation fixes
+ - rebased on v4.19-rc1
+
+Changes in v3:
+ Message-ID: <CAJuCfpF6=L=0LrmNnJrTNPazT4dWKqNv+thhN0dwpKCgUzs9sg@mail.gmail.com>
+ - removed UCLAMP_NONE not used by this patch
+ - remove not necessary checks in uclamp_group_find()
+ - add WARN on unlikely un-referenced decrement in uclamp_group_put()
+ - add WARN on unlikely un-referenced decrement in uclamp_cpu_put_id()
+ - make __setscheduler_uclamp() able to set just one clamp value
+ - make __setscheduler_uclamp() failing if both clamps are required but
+   there is no clamp groups available for one of them
+ - remove uclamp_group_find() from uclamp_group_get() which now takes a
+   group_id as a parameter
+ - add explicit calls to uclamp_group_find()
+   which is now not more part of uclamp_group_get()
+ - fixed a not required override
+ - fixed some typos in comments and changelog
+ Message-ID: <CAJuCfpGaKvxKcO=RLcmveHRB9qbMrvFs2yFVrk=k-v_m7JkxwQ@mail.gmail.com>
+ - few typos fixed
+ Message-ID: <20180409222417.GK3126663@devbig577.frc2.facebook.com>
+ - use "." notation for attributes naming
+   i.e. s/util_{min,max}/util.{min,max}/
+ - added new patches: 09 and 12
+ Other changes:
+ - rebased on tip/sched/core
+
+Changes in v2:
+ Message-ID: <20180413093822.GM4129@hirez.programming.kicks-ass.net>
+ - refactored struct rq::uclamp_cpu to be more cache efficient
+   no more holes, re-arranged vectors to match cache lines with expected
+   data locality
+ Message-ID: <20180413094615.GT4043@hirez.programming.kicks-ass.net>
+ - use *rq as parameter whenever already available
+ - add scheduling class's uclamp_enabled marker
+ - get rid of the "confusing" single callback uclamp_task_update()
+   and use uclamp_cpu_{get,put}() directly from {en,de}queue_task()
+ - fix/remove "bad" comments
+ Message-ID: <20180413113337.GU14248@e110439-lin>
+ - remove inline from init_uclamp, flag it __init
+ Message-ID: <20180413111900.GF4082@hirez.programming.kicks-ass.net>
+ - get rid of the group_id back annotation
+   which is not requires at this stage where we have only per-task
+   clamping support. It will be introduce later when cgroup support is
+   added.
+ Message-ID: <20180409222417.GK3126663@devbig577.frc2.facebook.com>
+ - make attributes available only on non-root nodes
+   a system wide API seems of not immediate interest and thus it's not
+   supported anymore
+ - remove implicit parent-child constraints and dependencies
+ Message-ID: <20180410200514.GA793541@devbig577.frc2.facebook.com>
+ - add some cgroup-v2 documentation for the new attributes
+ - (hopefully) better explain intended use-cases
+   the changelog above has been extended to better justify the naming
+   proposed by the new attributes
+ Other changes:
+ - improved documentation to make more explicit some concepts
+ - set UCLAMP_GROUPS_COUNT=2 by default
+   which allows to fit all the hot-path CPU clamps data into a single cache
+   line while still supporting up to 2 different {min,max}_utiql clamps.
+ - use -ERANGE as range violation error
+ - add attributes to the default hierarchy as well as the legacy one
+ - implement a "nice" semantics where cgroup clamp values are always
+   used to restrict task specific clamp values,
+   i.e. tasks running on a TG are only allowed to demote themself.
+ - patches re-ordering in top-down way
+ - rebased on v4.18-rc4
+
+Patrick Bellasi (16):
+  sched/core: uclamp: extend sched_setattr to support utilization
+    clamping
+  sched/core: uclamp: map TASK's clamp values into CPU's clamp groups
+  sched/core: uclamp: add CPU's clamp groups accounting
+  sched/core: uclamp: update CPU's refcount on clamp changes
+  sched/core: uclamp: enforce last task UCLAMP_MAX
+  sched/cpufreq: uclamp: add utilization clamping for FAIR tasks
+  sched/core: uclamp: extend cpu's cgroup controller
+  sched/core: uclamp: propagate parent clamps
+  sched/core: uclamp: map TG's clamp values into CPU's clamp groups
+  sched/core: uclamp: use TG's clamps to restrict Task's clamps
+  sched/core: uclamp: add system default clamps
+  sched/core: uclamp: update CPU's refcount on TG's clamp changes
+  sched/core: uclamp: use percentage clamp values
+  sched/core: uclamp: request CAP_SYS_ADMIN by default
+  sched/core: uclamp: add clamp group discretization support
+  sched/cpufreq: uclamp: add utilization clamping for RT tasks
+
+ Documentation/admin-guide/cgroup-v2.rst       |   46 +
+ .../admin-guide/kernel-parameters.txt         |    3 +
+ include/linux/sched.h                         |   65 +
+ include/linux/sched/sysctl.h                  |   11 +
+ include/linux/sched/task.h                    |    6 +
+ include/uapi/linux/sched.h                    |    8 +-
+ include/uapi/linux/sched/types.h              |   68 +-
+ init/Kconfig                                  |   63 +
+ init/init_task.c                              |    1 +
+ kernel/exit.c                                 |    1 +
+ kernel/sched/core.c                           | 1368 ++++++++++++++++-
+ kernel/sched/cpufreq_schedutil.c              |   31 +-
+ kernel/sched/fair.c                           |    4 +
+ kernel/sched/features.h                       |   10 +
+ kernel/sched/rt.c                             |    4 +
+ kernel/sched/sched.h                          |  177 ++-
+ kernel/sysctl.c                               |   16 +
+ 17 files changed, 1863 insertions(+), 19 deletions(-)
+
+-- 
+2.18.0
