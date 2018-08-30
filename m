@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 13/24] x86/mm: Shadow stack page fault error checking
-Date: Thu, 30 Aug 2018 07:38:53 -0700
-Message-ID: <20180830143904.3168-14-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 12/24] x86/mm: Modify ptep_set_wrprotect and pmdp_set_wrprotect for _PAGE_DIRTY_SW
+Date: Thu, 30 Aug 2018 07:38:52 -0700
+Message-ID: <20180830143904.3168-13-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,73 +10,78 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-If a page fault is triggered by a shadow stack access (e.g.
-call/ret) or shadow stack management instructions (e.g.
-wrussq), then bit[6] of the page fault error code is set.
+When Shadow Stack is enabled, the read-only and PAGE_DIRTY_HW PTE
+setting is reserved only for the Shadow Stack.  To track dirty of
+non-Shadow Stack read-only PTEs, we use PAGE_DIRTY_SW.
 
-In access_error(), we check if a shadow stack page fault
-is within a shadow stack memory area.
+Update ptep_set_wrprotect() and pmdp_set_wrprotect().
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/traps.h |  2 ++
- arch/x86/mm/fault.c          | 18 ++++++++++++++++++
- 2 files changed, 20 insertions(+)
+ arch/x86/include/asm/pgtable.h | 42 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 5196050ff3d5..58ea2f5722e9 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -157,6 +157,7 @@ enum {
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  */
- enum x86_pf_error_code {
- 	X86_PF_PROT	=		1 << 0,
-@@ -165,5 +166,6 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- };
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index b9123c497e0a..3842353fb4a3 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1162,6 +1162,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
- 
-+	/*
-+	 * Verify X86_PF_SHSTK is within a shadow stack VMA.
-+	 * It is always an error if there is a shadow stack
-+	 * fault outside a shadow stack VMA.
-+	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHSTK))
-+			return 1;
-+		return 0;
-+	}
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 4d50de77ea96..556ef258eeff 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1203,7 +1203,28 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+ static inline void ptep_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pte_t *ptep)
+ {
++	pte_t pte;
 +
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -1300,6 +1311,13 @@ __do_page_fault(struct pt_regs *regs, unsigned long error_code,
- 
- 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
- 
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
++	pte = *ptep;
++
 +	/*
-+	 * If the fault is caused by a shadow stack access,
-+	 * i.e. CALL/RET/SAVEPREVSSP/RSTORSSP, then set
-+	 * FAULT_FLAG_WRITE to effect copy-on-write.
++	 * Some processors can start a write, but ending up seeing
++	 * a read-only PTE by the time they get to the Dirty bit.
++	 * In this case, they will set the Dirty bit, leaving a
++	 * read-only, Dirty PTE which looks like a Shadow Stack PTE.
++	 *
++	 * However, this behavior has been improved and will not occur
++	 * on processors supporting Shadow Stacks.  Without this
++	 * guarantee, a transition to a non-present PTE and flush the
++	 * TLB would be needed.
++	 *
++	 * When change a writable PTE to read-only and if the PTE has
++	 * _PAGE_DIRTY_HW set, we move that bit to _PAGE_DIRTY_SW so
++	 * that the PTE is not a valid Shadow Stack PTE.
 +	 */
-+	if (error_code & X86_PF_SHSTK)
-+		flags |= FAULT_FLAG_WRITE;
- 	if (error_code & X86_PF_WRITE)
- 		flags |= FAULT_FLAG_WRITE;
- 	if (error_code & X86_PF_INSTR)
++	pte = pte_move_flags(pte, _PAGE_DIRTY_HW, _PAGE_DIRTY_SW);
++	set_pte_at(mm, addr, ptep, pte);
+ }
+ 
+ #define flush_tlb_fix_spurious_fault(vma, address) do { } while (0)
+@@ -1266,7 +1287,28 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pmd_t *pmdp)
+ {
++	pmd_t pmd;
++
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
++	pmd = *pmdp;
++
++	/*
++	 * Some processors can start a write, but ending up seeing
++	 * a read-only PTE by the time they get to the Dirty bit.
++	 * In this case, they will set the Dirty bit, leaving a
++	 * read-only, Dirty PTE which looks like a Shadow Stack PTE.
++	 *
++	 * However, this behavior has been improved and will not occur
++	 * on processors supporting Shadow Stacks.  Without this
++	 * guarantee, a transition to a non-present PTE and flush the
++	 * TLB would be needed.
++	 *
++	 * When change a writable PTE to read-only and if the PTE has
++	 * _PAGE_DIRTY_HW set, we move that bit to _PAGE_DIRTY_SW so
++	 * that the PTE is not a valid Shadow Stack PTE.
++	 */
++	pmd = pmd_move_flags(pmd, _PAGE_DIRTY_HW, _PAGE_DIRTY_SW);
++	set_pmd_at(mm, addr, pmdp, pmd);
+ }
+ 
+ #define pud_write pud_write
 -- 
 2.17.1
