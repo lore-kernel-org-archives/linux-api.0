@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 12/24] x86/mm: Modify ptep_set_wrprotect and pmdp_set_wrprotect for _PAGE_DIRTY_SW
-Date: Thu, 30 Aug 2018 07:38:52 -0700
-Message-ID: <20180830143904.3168-13-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 11/24] drm/i915/gvt: Update _PAGE_DIRTY to _PAGE_DIRTY_BITS
+Date: Thu, 30 Aug 2018 07:38:51 -0700
+Message-ID: <20180830143904.3168-12-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,78 +10,28 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-When Shadow Stack is enabled, the read-only and PAGE_DIRTY_HW PTE
-setting is reserved only for the Shadow Stack.  To track dirty of
-non-Shadow Stack read-only PTEs, we use PAGE_DIRTY_SW.
+Update _PAGE_DIRTY to _PAGE_DIRTY_BITS in split_2MB_gtt_entry().
 
-Update ptep_set_wrprotect() and pmdp_set_wrprotect().
+In order to support Control Flow Enforcement (CET), _PAGE_DIRTY
+is now _PAGE_DIRTY_HW or _PAGE_DIRTY_SW.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/pgtable.h | 42 ++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+ drivers/gpu/drm/i915/gvt/gtt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 4d50de77ea96..556ef258eeff 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1203,7 +1203,28 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
- static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pte_t *ptep)
- {
-+	pte_t pte;
-+
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
-+	pte = *ptep;
-+
-+	/*
-+	 * Some processors can start a write, but ending up seeing
-+	 * a read-only PTE by the time they get to the Dirty bit.
-+	 * In this case, they will set the Dirty bit, leaving a
-+	 * read-only, Dirty PTE which looks like a Shadow Stack PTE.
-+	 *
-+	 * However, this behavior has been improved and will not occur
-+	 * on processors supporting Shadow Stacks.  Without this
-+	 * guarantee, a transition to a non-present PTE and flush the
-+	 * TLB would be needed.
-+	 *
-+	 * When change a writable PTE to read-only and if the PTE has
-+	 * _PAGE_DIRTY_HW set, we move that bit to _PAGE_DIRTY_SW so
-+	 * that the PTE is not a valid Shadow Stack PTE.
-+	 */
-+	pte = pte_move_flags(pte, _PAGE_DIRTY_HW, _PAGE_DIRTY_SW);
-+	set_pte_at(mm, addr, ptep, pte);
- }
+diff --git a/drivers/gpu/drm/i915/gvt/gtt.c b/drivers/gpu/drm/i915/gvt/gtt.c
+index 00aad8164dec..2d6ba1462dd8 100644
+--- a/drivers/gpu/drm/i915/gvt/gtt.c
++++ b/drivers/gpu/drm/i915/gvt/gtt.c
+@@ -1170,7 +1170,7 @@ static int split_2MB_gtt_entry(struct intel_vgpu *vgpu,
+ 	}
  
- #define flush_tlb_fix_spurious_fault(vma, address) do { } while (0)
-@@ -1266,7 +1287,28 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
- static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pmd_t *pmdp)
- {
-+	pmd_t pmd;
-+
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
-+	pmd = *pmdp;
-+
-+	/*
-+	 * Some processors can start a write, but ending up seeing
-+	 * a read-only PTE by the time they get to the Dirty bit.
-+	 * In this case, they will set the Dirty bit, leaving a
-+	 * read-only, Dirty PTE which looks like a Shadow Stack PTE.
-+	 *
-+	 * However, this behavior has been improved and will not occur
-+	 * on processors supporting Shadow Stacks.  Without this
-+	 * guarantee, a transition to a non-present PTE and flush the
-+	 * TLB would be needed.
-+	 *
-+	 * When change a writable PTE to read-only and if the PTE has
-+	 * _PAGE_DIRTY_HW set, we move that bit to _PAGE_DIRTY_SW so
-+	 * that the PTE is not a valid Shadow Stack PTE.
-+	 */
-+	pmd = pmd_move_flags(pmd, _PAGE_DIRTY_HW, _PAGE_DIRTY_SW);
-+	set_pmd_at(mm, addr, pmdp, pmd);
- }
+ 	/* Clear dirty field. */
+-	se->val64 &= ~_PAGE_DIRTY;
++	se->val64 &= ~_PAGE_DIRTY_BITS;
  
- #define pud_write pud_write
+ 	ops->clear_pse(se);
+ 	ops->clear_ips(se);
 -- 
 2.17.1
