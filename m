@@ -1,123 +1,65 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 00/24] Control Flow Enforcement: Shadow Stack
-Date: Thu, 30 Aug 2018 07:38:40 -0700
-Message-ID: <20180830143904.3168-1-yu-cheng.yu@intel.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH v3 19/24] x86/cet/shstk: Introduce WRUSS instruction
+Date: Thu, 30 Aug 2018 17:39:35 +0200
+Message-ID: <CAG48ez3uZrC-9uJ0uMoVPTtxRXRN8D+3zs5FknZD2woTT6mazg@mail.gmail.com>
+References: <20180830143904.3168-1-yu-cheng.yu@intel.com> <20180830143904.3168-20-yu-cheng.yu@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180830143904.3168-20-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
+To: yu-cheng.yu@intel.com
+Cc: the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, keescook@chromiun.org, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>Pavel Machek <pa>
 List-Id: linux-api@vger.kernel.org
 
-The previous version of CET patches can be found in the following
-link.
+On Thu, Aug 30, 2018 at 4:44 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>
+> WRUSS is a new kernel-mode instruction but writes directly
+> to user shadow stack memory.  This is used to construct
+> a return address on the shadow stack for the signal
+> handler.
+>
+> This instruction can fault if the user shadow stack is
+> invalid shadow stack memory.  In that case, the kernel does
+> fixup.
+>
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+[...]
+> +static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
+> +{
+> +       int err = 0;
+> +
+> +       asm volatile("1: wrussq %1, (%0)\n"
+> +                    "2:\n"
+> +                    _ASM_EXTABLE_HANDLE(1b, 2b, ex_handler_wruss)
+> +                    :
+> +                    : "r" (addr), "r" (val));
+> +
+> +       return err;
+> +}
 
-  https://lkml.org/lkml/2018/7/10/1031
+What's up with "err"? You set it to zero, and then you return it, but
+nothing can ever set it to non-zero, right?
 
-Summary of changes from v2:
+> +__visible bool ex_handler_wruss(const struct exception_table_entry *fixup,
+> +                               struct pt_regs *regs, int trapnr)
+> +{
+> +       regs->ip = ex_fixup_addr(fixup);
+> +       regs->ax = -1;
+> +       return true;
+> +}
 
-  Move Shadow Stack page fault handling logic to arch/x86.
-  Update can_follow_write_pte/pmd; move logic to arch/x86.
-  Fix problems in WRUSS in-line assembly.
-  Fix issues in ELF parser.
-  Split out IBT/PTRACE patches to a second set.
-  Other small fixes.
+And here you just write into regs->ax, but your "asm volatile" doesn't
+reserve that register. This looks wrong to me.
 
-Yu-cheng Yu (24):
-  x86/cpufeatures: Add CPUIDs for Control-flow Enforcement Technology
-    (CET)
-  x86/fpu/xstate: Change some names to separate XSAVES system and user
-    states
-  x86/fpu/xstate: Enable XSAVES system states
-  x86/fpu/xstate: Add XSAVES system states for shadow stack
-  Documentation/x86: Add CET description
-  x86/cet: Control protection exception handler
-  x86/cet/shstk: Add Kconfig option for user-mode shadow stack
-  mm: Introduce VM_SHSTK for shadow stack memory
-  x86/mm: Change _PAGE_DIRTY to _PAGE_DIRTY_HW
-  x86/mm: Introduce _PAGE_DIRTY_SW
-  drm/i915/gvt: Update _PAGE_DIRTY to _PAGE_DIRTY_BITS
-  x86/mm: Modify ptep_set_wrprotect and pmdp_set_wrprotect for
-    _PAGE_DIRTY_SW
-  x86/mm: Shadow stack page fault error checking
-  mm: Handle shadow stack page fault
-  mm: Handle THP/HugeTLB shadow stack page fault
-  mm: Update can_follow_write_pte/pmd for shadow stack
-  mm: Introduce do_mmap_locked()
-  x86/cet/shstk: User-mode shadow stack support
-  x86/cet/shstk: Introduce WRUSS instruction
-  x86/cet/shstk: Signal handling for shadow stack
-  x86/cet/shstk: ELF header parsing of Shadow Stack
-  x86/cet/shstk: Handle thread shadow stack
-  x86/cet/shstk: Add arch_prctl functions for Shadow Stack
-  x86/cet/shstk: Add Shadow Stack instructions to opcode map
+I think you probably want to add something like an explicit
+`"+&a"(err)` output to the asm statements.
 
- .../admin-guide/kernel-parameters.txt         |   6 +
- Documentation/index.rst                       |   1 +
- Documentation/x86/index.rst                   |  11 +
- Documentation/x86/intel_cet.rst               | 252 +++++++++++++
- arch/x86/Kconfig                              |  28 ++
- arch/x86/Makefile                             |   7 +
- arch/x86/entry/entry_64.S                     |   2 +-
- arch/x86/ia32/ia32_signal.c                   |  13 +
- arch/x86/include/asm/cet.h                    |  42 +++
- arch/x86/include/asm/cpufeatures.h            |   2 +
- arch/x86/include/asm/disabled-features.h      |   8 +-
- arch/x86/include/asm/elf.h                    |   5 +
- arch/x86/include/asm/fpu/internal.h           |   6 +-
- arch/x86/include/asm/fpu/types.h              |  22 ++
- arch/x86/include/asm/fpu/xstate.h             |  31 +-
- arch/x86/include/asm/mmu_context.h            |   3 +
- arch/x86/include/asm/msr-index.h              |  14 +
- arch/x86/include/asm/pgtable.h                | 175 +++++++--
- arch/x86/include/asm/pgtable_types.h          |  31 +-
- arch/x86/include/asm/processor.h              |   5 +
- arch/x86/include/asm/sighandling.h            |   5 +
- arch/x86/include/asm/special_insns.h          |  37 ++
- arch/x86/include/asm/traps.h                  |   5 +
- arch/x86/include/uapi/asm/elf_property.h      |  15 +
- arch/x86/include/uapi/asm/prctl.h             |   5 +
- arch/x86/include/uapi/asm/processor-flags.h   |   2 +
- arch/x86/include/uapi/asm/sigcontext.h        |  17 +
- arch/x86/kernel/Makefile                      |   4 +
- arch/x86/kernel/cet.c                         | 285 +++++++++++++++
- arch/x86/kernel/cet_prctl.c                   |  79 ++++
- arch/x86/kernel/cpu/common.c                  |  24 ++
- arch/x86/kernel/cpu/scattered.c               |   1 +
- arch/x86/kernel/elf.c                         | 338 ++++++++++++++++++
- arch/x86/kernel/fpu/core.c                    |  11 +-
- arch/x86/kernel/fpu/init.c                    |  10 -
- arch/x86/kernel/fpu/signal.c                  |   6 +-
- arch/x86/kernel/fpu/xstate.c                  | 152 +++++---
- arch/x86/kernel/idt.c                         |   4 +
- arch/x86/kernel/process.c                     |   8 +
- arch/x86/kernel/process_64.c                  |   7 +
- arch/x86/kernel/relocate_kernel_64.S          |   2 +-
- arch/x86/kernel/signal.c                      |  96 +++++
- arch/x86/kernel/traps.c                       |  58 +++
- arch/x86/kvm/vmx.c                            |   2 +-
- arch/x86/lib/x86-opcode-map.txt               |  26 +-
- arch/x86/mm/extable.c                         |  11 +
- arch/x86/mm/fault.c                           |  27 ++
- arch/x86/mm/pgtable.c                         |  36 ++
- drivers/gpu/drm/i915/gvt/gtt.c                |   2 +-
- fs/binfmt_elf.c                               |  15 +
- fs/proc/task_mmu.c                            |   3 +
- include/asm-generic/pgtable.h                 |  52 +++
- include/linux/mm.h                            |  26 ++
- include/uapi/linux/elf.h                      |   1 +
- mm/gup.c                                      |   8 +-
- mm/huge_memory.c                              |  12 +-
- mm/internal.h                                 |   8 +
- mm/memory.c                                   |   3 +
- tools/objtool/arch/x86/lib/x86-opcode-map.txt |  26 +-
- 59 files changed, 1943 insertions(+), 150 deletions(-)
- create mode 100644 Documentation/x86/index.rst
- create mode 100644 Documentation/x86/intel_cet.rst
- create mode 100644 arch/x86/include/asm/cet.h
- create mode 100644 arch/x86/include/uapi/asm/elf_property.h
- create mode 100644 arch/x86/kernel/cet.c
- create mode 100644 arch/x86/kernel/cet_prctl.c
- create mode 100644 arch/x86/kernel/elf.c
+> @@ -1305,6 +1305,15 @@ __do_page_fault(struct pt_regs *regs, unsigned long error_code,
+>                 error_code |= X86_PF_USER;
+>                 flags |= FAULT_FLAG_USER;
+>         } else {
+> +               /*
+> +                * WRUSS is a kernel instrcution and but writes
 
--- 
-2.17.1
+Nits: typo ("instrcution"), weird grammar ("and but writes")
