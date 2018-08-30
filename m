@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 15/24] mm: Handle THP/HugeTLB shadow stack page fault
-Date: Thu, 30 Aug 2018 07:38:55 -0700
-Message-ID: <20180830143904.3168-16-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 07/24] x86/cet/shstk: Add Kconfig option for user-mode shadow stack
+Date: Thu, 30 Aug 2018 07:38:47 -0700
+Message-ID: <20180830143904.3168-8-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,91 +10,84 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch implements THP shadow stack memory copying in the same
-way as the previous patch for regular PTE.
+Introduce Kconfig option X86_INTEL_SHADOW_STACK_USER.
 
-In copy_huge_pmd(), we clear the dirty bit from the PMD.  On the
-next shadow stack access to the PMD, a page fault occurs.  At
-that time, the page is copied/re-used and the PMD is fixed.
+An application has shadow stack protection when all the following are
+true:
+
+  (1) The kernel has X86_INTEL_SHADOW_STACK_USER enabled,
+  (2) The running processor supports the shadow stack,
+  (3) The application is built with shadow stack enabled tools & libs
+      and, and at runtime, all dependent shared libs can support shadow
+      stack.
+
+If this kernel config option is enabled, but (2) or (3) above is not
+true, the application runs without the shadow stack protection.
+Existing legacy applications will continue to work without the shadow
+stack protection.
+
+The user-mode shadow stack protection is only implemented for the
+64-bit kernel.  Thirty-two bit applications are supported under the
+compatibility mode.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/mm/pgtable.c         | 8 ++++++++
- include/asm-generic/pgtable.h | 6 ++++++
- mm/huge_memory.c              | 4 ++++
- 3 files changed, 18 insertions(+)
+ arch/x86/Kconfig  | 24 ++++++++++++++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 31 insertions(+)
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index c63261128ac3..0ab38bfbedfc 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -881,4 +881,12 @@ inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
- 	else
- 		return pte;
- }
-+
-+inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
-+{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pmd_mkdirty_shstk(pmd);
-+	else
-+		return pmd;
-+}
- #endif /* CONFIG_X86_INTEL_SHADOW_STACK_USER */
-diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
-index 558a485617cd..0f25186cd38d 100644
---- a/include/asm-generic/pgtable.h
-+++ b/include/asm-generic/pgtable.h
-@@ -1151,8 +1151,14 @@ static inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
- {
- 	return pte;
- }
-+
-+static inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
-+{
-+	return pmd;
-+}
- #else
- pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
-+pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
- #endif
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index c5ff296bc5d1..017b3ba70807 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1913,6 +1913,30 @@ config X86_INTEL_MEMORY_PROTECTION_KEYS
  
- #endif /* _ASM_GENERIC_PGTABLE_H */
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index c3bc7e9c9a2a..5b4c8f2fb85e 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -597,6 +597,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
+ 	  If unsure, say y.
  
- 		entry = mk_huge_pmd(page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		page_add_new_anon_rmap(page, vma, haddr, true);
- 		mem_cgroup_commit_charge(page, memcg, false, true);
- 		lru_cache_add_active_or_unevictable(page, vma);
-@@ -1194,6 +1195,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
- 		pte_t entry;
- 		entry = mk_pte(pages[i], vma->vm_page_prot);
- 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+		entry = pte_set_vma_features(entry, vma);
- 		memcg = (void *)page_private(pages[i]);
- 		set_page_private(pages[i], 0);
- 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
-@@ -1278,6 +1280,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = pmd_mkyoung(orig_pmd);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
- 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 		ret |= VM_FAULT_WRITE;
-@@ -1349,6 +1352,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
- 		page_add_new_anon_rmap(new_page, vma, haddr, true);
- 		mem_cgroup_commit_charge(new_page, memcg, false, true);
++config X86_INTEL_CET
++	def_bool n
++
++config ARCH_HAS_SHSTK
++	def_bool n
++
++config X86_INTEL_SHADOW_STACK_USER
++	prompt "Intel Shadow Stack for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	select ARCH_HAS_SHSTK
++	---help---
++	  Shadow stack provides hardware protection against program stack
++	  corruption.  Only when all the following are true will an application
++	  have the shadow stack protection: the kernel supports it (i.e. this
++	  feature is enabled), the application is compiled and linked with
++	  shadow stack enabled, and the processor supports this feature.
++	  When the kernel has this configuration enabled, existing non shadow
++	  stack applications will continue to work, but without shadow stack
++	  protection.
++
++	  If unsure, say y.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 94859241bc3e..00927853e409 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -152,6 +152,13 @@ ifdef CONFIG_X86_X32
+ endif
+ export CONFIG_X86_X32_ABI
+ 
++# Check assembler shadow stack suppot
++ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++  ifeq ($(call as-instr, saveprevssp, y),)
++      $(error CONFIG_X86_INTEL_SHADOW_STACK_USER not supported by the assembler)
++  endif
++endif
++
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.17.1
