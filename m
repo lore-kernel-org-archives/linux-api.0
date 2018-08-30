@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 19/24] x86/cet/shstk: Introduce WRUSS instruction
-Date: Thu, 30 Aug 2018 07:38:59 -0700
-Message-ID: <20180830143904.3168-20-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 14/24] mm: Handle shadow stack page fault
+Date: Thu, 30 Aug 2018 07:38:54 -0700
+Message-ID: <20180830143904.3168-15-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,111 +10,89 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-WRUSS is a new kernel-mode instruction but writes directly
-to user shadow stack memory.  This is used to construct
-a return address on the shadow stack for the signal
-handler.
+When a task does fork(), its shadow stack must be duplicated for
+the child.  However, the child may not actually use all pages of
+of the copied shadow stack.  This patch implements a flow that
+is similar to copy-on-write of an anonymous page, but for shadow
+stack memory.  A shadow stack PTE needs to be RO and dirty.  We
+use this dirty bit requirement to effect the copying of shadow
+stack pages.
 
-This instruction can fault if the user shadow stack is
-invalid shadow stack memory.  In that case, the kernel does
-fixup.
+In copy_one_pte(), we clear the dirty bit from the shadow stack
+PTE.  On the next shadow stack access to the PTE, a page fault
+occurs.  At that time, we then copy/re-use the page and fix the
+PTE.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/special_insns.h | 37 ++++++++++++++++++++++++++++
- arch/x86/mm/extable.c                | 11 +++++++++
- arch/x86/mm/fault.c                  |  9 +++++++
- 3 files changed, 57 insertions(+)
+ arch/x86/mm/pgtable.c         | 10 ++++++++++
+ include/asm-generic/pgtable.h |  7 +++++++
+ mm/memory.c                   |  3 +++
+ 3 files changed, 20 insertions(+)
 
-diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
-index 317fc59b512c..9f609e802c5c 100644
---- a/arch/x86/include/asm/special_insns.h
-+++ b/arch/x86/include/asm/special_insns.h
-@@ -237,6 +237,43 @@ static inline void clwb(volatile void *__p)
- 		: [pax] "a" (p));
- }
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index e848a4811785..c63261128ac3 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -872,3 +872,13 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
  
-+#ifdef CONFIG_X86_INTEL_CET
+ #endif /* CONFIG_X86_64 */
+ #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
 +
-+#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
-+static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
 +{
-+	int err = 0;
++	if (vma->vm_flags & VM_SHSTK)
++		return pte_mkdirty_shstk(pte);
++	else
++		return pte;
++}
++#endif /* CONFIG_X86_INTEL_SHADOW_STACK_USER */
+diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
+index aa5271717126..558a485617cd 100644
+--- a/include/asm-generic/pgtable.h
++++ b/include/asm-generic/pgtable.h
+@@ -1146,6 +1146,13 @@ static inline bool pmd_dirty_hw(pmd_t pmd)
+ {
+ 	return false;
+ }
 +
-+	asm volatile("1: wrussd %1, (%0)\n"
-+		     "2:\n"
-+		     _ASM_EXTABLE_HANDLE(1b, 2b, ex_handler_wruss)
-+		     :
-+		     : "r" (addr), "r" (val));
-+
-+	return err;
++static inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
++{
++	return pte;
 +}
 +#else
-+static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
-+{
-+	BUG();
-+	return 0;
-+}
-+#endif
-+
-+static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
-+{
-+	int err = 0;
-+
-+	asm volatile("1: wrussq %1, (%0)\n"
-+		     "2:\n"
-+		     _ASM_EXTABLE_HANDLE(1b, 2b, ex_handler_wruss)
-+		     :
-+		     : "r" (addr), "r" (val));
-+
-+	return err;
-+}
-+#endif /* CONFIG_X86_INTEL_CET */
-+
- #define nop() asm volatile ("nop")
++pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
+ #endif
  
+ #endif /* _ASM_GENERIC_PGTABLE_H */
+diff --git a/mm/memory.c b/mm/memory.c
+index c467102a5cbc..9b4e11944b5d 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -2462,6 +2462,7 @@ static inline void wp_page_reuse(struct vm_fault *vmf)
+ 	flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+ 	entry = pte_mkyoung(vmf->orig_pte);
+ 	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++	entry = pte_set_vma_features(entry, vma);
+ 	if (ptep_set_access_flags(vma, vmf->address, vmf->pte, entry, 1))
+ 		update_mmu_cache(vma, vmf->address, vmf->pte);
+ 	pte_unmap_unlock(vmf->pte, vmf->ptl);
+@@ -2535,6 +2536,7 @@ static vm_fault_t wp_page_copy(struct vm_fault *vmf)
+ 		flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+ 		entry = mk_pte(new_page, vma->vm_page_prot);
+ 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++		entry = pte_set_vma_features(entry, vma);
+ 		/*
+ 		 * Clear the pte entry and flush it first, before updating the
+ 		 * pte with the new entry. This will avoid a race condition
+@@ -3187,6 +3189,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ 	entry = mk_pte(page, vma->vm_page_prot);
+ 	if (vma->vm_flags & VM_WRITE)
+ 		entry = pte_mkwrite(pte_mkdirty(entry));
++	entry = pte_set_vma_features(entry, vma);
  
-diff --git a/arch/x86/mm/extable.c b/arch/x86/mm/extable.c
-index 45f5d6cf65ae..e06ff851b671 100644
---- a/arch/x86/mm/extable.c
-+++ b/arch/x86/mm/extable.c
-@@ -157,6 +157,17 @@ __visible bool ex_handler_clear_fs(const struct exception_table_entry *fixup,
- }
- EXPORT_SYMBOL(ex_handler_clear_fs);
- 
-+#ifdef CONFIG_X86_INTEL_CET
-+__visible bool ex_handler_wruss(const struct exception_table_entry *fixup,
-+				struct pt_regs *regs, int trapnr)
-+{
-+	regs->ip = ex_fixup_addr(fixup);
-+	regs->ax = -1;
-+	return true;
-+}
-+EXPORT_SYMBOL(ex_handler_wruss);
-+#endif
-+
- __visible bool ex_has_fault_handler(unsigned long ip)
- {
- 	const struct exception_table_entry *e;
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index 3842353fb4a3..10dbb5c9aaef 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1305,6 +1305,15 @@ __do_page_fault(struct pt_regs *regs, unsigned long error_code,
- 		error_code |= X86_PF_USER;
- 		flags |= FAULT_FLAG_USER;
- 	} else {
-+		/*
-+		 * WRUSS is a kernel instrcution and but writes
-+		 * to user shadow stack.  When a fault occurs,
-+		 * both X86_PF_USER and X86_PF_SHSTK are set.
-+		 * Clear X86_PF_USER here.
-+		 */
-+		if ((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
-+		    (X86_PF_USER | X86_PF_SHSTK))
-+			error_code &= ~X86_PF_USER;
- 		if (regs->flags & X86_EFLAGS_IF)
- 			local_irq_enable();
- 	}
+ 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
+ 			&vmf->ptl);
 -- 
 2.17.1
