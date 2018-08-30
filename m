@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 06/24] x86/cet: Control protection exception handler
-Date: Thu, 30 Aug 2018 07:38:46 -0700
-Message-ID: <20180830143904.3168-7-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 04/24] x86/fpu/xstate: Add XSAVES system states for shadow stack
+Date: Thu, 30 Aug 2018 07:38:44 -0700
+Message-ID: <20180830143904.3168-5-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,147 +10,139 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-A control protection exception is triggered when a control flow transfer
-attempt violated shadow stack or indirect branch tracking constraints.
-For example, the return address for a RET instruction differs from the
-safe copy on the shadow stack; or a JMP instruction arrives at a non-
-ENDBR instruction.
+Intel Control-flow Enforcement Technology (CET) introduces the
+following MSRs into the XSAVES system states.
 
-The control protection exception handler works in a similar way as the
-general protection fault handler.
+    IA32_U_CET (user-mode CET settings),
+    IA32_PL3_SSP (user-mode shadow stack),
+    IA32_PL0_SSP (kernel-mode shadow stack),
+    IA32_PL1_SSP (ring-1 shadow stack),
+    IA32_PL2_SSP (ring-2 shadow stack).
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/entry/entry_64.S    |  2 +-
- arch/x86/include/asm/traps.h |  3 ++
- arch/x86/kernel/idt.c        |  4 +++
- arch/x86/kernel/traps.c      | 58 ++++++++++++++++++++++++++++++++++++
- 4 files changed, 66 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/fpu/types.h            | 22 +++++++++++++++++++++
+ arch/x86/include/asm/fpu/xstate.h           |  4 +++-
+ arch/x86/include/uapi/asm/processor-flags.h |  2 ++
+ arch/x86/kernel/fpu/xstate.c                | 10 ++++++++++
+ 4 files changed, 37 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index 957dfb693ecc..5f4914e988df 100644
---- a/arch/x86/entry/entry_64.S
-+++ b/arch/x86/entry/entry_64.S
-@@ -1000,7 +1000,7 @@ idtentry spurious_interrupt_bug		do_spurious_interrupt_bug	has_error_code=0
- idtentry coprocessor_error		do_coprocessor_error		has_error_code=0
- idtentry alignment_check		do_alignment_check		has_error_code=1
- idtentry simd_coprocessor_error		do_simd_coprocessor_error	has_error_code=0
--
-+idtentry control_protection		do_control_protection		has_error_code=1
+diff --git a/arch/x86/include/asm/fpu/types.h b/arch/x86/include/asm/fpu/types.h
+index 202c53918ecf..e55d51d172f1 100644
+--- a/arch/x86/include/asm/fpu/types.h
++++ b/arch/x86/include/asm/fpu/types.h
+@@ -114,6 +114,9 @@ enum xfeature {
+ 	XFEATURE_Hi16_ZMM,
+ 	XFEATURE_PT_UNIMPLEMENTED_SO_FAR,
+ 	XFEATURE_PKRU,
++	XFEATURE_RESERVED,
++	XFEATURE_SHSTK_USER,
++	XFEATURE_SHSTK_KERNEL,
  
- 	/*
- 	 * Reload gs selector with exception handling
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 3de69330e6c5..5196050ff3d5 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -26,6 +26,7 @@ asmlinkage void invalid_TSS(void);
- asmlinkage void segment_not_present(void);
- asmlinkage void stack_segment(void);
- asmlinkage void general_protection(void);
-+asmlinkage void control_protection(void);
- asmlinkage void page_fault(void);
- asmlinkage void async_page_fault(void);
- asmlinkage void spurious_interrupt_bug(void);
-@@ -77,6 +78,7 @@ dotraplinkage void do_stack_segment(struct pt_regs *, long);
- dotraplinkage void do_double_fault(struct pt_regs *, long);
- #endif
- dotraplinkage void do_general_protection(struct pt_regs *, long);
-+dotraplinkage void do_control_protection(struct pt_regs *, long);
- dotraplinkage void do_page_fault(struct pt_regs *, unsigned long);
- dotraplinkage void do_spurious_interrupt_bug(struct pt_regs *, long);
- dotraplinkage void do_coprocessor_error(struct pt_regs *, long);
-@@ -142,6 +144,7 @@ enum {
- 	X86_TRAP_AC,		/* 17, Alignment Check */
- 	X86_TRAP_MC,		/* 18, Machine Check */
- 	X86_TRAP_XF,		/* 19, SIMD Floating-Point Exception */
-+	X86_TRAP_CP = 21,	/* 21 Control Protection Fault */
- 	X86_TRAP_IRET = 32,	/* 32, IRET Exception */
+ 	XFEATURE_MAX,
+ };
+@@ -128,6 +131,8 @@ enum xfeature {
+ #define XFEATURE_MASK_Hi16_ZMM		(1 << XFEATURE_Hi16_ZMM)
+ #define XFEATURE_MASK_PT		(1 << XFEATURE_PT_UNIMPLEMENTED_SO_FAR)
+ #define XFEATURE_MASK_PKRU		(1 << XFEATURE_PKRU)
++#define XFEATURE_MASK_SHSTK_USER	(1 << XFEATURE_SHSTK_USER)
++#define XFEATURE_MASK_SHSTK_KERNEL	(1 << XFEATURE_SHSTK_KERNEL)
+ 
+ #define XFEATURE_MASK_FPSSE		(XFEATURE_MASK_FP | XFEATURE_MASK_SSE)
+ #define XFEATURE_MASK_AVX512		(XFEATURE_MASK_OPMASK \
+@@ -229,6 +234,23 @@ struct pkru_state {
+ 	u32				pad;
+ } __packed;
+ 
++/*
++ * State component 11 is Control flow Enforcement user states
++ */
++struct cet_user_state {
++	u64 u_cet;	/* user control flow settings */
++	u64 user_ssp;	/* user shadow stack pointer */
++} __packed;
++
++/*
++ * State component 12 is Control flow Enforcement kernel states
++ */
++struct cet_kernel_state {
++	u64 kernel_ssp;	/* kernel shadow stack */
++	u64 pl1_ssp;	/* ring-1 shadow stack */
++	u64 pl2_ssp;	/* ring-2 shadow stack */
++} __packed;
++
+ struct xstate_header {
+ 	u64				xfeatures;
+ 	u64				xcomp_bv;
+diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
+index a32dc5f8c963..662562cbafe9 100644
+--- a/arch/x86/include/asm/fpu/xstate.h
++++ b/arch/x86/include/asm/fpu/xstate.h
+@@ -31,7 +31,9 @@
+ 				  XFEATURE_MASK_Hi16_ZMM | \
+ 				  XFEATURE_MASK_PKRU | \
+ 				  XFEATURE_MASK_BNDREGS | \
+-				  XFEATURE_MASK_BNDCSR)
++				  XFEATURE_MASK_BNDCSR | \
++				  XFEATURE_MASK_SHSTK_USER | \
++				  XFEATURE_MASK_SHSTK_KERNEL)
+ 
+ #ifdef CONFIG_X86_64
+ #define REX_PREFIX	"0x48, "
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index bcba3c643e63..25311ec4b731 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -130,6 +130,8 @@
+ #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
+ #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
+ #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
++#define X86_CR4_CET_BIT		23 /* enable Control flow Enforcement */
++#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
+ 
+ /*
+  * x86-64 Task Priority Register, CR8
+diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+index dd2c561c4544..91c0f665567b 100644
+--- a/arch/x86/kernel/fpu/xstate.c
++++ b/arch/x86/kernel/fpu/xstate.c
+@@ -35,6 +35,9 @@ static const char *xfeature_names[] =
+ 	"Processor Trace (unused)"	,
+ 	"Protection Keys User registers",
+ 	"unknown xstate feature"	,
++	"Control flow User registers"	,
++	"Control flow Kernel registers"	,
++	"unknown xstate feature"	,
  };
  
-diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
-index 01adea278a71..2d02fdd599a2 100644
---- a/arch/x86/kernel/idt.c
-+++ b/arch/x86/kernel/idt.c
-@@ -104,6 +104,10 @@ static const __initconst struct idt_data def_idts[] = {
- #elif defined(CONFIG_X86_32)
- 	SYSG(IA32_SYSCALL_VECTOR,	entry_INT80_32),
- #endif
-+
-+#ifdef CONFIG_X86_INTEL_CET
-+	INTG(X86_TRAP_CP,		control_protection),
-+#endif
+ static short xsave_cpuid_features[] __initdata = {
+@@ -48,6 +51,9 @@ static short xsave_cpuid_features[] __initdata = {
+ 	X86_FEATURE_AVX512F,
+ 	X86_FEATURE_INTEL_PT,
+ 	X86_FEATURE_PKU,
++	0,		   /* Unused */
++	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_USER */
++	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_KERNEL */
  };
  
  /*
-diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
-index e6db475164ed..21a713b96148 100644
---- a/arch/x86/kernel/traps.c
-+++ b/arch/x86/kernel/traps.c
-@@ -578,6 +578,64 @@ do_general_protection(struct pt_regs *regs, long error_code)
+@@ -316,6 +322,8 @@ static void __init print_xstate_features(void)
+ 	print_xstate_feature(XFEATURE_MASK_ZMM_Hi256);
+ 	print_xstate_feature(XFEATURE_MASK_Hi16_ZMM);
+ 	print_xstate_feature(XFEATURE_MASK_PKRU);
++	print_xstate_feature(XFEATURE_MASK_SHSTK_USER);
++	print_xstate_feature(XFEATURE_MASK_SHSTK_KERNEL);
  }
- NOKPROBE_SYMBOL(do_general_protection);
  
-+static const char *control_protection_err[] =
-+{
-+	"unknown",
-+	"near-ret",
-+	"far-ret/iret",
-+	"endbranch",
-+	"rstorssp",
-+	"setssbsy",
-+};
-+
-+/*
-+ * When a control protection exception occurs, send a signal
-+ * to the responsible application.  Currently, control
-+ * protection is only enabled for the user mode.  This
-+ * exception should not come from the kernel mode.
-+ */
-+dotraplinkage void
-+do_control_protection(struct pt_regs *regs, long error_code)
-+{
-+	struct task_struct *tsk;
-+
-+	RCU_LOCKDEP_WARN(!rcu_is_watching(), "entry code didn't wake RCU");
-+	if (notify_die(DIE_TRAP, "control protection fault", regs,
-+		       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
-+		return;
-+	cond_local_irq_enable(regs);
-+
-+	if (!user_mode(regs))
-+		die("kernel control protection fault", regs, error_code);
-+
-+	if (!static_cpu_has(X86_FEATURE_SHSTK) &&
-+	    !static_cpu_has(X86_FEATURE_IBT))
-+		WARN_ONCE(1, "CET is disabled but got control "
-+			  "protection fault\n");
-+
-+	tsk = current;
-+	tsk->thread.error_code = error_code;
-+	tsk->thread.trap_nr = X86_TRAP_CP;
-+
-+	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
-+	    printk_ratelimit()) {
-+		unsigned int max_err;
-+
-+		max_err = ARRAY_SIZE(control_protection_err) - 1;
-+		if ((error_code < 0) || (error_code > max_err))
-+			error_code = 0;
-+		pr_info("%s[%d] control protection ip:%lx sp:%lx error:%lx(%s)",
-+			tsk->comm, task_pid_nr(tsk),
-+			regs->ip, regs->sp, error_code,
-+			control_protection_err[error_code]);
-+		print_vma_addr(" in ", regs->ip);
-+		pr_cont("\n");
-+	}
-+
-+	force_sig_info(SIGSEGV, SEND_SIG_PRIV, tsk);
-+}
-+NOKPROBE_SYMBOL(do_control_protection);
-+
- dotraplinkage void notrace do_int3(struct pt_regs *regs, long error_code)
- {
- #ifdef CONFIG_DYNAMIC_FTRACE
+ /*
+@@ -562,6 +570,8 @@ static void check_xstate_against_struct(int nr)
+ 	XCHECK_SZ(sz, nr, XFEATURE_ZMM_Hi256, struct avx_512_zmm_uppers_state);
+ 	XCHECK_SZ(sz, nr, XFEATURE_Hi16_ZMM,  struct avx_512_hi16_state);
+ 	XCHECK_SZ(sz, nr, XFEATURE_PKRU,      struct pkru_state);
++	XCHECK_SZ(sz, nr, XFEATURE_SHSTK_USER,   struct cet_user_state);
++	XCHECK_SZ(sz, nr, XFEATURE_SHSTK_KERNEL, struct cet_kernel_state);
+ 
+ 	/*
+ 	 * Make *SURE* to add any feature numbers in below if
 -- 
 2.17.1
