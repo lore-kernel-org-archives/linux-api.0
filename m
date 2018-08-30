@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 1/8] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-Date: Thu, 30 Aug 2018 07:40:02 -0700
-Message-ID: <20180830144009.3314-2-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 8/8] x86/cet: Add PTRACE interface for CET
+Date: Thu, 30 Aug 2018 07:40:09 -0700
+Message-ID: <20180830144009.3314-9-yu-cheng.yu@intel.com>
 References: <20180830144009.3314-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830144009.3314-1-yu-cheng.yu@intel.com>
@@ -10,57 +10,147 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The user-mode indirect branch tracking support is done mostly by
-GCC to insert ENDBR64/ENDBR32 instructions at branch targets.
-The kernel provides CPUID enumeration, feature MSR setup and
-the allocation of legacy bitmap.
+Add REGSET_CET64/REGSET_CET32 to get/set CET MSRs:
+
+    IA32_U_CET (user-mode CET settings),
+    IA32_PL3_SSP (user-mode shadow stack),
+    IA32_PL0_SSP (kernel-mode shadow stack),
+    IA32_PL1_SSP (ring-1 shadow stack),
+    IA32_PL2_SSP (ring-2 shadow stack).
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig  | 12 ++++++++++++
- arch/x86/Makefile |  7 +++++++
- 2 files changed, 19 insertions(+)
+ arch/x86/include/asm/fpu/regset.h |  7 +++---
+ arch/x86/kernel/fpu/regset.c      | 41 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/ptrace.c          | 16 ++++++++++++
+ include/uapi/linux/elf.h          |  1 +
+ 4 files changed, 62 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 2cfe11e1cf7f..0d97b03f35f6 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1941,6 +1941,18 @@ config X86_INTEL_SHADOW_STACK_USER
+diff --git a/arch/x86/include/asm/fpu/regset.h b/arch/x86/include/asm/fpu/regset.h
+index d5bdffb9d27f..edad0d889084 100644
+--- a/arch/x86/include/asm/fpu/regset.h
++++ b/arch/x86/include/asm/fpu/regset.h
+@@ -7,11 +7,12 @@
  
- 	  If unsure, say y.
+ #include <linux/regset.h>
  
-+config X86_INTEL_BRANCH_TRACKING_USER
-+	prompt "Intel Indirect Branch Tracking for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	select X86_INTEL_CET
-+	select ARCH_HAS_PROGRAM_PROPERTIES
-+	---help---
-+	  Indirect Branch Tracking provides hardware protection against return-/jmp-
-+	  oriented programing attacks.
-+
-+	  If unsure, say y
-+
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 00927853e409..0da5121c30db 100644
---- a/arch/x86/Makefile
-+++ b/arch/x86/Makefile
-@@ -159,6 +159,13 @@ ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-   endif
- endif
+-extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active;
++extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active,
++				cetregs_active;
+ extern user_regset_get_fn fpregs_get, xfpregs_get, fpregs_soft_get,
+-				xstateregs_get;
++				xstateregs_get, cetregs_get;
+ extern user_regset_set_fn fpregs_set, xfpregs_set, fpregs_soft_set,
+-				 xstateregs_set;
++				 xstateregs_set, cetregs_set;
  
-+# Check compiler ibt support
-+ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+  ifeq ($(call cc-option-yn, -fcf-protection=branch), n)
-+      $(error CONFIG_X86_INTEL_BRANCH_TRACKING_USER not supported by compiler)
-+  endif
-+endif
+ /*
+  * xstateregs_active == regset_fpregs_active. Please refer to the comment
+diff --git a/arch/x86/kernel/fpu/regset.c b/arch/x86/kernel/fpu/regset.c
+index bc02f5144b95..7008eb084d36 100644
+--- a/arch/x86/kernel/fpu/regset.c
++++ b/arch/x86/kernel/fpu/regset.c
+@@ -160,6 +160,47 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
+ 	return ret;
+ }
+ 
++int cetregs_active(struct task_struct *target, const struct user_regset *regset)
++{
++#ifdef CONFIG_X86_INTEL_CET
++	if (target->thread.cet.shstk_enabled || target->thread.cet.ibt_enabled)
++		return regset->n;
++#endif
++	return 0;
++}
 +
- #
- # If the function graph tracer is used with mcount instead of fentry,
- # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
++int cetregs_get(struct task_struct *target, const struct user_regset *regset,
++		unsigned int pos, unsigned int count,
++		void *kbuf, void __user *ubuf)
++{
++	struct fpu *fpu = &target->thread.fpu;
++	struct cet_user_state *cetregs;
++
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return -ENODEV;
++
++	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_MASK_SHSTK_USER);
++
++	fpu__prepare_read(fpu);
++	return user_regset_copyout(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
++}
++
++int cetregs_set(struct task_struct *target, const struct user_regset *regset,
++		  unsigned int pos, unsigned int count,
++		  const void *kbuf, const void __user *ubuf)
++{
++	struct fpu *fpu = &target->thread.fpu;
++	struct cet_user_state *cetregs;
++
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return -ENODEV;
++
++	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_MASK_SHSTK_USER);
++
++	fpu__prepare_write(fpu);
++	return user_regset_copyin(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
++}
++
+ #if defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
+ 
+ /*
+diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
+index e2ee403865eb..ac2bc3a18427 100644
+--- a/arch/x86/kernel/ptrace.c
++++ b/arch/x86/kernel/ptrace.c
+@@ -49,7 +49,9 @@ enum x86_regset {
+ 	REGSET_IOPERM64 = REGSET_XFP,
+ 	REGSET_XSTATE,
+ 	REGSET_TLS,
++	REGSET_CET64 = REGSET_TLS,
+ 	REGSET_IOPERM32,
++	REGSET_CET32,
+ };
+ 
+ struct pt_regs_offset {
+@@ -1276,6 +1278,13 @@ static struct user_regset x86_64_regsets[] __ro_after_init = {
+ 		.size = sizeof(long), .align = sizeof(long),
+ 		.active = ioperm_active, .get = ioperm_get
+ 	},
++	[REGSET_CET64] = {
++		.core_note_type = NT_X86_CET,
++		.n = sizeof(struct cet_user_state) / sizeof(u64),
++		.size = sizeof(u64), .align = sizeof(u64),
++		.active = cetregs_active, .get = cetregs_get,
++		.set = cetregs_set
++	},
+ };
+ 
+ static const struct user_regset_view user_x86_64_view = {
+@@ -1331,6 +1340,13 @@ static struct user_regset x86_32_regsets[] __ro_after_init = {
+ 		.size = sizeof(u32), .align = sizeof(u32),
+ 		.active = ioperm_active, .get = ioperm_get
+ 	},
++	[REGSET_CET32] = {
++		.core_note_type = NT_X86_CET,
++		.n = sizeof(struct cet_user_state) / sizeof(u64),
++		.size = sizeof(u64), .align = sizeof(u64),
++		.active = cetregs_active, .get = cetregs_get,
++		.set = cetregs_set
++	},
+ };
+ 
+ static const struct user_regset_view user_x86_32_view = {
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 5ef25a565e88..f4cdfdc59c0a 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -401,6 +401,7 @@ typedef struct elf64_shdr {
+ #define NT_386_TLS	0x200		/* i386 TLS slots (struct user_desc) */
+ #define NT_386_IOPERM	0x201		/* x86 io permission bitmap (1=deny) */
+ #define NT_X86_XSTATE	0x202		/* x86 extended state using xsave */
++#define NT_X86_CET	0x203		/* x86 cet state */
+ #define NT_S390_HIGH_GPRS	0x300	/* s390 upper register halves */
+ #define NT_S390_TIMER	0x301		/* s390 timer register */
+ #define NT_S390_TODCMP	0x302		/* s390 TOD clock comparator register */
 -- 
 2.17.1
