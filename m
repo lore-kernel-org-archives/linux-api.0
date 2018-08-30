@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 24/24] x86/cet/shstk: Add Shadow Stack instructions to opcode map
-Date: Thu, 30 Aug 2018 07:39:04 -0700
-Message-ID: <20180830143904.3168-25-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 16/24] mm: Update can_follow_write_pte/pmd for shadow stack
+Date: Thu, 30 Aug 2018 07:38:56 -0700
+Message-ID: <20180830143904.3168-17-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,177 +10,141 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add the following shadow stack management instructions.
+can_follow_write_pte/pmd look for the (RO & DIRTY) PTE/PMD to
+verify an exclusive RO page still exists after a broken COW.
 
-INCSSP:
-    Increment shadow stack pointer by the steps specified.
+A shadow stack PTE is RO & PAGE_DIRTY_SW when it is shared,
+otherwise RO & PAGE_DIRTY_HW.
 
-RDSSP:
-    Read SSP register into a GPR.
+Introduce pte_exclusive() and pmd_exclusive() to also verify a
+shadow stack PTE is exclusive.
 
-SAVEPREVSSP:
-    Use "prev ssp" token at top of current shadow stack to
-    create a "restore token" on previous shadow stack.
-
-RSTORSSP:
-    Restore from a "restore token" pointed by a GPR to SSP.
-
-WRSS:
-    Write to kernel-mode shadow stack (kernel-mode instruction).
-
-WRUSS:
-    Write to user-mode shadow stack (kernel-mode instruction).
-
-SETSSBSY:
-    Verify the "supervisor token" pointed by IA32_PL0_SSP MSR,
-    if valid, set the token to busy, and set SSP to the value
-    of IA32_PL0_SSP MSR.
-
-CLRSSBSY:
-    Verify the "supervisor token" pointed by a GPR, if valid,
-    clear the busy bit from the token.
+Also rename can_follow_write_pte/pmd() to can_follow_write() to
+make their meaning clear; i.e. "Can we write to the page?", not
+"Is the PTE writable?"
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/lib/x86-opcode-map.txt               | 26 +++++++++++++------
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 26 +++++++++++++------
- 2 files changed, 36 insertions(+), 16 deletions(-)
+ arch/x86/mm/pgtable.c         | 18 ++++++++++++++++++
+ include/asm-generic/pgtable.h | 18 ++++++++++++++++++
+ mm/gup.c                      |  8 +++++---
+ mm/huge_memory.c              |  8 +++++---
+ 4 files changed, 46 insertions(+), 6 deletions(-)
 
-diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
-index e0b85930dd77..c5e825d44766 100644
---- a/arch/x86/lib/x86-opcode-map.txt
-+++ b/arch/x86/lib/x86-opcode-map.txt
-@@ -366,7 +366,7 @@ AVXcode: 1
- 1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
- 1c:
- 1d:
--1e:
-+1e: RDSSP Rd (F3),REX.W
- 1f: NOP Ev
- # 0x0f 0x20-0x2f
- 20: MOV Rd,Cd
-@@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
- ff: UD0
- EndTable
- 
--Table: 3-byte opcode 1 (0x0f 0x38)
-+Table: 3-byte opcode 1 (0x0f 0x01)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xe7
-+e8: SETSSBSY (f3)
-+e9:
-+ea: SAVEPREVSSP (f3)
-+# Skip 0xeb-0xff
-+EndTable
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index 0ab38bfbedfc..13dd18ad6fd8 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -889,4 +889,22 @@ inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
+ 	else
+ 		return pmd;
+ }
 +
-+Table: 3-byte opcode 2 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
- f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
- f2: ANDN Gy,By,Ey (v)
- f3: Grp17 (1A)
--f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
--f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
-+f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
-+f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
- 
--Table: 3-byte opcode 2 (0x0f 0x3a)
-+Table: 3-byte opcode 3 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
-@@ -948,7 +958,7 @@ GrpTable: Grp7
- 2: LGDT Ms | XGETBV (000),(11B) | XSETBV (001),(11B) | VMFUNC (100),(11B) | XEND (101)(11B) | XTEST (110)(11B)
- 3: LIDT Ms
- 4: SMSW Mw/Rv
--5: rdpkru (110),(11B) | wrpkru (111),(11B)
-+5: rdpkru (110),(11B) | wrpkru (111),(11B) | RSTORSSP Mq (F3)
- 6: LMSW Ew
- 7: INVLPG Mb | SWAPGS (o64),(000),(11B) | RDTSCP (001),(11B)
- EndTable
-@@ -1019,8 +1029,8 @@ GrpTable: Grp15
- 2: vldmxcsr Md (v1) | WRFSBASE Ry (F3),(11B)
- 3: vstmxcsr Md (v1) | WRGSBASE Ry (F3),(11B)
- 4: XSAVE | ptwrite Ey (F3),(11B)
--5: XRSTOR | lfence (11B)
--6: XSAVEOPT | clwb (66) | mfence (11B)
-+5: XRSTOR | lfence (11B) | INCSSP Rd (F3),REX.W
-+6: XSAVEOPT | clwb (66) | mfence (11B) | CLRSSBSY Mq (F3)
- 7: clflush | clflushopt (66) | sfence (11B)
- EndTable
- 
-diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-index e0b85930dd77..c5e825d44766 100644
---- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-+++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-@@ -366,7 +366,7 @@ AVXcode: 1
- 1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
- 1c:
- 1d:
--1e:
-+1e: RDSSP Rd (F3),REX.W
- 1f: NOP Ev
- # 0x0f 0x20-0x2f
- 20: MOV Rd,Cd
-@@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
- ff: UD0
- EndTable
- 
--Table: 3-byte opcode 1 (0x0f 0x38)
-+Table: 3-byte opcode 1 (0x0f 0x01)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xe7
-+e8: SETSSBSY (f3)
-+e9:
-+ea: SAVEPREVSSP (f3)
-+# Skip 0xeb-0xff
-+EndTable
++inline bool pte_exclusive(pte_t pte, struct vm_area_struct *vma)
++{
++	if (vma->vm_flags & VM_SHSTK)
++		return pte_dirty_hw(pte);
++	else
++		return pte_dirty(pte);
++}
 +
-+Table: 3-byte opcode 2 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
- f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
- f2: ANDN Gy,By,Ey (v)
- f3: Grp17 (1A)
--f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
--f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
-+f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
-+f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++inline bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma)
++{
++	if (vma->vm_flags & VM_SHSTK)
++		return pmd_dirty_hw(pmd);
++	else
++		return pmd_dirty(pmd);
++}
++#endif
+ #endif /* CONFIG_X86_INTEL_SHADOW_STACK_USER */
+diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
+index 0f25186cd38d..2e8e7fa4ab71 100644
+--- a/include/asm-generic/pgtable.h
++++ b/include/asm-generic/pgtable.h
+@@ -1156,9 +1156,27 @@ static inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
+ {
+ 	return pmd;
+ }
++
++#ifdef CONFIG_MMU
++static inline bool pte_exclusive(pte_t pte, struct vm_area_struct *vma)
++{
++	return pte_dirty(pte);
++}
++
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++static inline bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma)
++{
++	return pmd_dirty(pmd);
++}
++#endif
++#endif /* CONFIG_MMU */
+ #else
+ pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
+ pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
++bool pte_exclusive(pte_t pte, struct vm_area_struct *vma);
++#ifdef CONFIG_TRANSPARENT_HUGEPAGE
++bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma);
++#endif
+ #endif
  
--Table: 3-byte opcode 2 (0x0f 0x3a)
-+Table: 3-byte opcode 3 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
-@@ -948,7 +958,7 @@ GrpTable: Grp7
- 2: LGDT Ms | XGETBV (000),(11B) | XSETBV (001),(11B) | VMFUNC (100),(11B) | XEND (101)(11B) | XTEST (110)(11B)
- 3: LIDT Ms
- 4: SMSW Mw/Rv
--5: rdpkru (110),(11B) | wrpkru (111),(11B)
-+5: rdpkru (110),(11B) | wrpkru (111),(11B) | RSTORSSP Mq (F3)
- 6: LMSW Ew
- 7: INVLPG Mb | SWAPGS (o64),(000),(11B) | RDTSCP (001),(11B)
- EndTable
-@@ -1019,8 +1029,8 @@ GrpTable: Grp15
- 2: vldmxcsr Md (v1) | WRFSBASE Ry (F3),(11B)
- 3: vstmxcsr Md (v1) | WRGSBASE Ry (F3),(11B)
- 4: XSAVE | ptwrite Ey (F3),(11B)
--5: XRSTOR | lfence (11B)
--6: XSAVEOPT | clwb (66) | mfence (11B)
-+5: XRSTOR | lfence (11B) | INCSSP Rd (F3),REX.W
-+6: XSAVEOPT | clwb (66) | mfence (11B) | CLRSSBSY Mq (F3)
- 7: clflush | clflushopt (66) | sfence (11B)
- EndTable
+ #endif /* _ASM_GENERIC_PGTABLE_H */
+diff --git a/mm/gup.c b/mm/gup.c
+index 1abc8b4afff6..03cb2e331f80 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -64,10 +64,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
+  * FOLL_FORCE can write to even unwritable pte's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
++static inline bool can_follow_write(pte_t pte, unsigned int flags,
++				    struct vm_area_struct *vma)
+ {
+ 	return pte_write(pte) ||
+-		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
++		((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
++		 pte_exclusive(pte, vma));
+ }
  
+ static struct page *follow_page_pte(struct vm_area_struct *vma,
+@@ -105,7 +107,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
+ 	}
+ 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
+ 		goto no_page;
+-	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
++	if ((flags & FOLL_WRITE) && !can_follow_write(pte, flags, vma)) {
+ 		pte_unmap_unlock(ptep, ptl);
+ 		return NULL;
+ 	}
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 5b4c8f2fb85e..702650eec0b2 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1387,10 +1387,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+  * FOLL_FORCE can write to even unwritable pmd's, but only
+  * after we've gone through a COW cycle and they are dirty.
+  */
+-static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
++static inline bool can_follow_write(pmd_t pmd, unsigned int flags,
++				    struct vm_area_struct *vma)
+ {
+ 	return pmd_write(pmd) ||
+-	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
++	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
++		pmd_exclusive(pmd, vma));
+ }
+ 
+ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+@@ -1403,7 +1405,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 
+ 	assert_spin_locked(pmd_lockptr(mm, pmd));
+ 
+-	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
++	if (flags & FOLL_WRITE && !can_follow_write(*pmd, flags, vma))
+ 		goto out;
+ 
+ 	/* Avoid dumping huge zero page */
 -- 
 2.17.1
