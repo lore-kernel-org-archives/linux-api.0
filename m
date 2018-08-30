@@ -1,55 +1,66 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 0/8] Control Flow Enforcement: Branch Tracking, PTRACE
-Date: Thu, 30 Aug 2018 07:40:01 -0700
-Message-ID: <20180830144009.3314-1-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 1/8] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
+Date: Thu, 30 Aug 2018 07:40:02 -0700
+Message-ID: <20180830144009.3314-2-yu-cheng.yu@intel.com>
+References: <20180830144009.3314-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180830144009.3314-1-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This set includes CET Indirect Branch Tracking patches and a PTRACE patch.
+The user-mode indirect branch tracking support is done mostly by
+GCC to insert ENDBR64/ENDBR32 instructions at branch targets.
+The kernel provides CPUID enumeration, feature MSR setup and
+the allocation of legacy bitmap.
 
-Summary of changes from v2:
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ arch/x86/Kconfig  | 12 ++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 19 insertions(+)
 
-  Allocate IBT bitmap at the start of a task.
-
-H.J. Lu (1):
-  x86: Insert endbr32/endbr64 to vDSO
-
-Yu-cheng Yu (7):
-  x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-  x86/cet/ibt: User-mode indirect branch tracking support
-  x86/cet/ibt: ELF header parsing for IBT
-  x86/cet/ibt: Add arch_prctl functions for IBT
-  x86/cet/ibt: Add ENDBR to op-code-map
-  mm/mmap: Add IBT bitmap size to address space limit check
-  x86/cet: Add PTRACE interface for CET
-
- arch/x86/Kconfig                              | 12 +++
- arch/x86/Makefile                             |  7 ++
- arch/x86/entry/vdso/.gitignore                |  4 +
- arch/x86/entry/vdso/Makefile                  | 12 ++-
- arch/x86/entry/vdso/vdso-layout.lds.S         |  1 +
- arch/x86/include/asm/cet.h                    |  8 ++
- arch/x86/include/asm/disabled-features.h      |  8 +-
- arch/x86/include/asm/fpu/regset.h             |  7 +-
- arch/x86/include/uapi/asm/elf_property.h      |  1 +
- arch/x86/include/uapi/asm/prctl.h             |  1 +
- arch/x86/include/uapi/asm/resource.h          |  5 ++
- arch/x86/kernel/cet.c                         | 74 +++++++++++++++++++
- arch/x86/kernel/cet_prctl.c                   | 38 +++++++++-
- arch/x86/kernel/cpu/common.c                  | 20 ++++-
- arch/x86/kernel/elf.c                         |  8 +-
- arch/x86/kernel/fpu/regset.c                  | 41 ++++++++++
- arch/x86/kernel/process.c                     |  2 +
- arch/x86/kernel/ptrace.c                      | 16 ++++
- arch/x86/lib/x86-opcode-map.txt               | 13 +++-
- include/uapi/asm-generic/resource.h           |  3 +
- include/uapi/linux/elf.h                      |  1 +
- mm/mmap.c                                     | 12 ++-
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++-
- 23 files changed, 294 insertions(+), 13 deletions(-)
-
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 2cfe11e1cf7f..0d97b03f35f6 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1941,6 +1941,18 @@ config X86_INTEL_SHADOW_STACK_USER
+ 
+ 	  If unsure, say y.
+ 
++config X86_INTEL_BRANCH_TRACKING_USER
++	prompt "Intel Indirect Branch Tracking for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	select ARCH_HAS_PROGRAM_PROPERTIES
++	---help---
++	  Indirect Branch Tracking provides hardware protection against return-/jmp-
++	  oriented programing attacks.
++
++	  If unsure, say y
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 00927853e409..0da5121c30db 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -159,6 +159,13 @@ ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
+   endif
+ endif
+ 
++# Check compiler ibt support
++ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++  ifeq ($(call cc-option-yn, -fcf-protection=branch), n)
++      $(error CONFIG_X86_INTEL_BRANCH_TRACKING_USER not supported by compiler)
++  endif
++endif
++
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.17.1
