@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v3 01/24] x86/cpufeatures: Add CPUIDs for Control-flow Enforcement Technology (CET)
-Date: Thu, 30 Aug 2018 07:38:41 -0700
-Message-ID: <20180830143904.3168-2-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v3 22/24] x86/cet/shstk: Handle thread shadow stack
+Date: Thu, 30 Aug 2018 07:39:02 -0700
+Message-ID: <20180830143904.3168-23-yu-cheng.yu@intel.com>
 References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180830143904.3168-1-yu-cheng.yu@intel.com>
@@ -10,48 +10,151 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add CPUIDs for Control-flow Enforcement Technology (CET).
+The shadow stack for clone/fork is handled as the following:
 
-CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
-CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect branch tracking
+(1) If ((clone_flags & (CLONE_VFORK | CLONE_VM)) == CLONE_VM),
+    the kernel allocates (and frees on thread exit) a new SHSTK
+    for the child.
+
+    It is possible for the kernel to complete the clone syscall
+    and set the child's SHSTK pointer to NULL and let the child
+    thread allocate a SHSTK for itself.  There are two issues
+    in this approach: It is not compatible with existing code
+    that does inline syscall and it cannot handle signals before
+    the child can successfully allocate a SHSTK.
+
+(2) For (clone_flags & CLONE_VFORK), the child uses the existing
+    SHSTK.
+
+(3) For all other cases, the SHSTK is copied/reused whenever the
+    parent or the child does a call/ret.
+
+This patch handles cases (1) & (2).  Case (3) is handled in
+the SHSTK page fault patches.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/cpufeatures.h | 2 ++
- arch/x86/kernel/cpu/scattered.c    | 1 +
- 2 files changed, 3 insertions(+)
+ arch/x86/include/asm/cet.h         |  2 ++
+ arch/x86/include/asm/mmu_context.h |  3 +++
+ arch/x86/kernel/cet.c              | 34 ++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c          |  1 +
+ arch/x86/kernel/process_64.c       |  7 ++++++
+ 5 files changed, 47 insertions(+)
 
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 89a048c2faec..fa69651a017e 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -221,6 +221,7 @@
- #define X86_FEATURE_ZEN			( 7*32+28) /* "" CPU is AMD family 0x17 (Zen) */
- #define X86_FEATURE_L1TF_PTEINV		( 7*32+29) /* "" L1TF workaround PTE inversion */
- #define X86_FEATURE_IBRS_ENHANCED	( 7*32+30) /* Enhanced IBRS */
-+#define X86_FEATURE_IBT			( 7*32+31) /* Indirect Branch Tracking */
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index d9ae3d86cdd7..b7b33e1026bb 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -17,12 +17,14 @@ struct cet_status {
  
- /* Virtualization flags: Linux defined, word 8 */
- #define X86_FEATURE_TPR_SHADOW		( 8*32+ 0) /* Intel TPR Shadow */
-@@ -321,6 +322,7 @@
- #define X86_FEATURE_PKU			(16*32+ 3) /* Protection Keys for Userspace */
- #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
- #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
-+#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
- #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
- #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
- #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
-diff --git a/arch/x86/kernel/cpu/scattered.c b/arch/x86/kernel/cpu/scattered.c
-index 772c219b6889..63cbb4d9938e 100644
---- a/arch/x86/kernel/cpu/scattered.c
-+++ b/arch/x86/kernel/cpu/scattered.c
-@@ -21,6 +21,7 @@ struct cpuid_bit {
- static const struct cpuid_bit cpuid_bits[] = {
- 	{ X86_FEATURE_APERFMPERF,       CPUID_ECX,  0, 0x00000006, 0 },
- 	{ X86_FEATURE_EPB,		CPUID_ECX,  3, 0x00000006, 0 },
-+	{ X86_FEATURE_IBT,		CPUID_EDX, 20, 0x00000007, 0},
- 	{ X86_FEATURE_CAT_L3,		CPUID_EBX,  1, 0x00000010, 0 },
- 	{ X86_FEATURE_CAT_L2,		CPUID_EBX,  2, 0x00000010, 0 },
- 	{ X86_FEATURE_CDP_L3,		CPUID_ECX,  2, 0x00000010, 1 },
+ #ifdef CONFIG_X86_INTEL_CET
+ int cet_setup_shstk(void);
++int cet_setup_thread_shstk(struct task_struct *p);
+ void cet_disable_shstk(void);
+ void cet_disable_free_shstk(struct task_struct *p);
+ int cet_restore_signal(unsigned long ssp);
+ int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
+ #else
+ static inline int cet_setup_shstk(void) { return 0; }
++static inline int cet_setup_thread_shstk(struct task_struct *p) { return 0; }
+ static inline void cet_disable_shstk(void) {}
+ static inline void cet_disable_free_shstk(struct task_struct *p) {}
+ static inline int cet_restore_signal(unsigned long ssp) { return 0; }
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index eeeb9289c764..8da7c999b7ee 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -13,6 +13,7 @@
+ #include <asm/tlbflush.h>
+ #include <asm/paravirt.h>
+ #include <asm/mpx.h>
++#include <asm/cet.h>
+ 
+ extern atomic64_t last_mm_ctx_id;
+ 
+@@ -223,6 +224,8 @@ do {						\
+ #else
+ #define deactivate_mm(tsk, mm)			\
+ do {						\
++	if (!tsk->vfork_done)			\
++		cet_disable_free_shstk(tsk);	\
+ 	load_gs_index(0);			\
+ 	loadsegment(fs, 0);			\
+ } while (0)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 5cc4be6e0982..ce0b3b7b1160 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -134,6 +134,40 @@ int cet_setup_shstk(void)
+ 	return 0;
+ }
+ 
++int cet_setup_thread_shstk(struct task_struct *tsk)
++{
++	unsigned long addr, size;
++	struct cet_user_state *state;
++
++	if (!current->thread.cet.shstk_enabled)
++		return 0;
++
++	state = get_xsave_addr(&tsk->thread.fpu.state.xsave,
++			       XFEATURE_MASK_SHSTK_USER);
++
++	if (!state)
++		return -EINVAL;
++
++	size = tsk->thread.cet.shstk_size;
++	if (size == 0)
++		size = rlimit(RLIMIT_STACK);
++
++	addr = do_mmap_locked(0, size, PROT_READ,
++			      MAP_ANONYMOUS | MAP_PRIVATE, VM_SHSTK);
++
++	if (addr >= TASK_SIZE_MAX) {
++		tsk->thread.cet.shstk_base = 0;
++		tsk->thread.cet.shstk_size = 0;
++		tsk->thread.cet.shstk_enabled = 0;
++		return -ENOMEM;
++	}
++
++	state->user_ssp = (u64)(addr + size - sizeof(u64));
++	tsk->thread.cet.shstk_base = addr;
++	tsk->thread.cet.shstk_size = size;
++	return 0;
++}
++
+ void cet_disable_shstk(void)
+ {
+ 	u64 r;
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 4a776da4c28c..440f012ef925 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -125,6 +125,7 @@ void exit_thread(struct task_struct *tsk)
+ 
+ 	free_vm86(t);
+ 
++	cet_disable_free_shstk(tsk);
+ 	fpu__drop(fpu);
+ }
+ 
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index a451bc374b9b..cfe955d8d6b2 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -317,6 +317,13 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
+ 	if (sp)
+ 		childregs->sp = sp;
+ 
++	/* Allocate a new shadow stack for pthread */
++	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) == CLONE_VM) {
++		err = cet_setup_thread_shstk(p);
++		if (err)
++			goto out;
++	}
++
+ 	err = -ENOMEM;
+ 	if (unlikely(test_tsk_thread_flag(me, TIF_IO_BITMAP))) {
+ 		p->thread.io_bitmap_ptr = kmemdup(me->thread.io_bitmap_ptr,
 -- 
 2.17.1
