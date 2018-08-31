@@ -1,41 +1,67 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [RFC PATCH v3 12/24] x86/mm: Modify ptep_set_wrprotect and
  pmdp_set_wrprotect for _PAGE_DIRTY_SW
-Date: Fri, 31 Aug 2018 18:29:20 +0200
-Message-ID: <20180831162920.GQ24124@hirez.programming.kicks-ass.net>
-References: <1535660494.28258.36.camel@intel.com>
- <CAG48ez0yOuDhqxB779aO3Kss3gQ3cZTJL1VphDXQm+_M9jFPvQ@mail.gmail.com>
- <1535662366.28781.6.camel@intel.com>
- <CAG48ez0mkr95_TbLQnDGuGUd6G+eJVLZ-fEjDkwA6dSrm+9tLw@mail.gmail.com>
- <CAG48ez3S3+DzAyo_SnoUW1GO0Cpd_x0A83MOx2p_MkogoAatLQ@mail.gmail.com>
- <20180831095300.GF24124@hirez.programming.kicks-ass.net>
- <1535726032.32537.0.camel@intel.com>
- <f5a36e32-7c5f-91fe-9e98-fb44867fda11@linux.intel.com>
- <1535730524.501.13.camel@intel.com>
- <6d31bd30-6d5b-bbde-1e97-1d8255eff76d@linux.intel.com>
+Date: Fri, 31 Aug 2018 10:46:51 -0700
+Message-ID: <CALCETrUE6mY-+YCaJjGJuEqE_OBQc=QUR1XMnPW9VwTb8=HK4w@mail.gmail.com>
+References: <20180830143904.3168-1-yu-cheng.yu@intel.com> <20180830143904.3168-13-yu-cheng.yu@intel.com>
+ <CAG48ez0Rca0XsdXJZ07c+iGPyep0Gpxw+sxQuACP5gyPaBgDKA@mail.gmail.com>
+ <079a55f2-4654-4adf-a6ef-6e480b594a2f@linux.intel.com> <CAG48ez2gHOD9hH4+0wek5vUOv9upj79XWoug2SXjdwfXWoQqxw@mail.gmail.com>
+ <ce051b5b-feef-376f-e085-11f65a5f2215@linux.intel.com> <B2222C69-337B-44F2-9DA6-69E685AA469B@amacapital.net>
+ <e164a320-25a4-a9fc-3256-901b778468f3@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <6d31bd30-6d5b-bbde-1e97-1d8255eff76d@linux.intel.com>
+In-Reply-To: <e164a320-25a4-a9fc-3256-901b778468f3@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, Jann Horn <jannh@google.com>, the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, keescook@chromiun.org, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.>
+Cc: Jann Horn <jannh@google.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 31, 2018 at 08:58:39AM -0700, Dave Hansen wrote:
-> On 08/31/2018 08:48 AM, Yu-cheng Yu wrote:
-> > To trigger a race in ptep_set_wrprotect(), we need to fork from one of
-> > three pthread siblings.
-> > 
-> > Or do we measure only how much this affects fork?
-> > If there is no racing, the effect should be minimal.
-> 
-> We don't need a race.
-> 
-> I think the cmpxchg will be slower, even without a race, than the code
-> that was there before.  The cmpxchg is a simple, straightforward
-> solution, but we're putting it in place of a plain memory write, which
-> is suboptimal.
+On Thu, Aug 30, 2018 at 11:55 AM, Dave Hansen
+<dave.hansen@linux.intel.com> wrote:
+> On 08/30/2018 10:34 AM, Andy Lutomirski wrote:
+>>> But, to keep B's TLB from picking up the entry, I think we can just make
+>>> it !Present for a moment.  No TLB can cache it, and I believe the same
+>>> "don't set Dirty on a !Writable entry" logic also holds for !Present
+>>> (modulo a weird erratum or two).
+>> Can we get documentation?  Pretty please?
+>
+> The accessed bit description in the SDM looks pretty good to me today:
+>
+>> Whenever the processor uses a paging-structure entry as part of
+>> linear-address translation, it sets the accessed flag in that entry
+>> (if it is not already set).
+> If it's !Present, it can't used as part of a translation so can't be
+> set.  I think that covers the thing I was unsure about.
+>
+> But, Dirty is a bit, er, muddier, but mostly because it only gets set on
+> leaf entries:
+>
+>> Whenever there is a write to a linear address, the processor sets the
+>> dirty flag (if it is not already set) in the paging- structure entry
+>> that identifies the final physical address for the linear address
+>> (either a PTE or a paging-structure entry in which the PS flag is
+>> 1).
+>
+> That little hunk will definitely need to get updated with something like:
+>
+>         On processors enumerating support for CET, the processor will on
+>         set the dirty flag on paging structure entries in which the W
+>         flag is 1.
 
-Note quite, the clear_bit() is LOCK prefixed.
+Can we get something much stronger, perhaps?  Like this:
+
+On processors enumerating support for CET, the processor will write to
+the accessed and/or dirty flags atomically, as if using the LOCK
+CMPXCHG instruction.  The memory access, any cached entries in any
+paging-structure caches, and the values in the paging-structure entry
+before and after writing the A and/or D bits will all be consistent.
+
+I'm sure this could be worded better.  The point is that the CPU
+should, atomically, load the PTE, check if it allows the access, set A
+and/or D appropriately, write the new value to the TLB, and use that
+value for the access.  This is clearly a little bit slower than what
+old CPUs could do when writing to an already-in-TLB writable non-dirty
+entry, but new CPUs are going to have to atomically check the W bit.
+(I assume that even old CPUs will *atomically* set the D bit as if by
+LOCK BTS, but this is all very vague in the SDM IIRC.)
