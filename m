@@ -1,93 +1,46 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v3 05/24] Documentation/x86: Add CET description
-Date: Thu, 30 Aug 2018 15:49:51 -0700
-Message-ID: <1535669391.28781.7.camel@intel.com>
-References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
-         <20180830143904.3168-6-yu-cheng.yu@intel.com> <20180830203948.GB1936@amd>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH v3 12/24] x86/mm: Modify ptep_set_wrprotect and pmdp_set_wrprotect for _PAGE_DIRTY_SW
+Date: Thu, 30 Aug 2018 18:23:15 -0700
+Message-ID: <337F9DA7-ED07-4CD0-B41C-22D570527362@amacapital.net>
+References: <20180830143904.3168-1-yu-cheng.yu@intel.com> <20180830143904.3168-13-yu-cheng.yu@intel.com> <CAG48ez0Rca0XsdXJZ07c+iGPyep0Gpxw+sxQuACP5gyPaBgDKA@mail.gmail.com> <079a55f2-4654-4adf-a6ef-6e480b594a2f@linux.intel.com> <CAG48ez2gHOD9hH4+0wek5vUOv9upj79XWoug2SXjdwfXWoQqxw@mail.gmail.com> <ce051b5b-feef-376f-e085-11f65a5f2215@linux.intel.com> <1535649960.26689.15.camel@intel.com> <33d45a12-513c-eba2-a2de-3d6b630e928e@linux.intel.com> <1535651666.27823.6.camel@intel.com> <CAG48ez3ixWROuQc6WZze6qPL6q0e_gCnMU4XF11JUWziePsBJg@mail.gmail.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180830203948.GB1936@amd>
+In-Reply-To: <CAG48ez3ixWROuQc6WZze6qPL6q0e_gCnMU4XF11JUWziePsBJg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromiun.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Peter Zijlstra <peterz@infradead.org>
+To: Jann Horn <jannh@google.com>
+Cc: yu-cheng.yu@intel.com, Dave Hansen <dave.hansen@linux.intel.com>, the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, keescook@chromiun.org, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2018-08-30 at 22:39 +0200, Pavel Machek wrote:
-> Hi!
-> 
-> > 
-> > diff --git a/Documentation/admin-guide/kernel-parameters.txt
-> > b/Documentation/admin-guide/kernel-parameters.txt
-> > index 9871e649ffef..b090787188b4 100644
-> > --- a/Documentation/admin-guide/kernel-parameters.txt
-> > +++ b/Documentation/admin-guide/kernel-parameters.txt
-> > @@ -2764,6 +2764,12 @@
-> >  			noexec=on: enable non-executable mappings
-> > (default)
-> >  			noexec=off: disable non-executable
-> > mappings
-> >  
-> > +	no_cet_ibt	[X86-64] Disable indirect branch
-> > tracking for user-mode
-> > +			applications
-> > +
-> > +	no_cet_shstk	[X86-64] Disable shadow stack support
-> > for user-mode
-> > +			applications
-> Hmm, not too consistent with "nosmap" below. Would it make sense to
-> have cet=on/off/ibt/shstk instead?
-> 
-> > 
-> > +++ b/Documentation/x86/intel_cet.rst
-> > @@ -0,0 +1,252 @@
-> > +=========================================
-> > +Control Flow Enforcement Technology (CET)
-> > +=========================================
-> > +
-> > +[1] Overview
-> > +============
-> > +
-> > +Control Flow Enforcement Technology (CET) provides protection
-> > against
-> > +return/jump-oriented programing (ROP) attacks.
-> Can you add something like "It attempts to protect process from
-> running arbitrary code even after attacker has control of its stack"
-> -- for people that don't know what ROP is, and perhaps link to
-> wikipedia explaining ROP or something...
-> 
-> > 
-> > It can be implemented
-> > +to protect both the kernel and applications.  In the first phase,
-> > +only the user-mode protection is implemented for the 64-bit
-> > kernel.
-> > +Thirty-two bit applications are supported under the compatibility
-> 32-bit (for consistency).
-> 
-> Ok, so CET stops execution of malicious code before architectural
-> effects are visible, correct? Does it prevent micro-architectural
-> effects of the malicious code? (cache content would be one example;
-> see Spectre).
-> 
-> > 
-> > +[3] Application Enabling
-> > +========================
-> "Enabling CET in applications" ?
-> 
-> > 
-> > +Signal
-> > +------
-> > +
-> > +The main program and its signal handlers use the same
-> > SHSTK.  Because
-> > +the SHSTK stores only return addresses, we can estimate a large
-> > +enough SHSTK to cover the condition that both the program stack
-> > and
-> > +the sigaltstack run out.
-> English? Is it estimate or is it large enough? "a large" -- "a"
-> should
-> be deleted AFAICT.
->  
 
-I will work on these, thanks!
+
+> On Aug 30, 2018, at 10:59 AM, Jann Horn <jannh@google.com> wrote:
+>=20
+>> On Thu, Aug 30, 2018 at 7:58 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote=
+:
+>>=20
+>>> On Thu, 2018-08-30 at 10:33 -0700, Dave Hansen wrote:
+>>>> On 08/30/2018 10:26 AM, Yu-cheng Yu wrote:
+>>>>=20
+>>>> We don't have the guard page now, but there is a shadow stack
+>>>> token
+>>>> there, which cannot be used as a return address.
+>>> The overall concern is that we could overflow into a page that we
+>>> did
+>>> not intend.  Either another actual shadow stack or something that a
+>>> page
+>>> that the attacker constructed, like the transient scenario Jann
+>>> described.
+>>>=20
+>>=20
+>> A task could go beyond the bottom of its shadow stack by doing either
+>> 'ret' or 'incssp'.  If it is the 'ret' case, the token prevents it.
+>> If it is the 'incssp' case, a guard page cannot prevent it entirely,
+>> right?
+>=20
+> I mean the other direction, on "call".
+
+I still think that shadow stacks should work just like mmap and that mmap sh=
+ould learn to add guard pages for all non-MAP_FIXED allocations.=
