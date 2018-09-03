@@ -1,7 +1,7 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 03/10] signal: Properly deliver SIGSEGV from x86 uprobes
-Date: Mon,  3 Sep 2018 22:44:23 +0200
-Message-ID: <20180903204430.25473-3-ebiederm@xmission.com>
+Subject: [PATCH 04/10] signal: Always deliver the kernel's SIGKILL and SIGSTOP to a pid namespace init
+Date: Mon,  3 Sep 2018 22:44:24 +0200
+Message-ID: <20180903204430.25473-4-ebiederm@xmission.com>
 References: <87musyl3fa.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <87musyl3fa.fsf@xmission.com>
@@ -10,36 +10,31 @@ To: linux-kernel@vger.kernel.org
 Cc: Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-For userspace to tell the difference between an random signal
-and an exception, the exception must include siginfo information.
+Instead of playing whack-a-mole and changing SEND_SIG_PRIV to
+SEND_SIG_FORCED throughout the kernel to ensure a pid namespace init
+gets signals sent by the kernel, stop allowing a pid namespace init to
+ignore SIGKILL or SIGSTOP sent by the kernel.  A pid namespace init is
+only supposed to be able to ignore signals sent from itself and
+children with SIG_DFL.
 
-Using SEND_SIG_FORCED for SIGSEGV is thus wrong, and it will result in
-userspace seeing si_code == SI_USER (like a random signal) instead of
-si_code == SI_KERNEL or a more specific si_code as all exceptions
-deliver.
-
-Therefore replace force_sig_info(SIGSEGV, SEND_SIG_FORCE, current)
-with force_sig(SIG_SEGV, current) which gets this right and is shorter
-and easier to type.
-
-Fixes: 791eca10107f ("uretprobes/x86: Hijack return address")
+Fixes: 921cf9f63089 ("signals: protect cinit from unblocked SIG_DFL signals")
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- arch/x86/kernel/uprobes.c | 2 +-
+ kernel/signal.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/uprobes.c b/arch/x86/kernel/uprobes.c
-index deb576b23b7c..843feb94a950 100644
---- a/arch/x86/kernel/uprobes.c
-+++ b/arch/x86/kernel/uprobes.c
-@@ -1086,7 +1086,7 @@ arch_uretprobe_hijack_return_addr(unsigned long trampoline_vaddr, struct pt_regs
- 		pr_err("return address clobbered: pid=%d, %%sp=%#lx, %%ip=%#lx\n",
- 		       current->pid, regs->sp, regs->ip);
+diff --git a/kernel/signal.c b/kernel/signal.c
+index b33264bb2064..8081ab79e97d 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -1039,7 +1039,7 @@ static int __send_signal(int sig, struct siginfo *info, struct task_struct *t,
  
--		force_sig_info(SIGSEGV, SEND_SIG_FORCED, current);
-+		force_sig(SIGSEGV, current);
- 	}
+ 	result = TRACE_SIGNAL_IGNORED;
+ 	if (!prepare_signal(sig, t,
+-			from_ancestor_ns || (info == SEND_SIG_FORCED)))
++			from_ancestor_ns || (info == SEND_SIG_PRIV) || (info == SEND_SIG_FORCED)))
+ 		goto ret;
  
- 	return -1;
+ 	pending = (type != PIDTYPE_PID) ? &t->signal->shared_pending : &t->pending;
 -- 
 2.17.1
