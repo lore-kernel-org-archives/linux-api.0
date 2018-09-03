@@ -1,7 +1,7 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 09/10] signal: Use SEND_SIG_PRIV not SEND_SIG_FORCED with SIGKILL and SIGSTOP
-Date: Mon,  3 Sep 2018 22:44:29 +0200
-Message-ID: <20180903204430.25473-9-ebiederm@xmission.com>
+Subject: [PATCH 10/10] signal: Remove SEND_SIG_FORCED
+Date: Mon,  3 Sep 2018 22:44:30 +0200
+Message-ID: <20180903204430.25473-10-ebiederm@xmission.com>
 References: <87musyl3fa.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <87musyl3fa.fsf@xmission.com>
@@ -10,78 +10,80 @@ To: linux-kernel@vger.kernel.org
 Cc: Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-Now that siginfo is never allocated for SIGKILL and SIGSTOP there is
-no difference between SEND_SIG_PRIV and SEND_SIG_FORCED for SIGKILL
-and SIGSTOP.  This makes SEND_SIG_FORCED unnecessary and redundant in
-the presence of SIGKILL and SIGSTOP.  Therefore change users of
-SEND_SIG_FORCED that are sending SIGKILL or SIGSTOP to use
-SEND_SIG_PRIV instead.
+There are no more users of SEND_SIG_FORCED so it may be safely removed.
 
-This removes the last users of SEND_SIG_FORCED.
+Remove the definition of SEND_SIG_FORCED, it's use in is_si_special,
+it's use in TP_STORE_SIGINFO, and it's use in __send_signal as without
+any users the uses of SEND_SIG_FORCED are now unncessary.
+
+This makes the code simpler, easier to understand and use.  Users of
+signal sending functions now no longer need to ask themselves do I
+need to use SEND_SIG_FORCED.
 
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- kernel/pid_namespace.c | 2 +-
- kernel/ptrace.c        | 4 ++--
- mm/oom_kill.c          | 4 ++--
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ include/linux/sched/signal.h  | 1 -
+ include/trace/events/signal.h | 3 +--
+ kernel/signal.c               | 7 +++----
+ 3 files changed, 4 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 2a2ac53d8b8b..c8d53397bbdd 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -216,7 +216,7 @@ void zap_pid_ns_processes(struct pid_namespace *pid_ns)
- 	idr_for_each_entry_continue(&pid_ns->idr, pid, nr) {
- 		task = pid_task(pid, PIDTYPE_PID);
- 		if (task && !__fatal_signal_pending(task))
--			send_sig_info(SIGKILL, SEND_SIG_FORCED, task);
-+			send_sig_info(SIGKILL, SEND_SIG_PRIV, task);
- 	}
- 	read_unlock(&tasklist_lock);
- 	rcu_read_unlock();
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 21fec73d45d4..45f77a1b9c97 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -396,7 +396,7 @@ static int ptrace_attach(struct task_struct *task, long request,
+diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+index 9b6968cbde14..9e07f3521549 100644
+--- a/include/linux/sched/signal.h
++++ b/include/linux/sched/signal.h
+@@ -477,7 +477,6 @@ static inline int kill_cad_pid(int sig, int priv)
+ /* These can be the second arg to send_sig_info/send_group_sig_info.  */
+ #define SEND_SIG_NOINFO ((struct siginfo *) 0)
+ #define SEND_SIG_PRIV	((struct siginfo *) 1)
+-#define SEND_SIG_FORCED	((struct siginfo *) 2)
  
- 	/* SEIZE doesn't trap tracee on attach */
- 	if (!seize)
--		send_sig_info(SIGSTOP, SEND_SIG_FORCED, task);
-+		send_sig_info(SIGSTOP, SEND_SIG_PRIV, task);
+ /*
+  * True if we are on the alternate signal stack.
+diff --git a/include/trace/events/signal.h b/include/trace/events/signal.h
+index 86582923d51c..3deeed50ffd0 100644
+--- a/include/trace/events/signal.h
++++ b/include/trace/events/signal.h
+@@ -11,8 +11,7 @@
  
- 	spin_lock(&task->sighand->siglock);
+ #define TP_STORE_SIGINFO(__entry, info)				\
+ 	do {							\
+-		if (info == SEND_SIG_NOINFO ||			\
+-		    info == SEND_SIG_FORCED) {			\
++		if (info == SEND_SIG_NOINFO) {			\
+ 			__entry->errno	= 0;			\
+ 			__entry->code	= SI_USER;		\
+ 		} else if (info == SEND_SIG_PRIV) {		\
+diff --git a/kernel/signal.c b/kernel/signal.c
+index d7d1adf735f4..ec136fda457a 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -736,7 +736,7 @@ static void flush_sigqueue_mask(sigset_t *mask, struct sigpending *s)
  
-@@ -563,7 +563,7 @@ void exit_ptrace(struct task_struct *tracer, struct list_head *dead)
+ static inline int is_si_special(const struct siginfo *info)
+ {
+-	return info <= SEND_SIG_FORCED;
++	return info <= SEND_SIG_PRIV;
+ }
  
- 	list_for_each_entry_safe(p, n, &tracer->ptraced, ptrace_entry) {
- 		if (unlikely(p->ptrace & PT_EXITKILL))
--			send_sig_info(SIGKILL, SEND_SIG_FORCED, p);
-+			send_sig_info(SIGKILL, SEND_SIG_PRIV, p);
+ static inline bool si_fromuser(const struct siginfo *info)
+@@ -1039,7 +1039,7 @@ static int __send_signal(int sig, struct siginfo *info, struct task_struct *t,
  
- 		if (__ptrace_detach(tracer, p))
- 			list_add(&p->ptrace_entry, dead);
-diff --git a/mm/oom_kill.c b/mm/oom_kill.c
-index b5b25e4dcbbb..3bcfeaaeed87 100644
---- a/mm/oom_kill.c
-+++ b/mm/oom_kill.c
-@@ -858,7 +858,7 @@ static void __oom_kill_process(struct task_struct *victim)
- 	 * in order to prevent the OOM victim from depleting the memory
- 	 * reserves from the user space under its control.
+ 	result = TRACE_SIGNAL_IGNORED;
+ 	if (!prepare_signal(sig, t,
+-			from_ancestor_ns || (info == SEND_SIG_PRIV) || (info == SEND_SIG_FORCED)))
++			from_ancestor_ns || (info == SEND_SIG_PRIV)))
+ 		goto ret;
+ 
+ 	pending = (type != PIDTYPE_PID) ? &t->signal->shared_pending : &t->pending;
+@@ -1057,8 +1057,7 @@ static int __send_signal(int sig, struct siginfo *info, struct task_struct *t,
+ 	 * Skip useless siginfo allocation for SIGKILL SIGSTOP,
+ 	 * and kernel threads.
  	 */
--	do_send_sig_info(SIGKILL, SEND_SIG_FORCED, victim, PIDTYPE_TGID);
-+	do_send_sig_info(SIGKILL, SEND_SIG_PRIV, victim, PIDTYPE_TGID);
- 	mark_oom_victim(victim);
- 	pr_err("Killed process %d (%s) total-vm:%lukB, anon-rss:%lukB, file-rss:%lukB, shmem-rss:%lukB\n",
- 		task_pid_nr(victim), victim->comm, K(victim->mm->total_vm),
-@@ -896,7 +896,7 @@ static void __oom_kill_process(struct task_struct *victim)
- 		 */
- 		if (unlikely(p->flags & PF_KTHREAD))
- 			continue;
--		do_send_sig_info(SIGKILL, SEND_SIG_FORCED, p, PIDTYPE_TGID);
-+		do_send_sig_info(SIGKILL, SEND_SIG_PRIV, p, PIDTYPE_TGID);
- 	}
- 	rcu_read_unlock();
+-	if ((info == SEND_SIG_FORCED) ||
+-	    sig_kernel_only(sig) || (t->flags & PF_KTHREAD))
++	if (sig_kernel_only(sig) || (t->flags & PF_KTHREAD))
+ 		goto out_set;
  
+ 	/*
 -- 
 2.17.1
