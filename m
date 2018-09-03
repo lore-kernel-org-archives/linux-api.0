@@ -1,7 +1,7 @@
 From: "Eric W. Biederman" <ebiederm@xmission.com>
-Subject: [PATCH 02/10] signal: Properly deliver SIGILL from uprobes
-Date: Mon,  3 Sep 2018 22:44:22 +0200
-Message-ID: <20180903204430.25473-2-ebiederm@xmission.com>
+Subject: [PATCH 03/10] signal: Properly deliver SIGSEGV from x86 uprobes
+Date: Mon,  3 Sep 2018 22:44:23 +0200
+Message-ID: <20180903204430.25473-3-ebiederm@xmission.com>
 References: <87musyl3fa.fsf@xmission.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <87musyl3fa.fsf@xmission.com>
@@ -10,46 +10,36 @@ To: linux-kernel@vger.kernel.org
 Cc: Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-For userspace to tell the difference between a random signal and an
-exception, the exception must include siginfo information.
+For userspace to tell the difference between an random signal
+and an exception, the exception must include siginfo information.
 
-Using SEND_SIG_FORCED for SIGILL is thus wrong, and it will result
-in userspace seeing si_code == SI_USER (like a random signal) instead
-of si_code == SI_KERNEL or a more specific si_code as all exceptions
+Using SEND_SIG_FORCED for SIGSEGV is thus wrong, and it will result in
+userspace seeing si_code == SI_USER (like a random signal) instead of
+si_code == SI_KERNEL or a more specific si_code as all exceptions
 deliver.
 
-Therefore replace force_sig_info(SIGILL, SEND_SIG_FORCE, current)
-with force_sig(SIG_ILL, current) which gets this right and is
-shorter and easier to type.
+Therefore replace force_sig_info(SIGSEGV, SEND_SIG_FORCE, current)
+with force_sig(SIG_SEGV, current) which gets this right and is shorter
+and easier to type.
 
-Fixes: 014940bad8e4 ("uprobes/x86: Send SIGILL if arch_uprobe_post_xol() fails")
-Fixes: 0b5256c7f173 ("uprobes: Send SIGILL if handle_trampoline() fails")
+Fixes: 791eca10107f ("uretprobes/x86: Hijack return address")
 Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
 ---
- kernel/events/uprobes.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ arch/x86/kernel/uprobes.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/events/uprobes.c b/kernel/events/uprobes.c
-index 3207a4d26849..2bf792d22087 100644
---- a/kernel/events/uprobes.c
-+++ b/kernel/events/uprobes.c
-@@ -1858,7 +1858,7 @@ static void handle_trampoline(struct pt_regs *regs)
+diff --git a/arch/x86/kernel/uprobes.c b/arch/x86/kernel/uprobes.c
+index deb576b23b7c..843feb94a950 100644
+--- a/arch/x86/kernel/uprobes.c
++++ b/arch/x86/kernel/uprobes.c
+@@ -1086,7 +1086,7 @@ arch_uretprobe_hijack_return_addr(unsigned long trampoline_vaddr, struct pt_regs
+ 		pr_err("return address clobbered: pid=%d, %%sp=%#lx, %%ip=%#lx\n",
+ 		       current->pid, regs->sp, regs->ip);
  
-  sigill:
- 	uprobe_warn(current, "handle uretprobe, sending SIGILL.");
--	force_sig_info(SIGILL, SEND_SIG_FORCED, current);
-+	force_sig(SIGILL, current);
- 
- }
- 
-@@ -1966,7 +1966,7 @@ static void handle_singlestep(struct uprobe_task *utask, struct pt_regs *regs)
- 
- 	if (unlikely(err)) {
- 		uprobe_warn(current, "execute the probed insn, sending SIGILL.");
--		force_sig_info(SIGILL, SEND_SIG_FORCED, current);
-+		force_sig(SIGILL, current);
+-		force_sig_info(SIGSEGV, SEND_SIG_FORCED, current);
++		force_sig(SIGSEGV, current);
  	}
- }
  
+ 	return -1;
 -- 
 2.17.1
