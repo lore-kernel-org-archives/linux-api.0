@@ -1,43 +1,134 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v3 00/24] Control Flow Enforcement: Shadow Stack
-Date: Tue, 04 Sep 2018 07:47:58 -0700
-Message-ID: <1536072478.12366.2.camel@intel.com>
-References: <20180830143904.3168-1-yu-cheng.yu@intel.com>
-         <20180902081350.GF28695@350D>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180902081350.GF28695@350D>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Balbir Singh <bsingharora@gmail.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <peterz@infradead.org>, Ravi V. Sha
+From: Mark Fasheh <mfasheh@suse.de>
+Subject: [RESEND][PATCH v5 0/2] vfs: fix dedupe permission check
+Date: Tue,  4 Sep 2018 13:40:14 -0700
+Message-ID: <20180904204016.14494-1-mfasheh@suse.de>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Al Viro <viro@ZenIV.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, Adam Borowski <kilobyte@angband.pl>, David Sterba <dsterba@suse.cz>, Mark Fasheh <mfasheh@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 2018-09-02 at 18:13 +1000, Balbir Singh wrote:
-> On Thu, Aug 30, 2018 at 07:38:40AM -0700, Yu-cheng Yu wrote:
-> > 
-> > The previous version of CET patches can be found in the following
-> > link.
-> > 
-> >   https://lkml.org/lkml/2018/7/10/1031
-> > 
-> > Summary of changes from v2:
-> > 
-> >   Move Shadow Stack page fault handling logic to arch/x86.
-> >   Update can_follow_write_pte/pmd; move logic to arch/x86.
-> >   Fix problems in WRUSS in-line assembly.
-> >   Fix issues in ELF parser.
-> >   Split out IBT/PTRACE patches to a second set.
-> >   Other small fixes.
-> > 
-> Quick question -- is there a simulator or some other way you've
-> been testing this? Just curious, if it's possible to run these
-> patches or just a review and internal hardware/simulator where
-> they are run and posted
-> 
-> Balbir Singh.
+Hi Andrew/Al,
 
-Currently only for review.
+Could I please have these patches put in a tree for more public testing?
+They've hit fsdevel a few times now, I have links to the discussions in the
+change log below.
 
-Yu-cheng
+
+The following patches fix a couple of issues with the permission check
+we do in vfs_dedupe_file_range().
+
+The first patch expands our check to allow dedupe of a file if the
+user owns it or otherwise would be allowed to write to it.
+
+Current behavior is that we'll allow dedupe only if:
+
+- the user is an admin (root)
+- the user has the file open for write
+
+This makes it impossible for a user to dedupe their own file set
+unless they do it as root, or ensure that all files have write
+permission. There's a couple of duperemove bugs open for this:
+
+https://github.com/markfasheh/duperemove/issues/129
+https://github.com/markfasheh/duperemove/issues/86
+
+The other problem we have is also related to forcing the user to open
+target files for write - A process trying to exec a file currently
+being deduped gets ETXTBUSY. The answer (as above) is to allow them to
+open the targets ro - root can already do this. There was a patch from
+Adam Borowski to fix this back in 2016:
+
+https://lkml.org/lkml/2016/7/17/130
+
+which I have incorporated into my changes.
+
+
+The 2nd patch fixes our return code for permission denied to be
+EPERM. For some reason we're returning EINVAL - I think that's
+probably my fault. At any rate, we need to be returning something
+descriptive of the actual problem, otherwise callers see EINVAL and
+can't really make a valid determination of what's gone wrong.
+
+This has also popped up in duperemove, mostly in the form of cryptic
+error messages. Because this is a code returned to userspace, I did
+check the other users of extent-same that I could find. Both 'bees'
+and 'rust-btrfs' do the same as duperemove and simply report the error
+(as they should).
+
+
+Lastly, I have an update to the fi_deduperange manpage to reflect these
+changes. That patch is attached below.
+
+
+Please apply.
+
+git pull https://github.com/markfasheh/linux dedupe-perms
+
+Thanks,
+  --Mark
+
+Changes from V4 to V5:
+- Rebase and retest on 4.18-rc8
+- Place updated manpage patch below, CC linux-api
+- V4 discussion: https://patchwork.kernel.org/patch/10530365/
+
+Changes from V3 to V4:
+- Add a patch (below) to ioctl_fideduperange.2 explaining our
+  changes. I will send this patch once the kernel update is
+  accepted. Thanks to Darrick Wong for this suggestion.
+- V3 discussion: https://www.spinics.net/lists/linux-btrfs/msg79135.html
+
+Changes from V2 to V3:
+- Return bool from allow_file_dedupe
+- V2 discussion: https://www.spinics.net/lists/linux-btrfs/msg78421.html
+
+Changes from V1 to V2:
+- Add inode_permission check as suggested by Adam Borowski
+- V1 discussion: https://marc.info/?l=linux-xfs&m=152606684017965&w=2
+
+
+From: Mark Fasheh <mfasheh@suse.de>
+
+[PATCH] ioctl_fideduperange.2: clarify permission requirements
+
+dedupe permission checks were recently relaxed - update our man page to
+reflect those changes.
+
+Signed-off-by: Mark Fasheh <mfasheh@suse.de>
+---
+ man2/ioctl_fideduperange.2 | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/man2/ioctl_fideduperange.2 b/man2/ioctl_fideduperange.2
+index 84d20a276..4040ee064 100644
+--- a/man2/ioctl_fideduperange.2
++++ b/man2/ioctl_fideduperange.2
+@@ -105,9 +105,12 @@ The field
+ must be zero.
+ During the call,
+ .IR src_fd
+-must be open for reading and
++must be open for reading.
+ .IR dest_fd
+-must be open for writing.
++can be open for writing, or reading.
++If
++.IR dest_fd
++is open for reading, the user must have write access to the file.
+ The combined size of the struct
+ .IR file_dedupe_range
+ and the struct
+@@ -185,8 +188,8 @@ This can appear if the filesystem does not support deduplicating either file
+ descriptor, or if either file descriptor refers to special inodes.
+ .TP
+ .B EPERM
+-.IR dest_fd
+-is immutable.
++This will be returned if the user lacks permission to dedupe the file referenced by
++.IR dest_fd .
+ .TP
+ .B ETXTBSY
+ One of the files is a swap file.
+-- 
+2.15.1
