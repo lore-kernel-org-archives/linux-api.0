@@ -1,181 +1,118 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 08/11] UAPI: sound: Fix use of u32 and co. in
-	UAPI headers
-Date: Wed, 05 Sep 2018 16:55:30 +0100
-Message-ID: <153616293089.23468.13515059526628668970.stgit@warthog.procyon.org.uk>
+From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH 09/11] UAPI: ndctl: Fix g++-unsupported initialisation in
+ headers
+Date: Wed, 05 Sep 2018 16:55:37 +0100
+Message-ID: <153616293757.23468.13765050528392604035.stgit@warthog.procyon.org.uk>
 References: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <alsa-devel-bounces@alsa-project.org>
-In-Reply-To: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
-List-Unsubscribe: <http://mailman.alsa-project.org/mailman/options/alsa-devel>,
- <mailto:alsa-devel-request@alsa-project.org?subject=unsubscribe>
-List-Archive: <http://mailman.alsa-project.org/pipermail/alsa-devel/>
-List-Post: <mailto:alsa-devel@alsa-project.org>
-List-Help: <mailto:alsa-devel-request@alsa-project.org?subject=help>
-List-Subscribe: <http://mailman.alsa-project.org/mailman/listinfo/alsa-devel>,
- <mailto:alsa-devel-request@alsa-project.org?subject=subscribe>
-Errors-To: alsa-devel-bounces@alsa-project.org
-Sender: alsa-devel-bounces@alsa-project.org
-To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
-Cc: dhowells@redhat.com, linux-kernel@vger.kernel.org, moderated for non-subscribers <alsa-devel@alsa-project.org>, Takashi Iwai <tiwai@suse.com>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <153616286704.23468.584491117180383924.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Fix the use of u32 and co. in UAPI headers as these are not defined.  Switch
-to using the __u32-style equivalents instead.
+The following code in the linux/ndctl header file:
 
-Signed-off-by: David Howells <dhowells@redhat.com>
-cc: Jaroslav Kysela <perex@perex.cz>
-cc: Takashi Iwai <tiwai@suse.com>
-cc: alsa-devel@alsa-project.org (moderated for non-subscribers)
+	static inline const char *nvdimm_bus_cmd_name(unsigned cmd)
+	{
+		static const char * const names[] = {
+			[ND_CMD_ARS_CAP] = "ars_cap",
+			[ND_CMD_ARS_START] = "ars_start",
+			[ND_CMD_ARS_STATUS] = "ars_status",
+			[ND_CMD_CLEAR_ERROR] = "clear_error",
+			[ND_CMD_CALL] = "cmd_call",
+		};
+
+		if (cmd < ARRAY_SIZE(names) && names[cmd])
+			return names[cmd];
+		return "unknown";
+	}
+
+is broken in a number of ways:
+
+ (1) ARRAY_SIZE() is not generally defined.  Fix this by defining a label
+     in the enum that indicates the number of commands.
+
+ (2) g++ does not support "non-trivial" array initialisers fully yet.  Fix
+     this by defining the missing intermediate values.
+
+ (3) Every file that calls this function will acquire a copy of names[].
+
+The same goes for nvdimm_cmd_name().
+
+A better way would be to remove these functions and their arrays from the
+header entirely.
+
+Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 ---
 
- include/uapi/sound/skl-tplg-interface.h |  106 ++++++++++++++++---------------
- 1 file changed, 54 insertions(+), 52 deletions(-)
+ include/uapi/linux/ndctl.h |   16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/include/uapi/sound/skl-tplg-interface.h b/include/uapi/sound/skl-tplg-interface.h
-index f58cafa42f18..f39352cef382 100644
---- a/include/uapi/sound/skl-tplg-interface.h
-+++ b/include/uapi/sound/skl-tplg-interface.h
-@@ -10,6 +10,8 @@
- #ifndef __HDA_TPLG_INTERFACE_H__
- #define __HDA_TPLG_INTERFACE_H__
- 
-+#include <linux/types.h>
-+
- /*
-  * Default types range from 0~12. type can range from 0 to 0xff
-  * SST types start at higher to avoid any overlapping in future
-@@ -143,10 +145,10 @@ enum skl_module_param_type {
+diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
+index 7e27070b9440..9c89159f6a0f 100644
+--- a/include/uapi/linux/ndctl.h
++++ b/include/uapi/linux/ndctl.h
+@@ -117,6 +117,7 @@ enum {
+ 	ND_CMD_VENDOR_EFFECT_LOG = 8,
+ 	ND_CMD_VENDOR = 9,
+ 	ND_CMD_CALL = 10,
++	nr__ND_CMD = 11
  };
  
- struct skl_dfw_algo_data {
--	u32 set_params:2;
--	u32 rsvd:30;
--	u32 param_id;
--	u32 max;
-+	__u32 set_params:2;
-+	__u32 rsvd:30;
-+	__u32 param_id;
-+	__u32 max;
- 	char params[0];
- } __packed;
+ enum {
+@@ -128,22 +129,29 @@ enum {
  
-@@ -163,68 +165,68 @@ enum skl_tuple_type {
- /* v4 configuration data */
+ static inline const char *nvdimm_bus_cmd_name(unsigned cmd)
+ {
+-	static const char * const names[] = {
++	static const char * const names[nr__ND_CMD] = {
++		[0] = NULL,
+ 		[ND_CMD_ARS_CAP] = "ars_cap",
+ 		[ND_CMD_ARS_START] = "ars_start",
+ 		[ND_CMD_ARS_STATUS] = "ars_status",
+ 		[ND_CMD_CLEAR_ERROR] = "clear_error",
++		[5] = NULL,
++		[6] = NULL,
++		[7] = NULL,
++		[8] = NULL,
++		[9] = NULL,
+ 		[ND_CMD_CALL] = "cmd_call",
+ 	};
  
- struct skl_dfw_v4_module_pin {
--	u16 module_id;
--	u16 instance_id;
-+	__u16 module_id;
-+	__u16 instance_id;
- } __packed;
+-	if (cmd < ARRAY_SIZE(names) && names[cmd])
++	if (cmd < nr__ND_CMD && names[cmd])
+ 		return names[cmd];
+ 	return "unknown";
+ }
  
- struct skl_dfw_v4_module_fmt {
--	u32 channels;
--	u32 freq;
--	u32 bit_depth;
--	u32 valid_bit_depth;
--	u32 ch_cfg;
--	u32 interleaving_style;
--	u32 sample_type;
--	u32 ch_map;
-+	__u32 channels;
-+	__u32 freq;
-+	__u32 bit_depth;
-+	__u32 valid_bit_depth;
-+	__u32 ch_cfg;
-+	__u32 interleaving_style;
-+	__u32 sample_type;
-+	__u32 ch_map;
- } __packed;
+ static inline const char *nvdimm_cmd_name(unsigned cmd)
+ {
+-	static const char * const names[] = {
++	static const char * const names[nr__ND_CMD] = {
++		[0] = NULL,
+ 		[ND_CMD_SMART] = "smart",
+ 		[ND_CMD_SMART_THRESHOLD] = "smart_thresh",
+ 		[ND_CMD_DIMM_FLAGS] = "flags",
+@@ -156,7 +164,7 @@ static inline const char *nvdimm_cmd_name(unsigned cmd)
+ 		[ND_CMD_CALL] = "cmd_call",
+ 	};
  
- struct skl_dfw_v4_module_caps {
--	u32 set_params:2;
--	u32 rsvd:30;
--	u32 param_id;
--	u32 caps_size;
--	u32 caps[HDA_SST_CFG_MAX];
-+	__u32 set_params:2;
-+	__u32 rsvd:30;
-+	__u32 param_id;
-+	__u32 caps_size;
-+	__u32 caps[HDA_SST_CFG_MAX];
- } __packed;
- 
- struct skl_dfw_v4_pipe {
--	u8 pipe_id;
--	u8 pipe_priority;
--	u16 conn_type:4;
--	u16 rsvd:4;
--	u16 memory_pages:8;
-+	__u8 pipe_id;
-+	__u8 pipe_priority;
-+	__u16 conn_type:4;
-+	__u16 rsvd:4;
-+	__u16 memory_pages:8;
- } __packed;
- 
- struct skl_dfw_v4_module {
- 	char uuid[SKL_UUID_STR_SZ];
- 
--	u16 module_id;
--	u16 instance_id;
--	u32 max_mcps;
--	u32 mem_pages;
--	u32 obs;
--	u32 ibs;
--	u32 vbus_id;
--
--	u32 max_in_queue:8;
--	u32 max_out_queue:8;
--	u32 time_slot:8;
--	u32 core_id:4;
--	u32 rsvd1:4;
--
--	u32 module_type:8;
--	u32 conn_type:4;
--	u32 dev_type:4;
--	u32 hw_conn_type:4;
--	u32 rsvd2:12;
--
--	u32 params_fixup:8;
--	u32 converter:8;
--	u32 input_pin_type:1;
--	u32 output_pin_type:1;
--	u32 is_dynamic_in_pin:1;
--	u32 is_dynamic_out_pin:1;
--	u32 is_loadable:1;
--	u32 rsvd3:11;
-+	__u16 module_id;
-+	__u16 instance_id;
-+	__u32 max_mcps;
-+	__u32 mem_pages;
-+	__u32 obs;
-+	__u32 ibs;
-+	__u32 vbus_id;
-+
-+	__u32 max_in_queue:8;
-+	__u32 max_out_queue:8;
-+	__u32 time_slot:8;
-+	__u32 core_id:4;
-+	__u32 rsvd1:4;
-+
-+	__u32 module_type:8;
-+	__u32 conn_type:4;
-+	__u32 dev_type:4;
-+	__u32 hw_conn_type:4;
-+	__u32 rsvd2:12;
-+
-+	__u32 params_fixup:8;
-+	__u32 converter:8;
-+	__u32 input_pin_type:1;
-+	__u32 output_pin_type:1;
-+	__u32 is_dynamic_in_pin:1;
-+	__u32 is_dynamic_out_pin:1;
-+	__u32 is_loadable:1;
-+	__u32 rsvd3:11;
- 
- 	struct skl_dfw_v4_pipe pipe;
- 	struct skl_dfw_v4_module_fmt in_fmt[MAX_IN_QUEUE];
+-	if (cmd < ARRAY_SIZE(names) && names[cmd])
++	if (cmd < nr__ND_CMD && names[cmd])
+ 		return names[cmd];
+ 	return "unknown";
+ }
