@@ -1,57 +1,46 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 01/11] UAPI: drm: Fix use of C++ keywords as structural members
-Date: Wed, 05 Sep 2018 16:54:40 +0100
-Message-ID: <153616288089.23468.4502511671693917281.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 02/11] UAPI: keys: Fix use of C++ keywords as structural
+ members
+Date: Wed, 05 Sep 2018 16:54:47 +0100
+Message-ID: <153616288762.23468.17409226604948361939.stgit@warthog.procyon.org.uk>
 References: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
-Cc: David Airlie <airlied@linux.ie>, linux-arm-msm@vger.kernel.org, linux-kernel@vger.kernel.org, dri-devel@lists.freedesktop.org, dhowells@redhat.com, freedreno@lists.freedesktop.org
+Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, keyrings@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-VGhlIGk4MTAgYW5kIG1zbSBkcm0gZHJpdmVycyB1c2UgQysrIGtleXdvcmRzIGFzIHN0cnVjdHVy
-YWwgbWVtYmVycy4gIEZpeAp0aGlzIGJ5IGluc2VydGluZyBhbiBhbm9ueW1vdXMgdW5pb24gdGhh
-dCBwcm92aWRlcyBhbiBhbHRlcm5hdGl2ZSBuYW1lIGFuZAp0aGVuIGhpZGUgdGhlIHJlc2VydmVk
-IG5hbWUgaW4gQysrLgoKU2lnbmVkLW9mZi1ieTogRGF2aWQgSG93ZWxscyA8ZGhvd2VsbHNAcmVk
-aGF0LmNvbT4KY2M6IFJvYiBDbGFyayA8cm9iZGNsYXJrQGdtYWlsLmNvbT4KY2M6IERhdmlkIEFp
-cmxpZSA8YWlybGllZEBsaW51eC5pZT4KY2M6IGxpbnV4LWFybS1tc21Admdlci5rZXJuZWwub3Jn
-CmNjOiBkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmNjOiBmcmVlZHJlbm9AbGlzdHMu
-ZnJlZWRlc2t0b3Aub3JnCi0tLQoKIGluY2x1ZGUvdWFwaS9kcm0vaTgxMF9kcm0uaCB8ICAgIDcg
-KysrKysrLQogaW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmggIHwgICAgNyArKysrKystCiAyIGZp
-bGVzIGNoYW5nZWQsIDEyIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
-IGEvaW5jbHVkZS91YXBpL2RybS9pODEwX2RybS5oIGIvaW5jbHVkZS91YXBpL2RybS9pODEwX2Ry
-bS5oCmluZGV4IGQyODVkNWU3MmU2YS4uNjE3ZDc5ZWMzZmM1IDEwMDY0NAotLS0gYS9pbmNsdWRl
-L3VhcGkvZHJtL2k4MTBfZHJtLmgKKysrIGIvaW5jbHVkZS91YXBpL2RybS9pODEwX2RybS5oCkBA
-IC0yNjYsNyArMjY2LDEyIEBAIHR5cGVkZWYgc3RydWN0IF9kcm1faTgxMF9jb3B5X3QgewogI2Rl
-ZmluZSBQUl9NQVNLICAgICAgICAgICAgICAoMHg3PDwxOCkKIAogdHlwZWRlZiBzdHJ1Y3QgZHJt
-X2k4MTBfZG1hIHsKLQl2b2lkICp2aXJ0dWFsOworCXVuaW9uIHsKKyNpZm5kZWYgX19jcGx1c3Bs
-dXMKKwkJdm9pZCAqdmlydHVhbDsKKyNlbmRpZgorCQl2b2lkICpfdmlydHVhbDsKKwl9OwogCWlu
-dCByZXF1ZXN0X2lkeDsKIAlpbnQgcmVxdWVzdF9zaXplOwogCWludCBncmFudGVkOwpkaWZmIC0t
-Z2l0IGEvaW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmggYi9pbmNsdWRlL3VhcGkvZHJtL21zbV9k
-cm0uaAppbmRleCBjMDZkMGE1YmRkODAuLmU5OWJhYjcyZDU4YyAxMDA2NDQKLS0tIGEvaW5jbHVk
-ZS91YXBpL2RybS9tc21fZHJtLmgKKysrIGIvaW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmgKQEAg
-LTE0OCw3ICsxNDgsMTIgQEAgc3RydWN0IGRybV9tc21fZ2VtX2NwdV9maW5pIHsKICAqLwogc3Ry
-dWN0IGRybV9tc21fZ2VtX3N1Ym1pdF9yZWxvYyB7CiAJX191MzIgc3VibWl0X29mZnNldDsgIC8q
-IGluLCBvZmZzZXQgZnJvbSBzdWJtaXRfYm8gKi8KLQlfX3UzMiBvcjsgICAgICAgICAgICAgLyog
-aW4sIHZhbHVlIE9SJ2Qgd2l0aCByZXN1bHQgKi8KKwl1bmlvbiB7CisjaWZuZGVmIF9fY3BsdXNw
-bHVzCisJCV9fdTMyIG9yOwkvKiBpbiwgdmFsdWUgT1InZCB3aXRoIHJlc3VsdCAqLworI2VuZGlm
-CisJCV9fdTMyIF9vcjsJLyogaW4sIHZhbHVlIE9SJ2Qgd2l0aCByZXN1bHQgKi8KKwl9OwogCV9f
-czMyIHNoaWZ0OyAgICAgICAgICAvKiBpbiwgYW1vdW50IG9mIGxlZnQgc2hpZnQgKGNhbiBiZSBu
-ZWdhdGl2ZSkgKi8KIAlfX3UzMiByZWxvY19pZHg7ICAgICAgLyogaW4sIGluZGV4IG9mIHJlbG9j
-X2JvIGJ1ZmZlciAqLwogCV9fdTY0IHJlbG9jX29mZnNldDsgICAvKiBpbiwgb2Zmc2V0IGZyb20g
-c3RhcnQgb2YgcmVsb2NfYm8gKi8KCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fCmRyaS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVk
-ZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZv
-L2RyaS1kZXZlbAo=
+The keyctl_dh_params struct uses a C++ keyword as structural members.  Fix
+this by inserting an anonymous union that provides an alternative name and
+then hide the reserved name in C++.
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Mat Martineau <mathew.j.martineau@linux.intel.com>
+cc: keyrings@vger.kernel.org
+---
+
+ include/uapi/linux/keyctl.h |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
+index 7b8c9e19bad1..170f015d1f25 100644
+--- a/include/uapi/linux/keyctl.h
++++ b/include/uapi/linux/keyctl.h
+@@ -65,7 +65,12 @@
+ 
+ /* keyctl structures */
+ struct keyctl_dh_params {
+-	__s32 private;
++	union {
++#ifndef __cplusplus
++		__s32 private;
++#endif
++		__s32 dh_private;
++	};
+ 	__s32 prime;
+ 	__s32 base;
+ };
