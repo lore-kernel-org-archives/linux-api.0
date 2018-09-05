@@ -1,56 +1,41 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH 03/11] UAPI: virtio_net: Fix use of C++ keywords as
- structural members
-Date: Wed, 5 Sep 2018 18:54:36 +0200
-Message-ID: <20180905165436.GA25206@kroah.com>
+From: Greg KH <greg-U8xfFu+wG4EAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [RFC] UAPI: Check headers by compiling all together as C++
+Date: Wed, 5 Sep 2018 18:55:52 +0200
+Message-ID: <20180905165552.GB25206@kroah.com>
 References: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
- <153616289529.23468.7498785670556620808.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <153616289529.23468.7498785670556620808.stgit@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org, "Michael S. Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org
+In-Reply-To: <153616286704.23468.584491117180383924.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: moderated for non-subscribers <alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org>, "Michael S. Tsirkin" <mst-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, Jason Wang <jasowang-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Mat Martineau <mathew.j.martineau-VuQAYsv1563Yd54FQh9/CA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, Masahiro Yamada <yamada.masahiro-uWyLwvC0a2jby3iVrkZq2A@public.gmane.org>, keyrings-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Ryusuke Konishi <konishi.ryusuke-Zyj7fXuS5i5L9jVzuh4AOg@public.gmane.org>, linux-nilfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, codalist-/uMB558Y47wP4a1z8dhFYw@public.gmane.org, coda-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, Kent Overstreet <kent.overstreet-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jaroslav Kysela <perex-/Fr2/VpizcU@public.gmane.org>, Jan Harkes <jaharkes-ETDLCGt7PQU3uPMLIKxrzw@public.gmane.org>, Michal Marek <michal.lkml-yyZNWGI4GtDR7s880joybQ@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Takashi Iwai <tiwai-IBi9RG/b67k@public.gmane.org>, linux-kernel@
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 05, 2018 at 04:54:55PM +0100, David Howells wrote:
-> The virtio_net_ctrl_hdr struct uses a C++ keyword as structural members.  Fix
-> this by inserting an anonymous union that provides an alternative name and
-> then hide the reserved name in C++.
+On Wed, Sep 05, 2018 at 04:54:27PM +0100, David Howells wrote:
 > 
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> cc: "Michael S. Tsirkin" <mst@redhat.com>
-> cc: Jason Wang <jasowang@redhat.com>
-> cc: virtualization@lists.linux-foundation.org
-> ---
-> 
->  include/uapi/linux/virtio_net.h |    7 ++++++-
->  1 file changed, 6 insertions(+), 1 deletion(-)
-> 
-> diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
-> index a3715a3224c1..967142bc0e05 100644
-> --- a/include/uapi/linux/virtio_net.h
-> +++ b/include/uapi/linux/virtio_net.h
-> @@ -150,7 +150,12 @@ struct virtio_net_hdr_mrg_rxbuf {
->   * command goes in between.
->   */
->  struct virtio_net_ctrl_hdr {
-> -	__u8 class;
-> +	union {
-> +#ifndef __cplusplus
-> +		__u8 class;
-> +#endif
-> +		__u8 _class;
-> +	};
+> Here's a set of patches that inserts a step into the build process to make
+> sure that the UAPI headers can all be built together with C++ (if the
+> compiler being used supports C++).  All but the final patch perform fixups,
+> including:
 
-Ugh, ick, no!
+Wait, why do we care?  What has recently changed to start to directly
+import kernel uapi files into C++ code?
 
-Come on now, either put the whole C namespace stuff around the file, or
-don't care about this at all.  Doing this whack-a-mole style is a mess.
+And if userspace wants to do this, can't they do the C namespace trick
+themselves when they do the import?  That must be how they are doing it
+today, right?
 
-"class" is a fine variable name for C code, there's no reason this has
-to change here at all.
+thanks,
 
 greg k-h
