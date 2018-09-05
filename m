@@ -1,7 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 06/11] UAPI: netfilter: Fix symbol collision issues
-Date: Wed, 05 Sep 2018 16:55:16 +0100
-Message-ID: <153616291694.23468.3826354165095743891.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 07/11] UAPI: nilfs2: Fix use of undefined byteswapping
+ functions
+Date: Wed, 05 Sep 2018 16:55:23 +0100
+Message-ID: <153616292366.23468.14988166998690800938.stgit@warthog.procyon.org.uk>
 References: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -10,65 +11,101 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
-Cc: netfilter-devel@vger.kernel.org, coreteam@netfilter.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
+Cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>, linux-nilfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-The netfilter UAPI headers have some symbol collision issues:
+nilfs2 exports a load of inline functions to userspace that call kernel
+byteswapping functions that don't exist in UAPI.  Fix this by making it
+#include asm/byteorder.h and use the functions declared there.
 
- (1) "enum nfnl_acct_msg_types" is defined twice, and each definition is
-     completely different.
-
-     Fix this by renaming the one in nfnetlink_cthelper.h to be "enum
-     nfnl_cthelper_types" to be consistent with the other things in that
-     file.
-
- (2) There's a disagreement between ipt_ECN.h and ipt_ecn.h over the
-     definition of various IPT_ECN_* constants, leading to an error over
-     IPT_ECN_IP_MASK being substituted when being defined as an enum value
-     in ipt_ecn.h if ipt_ECN.h is #included first.
-
-     Fix this by removing the conflicting constants from ipt_ECN.h and
-     including ipt_ecn.h instead.
+A better way is probably to remove these inline functions from the nilfs2
+header since they are technically broken.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
-cc: netfilter-devel@vger.kernel.org
-cc: coreteam@netfilter.org
+cc: Ryusuke Konishi <konishi.ryusuke@lab.ntt.co.jp>
+cc: linux-nilfs@vger.kernel.org
+cc: linux-fsdevel@vger.kernel.org
 ---
 
- include/uapi/linux/netfilter/nfnetlink_cthelper.h |    2 +-
- include/uapi/linux/netfilter_ipv4/ipt_ECN.h       |    9 +--------
- 2 files changed, 2 insertions(+), 9 deletions(-)
+ include/uapi/linux/nilfs2_ondisk.h |   21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
 
-diff --git a/include/uapi/linux/netfilter/nfnetlink_cthelper.h b/include/uapi/linux/netfilter/nfnetlink_cthelper.h
-index a13137afc429..b9313ed0c313 100644
---- a/include/uapi/linux/netfilter/nfnetlink_cthelper.h
-+++ b/include/uapi/linux/netfilter/nfnetlink_cthelper.h
-@@ -5,7 +5,7 @@
- #define NFCT_HELPER_STATUS_DISABLED	0
- #define NFCT_HELPER_STATUS_ENABLED	1
- 
--enum nfnl_acct_msg_types {
-+enum nfnl_cthelper_types {
- 	NFNL_MSG_CTHELPER_NEW,
- 	NFNL_MSG_CTHELPER_GET,
- 	NFNL_MSG_CTHELPER_DEL,
-diff --git a/include/uapi/linux/netfilter_ipv4/ipt_ECN.h b/include/uapi/linux/netfilter_ipv4/ipt_ECN.h
-index e3630fd045b8..d582119ad62a 100644
---- a/include/uapi/linux/netfilter_ipv4/ipt_ECN.h
-+++ b/include/uapi/linux/netfilter_ipv4/ipt_ECN.h
-@@ -12,14 +12,7 @@
+diff --git a/include/uapi/linux/nilfs2_ondisk.h b/include/uapi/linux/nilfs2_ondisk.h
+index a7e66ab11d1d..d3bd2fe08791 100644
+--- a/include/uapi/linux/nilfs2_ondisk.h
++++ b/include/uapi/linux/nilfs2_ondisk.h
+@@ -29,6 +29,7 @@
  
  #include <linux/types.h>
- #include <linux/netfilter/xt_DSCP.h>
--
--#define IPT_ECN_IP_MASK	(~XT_DSCP_MASK)
--
--#define IPT_ECN_OP_SET_IP	0x01	/* set ECN bits of IPv4 header */
--#define IPT_ECN_OP_SET_ECE	0x10	/* set ECE bit of TCP header */
--#define IPT_ECN_OP_SET_CWR	0x20	/* set CWR bit of TCP header */
--
--#define IPT_ECN_OP_MASK		0xce
-+#include <linux/netfilter_ipv4/ipt_ecn.h>
+ #include <linux/magic.h>
++#include <asm/byteorder.h>
  
- struct ipt_ECN_info {
- 	__u8 operation;	/* bitset of operations */
+ 
+ #define NILFS_INODE_BMAP_SIZE	7
+@@ -533,19 +534,19 @@ enum {
+ static inline void							\
+ nilfs_checkpoint_set_##name(struct nilfs_checkpoint *cp)		\
+ {									\
+-	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) |		\
++	cp->cp_flags = __cpu_to_le32(__le32_to_cpu(cp->cp_flags) |	\
+ 				   (1UL << NILFS_CHECKPOINT_##flag));	\
+ }									\
+ static inline void							\
+ nilfs_checkpoint_clear_##name(struct nilfs_checkpoint *cp)		\
+ {									\
+-	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) &		\
++	cp->cp_flags = __cpu_to_le32(__le32_to_cpu(cp->cp_flags) &	\
+ 				   ~(1UL << NILFS_CHECKPOINT_##flag));	\
+ }									\
+ static inline int							\
+ nilfs_checkpoint_##name(const struct nilfs_checkpoint *cp)		\
+ {									\
+-	return !!(le32_to_cpu(cp->cp_flags) &				\
++	return !!(__le32_to_cpu(cp->cp_flags) &				\
+ 		  (1UL << NILFS_CHECKPOINT_##flag));			\
+ }
+ 
+@@ -595,20 +596,20 @@ enum {
+ static inline void							\
+ nilfs_segment_usage_set_##name(struct nilfs_segment_usage *su)		\
+ {									\
+-	su->su_flags = cpu_to_le32(le32_to_cpu(su->su_flags) |		\
++	su->su_flags = __cpu_to_le32(__le32_to_cpu(su->su_flags) |	\
+ 				   (1UL << NILFS_SEGMENT_USAGE_##flag));\
+ }									\
+ static inline void							\
+ nilfs_segment_usage_clear_##name(struct nilfs_segment_usage *su)	\
+ {									\
+ 	su->su_flags =							\
+-		cpu_to_le32(le32_to_cpu(su->su_flags) &			\
++		__cpu_to_le32(__le32_to_cpu(su->su_flags) &		\
+ 			    ~(1UL << NILFS_SEGMENT_USAGE_##flag));      \
+ }									\
+ static inline int							\
+ nilfs_segment_usage_##name(const struct nilfs_segment_usage *su)	\
+ {									\
+-	return !!(le32_to_cpu(su->su_flags) &				\
++	return !!(__le32_to_cpu(su->su_flags) &				\
+ 		  (1UL << NILFS_SEGMENT_USAGE_##flag));			\
+ }
+ 
+@@ -619,15 +620,15 @@ NILFS_SEGMENT_USAGE_FNS(ERROR, error)
+ static inline void
+ nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
+ {
+-	su->su_lastmod = cpu_to_le64(0);
+-	su->su_nblocks = cpu_to_le32(0);
+-	su->su_flags = cpu_to_le32(0);
++	su->su_lastmod = __cpu_to_le64(0);
++	su->su_nblocks = __cpu_to_le32(0);
++	su->su_flags = __cpu_to_le32(0);
+ }
+ 
+ static inline int
+ nilfs_segment_usage_clean(const struct nilfs_segment_usage *su)
+ {
+-	return !le32_to_cpu(su->su_flags);
++	return !__le32_to_cpu(su->su_flags);
+ }
+ 
+ /**
