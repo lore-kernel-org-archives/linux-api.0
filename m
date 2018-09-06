@@ -1,7 +1,7 @@
 From: Tycho Andersen <tycho@tycho.ws>
-Subject: [PATCH v6 3/5] seccomp: add a way to get a listener fd from ptrace
-Date: Thu,  6 Sep 2018 09:28:57 -0600
-Message-ID: <20180906152859.7810-4-tycho@tycho.ws>
+Subject: [PATCH v6 4/5] seccomp: add support for passing fds via USER_NOTIF
+Date: Thu,  6 Sep 2018 09:28:58 -0600
+Message-ID: <20180906152859.7810-5-tycho@tycho.ws>
 References: <20180906152859.7810-1-tycho@tycho.ws>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180906152859.7810-1-tycho@tycho.ws>
@@ -10,21 +10,33 @@ To: Kees Cook <keescook@chromium.org>
 Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
-As an alternative to SECCOMP_FILTER_FLAG_GET_LISTENER, perhaps a ptrace()
-version which can acquire filters is useful. There are at least two reasons
-this is preferable, even though it uses ptrace:
+The idea here is that the userspace handler should be able to pass an fd
+back to the trapped task, for example so it can be returned from socket().
 
-1. You can control tasks that aren't cooperating with you
-2. You can control tasks whose filters block sendmsg() and socket(); if the
-   task installs a filter which blocks these calls, there's no way with
-   SECCOMP_FILTER_FLAG_GET_LISTENER to get the fd out to the privileged task.
+I've proposed one API here, but I'm open to other options. In particular,
+this only lets you return an fd from a syscall, which may not be enough in
+all cases. For example, if an fd is written to an output parameter instead
+of returned, the current API can't handle this. Another case is that
+netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If netlink
+ever decides to install an fd and output it, we wouldn't be able to handle
+this either.
 
-v2: fix a bug where listener mode was not unset when an unused fd was not
-    available
-v3: fix refcounting bug (Oleg)
-v4: * change the listener's fd flags to be 0
-    * rename GET_LISTENER to NEW_LISTENER (Matthew)
-v5: * add capable(CAP_SYS_ADMIN) requirement
+Still, the vast majority of interesting cases are covered by this API, so
+perhaps it is Enough.
+
+I've left it as a separate commit for two reasons:
+  * It illustrates the way in which we would grow struct seccomp_notif and
+    struct seccomp_notif_resp without using netlink
+  * It shows just how little code is needed to accomplish this :)
+
+v2: new in v2
+v3: no changes
+v4: * pass fd flags back from userspace as well (Jann)
+    * update same cgroup data on fd pass as SCM_RIGHTS (Alban)
+    * only set the REPLIED state /after/ successful fdget (Alban)
+    * reflect GET_LISTENER -> NEW_LISTENER changes
+    * add to the new Documentation/ on user notifications about fd replies
+v5: * fix documentation typo (O_EXCL -> O_CLOEXEC)
 
 Signed-off-by: Tycho Andersen <tycho@tycho.ws>
 CC: Kees Cook <keescook@chromium.org>
@@ -36,123 +48,163 @@ CC: Christian Brauner <christian.brauner@ubuntu.com>
 CC: Tyler Hicks <tyhicks@canonical.com>
 CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
 ---
- include/linux/seccomp.h                       | 11 +++
- include/uapi/linux/ptrace.h                   |  2 +
- kernel/ptrace.c                               |  4 ++
- kernel/seccomp.c                              | 31 +++++++++
- tools/testing/selftests/seccomp/seccomp_bpf.c | 68 +++++++++++++++++++
- 5 files changed, 116 insertions(+)
+ .../userspace-api/seccomp_filter.rst          |  11 ++
+ include/uapi/linux/seccomp.h                  |   3 +
+ kernel/seccomp.c                              |  51 +++++++-
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 116 ++++++++++++++++++
+ 4 files changed, 179 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
-index 017444b5efed..c17c7d051af0 100644
---- a/include/linux/seccomp.h
-+++ b/include/linux/seccomp.h
-@@ -112,4 +112,15 @@ static inline long seccomp_get_metadata(struct task_struct *task,
- 	return -EINVAL;
- }
- #endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
+diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
+index d1498885c1c7..1c0aab306426 100644
+--- a/Documentation/userspace-api/seccomp_filter.rst
++++ b/Documentation/userspace-api/seccomp_filter.rst
+@@ -235,6 +235,9 @@ The interface for a seccomp notification fd consists of two structures:
+         __u64 id;
+         __s32 error;
+         __s64 val;
++        __u8 return_fd;
++        __u32 fd;
++        __u32 fd_flags;
+     };
+ 
+ Users can read via ``ioctl(SECCOMP_NOTIF_RECV)``  (or ``poll()``) on a seccomp
+@@ -256,6 +259,14 @@ mentioned above in this document: all arguments being read from the tracee's
+ memory should be read into the tracer's memory before any policy decisions are
+ made. This allows for an atomic decision on syscall arguments.
+ 
++Userspace can also return file descriptors. For example, one may decide to
++intercept ``socket()`` syscalls, and return some file descriptor from those
++based on some policy. To return a file descriptor, the ``return_fd`` member
++should be non-zero, the ``fd`` argument should be the fd in the listener's
++table to send to the tracee (similar to how ``SCM_RIGHTS`` works), and
++``fd_flags`` should be the flags that the fd in the tracee's table is opened
++with (e.g. ``O_CLOEXEC`` or similar).
 +
-+#ifdef CONFIG_SECCOMP_USER_NOTIFICATION
-+extern long seccomp_new_listener(struct task_struct *task,
-+				 unsigned long filter_off);
-+#else
-+static inline long seccomp_new_listener(struct task_struct *task,
-+					unsigned long filter_off)
-+{
-+	return -EINVAL;
-+}
-+#endif/* CONFIG_SECCOMP_USER_NOTIFICATION */
- #endif /* _LINUX_SECCOMP_H */
-diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
-index d5a1b8a492b9..e80ecb1bd427 100644
---- a/include/uapi/linux/ptrace.h
-+++ b/include/uapi/linux/ptrace.h
-@@ -73,6 +73,8 @@ struct seccomp_metadata {
- 	__u64 flags;		/* Output: filter's flags */
+ Sysctls
+ =======
+ 
+diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+index aa5878972128..93f1bd5c7cf0 100644
+--- a/include/uapi/linux/seccomp.h
++++ b/include/uapi/linux/seccomp.h
+@@ -75,6 +75,9 @@ struct seccomp_notif_resp {
+ 	__u64 id;
+ 	__s32 error;
+ 	__s64 val;
++	__u8 return_fd;
++	__u32 fd;
++	__u32 fd_flags;
  };
  
-+#define PTRACE_SECCOMP_NEW_LISTENER	0x420e
-+
- /* Read signals from a shared (process wide) queue */
- #define PTRACE_PEEKSIGINFO_SHARED	(1 << 0)
- 
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 21fec73d45d4..289960ac181b 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -1096,6 +1096,10 @@ int ptrace_request(struct task_struct *child, long request,
- 		ret = seccomp_get_metadata(child, addr, datavp);
- 		break;
- 
-+	case PTRACE_SECCOMP_NEW_LISTENER:
-+		ret = seccomp_new_listener(child, addr);
-+		break;
-+
- 	default:
- 		break;
- 	}
+ #define SECCOMP_IOC_MAGIC		0xF7
 diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index ed786655186d..580888785324 100644
+index 580888785324..4a6db4076ec5 100644
 --- a/kernel/seccomp.c
 +++ b/kernel/seccomp.c
-@@ -1787,6 +1787,37 @@ static struct file *init_listener(struct task_struct *task,
+@@ -43,6 +43,7 @@
  
- 	return ret;
- }
+ #ifdef CONFIG_SECCOMP_USER_NOTIFICATION
+ #include <linux/anon_inodes.h>
++#include <net/cls_cgroup.h>
+ 
+ enum notify_state {
+ 	SECCOMP_NOTIFY_INIT,
+@@ -80,6 +81,8 @@ struct seccomp_knotif {
+ 	/* The return values, only valid when in SECCOMP_NOTIFY_REPLIED */
+ 	int error;
+ 	long val;
++	struct file *file;
++	unsigned int flags;
+ 
+ 	/* Signals when this has entered SECCOMP_NOTIFY_REPLIED */
+ 	struct completion ready;
+@@ -800,10 +803,44 @@ static void seccomp_do_user_notification(int this_syscall,
+ 			goto remove_list;
+ 	}
+ 
+-	ret = n.val;
+-	err = n.error;
++	if (n.file) {
++		int fd;
++		struct socket *sock;
 +
-+long seccomp_new_listener(struct task_struct *task,
-+			  unsigned long filter_off)
-+{
-+	struct seccomp_filter *filter;
-+	struct file *listener;
-+	int fd;
++		fd = get_unused_fd_flags(n.flags);
++		if (fd < 0) {
++			err = fd;
++			ret = -1;
++			goto remove_list;
++		}
 +
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EACCES;
++		/*
++		 * Similar to what SCM_RIGHTS does, let's re-set the cgroup
++		 * data to point ot the tracee's cgroups instead of the
++		 * listener's.
++		 */
++		sock = sock_from_file(n.file, &err);
++		if (sock) {
++			sock_update_netprioidx(&sock->sk->sk_cgrp_data);
++			sock_update_classid(&sock->sk->sk_cgrp_data);
++		}
 +
-+	filter = get_nth_filter(task, filter_off);
-+	if (IS_ERR(filter))
-+		return PTR_ERR(filter);
++		ret = fd;
++		err = 0;
 +
-+	fd = get_unused_fd_flags(0);
-+	if (fd < 0) {
-+		__put_seccomp_filter(filter);
-+		return fd;
++		fd_install(fd, n.file);
++		/* Don't fput, since fd has a reference now */
++		n.file = NULL;
++	} else {
++		ret = n.val;
++		err = n.error;
 +	}
 +
-+	listener = init_listener(task, task->seccomp.filter);
-+	__put_seccomp_filter(filter);
-+	if (IS_ERR(listener)) {
-+		put_unused_fd(fd);
-+		return PTR_ERR(listener);
+ 
+ remove_list:
++	if (n.file)
++		fput(n.file);
++
+ 	list_del(&n.list);
+ out:
+ 	mutex_unlock(&match->notify_lock);
+@@ -1675,10 +1712,20 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
+ 		goto out;
+ 	}
+ 
++	if (resp.return_fd) {
++		knotif->flags = resp.fd_flags;
++		knotif->file = fget(resp.fd);
++		if (!knotif->file) {
++			ret = -EBADF;
++			goto out;
++		}
 +	}
 +
-+	fd_install(fd, listener);
-+	return fd;
-+}
- #else
- static struct file *init_listener(struct task_struct *task,
- 				  struct seccomp_filter *filter)
+ 	ret = size;
+ 	knotif->state = SECCOMP_NOTIFY_REPLIED;
+ 	knotif->error = resp.error;
+ 	knotif->val = resp.val;
++
+ 	complete(&knotif->ready);
+ out:
+ 	mutex_unlock(&filter->notify_lock);
 diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 89f2c788a06b..61b8e3c5c06b 100644
+index 61b8e3c5c06b..c756722faa88 100644
 --- a/tools/testing/selftests/seccomp/seccomp_bpf.c
 +++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -193,6 +193,10 @@ int seccomp(unsigned int op, unsigned int flags, void *args)
- }
+@@ -182,6 +182,9 @@ struct seccomp_notif_resp {
+ 	__u64 id;
+ 	__s32 error;
+ 	__s64 val;
++	__u8 return_fd;
++	__u32 fd;
++	__u32 fd_flags;
+ };
  #endif
  
-+#ifndef PTRACE_SECCOMP_NEW_LISTENER
-+#define PTRACE_SECCOMP_NEW_LISTENER 0x420e
-+#endif
-+
- #if __BYTE_ORDER == __LITTLE_ENDIAN
- #define syscall_arg(_n) (offsetof(struct seccomp_data, args[_n]))
- #elif __BYTE_ORDER == __BIG_ENDIAN
-@@ -3165,6 +3169,70 @@ TEST(get_user_notification_syscall)
- 	EXPECT_EQ(0, WEXITSTATUS(status));
+@@ -3233,6 +3236,119 @@ TEST(get_user_notification_ptrace)
+ 	close(listener);
  }
  
-+TEST(get_user_notification_ptrace)
++TEST(user_notification_pass_fd)
 +{
 +	pid_t pid;
 +	int status, listener;
@@ -160,6 +212,7 @@ index 89f2c788a06b..61b8e3c5c06b 100644
 +	char c;
 +	struct seccomp_notif req = {};
 +	struct seccomp_notif_resp resp = {};
++	long ret;
 +
 +	ASSERT_EQ(socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair), 0);
 +
@@ -167,19 +220,25 @@ index 89f2c788a06b..61b8e3c5c06b 100644
 +	ASSERT_GE(pid, 0);
 +
 +	if (pid == 0) {
-+		EXPECT_EQ(user_trap_syscall(__NR_getpid, 0), 0);
++		int fd;
++		char buf[16];
 +
-+		/* Test that we get ENOSYS while not attached */
-+		EXPECT_EQ(syscall(__NR_getpid), -1);
-+		EXPECT_EQ(errno, ENOSYS);
++		EXPECT_EQ(user_trap_syscall(__NR_getpid, 0), 0);
 +
 +		/* Signal we're ready and have installed the filter. */
 +		EXPECT_EQ(write(sk_pair[1], "J", 1), 1);
 +
 +		EXPECT_EQ(read(sk_pair[1], &c, 1), 1);
 +		EXPECT_EQ(c, 'H');
++		close(sk_pair[1]);
 +
-+		exit(syscall(__NR_getpid) != USER_NOTIF_MAGIC);
++		/* An fd from getpid(). Let the games begin. */
++		fd = syscall(__NR_getpid);
++		EXPECT_GT(fd, 0);
++		EXPECT_EQ(read(fd, buf, sizeof(buf)), 12);
++		close(fd);
++
++		exit(strcmp("hello world", buf));
 +	}
 +
 +	EXPECT_EQ(read(sk_pair[0], &c, 1), 1);
@@ -189,31 +248,73 @@ index 89f2c788a06b..61b8e3c5c06b 100644
 +	EXPECT_EQ(waitpid(pid, NULL, 0), pid);
 +	listener = ptrace(PTRACE_SECCOMP_NEW_LISTENER, pid, 0);
 +	EXPECT_GE(listener, 0);
-+
-+	/* EBUSY for second listener */
-+	EXPECT_EQ(ptrace(PTRACE_SECCOMP_NEW_LISTENER, pid, 0), -1);
-+	EXPECT_EQ(errno, EBUSY);
-+
 +	EXPECT_EQ(ptrace(PTRACE_DETACH, pid, NULL, 0), 0);
 +
-+	/* Now signal we are done and respond with magic */
++	/* Now signal we are done installing so it can do a getpid */
 +	EXPECT_EQ(write(sk_pair[0], "H", 1), 1);
++	close(sk_pair[0]);
 +
-+	req.len = sizeof(req);
-+	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_RECV, &req), sizeof(req));
++	/* Make a new socket pair so we can send half across */
++	EXPECT_EQ(socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair), 0);
++
++	ret = read_notif(listener, &req);
++	EXPECT_EQ(ret, sizeof(req));
++	EXPECT_EQ(errno, 0);
 +
 +	resp.len = sizeof(resp);
 +	resp.id = req.id;
-+	resp.error = 0;
-+	resp.val = USER_NOTIF_MAGIC;
-+
++	resp.return_fd = 1;
++	resp.fd = sk_pair[1];
++	resp.fd_flags = 0;
 +	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_SEND, &resp), sizeof(resp));
++	close(sk_pair[1]);
++
++	EXPECT_EQ(write(sk_pair[0], "hello world\0", 12), 12);
++	close(sk_pair[0]);
 +
 +	EXPECT_EQ(waitpid(pid, &status, 0), pid);
 +	EXPECT_EQ(true, WIFEXITED(status));
 +	EXPECT_EQ(0, WEXITSTATUS(status));
-+
 +	close(listener);
++}
++
++TEST(user_notification_struct_size_mismatch)
++{
++	pid_t pid;
++	long ret;
++	int status, listener, len;
++	struct seccomp_notif req;
++	struct seccomp_notif_resp resp;
++
++	listener = user_trap_syscall(__NR_getpid,
++				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
++	EXPECT_GE(listener, 0);
++
++	pid = fork();
++	ASSERT_GE(pid, 0);
++
++	if (pid == 0) {
++		ret = syscall(__NR_getpid);
++		exit(ret != USER_NOTIF_MAGIC);
++	}
++
++	req.len = sizeof(req);
++	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_RECV, &req), sizeof(req));
++
++	/*
++	 * Only write a partial structure: this is what was available before we
++	 * had fd support.
++	 */
++	len = offsetof(struct seccomp_notif_resp, val) + sizeof(resp.val);
++	resp.len = len;
++	resp.id = req.id;
++	resp.error = 0;
++	resp.val = USER_NOTIF_MAGIC;
++	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_SEND, &resp), len);
++
++	EXPECT_EQ(waitpid(pid, &status, 0), pid);
++	EXPECT_EQ(true, WIFEXITED(status));
++	EXPECT_EQ(0, WEXITSTATUS(status));
 +}
 +
  /*
