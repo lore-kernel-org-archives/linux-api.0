@@ -1,68 +1,50 @@
-From: Jan Harkes <jaharkes@cs.cmu.edu>
-Subject: Re: [PATCH 05/11] UAPI: coda: Don't use internal kernel structs in
- UAPI
-Date: Thu, 6 Sep 2018 08:16:24 -0400
-Message-ID: <20180906121623.6lrt6lajqstdymtx@cs.cmu.edu>
-References: <1c57005277ac723ebb670a1dc847a205f0529d53.camel@opteya.com>
+From: "Michael S. Tsirkin" <mst@redhat.com>
+Subject: Re: [PATCH 03/11] UAPI: virtio_net: Fix use of C++ keywords as
+ structural members
+Date: Thu, 6 Sep 2018 10:36:59 -0400
+Message-ID: <20180906101318-mutt-send-email-mst@kernel.org>
+References: <20180905125636-mutt-send-email-mst@kernel.org>
  <153616286704.23468.584491117180383924.stgit@warthog.procyon.org.uk>
- <153616291029.23468.16421004714304578585.stgit@warthog.procyon.org.uk>
- <9916.1536218032@warthog.procyon.org.uk>
- <2e337313415a1ede1fb7a777902a0de7cb7c2602.camel@opteya.com>
+ <153616289529.23468.7498785670556620808.stgit@warthog.procyon.org.uk>
+ <9357.1536217759@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <2e337313415a1ede1fb7a777902a0de7cb7c2602.camel@opteya.com>
+In-Reply-To: <9357.1536217759@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yann Droneaud <ydroneaud@opteya.com>
-Cc: David Howells <dhowells@redhat.com>, linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org, Jason Wang <jasowang@redhat.com>, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 06, 2018 at 01:52:29PM +0200, Yann Droneaud wrote:
-> Hi,
+On Thu, Sep 06, 2018 at 08:09:19AM +0100, David Howells wrote:
+> Michael S. Tsirkin <mst@redhat.com> wrote:
 > 
-> Le jeudi 06 septembre 2018 à 08:13 +0100, David Howells a écrit :
-> > Yann Droneaud <ydroneaud@opteya.com> wrote:
+> > As long as you do not intend to use any classes, how about
+> > simply adding
 > > 
-> > > This structure should not have been exposed to userspace in the
-> > > first
-> > > place: it's unusable by userspace as it is. It was incorrect to
-> > > have it
-> > > outside of #ifdef __KERNEL__ before commit 607ca46e97a1b ... 
-> > > ...
-> > > All CODA_REQ_* defines internals to kernel side and not exchanged
-> > > with
-> > > userspace.
-> > > 
-> > > Please move them back to <linux/coda_psdev.h>
+> > -Dclass=_class
 > > 
-> > Is there any reason coda_psdev.h needs to be in include/linux/ rather
-> > than fs/coda/?
-> > 
+> > to your command line?
 > 
-> It's a valid concern.
+> That kind of misses the point;-).  It's not reasonable to expect all userspace
+> C++ users to do this.
 > 
-> At first I thought the first lines (see below) could have been useful
-> for userspace:
-> 
->   #define CODA_PSDEV_MAJOR 67
->   #define MAX_CODADEVS  5    /* how many do we allow */
+> David
 
-Nope, userspace just tries to open /dev/cfs0, or a manually configured
-alternative. We have only used linux/coda.h, and actually carry our own
-copy of that file which is kept in sync manually, which is why there are
-all those ifdefs for different systems in there. This all originates
-from the time of the 2.1.x kernels when Coda was built externally.
+I thought one of the points was that building kernel with c++ catches
+some bugs, no?  If the point is to make life easier for c++ userspace
+I'm not sure what we can do to be frank. C++ seems to be adding new
+keywords with no restraint (C99 did it with inline and restrict too, but
+it seems this stopped) so no good way to future-proof code for all
+language dialects.
 
-> But the file was unsuable for a long long time so we can assume it's
-> usage by userspace is deprecated, then we could remove it from UAPI,
-> and moves its content back to include/linux.
-> 
-> As one could see include/linux/coda_psdev.h is not used outside of
-> fs/coda, moving the header here as you suggests seems to be the correct
-> solution.
+So I'd like to know which are the actual c++ users asking for this - we
+can then accomodate the specific version they need.
+Meanwhile people can get by with a wrapper along the lines of
+#define class _class
+#include <linux/virtio_net.h>
+#undef class
 
-Agreed.
-
-Jan
+-- 
+MST
