@@ -1,84 +1,185 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 10/11] UAPI: ndctl: Remove use of PAGE_SIZE [ver #2]
-Date: Thu, 06 Sep 2018 10:19:30 +0100
-Message-ID: <153622557095.14298.10281337300003012767.stgit@warthog.procyon.org.uk>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 11/11] UAPI: Check headers build for C++ [ver #2]
+Date: Thu, 06 Sep 2018 10:19:37 +0100
+Message-ID: <153622557736.14298.10350496216090814292.stgit@warthog.procyon.org.uk>
 References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <153622549721.14298.8116794954073122489.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
+Cc: Masahiro Yamada <yamada.masahiro@socionext.com>, Michal Marek <michal.lkml@markovi.net>, linux-kernel@vger.kernel.org, dhowells@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-The macro PAGE_SIZE isn't valid outside of the kernel, so it should not
-appear in UAPI headers.
+Check that all the headers can be included from one file and built for C++,
+thereby catching the use of C++ reserved words and bits of unimplemented
+C++ in the UAPI headers.
 
-Furthermore, the actual machine page size could theoretically change from
-an application's point of view if it's running in a container that gets
-migrated to another machine (say 4K/ppc64 to 64K/ppc64).
+Note that certain headers are excluded from the build, including:
 
-Fixes: f2ba5a5baecf ("libnvdimm, namespace: make min namespace size 4K")
-Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+ (1) Any header ending in "_32.h", "_64.h" or "_x32.h" as these are
+     expected to be multiarch variant headers.
+
+ (2) Endianness variant headers.
+
+ (3) asm-generic/ headers (they're used conditionally by the asm/ headers
+     and shouldn't be used directly).
+
+ (4) netfilter_ipv*/ip*t_LOG.h headers.  They emit a warning indicating
+     they're going to be removed soon.
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Masahiro Yamada <yamada.masahiro@socionext.com>
+cc: Michal Marek <michal.lkml@markovi.net>
+cc: linux-kbuild@vger.kernel.org
 ---
 
- include/linux/ndctl.h      |   22 ++++++++++++++++++++++
- include/uapi/linux/ndctl.h |    4 ----
- 2 files changed, 22 insertions(+), 4 deletions(-)
- create mode 100644 include/linux/ndctl.h
+ Makefile               |    1 
+ scripts/headers-c++.sh |  124 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 125 insertions(+)
+ create mode 100755 scripts/headers-c++.sh
 
-diff --git a/include/linux/ndctl.h b/include/linux/ndctl.h
-new file mode 100644
-index 000000000000..cd5a293ce3ae
---- /dev/null
-+++ b/include/linux/ndctl.h
-@@ -0,0 +1,22 @@
-+/*
-+ * Copyright (c) 2014-2016, Intel Corporation.
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms and conditions of the GNU Lesser General Public License,
-+ * version 2.1, as published by the Free Software Foundation.
-+ *
-+ * This program is distributed in the hope it will be useful, but WITHOUT ANY
-+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-+ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
-+ * more details.
-+ */
-+#ifndef _LINUX_NDCTL_H
-+#define _LINUX_NDCTL_H
-+
-+#include <uapi/linux/ndctl.h>
-+
-+enum {
-+	ND_MIN_NAMESPACE_SIZE = PAGE_SIZE,
-+};
-+
-+#endif /* _LINUX_NDCTL_H */
-diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
-index 2f2c43d633c5..f57c9e434d2d 100644
---- a/include/uapi/linux/ndctl.h
-+++ b/include/uapi/linux/ndctl.h
-@@ -202,10 +202,6 @@ enum nd_driver_flags {
- 	ND_DRIVER_DAX_PMEM	  = 1 << ND_DEVICE_DAX_PMEM,
- };
+diff --git a/Makefile b/Makefile
+index 19948e556941..38d655cb4474 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1186,6 +1186,7 @@ headers_install: __headers
+ 	  $(error Headers not exportable for the $(SRCARCH) architecture))
+ 	$(Q)$(MAKE) $(hdr-inst)=include/uapi dst=include
+ 	$(Q)$(MAKE) $(hdr-inst)=arch/$(SRCARCH)/include/uapi $(hdr-dst)
++	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/headers-c++.sh check
  
--enum {
--	ND_MIN_NAMESPACE_SIZE = PAGE_SIZE,
--};
--
- enum ars_masks {
- 	ARS_STATUS_MASK = 0x0000FFFF,
- 	ARS_EXT_STATUS_SHIFT = 16,
+ PHONY += headers_check_all
+ headers_check_all: headers_install_all
+diff --git a/scripts/headers-c++.sh b/scripts/headers-c++.sh
+new file mode 100755
+index 000000000000..7e56913629f8
+--- /dev/null
++++ b/scripts/headers-c++.sh
+@@ -0,0 +1,124 @@
++#!/bin/sh
++# SPDX-License-Identifier: GPL-2.0
++# Run headers_$1 command for all suitable architectures
++
++# Stop on error
++set -e
++
++if ! $CC -x c++ -c - -o /dev/null </dev/null 2>/dev/null
++then
++    echo "  CHECK   C++ HEADER COMPILATION [SKIPPED]"
++    exit 0
++fi
++
++echo "  CHECK   C++ HEADER COMPILATION"
++
++mkdir -p hdr-check
++cd hdr-check
++
++mkdir -p include/sys
++mkdir -p include/arpa
++mkdir -p include/xen/interface
++echo >include/endian.h
++echo >include/limits.h
++echo >include/stdint.h
++echo >include/stdlib.h
++echo >include/stdio.h
++echo >include/string.h
++echo >include/time.h
++echo >include/unistd.h
++echo >include/arpa/inet.h
++echo >include/sys/ioctl.h
++echo >include/sys/types.h
++echo >include/sys/time.h
++echo >include/sys/socket.h
++echo >include/xen/interface/xen.h
++
++cat >test.h <<EOF
++#ifdef __cplusplus
++#define NULL nullptr
++#define _Bool bool
++#else
++#define NULL ((void *)0)
++#define bool _Bool
++#endif
++#include <linux/types.h>
++#include <linux/socket.h>
++#include <linux/time.h>
++
++typedef __s8			int8_t;
++typedef __s16			int16_t;
++typedef __s32			int32_t;
++typedef __s64			int64_t;
++typedef __u8			uint8_t;
++typedef __u16			uint16_t;
++typedef __u32			uint32_t;
++typedef __u64			uint64_t;
++typedef long int		intptr_t;
++typedef unsigned long int	uintptr_t;
++typedef unsigned short		u_short;
++typedef unsigned int		u_int;
++typedef unsigned long		u_long;
++typedef char			*caddr_t;
++
++typedef __kernel_clockid_t	clockid_t;
++typedef __kernel_ino_t		ino_t;
++typedef __kernel_pid_t		pid_t;
++typedef __kernel_sa_family_t	sa_family_t;
++typedef __kernel_size_t		size_t;
++typedef __kernel_uid_t		uid_t;
++
++typedef unsigned long		elf_greg_t;
++typedef elf_greg_t		elf_gregset_t[1];
++typedef unsigned long long	elf_fpregset_t[1];
++typedef unsigned long long	elf_fpxregset_t[1];
++
++#define INT_MIN ((int)0x80000000)
++#define INT_MAX ((int)0x7fffffff)
++
++extern size_t strlen(const char *);
++extern void *memset(void *, int, size_t);
++extern void *memcpy(void *, const void *, size_t);
++extern __u16 ntohs(__u16);
++extern __u16 htons(__u16);
++extern __u32 ntohl(__u32);
++extern __u32 htonl(__u32);
++
++typedef uint32_t		grant_ref_t;
++typedef uint16_t		domid_t;
++typedef unsigned long		xen_pfn_t;
++
++#define MSG_FIN         0x200
++
++typedef int SVGA3dMSPattern;
++typedef int SVGA3dMSQualityLevel;
++
++struct sockaddr
++{
++	sa_family_t	sa_family;
++	char		sa_data[14];
++};
++#define sockaddr_storage __kernel_sockaddr_storage
++
++#define _LINUX_PATCHKEY_H_INDIRECT
++
++EOF
++
++find ../usr/include -name '*.h' |
++    grep -v 'linux/byteorder/big_endian.h' |
++    grep -v 'linux/byteorder/little_endian.h' |
++    grep -v '_\(32\|64\|x32\)[.]h$' |
++    grep -v '/asm-generic/' |
++    # ip*t_LOG.h are deprecated
++    grep -v 'linux/netfilter_ipv4/ipt_LOG[.]h' |
++    grep -v 'linux/netfilter_ipv6/ip6t_LOG[.]h' |
++    sed -e 's!../usr/include/!#include <!' -e 's!$!>!' >>test.h
++
++echo '#include "test.h"' >test.cpp
++
++$CC -x c++ -o /dev/null -c test.cpp \
++    -nostdinc \
++    -isystem ./include \
++    -isystem ../usr/include \
++    -fpermissive \
++    -D PAGE_SIZE='#PAGE_SIZE_IS_NOT_VALID_OUTSIDE_OF_KERNEL'
