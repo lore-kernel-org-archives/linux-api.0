@@ -1,7 +1,7 @@
 From: Tycho Andersen <tycho@tycho.ws>
-Subject: [PATCH v6 4/5] seccomp: add support for passing fds via USER_NOTIF
-Date: Thu,  6 Sep 2018 09:28:58 -0600
-Message-ID: <20180906152859.7810-5-tycho@tycho.ws>
+Subject: [PATCH v6 5/5] samples: add an example of seccomp user trap
+Date: Thu,  6 Sep 2018 09:28:59 -0600
+Message-ID: <20180906152859.7810-6-tycho@tycho.ws>
 References: <20180906152859.7810-1-tycho@tycho.ws>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180906152859.7810-1-tycho@tycho.ws>
@@ -10,33 +10,12 @@ To: Kees Cook <keescook@chromium.org>
 Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
-The idea here is that the userspace handler should be able to pass an fd
-back to the trapped task, for example so it can be returned from socket().
+The idea here is just to give a demonstration of how one could safely use
+the SECCOMP_RET_USER_NOTIF feature to do mount policies. This particular
+policy is (as noted in the comment) not very interesting, but it serves to
+illustrate how one might apply a policy dodging the various TOCTOU issues.
 
-I've proposed one API here, but I'm open to other options. In particular,
-this only lets you return an fd from a syscall, which may not be enough in
-all cases. For example, if an fd is written to an output parameter instead
-of returned, the current API can't handle this. Another case is that
-netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If netlink
-ever decides to install an fd and output it, we wouldn't be able to handle
-this either.
-
-Still, the vast majority of interesting cases are covered by this API, so
-perhaps it is Enough.
-
-I've left it as a separate commit for two reasons:
-  * It illustrates the way in which we would grow struct seccomp_notif and
-    struct seccomp_notif_resp without using netlink
-  * It shows just how little code is needed to accomplish this :)
-
-v2: new in v2
-v3: no changes
-v4: * pass fd flags back from userspace as well (Jann)
-    * update same cgroup data on fd pass as SCM_RIGHTS (Alban)
-    * only set the REPLIED state /after/ successful fdget (Alban)
-    * reflect GET_LISTENER -> NEW_LISTENER changes
-    * add to the new Documentation/ on user notifications about fd replies
-v5: * fix documentation typo (O_EXCL -> O_CLOEXEC)
+v5: new in v5
 
 Signed-off-by: Tycho Andersen <tycho@tycho.ws>
 CC: Kees Cook <keescook@chromium.org>
@@ -48,277 +27,368 @@ CC: Christian Brauner <christian.brauner@ubuntu.com>
 CC: Tyler Hicks <tyhicks@canonical.com>
 CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
 ---
- .../userspace-api/seccomp_filter.rst          |  11 ++
- include/uapi/linux/seccomp.h                  |   3 +
- kernel/seccomp.c                              |  51 +++++++-
- tools/testing/selftests/seccomp/seccomp_bpf.c | 116 ++++++++++++++++++
- 4 files changed, 179 insertions(+), 2 deletions(-)
+ samples/seccomp/.gitignore  |   1 +
+ samples/seccomp/Makefile    |   7 +-
+ samples/seccomp/user-trap.c | 312 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 319 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
-index d1498885c1c7..1c0aab306426 100644
---- a/Documentation/userspace-api/seccomp_filter.rst
-+++ b/Documentation/userspace-api/seccomp_filter.rst
-@@ -235,6 +235,9 @@ The interface for a seccomp notification fd consists of two structures:
-         __u64 id;
-         __s32 error;
-         __s64 val;
-+        __u8 return_fd;
-+        __u32 fd;
-+        __u32 fd_flags;
-     };
+diff --git a/samples/seccomp/.gitignore b/samples/seccomp/.gitignore
+index 78fb78184291..d1e2e817d556 100644
+--- a/samples/seccomp/.gitignore
++++ b/samples/seccomp/.gitignore
+@@ -1,3 +1,4 @@
+ bpf-direct
+ bpf-fancy
+ dropper
++user-trap
+diff --git a/samples/seccomp/Makefile b/samples/seccomp/Makefile
+index cf34ff6b4065..4920903c8009 100644
+--- a/samples/seccomp/Makefile
++++ b/samples/seccomp/Makefile
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ ifndef CROSS_COMPILE
+-hostprogs-$(CONFIG_SAMPLE_SECCOMP) := bpf-fancy dropper bpf-direct
++hostprogs-$(CONFIG_SAMPLE_SECCOMP) := bpf-fancy dropper bpf-direct user-trap
  
- Users can read via ``ioctl(SECCOMP_NOTIF_RECV)``  (or ``poll()``) on a seccomp
-@@ -256,6 +259,14 @@ mentioned above in this document: all arguments being read from the tracee's
- memory should be read into the tracer's memory before any policy decisions are
- made. This allows for an atomic decision on syscall arguments.
+ HOSTCFLAGS_bpf-fancy.o += -I$(objtree)/usr/include
+ HOSTCFLAGS_bpf-fancy.o += -idirafter $(objtree)/include
+@@ -16,6 +16,10 @@ HOSTCFLAGS_bpf-direct.o += -I$(objtree)/usr/include
+ HOSTCFLAGS_bpf-direct.o += -idirafter $(objtree)/include
+ bpf-direct-objs := bpf-direct.o
  
-+Userspace can also return file descriptors. For example, one may decide to
-+intercept ``socket()`` syscalls, and return some file descriptor from those
-+based on some policy. To return a file descriptor, the ``return_fd`` member
-+should be non-zero, the ``fd`` argument should be the fd in the listener's
-+table to send to the tracee (similar to how ``SCM_RIGHTS`` works), and
-+``fd_flags`` should be the flags that the fd in the tracee's table is opened
-+with (e.g. ``O_CLOEXEC`` or similar).
++HOSTCFLAGS_user-trap.o += -I$(objtree)/usr/include
++HOSTCFLAGS_user-trap.o += -idirafter $(objtree)/include
++user-trap-objs := user-trap.o
 +
- Sysctls
- =======
+ # Try to match the kernel target.
+ ifndef CONFIG_64BIT
  
-diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
-index aa5878972128..93f1bd5c7cf0 100644
---- a/include/uapi/linux/seccomp.h
-+++ b/include/uapi/linux/seccomp.h
-@@ -75,6 +75,9 @@ struct seccomp_notif_resp {
- 	__u64 id;
- 	__s32 error;
- 	__s64 val;
-+	__u8 return_fd;
-+	__u32 fd;
-+	__u32 fd_flags;
- };
- 
- #define SECCOMP_IOC_MAGIC		0xF7
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 580888785324..4a6db4076ec5 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -43,6 +43,7 @@
- 
- #ifdef CONFIG_SECCOMP_USER_NOTIFICATION
- #include <linux/anon_inodes.h>
-+#include <net/cls_cgroup.h>
- 
- enum notify_state {
- 	SECCOMP_NOTIFY_INIT,
-@@ -80,6 +81,8 @@ struct seccomp_knotif {
- 	/* The return values, only valid when in SECCOMP_NOTIFY_REPLIED */
- 	int error;
- 	long val;
-+	struct file *file;
-+	unsigned int flags;
- 
- 	/* Signals when this has entered SECCOMP_NOTIFY_REPLIED */
- 	struct completion ready;
-@@ -800,10 +803,44 @@ static void seccomp_do_user_notification(int this_syscall,
- 			goto remove_list;
- 	}
- 
--	ret = n.val;
--	err = n.error;
-+	if (n.file) {
-+		int fd;
-+		struct socket *sock;
+@@ -33,6 +37,7 @@ HOSTCFLAGS_bpf-fancy.o += $(MFLAG)
+ HOSTLDLIBS_bpf-direct += $(MFLAG)
+ HOSTLDLIBS_bpf-fancy += $(MFLAG)
+ HOSTLDLIBS_dropper += $(MFLAG)
++HOSTLDLIBS_user-trap += $(MFLAG)
+ endif
+ always := $(hostprogs-m)
+ endif
+diff --git a/samples/seccomp/user-trap.c b/samples/seccomp/user-trap.c
+new file mode 100644
+index 000000000000..571eb32fd80b
+--- /dev/null
++++ b/samples/seccomp/user-trap.c
+@@ -0,0 +1,312 @@
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <string.h>
++#include <stddef.h>
++#include <sys/sysmacros.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <sys/socket.h>
++#include <sys/stat.h>
++#include <sys/mman.h>
++#include <sys/syscall.h>
++#include <sys/user.h>
++#include <sys/ioctl.h>
++#include <sys/ptrace.h>
++#include <sys/mount.h>
++#include <linux/limits.h>
++#include <linux/filter.h>
++#include <linux/seccomp.h>
 +
-+		fd = get_unused_fd_flags(n.flags);
-+		if (fd < 0) {
-+			err = fd;
-+			ret = -1;
-+			goto remove_list;
-+		}
++/*
++ * Because of some grossness, we can't include linux/ptrace.h here, so we
++ * re-define PTRACE_SECCOMP_NEW_LISTENER.
++ */
++#ifndef PTRACE_SECCOMP_NEW_LISTENER
++#define PTRACE_SECCOMP_NEW_LISTENER	0x420e
++#endif
 +
-+		/*
-+		 * Similar to what SCM_RIGHTS does, let's re-set the cgroup
-+		 * data to point ot the tracee's cgroups instead of the
-+		 * listener's.
-+		 */
-+		sock = sock_from_file(n.file, &err);
-+		if (sock) {
-+			sock_update_netprioidx(&sock->sk->sk_cgrp_data);
-+			sock_update_classid(&sock->sk->sk_cgrp_data);
-+		}
++#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 +
-+		ret = fd;
-+		err = 0;
-+
-+		fd_install(fd, n.file);
-+		/* Don't fput, since fd has a reference now */
-+		n.file = NULL;
-+	} else {
-+		ret = n.val;
-+		err = n.error;
-+	}
-+
- 
- remove_list:
-+	if (n.file)
-+		fput(n.file);
-+
- 	list_del(&n.list);
- out:
- 	mutex_unlock(&match->notify_lock);
-@@ -1675,10 +1712,20 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
- 		goto out;
- 	}
- 
-+	if (resp.return_fd) {
-+		knotif->flags = resp.fd_flags;
-+		knotif->file = fget(resp.fd);
-+		if (!knotif->file) {
-+			ret = -EBADF;
-+			goto out;
-+		}
-+	}
-+
- 	ret = size;
- 	knotif->state = SECCOMP_NOTIFY_REPLIED;
- 	knotif->error = resp.error;
- 	knotif->val = resp.val;
-+
- 	complete(&knotif->ready);
- out:
- 	mutex_unlock(&filter->notify_lock);
-diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 61b8e3c5c06b..c756722faa88 100644
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -182,6 +182,9 @@ struct seccomp_notif_resp {
- 	__u64 id;
- 	__s32 error;
- 	__s64 val;
-+	__u8 return_fd;
-+	__u32 fd;
-+	__u32 fd_flags;
- };
- #endif
- 
-@@ -3233,6 +3236,119 @@ TEST(get_user_notification_ptrace)
- 	close(listener);
- }
- 
-+TEST(user_notification_pass_fd)
++static int seccomp(unsigned int op, unsigned int flags, void *args)
 +{
-+	pid_t pid;
-+	int status, listener;
-+	int sk_pair[2];
-+	char c;
-+	struct seccomp_notif req = {};
-+	struct seccomp_notif_resp resp = {};
-+	long ret;
-+
-+	ASSERT_EQ(socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair), 0);
-+
-+	pid = fork();
-+	ASSERT_GE(pid, 0);
-+
-+	if (pid == 0) {
-+		int fd;
-+		char buf[16];
-+
-+		EXPECT_EQ(user_trap_syscall(__NR_getpid, 0), 0);
-+
-+		/* Signal we're ready and have installed the filter. */
-+		EXPECT_EQ(write(sk_pair[1], "J", 1), 1);
-+
-+		EXPECT_EQ(read(sk_pair[1], &c, 1), 1);
-+		EXPECT_EQ(c, 'H');
-+		close(sk_pair[1]);
-+
-+		/* An fd from getpid(). Let the games begin. */
-+		fd = syscall(__NR_getpid);
-+		EXPECT_GT(fd, 0);
-+		EXPECT_EQ(read(fd, buf, sizeof(buf)), 12);
-+		close(fd);
-+
-+		exit(strcmp("hello world", buf));
-+	}
-+
-+	EXPECT_EQ(read(sk_pair[0], &c, 1), 1);
-+	EXPECT_EQ(c, 'J');
-+
-+	EXPECT_EQ(ptrace(PTRACE_ATTACH, pid), 0);
-+	EXPECT_EQ(waitpid(pid, NULL, 0), pid);
-+	listener = ptrace(PTRACE_SECCOMP_NEW_LISTENER, pid, 0);
-+	EXPECT_GE(listener, 0);
-+	EXPECT_EQ(ptrace(PTRACE_DETACH, pid, NULL, 0), 0);
-+
-+	/* Now signal we are done installing so it can do a getpid */
-+	EXPECT_EQ(write(sk_pair[0], "H", 1), 1);
-+	close(sk_pair[0]);
-+
-+	/* Make a new socket pair so we can send half across */
-+	EXPECT_EQ(socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair), 0);
-+
-+	ret = read_notif(listener, &req);
-+	EXPECT_EQ(ret, sizeof(req));
-+	EXPECT_EQ(errno, 0);
-+
-+	resp.len = sizeof(resp);
-+	resp.id = req.id;
-+	resp.return_fd = 1;
-+	resp.fd = sk_pair[1];
-+	resp.fd_flags = 0;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_SEND, &resp), sizeof(resp));
-+	close(sk_pair[1]);
-+
-+	EXPECT_EQ(write(sk_pair[0], "hello world\0", 12), 12);
-+	close(sk_pair[0]);
-+
-+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
-+	EXPECT_EQ(true, WIFEXITED(status));
-+	EXPECT_EQ(0, WEXITSTATUS(status));
-+	close(listener);
++	errno = 0;
++	return syscall(__NR_seccomp, op, flags, args);
 +}
 +
-+TEST(user_notification_struct_size_mismatch)
++static int user_trap_syscall(int nr, unsigned int flags)
 +{
-+	pid_t pid;
-+	long ret;
-+	int status, listener, len;
-+	struct seccomp_notif req;
-+	struct seccomp_notif_resp resp;
++	struct sock_filter filter[] = {
++		BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
++			offsetof(struct seccomp_data, nr)),
++		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, nr, 0, 1),
++		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_USER_NOTIF),
++		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
++	};
 +
-+	listener = user_trap_syscall(__NR_getpid,
-+				     SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	EXPECT_GE(listener, 0);
++	struct sock_fprog prog = {
++		.len = (unsigned short)ARRAY_SIZE(filter),
++		.filter = filter,
++	};
 +
-+	pid = fork();
-+	ASSERT_GE(pid, 0);
++	return seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
++}
 +
-+	if (pid == 0) {
-+		ret = syscall(__NR_getpid);
-+		exit(ret != USER_NOTIF_MAGIC);
++static int handle_req(struct seccomp_notif *req,
++		      struct seccomp_notif_resp *resp, int listener)
++{
++	char path[PATH_MAX], source[PATH_MAX], target[PATH_MAX];
++	int ret = -1, mem;
++
++	resp->len = sizeof(*resp);
++	resp->id = req->id;
++	resp->error = -EPERM;
++	resp->val = 0;
++
++	if (req->data.nr != __NR_mount) {
++		fprintf(stderr, "huh? trapped something besides mknod? %d\n", req->data.nr);
++		return -1;
 +	}
 +
-+	req.len = sizeof(req);
-+	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_RECV, &req), sizeof(req));
++	/* Only allow bind mounts. */
++	if (!(req->data.args[3] & MS_BIND))
++		return 0;
 +
 +	/*
-+	 * Only write a partial structure: this is what was available before we
-+	 * had fd support.
++	 * Ok, let's read the task's memory to see where they wanted their
++	 * mount to go.
 +	 */
-+	len = offsetof(struct seccomp_notif_resp, val) + sizeof(resp.val);
-+	resp.len = len;
-+	resp.id = req.id;
-+	resp.error = 0;
-+	resp.val = USER_NOTIF_MAGIC;
-+	EXPECT_EQ(ioctl(listener, SECCOMP_NOTIF_SEND, &resp), len);
++	snprintf(path, sizeof(path), "/proc/%d/mem", req->pid);
++	mem = open(path, O_RDONLY);
++	if (mem < 0) {
++		perror("open mem");
++		return -1;
++	}
 +
-+	EXPECT_EQ(waitpid(pid, &status, 0), pid);
-+	EXPECT_EQ(true, WIFEXITED(status));
-+	EXPECT_EQ(0, WEXITSTATUS(status));
++	/*
++	 * Now we avoid a TOCTOU: we referred to a pid by its pid, but since
++	 * the pid that made the syscall may have died, we need to confirm that
++	 * the pid is still valid after we open its /proc/pid/mem file. We can
++	 * ask the listener fd this as follows.
++	 *
++	 * Note that this check should occur *after* any task-specific
++	 * resources are opened, to make sure that the task has not died and
++	 * we're not wrongly reading someone else's state in order to make
++	 * decisions.
++	 */
++	if (ioctl(listener, SECCOMP_NOTIF_IS_ID_VALID, &req->id) != 1) {
++		fprintf(stderr, "task died before we could map its memory\n");
++		goto out;
++	}
++
++	/*
++	 * Phew, we've got the right /proc/pid/mem. Now we can read it. Note
++	 * that to avoid another TOCTOU, we should read all of the pointer args
++	 * before we decide to allow the syscall.
++	 */
++	if (lseek(mem, req->data.args[0], SEEK_SET) < 0) {
++		perror("seek");
++		goto out;
++	}
++
++	ret = read(mem, source, sizeof(source));
++	if (ret < 0) {
++		perror("read");
++		goto out;
++	}
++
++	if (lseek(mem, req->data.args[1], SEEK_SET) < 0) {
++		perror("seek");
++		goto out;
++	}
++
++	ret = read(mem, target, sizeof(target));
++	if (ret < 0) {
++		perror("read");
++		goto out;
++	}
++
++	/*
++	 * Our policy is to only allow bind mounts inside /tmp. This isn't very
++	 * interesting, because we could do unprivlieged bind mounts with user
++	 * namespaces already, but you get the idea.
++	 */
++	if (!strncmp(source, "/tmp", 4) && !strncmp(target, "/tmp", 4)) {
++		if (mount(source, target, NULL, req->data.args[3], NULL) < 0) {
++			ret = -1;
++			perror("actual mount");
++			goto out;
++		}
++		resp->error = 0;
++	}
++
++	/* Even if we didn't allow it because of policy, generating the
++	 * response was be a success, because we want to tell the worker EPERM.
++	 */
++	ret = 0;
++
++out:
++	close(mem);
++	return ret;
 +}
 +
- /*
-  * Check that a pid in a child namespace still shows up as valid in ours.
-  */
++int main(void)
++{
++	int sk_pair[2], ret = 1, status, listener;
++	pid_t worker = 0 , tracer = 0;
++	char c;
++
++	if (socketpair(PF_LOCAL, SOCK_SEQPACKET, 0, sk_pair) < 0) {
++		perror("socketpair");
++		return 1;
++	}
++
++	worker = fork();
++	if (worker < 0) {
++		perror("fork");
++		goto close_pair;
++	}
++
++	if (worker == 0) {
++		if (user_trap_syscall(__NR_mount, 0) < 0) {
++			perror("seccomp");
++			exit(1);
++		}
++
++		if (setuid(1000) < 0) {
++			perror("setuid");
++			exit(1);
++		}
++
++		if (write(sk_pair[1], "a", 1) != 1) {
++			perror("write");
++			exit(1);
++		}
++
++		if (read(sk_pair[1], &c, 1) != 1) {
++			perror("write");
++			exit(1);
++		}
++
++		if (mkdir("/tmp/foo", 0755) < 0) {
++			perror("mkdir");
++			exit(1);
++		}
++
++		if (mount("/dev/sda", "/tmp/foo", NULL, 0, NULL) != -1) {
++			fprintf(stderr, "huh? mounted /dev/sda?\n");
++			exit(1);
++		}
++
++		if (errno != EPERM) {
++			perror("bad error from mount");
++			exit(1);
++		}
++
++		if (mount("/tmp/foo", "/tmp/foo", NULL, MS_BIND, NULL) < 0) {
++			perror("mount");
++			exit(1);
++		}
++
++		exit(0);
++	}
++
++	if (read(sk_pair[0], &c, 1) != 1) {
++		perror("read ready signal");
++		goto out_kill;
++	}
++
++	if (ptrace(PTRACE_ATTACH, worker) < 0) {
++		perror("ptrace");
++		goto out_kill;
++	}
++
++	if (waitpid(worker, NULL, 0) != worker) {
++		perror("waitpid");
++		goto out_kill;
++	}
++
++	listener = ptrace(PTRACE_SECCOMP_NEW_LISTENER, worker, 0);
++	if (listener < 0) {
++		perror("ptrace get listener");
++		goto out_kill;
++	}
++
++	if (ptrace(PTRACE_DETACH, worker, NULL, 0) < 0) {
++		perror("ptrace detach");
++		goto out_kill;
++	}
++
++	if (write(sk_pair[0], "a", 1) != 1) {
++		perror("write");
++		exit(1);
++	}
++
++	tracer = fork();
++	if (tracer < 0) {
++		perror("fork");
++		goto out_kill;
++	}
++
++	if (tracer == 0) {
++		while (1) {
++			struct seccomp_notif req = {};
++			struct seccomp_notif_resp resp = {};
++
++			req.len = sizeof(req);
++			if (ioctl(listener, SECCOMP_NOTIF_RECV, &req) != sizeof(req)) {
++				perror("ioctl recv");
++				goto out_close;
++			}
++
++			if (handle_req(&req, &resp, listener) < 0)
++				goto out_close;
++
++			if (ioctl(listener, SECCOMP_NOTIF_SEND, &resp) != sizeof(resp)) {
++				perror("ioctl send");
++				goto out_close;
++			}
++		}
++out_close:
++		close(listener);
++		exit(1);
++	}
++
++	close(listener);
++
++	if (waitpid(worker, &status, 0) != worker) {
++		perror("waitpid");
++		goto out_kill;
++	}
++
++	if (umount2("/tmp/foo", MNT_DETACH) < 0 && errno != EINVAL) {
++		perror("umount2");
++		goto out_kill;
++	}
++
++	if (remove("/tmp/foo") < 0 && errno != ENOENT) {
++		perror("remove");
++		exit(1);
++	}
++
++	if (!WIFEXITED(status) || WEXITSTATUS(status)) {
++		fprintf(stderr, "worker exited nonzero\n");
++		goto out_kill;
++	}
++
++	ret = 0;
++
++out_kill:
++	if (tracer > 0)
++		kill(tracer, SIGKILL);
++	if (worker > 0)
++		kill(worker, SIGKILL);
++
++close_pair:
++	close(sk_pair[0]);
++	close(sk_pair[1]);
++	return ret;
++}
 -- 
 2.17.1
