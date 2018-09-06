@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 02/11] UAPI: keys: Fix use of C++ keywords as structural
- members [ver #2]
-Date: Thu, 06 Sep 2018 10:18:36 +0100
-Message-ID: <153622551617.14298.12454094039718200093.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 03/11] UAPI: virtio_net: Fix use of C++ keywords as
+ structural members [ver #2]
+Date: Thu, 06 Sep 2018 10:18:42 +0100
+Message-ID: <153622552270.14298.14568295161017777604.stgit@warthog.procyon.org.uk>
 References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -11,36 +11,37 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
-Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, keyrings@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
+Cc: "Michael S. Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-The keyctl_dh_params struct uses a C++ keyword as structural members.  Fix
+The virtio_net_ctrl_hdr struct uses a C++ keyword as structural members.  Fix
 this by inserting an anonymous union that provides an alternative name and
 then hide the reserved name in C++.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
-cc: Mat Martineau <mathew.j.martineau@linux.intel.com>
-cc: keyrings@vger.kernel.org
+cc: "Michael S. Tsirkin" <mst@redhat.com>
+cc: Jason Wang <jasowang@redhat.com>
+cc: virtualization@lists.linux-foundation.org
 ---
 
- include/uapi/linux/keyctl.h |    7 ++++++-
+ include/uapi/linux/virtio_net.h |    7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
-index 910cc4334b21..170f015d1f25 100644
---- a/include/uapi/linux/keyctl.h
-+++ b/include/uapi/linux/keyctl.h
-@@ -65,7 +65,12 @@
- 
- /* keyctl structures */
- struct keyctl_dh_params {
--	__s32 dh_private;
+diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
+index a3715a3224c1..967142bc0e05 100644
+--- a/include/uapi/linux/virtio_net.h
++++ b/include/uapi/linux/virtio_net.h
+@@ -150,7 +150,12 @@ struct virtio_net_hdr_mrg_rxbuf {
+  * command goes in between.
+  */
+ struct virtio_net_ctrl_hdr {
+-	__u8 class;
 +	union {
 +#ifndef __cplusplus
-+		__s32 private;
++		__u8 class;
 +#endif
-+		__s32 dh_private;
++		__u8 _class;
 +	};
- 	__s32 prime;
- 	__s32 base;
- };
+ 	__u8 cmd;
+ } __attribute__((packed));
+ 
