@@ -1,58 +1,46 @@
-From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 01/11] UAPI: drm: Fix use of C++ keywords as
- structural members [ver #2]
-Date: Thu, 06 Sep 2018 10:18:29 +0100
-Message-ID: <153622550941.14298.18224012706200881807.stgit@warthog.procyon.org.uk>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 02/11] UAPI: keys: Fix use of C++ keywords as structural
+ members [ver #2]
+Date: Thu, 06 Sep 2018 10:18:36 +0100
+Message-ID: <153622551617.14298.12454094039718200093.stgit@warthog.procyon.org.uk>
 References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <freedreno-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-In-Reply-To: <153622549721.14298.8116794954073122489.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/freedreno>,
- <mailto:freedreno-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/freedreno>
-List-Post: <mailto:freedreno-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-List-Help: <mailto:freedreno-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/freedreno>,
- <mailto:freedreno-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=subscribe>
-Errors-To: freedreno-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Sender: "Freedreno" <freedreno-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: David Airlie <airlied-cv59FeDIM0c@public.gmane.org>, linux-arm-msm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Rob Clark <robdclark-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, freedreno-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org
+Cc: Mat Martineau <mathew.j.martineau@linux.intel.com>, keyrings@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-VGhlIGk4MTAgYW5kIG1zbSBkcm0gZHJpdmVycyB1c2UgQysrIGtleXdvcmRzIGFzIHN0cnVjdHVy
-YWwgbWVtYmVycy4gIEZpeAp0aGlzIGJ5IGluc2VydGluZyBhbiBhbm9ueW1vdXMgdW5pb24gdGhh
-dCBwcm92aWRlcyBhbiBhbHRlcm5hdGl2ZSBuYW1lIGFuZAp0aGVuIGhpZGUgdGhlIHJlc2VydmVk
-IG5hbWUgaW4gQysrLgoKU2lnbmVkLW9mZi1ieTogRGF2aWQgSG93ZWxscyA8ZGhvd2VsbHNAcmVk
-aGF0LmNvbT4KY2M6IFJvYiBDbGFyayA8cm9iZGNsYXJrQGdtYWlsLmNvbT4KY2M6IERhdmlkIEFp
-cmxpZSA8YWlybGllZEBsaW51eC5pZT4KY2M6IGxpbnV4LWFybS1tc21Admdlci5rZXJuZWwub3Jn
-CmNjOiBkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Aub3JnCmNjOiBmcmVlZHJlbm9AbGlzdHMu
-ZnJlZWRlc2t0b3Aub3JnCi0tLQoKIGluY2x1ZGUvdWFwaS9kcm0vaTgxMF9kcm0uaCB8ICAgIDcg
-KysrKysrLQogaW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmggIHwgICAgNyArKysrKystCiAyIGZp
-bGVzIGNoYW5nZWQsIDEyIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
-IGEvaW5jbHVkZS91YXBpL2RybS9pODEwX2RybS5oIGIvaW5jbHVkZS91YXBpL2RybS9pODEwX2Ry
-bS5oCmluZGV4IGQyODVkNWU3MmU2YS4uNjE3ZDc5ZWMzZmM1IDEwMDY0NAotLS0gYS9pbmNsdWRl
-L3VhcGkvZHJtL2k4MTBfZHJtLmgKKysrIGIvaW5jbHVkZS91YXBpL2RybS9pODEwX2RybS5oCkBA
-IC0yNjYsNyArMjY2LDEyIEBAIHR5cGVkZWYgc3RydWN0IF9kcm1faTgxMF9jb3B5X3QgewogI2Rl
-ZmluZSBQUl9NQVNLICAgICAgICAgICAgICAoMHg3PDwxOCkKIAogdHlwZWRlZiBzdHJ1Y3QgZHJt
-X2k4MTBfZG1hIHsKLQl2b2lkICp2aXJ0dWFsOworCXVuaW9uIHsKKyNpZm5kZWYgX19jcGx1c3Bs
-dXMKKwkJdm9pZCAqdmlydHVhbDsKKyNlbmRpZgorCQl2b2lkICpfdmlydHVhbDsKKwl9OwogCWlu
-dCByZXF1ZXN0X2lkeDsKIAlpbnQgcmVxdWVzdF9zaXplOwogCWludCBncmFudGVkOwpkaWZmIC0t
-Z2l0IGEvaW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmggYi9pbmNsdWRlL3VhcGkvZHJtL21zbV9k
-cm0uaAppbmRleCBjMDZkMGE1YmRkODAuLmU5OWJhYjcyZDU4YyAxMDA2NDQKLS0tIGEvaW5jbHVk
-ZS91YXBpL2RybS9tc21fZHJtLmgKKysrIGIvaW5jbHVkZS91YXBpL2RybS9tc21fZHJtLmgKQEAg
-LTE0OCw3ICsxNDgsMTIgQEAgc3RydWN0IGRybV9tc21fZ2VtX2NwdV9maW5pIHsKICAqLwogc3Ry
-dWN0IGRybV9tc21fZ2VtX3N1Ym1pdF9yZWxvYyB7CiAJX191MzIgc3VibWl0X29mZnNldDsgIC8q
-IGluLCBvZmZzZXQgZnJvbSBzdWJtaXRfYm8gKi8KLQlfX3UzMiBvcjsgICAgICAgICAgICAgLyog
-aW4sIHZhbHVlIE9SJ2Qgd2l0aCByZXN1bHQgKi8KKwl1bmlvbiB7CisjaWZuZGVmIF9fY3BsdXNw
-bHVzCisJCV9fdTMyIG9yOwkvKiBpbiwgdmFsdWUgT1InZCB3aXRoIHJlc3VsdCAqLworI2VuZGlm
-CisJCV9fdTMyIF9vcjsJLyogaW4sIHZhbHVlIE9SJ2Qgd2l0aCByZXN1bHQgKi8KKwl9OwogCV9f
-czMyIHNoaWZ0OyAgICAgICAgICAvKiBpbiwgYW1vdW50IG9mIGxlZnQgc2hpZnQgKGNhbiBiZSBu
-ZWdhdGl2ZSkgKi8KIAlfX3UzMiByZWxvY19pZHg7ICAgICAgLyogaW4sIGluZGV4IG9mIHJlbG9j
-X2JvIGJ1ZmZlciAqLwogCV9fdTY0IHJlbG9jX29mZnNldDsgICAvKiBpbiwgb2Zmc2V0IGZyb20g
-c3RhcnQgb2YgcmVsb2NfYm8gKi8KCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fCkZyZWVkcmVubyBtYWlsaW5nIGxpc3QKRnJlZWRyZW5vQGxpc3RzLmZyZWVk
-ZXNrdG9wLm9yZwpodHRwczovL2xpc3RzLmZyZWVkZXNrdG9wLm9yZy9tYWlsbWFuL2xpc3RpbmZv
-L2ZyZWVkcmVubwo=
+The keyctl_dh_params struct uses a C++ keyword as structural members.  Fix
+this by inserting an anonymous union that provides an alternative name and
+then hide the reserved name in C++.
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Mat Martineau <mathew.j.martineau@linux.intel.com>
+cc: keyrings@vger.kernel.org
+---
+
+ include/uapi/linux/keyctl.h |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
+index 910cc4334b21..170f015d1f25 100644
+--- a/include/uapi/linux/keyctl.h
++++ b/include/uapi/linux/keyctl.h
+@@ -65,7 +65,12 @@
+ 
+ /* keyctl structures */
+ struct keyctl_dh_params {
+-	__s32 dh_private;
++	union {
++#ifndef __cplusplus
++		__s32 private;
++#endif
++		__s32 dh_private;
++	};
+ 	__s32 prime;
+ 	__s32 base;
+ };
