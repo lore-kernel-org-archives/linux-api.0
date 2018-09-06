@@ -1,8 +1,7 @@
 From: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH 09/11] UAPI: ndctl: Fix g++-unsupported initialisation in
- headers [ver #2]
-Date: Thu, 06 Sep 2018 10:19:24 +0100
-Message-ID: <153622556444.14298.5971956747198405225.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 10/11] UAPI: ndctl: Remove use of PAGE_SIZE [ver #2]
+Date: Thu, 06 Sep 2018 10:19:30 +0100
+Message-ID: <153622557095.14298.10281337300003012767.stgit@warthog.procyon.org.uk>
 References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,109 +21,64 @@ To: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY7
 Cc: dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The following code in the linux/ndctl header file:
+The macro PAGE_SIZE isn't valid outside of the kernel, so it should not
+appear in UAPI headers.
 
-	static inline const char *nvdimm_bus_cmd_name(unsigned cmd)
-	{
-		static const char * const names[] = {
-			[ND_CMD_ARS_CAP] = "ars_cap",
-			[ND_CMD_ARS_START] = "ars_start",
-			[ND_CMD_ARS_STATUS] = "ars_status",
-			[ND_CMD_CLEAR_ERROR] = "clear_error",
-			[ND_CMD_CALL] = "cmd_call",
-		};
+Furthermore, the actual machine page size could theoretically change from
+an application's point of view if it's running in a container that gets
+migrated to another machine (say 4K/ppc64 to 64K/ppc64).
 
-		if (cmd < ARRAY_SIZE(names) && names[cmd])
-			return names[cmd];
-		return "unknown";
-	}
-
-is broken in a number of ways:
-
- (1) ARRAY_SIZE() is not generally defined.
-
- (2) g++ does not support "non-trivial" array initialisers fully yet.
-
- (3) Every file that calls this function will acquire a copy of names[].
-
-The same goes for nvdimm_cmd_name().
-
-Fix all three by converting to a switch statement where each case returns a
-string.  That way if cmd is a constant, the compiler can trivially reduce it
-and, if not, the compiler can use a shared lookup table if it thinks that is
-more efficient.
-
-A better way would be to remove these functions and their arrays from the
-header entirely.
-
+Fixes: f2ba5a5baecf ("libnvdimm, namespace: make min namespace size 4K")
 Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
 ---
 
- include/uapi/linux/ndctl.h |   48 +++++++++++++++++++-------------------------
- 1 file changed, 21 insertions(+), 27 deletions(-)
+ include/linux/ndctl.h      |   22 ++++++++++++++++++++++
+ include/uapi/linux/ndctl.h |    4 ----
+ 2 files changed, 22 insertions(+), 4 deletions(-)
+ create mode 100644 include/linux/ndctl.h
 
+diff --git a/include/linux/ndctl.h b/include/linux/ndctl.h
+new file mode 100644
+index 000000000000..cd5a293ce3ae
+--- /dev/null
++++ b/include/linux/ndctl.h
+@@ -0,0 +1,22 @@
++/*
++ * Copyright (c) 2014-2016, Intel Corporation.
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU Lesser General Public License,
++ * version 2.1, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT ANY
++ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
++ * FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for
++ * more details.
++ */
++#ifndef _LINUX_NDCTL_H
++#define _LINUX_NDCTL_H
++
++#include <uapi/linux/ndctl.h>
++
++enum {
++	ND_MIN_NAMESPACE_SIZE = PAGE_SIZE,
++};
++
++#endif /* _LINUX_NDCTL_H */
 diff --git a/include/uapi/linux/ndctl.h b/include/uapi/linux/ndctl.h
-index 7e27070b9440..2f2c43d633c5 100644
+index 2f2c43d633c5..f57c9e434d2d 100644
 --- a/include/uapi/linux/ndctl.h
 +++ b/include/uapi/linux/ndctl.h
-@@ -128,37 +128,31 @@ enum {
+@@ -202,10 +202,6 @@ enum nd_driver_flags {
+ 	ND_DRIVER_DAX_PMEM	  = 1 << ND_DEVICE_DAX_PMEM,
+ };
  
- static inline const char *nvdimm_bus_cmd_name(unsigned cmd)
- {
--	static const char * const names[] = {
--		[ND_CMD_ARS_CAP] = "ars_cap",
--		[ND_CMD_ARS_START] = "ars_start",
--		[ND_CMD_ARS_STATUS] = "ars_status",
--		[ND_CMD_CLEAR_ERROR] = "clear_error",
--		[ND_CMD_CALL] = "cmd_call",
--	};
+-enum {
+-	ND_MIN_NAMESPACE_SIZE = PAGE_SIZE,
+-};
 -
--	if (cmd < ARRAY_SIZE(names) && names[cmd])
--		return names[cmd];
--	return "unknown";
-+	switch (cmd) {
-+	case ND_CMD_ARS_CAP:		return "ars_cap";
-+	case ND_CMD_ARS_START:		return "ars_start";
-+	case ND_CMD_ARS_STATUS:		return "ars_status";
-+	case ND_CMD_CLEAR_ERROR:	return "clear_error";
-+	case ND_CMD_CALL:		return "cmd_call";
-+	default:			return "unknown";
-+	}
- }
- 
- static inline const char *nvdimm_cmd_name(unsigned cmd)
- {
--	static const char * const names[] = {
--		[ND_CMD_SMART] = "smart",
--		[ND_CMD_SMART_THRESHOLD] = "smart_thresh",
--		[ND_CMD_DIMM_FLAGS] = "flags",
--		[ND_CMD_GET_CONFIG_SIZE] = "get_size",
--		[ND_CMD_GET_CONFIG_DATA] = "get_data",
--		[ND_CMD_SET_CONFIG_DATA] = "set_data",
--		[ND_CMD_VENDOR_EFFECT_LOG_SIZE] = "effect_size",
--		[ND_CMD_VENDOR_EFFECT_LOG] = "effect_log",
--		[ND_CMD_VENDOR] = "vendor",
--		[ND_CMD_CALL] = "cmd_call",
--	};
--
--	if (cmd < ARRAY_SIZE(names) && names[cmd])
--		return names[cmd];
--	return "unknown";
-+	switch (cmd) {
-+	case ND_CMD_SMART:			return "smart";
-+	case ND_CMD_SMART_THRESHOLD:		return "smart_thresh";
-+	case ND_CMD_DIMM_FLAGS:			return "flags";
-+	case ND_CMD_GET_CONFIG_SIZE:		return "get_size";
-+	case ND_CMD_GET_CONFIG_DATA:		return "get_data";
-+	case ND_CMD_SET_CONFIG_DATA:		return "set_data";
-+	case ND_CMD_VENDOR_EFFECT_LOG_SIZE:	return "effect_size";
-+	case ND_CMD_VENDOR_EFFECT_LOG:		return "effect_log";
-+	case ND_CMD_VENDOR:			return "vendor";
-+	case ND_CMD_CALL:			return "cmd_call";
-+	default:				return "unknown";
-+	}
- }
- 
- #define ND_IOCTL 'N'
+ enum ars_masks {
+ 	ARS_STATUS_MASK = 0x0000FFFF,
+ 	ARS_EXT_STATUS_SHIFT = 16,
