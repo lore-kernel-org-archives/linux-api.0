@@ -1,70 +1,46 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH 03/11] UAPI: virtio_net: Fix use of C++ keywords as
- structural members [ver #2]
-Date: Thu, 6 Sep 2018 11:02:04 -0400
-Message-ID: <20180906104208-mutt-send-email-mst@kernel.org>
-References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
- <153622552270.14298.14568295161017777604.stgit@warthog.procyon.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: [PATCH v6 0/5] seccomp trap to userspace
+Date: Thu,  6 Sep 2018 09:28:54 -0600
+Message-ID: <20180906152859.7810-1-tycho@tycho.ws>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <153622552270.14298.14568295161017777604.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org, Jason Wang <jasowang@redhat.com>, virtualization@lists.linux-foundation.org, linux-kernel@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 06, 2018 at 10:18:42AM +0100, David Howells wrote:
-> The virtio_net_ctrl_hdr struct uses a C++ keyword as structural members.  Fix
-> this by inserting an anonymous union that provides an alternative name and
-> then hide the reserved name in C++.
-> 
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> cc: "Michael S. Tsirkin" <mst@redhat.com>
-> cc: Jason Wang <jasowang@redhat.com>
-> cc: virtualization@lists.linux-foundation.org
-> ---
-> 
->  include/uapi/linux/virtio_net.h |    7 ++++++-
->  1 file changed, 6 insertions(+), 1 deletion(-)
-> 
-> diff --git a/include/uapi/linux/virtio_net.h b/include/uapi/linux/virtio_net.h
-> index a3715a3224c1..967142bc0e05 100644
-> --- a/include/uapi/linux/virtio_net.h
-> +++ b/include/uapi/linux/virtio_net.h
-> @@ -150,7 +150,12 @@ struct virtio_net_hdr_mrg_rxbuf {
->   * command goes in between.
->   */
->  struct virtio_net_ctrl_hdr {
-> -	__u8 class;
-> +	union {
-> +#ifndef __cplusplus
-> +		__u8 class;
-> +#endif
-> +		__u8 _class;
-> +	};
->  	__u8 cmd;
->  } __attribute__((packed));
->  
+Hi all,
 
-So if we are going to do this, I think I'd prefer something like:
+Here's a v6 of the seccomp trap to userspace series. v5 [1] was fairly
+quiet, with Christian reminding me that I had forgotten to update the
+docs for the ioctl change. Other than that, there are no changes.
 
-struct virtio_net_ctrl_hdr_v2 {
-	__u8 cmd_class;
-  	__u8 cmd;
-};
+[1]: https://lkml.org/lkml/2018/8/28/590
 
-And then hide the whole old structure. This also gets rid of the packed
-keyword which we don't really need here.
+Thoughts welcome,
 
-Only issue is virtio_net_ctrl_hdr_v2 is ugly. But oh well.
+Tycho
 
-And then rework at least QEMU to use the v2 of the header.
+Tycho Andersen (5):
+  seccomp: add a return code to trap to userspace
+  seccomp: make get_nth_filter available outside of CHECKPOINT_RESTORE
+  seccomp: add a way to get a listener fd from ptrace
+  seccomp: add support for passing fds via USER_NOTIF
+  samples: add an example of seccomp user trap
 
-Quite a bit of churn, so I don't think it makes sense to apply just this
-one in isolation - only if rest of the changes go in.
-
+ Documentation/ioctl/ioctl-number.txt          |   1 +
+ .../userspace-api/seccomp_filter.rst          |  84 +++
+ arch/Kconfig                                  |   9 +
+ include/linux/seccomp.h                       |  18 +-
+ include/uapi/linux/ptrace.h                   |   2 +
+ include/uapi/linux/seccomp.h                  |  36 +-
+ kernel/ptrace.c                               |   4 +
+ kernel/seccomp.c                              | 538 +++++++++++++++-
+ samples/seccomp/.gitignore                    |   1 +
+ samples/seccomp/Makefile                      |   7 +-
+ samples/seccomp/user-trap.c                   | 312 ++++++++++
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 587 +++++++++++++++++-
+ 12 files changed, 1586 insertions(+), 13 deletions(-)
+ create mode 100644 samples/seccomp/user-trap.c
 
 -- 
-MST
+2.17.1
