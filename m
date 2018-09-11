@@ -1,39 +1,77 @@
-From: Mark Fasheh <mfasheh@suse.de>
-Subject: [PATCH 2/2] vfs: dedupe should return EPERM if permission is not granted
-Date: Mon, 10 Sep 2018 16:21:18 -0700
-Message-ID: <20180910232118.14424-3-mfasheh@suse.de>
-References: <20180910232118.14424-1-mfasheh@suse.de>
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20180910232118.14424-1-mfasheh@suse.de>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, "Darrick J . Wong" <darrick.wong@oracle.com>, Adam Borowski <kilobyte@angband.pl>, David Sterba <dsterba@suse.cz>, Mark Fasheh <mfasheh@suse.de>
+From: Gerd Hoffmann <kraxel@redhat.com>
+Subject: Re: [PATCH v7] Add udmabuf misc device
+Date: Tue, 11 Sep 2018 08:50:14 +0200
+Message-ID: <20180911065014.vo6qp6hkb7cjftdc@sirius.home.kraxel.org>
+References: <20180827093444.23623-1-kraxel@redhat.com>
+ <21053714.0Xa7F2u2PE@avalon>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <21053714.0Xa7F2u2PE@avalon>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Cc: dri-devel@lists.freedesktop.org, David Airlie <airlied@linux.ie>, Tomeu Vizoso <tomeu.vizoso@collabora.com>, Daniel Vetter <daniel@ffwll.ch>, Jonathan Corbet <corbet@lwn.net>, Sumit Semwal <sumit.semwal@linaro.org>, Shuah Khan <shuah@kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:DMA BUFFER SHARING FRAMEWORK" <linux-media@vger.kernel.org>, "moderated list:DMA BUFFER SHARING FRAMEWORK" <linaro-mm-sig@lists.linaro.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Right now we return EINVAL if a process does not have permission to dedupe a
-file. This was an oversight on my part. EPERM gives a true description of
-the nature of our error, and EINVAL is already used for the case that the
-filesystem does not support dedupe.
+  Hi,
 
-Signed-off-by: Mark Fasheh <mfasheh@suse.de>
-Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
-Acked-by: David Sterba <dsterba@suse.com>
----
- fs/read_write.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> > +#define UDMABUF_CREATE       _IOW('u', 0x42, struct udmabuf_create)
+> 
+> Why do you start at 0x42 if you reserve the 0x40-0x4f range ?
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index be0e8723a049..c734bc2880a5 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -1991,7 +1991,7 @@ int vfs_dedupe_file_range_one(struct file *src_file, loff_t src_pos,
- 	if (ret < 0)
- 		goto out_drop_write;
- 
--	ret = -EINVAL;
-+	ret = -EPERM;
- 	if (!allow_file_dedupe(dst_file))
- 		goto out_drop_write;
- 
--- 
-2.15.1
+No particular strong reason, just that using 42 was less boring than
+starting with 0x40.
+
+> > +#define UDMABUF_CREATE_LIST  _IOW('u', 0x43, struct udmabuf_create_list)
+> 
+> Where's the documentation ? :-)
+
+Isn't it simple enough?
+
+But, well, yes, I guess I can add some kerneldoc comments.
+
+> > +static int udmabuf_vm_fault(struct vm_fault *vmf)
+> > +{
+> > +	struct vm_area_struct *vma = vmf->vma;
+> > +	struct udmabuf *ubuf = vma->vm_private_data;
+> > +
+> > +	if (WARN_ON(vmf->pgoff >= ubuf->pagecount))
+> > +		return VM_FAULT_SIGBUS;
+> 
+> Just curious, when do you expect this to happen ?
+
+It should not.  If it actually happens it would be a bug somewhere,
+thats why the WARN_ON.
+
+> > +	struct udmabuf *ubuf;
+
+> > +	ubuf = kzalloc(sizeof(struct udmabuf), GFP_KERNEL);
+> 
+> sizeof(*ubuf)
+
+Why?  Should not make a difference ...
+
+> > +		memfd = fget(list[i].memfd);
+> > +		if (!memfd)
+> > +			goto err_put_pages;
+> > +		if (!shmem_mapping(file_inode(memfd)->i_mapping))
+> > +			goto err_put_pages;
+> > +		seals = memfd_fcntl(memfd, F_GET_SEALS, 0);
+> > +		if (seals == -EINVAL ||
+> > +		    (seals & SEALS_WANTED) != SEALS_WANTED ||
+> > +		    (seals & SEALS_DENIED) != 0)
+> > +			goto err_put_pages;
+> 
+> All these conditions will return -EINVAL. I'm not familiar with the memfd API, 
+> should some error conditions return a different error code to make them 
+> distinguishable by userspace ?
+
+Hmm, I guess EBADFD would be reasonable in case the file handle isn't a
+memfd.  Other suggestions?
+
+I'll prepare a fixup patch series addressing most of the other
+review comments.
+
+cheers,
+  Gerd
