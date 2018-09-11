@@ -1,77 +1,126 @@
-From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+From: Daniel Vetter <daniel@ffwll.ch>
 Subject: Re: [PATCH v7] Add udmabuf misc device
-Date: Tue, 11 Sep 2018 12:50:58 +0300
-Message-ID: <18750721.r4B5nx0M26@avalon>
-References: <20180827093444.23623-1-kraxel@redhat.com>
- <21053714.0Xa7F2u2PE@avalon>
- <20180911065014.vo6qp6hkb7cjftdc@sirius.home.kraxel.org>
+Date: Tue, 11 Sep 2018 12:05:55 +0200
+Message-ID: <CAKMK7uFviQPhsehfps0=gyA=bT72uQn1avzN7RXWE-OyRdb9aQ@mail.gmail.com>
+References: <20180827093444.23623-1-kraxel@redhat.com> <21053714.0Xa7F2u2PE@avalon>
+ <20180911065014.vo6qp6hkb7cjftdc@sirius.home.kraxel.org> <18750721.r4B5nx0M26@avalon>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dri-devel-bounces@lists.freedesktop.org>
-In-Reply-To: <20180911065014.vo6qp6hkb7cjftdc@sirius.home.kraxel.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/dri-devel>
-List-Post: <mailto:dri-devel@lists.freedesktop.org>
-List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/dri-devel>,
- <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: dri-devel-bounces@lists.freedesktop.org
-Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
-To: Gerd Hoffmann <kraxel@redhat.com>
-Cc: "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Tomeu Vizoso <tomeu.vizoso@collabora.com>, Jonathan Corbet <corbet@lwn.net>, David Airlie <airlied@linux.ie>, linux-api@vger.kernel.org, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, dri-devel@lists.freedesktop.org, "moderated list:DMA BUFFER SHARING FRAMEWORK" <linaro-mm-sig@lists.linaro.org>, Shuah Khan <shuah@kernel.org>, "open list:DMA BUFFER SHARING FRAMEWORK" <linux-media@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <18750721.r4B5nx0M26@avalon>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Cc: Gerd Hoffmann <kraxel@redhat.com>, dri-devel <dri-devel@lists.freedesktop.org>, David Airlie <airlied@linux.ie>, Tomeu Vizoso <tomeu.vizoso@collabora.com>, Jonathan Corbet <corbet@lwn.net>, Sumit Semwal <sumit.semwal@linaro.org>, Shuah Khan <shuah@kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:DMA BUFFER SHARING FRAMEWORK" <linux-media@vger.kernel.org>, "moderated list:DMA BUFFER SHARING FRAMEWORK" <linaro-mm-sig@lists.linaro.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgR2VyZCwKCk9uIFR1ZXNkYXksIDExIFNlcHRlbWJlciAyMDE4IDA5OjUwOjE0IEVFU1QgR2Vy
-ZCBIb2ZmbWFubiB3cm90ZToKPiAgIEhpLAo+IAo+ID4+ICsjZGVmaW5lIFVETUFCVUZfQ1JFQVRF
-ICAgICAgIF9JT1coJ3UnLCAweDQyLCBzdHJ1Y3QgdWRtYWJ1Zl9jcmVhdGUpCj4gPiAKPiA+IFdo
-eSBkbyB5b3Ugc3RhcnQgYXQgMHg0MiBpZiB5b3UgcmVzZXJ2ZSB0aGUgMHg0MC0weDRmIHJhbmdl
-ID8KPiAKPiBObyBwYXJ0aWN1bGFyIHN0cm9uZyByZWFzb24sIGp1c3QgdGhhdCB1c2luZyA0MiB3
-YXMgbGVzcyBib3JpbmcgdGhhbgo+IHN0YXJ0aW5nIHdpdGggMHg0MC4KPiAKPiA+PiArI2RlZmlu
-ZSBVRE1BQlVGX0NSRUFURV9MSVNUICBfSU9XKCd1JywgMHg0Mywgc3RydWN0Cj4gPj4gdWRtYWJ1
-Zl9jcmVhdGVfbGlzdCkKPiA+IAo+ID4gV2hlcmUncyB0aGUgZG9jdW1lbnRhdGlvbiA/IDotKQo+
-IAo+IElzbid0IGl0IHNpbXBsZSBlbm91Z2g/CgpObyBrZXJuZWwgVUFQSSBpcyBzaW1wbGUgZW5v
-dWdoIHRvIGdldCBhd2F5IHdpdGhvdXQgZG9jdW1lbnRpbmcgaXQuCgo+IEJ1dCwgd2VsbCwgeWVz
-LCBJIGd1ZXNzIEkgY2FuIGFkZCBzb21lIGtlcm5lbGRvYyBjb21tZW50cy4KPiAKPiA+PiArc3Rh
-dGljIGludCB1ZG1hYnVmX3ZtX2ZhdWx0KHN0cnVjdCB2bV9mYXVsdCAqdm1mKQo+ID4+ICt7Cj4g
-Pj4gKwlzdHJ1Y3Qgdm1fYXJlYV9zdHJ1Y3QgKnZtYSA9IHZtZi0+dm1hOwo+ID4+ICsJc3RydWN0
-IHVkbWFidWYgKnVidWYgPSB2bWEtPnZtX3ByaXZhdGVfZGF0YTsKPiA+PiArCj4gPj4gKwlpZiAo
-V0FSTl9PTih2bWYtPnBnb2ZmID49IHVidWYtPnBhZ2Vjb3VudCkpCj4gPj4gKwkJcmV0dXJuIFZN
-X0ZBVUxUX1NJR0JVUzsKPiA+IAo+ID4gSnVzdCBjdXJpb3VzLCB3aGVuIGRvIHlvdSBleHBlY3Qg
-dGhpcyB0byBoYXBwZW4gPwo+IAo+IEl0IHNob3VsZCBub3QuICBJZiBpdCBhY3R1YWxseSBoYXBw
-ZW5zIGl0IHdvdWxkIGJlIGEgYnVnIHNvbWV3aGVyZSwKPiB0aGF0cyB3aHkgdGhlIFdBUk5fT04u
-CgpCdXQgeW91IHNlZW0gdG8gY29uc2lkZXIgdGhhdCB0aGlzIGNvbmRpdGlvbiB0aGF0IHNob3Vs
-ZCBuZXZlciBoYXBwZW4gc3RpbGwgCmhhcyBhIGhpZ2ggZW5vdWdoIGNoYW5jZSBvZiBoYXBwZW5p
-bmcgdGhhdCBpdCdzIHdvcnRoIGEgV0FSTl9PTigpLiBJIHdhcyAKd29uZGVyaW5nIHdoeSB0aGlz
-IG9uZSBpbiBwYXJ0aWN1bGFyLCBhbmQgbm90IG90aGVyIGNvbmRpdGlvbnMgdGhhdCBhbHNvIGNh
-bid0IApoYXBwZW4gYW5kIGFyZSBub3QgY2hlY2tlZCB0aHJvdWdoIHRoZSBjb2RlLiAKCj4gPj4g
-KwlzdHJ1Y3QgdWRtYWJ1ZiAqdWJ1ZjsKPiA+PiAKPiA+PiArCXVidWYgPSBremFsbG9jKHNpemVv
-ZihzdHJ1Y3QgdWRtYWJ1ZiksIEdGUF9LRVJORUwpOwo+ID4gCj4gPiBzaXplb2YoKnVidWYpCj4g
-Cj4gV2h5PyAgU2hvdWxkIG5vdCBtYWtlIGEgZGlmZmVyZW5jZSAuLi4KCkJlY2F1c2UgdGhlIGRh
-eSB3ZSByZXBsYWNlCgoJc3RydWN0IHVkbWFidWYgKnVidWY7Cgp3aXRoCgoJc3RydWN0IHVkbWFi
-dWZfZXh0ICp1YnVmOwoKYW5kIGZvcmdldCB0byBjaGFuZ2UgdGhlIG5leHQgbGluZSwgd2UnbGwg
-aW50cm9kdWNlIGEgYnVnLiBUaGF0J3Mgd2h5IApzaXplb2YodmFyaWFibGUpIGlzIHByZWZlcnJl
-ZCBvdmVyIHNpemVvZih0eXBlKS4gQW5vdGhlciByZWFzb24gaXMgdGhhdCBJIGNhbiAKZWFzaWx5
-IHNlZSB0aGF0CgoJdWJ1ZiA9IGt6YWxsb2Moc2l6ZW9mKCp1YnVmKSwgR0ZQX0tFUk5FTCk7Cgpp
-cyBjb3JyZWN0LCB3aGlsZSB1c2luZyBzaXplb2YodHlwZSkgcmVxdWlyZXMgbWUgdG8gZ28gYW5k
-IGxvb2sgdXAgdGhlIApkZWNsYXJhdGlvbiBvZiB0aGUgdmFyaWFibGUuCgo+ID4+ICsJCW1lbWZk
-ID0gZmdldChsaXN0W2ldLm1lbWZkKTsKPiA+PiArCQlpZiAoIW1lbWZkKQo+ID4+ICsJCQlnb3Rv
-IGVycl9wdXRfcGFnZXM7Cj4gPj4gKwkJaWYgKCFzaG1lbV9tYXBwaW5nKGZpbGVfaW5vZGUobWVt
-ZmQpLT5pX21hcHBpbmcpKQo+ID4+ICsJCQlnb3RvIGVycl9wdXRfcGFnZXM7Cj4gPj4gKwkJc2Vh
-bHMgPSBtZW1mZF9mY250bChtZW1mZCwgRl9HRVRfU0VBTFMsIDApOwo+ID4+ICsJCWlmIChzZWFs
-cyA9PSAtRUlOVkFMIHx8Cj4gPj4gKwkJICAgIChzZWFscyAmIFNFQUxTX1dBTlRFRCkgIT0gU0VB
-TFNfV0FOVEVEIHx8Cj4gPj4gKwkJICAgIChzZWFscyAmIFNFQUxTX0RFTklFRCkgIT0gMCkKPiA+
-PiArCQkJZ290byBlcnJfcHV0X3BhZ2VzOwo+ID4gCj4gPiBBbGwgdGhlc2UgY29uZGl0aW9ucyB3
-aWxsIHJldHVybiAtRUlOVkFMLiBJJ20gbm90IGZhbWlsaWFyIHdpdGggdGhlIG1lbWZkCj4gPiBB
-UEksIHNob3VsZCBzb21lIGVycm9yIGNvbmRpdGlvbnMgcmV0dXJuIGEgZGlmZmVyZW50IGVycm9y
-IGNvZGUgdG8gbWFrZQo+ID4gdGhlbSBkaXN0aW5ndWlzaGFibGUgYnkgdXNlcnNwYWNlID8KPiAK
-PiBIbW0sIEkgZ3Vlc3MgRUJBREZEIHdvdWxkIGJlIHJlYXNvbmFibGUgaW4gY2FzZSB0aGUgZmls
-ZSBoYW5kbGUgaXNuJ3QgYQo+IG1lbWZkLiAgT3RoZXIgc3VnZ2VzdGlvbnM/CgpJJ2xsIGxldCBv
-dGhlcnMgY29tbWVudCBvbiB0aGlzIGFzIEkgZG9uJ3QgZmVlbCBxdWFsaWZpZWQgdG8gcGljayBw
-cm9wZXIgZXJyb3IgCmNvZGVzLCBub3QgYmVpbmcgZmFtaWxpYXIgd2l0aCB0aGUgbWVtZmQgQVBJ
-LgoKPiBJJ2xsIHByZXBhcmUgYSBmaXh1cCBwYXRjaCBzZXJpZXMgYWRkcmVzc2luZyBtb3N0IG9m
-IHRoZSBvdGhlcgo+IHJldmlldyBjb21tZW50cy4KCi0tIApSZWdhcmRzLAoKTGF1cmVudCBQaW5j
-aGFydAoKCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpk
-cmktZGV2ZWwgbWFpbGluZyBsaXN0CmRyaS1kZXZlbEBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0
-cHM6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2ZWwK
+On Tue, Sep 11, 2018 at 11:50 AM, Laurent Pinchart
+<laurent.pinchart@ideasonboard.com> wrote:
+> Hi Gerd,
+>
+> On Tuesday, 11 September 2018 09:50:14 EEST Gerd Hoffmann wrote:
+>>   Hi,
+>>
+>> >> +#define UDMABUF_CREATE       _IOW('u', 0x42, struct udmabuf_create)
+>> >
+>> > Why do you start at 0x42 if you reserve the 0x40-0x4f range ?
+>>
+>> No particular strong reason, just that using 42 was less boring than
+>> starting with 0x40.
+>>
+>> >> +#define UDMABUF_CREATE_LIST  _IOW('u', 0x43, struct
+>> >> udmabuf_create_list)
+>> >
+>> > Where's the documentation ? :-)
+>>
+>> Isn't it simple enough?
+>
+> No kernel UAPI is simple enough to get away without documenting it.
+
+Simplest option would be to throw a bit of kerneldoc into the uapi
+header, add Documentation/driver-api/dma-buf.rst.
+-Daniel
+
+>
+>> But, well, yes, I guess I can add some kerneldoc comments.
+>>
+>> >> +static int udmabuf_vm_fault(struct vm_fault *vmf)
+>> >> +{
+>> >> +  struct vm_area_struct *vma = vmf->vma;
+>> >> +  struct udmabuf *ubuf = vma->vm_private_data;
+>> >> +
+>> >> +  if (WARN_ON(vmf->pgoff >= ubuf->pagecount))
+>> >> +          return VM_FAULT_SIGBUS;
+>> >
+>> > Just curious, when do you expect this to happen ?
+>>
+>> It should not.  If it actually happens it would be a bug somewhere,
+>> thats why the WARN_ON.
+>
+> But you seem to consider that this condition that should never happen still
+> has a high enough chance of happening that it's worth a WARN_ON(). I was
+> wondering why this one in particular, and not other conditions that also can't
+> happen and are not checked through the code.
+>
+>> >> +  struct udmabuf *ubuf;
+>> >>
+>> >> +  ubuf = kzalloc(sizeof(struct udmabuf), GFP_KERNEL);
+>> >
+>> > sizeof(*ubuf)
+>>
+>> Why?  Should not make a difference ...
+>
+> Because the day we replace
+>
+>         struct udmabuf *ubuf;
+>
+> with
+>
+>         struct udmabuf_ext *ubuf;
+>
+> and forget to change the next line, we'll introduce a bug. That's why
+> sizeof(variable) is preferred over sizeof(type). Another reason is that I can
+> easily see that
+>
+>         ubuf = kzalloc(sizeof(*ubuf), GFP_KERNEL);
+>
+> is correct, while using sizeof(type) requires me to go and look up the
+> declaration of the variable.
+>
+>> >> +          memfd = fget(list[i].memfd);
+>> >> +          if (!memfd)
+>> >> +                  goto err_put_pages;
+>> >> +          if (!shmem_mapping(file_inode(memfd)->i_mapping))
+>> >> +                  goto err_put_pages;
+>> >> +          seals = memfd_fcntl(memfd, F_GET_SEALS, 0);
+>> >> +          if (seals == -EINVAL ||
+>> >> +              (seals & SEALS_WANTED) != SEALS_WANTED ||
+>> >> +              (seals & SEALS_DENIED) != 0)
+>> >> +                  goto err_put_pages;
+>> >
+>> > All these conditions will return -EINVAL. I'm not familiar with the memfd
+>> > API, should some error conditions return a different error code to make
+>> > them distinguishable by userspace ?
+>>
+>> Hmm, I guess EBADFD would be reasonable in case the file handle isn't a
+>> memfd.  Other suggestions?
+>
+> I'll let others comment on this as I don't feel qualified to pick proper error
+> codes, not being familiar with the memfd API.
+>
+>> I'll prepare a fixup patch series addressing most of the other
+>> review comments.
+>
+> --
+> Regards,
+>
+> Laurent Pinchart
+>
+>
+>
+
+
+
+-- 
+Daniel Vetter
+Software Engineer, Intel Corporation
++41 (0) 79 365 57 48 - http://blog.ffwll.ch
