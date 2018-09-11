@@ -1,71 +1,70 @@
-From: Gerd Hoffmann <kraxel@redhat.com>
-Subject: Re: [PATCH v7] Add udmabuf misc device
-Date: Tue, 11 Sep 2018 14:03:50 +0200
-Message-ID: <20180911120350.qtacdf2otwzuywv2@sirius.home.kraxel.org>
-References: <20180827093444.23623-1-kraxel@redhat.com>
- <21053714.0Xa7F2u2PE@avalon>
- <20180911065014.vo6qp6hkb7cjftdc@sirius.home.kraxel.org>
- <18750721.r4B5nx0M26@avalon>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via
+ USER_NOTIF
+Date: Tue, 11 Sep 2018 14:29:49 -0600
+Message-ID: <20180911202949.GG3444@cisco.cisco.com>
+References: <20180906152859.7810-1-tycho@tycho.ws>
+ <20180906152859.7810-5-tycho@tycho.ws>
+ <CAG48ez2oQnAb=OMGOUz0GfSWMsjqydPe8dmp6L=QswSQpSpVXA@mail.gmail.com>
+ <20180906162246.GB3326@cisco.cisco.com>
+ <20180906183018.GC3326@cisco.cisco.com>
+ <CAG48ez0Dx+35fGcrBzzNRSOsmFhuiQBN+-S5+b3_9m9eWbLeQQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <18750721.r4B5nx0M26@avalon>
+In-Reply-To: <CAG48ez0Dx+35fGcrBzzNRSOsmFhuiQBN+-S5+b3_9m9eWbLeQQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-Cc: dri-devel@lists.freedesktop.org, David Airlie <airlied@linux.ie>, Tomeu Vizoso <tomeu.vizoso@collabora.com>, Daniel Vetter <daniel@ffwll.ch>, Jonathan Corbet <corbet@lwn.net>, Sumit Semwal <sumit.semwal@linaro.org>, Shuah Khan <shuah@kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, "open list:DMA BUFFER SHARING FRAMEWORK" <linux-media@vger.kernel.org>, "moderated list:DMA BUFFER SHARING FRAMEWORK" <linaro-mm-sig@lists.linaro.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, linux-api@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp
 List-Id: linux-api@vger.kernel.org
 
-> > >> +	if (WARN_ON(vmf->pgoff >= ubuf->pagecount))
-> > >> +		return VM_FAULT_SIGBUS;
-> > > 
-> > > Just curious, when do you expect this to happen ?
-> > 
-> > It should not.  If it actually happens it would be a bug somewhere,
-> > thats why the WARN_ON.
+On Mon, Sep 10, 2018 at 07:00:43PM +0200, Jann Horn wrote:
+> On Thu, Sep 6, 2018 at 8:30 PM Tycho Andersen <tycho@tycho.ws> wrote:
+> > On Thu, Sep 06, 2018 at 10:22:46AM -0600, Tycho Andersen wrote:
+> > > On Thu, Sep 06, 2018 at 06:15:18PM +0200, Jann Horn wrote:
+> > > > On Thu, Sep 6, 2018 at 5:29 PM Tycho Andersen <tycho@tycho.ws> wrote:
+> > > > > The idea here is that the userspace handler should be able to pass an fd
+> > > > > back to the trapped task, for example so it can be returned from socket().
+> > > > [...]
+> > > > > diff --git a/Documentation/userspace-api/seccomp_filter.rst b/Documentation/userspace-api/seccomp_filter.rst
+> > > > > index d1498885c1c7..1c0aab306426 100644
+> > > > > --- a/Documentation/userspace-api/seccomp_filter.rst
+> > > > > +++ b/Documentation/userspace-api/seccomp_filter.rst
+> > > > > @@ -235,6 +235,9 @@ The interface for a seccomp notification fd consists of two structures:
+> > > > >          __u64 id;
+> > > > >          __s32 error;
+> > > > >          __s64 val;
+> > > > > +        __u8 return_fd;
+> > > > > +        __u32 fd;
+> > > > > +        __u32 fd_flags;
+> > > >
+> > > > Normally,  syscalls that take an optional file descriptor accept a
+> > > > signed 32-bit number, with -1 standing for "no file descriptor". Is
+> > > > there a reason why this uses a separate variable to signal whether an
+> > > > fd was provided?
+> > >
+> > > No real reason other than I looked at the bpf code and they were using
+> > > __u32 for bpf (but I think in their case the fd args are not
+> > > optional). I'll switch it to __s32/-1 for the next version.
+> >
+> > Oh, I think there is a reason actually: since this is an API addition,
+> > the "0" value needs to be the previously default behavior if userspace
+> > doesn't specify it. Since the previously default behavior was not to
+> > return an fd, and we want to allow fd == 0, we need the extra flag to
+> > make this work.
+> >
+> > This is really only a problem because we're introducing this stuff in
+> > a second patch (mostly to illustrate how extending the response
+> > structure would work). I could fold this into the first patch if we
+> > want, or we could keep the return_fd bits if the illustration is
+> > useful.
 > 
-> But you seem to consider that this condition that should never happen still 
-> has a high enough chance of happening that it's worth a WARN_ON(). I was 
-> wondering why this one in particular, and not other conditions that also can't 
-> happen and are not checked through the code. 
+> I feel like adding extra struct fields just so that it is possible to
+> write programs against the intermediate new API between two kernel
+> commits is taking things a bit far.
 
-Added it while writing the code, to get any coding mistake I make
-flagged right away instead of things exploding later on.
+Yep, I tend to agree with you. I'll fold the whole thing into the
+first patch for the next version.
 
-I can drop it.
-
-> > >> +	ubuf = kzalloc(sizeof(struct udmabuf), GFP_KERNEL);
-> > > 
-> > > sizeof(*ubuf)
-> > 
-> > Why?  Should not make a difference ...
-> 
-> Because the day we replace
-> 
-> 	struct udmabuf *ubuf;
-> 
-> with
-> 
-> 	struct udmabuf_ext *ubuf;
-> 
-> and forget to change the next line, we'll introduce a bug. That's why 
-> sizeof(variable) is preferred over sizeof(type). Another reason is that I can 
-> easily see that
-> 
-> 	ubuf = kzalloc(sizeof(*ubuf), GFP_KERNEL);
-> 
-> is correct, while using sizeof(type) requires me to go and look up the 
-> declaration of the variable.
-
-So it simplifies review, ok, will change it.
-
-BTW: Maybe the kernel should pick up a neat trick from glib:
-
-g_new0() is a macro which takes the type instead of the size as first
-argument, and it casts the return value to that type.  So the compiler
-will throw warnings in case of a mismatch.  That'll work better than
-depending purely on the coder being careful and review catching the
-remaining issues.
-
-cheers,
-  Gerd
+Tycho
