@@ -1,85 +1,76 @@
-From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via
- USER_NOTIF
-Date: Thu, 13 Sep 2018 19:42:56 +1000
-Message-ID: <20180913094256.gpwrlu4gnjn6zyhn@mikami>
-References: <20180906152859.7810-1-tycho@tycho.ws>
- <20180906152859.7810-5-tycho@tycho.ws>
- <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH] proc: restrict kernel stack dumps to root
+Date: Thu, 13 Sep 2018 13:55:28 +0200
+Message-ID: <CAG48ez22djpKdtYDTMn0MS=2m_QAq983O0-oXyVGiu3ju2HwXg@mail.gmail.com>
+References: <20180911183909.233413-1-jannh@google.com> <CAG48ez03ivLr6w+V911V7pqb1o=kcJw4CLEktcSVVE+=hXXP=w@mail.gmail.com>
+ <CAGXu5jKBPh+TSCuaitpPdk89hW=ch+QeRsUfE68pLpzLS=z4Jg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="6ksm43o3rqx7ajcf"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
+In-Reply-To: <CAGXu5jKBPh+TSCuaitpPdk89hW=ch+QeRsUfE68pLpzLS=z4Jg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Christian Brauner <christian.brauner@ubuntu.com>
+To: Kees Cook <keescook@chromium.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>, Ken Chen <kenchen@google.com>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Laura Abbott <labbott@redhat.com>, Andy Lutomirski <luto@amacapital.net>, security@kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
---6ksm43o3rqx7ajcf
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On 2018-09-12, Andy Lutomirski <luto@amacapital.net> wrote:
-> > The idea here is that the userspace handler should be able to pass an fd
-> > back to the trapped task, for example so it can be returned from socket=
-().
+On Thu, Sep 13, 2018 at 12:28 AM Kees Cook <keescook@chromium.org> wrote:
+>
+> On Wed, Sep 12, 2018 at 8:29 AM, Jann Horn <jannh@google.com> wrote:
+> > +linux-api, I guess
 > >
-> > I've proposed one API here, but I'm open to other options. In particula=
-r,
-> > this only lets you return an fd from a syscall, which may not be enough=
- in
-> > all cases. For example, if an fd is written to an output parameter inst=
-ead
-> > of returned, the current API can't handle this. Another case is that
-> > netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If netlink
-> > ever decides to install an fd and output it, we wouldn't be able to han=
-dle
-> > this either.
->=20
-> An alternative could be to have an API (an ioctl on the listener,
-> perhaps) that just copies an fd into the tracee.  There would be the
-> obvious set of options: do we replace an existing fd or allocate a new
-> one, and is it CLOEXEC.  Then the tracer could add an fd and then
-> return it just like it's a regular number.
->=20
-> I feel like this would be more flexible and conceptually simpler, but
-> maybe a little slower for the common cases.  What do you think?
+> > On Tue, Sep 11, 2018 at 8:39 PM Jann Horn <jannh@google.com> wrote:
+> >>
+> >> Restrict the ability to inspect kernel stacks of arbitrary tasks to root
+> >> in order to prevent a local attacker from exploiting racy stack unwinding
+> >> to leak kernel task stack contents.
+> >> See the added comment for a longer rationale.
+> >>
+> >> There don't seem to be any users of this userspace API that can't
+> >> gracefully bail out if reading from the file fails. Therefore, I believe
+> >> that this change is unlikely to break things.
+> >> In the case that this patch does end up needing a revert, the next-best
+> >> solution might be to fake a single-entry stack based on wchan.
+> >>
+> >> Fixes: 2ec220e27f50 ("proc: add /proc/*/stack")
+> >> Cc: stable@vger.kernel.org
+> >> Signed-off-by: Jann Horn <jannh@google.com>
+> >> ---
+> >>  fs/proc/base.c | 14 ++++++++++++++
+> >>  1 file changed, 14 insertions(+)
+> >>
+> >> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> >> index ccf86f16d9f0..7e9f07bf260d 100644
+> >> --- a/fs/proc/base.c
+> >> +++ b/fs/proc/base.c
+> >> @@ -407,6 +407,20 @@ static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
+> >>         unsigned long *entries;
+> >>         int err;
+> >>
+> >> +       /*
+> >> +        * The ability to racily run the kernel stack unwinder on a running task
+> >> +        * and then observe the unwinder output is scary; while it is useful for
+> >> +        * debugging kernel issues, it can also allow an attacker to leak kernel
+> >> +        * stack contents.
+> >> +        * Doing this in a manner that is at least safe from races would require
+> >> +        * some work to ensure that the remote task can not be scheduled; and
+> >> +        * even then, this would still expose the unwinder as local attack
+> >> +        * surface.
+> >> +        * Therefore, this interface is restricted to root.
+> >> +        */
+> >> +       if (!file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN))
+> >> +               return -EACCES;
+>
+> In the past, we've avoided hard errors like this in favor of just
+> censoring the output. Do we want to be more cautious here? (i.e.
+> return 0 or a fuller seq_printf(m, "[<0>] privileged\n"); return 0;)
 
-When we first discussed this I sent a (probably somewhat broken) patch
-for "dup4" which would let you inject a file descriptor into a different
-process -- I still think that having a method for injecting a file
-descriptor without needing ptrace (and SCM_RIGHTS) shenanigans would be
-generally useful. (With "dup4" you have a more obvious API for flags and
-whether you allocate a new fd or use a specific one.)
+In my mind, this is different because it's a place where we don't have
+to selectively censor output while preserving parts of it, and it's a
+place where, as Laura said, it's useful to make lack of privileges
+clearly visible because that informs users that they may have to retry
+with more privileges.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---6ksm43o3rqx7ajcf
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAluaMR0ACgkQnhiqJn3b
-jbRdog//SGIbgcHJBzJCVik/HjW9K8MCFuwaWPTMH5NvZ3L7mVM8z3sztN91sA3R
-FMK/t0DfXk7sTQaBo8hy4J636GR37f+GSt1AqowHLiBjOD3zagA6/DO6/9SH7cER
-8UsA4sWbdy8s1yEKuOs4q8YMqwvOlSBJGRS/9s4T7I2PaGSHFVxzHWpRnEaQKjHe
-fLBDQOAyBu1qGkv5KS1W0uXenjX1cybkYlnZjrsfzd7D7lwcsjKpeZJanrKReS5a
-ehHqpiDkI2/IqokIEOqK23SoctJlOFgAVuL5tY7KH7VlC0Vqp+1P5iOD1PEdLzWu
-ZHN3TN9U5jmOiUaJebWoylvq06IdllFaiaaRDzBw7HXSUsrJKISHXH04p5Zb8mkC
-x0dkuuf+w3fD2/PYHSFxW+QyywuI25+cUHEYUqSqAnJy7gBJDHCv3zp5T1Ab/nHf
-SkcHkJxOUCiR3G2ncZMnF2vaYdqVS1rvPPeAkjxVeUVyCkR2G9pkxqeMJMCv5NRR
-HaXtS0eN5+tva84gSJy5Q8iq9opYVri/6avLvlyQCuNPt/YSBeTOSiZYeamDIxjY
-DZiBI/mv2vDOQUoAY3TpDkhchXq7Tif3B+DED4n3AtduAxojti+tG+pdMMFuCO7g
-gpYDbd/qbTCb3NSlqIxw1pzMXJsPUx3eCOJH69mJUf6QB0Bd5I8=
-=EVfp
------END PGP SIGNATURE-----
-
---6ksm43o3rqx7ajcf--
+Of course, if you have an example of software that actually breaks due
+to this, I'll change it. But I looked at the three things in Debian
+codesearch that seem to use it, and from what I can tell, they all
+bail out cleanly when the read fails.
