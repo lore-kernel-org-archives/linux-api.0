@@ -1,57 +1,54 @@
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Subject: Re: [RFC PATCH v3 12/24] x86/mm: Modify ptep_set_wrprotect and
- pmdp_set_wrprotect for _PAGE_DIRTY_SW
-Date: Fri, 14 Sep 2018 14:33:36 -0700
-Message-ID: <9366d924-cd67-1d2d-b78d-809bb46e7186@linux.intel.com>
-References: <1535660494.28258.36.camel@intel.com>
- <CAG48ez0yOuDhqxB779aO3Kss3gQ3cZTJL1VphDXQm+_M9jFPvQ@mail.gmail.com>
- <1535662366.28781.6.camel@intel.com>
- <CAG48ez0mkr95_TbLQnDGuGUd6G+eJVLZ-fEjDkwA6dSrm+9tLw@mail.gmail.com>
- <CAG48ez3S3+DzAyo_SnoUW1GO0Cpd_x0A83MOx2p_MkogoAatLQ@mail.gmail.com>
- <20180831095300.GF24124@hirez.programming.kicks-ass.net>
- <1535726032.32537.0.camel@intel.com>
- <f5a36e32-7c5f-91fe-9e98-fb44867fda11@linux.intel.com>
- <1535730524.501.13.camel@intel.com>
- <6d31bd30-6d5b-bbde-1e97-1d8255eff76d@linux.intel.com>
- <20180831162920.GQ24124@hirez.programming.kicks-ass.net>
- <1536957543.12990.9.camel@intel.com>
- <8d9ce0e9-8fc7-8c68-4aa9-9aed9ee949f2@linux.intel.com>
- <1536959337.12990.27.camel@intel.com>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: Re: [PATCH 3/5] ppoll: use __kernel_timespec
+Date: Fri, 14 Sep 2018 15:07:09 -0700
+Message-ID: <CABeXuvrnzJJaZS-xp4+H7848+wbQ2TqsN9cVbM08a2naoyApCQ@mail.gmail.com>
+References: <20180901204721.13117-1-deepa.kernel@gmail.com>
+ <20180901204721.13117-4-deepa.kernel@gmail.com> <CAK8P3a1zQBQz1ZtNZzkceut4k3eLjOjCwvOtBdEmc9cTsaFz+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1536959337.12990.27.camel@intel.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, Peter Zijlstra <peterz@infradead.org>
-Cc: Jann Horn <jannh@google.com>, the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, keescook@chromium.org, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <CAK8P3a1zQBQz1ZtNZzkceut4k3eLjOjCwvOtBdEmc9cTsaFz+g@mail.gmail.com>
+Sender: owner-linux-aio@kvack.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-aio <linux-aio@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/14/2018 02:08 PM, Yu-cheng Yu wrote:
-> On Fri, 2018-09-14 at 13:46 -0700, Dave Hansen wrote:
->> On 09/14/2018 01:39 PM, Yu-cheng Yu wrote:
->>>
->>> With the updated ptep_set_wrprotect() below, I did MADV_WILLNEED to a shadow
->>> stack of 8 MB, then 10,000 fork()'s, but could not prove it is more or less
->>> efficient than the other.  So can we say this is probably fine in terms of
->>> efficiency?
+On Fri, Sep 14, 2018 at 8:57 AM Arnd Bergmann <arnd@arndb.de> wrote:
+>
+> On Sat, Sep 1, 2018 at 10:48 PM Deepa Dinamani <deepa.kernel@gmail.com> wrote:
+>
+> > +
+> > +       /* We can restart this syscall, usually */
+> > +       if (ret == -EINTR) {
+> > +               restore_user_sigmask(sigmask, &sigsaved);
+> > +               ret = -ERESTARTNOHAND;
+> > +       }
+>
+> I need a little help understanding this part: In the two existing copies of that
+> function, you have changed it to
+>
+>         restore_user_sigmask(sigmask, &sigsaved);
+>         if (ret == -EINTR)
+>                 ret = -ERESTARTNOHAND;
+>
+> in the previous patch, but the new new copies you add here do
+>
+>        if (ret == -EINTR) {
+>                restore_user_sigmask(sigmask, &sigsaved);
+>                ret = -ERESTARTNOHAND;
+>        }
+>
+> Is that intentional, or did you accidently leave a version in here that
+> you had changed afterwards?
 
-BTW, I wasn't particularly concerned about shadow stacks.  Plain old
-memory is affected by this change too.  Right?
+Oops, you are right. This wasn't intentional.
+I will send out a v2.
 
->> Well, the first fork() will do all the hard work.  I don't think
->> subsequent fork()s will be affected.
-> 
-> Are you talking about a recent commit:
-> 
->     1b2de5d0 mm/cow: don't bother write protecting already write-protected pages
-> 
-> With that, subsequent fork()s will not do all the hard work.
-> However, I have not done that for shadow stack PTEs (do we want to do that?).
-> I think the additional benefit for shadow stack is small?
+Thanks,
+Deepa
 
-You're right.  mprotect() doesn't use this path.
-
-But, that reminds me, can you take a quick look at change_pte_range()
-and double-check that it's not affected by this issue?
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
