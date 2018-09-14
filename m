@@ -1,224 +1,77 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH] [RFC] making uapi/linux/elfcore.h useful again
-Date: Fri, 14 Sep 2018 13:38:50 +0200
-Message-ID: <20180914113929.953895-1-arnd@arndb.de>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH] Add /proc/<pid>/numa_vamaps for numa node information
+Date: Fri, 14 Sep 2018 14:49:10 +0200
+Message-ID: <CAG48ez2RSn-EQkf-ahs41tOKpzt23JMGYZxUtWMRPe8c5jAq-A@mail.gmail.com>
+References: <2ce01d91-5fba-b1b7-2956-c8cc1853536d@intel.com>
+ <33f96879-351f-674a-ca23-43f233f4eb1d@linux.vnet.ibm.com> <82d2b35c-272a-ad02-692f-2c109aacdfb6@oracle.com>
+ <8569dabb-4930-aa20-6249-72457e2df51e@intel.com> <51145ccb-fc0d-0281-9757-fb8a5112ec24@oracle.com>
+ <c72fea44-59f3-b106-8311-b5eae2d254e7@intel.com> <addeaadc-5ab2-f0c9-2194-dd100ae90f3a@oracle.com>
+ <aaca3180-7510-c008-3e12-8bbe92344ef4@intel.com> <94ee0b6c-4663-0705-d4a8-c50342f6b483@oracle.com>
+ <CAG48ez1YhHKTDHZoH2tEFaLk4LcCSw5G60=+KpGRaMQxvw1qLw@mail.gmail.com> <20180914062132.GI20287@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180914062132.GI20287@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-arch@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, =?UTF-8?q?Joseph=20Myers=C2=A0?= <joseph@codesourcery.com>, David Howells <dhowells@redhat.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, linux-kernel@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Prakash Sangappa <prakash.sangappa@oracle.com>, Dave Hansen <dave.hansen@intel.com>, Anshuman Khandual <khandual@linux.vnet.ibm.com>, Andrew Morton <akpm@linux-foundation.org>, kernel list <linux-kernel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, n-horiguchi@ah.jp.nec.com, Ulrich Drepper <drepper@gmail.com>, David Rientjes <rientjes@google.com>, Horiguchi Naoya <nao.horiguchi@gmail.com>, steven.sistare@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-After finding a bug in glibc the question came up how linux/elfcore.h
-is supposed to be used from user space. As far as I can tell, it's
-not possible, as it references data types that are simply unavailable
-there.
+On Fri, Sep 14, 2018 at 8:21 AM Michal Hocko <mhocko@kernel.org> wrote:
+> On Fri 14-09-18 03:33:28, Jann Horn wrote:
+> > On Wed, Sep 12, 2018 at 10:43 PM prakash.sangappa
+> > <prakash.sangappa@oracle.com> wrote:
+> > > On 05/09/2018 04:31 PM, Dave Hansen wrote:
+> > > > On 05/07/2018 06:16 PM, prakash.sangappa wrote:
+> > > >> It will be /proc/<pid>/numa_vamaps. Yes, the behavior will be
+> > > >> different with respect to seeking. Output will still be text and
+> > > >> the format will be same.
+> > > >>
+> > > >> I want to get feedback on this approach.
+> > > > I think it would be really great if you can write down a list of the
+> > > > things you actually want to accomplish.  Dare I say: you need a
+> > > > requirements list.
+> > > >
+> > > > The numa_vamaps approach continues down the path of an ever-growing list
+> > > > of highly-specialized /proc/<pid> files.  I don't think that is
+> > > > sustainable, even if it has been our trajectory for many years.
+> > > >
+> > > > Pagemap wasn't exactly a shining example of us getting new ABIs right,
+> > > > but it sounds like something along those is what we need.
+> > >
+> > > Just sent out a V2 patch.  This patch simplifies the file content. It
+> > > only provides VA range to numa node id information.
+> > >
+> > > The requirement is basically observability for performance analysis.
+> > >
+> > > - Need to be able to determine VA range to numa node id information.
+> > >    Which also gives an idea of which range has memory allocated.
+> > >
+> > > - The proc file /proc/<pid>/numa_vamaps is in text so it is easy to
+> > >    directly view.
+> > >
+> > > The V2 patch supports seeking to a particular process VA from where
+> > > the application could read the VA to  numa node id information.
+> > >
+> > > Also added the 'PTRACE_MODE_READ_REALCREDS' check when opening the
+> > > file /proc file as was indicated by Michal Hacko
+> >
+> > procfs files should use PTRACE_MODE_*_FSCREDS, not PTRACE_MODE_*_REALCREDS.
+>
+> Out of my curiosity, what is the semantic difference? At least
+> kernel_move_pages uses PTRACE_MODE_READ_REALCREDS. Is this a bug?
 
-The #ifndef __KERNEL__ section in that header dates back to when the
-file was introduced in linux-1.3.5, and presumably was meant to
-provide the structures for the libc sys/procfs.h implementation.
-However, this was never portable to architectures other than x86-32,
-and has been broken on that architecture at a later point.
+No, that's fine. REALCREDS basically means "look at the caller's real
+UID for the access check", while FSCREDS means "look at the caller's
+filesystem UID". The ptrace access check has historically been using
+the real UID, which is sorta weird, but normally works fine. Given
+that this is documented, I didn't see any reason to change it for most
+things that do ptrace access checks, even if the EUID would IMO be
+more appropriate. But things that capture caller credentials at points
+like open() really shouldn't look at the real UID; instead, they
+should use the filesystem UID (which in practice is basically the same
+as the EUID).
 
-These are the steps that I needed to make it possible to include the
-header file, e.g. for libc self-testing in order to make sure the
-structures are compatible with its own:
-
-- drop the #ifndef __KERNEL__ section that are obviously useless
-  and get in the way
-
-- change the pid_t references to __kernel_pid_t
-
-- Move required data from the private x86 asm/elf.h file into
-  a new uapi/asm/elf.h. Some other architectures already do that,
-  but most of them do not. Before applying the patch, we have
-  to do this for all architectures
-
-- Change ELF_NGREG to an integer literal constant instead of
-  a sizeof operation based on a private type.
-
-Cc: Joseph Myers <joseph@codesourcery.com>
-Cc: David Howells <dhowells@redhat.com>
-Cc: libc-alpha@sourceware.org
-Link: https://patchwork.ozlabs.org/patch/969540/
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- arch/x86/include/asm/elf.h         | 24 +-----------------------
- arch/x86/include/uapi/asm/elf.h    | 30 ++++++++++++++++++++++++++++++
- arch/x86/include/uapi/asm/signal.h |  2 +-
- include/uapi/linux/elf.h           |  1 +
- include/uapi/linux/elfcore.h       | 26 +++++---------------------
- 5 files changed, 38 insertions(+), 45 deletions(-)
- create mode 100644 arch/x86/include/uapi/asm/elf.h
-
-diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
-index 0d157d2a1e2a..973bd7b5b164 100644
---- a/arch/x86/include/asm/elf.h
-+++ b/arch/x86/include/asm/elf.h
-@@ -10,18 +10,10 @@
- #include <asm/ptrace.h>
- #include <asm/user.h>
- #include <asm/auxvec.h>
--
--typedef unsigned long elf_greg_t;
--
--#define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t))
--typedef elf_greg_t elf_gregset_t[ELF_NGREG];
--
--typedef struct user_i387_struct elf_fpregset_t;
-+#include <uapi/asm/elf.h>
- 
- #ifdef __i386__
- 
--typedef struct user_fxsr_struct elf_fpxregset_t;
--
- #define R_386_NONE	0
- #define R_386_32	1
- #define R_386_PC32	2
-@@ -35,13 +27,6 @@ typedef struct user_fxsr_struct elf_fpxregset_t;
- #define R_386_GOTPC	10
- #define R_386_NUM	11
- 
--/*
-- * These are used to set parameters in the core dumps.
-- */
--#define ELF_CLASS	ELFCLASS32
--#define ELF_DATA	ELFDATA2LSB
--#define ELF_ARCH	EM_386
--
- #else
- 
- /* x86-64 relocation types */
-@@ -65,13 +50,6 @@ typedef struct user_fxsr_struct elf_fpxregset_t;
- 
- #define R_X86_64_NUM		16
- 
--/*
-- * These are used to set parameters in the core dumps.
-- */
--#define ELF_CLASS	ELFCLASS64
--#define ELF_DATA	ELFDATA2LSB
--#define ELF_ARCH	EM_X86_64
--
- #endif
- 
- #include <asm/vdso.h>
-diff --git a/arch/x86/include/uapi/asm/elf.h b/arch/x86/include/uapi/asm/elf.h
-new file mode 100644
-index 000000000000..a640e1224939
---- /dev/null
-+++ b/arch/x86/include/uapi/asm/elf.h
-@@ -0,0 +1,30 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef _UAPI_ASM_X86_ELF_H
-+#define _UAPI_ASM_X86_ELF_H
-+
-+#ifdef __i386__
-+
-+/*
-+ * These are used to set parameters in the core dumps.
-+ */
-+#define ELF_CLASS	ELFCLASS32
-+#define ELF_DATA	ELFDATA2LSB
-+#define ELF_ARCH	EM_386
-+#define ELF_NGREG	17
-+
-+#else
-+
-+/*
-+ * These are used to set parameters in the core dumps.
-+ */
-+#define ELF_CLASS	ELFCLASS64
-+#define ELF_DATA	ELFDATA2LSB
-+#define ELF_ARCH	EM_X86_64
-+#define ELF_NGREG	27
-+
-+#endif /* __i386__ */
-+
-+typedef unsigned long elf_greg_t;
-+typedef elf_greg_t elf_gregset_t[ELF_NGREG];
-+
-+#endif
-diff --git a/arch/x86/include/uapi/asm/signal.h b/arch/x86/include/uapi/asm/signal.h
-index e5745d593dc7..00f273eaddf7 100644
---- a/arch/x86/include/uapi/asm/signal.h
-+++ b/arch/x86/include/uapi/asm/signal.h
-@@ -128,7 +128,7 @@ struct sigaction {
- typedef struct sigaltstack {
- 	void __user *ss_sp;
- 	int ss_flags;
--	size_t ss_size;
-+	__kernel_size_t ss_size;
- } stack_t;
- 
- #endif /* __ASSEMBLY__ */
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index c5358e0ae7c5..e1e4561ed9c2 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -4,6 +4,7 @@
- 
- #include <linux/types.h>
- #include <linux/elf-em.h>
-+#include <asm/elf.h>
- 
- /* 32-bit ELF base types. */
- typedef __u32	Elf32_Addr;
-diff --git a/include/uapi/linux/elfcore.h b/include/uapi/linux/elfcore.h
-index baf03562306d..9c0078004275 100644
---- a/include/uapi/linux/elfcore.h
-+++ b/include/uapi/linux/elfcore.h
-@@ -16,15 +16,6 @@ struct elf_siginfo
- 	int	si_errno;			/* errno */
- };
- 
--
--#ifndef __KERNEL__
--typedef elf_greg_t greg_t;
--typedef elf_gregset_t gregset_t;
--typedef elf_fpregset_t fpregset_t;
--typedef elf_fpxregset_t fpxregset_t;
--#define NGREG ELF_NGREG
--#endif
--
- /*
-  * Definitions to generate Intel SVR4-like core files.
-  * These mostly have the same names as the SVR4 types with "elf_"
-@@ -49,10 +40,10 @@ struct elf_prstatus
- 	struct sigaltstack pr_altstack;	/* Alternate stack info */
- 	struct sigaction pr_action;	/* Signal action for current sig */
- #endif
--	pid_t	pr_pid;
--	pid_t	pr_ppid;
--	pid_t	pr_pgrp;
--	pid_t	pr_sid;
-+	__kernel_pid_t	pr_pid;
-+	__kernel_pid_t	pr_ppid;
-+	__kernel_pid_t	pr_pgrp;
-+	__kernel_pid_t	pr_sid;
- 	struct __kernel_old_timeval pr_utime;	/* User time */
- 	struct __kernel_old_timeval pr_stime;	/* System time */
- 	struct __kernel_old_timeval pr_cutime;	/* Cumulative user time */
-@@ -85,17 +76,10 @@ struct elf_prpsinfo
- 	unsigned long pr_flag;	/* flags */
- 	__kernel_uid_t	pr_uid;
- 	__kernel_gid_t	pr_gid;
--	pid_t	pr_pid, pr_ppid, pr_pgrp, pr_sid;
-+	__kernel_pid_t	pr_pid, pr_ppid, pr_pgrp, pr_sid;
- 	/* Lots missing */
- 	char	pr_fname[16];	/* filename of executable */
- 	char	pr_psargs[ELF_PRARGSZ];	/* initial part of arg list */
- };
- 
--#ifndef __KERNEL__
--typedef struct elf_prstatus prstatus_t;
--typedef struct elf_prpsinfo prpsinfo_t;
--#define PRARGSZ ELF_PRARGSZ 
--#endif
--
--
- #endif /* _UAPI_LINUX_ELFCORE_H */
--- 
-2.18.0
+So in short, it depends on the interface you're coming through: Direct
+syscalls use REALCREDS, things that go through the VFS layer use
+FSCREDS.
