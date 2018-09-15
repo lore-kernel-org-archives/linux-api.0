@@ -1,54 +1,43 @@
 From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: Re: [PATCH 3/5] ppoll: use __kernel_timespec
-Date: Fri, 14 Sep 2018 15:07:09 -0700
-Message-ID: <CABeXuvrnzJJaZS-xp4+H7848+wbQ2TqsN9cVbM08a2naoyApCQ@mail.gmail.com>
-References: <20180901204721.13117-1-deepa.kernel@gmail.com>
- <20180901204721.13117-4-deepa.kernel@gmail.com> <CAK8P3a1zQBQz1ZtNZzkceut4k3eLjOjCwvOtBdEmc9cTsaFz+g@mail.gmail.com>
+Subject: [PATCH v2 0/5] y2038: Make ppoll,
+	io_pgetevents and pselect y2038 safe
+Date: Fri, 14 Sep 2018 22:08:38 -0700
+Message-ID: <20180915050843.19183-1-deepa.kernel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CAK8P3a1zQBQz1ZtNZzkceut4k3eLjOjCwvOtBdEmc9cTsaFz+g@mail.gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-aio <linux-aio@kvack.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: viro@zeniv.linux.org.uk, tglx@linutronix.de, linux-kernel@vger.kernel.org
+Cc: y2038@lists.linaro.org, linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, arnd@arndb.de, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 14, 2018 at 8:57 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> On Sat, Sep 1, 2018 at 10:48 PM Deepa Dinamani <deepa.kernel@gmail.com> wrote:
->
-> > +
-> > +       /* We can restart this syscall, usually */
-> > +       if (ret == -EINTR) {
-> > +               restore_user_sigmask(sigmask, &sigsaved);
-> > +               ret = -ERESTARTNOHAND;
-> > +       }
->
-> I need a little help understanding this part: In the two existing copies of that
-> function, you have changed it to
->
->         restore_user_sigmask(sigmask, &sigsaved);
->         if (ret == -EINTR)
->                 ret = -ERESTARTNOHAND;
->
-> in the previous patch, but the new new copies you add here do
->
->        if (ret == -EINTR) {
->                restore_user_sigmask(sigmask, &sigsaved);
->                ret = -ERESTARTNOHAND;
->        }
->
-> Is that intentional, or did you accidently leave a version in here that
-> you had changed afterwards?
-
-Oops, you are right. This wasn't intentional.
-I will send out a v2.
-
-Thanks,
-Deepa
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+VGhlIHNlcmllcyB0cmFuc2l0aW9ucyB0aGUgcHBvbGwsIGlvX2dldGV2ZW50cywgYW5kIHBzZWxl
+Y3Qgc3lzY2FsbHMKdG8gYmUgeTIwMzggc2FmZS4KClRoaXMgaXMgcGFydCBvZiB0aGUgd29yayBw
+cm9jZWVkaW5nIGZvciBzeXNjYWxscyBmb3IgeTIwMzguCkl0IGlzIGJhc2VkIG9uIHRoZSBzZXJp
+ZXMgWzFdIGZyb20gQXJuZCBCZXJnbWFubi4KClRoZSBvdmVydmlldyBvZiB0aGUgc2VyaWVzIGlz
+IGFzIGJlbG93OgoxLiBSZWZhY3RvciBzaWdtYXNrIGhhbmRsaW5nIGxvZ2ljIGZvciB0aGUgYWJv
+dmUgc3lzY2FsbHMuCjIuIFByb3ZpZGUgeTIwMzggc2FmZSB2ZXJzaW9ucyBvZiBzeXNjYWxscyBm
+b3IgYWxsIEFCSXMuCgpbMV0gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTgvOC8yNy82NTEKCkNo
+YW5nZXMgc2luY2UgdjE6CiogZml4ZWQgYnVnIHBvaW50ZWQgb3V0IGJ5IGFybmQKCkRlZXBhIERp
+bmFtYW5pICg1KToKICBzaWduYWw6IEFkZCBzZXRfdXNlcl9zaWdtYXNrKCkKICBzaWduYWw6IEFk
+ZCByZXN0b3JlX3VzZXJfc2lnbWFzaygpCiAgcHBvbGw6IHVzZSBfX2tlcm5lbF90aW1lc3BlYwog
+IHBzZWxlY3Q2OiB1c2UgX19rZXJuZWxfdGltZXNwZWMKICBpb19wZ2V0ZXZlbnRzOiB1c2UgX19r
+ZXJuZWxfdGltZXNwZWMKCiBmcy9haW8uYyAgICAgICAgICAgICAgICAgfCAxMzggKysrKysrKysr
+Ky0tLS0tCiBmcy9ldmVudHBvbGwuYyAgICAgICAgICAgfCAgNTIgKy0tLS0tCiBmcy9zZWxlY3Qu
+YyAgICAgICAgICAgICAgfCAzNjcgKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0t
+LS0tCiBpbmNsdWRlL2xpbnV4L2NvbXBhdC5oICAgfCAgMjAgKysrCiBpbmNsdWRlL2xpbnV4L3Np
+Z25hbC5oICAgfCAgIDQgKwogaW5jbHVkZS9saW51eC9zeXNjYWxscy5oIHwgIDIwICsrLQoga2Vy
+bmVsL3NpZ25hbC5jICAgICAgICAgIHwgIDc4ICsrKysrKysrKwogNyBmaWxlcyBjaGFuZ2VkLCA0
+MzcgaW5zZXJ0aW9ucygrKSwgMjQyIGRlbGV0aW9ucygtKQoKLS0gCjIuMTcuMQoKX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0
+ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4v
+bGlzdGluZm8veTIwMzgK
