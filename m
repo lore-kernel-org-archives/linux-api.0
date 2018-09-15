@@ -1,234 +1,86 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v2 5/5] io_pgetevents: use __kernel_timespec
-Date: Fri, 14 Sep 2018 22:08:43 -0700
-Message-ID: <20180915050843.19183-6-deepa.kernel@gmail.com>
-References: <20180915050843.19183-1-deepa.kernel@gmail.com>
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180915050843.19183-1-deepa.kernel@gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: viro@zeniv.linux.org.uk, tglx@linutronix.de, linux-kernel@vger.kernel.org
-Cc: arnd@arndb.de, y2038@lists.linaro.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-aio@kvack.org
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH] [RFC] making uapi/linux/elfcore.h useful again
+Date: Sat, 15 Sep 2018 13:37:33 +0200
+Message-ID: <20180915113733.GA35411@gmail.com>
+References: <20180914113929.953895-1-arnd@arndb.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20180914113929.953895-1-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Joseph =?iso-8859-1?Q?Myers=A0?= <joseph@codesourcery.com>, David Howells <dhowells@redhat.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-struct timespec is not y2038 safe.
-struct __kernel_timespec is the new y2038 safe structure for all
-syscalls that are using struct timespec.
-Update io_pgetevents interfaces to use struct __kernel_timespec.
 
-sigset_t also has different representations on 32 bit and 64 bit
-architectures. Hence, we need to support the following different
-syscalls:
+* Arnd Bergmann <arnd@arndb.de> wrote:
 
-New y2038 safe syscalls:
-(Controlled by CONFIG_64BIT_TIME for 32 bit ABIs)
+> diff --git a/arch/x86/include/uapi/asm/elf.h b/arch/x86/include/uapi/asm/elf.h
+> new file mode 100644
+> index 000000000000..a640e1224939
+> --- /dev/null
+> +++ b/arch/x86/include/uapi/asm/elf.h
+> @@ -0,0 +1,30 @@
+> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+> +#ifndef _UAPI_ASM_X86_ELF_H
+> +#define _UAPI_ASM_X86_ELF_H
+> +
+> +#ifdef __i386__
+> +
+> +/*
+> + * These are used to set parameters in the core dumps.
+> + */
+> +#define ELF_CLASS	ELFCLASS32
+> +#define ELF_DATA	ELFDATA2LSB
+> +#define ELF_ARCH	EM_386
+> +#define ELF_NGREG	17
+> +
+> +#else
+> +
+> +/*
+> + * These are used to set parameters in the core dumps.
+> + */
+> +#define ELF_CLASS	ELFCLASS64
+> +#define ELF_DATA	ELFDATA2LSB
+> +#define ELF_ARCH	EM_X86_64
+> +#define ELF_NGREG	27
+> +
+> +#endif /* __i386__ */
+> +
+> +typedef unsigned long elf_greg_t;
+> +typedef elf_greg_t elf_gregset_t[ELF_NGREG];
+> +
+> +#endif
 
-Native 64 bit(unchanged) and native 32 bit : sys_io_pgetevents
-Compat : compat_sys_io_pgetevents_time64
+On a second thought, maybe deduplicate the comments? Something like:
 
-Older y2038 unsafe syscalls:
-(Controlled by CONFIG_32BIT_COMPAT_TIME for 32 bit ABIs)
+/*
+ * These are used to set parameters in core dumps:
+ */
+#ifdef __i386__
+# define ELF_CLASS	ELFCLASS32
+# define ELF_DATA	ELFDATA2LSB
+# define ELF_ARCH	EM_386
+# define ELF_NGREG	17
+#else
+# define ELF_CLASS	ELFCLASS64
+# define ELF_DATA	ELFDATA2LSB
+# define ELF_ARCH	EM_X86_64
+# define ELF_NGREG	27
+#endif
 
-Native 32 bit : sys_io_pgetevents_time32
-Compat : compat_sys_io_pgetevents
+Note:
 
-Note that io_getevents syscalls do not have a y2038 safe solution.
+ - I fixed a typo in the comment.
+ - Aligned the blocks vertically for better visibility.
+ - The closing #endif comment became unnecessary as well, due to the much more obvious 
+   structure when written this way.
 
-Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
----
- fs/aio.c                 | 88 ++++++++++++++++++++++++++++++++++++++--
- include/linux/compat.h   |  6 +++
- include/linux/syscalls.h | 10 ++++-
- 3 files changed, 99 insertions(+), 5 deletions(-)
+The type changes/cleanups look good otherwise: it's quite probable that it was never directly 
+included in any user-space library in any sane fashion before, so it's not really an UAPI that 
+was relied on, as long as it doesn't break the build anywhere.
 
-diff --git a/fs/aio.c b/fs/aio.c
-index b81c216534d6..9560f147d7a5 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -2063,11 +2063,13 @@ static long do_io_getevents(aio_context_t ctx_id,
-  *	specifies an infinite timeout. Note that the timeout pointed to by
-  *	timeout is relative.  Will fail with -ENOSYS if not implemented.
-  */
-+#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-+
- SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 		long, min_nr,
- 		long, nr,
- 		struct io_event __user *, events,
--		struct timespec __user *, timeout)
-+		struct __kernel_timespec __user *, timeout)
- {
- 	struct timespec64	ts;
- 	int			ret;
-@@ -2081,6 +2083,8 @@ SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
- 	return ret;
- }
- 
-+#endif
-+
- struct __aio_sigset {
- 	const sigset_t __user	*sigmask;
- 	size_t		sigsetsize;
-@@ -2091,7 +2095,7 @@ SYSCALL_DEFINE6(io_pgetevents,
- 		long, min_nr,
- 		long, nr,
- 		struct io_event __user *, events,
--		struct timespec __user *, timeout,
-+		struct __kernel_timespec __user *, timeout,
- 		const struct __aio_sigset __user *, usig)
- {
- 	struct __aio_sigset	ksig = { NULL, };
-@@ -2118,7 +2122,44 @@ SYSCALL_DEFINE6(io_pgetevents,
- 	return ret;
- }
- 
--#ifdef CONFIG_COMPAT
-+#if defined(CONFIG_COMPAT_32BIT_TIME) && !defined(CONFIG_64BIT)
-+
-+SYSCALL_DEFINE6(io_pgetevents_time32,
-+		aio_context_t, ctx_id,
-+		long, min_nr,
-+		long, nr,
-+		struct io_event __user *, events,
-+		struct old_timespec32 __user *, timeout,
-+		const struct __aio_sigset __user *, usig)
-+{
-+	struct __aio_sigset	ksig = { NULL, };
-+	sigset_t		ksigmask, sigsaved;
-+	struct timespec64	ts;
-+	int ret;
-+
-+	if (timeout && unlikely(get_old_timespec32(&ts, timeout)))
-+		return -EFAULT;
-+
-+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
-+		return -EFAULT;
-+
-+
-+	ret = set_user_sigmask(ksig.sigmask, &ksigmask, &sigsaved, ksig.sigsetsize);
-+	if (ret)
-+		return ret;
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &ts : NULL);
-+	restore_user_sigmask(ksig.sigmask, &sigsaved);
-+	if (signal_pending(current) && !ret)
-+		ret = -ERESTARTNOHAND;
-+
-+	return ret;
-+}
-+
-+#endif
-+
-+#if defined(CONFIG_COMPAT_32BIT_TIME)
-+
- COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 		       compat_long_t, min_nr,
- 		       compat_long_t, nr,
-@@ -2137,12 +2178,17 @@ COMPAT_SYSCALL_DEFINE5(io_getevents, compat_aio_context_t, ctx_id,
- 	return ret;
- }
- 
-+#endif
-+
-+#ifdef CONFIG_COMPAT
- 
- struct __compat_aio_sigset {
- 	compat_sigset_t __user	*sigmask;
- 	compat_size_t		sigsetsize;
- };
- 
-+#if defined(CONFIG_COMPAT_32BIT_TIME)
-+
- COMPAT_SYSCALL_DEFINE6(io_pgetevents,
- 		compat_aio_context_t, ctx_id,
- 		compat_long_t, min_nr,
-@@ -2173,4 +2219,40 @@ COMPAT_SYSCALL_DEFINE6(io_pgetevents,
- 
- 	return ret;
- }
-+
-+#endif
-+
-+#if defined(CONFIG_64BIT_TIME)
-+
-+COMPAT_SYSCALL_DEFINE6(io_pgetevents_time64,
-+		compat_aio_context_t, ctx_id,
-+		compat_long_t, min_nr,
-+		compat_long_t, nr,
-+		struct io_event __user *, events,
-+		struct __kernel_timespec __user *, timeout,
-+		const struct __compat_aio_sigset __user *, usig)
-+{
-+	struct __compat_aio_sigset ksig = { NULL, };
-+	sigset_t ksigmask, sigsaved;
-+	struct timespec64 t;
-+	int ret;
-+
-+	if (timeout && get_timespec64(&t, timeout))
-+		return -EFAULT;
-+
-+	if (usig && copy_from_user(&ksig, usig, sizeof(ksig)))
-+		return -EFAULT;
-+
-+	ret = set_compat_user_sigmask(ksig.sigmask, &ksigmask, &sigsaved, ksig.sigsetsize);
-+	if (ret)
-+		return ret;
-+
-+	ret = do_io_getevents(ctx_id, min_nr, nr, events, timeout ? &t : NULL);
-+	restore_user_sigmask(ksig.sigmask, &sigsaved);
-+	if (signal_pending(current) && !ret)
-+		ret = -ERESTARTNOHAND;
-+
-+	return ret;
-+}
-+#endif
- #endif
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 6896e6e51c00..50cd0329c8bf 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -556,6 +556,12 @@ asmlinkage long compat_sys_io_pgetevents(compat_aio_context_t ctx_id,
- 					struct io_event __user *events,
- 					struct old_timespec32 __user *timeout,
- 					const struct __compat_aio_sigset __user *usig);
-+asmlinkage long compat_sys_io_pgetevents_time64(compat_aio_context_t ctx_id,
-+					compat_long_t min_nr,
-+					compat_long_t nr,
-+					struct io_event __user *events,
-+					struct __kernel_timespec __user *timeout,
-+					const struct __compat_aio_sigset __user *usig);
- 
- /* fs/cookies.c */
- asmlinkage long compat_sys_lookup_dcookie(u32, u32, char __user *, compat_size_t);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e9cd0409c3fe..3ff0e29c082c 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -297,12 +297,18 @@ asmlinkage long sys_io_getevents(aio_context_t ctx_id,
- 				long min_nr,
- 				long nr,
- 				struct io_event __user *events,
--				struct timespec __user *timeout);
-+				struct __kernel_timespec __user *timeout);
- asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
- 				long min_nr,
- 				long nr,
- 				struct io_event __user *events,
--				struct timespec __user *timeout,
-+				struct __kernel_timespec __user *timeout,
-+				const struct __aio_sigset *sig);
-+asmlinkage long sys_io_pgetevents_time32(aio_context_t ctx_id,
-+				long min_nr,
-+				long nr,
-+				struct io_event __user *events,
-+				struct old_timespec32 __user *timeout,
- 				const struct __aio_sigset *sig);
- 
- /* fs/xattr.c */
--- 
-2.17.1
+Thanks,
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+	Ingo
