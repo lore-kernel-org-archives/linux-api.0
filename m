@@ -1,86 +1,36 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH] [RFC] making uapi/linux/elfcore.h useful again
-Date: Sat, 15 Sep 2018 13:37:33 +0200
-Message-ID: <20180915113733.GA35411@gmail.com>
-References: <20180914113929.953895-1-arnd@arndb.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 4/5] pselect6: use __kernel_timespec
+Date: Sat, 15 Sep 2018 17:27:59 +0200
+Message-ID: <CAK8P3a2Kkm2ubg_MVN_BJL=s7qpUB1-np=9zVpcJ2U-aPAJswg@mail.gmail.com>
+References: <20180915050843.19183-1-deepa.kernel@gmail.com> <20180915050843.19183-5-deepa.kernel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180914113929.953895-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Joseph =?iso-8859-1?Q?Myers=A0?= <joseph@codesourcery.com>, David Howells <dhowells@redhat.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20180915050843.19183-5-deepa.kernel@gmail.com>
+Sender: owner-linux-aio@kvack.org
+To: Deepa Dinamani <deepa.kernel@gmail.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-aio <linux-aio@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
+On Sat, Sep 15, 2018 at 7:09 AM Deepa Dinamani <deepa.kernel@gmail.com> wrote:
 
-* Arnd Bergmann <arnd@arndb.de> wrote:
-
-> diff --git a/arch/x86/include/uapi/asm/elf.h b/arch/x86/include/uapi/asm/elf.h
-> new file mode 100644
-> index 000000000000..a640e1224939
-> --- /dev/null
-> +++ b/arch/x86/include/uapi/asm/elf.h
-> @@ -0,0 +1,30 @@
-> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-> +#ifndef _UAPI_ASM_X86_ELF_H
-> +#define _UAPI_ASM_X86_ELF_H
+> +#if defined(CONFIG_64BIT_TIME)
 > +
-> +#ifdef __i386__
-> +
-> +/*
-> + * These are used to set parameters in the core dumps.
-> + */
-> +#define ELF_CLASS	ELFCLASS32
-> +#define ELF_DATA	ELFDATA2LSB
-> +#define ELF_ARCH	EM_386
-> +#define ELF_NGREG	17
-> +
-> +#else
-> +
-> +/*
-> + * These are used to set parameters in the core dumps.
-> + */
-> +#define ELF_CLASS	ELFCLASS64
-> +#define ELF_DATA	ELFDATA2LSB
-> +#define ELF_ARCH	EM_X86_64
-> +#define ELF_NGREG	27
-> +
-> +#endif /* __i386__ */
-> +
-> +typedef unsigned long elf_greg_t;
-> +typedef elf_greg_t elf_gregset_t[ELF_NGREG];
-> +
-> +#endif
+> +COMPAT_SYSCALL_DEFINE6(pselect6_time64, int, n, compat_ulong_t __user *, inp,
+> +       compat_ulong_t __user *, outp, compat_ulong_t __user *, exp,
+> +       struct __kernel_timespec __user *, tsp, void __user *, sig)
 
-On a second thought, maybe deduplicate the comments? Something like:
+I got a link error here since compat_sys_pselect6_time64 and
+compat_sys_ppoll_time64 are only defined when CONFIG_64BIT_TIME
+is set.
 
-/*
- * These are used to set parameters in core dumps:
- */
-#ifdef __i386__
-# define ELF_CLASS	ELFCLASS32
-# define ELF_DATA	ELFDATA2LSB
-# define ELF_ARCH	EM_386
-# define ELF_NGREG	17
-#else
-# define ELF_CLASS	ELFCLASS64
-# define ELF_DATA	ELFDATA2LSB
-# define ELF_ARCH	EM_X86_64
-# define ELF_NGREG	27
-#endif
+I did not think we would select this symbol on arm64, is that a mistake
+on my side, or should the #ifdef check be removed?
 
-Note:
+      Arnd
 
- - I fixed a typo in the comment.
- - Aligned the blocks vertically for better visibility.
- - The closing #endif comment became unnecessary as well, due to the much more obvious 
-   structure when written this way.
-
-The type changes/cleanups look good otherwise: it's quite probable that it was never directly 
-included in any user-space library in any sane fashion before, so it's not really an UAPI that 
-was relied on, as long as it doesn't break the build anywhere.
-
-Thanks,
-
-	Ingo
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
