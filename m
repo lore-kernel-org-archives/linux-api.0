@@ -1,25 +1,52 @@
-From: Joseph Myers <joseph@codesourcery.com>
-Subject: Re: [PATCH] [RFC] making uapi/linux/elfcore.h useful again
-Date: Mon, 17 Sep 2018 12:05:48 +0000
-Message-ID: <alpine.DEB.2.21.1809171204350.13789@digraph.polyomino.org.uk>
-References: <20180914113929.953895-1-arnd@arndb.de>
+From: Stepan Golosunov <stepan@golosunov.pp.ru>
+Subject: Re: [PATCH v3 4/5] pselect6: use __kernel_timespec
+Date: Tue, 18 Sep 2018 00:34:39 +0400
+Message-ID: <20180917203438.maary2eo64dbuhw2@sghpc.golosunov.pp.ru>
+References: <20180917010458.23159-1-deepa.kernel@gmail.com>
+ <20180917010458.23159-5-deepa.kernel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180914113929.953895-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20180917010458.23159-5-deepa.kernel@gmail.com>
+Sender: owner-linux-aio@kvack.org
+To: Deepa Dinamani <deepa.kernel@gmail.com>
+Cc: viro@zeniv.linux.org.uk, tglx@linutronix.de, linux-kernel@vger.kernel.org, arnd@arndb.de, y2038@lists.linaro.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-aio@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 14 Sep 2018, Arnd Bergmann wrote:
+On Sun, Sep 16, 2018 at 06:04:57PM -0700, Deepa Dinamani wrote:
+>  static long do_compat_pselect(int n, compat_ulong_t __user *inp,
+>  	compat_ulong_t __user *outp, compat_ulong_t __user *exp,
+> -	struct old_timespec32 __user *tsp, compat_sigset_t __user *sigmask,
+> -	compat_size_t sigsetsize)
+> +	void __user *tsp, compat_sigset_t __user *sigmask,
+> +	compat_size_t sigsetsize, enum poll_time_type type)
+>  {
+>  	sigset_t ksigmask, sigsaved;
+>  	struct timespec64 ts, end_time, *to = NULL;
+>  	int ret;
+>  
+>  	if (tsp) {
+> -		if (get_old_timespec32(&ts, tsp))
+> -			return -EFAULT;
+> +		switch (type) {
+> +		case PT_OLD_TIMESPEC:
+> +			if (get_old_timespec32(&ts, tsp))
+> +				return -EFAULT;
+> +			break;
+> +		case PT_TIMESPEC:
+> +			if (get_old_timespec32(&ts, tsp))
+> +				return -EFAULT;
+> +			break;
+> +		default:
+> +			BUG();
+> +		}
 
-> +typedef unsigned long elf_greg_t;
+One of the two get_old_timespec32 calls here should be
+get_timespec64.
 
-Does that need to be unsigned long long for x32?  (At least glibc thinks 
-so; I've not tested what an x32 core dump actually looks like, but to be 
-useful it certainly ought to have 64-bit registers.)
-
--- 
-Joseph S. Myers
-joseph@codesourcery.com
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
