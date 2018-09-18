@@ -1,101 +1,29 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH] rseq/selftests: fix parametrized test with -fpie
-Date: Tue, 18 Sep 2018 09:53:28 -0400
-Message-ID: <20180918135328.32034-1-mathieu.desnoyers@efficios.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] [RFC] making uapi/linux/elfcore.h useful again
+Date: Tue, 18 Sep 2018 07:21:13 -0700
+Message-ID: <CAK8P3a3PViCK9RzhwDkXhO_mJvgnfe0=tbFs5X_7JDRQQMujYA@mail.gmail.com>
+References: <20180914113929.953895-1-arnd@arndb.de> <alpine.DEB.2.21.1809171204350.13789@digraph.polyomino.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.21.1809171204350.13789@digraph.polyomino.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joseph Myers <joseph@codesourcery.com>
+Cc: linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, David Howells <dhowells@redhat.com>, GNU C Library <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On x86-64, the parametrized selftest code for rseq crashes with a
-segmentation fault when compiled with -fpie. This happens when the
-param_test binary is loaded at an address beyond 32-bit on x86-64.
+On Mon, Sep 17, 2018 at 5:05 AM Joseph Myers <joseph@codesourcery.com> wrote:
+>
+> On Fri, 14 Sep 2018, Arnd Bergmann wrote:
+>
+> > +typedef unsigned long elf_greg_t;
+>
+> Does that need to be unsigned long long for x32?  (At least glibc thinks
+> so; I've not tested what an x32 core dump actually looks like, but to be
+> useful it certainly ought to have 64-bit registers.)
 
-The issue is caused by use of a 32-bit register to hold the address
-of the loop counter variable.
+Yes, I think that's right. 'unsigned long' was correct inside of the kernel,
+but copying it into a uapi header means we have to use '__kernel_ulong_t'
+so it gets interpreted right by x32 user space.
 
-Fix this by using a 64-bit register to calculate the address of the
-loop counter variables as an offset from rip.
-
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: <stable@vger.kernel.org> # v4.18
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Joel Fernandes <joelaf@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Watson <davejwatson@fb.com>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: Shuah Khan <shuahkh@osg.samsung.com>
-Cc: Andi Kleen <andi@firstfloor.org>
-Cc: linux-kselftest@vger.kernel.org
-Cc: "H . Peter Anvin" <hpa@zytor.com>
-Cc: Chris Lameter <cl@linux.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Paul Turner <pjt@google.com>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: Josh Triplett <josh@joshtriplett.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ben Maurer <bmaurer@fb.com>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
----
- tools/testing/selftests/rseq/param_test.c | 19 ++++++++++---------
- 1 file changed, 10 insertions(+), 9 deletions(-)
-
-diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
-index 615252331813..4bc071525bf7 100644
---- a/tools/testing/selftests/rseq/param_test.c
-+++ b/tools/testing/selftests/rseq/param_test.c
-@@ -56,15 +56,13 @@ unsigned int yield_mod_cnt, nr_abort;
- 			printf(fmt, ## __VA_ARGS__);	\
- 	} while (0)
- 
--#if defined(__x86_64__) || defined(__i386__)
-+#ifdef __i386__
- 
- #define INJECT_ASM_REG	"eax"
- 
- #define RSEQ_INJECT_CLOBBER \
- 	, INJECT_ASM_REG
- 
--#ifdef __i386__
--
- #define RSEQ_INJECT_ASM(n) \
- 	"mov asm_loop_cnt_" #n ", %%" INJECT_ASM_REG "\n\t" \
- 	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
-@@ -76,9 +74,16 @@ unsigned int yield_mod_cnt, nr_abort;
- 
- #elif defined(__x86_64__)
- 
-+#define INJECT_ASM_REG_P	"rax"
-+#define INJECT_ASM_REG		"eax"
-+
-+#define RSEQ_INJECT_CLOBBER \
-+	, INJECT_ASM_REG_P \
-+	, INJECT_ASM_REG
-+
- #define RSEQ_INJECT_ASM(n) \
--	"lea asm_loop_cnt_" #n "(%%rip), %%" INJECT_ASM_REG "\n\t" \
--	"mov (%%" INJECT_ASM_REG "), %%" INJECT_ASM_REG "\n\t" \
-+	"lea asm_loop_cnt_" #n "(%%rip), %%" INJECT_ASM_REG_P "\n\t" \
-+	"mov (%%" INJECT_ASM_REG_P "), %%" INJECT_ASM_REG "\n\t" \
- 	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
- 	"jz 333f\n\t" \
- 	"222:\n\t" \
-@@ -86,10 +91,6 @@ unsigned int yield_mod_cnt, nr_abort;
- 	"jnz 222b\n\t" \
- 	"333:\n\t"
- 
--#else
--#error "Unsupported architecture"
--#endif
--
- #elif defined(__ARMEL__)
- 
- #define RSEQ_INJECT_INPUT \
--- 
-2.11.0
+          Arnd
