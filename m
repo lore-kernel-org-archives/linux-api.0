@@ -1,52 +1,101 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: Re: [PATCH v3 4/5] pselect6: use __kernel_timespec
-Date: Mon, 17 Sep 2018 14:16:09 -0700
-Message-ID: <CABeXuvrZHRLjiyqs_rGXWCKqjiWXkQPBr=mHntpZ6xdoc3z_Zg@mail.gmail.com>
-References: <20180917010458.23159-1-deepa.kernel@gmail.com>
- <20180917010458.23159-5-deepa.kernel@gmail.com> <20180917203438.maary2eo64dbuhw2@sghpc.golosunov.pp.ru>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180917203438.maary2eo64dbuhw2@sghpc.golosunov.pp.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-To: stepan@golosunov.pp.ru
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, y2038 Mailman List <y2038@lists.linaro.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-aio <linux-aio@kvack.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH] rseq/selftests: fix parametrized test with -fpie
+Date: Tue, 18 Sep 2018 09:53:28 -0400
+Message-ID: <20180918135328.32034-1-mathieu.desnoyers@efficios.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 17, 2018 at 1:34 PM Stepan Golosunov <stepan@golosunov.pp.ru> wrote:
->
-> On Sun, Sep 16, 2018 at 06:04:57PM -0700, Deepa Dinamani wrote:
-> >  static long do_compat_pselect(int n, compat_ulong_t __user *inp,
-> >       compat_ulong_t __user *outp, compat_ulong_t __user *exp,
-> > -     struct old_timespec32 __user *tsp, compat_sigset_t __user *sigmask,
-> > -     compat_size_t sigsetsize)
-> > +     void __user *tsp, compat_sigset_t __user *sigmask,
-> > +     compat_size_t sigsetsize, enum poll_time_type type)
-> >  {
-> >       sigset_t ksigmask, sigsaved;
-> >       struct timespec64 ts, end_time, *to = NULL;
-> >       int ret;
-> >
-> >       if (tsp) {
-> > -             if (get_old_timespec32(&ts, tsp))
-> > -                     return -EFAULT;
-> > +             switch (type) {
-> > +             case PT_OLD_TIMESPEC:
-> > +                     if (get_old_timespec32(&ts, tsp))
-> > +                             return -EFAULT;
-> > +                     break;
-> > +             case PT_TIMESPEC:
-> > +                     if (get_old_timespec32(&ts, tsp))
-> > +                             return -EFAULT;
-> > +                     break;
-> > +             default:
-> > +                     BUG();
-> > +             }
->
-> One of the two get_old_timespec32 calls here should be
-> get_timespec64.
+On x86-64, the parametrized selftest code for rseq crashes with a
+segmentation fault when compiled with -fpie. This happens when the
+param_test binary is loaded at an address beyond 32-bit on x86-64.
 
-Right. It is a copy paste bug.
+The issue is caused by use of a 32-bit register to hold the address
+of the loop counter variable.
 
-Thanks,
-Deepa
+Fix this by using a 64-bit register to calculate the address of the
+loop counter variables as an offset from rip.
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: <stable@vger.kernel.org> # v4.18
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Joel Fernandes <joelaf@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Catalin Marinas <catalin.marinas@arm.com>
+Cc: Dave Watson <davejwatson@fb.com>
+Cc: Will Deacon <will.deacon@arm.com>
+Cc: Shuah Khan <shuahkh@osg.samsung.com>
+Cc: Andi Kleen <andi@firstfloor.org>
+Cc: linux-kselftest@vger.kernel.org
+Cc: "H . Peter Anvin" <hpa@zytor.com>
+Cc: Chris Lameter <cl@linux.com>
+Cc: Russell King <linux@arm.linux.org.uk>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: Paul Turner <pjt@google.com>
+Cc: Boqun Feng <boqun.feng@gmail.com>
+Cc: Josh Triplett <josh@joshtriplett.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Ben Maurer <bmaurer@fb.com>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ tools/testing/selftests/rseq/param_test.c | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
+index 615252331813..4bc071525bf7 100644
+--- a/tools/testing/selftests/rseq/param_test.c
++++ b/tools/testing/selftests/rseq/param_test.c
+@@ -56,15 +56,13 @@ unsigned int yield_mod_cnt, nr_abort;
+ 			printf(fmt, ## __VA_ARGS__);	\
+ 	} while (0)
+ 
+-#if defined(__x86_64__) || defined(__i386__)
++#ifdef __i386__
+ 
+ #define INJECT_ASM_REG	"eax"
+ 
+ #define RSEQ_INJECT_CLOBBER \
+ 	, INJECT_ASM_REG
+ 
+-#ifdef __i386__
+-
+ #define RSEQ_INJECT_ASM(n) \
+ 	"mov asm_loop_cnt_" #n ", %%" INJECT_ASM_REG "\n\t" \
+ 	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
+@@ -76,9 +74,16 @@ unsigned int yield_mod_cnt, nr_abort;
+ 
+ #elif defined(__x86_64__)
+ 
++#define INJECT_ASM_REG_P	"rax"
++#define INJECT_ASM_REG		"eax"
++
++#define RSEQ_INJECT_CLOBBER \
++	, INJECT_ASM_REG_P \
++	, INJECT_ASM_REG
++
+ #define RSEQ_INJECT_ASM(n) \
+-	"lea asm_loop_cnt_" #n "(%%rip), %%" INJECT_ASM_REG "\n\t" \
+-	"mov (%%" INJECT_ASM_REG "), %%" INJECT_ASM_REG "\n\t" \
++	"lea asm_loop_cnt_" #n "(%%rip), %%" INJECT_ASM_REG_P "\n\t" \
++	"mov (%%" INJECT_ASM_REG_P "), %%" INJECT_ASM_REG "\n\t" \
+ 	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
+ 	"jz 333f\n\t" \
+ 	"222:\n\t" \
+@@ -86,10 +91,6 @@ unsigned int yield_mod_cnt, nr_abort;
+ 	"jnz 222b\n\t" \
+ 	"333:\n\t"
+ 
+-#else
+-#error "Unsupported architecture"
+-#endif
+-
+ #elif defined(__ARMEL__)
+ 
+ #define RSEQ_INJECT_INPUT \
+-- 
+2.11.0
