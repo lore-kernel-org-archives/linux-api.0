@@ -1,53 +1,55 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [RFC 06/20] kernel: Take into account timens clock offsets in clock_nanosleep
-Date: Wed, 19 Sep 2018 21:50:23 +0100
-Message-ID: <20180919205037.9574-7-dima@arista.com>
+Subject: [RFC 08/20] x86/vdso: Restrict splitting vvar vma
+Date: Wed, 19 Sep 2018 21:50:25 +0100
+Message-ID: <20180919205037.9574-9-dima@arista.com>
 References: <20180919205037.9574-1-dima@arista.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180919205037.9574-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+As offsets differ between time namespaces, we will need to flush vvar
+mapping for timens page during setns(), unshare(), clone(NEW_TIME).
+Forcing userspace to mremap() either all vvar or nothing and the same
+for munmap() will simplify searching for timens page to flush.
 
-Wire up clock_nanosleep to timens offsets.
-
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/hrtimer.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ arch/x86/entry/vdso/vma.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index e1a549c9e399..4fe80c1325b2 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -51,6 +51,7 @@
- #include <linux/timer.h>
- #include <linux/freezer.h>
- #include <linux/compat.h>
-+#include <linux/time_namespace.h>
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 5b8b556dbb12..8cc0395687b0 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -84,6 +84,18 @@ static int vdso_mremap(const struct vm_special_mapping *sm,
+ 	return 0;
+ }
  
- #include <linux/uaccess.h>
- 
-@@ -1730,9 +1731,16 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
- {
- 	struct restart_block *restart;
- 	struct hrtimer_sleeper t;
-+	struct timespec64 tp;
- 	int ret = 0;
- 	u64 slack;
- 
-+	if (!(mode & HRTIMER_MODE_REL)) {
-+		tp = *rqtp;
-+		rqtp = &tp;
-+		timens_clock_to_host(clockid, &tp);
-+	}
++static int vvar_mremap(const struct vm_special_mapping *sm,
++		struct vm_area_struct *new_vma)
++{
++	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
++	const struct vdso_image *image = current->mm->context.vdso_image;
 +
- 	slack = current->timer_slack_ns;
- 	if (dl_task(current) || rt_task(current))
- 		slack = 0;
++	if (new_size != -image->sym_vvar_start)
++		return -EINVAL;
++
++	return 0;
++}
++
+ static int vvar_fault(const struct vm_special_mapping *sm,
+ 		      struct vm_area_struct *vma, struct vm_fault *vmf)
+ {
+@@ -142,6 +154,7 @@ static const struct vm_special_mapping vdso_mapping = {
+ static const struct vm_special_mapping vvar_mapping = {
+ 	.name = "[vvar]",
+ 	.fault = vvar_fault,
++	.mremap = vvar_mremap,
+ };
+ 
+ /*
 -- 
 2.13.6
