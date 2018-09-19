@@ -1,336 +1,369 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH man-pages] Add rseq manpage
-Date: Wed, 19 Sep 2018 10:40:28 -0400
-Message-ID: <20180919144028.10863-1-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH] glibc: Perform rseq(2) registration at nptl init and thread creation
+Date: Wed, 19 Sep 2018 10:44:38 -0400
+Message-ID: <20180919144438.1066-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
+To: Carlos O'Donell <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, libc-alpha@sourceware.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Here is a rough prototype registering rseq(2) TLS for each thread
+(including main), and unregistering for each thread (excluding
+main). "rseq" stands for Restartable Sequences.
+
+Things to consider:
+
+- Move __rseq_refcount to an extra field at the end of __rseq_abi to
+  eliminate one symbol. This would require to wrap struct rseq into
+  e.g. struct rseq_lib or such, e.g.:
+
+struct rseq_lib {
+  struct rseq kabi;
+  int refcount;
+};
+
+All libraries/programs which try to register rseq (glibc, early-adopter
+applications, early-adopter libraries) should use the rseq refcount.
+It becomes part of the ABI within a user-space process, but it's not
+part of the ABI shared with the kernel per se.
+
+- Restructure how this code is organized so glibc keeps building on
+  non-Linux targets.
+
+- We do not need an atomic increment/decrement for the refcount per
+  se. Just being atomic with respect to the current thread (and nested
+  signals) would be enough. What is the proper API to use there ?
+  Should we expose struct rseq_lib in a public glibc header ? Should
+  we create a rseq(3) man page ?
+
+- Revisit use of "weak" symbol for __rseq_abi in glibc. Perhaps we
+  want a non-weak symbol there ? (and let all other early user
+  libraries use weak)
+
+- Should we pull linux/rseq.h from the Linux kernel into the glibc
+  tree or keep a dependency on installed kernel headers ?
+
+- I plan to host a librseq library containing mostly helper headers
+  that vastly simplify using rseq. It will contain a librseq.so
+  which provides an API to explicitly register rseq to the
+  kernel (for early adopters). The refcounting mechanism in the TLS
+  would be used to ensure combining librseq.so and libc.so.6 with rseq
+  support works fine.
+
+- How early do we want to register rseq and how late do we want to
+  unregister it ? It's important to consider if we expect rseq to
+  be used by the memory allocator and within destructor callbacks.
+
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul Turner <pjt@google.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
 CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
 CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
 CC: linux-api@vger.kernel.org
 ---
- man2/rseq.2 | 291 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 291 insertions(+)
- create mode 100644 man2/rseq.2
+ nptl/Versions                  |   1 +
+ nptl/nptl-init.c               |   3 +
+ nptl/pthreadP.h                |  45 ++++++++++
+ nptl/pthread_create.c          |  15 ++++
+ sysdeps/unix/sysv/linux/rseq.h | 147 +++++++++++++++++++++++++++++++++
+ 5 files changed, 211 insertions(+)
+ create mode 100644 sysdeps/unix/sysv/linux/rseq.h
 
-diff --git a/man2/rseq.2 b/man2/rseq.2
+diff --git a/nptl/Versions b/nptl/Versions
+index e7f691da7a..7316c2815d 100644
+--- a/nptl/Versions
++++ b/nptl/Versions
+@@ -275,6 +275,7 @@ libpthread {
+     mtx_init; mtx_lock; mtx_timedlock; mtx_trylock; mtx_unlock; mtx_destroy;
+     call_once; cnd_broadcast; cnd_destroy; cnd_init; cnd_signal;
+     cnd_timedwait; cnd_wait; tss_create; tss_delete; tss_get; tss_set;
++    __rseq_abi; __rseq_refcount;
+   }
+ 
+   GLIBC_PRIVATE {
+diff --git a/nptl/nptl-init.c b/nptl/nptl-init.c
+index 907411d5bc..0c056c3fce 100644
+--- a/nptl/nptl-init.c
++++ b/nptl/nptl-init.c
+@@ -431,6 +431,9 @@ __pthread_initialize_minimal_internal (void)
+ 
+   /* Determine whether the machine is SMP or not.  */
+   __is_smp = is_smp_system ();
++
++    /* Register rseq ABI to the kernel. */
++  (void) rseq_register_current_thread();
+ }
+ strong_alias (__pthread_initialize_minimal_internal,
+ 	      __pthread_initialize_minimal)
+diff --git a/nptl/pthreadP.h b/nptl/pthreadP.h
+index 13bdb11133..94f54c630e 100644
+--- a/nptl/pthreadP.h
++++ b/nptl/pthreadP.h
+@@ -33,6 +33,8 @@
+ #include <kernel-features.h>
+ #include <errno.h>
+ #include <internal-signals.h>
++//TODO: fix sysdeps include to make it portable to non-Linux systems.
++#include <sysdeps/unix/sysv/linux/rseq.h>
+ 
+ 
+ /* Atomic operations on TLS memory.  */
+@@ -660,4 +662,47 @@ check_stacksize_attr (size_t st)
+ 		  "offset of " #member " field of " #type " != "	\
+ 		  ASSERT_PTHREAD_STRING (offset))
+ 
++//TODO: we may want to move the rseq code to a linux sysdeps file.
++#define RSEQ_SIG 0x53053053
++
++extern __thread volatile struct rseq __rseq_abi;
++extern __thread volatile int __rseq_refcount;
++
++static inline int
++rseq_register_current_thread (void)
++{
++  int rc, ret = 0;
++  INTERNAL_SYSCALL_DECL (err);
++
++  if (atomic_increment_val(&__rseq_refcount) - 1)
++    goto end;
++  rc = INTERNAL_SYSCALL_CALL(rseq, err, &__rseq_abi, sizeof(struct rseq),
++                             0, RSEQ_SIG);
++  if (!rc)
++    goto end;
++  if (INTERNAL_SYSCALL_ERRNO(rc, err) != EBUSY)
++    __rseq_abi.cpu_id = -2;
++  ret = -1;
++  atomic_decrement(&__rseq_refcount);
++end:
++  return ret;
++}
++
++static inline int
++rseq_unregister_current_thread (void)
++{
++  int rc, ret = 0;
++  INTERNAL_SYSCALL_DECL (err);
++
++  if (atomic_decrement_val(&__rseq_refcount))
++    goto end;
++  rc = INTERNAL_SYSCALL_CALL(rseq, err, &__rseq_abi, sizeof(struct rseq),
++                             RSEQ_FLAG_UNREGISTER, RSEQ_SIG);
++  if (!rc)
++    goto end;
++  ret = -1;
++end:
++  return ret;
++}
++
+ #endif	/* pthreadP.h */
+diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
+index fe75d04113..20ee197d94 100644
+--- a/nptl/pthread_create.c
++++ b/nptl/pthread_create.c
+@@ -52,6 +52,13 @@ static struct pthread *__nptl_last_event __attribute_used__;
+ /* Number of threads running.  */
+ unsigned int __nptl_nthreads = 1;
+ 
++__attribute__((weak, tls_model("initial-exec"))) __thread
++volatile struct rseq __rseq_abi = {
++	.cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
++};
++
++__attribute__((weak, tls_model("initial-exec"))) __thread
++volatile int __rseq_refcount;
+ 
+ /* Code to allocate and deallocate a stack.  */
+ #include "allocatestack.c"
+@@ -378,6 +385,7 @@ __free_tcb (struct pthread *pd)
+ START_THREAD_DEFN
+ {
+   struct pthread *pd = START_THREAD_SELF;
++  bool has_rseq = false;
+ 
+ #if HP_TIMING_AVAIL
+   /* Remember the time when the thread was started.  */
+@@ -445,6 +453,9 @@ START_THREAD_DEFN
+   unwind_buf.priv.data.prev = NULL;
+   unwind_buf.priv.data.cleanup = NULL;
+ 
++  /* Register rseq TLS to the kernel. */
++  has_rseq = !rseq_register_current_thread();
++
+   if (__glibc_likely (! not_first_call))
+     {
+       /* Store the new cleanup handler info.  */
+@@ -487,6 +498,10 @@ START_THREAD_DEFN
+       THREAD_SETMEM (pd, result, ret);
+     }
+ 
++  /* Unregister rseq TLS from kernel. */
++  if (has_rseq && rseq_unregister_current_thread())
++    abort();
++
+   /* Call destructors for the thread_local TLS variables.  */
+ #ifndef SHARED
+   if (&__call_tls_dtors != NULL)
+diff --git a/sysdeps/unix/sysv/linux/rseq.h b/sysdeps/unix/sysv/linux/rseq.h
 new file mode 100644
-index 000000000..a381963ba
+index 0000000000..9a402fdb60
 --- /dev/null
-+++ b/man2/rseq.2
-@@ -0,0 +1,291 @@
-+.\" Copyright 2015-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-+.\"
-+.\" %%%LICENSE_START(VERBATIM)
-+.\" Permission is granted to make and distribute verbatim copies of this
-+.\" manual provided the copyright notice and this permission notice are
-+.\" preserved on all copies.
-+.\"
-+.\" Permission is granted to copy and distribute modified versions of this
-+.\" manual under the conditions for verbatim copying, provided that the
-+.\" entire resulting derived work is distributed under the terms of a
-+.\" permission notice identical to this one.
-+.\"
-+.\" Since the Linux kernel and libraries are constantly changing, this
-+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-+.\" responsibility for errors or omissions, or for damages resulting from
-+.\" the use of the information contained herein.  The author(s) may not
-+.\" have taken the same level of care in the production of this manual,
-+.\" which is licensed free of charge, as they might when working
-+.\" professionally.
-+.\"
-+.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and authors of this work.
-+.\" %%%LICENSE_END
-+.\"
-+.TH RSEQ 2 2018-09-19 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+rseq \- Restartable sequences and cpu number cache
-+.SH SYNOPSIS
-+.nf
-+.B #include <linux/rseq.h>
-+.sp
-+.BI "int rseq(struct rseq * " rseq ", uint32_t " rseq_len ", int " flags ", uint32_t " sig ");
-+.sp
-+.SH DESCRIPTION
-+The
-+.BR rseq ()
-+ABI accelerates user-space operations on per-cpu data by defining a
-+shared data structure ABI between each user-space thread and the kernel.
++++ b/sysdeps/unix/sysv/linux/rseq.h
+@@ -0,0 +1,147 @@
++/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
++#ifndef _UAPI_LINUX_RSEQ_H
++#define _UAPI_LINUX_RSEQ_H
 +
-+It allows user-space to perform update operations on per-cpu data
-+without requiring heavy-weight atomic operations.
++/*
++ * linux/rseq.h
++ *
++ * Restartable sequences system call API
++ *
++ * Copyright (c) 2015-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++ */
 +
-+The term CPU used in this documentation refers to a hardware execution
-+context.
++#include <linux/types.h>
++#include <asm/byteorder.h>
 +
-+Restartable sequences are atomic with respect to preemption (making it
-+atomic with respect to other threads running on the same CPU), as well
-+as signal delivery (user-space execution contexts nested over the same
-+thread). They either complete atomically with respect to preemption on
-+the current CPU and signal delivery, or they are aborted.
++enum rseq_cpu_id_state {
++	RSEQ_CPU_ID_UNINITIALIZED		= -1,
++	RSEQ_CPU_ID_REGISTRATION_FAILED		= -2,
++};
 +
-+It is suited for update operations on per-cpu data.
++enum rseq_flags {
++	RSEQ_FLAG_UNREGISTER = (1 << 0),
++};
 +
-+It can be used on data structures shared between threads within a
-+process, and on data structures shared between threads across different
-+processes.
++enum rseq_cs_flags_bit {
++	RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT_BIT	= 0,
++	RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL_BIT	= 1,
++	RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE_BIT	= 2,
++};
 +
-+.PP
-+Some examples of operations that can be accelerated or improved
-+by this ABI:
-+.IP \[bu] 2
-+Memory allocator per-cpu free-lists,
-+.IP \[bu] 2
-+Querying the current CPU number,
-+.IP \[bu] 2
-+Incrementing per-CPU counters,
-+.IP \[bu] 2
-+Modifying data protected by per-CPU spinlocks,
-+.IP \[bu] 2
-+Inserting/removing elements in per-CPU linked-lists,
-+.IP \[bu] 2
-+Writing/reading per-CPU ring buffers content.
-+.IP \[bu] 2
-+Accurately reading performance monitoring unit counters
-+with respect to thread migration.
++enum rseq_cs_flags {
++	RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT	=
++		(1U << RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT_BIT),
++	RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL	=
++		(1U << RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL_BIT),
++	RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE	=
++		(1U << RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE_BIT),
++};
 +
-+.PP
-+Restartable sequences must not perform system calls. Doing so may result
-+in termination of the process by a segmentation fault.
++/*
++ * struct rseq_cs is aligned on 4 * 8 bytes to ensure it is always
++ * contained within a single cache-line. It is usually declared as
++ * link-time constant data.
++ */
++struct rseq_cs {
++	/* Version of this structure. */
++	__u32 version;
++	/* enum rseq_cs_flags */
++	__u32 flags;
++	__u64 start_ip;
++	/* Offset from start_ip. */
++	__u64 post_commit_offset;
++	__u64 abort_ip;
++} __attribute__((aligned(4 * sizeof(__u64))));
 +
-+.PP
-+The
-+.I rseq
-+argument is a pointer to the thread-local rseq structure to be shared
-+between kernel and user-space.
++/*
++ * struct rseq is aligned on 4 * 8 bytes to ensure it is always
++ * contained within a single cache-line.
++ *
++ * A single struct rseq per thread is allowed.
++ */
++struct rseq {
++	/*
++	 * Restartable sequences cpu_id_start field. Updated by the
++	 * kernel. Read by user-space with single-copy atomicity
++	 * semantics. This field should only be read by the thread which
++	 * registered this data structure. Aligned on 32-bit. Always
++	 * contains a value in the range of possible CPUs, although the
++	 * value may not be the actual current CPU (e.g. if rseq is not
++	 * initialized). This CPU number value should always be compared
++	 * against the value of the cpu_id field before performing a rseq
++	 * commit or returning a value read from a data structure indexed
++	 * using the cpu_id_start value.
++	 */
++	__u32 cpu_id_start;
++	/*
++	 * Restartable sequences cpu_id field. Updated by the kernel.
++	 * Read by user-space with single-copy atomicity semantics. This
++	 * field should only be read by the thread which registered this
++	 * data structure. Aligned on 32-bit. Values
++	 * RSEQ_CPU_ID_UNINITIALIZED and RSEQ_CPU_ID_REGISTRATION_FAILED
++	 * have a special semantic: the former means "rseq uninitialized",
++	 * and latter means "rseq initialization failed". This value is
++	 * meant to be read within rseq critical sections and compared
++	 * with the cpu_id_start value previously read, before performing
++	 * the commit instruction, or read and compared with the
++	 * cpu_id_start value before returning a value loaded from a data
++	 * structure indexed using the cpu_id_start value.
++	 */
++	__u32 cpu_id;
++	/*
++	 * Restartable sequences rseq_cs field.
++	 *
++	 * Contains NULL when no critical section is active for the current
++	 * thread, or holds a pointer to the currently active struct rseq_cs.
++	 *
++	 * Updated by user-space, which sets the address of the currently
++	 * active rseq_cs at the beginning of assembly instruction sequence
++	 * block, and set to NULL by the kernel when it restarts an assembly
++	 * instruction sequence block, as well as when the kernel detects that
++	 * it is preempting or delivering a signal outside of the range
++	 * targeted by the rseq_cs. Also needs to be set to NULL by user-space
++	 * before reclaiming memory that contains the targeted struct rseq_cs.
++	 *
++	 * Read and set by the kernel. Set by user-space with single-copy
++	 * atomicity semantics. This field should only be updated by the
++	 * thread which registered this data structure. Aligned on 64-bit.
++	 */
++	union {
++		__u64 ptr64;
++#ifdef __LP64__
++		__u64 ptr;
++#else
++		struct {
++#if (defined(__BYTE_ORDER) && (__BYTE_ORDER == __BIG_ENDIAN)) || defined(__BIG_ENDIAN)
++			__u32 padding;		/* Initialized to zero. */
++			__u32 ptr32;
++#else /* LITTLE */
++			__u32 ptr32;
++			__u32 padding;		/* Initialized to zero. */
++#endif /* ENDIAN */
++		} ptr;
++#endif
++	} rseq_cs;
 +
-+.PP
-+The layout of
-+.B struct rseq
-+is as follows:
-+.TP
-+.B Structure alignment
-+This structure is aligned on 32-byte boundary.
-+.TP
-+.B Structure size
-+This structure is extensible. Its size is passed as parameter to the
-+rseq system call.
-+.TP
-+.B Fields
++	/*
++	 * Restartable sequences flags field.
++	 *
++	 * This field should only be updated by the thread which
++	 * registered this data structure. Read by the kernel.
++	 * Mainly used for single-stepping through rseq critical sections
++	 * with debuggers.
++	 *
++	 * - RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
++	 *     Inhibit instruction sequence block restart on preemption
++	 *     for this thread.
++	 * - RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
++	 *     Inhibit instruction sequence block restart on signal
++	 *     delivery for this thread.
++	 * - RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
++	 *     Inhibit instruction sequence block restart on migration for
++	 *     this thread.
++	 */
++	__u32 flags;
++} __attribute__((aligned(4 * sizeof(__u64))));
 +
-+.TP
-+.in +4n
-+.I cpu_id_start
-+Optimistic cache of the CPU number on which the current thread is
-+running. Its value is guaranteed to always be a possible CPU number,
-+even when rseq is not initialized. The value it contains should always
-+be confirmed by reading the cpu_id field.
-+
-+This field is an optimistic cache in the sense that it is always
-+guaranteed to hold a valid CPU number in the range [ 0 ..
-+nr_possible_cpus - 1 ]. It can therefore be loaded by user-space and
-+used as an offset in per-cpu data structures without having to
-+check whether its value is within the valid bounds compared to the
-+number of possible CPUs in the system.
-+
-+For user-space applications executed on a kernel without rseq support,
-+the cpu_id_start field stays initialized at 0, which is indeed a valid
-+CPU number. It is therefore valid to use it as an offset in per-cpu data
-+structures, and only validate whether it's actually the current CPU
-+number by comparing it with the cpu_id field within the rseq critical
-+section. If the kernel does not provide rseq support, that cpu_id field
-+stays initialized at -1, so the comparison always fails, as intended.
-+
-+It is then up to user-space to use a fall-back mechanism, considering
-+that rseq is not available.
-+
-+.in
-+.TP
-+.in +4n
-+.I cpu_id
-+Cache of the CPU number on which the current thread is running.
-+-1 if uninitialized.
-+.in
-+.TP
-+.in +4n
-+.I rseq_cs
-+The rseq_cs field is a pointer to a struct rseq_cs. Is is NULL when no
-+rseq assembly block critical section is active for the current thread.
-+Setting it to point to a critical section descriptor (struct rseq_cs)
-+marks the beginning of the critical section.
-+.in
-+.TP
-+.in +4n
-+.I flags
-+Flags indicating the restart behavior for the current thread. This is
-+mainly used for debugging purposes. Can be either:
-+.IP \[bu]
-+RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
-+.IP \[bu]
-+RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
-+.IP \[bu]
-+RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
-+.in
-+
-+.PP
-+The layout of
-+.B struct rseq_cs
-+version 0 is as follows:
-+.TP
-+.B Structure alignment
-+This structure is aligned on 32-byte boundary.
-+.TP
-+.B Structure size
-+This structure has a fixed size of 32 bytes.
-+.TP
-+.B Fields
-+
-+.TP
-+.in +4n
-+.I version
-+Version of this structure.
-+.in
-+.TP
-+.in +4n
-+.I flags
-+Flags indicating the restart behavior of this structure. Can be
-+a combination of:
-+.IP \[bu]
-+RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
-+.IP \[bu]
-+RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
-+.IP \[bu]
-+RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
-+.TP
-+.in +4n
-+.I start_ip
-+Instruction pointer address of the first instruction of the sequence of
-+consecutive assembly instructions.
-+.in
-+.TP
-+.in +4n
-+.I post_commit_offset
-+Offset (from start_ip address) of the address after the last instruction
-+of the sequence of consecutive assembly instructions.
-+.in
-+.TP
-+.in +4n
-+.I abort_ip
-+Instruction pointer address where to move the execution flow in case of
-+abort of the sequence of consecutive assembly instructions.
-+.in
-+
-+.PP
-+The
-+.I rseq_len
-+argument is the size of the
-+.I struct rseq
-+to register.
-+
-+.PP
-+The
-+.I flags
-+argument is 0 for registration, and
-+.IR RSEQ_FLAG_UNREGISTER
-+for unregistration.
-+
-+.PP
-+The
-+.I sig
-+argument is the 32-bit signature to be expected before the abort
-+handler code.
-+
-+.PP
-+A single library per process should keep the rseq structure in a
-+thread-local storage variable.
-+The
-+.I cpu_id
-+field should be initialized to -1, and the
-+.I cpu_id_start
-+field should be initialized to a possible CPU value (typically 0).
-+
-+.PP
-+Each thread is responsible for registering and unregistering its rseq
-+structure. No more than one rseq structure address can be registered
-+per thread at a given time.
-+
-+.PP
-+In a typical usage scenario, the thread registering the rseq
-+structure will be performing loads and stores from/to that structure. It
-+is however also allowed to read that structure from other threads.
-+The rseq field updates performed by the kernel provide relaxed atomicity
-+semantics, which guarantee that other threads performing relaxed atomic
-+reads of the cpu number cache will always observe a consistent value.
-+
-+.SH RETURN VALUE
-+A return value of 0 indicates success. On error, \-1 is returned, and
-+.I errno
-+is set appropriately.
-+
-+.SH ERRORS
-+.TP
-+.B EINVAL
-+Either
-+.I flags
-+contains an invalid value, or
-+.I rseq
-+contains an address which is not appropriately aligned, or
-+.I rseq_len
-+contains a size that does not match the size received on registration.
-+.TP
-+.B ENOSYS
-+The
-+.BR rseq ()
-+system call is not implemented by this kernel.
-+.TP
-+.B EFAULT
-+.I rseq
-+is an invalid address.
-+.TP
-+.B EBUSY
-+Restartable sequence is already registered for this thread.
-+.TP
-+.B EPERM
-+The
-+.I sig
-+argument on unregistration does not match the signature received
-+on registration.
-+
-+.SH VERSIONS
-+The
-+.BR rseq ()
-+system call was added in Linux 4.18.
-+
-+.SH CONFORMING TO
-+.BR rseq ()
-+is Linux-specific.
-+
-+.in
-+.SH SEE ALSO
-+.BR sched_getcpu (3) ,
-+.BR membarrier (2)
++#endif /* _UAPI_LINUX_RSEQ_H */
 -- 
-2.11.0
+2.17.1
