@@ -1,77 +1,336 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via
- USER_NOTIF
-Date: Wed, 19 Sep 2018 08:38:42 -0600
-Message-ID: <20180919143842.GN4672@cisco>
-References: <20180906152859.7810-1-tycho@tycho.ws>
- <20180906152859.7810-5-tycho@tycho.ws>
- <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
- <20180919095536.GM4672@cisco>
- <C1406292-7496-459F-A76A-20C9EFBB12D6@amacapital.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH man-pages] Add rseq manpage
+Date: Wed, 19 Sep 2018 10:40:28 -0400
+Message-ID: <20180919144028.10863-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <C1406292-7496-459F-A76A-20C9EFBB12D6@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 19, 2018 at 07:19:56AM -0700, Andy Lutomirski wrote:
-> 
-> 
-> > On Sep 19, 2018, at 2:55 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> > 
-> >> On Wed, Sep 12, 2018 at 04:52:38PM -0700, Andy Lutomirski wrote:
-> >>> On Thu, Sep 6, 2018 at 8:28 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> >>> The idea here is that the userspace handler should be able to pass an fd
-> >>> back to the trapped task, for example so it can be returned from socket().
-> >>> 
-> >>> I've proposed one API here, but I'm open to other options. In particular,
-> >>> this only lets you return an fd from a syscall, which may not be enough in
-> >>> all cases. For example, if an fd is written to an output parameter instead
-> >>> of returned, the current API can't handle this. Another case is that
-> >>> netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If netlink
-> >>> ever decides to install an fd and output it, we wouldn't be able to handle
-> >>> this either.
-> >> 
-> >> An alternative could be to have an API (an ioctl on the listener,
-> >> perhaps) that just copies an fd into the tracee.  There would be the
-> >> obvious set of options: do we replace an existing fd or allocate a new
-> >> one, and is it CLOEXEC.  Then the tracer could add an fd and then
-> >> return it just like it's a regular number.
-> >> 
-> >> I feel like this would be more flexible and conceptually simpler, but
-> >> maybe a little slower for the common cases.  What do you think?
-> > 
-> > I'm just implementing this now, and there's one question: when do we
-> > actually do the fd install? Should we do it when the user calls
-> > SECCOMP_NOTIF_PUT_FD, or when the actual response is sent? It feels
-> > like we should do it when the response is sent, instead of doing it
-> > right when SECCOMP_NOTIF_PUT_FD is called, since if there's a
-> > subsequent signal and the tracer decides to discard the response,
-> > we'll have to implement some delete mechanism to delete the fd, but it
-> > would have already been visible to the process, etc. So I'll go
-> > forward with this unless there are strong objections, but I thought
-> > I'd point it out just to avoid another round trip.
-> > 
-> > 
-> 
-> Can you do that non-racily?  That is, you need to commit to an fd *number* right away, but what if another thread uses the number before you actually install the fd?
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
+---
+ man2/rseq.2 | 291 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 291 insertions(+)
+ create mode 100644 man2/rseq.2
 
-I was thinking we could just do an __alloc_fd() and then do the
-fd_install() when the response is sent or clean up the case that the
-listener or task dies. I haven't actually tried to run the code yet,
-so it's possible the locking won't work :)
-
-> Do we really allow non-“kill” signals to interrupt the whole process?  It might be the case that we don’t really need to clean up from signals if there’s a guarantee that the thread dies.
-
-Yes, we do, because of this: https://lkml.org/lkml/2018/3/15/1122
-
-I could change that to just be a killable wait, though; I don't have
-strong opinions about it and several people have commented that the
-code is kind of weird.
-
-Tycho
+diff --git a/man2/rseq.2 b/man2/rseq.2
+new file mode 100644
+index 000000000..a381963ba
+--- /dev/null
++++ b/man2/rseq.2
+@@ -0,0 +1,291 @@
++.\" Copyright 2015-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++.\"
++.\" %%%LICENSE_START(VERBATIM)
++.\" Permission is granted to make and distribute verbatim copies of this
++.\" manual provided the copyright notice and this permission notice are
++.\" preserved on all copies.
++.\"
++.\" Permission is granted to copy and distribute modified versions of this
++.\" manual under the conditions for verbatim copying, provided that the
++.\" entire resulting derived work is distributed under the terms of a
++.\" permission notice identical to this one.
++.\"
++.\" Since the Linux kernel and libraries are constantly changing, this
++.\" manual page may be incorrect or out-of-date.  The author(s) assume no
++.\" responsibility for errors or omissions, or for damages resulting from
++.\" the use of the information contained herein.  The author(s) may not
++.\" have taken the same level of care in the production of this manual,
++.\" which is licensed free of charge, as they might when working
++.\" professionally.
++.\"
++.\" Formatted or processed versions of this manual, if unaccompanied by
++.\" the source, must acknowledge the copyright and authors of this work.
++.\" %%%LICENSE_END
++.\"
++.TH RSEQ 2 2018-09-19 "Linux" "Linux Programmer's Manual"
++.SH NAME
++rseq \- Restartable sequences and cpu number cache
++.SH SYNOPSIS
++.nf
++.B #include <linux/rseq.h>
++.sp
++.BI "int rseq(struct rseq * " rseq ", uint32_t " rseq_len ", int " flags ", uint32_t " sig ");
++.sp
++.SH DESCRIPTION
++The
++.BR rseq ()
++ABI accelerates user-space operations on per-cpu data by defining a
++shared data structure ABI between each user-space thread and the kernel.
++
++It allows user-space to perform update operations on per-cpu data
++without requiring heavy-weight atomic operations.
++
++The term CPU used in this documentation refers to a hardware execution
++context.
++
++Restartable sequences are atomic with respect to preemption (making it
++atomic with respect to other threads running on the same CPU), as well
++as signal delivery (user-space execution contexts nested over the same
++thread). They either complete atomically with respect to preemption on
++the current CPU and signal delivery, or they are aborted.
++
++It is suited for update operations on per-cpu data.
++
++It can be used on data structures shared between threads within a
++process, and on data structures shared between threads across different
++processes.
++
++.PP
++Some examples of operations that can be accelerated or improved
++by this ABI:
++.IP \[bu] 2
++Memory allocator per-cpu free-lists,
++.IP \[bu] 2
++Querying the current CPU number,
++.IP \[bu] 2
++Incrementing per-CPU counters,
++.IP \[bu] 2
++Modifying data protected by per-CPU spinlocks,
++.IP \[bu] 2
++Inserting/removing elements in per-CPU linked-lists,
++.IP \[bu] 2
++Writing/reading per-CPU ring buffers content.
++.IP \[bu] 2
++Accurately reading performance monitoring unit counters
++with respect to thread migration.
++
++.PP
++Restartable sequences must not perform system calls. Doing so may result
++in termination of the process by a segmentation fault.
++
++.PP
++The
++.I rseq
++argument is a pointer to the thread-local rseq structure to be shared
++between kernel and user-space.
++
++.PP
++The layout of
++.B struct rseq
++is as follows:
++.TP
++.B Structure alignment
++This structure is aligned on 32-byte boundary.
++.TP
++.B Structure size
++This structure is extensible. Its size is passed as parameter to the
++rseq system call.
++.TP
++.B Fields
++
++.TP
++.in +4n
++.I cpu_id_start
++Optimistic cache of the CPU number on which the current thread is
++running. Its value is guaranteed to always be a possible CPU number,
++even when rseq is not initialized. The value it contains should always
++be confirmed by reading the cpu_id field.
++
++This field is an optimistic cache in the sense that it is always
++guaranteed to hold a valid CPU number in the range [ 0 ..
++nr_possible_cpus - 1 ]. It can therefore be loaded by user-space and
++used as an offset in per-cpu data structures without having to
++check whether its value is within the valid bounds compared to the
++number of possible CPUs in the system.
++
++For user-space applications executed on a kernel without rseq support,
++the cpu_id_start field stays initialized at 0, which is indeed a valid
++CPU number. It is therefore valid to use it as an offset in per-cpu data
++structures, and only validate whether it's actually the current CPU
++number by comparing it with the cpu_id field within the rseq critical
++section. If the kernel does not provide rseq support, that cpu_id field
++stays initialized at -1, so the comparison always fails, as intended.
++
++It is then up to user-space to use a fall-back mechanism, considering
++that rseq is not available.
++
++.in
++.TP
++.in +4n
++.I cpu_id
++Cache of the CPU number on which the current thread is running.
++-1 if uninitialized.
++.in
++.TP
++.in +4n
++.I rseq_cs
++The rseq_cs field is a pointer to a struct rseq_cs. Is is NULL when no
++rseq assembly block critical section is active for the current thread.
++Setting it to point to a critical section descriptor (struct rseq_cs)
++marks the beginning of the critical section.
++.in
++.TP
++.in +4n
++.I flags
++Flags indicating the restart behavior for the current thread. This is
++mainly used for debugging purposes. Can be either:
++.IP \[bu]
++RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
++.IP \[bu]
++RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
++.IP \[bu]
++RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
++.in
++
++.PP
++The layout of
++.B struct rseq_cs
++version 0 is as follows:
++.TP
++.B Structure alignment
++This structure is aligned on 32-byte boundary.
++.TP
++.B Structure size
++This structure has a fixed size of 32 bytes.
++.TP
++.B Fields
++
++.TP
++.in +4n
++.I version
++Version of this structure.
++.in
++.TP
++.in +4n
++.I flags
++Flags indicating the restart behavior of this structure. Can be
++a combination of:
++.IP \[bu]
++RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
++.IP \[bu]
++RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
++.IP \[bu]
++RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
++.TP
++.in +4n
++.I start_ip
++Instruction pointer address of the first instruction of the sequence of
++consecutive assembly instructions.
++.in
++.TP
++.in +4n
++.I post_commit_offset
++Offset (from start_ip address) of the address after the last instruction
++of the sequence of consecutive assembly instructions.
++.in
++.TP
++.in +4n
++.I abort_ip
++Instruction pointer address where to move the execution flow in case of
++abort of the sequence of consecutive assembly instructions.
++.in
++
++.PP
++The
++.I rseq_len
++argument is the size of the
++.I struct rseq
++to register.
++
++.PP
++The
++.I flags
++argument is 0 for registration, and
++.IR RSEQ_FLAG_UNREGISTER
++for unregistration.
++
++.PP
++The
++.I sig
++argument is the 32-bit signature to be expected before the abort
++handler code.
++
++.PP
++A single library per process should keep the rseq structure in a
++thread-local storage variable.
++The
++.I cpu_id
++field should be initialized to -1, and the
++.I cpu_id_start
++field should be initialized to a possible CPU value (typically 0).
++
++.PP
++Each thread is responsible for registering and unregistering its rseq
++structure. No more than one rseq structure address can be registered
++per thread at a given time.
++
++.PP
++In a typical usage scenario, the thread registering the rseq
++structure will be performing loads and stores from/to that structure. It
++is however also allowed to read that structure from other threads.
++The rseq field updates performed by the kernel provide relaxed atomicity
++semantics, which guarantee that other threads performing relaxed atomic
++reads of the cpu number cache will always observe a consistent value.
++
++.SH RETURN VALUE
++A return value of 0 indicates success. On error, \-1 is returned, and
++.I errno
++is set appropriately.
++
++.SH ERRORS
++.TP
++.B EINVAL
++Either
++.I flags
++contains an invalid value, or
++.I rseq
++contains an address which is not appropriately aligned, or
++.I rseq_len
++contains a size that does not match the size received on registration.
++.TP
++.B ENOSYS
++The
++.BR rseq ()
++system call is not implemented by this kernel.
++.TP
++.B EFAULT
++.I rseq
++is an invalid address.
++.TP
++.B EBUSY
++Restartable sequence is already registered for this thread.
++.TP
++.B EPERM
++The
++.I sig
++argument on unregistration does not match the signature received
++on registration.
++
++.SH VERSIONS
++The
++.BR rseq ()
++system call was added in Linux 4.18.
++
++.SH CONFORMING TO
++.BR rseq ()
++is Linux-specific.
++
++.in
++.SH SEE ALSO
++.BR sched_getcpu (3) ,
++.BR membarrier (2)
+-- 
+2.11.0
