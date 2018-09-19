@@ -1,118 +1,109 @@
-From: Dmitry Safonov <dima@arista.com>
-Subject: [RFC 02/20] timens: Add timens_offsets
-Date: Wed, 19 Sep 2018 21:50:19 +0100
-Message-ID: <20180919205037.9574-3-dima@arista.com>
-References: <20180919205037.9574-1-dima@arista.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180919205037.9574-1-dima@arista.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH] glibc: Perform rseq(2) registration at nptl init
+ and thread creation
+Date: Wed, 19 Sep 2018 17:01:26 -0400 (EDT)
+Message-ID: <2052751374.8654.1537390886450.JavaMail.zimbra@efficios.com>
+References: <20180919144438.1066-1-mathieu.desnoyers@efficios.com> <c58d4d6e-f22a-f5d9-e23a-5bd72cec1a86@arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <libc-alpha-return-95968-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <c58d4d6e-f22a-f5d9-e23a-5bd72cec1a86@arm.com>
+To: Szabolcs Nagy <szabolcs.nagy@arm.com>
+Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, nd <nd@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, libc-alpha <libc-alpha@sourceware.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@openvz.org>
+----- On Sep 19, 2018, at 1:38 PM, Szabolcs Nagy szabolcs.nagy@arm.com wrote:
 
-Introduce offsets for time namespace. They will contain adjustment
-needed to convert clocks to/from host's.
+> On 19/09/18 15:44, Mathieu Desnoyers wrote:
+>> Things to consider:
+>> 
+>> - Move __rseq_refcount to an extra field at the end of __rseq_abi to
+>>    eliminate one symbol. This would require to wrap struct rseq into
+>>    e.g. struct rseq_lib or such, e.g.:
+>> 
+>> struct rseq_lib {
+>>    struct rseq kabi;
+>>    int refcount;
+>> };
+>> 
+>> All libraries/programs which try to register rseq (glibc, early-adopter
+>> applications, early-adopter libraries) should use the rseq refcount.
+>> It becomes part of the ABI within a user-space process, but it's not
+>> part of the ABI shared with the kernel per se.
+>> 
+>> - Restructure how this code is organized so glibc keeps building on
+>>    non-Linux targets.
+>> 
+>> - We do not need an atomic increment/decrement for the refcount per
+>>    se. Just being atomic with respect to the current thread (and nested
+>>    signals) would be enough. What is the proper API to use there ?
+>>    Should we expose struct rseq_lib in a public glibc header ? Should
+>>    we create a rseq(3) man page ?
+>> 
+>> - Revisit use of "weak" symbol for __rseq_abi in glibc. Perhaps we
+>>    want a non-weak symbol there ? (and let all other early user
+>>    libraries use weak)
+>> 
+> 
+> i don't think there is precedent for exposing tls symbol in glibc
+> (e.g. errno is exposed via __errno_location function) so there
+> might be issues with this (but i don't have immediate concerns).
+> 
+>> diff --git a/nptl/pthread_create.c b/nptl/pthread_create.c
+>> index fe75d04113..20ee197d94 100644
+>> --- a/nptl/pthread_create.c
+>> +++ b/nptl/pthread_create.c
+>> @@ -52,6 +52,13 @@ static struct pthread *__nptl_last_event __attribute_used__;
+>>   /* Number of threads running.  */
+>>   unsigned int __nptl_nthreads = 1;
+>>   
+>> +__attribute__((weak, tls_model("initial-exec"))) __thread
+>> +volatile struct rseq __rseq_abi = {
+>> +	.cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
+>> +};
+>> +
+>> +__attribute__((weak, tls_model("initial-exec"))) __thread
+>> +volatile int __rseq_refcount;
+>>  
+> 
+> note that libpthread.so is built with -ftls-model=initial-exec
 
-Allocate one page for each time namespace that will be premapped into
-userspace with vvar pages.
+Which would indeed make these annotations redundant. I'll remove
+them.
 
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
-Signed-off-by: Dmitry Safonov <dima@arista.com>
----
- include/linux/time_namespace.h |  2 ++
- include/linux/timens_offsets.h |  8 ++++++++
- kernel/time_namespace.c        | 14 ++++++++++++--
- 3 files changed, 22 insertions(+), 2 deletions(-)
- create mode 100644 include/linux/timens_offsets.h
+> (and if it wasn't then you'd want to put the attribute on the
+> declaration in the internal header file, not on the definition,
+> so the actual tls accesses generate the right code)
 
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index bf98f35efe07..4960c54f1b33 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -8,6 +8,7 @@
- #include <linux/nsproxy.h>
- #include <linux/ns_common.h>
- #include <linux/err.h>
-+#include <linux/timens_offsets.h>
- 
- struct user_namespace;
- extern struct user_namespace init_user_ns;
-@@ -17,6 +18,7 @@ struct time_namespace {
- 	struct user_namespace *user_ns;
- 	struct ucounts *ucounts;
- 	struct ns_common ns;
-+	struct timens_offsets *offsets;
- } __randomize_layout;
- extern struct time_namespace init_time_ns;
- 
-diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
-new file mode 100644
-index 000000000000..7d7cb68ea778
---- /dev/null
-+++ b/include/linux/timens_offsets.h
-@@ -0,0 +1,8 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_TIME_OFFSETS_H
-+#define _LINUX_TIME_OFFSETS_H
-+
-+struct timens_offsets {
-+};
-+
-+#endif
-diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index 902cd9c22159..a985529754b4 100644
---- a/kernel/time_namespace.c
-+++ b/kernel/time_namespace.c
-@@ -13,6 +13,7 @@
- #include <linux/user_namespace.h>
- #include <linux/proc_ns.h>
- #include <linux/sched/task.h>
-+#include <linux/mm.h>
- 
- static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
- {
-@@ -44,6 +45,7 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
- {
- 	struct time_namespace *ns;
- 	struct ucounts *ucounts;
-+	struct page *page;
- 	int err;
- 
- 	err = -ENOSPC;
-@@ -56,15 +58,22 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
- 	if (!ns)
- 		goto fail_dec;
- 
-+	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-+	if (!page)
-+		goto fail_free;
-+	ns->offsets = page_address(page);
-+	BUILD_BUG_ON(sizeof(*ns->offsets) > PAGE_SIZE);
-+
- 	err = ns_alloc_inum(&ns->ns);
- 	if (err)
--		goto fail_free;
-+		goto fail_page;
- 
- 	ns->ucounts = ucounts;
- 	ns->ns.ops = &timens_operations;
- 	ns->user_ns = get_user_ns(user_ns);
- 	return ns;
--
-+fail_page:
-+	free_page((unsigned long)ns->offsets);
- fail_free:
- 	kfree(ns);
- fail_dec:
-@@ -93,6 +102,7 @@ void free_time_ns(struct kref *kref)
- 	struct time_namespace *ns;
- 
- 	ns = container_of(kref, struct time_namespace, kref);
-+	free_page((unsigned long)ns->offsets);
- 	dec_time_namespaces(ns->ucounts);
- 	put_user_ns(ns->user_ns);
- 	ns_free_inum(&ns->ns);
+This area is one where I'm still uneasy on my comprehension of
+the details, especially that it goes in a different direction than
+what you are recommending.
+
+I've read through https://www.akkadia.org/drepper/tls.pdf Section 5
+"Linker Optimizations" to try to figure it out, and I end up being
+under the impression that applying the tls_model("initial-exec")
+attribute to a symbol declaration in a header file does not have
+much impact on the accesses that use that variable. Reading through
+that section, it seems that the variable definition is the one that
+matters, and then the compiler/linker/loader are tweaking the sites
+that reference the TLS variable through code rewrite based on the
+most efficient mechanism that each phase knows can be used at each
+stage.
+
+What am I missing ?
+
+Thanks,
+
+Mathieu
+
 -- 
-2.13.6
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
