@@ -1,101 +1,56 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via USER_NOTIF
-Date: Wed, 19 Sep 2018 12:58:20 -0700
-Message-ID: <CALCETrVuP0nQ5B01-iWrcQ87hisz7=jA08-Uisqud_r+zc74NQ@mail.gmail.com>
-References: <20180906152859.7810-1-tycho@tycho.ws> <20180906152859.7810-5-tycho@tycho.ws>
- <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
- <20180919095536.GM4672@cisco> <C1406292-7496-459F-A76A-20C9EFBB12D6@amacapital.net>
- <20180919143842.GN4672@cisco>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH] glibc: Perform rseq(2) registration at nptl init
+ and thread creation
+Date: Wed, 19 Sep 2018 16:10:54 -0400 (EDT)
+Message-ID: <466724077.8623.1537387854947.JavaMail.zimbra@efficios.com>
+References: <20180919144438.1066-1-mathieu.desnoyers@efficios.com> <c58d4d6e-f22a-f5d9-e23a-5bd72cec1a86@arm.com> <alpine.DEB.2.21.1809191944470.4536@digraph.polyomino.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180919143842.GN4672@cisco>
+In-Reply-To: <alpine.DEB.2.21.1809191944470.4536@digraph.polyomino.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>
+To: Joseph Myers <joseph@codesourcery.com>
+Cc: Szabolcs Nagy <szabolcs.nagy@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, nd <nd@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, libc-alpha <libc-alpha@sourceware.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 19, 2018 at 7:38 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> On Wed, Sep 19, 2018 at 07:19:56AM -0700, Andy Lutomirski wrote:
->>
->>
->> > On Sep 19, 2018, at 2:55 AM, Tycho Andersen <tycho@tycho.ws> wrote:
->> >
->> >> On Wed, Sep 12, 2018 at 04:52:38PM -0700, Andy Lutomirski wrote:
->> >>> On Thu, Sep 6, 2018 at 8:28 AM, Tycho Andersen <tycho@tycho.ws> wrot=
-e:
->> >>> The idea here is that the userspace handler should be able to pass a=
-n fd
->> >>> back to the trapped task, for example so it can be returned from soc=
-ket().
->> >>>
->> >>> I've proposed one API here, but I'm open to other options. In partic=
-ular,
->> >>> this only lets you return an fd from a syscall, which may not be eno=
-ugh in
->> >>> all cases. For example, if an fd is written to an output parameter i=
-nstead
->> >>> of returned, the current API can't handle this. Another case is that
->> >>> netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If netl=
-ink
->> >>> ever decides to install an fd and output it, we wouldn't be able to =
-handle
->> >>> this either.
->> >>
->> >> An alternative could be to have an API (an ioctl on the listener,
->> >> perhaps) that just copies an fd into the tracee.  There would be the
->> >> obvious set of options: do we replace an existing fd or allocate a ne=
-w
->> >> one, and is it CLOEXEC.  Then the tracer could add an fd and then
->> >> return it just like it's a regular number.
->> >>
->> >> I feel like this would be more flexible and conceptually simpler, but
->> >> maybe a little slower for the common cases.  What do you think?
->> >
->> > I'm just implementing this now, and there's one question: when do we
->> > actually do the fd install? Should we do it when the user calls
->> > SECCOMP_NOTIF_PUT_FD, or when the actual response is sent? It feels
->> > like we should do it when the response is sent, instead of doing it
->> > right when SECCOMP_NOTIF_PUT_FD is called, since if there's a
->> > subsequent signal and the tracer decides to discard the response,
->> > we'll have to implement some delete mechanism to delete the fd, but it
->> > would have already been visible to the process, etc. So I'll go
->> > forward with this unless there are strong objections, but I thought
->> > I'd point it out just to avoid another round trip.
->> >
->> >
->>
->> Can you do that non-racily?  That is, you need to commit to an fd *numbe=
-r* right away, but what if another thread uses the number before you actual=
-ly install the fd?
->
-> I was thinking we could just do an __alloc_fd() and then do the
-> fd_install() when the response is sent or clean up the case that the
-> listener or task dies. I haven't actually tried to run the code yet,
-> so it's possible the locking won't work :)
+----- On Sep 19, 2018, at 3:49 PM, Joseph Myers joseph@codesourcery.com wrote:
 
-I would be very surprised if the locking works.  How can you run a
-thread in a process when another thread has allocated but not
-installed an fd and is blocked for an arbitrarily long time?
+> On Wed, 19 Sep 2018, Szabolcs Nagy wrote:
+> 
+>> i don't think there is precedent for exposing tls symbol in glibc
+>> (e.g. errno is exposed via __errno_location function) so there
+>> might be issues with this (but i don't have immediate concerns).
+> 
+> There have been suggestions to expose TLS errno - but also suggestions
+> that use of __errno_location is more efficient, at least in terms of code
+> size everywhere errno is accessed (for some ABIs, anyway).
 
->
->> Do we really allow non-=E2=80=9Ckill=E2=80=9D signals to interrupt the w=
-hole process?  It might be the case that we don=E2=80=99t really need to cl=
-ean up from signals if there=E2=80=99s a guarantee that the thread dies.
->
-> Yes, we do, because of this: https://lkml.org/lkml/2018/3/15/1122
->
+AFAIU, the trade-off is different between the errno use-case and the
+rseq use-case.
 
-I'm still not sure I see the problem.  Suppose I'm implementing a user
-notifier for a nasty syscall like recvmsg().  If I'm the tracer, by
-the time I decide to install an fd, I've committed to returning
-something other than -EINTR, even if a non-fatal signal is sent before
-I finish.  No rollback should be necessary.
+If my understanding is correct, errno is not supposed to be used in
+fast-paths, only when an error is returned. So size is more important than
+speed there.
 
-In the (unlikely?) event that some tracer needs to be able to rollback
-an fd installation to return -EINTR, a SECCOMP_NOTIF_CLOSE_FD
-operation should be good enough, I think.  Or maybe PUT_FD can put -1
-to delete an fd.
+Comparatively, rseq is _meant_ to speed up fast-paths. A per-cpu statistics
+counter can be incremented in 2ns with rseq on a Intel E5-2630, which is faster
+than a simple function call.
 
---Andy
+So for rseq, we should favor speed over space, which means the user applications
+and libraries would need access to the TLS symbol without requiring an
+accessor function. That's also why I'm using the initial-exec tls model
+rather than the global-dynamic: I want to make sure no function call is
+generated there.
+
+> The ABI tests have code that would list .tbss symbols as "T" in ABI test
+> baselines, but no existing ABI baselines use that.
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
