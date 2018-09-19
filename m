@@ -1,29 +1,52 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] [RFC] making uapi/linux/elfcore.h useful again
-Date: Tue, 18 Sep 2018 07:21:13 -0700
-Message-ID: <CAK8P3a3PViCK9RzhwDkXhO_mJvgnfe0=tbFs5X_7JDRQQMujYA@mail.gmail.com>
-References: <20180914113929.953895-1-arnd@arndb.de> <alpine.DEB.2.21.1809171204350.13789@digraph.polyomino.org.uk>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via
+ USER_NOTIF
+Date: Wed, 19 Sep 2018 03:55:36 -0600
+Message-ID: <20180919095536.GM4672@cisco>
+References: <20180906152859.7810-1-tycho@tycho.ws>
+ <20180906152859.7810-5-tycho@tycho.ws>
+ <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1809171204350.13789@digraph.polyomino.org.uk>
+Content-Disposition: inline
+In-Reply-To: <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joseph Myers <joseph@codesourcery.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, David Howells <dhowells@redhat.com>, GNU C Library <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 17, 2018 at 5:05 AM Joseph Myers <joseph@codesourcery.com> wrote:
->
-> On Fri, 14 Sep 2018, Arnd Bergmann wrote:
->
-> > +typedef unsigned long elf_greg_t;
->
-> Does that need to be unsigned long long for x32?  (At least glibc thinks
-> so; I've not tested what an x32 core dump actually looks like, but to be
-> useful it certainly ought to have 64-bit registers.)
+On Wed, Sep 12, 2018 at 04:52:38PM -0700, Andy Lutomirski wrote:
+> On Thu, Sep 6, 2018 at 8:28 AM, Tycho Andersen <tycho@tycho.ws> wrote:
+> > The idea here is that the userspace handler should be able to pass an fd
+> > back to the trapped task, for example so it can be returned from socket().
+> >
+> > I've proposed one API here, but I'm open to other options. In particular,
+> > this only lets you return an fd from a syscall, which may not be enough in
+> > all cases. For example, if an fd is written to an output parameter instead
+> > of returned, the current API can't handle this. Another case is that
+> > netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If netlink
+> > ever decides to install an fd and output it, we wouldn't be able to handle
+> > this either.
+> 
+> An alternative could be to have an API (an ioctl on the listener,
+> perhaps) that just copies an fd into the tracee.  There would be the
+> obvious set of options: do we replace an existing fd or allocate a new
+> one, and is it CLOEXEC.  Then the tracer could add an fd and then
+> return it just like it's a regular number.
+> 
+> I feel like this would be more flexible and conceptually simpler, but
+> maybe a little slower for the common cases.  What do you think?
 
-Yes, I think that's right. 'unsigned long' was correct inside of the kernel,
-but copying it into a uapi header means we have to use '__kernel_ulong_t'
-so it gets interpreted right by x32 user space.
+I'm just implementing this now, and there's one question: when do we
+actually do the fd install? Should we do it when the user calls
+SECCOMP_NOTIF_PUT_FD, or when the actual response is sent? It feels
+like we should do it when the response is sent, instead of doing it
+right when SECCOMP_NOTIF_PUT_FD is called, since if there's a
+subsequent signal and the tracer decides to discard the response,
+we'll have to implement some delete mechanism to delete the fd, but it
+would have already been visible to the process, etc. So I'll go
+forward with this unless there are strong objections, but I thought
+I'd point it out just to avoid another round trip.
 
-          Arnd
+Tycho
