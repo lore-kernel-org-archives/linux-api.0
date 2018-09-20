@@ -1,253 +1,56 @@
-From: Deepa Dinamani <deepa.kernel@gmail.com>
-Subject: [PATCH v4 4/5] pselect6: use __kernel_timespec
-Date: Wed, 19 Sep 2018 21:41:07 -0700
-Message-ID: <20180920044108.6606-5-deepa.kernel@gmail.com>
-References: <20180920044108.6606-1-deepa.kernel@gmail.com>
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20180920044108.6606-1-deepa.kernel@gmail.com>
-Sender: owner-linux-aio@kvack.org
-To: viro@zeniv.linux.org.uk, tglx@linutronix.de, linux-kernel@vger.kernel.org
-Cc: arnd@arndb.de, y2038@lists.linaro.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-aio@kvack.org
+From: Szabolcs Nagy <szabolcs.nagy@arm.com>
+Subject: Re: [RFC PATCH] glibc: Perform rseq(2) registration at nptl init and
+ thread creation
+Date: Thu, 20 Sep 2018 11:28:39 +0100
+Message-ID: <b0a05883-befc-05f5-0bb7-d59b257238a6@arm.com>
+References: <20180919144438.1066-1-mathieu.desnoyers@efficios.com>
+ <c58d4d6e-f22a-f5d9-e23a-5bd72cec1a86@arm.com>
+ <2052751374.8654.1537390886450.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2052751374.8654.1537390886450.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: nd@arm.com, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, libc-alpha <libc-alpha@sourceware.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-struct timespec is not y2038 safe.
-struct __kernel_timespec is the new y2038 safe structure for all
-syscalls that are using struct timespec.
-Update pselect interfaces to use struct __kernel_timespec.
+On 19/09/18 22:01, Mathieu Desnoyers wrote:
+> ----- On Sep 19, 2018, at 1:38 PM, Szabolcs Nagy szabolcs.nagy@arm.com wrote:
+>> note that libpthread.so is built with -ftls-model=initial-exec
+> 
+> Which would indeed make these annotations redundant. I'll remove
+> them.
+> 
+>> (and if it wasn't then you'd want to put the attribute on the
+>> declaration in the internal header file, not on the definition,
+>> so the actual tls accesses generate the right code)
+> 
+> This area is one where I'm still uneasy on my comprehension of
+> the details, especially that it goes in a different direction than
+> what you are recommending.
+> 
+> I've read through https://www.akkadia.org/drepper/tls.pdf Section 5
+> "Linker Optimizations" to try to figure it out, and I end up being
+> under the impression that applying the tls_model("initial-exec")
+> attribute to a symbol declaration in a header file does not have
+> much impact on the accesses that use that variable. Reading through
+> that section, it seems that the variable definition is the one that
+> matters, and then the compiler/linker/loader are tweaking the sites
+> that reference the TLS variable through code rewrite based on the
+> most efficient mechanism that each phase knows can be used at each
+> stage.
+> 
+> What am I missing ?
 
-sigset_t also has different representations on 32 bit and 64 bit
-architectures. Hence, we need to support the following different
-syscalls:
+in general if you rely on linker relaxations you may not
+get optimal code because the linker cannot remove
+instructions, just nop them out.
 
-New y2038 safe syscalls:
-(Controlled by CONFIG_64BIT_TIME for 32 bit ABIs)
-
-Native 64 bit(unchanged) and native 32 bit : sys_pselect6
-Compat : compat_sys_pselect6_time64
-
-Older y2038 unsafe syscalls:
-(Controlled by CONFIG_32BIT_COMPAT_TIME for 32 bit ABIs)
-
-Native 32 bit : pselect6_time32
-Compat : compat_sys_pselect6
-
-Note that all other versions of select syscalls will not have
-y2038 safe versions.
-
-Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
----
- fs/select.c              | 94 ++++++++++++++++++++++++++++++++++------
- include/linux/compat.h   |  5 +++
- include/linux/syscalls.h |  5 ++-
- 3 files changed, 90 insertions(+), 14 deletions(-)
-
-diff --git a/fs/select.c b/fs/select.c
-index d332be059487..4c8652390c94 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -729,16 +729,27 @@ SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
- }
- 
- static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
--		       fd_set __user *exp, struct timespec __user *tsp,
--		       const sigset_t __user *sigmask, size_t sigsetsize)
-+		       fd_set __user *exp, void __user *tsp,
-+		       const sigset_t __user *sigmask, size_t sigsetsize,
-+		       enum poll_time_type type)
- {
- 	sigset_t ksigmask, sigsaved;
- 	struct timespec64 ts, end_time, *to = NULL;
- 	int ret;
- 
- 	if (tsp) {
--		if (get_timespec64(&ts, tsp))
--			return -EFAULT;
-+		switch (type) {
-+		case PT_TIMESPEC:
-+			if (get_timespec64(&ts, tsp))
-+				return -EFAULT;
-+			break;
-+		case PT_OLD_TIMESPEC:
-+			if (get_old_timespec32(&ts, tsp))
-+				return -EFAULT;
-+			break;
-+		default:
-+			BUG();
-+		}
- 
- 		to = &end_time;
- 		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
-@@ -750,7 +761,7 @@ static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
- 		return ret;
- 
- 	ret = core_sys_select(n, inp, outp, exp, to);
--	ret = poll_select_copy_remaining(&end_time, tsp, PT_TIMESPEC, ret);
-+	ret = poll_select_copy_remaining(&end_time, tsp, type, ret);
- 
- 	restore_user_sigmask(sigmask, &sigsaved);
- 
-@@ -764,7 +775,27 @@ static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
-  * the sigset size.
-  */
- SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
--		fd_set __user *, exp, struct timespec __user *, tsp,
-+		fd_set __user *, exp, struct __kernel_timespec __user *, tsp,
-+		void __user *, sig)
-+{
-+	size_t sigsetsize = 0;
-+	sigset_t __user *up = NULL;
-+
-+	if (sig) {
-+		if (!access_ok(VERIFY_READ, sig, sizeof(void *)+sizeof(size_t))
-+		    || __get_user(up, (sigset_t __user * __user *)sig)
-+		    || __get_user(sigsetsize,
-+				(size_t __user *)(sig+sizeof(void *))))
-+			return -EFAULT;
-+	}
-+
-+	return do_pselect(n, inp, outp, exp, tsp, up, sigsetsize, PT_TIMESPEC);
-+}
-+
-+#if defined(CONFIG_COMPAT_32BIT_TIME) && !defined(CONFIG_64BIT)
-+
-+SYSCALL_DEFINE6(pselect6_time32, int, n, fd_set __user *, inp, fd_set __user *, outp,
-+		fd_set __user *, exp, struct old_timespec32 __user *, tsp,
- 		void __user *, sig)
- {
- 	size_t sigsetsize = 0;
-@@ -778,9 +809,11 @@ SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
- 			return -EFAULT;
- 	}
- 
--	return do_pselect(n, inp, outp, exp, tsp, up, sigsetsize);
-+	return do_pselect(n, inp, outp, exp, tsp, up, sigsetsize, PT_OLD_TIMESPEC);
- }
- 
-+#endif
-+
- #ifdef __ARCH_WANT_SYS_OLD_SELECT
- struct sel_arg_struct {
- 	unsigned long n;
-@@ -1289,16 +1322,26 @@ COMPAT_SYSCALL_DEFINE1(old_select, struct compat_sel_arg_struct __user *, arg)
- 
- static long do_compat_pselect(int n, compat_ulong_t __user *inp,
- 	compat_ulong_t __user *outp, compat_ulong_t __user *exp,
--	struct old_timespec32 __user *tsp, compat_sigset_t __user *sigmask,
--	compat_size_t sigsetsize)
-+	void __user *tsp, compat_sigset_t __user *sigmask,
-+	compat_size_t sigsetsize, enum poll_time_type type)
- {
- 	sigset_t ksigmask, sigsaved;
- 	struct timespec64 ts, end_time, *to = NULL;
- 	int ret;
- 
- 	if (tsp) {
--		if (get_old_timespec32(&ts, tsp))
--			return -EFAULT;
-+		switch (type) {
-+		case PT_OLD_TIMESPEC:
-+			if (get_old_timespec32(&ts, tsp))
-+				return -EFAULT;
-+			break;
-+		case PT_TIMESPEC:
-+			if (get_timespec64(&ts, tsp))
-+				return -EFAULT;
-+			break;
-+		default:
-+			BUG();
-+		}
- 
- 		to = &end_time;
- 		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
-@@ -1310,13 +1353,35 @@ static long do_compat_pselect(int n, compat_ulong_t __user *inp,
- 		return ret;
- 
- 	ret = compat_core_sys_select(n, inp, outp, exp, to);
--	ret = poll_select_copy_remaining(&end_time, tsp, PT_OLD_TIMESPEC, ret);
-+	ret = poll_select_copy_remaining(&end_time, tsp, type, ret);
- 
- 	restore_user_sigmask(sigmask, &sigsaved);
- 
- 	return ret;
- }
- 
-+COMPAT_SYSCALL_DEFINE6(pselect6_time64, int, n, compat_ulong_t __user *, inp,
-+	compat_ulong_t __user *, outp, compat_ulong_t __user *, exp,
-+	struct __kernel_timespec __user *, tsp, void __user *, sig)
-+{
-+	compat_size_t sigsetsize = 0;
-+	compat_uptr_t up = 0;
-+
-+	if (sig) {
-+		if (!access_ok(VERIFY_READ, sig,
-+				sizeof(compat_uptr_t)+sizeof(compat_size_t)) ||
-+				__get_user(up, (compat_uptr_t __user *)sig) ||
-+				__get_user(sigsetsize,
-+				(compat_size_t __user *)(sig+sizeof(up))))
-+			return -EFAULT;
-+	}
-+
-+	return do_compat_pselect(n, inp, outp, exp, tsp, compat_ptr(up),
-+				 sigsetsize, PT_TIMESPEC);
-+}
-+
-+#if defined(CONFIG_COMPAT_32BIT_TIME)
-+
- COMPAT_SYSCALL_DEFINE6(pselect6, int, n, compat_ulong_t __user *, inp,
- 	compat_ulong_t __user *, outp, compat_ulong_t __user *, exp,
- 	struct old_timespec32 __user *, tsp, void __user *, sig)
-@@ -1332,10 +1397,13 @@ COMPAT_SYSCALL_DEFINE6(pselect6, int, n, compat_ulong_t __user *, inp,
- 				(compat_size_t __user *)(sig+sizeof(up))))
- 			return -EFAULT;
- 	}
-+
- 	return do_compat_pselect(n, inp, outp, exp, tsp, compat_ptr(up),
--				 sigsetsize);
-+				 sigsetsize, PT_OLD_TIMESPEC);
- }
- 
-+#endif
-+
- #if defined(CONFIG_COMPAT_32BIT_TIME)
- COMPAT_SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds,
- 	unsigned int,  nfds, struct old_timespec32 __user *, tsp,
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 349a2d98e450..6896e6e51c00 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -641,6 +641,11 @@ asmlinkage long compat_sys_pselect6(int n, compat_ulong_t __user *inp,
- 				    compat_ulong_t __user *exp,
- 				    struct old_timespec32 __user *tsp,
- 				    void __user *sig);
-+asmlinkage long compat_sys_pselect6_time64(int n, compat_ulong_t __user *inp,
-+				    compat_ulong_t __user *outp,
-+				    compat_ulong_t __user *exp,
-+				    struct __kernel_timespec __user *tsp,
-+				    void __user *sig);
- asmlinkage long compat_sys_ppoll(struct pollfd __user *ufds,
- 				 unsigned int nfds,
- 				 struct old_timespec32 __user *tsp,
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 9755e70cfbb0..e9cd0409c3fe 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -467,7 +467,10 @@ asmlinkage long sys_sendfile64(int out_fd, int in_fd,
- 
- /* fs/select.c */
- asmlinkage long sys_pselect6(int, fd_set __user *, fd_set __user *,
--			     fd_set __user *, struct timespec __user *,
-+			     fd_set __user *, struct __kernel_timespec __user *,
-+			     void __user *);
-+asmlinkage long sys_pselect6_time32(int, fd_set __user *, fd_set __user *,
-+			     fd_set __user *, struct old_timespec32 __user *,
- 			     void __user *);
- asmlinkage long sys_ppoll(struct pollfd __user *, unsigned int,
- 			  struct __kernel_timespec __user *, const sigset_t __user *,
--- 
-2.17.1
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+(e.g. on aarch64 an initial-exec access is 4 instructions
+a general dynamic (tlsdesc) access is 6 instructions +
+it involves a call, so the return address has to be saved
+and restored (+ 3 instructions for stack operations if
+there were none otherwise, which the linker cannot change))
