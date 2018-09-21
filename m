@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v4 5/9] x86/cet/ibt: ELF header parsing for IBT
-Date: Fri, 21 Sep 2018 08:05:49 -0700
-Message-ID: <20180921150553.21016-6-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v4 6/9] x86/cet/ibt: Add arch_prctl functions for IBT
+Date: Fri, 21 Sep 2018 08:05:50 -0700
+Message-ID: <20180921150553.21016-7-yu-cheng.yu@intel.com>
 References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180921150553.21016-1-yu-cheng.yu@intel.com>
@@ -10,52 +10,122 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Look in .note.gnu.property of an ELF file and check if Indirect
-Branch Tracking needs to be enabled for the task.
+Update ARCH_CET_STATUS and ARCH_CET_DISABLE to include Indirect
+Branch Tracking features.
+
+Introduce:
+
+arch_prctl(ARCH_CET_LEGACY_BITMAP, unsigned long *addr)
+    Enable the Indirect Branch Tracking legacy code bitmap.
+
+    The parameter 'addr' is a pointer to a user buffer.
+    On returning to the caller, the kernel fills the following:
+
+    *addr = IBT bitmap base address
+    *(addr + 1) = IBT bitmap size
 
 Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/uapi/asm/elf_property.h | 1 +
- arch/x86/kernel/elf.c                    | 8 +++++++-
- 2 files changed, 8 insertions(+), 1 deletion(-)
+ arch/x86/include/uapi/asm/prctl.h |  1 +
+ arch/x86/kernel/cet_prctl.c       | 38 ++++++++++++++++++++++++++++++-
+ arch/x86/kernel/process.c         |  1 +
+ 3 files changed, 39 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/uapi/asm/elf_property.h b/arch/x86/include/uapi/asm/elf_property.h
-index af361207718c..343a871b8fc1 100644
---- a/arch/x86/include/uapi/asm/elf_property.h
-+++ b/arch/x86/include/uapi/asm/elf_property.h
-@@ -11,5 +11,6 @@
-  * Bits for GNU_PROPERTY_X86_FEATURE_1_AND
-  */
- #define GNU_PROPERTY_X86_FEATURE_1_SHSTK	(0x00000002)
-+#define GNU_PROPERTY_X86_FEATURE_1_IBT		(0x00000001)
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 3aec1088e01d..31d2465f9caf 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -18,5 +18,6 @@
+ #define ARCH_CET_DISABLE	0x3002
+ #define ARCH_CET_LOCK		0x3003
+ #define ARCH_CET_ALLOC_SHSTK	0x3004
++#define ARCH_CET_LEGACY_BITMAP	0x3005
  
- #endif /* _UAPI_ASM_X86_ELF_PROPERTY_H */
-diff --git a/arch/x86/kernel/elf.c b/arch/x86/kernel/elf.c
-index 2fddd0bc545b..13358026cd64 100644
---- a/arch/x86/kernel/elf.c
-+++ b/arch/x86/kernel/elf.c
-@@ -300,7 +300,8 @@ int arch_setup_features(void *ehdr_p, void *phdr_p,
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+index c4b7c19f5040..df47b5ebc3f4 100644
+--- a/arch/x86/kernel/cet_prctl.c
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -20,6 +20,8 @@ static int handle_get_status(unsigned long arg2)
  
- 	struct elf64_hdr *ehdr64 = ehdr_p;
+ 	if (current->thread.cet.shstk_enabled)
+ 		features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++	if (current->thread.cet.ibt_enabled)
++		features |= GNU_PROPERTY_X86_FEATURE_1_IBT;
  
+ 	shstk_base = current->thread.cet.shstk_base;
+ 	shstk_size = current->thread.cet.shstk_size;
+@@ -49,9 +51,35 @@ static int handle_alloc_shstk(unsigned long arg2)
+ 	return 0;
+ }
+ 
++static int handle_bitmap(unsigned long arg2)
++{
++	unsigned long addr, size;
++
++	if (current->thread.cet.ibt_enabled) {
++		int err;
++
++		err  = cet_setup_ibt_bitmap();
++		if (err)
++			return err;
++
++		addr = current->thread.cet.ibt_bitmap_addr;
++		size = current->thread.cet.ibt_bitmap_size;
++	} else {
++		addr = 0;
++		size = 0;
++	}
++
++	if (put_user(addr, (unsigned long __user *)arg2) ||
++	    put_user(size, (unsigned long __user *)arg2 + 1))
++		return -EFAULT;
++
++	return 0;
++}
++
+ int prctl_cet(int option, unsigned long arg2)
+ {
 -	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
 +	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) &&
 +	    !cpu_feature_enabled(X86_FEATURE_IBT))
+ 		return -EINVAL;
+ 
+ 	switch (option) {
+@@ -63,6 +91,8 @@ int prctl_cet(int option, unsigned long arg2)
+ 			return -EPERM;
+ 		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
+ 			cet_disable_free_shstk(current);
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			cet_disable_ibt();
+ 
  		return 0;
  
- 	if (ehdr64->e_ident[EI_CLASS] == ELFCLASS64) {
-@@ -335,6 +336,11 @@ int arch_setup_features(void *ehdr_p, void *phdr_p,
- 		}
+@@ -73,6 +103,12 @@ int prctl_cet(int option, unsigned long arg2)
+ 	case ARCH_CET_ALLOC_SHSTK:
+ 		return handle_alloc_shstk(arg2);
+ 
++	/*
++	 * Allocate legacy bitmap and return address & size to user.
++	 */
++	case ARCH_CET_LEGACY_BITMAP:
++		return handle_bitmap(arg2);
++
+ 	default:
+ 		return -EINVAL;
+ 	}
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index ac0ea9c7e89f..aea15a9b6a3e 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -797,6 +797,7 @@ long do_arch_prctl_common(struct task_struct *task, int option,
+ 	case ARCH_CET_DISABLE:
+ 	case ARCH_CET_LOCK:
+ 	case ARCH_CET_ALLOC_SHSTK:
++	case ARCH_CET_LEGACY_BITMAP:
+ 		return prctl_cet(option, cpuid_enabled);
  	}
  
-+	if (cpu_feature_enabled(X86_FEATURE_IBT)) {
-+		if (feature & GNU_PROPERTY_X86_FEATURE_1_IBT)
-+			err = cet_setup_ibt();
-+	}
-+
- out:
- 	return err;
- }
 -- 
 2.17.1
