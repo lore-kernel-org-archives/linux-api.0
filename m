@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v4 3/9] x86/cet/ibt: Add IBT legacy code bitmap allocation function
-Date: Fri, 21 Sep 2018 08:05:47 -0700
-Message-ID: <20180921150553.21016-4-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v4 1/9] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
+Date: Fri, 21 Sep 2018 08:05:45 -0700
+Message-ID: <20180921150553.21016-2-yu-cheng.yu@intel.com>
 References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180921150553.21016-1-yu-cheng.yu@intel.com>
@@ -10,71 +10,57 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Indirect branch tracking provides an optional legacy code bitmap
-that indicates locations of non-IBT compatible code.  When set,
-each bit in the bitmap represents a page in the linear address is
-legacy code.
-
-We allocate the bitmap only when the application requests it.
-Most applications do not need the bitmap.
+The user-mode indirect branch tracking support is done mostly by
+GCC to insert ENDBR64/ENDBR32 instructions at branch targets.
+The kernel provides CPUID enumeration, feature MSR setup and
+the allocation of legacy bitmap.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/kernel/cet.c | 45 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 45 insertions(+)
+ arch/x86/Kconfig  | 12 ++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 19 insertions(+)
 
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 6adfe795d692..a65d9745af08 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -314,3 +314,48 @@ void cet_disable_ibt(void)
- 	wrmsrl(MSR_IA32_U_CET, r);
- 	current->thread.cet.ibt_enabled = 0;
- }
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 6377125543cc..2a0ff538a229 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1941,6 +1941,18 @@ config X86_INTEL_SHADOW_STACK_USER
+ 
+ 	  If unsure, say y.
+ 
++config X86_INTEL_BRANCH_TRACKING_USER
++	prompt "Intel Indirect Branch Tracking for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	select ARCH_HAS_PROGRAM_PROPERTIES
++	---help---
++	  Indirect Branch Tracking provides hardware protection against return-/jmp-
++	  oriented programming attacks.
 +
-+int cet_setup_ibt_bitmap(void)
-+{
-+	u64 r;
-+	unsigned long bitmap;
-+	unsigned long size;
++	  If unsure, say y
 +
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return -EOPNOTSUPP;
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index b28842b80295..ff652bba849f 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -159,6 +159,13 @@ ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
+   endif
+ endif
+ 
++# Check compiler ibt support
++ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++  ifeq ($(call cc-option-yn, -fcf-protection=branch), n)
++      $(error CONFIG_X86_INTEL_BRANCH_TRACKING_USER not supported by compiler)
++  endif
++endif
 +
-+	if (!current->thread.cet.ibt_bitmap_addr) {
-+		/*
-+		 * Calculate size and put in thread header.
-+		 * may_expand_vm() needs this information.
-+		 */
-+		size = TASK_SIZE / PAGE_SIZE / BITS_PER_BYTE;
-+		current->thread.cet.ibt_bitmap_size = size;
-+		bitmap = do_mmap_locked(0, size, PROT_READ | PROT_WRITE,
-+					MAP_ANONYMOUS | MAP_PRIVATE,
-+					VM_DONTDUMP);
-+
-+		if (bitmap >= TASK_SIZE) {
-+			current->thread.cet.ibt_bitmap_size = 0;
-+			return -ENOMEM;
-+		}
-+
-+		current->thread.cet.ibt_bitmap_addr = bitmap;
-+	}
-+
-+	/*
-+	 * Lower bits of MSR_IA32_CET_LEG_IW_EN are for IBT
-+	 * settings.  Clear lower bits even bitmap is already
-+	 * page-aligned.
-+	 */
-+	bitmap = current->thread.cet.ibt_bitmap_addr;
-+	bitmap &= PAGE_MASK;
-+
-+	/*
-+	 * Turn on IBT legacy bitmap.
-+	 */
-+	rdmsrl(MSR_IA32_U_CET, r);
-+	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
-+	wrmsrl(MSR_IA32_U_CET, r);
-+	return 0;
-+}
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.17.1
