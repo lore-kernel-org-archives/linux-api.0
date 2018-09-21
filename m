@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v4 27/27] x86/cet/shstk: Add Shadow Stack instructions to opcode map
-Date: Fri, 21 Sep 2018 08:03:51 -0700
-Message-ID: <20180921150351.20898-28-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v4 07/27] x86/cet/shstk: Add Kconfig option for user-mode shadow stack
+Date: Fri, 21 Sep 2018 08:03:31 -0700
+Message-ID: <20180921150351.20898-8-yu-cheng.yu@intel.com>
 References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180921150351.20898-1-yu-cheng.yu@intel.com>
@@ -10,177 +10,84 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add the following shadow stack management instructions.
+Introduce Kconfig option X86_INTEL_SHADOW_STACK_USER.
 
-INCSSP:
-    Increment shadow stack pointer by the steps specified.
+An application has shadow stack protection when all the following are
+true:
 
-RDSSP:
-    Read SSP register into a GPR.
+  (1) The kernel has X86_INTEL_SHADOW_STACK_USER enabled,
+  (2) The running processor supports the shadow stack,
+  (3) The application is built with shadow stack enabled tools & libs
+      and, and at runtime, all dependent shared libs can support shadow
+      stack.
 
-SAVEPREVSSP:
-    Use "prev ssp" token at top of current shadow stack to
-    create a "restore token" on previous shadow stack.
+If this kernel config option is enabled, but (2) or (3) above is not
+true, the application runs without the shadow stack protection.
+Existing legacy applications will continue to work without the shadow
+stack protection.
 
-RSTORSSP:
-    Restore from a "restore token" pointed by a GPR to SSP.
-
-WRSS:
-    Write to kernel-mode shadow stack (kernel-mode instruction).
-
-WRUSS:
-    Write to user-mode shadow stack (kernel-mode instruction).
-
-SETSSBSY:
-    Verify the "supervisor token" pointed by IA32_PL0_SSP MSR,
-    if valid, set the token to busy, and set SSP to the value
-    of IA32_PL0_SSP MSR.
-
-CLRSSBSY:
-    Verify the "supervisor token" pointed by a GPR, if valid,
-    clear the busy bit from the token.
+The user-mode shadow stack protection is only implemented for the
+64-bit kernel.  Thirty-two bit applications are supported under the
+compatibility mode.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/lib/x86-opcode-map.txt               | 26 +++++++++++++------
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 26 +++++++++++++------
- 2 files changed, 36 insertions(+), 16 deletions(-)
+ arch/x86/Kconfig  | 24 ++++++++++++++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 31 insertions(+)
 
-diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
-index e0b85930dd77..c5e825d44766 100644
---- a/arch/x86/lib/x86-opcode-map.txt
-+++ b/arch/x86/lib/x86-opcode-map.txt
-@@ -366,7 +366,7 @@ AVXcode: 1
- 1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
- 1c:
- 1d:
--1e:
-+1e: RDSSP Rd (F3),REX.W
- 1f: NOP Ev
- # 0x0f 0x20-0x2f
- 20: MOV Rd,Cd
-@@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
- ff: UD0
- EndTable
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 1a0be022f91d..808aa3aecf3c 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1913,6 +1913,30 @@ config X86_INTEL_MEMORY_PROTECTION_KEYS
  
--Table: 3-byte opcode 1 (0x0f 0x38)
-+Table: 3-byte opcode 1 (0x0f 0x01)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xe7
-+e8: SETSSBSY (f3)
-+e9:
-+ea: SAVEPREVSSP (f3)
-+# Skip 0xeb-0xff
-+EndTable
+ 	  If unsure, say y.
+ 
++config X86_INTEL_CET
++	def_bool n
 +
-+Table: 3-byte opcode 2 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
- f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
- f2: ANDN Gy,By,Ey (v)
- f3: Grp17 (1A)
--f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
--f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
-+f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
-+f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
- 
--Table: 3-byte opcode 2 (0x0f 0x3a)
-+Table: 3-byte opcode 3 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
-@@ -948,7 +958,7 @@ GrpTable: Grp7
- 2: LGDT Ms | XGETBV (000),(11B) | XSETBV (001),(11B) | VMFUNC (100),(11B) | XEND (101)(11B) | XTEST (110)(11B)
- 3: LIDT Ms
- 4: SMSW Mw/Rv
--5: rdpkru (110),(11B) | wrpkru (111),(11B)
-+5: rdpkru (110),(11B) | wrpkru (111),(11B) | RSTORSSP Mq (F3)
- 6: LMSW Ew
- 7: INVLPG Mb | SWAPGS (o64),(000),(11B) | RDTSCP (001),(11B)
- EndTable
-@@ -1019,8 +1029,8 @@ GrpTable: Grp15
- 2: vldmxcsr Md (v1) | WRFSBASE Ry (F3),(11B)
- 3: vstmxcsr Md (v1) | WRGSBASE Ry (F3),(11B)
- 4: XSAVE | ptwrite Ey (F3),(11B)
--5: XRSTOR | lfence (11B)
--6: XSAVEOPT | clwb (66) | mfence (11B)
-+5: XRSTOR | lfence (11B) | INCSSP Rd (F3),REX.W
-+6: XSAVEOPT | clwb (66) | mfence (11B) | CLRSSBSY Mq (F3)
- 7: clflush | clflushopt (66) | sfence (11B)
- EndTable
- 
-diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-index e0b85930dd77..c5e825d44766 100644
---- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-+++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-@@ -366,7 +366,7 @@ AVXcode: 1
- 1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
- 1c:
- 1d:
--1e:
-+1e: RDSSP Rd (F3),REX.W
- 1f: NOP Ev
- # 0x0f 0x20-0x2f
- 20: MOV Rd,Cd
-@@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
- ff: UD0
- EndTable
- 
--Table: 3-byte opcode 1 (0x0f 0x38)
-+Table: 3-byte opcode 1 (0x0f 0x01)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xe7
-+e8: SETSSBSY (f3)
-+e9:
-+ea: SAVEPREVSSP (f3)
-+# Skip 0xeb-0xff
-+EndTable
++config ARCH_HAS_SHSTK
++	def_bool n
 +
-+Table: 3-byte opcode 2 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
- f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
- f2: ANDN Gy,By,Ey (v)
- f3: Grp17 (1A)
--f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
--f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
-+f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
-+f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
++config X86_INTEL_SHADOW_STACK_USER
++	prompt "Intel Shadow Stack for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	select ARCH_HAS_SHSTK
++	---help---
++	  Shadow stack provides hardware protection against program stack
++	  corruption.  Only when all the following are true will an application
++	  have the shadow stack protection: the kernel supports it (i.e. this
++	  feature is enabled), the application is compiled and linked with
++	  shadow stack enabled, and the processor supports this feature.
++	  When the kernel has this configuration enabled, existing non shadow
++	  stack applications will continue to work, but without shadow stack
++	  protection.
++
++	  If unsure, say y.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 8f6e7eb8ae9f..b28842b80295 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -152,6 +152,13 @@ ifdef CONFIG_X86_X32
+ endif
+ export CONFIG_X86_X32_ABI
  
--Table: 3-byte opcode 2 (0x0f 0x3a)
-+Table: 3-byte opcode 3 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
-@@ -948,7 +958,7 @@ GrpTable: Grp7
- 2: LGDT Ms | XGETBV (000),(11B) | XSETBV (001),(11B) | VMFUNC (100),(11B) | XEND (101)(11B) | XTEST (110)(11B)
- 3: LIDT Ms
- 4: SMSW Mw/Rv
--5: rdpkru (110),(11B) | wrpkru (111),(11B)
-+5: rdpkru (110),(11B) | wrpkru (111),(11B) | RSTORSSP Mq (F3)
- 6: LMSW Ew
- 7: INVLPG Mb | SWAPGS (o64),(000),(11B) | RDTSCP (001),(11B)
- EndTable
-@@ -1019,8 +1029,8 @@ GrpTable: Grp15
- 2: vldmxcsr Md (v1) | WRFSBASE Ry (F3),(11B)
- 3: vstmxcsr Md (v1) | WRGSBASE Ry (F3),(11B)
- 4: XSAVE | ptwrite Ey (F3),(11B)
--5: XRSTOR | lfence (11B)
--6: XSAVEOPT | clwb (66) | mfence (11B)
-+5: XRSTOR | lfence (11B) | INCSSP Rd (F3),REX.W
-+6: XSAVEOPT | clwb (66) | mfence (11B) | CLRSSBSY Mq (F3)
- 7: clflush | clflushopt (66) | sfence (11B)
- EndTable
- 
++# Check assembler shadow stack suppot
++ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++  ifeq ($(call as-instr, saveprevssp, y),)
++      $(error CONFIG_X86_INTEL_SHADOW_STACK_USER not supported by the assembler)
++  endif
++endif
++
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.17.1
