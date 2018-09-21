@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 30/34] vfs: syscall: Add fsmount() to create a mount for a
- superblock [ver #12]
-Date: Fri, 21 Sep 2018 17:34:12 +0100
-Message-ID: <153754765237.17872.17624067695858838756.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock for
+ reconfiguration [ver #12]
+Date: Fri, 21 Sep 2018 17:34:20 +0100
+Message-ID: <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
 References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,234 +14,143 @@ To: viro@zeniv.linux.org.uk
 Cc: linux-api@vger.kernel.org, torvalds@linux-foundation.org, dhowells@redhat.com, ebiederm@xmission.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-Provide a system call by which a filesystem opened with fsopen() and
-configured by a series of fsconfig() calls can have a detached mount object
-created for it.  This mount object can then be attached to the VFS mount
-hierarchy using move_mount() by passing the returned file descriptor as the
-from directory fd.
+Provide an fspick() system call that can be used to pick an existing
+mountpoint into an fs_context which can thereafter be used to reconfigure a
+superblock (equivalent of the superblock side of -o remount).
 
-The system call looks like:
+This looks like:
 
-	int mfd = fsmount(int fsfd, unsigned int flags,
-			  unsigned int ms_flags);
+	int fd = fspick(AT_FDCWD, "/mnt",
+			FSPICK_CLOEXEC | FSPICK_NO_AUTOMOUNT);
+	fsconfig(fd, FSCONFIG_SET_FLAG, "intr", NULL, 0);
+	fsconfig(fd, FSCONFIG_SET_FLAG, "noac", NULL, 0);
+	fsconfig(fd, FSCONFIG_CMD_RECONFIGURE, NULL, NULL, 0);
 
-where fsfd is the file descriptor returned by fsopen().  flags can be 0 or
-FSMOUNT_CLOEXEC.  ms_flags is a bitwise-OR of the following flags:
-
-	MS_RDONLY
-	MS_NOSUID
-	MS_NODEV
-	MS_NOEXEC
-	MS_NOATIME
-	MS_NODIRATIME
-	MS_RELATIME
-	MS_STRICTATIME
-
-	MS_UNBINDABLE
-	MS_PRIVATE
-	MS_SLAVE
-	MS_SHARED
-
-In the event that fsmount() fails, it may be possible to get an error
-message by calling read() on fsfd.  If no message is available, ENODATA
-will be reported.
+At the point of fspick being called, the file descriptor referring to the
+filesystem context is in exactly the same state as the one that was created
+by fsopen() after fsmount() has been successfully called.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 cc: linux-api@vger.kernel.org
 ---
 
- arch/x86/entry/syscalls/syscall_32.tbl |    1 
- arch/x86/entry/syscalls/syscall_64.tbl |    1 
- fs/namespace.c                         |  125 +++++++++++++++++++++++++++++++-
- include/linux/syscalls.h               |    1 
- include/uapi/linux/fs.h                |    2 +
- 5 files changed, 126 insertions(+), 4 deletions(-)
+ arch/x86/entry/syscalls/syscall_32.tbl |    1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |    1 +
+ fs/fsopen.c                            |   54 ++++++++++++++++++++++++++++++++
+ include/linux/syscalls.h               |    1 +
+ include/uapi/linux/fs.h                |    5 +++
+ 5 files changed, 62 insertions(+)
 
 diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index f9970310c126..c78b68256f8a 100644
+index c78b68256f8a..d1eb6c815790 100644
 --- a/arch/x86/entry/syscalls/syscall_32.tbl
 +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -402,3 +402,4 @@
- 388	i386	move_mount		sys_move_mount			__ia32_sys_move_mount
+@@ -403,3 +403,4 @@
  389	i386	fsopen			sys_fsopen			__ia32_sys_fsopen
  390	i386	fsconfig		sys_fsconfig			__ia32_sys_fsconfig
-+391	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
+ 391	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
++392	i386	fspick			sys_fspick			__ia32_sys_fspick
 diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 4185d36e03bb..d44ead5d4368 100644
+index d44ead5d4368..d3ab703c02bb 100644
 --- a/arch/x86/entry/syscalls/syscall_64.tbl
 +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -347,6 +347,7 @@
- 336	common	move_mount		__x64_sys_move_mount
+@@ -348,6 +348,7 @@
  337	common	fsopen			__x64_sys_fsopen
  338	common	fsconfig		__x64_sys_fsconfig
-+339	common	fsmount			__x64_sys_fsmount
+ 339	common	fsmount			__x64_sys_fsmount
++340	common	fspick			__x64_sys_fspick
  
  #
  # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 156261d03c12..4dfe7e23b7ee 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -2463,7 +2463,7 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
+diff --git a/fs/fsopen.c b/fs/fsopen.c
+index 5955a6b65596..9ead9220e2cb 100644
+--- a/fs/fsopen.c
++++ b/fs/fsopen.c
+@@ -155,6 +155,60 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
+ 	return ret;
+ }
  
- 	attached = mnt_has_parent(old);
- 	/*
--	 * We need to allow open_tree(OPEN_TREE_CLONE) followed by
-+	 * We need to allow open_tree(OPEN_TREE_CLONE) or fsmount() followed by
- 	 * move_mount(), but mustn't allow "/" to be moved.
- 	 */
- 	if (old->mnt_ns && !attached)
-@@ -3329,9 +3329,126 @@ struct vfsmount *kern_mount(struct file_system_type *type)
- EXPORT_SYMBOL_GPL(kern_mount);
- 
- /*
-- * Move a mount from one place to another.
-- * In combination with open_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can be
-- * used to copy a mount subtree.
-+ * Create a kernel mount representation for a new, prepared superblock
-+ * (specified by fs_fd) and attach to an open_tree-like file descriptor.
++/*
++ * Pick a superblock into a context for reconfiguration.
 + */
-+SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags, unsigned int, ms_flags)
++SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags)
 +{
 +	struct fs_context *fc;
-+	struct file *file;
-+	struct path newmount;
-+	struct fd f;
-+	unsigned int mnt_flags = 0;
-+	long ret;
++	struct path target;
++	unsigned int lookup_flags;
++	int ret;
 +
-+	if (!may_mount())
++	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
 +		return -EPERM;
 +
-+	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
++	if ((flags & ~(FSPICK_CLOEXEC |
++		       FSPICK_SYMLINK_NOFOLLOW |
++		       FSPICK_NO_AUTOMOUNT |
++		       FSPICK_EMPTY_PATH)) != 0)
 +		return -EINVAL;
 +
-+	if (ms_flags & ~(MS_RDONLY | MS_NOSUID | MS_NODEV | MS_NOEXEC |
-+			 MS_NOATIME | MS_NODIRATIME | MS_RELATIME |
-+			 MS_STRICTATIME))
-+		return -EINVAL;
-+
-+	if (ms_flags & MS_RDONLY)
-+		mnt_flags |= MNT_READONLY;
-+	if (ms_flags & MS_NOSUID)
-+		mnt_flags |= MNT_NOSUID;
-+	if (ms_flags & MS_NODEV)
-+		mnt_flags |= MNT_NODEV;
-+	if (ms_flags & MS_NOEXEC)
-+		mnt_flags |= MNT_NOEXEC;
-+	if (ms_flags & MS_NODIRATIME)
-+		mnt_flags |= MNT_NODIRATIME;
-+
-+	if (ms_flags & MS_STRICTATIME) {
-+		if (ms_flags & MS_NOATIME)
-+			return -EINVAL;
-+	} else if (ms_flags & MS_NOATIME) {
-+		mnt_flags |= MNT_NOATIME;
-+	} else {
-+		mnt_flags |= MNT_RELATIME;
-+	}
-+
-+	f = fdget(fs_fd);
-+	if (!f.file)
-+		return -EBADF;
-+
-+	ret = -EINVAL;
-+	if (f.file->f_op != &fscontext_fops)
-+		goto err_fsfd;
-+
-+	fc = f.file->private_data;
-+
-+	/* There must be a valid superblock or we can't mount it */
-+	ret = -EINVAL;
-+	if (!fc->root)
-+		goto err_fsfd;
-+
-+	ret = -EPERM;
-+	if (mount_too_revealing(fc->root->d_sb, &mnt_flags)) {
-+		pr_warn("VFS: Mount too revealing\n");
-+		goto err_fsfd;
-+	}
-+
-+	ret = mutex_lock_interruptible(&fc->uapi_mutex);
++	lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
++	if (flags & FSPICK_SYMLINK_NOFOLLOW)
++		lookup_flags &= ~LOOKUP_FOLLOW;
++	if (flags & FSPICK_NO_AUTOMOUNT)
++		lookup_flags &= ~LOOKUP_AUTOMOUNT;
++	if (flags & FSPICK_EMPTY_PATH)
++		lookup_flags |= LOOKUP_EMPTY;
++	ret = user_path_at(dfd, path, lookup_flags, &target);
 +	if (ret < 0)
-+		goto err_fsfd;
++		goto err;
 +
-+	ret = -EBUSY;
-+	if (fc->phase != FS_CONTEXT_AWAITING_MOUNT)
-+		goto err_unlock;
-+
-+	ret = -EPERM;
-+	if ((fc->sb_flags & SB_MANDLOCK) && !may_mandlock())
-+		goto err_unlock;
-+
-+	newmount.mnt = vfs_create_mount(fc, mnt_flags);
-+	if (IS_ERR(newmount.mnt)) {
-+		ret = PTR_ERR(newmount.mnt);
-+		goto err_unlock;
-+	}
-+	newmount.dentry = dget(fc->root);
-+
-+	/* We've done the mount bit - now move the file context into more or
-+	 * less the same state as if we'd done an fspick().  We don't want to
-+	 * do any memory allocation or anything like that at this point as we
-+	 * don't want to have to handle any errors incurred.
-+	 */
-+	vfs_clean_context(fc);
-+
-+	/* Attach to an apparent O_PATH fd with a note that we need to unmount
-+	 * it, not just simply put it.
-+	 */
-+	file = dentry_open(&newmount, O_PATH, fc->cred);
-+	if (IS_ERR(file)) {
-+		ret = PTR_ERR(file);
++	fc = vfs_new_fs_context(target.dentry->d_sb->s_type, target.dentry,
++				0, 0, FS_CONTEXT_FOR_RECONFIGURE);
++	if (IS_ERR(fc)) {
++		ret = PTR_ERR(fc);
 +		goto err_path;
 +	}
-+	file->f_mode |= FMODE_NEED_UNMOUNT;
 +
-+	ret = get_unused_fd_flags((flags & FSMOUNT_CLOEXEC) ? O_CLOEXEC : 0);
-+	if (ret >= 0)
-+		fd_install(ret, file);
-+	else
-+		fput(file);
++	fc->phase = FS_CONTEXT_RECONF_PARAMS;
 +
++	ret = fscontext_alloc_log(fc);
++	if (ret < 0)
++		goto err_fc;
++
++	path_put(&target);
++	return fscontext_create_fd(fc, flags & FSPICK_CLOEXEC ? O_CLOEXEC : 0);
++
++err_fc:
++	put_fs_context(fc);
 +err_path:
-+	path_put(&newmount);
-+err_unlock:
-+	mutex_unlock(&fc->uapi_mutex);
-+err_fsfd:
-+	fdput(f);
++	path_put(&target);
++err:
 +	return ret;
 +}
 +
-+/*
-+ * Move a mount from one place to another.  In combination with
-+ * fsopen()/fsmount() this is used to install a new mount and in combination
-+ * with open_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can be used to copy
-+ * a mount subtree.
-  *
-  * Note the flags value is a combination of MOVE_MOUNT_* flags.
-  */
+ /*
+  * Check the state and apply the configuration.  Note that this function is
+  * allowed to 'steal' the value by setting param->xxx to NULL before returning.
 diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 4ab15fdf8aea..4697fad47789 100644
+index 4697fad47789..eb8d62f4ee24 100644
 --- a/include/linux/syscalls.h
 +++ b/include/linux/syscalls.h
-@@ -913,6 +913,7 @@ asmlinkage long sys_move_mount(int from_dfd, const char __user *from_path,
- asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags);
+@@ -914,6 +914,7 @@ asmlinkage long sys_fsopen(const char __user *fs_name, unsigned int flags);
  asmlinkage long sys_fsconfig(int fs_fd, unsigned int cmd, const char __user *key,
  			     const void __user *value, int aux);
-+asmlinkage long sys_fsmount(int fs_fd, unsigned int flags, unsigned int ms_flags);
+ asmlinkage long sys_fsmount(int fs_fd, unsigned int flags, unsigned int ms_flags);
++asmlinkage long sys_fspick(int dfd, const char __user *path, unsigned int flags);
  
  /*
   * Architecture-specific system calls
 diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index fecbae30a30d..10281d582e28 100644
+index 10281d582e28..7f01503a9e9b 100644
 --- a/include/uapi/linux/fs.h
 +++ b/include/uapi/linux/fs.h
-@@ -349,6 +349,8 @@ typedef int __bitwise __kernel_rwf_t;
-  */
- #define FSOPEN_CLOEXEC		0x00000001
+@@ -351,6 +351,11 @@ typedef int __bitwise __kernel_rwf_t;
  
-+#define FSMOUNT_CLOEXEC		0x00000001
+ #define FSMOUNT_CLOEXEC		0x00000001
+ 
++#define FSPICK_CLOEXEC		0x00000001
++#define FSPICK_SYMLINK_NOFOLLOW	0x00000002
++#define FSPICK_NO_AUTOMOUNT	0x00000004
++#define FSPICK_EMPTY_PATH	0x00000008
 +
  /*
   * The type of fsconfig() call made.
