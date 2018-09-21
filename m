@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v4 15/27] mm: Handle THP/HugeTLB shadow stack page fault
-Date: Fri, 21 Sep 2018 08:03:39 -0700
-Message-ID: <20180921150351.20898-16-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v4 08/27] mm: Introduce VM_SHSTK for shadow stack memory
+Date: Fri, 21 Sep 2018 08:03:32 -0700
+Message-ID: <20180921150351.20898-9-yu-cheng.yu@intel.com>
 References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180921150351.20898-1-yu-cheng.yu@intel.com>
@@ -10,90 +10,44 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch implements THP shadow stack memory copying in the same
-way as the previous patch for regular PTE.
-
-In copy_huge_pmd(), we clear the dirty bit from the PMD.  On the
-next shadow stack access to the PMD, a page fault occurs.  At
-that time, the page is copied/re-used and the PMD is fixed.
+VM_SHSTK indicates a shadow stack memory area.
+The shadow stack is implemented only for the 64-bit kernel.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/mm/pgtable.c         | 8 ++++++++
- include/asm-generic/pgtable.h | 2 ++
- mm/huge_memory.c              | 4 ++++
- 3 files changed, 14 insertions(+)
+ include/linux/mm.h | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index 57eeb2230340..ccdfd3dd7163 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -882,6 +882,14 @@ inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
- 		return pte;
- }
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index a61ebe8ad4ca..f40387ecd920 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -224,11 +224,13 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
++#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
+ #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
+ #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+ #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+ #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
++#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
+ #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
  
-+inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
-+{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pmd_mkdirty_shstk(pmd);
-+	else
-+		return pmd;
-+}
-+
- inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
- {
- 	return (vm_flags & VM_SHSTK);
-diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
-index b99aa3677350..a91f07454ced 100644
---- a/include/asm-generic/pgtable.h
-+++ b/include/asm-generic/pgtable.h
-@@ -1129,9 +1129,11 @@ static inline bool arch_has_pfn_modify_check(void)
- 
- #ifndef CONFIG_ARCH_HAS_SHSTK
- #define pte_set_vma_features(pte, vma) pte
-+#define pmd_set_vma_features(pmd, vma) pmd
- #define arch_copy_pte_mapping(vma_flags) false
- #else
- inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
-+inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
- bool arch_copy_pte_mapping(vm_flags_t vm_flags);
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+@@ -266,6 +268,12 @@ extern unsigned int kobjsize(const void *objp);
+ # define VM_MPX		VM_NONE
  #endif
  
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 533f9b00147d..df39ae20fe40 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -597,6 +597,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
- 
- 		entry = mk_huge_pmd(page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		page_add_new_anon_rmap(page, vma, haddr, true);
- 		mem_cgroup_commit_charge(page, memcg, false, true);
- 		lru_cache_add_active_or_unevictable(page, vma);
-@@ -1194,6 +1195,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
- 		pte_t entry;
- 		entry = mk_pte(pages[i], vma->vm_page_prot);
- 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+		entry = pte_set_vma_features(entry, vma);
- 		memcg = (void *)page_private(pages[i]);
- 		set_page_private(pages[i], 0);
- 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
-@@ -1278,6 +1280,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = pmd_mkyoung(orig_pmd);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
- 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 		ret |= VM_FAULT_WRITE;
-@@ -1349,6 +1352,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
- 		page_add_new_anon_rmap(new_page, vma, haddr, true);
- 		mem_cgroup_commit_charge(new_page, memcg, false, true);
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++# define VM_SHSTK	VM_HIGH_ARCH_5
++#else
++# define VM_SHSTK	VM_NONE
++#endif
++
+ #ifndef VM_GROWSUP
+ # define VM_GROWSUP	VM_NONE
+ #endif
 -- 
 2.17.1
