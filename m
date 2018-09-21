@@ -1,65 +1,87 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v4 0/9] Control Flow Enforcement: Branch Tracking, PTRACE
-Date: Fri, 21 Sep 2018 08:05:44 -0700
-Message-ID: <20180921150553.21016-1-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v4 7/9] x86/cet/ibt: Add ENDBR to op-code-map
+Date: Fri, 21 Sep 2018 08:05:51 -0700
+Message-ID: <20180921150553.21016-8-yu-cheng.yu@intel.com>
+References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180921150553.21016-1-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The previous version of CET patches can be found in the following
-link:
+Add control transfer terminating instructions:
 
-  https://lkml.org/lkml/2018/8/30/582
+ENDBR64/ENDBR32:
+    Mark a valid 64/32-bit control transfer endpoint.
 
-Summary of changes from v3:
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ arch/x86/lib/x86-opcode-map.txt               | 13 +++++++++++--
+ tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++++++++++--
+ 2 files changed, 22 insertions(+), 4 deletions(-)
 
-  Move IBT legacy code bitmap allocation back to when the application
-  requests it.  Most application do not need the bitmap.  It is only
-  used when an application does dlopen() a legacy library.
-
-  In the previous version, we pre-allocated the bitmap for every IBT-
-  enabled application to avoid creating a hole in the linear address.
-  However, this created a problem when the system has limited memory.
-
-H.J. Lu (1):
-  x86: Insert endbr32/endbr64 to vDSO
-
-Yu-cheng Yu (8):
-  x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-  x86/cet/ibt: User-mode indirect branch tracking support
-  x86/cet/ibt: Add IBT legacy code bitmap allocation function
-  mm/mmap: Add IBT bitmap size to address space limit check
-  x86/cet/ibt: ELF header parsing for IBT
-  x86/cet/ibt: Add arch_prctl functions for IBT
-  x86/cet/ibt: Add ENDBR to op-code-map
-  x86/cet: Add PTRACE interface for CET
-
- arch/x86/Kconfig                              | 12 +++
- arch/x86/Makefile                             |  7 ++
- arch/x86/entry/vdso/.gitignore                |  4 +
- arch/x86/entry/vdso/Makefile                  | 12 ++-
- arch/x86/entry/vdso/vdso-layout.lds.S         |  1 +
- arch/x86/include/asm/cet.h                    |  8 ++
- arch/x86/include/asm/disabled-features.h      |  8 +-
- arch/x86/include/asm/fpu/regset.h             |  7 +-
- arch/x86/include/uapi/asm/elf_property.h      |  1 +
- arch/x86/include/uapi/asm/prctl.h             |  1 +
- arch/x86/include/uapi/asm/resource.h          |  5 ++
- arch/x86/kernel/cet.c                         | 76 +++++++++++++++++++
- arch/x86/kernel/cet_prctl.c                   | 38 +++++++++-
- arch/x86/kernel/cpu/common.c                  | 20 ++++-
- arch/x86/kernel/elf.c                         |  8 +-
- arch/x86/kernel/fpu/regset.c                  | 41 ++++++++++
- arch/x86/kernel/process.c                     |  2 +
- arch/x86/kernel/ptrace.c                      | 16 ++++
- arch/x86/lib/x86-opcode-map.txt               | 13 +++-
- include/uapi/asm-generic/resource.h           |  3 +
- include/uapi/linux/elf.h                      |  1 +
- mm/mmap.c                                     | 12 ++-
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++-
- 23 files changed, 296 insertions(+), 13 deletions(-)
-
+diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
+index c5e825d44766..fbc53481bc59 100644
+--- a/arch/x86/lib/x86-opcode-map.txt
++++ b/arch/x86/lib/x86-opcode-map.txt
+@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
+ # Skip 0xeb-0xff
+ EndTable
+ 
+-Table: 3-byte opcode 2 (0x0f 0x38)
++Table: 3-byte opcode 2 (0x0f 0x1e)
++Referrer:
++AVXcode:
++# Skip 0x00-0xf9
++fa: ENDBR64 (f3)
++fb: ENDBR32 (f3)
++#skip 0xfc-0xff
++EndTable
++
++Table: 3-byte opcode 3 (0x0f 0x38)
+ Referrer: 3-byte escape 1
+ AVXcode: 2
+ # 0x0f 0x38 0x00-0x0f
+@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
+ f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+ EndTable
+ 
+-Table: 3-byte opcode 3 (0x0f 0x3a)
++Table: 3-byte opcode 4 (0x0f 0x3a)
+ Referrer: 3-byte escape 2
+ AVXcode: 3
+ # 0x0f 0x3a 0x00-0xff
+diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+index c5e825d44766..fbc53481bc59 100644
+--- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
++++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
+ # Skip 0xeb-0xff
+ EndTable
+ 
+-Table: 3-byte opcode 2 (0x0f 0x38)
++Table: 3-byte opcode 2 (0x0f 0x1e)
++Referrer:
++AVXcode:
++# Skip 0x00-0xf9
++fa: ENDBR64 (f3)
++fb: ENDBR32 (f3)
++#skip 0xfc-0xff
++EndTable
++
++Table: 3-byte opcode 3 (0x0f 0x38)
+ Referrer: 3-byte escape 1
+ AVXcode: 2
+ # 0x0f 0x38 0x00-0x0f
+@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
+ f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+ EndTable
+ 
+-Table: 3-byte opcode 3 (0x0f 0x3a)
++Table: 3-byte opcode 4 (0x0f 0x3a)
+ Referrer: 3-byte escape 2
+ AVXcode: 3
+ # 0x0f 0x3a 0x00-0xff
 -- 
 2.17.1
