@@ -1,188 +1,200 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via USER_NOTIF
-Date: Thu, 20 Sep 2018 19:18:45 -0700
-Message-ID: <CALCETrWEr_VAtJu1mm1akTigsRUXAA7_7RHb-WGHqnyNy=j17Q@mail.gmail.com>
-References: <20180906152859.7810-1-tycho@tycho.ws> <20180906152859.7810-5-tycho@tycho.ws>
- <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
- <20180919095536.GM4672@cisco> <C1406292-7496-459F-A76A-20C9EFBB12D6@amacapital.net>
- <20180919143842.GN4672@cisco> <CALCETrVuP0nQ5B01-iWrcQ87hisz7=jA08-Uisqud_r+zc74NQ@mail.gmail.com>
- <20180920234240.GR4672@cisco>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
+Date: Fri, 21 Sep 2018 14:27:29 +0200
+Message-ID: <874lej6nny.fsf@xmission.com>
+References: <20180919205037.9574-1-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180920234240.GR4672@cisco>
+In-Reply-To: <20180919205037.9574-1-dima@arista.com> (Dmitry Safonov's message
+        of "Wed, 19 Sep 2018 21:50:17 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>
+To: Dmitry Safonov <dima@arista.com>
+Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 20, 2018 at 4:42 PM Tycho Andersen <tycho@tycho.ws> wrote:
+Dmitry Safonov <dima@arista.com> writes:
+
+> Discussions around time virtualization are there for a long time.
+> The first attempt to implement time namespace was in 2006 by Jeff Dike.
+> From that time, the topic appears on and off in various discussions.
 >
-> On Wed, Sep 19, 2018 at 12:58:20PM -0700, Andy Lutomirski wrote:
-> > On Wed, Sep 19, 2018 at 7:38 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> > > On Wed, Sep 19, 2018 at 07:19:56AM -0700, Andy Lutomirski wrote:
-> > >>
-> > >>
-> > >> > On Sep 19, 2018, at 2:55 AM, Tycho Andersen <tycho@tycho.ws> wrote=
-:
-> > >> >
-> > >> >> On Wed, Sep 12, 2018 at 04:52:38PM -0700, Andy Lutomirski wrote:
-> > >> >>> On Thu, Sep 6, 2018 at 8:28 AM, Tycho Andersen <tycho@tycho.ws> =
-wrote:
-> > >> >>> The idea here is that the userspace handler should be able to pa=
-ss an fd
-> > >> >>> back to the trapped task, for example so it can be returned from=
- socket().
-> > >> >>>
-> > >> >>> I've proposed one API here, but I'm open to other options. In pa=
-rticular,
-> > >> >>> this only lets you return an fd from a syscall, which may not be=
- enough in
-> > >> >>> all cases. For example, if an fd is written to an output paramet=
-er instead
-> > >> >>> of returned, the current API can't handle this. Another case is =
-that
-> > >> >>> netlink takes as input fds sometimes (IFLA_NET_NS_FD, e.g.). If =
-netlink
-> > >> >>> ever decides to install an fd and output it, we wouldn't be able=
- to handle
-> > >> >>> this either.
-> > >> >>
-> > >> >> An alternative could be to have an API (an ioctl on the listener,
-> > >> >> perhaps) that just copies an fd into the tracee.  There would be =
-the
-> > >> >> obvious set of options: do we replace an existing fd or allocate =
-a new
-> > >> >> one, and is it CLOEXEC.  Then the tracer could add an fd and then
-> > >> >> return it just like it's a regular number.
-> > >> >>
-> > >> >> I feel like this would be more flexible and conceptually simpler,=
- but
-> > >> >> maybe a little slower for the common cases.  What do you think?
-> > >> >
-> > >> > I'm just implementing this now, and there's one question: when do =
-we
-> > >> > actually do the fd install? Should we do it when the user calls
-> > >> > SECCOMP_NOTIF_PUT_FD, or when the actual response is sent? It feel=
-s
-> > >> > like we should do it when the response is sent, instead of doing i=
-t
-> > >> > right when SECCOMP_NOTIF_PUT_FD is called, since if there's a
-> > >> > subsequent signal and the tracer decides to discard the response,
-> > >> > we'll have to implement some delete mechanism to delete the fd, bu=
-t it
-> > >> > would have already been visible to the process, etc. So I'll go
-> > >> > forward with this unless there are strong objections, but I though=
-t
-> > >> > I'd point it out just to avoid another round trip.
-> > >> >
-> > >> >
-> > >>
-> > >> Can you do that non-racily?  That is, you need to commit to an fd *n=
-umber* right away, but what if another thread uses the number before you ac=
-tually install the fd?
-> > >
-> > > I was thinking we could just do an __alloc_fd() and then do the
-> > > fd_install() when the response is sent or clean up the case that the
-> > > listener or task dies. I haven't actually tried to run the code yet,
-> > > so it's possible the locking won't work :)
-> >
-> > I would be very surprised if the locking works.  How can you run a
-> > thread in a process when another thread has allocated but not
-> > installed an fd and is blocked for an arbitrarily long time?
+> There are two main use cases for time namespaces:
+> 1. change date and time inside a container;
+> 2. adjust clocks for a container restored from a checkpoint.
 >
-> I think the trick is that there's no actual locking required (except
-> for a brief locking of task->files). I've run the patch below and it
-> seems to work. But perhaps that's abusing __alloc_fd a little too
-> hard, I don't really know.
+> “It seems like this might be one of the last major obstacles keeping
+> migration from being used in production systems, given that not all
+> containers and connections can be migrated as long as a time dependency
+> is capable of messing it up.” (by github.com/dav-ell)
 >
-
-Hmm.  This makes me highly nervous.  If nothing else, what releases
-the busy-but-not-open fd if the whole process aborts?
-
-> > >
-> > >> Do we really allow non-=E2=80=9Ckill=E2=80=9D signals to interrupt t=
-he whole process?  It might be the case that we don=E2=80=99t really need t=
-o clean up from signals if there=E2=80=99s a guarantee that the thread dies=
-.
-> > >
-> > > Yes, we do, because of this: https://lkml.org/lkml/2018/3/15/1122
-> > >
-> >
-> > I'm still not sure I see the problem.  Suppose I'm implementing a user
-> > notifier for a nasty syscall like recvmsg().  If I'm the tracer, by
-> > the time I decide to install an fd, I've committed to returning
-> > something other than -EINTR, even if a non-fatal signal is sent before
-> > I finish.  No rollback should be necessary.
+> The kernel provides access to several clocks: CLOCK_REALTIME,
+> CLOCK_MONOTONIC, CLOCK_BOOTTIME. Last two clocks are monotonous, but the
+> start points for them are not defined and are different for each running
+> system. When a container is migrated from one node to another, all
+> clocks have to be restored into consistent states; in other words, they
+> have to continue running from the same points where they have been
+> dumped.
 >
-> I don't understand why this is true. Surely you could stop a handler
-> on receipt of a new signal, and have it do something else entirely?
-
-I think you *could*, but I'm not sure why you would.  In general,
-syscalls never execute signal handlers mid-syscall.  There is a very
-small number of syscalls that use sys_restart_syscall(), but I don't
-think any of them allocate fds, and I'm not sure we need or want to
-support them with user notifiers.  The rest of the syscalls will, if
-they're behaving correct, either do *something* (like reading some or
-all of a buffer) and return success or they'll do nothing and return
--EINTR.  Or they return an -ERESTARTSYS variant.  And then, only
-*after* the syscall logically returns (i.e. completely finishes
-processing and puts its return code into the relevant register) will a
-signal be delivered.  In other words, the case where something like
-recv() gets interrupted but still returns a success code does not mean
-that a signal handler was called and then recv() resumed.  It means
-that recv() noticed the signal, stopped receiving, returned the number
-of bytes read, and then allowed the signal to be delivered.
-
-In the -ERESTARTSYS case, the syscall returns -ERESTARTSYS (or a
-variant) and returns without doing anything.  But it returns in a
-special case where, after the signal returns, the syscall will happen
-again.
-
-So, for user notifiers, I think that any sane handler that notices a
-non-fatal signal will do one of these things:
-
- - Return -EINTR without changing any tracee state.
-
- - Return success, possibly without blocking as long as it would have
-without the signal.
-
- - Return -ERESTARTSYS without changing any tracee state.
-
- - Kill the tracee.
-
-None of these would involve backing out an fd that was already
-installed.  I suppose another way of looking at this is that.
-
-Although... now that I think about it, there are some special cases,
-like socketpair().  Look for put_unused_fd().  So maybe we need to
-expose get_unused_fd_flags() and put_unused_fd(), but I think that
-these are exceptions and will be very uncommon in the context of
-seccomp user notifiers.  (For example, socketpair() can be implemented
-almost correctly without put_unused_fd().)
-
-Hmm.  This does mean that we need a test case for a user notifier
-returning -ERESTARTSYS.  It should Just Work (tm), but those are
-famous last words.
-
--ERESTARTSYS_RESTARTBLOCK is the case that I don't think we need to worry a=
-bout.
-
+> The main idea behind this patch set is adding per-namespace offsets for
+> system clocks. When a process in a non-root time namespace requests
+> time of a clock, a namespace offset is added to the current value of
+> this clock on a host and the sum is returned.
 >
-> > In the (unlikely?) event that some tracer needs to be able to rollback
-> > an fd installation to return -EINTR, a SECCOMP_NOTIF_CLOSE_FD
-> > operation should be good enough, I think.  Or maybe PUT_FD can put -1
-> > to delete an fd.
+> All offsets are placed on a separate page, this allows up to map it as 
+> part of vvar into user processes and use offsets from vdso calls.
 >
-> Yes, I think even with something like what I did below we'd need some
-> sort of REMOVE_FD option, because otherwise there's no way to change
-> your mind and send -EINTR without the fd you just PUT_FD'd.
+> Now offsets are implemented for CLOCK_MONOTONIC and CLOCK_BOOTTIME
+> clocks.
 >
+> Questions to discuss:
+>
+> * Clone flags exhaustion. Currently there is only one unused clone flag
+> bit left, and it may be worth to use it to extend arguments of the clone
+> system call.
+>
+> * Realtime clock implementation details:
+>   Is having a simple offset enough?
+>   What to do when date and time is changed on the host?
+>   Is there a need to adjust vfs modification and creation times? 
+>   Implementation for adjtime() syscall.
 
-I think we just want the operation to cover all the cases.  Let PUT_FD
-take a source fd and a dest fd.  If the source fd is -1, the dest is
-closed.  If the source is -1 and the dest is -1, return -EINVAL.  If
-the dest is -1, allocate an fd.  If the dest is >=3D 0, work like
-dup2().  (The latter could be necessary to emulate things like, say,
-dup2 :))
+Overall I support this effort.  In my quick skim this code looked good.
+
+My feeling is that we need to be able to support running ntpd and
+support one namespace doing googles smoothing of leap seconds while
+another namespace takes the leap second.
+
+What I was imagining when I was last thinking about this was one
+instance of struct timekeeper aka tk_core per time namespace.  That
+structure already keeps offsets for all of the various clocks from
+the kerne internal time sources.  What would be needed would be to
+pass in an appropriate time namespace pointer.
+
+I could be completely wrong as I have not take the time to completely
+trace through the code.  Have you looked at pushing the time namespace
+down as far as tk_core?
+
+What I think would be the big advantage (besides ntp working) is that
+the bulk of the code could be reused.  Allowing testing of the kernel's
+time code by setting up a new time namespace.  So a person in production
+could setup a time namespace with the time set ahead a little  bit and
+be able to verify that the kernel handles the upcoming leap second
+properly.
+
+
+
+I don't know about the vfs.  I think the danger is being able to write
+dates in the future or in the past.  It appears that utimes(2) and
+utimesnat(2) already allow this except for status change.  So it is
+possible we simply don't care.  I seem to remember that what nfs does
+is take the time stamp from the host writing to the file.
+
+I think the guide for filesystem timestamps should be to first ensure
+we don't introduce security issues, and then do what distributed
+filesystems do when dealing with hosts with different clocks.
+
+Given those those two guidlines above I don't think there is a need to
+change timestamsp the way the user namespace changes uid when displayed.
+
+
+
+As for the hardware like the real time clock we definitely should not
+let a root in a time namespace change it.  We might even be able to get
+away with leaving the real time clock out of the time namespace.  If not
+we need to be very careful how the real time clock is abstracted.  I
+would start by leaving the real time clock hardware out of the time
+namespace and see if there is any part of userspace that cares.
+
+Eric
+
+> Cc: Dmitry Safonov <0x7f454c46@gmail.com>
+> Cc: Adrian Reber <adrian@lisas.de>
+> Cc: Andrei Vagin <avagin@openvz.org>
+> Cc: Andy Lutomirski <luto@kernel.org>
+> Cc: Christian Brauner <christian.brauner@ubuntu.com>
+> Cc: Cyrill Gorcunov <gorcunov@openvz.org>
+> Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+> Cc: "H. Peter Anvin" <hpa@zytor.com> 
+> Cc: Ingo Molnar <mingo@redhat.com>
+> Cc: Jeff Dike <jdike@addtoit.com>
+> Cc: Oleg Nesterov <oleg@redhat.com>
+> Cc: Pavel Emelyanov <xemul@virtuozzo.com>
+> Cc: Shuah Khan <shuah@kernel.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: containers@lists.linux-foundation.org
+> Cc: criu@openvz.org
+> Cc: linux-api@vger.kernel.org
+> Cc: x86@kernel.org
+>
+> Andrei Vagin (12):
+>   ns: Introduce Time Namespace
+>   timens: Add timens_offsets
+>   timens: Introduce CLOCK_MONOTONIC offsets
+>   timens: Introduce CLOCK_BOOTTIME offset
+>   timerfd/timens: Take into account ns clock offsets
+>   kernel: Take into account timens clock offsets in clock_nanosleep
+>   x86/vdso/timens: Add offsets page in vvar
+>   x86/vdso: Use set_normalized_timespec() to avoid 32 bit overflow
+>   posix-timers/timens: Take into account clock offsets
+>   selftest/timens: Add test for timerfd
+>   selftest/timens: Add test for clock_nanosleep
+>   timens/selftest: Add timer offsets test
+>
+> Dmitry Safonov (8):
+>   timens: Shift /proc/uptime
+>   x86/vdso: Restrict splitting vvar vma
+>   x86/vdso: Purge timens page on setns()/unshare()/clone()
+>   x86/vdso: Look for vvar vma to purge timens page
+>   timens: Add align for timens_offsets
+>   timens: Optimize zero-offsets
+>   selftest: Add Time Namespace test for supported clocks
+>   timens/selftest: Add procfs selftest
+>
+>  arch/Kconfig                                     |   5 +
+>  arch/x86/Kconfig                                 |   1 +
+>  arch/x86/entry/vdso/vclock_gettime.c             |  52 +++++
+>  arch/x86/entry/vdso/vdso-layout.lds.S            |   9 +-
+>  arch/x86/entry/vdso/vdso2c.c                     |   3 +
+>  arch/x86/entry/vdso/vma.c                        |  67 +++++++
+>  arch/x86/include/asm/vdso.h                      |   2 +
+>  fs/proc/namespaces.c                             |   3 +
+>  fs/proc/uptime.c                                 |   3 +
+>  fs/timerfd.c                                     |  16 +-
+>  include/linux/nsproxy.h                          |   1 +
+>  include/linux/proc_ns.h                          |   1 +
+>  include/linux/time_namespace.h                   |  72 +++++++
+>  include/linux/timens_offsets.h                   |  25 +++
+>  include/linux/user_namespace.h                   |   1 +
+>  include/uapi/linux/sched.h                       |   1 +
+>  init/Kconfig                                     |   8 +
+>  kernel/Makefile                                  |   1 +
+>  kernel/fork.c                                    |   3 +-
+>  kernel/nsproxy.c                                 |  19 +-
+>  kernel/time/hrtimer.c                            |   8 +
+>  kernel/time/posix-timers.c                       |  89 ++++++++-
+>  kernel/time/posix-timers.h                       |   2 +
+>  kernel/time_namespace.c                          | 230 +++++++++++++++++++++++
+>  tools/testing/selftests/timens/.gitignore        |   5 +
+>  tools/testing/selftests/timens/Makefile          |   6 +
+>  tools/testing/selftests/timens/clock_nanosleep.c |  98 ++++++++++
+>  tools/testing/selftests/timens/config            |   1 +
+>  tools/testing/selftests/timens/log.h             |  21 +++
+>  tools/testing/selftests/timens/procfs.c          | 145 ++++++++++++++
+>  tools/testing/selftests/timens/timens.c          | 196 +++++++++++++++++++
+>  tools/testing/selftests/timens/timer.c           |  95 ++++++++++
+>  tools/testing/selftests/timens/timerfd.c         |  96 ++++++++++
+>  33 files changed, 1272 insertions(+), 13 deletions(-)
+>  create mode 100644 include/linux/time_namespace.h
+>  create mode 100644 include/linux/timens_offsets.h
+>  create mode 100644 kernel/time_namespace.c
+>  create mode 100644 tools/testing/selftests/timens/.gitignore
+>  create mode 100644 tools/testing/selftests/timens/Makefile
+>  create mode 100644 tools/testing/selftests/timens/clock_nanosleep.c
+>  create mode 100644 tools/testing/selftests/timens/config
+>  create mode 100644 tools/testing/selftests/timens/log.h
+>  create mode 100644 tools/testing/selftests/timens/procfs.c
+>  create mode 100644 tools/testing/selftests/timens/timens.c
+>  create mode 100644 tools/testing/selftests/timens/timer.c
+>  create mode 100644 tools/testing/selftests/timens/timerfd.c
