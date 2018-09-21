@@ -1,64 +1,43 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via USER_NOTIF
-Date: Fri, 21 Sep 2018 11:27:59 -0700
-Message-ID: <CALCETrWxjLw6-pMcOydDxbf6KfMrYZcdriTk5g7U3Ba6cRNJNg@mail.gmail.com>
-References: <20180906152859.7810-1-tycho@tycho.ws> <20180906152859.7810-5-tycho@tycho.ws>
- <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
- <20180919095536.GM4672@cisco> <C1406292-7496-459F-A76A-20C9EFBB12D6@amacapital.net>
- <20180919143842.GN4672@cisco> <CALCETrVuP0nQ5B01-iWrcQ87hisz7=jA08-Uisqud_r+zc74NQ@mail.gmail.com>
- <20180920234240.GR4672@cisco> <CALCETrWEr_VAtJu1mm1akTigsRUXAA7_7RHb-WGHqnyNy=j17Q@mail.gmail.com>
- <20180921133928.GS4672@cisco>
+From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: Re: [PATCH 0/5] VFS: Introduce filesystem information query syscall
+ [ver #12]
+Date: Fri, 21 Sep 2018 21:50:32 +0200
+Message-ID: <f3646774-ee9e-d5b7-8a11-670012034d59@rasmusvillemoes.dk>
+References: <153754786825.19213.16907802981157370740.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180921133928.GS4672@cisco>
+In-Reply-To: <153754786825.19213.16907802981157370740.stgit@warthog.procyon.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>
+To: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
+Cc: linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 21, 2018 at 6:39 AM Tycho Andersen <tycho@tycho.ws> wrote:
->
-> On Thu, Sep 20, 2018 at 07:18:45PM -0700, Andy Lutomirski wrote:
-> >
-> > I think we just want the operation to cover all the cases.  Let PUT_FD
-> > take a source fd and a dest fd.  If the source fd is -1, the dest is
-> > closed.  If the source is -1 and the dest is -1, return -EINVAL.  If
-> > the dest is -1, allocate an fd.  If the dest is >= 0, work like
-> > dup2().  (The latter could be necessary to emulate things like, say,
-> > dup2 :))
->
-> ...then if we're going to allow overwriting fds, we'd need to lift out
-> the logic from do_dup2 somewhere? Is this getting too complicated? :)
->
+On 2018-09-21 18:37, David Howells wrote:
 
-fds are complicated :-p
+> 
+>  arch/x86/entry/syscalls/syscall_32.tbl |    1 
+>  arch/x86/entry/syscalls/syscall_64.tbl |    1 
+>  fs/afs/internal.h                      |    1 
+>  fs/afs/super.c                         |  168 +++++++++
+>  fs/hugetlbfs/inode.c                   |   66 ++++
+>  fs/kernfs/mount.c                      |   16 +
+>  fs/statfs.c                            |  587 ++++++++++++++++++++++++++++++++
+>  include/linux/fs.h                     |    4 
+>  include/linux/fsinfo.h                 |   41 ++
+>  include/linux/kernfs.h                 |    2 
+>  include/linux/syscalls.h               |    4 
+>  include/uapi/linux/fsinfo.h            |  303 ++++++++++++++++
+>  kernel/cgroup/cgroup-v1.c              |   72 ++++
+>  kernel/cgroup/cgroup.c                 |   31 ++
+>  samples/vfs/Makefile                   |    6 
+>  samples/vfs/test-fs-query.c            |  138 +++++++
+>  samples/vfs/test-fsinfo.c              |  589 ++++++++++++++++++++++++++++++++
+>  17 files changed, 2028 insertions(+), 2 deletions(-)
 
-More seriously, though, I think it's okay if we don't support
-everything out of the box.  getting the general semantics I suggested
-is kind of nice because the resulting API is conceptually simple, even
-if it encapsulates three cases.  But I'd be okay with only supporting
-add-an-fd-at-an-unused-position and delete-an-fd out of the box --
-more can be added if there's demand.
+Would you consider adding a Kconfig knob to not include all this (and
+all the extra tricks that syscall might learn down the road)?
 
-But I think that exposing an operation that allocates and reserves an
-fd without putting anything in the slot is awkward, and it opens us up
-to weird corner cases becoming visible that are currently there but
-mostly hidden.  For example, what happens if someone overwrites a
-reserved fd with dup2()?  (The answer is apparently -EBUSY -- see the
-big comment in do_dup2() in fs/file.c.)  But there's a more
-significant nastiness: what happens if someone abuses your new
-mechanism to overwrite a reserved fd that belongs to a different
-thread?  It looks like you'll hit the BUG_ON(fdt->fd[fd] != NULL); in
-__fd_install().  So unless you actually track which unused fds you own
-and enforce that the final installation installs in the right slot,
-you have a problem.
-
-BTW, socketpair() isn't the only thing that can add two fds.
-recvmsg() can, too, as can pipe() and pipe2().  Some of the DRM ioctls
-may as well for all I know.  But socketpair(), pipe(), and recvmsg()
-can be credibly emulated by adding each fd in sequence and then
-deleting them all of one fails.  Sure, this could race against dup2(),
-but I'm not sure we care.
-
---Andy
+Rasmus
