@@ -1,52 +1,44 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [patch v2] mm, thp: always specify ineligible vmas as nh in smaps
-Date: Tue, 25 Sep 2018 07:50:22 +0200
-Message-ID: <20180925055022.GL18685@dhcp22.suse.cz>
-References: <alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com>
- <e2f159f3-5373-dda4-5904-ed24d029de3c@suse.cz>
- <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com>
- <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
- <20180924195603.GJ18685@dhcp22.suse.cz>
- <20180924200258.GK18685@dhcp22.suse.cz>
- <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v6 4/5] seccomp: add support for passing fds via
+ USER_NOTIF
+Date: Tue, 25 Sep 2018 06:53:27 -0600
+Message-ID: <20180925125327.GB9537@cisco>
+References: <20180906152859.7810-1-tycho@tycho.ws>
+ <20180906152859.7810-5-tycho@tycho.ws>
+ <CALCETrWZmN4FeCSwemfMeayupBmQ-NqpVWQuqSU34CLvzdx8gw@mail.gmail.com>
+ <20180919095536.GM4672@cisco>
+ <C1406292-7496-459F-A76A-20C9EFBB12D6@amacapital.net>
+ <20180919143842.GN4672@cisco>
+ <CALCETrVuP0nQ5B01-iWrcQ87hisz7=jA08-Uisqud_r+zc74NQ@mail.gmail.com>
+ <20180920234240.GR4672@cisco>
+ <CALCETrWEr_VAtJu1mm1akTigsRUXAA7_7RHb-WGHqnyNy=j17Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+In-Reply-To: <CALCETrWEr_VAtJu1mm1akTigsRUXAA7_7RHb-WGHqnyNy=j17Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: David Rientjes <rientjes@google.com>, Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Kees Cook <keescook@chromium.org>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 24-09-18 22:43:49, Vlastimil Babka wrote:
-> On 9/24/18 10:02 PM, Michal Hocko wrote:
-> > On Mon 24-09-18 21:56:03, Michal Hocko wrote:
-[...]
-> >> That being said, I do not object to the patch, I am just trying to
-> >> understand what is the intended usage for the flag that does try to say
-> >> more than the madvise status.
-> > 
-> > And moreover, how is the PR_SET_THP_DISABLE any different from the
-> > global THP disabled case. Do we want to set all vmas to nh as well?
-> 
-> Probably not. It's easy to check the global status, but is it possible
-> to query for the prctl flags of a process?
+On Thu, Sep 20, 2018 at 07:18:45PM -0700, Andy Lutomirski wrote:
+> Hmm.  This does mean that we need a test case for a user notifier
+> returning -ERESTARTSYS.  It should Just Work (tm), but those are
+> famous last words.
 
-Dunno but I suspect there is no way to check for this.
+Just to confirm, I've got a test case that works like this:
 
-> We are looking at process or
-> even vma-specific flags here. If the prctl was historically implemented
-> via VM_NOHUGEPAGE and thus reported as such in smaps, it makes sense to
-> do so even with the MMF_ flag IMHO?
+1. fork and install a SIGUSR1 handler
+2. tracee does a syscall that gets trapped
+3. send SIGUSR1
+4. respond from the listener with -ERESTARTSYS
+5. see another of the same syscall, even though the tracee still thinks
+   its in the first one
+6. respond with something reasonable, the tracee sees this response
 
-Yes if this breaks some userspace which relied on the previous behavior.
-But if nothing really broke then I guess it would be better to have the
-semantic as clear as possible. Go and check the global status to make
-the whole picture doesn't look very sound to me. On the other hand this
-VMA has a madvise flag on it sounds quite clear and you know what to
-expect at least. Sure the hint might be ignored in the end but well,
-these are hints they do not guarantee anything after all.
--- 
-Michal Hocko
-SUSE Labs
+I think that's the intended behavior. Note that when the listener
+responds with -ERESTARTSYS and there is no signal pending, the task
+just dies. That might be reasonable, I'm not sure.
+
+Tycho
