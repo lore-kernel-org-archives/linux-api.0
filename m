@@ -1,36 +1,55 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v4 01/27] x86/cpufeatures: Add CPUIDs for
- Control-flow Enforcement Technology (CET)
-Date: Tue, 25 Sep 2018 09:29:51 -0700
-Message-ID: <309a30584a56babbd4d25199f71b786442300c1e.camel@intel.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC PATCH v4 02/27] x86/fpu/xstate: Change some names to
+ separate XSAVES system and user states
+Date: Tue, 25 Sep 2018 18:37:45 +0200
+Message-ID: <20180925163745.GC30146@hirez.programming.kicks-ass.net>
 References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
-         <20180921150351.20898-2-yu-cheng.yu@intel.com>
-         <20180925162705.GB30146@hirez.programming.kicks-ass.net>
+ <20180921150351.20898-3-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180925162705.GB30146@hirez.programming.kicks-ass.net>
+Content-Disposition: inline
+In-Reply-To: <20180921150351.20898-3-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Randy
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2018-09-25 at 18:27 +0200, Peter Zijlstra wrote:
-> On Fri, Sep 21, 2018 at 08:03:25AM -0700, Yu-cheng Yu wrote:
-> 
-> > diff --git a/arch/x86/kernel/cpu/scattered.c
-> > b/arch/x86/kernel/cpu/scattered.c
-> > index 772c219b6889..63cbb4d9938e 100644
-> > --- a/arch/x86/kernel/cpu/scattered.c
-> > +++ b/arch/x86/kernel/cpu/scattered.c
-> > @@ -21,6 +21,7 @@ struct cpuid_bit {
-> >  static const struct cpuid_bit cpuid_bits[] = {
-> >  	{ X86_FEATURE_APERFMPERF,       CPUID_ECX,  0, 0x00000006, 0 },
-> >  	{ X86_FEATURE_EPB,		CPUID_ECX,  3, 0x00000006, 0 },
-> > +	{ X86_FEATURE_IBT,		CPUID_EDX, 20, 0x00000007, 0},
-> 
->                                                                    ^^
-> missing white space at the end there.
+On Fri, Sep 21, 2018 at 08:03:26AM -0700, Yu-cheng Yu wrote:
 
-I will fix it.  Thanks!
+> diff --git a/arch/x86/include/asm/fpu/internal.h b/arch/x86/include/asm/fpu/internal.h
+> index a38bf5a1e37a..f1f9bf91a0ab 100644
+> --- a/arch/x86/include/asm/fpu/internal.h
+> +++ b/arch/x86/include/asm/fpu/internal.h
+> @@ -93,7 +93,8 @@ static inline void fpstate_init_xstate(struct xregs_state *xsave)
+>  	 * XRSTORS requires these bits set in xcomp_bv, or it will
+>  	 * trigger #GP:
+>  	 */
+> -	xsave->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT | xfeatures_mask;
+> +	xsave->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT |
+> +			xfeatures_mask_user;
+
+I would be OK with that line extending to 82 characters..
+
+>  }
+>  
+>  static inline void fpstate_init_fxstate(struct fxregs_state *fx)
+
+> diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+> index 87a57b7642d3..19f8df54c72a 100644
+> --- a/arch/x86/kernel/fpu/xstate.c
+> +++ b/arch/x86/kernel/fpu/xstate.c
+
+> @@ -421,7 +421,8 @@ static void __init setup_init_fpu_buf(void)
+>  	print_xstate_features();
+>  
+>  	if (boot_cpu_has(X86_FEATURE_XSAVES))
+> -		init_fpstate.xsave.header.xcomp_bv = (u64)1 << 63 | xfeatures_mask;
+> +		init_fpstate.xsave.header.xcomp_bv =
+> +			BIT_ULL(63) | xfeatures_mask_user;
+
+If you do that, the if () needs { } per coding style.
+
+>  
+>  	/*
+>  	 * Init all the features state with header.xfeatures being 0x0
