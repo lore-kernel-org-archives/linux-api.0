@@ -1,121 +1,61 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH] rseq/selftests: fix parametrized test with -fpie
-Date: Tue, 25 Sep 2018 13:39:36 -0400 (EDT)
-Message-ID: <1367962117.10271.1537897176578.JavaMail.zimbra@efficios.com>
-References: <20180918135328.32034-1-mathieu.desnoyers@efficios.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [patch v2] mm, thp: always specify ineligible vmas as nh in
+ smaps
+Date: Tue, 25 Sep 2018 12:52:09 -0700 (PDT)
+Message-ID: <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
+References: <alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com> <e2f159f3-5373-dda4-5904-ed24d029de3c@suse.cz> <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com> <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
+ <20180924195603.GJ18685@dhcp22.suse.cz> <20180924200258.GK18685@dhcp22.suse.cz> <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20180918135328.32034-1-mathieu.desnoyers@efficios.com>
-Sender: stable-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kselftest <linux-kselftest@vger.kernel.org>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Sep 18, 2018, at 9:53 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Mon, 24 Sep 2018, Vlastimil Babka wrote:
 
-> On x86-64, the parametrized selftest code for rseq crashes with a
-> segmentation fault when compiled with -fpie. This happens when the
-> param_test binary is loaded at an address beyond 32-bit on x86-64.
-> 
-> The issue is caused by use of a 32-bit register to hold the address
-> of the loop counter variable.
-> 
-> Fix this by using a 64-bit register to calculate the address of the
-> loop counter variables as an offset from rip.
+> On 9/24/18 10:02 PM, Michal Hocko wrote:
+> > On Mon 24-09-18 21:56:03, Michal Hocko wrote:
+> >> On Mon 24-09-18 12:30:07, David Rientjes wrote:
+> >>> Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+> >>> introduced a regression in that userspace cannot always determine the set
+> >>> of vmas where thp is ineligible.
+> >>>
+> >>> Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
+> >>> to determine if a vma is eligible to be backed by hugepages.
+> >>
+> >> I was under impression that nh resp hg flags only tell about the madvise
+> >> status. How do you exactly use these flags in an application?
+> >>
 
-Should this fix go through tip or the selftests tree ?
+This is used to identify heap mappings that should be able to fault thp 
+but do not, and they normally point to a low-on-memory or fragmentation 
+issue.  After commit 1860033237d4, our users of PR_SET_THP_DISABLE no 
+longer show "nh" for their heap mappings so they get reported as having a 
+low thp ratio when in reality it is disabled.  It is also used in 
+automated testing to ensure that vmas get disabled for thp appropriately 
+and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
+this, and those tests now break.
 
-Thanks,
+> >> Your eligible rules as defined here:
+> >>
+> >>> + [*] A process mapping is eligible to be backed by transparent hugepages (thp)
+> >>> +     depending on system-wide settings and the mapping itself.  See
+> >>> +     Documentation/admin-guide/mm/transhuge.rst for default behavior.  If a
+> >>> +     mapping has a flag of "nh", it is not eligible to be backed by hugepages
+> >>> +     in any condition, either because of prctl(PR_SET_THP_DISABLE) or
+> >>> +     madvise(MADV_NOHUGEPAGE).  PR_SET_THP_DISABLE takes precedence over any
+> >>> +     MADV_HUGEPAGE.
+> >>
+> >> doesn't seem to match the reality. I do not see all the file backed
+> >> mappings to be nh marked. So is this really about eligibility rather
+> >> than the madvise status? Maybe it is just the above documentation that
+> >> needs to be updated.
+> 
+> Yeah the change from madvise to eligibility in the doc seems to go too far.
+> 
 
-Mathieu
-
-> 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> Cc: <stable@vger.kernel.org> # v4.18
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Joel Fernandes <joelaf@google.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Catalin Marinas <catalin.marinas@arm.com>
-> Cc: Dave Watson <davejwatson@fb.com>
-> Cc: Will Deacon <will.deacon@arm.com>
-> Cc: Shuah Khan <shuahkh@osg.samsung.com>
-> Cc: Andi Kleen <andi@firstfloor.org>
-> Cc: linux-kselftest@vger.kernel.org
-> Cc: "H . Peter Anvin" <hpa@zytor.com>
-> Cc: Chris Lameter <cl@linux.com>
-> Cc: Russell King <linux@arm.linux.org.uk>
-> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-> Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-> Cc: Paul Turner <pjt@google.com>
-> Cc: Boqun Feng <boqun.feng@gmail.com>
-> Cc: Josh Triplett <josh@joshtriplett.org>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> Cc: Ben Maurer <bmaurer@fb.com>
-> Cc: Andy Lutomirski <luto@amacapital.net>
-> Cc: Andrew Morton <akpm@linux-foundation.org>
-> Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> ---
-> tools/testing/selftests/rseq/param_test.c | 19 ++++++++++---------
-> 1 file changed, 10 insertions(+), 9 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/rseq/param_test.c
-> b/tools/testing/selftests/rseq/param_test.c
-> index 615252331813..4bc071525bf7 100644
-> --- a/tools/testing/selftests/rseq/param_test.c
-> +++ b/tools/testing/selftests/rseq/param_test.c
-> @@ -56,15 +56,13 @@ unsigned int yield_mod_cnt, nr_abort;
-> 			printf(fmt, ## __VA_ARGS__);	\
-> 	} while (0)
-> 
-> -#if defined(__x86_64__) || defined(__i386__)
-> +#ifdef __i386__
-> 
-> #define INJECT_ASM_REG	"eax"
-> 
-> #define RSEQ_INJECT_CLOBBER \
-> 	, INJECT_ASM_REG
-> 
-> -#ifdef __i386__
-> -
-> #define RSEQ_INJECT_ASM(n) \
-> 	"mov asm_loop_cnt_" #n ", %%" INJECT_ASM_REG "\n\t" \
-> 	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
-> @@ -76,9 +74,16 @@ unsigned int yield_mod_cnt, nr_abort;
-> 
-> #elif defined(__x86_64__)
-> 
-> +#define INJECT_ASM_REG_P	"rax"
-> +#define INJECT_ASM_REG		"eax"
-> +
-> +#define RSEQ_INJECT_CLOBBER \
-> +	, INJECT_ASM_REG_P \
-> +	, INJECT_ASM_REG
-> +
-> #define RSEQ_INJECT_ASM(n) \
-> -	"lea asm_loop_cnt_" #n "(%%rip), %%" INJECT_ASM_REG "\n\t" \
-> -	"mov (%%" INJECT_ASM_REG "), %%" INJECT_ASM_REG "\n\t" \
-> +	"lea asm_loop_cnt_" #n "(%%rip), %%" INJECT_ASM_REG_P "\n\t" \
-> +	"mov (%%" INJECT_ASM_REG_P "), %%" INJECT_ASM_REG "\n\t" \
-> 	"test %%" INJECT_ASM_REG ",%%" INJECT_ASM_REG "\n\t" \
-> 	"jz 333f\n\t" \
-> 	"222:\n\t" \
-> @@ -86,10 +91,6 @@ unsigned int yield_mod_cnt, nr_abort;
-> 	"jnz 222b\n\t" \
-> 	"333:\n\t"
-> 
-> -#else
-> -#error "Unsupported architecture"
-> -#endif
-> -
-> #elif defined(__ARMEL__)
-> 
-> #define RSEQ_INJECT_INPUT \
-> --
-> 2.11.0
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+I'll reword this to explicitly state that "hg" and "nh" mappings either 
+allow or disallow thp backing.
