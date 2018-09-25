@@ -1,133 +1,133 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
+From: Andrey Vagin <avagin@virtuozzo.com>
 Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
-Date: Tue, 25 Sep 2018 00:02:32 +0200
-Message-ID: <874leezh8n.fsf@xmission.com>
+Date: Tue, 25 Sep 2018 01:42:02 +0000
+Message-ID: <20180925014150.GA6302@outlook.office365.com>
 References: <20180919205037.9574-1-dima@arista.com>
-        <874lej6nny.fsf@xmission.com>
-        <20180924205119.GA14833@outlook.office365.com>
+ <874lej6nny.fsf@xmission.com> <20180924205119.GA14833@outlook.office365.com>
+ <874leezh8n.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180924205119.GA14833@outlook.office365.com> (Andrey Vagin's
-        message of "Mon, 24 Sep 2018 20:51:33 +0000")
+In-Reply-To: <874leezh8n.fsf@xmission.com>
+Content-Language: en-US
+Content-ID: <875B41794BA40B45ABD259AFFEE4729B@eurprd08.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrey Vagin <avagin@virtuozzo.com>
-Cc: Dmitry Safonov <dima@arista.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "criu@openvz.org" <criu@openvz.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Alexey
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Dmitry Safonov <dima@arista.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "criu@openvz.org" <criu@openvz.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>Alexey Dobriyan <ad>
 List-Id: linux-api@vger.kernel.org
 
-Andrey Vagin <avagin@virtuozzo.com> writes:
-
-> On Fri, Sep 21, 2018 at 02:27:29PM +0200, Eric W. Biederman wrote:
->> Dmitry Safonov <dima@arista.com> writes:
->> 
->> > Discussions around time virtualization are there for a long time.
->> > The first attempt to implement time namespace was in 2006 by Jeff Dike.
->> > From that time, the topic appears on and off in various discussions.
->> >
->> > There are two main use cases for time namespaces:
->> > 1. change date and time inside a container;
->> > 2. adjust clocks for a container restored from a checkpoint.
->> >
->> > “It seems like this might be one of the last major obstacles keeping
->> > migration from being used in production systems, given that not all
->> > containers and connections can be migrated as long as a time dependency
->> > is capable of messing it up.” (by github.com/dav-ell)
->> >
->> > The kernel provides access to several clocks: CLOCK_REALTIME,
->> > CLOCK_MONOTONIC, CLOCK_BOOTTIME. Last two clocks are monotonous, but the
->> > start points for them are not defined and are different for each running
->> > system. When a container is migrated from one node to another, all
->> > clocks have to be restored into consistent states; in other words, they
->> > have to continue running from the same points where they have been
->> > dumped.
->> >
->> > The main idea behind this patch set is adding per-namespace offsets for
->> > system clocks. When a process in a non-root time namespace requests
->> > time of a clock, a namespace offset is added to the current value of
->> > this clock on a host and the sum is returned.
->> >
->> > All offsets are placed on a separate page, this allows up to map it as 
->> > part of vvar into user processes and use offsets from vdso calls.
->> >
->> > Now offsets are implemented for CLOCK_MONOTONIC and CLOCK_BOOTTIME
->> > clocks.
->> >
->> > Questions to discuss:
->> >
->> > * Clone flags exhaustion. Currently there is only one unused clone flag
->> > bit left, and it may be worth to use it to extend arguments of the clone
->> > system call.
->> >
->> > * Realtime clock implementation details:
->> >   Is having a simple offset enough?
->> >   What to do when date and time is changed on the host?
->> >   Is there a need to adjust vfs modification and creation times? 
->> >   Implementation for adjtime() syscall.
->> 
->> Overall I support this effort.  In my quick skim this code looked good.
->
-> Hi Eric,
->
-> Thank you for the feedback.
->
->> 
->> My feeling is that we need to be able to support running ntpd and
->> support one namespace doing googles smoothing of leap seconds while
->> another namespace takes the leap second.
->> 
->> What I was imagining when I was last thinking about this was one
->> instance of struct timekeeper aka tk_core per time namespace.  That
->> structure already keeps offsets for all of the various clocks from
->> the kerne internal time sources.  What would be needed would be to
->> pass in an appropriate time namespace pointer.
->> 
->> I could be completely wrong as I have not take the time to completely
->> trace through the code.  Have you looked at pushing the time namespace
->> down as far as tk_core?
->> 
->> What I think would be the big advantage (besides ntp working) is that
->> the bulk of the code could be reused.  Allowing testing of the kernel's
->> time code by setting up a new time namespace.  So a person in production
->> could setup a time namespace with the time set ahead a little  bit and
->> be able to verify that the kernel handles the upcoming leap second
->> properly.
->>
->
-> It is an interesting idea, but I have a few questions:
->
-> 1. Does it mean that timekeeping_update() will be called for each
-> namespace? This functions is called periodically, it updates times on the
-> timekeeper structure, updates vsyscall_gtod_data, etc. What will be an
-> overhead of this?
-
-I don't know if periodically is a proper characterization.  There may be
-a code path that does that.  But from what I can see timekeeping_update
-is the guts of settimeofday (and a few related functions).
-
-So it appears to make sense for timekeeping_update to be per namespace.
-
-Hmm.  Looking at what is updated in the vsyscall_gtod_data it does
-look like you would have to periodically update things, but I don't know
-big that period would be.  As long as the period is reasonably large,
-or the time namespaces were sufficiently deschronized it should not
-be a problem.  But that is the class of problem that could make
-my ideal impractical if there is measuarable overhead.
-
-Where were you seeing timekeeping_update being called periodically?
-
-> 2. What will we do with vdso? It looks like we will have to have a
-> separate vsyscall_gtod_data for each ns and update each of them
-> separately.
-
-Yes.  But you don't have to have introduce another variable just make
-certain vsyscall_gtod_data is a page aligned thing per time namespace.
-
-If I read the summary of the existing patchset something very similiar
-is already going on.
-
-Each process would only map one.  And unshare of the time namespace
-would need to act like the pid namespace or be limited to only being
-allowed when there is only a single task using the mm.
-
-Eric
+T24gVHVlLCBTZXAgMjUsIDIwMTggYXQgMTI6MDI6MzJBTSArMDIwMCwgRXJpYyBXLiBCaWVkZXJt
+YW4gd3JvdGU6DQo+IEFuZHJleSBWYWdpbiA8YXZhZ2luQHZpcnR1b3p6by5jb20+IHdyaXRlczoN
+Cj4gDQo+ID4gT24gRnJpLCBTZXAgMjEsIDIwMTggYXQgMDI6Mjc6MjlQTSArMDIwMCwgRXJpYyBX
+LiBCaWVkZXJtYW4gd3JvdGU6DQo+ID4+IERtaXRyeSBTYWZvbm92IDxkaW1hQGFyaXN0YS5jb20+
+IHdyaXRlczoNCj4gPj4gDQo+ID4+ID4gRGlzY3Vzc2lvbnMgYXJvdW5kIHRpbWUgdmlydHVhbGl6
+YXRpb24gYXJlIHRoZXJlIGZvciBhIGxvbmcgdGltZS4NCj4gPj4gPiBUaGUgZmlyc3QgYXR0ZW1w
+dCB0byBpbXBsZW1lbnQgdGltZSBuYW1lc3BhY2Ugd2FzIGluIDIwMDYgYnkgSmVmZiBEaWtlLg0K
+PiA+PiA+IEZyb20gdGhhdCB0aW1lLCB0aGUgdG9waWMgYXBwZWFycyBvbiBhbmQgb2ZmIGluIHZh
+cmlvdXMgZGlzY3Vzc2lvbnMuDQo+ID4+ID4NCj4gPj4gPiBUaGVyZSBhcmUgdHdvIG1haW4gdXNl
+IGNhc2VzIGZvciB0aW1lIG5hbWVzcGFjZXM6DQo+ID4+ID4gMS4gY2hhbmdlIGRhdGUgYW5kIHRp
+bWUgaW5zaWRlIGEgY29udGFpbmVyOw0KPiA+PiA+IDIuIGFkanVzdCBjbG9ja3MgZm9yIGEgY29u
+dGFpbmVyIHJlc3RvcmVkIGZyb20gYSBjaGVja3BvaW50Lg0KPiA+PiA+DQo+ID4+ID4g4oCcSXQg
+c2VlbXMgbGlrZSB0aGlzIG1pZ2h0IGJlIG9uZSBvZiB0aGUgbGFzdCBtYWpvciBvYnN0YWNsZXMg
+a2VlcGluZw0KPiA+PiA+IG1pZ3JhdGlvbiBmcm9tIGJlaW5nIHVzZWQgaW4gcHJvZHVjdGlvbiBz
+eXN0ZW1zLCBnaXZlbiB0aGF0IG5vdCBhbGwNCj4gPj4gPiBjb250YWluZXJzIGFuZCBjb25uZWN0
+aW9ucyBjYW4gYmUgbWlncmF0ZWQgYXMgbG9uZyBhcyBhIHRpbWUgZGVwZW5kZW5jeQ0KPiA+PiA+
+IGlzIGNhcGFibGUgb2YgbWVzc2luZyBpdCB1cC7igJ0gKGJ5IGdpdGh1Yi5jb20vZGF2LWVsbCkN
+Cj4gPj4gPg0KPiA+PiA+IFRoZSBrZXJuZWwgcHJvdmlkZXMgYWNjZXNzIHRvIHNldmVyYWwgY2xv
+Y2tzOiBDTE9DS19SRUFMVElNRSwNCj4gPj4gPiBDTE9DS19NT05PVE9OSUMsIENMT0NLX0JPT1RU
+SU1FLiBMYXN0IHR3byBjbG9ja3MgYXJlIG1vbm90b25vdXMsIGJ1dCB0aGUNCj4gPj4gPiBzdGFy
+dCBwb2ludHMgZm9yIHRoZW0gYXJlIG5vdCBkZWZpbmVkIGFuZCBhcmUgZGlmZmVyZW50IGZvciBl
+YWNoIHJ1bm5pbmcNCj4gPj4gPiBzeXN0ZW0uIFdoZW4gYSBjb250YWluZXIgaXMgbWlncmF0ZWQg
+ZnJvbSBvbmUgbm9kZSB0byBhbm90aGVyLCBhbGwNCj4gPj4gPiBjbG9ja3MgaGF2ZSB0byBiZSBy
+ZXN0b3JlZCBpbnRvIGNvbnNpc3RlbnQgc3RhdGVzOyBpbiBvdGhlciB3b3JkcywgdGhleQ0KPiA+
+PiA+IGhhdmUgdG8gY29udGludWUgcnVubmluZyBmcm9tIHRoZSBzYW1lIHBvaW50cyB3aGVyZSB0
+aGV5IGhhdmUgYmVlbg0KPiA+PiA+IGR1bXBlZC4NCj4gPj4gPg0KPiA+PiA+IFRoZSBtYWluIGlk
+ZWEgYmVoaW5kIHRoaXMgcGF0Y2ggc2V0IGlzIGFkZGluZyBwZXItbmFtZXNwYWNlIG9mZnNldHMg
+Zm9yDQo+ID4+ID4gc3lzdGVtIGNsb2Nrcy4gV2hlbiBhIHByb2Nlc3MgaW4gYSBub24tcm9vdCB0
+aW1lIG5hbWVzcGFjZSByZXF1ZXN0cw0KPiA+PiA+IHRpbWUgb2YgYSBjbG9jaywgYSBuYW1lc3Bh
+Y2Ugb2Zmc2V0IGlzIGFkZGVkIHRvIHRoZSBjdXJyZW50IHZhbHVlIG9mDQo+ID4+ID4gdGhpcyBj
+bG9jayBvbiBhIGhvc3QgYW5kIHRoZSBzdW0gaXMgcmV0dXJuZWQuDQo+ID4+ID4NCj4gPj4gPiBB
+bGwgb2Zmc2V0cyBhcmUgcGxhY2VkIG9uIGEgc2VwYXJhdGUgcGFnZSwgdGhpcyBhbGxvd3MgdXAg
+dG8gbWFwIGl0IGFzIA0KPiA+PiA+IHBhcnQgb2YgdnZhciBpbnRvIHVzZXIgcHJvY2Vzc2VzIGFu
+ZCB1c2Ugb2Zmc2V0cyBmcm9tIHZkc28gY2FsbHMuDQo+ID4+ID4NCj4gPj4gPiBOb3cgb2Zmc2V0
+cyBhcmUgaW1wbGVtZW50ZWQgZm9yIENMT0NLX01PTk9UT05JQyBhbmQgQ0xPQ0tfQk9PVFRJTUUN
+Cj4gPj4gPiBjbG9ja3MuDQo+ID4+ID4NCj4gPj4gPiBRdWVzdGlvbnMgdG8gZGlzY3VzczoNCj4g
+Pj4gPg0KPiA+PiA+ICogQ2xvbmUgZmxhZ3MgZXhoYXVzdGlvbi4gQ3VycmVudGx5IHRoZXJlIGlz
+IG9ubHkgb25lIHVudXNlZCBjbG9uZSBmbGFnDQo+ID4+ID4gYml0IGxlZnQsIGFuZCBpdCBtYXkg
+YmUgd29ydGggdG8gdXNlIGl0IHRvIGV4dGVuZCBhcmd1bWVudHMgb2YgdGhlIGNsb25lDQo+ID4+
+ID4gc3lzdGVtIGNhbGwuDQo+ID4+ID4NCj4gPj4gPiAqIFJlYWx0aW1lIGNsb2NrIGltcGxlbWVu
+dGF0aW9uIGRldGFpbHM6DQo+ID4+ID4gICBJcyBoYXZpbmcgYSBzaW1wbGUgb2Zmc2V0IGVub3Vn
+aD8NCj4gPj4gPiAgIFdoYXQgdG8gZG8gd2hlbiBkYXRlIGFuZCB0aW1lIGlzIGNoYW5nZWQgb24g
+dGhlIGhvc3Q/DQo+ID4+ID4gICBJcyB0aGVyZSBhIG5lZWQgdG8gYWRqdXN0IHZmcyBtb2RpZmlj
+YXRpb24gYW5kIGNyZWF0aW9uIHRpbWVzPyANCj4gPj4gPiAgIEltcGxlbWVudGF0aW9uIGZvciBh
+ZGp0aW1lKCkgc3lzY2FsbC4NCj4gPj4gDQo+ID4+IE92ZXJhbGwgSSBzdXBwb3J0IHRoaXMgZWZm
+b3J0LiAgSW4gbXkgcXVpY2sgc2tpbSB0aGlzIGNvZGUgbG9va2VkIGdvb2QuDQo+ID4NCj4gPiBI
+aSBFcmljLA0KPiA+DQo+ID4gVGhhbmsgeW91IGZvciB0aGUgZmVlZGJhY2suDQo+ID4NCj4gPj4g
+DQo+ID4+IE15IGZlZWxpbmcgaXMgdGhhdCB3ZSBuZWVkIHRvIGJlIGFibGUgdG8gc3VwcG9ydCBy
+dW5uaW5nIG50cGQgYW5kDQo+ID4+IHN1cHBvcnQgb25lIG5hbWVzcGFjZSBkb2luZyBnb29nbGVz
+IHNtb290aGluZyBvZiBsZWFwIHNlY29uZHMgd2hpbGUNCj4gPj4gYW5vdGhlciBuYW1lc3BhY2Ug
+dGFrZXMgdGhlIGxlYXAgc2Vjb25kLg0KPiA+PiANCj4gPj4gV2hhdCBJIHdhcyBpbWFnaW5pbmcg
+d2hlbiBJIHdhcyBsYXN0IHRoaW5raW5nIGFib3V0IHRoaXMgd2FzIG9uZQ0KPiA+PiBpbnN0YW5j
+ZSBvZiBzdHJ1Y3QgdGltZWtlZXBlciBha2EgdGtfY29yZSBwZXIgdGltZSBuYW1lc3BhY2UuICBU
+aGF0DQo+ID4+IHN0cnVjdHVyZSBhbHJlYWR5IGtlZXBzIG9mZnNldHMgZm9yIGFsbCBvZiB0aGUg
+dmFyaW91cyBjbG9ja3MgZnJvbQ0KPiA+PiB0aGUga2VybmUgaW50ZXJuYWwgdGltZSBzb3VyY2Vz
+LiAgV2hhdCB3b3VsZCBiZSBuZWVkZWQgd291bGQgYmUgdG8NCj4gPj4gcGFzcyBpbiBhbiBhcHBy
+b3ByaWF0ZSB0aW1lIG5hbWVzcGFjZSBwb2ludGVyLg0KPiA+PiANCj4gPj4gSSBjb3VsZCBiZSBj
+b21wbGV0ZWx5IHdyb25nIGFzIEkgaGF2ZSBub3QgdGFrZSB0aGUgdGltZSB0byBjb21wbGV0ZWx5
+DQo+ID4+IHRyYWNlIHRocm91Z2ggdGhlIGNvZGUuICBIYXZlIHlvdSBsb29rZWQgYXQgcHVzaGlu
+ZyB0aGUgdGltZSBuYW1lc3BhY2UNCj4gPj4gZG93biBhcyBmYXIgYXMgdGtfY29yZT8NCj4gPj4g
+DQo+ID4+IFdoYXQgSSB0aGluayB3b3VsZCBiZSB0aGUgYmlnIGFkdmFudGFnZSAoYmVzaWRlcyBu
+dHAgd29ya2luZykgaXMgdGhhdA0KPiA+PiB0aGUgYnVsayBvZiB0aGUgY29kZSBjb3VsZCBiZSBy
+ZXVzZWQuICBBbGxvd2luZyB0ZXN0aW5nIG9mIHRoZSBrZXJuZWwncw0KPiA+PiB0aW1lIGNvZGUg
+Ynkgc2V0dGluZyB1cCBhIG5ldyB0aW1lIG5hbWVzcGFjZS4gIFNvIGEgcGVyc29uIGluIHByb2R1
+Y3Rpb24NCj4gPj4gY291bGQgc2V0dXAgYSB0aW1lIG5hbWVzcGFjZSB3aXRoIHRoZSB0aW1lIHNl
+dCBhaGVhZCBhIGxpdHRsZSAgYml0IGFuZA0KPiA+PiBiZSBhYmxlIHRvIHZlcmlmeSB0aGF0IHRo
+ZSBrZXJuZWwgaGFuZGxlcyB0aGUgdXBjb21pbmcgbGVhcCBzZWNvbmQNCj4gPj4gcHJvcGVybHku
+DQo+ID4+DQo+ID4NCj4gPiBJdCBpcyBhbiBpbnRlcmVzdGluZyBpZGVhLCBidXQgSSBoYXZlIGEg
+ZmV3IHF1ZXN0aW9uczoNCj4gPg0KPiA+IDEuIERvZXMgaXQgbWVhbiB0aGF0IHRpbWVrZWVwaW5n
+X3VwZGF0ZSgpIHdpbGwgYmUgY2FsbGVkIGZvciBlYWNoDQo+ID4gbmFtZXNwYWNlPyBUaGlzIGZ1
+bmN0aW9ucyBpcyBjYWxsZWQgcGVyaW9kaWNhbGx5LCBpdCB1cGRhdGVzIHRpbWVzIG9uIHRoZQ0K
+PiA+IHRpbWVrZWVwZXIgc3RydWN0dXJlLCB1cGRhdGVzIHZzeXNjYWxsX2d0b2RfZGF0YSwgZXRj
+LiBXaGF0IHdpbGwgYmUgYW4NCj4gPiBvdmVyaGVhZCBvZiB0aGlzPw0KPiANCj4gSSBkb24ndCBr
+bm93IGlmIHBlcmlvZGljYWxseSBpcyBhIHByb3BlciBjaGFyYWN0ZXJpemF0aW9uLiAgVGhlcmUg
+bWF5IGJlDQo+IGEgY29kZSBwYXRoIHRoYXQgZG9lcyB0aGF0LiAgQnV0IGZyb20gd2hhdCBJIGNh
+biBzZWUgdGltZWtlZXBpbmdfdXBkYXRlDQo+IGlzIHRoZSBndXRzIG9mIHNldHRpbWVvZmRheSAo
+YW5kIGEgZmV3IHJlbGF0ZWQgZnVuY3Rpb25zKS4NCj4gDQo+IFNvIGl0IGFwcGVhcnMgdG8gbWFr
+ZSBzZW5zZSBmb3IgdGltZWtlZXBpbmdfdXBkYXRlIHRvIGJlIHBlciBuYW1lc3BhY2UuDQo+IA0K
+PiBIbW0uICBMb29raW5nIGF0IHdoYXQgaXMgdXBkYXRlZCBpbiB0aGUgdnN5c2NhbGxfZ3RvZF9k
+YXRhIGl0IGRvZXMNCj4gbG9vayBsaWtlIHlvdSB3b3VsZCBoYXZlIHRvIHBlcmlvZGljYWxseSB1
+cGRhdGUgdGhpbmdzLCBidXQgSSBkb24ndCBrbm93DQo+IGJpZyB0aGF0IHBlcmlvZCB3b3VsZCBi
+ZS4gIEFzIGxvbmcgYXMgdGhlIHBlcmlvZCBpcyByZWFzb25hYmx5IGxhcmdlLA0KPiBvciB0aGUg
+dGltZSBuYW1lc3BhY2VzIHdlcmUgc3VmZmljaWVudGx5IGRlc2Nocm9uaXplZCBpdCBzaG91bGQg
+bm90DQo+IGJlIGEgcHJvYmxlbS4gIEJ1dCB0aGF0IGlzIHRoZSBjbGFzcyBvZiBwcm9ibGVtIHRo
+YXQgY291bGQgbWFrZQ0KPiBteSBpZGVhbCBpbXByYWN0aWNhbCBpZiB0aGVyZSBpcyBtZWFzdWFy
+YWJsZSBvdmVyaGVhZC4NCj4gDQo+IFdoZXJlIHdlcmUgeW91IHNlZWluZyB0aW1la2VlcGluZ191
+cGRhdGUgYmVpbmcgY2FsbGVkIHBlcmlvZGljYWxseT8NCg0KdGltZWtlZXBpbmdfdXBkYXRlKCkg
+aXMgY2FsbGVkIEhaIHRpbWVzIHBlci1zZWNvbmQ6DQoNClsgICA2Ny45MTI4NThdICB0aW1la2Vl
+cGluZ191cGRhdGUuY29sZC4yNisweDUvMHhhDQpbICAgNjcuOTEzMzMyXSAgdGltZWtlZXBpbmdf
+YWR2YW5jZSsweDM2MS8weDVjMA0KWyAgIDY3LjkxMzg1N10gID8gdGlja19zY2hlZF9kb190aW1l
+cisweDU1LzB4NzANClsgICA2Ny45MTQ0MDldICA/IHRpY2tfc2NoZWRfZG9fdGltZXIrMHg3MC8w
+eDcwDQpbICAgNjcuOTE0OTQ3XSAgdGlja19zY2hlZF9kb190aW1lcisweDU1LzB4NzANClsgICA2
+Ny45MTU1MDVdICB0aWNrX3NjaGVkX3RpbWVyKzB4MjcvMHg3MA0KWyAgIDY3LjkxNjA0Ml0gIF9f
+aHJ0aW1lcl9ydW5fcXVldWVzKzB4MTBmLzB4NDQwDQpbICAgNjcuOTE2NjM5XSAgaHJ0aW1lcl9p
+bnRlcnJ1cHQrMHgxMDAvMHgyMjANClsgICA2Ny45MTczMDVdICBzbXBfYXBpY190aW1lcl9pbnRl
+cnJ1cHQrMHg3OS8weDIyMA0KWyAgIDY3LjkxODAzMF0gIGFwaWNfdGltZXJfaW50ZXJydXB0KzB4
+Zi8weDIwDQoNCj4gDQo+ID4gMi4gV2hhdCB3aWxsIHdlIGRvIHdpdGggdmRzbz8gSXQgbG9va3Mg
+bGlrZSB3ZSB3aWxsIGhhdmUgdG8gaGF2ZSBhDQo+ID4gc2VwYXJhdGUgdnN5c2NhbGxfZ3RvZF9k
+YXRhIGZvciBlYWNoIG5zIGFuZCB1cGRhdGUgZWFjaCBvZiB0aGVtDQo+ID4gc2VwYXJhdGVseS4N
+Cj4gDQo+IFllcy4gIEJ1dCB5b3UgZG9uJ3QgaGF2ZSB0byBoYXZlIGludHJvZHVjZSBhbm90aGVy
+IHZhcmlhYmxlIGp1c3QgbWFrZQ0KPiBjZXJ0YWluIHZzeXNjYWxsX2d0b2RfZGF0YSBpcyBhIHBh
+Z2UgYWxpZ25lZCB0aGluZyBwZXIgdGltZSBuYW1lc3BhY2UuDQo+IA0KPiBJZiBJIHJlYWQgdGhl
+IHN1bW1hcnkgb2YgdGhlIGV4aXN0aW5nIHBhdGNoc2V0IHNvbWV0aGluZyB2ZXJ5IHNpbWlsaWFy
+DQo+IGlzIGFscmVhZHkgZ29pbmcgb24uDQoNCkkgbWVhbiB2c3lzY2FsbF9ndG9kX2RhdGEgaGFz
+IHNvbWUgZGF0YSB3aGljaCBhcmUgb2Z0ZW4gdXBkYXRlZC4gVGhlcmUNCmFyZSB0aW1lc3RhbXBz
+IGZvciBtb25vdG9uaWMgYW5kIHdhbGwgY2xvY2tzLiBjbG9ja19nZXR0aW1lKCkgcmVhZHMgYQ0K
+dGltZSBzdGFtcCBmcm9tIHZzeXNjYWxsX2d0b2RfZGF0YSBhbmQgdGhlbiB1c2UgdHNjIHRvIGFw
+cHJveGltYXRlIHRoZQ0KY3VycmVudCB2YWx1ZSBvZiBhIGNsb2NrLg0KDQpBY3R1YWxseSwgdGhp
+cyBpcyBub3QgdGhlIHNlY29uZCBxdWVzdGlvbiwgaXQgaXMgYSBwYXJ0IG9mIHRoZSBmaXJzdA0K
+cXVlc3Rpb24uIHVwZGF0ZV92c3lzY2FsbCgpIGlzIGNhbGxlZCBmcm9tIHRpbWVrZWVwaW5nX3Vw
+ZGF0ZSgpLg0KDQo+IA0KPiBFYWNoIHByb2Nlc3Mgd291bGQgb25seSBtYXAgb25lLiAgQW5kIHVu
+c2hhcmUgb2YgdGhlIHRpbWUgbmFtZXNwYWNlDQo+IHdvdWxkIG5lZWQgdG8gYWN0IGxpa2UgdGhl
+IHBpZCBuYW1lc3BhY2Ugb3IgYmUgbGltaXRlZCB0byBvbmx5IGJlaW5nDQo+IGFsbG93ZWQgd2hl
+biB0aGVyZSBpcyBvbmx5IGEgc2luZ2xlIHRhc2sgdXNpbmcgdGhlIG1tLg0KPiANCj4gRXJpYw0K
