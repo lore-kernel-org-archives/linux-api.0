@@ -1,61 +1,40 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [patch v2] mm, thp: always specify ineligible vmas as nh in
- smaps
-Date: Tue, 25 Sep 2018 12:52:09 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
-References: <alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com> <e2f159f3-5373-dda4-5904-ed24d029de3c@suse.cz> <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com> <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
- <20180924195603.GJ18685@dhcp22.suse.cz> <20180924200258.GK18685@dhcp22.suse.cz> <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH 10/11] UAPI: ndctl: Remove use of PAGE_SIZE [ver #2]
+Date: Tue, 25 Sep 2018 13:17:54 -0700
+Message-ID: <CAPcyv4gmMwRAG=VxWNyeacxdsPCsaT+BtR+27+bHT=6heAZ3sQ@mail.gmail.com>
+References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
+ <153622557095.14298.10281337300003012767.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <153622557095.14298.10281337300003012767.stgit-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 24 Sep 2018, Vlastimil Babka wrote:
+On Thu, Sep 6, 2018 at 2:19 AM David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+>
+> The macro PAGE_SIZE isn't valid outside of the kernel, so it should not
+> appear in UAPI headers.
+>
+> Furthermore, the actual machine page size could theoretically change from
+> an application's point of view if it's running in a container that gets
+> migrated to another machine (say 4K/ppc64 to 64K/ppc64).
+>
+> Fixes: f2ba5a5baecf ("libnvdimm, namespace: make min namespace size 4K")
+> Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> cc: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-> On 9/24/18 10:02 PM, Michal Hocko wrote:
-> > On Mon 24-09-18 21:56:03, Michal Hocko wrote:
-> >> On Mon 24-09-18 12:30:07, David Rientjes wrote:
-> >>> Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
-> >>> introduced a regression in that userspace cannot always determine the set
-> >>> of vmas where thp is ineligible.
-> >>>
-> >>> Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
-> >>> to determine if a vma is eligible to be backed by hugepages.
-> >>
-> >> I was under impression that nh resp hg flags only tell about the madvise
-> >> status. How do you exactly use these flags in an application?
-> >>
+Acked-by: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
 
-This is used to identify heap mappings that should be able to fault thp 
-but do not, and they normally point to a low-on-memory or fragmentation 
-issue.  After commit 1860033237d4, our users of PR_SET_THP_DISABLE no 
-longer show "nh" for their heap mappings so they get reported as having a 
-low thp ratio when in reality it is disabled.  It is also used in 
-automated testing to ensure that vmas get disabled for thp appropriately 
-and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
-this, and those tests now break.
-
-> >> Your eligible rules as defined here:
-> >>
-> >>> + [*] A process mapping is eligible to be backed by transparent hugepages (thp)
-> >>> +     depending on system-wide settings and the mapping itself.  See
-> >>> +     Documentation/admin-guide/mm/transhuge.rst for default behavior.  If a
-> >>> +     mapping has a flag of "nh", it is not eligible to be backed by hugepages
-> >>> +     in any condition, either because of prctl(PR_SET_THP_DISABLE) or
-> >>> +     madvise(MADV_NOHUGEPAGE).  PR_SET_THP_DISABLE takes precedence over any
-> >>> +     MADV_HUGEPAGE.
-> >>
-> >> doesn't seem to match the reality. I do not see all the file backed
-> >> mappings to be nh marked. So is this really about eligibility rather
-> >> than the madvise status? Maybe it is just the above documentation that
-> >> needs to be updated.
-> 
-> Yeah the change from madvise to eligibility in the doc seems to go too far.
-> 
-
-I'll reword this to explicitly state that "hg" and "nh" mappings either 
-allow or disallow thp backing.
+Let me know if you want me to pick this up for 4.20.
