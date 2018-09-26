@@ -1,22 +1,30 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [patch v2] mm, thp: always specify ineligible vmas as nh in
- smaps
-Date: Tue, 25 Sep 2018 17:55:53 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1809251750300.28960@chino.kir.corp.google.com>
-References: <alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com> <e2f159f3-5373-dda4-5904-ed24d029de3c@suse.cz> <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com> <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
- <20180924195603.GJ18685@dhcp22.suse.cz> <20180924200258.GK18685@dhcp22.suse.cz> <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz> <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com> <20180925202959.GY18685@dhcp22.suse.cz>
- <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com> <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [patch v2] mm, thp: always specify ineligible vmas as nh in smaps
+Date: Wed, 26 Sep 2018 08:06:24 +0200
+Message-ID: <20180926060624.GA18685@dhcp22.suse.cz>
+References: <e2f159f3-5373-dda4-5904-ed24d029de3c@suse.cz>
+ <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com>
+ <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
+ <20180924195603.GJ18685@dhcp22.suse.cz>
+ <20180924200258.GK18685@dhcp22.suse.cz>
+ <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+ <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
+ <20180925202959.GY18685@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com>
+ <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: David Rientjes <rientjes@google.com>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 25 Sep 2018, Andrew Morton wrote:
-
+On Tue 25-09-18 15:04:06, Andrew Morton wrote:
+> On Tue, 25 Sep 2018 14:45:19 -0700 (PDT) David Rientjes <rientjes@google.com> wrote:
+> 
 > > > > It is also used in 
 > > > > automated testing to ensure that vmas get disabled for thp appropriately 
 > > > > and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
@@ -37,17 +45,15 @@ On Tue, 25 Sep 2018, Andrew Morton wrote:
 > too worried about restoring the old interface.  In which case
 > we have an opportunity to make improvements such as that suggested
 > by Michal?
-> 
 
-The only way to determine if a vma was thp disabled prior to this commit 
-was parsing VmFlags from /proc/pid/smaps.  That was possible either 
-through MADV_NOHUGEPAGE or PR_SET_THP_DISABLE.  It is perfectly legitimate 
-for a test case to check if either are being set correctly through 
-userspace libraries or through the kernel itself in the manner in which 
-the kernel exports this information.  It is also perfectly legitimate for 
-userspace to cull through information in the only way it is exported by 
-the kernel to identify reasons for why applications are not having their 
-heap backed by transparent hugepages: the mapping is disabled, the 
-application is hitting the limit for its mem cgroup, we are low on memory, 
-or there are fragmentation issues.  Differentiating between those is 
-something our userspace does, and was broken by 1860033237d4.
+Yeah, can we add a way to export PR_SET_THP_DISABLE to userspace
+somehow? E.g. /proc/<pid>/status. It is a process wide thing so
+reporting it per VMA sounds strange at best.
+
+This would also keep a sane (and currently documented) semantic for
+the smaps flag to be really
+    hg  - huge page advise flag
+    nh  - no-huge page advise flag
+-- 
+Michal Hocko
+SUSE Labs
