@@ -1,94 +1,76 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v7 4/6] files: add a replace_fd_files() function
-Date: Thu, 27 Sep 2018 18:49:02 +0200
-Message-ID: <CAG48ez1eU_j_Ti0nRh05Qv6hv7-7hv5i+8gnJS5e30mTti2Jhg@mail.gmail.com>
-References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-5-tycho@tycho.ws>
+Subject: Re: [PATCH v7 2/6] seccomp: make get_nth_filter available outside of CHECKPOINT_RESTORE
+Date: Thu, 27 Sep 2018 18:51:10 +0200
+Message-ID: <CAG48ez0-Zq74QCVJ+P0QZZOE4RG-Y_py-GiKhsD12njkbTgVgw@mail.gmail.com>
+References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-3-tycho@tycho.ws>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180927151119.9989-5-tycho@tycho.ws>
+In-Reply-To: <20180927151119.9989-3-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
+Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On Thu, Sep 27, 2018 at 5:11 PM Tycho Andersen <tycho@tycho.ws> wrote:
-> Similar to fd_install/__fd_install, we want to be able to replace an fd of
-> an arbitrary struct files_struct, not just current's. We'll use this in the
-> next patch to implement the seccomp ioctl that allows inserting fds into a
-> stopped process' context.
-[...]
-> diff --git a/fs/file.c b/fs/file.c
-> index 7ffd6e9d103d..3b3c5aadaadb 100644
-> --- a/fs/file.c
-> +++ b/fs/file.c
-> @@ -850,24 +850,32 @@ __releases(&files->file_lock)
+> In the next commit we'll use this same mnemonic to get a listener for the
+> nth filter, so we need it available outside of CHECKPOINT_RESTORE in the
+> USER_NOTIFICATION case as well.
+>
+> v2: new in v2
+> v3: no changes
+> v4: no changes
+> v5: switch to CHECKPOINT_RESTORE || USER_NOTIFICATION to avoid warning when
+>     only CONFIG_SECCOMP_FILTER is enabled.
+> v7: drop USER_NOTIFICATION bits
+>
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> CC: Kees Cook <keescook@chromium.org>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Oleg Nesterov <oleg@redhat.com>
+> CC: Eric W. Biederman <ebiederm@xmission.com>
+> CC: "Serge E. Hallyn" <serge@hallyn.com>
+> CC: Christian Brauner <christian.brauner@ubuntu.com>
+> CC: Tyler Hicks <tyhicks@canonical.com>
+> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+
+Reviewed-by: Jann Horn <jannh@google.com>
+
+> ---
+>  kernel/seccomp.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+>
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index fa6fe9756c80..44a31ac8373a 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -1158,7 +1158,7 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+>         return do_seccomp(op, 0, uargs);
 >  }
 >
->  int replace_fd(unsigned fd, struct file *file, unsigned flags)
-> +{
-> +       return replace_fd_task(current, fd, file, flags);
-> +}
-> +
-> +/*
-> + * Same warning as __alloc_fd()/__fd_install() here.
-> + */
-> +int replace_fd_task(struct task_struct *task, unsigned fd,
-> +                   struct file *file, unsigned flags)
+> -#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
+> +#if defined(CONFIG_SECCOMP_FILTER)
+>  static struct seccomp_filter *get_nth_filter(struct task_struct *task,
+>                                              unsigned long filter_off)
 >  {
->         int err;
-> -       struct files_struct *files = current->files;
-
-Why did you remove this? You could just do s/current/task/ instead, right?
-
->         if (!file)
-> -               return __close_fd(files, fd);
-> +               return __close_fd(task->files, fd);
->
-> -       if (fd >= rlimit(RLIMIT_NOFILE))
-> +       if (fd >= task_rlimit(task, RLIMIT_NOFILE))
->                 return -EBADF;
->
-> -       spin_lock(&files->file_lock);
-> -       err = expand_files(files, fd);
-> +       spin_lock(&task->files->file_lock);
-> +       err = expand_files(task->files, fd);
->         if (unlikely(err < 0))
->                 goto out_unlock;
-> -       return do_dup2(files, file, fd, flags);
-> +       return do_dup2(task->files, file, fd, flags);
->
->  out_unlock:
-> -       spin_unlock(&files->file_lock);
-> +       spin_unlock(&task->files->file_lock);
->         return err;
+> @@ -1205,6 +1205,7 @@ static struct seccomp_filter *get_nth_filter(struct task_struct *task,
+>         return filter;
 >  }
 >
-> diff --git a/include/linux/file.h b/include/linux/file.h
-> index 6b2fb032416c..f94277fee038 100644
-> --- a/include/linux/file.h
-> +++ b/include/linux/file.h
-> @@ -11,6 +11,7 @@
->  #include <linux/posix_types.h>
+> +#if defined(CONFIG_CHECKPOINT_RESTORE)
+>  long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
+>                         void __user *data)
+>  {
+> @@ -1277,7 +1278,8 @@ long seccomp_get_metadata(struct task_struct *task,
+>         __put_seccomp_filter(filter);
+>         return ret;
+>  }
+> -#endif
+> +#endif /* CONFIG_CHECKPOINT_RESTORE */
+> +#endif /* CONFIG_SECCOMP_FILTER */
 >
->  struct file;
-> +struct task_struct;
+>  #ifdef CONFIG_SYSCTL
 >
->  extern void fput(struct file *);
+> --
+> 2.17.1
 >
-> @@ -79,6 +80,13 @@ static inline void fdput_pos(struct fd f)
->
->  extern int f_dupfd(unsigned int from, struct file *file, unsigned flags);
->  extern int replace_fd(unsigned fd, struct file *file, unsigned flags);
-> +/*
-> + * Warning! This is only safe if you know the owner of the files_struct is
-> + * stopped outside syscall context. It's a very bad idea to use this unless you
-> + * have similar guarantees in your code.
-> + */
-> +extern int replace_fd_task(struct task_struct *task, unsigned fd,
-> +                          struct file *file, unsigned flags);
-
-I think Linux kernel coding style is normally to have comments on the
-implementations of functions, not in the headers? Maybe replace the
-warning above the implemenation of replace_fd_task() with this
-comment.
