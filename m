@@ -1,73 +1,74 @@
-From: Shuah Khan <shuah@kernel.org>
-Subject: Re: [PATCH] rseq/selftests: fix parametrized test with -fpie
-Date: Thu, 27 Sep 2018 12:26:54 -0600
-Message-ID: <da7ed2a7-8e0f-3465-1662-e8e20735d9a6@kernel.org>
-References: <20180918135328.32034-1-mathieu.desnoyers@efficios.com>
- <1367962117.10271.1537897176578.JavaMail.zimbra@efficios.com>
- <CGME20180927132250epcas4p3d0775cc258f6112d27bdad359fc6e416@epcas4p3.samsung.com>
- <20180927092235.77282e35@vmware.local.home>
- <a7bae2ff-1f4d-dbfc-43f8-e7a89f319abb@samsung.com>
- <44897232.11546.1538071328396.JavaMail.zimbra@efficios.com>
- <2bfea3f5-b251-d4b8-d03a-28b575aefae0@samsung.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH resend] proc: restrict kernel stack dumps to root
+Date: Thu, 27 Sep 2018 11:29:53 -0700
+Message-ID: <CAGXu5j+9=6tvtynh=KLdvt6O9TkS6cj49itwZk9n0x0qDqaShg@mail.gmail.com>
+References: <20180927153316.200286-1-jannh@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <2bfea3f5-b251-d4b8-d03a-28b575aefae0@samsung.com>
-Content-Language: en-US
-Sender: stable-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kselftest <linux-kselftest@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20180927153316.200286-1-jannh@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, Ken Chen <kenchen@google.com>, kernel list <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Will Deacon <will.deacon@arm.com>, Laura Abbott <labbott@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Security Officers <security@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 09/27/2018 12:10 PM, Shuah Khan wrote:
-> On 09/27/2018 12:02 PM, Mathieu Desnoyers wrote:
->> ----- On Sep 27, 2018, at 9:58 AM, Shuah Khan shuah.kh@samsung.com wrote:
->>
->>> On 09/27/2018 07:22 AM, Steven Rostedt wrote:
->>>> On Tue, 25 Sep 2018 13:39:36 -0400 (EDT)
->>>> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
->>>>
->>>>> ----- On Sep 18, 2018, at 9:53 AM, Mathieu Desnoyers
->>>>> mathieu.desnoyers@efficios.com wrote:
->>>>>
->>>>>> On x86-64, the parametrized selftest code for rseq crashes with a
->>>>>> segmentation fault when compiled with -fpie. This happens when the
->>>>>> param_test binary is loaded at an address beyond 32-bit on x86-64.
->>>>>>
->>>>>> The issue is caused by use of a 32-bit register to hold the address
->>>>>> of the loop counter variable.
->>>>>>
->>>>>> Fix this by using a 64-bit register to calculate the address of the
->>>>>> loop counter variables as an offset from rip.
->>>>>
->>>>> Should this fix go through tip or the selftests tree ?
->>>>>
->>>>
->>>> I usually have changes like this pulled through Shuah's tree with an
->>>> ack from the maintainer of the code that it tests.
->>>>
->>>> -- Steve
->>>>
->>>
->>> Right that is what I prefer. I usually wait for an Ack. I can pull this
->>> in.
->>
->> I am maintainer of the code that it tests as well, so being both author
->> of the selftest patch and giving an ack to it seems a bit silly. :) Other
->> rseq co-maintainers could weight in though: Peter, Paul, and Boqun.
->>
-> 
-> I was commenting in general, not specific to this patch. No worries. I will
-> apply this right away.
-> 
-> I have been traveling the last couple of weeks and in the catch up mode still.
-> 
+On Thu, Sep 27, 2018 at 8:33 AM, Jann Horn <jannh@google.com> wrote:
+> Restrict the ability to inspect kernel stacks of arbitrary tasks to root
+> in order to prevent a local attacker from exploiting racy stack unwinding
+> to leak kernel task stack contents.
+> See the added comment for a longer rationale.
+>
+> There don't seem to be any users of this userspace API that can't
+> gracefully bail out if reading from the file fails. Therefore, I believe
+> that this change is unlikely to break things.
+> In the case that this patch does end up needing a revert, the next-best
+> solution might be to fake a single-entry stack based on wchan.
+>
+> Fixes: 2ec220e27f50 ("proc: add /proc/*/stack")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Jann Horn <jannh@google.com>
 
-Hmm. this patch doesn't apply to linux-kselftest fixes branch which is at 4.19-rc4.
-Also you don't have my current email from getmaintainers.
+Acked-by: Kees Cook <keescook@chromium.org>
 
-Could you please rebase and send it to me.
+-Kees
 
-thanks,
--- Shuah
+> ---
+> Resending because I forgot to send this to akpm the first time.
+>
+>  fs/proc/base.c | 14 ++++++++++++++
+>  1 file changed, 14 insertions(+)
+>
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index ccf86f16d9f0..7e9f07bf260d 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -407,6 +407,20 @@ static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
+>         unsigned long *entries;
+>         int err;
+>
+> +       /*
+> +        * The ability to racily run the kernel stack unwinder on a running task
+> +        * and then observe the unwinder output is scary; while it is useful for
+> +        * debugging kernel issues, it can also allow an attacker to leak kernel
+> +        * stack contents.
+> +        * Doing this in a manner that is at least safe from races would require
+> +        * some work to ensure that the remote task can not be scheduled; and
+> +        * even then, this would still expose the unwinder as local attack
+> +        * surface.
+> +        * Therefore, this interface is restricted to root.
+> +        */
+> +       if (!file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN))
+> +               return -EACCES;
+> +
+>         entries = kmalloc_array(MAX_STACK_TRACE_DEPTH, sizeof(*entries),
+>                                 GFP_KERNEL);
+>         if (!entries)
+> --
+> 2.19.0.rc2.392.g5ba43deb5a-goog
+>
+
+
+
+-- 
+Kees Cook
+Pixel Security
