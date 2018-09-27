@@ -1,77 +1,30 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v7 2/6] seccomp: make get_nth_filter available outside of CHECKPOINT_RESTORE
-Date: Thu, 27 Sep 2018 14:42:02 -0700
-Message-ID: <CAGXu5jKdKYmF-gmUyBSGaZw3Jhc9HMXOiNRpSRRhLNcyBZEPSw@mail.gmail.com>
-References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-3-tycho@tycho.ws>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
+Date: Thu, 27 Sep 2018 23:41:49 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1809272335430.8118@nanos.tec.linutronix.de>
+References: <20180919205037.9574-1-dima@arista.com>        <874lej6nny.fsf@xmission.com>        <20180924205119.GA14833@outlook.office365.com>        <874leezh8n.fsf@xmission.com>        <20180925014150.GA6302@outlook.office365.com> <87zhw4rwiq.fsf@xmission.com>
+ <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180927151119.9989-3-tycho@tycho.ws>
+In-Reply-To: <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Andrey Vagin <avagin@virtuozzo.com>, Dmitry Safonov <dima@arista.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "criu@openvz.org" <criu@openvz.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Alexey Dobriyan <ado>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> In the next commit we'll use this same mnemonic to get a listener for the
-> nth filter, so we need it available outside of CHECKPOINT_RESTORE in the
-> USER_NOTIFICATION case as well.
->
-> v2: new in v2
-> v3: no changes
-> v4: no changes
-> v5: switch to CHECKPOINT_RESTORE || USER_NOTIFICATION to avoid warning when
->     only CONFIG_SECCOMP_FILTER is enabled.
-> v7: drop USER_NOTIFICATION bits
->
-> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
-> CC: Kees Cook <keescook@chromium.org>
-> CC: Andy Lutomirski <luto@amacapital.net>
-> CC: Oleg Nesterov <oleg@redhat.com>
-> CC: Eric W. Biederman <ebiederm@xmission.com>
-> CC: "Serge E. Hallyn" <serge@hallyn.com>
-> CC: Christian Brauner <christian.brauner@ubuntu.com>
-> CC: Tyler Hicks <tyhicks@canonical.com>
-> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
-> ---
->  kernel/seccomp.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
->
-> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> index fa6fe9756c80..44a31ac8373a 100644
-> --- a/kernel/seccomp.c
-> +++ b/kernel/seccomp.c
-> @@ -1158,7 +1158,7 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
->         return do_seccomp(op, 0, uargs);
->  }
->
-> -#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
-> +#if defined(CONFIG_SECCOMP_FILTER)
->  static struct seccomp_filter *get_nth_filter(struct task_struct *task,
->                                              unsigned long filter_off)
->  {
-> @@ -1205,6 +1205,7 @@ static struct seccomp_filter *get_nth_filter(struct task_struct *task,
->         return filter;
->  }
->
-> +#if defined(CONFIG_CHECKPOINT_RESTORE)
->  long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
->                         void __user *data)
->  {
-> @@ -1277,7 +1278,8 @@ long seccomp_get_metadata(struct task_struct *task,
->         __put_seccomp_filter(filter);
->         return ret;
->  }
-> -#endif
-> +#endif /* CONFIG_CHECKPOINT_RESTORE */
-> +#endif /* CONFIG_SECCOMP_FILTER */
->
->  #ifdef CONFIG_SYSCTL
+On Thu, 27 Sep 2018, Thomas Gleixner wrote:
+> Add time skew via NTP/PTP into the picture and you might have to adjust
+> timers as well, because you need to guarantee that they are not expiring
+> early.
+> 
+> I haven't looked through Dimitry's patches yet, but I don't see how this
+> can work at all without introducing subtle issues all over the place.
 
-Yup, looks fine.
+And just a quick scan tells me that this is broken. Timers will expire
+early or late. The latter is acceptible to some extent, but larger delays
+might come with surprise. Expiring early is an absolute nono.
 
--Kees
+Thanks,
 
--- 
-Kees Cook
-Pixel Security
+	tglx
