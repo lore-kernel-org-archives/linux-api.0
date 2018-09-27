@@ -1,74 +1,53 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH resend] proc: restrict kernel stack dumps to root
-Date: Thu, 27 Sep 2018 11:29:53 -0700
-Message-ID: <CAGXu5j+9=6tvtynh=KLdvt6O9TkS6cj49itwZk9n0x0qDqaShg@mail.gmail.com>
-References: <20180927153316.200286-1-jannh@google.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v7 5/6] seccomp: add a way to pass FDs via a notification fd
+Date: Thu, 27 Sep 2018 21:28:07 +0200
+Message-ID: <CAG48ez0JY=_fvgy+t92-08kBFgTAZ-3hgAp+OOAwmSd73MJ-QA@mail.gmail.com>
+References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-6-tycho@tycho.ws>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180927153316.200286-1-jannh@google.com>
+In-Reply-To: <20180927151119.9989-6-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, Ken Chen <kenchen@google.com>, kernel list <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Will Deacon <will.deacon@arm.com>, Laura Abbott <labbott@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Security Officers <security@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 27, 2018 at 8:33 AM, Jann Horn <jannh@google.com> wrote:
-> Restrict the ability to inspect kernel stacks of arbitrary tasks to root
-> in order to prevent a local attacker from exploiting racy stack unwinding
-> to leak kernel task stack contents.
-> See the added comment for a longer rationale.
->
-> There don't seem to be any users of this userspace API that can't
-> gracefully bail out if reading from the file fails. Therefore, I believe
-> that this change is unlikely to break things.
-> In the case that this patch does end up needing a revert, the next-best
-> solution might be to fake a single-entry stack based on wchan.
->
-> Fixes: 2ec220e27f50 ("proc: add /proc/*/stack")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Jann Horn <jannh@google.com>
-
-Acked-by: Kees Cook <keescook@chromium.org>
-
--Kees
-
-> ---
-> Resending because I forgot to send this to akpm the first time.
->
->  fs/proc/base.c | 14 ++++++++++++++
->  1 file changed, 14 insertions(+)
->
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index ccf86f16d9f0..7e9f07bf260d 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -407,6 +407,20 @@ static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
->         unsigned long *entries;
->         int err;
->
-> +       /*
-> +        * The ability to racily run the kernel stack unwinder on a running task
-> +        * and then observe the unwinder output is scary; while it is useful for
-> +        * debugging kernel issues, it can also allow an attacker to leak kernel
-> +        * stack contents.
-> +        * Doing this in a manner that is at least safe from races would require
-> +        * some work to ensure that the remote task can not be scheduled; and
-> +        * even then, this would still expose the unwinder as local attack
-> +        * surface.
-> +        * Therefore, this interface is restricted to root.
-> +        */
-> +       if (!file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN))
-> +               return -EACCES;
+On Thu, Sep 27, 2018 at 5:11 PM Tycho Andersen <tycho@tycho.ws> wrote:
+> This patch adds a way to insert FDs into the tracee's process (also
+> close/overwrite fds for the tracee). This functionality is necessary to
+> mock things like socketpair() or dup2() or similar, but since it depends on
+> external (vfs) patches, I've left it as a separate patch as before so the
+> core functionality can still be merged while we argue about this. Except
+> this time it doesn't add any ugliness to the API :)
+[...]
+> +static long seccomp_notify_put_fd(struct seccomp_filter *filter,
+> +                                 unsigned long arg)
+> +{
+> +       struct seccomp_notif_put_fd req;
+> +       void __user *buf = (void __user *)arg;
+> +       struct seccomp_knotif *knotif = NULL;
+> +       long ret;
 > +
->         entries = kmalloc_array(MAX_STACK_TRACE_DEPTH, sizeof(*entries),
->                                 GFP_KERNEL);
->         if (!entries)
-> --
-> 2.19.0.rc2.392.g5ba43deb5a-goog
->
+> +       if (copy_from_user(&req, buf, sizeof(req)))
+> +               return -EFAULT;
+> +
+> +       if (req.fd < 0 && req.to_replace < 0)
+> +               return -EINVAL;
+> +
+> +       ret = mutex_lock_interruptible(&filter->notify_lock);
+> +       if (ret < 0)
+> +               return ret;
+> +
+> +       ret = -ENOENT;
+> +       list_for_each_entry(knotif, &filter->notif->notifications, list) {
+> +               struct file *file = NULL;
+> +
+> +               if (knotif->id != req.id)
+> +                       continue;
 
+Are you intentionally permitting non-SENT states here? It shouldn't
+make a big difference, but I think it'd be nice to at least block the
+use of notifications in SECCOMP_NOTIFY_REPLIED state.
 
-
--- 
-Kees Cook
-Pixel Security
+> +               if (req.fd >= 0)
+> +                       file = fget(req.fd);
