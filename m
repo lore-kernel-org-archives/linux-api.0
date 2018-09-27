@@ -1,50 +1,84 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
- ptrace
-Date: Thu, 27 Sep 2018 12:09:39 -0600
-Message-ID: <20180927180939.GB15491@cisco.cisco.com>
-References: <20180927151119.9989-1-tycho@tycho.ws>
- <20180927151119.9989-4-tycho@tycho.ws>
- <CAG48ez14hkjQr8_ysg13Ax9uc+abKeTtN7pCxuiJ83Ms3Gbo5Q@mail.gmail.com>
+From: Shuah Khan <shuah.kh@samsung.com>
+Subject: Re: [PATCH] rseq/selftests: fix parametrized test with -fpie
+Date: Thu, 27 Sep 2018 12:10:38 -0600
+Message-ID: <2bfea3f5-b251-d4b8-d03a-28b575aefae0@samsung.com>
+References: <20180918135328.32034-1-mathieu.desnoyers@efficios.com>
+        <1367962117.10271.1537897176578.JavaMail.zimbra@efficios.com>
+        <CGME20180927132250epcas4p3d0775cc258f6112d27bdad359fc6e416@epcas4p3.samsung.com>
+        <20180927092235.77282e35@vmware.local.home>
+        <a7bae2ff-1f4d-dbfc-43f8-e7a89f319abb@samsung.com>
+        <44897232.11546.1538071328396.JavaMail.zimbra@efficios.com>
+Reply-To: <shuah.kh@samsung.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez14hkjQr8_ysg13Ax9uc+abKeTtN7pCxuiJ83Ms3Gbo5Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <44897232.11546.1538071328396.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
+Sender: stable-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Shuah Khan <shuahkh@osg.samsung.com>, linux-kselftest <linux-kselftest@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 27, 2018 at 07:35:06PM +0200, Jann Horn wrote:
-> On Thu, Sep 27, 2018 at 5:11 PM Tycho Andersen <tycho@tycho.ws> wrote:
-> >
-> > As an alternative to SECCOMP_FILTER_FLAG_GET_LISTENER, perhaps a ptrace()
-> > version which can acquire filters is useful. There are at least two reasons
-> > this is preferable, even though it uses ptrace:
-> >
-> > 1. You can control tasks that aren't cooperating with you
-> > 2. You can control tasks whose filters block sendmsg() and socket(); if the
-> >    task installs a filter which blocks these calls, there's no way with
-> >    SECCOMP_FILTER_FLAG_GET_LISTENER to get the fd out to the privileged task.
-> [...]
-> > diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-> > index 21fec73d45d4..289960ac181b 100644
-> > --- a/kernel/ptrace.c
-> > +++ b/kernel/ptrace.c
-> > @@ -1096,6 +1096,10 @@ int ptrace_request(struct task_struct *child, long request,
-> >                 ret = seccomp_get_metadata(child, addr, datavp);
-> >                 break;
-> >
-> > +       case PTRACE_SECCOMP_NEW_LISTENER:
-> > +               ret = seccomp_new_listener(child, addr);
-> > +               break;
+On 09/27/2018 12:02 PM, Mathieu Desnoyers wrote:
+> ----- On Sep 27, 2018, at 9:58 AM, Shuah Khan shuah.kh@samsung.com wrote:
 > 
-> Actually, could you amend this to also ensure that `data == 0` and
-> return -EINVAL otherwise? Then if we want to abuse `data` for passing
-> flags in the future, we don't have to worry about what happens if
-> someone passes in garbage as `data`.
+>> On 09/27/2018 07:22 AM, Steven Rostedt wrote:
+>>> On Tue, 25 Sep 2018 13:39:36 -0400 (EDT)
+>>> Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+>>>
+>>>> ----- On Sep 18, 2018, at 9:53 AM, Mathieu Desnoyers
+>>>> mathieu.desnoyers@efficios.com wrote:
+>>>>
+>>>>> On x86-64, the parametrized selftest code for rseq crashes with a
+>>>>> segmentation fault when compiled with -fpie. This happens when the
+>>>>> param_test binary is loaded at an address beyond 32-bit on x86-64.
+>>>>>
+>>>>> The issue is caused by use of a 32-bit register to hold the address
+>>>>> of the loop counter variable.
+>>>>>
+>>>>> Fix this by using a 64-bit register to calculate the address of the
+>>>>> loop counter variables as an offset from rip.
+>>>>
+>>>> Should this fix go through tip or the selftests tree ?
+>>>>
+>>>
+>>> I usually have changes like this pulled through Shuah's tree with an
+>>> ack from the maintainer of the code that it tests.
+>>>
+>>> -- Steve
+>>>
+>>
+>> Right that is what I prefer. I usually wait for an Ack. I can pull this
+>> in.
+> 
+> I am maintainer of the code that it tests as well, so being both author
+> of the selftest patch and giving an ack to it seems a bit silly. :) Other
+> rseq co-maintainers could weight in though: Peter, Paul, and Boqun.
+> 
 
-Yes, good idea. Thanks!
+I was commenting in general, not specific to this patch. No worries. I will
+apply this right away.
 
-Tycho
+I have been traveling the last couple of weeks and in the catch up mode still.
+
+thanks,
+-- Shuah
+
+
+>>
+>> --
+>> Shuah Khan
+>> Sr. Linux Kernel Developer
+>> Open Source Innovation Group
+>> Samsung Research America(Silicon Valley)
+>> shuah.kh@samsung.com
+> 
+
+
+-- 
+Shuah Khan
+Sr. Linux Kernel Developer
+Open Source Innovation Group
+Samsung Research America(Silicon Valley)
+shuah.kh@samsung.com
