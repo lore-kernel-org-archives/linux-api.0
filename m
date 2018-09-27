@@ -1,69 +1,151 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH resend] proc: restrict kernel stack dumps to root
-Date: Fri, 28 Sep 2018 00:39:16 +0200
-Message-ID: <CAG48ez3CSRuY3g+ug+PaM2ivc2n_fJQuP9U9VKv8JLELtBoLbA@mail.gmail.com>
-References: <20180927153316.200286-1-jannh@google.com> <20180927152908.f5c9239d527380c582b1bcfa@linux-foundation.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v7 1/6] seccomp: add a return code to trap to userspace
+Date: Thu, 27 Sep 2018 15:45:11 -0700
+Message-ID: <CAGXu5j+uqgCkxaEPoOa_+XSTJBe==bNATCewsqqzwiyKhbLGVQ@mail.gmail.com>
+References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-2-tycho@tycho.ws>
+ <CAG48ez05LyQOb4pw5H74VhHdQFDEOPLoLuhDPMEqFG7W1hwA_Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180927152908.f5c9239d527380c582b1bcfa@linux-foundation.org>
+In-Reply-To: <CAG48ez05LyQOb4pw5H74VhHdQFDEOPLoLuhDPMEqFG7W1hwA_Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Ken Chen <kenchen@google.com>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Laura Abbott <labbott@redhat.com>, Andy Lutomirski <luto@amacapital.net>, security@kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
+To: Jann Horn <jannh@google.com>
+Cc: Tycho Andersen <tycho@tycho.ws>, Christoph Hellwig <hch@lst.de>, Al Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 28, 2018 at 12:29 AM Andrew Morton
-<akpm@linux-foundation.org> wrote:
+On Thu, Sep 27, 2018 at 2:51 PM, Jann Horn <jannh@google.com> wrote:
+> On Thu, Sep 27, 2018 at 5:11 PM Tycho Andersen <tycho@tycho.ws> wrote:
+>> However, care should be taken to avoid the TOCTOU
+>> +mentioned above in this document: all arguments being read from the tracee's
+>> +memory should be read into the tracer's memory before any policy decisions are
+>> +made. This allows for an atomic decision on syscall arguments.
 >
-> On Thu, 27 Sep 2018 17:33:16 +0200 Jann Horn <jannh@google.com> wrote:
->
-> > Restrict the ability to inspect kernel stacks of arbitrary tasks to root
-> > in order to prevent a local attacker from exploiting racy stack unwinding
-> > to leak kernel task stack contents.
-> > See the added comment for a longer rationale.
-> >
-> > There don't seem to be any users of this userspace API that can't
-> > gracefully bail out if reading from the file fails. Therefore, I believe
-> > that this change is unlikely to break things.
-> > In the case that this patch does end up needing a revert, the next-best
-> > solution might be to fake a single-entry stack based on wchan.
-> >
-> > Fixes: 2ec220e27f50 ("proc: add /proc/*/stack")
-> > Cc: stable@vger.kernel.org
-> > Signed-off-by: Jann Horn <jannh@google.com>
->
-> It's a bit worrisome cc'ing stable on a patch which might need a revert.
->
-> > --- a/fs/proc/base.c
-> > +++ b/fs/proc/base.c
-> > @@ -407,6 +407,20 @@ static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
-> >       unsigned long *entries;
-> >       int err;
-> >
-> > +     /*
-> > +      * The ability to racily run the kernel stack unwinder on a running task
-> > +      * and then observe the unwinder output is scary; while it is useful for
-> > +      * debugging kernel issues, it can also allow an attacker to leak kernel
-> > +      * stack contents.
-> > +      * Doing this in a manner that is at least safe from races would require
-> > +      * some work to ensure that the remote task can not be scheduled; and
-> > +      * even then, this would still expose the unwinder as local attack
-> > +      * surface.
-> > +      * Therefore, this interface is restricted to root.
-> > +      */
->
-> The /proc file is 0400 so the user can only read owned-by-self stacks,
-> yes?  In what way could exposure of one's own kernel stack contents
-> lead to plausible attacks?  I guess maybe post-setuid, perhaps?
->
-> I do think we're owed considerably more explanation of the present risk
-> before considering a somewhat dangerous -stable backport, please.
+> Again, I don't really see how you could get this wrong.
 
-I sent a bug report to security@. The short version: Currently, you
-can use /proc/self/task/*/stack to cause a stack walk on a task you
-control while it is running on another CPU. That means that the stack
-can change under the stack walker. The stack walker does have guards
-against going completely off the rails and into random kernel memory,
-but it can interpret random data from your kernel stack as instruction
-pointers and stack pointers. This can cause exposure of kernel stack
-contents to userspace.
+Doesn't hurt to mention it, IMO.
+
+>> +static long seccomp_notify_send(struct seccomp_filter *filter,
+>> +                               unsigned long arg)
+>> +{
+>> +       struct seccomp_notif_resp resp = {};
+>> +       struct seccomp_knotif *knotif = NULL;
+>> +       long ret;
+>> +       u16 size;
+>> +       void __user *buf = (void __user *)arg;
+>> +
+>> +       if (copy_from_user(&size, buf, sizeof(size)))
+>> +               return -EFAULT;
+>> +       size = min_t(size_t, size, sizeof(resp));
+>> +       if (copy_from_user(&resp, buf, size))
+>> +               return -EFAULT;
+>> +
+>> +       ret = mutex_lock_interruptible(&filter->notify_lock);
+>> +       if (ret < 0)
+>> +               return ret;
+>> +
+>> +       list_for_each_entry(knotif, &filter->notif->notifications, list) {
+>> +               if (knotif->id == resp.id)
+>> +                       break;
+>> +       }
+>> +
+>> +       if (!knotif || knotif->id != resp.id) {
+>
+> Uuuh, this looks unsafe and wrong. I don't think `knotif` can ever be
+> NULL here. If `filter->notif->notifications` is empty, I think
+> `knotif` will be `container_of(&filter->notif->notifications, struct
+> seccom_knotif, list)` - in other words, you'll have a type confusion,
+> and `knotif` probably points into some random memory in front of
+> `filter->notif`.
+>
+> Am I missing something?
+
+Oh, good catch. This just needs to be fixed like it's done in
+seccomp_notif_recv (separate cur and knotif).
+
+>> +static struct file *init_listener(struct task_struct *task,
+>> +                                 struct seccomp_filter *filter)
+>> +{
+>
+> Why does this function take a `task` pointer instead of always
+> accessing `current`? If `task` actually wasn't `current`, I would have
+> concurrency concerns. A comment in seccomp.h even explains:
+>
+>  *          @filter must only be accessed from the context of current as there
+>  *          is no read locking.
+>
+> Unless there's a good reason for it, I would prefer it if this
+> function didn't take a `task` pointer.
+
+This is to support PTRACE_SECCOMP_NEW_LISTENER.
+
+But you make an excellent point. Even TSYNC expects to operate only on
+the current thread group. Hmm.
+
+While the process is stopped by ptrace, we could, in theory, update
+task->seccomp.filter via something like TSYNC.
+
+So perhaps use:
+
+mutex_lock_killable(&task->signal->cred_guard_mutex);
+
+before walking the notify_locks?
+
+>
+>> +       struct file *ret = ERR_PTR(-EBUSY);
+>> +       struct seccomp_filter *cur, *last_locked = NULL;
+>> +       int filter_nesting = 0;
+>> +
+>> +       for (cur = task->seccomp.filter; cur; cur = cur->prev) {
+>> +               mutex_lock_nested(&cur->notify_lock, filter_nesting);
+>> +               filter_nesting++;
+>> +               last_locked = cur;
+>> +               if (cur->notif)
+>> +                       goto out;
+>> +       }
+>> +
+>> +       ret = ERR_PTR(-ENOMEM);
+>> +       filter->notif = kzalloc(sizeof(*(filter->notif)), GFP_KERNEL);
+>
+> sizeof(struct notification) instead, to make the code clearer?
+
+I prefer what Tycho has: I want to allocate an instances of whatever
+filter->notif is.
+
+Though, let's do the kzalloc outside of the locking, instead?
+
+>> +       ret = anon_inode_getfile("seccomp notify", &seccomp_notify_ops,
+>> +                                filter, O_RDWR);
+>> +       if (IS_ERR(ret))
+>> +               goto out;
+>> +
+>> +
+>> +       /* The file has a reference to it now */
+>> +       __get_seccomp_filter(filter);
+>
+> __get_seccomp_filter() has a comment in it that claims "/* Reference
+> count is bounded by the number of total processes. */". I think this
+> change invalidates that comment. I think it should be fine to just
+> remove the comment.
+
+Update it to "bounded by total processes and notification listeners"?
+
+>> +out:
+>> +       for (cur = task->seccomp.filter; cur; cur = cur->prev) {
+>
+> s/; cur;/; 1;/, or use a while loop instead? If the NULL check fires
+> here, something went very wrong.
+
+Hm? This is correct. This is how seccomp_run_filters() walks the list too:
+
+        struct seccomp_filter *f =
+                        READ_ONCE(current->seccomp.filter);
+        ...
+        for (; f; f = f->prev) {
+
+Especially if we'll be holding the cred_guard_mutex.
+
+-Kees
+
+-- 
+Kees Cook
+Pixel Security
