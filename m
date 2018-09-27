@@ -1,32 +1,88 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
-Date: Wed, 26 Sep 2018 18:59:49 +0100
-Message-ID: <CAJwJo6bseG42YNqA0cxWpB0C252_CWER0gDrF0OUOm+=DJ7XdQ@mail.gmail.com>
-References: <20180919205037.9574-1-dima@arista.com> <874lej6nny.fsf@xmission.com>
- <20180924205119.GA14833@outlook.office365.com> <874leezh8n.fsf@xmission.com>
- <20180925014150.GA6302@outlook.office365.com> <87zhw4rwiq.fsf@xmission.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH] proc: restrict kernel stack dumps to root
+Date: Thu, 27 Sep 2018 03:19:35 +0200
+Message-ID: <CAG48ez0M90ajea8Cee32VjRV4A5CjM8FA1kpdmL6yThBrGf9Lg@mail.gmail.com>
+References: <20180911183909.233413-1-jannh@google.com> <CAG48ez03ivLr6w+V911V7pqb1o=kcJw4CLEktcSVVE+=hXXP=w@mail.gmail.com>
+ <CAGXu5jKBPh+TSCuaitpPdk89hW=ch+QeRsUfE68pLpzLS=z4Jg@mail.gmail.com>
+ <CAG48ez22djpKdtYDTMn0MS=2m_QAq983O0-oXyVGiu3ju2HwXg@mail.gmail.com> <CAGXu5jLLC6dp7T5AmKur0dioc767vvJFms8wj9syLBvQzcYQpg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87zhw4rwiq.fsf@xmission.com>
+In-Reply-To: <CAGXu5jLLC6dp7T5AmKur0dioc767vvJFms8wj9syLBvQzcYQpg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andrey Vagin <avagin@virtuozzo.com>, Dmitry Safonov <dima@arista.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "criu@openvz.org" <criu@openvz.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Alexey Dobriyan <adob>
+To: Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>, Ken Chen <kenchen@google.com>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Will Deacon <will.deacon@arm.com>, Laura Abbott <labbott@redhat.com>, Andy Lutomirski <luto@amacapital.net>, security@kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Josh Poimboeuf <jpoimboe@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-2018-09-26 18:36 GMT+01:00 Eric W. Biederman <ebiederm@xmission.com>:
-> The advantage of timekeeping_update per time namespace is that it allows
-> different lengths of seconds per time namespace.  Which allows testing
-> ntp and the kernel in interesting ways while still having a working
-> production configuration on the same system.
+On Thu, Sep 13, 2018 at 4:39 PM Kees Cook <keescook@chromium.org> wrote:
+> On Thu, Sep 13, 2018 at 4:55 AM, Jann Horn <jannh@google.com> wrote:
+> > On Thu, Sep 13, 2018 at 12:28 AM Kees Cook <keescook@chromium.org> wrote:
+> >>
+> >> On Wed, Sep 12, 2018 at 8:29 AM, Jann Horn <jannh@google.com> wrote:
+> >> > +linux-api, I guess
+> >> >
+> >> > On Tue, Sep 11, 2018 at 8:39 PM Jann Horn <jannh@google.com> wrote:
+> >> >>
+> >> >> Restrict the ability to inspect kernel stacks of arbitrary tasks to root
+> >> >> in order to prevent a local attacker from exploiting racy stack unwinding
+> >> >> to leak kernel task stack contents.
+> >> >> See the added comment for a longer rationale.
+> >> >>
+> >> >> There don't seem to be any users of this userspace API that can't
+> >> >> gracefully bail out if reading from the file fails. Therefore, I believe
+> >> >> that this change is unlikely to break things.
+> >> >> In the case that this patch does end up needing a revert, the next-best
+> >> >> solution might be to fake a single-entry stack based on wchan.
+> >> >>
+> >> >> Fixes: 2ec220e27f50 ("proc: add /proc/*/stack")
+> >> >> Cc: stable@vger.kernel.org
+> >> >> Signed-off-by: Jann Horn <jannh@google.com>
+> >> >> ---
+> >> >>  fs/proc/base.c | 14 ++++++++++++++
+> >> >>  1 file changed, 14 insertions(+)
+> >> >>
+> >> >> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> >> >> index ccf86f16d9f0..7e9f07bf260d 100644
+> >> >> --- a/fs/proc/base.c
+> >> >> +++ b/fs/proc/base.c
+> >> >> @@ -407,6 +407,20 @@ static int proc_pid_stack(struct seq_file *m, struct pid_namespace *ns,
+> >> >>         unsigned long *entries;
+> >> >>         int err;
+> >> >>
+> >> >> +       /*
+> >> >> +        * The ability to racily run the kernel stack unwinder on a running task
+> >> >> +        * and then observe the unwinder output is scary; while it is useful for
+> >> >> +        * debugging kernel issues, it can also allow an attacker to leak kernel
+> >> >> +        * stack contents.
+> >> >> +        * Doing this in a manner that is at least safe from races would require
+> >> >> +        * some work to ensure that the remote task can not be scheduled; and
+> >> >> +        * even then, this would still expose the unwinder as local attack
+> >> >> +        * surface.
+> >> >> +        * Therefore, this interface is restricted to root.
+> >> >> +        */
+> >> >> +       if (!file_ns_capable(m->file, &init_user_ns, CAP_SYS_ADMIN))
+> >> >> +               return -EACCES;
+> >>
+> >> In the past, we've avoided hard errors like this in favor of just
+> >> censoring the output. Do we want to be more cautious here? (i.e.
+> >> return 0 or a fuller seq_printf(m, "[<0>] privileged\n"); return 0;)
+> >
+> > In my mind, this is different because it's a place where we don't have
+> > to selectively censor output while preserving parts of it, and it's a
+> > place where, as Laura said, it's useful to make lack of privileges
+> > clearly visible because that informs users that they may have to retry
+> > with more privileges.
+> >
+> > Of course, if you have an example of software that actually breaks due
+> > to this, I'll change it. But I looked at the three things in Debian
+> > codesearch that seem to use it, and from what I can tell, they all
+> > bail out cleanly when the read fails.
+>
+> I prefer -EACCESS too, but I thought I'd mention the alternative. So, I guess:
+>
+> Reviewed-by: Kees Cook <keescook@chromium.org>
 
-Just a quick note: the different length of second per namespace sounds
-very interesting in my POV, I remember I've seen this article:
-http://publish.illinois.edu/science-of-security-lablet/files/2014/05/DSSnet-A-Smart-Grid-Modeling-Platform-Combining-Electrical-Power-Distributtion-System-Simulation-and-Software-Defined-Networking-Emulation.pdf
-
-And their realisation with a simulation of time going with different speed
-per-pid  (with vdso disabled):
-https://github.com/littlepretty/VirtualTimeKernel
-
-Thanks,
-             Dmitry
+What do I need to do to get this merged? Oh, I think I misread
+MAINTAINERS - Alexey Dobriyan is not a maintainer, just a reviewer. So
+I guess this has to go via Andrew Morton? Should I resend the patch
+with Andrew in the recipient list?
