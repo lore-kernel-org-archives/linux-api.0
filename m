@@ -1,164 +1,131 @@
-From: Tycho Andersen <tycho@tycho.ws>
+From: Kees Cook <keescook@chromium.org>
 Subject: Re: [PATCH v7 1/6] seccomp: add a return code to trap to userspace
-Date: Thu, 27 Sep 2018 17:08:06 -0600
-Message-ID: <20180927230806.GI15491@cisco.cisco.com>
-References: <20180927151119.9989-1-tycho@tycho.ws>
- <20180927151119.9989-2-tycho@tycho.ws>
- <CAG48ez05LyQOb4pw5H74VhHdQFDEOPLoLuhDPMEqFG7W1hwA_Q@mail.gmail.com>
- <CAGXu5j+uqgCkxaEPoOa_+XSTJBe==bNATCewsqqzwiyKhbLGVQ@mail.gmail.com>
+Date: Thu, 27 Sep 2018 16:10:29 -0700
+Message-ID: <CAGXu5jJ8VSJ6BqqxAL+B12bv2xTNU3CzpBOMf-zEChO9opaFMA@mail.gmail.com>
+References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-2-tycho@tycho.ws>
+ <CAGXu5jJr3JWLYGrJ+knu3sj4wwJ_irVvs+JRrY5MuYT3voLegg@mail.gmail.com> <20180927224839.GF15491@cisco.cisco.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5j+uqgCkxaEPoOa_+XSTJBe==bNATCewsqqzwiyKhbLGVQ@mail.gmail.com>
+In-Reply-To: <20180927224839.GF15491@cisco.cisco.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Jann Horn <jannh@google.com>, Christoph Hellwig <hch@lst.de>, Al Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+To: Tycho Andersen <tycho@tycho.ws>, Stephane Graber <stgraber@ubuntu.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 27, 2018 at 03:45:11PM -0700, Kees Cook wrote:
-> On Thu, Sep 27, 2018 at 2:51 PM, Jann Horn <jannh@google.com> wrote:
-> > On Thu, Sep 27, 2018 at 5:11 PM Tycho Andersen <tycho@tycho.ws> wrote:
-> >> However, care should be taken to avoid the TOCTOU
-> >> +mentioned above in this document: all arguments being read from the tracee's
-> >> +memory should be read into the tracer's memory before any policy decisions are
-> >> +made. This allows for an atomic decision on syscall arguments.
-> >
-> > Again, I don't really see how you could get this wrong.
-> 
-> Doesn't hurt to mention it, IMO.
-> 
-> >> +static long seccomp_notify_send(struct seccomp_filter *filter,
-> >> +                               unsigned long arg)
-> >> +{
-> >> +       struct seccomp_notif_resp resp = {};
-> >> +       struct seccomp_knotif *knotif = NULL;
-> >> +       long ret;
-> >> +       u16 size;
-> >> +       void __user *buf = (void __user *)arg;
-> >> +
-> >> +       if (copy_from_user(&size, buf, sizeof(size)))
-> >> +               return -EFAULT;
-> >> +       size = min_t(size_t, size, sizeof(resp));
-> >> +       if (copy_from_user(&resp, buf, size))
-> >> +               return -EFAULT;
-> >> +
-> >> +       ret = mutex_lock_interruptible(&filter->notify_lock);
-> >> +       if (ret < 0)
-> >> +               return ret;
-> >> +
-> >> +       list_for_each_entry(knotif, &filter->notif->notifications, list) {
-> >> +               if (knotif->id == resp.id)
-> >> +                       break;
-> >> +       }
-> >> +
-> >> +       if (!knotif || knotif->id != resp.id) {
-> >
-> > Uuuh, this looks unsafe and wrong. I don't think `knotif` can ever be
-> > NULL here. If `filter->notif->notifications` is empty, I think
-> > `knotif` will be `container_of(&filter->notif->notifications, struct
-> > seccom_knotif, list)` - in other words, you'll have a type confusion,
-> > and `knotif` probably points into some random memory in front of
-> > `filter->notif`.
-> >
-> > Am I missing something?
-> 
-> Oh, good catch. This just needs to be fixed like it's done in
-> seccomp_notif_recv (separate cur and knotif).
-> 
-> >> +static struct file *init_listener(struct task_struct *task,
-> >> +                                 struct seccomp_filter *filter)
-> >> +{
-> >
-> > Why does this function take a `task` pointer instead of always
-> > accessing `current`? If `task` actually wasn't `current`, I would have
-> > concurrency concerns. A comment in seccomp.h even explains:
-> >
-> >  *          @filter must only be accessed from the context of current as there
-> >  *          is no read locking.
-> >
-> > Unless there's a good reason for it, I would prefer it if this
-> > function didn't take a `task` pointer.
-> 
-> This is to support PTRACE_SECCOMP_NEW_LISTENER.
-> 
-> But you make an excellent point. Even TSYNC expects to operate only on
-> the current thread group. Hmm.
-> 
-> While the process is stopped by ptrace, we could, in theory, update
-> task->seccomp.filter via something like TSYNC.
-> 
-> So perhaps use:
-> 
-> mutex_lock_killable(&task->signal->cred_guard_mutex);
-> 
-> before walking the notify_locks?
+On Thu, Sep 27, 2018 at 3:48 PM, Tycho Andersen <tycho@tycho.ws> wrote:
+> On Thu, Sep 27, 2018 at 02:31:24PM -0700, Kees Cook wrote:
+>> On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
+>> struct seccomp_notif {
+>>         __u16                      len;                  /*     0     2 */
+>>
+>>         /* XXX 6 bytes hole, try to pack */
+>>
+>>         __u64                      id;                   /*     8     8 */
+>>         __u32                      pid;                  /*    16     4 */
+>>         __u8                       signaled;             /*    20     1 */
+>>
+>>         /* XXX 3 bytes hole, try to pack */
+>>
+>>         struct seccomp_data        data;                 /*    24    64 */
+>>         /* --- cacheline 1 boundary (64 bytes) was 24 bytes ago --- */
+>>
+>>         /* size: 88, cachelines: 2, members: 5 */
+>>         /* sum members: 79, holes: 2, sum holes: 9 */
+>>         /* last cacheline: 24 bytes */
+>> };
+>> struct seccomp_notif_resp {
+>>         __u16                      len;                  /*     0     2 */
+>>
+>>         /* XXX 6 bytes hole, try to pack */
+>>
+>>         __u64                      id;                   /*     8     8 */
+>>         __s32                      error;                /*    16     4 */
+>>
+>>         /* XXX 4 bytes hole, try to pack */
+>>
+>>         __s64                      val;                  /*    24     8 */
+>>
+>>         /* size: 32, cachelines: 1, members: 4 */
+>>         /* sum members: 22, holes: 2, sum holes: 10 */
+>>         /* last cacheline: 32 bytes */
+>> };
+>>
+>> How about making len u32, and moving pid and error above "id"? This
+>> leaves a hole after signaled, so changing "len" won't be sufficient
+>> for versioning here. Perhaps move it after data?
+>
+> I'm not sure what you mean by "len won't be sufficient for versioning
+> here"? Anyway, I can do some packing on these; I didn't bother before
+> since I figured it's a userspace interface, so saving a few bytes
+> isn't a huge deal.
 
-This means that all the seccomp/ptrace code probably needs to be
-updated for this? I'll try to send patches for this as well as the
-return code thing Jann pointed out.
+I was thinking the "len" portion was for determining if the API ever
+changes in the future. My point was that given the padding holes, e.g.
+adding a u8 after signaled, "len" wouldn't change, so the kernel might
+expect to starting reading something after signaled that it wasn't
+checking before, but the len would be the same.
 
-> >
-> >> +       struct file *ret = ERR_PTR(-EBUSY);
-> >> +       struct seccomp_filter *cur, *last_locked = NULL;
-> >> +       int filter_nesting = 0;
-> >> +
-> >> +       for (cur = task->seccomp.filter; cur; cur = cur->prev) {
-> >> +               mutex_lock_nested(&cur->notify_lock, filter_nesting);
-> >> +               filter_nesting++;
-> >> +               last_locked = cur;
-> >> +               if (cur->notif)
-> >> +                       goto out;
-> >> +       }
-> >> +
-> >> +       ret = ERR_PTR(-ENOMEM);
-> >> +       filter->notif = kzalloc(sizeof(*(filter->notif)), GFP_KERNEL);
-> >
-> > sizeof(struct notification) instead, to make the code clearer?
-> 
-> I prefer what Tycho has: I want to allocate an instances of whatever
-> filter->notif is.
-> 
-> Though, let's do the kzalloc outside of the locking, instead?
+>> I have to say, I'm vaguely nervous about changing the semantics here
+>> for passing back the fd as the return code from the seccomp() syscall.
+>> Alternatives seem less appealing, though: changing the meaning of the
+>> uargs parameter when SECCOMP_FILTER_FLAG_NEW_LISTENER is set, for
+>> example. Hmm.
+>
+> From my perspective we can drop this whole thing. The only thing I'll
+> ever use is the ptrace version. Someone at some point (I don't
+> remember who, maybe stgraber) suggested this version would be useful
+> as well.
 
-Yep, sounds good.
+Well that would certainly change the exposure of the interface pretty
+drastically. :)
 
-> >> +       ret = anon_inode_getfile("seccomp notify", &seccomp_notify_ops,
-> >> +                                filter, O_RDWR);
-> >> +       if (IS_ERR(ret))
-> >> +               goto out;
-> >> +
-> >> +
-> >> +       /* The file has a reference to it now */
-> >> +       __get_seccomp_filter(filter);
-> >
-> > __get_seccomp_filter() has a comment in it that claims "/* Reference
-> > count is bounded by the number of total processes. */". I think this
-> > change invalidates that comment. I think it should be fine to just
-> > remove the comment.
-> 
-> Update it to "bounded by total processes and notification listeners"?
+So, let's talk more about this, as it raises another thought I had
+too: for the PTRACE interface to work, you have to know specifically
+which filter you want to get notifications for. Won't that be slightly
+tricky?
 
-Will do.
+> Anyway, let me know if your nervousness outweighs this, I'm happy to
+> drop it.
 
-> >> +out:
-> >> +       for (cur = task->seccomp.filter; cur; cur = cur->prev) {
-> >
-> > s/; cur;/; 1;/, or use a while loop instead? If the NULL check fires
-> > here, something went very wrong.
-> 
-> Hm? This is correct. This is how seccomp_run_filters() walks the list too:
-> 
->         struct seccomp_filter *f =
->                         READ_ONCE(current->seccomp.filter);
->         ...
->         for (; f; f = f->prev) {
-> 
-> Especially if we'll be holding the cred_guard_mutex.
+I'm not opposed to keeping it, but if you don't think anyone will use
+it ... we should probably drop it just to avoid the complexity. It's a
+cool API, though, so I'd like to hear from others first before you go
+tearing it out. ;) (stgraber added to CC)
 
-There is a last_locked local here though, I think that's what Jann is
-pointing out.
+>> It is possible (though unlikely given the type widths involved here)
+>> for unotif = {} to not initialize padding, so I would recommend an
+>> explicit memset(&unotif, 0, sizeof(unotif)) here.
+>
+> Orly? I didn't know that, thanks.
 
-Cheers,
+Yeah, it's a pretty annoying C-ism. The spec says that struct
+_members_ will get zero-initialized, but it doesn't say anything about
+padding. >_< In most cases, the padding gets initialized too, just
+because of bit widths being small enough that they're caught in the
+member initialization that the compiler does. But for REALLY big
+holes, they may get missed. In this case, while the padding is small,
+it's directly exposed to userspace, so I want to make it robust.
 
-Tycho
+>> > +       if (copy_from_user(&size, buf, sizeof(size)))
+>> > +               return -EFAULT;
+>> > +       size = min_t(size_t, size, sizeof(resp));
+>> > +       if (copy_from_user(&resp, buf, size))
+>> > +               return -EFAULT;
+>>
+>> For sanity checking on a double-read from userspace, please add:
+>>
+>>     if (resp.len != size)
+>>         return -EINVAL;
+>
+> Won't that fail if sizeof(resp) < resp.len, because of the min_t()?
+
+Ah, true. In that case, probably do resp.len = size to avoid any logic
+failures due to the double-read? I just want to avoid any chance of
+confusing the size and actually using it somewhere.
+
+-Kees
+
+-- 
+Kees Cook
+Pixel Security
