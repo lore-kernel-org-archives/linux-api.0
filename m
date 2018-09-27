@@ -1,111 +1,94 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v7 5/6] seccomp: add a way to pass FDs via a notification fd
-Date: Thu, 27 Sep 2018 18:39:02 +0200
-Message-ID: <CAG48ez2vJJQm8-Rdz4b=cvBQn2Ws-9wazVuVUXQFYqMMZh64YA@mail.gmail.com>
-References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-6-tycho@tycho.ws>
+Subject: Re: [PATCH v7 4/6] files: add a replace_fd_files() function
+Date: Thu, 27 Sep 2018 18:49:02 +0200
+Message-ID: <CAG48ez1eU_j_Ti0nRh05Qv6hv7-7hv5i+8gnJS5e30mTti2Jhg@mail.gmail.com>
+References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-5-tycho@tycho.ws>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180927151119.9989-6-tycho@tycho.ws>
+In-Reply-To: <20180927151119.9989-5-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org
+Cc: Kees Cook <keescook@chromium.org>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
 On Thu, Sep 27, 2018 at 5:11 PM Tycho Andersen <tycho@tycho.ws> wrote:
-> This patch adds a way to insert FDs into the tracee's process (also
-> close/overwrite fds for the tracee). This functionality is necessary to
-> mock things like socketpair() or dup2() or similar, but since it depends on
-> external (vfs) patches, I've left it as a separate patch as before so the
-> core functionality can still be merged while we argue about this. Except
-> this time it doesn't add any ugliness to the API :)
+> Similar to fd_install/__fd_install, we want to be able to replace an fd of
+> an arbitrary struct files_struct, not just current's. We'll use this in the
+> next patch to implement the seccomp ioctl that allows inserting fds into a
+> stopped process' context.
 [...]
-> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> index 17685803a2af..07a05ad59731 100644
-> --- a/kernel/seccomp.c
-> +++ b/kernel/seccomp.c
-> @@ -41,6 +41,8 @@
->  #include <linux/tracehook.h>
->  #include <linux/uaccess.h>
->  #include <linux/anon_inodes.h>
-> +#include <linux/fdtable.h>
-> +#include <net/cls_cgroup.h>
->
->  enum notify_state {
->         SECCOMP_NOTIFY_INIT,
-> @@ -1684,6 +1686,56 @@ static long seccomp_notify_id_valid(struct seccomp_filter *filter,
->         return ret;
+> diff --git a/fs/file.c b/fs/file.c
+> index 7ffd6e9d103d..3b3c5aadaadb 100644
+> --- a/fs/file.c
+> +++ b/fs/file.c
+> @@ -850,24 +850,32 @@ __releases(&files->file_lock)
 >  }
 >
-> +static long seccomp_notify_put_fd(struct seccomp_filter *filter,
-> +                                 unsigned long arg)
+>  int replace_fd(unsigned fd, struct file *file, unsigned flags)
 > +{
-> +       struct seccomp_notif_put_fd req;
-> +       void __user *buf = (void __user *)arg;
-> +       struct seccomp_knotif *knotif = NULL;
-> +       long ret;
-> +
-> +       if (copy_from_user(&req, buf, sizeof(req)))
-> +               return -EFAULT;
-> +
-> +       if (req.fd < 0 && req.to_replace < 0)
-> +               return -EINVAL;
-> +
-> +       ret = mutex_lock_interruptible(&filter->notify_lock);
-> +       if (ret < 0)
-> +               return ret;
-> +
-> +       ret = -ENOENT;
-> +       list_for_each_entry(knotif, &filter->notif->notifications, list) {
-> +               struct file *file = NULL;
-> +
-> +               if (knotif->id != req.id)
-> +                       continue;
-> +
-> +               if (req.fd >= 0)
-> +                       file = fget(req.fd);
-
-So here we take a reference on `file`.
-
-> +               if (req.to_replace >= 0) {
-> +                       ret = replace_fd_task(knotif->task, req.to_replace,
-> +                                             file, req.fd_flags);
-
-Then here we try to place the file in knotif->task's file descriptor
-table. This can either fail (e.g. due to exceeded rlimit), in which
-case nothing happens, or it can do do_dup2(), which first takes an
-extra reference to the file, then places it in the task's fd table.
-
-Either way, afterwards, we still hold a reference to the file.
-
-> +               } else {
-> +                       unsigned long max_files;
-> +
-> +                       max_files = task_rlimit(knotif->task, RLIMIT_NOFILE);
-> +                       ret = __alloc_fd(knotif->task->files, 0, max_files,
-> +                                        req.fd_flags);
-> +                       if (ret < 0)
-> +                               break;
-
-If we bail out here, we still hold a reference to `file`.
-
-Suggestion: Change this to "if (ret >= 0) {" and make the following
-code conditional instead of breaking.
-
-> +                       __fd_install(knotif->task->files, ret, file);
-
-But if we reach this point, __fd_install() consumes the file pointer,
-so `file` is a dangling pointer now.
-
-Suggestion: Add "break;" here.
-
-> +               }
-
-Suggestion: Add "if (file != NULL) fput(file);" here.
-
-> +               break;
-> +       }
-> +
-> +       mutex_unlock(&filter->notify_lock);
-> +       return ret;
+> +       return replace_fd_task(current, fd, file, flags);
 > +}
+> +
+> +/*
+> + * Same warning as __alloc_fd()/__fd_install() here.
+> + */
+> +int replace_fd_task(struct task_struct *task, unsigned fd,
+> +                   struct file *file, unsigned flags)
+>  {
+>         int err;
+> -       struct files_struct *files = current->files;
+
+Why did you remove this? You could just do s/current/task/ instead, right?
+
+>         if (!file)
+> -               return __close_fd(files, fd);
+> +               return __close_fd(task->files, fd);
+>
+> -       if (fd >= rlimit(RLIMIT_NOFILE))
+> +       if (fd >= task_rlimit(task, RLIMIT_NOFILE))
+>                 return -EBADF;
+>
+> -       spin_lock(&files->file_lock);
+> -       err = expand_files(files, fd);
+> +       spin_lock(&task->files->file_lock);
+> +       err = expand_files(task->files, fd);
+>         if (unlikely(err < 0))
+>                 goto out_unlock;
+> -       return do_dup2(files, file, fd, flags);
+> +       return do_dup2(task->files, file, fd, flags);
+>
+>  out_unlock:
+> -       spin_unlock(&files->file_lock);
+> +       spin_unlock(&task->files->file_lock);
+>         return err;
+>  }
+>
+> diff --git a/include/linux/file.h b/include/linux/file.h
+> index 6b2fb032416c..f94277fee038 100644
+> --- a/include/linux/file.h
+> +++ b/include/linux/file.h
+> @@ -11,6 +11,7 @@
+>  #include <linux/posix_types.h>
+>
+>  struct file;
+> +struct task_struct;
+>
+>  extern void fput(struct file *);
+>
+> @@ -79,6 +80,13 @@ static inline void fdput_pos(struct fd f)
+>
+>  extern int f_dupfd(unsigned int from, struct file *file, unsigned flags);
+>  extern int replace_fd(unsigned fd, struct file *file, unsigned flags);
+> +/*
+> + * Warning! This is only safe if you know the owner of the files_struct is
+> + * stopped outside syscall context. It's a very bad idea to use this unless you
+> + * have similar guarantees in your code.
+> + */
+> +extern int replace_fd_task(struct task_struct *task, unsigned fd,
+> +                          struct file *file, unsigned flags);
+
+I think Linux kernel coding style is normally to have comments on the
+implementations of functions, not in the headers? Maybe replace the
+warning above the implemenation of replace_fd_task() with this
+comment.
