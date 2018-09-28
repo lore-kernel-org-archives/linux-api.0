@@ -1,144 +1,70 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v7 1/6] seccomp: add a return code to trap to userspace
-Date: Fri, 28 Sep 2018 08:39:01 -0600
-Message-ID: <20180928143901.GB18045@cisco.lan>
-References: <20180927151119.9989-1-tycho@tycho.ws>
- <20180927151119.9989-2-tycho@tycho.ws>
- <CAGXu5jJr3JWLYGrJ+knu3sj4wwJ_irVvs+JRrY5MuYT3voLegg@mail.gmail.com>
- <20180927224839.GF15491@cisco.cisco.com>
- <CAGXu5jJ8VSJ6BqqxAL+B12bv2xTNU3CzpBOMf-zEChO9opaFMA@mail.gmail.com>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [RFC PATCH v4 01/27] x86/cpufeatures: Add CPUIDs for
+ Control-flow Enforcement Technology (CET)
+Date: Fri, 28 Sep 2018 18:51:18 +0200
+Message-ID: <20180928165118.GD20768@zn.tnic>
+References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
+ <20180921150351.20898-2-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jJ8VSJ6BqqxAL+B12bv2xTNU3CzpBOMf-zEChO9opaFMA@mail.gmail.com>
+In-Reply-To: <20180921150351.20898-2-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Stephane Graber <stgraber@ubuntu.com>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 27, 2018 at 04:10:29PM -0700, Kees Cook wrote:
-> On Thu, Sep 27, 2018 at 3:48 PM, Tycho Andersen <tycho@tycho.ws> wrote:
-> > On Thu, Sep 27, 2018 at 02:31:24PM -0700, Kees Cook wrote:
-> >> On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> >> struct seccomp_notif {
-> >>         __u16                      len;                  /*     0     2 */
-> >>
-> >>         /* XXX 6 bytes hole, try to pack */
-> >>
-> >>         __u64                      id;                   /*     8     8 */
-> >>         __u32                      pid;                  /*    16     4 */
-> >>         __u8                       signaled;             /*    20     1 */
-> >>
-> >>         /* XXX 3 bytes hole, try to pack */
-> >>
-> >>         struct seccomp_data        data;                 /*    24    64 */
-> >>         /* --- cacheline 1 boundary (64 bytes) was 24 bytes ago --- */
-> >>
-> >>         /* size: 88, cachelines: 2, members: 5 */
-> >>         /* sum members: 79, holes: 2, sum holes: 9 */
-> >>         /* last cacheline: 24 bytes */
-> >> };
-> >> struct seccomp_notif_resp {
-> >>         __u16                      len;                  /*     0     2 */
-> >>
-> >>         /* XXX 6 bytes hole, try to pack */
-> >>
-> >>         __u64                      id;                   /*     8     8 */
-> >>         __s32                      error;                /*    16     4 */
-> >>
-> >>         /* XXX 4 bytes hole, try to pack */
-> >>
-> >>         __s64                      val;                  /*    24     8 */
-> >>
-> >>         /* size: 32, cachelines: 1, members: 4 */
-> >>         /* sum members: 22, holes: 2, sum holes: 10 */
-> >>         /* last cacheline: 32 bytes */
-> >> };
-> >>
-> >> How about making len u32, and moving pid and error above "id"? This
-> >> leaves a hole after signaled, so changing "len" won't be sufficient
-> >> for versioning here. Perhaps move it after data?
-> >
-> > I'm not sure what you mean by "len won't be sufficient for versioning
-> > here"? Anyway, I can do some packing on these; I didn't bother before
-> > since I figured it's a userspace interface, so saving a few bytes
-> > isn't a huge deal.
+On Fri, Sep 21, 2018 at 08:03:25AM -0700, Yu-cheng Yu wrote:
+> Add CPUIDs for Control-flow Enforcement Technology (CET).
 > 
-> I was thinking the "len" portion was for determining if the API ever
-> changes in the future. My point was that given the padding holes, e.g.
-> adding a u8 after signaled, "len" wouldn't change, so the kernel might
-> expect to starting reading something after signaled that it wasn't
-> checking before, but the len would be the same.
-
-Oh, yeah. That's ugly :(
-
-> >> I have to say, I'm vaguely nervous about changing the semantics here
-> >> for passing back the fd as the return code from the seccomp() syscall.
-> >> Alternatives seem less appealing, though: changing the meaning of the
-> >> uargs parameter when SECCOMP_FILTER_FLAG_NEW_LISTENER is set, for
-> >> example. Hmm.
-> >
-> > From my perspective we can drop this whole thing. The only thing I'll
-> > ever use is the ptrace version. Someone at some point (I don't
-> > remember who, maybe stgraber) suggested this version would be useful
-> > as well.
+> CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+> CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect branch tracking
 > 
-> Well that would certainly change the exposure of the interface pretty
-> drastically. :)
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/asm/cpufeatures.h | 2 ++
+>  arch/x86/kernel/cpu/scattered.c    | 1 +
+>  2 files changed, 3 insertions(+)
 > 
-> So, let's talk more about this, as it raises another thought I had
-> too: for the PTRACE interface to work, you have to know specifically
-> which filter you want to get notifications for. Won't that be slightly
-> tricky?
+> diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+> index 89a048c2faec..fa69651a017e 100644
+> --- a/arch/x86/include/asm/cpufeatures.h
+> +++ b/arch/x86/include/asm/cpufeatures.h
+> @@ -221,6 +221,7 @@
+>  #define X86_FEATURE_ZEN			( 7*32+28) /* "" CPU is AMD family 0x17 (Zen) */
+>  #define X86_FEATURE_L1TF_PTEINV		( 7*32+29) /* "" L1TF workaround PTE inversion */
+>  #define X86_FEATURE_IBRS_ENHANCED	( 7*32+30) /* Enhanced IBRS */
+> +#define X86_FEATURE_IBT			( 7*32+31) /* Indirect Branch Tracking */
+>  
+>  /* Virtualization flags: Linux defined, word 8 */
+>  #define X86_FEATURE_TPR_SHADOW		( 8*32+ 0) /* Intel TPR Shadow */
+> @@ -321,6 +322,7 @@
+>  #define X86_FEATURE_PKU			(16*32+ 3) /* Protection Keys for Userspace */
+>  #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+>  #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
+> +#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+>  #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+>  #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+>  #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+> diff --git a/arch/x86/kernel/cpu/scattered.c b/arch/x86/kernel/cpu/scattered.c
+> index 772c219b6889..63cbb4d9938e 100644
+> --- a/arch/x86/kernel/cpu/scattered.c
+> +++ b/arch/x86/kernel/cpu/scattered.c
+> @@ -21,6 +21,7 @@ struct cpuid_bit {
+>  static const struct cpuid_bit cpuid_bits[] = {
+>  	{ X86_FEATURE_APERFMPERF,       CPUID_ECX,  0, 0x00000006, 0 },
+>  	{ X86_FEATURE_EPB,		CPUID_ECX,  3, 0x00000006, 0 },
+> +	{ X86_FEATURE_IBT,		CPUID_EDX, 20, 0x00000007, 0},
 
-Not necessarily. The way I imagine using it is:
+If you haven't noticed, there's already a separate leaf:
 
-1. container manager forks init task
-2. init task does a bunch of setup stuff, then installs the filter
-3. optionally install any user specified filter (or just merge the
-   filter with step 2 instead of chaining them)
-4. container manager grabs the listener fd from the container init via
-   ptrace
-5. init execs the user specified init
+/* Intel-defined CPU features, CPUID level 0x00000007:0 (EDX), word 18 */
 
-So the offset will always be known at least in my usecase. The
-container manager doesn't want to install the filter on itself, so it
-won't use NEW_LISTENER. Similarly, we don't want init to use
-NEW_LISTENER, because if the user has decided to block sendmsg as part
-of their policy, there's no way to get the fd out.
+in arch/x86/include/asm/cpufeatures.h
 
-> > Anyway, let me know if your nervousness outweighs this, I'm happy to
-> > drop it.
-> 
-> I'm not opposed to keeping it, but if you don't think anyone will use
-> it ... we should probably drop it just to avoid the complexity. It's a
-> cool API, though, so I'd like to hear from others first before you go
-> tearing it out. ;) (stgraber added to CC)
+-- 
+Regards/Gruss,
+    Boris.
 
-It does seem useful for lighter weight cases than a container. The "I
-want to run some random binary that I don't have the source for that
-tries to make some privileged calls it doesn't really need" case. But
-as a Container Guy I think I have in my contract somewhere that I have
-to use containers :). But let's see what people think.
-
-> >> > +       if (copy_from_user(&size, buf, sizeof(size)))
-> >> > +               return -EFAULT;
-> >> > +       size = min_t(size_t, size, sizeof(resp));
-> >> > +       if (copy_from_user(&resp, buf, size))
-> >> > +               return -EFAULT;
-> >>
-> >> For sanity checking on a double-read from userspace, please add:
-> >>
-> >>     if (resp.len != size)
-> >>         return -EINVAL;
-> >
-> > Won't that fail if sizeof(resp) < resp.len, because of the min_t()?
-> 
-> Ah, true. In that case, probably do resp.len = size to avoid any logic
-> failures due to the double-read? I just want to avoid any chance of
-> confusing the size and actually using it somewhere.
-
-Yep, sounds good.
-
-Tycho
+Good mailing practices for 400: avoid top-posting and trim the reply.
