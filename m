@@ -1,146 +1,39 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v7 4/6] files: add a replace_fd_files() function
-Date: Thu, 27 Sep 2018 23:23:46 -0600
-Message-ID: <20180928052346.GA18045@cisco.lan>
-References: <20180927151119.9989-1-tycho@tycho.ws>
- <20180927151119.9989-5-tycho@tycho.ws>
- <CAGXu5jLOe0izpGoB8c-hAeH2SzA51dF1BuMcXbk-d=QwqfjxxQ@mail.gmail.com>
- <CAGXu5jJvkkNNsGj=MK+=Dg0=nauANRkp=b1MrvOOzxkpb+DVkg@mail.gmail.com>
+From: Pablo Neira Ayuso <pablo@netfilter.org>
+Subject: Re: [netfilter-core] [PATCH 07/11] UAPI: netfilter: Fix symbol
+ collision issues [ver #2]
+Date: Fri, 28 Sep 2018 15:07:04 +0200
+Message-ID: <20180928130704.kcmsnsecp6aqpk66@salvia>
+References: <153622549721.14298.8116794954073122489.stgit@warthog.procyon.org.uk>
+ <153622555128.14298.11612304975343930534.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jJvkkNNsGj=MK+=Dg0=nauANRkp=b1MrvOOzxkpb+DVkg@mail.gmail.com>
+In-Reply-To: <153622555128.14298.11612304975343930534.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>
+To: David Howells <dhowells@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-kbuild@vger.kernel.org, coreteam@netfilter.org, netfilter-devel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 27, 2018 at 07:20:50PM -0700, Kees Cook wrote:
-> On Thu, Sep 27, 2018 at 2:59 PM, Kees Cook <keescook@chromium.org> wrote:
-> > On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> >> Similar to fd_install/__fd_install, we want to be able to replace an fd of
-> >> an arbitrary struct files_struct, not just current's. We'll use this in the
-> >> next patch to implement the seccomp ioctl that allows inserting fds into a
-> >> stopped process' context.
-> >>
-> >> v7: new in v7
-> >>
-> >> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
-> >> CC: Alexander Viro <viro@zeniv.linux.org.uk>
-> >> CC: Kees Cook <keescook@chromium.org>
-> >> CC: Andy Lutomirski <luto@amacapital.net>
-> >> CC: Oleg Nesterov <oleg@redhat.com>
-> >> CC: Eric W. Biederman <ebiederm@xmission.com>
-> >> CC: "Serge E. Hallyn" <serge@hallyn.com>
-> >> CC: Christian Brauner <christian.brauner@ubuntu.com>
-> >> CC: Tyler Hicks <tyhicks@canonical.com>
-> >> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
-> >> ---
-> >>  fs/file.c            | 22 +++++++++++++++-------
-> >>  include/linux/file.h |  8 ++++++++
-> >>  2 files changed, 23 insertions(+), 7 deletions(-)
-> >>
-> >> diff --git a/fs/file.c b/fs/file.c
-> >> index 7ffd6e9d103d..3b3c5aadaadb 100644
-> >> --- a/fs/file.c
-> >> +++ b/fs/file.c
-> >> @@ -850,24 +850,32 @@ __releases(&files->file_lock)
-> >>  }
-> >>
-> >>  int replace_fd(unsigned fd, struct file *file, unsigned flags)
-> >> +{
-> >> +       return replace_fd_task(current, fd, file, flags);
-> >> +}
-> >> +
-> >> +/*
-> >> + * Same warning as __alloc_fd()/__fd_install() here.
-> >> + */
-> >> +int replace_fd_task(struct task_struct *task, unsigned fd,
-> >> +                   struct file *file, unsigned flags)
-> >>  {
-> >>         int err;
-> >> -       struct files_struct *files = current->files;
-> >
-> > Same feedback as Jann: on a purely "smaller diff" note, this could
-> > just be s/current/task/ here and all the other s/files/task->files/
-> > would go away...
-> >
-> >>
-> >>         if (!file)
-> >> -               return __close_fd(files, fd);
-> >> +               return __close_fd(task->files, fd);
-> >>
-> >> -       if (fd >= rlimit(RLIMIT_NOFILE))
-> >> +       if (fd >= task_rlimit(task, RLIMIT_NOFILE))
-> >>                 return -EBADF;
-> >>
-> >> -       spin_lock(&files->file_lock);
-> >> -       err = expand_files(files, fd);
-> >> +       spin_lock(&task->files->file_lock);
-> >> +       err = expand_files(task->files, fd);
-> >>         if (unlikely(err < 0))
-> >>                 goto out_unlock;
-> >> -       return do_dup2(files, file, fd, flags);
-> >> +       return do_dup2(task->files, file, fd, flags);
-> >>
-> >>  out_unlock:
-> >> -       spin_unlock(&files->file_lock);
-> >> +       spin_unlock(&task->files->file_lock);
-> >>         return err;
-> >>  }
-> >>
-> >> diff --git a/include/linux/file.h b/include/linux/file.h
-> >> index 6b2fb032416c..f94277fee038 100644
-> >> --- a/include/linux/file.h
-> >> +++ b/include/linux/file.h
-> >> @@ -11,6 +11,7 @@
-> >>  #include <linux/posix_types.h>
-> >>
-> >>  struct file;
-> >> +struct task_struct;
-> >>
-> >>  extern void fput(struct file *);
-> >>
-> >> @@ -79,6 +80,13 @@ static inline void fdput_pos(struct fd f)
-> >>
-> >>  extern int f_dupfd(unsigned int from, struct file *file, unsigned flags);
-> >>  extern int replace_fd(unsigned fd, struct file *file, unsigned flags);
-> >> +/*
-> >> + * Warning! This is only safe if you know the owner of the files_struct is
-> >> + * stopped outside syscall context. It's a very bad idea to use this unless you
-> >> + * have similar guarantees in your code.
-> >> + */
-> >> +extern int replace_fd_task(struct task_struct *task, unsigned fd,
-> >> +                          struct file *file, unsigned flags);
-> >
-> > Perhaps call this __replace_fd() to indicate the "please don't use
-> > this unless you're very sure"ness of it?
-> >
-> >>  extern void set_close_on_exec(unsigned int fd, int flag);
-> >>  extern bool get_close_on_exec(unsigned int fd);
-> >>  extern int get_unused_fd_flags(unsigned flags);
-> >> --
-> >> 2.17.1
-> >>
-> >
-> > If I can get an Ack from Al, that would be very nice. :)
+On Thu, Sep 06, 2018 at 10:19:11AM +0100, David Howells wrote:
+> The netfilter UAPI headers have some symbol collision issues:
 > 
-> In out-of-band feedback from Al, he's pointed out a much cleaner
-> approach: do the work on the "current" side. i.e. current is stopped
-> in __seccomp_filter in the case SECCOMP_RET_USER_NOTIFY. Instead of
-> having the ioctl-handing process doing the work, have it done on the
-> other side. This may cause some additional complexity on the ioctl
-> return path, but it solves both this problem and the "ptrace attach"
-> issue: have the work delayed until "current" gets caught by seccomp.
+>  (1) "enum nfnl_acct_msg_types" is defined twice, and each definition is
+>      completely different.
+> 
+>      Fix this by renaming the one in nfnetlink_cthelper.h to be "enum
+>      nfnl_cthelper_types" to be consistent with the other things in that
+>      file.
+> 
+>  (2) There's a disagreement between ipt_ECN.h and ipt_ecn.h over the
+>      definition of various IPT_ECN_* constants, leading to an error over
+>      IPT_ECN_IP_MASK being substituted when being defined as an enum value
+>      in ipt_ecn.h if ipt_ECN.h is #included first.
+> 
+>      Fix this by removing the conflicting constants from ipt_ECN.h and
+>      including ipt_ecn.h instead.
 
-So this is pretty much what we had in v6 (a one fd version, but the
-idea is the same). The biggest issue is that in the case of e.g.
-socketpair(), the fd values need to be written somewhere in the task's
-memory, which means they need to be known before the response is sent.
-If we have to wait until we're back in the task's context to install
-them, we can't know the fd values.
+David, may I upstream this or you will pass it to Greg? I can just
+take this, as you prefer.
 
-V6 implementation: https://lkml.org/lkml/2018/9/6/773
-
-Tycho
+Thanks.
