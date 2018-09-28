@@ -1,19 +1,22 @@
-From: Jann Horn <jannh@google.com>
+From: Tycho Andersen <tycho@tycho.ws>
 Subject: Re: [PATCH v7 4/6] files: add a replace_fd_files() function
-Date: Fri, 28 Sep 2018 04:46:26 +0200
-Message-ID: <CAG48ez0RybWLS_o4NmSiKEfK=3EFbBzPQ9HoaMS3U_AM5NrUuQ@mail.gmail.com>
-References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-5-tycho@tycho.ws>
- <CAGXu5jLOe0izpGoB8c-hAeH2SzA51dF1BuMcXbk-d=QwqfjxxQ@mail.gmail.com> <CAGXu5jJvkkNNsGj=MK+=Dg0=nauANRkp=b1MrvOOzxkpb+DVkg@mail.gmail.com>
+Date: Thu, 27 Sep 2018 23:23:46 -0600
+Message-ID: <20180928052346.GA18045@cisco.lan>
+References: <20180927151119.9989-1-tycho@tycho.ws>
+ <20180927151119.9989-5-tycho@tycho.ws>
+ <CAGXu5jLOe0izpGoB8c-hAeH2SzA51dF1BuMcXbk-d=QwqfjxxQ@mail.gmail.com>
+ <CAGXu5jJvkkNNsGj=MK+=Dg0=nauANRkp=b1MrvOOzxkpb+DVkg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <CAGXu5jJvkkNNsGj=MK+=Dg0=nauANRkp=b1MrvOOzxkpb+DVkg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Kees Cook <keescook@chromium.org>
-Cc: Tycho Andersen <tycho@tycho.ws>, kernel list <linux-kernel@vger.kernel.org>, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, suda.akihiro@lab.ntt.co.jp, linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 28, 2018 at 4:20 AM Kees Cook <keescook@chromium.org> wrote:
+On Thu, Sep 27, 2018 at 07:20:50PM -0700, Kees Cook wrote:
 > On Thu, Sep 27, 2018 at 2:59 PM, Kees Cook <keescook@chromium.org> wrote:
 > > On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
 > >> Similar to fd_install/__fd_install, we want to be able to replace an fd of
@@ -122,7 +125,7 @@ On Fri, Sep 28, 2018 at 4:20 AM Kees Cook <keescook@chromium.org> wrote:
 > >>
 > >
 > > If I can get an Ack from Al, that would be very nice. :)
->
+> 
 > In out-of-band feedback from Al, he's pointed out a much cleaner
 > approach: do the work on the "current" side. i.e. current is stopped
 > in __seccomp_filter in the case SECCOMP_RET_USER_NOTIFY. Instead of
@@ -131,10 +134,13 @@ On Fri, Sep 28, 2018 at 4:20 AM Kees Cook <keescook@chromium.org> wrote:
 > return path, but it solves both this problem and the "ptrace attach"
 > issue: have the work delayed until "current" gets caught by seccomp.
 
-Can you elaborate on this? Are you saying you want to, for every file
-descriptor that should be transferred, put a reference to the file
-into the kernel's seccomp notification data structure, wake up the
-task that's waiting for a reply, let the task install an fd, send back
-a response on whether installing the FD worked, and then return that
-response back to the container manager process? That sounds
-like a pretty complicated dance that I'd prefer to avoid.
+So this is pretty much what we had in v6 (a one fd version, but the
+idea is the same). The biggest issue is that in the case of e.g.
+socketpair(), the fd values need to be written somewhere in the task's
+memory, which means they need to be known before the response is sent.
+If we have to wait until we're back in the task's context to install
+them, we can't know the fd values.
+
+V6 implementation: https://lkml.org/lkml/2018/9/6/773
+
+Tycho
