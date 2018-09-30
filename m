@@ -1,7 +1,7 @@
 From: Laurent Vivier <laurent@vivier.eu>
-Subject: [RFC 2/2] binfmt_misc: move data to binfmt_namespace
-Date: Mon,  1 Oct 2018 01:46:28 +0200
-Message-ID: <20180930234628.25528-3-laurent@vivier.eu>
+Subject: [RFC 1/2] ns: introduce binfmt_misc namespace
+Date: Mon,  1 Oct 2018 01:46:27 +0200
+Message-ID: <20180930234628.25528-2-laurent@vivier.eu>
 References: <20180930234628.25528-1-laurent@vivier.eu>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20180930234628.25528-1-laurent@vivier.eu>
@@ -12,242 +12,423 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Laurent Vivier <laurent@vivier.eu>
 ---
- fs/binfmt_misc.c                 | 50 +++++++++++++++++---------------
- include/linux/binfmt_namespace.h | 12 ++++++++
- kernel/binfmt_namespace.c        | 11 +++++++
- 3 files changed, 49 insertions(+), 24 deletions(-)
+ fs/proc/namespaces.c             |   3 +
+ include/linux/binfmt_namespace.h |  51 +++++++++++
+ include/linux/nsproxy.h          |   2 +
+ include/linux/proc_ns.h          |   2 +
+ include/linux/user_namespace.h   |   1 +
+ include/uapi/linux/sched.h       |   1 +
+ init/Kconfig                     |   8 ++
+ kernel/Makefile                  |   1 +
+ kernel/binfmt_namespace.c        | 153 +++++++++++++++++++++++++++++++
+ kernel/fork.c                    |   3 +-
+ kernel/nsproxy.c                 |  18 +++-
+ 11 files changed, 240 insertions(+), 3 deletions(-)
+ create mode 100644 include/linux/binfmt_namespace.h
+ create mode 100644 kernel/binfmt_namespace.c
 
-diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-index aa4a7a23ff99..c6148b2bdd19 100644
---- a/fs/binfmt_misc.c
-+++ b/fs/binfmt_misc.c
-@@ -25,6 +25,7 @@
- #include <linux/syscalls.h>
- #include <linux/fs.h>
- #include <linux/uaccess.h>
-+#include <linux/binfmt_namespace.h>
- 
- #include "internal.h"
- 
-@@ -38,9 +39,6 @@ enum {
- 	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
+diff --git a/fs/proc/namespaces.c b/fs/proc/namespaces.c
+index dd2b35f78b09..4d86549a788f 100644
+--- a/fs/proc/namespaces.c
++++ b/fs/proc/namespaces.c
+@@ -33,6 +33,9 @@ static const struct proc_ns_operations *ns_entries[] = {
+ #ifdef CONFIG_CGROUPS
+ 	&cgroupns_operations,
+ #endif
++#ifdef CONFIG_BINFMT_NS
++	&binfmtns_operations,
++#endif
  };
  
--static LIST_HEAD(entries);
--static int enabled = 1;
--
- enum {Enabled, Magic};
- #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
- #define MISC_FMT_OPEN_BINARY (1 << 30)
-@@ -60,10 +58,7 @@ typedef struct {
- 	struct file *interp_file;
- } Node;
- 
--static DEFINE_RWLOCK(entries_lock);
- static struct file_system_type bm_fs_type;
--static struct vfsmount *bm_mnt;
--static int entry_count;
+ static const char *proc_ns_get_link(struct dentry *dentry,
+diff --git a/include/linux/binfmt_namespace.h b/include/linux/binfmt_namespace.h
+new file mode 100644
+index 000000000000..8688869ee254
+--- /dev/null
++++ b/include/linux/binfmt_namespace.h
+@@ -0,0 +1,51 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _LINUX_BINFMT_NAMESPACE_H
++#define _LINUX_BINFMT_NAMESPACE_H
++
++struct user_namespace;
++extern struct user_namespace init_user_ns;
++
++struct binfmt_namespace {
++	struct kref kref;
++	struct user_namespace *user_ns;
++	struct ucounts *ucounts;
++	struct ns_common ns;
++} __randomize_layout;
++extern struct binfmt_namespace init_binfmt_ns;
++
++#ifdef CONFIG_BINFMT_NS
++static inline void get_binfmt_ns(struct binfmt_namespace *ns)
++{
++	if (ns)
++		kref_get(&ns->kref);
++}
++
++extern struct binfmt_namespace *copy_binfmt_ns(unsigned long flags,
++	struct user_namespace *user_ns, struct binfmt_namespace *old_ns);
++extern void free_binfmt_ns(struct kref *kref);
++
++static inline void put_binfmt_ns(struct binfmt_namespace *ns)
++{
++	if (ns)
++		kref_put(&ns->kref, free_binfmt_ns);
++}
++
++#else
++static inline void get_binfmt_ns(struct binfmt_namespace *ns)
++{
++}
++
++static inline void put_binfmt_ns(struct binfmt_namespace *ns)
++{
++}
++
++static inline struct binfmt_namespace *copy_binfmt_ns(unsigned long flags,
++	struct user_namespace *user_ns, struct binfmt_namespace *old_ns)
++{
++	if (flags & CLONE_NEWBINFMT)
++		return ERR_PTR(-EINVAL);
++
++	return old_ns;
++}
++#endif
++#endif /* _LINUX_BINFMT_NAMESPACE_H */
+diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
+index 2ae1b1a4d84d..8d2294477095 100644
+--- a/include/linux/nsproxy.h
++++ b/include/linux/nsproxy.h
+@@ -10,6 +10,7 @@ struct uts_namespace;
+ struct ipc_namespace;
+ struct pid_namespace;
+ struct cgroup_namespace;
++struct binfmt_namespace;
+ struct fs_struct;
  
  /*
-  * Max length of the register string.  Determined by:
-@@ -91,7 +86,7 @@ static Node *check_file(struct linux_binprm *bprm)
- 	struct list_head *l;
- 
- 	/* Walk all the registered handlers. */
--	list_for_each(l, &entries) {
-+	list_for_each(l, &binfmt_ns(entries)) {
- 		Node *e = list_entry(l, Node, list);
- 		char *s;
- 		int j;
-@@ -135,15 +130,15 @@ static int load_misc_binary(struct linux_binprm *bprm)
- 	int fd_binary = -1;
- 
- 	retval = -ENOEXEC;
--	if (!enabled)
-+	if (!binfmt_ns(enabled))
- 		return retval;
- 
- 	/* to keep locking time low, we copy the interpreter string */
--	read_lock(&entries_lock);
-+	read_lock(&binfmt_ns(entries_lock));
- 	fmt = check_file(bprm);
- 	if (fmt)
- 		dget(fmt->dentry);
--	read_unlock(&entries_lock);
-+	read_unlock(&binfmt_ns(entries_lock));
- 	if (!fmt)
- 		return retval;
- 
-@@ -613,15 +608,15 @@ static void kill_node(Node *e)
- {
- 	struct dentry *dentry;
- 
--	write_lock(&entries_lock);
-+	write_lock(&binfmt_ns(entries_lock));
- 	list_del_init(&e->list);
--	write_unlock(&entries_lock);
-+	write_unlock(&binfmt_ns(entries_lock));
- 
- 	dentry = e->dentry;
- 	drop_nlink(d_inode(dentry));
- 	d_drop(dentry);
- 	dput(dentry);
--	simple_release_fs(&bm_mnt, &entry_count);
-+	simple_release_fs(&binfmt_ns(bm_mnt), &binfmt_ns(entry_count));
- }
- 
- /* /<entry> */
-@@ -716,7 +711,8 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
- 	if (!inode)
- 		goto out2;
- 
--	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-+	err = simple_pin_fs(&bm_fs_type, &binfmt_ns(bm_mnt),
-+			    &binfmt_ns(entry_count));
- 	if (err) {
- 		iput(inode);
- 		inode = NULL;
-@@ -730,7 +726,8 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
- 		if (IS_ERR(f)) {
- 			err = PTR_ERR(f);
- 			pr_notice("register: failed to install interpreter file %s\n", e->interpreter);
--			simple_release_fs(&bm_mnt, &entry_count);
-+			simple_release_fs(&binfmt_ns(bm_mnt),
-+					  &binfmt_ns(entry_count));
- 			iput(inode);
- 			inode = NULL;
- 			goto out2;
-@@ -743,9 +740,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
- 	inode->i_fop = &bm_entry_operations;
- 
- 	d_instantiate(dentry, inode);
--	write_lock(&entries_lock);
--	list_add(&e->list, &entries);
--	write_unlock(&entries_lock);
-+	write_lock(&binfmt_ns(entries_lock));
-+	list_add(&e->list, &binfmt_ns(entries));
-+	write_unlock(&binfmt_ns(entries_lock));
- 
- 	err = 0;
- out2:
-@@ -770,7 +767,7 @@ static const struct file_operations bm_register_operations = {
- static ssize_t
- bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
- {
--	char *s = enabled ? "enabled\n" : "disabled\n";
-+	char *s = binfmt_ns(enabled) ? "enabled\n" : "disabled\n";
- 
- 	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
- }
-@@ -784,19 +781,20 @@ static ssize_t bm_status_write(struct file *file, const char __user *buffer,
- 	switch (res) {
- 	case 1:
- 		/* Disable all handlers. */
--		enabled = 0;
-+		binfmt_ns(enabled) = 0;
- 		break;
- 	case 2:
- 		/* Enable all handlers. */
--		enabled = 1;
-+		binfmt_ns(enabled) = 1;
- 		break;
- 	case 3:
- 		/* Delete all handlers. */
- 		root = file_inode(file)->i_sb->s_root;
- 		inode_lock(d_inode(root));
- 
--		while (!list_empty(&entries))
--			kill_node(list_first_entry(&entries, Node, list));
-+		while (!list_empty(&binfmt_ns(entries)))
-+			kill_node(list_first_entry(&binfmt_ns(entries),
-+						   Node, list));
- 
- 		inode_unlock(d_inode(root));
- 		break;
-@@ -838,7 +836,10 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
- static struct dentry *bm_mount(struct file_system_type *fs_type,
- 	int flags, const char *dev_name, void *data)
- {
--	return mount_single(fs_type, flags, data, bm_fill_super);
-+	struct binfmt_namespace *binfmt_ns =  current->nsproxy->binfmt_ns;
-+
-+	return mount_ns(fs_type, flags, data, binfmt_ns, binfmt_ns->user_ns,
-+			bm_fill_super);
- }
- 
- static struct linux_binfmt misc_format = {
-@@ -849,6 +850,7 @@ static struct linux_binfmt misc_format = {
- static struct file_system_type bm_fs_type = {
- 	.owner		= THIS_MODULE,
- 	.name		= "binfmt_misc",
-+	.fs_flags	= FS_USERNS_MOUNT,
- 	.mount		= bm_mount,
- 	.kill_sb	= kill_litter_super,
+@@ -36,6 +37,7 @@ struct nsproxy {
+ 	struct pid_namespace *pid_ns_for_children;
+ 	struct net 	     *net_ns;
+ 	struct cgroup_namespace *cgroup_ns;
++	struct binfmt_namespace *binfmt_ns;
  };
-diff --git a/include/linux/binfmt_namespace.h b/include/linux/binfmt_namespace.h
-index 8688869ee254..550357ab4f62 100644
---- a/include/linux/binfmt_namespace.h
-+++ b/include/linux/binfmt_namespace.h
-@@ -7,12 +7,24 @@ extern struct user_namespace init_user_ns;
+ extern struct nsproxy init_nsproxy;
  
- struct binfmt_namespace {
- 	struct kref kref;
-+
-+	struct list_head entries;
-+	rwlock_t entries_lock;
-+	int enabled;
-+	struct vfsmount *bm_mnt;
-+	int entry_count;
-+
-+	/* user_ns which owns the binfmt_misc ns */
-+
- 	struct user_namespace *user_ns;
- 	struct ucounts *ucounts;
-+
- 	struct ns_common ns;
- } __randomize_layout;
- extern struct binfmt_namespace init_binfmt_ns;
+diff --git a/include/linux/proc_ns.h b/include/linux/proc_ns.h
+index d31cb6215905..6afa2dbc5204 100644
+--- a/include/linux/proc_ns.h
++++ b/include/linux/proc_ns.h
+@@ -32,6 +32,7 @@ extern const struct proc_ns_operations pidns_for_children_operations;
+ extern const struct proc_ns_operations userns_operations;
+ extern const struct proc_ns_operations mntns_operations;
+ extern const struct proc_ns_operations cgroupns_operations;
++extern const struct proc_ns_operations binfmtns_operations;
  
-+#define binfmt_ns(a) (current->nsproxy->binfmt_ns->a)
+ /*
+  * We always define these enumerators
+@@ -43,6 +44,7 @@ enum {
+ 	PROC_USER_INIT_INO	= 0xEFFFFFFDU,
+ 	PROC_PID_INIT_INO	= 0xEFFFFFFCU,
+ 	PROC_CGROUP_INIT_INO	= 0xEFFFFFFBU,
++	PROC_BINFMT_INIT_INO	= 0xEFFFFFFAU,
+ };
+ 
+ #ifdef CONFIG_PROC_FS
+diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
+index d6b74b91096b..81365a22362c 100644
+--- a/include/linux/user_namespace.h
++++ b/include/linux/user_namespace.h
+@@ -45,6 +45,7 @@ enum ucount_type {
+ 	UCOUNT_NET_NAMESPACES,
+ 	UCOUNT_MNT_NAMESPACES,
+ 	UCOUNT_CGROUP_NAMESPACES,
++	UCOUNT_BINFMT_NAMESPACES,
+ #ifdef CONFIG_INOTIFY_USER
+ 	UCOUNT_INOTIFY_INSTANCES,
+ 	UCOUNT_INOTIFY_WATCHES,
+diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+index 22627f80063e..51fe40681e8e 100644
+--- a/include/uapi/linux/sched.h
++++ b/include/uapi/linux/sched.h
+@@ -10,6 +10,7 @@
+ #define CLONE_FS	0x00000200	/* set if fs info shared between processes */
+ #define CLONE_FILES	0x00000400	/* set if open files shared between processes */
+ #define CLONE_SIGHAND	0x00000800	/* set if signal handlers and blocked signals shared */
++#define CLONE_NEWBINFMT	0x00001000	/* New binfmt_misc namespace */
+ #define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */
+ #define CLONE_VFORK	0x00004000	/* set if the parent wants the child to wake it up on mm_release */
+ #define CLONE_PARENT	0x00008000	/* set if we want to have the same parent as the cloner */
+diff --git a/init/Kconfig b/init/Kconfig
+index 1e234e2f1cba..4874719a2799 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -965,6 +965,14 @@ config NET_NS
+ 	  Allow user space to create what appear to be multiple instances
+ 	  of the network stack.
+ 
++config BINFMT_NS
++	bool "binfmt_misc Namespace"
++	depends on BINFMT_MISC
++	default y
++	help
++	  This allows to use several binfmt_misc configurations on
++	  the same system.
 +
- #ifdef CONFIG_BINFMT_NS
- static inline void get_binfmt_ns(struct binfmt_namespace *ns)
- {
+ endif # NAMESPACES
+ 
+ config CHECKPOINT_RESTORE
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 7a63d567fdb5..313c80f5883f 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -72,6 +72,7 @@ obj-$(CONFIG_CGROUPS) += cgroup/
+ obj-$(CONFIG_UTS_NS) += utsname.o
+ obj-$(CONFIG_USER_NS) += user_namespace.o
+ obj-$(CONFIG_PID_NS) += pid_namespace.o
++obj-$(CONFIG_BINFMT_NS) += binfmt_namespace.o
+ obj-$(CONFIG_IKCONFIG) += configs.o
+ obj-$(CONFIG_SMP) += stop_machine.o
+ obj-$(CONFIG_KPROBES_SANITY_TEST) += test_kprobes.o
 diff --git a/kernel/binfmt_namespace.c b/kernel/binfmt_namespace.c
-index 63a80bcd70df..22be49beee08 100644
---- a/kernel/binfmt_namespace.c
+new file mode 100644
+index 000000000000..63a80bcd70df
+--- /dev/null
 +++ b/kernel/binfmt_namespace.c
-@@ -48,6 +48,12 @@ static struct binfmt_namespace *clone_binfmt_ns(struct user_namespace *user_ns,
- 	if (err)
- 		goto fail_free;
- 
-+	INIT_LIST_HEAD(&ns->entries);
-+	ns->enabled = 1;
-+	rwlock_init(&ns->entries_lock);
-+	ns->bm_mnt = NULL;
-+	ns->entry_count = 0;
+@@ -0,0 +1,153 @@
++/* SPDX-License-Identifier: GPL-2.0 */
 +
- 	ns->ucounts = ucounts;
- 	ns->ns.ops = &binfmtns_operations;
- 	ns->user_ns = get_user_ns(user_ns);
-@@ -140,6 +146,9 @@ const struct proc_ns_operations binfmtns_operations = {
- struct binfmt_namespace init_binfmt_ns = {
- 	.kref = KREF_INIT(2),
- 	.user_ns = &init_user_ns,
-+	.enabled = 1,
-+	.entry_count = 0,
-+	.bm_mnt = NULL,
- 	.ns.inum = PROC_BINFMT_INIT_INO,
- #ifdef CONFIG_BINFMT_NS
- 	.ns.ops = &binfmtns_operations,
-@@ -148,6 +157,8 @@ struct binfmt_namespace init_binfmt_ns = {
++#include <linux/slab.h>
++#include <linux/user_namespace.h>
++#include <linux/cred.h>
++#include <linux/binfmt_namespace.h>
++#include <linux/proc_ns.h>
++#include <linux/sched/task.h>
++
++static struct ucounts *inc_binfmt_namespaces(struct user_namespace *ns)
++{
++	return inc_ucount(ns, current_euid(), UCOUNT_BINFMT_NAMESPACES);
++}
++
++static void dec_binfmt_namespaces(struct ucounts *ucounts)
++{
++	dec_ucount(ucounts, UCOUNT_BINFMT_NAMESPACES);
++}
++
++static struct binfmt_namespace *create_binfmt_ns(void)
++{
++	struct binfmt_namespace *binfmt_ns;
++
++	binfmt_ns = kmalloc(sizeof(struct binfmt_namespace), GFP_KERNEL);
++	if (binfmt_ns)
++		kref_init(&binfmt_ns->kref);
++	return binfmt_ns;
++}
++
++static struct binfmt_namespace *clone_binfmt_ns(struct user_namespace *user_ns,
++					       struct binfmt_namespace *old_ns)
++{
++	struct binfmt_namespace *ns;
++	struct ucounts *ucounts;
++	int err;
++
++	err = -ENOSPC;
++	ucounts = inc_binfmt_namespaces(user_ns);
++	if (!ucounts)
++		goto fail;
++
++	err = -ENOMEM;
++	ns = create_binfmt_ns();
++	if (!ns)
++		goto fail_dec;
++
++	err = ns_alloc_inum(&ns->ns);
++	if (err)
++		goto fail_free;
++
++	ns->ucounts = ucounts;
++	ns->ns.ops = &binfmtns_operations;
++	ns->user_ns = get_user_ns(user_ns);
++	return ns;
++
++fail_free:
++	kfree(ns);
++fail_dec:
++	dec_binfmt_namespaces(ucounts);
++fail:
++	return ERR_PTR(err);
++}
++
++struct binfmt_namespace *copy_binfmt_ns(unsigned long flags,
++		struct user_namespace *user_ns, struct binfmt_namespace *old_ns)
++{
++	if (!(flags & CLONE_NEWBINFMT)) {
++		get_binfmt_ns(old_ns);
++		return old_ns;
++	}
++
++	return clone_binfmt_ns(user_ns, old_ns);
++}
++
++void free_binfmt_ns(struct kref *kref)
++{
++	struct binfmt_namespace *ns;
++
++	ns = container_of(kref, struct binfmt_namespace, kref);
++	dec_binfmt_namespaces(ns->ucounts);
++	put_user_ns(ns->user_ns);
++	ns_free_inum(&ns->ns);
++	kfree(ns);
++}
++
++static inline struct binfmt_namespace *to_binfmt_ns(struct ns_common *ns)
++{
++	return container_of(ns, struct binfmt_namespace, ns);
++}
++
++static struct ns_common *binfmtns_get(struct task_struct *task)
++{
++	struct binfmt_namespace *ns = NULL;
++	struct nsproxy *nsproxy;
++
++	task_lock(task);
++	nsproxy = task->nsproxy;
++	if (nsproxy) {
++		ns = nsproxy->binfmt_ns;
++		get_binfmt_ns(ns);
++	}
++	task_unlock(task);
++
++	return ns ? &ns->ns : NULL;
++}
++
++static void binfmtns_put(struct ns_common *ns)
++{
++	put_binfmt_ns(to_binfmt_ns(ns));
++}
++
++static int binfmtns_install(struct nsproxy *nsproxy, struct ns_common *new)
++{
++	struct binfmt_namespace *ns = to_binfmt_ns(new);
++
++	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
++	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
++		return -EPERM;
++
++	get_binfmt_ns(ns);
++	put_binfmt_ns(nsproxy->binfmt_ns);
++	nsproxy->binfmt_ns = ns;
++	return 0;
++}
++
++static struct user_namespace *binfmtns_owner(struct ns_common *ns)
++{
++	return to_binfmt_ns(ns)->user_ns;
++}
++
++const struct proc_ns_operations binfmtns_operations = {
++	.name		= "binfmt_misc",
++	.type		= CLONE_NEWBINFMT,
++	.get		= binfmtns_get,
++	.put		= binfmtns_put,
++	.install	= binfmtns_install,
++	.owner		= binfmtns_owner,
++};
++
++struct binfmt_namespace init_binfmt_ns = {
++	.kref = KREF_INIT(2),
++	.user_ns = &init_user_ns,
++	.ns.inum = PROC_BINFMT_INIT_INO,
++#ifdef CONFIG_BINFMT_NS
++	.ns.ops = &binfmtns_operations,
++#endif
++};
++
++static int __init binfmt_ns_init(void)
++{
++	return 0;
++}
++subsys_initcall(binfmt_ns_init);
+diff --git a/kernel/fork.c b/kernel/fork.c
+index f0b58479534f..d89cf8b89e43 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2365,7 +2365,8 @@ static int check_unshare_flags(unsigned long unshare_flags)
+ 	if (unshare_flags & ~(CLONE_THREAD|CLONE_FS|CLONE_NEWNS|CLONE_SIGHAND|
+ 				CLONE_VM|CLONE_FILES|CLONE_SYSVSEM|
+ 				CLONE_NEWUTS|CLONE_NEWIPC|CLONE_NEWNET|
+-				CLONE_NEWUSER|CLONE_NEWPID|CLONE_NEWCGROUP))
++				CLONE_NEWUSER|CLONE_NEWPID|CLONE_NEWCGROUP|
++				CLONE_NEWBINFMT))
+ 		return -EINVAL;
+ 	/*
+ 	 * Not implemented, but pretend it works if there is nothing
+diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+index f6c5d330059a..386028e6da39 100644
+--- a/kernel/nsproxy.c
++++ b/kernel/nsproxy.c
+@@ -22,6 +22,7 @@
+ #include <linux/pid_namespace.h>
+ #include <net/net_namespace.h>
+ #include <linux/ipc_namespace.h>
++#include <linux/binfmt_namespace.h>
+ #include <linux/proc_ns.h>
+ #include <linux/file.h>
+ #include <linux/syscalls.h>
+@@ -44,6 +45,9 @@ struct nsproxy init_nsproxy = {
+ #ifdef CONFIG_CGROUPS
+ 	.cgroup_ns		= &init_cgroup_ns,
+ #endif
++#if IS_ENABLED(BINFMT_MISC)
++	.binfmt_ns		= &init_binfmt_ns,
++#endif
+ };
  
- static int __init binfmt_ns_init(void)
- {
-+	INIT_LIST_HEAD(&init_binfmt_ns.entries);
-+	rwlock_init(&init_binfmt_ns.entries_lock);
- 	return 0;
- }
- subsys_initcall(binfmt_ns_init);
+ static inline struct nsproxy *create_nsproxy(void)
+@@ -110,6 +114,13 @@ static struct nsproxy *create_new_namespaces(unsigned long flags,
+ 		goto out_net;
+ 	}
+ 
++	new_nsp->binfmt_ns = copy_binfmt_ns(flags, user_ns,
++					    tsk->nsproxy->binfmt_ns);
++	if (IS_ERR(new_nsp->binfmt_ns)) {
++		err = PTR_ERR(new_nsp->binfmt_ns);
++		goto out_net;
++	}
++
+ 	return new_nsp;
+ 
+ out_net:
+@@ -143,7 +154,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
+ 
+ 	if (likely(!(flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+ 			      CLONE_NEWPID | CLONE_NEWNET |
+-			      CLONE_NEWCGROUP)))) {
++			      CLONE_NEWCGROUP | CLONE_NEWBINFMT)))) {
+ 		get_nsproxy(old_ns);
+ 		return 0;
+ 	}
+@@ -180,6 +191,8 @@ void free_nsproxy(struct nsproxy *ns)
+ 		put_ipc_ns(ns->ipc_ns);
+ 	if (ns->pid_ns_for_children)
+ 		put_pid_ns(ns->pid_ns_for_children);
++	if (ns->binfmt_ns)
++		put_binfmt_ns(ns->binfmt_ns);
+ 	put_cgroup_ns(ns->cgroup_ns);
+ 	put_net(ns->net_ns);
+ 	kmem_cache_free(nsproxy_cachep, ns);
+@@ -196,7 +209,8 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
+ 	int err = 0;
+ 
+ 	if (!(unshare_flags & (CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+-			       CLONE_NEWNET | CLONE_NEWPID | CLONE_NEWCGROUP)))
++			       CLONE_NEWNET | CLONE_NEWPID | CLONE_NEWCGROUP |
++			       CLONE_NEWBINFMT)))
+ 		return 0;
+ 
+ 	user_ns = new_cred ? new_cred->user_ns : current_user_ns();
 -- 
 2.17.1
