@@ -1,49 +1,44 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Setting monotonic time?
-Date: Mon, 1 Oct 2018 20:52:41 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1810012047520.32062@nanos.tec.linutronix.de>
-References: <20180919205037.9574-1-dima@arista.com>        <874lej6nny.fsf@xmission.com>        <20180924205119.GA14833@outlook.office365.com>        <874leezh8n.fsf@xmission.com>        <20180925014150.GA6302@outlook.office365.com>        <87zhw4rwiq.fsf@xmission.com>
-        <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>        <87mus1ftb9.fsf@xmission.com>        <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de> <877ej2xc23.fsf_-_@xmission.com>
+From: Daniel Borkmann <daniel@iogearbox.net>
+Subject: Re: [PATCH 0/3] bpf: allow zero-initialising hash map seed
+Date: Mon, 1 Oct 2018 21:12:48 +0200
+Message-ID: <59ef80ab-4f28-5c75-c394-55fcfd9bc8ca@iogearbox.net>
+References: <20181001104509.24211-1-lmb@cloudflare.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <877ej2xc23.fsf_-_@xmission.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andrey Vagin <avagin@virtuozzo.com>, Dmitry Safonov <dima@arista.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "criu@openvz.org" <criu@openvz.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Alexey Dobriyan <ado>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20181001104509.24211-1-lmb@cloudflare.com>
+Content-Language: en-US
+Sender: netdev-owner@vger.kernel.org
+To: Lorenz Bauer <lmb@cloudflare.com>, ast@kernel.org
+Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 1 Oct 2018, Eric W. Biederman wrote:
-> In the context of process migration there is a simpler subproblem that I
-> think it is worth exploring if we can do something about.
+On 10/01/2018 12:45 PM, Lorenz Bauer wrote:
+> This patch set adds a new flag BPF_F_ZERO_SEED, which allows
+> forcing the seed used by hash maps to zero. This makes
+> it possible to write deterministic tests.
 > 
-> For a cluster of machines all running with synchronized
-> clocks. CLOCK_REALTIME matches. CLOCK_MONOTNIC does not match between
-> machines.   Not having a matching CLOCK_MONOTONIC prevents successful
-> process migration between nodes in that cluster.
+> Based on an off-list conversation with Alexei Starovoitov and
+> Daniel Borkmann.
 > 
-> Would it be possible to allow setting CLOCK_MONOTONIC at the very
-> beginning of time?  So that all of the nodes in a cluster can be in
-> sync?
+> Lorenz Bauer (3):
+>   bpf: allow zero-initializing hash map seed
+>   tools: sync linux/bpf.h
+>   tools: add selftest for BPF_F_ZERO_SEED
 > 
-> No change in skew just in offset for CLOCK_MONOTONIC.
+>  include/uapi/linux/bpf.h                |  2 +
+>  kernel/bpf/hashtab.c                    |  8 ++-
+>  tools/include/uapi/linux/bpf.h          |  2 +
+>  tools/testing/selftests/bpf/test_maps.c | 67 +++++++++++++++++++++----
+>  4 files changed, 66 insertions(+), 13 deletions(-)
 > 
-> There are also dragons involved in coordinating things so that
-> CLOCK_MONOTONIC gets set before CLOCK_MONOTONIC gets used.  So I don't
-> know if allowing CLOCK_MONOTONIC to be set would be practical but it
-> seems work exploring all on it's own.
 
-It's used very early on in the kernel, so that would be a major surprise
-for many things including user space which has expectations on clock
-monotonic.
-
-It would be reasonably easy to add CLOCK_MONONOTIC_SYNC which can be set in
-the way you described and then in name spaces make it possible to magically
-map CLOCK_MONOTONIC to CLOCK_MONOTONIC_SYNC.
-
-It still wouldn't allow to have different NTP/PTP time domains, but might
-be a good start to address the main migration headaches.
+Please respin with proper SoB for each patch and non-empty commit
+description. I think patch 1 should also have a more elaborate
+commit description on the use case for BPF_F_ZERO_SEED, and I
+think also a better comment in the uapi header that this is only
+meant for testing and not production use.
 
 Thanks,
-
-	tglx
+Daniel
