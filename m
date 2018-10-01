@@ -1,93 +1,159 @@
 From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [RFC 0/2] ns: introduce binfmt_misc namespace
-Date: Mon, 01 Oct 2018 10:56:03 +0200
-Message-ID: <87k1n2yrj0.fsf@xmission.com>
-References: <20180930234628.25528-1-laurent@vivier.eu>
-        <CALCETrWcQtLTVJU14ytWxu_gqoLuAYZJpyAvRsKwwgYZz7FEFg@mail.gmail.com>
-        <874le63zei.fsf@xmission.com>
-        <5b4f0798-eb22-2684-775c-c038c104e190@vivier.eu>
+Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
+Date: Mon, 01 Oct 2018 11:05:12 +0200
+Message-ID: <87zhvyxcjb.fsf@xmission.com>
+References: <20180919205037.9574-1-dima@arista.com>
+        <874lej6nny.fsf@xmission.com>
+        <20180924205119.GA14833@outlook.office365.com>
+        <874leezh8n.fsf@xmission.com>
+        <20180925014150.GA6302@outlook.office365.com>
+        <87zhw4rwiq.fsf@xmission.com>
+        <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
+        <87mus1ftb9.fsf@xmission.com>
+        <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5b4f0798-eb22-2684-775c-c038c104e190@vivier.eu> (Laurent
-        Vivier's message of "Mon, 1 Oct 2018 10:45:36 +0200")
+In-Reply-To: <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de>
+        (Thomas Gleixner's message of "Fri, 28 Sep 2018 21:32:15 +0200
+        (CEST)")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, Andrey Vagin <avagin@openvz.org>, Linux Containers <containers@lists.linux-foundation.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Andrey Vagin <avagin@virtuozzo.com>, Dmitry Safonov <dima@arista.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "criu@openvz.org" <criu@openvz.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, Alexey
 List-Id: linux-api@vger.kernel.org
 
-Laurent Vivier <laurent@vivier.eu> writes:
+Thomas Gleixner <tglx@linutronix.de> writes:
 
-> Le 01/10/2018 à 09:21, Eric W. Biederman a écrit :
->> Andy Lutomirski <luto@kernel.org> writes:
+> Eric,
+>
+> On Fri, 28 Sep 2018, Eric W. Biederman wrote:
+>> Thomas Gleixner <tglx@linutronix.de> writes:
+>> > On Wed, 26 Sep 2018, Eric W. Biederman wrote:
+>> >> At the same time using the techniques from the nohz work and a little
+>> >> smarts I expect we could get the code to scale.
+>> >
+>> > You'd need to invoke the update when the namespace is switched in and
+>> > hasn't been updated since the last tick happened. That might be doable, but
+>> > you also need to take the wraparound constraints of the underlying
+>> > clocksources into account, which again can cause walking all name spaces
+>> > when they are all idle long enough.
 >> 
->>> On Sun, Sep 30, 2018 at 4:47 PM Laurent Vivier <laurent@vivier.eu> wrote:
->>>>
->>>> This series introduces a new namespace for binfmt_misc.
->>>>
->>>
->>> This seems conceptually quite reasonable, but I'm wondering if the
->>> number of namespace types is getting out of hand given the current
->>> API.  Should we be considering whether we need a new set of namespace
->>> creation APIs that scale better to larger numbers of namespace types?
->> 
->> I would rather encourage a way to make this part of an existing
->> namespace or find a way to make a mount of binfmt_misc control this.
->> 
->> Hmm.  This looks like something that can be very straight forwardly be
->> made part of the user namespace.  If you ever mount binfmt_misc in the
->> user namespace you get the new behavior.  Otherwise you get the existing
->> behavior.
+>> The wrap around constraints being how long before the time sources wrap
+>> around so you have to read them once per wrap around?  I have not dug
+>> deeply enough into the code to see that yet.
 >
-> Thank you. I'll do that.
+> It's done by limiting the NOHZ idle time when all CPUs are going into deep
+> sleep for a long time, i.e. we make sure that at least one CPU comes back
+> sufficiently _before_ the wraparound happens and invokes the update
+> function.
 >
->> A user namespace will definitely be required, as otherwise you run the
->> risk of confusing root (and suid root exectuables0 by being able to
->> change the behavior of executables.
->> 
->> What is the motivation for this?  My impression is that very few people
->> tweak binfmt_misc.
+> It's not so much a problem for TSC, but not every clocksource the kernel
+> supports has wraparound times in the range of hundreds of years.
 >
-> I think more and more people are using an interpreter like qemu
-> linux-usermode to have a cross-compilation environment: they bootstrap a
-> distro filesystems (with something like debootstrap), and then use
-> binfmt_misc to run the compiler inside this environment (see for
-> instance [1] [2] [3] or [4] [5]). This is interesting because you have
-> more than a cross-compiler with that: you have also all the libraries of
-> the target system, you can select exactly which target release you want
-> to build to, with the exact same compiler and libraries versions (and
-> you can re-use it you want to do maintenance on your project 10 years
-> later...)
->
-> The problem with this is you need to be root:
-> 1- to chroot
-> 2- to configure binfmt_misc
->
-> We already can use "unshare --map-root-user chroot" to address the point
-> 1, and this series tries to address the point 2.
->
-> I think it's also interesting to have a per container configuration for
-> binfmt_misc when the server administrator configures it and don't want
-> to share each user configuration with all the other user ones (in
-> something like docker or a cloud application).
+> But yes, your idea of keeping track of wraparounds might work. Tricky, but
+> looks feasible on first sight, but we should be aware of the dragons.
 
-OK.  So it sounds like you are already needing a user namespace for
-this.   If this is your use case then my proposed method above seems to
-fit rather well.  James Bottomley was doing something similar that
-connected to personality(2).  That might be worth a look to see if there
-is some synergy there.
+Oh.  Yes.  Definitely.  A key enabler of any namespace implementation is
+figuring out how to tame the dragons.
 
->> I also don't think this raises to the level where it makes sense to
->> create a new namespace for this.
+>> Please pardon me for thinking out load.
+>> 
+>> There are one or more time sources that we use to compute the time
+>> and for each time source we have a conversion from ticks of the
+>> time source to nanoseconds.
+>> 
+>> Each time source needs to be sampled at least once per wrap-around
+>> and something incremented so that we don't loose time when looking
+>> at that time source.
+>> 
+>> There are several clocks presented to userspace and they all share the
+>> same length of second and are all fundamentally offsets from
+>> CLOCK_MONOTONIC.
 >
-> OK.
+> Yes. That's the readout side. This one is doable. But now look at timers.
 >
-> Thanks,
-> Laurent
+> If you arm the timer from a name space, then it needs to be converted to
+> host time in order to sort it into the hrtimer queue and at some point arm
+> the clockevent device for it. This works as long as host and name space
+> time have a constant offset and the same skew.
 >
-> [1] https://wiki.debian.org/Arm64Qemu
-> [2] https://wiki.debian.org/M68k/sbuildQEMU
-> [3] https://wiki.debian.org/RISC-V#Manual_qemu-user_installation
-> [4] https://kbeckmann.github.io/2017/05/26/QEMU-instead-of-cross-compiling/
-> [5] https://wiki.gentoo.org/wiki/Crossdev_qemu-static-user-chroot
+> Once the name space time has a different skew this falls apart because the
+> armed timer will either expire late or early.
+>
+> Late might be acceptable, early violates the spec. You could do an extra
+> check for rescheduling it, if it's early, but that requires to store the
+> name space time accessor in the hrtimer itself because not every timer
+> expiry happens so that it can be checked in the name space context (think
+> signal based timers). We need to add this extra magic right into
+> __hrtimer_run_queues() which is called from the hard and soft interrupt. We
+> really don't want to touch all relevant callbacks or syscalls. The latter
+> is not sufficient anyway for signal based timer delivery.
+>
+> That's going to be interesting in terms of synchronization and might also
+> cause substantial overhead at least for the timers which belong to name
+> spaces.
+>
+> But that also means that anything which is early can and probably will
+> cause rearming of the timer hardware possibly for a very short delta. We
+> need to think about whether this can be abused to create interrupt storms.
+>
+> Now if you accept a bit late, which I'm not really happy about, then you
+> surely won't accept very late, i.e. hours, days. But that can happen when
+> settimeofday() comes into play. Right now with a single time domain, this
+> is easy. When settimeofday() or adjtimex() makes time jump, we just go and
+> reprogramm the hardware timers accordingly, which might also result in
+> immediate expiry of timers.
+>
+> But this does not help for time jumps in name spaces because the timer is
+> enqueued on the host time base.
+>
+> And no, we should not think about creating per name space hrtimer queues
+> and then have to walk through all of them for finding the first expiring
+> timer in order to arm the hardware. That cannot scale.
+>
+> Walking all hrtimer bases on all CPUs and check all queued timers whether
+> they belong to the affected name space does not scale either.
+>
+> So we'd need to keep track of queued timers belonging to a name space and
+> then just handle them. Interesting locking problem and also a scalability
+> issue because this might need to be done on all online CPUs. Haven't
+> thought it through, but it makes me shudder.
+
+Yes.  I can see how this is a dragon that we need to figure out how to
+tame.  It already exist somewhat for CLOCK_MONOTONIC vs CLOCK_REALTIME
+but still.
+
+>> I see two fundamental driving cases for a time namespace.
+>
+> <SNIP>
+>
+> I completely understand the problem you are trying to solve and yes, the
+> read out of time should be a solvable problem.
+
+There is simplified subproblem that I want to ask about but I will reply
+separately for that.
+
+>> Not that I think a final implementation would necessary look like what I
+>> have described. I just think it is possible with extreme care to evolve
+>> the current code base into something that can efficiently handle
+>> multiple time domains with slightly different lenghts of second.
+>
+> Yes, it really needs some serious thoughts and timekeeping is a really
+> complex place especially with NTP/PTP in play. We had quite some quality
+> time to make it work correctly and reliably, now you come along and want to
+> transform it into a multidimensional puzzle. :)
+
+I thought it was Einstein who pointed out what a puzzle timekeeping is,
+with the rest of us just playing catch up. ;-)
+
+>> It does though sound like it is going to take some serious digging
+>> through the code to understand how what everything does and how and why
+>> everthing works the way it does.  Not something grafted on top with just
+>> a cursory understanding of how the code works.
+>
+> I fully agree and I'm happy to help with explanations and ideas and being
+> the one who shoots holes into yours.
+
+Sounds good.
+
+Eric
