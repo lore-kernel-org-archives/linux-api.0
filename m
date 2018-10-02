@@ -1,243 +1,143 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: [RFC v2 v2 1/1] ns: add binfmt_misc to the mount namespace
-Date: Tue,  2 Oct 2018 12:20:54 +0200
-Message-ID: <20181002102054.13245-2-laurent@vivier.eu>
-References: <20181002102054.13245-1-laurent@vivier.eu>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Tue, 2 Oct 2018 13:28:51 +0200
+Message-ID: <20181002112851.GP18290@dhcp22.suse.cz>
+References: <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com>
+ <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
+ <20180924195603.GJ18685@dhcp22.suse.cz>
+ <20180924200258.GK18685@dhcp22.suse.cz>
+ <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+ <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
+ <20180925202959.GY18685@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com>
+ <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
+ <20180926060624.GA18685@dhcp22.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181002102054.13245-1-laurent@vivier.eu>
+Content-Disposition: inline
+In-Reply-To: <20180926060624.GA18685@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <dima@arista.com>, Andrei Vagin <avagin@openvz.org>, Eric Biederman <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@HansenPartnership.com>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Laurent Vivier <laurent@vivier.eu>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: David Rientjes <rientjes@google.com>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch allows to have a different binftm_misc configuration
-in each container we mount binfmt_misc filesystem with mount namespace
-enabled.
+On Wed 26-09-18 08:06:24, Michal Hocko wrote:
+> On Tue 25-09-18 15:04:06, Andrew Morton wrote:
+> > On Tue, 25 Sep 2018 14:45:19 -0700 (PDT) David Rientjes <rientjes@google.com> wrote:
+> > 
+> > > > > It is also used in 
+> > > > > automated testing to ensure that vmas get disabled for thp appropriately 
+> > > > > and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
+> > > > > this, and those tests now break.
+> > > > 
+> > > > This sounds like a bit of an abuse to me. It shows how an internal
+> > > > implementation detail leaks out to the userspace which is something we
+> > > > should try to avoid.
+> > > > 
+> > > 
+> > > Well, it's already how this has worked for years before commit 
+> > > 1860033237d4 broke it.  Changing the implementation in the kernel is fine 
+> > > as long as you don't break userspace who relies on what is exported to it 
+> > > and is the only way to determine if MADV_NOHUGEPAGE is preventing it from 
+> > > being backed by hugepages.
+> > 
+> > 1860033237d4 was over a year ago so perhaps we don't need to be
+> > too worried about restoring the old interface.  In which case
+> > we have an opportunity to make improvements such as that suggested
+> > by Michal?
+> 
+> Yeah, can we add a way to export PR_SET_THP_DISABLE to userspace
+> somehow? E.g. /proc/<pid>/status. It is a process wide thing so
+> reporting it per VMA sounds strange at best.
 
-A container started without the CLONE_NEWNS will use the host binfmt_misc
-configuration, otherwise the container starts with an empty binfmt_misc
-interpreters list.
+So how about this? (not tested yet but it should be pretty
+straightforward)
+--- 
+>From 048b29102de326900b54cce78b614345cd77a230 Mon Sep 17 00:00:00 2001
+From: Michal Hocko <mhocko@suse.com>
+Date: Tue, 2 Oct 2018 10:53:48 +0200
+Subject: [PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
 
-For instance, using "unshare" we can start a chroot of an another
-architecture and configure the binfmt_misc interpreted without being root
-to run the binaries in this chroot.
+David Rientjes has reported that 1860033237d4 ("mm: make
+PR_SET_THP_DISABLE immediately active") has changed the way how
+we report THPable VMAs to the userspace. Their monitoring tool is
+triggering false alarms on PR_SET_THP_DISABLE tasks because it considers
+an insufficient THP usage as a memory fragmentation resp. memory
+pressure issue.
 
-Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+Before the said commit each newly created VMA inherited VM_NOHUGEPAGE
+flag and that got exposed to the userspace via /proc/<pid>/smaps file.
+This implementation had its downsides as explained in the commit message
+but it is true that the userspace doesn't have any means to query for
+the process wide THP enabled/disabled status.
+
+PR_SET_THP_DISABLE is a process wide flag so it makes a lot of sense
+to export in the process wide context rather than per-vma. Introduce
+a new field to /proc/<pid>/status which export this status.  If
+PR_SET_THP_DISABLE is used the it reports false same as when the THP is
+not compiled in. It doesn't consider the global THP status because we
+already export that information via sysfs
+
+Fixes: 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+Signed-off-by: Michal Hocko <mhocko@suse.com>
 ---
- fs/binfmt_misc.c | 50 +++++++++++++++++++++++++-----------------------
- fs/mount.h       |  8 ++++++++
- fs/namespace.c   |  6 ++++++
- 3 files changed, 40 insertions(+), 24 deletions(-)
+ Documentation/filesystems/proc.txt |  3 +++
+ fs/proc/array.c                    | 10 ++++++++++
+ 2 files changed, 13 insertions(+)
 
-diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-index aa4a7a23ff99..ecb14776c759 100644
---- a/fs/binfmt_misc.c
-+++ b/fs/binfmt_misc.c
-@@ -25,6 +25,7 @@
- #include <linux/syscalls.h>
- #include <linux/fs.h>
- #include <linux/uaccess.h>
-+#include <mount.h>
- 
- #include "internal.h"
- 
-@@ -38,9 +39,6 @@ enum {
- 	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
- };
- 
--static LIST_HEAD(entries);
--static int enabled = 1;
--
- enum {Enabled, Magic};
- #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
- #define MISC_FMT_OPEN_BINARY (1 << 30)
-@@ -60,10 +58,7 @@ typedef struct {
- 	struct file *interp_file;
- } Node;
- 
--static DEFINE_RWLOCK(entries_lock);
- static struct file_system_type bm_fs_type;
--static struct vfsmount *bm_mnt;
--static int entry_count;
- 
- /*
-  * Max length of the register string.  Determined by:
-@@ -91,7 +86,7 @@ static Node *check_file(struct linux_binprm *bprm)
- 	struct list_head *l;
- 
- 	/* Walk all the registered handlers. */
--	list_for_each(l, &entries) {
-+	list_for_each(l, &binfmt_ns(entries)) {
- 		Node *e = list_entry(l, Node, list);
- 		char *s;
- 		int j;
-@@ -135,15 +130,15 @@ static int load_misc_binary(struct linux_binprm *bprm)
- 	int fd_binary = -1;
- 
- 	retval = -ENOEXEC;
--	if (!enabled)
-+	if (!binfmt_ns(enabled))
- 		return retval;
- 
- 	/* to keep locking time low, we copy the interpreter string */
--	read_lock(&entries_lock);
-+	read_lock(&binfmt_ns(entries_lock));
- 	fmt = check_file(bprm);
- 	if (fmt)
- 		dget(fmt->dentry);
--	read_unlock(&entries_lock);
-+	read_unlock(&binfmt_ns(entries_lock));
- 	if (!fmt)
- 		return retval;
- 
-@@ -613,15 +608,15 @@ static void kill_node(Node *e)
- {
- 	struct dentry *dentry;
- 
--	write_lock(&entries_lock);
-+	write_lock(&binfmt_ns(entries_lock));
- 	list_del_init(&e->list);
--	write_unlock(&entries_lock);
-+	write_unlock(&binfmt_ns(entries_lock));
- 
- 	dentry = e->dentry;
- 	drop_nlink(d_inode(dentry));
- 	d_drop(dentry);
- 	dput(dentry);
--	simple_release_fs(&bm_mnt, &entry_count);
-+	simple_release_fs(&binfmt_ns(bm_mnt), &binfmt_ns(entry_count));
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index 22b4b00dee31..bafa5cb1685a 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -182,6 +182,7 @@ For example, to get the status information of a process, all you have to do is
+   VmSwap:        0 kB
+   HugetlbPages:          0 kB
+   CoreDumping:    0
++  THP_enabled:	  1
+   Threads:        1
+   SigQ:   0/28578
+   SigPnd: 0000000000000000
+@@ -256,6 +257,8 @@ Table 1-2: Contents of the status files (as of 4.8)
+  HugetlbPages                size of hugetlb memory portions
+  CoreDumping                 process's memory is currently being dumped
+                              (killing the process may lead to a corrupted core)
++ THP_enabled		     process is allowed to use THP (returns 0 when
++			     PR_SET_THP_DISABLE is set on the process
+  Threads                     number of threads
+  SigQ                        number of signals queued/max. number for queue
+  SigPnd                      bitmap of pending signals for the thread
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index 0ceb3b6b37e7..9d428d5a0ac8 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -392,6 +392,15 @@ static inline void task_core_dumping(struct seq_file *m, struct mm_struct *mm)
+ 	seq_putc(m, '\n');
  }
  
- /* /<entry> */
-@@ -716,7 +711,8 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
- 	if (!inode)
- 		goto out2;
- 
--	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-+	err = simple_pin_fs(&bm_fs_type, &binfmt_ns(bm_mnt),
-+			    &binfmt_ns(entry_count));
- 	if (err) {
- 		iput(inode);
- 		inode = NULL;
-@@ -730,7 +726,8 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
- 		if (IS_ERR(f)) {
- 			err = PTR_ERR(f);
- 			pr_notice("register: failed to install interpreter file %s\n", e->interpreter);
--			simple_release_fs(&bm_mnt, &entry_count);
-+			simple_release_fs(&binfmt_ns(bm_mnt),
-+					  &binfmt_ns(entry_count));
- 			iput(inode);
- 			inode = NULL;
- 			goto out2;
-@@ -743,9 +740,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
- 	inode->i_fop = &bm_entry_operations;
- 
- 	d_instantiate(dentry, inode);
--	write_lock(&entries_lock);
--	list_add(&e->list, &entries);
--	write_unlock(&entries_lock);
-+	write_lock(&binfmt_ns(entries_lock));
-+	list_add(&e->list, &binfmt_ns(entries));
-+	write_unlock(&binfmt_ns(entries_lock));
- 
- 	err = 0;
- out2:
-@@ -770,7 +767,7 @@ static const struct file_operations bm_register_operations = {
- static ssize_t
- bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
- {
--	char *s = enabled ? "enabled\n" : "disabled\n";
-+	char *s = binfmt_ns(enabled) ? "enabled\n" : "disabled\n";
- 
- 	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
- }
-@@ -784,19 +781,20 @@ static ssize_t bm_status_write(struct file *file, const char __user *buffer,
- 	switch (res) {
- 	case 1:
- 		/* Disable all handlers. */
--		enabled = 0;
-+		binfmt_ns(enabled) = 0;
- 		break;
- 	case 2:
- 		/* Enable all handlers. */
--		enabled = 1;
-+		binfmt_ns(enabled) = 1;
- 		break;
- 	case 3:
- 		/* Delete all handlers. */
- 		root = file_inode(file)->i_sb->s_root;
- 		inode_lock(d_inode(root));
- 
--		while (!list_empty(&entries))
--			kill_node(list_first_entry(&entries, Node, list));
-+		while (!list_empty(&binfmt_ns(entries)))
-+			kill_node(list_first_entry(&binfmt_ns(entries),
-+						   Node, list));
- 
- 		inode_unlock(d_inode(root));
- 		break;
-@@ -838,7 +836,10 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
- static struct dentry *bm_mount(struct file_system_type *fs_type,
- 	int flags, const char *dev_name, void *data)
- {
--	return mount_single(fs_type, flags, data, bm_fill_super);
-+	struct mnt_namespace *mnt_ns = current->nsproxy->mnt_ns;
++static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
++{
++	bool thp_enabled = IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE);
 +
-+	return mount_ns(fs_type, flags, data, mnt_ns, mnt_ns->user_ns,
-+			bm_fill_super);
- }
- 
- static struct linux_binfmt misc_format = {
-@@ -849,6 +850,7 @@ static struct linux_binfmt misc_format = {
- static struct file_system_type bm_fs_type = {
- 	.owner		= THIS_MODULE,
- 	.name		= "binfmt_misc",
-+	.fs_flags	= FS_USERNS_MOUNT,
- 	.mount		= bm_mount,
- 	.kill_sb	= kill_litter_super,
- };
-diff --git a/fs/mount.h b/fs/mount.h
-index f39bc9da4d73..f03b35141440 100644
---- a/fs/mount.h
-+++ b/fs/mount.h
-@@ -17,6 +17,12 @@ struct mnt_namespace {
- 	u64 event;
- 	unsigned int		mounts; /* # of mounts in the namespace */
- 	unsigned int		pending_mounts;
-+	/* binfmt misc */
-+	struct list_head entries;
-+	rwlock_t entries_lock;
-+	int enabled;
-+	struct vfsmount *bm_mnt;
-+	int entry_count;
- } __randomize_layout;
- 
- struct mnt_pcp {
-@@ -72,6 +78,8 @@ struct mount {
- 	struct dentry *mnt_ex_mountpoint;
- } __randomize_layout;
- 
-+#define binfmt_ns(a) (current->nsproxy->mnt_ns->a)
++	if (thp_enabled)
++		thp_enabled = !test_bit(MMF_DISABLE_THP, &mm->flags);
++	seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
++}
 +
- #define MNT_NS_INTERNAL ERR_PTR(-EINVAL) /* distinct from any mnt_namespace */
- 
- static inline struct mount *real_mount(struct vfsmount *mnt)
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 99186556f8d3..f92b8371228d 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -2850,6 +2850,12 @@ static struct mnt_namespace *alloc_mnt_ns(struct user_namespace *user_ns)
- 	new_ns->ucounts = ucounts;
- 	new_ns->mounts = 0;
- 	new_ns->pending_mounts = 0;
-+	/* binfmt_misc */
-+	INIT_LIST_HEAD(&new_ns->entries);
-+	new_ns->enabled = 1;
-+	rwlock_init(&new_ns->entries_lock);
-+	new_ns->bm_mnt = NULL;
-+	new_ns->entry_count = 0;
- 	return new_ns;
- }
- 
+ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+ 			struct pid *pid, struct task_struct *task)
+ {
+@@ -406,6 +415,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+ 	if (mm) {
+ 		task_mem(m, mm);
+ 		task_core_dumping(m, mm);
++		task_thp_status(m, mm);
+ 		mmput(mm);
+ 	}
+ 	task_sig(m, task);
 -- 
-2.17.1
+2.19.0
+
+-- 
+Michal Hocko
+SUSE Labs
