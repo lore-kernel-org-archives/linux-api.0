@@ -1,50 +1,28 @@
-From: Borislav Petkov <bp@alien8.de>
+From: Dave Hansen <dave.hansen@linux.intel.com>
 Subject: Re: [RFC PATCH v4 02/27] x86/fpu/xstate: Change some names to
  separate XSAVES system and user states
-Date: Tue, 2 Oct 2018 18:37:36 +0200
-Message-ID: <20181002163736.GD29601@zn.tnic>
+Date: Tue, 2 Oct 2018 09:39:31 -0700
+Message-ID: <6859a180-8973-e794-7ac4-1ac8f0e1c709@linux.intel.com>
 References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
  <20180921150351.20898-3-yu-cheng.yu@intel.com>
  <20181002152903.GB29601@zn.tnic>
  <ba13d643c21de8e1e01a8d528457fb5dd82c42aa.camel@intel.com>
  <498c8824-9255-96be-71c2-3ebfa684a9d3@linux.intel.com>
+ <20181002163736.GD29601@zn.tnic>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <498c8824-9255-96be-71c2-3ebfa684a9d3@linux.intel.com>
+In-Reply-To: <20181002163736.GD29601@zn.tnic>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>
+To: Borislav Petkov <bp@alien8.de>, Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>, Peter Zijlstra <peterz@infradead.org>, Randy Dunlap <rdu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 02, 2018 at 09:30:52AM -0700, Dave Hansen wrote:
-> > Good point.  However, "system" is more indicative; CET states are per-task and
-> > not "Supervisor".  Do we want to go back to "Supervisor" or add comments?
-> 
-> This is one of those things where the SDM language does not match what
-> we use in the kernel.  I think it's fine to call them "system" or
-> "kernel" states to make it consistent with our existing in-kernel
-> nomenclature.
-> 
-> I say add comments to clarify what the SDM calls it vs. what we do.
+On 10/02/2018 09:37 AM, Borislav Petkov wrote:
+> This patch's commit message is not even close. So I'd very much
+> appreciate a more verbose explanation, even if it repeats itself at
+> places.
 
-So AFAIU, the difference is that XSAVES is a CPL0 insn. Thus the
-supervisor thing, I'd guess.
-
-Now it looks like CET uses XSAVES (from skimming the patchset forward)
-but then what our nomenclature is and how it all gets tied together,
-needs to be explained somewhere prominent so that we're all on the same
-page.
-
-This patch's commit message is not even close. So I'd very much
-appreciate a more verbose explanation, even if it repeats itself at
-places.
-
-Thx.
-
--- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+Yep, totally agree.
