@@ -1,73 +1,57 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Setting monotonic time?
-Date: Tue, 2 Oct 2018 22:06:28 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1810022205080.1435@nanos.tec.linutronix.de>
-References: <20180919205037.9574-1-dima@arista.com> <874lej6nny.fsf@xmission.com> <20180924205119.GA14833@outlook.office365.com> <874leezh8n.fsf@xmission.com> <20180925014150.GA6302@outlook.office365.com> <87zhw4rwiq.fsf@xmission.com>
- <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de> <87mus1ftb9.fsf@xmission.com> <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de> <877ej2xc23.fsf_-_@xmission.com> <alpine.DEB.2.21.1810012047520.32062@nanos.tec.linutronix.de>
- <CAK8P3a2zTqrCGURE3XVpn3_w6C4R5O+cq8TdtbyKCMGyRk9_jw@mail.gmail.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
+Date: Tue, 2 Oct 2018 13:18:54 -0700
+Message-ID: <CAPcyv4j0tTD+rENqFExA68aw=-MmtCBaOe1qJovyrmJC=yBg-Q@mail.gmail.com>
+References: <20181002100531.GC4135@quack2.suse.cz>
+ <20181002121039.GA3274@linux-x5ow.site>
+ <20181002142959.GD9127@quack2.suse.cz> <20181002143713.GA19845@infradead.org>
+ <20181002144412.GC4963@linux-x5ow.site> <20181002145206.GA10903@infradead.org>
+ <20181002153100.GG9127@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a2zTqrCGURE3XVpn3_w6C4R5O+cq8TdtbyKCMGyRk9_jw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W . Biederman" <ebiederm@xmission.com>, avagin@virtuozzo.com, dima@arista.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, 0x7f454c46@gmail.com, adrian@lisas.de, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, gorcunov@openvz.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, xemul@virtuozzo.com, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-kselftest@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181002153100.GG9127-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2 Oct 2018, Arnd Bergmann wrote:
-> On Mon, Oct 1, 2018 at 8:53 PM Thomas Gleixner <tglx@linutronix.de> wrote:
-> >
-> > On Mon, 1 Oct 2018, Eric W. Biederman wrote:
-> > > In the context of process migration there is a simpler subproblem that I
-> > > think it is worth exploring if we can do something about.
+On Tue, Oct 2, 2018 at 8:32 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+>
+> On Tue 02-10-18 07:52:06, Christoph Hellwig wrote:
+> > On Tue, Oct 02, 2018 at 04:44:13PM +0200, Johannes Thumshirn wrote:
+> > > On Tue, Oct 02, 2018 at 07:37:13AM -0700, Christoph Hellwig wrote:
+> > > > No, it should not.  DAX is an implementation detail thay may change
+> > > > or go away at any time.
 > > >
-> > > For a cluster of machines all running with synchronized
-> > > clocks. CLOCK_REALTIME matches. CLOCK_MONOTNIC does not match between
-> > > machines.   Not having a matching CLOCK_MONOTONIC prevents successful
-> > > process migration between nodes in that cluster.
-> > >
-> > > Would it be possible to allow setting CLOCK_MONOTONIC at the very
-> > > beginning of time?  So that all of the nodes in a cluster can be in
-> > > sync?
-> > >
-> > > No change in skew just in offset for CLOCK_MONOTONIC.
-> > >
-> > > There are also dragons involved in coordinating things so that
-> > > CLOCK_MONOTONIC gets set before CLOCK_MONOTONIC gets used.  So I don't
-> > > know if allowing CLOCK_MONOTONIC to be set would be practical but it
-> > > seems work exploring all on it's own.
+> > > Well we had an issue with an application checking for dax, this is how
+> > > we landed here in the first place.
 > >
-> > It's used very early on in the kernel, so that would be a major surprise
-> > for many things including user space which has expectations on clock
-> > monotonic.
-> >
-> > It would be reasonably easy to add CLOCK_MONONOTIC_SYNC which can be set in
-> > the way you described and then in name spaces make it possible to magically
-> > map CLOCK_MONOTONIC to CLOCK_MONOTONIC_SYNC.
-> >
-> > It still wouldn't allow to have different NTP/PTP time domains, but might
-> > be a good start to address the main migration headaches.
-> 
-> If we make CLOCK_MONOTONIC settable this way in a namespace,
-> do you think that should include device drivers that report timestamps
-> in CLOCK_MONOTONIC base, or only the timekeeping clock and timer
-> interfaces?
+> > So what exacty is that "DAX" they are querying about (and no, I'm not
+> > joking, nor being philosophical).
+>
+> I believe the application we are speaking about is mostly concerned about
+> the memory overhead of the page cache. Think of a machine that has ~ 1TB of
+> DRAM, the database running on it is about that size as well and they want
+> database state stored somewhere persistently - which they may want to do by
+> modifying mmaped database files if they do small updates... So they really
+> want to be able to use close to all DRAM for the DB and not leave slack
+> space for the kernel page cache to cache 1TB of database files.
 
-Uurgh. That gets messy very fast.
+VM_MIXEDMAP was never a reliable indication of DAX because it could be
+set for random other device-drivers that use vm_insert_mixed(). The
+MAP_SYNC flag positively indicates that page cache is disabled for a
+given mapping, although whether that property is due to "dax" or some
+other kernel mechanics is purely an internal detail.
 
-> Examples for drivers that can report timestamps are input, sound, v4l,
-> and drm. I think most of these can report stamps in either monotonic
-> or realtime base, while socket timestamps notably are always in
-> realtime.
-> 
-> We can probably get away with not setting the timebase for those
-> device drivers as long as the checkpoint/restart and migration features
-> are not expected to restore the state of an open character device
-> in that way. I don't know if that is a reasonable assumption to make
-> for the examples I listed.
-
-No idea. I'm not a container migration wizard.
-
-Thanks,
-
-	tglx
+I'm not opposed to faking out VM_MIXEDMAP if this broken check has
+made it into production, but again, it's unreliable.
