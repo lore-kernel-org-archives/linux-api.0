@@ -1,53 +1,50 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
-Date: Tue, 2 Oct 2018 17:31:00 +0200
-Message-ID: <20181002153100.GG9127@quack2.suse.cz>
-References: <20181002100531.GC4135@quack2.suse.cz>
- <20181002121039.GA3274@linux-x5ow.site>
- <20181002142959.GD9127@quack2.suse.cz>
- <20181002143713.GA19845@infradead.org>
- <20181002144412.GC4963@linux-x5ow.site>
- <20181002145206.GA10903@infradead.org>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [RFC v2 v2 0/1] ns: introduce binfmt_misc namespace
+Date: Tue, 02 Oct 2018 18:13:30 +0200
+Message-ID: <1538496810.14607.5.camel@HansenPartnership.com>
+References: <20181002102054.13245-1-laurent@vivier.eu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20181002145206.GA10903-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181002102054.13245-1-laurent@vivier.eu>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Laurent Vivier <laurent@vivier.eu>, linux-kernel@vger.kernel.org
+Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Eric Biederman <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 02-10-18 07:52:06, Christoph Hellwig wrote:
-> On Tue, Oct 02, 2018 at 04:44:13PM +0200, Johannes Thumshirn wrote:
-> > On Tue, Oct 02, 2018 at 07:37:13AM -0700, Christoph Hellwig wrote:
-> > > No, it should not.  DAX is an implementation detail thay may change
-> > > or go away at any time.
-> > 
-> > Well we had an issue with an application checking for dax, this is how
-> > we landed here in the first place.
+On Tue, 2018-10-02 at 12:20 +0200, Laurent Vivier wrote:
+> v2: no new namespace, binfmt_misc data are now part of
+>     the mount namespace
+>     I put this in mount namespace instead of user namespace
+>     because the mount namespace is already needed and
+>     I don't want to force to have the user namespace for that.
+>     As this is a filesystem, it seems logic to have it here.
 > 
-> So what exacty is that "DAX" they are querying about (and no, I'm not
-> joking, nor being philosophical).
+> This allows to define a new interpreter for each new container.
+> 
+> But the main goal is to be able to chroot to a directory
+> using a binfmt_misc interpreter without being root.
 
-I believe the application we are speaking about is mostly concerned about
-the memory overhead of the page cache. Think of a machine that has ~ 1TB of
-DRAM, the database running on it is about that size as well and they want
-database state stored somewhere persistently - which they may want to do by
-modifying mmaped database files if they do small updates... So they really
-want to be able to use close to all DRAM for the DB and not leave slack
-space for the kernel page cache to cache 1TB of database files.
+Reading all this, I don't quite understand why this works for me and
+not for you (I think I get from your explanation that it doesn't work
+for you, but I might have missed something):
 
-								Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+jejb@jarvis:~> uname -m
+x86_64
+jejb@jarvis:~> unshare -r -m
+root@jarvis:~# chroot /home/jejb/containers/aarch64
+jarvis:/ # uname -m
+aarch64
+
+Of course to get that to work I have an 'F' entry in
+/etc/binfmt.d/qemu-aarch64.conf
+
+Which means I'm running the host emulator in the container, which is
+what I want to do.  I think another goal of the patches might be to use
+different emulators for different aarch64 containers?  Do you have a
+use case for this, because right at the moment for arch emulation
+containers I think a single host wide entry per static emulator is the
+right approach.
+
+James
