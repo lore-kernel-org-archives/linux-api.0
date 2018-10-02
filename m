@@ -1,80 +1,243 @@
 From: Laurent Vivier <laurent@vivier.eu>
-Subject: [RFC v2 v2 0/1] ns: introduce binfmt_misc namespace
-Date: Tue,  2 Oct 2018 12:20:53 +0200
-Message-ID: <20181002102054.13245-1-laurent@vivier.eu>
+Subject: [RFC v2 v2 1/1] ns: add binfmt_misc to the mount namespace
+Date: Tue,  2 Oct 2018 12:20:54 +0200
+Message-ID: <20181002102054.13245-2-laurent@vivier.eu>
+References: <20181002102054.13245-1-laurent@vivier.eu>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181002102054.13245-1-laurent@vivier.eu>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <dima@arista.com>, Andrei Vagin <avagin@openvz.org>, Eric Biederman <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@HansenPartnership.com>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Laurent Vivier <laurent@vivier.eu>
 List-Id: linux-api@vger.kernel.org
 
-v2: no new namespace, binfmt_misc data are now part of
-    the mount namespace
-    I put this in mount namespace instead of user namespace
-    because the mount namespace is already needed and
-    I don't want to force to have the user namespace for that.
-    As this is a filesystem, it seems logic to have it here.
+This patch allows to have a different binftm_misc configuration
+in each container we mount binfmt_misc filesystem with mount namespace
+enabled.
 
-This allows to define a new interpreter for each new container.
+A container started without the CLONE_NEWNS will use the host binfmt_misc
+configuration, otherwise the container starts with an empty binfmt_misc
+interpreters list.
 
-But the main goal is to be able to chroot to a directory
-using a binfmt_misc interpreter without being root.
+For instance, using "unshare" we can start a chroot of an another
+architecture and configure the binfmt_misc interpreted without being root
+to run the binaries in this chroot.
 
-I have a modified version of unshare at:
-
-  git@github.com:vivier/util-linux.git branch unshare-chroot
-
-with some new options to unshare binfmt_misc namespace and to chroot
-to a directory.
-
-If you have a directory /chroot/powerpc/jessie containing debian for powerpc
-binaries and a qemu-ppc interpreter, you can do for instance:
-
- $ uname -a
- Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
- $ ./unshare --map-root-user --fork --pid \
-   --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
-   --root=/chroot/powerpc/jessie /bin/bash -l
- # uname -a
- Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
- # id
-uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
- # ls -l
-total 5940
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
-drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
-drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
-drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
-drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
-drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
-drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
-dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
--rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
-drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
-drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
-drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
-drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
-drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
-drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
-
-If you want to use the qemu binary provided by your distro, you can use
-
-    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
-
-With the 'F' flag, qemu-ppc-static will be then loaded from the main root
-filesystem before switching to the chroot.
-
-Laurent Vivier (1):
-  ns: add binfmt_misc to the mount namespace
-
+Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+---
  fs/binfmt_misc.c | 50 +++++++++++++++++++++++++-----------------------
  fs/mount.h       |  8 ++++++++
  fs/namespace.c   |  6 ++++++
  3 files changed, 40 insertions(+), 24 deletions(-)
 
+diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
+index aa4a7a23ff99..ecb14776c759 100644
+--- a/fs/binfmt_misc.c
++++ b/fs/binfmt_misc.c
+@@ -25,6 +25,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/fs.h>
+ #include <linux/uaccess.h>
++#include <mount.h>
+ 
+ #include "internal.h"
+ 
+@@ -38,9 +39,6 @@ enum {
+ 	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
+ };
+ 
+-static LIST_HEAD(entries);
+-static int enabled = 1;
+-
+ enum {Enabled, Magic};
+ #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
+ #define MISC_FMT_OPEN_BINARY (1 << 30)
+@@ -60,10 +58,7 @@ typedef struct {
+ 	struct file *interp_file;
+ } Node;
+ 
+-static DEFINE_RWLOCK(entries_lock);
+ static struct file_system_type bm_fs_type;
+-static struct vfsmount *bm_mnt;
+-static int entry_count;
+ 
+ /*
+  * Max length of the register string.  Determined by:
+@@ -91,7 +86,7 @@ static Node *check_file(struct linux_binprm *bprm)
+ 	struct list_head *l;
+ 
+ 	/* Walk all the registered handlers. */
+-	list_for_each(l, &entries) {
++	list_for_each(l, &binfmt_ns(entries)) {
+ 		Node *e = list_entry(l, Node, list);
+ 		char *s;
+ 		int j;
+@@ -135,15 +130,15 @@ static int load_misc_binary(struct linux_binprm *bprm)
+ 	int fd_binary = -1;
+ 
+ 	retval = -ENOEXEC;
+-	if (!enabled)
++	if (!binfmt_ns(enabled))
+ 		return retval;
+ 
+ 	/* to keep locking time low, we copy the interpreter string */
+-	read_lock(&entries_lock);
++	read_lock(&binfmt_ns(entries_lock));
+ 	fmt = check_file(bprm);
+ 	if (fmt)
+ 		dget(fmt->dentry);
+-	read_unlock(&entries_lock);
++	read_unlock(&binfmt_ns(entries_lock));
+ 	if (!fmt)
+ 		return retval;
+ 
+@@ -613,15 +608,15 @@ static void kill_node(Node *e)
+ {
+ 	struct dentry *dentry;
+ 
+-	write_lock(&entries_lock);
++	write_lock(&binfmt_ns(entries_lock));
+ 	list_del_init(&e->list);
+-	write_unlock(&entries_lock);
++	write_unlock(&binfmt_ns(entries_lock));
+ 
+ 	dentry = e->dentry;
+ 	drop_nlink(d_inode(dentry));
+ 	d_drop(dentry);
+ 	dput(dentry);
+-	simple_release_fs(&bm_mnt, &entry_count);
++	simple_release_fs(&binfmt_ns(bm_mnt), &binfmt_ns(entry_count));
+ }
+ 
+ /* /<entry> */
+@@ -716,7 +711,8 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
+ 	if (!inode)
+ 		goto out2;
+ 
+-	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
++	err = simple_pin_fs(&bm_fs_type, &binfmt_ns(bm_mnt),
++			    &binfmt_ns(entry_count));
+ 	if (err) {
+ 		iput(inode);
+ 		inode = NULL;
+@@ -730,7 +726,8 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
+ 		if (IS_ERR(f)) {
+ 			err = PTR_ERR(f);
+ 			pr_notice("register: failed to install interpreter file %s\n", e->interpreter);
+-			simple_release_fs(&bm_mnt, &entry_count);
++			simple_release_fs(&binfmt_ns(bm_mnt),
++					  &binfmt_ns(entry_count));
+ 			iput(inode);
+ 			inode = NULL;
+ 			goto out2;
+@@ -743,9 +740,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
+ 	inode->i_fop = &bm_entry_operations;
+ 
+ 	d_instantiate(dentry, inode);
+-	write_lock(&entries_lock);
+-	list_add(&e->list, &entries);
+-	write_unlock(&entries_lock);
++	write_lock(&binfmt_ns(entries_lock));
++	list_add(&e->list, &binfmt_ns(entries));
++	write_unlock(&binfmt_ns(entries_lock));
+ 
+ 	err = 0;
+ out2:
+@@ -770,7 +767,7 @@ static const struct file_operations bm_register_operations = {
+ static ssize_t
+ bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
+ {
+-	char *s = enabled ? "enabled\n" : "disabled\n";
++	char *s = binfmt_ns(enabled) ? "enabled\n" : "disabled\n";
+ 
+ 	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
+ }
+@@ -784,19 +781,20 @@ static ssize_t bm_status_write(struct file *file, const char __user *buffer,
+ 	switch (res) {
+ 	case 1:
+ 		/* Disable all handlers. */
+-		enabled = 0;
++		binfmt_ns(enabled) = 0;
+ 		break;
+ 	case 2:
+ 		/* Enable all handlers. */
+-		enabled = 1;
++		binfmt_ns(enabled) = 1;
+ 		break;
+ 	case 3:
+ 		/* Delete all handlers. */
+ 		root = file_inode(file)->i_sb->s_root;
+ 		inode_lock(d_inode(root));
+ 
+-		while (!list_empty(&entries))
+-			kill_node(list_first_entry(&entries, Node, list));
++		while (!list_empty(&binfmt_ns(entries)))
++			kill_node(list_first_entry(&binfmt_ns(entries),
++						   Node, list));
+ 
+ 		inode_unlock(d_inode(root));
+ 		break;
+@@ -838,7 +836,10 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
+ static struct dentry *bm_mount(struct file_system_type *fs_type,
+ 	int flags, const char *dev_name, void *data)
+ {
+-	return mount_single(fs_type, flags, data, bm_fill_super);
++	struct mnt_namespace *mnt_ns = current->nsproxy->mnt_ns;
++
++	return mount_ns(fs_type, flags, data, mnt_ns, mnt_ns->user_ns,
++			bm_fill_super);
+ }
+ 
+ static struct linux_binfmt misc_format = {
+@@ -849,6 +850,7 @@ static struct linux_binfmt misc_format = {
+ static struct file_system_type bm_fs_type = {
+ 	.owner		= THIS_MODULE,
+ 	.name		= "binfmt_misc",
++	.fs_flags	= FS_USERNS_MOUNT,
+ 	.mount		= bm_mount,
+ 	.kill_sb	= kill_litter_super,
+ };
+diff --git a/fs/mount.h b/fs/mount.h
+index f39bc9da4d73..f03b35141440 100644
+--- a/fs/mount.h
++++ b/fs/mount.h
+@@ -17,6 +17,12 @@ struct mnt_namespace {
+ 	u64 event;
+ 	unsigned int		mounts; /* # of mounts in the namespace */
+ 	unsigned int		pending_mounts;
++	/* binfmt misc */
++	struct list_head entries;
++	rwlock_t entries_lock;
++	int enabled;
++	struct vfsmount *bm_mnt;
++	int entry_count;
+ } __randomize_layout;
+ 
+ struct mnt_pcp {
+@@ -72,6 +78,8 @@ struct mount {
+ 	struct dentry *mnt_ex_mountpoint;
+ } __randomize_layout;
+ 
++#define binfmt_ns(a) (current->nsproxy->mnt_ns->a)
++
+ #define MNT_NS_INTERNAL ERR_PTR(-EINVAL) /* distinct from any mnt_namespace */
+ 
+ static inline struct mount *real_mount(struct vfsmount *mnt)
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 99186556f8d3..f92b8371228d 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -2850,6 +2850,12 @@ static struct mnt_namespace *alloc_mnt_ns(struct user_namespace *user_ns)
+ 	new_ns->ucounts = ucounts;
+ 	new_ns->mounts = 0;
+ 	new_ns->pending_mounts = 0;
++	/* binfmt_misc */
++	INIT_LIST_HEAD(&new_ns->entries);
++	new_ns->enabled = 1;
++	rwlock_init(&new_ns->entries_lock);
++	new_ns->bm_mnt = NULL;
++	new_ns->entry_count = 0;
+ 	return new_ns;
+ }
+ 
 -- 
 2.17.1
