@@ -1,143 +1,79 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Tue, 2 Oct 2018 13:28:51 +0200
-Message-ID: <20181002112851.GP18290@dhcp22.suse.cz>
-References: <alpine.DEB.2.21.1809241215170.239142@chino.kir.corp.google.com>
- <alpine.DEB.2.21.1809241227370.241621@chino.kir.corp.google.com>
- <20180924195603.GJ18685@dhcp22.suse.cz>
- <20180924200258.GK18685@dhcp22.suse.cz>
- <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
- <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
- <20180925202959.GY18685@dhcp22.suse.cz>
- <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com>
- <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
- <20180926060624.GA18685@dhcp22.suse.cz>
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
+Date: Tue, 2 Oct 2018 16:29:59 +0200
+Message-ID: <20181002142959.GD9127@quack2.suse.cz>
+References: <20181002100531.GC4135@quack2.suse.cz>
+ <20181002121039.GA3274@linux-x5ow.site>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20180926060624.GA18685@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: David Rientjes <rientjes@google.com>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+In-Reply-To: <20181002121039.GA3274-qw2SdCWA0PpjqqEj2zc+bA@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 26-09-18 08:06:24, Michal Hocko wrote:
-> On Tue 25-09-18 15:04:06, Andrew Morton wrote:
-> > On Tue, 25 Sep 2018 14:45:19 -0700 (PDT) David Rientjes <rientjes@google.com> wrote:
+[Added ext4, xfs, and linux-api folks to CC for the interface discussion]
+
+On Tue 02-10-18 14:10:39, Johannes Thumshirn wrote:
+> On Tue, Oct 02, 2018 at 12:05:31PM +0200, Jan Kara wrote:
+> > Hello,
 > > 
-> > > > > It is also used in 
-> > > > > automated testing to ensure that vmas get disabled for thp appropriately 
-> > > > > and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
-> > > > > this, and those tests now break.
-> > > > 
-> > > > This sounds like a bit of an abuse to me. It shows how an internal
-> > > > implementation detail leaks out to the userspace which is something we
-> > > > should try to avoid.
-> > > > 
-> > > 
-> > > Well, it's already how this has worked for years before commit 
-> > > 1860033237d4 broke it.  Changing the implementation in the kernel is fine 
-> > > as long as you don't break userspace who relies on what is exported to it 
-> > > and is the only way to determine if MADV_NOHUGEPAGE is preventing it from 
-> > > being backed by hugepages.
-> > 
-> > 1860033237d4 was over a year ago so perhaps we don't need to be
-> > too worried about restoring the old interface.  In which case
-> > we have an opportunity to make improvements such as that suggested
-> > by Michal?
+> > commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
+> > removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
+> > mean time certain customer of ours started poking into /proc/<pid>/smaps
+> > and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
+> > flags, the application just fails to start complaining that DAX support is
+> > missing in the kernel. The question now is how do we go about this?
 > 
-> Yeah, can we add a way to export PR_SET_THP_DISABLE to userspace
-> somehow? E.g. /proc/<pid>/status. It is a process wide thing so
-> reporting it per VMA sounds strange at best.
+> OK naive question from me, how do we want an application to be able to
+> check if it is running on a DAX mapping?
 
-So how about this? (not tested yet but it should be pretty
-straightforward)
---- 
->From 048b29102de326900b54cce78b614345cd77a230 Mon Sep 17 00:00:00 2001
-From: Michal Hocko <mhocko@suse.com>
-Date: Tue, 2 Oct 2018 10:53:48 +0200
-Subject: [PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+The question from me is: Should application really care? After all DAX is
+just a caching decision. Sure it affects performance characteristics and
+memory usage of the kernel but it is not a correctness issue (in particular
+we took care for MAP_SYNC to return EOPNOTSUPP if the feature cannot be
+supported for current mapping). And in the future the details of what we do
+with DAX mapping can change - e.g. I could imagine we might decide to cache
+writes in DRAM but do direct PMEM access on reads. And all this could be
+auto-tuned based on media properties. And we don't want to tie our hands by
+specifying too narrowly how the kernel is going to behave.
 
-David Rientjes has reported that 1860033237d4 ("mm: make
-PR_SET_THP_DISABLE immediately active") has changed the way how
-we report THPable VMAs to the userspace. Their monitoring tool is
-triggering false alarms on PR_SET_THP_DISABLE tasks because it considers
-an insufficient THP usage as a memory fragmentation resp. memory
-pressure issue.
+OTOH I understand that e.g. for a large database application the difference
+between DAX and non-DAX mapping can be a difference between performs fine
+and performs terribly / kills the machine so such application might want to
+determine / force caching policy to save sysadmin from debugging why the
+application is misbehaving.
 
-Before the said commit each newly created VMA inherited VM_NOHUGEPAGE
-flag and that got exposed to the userspace via /proc/<pid>/smaps file.
-This implementation had its downsides as explained in the commit message
-but it is true that the userspace doesn't have any means to query for
-the process wide THP enabled/disabled status.
+> AFAIU DAX is always associated with a file descriptor of some kind (be
+> it a real file with filesystem dax or the /dev/dax device file for
+> device dax). So could a new fcntl() be of any help here? IS_DAX() only
+> checks for the S_DAX flag in inode::i_flags, so this should be doable
+> for both fsdax and devdax.
 
-PR_SET_THP_DISABLE is a process wide flag so it makes a lot of sense
-to export in the process wide context rather than per-vma. Introduce
-a new field to /proc/<pid>/status which export this status.  If
-PR_SET_THP_DISABLE is used the it reports false same as when the THP is
-not compiled in. It doesn't consider the global THP status because we
-already export that information via sysfs
+So fcntl() to query DAX usage is one option. Another option is the GETFLAGS
+ioctl with which you can query the state of S_DAX flag (works only for XFS
+currently). But that inode flag was meant more as a hint "use DAX if
+available" AFAIK so that's probably not really suitable for querying
+whether DAX is really in use or not. Since DAX is really about caching
+policy, I was also thinking that we could use madvise / fadvise for this.
+I.e., something like MADV_DIRECT_ACCESS which would return with success if
+DAX is in use, with error if not. Later, kernel could use it as a hint to
+really force DAX on a mapping and not try clever caching policies...
+Thoughts?
 
-Fixes: 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
-Signed-off-by: Michal Hocko <mhocko@suse.com>
----
- Documentation/filesystems/proc.txt |  3 +++
- fs/proc/array.c                    | 10 ++++++++++
- 2 files changed, 13 insertions(+)
-
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 22b4b00dee31..bafa5cb1685a 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -182,6 +182,7 @@ For example, to get the status information of a process, all you have to do is
-   VmSwap:        0 kB
-   HugetlbPages:          0 kB
-   CoreDumping:    0
-+  THP_enabled:	  1
-   Threads:        1
-   SigQ:   0/28578
-   SigPnd: 0000000000000000
-@@ -256,6 +257,8 @@ Table 1-2: Contents of the status files (as of 4.8)
-  HugetlbPages                size of hugetlb memory portions
-  CoreDumping                 process's memory is currently being dumped
-                              (killing the process may lead to a corrupted core)
-+ THP_enabled		     process is allowed to use THP (returns 0 when
-+			     PR_SET_THP_DISABLE is set on the process
-  Threads                     number of threads
-  SigQ                        number of signals queued/max. number for queue
-  SigPnd                      bitmap of pending signals for the thread
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index 0ceb3b6b37e7..9d428d5a0ac8 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -392,6 +392,15 @@ static inline void task_core_dumping(struct seq_file *m, struct mm_struct *mm)
- 	seq_putc(m, '\n');
- }
- 
-+static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
-+{
-+	bool thp_enabled = IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE);
-+
-+	if (thp_enabled)
-+		thp_enabled = !test_bit(MMF_DISABLE_THP, &mm->flags);
-+	seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
-+}
-+
- int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 			struct pid *pid, struct task_struct *task)
- {
-@@ -406,6 +415,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 	if (mm) {
- 		task_mem(m, mm);
- 		task_core_dumping(m, mm);
-+		task_thp_status(m, mm);
- 		mmput(mm);
- 	}
- 	task_sig(m, task);
--- 
-2.19.0
+								Honza
 
 -- 
-Michal Hocko
-SUSE Labs
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
