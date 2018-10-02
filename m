@@ -1,64 +1,69 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 1/3] bpf: allow zero-initializing hash map seed
-Date: Tue, 2 Oct 2018 21:59:37 +0200
-Message-ID: <CAG48ez0_BtXQ2KCgpRicQ8yfeNqV2mN8RKCA3nn8DXFTmsj6UA@mail.gmail.com>
-References: <20181001104509.24211-1-lmb@cloudflare.com> <20181001104509.24211-2-lmb@cloudflare.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: Setting monotonic time?
+Date: Tue, 2 Oct 2018 22:00:57 +0200
+Message-ID: <CAK8P3a2zTqrCGURE3XVpn3_w6C4R5O+cq8TdtbyKCMGyRk9_jw@mail.gmail.com>
+References: <20180919205037.9574-1-dima@arista.com> <874lej6nny.fsf@xmission.com>
+ <20180924205119.GA14833@outlook.office365.com> <874leezh8n.fsf@xmission.com>
+ <20180925014150.GA6302@outlook.office365.com> <87zhw4rwiq.fsf@xmission.com>
+ <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
+ <87mus1ftb9.fsf@xmission.com> <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de>
+ <877ej2xc23.fsf_-_@xmission.com> <alpine.DEB.2.21.1810012047520.32062@nanos.tec.linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181001104509.24211-2-lmb@cloudflare.com>
-Sender: netdev-owner@vger.kernel.org
-To: lmb@cloudflare.com
-Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.21.1810012047520.32062@nanos.tec.linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: "Eric W . Biederman" <ebiederm@xmission.com>, avagin@virtuozzo.com, dima@arista.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, 0x7f454c46@gmail.com, adrian@lisas.de, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, gorcunov@openvz.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, xemul@virtuozzo.com, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 1, 2018 at 12:47 PM Lorenz Bauer <lmb@cloudflare.com> wrote:
+On Mon, Oct 1, 2018 at 8:53 PM Thomas Gleixner <tglx@linutronix.de> wrote:
 >
-> Add a new flag BPF_F_ZERO_SEED, which forces a hash map
-> to initialize the seed to zero.
-> ---
->  include/uapi/linux/bpf.h | 2 ++
->  kernel/bpf/hashtab.c     | 8 ++++++--
->  2 files changed, 8 insertions(+), 2 deletions(-)
+> On Mon, 1 Oct 2018, Eric W. Biederman wrote:
+> > In the context of process migration there is a simpler subproblem that I
+> > think it is worth exploring if we can do something about.
+> >
+> > For a cluster of machines all running with synchronized
+> > clocks. CLOCK_REALTIME matches. CLOCK_MONOTNIC does not match between
+> > machines.   Not having a matching CLOCK_MONOTONIC prevents successful
+> > process migration between nodes in that cluster.
+> >
+> > Would it be possible to allow setting CLOCK_MONOTONIC at the very
+> > beginning of time?  So that all of the nodes in a cluster can be in
+> > sync?
+> >
+> > No change in skew just in offset for CLOCK_MONOTONIC.
+> >
+> > There are also dragons involved in coordinating things so that
+> > CLOCK_MONOTONIC gets set before CLOCK_MONOTONIC gets used.  So I don't
+> > know if allowing CLOCK_MONOTONIC to be set would be practical but it
+> > seems work exploring all on it's own.
 >
-> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-> index aa5ccd2385ed..9d15c8f179ac 100644
-> --- a/include/uapi/linux/bpf.h
-> +++ b/include/uapi/linux/bpf.h
-> @@ -252,6 +252,8 @@ enum bpf_attach_type {
->  #define BPF_F_NO_COMMON_LRU    (1U << 1)
->  /* Specify numa node during map creation */
->  #define BPF_F_NUMA_NODE                (1U << 2)
-> +/* Zero-initialize hash function seed */
-> +#define BPF_F_ZERO_SEED                (1U << 6)
+> It's used very early on in the kernel, so that would be a major surprise
+> for many things including user space which has expectations on clock
+> monotonic.
 >
->  /* flags for BPF_PROG_QUERY */
->  #define BPF_F_QUERY_EFFECTIVE  (1U << 0)
-> diff --git a/kernel/bpf/hashtab.c b/kernel/bpf/hashtab.c
-> index 2c1790288138..a79e123dae62 100644
-> --- a/kernel/bpf/hashtab.c
-> +++ b/kernel/bpf/hashtab.c
-> @@ -23,7 +23,7 @@
+> It would be reasonably easy to add CLOCK_MONONOTIC_SYNC which can be set in
+> the way you described and then in name spaces make it possible to magically
+> map CLOCK_MONOTONIC to CLOCK_MONOTONIC_SYNC.
 >
->  #define HTAB_CREATE_FLAG_MASK                                          \
->         (BPF_F_NO_PREALLOC | BPF_F_NO_COMMON_LRU | BPF_F_NUMA_NODE |    \
-> -        BPF_F_RDONLY | BPF_F_WRONLY)
-> +        BPF_F_RDONLY | BPF_F_WRONLY | BPF_F_ZERO_SEED)
->
->  struct bucket {
->         struct hlist_nulls_head head;
-> @@ -373,7 +373,11 @@ static struct bpf_map *htab_map_alloc(union bpf_attr *attr)
->         if (!htab->buckets)
->                 goto free_htab;
->
-> -       htab->hashrnd = get_random_int();
-> +       if (htab->map.map_flags & BPF_F_ZERO_SEED)
-> +               htab->hashrnd = 0;
-> +       else
-> +               htab->hashrnd = get_random_int();
-> +
+> It still wouldn't allow to have different NTP/PTP time domains, but might
+> be a good start to address the main migration headaches.
 
-If this is for testing only, you can slap a capable(CAP_SYS_ADMIN)
-check in here, right? I doubt it matters, but I don't really like
-seeing something like this exposed to unprivileged userspace just
-because you need it for kernel testing.
+If we make CLOCK_MONOTONIC settable this way in a namespace,
+do you think that should include device drivers that report timestamps
+in CLOCK_MONOTONIC base, or only the timekeeping clock and timer
+interfaces?
+
+Examples for drivers that can report timestamps are input, sound, v4l,
+and drm. I think most of these can report stamps in either monotonic
+or realtime base, while socket timestamps notably are always in
+realtime.
+
+We can probably get away with not setting the timebase for those
+device drivers as long as the checkpoint/restart and migration features
+are not expected to restore the state of an open character device
+in that way. I don't know if that is a reasonable assumption to make
+for the examples I listed.
+
+      Arnd
