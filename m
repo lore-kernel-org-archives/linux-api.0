@@ -1,117 +1,80 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH 2/3] namei: implement AT_THIS_ROOT chroot-like path
- resolution
-Date: Tue, 2 Oct 2018 17:32:20 +1000
-Message-ID: <20181002073220.7mzndna4tdnxdvdt@ryuk>
-References: <20180929103453.12025-1-cyphar@cyphar.com>
- <20180929131534.24472-1-cyphar@cyphar.com>
- <CAG48ez30WJhbsro2HOc_DR7V91M+hNFzBP5ogRMZaxbAORvqzg@mail.gmail.com>
- <20181001054246.gfinmx3api7kjhmc@ryuk>
- <C89D720F-3CC4-4FA9-9CBB-E41A67360A6B@amacapital.net>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="f5grxfjtcz5dvrfy"
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: [RFC v2 v2 0/1] ns: introduce binfmt_misc namespace
+Date: Tue,  2 Oct 2018 12:20:53 +0200
+Message-ID: <20181002102054.13245-1-laurent@vivier.eu>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <C89D720F-3CC4-4FA9-9CBB-E41A67360A6B@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, jlayton@kernel.org, Bruce Fields <bfields@fieldses.org>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, shuah@kernel.org, David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, linux-kselftest@vger.kernel.org, dev@opencontainers.org, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>
+To: linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <dima@arista.com>, Andrei Vagin <avagin@openvz.org>, Eric Biederman <ebiederm@xmission.com>, Alexander Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@HansenPartnership.com>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Laurent Vivier <laurent@vivier.eu>
 List-Id: linux-api@vger.kernel.org
 
+v2: no new namespace, binfmt_misc data are now part of
+    the mount namespace
+    I put this in mount namespace instead of user namespace
+    because the mount namespace is already needed and
+    I don't want to force to have the user namespace for that.
+    As this is a filesystem, it seems logic to have it here.
 
---f5grxfjtcz5dvrfy
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+This allows to define a new interpreter for each new container.
 
-On 2018-10-01, Andy Lutomirski <luto@amacapital.net> wrote:
-> >>> Currently most container runtimes try to do this resolution in
-> >>> userspace[1], causing many potential race conditions. In addition, the
-> >>> "obvious" alternative (actually performing a {ch,pivot_}root(2))
-> >>> requires a fork+exec which is *very* costly if necessary for every
-> >>> filesystem operation involving a container.
-> >>=20
-> >> Wait. fork() I understand, but why exec? And actually, you don't need
-> >> a full fork() either, clone() lets you do this with some process parts
-> >> shared. And then you also shouldn't need to use SCM_RIGHTS, just keep
-> >> the file descriptor table shared. And why chroot()/pivot_root(),
-> >> wouldn't you want to use setns()?
-> >=20
-> > You're right about this -- for C runtimes. In Go we cannot do a raw
-> > clone() or fork() (if you do it manually with RawSyscall you'll end with
-> > broken runtime state). So you're forced to do fork+exec (which then
-> > means that you can't use CLONE_FILES and must use SCM_RIGHTS). Same goes
-> > for CLONE_VFORK.
->=20
-> I must admit that I=E2=80=99m not very sympathetic to the argument that =
-=E2=80=9CGo=E2=80=99s
-> runtime model is incompatible with the simpler solution.=E2=80=9D
+But the main goal is to be able to chroot to a directory
+using a binfmt_misc interpreter without being root.
 
-Multi-threaded programs have a similar issue (though with Go it's much
-worse). If you fork a multi-threaded C program then you can only safely
-use AS-Safe glibc functions (those that are safe within a signal
-handler). But if you're just doing three syscalls this shouldn't be as
-big of a problem as Go where you can't even do said syscalls.
+I have a modified version of unshare at:
 
-> Anyway, it occurs to me that the real problem is that setns() and
-> chroot() are both overkill for this use case.
+  git@github.com:vivier/util-linux.git branch unshare-chroot
 
-I agree. My diversion to Go was to explain why it was particularly bad
-for cri-o/rkt/runc/Docker/etc.
+with some new options to unshare binfmt_misc namespace and to chroot
+to a directory.
 
-> What=E2=80=99s needed is to start your walk from /proc/pid-in-container/r=
-oot,
-> with two twists:
->=20
-> 1. Do the walk as though rooted at a directory. This is basically just
-> your AT_THIS_ROOT, but the footgun is avoided because the dirfd you
-> use is from a foreign namespace, and, except for symlinks to absolute
-> paths, no amount of .. racing is going to escape the *namespace*.
+If you have a directory /chroot/powerpc/jessie containing debian for powerpc
+binaries and a qemu-ppc interpreter, you can do for instance:
 
-This is quite clever and I'll admit I hadn't thought of this. This
-definitely fixes the ".." issue, but as you've said it won't handle
-absolute symlinks (which means userspace has the same races that we
-currently have even if you assume that you have a container process
-already running -- CVE-2018-15664 is one of many examples of this).
+ $ uname -a
+ Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
+ $ ./unshare --map-root-user --fork --pid \
+   --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
+   --root=/chroot/powerpc/jessie /bin/bash -l
+ # uname -a
+ Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
+ # id
+uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
+ # ls -l
+total 5940
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
+drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
+drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
+drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
+drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
+drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
+drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
+dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
+-rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
+drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
+drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
+drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
+drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
+drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
+drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
 
-(AT_THIS_ROOT using /proc/$container/root would in principle fix all of
-the mentioned issues -- but as I said before I'd like to see whether
-hardening ".." would be enough to solve the escape problem.)
+If you want to use the qemu binary provided by your distro, you can use
 
-> 2. Avoid /proc. It=E2=80=99s not just the *links* =E2=80=94 you really do=
-n=E2=80=99t want to
-> walk into /proc/self. *Maybe* procfs is already careful enough when
-> mounted in a namespace?
+    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
 
-I just tried it and /proc/self gives you -ENOENT. I believe this is
-because it does a check against the pid namespace that the procfs mount
-has pinned.
+With the 'F' flag, qemu-ppc-static will be then loaded from the main root
+filesystem before switching to the chroot.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+Laurent Vivier (1):
+  ns: add binfmt_misc to the mount namespace
 
---f5grxfjtcz5dvrfy
-Content-Type: application/pgp-signature; name="signature.asc"
+ fs/binfmt_misc.c | 50 +++++++++++++++++++++++++-----------------------
+ fs/mount.h       |  8 ++++++++
+ fs/namespace.c   |  6 ++++++
+ 3 files changed, 40 insertions(+), 24 deletions(-)
 
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAluzHwEACgkQnhiqJn3b
-jbQ5LRAAxGtWfDWV6hZtCxTiyzf5SiMxYXCzdM/1SmlYfclwu0o7Cvpcs2dHqwbo
-EftRBczNj1uLzuI4Qov9gpM3Ey5Y1YwxAFzEEIlCvtKUIO+oekiAMd0gsarwxLLo
-OPROl3596WbVsOyCXkhJ5hu2XtiU3h/T3gbMuqM9KbsFL9Bb8En607RI4BI3yhE/
-d8iSrBv8zxhfxSoQLPlNNJHG5TKN3G1C0hb+puVHkzbb9l9R/gcSJMEQsfMdTs48
-ZBVByLUKirntkbDKgw5aDg52n8hz2TUx35V7dQD2E366V3jzEWRtKViG193NOvSu
-8v0NpyyDC3+GxDTO1gm0XKMEEC5Xb/wMlTvOU6xj1hLV7L3APPqUkuOG5TTdB1Id
-hKwiK7H5RlbRo3FaIpkOJaU5eYH4Q6QGYw9+lKg1fk/FTvgB1y8HcYBFC+PKI++j
-bZPB0MZEL0cCCWnDYROA7vrgFCk+AgY7pMCAowOrsjDDd4stZohpq2qDN0nKR7m1
-BtciN5dAxNMHoEqn/Q1y5CapVHmLzQOUTYksUORO7tsDKyDMp7V3DnBJ8GWqVQYE
-AfzhuRdsW50sf3lyGfLE+8wlhlXzIc9Mcvjk5UXt6XBL80OQAOQbUzdrqSUXUWkx
-WHbkFyxKgu/1bjE1HKYxlyIF6cxoq11EIseP5igqtrgFE4kdV1U=
-=pZFZ
------END PGP SIGNATURE-----
-
---f5grxfjtcz5dvrfy--
+-- 
+2.17.1
