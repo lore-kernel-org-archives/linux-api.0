@@ -1,24 +1,44 @@
-From: Eugene Syromiatnikov <esyr@redhat.com>
-Subject: Re: [RFC PATCH v4 24/27] mm/mmap: Create a guard area between VMAs
-Date: Wed, 3 Oct 2018 06:56:11 +0200
-Message-ID: <20181003045611.GB22724@asgard.redhat.com>
-References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
- <20180921150351.20898-25-yu-cheng.yu@intel.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Setting monotonic time?
+Date: Wed, 3 Oct 2018 07:25:35 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1810030711520.1435@nanos.tec.linutronix.de>
+References: <20180919205037.9574-1-dima@arista.com> <874lej6nny.fsf@xmission.com> <20180924205119.GA14833@outlook.office365.com> <874leezh8n.fsf@xmission.com> <20180925014150.GA6302@outlook.office365.com> <87zhw4rwiq.fsf@xmission.com>
+ <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de> <87mus1ftb9.fsf@xmission.com> <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de> <877ej2xc23.fsf_-_@xmission.com> <alpine.DEB.2.21.1810012047520.32062@nanos.tec.linutronix.de>
+ <CAK8P3a2zTqrCGURE3XVpn3_w6C4R5O+cq8TdtbyKCMGyRk9_jw@mail.gmail.com> <alpine.DEB.2.21.1810022205080.1435@nanos.tec.linutronix.de> <87in2jskew.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180921150351.20898-25-yu-cheng.yu@intel.com>
+In-Reply-To: <87in2jskew.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, avagin@virtuozzo.com, dima@arista.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, 0x7f454c46@gmail.com, adrian@lisas.de, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, gorcunov@openvz.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, xemul@virtuozzo.com, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 21, 2018 at 08:03:48AM -0700, Yu-cheng Yu wrote:
-> Create a guard area between VMAs, to detect memory corruption.
+On Wed, 3 Oct 2018, Eric W. Biederman wrote:
+> Direct access to hardware/drivers and not through an abstraction like
+> the vfs (an abstraction over block devices) can legitimately be handled
+> by hotplug events.  I unplug one keyboard I plug in another.
+> 
+> I don't know if the input layer is more of a general abstraction
+> or more of a hardware device.  I have not dug into it but my guess
+> is abstraction from what I have heard.
+> 
+> The scary difficulty here is if after restart input is reporting times
+> in CLOCK_MONOTONIC and the applications in the namespace are talking
+> about times in CLOCK_MONOTONIC_SYNC.  Then there is an issue.  As even
+> with a fixed offset the times don't match up.
+> 
+> So a time namespace absolutely needs to do is figure out how to deal
+> with all of the kernel interfaces reporting times and figure out how to
+> report them in the current time namespace.
 
-Do I understand correctly that with this patch a user space program
-no longer be able to place two mappings back to back? If it is so,
-it will likely break a lot of things; for example, it's a common ring
-buffer implementations technique, to map buffer memory twice back
-to back in order to avoid special handling of items wrapping its end.
+So you want to talk to Arnd who is leading the y2038 effort. He knowns how
+many and which interfaces are involved aside of the obvious core timer
+ones. It's quite an amount and the problem is that you really need to do
+that at the interface level, because many of those time stamps are taken in
+contexts which are completely oblivious of name spaces. Ditto for timeouts
+and similar things which are handed in through these interfaces.
+
+Thanks,
+
+	tglx
