@@ -1,81 +1,91 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH 2/3] namei: implement AT_THIS_ROOT chroot-like path resolution
-Date: Wed, 3 Oct 2018 15:09:18 -0700
-Message-ID: <CALCETrXZ_Kg25gToCzzM=4g1Z3mQgou8RmF6OWoh3+vuPk3vUA@mail.gmail.com>
-References: <20180929103453.12025-1-cyphar@cyphar.com> <20180929131534.24472-1-cyphar@cyphar.com>
- <CAG48ez30WJhbsro2HOc_DR7V91M+hNFzBP5ogRMZaxbAORvqzg@mail.gmail.com>
- <20181001054246.gfinmx3api7kjhmc@ryuk> <C89D720F-3CC4-4FA9-9CBB-E41A67360A6B@amacapital.net>
- <20181002073220.7mzndna4tdnxdvdt@ryuk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: [RFC v3 0/1] ns: introduce binfmt_misc namespace
+Date: Thu,  4 Oct 2018 00:50:21 +0200
+Message-ID: <20181003225022.32033-1-laurent@vivier.eu>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181002073220.7mzndna4tdnxdvdt@ryuk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, Shuah Khan <shuah@kernel.org>, David Howells <dhowells@redhat.com>, Andrew Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, LKML <linux-kernel@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>
+To: linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <dima@arista.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, linux-fsdevel@vger.kernel.org, James Bottomley <James.Bottomley@HansenPartnership.com>, Andrei Vagin <avagin@openvz.org>, containers@lists.linux-foundation.org, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, Laurent Vivier <laurent@vivier.eu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 2, 2018 at 12:32 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
->
-> On 2018-10-01, Andy Lutomirski <luto@amacapital.net> wrote:
-> > >>> Currently most container runtimes try to do this resolution in
-> > >>> userspace[1], causing many potential race conditions. In addition, =
-the
-> > >>> "obvious" alternative (actually performing a {ch,pivot_}root(2))
-> > >>> requires a fork+exec which is *very* costly if necessary for every
-> > >>> filesystem operation involving a container.
-> > >>
-> > >> Wait. fork() I understand, but why exec? And actually, you don't nee=
-d
-> > >> a full fork() either, clone() lets you do this with some process par=
-ts
-> > >> shared. And then you also shouldn't need to use SCM_RIGHTS, just kee=
-p
-> > >> the file descriptor table shared. And why chroot()/pivot_root(),
-> > >> wouldn't you want to use setns()?
-> > >
-> > > You're right about this -- for C runtimes. In Go we cannot do a raw
-> > > clone() or fork() (if you do it manually with RawSyscall you'll end w=
-ith
-> > > broken runtime state). So you're forced to do fork+exec (which then
-> > > means that you can't use CLONE_FILES and must use SCM_RIGHTS). Same g=
-oes
-> > > for CLONE_VFORK.
-> >
-> > I must admit that I=E2=80=99m not very sympathetic to the argument that=
- =E2=80=9CGo=E2=80=99s
-> > runtime model is incompatible with the simpler solution.=E2=80=9D
->
-> Multi-threaded programs have a similar issue (though with Go it's much
-> worse). If you fork a multi-threaded C program then you can only safely
-> use AS-Safe glibc functions (those that are safe within a signal
-> handler). But if you're just doing three syscalls this shouldn't be as
-> big of a problem as Go where you can't even do said syscalls.
->
-> > Anyway, it occurs to me that the real problem is that setns() and
-> > chroot() are both overkill for this use case.
->
-> I agree. My diversion to Go was to explain why it was particularly bad
-> for cri-o/rkt/runc/Docker/etc.
->
-> > What=E2=80=99s needed is to start your walk from /proc/pid-in-container=
-/root,
-> > with two twists:
-> >
-> > 1. Do the walk as though rooted at a directory. This is basically just
-> > your AT_THIS_ROOT, but the footgun is avoided because the dirfd you
-> > use is from a foreign namespace, and, except for symlinks to absolute
-> > paths, no amount of .. racing is going to escape the *namespace*.
->
-> This is quite clever and I'll admit I hadn't thought of this. This
-> definitely fixes the ".." issue, but as you've said it won't handle
-> absolute symlinks (which means userspace has the same races that we
-> currently have even if you assume that you have a container process
-> already running -- CVE-2018-15664 is one of many examples of this).
->
-> (AT_THIS_ROOT using /proc/$container/root would in principle fix all of
-> the mentioned issues -- but as I said before I'd like to see whether
-> hardening ".." would be enough to solve the escape problem.)
+v3: create a structure to store binfmt_misc data,
+    add a pointer to this structure in the user_namespace structure,
+    in init_user_ns structure this pointer points to an init_binfmt_ns
+    structure. And all new user namespaces point to this init structure.
+    A new binfmt namespace structure is allocated if the binfmt_misc
+    filesystem is mounted in a user namespace that is not the initial
+    one but its binfmt namespace pointer points to the initial one.
+    add override_creds()/revert_creds() around open_exec() in
+    bm_register_write()
 
-Hmm.  Good point.
+v2: no new namespace, binfmt_misc data are now part of
+    the mount namespace
+    I put this in mount namespace instead of user namespace
+    because the mount namespace is already needed and
+    I don't want to force to have the user namespace for that.
+    As this is a filesystem, it seems logic to have it here.
+
+This allows to define a new interpreter for each new container.
+
+But the main goal is to be able to chroot to a directory
+using a binfmt_misc interpreter without being root.
+
+I have a modified version of unshare at:
+
+  git@github.com:vivier/util-linux.git branch unshare-chroot
+
+with some new options to unshare binfmt_misc namespace and to chroot
+to a directory.
+
+If you have a directory /chroot/powerpc/jessie containing debian for powerpc
+binaries and a qemu-ppc interpreter, you can do for instance:
+
+ $ uname -a
+ Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
+ $ ./unshare --map-root-user --fork --pid \
+   --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
+   --root=/chroot/powerpc/jessie /bin/bash -l
+ # uname -a
+ Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
+ # id
+uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
+ # ls -l
+total 5940
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
+drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
+drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
+drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
+drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
+drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
+drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
+dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
+-rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
+drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
+drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
+drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
+drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
+drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
+drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
+drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
+
+If you want to use the qemu binary provided by your distro, you can use
+
+    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
+
+With the 'F' flag, qemu-ppc-static will be then loaded from the main root
+filesystem before switching to the chroot.
+
+Laurent Vivier (1):
+  ns: add binfmt_misc to the user namespace
+
+ fs/binfmt_misc.c               | 85 +++++++++++++++++++++++-----------
+ include/linux/user_namespace.h | 15 ++++++
+ kernel/user.c                  | 14 ++++++
+ kernel/user_namespace.c        |  9 ++++
+ 4 files changed, 95 insertions(+), 28 deletions(-)
+
+-- 
+2.17.1
