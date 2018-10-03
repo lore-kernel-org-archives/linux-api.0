@@ -1,66 +1,94 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Wed, 3 Oct 2018 09:36:40 +0200
-Message-ID: <20181003073640.GF18290@dhcp22.suse.cz>
-References: <20180924195603.GJ18685@dhcp22.suse.cz>
- <20180924200258.GK18685@dhcp22.suse.cz>
- <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
- <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
- <20180925202959.GY18685@dhcp22.suse.cz>
- <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com>
- <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
- <20180926060624.GA18685@dhcp22.suse.cz>
- <20181002112851.GP18290@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [RFC v2 v2 0/1] ns: introduce binfmt_misc namespace
+Date: Wed, 03 Oct 2018 12:13:43 +0200
+Message-ID: <1538561623.7448.5.camel@HansenPartnership.com>
+References: <20181002102054.13245-1-laurent@vivier.eu>
+         <1538496810.14607.5.camel@HansenPartnership.com>
+         <a9997ce3-d63d-44b4-6a2a-09fd207a1550@vivier.eu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com>
+In-Reply-To: <a9997ce3-d63d-44b4-6a2a-09fd207a1550@vivier.eu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Laurent Vivier <laurent@vivier.eu>, linux-kernel@vger.kernel.org
+Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Eric Biederman <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 02-10-18 13:29:42, David Rientjes wrote:
-> On Tue, 2 Oct 2018, Michal Hocko wrote:
-> 
-> > On Wed 26-09-18 08:06:24, Michal Hocko wrote:
-> > > On Tue 25-09-18 15:04:06, Andrew Morton wrote:
-> > > > On Tue, 25 Sep 2018 14:45:19 -0700 (PDT) David Rientjes <rientjes@google.com> wrote:
-> > > > 
-> > > > > > > It is also used in 
-> > > > > > > automated testing to ensure that vmas get disabled for thp appropriately 
-> > > > > > > and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
-> > > > > > > this, and those tests now break.
-> > > > > > 
-> > > > > > This sounds like a bit of an abuse to me. It shows how an internal
-> > > > > > implementation detail leaks out to the userspace which is something we
-> > > > > > should try to avoid.
-> > > > > > 
-> > > > > 
-> > > > > Well, it's already how this has worked for years before commit 
-> > > > > 1860033237d4 broke it.  Changing the implementation in the kernel is fine 
-> > > > > as long as you don't break userspace who relies on what is exported to it 
-> > > > > and is the only way to determine if MADV_NOHUGEPAGE is preventing it from 
-> > > > > being backed by hugepages.
-> > > > 
-> > > > 1860033237d4 was over a year ago so perhaps we don't need to be
-> > > > too worried about restoring the old interface.  In which case
-> > > > we have an opportunity to make improvements such as that suggested
-> > > > by Michal?
+On Tue, 2018-10-02 at 18:47 +0200, Laurent Vivier wrote:
+> Le 02/10/2018 à 18:13, James Bottomley a écrit :
+> > On Tue, 2018-10-02 at 12:20 +0200, Laurent Vivier wrote:
+> > > v2: no new namespace, binfmt_misc data are now part of
+> > >     the mount namespace
+> > >     I put this in mount namespace instead of user namespace
+> > >     because the mount namespace is already needed and
+> > >     I don't want to force to have the user namespace for that.
+> > >     As this is a filesystem, it seems logic to have it here.
 > > > 
-> > > Yeah, can we add a way to export PR_SET_THP_DISABLE to userspace
-> > > somehow? E.g. /proc/<pid>/status. It is a process wide thing so
-> > > reporting it per VMA sounds strange at best.
+> > > This allows to define a new interpreter for each new container.
+> > > 
+> > > But the main goal is to be able to chroot to a directory
+> > > using a binfmt_misc interpreter without being root.
 > > 
-> > So how about this? (not tested yet but it should be pretty
-> > straightforward)
+> > Reading all this, I don't quite understand why this works for me
+> > and
+> > not for you (I think I get from your explanation that it doesn't
+> > work
+> > for you, but I might have missed something):
+> > 
+> > jejb@jarvis:~> uname -m
+> > x86_64
+> > jejb@jarvis:~> unshare -r -m
+> > root@jarvis:~# chroot /home/jejb/containers/aarch64
+> > jarvis:/ # uname -m
+> > aarch64
+> > 
+> > Of course to get that to work I have an 'F' entry in
+> > /etc/binfmt.d/qemu-aarch64.conf
+> > 
 > 
-> Umm, prctl(PR_GET_THP_DISABLE)?
+> I'd like to configure the interpreter without being root.
+> 
+> As a simple user can run a VM and a full system inside, I'd like to
+> be
+> able to start a container/chroot without having to configure
+> something
+> at the host level.
+> 
+> For instance, I'd like to provide to "someone" (with no admin rights)
+> a tar file with inside an OS environment for a given target and the
+> interpreter, and allow him to run the binaries inside just by running
+> a simple command (like qemu-system-XXX -hda my.img)
 
-/me confused. I thought you want to query for the flag on a
-_different_ process. 
--- 
-Michal Hocko
-SUSE Labs
+OK, since trying to persuade the distros to add the 'F' flag has been
+challenging, I certainly buy this use case.
+
+There is a security risk to allowing an unprivileged user to supply an
+arbitrary interpreter (suid and sgid binaries), but as long as
+whatever's agreed requires root in the user namespace, I'm happy we
+have the security issue confined.
+
+James
+
+
+> It's also interesting for a test purpose: I can test concurrently
+> different interpreters for the same target without modifying the
+> target root filesystem (with the 'F' flag but on a per directory
+> basis) or the host configuration.
+> 
+> Another case is we can't configure qemu-mips/qemu-mipsel (old kernel
+> API) and qemu-mipsn32/qemu-mipsne32el (new kernel API) interpreters
+> on the same system because they share the same ELF signature (to be
+> honest qemu should have only one binary for the old and the new
+> interface and dynamically change it according to the ELF binary that
+> is loaded, as it is done for ARM).
+> 
+> But if no one thinks it's useful, I don't want to push this more than
+> that...
+> 
+> Thanks,
+> Laurent
+> _______________________________________________
+> Containers mailing list
+> Containers@lists.linux-foundation.org
+> https://lists.linuxfoundation.org/mailman/listinfo/containers
