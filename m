@@ -1,66 +1,37 @@
-From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
-Date: Wed, 3 Oct 2018 14:13:59 -0700
-Message-ID: <CAPcyv4iCXNYTSzwU5OoZc_b+xxbqKwjyQV74CRxEfvDjaMPDfg@mail.gmail.com>
-References: <20181002142959.GD9127@quack2.suse.cz>
- <20181002143713.GA19845@infradead.org>
- <20181002144412.GC4963@linux-x5ow.site> <20181002145206.GA10903@infradead.org>
- <20181002153100.GG9127@quack2.suse.cz>
- <CAPcyv4j0tTD+rENqFExA68aw=-MmtCBaOe1qJovyrmJC=yBg-Q@mail.gmail.com>
- <20181003125056.GA21043@quack2.suse.cz>
- <CAPcyv4jfV10yuTiPg6ijsPRRL2-c_48ovfpU5TK1Zu7BWnfk3g@mail.gmail.com>
- <20181003150658.GC24030@quack2.suse.cz>
- <CAPcyv4iJvN6_Cf6tw=5a=Uh99LfMFKU7n8QkGcz1ZaxL0Oi-3w@mail.gmail.com>
- <20181003164407.GK24030@quack2.suse.cz>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [RFC PATCH v4 24/27] mm/mmap: Create a guard area between VMAs
+Date: Wed, 3 Oct 2018 23:21:44 +0200
+Message-ID: <20181003212029.GH32759@asgard.redhat.com>
+References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
+ <20180921150351.20898-25-yu-cheng.yu@intel.com>
+ <20181003045611.GB22724@asgard.redhat.com>
+ <CALCETrU-Ny-uC1NqRedQwNKe2MMhsFEqZ08TtHJwbLfCACMmLw@mail.gmail.com>
+ <5ddb0ad33298d1858e530fce9c9ea2788b2fac81.camel@intel.com>
+ <20181003163226.GC9449@asgard.redhat.com>
+ <CAG48ez0KZYv9BECMm0-BNypJ232jrdkFp6_4VYTA=WoB-8w89w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20181003164407.GK24030-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez0KZYv9BECMm0-BNypJ232jrdkFp6_4VYTA=WoB-8w89w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: yu-cheng.yu@intel.com, Andy Lutomirski <luto@amacapital.net>, the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 3, 2018 at 9:46 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
->
-> On Wed 03-10-18 08:13:37, Dan Williams wrote:
-> > On Wed, Oct 3, 2018 at 8:07 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > > WRT per-inode DAX property, AFAIU that inode flag is just going to be
-> > > advisory thing - i.e., use DAX if possible. If you mount a filesystem with
-> > > these inode flags set in a configuration which does not allow DAX to be
-> > > used, you will still be able to access such inodes but the access will use
-> > > page cache instead. And querying these flags should better show real
-> > > on-disk status and not just whether DAX is used as that would result in an
-> > > even bigger mess. So this feature seems to be somewhat orthogonal to the
-> > > API I'm looking for.
-> >
-> > True, I imagine once we have that flag we will be able to distinguish
-> > the "saved" property and the "effective / live" property of DAX...
-> > Also it's really not DAX that applications care about as much as "is
-> > there page-cache indirection / overhead for this mapping?". That seems
-> > to be a narrower guarantee that we can make than what "DAX" might
-> > imply.
->
-> Right. So what do people think about my suggestion earlier in the thread to
-> use madvise(MADV_DIRECT_ACCESS) for this? Currently it would return success
-> when DAX is in use, failure otherwise. Later we could extend it to be also
-> used as a hint for caching policy for the inode...
+On Wed, Oct 03, 2018 at 06:52:40PM +0200, Jann Horn wrote:
+> On Wed, Oct 3, 2018 at 6:32 PM Eugene Syromiatnikov <esyr@redhat.com> wrote:
+> > I'm not sure, however, whether such a change that provides no ability
+> > to configure or affect it will go well with all the supported
+> > architectures.
+> 
+> Is there a concrete reason why you think an architecture might not
+> like this? As far as I can tell, the virtual address space overhead
+> should be insignificant even for 32-bit systems.
 
-The only problem is that you can't use it purely as a query. If we
-ever did plumb it to be a hint you could not read the state without
-writing the state.
+Not really, and not architectures per se, but judging by some past
+experiences with enabling ASLR, I would expect that all kinds of weird
+applications may start to behave in all kinds of strange ways.
 
-mincore(2) seems to be close the intent of discovering whether RAM is
-being consumed for a given address range, but it currently is
-implemented to only indicate if *any* mapping is established, not
-whether RAM is consumed. I can see an argument that a dax mapped file
-should always report an empty mincore vector.
+Not that I have anything more than this doubt, however; but this sort of
+change without any ability to tune or revert it still looks unusual to me.
