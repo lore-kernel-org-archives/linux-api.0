@@ -1,94 +1,89 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [RFC v2 v2 0/1] ns: introduce binfmt_misc namespace
-Date: Wed, 03 Oct 2018 12:13:43 +0200
-Message-ID: <1538561623.7448.5.camel@HansenPartnership.com>
-References: <20181002102054.13245-1-laurent@vivier.eu>
-         <1538496810.14607.5.camel@HansenPartnership.com>
-         <a9997ce3-d63d-44b4-6a2a-09fd207a1550@vivier.eu>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [RFC PATCH v4 06/27] x86/cet: Control protection exception
+ handler
+Date: Wed, 3 Oct 2018 12:39:59 +0200
+Message-ID: <20181003103959.GB7111@asgard.redhat.com>
+References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
+ <20180921150351.20898-7-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a9997ce3-d63d-44b4-6a2a-09fd207a1550@vivier.eu>
+Content-Disposition: inline
+In-Reply-To: <20180921150351.20898-7-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>, linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Eric Biederman <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2018-10-02 at 18:47 +0200, Laurent Vivier wrote:
-> Le 02/10/2018 à 18:13, James Bottomley a écrit :
-> > On Tue, 2018-10-02 at 12:20 +0200, Laurent Vivier wrote:
-> > > v2: no new namespace, binfmt_misc data are now part of
-> > >     the mount namespace
-> > >     I put this in mount namespace instead of user namespace
-> > >     because the mount namespace is already needed and
-> > >     I don't want to force to have the user namespace for that.
-> > >     As this is a filesystem, it seems logic to have it here.
-> > > 
-> > > This allows to define a new interpreter for each new container.
-> > > 
-> > > But the main goal is to be able to chroot to a directory
-> > > using a binfmt_misc interpreter without being root.
-> > 
-> > Reading all this, I don't quite understand why this works for me
-> > and
-> > not for you (I think I get from your explanation that it doesn't
-> > work
-> > for you, but I might have missed something):
-> > 
-> > jejb@jarvis:~> uname -m
-> > x86_64
-> > jejb@jarvis:~> unshare -r -m
-> > root@jarvis:~# chroot /home/jejb/containers/aarch64
-> > jarvis:/ # uname -m
-> > aarch64
-> > 
-> > Of course to get that to work I have an 'F' entry in
-> > /etc/binfmt.d/qemu-aarch64.conf
-> > 
-> 
-> I'd like to configure the interpreter without being root.
-> 
-> As a simple user can run a VM and a full system inside, I'd like to
-> be
-> able to start a container/chroot without having to configure
-> something
-> at the host level.
-> 
-> For instance, I'd like to provide to "someone" (with no admin rights)
-> a tar file with inside an OS environment for a given target and the
-> interpreter, and allow him to run the binaries inside just by running
-> a simple command (like qemu-system-XXX -hda my.img)
+On Fri, Sep 21, 2018 at 08:03:30AM -0700, Yu-cheng Yu wrote:
 
-OK, since trying to persuade the distros to add the 'F' flag has been
-challenging, I certainly buy this use case.
+> diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+> index e6db475164ed..873765adc244 100644
+> --- a/arch/x86/kernel/traps.c
+> +++ b/arch/x86/kernel/traps.c
+> @@ -578,6 +578,64 @@ do_general_protection(struct pt_regs *regs, long error_code)
+>  }
+>  NOKPROBE_SYMBOL(do_general_protection);
+>  
+> +static const char *control_protection_err[] =
+> +{
+> +	"unknown",
+> +	"near-ret",
+> +	"far-ret/iret",
+> +	"endbranch",
+> +	"rstorssp",
+> +	"setssbsy",
+> +};
+> +
+> +/*
+> + * When a control protection exception occurs, send a signal
+> + * to the responsible application.  Currently, control
+> + * protection is only enabled for the user mode.  This
+> + * exception should not come from the kernel mode.
+> + */
+> +dotraplinkage void
+> +do_control_protection(struct pt_regs *regs, long error_code)
+> +{
+> +	struct task_struct *tsk;
+> +
+> +	RCU_LOCKDEP_WARN(!rcu_is_watching(), "entry code didn't wake RCU");
+> +	if (notify_die(DIE_TRAP, "control protection fault", regs,
+> +		       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
+> +		return;
+> +	cond_local_irq_enable(regs);
+> +
+> +	if (!user_mode(regs))
+> +		die("kernel control protection fault", regs, error_code);
+> +
+> +	if (!static_cpu_has(X86_FEATURE_SHSTK) &&
+> +	    !static_cpu_has(X86_FEATURE_IBT))
+> +		WARN_ONCE(1, "CET is disabled but got control "
+> +			  "protection fault\n");
+> +
+> +	tsk = current;
+> +	tsk->thread.error_code = error_code;
+> +	tsk->thread.trap_nr = X86_TRAP_CP;
+> +
+> +	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
+> +	    printk_ratelimit()) {
+> +		unsigned int max_err;
+> +
+> +		max_err = ARRAY_SIZE(control_protection_err) - 1;
+> +		if ((error_code < 0) || (error_code > max_err))
+> +			error_code = 0;
+> +		pr_info("%s[%d] control protection ip:%lx sp:%lx error:%lx(%s)",
+> +			tsk->comm, task_pid_nr(tsk),
+> +			regs->ip, regs->sp, error_code,
+> +			control_protection_err[error_code]);
+> +		print_vma_addr(KERN_CONT " in ", regs->ip);
+> +		pr_cont("\n");
+> +	}
+> +
+> +	force_sig_info(SIGSEGV, SEND_SIG_PRIV, tsk);
 
-There is a security risk to allowing an unprivileged user to supply an
-arbitrary interpreter (suid and sgid binaries), but as long as
-whatever's agreed requires root in the user namespace, I'm happy we
-have the security issue confined.
-
-James
-
-
-> It's also interesting for a test purpose: I can test concurrently
-> different interpreters for the same target without modifying the
-> target root filesystem (with the 'F' flag but on a per directory
-> basis) or the host configuration.
-> 
-> Another case is we can't configure qemu-mips/qemu-mipsel (old kernel
-> API) and qemu-mipsn32/qemu-mipsne32el (new kernel API) interpreters
-> on the same system because they share the same ELF signature (to be
-> honest qemu should have only one binary for the old and the new
-> interface and dynamically change it according to the ELF binary that
-> is loaded, as it is done for ARM).
-> 
-> But if no one thinks it's useful, I don't want to push this more than
-> that...
-> 
-> Thanks,
-> Laurent
-> _______________________________________________
-> Containers mailing list
-> Containers@lists.linux-foundation.org
-> https://lists.linuxfoundation.org/mailman/listinfo/containers
+That way, no information is provided to userspace (both application and
+debugger), which is rather unfortunate. It would be nice if a new SEGV_*
+code was added at least, and CET error (with error code constant provided
+in UAPI) is passed via si_errno. (Having ip/sp/*ssp would be even
+better, but I'm not exactly sure about ramifications of providing this
+kind of information to user space).
