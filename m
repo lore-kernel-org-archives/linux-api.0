@@ -1,91 +1,66 @@
-From: Eugene Syromiatnikov <esyr@redhat.com>
-Subject: Re: [RFC PATCH v4 4/9] mm/mmap: Add IBT bitmap size to address space
- limit check
-Date: Wed, 3 Oct 2018 22:21:46 +0200
-Message-ID: <20181003202146.GG32759@asgard.redhat.com>
-References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
- <20180921150553.21016-5-yu-cheng.yu@intel.com>
+From: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
+Date: Wed, 3 Oct 2018 14:13:59 -0700
+Message-ID: <CAPcyv4iCXNYTSzwU5OoZc_b+xxbqKwjyQV74CRxEfvDjaMPDfg@mail.gmail.com>
+References: <20181002142959.GD9127@quack2.suse.cz>
+ <20181002143713.GA19845@infradead.org>
+ <20181002144412.GC4963@linux-x5ow.site> <20181002145206.GA10903@infradead.org>
+ <20181002153100.GG9127@quack2.suse.cz>
+ <CAPcyv4j0tTD+rENqFExA68aw=-MmtCBaOe1qJovyrmJC=yBg-Q@mail.gmail.com>
+ <20181003125056.GA21043@quack2.suse.cz>
+ <CAPcyv4jfV10yuTiPg6ijsPRRL2-c_48ovfpU5TK1Zu7BWnfk3g@mail.gmail.com>
+ <20181003150658.GC24030@quack2.suse.cz>
+ <CAPcyv4iJvN6_Cf6tw=5a=Uh99LfMFKU7n8QkGcz1ZaxL0Oi-3w@mail.gmail.com>
+ <20181003164407.GK24030@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20180921150553.21016-5-yu-cheng.yu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181003164407.GK24030-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 21, 2018 at 08:05:48AM -0700, Yu-cheng Yu wrote:
-> The indirect branch tracking legacy bitmap takes a large address
-> space.  This causes may_expand_vm() failure on the address limit
-> check.  For a IBT-enabled task, add the bitmap size to the
-> address limit.
-> 
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> ---
->  arch/x86/include/uapi/asm/resource.h |  5 +++++
->  include/uapi/asm-generic/resource.h  |  3 +++
->  mm/mmap.c                            | 12 +++++++++++-
->  3 files changed, 19 insertions(+), 1 deletion(-)
-> 
-> diff --git a/arch/x86/include/uapi/asm/resource.h b/arch/x86/include/uapi/asm/resource.h
-> index 04bc4db8921b..0741b2a6101a 100644
-> --- a/arch/x86/include/uapi/asm/resource.h
-> +++ b/arch/x86/include/uapi/asm/resource.h
-> @@ -1 +1,6 @@
-> +/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
-> +#ifdef CONFIG_X86_INTEL_CET
-> +#define rlimit_as_extra() current->thread.cet.ibt_bitmap_size
-> +#endif
+On Wed, Oct 3, 2018 at 9:46 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+>
+> On Wed 03-10-18 08:13:37, Dan Williams wrote:
+> > On Wed, Oct 3, 2018 at 8:07 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
+> > > WRT per-inode DAX property, AFAIU that inode flag is just going to be
+> > > advisory thing - i.e., use DAX if possible. If you mount a filesystem with
+> > > these inode flags set in a configuration which does not allow DAX to be
+> > > used, you will still be able to access such inodes but the access will use
+> > > page cache instead. And querying these flags should better show real
+> > > on-disk status and not just whether DAX is used as that would result in an
+> > > even bigger mess. So this feature seems to be somewhat orthogonal to the
+> > > API I'm looking for.
+> >
+> > True, I imagine once we have that flag we will be able to distinguish
+> > the "saved" property and the "effective / live" property of DAX...
+> > Also it's really not DAX that applications care about as much as "is
+> > there page-cache indirection / overhead for this mapping?". That seems
+> > to be a narrower guarantee that we can make than what "DAX" might
+> > imply.
+>
+> Right. So what do people think about my suggestion earlier in the thread to
+> use madvise(MADV_DIRECT_ACCESS) for this? Currently it would return success
+> when DAX is in use, failure otherwise. Later we could extend it to be also
+> used as a hint for caching policy for the inode...
 
-Does this really belong to UAPI?
+The only problem is that you can't use it purely as a query. If we
+ever did plumb it to be a hint you could not read the state without
+writing the state.
 
-> +
->  #include <asm-generic/resource.h>
-> diff --git a/include/uapi/asm-generic/resource.h b/include/uapi/asm-generic/resource.h
-> index f12db7a0da64..8a7608a09700 100644
-> --- a/include/uapi/asm-generic/resource.h
-> +++ b/include/uapi/asm-generic/resource.h
-> @@ -58,5 +58,8 @@
->  # define RLIM_INFINITY		(~0UL)
->  #endif
->  
-> +#ifndef rlimit_as_extra
-> +#define rlimit_as_extra() 0
-> +#endif
-
-And this?
-
->  #endif /* _UAPI_ASM_GENERIC_RESOURCE_H */
-> diff --git a/mm/mmap.c b/mm/mmap.c
-> index fa581ced3f56..397b8cb0b0af 100644
-> --- a/mm/mmap.c
-> +++ b/mm/mmap.c
-> @@ -3237,7 +3237,17 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
->   */
->  bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
->  {
-> -	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
-> +	unsigned long as_limit = rlimit(RLIMIT_AS);
-> +	unsigned long as_limit_plus = as_limit + rlimit_as_extra();
-> +
-> +	/* as_limit_plus overflowed */
-> +	if (as_limit_plus < as_limit)
-> +		as_limit_plus = RLIM_INFINITY;
-> +
-> +	if (as_limit_plus > as_limit)
-> +		as_limit = as_limit_plus;
-> +
-> +	if (mm->total_vm + npages > as_limit >> PAGE_SHIFT)
-
-I wonder, how realistic a scenario where a userspace application enables IBT,
-configures a huge prefetchable IO memory region (that just ignores bits
-of offset beyond 16, for example), and start repeatedly loading a legacy
-library there at different linear addresses.
-
->  		return false;
->  
->  	if (is_data_mapping(flags) &&
-> -- 
-> 2.17.1
-> 
+mincore(2) seems to be close the intent of discovering whether RAM is
+being consumed for a given address range, but it currently is
+implemented to only indicate if *any* mapping is established, not
+whether RAM is consumed. I can see an argument that a dax mapped file
+should always report an empty mincore vector.
