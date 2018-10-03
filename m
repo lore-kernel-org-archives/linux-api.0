@@ -1,60 +1,51 @@
-From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
-Date: Wed, 3 Oct 2018 18:44:07 +0200
-Message-ID: <20181003164407.GK24030@quack2.suse.cz>
-References: <20181002142959.GD9127@quack2.suse.cz>
- <20181002143713.GA19845@infradead.org>
- <20181002144412.GC4963@linux-x5ow.site>
- <20181002145206.GA10903@infradead.org>
- <20181002153100.GG9127@quack2.suse.cz>
- <CAPcyv4j0tTD+rENqFExA68aw=-MmtCBaOe1qJovyrmJC=yBg-Q@mail.gmail.com>
- <20181003125056.GA21043@quack2.suse.cz>
- <CAPcyv4jfV10yuTiPg6ijsPRRL2-c_48ovfpU5TK1Zu7BWnfk3g@mail.gmail.com>
- <20181003150658.GC24030@quack2.suse.cz>
- <CAPcyv4iJvN6_Cf6tw=5a=Uh99LfMFKU7n8QkGcz1ZaxL0Oi-3w@mail.gmail.com>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v4 24/27] mm/mmap: Create a guard area between VMAs
+Date: Wed, 03 Oct 2018 09:40:58 -0700
+Message-ID: <36fa923c4ed6b78517b93475aa2544aa8ba7243c.camel@intel.com>
+References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
+         <20180921150351.20898-25-yu-cheng.yu@intel.com>
+         <20181003045611.GB22724@asgard.redhat.com>
+         <CALCETrU-Ny-uC1NqRedQwNKe2MMhsFEqZ08TtHJwbLfCACMmLw@mail.gmail.com>
+         <5ddb0ad33298d1858e530fce9c9ea2788b2fac81.camel@intel.com>
+         <20181003163226.GC9449@asgard.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <CAPcyv4iJvN6_Cf6tw=5a=Uh99LfMFKU7n8QkGcz1ZaxL0Oi-3w-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dan Williams <dan.j.williams-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
-Cc: linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181003163226.GC9449@asgard.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Eugene Syromiatnikov <esyr@redhat.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-On Wed 03-10-18 08:13:37, Dan Williams wrote:
-> On Wed, Oct 3, 2018 at 8:07 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > WRT per-inode DAX property, AFAIU that inode flag is just going to be
-> > advisory thing - i.e., use DAX if possible. If you mount a filesystem with
-> > these inode flags set in a configuration which does not allow DAX to be
-> > used, you will still be able to access such inodes but the access will use
-> > page cache instead. And querying these flags should better show real
-> > on-disk status and not just whether DAX is used as that would result in an
-> > even bigger mess. So this feature seems to be somewhat orthogonal to the
-> > API I'm looking for.
+On Wed, 2018-10-03 at 18:32 +0200, Eugene Syromiatnikov wrote:
+> On Wed, Oct 03, 2018 at 09:00:04AM -0700, Yu-cheng Yu wrote:
+> > On Tue, 2018-10-02 at 22:36 -0700, Andy Lutomirski wrote:
+> > > On Tue, Oct 2, 2018 at 9:55 PM Eugene Syromiatnikov <esyr@redhat.com>
+> > > wrote:
+> > > > 
+> > > > On Fri, Sep 21, 2018 at 08:03:48AM -0700, Yu-cheng Yu wrote:
+> > > > > Create a guard area between VMAs, to detect memory corruption.
+> > > > 
+> > > > Do I understand correctly that with this patch a user space program
+> > > > no longer be able to place two mappings back to back? If it is so,
+> > > > it will likely break a lot of things; for example, it's a common ring
+> > > > buffer implementations technique, to map buffer memory twice back
+> > > > to back in order to avoid special handling of items wrapping its end.
+> > > 
+> > > I haven't checked what the patch actually does, but it shouldn't have
+> > > any affect on MAP_FIXED or the new no-replace MAP_FIXED variant.
+> > > 
+> > > --Andy
+> > 
+> > I did some mmap tests with/without MAP_FIXED, and it works as intended.
+> > In addition to the ring buffer, are there other test cases?
 > 
-> True, I imagine once we have that flag we will be able to distinguish
-> the "saved" property and the "effective / live" property of DAX...
-> Also it's really not DAX that applications care about as much as "is
-> there page-cache indirection / overhead for this mapping?". That seems
-> to be a narrower guarantee that we can make than what "DAX" might
-> imply.
+> Right, after some more code reading I figured out that it indeed
+> shouldn't affect MAP_FIXED, thank you for confirmation.
+> 
+> I'm not sure, however, whether such a change that provides no ability
+> to configure or affect it will go well with all the supported
+> architectures.
 
-Right. So what do people think about my suggestion earlier in the thread to
-use madvise(MADV_DIRECT_ACCESS) for this? Currently it would return success
-when DAX is in use, failure otherwise. Later we could extend it to be also
-used as a hint for caching policy for the inode...
-
-								Honza
--- 
-Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
-SUSE Labs, CR
+Can we do CONFIG_MMAP_GUARD_GAP?
