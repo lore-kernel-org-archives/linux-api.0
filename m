@@ -1,71 +1,46 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [RFC PATCH v4 06/27] x86/cet: Control protection exception
- handler
-Date: Wed, 03 Oct 2018 09:11:34 -0700
-Message-ID: <9c93e864e5996862cb5fdb66d4140faa634cbc47.camel@intel.com>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [RFC PATCH v4 24/27] mm/mmap: Create a guard area between VMAs
+Date: Wed, 3 Oct 2018 18:32:26 +0200
+Message-ID: <20181003163226.GC9449@asgard.redhat.com>
 References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
-         <20180921150351.20898-7-yu-cheng.yu@intel.com>
-         <20181003103959.GB7111@asgard.redhat.com>
+ <20180921150351.20898-25-yu-cheng.yu@intel.com>
+ <20181003045611.GB22724@asgard.redhat.com>
+ <CALCETrU-Ny-uC1NqRedQwNKe2MMhsFEqZ08TtHJwbLfCACMmLw@mail.gmail.com>
+ <5ddb0ad33298d1858e530fce9c9ea2788b2fac81.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181003103959.GB7111@asgard.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <5ddb0ad33298d1858e530fce9c9ea2788b2fac81.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Eugene Syromiatnikov <esyr@redhat.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2018-10-03 at 12:39 +0200, Eugene Syromiatnikov wrote:
-> On Fri, Sep 21, 2018 at 08:03:30AM -0700, Yu-cheng Yu wrote:
-> > +dotraplinkage void
-> > +do_control_protection(struct pt_regs *regs, long error_code)
-> > +{
-> > +	struct task_struct *tsk;
-> > +
-> > +	RCU_LOCKDEP_WARN(!rcu_is_watching(), "entry code didn't wake RCU");
-> > +	if (notify_die(DIE_TRAP, "control protection fault", regs,
-> > +		       error_code, X86_TRAP_CP, SIGSEGV) == NOTIFY_STOP)
-> > +		return;
-> > +	cond_local_irq_enable(regs);
-> > +
-> > +	if (!user_mode(regs))
-> > +		die("kernel control protection fault", regs, error_code);
-> > +
-> > +	if (!static_cpu_has(X86_FEATURE_SHSTK) &&
-> > +	    !static_cpu_has(X86_FEATURE_IBT))
-> > +		WARN_ONCE(1, "CET is disabled but got control "
-> > +			  "protection fault\n");
-> > +
-> > +	tsk = current;
-> > +	tsk->thread.error_code = error_code;
-> > +	tsk->thread.trap_nr = X86_TRAP_CP;
-> > +
-> > +	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
-> > +	    printk_ratelimit()) {
-> > +		unsigned int max_err;
-> > +
-> > +		max_err = ARRAY_SIZE(control_protection_err) - 1;
-> > +		if ((error_code < 0) || (error_code > max_err))
-> > +			error_code = 0;
-> > +		pr_info("%s[%d] control protection ip:%lx sp:%lx
-> > error:%lx(%s)",
-> > +			tsk->comm, task_pid_nr(tsk),
-> > +			regs->ip, regs->sp, error_code,
-> > +			control_protection_err[error_code]);
-> > +		print_vma_addr(KERN_CONT " in ", regs->ip);
-> > +		pr_cont("\n");
-> > +	}
-> > +
-> > +	force_sig_info(SIGSEGV, SEND_SIG_PRIV, tsk);
+On Wed, Oct 03, 2018 at 09:00:04AM -0700, Yu-cheng Yu wrote:
+> On Tue, 2018-10-02 at 22:36 -0700, Andy Lutomirski wrote:
+> > On Tue, Oct 2, 2018 at 9:55 PM Eugene Syromiatnikov <esyr@redhat.com> wrote:
+> > > 
+> > > On Fri, Sep 21, 2018 at 08:03:48AM -0700, Yu-cheng Yu wrote:
+> > > > Create a guard area between VMAs, to detect memory corruption.
+> > > 
+> > > Do I understand correctly that with this patch a user space program
+> > > no longer be able to place two mappings back to back? If it is so,
+> > > it will likely break a lot of things; for example, it's a common ring
+> > > buffer implementations technique, to map buffer memory twice back
+> > > to back in order to avoid special handling of items wrapping its end.
+> > 
+> > I haven't checked what the patch actually does, but it shouldn't have
+> > any affect on MAP_FIXED or the new no-replace MAP_FIXED variant.
+> > 
+> > --Andy
 > 
-> That way, no information is provided to userspace (both application and
-> debugger), which is rather unfortunate. It would be nice if a new SEGV_*
-> code was added at least, and CET error (with error code constant provided
-> in UAPI) is passed via si_errno. (Having ip/sp/*ssp would be even
-> better, but I'm not exactly sure about ramifications of providing this
-> kind of information to user space).
+> I did some mmap tests with/without MAP_FIXED, and it works as intended.
+> In addition to the ring buffer, are there other test cases?
 
-Ok, I will add that.
+Right, after some more code reading I figured out that it indeed
+shouldn't affect MAP_FIXED, thank you for confirmation.
 
-Yu-cheng
+I'm not sure, however, whether such a change that provides no ability
+to configure or affect it will go well with all the supported
+architectures.
