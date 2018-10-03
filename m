@@ -1,94 +1,66 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: Setting monotonic time?
-Date: Wed, 3 Oct 2018 09:02:00 +0200
-Message-ID: <CAK8P3a2cM4AWKQ9VsZFzUu0qJ-fYiLK5fMXRoTsVcgmFwoeJxg@mail.gmail.com>
-References: <20180919205037.9574-1-dima@arista.com> <874lej6nny.fsf@xmission.com>
- <20180924205119.GA14833@outlook.office365.com> <874leezh8n.fsf@xmission.com>
- <20180925014150.GA6302@outlook.office365.com> <87zhw4rwiq.fsf@xmission.com>
- <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
- <87mus1ftb9.fsf@xmission.com> <alpine.DEB.2.21.1809282023350.1432@nanos.tec.linutronix.de>
- <877ej2xc23.fsf_-_@xmission.com> <alpine.DEB.2.21.1810012047520.32062@nanos.tec.linutronix.de>
- <CAK8P3a2zTqrCGURE3XVpn3_w6C4R5O+cq8TdtbyKCMGyRk9_jw@mail.gmail.com>
- <alpine.DEB.2.21.1810022205080.1435@nanos.tec.linutronix.de>
- <87in2jskew.fsf@xmission.com> <alpine.DEB.2.21.1810030711520.1435@nanos.tec.linutronix.de>
- <87in2jo8u6.fsf@xmission.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Wed, 3 Oct 2018 09:36:40 +0200
+Message-ID: <20181003073640.GF18290@dhcp22.suse.cz>
+References: <20180924195603.GJ18685@dhcp22.suse.cz>
+ <20180924200258.GK18685@dhcp22.suse.cz>
+ <0aa3eb55-82c0-eba3-b12c-2ba22e052a8e@suse.cz>
+ <alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com>
+ <20180925202959.GY18685@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com>
+ <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org>
+ <20180926060624.GA18685@dhcp22.suse.cz>
+ <20181002112851.GP18290@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87in2jo8u6.fsf@xmission.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W . Biederman" <ebiederm@xmission.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, avagin@virtuozzo.com, dima@arista.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, 0x7f454c46@gmail.com, adrian@lisas.de, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, gorcunov@openvz.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, xemul@virtuozzo.com, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-kselftest@vger.kernel.org
+To: David Rientjes <rientjes@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 3, 2018 at 8:14 AM Eric W. Biederman <ebiederm@xmission.com> wrote:
->
-> Thomas Gleixner <tglx@linutronix.de> writes:
->
-> > On Wed, 3 Oct 2018, Eric W. Biederman wrote:
-> >> Direct access to hardware/drivers and not through an abstraction like
-> >> the vfs (an abstraction over block devices) can legitimately be handled
-> >> by hotplug events.  I unplug one keyboard I plug in another.
-> >>
-> >> I don't know if the input layer is more of a general abstraction
-> >> or more of a hardware device.  I have not dug into it but my guess
-> >> is abstraction from what I have heard.
-> >>
-> >> The scary difficulty here is if after restart input is reporting times
-> >> in CLOCK_MONOTONIC and the applications in the namespace are talking
-> >> about times in CLOCK_MONOTONIC_SYNC.  Then there is an issue.  As even
-> >> with a fixed offset the times don't match up.
-> >>
-> >> So a time namespace absolutely needs to do is figure out how to deal
-> >> with all of the kernel interfaces reporting times and figure out how to
-> >> report them in the current time namespace.
-> >
-> > So you want to talk to Arnd who is leading the y2038 effort. He knowns how
-> > many and which interfaces are involved aside of the obvious core timer
-> > ones. It's quite an amount and the problem is that you really need to do
-> > that at the interface level, because many of those time stamps are taken in
-> > contexts which are completely oblivious of name spaces. Ditto for timeouts
-> > and similar things which are handed in through these interfaces.
->
-> Yep.  That sounds right.
+On Tue 02-10-18 13:29:42, David Rientjes wrote:
+> On Tue, 2 Oct 2018, Michal Hocko wrote:
+> 
+> > On Wed 26-09-18 08:06:24, Michal Hocko wrote:
+> > > On Tue 25-09-18 15:04:06, Andrew Morton wrote:
+> > > > On Tue, 25 Sep 2018 14:45:19 -0700 (PDT) David Rientjes <rientjes@google.com> wrote:
+> > > > 
+> > > > > > > It is also used in 
+> > > > > > > automated testing to ensure that vmas get disabled for thp appropriately 
+> > > > > > > and we used "nh" since that is how PR_SET_THP_DISABLE previously enforced 
+> > > > > > > this, and those tests now break.
+> > > > > > 
+> > > > > > This sounds like a bit of an abuse to me. It shows how an internal
+> > > > > > implementation detail leaks out to the userspace which is something we
+> > > > > > should try to avoid.
+> > > > > > 
+> > > > > 
+> > > > > Well, it's already how this has worked for years before commit 
+> > > > > 1860033237d4 broke it.  Changing the implementation in the kernel is fine 
+> > > > > as long as you don't break userspace who relies on what is exported to it 
+> > > > > and is the only way to determine if MADV_NOHUGEPAGE is preventing it from 
+> > > > > being backed by hugepages.
+> > > > 
+> > > > 1860033237d4 was over a year ago so perhaps we don't need to be
+> > > > too worried about restoring the old interface.  In which case
+> > > > we have an opportunity to make improvements such as that suggested
+> > > > by Michal?
+> > > 
+> > > Yeah, can we add a way to export PR_SET_THP_DISABLE to userspace
+> > > somehow? E.g. /proc/<pid>/status. It is a process wide thing so
+> > > reporting it per VMA sounds strange at best.
+> > 
+> > So how about this? (not tested yet but it should be pretty
+> > straightforward)
+> 
+> Umm, prctl(PR_GET_THP_DISABLE)?
 
-Let's stay with the input event example for the moment: Here, we have a
-character device, and a user calls read() to retrieve one or more records
-of type 'struct input_event' using the evdev_read() function. The original
-timestamp gets put there using this logic:
-
-        ktime_t time;
-        struct timespec64 ts;
-        time = client->clk_type == EV_CLK_REAL ?
-                        ktime_get_real() :
-                        client->clk_type == EV_CLK_MONO ?
-                                ktime_get() :
-                                ktime_get_boottime();
-        ts = ktime_to_timespec64(time);
-        ev.input_event_sec = ts.tv_sec;
-        ev.input_event_usec = ts.tv_nsec / NSEC_PER_USEC;
-
-clk_type can get set using an ioctl() to real, monotonic or
-boottime. We have to stop using EV_CLK_REAL in the
-future because that breaks in y2038, but I guess EV_CLK_MONO
-and EV_CLK_BOOK should stay.
-
-If we want this to work correctly in a namespace that has a
-user defined CLOCK_MONOTONIC timebase, one way to
-do it might be to always call ktime_get() when we record
-the timestamp in the kernel-internal CLOCK_MONOTONIC
-base, but then convert it to the correct base when copying to
-user space.
-
-Note that AFAIU practically all users of evdev do /not/ actually
-care about the time base, they only care about the elapsed
-time between intervals, e.g. to track how fast a pointer should
-move based on input from a trackpad. I don't see any reason
-why one would compare this timestamp to a clock_gettime()
-value, but of course at the moment this has well-defined
-behavior that would break if we change clock_gettime(), and
-we have a process in the namespace that opens
-/dev/input/eventX and relies on meaningful timestamps
-relative to a particular base.
-
-       Arnd
+/me confused. I thought you want to query for the flag on a
+_different_ process. 
+-- 
+Michal Hocko
+SUSE Labs
