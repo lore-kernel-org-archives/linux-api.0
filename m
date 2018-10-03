@@ -1,100 +1,91 @@
 From: Eugene Syromiatnikov <esyr@redhat.com>
-Subject: Re: [RFC PATCH v4 3/9] x86/cet/ibt: Add IBT legacy code bitmap
- allocation function
-Date: Wed, 3 Oct 2018 21:57:06 +0200
-Message-ID: <20181003195702.GF32759@asgard.redhat.com>
+Subject: Re: [RFC PATCH v4 4/9] mm/mmap: Add IBT bitmap size to address space
+ limit check
+Date: Wed, 3 Oct 2018 22:21:46 +0200
+Message-ID: <20181003202146.GG32759@asgard.redhat.com>
 References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
- <20180921150553.21016-4-yu-cheng.yu@intel.com>
+ <20180921150553.21016-5-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180921150553.21016-4-yu-cheng.yu@intel.com>
+In-Reply-To: <20180921150553.21016-5-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 21, 2018 at 08:05:47AM -0700, Yu-cheng Yu wrote:
-> Indirect branch tracking provides an optional legacy code bitmap
-> that indicates locations of non-IBT compatible code.  When set,
-> each bit in the bitmap represents a page in the linear address is
-> legacy code.
-> 
-> We allocate the bitmap only when the application requests it.
-> Most applications do not need the bitmap.
+On Fri, Sep 21, 2018 at 08:05:48AM -0700, Yu-cheng Yu wrote:
+> The indirect branch tracking legacy bitmap takes a large address
+> space.  This causes may_expand_vm() failure on the address limit
+> check.  For a IBT-enabled task, add the bitmap size to the
+> address limit.
 > 
 > Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 > ---
->  arch/x86/kernel/cet.c | 45 +++++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 45 insertions(+)
+>  arch/x86/include/uapi/asm/resource.h |  5 +++++
+>  include/uapi/asm-generic/resource.h  |  3 +++
+>  mm/mmap.c                            | 12 +++++++++++-
+>  3 files changed, 19 insertions(+), 1 deletion(-)
 > 
-> diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-> index 6adfe795d692..a65d9745af08 100644
-> --- a/arch/x86/kernel/cet.c
-> +++ b/arch/x86/kernel/cet.c
-> @@ -314,3 +314,48 @@ void cet_disable_ibt(void)
->  	wrmsrl(MSR_IA32_U_CET, r);
->  	current->thread.cet.ibt_enabled = 0;
->  }
-> +
-> +int cet_setup_ibt_bitmap(void)
-> +{
-> +	u64 r;
-> +	unsigned long bitmap;
-> +	unsigned long size;
-> +
-> +	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-> +		return -EOPNOTSUPP;
-> +
-> +	if (!current->thread.cet.ibt_bitmap_addr) {
-> +		/*
-> +		 * Calculate size and put in thread header.
-> +		 * may_expand_vm() needs this information.
-> +		 */
-> +		size = TASK_SIZE / PAGE_SIZE / BITS_PER_BYTE;
+> diff --git a/arch/x86/include/uapi/asm/resource.h b/arch/x86/include/uapi/asm/resource.h
+> index 04bc4db8921b..0741b2a6101a 100644
+> --- a/arch/x86/include/uapi/asm/resource.h
+> +++ b/arch/x86/include/uapi/asm/resource.h
+> @@ -1 +1,6 @@
+> +/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+> +#ifdef CONFIG_X86_INTEL_CET
+> +#define rlimit_as_extra() current->thread.cet.ibt_bitmap_size
+> +#endif
 
-TASK_SIZE_MAX is likely needed here, as an application can easily switch
-between long an 32-bit protected mode.  And then the case of a CPU that
-doesn't support 5LPT.
-
-> +		current->thread.cet.ibt_bitmap_size = size;
-> +		bitmap = do_mmap_locked(0, size, PROT_READ | PROT_WRITE,
-> +					MAP_ANONYMOUS | MAP_PRIVATE,
-> +					VM_DONTDUMP);
-> +
-> +		if (bitmap >= TASK_SIZE) {
-
-Shouldn't bitmap be unmapped here?
-
-> +			current->thread.cet.ibt_bitmap_size = 0;
-> +			return -ENOMEM;
-> +		}
-> +
-> +		current->thread.cet.ibt_bitmap_addr = bitmap;
-> +	}
-> +
-> +	/*
-> +	 * Lower bits of MSR_IA32_CET_LEG_IW_EN are for IBT
-> +	 * settings.  Clear lower bits even bitmap is already
-> +	 * page-aligned.
-> +	 */
-> +	bitmap = current->thread.cet.ibt_bitmap_addr;
-> +	bitmap &= PAGE_MASK;
-
-In a hypothetical situation of bitmap & PAGE_MASK < bitmap that would lead
-to bitmap pointing to unmapped memory. A check that bitmap is sane would
-probably be better.
+Does this really belong to UAPI?
 
 > +
-> +	/*
-> +	 * Turn on IBT legacy bitmap.
-> +	 */
-> +	rdmsrl(MSR_IA32_U_CET, r);
-> +	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
-> +	wrmsrl(MSR_IA32_U_CET, r);
-> +	return 0;
-> +}
+>  #include <asm-generic/resource.h>
+> diff --git a/include/uapi/asm-generic/resource.h b/include/uapi/asm-generic/resource.h
+> index f12db7a0da64..8a7608a09700 100644
+> --- a/include/uapi/asm-generic/resource.h
+> +++ b/include/uapi/asm-generic/resource.h
+> @@ -58,5 +58,8 @@
+>  # define RLIM_INFINITY		(~0UL)
+>  #endif
+>  
+> +#ifndef rlimit_as_extra
+> +#define rlimit_as_extra() 0
+> +#endif
+
+And this?
+
+>  #endif /* _UAPI_ASM_GENERIC_RESOURCE_H */
+> diff --git a/mm/mmap.c b/mm/mmap.c
+> index fa581ced3f56..397b8cb0b0af 100644
+> --- a/mm/mmap.c
+> +++ b/mm/mmap.c
+> @@ -3237,7 +3237,17 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+>   */
+>  bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
+>  {
+> -	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
+> +	unsigned long as_limit = rlimit(RLIMIT_AS);
+> +	unsigned long as_limit_plus = as_limit + rlimit_as_extra();
+> +
+> +	/* as_limit_plus overflowed */
+> +	if (as_limit_plus < as_limit)
+> +		as_limit_plus = RLIM_INFINITY;
+> +
+> +	if (as_limit_plus > as_limit)
+> +		as_limit = as_limit_plus;
+> +
+> +	if (mm->total_vm + npages > as_limit >> PAGE_SHIFT)
+
+I wonder, how realistic a scenario where a userspace application enables IBT,
+configures a huge prefetchable IO memory region (that just ignores bits
+of offset beyond 16, for example), and start repeatedly loading a legacy
+library there at different linear addresses.
+
+>  		return false;
+>  
+>  	if (is_data_mapping(flags) &&
 > -- 
 > 2.17.1
 > 
