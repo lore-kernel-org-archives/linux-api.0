@@ -1,92 +1,145 @@
-From: Johannes Thumshirn <jthumshirn-l3A5Bk7waGM@public.gmane.org>
-Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
-Date: Thu, 4 Oct 2018 12:04:06 +0200
-Message-ID: <20181004100406.GE6682@linux-x5ow.site>
-References: <20181002143713.GA19845@infradead.org>
- <20181002144412.GC4963@linux-x5ow.site>
- <20181002145206.GA10903@infradead.org>
- <20181002153100.GG9127@quack2.suse.cz>
- <CAPcyv4j0tTD+rENqFExA68aw=-MmtCBaOe1qJovyrmJC=yBg-Q@mail.gmail.com>
- <20181003125056.GA21043@quack2.suse.cz>
- <CAPcyv4jfV10yuTiPg6ijsPRRL2-c_48ovfpU5TK1Zu7BWnfk3g@mail.gmail.com>
- <20181003150658.GC24030@quack2.suse.cz>
- <CAPcyv4iJvN6_Cf6tw=5a=Uh99LfMFKU7n8QkGcz1ZaxL0Oi-3w@mail.gmail.com>
- <20181003164407.GK24030@quack2.suse.cz>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [RFC PATCH v4 6/9] x86/cet/ibt: Add arch_prctl functions for IBT
+Date: Thu, 4 Oct 2018 15:28:11 +0200
+Message-ID: <20181004132811.GJ32759@asgard.redhat.com>
+References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
+ <20180921150553.21016-7-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181003164407.GK24030-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christoph Hellwig <hch-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20180921150553.21016-7-yu-cheng.yu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 03, 2018 at 06:44:07PM +0200, Jan Kara wrote:
-> On Wed 03-10-18 08:13:37, Dan Williams wrote:
-> > On Wed, Oct 3, 2018 at 8:07 AM Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> wrote:
-> > > WRT per-inode DAX property, AFAIU that inode flag is just going to be
-> > > advisory thing - i.e., use DAX if possible. If you mount a filesystem=
- with
-> > > these inode flags set in a configuration which does not allow DAX to =
-be
-> > > used, you will still be able to access such inodes but the access wil=
-l use
-> > > page cache instead. And querying these flags should better show real
-> > > on-disk status and not just whether DAX is used as that would result =
-in an
-> > > even bigger mess. So this feature seems to be somewhat orthogonal to =
-the
-> > > API I'm looking for.
-> > =
+On Fri, Sep 21, 2018 at 08:05:50AM -0700, Yu-cheng Yu wrote:
+> Update ARCH_CET_STATUS and ARCH_CET_DISABLE to include Indirect
+> Branch Tracking features.
+> 
+> Introduce:
+> 
+> arch_prctl(ARCH_CET_LEGACY_BITMAP, unsigned long *addr)
+>     Enable the Indirect Branch Tracking legacy code bitmap.
+> 
+>     The parameter 'addr' is a pointer to a user buffer.
+>     On returning to the caller, the kernel fills the following:
+> 
+>     *addr = IBT bitmap base address
+>     *(addr + 1) = IBT bitmap size
 
-> > True, I imagine once we have that flag we will be able to distinguish
-> > the "saved" property and the "effective / live" property of DAX...
-> > Also it's really not DAX that applications care about as much as "is
-> > there page-cache indirection / overhead for this mapping?". That seems
-> > to be a narrower guarantee that we can make than what "DAX" might
-> > imply.
-> =
+Again, some structure with a size field would be better from
+UAPI/extensibility standpoint.
 
-> Right. So what do people think about my suggestion earlier in the thread =
-to
-> use madvise(MADV_DIRECT_ACCESS) for this? Currently it would return succe=
-ss
-> when DAX is in use, failure otherwise. Later we could extend it to be also
-> used as a hint for caching policy for the inode...
+One additional point: "size" in the structure from kernel should have
+structure size expected by kernel, and at least providing there "0" from
+user space shouldn't lead to failure (in fact, it is possible to provide
+structure size back to userspace even if buffer is too small, along
+with error).
 
-Hmm apart from Dan's objection that it can't really be used for a
-query, isn't madvise(2) for mmap(2)?
+> 
+> Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/uapi/asm/prctl.h |  1 +
+>  arch/x86/kernel/cet_prctl.c       | 38 ++++++++++++++++++++++++++++++-
+>  arch/x86/kernel/process.c         |  1 +
+>  3 files changed, 39 insertions(+), 1 deletion(-)
+> 
+> diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+> index 3aec1088e01d..31d2465f9caf 100644
+> --- a/arch/x86/include/uapi/asm/prctl.h
+> +++ b/arch/x86/include/uapi/asm/prctl.h
+> @@ -18,5 +18,6 @@
+>  #define ARCH_CET_DISABLE	0x3002
+>  #define ARCH_CET_LOCK		0x3003
+>  #define ARCH_CET_ALLOC_SHSTK	0x3004
+> +#define ARCH_CET_LEGACY_BITMAP	0x3005
 
-But AFAIU (from looking at the xfs code, so please correct me if I',
-wrong), DAX can be used for the traditional read(2)/write(2) interface
-as well.
+It would probably be nice to have mention of an architecture in these
+definitions ("ARCH_X86_CET_"...), but it's likely too late.
 
-There is at least:
+>  
+>  #endif /* _ASM_X86_PRCTL_H */
+> diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+> index c4b7c19f5040..df47b5ebc3f4 100644
+> --- a/arch/x86/kernel/cet_prctl.c
+> +++ b/arch/x86/kernel/cet_prctl.c
+> @@ -20,6 +20,8 @@ static int handle_get_status(unsigned long arg2)
+>  
+>  	if (current->thread.cet.shstk_enabled)
+>  		features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
+> +	if (current->thread.cet.ibt_enabled)
+> +		features |= GNU_PROPERTY_X86_FEATURE_1_IBT;
+>  
+>  	shstk_base = current->thread.cet.shstk_base;
+>  	shstk_size = current->thread.cet.shstk_size;
+> @@ -49,9 +51,35 @@ static int handle_alloc_shstk(unsigned long arg2)
+>  	return 0;
+>  }
+>  
+> +static int handle_bitmap(unsigned long arg2)
+> +{
+> +	unsigned long addr, size;
+> +
+> +	if (current->thread.cet.ibt_enabled) {
+> +		int err;
+> +
+> +		err  = cet_setup_ibt_bitmap();
+> +		if (err)
+> +			return err;
+> +
+> +		addr = current->thread.cet.ibt_bitmap_addr;
+> +		size = current->thread.cet.ibt_bitmap_size;
+> +	} else {
+> +		addr = 0;
+> +		size = 0;
+> +	}
+> +
+> +	if (put_user(addr, (unsigned long __user *)arg2) ||
+> +	    put_user(size, (unsigned long __user *)arg2 + 1))
+> +		return -EFAULT;
+> +
+> +	return 0;
+> +}
+> +
+>  int prctl_cet(int option, unsigned long arg2)
+>  {
+> -	if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+> +	if (!cpu_feature_enabled(X86_FEATURE_SHSTK) &&
+> +	    !cpu_feature_enabled(X86_FEATURE_IBT))
 
-xfs_file_read_iter()
-`-> if (IS_DAX(inode))
-    `-> xfs_file_dax_read()
-        `->dax_iomap_rw()
+This check is repeated many times, it is probably worth defining
+something like cpu_x86_cet_enabled() or something like that.
+Besides, early introduction of the macro would allow avoiding all these
+changes over the code in IBT patches, only macro definition has
+to be changed that way.
 
-So IMHO something on an inode granularity would make more sens to me.
+> @@ -73,6 +103,12 @@ int prctl_cet(int option, unsigned long arg2)
+>  	case ARCH_CET_ALLOC_SHSTK:
+>  		return handle_alloc_shstk(arg2);
+>  
+> +	/*
+> +	 * Allocate legacy bitmap and return address & size to user.
+> +	 */
+> +	case ARCH_CET_LEGACY_BITMAP:
+> +		return handle_bitmap(arg2);
+> +
+>  	default:
+>  		return -EINVAL;
+>  	}
+> diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+> index ac0ea9c7e89f..aea15a9b6a3e 100644
+> --- a/arch/x86/kernel/process.c
+> +++ b/arch/x86/kernel/process.c
+> @@ -797,6 +797,7 @@ long do_arch_prctl_common(struct task_struct *task, int option,
+>  	case ARCH_CET_DISABLE:
+>  	case ARCH_CET_LOCK:
+>  	case ARCH_CET_ALLOC_SHSTK:
+> +	case ARCH_CET_LEGACY_BITMAP:
+>  		return prctl_cet(option, cpuid_enabled);
+>  	}
 
-Byte,
-	Johannes
--- =
-
-Johannes Thumshirn                                          Storage
-jthumshirn-l3A5Bk7waGM@public.gmane.org                                +49 911 74053 689
-SUSE LINUX GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Felix Imend=F6rffer, Jane Smithard, Graham Norton
-HRB 21284 (AG N=FCrnberg)
-Key fingerprint =3D EC38 9CAB C2C4 F25D 8600 D0D0 0393 969D 2D76 0850
+I wonder, whether this duplication is really needed for CET-related
+arch_prctl commands, why not just call them from do_arch_prctl_common?
