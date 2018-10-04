@@ -1,48 +1,64 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Thu, 4 Oct 2018 11:34:11 -0700 (PDT)
-Message-ID: <alpine.DEB.2.21.1810041130380.12951@chino.kir.corp.google.com>
-References: <20180925202959.GY18685@dhcp22.suse.cz> <alpine.DEB.2.21.1809251440001.94921@chino.kir.corp.google.com> <20180925150406.872aab9f4f945193e5915d69@linux-foundation.org> <20180926060624.GA18685@dhcp22.suse.cz> <20181002112851.GP18290@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com> <20181003073640.GF18290@dhcp22.suse.cz> <alpine.DEB.2.21.1810031547150.202532@chino.kir.corp.google.com> <20181004055842.GA22173@dhcp22.suse.cz> <alpine.DEB.2.21.1810040209130.113459@chino.kir.corp.google.com>
- <20181004094637.GG22173@dhcp22.suse.cz>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 00/34] VFS: Introduce filesystem context [ver #12]
+Date: Thu, 04 Oct 2018 20:37:09 +0200
+Message-ID: <87sh1ld0dm.fsf@xmission.com>
+References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181004094637.GG22173@dhcp22.suse.cz>
+In-Reply-To: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
+        (David Howells's message of "Fri, 21 Sep 2018 17:30:08 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, "Eric W. Biederman" <ebiederm@redhat.com>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 4 Oct 2018, Michal Hocko wrote:
 
-> > And prior to the offending commit, there were three ways to control thp 
-> > but two ways to determine if a mapping was eligible for thp based on the 
-> > implementation detail of one of those ways.
-> 
-> Yes, it is really unfortunate that we have ever allowed to leak such an
-> internal stuff like VMA flags to userspace.
-> 
+David,
 
-Right, I don't like userspace dependencies on VmFlags in smaps myself, but 
-it's the only way we have available that shows whether a single mapping is 
-eligible to be backed by thp :/
+I have been going through these and it is a wonderful proof of concept
+patchset.  There are a couple significant problems with it however.
 
-> > If there are three ways to 
-> > control thp, userspace is still in the dark wrt which takes precedence 
-> > over the other: we have PR_SET_THP_DISABLE but globally sysfs has it set 
-> > to "always", or we have MADV_HUGEPAGE set per smaps but PR_SET_THP_DISABLE 
-> > shown in /proc/pid/status, etc.
-> > 
-> > Which one is the ultimate authority?
-> 
-> Isn't our documentation good enough? If not then we should document it
-> properly.
-> 
+- Many patches do more than one thing that could benefit from being
+  broken up into more patches so that there is only one logical change
+  per patch.  I have attempted a little of that and have found several
+  significant bugs.
 
-No, because the offending commit actually changed the precedence itself: 
-PR_SET_THP_DISABLE used to be honored for future mappings and the commit 
-changed that for all current mappings.  So as a result of the commit 
-itself we would have had to change the documentation and userspace can't 
-be expected to keep up with yet a fourth variable: kernel version.  It 
-really needs to be simpler, just a per-mapping specifier.
+- There are many unnecessary changes in this patchset that just add
+  noise and make it difficult to review.
+
+- There are many typos and thinkos in this patchset that while not hard
+  to correct keep this from being anywhere close to being ready for
+  prime time.
+
+- Some of the bugs I have encountered.
+  * proc that isn't pid_ns_prepare_proc does not set fc->user_ns to
+    match the pid namespace.
+  * mqueue does not set fc->user_ns to match the ipc namespace.
+  * The cpuset filesystem always fails to mount
+  * Non-converted filesystems don't have the old security hooks
+    and only have a bit blob so don't call into the new security
+    hooks either.
+  * The changes to implement the new security hooks at least for
+    selinux are riddled with typos, and thinkos.
+
+I was hoping to get into the semantic questions but I can't get
+there until I get a good solid baseline patch to work with.
+
+I have been able to hoist the permission check out of sget_fc for
+converted filesystems.  So progress is being made.  That absolutely
+requires fc->user_ns to be set properly before vfs_get_tree.  Something
+that still needs to be fixed.
+
+I have also observed that by not allowing unconverted filesystems
+to mount using the new api.  The compatbitility code can be
+significantly simplified, and the who data_size problem goes away.
+
+I am going to be travelling for the next couple of days so I
+don't expect I will be able to answer questions in a timely manner.
+In the hopes that it might help below is my work in progress git
+tree where I have cleaned up some of these issues.
+
+https://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git new-mount-api-testing
+
+Eric
