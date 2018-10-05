@@ -1,64 +1,107 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 00/34] VFS: Introduce filesystem context [ver #12]
-Date: Thu, 04 Oct 2018 20:37:09 +0200
-Message-ID: <87sh1ld0dm.fsf@xmission.com>
-References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
+From: Andrei Vagin <avagin@gmail.com>
+Subject: Re: [REVIEW][PATCH 2/6] signal: Fail sigqueueinfo if si_signo != sig
+Date: Thu, 4 Oct 2018 23:06:13 -0700
+Message-ID: <20181005060611.GA19061@gmail.com>
+References: <87h8idv6nw.fsf@xmission.com>
+ <20180925171906.19683-2-ebiederm@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=koi8-r
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
-        (David Howells's message of "Fri, 21 Sep 2018 17:30:08 +0100")
+Content-Disposition: inline
+In-Reply-To: <20180925171906.19683-2-ebiederm@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: viro@zeniv.linux.org.uk, John Johansen <john.johansen@canonical.com>, Tejun Heo <tj@kernel.org>, "Eric W. Biederman" <ebiederm@redhat.com>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Li Zefan <lizefan@huawei.com>, linux-api@vger.kernel.org, apparmor@lists.ubuntu.com, Casey Schaufler <casey@schaufler-ca.com>, fenghua.yu@intel.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Eric Biggers <ebiggers@google.com>, linux-security-module@vger.kernel.org, Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>, Johannes Weiner <hannes@cmpxchg.org>, Stephen Smalley <sds@tycho.nsa.gov>, tomoyo-dev-en@lists.sourceforge.jp, cgroups@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Sep 25, 2018 at 07:19:02PM +0200, Eric W. Biederman wrote:
+> The kernel needs to validate that the contents of struct siginfo make
+> sense as siginfo is copied into the kernel, so that the proper union
+> members can be put in the appropriate locations.  The field si_signo
+> is a fundamental part of that validation.  As such changing the
+> contents of si_signo after the validation make no sense and can result
+> in nonsense values in the kernel.
 
-David,
+Accoding to the man page, the user should not set si_signo, it has to be set
+by kernel.
 
-I have been going through these and it is a wonderful proof of concept
-patchset.  There are a couple significant problems with it however.
+$ man 2 rt_sigqueueinfo
 
-- Many patches do more than one thing that could benefit from being
-  broken up into more patches so that there is only one logical change
-  per patch.  I have attempted a little of that and have found several
-  significant bugs.
+    The uinfo argument specifies the data to accompany  the  signal.   This
+       argument  is  a  pointer to a structure of type siginfo_t, described in
+       sigaction(2) (and defined  by  including  <sigaction.h>).   The  caller
+       should set the following fields in this structure:
 
-- There are many unnecessary changes in this patchset that just add
-  noise and make it difficult to review.
+       si_code
+              This  must  be  one of the SI_* codes in the Linux kernel source
+              file include/asm-generic/siginfo.h, with  the  restriction  that
+              the  code  must  be  negative (i.e., cannot be SI_USER, which is
+              used by the kernel to indicate a signal  sent  by  kill(2))  and
+              cannot  (since  Linux  2.6.39) be SI_TKILL (which is used by the
+              kernel to indicate a signal sent using tgkill(2)).
 
-- There are many typos and thinkos in this patchset that while not hard
-  to correct keep this from being anywhere close to being ready for
-  prime time.
+       si_pid This should be set to a process ID, typically the process ID  of
+              the sender.
 
-- Some of the bugs I have encountered.
-  * proc that isn't pid_ns_prepare_proc does not set fc->user_ns to
-    match the pid namespace.
-  * mqueue does not set fc->user_ns to match the ipc namespace.
-  * The cpuset filesystem always fails to mount
-  * Non-converted filesystems don't have the old security hooks
-    and only have a bit blob so don't call into the new security
-    hooks either.
-  * The changes to implement the new security hooks at least for
-    selinux are riddled with typos, and thinkos.
+       si_uid This  should  be set to a user ID, typically the real user ID of
+              the sender.
 
-I was hoping to get into the semantic questions but I can't get
-there until I get a good solid baseline patch to work with.
+       si_value
+              This field contains the user data to accompany the signal.   For
+              more information, see the description of the last (union sigval)
+              argument of sigqueue(3).
 
-I have been able to hoist the permission check out of sget_fc for
-converted filesystems.  So progress is being made.  That absolutely
-requires fc->user_ns to be set properly before vfs_get_tree.  Something
-that still needs to be fixed.
+       Internally, the kernel sets the si_signo field to the  value  specified
+       in  sig,  so that the receiver of the signal can also obtain the signal
+       number via that field.
 
-I have also observed that by not allowing unconverted filesystems
-to mount using the new api.  The compatbitility code can be
-significantly simplified, and the who data_size problem goes away.
+> 
+> As such simply fail if someone is silly enough to set si_signo out of
+> sync with the signal number passed to sigqueueinfo.
+> 
+> I don't expect a problem as glibc's sigqueue implementation sets
+> "si_signo = sig" and CRIU just returns to the kernel what the kernel
+> gave to it.
+> 
+> If there is some application that calls sigqueueinfo directly that has
+> a problem with this added sanity check we can revisit this when we see
+> what kind of crazy that application is doing.
 
-I am going to be travelling for the next couple of days so I
-don't expect I will be able to answer questions in a timely manner.
-In the hopes that it might help below is my work in progress git
-tree where I have cleaned up some of these issues.
 
-https://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git new-mount-api-testing
+I already know two "applications" ;)
 
-Eric
+https://github.com/torvalds/linux/blob/master/tools/testing/selftests/ptrace/peeksiginfo.c
+https://github.com/checkpoint-restore/criu/blob/master/test/zdtm/static/sigpending.c
+
+Disclaimer: I'm the author of both of them.
+
+> 
+> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> ---
+>  kernel/signal.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/signal.c b/kernel/signal.c
+> index 7b49c31d3fdb..e445b0a63faa 100644
+> --- a/kernel/signal.c
+> +++ b/kernel/signal.c
+> @@ -3306,7 +3306,8 @@ static int do_rt_sigqueueinfo(pid_t pid, int sig, siginfo_t *info)
+>  	    (task_pid_vnr(current) != pid))
+>  		return -EPERM;
+>  
+> -	info->si_signo = sig;
+> +	if (info->si_signo != sig)
+> +		return -EINVAL;
+>  
+>  	/* POSIX.1b doesn't mention process groups.  */
+>  	return kill_proc_info(sig, info, pid);
+> @@ -3354,7 +3355,8 @@ static int do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig, siginfo_t *info)
+>  	    (task_pid_vnr(current) != pid))
+>  		return -EPERM;
+>  
+> -	info->si_signo = sig;
+> +	if (info->si_signo != sig)
+> +		return -EINVAL;
+>  
+>  	return do_send_specific(tgid, pid, sig, info);
+>  }
