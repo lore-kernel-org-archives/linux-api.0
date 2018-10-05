@@ -1,51 +1,66 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: Re: [PATCH 1/3] bpf: allow zero-initializing hash map seed
-Date: Fri, 5 Oct 2018 15:21:16 +0100
-Message-ID: <CACAyw9-JcORMGDb3wm-E4VYmjVmvWqB5vVh+=qTvXmpFWye_QA@mail.gmail.com>
-References: <20181001104509.24211-1-lmb@cloudflare.com> <20181001104509.24211-2-lmb@cloudflare.com>
- <CAG48ez0_BtXQ2KCgpRicQ8yfeNqV2mN8RKCA3nn8DXFTmsj6UA@mail.gmail.com>
- <CACAyw99ar0Wokyg4jx8FPyr1Z=7Cf+=WVgF6sLL1FK9JtHROjw@mail.gmail.com> <CAG48ez3wwGgc40uAg5nq9dnC3qsAD04jQZTWtPi7jg_VDws-fg@mail.gmail.com>
+Subject: Re: [PATCH 0/3] bpf: allow zero-initialising hash map seed
+Date: Fri, 5 Oct 2018 15:27:10 +0100
+Message-ID: <CACAyw99h58NX6tE1KrgoNEWwX4U8WW3JaRnJGJ0EGXEoeqeMDw@mail.gmail.com>
+References: <20181001104509.24211-1-lmb@cloudflare.com> <59ef80ab-4f28-5c75-c394-55fcfd9bc8ca@iogearbox.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez3wwGgc40uAg5nq9dnC3qsAD04jQZTWtPi7jg_VDws-fg@mail.gmail.com>
+In-Reply-To: <59ef80ab-4f28-5c75-c394-55fcfd9bc8ca@iogearbox.net>
 Sender: netdev-owner@vger.kernel.org
-To: jannh@google.com
-Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, netdev@vger.kernel.org, linux-api@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Alexei Starovoitov <ast@kernel.org>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 5 Oct 2018 at 15:12, Jann Horn <jannh@google.com> wrote:
+On Mon, 1 Oct 2018 at 20:12, Daniel Borkmann <daniel@iogearbox.net> wrote:
 >
-> On Fri, Oct 5, 2018 at 9:42 AM Lorenz Bauer <lmb@cloudflare.com> wrote:
-> > On Tue, 2 Oct 2018 at 21:00, Jann Horn <jannh@google.com> wrote:
-> > >
-> > > If this is for testing only, you can slap a capable(CAP_SYS_ADMIN)
-> > > check in here, right? I doubt it matters, but I don't really like
-> > > seeing something like this exposed to unprivileged userspace just
-> > > because you need it for kernel testing.
+> On 10/01/2018 12:45 PM, Lorenz Bauer wrote:
+> > This patch set adds a new flag BPF_F_ZERO_SEED, which allows
+> > forcing the seed used by hash maps to zero. This makes
+> > it possible to write deterministic tests.
 > >
-> > That would mean all tests have to run as root / with CAP_SYS_ADMIN
-> > which isn't ideal.
+> > Based on an off-list conversation with Alexei Starovoitov and
+> > Daniel Borkmann.
+> >
+> > Lorenz Bauer (3):
+> >   bpf: allow zero-initializing hash map seed
+> >   tools: sync linux/bpf.h
+> >   tools: add selftest for BPF_F_ZERO_SEED
+> >
+> >  include/uapi/linux/bpf.h                |  2 +
+> >  kernel/bpf/hashtab.c                    |  8 ++-
+> >  tools/include/uapi/linux/bpf.h          |  2 +
+> >  tools/testing/selftests/bpf/test_maps.c | 67 +++++++++++++++++++++----
+> >  4 files changed, 66 insertions(+), 13 deletions(-)
+> >
 >
-> This patch basically means that it becomes easier for a local user to
-> construct a BPF hash table that has all of its values stuffed into a
-> single hash bucket, correct? Which makes it easier to create a BPF
-> program that generates unusually large RCU stalls by performing ~40000
-> BPF map lookups, each of which has to walk through the entire linked
-> list of the hash map bucket? I dislike exposing something like that to
-> unprivileged userspace.
+> Please respin with proper SoB for each patch and non-empty commit
+> description.
 
-That's a good point, for which I don't have an answer. You could argue that
-this was the status quo until the seed was randomised, so it seems
-like this hasn't been a worry so far. Should it be going forward?
+What does SoB mean? Point taken about the empty commit message.
 
-> And if you want to run the whole BPF test suite with all its tests,
-> don't you already need root privileges? Or is this a different test
-> suite?
+> I think patch 1 should also have a more elaborate
+> commit description on the use case for BPF_F_ZERO_SEED, and I
 
-No, I'm thinking about third parties that want to test their own BPF.
-If you enable unprivileged BPF you can use BPF_PROG_TEST_RUN to
-test your programs without root, if I'm not mistaken.
+This came out of the off-list discussion we had about map hash functions,
+where Alexei expressed concern that your change to randomise the seed
+might catch users off-guard. I personally don't have a use case, but decided
+to tackle it since it seemed a simple-ish fix to get acquainted with
+the code base.
+
+Maybe this isn't needed after all?
+
+> think also a better comment in the uapi header that this is only
+> meant for testing and not production use.
+
+Will do, if you decide that this is worth having in the first place.
+
+>
+> Thanks,
+> Daniel
+
+Lorenz
+
 -- 
 Lorenz Bauer  |  Systems Engineer
 25 Lavington St., London SE1 0NZ
