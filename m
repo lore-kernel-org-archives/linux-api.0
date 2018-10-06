@@ -1,101 +1,73 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: [RFC v4 0/1] ns: introduce binfmt_misc namespace
-Date: Sat,  6 Oct 2018 21:35:45 +0200
-Message-ID: <20181006193546.29340-1-laurent@vivier.eu>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: [PATCH 2/3] namei: implement AT_THIS_ROOT chroot-like path resolution
+Date: Sat, 06 Oct 2018 22:56:23 +0200
+Message-ID: <875zyeg5fs.fsf@mid.deneb.enyo.de>
+References: <20180929103453.12025-1-cyphar@cyphar.com>
+        <20180929131534.24472-1-cyphar@cyphar.com>
+        <CAG48ez30WJhbsro2HOc_DR7V91M+hNFzBP5ogRMZaxbAORvqzg@mail.gmail.com>
+        <20181001054246.gfinmx3api7kjhmc@ryuk>
+        <C89D720F-3CC4-4FA9-9CBB-E41A67360A6B@amacapital.net>
+        <20181002073220.7mzndna4tdnxdvdt@ryuk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181002073220.7mzndna4tdnxdvdt@ryuk> (Aleksa Sarai's message of
+        "Tue, 2 Oct 2018 17:32:20 +1000")
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@gmail.com>, linux-fsdevel@vger.kernel.org, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, Dmitry Safonov <dima@arista.com>, containers@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Laurent Vivier <laurent@vivier.eu>
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, jlayton@kernel.org, Bruce Fields <bfields@fieldses.org>, Al Viro <viro@zeniv.linux.org.uk>, Arnd Bergmann <arnd@arndb.de>, shuah@kernel.org, David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, linux-kselftest@vger.kernel.org, dev@opencontainers.org, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-v4: first user namespace is initialized with &init_binfmt_ns,
-    all new user namespaces are initialized with a NULL and use
-    the one of the first parent that is not NULL. The pointer
-    is initialized to a valid value the first time the binfmt_misc
-    fs is mounted in the current user namespace.
-    This allows to not change the way it was working before:
-    new ns inherits values from its parent, and if parent values are
-    modified (or parent creates its own binfmt entry by mounting the fs)
-    child inherits it (unless it has itself mounted the fs).
+* Aleksa Sarai:
 
-v3: create a structure to store binfmt_misc data,
-    add a pointer to this structure in the user_namespace structure,
-    in init_user_ns structure this pointer points to an init_binfmt_ns
-    structure. And all new user namespaces point to this init structure.
-    A new binfmt namespace structure is allocated if the binfmt_misc
-    filesystem is mounted in a user namespace that is not the initial
-    one but its binfmt namespace pointer points to the initial one.
-    add override_creds()/revert_creds() around open_exec() in
-    bm_register_write()
+> On 2018-10-01, Andy Lutomirski <luto@amacapital.net> wrote:
+>> >>> Currently most container runtimes try to do this resolution in
+>> >>> userspace[1], causing many potential race conditions. In addition, the
+>> >>> "obvious" alternative (actually performing a {ch,pivot_}root(2))
+>> >>> requires a fork+exec which is *very* costly if necessary for every
+>> >>> filesystem operation involving a container.
+>> >> 
+>> >> Wait. fork() I understand, but why exec? And actually, you don't need
+>> >> a full fork() either, clone() lets you do this with some process parts
+>> >> shared. And then you also shouldn't need to use SCM_RIGHTS, just keep
+>> >> the file descriptor table shared. And why chroot()/pivot_root(),
+>> >> wouldn't you want to use setns()?
+>> > 
+>> > You're right about this -- for C runtimes. In Go we cannot do a raw
+>> > clone() or fork() (if you do it manually with RawSyscall you'll end with
+>> > broken runtime state). So you're forced to do fork+exec (which then
+>> > means that you can't use CLONE_FILES and must use SCM_RIGHTS). Same goes
+>> > for CLONE_VFORK.
+>> 
+>> I must admit that I’m not very sympathetic to the argument that “Go’s
+>> runtime model is incompatible with the simpler solution.”
+>
+> Multi-threaded programs have a similar issue (though with Go it's much
+> worse). If you fork a multi-threaded C program then you can only safely
+> use AS-Safe glibc functions (those that are safe within a signal
+> handler). But if you're just doing three syscalls this shouldn't be as
+> big of a problem as Go where you can't even do said syscalls.
 
-v2: no new namespace, binfmt_misc data are now part of
-    the mount namespace
-    I put this in mount namespace instead of user namespace
-    because the mount namespace is already needed and
-    I don't want to force to have the user namespace for that.
-    As this is a filesystem, it seems logic to have it here.
+The situation is a bit more complicated.  There are many programs out
+there which use malloc and free (at least indirectly) after a fork,
+and we cannot break them.  In glibc, we have a couple of subsystems
+which are put into a known state before calling the fork/clone system
+call if the application calls fork.  The price we pay for that is a
+fork which is not POSIX-compliant because it is not async-signal-safe.
+Admittedly, other libcs chose different trade-offs.
 
-This allows to define a new interpreter for each new container.
+However, what is the same across libcs is this: You cannot call the
+clone system call directly and get a fully working new process.  Some
+things break.  For example, for recursive mutexes, we need to know the
+TID of the current thread, and we cannot perform a system call to get
+it for performance reasons.  So everyone has a TID cache for that.
+But the TID cache does not get reset when you bypass the fork
+implementation in libc, so you end up with subtle corruption bugs on
+TID reuse.
 
-But the main goal is to be able to chroot to a directory
-using a binfmt_misc interpreter without being root.
-
-I have a modified version of unshare at:
-
-  git@github.com:vivier/util-linux.git branch unshare-chroot
-
-with some new options to unshare binfmt_misc namespace and to chroot
-to a directory.
-
-If you have a directory /chroot/powerpc/jessie containing debian for powerpc
-binaries and a qemu-ppc interpreter, you can do for instance:
-
- $ uname -a
- Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
- $ ./unshare --map-root-user --fork --pid \
-   --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
-   --root=/chroot/powerpc/jessie /bin/bash -l
- # uname -a
- Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
- # id
-uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
- # ls -l
-total 5940
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
-drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
-drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
-drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
-drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
-drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
-drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
-dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
--rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
-drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
-drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
-drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
-drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
-drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
-drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
-drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
-
-If you want to use the qemu binary provided by your distro, you can use
-
-    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
-
-With the 'F' flag, qemu-ppc-static will be then loaded from the main root
-filesystem before switching to the chroot.
-
-Laurent Vivier (1):
-  ns: add binfmt_misc to the user namespace
-
- fs/binfmt_misc.c               | 99 ++++++++++++++++++++++++----------
- include/linux/user_namespace.h | 13 +++++
- kernel/user.c                  | 13 +++++
- kernel/user_namespace.c        |  7 +++
- 4 files changed, 104 insertions(+), 28 deletions(-)
-
--- 
-2.17.1
+So I'd say that in most cases, the C situation is pretty much the same
+as the Go situation.  If I recall correctly, the problem for Go is
+that it cannot call setns from Go code because it fails in the kernel
+for multi-threaded processes, and Go processes are already
+multi-threaded when user Go code runs.
