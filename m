@@ -1,112 +1,101 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 2/3] namei: implement AT_THIS_ROOT chroot-like path resolution
-Date: Mon, 8 Oct 2018 12:50:34 +0200
-Message-ID: <CAG48ez3M84-iL7_9__G81L+16K1eT3j-=QTjL_kVy6BC6sYZzQ@mail.gmail.com>
-References: <20180929103453.12025-1-cyphar@cyphar.com> <20180929131534.24472-1-cyphar@cyphar.com>
- <CAG48ez30WJhbsro2HOc_DR7V91M+hNFzBP5ogRMZaxbAORvqzg@mail.gmail.com>
- <20181004162611.vdlujbdguvagalpt@ryuk> <CAG48ez2u--Wac7d9n3idC92Pd-M40QzYtR6FKR8PAYr=VQHUBQ@mail.gmail.com>
- <20181005150728.mgqnpkbukpeu3bsm@ryuk> <CAG48ez3FG0axt92F=+vDe1Q=kj-YngmCgFqDET7E2xCE1mOgeg@mail.gmail.com>
- <20181006021002.6vzsdwd3klddbmji@ryuk>
+Subject: Re: [RFC v3 1/1] ns: add binfmt_misc to the user namespace
+Date: Mon, 8 Oct 2018 12:58:33 +0200
+Message-ID: <CAG48ez0z2b-xwME25mrEnd7++mTj=07g_L+pZdgowGLY9-xqPQ@mail.gmail.com>
+References: <20181003225022.32033-1-laurent@vivier.eu> <20181003225022.32033-2-laurent@vivier.eu>
+ <20181006060427.GA15164@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181006021002.6vzsdwd3klddbmji@ryuk>
+In-Reply-To: <20181006060427.GA15164@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: cyphar@cyphar.com
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, jlayton@kernel.org, Bruce Fields <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, shuah@kernel.org, David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, linux-kselftest@vger.kernel.org, dev@opencontainers.org, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>
+To: avagin@gmail.com
+Cc: Laurent Vivier <laurent@vivier.eu>, kernel list <linux-kernel@vger.kernel.org>, Andrei Vagin <avagin@openvz.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, James Bottomley <James.Bottomley@hansenpartnership.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 6, 2018 at 4:10 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> On 2018-10-05, Jann Horn <jannh@google.com> wrote:
-> > > What if we took rename_lock (call it nd->r_seq) at the start of the
-> > > resolution, and then only tried the __d_path-style check
-> > >
-> > >   if (read_seqretry(&rename_lock, nd->r_seq) ||
-> > >       read_seqretry(&mount_lock, nd->m_seq))
-> > >           /* do the __d_path lookup. */
-> > >
-> > > That way you would only hit the slow path if there were concurrent
-> > > renames or mounts *and* you are doing a path resolution with
-> > > AT_THIS_ROOT or AT_BENEATH. I've attached a modified patch that does
-> > > this (and after some testing it also appears to work).
+On Sat, Oct 6, 2018 at 8:04 AM Andrei Vagin <avagin@gmail.com> wrote:
+> On Thu, Oct 04, 2018 at 12:50:22AM +0200, Laurent Vivier wrote:
+> > This patch allows to have a different binfmt_misc configuration
+> > for each new user namespace. By default, the binfmt_misc configuration
+> > is the one of the host, but if the binfmt_misc filesystem is mounted
+> > in the new namespace a new empty binfmt instance is created and used
+> > in this namespace.
 > >
-> > Yeah, I think that might do the job.
->
-> *phew* I was all out of other ideas. :P
->
-> > > ---
-> > >  fs/namei.c | 49 ++++++++++++++++++++++++++++++++++++++++++++++---
-> > >  1 file changed, 46 insertions(+), 3 deletions(-)
-> > >
-> > > diff --git a/fs/namei.c b/fs/namei.c
-> > > index 6f995e6de6b1..12c9be175cb4 100644
-> > > --- a/fs/namei.c
-> > > +++ b/fs/namei.c
-> > > @@ -493,7 +493,7 @@ struct nameidata {
-> > >         struct path     root;
-> > >         struct inode    *inode; /* path.dentry.d_inode */
-> > >         unsigned int    flags;
-> > > -       unsigned        seq, m_seq;
-> > > +       unsigned        seq, m_seq, r_seq;
-> > >         int             last_type;
-> > >         unsigned        depth;
-> > >         int             total_link_count;
-> > > @@ -1375,6 +1375,27 @@ static int follow_dotdot_rcu(struct nameidata *nd)
-> > >                                 return -EXDEV;
-> > >                         break;
-> > >                 }
-> > > +               if (unlikely((nd->flags & (LOOKUP_BENEATH | LOOKUP_CHROOT)) &&
-> > > +                            (read_seqretry(&rename_lock, nd->r_seq) ||
-> > > +                             read_seqretry(&mount_lock, nd->m_seq)))) {
-> > > +                       char *pathbuf, *pathptr;
-> > > +
-> > > +                       nd->r_seq = read_seqbegin(&rename_lock);
-> > > +                       /* Cannot take m_seq here. */
-> > > +
-> > > +                       pathbuf = kmalloc(PATH_MAX, GFP_ATOMIC);
-> > > +                       if (!pathbuf)
-> > > +                               return -ECHILD;
-> > > +                       pathptr = __d_path(&nd->path, &nd->root, pathbuf, PATH_MAX);
-> > > +                       kfree(pathbuf);
+> > For instance, using "unshare" we can start a chroot of an another
+> > architecture and configure the binfmt_misc interpreter without being root
+> > to run the binaries in this chroot.
 > >
-> > You're doing this check before actually looking up the parent, right?
-> > So as long as I don't trigger the "path_equal(&nd->path, &nd->root)"
-> > check that you do for O_BENEATH, escaping up by one level is possible,
-> > right? You should probably move this check so that it happens after
-> > following "..".
->
-> Yup, you're right. I'll do that.
->
-> > (Also: I assume that you're going to get rid of that memory allocation
-> > in a future version.)
->
-> Sure. Would you prefer adding some scratch space in nameidata, or that I
-> change __d_path so it accepts NULL as the buffer (and thus it doesn't
-> actually do any string operations)?
-
-Well, I think accepting a NULL buffer would be much cleaner; but keep
-in mind that I'm just someone making suggestions, Al Viro is the one
-who has to like your code. :P
-
-> > >                 if (nd->path.dentry != nd->path.mnt->mnt_root) {
-> > >                         int ret = path_parent_directory(&nd->path);
-> > >                         if (ret)
-> > > @@ -2269,6 +2311,9 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
-> > >         nd->last_type = LAST_ROOT; /* if there are only slashes... */
-> > >         nd->flags = flags | LOOKUP_JUMPED | LOOKUP_PARENT;
-> > >         nd->depth = 0;
-> > > +       nd->m_seq = read_seqbegin(&mount_lock);
-> > > +       nd->r_seq = read_seqbegin(&rename_lock);
+> > Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+> > ---
+> >  fs/binfmt_misc.c               | 85 +++++++++++++++++++++++-----------
+> >  include/linux/user_namespace.h | 15 ++++++
+> >  kernel/user.c                  | 14 ++++++
+> >  kernel/user_namespace.c        |  9 ++++
+> >  4 files changed, 95 insertions(+), 28 deletions(-)
 > >
-> > This means that now, attempting to perform a lookup while something is
-> > holding the rename_lock will spin on the lock. I don't know whether
-> > that's a problem in practice though. Does anyone on this thread know
-> > whether this is problematic?
+> > diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
+> > index aa4a7a23ff99..78780bc87506 100644
+> > --- a/fs/binfmt_misc.c
+> > +++ b/fs/binfmt_misc.c
+> > @@ -38,9 +38,6 @@ enum {
+> >       VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
+> >  };
+> >
+> > -static LIST_HEAD(entries);
+> > -static int enabled = 1;
+> > -
+> >  enum {Enabled, Magic};
+> >  #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
+> >  #define MISC_FMT_OPEN_BINARY (1 << 30)
+> > @@ -60,10 +57,7 @@ typedef struct {
+> >       struct file *interp_file;
+> >  } Node;
+> >
+> > -static DEFINE_RWLOCK(entries_lock);
+> >  static struct file_system_type bm_fs_type;
+> > -static struct vfsmount *bm_mnt;
+> > -static int entry_count;
+> >
+> >  /*
+> >   * Max length of the register string.  Determined by:
+> > @@ -85,13 +79,13 @@ static int entry_count;
+> >   * if we do, return the node, else NULL
+> >   * locking is done in load_misc_binary
+> >   */
+> > -static Node *check_file(struct linux_binprm *bprm)
+> > +static Node *check_file(struct user_namespace *ns, struct linux_binprm *bprm)
+> >  {
+> >       char *p = strrchr(bprm->interp, '.');
+> >       struct list_head *l;
+> >
+> >       /* Walk all the registered handlers. */
+> > -     list_for_each(l, &entries) {
+> > +     list_for_each(l, &ns->binfmt_ns->entries) {
+> >               Node *e = list_entry(l, Node, list);
+> >               char *s;
+> >               int j;
+> > @@ -133,17 +127,18 @@ static int load_misc_binary(struct linux_binprm *bprm)
+> >       struct file *interp_file = NULL;
+> >       int retval;
+> >       int fd_binary = -1;
+> > +     struct user_namespace *ns = current_user_ns();
+> >
+> >       retval = -ENOEXEC;
+> > -     if (!enabled)
+> > +     if (!ns->binfmt_ns->enabled)
+> >               return retval;
+> >
+> >       /* to keep locking time low, we copy the interpreter string */
+> > -     read_lock(&entries_lock);
+> > -     fmt = check_file(bprm);
+> > +     read_lock(&ns->binfmt_ns->entries_lock);
 >
-> I could make it so that we only take &rename_lock
->   if (nd->flags & (FOLLOW_BENEATH | FOLLOW_CHROOT)),
-> since it's not used outside of that path.
+> It looks like ns->binfmt_ns isn't protected by any lock and
+> ns->binfmt_ns can be changed between read_lock() and read_unlock().
+>
+> This can be fixed if ns->binfmt_ns will be dereferenced only once in
+> this function:
+>
+>         struct binfmt_namespace *binfmt_ns = ns->binfmt_ns;
 
-I think that might be a sensible change; but as I said, I don't
-actually know whether it's necessary, and it would be very helpful if
-someone who actually knows commented on this.
+Technically, wouldn't you want READ_ONCE(ns->binfmt_ns)?
