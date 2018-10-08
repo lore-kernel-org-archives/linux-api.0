@@ -1,75 +1,70 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
- ptrace
-Date: Mon, 8 Oct 2018 20:41:05 +0200
-Message-ID: <20181008184104.4vngt5k24bog3j4f@brauner.io>
-References: <20180927151119.9989-1-tycho@tycho.ws>
- <20180927151119.9989-4-tycho@tycho.ws>
- <20181008151629.hkgzzsluevwtuclw@brauner.io>
- <20181008180043.GE28238@cisco.lan>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [RFC v4 1/1] ns: add binfmt_misc to the user namespace
+Date: Mon, 8 Oct 2018 21:05:34 +0200
+Message-ID: <6150310e-75fa-0199-71bd-5794392b73c2@vivier.eu>
+References: <20181006193546.29340-1-laurent@vivier.eu>
+ <20181006193546.29340-2-laurent@vivier.eu>
+ <CAG48ez1S7CVDCCec5F-N32BVEPckLb0Qy+PypThezwKA=8HSSg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181008180043.GE28238@cisco.lan>
+In-Reply-To: <CAG48ez1S7CVDCCec5F-N32BVEPckLb0Qy+PypThezwKA=8HSSg@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, linux-kernel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>
+To: Jann Horn <jannh@google.com>
+Cc: kernel list <linux-kernel@vger.kernel.org>, avagin@gmail.com, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, dima@arista.com, containers@lists.linux-foundation.org, Al Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@hansenpartnership.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 08, 2018 at 12:00:43PM -0600, Tycho Andersen wrote:
-> On Mon, Oct 08, 2018 at 05:16:30PM +0200, Christian Brauner wrote:
-> > On Thu, Sep 27, 2018 at 09:11:16AM -0600, Tycho Andersen wrote:
-> > > As an alternative to SECCOMP_FILTER_FLAG_GET_LISTENER, perhaps a ptrace()
-> > > version which can acquire filters is useful. There are at least two reasons
-> > > this is preferable, even though it uses ptrace:
-> > > 
-> > > 1. You can control tasks that aren't cooperating with you
-> > > 2. You can control tasks whose filters block sendmsg() and socket(); if the
-> > >    task installs a filter which blocks these calls, there's no way with
-> > >    SECCOMP_FILTER_FLAG_GET_LISTENER to get the fd out to the privileged task.
-> > 
-> > So for the slow of mind aka me:
-> > I'm not sure I completely understand this problem. Can you outline how
-> > sendmsg() and socket() are involved in this?
-> > 
-> > I'm also not sure that this holds (but I might misunderstand the
-> > problem) afaict, you could do try to get the fd out via CLONE_FILES and
-> > other means so something like: 
-> > 
-> > // let's pretend the libc wrapper for clone actually has sane semantics
-> > pid = clone(CLONE_FILES);
-> > if (pid == 0) {
-> >         fd = seccomp(SECCOMP_SET_MODE_FILTER, SECCOMP_FILTER_FLAG_NEW_LISTENER, &prog);
-> > 
-> >         // Now this fd will be valid in both parent and child.
-> >         // If you haven't blocked it you can inform the parent what
-> >         // the fd number is via pipe2(). If you have blocked it you can
-> >         // use dup2() and dup to a known fd number.
-> > }
+Le 08/10/2018 à 13:26, Jann Horn a écrit :
+> On Sat, Oct 6, 2018 at 9:36 PM Laurent Vivier <laurent@vivier.eu> wrote:
+>> This patch allows to have a different binfmt_misc configuration
+>> for each new user namespace. By default, the binfmt_misc configuration
+>> is the one of the previous level, but if the binfmt_misc filesystem is
+>> mounted in the new namespace a new empty binfmt instance is created and
+>> used in this namespace.
+>>
+>> For instance, using "unshare" we can start a chroot of an another
+>> architecture and configure the binfmt_misc interpreter without being root
+>> to run the binaries in this chroot.
+>>
+>> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+>> ---
+> [...]
+...
+>> @@ -838,7 +858,29 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
+>>  static struct dentry *bm_mount(struct file_system_type *fs_type,
+>>         int flags, const char *dev_name, void *data)
+>>  {
+>> -       return mount_single(fs_type, flags, data, bm_fill_super);
+>> +       struct user_namespace *ns = current_user_ns();
+>> +
+>> +       /* create a new binfmt namespace
+>> +        * if we are not in the first user namespace
+>> +        * but the binfmt namespace is the first one
+>> +        */
+>> +       if (ns->binfmt_ns == NULL) {
+>> +               struct binfmt_namespace *new_ns;
+>> +
+>> +               new_ns = kmalloc(sizeof(struct binfmt_namespace),
+>> +                                GFP_KERNEL);
+>> +               if (new_ns == NULL)
+>> +                       return ERR_PTR(-ENOMEM);
+>> +               INIT_LIST_HEAD(&new_ns->entries);
+>> +               new_ns->enabled = 1;
+>> +               rwlock_init(&new_ns->entries_lock);
+>> +               new_ns->bm_mnt = NULL;
+>> +               new_ns->entry_count = 0;
+>> +               ns->binfmt_ns = new_ns;
 > 
-> But what if your seccomp filter wants to block both pipe2() and
-> dup2()? Whatever syscall you want to use to do this could be blocked
+> What happens if someone mounts two instances of the binfmt_misc
+> filesystem at the same time? Would you end up creating two binfmt
+> namespaces, one of which would never be freed again?
 
-(Fwiw, setup shared memory before the clone(CLONE_FILES) and write the
-fd in the shared memory. :))
+I think you're right. And there is also a problem if mount_ns() fails.
 
+So I think I can put this sequence in bm_fill_super() to avoid these
+problems.
 
-> by some seccomp policy, which means you might not be able to use this
-> feature in some cases.
-
-> 
-> Perhaps it's unlikely, and we can just go forward knowing this. But it
-> seems like it is worth at least acknowledging that you can wedge
-> yourself into a corner.
-
-Sure, if you try really really hard to shoot yourself in the foot you'll
-always be able to. From the top of my hat I'd say you can at least
-probably filter the seccomp() syscall with the listener argument. Once
-you've loaded the policy you're out of luck.
-You also might be seccomp confided and not be able to use the ptrace()
-syscall. AppArmor might prevent you from using ptrace()ing etc. pp.
-
-So I think we really want both ways but the seccomp interface is way
-cleaner. To get the fd from ptrace() you need three syscalls. With
-seccomp() you need one.
+Thanks,
+Laurent
