@@ -1,70 +1,97 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: Re: [RFC v4 1/1] ns: add binfmt_misc to the user namespace
-Date: Mon, 8 Oct 2018 21:05:34 +0200
-Message-ID: <6150310e-75fa-0199-71bd-5794392b73c2@vivier.eu>
-References: <20181006193546.29340-1-laurent@vivier.eu>
- <20181006193546.29340-2-laurent@vivier.eu>
- <CAG48ez1S7CVDCCec5F-N32BVEPckLb0Qy+PypThezwKA=8HSSg@mail.gmail.com>
+From: Song Liu <liu.song.a23@gmail.com>
+Subject: Re: [PATCH v2 1/3] bpf: allow zero-initializing hash map seed
+Date: Mon, 8 Oct 2018 16:07:58 -0700
+Message-ID: <CAPhsuW5_1LRw=tjaNWfgrPKaS_Rs12BYAHPOjmXwEs8C9YSy1Q@mail.gmail.com>
+References: <20181001104509.24211-1-lmb@cloudflare.com> <20181008103221.13468-1-lmb@cloudflare.com>
+ <20181008103221.13468-2-lmb@cloudflare.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez1S7CVDCCec5F-N32BVEPckLb0Qy+PypThezwKA=8HSSg@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: kernel list <linux-kernel@vger.kernel.org>, avagin@gmail.com, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, dima@arista.com, containers@lists.linux-foundation.org, Al Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@hansenpartnership.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20181008103221.13468-2-lmb@cloudflare.com>
+Sender: netdev-owner@vger.kernel.org
+To: lmb@cloudflare.com
+Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Networking <netdev@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Le 08/10/2018 à 13:26, Jann Horn a écrit :
-> On Sat, Oct 6, 2018 at 9:36 PM Laurent Vivier <laurent@vivier.eu> wrote:
->> This patch allows to have a different binfmt_misc configuration
->> for each new user namespace. By default, the binfmt_misc configuration
->> is the one of the previous level, but if the binfmt_misc filesystem is
->> mounted in the new namespace a new empty binfmt instance is created and
->> used in this namespace.
->>
->> For instance, using "unshare" we can start a chroot of an another
->> architecture and configure the binfmt_misc interpreter without being root
->> to run the binaries in this chroot.
->>
->> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
->> ---
-> [...]
-...
->> @@ -838,7 +858,29 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
->>  static struct dentry *bm_mount(struct file_system_type *fs_type,
->>         int flags, const char *dev_name, void *data)
->>  {
->> -       return mount_single(fs_type, flags, data, bm_fill_super);
->> +       struct user_namespace *ns = current_user_ns();
->> +
->> +       /* create a new binfmt namespace
->> +        * if we are not in the first user namespace
->> +        * but the binfmt namespace is the first one
->> +        */
->> +       if (ns->binfmt_ns == NULL) {
->> +               struct binfmt_namespace *new_ns;
->> +
->> +               new_ns = kmalloc(sizeof(struct binfmt_namespace),
->> +                                GFP_KERNEL);
->> +               if (new_ns == NULL)
->> +                       return ERR_PTR(-ENOMEM);
->> +               INIT_LIST_HEAD(&new_ns->entries);
->> +               new_ns->enabled = 1;
->> +               rwlock_init(&new_ns->entries_lock);
->> +               new_ns->bm_mnt = NULL;
->> +               new_ns->entry_count = 0;
->> +               ns->binfmt_ns = new_ns;
-> 
-> What happens if someone mounts two instances of the binfmt_misc
-> filesystem at the same time? Would you end up creating two binfmt
-> namespaces, one of which would never be freed again?
+On Mon, Oct 8, 2018 at 3:34 AM Lorenz Bauer <lmb@cloudflare.com> wrote:
+>
+> Add a new flag BPF_F_ZERO_SEED, which forces a hash map
+> to initialize the seed to zero. This is useful when doing
+> performance analysis both on individual BPF programs, as
+> well as the kernel's hash table implementation.
+>
+> Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
+> ---
+>  include/uapi/linux/bpf.h |  2 ++
+>  kernel/bpf/hashtab.c     | 13 +++++++++++--
+>  2 files changed, 13 insertions(+), 2 deletions(-)
+>
+> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> index f9187b41dff6..2c121f862082 100644
+> --- a/include/uapi/linux/bpf.h
+> +++ b/include/uapi/linux/bpf.h
+> @@ -253,6 +253,8 @@ enum bpf_attach_type {
+>  #define BPF_F_NO_COMMON_LRU    (1U << 1)
+>  /* Specify numa node during map creation */
+>  #define BPF_F_NUMA_NODE                (1U << 2)
+> +/* Zero-initialize hash function seed. This should only be used for testing. */
+> +#define BPF_F_ZERO_SEED                (1U << 6)
 
-I think you're right. And there is also a problem if mount_ns() fails.
+Please add this line after
+#define BPF_F_STACK_BUILD_ID    (1U << 5)
 
-So I think I can put this sequence in bm_fill_super() to avoid these
-problems.
+Other than this
+Acked-by: Song Liu <songliubraving@fb.com>
 
-Thanks,
-Laurent
+
+>
+>  /* flags for BPF_PROG_QUERY */
+>  #define BPF_F_QUERY_EFFECTIVE  (1U << 0)
+> diff --git a/kernel/bpf/hashtab.c b/kernel/bpf/hashtab.c
+> index 2c1790288138..4b7c76765d9d 100644
+> --- a/kernel/bpf/hashtab.c
+> +++ b/kernel/bpf/hashtab.c
+> @@ -23,7 +23,7 @@
+>
+>  #define HTAB_CREATE_FLAG_MASK                                          \
+>         (BPF_F_NO_PREALLOC | BPF_F_NO_COMMON_LRU | BPF_F_NUMA_NODE |    \
+> -        BPF_F_RDONLY | BPF_F_WRONLY)
+> +        BPF_F_RDONLY | BPF_F_WRONLY | BPF_F_ZERO_SEED)
+>
+>  struct bucket {
+>         struct hlist_nulls_head head;
+> @@ -244,6 +244,7 @@ static int htab_map_alloc_check(union bpf_attr *attr)
+>          */
+>         bool percpu_lru = (attr->map_flags & BPF_F_NO_COMMON_LRU);
+>         bool prealloc = !(attr->map_flags & BPF_F_NO_PREALLOC);
+> +       bool zero_seed = (attr->map_flags & BPF_F_ZERO_SEED);
+>         int numa_node = bpf_map_attr_numa_node(attr);
+>
+>         BUILD_BUG_ON(offsetof(struct htab_elem, htab) !=
+> @@ -257,6 +258,10 @@ static int htab_map_alloc_check(union bpf_attr *attr)
+>                  */
+>                 return -EPERM;
+>
+> +       if (zero_seed && !capable(CAP_SYS_ADMIN))
+> +               /* Guard against local DoS, and discourage production use. */
+> +               return -EPERM;
+> +
+>         if (attr->map_flags & ~HTAB_CREATE_FLAG_MASK)
+>                 /* reserved bits should not be used */
+>                 return -EINVAL;
+> @@ -373,7 +378,11 @@ static struct bpf_map *htab_map_alloc(union bpf_attr *attr)
+>         if (!htab->buckets)
+>                 goto free_htab;
+>
+> -       htab->hashrnd = get_random_int();
+> +       if (htab->map.map_flags & BPF_F_ZERO_SEED)
+> +               htab->hashrnd = 0;
+> +       else
+> +               htab->hashrnd = get_random_int();
+> +
+>         for (i = 0; i < htab->n_buckets; i++) {
+>                 INIT_HLIST_NULLS_HEAD(&htab->buckets[i].head, i);
+>                 raw_spin_lock_init(&htab->buckets[i].lock);
+> --
+> 2.17.1
+>
