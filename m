@@ -1,93 +1,83 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [RFC v4 1/1] ns: add binfmt_misc to the user namespace
-Date: Mon, 8 Oct 2018 13:26:54 +0200
-Message-ID: <CAG48ez1S7CVDCCec5F-N32BVEPckLb0Qy+PypThezwKA=8HSSg@mail.gmail.com>
-References: <20181006193546.29340-1-laurent@vivier.eu> <20181006193546.29340-2-laurent@vivier.eu>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v7 2/6] seccomp: make get_nth_filter available outside of
+ CHECKPOINT_RESTORE
+Date: Mon, 8 Oct 2018 15:55:07 +0200
+Message-ID: <20181008135506.xvee7twtmv263ogr@brauner.io>
+References: <20180927151119.9989-1-tycho@tycho.ws>
+ <20180927151119.9989-3-tycho@tycho.ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181006193546.29340-2-laurent@vivier.eu>
+Content-Disposition: inline
+In-Reply-To: <20180927151119.9989-3-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: kernel list <linux-kernel@vger.kernel.org>, avagin@gmail.com, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, dima@arista.com, containers@lists.linux-foundation.org, Al Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@hansenpartnership.com>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, linux-kernel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 6, 2018 at 9:36 PM Laurent Vivier <laurent@vivier.eu> wrote:
-> This patch allows to have a different binfmt_misc configuration
-> for each new user namespace. By default, the binfmt_misc configuration
-> is the one of the previous level, but if the binfmt_misc filesystem is
-> mounted in the new namespace a new empty binfmt instance is created and
-> used in this namespace.
->
-> For instance, using "unshare" we can start a chroot of an another
-> architecture and configure the binfmt_misc interpreter without being root
-> to run the binaries in this chroot.
->
-> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+On Thu, Sep 27, 2018 at 09:11:15AM -0600, Tycho Andersen wrote:
+> In the next commit we'll use this same mnemonic to get a listener for the
+> nth filter, so we need it available outside of CHECKPOINT_RESTORE in the
+> USER_NOTIFICATION case as well.
+> 
+> v2: new in v2
+> v3: no changes
+> v4: no changes
+> v5: switch to CHECKPOINT_RESTORE || USER_NOTIFICATION to avoid warning when
+>     only CONFIG_SECCOMP_FILTER is enabled.
+> v7: drop USER_NOTIFICATION bits
+> 
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> CC: Kees Cook <keescook@chromium.org>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Oleg Nesterov <oleg@redhat.com>
+> CC: Eric W. Biederman <ebiederm@xmission.com>
+> CC: "Serge E. Hallyn" <serge@hallyn.com>
+> CC: Christian Brauner <christian.brauner@ubuntu.com>
+> CC: Tyler Hicks <tyhicks@canonical.com>
+> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+
+Acked-by: Christian Brauner <christian@brauner.io>
+
 > ---
-[...]
-> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
-> +{
-> +       while (ns) {
-> +               if (ns->binfmt_ns)
-> +                       return ns->binfmt_ns;
-> +               ns = ns->parent;
-> +       }
-> +       return NULL;
-> +}
-
-If the value being read can change under you, please use READ_ONCE().
-Also: That "return NULL" can never happen, right? You should probably
-at least put a WARN(...) in there.
-
-[...]
-> @@ -838,7 +858,29 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
->  static struct dentry *bm_mount(struct file_system_type *fs_type,
->         int flags, const char *dev_name, void *data)
->  {
-> -       return mount_single(fs_type, flags, data, bm_fill_super);
-> +       struct user_namespace *ns = current_user_ns();
-> +
-> +       /* create a new binfmt namespace
-> +        * if we are not in the first user namespace
-> +        * but the binfmt namespace is the first one
-> +        */
-> +       if (ns->binfmt_ns == NULL) {
-> +               struct binfmt_namespace *new_ns;
-> +
-> +               new_ns = kmalloc(sizeof(struct binfmt_namespace),
-> +                                GFP_KERNEL);
-> +               if (new_ns == NULL)
-> +                       return ERR_PTR(-ENOMEM);
-> +               INIT_LIST_HEAD(&new_ns->entries);
-> +               new_ns->enabled = 1;
-> +               rwlock_init(&new_ns->entries_lock);
-> +               new_ns->bm_mnt = NULL;
-> +               new_ns->entry_count = 0;
-> +               ns->binfmt_ns = new_ns;
-
-What happens if someone mounts two instances of the binfmt_misc
-filesystem at the same time? Would you end up creating two binfmt
-namespaces, one of which would never be freed again?
-
-> +       }
-> +
-> +       return mount_ns(fs_type, flags, data, ns, ns,
-> +                       bm_fill_super);
+>  kernel/seccomp.c | 6 ++++--
+>  1 file changed, 4 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index fa6fe9756c80..44a31ac8373a 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -1158,7 +1158,7 @@ long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+>  	return do_seccomp(op, 0, uargs);
 >  }
-[...]
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index e5222b5fb4fe..da4950282ea1 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -140,6 +140,10 @@ int create_user_ns(struct cred *new)
->         if (!setup_userns_sysctls(ns))
->                 goto fail_keyring;
->
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +       ns->binfmt_ns = NULL;
-> +#endif
-
-Isn't this unnecessary? The namespace is allocated with all fields zeroed:
-
-ns = kmem_cache_zalloc(user_ns_cachep, GFP_KERNEL);
+>  
+> -#if defined(CONFIG_SECCOMP_FILTER) && defined(CONFIG_CHECKPOINT_RESTORE)
+> +#if defined(CONFIG_SECCOMP_FILTER)
+>  static struct seccomp_filter *get_nth_filter(struct task_struct *task,
+>  					     unsigned long filter_off)
+>  {
+> @@ -1205,6 +1205,7 @@ static struct seccomp_filter *get_nth_filter(struct task_struct *task,
+>  	return filter;
+>  }
+>  
+> +#if defined(CONFIG_CHECKPOINT_RESTORE)
+>  long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
+>  			void __user *data)
+>  {
+> @@ -1277,7 +1278,8 @@ long seccomp_get_metadata(struct task_struct *task,
+>  	__put_seccomp_filter(filter);
+>  	return ret;
+>  }
+> -#endif
+> +#endif /* CONFIG_CHECKPOINT_RESTORE */
+> +#endif /* CONFIG_SECCOMP_FILTER */
+>  
+>  #ifdef CONFIG_SYSCTL
+>  
+> -- 
+> 2.17.1
+> 
+> _______________________________________________
+> Containers mailing list
+> Containers@lists.linux-foundation.org
+> https://lists.linuxfoundation.org/mailman/listinfo/containers
