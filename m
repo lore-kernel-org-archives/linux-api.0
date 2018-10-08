@@ -1,122 +1,112 @@
-From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v2 3/3] tools: add selftest for BPF_F_ZERO_SEED
-Date: Mon,  8 Oct 2018 11:32:21 +0100
-Message-ID: <20181008103221.13468-4-lmb@cloudflare.com>
-References: <20181001104509.24211-1-lmb@cloudflare.com>
- <20181008103221.13468-1-lmb@cloudflare.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181008103221.13468-1-lmb@cloudflare.com>
-Sender: netdev-owner@vger.kernel.org
-To: ast@kernel.org, daniel@iogearbox.net
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, Lorenz Bauer <lmb@cloudflare.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH 2/3] namei: implement AT_THIS_ROOT chroot-like path resolution
+Date: Mon, 8 Oct 2018 12:50:34 +0200
+Message-ID: <CAG48ez3M84-iL7_9__G81L+16K1eT3j-=QTjL_kVy6BC6sYZzQ@mail.gmail.com>
+References: <20180929103453.12025-1-cyphar@cyphar.com> <20180929131534.24472-1-cyphar@cyphar.com>
+ <CAG48ez30WJhbsro2HOc_DR7V91M+hNFzBP5ogRMZaxbAORvqzg@mail.gmail.com>
+ <20181004162611.vdlujbdguvagalpt@ryuk> <CAG48ez2u--Wac7d9n3idC92Pd-M40QzYtR6FKR8PAYr=VQHUBQ@mail.gmail.com>
+ <20181005150728.mgqnpkbukpeu3bsm@ryuk> <CAG48ez3FG0axt92F=+vDe1Q=kj-YngmCgFqDET7E2xCE1mOgeg@mail.gmail.com>
+ <20181006021002.6vzsdwd3klddbmji@ryuk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181006021002.6vzsdwd3klddbmji@ryuk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: cyphar@cyphar.com
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Al Viro <viro@zeniv.linux.org.uk>, jlayton@kernel.org, Bruce Fields <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, shuah@kernel.org, David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, linux-kselftest@vger.kernel.org, dev@opencontainers.org, containers@lists.linux-foundation.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Check that iterating two separate hash maps produces the same
-order of keys if BPF_F_ZERO_SEED is used.
+On Sat, Oct 6, 2018 at 4:10 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> On 2018-10-05, Jann Horn <jannh@google.com> wrote:
+> > > What if we took rename_lock (call it nd->r_seq) at the start of the
+> > > resolution, and then only tried the __d_path-style check
+> > >
+> > >   if (read_seqretry(&rename_lock, nd->r_seq) ||
+> > >       read_seqretry(&mount_lock, nd->m_seq))
+> > >           /* do the __d_path lookup. */
+> > >
+> > > That way you would only hit the slow path if there were concurrent
+> > > renames or mounts *and* you are doing a path resolution with
+> > > AT_THIS_ROOT or AT_BENEATH. I've attached a modified patch that does
+> > > this (and after some testing it also appears to work).
+> >
+> > Yeah, I think that might do the job.
+>
+> *phew* I was all out of other ideas. :P
+>
+> > > ---
+> > >  fs/namei.c | 49 ++++++++++++++++++++++++++++++++++++++++++++++---
+> > >  1 file changed, 46 insertions(+), 3 deletions(-)
+> > >
+> > > diff --git a/fs/namei.c b/fs/namei.c
+> > > index 6f995e6de6b1..12c9be175cb4 100644
+> > > --- a/fs/namei.c
+> > > +++ b/fs/namei.c
+> > > @@ -493,7 +493,7 @@ struct nameidata {
+> > >         struct path     root;
+> > >         struct inode    *inode; /* path.dentry.d_inode */
+> > >         unsigned int    flags;
+> > > -       unsigned        seq, m_seq;
+> > > +       unsigned        seq, m_seq, r_seq;
+> > >         int             last_type;
+> > >         unsigned        depth;
+> > >         int             total_link_count;
+> > > @@ -1375,6 +1375,27 @@ static int follow_dotdot_rcu(struct nameidata *nd)
+> > >                                 return -EXDEV;
+> > >                         break;
+> > >                 }
+> > > +               if (unlikely((nd->flags & (LOOKUP_BENEATH | LOOKUP_CHROOT)) &&
+> > > +                            (read_seqretry(&rename_lock, nd->r_seq) ||
+> > > +                             read_seqretry(&mount_lock, nd->m_seq)))) {
+> > > +                       char *pathbuf, *pathptr;
+> > > +
+> > > +                       nd->r_seq = read_seqbegin(&rename_lock);
+> > > +                       /* Cannot take m_seq here. */
+> > > +
+> > > +                       pathbuf = kmalloc(PATH_MAX, GFP_ATOMIC);
+> > > +                       if (!pathbuf)
+> > > +                               return -ECHILD;
+> > > +                       pathptr = __d_path(&nd->path, &nd->root, pathbuf, PATH_MAX);
+> > > +                       kfree(pathbuf);
+> >
+> > You're doing this check before actually looking up the parent, right?
+> > So as long as I don't trigger the "path_equal(&nd->path, &nd->root)"
+> > check that you do for O_BENEATH, escaping up by one level is possible,
+> > right? You should probably move this check so that it happens after
+> > following "..".
+>
+> Yup, you're right. I'll do that.
+>
+> > (Also: I assume that you're going to get rid of that memory allocation
+> > in a future version.)
+>
+> Sure. Would you prefer adding some scratch space in nameidata, or that I
+> change __d_path so it accepts NULL as the buffer (and thus it doesn't
+> actually do any string operations)?
 
-Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
----
- tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
- 1 file changed, 57 insertions(+), 11 deletions(-)
+Well, I think accepting a NULL buffer would be much cleaner; but keep
+in mind that I'm just someone making suggestions, Al Viro is the one
+who has to like your code. :P
 
-diff --git a/tools/testing/selftests/bpf/test_maps.c b/tools/testing/selftests/bpf/test_maps.c
-index 9b552c0fc47d..a8d6af27803a 100644
---- a/tools/testing/selftests/bpf/test_maps.c
-+++ b/tools/testing/selftests/bpf/test_maps.c
-@@ -257,23 +257,35 @@ static void test_hashmap_percpu(int task, void *data)
- 	close(fd);
- }
- 
-+static int helper_fill_hashmap(int max_entries)
-+{
-+	int i, fd, ret;
-+	long long key, value;
-+
-+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
-+			    max_entries, map_flags);
-+	CHECK(fd < 0,
-+	      "failed to create hashmap",
-+	      "err: %s, flags: 0x%x\n", strerror(errno), map_flags);
-+
-+	for (i = 0; i < max_entries; i++) {
-+		key = i; value = key;
-+		ret = bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST);
-+		CHECK(ret != 0,
-+		      "can't update hashmap",
-+		      "err: %s\n", strerror(ret));
-+	}
-+
-+	return fd;
-+}
-+
- static void test_hashmap_walk(int task, void *data)
- {
- 	int fd, i, max_entries = 1000;
- 	long long key, value, next_key;
- 	bool next_key_valid = true;
- 
--	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
--			    max_entries, map_flags);
--	if (fd < 0) {
--		printf("Failed to create hashmap '%s'!\n", strerror(errno));
--		exit(1);
--	}
--
--	for (i = 0; i < max_entries; i++) {
--		key = i; value = key;
--		assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
--	}
-+	fd = helper_fill_hashmap(max_entries);
- 
- 	for (i = 0; bpf_map_get_next_key(fd, !i ? NULL : &key,
- 					 &next_key) == 0; i++) {
-@@ -305,6 +317,39 @@ static void test_hashmap_walk(int task, void *data)
- 	close(fd);
- }
- 
-+static void test_hashmap_zero_seed(void)
-+{
-+	int i, first, second, old_flags;
-+	long long key, next_first, next_second;
-+
-+	old_flags = map_flags;
-+	map_flags |= BPF_F_ZERO_SEED;
-+
-+	first = helper_fill_hashmap(3);
-+	second = helper_fill_hashmap(3);
-+
-+	for (i = 0; ; i++) {
-+		void *key_ptr = !i ? NULL : &key;
-+
-+		if (bpf_map_get_next_key(first, key_ptr, &next_first) != 0)
-+			break;
-+
-+		CHECK(bpf_map_get_next_key(second, key_ptr, &next_second) != 0,
-+		      "next_key for second map must succeed",
-+		      "key_ptr: %p", key_ptr);
-+		CHECK(next_first != next_second,
-+		      "keys must match",
-+		      "i: %d first: %lld second: %lld\n", i,
-+		      next_first, next_second);
-+
-+		key = next_first;
-+	}
-+
-+	map_flags = old_flags;
-+	close(first);
-+	close(second);
-+}
-+
- static void test_arraymap(int task, void *data)
- {
- 	int key, next_key, fd;
-@@ -1417,6 +1462,7 @@ static void run_all_tests(void)
- 	test_hashmap(0, NULL);
- 	test_hashmap_percpu(0, NULL);
- 	test_hashmap_walk(0, NULL);
-+	test_hashmap_zero_seed();
- 
- 	test_arraymap(0, NULL);
- 	test_arraymap_percpu(0, NULL);
--- 
-2.17.1
+> > >                 if (nd->path.dentry != nd->path.mnt->mnt_root) {
+> > >                         int ret = path_parent_directory(&nd->path);
+> > >                         if (ret)
+> > > @@ -2269,6 +2311,9 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+> > >         nd->last_type = LAST_ROOT; /* if there are only slashes... */
+> > >         nd->flags = flags | LOOKUP_JUMPED | LOOKUP_PARENT;
+> > >         nd->depth = 0;
+> > > +       nd->m_seq = read_seqbegin(&mount_lock);
+> > > +       nd->r_seq = read_seqbegin(&rename_lock);
+> >
+> > This means that now, attempting to perform a lookup while something is
+> > holding the rename_lock will spin on the lock. I don't know whether
+> > that's a problem in practice though. Does anyone on this thread know
+> > whether this is problematic?
+>
+> I could make it so that we only take &rename_lock
+>   if (nd->flags & (FOLLOW_BENEATH | FOLLOW_CHROOT)),
+> since it's not used outside of that path.
+
+I think that might be a sensible change; but as I said, I don't
+actually know whether it's necessary, and it would be very helpful if
+someone who actually knows commented on this.
