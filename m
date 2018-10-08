@@ -1,386 +1,304 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: Re: [RFC v4 1/1] ns: add binfmt_misc to the user namespace
-Date: Sun, 7 Oct 2018 18:11:34 -0700
-Message-ID: <20181008011133.GB17019@gmail.com>
-References: <20181006193546.29340-1-laurent@vivier.eu>
- <20181006193546.29340-2-laurent@vivier.eu>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Subject: Re: [PATCH bpf-next 1/6] bpf: introduce BPF_PROG_TYPE_FILE_FILTER
+Date: Mon, 8 Oct 2018 11:06:12 +0200
+Message-ID: <21525bdd-f36e-e667-c30c-0b1d96d4cfaa@digikod.net>
+References: <20181004025750.498303-1-ast@kernel.org>
+ <20181004025750.498303-2-ast@kernel.org>
+ <CAG48ez2zuJP0qOSU5QAER1xP56d5SvC0HTrM0Yh3wkKEQZ9R3A@mail.gmail.com>
+ <20181008022210.33ljgryhodzunf5l@ast-mbp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181006193546.29340-2-laurent@vivier.eu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, Dmitry Safonov <dima@arista.com>, containers@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="ZuFo3URFNuj67zDUHuDr3ZZmLnn0vPwt3"
+Return-path: <kernel-hardening-return-14149-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <20181008022210.33ljgryhodzunf5l@ast-mbp>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Jann Horn <jannh@google.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Network Development <netdev@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, kernel-team@fb.com, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-security-module <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 06, 2018 at 09:35:46PM +0200, Laurent Vivier wrote:
-> This patch allows to have a different binfmt_misc configuration
-> for each new user namespace. By default, the binfmt_misc configuration
-> is the one of the previous level, but if the binfmt_misc filesystem is
-> mounted in the new namespace a new empty binfmt instance is created and
-> used in this namespace.
-> 
-> For instance, using "unshare" we can start a chroot of an another
-> architecture and configure the binfmt_misc interpreter without being root
-> to run the binaries in this chroot.
-> 
-> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
-> ---
->  fs/binfmt_misc.c               | 99 ++++++++++++++++++++++++----------
->  include/linux/user_namespace.h | 13 +++++
->  kernel/user.c                  | 13 +++++
->  kernel/user_namespace.c        |  7 +++
->  4 files changed, 104 insertions(+), 28 deletions(-)
-> 
-> diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-> index aa4a7a23ff99..1beefafcb416 100644
-> --- a/fs/binfmt_misc.c
-> +++ b/fs/binfmt_misc.c
-> @@ -38,9 +38,6 @@ enum {
->  	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
->  };
->  
-> -static LIST_HEAD(entries);
-> -static int enabled = 1;
-> -
->  enum {Enabled, Magic};
->  #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
->  #define MISC_FMT_OPEN_BINARY (1 << 30)
-> @@ -60,10 +57,7 @@ typedef struct {
->  	struct file *interp_file;
->  } Node;
->  
-> -static DEFINE_RWLOCK(entries_lock);
->  static struct file_system_type bm_fs_type;
-> -static struct vfsmount *bm_mnt;
-> -static int entry_count;
->  
->  /*
->   * Max length of the register string.  Determined by:
-> @@ -80,18 +74,28 @@ static int entry_count;
->   */
->  #define MAX_REGISTER_LENGTH 1920
->  
-> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
-> +{
-> +	while (ns) {
-> +		if (ns->binfmt_ns)
-> +			return ns->binfmt_ns;
-> +		ns = ns->parent;
-> +	}
-> +	return NULL;
-> +}
-> +
->  /*
->   * Check if we support the binfmt
->   * if we do, return the node, else NULL
->   * locking is done in load_misc_binary
->   */
-> -static Node *check_file(struct linux_binprm *bprm)
-> +static Node *check_file(struct binfmt_namespace *ns, struct linux_binprm *bprm)
->  {
->  	char *p = strrchr(bprm->interp, '.');
->  	struct list_head *l;
->  
->  	/* Walk all the registered handlers. */
-> -	list_for_each(l, &entries) {
-> +	list_for_each(l, &ns->entries) {
->  		Node *e = list_entry(l, Node, list);
->  		char *s;
->  		int j;
-> @@ -133,17 +137,18 @@ static int load_misc_binary(struct linux_binprm *bprm)
->  	struct file *interp_file = NULL;
->  	int retval;
->  	int fd_binary = -1;
-> +	struct binfmt_namespace *ns = binfmt_ns(current_user_ns());
->  
->  	retval = -ENOEXEC;
-> -	if (!enabled)
-> +	if (!ns->enabled)
->  		return retval;
->  
->  	/* to keep locking time low, we copy the interpreter string */
-> -	read_lock(&entries_lock);
-> -	fmt = check_file(bprm);
-> +	read_lock(&ns->entries_lock);
-> +	fmt = check_file(ns, bprm);
->  	if (fmt)
->  		dget(fmt->dentry);
-> -	read_unlock(&entries_lock);
-> +	read_unlock(&ns->entries_lock);
->  	if (!fmt)
->  		return retval;
->  
-> @@ -609,19 +614,19 @@ static void bm_evict_inode(struct inode *inode)
->  	kfree(e);
->  }
->  
-> -static void kill_node(Node *e)
-> +static void kill_node(struct binfmt_namespace *ns, Node *e)
->  {
->  	struct dentry *dentry;
->  
-> -	write_lock(&entries_lock);
-> +	write_lock(&ns->entries_lock);
->  	list_del_init(&e->list);
-> -	write_unlock(&entries_lock);
-> +	write_unlock(&ns->entries_lock);
->  
->  	dentry = e->dentry;
->  	drop_nlink(d_inode(dentry));
->  	d_drop(dentry);
->  	dput(dentry);
-> -	simple_release_fs(&bm_mnt, &entry_count);
-> +	simple_release_fs(&ns->bm_mnt, &ns->entry_count);
->  }
->  
->  /* /<entry> */
-> @@ -651,6 +656,9 @@ static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
->  	struct dentry *root;
->  	Node *e = file_inode(file)->i_private;
->  	int res = parse_command(buffer, count);
-> +	struct binfmt_namespace *ns;
-> +
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
->  
->  	switch (res) {
->  	case 1:
-> @@ -667,7 +675,7 @@ static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
->  		inode_lock(d_inode(root));
->  
->  		if (!list_empty(&e->list))
-> -			kill_node(e);
-> +			kill_node(ns, e);
->  
->  		inode_unlock(d_inode(root));
->  		break;
-> @@ -693,6 +701,7 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	struct inode *inode;
->  	struct super_block *sb = file_inode(file)->i_sb;
->  	struct dentry *root = sb->s_root, *dentry;
-> +	struct binfmt_namespace *ns;
->  	int err = 0;
->  
->  	e = create_entry(buffer, count);
-> @@ -716,7 +725,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	if (!inode)
->  		goto out2;
->  
-> -	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
-> +	err = simple_pin_fs(&bm_fs_type, &ns->bm_mnt,
-> +			    &ns->entry_count);
->  	if (err) {
->  		iput(inode);
->  		inode = NULL;
-> @@ -725,12 +736,16 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  
->  	if (e->flags & MISC_FMT_OPEN_FILE) {
->  		struct file *f;
-> +		const struct cred *old_cred;
->  
-> +		old_cred = override_creds(file->f_cred);
->  		f = open_exec(e->interpreter);
-> +		revert_creds(old_cred);
->  		if (IS_ERR(f)) {
->  			err = PTR_ERR(f);
->  			pr_notice("register: failed to install interpreter file %s\n", e->interpreter);
-> -			simple_release_fs(&bm_mnt, &entry_count);
-> +			simple_release_fs(&ns->bm_mnt,
-> +					  &ns->entry_count);
->  			iput(inode);
->  			inode = NULL;
->  			goto out2;
-> @@ -743,9 +758,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	inode->i_fop = &bm_entry_operations;
->  
->  	d_instantiate(dentry, inode);
-> -	write_lock(&entries_lock);
-> -	list_add(&e->list, &entries);
-> -	write_unlock(&entries_lock);
-> +	write_lock(&ns->entries_lock);
-> +	list_add(&e->list, &ns->entries);
-> +	write_unlock(&ns->entries_lock);
->  
->  	err = 0;
->  out2:
-> @@ -770,7 +785,9 @@ static const struct file_operations bm_register_operations = {
->  static ssize_t
->  bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
->  {
-> -	char *s = enabled ? "enabled\n" : "disabled\n";
-> +	struct binfmt_namespace *ns =
-> +				binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
-> +	char *s = ns->enabled ? "enabled\n" : "disabled\n";
->  
->  	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
->  }
-> @@ -778,25 +795,28 @@ bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
->  static ssize_t bm_status_write(struct file *file, const char __user *buffer,
->  		size_t count, loff_t *ppos)
->  {
-> +	struct binfmt_namespace *ns;
->  	int res = parse_command(buffer, count);
->  	struct dentry *root;
->  
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
->  	switch (res) {
->  	case 1:
->  		/* Disable all handlers. */
-> -		enabled = 0;
-> +		ns->enabled = 0;
->  		break;
->  	case 2:
->  		/* Enable all handlers. */
-> -		enabled = 1;
-> +		ns->enabled = 1;
->  		break;
->  	case 3:
->  		/* Delete all handlers. */
->  		root = file_inode(file)->i_sb->s_root;
->  		inode_lock(d_inode(root));
->  
-> -		while (!list_empty(&entries))
-> -			kill_node(list_first_entry(&entries, Node, list));
-> +		while (!list_empty(&ns->entries))
-> +			kill_node(ns, list_first_entry(&ns->entries,
-> +						       Node, list));
->  
->  		inode_unlock(d_inode(root));
->  		break;
-> @@ -838,7 +858,29 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
->  static struct dentry *bm_mount(struct file_system_type *fs_type,
->  	int flags, const char *dev_name, void *data)
->  {
-> -	return mount_single(fs_type, flags, data, bm_fill_super);
-> +	struct user_namespace *ns = current_user_ns();
-> +
-> +	/* create a new binfmt namespace
-> +	 * if we are not in the first user namespace
-> +	 * but the binfmt namespace is the first one
-> +	 */
-> +	if (ns->binfmt_ns == NULL) {
-> +		struct binfmt_namespace *new_ns;
-> +
-> +		new_ns = kmalloc(sizeof(struct binfmt_namespace),
-> +				 GFP_KERNEL);
-> +		if (new_ns == NULL)
-> +			return ERR_PTR(-ENOMEM);
-> +		INIT_LIST_HEAD(&new_ns->entries);
-> +		new_ns->enabled = 1;
-> +		rwlock_init(&new_ns->entries_lock);
-> +		new_ns->bm_mnt = NULL;
-> +		new_ns->entry_count = 0;
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--ZuFo3URFNuj67zDUHuDr3ZZmLnn0vPwt3
+Content-Type: multipart/mixed; boundary="s8J97wK6jodOSvZAps7GdU01wi6LfJXeM";
+ protected-headers="v1"
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>,
+ Jann Horn <jannh@google.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, "David S. Miller"
+ <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>,
+ Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>,
+ Network Development <netdev@vger.kernel.org>,
+ kernel list <linux-kernel@vger.kernel.org>, kernel-team@fb.com,
+ Kernel Hardening <kernel-hardening@lists.openwall.com>,
+ linux-security-module <linux-security-module@vger.kernel.org>,
+ Linux API <linux-api@vger.kernel.org>
+Message-ID: <21525bdd-f36e-e667-c30c-0b1d96d4cfaa@digikod.net>
+Subject: Re: [PATCH bpf-next 1/6] bpf: introduce BPF_PROG_TYPE_FILE_FILTER
+References: <20181004025750.498303-1-ast@kernel.org>
+ <20181004025750.498303-2-ast@kernel.org>
+ <CAG48ez2zuJP0qOSU5QAER1xP56d5SvC0HTrM0Yh3wkKEQZ9R3A@mail.gmail.com>
+ <20181008022210.33ljgryhodzunf5l@ast-mbp>
+In-Reply-To: <20181008022210.33ljgryhodzunf5l@ast-mbp>
 
-I think we need a memory barrier here to be sure that new_ns is
-comletely initialized before someone will be able to see it.
+--s8J97wK6jodOSvZAps7GdU01wi6LfJXeM
+Content-Type: text/plain; charset=UTF-8
+Content-Language: en-US
+Content-Transfer-Encoding: quoted-printable
 
-		smp_wmb();
 
-> +		ns->binfmt_ns = new_ns;
-> +	}
-> +
-> +	return mount_ns(fs_type, flags, data, ns, ns,
-> +			bm_fill_super);
->  }
->  
->  static struct linux_binfmt misc_format = {
-> @@ -849,6 +891,7 @@ static struct linux_binfmt misc_format = {
->  static struct file_system_type bm_fs_type = {
->  	.owner		= THIS_MODULE,
->  	.name		= "binfmt_misc",
-> +	.fs_flags	= FS_USERNS_MOUNT,
->  	.mount		= bm_mount,
->  	.kill_sb	= kill_litter_super,
->  };
-> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-> index d6b74b91096b..5c6e7e63b97e 100644
-> --- a/include/linux/user_namespace.h
-> +++ b/include/linux/user_namespace.h
-> @@ -52,6 +52,16 @@ enum ucount_type {
->  	UCOUNT_COUNTS,
->  };
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +struct binfmt_namespace {
-> +	struct list_head entries;
-> +	rwlock_t entries_lock;
-> +	int enabled;
-> +	struct vfsmount *bm_mnt;
-> +	int entry_count;
-> +} __randomize_layout;
-> +#endif
-> +
->  struct user_namespace {
->  	struct uid_gid_map	uid_map;
->  	struct uid_gid_map	gid_map;
-> @@ -76,6 +86,9 @@ struct user_namespace {
->  #endif
->  	struct ucounts		*ucounts;
->  	int ucount_max[UCOUNT_COUNTS];
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	struct binfmt_namespace *binfmt_ns;
-> +#endif
->  } __randomize_layout;
->  
->  struct ucounts {
-> diff --git a/kernel/user.c b/kernel/user.c
-> index 0df9b1640b2a..912916d435aa 100644
-> --- a/kernel/user.c
-> +++ b/kernel/user.c
-> @@ -19,6 +19,16 @@
->  #include <linux/user_namespace.h>
->  #include <linux/proc_ns.h>
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +static struct binfmt_namespace init_binfmt_ns = {
-> +	.entries = LIST_HEAD_INIT(init_binfmt_ns.entries),
-> +	.enabled = 1,
-> +	.entries_lock = __RW_LOCK_UNLOCKED(init_binfmt_ns.entries_lock),
-> +	.bm_mnt = NULL,
-> +	.entry_count = 0,
-> +};
-> +#endif
-> +
->  /*
->   * userns count is 1 for root user, 1 for init_uts_ns,
->   * and 1 for... ?
-> @@ -66,6 +76,9 @@ struct user_namespace init_user_ns = {
->  	.persistent_keyring_register_sem =
->  	__RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
->  #endif
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	.binfmt_ns = &init_binfmt_ns,
-> +#endif
->  };
->  EXPORT_SYMBOL_GPL(init_user_ns);
->  
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index e5222b5fb4fe..da4950282ea1 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -140,6 +140,10 @@ int create_user_ns(struct cred *new)
->  	if (!setup_userns_sysctls(ns))
->  		goto fail_keyring;
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	ns->binfmt_ns = NULL;
-> +#endif
-> +
->  	set_cred_user_ns(new, ns);
->  	return 0;
->  fail_keyring:
-> @@ -195,6 +199,9 @@ static void free_user_ns(struct work_struct *work)
->  			kfree(ns->projid_map.forward);
->  			kfree(ns->projid_map.reverse);
->  		}
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +		kfree(ns->binfmt_ns);
-> +#endif
->  		retire_userns_sysctls(ns);
->  #ifdef CONFIG_PERSISTENT_KEYRINGS
->  		key_put(ns->persistent_keyring_register);
-> -- 
-> 2.17.1
-> 
+On 10/8/18 04:22, Alexei Starovoitov wrote:
+> On Mon, Oct 08, 2018 at 02:56:15AM +0200, Jann Horn wrote:
+>> +cc kernel-hardening because this is related to sandboxing
+>> +cc Micka=C3=ABl Sala=C3=BCn because this looks related to his Landloc=
+k proposal
+
+Thanks for the CC. Because this patch series is an access-control
+mechanism, it will undoubtedly interest LSM folks as well.
+
+Here is the full thread:
+https://lore.kernel.org/lkml/20181004025750.498303-1-ast@kernel.org/
+
+>=20
+> It may seem that this work overlaps with landlock, but the goals
+> are different. Landlock is LSM based to act as _security_ framework
+> with end goal being available to unpriv users.
+
+Right, one of the end goal of Landlock is to make most of its
+access-control features available to unprivileged processes. However,
+some of them may require higher privileges, but we should minimize them
+as much as possible to not end up with the SUID-binary (or
+CAP_SYS_ADMIN) syndrome.
+
+> While this cgroup-bpf hook is expected to stay root only,
+> since we're trying to restrict what containers can do in a trusted envi=
+ronment.
+> 'sandboxing' is overloaded word.
+> Sandboxing for security and sandboxing of trusted root are different.
+
+Sure we must treat them in a different manner but we must take care of
+which capability this sandboxing mechanism really need, and hopefully
+not root-like ones, especially for a container.
+
+As a reminder, using cgroups to sandbox processes is definitely a use
+case for Landlock, as well as the process hierarchy one (seccomp-like).
+I implemented sandboxing with cgroups in a previous patch series, but
+put it aside for now to minimize the number of patches.
+
+>=20
+>> On Mon, Oct 8, 2018 at 2:30 AM Alexei Starovoitov <ast@kernel.org> wro=
+te:
+>>> Similar to networking sandboxing programs and cgroup-v2 based hooks
+>>> (BPF_CGROUP_INET_[INGRESS|EGRESS,] BPF_CGROUP_INET[4|6]_[BIND|CONNECT=
+], etc)
+>>> introduce basic per-container sandboxing for file access via
+>>> new BPF_PROG_TYPE_FILE_FILTER program type that attaches after
+>>> security_file_open() LSM hook and works as additional file_open filte=
+r.
+>>> The new cgroup bpf hook is called BPF_CGROUP_FILE_OPEN.
+>>
+>> Why do_dentry_open() specifically, and nothing else? If you want to
+>> filter open, wouldn't you also want to filter a bunch of other
+>> filesystem operations with LSM hooks, like rename, unlink, truncate
+>> and so on? Landlock benefits there from re-using the existing security=
+
+>> hooks.
+>=20
+> It may make sense to extend in the future, but we don't have clear
+> user cases for rename/unlink/truncate at this point.
+
+I guess the users who ask for the current features will come with new
+ones, which will move towards the same goal as Landlock.
+
+>=20
+> As you can see the amount of pushback even for basic file access is hig=
+h.
+> Hence I don't think the landlock can be upstreamed in the current form,=
+
+> since it touches VFS layer a lot more than this patch.
+
+That is not true for the main part. The only patch from Landlock
+touching the FS subsystem is to add a new LSM hook. This was NAKed by Al
+but I guess mostly because of misunderstanding. I'll send a new specific
+patch to the FS subsystem soon to properly explain the impact on path
+lookup and why it doesn't expose more that userspace have already access.=
+
+
+Regarding the upstreaming concern, if I remember correctly, the net/BPF
+and the LSM maintainers are (mostly ?) OK. The feedback I got (you
+included) was good.
+
+I can definitely create a lighter version of Landlock with your use
+cases in mind. There is already all the necessary building blocks: the
+BPF (un-)privileged handling, the file checks (see the FS_PICK subtype)
+and the cgroups handling. I may even be easier to upstream (and answer
+Casey's request) to make the patch series smaller.
+
+> It's intrusive to LSM, and adds new concepts to BPF as well.
+> This work fits into existing BPF machinery and minimally intrusive to V=
+FS.
+> I hope we can find a common ground with Al regarding what file
+> access primitives are exposed to BPF side.
+> Once we agree on that the landlock can piggy back on this work
+> and extend it to all file-based LSM hooks.
+
+Can you explain your thought about piggy backing? If your patch is
+included, Landlock will still need to add new BPF prog types, and will
+still be an LSM (which is designed to handle access-control).
+
+> The first step for everyone interested in bpf-based 'sandboxing'
+> is to figure out VFS<->BPF interface.
+> If you or Mickael have suggestions on what bpf progs should and should =
+not
+> see at these hooks, it's a good time to discuss.
+> I believe the fields proposed are the obvious minimum.
+
+In a nutshell, Landlock rely on an inode map, which contains references
+to inodes. These references/handles can then be used to "compare" with a
+requested inode. This way, we can limit the checks to what is already
+available to the process which loaded the map. I suggest to not use
+these hardcoded fields but use a BFP helper with a file handle as
+argument and dedicated flags, as I did in a previous version of Landlock
+(which I planned to upstream as a new future feature).
+
+>=20
+>>> Just like other cgroup-bpf programs new BPF_PROG_TYPE_FILE_FILTER typ=
+e
+>>> is only available to root.
+>>>
+>>> This program type has access to single argument 'struct bpf_file_info=
+'
+>>> that contains standard sys_stat fields:
+>>> struct bpf_file_info {
+>>>         __u64 inode;
+>>>         __u32 dev_major;
+>>>         __u32 dev_minor;
+>>>         __u32 fs_magic;
+>>>         __u32 mnt_id;
+>>>         __u32 nlink;
+>>>         __u32 mode;     /* file mode S_ISDIR, S_ISLNK, 0755, etc */
+>>>         __u32 flags;    /* open flags O_RDWR, O_CREAT, etc */
+>>> };
+>>> Other file attributes can be added in the future to the end of this s=
+truct
+>>> without breaking bpf programs.
+>>>
+>>> For debugging introduce bpf_get_file_path() helper that returns
+>>> NUL-terminated full path of the file. It should never be used for san=
+dboxing.
+
+Well, I'm convinced it *will* be used for sandboxing. Once a feature is
+available, it is too late to forbid users to use it the way they want,
+even if you warn them about security issues=E2=80=A6
+
+>>>
+>>> Use cases:
+>>> - disallow certain FS types within containers (fs_magic =3D=3D CGROUP=
+2_SUPER_MAGIC)
+>>> - restrict permissions in particular mount (mnt_id =3D=3D X && (flags=
+ & O_RDWR))
+>>> - disallow access to hard linked sensitive files (nlink > 1 && mode =3D=
+=3D 0700)
+>>> - disallow access to world writeable files (mode =3D=3D 0..7)
+>>> - disallow access to given set of files (dev_major =3D=3D X && dev_mi=
+nor =3D=3D Y && inode =3D=3D Z)
+
+These use cases are interesting and should help to harden containers.
+They are definitely in the scope of what Landlock can do.
+
+However, I would like to see which capabilities are needed to access
+these properties.
+
+>>
+>> That last one sounds weird. It doesn't work if you want to ban access
+>> to a whole directory at once. And in general, highly specific
+>> blocklists make me nervous, because if you add anything new and forget=
+
+>> to put it on the list, you have a problem.
+>=20
+> In the upcoming V2 of the patches the direct exposure to dev and inode =
+will be removed.
+> And instead the opaque 'struct file_handle' will be available to bpf pr=
+ogs.
+> The use case is indeed to restrict access to specific blacklist of file=
+s.
+> The user space will collect the set of files via sys_name_to_handle_at(=
+),
+> then store the fhandles in bpf map, and bpf prog will consult the map
+> to deny the access.
+> It's not a replacement for ACLs, directory permissions, etc. The use ca=
+se
+> is to prevent trusted containers messing up the environment.
+> The continuous integration system needs to run some containers (and tes=
+ts inside them)
+> with root privs. When these jobs mess up the system the subsequent jobs=
+ may incorrectly
+> fail. We believe that this cgroup based container enforcement will solv=
+e this use case
+> and similar other use cases when containers are trusted, but could be b=
+uggy when
+> it comes to file access.
+>=20
+> To recap what I'm implementing in V2:
+> 1.
+> struct bpf_file_info {
+>         __u32 fs_magic; // file->f_inode->i_sb->s_magic
+>         __u32 mnt_id;   // real_mount(file->f_path.mnt)->mnt_id
+>         __u32 nlink;    // file->f_inode->i_nlink
+>         __u32 mode;     // file->f_inode->i_mode
+>         __u32 flags;    // file->f_flags
+> };
+> I double checked what VFS layer does with above fields and I think
+> there is no additional user space exposure will be made when such
+> fields are seen by bpf progs.
+> But since I'm not a VFS expert, I'd like Al to confirm.
+>=20
+> 2.
+> bpf_get_file_handle(struct bpf_file_info *ctx, struct file_handle *fh, =
+int fh_size);
+> helper that bpf prog will use to obtain fh of the file about to be open=
+=2E
+
+This looks like Landlock. :)
+
+>=20
+> 3.
+> bpf_get_file_statx(struct bpf_file_info *ctx, struct statx *sx, int siz=
+e, int flags);
+> Though struct statx is 256 bytes, and the helper would have to touch al=
+l bytes
+> I couldn't figure out the faster way to get to inode/dev/uid of the giv=
+en file
+> that will work on all underlying FSes.
+
+This looks like a previous helper I implemented, but tried to avoid
+because of security issues (mostly for unpriv processes).
+
+>=20
+> Thoughts?
+>=20
+>=20
+
+
+--s8J97wK6jodOSvZAps7GdU01wi6LfJXeM--
+
+--ZuFo3URFNuj67zDUHuDr3ZZmLnn0vPwt3
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCgAdFiEEUysCyY8er9Axt7hqIt7+33O9apUFAlu7HgQACgkQIt7+33O9
+apX6vwf/Yoz6uZpV/fRRnoY7ZggduD1e+0cvDjXg4I7IYibXzjS7yOgGOyE1VKZQ
+70tZD8sO8txFBTRppcIoGsfK/NTL2DMyf7dbdNzcmV4k+JODkOCf8pIpcDdiw8sL
+QZQ6yJbAhWfcc7ZWsnkEeiBVQ4s1lulpFCSLSsw8eCUK6x96Kh2FSf5jOXf27Fdb
+C68ckQyeSuEMpU95btYIERZkBfCqohawcoBZor+CqNBLBcxWCU6SrivwkUf+08nP
+PhcA2bmjUriXoUIEXj5J28GUKK5sAAxles89DO88TPNxKr/A46RivVCgsEMG3R+V
+wn6D7BccQ8sb9Qt9pGcJcN4uUoeTBA==
+=Xjv6
+-----END PGP SIGNATURE-----
+
+--ZuFo3URFNuj67zDUHuDr3ZZmLnn0vPwt3--
