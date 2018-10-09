@@ -1,80 +1,137 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v3 3/3] namei: aggressively check for nd->root escape on
- ".." resolution
-Date: Tue, 9 Oct 2018 18:46:41 +0200
-Message-ID: <CAG48ez0TeT7=SC7rxNC6RA4ALUcqfRrewx9RYtg9PwFkmy044A@mail.gmail.com>
-References: <20181009070230.12884-1-cyphar@cyphar.com> <20181009070230.12884-4-cyphar@cyphar.com>
- <CAG48ez3Ae5b20g2UquekfBNaUw1tLt4nWy2pYm-LNRMbDVpHfA@mail.gmail.com> <20181009153728.2altaqxclntvyc7b@mikami>
+Subject: Re: [RFC v5 1/1] ns: add binfmt_misc to the user namespace
+Date: Tue, 9 Oct 2018 18:53:22 +0200
+Message-ID: <CAG48ez0pAxC+yetPfM+XyS8kfqA4hw1hxjKG55gbF-4qcNWUiA@mail.gmail.com>
+References: <20181009103752.21482-1-laurent@vivier.eu> <20181009103752.21482-2-laurent@vivier.eu>
+ <f14ce318-5a1a-06f3-2e90-91220f39e74b@virtuozzo.com> <bc11ca64-8616-f06a-c1fa-c76511e60257@vivier.eu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181009153728.2altaqxclntvyc7b@mikami>
+In-Reply-To: <bc11ca64-8616-f06a-c1fa-c76511e60257@vivier.eu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: asarai@suse.de
-Cc: cyphar@cyphar.com, Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, jlayton@kernel.org, Bruce Fields <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Laurent Vivier <laurent@vivier.eu>
+Cc: ktkhai@virtuozzo.com, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, dima@arista.com, Linux API <linux-api@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, containers@lists.linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 9, 2018 at 5:36 PM Aleksa Sarai <asarai@suse.de> wrote:
-> On 2018-10-09, 'Jann Horn' via dev <jannh@google.com> wrote:
-> > On Tue, Oct 9, 2018 at 9:03 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > > This patch allows for AT_BENEATH and AT_THIS_ROOT to safely permit ".."
-> > > resolution (in the case of AT_BENEATH the resolution will still fail if
-> > > ".." resolution would resolve a path outside of the root -- while
-> > > AT_THIS_ROOT will chroot(2)-style scope it). "proclink" jumps are still
-> > > disallowed entirely because now they could result in inconsistent
-> > > behaviour if resolution encounters a subsequent "..".
-> > >
-> > > The need for this patch is explained by observing there is a fairly
-> > > easy-to-exploit race condition with chroot(2) (and thus by extension
-> > > AT_THIS_ROOT and AT_BENEATH) where a rename(2) of a path can be used to
-> > > "skip over" nd->root and thus escape to the filesystem above nd->root.
-> > >
-> > >   thread1 [attacker]:
-> > >     for (;;)
-> > >       renameat2(AT_FDCWD, "/a/b/c", AT_FDCWD, "/a/d", RENAME_EXCHANGE);
-> > >   thread2 [victim]:
-> > >     for (;;)
-> > >       openat(dirb, "b/c/../../etc/shadow", O_THISROOT);
-> > >
-> > > With fairly significant regularity, thread2 will resolve to
-> > > "/etc/shadow" rather than "/a/b/etc/shadow". There is also a similar
-> > > (though somewhat more privileged) attack using MS_MOVE.
-> > >
-> > > With this patch, such cases will be detected *during* ".." resolution
-> > > (which is the weak point of chroot(2) -- since walking *into* a
-> > > subdirectory tautologically cannot result in you walking *outside*
-> > > nd->root -- except through a bind-mount or "proclink"). By detecting
-> > > this at ".." resolution (rather than checking only at the end of the
-> > > entire resolution) we can both correct escapes by jumping back to the
-> > > root (in the case of AT_THIS_ROOT), as well as avoid revealing to
-> > > attackers the structure of the filesystem outside of the root (through
-> > > timing attacks for instance).
-> > >
-> > > In order to avoid a quadratic lookup with each ".." entry, we only
-> > > activate the slow path if a write through &rename_lock or &mount_lock
-> > > have occurred during path resolution (&rename_lock and &mount_lock are
-> > > re-taken to further optimise the lookup). Since the primary attack being
-> > > protected against is MS_MOVE or rename(2), not doing additional checks
-> > > unless a mount or rename have occurred avoids making the common case
-> > > slow.
-> > >
-> > > The use of __d_path here might seem suspect, but on further inspection
-> > > of the most important race (a path was *inside* the root but is now
-> > > *outside*), there appears to be no attack potential. If __d_path occurs
-> > > before the rename, then the path will be resolved but since the path was
-> > > originally inside the root there is no escape. Subsequent ".." jumps are
-> > > guaranteed to check __d_path reachable (by construction, &rename_lock or
-> > > &mount_lock must have been taken after __d_path returned),
+On Tue, Oct 9, 2018 at 6:45 PM Laurent Vivier <laurent@vivier.eu> wrote:
+> Le 09/10/2018 =C3=A0 18:15, Kirill Tkhai a =C3=A9crit :
+> > On 09.10.2018 13:37, Laurent Vivier wrote:
+> >> This patch allows to have a different binfmt_misc configuration
+> >> for each new user namespace. By default, the binfmt_misc configuration
+> >> is the one of the previous level, but if the binfmt_misc filesystem is
+> >> mounted in the new namespace a new empty binfmt instance is created an=
+d
+> >> used in this namespace.
+> >>
+> >> For instance, using "unshare" we can start a chroot of an another
+> >> architecture and configure the binfmt_misc interpreter without being r=
+oot
+> >> to run the binaries in this chroot.
+> >>
+> >> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+> >> ---
+> >>  fs/binfmt_misc.c               | 106 ++++++++++++++++++++++++--------=
+-
+> >>  include/linux/user_namespace.h |  13 ++++
+> >>  kernel/user.c                  |  13 ++++
+> >>  kernel/user_namespace.c        |   3 +
+> >>  4 files changed, 107 insertions(+), 28 deletions(-)
+> >>
+> >> diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
+> >> index aa4a7a23ff99..1e0029d097d9 100644
+> >> --- a/fs/binfmt_misc.c
+> >> +++ b/fs/binfmt_misc.c
+> ...
+> >> @@ -80,18 +74,32 @@ static int entry_count;
+> >>   */
+> >>  #define MAX_REGISTER_LENGTH 1920
+> >>
+> >> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
+> >> +{
+> >> +    struct binfmt_namespace *b_ns;
+> >> +
+> >> +    while (ns) {
+> >> +            b_ns =3D READ_ONCE(ns->binfmt_ns);
+> >> +            if (b_ns)
+> >> +                    return b_ns;
+> >> +            ns =3D ns->parent;
+> >> +    }
+> >> +    WARN_ON_ONCE(1);
+> >> +    return NULL;
+> >> +}
+> >> +
+> ...
+> >> @@ -823,12 +847,34 @@ static const struct super_operations s_ops =3D {
+> >>  static int bm_fill_super(struct super_block *sb, void *data, int sile=
+nt)
+> >>  {
+> >>      int err;
+> >> +    struct user_namespace *ns =3D sb->s_user_ns;
+> >>      static const struct tree_descr bm_files[] =3D {
+> >>              [2] =3D {"status", &bm_status_operations, S_IWUSR|S_IRUGO=
+},
+> >>              [3] =3D {"register", &bm_register_operations, S_IWUSR},
+> >>              /* last one */ {""}
+> >>      };
+> >>
+> >> +    /* create a new binfmt namespace
+> >> +     * if we are not in the first user namespace
+> >> +     * but the binfmt namespace is the first one
+> >> +     */
+> >> +    if (READ_ONCE(ns->binfmt_ns) =3D=3D NULL) {
+> >> +            struct binfmt_namespace *new_ns;
+> >> +
+> >> +            new_ns =3D kmalloc(sizeof(struct binfmt_namespace),
+> >> +                             GFP_KERNEL);
+> >> +            if (new_ns =3D=3D NULL)
+> >> +                    return -ENOMEM;
+> >> +            INIT_LIST_HEAD(&new_ns->entries);
+> >> +            new_ns->enabled =3D 1;
+> >> +            rwlock_init(&new_ns->entries_lock);
+> >> +            new_ns->bm_mnt =3D NULL;
+> >> +            new_ns->entry_count =3D 0;
+> >> +            /* ensure new_ns is completely initialized before sharing=
+ it */
+> >> +            smp_wmb();
 > >
-> > "after"? Don't you mean "before"? Otherwise I don't understand what
-> > you're saying here.
+> > (I haven't dived into patch logic, here just small barrier remark from =
+quick sight).
+> > smp_wmb() has no sense without paired smp_rmb() on the read side. Possi=
+ble,
+> > you want something like below in read hunk:
+> >
+> > +             b_ns =3D READ_ONCE(ns->binfmt_ns);
+> > +             if (b_ns) {
+> > +                     smp_rmb();
+> > +                     return b_ns;
+> > +             }
+> >
+> >
 >
-> I meant that the attacker doing the rename must've taken &rename_lock
-> or &mount_lock after __d_path returns in the target process (because the
-> race being examined is that the rename occurs *after* __d_path) and thus
-> are guaranteed to be detected).
+> The write barrier is here to ensure the structure is fully written
+> before we set the pointer.
 >
-> Maybe there's a better way to phrase what I mean...
+> I don't understand how read barrier can change something at this level,
+> IMHO the couple WRITE_ONCE()/READ_ONCE() should be enough to ensure we
+> have correctly initialized the pointer and the structure when we read
+> the pointer back.
+>
+> I think the pointer itself is the "barrier" to access the memory
+> modified before.
 
-Aah, I thought you were referring to what the victim process is doing,
-not what the racing attacker is doing.
+Things don't work that way on alpha, but that's why READ_ONCE()
+includes an smp_read_barrier_depends():
+
+#define __READ_ONCE(x, check)                                           \
+({                                                                      \
+        union { typeof(x) __val; char __c[1]; } __u;                    \
+        if (check)                                                      \
+                __read_once_size(&(x), __u.__c, sizeof(x));             \
+        else                                                            \
+                __read_once_size_nocheck(&(x), __u.__c, sizeof(x));     \
+        smp_read_barrier_depends(); /* Enforce dependency ordering from x *=
+/ \
+        __u.__val;                                                      \
+})
+#define READ_ONCE(x) __READ_ONCE(x, 1)
