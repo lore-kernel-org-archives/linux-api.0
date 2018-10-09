@@ -1,144 +1,89 @@
-From: Laurent Vivier <laurent@vivier.eu>
+From: Kirill Tkhai <ktkhai@virtuozzo.com>
 Subject: Re: [RFC v5 1/1] ns: add binfmt_misc to the user namespace
-Date: Tue, 9 Oct 2018 18:57:41 +0200
-Message-ID: <795fea1a-97bd-87f5-6a14-6d47a4e42f74@vivier.eu>
+Date: Tue, 9 Oct 2018 17:01:47 +0000
+Message-ID: <7d9d7846-d153-f328-f5b4-8dc9d9705339@virtuozzo.com>
 References: <20181009103752.21482-1-laurent@vivier.eu>
  <20181009103752.21482-2-laurent@vivier.eu>
  <f14ce318-5a1a-06f3-2e90-91220f39e74b@virtuozzo.com>
  <bc11ca64-8616-f06a-c1fa-c76511e60257@vivier.eu>
- <CAG48ez0pAxC+yetPfM+XyS8kfqA4hw1hxjKG55gbF-4qcNWUiA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez0pAxC+yetPfM+XyS8kfqA4hw1hxjKG55gbF-4qcNWUiA@mail.gmail.com>
+In-Reply-To: <bc11ca64-8616-f06a-c1fa-c76511e60257@vivier.eu>
 Content-Language: en-US
+Content-ID: <0247F71A93C55847856679BE251300BD@eurprd08.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: ktkhai@virtuozzo.com, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, dima@arista.com, Linux API <linux-api@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, containers@lists.linux-foundation.org
+To: Laurent Vivier <laurent@vivier.eu>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: Eric Biederman <ebiederm@xmission.com>, Dmitry Safonov <dima@arista.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Alexander Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "Andrei Vagin (C)" <avagin@gmail.com>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, Jann Horn <jannh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Le 09/10/2018 à 18:53, Jann Horn a écrit :
-> On Tue, Oct 9, 2018 at 6:45 PM Laurent Vivier <laurent@vivier.eu> wrote:
->> Le 09/10/2018 à 18:15, Kirill Tkhai a écrit :
->>> On 09.10.2018 13:37, Laurent Vivier wrote:
->>>> This patch allows to have a different binfmt_misc configuration
->>>> for each new user namespace. By default, the binfmt_misc configuration
->>>> is the one of the previous level, but if the binfmt_misc filesystem is
->>>> mounted in the new namespace a new empty binfmt instance is created and
->>>> used in this namespace.
->>>>
->>>> For instance, using "unshare" we can start a chroot of an another
->>>> architecture and configure the binfmt_misc interpreter without being root
->>>> to run the binaries in this chroot.
->>>>
->>>> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
->>>> ---
->>>>  fs/binfmt_misc.c               | 106 ++++++++++++++++++++++++---------
->>>>  include/linux/user_namespace.h |  13 ++++
->>>>  kernel/user.c                  |  13 ++++
->>>>  kernel/user_namespace.c        |   3 +
->>>>  4 files changed, 107 insertions(+), 28 deletions(-)
->>>>
->>>> diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
->>>> index aa4a7a23ff99..1e0029d097d9 100644
->>>> --- a/fs/binfmt_misc.c
->>>> +++ b/fs/binfmt_misc.c
->> ...
->>>> @@ -80,18 +74,32 @@ static int entry_count;
->>>>   */
->>>>  #define MAX_REGISTER_LENGTH 1920
->>>>
->>>> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
->>>> +{
->>>> +    struct binfmt_namespace *b_ns;
->>>> +
->>>> +    while (ns) {
->>>> +            b_ns = READ_ONCE(ns->binfmt_ns);
->>>> +            if (b_ns)
->>>> +                    return b_ns;
->>>> +            ns = ns->parent;
->>>> +    }
->>>> +    WARN_ON_ONCE(1);
->>>> +    return NULL;
->>>> +}
->>>> +
->> ...
->>>> @@ -823,12 +847,34 @@ static const struct super_operations s_ops = {
->>>>  static int bm_fill_super(struct super_block *sb, void *data, int silent)
->>>>  {
->>>>      int err;
->>>> +    struct user_namespace *ns = sb->s_user_ns;
->>>>      static const struct tree_descr bm_files[] = {
->>>>              [2] = {"status", &bm_status_operations, S_IWUSR|S_IRUGO},
->>>>              [3] = {"register", &bm_register_operations, S_IWUSR},
->>>>              /* last one */ {""}
->>>>      };
->>>>
->>>> +    /* create a new binfmt namespace
->>>> +     * if we are not in the first user namespace
->>>> +     * but the binfmt namespace is the first one
->>>> +     */
->>>> +    if (READ_ONCE(ns->binfmt_ns) == NULL) {
->>>> +            struct binfmt_namespace *new_ns;
->>>> +
->>>> +            new_ns = kmalloc(sizeof(struct binfmt_namespace),
->>>> +                             GFP_KERNEL);
->>>> +            if (new_ns == NULL)
->>>> +                    return -ENOMEM;
->>>> +            INIT_LIST_HEAD(&new_ns->entries);
->>>> +            new_ns->enabled = 1;
->>>> +            rwlock_init(&new_ns->entries_lock);
->>>> +            new_ns->bm_mnt = NULL;
->>>> +            new_ns->entry_count = 0;
->>>> +            /* ensure new_ns is completely initialized before sharing it */
->>>> +            smp_wmb();
->>>
->>> (I haven't dived into patch logic, here just small barrier remark from quick sight).
->>> smp_wmb() has no sense without paired smp_rmb() on the read side. Possible,
->>> you want something like below in read hunk:
->>>
->>> +             b_ns = READ_ONCE(ns->binfmt_ns);
->>> +             if (b_ns) {
->>> +                     smp_rmb();
->>> +                     return b_ns;
->>> +             }
->>>
->>>
->>
->> The write barrier is here to ensure the structure is fully written
->> before we set the pointer.
->>
->> I don't understand how read barrier can change something at this level,
->> IMHO the couple WRITE_ONCE()/READ_ONCE() should be enough to ensure we
->> have correctly initialized the pointer and the structure when we read
->> the pointer back.
->>
->> I think the pointer itself is the "barrier" to access the memory
->> modified before.
-> 
-> Things don't work that way on alpha, but that's why READ_ONCE()
-> includes an smp_read_barrier_depends():
-> 
-> #define __READ_ONCE(x, check)                                           \
-> ({                                                                      \
->         union { typeof(x) __val; char __c[1]; } __u;                    \
->         if (check)                                                      \
->                 __read_once_size(&(x), __u.__c, sizeof(x));             \
->         else                                                            \
->                 __read_once_size_nocheck(&(x), __u.__c, sizeof(x));     \
->         smp_read_barrier_depends(); /* Enforce dependency ordering from x */ \
->         __u.__val;                                                      \
-> })
-> #define READ_ONCE(x) __READ_ONCE(x, 1)
-> 
-
-So my questions are:
-
-- do we need a smp_wmb() barrier if we use READ_ONCE() and WRITE_ONCE()?
-
-- if we need an smp_wmb() barrier, do we need an smp_rmb() barrier as
-the data we want to "protect" are behind an access to the pointer?
-
-Thanks,
-Laurent
+T24gMDkuMTAuMjAxOCAxOTo0NSwgTGF1cmVudCBWaXZpZXIgd3JvdGU6DQo+IExlIDA5LzEwLzIw
+MTggw6AgMTg6MTUsIEtpcmlsbCBUa2hhaSBhIMOpY3JpdMKgOg0KPj4gT24gMDkuMTAuMjAxOCAx
+MzozNywgTGF1cmVudCBWaXZpZXIgd3JvdGU6DQo+Pj4gVGhpcyBwYXRjaCBhbGxvd3MgdG8gaGF2
+ZSBhIGRpZmZlcmVudCBiaW5mbXRfbWlzYyBjb25maWd1cmF0aW9uDQo+Pj4gZm9yIGVhY2ggbmV3
+IHVzZXIgbmFtZXNwYWNlLiBCeSBkZWZhdWx0LCB0aGUgYmluZm10X21pc2MgY29uZmlndXJhdGlv
+bg0KPj4+IGlzIHRoZSBvbmUgb2YgdGhlIHByZXZpb3VzIGxldmVsLCBidXQgaWYgdGhlIGJpbmZt
+dF9taXNjIGZpbGVzeXN0ZW0gaXMNCj4+PiBtb3VudGVkIGluIHRoZSBuZXcgbmFtZXNwYWNlIGEg
+bmV3IGVtcHR5IGJpbmZtdCBpbnN0YW5jZSBpcyBjcmVhdGVkIGFuZA0KPj4+IHVzZWQgaW4gdGhp
+cyBuYW1lc3BhY2UuDQo+Pj4NCj4+PiBGb3IgaW5zdGFuY2UsIHVzaW5nICJ1bnNoYXJlIiB3ZSBj
+YW4gc3RhcnQgYSBjaHJvb3Qgb2YgYW4gYW5vdGhlcg0KPj4+IGFyY2hpdGVjdHVyZSBhbmQgY29u
+ZmlndXJlIHRoZSBiaW5mbXRfbWlzYyBpbnRlcnByZXRlciB3aXRob3V0IGJlaW5nIHJvb3QNCj4+
+PiB0byBydW4gdGhlIGJpbmFyaWVzIGluIHRoaXMgY2hyb290Lg0KPj4+DQo+Pj4gU2lnbmVkLW9m
+Zi1ieTogTGF1cmVudCBWaXZpZXIgPGxhdXJlbnRAdml2aWVyLmV1Pg0KPj4+IC0tLQ0KPj4+ICBm
+cy9iaW5mbXRfbWlzYy5jICAgICAgICAgICAgICAgfCAxMDYgKysrKysrKysrKysrKysrKysrKysr
+KysrLS0tLS0tLS0tDQo+Pj4gIGluY2x1ZGUvbGludXgvdXNlcl9uYW1lc3BhY2UuaCB8ICAxMyAr
+KysrDQo+Pj4gIGtlcm5lbC91c2VyLmMgICAgICAgICAgICAgICAgICB8ICAxMyArKysrDQo+Pj4g
+IGtlcm5lbC91c2VyX25hbWVzcGFjZS5jICAgICAgICB8ICAgMyArDQo+Pj4gIDQgZmlsZXMgY2hh
+bmdlZCwgMTA3IGluc2VydGlvbnMoKyksIDI4IGRlbGV0aW9ucygtKQ0KPj4+DQo+Pj4gZGlmZiAt
+LWdpdCBhL2ZzL2JpbmZtdF9taXNjLmMgYi9mcy9iaW5mbXRfbWlzYy5jDQo+Pj4gaW5kZXggYWE0
+YTdhMjNmZjk5Li4xZTAwMjlkMDk3ZDkgMTAwNjQ0DQo+Pj4gLS0tIGEvZnMvYmluZm10X21pc2Mu
+Yw0KPj4+ICsrKyBiL2ZzL2JpbmZtdF9taXNjLmMNCj4gLi4uDQo+Pj4gQEAgLTgwLDE4ICs3NCwz
+MiBAQCBzdGF0aWMgaW50IGVudHJ5X2NvdW50Ow0KPj4+ICAgKi8NCj4+PiAgI2RlZmluZSBNQVhf
+UkVHSVNURVJfTEVOR1RIIDE5MjANCj4+PiAgDQo+Pj4gK3N0YXRpYyBzdHJ1Y3QgYmluZm10X25h
+bWVzcGFjZSAqYmluZm10X25zKHN0cnVjdCB1c2VyX25hbWVzcGFjZSAqbnMpDQo+Pj4gK3sNCj4+
+PiArCXN0cnVjdCBiaW5mbXRfbmFtZXNwYWNlICpiX25zOw0KPj4+ICsNCj4+PiArCXdoaWxlIChu
+cykgew0KPj4+ICsJCWJfbnMgPSBSRUFEX09OQ0UobnMtPmJpbmZtdF9ucyk7DQo+Pj4gKwkJaWYg
+KGJfbnMpDQo+Pj4gKwkJCXJldHVybiBiX25zOw0KPj4+ICsJCW5zID0gbnMtPnBhcmVudDsNCj4+
+PiArCX0NCj4+PiArCVdBUk5fT05fT05DRSgxKTsNCj4+PiArCXJldHVybiBOVUxMOw0KPj4+ICt9
+DQo+Pj4gKw0KPiAuLi4NCj4+PiBAQCAtODIzLDEyICs4NDcsMzQgQEAgc3RhdGljIGNvbnN0IHN0
+cnVjdCBzdXBlcl9vcGVyYXRpb25zIHNfb3BzID0gew0KPj4+ICBzdGF0aWMgaW50IGJtX2ZpbGxf
+c3VwZXIoc3RydWN0IHN1cGVyX2Jsb2NrICpzYiwgdm9pZCAqZGF0YSwgaW50IHNpbGVudCkNCj4+
+PiAgew0KPj4+ICAJaW50IGVycjsNCj4+PiArCXN0cnVjdCB1c2VyX25hbWVzcGFjZSAqbnMgPSBz
+Yi0+c191c2VyX25zOw0KPj4+ICAJc3RhdGljIGNvbnN0IHN0cnVjdCB0cmVlX2Rlc2NyIGJtX2Zp
+bGVzW10gPSB7DQo+Pj4gIAkJWzJdID0geyJzdGF0dXMiLCAmYm1fc3RhdHVzX29wZXJhdGlvbnMs
+IFNfSVdVU1J8U19JUlVHT30sDQo+Pj4gIAkJWzNdID0geyJyZWdpc3RlciIsICZibV9yZWdpc3Rl
+cl9vcGVyYXRpb25zLCBTX0lXVVNSfSwNCj4+PiAgCQkvKiBsYXN0IG9uZSAqLyB7IiJ9DQo+Pj4g
+IAl9Ow0KPj4+ICANCj4+PiArCS8qIGNyZWF0ZSBhIG5ldyBiaW5mbXQgbmFtZXNwYWNlDQo+Pj4g
+KwkgKiBpZiB3ZSBhcmUgbm90IGluIHRoZSBmaXJzdCB1c2VyIG5hbWVzcGFjZQ0KPj4+ICsJICog
+YnV0IHRoZSBiaW5mbXQgbmFtZXNwYWNlIGlzIHRoZSBmaXJzdCBvbmUNCj4+PiArCSAqLw0KPj4+
+ICsJaWYgKFJFQURfT05DRShucy0+YmluZm10X25zKSA9PSBOVUxMKSB7DQo+Pj4gKwkJc3RydWN0
+IGJpbmZtdF9uYW1lc3BhY2UgKm5ld19uczsNCj4+PiArDQo+Pj4gKwkJbmV3X25zID0ga21hbGxv
+YyhzaXplb2Yoc3RydWN0IGJpbmZtdF9uYW1lc3BhY2UpLA0KPj4+ICsJCQkJIEdGUF9LRVJORUwp
+Ow0KPj4+ICsJCWlmIChuZXdfbnMgPT0gTlVMTCkNCj4+PiArCQkJcmV0dXJuIC1FTk9NRU07DQo+
+Pj4gKwkJSU5JVF9MSVNUX0hFQUQoJm5ld19ucy0+ZW50cmllcyk7DQo+Pj4gKwkJbmV3X25zLT5l
+bmFibGVkID0gMTsNCj4+PiArCQlyd2xvY2tfaW5pdCgmbmV3X25zLT5lbnRyaWVzX2xvY2spOw0K
+Pj4+ICsJCW5ld19ucy0+Ym1fbW50ID0gTlVMTDsNCj4+PiArCQluZXdfbnMtPmVudHJ5X2NvdW50
+ID0gMDsNCj4+PiArCQkvKiBlbnN1cmUgbmV3X25zIGlzIGNvbXBsZXRlbHkgaW5pdGlhbGl6ZWQg
+YmVmb3JlIHNoYXJpbmcgaXQgKi8NCj4+PiArCQlzbXBfd21iKCk7DQo+Pg0KPj4gKEkgaGF2ZW4n
+dCBkaXZlZCBpbnRvIHBhdGNoIGxvZ2ljLCBoZXJlIGp1c3Qgc21hbGwgYmFycmllciByZW1hcmsg
+ZnJvbSBxdWljayBzaWdodCkuDQo+PiBzbXBfd21iKCkgaGFzIG5vIHNlbnNlIHdpdGhvdXQgcGFp
+cmVkIHNtcF9ybWIoKSBvbiB0aGUgcmVhZCBzaWRlLiBQb3NzaWJsZSwNCj4+IHlvdSB3YW50IHNv
+bWV0aGluZyBsaWtlIGJlbG93IGluIHJlYWQgaHVuazoNCj4+DQo+PiArCQliX25zID0gUkVBRF9P
+TkNFKG5zLT5iaW5mbXRfbnMpOw0KPj4gKwkJaWYgKGJfbnMpIHsNCj4+ICsJCQlzbXBfcm1iKCk7
+DQo+PiArCQkJcmV0dXJuIGJfbnM7DQo+PiArCQl9DQo+Pg0KPj4NCj4gDQo+IFRoZSB3cml0ZSBi
+YXJyaWVyIGlzIGhlcmUgdG8gZW5zdXJlIHRoZSBzdHJ1Y3R1cmUgaXMgZnVsbHkgd3JpdHRlbg0K
+PiBiZWZvcmUgd2Ugc2V0IHRoZSBwb2ludGVyLg0KPiANCj4gSSBkb24ndCB1bmRlcnN0YW5kIGhv
+dyByZWFkIGJhcnJpZXIgY2FuIGNoYW5nZSBzb21ldGhpbmcgYXQgdGhpcyBsZXZlbCwNCj4gSU1I
+TyB0aGUgY291cGxlIFdSSVRFX09OQ0UoKS9SRUFEX09OQ0UoKSBzaG91bGQgYmUgZW5vdWdoIHRv
+IGVuc3VyZSB3ZQ0KPiBoYXZlIGNvcnJlY3RseSBpbml0aWFsaXplZCB0aGUgcG9pbnRlciBhbmQg
+dGhlIHN0cnVjdHVyZSB3aGVuIHdlIHJlYWQNCj4gdGhlIHBvaW50ZXIgYmFjay4NCj4gDQo+IEkg
+dGhpbmsgdGhlIHBvaW50ZXIgaXRzZWxmIGlzIHRoZSAiYmFycmllciIgdG8gYWNjZXNzIHRoZSBt
+ZW1vcnkNCj4gbW9kaWZpZWQgYmVmb3JlLg0KDQpzbXBfcm1iKCkgZ3VhcmFudGVlcyB5b3Ugc2Vl
+IHN0b3JlcyBpbiB0aGUgb3JkZXIgeW91IHdhbnQuIElmIHlvdSBoYXZlOg0KDQpbY3B1MF0JCQkJ
+CVtjcHUxXQ0KbmV3X25zLT5lbnRyeV9jb3VudCA9IDA7IA0Kc21wX3dtYigpOw0KV1JJVEVfT05D
+RShucy0+YmluZm10X25zLCBuZXdfbnMpOyAJYl9ucyA9IFJFQURfT05DRShucy0+YmluZm10X25z
+KTsNCgkJCQkJc21wX3JtYigpOw0KCQkJCQk8YWNjZXNzIGJfbnMtPmVudHJ5X2NvdW50Pg0KDQpz
+bXBfcm1iKCkgZ3VhcmFudGVlcyB5b3Ugc2VlIHRydWUgZW50cnlfY291bnQgb24gdGhlIGNwdTEu
+IFdpdGhvdXQNCnNtcF9ybWIoKSB5b3UgbWF5IHNlZSBvbGQgdmFsdWUgb2YgbmV3X25zLT5lbnRy
+eV9jb3VudC4NCgkJCQkJDQpTZWUgRG9jdW1lbnRhdGlvbi9tZW1vcnktYmFycmllcnMudHh0DQo=
