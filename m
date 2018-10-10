@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 08/16] x86: Wire up cpu_opv system call
-Date: Wed, 10 Oct 2018 15:19:28 -0400
-Message-ID: <20181010191936.7495-9-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 03/16] sched: Implement push_task_to_cpu (v2)
+Date: Wed, 10 Oct 2018 15:19:23 -0400
+Message-ID: <20181010191936.7495-4-mathieu.desnoyers@efficios.com>
 References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
@@ -9,6 +9,20 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
+
+Implement push_task_to_cpu(), which moves the task received as argument
+to the destination cpu's runqueue. It only does so if the CPU is within
+the CPU allowed mask of the task and if the CPU is active. If the CPU is
+not part of the allowed mask, -EINVAL is returned. If the CPU is not
+active, -EBUSY is returned.
+
+It does not change the CPU allowed mask, and can therefore be used
+within applications which rely on owning the sched_setaffinity() state.
+
+It does not pin the task to the destination CPU, which means that the
+scheduler may choose to move the task away from that CPU before the
+task executes. Code invoking push_task_to_cpu() must be prepared to
+retry in that case.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -32,31 +46,87 @@ CC: Will Deacon <will.deacon@arm.com>
 CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
----
- arch/x86/entry/syscalls/syscall_32.tbl | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl | 1 +
- 2 files changed, 2 insertions(+)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 3cf7b533b3d1..d3253547e15e 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -398,3 +398,4 @@
- 384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
- 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
- 386	i386	rseq			sys_rseq			__ia32_sys_rseq
-+387	i386	cpu_opv			sys_cpu_opv			__ia32_sys_cpu_opv
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index f0b1709a5ffb..1391971b1517 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -343,6 +343,7 @@
- 332	common	statx			__x64_sys_statx
- 333	common	io_pgetevents		__x64_sys_io_pgetevents
- 334	common	rseq			__x64_sys_rseq
-+335	common	cpu_opv			__x64_sys_cpu_opv
+---
+Change since v1:
+- Return -EBUSY if CPU is not active.
+---
+ kernel/sched/core.c  | 42 ++++++++++++++++++++++++++++++++++++++++++
+ kernel/sched/sched.h |  9 +++++++++
+ 2 files changed, 51 insertions(+)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index ad97f3ba5ec5..ee302988b342 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1036,6 +1036,48 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
+ 		set_curr_task(rq, p);
+ }
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
++int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
++{
++	struct rq_flags rf;
++	struct rq *rq;
++	int ret = 0;
++
++	rq = task_rq_lock(p, &rf);
++	update_rq_clock(rq);
++
++	if (!cpumask_test_cpu(dest_cpu, &p->cpus_allowed)) {
++		ret = -EINVAL;
++		goto out;
++	}
++
++	if (!cpumask_test_cpu(dest_cpu, cpu_active_mask)) {
++		ret = -EBUSY;
++		goto out;
++	}
++
++	if (task_cpu(p) == dest_cpu)
++		goto out;
++
++	if (task_running(rq, p) || p->state == TASK_WAKING) {
++		struct migration_arg arg = { p, dest_cpu };
++		/* Need help from migration thread: drop lock and wait. */
++		task_rq_unlock(rq, p, &rf);
++		stop_one_cpu(cpu_of(rq), migration_cpu_stop, &arg);
++		tlb_migrate_finish(p->mm);
++		return 0;
++	} else if (task_on_rq_queued(p)) {
++		/*
++		 * OK, since we're going to drop the lock immediately
++		 * afterwards anyway.
++		 */
++		rq = move_queued_task(rq, &rf, p, dest_cpu);
++	}
++out:
++	task_rq_unlock(rq, p, &rf);
++
++	return ret;
++}
++
+ /*
+  * Change a given task's CPU affinity. Migrate the thread to a
+  * proper CPU and schedule it away if the CPU it's executing on
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index 455fa330de04..27ad25780204 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -1340,6 +1340,15 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
+ #endif
+ }
+ 
++#ifdef CONFIG_SMP
++int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu);
++#else
++static inline int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
++{
++	return 0;
++}
++#endif
++
+ /*
+  * Tunables that become constants when CONFIG_SCHED_DEBUG is off:
+  */
 -- 
 2.11.0
