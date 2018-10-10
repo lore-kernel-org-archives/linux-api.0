@@ -1,87 +1,70 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v2 1/3] namei: implement O_BENEATH-style AT_* flags
-Date: Wed, 10 Oct 2018 18:07:47 +1100
-Message-ID: <20181010070747.byi2itbi4j42gynq@ryuk>
-References: <20181009065300.11053-1-cyphar@cyphar.com>
- <20181009065300.11053-3-cyphar@cyphar.com>
- <CALCETrUZAYw-g+75WAijS+fmRA_DrTahpv156WrxgYuX3KX2xw@mail.gmail.com>
+From: Aleksa Sarai <asarai@suse.de>
+Subject: Re: [RFC v5 1/1] ns: add binfmt_misc to the user namespace
+Date: Wed, 10 Oct 2018 18:14:47 +1100
+Message-ID: <20181010071447.whwwxjdv54qfnvsr@mikami>
+References: <20181009103752.21482-1-laurent@vivier.eu>
+ <20181009103752.21482-2-laurent@vivier.eu>
+ <20181009151641.GB10149@cisco>
+ <409c22e3-1df8-cf7f-2462-ead2bb3020cf@vivier.eu>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="n7emm7xa7e276qdd"
+        protocol="application/pgp-signature"; boundary="5jn6nwbw5w45hpy6"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrUZAYw-g+75WAijS+fmRA_DrTahpv156WrxgYuX3KX2xw@mail.gmail.com>
+In-Reply-To: <409c22e3-1df8-cf7f-2462-ead2bb3020cf@vivier.eu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, "Eric W. Biederman" <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Cc: Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, James Bottomley <James.Bottomley@HansenPartnership.com>, Eric Biederman <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
 
---n7emm7xa7e276qdd
-Content-Type: text/plain; charset=us-ascii
+--5jn6nwbw5w45hpy6
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On 2018-10-09, Andy Lutomirski <luto@kernel.org> wrote:
-> On Mon, Oct 8, 2018 at 11:53 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > * AT_NO_PROCLINK: Disallows ->get_link "symlink" jumping. This is a very
-> >   specific restriction, and it exists because /proc/$pid/fd/...
-> >   "symlinks" allow for access outside nd->root and pose risk to
-> >   container runtimes that don't want to be tricked into accessing a host
-> >   path (but do want to allow no-funny-business symlink resolution).
+On 2018-10-09, Laurent Vivier <laurent@vivier.eu> wrote:
+> Le 09/10/2018 =E0 17:16, Tycho Andersen a =E9crit=A0:
+> > On Tue, Oct 09, 2018 at 12:37:52PM +0200, Laurent Vivier wrote:
+> >> @@ -80,18 +74,32 @@ static int entry_count;
+> >>   */
+> >>  #define MAX_REGISTER_LENGTH 1920
+> >> =20
+> >> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
+> >> +{
+> >> +	struct binfmt_namespace *b_ns;
+> >> +
+> >> +	while (ns) {
+> >> +		b_ns =3D READ_ONCE(ns->binfmt_ns);
+> >> +		if (b_ns)
+> >> +			return b_ns;
+> >> +		ns =3D ns->parent;
+> >> +	}
+> >> +	WARN_ON_ONCE(1);
+> >=20
+> > It looks like we warn here,
+> >=20
+> >> @@ -133,17 +141,18 @@ static int load_misc_binary(struct linux_binprm =
+*bprm)
+> >>  	struct file *interp_file =3D NULL;
+> >>  	int retval;
+> >>  	int fd_binary =3D -1;
+> >> +	struct binfmt_namespace *ns =3D binfmt_ns(current_user_ns());
+> >> =20
+> >>  	retval =3D -ENOEXEC;
+> >> -	if (!enabled)
+> >> +	if (!ns->enabled)
+> >=20
+> > ...but then in cases like this we immediately dereference the pointer
+> > anyways and crash. Can we return some other error code here in the !ns
+> > case so we don't crash?
 >=20
-> Can you elaborate on the use case?
->=20
-> If I'm set up a container namespace and walk it for real (through the
-> outside /proc/PID/root or otherwise starting from an fd that points
-> into that namespace), and I walk through that namespace's /proc, I'm
-> going to see the same thing that the processes in the namespace would
-> see.  So what's the issue?
->=20
-> Similarly, if I somehow manage to walk into the outside /proc, then
-> I've pretty much lost regardless of the links.
+> My concern here is I don't want to add code to check an error case that
+> cannot happen. The first namespace binfmt_ns pointer is initialized with
+> &init_binfmt_ns, so the return value cannot be NULL.
 
-Well, there's a couple of reasons:
-
-* The original AT_NO_JUMPS patchset similarly disabled "proclinks" but
-  it was sort of all contained within AT_NO_JUMPS. In order to have a
-  precise 1:1 feature mapping we need this in *some* form (and in v1 the
-  only way to get it was to add a separate flag). According to the
-  original O_BENEATH changelog, both you and Al pushed for this to be
-  part of O_BENEATH. :P
-
-  *However* in v2 of the patchset, proclinks are also disabled by
-  AT_BENEATH (because it's not really safe or consistent to allow them
-  at the moment -- we'd need to add __d_path checks when jumping through
-  them as well if we wanted them to be consistent) -- so the need for
-  this flag (purely for AT_NO_JUMPS compatibility) is reduced.
-
-* There were cases in the past where races caused (temporarily)
-  something like /proc/self/exe (or a file descriptor referencing the
-  host filesystem) to be exposed into a container -- but because of
-  set_dumpable they were blocked. CVE-2016-9962 was an example of this
-  (it wasn't blocked by set_dumpable -- but the fix used set_dumpable).
-
-  In those cases, if you can trick a host-side process to open that
-  procfs file through a symlink/bind-mount (which is technically
-  "accessible" but not actually usable by the container process), you
-  can trick the resolution to resolve the host filesystem (and this
-  might be a file which is unlinked and thus there's no way for __d_path
-  checking to verify whether it is safe or not).
-
-  I think that AT_BENEATH allowing only proclinks that result in you
-  being under the root is something we might want in the future, but I
-  think there are some cases where you want to be _very_ sure you don't
-  follow a proclink (now or in the future).
-
-* And finally, some containers run with the host's pidns. This is not a
-  usecase that I'm particularly fond of, but some folks do use this (as
-  far as I'm aware this is one of the reasons why the subreaper concept
-  exists). In those cases, the procfs mount would be able to see the
-  host processes -- and thus /proc/self would resolve (as would the
-  host's init and so on).
-
-I will admit that this flag is more paranoid than the others though.
+I'd argue that BUG() is a better thing to do then -- if doing a dummy
+error path makes no sense. Though IIRC BUG() is no longer a popular
+thing to do.
 
 --=20
 Aleksa Sarai
@@ -89,24 +72,24 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---n7emm7xa7e276qdd
+--5jn6nwbw5w45hpy6
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAlu9pT8ACgkQnhiqJn3b
-jbSBVg//c4KvbXk7YydiFAtNTbwXcmuc0QpBJdnDKNZX8J9MrzVvUv0yhbrsrOj+
-SBIeBvSytBsbRhVohQSJpR3CUL4BgGKRFh2z7YSVgxa9dOSoFJ+NPLR2RkXl/h2x
-59GGaWP/THGOtKheWGMjJgbOJMd31RaNru0w3gZx69kEhU8V3jCFfuTvx1s+RP9O
-sUA4E+nHcoVxPp7lZRtF1odlEBOrqo6V9Nw9gDOPKWK/dI6wiIZMsfzo72Q+xaZh
-7XURnAKdLHTqQX+GQ/ydPfNaBZb2ccn4fAg2dlRmlN27rESfwaqj+wOgPJyNOYPE
-RHYCaJKh6xXbq3KbeIxgIWhHQRjnB+sZt8CdXlikFAWST3vOXIiqwkbh9Whnqrz+
-W75INjqyzstSlgXpEqBQZ0nneHkt94C8hQE8qn3tkEdVmx2reoYK+1ZNBuR0hK7G
-vOvT2xEB1i2Lkd3qhZQjcKDFZ8o0D1oA8tVGL9Nne21c4AFomYlRB7j4C+Pw6K5U
-c94RS53SjMpIpgbmS4EnwYUHPmuuQe98h5O+WxOMvnBrIcs1OqgUTmTFR4/a/De6
-hoFfo1nszzlieolP9lS3fbY/q1DFWtX4XyuxgMW0FxmjkSer2zlPG9khkbfYhwks
-DWRx2nas50uUEWsI9SPSZbFbRrDC+IeJ3UicDXdLOxNE43/R3wU=
-=QM+v
+iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAlu9puMACgkQnhiqJn3b
+jbRLDBAAstmpL3yvxUBUsp+o1eDUI0ZuTqG4whpTYckWTtCm59TAn4wotIT5Pv0I
+6f1SNATVnxq7U+ot1tCluNr0jXe1u/0S7ZvEY8zpHzWomc9CFUsM+yFENbCgDl0D
+qmKMiKwlSYk8tEI3WnAfWb9l7hwrUoFCHrCmUUucrccDltvhiYaDRufoezcMqpEB
+DtTchJIv+6bf1YcEbVa6xM8pG915ywtavVHlOMcUxtPuybk5RZGEcgZJo8Fn5PgF
+HLCiVgiWdKNBY1Md2gTF6gf1zGp2tSc7e/ARUftL9JlE+hLIWudyLrpwMaXqfBMQ
+4YxTM6xmHuCuW7ZgDg29zvQ4aJxRgoDrx438hYVemkUFxWAub56ZK7HHLv+Ls47Y
+QKO5QAt1jRPGpMtPpABBgfFcb4nD+v4BY6eY3po8/pTpQv8P5by0HjjnV3K7/Jar
+2UnvOCSOeZ6QbPI0gp1LYKkOBoINJSLkn8rHmjeM9xh8VtyktrlVelYTPH9/qdoQ
+FLNVDUlxEig1c7FiKBhzPhNRDGWO5+hF4Ughg3A+kutPumILfuk1j1pCNZJM9HSz
+pIYFmvpReZkFzOHlLeGLNFmym+OCf6q3+/QUX5P9L2saOkyALS4Aww/wxVOeKOrw
+uJ4zc4NzmU48TmhAKlUBcnryN7EE/RhsEXamlcXQcdsGwW6cFok=
+=AzDm
 -----END PGP SIGNATURE-----
 
---n7emm7xa7e276qdd--
+--5jn6nwbw5w45hpy6--
