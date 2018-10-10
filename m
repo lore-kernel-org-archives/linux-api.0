@@ -1,87 +1,112 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
- ptrace
-Date: Wed, 10 Oct 2018 20:28:22 +0200
-Message-ID: <20181010182821.grl7fwmcuk7rlogc@brauner.io>
-References: <20181008181815.pwnqxngj22mhm2vj@brauner.io>
- <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
- <20181009132850.fp6yne2vgmfpi27k@brauner.io>
- <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
- <CAHC9VhQfzJgG3i=Q8C+pGY2Lpr+2MRTwxgUWec_heGOecd=xRg@mail.gmail.com>
- <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com>
- <20181010153956.zzlatxdlcwolbs6k@brauner.io>
- <20181010165458.GA5607@cisco>
- <20181010171500.wh4yygmh7u6ynqid@brauner.io>
- <20181010172622.GB5607@cisco>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 00/16] rseq updates, new cpu_opv system call
+Date: Wed, 10 Oct 2018 15:19:20 -0400
+Message-ID: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181010172622.GB5607@cisco>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Jann Horn <jannh@google.com>, Paul Moore <paul@paul-moore.com>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, suda.akihiro@lab.ntt.co.jp, Oleg Nesterov <oleg@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
+To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 10, 2018 at 10:26:22AM -0700, Tycho Andersen wrote:
-> On Wed, Oct 10, 2018 at 07:15:02PM +0200, Christian Brauner wrote:
-> > On Wed, Oct 10, 2018 at 09:54:58AM -0700, Tycho Andersen wrote:
-> > > On Wed, Oct 10, 2018 at 05:39:57PM +0200, Christian Brauner wrote:
-> > > > On Wed, Oct 10, 2018 at 05:33:43PM +0200, Jann Horn wrote:
-> > > > > On Wed, Oct 10, 2018 at 5:32 PM Paul Moore <paul@paul-moore.com> wrote:
-> > > > > > On Tue, Oct 9, 2018 at 9:36 AM Jann Horn <jannh@google.com> wrote:
-> > > > > > > +cc selinux people explicitly, since they probably have opinions on this
-> > > > > >
-> > > > > > I just spent about twenty minutes working my way through this thread,
-> > > > > > and digging through the containers archive trying to get a good
-> > > > > > understanding of what you guys are trying to do, and I'm not quite
-> > > > > > sure I understand it all.  However, from what I have seen, this
-> > > > > > approach looks very ptrace-y to me (I imagine to others as well based
-> > > > > > on the comments) and because of this I think ensuring the usual ptrace
-> > > > > > access controls are evaluated, including the ptrace LSM hooks, is the
-> > > > > > right thing to do.
-> > > > > 
-> > > > > Basically the problem is that this new ptrace() API does something
-> > > > > that doesn't just influence the target task, but also every other task
-> > > > > that has the same seccomp filter. So the classic ptrace check doesn't
-> > > > > work here.
-> > > > 
-> > > > Just to throw this into the mix: then maybe ptrace() isn't the right
-> > > > interface and we should just go with the native seccomp() approach for
-> > > > now.
-> > > 
-> > > Please no :).
-> > > 
-> > > I don't buy your arguments that 3-syscalls vs. one is better. If I'm
-> > > doing this setup with a new container, I have to do
-> > > clone(CLONE_FILES), do this seccomp thing, so that my parent can pick
-> > > it up again, then do another clone without CLONE_FILES, because in the
-> > > general case I don't want to share my fd table with the container,
-> > > wait on the middle task for errors, etc. So we're still doing a bunch
-> > > of setup, and it feels more awkward than ptrace, with at least as many
-> > > syscalls, and it only works for your children.
-> > 
-> > You're talking about the case where you already have shot yourself in
-> > the foot by blocking basically all other sensible ways of getting the fd
-> > out.
-> 
-> Ok, but these other ways involve syscalls too (sendmsg() or whatever).
-> And if you're going to allow arbitrary policy from your users, you
-> have to be maximally flexible.
+Hi,
 
-So, I totally like the idea of being able to get an fd before the filter
-is active. If this could be done in seccomp()-only it would be A+ (See
-Andy's mail in the other thread.)
-But I really don't want to keep you working on this forever. :)
+Considering it's already late in the 4.19 rc cycle, I'm submitting this
+patchset as RFC for 4.21 to give everyone plenty of time to provide
+feedback.
 
-> 
-> > Also, this was meant to show that parts of your initial justification
-> > for implementing the ptrace() way of getting an fd doesn't really stand.
-> > And it doesn't really. Even with ptrace() you can get into situations
-> > where you're not able to get an fd. (see prior threads)
-> 
-> Of course. I guess my point was that we shouldn't design an API that's
-> impossible to use. I'll drop the notes about sendmsg() from the commit
-> message.
-> 
-> Tycho
+This series contain:
+
+- rseq selftests (this could be 4.20 material):
+  - Added reference counter within user-space __rseq_abi structure, for
+    integration of rseq application/libraries with future use by glibc,
+  - Adapt number of threads to the number of online cpus.
+
+- cpu_opv (4.21 material):
+  - Implement push_task_to_cpu() (scheduler),
+  - Introduce vm_map_user_ram()/vm_unmap_user_ram() (mm),
+  - Provide is_vma_noncached() (mm),
+  - Introduce cpu_opv system call, with vmap space limiting,
+    - Wire up cpu_opv on x86, powerpc, arm,
+  - Provide cpu_opv selftests.
+
+The cpu_opv system call covers the use-cases that rseq does not handle,
+namely single-stepping with debuggers, moving data between per-cpu data
+structures without interfering with cpu affinity masks, and using rseq
+from signal handlers nested between thread creation and rseq
+registration by glibc, or between rseq unregistration by glibc and
+thread teardown.
+
+Thanks,
+
+Mathieu
+
+Mathieu Desnoyers (16):
+  rseq/selftests: Add reference counter to coexist with glibc
+  rseq/selftests: Adapt number of threads to the number of detected cpus
+  sched: Implement push_task_to_cpu (v2)
+  mm: Introduce vm_map_user_ram, vm_unmap_user_ram
+  mm: Provide is_vma_noncached
+  cpu_opv: Provide cpu_opv system call (v8)
+  cpu_opv: limit amount of virtual address space used by cpu_opv
+  x86: Wire up cpu_opv system call
+  powerpc: Wire up cpu_opv system call
+  arm: Wire up cpu_opv system call
+  cpu-opv/selftests: Provide cpu-op library
+  cpu-opv/selftests: Provide basic test
+  cpu-opv/selftests: Provide percpu_op API
+  cpu-opv/selftests: Provide basic percpu ops test
+  cpu-opv/selftests: Provide parametrized tests
+  cpu-opv/selftests: Provide Makefile, scripts, gitignore
+
+ MAINTAINERS                                        |    8 +
+ arch/arm/tools/syscall.tbl                         |    1 +
+ arch/powerpc/include/asm/systbl.h                  |    1 +
+ arch/powerpc/include/uapi/asm/unistd.h             |    1 +
+ arch/x86/entry/syscalls/syscall_32.tbl             |    1 +
+ arch/x86/entry/syscalls/syscall_64.tbl             |    1 +
+ include/linux/mm.h                                 |   24 +
+ include/linux/syscalls.h                           |    3 +
+ include/linux/vmalloc.h                            |    4 +
+ include/uapi/linux/cpu_opv.h                       |  114 ++
+ init/Kconfig                                       |   17 +
+ kernel/Makefile                                    |    1 +
+ kernel/cpu_opv.c                                   | 1190 ++++++++++++++=
++++
+ kernel/sched/core.c                                |   42 +
+ kernel/sched/sched.h                               |    9 +
+ kernel/sys_ni.c                                    |    1 +
+ kernel/sysctl.c                                    |   15 +
+ mm/vmalloc.c                                       |   64 +
+ tools/testing/selftests/Makefile                   |    1 +
+ tools/testing/selftests/cpu-opv/.gitignore         |    6 +
+ tools/testing/selftests/cpu-opv/Makefile           |   39 +
+ .../testing/selftests/cpu-opv/basic_cpu_opv_test.c | 1362 ++++++++++++++=
+++++++
+ .../selftests/cpu-opv/basic_percpu_ops_test.c      |  295 +++++
+ tools/testing/selftests/cpu-opv/cpu-op.c           |  353 +++++
+ tools/testing/selftests/cpu-opv/cpu-op.h           |   42 +
+ tools/testing/selftests/cpu-opv/param_test.c       | 1187 ++++++++++++++=
++++
+ tools/testing/selftests/cpu-opv/percpu-op.h        |  151 +++
+ tools/testing/selftests/cpu-opv/run_param_test.sh  |  134 ++
+ tools/testing/selftests/rseq/rseq.c                |   32 +-
+ tools/testing/selftests/rseq/run_param_test.sh     |    7 +-
+ 30 files changed, 5096 insertions(+), 10 deletions(-)
+ create mode 100644 include/uapi/linux/cpu_opv.h
+ create mode 100644 kernel/cpu_opv.c
+ create mode 100644 tools/testing/selftests/cpu-opv/.gitignore
+ create mode 100644 tools/testing/selftests/cpu-opv/Makefile
+ create mode 100644 tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c
+ create mode 100644 tools/testing/selftests/cpu-opv/basic_percpu_ops_test=
+.c
+ create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.c
+ create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.h
+ create mode 100644 tools/testing/selftests/cpu-opv/param_test.c
+ create mode 100644 tools/testing/selftests/cpu-opv/percpu-op.h
+ create mode 100755 tools/testing/selftests/cpu-opv/run_param_test.sh
+
+--=20
+2.11.0
