@@ -1,212 +1,135 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
- ptrace
-Date: Wed, 10 Oct 2018 17:39:57 +0200
-Message-ID: <20181010153956.zzlatxdlcwolbs6k@brauner.io>
-References: <20181008151629.hkgzzsluevwtuclw@brauner.io>
- <CAG48ez3zaqOXH_jHN8=+jXjOf3vhFyWUkM_6KLPi9T8HcQySeg@mail.gmail.com>
- <20181008162147.ubfxxsv2425l2zsp@brauner.io>
- <CAG48ez3O+wAkq+0yDfoMt73ybnCOEPpi3Mu-uF57_v=6hA8ZEw@mail.gmail.com>
- <20181008181815.pwnqxngj22mhm2vj@brauner.io>
- <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
- <20181009132850.fp6yne2vgmfpi27k@brauner.io>
- <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
- <CAHC9VhQfzJgG3i=Q8C+pGY2Lpr+2MRTwxgUWec_heGOecd=xRg@mail.gmail.com>
- <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v4 3/9] x86/cet/ibt: Add IBT legacy code bitmap
+ allocation function
+Date: Wed, 10 Oct 2018 08:56:03 -0700
+Message-ID: <f6dcfb3c548f49cd096088e4366e44f57ec5964e.camel@intel.com>
+References: <20180921150553.21016-1-yu-cheng.yu@intel.com>
+         <20180921150553.21016-4-yu-cheng.yu@intel.com>
+         <20181003195702.GF32759@asgard.redhat.com>
+         <fc2f98ab46240c0498bdf4d7458b4373c1f02bf8.camel@intel.com>
+         <5BF3AE8F-CC2A-4160-9FF6-FEA171A76371@amacapital.net>
+         <aa5a061c159471f410d677af6a609793906cece1.camel@intel.com>
+         <CALCETrXVdYsJsVy=QWruDYdRc6wb44b=0J3OK3zjR_fT1fQH7w@mail.gmail.com>
+         <20181005172622.GD19360@asgard.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com>
+In-Reply-To: <20181005172622.GD19360@asgard.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Paul Moore <paul@paul-moore.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, suda.akihiro@lab.ntt.co.jp, Oleg Nesterov <oleg@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
+To: Eugene Syromiatnikov <esyr@redhat.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@red>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 10, 2018 at 05:33:43PM +0200, Jann Horn wrote:
-> On Wed, Oct 10, 2018 at 5:32 PM Paul Moore <paul@paul-moore.com> wrote:
-> > On Tue, Oct 9, 2018 at 9:36 AM Jann Horn <jannh@google.com> wrote:
-> > > +cc selinux people explicitly, since they probably have opinions on this
-> >
-> > I just spent about twenty minutes working my way through this thread,
-> > and digging through the containers archive trying to get a good
-> > understanding of what you guys are trying to do, and I'm not quite
-> > sure I understand it all.  However, from what I have seen, this
-> > approach looks very ptrace-y to me (I imagine to others as well based
-> > on the comments) and because of this I think ensuring the usual ptrace
-> > access controls are evaluated, including the ptrace LSM hooks, is the
-> > right thing to do.
+On Fri, 2018-10-05 at 10:26 -0700, Eugene Syromiatnikov wrote:
+> On Fri, Oct 05, 2018 at 10:07:46AM -0700, Andy Lutomirski wrote:
+> > On Fri, Oct 5, 2018 at 10:03 AM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > > 
+> > > On Fri, 2018-10-05 at 09:28 -0700, Andy Lutomirski wrote:
+> > > > > On Oct 5, 2018, at 9:13 AM, Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > > > > 
+> > > > > > On Wed, 2018-10-03 at 21:57 +0200, Eugene Syromiatnikov wrote:
+> > > > > > > On Fri, Sep 21, 2018 at 08:05:47AM -0700, Yu-cheng Yu wrote:
+> > > > > > > Indirect branch tracking provides an optional legacy code bitmap
+> > > > > > > that indicates locations of non-IBT compatible code.  When set,
+> > > > > > > each bit in the bitmap represents a page in the linear address is
+> > > > > > > legacy code.
+> > > > > > > 
+> > > > > > > We allocate the bitmap only when the application requests it.
+> > > > > > > Most applications do not need the bitmap.
+> > > > > > > 
+> > > > > > > Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> > > > > > > ---
+> > > > > > > arch/x86/kernel/cet.c | 45
+> > > > > > > +++++++++++++++++++++++++++++++++++++++++++
+> > > > > > > 1 file changed, 45 insertions(+)
+> > > > > > > 
+> > > > > > > diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+> > > > > > > index 6adfe795d692..a65d9745af08 100644
+> > > > > > > --- a/arch/x86/kernel/cet.c
+> > > > > > > +++ b/arch/x86/kernel/cet.c
+> > > > > > > @@ -314,3 +314,48 @@ void cet_disable_ibt(void)
+> > > > > > >    wrmsrl(MSR_IA32_U_CET, r);
+> > > > > > >    current->thread.cet.ibt_enabled = 0;
+> > > > > > > }
+> > > > > > > +
+> > > > > > > +int cet_setup_ibt_bitmap(void)
+> > > > > > > +{
+> > > > > > > +    u64 r;
+> > > > > > > +    unsigned long bitmap;
+> > > > > > > +    unsigned long size;
+> > > > > > > +
+> > > > > > > +    if (!cpu_feature_enabled(X86_FEATURE_IBT))
+> > > > > > > +        return -EOPNOTSUPP;
+> > > > > > > +
+> > > > > > > +    if (!current->thread.cet.ibt_bitmap_addr) {
+> > > > > > > +        /*
+> > > > > > > +         * Calculate size and put in thread header.
+> > > > > > > +         * may_expand_vm() needs this information.
+> > > > > > > +         */
+> > > > > > > +        size = TASK_SIZE / PAGE_SIZE / BITS_PER_BYTE;
+> > > > > > 
+> > > > > > TASK_SIZE_MAX is likely needed here, as an application can easily
+> > > > > > switch
+> > > > > > between long an 32-bit protected mode.  And then the case of a CPU
+> > > > > > that
+> > > > > > doesn't support 5LPT.
+> > > > > 
+> > > > > If we had calculated bitmap size from TASK_SIZE_MAX, all 32-bit apps
+> > > > > would
+> > > > > have
+> > > > > failed the allocation for bitmap size > TASK_SIZE.  Please see values
+> > > > > below,
+> > > > > which is printed from the current code.
+> > > > > 
+> > > > > Yu-cheng
+> > > > > 
+> > > > > 
+> > > > > x64:
+> > > > > TASK_SIZE_MAX    = 0000 7fff ffff f000
+> > > > > TASK_SIZE    = 0000 7fff ffff f000
+> > > > > bitmap size    = 0000 0000 ffff ffff
+> > > > > 
+> > > > > x32:
+> > > > > TASK_SIZE_MAX    = 0000 7fff ffff f000
+> > > > > TASK_SIZE    = 0000 0000 ffff e000
+> > > > > bitmap size    = 0000 0000 0001 ffff
+> > > > > 
+> > > > 
+> > > > I haven’t followed all the details here, but I have a general policy of
+> > > > objecting to any new use of TASK_SIZE. If you really really need to
+> > > > depend on
+> > > > 32-bitness in new code, please figure out what exactly you mean by “32-
+> > > > bit”
+> > > > and use an explicit check.
+> > > 
+> > > The explicit check would be:
+> > > 
+> > > test_thread_flag(TIF_ADDR32) ? IA32_PAGE_OFFSET : TASK_SIZE_MAX
+> > > 
+> > > which is the same as TASK_SIZE.
+> > 
+> > But this is only ever done in response to a syscall, right?  So
+> > wouldn't in_compat_syscall() be the right check?
+> > 
+> > Also, this whole thing makes me extremely nervous.  The MSR only
+> > contains the start address, not the size, right?  So what prevents
+> > some goof from causing the CPU to read way past the end of the bitmap
+> > if the bitmap is short because the kernel thought it was supposed to
+> > be 32-bit?
 > 
-> Basically the problem is that this new ptrace() API does something
-> that doesn't just influence the target task, but also every other task
-> that has the same seccomp filter. So the classic ptrace check doesn't
-> work here.
-
-Just to throw this into the mix: then maybe ptrace() isn't the right
-interface and we should just go with the native seccomp() approach for
-now.
-
+> That's what I've mentioned initially: every syscall made with int 0x80
+> is interpreted as compat, even if it was made from long mode.
 > 
-> > If I've missed something, or I'm thinking about this wrong, please
-> > educate me; just a heads-up that I'm largely offline for most of this
-> > week so responses on my end are going to be delayed much more than
-> > usual.
-> >
-> > > On Tue, Oct 9, 2018 at 3:29 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > On Tue, Oct 09, 2018 at 02:39:53PM +0200, Jann Horn wrote:
-> > > > > On Mon, Oct 8, 2018 at 8:18 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > > > On Mon, Oct 08, 2018 at 06:42:00PM +0200, Jann Horn wrote:
-> > > > > > > On Mon, Oct 8, 2018 at 6:21 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > > > > > On Mon, Oct 08, 2018 at 05:33:22PM +0200, Jann Horn wrote:
-> > > > > > > > > On Mon, Oct 8, 2018 at 5:16 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > > > > > > > On Thu, Sep 27, 2018 at 09:11:16AM -0600, Tycho Andersen wrote:
-> > > > > > > > > > > diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> > > > > > > > > > > index 44a31ac8373a..17685803a2af 100644
-> > > > > > > > > > > --- a/kernel/seccomp.c
-> > > > > > > > > > > +++ b/kernel/seccomp.c
-> > > > > > > > > > > @@ -1777,4 +1777,35 @@ static struct file *init_listener(struct task_struct *task,
-> > > > > > > > > > >
-> > > > > > > > > > >       return ret;
-> > > > > > > > > > >  }
-> > > > > > > > > > > +
-> > > > > > > > > > > +long seccomp_new_listener(struct task_struct *task,
-> > > > > > > > > > > +                       unsigned long filter_off)
-> > > > > > > > > > > +{
-> > > > > > > > > > > +     struct seccomp_filter *filter;
-> > > > > > > > > > > +     struct file *listener;
-> > > > > > > > > > > +     int fd;
-> > > > > > > > > > > +
-> > > > > > > > > > > +     if (!capable(CAP_SYS_ADMIN))
-> > > > > > > > > > > +             return -EACCES;
-> > > > > > > > > >
-> > > > > > > > > > I know this might have been discussed a while back but why exactly do we
-> > > > > > > > > > require CAP_SYS_ADMIN in init_userns and not in the target userns? What
-> > > > > > > > > > if I want to do a setns()fd, CLONE_NEWUSER) to the target process and
-> > > > > > > > > > use ptrace from in there?
-> > > > > > > > >
-> > > > > > > > > See https://lore.kernel.org/lkml/CAG48ez3R+ZJ1vwGkDfGzKX2mz6f=jjJWsO5pCvnH68P+RKO8Ow@mail.gmail.com/
-> > > > > > > > > . Basically, the problem is that this doesn't just give you capability
-> > > > > > > > > over the target task, but also over every other task that has the same
-> > > > > > > > > filter installed; you need some sort of "is the caller capable over
-> > > > > > > > > the filter and anyone who uses it" check.
-> > > > > > > >
-> > > > > > > > Thanks.
-> > > > > > > > But then this new ptrace feature as it stands is imho currently broken.
-> > > > > > > > If you can install a seccomp filter with SECCOMP_RET_USER_NOTIF if you
-> > > > > > > > are ns_cpabable(CAP_SYS_ADMIN) and also get an fd via seccomp() itself
-> > > > > > > > if you are ns_cpabable(CAP_SYS_ADMIN)
-> > > > >
-> > > > > Actually, you don't need CAP_SYS_ADMIN for seccomp() at all as long as
-> > > > > you enable the NNP flag, I think?
-> > > >
-> > > > Yes, if you turn on NNP you don't even need sys_admin.
-> > > >
-> > > > >
-> > > > > > > > then either the new ptrace() api
-> > > > > > > > extension should be fixed to allow for this too or the seccomp() way of
-> > > > > > > > retrieving the pid - which I really think we want - needs to be fixed to
-> > > > > > > > require capable(CAP_SYS_ADMIN) too.
-> > > > > > > > The solution where both require ns_capable(CAP_SYS_ADMIN) is - imho -
-> > > > > > > > the preferred way to solve this.
-> > > > > > > > Everything else will just be confusing.
-> > > > > > >
-> > > > > > > First you say "broken", then you say "confusing". Which one do you mean?
-> > > > > >
-> > > > > > Both. It's broken in so far as it places a seemingly unnecessary
-> > > > > > restriction that could be fixed. You outlined one possible fix yourself
-> > > > > > in the link you provided.
-> > > > >
-> > > > > If by "possible fix" you mean "check whether the seccomp filter is
-> > > > > only attached to a single task": That wouldn't fundamentally change
-> > > > > the situation, it would only add an additional special case.
-> > > > >
-> > > > > > And it's confusing in so far as there is a way
-> > > > > > via seccomp() to get the fd without said requirement.
-> > > > >
-> > > > > I don't find it confusing at all. seccomp() and ptrace() are very
-> > > >
-> > > > Fine, then that's a matter of opinion. I find it counterintuitive that
-> > > > you can get an fd without privileges via one interface but not via
-> > > > another.
-> > > >
-> > > > > different situations: When you use seccomp(), infrastructure is
-> > > >
-> > > > Sure. Note, that this is _one_ of the reasons why I want to make sure we
-> > > > keep the native seccomp() only based way of getting an fd without
-> > > > forcing userspace to switching to a differnet kernel api.
-> > > >
-> > > > > already in place for ensuring that your filter is only applied to
-> > > > > processes over which you are capable, and propagation is limited by
-> > > > > inheritance from your task down. When you use ptrace(), you need a
-> > > > > pretty different sort of access check that checks whether you're
-> > > > > privileged over ancestors, siblings and so on of the target task.
-> > > >
-> > > > So, don't get me wrong I'm not arguing against the ptrace() interface in
-> > > > general. If this is something that people find useful, fine. But, I
-> > > > would like to have a simple single-syscall pure-seccomp() based way of
-> > > > getting an fd, i.e. what we have in patch 1 of this series.
-> > >
-> > > Yeah, I also prefer the seccomp() one.
-> > >
-> > > > > But thinking about it more, I think that CAP_SYS_ADMIN over the saved
-> > > > > current->mm->user_ns of the task that installed the filter (stored as
-> > > > > a "struct user_namespace *" in the filter) should be acceptable.
-> > > >
-> > > > Hm... Why not CAP_SYS_PTRACE?
-> > >
-> > > Because LSMs like SELinux add extra checks that apply even if you have
-> > > CAP_SYS_PTRACE, and this would subvert those. The only capability I
-> > > know of that lets you bypass LSM checks by design (if no LSM blocks
-> > > the capability itself) is CAP_SYS_ADMIN.
-> > >
-> > > > One more thing. Citing from [1]
-> > > >
-> > > > > I think there's a security problem here. Imagine the following scenario:
-> > > > >
-> > > > > 1. task A (uid==0) sets up a seccomp filter that uses SECCOMP_RET_USER_NOTIF
-> > > > > 2. task A forks off a child B
-> > > > > 3. task B uses setuid(1) to drop its privileges
-> > > > > 4. task B becomes dumpable again, either via prctl(PR_SET_DUMPABLE, 1)
-> > > > > or via execve()
-> > > > > 5. task C (the attacker, uid==1) attaches to task B via ptrace
-> > > > > 6. task C uses PTRACE_SECCOMP_NEW_LISTENER on task B
-> > > >
-> > > > Sorry, to be late to the party but would this really pass
-> > > > __ptrace_may_access() in ptrace_attach()? It doesn't seem obvious to me
-> > > > that it would... Doesn't look like it would get past:
-> > > >
-> > > >         tcred = __task_cred(task);
-> > > >         if (uid_eq(caller_uid, tcred->euid) &&
-> > > >             uid_eq(caller_uid, tcred->suid) &&
-> > > >             uid_eq(caller_uid, tcred->uid)  &&
-> > > >             gid_eq(caller_gid, tcred->egid) &&
-> > > >             gid_eq(caller_gid, tcred->sgid) &&
-> > > >             gid_eq(caller_gid, tcred->gid))
-> > > >                 goto ok;
-> > > >         if (ptrace_has_cap(tcred->user_ns, mode))
-> > > >                 goto ok;
-> > > >         rcu_read_unlock();
-> > > >         return -EPERM;
-> > > > ok:
-> > > >         rcu_read_unlock();
-> > > >         mm = task->mm;
-> > > >         if (mm &&
-> > > >             ((get_dumpable(mm) != SUID_DUMP_USER) &&
-> > > >              !ptrace_has_cap(mm->user_ns, mode)))
-> > > >             return -EPERM;
-> > >
-> > > Which specific check would prevent task C from attaching to task B? If
-> > > the UIDs match, the first "goto ok" executes; and you're dumpable, so
-> > > you don't trigger the second "return -EPERM".
-> > >
-> > > > > 7. because the seccomp filter is shared by task A and task B, task C
-> > > > > is now able to influence syscall results for syscalls performed by
-> > > > > task A
-> > > >
-> > > > [1]: https://lore.kernel.org/lkml/CAG48ez3R+ZJ1vwGkDfGzKX2mz6f=jjJWsO5pCvnH68P+RKO8Ow@mail.gmail.com/
-> >
-> >
-> >
-> > --
-> > paul moore
-> > www.paul-moore.com
+> > I'm inclined to suggest something awful-ish: always allocate the
+> > bitmap as though it's for a 64-bit process, and just let it be at a
+> > high address.  And add a syscall or arch_prctl() to manipulate it for
+> > the benefit of 32-bit programs that can't address it directly.
+> 
+> That's likely the only way to go.
+
+This bitmap is needed only when the app does dlopen() a non-IBT .so file.  Most
+applications do not need it.  Can't we let dlopen mmap() the bitmap when needed
+and pass it to the kernel?
+
+Yu-cheng
