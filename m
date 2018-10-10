@@ -1,153 +1,53 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
- ptrace
-Date: Wed, 10 Oct 2018 15:18:30 +0200
-Message-ID: <20181010131829.rlczow555y6gig5p@brauner.io>
-References: <20181009132850.fp6yne2vgmfpi27k@brauner.io>
- <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
- <20181009134923.2fvf5roghqgaj5gq@brauner.io>
- <CAG48ez1hnKkm7mzXuZLP4n6x8K1JqmTwQb-e79oJguTaH1mkUw@mail.gmail.com>
- <20181009140932.e5w5lgbgucbl72kt@brauner.io>
- <CAG48ez12SYRUJTWRdzWhpvHBkQion4i8Gpef4r1L6epo9JF-ng@mail.gmail.com>
- <20181009162022.d7fd2wibyq6xi6sg@brauner.io>
- <CAG48ez2ROhq4R1az2TXNmBvCXY=3UVxnmh6CeR05N0xVGrpwpA@mail.gmail.com>
- <20181010125422.rouslofknxzvygzr@brauner.io>
- <CAG48ez0ct7_i1U0=vr1Z=4WhVH7GQKFzhtuxR+1oknmPiDTqKg@mail.gmail.com>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
+Date: Wed, 10 Oct 2018 16:10:21 +0200
+Message-ID: <20181010141017.GA2881@asgard.redhat.com>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20180724173957.GA22106@yury-thinkpad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez0ct7_i1U0=vr1Z=4WhVH7GQKFzhtuxR+1oknmPiDTqKg@mail.gmail.com>
+In-Reply-To: <20180724173957.GA22106@yury-thinkpad>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, suda.akihiro@lab.ntt.co.jp, Oleg Nesterov <oleg@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Paul Moore <paul@paul-moore.com>, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <jame>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 10, 2018 at 03:10:11PM +0200, Jann Horn wrote:
-> On Wed, Oct 10, 2018 at 2:54 PM Christian Brauner <christian@brauner.io> wrote:
-> > On Tue, Oct 09, 2018 at 06:26:47PM +0200, Jann Horn wrote:
-> > > On Tue, Oct 9, 2018 at 6:20 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > On Tue, Oct 09, 2018 at 05:26:26PM +0200, Jann Horn wrote:
-> > > > > On Tue, Oct 9, 2018 at 4:09 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > > > On Tue, Oct 09, 2018 at 03:50:53PM +0200, Jann Horn wrote:
-> > > > > > > On Tue, Oct 9, 2018 at 3:49 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > > > > > On Tue, Oct 09, 2018 at 03:36:04PM +0200, Jann Horn wrote:
-> > > > > > > > > On Tue, Oct 9, 2018 at 3:29 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > > > > > > > One more thing. Citing from [1]
-> > > > > > > > > >
-> > > > > > > > > > > I think there's a security problem here. Imagine the following scenario:
-> > > > > > > > > > >
-> > > > > > > > > > > 1. task A (uid==0) sets up a seccomp filter that uses SECCOMP_RET_USER_NOTIF
-> > > > > > > > > > > 2. task A forks off a child B
-> > > > > > > > > > > 3. task B uses setuid(1) to drop its privileges
-> > > > > > > > > > > 4. task B becomes dumpable again, either via prctl(PR_SET_DUMPABLE, 1)
-> > > > > > > > > > > or via execve()
-> > > > > > > > > > > 5. task C (the attacker, uid==1) attaches to task B via ptrace
-> > > > > > > > > > > 6. task C uses PTRACE_SECCOMP_NEW_LISTENER on task B
-> > > > > > > > > >
-> > > > > > > > > > Sorry, to be late to the party but would this really pass
-> > > > > > > > > > __ptrace_may_access() in ptrace_attach()? It doesn't seem obvious to me
-> > > > > > > > > > that it would... Doesn't look like it would get past:
-> > > > > > > > > >
-> > > > > > > > > >         tcred = __task_cred(task);
-> > > > > > > > > >         if (uid_eq(caller_uid, tcred->euid) &&
-> > > > > > > > > >             uid_eq(caller_uid, tcred->suid) &&
-> > > > > > > > > >             uid_eq(caller_uid, tcred->uid)  &&
-> > > > > > > > > >             gid_eq(caller_gid, tcred->egid) &&
-> > > > > > > > > >             gid_eq(caller_gid, tcred->sgid) &&
-> > > > > > > > > >             gid_eq(caller_gid, tcred->gid))
-> > > > > > > > > >                 goto ok;
-> > > > > > > > > >         if (ptrace_has_cap(tcred->user_ns, mode))
-> > > > > > > > > >                 goto ok;
-> > > > > > > > > >         rcu_read_unlock();
-> > > > > > > > > >         return -EPERM;
-> > > > > > > > > > ok:
-> > > > > > > > > >         rcu_read_unlock();
-> > > > > > > > > >         mm = task->mm;
-> > > > > > > > > >         if (mm &&
-> > > > > > > > > >             ((get_dumpable(mm) != SUID_DUMP_USER) &&
-> > > > > > > > > >              !ptrace_has_cap(mm->user_ns, mode)))
-> > > > > > > > > >             return -EPERM;
-> > > > > > > > >
-> > > > > > > > > Which specific check would prevent task C from attaching to task B? If
-> > > > > > > > > the UIDs match, the first "goto ok" executes; and you're dumpable, so
-> > > > > > > > > you don't trigger the second "return -EPERM".
-> > > > > > > >
-> > > > > > > > You'd also need CAP_SYS_PTRACE in the mm->user_ns which you shouldn't
-> > > > > > > > have if you did a setuid to an unpriv user. (But I always find that code
-> > > > > > > > confusing.)
-> > > > > > >
-> > > > > > > Only if the target hasn't gone through execve() since setuid().
-> > > > > >
-> > > > > > Sorry if I want to know this in excessive detail but I'd like to
-> > > > > > understand this properly so bear with me :)
-> > > > > > - If task B has setuid()ed and prctl(PR_SET_DUMPABLE, 1)ed but not
-> > > > > >   execve()ed then C won't pass ptrace_has_cap(mm->user_ns, mode).
-> > > > >
-> > > > > Yeah.
-> > > > >
-> > > > > > - If task B has setuid()ed, exeved()ed it will get its dumpable flag set
-> > > > > >   to /proc/sys/fs/suid_dumpable
-> > > > >
-> > > > > Not if you changed all UIDs (e.g. by calling setuid() as root). In
-> > > > > that case, setup_new_exec() calls "set_dumpable(current->mm,
-> > > > > SUID_DUMP_USER)".
-> > > >
-> > > > Actually, looking at this when C is trying to PTRACE_ATTACH to B as an
-> > > > unprivileged user even if B execve()ed and it is dumpable C still
-> > > > wouldn't have CAP_SYS_PTRACE in the mm->user_ns unless it already is
-> > > > privileged over mm->user_ns which means it must be in an ancestor
-> > > > user_ns.
-> > >
-> > > Huh? Why would you need CAP_SYS_PTRACE for anything here? You can
-> > > ptrace another process running under your UID just fine, no matter
-> > > what the namespaces are. I'm not sure what you're saying.
-> >
-> > Sorry, I was out the door yesterday when answering this and was too
-> > brief. I forgot to mention: /proc/sys/kernel/yama/ptrace_scope. It
-> > should be enabled by default on nearly all distros
+On Tue, Jul 24, 2018 at 08:39:57PM +0300, Yury Norov wrote:
+> Hi all,
 > 
-> "nearly all distros"? AFAIK it's off on Debian, for starters. And Yama
-> still doesn't help you if one of the tasks enters a new user namespace
-> or whatever.
+> + Pavel Machek, Palmer Dabbelt, Wookey.
 > 
-> Yama is a little bit of extra, heuristic, **opt-in** hardening enabled
-> in some configurations. It is **not** a fundamental building block you
-> can rely on.
-> 
-> > and even if not -
-> > which is an administrators choice - you can usually easily enable it via
-> > sysctl.
-> 
-> Opt-in security isn't good enough. Kernel interfaces should still be
-> safe to use even on a system that has all the LSM stuff disabled in
-> the kernel config.
+> On Wed, May 16, 2018 at 11:18:45AM +0300, Yury Norov wrote:
+> > This series enables AARCH64 with ILP32 mode.
+> > 
+> > As supporting work, it introduces ARCH_32BIT_OFF_T configuration
+> > option that is enabled for existing 32-bit architectures but disabled
+> > for new arches (so 64-bit off_t userspace type is used by new userspace).
+> > Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
+> > 
+> > Based on kernel v4.16. Tested with LTP, glibc testsuite, trinity, lmbench,
+> > CPUSpec.
 
-Then ptrace() isn't, I guess?
+> This is the update of the series based on 4.17 kernel
+> https://github.com/norov/linux/tree/ilp32-4.17
 
-But see https://lists.linuxfoundation.org/pipermail/containers/2018-October/039567.html
-I don't care as long as we have a way of getting the fd without the
-CAP_SYS_ADMIN requirement throught seccomp().
+Hello.
 
-> 
-> > 1 ("restricted ptrace") [default value]
-> > When  performing an operation that requires a PTRACE_MODE_ATTACH check,
-> > the calling process must either have the CAP_SYS_PTRACE capability in
-> > the user namespace of the target process or it must have a prede‐ fined
-> > relationship with the target process.  By default, the predefined
-> > relationship is that the target process must be a descendant of the
-> > caller.
-> >
-> > If you don't have it set you're already susceptible to all kinds of
-> > other attacks
-> 
-> Oh? Can you be more specific, please?
+I have some questions regarding AArch64 ILP32 implementation for which I
+failed to find an answer myself:
+ * How ptrace() tracer is supposed to distinguish between ILP32 and LP64
+   tracees? For MIPS N32 and x32 this is possible based on syscall
+   number, but for AArch64 ILP32 I do not see such a sign. There's also
+   ARM_ip is employed for signalling entering/exiting, I wonder whether
+   it's possible to employ it also for signalling tracee's personality.
+ * What's the reasoning behind capping syscall arguments to 32 bit? x32
+   and MIPS N32 do not have such a restriction (and do not need special
+   wrappers for syscalls that pass 64-bit values as a result, except
+   when they do,  as it is the case for preadv2 on x32); moreover, that
+   would lead to insurmountable difficulties for AArch64 ILP32 tracers
+   that try to trace LP64 tracees, as it would be impossible to pass
+   64-bit addresses to process_vm_{read,write} or ptrace PEEK/POKE.
 
-I was referring to attacks where you attach to processes that run as
-your user but might expose in-memory credentials or other sensitive
-information, (essentially what the manpage is outlining).
-
-> 
-> > and I'm still not convinced we need to bring out the big
-> > capable(CAP_SYS_ADMIN) gun here.
+Thank you.
