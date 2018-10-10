@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 02/16] rseq/selftests: Adapt number of threads to the number of detected cpus
-Date: Wed, 10 Oct 2018 15:19:22 -0400
-Message-ID: <20181010191936.7495-3-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 04/16] mm: Introduce vm_map_user_ram, vm_unmap_user_ram
+Date: Wed, 10 Oct 2018 15:19:24 -0400
+Message-ID: <20181010191936.7495-5-mathieu.desnoyers@efficios.com>
 References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
@@ -10,70 +10,128 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
 
-On smaller systems, running a test with 200 threads can take a long
-time on machines with smaller number of CPUs.
-
-Detect the number of online cpus at test runtime, and multiply that
-by 6 to have 6 rseq threads per cpu preempting each other.
+Create and destroy mappings aliased to a user-space mapping with the same
+cache coloring as the userspace mapping. Allow the kernel to load from
+and store to pages shared with user-space through its own mapping in
+kernel virtual addresses while ensuring cache conherency between kernel
+and userspace mappings for virtually aliased architectures.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Joel Fernandes <joelaf@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Watson <davejwatson@fb.com>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: Andi Kleen <andi@firstfloor.org>
-Cc: linux-kselftest@vger.kernel.org
-Cc: "H . Peter Anvin" <hpa@zytor.com>
-Cc: Chris Lameter <cl@linux.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Paul Turner <pjt@google.com>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: Josh Triplett <josh@joshtriplett.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ben Maurer <bmaurer@fb.com>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Reviewed-by: Matthew Wilcox <mawilcox@microsoft.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
 ---
- tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ include/linux/vmalloc.h |  4 ++++
+ mm/vmalloc.c            | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 68 insertions(+)
 
-diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
-index 3acd6d75ff9f..e426304fd4a0 100755
---- a/tools/testing/selftests/rseq/run_param_test.sh
-+++ b/tools/testing/selftests/rseq/run_param_test.sh
-@@ -1,6 +1,8 @@
- #!/bin/bash
- # SPDX-License-Identifier: GPL-2.0+ or MIT
- 
-+NR_CPUS=`grep '^processor' /proc/cpuinfo | wc -l`
+diff --git a/include/linux/vmalloc.h b/include/linux/vmalloc.h
+index 398e9c95cd61..899657b3d469 100644
+--- a/include/linux/vmalloc.h
++++ b/include/linux/vmalloc.h
+@@ -59,6 +59,10 @@ struct vmap_area {
+ extern void vm_unmap_ram(const void *mem, unsigned int count);
+ extern void *vm_map_ram(struct page **pages, unsigned int count,
+ 				int node, pgprot_t prot);
++extern void vm_unmap_user_ram(const void *mem, unsigned int count);
++extern void *vm_map_user_ram(struct page **pages, unsigned int count,
++				unsigned long uaddr, int node, pgprot_t prot);
 +
- EXTRA_ARGS=${@}
+ extern void vm_unmap_aliases(void);
  
- OLDIFS="$IFS"
-@@ -28,15 +30,16 @@ IFS="$OLDIFS"
- 
- REPS=1000
- SLOW_REPS=100
-+NR_THREADS=$((6*${NR_CPUS}))
- 
- function do_tests()
- {
- 	local i=0
- 	while [ "$i" -lt "${#TEST_LIST[@]}" ]; do
- 		echo "Running test ${TEST_NAME[$i]}"
--		./param_test ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		./param_test ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
- 		echo "Running compare-twice test ${TEST_NAME[$i]}"
--		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
- 		let "i++"
- 	done
+ #ifdef CONFIG_MMU
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index a728fc492557..a86bf550b027 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -1186,6 +1186,70 @@ void *vm_map_ram(struct page **pages, unsigned int count, int node, pgprot_t pro
  }
+ EXPORT_SYMBOL(vm_map_ram);
+ 
++/**
++ * vm_unmap_user_ram - unmap linear kernel address space set up by vm_map_user_ram
++ * @mem: the pointer returned by vm_map_user_ram
++ * @count: the count passed to that vm_map_user_ram call (cannot unmap partial)
++ */
++void vm_unmap_user_ram(const void *mem, unsigned int count)
++{
++	unsigned long size = (unsigned long)count << PAGE_SHIFT;
++	unsigned long addr = (unsigned long)mem;
++	struct vmap_area *va;
++
++	might_sleep();
++	BUG_ON(!addr);
++	BUG_ON(addr < VMALLOC_START);
++	BUG_ON(addr > VMALLOC_END);
++	BUG_ON(!PAGE_ALIGNED(addr));
++
++	debug_check_no_locks_freed(mem, size);
++	va = find_vmap_area(addr);
++	BUG_ON(!va);
++	free_unmap_vmap_area(va);
++}
++EXPORT_SYMBOL(vm_unmap_user_ram);
++
++/**
++ * vm_map_user_ram - map user space pages linearly into kernel virtual address
++ * @pages: an array of pointers to the virtually contiguous pages to be mapped
++ * @count: number of pages
++ * @uaddr: address within the first page in the userspace mapping
++ * @node: prefer to allocate data structures on this node
++ * @prot: memory protection to use. PAGE_KERNEL for regular RAM
++ *
++ * Create a mapping aliased to a user-space mapping with the same cache
++ * coloring as the userspace mapping. Allow the kernel to load from and
++ * store to pages shared with user-space through its own mapping in kernel
++ * virtual addresses while ensuring cache conherency between kernel and
++ * userspace mappings for virtually aliased architectures.
++ *
++ * Returns: a pointer to the address that has been mapped, or %NULL on failure
++ */
++void *vm_map_user_ram(struct page **pages, unsigned int count,
++		unsigned long uaddr, int node, pgprot_t prot)
++{
++	unsigned long size = (unsigned long)count << PAGE_SHIFT;
++	unsigned long va_offset = ALIGN_DOWN(uaddr, PAGE_SIZE) & (SHMLBA - 1);
++	unsigned long alloc_size = ALIGN(va_offset + size, SHMLBA);
++	struct vmap_area *va;
++	unsigned long addr;
++	void *mem;
++
++	va = alloc_vmap_area(alloc_size, SHMLBA, VMALLOC_START, VMALLOC_END,
++			node, GFP_KERNEL);
++	if (IS_ERR(va))
++		return NULL;
++	addr = va->va_start + va_offset;
++	mem = (void *)addr;
++	if (vmap_page_range(addr, addr + size, prot, pages) < 0) {
++		vm_unmap_user_ram(mem, count);
++		return NULL;
++	}
++	return mem;
++}
++EXPORT_SYMBOL(vm_map_user_ram);
++
+ static struct vm_struct *vmlist __initdata;
+ /**
+  * vm_area_add_early - add vmap area early during boot
 -- 
 2.11.0
