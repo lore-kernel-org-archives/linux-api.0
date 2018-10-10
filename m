@@ -1,62 +1,24 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: Re: [RFC v5 1/1] ns: add binfmt_misc to the user namespace
-Date: Wed, 10 Oct 2018 12:11:34 +0200
-Message-ID: <485d1157-9d3e-b4e0-4ece-4e80b2f252c4@vivier.eu>
-References: <20181009103752.21482-1-laurent@vivier.eu>
- <20181009103752.21482-2-laurent@vivier.eu> <20181009151641.GB10149@cisco>
- <409c22e3-1df8-cf7f-2462-ead2bb3020cf@vivier.eu>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 0/5] VFS: Introduce filesystem information query syscall [ver #12]
+Date: Wed, 10 Oct 2018 12:58:31 +0100
+Message-ID: <30911.1539172711@warthog.procyon.org.uk>
+References: <f3646774-ee9e-d5b7-8a11-670012034d59@rasmusvillemoes.dk> <153754786825.19213.16907802981157370740.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <409c22e3-1df8-cf7f-2462-ead2bb3020cf@vivier.eu>
-Content-Language: en-US
+In-Reply-To: <f3646774-ee9e-d5b7-8a11-670012034d59@rasmusvillemoes.dk>
+Content-ID: <30910.1539172711.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <dima@arista.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Eric Biederman <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>
+To: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On 09/10/2018 17:19, Laurent Vivier wrote:
-> Le 09/10/2018 à 17:16, Tycho Andersen a écrit :
->> On Tue, Oct 09, 2018 at 12:37:52PM +0200, Laurent Vivier wrote:
->>> @@ -80,18 +74,32 @@ static int entry_count;
->>>   */
->>>  #define MAX_REGISTER_LENGTH 1920
->>>  
->>> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
->>> +{
->>> +	struct binfmt_namespace *b_ns;
->>> +
->>> +	while (ns) {
->>> +		b_ns = READ_ONCE(ns->binfmt_ns);
->>> +		if (b_ns)
->>> +			return b_ns;
->>> +		ns = ns->parent;
->>> +	}
->>> +	WARN_ON_ONCE(1);
->>
->> It looks like we warn here,
->>
->>> @@ -133,17 +141,18 @@ static int load_misc_binary(struct linux_binprm *bprm)
->>>  	struct file *interp_file = NULL;
->>>  	int retval;
->>>  	int fd_binary = -1;
->>> +	struct binfmt_namespace *ns = binfmt_ns(current_user_ns());
->>>  
->>>  	retval = -ENOEXEC;
->>> -	if (!enabled)
->>> +	if (!ns->enabled)
->>
->> ...but then in cases like this we immediately dereference the pointer
->> anyways and crash. Can we return some other error code here in the !ns
->> case so we don't crash?
-> 
-> My concern here is I don't want to add code to check an error case that
-> cannot happen. The first namespace binfmt_ns pointer is initialized with
-> &init_binfmt_ns, so the return value cannot be NULL.
+Rasmus Villemoes <linux@rasmusvillemoes.dk> wrote:
 
-Perhaps it could be reasonable to return &init_binfmt_ns rather than
-NULL in this case?
+> Would you consider adding a Kconfig knob to not include all this (and
+> all the extra tricks that syscall might learn down the road)?
 
-Thanks,
-Laurent
+I guess that can be done, though the bits are spread out into various
+filesystems.
+
+David
