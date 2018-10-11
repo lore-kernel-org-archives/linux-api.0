@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 17/27] mm: Handle THP/HugeTLB shadow stack page fault
-Date: Thu, 11 Oct 2018 08:15:13 -0700
-Message-ID: <20181011151523.27101-18-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 26/27] x86/cet/shstk: Add arch_prctl functions for Shadow Stack
+Date: Thu, 11 Oct 2018 08:15:22 -0700
+Message-ID: <20181011151523.27101-27-yu-cheng.yu@intel.com>
 References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151523.27101-1-yu-cheng.yu@intel.com>
@@ -10,90 +10,250 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch implements THP shadow stack memory copying in the same
-way as the previous patch for regular PTE.
+arch_prctl(ARCH_X86_CET_STATUS, unsigned long *addr)
+    Return CET feature status.
 
-In copy_huge_pmd(), we clear the dirty bit from the PMD.  On the
-next shadow stack access to the PMD, a page fault occurs.  At
-that time, the page is copied/re-used and the PMD is fixed.
+    The parameter 'addr' is a pointer to a user buffer.
+    On returning to the caller, the kernel fills the following
+    information:
 
+    *addr = SHSTK/IBT status
+    *(addr + 1) = SHSTK base address
+    *(addr + 2) = SHSTK size
+
+arch_prctl(ARCH_X86_CET_DISABLE, unsigned long features)
+    Disable CET features specified in 'features'.  Return
+    -EPERM if CET is locked.
+
+arch_prctl(ARCH_X86_CET_LOCK)
+    Lock in CET feature.
+
+arch_prctl(ARCH_X86_CET_ALLOC_SHSTK, unsigned long *addr)
+    Allocate a new SHSTK.
+
+    The parameter 'addr' is a pointer to a user buffer and indicates
+    the desired SHSTK size to allocate.  On returning to the caller
+    the buffer contains the address of the new SHSTK.
+
+There is no CET enabling arch_prctl function.  By design, CET is
+enabled automatically if the binary and the system can support it.
+
+The parameters passed are always unsigned 64-bit.  When an ia32
+application passing pointers, it should only use the lower 32 bits.
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/mm/pgtable.c         | 8 ++++++++
- include/asm-generic/pgtable.h | 2 ++
- mm/huge_memory.c              | 4 ++++
- 3 files changed, 14 insertions(+)
+ arch/x86/include/asm/cet.h        |  5 ++
+ arch/x86/include/uapi/asm/prctl.h |  5 ++
+ arch/x86/kernel/Makefile          |  2 +-
+ arch/x86/kernel/cet.c             | 29 +++++++++++
+ arch/x86/kernel/cet_prctl.c       | 86 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c         |  4 +-
+ 6 files changed, 128 insertions(+), 3 deletions(-)
+ create mode 100644 arch/x86/kernel/cet_prctl.c
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index e9ee4c86a477..864954bda7fe 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -891,6 +891,14 @@ inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
- 		return pte;
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index 008b4651b5be..6fa23a41580c 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -12,19 +12,24 @@ struct task_struct;
+ struct cet_status {
+ 	unsigned long	shstk_base;
+ 	unsigned long	shstk_size;
++	unsigned int	locked:1;
+ 	unsigned int	shstk_enabled:1;
+ };
+ 
+ #ifdef CONFIG_X86_INTEL_CET
++int prctl_cet(int option, unsigned long arg2);
+ int cet_setup_shstk(void);
+ int cet_setup_thread_shstk(struct task_struct *p);
++int cet_alloc_shstk(unsigned long *arg);
+ void cet_disable_shstk(void);
+ void cet_disable_free_shstk(struct task_struct *p);
+ int cet_restore_signal(unsigned long ssp);
+ int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
+ #else
++static inline int prctl_cet(int option, unsigned long arg2) { return -EINVAL; }
+ static inline int cet_setup_shstk(void) { return -EINVAL; }
+ static inline int cet_setup_thread_shstk(struct task_struct *p) { return -EINVAL; }
++static inline int cet_alloc_shstk(unsigned long *arg) { return -EINVAL; }
+ static inline void cet_disable_shstk(void) {}
+ static inline void cet_disable_free_shstk(struct task_struct *p) {}
+ static inline int cet_restore_signal(unsigned long ssp) { return -EINVAL; }
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index 5a6aac9fa41f..d962f0ec9ccf 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -14,4 +14,9 @@
+ #define ARCH_MAP_VDSO_32	0x2002
+ #define ARCH_MAP_VDSO_64	0x2003
+ 
++#define ARCH_X86_CET_STATUS		0x3001
++#define ARCH_X86_CET_DISABLE		0x3002
++#define ARCH_X86_CET_LOCK		0x3003
++#define ARCH_X86_CET_ALLOC_SHSTK	0x3004
++
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 36b14ef410c8..b9e6cdc6b4f7 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -139,7 +139,7 @@ obj-$(CONFIG_UNWINDER_ORC)		+= unwind_orc.o
+ obj-$(CONFIG_UNWINDER_FRAME_POINTER)	+= unwind_frame.o
+ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+-obj-$(CONFIG_X86_INTEL_CET)		+= cet.o
++obj-$(CONFIG_X86_INTEL_CET)		+= cet.o cet_prctl.o
+ 
+ obj-$(CONFIG_ARCH_HAS_PROGRAM_PROPERTIES) += elf.o
+ 
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 51b26616ac20..17ad328586aa 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -121,6 +121,35 @@ static int create_rstor_token(bool ia32, unsigned long ssp,
+ 	return 0;
  }
  
-+inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
++int cet_alloc_shstk(unsigned long *arg)
 +{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pmd_mkdirty_shstk(pmd);
-+	else
-+		return pmd;
++	unsigned long len = *arg;
++	unsigned long addr;
++	unsigned long token;
++	unsigned long ssp;
++
++	addr = do_mmap_locked(0, len, PROT_READ,
++			      MAP_ANONYMOUS | MAP_PRIVATE, VM_SHSTK);
++	if (addr >= TASK_SIZE_MAX)
++		return -ENOMEM;
++
++	/* Restore token is 8 bytes and aligned to 8 bytes */
++	ssp = addr + len;
++	token = ssp;
++
++	if (!in_ia32_syscall())
++		token |= TOKEN_MODE_64;
++	ssp -= 8;
++
++	if (write_user_shstk_64(ssp, token)) {
++		vm_munmap(addr, len);
++		return -EINVAL;
++	}
++
++	*arg = addr;
++	return 0;
 +}
 +
- inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
+ int cet_setup_shstk(void)
  {
- 	return (vm_flags & VM_SHSTK);
-diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
-index 015b769377a3..7512e4dfd642 100644
---- a/include/asm-generic/pgtable.h
-+++ b/include/asm-generic/pgtable.h
-@@ -1129,9 +1129,11 @@ static inline bool arch_has_pfn_modify_check(void)
- 
- #ifndef CONFIG_ARCH_HAS_SHSTK
- #define pte_set_vma_features(pte, vma) pte
-+#define pmd_set_vma_features(pmd, vma) pmd
- #define arch_copy_pte_mapping(vma_flags) false
- #else
- pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
-+pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
- bool arch_copy_pte_mapping(vm_flags_t vm_flags);
- #endif
- 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 00704060b7f7..6e03e26c1cec 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -597,6 +597,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
- 
- 		entry = mk_huge_pmd(page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		page_add_new_anon_rmap(page, vma, haddr, true);
- 		mem_cgroup_commit_charge(page, memcg, false, true);
- 		lru_cache_add_active_or_unevictable(page, vma);
-@@ -1194,6 +1195,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
- 		pte_t entry;
- 		entry = mk_pte(pages[i], vma->vm_page_prot);
- 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+		entry = pte_set_vma_features(entry, vma);
- 		memcg = (void *)page_private(pages[i]);
- 		set_page_private(pages[i], 0);
- 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
-@@ -1278,6 +1280,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = pmd_mkyoung(orig_pmd);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
- 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 		ret |= VM_FAULT_WRITE;
-@@ -1349,6 +1352,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
- 		page_add_new_anon_rmap(new_page, vma, haddr, true);
- 		mem_cgroup_commit_charge(new_page, memcg, false, true);
+ 	unsigned long addr, size;
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+new file mode 100644
+index 000000000000..320dbb620d61
+--- /dev/null
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -0,0 +1,86 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++
++#include <linux/errno.h>
++#include <linux/uaccess.h>
++#include <linux/prctl.h>
++#include <linux/compat.h>
++#include <linux/mman.h>
++#include <asm/processor.h>
++#include <asm/prctl.h>
++#include <asm/elf.h>
++#include <asm/elf_property.h>
++#include <asm/cet.h>
++
++/* See Documentation/x86/intel_cet.txt. */
++
++static int handle_get_status(unsigned long arg2)
++{
++	unsigned int features = 0;
++	unsigned long shstk_base, shstk_size;
++	unsigned long buf[3];
++
++	if (current->thread.cet.shstk_enabled)
++		features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
++
++	shstk_base = current->thread.cet.shstk_base;
++	shstk_size = current->thread.cet.shstk_size;
++
++	buf[0] = (unsigned long)features;
++	buf[1] = shstk_base;
++	buf[2] = shstk_size;
++	return copy_to_user((unsigned long __user *)arg2, buf,
++			    sizeof(buf));
++}
++
++static int handle_alloc_shstk(unsigned long arg2)
++{
++	int err = 0;
++	unsigned long arg;
++	unsigned long addr = 0;
++	unsigned long size = 0;
++
++	if (get_user(arg, (unsigned long __user *)arg2))
++		return -EFAULT;
++
++	size = arg;
++	err = cet_alloc_shstk(&arg);
++	if (err)
++		return err;
++
++	addr = arg;
++	if (put_user(addr, (unsigned long __user *)arg2)) {
++		vm_munmap(addr, size);
++		return -EFAULT;
++	}
++
++	return 0;
++}
++
++int prctl_cet(int option, unsigned long arg2)
++{
++	if (!cpu_x86_cet_enabled())
++		return -EINVAL;
++
++	switch (option) {
++	case ARCH_X86_CET_STATUS:
++		return handle_get_status(arg2);
++
++	case ARCH_X86_CET_DISABLE:
++		if (current->thread.cet.locked)
++			return -EPERM;
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
++			cet_disable_free_shstk(current);
++
++		return 0;
++
++	case ARCH_X86_CET_LOCK:
++		current->thread.cet.locked = 1;
++		return 0;
++
++	case ARCH_X86_CET_ALLOC_SHSTK:
++		return handle_alloc_shstk(arg2);
++
++	default:
++		return -EINVAL;
++	}
++}
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 440f012ef925..f240fce2b20f 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -792,7 +792,7 @@ long do_arch_prctl_common(struct task_struct *task, int option,
+ 		return get_cpuid_mode();
+ 	case ARCH_SET_CPUID:
+ 		return set_cpuid_mode(task, cpuid_enabled);
++	default:
++		return prctl_cet(option, cpuid_enabled);
+ 	}
+-
+-	return -EINVAL;
+ }
 -- 
 2.17.1
