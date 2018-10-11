@@ -1,148 +1,73 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for shadow stack
-Date: Thu, 11 Oct 2018 08:15:00 -0700
-Message-ID: <20181011151523.27101-5-yu-cheng.yu@intel.com>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference counter
+ to coexist with glibc
+Date: Thu, 11 Oct 2018 16:20:05 +0000
+Message-ID: <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
+ <20181010191936.7495-2-mathieu.desnoyers@efficios.com>
+ <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com>
+ <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+In-Reply-To: <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
+Content-ID: <FC55997B59EB584AA9C8E212923066E9@eurprd08.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: nd <nd@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-Intel Control-flow Enforcement Technology (CET) introduces the
-following MSRs into the XSAVES system states.
-
-    IA32_U_CET (user-mode CET settings),
-    IA32_PL3_SSP (user-mode shadow stack),
-    IA32_PL0_SSP (kernel-mode shadow stack),
-    IA32_PL1_SSP (ring-1 shadow stack),
-    IA32_PL2_SSP (ring-2 shadow stack).
-
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
----
- arch/x86/include/asm/fpu/types.h            | 22 +++++++++++++++++++++
- arch/x86/include/asm/fpu/xstate.h           |  4 +++-
- arch/x86/include/uapi/asm/processor-flags.h |  2 ++
- arch/x86/kernel/fpu/xstate.c                | 10 ++++++++++
- 4 files changed, 37 insertions(+), 1 deletion(-)
-
-diff --git a/arch/x86/include/asm/fpu/types.h b/arch/x86/include/asm/fpu/types.h
-index 202c53918ecf..e55d51d172f1 100644
---- a/arch/x86/include/asm/fpu/types.h
-+++ b/arch/x86/include/asm/fpu/types.h
-@@ -114,6 +114,9 @@ enum xfeature {
- 	XFEATURE_Hi16_ZMM,
- 	XFEATURE_PT_UNIMPLEMENTED_SO_FAR,
- 	XFEATURE_PKRU,
-+	XFEATURE_RESERVED,
-+	XFEATURE_SHSTK_USER,
-+	XFEATURE_SHSTK_KERNEL,
- 
- 	XFEATURE_MAX,
- };
-@@ -128,6 +131,8 @@ enum xfeature {
- #define XFEATURE_MASK_Hi16_ZMM		(1 << XFEATURE_Hi16_ZMM)
- #define XFEATURE_MASK_PT		(1 << XFEATURE_PT_UNIMPLEMENTED_SO_FAR)
- #define XFEATURE_MASK_PKRU		(1 << XFEATURE_PKRU)
-+#define XFEATURE_MASK_SHSTK_USER	(1 << XFEATURE_SHSTK_USER)
-+#define XFEATURE_MASK_SHSTK_KERNEL	(1 << XFEATURE_SHSTK_KERNEL)
- 
- #define XFEATURE_MASK_FPSSE		(XFEATURE_MASK_FP | XFEATURE_MASK_SSE)
- #define XFEATURE_MASK_AVX512		(XFEATURE_MASK_OPMASK \
-@@ -229,6 +234,23 @@ struct pkru_state {
- 	u32				pad;
- } __packed;
- 
-+/*
-+ * State component 11 is Control flow Enforcement user states
-+ */
-+struct cet_user_state {
-+	u64 u_cet;	/* user control flow settings */
-+	u64 user_ssp;	/* user shadow stack pointer */
-+} __packed;
-+
-+/*
-+ * State component 12 is Control flow Enforcement kernel states
-+ */
-+struct cet_kernel_state {
-+	u64 kernel_ssp;	/* kernel shadow stack */
-+	u64 pl1_ssp;	/* ring-1 shadow stack */
-+	u64 pl2_ssp;	/* ring-2 shadow stack */
-+} __packed;
-+
- struct xstate_header {
- 	u64				xfeatures;
- 	u64				xcomp_bv;
-diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
-index d8e2ec99f635..18b60748a34d 100644
---- a/arch/x86/include/asm/fpu/xstate.h
-+++ b/arch/x86/include/asm/fpu/xstate.h
-@@ -28,7 +28,9 @@
- 				  XFEATURE_MASK_Hi16_ZMM | \
- 				  XFEATURE_MASK_PKRU | \
- 				  XFEATURE_MASK_BNDREGS | \
--				  XFEATURE_MASK_BNDCSR)
-+				  XFEATURE_MASK_BNDCSR | \
-+				  XFEATURE_MASK_SHSTK_USER | \
-+				  XFEATURE_MASK_SHSTK_KERNEL)
- 
- #ifdef CONFIG_X86_64
- #define REX_PREFIX	"0x48, "
-diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
-index bcba3c643e63..25311ec4b731 100644
---- a/arch/x86/include/uapi/asm/processor-flags.h
-+++ b/arch/x86/include/uapi/asm/processor-flags.h
-@@ -130,6 +130,8 @@
- #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
- #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
- #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
-+#define X86_CR4_CET_BIT		23 /* enable Control flow Enforcement */
-+#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
- 
- /*
-  * x86-64 Task Priority Register, CR8
-diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-index 605ec6decf3e..ad36ea28bfd1 100644
---- a/arch/x86/kernel/fpu/xstate.c
-+++ b/arch/x86/kernel/fpu/xstate.c
-@@ -35,6 +35,9 @@ static const char *xfeature_names[] =
- 	"Processor Trace (unused)"	,
- 	"Protection Keys User registers",
- 	"unknown xstate feature"	,
-+	"Control flow User registers"	,
-+	"Control flow Kernel registers"	,
-+	"unknown xstate feature"	,
- };
- 
- static short xsave_cpuid_features[] __initdata = {
-@@ -48,6 +51,9 @@ static short xsave_cpuid_features[] __initdata = {
- 	X86_FEATURE_AVX512F,
- 	X86_FEATURE_INTEL_PT,
- 	X86_FEATURE_PKU,
-+	0,		   /* Unused */
-+	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_USER */
-+	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_KERNEL */
- };
- 
- /*
-@@ -312,6 +318,8 @@ static void __init print_xstate_features(void)
- 	print_xstate_feature(XFEATURE_MASK_ZMM_Hi256);
- 	print_xstate_feature(XFEATURE_MASK_Hi16_ZMM);
- 	print_xstate_feature(XFEATURE_MASK_PKRU);
-+	print_xstate_feature(XFEATURE_MASK_SHSTK_USER);
-+	print_xstate_feature(XFEATURE_MASK_SHSTK_KERNEL);
- }
- 
- /*
-@@ -558,6 +566,8 @@ static void check_xstate_against_struct(int nr)
- 	XCHECK_SZ(sz, nr, XFEATURE_ZMM_Hi256, struct avx_512_zmm_uppers_state);
- 	XCHECK_SZ(sz, nr, XFEATURE_Hi16_ZMM,  struct avx_512_hi16_state);
- 	XCHECK_SZ(sz, nr, XFEATURE_PKRU,      struct pkru_state);
-+	XCHECK_SZ(sz, nr, XFEATURE_SHSTK_USER,   struct cet_user_state);
-+	XCHECK_SZ(sz, nr, XFEATURE_SHSTK_KERNEL, struct cet_kernel_state);
- 
- 	/*
- 	 * Make *SURE* to add any feature numbers in below if
--- 
-2.17.1
+T24gMTEvMTAvMTggMTY6MTMsIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPiAtLS0tLSBPbiBP
+Y3QgMTEsIDIwMTgsIGF0IDY6MzcgQU0sIFN6YWJvbGNzIE5hZ3kgU3phYm9sY3MuTmFneUBhcm0u
+Y29tIHdyb3RlOg0KPiANCj4+IE9uIDEwLzEwLzE4IDIwOjE5LCBNYXRoaWV1IERlc25veWVycyB3
+cm90ZToNCj4+PiBJbiBvcmRlciB0byBpbnRlZ3JhdGUgcnNlcSBpbnRvIHVzZXItc3BhY2UgYXBw
+bGljYXRpb25zLCBhZGQgYSByZWZlcmVuY2UNCj4+PiBjb3VudGVyIGZpZWxkIGFmdGVyIHRoZSBz
+dHJ1Y3QgcnNlcSBUTFMgQUJJIHNvIG1hbnkgcnNlcSB1c2VycyBjYW4gYmUNCj4+PiBsaW5rZWQg
+aW50byB0aGUgc2FtZSBhcHBsaWNhdGlvbiAoZS5nLiBsaWJyc2VxIGFuZCBnbGliYykuIFRoZQ0K
+Pj4+IHJlZmVyZW5jZSBjb3VudCBlbnN1cmVzIHRoYXQgcnNlcSBzeXNjYWxsIHJlZ2lzdHJhdGlv
+bi91bnJlZ2lzdHJhdGlvbg0KPj4+IGhhcHBlbnMgb25seSBmb3IgdGhlIG1vc3QgZWFybHkvbGF0
+ZSB1c2VyIGZvciBlYWNoIHRocmVhZCwgdGh1cyBlbnN1cmluZw0KPj4+IHRoYXQgcnNlcSBpcyBy
+ZWdpc3RlcmVkIGFjcm9zcyB0aGUgbGlmZXRpbWUgb2YgYWxsIHJzZXEgdXNlcnMgZm9yIGENCj4+
+PiBnaXZlbiB0aHJlYWQuDQo+PiAuLi4NCj4+PiArX19hdHRyaWJ1dGVfXygodmlzaWJpbGl0eSgi
+aGlkZGVuIikpKSBfX3RocmVhZA0KPj4+ICt2b2xhdGlsZSBzdHJ1Y3QgbGliY19yc2VxIF9fbGli
+X3JzZXFfYWJpID0gew0KPj4gLi4uDQo+Pj4gK2V4dGVybiBfX2F0dHJpYnV0ZV9fKCh3ZWFrLCBh
+bGlhcygiX19saWJfcnNlcV9hYmkiKSkpIF9fdGhyZWFkDQo+Pj4gK3ZvbGF0aWxlIHN0cnVjdCBy
+c2VxIF9fcnNlcV9hYmk7DQo+PiAuLi4NCj4+PiBAQCAtNzAsNyArODYsNyBAQCBpbnQgcnNlcV9y
+ZWdpc3Rlcl9jdXJyZW50X3RocmVhZCh2b2lkKQ0KPj4+ICAJc2lnc2V0X3Qgb2xkc2V0Ow0KPj4+
+ICANCj4+PiAgCXNpZ25hbF9vZmZfc2F2ZSgmb2xkc2V0KTsNCj4+PiAtCWlmIChyZWZjb3VudCsr
+KQ0KPj4+ICsJaWYgKF9fbGliX3JzZXFfYWJpLnJlZmNvdW50KyspDQo+Pj4gIAkJZ290byBlbmQ7
+DQo+Pj4gIAlyYyA9IHN5c19yc2VxKCZfX3JzZXFfYWJpLCBzaXplb2Yoc3RydWN0IHJzZXEpLCAw
+LCBSU0VRX1NJRyk7DQo+Pg0KPj4gd2h5IGRvIHlvdSB1c2UgYSBsb2NhbCByZWZjb3VudGVyIGlu
+c3RlYWQgb2YgdGhlIF9fcnNlcV9hYmkgb25lPw0KPiANCj4gVGhlcmUgaXMgbm8gcmVmY291bnQg
+aW4gc3RydWN0IHJzZXEgKHRoZSBBQkkgYmV0d2VlbiBrZXJuZWwgYW5kIHVzZXItc3BhY2UpLg0K
+PiBUaGUgcmVnaXN0cmF0aW9uIHJlZmNvdW50IHdhcyBwYXJ0IG9mIGFuIGVhcmxpZXIgdmVyc2lv
+biBvZiB0aGUgcnNlcSBzeXN0ZW0gY2FsbCwNCj4gYnV0IHdlIGRlY2lkZWQgYWdhaW5zdCBrZWVw
+aW5nIGl0IGluIHRoZSBrZXJuZWwuDQo+IA0KPiBTbyBJJ20gYWRkaW5nIG9uZSBfYWZ0ZXJfIHN0
+cnVjdCByc2VxLCBwdXJlbHkgdG8gYWxsb3cgaW50ZXJhY3Rpb24gYmV0d2Vlbg0KPiB2YXJpb3Vz
+IHVzZXItc3BhY2UgY29tcG9uZW50cyAocHJvZ3JhbS9saWJyYXJpZXMpLg0KDQp0aGVuIGFsbCB0
+aG9zZSBjb21wb25lbnRzIG11c3QgdXNlIHRoZSBzYW1lDQoNCiAgcnNlcV9yZWdpc3Rlcl9jdXJy
+ZW50X3RocmVhZA0KICByc2VxX3VucmVnaXN0ZXJfY3VycmVudF90aHJlYWQNCg0KZnVuY3Rpb25z
+IGFuZCBub3QgY2FsbCB0aGUgc3lzY2FsbCBvbiB0aGVpciBvd24uDQoNCmluIHdoaWNoIGNhc2Ug
+dGhlIHJlZmNvdW50IGNvdWxkIGJlIGEgc3RhdGljIF9fdGhyZWFkIHZhcmlhYmxlLg0KDQpidXQg
+aXQncyBpbiBhIG1hZ2ljIHN0cnVjdCB0aGF0J3MgY2FsbGVkICJhYmkiIHdoaWNoIGlzIGNvbmZ1
+c2luZywNCnRoZSBjb3VudGVyIGlzIG5vdCBhYmksIGl0J3MgaW4gYSBoaWRkZW4gb2JqZWN0Lg0K
+DQo+PiB3aGF0IHByZXZlbnRzIGNhbGxpbmcgcnNlcV9yZWdpc3Rlcl9jdXJyZW50X3RocmVhZCBt
+b3JlIHRoYW4gNEcgdGltZXM/DQo+IA0KPiBOb3RoaW5nLiBJdCB3b3VsZCBpbmRlZWQgYmUgY2xl
+YW5lciB0byBlcnJvciBvdXQgaWYgd2UgZGV0ZWN0IHRoYXQgcmVmY291bnQgaXMgYXQNCj4gSU5U
+X01BWC4gSXMgdGhhdCB3aGF0IHlvdSBoYXZlIGluIG1pbmQgPw0KDQp5ZXMNCg0KPj4gd2h5IGNh
+bnQgdGhlIGtlcm5lbCBzZWUgdGhhdCB0aGUgc2FtZSBhZGRyZXNzIGlzIHJlZ2lzdGVyZWQgYWdh
+aW4gYW5kIHN1Y2NlZWQ/DQo+IA0KPiBJdCBjYW4sIGFuZCBpdCBkb2VzLiBIb3dldmVyLCByZWZj
+b3VudGluZyBhdCB1c2VyLWxldmVsIGlzIG5lZWRlZCB0byBlbnN1cmUNCj4gdGhlIHJlZ2lzdHJh
+dGlvbiAibGlmZXRpbWUiIGZvciByc2VxIGNvdmVycyBpdHMgZW50aXJlIHVzZS4gSWYgd2UgaGF2
+ZSB0d28gbGlicmFyaWVzDQo+IHVzaW5nIHJzZXEsIHdlIGVuZCB1cCB3aXRoIHRoZSBmb2xsb3dp
+bmcgc2NlbmFyaW86DQo+IA0KPiBUaHJlYWQgMQ0KPiANCj4gICBsaWJBIHJlZ2lzdGVycyByc2Vx
+DQo+ICAgbGliQiByZWdpc3RlcnMgcnNlcQ0KPiAgIGxpYkIgdW5yZWdpc3RlcnMgcnNlcQ0KPiAg
+IGxpYkEgdXNlcyByc2VxIC0+IGJ1ZyEgaXQncyBiZWVuIHVucmVnaXN0ZXJlZCBieSBsaWJCLg0K
+PiAgIGxpYkEgdW5yZWdpc3RlcnMgcnNlcSAtPiB1bmV4cGVjdGVkLCBpdCdzIGFscmVhZHkgYmVl
+biB1bnJlZ2lzdGVyZWQuDQo+ICANCj4gc2FtZSBhcHBsaWVzIGlmIGxpYkEgdW5yZWdpc3RlcnMg
+cnNlcSBiZWZvcmUgbGliQiAoYW5kIGxpYkIgdHJ5IHRvIHVzZSByc2VxDQo+IGFmdGVyIGxpYkEg
+aGFzIHVucmVnaXN0ZXJlZCkuDQo+IA0KPiBUaGUgcmVmY291bnQgaW4gdXNlci1zcGFjZSBmaXhl
+cyB0aGlzLg0KDQppIHNlZS4NCg0KPiBUaG91Z2h0cyA/DQo+IA0KPiBUaGFua3MsDQo+IA0KPiBN
+YXRoaWV1DQo+IA0KDQo=
