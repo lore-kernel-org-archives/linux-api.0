@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 02/11] x86/cet/ibt: User-mode indirect branch tracking support
-Date: Thu, 11 Oct 2018 08:16:45 -0700
-Message-ID: <20181011151654.27221-3-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 04/11] mm/mmap: Add IBT bitmap size to address space limit check
+Date: Thu, 11 Oct 2018 08:16:47 -0700
+Message-ID: <20181011151654.27221-5-yu-cheng.yu@intel.com>
 References: <20181011151654.27221-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151654.27221-1-yu-cheng.yu@intel.com>
@@ -10,165 +10,68 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add user-mode indirect branch tracking enabling/disabling
-and supporting routines.
+The indirect branch tracking legacy bitmap takes a large address
+space.  This causes may_expand_vm() failure on the address limit
+check.  For a IBT-enabled task, add the bitmap size to the
+address limit.
 
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/cet.h               |  8 ++++++
- arch/x86/include/asm/disabled-features.h |  8 +++++-
- arch/x86/kernel/cet.c                    | 31 ++++++++++++++++++++++++
- arch/x86/kernel/cpu/common.c             | 17 +++++++++++++
- arch/x86/kernel/process.c                |  1 +
- 5 files changed, 64 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/mmu_context.h |  7 +++++++
+ mm/mmap.c                          | 19 ++++++++++++++++++-
+ 2 files changed, 25 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 6fa23a41580c..082abf5e8528 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -12,8 +12,11 @@ struct task_struct;
- struct cet_status {
- 	unsigned long	shstk_base;
- 	unsigned long	shstk_size;
-+	unsigned long	ibt_bitmap_addr;
-+	unsigned long	ibt_bitmap_size;
- 	unsigned int	locked:1;
- 	unsigned int	shstk_enabled:1;
-+	unsigned int	ibt_enabled:1;
- };
- 
- #ifdef CONFIG_X86_INTEL_CET
-@@ -25,6 +28,9 @@ void cet_disable_shstk(void);
- void cet_disable_free_shstk(struct task_struct *p);
- int cet_restore_signal(unsigned long ssp);
- int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
-+int cet_setup_ibt(void);
-+int cet_setup_ibt_bitmap(void);
-+void cet_disable_ibt(void);
- #else
- static inline int prctl_cet(int option, unsigned long arg2) { return -EINVAL; }
- static inline int cet_setup_shstk(void) { return -EINVAL; }
-@@ -35,6 +41,8 @@ static inline void cet_disable_free_shstk(struct task_struct *p) {}
- static inline int cet_restore_signal(unsigned long ssp) { return -EINVAL; }
- static inline int cet_setup_signal(bool ia32, unsigned long rstor,
- 				   unsigned long *new_ssp) { return -EINVAL; }
-+static inline int cet_setup_ibt(void) { return -EINVAL; }
-+static inline void cet_disable_ibt(void) {}
- #endif
- 
- #define cpu_x86_cet_enabled() \
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index 3624a11e5ba6..ce5bdaf0f1ff 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -62,6 +62,12 @@
- #define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
- #endif
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 8da7c999b7ee..9c726171e5c5 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -341,4 +341,11 @@ static inline unsigned long __get_current_cr3_fast(void)
+ 	return cr3;
+ }
  
 +#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+#define DISABLE_IBT	0
-+#else
-+#define DISABLE_IBT	(1<<(X86_FEATURE_IBT & 31))
++static inline unsigned long arch_as_limit(void)
++{
++	return current->thread.cet.ibt_bitmap_size;
++}
 +#endif
 +
- /*
-  * Make sure to add features to the correct mask
-  */
-@@ -72,7 +78,7 @@
- #define DISABLED_MASK4	(DISABLE_PCID)
- #define DISABLED_MASK5	0
- #define DISABLED_MASK6	0
--#define DISABLED_MASK7	(DISABLE_PTI)
-+#define DISABLED_MASK7	(DISABLE_PTI|DISABLE_IBT)
- #define DISABLED_MASK8	0
- #define DISABLED_MASK9	(DISABLE_MPX)
- #define DISABLED_MASK10	0
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 17ad328586aa..40c4c08e5e31 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -12,6 +12,8 @@
- #include <linux/slab.h>
- #include <linux/uaccess.h>
- #include <linux/sched/signal.h>
-+#include <linux/vmalloc.h>
-+#include <linux/bitops.h>
- #include <asm/msr.h>
- #include <asm/user.h>
- #include <asm/fpu/xstate.h>
-@@ -296,3 +298,32 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr,
- 	set_shstk_ptr(ssp);
- 	return 0;
+ #endif /* _ASM_X86_MMU_CONTEXT_H */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index fa581ced3f56..62b3045af005 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -3231,13 +3231,30 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+ 	return NULL;
  }
-+
-+int cet_setup_ibt(void)
+ 
++#ifndef CONFIG_ARCH_HAS_AS_LIMIT
++static inline int arch_as_limit(void)
 +{
-+	u64 r;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return -EOPNOTSUPP;
-+
-+	rdmsrl(MSR_IA32_U_CET, r);
-+	r |= (MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_NO_TRACK_EN);
-+	wrmsrl(MSR_IA32_U_CET, r);
-+
-+	current->thread.cet.ibt_enabled = 1;
 +	return 0;
 +}
-+
-+void cet_disable_ibt(void)
-+{
-+	u64 r;
-+
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return;
-+
-+	rdmsrl(MSR_IA32_U_CET, r);
-+	r &= ~(MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_LEG_IW_EN |
-+	       MSR_IA32_CET_NO_TRACK_EN);
-+	wrmsrl(MSR_IA32_U_CET, r);
-+	current->thread.cet.ibt_enabled = 0;
-+}
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index c3960326b67f..785e387cfdfd 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -435,6 +435,23 @@ static __init int setup_disable_shstk(char *s)
- __setup("no_cet_shstk", setup_disable_shstk);
- #endif
- 
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+static __init int setup_disable_ibt(char *s)
-+{
-+	/* require an exact match without trailing characters */
-+	if (s[0] != '\0')
-+		return 0;
-+
-+	if (!boot_cpu_has(X86_FEATURE_IBT))
-+		return 1;
-+
-+	setup_clear_cpu_cap(X86_FEATURE_IBT);
-+	pr_info("x86: 'no_cet_ibt' specified, disabling Branch Tracking\n");
-+	return 1;
-+}
-+__setup("no_cet_ibt", setup_disable_ibt);
 +#endif
 +
  /*
-  * Some CPU features depend on higher CPUID levels, which may not always
-  * be available due to CPUID level capping or broken virtualization
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index f240fce2b20f..f44c26bf6d28 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -137,6 +137,7 @@ void flush_thread(void)
- 	memset(tsk->thread.tls_array, 0, sizeof(tsk->thread.tls_array));
+  * Return true if the calling process may expand its vm space by the passed
+  * number of pages
+  */
+ bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
+ {
+-	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
++	unsigned long as_limit = rlimit(RLIMIT_AS);
++	unsigned long as_limit_plus = as_limit + arch_as_limit();
++
++	/* as_limit_plus overflowed */
++	if (as_limit_plus < as_limit)
++		as_limit_plus = RLIM_INFINITY;
++
++	if (as_limit_plus > as_limit)
++		as_limit = as_limit_plus;
++
++	if (mm->total_vm + npages > as_limit >> PAGE_SHIFT)
+ 		return false;
  
- 	cet_disable_shstk();
-+	cet_disable_ibt();
- 	fpu__clear(&tsk->thread.fpu);
- }
- 
+ 	if (is_data_mapping(flags) &&
 -- 
 2.17.1
