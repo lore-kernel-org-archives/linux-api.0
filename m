@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 10/11] x86/vsyscall/64: Add ENDBR64 to vsyscall entry points
-Date: Thu, 11 Oct 2018 08:16:53 -0700
-Message-ID: <20181011151654.27221-11-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 09/11] x86/vsyscall/32: Add ENDBR32 to vsyscall entry point
+Date: Thu, 11 Oct 2018 08:16:52 -0700
+Message-ID: <20181011151654.27221-10-yu-cheng.yu@intel.com>
 References: <20181011151654.27221-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151654.27221-1-yu-cheng.yu@intel.com>
@@ -11,42 +11,26 @@ List-Id: linux-api@vger.kernel.org
 
 From: "H.J. Lu" <hjl.tools@gmail.com>
 
-Add ENDBR64 to vsyscall entry points.
+Add ENDBR32 to vsyscall entry point.
 
 Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 ---
- arch/x86/entry/vsyscall/vsyscall_emu_64.S | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/arch/x86/entry/vsyscall/vsyscall_emu_64.S b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-index c9596a9af159..08554445bef1 100644
---- a/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-+++ b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-@@ -18,16 +18,25 @@ __PAGE_ALIGNED_DATA
- 	.type __vsyscall_page, @object
- __vsyscall_page:
- 
+diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
+index 263d7433dea8..2fc8141fff4e 100644
+--- a/arch/x86/entry/vdso/vdso32/system_call.S
++++ b/arch/x86/entry/vdso/vdso32/system_call.S
+@@ -14,6 +14,9 @@
+ 	ALIGN
+ __kernel_vsyscall:
+ 	CFI_STARTPROC
 +#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	endbr64
++	endbr32
 +#endif
- 	mov $__NR_gettimeofday, %rax
- 	syscall
- 	ret
- 
- 	.balign 1024, 0xcc
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_time, %rax
- 	syscall
- 	ret
- 
- 	.balign 1024, 0xcc
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_getcpu, %rax
- 	syscall
- 	ret
+ 	/*
+ 	 * Reshuffle regs so that all of any of the entry instructions
+ 	 * will preserve enough state.
 -- 
 2.17.1
