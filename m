@@ -1,77 +1,174 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 00/11] Control Flow Enforcement: Branch Tracking, PTRACE
-Date: Thu, 11 Oct 2018 08:16:43 -0700
-Message-ID: <20181011151654.27221-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 02/11] x86/cet/ibt: User-mode indirect branch tracking support
+Date: Thu, 11 Oct 2018 08:16:45 -0700
+Message-ID: <20181011151654.27221-3-yu-cheng.yu@intel.com>
+References: <20181011151654.27221-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181011151654.27221-1-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The previous version of CET Branch Tracking/PTRACE patches is at the following
-link:
+Add user-mode indirect branch tracking enabling/disabling
+and supporting routines.
 
-  https://lkml.org/lkml/2018/9/21/773
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ arch/x86/include/asm/cet.h               |  8 ++++++
+ arch/x86/include/asm/disabled-features.h |  8 +++++-
+ arch/x86/kernel/cet.c                    | 31 ++++++++++++++++++++++++
+ arch/x86/kernel/cpu/common.c             | 17 +++++++++++++
+ arch/x86/kernel/process.c                |  1 +
+ 5 files changed, 64 insertions(+), 1 deletion(-)
 
-Summary of changes from v4:
-
-  Add ENDBR32/ENDBR64 to vsyscall assembly code.
-  Small cleanups.
-  Small fixes in IBT bitmap allocation.
-
-  From the discussion of IBT bitmap size, I got:
-
-    1. There are potential issues from using TASK_SIZE/TASK_SIZE_MAX;
-    2. We cannot always depend on in_compat_syscall();
-    3. Doing allocation in the kernel is tricky;
-
-    The bitmap is needed only when an app does dlopen() non-IBT .so
-    files; most applications do not need it.
-
-    I am proposing that dlopen() does mmap() and passes the bitmap to
-    the kernel.  If that is accepted, we can change these patches
-    accordingly.
-
-H.J. Lu (3):
-  x86: Insert endbr32/endbr64 to vDSO
-  x86/vsyscall/32: Add ENDBR32 to vsyscall entry point
-  x86/vsyscall/64: Add ENDBR64 to vsyscall entry points
-
-Yu-cheng Yu (8):
-  x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
-  x86/cet/ibt: User-mode indirect branch tracking support
-  x86/cet/ibt: Add IBT legacy code bitmap allocation function
-  mm/mmap: Add IBT bitmap size to address space limit check
-  x86/cet/ibt: ELF header parsing for IBT
-  x86/cet/ibt: Add arch_prctl functions for IBT
-  x86/cet/ibt: Add ENDBR to op-code-map
-  x86/cet: Add PTRACE interface for CET
-
- arch/x86/Kconfig                              | 16 ++++
- arch/x86/Makefile                             |  7 ++
- arch/x86/entry/vdso/.gitignore                |  4 +
- arch/x86/entry/vdso/Makefile                  | 12 ++-
- arch/x86/entry/vdso/vdso-layout.lds.S         |  1 +
- arch/x86/entry/vdso/vdso32/system_call.S      |  3 +
- arch/x86/entry/vsyscall/vsyscall_emu_64.S     |  9 +++
- arch/x86/include/asm/cet.h                    |  8 ++
- arch/x86/include/asm/disabled-features.h      |  8 +-
- arch/x86/include/asm/fpu/regset.h             |  7 +-
- arch/x86/include/asm/mmu_context.h            |  7 ++
- arch/x86/include/uapi/asm/elf_property.h      |  1 +
- arch/x86/include/uapi/asm/prctl.h             |  1 +
- arch/x86/kernel/cet.c                         | 78 +++++++++++++++++++
- arch/x86/kernel/cet_prctl.c                   | 35 +++++++++
- arch/x86/kernel/cpu/common.c                  | 17 ++++
- arch/x86/kernel/elf.c                         |  5 ++
- arch/x86/kernel/fpu/regset.c                  | 41 ++++++++++
- arch/x86/kernel/process.c                     |  1 +
- arch/x86/kernel/ptrace.c                      | 16 ++++
- arch/x86/lib/x86-opcode-map.txt               | 13 +++-
- include/uapi/linux/elf.h                      |  1 +
- mm/mmap.c                                     | 19 ++++-
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++-
- 24 files changed, 313 insertions(+), 10 deletions(-)
-
+diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
+index 6fa23a41580c..082abf5e8528 100644
+--- a/arch/x86/include/asm/cet.h
++++ b/arch/x86/include/asm/cet.h
+@@ -12,8 +12,11 @@ struct task_struct;
+ struct cet_status {
+ 	unsigned long	shstk_base;
+ 	unsigned long	shstk_size;
++	unsigned long	ibt_bitmap_addr;
++	unsigned long	ibt_bitmap_size;
+ 	unsigned int	locked:1;
+ 	unsigned int	shstk_enabled:1;
++	unsigned int	ibt_enabled:1;
+ };
+ 
+ #ifdef CONFIG_X86_INTEL_CET
+@@ -25,6 +28,9 @@ void cet_disable_shstk(void);
+ void cet_disable_free_shstk(struct task_struct *p);
+ int cet_restore_signal(unsigned long ssp);
+ int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
++int cet_setup_ibt(void);
++int cet_setup_ibt_bitmap(void);
++void cet_disable_ibt(void);
+ #else
+ static inline int prctl_cet(int option, unsigned long arg2) { return -EINVAL; }
+ static inline int cet_setup_shstk(void) { return -EINVAL; }
+@@ -35,6 +41,8 @@ static inline void cet_disable_free_shstk(struct task_struct *p) {}
+ static inline int cet_restore_signal(unsigned long ssp) { return -EINVAL; }
+ static inline int cet_setup_signal(bool ia32, unsigned long rstor,
+ 				   unsigned long *new_ssp) { return -EINVAL; }
++static inline int cet_setup_ibt(void) { return -EINVAL; }
++static inline void cet_disable_ibt(void) {}
+ #endif
+ 
+ #define cpu_x86_cet_enabled() \
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 3624a11e5ba6..ce5bdaf0f1ff 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -62,6 +62,12 @@
+ #define DISABLE_SHSTK	(1<<(X86_FEATURE_SHSTK & 31))
+ #endif
+ 
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++#define DISABLE_IBT	0
++#else
++#define DISABLE_IBT	(1<<(X86_FEATURE_IBT & 31))
++#endif
++
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -72,7 +78,7 @@
+ #define DISABLED_MASK4	(DISABLE_PCID)
+ #define DISABLED_MASK5	0
+ #define DISABLED_MASK6	0
+-#define DISABLED_MASK7	(DISABLE_PTI)
++#define DISABLED_MASK7	(DISABLE_PTI|DISABLE_IBT)
+ #define DISABLED_MASK8	0
+ #define DISABLED_MASK9	(DISABLE_MPX)
+ #define DISABLED_MASK10	0
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 17ad328586aa..40c4c08e5e31 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -12,6 +12,8 @@
+ #include <linux/slab.h>
+ #include <linux/uaccess.h>
+ #include <linux/sched/signal.h>
++#include <linux/vmalloc.h>
++#include <linux/bitops.h>
+ #include <asm/msr.h>
+ #include <asm/user.h>
+ #include <asm/fpu/xstate.h>
+@@ -296,3 +298,32 @@ int cet_setup_signal(bool ia32, unsigned long rstor_addr,
+ 	set_shstk_ptr(ssp);
+ 	return 0;
+ }
++
++int cet_setup_ibt(void)
++{
++	u64 r;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return -EOPNOTSUPP;
++
++	rdmsrl(MSR_IA32_U_CET, r);
++	r |= (MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_NO_TRACK_EN);
++	wrmsrl(MSR_IA32_U_CET, r);
++
++	current->thread.cet.ibt_enabled = 1;
++	return 0;
++}
++
++void cet_disable_ibt(void)
++{
++	u64 r;
++
++	if (!cpu_feature_enabled(X86_FEATURE_IBT))
++		return;
++
++	rdmsrl(MSR_IA32_U_CET, r);
++	r &= ~(MSR_IA32_CET_ENDBR_EN | MSR_IA32_CET_LEG_IW_EN |
++	       MSR_IA32_CET_NO_TRACK_EN);
++	wrmsrl(MSR_IA32_U_CET, r);
++	current->thread.cet.ibt_enabled = 0;
++}
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index c3960326b67f..785e387cfdfd 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -435,6 +435,23 @@ static __init int setup_disable_shstk(char *s)
+ __setup("no_cet_shstk", setup_disable_shstk);
+ #endif
+ 
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++static __init int setup_disable_ibt(char *s)
++{
++	/* require an exact match without trailing characters */
++	if (s[0] != '\0')
++		return 0;
++
++	if (!boot_cpu_has(X86_FEATURE_IBT))
++		return 1;
++
++	setup_clear_cpu_cap(X86_FEATURE_IBT);
++	pr_info("x86: 'no_cet_ibt' specified, disabling Branch Tracking\n");
++	return 1;
++}
++__setup("no_cet_ibt", setup_disable_ibt);
++#endif
++
+ /*
+  * Some CPU features depend on higher CPUID levels, which may not always
+  * be available due to CPUID level capping or broken virtualization
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index f240fce2b20f..f44c26bf6d28 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -137,6 +137,7 @@ void flush_thread(void)
+ 	memset(tsk->thread.tls_array, 0, sizeof(tsk->thread.tls_array));
+ 
+ 	cet_disable_shstk();
++	cet_disable_ibt();
+ 	fpu__clear(&tsk->thread.fpu);
+ }
+ 
 -- 
 2.17.1
