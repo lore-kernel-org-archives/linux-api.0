@@ -1,73 +1,138 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference counter
- to coexist with glibc
-Date: Thu, 11 Oct 2018 16:20:05 +0000
-Message-ID: <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
- <20181010191936.7495-2-mathieu.desnoyers@efficios.com>
- <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com>
- <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference
+ counter to coexist with glibc
+Date: Thu, 11 Oct 2018 12:37:26 -0400 (EDT)
+Message-ID: <1680616760.2469.1539275846360.JavaMail.zimbra@efficios.com>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <20181010191936.7495-2-mathieu.desnoyers@efficios.com> <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com> <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com> <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com>
-Content-Language: en-US
-Content-ID: <FC55997B59EB584AA9C8E212923066E9@eurprd08.prod.outlook.com>
+In-Reply-To: <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
 Cc: nd <nd@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTEvMTAvMTggMTY6MTMsIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPiAtLS0tLSBPbiBP
-Y3QgMTEsIDIwMTgsIGF0IDY6MzcgQU0sIFN6YWJvbGNzIE5hZ3kgU3phYm9sY3MuTmFneUBhcm0u
-Y29tIHdyb3RlOg0KPiANCj4+IE9uIDEwLzEwLzE4IDIwOjE5LCBNYXRoaWV1IERlc25veWVycyB3
-cm90ZToNCj4+PiBJbiBvcmRlciB0byBpbnRlZ3JhdGUgcnNlcSBpbnRvIHVzZXItc3BhY2UgYXBw
-bGljYXRpb25zLCBhZGQgYSByZWZlcmVuY2UNCj4+PiBjb3VudGVyIGZpZWxkIGFmdGVyIHRoZSBz
-dHJ1Y3QgcnNlcSBUTFMgQUJJIHNvIG1hbnkgcnNlcSB1c2VycyBjYW4gYmUNCj4+PiBsaW5rZWQg
-aW50byB0aGUgc2FtZSBhcHBsaWNhdGlvbiAoZS5nLiBsaWJyc2VxIGFuZCBnbGliYykuIFRoZQ0K
-Pj4+IHJlZmVyZW5jZSBjb3VudCBlbnN1cmVzIHRoYXQgcnNlcSBzeXNjYWxsIHJlZ2lzdHJhdGlv
-bi91bnJlZ2lzdHJhdGlvbg0KPj4+IGhhcHBlbnMgb25seSBmb3IgdGhlIG1vc3QgZWFybHkvbGF0
-ZSB1c2VyIGZvciBlYWNoIHRocmVhZCwgdGh1cyBlbnN1cmluZw0KPj4+IHRoYXQgcnNlcSBpcyBy
-ZWdpc3RlcmVkIGFjcm9zcyB0aGUgbGlmZXRpbWUgb2YgYWxsIHJzZXEgdXNlcnMgZm9yIGENCj4+
-PiBnaXZlbiB0aHJlYWQuDQo+PiAuLi4NCj4+PiArX19hdHRyaWJ1dGVfXygodmlzaWJpbGl0eSgi
-aGlkZGVuIikpKSBfX3RocmVhZA0KPj4+ICt2b2xhdGlsZSBzdHJ1Y3QgbGliY19yc2VxIF9fbGli
-X3JzZXFfYWJpID0gew0KPj4gLi4uDQo+Pj4gK2V4dGVybiBfX2F0dHJpYnV0ZV9fKCh3ZWFrLCBh
-bGlhcygiX19saWJfcnNlcV9hYmkiKSkpIF9fdGhyZWFkDQo+Pj4gK3ZvbGF0aWxlIHN0cnVjdCBy
-c2VxIF9fcnNlcV9hYmk7DQo+PiAuLi4NCj4+PiBAQCAtNzAsNyArODYsNyBAQCBpbnQgcnNlcV9y
-ZWdpc3Rlcl9jdXJyZW50X3RocmVhZCh2b2lkKQ0KPj4+ICAJc2lnc2V0X3Qgb2xkc2V0Ow0KPj4+
-ICANCj4+PiAgCXNpZ25hbF9vZmZfc2F2ZSgmb2xkc2V0KTsNCj4+PiAtCWlmIChyZWZjb3VudCsr
-KQ0KPj4+ICsJaWYgKF9fbGliX3JzZXFfYWJpLnJlZmNvdW50KyspDQo+Pj4gIAkJZ290byBlbmQ7
-DQo+Pj4gIAlyYyA9IHN5c19yc2VxKCZfX3JzZXFfYWJpLCBzaXplb2Yoc3RydWN0IHJzZXEpLCAw
-LCBSU0VRX1NJRyk7DQo+Pg0KPj4gd2h5IGRvIHlvdSB1c2UgYSBsb2NhbCByZWZjb3VudGVyIGlu
-c3RlYWQgb2YgdGhlIF9fcnNlcV9hYmkgb25lPw0KPiANCj4gVGhlcmUgaXMgbm8gcmVmY291bnQg
-aW4gc3RydWN0IHJzZXEgKHRoZSBBQkkgYmV0d2VlbiBrZXJuZWwgYW5kIHVzZXItc3BhY2UpLg0K
-PiBUaGUgcmVnaXN0cmF0aW9uIHJlZmNvdW50IHdhcyBwYXJ0IG9mIGFuIGVhcmxpZXIgdmVyc2lv
-biBvZiB0aGUgcnNlcSBzeXN0ZW0gY2FsbCwNCj4gYnV0IHdlIGRlY2lkZWQgYWdhaW5zdCBrZWVw
-aW5nIGl0IGluIHRoZSBrZXJuZWwuDQo+IA0KPiBTbyBJJ20gYWRkaW5nIG9uZSBfYWZ0ZXJfIHN0
-cnVjdCByc2VxLCBwdXJlbHkgdG8gYWxsb3cgaW50ZXJhY3Rpb24gYmV0d2Vlbg0KPiB2YXJpb3Vz
-IHVzZXItc3BhY2UgY29tcG9uZW50cyAocHJvZ3JhbS9saWJyYXJpZXMpLg0KDQp0aGVuIGFsbCB0
-aG9zZSBjb21wb25lbnRzIG11c3QgdXNlIHRoZSBzYW1lDQoNCiAgcnNlcV9yZWdpc3Rlcl9jdXJy
-ZW50X3RocmVhZA0KICByc2VxX3VucmVnaXN0ZXJfY3VycmVudF90aHJlYWQNCg0KZnVuY3Rpb25z
-IGFuZCBub3QgY2FsbCB0aGUgc3lzY2FsbCBvbiB0aGVpciBvd24uDQoNCmluIHdoaWNoIGNhc2Ug
-dGhlIHJlZmNvdW50IGNvdWxkIGJlIGEgc3RhdGljIF9fdGhyZWFkIHZhcmlhYmxlLg0KDQpidXQg
-aXQncyBpbiBhIG1hZ2ljIHN0cnVjdCB0aGF0J3MgY2FsbGVkICJhYmkiIHdoaWNoIGlzIGNvbmZ1
-c2luZywNCnRoZSBjb3VudGVyIGlzIG5vdCBhYmksIGl0J3MgaW4gYSBoaWRkZW4gb2JqZWN0Lg0K
-DQo+PiB3aGF0IHByZXZlbnRzIGNhbGxpbmcgcnNlcV9yZWdpc3Rlcl9jdXJyZW50X3RocmVhZCBt
-b3JlIHRoYW4gNEcgdGltZXM/DQo+IA0KPiBOb3RoaW5nLiBJdCB3b3VsZCBpbmRlZWQgYmUgY2xl
-YW5lciB0byBlcnJvciBvdXQgaWYgd2UgZGV0ZWN0IHRoYXQgcmVmY291bnQgaXMgYXQNCj4gSU5U
-X01BWC4gSXMgdGhhdCB3aGF0IHlvdSBoYXZlIGluIG1pbmQgPw0KDQp5ZXMNCg0KPj4gd2h5IGNh
-bnQgdGhlIGtlcm5lbCBzZWUgdGhhdCB0aGUgc2FtZSBhZGRyZXNzIGlzIHJlZ2lzdGVyZWQgYWdh
-aW4gYW5kIHN1Y2NlZWQ/DQo+IA0KPiBJdCBjYW4sIGFuZCBpdCBkb2VzLiBIb3dldmVyLCByZWZj
-b3VudGluZyBhdCB1c2VyLWxldmVsIGlzIG5lZWRlZCB0byBlbnN1cmUNCj4gdGhlIHJlZ2lzdHJh
-dGlvbiAibGlmZXRpbWUiIGZvciByc2VxIGNvdmVycyBpdHMgZW50aXJlIHVzZS4gSWYgd2UgaGF2
-ZSB0d28gbGlicmFyaWVzDQo+IHVzaW5nIHJzZXEsIHdlIGVuZCB1cCB3aXRoIHRoZSBmb2xsb3dp
-bmcgc2NlbmFyaW86DQo+IA0KPiBUaHJlYWQgMQ0KPiANCj4gICBsaWJBIHJlZ2lzdGVycyByc2Vx
-DQo+ICAgbGliQiByZWdpc3RlcnMgcnNlcQ0KPiAgIGxpYkIgdW5yZWdpc3RlcnMgcnNlcQ0KPiAg
-IGxpYkEgdXNlcyByc2VxIC0+IGJ1ZyEgaXQncyBiZWVuIHVucmVnaXN0ZXJlZCBieSBsaWJCLg0K
-PiAgIGxpYkEgdW5yZWdpc3RlcnMgcnNlcSAtPiB1bmV4cGVjdGVkLCBpdCdzIGFscmVhZHkgYmVl
-biB1bnJlZ2lzdGVyZWQuDQo+ICANCj4gc2FtZSBhcHBsaWVzIGlmIGxpYkEgdW5yZWdpc3RlcnMg
-cnNlcSBiZWZvcmUgbGliQiAoYW5kIGxpYkIgdHJ5IHRvIHVzZSByc2VxDQo+IGFmdGVyIGxpYkEg
-aGFzIHVucmVnaXN0ZXJlZCkuDQo+IA0KPiBUaGUgcmVmY291bnQgaW4gdXNlci1zcGFjZSBmaXhl
-cyB0aGlzLg0KDQppIHNlZS4NCg0KPiBUaG91Z2h0cyA/DQo+IA0KPiBUaGFua3MsDQo+IA0KPiBN
-YXRoaWV1DQo+IA0KDQo=
+----- On Oct 11, 2018, at 12:20 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+
+> On 11/10/18 16:13, Mathieu Desnoyers wrote:
+>> ----- On Oct 11, 2018, at 6:37 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>> 
+>>> On 10/10/18 20:19, Mathieu Desnoyers wrote:
+>>>> In order to integrate rseq into user-space applications, add a reference
+>>>> counter field after the struct rseq TLS ABI so many rseq users can be
+>>>> linked into the same application (e.g. librseq and glibc). The
+>>>> reference count ensures that rseq syscall registration/unregistration
+>>>> happens only for the most early/late user for each thread, thus ensuring
+>>>> that rseq is registered across the lifetime of all rseq users for a
+>>>> given thread.
+>>> ...
+>>>> +__attribute__((visibility("hidden"))) __thread
+>>>> +volatile struct libc_rseq __lib_rseq_abi = {
+>>> ...
+>>>> +extern __attribute__((weak, alias("__lib_rseq_abi"))) __thread
+>>>> +volatile struct rseq __rseq_abi;
+>>> ...
+>>>> @@ -70,7 +86,7 @@ int rseq_register_current_thread(void)
+>>>>  	sigset_t oldset;
+>>>>  
+>>>>  	signal_off_save(&oldset);
+>>>> -	if (refcount++)
+>>>> +	if (__lib_rseq_abi.refcount++)
+>>>>  		goto end;
+>>>>  	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq), 0, RSEQ_SIG);
+>>>
+>>> why do you use a local refcounter instead of the __rseq_abi one?
+>> 
+>> There is no refcount in struct rseq (the ABI between kernel and user-space).
+>> The registration refcount was part of an earlier version of the rseq system
+>> call,
+>> but we decided against keeping it in the kernel.
+>> 
+>> So I'm adding one _after_ struct rseq, purely to allow interaction between
+>> various user-space components (program/libraries).
+> 
+> then all those components must use the same
+> 
+>  rseq_register_current_thread
+>  rseq_unregister_current_thread
+> 
+> functions and not call the syscall on their own.
+
+Not quite. Each user (programs and shared objects) must handle the refcount in a
+similar way if they wish to invoke the syscall by themselves. They can
+alternately use the librseq APIs if they do not wish to have a local implementation
+of the reference counting and syscall registration/unregistration.
+
+> 
+> in which case the refcount could be a static __thread variable.
+
+Yes, but I want to limit the number of symbols we need to export
+from glibc by appending the refcount field at the end of struct rseq.
+
+> 
+> but it's in a magic struct that's called "abi" which is confusing,
+> the counter is not abi, it's in a hidden object.
+
+No, it is really an ABI between user-space apps/libs. It's not meant to be
+hidden. glibc implements its own register/unregister functions (it does not
+link against librseq). librseq exposes register/unregister functions as public
+APIs. Those also use the refcount. I also plan to have existing libraries, e.g.
+liblttng-ust and possibly liburcu flavors, implement the
+registration/unregistration and refcount handling on their own, so we don't
+have to add a requirement on additional linking on librseq for pre-existing
+libraries.
+
+So that refcount is not an ABI between kernel and user-space, but it's a
+user-space ABI nevertheless (between program and shared objects).
+
+> 
+>>> what prevents calling rseq_register_current_thread more than 4G times?
+>> 
+>> Nothing. It would indeed be cleaner to error out if we detect that refcount is
+>> at
+>> INT_MAX. Is that what you have in mind ?
+> 
+> yes
+
+Allright, will fix.
+
+> 
+>>> why cant the kernel see that the same address is registered again and succeed?
+>> 
+>> It can, and it does. However, refcounting at user-level is needed to ensure
+>> the registration "lifetime" for rseq covers its entire use. If we have two
+>> libraries
+>> using rseq, we end up with the following scenario:
+>> 
+>> Thread 1
+>> 
+>>   libA registers rseq
+>>   libB registers rseq
+>>   libB unregisters rseq
+>>   libA uses rseq -> bug! it's been unregistered by libB.
+>>   libA unregisters rseq -> unexpected, it's already been unregistered.
+>>  
+>> same applies if libA unregisters rseq before libB (and libB try to use rseq
+>> after libA has unregistered).
+>> 
+>> The refcount in user-space fixes this.
+> 
+> i see.
+
+Thanks for the feedback!
+
+Mathieu
+
+> 
+>> Thoughts ?
+>> 
+>> Thanks,
+>> 
+>> Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
