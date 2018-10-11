@@ -1,38 +1,128 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v5 00/27] Control Flow Enforcement: Shadow Stack
-Date: Thu, 11 Oct 2018 12:29:03 -0700
-Message-ID: <d068f923d45c26e4c0f91f4cf0eef8a02ae4a6b0.camel@intel.com>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
-         <109d1600-340e-e3c2-ba11-1f6096212540@linux.intel.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference
+ counter to coexist with glibc
+Date: Thu, 11 Oct 2018 15:42:58 -0400 (EDT)
+Message-ID: <254339058.2585.1539286978932.JavaMail.zimbra@efficios.com>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <20181010191936.7495-2-mathieu.desnoyers@efficios.com> <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com> <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com> <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com> <1680616760.2469.1539275846360.JavaMail.zimbra@efficios.com> <f22ef029-2f30-6bd9-e46a-9e7b0a1e9225@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <109d1600-340e-e3c2-ba11-1f6096212540@linux.intel.com>
+In-Reply-To: <f22ef029-2f30-6bd9-e46a-9e7b0a1e9225@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
+To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Cc: nd <nd@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2018-10-11 at 12:21 -0700, Dave Hansen wrote:
-> On 10/11/2018 08:14 AM, Yu-cheng Yu wrote:
-> > The previous version of CET Shadow Stack patches is at the following
-> > link:
-> > 
-> >   https://lkml.org/lkml/2018/9/21/776
+----- On Oct 11, 2018, at 1:04 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+
+> On 11/10/18 17:37, Mathieu Desnoyers wrote:
+>> ----- On Oct 11, 2018, at 12:20 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>>> On 11/10/18 16:13, Mathieu Desnoyers wrote:
+>>>> ----- On Oct 11, 2018, at 6:37 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>>>>> On 10/10/18 20:19, Mathieu Desnoyers wrote:
+>>>>>> +__attribute__((visibility("hidden"))) __thread
+>>>>>> +volatile struct libc_rseq __lib_rseq_abi = {
+>>>>> ...
+>>> but it's in a magic struct that's called "abi" which is confusing,
+>>> the counter is not abi, it's in a hidden object.
+>> 
+>> No, it is really an ABI between user-space apps/libs. It's not meant to be
+>> hidden. glibc implements its own register/unregister functions (it does not
+>> link against librseq). librseq exposes register/unregister functions as public
+>> APIs. Those also use the refcount. I also plan to have existing libraries, e.g.
+>> liblttng-ust and possibly liburcu flavors, implement the
+>> registration/unregistration and refcount handling on their own, so we don't
+>> have to add a requirement on additional linking on librseq for pre-existing
+>> libraries.
+>> 
+>> So that refcount is not an ABI between kernel and user-space, but it's a
+>> user-space ABI nevertheless (between program and shared objects).
+>> 
 > 
-> Why are you posting these?  Do you want more review?  Do you simply want
-> the series applied?
+> if that's what you want, then your declaration is wrong.
+> the object should not have hidden visibility.
 
-Thanks, Dave!
+Actually, if we look closer into my patch, it defines two symbols,
+one of which is an alias:
+
+__attribute__((visibility("hidden"))) __thread
+volatile struct libc_rseq __lib_rseq_abi = {
+        .cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
+};
+
+extern __attribute__((weak, alias("__lib_rseq_abi"))) __thread
+volatile struct rseq __rseq_abi;
+
+Note that the public __rseq_abi symbol is weak but does not have
+hidden visibility. I do this to ensure I don't get prototype
+mismatch for __rseq_abi between rseq.c and rseq.h (it is required
+to be a struct rseq by rseq.h), but I want the space to hold the
+extra refcount field present in struct libc_rseq.
 
 
-Hi Maintainers,
+> 
+> then each library (glibc etc) will have its own separate
+> tls object with their own separate refcounter (and they
+> will unregister when their own refcounter hits 0)
 
-If there are no more major issues, can we get these applied?
+Given they all interact with the public __rseq_abi symbol,
+at field refcount offset, they all effectively use the same
+refcount field per thread, which serves the intended purpose.
 
-Currently the IBT bitmap allocation (in the IBT series) works with GLIBC.
-If GLIBC developers agree to mmap() the bitmap in dlopen(), I will submit an
-additional patch to change how the kernel handles it.
+> 
+> either the struct should be public abi (extern tls
+> symbol) or the register/unregister functions should
+> be public abi (so when multiple implementations are
+> present in the same process only one of them will
+> provide definition for the public abi symbol and
+> thus there will be one refcounter).
+
+Those are two possible solutions, indeed. Considering that
+we already need to expose the __rseq_abi symbol as a public
+ABI in a way that ensures that multiple implementations
+in a same process end up only using one of them, it seems
+straightforward to simply extend that structure and hold the
+refcount there, rather than having two extra ABI symbols
+(register/unregister functions).
+
+One very appropriate question here is whether we want to
+expose the layout of struct libc_rseq (which includes the
+refcount) in a public header file, and if so, which project
+should hold it ? Or do we just want to document the layout
+of this ABI so projects can define the structure layout
+internally ? As my implementation currently stands, I have
+the following structure duplicated into rseq selftests,
+librseq, and glibc:
+
+/*
+ * linux/rseq.h defines struct rseq as aligned on 32 bytes. The kernel ABI
+ * size is 20 bytes. For support of multiple rseq users within a process,
+ * user-space defines an extra 4 bytes field as a reference count, for a
+ * total of 24 bytes.
+ */
+struct libc_rseq {
+        /* kernel-userspace ABI. */
+        __u32 cpu_id_start;
+        __u32 cpu_id;
+        __u64 rseq_cs;
+        __u32 flags;
+        /* user-space ABI. */
+        __u32 refcount;
+} __attribute__((aligned(4 * sizeof(__u64))));
+
+That duplicated structure only needs to be present in early-adopter
+applications/libraries. Those linking on librseq or relying on newer
+glibc to register rseq don't need to know about this extended layout:
+all they need to care about is the layout of struct rseq (without the
+added refcount). 
 
 Thanks,
-Yu-cheng
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
