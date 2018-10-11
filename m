@@ -1,50 +1,87 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from ptrace
-Date: Thu, 11 Oct 2018 15:39:37 +0200
-Message-ID: <CAG48ez0=NRRu2FUZFwdDSMmkdWsFi1XSSPTO8bL84YAY=jOzMQ@mail.gmail.com>
-References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-4-tycho@tycho.ws>
- <20181008151629.hkgzzsluevwtuclw@brauner.io> <CAG48ez3zaqOXH_jHN8=+jXjOf3vhFyWUkM_6KLPi9T8HcQySeg@mail.gmail.com>
- <20181008162147.ubfxxsv2425l2zsp@brauner.io> <CAG48ez3O+wAkq+0yDfoMt73ybnCOEPpi3Mu-uF57_v=6hA8ZEw@mail.gmail.com>
- <20181008181815.pwnqxngj22mhm2vj@brauner.io> <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
- <20181009132850.fp6yne2vgmfpi27k@brauner.io> <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
- <CAHC9VhQfzJgG3i=Q8C+pGY2Lpr+2MRTwxgUWec_heGOecd=xRg@mail.gmail.com>
- <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com> <16662034750.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference
+ counter to coexist with glibc
+Date: Thu, 11 Oct 2018 11:13:28 -0400 (EDT)
+Message-ID: <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <20181010191936.7495-2-mathieu.desnoyers@efficios.com> <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <16662034750.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
+In-Reply-To: <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, suda.akihiro@lab.ntt.co.jp, Oleg Nesterov <oleg@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
+To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, nd <nd@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 11, 2018 at 9:24 AM Paul Moore <paul@paul-moore.com> wrote:
-> On October 10, 2018 11:34:11 AM Jann Horn <jannh@google.com> wrote:
-> > On Wed, Oct 10, 2018 at 5:32 PM Paul Moore <paul@paul-moore.com> wrote:
-> >> On Tue, Oct 9, 2018 at 9:36 AM Jann Horn <jannh@google.com> wrote:
-> >>> +cc selinux people explicitly, since they probably have opinions on this
-> >>
-> >> I just spent about twenty minutes working my way through this thread,
-> >> and digging through the containers archive trying to get a good
-> >> understanding of what you guys are trying to do, and I'm not quite
-> >> sure I understand it all.  However, from what I have seen, this
-> >> approach looks very ptrace-y to me (I imagine to others as well based
-> >> on the comments) and because of this I think ensuring the usual ptrace
-> >> access controls are evaluated, including the ptrace LSM hooks, is the
-> >> right thing to do.
-> >
-> > Basically the problem is that this new ptrace() API does something
-> > that doesn't just influence the target task, but also every other task
-> > that has the same seccomp filter. So the classic ptrace check doesn't
-> > work here.
->
-> Due to some rather unfortunate events today I'm suddenly without easy access to the kernel code, but would it be possible to run the LSM ptrace access control checks against all of the affected tasks?  If it is possible, how painful would it be?
+----- On Oct 11, 2018, at 6:37 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
 
-There are currently no backlinks from seccomp filters to the tasks
-that use them; the only thing you have is a refcount. If the refcount
-is 1, and the target task uses the filter directly (it is the last
-installed one), you'd be able to infer that the ptrace target is the
-only task with a reference to the filter, and you could just do the
-direct check; but if the refcount is >1, you might end up having to
-take some spinlock and then iterate over all tasks' filters with that
-spinlock held, or something like that.
+> On 10/10/18 20:19, Mathieu Desnoyers wrote:
+>> In order to integrate rseq into user-space applications, add a reference
+>> counter field after the struct rseq TLS ABI so many rseq users can be
+>> linked into the same application (e.g. librseq and glibc). The
+>> reference count ensures that rseq syscall registration/unregistration
+>> happens only for the most early/late user for each thread, thus ensuring
+>> that rseq is registered across the lifetime of all rseq users for a
+>> given thread.
+> ...
+>> +__attribute__((visibility("hidden"))) __thread
+>> +volatile struct libc_rseq __lib_rseq_abi = {
+> ...
+>> +extern __attribute__((weak, alias("__lib_rseq_abi"))) __thread
+>> +volatile struct rseq __rseq_abi;
+> ...
+>> @@ -70,7 +86,7 @@ int rseq_register_current_thread(void)
+>>  	sigset_t oldset;
+>>  
+>>  	signal_off_save(&oldset);
+>> -	if (refcount++)
+>> +	if (__lib_rseq_abi.refcount++)
+>>  		goto end;
+>>  	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq), 0, RSEQ_SIG);
+> 
+> why do you use a local refcounter instead of the __rseq_abi one?
+
+There is no refcount in struct rseq (the ABI between kernel and user-space).
+The registration refcount was part of an earlier version of the rseq system call,
+but we decided against keeping it in the kernel.
+
+So I'm adding one _after_ struct rseq, purely to allow interaction between
+various user-space components (program/libraries).
+
+> 
+> what prevents calling rseq_register_current_thread more than 4G times?
+
+Nothing. It would indeed be cleaner to error out if we detect that refcount is at
+INT_MAX. Is that what you have in mind ?
+
+> 
+> why cant the kernel see that the same address is registered again and succeed?
+
+It can, and it does. However, refcounting at user-level is needed to ensure
+the registration "lifetime" for rseq covers its entire use. If we have two libraries
+using rseq, we end up with the following scenario:
+
+Thread 1
+
+  libA registers rseq
+  libB registers rseq
+  libB unregisters rseq
+  libA uses rseq -> bug! it's been unregistered by libB.
+  libA unregisters rseq -> unexpected, it's already been unregistered.
+ 
+same applies if libA unregisters rseq before libB (and libB try to use rseq
+after libA has unregistered).
+
+The refcount in user-space fixes this.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
