@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 13/27] drm/i915/gvt: Update _PAGE_DIRTY to _PAGE_DIRTY_BITS
-Date: Thu, 11 Oct 2018 08:15:09 -0700
-Message-ID: <20181011151523.27101-14-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 10/27] mm/mmap: Prevent Shadow Stack VMA merges
+Date: Thu, 11 Oct 2018 08:15:06 -0700
+Message-ID: <20181011151523.27101-11-yu-cheng.yu@intel.com>
 References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151523.27101-1-yu-cheng.yu@intel.com>
@@ -10,28 +10,30 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Update _PAGE_DIRTY to _PAGE_DIRTY_BITS in split_2MB_gtt_entry().
-
-In order to support Control Flow Enforcement (CET), _PAGE_DIRTY
-is now _PAGE_DIRTY_HW or _PAGE_DIRTY_SW.
+To prevent function call/return spills into the next shadow stack
+area, we do not merge shadow stack areas.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- drivers/gpu/drm/i915/gvt/gtt.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ mm/mmap.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/drivers/gpu/drm/i915/gvt/gtt.c b/drivers/gpu/drm/i915/gvt/gtt.c
-index 00aad8164dec..2d6ba1462dd8 100644
---- a/drivers/gpu/drm/i915/gvt/gtt.c
-+++ b/drivers/gpu/drm/i915/gvt/gtt.c
-@@ -1170,7 +1170,7 @@ static int split_2MB_gtt_entry(struct intel_vgpu *vgpu,
- 	}
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 5f2b2b184c60..b85292014ec9 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1123,6 +1123,12 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 	if (vm_flags & VM_SPECIAL)
+ 		return NULL;
  
- 	/* Clear dirty field. */
--	se->val64 &= ~_PAGE_DIRTY;
-+	se->val64 &= ~_PAGE_DIRTY_BITS;
- 
- 	ops->clear_pse(se);
- 	ops->clear_ips(se);
++	/*
++	 * Do not merge shadow stack areas.
++	 */
++	if (vm_flags & VM_SHSTK)
++		return NULL;
++
+ 	if (prev)
+ 		next = prev->vm_next;
+ 	else
 -- 
 2.17.1
