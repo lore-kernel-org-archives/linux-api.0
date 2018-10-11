@@ -1,41 +1,50 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference counter
- to coexist with glibc
-Date: Thu, 11 Oct 2018 10:37:25 +0000
-Message-ID: <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
- <20181010191936.7495-2-mathieu.desnoyers@efficios.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from ptrace
+Date: Thu, 11 Oct 2018 15:39:37 +0200
+Message-ID: <CAG48ez0=NRRu2FUZFwdDSMmkdWsFi1XSSPTO8bL84YAY=jOzMQ@mail.gmail.com>
+References: <20180927151119.9989-1-tycho@tycho.ws> <20180927151119.9989-4-tycho@tycho.ws>
+ <20181008151629.hkgzzsluevwtuclw@brauner.io> <CAG48ez3zaqOXH_jHN8=+jXjOf3vhFyWUkM_6KLPi9T8HcQySeg@mail.gmail.com>
+ <20181008162147.ubfxxsv2425l2zsp@brauner.io> <CAG48ez3O+wAkq+0yDfoMt73ybnCOEPpi3Mu-uF57_v=6hA8ZEw@mail.gmail.com>
+ <20181008181815.pwnqxngj22mhm2vj@brauner.io> <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
+ <20181009132850.fp6yne2vgmfpi27k@brauner.io> <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
+ <CAHC9VhQfzJgG3i=Q8C+pGY2Lpr+2MRTwxgUWec_heGOecd=xRg@mail.gmail.com>
+ <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com> <16662034750.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181010191936.7495-2-mathieu.desnoyers@efficios.com>
-Content-Language: en-US
-Content-ID: <098D89D6A661F644B1E5C7D8D0DD5A03@eurprd08.prod.outlook.com>
+In-Reply-To: <16662034750.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>
-Cc: nd <nd@arm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>, Will Deacon <Will.Deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.c>
+To: Paul Moore <paul@paul-moore.com>
+Cc: christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, suda.akihiro@lab.ntt.co.jp, Oleg Nesterov <oleg@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Andy Lutomirski <luto@amacapital.net>, linux-security-module <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTAvMTAvMTggMjA6MTksIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPiBJbiBvcmRlciB0
-byBpbnRlZ3JhdGUgcnNlcSBpbnRvIHVzZXItc3BhY2UgYXBwbGljYXRpb25zLCBhZGQgYSByZWZl
-cmVuY2UNCj4gY291bnRlciBmaWVsZCBhZnRlciB0aGUgc3RydWN0IHJzZXEgVExTIEFCSSBzbyBt
-YW55IHJzZXEgdXNlcnMgY2FuIGJlDQo+IGxpbmtlZCBpbnRvIHRoZSBzYW1lIGFwcGxpY2F0aW9u
-IChlLmcuIGxpYnJzZXEgYW5kIGdsaWJjKS4gVGhlDQo+IHJlZmVyZW5jZSBjb3VudCBlbnN1cmVz
-IHRoYXQgcnNlcSBzeXNjYWxsIHJlZ2lzdHJhdGlvbi91bnJlZ2lzdHJhdGlvbg0KPiBoYXBwZW5z
-IG9ubHkgZm9yIHRoZSBtb3N0IGVhcmx5L2xhdGUgdXNlciBmb3IgZWFjaCB0aHJlYWQsIHRodXMg
-ZW5zdXJpbmcNCj4gdGhhdCByc2VxIGlzIHJlZ2lzdGVyZWQgYWNyb3NzIHRoZSBsaWZldGltZSBv
-ZiBhbGwgcnNlcSB1c2VycyBmb3IgYQ0KPiBnaXZlbiB0aHJlYWQuDQouLi4NCj4gK19fYXR0cmli
-dXRlX18oKHZpc2liaWxpdHkoImhpZGRlbiIpKSkgX190aHJlYWQNCj4gK3ZvbGF0aWxlIHN0cnVj
-dCBsaWJjX3JzZXEgX19saWJfcnNlcV9hYmkgPSB7DQouLi4NCj4gK2V4dGVybiBfX2F0dHJpYnV0
-ZV9fKCh3ZWFrLCBhbGlhcygiX19saWJfcnNlcV9hYmkiKSkpIF9fdGhyZWFkDQo+ICt2b2xhdGls
-ZSBzdHJ1Y3QgcnNlcSBfX3JzZXFfYWJpOw0KLi4uDQo+IEBAIC03MCw3ICs4Niw3IEBAIGludCBy
-c2VxX3JlZ2lzdGVyX2N1cnJlbnRfdGhyZWFkKHZvaWQpDQo+ICAJc2lnc2V0X3Qgb2xkc2V0Ow0K
-PiAgDQo+ICAJc2lnbmFsX29mZl9zYXZlKCZvbGRzZXQpOw0KPiAtCWlmIChyZWZjb3VudCsrKQ0K
-PiArCWlmIChfX2xpYl9yc2VxX2FiaS5yZWZjb3VudCsrKQ0KPiAgCQlnb3RvIGVuZDsNCj4gIAly
-YyA9IHN5c19yc2VxKCZfX3JzZXFfYWJpLCBzaXplb2Yoc3RydWN0IHJzZXEpLCAwLCBSU0VRX1NJ
-Ryk7DQoNCndoeSBkbyB5b3UgdXNlIGEgbG9jYWwgcmVmY291bnRlciBpbnN0ZWFkIG9mIHRoZSBf
-X3JzZXFfYWJpIG9uZT8NCg0Kd2hhdCBwcmV2ZW50cyBjYWxsaW5nIHJzZXFfcmVnaXN0ZXJfY3Vy
-cmVudF90aHJlYWQgbW9yZSB0aGFuIDRHIHRpbWVzPw0KDQp3aHkgY2FudCB0aGUga2VybmVsIHNl
-ZSB0aGF0IHRoZSBzYW1lIGFkZHJlc3MgaXMgcmVnaXN0ZXJlZCBhZ2FpbiBhbmQgc3VjY2VlZD8N
-Cg==
+On Thu, Oct 11, 2018 at 9:24 AM Paul Moore <paul@paul-moore.com> wrote:
+> On October 10, 2018 11:34:11 AM Jann Horn <jannh@google.com> wrote:
+> > On Wed, Oct 10, 2018 at 5:32 PM Paul Moore <paul@paul-moore.com> wrote:
+> >> On Tue, Oct 9, 2018 at 9:36 AM Jann Horn <jannh@google.com> wrote:
+> >>> +cc selinux people explicitly, since they probably have opinions on this
+> >>
+> >> I just spent about twenty minutes working my way through this thread,
+> >> and digging through the containers archive trying to get a good
+> >> understanding of what you guys are trying to do, and I'm not quite
+> >> sure I understand it all.  However, from what I have seen, this
+> >> approach looks very ptrace-y to me (I imagine to others as well based
+> >> on the comments) and because of this I think ensuring the usual ptrace
+> >> access controls are evaluated, including the ptrace LSM hooks, is the
+> >> right thing to do.
+> >
+> > Basically the problem is that this new ptrace() API does something
+> > that doesn't just influence the target task, but also every other task
+> > that has the same seccomp filter. So the classic ptrace check doesn't
+> > work here.
+>
+> Due to some rather unfortunate events today I'm suddenly without easy access to the kernel code, but would it be possible to run the LSM ptrace access control checks against all of the affected tasks?  If it is possible, how painful would it be?
+
+There are currently no backlinks from seccomp filters to the tasks
+that use them; the only thing you have is a refcount. If the refcount
+is 1, and the target task uses the filter directly (it is the last
+installed one), you'd be able to infer that the ptrace target is the
+only task with a reference to the filter, and you could just do the
+direct check; but if the refcount is >1, you might end up having to
+take some spinlock and then iterate over all tasks' filters with that
+spinlock held, or something like that.
