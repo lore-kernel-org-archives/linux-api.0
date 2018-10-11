@@ -1,138 +1,61 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference
- counter to coexist with glibc
-Date: Thu, 11 Oct 2018 12:37:26 -0400 (EDT)
-Message-ID: <1680616760.2469.1539275846360.JavaMail.zimbra@efficios.com>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <20181010191936.7495-2-mathieu.desnoyers@efficios.com> <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com> <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com> <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v5 01/27] x86/cpufeatures: Add CPUIDs for Control Flow
+ Enforcement Technology (CET)
+Date: Thu, 11 Oct 2018 18:43:29 +0200
+Message-ID: <20181011164329.GF25435@zn.tnic>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-2-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com>
+Content-Disposition: inline
+In-Reply-To: <20181011151523.27101-2-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Cc: nd <nd@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 11, 2018, at 12:20 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+On Thu, Oct 11, 2018 at 08:14:57AM -0700, Yu-cheng Yu wrote:
+> Add CPUIDs for Control Flow Enforcement Technology (CET).
 
-> On 11/10/18 16:13, Mathieu Desnoyers wrote:
->> ----- On Oct 11, 2018, at 6:37 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
->> 
->>> On 10/10/18 20:19, Mathieu Desnoyers wrote:
->>>> In order to integrate rseq into user-space applications, add a reference
->>>> counter field after the struct rseq TLS ABI so many rseq users can be
->>>> linked into the same application (e.g. librseq and glibc). The
->>>> reference count ensures that rseq syscall registration/unregistration
->>>> happens only for the most early/late user for each thread, thus ensuring
->>>> that rseq is registered across the lifetime of all rseq users for a
->>>> given thread.
->>> ...
->>>> +__attribute__((visibility("hidden"))) __thread
->>>> +volatile struct libc_rseq __lib_rseq_abi = {
->>> ...
->>>> +extern __attribute__((weak, alias("__lib_rseq_abi"))) __thread
->>>> +volatile struct rseq __rseq_abi;
->>> ...
->>>> @@ -70,7 +86,7 @@ int rseq_register_current_thread(void)
->>>>  	sigset_t oldset;
->>>>  
->>>>  	signal_off_save(&oldset);
->>>> -	if (refcount++)
->>>> +	if (__lib_rseq_abi.refcount++)
->>>>  		goto end;
->>>>  	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq), 0, RSEQ_SIG);
->>>
->>> why do you use a local refcounter instead of the __rseq_abi one?
->> 
->> There is no refcount in struct rseq (the ABI between kernel and user-space).
->> The registration refcount was part of an earlier version of the rseq system
->> call,
->> but we decided against keeping it in the kernel.
->> 
->> So I'm adding one _after_ struct rseq, purely to allow interaction between
->> various user-space components (program/libraries).
+This is not "CPUIDs" but feature flags. Fix the subject too pls.
+
+> CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+> CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect branch tracking
 > 
-> then all those components must use the same
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/asm/cpufeatures.h | 2 ++
+>  1 file changed, 2 insertions(+)
 > 
->  rseq_register_current_thread
->  rseq_unregister_current_thread
-> 
-> functions and not call the syscall on their own.
+> diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+> index 89a048c2faec..142b15da06fd 100644
+> --- a/arch/x86/include/asm/cpufeatures.h
+> +++ b/arch/x86/include/asm/cpufeatures.h
+> @@ -321,6 +321,7 @@
+>  #define X86_FEATURE_PKU			(16*32+ 3) /* Protection Keys for Userspace */
+>  #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+>  #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
+> +#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+>  #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+>  #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+>  #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+> @@ -341,6 +342,7 @@
+>  #define X86_FEATURE_AVX512_4VNNIW	(18*32+ 2) /* AVX-512 Neural Network Instructions */
+>  #define X86_FEATURE_AVX512_4FMAPS	(18*32+ 3) /* AVX-512 Multiply Accumulation Single precision */
+>  #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
+> +#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+>  #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+>  #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+>  #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
+> -- 
 
-Not quite. Each user (programs and shared objects) must handle the refcount in a
-similar way if they wish to invoke the syscall by themselves. They can
-alternately use the librseq APIs if they do not wish to have a local implementation
-of the reference counting and syscall registration/unregistration.
+With that addressed:
 
-> 
-> in which case the refcount could be a static __thread variable.
-
-Yes, but I want to limit the number of symbols we need to export
-from glibc by appending the refcount field at the end of struct rseq.
-
-> 
-> but it's in a magic struct that's called "abi" which is confusing,
-> the counter is not abi, it's in a hidden object.
-
-No, it is really an ABI between user-space apps/libs. It's not meant to be
-hidden. glibc implements its own register/unregister functions (it does not
-link against librseq). librseq exposes register/unregister functions as public
-APIs. Those also use the refcount. I also plan to have existing libraries, e.g.
-liblttng-ust and possibly liburcu flavors, implement the
-registration/unregistration and refcount handling on their own, so we don't
-have to add a requirement on additional linking on librseq for pre-existing
-libraries.
-
-So that refcount is not an ABI between kernel and user-space, but it's a
-user-space ABI nevertheless (between program and shared objects).
-
-> 
->>> what prevents calling rseq_register_current_thread more than 4G times?
->> 
->> Nothing. It would indeed be cleaner to error out if we detect that refcount is
->> at
->> INT_MAX. Is that what you have in mind ?
-> 
-> yes
-
-Allright, will fix.
-
-> 
->>> why cant the kernel see that the same address is registered again and succeed?
->> 
->> It can, and it does. However, refcounting at user-level is needed to ensure
->> the registration "lifetime" for rseq covers its entire use. If we have two
->> libraries
->> using rseq, we end up with the following scenario:
->> 
->> Thread 1
->> 
->>   libA registers rseq
->>   libB registers rseq
->>   libB unregisters rseq
->>   libA uses rseq -> bug! it's been unregistered by libB.
->>   libA unregisters rseq -> unexpected, it's already been unregistered.
->>  
->> same applies if libA unregisters rseq before libB (and libB try to use rseq
->> after libA has unregistered).
->> 
->> The refcount in user-space fixes this.
-> 
-> i see.
-
-Thanks for the feedback!
-
-Mathieu
-
-> 
->> Thoughts ?
->> 
->> Thanks,
->> 
->> Mathieu
+Reviewed-by: Borislav Petkov <bp@suse.de>
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
