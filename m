@@ -1,128 +1,57 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference
- counter to coexist with glibc
-Date: Thu, 11 Oct 2018 15:42:58 -0400 (EDT)
-Message-ID: <254339058.2585.1539286978932.JavaMail.zimbra@efficios.com>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <20181010191936.7495-2-mathieu.desnoyers@efficios.com> <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com> <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com> <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com> <1680616760.2469.1539275846360.JavaMail.zimbra@efficios.com> <f22ef029-2f30-6bd9-e46a-9e7b0a1e9225@arm.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v5 07/27] mm/mmap: Create a guard area between VMAs
+Date: Thu, 11 Oct 2018 22:39:24 +0200
+Message-ID: <CAG48ez3R7XL8MX_sjff1FFYuARX_58wA_=ACbv2im-XJKR8tvA@mail.gmail.com>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com> <20181011151523.27101-8-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <f22ef029-2f30-6bd9-e46a-9e7b0a1e9225@arm.com>
+In-Reply-To: <20181011151523.27101-8-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Cc: nd <nd@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
+To: yu-cheng.yu@intel.com, Andy Lutomirski <luto@amacapital.net>
+Cc: the arch/x86 maintainers <x86@kernel.org>, "H . Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, hjl.tools@gmail.com, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.c>
 List-Id: linux-api@vger.kernel.org
 
------ On Oct 11, 2018, at 1:04 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+On Thu, Oct 11, 2018 at 5:20 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> Create a guard area between VMAs to detect memory corruption.
+[...]
+> +config VM_AREA_GUARD
+> +       bool "VM area guard"
+> +       default n
+> +       help
+> +         Create a guard area between VM areas so that access beyond
+> +         limit can be detected.
+> +
+>  endmenu
 
-> On 11/10/18 17:37, Mathieu Desnoyers wrote:
->> ----- On Oct 11, 2018, at 12:20 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
->>> On 11/10/18 16:13, Mathieu Desnoyers wrote:
->>>> ----- On Oct 11, 2018, at 6:37 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
->>>>> On 10/10/18 20:19, Mathieu Desnoyers wrote:
->>>>>> +__attribute__((visibility("hidden"))) __thread
->>>>>> +volatile struct libc_rseq __lib_rseq_abi = {
->>>>> ...
->>> but it's in a magic struct that's called "abi" which is confusing,
->>> the counter is not abi, it's in a hidden object.
->> 
->> No, it is really an ABI between user-space apps/libs. It's not meant to be
->> hidden. glibc implements its own register/unregister functions (it does not
->> link against librseq). librseq exposes register/unregister functions as public
->> APIs. Those also use the refcount. I also plan to have existing libraries, e.g.
->> liblttng-ust and possibly liburcu flavors, implement the
->> registration/unregistration and refcount handling on their own, so we don't
->> have to add a requirement on additional linking on librseq for pre-existing
->> libraries.
->> 
->> So that refcount is not an ABI between kernel and user-space, but it's a
->> user-space ABI nevertheless (between program and shared objects).
->> 
-> 
-> if that's what you want, then your declaration is wrong.
-> the object should not have hidden visibility.
+Sorry to bring this up so late, but Daniel Micay pointed out to me
+that, given that VMA guards will raise the number of VMAs by
+inhibiting vma_merge(), people are more likely to run into
+/proc/sys/vm/max_map_count (which limits the number of VMAs to ~65k by
+default, and can't easily be raised without risking an overflow of
+page->_mapcount on systems with over ~800GiB of RAM, see
+https://lore.kernel.org/lkml/20180208021112.GB14918@bombadil.infradead.org/
+and replies) with this change.
 
-Actually, if we look closer into my patch, it defines two symbols,
-one of which is an alias:
+Playing with glibc's memory allocator, it looks like glibc will use
+mmap() for 128KB allocations; so at 65530*128KB=8GB of memory usage in
+128KB chunks, an application could run out of VMAs.
 
-__attribute__((visibility("hidden"))) __thread
-volatile struct libc_rseq __lib_rseq_abi = {
-        .cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
-};
+People already run into that limit sometimes when mapping files, and
+recommend raising it:
 
-extern __attribute__((weak, alias("__lib_rseq_abi"))) __thread
-volatile struct rseq __rseq_abi;
+https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
+http://docs.actian.com/vector/4.2/User/Increase_max_map_count_Kernel_Parameter_(Linux).htm
+https://www.suse.com/de-de/support/kb/doc/?id=7000830 (they actually
+ran into ENOMEM on **munmap**, because you can't split VMAs once the
+limit is reached): "A custom application was failing on a SLES server
+with ENOMEM errors when attempting to release memory using an munmap
+call. This resulted in memory failing to be released, and the system
+load and swap use increasing until the SLES machine ultimately crashed
+or hung."
+https://access.redhat.com/solutions/99913
+https://forum.manjaro.org/t/resolved-how-to-set-vm-max-map-count-during-boot/43360
 
-Note that the public __rseq_abi symbol is weak but does not have
-hidden visibility. I do this to ensure I don't get prototype
-mismatch for __rseq_abi between rseq.c and rseq.h (it is required
-to be a struct rseq by rseq.h), but I want the space to hold the
-extra refcount field present in struct libc_rseq.
-
-
-> 
-> then each library (glibc etc) will have its own separate
-> tls object with their own separate refcounter (and they
-> will unregister when their own refcounter hits 0)
-
-Given they all interact with the public __rseq_abi symbol,
-at field refcount offset, they all effectively use the same
-refcount field per thread, which serves the intended purpose.
-
-> 
-> either the struct should be public abi (extern tls
-> symbol) or the register/unregister functions should
-> be public abi (so when multiple implementations are
-> present in the same process only one of them will
-> provide definition for the public abi symbol and
-> thus there will be one refcounter).
-
-Those are two possible solutions, indeed. Considering that
-we already need to expose the __rseq_abi symbol as a public
-ABI in a way that ensures that multiple implementations
-in a same process end up only using one of them, it seems
-straightforward to simply extend that structure and hold the
-refcount there, rather than having two extra ABI symbols
-(register/unregister functions).
-
-One very appropriate question here is whether we want to
-expose the layout of struct libc_rseq (which includes the
-refcount) in a public header file, and if so, which project
-should hold it ? Or do we just want to document the layout
-of this ABI so projects can define the structure layout
-internally ? As my implementation currently stands, I have
-the following structure duplicated into rseq selftests,
-librseq, and glibc:
-
-/*
- * linux/rseq.h defines struct rseq as aligned on 32 bytes. The kernel ABI
- * size is 20 bytes. For support of multiple rseq users within a process,
- * user-space defines an extra 4 bytes field as a reference count, for a
- * total of 24 bytes.
- */
-struct libc_rseq {
-        /* kernel-userspace ABI. */
-        __u32 cpu_id_start;
-        __u32 cpu_id;
-        __u64 rseq_cs;
-        __u32 flags;
-        /* user-space ABI. */
-        __u32 refcount;
-} __attribute__((aligned(4 * sizeof(__u64))));
-
-That duplicated structure only needs to be present in early-adopter
-applications/libraries. Those linking on librseq or relying on newer
-glibc to register rseq don't need to know about this extended layout:
-all they need to care about is the layout of struct rseq (without the
-added refcount). 
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Arguably the proper solution to this would be to raise the default
+max_map_count to be much higher; but then that requires fixing the
+mapcount overflow.
