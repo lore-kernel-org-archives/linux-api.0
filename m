@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 23/27] x86/cet/shstk: ELF header parsing of Shadow Stack
-Date: Thu, 11 Oct 2018 08:15:19 -0700
-Message-ID: <20181011151523.27101-24-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 17/27] mm: Handle THP/HugeTLB shadow stack page fault
+Date: Thu, 11 Oct 2018 08:15:13 -0700
+Message-ID: <20181011151523.27101-18-yu-cheng.yu@intel.com>
 References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151523.27101-1-yu-cheng.yu@intel.com>
@@ -10,477 +10,90 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Look in .note.gnu.property of an ELF file and check if Shadow Stack needs
-to be enabled for the task.
+This patch implements THP shadow stack memory copying in the same
+way as the previous patch for regular PTE.
 
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
+In copy_huge_pmd(), we clear the dirty bit from the PMD.  On the
+next shadow stack access to the PMD, a page fault occurs.  At
+that time, the page is copied/re-used and the PMD is fixed.
+
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig                         |   4 +
- arch/x86/include/asm/elf.h               |   5 +
- arch/x86/include/uapi/asm/elf_property.h |  15 +
- arch/x86/kernel/Makefile                 |   2 +
- arch/x86/kernel/elf.c                    | 341 +++++++++++++++++++++++
- fs/binfmt_elf.c                          |  15 +
- include/uapi/linux/elf.h                 |   1 +
- 7 files changed, 383 insertions(+)
- create mode 100644 arch/x86/include/uapi/asm/elf_property.h
- create mode 100644 arch/x86/kernel/elf.c
+ arch/x86/mm/pgtable.c         | 8 ++++++++
+ include/asm-generic/pgtable.h | 2 ++
+ mm/huge_memory.c              | 4 ++++
+ 3 files changed, 14 insertions(+)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 5f73335b7a3a..ac2244896a18 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1919,6 +1919,9 @@ config X86_INTEL_CET
- config ARCH_HAS_SHSTK
- 	def_bool n
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index e9ee4c86a477..864954bda7fe 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -891,6 +891,14 @@ inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
+ 		return pte;
+ }
  
-+config ARCH_HAS_PROGRAM_PROPERTIES
-+	def_bool n
-+
- config X86_INTEL_SHADOW_STACK_USER
- 	prompt "Intel Shadow Stack for user-mode"
- 	def_bool n
-@@ -1927,6 +1930,7 @@ config X86_INTEL_SHADOW_STACK_USER
- 	select X86_INTEL_CET
- 	select ARCH_HAS_SHSTK
- 	select VM_AREA_GUARD
-+	select ARCH_HAS_PROGRAM_PROPERTIES
- 	---help---
- 	  Shadow stack provides hardware protection against program stack
- 	  corruption.  Only when all the following are true will an application
-diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
-index 0d157d2a1e2a..5b5f169c5c07 100644
---- a/arch/x86/include/asm/elf.h
-+++ b/arch/x86/include/asm/elf.h
-@@ -382,4 +382,9 @@ struct va_alignment {
- 
- extern struct va_alignment va_align;
- extern unsigned long align_vdso_addr(unsigned long);
-+
-+#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
-+extern int arch_setup_features(void *ehdr, void *phdr, struct file *file,
-+			       bool interp);
-+#endif
- #endif /* _ASM_X86_ELF_H */
-diff --git a/arch/x86/include/uapi/asm/elf_property.h b/arch/x86/include/uapi/asm/elf_property.h
-new file mode 100644
-index 000000000000..af361207718c
---- /dev/null
-+++ b/arch/x86/include/uapi/asm/elf_property.h
-@@ -0,0 +1,15 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _UAPI_ASM_X86_ELF_PROPERTY_H
-+#define _UAPI_ASM_X86_ELF_PROPERTY_H
-+
-+/*
-+ * pr_type
-+ */
-+#define GNU_PROPERTY_X86_FEATURE_1_AND (0xc0000002)
-+
-+/*
-+ * Bits for GNU_PROPERTY_X86_FEATURE_1_AND
-+ */
-+#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	(0x00000002)
-+
-+#endif /* _UAPI_ASM_X86_ELF_PROPERTY_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index fbb2d91fb756..36b14ef410c8 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -141,6 +141,8 @@ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
- 
- obj-$(CONFIG_X86_INTEL_CET)		+= cet.o
- 
-+obj-$(CONFIG_ARCH_HAS_PROGRAM_PROPERTIES) += elf.o
-+
- ###
- # 64 bit specific files
- ifeq ($(CONFIG_X86_64),y)
-diff --git a/arch/x86/kernel/elf.c b/arch/x86/kernel/elf.c
-new file mode 100644
-index 000000000000..2e2030a0462b
---- /dev/null
-+++ b/arch/x86/kernel/elf.c
-@@ -0,0 +1,341 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Look at an ELF file's .note.gnu.property and determine if the file
-+ * supports shadow stack and/or indirect branch tracking.
-+ * The path from the ELF header to the note section is the following:
-+ * elfhdr->elf_phdr->elf_note->property[].
-+ */
-+
-+#include <asm/cet.h>
-+#include <asm/elf_property.h>
-+#include <asm/prctl.h>
-+#include <asm/processor.h>
-+#include <uapi/linux/elf-em.h>
-+#include <uapi/linux/prctl.h>
-+#include <linux/binfmts.h>
-+#include <linux/elf.h>
-+#include <linux/slab.h>
-+#include <linux/fs.h>
-+#include <linux/uaccess.h>
-+#include <linux/string.h>
-+#include <linux/compat.h>
-+
-+/*
-+ * The .note.gnu.property layout:
-+ *
-+ *	struct elf_note {
-+ *		u32 n_namesz; --> sizeof(n_name[]); always (4)
-+ *		u32 n_ndescsz;--> sizeof(property[])
-+ *		u32 n_type;   --> always NT_GNU_PROPERTY_TYPE_0
-+ *	};
-+ *	char n_name[4]; --> always 'GNU\0'
-+ *
-+ *	struct {
-+ *		struct property_x86 {
-+ *			u32 pr_type;
-+ *			u32 pr_datasz;
-+ *		};
-+ *		u8 pr_data[pr_datasz];
-+ *	}[];
-+ */
-+
-+#define BUF_SIZE (PAGE_SIZE / 4)
-+
-+struct property_x86 {
-+	u32 pr_type;
-+	u32 pr_datasz;
-+};
-+
-+typedef bool (test_fn)(void *buf, u32 *arg);
-+typedef void *(next_fn)(void *buf, u32 *arg);
-+
-+static inline bool test_note_type_0(void *buf, u32 *arg)
++inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
 +{
-+	struct elf_note *n = buf;
-+
-+	return ((n->n_namesz == 4) && (memcmp(n + 1, "GNU", 4) == 0) &&
-+		(n->n_type == NT_GNU_PROPERTY_TYPE_0));
-+}
-+
-+static inline void *next_note(void *buf, u32 *arg)
-+{
-+	struct elf_note *n = buf;
-+	u32 align = *arg;
-+	int size;
-+
-+	size = round_up(sizeof(*n) + n->n_namesz, align);
-+	size = round_up(size + n->n_descsz, align);
-+
-+	if (buf + size < buf)
-+		return NULL;
++	if (vma->vm_flags & VM_SHSTK)
++		return pmd_mkdirty_shstk(pmd);
 +	else
-+		return (buf + size);
++		return pmd;
 +}
 +
-+static inline bool test_property_x86(void *buf, u32 *arg)
-+{
-+	struct property_x86 *pr = buf;
-+	u32 max_type = *arg;
-+
-+	if (pr->pr_type > max_type)
-+		*arg = pr->pr_type;
-+
-+	return (pr->pr_type == GNU_PROPERTY_X86_FEATURE_1_AND);
-+}
-+
-+static inline void *next_property(void *buf, u32 *arg)
-+{
-+	struct property_x86 *pr = buf;
-+	u32 max_type = *arg;
-+
-+	if ((buf + sizeof(*pr) +  pr->pr_datasz < buf) ||
-+	    (pr->pr_type > GNU_PROPERTY_X86_FEATURE_1_AND) ||
-+	    (pr->pr_type > max_type))
-+		return NULL;
-+	else
-+		return (buf + sizeof(*pr) + pr->pr_datasz);
-+}
-+
-+/*
-+ * Scan 'buf' for a pattern; return true if found.
-+ * *pos is the distance from the beginning of buf to where
-+ * the searched item or the next item is located.
-+ */
-+static int scan(u8 *buf, u32 buf_size, int item_size,
-+		 test_fn test, next_fn next, u32 *arg, u32 *pos)
-+{
-+	int found = 0;
-+	u8 *p, *max;
-+
-+	max = buf + buf_size;
-+	if (max < buf)
-+		return 0;
-+
-+	p = buf;
-+
-+	while ((p + item_size < max) && (p + item_size > buf)) {
-+		if (test(p, arg)) {
-+			found = 1;
-+			break;
-+		}
-+
-+		p = next(p, arg);
-+	}
-+
-+	*pos = (p + item_size <= buf) ? 0 : (u32)(p - buf);
-+	return found;
-+}
-+
-+/*
-+ * Search a NT_GNU_PROPERTY_TYPE_0 for GNU_PROPERTY_X86_FEATURE_1_AND.
-+ */
-+static int find_feature_x86(struct file *file, unsigned long desc_size,
-+			    loff_t file_offset, u8 *buf, u32 *feature)
-+{
-+	u32 buf_pos;
-+	unsigned long read_size;
-+	unsigned long done;
-+	int found = 0;
-+	int ret = 0;
-+	u32 last_pr = 0;
-+
-+	*feature = 0;
-+	buf_pos = 0;
-+
-+	for (done = 0; done < desc_size; done += buf_pos) {
-+		read_size = desc_size - done;
-+		if (read_size > BUF_SIZE)
-+			read_size = BUF_SIZE;
-+
-+		ret = kernel_read(file, buf, read_size, &file_offset);
-+
-+		if (ret != read_size)
-+			return (ret < 0) ? ret : -EIO;
-+
-+		ret = 0;
-+		found = scan(buf, read_size, sizeof(struct property_x86),
-+			     test_property_x86, next_property,
-+			     &last_pr, &buf_pos);
-+
-+		if ((!buf_pos) || found)
-+			break;
-+
-+		file_offset += buf_pos - read_size;
-+	}
-+
-+	if (found) {
-+		struct property_x86 *pr =
-+			(struct property_x86 *)(buf + buf_pos);
-+
-+		if (pr->pr_datasz == 4) {
-+			u32 *max =  (u32 *)(buf + read_size);
-+			u32 *data = (u32 *)((u8 *)pr + sizeof(*pr));
-+
-+			if (data + 1 <= max) {
-+				*feature = *data;
-+			} else {
-+				file_offset += buf_pos - read_size;
-+				file_offset += sizeof(*pr);
-+				ret = kernel_read(file, feature, 4,
-+						  &file_offset);
-+			}
-+		}
-+	}
-+
-+	return ret;
-+}
-+
-+/*
-+ * Search a PT_NOTE segment for NT_GNU_PROPERTY_TYPE_0.
-+ */
-+static int find_note_type_0(struct file *file, unsigned long note_size,
-+			    loff_t file_offset, u32 align, u32 *feature)
-+{
-+	u8 *buf;
-+	u32 buf_pos;
-+	unsigned long read_size;
-+	unsigned long done;
-+	int found = 0;
-+	int ret = 0;
-+
-+	buf = kmalloc(BUF_SIZE, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	*feature = 0;
-+	buf_pos = 0;
-+
-+	for (done = 0; done < note_size; done += buf_pos) {
-+		read_size = note_size - done;
-+		if (read_size > BUF_SIZE)
-+			read_size = BUF_SIZE;
-+
-+		ret = kernel_read(file, buf, read_size, &file_offset);
-+
-+		if (ret != read_size) {
-+			ret = (ret < 0) ? ret : -EIO;
-+			kfree(buf);
-+			return ret;
-+		}
-+
-+		/*
-+		 * item_size = sizeof(struct elf_note) + elf_note.n_namesz.
-+		 * n_namesz is 4 for the note type we look for.
-+		 */
-+		ret = scan(buf, read_size, sizeof(struct elf_note) + 4,
-+			      test_note_type_0, next_note,
-+			      &align, &buf_pos);
-+
-+		file_offset += buf_pos - read_size;
-+
-+		if (ret && !found) {
-+			struct elf_note *n =
-+				(struct elf_note *)(buf + buf_pos);
-+			u32 start = round_up(sizeof(*n) + n->n_namesz, align);
-+			u32 total = round_up(start + n->n_descsz, align);
-+
-+			ret = find_feature_x86(file, n->n_descsz,
-+					       file_offset + start,
-+					       buf, feature);
-+			found++;
-+			file_offset += total;
-+			buf_pos += total;
-+		} else if (!buf_pos || ret) {
-+			ret = 0;
-+			*feature = 0;
-+			break;
-+		}
-+	}
-+
-+	kfree(buf);
-+	return ret;
-+}
-+
-+#ifdef CONFIG_COMPAT
-+static int check_notes_32(struct file *file, struct elf32_phdr *phdr,
-+			  int phnum, u32 *feature)
-+{
-+	int i;
-+	int err = 0;
-+
-+	for (i = 0; i < phnum; i++, phdr++) {
-+		if ((phdr->p_type != PT_NOTE) || (phdr->p_align != 4))
-+			continue;
-+
-+		err = find_note_type_0(file, phdr->p_filesz, phdr->p_offset,
-+				       phdr->p_align, feature);
-+		if (err)
-+			return err;
-+	}
-+
-+	return 0;
-+}
-+#endif
-+
-+#ifdef CONFIG_X86_64
-+static int check_notes_64(struct file *file, struct elf64_phdr *phdr,
-+			  int phnum, u32 *feature)
-+{
-+	int i;
-+	int err = 0;
-+
-+	for (i = 0; i < phnum; i++, phdr++) {
-+		if ((phdr->p_type != PT_NOTE) || (phdr->p_align != 8))
-+			continue;
-+
-+		err = find_note_type_0(file, phdr->p_filesz, phdr->p_offset,
-+				       phdr->p_align, feature);
-+		if (err)
-+			return err;
-+	}
-+
-+	return 0;
-+}
-+#endif
-+
-+int arch_setup_features(void *ehdr_p, void *phdr_p,
-+			struct file *file, bool interp)
-+{
-+	int err = 0;
-+	u32 feature = 0;
-+
-+	struct elf64_hdr *ehdr64 = ehdr_p;
-+
-+	if (!cpu_x86_cet_enabled())
-+		return 0;
-+
-+	if (ehdr64->e_ident[EI_CLASS] == ELFCLASS64) {
-+		struct elf64_phdr *phdr64 = phdr_p;
-+
-+		err = check_notes_64(file, phdr64, ehdr64->e_phnum,
-+				     &feature);
-+		if (err < 0)
-+			goto out;
-+	} else {
-+#ifdef CONFIG_COMPAT
-+		struct elf32_hdr *ehdr32 = ehdr_p;
-+
-+		if (ehdr32->e_ident[EI_CLASS] == ELFCLASS32) {
-+			struct elf32_phdr *phdr32 = phdr_p;
-+
-+			err = check_notes_32(file, phdr32, ehdr32->e_phnum,
-+					     &feature);
-+			if (err < 0)
-+				goto out;
-+		}
-+#endif
-+	}
-+
-+	memset(&current->thread.cet, 0, sizeof(struct cet_status));
-+
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
-+		if (feature & GNU_PROPERTY_X86_FEATURE_1_SHSTK) {
-+			err = cet_setup_shstk();
-+			if (err < 0)
-+				goto out;
-+		}
-+	}
-+
-+out:
-+	return err;
-+}
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index efae2fb0930a..b891aa292b46 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -1081,6 +1081,21 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 		goto out_free_dentry;
- 	}
+ inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
+ {
+ 	return (vm_flags & VM_SHSTK);
+diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
+index 015b769377a3..7512e4dfd642 100644
+--- a/include/asm-generic/pgtable.h
++++ b/include/asm-generic/pgtable.h
+@@ -1129,9 +1129,11 @@ static inline bool arch_has_pfn_modify_check(void)
  
-+#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
-+	if (interpreter) {
-+		retval = arch_setup_features(&loc->interp_elf_ex,
-+					     interp_elf_phdata,
-+					     interpreter, true);
-+	} else {
-+		retval = arch_setup_features(&loc->elf_ex,
-+					     elf_phdata,
-+					     bprm->file, false);
-+	}
-+
-+	if (retval < 0)
-+		goto out_free_dentry;
-+#endif
-+
- 	if (elf_interpreter) {
- 		unsigned long interp_map_addr = 0;
+ #ifndef CONFIG_ARCH_HAS_SHSTK
+ #define pte_set_vma_features(pte, vma) pte
++#define pmd_set_vma_features(pmd, vma) pmd
+ #define arch_copy_pte_mapping(vma_flags) false
+ #else
+ pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
++pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
+ bool arch_copy_pte_mapping(vm_flags_t vm_flags);
+ #endif
  
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index c5358e0ae7c5..5ef25a565e88 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -372,6 +372,7 @@ typedef struct elf64_shdr {
- #define NT_PRFPREG	2
- #define NT_PRPSINFO	3
- #define NT_TASKSTRUCT	4
-+#define NT_GNU_PROPERTY_TYPE_0 5
- #define NT_AUXV		6
- /*
-  * Note to userspace developers: size of NT_SIGINFO note may increase
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 00704060b7f7..6e03e26c1cec 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -597,6 +597,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
+ 
+ 		entry = mk_huge_pmd(page, vma->vm_page_prot);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
++		entry = pmd_set_vma_features(entry, vma);
+ 		page_add_new_anon_rmap(page, vma, haddr, true);
+ 		mem_cgroup_commit_charge(page, memcg, false, true);
+ 		lru_cache_add_active_or_unevictable(page, vma);
+@@ -1194,6 +1195,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
+ 		pte_t entry;
+ 		entry = mk_pte(pages[i], vma->vm_page_prot);
+ 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++		entry = pte_set_vma_features(entry, vma);
+ 		memcg = (void *)page_private(pages[i]);
+ 		set_page_private(pages[i], 0);
+ 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
+@@ -1278,6 +1280,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+ 		pmd_t entry;
+ 		entry = pmd_mkyoung(orig_pmd);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
++		entry = pmd_set_vma_features(entry, vma);
+ 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
+ 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
+ 		ret |= VM_FAULT_WRITE;
+@@ -1349,6 +1352,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+ 		pmd_t entry;
+ 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
+ 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
++		entry = pmd_set_vma_features(entry, vma);
+ 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
+ 		page_add_new_anon_rmap(new_page, vma, haddr, true);
+ 		mem_cgroup_commit_charge(new_page, memcg, false, true);
 -- 
 2.17.1
