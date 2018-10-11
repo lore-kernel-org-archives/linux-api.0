@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 11/27] x86/mm: Change _PAGE_DIRTY to _PAGE_DIRTY_HW
-Date: Thu, 11 Oct 2018 08:15:07 -0700
-Message-ID: <20181011151523.27101-12-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 02/27] x86/fpu/xstate: Change names to separate XSAVES system and user states
+Date: Thu, 11 Oct 2018 08:14:58 -0700
+Message-ID: <20181011151523.27101-3-yu-cheng.yu@intel.com>
 References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151523.27101-1-yu-cheng.yu@intel.com>
@@ -10,147 +10,418 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-We are going to create _PAGE_DIRTY_SW for non-hardware, memory
-management purposes.  Rename _PAGE_DIRTY to _PAGE_DIRTY_HW and
-_PAGE_BIT_DIRTY to _PAGE_BIT_DIRTY_HW to make these PTE dirty
-bits more clear.  There are no functional changes in this
-patch.
+Control Flow Enforcement (CET) MSRs are XSAVES system/supervisor
+states.  To support CET, we introduce XSAVES system states first.
+
+XSAVES is a "supervisor" instruction and, comparing to XSAVE, saves
+additional "supervisor" states that can be modified only from CPL 0.
+However, these states are per-task and not kernel's own.  Rename
+"supervisor" states to "system" states to clearly separate them from
+"user" states.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/pgtable.h       |  6 +++---
- arch/x86/include/asm/pgtable_types.h | 17 +++++++++--------
- arch/x86/kernel/relocate_kernel_64.S |  2 +-
- arch/x86/kvm/vmx.c                   |  2 +-
- 4 files changed, 14 insertions(+), 13 deletions(-)
+ arch/x86/include/asm/fpu/internal.h |  4 +-
+ arch/x86/include/asm/fpu/xstate.h   | 20 +++----
+ arch/x86/kernel/fpu/core.c          |  4 +-
+ arch/x86/kernel/fpu/init.c          |  2 +-
+ arch/x86/kernel/fpu/signal.c        |  6 +--
+ arch/x86/kernel/fpu/xstate.c        | 82 ++++++++++++++---------------
+ 6 files changed, 57 insertions(+), 61 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 690c0307afed..95c918ad84ed 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -316,7 +316,7 @@ static inline pte_t pte_mkexec(pte_t pte)
- 
- static inline pte_t pte_mkdirty(pte_t pte)
- {
--	return pte_set_flags(pte, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
-+	return pte_set_flags(pte, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
+diff --git a/arch/x86/include/asm/fpu/internal.h b/arch/x86/include/asm/fpu/internal.h
+index a38bf5a1e37a..02c4296478c8 100644
+--- a/arch/x86/include/asm/fpu/internal.h
++++ b/arch/x86/include/asm/fpu/internal.h
+@@ -93,7 +93,7 @@ static inline void fpstate_init_xstate(struct xregs_state *xsave)
+ 	 * XRSTORS requires these bits set in xcomp_bv, or it will
+ 	 * trigger #GP:
+ 	 */
+-	xsave->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT | xfeatures_mask;
++	xsave->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT | xfeatures_mask_user;
  }
  
- static inline pte_t pte_mkyoung(pte_t pte)
-@@ -390,7 +390,7 @@ static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ static inline void fpstate_init_fxstate(struct fxregs_state *fx)
+@@ -233,7 +233,7 @@ static inline void copy_fxregs_to_kernel(struct fpu *fpu)
  
- static inline pmd_t pmd_mkdirty(pmd_t pmd)
- {
--	return pmd_set_flags(pmd, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
-+	return pmd_set_flags(pmd, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
+ /*
+  * If XSAVES is enabled, it replaces XSAVEOPT because it supports a compact
+- * format and supervisor states in addition to modified optimization in
++ * format and system states in addition to modified optimization in
+  * XSAVEOPT.
+  *
+  * Otherwise, if XSAVEOPT is enabled, XSAVEOPT replaces XSAVE because XSAVEOPT
+diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
+index 48581988d78c..76f83d2ac10e 100644
+--- a/arch/x86/include/asm/fpu/xstate.h
++++ b/arch/x86/include/asm/fpu/xstate.h
+@@ -23,15 +23,15 @@
+ #define XFEATURE_MASK_SUPERVISOR (XFEATURE_MASK_PT)
  
- static inline pmd_t pmd_mkdevmap(pmd_t pmd)
-@@ -444,7 +444,7 @@ static inline pud_t pud_wrprotect(pud_t pud)
+ /* All currently supported features */
+-#define XCNTXT_MASK		(XFEATURE_MASK_FP | \
+-				 XFEATURE_MASK_SSE | \
+-				 XFEATURE_MASK_YMM | \
+-				 XFEATURE_MASK_OPMASK | \
+-				 XFEATURE_MASK_ZMM_Hi256 | \
+-				 XFEATURE_MASK_Hi16_ZMM	 | \
+-				 XFEATURE_MASK_PKRU | \
+-				 XFEATURE_MASK_BNDREGS | \
+-				 XFEATURE_MASK_BNDCSR)
++#define SUPPORTED_XFEATURES_MASK (XFEATURE_MASK_FP | \
++				  XFEATURE_MASK_SSE | \
++				  XFEATURE_MASK_YMM | \
++				  XFEATURE_MASK_OPMASK | \
++				  XFEATURE_MASK_ZMM_Hi256 | \
++				  XFEATURE_MASK_Hi16_ZMM | \
++				  XFEATURE_MASK_PKRU | \
++				  XFEATURE_MASK_BNDREGS | \
++				  XFEATURE_MASK_BNDCSR)
  
- static inline pud_t pud_mkdirty(pud_t pud)
- {
--	return pud_set_flags(pud, _PAGE_DIRTY | _PAGE_SOFT_DIRTY);
-+	return pud_set_flags(pud, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
- }
- 
- static inline pud_t pud_mkdevmap(pud_t pud)
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index b64acb08a62b..0657a22d5216 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -15,7 +15,7 @@
- #define _PAGE_BIT_PWT		3	/* page write through */
- #define _PAGE_BIT_PCD		4	/* page cache disabled */
- #define _PAGE_BIT_ACCESSED	5	/* was accessed (raised by CPU) */
--#define _PAGE_BIT_DIRTY		6	/* was written to (raised by CPU) */
-+#define _PAGE_BIT_DIRTY_HW	6	/* was written to (raised by CPU) */
- #define _PAGE_BIT_PSE		7	/* 4 MB (or 2MB) page */
- #define _PAGE_BIT_PAT		7	/* on 4KB pages */
- #define _PAGE_BIT_GLOBAL	8	/* Global TLB entry PPro+ */
-@@ -45,7 +45,7 @@
- #define _PAGE_PWT	(_AT(pteval_t, 1) << _PAGE_BIT_PWT)
- #define _PAGE_PCD	(_AT(pteval_t, 1) << _PAGE_BIT_PCD)
- #define _PAGE_ACCESSED	(_AT(pteval_t, 1) << _PAGE_BIT_ACCESSED)
--#define _PAGE_DIRTY	(_AT(pteval_t, 1) << _PAGE_BIT_DIRTY)
-+#define _PAGE_DIRTY_HW	(_AT(pteval_t, 1) << _PAGE_BIT_DIRTY_HW)
- #define _PAGE_PSE	(_AT(pteval_t, 1) << _PAGE_BIT_PSE)
- #define _PAGE_GLOBAL	(_AT(pteval_t, 1) << _PAGE_BIT_GLOBAL)
- #define _PAGE_SOFTW1	(_AT(pteval_t, 1) << _PAGE_BIT_SOFTW1)
-@@ -73,7 +73,7 @@
- 			 _PAGE_PKEY_BIT3)
- 
- #if defined(CONFIG_X86_64) || defined(CONFIG_X86_PAE)
--#define _PAGE_KNL_ERRATUM_MASK (_PAGE_DIRTY | _PAGE_ACCESSED)
-+#define _PAGE_KNL_ERRATUM_MASK (_PAGE_DIRTY_HW | _PAGE_ACCESSED)
- #else
- #define _PAGE_KNL_ERRATUM_MASK 0
+ #ifdef CONFIG_X86_64
+ #define REX_PREFIX	"0x48, "
+@@ -39,7 +39,7 @@
+ #define REX_PREFIX
  #endif
-@@ -112,9 +112,9 @@
- #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
  
- #define _PAGE_TABLE_NOENC	(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER |\
--				 _PAGE_ACCESSED | _PAGE_DIRTY)
-+				 _PAGE_ACCESSED | _PAGE_DIRTY_HW)
- #define _KERNPG_TABLE_NOENC	(_PAGE_PRESENT | _PAGE_RW |		\
--				 _PAGE_ACCESSED | _PAGE_DIRTY)
-+				 _PAGE_ACCESSED | _PAGE_DIRTY_HW)
+-extern u64 xfeatures_mask;
++extern u64 xfeatures_mask_user;
+ extern u64 xstate_fx_sw_bytes[USER_XSTATE_FX_SW_WORDS];
+ 
+ extern void __init update_regset_xstate_info(unsigned int size,
+diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
+index 2ea85b32421a..4bd56079048f 100644
+--- a/arch/x86/kernel/fpu/core.c
++++ b/arch/x86/kernel/fpu/core.c
+@@ -363,7 +363,7 @@ void fpu__drop(struct fpu *fpu)
+  * Clear FPU registers by setting them up from
+  * the init fpstate:
+  */
+-static inline void copy_init_fpstate_to_fpregs(void)
++static inline void copy_init_user_fpstate_to_fpregs(void)
+ {
+ 	if (use_xsave())
+ 		copy_kernel_to_xregs(&init_fpstate.xsave, -1);
+@@ -395,7 +395,7 @@ void fpu__clear(struct fpu *fpu)
+ 		preempt_disable();
+ 		fpu__initialize(fpu);
+ 		user_fpu_begin();
+-		copy_init_fpstate_to_fpregs();
++		copy_init_user_fpstate_to_fpregs();
+ 		preempt_enable();
+ 	}
+ }
+diff --git a/arch/x86/kernel/fpu/init.c b/arch/x86/kernel/fpu/init.c
+index 6abd83572b01..761c3a5a9e07 100644
+--- a/arch/x86/kernel/fpu/init.c
++++ b/arch/x86/kernel/fpu/init.c
+@@ -229,7 +229,7 @@ static void __init fpu__init_system_xstate_size_legacy(void)
+  */
+ u64 __init fpu__get_supported_xfeatures_mask(void)
+ {
+-	return XCNTXT_MASK;
++	return SUPPORTED_XFEATURES_MASK;
+ }
+ 
+ /* Legacy code to initialize eager fpu mode. */
+diff --git a/arch/x86/kernel/fpu/signal.c b/arch/x86/kernel/fpu/signal.c
+index 23f1691670b6..f77aa76ba675 100644
+--- a/arch/x86/kernel/fpu/signal.c
++++ b/arch/x86/kernel/fpu/signal.c
+@@ -249,11 +249,11 @@ static inline int copy_user_to_fpregs_zeroing(void __user *buf, u64 xbv, int fx_
+ {
+ 	if (use_xsave()) {
+ 		if ((unsigned long)buf % 64 || fx_only) {
+-			u64 init_bv = xfeatures_mask & ~XFEATURE_MASK_FPSSE;
++			u64 init_bv = xfeatures_mask_user & ~XFEATURE_MASK_FPSSE;
+ 			copy_kernel_to_xregs(&init_fpstate.xsave, init_bv);
+ 			return copy_user_to_fxregs(buf);
+ 		} else {
+-			u64 init_bv = xfeatures_mask & ~xbv;
++			u64 init_bv = xfeatures_mask_user & ~xbv;
+ 			if (unlikely(init_bv))
+ 				copy_kernel_to_xregs(&init_fpstate.xsave, init_bv);
+ 			return copy_user_to_xregs(buf, xbv);
+@@ -417,7 +417,7 @@ void fpu__init_prepare_fx_sw_frame(void)
+ 
+ 	fx_sw_reserved.magic1 = FP_XSTATE_MAGIC1;
+ 	fx_sw_reserved.extended_size = size;
+-	fx_sw_reserved.xfeatures = xfeatures_mask;
++	fx_sw_reserved.xfeatures = xfeatures_mask_user;
+ 	fx_sw_reserved.xstate_size = fpu_user_xstate_size;
+ 
+ 	if (IS_ENABLED(CONFIG_IA32_EMULATION) ||
+diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+index 87a57b7642d3..e7cbaed12ef1 100644
+--- a/arch/x86/kernel/fpu/xstate.c
++++ b/arch/x86/kernel/fpu/xstate.c
+@@ -51,13 +51,14 @@ static short xsave_cpuid_features[] __initdata = {
+ };
  
  /*
-  * Set of bits not changed in pte_modify.  The pte's
-@@ -123,7 +123,7 @@
-  * pte_modify() does modify it.
+- * Mask of xstate features supported by the CPU and the kernel:
++ * Mask of supported 'user' xstate features derived from boot_cpu_has() and
++ * SUPPORTED_XFEATURES_MASK.
   */
- #define _PAGE_CHG_MASK	(PTE_PFN_MASK | _PAGE_PCD | _PAGE_PWT |		\
--			 _PAGE_SPECIAL | _PAGE_ACCESSED | _PAGE_DIRTY |	\
-+			 _PAGE_SPECIAL | _PAGE_ACCESSED | _PAGE_DIRTY_HW |	\
- 			 _PAGE_SOFT_DIRTY)
- #define _HPAGE_CHG_MASK (_PAGE_CHG_MASK | _PAGE_PSE)
+-u64 xfeatures_mask __read_mostly;
++u64 xfeatures_mask_user __read_mostly;
  
-@@ -168,7 +168,8 @@ enum page_cache_mode {
- 					 _PAGE_ACCESSED)
- 
- #define __PAGE_KERNEL_EXEC						\
--	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED | _PAGE_GLOBAL)
-+	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY_HW | _PAGE_ACCESSED | \
-+	 _PAGE_GLOBAL)
- #define __PAGE_KERNEL		(__PAGE_KERNEL_EXEC | _PAGE_NX)
- 
- #define __PAGE_KERNEL_RO		(__PAGE_KERNEL & ~_PAGE_RW)
-@@ -187,7 +188,7 @@ enum page_cache_mode {
- #define _PAGE_ENC	(_AT(pteval_t, sme_me_mask))
- 
- #define _KERNPG_TABLE	(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED |	\
--			 _PAGE_DIRTY | _PAGE_ENC)
-+			 _PAGE_DIRTY_HW | _PAGE_ENC)
- #define _PAGE_TABLE	(_KERNPG_TABLE | _PAGE_USER)
- 
- #define __PAGE_KERNEL_ENC	(__PAGE_KERNEL | _PAGE_ENC)
-diff --git a/arch/x86/kernel/relocate_kernel_64.S b/arch/x86/kernel/relocate_kernel_64.S
-index 11eda21eb697..e7665a4767b3 100644
---- a/arch/x86/kernel/relocate_kernel_64.S
-+++ b/arch/x86/kernel/relocate_kernel_64.S
-@@ -17,7 +17,7 @@
-  */
- 
- #define PTR(x) (x << 3)
--#define PAGE_ATTR (_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED | _PAGE_DIRTY)
-+#define PAGE_ATTR (_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED | _PAGE_DIRTY_HW)
+ static unsigned int xstate_offsets[XFEATURE_MAX] = { [ 0 ... XFEATURE_MAX - 1] = -1};
+ static unsigned int xstate_sizes[XFEATURE_MAX]   = { [ 0 ... XFEATURE_MAX - 1] = -1};
+-static unsigned int xstate_comp_offsets[sizeof(xfeatures_mask)*8];
++static unsigned int xstate_comp_offsets[sizeof(xfeatures_mask_user)*8];
  
  /*
-  * control_page + KEXEC_CONTROL_CODE_MAX_SIZE
-diff --git a/arch/x86/kvm/vmx.c b/arch/x86/kvm/vmx.c
-index 612fd17be635..1b07080bd797 100644
---- a/arch/x86/kvm/vmx.c
-+++ b/arch/x86/kvm/vmx.c
-@@ -5833,7 +5833,7 @@ static int init_rmode_identity_map(struct kvm *kvm)
- 	/* Set up identity-mapping pagetable for EPT in real mode */
- 	for (i = 0; i < PT32_ENT_PER_PAGE; i++) {
- 		tmp = (i << 22) + (_PAGE_PRESENT | _PAGE_RW | _PAGE_USER |
--			_PAGE_ACCESSED | _PAGE_DIRTY | _PAGE_PSE);
-+			_PAGE_ACCESSED | _PAGE_DIRTY_HW | _PAGE_PSE);
- 		r = kvm_write_guest_page(kvm, identity_map_pfn,
- 				&tmp, i * sizeof(tmp), sizeof(tmp));
- 		if (r < 0)
+  * The XSAVE area of kernel can be in standard or compacted format;
+@@ -82,7 +83,7 @@ void fpu__xstate_clear_all_cpu_caps(void)
+  */
+ int cpu_has_xfeatures(u64 xfeatures_needed, const char **feature_name)
+ {
+-	u64 xfeatures_missing = xfeatures_needed & ~xfeatures_mask;
++	u64 xfeatures_missing = xfeatures_needed & ~xfeatures_mask_user;
+ 
+ 	if (unlikely(feature_name)) {
+ 		long xfeature_idx, max_idx;
+@@ -113,14 +114,11 @@ int cpu_has_xfeatures(u64 xfeatures_needed, const char **feature_name)
+ }
+ EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
+ 
+-static int xfeature_is_supervisor(int xfeature_nr)
++static int xfeature_is_system(int xfeature_nr)
+ {
+ 	/*
+-	 * We currently do not support supervisor states, but if
+-	 * we did, we could find out like this.
+-	 *
+ 	 * SDM says: If state component 'i' is a user state component,
+-	 * ECX[0] return 0; if state component i is a supervisor
++	 * ECX[0] return 0; if state component i is a system
+ 	 * state component, ECX[0] returns 1.
+ 	 */
+ 	u32 eax, ebx, ecx, edx;
+@@ -131,7 +129,7 @@ static int xfeature_is_supervisor(int xfeature_nr)
+ 
+ static int xfeature_is_user(int xfeature_nr)
+ {
+-	return !xfeature_is_supervisor(xfeature_nr);
++	return !xfeature_is_system(xfeature_nr);
+ }
+ 
+ /*
+@@ -164,7 +162,7 @@ void fpstate_sanitize_xstate(struct fpu *fpu)
+ 	 * None of the feature bits are in init state. So nothing else
+ 	 * to do for us, as the memory layout is up to date.
+ 	 */
+-	if ((xfeatures & xfeatures_mask) == xfeatures_mask)
++	if ((xfeatures & xfeatures_mask_user) == xfeatures_mask_user)
+ 		return;
+ 
+ 	/*
+@@ -191,7 +189,7 @@ void fpstate_sanitize_xstate(struct fpu *fpu)
+ 	 * in a special way already:
+ 	 */
+ 	feature_bit = 0x2;
+-	xfeatures = (xfeatures_mask & ~xfeatures) >> 2;
++	xfeatures = (xfeatures_mask_user & ~xfeatures) >> 2;
+ 
+ 	/*
+ 	 * Update all the remaining memory layouts according to their
+@@ -219,20 +217,18 @@ void fpstate_sanitize_xstate(struct fpu *fpu)
+  */
+ void fpu__init_cpu_xstate(void)
+ {
+-	if (!boot_cpu_has(X86_FEATURE_XSAVE) || !xfeatures_mask)
++	if (!boot_cpu_has(X86_FEATURE_XSAVE) || !xfeatures_mask_user)
+ 		return;
+ 	/*
+-	 * Make it clear that XSAVES supervisor states are not yet
+-	 * implemented should anyone expect it to work by changing
+-	 * bits in XFEATURE_MASK_* macros and XCR0.
++	 * XCR_XFEATURE_ENABLED_MASK sets the features that are managed
++	 * by XSAVE{C, OPT} and XRSTOR.  Only XSAVE user states can be
++	 * set here.
+ 	 */
+-	WARN_ONCE((xfeatures_mask & XFEATURE_MASK_SUPERVISOR),
+-		"x86/fpu: XSAVES supervisor states are not yet implemented.\n");
+ 
+-	xfeatures_mask &= ~XFEATURE_MASK_SUPERVISOR;
++	xfeatures_mask_user &= ~XFEATURE_MASK_SUPERVISOR;
+ 
+ 	cr4_set_bits(X86_CR4_OSXSAVE);
+-	xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask);
++	xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask_user);
+ }
+ 
+ /*
+@@ -242,7 +238,7 @@ void fpu__init_cpu_xstate(void)
+  */
+ static int xfeature_enabled(enum xfeature xfeature)
+ {
+-	return !!(xfeatures_mask & (1UL << xfeature));
++	return !!(xfeatures_mask_user & BIT_ULL(xfeature));
+ }
+ 
+ /*
+@@ -272,7 +268,7 @@ static void __init setup_xstate_features(void)
+ 		cpuid_count(XSTATE_CPUID, i, &eax, &ebx, &ecx, &edx);
+ 
+ 		/*
+-		 * If an xfeature is supervisor state, the offset
++		 * If an xfeature is system state, the offset
+ 		 * in EBX is invalid. We leave it to -1.
+ 		 */
+ 		if (xfeature_is_user(i))
+@@ -348,7 +344,7 @@ static int xfeature_is_aligned(int xfeature_nr)
+  */
+ static void __init setup_xstate_comp(void)
+ {
+-	unsigned int xstate_comp_sizes[sizeof(xfeatures_mask)*8];
++	unsigned int xstate_comp_sizes[sizeof(xfeatures_mask_user)*8];
+ 	int i;
+ 
+ 	/*
+@@ -421,7 +417,7 @@ static void __init setup_init_fpu_buf(void)
+ 	print_xstate_features();
+ 
+ 	if (boot_cpu_has(X86_FEATURE_XSAVES))
+-		init_fpstate.xsave.header.xcomp_bv = (u64)1 << 63 | xfeatures_mask;
++		init_fpstate.xsave.header.xcomp_bv = BIT_ULL(63) | xfeatures_mask_user;
+ 
+ 	/*
+ 	 * Init all the features state with header.xfeatures being 0x0
+@@ -440,8 +436,8 @@ static int xfeature_uncompacted_offset(int xfeature_nr)
+ 	u32 eax, ebx, ecx, edx;
+ 
+ 	/*
+-	 * Only XSAVES supports supervisor states and it uses compacted
+-	 * format. Checking a supervisor state's uncompacted offset is
++	 * Only XSAVES supports system states and it uses compacted
++	 * format. Checking a system state's uncompacted offset is
+ 	 * an error.
+ 	 */
+ 	if (XFEATURE_MASK_SUPERVISOR & (1 << xfeature_nr)) {
+@@ -465,7 +461,7 @@ static int xfeature_size(int xfeature_nr)
+ 
+ /*
+  * 'XSAVES' implies two different things:
+- * 1. saving of supervisor/system state
++ * 1. saving of system state
+  * 2. using the compacted format
+  *
+  * Use this function when dealing with the compacted format so
+@@ -480,8 +476,8 @@ int using_compacted_format(void)
+ /* Validate an xstate header supplied by userspace (ptrace or sigreturn) */
+ int validate_xstate_header(const struct xstate_header *hdr)
+ {
+-	/* No unknown or supervisor features may be set */
+-	if (hdr->xfeatures & (~xfeatures_mask | XFEATURE_MASK_SUPERVISOR))
++	/* No unknown or system features may be set */
++	if (hdr->xfeatures & ~xfeatures_mask_user)
+ 		return -EINVAL;
+ 
+ 	/* Userspace must use the uncompacted format */
+@@ -588,11 +584,11 @@ static void do_extra_xstate_size_checks(void)
+ 
+ 		check_xstate_against_struct(i);
+ 		/*
+-		 * Supervisor state components can be managed only by
++		 * System state components can be managed only by
+ 		 * XSAVES, which is compacted-format only.
+ 		 */
+ 		if (!using_compacted_format())
+-			XSTATE_WARN_ON(xfeature_is_supervisor(i));
++			XSTATE_WARN_ON(xfeature_is_system(i));
+ 
+ 		/* Align from the end of the previous feature */
+ 		if (xfeature_is_aligned(i))
+@@ -616,7 +612,7 @@ static void do_extra_xstate_size_checks(void)
+ 
+ 
+ /*
+- * Get total size of enabled xstates in XCR0/xfeatures_mask.
++ * Get total size of enabled xstates in XCR0/xfeatures_mask_user.
+  *
+  * Note the SDM's wording here.  "sub-function 0" only enumerates
+  * the size of the *user* states.  If we use it to size a buffer
+@@ -706,7 +702,7 @@ static int init_xstate_size(void)
+  */
+ static void fpu__init_disable_system_xstate(void)
+ {
+-	xfeatures_mask = 0;
++	xfeatures_mask_user = 0;
+ 	cr4_clear_bits(X86_CR4_OSXSAVE);
+ 	fpu__xstate_clear_all_cpu_caps();
+ }
+@@ -742,15 +738,15 @@ void __init fpu__init_system_xstate(void)
+ 	}
+ 
+ 	cpuid_count(XSTATE_CPUID, 0, &eax, &ebx, &ecx, &edx);
+-	xfeatures_mask = eax + ((u64)edx << 32);
++	xfeatures_mask_user = eax + ((u64)edx << 32);
+ 
+-	if ((xfeatures_mask & XFEATURE_MASK_FPSSE) != XFEATURE_MASK_FPSSE) {
++	if ((xfeatures_mask_user & XFEATURE_MASK_FPSSE) != XFEATURE_MASK_FPSSE) {
+ 		/*
+ 		 * This indicates that something really unexpected happened
+ 		 * with the enumeration.  Disable XSAVE and try to continue
+ 		 * booting without it.  This is too early to BUG().
+ 		 */
+-		pr_err("x86/fpu: FP/SSE not present amongst the CPU's xstate features: 0x%llx.\n", xfeatures_mask);
++		pr_err("x86/fpu: FP/SSE not present amongst the CPU's xstate features: 0x%llx.\n", xfeatures_mask_user);
+ 		goto out_disable;
+ 	}
+ 
+@@ -759,10 +755,10 @@ void __init fpu__init_system_xstate(void)
+ 	 */
+ 	for (i = 0; i < ARRAY_SIZE(xsave_cpuid_features); i++) {
+ 		if (!boot_cpu_has(xsave_cpuid_features[i]))
+-			xfeatures_mask &= ~BIT(i);
++			xfeatures_mask_user &= ~BIT_ULL(i);
+ 	}
+ 
+-	xfeatures_mask &= fpu__get_supported_xfeatures_mask();
++	xfeatures_mask_user &= fpu__get_supported_xfeatures_mask();
+ 
+ 	/* Enable xstate instructions to be able to continue with initialization: */
+ 	fpu__init_cpu_xstate();
+@@ -772,9 +768,9 @@ void __init fpu__init_system_xstate(void)
+ 
+ 	/*
+ 	 * Update info used for ptrace frames; use standard-format size and no
+-	 * supervisor xstates:
++	 * system xstates:
+ 	 */
+-	update_regset_xstate_info(fpu_user_xstate_size,	xfeatures_mask & ~XFEATURE_MASK_SUPERVISOR);
++	update_regset_xstate_info(fpu_user_xstate_size, xfeatures_mask_user & ~XFEATURE_MASK_SUPERVISOR);
+ 
+ 	fpu__init_prepare_fx_sw_frame();
+ 	setup_init_fpu_buf();
+@@ -782,7 +778,7 @@ void __init fpu__init_system_xstate(void)
+ 	print_xstate_offset_size();
+ 
+ 	pr_info("x86/fpu: Enabled xstate features 0x%llx, context size is %d bytes, using '%s' format.\n",
+-		xfeatures_mask,
++		xfeatures_mask_user,
+ 		fpu_kernel_xstate_size,
+ 		boot_cpu_has(X86_FEATURE_XSAVES) ? "compacted" : "standard");
+ 	return;
+@@ -801,7 +797,7 @@ void fpu__resume_cpu(void)
+ 	 * Restore XCR0 on xsave capable CPUs:
+ 	 */
+ 	if (boot_cpu_has(X86_FEATURE_XSAVE))
+-		xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask);
++		xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask_user);
+ }
+ 
+ /*
+@@ -853,7 +849,7 @@ void *get_xsave_addr(struct xregs_state *xsave, int xstate_feature)
+ 	 * have not enabled.  Remember that pcntxt_mask is
+ 	 * what we write to the XCR0 register.
+ 	 */
+-	WARN_ONCE(!(xfeatures_mask & xstate_feature),
++	WARN_ONCE(!(xfeatures_mask_user & xstate_feature),
+ 		  "get of unsupported state");
+ 	/*
+ 	 * This assumes the last 'xsave*' instruction to
 -- 
 2.17.1
