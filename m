@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 03/11] x86/cet/ibt: Add IBT legacy code bitmap allocation function
-Date: Thu, 11 Oct 2018 08:16:46 -0700
-Message-ID: <20181011151654.27221-4-yu-cheng.yu@intel.com>
+Subject: [PATCH v5 01/11] x86/cet/ibt: Add Kconfig option for user-mode Indirect Branch Tracking
+Date: Thu, 11 Oct 2018 08:16:44 -0700
+Message-ID: <20181011151654.27221-2-yu-cheng.yu@intel.com>
 References: <20181011151654.27221-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181011151654.27221-1-yu-cheng.yu@intel.com>
@@ -10,80 +10,68 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Indirect branch tracking provides an optional legacy code bitmap
-that indicates locations of non-IBT compatible code.  When set,
-each bit in the bitmap represents a page in the linear address is
-legacy code.
-
-We allocate the bitmap only when the application requests it.
-Most applications do not need the bitmap.
+The user-mode indirect branch tracking support is done mostly by
+GCC to insert ENDBR64/ENDBR32 instructions at branch targets.
+The kernel provides CPUID enumeration, feature MSR setup and
+the allocation of legacy bitmap.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/kernel/cet.c | 47 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 47 insertions(+)
+ arch/x86/Kconfig  | 16 ++++++++++++++++
+ arch/x86/Makefile |  7 +++++++
+ 2 files changed, 23 insertions(+)
 
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 40c4c08e5e31..77ae4eaa9dea 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -21,6 +21,7 @@
- #include <asm/compat.h>
- #include <asm/cet.h>
- #include <asm/special_insns.h>
-+#include <asm/elf.h>
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index ac2244896a18..dd65dae3c5cb 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1919,6 +1919,9 @@ config X86_INTEL_CET
+ config ARCH_HAS_SHSTK
+ 	def_bool n
  
- static int set_shstk_ptr(unsigned long addr)
- {
-@@ -327,3 +328,49 @@ void cet_disable_ibt(void)
- 	wrmsrl(MSR_IA32_U_CET, r);
- 	current->thread.cet.ibt_enabled = 0;
- }
++config ARCH_HAS_AS_LIMIT
++	def_bool n
 +
-+int cet_setup_ibt_bitmap(void)
-+{
-+	u64 r;
-+	unsigned long bitmap;
-+	unsigned long size;
+ config ARCH_HAS_PROGRAM_PROPERTIES
+ 	def_bool n
+ 
+@@ -1943,6 +1946,19 @@ config X86_INTEL_SHADOW_STACK_USER
+ 
+ 	  If unsure, say y.
+ 
++config X86_INTEL_BRANCH_TRACKING_USER
++	prompt "Intel Indirect Branch Tracking for user-mode"
++	def_bool n
++	depends on CPU_SUP_INTEL && X86_64
++	select X86_INTEL_CET
++	select ARCH_HAS_AS_LIMIT
++	select ARCH_HAS_PROGRAM_PROPERTIES
++	---help---
++	  Indirect Branch Tracking provides hardware protection against return-/jmp-
++	  oriented programming attacks.
 +
-+	if (!cpu_feature_enabled(X86_FEATURE_IBT))
-+		return -EOPNOTSUPP;
++	  If unsure, say y
 +
-+	if (!current->thread.cet.ibt_bitmap_addr) {
-+		/*
-+		 * Calculate size and put in thread header.
-+		 * may_expand_vm() needs this information.
-+		 */
-+		size = in_compat_syscall() ? task_size_32bit() : task_size_64bit(1);
-+		size = size / PAGE_SIZE / BITS_PER_BYTE;
-+		current->thread.cet.ibt_bitmap_size = size;
-+		bitmap = do_mmap_locked(0, size, PROT_READ | PROT_WRITE,
-+					MAP_ANONYMOUS | MAP_PRIVATE,
-+					VM_DONTDUMP);
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index b28842b80295..ff652bba849f 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -159,6 +159,13 @@ ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
+   endif
+ endif
+ 
++# Check compiler ibt support
++ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++  ifeq ($(call cc-option-yn, -fcf-protection=branch), n)
++      $(error CONFIG_X86_INTEL_BRANCH_TRACKING_USER not supported by compiler)
++  endif
++endif
 +
-+		if ((bitmap >= TASK_SIZE) || (bitmap < size)) {
-+			current->thread.cet.ibt_bitmap_size = 0;
-+			return -ENOMEM;
-+		}
-+
-+		current->thread.cet.ibt_bitmap_addr = bitmap;
-+
-+		/*
-+		 * Lower bits of MSR_IA32_CET_LEG_IW_EN are for IBT
-+		 * settings.  Clear lower bits even bitmap is already
-+		 * page-aligned.
-+		 */
-+		bitmap &= PAGE_MASK;
-+
-+		/*
-+		 * Turn on IBT legacy bitmap.
-+		 */
-+		rdmsrl(MSR_IA32_U_CET, r);
-+		r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
-+		wrmsrl(MSR_IA32_U_CET, r);
-+	}
-+
-+	return 0;
-+}
+ #
+ # If the function graph tracer is used with mcount instead of fentry,
+ # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
 -- 
 2.17.1
