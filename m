@@ -1,25 +1,29 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from ptrace
-Date: Fri, 12 Oct 2018 22:06:00 +0200
-Message-ID: <CAG48ez3o0t6UjtdsuiUck7ijJiA39uy5Jfno28UMMq_Q1d=s8g@mail.gmail.com>
-References: <20181008181815.pwnqxngj22mhm2vj@brauner.io> <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
- <20181009132850.fp6yne2vgmfpi27k@brauner.io> <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
+ ptrace
+Date: Fri, 12 Oct 2018 22:11:54 +0200
+Message-ID: <20181012201153.psyjrjzpiyjksqba@brauner.io>
+References: <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
+ <20181009132850.fp6yne2vgmfpi27k@brauner.io>
+ <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
  <CAHC9VhQfzJgG3i=Q8C+pGY2Lpr+2MRTwxgUWec_heGOecd=xRg@mail.gmail.com>
  <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com>
  <16662034750.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
  <CAG48ez0=NRRu2FUZFwdDSMmkdWsFi1XSSPTO8bL84YAY=jOzMQ@mail.gmail.com>
  <1666564e4f8.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
- <CALCETrV1fWKJe96ow3XGy_kmZoXoehb99e4AZehsO84YGxKjgQ@mail.gmail.com> <20181012200220.GC5530@cisco>
+ <CALCETrV1fWKJe96ow3XGy_kmZoXoehb99e4AZehsO84YGxKjgQ@mail.gmail.com>
+ <20181012200220.GC5530@cisco>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20181012200220.GC5530@cisco>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tycho Andersen <tycho@tycho.ws>
-Cc: Andy Lutomirski <luto@amacapital.net>, Paul Moore <paul@paul-moore.com>, christian@brauner.io, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, suda.akihiro@lab.ntt.co.jp, Oleg Nesterov <oleg@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, linux-security-module <linux-security-module@vger.kernel.org>, selinux@tycho.nsa.gov, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Paul Moore <paul@paul-moore.com>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, LSM List <linux-security-module@vger.kernel.org>, SELinux-NSA <selinux@tycho.nsa.gov>, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 12, 2018 at 10:02 PM Tycho Andersen <tycho@tycho.ws> wrote:
+On Fri, Oct 12, 2018 at 01:02:20PM -0700, Tycho Andersen wrote:
 > On Thu, Oct 11, 2018 at 06:02:06PM -0700, Andy Lutomirski wrote:
 > > On Thu, Oct 11, 2018 at 4:10 PM Paul Moore <paul@paul-moore.com> wrote:
 > > >
@@ -59,17 +63,22 @@ On Fri, Oct 12, 2018 at 10:02 PM Tycho Andersen <tycho@tycho.ws> wrote:
 > > >
 > > > Unfortunately, I stand by my previous statements that we still probably want a LSM access check similar to what we currently do for ptrace.
 > > >
-> >
+> > 
 > > I would argue that once "LSM" enters this conversation, it just means
 > > we're on the wrong track.  Let's try to make this work without ptrace
 > > if possible :)  The whole seccomp() mechanism is very carefully
 > > designed so that it's perfectly safe to install seccomp filters
 > > without involving LSM or even involving credentials at all.
->
+> 
 > In a last ditch effort to save the ptrace() interface: can we just
 > only allow it when refcount_read(filter->usage) == 1?
 
->From a security perspective, I think that would be fine, assuming that
-we know that the target task is stopped. (But note that if the target
-process e.g. uses the filter on multiple threads, the refcount will be
-higher.)
+I mean, the filter->usage == 1 means lets us get rid of
+capable(CAP_SYS_ADMIN) making the ptrace() way of getting an fd useable
+in nesting scenarios and from within user namespaces. That makes it a
+whole lot more useful and aligns it with the seccomp() way of getting
+the fd. So I wouldn't argue against it.
+I guess it comes down to (for me) whether you consider this a necessary
+part of this patchset aka meaning without it it wouldn't be useable.
+
+Christian
