@@ -1,103 +1,75 @@
-From: Alan Jenkins <alan.christopher.jenkins@gmail.com>
-Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock
- for reconfiguration [ver #12]
-Date: Fri, 12 Oct 2018 15:49:50 +0100
-Message-ID: <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com>
-References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
- <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v7 3/6] seccomp: add a way to get a listener fd from
+ ptrace
+Date: Fri, 12 Oct 2018 13:02:20 -0700
+Message-ID: <20181012200220.GC5530@cisco>
+References: <20181008181815.pwnqxngj22mhm2vj@brauner.io>
+ <CAG48ez3PEce4ynRnDk=yfsAOuFGH=YMmuf13CAxEt07Yjk3ZCw@mail.gmail.com>
+ <20181009132850.fp6yne2vgmfpi27k@brauner.io>
+ <CAG48ez2EV8Z=Egn7hNpXd86bHdvQhVxStqE1N=U2L2R7sA-gjg@mail.gmail.com>
+ <CAHC9VhQfzJgG3i=Q8C+pGY2Lpr+2MRTwxgUWec_heGOecd=xRg@mail.gmail.com>
+ <CAG48ez2hTBFwmA65FXv0zJjc0_wpc1S-uOBn1t+X=0vPH25YvQ@mail.gmail.com>
+ <16662034750.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
+ <CAG48ez0=NRRu2FUZFwdDSMmkdWsFi1XSSPTO8bL84YAY=jOzMQ@mail.gmail.com>
+ <1666564e4f8.2781.85c95baa4474aabc7814e68940a78392@paul-moore.com>
+ <CALCETrV1fWKJe96ow3XGy_kmZoXoehb99e4AZehsO84YGxKjgQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
-Content-Language: en-GB
+Content-Disposition: inline
+In-Reply-To: <CALCETrV1fWKJe96ow3XGy_kmZoXoehb99e4AZehsO84YGxKjgQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
-Cc: linux-api@vger.kernel.org, torvalds@linux-foundation.org, ebiederm@xmission.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Paul Moore <paul@paul-moore.com>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, LSM List <linux-security-module@vger.kernel.org>, SELinux-NSA <selinux@tycho.nsa.gov>, Stephen Smalley <sds@tycho.nsa.gov>, Eric Paris <eparis@parisplace.org>
 List-Id: linux-api@vger.kernel.org
 
-On 21/09/2018 17:34, David Howells wrote:
-> Provide an fspick() system call that can be used to pick an existing
-> mountpoint into an fs_context which can thereafter be used to reconfigure a
-> superblock (equivalent of the superblock side of -o remount).
->
-> This looks like:
->
-> 	int fd = fspick(AT_FDCWD, "/mnt",
-> 			FSPICK_CLOEXEC | FSPICK_NO_AUTOMOUNT);
-> 	fsconfig(fd, FSCONFIG_SET_FLAG, "intr", NULL, 0);
-> 	fsconfig(fd, FSCONFIG_SET_FLAG, "noac", NULL, 0);
-> 	fsconfig(fd, FSCONFIG_CMD_RECONFIGURE, NULL, NULL, 0);
->
-> At the point of fspick being called, the file descriptor referring to the
-> filesystem context is in exactly the same state as the one that was created
-> by fsopen() after fsmount() has been successfully called.
->
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> cc: linux-api@vger.kernel.org
-> ---
->
->   arch/x86/entry/syscalls/syscall_32.tbl |    1 +
->   arch/x86/entry/syscalls/syscall_64.tbl |    1 +
->   fs/fsopen.c                            |   54 ++++++++++++++++++++++++++++++++
->   include/linux/syscalls.h               |    1 +
->   include/uapi/linux/fs.h                |    5 +++
->   5 files changed, 62 insertions(+)
->
-> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-> index c78b68256f8a..d1eb6c815790 100644
-> --- a/arch/x86/entry/syscalls/syscall_32.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-> @@ -403,3 +403,4 @@
->   389	i386	fsopen			sys_fsopen			__ia32_sys_fsopen
->   390	i386	fsconfig		sys_fsconfig			__ia32_sys_fsconfig
->   391	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
-> +392	i386	fspick			sys_fspick			__ia32_sys_fspick
-> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-> index d44ead5d4368..d3ab703c02bb 100644
-> --- a/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -348,6 +348,7 @@
->   337	common	fsopen			__x64_sys_fsopen
->   338	common	fsconfig		__x64_sys_fsconfig
->   339	common	fsmount			__x64_sys_fsmount
-> +340	common	fspick			__x64_sys_fspick
->   
->   #
->   # x32-specific system call numbers start at 512 to avoid cache impact
-> diff --git a/fs/fsopen.c b/fs/fsopen.c
-> index 5955a6b65596..9ead9220e2cb 100644
-> --- a/fs/fsopen.c
-> +++ b/fs/fsopen.c
-> @@ -155,6 +155,60 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
->   	return ret;
->   }
->   
-> +/*
-> + * Pick a superblock into a context for reconfiguration.
-> + */
-> +SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags)
-> +{
-> +	struct fs_context *fc;
-> +	struct path target;
-> +	unsigned int lookup_flags;
-> +	int ret;
-> +
-> +	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
-> +		return -EPERM;
+On Thu, Oct 11, 2018 at 06:02:06PM -0700, Andy Lutomirski wrote:
+> On Thu, Oct 11, 2018 at 4:10 PM Paul Moore <paul@paul-moore.com> wrote:
+> >
+> > On October 11, 2018 9:40:06 AM Jann Horn <jannh@google.com> wrote:
+> > > On Thu, Oct 11, 2018 at 9:24 AM Paul Moore <paul@paul-moore.com> wrote:
+> > >> On October 10, 2018 11:34:11 AM Jann Horn <jannh@google.com> wrote:
+> > >>> On Wed, Oct 10, 2018 at 5:32 PM Paul Moore <paul@paul-moore.com> wrote:
+> > >>>> On Tue, Oct 9, 2018 at 9:36 AM Jann Horn <jannh@google.com> wrote:
+> > >>>>> +cc selinux people explicitly, since they probably have opinions on this
+> > >>>>
+> > >>>> I just spent about twenty minutes working my way through this thread,
+> > >>>> and digging through the containers archive trying to get a good
+> > >>>> understanding of what you guys are trying to do, and I'm not quite
+> > >>>> sure I understand it all.  However, from what I have seen, this
+> > >>>> approach looks very ptrace-y to me (I imagine to others as well based
+> > >>>> on the comments) and because of this I think ensuring the usual ptrace
+> > >>>> access controls are evaluated, including the ptrace LSM hooks, is the
+> > >>>> right thing to do.
+> > >>>
+> > >>> Basically the problem is that this new ptrace() API does something
+> > >>> that doesn't just influence the target task, but also every other task
+> > >>> that has the same seccomp filter. So the classic ptrace check doesn't
+> > >>> work here.
+> > >>
+> > >> Due to some rather unfortunate events today I'm suddenly without easy access to the kernel code, but would it be possible to run the LSM ptrace access control checks against all of the affected tasks?  If it is possible, how painful would it be?
+> > >
+> > > There are currently no backlinks from seccomp filters to the tasks
+> > > that use them; the only thing you have is a refcount. If the refcount
+> > > is 1, and the target task uses the filter directly (it is the last
+> > > installed one), you'd be able to infer that the ptrace target is the
+> > > only task with a reference to the filter, and you could just do the
+> > > direct check; but if the refcount is >1, you might end up having to
+> > > take some spinlock and then iterate over all tasks' filters with that
+> > > spinlock held, or something like that.
+> >
+> > That's what I was afraid of.
+> >
+> > Unfortunately, I stand by my previous statements that we still probably want a LSM access check similar to what we currently do for ptrace.
+> >
+> 
+> I would argue that once "LSM" enters this conversation, it just means
+> we're on the wrong track.  Let's try to make this work without ptrace
+> if possible :)  The whole seccomp() mechanism is very carefully
+> designed so that it's perfectly safe to install seccomp filters
+> without involving LSM or even involving credentials at all.
 
+In a last ditch effort to save the ptrace() interface: can we just
+only allow it when refcount_read(filter->usage) == 1?
 
-This seems to accept basically any mount.  Specifically: are you sure 
-it's OK to return a handle to a SB_NO_USER superblock?
-
-# strace -f -v -e trace=154 \
-     ./fspick 3</proc/self/ns/mnt 3 \
-     stat -f /dev/fd/3
-
-syscall_0x154(0x3, 0x4009a1, 0x8, ...) = 0x4
-   File: "/dev/fd/3"
-     ID: 0        Namelen: 255     Type: anon-inode FS
-Block size: 4096       Fundamental block size: 4096
-Blocks: Total: 0          Free: 0          Available: 0
-Inodes: Total: 0          Free: 0
-+++ exited with 0 +++
+Tycho
