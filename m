@@ -1,82 +1,87 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v3 3/3] namei: aggressively check for nd->root escape on
- ".." resolution
-Date: Sat, 13 Oct 2018 20:27:02 +1100
-Message-ID: <20181013092702.mf4gjnq2cfqhkvah@ryuk>
-References: <20181009070230.12884-1-cyphar@cyphar.com>
- <20181009070230.12884-4-cyphar@cyphar.com>
- <CAG48ez3Ae5b20g2UquekfBNaUw1tLt4nWy2pYm-LNRMbDVpHfA@mail.gmail.com>
- <20181009153728.2altaqxclntvyc7b@mikami>
- <20181013082210.GU32577@ZenIV.linux.org.uk>
- <20181013085326.gx6rvgqbbyuntfvv@ryuk>
- <20181013090432.GV32577@ZenIV.linux.org.uk>
+From: Catalin Marinas <catalin.marinas@arm.com>
+Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
+Date: Sat, 13 Oct 2018 10:34:11 +0100
+Message-ID: <20181013093411.o3id6yzkspsxr5jt@mbp>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20180724173957.GA22106@yury-thinkpad>
+ <20181010141017.GA2881@asgard.redhat.com>
+ <20181010153655.GA212880@arrakis.emea.arm.com>
+ <20181013021416.GE21972@asgard.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="tdpm54ekpnomwcqn"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20181013090432.GV32577@ZenIV.linux.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, jlayton@kernel.org, Bruce Fields <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, christian@brauner.io, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20181013021416.GE21972@asgard.redhat.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Eugene Syromiatnikov <esyr@redhat.com>
+Cc: linux-doc@vger.kernel.org, Szabolcs Nagy <szabolcs.nagy@arm.com>, Palmer Dabbelt <palmer@sifive.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yury Norov <ynorov@caviumnetworks.com>, Pavel Machek <pavel@ucw.cz>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, linux-arch@vger.kernel.org, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.com>, James Hogan <james.hogan@imgtec.com>, Chris Metcalf <cmetcalf@mellanox.com>, Arnd Bergmann <arnd@arndb.de>, Andrew Pinski <pinskia@gmail.com>, Lin Yongting <linyongting@huawei.com>A
 List-Id: linux-api@vger.kernel.org
 
+On Sat, Oct 13, 2018 at 04:14:16AM +0200, Eugene Syromiatnikov wrote:
+> On Wed, Oct 10, 2018 at 04:36:56PM +0100, Catalin Marinas wrote:
+> > On Wed, Oct 10, 2018 at 04:10:21PM +0200, Eugene Syromiatnikov wrote:
+> > > I have some questions regarding AArch64 ILP32 implementation for which I
+> > > failed to find an answer myself:
+> > >  * How ptrace() tracer is supposed to distinguish between ILP32 and LP64
+> > >    tracees? For MIPS N32 and x32 this is possible based on syscall
+> > >    number, but for AArch64 ILP32 I do not see such a sign. There's also
+> > >    ARM_ip is employed for signalling entering/exiting, I wonder whether
+> > >    it's possible to employ it also for signalling tracee's personality.
+> > 
+> > With the current implementation, I don't think you can distinguish. From
+> > the kernel perspective, the register set is the same. What is the
+> > use-case for this?
+> 
+> Err, a ptrace()-based tracer trying to trace a process, for example?
 
---tdpm54ekpnomwcqn
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I first thought it wouldn't matter for ptrace-based tracers since the
+syscall numbers are (mostly) the same. But the arguments layout in
+register is indeed different, so I see your point now about having to
+distinguish.
 
-On 2018-10-13, Al Viro <viro@ZenIV.linux.org.uk> wrote:
-> On Sat, Oct 13, 2018 at 07:53:26PM +1100, Aleksa Sarai wrote:
->=20
-> > I didn't know about path_is_under() -- I just checked and it appears to
-> > not take &rename_lock? From my understanding, in order to protect
-> > against the rename attack you need to take &rename_lock (or check
-> > against &rename_lock at least and retry if it changed).
-> >=20
-> > I could definitely use path_is_under() if you prefer, though I think
-> > that in this case we'd need to take &rename_lock (right?). Also is there
-> > a speed issue with taking the write-side of a seqlock when we are just
-> > reading -- is this more efficient than doing a retry like in __d_path?
->=20
-> ???
->=20
-> 1) it uses is_subdir(), which does deal with rename_lock
+> > We could add a new regset to expose the ILP32 state (NT_ARM_..., I can't
+> > think of a name now but probably not PER* as this implies PER_LINUX_...
+> > which is independent from TIF_32BIT_*).
+> 
+> So that would require an additional ptrace() call on each syscall stop,
+> is that correct?
 
-Oh -- complete brain-fart on my part. Sorry about that.
+The ILP32 state does not change at run-time, so it could only do a
+ptrace() call once and save the information. No need to re-read it on
+each syscall stop.
 
-> 2) what it does is taking mount_lock.lock.  I.e. the same
-> thing as the second retry in __d_path().  _If_ it shows
-> up in profiles, we can switch it to read_seqbegin_or_lock(),
-> but I'd like to see the profiling data first.
+We could set a high bit in the syscall number reported to the ptrace
+caller (though not changing the syscall ABI) but I haven't thought of
+other consequences. For example, can the ptrace caller change the
+syscall number?
 
-Sure, I'll switch it to use path_is_under().
+> > >  * What's the reasoning behind capping syscall arguments to 32 bit? x32
+> > >    and MIPS N32 do not have such a restriction (and do not need special
+> > >    wrappers for syscalls that pass 64-bit values as a result, except
+> > >    when they do,  as it is the case for preadv2 on x32); moreover, that
+> > >    would lead to insurmountable difficulties for AArch64 ILP32 tracers
+> > >    that try to trace LP64 tracees, as it would be impossible to pass
+> > >    64-bit addresses to process_vm_{read,write} or ptrace PEEK/POKE.
+> > 
+> > We've attempted in earlier versions to allow a mix of 32 and 64-bit
+> > register values from ILP32 but it got pretty complicated. The entry code
+> > would need to know which registers need zeroing of the top 32-bit
+> 
+> If kernel specifies 64-bit wide registers for syscalls, then it's the
+> caller's (libc's) responsibility to properly sign-extend arguments when
+> needed, and glibc, for example, already has proper type definitions that
+> aimed to handle this.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+We tried, see my other reply.
 
---tdpm54ekpnomwcqn
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAlvBumYACgkQnhiqJn3b
-jbT2oA/8Dm/EBSA4DrGPauqXWpfU9wnpoF4LIaqtaAsPIVRsmt149Pe/XLvjGhvG
-uTQR5R43kWVcZUbhDGNiTLLemWMHsClDsNyY08WE9SI7dGt1nwVmvJMxQU9RetW8
-lzQqdU2iuUL2CPAupyJqTAy5GZz6OoDVY3db3qsANzCPvmJbDDdTRJ4SMQnxvGZL
-iajDMWEwzt9SDDOiY/AAjmag+U/dY7WoO/K6MKi3J8y1+qYpgWD2gI7hJLzlfGlx
-+BZgXTu5+P77kyNNg6MhcINYD9HSfaAPooCQlAjyOdjqAlPuwa8roe/o4McUoH4r
-4SGI2tvMxUgJTl+xfL/06K+w4k8bmii8LlX2Bj59jeq/IUVj24cbW4MU8lFvwakV
-kvi9bY+o+GYOlR5v5LmS/FZ9Urycn/dN3qtXRL/fEuoPs5ZRW7ikDLELWEs1qM66
-r8IZHDE8wlGMwKP9HzNp40Abn1prfuBCU8jm2enRfm3JK/xxOasVaJwoB0LY/pfy
-AL6+8AK4jARdJvBsGTmpcGrPgGuswT/5Oo5SXp6MErpC11S7kZXVBSJ/E3SLSZvm
-np99T3DjQG+F2HyBUhrcTxcG3Gcs7sxs+xqXGVmephY5c0KqTsnv702k/ZiYCmKh
-Q6sd9EmSXoQUm225ZDIyaSf5nJpHEUiN11LzG0KgJw+N99ZA41U=
-=CD2O
------END PGP SIGNATURE-----
-
---tdpm54ekpnomwcqn--
+-- 
+Catalin
