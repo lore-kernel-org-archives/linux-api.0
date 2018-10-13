@@ -1,68 +1,37 @@
-From: Eugene Syromiatnikov <esyr@redhat.com>
-Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Sat, 13 Oct 2018 04:14:16 +0200
-Message-ID: <20181013021416.GE21972@asgard.redhat.com>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20180724173957.GA22106@yury-thinkpad>
- <20181010141017.GA2881@asgard.redhat.com>
- <20181010153655.GA212880@arrakis.emea.arm.com>
+From: Al Viro <viro@ZenIV.linux.org.uk>
+Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock
+ for reconfiguration [ver #12]
+Date: Sat, 13 Oct 2018 07:11:41 +0100
+Message-ID: <20181013061141.GR32577@ZenIV.linux.org.uk>
+References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
+ <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
+ <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181010153655.GA212880@arrakis.emea.arm.com>
+In-Reply-To: <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Yury Norov <ynorov@caviumnetworks.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.h>
+To: Alan Jenkins <alan.christopher.jenkins@gmail.com>
+Cc: David Howells <dhowells@redhat.com>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, ebiederm@xmission.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 10, 2018 at 04:36:56PM +0100, Catalin Marinas wrote:
-> On Wed, Oct 10, 2018 at 04:10:21PM +0200, Eugene Syromiatnikov wrote:
-> > I have some questions regarding AArch64 ILP32 implementation for which I
-> > failed to find an answer myself:
-> >  * How ptrace() tracer is supposed to distinguish between ILP32 and LP64
-> >    tracees? For MIPS N32 and x32 this is possible based on syscall
-> >    number, but for AArch64 ILP32 I do not see such a sign. There's also
-> >    ARM_ip is employed for signalling entering/exiting, I wonder whether
-> >    it's possible to employ it also for signalling tracee's personality.
+On Fri, Oct 12, 2018 at 03:49:50PM +0100, Alan Jenkins wrote:
+> > +SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags)
+> > +{
+> > +	struct fs_context *fc;
+> > +	struct path target;
+> > +	unsigned int lookup_flags;
+> > +	int ret;
+> > +
+> > +	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
+> > +		return -EPERM;
 > 
-> With the current implementation, I don't think you can distinguish. From
-> the kernel perspective, the register set is the same. What is the
-> use-case for this?
-
-Err, a ptrace()-based tracer trying to trace a process, for example?
-
-> We could add a new regset to expose the ILP32 state (NT_ARM_..., I can't
-> think of a name now but probably not PER* as this implies PER_LINUX_...
-> which is independent from TIF_32BIT_*).
-
-So that would require an additional ptrace() call on each syscall stop,
-is that correct?
-
-> >  * What's the reasoning behind capping syscall arguments to 32 bit? x32
-> >    and MIPS N32 do not have such a restriction (and do not need special
-> >    wrappers for syscalls that pass 64-bit values as a result, except
-> >    when they do,  as it is the case for preadv2 on x32); moreover, that
-> >    would lead to insurmountable difficulties for AArch64 ILP32 tracers
-> >    that try to trace LP64 tracees, as it would be impossible to pass
-> >    64-bit addresses to process_vm_{read,write} or ptrace PEEK/POKE.
 > 
-> We've attempted in earlier versions to allow a mix of 32 and 64-bit
-> register values from ILP32 but it got pretty complicated. The entry code
-> would need to know which registers need zeroing of the top 32-bit
+> This seems to accept basically any mount.  Specifically: are you sure it's
+> OK to return a handle to a SB_NO_USER superblock?
 
-If kernel specifies 64-bit wide registers for syscalls, then it's the
-caller's (libc's) responsibility to properly sign-extend arguments when
-needed, and glibc, for example, already has proper type definitions that
-aimed to handle this.
-
-> and the generic unistd.h wrapper hacks were not very nice.
-
-They are already implemented in glibc during x32 introduction period.
-
-> Some past discussions:
-> 
-> https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1211716.html
-> 
-> -- 
-> Catalin
+Umm...  As long as we don't try to do pathname resolution from its ->s_root,
+shouldn't be a problem and I don't see anything that would do that.  I might've
+missed something, but...
