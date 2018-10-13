@@ -1,112 +1,49 @@
 From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Sat, 13 Oct 2018 09:54:22 -0700
-Message-ID: <CALCETrW0sFoOknkLGFSiobQLg9O4qzD9f-9ws8uk69J1X866cg@mail.gmail.com>
+Date: Sat, 13 Oct 2018 12:36:21 -0700
+Message-ID: <CALCETrVuabkb5ZQOSgQQTEq8CrS602NBpAkE2=4n982r1f5reQ@mail.gmail.com>
 References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20180724173957.GA22106@yury-thinkpad> <20181010141017.GA2881@asgard.redhat.com>
- <20181010153655.GA212880@arrakis.emea.arm.com> <20181013021416.GE21972@asgard.redhat.com>
- <20181013093411.o3id6yzkspsxr5jt@mbp>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181013093411.o3id6yzkspsxr5jt@mbp>
+In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Eugene Syromiatnikov <esyr@redhat.com>, linux-doc@vger.kernel.org, szabolcs.nagy@arm.com, palmer@sifive.com, Heiko Carstens <heiko.carstens@de.ibm.com>, ynorov@caviumnetworks.com, Pavel Machek <pavel@ucw.cz>, philipp.tomsich@theobroma-systems.com, "Joseph S. Myers" <joseph@codesourcery.com>, linux-arch <linux-arch@vger.kernel.org>, sellcey@caviumnetworks.com, Prasun.Kapoor@caviumnetworks.com, schwab@suse.de, Alexander Graf <agraf@suse.de>, bamv2005@gmail.com, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, manuel.montezelo@gmail.com, James Hogan <james.hogan@imgtec.com>, Chris Metcalf <cmetcalf@mellanox.com>, Arnd Bergmann <arnd@arndb.de>, Andrew Pinski <pinskia@gmail.com>, linyongting@huawei.com
+To: ynorov@caviumnetworks.com
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel <linux-arm-kernel@lists.infradead.org>, LKML <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, klimov.linux@gmail.com, schwab@suse.de, Andrew Pinski <pinskia@gmail.com>, bamv2005@gmail.com, Chris Metcalf <cmetcalf@mellanox.com>, christoph.muellner@theobroma-systems.com, Dave Martin <Dave.Martin@arm.com>, "David S. Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>Ja
 List-Id: linux-api@vger.kernel.org
 
-> On Oct 13, 2018, at 2:34 AM, Catalin Marinas <catalin.marinas@arm.com> wrote:
+On Wed, May 16, 2018 at 1:19 AM Yury Norov <ynorov@caviumnetworks.com> wrote:
 >
->> On Sat, Oct 13, 2018 at 04:14:16AM +0200, Eugene Syromiatnikov wrote:
->>> On Wed, Oct 10, 2018 at 04:36:56PM +0100, Catalin Marinas wrote:
->>>> On Wed, Oct 10, 2018 at 04:10:21PM +0200, Eugene Syromiatnikov wrote:
->>>> I have some questions regarding AArch64 ILP32 implementation for which I
->>>> failed to find an answer myself:
->>>> * How ptrace() tracer is supposed to distinguish between ILP32 and LP64
->>>>   tracees? For MIPS N32 and x32 this is possible based on syscall
->>>>   number, but for AArch64 ILP32 I do not see such a sign. There's also
->>>>   ARM_ip is employed for signalling entering/exiting, I wonder whether
->>>>   it's possible to employ it also for signalling tracee's personality.
->>>
->>> With the current implementation, I don't think you can distinguish. From
->>> the kernel perspective, the register set is the same. What is the
->>> use-case for this?
->>
->> Err, a ptrace()-based tracer trying to trace a process, for example?
+> This series enables AARCH64 with ILP32 mode.
 >
-> I first thought it wouldn't matter for ptrace-based tracers since the
-> syscall numbers are (mostly) the same. But the arguments layout in
-> register is indeed different, so I see your point now about having to
-> distinguish.
->
->>> We could add a new regset to expose the ILP32 state (NT_ARM_..., I can't
->>> think of a name now but probably not PER* as this implies PER_LINUX_...
->>> which is independent from TIF_32BIT_*).
->>
->> So that would require an additional ptrace() call on each syscall stop,
->> is that correct?
->
-> The ILP32 state does not change at run-time, so it could only do a
-> ptrace() call once and save the information. No need to re-read it on
-> each syscall stop.
->
+> As supporting work, it introduces ARCH_32BIT_OFF_T configuration
+> option that is enabled for existing 32-bit architectures but disabled
+> for new arches (so 64-bit off_t userspace type is used by new userspace).
+> Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
 
-Please solve this in an arch independent way.  This situation is
-basically unusably broken on x86 right now.  Please solve it for real,
-by, for example, adding a new ptrace operation that returns something
-like this:
+A few thoughts:
 
-enum ptrace_syscall_state {
-  NO_SYSCALL,
-  SYSCALL_ENTRY,
-  SYSCALL_EXIT,
-  /* other values may be defined in the future. */
-};
+1. I've never been able to shake the feeling that x32 should not need
+kernel support at all.  As far as I can tell, the kernel support is an
+enormous amount of code and complexity to deal with exactly two
+issues.  First, ILP32 only has 32-bit pointers, so there needs to be a
+way to tell the kernel to only use the lower 4 GB of user address
+space.  That part is easy.  Second, ILP32 user code is highly unlikely
+to end up with the same struct layout as ILP64 code.  The latter seems
+like it should be solved entirely in userspace by adding a way to
+annotate a structure as being a kernel ABI structure and getting the
+toolchain to lay it out as if it were ILP64 even though the target is
+ILP32.
 
-struct ptrace_syscall_info {
-  enum ptrace_syscall_state state;
-  unsigned long arch;
-  union {
-    struct {
-      unsigned long nr;
-      unsigned long args[6];
-   } entry;
-   struct {
-      unsigned long ret;
-   } exit;
-};
+2. I think you should make a conscious decision as to whether the
+ILP32-ness of a syscall is a property of the task or of the syscall.
+On x86, x32-ness is a property of the syscall, but historically it
+also got rather entangled with the state of the task, and the result
+was a mess.  It looks like you're making it be a property of the task,
+which is fine, but you're making it impossible for very clever ILP32
+libraries to include little ILP64 stubs that do fancy things with full
+64-bit syscalls.
 
-where arch is an AUDIT_ARCH_XYZ constant.
-
-On x86, it's currently essentially impossible for tools like strace to
-correctly decode syscalls.
-
-> We could set a high bit in the syscall number reported to the ptrace
-> caller (though not changing the syscall ABI) but I haven't thought of
-> other consequences. For example, can the ptrace caller change the
-> syscall number?
-
-Yes it can.
-
->
->>>> * What's the reasoning behind capping syscall arguments to 32 bit? x32
->>>>   and MIPS N32 do not have such a restriction (and do not need special
->>>>   wrappers for syscalls that pass 64-bit values as a result, except
->>>>   when they do,  as it is the case for preadv2 on x32); moreover, that
->>>>   would lead to insurmountable difficulties for AArch64 ILP32 tracers
->>>>   that try to trace LP64 tracees, as it would be impossible to pass
->>>>   64-bit addresses to process_vm_{read,write} or ptrace PEEK/POKE.
->>>
->>> We've attempted in earlier versions to allow a mix of 32 and 64-bit
->>> register values from ILP32 but it got pretty complicated. The entry code
->>> would need to know which registers need zeroing of the top 32-bit
->>
->> If kernel specifies 64-bit wide registers for syscalls, then it's the
->> caller's (libc's) responsibility to properly sign-extend arguments when
->> needed, and glibc, for example, already has proper type definitions that
->> aimed to handle this.
->
-> We tried, see my other reply.
->
-> --
-> Catalin
+3. Make very certain that you aren't exploitable by malicious
+processes that set the high bits in ILP32 syscall args.  x86 compat
+has issues like that in the past.
