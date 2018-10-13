@@ -1,49 +1,64 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Sat, 13 Oct 2018 12:36:21 -0700
-Message-ID: <CALCETrVuabkb5ZQOSgQQTEq8CrS602NBpAkE2=4n982r1f5reQ@mail.gmail.com>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock
+ for reconfiguration [ver #12]
+Date: Sat, 13 Oct 2018 16:04:09 -0700
+Message-ID: <CALCETrWvEJHGWNXvOBcaFbX16pyBEqmNk4V+dBxX00OAS4OMng@mail.gmail.com>
+References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
+ <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
+ <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com> <20181013061141.GR32577@ZenIV.linux.org.uk>
+ <68a2107f-bf70-055b-86cf-1ba2ba9422bf@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+In-Reply-To: <68a2107f-bf70-055b-86cf-1ba2ba9422bf@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: ynorov@caviumnetworks.com
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel <linux-arm-kernel@lists.infradead.org>, LKML <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, klimov.linux@gmail.com, schwab@suse.de, Andrew Pinski <pinskia@gmail.com>, bamv2005@gmail.com, Chris Metcalf <cmetcalf@mellanox.com>, christoph.muellner@theobroma-systems.com, Dave Martin <Dave.Martin@arm.com>, "David S. Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <james.hogan@imgtec.com>Ja
+To: alan.christopher.jenkins@gmail.com
+Cc: Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Miklos Szeredi <mszeredi@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 16, 2018 at 1:19 AM Yury Norov <ynorov@caviumnetworks.com> wrote:
+On Sat, Oct 13, 2018 at 2:45 AM Alan Jenkins
+<alan.christopher.jenkins@gmail.com> wrote:
 >
-> This series enables AARCH64 with ILP32 mode.
+> On 13/10/2018 07:11, Al Viro wrote:
+> > On Fri, Oct 12, 2018 at 03:49:50PM +0100, Alan Jenkins wrote:
+> >>> +SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags)
+> >>> +{
+> >>> +   struct fs_context *fc;
+> >>> +   struct path target;
+> >>> +   unsigned int lookup_flags;
+> >>> +   int ret;
+> >>> +
+> >>> +   if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
+> >>> +           return -EPERM;
+> >>
+> >> This seems to accept basically any mount.  Specifically: are you sure it's
+> >> OK to return a handle to a SB_NO_USER superblock?
+> > Umm...  As long as we don't try to do pathname resolution from its ->s_root,
+> > shouldn't be a problem and I don't see anything that would do that.  I might've
+> > missed something, but...
 >
-> As supporting work, it introduces ARCH_32BIT_OFF_T configuration
-> option that is enabled for existing 32-bit architectures but disabled
-> for new arches (so 64-bit off_t userspace type is used by new userspace).
-> Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
+> Sorry, I guess SB_NOUSER was the wrong word.  I was trying find if
+> anything stopped things like
+>
+> int memfd = memfd_create("foo", 0);
+> int fsfd = fspick(memfd, "", FSPICK_EMPTY_PATH);
+>
+> fsconfig(fsfd, FSCONFIG_SET_FLAG, "ro", NULL, 0);
+> fsconfig(fsfd, FSCONFIG_SET_STRING, "size", "100M", 0);
+> fsconfig(fsfd, FSCONFIG_CMD_RECONFIGURE, NULL, NULL, 0);
+>
+> So far I'm getting -EBUSY if I try to apply the "ro", -EINVAL if I try
+> to apply the "size=100M".  But if I don't apply either, then
+> FSCONFIG_CMD_RECONFIGURE succeeds.
+>
+> It seems worrying that it might let me set options on shm_mnt. Or at
+> least letting me get as far as the -EBUSY check for the "ro" superblock
+> flag.
+>
+> I'm not sure why I'm getting the -EINVAL setting the "size" option.  But
+> it would be much more reassuring if I was getting -EPERM :-).
+>
 
-A few thoughts:
-
-1. I've never been able to shake the feeling that x32 should not need
-kernel support at all.  As far as I can tell, the kernel support is an
-enormous amount of code and complexity to deal with exactly two
-issues.  First, ILP32 only has 32-bit pointers, so there needs to be a
-way to tell the kernel to only use the lower 4 GB of user address
-space.  That part is easy.  Second, ILP32 user code is highly unlikely
-to end up with the same struct layout as ILP64 code.  The latter seems
-like it should be solved entirely in userspace by adding a way to
-annotate a structure as being a kernel ABI structure and getting the
-toolchain to lay it out as if it were ILP64 even though the target is
-ILP32.
-
-2. I think you should make a conscious decision as to whether the
-ILP32-ness of a syscall is a property of the task or of the syscall.
-On x86, x32-ness is a property of the syscall, but historically it
-also got rather entangled with the state of the task, and the result
-was a mess.  It looks like you're making it be a property of the task,
-which is fine, but you're making it impossible for very clever ILP32
-libraries to include little ILP64 stubs that do fancy things with full
-64-bit syscalls.
-
-3. Make very certain that you aren't exploitable by malicious
-processes that set the high bits in ILP32 syscall args.  x86 compat
-has issues like that in the past.
+I would argue that the filesystem associated with a memfd, and even
+the fact that there *is* a filesystem, is none of user code's
+business.  So that fspick() call should return -EINVAL or similar.
