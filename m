@@ -1,75 +1,128 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Mon, 15 Oct 2018 17:03:25 +0200
-Message-ID: <20181015150325.GN18839@dhcp22.suse.cz>
-References: <20180926060624.GA18685@dhcp22.suse.cz>
- <20181002112851.GP18290@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com>
- <20181003073640.GF18290@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810031547150.202532@chino.kir.corp.google.com>
- <20181004055842.GA22173@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810040209130.113459@chino.kir.corp.google.com>
- <20181004094637.GG22173@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810041130380.12951@chino.kir.corp.google.com>
- <20181009083326.GG8528@dhcp22.suse.cz>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v5 02/27] x86/fpu/xstate: Change names to separate XSAVES
+ system and user states
+Date: Mon, 15 Oct 2018 19:03:20 +0200
+Message-ID: <20181015170320.GF11434@zn.tnic>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-3-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181009083326.GG8528@dhcp22.suse.cz>
+In-Reply-To: <20181011151523.27101-3-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Tue 09-10-18 10:33:26, Michal Hocko wrote:
-> On Thu 04-10-18 11:34:11, David Rientjes wrote:
-> > On Thu, 4 Oct 2018, Michal Hocko wrote:
-> > 
-> > > > And prior to the offending commit, there were three ways to control thp 
-> > > > but two ways to determine if a mapping was eligible for thp based on the 
-> > > > implementation detail of one of those ways.
-> > > 
-> > > Yes, it is really unfortunate that we have ever allowed to leak such an
-> > > internal stuff like VMA flags to userspace.
-> > > 
-> > 
-> > Right, I don't like userspace dependencies on VmFlags in smaps myself, but 
-> > it's the only way we have available that shows whether a single mapping is 
-> > eligible to be backed by thp :/
+On Thu, Oct 11, 2018 at 08:14:58AM -0700, Yu-cheng Yu wrote:
+> Control Flow Enforcement (CET) MSRs are XSAVES system/supervisor
+> states.  To support CET, we introduce XSAVES system states first.
 > 
-> Which is not the case due to reasons mentioned earlier. It only speaks
-> about madvise status on the VMA.
+> XSAVES is a "supervisor" instruction and, comparing to XSAVE, saves
+> additional "supervisor" states that can be modified only from CPL 0.
+> However, these states are per-task and not kernel's own.  Rename
+> "supervisor" states to "system" states to clearly separate them from
+> "user" states.
 > 
-> > > > If there are three ways to 
-> > > > control thp, userspace is still in the dark wrt which takes precedence 
-> > > > over the other: we have PR_SET_THP_DISABLE but globally sysfs has it set 
-> > > > to "always", or we have MADV_HUGEPAGE set per smaps but PR_SET_THP_DISABLE 
-> > > > shown in /proc/pid/status, etc.
-> > > > 
-> > > > Which one is the ultimate authority?
-> > > 
-> > > Isn't our documentation good enough? If not then we should document it
-> > > properly.
-> > > 
-> > 
-> > No, because the offending commit actually changed the precedence itself: 
-> > PR_SET_THP_DISABLE used to be honored for future mappings and the commit 
-> > changed that for all current mappings.
-> 
-> Which is the actual and the full point of the fix as described in the
-> changelog. The original implementation was poor and inconsistent.
-> 
-> > So as a result of the commit 
-> > itself we would have had to change the documentation and userspace can't 
-> > be expected to keep up with yet a fourth variable: kernel version.  It 
-> > really needs to be simpler, just a per-mapping specifier.
-> 
-> As I've said, if you really need a per-vma granularity then make it a
-> dedicated line in the output with a clear semantic. Do not make VMA
-> flags even more confusing.
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/asm/fpu/internal.h |  4 +-
+>  arch/x86/include/asm/fpu/xstate.h   | 20 +++----
+>  arch/x86/kernel/fpu/core.c          |  4 +-
+>  arch/x86/kernel/fpu/init.c          |  2 +-
+>  arch/x86/kernel/fpu/signal.c        |  6 +--
+>  arch/x86/kernel/fpu/xstate.c        | 82 ++++++++++++++---------------
+>  6 files changed, 57 insertions(+), 61 deletions(-)
 
-Can we settle with something please?
+...
+
+> diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+> index 87a57b7642d3..e7cbaed12ef1 100644
+> --- a/arch/x86/kernel/fpu/xstate.c
+> +++ b/arch/x86/kernel/fpu/xstate.c
+> @@ -51,13 +51,14 @@ static short xsave_cpuid_features[] __initdata = {
+>  };
+>  
+>  /*
+> - * Mask of xstate features supported by the CPU and the kernel:
+> + * Mask of supported 'user' xstate features derived from boot_cpu_has() and
+> + * SUPPORTED_XFEATURES_MASK.
+
+<--- This comment here looks like a good place to put some blurb about
+user and system states, what they are, what the distinction is and so
+on.
+
+>   */
+> -u64 xfeatures_mask __read_mostly;
+> +u64 xfeatures_mask_user __read_mostly;
+>  
+>  static unsigned int xstate_offsets[XFEATURE_MAX] = { [ 0 ... XFEATURE_MAX - 1] = -1};
+>  static unsigned int xstate_sizes[XFEATURE_MAX]   = { [ 0 ... XFEATURE_MAX - 1] = -1};
+> -static unsigned int xstate_comp_offsets[sizeof(xfeatures_mask)*8];
+> +static unsigned int xstate_comp_offsets[sizeof(xfeatures_mask_user)*8];
+>  
+>  /*
+>   * The XSAVE area of kernel can be in standard or compacted format;
+> @@ -82,7 +83,7 @@ void fpu__xstate_clear_all_cpu_caps(void)
+>   */
+>  int cpu_has_xfeatures(u64 xfeatures_needed, const char **feature_name)
+>  {
+> -	u64 xfeatures_missing = xfeatures_needed & ~xfeatures_mask;
+> +	u64 xfeatures_missing = xfeatures_needed & ~xfeatures_mask_user;
+>  
+>  	if (unlikely(feature_name)) {
+>  		long xfeature_idx, max_idx;
+> @@ -113,14 +114,11 @@ int cpu_has_xfeatures(u64 xfeatures_needed, const char **feature_name)
+>  }
+>  EXPORT_SYMBOL_GPL(cpu_has_xfeatures);
+>  
+> -static int xfeature_is_supervisor(int xfeature_nr)
+> +static int xfeature_is_system(int xfeature_nr)
+>  {
+>  	/*
+> -	 * We currently do not support supervisor states, but if
+> -	 * we did, we could find out like this.
+> -	 *
+>  	 * SDM says: If state component 'i' is a user state component,
+> -	 * ECX[0] return 0; if state component i is a supervisor
+> +	 * ECX[0] return 0; if state component i is a system
+
+		  is 0
+
+>  	 * state component, ECX[0] returns 1.
+
+				   is 1.
+
+>  	 */
+>  	u32 eax, ebx, ecx, edx;
+
+...
+
+> @@ -242,7 +238,7 @@ void fpu__init_cpu_xstate(void)
+>   */
+>  static int xfeature_enabled(enum xfeature xfeature)
+>  {
+> -	return !!(xfeatures_mask & (1UL << xfeature));
+> +	return !!(xfeatures_mask_user & BIT_ULL(xfeature));
+>  }
+>  
+>  /*
+> @@ -272,7 +268,7 @@ static void __init setup_xstate_features(void)
+>  		cpuid_count(XSTATE_CPUID, i, &eax, &ebx, &ecx, &edx);
+>  
+>  		/*
+> -		 * If an xfeature is supervisor state, the offset
+> +		 * If an xfeature is system state, the offset
+
+				is a system state, ...
+
+>  		 * in EBX is invalid. We leave it to -1.
+>  		 */
+>  		if (xfeature_is_user(i))
+
 -- 
-Michal Hocko
-SUSE Labs
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
