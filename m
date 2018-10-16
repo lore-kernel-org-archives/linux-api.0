@@ -1,403 +1,344 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: Re: [PATCH v6 1/1] ns: add binfmt_misc to the user namespace
-Date: Tue, 16 Oct 2018 09:22:46 -0700
-Message-ID: <20181016162245.GA7697@gmail.com>
-References: <20181010161430.11633-1-laurent@vivier.eu>
- <20181010161430.11633-2-laurent@vivier.eu>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v4 21/27] x86/cet/shstk: ELF header parsing of
+ Shadow Stack
+Date: Tue, 16 Oct 2018 10:23:43 -0700
+Message-ID: <124c1c2805286c70a9b2cc8e4b0abad7ef997ed4.camel@intel.com>
+References: <20180921150351.20898-1-yu-cheng.yu@intel.com>
+         <20180921150351.20898-22-yu-cheng.yu@intel.com>
+         <CAGXu5jKO5Ot5VAJBMHudgx40g4N2tqhLKHeCdS7rkFj1bPaHig@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181010161430.11633-2-laurent@vivier.eu>
+In-Reply-To: <CAGXu5jKO5Ot5VAJBMHudgx40g4N2tqhLKHeCdS7rkFj1bPaHig@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: linux-kernel@vger.kernel.org, Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, Eric Biederman <ebiederm@xmission.com>, containers@lists.linux-foundation.org, Dmitry Safonov <dima@arista.com>
+To: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>
+Cc: X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 10, 2018 at 06:14:30PM +0200, Laurent Vivier wrote:
-> This patch allows to have a different binfmt_misc configuration
-> for each new user namespace. By default, the binfmt_misc configuration
-> is the one of the previous level, but if the binfmt_misc filesystem is
-> mounted in the new namespace a new empty binfmt instance is created and
-> used in this namespace.
-> 
-> For instance, using "unshare" we can start a chroot of another
-> architecture and configure the binfmt_misc interpreter without being root
-> to run the binaries in this chroot.
-> 
-> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+On Mon, 2018-10-15 at 16:40 -0700, Kees Cook wrote:
+> On Fri, Sep 21, 2018 at 8:03 AM, Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > Look in .note.gnu.property of an ELF file and check if Shadow Stack needs
+> > to be enabled for the task.
 
-Acked-by: Andrei Vagin <avagin@gmail.com>
+[...]
 
-Thanks,
-Andrei
+> > +/*
+> > + * The .note.gnu.property layout:
+> > + *
+> > + *     struct elf_note {
+> > + *             u32 n_namesz; --> sizeof(n_name[]); always (4)
+> > + *             u32 n_ndescsz;--> sizeof(property[])
+> > + *             u32 n_type;   --> always NT_GNU_PROPERTY_TYPE_0
+> > + *     };
+> > + *     char n_name[4]; --> always 'GNU\0'
+> > + *
+> > + *     struct {
+> > + *             struct property_x86 {
+> > + *                     u32 pr_type;
+> > + *                     u32 pr_datasz;
+> > + *             };
+> > + *             u8 pr_data[pr_datasz];
+> > + *     }[];
+> > + */
+> 
+> Does NT_GNU_PROPERTY_TYPE_0 only ever contain property_x86 bytes? (I
+> assume not, since there is a pr_type?)
 
-> ---
->  fs/binfmt_misc.c               | 111 ++++++++++++++++++++++++---------
->  include/linux/user_namespace.h |  15 +++++
->  kernel/user.c                  |  14 +++++
->  kernel/user_namespace.c        |   3 +
->  4 files changed, 115 insertions(+), 28 deletions(-)
+There are other property types, but we only look for NT_GNU_PROPERTY_TYPE_0.
+
+> > +
+> > +#define BUF_SIZE (PAGE_SIZE / 4)
+> > +
+> > +struct property_x86 {
+> > +       u32 pr_type;
+> > +       u32 pr_datasz;
+> > +};
+> > +
+> > +typedef bool (test_fn)(void *buf, u32 *arg);
+> > +typedef void *(next_fn)(void *buf, u32 *arg);
+> > +
+> > +static inline bool test_note_type_0(void *buf, u32 *arg)
+> > +{
+> > +       struct elf_note *n = buf;
+> > +
+> > +       return ((n->n_namesz == 4) && (memcmp(n + 1, "GNU", 4) == 0) &&
+> > +               (n->n_type == NT_GNU_PROPERTY_TYPE_0));
 > 
-> diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-> index aa4a7a23ff99..df9dc3248b7b 100644
-> --- a/fs/binfmt_misc.c
-> +++ b/fs/binfmt_misc.c
-> @@ -38,9 +38,6 @@ enum {
->  	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
->  };
->  
-> -static LIST_HEAD(entries);
-> -static int enabled = 1;
-> -
->  enum {Enabled, Magic};
->  #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
->  #define MISC_FMT_OPEN_BINARY (1 << 30)
-> @@ -60,10 +57,7 @@ typedef struct {
->  	struct file *interp_file;
->  } Node;
->  
-> -static DEFINE_RWLOCK(entries_lock);
->  static struct file_system_type bm_fs_type;
-> -static struct vfsmount *bm_mnt;
-> -static int entry_count;
->  
->  /*
->   * Max length of the register string.  Determined by:
-> @@ -80,18 +74,37 @@ static int entry_count;
->   */
->  #define MAX_REGISTER_LENGTH 1920
->  
-> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
-> +{
-> +	struct binfmt_namespace *b_ns;
-> +
-> +	while (ns) {
-> +		b_ns = READ_ONCE(ns->binfmt_ns);
-> +		if (b_ns)
-> +			return b_ns;
-> +		ns = ns->parent;
-> +	}
-> +	/* as the first user namespace is initialized with
-> +	 * &init_binfmt_ns we should never come here
-> +	 * but we try to stay safe by logging a warning
-> +	 * and returning a sane value
-> +	 */
-> +	WARN_ON_ONCE(1);
-> +	return &init_binfmt_ns;
-> +}
-> +
->  /*
->   * Check if we support the binfmt
->   * if we do, return the node, else NULL
->   * locking is done in load_misc_binary
->   */
-> -static Node *check_file(struct linux_binprm *bprm)
-> +static Node *check_file(struct binfmt_namespace *ns, struct linux_binprm *bprm)
->  {
->  	char *p = strrchr(bprm->interp, '.');
->  	struct list_head *l;
->  
->  	/* Walk all the registered handlers. */
-> -	list_for_each(l, &entries) {
-> +	list_for_each(l, &ns->entries) {
->  		Node *e = list_entry(l, Node, list);
->  		char *s;
->  		int j;
-> @@ -133,17 +146,18 @@ static int load_misc_binary(struct linux_binprm *bprm)
->  	struct file *interp_file = NULL;
->  	int retval;
->  	int fd_binary = -1;
-> +	struct binfmt_namespace *ns = binfmt_ns(current_user_ns());
->  
->  	retval = -ENOEXEC;
-> -	if (!enabled)
-> +	if (!ns->enabled)
->  		return retval;
->  
->  	/* to keep locking time low, we copy the interpreter string */
-> -	read_lock(&entries_lock);
-> -	fmt = check_file(bprm);
-> +	read_lock(&ns->entries_lock);
-> +	fmt = check_file(ns, bprm);
->  	if (fmt)
->  		dget(fmt->dentry);
-> -	read_unlock(&entries_lock);
-> +	read_unlock(&ns->entries_lock);
->  	if (!fmt)
->  		return retval;
->  
-> @@ -609,19 +623,19 @@ static void bm_evict_inode(struct inode *inode)
->  	kfree(e);
->  }
->  
-> -static void kill_node(Node *e)
-> +static void kill_node(struct binfmt_namespace *ns, Node *e)
->  {
->  	struct dentry *dentry;
->  
-> -	write_lock(&entries_lock);
-> +	write_lock(&ns->entries_lock);
->  	list_del_init(&e->list);
-> -	write_unlock(&entries_lock);
-> +	write_unlock(&ns->entries_lock);
->  
->  	dentry = e->dentry;
->  	drop_nlink(d_inode(dentry));
->  	d_drop(dentry);
->  	dput(dentry);
-> -	simple_release_fs(&bm_mnt, &entry_count);
-> +	simple_release_fs(&ns->bm_mnt, &ns->entry_count);
->  }
->  
->  /* /<entry> */
-> @@ -651,6 +665,9 @@ static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
->  	struct dentry *root;
->  	Node *e = file_inode(file)->i_private;
->  	int res = parse_command(buffer, count);
-> +	struct binfmt_namespace *ns;
-> +
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
->  
->  	switch (res) {
->  	case 1:
-> @@ -667,7 +684,7 @@ static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
->  		inode_lock(d_inode(root));
->  
->  		if (!list_empty(&e->list))
-> -			kill_node(e);
-> +			kill_node(ns, e);
->  
->  		inode_unlock(d_inode(root));
->  		break;
-> @@ -693,6 +710,7 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	struct inode *inode;
->  	struct super_block *sb = file_inode(file)->i_sb;
->  	struct dentry *root = sb->s_root, *dentry;
-> +	struct binfmt_namespace *ns;
->  	int err = 0;
->  
->  	e = create_entry(buffer, count);
-> @@ -716,7 +734,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	if (!inode)
->  		goto out2;
->  
-> -	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
-> +	err = simple_pin_fs(&bm_fs_type, &ns->bm_mnt,
-> +			    &ns->entry_count);
->  	if (err) {
->  		iput(inode);
->  		inode = NULL;
-> @@ -725,12 +745,16 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  
->  	if (e->flags & MISC_FMT_OPEN_FILE) {
->  		struct file *f;
-> +		const struct cred *old_cred;
->  
-> +		old_cred = override_creds(file->f_cred);
->  		f = open_exec(e->interpreter);
-> +		revert_creds(old_cred);
->  		if (IS_ERR(f)) {
->  			err = PTR_ERR(f);
->  			pr_notice("register: failed to install interpreter file %s\n", e->interpreter);
-> -			simple_release_fs(&bm_mnt, &entry_count);
-> +			simple_release_fs(&ns->bm_mnt,
-> +					  &ns->entry_count);
->  			iput(inode);
->  			inode = NULL;
->  			goto out2;
-> @@ -743,9 +767,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	inode->i_fop = &bm_entry_operations;
->  
->  	d_instantiate(dentry, inode);
-> -	write_lock(&entries_lock);
-> -	list_add(&e->list, &entries);
-> -	write_unlock(&entries_lock);
-> +	write_lock(&ns->entries_lock);
-> +	list_add(&e->list, &ns->entries);
-> +	write_unlock(&ns->entries_lock);
->  
->  	err = 0;
->  out2:
-> @@ -770,7 +794,9 @@ static const struct file_operations bm_register_operations = {
->  static ssize_t
->  bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
->  {
-> -	char *s = enabled ? "enabled\n" : "disabled\n";
-> +	struct binfmt_namespace *ns =
-> +				binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
-> +	char *s = ns->enabled ? "enabled\n" : "disabled\n";
->  
->  	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
->  }
-> @@ -778,25 +804,28 @@ bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
->  static ssize_t bm_status_write(struct file *file, const char __user *buffer,
->  		size_t count, loff_t *ppos)
->  {
-> +	struct binfmt_namespace *ns;
->  	int res = parse_command(buffer, count);
->  	struct dentry *root;
->  
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
->  	switch (res) {
->  	case 1:
->  		/* Disable all handlers. */
-> -		enabled = 0;
-> +		ns->enabled = 0;
->  		break;
->  	case 2:
->  		/* Enable all handlers. */
-> -		enabled = 1;
-> +		ns->enabled = 1;
->  		break;
->  	case 3:
->  		/* Delete all handlers. */
->  		root = file_inode(file)->i_sb->s_root;
->  		inode_lock(d_inode(root));
->  
-> -		while (!list_empty(&entries))
-> -			kill_node(list_first_entry(&entries, Node, list));
-> +		while (!list_empty(&ns->entries))
-> +			kill_node(ns, list_first_entry(&ns->entries,
-> +						       Node, list));
->  
->  		inode_unlock(d_inode(root));
->  		break;
-> @@ -823,12 +852,34 @@ static const struct super_operations s_ops = {
->  static int bm_fill_super(struct super_block *sb, void *data, int silent)
->  {
->  	int err;
-> +	struct user_namespace *ns = sb->s_user_ns;
->  	static const struct tree_descr bm_files[] = {
->  		[2] = {"status", &bm_status_operations, S_IWUSR|S_IRUGO},
->  		[3] = {"register", &bm_register_operations, S_IWUSR},
->  		/* last one */ {""}
->  	};
->  
-> +	/* create a new binfmt namespace
-> +	 * if we are not in the first user namespace
-> +	 * but the binfmt namespace is the first one
-> +	 */
-> +	if (READ_ONCE(ns->binfmt_ns) == NULL) {
-> +		struct binfmt_namespace *new_ns;
-> +
-> +		new_ns = kmalloc(sizeof(struct binfmt_namespace),
-> +				 GFP_KERNEL);
-> +		if (new_ns == NULL)
-> +			return -ENOMEM;
-> +		INIT_LIST_HEAD(&new_ns->entries);
-> +		new_ns->enabled = 1;
-> +		rwlock_init(&new_ns->entries_lock);
-> +		new_ns->bm_mnt = NULL;
-> +		new_ns->entry_count = 0;
-> +		/* ensure new_ns is completely initialized before sharing it */
-> +		smp_wmb();
-> +		WRITE_ONCE(ns->binfmt_ns, new_ns);
-> +	}
-> +
->  	err = simple_fill_super(sb, BINFMTFS_MAGIC, bm_files);
->  	if (!err)
->  		sb->s_op = &s_ops;
-> @@ -838,7 +889,10 @@ static int bm_fill_super(struct super_block *sb, void *data, int silent)
->  static struct dentry *bm_mount(struct file_system_type *fs_type,
->  	int flags, const char *dev_name, void *data)
->  {
-> -	return mount_single(fs_type, flags, data, bm_fill_super);
-> +	struct user_namespace *ns = current_user_ns();
-> +
-> +	return mount_ns(fs_type, flags, data, ns, ns,
-> +			bm_fill_super);
->  }
->  
->  static struct linux_binfmt misc_format = {
-> @@ -849,6 +903,7 @@ static struct linux_binfmt misc_format = {
->  static struct file_system_type bm_fs_type = {
->  	.owner		= THIS_MODULE,
->  	.name		= "binfmt_misc",
-> +	.fs_flags	= FS_USERNS_MOUNT,
->  	.mount		= bm_mount,
->  	.kill_sb	= kill_litter_super,
->  };
-> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-> index d6b74b91096b..319141da5315 100644
-> --- a/include/linux/user_namespace.h
-> +++ b/include/linux/user_namespace.h
-> @@ -52,6 +52,18 @@ enum ucount_type {
->  	UCOUNT_COUNTS,
->  };
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +struct binfmt_namespace {
-> +	struct list_head entries;
-> +	rwlock_t entries_lock;
-> +	int enabled;
-> +	struct vfsmount *bm_mnt;
-> +	int entry_count;
-> +} __randomize_layout;
-> +
-> +extern struct binfmt_namespace init_binfmt_ns;
-> +#endif
-> +
->  struct user_namespace {
->  	struct uid_gid_map	uid_map;
->  	struct uid_gid_map	gid_map;
-> @@ -76,6 +88,9 @@ struct user_namespace {
->  #endif
->  	struct ucounts		*ucounts;
->  	int ucount_max[UCOUNT_COUNTS];
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	struct binfmt_namespace *binfmt_ns;
-> +#endif
->  } __randomize_layout;
->  
->  struct ucounts {
-> diff --git a/kernel/user.c b/kernel/user.c
-> index 0df9b1640b2a..220ab2053d44 100644
-> --- a/kernel/user.c
-> +++ b/kernel/user.c
-> @@ -19,6 +19,17 @@
->  #include <linux/user_namespace.h>
->  #include <linux/proc_ns.h>
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +struct binfmt_namespace init_binfmt_ns = {
-> +	.entries = LIST_HEAD_INIT(init_binfmt_ns.entries),
-> +	.enabled = 1,
-> +	.entries_lock = __RW_LOCK_UNLOCKED(init_binfmt_ns.entries_lock),
-> +	.bm_mnt = NULL,
-> +	.entry_count = 0,
-> +};
-> +EXPORT_SYMBOL_GPL(init_binfmt_ns);
-> +#endif
-> +
->  /*
->   * userns count is 1 for root user, 1 for init_uts_ns,
->   * and 1 for... ?
-> @@ -66,6 +77,9 @@ struct user_namespace init_user_ns = {
->  	.persistent_keyring_register_sem =
->  	__RWSEM_INITIALIZER(init_user_ns.persistent_keyring_register_sem),
->  #endif
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	.binfmt_ns = &init_binfmt_ns,
-> +#endif
->  };
->  EXPORT_SYMBOL_GPL(init_user_ns);
->  
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index e5222b5fb4fe..990cf5950a89 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -195,6 +195,9 @@ static void free_user_ns(struct work_struct *work)
->  			kfree(ns->projid_map.forward);
->  			kfree(ns->projid_map.reverse);
->  		}
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +		kfree(ns->binfmt_ns);
-> +#endif
->  		retire_userns_sysctls(ns);
->  #ifdef CONFIG_PERSISTENT_KEYRINGS
->  		key_put(ns->persistent_keyring_register);
-> -- 
-> 2.17.1
+> Cheaper to test n_type first...
+
+Yes, Thanks!
+
 > 
+> > +}
+> > +
+> > +static inline void *next_note(void *buf, u32 *arg)
+> > +{
+> > +       struct elf_note *n = buf;
+> > +       u32 align = *arg;
+> > +       int size;
+> > +
+> > +       size = round_up(sizeof(*n) + n->n_namesz, align);
+> 
+> I think this could overflow: n_namesz can be u64 for elf64_note.
+> 
+> > +       size = round_up(size + n->n_descsz, align);
+> 
+> Same here. You may want to use check_add_overflow(), etc, an u64 types.
+
+Note->n_namesz is always four-byte.  I should have used u32.
+
+> 
+> > +
+> > +       if (buf + size < buf)
+> > +               return NULL;
+> 
+> I don't understand this. You want to check size not exceeding the
+> allocation, which isn't passed into this function. Checking for a full
+> unsigned address wrap around is not sufficient to detect overflow.
+
+Here we only detect the warp around.  After this returns we then check other
+types of overflow in scan().
+
+> 
+> > +       else
+> > +               return (buf + size);
+> > +}
+> > +
+> > +static inline bool test_property_x86(void *buf, u32 *arg)
+> > +{
+> > +       struct property_x86 *pr = buf;
+> > +       u32 max_type = *arg;
+> > +
+> > +       if (pr->pr_type > max_type)
+> > +               *arg = pr->pr_type;
+> 
+> Why is *arg being updated? I don't see last_pr used outside of here --
+> are properties required to be pr_type-ordered?
+
+Yes, they need to be in ascending order.
+
+> 
+> > +
+> > +       return (pr->pr_type == GNU_PROPERTY_X86_FEATURE_1_AND);
+> > +}
+> > +
+> > +static inline void *next_property(void *buf, u32 *arg)
+> > +{
+> > +       struct property_x86 *pr = buf;
+> > +       u32 max_type = *arg;
+> > +
+> > +       if ((buf + sizeof(*pr) +  pr->pr_datasz < buf) ||
+> 
+> Again, this "< buf" test doesn't look at all correct to me.
+> 
+> > +           (pr->pr_type > GNU_PROPERTY_X86_FEATURE_1_AND) ||
+> > +           (pr->pr_type > max_type))
+> > +               return NULL;
+> > +       else
+> > +               return (buf + sizeof(*pr) + pr->pr_datasz);
+> > +}
+> > +
+> > +/*
+> > + * Scan 'buf' for a pattern; return true if found.
+> > + * *pos is the distance from the beginning of buf to where
+> > + * the searched item or the next item is located.
+> > + */
+> > +static int scan(u8 *buf, u32 buf_size, int item_size,
+> > +                test_fn test, next_fn next, u32 *arg, u32 *pos)
+> 
+> I'm not a fan of the short "scan", "test" and "next" names, and I
+> really don't like an arg named "arg". Something slightly more
+> descriptive for all of these would be nice, please.
+
+I need to work on that :-)  What would you suggest?
+
+> 
+> > +{
+> > +       int found = 0;
+> > +       u8 *p, *max;
+> > +
+> > +       max = buf + buf_size;
+> > +       if (max < buf)
+> > +               return 0;
+> > +
+> > +       p = buf;
+> > +
+> > +       while ((p + item_size < max) && (p + item_size > buf)) {
+> 
+> These comparisons are safe due to the BUF_SIZE limit of buf_size and
+> the only used size of item_size, but if this becomes more generic, it
+> should be more defensive on the size calculations (e.g. make sure than
+> "item_size < max" and then here "p < max - item_size", etc).
+> 
+> I'd kind of rather this code walked the base type and check each for
+> the matching feature. What is the general specification for what
+> NT_GNU_PROPERTY_TYPE_0 contains?
+
+There are other property types, but the kernel does not look at most of them.
+If the kernel needs to look at others, we need to rewrite this.
+
+[...]
+
+> > +
+> > +/*
+> > + * Search a PT_NOTE segment for the first NT_GNU_PROPERTY_TYPE_0.
+> > + */
+> > +static int find_note_type_0(struct file *file, unsigned long note_size,
+> > +                           loff_t file_offset, u32 align, u32 *feature)
+> > +{
+> > +       u8 *buf;
+> > +       u32 buf_pos;
+> > +       unsigned long read_size;
+> > +       unsigned long done;
+> > +       int found = 0;
+> > +       int ret = 0;
+> > +
+> > +       buf = kmalloc(BUF_SIZE, GFP_KERNEL);
+> > +       if (!buf)
+> > +               return -ENOMEM;
+> 
+> Why kmalloc over stack variable? (Or, does BUF_SIZE here really need
+> to be 1024?)
+
+BUF_SIZE can be smaller, for example 64.  If it is too small, we need to do
+kernel_read() too often.
+
+> 
+> > +
+> > +       *feature = 0;
+> > +       buf_pos = 0;
+> > +
+> > +       for (done = 0; done < note_size; done += buf_pos) {
+> > +               read_size = note_size - done;
+> > +               if (read_size > BUF_SIZE)
+> > +                       read_size = BUF_SIZE;
+> > +
+> > +               ret = kernel_read(file, buf, read_size, &file_offset);
+> > +
+> > +               if (ret != read_size) {
+> > +                       ret = (ret < 0) ? ret : -EIO;
+> > +                       kfree(buf);
+> > +                       return ret;
+> > +               }
+> > +
+> > +               /*
+> > +                * item_size = sizeof(struct elf_note) + elf_note.n_namesz.
+> > +                * n_namesz is 4 for the note type we look for.
+> > +                */
+> > +               ret = 0;
+> > +               found += scan(buf, read_size, sizeof(struct elf_note) + 4,
+> > +                             test_note_type_0, next_note,
+> > +                             &align, &buf_pos);
+> > +
+> > +               file_offset += buf_pos - read_size;
+> > +
+> > +               if (found == 1) {
+> > +                       struct elf_note *n =
+> > +                               (struct elf_note *)(buf + buf_pos);
+> > +                       u32 start = round_up(sizeof(*n) + n->n_namesz,
+> > align);
+> > +                       u32 total = round_up(start + n->n_descsz, align);
+> 
+> Same overflow notes from earlier...
+> 
+> > +
+> > +                       ret = find_feature_x86(file, n->n_descsz,
+> > +                                              file_offset + start,
+> > +                                              buf, feature);
+> > +                       file_offset += total;
+> > +                       buf_pos += total;
+> > +               } else if (!buf_pos) {
+> > +                       *feature = 0;
+> > +                       break;
+> > +               }
+> > +       }
+> > +
+> > +       kfree(buf);
+> > +       return ret;
+> > +}
+> > +
+> > +#ifdef CONFIG_COMPAT
+> > +static int check_notes_32(struct file *file, struct elf32_phdr *phdr,
+> > +                         int phnum, u32 *feature)
+> > +{
+> > +       int i;
+> > +       int err = 0;
+> > +
+> > +       for (i = 0; i < phnum; i++, phdr++) {
+> > +               if ((phdr->p_type != PT_NOTE) || (phdr->p_align != 4))
+> > +                       continue;
+> > +
+> > +               err = find_note_type_0(file, phdr->p_filesz, phdr->p_offset,
+> > +                                      phdr->p_align, feature);
+> > +               if (err)
+> > +                       return err;
+> > +       }
+> > +
+> > +       return 0;
+> > +}
+> > +#endif
+> > +
+> > +#ifdef CONFIG_X86_64
+> > +static int check_notes_64(struct file *file, struct elf64_phdr *phdr,
+> > +                         int phnum, u32 *feature)
+> > +{
+> > +       int i;
+> > +       int err = 0;
+> > +
+> > +       for (i = 0; i < phnum; i++, phdr++) {
+> > +               if ((phdr->p_type != PT_NOTE) || (phdr->p_align != 8))
+> > +                       continue;
+> 
+> Instead of a separate parser here, wouldn't it be a bit nicer to
+> attach this to the existing binfmt_elf program header parsing loop:
+
+We need to wait until SET_PERSONALITY2() is done.
+
+[...]
+
+> > +int arch_setup_features(void *ehdr_p, void *phdr_p,
+> > +                       struct file *file, bool interp)
+> > +{
+> > +       int err = 0;
+> > +       u32 feature = 0;
+> > +
+> > +       struct elf64_hdr *ehdr64 = ehdr_p;
+> > +
+> > +       if (!cpu_feature_enabled(X86_FEATURE_SHSTK))
+> > +               return 0;
+> > +
+> > +       if (ehdr64->e_ident[EI_CLASS] == ELFCLASS64) {
+> > +               struct elf64_phdr *phdr64 = phdr_p;
+> > +
+> > +               err = check_notes_64(file, phdr64, ehdr64->e_phnum,
+> > +                                    &feature);
+> > +               if (err < 0)
+> > +                       goto out;
+> > +       } else {
+> > +#ifdef CONFIG_COMPAT
+> > +               struct elf32_hdr *ehdr32 = ehdr_p;
+> > +
+> > +               if (ehdr32->e_ident[EI_CLASS] == ELFCLASS32) {
+> > +                       struct elf32_phdr *phdr32 = phdr_p;
+> > +
+> > +                       err = check_notes_32(file, phdr32, ehdr32->e_phnum,
+> > +                                            &feature);
+> > +                       if (err < 0)
+> > +                               goto out;
+> > +               }
+> > +#endif
+> 
+> Should there be an #else error here?
+
+Yes, thanks.
+
+> I'd like to be using this code for a few other cases too (not just
+> x86-specific). For example, for marking KASan binaries as needing a
+> "legacy" memory layouts[1]. Others might be setting things like
+> no_new_privs at exec time, etc.
+
+If the item is a bit of GNU_PROPERTY_X86_FEATURE_1_AND, then this code would
+work.  Has it been finalized?
+
+Yu-cheng
