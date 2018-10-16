@@ -1,125 +1,47 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
-Date: Tue, 16 Oct 2018 11:52:19 +0200
-Message-ID: <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
+From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: Re: [PATCH v6 1/1] ns: add binfmt_misc to the user namespace
+Date: Tue, 16 Oct 2018 12:13:47 +0200
+Message-ID: <97280bb2-933e-9281-bd91-99748e1dd653@rasmusvillemoes.dk>
 References: <20181010161430.11633-1-laurent@vivier.eu>
+ <20181010161430.11633-2-laurent@vivier.eu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181010161430.11633-1-laurent@vivier.eu>
+In-Reply-To: <20181010161430.11633-2-laurent@vivier.eu>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
+To: Laurent Vivier <laurent@vivier.eu>, linux-kernel@vger.kernel.org
 Cc: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Eric Biederman <ebiederm@xmission.com>, containers@lists.linux-foundation.org, Dmitry Safonov <dima@arista.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On 2018-10-10 18:14, Laurent Vivier wrote:
 
-Any comment on this last version?
+> +	/* create a new binfmt namespace
+> +	 * if we are not in the first user namespace
+> +	 * but the binfmt namespace is the first one
+> +	 */
+> +	if (READ_ONCE(ns->binfmt_ns) == NULL) {
+> +		struct binfmt_namespace *new_ns;
+> +
+> +		new_ns = kmalloc(sizeof(struct binfmt_namespace),
+> +				 GFP_KERNEL);
+> +		if (new_ns == NULL)
+> +			return -ENOMEM;
+> +		INIT_LIST_HEAD(&new_ns->entries);
+> +		new_ns->enabled = 1;
+> +		rwlock_init(&new_ns->entries_lock);
+> +		new_ns->bm_mnt = NULL;
+> +		new_ns->entry_count = 0;
+> +		/* ensure new_ns is completely initialized before sharing it */
+> +		smp_wmb();
+> +		WRITE_ONCE(ns->binfmt_ns, new_ns);
+> +	}
 
-Any chance to be merged?
+If ns->binfmt_ns can really change under us (given you use READ_ONCE),
+what prevents two instances of this code running at the same time, in
+which case one of them would leak its new_ns instance? Also, there
+doesn't seem to be any smp_rmb() buddy to that wmb(), I don't think
+that's implied by READ_ONCE() in binfmt_ns().
 
-Thanks,
-Laurent
-
-Le 10/10/2018 à 18:14, Laurent Vivier a écrit :
-> v6: Return &init_binfmt_ns instead of NULL in binfmt_ns()
->     This should never happen, but to stay safe return a
->     value we can use.
->     change subject from "RFC" to "PATCH"
-> 
-> v5: Use READ_ONCE()/WRITE_ONCE()
->     move mount pointer struct init to bm_fill_super() and add smp_wmb()
->     remove useless NULL value init
->     add WARN_ON_ONCE()
-> 
-> v4: first user namespace is initialized with &init_binfmt_ns,
->     all new user namespaces are initialized with a NULL and use
->     the one of the first parent that is not NULL. The pointer
->     is initialized to a valid value the first time the binfmt_misc
->     fs is mounted in the current user namespace.
->     This allows to not change the way it was working before:
->     new ns inherits values from its parent, and if parent value is modified
->     (or parent creates its own binfmt entry by mounting the fs) child
->     inherits it (unless it has itself mounted the fs).
-> 
-> v3: create a structure to store binfmt_misc data,
->     add a pointer to this structure in the user_namespace structure,
->     in init_user_ns structure this pointer points to an init_binfmt_ns
->     structure. And all new user namespaces point to this init structure.
->     A new binfmt namespace structure is allocated if the binfmt_misc
->     filesystem is mounted in a user namespace that is not the initial
->     one but its binfmt namespace pointer points to the initial one.
->     add override_creds()/revert_creds() around open_exec() in
->     bm_register_write()
-> 
-> v2: no new namespace, binfmt_misc data are now part of
->     the mount namespace
->     I put this in mount namespace instead of user namespace
->     because the mount namespace is already needed and
->     I don't want to force to have the user namespace for that.
->     As this is a filesystem, it seems logic to have it here.
-> 
-> This allows to define a new interpreter for each new container.
-> 
-> But the main goal is to be able to chroot to a directory
-> using a binfmt_misc interpreter without being root.
-> 
-> I have a modified version of unshare at:
-> 
->   git@github.com:vivier/util-linux.git branch unshare-chroot
-> 
-> with some new options to unshare binfmt_misc namespace and to chroot
-> to a directory.
-> 
-> If you have a directory /chroot/powerpc/jessie containing debian for powerpc
-> binaries and a qemu-ppc interpreter, you can do for instance:
-> 
->  $ uname -a
->  Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
->  $ ./unshare --map-root-user --fork --pid \
->    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
->    --root=/chroot/powerpc/jessie /bin/bash -l
->  # uname -a
->  Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
->  # id
-> uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
->  # ls -l
-> total 5940
-> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
-> drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
-> drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
-> drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
-> drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
-> drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
-> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
-> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
-> drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
-> dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
-> -rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
-> drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
-> drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
-> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
-> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
-> drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
-> drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
-> drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
-> drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
-> 
-> If you want to use the qemu binary provided by your distro, you can use
-> 
->     --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
-> 
-> With the 'F' flag, qemu-ppc-static will be then loaded from the main root
-> filesystem before switching to the chroot.
-> 
-> Laurent Vivier (1):
->   ns: add binfmt_misc to the user namespace
-> 
->  fs/binfmt_misc.c               | 111 ++++++++++++++++++++++++---------
->  include/linux/user_namespace.h |  15 +++++
->  kernel/user.c                  |  14 +++++
->  kernel/user_namespace.c        |   3 +
->  4 files changed, 115 insertions(+), 28 deletions(-)
-> 
+Rasmus
