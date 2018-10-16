@@ -1,48 +1,125 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Subject: Re: [RFC PATCH for 4.21 06/16] cpu_opv: Provide cpu_opv system call
- (v8)
-Date: Tue, 16 Oct 2018 17:10:29 +0900
-Message-ID: <20181016081029.GA30363@jagdpanzerIV>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
- <20181010191936.7495-7-mathieu.desnoyers@efficios.com>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
+Date: Tue, 16 Oct 2018 11:52:19 +0200
+Message-ID: <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
+References: <20181010161430.11633-1-laurent@vivier.eu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181010191936.7495-7-mathieu.desnoyers@efficios.com>
+In-Reply-To: <20181010161430.11633-1-laurent@vivier.eu>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
+To: linux-kernel@vger.kernel.org
+Cc: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Eric Biederman <ebiederm@xmission.com>, containers@lists.linux-foundation.org, Dmitry Safonov <dima@arista.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mathieu,
+Hi,
 
-On (10/10/18 15:19), Mathieu Desnoyers wrote:
-[..]
-> +SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucpuopv, int, cpuopcnt,
-> +		int, cpu, int, flags)
-> +{
-[..]
-> +again:
-> +	ret = cpu_opv_pin_pages(cpuopv, cpuopcnt, &vaddr_ptrs);
-> +	if (ret)
-> +		goto end;
-> +	ret = do_cpu_opv(cpuopv, cpuopcnt, &vaddr_ptrs, cpu);
-> +	if (ret == -EAGAIN)
-> +		retry = true;
-> +end:
-> +	for (i = 0; i < vaddr_ptrs.nr_vaddr; i++) {
-> +		struct vaddr *vaddr = &vaddr_ptrs.addr[i];
-> +		int j;
-> +
-> +		vm_unmap_user_ram((void *)vaddr->mem, vaddr->nr_pages);
+Any comment on this last version?
 
-A dumb question.
+Any chance to be merged?
 
-Both vm_unmap_user_ram() and vm_map_user_ram() can BUG_ON().
-So this is
-   userspace -> syscall -> cpu_opv() -> vm_unmap_user_ram() -> BUG_ON()
+Thanks,
+Laurent
 
-Any chance someone can exploit it?
-
-	-ss
+Le 10/10/2018 à 18:14, Laurent Vivier a écrit :
+> v6: Return &init_binfmt_ns instead of NULL in binfmt_ns()
+>     This should never happen, but to stay safe return a
+>     value we can use.
+>     change subject from "RFC" to "PATCH"
+> 
+> v5: Use READ_ONCE()/WRITE_ONCE()
+>     move mount pointer struct init to bm_fill_super() and add smp_wmb()
+>     remove useless NULL value init
+>     add WARN_ON_ONCE()
+> 
+> v4: first user namespace is initialized with &init_binfmt_ns,
+>     all new user namespaces are initialized with a NULL and use
+>     the one of the first parent that is not NULL. The pointer
+>     is initialized to a valid value the first time the binfmt_misc
+>     fs is mounted in the current user namespace.
+>     This allows to not change the way it was working before:
+>     new ns inherits values from its parent, and if parent value is modified
+>     (or parent creates its own binfmt entry by mounting the fs) child
+>     inherits it (unless it has itself mounted the fs).
+> 
+> v3: create a structure to store binfmt_misc data,
+>     add a pointer to this structure in the user_namespace structure,
+>     in init_user_ns structure this pointer points to an init_binfmt_ns
+>     structure. And all new user namespaces point to this init structure.
+>     A new binfmt namespace structure is allocated if the binfmt_misc
+>     filesystem is mounted in a user namespace that is not the initial
+>     one but its binfmt namespace pointer points to the initial one.
+>     add override_creds()/revert_creds() around open_exec() in
+>     bm_register_write()
+> 
+> v2: no new namespace, binfmt_misc data are now part of
+>     the mount namespace
+>     I put this in mount namespace instead of user namespace
+>     because the mount namespace is already needed and
+>     I don't want to force to have the user namespace for that.
+>     As this is a filesystem, it seems logic to have it here.
+> 
+> This allows to define a new interpreter for each new container.
+> 
+> But the main goal is to be able to chroot to a directory
+> using a binfmt_misc interpreter without being root.
+> 
+> I have a modified version of unshare at:
+> 
+>   git@github.com:vivier/util-linux.git branch unshare-chroot
+> 
+> with some new options to unshare binfmt_misc namespace and to chroot
+> to a directory.
+> 
+> If you have a directory /chroot/powerpc/jessie containing debian for powerpc
+> binaries and a qemu-ppc interpreter, you can do for instance:
+> 
+>  $ uname -a
+>  Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
+>  $ ./unshare --map-root-user --fork --pid \
+>    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
+>    --root=/chroot/powerpc/jessie /bin/bash -l
+>  # uname -a
+>  Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
+>  # id
+> uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
+>  # ls -l
+> total 5940
+> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
+> drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
+> drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
+> drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
+> drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
+> drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
+> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
+> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
+> drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
+> dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
+> -rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
+> drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
+> drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
+> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
+> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
+> drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
+> drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
+> drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
+> drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
+> 
+> If you want to use the qemu binary provided by your distro, you can use
+> 
+>     --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
+> 
+> With the 'F' flag, qemu-ppc-static will be then loaded from the main root
+> filesystem before switching to the chroot.
+> 
+> Laurent Vivier (1):
+>   ns: add binfmt_misc to the user namespace
+> 
+>  fs/binfmt_misc.c               | 111 ++++++++++++++++++++++++---------
+>  include/linux/user_namespace.h |  15 +++++
+>  kernel/user.c                  |  14 +++++
+>  kernel/user_namespace.c        |   3 +
+>  4 files changed, 115 insertions(+), 28 deletions(-)
+> 
