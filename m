@@ -1,70 +1,57 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Tue, 16 Oct 2018 12:48:55 +0200
-Message-ID: <20181016104855.GQ18839@dhcp22.suse.cz>
-References: <alpine.DEB.2.21.1810021329260.87409@chino.kir.corp.google.com>
- <20181003073640.GF18290@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810031547150.202532@chino.kir.corp.google.com>
- <20181004055842.GA22173@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810040209130.113459@chino.kir.corp.google.com>
- <20181004094637.GG22173@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810041130380.12951@chino.kir.corp.google.com>
- <20181009083326.GG8528@dhcp22.suse.cz>
- <20181015150325.GN18839@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [PATCH v6 1/1] ns: add binfmt_misc to the user namespace
+Date: Tue, 16 Oct 2018 12:53:11 +0200
+Message-ID: <1eca343b-19c7-a82c-d7ac-b3aea288b56b@vivier.eu>
+References: <20181010161430.11633-1-laurent@vivier.eu>
+ <20181010161430.11633-2-laurent@vivier.eu>
+ <97280bb2-933e-9281-bd91-99748e1dd653@rasmusvillemoes.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
+In-Reply-To: <97280bb2-933e-9281-bd91-99748e1dd653@rasmusvillemoes.dk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Rasmus Villemoes <linux@rasmusvillemoes.dk>, linux-kernel@vger.kernel.org
+Cc: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Eric Biederman <ebiederm@xmission.com>, containers@lists.linux-foundation.org, Dmitry Safonov <dima@arista.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon 15-10-18 15:25:14, David Rientjes wrote:
-> On Mon, 15 Oct 2018, Michal Hocko wrote:
+Le 16/10/2018 à 12:13, Rasmus Villemoes a écrit :
+> On 2018-10-10 18:14, Laurent Vivier wrote:
 > 
-> > > > No, because the offending commit actually changed the precedence itself: 
-> > > > PR_SET_THP_DISABLE used to be honored for future mappings and the commit 
-> > > > changed that for all current mappings.
-> > > 
-> > > Which is the actual and the full point of the fix as described in the
-> > > changelog. The original implementation was poor and inconsistent.
-> > > 
-> > > > So as a result of the commit 
-> > > > itself we would have had to change the documentation and userspace can't 
-> > > > be expected to keep up with yet a fourth variable: kernel version.  It 
-> > > > really needs to be simpler, just a per-mapping specifier.
-> > > 
-> > > As I've said, if you really need a per-vma granularity then make it a
-> > > dedicated line in the output with a clear semantic. Do not make VMA
-> > > flags even more confusing.
-> > 
-> > Can we settle with something please?
+>> +	/* create a new binfmt namespace
+>> +	 * if we are not in the first user namespace
+>> +	 * but the binfmt namespace is the first one
+>> +	 */
+>> +	if (READ_ONCE(ns->binfmt_ns) == NULL) {
+>> +		struct binfmt_namespace *new_ns;
+>> +
+>> +		new_ns = kmalloc(sizeof(struct binfmt_namespace),
+>> +				 GFP_KERNEL);
+>> +		if (new_ns == NULL)
+>> +			return -ENOMEM;
+>> +		INIT_LIST_HEAD(&new_ns->entries);
+>> +		new_ns->enabled = 1;
+>> +		rwlock_init(&new_ns->entries_lock);
+>> +		new_ns->bm_mnt = NULL;
+>> +		new_ns->entry_count = 0;
+>> +		/* ensure new_ns is completely initialized before sharing it */
+>> +		smp_wmb();
+>> +		WRITE_ONCE(ns->binfmt_ns, new_ns);
+>> +	}
 > 
-> I don't understand the point of extending smaps with yet another line.  
+> If ns->binfmt_ns can really change under us (given you use READ_ONCE),
+> what prevents two instances of this code running at the same time, in
+> which case one of them would leak its new_ns instance? Also, there
 
-Because abusing a vma flag part is just wrong. What are you going to do
-when a next bug report states that the flag is set even though no
-userspace has set it and that leads to some malfunctioning? Can you rule
-that out? Even your abuse of the flag is surprising so why others
-wouldn't be?
+See
+https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1782780.html
 
-> The only way for a different process to determine if a single vma from 
-> another process is thp disabled is by the "nh" flag, so it is reasonable 
-> that userspace reads this.  My patch fixes that.  If smaps is extended 
-> with another line per your patch, it doesn't change the fact that previous 
-> binaries are built to check for "nh" so it does not deprecate that.  
-> ("THP_Enabled" is also ambiguous since it only refers to prctl and not the 
-> default thp setting or madvise.)
+> doesn't seem to be any smp_rmb() buddy to that wmb(), I don't think
+> that's implied by READ_ONCE() in binfmt_ns().
 
-As I've said there are two things. Exporting PR_SET_THP_DISABLE to
-userspace so that a 3rd party process can query it. I've already
-explained why that might be useful. If you really insist on having
-a per-vma field then let's do it properly now. Are you going to agree on
-that? If yes, I am willing to spend my time on that but I am not going
-to bother if this will lead to "I want my vma field abuse anyway".
--- 
-Michal Hocko
-SUSE Labs
+See
+https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1783049.html
+
+Thanks,
+Laurent
