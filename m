@@ -1,89 +1,52 @@
-From: Alan Jenkins <alan.christopher.jenkins@gmail.com>
-Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock
- for reconfiguration [ver #12]
-Date: Wed, 17 Oct 2018 23:13:47 +0100
-Message-ID: <240b2620-02cd-89de-4c22-293af6c5ac8b@gmail.com>
-References: <f6f2553e-f64d-9c26-4290-baf43e5f533b@gmail.com>
- <19866.1539782101@warthog.procyon.org.uk>
- <68a2107f-bf70-055b-86cf-1ba2ba9422bf@gmail.com>
- <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
- <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
- <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com>
- <20181013061141.GR32577@ZenIV.linux.org.uk>
- <28710.1539782412@warthog.procyon.org.uk>
- <15867.1539791153@warthog.procyon.org.uk>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: statx(2) API and documentation
+Date: Thu, 18 Oct 2018 01:15:13 +0300
+Message-ID: <CAOQ4uxjqS3R_0O6gKVFEUJR7BvB+rpaHekjZm+fhMA+7on8AwQ@mail.gmail.com>
+References: <CAJfpegsxFUGeczcC-pzK0WWROjv48_PvXtNun-f5QJMoUDn1Dw@mail.gmail.com>
+ <006890C4-64D4-4DE2-A1F0-335FFFD585BB@dilger.ca> <CAJfpeguvJZbP83mSULc74Yhpp_CPMBW1XvcgbvCbLnF7QCncUA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <15867.1539791153@warthog.procyon.org.uk>
-Content-Language: en-GB
+In-Reply-To: <CAJfpeguvJZbP83mSULc74Yhpp_CPMBW1XvcgbvCbLnF7QCncUA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, ebiederm@xmission.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: Miklos Szeredi <miklos@szeredi.hu>
+Cc: Andreas Dilger <adilger@dilger.ca>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, David Howells <dhowells@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Jan Kara <jack@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-[resent, hopefully with slightly less formatting damage]
+On Wed, Oct 17, 2018 at 10:12 PM Miklos Szeredi <miklos@szeredi.hu> wrote:
 
-On 17/10/2018 16:45, David Howells wrote:
-
-> Alan Jenkins <alan.christopher.jenkins@gmail.com> wrote:
+> >> - STATX_ALL definition is unclear, can this change, or is it fixed?
+> >> If it's the former, than that's a backward compatibility nightmare.
+> >> If it's the latter, then what's the point?
+> >
+> > The value can change over time.  It is intended to reflect the current
+> > state of affairs at the time the userspace program and kernel are compiled.
+> > The value sent from userspace lets the kernel know what fields are in
+> > the userspace struct, so it doesn't try to set fields that aren't there.
 >
->> I agree. I'm happy to see this is using the same check as do_remount().
->>
->>
->> * change filesystem flags. dir should be a physical root of filesystem.
->> * If you've mounted a non-root directory somewhere and want to do remount
->> * on it - tough luck.
->> */
-> Are you suggesting that it should only work at the ultimate root of a
-> superblock and not a bind mount somewhere within?
+> What's the point of a userspace program specifying STATX_ALL?  Without
+> a way to programmatically query the interface definition it's useless:
+> there's no way to guess which mask bit corresponds to which field, and
+> what that field represents.
 >
-> That's tricky to make work for NFS because s_root is a dummy dentry.
+> And there will be programs out there which specify STATX_ALL without
+> considering that in the future it may become slower as it is now due
+> to a recompile.
 >
-> David
+> So what's the point exactly?
+>
+> > The value in the kernel allows masking off new fields from userspace that
+> > it doesn't understand.
+>
+> Okay, but that has nothing to do with the UAPI.  Even as an internal
+> flag we should be careful, as it might grow uses which can have
+> similar issues as the userspace one above.
+>
 
+FYI, I identified a similar anti-pattern in fanotify UAPI when I wanted to
+add new flags and did not want to change the UAPI _ALL_ constants.
+This is how we plan to solve it:
+https://github.com/amir73il/linux/commit/8c2b1acadb88ee4505ccc8bfdc665863111fb4cc
 
-Retro-actively: I do not suggest that.
-
-I tried to answer this question in my reply to Eric correcting me. Eric 
-was right to correct me.  I now understand the comment above 
-do_remount() is incorrect.  I re-reviewed your diff in light of that.  I 
-re-endorse your diff as a way to solve the problem I raised.
-
-(I think it would be useful to remove the misleading comment above 
-do_remount(), to avoid future confusion.)
-
-
-> @@ -186,6 +186,10 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags
->   	if (ret < 0)
->   		goto err;
->   
-> +	ret = -EINVAL;
-> +	if (target.mnt->mnt_root != target.dentry)
-> +		goto err_path;
-> +
->   	fc = vfs_new_fs_context(target.dentry->d_sb->s_type, target.dentry,
->   				0, 0, FS_CONTEXT_FOR_RECONFIGURE);
->   	if (IS_ERR(fc)) {
-
-
-( the "if" statement it adds to fspick() is equivalent to the second 
-"if" statement in do_remount(): )
-
-static int do_remount(struct path *path, int ms_flags, int sb_flags,
-		      int mnt_flags, void *data)
-{
-	int err;
-	struct super_block *sb = path->mnt->mnt_sb;
-	struct mount *mnt = real_mount(path->mnt);
-
-	if (!check_mnt(mnt))
-		return -EINVAL;
-
-	if (path->dentry != path->mnt->mnt_root)
-		return -EINVAL;
-
-Thanks
-
-Alan
+Thanks,
+Amir.
