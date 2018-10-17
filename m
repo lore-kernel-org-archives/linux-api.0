@@ -1,89 +1,39 @@
-From: Alan Jenkins <alan.christopher.jenkins@gmail.com>
-Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock
- for reconfiguration [ver #12]
-Date: Wed, 17 Oct 2018 18:41:24 +0100
-Message-ID: <7b409325-9e23-aa5e-916f-cb362a6940aa@gmail.com>
-References: <f6f2553e-f64d-9c26-4290-baf43e5f533b@gmail.com>
- <19866.1539782101@warthog.procyon.org.uk>
- <68a2107f-bf70-055b-86cf-1ba2ba9422bf@gmail.com>
- <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
- <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk>
- <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com>
- <20181013061141.GR32577@ZenIV.linux.org.uk>
- <28710.1539782412@warthog.procyon.org.uk>
- <15867.1539791153@warthog.procyon.org.uk>
+From: Miklos Szeredi <miklos@szeredi.hu>
+Subject: statx(2) API and documentation
+Date: Wed, 17 Oct 2018 20:24:38 +0200
+Message-ID: <CAJfpegsxFUGeczcC-pzK0WWROjv48_PvXtNun-f5QJMoUDn1Dw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <15867.1539791153@warthog.procyon.org.uk>
-Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@ZenIV.linux.org.uk>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, ebiederm@xmission.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: Michael Kerrisk <mtk.manpages@gmail.com>, David Howells <dhowells@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 17/10/2018 16:45, David Howells wrote:
-> Alan Jenkins <alan.christopher.jenkins@gmail.com> wrote:
->
->> I agree.  I'm happy to see this is using the same check as do_remount().
->>
->>
->> * change filesystem flags. dir should be a physical root of filesystem.
->> * If you've mounted a non-root directory somewhere and want to do remount
->> * on it - tough luck.
->> */
-> Are you suggesting that it should only work at the ultimate root of a
-> superblock and not a bind mount somewhere within?
->
-> That's tricky to make work for NFS because s_root is a dummy dentry.
->
-> David
+I'm trying to implement statx for fuse and ran into the following issues:
 
+- Need a STATX_ATTRIBUTES bit, so that userspace can explicitly ask
+for stx_attribute; otherwise if querying has non-zero cost, then
+filesystem cannot do it without regressing performance.
 
-Retro-actively: I do not suggest that.
+- STATX_ALL definition is unclear, can this change, or is it fixed?
+If it's the former, than that's a backward compatibility nightmare.
+If it's the latter, then what's the point?
 
-I tried to answer this question in my reply to Eric correcting me.  Eric 
-was right to correct me.  I now understand the comment above 
-do_remount() is incorrect.  I re-reviewed your diff in light of that.  I 
-re-endorse your diff as a way to solve the problem I raised.
+- STATX_ATIME is cleared from stx_mask on SB_RDONLY, and on NFS it is
+also cleared on MNT_NOATIME, but not on MNT_RDONLY.  We need some sort
+of guideline in the documentation about what constitutes
+"unsupported": does atime become unsupported because filesystem is
+remounted r/o?  If so, why isn't this case handled consistently in the
+VFS and filesystems?
 
-(I think it would be useful to remove the misleading comment above 
-do_remount(), to avoid future confusion.)
+- What about fields that are not cached when statx() is called with
+AT_STATX_DONT_SYNC?  E.g. stx_btime is supported by the filesystem,
+but getting it requires a roundtrip to the server.  Requesting
+STATX_BTIME in the mask and adding  AT_STATX_DONT_SYNC to the flags
+means the filesystem has to decide which it will honor.   My feeling
+is that it should honor AT_STATX_DONT_SYNC and clear STATX_BTIME in
+stx_mask.   Documentation has no word about this case.
 
- > @@ -186,6 +186,10 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char 
-__user *, path, unsigned int, flags
-
->  	if (ret < 0)
->  		goto err;
->  
-> +	ret = -EINVAL;
-> +	if (target.mnt->mnt_root != target.dentry)
-> +		goto err_path;
-> +
-
-( the "if" statement it adds to fspick() is equivalent to the second 
-"if" statement in do_remount(): )
-
-static  int  do_remount <https://elixir.bootlin.com/linux/v4.18/ident/do_remount>(struct  path <https://elixir.bootlin.com/linux/v4.18/ident/path>  *path <https://elixir.bootlin.com/linux/v4.18/ident/path>,  int  ms_flags,  int  sb_flags,
-		int  mnt_flags,  void  *data)
-{
-	int  err;
-	struct  super_block <https://elixir.bootlin.com/linux/v4.18/ident/super_block>  *sb  =  path <https://elixir.bootlin.com/linux/v4.18/ident/path>->mnt 
-<https://elixir.bootlin.com/linux/v4.18/ident/mnt>->mnt_sb;
-	struct  mount <https://elixir.bootlin.com/linux/v4.18/ident/mount>  *mnt <https://elixir.bootlin.com/linux/v4.18/ident/mnt>  =  real_mount 
-<https://elixir.bootlin.com/linux/v4.18/ident/real_mount>(path 
-<https://elixir.bootlin.com/linux/v4.18/ident/path>->mnt 
-<https://elixir.bootlin.com/linux/v4.18/ident/mnt>);
-
-	if  (!check_mnt <https://elixir.bootlin.com/linux/v4.18/ident/check_mnt>(mnt 
-<https://elixir.bootlin.com/linux/v4.18/ident/mnt>))
-		return  -EINVAL <https://elixir.bootlin.com/linux/v4.18/ident/EINVAL>;
-
-	if  (path <https://elixir.bootlin.com/linux/v4.18/ident/path>->dentry  !=  path <https://elixir.bootlin.com/linux/v4.18/ident/path>->mnt 
-<https://elixir.bootlin.com/linux/v4.18/ident/mnt>->mnt_root)
-		return  -EINVAL <https://elixir.bootlin.com/linux/v4.18/ident/EINVAL>;
-
-Thanks
-
-Alan
+Thanks,
+Miklos
