@@ -1,180 +1,87 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: statx(2) API and documentation
-Date: Wed, 17 Oct 2018 14:22:57 -0600
-Message-ID: <E9903911-9289-4038-9835-9353762A3BAF@dilger.ca>
-References: <CAJfpegsxFUGeczcC-pzK0WWROjv48_PvXtNun-f5QJMoUDn1Dw@mail.gmail.com>
- <006890C4-64D4-4DE2-A1F0-335FFFD585BB@dilger.ca>
- <CAJfpeguvJZbP83mSULc74Yhpp_CPMBW1XvcgbvCbLnF7QCncUA@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
-Content-Type: multipart/signed;
- boundary="Apple-Mail=_93E2257F-0FE4-4BE8-A439-506B41068230";
- protocol="application/pgp-signature"; micalg=pgp-sha256
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJfpeguvJZbP83mSULc74Yhpp_CPMBW1XvcgbvCbLnF7QCncUA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>, David Howells <dhowells@redhat.com>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
+Date: Wed, 17 Oct 2018 16:23:50 -0400
+Message-ID: <x49h8hkfhk9.fsf@segfault.boston.devel.redhat.com>
+References: <20181002100531.GC4135@quack2.suse.cz>
+ <20181002121039.GA3274@linux-x5ow.site>
+ <20181002142959.GD9127@quack2.suse.cz>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181002142959.GD9127-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org> (Jan Kara's message of
+ "Tue, 2 Oct 2018 16:29:59 +0200")
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
+Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> writes:
 
---Apple-Mail=_93E2257F-0FE4-4BE8-A439-506B41068230
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain;
-	charset=us-ascii
+> [Added ext4, xfs, and linux-api folks to CC for the interface discussion]
+>
+> On Tue 02-10-18 14:10:39, Johannes Thumshirn wrote:
+>> On Tue, Oct 02, 2018 at 12:05:31PM +0200, Jan Kara wrote:
+>> > Hello,
+>> > 
+>> > commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
+>> > removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
+>> > mean time certain customer of ours started poking into /proc/<pid>/smaps
+>> > and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
+>> > flags, the application just fails to start complaining that DAX support is
+>> > missing in the kernel. The question now is how do we go about this?
+>> 
+>> OK naive question from me, how do we want an application to be able to
+>> check if it is running on a DAX mapping?
+>
+> The question from me is: Should application really care? After all DAX is
+> just a caching decision. Sure it affects performance characteristics and
+> memory usage of the kernel but it is not a correctness issue (in particular
+> we took care for MAP_SYNC to return EOPNOTSUPP if the feature cannot be
+> supported for current mapping). And in the future the details of what we do
+> with DAX mapping can change - e.g. I could imagine we might decide to cache
+> writes in DRAM but do direct PMEM access on reads. And all this could be
+> auto-tuned based on media properties. And we don't want to tie our hands by
+> specifying too narrowly how the kernel is going to behave.
 
-On Oct 17, 2018, at 1:04 PM, Miklos Szeredi <miklos@szeredi.hu> wrote:
->=20
-> On Wed, Oct 17, 2018 at 8:45 PM, Andreas Dilger <adilger@dilger.ca> =
-wrote:
->> On Oct 17, 2018, at 12:24 PM, Miklos Szeredi <miklos@szeredi.hu> =
-wrote:
->>>=20
->>> I'm trying to implement statx for fuse and ran into the following =
-issues:
->>>=20
->>> - Need a STATX_ATTRIBUTES bit, so that userspace can explicitly ask
->>> for stx_attribute; otherwise if querying has non-zero cost, then
->>> filesystem cannot do it without regressing performance.
->>=20
->> Seems reasonable.
->>=20
->>> - STATX_ALL definition is unclear, can this change, or is it fixed?
->>> If it's the former, than that's a backward compatibility nightmare.
->>> If it's the latter, then what's the point?
->>=20
->> The value can change over time.  It is intended to reflect the =
-current
->> state of affairs at the time the userspace program and kernel are =
-compiled.
->> The value sent from userspace lets the kernel know what fields are in
->> the userspace struct, so it doesn't try to set fields that aren't =
-there.
->=20
-> What's the point of a userspace program specifying STATX_ALL?  Without
-> a way to programmatically query the interface definition it's useless:
-> there's no way to guess which mask bit corresponds to which field, and
-> what that field represents.
->=20
-> And there will be programs out there which specify STATX_ALL without
-> considering that in the future it may become slower as it is now due
-> to a recompile.
+For read and write, I would expect the O_DIRECT open flag to still work,
+even for dax-capable persistent memory.  Is that a contentious opinion?
 
-The whole point of statx is that applications should only be requesting
-fields that they care about, so "ls --color=3Dnever" shouldn't be asking =
-for
-the file mode/size/etc., and size/blocks should only be requested with
-"ls -ls", etc.
+So, what we're really discussing is the behavior for mmap.  MAP_SYNC
+will certainly ensure that the page cache is not used for writes.  It
+would also be odd for us to decide to cache reads.  The only issue I can
+see is that perhaps the application doesn't want to take a performance
+hit on write faults.  I haven't heard that concern expressed in this
+thread, though.
 
-> So what's the point exactly?
+Just to be clear, this is my understanding of the world:
 
-Ah, I see your point...  STATX_ALL seems to be mostly useful for the =
-kernel
-to mask off flags that it doesn't currently understand.  It doesn't make
-much sense for applications to specify STATX_ALL, since they don't have =
-any
-way to know what each flag means unless they are hard-coded to check =
-each of
-the STATX_* flags individually.  They should build up a mask of STATX_* =
-flags
-based on what they care about (e.g. "find" should only request =
-attributes
-based on the command-line options given).
+MAP_SYNC
+- file system guarantees that metadata required to reach faulted-in file
+  data is consistent on media before a write fault is completed.  A
+  side-effect is that the page cache will not be used for
+  writably-mapped pages.
 
->> The value in the kernel allows masking off new fields from userspace =
-that
->> it doesn't understand.
->=20
-> Okay, but that has nothing to do with the UAPI.  Even as an internal
-> flag we should be careful, as it might grow uses which can have
-> similar issues as the userspace one above.
->=20
->>> - STATX_ATIME is cleared from stx_mask on SB_RDONLY, and on NFS it =
-is
->>> also cleared on MNT_NOATIME, but not on MNT_RDONLY.  We need some =
-sort
->>> of guideline in the documentation about what constitutes
->>> "unsupported": does atime become unsupported because filesystem is
->>> remounted r/o?  If so, why isn't this case handled consistently in =
-the
->>> VFS and filesystems?
->>=20
->> Strange.  I'd think that if userspace is requesting atime, it should
->> get an atime value.  The fact that the kernel is not updating atime
->> due to mount options just means that atime might be old.  That =
-doesn't
->> mean (IMHO) that atime doesn't exist.
->=20
-> Right, OTOH I sort of see the value in  NFS: no roundtrip to server if
-> atime value is useless anyway.
+and what I think Dan had proposed:
 
-Well, "noatime" might be a client-only option, which doesn't mean that =
-the
-server or some other client isn't updating the atime.  Returning an old
-atime isn't the same as not returning anything at all.
+mmap flag, MAP_DIRECT
+- file system guarantees that page cache will not be used to front storage.
+  storage MUST be directly addressable.  This *almost* implies MAP_SYNC.
+  The subtle difference is that a write fault /may/ not result in metadata
+  being written back to media.
 
->>> - What about fields that are not cached when statx() is called with
->>> AT_STATX_DONT_SYNC?  E.g. stx_btime is supported by the filesystem,
->>> but getting it requires a roundtrip to the server.  Requesting
->>> STATX_BTIME in the mask and adding  AT_STATX_DONT_SYNC to the flags
->>> means the filesystem has to decide which it will honor.   My feeling
->>> is that it should honor AT_STATX_DONT_SYNC and clear STATX_BTIME in
->>> stx_mask.   Documentation has no word about this case.
->>=20
->> The btime value shouldn't change over the lifetime of a file, so
->> DONT_SYNC shouldn't have any effect on its validity?
->=20
-> Not validity, but presence in the cache.  Network filesystem or fuse
-> may or may not have it available in the cache at the time the inode is
-> first initialized on loookup.  So when statx(..., AT_STATX_DONT_SYNC,
-> STATX_BTIME) comes along, it may need a roundtrip to the server.  What
-> should it do?
+and this is what I think you were proposing, Jan:
 
-To my thinking, if the user/app requests btime/ctime/size/blocks the =
-kernel
-should return these fields.  If DONT_SYNC is set, it means the kernel =
-can
-return potentially stale values, but if the kernel doesn't have *any*
-values for these fields at all it still should query the server instead =
-of
-just returning random garbage.
+madvise flag, MADV_DIRECT_ACCESS
+- same semantics as MAP_DIRECT, but specified via the madvise system call
 
-That said, it seems that it isn't even possible to get into =
-nfs_getattr()
-without the VFS having instantiated a dentry and inode (i.e. queried the
-server via nfs_lookup() at some point), so the inode fields have already
-been filled with *something*.
-
-Cheers, Andreas
-
-
-
-
-
-
---Apple-Mail=_93E2257F-0FE4-4BE8-A439-506B41068230
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iQIzBAEBCAAdFiEEDb73u6ZejP5ZMprvcqXauRfMH+AFAlvHmiIACgkQcqXauRfM
-H+A9VA/+Kpylm80gTZnIFdxJl7frYp0k3FiZTT+8nS17CuVnb21J3Cdv95T57xn3
-dMIxOlDUTg32EKkRHdMAEC4Cg0cQM64xYVIVRvU5nXCUUT5fQvPFu0NJROF3HKii
-PwWq5oDyA3GijAiBn6wWkqqfXdQwh28OBbEIwMOz0WSiDKIIsc+gVOxEYXfJCbJu
-zUOHYfuVLkpNAeicY840ExkjtukqGAPcvXvIB2V9IRmmR3q2ePRk+15Y4iiPTCKb
-5eOWZLq8wgp9n2e8EAsvpM0GHJO2Ys9uFcnwPNtPMzW4hhEx/SF7vKOaz4YSWKgy
-4zmQkRyzImcsNuLf4ZGy/Rbd7/tZzkihMMX1qh4aJZJF9nzwgyd1Iun0+Ju3mbUJ
-uDI2jazh+M8Ru6JKDKIOUr7ajV4bekng8tvMizf/aMhou3bK4m2zDLGebioFFf0j
-9ylPITCqgNvjy+IfHhNas1KbQWTSR9Aw7sdl5vBU5na8m6+lQq+rVqQWmYCHA2b0
-r7LR0oFBu6GSggsdiuqPsxZspA+Jz2hkMoF/uBZvV3BNzv+exezVpjfxrJNAZ6Zi
-UoUdfnCuNxVwTH1FKwq+W8CYo3UQQQAdtkiMlpcVhabiHcwiuZF088jwc4GlAzAd
-D+PPXMx85+BSCRqQR5tgO+UmM3pP42PV7Ls2BK4cA53ATqZyrck=
-=GolS
------END PGP SIGNATURE-----
-
---Apple-Mail=_93E2257F-0FE4-4BE8-A439-506B41068230--
+Cheers,
+Jeff
