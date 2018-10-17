@@ -1,87 +1,67 @@
-From: Srikar Dronamraju <srikar@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH for 4.21 03/16] sched: Implement push_task_to_cpu (v2)
-Date: Wed, 17 Oct 2018 12:21:45 +0530
-Message-ID: <20181017065145.GA7111@linux.vnet.ibm.com>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
- <20181010191936.7495-4-mathieu.desnoyers@efficios.com>
-Reply-To: Srikar Dronamraju <srikar@linux.vnet.ibm.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Wed, 17 Oct 2018 09:05:31 +0200
+Message-ID: <20181017070531.GC18839@dhcp22.suse.cz>
+References: <alpine.DEB.2.21.1810031547150.202532@chino.kir.corp.google.com>
+ <20181004055842.GA22173@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810040209130.113459@chino.kir.corp.google.com>
+ <20181004094637.GG22173@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810041130380.12951@chino.kir.corp.google.com>
+ <20181009083326.GG8528@dhcp22.suse.cz>
+ <20181015150325.GN18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
+ <20181016104855.GQ18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181010191936.7495-4-mathieu.desnoyers@efficios.com>
+In-Reply-To: <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
+To: David Rientjes <rientjes@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Mathieu,
+On Tue 16-10-18 14:24:19, David Rientjes wrote:
+> On Tue, 16 Oct 2018, Michal Hocko wrote:
+> 
+> > > I don't understand the point of extending smaps with yet another line.  
+> > 
+> > Because abusing a vma flag part is just wrong. What are you going to do
+> > when a next bug report states that the flag is set even though no
+> > userspace has set it and that leads to some malfunctioning? Can you rule
+> > that out? Even your abuse of the flag is surprising so why others
+> > wouldn't be?
+> > 
+> 
+> The flag has taken on the meaning of "thp disabled for this vma", how it 
+> is set is not the scope of the flag.  If a thp is explicitly disabled from 
+> being eligible for thp, whether by madvise, prctl, or any future 
+> mechanism, it should use VM_NOHUGEPAGE or show_smap_vma_flags() needs to 
+> be modified.
 
-> +int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
-> +{
+No, this is not the meaning which is documented
 
-In your use case, is the task going to be current?
-If yes, we should simply be using migrate_task_to.
+nh  - no-huge page advise flag
 
-> +	struct rq_flags rf;
-> +	struct rq *rq;
-> +	int ret = 0;
-> +
-> +	rq = task_rq_lock(p, &rf);
-> +	update_rq_clock(rq);
-> +
-> +	if (!cpumask_test_cpu(dest_cpu, &p->cpus_allowed)) {
-> +		ret = -EINVAL;
-> +		goto out;
-> +	}
+and as far as I know it is only you who has complained so far.
+ 
+> > As I've said there are two things. Exporting PR_SET_THP_DISABLE to
+> > userspace so that a 3rd party process can query it. I've already
+> > explained why that might be useful. If you really insist on having
+> > a per-vma field then let's do it properly now. Are you going to agree on
+> > that? If yes, I am willing to spend my time on that but I am not going
+> > to bother if this will lead to "I want my vma field abuse anyway".
+> 
+> I think what you and I want is largely irrelevant :)  What's important is 
+> that there are userspace implementations that query this today so 
+> continuing to support it as the way to determine if a vma has been thp 
+> disabled doesn't seem problematic and guarantees that userspace doesn't 
+> break.
 
-Ideally we should have checked cpus_allowed/cpu_active_mask before taking
-the lock. This would help reduce the contention on the rqlock when the
-passed parameter is not correct.
+Do you know of any other userspace except your usecase? Is there
+anything fundamental that would prevent a proper API adoption for you?
 
-> +
-> +	if (!cpumask_test_cpu(dest_cpu, cpu_active_mask)) {
-> +		ret = -EBUSY;
-> +		goto out;
-> +	}
-> +
-> +	if (task_cpu(p) == dest_cpu)
-> +		goto out;
-
-Same as above.
-
-> +
-> +	if (task_running(rq, p) || p->state == TASK_WAKING) {
-
-Why are we using migration thread to move a task in TASK_WAKING state?
-
-> +		struct migration_arg arg = { p, dest_cpu };
-> +		/* Need help from migration thread: drop lock and wait. */
-> +		task_rq_unlock(rq, p, &rf);
-> +		stop_one_cpu(cpu_of(rq), migration_cpu_stop, &arg);
-> +		tlb_migrate_finish(p->mm);
-> +		return 0;
-
-Why cant we use migrate_task_to instead?
-
-> +	} else if (task_on_rq_queued(p)) {
-> diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-> index 455fa330de04..27ad25780204 100644
-> --- a/kernel/sched/sched.h
-> +++ b/kernel/sched/sched.h
-> @@ -1340,6 +1340,15 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
->  #endif
->  }
->  
-> +#ifdef CONFIG_SMP
-> +int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu);
-> +#else
-> +static inline int push_task_to_cpu(struct task_struct *p, unsigned int dest_cpu)
-> +{
-> +	return 0;
-> +}
-> +#endif
-> +
-
-Your usecase is outside kernel/sched. So I am not sure if this is the right
-place for the declaration.
+-- 
+Michal Hocko
+SUSE Labs
