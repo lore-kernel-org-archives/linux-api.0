@@ -1,31 +1,153 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock for reconfiguration [ver #12]
-Date: Wed, 17 Oct 2018 16:45:53 +0100
-Message-ID: <15867.1539791153@warthog.procyon.org.uk>
-References: <f6f2553e-f64d-9c26-4290-baf43e5f533b@gmail.com> <19866.1539782101@warthog.procyon.org.uk> <68a2107f-bf70-055b-86cf-1ba2ba9422bf@gmail.com> <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk> <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk> <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com> <20181013061141.GR32577@ZenIV.linux.org.uk> <28710.1539782412@warthog.procyon.org.uk>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.21 06/16] cpu_opv: Provide cpu_opv system call
+ (v8)
+Date: Wed, 17 Oct 2018 12:09:51 -0400 (EDT)
+Message-ID: <1102241735.877.1539792591430.JavaMail.zimbra@efficios.com>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <20181010191936.7495-7-mathieu.desnoyers@efficios.com> <20181017071931.GA18379@linux.vnet.ibm.com> <1006597066.825.1539789100381.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <f6f2553e-f64d-9c26-4290-baf43e5f533b@gmail.com>
-Content-ID: <15866.1539791153.1@warthog.procyon.org.uk>
+In-Reply-To: <1006597066.825.1539789100381.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Jenkins <alan.christopher.jenkins@gmail.com>
-Cc: dhowells@redhat.com, Al Viro <viro@ZenIV.linux.org.uk>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, ebiederm@xmission.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: Srikar Dronamraju <srikar@linux.vnet.ibm.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-Alan Jenkins <alan.christopher.jenkins@gmail.com> wrote:
+----- On Oct 17, 2018, at 11:11 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-> I agree.  I'm happy to see this is using the same check as do_remount().
+> ----- On Oct 17, 2018, at 3:19 AM, Srikar Dronamraju srikar@linux.vnet.ibm.com
+> wrote:
 > 
+>> Hi Mathieu,
+>> 
+>>> +static int do_cpu_opv(struct cpu_op *cpuop, int cpuopcnt,
+>>> +		      struct cpu_opv_vaddr *vaddr_ptrs, int cpu)
+>>> +{
+>>> +	struct mm_struct *mm = current->mm;
+>>> +	int ret;
+>>> +
+>>> +retry:
+>>> +	if (cpu != raw_smp_processor_id()) {
+>>> +		ret = push_task_to_cpu(current, cpu);
+>>> +		if (ret)
+>>> +			goto check_online;
+>>> +	}
+>>> +	down_read(&mm->mmap_sem);
+>>> +	ret = vaddr_ptrs_check(vaddr_ptrs);
+>>> +	if (ret)
+>>> +		goto end;
+>>> +	preempt_disable();
+>>> +	if (cpu != smp_processor_id()) {
+>>> +		preempt_enable();
+>>> +		up_read(&mm->mmap_sem);
+>>> +		goto retry;
+>>> +	}
+>> 
+>> If we have a higher priority task/s either pinned to the cpu, dont we end up
+>> in busy-looping till the task exits/sleeps?
 > 
-> * change filesystem flags. dir should be a physical root of filesystem.
-> * If you've mounted a non-root directory somewhere and want to do remount
-> * on it - tough luck.
-> */
+> You're right!
+> 
+> How about we ditch the thread migration altogether, and simply perform
+> the cpu_opv operations in a IPI handler ?
+> 
+> This is possible now that cpu_opv uses a temporary vmap() rather than
+> try to touch the user-space page through the current thread's page table.
+> 
+> Thoughts ?
 
-Are you suggesting that it should only work at the ultimate root of a
-superblock and not a bind mount somewhere within?
+Here is the associated implementation on top of this patchset:
 
-That's tricky to make work for NFS because s_root is a dummy dentry.
+commit 759c5a8860d867091e168900329f0955e5101989
+Author: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Date:   Wed Oct 17 11:32:02 2018 -0400
 
-David
+    cpu opv: use ipi
+
+diff --git a/kernel/cpu_opv.c b/kernel/cpu_opv.c
+index db144b71d51a..30405e0cc049 100644
+--- a/kernel/cpu_opv.c
++++ b/kernel/cpu_opv.c
+@@ -31,6 +31,7 @@
+ #include <linux/mm.h>
+ #include <linux/vmalloc.h>
+ #include <linux/atomic.h>
++#include <linux/smp.h>
+ #include <asm/ptrace.h>
+ #include <asm/byteorder.h>
+ #include <asm/cacheflush.h>
+@@ -1039,41 +1040,48 @@ static int vaddr_ptrs_check(struct cpu_opv_vaddr *vaddr_ptrs)
+        return 0;
+ }
+
++struct opv_ipi_args {
++       struct cpu_op *cpuop;
++       int cpuopcnt;
++       int ret;
++};
++
++static void cpu_opv_ipi(void *info)
++{
++       struct opv_ipi_args *args = info;
++
++       rseq_preempt(current);
++       args->ret = __do_cpu_opv(args->cpuop, args->cpuopcnt);
++}
++
+ static int do_cpu_opv(struct cpu_op *cpuop, int cpuopcnt,
+                      struct cpu_opv_vaddr *vaddr_ptrs, int cpu)
+ {
+        struct mm_struct *mm = current->mm;
++       struct opv_ipi_args args = {
++               .cpuop = cpuop,
++               .cpuopcnt = cpuopcnt,
++       };
+        int ret;
+
+ retry:
+-       if (cpu != raw_smp_processor_id()) {
+-               ret = push_task_to_cpu(current, cpu);
+-               if (ret)
+-                       goto check_online;
+-       }
++       if (!cpumask_test_cpu(cpu, &current->cpus_allowed))
++               return -EINVAL;
+        down_read(&mm->mmap_sem);
+        ret = vaddr_ptrs_check(vaddr_ptrs);
+        if (ret)
+                goto end;
+-       preempt_disable();
+-       if (cpu != smp_processor_id()) {
+-               preempt_enable();
++       ret = smp_call_function_single(cpu, cpu_opv_ipi, &args, 1);
++       if (ret) {
+                up_read(&mm->mmap_sem);
+-               goto retry;
++               goto check_online;
+        }
+-       ret = __do_cpu_opv(cpuop, cpuopcnt);
+-       preempt_enable();
++       ret = args.ret;
+ end:
+        up_read(&mm->mmap_sem);
+        return ret;
+
+ check_online:
+-       /*
+-        * push_task_to_cpu() returns -EINVAL if the requested cpu is not part
+-        * of the current thread's cpus_allowed mask.
+-        */
+-       if (ret == -EINVAL)
+-               return ret;
+        get_online_cpus();
+        if (cpu_online(cpu)) {
+                put_online_cpus();
+
+
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
