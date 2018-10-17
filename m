@@ -1,65 +1,92 @@
-From: Srikar Dronamraju <srikar@linux.vnet.ibm.com>
-Subject: Re: [RFC PATCH for 4.21 06/16] cpu_opv: Provide cpu_opv system call
- (v8)
-Date: Wed, 17 Oct 2018 12:49:31 +0530
-Message-ID: <20181017071931.GA18379@linux.vnet.ibm.com>
-References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
- <20181010191936.7495-7-mathieu.desnoyers@efficios.com>
-Reply-To: Srikar Dronamraju <srikar@linux.vnet.ibm.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v3 2/2] sysctl: handle overflow for file-max
+Date: Wed, 17 Oct 2018 11:57:11 +0200
+Message-ID: <20181017095709.6wx6wzhbbezgeybh@brauner.io>
+References: <20181016223322.16844-1-christian@brauner.io>
+ <20181016223322.16844-3-christian@brauner.io>
+ <20181017003548.GA32577@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181010191936.7495-7-mathieu.desnoyers@efficios.com>
+In-Reply-To: <20181017003548.GA32577@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
+To: Al Viro <viro@ZenIV.linux.org.uk>
+Cc: keescook@chromium.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, mcgrof@kernel.org, akpm@linux-foundation.org, joe.lawrence@redhat.com, longman@redhat.com, linux@dominikbrodowski.net, adobriyan@gmail.com, linux-api@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>, Eric Dumazet <eric.dumazet@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Oct 17, 2018 at 01:35:48AM +0100, Al Viro wrote:
+> On Wed, Oct 17, 2018 at 12:33:22AM +0200, Christian Brauner wrote:
+> > Currently, when writing
+> > 
+> > echo 18446744073709551616 > /proc/sys/fs/file-max
+> > 
+> > /proc/sys/fs/file-max will overflow and be set to 0. That quickly
+> > crashes the system.
+> > This commit sets the max and min value for file-max and returns -EINVAL
+> > when a long int is exceeded. Any higher value cannot currently be used as
+> > the percpu counters are long ints and not unsigned integers. This behavior
+> > also aligns with other tuneables that return -EINVAL when their range is
+> > exceeded. See e.g. [1], [2] and others.
+> 
+> Mostly sane, but...  get_max_files() users are bloody odd.  The one in
+> file-max limit reporting looks like a half-arsed attempt in "[PATCH] fix
+> file counting".  The one in af_unix.c, though...  I don't remember how
+> that check had come to be - IIRC that was a strange fallout of a thread
+> with me, Andrea and ANK involved, circa 1999, but I don't remember details;
+> Andrea, any memories?  It might be worth reconsidering...  The change in
+> question is in 2.2.4pre6; what do we use unix_nr_socks for?  We try to
+> limit the number of PF_UNIX socks by 2 * max_files, but max_files can be
 
-Hi Mathieu,
+So that's something I mentioned to Kees before. It seems we should
+either simply replace this check with:
 
-> +static int do_cpu_opv(struct cpu_op *cpuop, int cpuopcnt,
-> +		      struct cpu_opv_vaddr *vaddr_ptrs, int cpu)
-> +{
-> +	struct mm_struct *mm = current->mm;
-> +	int ret;
-> +
-> +retry:
-> +	if (cpu != raw_smp_processor_id()) {
-> +		ret = push_task_to_cpu(current, cpu);
-> +		if (ret)
-> +			goto check_online;
-> +	}
-> +	down_read(&mm->mmap_sem);
-> +	ret = vaddr_ptrs_check(vaddr_ptrs);
-> +	if (ret)
-> +		goto end;
-> +	preempt_disable();
-> +	if (cpu != smp_processor_id()) {
-> +		preempt_enable();
-> +		up_read(&mm->mmap_sem);
-> +		goto retry;
-> +	}
+        if ((atomic_long_read(&unix_nr_socks) >> 1) > get_max_files())
+                goto out;
 
-If we have a higher priority task/s either pinned to the cpu, dont we end up
-in busy-looping till the task exits/sleeps?
+to protect against overflows or simply do
 
-> +	ret = __do_cpu_opv(cpuop, cpuopcnt);
-> +	preempt_enable();
-> +end:
-> +	up_read(&mm->mmap_sem);
-> +	return ret;
-> +
-> +check_online:
-> +	/*
-> +	 * push_task_to_cpu() returns -EINVAL if the requested cpu is not part
-> +	 * of the current thread's cpus_allowed mask.
-> +	 */
-> +	if (ret == -EINVAL)
-> +		return ret;
-> +	get_online_cpus();
-> +	if (cpu_online(cpu)) {
-> +		put_online_cpus();
-> +		goto retry;
-> +	}
+        if (atomic_long_read(&unix_nr_socks) > get_max_files())
+                goto out;
+
+> huge *and* non-constant (i.e. it can decrease).  What's more, unix_tot_inflight
+> is unsigned int and max_files might exceed 2^31 just fine since "fs: allow
+> for more than 2^31 files" back in 2010...  Something's fishy there...
+
+What's more is that fs/file_table.c:files_maxfiles_init()
+currently has:
+void __init files_maxfiles_init(void)
+{
+        unsigned long n;
+        unsigned long memreserve = (totalram_pages - nr_free_pages()) * 3/2;
+
+        memreserve = min(memreserve, totalram_pages - 1);
+        n = ((totalram_pages - memreserve) * (PAGE_SIZE / 1024)) / 10;
+
+        files_stat.max_files = max_t(unsigned long, n, NR_FILE);
+}
+
+given that we currently can't handle more than LONG_MAX files should we
+maybe cap here? Like:
+
+diff --git a/fs/file_table.c b/fs/file_table.c
+index e49af4caf15d..dd108b4c6d72 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -376,6 +376,8 @@ void __init files_init(void)
+ /*
+  * One file with associated inode and dcache is very roughly 1K. Per default
+  * do not use more than 10% of our memory for files.
++ * The percpu counters only handle long ints so cap maximum number of
++ * files at LONG_MAX.
+  */
+ void __init files_maxfiles_init(void)
+ {
+@@ -386,4 +388,7 @@ void __init files_maxfiles_init(void)
+        n = ((totalram_pages - memreserve) * (PAGE_SIZE / 1024)) / 10;
+
+        files_stat.max_files = max_t(unsigned long, n, NR_FILE);
++
++       if (files_stat.max_files > LONG_MAX)
++               files_stat.max_files = LONG_MAX;
+ }
