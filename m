@@ -1,24 +1,39 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 31/34] vfs: syscall: Add fspick() to select a superblock for reconfiguration [ver #12]
-Date: Wed, 17 Oct 2018 16:24:23 +0100
-Message-ID: <13800.1539789863@warthog.procyon.org.uk>
-References: <87woqgiqta.fsf@xmission.com> <19866.1539782101@warthog.procyon.org.uk> <68a2107f-bf70-055b-86cf-1ba2ba9422bf@gmail.com> <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk> <153754766004.17872.9829232103614083565.stgit@warthog.procyon.org.uk> <9b8bf436-65de-13b9-0002-0479d11c18ca@gmail.com> <20181013061141.GR32577@ZenIV.linux.org.uk> <28710.1539782412@warthog.procyon.org.uk> <f6f2553e-f64d-9c26-4290-baf43e5f533b@gmail.com>
+From: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+Subject: Re: [RFC PATCH for 4.21 04/16] mm: Introduce vm_map_user_ram,
+ vm_unmap_user_ram
+Date: Thu, 18 Oct 2018 00:34:08 +0900
+Message-ID: <20181017153408.GB426@tigerII.localdomain>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com>
+ <20181010191936.7495-5-mathieu.desnoyers@efficios.com>
+ <20181016143016.10da89bd@gandalf.local.home>
+ <20181017002722.GA1068@jagdpanzerIV>
+ <1051015468.759.1539788401096.JavaMail.zimbra@efficios.com>
+ <2060193272.771.1539788641739.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87woqgiqta.fsf@xmission.com>
-Content-ID: <13799.1539789863.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <2060193272.771.1539788641739.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: dhowells@redhat.com, Alan Jenkins <alan.christopher.jenkins@gmail.com>, Al Viro <viro@ZenIV.linux.org.uk>, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>, rostedt <rostedt@goodmis.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Eric W. Biederman <ebiederm@xmission.com> wrote:
+On (10/17/18 11:04), Mathieu Desnoyers wrote:
+> >> 
+> >>> 	if (WARN_ON(x))
+> >>> 		return;
+> >> 
+> >> Given that this somewhat MM-related, I'd may be say VM_WARN_ON().
+> 
+> I notice that VM_WARN_ON() casts the result of WARN_ON() to (void), so it
+> cannot be used in a if () statement.
+> 
+> VM_WARN_ON() will only warn if CONFIG_DEBUG_VM is set.
+> 
+> Is it really what we want ?
 
-> Davids check will work for bind mounts as well.  It just won't work it
-> just won't work for files or subdirectories of some mountpoint.
+Oh, indeed... Sorry, I forgot that they cast WANR_ON() return to void.
+Let's do what Steven suggested.
 
-Bind mounts have to be done with open_tree() and move_mount().  You can't now
-do fsmount() on something fspick()'d.
-
-David
+	-ss
