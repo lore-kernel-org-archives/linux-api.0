@@ -1,87 +1,129 @@
-From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
-Date: Wed, 17 Oct 2018 16:23:50 -0400
-Message-ID: <x49h8hkfhk9.fsf@segfault.boston.devel.redhat.com>
-References: <20181002100531.GC4135@quack2.suse.cz>
- <20181002121039.GA3274@linux-x5ow.site>
- <20181002142959.GD9127@quack2.suse.cz>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v7 1/6] seccomp: add a return code to trap to userspace
+Date: Wed, 17 Oct 2018 14:29:33 -0600
+Message-ID: <20181017202933.GB14047@cisco>
+References: <20180927151119.9989-1-tycho@tycho.ws>
+ <20180927151119.9989-2-tycho@tycho.ws>
+ <CAGXu5jJr3JWLYGrJ+knu3sj4wwJ_irVvs+JRrY5MuYT3voLegg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20181002142959.GD9127-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org> (Jan Kara's message of
- "Tue, 2 Oct 2018 16:29:59 +0200")
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAGXu5jJr3JWLYGrJ+knu3sj4wwJ_irVvs+JRrY5MuYT3voLegg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org> writes:
+On Thu, Sep 27, 2018 at 02:31:24PM -0700, Kees Cook wrote:
+> On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
+> > @@ -60,4 +62,29 @@ struct seccomp_data {
+> >         __u64 args[6];
+> >  };
+> >
+> > +struct seccomp_notif {
+> > +       __u16 len;
+> > +       __u64 id;
+> > +       __u32 pid;
+> > +       __u8 signaled;
+> > +       struct seccomp_data data;
+> > +};
+> > +
+> > +struct seccomp_notif_resp {
+> > +       __u16 len;
+> > +       __u64 id;
+> > +       __s32 error;
+> > +       __s64 val;
+> > +};
+> 
+> So, len has to come first, for versioning. However, since it's ahead
+> of a u64, this leaves a struct padding hole. pahole output:
+> 
+> struct seccomp_notif {
+>         __u16                      len;                  /*     0     2 */
+> 
+>         /* XXX 6 bytes hole, try to pack */
+> 
+>         __u64                      id;                   /*     8     8 */
+>         __u32                      pid;                  /*    16     4 */
+>         __u8                       signaled;             /*    20     1 */
+> 
+>         /* XXX 3 bytes hole, try to pack */
+> 
+>         struct seccomp_data        data;                 /*    24    64 */
+>         /* --- cacheline 1 boundary (64 bytes) was 24 bytes ago --- */
+> 
+>         /* size: 88, cachelines: 2, members: 5 */
+>         /* sum members: 79, holes: 2, sum holes: 9 */
+>         /* last cacheline: 24 bytes */
+> };
+> struct seccomp_notif_resp {
+>         __u16                      len;                  /*     0     2 */
+> 
+>         /* XXX 6 bytes hole, try to pack */
+> 
+>         __u64                      id;                   /*     8     8 */
+>         __s32                      error;                /*    16     4 */
+> 
+>         /* XXX 4 bytes hole, try to pack */
+> 
+>         __s64                      val;                  /*    24     8 */
+> 
+>         /* size: 32, cachelines: 1, members: 4 */
+>         /* sum members: 22, holes: 2, sum holes: 10 */
+>         /* last cacheline: 32 bytes */
+> };
+> 
+> How about making len u32, and moving pid and error above "id"? This
+> leaves a hole after signaled, so changing "len" won't be sufficient
+> for versioning here. Perhaps move it after data?
 
-> [Added ext4, xfs, and linux-api folks to CC for the interface discussion]
->
-> On Tue 02-10-18 14:10:39, Johannes Thumshirn wrote:
->> On Tue, Oct 02, 2018 at 12:05:31PM +0200, Jan Kara wrote:
->> > Hello,
->> > 
->> > commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
->> > removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
->> > mean time certain customer of ours started poking into /proc/<pid>/smaps
->> > and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
->> > flags, the application just fails to start complaining that DAX support is
->> > missing in the kernel. The question now is how do we go about this?
->> 
->> OK naive question from me, how do we want an application to be able to
->> check if it is running on a DAX mapping?
->
-> The question from me is: Should application really care? After all DAX is
-> just a caching decision. Sure it affects performance characteristics and
-> memory usage of the kernel but it is not a correctness issue (in particular
-> we took care for MAP_SYNC to return EOPNOTSUPP if the feature cannot be
-> supported for current mapping). And in the future the details of what we do
-> with DAX mapping can change - e.g. I could imagine we might decide to cache
-> writes in DRAM but do direct PMEM access on reads. And all this could be
-> auto-tuned based on media properties. And we don't want to tie our hands by
-> specifying too narrowly how the kernel is going to behave.
+Just to confirm my understanding; I've got these as:
 
-For read and write, I would expect the O_DIRECT open flag to still work,
-even for dax-capable persistent memory.  Is that a contentious opinion?
+struct seccomp_notif {
+	__u32                      len;                  /*     0     4 */
+	__u32                      pid;                  /*     4     4 */
+	__u64                      id;                   /*     8     8 */
+	__u8                       signaled;             /*    16     1 */
 
-So, what we're really discussing is the behavior for mmap.  MAP_SYNC
-will certainly ensure that the page cache is not used for writes.  It
-would also be odd for us to decide to cache reads.  The only issue I can
-see is that perhaps the application doesn't want to take a performance
-hit on write faults.  I haven't heard that concern expressed in this
-thread, though.
+	/* XXX 7 bytes hole, try to pack */
 
-Just to be clear, this is my understanding of the world:
+	struct seccomp_data        data;                 /*    24    64 */
+	/* --- cacheline 1 boundary (64 bytes) was 24 bytes ago --- */
 
-MAP_SYNC
-- file system guarantees that metadata required to reach faulted-in file
-  data is consistent on media before a write fault is completed.  A
-  side-effect is that the page cache will not be used for
-  writably-mapped pages.
+	/* size: 88, cachelines: 2, members: 5 */
+	/* sum members: 81, holes: 1, sum holes: 7 */
+	/* last cacheline: 24 bytes */
+};
+struct seccomp_notif_resp {
+	__u32                      len;                  /*     0     4 */
+	__s32                      error;                /*     4     4 */
+	__u64                      id;                   /*     8     8 */
+	__s64                      val;                  /*    16     8 */
 
-and what I think Dan had proposed:
+	/* size: 24, cachelines: 1, members: 4 */
+	/* last cacheline: 24 bytes */
+};
 
-mmap flag, MAP_DIRECT
-- file system guarantees that page cache will not be used to front storage.
-  storage MUST be directly addressable.  This *almost* implies MAP_SYNC.
-  The subtle difference is that a write fault /may/ not result in metadata
-  being written back to media.
+in the next version. Since the structure has no padding at the end of
+it, I think the Right Thing will happen. Note that this is slightly
+different than what Kees suggested, if I add signaled after data, then
+I end up with:
 
-and this is what I think you were proposing, Jan:
+struct seccomp_notif {
+	__u32                      len;                  /*     0     4 */
+	__u32                      pid;                  /*     4     4 */
+	__u64                      id;                   /*     8     8 */
+	struct seccomp_data        data;                 /*    16    64 */
+	/* --- cacheline 1 boundary (64 bytes) was 16 bytes ago --- */
+	__u8                       signaled;             /*    80     1 */
 
-madvise flag, MADV_DIRECT_ACCESS
-- same semantics as MAP_DIRECT, but specified via the madvise system call
+	/* size: 88, cachelines: 2, members: 5 */
+	/* padding: 7 */
+	/* last cacheline: 24 bytes */
+};
 
-Cheers,
-Jeff
+which I think will have the versioning problem if the next member
+introduces is < 7 bytes.
+
+Tycho
