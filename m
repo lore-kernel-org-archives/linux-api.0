@@ -1,92 +1,152 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v3 2/2] sysctl: handle overflow for file-max
-Date: Wed, 17 Oct 2018 11:57:11 +0200
-Message-ID: <20181017095709.6wx6wzhbbezgeybh@brauner.io>
-References: <20181016223322.16844-1-christian@brauner.io>
- <20181016223322.16844-3-christian@brauner.io>
- <20181017003548.GA32577@ZenIV.linux.org.uk>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v5 03/27] x86/fpu/xstate: Introduce XSAVES system states
+Date: Wed, 17 Oct 2018 12:41:37 +0200
+Message-ID: <20181017104137.GE22535@zn.tnic>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-4-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181017003548.GA32577@ZenIV.linux.org.uk>
+In-Reply-To: <20181011151523.27101-4-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@ZenIV.linux.org.uk>
-Cc: keescook@chromium.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, mcgrof@kernel.org, akpm@linux-foundation.org, joe.lawrence@redhat.com, longman@redhat.com, linux@dominikbrodowski.net, adobriyan@gmail.com, linux-api@vger.kernel.org, Andrea Arcangeli <aarcange@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>, Eric Dumazet <eric.dumazet@gmail.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 17, 2018 at 01:35:48AM +0100, Al Viro wrote:
-> On Wed, Oct 17, 2018 at 12:33:22AM +0200, Christian Brauner wrote:
-> > Currently, when writing
-> > 
-> > echo 18446744073709551616 > /proc/sys/fs/file-max
-> > 
-> > /proc/sys/fs/file-max will overflow and be set to 0. That quickly
-> > crashes the system.
-> > This commit sets the max and min value for file-max and returns -EINVAL
-> > when a long int is exceeded. Any higher value cannot currently be used as
-> > the percpu counters are long ints and not unsigned integers. This behavior
-> > also aligns with other tuneables that return -EINVAL when their range is
-> > exceeded. See e.g. [1], [2] and others.
+On Thu, Oct 11, 2018 at 08:14:59AM -0700, Yu-cheng Yu wrote:
+> Control Flow Enforcement (CET) MSRs are XSAVES system states.
+
+That sentence needs massaging. MSRs are system states?!?!
+
+> To support CET, we introduce XSAVES system states first.
+
+Pls drop the "we" in all commit messages and convert the tone to
+impartial and passive.
+
+Also, this commit message needs to explain *why* you're doing this - it
+is too laconic.
+
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/asm/fpu/internal.h |  3 +-
+>  arch/x86/include/asm/fpu/xstate.h   |  4 +-
+>  arch/x86/kernel/fpu/core.c          |  6 +-
+>  arch/x86/kernel/fpu/init.c          | 10 ----
+>  arch/x86/kernel/fpu/xstate.c        | 86 ++++++++++++++++++-----------
+>  5 files changed, 62 insertions(+), 47 deletions(-)
 > 
-> Mostly sane, but...  get_max_files() users are bloody odd.  The one in
-> file-max limit reporting looks like a half-arsed attempt in "[PATCH] fix
-> file counting".  The one in af_unix.c, though...  I don't remember how
-> that check had come to be - IIRC that was a strange fallout of a thread
-> with me, Andrea and ANK involved, circa 1999, but I don't remember details;
-> Andrea, any memories?  It might be worth reconsidering...  The change in
-> question is in 2.2.4pre6; what do we use unix_nr_socks for?  We try to
-> limit the number of PF_UNIX socks by 2 * max_files, but max_files can be
+> diff --git a/arch/x86/include/asm/fpu/internal.h b/arch/x86/include/asm/fpu/internal.h
+> index 02c4296478c8..9a5db5a63f60 100644
+> --- a/arch/x86/include/asm/fpu/internal.h
+> +++ b/arch/x86/include/asm/fpu/internal.h
+> @@ -45,7 +45,6 @@ extern void fpu__init_cpu_xstate(void);
+>  extern void fpu__init_system(struct cpuinfo_x86 *c);
+>  extern void fpu__init_check_bugs(void);
+>  extern void fpu__resume_cpu(void);
+> -extern u64 fpu__get_supported_xfeatures_mask(void);
+>  
+>  /*
+>   * Debugging facility:
+> @@ -93,7 +92,7 @@ static inline void fpstate_init_xstate(struct xregs_state *xsave)
+>  	 * XRSTORS requires these bits set in xcomp_bv, or it will
+>  	 * trigger #GP:
+>  	 */
+> -	xsave->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT | xfeatures_mask_user;
+> +	xsave->header.xcomp_bv = XCOMP_BV_COMPACTED_FORMAT | xfeatures_mask_all;
+>  }
+>  
+>  static inline void fpstate_init_fxstate(struct fxregs_state *fx)
+> diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
+> index 76f83d2ac10e..d8e2ec99f635 100644
+> --- a/arch/x86/include/asm/fpu/xstate.h
+> +++ b/arch/x86/include/asm/fpu/xstate.h
+> @@ -19,9 +19,6 @@
+>  #define XSAVE_YMM_SIZE	    256
+>  #define XSAVE_YMM_OFFSET    (XSAVE_HDR_SIZE + XSAVE_HDR_OFFSET)
+>  
+> -/* Supervisor features */
+> -#define XFEATURE_MASK_SUPERVISOR (XFEATURE_MASK_PT)
+> -
+>  /* All currently supported features */
+>  #define SUPPORTED_XFEATURES_MASK (XFEATURE_MASK_FP | \
+>  				  XFEATURE_MASK_SSE | \
+> @@ -40,6 +37,7 @@
+>  #endif
+>  
+>  extern u64 xfeatures_mask_user;
+> +extern u64 xfeatures_mask_all;
 
-So that's something I mentioned to Kees before. It seems we should
-either simply replace this check with:
+You have a bunch of places where you generate the system mask by doing
+~xfeatures_mask_user.
 
-        if ((atomic_long_read(&unix_nr_socks) >> 1) > get_max_files())
-                goto out;
+Why not define
 
-to protect against overflows or simply do
+	xfeatures_mask_system
 
-        if (atomic_long_read(&unix_nr_socks) > get_max_files())
-                goto out;
+instead and generate the _all mask at the places you need it by doing
 
-> huge *and* non-constant (i.e. it can decrease).  What's more, unix_tot_inflight
-> is unsigned int and max_files might exceed 2^31 just fine since "fs: allow
-> for more than 2^31 files" back in 2010...  Something's fishy there...
+	xfeatures_mask_user | xfeatures_mask_system
 
-What's more is that fs/file_table.c:files_maxfiles_init()
-currently has:
-void __init files_maxfiles_init(void)
-{
-        unsigned long n;
-        unsigned long memreserve = (totalram_pages - nr_free_pages()) * 3/2;
+?
 
-        memreserve = min(memreserve, totalram_pages - 1);
-        n = ((totalram_pages - memreserve) * (PAGE_SIZE / 1024)) / 10;
+We are differentiating user and system states now so it is only logical
+to have that mirrored in the variables, right?
 
-        files_stat.max_files = max_t(unsigned long, n, NR_FILE);
-}
+You even do that in fpu__init_system_xstate().
 
-given that we currently can't handle more than LONG_MAX files should we
-maybe cap here? Like:
+...
 
-diff --git a/fs/file_table.c b/fs/file_table.c
-index e49af4caf15d..dd108b4c6d72 100644
---- a/fs/file_table.c
-+++ b/fs/file_table.c
-@@ -376,6 +376,8 @@ void __init files_init(void)
- /*
-  * One file with associated inode and dcache is very roughly 1K. Per default
-  * do not use more than 10% of our memory for files.
-+ * The percpu counters only handle long ints so cap maximum number of
-+ * files at LONG_MAX.
-  */
- void __init files_maxfiles_init(void)
- {
-@@ -386,4 +388,7 @@ void __init files_maxfiles_init(void)
-        n = ((totalram_pages - memreserve) * (PAGE_SIZE / 1024)) / 10;
+> @@ -225,20 +230,19 @@ void fpu__init_cpu_xstate(void)
+>  	 * set here.
+>  	 */
+>  
+> -	xfeatures_mask_user &= ~XFEATURE_MASK_SUPERVISOR;
+> -
+>  	cr4_set_bits(X86_CR4_OSXSAVE);
+>  	xsetbv(XCR_XFEATURE_ENABLED_MASK, xfeatures_mask_user);
 
-        files_stat.max_files = max_t(unsigned long, n, NR_FILE);
-+
-+       if (files_stat.max_files > LONG_MAX)
-+               files_stat.max_files = LONG_MAX;
- }
+<---- newline here.
+
+> +	/*
+> +	 * MSR_IA32_XSS sets which XSAVES system states to be managed by
+
+Improve:
+
+"MSR_IA32_XSS controls which system (not user) states are going to be
+managed by XSAVES."
+
+> @@ -702,6 +703,7 @@ static int init_xstate_size(void)
+>   */
+>  static void fpu__init_disable_system_xstate(void)
+>  {
+> +	xfeatures_mask_all = 0;
+>  	xfeatures_mask_user = 0;
+>  	cr4_clear_bits(X86_CR4_OSXSAVE);
+>  	fpu__xstate_clear_all_cpu_caps();
+> @@ -717,6 +719,8 @@ void __init fpu__init_system_xstate(void)
+>  	static int on_boot_cpu __initdata = 1;
+>  	int err;
+>  	int i;
+> +	u64 cpu_user_xfeatures_mask;
+> +	u64 cpu_system_xfeatures_mask;
+
+Please sort function local variables declaration in a reverse christmas
+tree order:
+
+	<type> longest_variable_name;
+	<type> shorter_var_name;
+	<type> even_shorter;
+	<type> i;
+
+>  
+>  	WARN_ON_FPU(!on_boot_cpu);
+>  	on_boot_cpu = 0;
+
+...
+
+-- 
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
