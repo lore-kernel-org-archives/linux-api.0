@@ -1,61 +1,30 @@
-From: Pavel Machek <pavel@ucw.cz>
+From: Borislav Petkov <bp@alien8.de>
 Subject: Re: [PATCH v5 03/27] x86/fpu/xstate: Introduce XSAVES system states
-Date: Thu, 18 Oct 2018 11:24:29 +0200
-Message-ID: <20181018092429.GA10861@amd>
+Date: Thu, 18 Oct 2018 11:26:03 +0200
+Message-ID: <20181018092603.GB20831@zn.tnic>
 References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
  <20181011151523.27101-4-yu-cheng.yu@intel.com>
  <20181017104137.GE22535@zn.tnic>
  <32da559b-7958-60db-e328-f0eb316e668e@infradead.org>
  <20181017225829.GA32023@zn.tnic>
+ <fde4c237-6210-f4e4-5362-c2e24a9916a2@infradead.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="tThc/1wpZn/ma/RB"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181017225829.GA32023@zn.tnic>
+In-Reply-To: <fde4c237-6210-f4e4-5362-c2e24a9916a2@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Borislav Petkov <bp@alien8.de>
-Cc: Randy Dunlap <rdunlap@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.c>
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Oct 17, 2018 at 04:17:01PM -0700, Randy Dunlap wrote:
+> I asked what I really wanted to know.
 
---tThc/1wpZn/ma/RB
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Then the answer is a bit better readability, I'd guess.
 
-On Thu 2018-10-18 00:58:29, Borislav Petkov wrote:
-> On Wed, Oct 17, 2018 at 03:39:47PM -0700, Randy Dunlap wrote:
-> > Would you mind explaining this request? (requirement?)
-> > Other than to say that it is the preference of some maintainers,
-> > please say Why it is preferred.
-> >=20
-> > and since the <type>s above won't typically be the same length,
-> > it's not for variable name alignment, right?
->=20
-> Searching the net a little, it shows you have asked that question
-> before. So what is it you really wanna know?
+-- 
+Regards/Gruss,
+    Boris.
 
-Why do you think sorting local variables is good idea (for includes it
-reduces collision, hopefully you don't have that for local variables),
-and where is it documented in CodingStyle.
-
-									Pavel
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
-
---tThc/1wpZn/ma/RB
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAlvIUU0ACgkQMOfwapXb+vLuYwCffF5sBE4m1yg2zzM9Cn5YOb1i
-rZsAnjdiBM6nrGcUURtx3ege7AefZD0x
-=AiQ3
------END PGP SIGNATURE-----
-
---tThc/1wpZn/ma/RB--
+Good mailing practices for 400: avoid top-posting and trim the reply.
