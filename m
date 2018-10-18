@@ -1,35 +1,61 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: statx(2) API and documentation
-Date: Thu, 18 Oct 2018 09:49:28 +0200
-Message-ID: <87in1zy9rr.fsf@mid.deneb.enyo.de>
-References: <CAJfpegsxFUGeczcC-pzK0WWROjv48_PvXtNun-f5QJMoUDn1Dw@mail.gmail.com>
-        <006890C4-64D4-4DE2-A1F0-335FFFD585BB@dilger.ca>
-        <CAJfpeguvJZbP83mSULc74Yhpp_CPMBW1XvcgbvCbLnF7QCncUA@mail.gmail.com>
-        <CAOQ4uxjqS3R_0O6gKVFEUJR7BvB+rpaHekjZm+fhMA+7on8AwQ@mail.gmail.com>
-        <20181018074101.GJ23493@quack2.suse.cz>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH v5 03/27] x86/fpu/xstate: Introduce XSAVES system states
+Date: Thu, 18 Oct 2018 11:24:29 +0200
+Message-ID: <20181018092429.GA10861@amd>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-4-yu-cheng.yu@intel.com>
+ <20181017104137.GE22535@zn.tnic>
+ <32da559b-7958-60db-e328-f0eb316e668e@infradead.org>
+ <20181017225829.GA32023@zn.tnic>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="tThc/1wpZn/ma/RB"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181018074101.GJ23493@quack2.suse.cz> (Jan Kara's message of
-        "Thu, 18 Oct 2018 09:41:01 +0200")
+Content-Disposition: inline
+In-Reply-To: <20181017225829.GA32023@zn.tnic>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>
-Cc: Amir Goldstein <amir73il@gmail.com>, Miklos Szeredi <miklos@szeredi.hu>, Andreas Dilger <adilger@dilger.ca>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, David Howells <dhowells@redhat.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+To: Borislav Petkov <bp@alien8.de>
+Cc: Randy Dunlap <rdunlap@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.c>
 List-Id: linux-api@vger.kernel.org
 
-* Jan Kara:
 
-> On Thu 18-10-18 01:15:13, Amir Goldstein wrote:
->> FYI, I identified a similar anti-pattern in fanotify UAPI when I wanted to
->> add new flags and did not want to change the UAPI _ALL_ constants.
->> This is how we plan to solve it:
->> https://github.com/amir73il/linux/commit/8c2b1acadb88ee4505ccc8bfdc665863111fb4cc
->
-> Yeah, after fanotify experience I find foo_ALL constants useless if not
-> dangerous for userspace.  Kernel internal constants like this are IMO
-> useful.
+--tThc/1wpZn/ma/RB
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-There are also various *_MAX constants which are increased regularly.
-Some of them are part of the UAPI headers (INET_DIAG_MAX appears to be
-a relevant example), some are no longer in UAPI, but still in custom
-glibc headers (AF_MAX/PF_MAX).  These appear to be equally useless.
+On Thu 2018-10-18 00:58:29, Borislav Petkov wrote:
+> On Wed, Oct 17, 2018 at 03:39:47PM -0700, Randy Dunlap wrote:
+> > Would you mind explaining this request? (requirement?)
+> > Other than to say that it is the preference of some maintainers,
+> > please say Why it is preferred.
+> >=20
+> > and since the <type>s above won't typically be the same length,
+> > it's not for variable name alignment, right?
+>=20
+> Searching the net a little, it shows you have asked that question
+> before. So what is it you really wanna know?
+
+Why do you think sorting local variables is good idea (for includes it
+reduces collision, hopefully you don't have that for local variables),
+and where is it documented in CodingStyle.
+
+									Pavel
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--tThc/1wpZn/ma/RB
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAlvIUU0ACgkQMOfwapXb+vLuYwCffF5sBE4m1yg2zzM9Cn5YOb1i
+rZsAnjdiBM6nrGcUURtx3ege7AefZD0x
+=AiQ3
+-----END PGP SIGNATURE-----
+
+--tThc/1wpZn/ma/RB--
