@@ -1,35 +1,70 @@
-From: Jeff Moyer <jmoyer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
-Date: Thu, 18 Oct 2018 17:05:30 -0400
-Message-ID: <x49woqfq82t.fsf@segfault.boston.devel.redhat.com>
-References: <20181002100531.GC4135@quack2.suse.cz>
- <20181002121039.GA3274@linux-x5ow.site>
- <20181002142959.GD9127@quack2.suse.cz>
- <x49h8hkfhk9.fsf@segfault.boston.devel.redhat.com>
- <20181018002510.GC6311@dastard>
+From: martin@omnibond.com
+Subject: Re: [PATCH 1/3] orangefs: fix request_mask misuse
+Date: Thu, 18 Oct 2018 17:45:17 -0400
+Message-ID: <20181018214517.GA44581@t480s.mkb.name>
+References: <20181018131125.6303-1-mszeredi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-In-Reply-To: <20181018002510.GC6311@dastard> (Dave Chinner's message of "Thu,
- 18 Oct 2018 11:25:10 +1100")
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
-Cc: linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181018131125.6303-1-mszeredi@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Miklos Szeredi <mszeredi@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>, Mike Marshall <hubcap@omnibond.com>
 List-Id: linux-api@vger.kernel.org
 
-Dave,
+On Thu, Oct 18, 2018 at 03:11:23PM +0200, Miklos Szeredi wrote:
+> Orangefs only handles STATX_BASIC_STATS in its getattr implementation, so
+> mask off all other flags.  Not doing so results in statx(2) forcing a
+> refresh of cached attributes on any other requested flag (i.e. STATX_BTIME
+> currently) due to the following test in orangefs_inode_getattr():
+> 
+>   (request_mask & orangefs_inode->getattr_mask) == request_mask
+> 
+> Also clean up gratuitous uses of STATX_ALL.
+> 
+> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+> Cc: Mike Marshall <hubcap@omnibond.com>
+> Cc: Martin Brandenburg <martin@omnibond.com>
 
-Thanks for the detailed response!  I hadn't considered the NOVA use case
-at all.
+Reviewed-by: Martin Brandenburg <martin@omnibond.com>
 
-Cheers,
-Jeff
+> ---
+>  fs/orangefs/inode.c | 7 ++++---
+>  1 file changed, 4 insertions(+), 3 deletions(-)
+> 
+> diff --git a/fs/orangefs/inode.c b/fs/orangefs/inode.c
+> index 31932879b716..bd7f15a831dc 100644
+> --- a/fs/orangefs/inode.c
+> +++ b/fs/orangefs/inode.c
+> @@ -256,7 +256,8 @@ int orangefs_getattr(const struct path *path, struct kstat *stat,
+>  		     "orangefs_getattr: called on %pd\n",
+>  		     path->dentry);
+>  
+> -	ret = orangefs_inode_getattr(inode, 0, 0, request_mask);
+> +	ret = orangefs_inode_getattr(inode, 0, 0,
+> +				     request_mask & STATX_BASIC_STATS);
+>  	if (ret == 0) {
+>  		generic_fillattr(inode, stat);
+>  
+> @@ -408,7 +409,7 @@ struct inode *orangefs_iget(struct super_block *sb,
+>  	if (!inode || !(inode->i_state & I_NEW))
+>  		return inode;
+>  
+> -	error = orangefs_inode_getattr(inode, 1, 1, STATX_ALL);
+> +	error = orangefs_inode_getattr(inode, 1, 1, STATX_BASIC_STATS);
+>  	if (error) {
+>  		iget_failed(inode);
+>  		return ERR_PTR(error);
+> @@ -453,7 +454,7 @@ struct inode *orangefs_new_inode(struct super_block *sb, struct inode *dir,
+>  	orangefs_set_inode(inode, ref);
+>  	inode->i_ino = hash;	/* needed for stat etc */
+>  
+> -	error = orangefs_inode_getattr(inode, 1, 1, STATX_ALL);
+> +	error = orangefs_inode_getattr(inode, 1, 1, STATX_BASIC_STATS);
+>  	if (error)
+>  		goto out_iput;
+>  
+> -- 
+> 2.14.3
+> 
