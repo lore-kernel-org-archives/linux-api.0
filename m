@@ -1,35 +1,82 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: [PATCH v5 03/27] x86/fpu/xstate: Introduce XSAVES system states
-Date: Thu, 18 Oct 2018 14:10:32 +0200
-Message-ID: <20181018121032.GD20831@zn.tnic>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
- <20181011151523.27101-4-yu-cheng.yu@intel.com>
- <20181017104137.GE22535@zn.tnic>
- <32da559b-7958-60db-e328-f0eb316e668e@infradead.org>
- <20181017225829.GA32023@zn.tnic>
- <fde4c237-6210-f4e4-5362-c2e24a9916a2@infradead.org>
- <20181018092603.GB20831@zn.tnic>
- <20181018093125.GB10861@amd>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Miklos Szeredi <mszeredi@redhat.com>
+Subject: [PATCH 3/3] statx: add STATX_ATTRIBUTES flag
+Date: Thu, 18 Oct 2018 15:11:25 +0200
+Message-ID: <20181018131125.6303-3-mszeredi@redhat.com>
+References: <20181018131125.6303-1-mszeredi@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181018093125.GB10861@amd>
+In-Reply-To: <20181018131125.6303-1-mszeredi@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Pavel Machek <pavel@ucw.cz>
-Cc: Randy Dunlap <rdunlap@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.c>
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 18, 2018 at 11:31:25AM +0200, Pavel Machek wrote:
-> We want readable sources, not neat ascii art everywhere.
+FUSE will want to know if stx_attributes is interesting or not, because
+there's a non-zero cost of retreiving it.
 
-And we want pink ponies.
+This is more of a "want" flag, since stx_attributes_mask already indicates
+whether we "got" stx_attributes or not.  So for now we can just deal with
+this flag in the generic code.
 
-Reverse xmas tree order is and has been the usual variable sorting in
-the tip tree for years.
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+---
+ fs/stat.c                       | 3 +++
+ include/uapi/linux/stat.h       | 1 +
+ samples/statx/test-statx.c      | 2 +-
+ tools/include/uapi/linux/stat.h | 1 +
+ 4 files changed, 6 insertions(+), 1 deletion(-)
 
+diff --git a/fs/stat.c b/fs/stat.c
+index 8d297a279991..6bf86d57e2e3 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -535,6 +535,9 @@ cp_statx(const struct kstat *stat, struct statx __user *buffer)
+ 	tmp.stx_size = stat->size;
+ 	tmp.stx_blocks = stat->blocks;
+ 	tmp.stx_attributes_mask = stat->attributes_mask;
++	/* Having anything in attributes_mask means attributes are valid. */
++	if (tmp.stx_attributes_mask)
++		tmp.stx_mask |= STATX_ATTRIBUTES;
+ 	tmp.stx_atime.tv_sec = stat->atime.tv_sec;
+ 	tmp.stx_atime.tv_nsec = stat->atime.tv_nsec;
+ 	tmp.stx_btime.tv_sec = stat->btime.tv_sec;
+diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
+index 370f09d92fa6..aef0aba5dfe7 100644
+--- a/include/uapi/linux/stat.h
++++ b/include/uapi/linux/stat.h
+@@ -148,6 +148,7 @@ struct statx {
+ #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
+ #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
+ #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
++#define STATX_ATTRIBUTES	0x00001000U	/* Want/got stx_attributes */
+ 
+ #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
+ 
+diff --git a/samples/statx/test-statx.c b/samples/statx/test-statx.c
+index e354048dea3c..deef9a68ff68 100644
+--- a/samples/statx/test-statx.c
++++ b/samples/statx/test-statx.c
+@@ -211,7 +211,7 @@ int main(int argc, char **argv)
+ 	struct statx stx;
+ 	int ret, raw = 0, atflag = AT_SYMLINK_NOFOLLOW;
+ 
+-	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME;
++	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME | STATX_ATTRIBUTES;
+ 
+ 	for (argv++; *argv; argv++) {
+ 		if (strcmp(*argv, "-F") == 0) {
+diff --git a/tools/include/uapi/linux/stat.h b/tools/include/uapi/linux/stat.h
+index 370f09d92fa6..aef0aba5dfe7 100644
+--- a/tools/include/uapi/linux/stat.h
++++ b/tools/include/uapi/linux/stat.h
+@@ -148,6 +148,7 @@ struct statx {
+ #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
+ #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
+ #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
++#define STATX_ATTRIBUTES	0x00001000U	/* Want/got stx_attributes */
+ 
+ #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
+ 
 -- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+2.14.3
