@@ -1,50 +1,35 @@
-From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Thu, 18 Oct 2018 12:14:36 +0100
-Message-ID: <20181018111435.GA237391@arrakis.emea.arm.com>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <CALCETrVuabkb5ZQOSgQQTEq8CrS602NBpAkE2=4n982r1f5reQ@mail.gmail.com>
- <CAK8P3a1Yhhv1TcQTcF0MinicGovgp_0g_sXqADe3fjVTtOK_aw@mail.gmail.com>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v5 03/27] x86/fpu/xstate: Introduce XSAVES system states
+Date: Thu, 18 Oct 2018 14:10:32 +0200
+Message-ID: <20181018121032.GD20831@zn.tnic>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-4-yu-cheng.yu@intel.com>
+ <20181017104137.GE22535@zn.tnic>
+ <32da559b-7958-60db-e328-f0eb316e668e@infradead.org>
+ <20181017225829.GA32023@zn.tnic>
+ <fde4c237-6210-f4e4-5362-c2e24a9916a2@infradead.org>
+ <20181018092603.GB20831@zn.tnic>
+ <20181018093125.GB10861@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAK8P3a1Yhhv1TcQTcF0MinicGovgp_0g_sXqADe3fjVTtOK_aw@mail.gmail.com>
+In-Reply-To: <20181018093125.GB10861@amd>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Andy Lutomirski <luto@amacapital.net>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yury Norov <ynorov@caviumnetworks.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, linux-arch <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Bamvor Zhangjian <bamv2005@gmail.com>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, "Manuel A. Fernandez Montecelo" <manuel.montezelo@gmail.com>, James Hogan <james.hogan@imgtec>
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Randy Dunlap <rdunlap@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.c>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Oct 14, 2018 at 09:49:01PM +0200, Arnd Bergmann wrote:
-> On Sat, Oct 13, 2018 at 9:36 PM Andy Lutomirski <luto@amacapital.net> wrote:
-> >
-> > On Wed, May 16, 2018 at 1:19 AM Yury Norov <ynorov@caviumnetworks.com> wrote:
-> > >
-> > > This series enables AARCH64 with ILP32 mode.
-> > >
-> > > As supporting work, it introduces ARCH_32BIT_OFF_T configuration
-> > > option that is enabled for existing 32-bit architectures but disabled
-> > > for new arches (so 64-bit off_t userspace type is used by new userspace).
-> > > Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
-> >
-> > Second, ILP32 user code is highly unlikely
-> > to end up with the same struct layout as ILP64 code.  The latter seems
-> > like it should be solved entirely in userspace by adding a way to
-> > annotate a structure as being a kernel ABI structure and getting the
-> > toolchain to lay it out as if it were ILP64 even though the target is
-> > ILP32.
-> 
-> The syscall ABI could be almost completely abstracted in glibc, the
-> main issue is ioctl and a couple of related interfaces that pass data
-> structures (read() on /dev/input/*, mmap on /dev/snd/*
-> or raw sockets, fcntl).
+On Thu, Oct 18, 2018 at 11:31:25AM +0200, Pavel Machek wrote:
+> We want readable sources, not neat ascii art everywhere.
 
-There is another case on struct siginfo which has some pointers and it
-wouldn't look like an LP64 structure at all (and glibc doesn't normally
-intercept the sighandler call to rewrite the structure). We could add
-padding around void * members as the kernel zeros them, I don't recall
-the kernel reading these pointers from user. Anyway, using something
-that resembles compat_siginfo looked the simplest for ILP32.
+And we want pink ponies.
+
+Reverse xmas tree order is and has been the usual variable sorting in
+the tip tree for years.
 
 -- 
-Catalin
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
