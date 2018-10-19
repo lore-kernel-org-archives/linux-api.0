@@ -1,79 +1,150 @@
-From: Trond Myklebust <trondmy@hammerspace.com>
-Subject: Re: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
-Date: Fri, 19 Oct 2018 18:14:53 +0000
-Message-ID: <05184f29b5778563519174769c675c5f6c5b2dd3.camel@hammerspace.com>
-References: <20181019122049.27121-1-mszeredi@redhat.com>
-         <20181019122049.27121-5-mszeredi@redhat.com>
-         <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
-         <CAJfpegtq1+vZ+uXwzFs20GeSPCR9UbtqD5-fOn8ynoJUJYx25g@mail.gmail.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 (was ghak32) V4 02/10] audit: add container id
+Date: Fri, 19 Oct 2018 15:38:33 -0400
+Message-ID: <CAHC9VhTT7n4wDoaDGFXAK+wtcsMDDMRkQVCQ2jNYLKSFqFc+bA@mail.gmail.com>
+References: <cover.1533065887.git.rgb@redhat.com> <12396e378a78ee8dd38c75f7730d67d8fbb08e02.1533065887.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJfpegtq1+vZ+uXwzFs20GeSPCR9UbtqD5-fOn8ynoJUJYx25g@mail.gmail.com>
-Content-Language: en-US
-Content-ID: <2D0C3B456D44AE4899DC58EE68CE669F@namprd13.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "miklos@szeredi.hu" <miklos@szeredi.hu>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "amir73il@gmail.com" <amir73il@gmail.com>, "mszeredi@redhat.com" <mszeredi@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "dhowells@redhat.com" <dhowells@redhat.com>, "fw@deneb.enyo.de" <fw@deneb.enyo.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <12396e378a78ee8dd38c75f7730d67d8fbb08e02.1533065887.git.rgb@redhat.com>
+Sender: netdev-owner@vger.kernel.org
+To: rgb@redhat.com
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCAyMDE4LTEwLTE5IGF0IDE5OjQ2ICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToN
-Cj4gT24gRnJpLCBPY3QgMTksIDIwMTggYXQgNTo1MiBQTSwgVHJvbmQgTXlrbGVidXN0DQo+IDx0
-cm9uZG15QGhhbW1lcnNwYWNlLmNvbT4gd3JvdGU6DQo+ID4gT24gRnJpLCAyMDE4LTEwLTE5IGF0
-IDE0OjIwICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToNCj4gPiA+IEFzIHBlciBzdGF0eCgy
-KSBtYW4gcGFnZSBvbmx5IGNsZWFyIG91dCBmbGFncyB0aGF0IGFyZQ0KPiA+ID4gdW5zdXBwb3J0
-ZWQgYnkNCj4gPiA+IHRoZQ0KPiA+ID4gZnMgb3IgaGF2ZSBhbiB1bnJlcHJlc2VudGFibGUgdmFs
-dWUuICBBdGltZSBpcyBzdXBwb3J0ZWQgYnkgTkZTDQo+ID4gPiBhcw0KPiA+ID4gbG9uZyBhcw0K
-PiA+ID4gaXQncyBzdXBwb3J0ZWQgb24gdGhlIHNlcnZlci4NCj4gPiA+IA0KPiA+ID4gU28gdGhl
-IFNUQVRYX0FUSU1FIGZsYWcgc2hvdWxkIG5vdCBiZSBjbGVhcmVkIGluIHRoZSByZXN1bHRfbWFz
-aw0KPiA+ID4gaWYNCj4gPiA+IHRoZQ0KPiA+ID4gb3BlcmF0aW9uIHdhcyByZXF1ZXN0ZWQgb24g
-YSBNTlRfTk9BVElNRSBvciBNTlRfTk9ESVJBVElNRSBtb3VudC4NCj4gPiA+IA0KPiA+ID4gVGhp
-cyBwYXRjaCBkb2Vzbid0IGNoYW5nZSB0aGUgcmV2YWxpZGF0aW9uIGFsZ29yaXRobSBpbiBhbnkg
-d2F5LA0KPiA+ID4ganVzdA0KPiA+ID4gdGhlDQo+ID4gPiBjbGVhcmluZyBvZiBmbGFncyBpbiBz
-dGF0LT5yZXN1bHRfbWFzay4NCj4gPiA+IA0KPiA+ID4gU2lnbmVkLW9mZi1ieTogTWlrbG9zIFN6
-ZXJlZGkgPG1zemVyZWRpQHJlZGhhdC5jb20+DQo+ID4gPiBGaXhlczogOWNjZWU5NDBiZDViICgi
-U3VwcG9ydCBzdGF0eCgpIG1hc2sgYW5kIHF1ZXJ5IGZsYWdzDQo+ID4gPiBwYXJhbWV0ZXJzIikN
-Cj4gPiA+IENjOiBUcm9uZCBNeWtsZWJ1c3QgPHRyb25kLm15a2xlYnVzdEBwcmltYXJ5ZGF0YS5j
-b20+DQo+ID4gPiAtLS0NCj4gPiA+ICBmcy9uZnMvaW5vZGUuYyB8IDUgKy0tLS0NCj4gPiA+ICAx
-IGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDQgZGVsZXRpb25zKC0pDQo+ID4gPiANCj4g
-PiA+IGRpZmYgLS1naXQgYS9mcy9uZnMvaW5vZGUuYyBiL2ZzL25mcy9pbm9kZS5jDQo+ID4gPiBp
-bmRleCBiNjVhZWU0ODFkMTMuLjM0YmIzZTU5MTcwOSAxMDA2NDQNCj4gPiA+IC0tLSBhL2ZzL25m
-cy9pbm9kZS5jDQo+ID4gPiArKysgYi9mcy9uZnMvaW5vZGUuYw0KPiA+ID4gQEAgLTgxMSw3ICs4
-MTEsNyBAQCBpbnQgbmZzX2dldGF0dHIoY29uc3Qgc3RydWN0IHBhdGggKnBhdGgsDQo+ID4gPiBz
-dHJ1Y3QNCj4gPiA+IGtzdGF0ICpzdGF0LA0KPiA+ID4gICAgICAgaWYgKCEocmVxdWVzdF9tYXNr
-ICYNCj4gPiA+IChTVEFUWF9NT0RFfFNUQVRYX05MSU5LfFNUQVRYX0FUSU1FfFNUQVRYX0NUSU1F
-fA0KPiA+ID4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBTVEFUWF9NVElN
-RXxTVEFUWF9VSUR8U1RBVFgNCj4gPiA+IF9HSUQNCj4gPiA+ID4gDQo+ID4gPiANCj4gPiA+ICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgU1RBVFhfU0laRXxTVEFUWF9CTE9D
-S1MpKSkNCj4gPiA+IC0gICAgICAgICAgICAgZ290byBvdXRfbm9fcmV2YWxpZGF0ZTsNCj4gPiA+
-ICsgICAgICAgICAgICAgZ290byBvdXRfbm9fdXBkYXRlOw0KPiA+ID4gDQo+ID4gPiAgICAgICAv
-KiBDaGVjayB3aGV0aGVyIHRoZSBjYWNoZWQgYXR0cmlidXRlcyBhcmUgc3RhbGUgKi8NCj4gPiA+
-ICAgICAgIGRvX3VwZGF0ZSB8PSBmb3JjZV9zeW5jIHx8DQo+ID4gPiBuZnNfYXR0cmlidXRlX2Nh
-Y2hlX2V4cGlyZWQoaW5vZGUpOw0KPiA+ID4gQEAgLTgzMyw5ICs4MzMsNiBAQCBpbnQgbmZzX2dl
-dGF0dHIoY29uc3Qgc3RydWN0IHBhdGggKnBhdGgsDQo+ID4gPiBzdHJ1Y3QNCj4gPiA+IGtzdGF0
-ICpzdGF0LA0KPiA+ID4gICAgICAgICAgICAgICAgICAgICAgIGdvdG8gb3V0Ow0KPiA+ID4gICAg
-ICAgfSBlbHNlDQo+ID4gPiAgICAgICAgICAgICAgIG5mc19yZWFkZGlycGx1c19wYXJlbnRfY2Fj
-aGVfaGl0KHBhdGgtPmRlbnRyeSk7DQo+ID4gPiAtb3V0X25vX3JldmFsaWRhdGU6DQo+ID4gPiAt
-ICAgICAvKiBPbmx5IHJldHVybiBhdHRyaWJ1dGVzIHRoYXQgd2VyZSByZXZhbGlkYXRlZC4gKi8N
-Cj4gPiA+IC0gICAgIHN0YXQtPnJlc3VsdF9tYXNrICY9IHJlcXVlc3RfbWFzazsNCj4gPiA+ICBv
-dXRfbm9fdXBkYXRlOg0KPiA+ID4gICAgICAgZ2VuZXJpY19maWxsYXR0cihpbm9kZSwgc3RhdCk7
-DQo+ID4gPiAgICAgICBzdGF0LT5pbm8gPSBuZnNfY29tcGF0X3VzZXJfaW5vNjQoTkZTX0ZJTEVJ
-RChpbm9kZSkpOw0KPiA+IA0KPiA+IE5BQ0suDQo+ID4gDQo+ID4gV2hlbiB3ZSBkb24ndCByZXZh
-bGlkYXRlIHRoZSBhdHRyaWJ1dGUsIHRoZW4gdGhlIGNvbnRlbnQgb2YgdGhlDQo+ID4gZmllbGQN
-Cj4gPiBjb250YWlucyBqdW5rIHZhbHVlcy4gVGhlIGFib3ZlIGNvZGUgaXMgdmVyeSBpbnRlbnRp
-b25hbC4NCj4gDQo+IEhvdyBpcyBpdCB0aGVuIHRoYXQgb25seSBTVEFUWF9BVElNRSBpcyBjbGVh
-cmVkIGFuZCBub3QgdGhlIG90aGVyDQo+IGZpZWxkcz8NCg0KSXQgaXNuJ3QganVzdCB0aGUgYXRp
-bWUuIFdlIGNhbiBhbHNvIGZhaWwgdG8gcmV2YWxpZGF0ZSB0aGUgY3RpbWUgYW5kDQptdGltZSBp
-ZiB0aGV5IGFyZSBub3QgYmVpbmcgcmVxdWVzdGVkIGJ5IHRoZSB1c2VyLg0KDQo+IA0KPiBOb3Rl
-OiBqdW5rICE9IHN0YWxlLiAgVGhlIHN0YXR4IGRlZmluaXRpb24gZG9lc24ndCB0YWxrIGFib3V0
-IHRoZQ0KPiBmaWVsZHMgYmVpbmcgdXAtdG8tZGF0ZSwgZXhjZXB0IGZvciBBVF9TVEFUWF9GT1JD
-RV9TWU5DLCBzbyBzdGFsZQ0KPiBhdHRyaWJ1dGVzIGFyZSBva2F5LCBhbmQgZG8gbm90IHdhcnJh
-bnQgY2xlYXJpbmcgdGhlIHJlc3VsdF9tYXNrLg0KPiANCg0KSSBkaXNhZ3JlZS4gc3RhbGUgPT0g
-anVuayBoZXJlLCBiZWNhdXNlIHRoZSBkZWZhdWx0IG9mDQpBVF9TVEFUWF9TWU5DX0FTX1NUQVQg
-aXMgZGVzY3JpYmVkIGJ5IHRoZSBtYW5wYWdlIGFzICJEbyAgd2hhdGV2ZXINCnN0YXQoMikgZG9l
-cy4iIHdoaWNoIHRoaXMgaXMgbm90Lg0KDQpUaGUgZGVmYXVsdCBiZWhhdmlvdXIgZm9yICJzdGF0
-KDIpIiBpcyB0byByZXZhbGlkYXRlIGF0dHJpYnV0ZXMgdGhhdCB3ZQ0Ka25vdyBvciBzdXNwZWN0
-IGFyZSBzdGFsZS4gV2UgbmV2ZXIga25vd2luZ2x5IHJldHVybiBzdGFsZSBhdHRyaWJ1dGVzLg0K
-DQotLSANClRyb25kIE15a2xlYnVzdA0KTGludXggTkZTIGNsaWVudCBtYWludGFpbmVyLCBIYW1t
-ZXJzcGFjZQ0KdHJvbmQubXlrbGVidXN0QGhhbW1lcnNwYWNlLmNvbQ0KDQoNCg==
+On Tue, Jul 31, 2018 at 4:11 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+>
+> Implement the proc fs write to set the audit container identifier of a
+> process, emitting an AUDIT_CONTAINER_OP record to document the event.
+>
+> This is a write from the container orchestrator task to a proc entry of
+> the form /proc/PID/audit_containerid where PID is the process ID of the
+> newly created task that is to become the first task in a container, or
+> an additional task added to a container.
+>
+> The write expects up to a u64 value (unset: 18446744073709551615).
+>
+> The writer must have capability CAP_AUDIT_CONTROL.
+>
+> This will produce a record such as this:
+>   type=3DCONTAINER_ID msg=3Daudit(2018-06-06 12:39:29.636:26949) : op=3Ds=
+et opid=3D2209 old-contid=3D18446744073709551615 contid=3D123456 pid=3D628 =
+auid=3Droot uid=3Droot tty=3DttyS0 ses=3D1 subj=3Dunconfined_u:unconfined_r=
+:unconfined_t:s0-s0:c0.c1023 comm=3Dbash exe=3D/usr/bin/bash res=3Dyes
+
+You need to update the record type in the example above.
+
+> The "op" field indicates an initial set.  The "pid" to "ses" fields are
+> the orchestrator while the "opid" field is the object's PID, the process
+> being "contained".  Old and new audit container identifier values are
+> given in the "contid" fields, while res indicates its success.
+
+I understand Steve's concern around the "op" field, but I think it
+might be a bit premature to think we might not need to do some sort of
+audit container ID management in the future that would want to make
+use of the CONTAINER_OP message type.  I would like to see the "op"
+field preserved.
+
+> It is not permitted to unset the audit container identifier.
+> A child inherits its parent's audit container identifier.
+>
+> See: https://github.com/linux-audit/audit-kernel/issues/90
+> See: https://github.com/linux-audit/audit-userspace/issues/51
+> See: https://github.com/linux-audit/audit-testsuite/issues/64
+> See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container=
+-ID
+>
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+> Acked-by: Steve Grubb <sgrubb@redhat.com>
+> ---
+>  fs/proc/base.c             | 37 +++++++++++++++++++++++++
+>  include/linux/audit.h      | 24 ++++++++++++++++
+>  include/uapi/linux/audit.h |  2 ++
+>  kernel/auditsc.c           | 68 ++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  4 files changed, 131 insertions(+)
+
+...
+
+> @@ -2112,6 +2114,72 @@ int audit_set_loginuid(kuid_t loginuid)
+>  }
+>
+>  /**
+> + * audit_set_contid - set current task's audit_context contid
+> + * @contid: contid value
+> + *
+> + * Returns 0 on success, -EPERM on permission failure.
+> + *
+> + * Called (set) from fs/proc/base.c::proc_contid_write().
+> + */
+> +int audit_set_contid(struct task_struct *task, u64 contid)
+> +{
+> +       u64 oldcontid;
+> +       int rc =3D 0;
+> +       struct audit_buffer *ab;
+> +       uid_t uid;
+> +       struct tty_struct *tty;
+> +       char comm[sizeof(current->comm)];
+> +
+> +       task_lock(task);
+> +       /* Can't set if audit disabled */
+> +       if (!task->audit) {
+> +               task_unlock(task);
+> +               return -ENOPROTOOPT;
+> +       }
+> +       oldcontid =3D audit_get_contid(task);
+> +       read_lock(&tasklist_lock);
+
+I assume lockdep was happy with nesting the tasklist_lock inside the task l=
+ock?
+
+> +       /* Don't allow the audit containerid to be unset */
+> +       if (!audit_contid_valid(contid))
+> +               rc =3D -EINVAL;
+> +       /* if we don't have caps, reject */
+> +       else if (!capable(CAP_AUDIT_CONTROL))
+> +               rc =3D -EPERM;
+> +       /* if task has children or is not single-threaded, deny */
+> +       else if (!list_empty(&task->children))
+> +               rc =3D -EBUSY;
+> +       else if (!(thread_group_leader(task) && thread_group_empty(task))=
+)
+> +               rc =3D -EALREADY;
+> +       read_unlock(&tasklist_lock);
+> +       if (!rc)
+> +               task->audit->contid =3D contid;
+> +       task_unlock(task);
+> +
+> +       if (!audit_enabled)
+> +               return rc;
+> +
+> +       ab =3D audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAIN=
+ER_OP);
+> +       if (!ab)
+> +               return rc;
+> +
+> +       uid =3D from_kuid(&init_user_ns, task_uid(current));
+> +       tty =3D audit_get_tty(current);
+> +       audit_log_format(ab, "op=3Dset opid=3D%d old-contid=3D%llu contid=
+=3D%llu pid=3D%d uid=3D%u auid=3D%u tty=3D%s ses=3D%u",
+> +                        task_tgid_nr(task), oldcontid, contid,
+> +                        task_tgid_nr(current), uid,
+> +                        from_kuid(&init_user_ns, audit_get_loginuid(curr=
+ent)),
+> +                        tty ? tty_name(tty) : "(none)",
+> +                        audit_get_sessionid(current));
+> +       audit_put_tty(tty);
+> +       audit_log_task_context(ab);
+> +       audit_log_format(ab, " comm=3D");
+> +       audit_log_untrustedstring(ab, get_task_comm(comm, current));
+> +       audit_log_d_path_exe(ab, current->mm);
+> +       audit_log_format(ab, " res=3D%d", !rc);
+> +       audit_log_end(ab);
+> +       return rc;
+> +}
+
+--=20
+paul moore
+www.paul-moore.com
