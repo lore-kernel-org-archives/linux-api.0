@@ -1,81 +1,79 @@
-From: Miklos Szeredi <miklos@szeredi.hu>
+From: Trond Myklebust <trondmy@hammerspace.com>
 Subject: Re: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
-Date: Fri, 19 Oct 2018 19:46:16 +0200
-Message-ID: <CAJfpegtq1+vZ+uXwzFs20GeSPCR9UbtqD5-fOn8ynoJUJYx25g@mail.gmail.com>
-References: <20181019122049.27121-1-mszeredi@redhat.com> <20181019122049.27121-5-mszeredi@redhat.com>
- <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
+Date: Fri, 19 Oct 2018 18:14:53 +0000
+Message-ID: <05184f29b5778563519174769c675c5f6c5b2dd3.camel@hammerspace.com>
+References: <20181019122049.27121-1-mszeredi@redhat.com>
+         <20181019122049.27121-5-mszeredi@redhat.com>
+         <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
+         <CAJfpegtq1+vZ+uXwzFs20GeSPCR9UbtqD5-fOn8ynoJUJYx25g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
+In-Reply-To: <CAJfpegtq1+vZ+uXwzFs20GeSPCR9UbtqD5-fOn8ynoJUJYx25g@mail.gmail.com>
+Content-Language: en-US
+Content-ID: <2D0C3B456D44AE4899DC58EE68CE669F@namprd13.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Trond Myklebust <trondmy@hammerspace.com>
-Cc: "mszeredi@redhat.com" <mszeredi@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "amir73il@gmail.com" <amir73il@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "fw@deneb.enyo.de" <fw@deneb.enyo.de>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>
+To: "miklos@szeredi.hu" <miklos@szeredi.hu>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "amir73il@gmail.com" <amir73il@gmail.com>, "mszeredi@redhat.com" <mszeredi@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "dhowells@redhat.com" <dhowells@redhat.com>, "fw@deneb.enyo.de" <fw@deneb.enyo.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 19, 2018 at 5:52 PM, Trond Myklebust
-<trondmy@hammerspace.com> wrote:
-> On Fri, 2018-10-19 at 14:20 +0200, Miklos Szeredi wrote:
->> As per statx(2) man page only clear out flags that are unsupported by
->> the
->> fs or have an unrepresentable value.  Atime is supported by NFS as
->> long as
->> it's supported on the server.
->>
->> So the STATX_ATIME flag should not be cleared in the result_mask if
->> the
->> operation was requested on a MNT_NOATIME or MNT_NODIRATIME mount.
->>
->> This patch doesn't change the revalidation algorithm in any way, just
->> the
->> clearing of flags in stat->result_mask.
->>
->> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
->> Fixes: 9ccee940bd5b ("Support statx() mask and query flags
->> parameters")
->> Cc: Trond Myklebust <trond.myklebust@primarydata.com>
->> ---
->>  fs/nfs/inode.c | 5 +----
->>  1 file changed, 1 insertion(+), 4 deletions(-)
->>
->> diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
->> index b65aee481d13..34bb3e591709 100644
->> --- a/fs/nfs/inode.c
->> +++ b/fs/nfs/inode.c
->> @@ -811,7 +811,7 @@ int nfs_getattr(const struct path *path, struct
->> kstat *stat,
->>       if (!(request_mask &
->> (STATX_MODE|STATX_NLINK|STATX_ATIME|STATX_CTIME|
->>                                       STATX_MTIME|STATX_UID|STATX_GID
->> |
->>                                       STATX_SIZE|STATX_BLOCKS)))
->> -             goto out_no_revalidate;
->> +             goto out_no_update;
->>
->>       /* Check whether the cached attributes are stale */
->>       do_update |= force_sync || nfs_attribute_cache_expired(inode);
->> @@ -833,9 +833,6 @@ int nfs_getattr(const struct path *path, struct
->> kstat *stat,
->>                       goto out;
->>       } else
->>               nfs_readdirplus_parent_cache_hit(path->dentry);
->> -out_no_revalidate:
->> -     /* Only return attributes that were revalidated. */
->> -     stat->result_mask &= request_mask;
->>  out_no_update:
->>       generic_fillattr(inode, stat);
->>       stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
->
-> NACK.
->
-> When we don't revalidate the attribute, then the content of the field
-> contains junk values. The above code is very intentional.
-
-How is it then that only STATX_ATIME is cleared and not the other fields?
-
-Note: junk != stale.  The statx definition doesn't talk about the
-fields being up-to-date, except for AT_STATX_FORCE_SYNC, so stale
-attributes are okay, and do not warrant clearing the result_mask.
-
-Thanks,
-Miklos
+T24gRnJpLCAyMDE4LTEwLTE5IGF0IDE5OjQ2ICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToN
+Cj4gT24gRnJpLCBPY3QgMTksIDIwMTggYXQgNTo1MiBQTSwgVHJvbmQgTXlrbGVidXN0DQo+IDx0
+cm9uZG15QGhhbW1lcnNwYWNlLmNvbT4gd3JvdGU6DQo+ID4gT24gRnJpLCAyMDE4LTEwLTE5IGF0
+IDE0OjIwICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToNCj4gPiA+IEFzIHBlciBzdGF0eCgy
+KSBtYW4gcGFnZSBvbmx5IGNsZWFyIG91dCBmbGFncyB0aGF0IGFyZQ0KPiA+ID4gdW5zdXBwb3J0
+ZWQgYnkNCj4gPiA+IHRoZQ0KPiA+ID4gZnMgb3IgaGF2ZSBhbiB1bnJlcHJlc2VudGFibGUgdmFs
+dWUuICBBdGltZSBpcyBzdXBwb3J0ZWQgYnkgTkZTDQo+ID4gPiBhcw0KPiA+ID4gbG9uZyBhcw0K
+PiA+ID4gaXQncyBzdXBwb3J0ZWQgb24gdGhlIHNlcnZlci4NCj4gPiA+IA0KPiA+ID4gU28gdGhl
+IFNUQVRYX0FUSU1FIGZsYWcgc2hvdWxkIG5vdCBiZSBjbGVhcmVkIGluIHRoZSByZXN1bHRfbWFz
+aw0KPiA+ID4gaWYNCj4gPiA+IHRoZQ0KPiA+ID4gb3BlcmF0aW9uIHdhcyByZXF1ZXN0ZWQgb24g
+YSBNTlRfTk9BVElNRSBvciBNTlRfTk9ESVJBVElNRSBtb3VudC4NCj4gPiA+IA0KPiA+ID4gVGhp
+cyBwYXRjaCBkb2Vzbid0IGNoYW5nZSB0aGUgcmV2YWxpZGF0aW9uIGFsZ29yaXRobSBpbiBhbnkg
+d2F5LA0KPiA+ID4ganVzdA0KPiA+ID4gdGhlDQo+ID4gPiBjbGVhcmluZyBvZiBmbGFncyBpbiBz
+dGF0LT5yZXN1bHRfbWFzay4NCj4gPiA+IA0KPiA+ID4gU2lnbmVkLW9mZi1ieTogTWlrbG9zIFN6
+ZXJlZGkgPG1zemVyZWRpQHJlZGhhdC5jb20+DQo+ID4gPiBGaXhlczogOWNjZWU5NDBiZDViICgi
+U3VwcG9ydCBzdGF0eCgpIG1hc2sgYW5kIHF1ZXJ5IGZsYWdzDQo+ID4gPiBwYXJhbWV0ZXJzIikN
+Cj4gPiA+IENjOiBUcm9uZCBNeWtsZWJ1c3QgPHRyb25kLm15a2xlYnVzdEBwcmltYXJ5ZGF0YS5j
+b20+DQo+ID4gPiAtLS0NCj4gPiA+ICBmcy9uZnMvaW5vZGUuYyB8IDUgKy0tLS0NCj4gPiA+ICAx
+IGZpbGUgY2hhbmdlZCwgMSBpbnNlcnRpb24oKyksIDQgZGVsZXRpb25zKC0pDQo+ID4gPiANCj4g
+PiA+IGRpZmYgLS1naXQgYS9mcy9uZnMvaW5vZGUuYyBiL2ZzL25mcy9pbm9kZS5jDQo+ID4gPiBp
+bmRleCBiNjVhZWU0ODFkMTMuLjM0YmIzZTU5MTcwOSAxMDA2NDQNCj4gPiA+IC0tLSBhL2ZzL25m
+cy9pbm9kZS5jDQo+ID4gPiArKysgYi9mcy9uZnMvaW5vZGUuYw0KPiA+ID4gQEAgLTgxMSw3ICs4
+MTEsNyBAQCBpbnQgbmZzX2dldGF0dHIoY29uc3Qgc3RydWN0IHBhdGggKnBhdGgsDQo+ID4gPiBz
+dHJ1Y3QNCj4gPiA+IGtzdGF0ICpzdGF0LA0KPiA+ID4gICAgICAgaWYgKCEocmVxdWVzdF9tYXNr
+ICYNCj4gPiA+IChTVEFUWF9NT0RFfFNUQVRYX05MSU5LfFNUQVRYX0FUSU1FfFNUQVRYX0NUSU1F
+fA0KPiA+ID4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBTVEFUWF9NVElN
+RXxTVEFUWF9VSUR8U1RBVFgNCj4gPiA+IF9HSUQNCj4gPiA+ID4gDQo+ID4gPiANCj4gPiA+ICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgU1RBVFhfU0laRXxTVEFUWF9CTE9D
+S1MpKSkNCj4gPiA+IC0gICAgICAgICAgICAgZ290byBvdXRfbm9fcmV2YWxpZGF0ZTsNCj4gPiA+
+ICsgICAgICAgICAgICAgZ290byBvdXRfbm9fdXBkYXRlOw0KPiA+ID4gDQo+ID4gPiAgICAgICAv
+KiBDaGVjayB3aGV0aGVyIHRoZSBjYWNoZWQgYXR0cmlidXRlcyBhcmUgc3RhbGUgKi8NCj4gPiA+
+ICAgICAgIGRvX3VwZGF0ZSB8PSBmb3JjZV9zeW5jIHx8DQo+ID4gPiBuZnNfYXR0cmlidXRlX2Nh
+Y2hlX2V4cGlyZWQoaW5vZGUpOw0KPiA+ID4gQEAgLTgzMyw5ICs4MzMsNiBAQCBpbnQgbmZzX2dl
+dGF0dHIoY29uc3Qgc3RydWN0IHBhdGggKnBhdGgsDQo+ID4gPiBzdHJ1Y3QNCj4gPiA+IGtzdGF0
+ICpzdGF0LA0KPiA+ID4gICAgICAgICAgICAgICAgICAgICAgIGdvdG8gb3V0Ow0KPiA+ID4gICAg
+ICAgfSBlbHNlDQo+ID4gPiAgICAgICAgICAgICAgIG5mc19yZWFkZGlycGx1c19wYXJlbnRfY2Fj
+aGVfaGl0KHBhdGgtPmRlbnRyeSk7DQo+ID4gPiAtb3V0X25vX3JldmFsaWRhdGU6DQo+ID4gPiAt
+ICAgICAvKiBPbmx5IHJldHVybiBhdHRyaWJ1dGVzIHRoYXQgd2VyZSByZXZhbGlkYXRlZC4gKi8N
+Cj4gPiA+IC0gICAgIHN0YXQtPnJlc3VsdF9tYXNrICY9IHJlcXVlc3RfbWFzazsNCj4gPiA+ICBv
+dXRfbm9fdXBkYXRlOg0KPiA+ID4gICAgICAgZ2VuZXJpY19maWxsYXR0cihpbm9kZSwgc3RhdCk7
+DQo+ID4gPiAgICAgICBzdGF0LT5pbm8gPSBuZnNfY29tcGF0X3VzZXJfaW5vNjQoTkZTX0ZJTEVJ
+RChpbm9kZSkpOw0KPiA+IA0KPiA+IE5BQ0suDQo+ID4gDQo+ID4gV2hlbiB3ZSBkb24ndCByZXZh
+bGlkYXRlIHRoZSBhdHRyaWJ1dGUsIHRoZW4gdGhlIGNvbnRlbnQgb2YgdGhlDQo+ID4gZmllbGQN
+Cj4gPiBjb250YWlucyBqdW5rIHZhbHVlcy4gVGhlIGFib3ZlIGNvZGUgaXMgdmVyeSBpbnRlbnRp
+b25hbC4NCj4gDQo+IEhvdyBpcyBpdCB0aGVuIHRoYXQgb25seSBTVEFUWF9BVElNRSBpcyBjbGVh
+cmVkIGFuZCBub3QgdGhlIG90aGVyDQo+IGZpZWxkcz8NCg0KSXQgaXNuJ3QganVzdCB0aGUgYXRp
+bWUuIFdlIGNhbiBhbHNvIGZhaWwgdG8gcmV2YWxpZGF0ZSB0aGUgY3RpbWUgYW5kDQptdGltZSBp
+ZiB0aGV5IGFyZSBub3QgYmVpbmcgcmVxdWVzdGVkIGJ5IHRoZSB1c2VyLg0KDQo+IA0KPiBOb3Rl
+OiBqdW5rICE9IHN0YWxlLiAgVGhlIHN0YXR4IGRlZmluaXRpb24gZG9lc24ndCB0YWxrIGFib3V0
+IHRoZQ0KPiBmaWVsZHMgYmVpbmcgdXAtdG8tZGF0ZSwgZXhjZXB0IGZvciBBVF9TVEFUWF9GT1JD
+RV9TWU5DLCBzbyBzdGFsZQ0KPiBhdHRyaWJ1dGVzIGFyZSBva2F5LCBhbmQgZG8gbm90IHdhcnJh
+bnQgY2xlYXJpbmcgdGhlIHJlc3VsdF9tYXNrLg0KPiANCg0KSSBkaXNhZ3JlZS4gc3RhbGUgPT0g
+anVuayBoZXJlLCBiZWNhdXNlIHRoZSBkZWZhdWx0IG9mDQpBVF9TVEFUWF9TWU5DX0FTX1NUQVQg
+aXMgZGVzY3JpYmVkIGJ5IHRoZSBtYW5wYWdlIGFzICJEbyAgd2hhdGV2ZXINCnN0YXQoMikgZG9l
+cy4iIHdoaWNoIHRoaXMgaXMgbm90Lg0KDQpUaGUgZGVmYXVsdCBiZWhhdmlvdXIgZm9yICJzdGF0
+KDIpIiBpcyB0byByZXZhbGlkYXRlIGF0dHJpYnV0ZXMgdGhhdCB3ZQ0Ka25vdyBvciBzdXNwZWN0
+IGFyZSBzdGFsZS4gV2UgbmV2ZXIga25vd2luZ2x5IHJldHVybiBzdGFsZSBhdHRyaWJ1dGVzLg0K
+DQotLSANClRyb25kIE15a2xlYnVzdA0KTGludXggTkZTIGNsaWVudCBtYWludGFpbmVyLCBIYW1t
+ZXJzcGFjZQ0KdHJvbmQubXlrbGVidXN0QGhhbW1lcnNwYWNlLmNvbQ0KDQoNCg==
