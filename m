@@ -1,42 +1,36 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH v2 6/5] statx: add STATX_RESULT_MASK flag
-Date: Fri, 19 Oct 2018 16:59:48 +0100
-Message-ID: <18142.1539964788@warthog.procyon.org.uk>
-References: <20181019143932.6697-1-mszeredi@redhat.com>
+From: Miklos Szeredi <miklos@szeredi.hu>
+Subject: Re: [PATCH v2 2/5] uapi: deprecate STATX_ALL
+Date: Fri, 19 Oct 2018 19:30:15 +0200
+Message-ID: <CAJfpegut_rcnssaaN2duCJruJOAJ+tzDsA0uUSEiNwS-QddArQ@mail.gmail.com>
+References: <20181019122049.27121-1-mszeredi@redhat.com> <20181019122049.27121-2-mszeredi@redhat.com>
+ <16382.1539963322@warthog.procyon.org.uk> <CAJfpegviiy=9fru3zButbqLnhshH85srH3qyZO2zf-_RPqSs=g@mail.gmail.com>
+ <17323.1539964061@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181019143932.6697-1-mszeredi@redhat.com>
-Content-ID: <18141.1539964788.1@warthog.procyon.org.uk>
+In-Reply-To: <17323.1539964061@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <mszeredi@redhat.com>
-Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
+To: David Howells <dhowells@redhat.com>
+Cc: Miklos Szeredi <mszeredi@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Miklos Szeredi <mszeredi@redhat.com> wrote:
+On Fri, Oct 19, 2018 at 5:47 PM, David Howells <dhowells@redhat.com> wrote:
+> Miklos Szeredi <miklos@szeredi.hu> wrote:
+>
+>> What is misleading about this?
+>
+> The manpage says:
+>
+>            STATX_ALL           [All currently available fields]
 
-> FUSE needs this, because it uses legacy inode initialization, that doesn't
-> return a result_mask, so needs a refresh when caller asks for it with
-> statx().
+Ah, the manpage needs to be fixed, obviously.
 
-Can't you just make it up in fuse?  Presumably, fuse doesn't support any of
-the non-basic statx fields either?
+>
+>> If you feel confused by this comment, then maybe I should just drop that part.
+>
+> I think that would be better.  Don't try to give it a definition.
 
-> It might make sense later to promote this to a proper statx mask flag and
-> return it in stx_mask to userspace.
+Okay.
 
-That sounds kind of recursive - a bit in stx_mask would be saying whether or
-not stx_mask can be used.
-
-Besides, what would it mean if that bit says you can't use stx_mask?  None of
-the stx_* fields are valid?
-
-> +#define STATX_RESULT_MASK STATX__RESERVED
-
-Please don't use that bit.
-
-
-Sorry, this patch doesn't make sense.  Just set result_mask to
-STATX_BASIC_STATS in fuse_fill_attr().
-
-David
+Thanks,
+Miklos
