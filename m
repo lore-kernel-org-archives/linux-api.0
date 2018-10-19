@@ -1,54 +1,66 @@
 From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
-Date: Fri, 19 Oct 2018 14:20:49 +0200
-Message-ID: <20181019122049.27121-5-mszeredi@redhat.com>
+Subject: [PATCH v2 3/5] statx: add STATX_ATTRIBUTES flag
+Date: Fri, 19 Oct 2018 14:20:47 +0200
+Message-ID: <20181019122049.27121-3-mszeredi@redhat.com>
 References: <20181019122049.27121-1-mszeredi@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181019122049.27121-1-mszeredi@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>, Trond Myklebust <trond.myklebust@primarydata.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-As per statx(2) man page only clear out flags that are unsupported by the
-fs or have an unrepresentable value.  Atime is supported by NFS as long as
-it's supported on the server.
+FUSE will want to know if stx_attributes is interesting or not, because
+there's a non-zero cost of retreiving it.
 
-So the STATX_ATIME flag should not be cleared in the result_mask if the
-operation was requested on a MNT_NOATIME or MNT_NODIRATIME mount.
-
-This patch doesn't change the revalidation algorithm in any way, just the
-clearing of flags in stat->result_mask.
+This just a "want" flag, since stx_attributes_mask already indicates
+whether we "got" stx_attributes or not.
 
 Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
-Fixes: 9ccee940bd5b ("Support statx() mask and query flags parameters")
-Cc: Trond Myklebust <trond.myklebust@primarydata.com>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 ---
- fs/nfs/inode.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ include/uapi/linux/stat.h       | 1 +
+ samples/statx/test-statx.c      | 2 +-
+ tools/include/uapi/linux/stat.h | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
-index b65aee481d13..34bb3e591709 100644
---- a/fs/nfs/inode.c
-+++ b/fs/nfs/inode.c
-@@ -811,7 +811,7 @@ int nfs_getattr(const struct path *path, struct kstat *stat,
- 	if (!(request_mask & (STATX_MODE|STATX_NLINK|STATX_ATIME|STATX_CTIME|
- 					STATX_MTIME|STATX_UID|STATX_GID|
- 					STATX_SIZE|STATX_BLOCKS)))
--		goto out_no_revalidate;
-+		goto out_no_update;
+diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
+index ed456ac0f90d..7d3cce078652 100644
+--- a/include/uapi/linux/stat.h
++++ b/include/uapi/linux/stat.h
+@@ -148,6 +148,7 @@ struct statx {
+ #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
+ #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
+ #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
++#define STATX_ATTRIBUTES	0x00001000U	/* Want stx_attributes */
  
- 	/* Check whether the cached attributes are stale */
- 	do_update |= force_sync || nfs_attribute_cache_expired(inode);
-@@ -833,9 +833,6 @@ int nfs_getattr(const struct path *path, struct kstat *stat,
- 			goto out;
- 	} else
- 		nfs_readdirplus_parent_cache_hit(path->dentry);
--out_no_revalidate:
--	/* Only return attributes that were revalidated. */
--	stat->result_mask &= request_mask;
- out_no_update:
- 	generic_fillattr(inode, stat);
- 	stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
+ #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
+ 
+diff --git a/samples/statx/test-statx.c b/samples/statx/test-statx.c
+index e354048dea3c..deef9a68ff68 100644
+--- a/samples/statx/test-statx.c
++++ b/samples/statx/test-statx.c
+@@ -211,7 +211,7 @@ int main(int argc, char **argv)
+ 	struct statx stx;
+ 	int ret, raw = 0, atflag = AT_SYMLINK_NOFOLLOW;
+ 
+-	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME;
++	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME | STATX_ATTRIBUTES;
+ 
+ 	for (argv++; *argv; argv++) {
+ 		if (strcmp(*argv, "-F") == 0) {
+diff --git a/tools/include/uapi/linux/stat.h b/tools/include/uapi/linux/stat.h
+index ed456ac0f90d..60cd0a3f52e7 100644
+--- a/tools/include/uapi/linux/stat.h
++++ b/tools/include/uapi/linux/stat.h
+@@ -148,6 +148,7 @@ struct statx {
+ #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
+ #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
+ #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
++#define STATX_ATTRIBUTES	0x00001000U	/* Want/got stx_attributes */
+ 
+ #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
+ 
 -- 
 2.14.3
