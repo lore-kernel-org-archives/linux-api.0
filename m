@@ -1,160 +1,58 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 02/10] audit: add container id
-Date: Fri, 19 Oct 2018 17:50:50 -0400
-Message-ID: <20181019215050.kuonluie6h3aokkt@madcap2.tricolour.ca>
-References: <cover.1533065887.git.rgb@redhat.com>
- <12396e378a78ee8dd38c75f7730d67d8fbb08e02.1533065887.git.rgb@redhat.com>
- <CAHC9VhTT7n4wDoaDGFXAK+wtcsMDDMRkQVCQ2jNYLKSFqFc+bA@mail.gmail.com>
+From: Calvin Owens <calvinowens@fb.com>
+Subject: Re: [PATCH 1/3] printk: Introduce per-console loglevel setting
+Date: Fri, 19 Oct 2018 22:03:37 +0000
+Message-ID: <20181019220314.GA8164@Haydn>
+References: <08c1dc1a96afd6b6aecc5ff3c7c0e62c36670893.1506644730.git.calvinowens@fb.com>
+ <20181019000403.GB877@jagdpanzerIV>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhTT7n4wDoaDGFXAK+wtcsMDDMRkQVCQ2jNYLKSFqFc+bA@mail.gmail.com>
+In-Reply-To: <20181019000403.GB877@jagdpanzerIV>
+Content-Language: en-US
+Content-ID: <8F8513DD920FE742ADCB168FFA263534@namprd15.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
+To: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
+Cc: Petr Mladek <pmladek@suse.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, Steven Rostedt <rostedt@goodmis.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2018-10-19 15:38, Paul Moore wrote:
-> On Tue, Jul 31, 2018 at 4:11 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> >
-> > Implement the proc fs write to set the audit container identifier of a
-> > process, emitting an AUDIT_CONTAINER_OP record to document the event.
-> >
-> > This is a write from the container orchestrator task to a proc entry of
-> > the form /proc/PID/audit_containerid where PID is the process ID of the
-> > newly created task that is to become the first task in a container, or
-> > an additional task added to a container.
-> >
-> > The write expects up to a u64 value (unset: 18446744073709551615).
-> >
-> > The writer must have capability CAP_AUDIT_CONTROL.
-> >
-> > This will produce a record such as this:
-> >   type=CONTAINER_ID msg=audit(2018-06-06 12:39:29.636:26949) : op=set opid=2209 old-contid=18446744073709551615 contid=123456 pid=628 auid=root uid=root tty=ttyS0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 comm=bash exe=/usr/bin/bash res=yes
-> 
-> You need to update the record type in the example above.
-
-Yup, thanks.
-
-> > The "op" field indicates an initial set.  The "pid" to "ses" fields are
-> > the orchestrator while the "opid" field is the object's PID, the process
-> > being "contained".  Old and new audit container identifier values are
-> > given in the "contid" fields, while res indicates its success.
-> 
-> I understand Steve's concern around the "op" field, but I think it
-> might be a bit premature to think we might not need to do some sort of
-> audit container ID management in the future that would want to make
-> use of the CONTAINER_OP message type.  I would like to see the "op"
-> field preserved.
-
-I strongly agree.
-
-> > It is not permitted to unset the audit container identifier.
-> > A child inherits its parent's audit container identifier.
-> >
-> > See: https://github.com/linux-audit/audit-kernel/issues/90
-> > See: https://github.com/linux-audit/audit-userspace/issues/51
-> > See: https://github.com/linux-audit/audit-testsuite/issues/64
-> > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> >
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > Acked-by: Serge Hallyn <serge@hallyn.com>
-> > Acked-by: Steve Grubb <sgrubb@redhat.com>
-> > ---
-> >  fs/proc/base.c             | 37 +++++++++++++++++++++++++
-> >  include/linux/audit.h      | 24 ++++++++++++++++
-> >  include/uapi/linux/audit.h |  2 ++
-> >  kernel/auditsc.c           | 68 ++++++++++++++++++++++++++++++++++++++++++++++
-> >  4 files changed, 131 insertions(+)
-> 
-> ...
-> 
-> > @@ -2112,6 +2114,72 @@ int audit_set_loginuid(kuid_t loginuid)
-> >  }
-> >
-> >  /**
-> > + * audit_set_contid - set current task's audit_context contid
-> > + * @contid: contid value
-> > + *
-> > + * Returns 0 on success, -EPERM on permission failure.
-> > + *
-> > + * Called (set) from fs/proc/base.c::proc_contid_write().
-> > + */
-> > +int audit_set_contid(struct task_struct *task, u64 contid)
-> > +{
-> > +       u64 oldcontid;
-> > +       int rc = 0;
-> > +       struct audit_buffer *ab;
-> > +       uid_t uid;
-> > +       struct tty_struct *tty;
-> > +       char comm[sizeof(current->comm)];
-> > +
-> > +       task_lock(task);
-> > +       /* Can't set if audit disabled */
-> > +       if (!task->audit) {
-> > +               task_unlock(task);
-> > +               return -ENOPROTOOPT;
-> > +       }
-> > +       oldcontid = audit_get_contid(task);
-> > +       read_lock(&tasklist_lock);
-> 
-> I assume lockdep was happy with nesting the tasklist_lock inside the task lock?
-
-Yup, I had gone through the logic and at first I had doubts, but the
-function comments and other usage reassured me (as well as in-kernel
-lock checks on boot) that this was the right order and approach.
-
-> > +       /* Don't allow the audit containerid to be unset */
-> > +       if (!audit_contid_valid(contid))
-> > +               rc = -EINVAL;
-> > +       /* if we don't have caps, reject */
-> > +       else if (!capable(CAP_AUDIT_CONTROL))
-> > +               rc = -EPERM;
-> > +       /* if task has children or is not single-threaded, deny */
-> > +       else if (!list_empty(&task->children))
-> > +               rc = -EBUSY;
-> > +       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> > +               rc = -EALREADY;
-> > +       read_unlock(&tasklist_lock);
-> > +       if (!rc)
-> > +               task->audit->contid = contid;
-> > +       task_unlock(task);
-> > +
-> > +       if (!audit_enabled)
-> > +               return rc;
-> > +
-> > +       ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_OP);
-> > +       if (!ab)
-> > +               return rc;
-> > +
-> > +       uid = from_kuid(&init_user_ns, task_uid(current));
-> > +       tty = audit_get_tty(current);
-> > +       audit_log_format(ab, "op=set opid=%d old-contid=%llu contid=%llu pid=%d uid=%u auid=%u tty=%s ses=%u",
-> > +                        task_tgid_nr(task), oldcontid, contid,
-> > +                        task_tgid_nr(current), uid,
-> > +                        from_kuid(&init_user_ns, audit_get_loginuid(current)),
-> > +                        tty ? tty_name(tty) : "(none)",
-> > +                        audit_get_sessionid(current));
-> > +       audit_put_tty(tty);
-> > +       audit_log_task_context(ab);
-> > +       audit_log_format(ab, " comm=");
-> > +       audit_log_untrustedstring(ab, get_task_comm(comm, current));
-> > +       audit_log_d_path_exe(ab, current->mm);
-> > +       audit_log_format(ab, " res=%d", !rc);
-> > +       audit_log_end(ab);
-> > +       return rc;
-> > +}
-> 
-> -- 
-> paul moore
-> www.paul-moore.com
-
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+T24gRnJpZGF5IDEwLzE5IGF0IDA5OjA0ICswOTAwLCBTZXJnZXkgU2Vub3poYXRza3kgd3JvdGU6
+DQo+IE9uICgwOS8yOC8xNyAxNzo0MyksIENhbHZpbiBPd2VucyB3cm90ZToNCj4gPiBOb3QgYWxs
+IGNvbnNvbGVzIGFyZSBjcmVhdGVkIGVxdWFsOiBkZXBlbmRpbmcgb24gdGhlIGFjdHVhbCBoYXJk
+d2FyZSwNCj4gPiB0aGUgbGF0ZW5jeSBvZiBhIHByaW50aygpIGNhbGwgY2FuIHZhcnkgZHJhbWF0
+aWNhbGx5LiBUaGUgd29yc3QgZXhhbXBsZXMNCj4gPiBhcmUgc2VyaWFsIGNvbnNvbGVzLCB3aGVy
+ZSBpdCBjYW4gc3BpbiBmb3IgdGVucyBvZiBtaWxsaXNlY29uZHMgYmFuZ2luZw0KPiA+IHRoZSBV
+QVJUIHRvIGVtaXQgYSBtZXNzYWdlLCB3aGljaCBjYW4gY2F1c2UgYXBwbGljYXRpb24tbGV2ZWwg
+cHJvYmxlbXMNCj4gPiB3aGVuIHRoZSBrZXJuZWwgc3Bld3Mgb250byB0aGUgY29uc29sZS4NCj4g
+PiANCj4gPiBBdCBGYWNlYm9vayB3ZSB1c2UgbmV0Y29uc29sZSB0byBtb25pdG9yIG91ciBmbGVl
+dCwgYnV0IHdlIHN0aWxsIGhhdmUNCj4gPiBzZXJpYWwgY29uc29sZXMgYXR0YWNoZWQgb24gZWFj
+aCBob3N0IGZvciBsaXZlIGRlYnVnZ2luZywgYW5kIHRoZSBsYXR0ZXINCj4gPiBoYXMgY2F1c2Vk
+IHByb2JsZW1zLiBBbiBvYnZpb3VzIHNvbHV0aW9uIGlzIHRvIGRpc2FibGUgdGhlIGtlcm5lbA0K
+PiA+IGNvbnNvbGUgb3V0cHV0IHRvIHR0eVMwLCBidXQgdGhpcyBtYWtlcyBsaXZlIGRlYnVnZ2lu
+ZyBmcnVzdHJhdGluZywNCj4gPiBzaW5jZSBjcmFzaGVzIGJlY29tZSBzaWxlbnQgYW5kIG9wYXF1
+ZSB0byB0aGUgdHR5UzAgdXNlci4gRW5hYmxpbmcgaXQgb24NCj4gPiB0aGUgZmx5IHdoZW4gbmVl
+ZGVkIGlzbid0IGZlYXNpYmxlLCBzaW5jZSBib3hlcyB5b3UgbmVlZCB0byBkZWJ1ZyB2aWENCj4g
+PiBzZXJpYWwgYXJlIGxpa2VseSB0byBiZSBib3JrZWQgaW4gd2F5cyB0aGF0IG1ha2UgdGhpcyBp
+bXBvc3NpYmxlLg0KPiA+IA0KPiA+IFRoYXQgcHV0cyB1cyBiZXR3ZWVuIGEgcm9jayBhbmQgYSBo
+YXJkIHBsYWNlOiB3ZSdkIGxvdmUgdG8gc2V0DQo+ID4ga2VybmVsLnByaW50ayB0byBLRVJOX0lO
+Rk8gYW5kIGdldCBhbGwgdGhlIGxvZ3MuIEJ1dCB3aGlsZSBuZXRjb25zb2xlIGlzDQo+ID4gZmFz
+dCBlbm91Z2ggdG8gcGVybWl0IHRoYXQgd2l0aG91dCBwZXJ0dXJiaW5nIHVzZXJzcGFjZSwgdHR5
+UzAgaXMgbm90LA0KPiA+IGFuZCB3ZSdyZSBmb3JjZWQgdG8gbGltaXQgY29uc29sZSBsb2dnaW5n
+IHRvIEtFUk5fV0FSTklORyBhbmQgaGlnaGVyLg0KPiA+IA0KPiA+IFRoaXMgcGF0Y2ggaW50cm9k
+dWNlcyBhIG5ldyBwZXItY29uc29sZSBsb2dsZXZlbCBzZXR0aW5nLCBhbmQgY2hhbmdlcw0KPiA+
+IGNvbnNvbGVfdW5sb2NrKCkgdG8gdXNlIG1heChnbG9iYWxfbGV2ZWwsIHBlcl9jb25zb2xlX2xl
+dmVsKSB3aGVuDQo+ID4gZGVjaWRpbmcgd2hldGhlciBvciBub3QgdG8gZW1pdCBhIGdpdmVuIGxv
+ZyBtZXNzYWdlLg0KPiA+IA0KPiA+IFRoaXMgbGV0cyB1cyBoYXZlIG91ciBjYWtlIGFuZCBlYXQg
+aXQgdG9vOiBpbnN0ZWFkIG9mIGJlaW5nIGZvcmNlZCB0bw0KPiA+IGxpbWl0IGFsbCBjb25zb2xl
+cyB2ZXJib3NpdHkgYmFzZWQgb24gdGhlIHNwZWVkIG9mIHRoZSBzbG93ZXN0IG9uZSwgd2UNCj4g
+PiBjYW4gInByb21vdGUiIHRoZSBmYXN0ZXIgY29uc29sZSB3aGlsZSBzdGlsbCB1c2luZyBhIGNv
+bnNlcnZhdGl2ZSBzeXN0ZW0NCj4gPiBsb2dsZXZlbCBzZXR0aW5nIHRvIGF2b2lkIGRpc3R1cmJp
+bmcgYXBwbGljYXRpb25zLg0KPiANCj4gSGkgQ2FsdmluLA0KPiANCj4gRG8geW91IGhhdmUgdGlt
+ZSB0byBhZGRyZXNzIHRoZSByZXZpZXcgZmVlZGJhY2sgYW5kIHJlLXNwaW4gdjI/DQoNCkhpIFNl
+cmdleSwNCg0KSXQncyBpbi1wcm9ncmVzcywgSSdtIHNvcnJ5IGl0IGhhc24ndCBoYXBwZW5lZCBz
+b29uZXIuDQoNCkJ5IGVtYmVkZGluZyB0aGUga29iamVjdCBpbiB0aGUgY29uc29sZSBzdHJ1Y3Qs
+IHdlIGVuZCB1cCBuZWVkaW5nIHRvIHJlZmFjdG9yDQp0aGUgY29uc29sZSBkcml2ZXJzIHRvIHVz
+ZSB0aGUga29iamVjdCByZWZjb3VudCBpbnN0ZWFkIG9mIHNpbXBseSBjYWxsaW5nDQprZnJlZSgp
+LCB3aGljaCBpcyB3aGF0IEknbSB3b3JraW5nIG9uLiBJdCBlbmRzIHVwIGJlaW5nIHRlZGlvdXMg
+YnV0IG5vdA0KcGFydGljdWxhcmx5IGNvbXBsaWNhdGVkLCBteSBnb2FsIGlzIHRvIGhhdmUgdGhp
+cyB1cCBzb29uIDopDQoNClRoYW5rcywNCkNhbHZpbg0K
