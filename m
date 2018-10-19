@@ -1,14 +1,13 @@
 From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH v2 2/5] uapi: deprecate STATX_ALL
-Date: Fri, 19 Oct 2018 16:35:22 +0100
-Message-ID: <16382.1539963322@warthog.procyon.org.uk>
-References: <20181019122049.27121-2-mszeredi@redhat.com> <20181019122049.27121-1-mszeredi@redhat.com>
+Subject: Re: [PATCH v2 3/5] statx: add STATX_ATTRIBUTES flag
+Date: Fri, 19 Oct 2018 16:36:12 +0100
+Message-ID: <16444.1539963372@warthog.procyon.org.uk>
+References: <20181019122049.27121-3-mszeredi@redhat.com> <20181019122049.27121-1-mszeredi@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181019122049.27121-2-mszeredi@redhat.com>
-Content-ID: <16381.1539963322.1@warthog.procyon.org.uk>
+In-Reply-To: <20181019122049.27121-3-mszeredi@redhat.com>
+Content-ID: <16443.1539963372.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Miklos Szeredi <mszeredi@redhat.com>
 Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
@@ -16,20 +15,16 @@ List-Id: linux-api@vger.kernel.org
 
 Miklos Szeredi <mszeredi@redhat.com> wrote:
 
-> +/*
-> + * This is deprecated, and shall remain the same value in the future.  To avoid
-> + * confusion please use the equivalent (STATX_BASIC_STATS | STATX_BTIME)
-> + * instead.
-> + */
-> +#define STATX_ALL		0x00000fffU
+> FUSE will want to know if stx_attributes is interesting or not, because
+> there's a non-zero cost of retreiving it.
+> 
+> This just a "want" flag, since stx_attributes_mask already indicates
+> whether we "got" stx_attributes or not.
+> 
+> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+> Cc: David Howells <dhowells@redhat.com>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 
-The comment is misleading.  STATX_ALL is *not* equivalent to
-STATX_BASIC_STATS | STATX_BTIME, even though it might be numerically the
-same.  You would need to update the comment when you add STATX_ATTRIBUTES
-to mention that also.
+Subject to fixing the comment on STAT_ALL:
 
-Apart from that, I'm okay with this.
-
-Further, please provide a manpage update also.
-
-David
+Acked-by: David Howells <dhowells@redhat.com>
