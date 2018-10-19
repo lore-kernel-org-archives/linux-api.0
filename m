@@ -1,7 +1,7 @@
 From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: [PATCH v2 3/5] statx: add STATX_ATTRIBUTES flag
-Date: Fri, 19 Oct 2018 14:20:47 +0200
-Message-ID: <20181019122049.27121-3-mszeredi@redhat.com>
+Subject: [PATCH v2 4/5] statx: don't clear STATX_ATIME on SB_RDONLY
+Date: Fri, 19 Oct 2018 14:20:48 +0200
+Message-ID: <20181019122049.27121-4-mszeredi@redhat.com>
 References: <20181019122049.27121-1-mszeredi@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181019122049.27121-1-mszeredi@redhat.com>
@@ -10,57 +10,32 @@ To: linux-fsdevel@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-FUSE will want to know if stx_attributes is interesting or not, because
-there's a non-zero cost of retreiving it.
+IS_NOATIME(inode) is defined as __IS_FLG(inode, SB_RDONLY|SB_NOATIME), so
+generic_fillattr() will clear STATX_ATIME from the result_mask if the super
+block is marked read only.
 
-This just a "want" flag, since stx_attributes_mask already indicates
-whether we "got" stx_attributes or not.
+This was probably not the intention, so fix to only clear STATX_ATIME if
+the fs doesn't support atime at all.
 
 Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
 Cc: David Howells <dhowells@redhat.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 ---
- include/uapi/linux/stat.h       | 1 +
- samples/statx/test-statx.c      | 2 +-
- tools/include/uapi/linux/stat.h | 1 +
- 3 files changed, 3 insertions(+), 1 deletion(-)
+ fs/stat.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-index ed456ac0f90d..7d3cce078652 100644
---- a/include/uapi/linux/stat.h
-+++ b/include/uapi/linux/stat.h
-@@ -148,6 +148,7 @@ struct statx {
- #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
- #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
- #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
-+#define STATX_ATTRIBUTES	0x00001000U	/* Want stx_attributes */
+diff --git a/fs/stat.c b/fs/stat.c
+index 8d297a279991..b46583df70d4 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -46,7 +46,8 @@ void generic_fillattr(struct inode *inode, struct kstat *stat)
+ 	stat->blksize = i_blocksize(inode);
+ 	stat->blocks = inode->i_blocks;
  
- #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
- 
-diff --git a/samples/statx/test-statx.c b/samples/statx/test-statx.c
-index e354048dea3c..deef9a68ff68 100644
---- a/samples/statx/test-statx.c
-+++ b/samples/statx/test-statx.c
-@@ -211,7 +211,7 @@ int main(int argc, char **argv)
- 	struct statx stx;
- 	int ret, raw = 0, atflag = AT_SYMLINK_NOFOLLOW;
- 
--	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME;
-+	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME | STATX_ATTRIBUTES;
- 
- 	for (argv++; *argv; argv++) {
- 		if (strcmp(*argv, "-F") == 0) {
-diff --git a/tools/include/uapi/linux/stat.h b/tools/include/uapi/linux/stat.h
-index ed456ac0f90d..60cd0a3f52e7 100644
---- a/tools/include/uapi/linux/stat.h
-+++ b/tools/include/uapi/linux/stat.h
-@@ -148,6 +148,7 @@ struct statx {
- #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
- #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
- #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
-+#define STATX_ATTRIBUTES	0x00001000U	/* Want/got stx_attributes */
- 
- #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
- 
+-	if (IS_NOATIME(inode))
++	/* SB_NOATIME means filesystem supplies dummy atime value */
++	if (inode->i_sb->s_flags & SB_NOATIME)
+ 		stat->result_mask &= ~STATX_ATIME;
+ 	if (IS_AUTOMOUNT(inode))
+ 		stat->attributes |= STATX_ATTR_AUTOMOUNT;
 -- 
 2.14.3
