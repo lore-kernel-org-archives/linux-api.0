@@ -1,54 +1,42 @@
-From: Trond Myklebust <trondmy@hammerspace.com>
-Subject: Re: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
-Date: Fri, 19 Oct 2018 15:52:37 +0000
-Message-ID: <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
-References: <20181019122049.27121-1-mszeredi@redhat.com>
-         <20181019122049.27121-5-mszeredi@redhat.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH v2 6/5] statx: add STATX_RESULT_MASK flag
+Date: Fri, 19 Oct 2018 16:59:48 +0100
+Message-ID: <18142.1539964788@warthog.procyon.org.uk>
+References: <20181019143932.6697-1-mszeredi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181019122049.27121-5-mszeredi@redhat.com>
-Content-Language: en-US
-Content-ID: <97C3A830F271724381B095718B2197D2@namprd13.prod.outlook.com>
+In-Reply-To: <20181019143932.6697-1-mszeredi@redhat.com>
+Content-ID: <18141.1539964788.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "mszeredi@redhat.com" <mszeredi@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
-Cc: "amir73il@gmail.com" <amir73il@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "fw@deneb.enyo.de" <fw@deneb.enyo.de>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>
+To: Miklos Szeredi <mszeredi@redhat.com>
+Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gRnJpLCAyMDE4LTEwLTE5IGF0IDE0OjIwICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToN
-Cj4gQXMgcGVyIHN0YXR4KDIpIG1hbiBwYWdlIG9ubHkgY2xlYXIgb3V0IGZsYWdzIHRoYXQgYXJl
-IHVuc3VwcG9ydGVkIGJ5DQo+IHRoZQ0KPiBmcyBvciBoYXZlIGFuIHVucmVwcmVzZW50YWJsZSB2
-YWx1ZS4gIEF0aW1lIGlzIHN1cHBvcnRlZCBieSBORlMgYXMNCj4gbG9uZyBhcw0KPiBpdCdzIHN1
-cHBvcnRlZCBvbiB0aGUgc2VydmVyLg0KPiANCj4gU28gdGhlIFNUQVRYX0FUSU1FIGZsYWcgc2hv
-dWxkIG5vdCBiZSBjbGVhcmVkIGluIHRoZSByZXN1bHRfbWFzayBpZg0KPiB0aGUNCj4gb3BlcmF0
-aW9uIHdhcyByZXF1ZXN0ZWQgb24gYSBNTlRfTk9BVElNRSBvciBNTlRfTk9ESVJBVElNRSBtb3Vu
-dC4NCj4gDQo+IFRoaXMgcGF0Y2ggZG9lc24ndCBjaGFuZ2UgdGhlIHJldmFsaWRhdGlvbiBhbGdv
-cml0aG0gaW4gYW55IHdheSwganVzdA0KPiB0aGUNCj4gY2xlYXJpbmcgb2YgZmxhZ3MgaW4gc3Rh
-dC0+cmVzdWx0X21hc2suDQo+IA0KPiBTaWduZWQtb2ZmLWJ5OiBNaWtsb3MgU3plcmVkaSA8bXN6
-ZXJlZGlAcmVkaGF0LmNvbT4NCj4gRml4ZXM6IDljY2VlOTQwYmQ1YiAoIlN1cHBvcnQgc3RhdHgo
-KSBtYXNrIGFuZCBxdWVyeSBmbGFncw0KPiBwYXJhbWV0ZXJzIikNCj4gQ2M6IFRyb25kIE15a2xl
-YnVzdCA8dHJvbmQubXlrbGVidXN0QHByaW1hcnlkYXRhLmNvbT4NCj4gLS0tDQo+ICBmcy9uZnMv
-aW5vZGUuYyB8IDUgKy0tLS0NCj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgNCBk
-ZWxldGlvbnMoLSkNCj4gDQo+IGRpZmYgLS1naXQgYS9mcy9uZnMvaW5vZGUuYyBiL2ZzL25mcy9p
-bm9kZS5jDQo+IGluZGV4IGI2NWFlZTQ4MWQxMy4uMzRiYjNlNTkxNzA5IDEwMDY0NA0KPiAtLS0g
-YS9mcy9uZnMvaW5vZGUuYw0KPiArKysgYi9mcy9uZnMvaW5vZGUuYw0KPiBAQCAtODExLDcgKzgx
-MSw3IEBAIGludCBuZnNfZ2V0YXR0cihjb25zdCBzdHJ1Y3QgcGF0aCAqcGF0aCwgc3RydWN0DQo+
-IGtzdGF0ICpzdGF0LA0KPiAgCWlmICghKHJlcXVlc3RfbWFzayAmDQo+IChTVEFUWF9NT0RFfFNU
-QVRYX05MSU5LfFNUQVRYX0FUSU1FfFNUQVRYX0NUSU1FfA0KPiAgCQkJCQlTVEFUWF9NVElNRXxT
-VEFUWF9VSUR8U1RBVFhfR0lEDQo+IHwNCj4gIAkJCQkJU1RBVFhfU0laRXxTVEFUWF9CTE9DS1Mp
-KSkNCj4gLQkJZ290byBvdXRfbm9fcmV2YWxpZGF0ZTsNCj4gKwkJZ290byBvdXRfbm9fdXBkYXRl
-Ow0KPiAgDQo+ICAJLyogQ2hlY2sgd2hldGhlciB0aGUgY2FjaGVkIGF0dHJpYnV0ZXMgYXJlIHN0
-YWxlICovDQo+ICAJZG9fdXBkYXRlIHw9IGZvcmNlX3N5bmMgfHwgbmZzX2F0dHJpYnV0ZV9jYWNo
-ZV9leHBpcmVkKGlub2RlKTsNCj4gQEAgLTgzMyw5ICs4MzMsNiBAQCBpbnQgbmZzX2dldGF0dHIo
-Y29uc3Qgc3RydWN0IHBhdGggKnBhdGgsIHN0cnVjdA0KPiBrc3RhdCAqc3RhdCwNCj4gIAkJCWdv
-dG8gb3V0Ow0KPiAgCX0gZWxzZQ0KPiAgCQluZnNfcmVhZGRpcnBsdXNfcGFyZW50X2NhY2hlX2hp
-dChwYXRoLT5kZW50cnkpOw0KPiAtb3V0X25vX3JldmFsaWRhdGU6DQo+IC0JLyogT25seSByZXR1
-cm4gYXR0cmlidXRlcyB0aGF0IHdlcmUgcmV2YWxpZGF0ZWQuICovDQo+IC0Jc3RhdC0+cmVzdWx0
-X21hc2sgJj0gcmVxdWVzdF9tYXNrOw0KPiAgb3V0X25vX3VwZGF0ZToNCj4gIAlnZW5lcmljX2Zp
-bGxhdHRyKGlub2RlLCBzdGF0KTsNCj4gIAlzdGF0LT5pbm8gPSBuZnNfY29tcGF0X3VzZXJfaW5v
-NjQoTkZTX0ZJTEVJRChpbm9kZSkpOw0KDQpOQUNLLg0KDQpXaGVuIHdlIGRvbid0IHJldmFsaWRh
-dGUgdGhlIGF0dHJpYnV0ZSwgdGhlbiB0aGUgY29udGVudCBvZiB0aGUgZmllbGQNCmNvbnRhaW5z
-IGp1bmsgdmFsdWVzLiBUaGUgYWJvdmUgY29kZSBpcyB2ZXJ5IGludGVudGlvbmFsLg0KDQotLSAN
-ClRyb25kIE15a2xlYnVzdA0KTGludXggTkZTIGNsaWVudCBtYWludGFpbmVyLCBIYW1tZXJzcGFj
-ZQ0KdHJvbmQubXlrbGVidXN0QGhhbW1lcnNwYWNlLmNvbQ0KDQoNCg==
+Miklos Szeredi <mszeredi@redhat.com> wrote:
+
+> FUSE needs this, because it uses legacy inode initialization, that doesn't
+> return a result_mask, so needs a refresh when caller asks for it with
+> statx().
+
+Can't you just make it up in fuse?  Presumably, fuse doesn't support any of
+the non-basic statx fields either?
+
+> It might make sense later to promote this to a proper statx mask flag and
+> return it in stx_mask to userspace.
+
+That sounds kind of recursive - a bit in stx_mask would be saying whether or
+not stx_mask can be used.
+
+Besides, what would it mean if that bit says you can't use stx_mask?  None of
+the stx_* fields are valid?
+
+> +#define STATX_RESULT_MASK STATX__RESERVED
+
+Please don't use that bit.
+
+
+Sorry, this patch doesn't make sense.  Just set result_mask to
+STATX_BASIC_STATS in fuse_fill_attr().
+
+David
