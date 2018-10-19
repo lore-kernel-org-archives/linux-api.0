@@ -1,187 +1,103 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 01/10] audit: collect audit task parameters
-Date: Fri, 19 Oct 2018 19:15:56 -0400
-Message-ID: <CAHC9VhQFqs1SyvximK+8XJG5Fk3p9WsWhEV5sY6kksN9tc6eKw@mail.gmail.com>
-References: <cover.1533065887.git.rgb@redhat.com> <8e617ab568df28a66dfbe3284452de186b42fb0f.1533065887.git.rgb@redhat.com>
+Subject: Re: [PATCH ghak90 (was ghak32) V4 03/10] audit: log container info of syscalls
+Date: Fri, 19 Oct 2018 19:16:38 -0400
+Message-ID: <CAHC9VhSv4hWGHiaaOfuBrRQKdp2YG5RtqXQbFXg7j7LNEhO2XQ@mail.gmail.com>
+References: <cover.1533065887.git.rgb@redhat.com> <34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <8e617ab568df28a66dfbe3284452de186b42fb0f.1533065887.git.rgb@redhat.com>
-Sender: netdev-owner@vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: rgb@redhat.com
 Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
 On Sun, Aug 5, 2018 at 4:32 AM Richard Guy Briggs <rgb@redhat.com> wrote:
-> The audit-related parameters in struct task_struct should ideally be
-> collected together and accessed through a standard audit API.
+> Create a new audit record AUDIT_CONTAINER to document the audit
+> container identifier of a process if it is present.
 >
-> Collect the existing loginuid, sessionid and audit_context together in a
-> new struct audit_task_info called "audit" in struct task_struct.
+> Called from audit_log_exit(), syscalls are covered.
 >
-> Use kmem_cache to manage this pool of memory.
-> Un-inline audit_free() to be able to always recover that memory.
+> A sample raw event:
+> type=3DSYSCALL msg=3Daudit(1519924845.499:257): arch=3Dc000003e syscall=
+=3D257 success=3Dyes exit=3D3 a0=3Dffffff9c a1=3D56374e1cef30 a2=3D241 a3=
+=3D1b6 items=3D2 ppid=3D606 pid=3D635 auid=3D0 uid=3D0 gid=3D0 euid=3D0 sui=
+d=3D0 fsuid=3D0 egid=3D0 sgid=3D0 fsgid=3D0 tty=3Dpts0 ses=3D3 comm=3D"bash=
+" exe=3D"/usr/bin/bash" subj=3Dunconfined_u:unconfined_r:unconfined_t:s0-s0=
+:c0.c1023 key=3D"tmpcontainerid"
+> type=3DCWD msg=3Daudit(1519924845.499:257): cwd=3D"/root"
+> type=3DPATH msg=3Daudit(1519924845.499:257): item=3D0 name=3D"/tmp/" inod=
+e=3D13863 dev=3D00:27 mode=3D041777 ouid=3D0 ogid=3D0 rdev=3D00:00 obj=3Dsy=
+stem_u:object_r:tmp_t:s0 nametype=3D PARENT cap_fp=3D0000000000000000 cap_f=
+i=3D0000000000000000 cap_fe=3D0 cap_fver=3D0
+> type=3DPATH msg=3Daudit(1519924845.499:257): item=3D1 name=3D"/tmp/tmpcon=
+tainerid" inode=3D17729 dev=3D00:27 mode=3D0100644 ouid=3D0 ogid=3D0 rdev=
+=3D00:00 obj=3Dunconfined_u:object_r:user_tmp_t:s0 nametype=3DCREATE cap_fp=
+=3D0000000000000000 cap_fi=3D0000000000000000 cap_fe=3D0 cap_fver=3D0
+> type=3DPROCTITLE msg=3Daudit(1519924845.499:257): proctitle=3D62617368002=
+D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E746169=
+6E65726964
+> type=3DCONTAINER msg=3Daudit(1519924845.499:257): op=3Dtask contid=3D1234=
+58
 >
-> See: https://github.com/linux-audit/audit-kernel/issues/81
->
+> See: https://github.com/linux-audit/audit-kernel/issues/90
+> See: https://github.com/linux-audit/audit-userspace/issues/51
+> See: https://github.com/linux-audit/audit-testsuite/issues/64
+> See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container=
+-ID
 > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+> Acked-by: Steve Grubb <sgrubb@redhat.com>
 > ---
->  include/linux/audit.h | 34 ++++++++++++++++++++++++----------
->  include/linux/sched.h |  5 +----
->  init/init_task.c      |  3 +--
->  init/main.c           |  2 ++
->  kernel/auditsc.c      | 51 ++++++++++++++++++++++++++++++++++++++++++---------
->  kernel/fork.c         |  4 +++-
->  6 files changed, 73 insertions(+), 26 deletions(-)
+>  include/linux/audit.h      |  7 +++++++
+>  include/uapi/linux/audit.h |  1 +
+>  kernel/audit.c             | 24 ++++++++++++++++++++++++
+>  kernel/auditsc.c           |  3 +++
+>  4 files changed, 35 insertions(+)
 
 ...
 
-> diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index 9334fbe..8964332 100644
-> --- a/include/linux/audit.h
-> +++ b/include/linux/audit.h
-> @@ -219,8 +219,15 @@ static inline void audit_log_task_info(struct audit_buffer *ab,
->
->  /* These are defined in auditsc.c */
->                                 /* Public API */
-> +struct audit_task_info {
-> +       kuid_t                  loginuid;
-> +       unsigned int            sessionid;
-> +       struct audit_context    *ctx;
-> +};
-
-...
-
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 87bf02d..e117272 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -873,10 +872,8 @@ struct task_struct {
->
->         struct callback_head            *task_works;
->
-> -       struct audit_context            *audit_context;
->  #ifdef CONFIG_AUDITSYSCALL
-> -       kuid_t                          loginuid;
-> -       unsigned int                    sessionid;
-> +       struct audit_task_info          *audit;
->  #endif
->         struct seccomp                  seccomp;
-
-Prior to this patch audit_context was available regardless of
-CONFIG_AUDITSYSCALL, after this patch the corresponding audit_context
-is only available when CONFIG_AUDITSYSCALL is defined.
-
-> diff --git a/init/main.c b/init/main.c
-> index 3b4ada1..6aba171 100644
-> --- a/init/main.c
-> +++ b/init/main.c
-> @@ -92,6 +92,7 @@
->  #include <linux/rodata_test.h>
->  #include <linux/jump_label.h>
->  #include <linux/mem_encrypt.h>
-> +#include <linux/audit.h>
->
->  #include <asm/io.h>
->  #include <asm/bugs.h>
-> @@ -721,6 +722,7 @@ asmlinkage __visible void __init start_kernel(void)
->         nsfs_init();
->         cpuset_init();
->         cgroup_init();
-> +       audit_task_init();
->         taskstats_init_early();
->         delayacct_init();
-
-It seems like we would need either init_struct_audit or
-audit_task_init(), but not both, yes?
-
-> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index fb20746..88779a7 100644
-> --- a/kernel/auditsc.c
-> +++ b/kernel/auditsc.c
-> @@ -841,7 +841,7 @@ static inline struct audit_context *audit_take_context(struct task_struct *tsk,
->                                                       int return_valid,
->                                                       long return_code)
->  {
-> -       struct audit_context *context = tsk->audit_context;
-> +       struct audit_context *context = tsk->audit->ctx;
->
->         if (!context)
->                 return NULL;
-> @@ -926,6 +926,15 @@ static inline struct audit_context *audit_alloc_context(enum audit_state state)
->         return context;
+> @@ -2045,6 +2045,30 @@ void audit_log_session_info(struct audit_buffer *a=
+b)
+>         audit_log_format(ab, " auid=3D%u ses=3D%u", auid, sessionid);
 >  }
 >
-> +static struct kmem_cache *audit_task_cache;
-> +
-> +void __init audit_task_init(void)
+> +/*
+> + * audit_log_contid - report container info
+> + * @tsk: task to be recorded
+> + * @context: task or local context for record
+> + * @op: contid string description
+> + */
+> +int audit_log_contid(struct task_struct *tsk,
+> +                            struct audit_context *context, char *op)
 > +{
-> +       audit_task_cache = kmem_cache_create("audit_task",
-> +                                            sizeof(struct audit_task_info),
-> +                                            0, SLAB_PANIC, NULL);
-> +}
-
-This is somewhat related to the CONFIG_AUDITSYSCALL comment above, but
-since the audit_task_info contains generic audit state (not just
-syscall related state), it seems like this, and the audit_task_info
-accessors/helpers, should live in kernel/audit.c.
-
-There are probably a few other things that should move to
-kernel/audit.c too, e.g. audit_alloc().  Have you verified that this
-builds/runs correctly on architectures that define CONFIG_AUDIT but
-not CONFIG_AUDITSYSCALL?
-
->  /**
->   * audit_alloc - allocate an audit context block for a task
->   * @tsk: task
-> @@ -940,17 +949,28 @@ int audit_alloc(struct task_struct *tsk)
->         struct audit_context *context;
->         enum audit_state     state;
->         char *key = NULL;
-> +       struct audit_task_info *info;
+> +       struct audit_buffer *ab;
 > +
-> +       info = kmem_cache_zalloc(audit_task_cache, GFP_KERNEL);
-> +       if (!info)
+> +       if (!audit_contid_set(tsk))
+> +               return 0;
+> +       /* Generate AUDIT_CONTAINER record with container ID */
+> +       ab =3D audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER);
+> +       if (!ab)
 > +               return -ENOMEM;
-> +       info->loginuid = audit_get_loginuid(current);
-> +       info->sessionid = audit_get_sessionid(current);
-> +       tsk->audit = info;
->
->         if (likely(!audit_ever_enabled))
->                 return 0; /* Return if not auditing. */
+> +       audit_log_format(ab, "op=3D%s contid=3D%llu",
+> +                        op, audit_get_contid(tsk));
+> +       audit_log_end(ab);
+> +       return 0;
+> +}
+> +EXPORT_SYMBOL(audit_log_contid);
 
-I don't view this as necessary for initial acceptance, and
-synchronization/locking might render this undesirable, but it would be
-curious to see if we could do something clever with refcnts and
-copy-on-write to minimize the number of kmem_cache objects in use in
-the !audit_ever_enabled (and possibly the AUDIT_DISABLED) case.
+As discussed in the previous iteration of the patch, I prefer
+AUDIT_CONTAINER_ID here over AUDIT_CONTAINER.  If you feel strongly
+about keeping it as-is with AUDIT_CONTAINER I suppose I could live
+with that, but it is isn't my first choice.
 
->         state = audit_filter_task(tsk, &key);
->         if (state == AUDIT_DISABLED) {
-> +               audit_set_context(tsk, NULL);
+However, I do care about the "op" field in this record.  It just
+doesn't make any sense; the way you are using it it is more of a
+context field than an operations field, and even then why is the
+context important from a logging and/or security perspective?  Drop it
+please.
 
-It's already NULL, isn't it?
-
->                 clear_tsk_thread_flag(tsk, TIF_SYSCALL_AUDIT);
->                 return 0;
->         }
->
->         if (!(context = audit_alloc_context(state))) {
-> +               tsk->audit = NULL;
-> +               kmem_cache_free(audit_task_cache, info);
->                 kfree(key);
->                 audit_log_lost("out of memory in audit_alloc");
->                 return -ENOMEM;
-> @@ -962,6 +982,12 @@ int audit_alloc(struct task_struct *tsk)
->         return 0;
->  }
->
-> +struct audit_task_info init_struct_audit = {
-> +       .loginuid = INVALID_UID,
-> +       .sessionid = AUDIT_SID_UNSET,
-> +       .ctx = NULL,
-> +};
-> +
->  static inline void audit_free_context(struct audit_context *context)
->  {
->         audit_free_names(context);
+--
+paul moore
+www.paul-moore.com
