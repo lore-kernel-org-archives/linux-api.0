@@ -1,41 +1,94 @@
-From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: [PATCH v2 4/5] statx: don't clear STATX_ATIME on SB_RDONLY
-Date: Fri, 19 Oct 2018 14:20:48 +0200
-Message-ID: <20181019122049.27121-4-mszeredi@redhat.com>
+From: Andreas Dilger <adilger@dilger.ca>
+Subject: Re: [PATCH v2 1/5] orangefs: fix request_mask misuse
+Date: Fri, 19 Oct 2018 08:27:05 -0600
+Message-ID: <9D62CF17-A2F8-43A2-A054-AF281FD96C13@dilger.ca>
 References: <20181019122049.27121-1-mszeredi@redhat.com>
+Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
+Content-Type: multipart/signed;
+ boundary="Apple-Mail=_88902FA3-F33A-4B04-8242-4DAE6FB12E7B";
+ protocol="application/pgp-signature"; micalg=pgp-sha256
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181019122049.27121-1-mszeredi@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
+To: Miklos Szeredi <mszeredi@redhat.com>
+Cc: Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>, Mike Marshall <hubcap@omnibond.com>
 List-Id: linux-api@vger.kernel.org
 
-IS_NOATIME(inode) is defined as __IS_FLG(inode, SB_RDONLY|SB_NOATIME), so
-generic_fillattr() will clear STATX_ATIME from the result_mask if the super
-block is marked read only.
 
-This was probably not the intention, so fix to only clear STATX_ATIME if
-the fs doesn't support atime at all.
+--Apple-Mail=_88902FA3-F33A-4B04-8242-4DAE6FB12E7B
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+	charset=us-ascii
 
-Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
-Cc: David Howells <dhowells@redhat.com>
----
- fs/stat.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+On Oct 19, 2018, at 6:20 AM, Miklos Szeredi <mszeredi@redhat.com> wrote:
+>=20
+> Orangefs only handles STATX_BASIC_STATS in its getattr implementation, =
+so
+> mask off all other flags.  Not doing so results in statx(2) forcing a
+> refresh of cached attributes on any other requested flag (i.e. =
+STATX_BTIME
+> currently) due to the following test in orangefs_inode_getattr():
+>=20
+> (request_mask & orangefs_inode->getattr_mask) =3D=3D request_mask
+>=20
+> Also clean up gratuitous uses of STATX_ALL.
+>=20
+> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+> Reviewed-by: Martin Brandenburg <martin@omnibond.com>
+> Cc: Mike Marshall <hubcap@omnibond.com>
+> ---
+> fs/orangefs/inode.c | 7 ++++---
+> 1 file changed, 4 insertions(+), 3 deletions(-)
+>=20
+> diff --git a/fs/orangefs/inode.c b/fs/orangefs/inode.c
+> index 31932879b716..bd7f15a831dc 100644
+> --- a/fs/orangefs/inode.c
+> +++ b/fs/orangefs/inode.c
+> @@ -256,7 +256,8 @@ int orangefs_getattr(const struct path *path, =
+struct kstat *stat,
+> 		     "orangefs_getattr: called on %pd\n",
+> 		     path->dentry);
+>=20
+> -	ret =3D orangefs_inode_getattr(inode, 0, 0, request_mask);
+> +	ret =3D orangefs_inode_getattr(inode, 0, 0,
+> +				     request_mask & STATX_BASIC_STATS);
 
-diff --git a/fs/stat.c b/fs/stat.c
-index 8d297a279991..b46583df70d4 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -46,7 +46,8 @@ void generic_fillattr(struct inode *inode, struct kstat *stat)
- 	stat->blksize = i_blocksize(inode);
- 	stat->blocks = inode->i_blocks;
- 
--	if (IS_NOATIME(inode))
-+	/* SB_NOATIME means filesystem supplies dummy atime value */
-+	if (inode->i_sb->s_flags & SB_NOATIME)
- 		stat->result_mask &= ~STATX_ATIME;
- 	if (IS_AUTOMOUNT(inode))
- 		stat->attributes |= STATX_ATTR_AUTOMOUNT;
--- 
-2.14.3
+Does it make sense to mask this off at the caller, rather than within
+orangefs_inode_getattr()?  Otherwise, orangefs_inode_getattr() will
+never see additional stats passed in, even if it is enhanced to return
+other values.
+
+Cheers, Andreas
+
+
+
+
+
+
+--Apple-Mail=_88902FA3-F33A-4B04-8242-4DAE6FB12E7B
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iQIzBAEBCAAdFiEEDb73u6ZejP5ZMprvcqXauRfMH+AFAlvJ6boACgkQcqXauRfM
+H+BRUA/+KhZhIkycQtUFCDFyXS4zsczmZn2BdFLg687vdfLzgFrQSMAbsJVLYgbe
+8pRDYrgDn305iymYbOx323GuEtAqjRUaKOV7viS8ugFFGwgIuB5xTDttcWfW60Ib
+VVNhXo+jDvcOjDplUaEI3yEMCohcgTIQiJ0HD7WS8JtbjYc5FWPrJ05Au86I+rtW
+pq8Z0rEzF7rzowimnlLPzu6dvMuMisYo3sNI6Ypp1qRwX6m5imzmr6J5dEziVigi
+LNrSDiEwR37eXKbQEaMJj0185o6j9Pdh2D3d5I1ha6HG2RGNUy666xXklvBn8uAn
+xEKvt54jj4uWgUG+7ASC+C1GrVTUIeHryGYP3PvhRXXwOOC+VxHqVcmZVZbaSVYz
+7nlR7VnCqa/pqMeAboB1YpG5CasiqcSj7Id7DFhXOLKuAT9SeaeyWl1hEcr/C+pM
+sHJWlB/ByY2E0cTOf9tSITmWkYptq7XKiJ7NygZgalqtxaG4nM7NQX7Pbv8HD8Sr
+bro5pm2cPrOARAXP5mrSL/sPg+HPzo0ONH2i0YL/holVk0tiUSlkMQnGcEFFNX+R
+uBvybTYKauR75pmn5tvB/LZ30v3RSCAgjfMuFIyopjv5xn0kkQ/X6fhvHmXRqgIl
+nPaSS/Urqzin6DUB7G3fdgLOuiy6kcbvm4WQ669YU4gc4Va8chw=
+=p4EX
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_88902FA3-F33A-4B04-8242-4DAE6FB12E7B--
