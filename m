@@ -1,109 +1,54 @@
 From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: [PATCH v2 2/5] uapi: deprecate STATX_ALL
-Date: Fri, 19 Oct 2018 14:20:46 +0200
-Message-ID: <20181019122049.27121-2-mszeredi@redhat.com>
+Subject: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
+Date: Fri, 19 Oct 2018 14:20:49 +0200
+Message-ID: <20181019122049.27121-5-mszeredi@redhat.com>
 References: <20181019122049.27121-1-mszeredi@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181019122049.27121-1-mszeredi@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>, Trond Myklebust <trond.myklebust@primarydata.com>
 List-Id: linux-api@vger.kernel.org
 
-Constants of the *_ALL type can be actively harmful due to the fact that
-developers will usually fail to consider the possible effects of future
-changes to the definition.
+As per statx(2) man page only clear out flags that are unsupported by the
+fs or have an unrepresentable value.  Atime is supported by NFS as long as
+it's supported on the server.
 
-Deprecate STATX_ALL in the uapi, while no damage has been done yet.
+So the STATX_ATIME flag should not be cleared in the result_mask if the
+operation was requested on a MNT_NOATIME or MNT_NODIRATIME mount.
 
-We could keep something like this around in the kernel, but there's
-actually no point, since all filesystems should be explicitly checking
-flags that they support and not rely on the VFS masking unknown ones out: a
-flag could be known to the VFS, yet not known to the filesystem (see
-orangefs bug fixed in the previous patch).
+This patch doesn't change the revalidation algorithm in any way, just the
+clearing of flags in stat->result_mask.
 
 Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+Fixes: 9ccee940bd5b ("Support statx() mask and query flags parameters")
+Cc: Trond Myklebust <trond.myklebust@primarydata.com>
 ---
- fs/stat.c                       |  1 -
- include/uapi/linux/stat.h       | 11 ++++++++++-
- samples/statx/test-statx.c      |  2 +-
- tools/include/uapi/linux/stat.h | 11 ++++++++++-
- 4 files changed, 21 insertions(+), 4 deletions(-)
+ fs/nfs/inode.c | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
 
-diff --git a/fs/stat.c b/fs/stat.c
-index f8e6fb2c3657..8d297a279991 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -73,7 +73,6 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
+diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
+index b65aee481d13..34bb3e591709 100644
+--- a/fs/nfs/inode.c
++++ b/fs/nfs/inode.c
+@@ -811,7 +811,7 @@ int nfs_getattr(const struct path *path, struct kstat *stat,
+ 	if (!(request_mask & (STATX_MODE|STATX_NLINK|STATX_ATIME|STATX_CTIME|
+ 					STATX_MTIME|STATX_UID|STATX_GID|
+ 					STATX_SIZE|STATX_BLOCKS)))
+-		goto out_no_revalidate;
++		goto out_no_update;
  
- 	memset(stat, 0, sizeof(*stat));
- 	stat->result_mask |= STATX_BASIC_STATS;
--	request_mask &= STATX_ALL;
- 	query_flags &= KSTAT_QUERY_FLAGS;
- 	if (inode->i_op->getattr)
- 		return inode->i_op->getattr(path, stat, request_mask,
-diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-index 7b35e98d3c58..ed456ac0f90d 100644
---- a/include/uapi/linux/stat.h
-+++ b/include/uapi/linux/stat.h
-@@ -148,9 +148,18 @@ struct statx {
- #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
- #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
- #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
--#define STATX_ALL		0x00000fffU	/* All currently supported flags */
-+
- #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
- 
-+#ifndef __KERNEL__
-+/*
-+ * This is deprecated, and shall remain the same value in the future.  To avoid
-+ * confusion please use the equivalent (STATX_BASIC_STATS | STATX_BTIME)
-+ * instead.
-+ */
-+#define STATX_ALL		0x00000fffU
-+#endif
-+
- /*
-  * Attributes to be found in stx_attributes and masked in stx_attributes_mask.
-  *
-diff --git a/samples/statx/test-statx.c b/samples/statx/test-statx.c
-index d4d77b09412c..e354048dea3c 100644
---- a/samples/statx/test-statx.c
-+++ b/samples/statx/test-statx.c
-@@ -211,7 +211,7 @@ int main(int argc, char **argv)
- 	struct statx stx;
- 	int ret, raw = 0, atflag = AT_SYMLINK_NOFOLLOW;
- 
--	unsigned int mask = STATX_ALL;
-+	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME;
- 
- 	for (argv++; *argv; argv++) {
- 		if (strcmp(*argv, "-F") == 0) {
-diff --git a/tools/include/uapi/linux/stat.h b/tools/include/uapi/linux/stat.h
-index 7b35e98d3c58..ed456ac0f90d 100644
---- a/tools/include/uapi/linux/stat.h
-+++ b/tools/include/uapi/linux/stat.h
-@@ -148,9 +148,18 @@ struct statx {
- #define STATX_BLOCKS		0x00000400U	/* Want/got stx_blocks */
- #define STATX_BASIC_STATS	0x000007ffU	/* The stuff in the normal stat struct */
- #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
--#define STATX_ALL		0x00000fffU	/* All currently supported flags */
-+
- #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
- 
-+#ifndef __KERNEL__
-+/*
-+ * This is deprecated, and shall remain the same value in the future.  To avoid
-+ * confusion please use the equivalent (STATX_BASIC_STATS | STATX_BTIME)
-+ * instead.
-+ */
-+#define STATX_ALL		0x00000fffU
-+#endif
-+
- /*
-  * Attributes to be found in stx_attributes and masked in stx_attributes_mask.
-  *
+ 	/* Check whether the cached attributes are stale */
+ 	do_update |= force_sync || nfs_attribute_cache_expired(inode);
+@@ -833,9 +833,6 @@ int nfs_getattr(const struct path *path, struct kstat *stat,
+ 			goto out;
+ 	} else
+ 		nfs_readdirplus_parent_cache_hit(path->dentry);
+-out_no_revalidate:
+-	/* Only return attributes that were revalidated. */
+-	stat->result_mask &= request_mask;
+ out_no_update:
+ 	generic_fillattr(inode, stat);
+ 	stat->ino = nfs_compat_user_ino64(NFS_FILEID(inode));
 -- 
 2.14.3
