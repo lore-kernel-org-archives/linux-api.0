@@ -1,39 +1,32 @@
-From: Miklos Szeredi <miklos@szeredi.hu>
-Subject: Re: [PATCH v2 2/5] uapi: deprecate STATX_ALL
-Date: Fri, 19 Oct 2018 17:40:40 +0200
-Message-ID: <CAJfpegviiy=9fru3zButbqLnhshH85srH3qyZO2zf-_RPqSs=g@mail.gmail.com>
-References: <20181019122049.27121-1-mszeredi@redhat.com> <20181019122049.27121-2-mszeredi@redhat.com>
- <16382.1539963322@warthog.procyon.org.uk>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
+Date: Fri, 19 Oct 2018 16:44:44 +0100
+Message-ID: <17057.1539963884@warthog.procyon.org.uk>
+References: <20181019122049.27121-5-mszeredi@redhat.com> <20181019122049.27121-1-mszeredi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <16382.1539963322@warthog.procyon.org.uk>
+In-Reply-To: <20181019122049.27121-5-mszeredi@redhat.com>
+Content-ID: <17056.1539963884.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Miklos Szeredi <mszeredi@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
+To: Miklos Szeredi <mszeredi@redhat.com>
+Cc: dhowells@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>, Trond Myklebust <trond.myklebust@primarydata.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 19, 2018 at 5:35 PM, David Howells <dhowells@redhat.com> wrote:
-> Miklos Szeredi <mszeredi@redhat.com> wrote:
->
->> +/*
->> + * This is deprecated, and shall remain the same value in the future.  To avoid
->> + * confusion please use the equivalent (STATX_BASIC_STATS | STATX_BTIME)
->> + * instead.
->> + */
->> +#define STATX_ALL            0x00000fffU
->
-> The comment is misleading.  STATX_ALL is *not* equivalent to
-> STATX_BASIC_STATS | STATX_BTIME, even though it might be numerically the
-> same.  You would need to update the comment when you add STATX_ATTRIBUTES
-> to mention that also.
+Miklos Szeredi <mszeredi@redhat.com> wrote:
 
-The definition of STATX_ALL is, and will remain, equivalent to
-STATX_BASIC_STATS | STATX_BTIME.
+> As per statx(2) man page only clear out flags that are unsupported by the
+> fs or have an unrepresentable value.  Atime is supported by NFS as long as
+> it's supported on the server.
+> 
+> So the STATX_ATIME flag should not be cleared in the result_mask if the
+> operation was requested on a MNT_NOATIME or MNT_NODIRATIME mount.
+> 
+> This patch doesn't change the revalidation algorithm in any way, just the
+> clearing of flags in stat->result_mask.
+> 
+> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+> Fixes: 9ccee940bd5b ("Support statx() mask and query flags parameters")
+> Cc: Trond Myklebust <trond.myklebust@primarydata.com>
 
-What is misleading about this?
-
-If you feel confused by this comment, then maybe I should just drop that part.
-
-Thanks,
-Miklos
+Reviewed-by: David Howells <dhowells@redhat.com>
