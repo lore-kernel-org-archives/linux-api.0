@@ -1,29 +1,54 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH v2 2/5] uapi: deprecate STATX_ALL
-Date: Fri, 19 Oct 2018 16:47:41 +0100
-Message-ID: <17323.1539964061@warthog.procyon.org.uk>
-References: <CAJfpegviiy=9fru3zButbqLnhshH85srH3qyZO2zf-_RPqSs=g@mail.gmail.com> <20181019122049.27121-1-mszeredi@redhat.com> <20181019122049.27121-2-mszeredi@redhat.com> <16382.1539963322@warthog.procyon.org.uk>
+From: Trond Myklebust <trondmy@hammerspace.com>
+Subject: Re: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
+Date: Fri, 19 Oct 2018 15:52:37 +0000
+Message-ID: <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
+References: <20181019122049.27121-1-mszeredi@redhat.com>
+         <20181019122049.27121-5-mszeredi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJfpegviiy=9fru3zButbqLnhshH85srH3qyZO2zf-_RPqSs=g@mail.gmail.com>
-Content-ID: <17322.1539964061.1@warthog.procyon.org.uk>
+In-Reply-To: <20181019122049.27121-5-mszeredi@redhat.com>
+Content-Language: en-US
+Content-ID: <97C3A830F271724381B095718B2197D2@namprd13.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: dhowells@redhat.com, Miklos Szeredi <mszeredi@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
+To: "mszeredi@redhat.com" <mszeredi@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Cc: "amir73il@gmail.com" <amir73il@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "adilger@dilger.ca" <adilger@dilger.ca>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "fw@deneb.enyo.de" <fw@deneb.enyo.de>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Miklos Szeredi <miklos@szeredi.hu> wrote:
-
-> What is misleading about this?
-
-The manpage says:
-
-           STATX_ALL           [All currently available fields]
-
-> If you feel confused by this comment, then maybe I should just drop that part.
-
-I think that would be better.  Don't try to give it a definition.
-
-David
+T24gRnJpLCAyMDE4LTEwLTE5IGF0IDE0OjIwICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToN
+Cj4gQXMgcGVyIHN0YXR4KDIpIG1hbiBwYWdlIG9ubHkgY2xlYXIgb3V0IGZsYWdzIHRoYXQgYXJl
+IHVuc3VwcG9ydGVkIGJ5DQo+IHRoZQ0KPiBmcyBvciBoYXZlIGFuIHVucmVwcmVzZW50YWJsZSB2
+YWx1ZS4gIEF0aW1lIGlzIHN1cHBvcnRlZCBieSBORlMgYXMNCj4gbG9uZyBhcw0KPiBpdCdzIHN1
+cHBvcnRlZCBvbiB0aGUgc2VydmVyLg0KPiANCj4gU28gdGhlIFNUQVRYX0FUSU1FIGZsYWcgc2hv
+dWxkIG5vdCBiZSBjbGVhcmVkIGluIHRoZSByZXN1bHRfbWFzayBpZg0KPiB0aGUNCj4gb3BlcmF0
+aW9uIHdhcyByZXF1ZXN0ZWQgb24gYSBNTlRfTk9BVElNRSBvciBNTlRfTk9ESVJBVElNRSBtb3Vu
+dC4NCj4gDQo+IFRoaXMgcGF0Y2ggZG9lc24ndCBjaGFuZ2UgdGhlIHJldmFsaWRhdGlvbiBhbGdv
+cml0aG0gaW4gYW55IHdheSwganVzdA0KPiB0aGUNCj4gY2xlYXJpbmcgb2YgZmxhZ3MgaW4gc3Rh
+dC0+cmVzdWx0X21hc2suDQo+IA0KPiBTaWduZWQtb2ZmLWJ5OiBNaWtsb3MgU3plcmVkaSA8bXN6
+ZXJlZGlAcmVkaGF0LmNvbT4NCj4gRml4ZXM6IDljY2VlOTQwYmQ1YiAoIlN1cHBvcnQgc3RhdHgo
+KSBtYXNrIGFuZCBxdWVyeSBmbGFncw0KPiBwYXJhbWV0ZXJzIikNCj4gQ2M6IFRyb25kIE15a2xl
+YnVzdCA8dHJvbmQubXlrbGVidXN0QHByaW1hcnlkYXRhLmNvbT4NCj4gLS0tDQo+ICBmcy9uZnMv
+aW5vZGUuYyB8IDUgKy0tLS0NCj4gIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlvbigrKSwgNCBk
+ZWxldGlvbnMoLSkNCj4gDQo+IGRpZmYgLS1naXQgYS9mcy9uZnMvaW5vZGUuYyBiL2ZzL25mcy9p
+bm9kZS5jDQo+IGluZGV4IGI2NWFlZTQ4MWQxMy4uMzRiYjNlNTkxNzA5IDEwMDY0NA0KPiAtLS0g
+YS9mcy9uZnMvaW5vZGUuYw0KPiArKysgYi9mcy9uZnMvaW5vZGUuYw0KPiBAQCAtODExLDcgKzgx
+MSw3IEBAIGludCBuZnNfZ2V0YXR0cihjb25zdCBzdHJ1Y3QgcGF0aCAqcGF0aCwgc3RydWN0DQo+
+IGtzdGF0ICpzdGF0LA0KPiAgCWlmICghKHJlcXVlc3RfbWFzayAmDQo+IChTVEFUWF9NT0RFfFNU
+QVRYX05MSU5LfFNUQVRYX0FUSU1FfFNUQVRYX0NUSU1FfA0KPiAgCQkJCQlTVEFUWF9NVElNRXxT
+VEFUWF9VSUR8U1RBVFhfR0lEDQo+IHwNCj4gIAkJCQkJU1RBVFhfU0laRXxTVEFUWF9CTE9DS1Mp
+KSkNCj4gLQkJZ290byBvdXRfbm9fcmV2YWxpZGF0ZTsNCj4gKwkJZ290byBvdXRfbm9fdXBkYXRl
+Ow0KPiAgDQo+ICAJLyogQ2hlY2sgd2hldGhlciB0aGUgY2FjaGVkIGF0dHJpYnV0ZXMgYXJlIHN0
+YWxlICovDQo+ICAJZG9fdXBkYXRlIHw9IGZvcmNlX3N5bmMgfHwgbmZzX2F0dHJpYnV0ZV9jYWNo
+ZV9leHBpcmVkKGlub2RlKTsNCj4gQEAgLTgzMyw5ICs4MzMsNiBAQCBpbnQgbmZzX2dldGF0dHIo
+Y29uc3Qgc3RydWN0IHBhdGggKnBhdGgsIHN0cnVjdA0KPiBrc3RhdCAqc3RhdCwNCj4gIAkJCWdv
+dG8gb3V0Ow0KPiAgCX0gZWxzZQ0KPiAgCQluZnNfcmVhZGRpcnBsdXNfcGFyZW50X2NhY2hlX2hp
+dChwYXRoLT5kZW50cnkpOw0KPiAtb3V0X25vX3JldmFsaWRhdGU6DQo+IC0JLyogT25seSByZXR1
+cm4gYXR0cmlidXRlcyB0aGF0IHdlcmUgcmV2YWxpZGF0ZWQuICovDQo+IC0Jc3RhdC0+cmVzdWx0
+X21hc2sgJj0gcmVxdWVzdF9tYXNrOw0KPiAgb3V0X25vX3VwZGF0ZToNCj4gIAlnZW5lcmljX2Zp
+bGxhdHRyKGlub2RlLCBzdGF0KTsNCj4gIAlzdGF0LT5pbm8gPSBuZnNfY29tcGF0X3VzZXJfaW5v
+NjQoTkZTX0ZJTEVJRChpbm9kZSkpOw0KDQpOQUNLLg0KDQpXaGVuIHdlIGRvbid0IHJldmFsaWRh
+dGUgdGhlIGF0dHJpYnV0ZSwgdGhlbiB0aGUgY29udGVudCBvZiB0aGUgZmllbGQNCmNvbnRhaW5z
+IGp1bmsgdmFsdWVzLiBUaGUgYWJvdmUgY29kZSBpcyB2ZXJ5IGludGVudGlvbmFsLg0KDQotLSAN
+ClRyb25kIE15a2xlYnVzdA0KTGludXggTkZTIGNsaWVudCBtYWludGFpbmVyLCBIYW1tZXJzcGFj
+ZQ0KdHJvbmQubXlrbGVidXN0QGhhbW1lcnNwYWNlLmNvbQ0KDQoNCg==
