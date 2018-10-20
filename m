@@ -1,79 +1,72 @@
-From: Andreas Dilger <adilger@dilger.ca>
-Subject: Re: [PATCH v2 6/5] statx: add STATX_RESULT_MASK flag
-Date: Fri, 19 Oct 2018 23:55:04 -0600
-Message-ID: <191D94B6-B91B-45C0-81A2-C6E7A3124731@dilger.ca>
-References: <20181019143932.6697-1-mszeredi@redhat.com>
- <18142.1539964788@warthog.procyon.org.uk>
- <CAJfpegtPv4+QxzcqMAGwTt7QALjBaxQtt2Qet98pdmuT1MRUeA@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
-Content-Type: multipart/signed;
- boundary="Apple-Mail=_2AA2161F-DEAC-4A18-B584-431061FB00A9";
- protocol="application/pgp-signature"; micalg=pgp-sha256
+From: Trond Myklebust <trondmy@hammerspace.com>
+Subject: Re: [PATCH v2 5/5] nfs: don't clear STATX_ATIME from result_mask
+Date: Sat, 20 Oct 2018 17:46:51 +0000
+Message-ID: <fbc3501c07fd48e65c0ffc8634870bf57a6f7fe1.camel@hammerspace.com>
+References: <20181019122049.27121-1-mszeredi@redhat.com>
+         <20181019122049.27121-5-mszeredi@redhat.com>
+         <2ca365ec330cf918188e8c47b26e741073382d9d.camel@primarydata.com>
+         <CAJfpegtq1+vZ+uXwzFs20GeSPCR9UbtqD5-fOn8ynoJUJYx25g@mail.gmail.com>
+         <05184f29b5778563519174769c675c5f6c5b2dd3.camel@hammerspace.com>
+         <CAJfpeguFe=KcahJmZire52TPppMk8amiTJFiBZuv=97bRbCj8g@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJfpegtPv4+QxzcqMAGwTt7QALjBaxQtt2Qet98pdmuT1MRUeA@mail.gmail.com>
+In-Reply-To: <CAJfpeguFe=KcahJmZire52TPppMk8amiTJFiBZuv=97bRbCj8g@mail.gmail.com>
+Content-Language: en-US
+Content-ID: <5061AEB311782948A8C8DA144731B4D3@namprd13.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: David Howells <dhowells@redhat.com>, Miklos Szeredi <mszeredi@redhat.com>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Florian Weimer <fw@deneb.enyo.de>, Amir Goldstein <amir73il@gmail.com>
+To: "miklos@szeredi.hu" <miklos@szeredi.hu>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "amir73il@gmail.com" <amir73il@gmail.com>, "mszeredi@redhat.com" <mszeredi@redhat.com>, "adilger@dilger.ca" <adilger@dilger.ca>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>, "fw@deneb.enyo.de" <fw@deneb.enyo.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
---Apple-Mail=_2AA2161F-DEAC-4A18-B584-431061FB00A9
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain;
-	charset=us-ascii
-
-On Oct 19, 2018, at 11:42 AM, Miklos Szeredi <miklos@szeredi.hu> wrote:
->>> +#define STATX_RESULT_MASK STATX__RESERVED
->> 
->> Please don't use that bit.
-> 
-> Using it internally is perfectly harmless.   If we'll need to extend
-> statx in the future and make use of this flag externally, then we can
-> easily move the internal flag somewhere else (e.g. extend request_mask
-> to 64bit, which we'll probably need to do anyway in that case).
-
-I was thinking about this - what is the point of returning an error
-if STATX__RESERVED is set?  If this is used to indicate the presence
-of e.g. stx_mask2, then newer applications trying to request any of the
-flags encoded into stx_mask2 will get an error, rather than the expected
-behaviour of "ignore flags you don't understand, and don't set them in
-the return stx_mask".
-
-Essentially, this will make STATX__RESERVED useless in the future, since
-no application will be able to use it without getting an error if they
-are running on an old kernel.
-
-Cheers, Andreas
-
-
-
-
-
-
---Apple-Mail=_2AA2161F-DEAC-4A18-B584-431061FB00A9
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename=signature.asc
-Content-Type: application/pgp-signature;
-	name=signature.asc
-Content-Description: Message signed with OpenPGP
-
------BEGIN PGP SIGNATURE-----
-Comment: GPGTools - http://gpgtools.org
-
-iQIzBAEBCAAdFiEEDb73u6ZejP5ZMprvcqXauRfMH+AFAlvKwzgACgkQcqXauRfM
-H+ATqxAApNR2xdaiSRfe2Fgfo8reQlhc30NE6O1bmlWMKVdMR5/QZoJ33qvSD3YM
-T01+drMlFx+L5Onoy9VF36bcvMm7LO3AN6ghINgQXVyPyitFXJiNn8DU/wwIwzNR
-8evyURtDSgdw0+BNOx6zuuLcOsDcAhSS9HwCpf57upQWVsnKsqTs0ZOPQMM2Bz3f
-/FcuVbe8UMyvyORUg+3AS+aX05MG12LXRClCGMyVnczbbfABtW+PJMtyZUvniqJd
-AmXS0y41IV0PU7Fun5m0J2EEdtQvMkqcT3ULutB5VtcZGAitBuBIKBeQs7a5PBlK
-lk0koGse1IR4sZi3NrCg+8UAUAQJG7Zvt6N4QFEN6pvilK3SflOydGEI7IQ7fQgJ
-52xCWLSOXwQvm1/oOFOC3sTOmZHOEwVn+YeEpWIaNHb9xSMuNgdBDYnpsVoMDdec
-w/2HECiWqi5+SkwRFzRjaeLkAHs5pnjVrDsV4i17gn4eJSIrg1wt0vDUbbPFBUJI
-qgqenVwOdUkrmiJ2PGnKzUoh0/WIhy3jHVhs9TTFLeSFMORP0KOmzVDuLX9TrY7u
-TTWKEj4bxU2NhAZCt2YmPcb+DZnpo/9hGziL1CF3zHqBgc9x/86si6lLnghZ40uA
-r+s3TJzEj02WHO3DIHk4Fr4YrjGyPI5Ys+MyhLwObu7JSDhQrRw=
-=X1q8
------END PGP SIGNATURE-----
-
---Apple-Mail=_2AA2161F-DEAC-4A18-B584-431061FB00A9--
+T24gRnJpLCAyMDE4LTEwLTE5IGF0IDIyOjQ4ICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToN
+Cj4gT24gRnJpLCBPY3QgMTksIDIwMTggYXQgODoxNCBQTSwgVHJvbmQgTXlrbGVidXN0DQo+IDx0
+cm9uZG15QGhhbW1lcnNwYWNlLmNvbT4gd3JvdGU6DQo+ID4gT24gRnJpLCAyMDE4LTEwLTE5IGF0
+IDE5OjQ2ICswMjAwLCBNaWtsb3MgU3plcmVkaSB3cm90ZToNCj4gPiA+IEhvdyBpcyBpdCB0aGVu
+IHRoYXQgb25seSBTVEFUWF9BVElNRSBpcyBjbGVhcmVkIGFuZCBub3QgdGhlIG90aGVyDQo+ID4g
+PiBmaWVsZHM/DQo+ID4gDQo+ID4gSXQgaXNuJ3QganVzdCB0aGUgYXRpbWUuIFdlIGNhbiBhbHNv
+IGZhaWwgdG8gcmV2YWxpZGF0ZSB0aGUgY3RpbWUNCj4gPiBhbmQNCj4gPiBtdGltZSBpZiB0aGV5
+IGFyZSBub3QgYmVpbmcgcmVxdWVzdGVkIGJ5IHRoZSB1c2VyLg0KPiA+IA0KPiA+ID4gDQo+ID4g
+PiBOb3RlOiBqdW5rICE9IHN0YWxlLiAgVGhlIHN0YXR4IGRlZmluaXRpb24gZG9lc24ndCB0YWxr
+IGFib3V0IHRoZQ0KPiA+ID4gZmllbGRzIGJlaW5nIHVwLXRvLWRhdGUsIGV4Y2VwdCBmb3IgQVRf
+U1RBVFhfRk9SQ0VfU1lOQywgc28gc3RhbGUNCj4gPiA+IGF0dHJpYnV0ZXMgYXJlIG9rYXksIGFu
+ZCBkbyBub3Qgd2FycmFudCBjbGVhcmluZyB0aGUgcmVzdWx0X21hc2suDQo+ID4gPiANCj4gPiAN
+Cj4gPiBJIGRpc2FncmVlLiBzdGFsZSA9PSBqdW5rIGhlcmUsIGJlY2F1c2UgdGhlIGRlZmF1bHQg
+b2YNCj4gPiBBVF9TVEFUWF9TWU5DX0FTX1NUQVQgaXMgZGVzY3JpYmVkIGJ5IHRoZSBtYW5wYWdl
+IGFzICJEbyAgd2hhdGV2ZXINCj4gPiBzdGF0KDIpIGRvZXMuIiB3aGljaCB0aGlzIGlzIG5vdC4N
+Cj4gDQo+IEFoLCB5b3UgYXJlIHRhbGtpbmcgYWJvdXQgdGhpczoNCj4gDQo+ICAgICAvKiBJcyB0
+aGUgdXNlciByZXF1ZXN0aW5nIGF0dHJpYnV0ZXMgdGhhdCBtaWdodCBuZWVkDQo+IHJldmFsaWRh
+dGlvbj8gKi8NCj4gICAgIGlmICghKHJlcXVlc3RfbWFzayAmDQo+IChTVEFUWF9NT0RFfFNUQVRY
+X05MSU5LfFNUQVRYX0FUSU1FfFNUQVRYX0NUSU1FfA0KPiAgICAgICAgICAgICAgICAgICAgIFNU
+QVRYX01USU1FfFNUQVRYX1VJRHxTVEFUWF9HSUR8DQo+ICAgICAgICAgICAgICAgICAgICAgU1RB
+VFhfU0laRXxTVEFUWF9CTE9DS1MpKSkNCj4gICAgICAgICBnb3RvIG91dF9ub191cGRhdGU7DQo+
+IA0KPiBXZWxsLCBpZiB0aGlzIGlzIHRyaWdnZXJlZCBmb3Igc3RhdHgoLi4uLCAgU1RBVFhfQVRJ
+TUUsDQo+IEFUX1NUQVRYX1NZTkNfQVNfU1RBVCkgYW5kIE1OVF9OT0FUSU1FLCB0aGVuIHllcywg
+cmVzdWx0IHdpbGwgYmUNCj4ganVuay4NCj4gV2hpY2ggbWVhbnMgdGhhdCB0aGUgY29kZSBpcyB3
+cm9uZywgaXQgc2hvdWxkbid0IGRvIHRoYXQuDQoNClRoZSBwcm9ibGVtIGlzIHRoYXQgdmZzX2dl
+dGF0dHJfbm9zZWMoKSBwb3B1bGF0ZXMgc3RhdC0+cmVzdWx0X21hc2sNCndpdGggYSBkZWZhdWx0
+IG9mIFNUQVRYX0JBU0lDX1NUQVRTLCB3aGljaCBtYWtlcyBubyBzZW5zZSB1bmxlc3MgeW91DQph
+c3N1bWUgdGhhdCB0aGUgdXNlciB3aWxsIGFsd2F5cyBhc2sgZm9yIGEgc3VwZXJzZXQgb2YNClNU
+QVRYX0JBU0lDX1NUQVRTIChvciB5b3UgYXNzdW1lIHRoYXQgdGhvc2UgYXR0cmlidXRlcyBuZXZl
+ciBuZWVkDQpyZXZhbGlkYXRpb24sIHdoaWNoIGlzIG9idmlvdXNseSBicmFpbmRlYWQpLg0KDQo+
+IE90aGVyd2lzZSAoaWYgc29tZXRoaW5nIG90aGVyIHRoYW4gU1RBVFhfQVRJTUUgb3IgU1RBVFhf
+SU5PIG9yDQo+IFNUQVRYX1RZUEUgaXMgZ2l2ZW4gYXMgd2VsbCkgaXQgKndpbGwqIGRvIHRoZSBz
+YW1lIHRoaW5nIGFzIHdoYXQNCj4gc3RhdCgyKSBkb2VzLCBzbyBpbiB0aGF0IGNhc2UgU1RBVFhf
+QVRJTUUgc2hvdWxkIG5vdCAgYmUgY2xlYXJlZCAoeWV0DQo+IGl0IGlzIGNsZWFyZWQpLg0KDQpB
+cyBmYXIgYXMgSSdtIGNvbmNlcm5lZCwgd2UgY2FuIGRlZmluaXRlbHkgZ2V0IHJpZCBvZiB0aGUN
+Cg0KICAgICAgICAvKg0KICAgICAgICAgKiBXZSBtYXkgZm9yY2UgYSBnZXRhdHRyIGlmIHRoZSB1
+c2VyIGNhcmVzIGFib3V0IGF0aW1lLg0KICAgICAgICAgKg0KICAgICAgICAgKiBOb3RlIHRoYXQg
+d2Ugb25seSBoYXZlIHRvIGNoZWNrIHRoZSB2ZnNtb3VudCBmbGFncyBoZXJlOg0KICAgICAgICAg
+KiAgLSBORlMgYWx3YXlzIHNldHMgU19OT0FUSU1FIGJ5IHNvIGNoZWNraW5nIGl0IHdvdWxkIGdp
+dmUgYQ0KICAgICAgICAgKiAgICBib2d1cyByZXN1bHQNCiAgICAgICAgICogIC0gTkZTIG5ldmVy
+IHNldHMgU0JfTk9BVElNRSBvciBTQl9OT0RJUkFUSU1FIHNvIHRoZXJlIGlzDQogICAgICAgICAq
+ICAgIG5vIHBvaW50IGluIGNoZWNraW5nIHRob3NlLg0KICAgICAgICAgKi8NCiAgICAgICAgaWYg
+KChwYXRoLT5tbnQtPm1udF9mbGFncyAmIE1OVF9OT0FUSU1FKSB8fA0KICAgICAgICAgICAgKChw
+YXRoLT5tbnQtPm1udF9mbGFncyAmIE1OVF9OT0RJUkFUSU1FKSAmJiBTX0lTRElSKGlub2RlLT5p
+X21vZGUpKSkNCiAgICAgICAgICAgICAgICByZXF1ZXN0X21hc2sgJj0gflNUQVRYX0FUSU1FOw0K
+DQoNCmhvd2V2ZXIgdGhlIHJlc3QgbmVlZHMgdG8gc3RheSwgb3IgdGhlcmUgaXMgbm8gd2F5IHdl
+IGNhbiB1c2Ugc3RhdHgoKQ0KdG8gYWxsb3cgb3B0aW1pc2VkIHJldHJpZXZhbCBvZiBvbmx5IHRo
+b3NlIGF0dHJpYnV0ZXMgdGhhdCB5b3VyDQphcHBsaWNhdGlvbiBjYXJlcyBhYm91dC4NCi0tIA0K
+VHJvbmQgTXlrbGVidXN0DQpMaW51eCBORlMgY2xpZW50IG1haW50YWluZXIsIEhhbW1lcnNwYWNl
+DQp0cm9uZC5teWtsZWJ1c3RAaGFtbWVyc3BhY2UuY29tDQoNCg0K
