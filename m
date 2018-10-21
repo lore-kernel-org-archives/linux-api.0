@@ -1,150 +1,408 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v7 1/6] seccomp: add a return code to trap to userspace
-Date: Sun, 21 Oct 2018 17:04:37 +0100
-Message-ID: <20181021160437.GB25202@cisco>
-References: <20180927151119.9989-1-tycho@tycho.ws>
- <20180927151119.9989-2-tycho@tycho.ws>
- <CAGXu5jJr3JWLYGrJ+knu3sj4wwJ_irVvs+JRrY5MuYT3voLegg@mail.gmail.com>
- <20181017202933.GB14047@cisco>
- <CAGXu5jK5yN7zcPUMzFYnUbRrVkLNE0YDCioYdNC3P6mF437+5g@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 01/34] vfs: syscall: Add open_tree(2) to reference or clone a mount [ver #12]
+Date: Sun, 21 Oct 2018 11:41:36 -0500
+Message-ID: <87bm7n5k1r.fsf@xmission.com>
+References: <153754740781.17872.7869536526927736855.stgit@warthog.procyon.org.uk>
+        <153754741974.17872.9547912893344172802.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5jK5yN7zcPUMzFYnUbRrVkLNE0YDCioYdNC3P6mF437+5g@mail.gmail.com>
+In-Reply-To: <153754741974.17872.9547912893344172802.stgit@warthog.procyon.org.uk>
+        (David Howells's message of "Fri, 21 Sep 2018 17:30:19 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian.brauner@ubuntu.com>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Jann Horn <jannh@google.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, torvalds@linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 17, 2018 at 03:21:02PM -0700, Kees Cook wrote:
-> On Wed, Oct 17, 2018 at 1:29 PM, Tycho Andersen <tycho@tycho.ws> wrote:
-> > On Thu, Sep 27, 2018 at 02:31:24PM -0700, Kees Cook wrote:
-> >> On Thu, Sep 27, 2018 at 8:11 AM, Tycho Andersen <tycho@tycho.ws> wrote:
-> >> > @@ -60,4 +62,29 @@ struct seccomp_data {
-> >> >         __u64 args[6];
-> >> >  };
-> >> >
-> >> > +struct seccomp_notif {
-> >> > +       __u16 len;
-> >> > +       __u64 id;
-> >> > +       __u32 pid;
-> >> > +       __u8 signaled;
-> >> > +       struct seccomp_data data;
-> >> > +};
-> >> > +
-> >> > +struct seccomp_notif_resp {
-> >> > +       __u16 len;
-> >> > +       __u64 id;
-> >> > +       __s32 error;
-> >> > +       __s64 val;
-> >> > +};
-> >>
-> >> So, len has to come first, for versioning. However, since it's ahead
-> >> of a u64, this leaves a struct padding hole. pahole output:
-> >>
-> >> struct seccomp_notif {
-> >>         __u16                      len;                  /*     0     2 */
-> >>
-> >>         /* XXX 6 bytes hole, try to pack */
-> >>
-> >>         __u64                      id;                   /*     8     8 */
-> >>         __u32                      pid;                  /*    16     4 */
-> >>         __u8                       signaled;             /*    20     1 */
-> >>
-> >>         /* XXX 3 bytes hole, try to pack */
-> >>
-> >>         struct seccomp_data        data;                 /*    24    64 */
-> >>         /* --- cacheline 1 boundary (64 bytes) was 24 bytes ago --- */
-> >>
-> >>         /* size: 88, cachelines: 2, members: 5 */
-> >>         /* sum members: 79, holes: 2, sum holes: 9 */
-> >>         /* last cacheline: 24 bytes */
-> >> };
-> >> struct seccomp_notif_resp {
-> >>         __u16                      len;                  /*     0     2 */
-> >>
-> >>         /* XXX 6 bytes hole, try to pack */
-> >>
-> >>         __u64                      id;                   /*     8     8 */
-> >>         __s32                      error;                /*    16     4 */
-> >>
-> >>         /* XXX 4 bytes hole, try to pack */
-> >>
-> >>         __s64                      val;                  /*    24     8 */
-> >>
-> >>         /* size: 32, cachelines: 1, members: 4 */
-> >>         /* sum members: 22, holes: 2, sum holes: 10 */
-> >>         /* last cacheline: 32 bytes */
-> >> };
-> >>
-> >> How about making len u32, and moving pid and error above "id"? This
-> >> leaves a hole after signaled, so changing "len" won't be sufficient
-> >> for versioning here. Perhaps move it after data?
-> >
-> > Just to confirm my understanding; I've got these as:
-> >
-> > struct seccomp_notif {
-> >         __u32                      len;                  /*     0     4 */
-> >         __u32                      pid;                  /*     4     4 */
-> >         __u64                      id;                   /*     8     8 */
-> >         __u8                       signaled;             /*    16     1 */
-> >
-> >         /* XXX 7 bytes hole, try to pack */
-> >
-> >         struct seccomp_data        data;                 /*    24    64 */
-> >         /* --- cacheline 1 boundary (64 bytes) was 24 bytes ago --- */
-> >
-> >         /* size: 88, cachelines: 2, members: 5 */
-> >         /* sum members: 81, holes: 1, sum holes: 7 */
-> >         /* last cacheline: 24 bytes */
-> > };
-> > struct seccomp_notif_resp {
-> >         __u32                      len;                  /*     0     4 */
-> >         __s32                      error;                /*     4     4 */
-> >         __u64                      id;                   /*     8     8 */
-> >         __s64                      val;                  /*    16     8 */
-> >
-> >         /* size: 24, cachelines: 1, members: 4 */
-> >         /* last cacheline: 24 bytes */
-> > };
-> >
-> > in the next version. Since the structure has no padding at the end of
-> > it, I think the Right Thing will happen. Note that this is slightly
-> > different than what Kees suggested, if I add signaled after data, then
-> > I end up with:
-> >
-> > struct seccomp_notif {
-> >         __u32                      len;                  /*     0     4 */
-> >         __u32                      pid;                  /*     4     4 */
-> >         __u64                      id;                   /*     8     8 */
-> >         struct seccomp_data        data;                 /*    16    64 */
-> >         /* --- cacheline 1 boundary (64 bytes) was 16 bytes ago --- */
-> >         __u8                       signaled;             /*    80     1 */
-> >
-> >         /* size: 88, cachelines: 2, members: 5 */
-> >         /* padding: 7 */
-> >         /* last cacheline: 24 bytes */
-> > };
-> >
-> > which I think will have the versioning problem if the next member
-> > introduces is < 7 bytes.
-> 
-> It'll be a problem in either place. What I was thinking was that
-> specific versioning is required instead of just length.
+David Howells <dhowells@redhat.com> writes:
 
-Euh, so I implemented this, and it sucks :). It's ugly, and generally
-feels bad.
+> From: Al Viro <viro@zeniv.linux.org.uk>
+>
+> open_tree(dfd, pathname, flags)
+>
+> Returns an O_PATH-opened file descriptor or an error.
+> dfd and pathname specify the location to open, in usual
+> fashion (see e.g. fstatat(2)).  flags should be an OR of
+> some of the following:
+> 	* AT_PATH_EMPTY, AT_NO_AUTOMOUNT, AT_SYMLINK_NOFOLLOW -
+> same meanings as usual
+> 	* OPEN_TREE_CLOEXEC - make the resulting descriptor
+> close-on-exec
+> 	* OPEN_TREE_CLONE or OPEN_TREE_CLONE | AT_RECURSIVE -
+> instead of opening the location in question, create a detached
+> mount tree matching the subtree rooted at location specified by
+> dfd/pathname.  With AT_RECURSIVE the entire subtree is cloned,
+> without it - only the part within in the mount containing the
+> location in question.  In other words, the same as mount --rbind
+> or mount --bind would've taken.  The detached tree will be
+> dissolved on the final close of obtained file.  Creation of such
+> detached trees requires the same capabilities as doing mount --bind.
 
-What if instead we just get rid of versioning all together, and
-instead introduce a u32 flags? We could have one flag right now
-(SECCOMP_NOTIF_FLAG_SIGNALED), and use introduce others as we add more
-information to the response. Then we can add
-SECCOMP_NOTIF_FLAG_EXTRA_FOO, and add another SECCOMP_IOCTL_GET_FOO to
-grab the info?
 
-FWIW, it's not really clear to me that we'll ever add anything to the
-response since hopefully we'll land PUT_FD, so maybe this is all moot
-anyway.
+What happens when mounts propgate to such a detached mount tree?
 
-Tycho
+It looks to me like the test in propagate_one for setting
+CL_UNPRIVILEGED will trigger a NULL pointer dereference:
+
+AKA:
+	/* Notice when we are propagating across user namespaces */
+	if (m->mnt_ns->user_ns != user_ns)
+		type |= CL_UNPRIVILEGED;
+
+Since we don't know which mount namespace if any this subtree is going
+into the test should become:
+
+	if (!m->mnt_ns || (m->mnt_ns->user_ns != user_ns))
+		type |= CL_UNPRIVILEGED;
+
+If the tree is never attached anywhere it won't hurt as we don't allow
+mounts or umounts on the detached subtree.  We don't have enough
+information to know about the namespace we copied from if it would cause
+CL_UNPRIVILEGED to be set on any given propagation.  Similarly we don't
+have any information at all about the mount namespace this tree may
+possibily be copied to.
+
+Eric
+
+
+> Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> cc: linux-api@vger.kernel.org
+> ---
+>
+>  arch/x86/entry/syscalls/syscall_32.tbl |    1 
+>  arch/x86/entry/syscalls/syscall_64.tbl |    1 
+>  fs/file_table.c                        |    9 +-
+>  fs/internal.h                          |    1 
+>  fs/namespace.c                         |  132 +++++++++++++++++++++++++++-----
+>  include/linux/fs.h                     |    7 +-
+>  include/linux/syscalls.h               |    1 
+>  include/uapi/linux/fcntl.h             |    2 
+>  include/uapi/linux/mount.h             |   10 ++
+>  9 files changed, 137 insertions(+), 27 deletions(-)
+>  create mode 100644 include/uapi/linux/mount.h
+>
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index 3cf7b533b3d1..ea1b413afd47 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -398,3 +398,4 @@
+>  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+>  385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+>  386	i386	rseq			sys_rseq			__ia32_sys_rseq
+> +387	i386	open_tree		sys_open_tree			__ia32_sys_open_tree
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index f0b1709a5ffb..0545bed581dc 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -343,6 +343,7 @@
+>  332	common	statx			__x64_sys_statx
+>  333	common	io_pgetevents		__x64_sys_io_pgetevents
+>  334	common	rseq			__x64_sys_rseq
+> +335	common	open_tree		__x64_sys_open_tree
+>  
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/fs/file_table.c b/fs/file_table.c
+> index e49af4caf15d..e03c8d121c6c 100644
+> --- a/fs/file_table.c
+> +++ b/fs/file_table.c
+> @@ -255,6 +255,7 @@ static void __fput(struct file *file)
+>  	struct dentry *dentry = file->f_path.dentry;
+>  	struct vfsmount *mnt = file->f_path.mnt;
+>  	struct inode *inode = file->f_inode;
+> +	fmode_t mode = file->f_mode;
+>  
+>  	if (unlikely(!(file->f_mode & FMODE_OPENED)))
+>  		goto out;
+> @@ -277,18 +278,20 @@ static void __fput(struct file *file)
+>  	if (file->f_op->release)
+>  		file->f_op->release(inode, file);
+>  	if (unlikely(S_ISCHR(inode->i_mode) && inode->i_cdev != NULL &&
+> -		     !(file->f_mode & FMODE_PATH))) {
+> +		     !(mode & FMODE_PATH))) {
+>  		cdev_put(inode->i_cdev);
+>  	}
+>  	fops_put(file->f_op);
+>  	put_pid(file->f_owner.pid);
+> -	if ((file->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
+> +	if ((mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
+>  		i_readcount_dec(inode);
+> -	if (file->f_mode & FMODE_WRITER) {
+> +	if (mode & FMODE_WRITER) {
+>  		put_write_access(inode);
+>  		__mnt_drop_write(mnt);
+>  	}
+>  	dput(dentry);
+> +	if (unlikely(mode & FMODE_NEED_UNMOUNT))
+> +		dissolve_on_fput(mnt);
+>  	mntput(mnt);
+>  out:
+>  	file_free(file);
+> diff --git a/fs/internal.h b/fs/internal.h
+> index 364c20b5ea2d..17029b30e196 100644
+> --- a/fs/internal.h
+> +++ b/fs/internal.h
+> @@ -85,6 +85,7 @@ extern int __mnt_want_write_file(struct file *);
+>  extern void __mnt_drop_write(struct vfsmount *);
+>  extern void __mnt_drop_write_file(struct file *);
+>  
+> +extern void dissolve_on_fput(struct vfsmount *);
+>  /*
+>   * fs_struct.c
+>   */
+> diff --git a/fs/namespace.c b/fs/namespace.c
+> index 8a7e1a7d1d06..ded1a970ec40 100644
+> --- a/fs/namespace.c
+> +++ b/fs/namespace.c
+> @@ -20,12 +20,14 @@
+>  #include <linux/init.h>		/* init_rootfs */
+>  #include <linux/fs_struct.h>	/* get_fs_root et.al. */
+>  #include <linux/fsnotify.h>	/* fsnotify_vfsmount_delete */
+> +#include <linux/file.h>
+>  #include <linux/uaccess.h>
+>  #include <linux/proc_ns.h>
+>  #include <linux/magic.h>
+>  #include <linux/bootmem.h>
+>  #include <linux/task_work.h>
+>  #include <linux/sched/task.h>
+> +#include <uapi/linux/mount.h>
+>  
+>  #include "pnode.h"
+>  #include "internal.h"
+> @@ -1779,6 +1781,16 @@ struct vfsmount *collect_mounts(const struct path *path)
+>  	return &tree->mnt;
+>  }
+>  
+> +void dissolve_on_fput(struct vfsmount *mnt)
+> +{
+> +	namespace_lock();
+> +	lock_mount_hash();
+> +	mntget(mnt);
+> +	umount_tree(real_mount(mnt), UMOUNT_CONNECTED);
+> +	unlock_mount_hash();
+> +	namespace_unlock();
+> +}
+> +
+>  void drop_collected_mounts(struct vfsmount *mnt)
+>  {
+>  	namespace_lock();
+> @@ -2138,6 +2150,30 @@ static bool has_locked_children(struct mount *mnt, struct dentry *dentry)
+>  	return false;
+>  }
+>  
+> +static struct mount *__do_loopback(struct path *old_path, int recurse)
+> +{
+> +	struct mount *mnt = ERR_PTR(-EINVAL), *old = real_mount(old_path->mnt);
+> +
+> +	if (IS_MNT_UNBINDABLE(old))
+> +		return mnt;
+> +
+> +	if (!check_mnt(old) && old_path->dentry->d_op != &ns_dentry_operations)
+> +		return mnt;
+> +
+> +	if (!recurse && has_locked_children(old, old_path->dentry))
+> +		return mnt;
+> +
+> +	if (recurse)
+> +		mnt = copy_tree(old, old_path->dentry, CL_COPY_MNT_NS_FILE);
+> +	else
+> +		mnt = clone_mnt(old, old_path->dentry, 0);
+> +
+> +	if (!IS_ERR(mnt))
+> +		mnt->mnt.mnt_flags &= ~MNT_LOCKED;
+> +
+> +	return mnt;
+> +}
+> +
+>  /*
+>   * do loopback mount.
+>   */
+> @@ -2145,7 +2181,7 @@ static int do_loopback(struct path *path, const char *old_name,
+>  				int recurse)
+>  {
+>  	struct path old_path;
+> -	struct mount *mnt = NULL, *old, *parent;
+> +	struct mount *mnt = NULL, *parent;
+>  	struct mountpoint *mp;
+>  	int err;
+>  	if (!old_name || !*old_name)
+> @@ -2159,38 +2195,21 @@ static int do_loopback(struct path *path, const char *old_name,
+>  		goto out;
+>  
+>  	mp = lock_mount(path);
+> -	err = PTR_ERR(mp);
+> -	if (IS_ERR(mp))
+> +	if (IS_ERR(mp)) {
+> +		err = PTR_ERR(mp);
+>  		goto out;
+> +	}
+>  
+> -	old = real_mount(old_path.mnt);
+>  	parent = real_mount(path->mnt);
+> -
+> -	err = -EINVAL;
+> -	if (IS_MNT_UNBINDABLE(old))
+> -		goto out2;
+> -
+>  	if (!check_mnt(parent))
+>  		goto out2;
+>  
+> -	if (!check_mnt(old) && old_path.dentry->d_op != &ns_dentry_operations)
+> -		goto out2;
+> -
+> -	if (!recurse && has_locked_children(old, old_path.dentry))
+> -		goto out2;
+> -
+> -	if (recurse)
+> -		mnt = copy_tree(old, old_path.dentry, CL_COPY_MNT_NS_FILE);
+> -	else
+> -		mnt = clone_mnt(old, old_path.dentry, 0);
+> -
+> +	mnt = __do_loopback(&old_path, recurse);
+>  	if (IS_ERR(mnt)) {
+>  		err = PTR_ERR(mnt);
+>  		goto out2;
+>  	}
+>  
+> -	mnt->mnt.mnt_flags &= ~MNT_LOCKED;
+> -
+>  	err = graft_tree(mnt, parent, mp);
+>  	if (err) {
+>  		lock_mount_hash();
+> @@ -2204,6 +2223,75 @@ static int do_loopback(struct path *path, const char *old_name,
+>  	return err;
+>  }
+>  
+> +SYSCALL_DEFINE3(open_tree, int, dfd, const char *, filename, unsigned, flags)
+> +{
+> +	struct file *file;
+> +	struct path path;
+> +	int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
+> +	bool detached = flags & OPEN_TREE_CLONE;
+> +	int error;
+> +	int fd;
+> +
+> +	BUILD_BUG_ON(OPEN_TREE_CLOEXEC != O_CLOEXEC);
+> +
+> +	if (flags & ~(AT_EMPTY_PATH | AT_NO_AUTOMOUNT | AT_RECURSIVE |
+> +		      AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE |
+> +		      OPEN_TREE_CLOEXEC))
+> +		return -EINVAL;
+> +
+> +	if ((flags & (AT_RECURSIVE | OPEN_TREE_CLONE)) == AT_RECURSIVE)
+> +		return -EINVAL;
+> +
+> +	if (flags & AT_NO_AUTOMOUNT)
+> +		lookup_flags &= ~LOOKUP_AUTOMOUNT;
+> +	if (flags & AT_SYMLINK_NOFOLLOW)
+> +		lookup_flags &= ~LOOKUP_FOLLOW;
+> +	if (flags & AT_EMPTY_PATH)
+> +		lookup_flags |= LOOKUP_EMPTY;
+> +
+> +	if (detached && !may_mount())
+> +		return -EPERM;
+> +
+> +	fd = get_unused_fd_flags(flags & O_CLOEXEC);
+> +	if (fd < 0)
+> +		return fd;
+> +
+> +	error = user_path_at(dfd, filename, lookup_flags, &path);
+> +	if (error)
+> +		goto out;
+> +
+> +	if (detached) {
+> +		struct mount *mnt = __do_loopback(&path, flags & AT_RECURSIVE);
+> +		if (IS_ERR(mnt)) {
+> +			error = PTR_ERR(mnt);
+> +			goto out2;
+> +		}
+> +		mntput(path.mnt);
+> +		path.mnt = &mnt->mnt;
+> +	}
+> +
+> +	file = dentry_open(&path, O_PATH, current_cred());
+> +	if (IS_ERR(file)) {
+> +		error = PTR_ERR(file);
+> +		goto out3;
+> +	}
+> +
+> +	if (detached)
+> +		file->f_mode |= FMODE_NEED_UNMOUNT;
+> +	path_put(&path);
+> +	fd_install(fd, file);
+> +	return fd;
+> +
+> +out3:
+> +	if (detached)
+> +		dissolve_on_fput(path.mnt);
+> +out2:
+> +	path_put(&path);
+> +out:
+> +	put_unused_fd(fd);
+> +	return error;
+> +}
+> +
+>  static int change_mount_flags(struct vfsmount *mnt, int ms_flags)
+>  {
+>  	int error = 0;
+> diff --git a/include/linux/fs.h b/include/linux/fs.h
+> index 4323b8fe353d..6dc32507762f 100644
+> --- a/include/linux/fs.h
+> +++ b/include/linux/fs.h
+> @@ -157,10 +157,13 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+>  #define FMODE_NONOTIFY		((__force fmode_t)0x4000000)
+>  
+>  /* File is capable of returning -EAGAIN if I/O will block */
+> -#define FMODE_NOWAIT	((__force fmode_t)0x8000000)
+> +#define FMODE_NOWAIT		((__force fmode_t)0x8000000)
+> +
+> +/* File represents mount that needs unmounting */
+> +#define FMODE_NEED_UNMOUNT	((__force fmode_t)0x10000000)
+>  
+>  /* File does not contribute to nr_files count */
+> -#define FMODE_NOACCOUNT	((__force fmode_t)0x20000000)
+> +#define FMODE_NOACCOUNT		((__force fmode_t)0x20000000)
+>  
+>  /*
+>   * Flag for rw_copy_check_uvector and compat_rw_copy_check_uvector
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 2ff814c92f7f..6978f3c76d41 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -906,6 +906,7 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
+>  			  unsigned mask, struct statx __user *buffer);
+>  asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
+>  			 int flags, uint32_t sig);
+> +asmlinkage long sys_open_tree(int dfd, const char __user *path, unsigned flags);
+>  
+>  /*
+>   * Architecture-specific system calls
+> diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+> index 6448cdd9a350..594b85f7cb86 100644
+> --- a/include/uapi/linux/fcntl.h
+> +++ b/include/uapi/linux/fcntl.h
+> @@ -90,5 +90,7 @@
+>  #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
+>  #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
+>  
+> +#define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
+> +
+>  
+>  #endif /* _UAPI_LINUX_FCNTL_H */
+> diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
+> new file mode 100644
+> index 000000000000..e8db2911adca
+> --- /dev/null
+> +++ b/include/uapi/linux/mount.h
+> @@ -0,0 +1,10 @@
+> +#ifndef _UAPI_LINUX_MOUNT_H
+> +#define _UAPI_LINUX_MOUNT_H
+> +
+> +/*
+> + * open_tree() flags.
+> + */
+> +#define OPEN_TREE_CLONE		1		/* Clone the target tree and attach the clone */
+> +#define OPEN_TREE_CLOEXEC	O_CLOEXEC	/* Close the file on execve() */
+> +
+> +#endif /* _UAPI_LINUX_MOUNT_H */
