@@ -1,250 +1,185 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: [GIT PULL] siginfo updates for 4.20-rc1
-Date: Mon, 22 Oct 2018 21:01:06 -0500
-Message-ID: <87h8hdzajh.fsf@xmission.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH for 4.21 01/16] rseq/selftests: Add reference
+ counter to coexist with glibc
+Date: Tue, 23 Oct 2018 10:59:05 -0400 (EDT)
+Message-ID: <1085544486.4156.1540306745517.JavaMail.zimbra@efficios.com>
+References: <20181010191936.7495-1-mathieu.desnoyers@efficios.com> <38596780-30f7-0763-0c17-7517dbf0bf59@arm.com> <1917048565.2402.1539270808972.JavaMail.zimbra@efficios.com> <3896e4f5-aab1-ae79-5360-088fd15ed380@arm.com> <1680616760.2469.1539275846360.JavaMail.zimbra@efficios.com> <f22ef029-2f30-6bd9-e46a-9e7b0a1e9225@arm.com> <254339058.2585.1539286978932.JavaMail.zimbra@efficios.com> <0dcd1e46-7007-3a99-4ada-f09ab66ab2d5@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <0dcd1e46-7007-3a99-4ada-f09ab66ab2d5@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Szabolcs Nagy <szabolcs.nagy@arm.com>
+Cc: nd <nd@arm.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <Catalin.Marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
+----- On Oct 12, 2018, at 10:59 AM, Szabolcs Nagy szabolcs.nagy@arm.com wrote:
 
-Linus,
+> On 11/10/18 20:42, Mathieu Desnoyers wrote:
+>> ----- On Oct 11, 2018, at 1:04 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>> 
+>>> On 11/10/18 17:37, Mathieu Desnoyers wrote:
+>>>> ----- On Oct 11, 2018, at 12:20 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>>>>> On 11/10/18 16:13, Mathieu Desnoyers wrote:
+>>>>>> ----- On Oct 11, 2018, at 6:37 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>>>>>>> On 10/10/18 20:19, Mathieu Desnoyers wrote:
+>>>>>>>> +__attribute__((visibility("hidden"))) __thread
+>>>>>>>> +volatile struct libc_rseq __lib_rseq_abi = {
+>>>>>>> ...
+>>>>> but it's in a magic struct that's called "abi" which is confusing,
+>>>>> the counter is not abi, it's in a hidden object.
+>>>>
+>>>> No, it is really an ABI between user-space apps/libs. It's not meant to be
+>>>> hidden. glibc implements its own register/unregister functions (it does not
+>>>> link against librseq). librseq exposes register/unregister functions as public
+>>>> APIs. Those also use the refcount. I also plan to have existing libraries, e.g.
+>>>> liblttng-ust and possibly liburcu flavors, implement the
+>>>> registration/unregistration and refcount handling on their own, so we don't
+>>>> have to add a requirement on additional linking on librseq for pre-existing
+>>>> libraries.
+>>>>
+>>>> So that refcount is not an ABI between kernel and user-space, but it's a
+>>>> user-space ABI nevertheless (between program and shared objects).
+>>>>
+>>>
+>>> if that's what you want, then your declaration is wrong.
+>>> the object should not have hidden visibility.
+>> 
+>> Actually, if we look closer into my patch, it defines two symbols,
+>> one of which is an alias:
+>> 
+>> __attribute__((visibility("hidden"))) __thread
+>> volatile struct libc_rseq __lib_rseq_abi = {
+>>         .cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
+>> };
+>> 
+>> extern __attribute__((weak, alias("__lib_rseq_abi"))) __thread
+>> volatile struct rseq __rseq_abi;
+>> 
+>> Note that the public __rseq_abi symbol is weak but does not have
+>> hidden visibility. I do this to ensure I don't get prototype
+>> mismatch for __rseq_abi between rseq.c and rseq.h (it is required
+>> to be a struct rseq by rseq.h), but I want the space to hold the
+>> extra refcount field present in struct libc_rseq.
+>> 
+>
 
-Please pull the siginfo-linus branch from the git tree:
+I notice this email has been sitting in my inbox for a while, sorry
+for the delayed reply.
+ 
+> but that's wrong: the weak symbol might get resolved to
+> a different object in another module, while you increment
+> a local refcounter, so there is no coordination between
+> userspace components.
 
-   git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git siginfo-linus
+Hrm, good point. I should not use the __lib_rseq_abi symbol at all
+here.
 
-   HEAD: a36700589b85443e28170be59fa11c8a104130a5 signal: Guard against negative signal numbers in copy_siginfo_from_user32
+> 
+> this was the reason for my first question in my original mail,
+> as soon as i saw the local counter i suspected this is broken.
 
-I have been slowly sorting out siginfo and this is the culmination of that work.
+Good catch, yes. I think I should not use the alias approach then.
 
-The primary result is in several ways the signal infrastructure has been made
-less error prone.  The code has been updated so that manually specifying
-SEND_SIG_FORCED is never necessary.  The conversion to the new siginfo sending
-functions is now complete, which makes it difficult to send a signal without
-filling in the proper siginfo fields.
+> 
+> and "assume there is an extra counter field" is not
+> acceptable as user space abi, if the counter is relevant
+> across modules then expose the entire struct.
 
-At the tail end of the patchset comes the optimization of decreasing the size of
-struct siginfo in the kernel from 128 bytes to about 48 bytes on 64bit.  The
-fundamental observation that enables this is by definition none of the known
-ways to use struct siginfo uses the extra bytes.
+The question that arises here is whether I should update
+uapi/linux/rseq.h and add the refcount field directly in
+there, even though the kernel does not care about it per se ?
 
-This comes at the cost of a small user space observable difference.  For the
-rare case of siginfo being injected into the kernel only what can be copied
-into kernel_siginfo is delivered to the destination, the rest of the bytes are
-set to 0.  For cases where the signal and the si_code are known this is safe,
-because we know thos bytes are not used.  For cases where the signal and si_code
-combination is unknown the bits that won't fit into struct kernel_siginfo are
-tested to verify they are zero, and the send fails if they are not.
+> 
+>>> either the struct should be public abi (extern tls
+>>> symbol) or the register/unregister functions should
+>>> be public abi (so when multiple implementations are
+>>> present in the same process only one of them will
+>>> provide definition for the public abi symbol and
+>>> thus there will be one refcounter).
+>> 
+>> Those are two possible solutions, indeed. Considering that
+>> we already need to expose the __rseq_abi symbol as a public
+>> ABI in a way that ensures that multiple implementations
+>> in a same process end up only using one of them, it seems
+>> straightforward to simply extend that structure and hold the
+>> refcount there, rather than having two extra ABI symbols
+>> (register/unregister functions).
+>> 
+>> One very appropriate question here is whether we want to
+>> expose the layout of struct libc_rseq (which includes the
+>> refcount) in a public header file, and if so, which project
+>> should hold it ? Or do we just want to document the layout
+>> of this ABI so projects can define the structure layout
+>> internally ? As my implementation currently stands, I have
+>> the following structure duplicated into rseq selftests,
+>> librseq, and glibc:
+>> 
+> 
+> "not exposed" and "the counter is abi" together is not
+> useful, either you want coordination in user-space or
+> not, that decision should imply the userspace abi/api
+> (e.g. adding a counter to the user-space struct).
 
-I made an extensive search through userspace code and I could not find anything
-that would break because of the above change.  If it turns out I did break
-something it will take just the revert of a single change to restore
-kernel_siginfo to the same size as userspace siginfo.
+I'm inclined to add the refcount to struct rseq directly,
+unless anyone objects. It seems much simpler.
 
-Testing did reveal dependencies on preferring the signo passed to sigqueueinfo
-over si->signo, so bit the bullet and added the complexity necessary to handle
-that case.
+> 
+> it is true that only modules that implement registration
+> need to know about the counter and normal users don't,
+> but if you want any coordination then the layout must
+> be fixed and that should be exposed somewhere to avoid
+> breakage.
 
-Testing also revealed bad things can happen if a negative signal number is
-passed into the system calls.  Something no sane application will do but
-something a malicious program or a fuzzer might do.  So I have fixed the code
-that performs the bounds checks to ensure negative signal numbers are handled.
+Yep. Exposing this in uapi/linux/rseq.h is the main
+location that seems to make sense to me.
+
+> 
+> (i think ideally the api would be controlled by functions
+> and not object symbols with magic layout, but the rseq
+> design is already full of such magic. and i think it's
+> better to do the registration in libc only without
+> coordination but that might not be practical if users
+> want it now)
+
+Yes, early adopters is my concern here.
+
+> 
+>> /*
+>>  * linux/rseq.h defines struct rseq as aligned on 32 bytes. The kernel ABI
+>>  * size is 20 bytes. For support of multiple rseq users within a process,
+>>  * user-space defines an extra 4 bytes field as a reference count, for a
+>>  * total of 24 bytes.
+>>  */
+>> struct libc_rseq {
+>>         /* kernel-userspace ABI. */
+>>         __u32 cpu_id_start;
+>>         __u32 cpu_id;
+>>         __u64 rseq_cs;
+>>         __u32 flags;
+>>         /* user-space ABI. */
+>>         __u32 refcount;
+>> } __attribute__((aligned(4 * sizeof(__u64))));
+>> 
+>> That duplicated structure only needs to be present in early-adopter
+>> applications/libraries. Those linking on librseq or relying on newer
+>> glibc to register rseq don't need to know about this extended layout:
+>> all they need to care about is the layout of struct rseq (without the
+>> added refcount).
+> 
+> please decide if you want multiple libraries to
+> be able to register rseq and coordinate or not
+> and document that decision in the public api.
+
+Yes, I'll try this out and see how this goes.
+
+Thanks for the feedback!
+
+Mathieu
 
 
-There are minor conflicts between this tree and several other trees.
-- The x86 tree
-- The y2038 tree
-- The arm64 tree
-- The x86 tip tree
-
-I think only the resolution of the x86 tip tree is at all difficult.  None of
-the conflicts are fundamental.  They are all from changes to other parts of the
-code that are just close enough to have context conflicts.  The x86 tip tree
-conflict actually involves a conflict from removing a unnecessary pkey parameter
-on the siginfo side and a some small refactoring on the x86 side.
-
-Eric W. Biederman (80):
-      signal: Always ignore SIGKILL and SIGSTOP sent to the global init
-      signal: Properly deliver SIGILL from uprobes
-      signal: Properly deliver SIGSEGV from x86 uprobes
-      signal: Always deliver the kernel's SIGKILL and SIGSTOP to a pid namespace init
-      signal: send_sig_all no longer needs SEND_SIG_FORCED
-      signal: Remove the siginfo paramater from kernel_dqueue_signal
-      signal: Don't send siginfo to kthreads.
-      signal: Never allocate siginfo for SIGKILL or SIGSTOP
-      signal: Use SEND_SIG_PRIV not SEND_SIG_FORCED with SIGKILL and SIGSTOP
-      signal: Remove SEND_SIG_FORCED
-      signal/GenWQE: Fix sending of SIGKILL
-      tty_io: Use group_send_sig_info in __do_SACK to note it is a session being killed
-      signal: Use group_send_sig_info to kill all processes in a pid namespace
-      signal: Remove specific_send_sig_info
-      signal: Pair exports with their functions
-      signal: Simplify tracehook_report_syscall_exit
-      signal/x86: Inline fill_sigtrap_info in it's only caller send_sigtrap
-      signal/x86: Move MCE error reporting out of force_sig_info_fault
-      signal/x86: Use send_sig_mceerr as apropriate
-      signal/x86: In trace_mpx_bounds_register_exception add __user annotations
-      signal/x86: Move mpx siginfo generation into do_bounds
-      signal/x86/traps: Factor out show_signal
-      signal/x86/traps: Move more code into do_trap_no_signal so it can be reused
-      signal/x86/traps: Use force_sig_bnderr
-      signal/x86/traps: Use force_sig instead of open coding it.
-      signal/x86/traps: Simplify trap generation
-      signal/x86: Remove pkey parameter from bad_area_nosemaphore
-      signal/x86: Remove the pkey parameter from do_sigbus
-      signal/x86: Remove pkey parameter from mm_fault_error
-      signal/x86: Don't compute pkey in __do_page_fault
-      signal/x86: Pass pkey not vma into __bad_area
-      signal/x86: Call force_sig_pkuerr from __bad_area_nosemaphore
-      signal/x86: Replace force_sig_info_fault with force_sig_fault
-      signal/x86: Pass pkey by value
-      signal/x86: Use force_sig_fault where appropriate
-      signal/powerpc: Use force_sig_mceerr as appropriate
-      signal/powerpc: Remove pkey parameter from __bad_area
-      signal/powerpc: Call _exception_pkey directly from bad_key_fault_exception
-      signal/powerpc: Remove pkey parameter from __bad_area_nosemaphore
-      signal/powerpc: Factor the common exception code into exception_common
-      signal/powerpc: Call force_sig_fault from _exception
-      signal/powerpc: Specialize _exception_pkey for handling pkey exceptions
-      signal/powerpc: Simplify _exception_pkey by using force_sig_pkuerr
-      signal/powerpc: Use force_sig_fault where appropriate
-      signal/arm64: Push siginfo generation into arm64_notify_die
-      signal/arm64: Remove unneeded tsk parameter from arm64_force_sig_info
-      signal/arm64: Factor out arm64_show_signal from arm64_force_sig_info
-      signal/arm64: Factor set_thread_esr out of __do_user_fault
-      signal/arm64: Consolidate the two hwpoison cases in do_page_fault
-      signal/arm64: For clarity separate the 3 signal sending cases in do_page_fault
-      signal/arm64: Expand __do_user_fault and remove it
-      signal/arm64: Only perform one esr_to_fault_info call in do_page_fault
-      signal/arm64: Only call set_thread_esr once in do_page_fault
-      signal/arm64: Add and use arm64_force_sig_fault where appropriate
-      signal/arm64: Add and use arm64_force_sig_mceerr as appropriate
-      signal/arm64: Remove arm64_force_sig_info
-      signal/arm64: In ptrace_hbptriggered name the signal description string
-      signal/arm64: Add and use arm64_force_sig_ptrace_errno_trap
-      signal/arm64: Use send_sig_fault where appropriate
-      signal/arm: Push siginfo generation into arm_notify_die
-      signal/arm: Use force_sig_fault where appropriate
-      signal/arm: Use send_sig_fault where appropriate
-      signal/arm/kvm: Use send_sig_mceerr
-      signal/ia64: Use the generic force_sigsegv in setup_frame
-      signal/ia64: Use the force_sig(SIGSEGV,...) in ia64_rt_sigreturn
-      signal/ia64: Use force_sig_fault where appropriate
-      signal/arc: Push siginfo generation into unhandled_exception
-      signal/arc: Use force_sig_fault where appropriate
-      signal/unicore32: Use send_sig_fault where appropriate
-      signal/unicore32: Generate siginfo in ucs32_notify_die
-      signal/unicore32: Use force_sig_fault where appropriate
-      signal/sparc: Move EMT_TAGOVF into the generic siginfo.h
-      signal: Fail sigqueueinfo if si_signo != sig
-      signal: Remove the need for __ARCH_SI_PREABLE_SIZE and SI_PAD_SIZE
-      signal: Introduce copy_siginfo_from_user and use it's return value
-      signal: Distinguish between kernel_siginfo and siginfo
-      signal: Use a smaller struct siginfo in the kernel
-      signal: In sigqueueinfo prefer sig not si_signo
-      signal: Guard against negative signal numbers in copy_siginfo_from_user
-      signal: Guard against negative signal numbers in copy_siginfo_from_user32
-
- arch/alpha/include/uapi/asm/siginfo.h        |   1 -
- arch/arc/kernel/traps.c                      |  22 +-
- arch/arc/mm/fault.c                          |  20 +-
- arch/arm/include/asm/bug.h                   |   4 +-
- arch/arm/kernel/ptrace.c                     |  11 +-
- arch/arm/kernel/swp_emulate.c                |  16 +-
- arch/arm/kernel/traps.c                      |  63 ++--
- arch/arm/mm/alignment.c                      |  10 +-
- arch/arm/mm/fault.c                          |  28 +-
- arch/arm/vfp/vfpmodule.c                     |  11 +-
- arch/arm64/include/asm/system_misc.h         |   3 +-
- arch/arm64/include/asm/traps.h               |   5 +-
- arch/arm64/include/uapi/asm/Kbuild           |   1 +
- arch/arm64/include/uapi/asm/siginfo.h        |  24 --
- arch/arm64/kernel/debug-monitors.c           |  11 +-
- arch/arm64/kernel/fpsimd.c                   |  10 +-
- arch/arm64/kernel/ptrace.c                   |  16 +-
- arch/arm64/kernel/sys_compat.c               |  13 +-
- arch/arm64/kernel/traps.c                    |  67 ++---
- arch/arm64/mm/fault.c                        |  94 +++---
- arch/ia64/include/uapi/asm/siginfo.h         |   2 -
- arch/ia64/kernel/brl_emu.c                   |  31 +-
- arch/ia64/kernel/signal.c                    |  60 +---
- arch/ia64/kernel/traps.c                     | 144 +++------
- arch/ia64/kernel/unaligned.c                 |  12 +-
- arch/ia64/mm/fault.c                         |  12 +-
- arch/mips/include/uapi/asm/siginfo.h         |  11 -
- arch/parisc/include/uapi/asm/Kbuild          |   1 +
- arch/parisc/include/uapi/asm/siginfo.h       |  11 -
- arch/powerpc/include/asm/bug.h               |   2 +-
- arch/powerpc/include/asm/ptrace.h            |   2 +-
- arch/powerpc/include/uapi/asm/Kbuild         |   1 +
- arch/powerpc/include/uapi/asm/siginfo.h      |  18 --
- arch/powerpc/kernel/process.c                |   9 +-
- arch/powerpc/kernel/traps.c                  |  34 +--
- arch/powerpc/mm/fault.c                      |  55 ++--
- arch/powerpc/platforms/cell/spu_base.c       |   4 +-
- arch/powerpc/platforms/cell/spufs/fault.c    |  26 +-
- arch/riscv/include/uapi/asm/Kbuild           |   1 +
- arch/riscv/include/uapi/asm/siginfo.h        |  24 --
- arch/s390/include/uapi/asm/Kbuild            |   1 +
- arch/s390/include/uapi/asm/siginfo.h         |  17 --
- arch/sparc/include/uapi/asm/siginfo.h        |   7 -
- arch/unicore32/include/asm/bug.h             |   3 +-
- arch/unicore32/kernel/fpu-ucf64.c            |  12 +-
- arch/unicore32/kernel/traps.c                |   5 +-
- arch/unicore32/mm/fault.c                    |  27 +-
- arch/x86/entry/vsyscall/vsyscall_64.c        |   9 +-
- arch/x86/include/asm/compat.h                |   2 +-
- arch/x86/include/asm/mpx.h                   |  12 +-
- arch/x86/include/asm/ptrace.h                |   2 +-
- arch/x86/include/asm/trace/mpx.h             |   4 +-
- arch/x86/include/uapi/asm/siginfo.h          |   2 -
- arch/x86/kernel/ptrace.c                     |  29 +-
- arch/x86/kernel/traps.c                      | 176 +++++------
- arch/x86/kernel/umip.c                       |   8 +-
- arch/x86/kernel/uprobes.c                    |   2 +-
- arch/x86/kvm/mmu.c                           |  11 +-
- arch/x86/mm/fault.c                          | 167 ++++-------
- arch/x86/mm/mpx.c                            |  30 +-
- drivers/misc/genwqe/card_base.h              |   2 +-
- drivers/misc/genwqe/card_dev.c               |   9 +-
- drivers/tty/sysrq.c                          |   2 +-
- drivers/tty/tty_io.c                         |   6 +-
- drivers/usb/core/devio.c                     |   4 +-
- drivers/usb/gadget/function/f_mass_storage.c |   4 +-
- fs/binfmt_elf.c                              |   6 +-
- fs/coredump.c                                |   2 +-
- fs/fcntl.c                                   |   2 +-
- fs/jffs2/background.c                        |   2 +-
- fs/signalfd.c                                |   6 +-
- include/linux/binfmts.h                      |   2 +-
- include/linux/compat.h                       |   4 +-
- include/linux/coredump.h                     |   4 +-
- include/linux/lsm_hooks.h                    |   4 +-
- include/linux/posix-timers.h                 |   2 +-
- include/linux/ptrace.h                       |  17 +-
- include/linux/sched.h                        |   2 +-
- include/linux/sched/signal.h                 |  23 +-
- include/linux/security.h                     |   6 +-
- include/linux/signal.h                       |  18 +-
- include/linux/signal_types.h                 |   8 +-
- include/linux/tracehook.h                    |  13 +-
- include/trace/events/signal.h                |   7 +-
- include/uapi/asm-generic/siginfo.h           | 193 ++++++------
- ipc/mqueue.c                                 |   2 +-
- kernel/events/uprobes.c                      |   4 +-
- kernel/pid_namespace.c                       |   2 +-
- kernel/ptrace.c                              |  26 +-
- kernel/seccomp.c                             |   6 +-
- kernel/signal.c                              | 421 +++++++++++++++++----------
- kernel/time/posix-timers.c                   |   2 +-
- mm/oom_kill.c                                |   4 +-
- security/apparmor/lsm.c                      |   2 +-
- security/security.c                          |   2 +-
- security/selinux/hooks.c                     |   2 +-
- security/smack/smack_lsm.c                   |   2 +-
- virt/kvm/arm/mmu.c                           |  14 +-
- 98 files changed, 925 insertions(+), 1328 deletions(-)
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
