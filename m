@@ -1,70 +1,59 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 03/10] audit: log container info of syscalls
-Date: Thu, 25 Oct 2018 07:13:07 +0100
-Message-ID: <166a9dae538.280e.85c95baa4474aabc7814e68940a78392@paul-moore.com>
-References: <cover.1533065887.git.rgb@redhat.com>
- <34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
- <CAHC9VhSv4hWGHiaaOfuBrRQKdp2YG5RtqXQbFXg7j7LNEhO2XQ@mail.gmail.com>
- <20181024151439.lavhanabsyxdrdvo@madcap2.tricolour.ca>
- <CAHC9VhRF1vsxM-k0Lw-9NqS9b9rgXRRBu0tq4ajdFpMqUxiH4A@mail.gmail.com>
- <20181025004255.zl7p7j6gztouh2hh@madcap2.tricolour.ca>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] seccomp: Add pkru into seccomp_data
+Date: Thu, 25 Oct 2018 11:12:25 +0200
+Message-ID: <875zxqo0ee.fsf@oldenburg.str.redhat.com>
+References: <20181024153523.10974-1-msammler@mpi-sws.org>
+ <87zhv3nrr0.fsf@oldenburg.str.redhat.com>
+ <11a706bd-060f-41de-118b-bababfd83b3d@mpi-sws.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181025004255.zl7p7j6gztouh2hh@madcap2.tricolour.ca>
-Sender: netdev-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
+Content-Type: text/plain
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <11a706bd-060f-41de-118b-bababfd83b3d@mpi-sws.org> (Michael
+ Sammler's message of "Thu, 25 Oct 2018 10:39:17 +0200")
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Michael Sammler <msammler@mpi-sws.org>
+Cc: Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Ram Pai <linuxram@us.ibm.com>, Andy Lutomirski <luto@amacapital.net>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On October 25, 2018 1:43:16 AM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2018-10-24 16:55, Paul Moore wrote:
->> On Wed, Oct 24, 2018 at 11:15 AM Richard Guy Briggs <rgb@redhat.com> wro=
-te:
->>> On 2018-10-19 19:16, Paul Moore wrote:
->>>> On Sun, Aug 5, 2018 at 4:32 AM Richard Guy Briggs <rgb@redhat.com> wro=
-te:
->
+* Michael Sammler:
 
-...
+> Thank you for the pointer about the POWER implementation. I am not
+> familiar with POWER in general and its protection key feature at
+> all. Would the AMR register be the correct register to expose here?
 
->
->>>> However, I do care about the "op" field in this record.  It just
->>>> doesn't make any sense; the way you are using it it is more of a
->>>> context field than an operations field, and even then why is the
->>>> context important from a logging and/or security perspective?  Drop it
->>>> please.
->>>
->>> I'll rename it to whatever you like.  I'd suggest "ref=3D".  The reason=
- I
->>> think it is important is there are multiple sources that aren't always
->>> obvious from the other records to which it is associated.  In the case
->>> of ptrace and signals, there can be many target tasks listed (OBJ_PID)
->>> with no other way to distinguish the matching audit container identifie=
-r
->>> records all for one event.  This is in addition to the default syscall
->>> container identifier record.  I'm not currently happy with the text
->>> content to link the two, but that should be solvable (most obvious is
->>> taret PID).  Throwing away this information seems shortsighted.
->>
->> It would be helpful if you could generate real audit events
->> demonstrating the problems you are describing, as well as a more
->> standard syscall event, so we can discuss some possible solutions.
->
-> If the auditted process is in a container and it ptraces or signals
-> another process in a container, there will be two AUDIT_CONTAINER
-> records for the same event that won't be identified as to which record
-> belongs to which process or other record (SYSCALL vs 1+ OBJ_PID
-> records).  There could be many signals recorded, each with their own
-> OBJ_PID record.  The first is stored in the audit context and additional
-> ones are stored in a chained struct that can accommodate 16 entries each.
->
-> (See audit_signal_info(), __audit_ptrace().)
->
-> (As a side note, on code inspection it appears that a signal target
-> would get overwritten by a ptrace action if they were to happen in that
-> order.)
+Yes, according to my notes, the register is called AMR (special purpose
+register 13).
 
-As requested above, please respond with real audit events generated by this=
- patchset so that we can discuss possible solutions.
+> I understand your concern about exposing the number of protection keys
+> in the ABI. One idea would be to state, that the pkru field (which
+> should probably be renamed) contains an architecture specific value,
+> which could then be the PKRU on x86 and AMR (or another register) on
+> POWER. This new field should probably be extended to __u64 and the
+> reserved field removed.
+
+POWER also has proper read/write bit separation, not PKEY_DISABLE_ACCESS
+(disable read and write) and PKEY_DISABLE_WRITE like Intel.  It's
+currently translated by the kernel, but I really need a
+PKEY_DISABLE_READ bit in glibc to implement pkey_get in case the memory
+is write-only.
+
+> Another idea would be to not add a field in the seccomp_data
+> structure, but instead provide a new BPF instruction, which reads the
+> value of a specified protection key.
+
+I would prefer that if it's possible.  We should make sure that the bits
+are the same as those returned from pkey_get.  I have an implementation
+on POWER, but have yet to figure out the implications for 32-bit because
+I do not know the AMR register size there.
+
+Thanks,
+Florian
