@@ -1,117 +1,69 @@
-From: Steve Grubb <sgrubb@redhat.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 03/10] audit: log container info
- of syscalls
-Date: Thu, 25 Oct 2018 17:57:45 +0200
-Message-ID: <20181025175745.5b2b13e9@ivy-bridge>
-References: <cover.1533065887.git.rgb@redhat.com>
-        <34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
-        <CAHC9VhSv4hWGHiaaOfuBrRQKdp2YG5RtqXQbFXg7j7LNEhO2XQ@mail.gmail.com>
-        <20181024151439.lavhanabsyxdrdvo@madcap2.tricolour.ca>
-        <CAHC9VhRF1vsxM-k0Lw-9NqS9b9rgXRRBu0tq4ajdFpMqUxiH4A@mail.gmail.com>
-        <20181025004255.zl7p7j6gztouh2hh@madcap2.tricolour.ca>
-        <20181025080638.771621a3@ivy-bridge>
-        <CAHC9VhR02siURgadQs0EikcOm0d_TPAi4jJYCx4NkA=wQ5rjSA@mail.gmail.com>
-        <20181025122732.4j4rbychjse3gemt@madcap2.tricolour.ca>
+From: Michael Sammler <msammler@mpi-sws.org>
+Subject: Re: [PATCH] seccomp: Add pkru into seccomp_data
+Date: Thu, 25 Oct 2018 18:42:05 +0200
+Message-ID: <c4d3f5c1-a2dc-5b44-4d12-1fae829a372c@mpi-sws.org>
+References: <20181024153523.10974-1-msammler@mpi-sws.org>
+ <87zhv3nrr0.fsf@oldenburg.str.redhat.com>
+ <11a706bd-060f-41de-118b-bababfd83b3d@mpi-sws.org>
+ <875zxqo0ee.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181025122732.4j4rbychjse3gemt@madcap2.tricolour.ca>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: Paul Moore <paul@paul-moore.com>, simo@redhat.com, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-audit@redhat.com, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, viro@zeniv.linux.org.uk
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <875zxqo0ee.fsf@oldenburg.str.redhat.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Ram Pai <linuxram@us.ibm.com>, Andy Lutomirski <luto@amacapital.net>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 25 Oct 2018 08:27:32 -0400
-Richard Guy Briggs <rgb@redhat.com> wrote:
+On 10/25/2018 11:12 AM, Florian Weimer wrote:
+>> I understand your concern about exposing the number of protection keys
+>> in the ABI. One idea would be to state, that the pkru field (which
+>> should probably be renamed) contains an architecture specific value,
+>> which could then be the PKRU on x86 and AMR (or another register) on
+>> POWER. This new field should probably be extended to __u64 and the
+>> reserved field removed.
+> POWER also has proper read/write bit separation, not PKEY_DISABLE_ACCESS
+> (disable read and write) and PKEY_DISABLE_WRITE like Intel.  It's
+> currently translated by the kernel, but I really need a
+> PKEY_DISABLE_READ bit in glibc to implement pkey_get in case the memory
+> is write-only.
+The idea here would be to simply provide the raw value of the register 
+(PKRU on x86, AMR on POWER) to the BPF program and let the BPF program 
+(or maybe a higher level library like libseccomp) deal with the 
+complications of interpreting this architecture specific value (similar 
+how the BPF program currently already has to deal with architecture 
+specific system call numbers). If an architecture were to support more 
+protection keys than fit into the field, the architecture specific value 
+stored in the field might simply be the first protection keys. If there 
+was interest, it would be possible to add more architecture specific 
+fields to seccomp_data.
+>> Another idea would be to not add a field in the seccomp_data
+>> structure, but instead provide a new BPF instruction, which reads the
+>> value of a specified protection key.
+> I would prefer that if it's possible.  We should make sure that the bits
+> are the same as those returned from pkey_get.  I have an implementation
+> on POWER, but have yet to figure out the implications for 32-bit because
+> I do not know the AMR register size there.
+>
+> Thanks,
+> Florian
+I have had a look at how BPF is implemented and it does not seem to be 
+easy to just add an BPF instruction for seccomp since (as far as I 
+understand) the code of the classical BPF (as used by seccomp) is shared 
+with the code of eBPF, which is used in many parts of the kernel and 
+there is at least one interpreter and one JIT compiler for BPF. But 
+maybe someone with more experience than me can comment on how hard it 
+would be to add an instruction to BPF.
 
-> On 2018-10-25 06:49, Paul Moore wrote:
-> > On Thu, Oct 25, 2018 at 2:06 AM Steve Grubb <sgrubb@redhat.com>
-> > wrote:  
-> > > On Wed, 24 Oct 2018 20:42:55 -0400
-> > > Richard Guy Briggs <rgb@redhat.com> wrote:  
-> > > > On 2018-10-24 16:55, Paul Moore wrote:  
-> > > > > On Wed, Oct 24, 2018 at 11:15 AM Richard Guy Briggs
-> > > > > <rgb@redhat.com> wrote:  
-> > > > > > On 2018-10-19 19:16, Paul Moore wrote:  
-> > > > > > > On Sun, Aug 5, 2018 at 4:32 AM Richard Guy Briggs
-> > > > > > > <rgb@redhat.com> wrote:  
-> > 
-> > ...
-> >   
-> > > > > > > > +/*
-> > > > > > > > + * audit_log_contid - report container info
-> > > > > > > > + * @tsk: task to be recorded
-> > > > > > > > + * @context: task or local context for record
-> > > > > > > > + * @op: contid string description
-> > > > > > > > + */
-> > > > > > > > +int audit_log_contid(struct task_struct *tsk,
-> > > > > > > > +                            struct audit_context
-> > > > > > > > *context, char *op) +{
-> > > > > > > > +       struct audit_buffer *ab;
-> > > > > > > > +
-> > > > > > > > +       if (!audit_contid_set(tsk))
-> > > > > > > > +               return 0;
-> > > > > > > > +       /* Generate AUDIT_CONTAINER record with
-> > > > > > > > container ID */
-> > > > > > > > +       ab = audit_log_start(context, GFP_KERNEL,
-> > > > > > > > AUDIT_CONTAINER);
-> > > > > > > > +       if (!ab)
-> > > > > > > > +               return -ENOMEM;
-> > > > > > > > +       audit_log_format(ab, "op=%s contid=%llu",
-> > > > > > > > +                        op, audit_get_contid(tsk));
-> > > > > > > > +       audit_log_end(ab);
-> > > > > > > > +       return 0;
-> > > > > > > > +}
-> > > > > > > > +EXPORT_SYMBOL(audit_log_contid);  
-> > > > > > >
-> > > > > > > As discussed in the previous iteration of the patch, I
-> > > > > > > prefer AUDIT_CONTAINER_ID here over AUDIT_CONTAINER.  If
-> > > > > > > you feel strongly about keeping it as-is with
-> > > > > > > AUDIT_CONTAINER I suppose I could live with that, but it
-> > > > > > > is isn't my first choice.  
-> > > > > >
-> > > > > > I don't have a strong opinion on this one, mildly
-> > > > > > preferring the shorter one only because it is shorter.  
-> > > > >
-> > > > > We already have multiple AUDIT_CONTAINER* record types, so it
-> > > > > seems as though we should use "AUDIT_CONTAINER" as a prefix
-> > > > > of sorts, rather than a type itself.  
-> > > >
-> > > > I'm fine with that.  I'd still like to hear Steve's input.  He
-> > > > had stronger opinions than me.  
-> > >
-> > > The creation event should be separate and distinct from the
-> > > continuing use when its used as a supplemental record. IOW,
-> > > binding the ID to a container is part of the lifecycle and needs
-> > > to be kept distinct.  
-> > 
-> > Steve's comment is pretty ambiguous when it comes to AUDIT_CONTAINER
-> > vs AUDIT_CONTAINER_ID, but one could argue that AUDIT_CONTAINER_ID
-> > helps distinguish the audit container id marking record and gets to
-> > what I believe is the spirit of Steve's comment.  Taking this in
-> > context with my previous remarks, let's switch to using
-> > AUDIT_CONTAINER_ID.  
-> 
-> I suspect Steve is mixing up AUDIT_CONTAINER_OP with
-> AUDIT_CONTAINER_ID, confusing the fact that they are two seperate
-> records.  As a summary, the suggested records are:
-> 	CONTAINER_OP	audit container identifier creation
-> 	CONTAINER	audit container identifier aux record to an
-> event
-> 
-> and what Paul is suggesting (which is fine by me) is:
-> 	CONTAINER_OP	audit container identifier creation event
-> 	CONTAINER_ID	audit container identifier aux record to
-> an event
-> 
-> Steve, please indicate you are fine with this.
-
-I thought it was:
-
-CONTAINER_ID audit container identifier creation event
-CONTAINER audit container identifier aux record to an event
-
-Or vice versa. Don't mix up creation of the identifier with operations.
-
--Steve
+- Michael
