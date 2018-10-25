@@ -1,119 +1,75 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 03/10] audit: log container info
-	of syscalls
-Date: Thu, 25 Oct 2018 08:27:32 -0400
-Message-ID: <20181025122732.4j4rbychjse3gemt@madcap2.tricolour.ca>
-References: <cover.1533065887.git.rgb@redhat.com>
-	<34017c395d03a213d6b0d49b9964429bd32b283d.1533065887.git.rgb@redhat.com>
-	<CAHC9VhSv4hWGHiaaOfuBrRQKdp2YG5RtqXQbFXg7j7LNEhO2XQ@mail.gmail.com>
-	<20181024151439.lavhanabsyxdrdvo@madcap2.tricolour.ca>
-	<CAHC9VhRF1vsxM-k0Lw-9NqS9b9rgXRRBu0tq4ajdFpMqUxiH4A@mail.gmail.com>
-	<20181025004255.zl7p7j6gztouh2hh@madcap2.tricolour.ca>
-	<20181025080638.771621a3@ivy-bridge>
-	<CAHC9VhR02siURgadQs0EikcOm0d_TPAi4jJYCx4NkA=wQ5rjSA@mail.gmail.com>
+From: Michael Sammler <msammler@mpi-sws.org>
+Subject: Re: [PATCH] seccomp: Add pkru into seccomp_data
+Date: Thu, 25 Oct 2018 10:39:17 +0200
+Message-ID: <11a706bd-060f-41de-118b-bababfd83b3d@mpi-sws.org>
+References: <20181024153523.10974-1-msammler@mpi-sws.org>
+ <87zhv3nrr0.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-audit-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhR02siURgadQs0EikcOm0d_TPAi4jJYCx4NkA=wQ5rjSA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-audit>
-List-Post: <mailto:linux-audit@redhat.com>
-List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=subscribe>
-Sender: linux-audit-bounces@redhat.com
-Errors-To: linux-audit-bounces@redhat.com
-To: Paul Moore <paul@paul-moore.com>
-Cc: luto@kernel.org, carlos@redhat.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, dhowells@redhat.com, linux-audit@redhat.com, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <87zhv3nrr0.fsf@oldenburg.str.redhat.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Will Drewry <wad@chromium.org>, Kees Cook <keescook@chromium.org>, linux-api@vger.kernel.org, Ram Pai <linuxram@us.ibm.com>, Andy Lutomirski <luto@amacapital.net>, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On 2018-10-25 06:49, Paul Moore wrote:
-> On Thu, Oct 25, 2018 at 2:06 AM Steve Grubb <sgrubb@redhat.com> wrote:
-> > On Wed, 24 Oct 2018 20:42:55 -0400
-> > Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > On 2018-10-24 16:55, Paul Moore wrote:
-> > > > On Wed, Oct 24, 2018 at 11:15 AM Richard Guy Briggs
-> > > > <rgb@redhat.com> wrote:
-> > > > > On 2018-10-19 19:16, Paul Moore wrote:
-> > > > > > On Sun, Aug 5, 2018 at 4:32 AM Richard Guy Briggs
-> > > > > > <rgb@redhat.com> wrote:
-> 
-> ...
-> 
-> > > > > > > +/*
-> > > > > > > + * audit_log_contid - report container info
-> > > > > > > + * @tsk: task to be recorded
-> > > > > > > + * @context: task or local context for record
-> > > > > > > + * @op: contid string description
-> > > > > > > + */
-> > > > > > > +int audit_log_contid(struct task_struct *tsk,
-> > > > > > > +                            struct audit_context *context,
-> > > > > > > char *op) +{
-> > > > > > > +       struct audit_buffer *ab;
-> > > > > > > +
-> > > > > > > +       if (!audit_contid_set(tsk))
-> > > > > > > +               return 0;
-> > > > > > > +       /* Generate AUDIT_CONTAINER record with container ID
-> > > > > > > */
-> > > > > > > +       ab = audit_log_start(context, GFP_KERNEL,
-> > > > > > > AUDIT_CONTAINER);
-> > > > > > > +       if (!ab)
-> > > > > > > +               return -ENOMEM;
-> > > > > > > +       audit_log_format(ab, "op=%s contid=%llu",
-> > > > > > > +                        op, audit_get_contid(tsk));
-> > > > > > > +       audit_log_end(ab);
-> > > > > > > +       return 0;
-> > > > > > > +}
-> > > > > > > +EXPORT_SYMBOL(audit_log_contid);
-> > > > > >
-> > > > > > As discussed in the previous iteration of the patch, I prefer
-> > > > > > AUDIT_CONTAINER_ID here over AUDIT_CONTAINER.  If you feel
-> > > > > > strongly about keeping it as-is with AUDIT_CONTAINER I suppose
-> > > > > > I could live with that, but it is isn't my first choice.
-> > > > >
-> > > > > I don't have a strong opinion on this one, mildly preferring the
-> > > > > shorter one only because it is shorter.
-> > > >
-> > > > We already have multiple AUDIT_CONTAINER* record types, so it seems
-> > > > as though we should use "AUDIT_CONTAINER" as a prefix of sorts,
-> > > > rather than a type itself.
-> > >
-> > > I'm fine with that.  I'd still like to hear Steve's input.  He had
-> > > stronger opinions than me.
-> >
-> > The creation event should be separate and distinct from the continuing
-> > use when its used as a supplemental record. IOW, binding the ID to a
-> > container is part of the lifecycle and needs to be kept distinct.
-> 
-> Steve's comment is pretty ambiguous when it comes to AUDIT_CONTAINER
-> vs AUDIT_CONTAINER_ID, but one could argue that AUDIT_CONTAINER_ID
-> helps distinguish the audit container id marking record and gets to
-> what I believe is the spirit of Steve's comment.  Taking this in
-> context with my previous remarks, let's switch to using
-> AUDIT_CONTAINER_ID.
+On 10/24/2018 08:06 PM, Florian Weimer wrote:
 
-I suspect Steve is mixing up AUDIT_CONTAINER_OP with AUDIT_CONTAINER_ID,
-confusing the fact that they are two seperate records.  As a summary,
-the suggested records are:
-	CONTAINER_OP	audit container identifier creation
-	CONTAINER	audit container identifier aux record to an event
+> * Michael Sammler:
+>
+>> Add the current value of the PKRU register to data available for
+>> seccomp-bpf programs to work on. This allows filters based on the
+>> currently enabled protection keys.
+>> diff --git a/include/uapi/linux/seccomp.h b/include/uapi/linux/seccomp.h
+>> index 9efc0e73..e8b9ecfc 100644
+>> --- a/include/uapi/linux/seccomp.h
+>> +++ b/include/uapi/linux/seccomp.h
+>> @@ -52,12 +52,16 @@
+>>    * @instruction_pointer: at the time of the system call.
+>>    * @args: up to 6 system call arguments always stored as 64-bit values
+>>    *        regardless of the architecture.
+>> + * @pkru: value of the pkru register
+>> + * @reserved: pad the structure to a multiple of eight bytes
+>>    */
+>>   struct seccomp_data {
+>>   	int nr;
+>>   	__u32 arch;
+>>   	__u64 instruction_pointer;
+>>   	__u64 args[6];
+>> +	__u32 pkru;
+>> +	__u32 reserved;
+>>   };
+> This doesn't cover the POWER implementation.  Adding Cc:s.
+>
+> And I think the kernel shouldn't expose the number of protection keys in
+> the ABI.
+>
+> Thanks,
+> Florian
+Thank you for the pointer about the POWER implementation. I am not 
+familiar with POWER in general and its protection key feature at all. 
+Would the AMR register be the correct register to expose here?
 
-and what Paul is suggesting (which is fine by me) is:
-	CONTAINER_OP	audit container identifier creation event
-	CONTAINER_ID	audit container identifier aux record to an event
+I understand your concern about exposing the number of protection keys 
+in the ABI. One idea would be to state, that the pkru field (which 
+should probably be renamed) contains an architecture specific value, 
+which could then be the PKRU on x86 and AMR (or another register) on 
+POWER. This new field should probably be extended to __u64 and the 
+reserved field removed.
 
-Steve, please indicate you are fine with this.
+Another idea would be to not add a field in the seccomp_data structure, 
+but instead provide a new BPF instruction, which reads the value of a 
+specified protection key.
 
-> paul moore
-
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+- Michael
