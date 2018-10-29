@@ -1,34 +1,50 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
-Date: Mon, 29 Oct 2018 22:36:23 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1810292234300.5984@nanos.tec.linutronix.de>
-References: <20180919205037.9574-1-dima@arista.com>        <874lej6nny.fsf@xmission.com>        <20180924205119.GA14833@outlook.office365.com>        <874leezh8n.fsf@xmission.com>        <20180925014150.GA6302@outlook.office365.com>        <87zhw4rwiq.fsf@xmission.com>
-        <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>        <87mus1ftb9.fsf@xmission.com> <20181021014121.GA23474@gmail.com>        <alpine.DEB.2.21.1810292026040.5984@nanos.tec.linutronix.de> <87y3ag5tze.fsf@xmission.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v3 0/2] sysctl: handle overflow for file-max
+Date: Mon, 29 Oct 2018 14:44:29 -0700
+Message-ID: <CAGXu5jJwSRQ3dOgNW_X0Fk+8gT+ACiBZPJ79g-aCfqiWsm=ewg@mail.gmail.com>
+References: <20181016223322.16844-1-christian@brauner.io> <20181029145818.4bqmy25itjnqhodg@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87y3ag5tze.fsf@xmission.com>
+In-Reply-To: <20181029145818.4bqmy25itjnqhodg@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Andrei Vagin <avagin@gmail.com>, "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Jeff Dike <jdike@addtoit.com>, "x86@kernel.org" <x86@kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "criu@openvz.org" <criu@openvz.org>, Ingo Molnar <mingo@redhat.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andy Lutomirski <luto@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Christian Brauner <christian.brauner@ubuntu.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linu
+To: Christian Brauner <christian@brauner.io>, Andrew Morton <akpm@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Luis R. Rodriguez" <mcgrof@kernel.org>, Joe Lawrence <joe.lawrence@redhat.com>, Waiman Long <longman@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Al Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Eric,
+On Mon, Oct 29, 2018 at 7:58 AM, Christian Brauner <christian@brauner.io> wrote:
+> On Wed, Oct 17, 2018 at 12:33:20AM +0200, Christian Brauner wrote:
+>> Hey,
+>>
+>> Here is v3 of this patchset. Changelogs are in the individual commits.
+>>
+>> Currently, when writing
+>>
+>> echo 18446744073709551616 > /proc/sys/fs/file-max
+>>
+>> /proc/sys/fs/file-max will overflow and be set to 0. That quickly
+>> crashes the system.
+>>
+>> The first version of this patch intended to detect the overflow and cap
+>> at ULONG_MAX. However, we should not do this and rather return EINVAL on
+>> overflow. The reasons are:
+>> - this aligns with other sysctl handlers that simply reject overflows
+>>   (cf. [1], [2], and a bunch of others)
+>> - we already do a partial fail on overflow right now
+>>   Namely, when the TMPBUFLEN is exceeded. So we already reject values
+>>   such as 184467440737095516160 (21 chars) but accept values such as
+>>   18446744073709551616 (20 chars) but both are overflows. So we should
+>>   just always reject 64bit overflows and not special-case this based on
+>>   the number of chars.
+>>
+>> (This patchset is in reference to https://lkml.org/lkml/2018/10/11/585.)
+>
+> Just so that we don't forget, can we make sure that this gets picked
+> into linux-next? :)
 
-On Mon, 29 Oct 2018, Eric W. Biederman wrote:
-> Thomas Gleixner <tglx@linutronix.de> writes:
-> >
-> > I'll try to find some time in the next weeks to look deeper into that, but
-> > I can't promise anything before returning from LPC. Btw, LPC would be a
-> > great opportunity to discuss that. Are you and the other name space wizards
-> > there by any chance?
-> 
-> I will be and there are going to be both container and CRIU
-> mini-conferences.  So there should at least some of us around.
+I was hoping akpm would take this? Andrew, does the v3 look okay to you?
 
-So let's try to find a slot for a BOF or similar (there might be still
-slots for the kernel summit available, i'll ask).
+-Kees
 
-Thanks,
-
-	tglx
+-- 
+Kees Cook
