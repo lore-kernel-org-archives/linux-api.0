@@ -1,7 +1,7 @@
 From: Oleg Nesterov <oleg@redhat.com>
 Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
-Date: Tue, 30 Oct 2018 15:32:36 +0100
-Message-ID: <20181030143235.GA3385@redhat.com>
+Date: Tue, 30 Oct 2018 16:02:54 +0100
+Message-ID: <20181030150254.GB3385@redhat.com>
 References: <20181029224031.29809-1-tycho@tycho.ws>
  <20181029224031.29809-2-tycho@tycho.ws>
 Mime-Version: 1.0
@@ -16,56 +16,67 @@ List-Id: linux-api@vger.kernel.org
 
 On 10/29, Tycho Andersen wrote:
 >
-> +	/* This is where we wait for a reply from userspace. */
-> +	err = wait_for_completion_interruptible(&n.ready);
-> +	mutex_lock(&match->notify_lock);
+> +static long seccomp_notify_recv(struct seccomp_filter *filter,
+> +				void __user *buf)
+> +{
+> +	struct seccomp_knotif *knotif = NULL, *cur;
+> +	struct seccomp_notif unotif;
+> +	ssize_t ret;
 > +
-> +	/*
-> +	 * If the noticiation fd died before we re-acquired the lock, we still
-> +	 * give -ENOSYS.
-> +	 */
-> +	if (!match->notif)
-> +		goto remove_list;
+> +	memset(&unotif, 0, sizeof(unotif));
 > +
-> +	/*
-> +	 * Here it's possible we got a signal and then had to wait on the mutex
-> +	 * while the reply was sent, so let's be sure there wasn't a response
-> +	 * in the meantime.
-> +	 */
-> +	if (err < 0 && n.state != SECCOMP_NOTIFY_REPLIED) {
-> +		/*
-> +		 * We got a signal. Let's tell userspace about it (potentially
-> +		 * again, if we had already notified them about the first one).
-> +		 */
-> +		n.signaled = true;
-> +		if (n.state == SECCOMP_NOTIFY_SENT) {
-> +			n.state = SECCOMP_NOTIFY_INIT;
-> +			up(&match->notif->request);
+> +	ret = down_interruptible(&filter->notif->request);
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	mutex_lock(&filter->notify_lock);
+> +	list_for_each_entry(cur, &filter->notif->notifications, list) {
+> +		if (cur->state == SECCOMP_NOTIFY_INIT) {
+> +			knotif = cur;
+> +			break;
 > +		}
-
-I am not sure I understand the value of signaled/SECCOMP_NOTIF_FLAG_SIGNALED...
-I mean, why it is actually useful?
-
-Sorry if this was already discussed.
-
-> +		wake_up_poll(&match->notif->wqh, EPOLLIN | EPOLLRDNORM);
+> +	}
 > +
-> +		mutex_unlock(&match->notify_lock);
-> +		err = wait_for_completion_killable(&n.ready);
-> +		mutex_lock(&match->notify_lock);
+> +	/*
+> +	 * If we didn't find a notification, it could be that the task was
+> +	 * interrupted by a fatal signal between the time we were woken and
+> +	 * when we were able to acquire the rw lock.
+> +	 *
+> +	 * This is the place where we handle the extra high semaphore count
+> +	 * mentioned in seccomp_do_user_notification().
+> +	 */
+> +	if (!knotif) {
+> +		ret = -ENOENT;
+> +		goto out;
+> +	}
+> +
+> +	unotif.id = knotif->id;
+> +	unotif.pid = task_pid_vnr(knotif->task);
+> +	if (knotif->signaled)
+> +		unotif.flags |= SECCOMP_NOTIF_FLAG_SIGNALED;
+> +	unotif.data = *(knotif->data);
 
-And it seems that SECCOMP_NOTIF_FLAG_SIGNALED is the only reason why
-seccomp_do_user_notification() doesn't do wait_for_completion_killable() from
-the very beginning.
+Tycho, I forgot everything about seccomp, most probably I am wrong but let me
+ask anyway.
 
-But my main concern is that either way wait_for_completion_killable() allows
-to trivially create a process which doesn't react to SIGSTOP, not good...
+__seccomp_filter(SECCOMP_RET_TRACE) does
 
-Note also that this can happen if, say, both the tracer and tracee run in the
-same process group and SIGSTOP is sent to their pgid, if the tracer gets the
-signal first the tracee won't stop.
+		/*
+		 * Recheck the syscall, since it may have changed. This
+		 * intentionally uses a NULL struct seccomp_data to force
+		 * a reload of all registers. This does not goto skip since
+		 * a skip would have already been reported.
+		 */
+		if (__seccomp_filter(this_syscall, NULL, true))
+			return -1;
 
-Of freezer. try_to_freeze_tasks() can fail if it freezes the tracer before
-it does SECCOMP_IOCTL_NOTIF_SEND.
+and the next seccomp_run_filters() can return SECCOMP_RET_USER_NOTIF, right?
+seccomp_do_user_notification() doesn't check recheck_after_trace and it simply
+does n.data = sd.
+
+Doesn't this mean that "unotif.data = *(knotif->data)" can hit NULL ?
+
+seccomp_run_filters() does populate_seccomp_data() in this case, but this
+won't affect "seccomp_data *sd" passed to seccomp_do_user_notification().
 
 Oleg.
