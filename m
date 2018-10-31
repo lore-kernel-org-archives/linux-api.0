@@ -1,52 +1,97 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
-Date: Wed, 31 Oct 2018 14:04:42 +0100
-Message-ID: <20181031130442.GB9007@redhat.com>
-References: <20181029224031.29809-1-tycho@tycho.ws>
- <20181029224031.29809-2-tycho@tycho.ws>
- <20181030150254.GB3385@redhat.com>
- <20181030155403.GC7343@cisco>
- <20181030162752.GB7643@redhat.com>
- <20181030163926.GC7643@redhat.com>
- <20181030172143.GD7343@cisco>
- <CAGXu5j+MYbAiSxdhLnQHdOZC-B=FWZoODxzwkYVEUqDc9SHnBQ@mail.gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH] Implement /proc/pid/kill
+Date: Wed, 31 Oct 2018 17:22:49 +0100
+Message-ID: <CAG48ez01OWYVqEo+Qf65scG7a-48tDM4Gh3BOUKY+-b9g+9itw@mail.gmail.com>
+References: <20181029221037.87724-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGXu5j+MYbAiSxdhLnQHdOZC-B=FWZoODxzwkYVEUqDc9SHnBQ@mail.gmail.com>
+In-Reply-To: <20181029221037.87724-1-dancol@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Tycho Andersen <tycho@tycho.ws>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>
+To: dancol@google.com
+Cc: kernel list <linux-kernel@vger.kernel.org>, timmurray@google.com, Joel Fernandes <joelaf@google.com>, surenb@google.com, Andy Lutomirski <luto@kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-On 10/30, Kees Cook wrote:
++linux-api, Andy Lutomirski, Eric Biederman
+
+On Wed, Oct 31, 2018 at 3:12 AM Daniel Colascione <dancol@google.com> wrote:
+> Add a simple proc-based kill interface. To use /proc/pid/kill, just
+> write the signal number in base-10 ASCII to the kill file of the
+> process to be killed: for example, 'echo 9 > /proc/$$/kill'.
+
+This is a kernel API change, you should CC the linux-api list.
+
+I think that getting the semantics of this right might be easier if
+you used an ioctl handler instead of a write handler.
+
+> Semantically, /proc/pid/kill works like kill(2), except that the
+> process ID comes from the proc filesystem context instead of from an
+> explicit system call parameter. This way, it's possible to avoid races
+> between inspecting some aspect of a process and that process's PID
+> being reused for some other process.
 >
-> I'd like to avoid changing the return value of __secure_computing() to
-> just avoid having to touch all the callers. And I'd prefer not to
-> change __seccomp_filter() to a bool, since I'd like the return values
-> to be consistent through the call chain.
-
-Sure, please forget.
-
-> I find the existing code more readable than a single-line return, just
-> because it's very explicit. I don't want to have to think any harder
-> when reading seccomp. ;)
-
-Heh ;) Again, please forget, this is cosmetic.
-
-But I simply can't resist. I asked this question exactly because I was
-confused by these 2 lines:
-
-		if (__seccomp_filter(this_syscall, NULL, true))
-			return -1;
-
-		return 0;
-
-to me it looks as if we need to filter out some non-zero return values and
-turn them into -1. I had to spend some time (and think harder ;) to verify
-that this is just the recursive call and nothing more.
-
-nevermind, please ignore.
-
-Oleg.
+> With /proc/pid/kill, it's possible to write a proper race-free and
+> safe pkill(1). An approximation follows. A real program might use
+> openat(2), having opened a process's /proc/pid directory explicitly,
+> with the directory file descriptor serving as a sort of "process
+> handle".
+>
+>     #!/bin/bash
+>     set -euo pipefail
+>     pat=$1
+>     for proc_status in /proc/*/status; do (
+>         cd $(dirname $proc_status)
+>         readarray proc_argv -d'' < cmdline
+>         if ((${#proc_argv[@]} > 0)) &&
+>                [[ ${proc_argv[0]} = *$pat* ]];
+>         then
+>             echo 15 > kill
+>         fi
+>     ) || true; done
+>
+> Signed-off-by: Daniel Colascione <dancol@google.com>
+> ---
+>  fs/proc/base.c | 39 +++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 39 insertions(+)
+>
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 7e9f07bf260d..923d62b21e67 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -205,6 +205,44 @@ static int proc_root_link(struct dentry *dentry, struct path *path)
+>         return result;
+>  }
+>
+> +static ssize_t proc_pid_kill_write(struct file *file,
+> +                                  const char __user *buf,
+> +                                  size_t count, loff_t *ppos)
+> +{
+> +       ssize_t res;
+> +       int sig;
+> +       char buffer[4];
+> +
+> +       res = -EINVAL;
+> +       if (*ppos != 0)
+> +               goto out;
+> +
+> +       res = -EINVAL;
+> +       if (count > sizeof(buffer) - 1)
+> +               goto out;
+> +
+> +       res = -EFAULT;
+> +       if (copy_from_user(buffer, buf, count))
+> +               goto out;
+> +
+> +       buffer[count] = '\0';
+> +       res = kstrtoint(strstrip(buffer), 10, &sig);
+> +       if (res)
+> +               goto out;
+> +
+> +       res = kill_pid(proc_pid(file_inode(file)), sig, 0);
+> +       if (res)
+> +               goto out;
+> +       res = count;
+> +out:
+> +       return res;
+> +
+> +}
