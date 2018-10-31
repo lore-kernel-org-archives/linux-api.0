@@ -1,97 +1,113 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [RFC PATCH] Implement /proc/pid/kill
-Date: Wed, 31 Oct 2018 17:22:49 +0100
-Message-ID: <CAG48ez01OWYVqEo+Qf65scG7a-48tDM4Gh3BOUKY+-b9g+9itw@mail.gmail.com>
-References: <20181029221037.87724-1-dancol@google.com>
+From: Andrei Vagin <avagin@gmail.com>
+Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
+Date: Wed, 31 Oct 2018 09:26:53 -0700
+Message-ID: <20181031162650.GB26067@gmail.com>
+References: <20180919205037.9574-1-dima@arista.com>
+ <874lej6nny.fsf@xmission.com>
+ <20180924205119.GA14833@outlook.office365.com>
+ <874leezh8n.fsf@xmission.com>
+ <20180925014150.GA6302@outlook.office365.com>
+ <87zhw4rwiq.fsf@xmission.com>
+ <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
+ <87mus1ftb9.fsf@xmission.com>
+ <20181021014121.GA23474@gmail.com>
+ <alpine.DEB.2.21.1810292026040.5984@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=koi8-r
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181029221037.87724-1-dancol@google.com>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1810292026040.5984@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dancol@google.com
-Cc: kernel list <linux-kernel@vger.kernel.org>, timmurray@google.com, Joel Fernandes <joelaf@google.com>, surenb@google.com, Andy Lutomirski <luto@kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Jeff Dike <jdike@addtoit.com>, "x86@kernel.org" <x86@kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "criu@openvz.org" <criu@openvz.org>, Ingo Molnar <mingo@redhat.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andy Lutomirski <luto@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Christian Brauner <christian.brauner@ubuntu.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, container
 List-Id: linux-api@vger.kernel.org
 
-+linux-api, Andy Lutomirski, Eric Biederman
+On Mon, Oct 29, 2018 at 09:33:14PM +0100, Thomas Gleixner wrote:
+> Andrei,
+> 
+> On Sat, 20 Oct 2018, Andrei Vagin wrote:
+> > When a container is migrated to another host, we have to restore its
+> > monotonic and boottime clocks, but we still expect that the container
+> > will continue using the host real-time clock.
+> > 
+> > Before stating this series, I was thinking about this, I decided that
+> > these cases can be solved independently. Probably, the full isolation of
+> > the time sub-system will have much higher overhead than just offsets for
+> > a few clocks. And the idea that isolation of the real-time clock should
+> > be optional gives us another hint that offsets for monotonic and
+> > boot-time clocks can be implemented independently.
+> > 
+> > Eric and Tomas, what do you think about this? If you agree that these
+> > two cases can be implemented separately, what should we do with this
+> > series to make it ready to be merged?
+> > 
+> > I know that we need to:
+> > 
+> > * look at device drivers that report timestamps in CLOCK_MONOTONIC base.
+> 
+> and CLOCK_BOOTTIME and that's quite a few.
+> 
+> > * forbid changing offsets after creating timers
+> 
+> There are more things to think about. What about interfaces which expose
+> boot time or monotonic time in /proc?
 
-On Wed, Oct 31, 2018 at 3:12 AM Daniel Colascione <dancol@google.com> wrote:
-> Add a simple proc-based kill interface. To use /proc/pid/kill, just
-> write the signal number in base-10 ASCII to the kill file of the
-> process to be killed: for example, 'echo 9 > /proc/$$/kill'.
+We didn't find any proc files where boot or monotonic time is reported,
+but we will double check this.
 
-This is a kernel API change, you should CC the linux-api list.
+> 
+> Aside of that (I finally came around to look at the series in more detail)
+> I'm really unhappy about the unconditional overhead once the Time namespace
+> config switch is enabled. This applies especially to the VDSO. We spent
+> quite some time recently to squeeze a few cycles out of those functions and
+> it would be a pity to pointlessly waste cycles for the !namespace case.
 
-I think that getting the semantics of this right might be easier if
-you used an ioctl handler instead of a write handler.
+It is a good point. We will work on it.
 
-> Semantically, /proc/pid/kill works like kill(2), except that the
-> process ID comes from the proc filesystem context instead of from an
-> explicit system call parameter. This way, it's possible to avoid races
-> between inspecting some aspect of a process and that process's PID
-> being reused for some other process.
->
-> With /proc/pid/kill, it's possible to write a proper race-free and
-> safe pkill(1). An approximation follows. A real program might use
-> openat(2), having opened a process's /proc/pid directory explicitly,
-> with the directory file descriptor serving as a sort of "process
-> handle".
->
->     #!/bin/bash
->     set -euo pipefail
->     pat=$1
->     for proc_status in /proc/*/status; do (
->         cd $(dirname $proc_status)
->         readarray proc_argv -d'' < cmdline
->         if ((${#proc_argv[@]} > 0)) &&
->                [[ ${proc_argv[0]} = *$pat* ]];
->         then
->             echo 15 > kill
->         fi
->     ) || true; done
->
-> Signed-off-by: Daniel Colascione <dancol@google.com>
-> ---
->  fs/proc/base.c | 39 +++++++++++++++++++++++++++++++++++++++
->  1 file changed, 39 insertions(+)
->
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index 7e9f07bf260d..923d62b21e67 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -205,6 +205,44 @@ static int proc_root_link(struct dentry *dentry, struct path *path)
->         return result;
->  }
->
-> +static ssize_t proc_pid_kill_write(struct file *file,
-> +                                  const char __user *buf,
-> +                                  size_t count, loff_t *ppos)
-> +{
-> +       ssize_t res;
-> +       int sig;
-> +       char buffer[4];
-> +
-> +       res = -EINVAL;
-> +       if (*ppos != 0)
-> +               goto out;
-> +
-> +       res = -EINVAL;
-> +       if (count > sizeof(buffer) - 1)
-> +               goto out;
-> +
-> +       res = -EFAULT;
-> +       if (copy_from_user(buffer, buf, count))
-> +               goto out;
-> +
-> +       buffer[count] = '\0';
-> +       res = kstrtoint(strstrip(buffer), 10, &sig);
-> +       if (res)
-> +               goto out;
-> +
-> +       res = kill_pid(proc_pid(file_inode(file)), sig, 0);
-> +       if (res)
-> +               goto out;
-> +       res = count;
-> +out:
-> +       return res;
-> +
-> +}
+> 
+> I can see the urge for this, but please let us think it through properly
+> before rushing anything in which we are going to regret once we want to do
+> more sophisticated time domain management, e.g. support for isolated clock
+> real time. I'm worried, that without a clear plan about the overall
+> picture, we end up with duct tape which is hard to distangle after the
+> fact.
+
+Thomas, there is no rush at all. This functionality is critical for
+CRUI, but we have enough time to solve it properly.
+
+The only thing what I want is that this functionality continues moving
+forward and will not be put in the back burner.
+
+> 
+> There have been a few other things brought up versus time management in
+> general, like the TSN folks utilizing grand clock masters which expose
+> random time instead of proper TAI. Plus some requirements for exposing some
+> sort of 'monotonic' clocks which are derived from external synchronization
+> mechanisms, but should not affect the regular time keeping clocks.
+> 
+> While different issues, these all fall into the category of separate time
+> domains, so taking a step back to the drawing board is probably the best
+> thing what we can do now.
+> 
+> There are certainly a few things which can be looked at independently,
+> e.g. the VDSO mechanics or general mechanisms to avoid plastering the whole
+> kernel with these name space functions applying offsets left and right. I
+> rather have dedicated core functionality which replaces/amends existing
+> timer functions to become time namespace aware.
+> 
+> I'll try to find some time in the next weeks to look deeper into that, but
+> I can't promise anything before returning from LPC. Btw, LPC would be a
+> great opportunity to discuss that. Are you and the other name space wizards
+> there by any chance?
+
+Dmitry and I are going to be there.
+
+Thanks!
+Andrei
+
+> 
+> Thanks,
+> 
+> 	tglx
+> 
+> 
