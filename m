@@ -1,113 +1,261 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: Re: [RFC 00/20] ns: Introduce Time Namespace
-Date: Wed, 31 Oct 2018 09:26:53 -0700
-Message-ID: <20181031162650.GB26067@gmail.com>
-References: <20180919205037.9574-1-dima@arista.com>
- <874lej6nny.fsf@xmission.com>
- <20180924205119.GA14833@outlook.office365.com>
- <874leezh8n.fsf@xmission.com>
- <20180925014150.GA6302@outlook.office365.com>
- <87zhw4rwiq.fsf@xmission.com>
- <alpine.DEB.2.21.1809272247270.8118@nanos.tec.linutronix.de>
- <87mus1ftb9.fsf@xmission.com>
- <20181021014121.GA23474@gmail.com>
- <alpine.DEB.2.21.1810292026040.5984@nanos.tec.linutronix.de>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [RFC PATCH] Minimal non-child process exit notification support
+Date: Wed, 31 Oct 2018 16:53:48 +0000
+Message-ID: <CAKOZueuX6GL+rXZbtd_X2RaxF1MdNiEnHFbTRE2X8bsY9bOzuA@mail.gmail.com>
+References: <20181029175322.189042-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.21.1810292026040.5984@nanos.tec.linutronix.de>
+In-Reply-To: <20181029175322.189042-1-dancol@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Jeff Dike <jdike@addtoit.com>, "x86@kernel.org" <x86@kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, "criu@openvz.org" <criu@openvz.org>, Ingo Molnar <mingo@redhat.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andy Lutomirski <luto@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Christian Brauner <christian.brauner@ubuntu.com>, Pavel Emelianov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, container
+To: linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+Cc: Tim Murray <timmurray@google.com>, Joel Fernandes <joelaf@google.com>, Daniel Colascione <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 29, 2018 at 09:33:14PM +0100, Thomas Gleixner wrote:
-> Andrei,
-> 
-> On Sat, 20 Oct 2018, Andrei Vagin wrote:
-> > When a container is migrated to another host, we have to restore its
-> > monotonic and boottime clocks, but we still expect that the container
-> > will continue using the host real-time clock.
-> > 
-> > Before stating this series, I was thinking about this, I decided that
-> > these cases can be solved independently. Probably, the full isolation of
-> > the time sub-system will have much higher overhead than just offsets for
-> > a few clocks. And the idea that isolation of the real-time clock should
-> > be optional gives us another hint that offsets for monotonic and
-> > boot-time clocks can be implemented independently.
-> > 
-> > Eric and Tomas, what do you think about this? If you agree that these
-> > two cases can be implemented separately, what should we do with this
-> > series to make it ready to be merged?
-> > 
-> > I know that we need to:
-> > 
-> > * look at device drivers that report timestamps in CLOCK_MONOTONIC base.
-> 
-> and CLOCK_BOOTTIME and that's quite a few.
-> 
-> > * forbid changing offsets after creating timers
-> 
-> There are more things to think about. What about interfaces which expose
-> boot time or monotonic time in /proc?
++ linux-api
 
-We didn't find any proc files where boot or monotonic time is reported,
-but we will double check this.
-
-> 
-> Aside of that (I finally came around to look at the series in more detail)
-> I'm really unhappy about the unconditional overhead once the Time namespace
-> config switch is enabled. This applies especially to the VDSO. We spent
-> quite some time recently to squeeze a few cycles out of those functions and
-> it would be a pity to pointlessly waste cycles for the !namespace case.
-
-It is a good point. We will work on it.
-
-> 
-> I can see the urge for this, but please let us think it through properly
-> before rushing anything in which we are going to regret once we want to do
-> more sophisticated time domain management, e.g. support for isolated clock
-> real time. I'm worried, that without a clear plan about the overall
-> picture, we end up with duct tape which is hard to distangle after the
-> fact.
-
-Thomas, there is no rush at all. This functionality is critical for
-CRUI, but we have enough time to solve it properly.
-
-The only thing what I want is that this functionality continues moving
-forward and will not be put in the back burner.
-
-> 
-> There have been a few other things brought up versus time management in
-> general, like the TSN folks utilizing grand clock masters which expose
-> random time instead of proper TAI. Plus some requirements for exposing some
-> sort of 'monotonic' clocks which are derived from external synchronization
-> mechanisms, but should not affect the regular time keeping clocks.
-> 
-> While different issues, these all fall into the category of separate time
-> domains, so taking a step back to the drawing board is probably the best
-> thing what we can do now.
-> 
-> There are certainly a few things which can be looked at independently,
-> e.g. the VDSO mechanics or general mechanisms to avoid plastering the whole
-> kernel with these name space functions applying offsets left and right. I
-> rather have dedicated core functionality which replaces/amends existing
-> timer functions to become time namespace aware.
-> 
-> I'll try to find some time in the next weeks to look deeper into that, but
-> I can't promise anything before returning from LPC. Btw, LPC would be a
-> great opportunity to discuss that. Are you and the other name space wizards
-> there by any chance?
-
-Dmitry and I are going to be there.
-
-Thanks!
-Andrei
-
-> 
-> Thanks,
-> 
-> 	tglx
-> 
-> 
+On Mon, Oct 29, 2018 at 5:53 PM, Daniel Colascione <dancol@google.com> wrote:
+> This patch adds a new file under /proc/pid, /proc/pid/exithand.
+> Attempting to read from an exithand file will block until the
+> corresponding process exits, at which point the read will successfully
+> complete with EOF.  The file descriptor supports both blocking
+> operations and poll(2). It's intended to be a minimal interface for
+> allowing a program to wait for the exit of a process that is not one
+> of its children.
+>
+> Why might we want this interface? Android's lmkd kills processes in
+> order to free memory in response to various memory pressure
+> signals. It's desirable to wait until a killed process actually exits
+> before moving on (if needed) to killing the next process. Since the
+> processes that lmkd kills are not lmkd's children, lmkd currently
+> lacks a way to wait for a proces to actually die after being sent
+> SIGKILL; today, lmkd resorts to polling the proc filesystem pid
+> entry. This interface allow lmkd to give up polling and instead block
+> and wait for process death.
+>
+> Signed-off-by: Daniel Colascione <dancol@google.com>
+> ---
+>  fs/proc/Makefile             |   1 +
+>  fs/proc/base.c               |   1 +
+>  fs/proc/exithand.c           | 117 +++++++++++++++++++++++++++++++++++
+>  fs/proc/internal.h           |   4 ++
+>  include/linux/sched/signal.h |   7 +++
+>  kernel/exit.c                |   2 +
+>  kernel/signal.c              |   3 +
+>  7 files changed, 135 insertions(+)
+>  create mode 100644 fs/proc/exithand.c
+>
+> diff --git a/fs/proc/Makefile b/fs/proc/Makefile
+> index ead487e80510..21322280a2c1 100644
+> --- a/fs/proc/Makefile
+> +++ b/fs/proc/Makefile
+> @@ -27,6 +27,7 @@ proc-y        += softirqs.o
+>  proc-y += namespaces.o
+>  proc-y += self.o
+>  proc-y += thread_self.o
+> +proc-y  += exithand.o
+>  proc-$(CONFIG_PROC_SYSCTL)     += proc_sysctl.o
+>  proc-$(CONFIG_NET)             += proc_net.o
+>  proc-$(CONFIG_PROC_KCORE)      += kcore.o
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 7e9f07bf260d..31bc6bbb6dc4 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -3006,6 +3006,7 @@ static const struct pid_entry tgid_base_stuff[] = {
+>  #ifdef CONFIG_LIVEPATCH
+>         ONE("patch_state",  S_IRUSR, proc_pid_patch_state),
+>  #endif
+> +       REG("exithand", S_IRUGO, proc_tgid_exithand_operations),
+>  };
+>
+>  static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
+> diff --git a/fs/proc/exithand.c b/fs/proc/exithand.c
+> new file mode 100644
+> index 000000000000..358b08da6a08
+> --- /dev/null
+> +++ b/fs/proc/exithand.c
+> @@ -0,0 +1,117 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/* Synchronous exit notification of non-child processes
+> + *
+> + * Simple file descriptor /proc/pid/exithand. Read blocks (and poll
+> + * reports non-readable) until process either dies or becomes
+> + * a zombie.
+> + */
+> +#include <linux/printk.h>
+> +#include <linux/sched/signal.h>
+> +#include <linux/poll.h>
+> +#include "internal.h"
+> +
+> +static int proc_tgid_exithand_open(struct inode *inode, struct file *file)
+> +{
+> +       struct task_struct* task = get_proc_task(inode);
+> +       /* If get_proc_task failed, it means the task is dead, which
+> +        * is fine, since a subsequent read will return
+> +        * immediately.  */
+> +       if (task && !thread_group_leader(task))
+> +               return -EINVAL;
+> +       return 0;
+> +}
+> +
+> +static ssize_t proc_tgid_exithand_read(struct file * file,
+> +                                      char __user * buf,
+> +                                      size_t count, loff_t *ppos)
+> +{
+> +       struct task_struct* task = NULL;
+> +       wait_queue_entry_t wait;
+> +       ssize_t res = 0;
+> +       bool locked = false;
+> +
+> +       for (;;) {
+> +               /* Retrieve the task from the struct pid each time
+> +                * through the loop in case the exact struct task
+> +                * changes underneath us (e.g., if in exec.c, the
+> +                * execing process kills the group leader and starts
+> +                * using its PID).  The struct signal should be the
+> +                * same though even in this case.
+> +                */
+> +               task = get_proc_task(file_inode(file));
+> +               res = 0;
+> +               if (!task)
+> +                       goto out;  /* No task?  Must have died.  */
+> +
+> +               BUG_ON(!thread_group_leader(task));
+> +
+> +               /* Synchronizes with exit.c machinery. */
+> +               read_lock(&tasklist_lock);
+> +               locked = true;
+> +
+> +               res = 0;
+> +               if (task->exit_state)
+> +                       goto out;
+> +
+> +               res = -EAGAIN;
+> +               if (file->f_flags & O_NONBLOCK)
+> +                       goto out;
+> +
+> +               /* Tell exit.c to go to the trouble of waking our
+> +                * runqueue when this process gets around to
+> +                * exiting. */
+> +               task->signal->exithand_is_interested = true;
+> +
+> +               /* Even if the task identity changes, task->signal
+> +                * should be invariant across the wait, making it safe
+> +                * to go remove our wait record from the wait queue
+> +                * after we come back from schedule.  */
+> +
+> +               init_waitqueue_entry(&wait, current);
+> +               add_wait_queue(&wait_exithand, &wait);
+> +
+> +               read_unlock(&tasklist_lock);
+> +               locked = false;
+> +
+> +               put_task_struct(task);
+> +               task = NULL;
+> +
+> +               set_current_state(TASK_INTERRUPTIBLE);
+> +               schedule();
+> +               set_current_state(TASK_RUNNING);
+> +               remove_wait_queue(&wait_exithand, &wait);
+> +
+> +               res = -ERESTARTSYS;
+> +               if (signal_pending(current))
+> +                       goto out;
+> +       }
+> +out:
+> +       if (locked)
+> +               read_unlock(&tasklist_lock);
+> +       if (task)
+> +               put_task_struct(task);
+> +       return res;
+> +}
+> +
+> +static __poll_t proc_tgid_exithand_poll(struct file *file, poll_table *wait)
+> +{
+> +       __poll_t mask = 0;
+> +       struct task_struct* task = get_proc_task(file_inode(file));
+> +       if (!task) {
+> +               mask |= POLLIN;
+> +       } else if (READ_ONCE(task->exit_state)) {
+> +               mask |= POLLIN;
+> +       } else {
+> +               read_lock(&tasklist_lock);
+> +               task->signal->exithand_is_interested = true;
+> +               read_unlock(&tasklist_lock);
+> +               poll_wait(file, &wait_exithand, wait);
+> +       }
+> +       return mask;
+> +}
+> +
+> +const struct file_operations proc_tgid_exithand_operations = {
+> +       .open           = proc_tgid_exithand_open,
+> +       .read           = proc_tgid_exithand_read,
+> +       .poll           = proc_tgid_exithand_poll,
+> +};
+> diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+> index 5185d7f6a51e..1009d20475bc 100644
+> --- a/fs/proc/internal.h
+> +++ b/fs/proc/internal.h
+> @@ -304,3 +304,7 @@ extern unsigned long task_statm(struct mm_struct *,
+>                                 unsigned long *, unsigned long *,
+>                                 unsigned long *, unsigned long *);
+>  extern void task_mem(struct seq_file *, struct mm_struct *);
+> +
+> +/* exithand.c */
+> +
+> +extern const struct file_operations proc_tgid_exithand_operations;
+> diff --git a/include/linux/sched/signal.h b/include/linux/sched/signal.h
+> index 13789d10a50e..44131cb6c7f4 100644
+> --- a/include/linux/sched/signal.h
+> +++ b/include/linux/sched/signal.h
+> @@ -74,6 +74,10 @@ struct multiprocess_signals {
+>         struct hlist_node node;
+>  };
+>
+> +/* Need to stick the waitq for exithand outside process structures in
+> + * case a process disappears across a poll.  */
+> +extern wait_queue_head_t wait_exithand;
+> +
+>  /*
+>   * NOTE! "signal_struct" does not have its own
+>   * locking, because a shared signal_struct always
+> @@ -87,6 +91,9 @@ struct signal_struct {
+>         int                     nr_threads;
+>         struct list_head        thread_head;
+>
+> +       /* Protected with tasklist_lock.  */
+> +       bool                    exithand_is_interested;
+> +
+>         wait_queue_head_t       wait_chldexit;  /* for wait4() */
+>
+>         /* current thread group signal load-balancing target: */
+> diff --git a/kernel/exit.c b/kernel/exit.c
+> index 0e21e6d21f35..44a4e3796f8b 100644
+> --- a/kernel/exit.c
+> +++ b/kernel/exit.c
+> @@ -1485,6 +1485,8 @@ void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
+>  {
+>         __wake_up_sync_key(&parent->signal->wait_chldexit,
+>                                 TASK_INTERRUPTIBLE, 1, p);
+> +       if (p->signal->exithand_is_interested)
+> +               __wake_up_sync(&wait_exithand, TASK_INTERRUPTIBLE, 0);
+>  }
+>
+>  static long do_wait(struct wait_opts *wo)
+> diff --git a/kernel/signal.c b/kernel/signal.c
+> index 17565240b1c6..e156d48da70a 100644
+> --- a/kernel/signal.c
+> +++ b/kernel/signal.c
+> @@ -454,6 +454,9 @@ void flush_sigqueue(struct sigpending *queue)
+>         }
+>  }
+>
+> +wait_queue_head_t wait_exithand =
+> +       __WAIT_QUEUE_HEAD_INITIALIZER(wait_exithand);
+> +
+>  /*
+>   * Flush all pending signals for this kthread.
+>   */
+> --
+> 2.19.1.568.g152ad8e336-goog
+>
