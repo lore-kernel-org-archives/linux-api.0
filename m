@@ -1,8 +1,11 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 05/16] mm: Provide is_vma_noncached
-Date: Thu,  1 Nov 2018 10:58:33 +0100
-Message-ID: <20181101095844.24462-6-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 06/16] cpu_opv: Provide cpu_opv system call (v9)
+Date: Thu,  1 Nov 2018 10:58:34 +0100
+Message-ID: <20181101095844.24462-7-mathieu.desnoyers@efficios.com>
 References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -10,8 +13,364 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
 
-Provide is_vma_noncached() static inline to allow generic code to
-check whether the given vma consists of noncached memory.
+The cpu_opv system call executes a vector of operations on behalf of
+user-space on a specific CPU with interrupts disabled or within an
+IPI handler. It is similar to readv() and writev() system calls which
+take a "struct iovec" array as argument.
+
+The operations available are: comparison, memcpy, memcpy_release, add,
+and add_release. The system call receives a CPU number from user-space
+as argument, which is the CPU on which those operations need to be
+performed. All pointers in the ops must have been set up to point to
+the per CPU memory of the CPU on which the operations should be
+executed. The "comparison" operation can be used to check that the data
+used in the preparation step did not change between preparation of
+system call inputs and operation execution within the irq-off critical
+section.
+
+The reason why for requiring all pointer offsets to be calculated by
+user-space beforehand is because get_user_pages() first needs to be
+used to pin all pages touched by each operation. This takes care of
+faulting-in the pages. Those pages are then vmap'd into the kernel
+virtual address range. Then the operations are performed atomically with
+respect to other thread's execution on that CPU, without generating any
+page fault, by means of a IPI handler (or disabling interrupts).
+
+An overall maximum of 4120 bytes in enforced on the sum of operation
+length within an operation vector, so user-space cannot generate a
+too long irq-off critical section. The maximum number of operations
+supported in a vector is 4. User-space can query the maximum vector
+size and the number of operation "instructions" supported with by
+passing the appropriate flags as system call parameter. The cache cold
+critical section duration has been measured as 4.7=C2=B5s on x86-64 for 1=
+6
+operations, therefore a more restrictive limit of 4 operations should
+cause an even shorter irq-off latency. Each operation is also limited to
+a length of 4096 bytes, meaning that an operation can touch a maximum of
+4 pages (memcpy: 2 pages for source, 2 pages for destination if
+addresses are not aligned on page boundaries).
+
+**** Justification for cpu_opv ****
+
+Here are a few reasons justifying why the cpu_opv system call is
+needed in addition to rseq:
+
+1) Allow algorithms to perform per-cpu data migration without relying on
+   sched_setaffinity()
+
+The use-cases are migration of memory between per-cpu memory free-lists,
+and stealing tasks from other per-cpu work queues: each require that
+accesses to remote per-cpu data structures are performed.
+
+Just rseq is not enough to cover those use-cases without additionally
+relying on sched_setaffinity, which is unfortunately not
+CPU-hotplug-safe.
+
+The cpu_opv system call receives a CPU number as argument, and
+performs the operation sequence in a IPI handler on the right CPU. The
+IPI handler ensures any restartable sequence critical section it
+interrupts will be aborted. If the requested CPU is offline, it performs
+the operations from the current CPU while preventing CPU hotplug, and
+with a mutex held.
+
+2) Handling single-stepping from tools
+
+Tools like debuggers and simulators use single-stepping to run through
+existing programs. If core libraries start to use restartable sequences
+for e.g. memory allocation, this means pre-existing programs cannot be
+single-stepped, simply because the underlying glibc or jemalloc has
+changed.
+
+The rseq user-space does expose a __rseq_table section for the sake of
+debuggers, so they can skip over the rseq critical sections if they
+want. However, this requires upgrading tools, and still breaks
+single-stepping in case where glibc or jemalloc is updated, but not the
+tooling.
+
+Having a performance-related library improvement break tooling is likely
+to cause a big push-back against wide adoption of rseq.
+
+3) Forward-progress guarantee
+
+Having a piece of user-space code that stops progressing due to external
+conditions is pretty bad. Developers are used to think of fast-path and
+slow-path (e.g. for locking), where the contended vs uncontended cases
+have different performance characteristics, but each need to provide
+some level of progress guarantees.
+
+There are concerns about using just "rseq" without the associated
+slow-path (cpu_opv) that guarantees progress. It's just asking for
+trouble when real-life happen: page faults, uprobes, and other
+unforeseen conditions that would seldom cause a rseq fast-path to never
+progress.
+
+4) Handling page faults
+
+It's pretty easy to come up with corner-case scenarios where rseq does
+not progress without the help from cpu_opv. For instance, a system with
+swap enabled which is under high memory pressure could trigger page
+faults at pretty much every rseq attempt. Although this scenario
+is extremely unlikely, rseq becomes the weak link of the chain.
+
+5) Comparison with LL/SC handling of debugger single-stepping
+
+The layman versed in the load-link/store-conditional instructions in
+RISC architectures will notice the similarity between rseq and LL/SC
+critical sections. The comparison can even be pushed further: since
+debuggers can handle those LL/SC critical sections, they should be
+able to handle rseq c.s. in the same way.
+
+First, the way gdb recognises LL/SC c.s. patterns is very fragile:
+it's limited to specific common patterns, and will miss the pattern
+in all other cases. But fear not, having the rseq c.s. expose a
+__rseq_table to debuggers removes that guessing part.
+
+The main difference between LL/SC and rseq is that debuggers had
+to support single-stepping through LL/SC critical sections from the
+get go in order to support a given architecture. For rseq, we're
+adding critical sections into pre-existing applications/libraries,
+so the user expectation is that tools don't break due to a library
+optimization.
+
+6) Perform maintenance operations on per-cpu data
+
+rseq c.s. are quite limited feature-wise: they need to end with a
+*single* commit instruction that updates a memory location. On the other
+hand, the cpu_opv system call can combine a sequence of operations that
+need to be executed atomically with respect to concurrent execution on
+a given CPU. While slower than rseq, this allows for more complex
+maintenance operations to be performed on per-cpu data concurrently with
+rseq fast-paths, in cases where it's not possible to map those sequences
+of ops to a rseq.
+
+7) Use cpu_opv as generic implementation for architectures not
+   implementing rseq assembly code
+
+rseq critical sections require architecture-specific user-space code to
+be crafted in order to port an algorithm to a given architecture. In
+addition, it requires that the kernel architecture implementation adds
+hooks into signal delivery and resume to user-space.
+
+In order to facilitate integration of rseq into user-space, cpu_opv can
+provide a (relatively slower) architecture-agnostic implementation of
+rseq. This means that user-space code can be ported to all architectures
+through use of cpu_opv initially, and have the fast-path use rseq
+whenever the asm code is implemented.
+
+8) Allow libraries with multi-part algorithms to work on same per-cpu
+   data without affecting the allowed cpu mask
+
+The lttng-ust tracer presents an interesting use-case for per-cpu
+buffers: the algorithm needs to update a "reserve" counter, serialize
+data into the buffer, and then update a "commit" counter _on the same
+per-cpu buffer_. Using rseq for both reserve and commit can bring
+significant performance benefits.
+
+Clearly, if rseq reserve fails, the algorithm can retry on a different
+per-cpu buffer. However, it's not that easy for the commit. It needs to
+be performed on the same per-cpu buffer as the reserve.
+
+The cpu_opv system call solves that problem by receiving the cpu number
+on which the operation needs to be performed as argument. It uses an
+IPI to perform the operations on the requested CPU.
+
+Changing the allowed cpu mask for the current thread is not an
+acceptable alternative for a tracing library, because the application
+being traced does not expect that mask to be changed by libraries.
+
+9) Ensure that data structures don't need store-release/load-acquire
+   semantic to handle fall-back
+
+cpu_opv performs the fall-back on the requested CPU with an IPI to that
+CPU. Executing the slow-path on the right CPU ensures that
+store-release/load-acquire semantic is not required neither on the
+fast-path nor slow-path.
+
+10) Allow use of rseq critical sections from signal handlers
+
+Considering that rseq needs to be registered/unregistered from the
+current thread, it means there is a window at thread creation/exit where
+a signal handler can nest over the thread before rseq is registered by
+glibc, or after it has been unregistered by glibc. One possibility to
+handle this would be to extend clone() to have rseq registered
+immediately when the thread is created, and unregistered implicitly when
+the thread vanishes. Adding complexity to clone() has not been an idea
+received well so far. So an alternative solution is to ensure that
+signal handlers using rseq critical sections have a fallback mechanism
+(cpu_opv) to work on per-cpu data structures when they are nested over
+threads for which rseq is not currently registered.
+
+11) Inability to mix rseq and non-rseq atomic operations on percpu data
+
+A typical approach when dealing with locking fast-path and slow-path is
+to fall-back on a slower/less efficient mechanism to perform what the
+fast-path cannot do.
+
+One approach that naturally comes to mind when considering rseq
+fast-path abort would be to rather issue the same side-effect by
+means of an atomic instruction. Arguably, before rseq, updates to
+per-cpu data structures used to be done by reading the current CPU
+number and by then using an atomic instruction to update the data in a
+way that is safe against concurrent updates. This atomic instruction was
+indeed needed to deal with migration between reading the current CPU
+number and doing the update.
+
+Unfortunately, it is a _bug_ to mix concurrent access to a per-cpu data
+with both rseq (guaranteed to be on the right CPU, never migrated before
+the commit) and non-rseq atomic instructions (which can be issued from
+the wrong CPU), because the rseq critical section (on the right CPU)
+executing concurrently with the atomic instruction (on another CPU due
+to migration) on can cause data corruption of the per-cpu data.
+
+**** rseq and cpu_opv use-cases ****
+
+1) per-cpu spinlock
+
+A per-cpu spinlock can be implemented as a rseq consisting of a
+comparison operation (=3D=3D 0) on a word, and a word store (1), followed
+by an acquire barrier after control dependency. The unlock path can be
+performed with a simple store-release of 0 to the word, which does
+not require rseq.
+
+The cpu_opv fallback requires a single-word comparison (=3D=3D 0) and a
+single-word store (1).
+
+2) per-cpu statistics counters
+
+A per-cpu statistics counters can be implemented as a rseq consisting
+of a final "add" instruction on a word as commit.
+
+The cpu_opv fallback can be implemented as a "ADD" operation.
+
+Besides statistics tracking, these counters can be used to implement
+user-space RCU per-cpu grace period tracking for both single and
+multi-process user-space RCU.
+
+3) per-cpu LIFO linked-list (unlimited size stack)
+
+A per-cpu LIFO linked-list has a "push" and "pop" operation,
+which respectively adds an item to the list, and removes an
+item from the list.
+
+The "push" operation can be implemented as a rseq consisting of
+a word comparison instruction against head followed by a word store
+(commit) to head. Its cpu_opv fallback can be implemented as a
+word-compare followed by word-store as well.
+
+The "pop" operation can be implemented as a rseq consisting of
+loading head, comparing it against NULL, loading the next pointer
+at the right offset within the head item, and the next pointer as
+a new head, returning the old head on success.
+
+The cpu_opv fallback for "pop" differs from its rseq algorithm:
+considering that cpu_opv requires to know all pointers at system
+call entry so it can pin all pages, so cpu_opv cannot simply load
+head and then load the head->next address within the irq-off
+critical section. User-space needs to pass the head and head->next
+addresses to the kernel, and the kernel needs to check that the
+head address is unchanged since it has been loaded by user-space.
+However, when accessing head->next in a ABA situation, it's
+possible that head is unchanged, but loading head->next can
+result in a page fault due to a concurrently freed head object.
+This is why the "expect_fault" operation field is introduced: if a
+fault is triggered by this access, "-EAGAIN" will be returned by
+cpu_opv rather than -EFAULT, thus indicating the the operation
+vector should be attempted again. The "pop" operation can thus be
+implemented as a word comparison of head against the head loaded
+by user-space, followed by a load of the head->next pointer (which
+may fault), and a store of that pointer as a new head.
+
+4) per-cpu LIFO ring buffer with pointers to objects (fixed-sized stack)
+
+This structure is useful for passing around allocated objects
+by passing pointers through per-cpu fixed-sized stack.
+
+The "push" side can be implemented with a check of the current
+offset against the maximum buffer length, followed by a rseq
+consisting of a comparison of the previously loaded offset
+against the current offset, a word "try store" operation into the
+next ring buffer array index (it's OK to abort after a try-store,
+since it's not the commit, and its side-effect can be overwritten),
+then followed by a word-store to increment the current offset (commit).
+
+The "push" cpu_opv fallback can be done with the comparison, and
+two consecutive word stores, all within the irq-off section.
+
+The "pop" side can be implemented with a check that offset is not
+0 (whether the buffer is empty), a load of the "head" pointer before the
+offset array index, followed by a rseq consisting of a word
+comparison checking that the offset is unchanged since previously
+loaded, another check ensuring that the "head" pointer is unchanged,
+followed by a store decrementing the current offset.
+
+The cpu_opv "pop" can be implemented with the same algorithm
+as the rseq fast-path (compare, compare, store).
+
+5) per-cpu LIFO ring buffer with pointers to objects (fixed-sized stack)
+   supporting "peek" from remote CPU
+
+In order to implement work queues with work-stealing between CPUs, it is
+useful to ensure the offset "commit" in scenario 4) "push" have a
+store-release semantic, thus allowing remote CPU to load the offset
+with acquire semantic, and load the top pointer, in order to check if
+work-stealing should be performed. The task (work queue item) existence
+should be protected by other means, e.g. RCU.
+
+If the peek operation notices that work-stealing should indeed be
+performed, a thread can use cpu_opv to move the task between per-cpu
+workqueues, by first invoking cpu_opv passing the remote work queue
+cpu number as argument to pop the task, and then again as "push" with
+the target work queue CPU number.
+
+6) per-cpu LIFO ring buffer with data copy (fixed-sized stack)
+   (with and without acquire-release)
+
+This structure is useful for passing around data without requiring
+memory allocation by copying the data content into per-cpu fixed-sized
+stack.
+
+The "push" operation is performed with an offset comparison against
+the buffer size (figuring out if the buffer is full), followed by
+a rseq consisting of a comparison of the offset, a try-memcpy attempting
+to copy the data content into the buffer (which can be aborted and
+overwritten), and a final store incrementing the offset.
+
+The cpu_opv fallback needs to same operations, except that the memcpy
+is guaranteed to complete, given that it is performed with irqs
+disabled or from IPI handler. This requires a memcpy operation
+supporting length up to 4kB.
+
+The "pop" operation is similar to the "push, except that the offset
+is first compared to 0 to ensure the buffer is not empty. The
+copy source is the ring buffer, and the destination is an output
+buffer.
+
+7) per-cpu FIFO ring buffer (fixed-sized queue)
+
+This structure is useful wherever a FIFO behavior (queue) is needed.
+One major use-case is tracer ring buffer.
+
+An implementation of this ring buffer has a "reserve", followed by
+serialization of multiple bytes into the buffer, ended by a "commit".
+The "reserve" can be implemented as a rseq consisting of a word
+comparison followed by a word store. The reserve operation moves the
+producer "head". The multi-byte serialization can be performed
+non-atomically. Finally, the "commit" update can be performed with
+a rseq "add" commit instruction with store-release semantic. The
+ring buffer consumer reads the commit value with load-acquire
+semantic to know whenever it is safe to read from the ring buffer.
+
+This use-case requires that both "reserve" and "commit" operations
+be performed on the same per-cpu ring buffer, even if a migration
+happens between those operations. In the typical case, both operations
+will happens on the same CPU and use rseq. In the unlikely event of a
+migration, the cpu_opv system call will ensure the commit can be
+performed on the right CPU by migrating the task to that CPU.
+
+On the consumer side, an alternative to using store-release and
+load-acquire on the commit counter would be to use cpu_opv to
+ensure the commit counter load is performed on the right CPU through an
+IPI.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -34,45 +393,1515 @@ CC: Catalin Marinas <catalin.marinas@arm.com>
 CC: Will Deacon <will.deacon@arm.com>
 CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-mm@kvack.org
+CC: linux-api@vger.kernel.org
 ---
- include/linux/mm.h | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+Changes since v1:
+- handle CPU hotplug,
+- cleanup implementation using function pointers: We can use function
+  pointers to implement the operations rather than duplicating all the
+  user-access code.
+- refuse device pages: Performing cpu_opv operations on io map'd pages
+  with preemption disabled could generate long preempt-off critical
+  sections, which leads to unwanted scheduler latency. Return EFAULT if
+  a device page is received as parameter
+- restrict op vector to 4216 bytes length sum: Restrict the operation
+  vector to length sum of:
+  - 4096 bytes (typical page size on most architectures, should be
+    enough for a string, or structures)
+  - 15 * 8 bytes (typical operations on integers or pointers).
+  The goal here is to keep the duration of preempt off critical section
+  short, so we don't add significant scheduler latency.
+- Add INIT_ONSTACK macro: Introduce the
+  CPU_OP_FIELD_u32_u64_INIT_ONSTACK() macros to ensure that users
+  correctly initialize the upper bits of CPU_OP_FIELD_u32_u64() on their
+  stack to 0 on 32-bit architectures.
+- Add CPU_MB_OP operation:
+  Use-cases with:
+  - two consecutive stores,
+  - a mempcy followed by a store,
+  require a memory barrier before the final store operation. A typical
+  use-case is a store-release on the final store. Given that this is a
+  slow path, just providing an explicit full barrier instruction should
+  be sufficient.
+- Add expect fault field:
+  The use-case of list_pop brings interesting challenges. With rseq, we
+  can use rseq_cmpnev_storeoffp_load(), and therefore load a pointer,
+  compare it against NULL, add an offset, and load the target "next"
+  pointer from the object, all within a single req critical section.
 
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 0416a7204be3..18acf4f339f8 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -2551,6 +2551,30 @@ static inline struct page *follow_page(struct vm_area_struct *vma,
- 	return follow_page_mask(vma, address, foll_flags, &unused_page_mask);
- }
- 
-+static inline bool pgprot_same(pgprot_t a, pgprot_t b)
-+{
-+	return pgprot_val(a) == pgprot_val(b);
-+}
+  Life is not so easy for cpu_opv in this use-case, mainly because we
+  need to pin all pages we are going to touch in the preempt-off
+  critical section beforehand. So we need to know the target object (in
+  which we apply an offset to fetch the next pointer) when we pin pages
+  before disabling preemption.
+
+  So the approach is to load the head pointer and compare it against
+  NULL in user-space, before doing the cpu_opv syscall. User-space can
+  then compute the address of the head->next field, *without loading it*.
+
+  The cpu_opv system call will first need to pin all pages associated
+  with input data. This includes the page backing the head->next object,
+  which may have been concurrently deallocated and unmapped. Therefore,
+  in this case, getting -EFAULT when trying to pin those pages may
+  happen: it just means they have been concurrently unmapped. This is
+  an expected situation, and should just return -EAGAIN to user-space,
+  to user-space can distinguish between "should retry" type of
+  situations and actual errors that should be handled with extreme
+  prejudice to the program (e.g. abort()).
+
+  Therefore, add "expect_fault" fields along with op input address
+  pointers, so user-space can identify whether a fault when getting a
+  field should return EAGAIN rather than EFAULT.
+- Add compiler barrier between operations: Adding a compiler barrier
+  between store operations in a cpu_opv sequence can be useful when
+  paired with membarrier system call.
+
+  An algorithm with a paired slow path and fast path can use
+  sys_membarrier on the slow path to replace fast-path memory barriers
+  by compiler barrier.
+
+  Adding an explicit compiler barrier between operations allows
+  cpu_opv to be used as fallback for operations meant to match
+  the membarrier system call.
+
+Changes since v2:
+
+- Fix memory leak by introducing struct cpu_opv_pinned_pages.
+  Suggested by Boqun Feng.
+- Cast argument 1 passed to access_ok from integer to void __user *,
+  fixing sparse warning.
+
+Changes since v3:
+
+- Fix !SMP by adding push_task_to_cpu() empty static inline.
+- Add missing sys_cpu_opv() asmlinkage declaration to
+  include/linux/syscalls.h.
+
+Changes since v4:
+
+- Cleanup based on Thomas Gleixner's feedback.
+- Handle retry in case where the scheduler migrates the thread away
+  from the target CPU after migration within the syscall rather than
+  returning EAGAIN to user-space.
+- Move push_task_to_cpu() to its own patch.
+- New scheme for touching user-space memory:
+   1) get_user_pages_fast() to pin/get all pages (which can sleep),
+   2) vm_map_ram() those pages
+   3) grab mmap_sem (read lock)
+   4) __get_user_pages_fast() (or get_user_pages() on failure)
+      -> Confirm that the same page pointers are returned. This
+         catches cases where COW mappings are changed concurrently.
+      -> If page pointers differ, or on gup failure, release mmap_sem,
+         vm_unmap_ram/put_page and retry from step (1).
+      -> perform put_page on the extra reference immediately for each
+         page.
+   5) preempt disable
+   6) Perform operations on vmap. Those operations are normal
+      loads/stores/memcpy.
+   7) preempt enable
+   8) release mmap_sem
+   9) vm_unmap_ram() all virtual addresses
+  10) put_page() all pages
+- Handle architectures with VIVT caches along with vmap(): call
+  flush_kernel_vmap_range() after each "write" operation. This
+  ensures that the user-space mapping and vmap reach a consistent
+  state between each operation.
+- Depend on MMU for is_zero_pfn(). e.g. Blackfin and SH architectures
+  don't provide the zero_pfn symbol.
+
+Changes since v5:
+
+- Fix handling of push_task_to_cpu() when argument is a cpu which is
+  not part of the task's allowed cpu mask.
+- Add CPU_OP_NR_FLAG flag, which returns the number of operations
+  supported by the system call.
+
+Changes since v6:
+
+- Use __u* in public uapi header rather than uint*_t.
+- Disallow cpu_opv targeting noncached vma, which requires using
+  get_user_pages() rather than get_user_pages_fast() to get the
+  vma.
+- Fix handling of vm_map_ram() errors by increasing nr_vaddr only after
+  success.
+- Issue vm_unmap_aliases() after each cpu_opv system call, thus ensuring
+  lazy unmapping does not exhaust vmalloc address space in stress-tests o=
+n
+  32-bit systems.
+- Use vm_map_user_ram() and vm_unmap_user_ram() to ensure cache coherency
+  on virtually aliased architectures.
+
+Changes since v7:
+
+- Adapt to removal of types_32_64.h.
+
+Changes since v8:
+
+- Use IPI to interpret operation vector (or interrupt off critical
+  section). This is possible now that the interpreter touches a shadow
+  mapping (vmap) of the user-space pages, and it is simpler than trying
+  to migrate the current thread.
+- Update documentation to reflect the change from preempt-off critical
+  section to IPI.
+- Introduce SPDX license comments.
+- Remove unused bitwise and shift operations (reduce instruction-set),
+- Remove "mb" instruction,
+- Introduce memcpy_release and add_release instructions,
+- Allow user-space to query operation vector size supported by the kernel=
+,
+- Reduce operation vector size supported from 16 to 4.
+
+---
+Man page associated:
+
+CPU_OPV(2)              Linux Programmer's Manual             CPU_OPV(2)
+
+NAME
+       cpu_opv - Per-CPU-atomic operation vector system call
+
+SYNOPSIS
+       #include <linux/cpu_opv.h>
+
+       int cpu_opv(struct cpu_op * cpu_opv, int cpuopcnt, int cpu, int fl=
+ags);
+
+DESCRIPTION
+       The cpu_opv system call executes a vector of operations on behalf
+       of user-space on a specific CPU atomically with respect  to  con=E2=
+=80=90
+       current execution on that CPU.
+
+       The term CPU used in this documentation refers to a hardware exe=E2=
+=80=90
+       cution context.
+
+       The operations available are: comparison, memcpy, add. Both  mem=E2=
+=80=90
+       cpy  and add operations have a counterpart with release semantic.
+       The system call receives a CPU number from  user-space  as  argu=E2=
+=80=90
+       ment,  which is the CPU on which those operations need to be per=E2=
+=80=90
+       formed.  All pointers in the ops must have been set up  to  point
+       to  the  per CPU memory of the CPU on which the operations should
+       be executed. The "comparison" operation can be used to check that
+       the  data  used  in  the  preparation step did not change between
+       preparation of system call inputs and operation execution by  the
+       kernel.
+
+       An overall maximum of 4216 bytes in enforced on the sum of opera=E2=
+=80=90
+       tion length within an operation vector, so user-space cannot gen=E2=
+=80=90
+       erate  a too long interrupt-off critical section or inter-proces=E2=
+=80=90
+       sor interrupt handler. Each operation is also limited a length of
+       4096  bytes.  A maximum limit of 4 operations per cpu_opv syscall
+       invocation is enforced.
+
+       The layout of struct cpu_opv is as follows:
+
+       Fields
+
+           op Operation of type enum cpu_op_type to perform. This opera=E2=
+=80=90
+              tion type selects the associated "u" union field.
+
+           len
+              Length (in bytes) of data to consider for this operation.
+
+           u.compare_op
+              For  a CPU_COMPARE_EQ_OP , and CPU_COMPARE_NE_OP , a and b
+              are  pointers  to  data  meant   to   be   compared.   The
+              expect_fault_a  and expect_fault_b fields indicate whether
+              a page fault should be expected when accessing the  memory
+              holding  this  data. If expect_fault_a , or expect_fault_b
+              is set, EAGAIN  is  returned  on  fault,  else  EFAULT  is
+              returned.  The  len field is allowed to take values from 0
+              to 4096 for comparison operations.
+
+           u.memcpy_op
+              For a CPU_MEMCPY_OP , or CPU_MEMCPY_RELEASE_OP ,  contains
+              the  dst  and  src pointers, expressing a copy of src into
+              dst.  The  expect_fault_dst  and  expect_fault_src  fields
+              indicate  whether  a  page  fault  should be expected when
+              accessing the memory holding both source and  destination,
+              which  starts  at the pointer address, of length len .  If
+              expect_fault_dst , or expect_fault_src is set,  EAGAIN  is
+              returned  on fault, else EFAULT is returned. The len field
+              is allowed to take values from 0 to 4096 for memcpy opera=E2=
+=80=90
+              tions.
+
+           u.arithmetic_op
+              For  a CPU_ADD_OP , or CPU_ADD_RELEASE_OP , contains the p
+              , count , and expect_fault_p  fields,  which  are  respec=E2=
+=80=90
+              tively  a pointer to the memory location to increment, the
+              64-bit signed integer value to add,  and  whether  a  page
+              fault  should  be  expected  for p .  If expect_fault_p is
+              set, EAGAIN is returned on fault, else EFAULT is returned.
+              The  len  field  is  allowed  to take values of 1, 2, 4, 8
+              bytes for arithmetic operations.
+
+       The enum cpu_op_types contains the following operations:
+
+       =C2=B7 CPU_COMPARE_EQ_OP: Compare whether  two  memory  locations =
+ are
+         equal,
+
+       =C2=B7 CPU_COMPARE_NE_OP: Compare whether two memory locations dif=
+fer,
+
+       =C2=B7 CPU_MEMCPY_OP:  Copy  a  source memory location into a dest=
+ina=E2=80=90
+         tion,
+
+       =C2=B7 CPU_MEMCPY_RELEASE_OP: Copy a source  memory  location  int=
+o  a
+         destination, with release semantic,
+
+       =C2=B7 CPU_ADD_OP:  Increment  a  target  memory  location  of a g=
+iven
+         count,
+
+       =C2=B7 CPU_ADD_RELEASE_OP: Increment a target  memory  location  o=
+f  a
+         given count, with release semantic,
+
+         All of the operations above provide single-copy atomicity guar=E2=
+=80=90
+         antees for word-sized, word-aligned target pointers,  for  both
+         loads and stores.
+
+       The  cpuopcnt  argument  is the number of elements in the cpu_opv
+       array. It can take values from 0 to an upper  limit  returned  by
+       invoking cpu_opv() with the CPU_OP_VEC_LEN_MAX_FLAG flag set.
+
+       The  cpu  argument  is  the  CPU  number  on  which the operation
+       sequence needs to be executed.
+
+       The flags argument is a bitmask. When CPU_OP_NR_FLAG is set,  the
+       cpu_opv() system call returns the number of operations available.
+        When  CPU_OP_VEC_LEN_MAX_FLAG  is set, the cpu_opv() system call
+       returns the maximum length of the sequence of operations that  is
+       accepted  as  input argument by the system call. When flags is 0,
+       the sequence of operations received as parameter is performed.
+
+RETURN VALUE
+       When invoked with flags set at 0, a return value of  0  indicates
+       success.  On  error, -1 is returned, and errno is set.  If a com=E2=
+=80=90
+       parison operation fails, execution of  the  operation  vector  is
+       stopped,  and  the return value is the index after the comparison
+       operation (values between 1 and 4).
+
+       When flags is non-zero, on error,  -1 is returned, and  errno  is
+       set.  On  success,  the  behavior is described in the DESCRIPTION
+       section for each flag.
+
+ERRORS
+       EAGAIN cpu_opv() system call should be attempted again.
+
+       EINVAL Either flags contains an invalid value, or cpu contains an
+              invalid  value  or  a  value  not  allowed  by the current
+              thread's allowed cpu mask, or cpuopcnt contains an invalid
+              value, or the cpu_opv operation vector contains an invalid
+              op value, or the  cpu_opv  operation  vector  contains  an
+              invalid  len value, or the cpu_opv operation vector sum of
+              len values is too large.
+
+       ENOSYS The cpu_opv() system call is not implemented by this  ker=E2=
+=80=90
+              nel.
+
+       EFAULT cpu_opv  is  an  invalid  address,  or a pointer contained
+              within an  operation  is  invalid  (and  a  fault  is  not
+              expected  for  that  pointer). Pointers to device and non=E2=
+=80=90
+              cached memory within an operation are considered invalid.
+
+VERSIONS
+       The cpu_opv() system call was added in Linux 4.X (TODO).
+
+CONFORMING TO
+       cpu_opv() is Linux-specific.
+
+SEE ALSO
+       membarrier(2), rseq(2)
+
+Linux                          2018-10-27                     CPU_OPV(2)
+---
+ MAINTAINERS                  |   7 +
+ include/linux/syscalls.h     |   3 +
+ include/uapi/linux/cpu_opv.h |  69 ++++
+ init/Kconfig                 |  18 +
+ kernel/Makefile              |   1 +
+ kernel/cpu_opv.c             | 955 +++++++++++++++++++++++++++++++++++++=
+++++++
+ kernel/sys_ni.c              |   1 +
+ 7 files changed, 1054 insertions(+)
+ create mode 100644 include/uapi/linux/cpu_opv.h
+ create mode 100644 kernel/cpu_opv.c
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index b2f710eee67a..de59c7c12c8f 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -3872,6 +3872,13 @@ B:	https://bugzilla.kernel.org
+ F:	drivers/cpuidle/*
+ F:	include/linux/cpuidle.h
+=20
++PER-CPU-ATOMIC OPERATION VECTOR SUPPORT
++M:	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++L:	linux-kernel@vger.kernel.org
++S:	Supported
++F:	kernel/cpu_opv.c
++F:	include/uapi/linux/cpu_opv.h
 +
-+#ifdef pgprot_noncached
-+static inline bool is_vma_noncached(struct vm_area_struct *vma)
-+{
-+	pgprot_t pgprot = vma->vm_page_prot;
+ CRAMFS FILESYSTEM
+ M:	Nicolas Pitre <nico@linaro.org>
+ S:	Maintained
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 2ff814c92f7f..c5af29eccd0e 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -68,6 +68,7 @@ struct perf_event_attr;
+ struct file_handle;
+ struct sigaltstack;
+ struct rseq;
++struct cpu_op;
+ union bpf_attr;
+=20
+ #include <linux/types.h>
+@@ -906,6 +907,8 @@ asmlinkage long sys_statx(int dfd, const char __user =
+*path, unsigned flags,
+ 			  unsigned mask, struct statx __user *buffer);
+ asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
+ 			 int flags, uint32_t sig);
++asmlinkage long sys_cpu_opv(struct cpu_op __user *ucpuopv, int cpuopcnt,
++			int cpu, int flags);
+=20
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/linux/cpu_opv.h b/include/uapi/linux/cpu_opv.h
+new file mode 100644
+index 000000000000..350e5a7a61f2
+--- /dev/null
++++ b/include/uapi/linux/cpu_opv.h
+@@ -0,0 +1,69 @@
++/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
++#ifndef _UAPI_LINUX_CPU_OPV_H
++#define _UAPI_LINUX_CPU_OPV_H
 +
-+	/* Check whether architecture implements noncached pages. */
-+	if (pgprot_same(pgprot_noncached(PAGE_KERNEL), PAGE_KERNEL))
-+		return false;
-+	if (!pgprot_same(pgprot, pgprot_noncached(pgprot)))
-+		return false;
-+	return true;
-+}
-+#else
-+static inline bool is_vma_noncached(struct vm_area_struct *vma)
-+{
-+	return false;
-+}
++/*
++ * linux/cpu_opv.h
++ *
++ * Per-CPU-atomic operation vector system call API
++ *
++ * Copyright (c) 2017-2018 Mathieu Desnoyers <mathieu.desnoyers@efficios=
+.com>
++ */
++
++#include <linux/types.h>
++
++/* Maximum size of operation structure within struct cpu_op. */
++#define CPU_OP_ARG_LEN_MAX			24
++/* Maximum data len for compare and memcpy operations. */
++#define CPU_OP_DATA_LEN_MAX			4096
++/* Maximum data len for arithmetic operations. */
++#define CPU_OP_ARITHMETIC_DATA_LEN_MAX		8
++
++enum cpu_op_flags {
++	CPU_OP_NR_FLAG =3D		(1U << 0),
++	CPU_OP_VEC_LEN_MAX_FLAG =3D	(1U << 1),
++};
++
++enum cpu_op_type {
++	/* compare */
++	CPU_COMPARE_EQ_OP,
++	CPU_COMPARE_NE_OP,
++	/* memcpy */
++	CPU_MEMCPY_OP,
++	CPU_MEMCPY_RELEASE_OP,
++	/* arithmetic */
++	CPU_ADD_OP,
++	CPU_ADD_RELEASE_OP,
++
++	NR_CPU_OPS,
++};
++
++/* Vector of operations to perform. Limited to 16. */
++struct cpu_op {
++	/* enum cpu_op_type. */
++	__s32 op;
++	/* data length, in bytes. */
++	__u32 len;
++	union {
++		struct {
++			__u64 a;
++			__u64 b;
++			__u8 expect_fault_a;
++			__u8 expect_fault_b;
++		} compare_op;
++		struct {
++			__u64 dst;
++			__u64 src;
++			__u8 expect_fault_dst;
++			__u8 expect_fault_src;
++		} memcpy_op;
++		struct {
++			__u64 p;
++			__s64 count;
++			__u8 expect_fault_p;
++		} arithmetic_op;
++		char __padding[CPU_OP_ARG_LEN_MAX];
++	} u;
++};
++
++#endif /* _UAPI_LINUX_CPU_OPV_H */
+diff --git a/init/Kconfig b/init/Kconfig
+index 1e234e2f1cba..e7c21a683642 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1483,6 +1483,8 @@ config RSEQ
+ 	bool "Enable rseq() system call" if EXPERT
+ 	default y
+ 	depends on HAVE_RSEQ
++	depends on MMU
++	select CPU_OPV
+ 	select MEMBARRIER
+ 	help
+ 	  Enable the restartable sequences system call. It provides a
+@@ -1502,6 +1504,22 @@ config DEBUG_RSEQ
+=20
+ 	  If unsure, say N.
+=20
++# CPU_OPV depends on MMU for is_zero_pfn()
++config CPU_OPV
++	bool "Enable cpu_opv() system call" if EXPERT
++	default y
++	depends on MMU
++	help
++	  Enable the per-CPU-atomic operation vector system call.
++	  It allows user-space to perform a sequence of operations on
++	  per-CPU data atomically with respect to concurrent execution on that
++	  CPU. Useful as single-stepping fall-back for restartable sequences,
++	  migration of data between per-CPU data structures, and for performing
++	  more complex operations on per-CPU data that would not be otherwise
++	  possible to do with restartable sequences.
++
++	  If unsure, say Y.
++
+ config EMBEDDED
+ 	bool "Embedded system"
+ 	option allnoconfig_y
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 7a63d567fdb5..507150b93521 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -116,6 +116,7 @@ obj-$(CONFIG_TORTURE_TEST) +=3D torture.o
+ obj-$(CONFIG_HAS_IOMEM) +=3D iomem.o
+ obj-$(CONFIG_ZONE_DEVICE) +=3D memremap.o
+ obj-$(CONFIG_RSEQ) +=3D rseq.o
++obj-$(CONFIG_CPU_OPV) +=3D cpu_opv.o
+=20
+ $(obj)/configs.o: $(obj)/config_data.h
+=20
+diff --git a/kernel/cpu_opv.c b/kernel/cpu_opv.c
+new file mode 100644
+index 000000000000..6ee7ca3376be
+--- /dev/null
++++ b/kernel/cpu_opv.c
+@@ -0,0 +1,955 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Per-CPU-atomic operation vector system call
++ *
++ * It allows user-space to perform a sequence of operations on per-cpu
++ * data in the user-space address space atomically with respect to concu=
+rrent
++ * accesses from the same cpu. Useful as single-stepping fall-back for
++ * restartable sequences, and for performing more complex operations on =
+per-cpu
++ * data that would not be otherwise possible to do with restartable sequ=
+ences,
++ * such as migration of per-cpu data from one cpu to another.
++ *
++ * Copyright (C) 2017-2018 EfficiOS Inc.,
++ * Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++ */
++
++#include <linux/sched.h>
++#include <linux/uaccess.h>
++#include <linux/syscalls.h>
++#include <linux/cpu_opv.h>
++#include <linux/types.h>
++#include <linux/mutex.h>
++#include <linux/pagemap.h>
++#include <linux/mm.h>
++#include <linux/vmalloc.h>
++#include <linux/atomic.h>
++#include <linux/smp.h>
++#include <asm/ptrace.h>
++#include <asm/byteorder.h>
++#include <asm/cacheflush.h>
++
++#include "sched/sched.h"
++
++/*
++ * Maximum number of operations expected for a vector.
++ */
++#define CPU_OP_VEC_LEN_MAX		4
++
++/*
++ * Maximum data len for overall vector. Restrict the amount of user-spac=
+e
++ * data touched by the kernel in interrupt-off or IPI handler context, s=
+o it
++ * does not introduce long interrupt latencies.
++ * cpu_opv allows one copy of up to 4096 bytes, and 3 operations touchin=
+g 8
++ * bytes each.
++ * This limit is applied to the sum of length specified for all operatio=
+ns
++ * in a vector.
++ */
++#define CPU_OP_VEC_DATA_LEN_MAX	(CPU_OP_DATA_LEN_MAX +	\
++	 (CPU_OP_VEC_LEN_MAX - 1) * CPU_OP_ARITHMETIC_DATA_LEN_MAX)
++
++/*
++ * Invocation of cpu_opv requires a maximum of 8 virtual address pointer=
+s.
++ * Keep those in an array on the stack of the cpu_opv system call.
++ */
++#define NR_VADDR			8
++
++/* Maximum pages per op. */
++#define CPU_OP_MAX_PAGES		4
++
++/* Maximum number of virtual addresses per op. */
++#define CPU_OP_VEC_MAX_ADDR		(2 * CPU_OP_VEC_LEN_MAX)
++
++union op_fn_data {
++	uint8_t _u8;
++	uint16_t _u16;
++	uint32_t _u32;
++	uint64_t _u64;
++#if (BITS_PER_LONG < 64)
++	uint32_t _u64_split[2];
 +#endif
++};
 +
- #define FOLL_WRITE	0x01	/* check pte is writable */
- #define FOLL_TOUCH	0x02	/* mark page accessed */
- #define FOLL_GET	0x04	/* do get_page on page */
--- 
++struct vaddr {
++	unsigned long mem;
++	unsigned long uaddr;
++	struct page *pages[2];
++	unsigned int nr_pages;
++	int write;
++};
++
++struct cpu_opv_vaddr {
++	struct vaddr addr[NR_VADDR];
++	size_t nr_vaddr;
++};
++
++typedef int (*op_fn_t)(union op_fn_data *data, uint64_t v, uint32_t len)=
+;
++
++struct opv_ipi_args {
++	struct cpu_op *cpuop;
++	int cpuopcnt;
++	int ret;
++};
++
++/*
++ * Provide mutual exclution for threads executing a cpu_opv against an
++ * offline CPU.
++ */
++static DEFINE_MUTEX(cpu_opv_offline_lock);
++
++/*
++ * The cpu_opv system call executes a vector of operations on behalf of
++ * user-space on a specific CPU either with interrupts disabled or withi=
+n
++ * a interrupt handler. It is inspired by readv() and writev() system
++ * calls which take a "struct iovec" array as argument.
++ *
++ * The operations available are: comparison, memcpy, memcpy_release, add=
+,
++ * add_release. The system call receives a CPU number from user-space as
++ * argument, which is the CPU on which those operations need to be
++ * performed.  All pointers in the ops must have been set up to point to
++ * the per CPU memory of the CPU on which the operations should be
++ * executed. The "comparison" operation can be used to check that the da=
+ta
++ * used in the preparation step did not change between preparation of
++ * system call inputs and interpretation of the operation vector within
++ * the kernel.
++ *
++ * The reason why we require all pointer offsets to be calculated by
++ * user-space beforehand is because we need to use get_user_pages()
++ * to first pin all pages touched by each operation. This takes care of
++ * faulting-in the pages. Then, either interrupts are disabled if the
++ * target CPU is the current CPU, or an IPI is sent to the target CPU, a=
+nd
++ * the operations are performed atomically with respect to other thread
++ * execution on that CPU, without generating any page fault. If the IPI
++ * nests over a restartable sequence critical section, it will abort tha=
+t
++ * critical section.
++ *
++ * An overall maximum of 4120 bytes in enforced on the sum of operation
++ * length within an operation vector, so user-space cannot generate a
++ * too long interrupt-off critical section or IPI handler. The operation
++ * vector size is limited to 4 operations. The cache cold critical secti=
+on
++ * duration has been measured as 4.7=C2=B5s for 16 operations on x86-64.=
+ Each
++ * operation is also limited a length of 4096 bytes, meaning that an
++ * operation can touch a maximum of 4 pages (memcpy: 2 pages for source,=
+ 2
++ * pages for destination if addresses are not aligned on page boundaries=
+).
++ *
++ * If the current thread running on the requested CPU, interrupts are
++ * disabled around interpretation of the operation vector. If the target
++ * CPU differs from the current CPU, an IPI is sent to the remote CPU
++ * to interpret the operation vector. If the remote CPU is offline, the
++ * operation vector is executed while holding a reference count preventi=
+ng
++ * concurrent CPU hotplug changes, with cpu_opv_offline_lock mutex held.
++ */
++
++static unsigned long cpu_op_range_nr_pages(unsigned long addr,
++					   unsigned long len)
++{
++	return ((addr + len - 1) >> PAGE_SHIFT) - (addr >> PAGE_SHIFT) + 1;
++}
++
++static int cpu_op_count_pages(u64 addr, unsigned long len)
++{
++	unsigned long nr_pages;
++
++	/*
++	 * Validate that the address is within the process address space.
++	 * This allows cast of those addresses to unsigned long throughout the
++	 * rest of this system call, because it would be invalid to have an
++	 * address over 4GB on a 32-bit kernel.
++	 */
++	if (addr >=3D TASK_SIZE)
++		return -EINVAL;
++	if (!len)
++		return 0;
++	nr_pages =3D cpu_op_range_nr_pages(addr, len);
++	if (nr_pages > 2) {
++		WARN_ON(1);
++		return -EINVAL;
++	}
++	return nr_pages;
++}
++
++/*
++ * Check operation types and length parameters. Count number of pages.
++ */
++static int cpu_opv_check_op(struct cpu_op *op, int *nr_vaddr, uint32_t *=
+sum)
++{
++	int ret;
++
++	*sum +=3D op->len;
++
++	/* Validate inputs. */
++	switch (op->op) {
++	case CPU_COMPARE_EQ_OP:
++	case CPU_COMPARE_NE_OP:
++	case CPU_MEMCPY_OP:
++	case CPU_MEMCPY_RELEASE_OP:
++		if (op->len > CPU_OP_DATA_LEN_MAX)
++			return -EINVAL;
++		break;
++	case CPU_ADD_OP:
++	case CPU_ADD_RELEASE_OP:
++		switch (op->len) {
++		case 1:
++		case 2:
++		case 4:
++		case 8:
++			break;
++		default:
++			return -EINVAL;
++		}
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	/* Validate pointers, count pages and virtual addresses. */
++	switch (op->op) {
++	case CPU_COMPARE_EQ_OP:
++	case CPU_COMPARE_NE_OP:
++		ret =3D cpu_op_count_pages(op->u.compare_op.a, op->len);
++		if (ret < 0)
++			return ret;
++		ret =3D cpu_op_count_pages(op->u.compare_op.b, op->len);
++		if (ret < 0)
++			return ret;
++		*nr_vaddr +=3D 2;
++		break;
++	case CPU_MEMCPY_OP:
++	case CPU_MEMCPY_RELEASE_OP:
++		ret =3D cpu_op_count_pages(op->u.memcpy_op.dst, op->len);
++		if (ret < 0)
++			return ret;
++		ret =3D cpu_op_count_pages(op->u.memcpy_op.src, op->len);
++		if (ret < 0)
++			return ret;
++		*nr_vaddr +=3D 2;
++		break;
++	case CPU_ADD_OP:
++	case CPU_ADD_RELEASE_OP:
++		ret =3D cpu_op_count_pages(op->u.arithmetic_op.p, op->len);
++		if (ret < 0)
++			return ret;
++		(*nr_vaddr)++;
++		break;
++	default:
++		return -EINVAL;
++	}
++	return 0;
++}
++
++/*
++ * Check operation types and length parameters. Count number of pages.
++ */
++static int cpu_opv_check(struct cpu_op *cpuopv, int cpuopcnt, int *nr_va=
+ddr)
++{
++	uint32_t sum =3D 0;
++	int i, ret;
++
++	for (i =3D 0; i < cpuopcnt; i++) {
++		ret =3D cpu_opv_check_op(&cpuopv[i], nr_vaddr, &sum);
++		if (ret)
++			return ret;
++	}
++	if (sum > CPU_OP_VEC_DATA_LEN_MAX)
++		return -EINVAL;
++	return 0;
++}
++
++static int cpu_op_check_page(struct page *page, int write)
++{
++	struct address_space *mapping;
++
++	if (is_zone_device_page(page))
++		return -EFAULT;
++
++	/*
++	 * The page lock protects many things but in this context the page
++	 * lock stabilizes mapping, prevents inode freeing in the shared
++	 * file-backed region case and guards against movement to swap
++	 * cache.
++	 *
++	 * Strictly speaking the page lock is not needed in all cases being
++	 * considered here and page lock forces unnecessarily serialization
++	 * From this point on, mapping will be re-verified if necessary and
++	 * page lock will be acquired only if it is unavoidable
++	 *
++	 * Mapping checks require the head page for any compound page so the
++	 * head page and mapping is looked up now.
++	 */
++	page =3D compound_head(page);
++	mapping =3D READ_ONCE(page->mapping);
++
++	/*
++	 * If page->mapping is NULL, then it cannot be a PageAnon page;
++	 * but it might be the ZERO_PAGE (which is OK to read from), or
++	 * in the gate area or in a special mapping (for which this
++	 * check should fail); or it may have been a good file page when
++	 * get_user_pages found it, but truncated or holepunched or
++	 * subjected to invalidate_complete_page2 before the page lock
++	 * is acquired (also cases which should fail). Given that a
++	 * reference to the page is currently held, refcount care in
++	 * invalidate_complete_page's remove_mapping prevents
++	 * drop_caches from setting mapping to NULL concurrently.
++	 *
++	 * The case to guard against is when memory pressure cause
++	 * shmem_writepage to move the page from filecache to swapcache
++	 * concurrently: an unlikely race, but a retry for page->mapping
++	 * is required in that situation.
++	 */
++	if (!mapping) {
++		int shmem_swizzled;
++
++		/*
++		 * Check again with page lock held to guard against
++		 * memory pressure making shmem_writepage move the page
++		 * from filecache to swapcache.
++		 */
++		lock_page(page);
++		shmem_swizzled =3D PageSwapCache(page) || page->mapping;
++		unlock_page(page);
++		if (shmem_swizzled)
++			return -EAGAIN;
++		/*
++		 * It is valid to read from, but invalid to write to the
++		 * ZERO_PAGE.
++		 */
++		if (!(is_zero_pfn(page_to_pfn(page)) ||
++		      is_huge_zero_page(page)) || write)
++			return -EFAULT;
++	}
++	return 0;
++}
++
++static int cpu_op_check_pages(struct page **pages,
++			      unsigned long nr_pages,
++			      int write)
++{
++	unsigned long i;
++
++	for (i =3D 0; i < nr_pages; i++) {
++		int ret;
++
++		ret =3D cpu_op_check_page(pages[i], write);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static int cpu_op_pin_pages(unsigned long addr, unsigned long len,
++			    struct cpu_opv_vaddr *vaddr_ptrs,
++			    unsigned long *vaddr, int write)
++{
++	struct page *pages[2];
++	struct vm_area_struct *vmas[2];
++	int ret, nr_pages, nr_put_pages, n;
++	unsigned long _vaddr;
++	struct vaddr *va;
++	struct mm_struct *mm =3D current->mm;
++
++	nr_pages =3D cpu_op_count_pages(addr, len);
++	if (nr_pages <=3D 0)
++		return nr_pages;
++again:
++	down_read(&mm->mmap_sem);
++	ret =3D get_user_pages(addr, nr_pages, write ? FOLL_WRITE : 0, pages,
++			     vmas);
++	if (ret < nr_pages) {
++		if (ret >=3D 0) {
++			nr_put_pages =3D ret;
++			ret =3D -EFAULT;
++		} else {
++			nr_put_pages =3D 0;
++		}
++		up_read(&mm->mmap_sem);
++		goto error;
++	}
++	/*
++	 * cpu_opv() accesses its own cached mapping of the userspace pages.
++	 * Considering that concurrent noncached and cached accesses may yield
++	 * to unexpected results in terms of memory consistency, explicitly
++	 * disallow cpu_opv on noncached memory.
++	 */
++	for (n =3D 0; n < nr_pages; n++) {
++		if (is_vma_noncached(vmas[n])) {
++			nr_put_pages =3D nr_pages;
++			ret =3D -EFAULT;
++			up_read(&mm->mmap_sem);
++			goto error;
++		}
++	}
++	up_read(&mm->mmap_sem);
++	ret =3D cpu_op_check_pages(pages, nr_pages, write);
++	if (ret) {
++		nr_put_pages =3D nr_pages;
++		goto error;
++	}
++	_vaddr =3D (unsigned long)vm_map_user_ram(pages, nr_pages, addr,
++						numa_node_id(), PAGE_KERNEL);
++	if (!_vaddr) {
++		nr_put_pages =3D nr_pages;
++		ret =3D -ENOMEM;
++		goto error;
++	}
++	va =3D &vaddr_ptrs->addr[vaddr_ptrs->nr_vaddr++];
++	va->mem =3D _vaddr;
++	va->uaddr =3D addr;
++	for (n =3D 0; n < nr_pages; n++)
++		va->pages[n] =3D pages[n];
++	va->nr_pages =3D nr_pages;
++	va->write =3D write;
++	*vaddr =3D _vaddr + (addr & ~PAGE_MASK);
++	return 0;
++
++error:
++	for (n =3D 0; n < nr_put_pages; n++)
++		put_page(pages[n]);
++	/*
++	 * Retry if a page has been faulted in, or is being swapped in.
++	 */
++	if (ret =3D=3D -EAGAIN)
++		goto again;
++	return ret;
++}
++
++static int cpu_opv_pin_pages_op(struct cpu_op *op,
++				struct cpu_opv_vaddr *vaddr_ptrs,
++				bool *expect_fault)
++{
++	int ret;
++	unsigned long vaddr =3D 0;
++
++	switch (op->op) {
++	case CPU_COMPARE_EQ_OP:
++	case CPU_COMPARE_NE_OP:
++		ret =3D -EFAULT;
++		*expect_fault =3D op->u.compare_op.expect_fault_a;
++		if (!access_ok(VERIFY_READ,
++			       (void __user *)(unsigned long)op->u.compare_op.a,
++			       op->len))
++			return ret;
++		ret =3D cpu_op_pin_pages(op->u.compare_op.a, op->len,
++				       vaddr_ptrs, &vaddr, 0);
++		if (ret)
++			return ret;
++		op->u.compare_op.a =3D vaddr;
++		ret =3D -EFAULT;
++		*expect_fault =3D op->u.compare_op.expect_fault_b;
++		if (!access_ok(VERIFY_READ,
++			       (void __user *)(unsigned long)op->u.compare_op.b,
++			       op->len))
++			return ret;
++		ret =3D cpu_op_pin_pages(op->u.compare_op.b, op->len,
++				       vaddr_ptrs, &vaddr, 0);
++		if (ret)
++			return ret;
++		op->u.compare_op.b =3D vaddr;
++		break;
++	case CPU_MEMCPY_OP:
++	case CPU_MEMCPY_RELEASE_OP:
++		ret =3D -EFAULT;
++		*expect_fault =3D op->u.memcpy_op.expect_fault_dst;
++		if (!access_ok(VERIFY_WRITE,
++			       (void __user *)(unsigned long)op->u.memcpy_op.dst,
++			       op->len))
++			return ret;
++		ret =3D cpu_op_pin_pages(op->u.memcpy_op.dst, op->len,
++				       vaddr_ptrs, &vaddr, 1);
++		if (ret)
++			return ret;
++		op->u.memcpy_op.dst =3D vaddr;
++		ret =3D -EFAULT;
++		*expect_fault =3D op->u.memcpy_op.expect_fault_src;
++		if (!access_ok(VERIFY_READ,
++			       (void __user *)(unsigned long)op->u.memcpy_op.src,
++			       op->len))
++			return ret;
++		ret =3D cpu_op_pin_pages(op->u.memcpy_op.src, op->len,
++				       vaddr_ptrs, &vaddr, 0);
++		if (ret)
++			return ret;
++		op->u.memcpy_op.src =3D vaddr;
++		break;
++	case CPU_ADD_OP:
++	case CPU_ADD_RELEASE_OP:
++		ret =3D -EFAULT;
++		*expect_fault =3D op->u.arithmetic_op.expect_fault_p;
++		if (!access_ok(VERIFY_WRITE,
++			       (void __user *)(unsigned long)op->u.arithmetic_op.p,
++			       op->len))
++			return ret;
++		ret =3D cpu_op_pin_pages(op->u.arithmetic_op.p, op->len,
++				       vaddr_ptrs, &vaddr, 1);
++		if (ret)
++			return ret;
++		op->u.arithmetic_op.p =3D vaddr;
++		break;
++	default:
++		return -EINVAL;
++	}
++	return 0;
++}
++
++static int cpu_opv_pin_pages(struct cpu_op *cpuop, int cpuopcnt,
++			     struct cpu_opv_vaddr *vaddr_ptrs)
++{
++	int ret, i;
++	bool expect_fault =3D false;
++
++	/* Check access, pin pages. */
++	for (i =3D 0; i < cpuopcnt; i++) {
++		ret =3D cpu_opv_pin_pages_op(&cpuop[i], vaddr_ptrs,
++					   &expect_fault);
++		if (ret)
++			goto error;
++	}
++	return 0;
++
++error:
++	/*
++	 * If faulting access is expected, return EAGAIN to user-space.
++	 * It allows user-space to distinguish between a fault caused by
++	 * an access which is expect to fault (e.g. due to concurrent
++	 * unmapping of underlying memory) from an unexpected fault from
++	 * which a retry would not recover.
++	 */
++	if (ret =3D=3D -EFAULT && expect_fault)
++		return -EAGAIN;
++	return ret;
++}
++
++static int __op_get(union op_fn_data *data, void *p, size_t len)
++{
++	switch (len) {
++	case 1:
++		data->_u8 =3D READ_ONCE(*(uint8_t *)p);
++		break;
++	case 2:
++		data->_u16 =3D READ_ONCE(*(uint16_t *)p);
++		break;
++	case 4:
++		data->_u32 =3D READ_ONCE(*(uint32_t *)p);
++		break;
++	case 8:
++#if (BITS_PER_LONG =3D=3D 64)
++		data->_u64 =3D READ_ONCE(*(uint64_t *)p);
++#else
++	{
++		data->_u64_split[0] =3D READ_ONCE(*(uint32_t *)p);
++		data->_u64_split[1] =3D READ_ONCE(*((uint32_t *)p + 1));
++	}
++#endif
++		break;
++	default:
++		return -EINVAL;
++	}
++	return 0;
++}
++
++static int __op_put(union op_fn_data *data, void *p, size_t len, bool re=
+lease)
++{
++	switch (len) {
++	case 1:
++		if (release)
++			smp_store_release((uint8_t *)p, data->_u8);
++		else
++			WRITE_ONCE(*(uint8_t *)p, data->_u8);
++		break;
++	case 2:
++		if (release)
++			smp_store_release((uint16_t *)p, data->_u16);
++		else
++			WRITE_ONCE(*(uint16_t *)p, data->_u16);
++		break;
++	case 4:
++		if (release)
++			smp_store_release((uint32_t *)p, data->_u32);
++		else
++			WRITE_ONCE(*(uint32_t *)p, data->_u32);
++		break;
++	case 8:
++#if (BITS_PER_LONG =3D=3D 64)
++		if (release)
++			smp_store_release((uint64_t *)p, data->_u64);
++		else
++			WRITE_ONCE(*(uint64_t *)p, data->_u64);
++#else
++	{
++		if (release)
++			smp_store_release((uint32_t *)p, data->_u64_split[0]);
++		else
++			WRITE_ONCE(*(uint32_t *)p, data->_u64_split[0]);
++		WRITE_ONCE(*((uint32_t *)p + 1), data->_u64_split[1]);
++	}
++#endif
++		break;
++	default:
++		return -EINVAL;
++	}
++	return 0;
++}
++
++/* Return 0 if same, > 0 if different, < 0 on error. */
++static int do_cpu_op_compare(unsigned long _a, unsigned long _b, uint32_=
+t len)
++{
++	void *a =3D (void *)_a;
++	void *b =3D (void *)_b;
++	union op_fn_data tmp[2];
++	int ret;
++
++	switch (len) {
++	case 1:
++	case 2:
++	case 4:
++	case 8:
++		if (!IS_ALIGNED(_a, len) || !IS_ALIGNED(_b, len))
++			goto memcmp;
++		break;
++	default:
++		goto memcmp;
++	}
++
++	ret =3D __op_get(&tmp[0], a, len);
++	if (ret)
++		return ret;
++	ret =3D __op_get(&tmp[1], b, len);
++	if (ret)
++		return ret;
++
++	switch (len) {
++	case 1:
++		ret =3D !!(tmp[0]._u8 !=3D tmp[1]._u8);
++		break;
++	case 2:
++		ret =3D !!(tmp[0]._u16 !=3D tmp[1]._u16);
++		break;
++	case 4:
++		ret =3D !!(tmp[0]._u32 !=3D tmp[1]._u32);
++		break;
++	case 8:
++		ret =3D !!(tmp[0]._u64 !=3D tmp[1]._u64);
++		break;
++	default:
++		return -EINVAL;
++	}
++	return ret;
++
++memcmp:
++	if (memcmp(a, b, len))
++		return 1;
++	return 0;
++}
++
++/* Return 0 on success, < 0 on error. */
++static int do_cpu_op_memcpy(unsigned long _dst, unsigned long _src,
++			    uint32_t len, bool release)
++{
++	void *dst =3D (void *)_dst;
++	void *src =3D (void *)_src;
++	union op_fn_data tmp;
++	int ret;
++
++	switch (len) {
++	case 1:
++	case 2:
++	case 4:
++	case 8:
++		if (!IS_ALIGNED(_dst, len) || !IS_ALIGNED(_src, len))
++			goto memcpy;
++		break;
++	default:
++		goto memcpy;
++	}
++
++	ret =3D __op_get(&tmp, src, len);
++	if (ret)
++		return ret;
++	return __op_put(&tmp, dst, len, release);
++
++memcpy:
++	if (release)
++		smp_mb();
++	memcpy(dst, src, len);
++	return 0;
++}
++
++static int op_add_fn(union op_fn_data *data, uint64_t count, uint32_t le=
+n)
++{
++	switch (len) {
++	case 1:
++		data->_u8 +=3D (uint8_t)count;
++		break;
++	case 2:
++		data->_u16 +=3D (uint16_t)count;
++		break;
++	case 4:
++		data->_u32 +=3D (uint32_t)count;
++		break;
++	case 8:
++		data->_u64 +=3D (uint64_t)count;
++		break;
++	default:
++		return -EINVAL;
++	}
++	return 0;
++}
++
++/* Return 0 on success, < 0 on error. */
++static int do_cpu_op_fn(op_fn_t op_fn, unsigned long _p, uint64_t v,
++			uint32_t len, bool release)
++{
++	union op_fn_data tmp;
++	void *p =3D (void *)_p;
++	int ret;
++
++	ret =3D __op_get(&tmp, p, len);
++	if (ret)
++		return ret;
++	ret =3D op_fn(&tmp, v, len);
++	if (ret)
++		return ret;
++	ret =3D __op_put(&tmp, p, len, release);
++	if (ret)
++		return ret;
++	return 0;
++}
++
++/*
++ * Return negative value on error, positive value if comparison
++ * fails, 0 on success.
++ */
++static int __do_cpu_opv_op(struct cpu_op *op)
++{
++	/* Guarantee a compiler barrier between each operation. */
++	barrier();
++
++	switch (op->op) {
++	case CPU_COMPARE_EQ_OP:
++		return do_cpu_op_compare(op->u.compare_op.a,
++					 op->u.compare_op.b,
++					 op->len);
++	case CPU_COMPARE_NE_OP:
++	{
++		int ret;
++
++		ret =3D do_cpu_op_compare(op->u.compare_op.a,
++					op->u.compare_op.b,
++					op->len);
++		if (ret < 0)
++			return ret;
++		/*
++		 * Stop execution, return positive value if comparison
++		 * is identical.
++		 */
++		if (ret =3D=3D 0)
++			return 1;
++		return 0;
++	}
++	case CPU_MEMCPY_OP:
++		return do_cpu_op_memcpy(op->u.memcpy_op.dst,
++					op->u.memcpy_op.src,
++					op->len, false);
++	case CPU_MEMCPY_RELEASE_OP:
++		return do_cpu_op_memcpy(op->u.memcpy_op.dst,
++					op->u.memcpy_op.src,
++					op->len, true);
++	case CPU_ADD_OP:
++		return do_cpu_op_fn(op_add_fn, op->u.arithmetic_op.p,
++				    op->u.arithmetic_op.count, op->len, false);
++	case CPU_ADD_RELEASE_OP:
++		return do_cpu_op_fn(op_add_fn, op->u.arithmetic_op.p,
++				    op->u.arithmetic_op.count, op->len, true);
++	default:
++		return -EINVAL;
++	}
++}
++
++static int __do_cpu_opv(struct cpu_op *cpuop, int cpuopcnt)
++{
++	int i, ret;
++
++	for (i =3D 0; i < cpuopcnt; i++) {
++		ret =3D __do_cpu_opv_op(&cpuop[i]);
++		/* If comparison fails, stop execution and return index + 1. */
++		if (ret > 0)
++			return i + 1;
++		/* On error, stop execution. */
++		if (ret < 0)
++			return ret;
++	}
++	return 0;
++}
++
++/*
++ * Check that the page pointers pinned by get_user_pages()
++ * are still in the page table. Invoked with mmap_sem held.
++ * Return 0 if pointers match, -EAGAIN if they don't.
++ */
++static int vaddr_check(struct vaddr *vaddr)
++{
++	struct page *pages[2];
++	int ret, n;
++
++	ret =3D __get_user_pages_fast(vaddr->uaddr, vaddr->nr_pages,
++				    vaddr->write, pages);
++	for (n =3D 0; n < ret; n++)
++		put_page(pages[n]);
++	if (ret < vaddr->nr_pages) {
++		ret =3D get_user_pages(vaddr->uaddr, vaddr->nr_pages,
++				     vaddr->write ? FOLL_WRITE : 0,
++				     pages, NULL);
++		if (ret < 0)
++			return -EAGAIN;
++		for (n =3D 0; n < ret; n++)
++			put_page(pages[n]);
++		if (ret < vaddr->nr_pages)
++			return -EAGAIN;
++	}
++	for (n =3D 0; n < vaddr->nr_pages; n++) {
++		if (pages[n] !=3D vaddr->pages[n])
++			return -EAGAIN;
++	}
++	return 0;
++}
++
++static int vaddr_ptrs_check(struct cpu_opv_vaddr *vaddr_ptrs)
++{
++	int i;
++
++	for (i =3D 0; i < vaddr_ptrs->nr_vaddr; i++) {
++		int ret;
++
++		ret =3D vaddr_check(&vaddr_ptrs->addr[i]);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static void cpu_opv_ipi(void *info)
++{
++	struct opv_ipi_args *args =3D info;
++
++	rseq_preempt(current);
++	args->ret =3D __do_cpu_opv(args->cpuop, args->cpuopcnt);
++}
++
++static int do_cpu_opv(struct cpu_op *cpuop, int cpuopcnt,
++		      struct cpu_opv_vaddr *vaddr_ptrs, int cpu)
++{
++	struct mm_struct *mm =3D current->mm;
++	struct opv_ipi_args args =3D {
++		.cpuop =3D cpuop,
++		.cpuopcnt =3D cpuopcnt,
++	};
++	int ret;
++
++retry:
++	if (!cpumask_test_cpu(cpu, &current->cpus_allowed))
++		return -EINVAL;
++	down_read(&mm->mmap_sem);
++	ret =3D vaddr_ptrs_check(vaddr_ptrs);
++	if (ret)
++		goto end;
++	ret =3D smp_call_function_single(cpu, cpu_opv_ipi, &args, 1);
++	if (ret) {
++		up_read(&mm->mmap_sem);
++		goto check_online;
++	}
++	ret =3D args.ret;
++end:
++	up_read(&mm->mmap_sem);
++	return ret;
++
++check_online:
++	get_online_cpus();
++	if (cpu_online(cpu)) {
++		put_online_cpus();
++		goto retry;
++	}
++	/*
++	 * CPU is offline. Perform operation from the current CPU with
++	 * cpu_online read lock held, preventing that CPU from coming online,
++	 * and with mutex held, providing mutual exclusion against other
++	 * CPUs also finding out about an offline CPU.
++	 */
++	down_read(&mm->mmap_sem);
++	ret =3D vaddr_ptrs_check(vaddr_ptrs);
++	if (ret)
++		goto offline_end;
++	mutex_lock(&cpu_opv_offline_lock);
++	ret =3D __do_cpu_opv(cpuop, cpuopcnt);
++	mutex_unlock(&cpu_opv_offline_lock);
++offline_end:
++	up_read(&mm->mmap_sem);
++	put_online_cpus();
++	return ret;
++}
++
++/*
++ * cpu_opv - execute operation vector on a given CPU in interrupt contex=
+t.
++ *
++ * Userspace should pass the CPU number on which the operation vector
++ * should be executed as parameter.
++ */
++SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucpuopv, int, cpuopcnt,
++		int, cpu, int, flags)
++{
++	struct cpu_op cpuopv[CPU_OP_VEC_LEN_MAX];
++	struct cpu_opv_vaddr vaddr_ptrs =3D {
++		.nr_vaddr =3D 0,
++	};
++	int ret, i, nr_vaddr =3D 0;
++	bool retry =3D false;
++
++	if (unlikely(flags & ~(CPU_OP_NR_FLAG | CPU_OP_VEC_LEN_MAX_FLAG)))
++		return -EINVAL;
++	if (flags & CPU_OP_NR_FLAG) {
++		if (flags & CPU_OP_VEC_LEN_MAX_FLAG)
++			return -EINVAL;
++		return NR_CPU_OPS;
++	}
++	if (flags & CPU_OP_VEC_LEN_MAX_FLAG)
++		return CPU_OP_VEC_LEN_MAX;
++	if (unlikely(cpu < 0))
++		return -EINVAL;
++	if (cpuopcnt < 0 || cpuopcnt > CPU_OP_VEC_LEN_MAX)
++		return -EINVAL;
++	if (copy_from_user(cpuopv, ucpuopv, cpuopcnt * sizeof(struct cpu_op)))
++		return -EFAULT;
++	ret =3D cpu_opv_check(cpuopv, cpuopcnt, &nr_vaddr);
++	if (ret)
++		return ret;
++	if (nr_vaddr > NR_VADDR)
++		return -EINVAL;
++again:
++	ret =3D cpu_opv_pin_pages(cpuopv, cpuopcnt, &vaddr_ptrs);
++	if (ret)
++		goto end;
++	ret =3D do_cpu_opv(cpuopv, cpuopcnt, &vaddr_ptrs, cpu);
++	if (ret =3D=3D -EAGAIN)
++		retry =3D true;
++end:
++	for (i =3D 0; i < vaddr_ptrs.nr_vaddr; i++) {
++		struct vaddr *vaddr =3D &vaddr_ptrs.addr[i];
++		int j;
++
++		vm_unmap_user_ram((void *)vaddr->mem, vaddr->nr_pages);
++		for (j =3D 0; j < vaddr->nr_pages; j++) {
++			if (vaddr->write)
++				set_page_dirty(vaddr->pages[j]);
++			put_page(vaddr->pages[j]);
++		}
++	}
++	/*
++	 * Force vm_map flush to ensure we don't exhaust available vmalloc
++	 * address space.
++	 */
++	if (vaddr_ptrs.nr_vaddr)
++		vm_unmap_aliases();
++	if (retry) {
++		retry =3D false;
++		vaddr_ptrs.nr_vaddr =3D 0;
++		goto again;
++	}
++	return ret;
++}
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index df556175be50..0a6410d77c33 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -435,3 +435,4 @@ COND_SYSCALL(setuid16);
+=20
+ /* restartable sequence */
+ COND_SYSCALL(rseq);
++COND_SYSCALL(cpu_opv);
+--=20
 2.11.0
