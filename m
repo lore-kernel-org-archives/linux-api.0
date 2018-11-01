@@ -1,28 +1,50 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC PATCH for 4.21 03/16] mm: Replace BUG_ON() by WARN_ON() in
- vm_unmap_ram()
-Date: Thu, 1 Nov 2018 13:21:12 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1811011320160.1642@nanos.tec.linutronix.de>
-References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com> <20181101095844.24462-4-mathieu.desnoyers@efficios.com>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
+Date: Thu, 1 Nov 2018 13:28:19 +0100
+Message-ID: <fcebfa0c-b389-5c4d-19b8-2f08b487ec25@vivier.eu>
+References: <20181010161430.11633-1-laurent@vivier.eu>
+ <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
+ <1541041159.4632.6.camel@HansenPartnership.com>
+ <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181101095844.24462-4-mathieu.desnoyers@efficios.com>
+In-Reply-To: <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
+To: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-Mathieu,
+On 01/11/2018 04:51, Jann Horn wrote:
+> On Thu, Nov 1, 2018 at 3:59 AM James Bottomley
+> <James.Bottomley@hansenpartnership.com> wrote:
+>>
+>> On Tue, 2018-10-16 at 11:52 +0200, Laurent Vivier wrote:
+>>> Hi,
+>>>
+>>> Any comment on this last version?
+>>>
+>>> Any chance to be merged?
+>>
+>> I've got a use case for this:  I went to one of the Graphene talks in
+>> Edinburgh and it struck me that we seem to keep reinventing the type of
+>> sandboxing that qemu-user already does.  However if you want to do an
+>> x86 on x86 sandbox, you can't currently use the binfmt_misc mechanism
+>> because that has you running *every* binary on the system emulated.
+>> Doing it per user namespace fixes this problem and allows us to at
+>> least cut down on all the pointless duplication.
+> 
+> Waaaaaait. What? qemu-user does not do "sandboxing". qemu-user makes
+> your code slower and *LESS* secure. As far as I know, qemu-user is
+> only intended for purposes like development and testing.
+> 
 
-On Thu, 1 Nov 2018, Mathieu Desnoyers wrote:
-
-> It is encouraged to warn and return rather than use BUG_ON() when
-> the condition can be recovered from in ways that are more graceful than
-> halting the whole system.
-
-You're failing to desribe how that graceful recovery works.
+I think the idea here is not to run qemu, but to use an interpreter
+(something like gVisor) into a container to control the binaries
+execution inside the container without using this interpreter on the
+host itself (container and host shares the same binfmt_misc magic/mask).
 
 Thanks,
-
-	tglx
+Laurent
