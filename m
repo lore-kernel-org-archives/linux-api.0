@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 07/16] cpu_opv: limit amount of virtual address space used by cpu_opv
-Date: Thu,  1 Nov 2018 10:58:35 +0100
-Message-ID: <20181101095844.24462-8-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 08/16] x86: Wire up cpu_opv system call
+Date: Thu,  1 Nov 2018 10:58:36 +0100
+Message-ID: <20181101095844.24462-9-mathieu.desnoyers@efficios.com>
 References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
@@ -9,12 +9,6 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
-
-Introduce sysctl cpu_opv_va_max_bytes, which limits the amount of
-virtual address space that can be used by cpu_opv.
-
-Its default value is the maximum amount of virtual address space which
-can be used by a single cpu_opv system call (e.g. 64 kB on x86).
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -39,166 +33,30 @@ CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
 CC: linux-api@vger.kernel.org
 ---
- kernel/cpu_opv.c | 74 +++++++++++++++++++++++++++++++++++++++++++++++++++++++-
- kernel/sysctl.c  | 15 ++++++++++++
- 2 files changed, 88 insertions(+), 1 deletion(-)
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ 2 files changed, 2 insertions(+)
 
-diff --git a/kernel/cpu_opv.c b/kernel/cpu_opv.c
-index 6ee7ca3376be..309d20a35227 100644
---- a/kernel/cpu_opv.c
-+++ b/kernel/cpu_opv.c
-@@ -59,6 +59,16 @@
- /* Maximum number of virtual addresses per op. */
- #define CPU_OP_VEC_MAX_ADDR		(2 * CPU_OP_VEC_LEN_MAX)
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 3cf7b533b3d1..d3253547e15e 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -398,3 +398,4 @@
+ 384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+ 385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+ 386	i386	rseq			sys_rseq			__ia32_sys_rseq
++387	i386	cpu_opv			sys_cpu_opv			__ia32_sys_cpu_opv
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index f0b1709a5ffb..1391971b1517 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -343,6 +343,7 @@
+ 332	common	statx			__x64_sys_statx
+ 333	common	io_pgetevents		__x64_sys_io_pgetevents
+ 334	common	rseq			__x64_sys_rseq
++335	common	cpu_opv			__x64_sys_cpu_opv
  
-+/* Maximum address range size (aligned on SHMLBA) per virtual address. */
-+#define CPU_OP_RANGE_PER_ADDR_MAX	(2 * SHMLBA)
-+
-+/*
-+ * Minimum value for sysctl_cpu_opv_va_max_bytes is the maximum virtual memory
-+ * space needed by one cpu_opv system call.
-+ */
-+#define CPU_OPV_VA_MAX_BYTES_MIN	\
-+		(CPU_OP_VEC_MAX_ADDR * CPU_OP_RANGE_PER_ADDR_MAX)
-+
- union op_fn_data {
- 	uint8_t _u8;
- 	uint16_t _u16;
-@@ -96,6 +106,15 @@ struct opv_ipi_args {
-  */
- static DEFINE_MUTEX(cpu_opv_offline_lock);
- 
-+/* Maximum virtual address space which can be used by cpu_opv. */
-+int sysctl_cpu_opv_va_max_bytes __read_mostly;
-+int sysctl_cpu_opv_va_max_bytes_min;
-+
-+static atomic_t cpu_opv_va_allocated_bytes;
-+
-+/* Waitqueue for cpu_opv blocked on virtual address space reservation. */
-+static DECLARE_WAIT_QUEUE_HEAD(cpu_opv_va_wait);
-+
- /*
-  * The cpu_opv system call executes a vector of operations on behalf of
-  * user-space on a specific CPU either with interrupts disabled or within
-@@ -489,6 +508,43 @@ static int cpu_opv_pin_pages_op(struct cpu_op *op,
- 	return 0;
- }
- 
-+/*
-+ * Approximate the amount of virtual address space required per
-+ * vaddr to a worse-case of CPU_OP_RANGE_PER_ADDR_MAX.
-+ */
-+static int cpu_opv_reserve_va(int nr_vaddr, int *reserved_va)
-+{
-+	int nr_bytes = nr_vaddr * CPU_OP_RANGE_PER_ADDR_MAX;
-+	int old_bytes, new_bytes;
-+
-+	WARN_ON_ONCE(*reserved_va != 0);
-+	if (nr_bytes > sysctl_cpu_opv_va_max_bytes) {
-+		WARN_ON_ONCE(1);
-+		return -EINVAL;
-+	}
-+	do {
-+		wait_event(cpu_opv_va_wait,
-+			(old_bytes = atomic_read(&cpu_opv_va_allocated_bytes)) +
-+			nr_bytes <= sysctl_cpu_opv_va_max_bytes);
-+		new_bytes = old_bytes + nr_bytes;
-+	} while (atomic_cmpxchg(&cpu_opv_va_allocated_bytes,
-+		 old_bytes, new_bytes) != old_bytes);
-+
-+	*reserved_va = nr_bytes;
-+	return 0;
-+}
-+
-+static void cpu_opv_unreserve_va(int *reserved_va)
-+{
-+	int nr_bytes = *reserved_va;
-+
-+	if (!nr_bytes)
-+		return;
-+	atomic_sub(nr_bytes, &cpu_opv_va_allocated_bytes);
-+	wake_up(&cpu_opv_va_wait);
-+	*reserved_va = 0;
-+}
-+
- static int cpu_opv_pin_pages(struct cpu_op *cpuop, int cpuopcnt,
- 			     struct cpu_opv_vaddr *vaddr_ptrs)
- {
-@@ -898,7 +954,7 @@ SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucpuopv, int, cpuopcnt,
- 	struct cpu_opv_vaddr vaddr_ptrs = {
- 		.nr_vaddr = 0,
- 	};
--	int ret, i, nr_vaddr = 0;
-+	int ret, i, nr_vaddr = 0, reserved_va = 0;
- 	bool retry = false;
- 
- 	if (unlikely(flags & ~(CPU_OP_NR_FLAG | CPU_OP_VEC_LEN_MAX_FLAG)))
-@@ -922,6 +978,9 @@ SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucpuopv, int, cpuopcnt,
- 	if (nr_vaddr > NR_VADDR)
- 		return -EINVAL;
- again:
-+	ret = cpu_opv_reserve_va(nr_vaddr, &reserved_va);
-+	if (ret)
-+		goto end;
- 	ret = cpu_opv_pin_pages(cpuopv, cpuopcnt, &vaddr_ptrs);
- 	if (ret)
- 		goto end;
-@@ -946,6 +1005,7 @@ SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucpuopv, int, cpuopcnt,
- 	 */
- 	if (vaddr_ptrs.nr_vaddr)
- 		vm_unmap_aliases();
-+	cpu_opv_unreserve_va(&reserved_va);
- 	if (retry) {
- 		retry = false;
- 		vaddr_ptrs.nr_vaddr = 0;
-@@ -953,3 +1013,15 @@ SYSCALL_DEFINE4(cpu_opv, struct cpu_op __user *, ucpuopv, int, cpuopcnt,
- 	}
- 	return ret;
- }
-+
-+/*
-+ * Dynamic initialization is required on sparc because SHMLBA is not a
-+ * constant.
-+ */
-+static int __init cpu_opv_init(void)
-+{
-+	sysctl_cpu_opv_va_max_bytes = CPU_OPV_VA_MAX_BYTES_MIN;
-+	sysctl_cpu_opv_va_max_bytes_min = CPU_OPV_VA_MAX_BYTES_MIN;
-+	return 0;
-+}
-+core_initcall(cpu_opv_init);
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index cc02050fd0c4..eb34c6be2aa4 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -175,6 +175,11 @@ extern int unaligned_dump_stack;
- extern int no_unaligned_warning;
- #endif
- 
-+#ifdef CONFIG_CPU_OPV
-+extern int sysctl_cpu_opv_va_max_bytes;
-+extern int sysctl_cpu_opv_va_max_bytes_min;
-+#endif
-+
- #ifdef CONFIG_PROC_SYSCTL
- 
- /**
-@@ -1233,6 +1238,16 @@ static struct ctl_table kern_table[] = {
- 		.extra2		= &one,
- 	},
- #endif
-+#ifdef CONFIG_CPU_OPV
-+	{
-+		.procname	= "cpu_opv_va_max_bytes",
-+		.data		= &sysctl_cpu_opv_va_max_bytes,
-+		.maxlen		= sizeof(sysctl_cpu_opv_va_max_bytes),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_minmax,
-+		.extra1		= &sysctl_cpu_opv_va_max_bytes_min,
-+	},
-+#endif
- 	{ }
- };
- 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
 -- 
 2.11.0
