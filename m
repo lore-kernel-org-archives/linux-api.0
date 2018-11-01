@@ -1,34 +1,52 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: RFC: userspace exception fixups
-Date: Thu, 1 Nov 2018 14:24:26 -0700
-Message-ID: <CAHk-=wiYSpmDOfpi9n7ETsxK2UrUKfT4kM=Y3yqRSaZuFFPY1A@mail.gmail.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <CAG48ez0vBqL0tyfWwmuc_cq+OAUoEi88=r+t6h64a-Fw8z59zA@mail.gmail.com>
- <20181101185225.GC5150@brightrain.aerifal.cx> <CAHk-=wgFo8tuZX5gzCfWGdAwGyn_Ar9JFnnMFNuwr9=vtfDV1g@mail.gmail.com>
- <20181101193107.GE5150@brightrain.aerifal.cx>
+Subject: Re: [RFC PATCH for 4.21 03/16] mm: Replace BUG_ON() by WARN_ON() in vm_unmap_ram()
+Date: Thu, 1 Nov 2018 15:00:34 -0700
+Message-ID: <CAHk-=wiOm8x5KnBQH+FYN76sSjCeP2_9cxgzu4WArR3jP0MD8g@mail.gmail.com>
+References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
+ <20181101095844.24462-4-mathieu.desnoyers@efficios.com> <alpine.DEB.2.21.1811011320160.1642@nanos.tec.linutronix.de>
+ <20181101144623.61d43102@gandalf.local.home> <278477314.3995.1541102273591.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181101193107.GE5150@brightrain.aerifal.cx>
+In-Reply-To: <278477314.3995.1541102273591.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dalias@libc.org
-Cc: Jann Horn <jannh@google.com>, luto@kernel.org, dave.hansen@linux.intel.com, sean.j.christopherson@intel.com, jethro@fortanix.com, jarkko.sakkinen@linux.intel.com, fweimer@redhat.com, linux-api@vger.kernel.org, x86@kernel.org, linux-arch@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, serge.ayoun@intel.com, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, andriy.shevchenko@linux.intel.com, tglx@linutronix.de, Ingo Molnar <mingo@redhat.com>, bp@alien8.de, carlos@redhat.com, adhemerval.zanella@linaro.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: rostedt@goodmis.org, tglx@linutronix.de, Peter Zijlstra <peterz@infradead.org>, Paul McKenney <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, luto@amacapital.net, davejwatson@fb.com, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, linux@arm.linux.org.uk, Ingo Molnar <mingo@redhat.com>, Peter Anvin <hpa@zytor.com>, andi@firstfloor.org, Christoph Lameter <cl@linux.com>, bmaurer@fb.com, josh@joshtriplett.org, Catalin Marinas <catalin.marinas@arm.com>, will.deacon@arm.com, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Sergey Senozhatsky <sergey.senozhatsky@gmail.com>, mawilcox@microsoft.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 1, 2018 at 12:31 PM Rich Felker <dalias@libc.org> wrote:
+On Thu, Nov 1, 2018 at 12:57 PM Mathieu Desnoyers
+<mathieu.desnoyers@efficios.com> wrote:
 >
-> See my other emails in this thread. You would register the *address*
-> (in TLS) of a function pointer object pointing to the handler, rather
-> than the function address of the handler. Then switching handler is
-> just a single store in userspace, no syscalls involved.
+> > I think the graceful recovery is to simply return:
+> >
+> >       if (WARN_ON(cond))
+> >               return;
+> >
+> > is better than just
+> >
+> >       BUG_ON(cond);
+> >
+> > As that's what Linus made pretty clear at the Maintainer's Summit.
+>
+> That's it. For an unmap function, this basically boils down to
+> print a warning and leak the memory on internal unmap error.
+>
+> I will update the commit message describing this behavior.
 
-Yes.
+It might be even better to use WARN_ON_ONCE().
 
-And for just EENTER, maybe that's the right model.
+If it's a "this shouldn't happen" situation, the advantage of
+WARN_ON_ONCE() is that it will still show the backtrace of the "how
+the heck did it happen after all" situation, but if it turns ouit to
+be user-triggerable (or simply triggerable by some odd hw situation),
+it won't spam your logs forever.
 
-If we want to generalize it to other thread-synchronous faults, it
-needs way more information and a list of handlers, but if we limit the
-thing to _only_ EENTER getting an SGX fault, then a single "this is
-the fault handler" address is probably the right thing to do.
+Obviously, things like rate limiting etc can also be good ideas, but
+that's just overkill for "this really should never happen" cases.
 
-                     Linus
+(Side note: WARN_ON_ONCE() will _warn_ just once, but will always
+return the condition that it warns for, so the return value is _not_
+"I have warned", but "I have seen the condition that I should warn
+about". Just in case people are worried about it).
+
+                  Linus
