@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 09/16] powerpc: Wire up cpu_opv system call
-Date: Thu,  1 Nov 2018 10:58:37 +0100
-Message-ID: <20181101095844.24462-10-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 10/16] arm: Wire up cpu_opv system call
+Date: Thu,  1 Nov 2018 10:58:38 +0100
+Message-ID: <20181101095844.24462-11-mathieu.desnoyers@efficios.com>
 References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
@@ -11,37 +11,37 @@ Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tg
 List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-CC: Paul Mackerras <paulus@samba.org>
-CC: Michael Ellerman <mpe@ellerman.id.au>
-CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Paul Turner <pjt@google.com>
 CC: Peter Zijlstra <peterz@infradead.org>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: linuxppc-dev@lists.ozlabs.org
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: linux-api@vger.kernel.org
 ---
- arch/powerpc/include/asm/systbl.h      | 1 +
- arch/powerpc/include/uapi/asm/unistd.h | 1 +
- 2 files changed, 2 insertions(+)
+ arch/arm/tools/syscall.tbl | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/arch/powerpc/include/asm/systbl.h b/arch/powerpc/include/asm/systbl.h
-index 01b5171ea189..8f58710f5e8b 100644
---- a/arch/powerpc/include/asm/systbl.h
-+++ b/arch/powerpc/include/asm/systbl.h
-@@ -394,3 +394,4 @@ SYSCALL(pkey_free)
- SYSCALL(pkey_mprotect)
- SYSCALL(rseq)
- COMPAT_SYS(io_pgetevents)
-+SYSCALL(cpu_opv)
-diff --git a/arch/powerpc/include/uapi/asm/unistd.h b/arch/powerpc/include/uapi/asm/unistd.h
-index 985534d0b448..112e2c54750a 100644
---- a/arch/powerpc/include/uapi/asm/unistd.h
-+++ b/arch/powerpc/include/uapi/asm/unistd.h
-@@ -400,5 +400,6 @@
- #define __NR_pkey_mprotect	386
- #define __NR_rseq		387
- #define __NR_io_pgetevents	388
-+#define __NR_cpu_opv		389
- 
- #endif /* _UAPI_ASM_POWERPC_UNISTD_H_ */
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 8edf93b4490f..da2cb7a12644 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -414,3 +414,4 @@
+ 397	common	statx			sys_statx
+ 398	common	rseq			sys_rseq
+ 399	common	io_pgetevents		sys_io_pgetevents
++400	common	cpu_opv			sys_cpu_opv
 -- 
 2.11.0
