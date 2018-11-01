@@ -1,39 +1,64 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: RFC: userspace exception fixups
-Date: Thu, 1 Nov 2018 21:00:38 +0200 (EET)
-Message-ID: <alpine.DEB.2.21.1811012058480.7972@jsakkine-mobl1>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com> <877ehwisaa.fsf@oldenburg.str.redhat.com>
+Date: Thu, 1 Nov 2018 12:06:21 -0700
+Message-ID: <CAHk-=wjJhdr3JCnGrMKqL-prxYd__kkAspKVYBO3BYYmq2hu4A@mail.gmail.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <877ehwisaa.fsf@oldenburg.str.redhat.com>
+In-Reply-To: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>Ingo Molnar <mi>
+To: luto@kernel.org
+Cc: dave.hansen@linux.intel.com, sean.j.christopherson@intel.com, jethro@fortanix.com, jarkko.sakkinen@linux.intel.com, fweimer@redhat.com, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, x86@kernel.org, linux-arch@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, dalias@libc.org, nhorman@redhat.com, npmccallum@redhat.com, serge.ayoun@intel.com, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, andriy.shevchenko@linux.intel.com, tglx@linutronix.de, Ingo Molnar <mingo@redhat.com>, bp@alien8.de
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 1 Nov 2018, Florian Weimer wrote:
-> * Andy Lutomirski:
+On Thu, Nov 1, 2018 at 10:53 AM Andy Lutomirski <luto@kernel.org> wrote:
 >
->> The basic idea would be to allow libc, or maybe even any library, to
->> register a handler that gets a chance to act on an exception caused by
->> a user instruction before a signal is delivered.  As a straw-man
->> example for how this could work, there could be a new syscall:
->>
->> long register_exception_handler(void (*handler)(int, siginfo_t *, void *));
->>
->> If a handler is registered, then, if a synchronous exception happens
->> (page fault, etc), the kernel would set up an exception frame as usual
->> but, rather than checking for signal handlers, it would just call the
->> registered handler.  That handler is expected to either handle the
->> exception entirely on its own or to call one of two new syscalls to
->> ask for normal signal delivery or to ask to retry the faulting
->> instruction.
+> There's been some discussion of adding a vDSO entry point to wrap
+> EENTER and do something sensible with the exceptions,
+
+I think that's likely the right thing to do, and would be similar to sysenter.
+
+> The basic idea would be to allow libc, or maybe even any library, to
+> register a handler that gets a chance to act on an exception caused by
+> a user instruction before a signal is delivered.  As a straw-man
+> example for how this could work, there could be a new syscall:
 >
-> Would the exception handler be a per-thread resource?
+> long register_exception_handler(void (*handler)(int, siginfo_t *, void *));
 
-For SGX purposes it would *need* to be per-thread resource so that the
-run-time (not just Intel but any user space support code for SGX) is
-able to act on thread that caused this exception inside the enclave.
+I'm not a huge fan of signals, but the above is an abomination.
 
-/Jarkko
+It has all the problems of signals _and_ then some.
+
+And it in absolutely no way fixes the problem with libraires. In fact,
+it arguably makes it much much worse, since now there's only one
+single library that can register it.
+
+Yes yes, maybe a library would then expose _another_ interface to
+other libraries and act as some kind of dispatch point, but on the
+whole the above is just crazy and fundamentally broken.
+
+If you want to register an exception, you need to make it clear
+
+ (a) which _thread_ the exception registration is valid for
+
+ (b) which _range_ the exception registration is valid for
+
+ (c) which _fault_ the exception registration is valid for (page
+fault, div-by-zero, whatever)
+
+ (d) which save area (aka stack) and exception handler point.
+
+Note that (b) might be more than just an exception IP range. It might
+well be interesting to register the exception by page fault address
+(in addition to code range).
+
+If you do something that does all of (a)-(d), and you allow some
+limited number of exception registrations, then maybe. Because at that
+point, you have something that is actually actively more powerful than
+signal handling is.
+
+But your suggested "just register a broken form of signal handling for
+a special case" is just wrong. Don't do it.
+
+              Linus
