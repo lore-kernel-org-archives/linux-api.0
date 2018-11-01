@@ -1,64 +1,167 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.21 03/16] mm: Replace BUG_ON() by WARN_ON() in
- vm_unmap_ram()
-Date: Thu, 1 Nov 2018 18:17:19 -0400 (EDT)
-Message-ID: <1770995215.4046.1541110639818.JavaMail.zimbra@efficios.com>
-References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com> <20181101095844.24462-4-mathieu.desnoyers@efficios.com> <alpine.DEB.2.21.1811011320160.1642@nanos.tec.linutronix.de> <20181101144623.61d43102@gandalf.local.home> <278477314.3995.1541102273591.JavaMail.zimbra@efficios.com> <CAHk-=wiOm8x5KnBQH+FYN76sSjCeP2_9cxgzu4WArR3jP0MD8g@mail.gmail.com>
+From: Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org>
+Subject: Re: Problems with VM_MIXEDMAP removal from /proc/<pid>/smaps
+Date: Fri, 2 Nov 2018 10:00:12 +1100
+Message-ID: <20181101230012.GC19305@dastard>
+References: <20181002100531.GC4135@quack2.suse.cz>
+ <20181002121039.GA3274@linux-x5ow.site>
+ <20181002142959.GD9127@quack2.suse.cz>
+ <x49h8hkfhk9.fsf@segfault.boston.devel.redhat.com>
+ <20181018002510.GC6311@dastard>
+ <20181018145555.GS23493@quack2.suse.cz>
+ <20181019004303.GI6311@dastard>
+ <CAPcyv4ixoAh7HEMfm+B4sRDx1Qwm6SHGjtQ+5r3EKsxreRydrA@mail.gmail.com>
+ <20181030224904.GT19305@dastard>
+ <TYAPR01MB32619CCA488DD0DA86EDB17E90CD0@TYAPR01MB3261.jpnprd01.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wiOm8x5KnBQH+FYN76sSjCeP2_9cxgzu4WArR3jP0MD8g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.ma>
+Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <TYAPR01MB32619CCA488DD0DA86EDB17E90CD0-0qPFe2CvyVSThio5wsivRXcolHNk5qUtvxpqHgZTriW3zl9H0oFU5g@public.gmane.org>
+List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
+List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
+ <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
+Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
+Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+To: "y-goto-LMvhtfratI1BDgjK7y7TUQ@public.gmane.org" <y-goto-LMvhtfratI1BDgjK7y7TUQ@public.gmane.org>
+Cc: linux-nvdimm <linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-xfs <linux-xfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux MM <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, linux-ext4 <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 1, 2018, at 11:00 PM, Linus Torvalds torvalds@linux-foundation.org wrote:
-
-> On Thu, Nov 1, 2018 at 12:57 PM Mathieu Desnoyers
-> <mathieu.desnoyers@efficios.com> wrote:
->>
->> > I think the graceful recovery is to simply return:
->> >
->> >       if (WARN_ON(cond))
->> >               return;
->> >
->> > is better than just
->> >
->> >       BUG_ON(cond);
->> >
->> > As that's what Linus made pretty clear at the Maintainer's Summit.
->>
->> That's it. For an unmap function, this basically boils down to
->> print a warning and leak the memory on internal unmap error.
->>
->> I will update the commit message describing this behavior.
+On Wed, Oct 31, 2018 at 05:59:17AM +0000, y-goto-LMvhtfratI1BDgjK7y7TUQ@public.gmane.org wrote:
+> > On Mon, Oct 29, 2018 at 11:30:41PM -0700, Dan Williams wrote:
+> > > On Thu, Oct 18, 2018 at 5:58 PM Dave Chinner <david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org> wrote:
+> > In summary:
+> > 
+> > 	MAP_DIRECT is an access hint.
+> > 
+> > 	MAP_SYNC provides a data integrity model guarantee.
+> > 
+> > 	MAP_SYNC may imply MAP_DIRECT for specific implementations,
+> > 	but it does not require or guarantee MAP_DIRECT.
+> > 
+> > Let's compare that with O_DIRECT:
+> > 
+> > 	O_DIRECT in an access hint.
+> > 
+> > 	O_DSYNC provides a data integrity model guarantee.
+> > 
+> > 	O_DSYNC may imply O_DIRECT for specific implementations, but
+> > 	it does not require or guarantee O_DIRECT.
+> > 
+> > Consistency in access and data integrity models is a good thing. DAX
+> > and pmem is not an exception. We need to use a model we know works
+> > and has proven itself over a long period of time.
 > 
-> It might be even better to use WARN_ON_ONCE().
+> Hmmm, then, I would like to know all of the reasons of breakage of MAP_DIRECT.
+> (I'm not opposed to your opinion, but I need to know it.)
 > 
-> If it's a "this shouldn't happen" situation, the advantage of
-> WARN_ON_ONCE() is that it will still show the backtrace of the "how
-> the heck did it happen after all" situation, but if it turns ouit to
-> be user-triggerable (or simply triggerable by some odd hw situation),
-> it won't spam your logs forever.
-> 
-> Obviously, things like rate limiting etc can also be good ideas, but
-> that's just overkill for "this really should never happen" cases.
-> 
-> (Side note: WARN_ON_ONCE() will _warn_ just once, but will always
-> return the condition that it warns for, so the return value is _not_
-> "I have warned", but "I have seen the condition that I should warn
-> about". Just in case people are worried about it).
+> In O_DIRECT case, in my understanding, the reason of breakage of O_DIRECT is 
+> "wrong alignment is specified by application", right?
 
-Allright, I'll update this patch (and the following one implementing
-vm_{map,unmap}_user_ram) to use WARN_ON_ONCE().
+O_DIRECT has defined memory and offset alignment restrictions, and
+will return an error to userspace when they are violated. It does
+not fall back to buffered IO in this case. MAP_DIRECT has no
+equivalent restriction, so IO alignment of O_DIRECT is largely
+irrelevant here.
 
-Thanks!
+What we are talking about here is that some filesystems can only do
+certain operations through buffered IO, such as block allocation or
+file extension, and so silently fall back to doing them via buffered
+IO even when O_DIRECT is specified. The old direct IO code used to
+be full of conditionals to allow this - I think DIO_SKIP_HOLES is
+only one remaining:
 
-Mathieu
+                /*
+                 * For writes that could fill holes inside i_size on a
+                 * DIO_SKIP_HOLES filesystem we forbid block creations: only
+                 * overwrites are permitted. We will return early to the caller
+                 * once we see an unmapped buffer head returned, and the caller
+                 * will fall back to buffered I/O.
+                 *
+                 * Otherwise the decision is left to the get_blocks method,
+                 * which may decide to handle it or also return an unmapped
+                 * buffer head.
+                 */
+                create = dio->op == REQ_OP_WRITE;
+                if (dio->flags & DIO_SKIP_HOLES) {
+                        if (fs_startblk <= ((i_size_read(dio->inode) - 1) >>
+                                                        i_blkbits))
+                                create = 0;
+                }
 
+Other cases like file extension cases are caught by the filesystems
+before calling into the DIO code itself, so there's multiple avenues
+for O_DIRECT transparently falling back to buffered IO.
+
+This means the applications don't fail just because the filesystem
+can't do a specific operation via O_DIRECT. The data writes still
+succeed because they fall back to buffered IO, and the application
+is blissfully unaware that the filesystem behaved that way.
+
+> When filesystem can not use O_DIRECT and it uses page cache instead,
+> then system uses more memory resource than user's expectation.
+
+That's far better than failing unexpectedly because the app
+unexpectedly came across a hole in the file (e.g. someone ran
+sparsify across the filesystem).
+
+> So, there is a side effect, and it may cause other trouble.
+> (memory pressure, expected performance can not be gained, and so on ..)
+
+Which is why people are supposed to test their systems before they
+put them into production.
+
+I've lost count of the number of times I've heard "but O_DIRECT is
+supposed to make things faster!" because people don't understand
+exactly what it does or means. Bypassing the page cache does not
+magically make applications go faster - it puts the responsibility
+for doing optimal IO on the application, not the kernel.
+
+MAP_DIRECT will be no different. It's no guarantee that it will make
+things faster, or that everything will just work as users expect
+them to. It specifically places the responsibility for performing IO
+in an optimal fashion on the application and the user for making
+sure that it is fit for their purposes. Like O_DIRECT, using
+MAP_DIRECT means "I, the application, know exactly what I'm doing,
+so get out of the way as much as possible because I'm taking
+responsibility for issuing IO in the most optimal manner now".
+
+> In such case its administrator (or technical support engineer) needs to struggle to
+> investigate what is the reason.
+
+That's no different to performance problems that arise from
+inappropriate use of O_DIRECT. It requires a certain level of
+expertise to be able to understand and diagnose such issues.
+
+> So, I would like to know in MAP_DIRECT case, what is the reasons? 
+> I think it will be helpful for users.
+> Only splice?
+
+The filesystem can ignore MAP_DIRECT for any reason it needs to. I'm
+certain that filesystem developers will try to maintain MAP_DIRECT
+semantics as much as possible, but it's not going to be possible in
+/all situations/ on XFS and ext4 because they simply haven't been
+designed with DAX in mind. Filesystems designed specifically for
+pmem and DAX might be able to provide MAP_DIRECT in all situations,
+but those filesystems don't really exist yet.
+
+This is no different to the early days of O_DIRECT. e.g.  ext3
+couldn't do O_DIRECT for all operations when it was first
+introduced, but over time the functionality improved as the
+underlying issues were solved. If O_DIRECT was a guarantee, then
+ext3 would have never supported O_DIRECT at all...
+
+> (Maybe such document will be necessary....)
+
+The semantics will need to be documented in the relevant man pages.
+
+Cheers,
+
+Dave.
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Dave Chinner
+david-FqsqvQoI3Ljby3iVrkZq2A@public.gmane.org
