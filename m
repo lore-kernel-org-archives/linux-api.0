@@ -1,50 +1,53 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
-Date: Thu, 1 Nov 2018 13:28:19 +0100
-Message-ID: <fcebfa0c-b389-5c4d-19b8-2f08b487ec25@vivier.eu>
-References: <20181010161430.11633-1-laurent@vivier.eu>
- <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
- <1541041159.4632.6.camel@HansenPartnership.com>
- <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
+Date: Thu, 1 Nov 2018 14:40:02 +0100
+Message-ID: <20181101134001.GA23232@redhat.com>
+References: <20181029224031.29809-1-tycho@tycho.ws>
+ <20181029224031.29809-2-tycho@tycho.ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20181029224031.29809-2-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>
-Cc: kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 01/11/2018 04:51, Jann Horn wrote:
-> On Thu, Nov 1, 2018 at 3:59 AM James Bottomley
-> <James.Bottomley@hansenpartnership.com> wrote:
->>
->> On Tue, 2018-10-16 at 11:52 +0200, Laurent Vivier wrote:
->>> Hi,
->>>
->>> Any comment on this last version?
->>>
->>> Any chance to be merged?
->>
->> I've got a use case for this:  I went to one of the Graphene talks in
->> Edinburgh and it struck me that we seem to keep reinventing the type of
->> sandboxing that qemu-user already does.  However if you want to do an
->> x86 on x86 sandbox, you can't currently use the binfmt_misc mechanism
->> because that has you running *every* binary on the system emulated.
->> Doing it per user namespace fixes this problem and allows us to at
->> least cut down on all the pointless duplication.
-> 
-> Waaaaaait. What? qemu-user does not do "sandboxing". qemu-user makes
-> your code slower and *LESS* secure. As far as I know, qemu-user is
-> only intended for purposes like development and testing.
-> 
+On 10/29, Tycho Andersen wrote:
+>
+> +static struct file *init_listener(struct seccomp_filter *filter)
+> +{
+> +	struct file *ret = ERR_PTR(-EBUSY);
+> +	struct seccomp_filter *cur, *last_locked = NULL;
+> +	int filter_nesting = 0;
+> +
+> +	for (cur = current->seccomp.filter; cur; cur = cur->prev) {
+> +		mutex_lock_nested(&cur->notify_lock, filter_nesting);
+> +		filter_nesting++;
+> +		last_locked = cur;
+> +		if (cur->notif)
+> +			goto out;
+> +	}
 
-I think the idea here is not to run qemu, but to use an interpreter
-(something like gVisor) into a container to control the binaries
-execution inside the container without using this interpreter on the
-host itself (container and host shares the same binfmt_misc magic/mask).
+Somehow I no longer understand why do you need to take all locks. Isn't
+the first filter's notify_lock enough? IOW,
 
-Thanks,
-Laurent
+		for (cur = current->seccomp.filter; cur; cur = cur->prev) {
+			if (cur->notif)
+				return ERR_PTR(-EBUSY);
+			first = cur;
+		}
+
+		if (first)
+			mutex_lock(&first->notify_lock);
+
+		... initialize filter->notif ...
+
+	out:
+		if (first)
+			mutex_unlock(&first->notify_lock);
+
+		return ret;
+
+Oleg.
