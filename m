@@ -1,126 +1,123 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 00/16] rseq updates, new cpu_opv system call (v2)
-Date: Thu,  1 Nov 2018 10:58:28 +0100
-Message-ID: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Subject: [RFC PATCH for 4.21 01/16] rseq/selftests: Expose reference counter to coexist with glibc (v2)
+Date: Thu,  1 Nov 2018 10:58:29 +0100
+Message-ID: <20181101095844.24462-2-mathieu.desnoyers@efficios.com>
+References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+In order to integrate rseq into user-space applications, expose a
+reference counter TLS as a __rseq_refcount weak symbol so many rseq
+users can be linked into the same application (e.g. librseq and glibc).
+The reference count ensures that rseq syscall
+registration/unregistration happens only for the most early/late user
+for each thread, thus ensuring that rseq is registered across the
+lifetime of all rseq users for a given thread.
 
-Here is an updated patchset submitted as RFC for 4.21 (next merge
-window).
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Shuah Khan <shuah@kernel.org>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- Error out on refcount overflow/underflow.
+- Expose __rseq_refcount weak symbol.
+---
+ tools/testing/selftests/rseq/rseq.c | 23 ++++++++++++++++-------
+ tools/testing/selftests/rseq/rseq.h |  1 +
+ 2 files changed, 17 insertions(+), 7 deletions(-)
 
-This series contain:
-
-- rseq selftests:
-  - Added reference counter within user-space __rseq_abi structure, for
-    integration of rseq application/libraries with future use by glibc,
-  - Adapt number of threads to the number of online cpus.
-
-- cpu_opv:
-  - Introduce vm_map_user_ram()/vm_unmap_user_ram() (mm),
-  - Provide is_vma_noncached() (mm),
-  - Introduce cpu_opv system call, with vmap space limiting,
-    - Wire up cpu_opv on x86, powerpc, arm,
-  - Provide cpu_opv selftests.
-
-The cpu_opv system call covers the use-cases that rseq does not handle,
-namely single-stepping with debuggers, moving data between per-cpu data
-structures without interfering with cpu affinity masks, and using rseq
-from signal handlers nested between thread creation and rseq
-registration by glibc, or between rseq unregistration by glibc and
-thread teardown.
-
-The cpu_opv system call has been greatly simplified since the last round
-based on feedback from Peter Zijlstra and Will Deacon at OSS Europe.
-Major simplifications are:
-
-- Remove unnecessary operations. Only keep compare, memcpy,
-  memcpy_release, add, add_release,
-- Remove the "mb" instruction in favor of a release semantic,
-- Use IPI to execute operations on remote CPUs rather than try to
-  migrate the current thread,
-- Reduce the maximum operation vector size from 16 to 4 elements,
-  thus removing the need to perform memory allocation in the cpu_opv
-  system call (there is enough space on the stack). Add a new flag
-  allowing user-space to query the maximum vector size supported by
-  the kernel for future extensibility.
-
-Feedback is welcome!
-
-Thanks,
-
-Mathieu
-
-Mathieu Desnoyers (16):
-  rseq/selftests: Expose reference counter to coexist with glibc (v2)
-  rseq/selftests: Adapt number of threads to the number of detected cpus
-  mm: Replace BUG_ON() by WARN_ON() in vm_unmap_ram()
-  mm: Introduce vm_map_user_ram, vm_unmap_user_ram (v2)
-  mm: Provide is_vma_noncached
-  cpu_opv: Provide cpu_opv system call (v9)
-  cpu_opv: limit amount of virtual address space used by cpu_opv
-  x86: Wire up cpu_opv system call
-  powerpc: Wire up cpu_opv system call
-  arm: Wire up cpu_opv system call
-  cpu-opv/selftests: Provide cpu-op library
-  cpu-opv/selftests: Provide basic test
-  cpu-opv/selftests: Provide percpu_op API
-  cpu-opv/selftests: Provide basic percpu ops test
-  cpu-opv/selftests: Provide parametrized tests
-  cpu-opv/selftests: Provide Makefile, scripts, gitignore
-
- MAINTAINERS                                        |    8 +
- arch/arm/tools/syscall.tbl                         |    1 +
- arch/powerpc/include/asm/systbl.h                  |    1 +
- arch/powerpc/include/uapi/asm/unistd.h             |    1 +
- arch/x86/entry/syscalls/syscall_32.tbl             |    1 +
- arch/x86/entry/syscalls/syscall_64.tbl             |    1 +
- include/linux/mm.h                                 |   24 +
- include/linux/syscalls.h                           |    3 +
- include/linux/vmalloc.h                            |    4 +
- include/uapi/linux/cpu_opv.h                       |   69 ++
- init/Kconfig                                       |   17 +
- kernel/Makefile                                    |    1 +
- kernel/cpu_opv.c                                   | 1027 ++++++++++++++=
-+++
- kernel/sys_ni.c                                    |    1 +
- kernel/sysctl.c                                    |   15 +
- mm/vmalloc.c                                       |   78 +-
- tools/testing/selftests/Makefile                   |    1 +
- tools/testing/selftests/cpu-opv/.gitignore         |    6 +
- tools/testing/selftests/cpu-opv/Makefile           |   39 +
- .../testing/selftests/cpu-opv/basic_cpu_opv_test.c | 1207 ++++++++++++++=
-++++++
- .../selftests/cpu-opv/basic_percpu_ops_test.c      |  295 +++++
- tools/testing/selftests/cpu-opv/cpu-op.c           |  362 ++++++
- tools/testing/selftests/cpu-opv/cpu-op.h           |   43 +
- tools/testing/selftests/cpu-opv/param_test.c       | 1187 ++++++++++++++=
-+++++
- tools/testing/selftests/cpu-opv/percpu-op.h        |  151 +++
- tools/testing/selftests/cpu-opv/run_param_test.sh  |  134 +++
- tools/testing/selftests/rseq/rseq.c                |   23 +-
- tools/testing/selftests/rseq/rseq.h                |    1 +
- tools/testing/selftests/rseq/run_param_test.sh     |    7 +-
- 29 files changed, 4694 insertions(+), 14 deletions(-)
- create mode 100644 include/uapi/linux/cpu_opv.h
- create mode 100644 kernel/cpu_opv.c
- create mode 100644 tools/testing/selftests/cpu-opv/.gitignore
- create mode 100644 tools/testing/selftests/cpu-opv/Makefile
- create mode 100644 tools/testing/selftests/cpu-opv/basic_cpu_opv_test.c
- create mode 100644 tools/testing/selftests/cpu-opv/basic_percpu_ops_test=
-.c
- create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.c
- create mode 100644 tools/testing/selftests/cpu-opv/cpu-op.h
- create mode 100644 tools/testing/selftests/cpu-opv/param_test.c
- create mode 100644 tools/testing/selftests/cpu-opv/percpu-op.h
- create mode 100755 tools/testing/selftests/cpu-opv/run_param_test.sh
-
---=20
+diff --git a/tools/testing/selftests/rseq/rseq.c b/tools/testing/selftests/rseq/rseq.c
+index 4847e97ed049..835e3917d220 100644
+--- a/tools/testing/selftests/rseq/rseq.c
++++ b/tools/testing/selftests/rseq/rseq.c
+@@ -25,18 +25,19 @@
+ #include <syscall.h>
+ #include <assert.h>
+ #include <signal.h>
++#include <limits.h>
+ 
+ #include "rseq.h"
+ 
+ #define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
+ 
+-__attribute__((tls_model("initial-exec"))) __thread
++__attribute__((weak)) __thread
+ volatile struct rseq __rseq_abi = {
+ 	.cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
+ };
+ 
+-static __attribute__((tls_model("initial-exec"))) __thread
+-volatile int refcount;
++__attribute__((weak)) __thread
++volatile uint32_t __rseq_refcount;
+ 
+ static void signal_off_save(sigset_t *oldset)
+ {
+@@ -70,7 +71,11 @@ int rseq_register_current_thread(void)
+ 	sigset_t oldset;
+ 
+ 	signal_off_save(&oldset);
+-	if (refcount++)
++	if (__rseq_refcount == UINT_MAX) {
++		ret = -1;
++		goto end;
++	}
++	if (__rseq_refcount++)
+ 		goto end;
+ 	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq), 0, RSEQ_SIG);
+ 	if (!rc) {
+@@ -78,9 +83,9 @@ int rseq_register_current_thread(void)
+ 		goto end;
+ 	}
+ 	if (errno != EBUSY)
+-		__rseq_abi.cpu_id = -2;
++		__rseq_abi.cpu_id = RSEQ_CPU_ID_REGISTRATION_FAILED;
+ 	ret = -1;
+-	refcount--;
++	__rseq_refcount--;
+ end:
+ 	signal_restore(oldset);
+ 	return ret;
+@@ -92,7 +97,11 @@ int rseq_unregister_current_thread(void)
+ 	sigset_t oldset;
+ 
+ 	signal_off_save(&oldset);
+-	if (--refcount)
++	if (!__rseq_refcount) {
++		ret = -1;
++		goto end;
++	}
++	if (--__rseq_refcount)
+ 		goto end;
+ 	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq),
+ 		      RSEQ_FLAG_UNREGISTER, RSEQ_SIG);
+diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
+index c72eb70f9b52..47f815c19cef 100644
+--- a/tools/testing/selftests/rseq/rseq.h
++++ b/tools/testing/selftests/rseq/rseq.h
+@@ -45,6 +45,7 @@
+ #endif
+ 
+ extern __thread volatile struct rseq __rseq_abi;
++extern __thread volatile uint32_t __rseq_refcount;
+ 
+ #define rseq_likely(x)		__builtin_expect(!!(x), 1)
+ #define rseq_unlikely(x)	__builtin_expect(!!(x), 0)
+-- 
 2.11.0
