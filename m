@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH for 4.21 02/16] rseq/selftests: Adapt number of threads to the number of detected cpus
-Date: Thu,  1 Nov 2018 10:58:30 +0100
-Message-ID: <20181101095844.24462-3-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH for 4.21 03/16] mm: Replace BUG_ON() by WARN_ON() in vm_unmap_ram()
+Date: Thu,  1 Nov 2018 10:58:31 +0100
+Message-ID: <20181101095844.24462-4-mathieu.desnoyers@efficios.com>
 References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181101095844.24462-1-mathieu.desnoyers@efficios.com>
@@ -10,70 +10,67 @@ To: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vn
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Joel Fernandes <joelaf@google.com>, Mathieu Desnoyers <mathieu.desnoyers@ef>
 List-Id: linux-api@vger.kernel.org
 
-On smaller systems, running a test with 200 threads can take a long
-time on machines with smaller number of CPUs.
-
-Detect the number of online cpus at test runtime, and multiply that
-by 6 to have 6 rseq threads per cpu preempting each other.
+It is encouraged to warn and return rather than use BUG_ON() when
+the condition can be recovered from in ways that are more graceful than
+halting the whole system.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Joel Fernandes <joelaf@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>
-Cc: Dave Watson <davejwatson@fb.com>
-Cc: Will Deacon <will.deacon@arm.com>
-Cc: Andi Kleen <andi@firstfloor.org>
-Cc: linux-kselftest@vger.kernel.org
-Cc: "H . Peter Anvin" <hpa@zytor.com>
-Cc: Chris Lameter <cl@linux.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Paul Turner <pjt@google.com>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: Josh Triplett <josh@joshtriplett.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ben Maurer <bmaurer@fb.com>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Suggested-by: Steven Rostedt <rostedt@goodmis.org>
+CC: Sergey Senozhatsky <sergey.senozhatsky@gmail.com>
+CC: Matthew Wilcox <mawilcox@microsoft.com>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Paul Turner <pjt@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: "H. Peter Anvin" <hpa@zytor.com>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
 ---
- tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ mm/vmalloc.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
-index 3acd6d75ff9f..e426304fd4a0 100755
---- a/tools/testing/selftests/rseq/run_param_test.sh
-+++ b/tools/testing/selftests/rseq/run_param_test.sh
-@@ -1,6 +1,8 @@
- #!/bin/bash
- # SPDX-License-Identifier: GPL-2.0+ or MIT
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index a728fc492557..a236bac872f0 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -1123,10 +1123,11 @@ void vm_unmap_ram(const void *mem, unsigned int count)
+ 	struct vmap_area *va;
  
-+NR_CPUS=`grep '^processor' /proc/cpuinfo | wc -l`
-+
- EXTRA_ARGS=${@}
+ 	might_sleep();
+-	BUG_ON(!addr);
+-	BUG_ON(addr < VMALLOC_START);
+-	BUG_ON(addr > VMALLOC_END);
+-	BUG_ON(!PAGE_ALIGNED(addr));
++	if (WARN_ON(!addr) ||
++	    WARN_ON(addr < VMALLOC_START) ||
++	    WARN_ON(addr > VMALLOC_END) ||
++	    WARN_ON(!PAGE_ALIGNED(addr)))
++		return;
  
- OLDIFS="$IFS"
-@@ -28,15 +30,16 @@ IFS="$OLDIFS"
+ 	if (likely(count <= VMAP_MAX_ALLOC)) {
+ 		debug_check_no_locks_freed(mem, size);
+@@ -1135,7 +1136,8 @@ void vm_unmap_ram(const void *mem, unsigned int count)
+ 	}
  
- REPS=1000
- SLOW_REPS=100
-+NR_THREADS=$((6*${NR_CPUS}))
- 
- function do_tests()
- {
- 	local i=0
- 	while [ "$i" -lt "${#TEST_LIST[@]}" ]; do
- 		echo "Running test ${TEST_NAME[$i]}"
--		./param_test ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		./param_test ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
- 		echo "Running compare-twice test ${TEST_NAME[$i]}"
--		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
-+		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
- 		let "i++"
- 	done
- }
+ 	va = find_vmap_area(addr);
+-	BUG_ON(!va);
++	if (WARN_ON(!va))
++		return;
+ 	debug_check_no_locks_freed((void *)va->va_start,
+ 				    (va->va_end - va->va_start));
+ 	free_unmap_vmap_area(va);
 -- 
 2.11.0
