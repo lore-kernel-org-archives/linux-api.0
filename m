@@ -1,69 +1,109 @@
 From: Tycho Andersen <tycho@tycho.ws>
 Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
-Date: Thu, 1 Nov 2018 13:58:14 -0600
-Message-ID: <20181101195814.GH2180@cisco>
+Date: Thu, 1 Nov 2018 14:33:28 -0600
+Message-ID: <20181101203328.GI2180@cisco>
 References: <20181029224031.29809-1-tycho@tycho.ws>
  <20181029224031.29809-2-tycho@tycho.ws>
- <20181101135633.GB23232@redhat.com>
+ <20181030143235.GA3385@redhat.com>
+ <20181030153231.GB7343@cisco>
+ <20181101144804.GD23232@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181101135633.GB23232@redhat.com>
+In-Reply-To: <20181101144804.GD23232@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Oleg Nesterov <oleg@redhat.com>
 Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 01, 2018 at 02:56:34PM +0100, Oleg Nesterov wrote:
-> On 10/29, Tycho Andersen wrote:
+On Thu, Nov 01, 2018 at 03:48:05PM +0100, Oleg Nesterov wrote:
+> On 10/30, Tycho Andersen wrote:
 > >
-> > +static int seccomp_notify_release(struct inode *inode, struct file *file)
-> > +{
-> > +	struct seccomp_filter *filter = file->private_data;
-> > +	struct seccomp_knotif *knotif;
-> > +
-> > +	mutex_lock(&filter->notify_lock);
-> > +
-> > +	/*
-> > +	 * If this file is being closed because e.g. the task who owned it
-> > +	 * died, let's wake everyone up who was waiting on us.
-> > +	 */
-> > +	list_for_each_entry(knotif, &filter->notif->notifications, list) {
-> > +		if (knotif->state == SECCOMP_NOTIFY_REPLIED)
-> > +			continue;
-> > +
-> > +		knotif->state = SECCOMP_NOTIFY_REPLIED;
-> > +		knotif->error = -ENOSYS;
-> > +		knotif->val = 0;
-> > +
-> > +		complete(&knotif->ready);
-> > +	}
-> > +
-> > +	wake_up_all(&filter->notif->wqh);
+> > > I am not sure I understand the value of signaled/SECCOMP_NOTIF_FLAG_SIGNALED...
+> > > I mean, why it is actually useful?
+> > >
+> > > Sorry if this was already discussed.
+> >
+> > :) no problem, many people have complained about this. This is an
+> > implementation of Andy's suggestion here:
+> > https://lkml.org/lkml/2018/3/15/1122
+> >
+> > You can see some more detailed discussion here:
+> > https://lkml.org/lkml/2018/9/21/138
 > 
-> Why? __fput() is not possible if there is another user of this file sleeping
-> in seccomp_notify_poll().
+> Cough, sorry, I simply can't understand what are you talking about ;)
+> It seems that I need to read all the previous emails... So let me ask
+> a stupid question below.
+> 
+> > > But my main concern is that either way wait_for_completion_killable() allows
+> > > to trivially create a process which doesn't react to SIGSTOP, not good...
+> > >
+> > > Note also that this can happen if, say, both the tracer and tracee run in the
+> > > same process group and SIGSTOP is sent to their pgid, if the tracer gets the
+> > > signal first the tracee won't stop.
+> > >
+> > > Of freezer. try_to_freeze_tasks() can fail if it freezes the tracer before
+> > > it does SECCOMP_IOCTL_NOTIF_SEND.
+> >
+> > I think in general the way this is intended to be used these things
+> > wouldn't happen.
+> 
+> Why?
 
-Yes, I was just trying to be extra defensive. But I can drop it.
+The intent is to run the tracer on the host and have it trace
+containers, which would live in a different freezer cgroup, process
+group, etc. Of course you could use it in a situation where they would
+be, so the concern is still valid, but I'm not sure why you'd do that.
 
-> > +	kfree(filter->notif);
+> > was malicious and had the ability to create a user namespace to
+> > exhaust pids this way,
 > 
-> Hmm, this looks wrong... we can't kfree ->notif if its ->notifications list
-> is not empty, otherwise seccomp_do_user_notification()->list_del(&n.list)
-> can write to the freed memory.
+> Not sure I understand how this connects to my question... nevermind.
 > 
-> I think _release() should do list_for_each_entry_safe() + list_del_init()
-> and seccomp_do_user_notification() should use list_del_init() too.
+> > so perhaps we should drop this part of the
+> > patch. I have no real need for it, but perhaps Andy can elaborate?
 > 
-> Or, simpler, seccomp_do_user_notification() should do
+> Yes I think it would be nice to avoid wait_for_completion_killable().
 > 
-> 	if (!match->notif)
-> 		goto out;
-> 
-> instead of "goto remove_list".
+> So please help me to understand the problem. Once again, why can not
+> seccomp_do_user_notification() use wait_for_completion_interruptible() only?
+>
+> This is called before the task actually starts the syscall, so
+> -ERESTARTNOINTR if signal_pending() can't hurt.
 
-Yes, and we need another such check in this case after we re-acquire
-the lock from the signal send. Thanks for catching this!
+The idea was that when the tracee gets a signal, it notifies the
+tracer exactly once, and then waits for the tracer to decide what to
+do. So if we use another wait_for_completion_interruptible(), doesn't
+it just get re-woken immediately because the signal is still pending?
+
+...actually I just tested it, and it doesn't. So it seems we could use
+_interruptible() here and achieve the same thing.
+
+> Now lets suppose seccomp_do_user_notification() simply does
+> 
+> 	err = wait_for_completion_interruptible(&n.ready);
+> 
+> 	if (err < 0 && state != SECCOMP_NOTIFY_REPLIED) {
+> 		syscall_set_return_value(ERESTARTNOINTR);
+> 		list_del(&n.list);
+> 		return -1;
+> 	}
+> 
+> (I am ignoring the locking/etc). Now the obvious problem is that the listener
+> doing SECCOMP_IOCTL_NOTIF_SEND can't distinguish -ENOENT from the case when the
+> tracee was killed, yes?
+> 
+> Is it that important?
+
+The answer to this question depends on how we want the listener to be
+able to react. For example, if the listener is in the middle of doing
+a mount() on behalf of the task and it gets a signal and we return
+immediately, the listener will complete the mount(), try to respond
+with success and get -ENOENT. If the task handles the signal and
+restarts the mount(), it'll happen twice unless the listener undoes
+it when it sees the -ENOENT. If we send another notification with the
+SIGNALED flag, the listener has a better picture of what's going on,
+which might be nice.
 
 Tycho
