@@ -1,56 +1,69 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 4.21 03/16] mm: Replace BUG_ON() by WARN_ON() in
- vm_unmap_ram()
-Date: Thu, 1 Nov 2018 15:57:53 -0400 (EDT)
-Message-ID: <278477314.3995.1541102273591.JavaMail.zimbra@efficios.com>
-References: <20181101095844.24462-1-mathieu.desnoyers@efficios.com> <20181101095844.24462-4-mathieu.desnoyers@efficios.com> <alpine.DEB.2.21.1811011320160.1642@nanos.tec.linutronix.de> <20181101144623.61d43102@gandalf.local.home>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
+Date: Thu, 1 Nov 2018 13:58:14 -0600
+Message-ID: <20181101195814.GH2180@cisco>
+References: <20181029224031.29809-1-tycho@tycho.ws>
+ <20181029224031.29809-2-tycho@tycho.ws>
+ <20181101135633.GB23232@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181101144623.61d43102@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <20181101135633.GB23232@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michae
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 1, 2018, at 7:46 PM, rostedt rostedt@goodmis.org wrote:
-
-> On Thu, 1 Nov 2018 13:21:12 +0100 (CET)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
+On Thu, Nov 01, 2018 at 02:56:34PM +0100, Oleg Nesterov wrote:
+> On 10/29, Tycho Andersen wrote:
+> >
+> > +static int seccomp_notify_release(struct inode *inode, struct file *file)
+> > +{
+> > +	struct seccomp_filter *filter = file->private_data;
+> > +	struct seccomp_knotif *knotif;
+> > +
+> > +	mutex_lock(&filter->notify_lock);
+> > +
+> > +	/*
+> > +	 * If this file is being closed because e.g. the task who owned it
+> > +	 * died, let's wake everyone up who was waiting on us.
+> > +	 */
+> > +	list_for_each_entry(knotif, &filter->notif->notifications, list) {
+> > +		if (knotif->state == SECCOMP_NOTIFY_REPLIED)
+> > +			continue;
+> > +
+> > +		knotif->state = SECCOMP_NOTIFY_REPLIED;
+> > +		knotif->error = -ENOSYS;
+> > +		knotif->val = 0;
+> > +
+> > +		complete(&knotif->ready);
+> > +	}
+> > +
+> > +	wake_up_all(&filter->notif->wqh);
 > 
->> Mathieu,
->> 
->> On Thu, 1 Nov 2018, Mathieu Desnoyers wrote:
->> 
->> > It is encouraged to warn and return rather than use BUG_ON() when
->> > the condition can be recovered from in ways that are more graceful than
->> > halting the whole system.
->> 
->> You're failing to desribe how that graceful recovery works.
->> 
-> 
-> I think the graceful recovery is to simply return:
-> 
->	if (WARN_ON(cond))
->		return;
-> 
-> is better than just
-> 
->	BUG_ON(cond);
-> 
-> As that's what Linus made pretty clear at the Maintainer's Summit.
+> Why? __fput() is not possible if there is another user of this file sleeping
+> in seccomp_notify_poll().
 
-That's it. For an unmap function, this basically boils down to
-print a warning and leak the memory on internal unmap error.
+Yes, I was just trying to be extra defensive. But I can drop it.
 
-I will update the commit message describing this behavior.
+> > +	kfree(filter->notif);
+> 
+> Hmm, this looks wrong... we can't kfree ->notif if its ->notifications list
+> is not empty, otherwise seccomp_do_user_notification()->list_del(&n.list)
+> can write to the freed memory.
+> 
+> I think _release() should do list_for_each_entry_safe() + list_del_init()
+> and seccomp_do_user_notification() should use list_del_init() too.
+> 
+> Or, simpler, seccomp_do_user_notification() should do
+> 
+> 	if (!match->notif)
+> 		goto out;
+> 
+> instead of "goto remove_list".
 
-Thanks,
+Yes, and we need another such check in this case after we re-acquire
+the lock from the signal send. Thanks for catching this!
 
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Tycho
