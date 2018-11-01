@@ -1,90 +1,86 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
-Date: Thu, 1 Nov 2018 15:44:23 +0100
-Message-ID: <CAG48ez2vyk0ki1AMv0G_-3m2Pq8gAkO2yjVjs=3CaJNBP0JChA@mail.gmail.com>
-References: <20181010161430.11633-1-laurent@vivier.eu> <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
- <1541041159.4632.6.camel@HansenPartnership.com> <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
- <1541081413.2853.6.camel@HansenPartnership.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
+Date: Thu, 1 Nov 2018 15:48:05 +0100
+Message-ID: <20181101144804.GD23232@redhat.com>
+References: <20181029224031.29809-1-tycho@tycho.ws>
+ <20181029224031.29809-2-tycho@tycho.ws>
+ <20181030143235.GA3385@redhat.com>
+ <20181030153231.GB7343@cisco>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1541081413.2853.6.camel@HansenPartnership.com>
+Content-Disposition: inline
+In-Reply-To: <20181030153231.GB7343@cisco>
 Sender: linux-kernel-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@hansenpartnership.com>
-Cc: Laurent Vivier <laurent@vivier.eu>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 1, 2018 at 3:10 PM James Bottomley
-<James.Bottomley@hansenpartnership.com> wrote:
-> On Thu, 2018-11-01 at 04:51 +0100, Jann Horn wrote:
-> > On Thu, Nov 1, 2018 at 3:59 AM James Bottomley
-> > <James.Bottomley@hansenpartnership.com> wrote:
-> > >
-> > > On Tue, 2018-10-16 at 11:52 +0200, Laurent Vivier wrote:
-> > > > Hi,
-> > > >
-> > > > Any comment on this last version?
-> > > >
-> > > > Any chance to be merged?
-> > >
-> > > I've got a use case for this:  I went to one of the Graphene talks
-> > > in Edinburgh and it struck me that we seem to keep reinventing the
-> > > type of sandboxing that qemu-user already does.  However if you
-> > > want to do an x86 on x86 sandbox, you can't currently use the
-> > > binfmt_misc mechanism because that has you running *every* binary
-> > > on the system emulated. Doing it per user namespace fixes this
-> > > problem and allows us to at least cut down on all the pointless
-> > > duplication.
+On 10/30, Tycho Andersen wrote:
+>
+> > I am not sure I understand the value of signaled/SECCOMP_NOTIF_FLAG_SIGNALED...
+> > I mean, why it is actually useful?
 > >
-> > Waaaaaait. What? qemu-user does not do "sandboxing". qemu-user makes
-> > your code slower and *LESS* secure. As far as I know, qemu-user is
-> > only intended for purposes like development and testing.
+> > Sorry if this was already discussed.
 >
-> Sandboxing is about protecting the cloud service provider (and other
-> tenants) from horizontal attack by reducing calls to the shared kernel.
->  I think it's pretty indisputable that full emulation is an effective
-> sandbox in that regard.
+> :) no problem, many people have complained about this. This is an
+> implementation of Andy's suggestion here:
+> https://lkml.org/lkml/2018/3/15/1122
 >
-> We can argue for about bugginess vs completeness, but technologically
-> qemu-user already has most of the system calls, which seems to be a
-> significant problem with other sandboxes.  I also can't dispute it's
-> slower, but that's a tradeoff for people to make.
+> You can see some more detailed discussion here:
+> https://lkml.org/lkml/2018/9/21/138
 
-I'm pretty sure you don't understand how qemu-user works.
+Cough, sorry, I simply can't understand what are you talking about ;)
+It seems that I need to read all the previous emails... So let me ask
+a stupid question below.
 
-When the emulated code makes a syscall, QEMU just forwards the syscall
-to the native kernel.
+> > But my main concern is that either way wait_for_completion_killable() allows
+> > to trivially create a process which doesn't react to SIGSTOP, not good...
+> >
+> > Note also that this can happen if, say, both the tracer and tracee run in the
+> > same process group and SIGSTOP is sent to their pgid, if the tracer gets the
+> > signal first the tracee won't stop.
+> >
+> > Of freezer. try_to_freeze_tasks() can fail if it freezes the tracer before
+> > it does SECCOMP_IOCTL_NOTIF_SEND.
+>
+> I think in general the way this is intended to be used these things
+> wouldn't happen.
 
-QEMU doesn't even prevent you from accessing the address space used by
-the emulation logic.
+Why?
 
-qemu-user is not for sandboxing. qemu-user is not for security.
-qemu-user is for running binaries from architecture A on architecture
-B, with as much direct access to the kernel's syscall surface as
-possible.
+> was malicious and had the ability to create a user namespace to
+> exhaust pids this way,
 
+Not sure I understand how this connects to my question... nevermind.
 
-An example:
+> so perhaps we should drop this part of the
+> patch. I have no real need for it, but perhaps Andy can elaborate?
 
-$ cat blah.c
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-int main(void) {
-  open("/foo/bar/blah", O_RDONLY);
-  char c;
-  printf("ptr is %p\n", &c);
-  read(1337, &c, 1);
-  *(volatile char *)0x13371338;
-}
-$ aarch64-linux-gnu-gcc -static -o blah blah.c && strace -f qemu-aarch64 ./blah
-[...]
-[pid 14181] openat(AT_FDCWD, "/foo/bar/blah", O_RDONLY) = -1 ENOENT
-(No such file or directory)
-[pid 14181] fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 93), ...}) = 0
-[pid 14181] write(1, "ptr is 0x40007fff2f\n", 20ptr is 0x40007fff2f
-) = 20
-[pid 14181] read(1337, 0x40007fff2f, 1) = -1 EBADF (Bad file descriptor)
-[pid 14181] --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR,
-si_addr=0x13371338} ---
-[...]
+Yes I think it would be nice to avoid wait_for_completion_killable().
+
+So please help me to understand the problem. Once again, why can not
+seccomp_do_user_notification() use wait_for_completion_interruptible() only?
+
+This is called before the task actually starts the syscall, so
+-ERESTARTNOINTR if signal_pending() can't hurt.
+
+Now lets suppose seccomp_do_user_notification() simply does
+
+	err = wait_for_completion_interruptible(&n.ready);
+
+	if (err < 0 && state != SECCOMP_NOTIFY_REPLIED) {
+		syscall_set_return_value(ERESTARTNOINTR);
+		list_del(&n.list);
+		return -1;
+	}
+
+(I am ignoring the locking/etc). Now the obvious problem is that the listener
+doing SECCOMP_IOCTL_NOTIF_SEND can't distinguish -ENOENT from the case when the
+tracee was killed, yes?
+
+Is it that important?
+
+Any other problem?
+
+Oleg.
