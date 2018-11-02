@@ -1,97 +1,92 @@
-From: Mark Rutland <mark.rutland@arm.com>
-Subject: Re: Supporting core-specific instruction sets (e.g. big.LITTLE) with
- restartable sequences
-Date: Fri, 2 Nov 2018 16:08:45 +0000
-Message-ID: <20181102160844.ihge4najccn63cxi@lakrids.cambridge.arm.com>
-References: <313542172.8.1541171544337.JavaMail.zimbra@efficios.com>
+From: Sean Christopherson <sean.j.christopherson@intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Fri, 2 Nov 2018 09:30:34 -0700
+Message-ID: <20181102163034.GB7393@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+ <CAG48ez0vBqL0tyfWwmuc_cq+OAUoEi88=r+t6h64a-Fw8z59zA@mail.gmail.com>
+ <20181101185225.GC5150@brightrain.aerifal.cx>
+ <CAHk-=wgFo8tuZX5gzCfWGdAwGyn_Ar9JFnnMFNuwr9=vtfDV1g@mail.gmail.com>
+ <20181101193107.GE5150@brightrain.aerifal.cx>
+ <CAHk-=wiYSpmDOfpi9n7ETsxK2UrUKfT4kM=Y3yqRSaZuFFPY1A@mail.gmail.com>
+ <CALCETrWe4+apXJNswHAKVVqajGS3jTEKxdd2r3iu-MzGK1v0DA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <313542172.8.1541171544337.JavaMail.zimbra@efficios.com>
+In-Reply-To: <CALCETrWe4+apXJNswHAKVVqajGS3jTEKxdd2r3iu-MzGK1v0DA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Richard Henderson <rth@twiddle.net>, Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>, Carlos O'Donell <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Jann Horn <jannh@google.com>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, Carlos O'Donell <carlos@r>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mathieu, Richard,
-
-On Fri, Nov 02, 2018 at 11:12:24AM -0400, Mathieu Desnoyers wrote:
-> Hi Richard,
+On Thu, Nov 01, 2018 at 04:22:55PM -0700, Andy Lutomirski wrote:
+> On Thu, Nov 1, 2018 at 2:24 PM Linus Torvalds
+> <torvalds@linux-foundation.org> wrote:
+> >
+> > On Thu, Nov 1, 2018 at 12:31 PM Rich Felker <dalias@libc.org> wrote:
+> > >
+> > > See my other emails in this thread. You would register the *address*
+> > > (in TLS) of a function pointer object pointing to the handler, rather
+> > > than the function address of the handler. Then switching handler is
+> > > just a single store in userspace, no syscalls involved.
+> >
+> > Yes.
+> >
+> > And for just EENTER, maybe that's the right model.
+> >
+> > If we want to generalize it to other thread-synchronous faults, it
+> > needs way more information and a list of handlers, but if we limit the
+> > thing to _only_ EENTER getting an SGX fault, then a single "this is
+> > the fault handler" address is probably the right thing to do.
 > 
-> I stumbled on these articles:
+> It sounds like you're saying that the kernel should know, *before*
+> running any user fixup code, whether the fault in question is one that
+> wants a fixup.  Sounds reasonable.
 > 
-> - https://medium.com/@jadr2ddude/a-big-little-problem-a-tale-of-big-little-gone-wrong-e7778ce744bb
-> - https://www.mono-project.com/news/2016/09/12/arm64-icache/
-> 
-> and discussed them with Will Deacon. He told me you were looking into
-> gcc atomics and it might be worthwhile to discuss the possible use of
-> the new rseq system call that has been added in Linux 4.18 for those
-> use-cases.
-> 
-> Basically, the use-cases targeted are those where some cores on the
-> system support a larger instruction set than others. So for instance,
-> some cores could use a faster atomic add instruction than others,
-> which should rely on a slower fallback. This is also the same story
-> for reading the performance monitoring unit counters from user-space:
-> it depends on the feature-set supported by the CPU on which the
-> instruction is issued. Same applies to cores having different
-> cache-line sizes.
+> I think it would be nice, but not absolutely necessary, if user code
+> didn't need to poke some value into TLS each time it ran a function
+> that had a fixup.  With the poke-into-TLS approach, it looks a lot
+> like rseq, and rseq doesn't nest very nicely.  I think we really want
+> this mechanism to Just Work.  So we could maybe have a syscall that
+> associates a list of fixups with a given range of text addresses.  We
+> might want the kernel to automatically zap the fixups when the text in
+> question is unmapped.
 
-Please note that upstream arm64 Linux does not expose mismatched ISA
-feature to userspace. We go to great pains to expose a uniform set of
-supported features.
+If this is EENTER specific then nesting isn't an issue.  But I don't
+see a simple way to restrict the mechanism to EENTER.
 
-The two issues referenced above are both handled by the kernel, and no
-userspace changes are required to handle them.
+What if rather than having userspace register an address for fixup the
+kernel instead unconditionally does fixup on the ENCLU opcode?  For
+example, skip the instruction and put fault info into some combination
+of RDX/RSI/RDI (they're cleared on asynchronous enclave exits).
 
-We do not intend or expect to expose mismatched features to userspace.
-Correctly-written userspace should not use optional instructions unless
-the kernel has advertised their presence via a hwcap (or via ID register
-emulation).
+The decode logic is straightforward since ENCLU doesn't have operands,
+we'd just have to eat any ignored prefixes.  The intended convention
+for EENTER is to have an ENCLU at the AEX target (to automatically do
+ERESUME after INTR, etc...), so this would work regardless of whether
+the fault happened on EENTER or in the enclave.  EENTER/ERESUME are
+the only ENCLU functions that are allowed outside of an enclave so
+there's no danger of accidentally crushing something else.
 
-> The main problem is that the kernel can migrate a thread at any point
-> between user-space reading the current cpu number and issuing the
-> instruction. This is where rseq can help.
-> 
-> The core idea to solve the instruction set issue is to set a mask of
-> cpus supporting the new instruction in a library constructor, and then
-> load cpu_id, use it with the mask, and branch to either the new or old
-> instruction, all with a rseq critical section. If the kernel needs to
-> abort due to preemption or signal delivery, the abort behavior would
-> be to issue the fallback (slow) atomic operation, which guarantees
-> progress even if single-stepping.
-> 
-> As long as the load, test and branch is faster than the performance
-> delta between the old and new atomic instruction, it would be worth
-> it.
+This way we wouldn't need a VDSO blob and we'd enforce the kernel's
+ABI, e.g. a library that tried to use signal handling would go off the
+rails when the kernel mucked with the registers.  We could even have
+the SGX EPC fault handler return VM_FAULT_SIGBUS if the faulting
+instruction isn't ENCLU, e.g. to further enforce that the AEX target
+needs to be ENCLU.
 
-Specifically w.r.t. the atomics, the kernel will only expose the
-presence of the ARMv8.1 atomic instructions when supported by all CPUs
-in the system.
 
-> In the case of PMU read from user-space, using rseq to figure out how
-> to issue the PMU read enables a use-case which is not otherwise
-> possible to do on big.LITTLE. On rseq abort, it would fallback to a
-> system call to read the PMU counter. This abort behavior guarantees
-> forward progress.
+Userspace would look something like this:
 
-We do not currently expose any PMU registers to userspace. If we were to
-expose them for big.LITTLE, rseq may be of use, but no-one has done the
-groundwork to investigate this.
+    mov tcs, %xbx               /* Thread Control Structure address */
+    leaq async_exit(%rip), %rcx /* AEX target for EENTER/RESUME */
+    mov $SGX_EENTER, %rax       /* EENTER leaf */
 
-> The second article is about cache line size discrepancy between CPUs.
-> Here again, doing the cacheline flushing in a rseq critical section
-> could allow tuning it to characteristics of the actual core it is
-> running on. The fast-path would use a stride fitting the current core
-> characteristics, and if rseq needs to abort, the slow-path would
-> fall-back to a conservative value which would fit all cores (smaller
-> cache line size on the overall system).
+async_exit:
+    ENCLU
 
-This is already handled by the kernel, and the proposed rseq approach is
-not correct -- cache maintenance must *always* use the system-wide
-minimum cacheline size, or stale entries will be left on some CPUs,
-which will result in later failures.
+fault_handler:
+    <handle fault>
 
-Thanks,
-Mark.
+enclave_exit:                   /* EEXIT target */
+    <handle enclave request>
