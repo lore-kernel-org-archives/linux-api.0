@@ -1,127 +1,66 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
-Date: Fri, 2 Nov 2018 07:50:11 -0600
-Message-ID: <20181102135011.GK2180@cisco>
-References: <20181029224031.29809-1-tycho@tycho.ws>
- <20181029224031.29809-2-tycho@tycho.ws>
- <20181030143235.GA3385@redhat.com>
- <20181030153231.GB7343@cisco>
- <20181101144804.GD23232@redhat.com>
- <20181101203328.GI2180@cisco>
- <20181102112903.GB12360@redhat.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Supporting core-specific instruction sets (e.g. big.LITTLE) with
+ restartable sequences
+Date: Fri, 2 Nov 2018 11:12:24 -0400 (EDT)
+Message-ID: <313542172.8.1541171544337.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181102112903.GB12360@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
+To: Richard Henderson <rth@twiddle.net>
+Cc: Will Deacon <will.deacon@arm.com>, linux-kernel <linux-kernel@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>, Carlos O'Donell <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>Ben Maurer <bmaurer@fb.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 02, 2018 at 12:29:03PM +0100, Oleg Nesterov wrote:
-> On 11/01, Tycho Andersen wrote:
-> >
-> > On Thu, Nov 01, 2018 at 03:48:05PM +0100, Oleg Nesterov wrote:
-> > >
-> > > > > But my main concern is that either way wait_for_completion_killable() allows
-> > > > > to trivially create a process which doesn't react to SIGSTOP, not good...
-> > > > >
-> > > > > Note also that this can happen if, say, both the tracer and tracee run in the
-> > > > > same process group and SIGSTOP is sent to their pgid, if the tracer gets the
-> > > > > signal first the tracee won't stop.
-> > > > >
-> > > > > Of freezer. try_to_freeze_tasks() can fail if it freezes the tracer before
-> > > > > it does SECCOMP_IOCTL_NOTIF_SEND.
-> > > >
-> > > > I think in general the way this is intended to be used these things
-> > > > wouldn't happen.
-> > >
-> > > Why?
-> >
-> > The intent is to run the tracer on the host and have it trace
-> > containers, which would live in a different freezer cgroup, process
-> > group, etc.
-> 
-> I didn't mean the freezer cgroup, suspend can fail, it does the "global" freeze.
-> Nevermind.
-> 
-> > > Yes I think it would be nice to avoid wait_for_completion_killable().
-> > >
-> > > So please help me to understand the problem. Once again, why can not
-> > > seccomp_do_user_notification() use wait_for_completion_interruptible() only?
-> > >
-> > > This is called before the task actually starts the syscall, so
-> > > -ERESTARTNOINTR if signal_pending() can't hurt.
-> >
-> > The idea was that when the tracee gets a signal, it notifies the
-> > tracer exactly once, and then waits for the tracer to decide what to
-> > do. So if we use another wait_for_completion_interruptible(), doesn't
-> > it just get re-woken immediately because the signal is still pending?
-> 
-> Hmm. I meant that we should use a single wait_for_completion_interruptible().
+Hi Richard,
 
-Yes, but if we can use a second _interruptible(), then we can avoid
-the SIGSTOP issue and still perhaps preserve the SIGNALED bit if we
-decide it's worth it at the conclusion of this thread.
+I stumbled on these articles:
 
-> > > Now lets suppose seccomp_do_user_notification() simply does
-> > >
-> > > 	err = wait_for_completion_interruptible(&n.ready);
-> > >
-> > > 	if (err < 0 && state != SECCOMP_NOTIFY_REPLIED) {
-> > > 		syscall_set_return_value(ERESTARTNOINTR);
-> > > 		list_del(&n.list);
-> > > 		return -1;
-> > > 	}
-> > >
-> > > (I am ignoring the locking/etc). Now the obvious problem is that the listener
-> > > doing SECCOMP_IOCTL_NOTIF_SEND can't distinguish -ENOENT from the case when the
-> > > tracee was killed, yes?
-> > >
-> > > Is it that important?
-> >
-> > The answer to this question depends on how we want the listener to be
-> > able to react. For example, if the listener is in the middle of doing
-> > a mount() on behalf of the task and it gets a signal and we return
-> > immediately, the listener will complete the mount(), try to respond
-> > with success and get -ENOENT.
-> 
-> Yes. Should we undo the mount if the tracee is killed?
-> 
-> > If the task handles the signal and
-> > restarts the mount(), it'll happen twice unless the listener undoes
-> > it when it sees the -ENOENT.
-> 
-> Yes. But note that we know that if the same tracee sends another notification
-> it must be the same syscall.
-> 
-> So. If the listener needs to undo mount when the tracee is killed, it should
-> undo it if it was interrupted too.
-> 
-> If no, the listener can simply "ignore" the next notification and do
-> SECCOMP_IOCTL_NOTIF_SEND(val = 0, error = 0).
-> 
-> I see no real difference...
+- https://medium.com/@jadr2ddude/a-big-little-problem-a-tale-of-big-little-gone-wrong-e7778ce744bb
+- https://www.mono-project.com/news/2016/09/12/arm64-icache/
 
-Well, doesn't it seem like a hack? What if the tracee really makes the
-same syscall twice? How do we tell the difference between one that was
-restarted and a real second call?
+and discussed them with Will Deacon. He told me you were looking into gcc atomics and it might be
+worthwhile to discuss the possible use of the new rseq system call that has been added in Linux 4.18
+for those use-cases.
 
-> > If we send another notification with the
-> > SIGNALED flag, the listener has a better picture of what's going on,
-> > which might be nice.
-> 
-> Yes, but this returns us to my my question: Is it that important?
-> 
-> What exactly the listener can do if it gets SECCOMP_NOTIF_FLAG_SIGNALED?
-> 
-> Undo the mount? No. This doesn't differ from the case when the tracee gets
-> the non-fatal signal right after SECCOMP_NOTIFY_REPLIED.
+Basically, the use-cases targeted are those where some cores on the system support a larger instruction
+set than others. So for instance, some cores could use a faster atomic add instruction than others, which
+should rely on a slower fallback. This is also the same story for reading the performance monitoring
+unit counters from user-space: it depends on the feature-set supported by the CPU on which the instruction
+is issued. Same applies to cores having different cache-line sizes.
 
-I guess that in do_user_notification(), even if we get -EINTER from
-the wait, we should check to see that the state is REPLIED. If it is,
-we can use the err and val from it, and complete the syscall as
-normal, since it did.
+The main problem is that the kernel can migrate a thread at any point between user-space reading the
+current cpu number and issuing the instruction. This is where rseq can help.
 
-Tycho
+The core idea to solve the instruction set issue is to set a mask of cpus supporting the new instruction
+in a library constructor, and then load cpu_id, use it with the mask, and branch to either the new or
+old instruction, all with a rseq critical section. If the kernel needs to abort due to preemption or
+signal delivery, the abort behavior would be to issue the fallback (slow) atomic operation, which
+guarantees progress even if single-stepping.
+
+As long as the load, test and branch is faster than the performance delta between the old and new atomic
+instruction, it would be worth it.
+
+In the case of PMU read from user-space, using rseq to figure out how to issue the PMU read enables a
+use-case which is not otherwise possible to do on big.LITTLE. On rseq abort, it would fallback to a
+system call to read the PMU counter. This abort behavior guarantees forward progress.
+
+The second article is about cache line size discrepancy between CPUs. Here again, doing the cacheline
+flushing in a rseq critical section could allow tuning it to characteristics of the actual core it is
+running on. The fast-path would use a stride fitting the current core characteristics, and if rseq
+needs to abort, the slow-path would fall-back to a conservative value which would fit all cores (smaller
+cache line size on the overall system). Once again, this abort behavior guarantees forward progress.
+This would only work, of course, if cacheline invalidation done on a big core end up being propagated
+to other cores in a way that clears all the cache lines corresponding to the one targeted on the big
+core.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
