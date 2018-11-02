@@ -1,176 +1,31 @@
-From: Sean Christopherson <sean.j.christopherson@intel.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
 Subject: Re: RFC: userspace exception fixups
-Date: Fri, 2 Nov 2018 15:04:37 -0700
-Message-ID: <20181102220437.GI7393@linux.intel.com>
-References: <CAHk-=wiYSpmDOfpi9n7ETsxK2UrUKfT4kM=Y3yqRSaZuFFPY1A@mail.gmail.com>
- <CALCETrWe4+apXJNswHAKVVqajGS3jTEKxdd2r3iu-MzGK1v0DA@mail.gmail.com>
- <20181102163034.GB7393@linux.intel.com>
- <7050972d-a874-dc08-3214-93e81181da60@intel.com>
- <20181102170627.GD7393@linux.intel.com>
- <a4d2b3ec-43ec-f062-e180-c6e5a0d9fab8@intel.com>
- <20181102173350.GF7393@linux.intel.com>
- <CALCETrUQVPN0LSEz+5aNsbfFc=rQ33JHiOoRXVbvEEb9is9DDQ@mail.gmail.com>
- <20181102182712.GG7393@linux.intel.com>
- <CAG48ez0x7ZPcKvLt01WS-VrLm59WfvYE3nE1xbnyn3Qsp5T2rA@mail.gmail.com>
+Date: Sat, 3 Nov 2018 00:07:52 +0200
+Message-ID: <20181102220752.GA24373@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez0x7ZPcKvLt01WS-VrLm59WfvYE3nE1xbnyn3Qsp5T2rA@mail.gmail.com>
+In-Reply-To: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, dalias@libc.org, Dave Hansen <dave.hansen@linux.intel.com>, jethro@fortanix.com, jarkko.sakkinen@linux.intel.com, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, serge.ayoun@intel.com, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, andriy.shevchenko@linux.intel.com, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, carlos@redhat.com, adhemerval.zane
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 02, 2018 at 08:02:23PM +0100, Jann Horn wrote:
-> On Fri, Nov 2, 2018 at 7:27 PM Sean Christopherson
-> <sean.j.christopherson@intel.com> wrote:
-> > On Fri, Nov 02, 2018 at 10:48:38AM -0700, Andy Lutomirski wrote:
-> > > This whole mechanism seems very complicated, and it's not clear
-> > > exactly what behavior user code wants.
-> >
-> > No argument there.  That's why I like the approach of dumping the
-> > exception to userspace without trying to do anything intelligent in
-> > the kernel.  Userspace can then do whatever it wants AND we don't
-> > have to worry about mucking with stacks.
-> >
-> > One of the hiccups with the VDSO approach is that the enclave may
-> > want to use the untrusted stack, i.e. the stack that has the VDSO's
-> > stack frame.  For example, Intel's SDK uses the untrusted stack to
-> > pass parameters for EEXIT, which means an AEX might occur with what
-> > is effectively a bad stack from the VDSO's perspective.
-> 
-> What exactly does "uses the untrusted stack to pass parameters for
-> EEXIT" mean? I guess you're saying that the enclave is writing to
-> RSP+[0...some_positive_offset], and the written data needs to be
-> visible to the code outside the enclave afterwards?
+On Thu, Nov 01, 2018 at 10:53:40AM -0700, Andy Lutomirski wrote:
+> If a handler is registered, then, if a synchronous exception happens
+> (page fault, etc), the kernel would set up an exception frame as usual
+> but, rather than checking for signal handlers, it would just call the
+> registered handler.  That handler is expected to either handle the
+> exception entirely on its own or to call one of two new syscalls to
+> ask for normal signal delivery or to ask to retry the faulting
+> instruction.
 
-As is, they actually do it the other way around, i.e. negative offsets
-relative to the untrusted %RSP.  Going into the enclave there is no
-reserved space on the stack.  The SDK uses EEXIT like a function call,
-i.e. pushing parameters on the stack and making an call outside of the
-enclave, hence the name out-call.  This allows the SDK to handle any
-reasonable out-call without a priori knowledge of the application's
-maximum out-call "size".
+Why the syscalls are required? Couldn't the handler have just a return
+value to indicate the appropriate action?
 
+Another thing that I'm wondering is that what if a signal occurs inside
+the exception handler?
 
-Rough outline of what happens in a non-faulting case.
-
-1: Userspace executes EENTER
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at EENTER
-
-
-2: Enclave does EEXIT to invoke out-call function
-
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              |
-        | paramN           |
-        -------------------- <-- %RSP at EEXIT
-
-
-3: Userspace re-EENTERs enclave after handling EEXIT request
-
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at original EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              |
-        | paramN           |
-        -------------------- <-- %RSP at post-EEXIT EENTER
-
-
-4: Enclave cleans up the stack
-
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP back at original EENTER
-
-
-
-In the faulting case, an AEX can occur while the enclave is pushing
-parameters onto the stack for EEXIT.
-
-
-1: Userspace executes EENTER
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at EENTER
-
-
-2: AEX occurs during enclave prep for EEXIT
-
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              | 
-        -------------------- <-- %RSP at AEX
-
-
-3: Userspace re-EENTERs enclave to invoke enclave fault handler
-
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at original EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              | 
-        -------------------- <-- %RSP at AEX
-        | userspace stack  |
-        -------------------- <-- %RSP at EENTER to fault handler
-
-
-4: Enclave handles the fault, EEXITs back to userspace
-
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at original EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              | 
-        -------------------- <-- %RSP at AEX
-        | userspace stack  |
-        -------------------- <-- %RSP at EEXIT from fault handler
-
-
-5: Userspace pops its stack and ERESUMEs back to the enclave
-        --------------------
-        | userspace stack  | 
-        -------------------- <-- %RSP at original EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              | 
-        -------------------- <-- %RSP at ERESUME
-
-
-6: Enclave finishes its EEXIT to invoke out-call function
-
-        --------------------
-        | userspace stuff  | 
-        -------------------- <-- %RSP at original EENTER
-        | out-call func ID |
-        | param1           |
-        | ...              |
-        | paramN           |
-        -------------------- <-- %RSP at EEXIT 
- 
-> In other words, the vDSO helper would have to not touch the stack
-> pointer (only using the 128-byte redzone to store spilled data, at
-> least across the enclave entry), and return by decrementing the stack
-> pointer by 8 immediately before returning (storing the return pointer
-> in the redzone)?
-> 
-> So you'd call the vDSO helper with a normal "call
-> vdso_helper_address", then the vDSO helper does "add rsp, 8", then the
-> vDSO helper does its magic, and then it returns with "sub rsp, 8" and
-> "ret"? That way you don't touch anything on the high-address side of
-> RSP while still avoiding running into CET problems. (I'm assuming that
-> you can use CET in a process that is hosting SGX enclaves?)
+/Jarkko
