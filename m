@@ -1,80 +1,176 @@
-From: Andrew Pinski <pinskia@gmail.com>
-Subject: Re: Supporting core-specific instruction sets (e.g. big.LITTLE) with
- restartable sequences
-Date: Fri, 2 Nov 2018 12:27:49 -0700
-Message-ID: <CA+=Sn1=9Sm+A+kdfcHxXVcjY5Zhm=YouGqK6kDjnYg7g5+oddA@mail.gmail.com>
-References: <313542172.8.1541171544337.JavaMail.zimbra@efficios.com>
+From: Sean Christopherson <sean.j.christopherson@intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Fri, 2 Nov 2018 15:04:37 -0700
+Message-ID: <20181102220437.GI7393@linux.intel.com>
+References: <CAHk-=wiYSpmDOfpi9n7ETsxK2UrUKfT4kM=Y3yqRSaZuFFPY1A@mail.gmail.com>
+ <CALCETrWe4+apXJNswHAKVVqajGS3jTEKxdd2r3iu-MzGK1v0DA@mail.gmail.com>
+ <20181102163034.GB7393@linux.intel.com>
+ <7050972d-a874-dc08-3214-93e81181da60@intel.com>
+ <20181102170627.GD7393@linux.intel.com>
+ <a4d2b3ec-43ec-f062-e180-c6e5a0d9fab8@intel.com>
+ <20181102173350.GF7393@linux.intel.com>
+ <CALCETrUQVPN0LSEz+5aNsbfFc=rQ33JHiOoRXVbvEEb9is9DDQ@mail.gmail.com>
+ <20181102182712.GG7393@linux.intel.com>
+ <CAG48ez0x7ZPcKvLt01WS-VrLm59WfvYE3nE1xbnyn3Qsp5T2rA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <313542172.8.1541171544337.JavaMail.zimbra@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez0x7ZPcKvLt01WS-VrLm59WfvYE3nE1xbnyn3Qsp5T2rA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: mathieu.desnoyers@efficios.com
-Cc: Richard Henderson <rth@twiddle.net>, Will Deacon <will.deacon@arm.com>, LKML <linux-kernel@vger.kernel.org>, GNU C Library <libc-alpha@sourceware.org>, Carlos O'Donell <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, "Joseph S. Myers" <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Thomas Gleixner <tglx@linutronix.de>, bmaurer@fb.com, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, boqun.feng@gmail.com, davejwatson@fb.com, pjt@google.com, linux-api@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, dalias@libc.org, Dave Hansen <dave.hansen@linux.intel.com>, jethro@fortanix.com, jarkko.sakkinen@linux.intel.com, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, serge.ayoun@intel.com, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, andriy.shevchenko@linux.intel.com, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, carlos@redhat.com, adhemerval.zane
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 2, 2018 at 8:12 AM Mathieu Desnoyers
-<mathieu.desnoyers@efficios.com> wrote:
->
-> Hi Richard,
->
-> I stumbled on these articles:
->
-> - https://medium.com/@jadr2ddude/a-big-little-problem-a-tale-of-big-little-gone-wrong-e7778ce744bb
-> - https://www.mono-project.com/news/2016/09/12/arm64-icache/
->
-> and discussed them with Will Deacon. He told me you were looking into gcc atomics and it might be
-> worthwhile to discuss the possible use of the new rseq system call that has been added in Linux 4.18
-> for those use-cases.
->
-> Basically, the use-cases targeted are those where some cores on the system support a larger instruction
-> set than others. So for instance, some cores could use a faster atomic add instruction than others, which
-> should rely on a slower fallback. This is also the same story for reading the performance monitoring
-> unit counters from user-space: it depends on the feature-set supported by the CPU on which the instruction
-> is issued. Same applies to cores having different cache-line sizes.
->
-> The main problem is that the kernel can migrate a thread at any point between user-space reading the
-> current cpu number and issuing the instruction. This is where rseq can help.
->
-> The core idea to solve the instruction set issue is to set a mask of cpus supporting the new instruction
-> in a library constructor, and then load cpu_id, use it with the mask, and branch to either the new or
-> old instruction, all with a rseq critical section. If the kernel needs to abort due to preemption or
-> signal delivery, the abort behavior would be to issue the fallback (slow) atomic operation, which
-> guarantees progress even if single-stepping.
->
-> As long as the load, test and branch is faster than the performance delta between the old and new atomic
-> instruction, it would be worth it.
->
-> In the case of PMU read from user-space, using rseq to figure out how to issue the PMU read enables a
-> use-case which is not otherwise possible to do on big.LITTLE. On rseq abort, it would fallback to a
-> system call to read the PMU counter. This abort behavior guarantees forward progress.
->
-> The second article is about cache line size discrepancy between CPUs. Here again, doing the cacheline
-> flushing in a rseq critical section could allow tuning it to characteristics of the actual core it is
-> running on. The fast-path would use a stride fitting the current core characteristics, and if rseq
-> needs to abort, the slow-path would fall-back to a conservative value which would fit all cores (smaller
-> cache line size on the overall system). Once again, this abort behavior guarantees forward progress.
-> This would only work, of course, if cacheline invalidation done on a big core end up being propagated
-> to other cores in a way that clears all the cache lines corresponding to the one targeted on the big
-> core.
+On Fri, Nov 02, 2018 at 08:02:23PM +0100, Jann Horn wrote:
+> On Fri, Nov 2, 2018 at 7:27 PM Sean Christopherson
+> <sean.j.christopherson@intel.com> wrote:
+> > On Fri, Nov 02, 2018 at 10:48:38AM -0700, Andy Lutomirski wrote:
+> > > This whole mechanism seems very complicated, and it's not clear
+> > > exactly what behavior user code wants.
+> >
+> > No argument there.  That's why I like the approach of dumping the
+> > exception to userspace without trying to do anything intelligent in
+> > the kernel.  Userspace can then do whatever it wants AND we don't
+> > have to worry about mucking with stacks.
+> >
+> > One of the hiccups with the VDSO approach is that the enclave may
+> > want to use the untrusted stack, i.e. the stack that has the VDSO's
+> > stack frame.  For example, Intel's SDK uses the untrusted stack to
+> > pass parameters for EEXIT, which means an AEX might occur with what
+> > is effectively a bad stack from the VDSO's perspective.
+> 
+> What exactly does "uses the untrusted stack to pass parameters for
+> EEXIT" mean? I guess you're saying that the enclave is writing to
+> RSP+[0...some_positive_offset], and the written data needs to be
+> visible to the code outside the enclave afterwards?
 
-Cache flusing is only one thing that deals with cache line sizes
-difference.  Another thing which either needs to be emulated in the
-software or disable is the "dc ZVA" instruction which is used in
-memset.
-There are most likely eithers too.  For an example, dealing with dmb/dsb sizes.
+As is, they actually do it the other way around, i.e. negative offsets
+relative to the untrusted %RSP.  Going into the enclave there is no
+reserved space on the stack.  The SDK uses EEXIT like a function call,
+i.e. pushing parameters on the stack and making an call outside of the
+enclave, hence the name out-call.  This allows the SDK to handle any
+reasonable out-call without a priori knowledge of the application's
+maximum out-call "size".
 
-Thanks,
-Andrew
 
->
-> Thoughts ?
->
-> Thanks,
->
-> Mathieu
->
-> --
-> Mathieu Desnoyers
-> EfficiOS Inc.
-> http://www.efficios.com
+Rough outline of what happens in a non-faulting case.
+
+1: Userspace executes EENTER
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at EENTER
+
+
+2: Enclave does EEXIT to invoke out-call function
+
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              |
+        | paramN           |
+        -------------------- <-- %RSP at EEXIT
+
+
+3: Userspace re-EENTERs enclave after handling EEXIT request
+
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at original EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              |
+        | paramN           |
+        -------------------- <-- %RSP at post-EEXIT EENTER
+
+
+4: Enclave cleans up the stack
+
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP back at original EENTER
+
+
+
+In the faulting case, an AEX can occur while the enclave is pushing
+parameters onto the stack for EEXIT.
+
+
+1: Userspace executes EENTER
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at EENTER
+
+
+2: AEX occurs during enclave prep for EEXIT
+
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              | 
+        -------------------- <-- %RSP at AEX
+
+
+3: Userspace re-EENTERs enclave to invoke enclave fault handler
+
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at original EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              | 
+        -------------------- <-- %RSP at AEX
+        | userspace stack  |
+        -------------------- <-- %RSP at EENTER to fault handler
+
+
+4: Enclave handles the fault, EEXITs back to userspace
+
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at original EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              | 
+        -------------------- <-- %RSP at AEX
+        | userspace stack  |
+        -------------------- <-- %RSP at EEXIT from fault handler
+
+
+5: Userspace pops its stack and ERESUMEs back to the enclave
+        --------------------
+        | userspace stack  | 
+        -------------------- <-- %RSP at original EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              | 
+        -------------------- <-- %RSP at ERESUME
+
+
+6: Enclave finishes its EEXIT to invoke out-call function
+
+        --------------------
+        | userspace stuff  | 
+        -------------------- <-- %RSP at original EENTER
+        | out-call func ID |
+        | param1           |
+        | ...              |
+        | paramN           |
+        -------------------- <-- %RSP at EEXIT 
+ 
+> In other words, the vDSO helper would have to not touch the stack
+> pointer (only using the 128-byte redzone to store spilled data, at
+> least across the enclave entry), and return by decrementing the stack
+> pointer by 8 immediately before returning (storing the return pointer
+> in the redzone)?
+> 
+> So you'd call the vDSO helper with a normal "call
+> vdso_helper_address", then the vDSO helper does "add rsp, 8", then the
+> vDSO helper does its magic, and then it returns with "sub rsp, 8" and
+> "ret"? That way you don't touch anything on the high-address side of
+> RSP while still avoiding running into CET problems. (I'm assuming that
+> you can use CET in a process that is hosting SGX enclaves?)
