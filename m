@@ -1,48 +1,79 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v5 21/27] x86/cet/shstk: Introduce WRUSS instruction
-Date: Tue, 6 Nov 2018 10:55:36 -0800
-Message-ID: <CALCETrVfQ8oumNUx6jCFDm0JOD+7qPjaeYvC6pGyodMBcf0VRw@mail.gmail.com>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com> <20181011151523.27101-22-yu-cheng.yu@intel.com>
- <ee5a93f7-ed42-dcc5-0e55-e73ac2637e84@intel.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v6 1/1] ns: add binfmt_misc to the user namespace
+Date: Tue, 6 Nov 2018 20:40:57 +0100
+Message-ID: <CAG48ez1wz6tt2ZLBWgbkspirHYRUN7bAPmqf21jXgBx09G1K2A@mail.gmail.com>
+References: <20181010161430.11633-1-laurent@vivier.eu> <20181010161430.11633-2-laurent@vivier.eu>
+ <20181016162245.GA7697@gmail.com> <0fb09ce6-e006-31a2-1f32-f3f6eda44504@vivier.eu>
+ <4a1ec0cf-dce7-4193-6946-d46d63398c2d@vivier.eu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ee5a93f7-ed42-dcc5-0e55-e73ac2637e84@intel.com>
+In-Reply-To: <4a1ec0cf-dce7-4193-6946-d46d63398c2d@vivier.eu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.krav>
+To: Laurent Vivier <laurent@vivier.eu>, Andrew Morton <akpm@linux-foundation.org>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andrei Vagin <avagin@gmail.com>, kernel list <linux-kernel@vger.kernel.org>, James Bottomley <James.Bottomley@hansenpartnership.com>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, containers@lists.linux-foundation.org, dima@arista.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 6, 2018 at 10:43 AM Dave Hansen <dave.hansen@intel.com> wrote:
->
-> On 10/11/18 8:15 AM, Yu-cheng Yu wrote:
-> > --- a/arch/x86/mm/fault.c
-> > +++ b/arch/x86/mm/fault.c
-> > @@ -1305,6 +1305,15 @@ __do_page_fault(struct pt_regs *regs, unsigned long error_code,
-> >               error_code |= X86_PF_USER;
-> >               flags |= FAULT_FLAG_USER;
-> >       } else {
-> > +             /*
-> > +              * WRUSS is a kernel instruction and but writes
-> > +              * to user shadow stack.  When a fault occurs,
-> > +              * both X86_PF_USER and X86_PF_SHSTK are set.
-> > +              * Clear X86_PF_USER here.
-> > +              */
-> > +             if ((error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
-> > +                 (X86_PF_USER | X86_PF_SHSTK))
-> > +                     error_code &= ~X86_PF_USER;
-> This hunk of code basically points out that the architecture of WRUSS is
-> broken for Linux.  The setting of X86_PF_USER for a ring-0 instruction
-> really is a mis-feature of the architecture for us and we *undo* it in
-> software which is unfortunate.  Wish I would have caught this earlier.
->
-> Andy, note that this is another case where hw_error_code and
-> sw_error_code will diverge, unfortunately.
->
-> Anyway, this is going to necessitate some comment updates in the page
-> fault code.  Yu-cheng, you are going to collide with some recent changes
-> I made to the page fault code.  Please be careful with the context when
-> you do the merge and make sure that all the new comments stay correct.
+On Tue, Oct 30, 2018 at 9:51 AM Laurent Vivier <laurent@vivier.eu> wrote:
+> Le 24/10/2018 =C3=A0 19:15, Laurent Vivier a =C3=A9crit :
+> > On 16/10/2018 17:22, Andrei Vagin wrote:
+> >> On Wed, Oct 10, 2018 at 06:14:30PM +0200, Laurent Vivier wrote:
+> >>> This patch allows to have a different binfmt_misc configuration
+> >>> for each new user namespace. By default, the binfmt_misc configuratio=
+n
+> >>> is the one of the previous level, but if the binfmt_misc filesystem i=
+s
+> >>> mounted in the new namespace a new empty binfmt instance is created a=
+nd
+> >>> used in this namespace.
+> >>>
+> >>> For instance, using "unshare" we can start a chroot of another
+> >>> architecture and configure the binfmt_misc interpreter without being =
+root
+> >>> to run the binaries in this chroot.
+> >>>
+> >>> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
+> >>
+> >> Acked-by: Andrei Vagin <avagin@gmail.com>
+> >>
+> >> Thanks,
+> >> Andrei
+> >>
+> >
+> > I don't konw who is the maintainer for this part,
 
-I'm going to send a patch set in the next day or two that cleans it up
-further and is probably good preparation for WRUSS.
+I think Andrew Morton is the right maintainer here.
+
+> > but is there any
+> > chance to have this merged in 4.20?
+> >
+>
+> I'd really want to have this merged.
+>
+> I have some real use cases for this:
+>
+> 1- to allow a non root user to run a container (with "unshare" for
+> instance) with its own binfmt_misc configuration. For instance, like we
+> provide a disk image and ask an ordinary user to run it with his
+> favorite VM hypervisor, we can provide a tar.gz containing our own
+> interpreter and just ask him to unshare+chroot to the exploded file tree,
+>
+> 2- to allow to run automatic tests of an interpreter on a machine
+> without having to change the global configuration of the system. I have
+> in mind to add some tests in Avocado to automatically test
+> qemu-linux-user in containers, so the interpreter path can depend on the
+> build path and possibly run them concurrently,
+>
+> 3- to select an interpreter by container. For instance, on the
+> qemu-devel mailing list, we have a waiting patch to add the bFLT
+> interpreter binfmt_misc configuration, but the bFLT doesn't provide the
+> CPU type in magic/mask. So it would be interesting to be able to select
+> also a bFLT interpreter by container, as we know the CPU architecture we
+> have in each chroot/container,
+>
+> 4- another example to select an interpreter by container is qemu-mips
+> and qemu-misn32 share the same magic/mask because only the kernel API
+> changes, so we can't configure both on the system (but I agree it's a
+> QEMU bug: they should be merged and the kernel API be selected at runtime=
+).
