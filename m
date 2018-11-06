@@ -1,7 +1,7 @@
 From: Dave Hansen <dave.hansen@intel.com>
 Subject: Re: RFC: userspace exception fixups
-Date: Tue, 6 Nov 2018 09:00:38 -0800
-Message-ID: <6c1b7424-84f6-5fd4-ed7f-6c326d0e4090@intel.com>
+Date: Tue, 6 Nov 2018 09:03:07 -0800
+Message-ID: <3d31d0b9-95bf-953e-1e28-d45c57b9c599@intel.com>
 References: <CAHk-=wiYSpmDOfpi9n7ETsxK2UrUKfT4kM=Y3yqRSaZuFFPY1A@mail.gmail.com>
  <CALCETrWe4+apXJNswHAKVVqajGS3jTEKxdd2r3iu-MzGK1v0DA@mail.gmail.com>
  <20181102163034.GB7393@linux.intel.com>
@@ -16,45 +16,26 @@ References: <CAHk-=wiYSpmDOfpi9n7ETsxK2UrUKfT4kM=Y3yqRSaZuFFPY1A@mail.gmail.com>
  <CAG48ez1+nGDbuBaKJVPAOzEwiBkXqHHs7vmyAqvbeM42r0nFHg@mail.gmail.com>
  <CALCETrXq1Kj=McxnPVjkscNq-b_7LeoFOdu7qKjHdvwcfFh9Og@mail.gmail.com>
  <1541518670.7839.31.camel@intel.com>
+ <AF4A5C77-0A79-403F-A205-0F93B7CD6E26@amacapital.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1541518670.7839.31.camel@intel.com>
+In-Reply-To: <AF4A5C77-0A79-403F-A205-0F93B7CD6E26@amacapital.net>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sean Christopherson <sean.j.christopherson@intel.com>, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, Carlos O'Donell <carlos@redhat.com>, adhemerval
+To: Andy Lutomirski <luto@amacapital.net>, Sean Christopherson <sean.j.christopherson@intel.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@al>
 List-Id: linux-api@vger.kernel.org
 
-On 11/6/18 7:37 AM, Sean Christopherson wrote:
-> 
-> void *sgx_alloc_untrusted_stack(size_t size)
-> {
-> 	struct sgx_encl_tls *tls = get_encl_tls();
-> 	struct sgx_out_call_context *context;
-> 	void *tmp;
-> 
-> 	/* create a frame on the trusted stack to hold the out-call context */
-> 	tls->trusted_stack -= sizeof(struct sgx_out_call_context);
-> 
-> 	/* save the untrusted %RSP into the out-call context */
-> 	context = (struct sgx_out_call_context *)tls->trusted_stack;
-> 	context->untrusted_stack = tls->save_state_area[SSA_RSP];
-> 
-> 	/* allocate space on the untrusted stack */
-> 	tmp = (void *)(tls->save_state_area[SSA_RSP] - size);
-> 	tls->save_state_area[SSA_RSP] = tmp;
-> 
-> 	return tmp;
-> }
+On 11/6/18 8:57 AM, Andy Lutomirski wrote:
+> I’m assuming it’s way too late for the SGX SDK to be changed to use a
+> normal RPC mechanism? I’m a bit disappointed that enclaves can even
+> manipulate outside state like this. I assume Intel had some reason
+> for making it possible, but still.
 
-Why does it bother to go to all the trouble of mucking with the
-untrusted stack?  It could *easily* just leave it alone and do out-calls
-if it needs to allocate memory for parameter storage.  Heck, that could
-theoretically even be _on_ the stack if the untrusted runtime was being
-clever.
+Just because it's architecturally possible doesn't mean it has to be a
+part of the ABI for running enclaves under Linux.
 
-The only downside would be that the untrusted runtime would have to keep
-track of the space a bit more explicitly so it could be cleaned up if
-the enclave didn't do it.
+It's not too late to change the SDK.  Intel does not and can not depend
+on any behavior of Linux until code gets merged.
