@@ -1,94 +1,53 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
- shadow stack
-Date: Thu, 08 Nov 2018 13:01:05 -0800
-Message-ID: <4295b8f786c10c469870a6d9725749ce75dcdaa2.camel@intel.com>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
-         <20181011151523.27101-5-yu-cheng.yu@intel.com>
-         <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
+From: Sean Christopherson <sean.j.christopherson@intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Thu, 8 Nov 2018 13:16:00 -0800
+Message-ID: <20181108211600.GA17167@linux.intel.com>
+References: <22596E35-F5D1-4935-86AB-B510DCA0FABE@amacapital.net>
+ <c9659222-efc6-b73a-ce48-30be8bdc5397@intel.com>
+ <CALCETrWBV=1JbAKYn2Jy2LxkGZQvKRtFRnrWUMoejrwQe73VHw@mail.gmail.com>
+ <b9c53669-cd27-e3bc-3d62-f47c77029c43@intel.com>
+ <1C426267-492F-4AE7-8BE8-C7FE278531F9@amacapital.net>
+ <209cf4a5-eda9-2495-539f-fed22252cf02@intel.com>
+ <9B76E95B-5745-412E-8007-7FAA7F83D6FB@amacapital.net>
+ <20181108195420.GA14715@linux.intel.com>
+ <CALCETrUCQbPMfBJVRRg=0apEU=2U2ps74UPTrN8bFqi1k0K4VA@mail.gmail.com>
+ <7027c3dc-addb-1b96-027e-a57fccf1f812@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <7027c3dc-addb-1b96-027e-a57fccf1f812@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.am>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2018-11-08 at 12:46 -0800, Andy Lutomirski wrote:
-> On Thu, Oct 11, 2018 at 8:20 AM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
-> > 
-> > Intel Control-flow Enforcement Technology (CET) introduces the
-> > following MSRs into the XSAVES system states.
-> > 
-> >     IA32_U_CET (user-mode CET settings),
-> >     IA32_PL3_SSP (user-mode shadow stack),
-> >     IA32_PL0_SSP (kernel-mode shadow stack),
-> >     IA32_PL1_SSP (ring-1 shadow stack),
-> >     IA32_PL2_SSP (ring-2 shadow stack).
-> > 
-> > Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> > ---
-> >  arch/x86/include/asm/fpu/types.h            | 22 +++++++++++++++++++++
-> >  arch/x86/include/asm/fpu/xstate.h           |  4 +++-
-> >  arch/x86/include/uapi/asm/processor-flags.h |  2 ++
-> >  arch/x86/kernel/fpu/xstate.c                | 10 ++++++++++
-> >  4 files changed, 37 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/arch/x86/include/asm/fpu/types.h
-> > b/arch/x86/include/asm/fpu/types.h
-> > index 202c53918ecf..e55d51d172f1 100644
-> > --- a/arch/x86/include/asm/fpu/types.h
-> > +++ b/arch/x86/include/asm/fpu/types.h
-> > @@ -114,6 +114,9 @@ enum xfeature {
-> >         XFEATURE_Hi16_ZMM,
-> >         XFEATURE_PT_UNIMPLEMENTED_SO_FAR,
-> >         XFEATURE_PKRU,
-> > +       XFEATURE_RESERVED,
-> > +       XFEATURE_SHSTK_USER,
-> > +       XFEATURE_SHSTK_KERNEL,
-> > 
-> >         XFEATURE_MAX,
-> >  };
-> > @@ -128,6 +131,8 @@ enum xfeature {
-> >  #define XFEATURE_MASK_Hi16_ZMM         (1 << XFEATURE_Hi16_ZMM)
-> >  #define XFEATURE_MASK_PT               (1 <<
-> > XFEATURE_PT_UNIMPLEMENTED_SO_FAR)
-> >  #define XFEATURE_MASK_PKRU             (1 << XFEATURE_PKRU)
-> > +#define XFEATURE_MASK_SHSTK_USER       (1 << XFEATURE_SHSTK_USER)
-> > +#define XFEATURE_MASK_SHSTK_KERNEL     (1 << XFEATURE_SHSTK_KERNEL)
-> > 
-> >  #define XFEATURE_MASK_FPSSE            (XFEATURE_MASK_FP |
-> > XFEATURE_MASK_SSE)
-> >  #define XFEATURE_MASK_AVX512           (XFEATURE_MASK_OPMASK \
-> > @@ -229,6 +234,23 @@ struct pkru_state {
-> >         u32                             pad;
-> >  } __packed;
-> > 
-> > +/*
-> > + * State component 11 is Control flow Enforcement user states
-> > + */
-> > +struct cet_user_state {
-> > +       u64 u_cet;      /* user control flow settings */
-> > +       u64 user_ssp;   /* user shadow stack pointer */
-> > +} __packed;
-> > +
-> > +/*
-> > + * State component 12 is Control flow Enforcement kernel states
-> > + */
-> > +struct cet_kernel_state {
-> > +       u64 kernel_ssp; /* kernel shadow stack */
-> > +       u64 pl1_ssp;    /* ring-1 shadow stack */
-> > +       u64 pl2_ssp;    /* ring-2 shadow stack */
-> > +} __packed;
-> > +
+On Thu, Nov 08, 2018 at 12:10:30PM -0800, Dave Hansen wrote:
+> On 11/8/18 12:05 PM, Andy Lutomirski wrote:
+> > Hmm.  The idea being that the SDK preserves RBP but not RSP.  That's
+> > not the most terrible thing in the world.  But could the SDK live with
+> > something more like my suggestion where the vDSO supplies a normal
+> > function that takes a struct containing registers that are visible to
+> > the enclave?  This would make it extremely awkward for the enclave to
+> > use the untrusted stack per se, but it would make it quite easy (I
+> > think) for the untrusted part of the SDK to allocate some extra memory
+> > and just tell the enclave that *that* memory is the stack.
 > 
-> Why are these __packed?  It seems like it'll generate bad code for no
-> obvious purpose.
+> I really think the enclave should keep its grubby mitts off the
+> untrusted stack.  There are lots of ways to get memory, even with
+> stack-like semantics, that don't involve mucking with the stack itself.
+> 
+> I have not heard a good, hard argument for why there is an absolute
+> *need* to store things on the actual untrusted stack.
 
-That prevents any possibility that the compiler will insert padding, although in
-64-bit kernel this should not happen to either struct.  Also all xstate
-components here are packed.
+Convenience and performance are the only arguments I've heard, e.g. so
+that allocating memory doesn't require an extra EEXIT->EENTER round trip.
 
-Yu-cheng
+> We could quite easily have the untrusted code just promise to allocate a
+> stack-sized virtual area (even derived from the stack rlimit size) and
+> pass that into the enclave for parameter use.
+
+I agree more and more the further I dig.  AFAIK there is no need to for
+the enclave to actually load %rsp.  The initial EENTER can pass in the
+base/top of the pseudo-stack and from there the enclave can manage it
+purely in software.
