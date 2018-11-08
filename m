@@ -1,87 +1,80 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Thu, 08 Nov 2018 21:23:35 +0100
-Message-ID: <87bm6z71yw.fsf@oldenburg.str.redhat.com>
-References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
- <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
- <87bm6zaa04.fsf@oldenburg.str.redhat.com>
- <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
+ shadow stack
+Date: Thu, 08 Nov 2018 12:40:02 -0800
+Message-ID: <bb049aa9578bae7cfc6bd7c05b540f033f6685cc.camel@intel.com>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+         <20181011151523.27101-5-yu-cheng.yu@intel.com>
+         <20181108184038.GJ7543@zn.tnic>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20181108201231.GE5481@ram.oc3035372033.ibm.com> (Ram Pai's
- message of "Thu, 8 Nov 2018 12:12:31 -0800")
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Ram Pai <linuxram@us.ibm.com>
-Cc: linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, linuxppc-dev@lists.ozlabs.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181108184038.GJ7543@zn.tnic>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Borislav Petkov <bp@alien8.de>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-* Ram Pai:
+On Thu, 2018-11-08 at 19:40 +0100, Borislav Petkov wrote:
+> On Thu, Oct 11, 2018 at 08:15:00AM -0700, Yu-cheng Yu wrote:
+> > [...] 
+> > +/*
+> > + * State component 11 is Control flow Enforcement user states
+> 
+> Why the Camel-cased naming?
+> 
+> "Control" then "flow" then capitalized again "Enforcement".
+> 
+> Fix all occurrences pls, especially the user-visible strings.
 
-> Florian,
->
-> 	I can. But I am struggling to understand the requirement. Why is
-> 	this needed?  Are we proposing a enhancement to the sys_pkey_alloc(),
-> 	to be able to allocate keys that are initialied to disable-read
-> 	only?
+I will change it to "Control-flow Enforcement" everywhere.
 
-Yes, I think that would be a natural consequence.
+> > + */
+> > +struct cet_user_state {
+> > +	u64 u_cet;	/* user control flow settings */
+> > +	u64 user_ssp;	/* user shadow stack pointer */
+> 
+> Prefix both with "usr_" instead.
 
-However, my immediate need comes from the fact that the AMR register can
-contain a flag combination that is not possible to represent with the
-existing PKEY_DISABLE_WRITE and PKEY_DISABLE_ACCESS flags.  User code
-could write to AMR directly, so I cannot rule out that certain flag
-combinations exist there.
+Ok.
 
-So I came up with this:
+> [...]
+> 
+> Just write "privilege level" everywhere - not "ring".
+> 
+> Btw, do you see how the type and the name of all those other fields in
+> that file are tabulated? Except yours...
 
-int
-pkey_get (int key)
-{
-  if (key < 0 || key > PKEY_MAX)
-    {
-      __set_errno (EINVAL);
-      return -1;
-    }
-  unsigned int index = pkey_index (key);
-  unsigned long int amr = pkey_read ();
-  unsigned int bits = (amr >> index) & 3;
+I will fix it.
 
-  /* Translate from AMR values.  PKEY_AMR_READ standing alone is not
-     currently representable.  */
-  if (bits & PKEY_AMR_READ)
-    return PKEY_DISABLE_ACCESS;
-  else if (bits == PKEY_AMR_WRITE)
-    return PKEY_DISABLE_WRITE;
-  return 0;
-}
+[...] 
+> > 
+> > diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+> > index 605ec6decf3e..ad36ea28bfd1 100644
+> > --- a/arch/x86/kernel/fpu/xstate.c
+> > +++ b/arch/x86/kernel/fpu/xstate.c
+> > @@ -35,6 +35,9 @@ static const char *xfeature_names[] =
+> >  	"Processor Trace (unused)"	,
+> >  	"Protection Keys User registers",
+> >  	"unknown xstate feature"	,
+> > +	"Control flow User registers"	,
+> > +	"Control flow Kernel registers"	,
+> > +	"unknown xstate feature"	,
+> 
+> So there are two "unknown xstate feature" array elems now...
+> 
+> >  static short xsave_cpuid_features[] __initdata = {
+> > @@ -48,6 +51,9 @@ static short xsave_cpuid_features[] __initdata = {
+> >  	X86_FEATURE_AVX512F,
+> >  	X86_FEATURE_INTEL_PT,
+> >  	X86_FEATURE_PKU,
+> > +	0,		   /* Unused */
+> 
+> What's that for?
 
-And this is not ideal.  I would prefer something like this instead:
+In fpu_init_system_xstate(), we test and clear features that are not enabled.
+There we depend on the order of these elements.  This is the tenth "unknown
+xstate feature".
 
-  switch (bits)
-    {
-      case PKEY_AMR_READ | PKEY_AMR_WRITE:
-        return PKEY_DISABLE_ACCESS;
-      case PKEY_AMR_READ:
-        return PKEY_DISABLE_READ;
-      case PKEY_AMR_WRITE:
-        return PKEY_DISABLE_WRITE;
-      case 0:
-        return 0;
-    }
-
-By the way, is the AMR register 64-bit or 32-bit on 32-bit POWER?
-
-Thanks,
-Florian
+Yu-cheng
