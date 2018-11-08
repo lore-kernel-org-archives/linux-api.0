@@ -1,162 +1,46 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
- shadow stack
-Date: Thu, 8 Nov 2018 19:40:38 +0100
-Message-ID: <20181108184038.GJ7543@zn.tnic>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
- <20181011151523.27101-5-yu-cheng.yu@intel.com>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
+Date: Thu, 8 Nov 2018 11:22:26 -0800
+Message-ID: <20181108192226.GC5481@ram.oc3035372033.ibm.com>
+References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
+Reply-To: Ram Pai <linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181011151523.27101-5-yu-cheng.yu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: linux-api@vger.kernel.org, dave.hansen@intel.com, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 11, 2018 at 08:15:00AM -0700, Yu-cheng Yu wrote:
-> Intel Control-flow Enforcement Technology (CET) introduces the
-> following MSRs into the XSAVES system states.
+On Thu, Nov 08, 2018 at 01:05:09PM +0100, Florian Weimer wrote:
+> Would it be possible to reserve a bit for PKEY_DISABLE_READ?
 > 
->     IA32_U_CET (user-mode CET settings),
->     IA32_PL3_SSP (user-mode shadow stack),
->     IA32_PL0_SSP (kernel-mode shadow stack),
->     IA32_PL1_SSP (ring-1 shadow stack),
->     IA32_PL2_SSP (ring-2 shadow stack).
+> I think the POWER implementation can disable read access at the hardware
+> level, but not write access, and that cannot be expressed with the
+> current PKEY_DISABLE_ACCESS and PKEY_DISABLE_WRITE bits.
 
-And?
+POWER hardware can disable-read and can **also disable-write**
+at the hardware level. It can disable-execute aswell at the
+hardware level.   For example if the key bits for a given key in the AMR
+register is  
+	0b01  it is read-disable
+	0b10  it is write-disable
 
-That commit message got chopped off here, it seems.
+To support access-disable, we make the key value 0b11.
 
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> ---
->  arch/x86/include/asm/fpu/types.h            | 22 +++++++++++++++++++++
->  arch/x86/include/asm/fpu/xstate.h           |  4 +++-
->  arch/x86/include/uapi/asm/processor-flags.h |  2 ++
->  arch/x86/kernel/fpu/xstate.c                | 10 ++++++++++
->  4 files changed, 37 insertions(+), 1 deletion(-)
-> 
-> diff --git a/arch/x86/include/asm/fpu/types.h b/arch/x86/include/asm/fpu/types.h
-> index 202c53918ecf..e55d51d172f1 100644
-> --- a/arch/x86/include/asm/fpu/types.h
-> +++ b/arch/x86/include/asm/fpu/types.h
-> @@ -114,6 +114,9 @@ enum xfeature {
->  	XFEATURE_Hi16_ZMM,
->  	XFEATURE_PT_UNIMPLEMENTED_SO_FAR,
->  	XFEATURE_PKRU,
-> +	XFEATURE_RESERVED,
-> +	XFEATURE_SHSTK_USER,
-> +	XFEATURE_SHSTK_KERNEL,
->  
->  	XFEATURE_MAX,
->  };
-> @@ -128,6 +131,8 @@ enum xfeature {
->  #define XFEATURE_MASK_Hi16_ZMM		(1 << XFEATURE_Hi16_ZMM)
->  #define XFEATURE_MASK_PT		(1 << XFEATURE_PT_UNIMPLEMENTED_SO_FAR)
->  #define XFEATURE_MASK_PKRU		(1 << XFEATURE_PKRU)
-> +#define XFEATURE_MASK_SHSTK_USER	(1 << XFEATURE_SHSTK_USER)
-> +#define XFEATURE_MASK_SHSTK_KERNEL	(1 << XFEATURE_SHSTK_KERNEL)
->  
->  #define XFEATURE_MASK_FPSSE		(XFEATURE_MASK_FP | XFEATURE_MASK_SSE)
->  #define XFEATURE_MASK_AVX512		(XFEATURE_MASK_OPMASK \
-> @@ -229,6 +234,23 @@ struct pkru_state {
->  	u32				pad;
->  } __packed;
->  
-> +/*
-> + * State component 11 is Control flow Enforcement user states
+So in case if you want to know if the key is read-disable 'bitwise-and' it
+against 0x1.  i.e  (x & 0x1)
 
-Why the Camel-cased naming?
-
-"Control" then "flow" then capitalized again "Enforcement".
-
-Fix all occurrences pls, especially the user-visible strings.
-
-> + */
-> +struct cet_user_state {
-> +	u64 u_cet;	/* user control flow settings */
-> +	u64 user_ssp;	/* user shadow stack pointer */
-
-Prefix both with "usr_" instead.
-
-> +} __packed;
-> +
-> +/*
-> + * State component 12 is Control flow Enforcement kernel states
-> + */
-> +struct cet_kernel_state {
-> +	u64 kernel_ssp;	/* kernel shadow stack */
-> +	u64 pl1_ssp;	/* ring-1 shadow stack */
-> +	u64 pl2_ssp;	/* ring-2 shadow stack */
-
-Just write "privilege level" everywhere - not "ring".
-
-Btw, do you see how the type and the name of all those other fields in
-that file are tabulated? Except yours...
-
-> +} __packed;
-> +
->  struct xstate_header {
->  	u64				xfeatures;
->  	u64				xcomp_bv;
-> diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
-> index d8e2ec99f635..18b60748a34d 100644
-> --- a/arch/x86/include/asm/fpu/xstate.h
-> +++ b/arch/x86/include/asm/fpu/xstate.h
-> @@ -28,7 +28,9 @@
->  				  XFEATURE_MASK_Hi16_ZMM | \
->  				  XFEATURE_MASK_PKRU | \
->  				  XFEATURE_MASK_BNDREGS | \
-> -				  XFEATURE_MASK_BNDCSR)
-> +				  XFEATURE_MASK_BNDCSR | \
-> +				  XFEATURE_MASK_SHSTK_USER | \
-> +				  XFEATURE_MASK_SHSTK_KERNEL)
->  
->  #ifdef CONFIG_X86_64
->  #define REX_PREFIX	"0x48, "
-> diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
-> index bcba3c643e63..25311ec4b731 100644
-> --- a/arch/x86/include/uapi/asm/processor-flags.h
-> +++ b/arch/x86/include/uapi/asm/processor-flags.h
-> @@ -130,6 +130,8 @@
->  #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
->  #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
->  #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
-> +#define X86_CR4_CET_BIT		23 /* enable Control flow Enforcement */
-> +#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
->  
->  /*
->   * x86-64 Task Priority Register, CR8
-> diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-> index 605ec6decf3e..ad36ea28bfd1 100644
-> --- a/arch/x86/kernel/fpu/xstate.c
-> +++ b/arch/x86/kernel/fpu/xstate.c
-> @@ -35,6 +35,9 @@ static const char *xfeature_names[] =
->  	"Processor Trace (unused)"	,
->  	"Protection Keys User registers",
->  	"unknown xstate feature"	,
-> +	"Control flow User registers"	,
-> +	"Control flow Kernel registers"	,
-> +	"unknown xstate feature"	,
-
-So there are two "unknown xstate feature" array elems now...
-
->  static short xsave_cpuid_features[] __initdata = {
-> @@ -48,6 +51,9 @@ static short xsave_cpuid_features[] __initdata = {
->  	X86_FEATURE_AVX512F,
->  	X86_FEATURE_INTEL_PT,
->  	X86_FEATURE_PKU,
-> +	0,		   /* Unused */
-
-What's that for?
-
-> +	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_USER */
-> +	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_KERNEL */
->  };
-
--- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+RP
