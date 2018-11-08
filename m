@@ -1,96 +1,58 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
- shadow stack
-Date: Thu, 8 Nov 2018 14:01:42 -0800
-Message-ID: <CALCETrXNt6nEMu9bbK7GizoeC+rphi8ZK0dDsHiVgOCQj1eQEA@mail.gmail.com>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com> <20181011151523.27101-5-yu-cheng.yu@intel.com>
- <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
- <4295b8f786c10c469870a6d9725749ce75dcdaa2.camel@intel.com>
- <CALCETrUKzXYzRrWRdi8Z7AdAF0uZW5Gs7J4s=55dszoyzc29rw@mail.gmail.com> <20181108213126.GD13195@uranus.lan>
+From: Sean Christopherson <sean.j.christopherson@intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Thu, 8 Nov 2018 14:04:16 -0800
+Message-ID: <20181108220416.GA18263@linux.intel.com>
+References: <CALCETrWBV=1JbAKYn2Jy2LxkGZQvKRtFRnrWUMoejrwQe73VHw@mail.gmail.com>
+ <b9c53669-cd27-e3bc-3d62-f47c77029c43@intel.com>
+ <1C426267-492F-4AE7-8BE8-C7FE278531F9@amacapital.net>
+ <209cf4a5-eda9-2495-539f-fed22252cf02@intel.com>
+ <9B76E95B-5745-412E-8007-7FAA7F83D6FB@amacapital.net>
+ <20181108195420.GA14715@linux.intel.com>
+ <CALCETrUCQbPMfBJVRRg=0apEU=2U2ps74UPTrN8bFqi1k0K4VA@mail.gmail.com>
+ <7027c3dc-addb-1b96-027e-a57fccf1f812@intel.com>
+ <20181108211600.GA17167@linux.intel.com>
+ <7d965299-0402-f730-6e1a-515a836a3956@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181108213126.GD13195@uranus.lan>
+Content-Disposition: inline
+In-Reply-To: <7d965299-0402-f730-6e1a-515a836a3956@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Cyrill Gorcunov <gorcunov@gmail.com>
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.ami>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 8, 2018 at 1:31 PM Cyrill Gorcunov <gorcunov@gmail.com> wrote:
->
-> On Thu, Nov 08, 2018 at 01:22:54PM -0800, Andy Lutomirski wrote:
-> > > >
-> > > > Why are these __packed?  It seems like it'll generate bad code for no
-> > > > obvious purpose.
-> > >
-> > > That prevents any possibility that the compiler will insert padding, although in
-> > > 64-bit kernel this should not happen to either struct.  Also all xstate
-> > > components here are packed.
-> > >
-> >
-> > They both seem like bugs, perhaps.  As I understand it, __packed
-> > removes padding, but it also forces the compiler to expect the fields
-> > to be unaligned even if they are actually aligned.
->
-> How is that? Andy, mind to point where you get that this
-> attribute forces compiler to make such assumption?
+On Thu, Nov 08, 2018 at 01:50:31PM -0800, Dave Hansen wrote:
+> On 11/8/18 1:16 PM, Sean Christopherson wrote:
+> > On Thu, Nov 08, 2018 at 12:10:30PM -0800, Dave Hansen wrote:
+> >> On 11/8/18 12:05 PM, Andy Lutomirski wrote:
+> >>> Hmm.  The idea being that the SDK preserves RBP but not RSP.  That's
+> >>> not the most terrible thing in the world.  But could the SDK live with
+> >>> something more like my suggestion where the vDSO supplies a normal
+> >>> function that takes a struct containing registers that are visible to
+> >>> the enclave?  This would make it extremely awkward for the enclave to
+> >>> use the untrusted stack per se, but it would make it quite easy (I
+> >>> think) for the untrusted part of the SDK to allocate some extra memory
+> >>> and just tell the enclave that *that* memory is the stack.
+> >>
+> >> I really think the enclave should keep its grubby mitts off the
+> >> untrusted stack.  There are lots of ways to get memory, even with
+> >> stack-like semantics, that don't involve mucking with the stack itself.
+> >>
+> >> I have not heard a good, hard argument for why there is an absolute
+> >> *need* to store things on the actual untrusted stack.
+> > 
+> > Convenience and performance are the only arguments I've heard, e.g. so
+> > that allocating memory doesn't require an extra EEXIT->EENTER round trip.
+> 
+> Well, for the first access, it's going to cost a bunch asynchronous
+> exits to fault in all the stack pages.  Instead of that, if you had a
+> single area, or an explicit out-call to allocate and populate the area,
+> you could do it in a single EEXIT and zero asynchronous exits for demand
+> page faults.
+> 
+> So, it might be convenient, but I'm rather suspicious of any performance
+> arguments.
 
-It's from memory.  But gcc seems to agree with me I compiled this:
-
-struct foo {
-    int x;
-} __attribute__((packed));
-
-int read_foo(struct foo *f)
-{
-    return f->x;
-}
-
-int align_of_foo_x(struct foo *f)
-{
-    return __alignof__(f->x);
-}
-
-Compiling with -O2 gives:
-
-    .globl    read_foo
-    .type    read_foo, @function
-read_foo:
-    movl    (%rdi), %eax
-    ret
-    .size    read_foo, .-read_foo
-
-    .p2align 4,,15
-    .globl    align_of_foo_x
-    .type    align_of_foo_x, @function
-align_of_foo_x:
-    movl    $1, %eax
-    ret
-    .size    align_of_foo_x, .-align_of_foo_x
-
-So gcc thinks that the x field is one-byte-aligned, but the code is
-okay (at least in this instance) on x86.
-Building for armv5 gives:
-
-    .type    read_foo, %function
-read_foo:
-    @ args = 0, pretend = 0, frame = 0
-    @ frame_needed = 0, uses_anonymous_args = 0
-    @ link register save eliminated.
-    ldrb    r3, [r0]    @ zero_extendqisi2
-    ldrb    r1, [r0, #1]    @ zero_extendqisi2
-    ldrb    r2, [r0, #2]    @ zero_extendqisi2
-    orr    r3, r3, r1, lsl #8
-    ldrb    r0, [r0, #3]    @ zero_extendqisi2
-    orr    r3, r3, r2, lsl #16
-    orr    r0, r3, r0, lsl #24
-    bx    lr
-    .size    read_foo, .-read_foo
-    .align    2
-    .global    align_of_foo_x
-    .syntax unified
-    .arm
-    .fpu vfpv3-d16
-    .type    align_of_foo_x, %function
-
-So I'm pretty sure I'm right.
+Ya, I meant versus doing an EEXIT on every allocation, i.e. a very
+naive allocation scheme.
