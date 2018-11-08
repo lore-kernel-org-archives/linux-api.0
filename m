@@ -1,62 +1,96 @@
-From: Matthew Wilcox <willy@infradead.org>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
  shadow stack
-Date: Thu, 8 Nov 2018 14:00:54 -0800
-Message-ID: <20181108220054.GP3074@bombadil.infradead.org>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
- <20181011151523.27101-5-yu-cheng.yu@intel.com>
+Date: Thu, 8 Nov 2018 14:01:42 -0800
+Message-ID: <CALCETrXNt6nEMu9bbK7GizoeC+rphi8ZK0dDsHiVgOCQj1eQEA@mail.gmail.com>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com> <20181011151523.27101-5-yu-cheng.yu@intel.com>
  <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
  <4295b8f786c10c469870a6d9725749ce75dcdaa2.camel@intel.com>
- <CALCETrUKzXYzRrWRdi8Z7AdAF0uZW5Gs7J4s=55dszoyzc29rw@mail.gmail.com>
- <043a17ef-dc9f-56d2-5fba-1a58b7b0fd4d@intel.com>
+ <CALCETrUKzXYzRrWRdi8Z7AdAF0uZW5Gs7J4s=55dszoyzc29rw@mail.gmail.com> <20181108213126.GD13195@uranus.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <043a17ef-dc9f-56d2-5fba-1a58b7b0fd4d@intel.com>
+In-Reply-To: <20181108213126.GD13195@uranus.lan>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook>
+To: Cyrill Gorcunov <gorcunov@gmail.com>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.ami>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 08, 2018 at 01:48:54PM -0800, Dave Hansen wrote:
-> On 11/8/18 1:22 PM, Andy Lutomirski wrote:
-> >> +struct cet_kernel_state {
-> >> +       u64 kernel_ssp; /* kernel shadow stack */
-> >> +       u64 pl1_ssp;    /* ring-1 shadow stack */
-> >> +       u64 pl2_ssp;    /* ring-2 shadow stack */
-> >> +} __packed;
-> >> +
-> > Why are these __packed?  It seems like it'll generate bad code for no
-> > obvious purpose.
-> 
-> It's a hardware-defined in-memory structure.  Granted, we'd need a
-> really wonky compiler to make that anything *other* than a nicely-packed
-> 24-byte structure, but the __packed makes it explicit.
-> 
-> It is probably a really useful long-term thing to stop using __packed
-> and start using "__hw_defined" or something that #defines down to __packed.
+On Thu, Nov 8, 2018 at 1:31 PM Cyrill Gorcunov <gorcunov@gmail.com> wrote:
+>
+> On Thu, Nov 08, 2018 at 01:22:54PM -0800, Andy Lutomirski wrote:
+> > > >
+> > > > Why are these __packed?  It seems like it'll generate bad code for no
+> > > > obvious purpose.
+> > >
+> > > That prevents any possibility that the compiler will insert padding, although in
+> > > 64-bit kernel this should not happen to either struct.  Also all xstate
+> > > components here are packed.
+> > >
+> >
+> > They both seem like bugs, perhaps.  As I understand it, __packed
+> > removes padding, but it also forces the compiler to expect the fields
+> > to be unaligned even if they are actually aligned.
+>
+> How is that? Andy, mind to point where you get that this
+> attribute forces compiler to make such assumption?
 
-packed doesn't mean "don't leave gaps".  It means:
+It's from memory.  But gcc seems to agree with me I compiled this:
 
-'packed'
-     The 'packed' attribute specifies that a variable or structure field
-     should have the smallest possible alignment--one byte for a
-     variable, and one bit for a field, unless you specify a larger
-     value with the 'aligned' attribute.
+struct foo {
+    int x;
+} __attribute__((packed));
 
-So Andy's right.  It tells the compiler, "this struct will not be naturally aligned, it will be aligned to a 1-byte boundary".  Which is silly.  If we have
+int read_foo(struct foo *f)
+{
+    return f->x;
+}
 
-struct b {
-	unsigned long x;
-} __packed;
+int align_of_foo_x(struct foo *f)
+{
+    return __alignof__(f->x);
+}
 
-struct a {
-	char c;
-	struct b b;
-};
+Compiling with -O2 gives:
 
-we want struct b to start at offset 8, but with __packed, it will start
-at offset 1.
+    .globl    read_foo
+    .type    read_foo, @function
+read_foo:
+    movl    (%rdi), %eax
+    ret
+    .size    read_foo, .-read_foo
 
-Delete __packed.  It doesn't do what you think it does.
+    .p2align 4,,15
+    .globl    align_of_foo_x
+    .type    align_of_foo_x, @function
+align_of_foo_x:
+    movl    $1, %eax
+    ret
+    .size    align_of_foo_x, .-align_of_foo_x
+
+So gcc thinks that the x field is one-byte-aligned, but the code is
+okay (at least in this instance) on x86.
+Building for armv5 gives:
+
+    .type    read_foo, %function
+read_foo:
+    @ args = 0, pretend = 0, frame = 0
+    @ frame_needed = 0, uses_anonymous_args = 0
+    @ link register save eliminated.
+    ldrb    r3, [r0]    @ zero_extendqisi2
+    ldrb    r1, [r0, #1]    @ zero_extendqisi2
+    ldrb    r2, [r0, #2]    @ zero_extendqisi2
+    orr    r3, r3, r1, lsl #8
+    ldrb    r0, [r0, #3]    @ zero_extendqisi2
+    orr    r3, r3, r2, lsl #16
+    orr    r0, r3, r0, lsl #24
+    bx    lr
+    .size    read_foo, .-read_foo
+    .align    2
+    .global    align_of_foo_x
+    .syntax unified
+    .arm
+    .fpu vfpv3-d16
+    .type    align_of_foo_x, %function
+
+So I'm pretty sure I'm right.
