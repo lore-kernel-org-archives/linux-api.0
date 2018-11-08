@@ -1,58 +1,35 @@
-From: Sean Christopherson <sean.j.christopherson@intel.com>
-Subject: Re: RFC: userspace exception fixups
-Date: Thu, 8 Nov 2018 14:04:16 -0800
-Message-ID: <20181108220416.GA18263@linux.intel.com>
-References: <CALCETrWBV=1JbAKYn2Jy2LxkGZQvKRtFRnrWUMoejrwQe73VHw@mail.gmail.com>
- <b9c53669-cd27-e3bc-3d62-f47c77029c43@intel.com>
- <1C426267-492F-4AE7-8BE8-C7FE278531F9@amacapital.net>
- <209cf4a5-eda9-2495-539f-fed22252cf02@intel.com>
- <9B76E95B-5745-412E-8007-7FAA7F83D6FB@amacapital.net>
- <20181108195420.GA14715@linux.intel.com>
- <CALCETrUCQbPMfBJVRRg=0apEU=2U2ps74UPTrN8bFqi1k0K4VA@mail.gmail.com>
- <7027c3dc-addb-1b96-027e-a57fccf1f812@intel.com>
- <20181108211600.GA17167@linux.intel.com>
- <7d965299-0402-f730-6e1a-515a836a3956@intel.com>
+From: Cyrill Gorcunov <gorcunov@gmail.com>
+Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
+ shadow stack
+Date: Fri, 9 Nov 2018 01:18:04 +0300
+Message-ID: <20181108221804.GE13195@uranus.lan>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-5-yu-cheng.yu@intel.com>
+ <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
+ <4295b8f786c10c469870a6d9725749ce75dcdaa2.camel@intel.com>
+ <CALCETrUKzXYzRrWRdi8Z7AdAF0uZW5Gs7J4s=55dszoyzc29rw@mail.gmail.com>
+ <20181108213126.GD13195@uranus.lan>
+ <CALCETrXNt6nEMu9bbK7GizoeC+rphi8ZK0dDsHiVgOCQj1eQEA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <7d965299-0402-f730-6e1a-515a836a3956@intel.com>
+In-Reply-To: <CALCETrXNt6nEMu9bbK7GizoeC+rphi8ZK0dDsHiVgOCQj1eQEA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Andy Lutomirski <luto@amacapital.net>, Andrew Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.ami>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 08, 2018 at 01:50:31PM -0800, Dave Hansen wrote:
-> On 11/8/18 1:16 PM, Sean Christopherson wrote:
-> > On Thu, Nov 08, 2018 at 12:10:30PM -0800, Dave Hansen wrote:
-> >> On 11/8/18 12:05 PM, Andy Lutomirski wrote:
-> >>> Hmm.  The idea being that the SDK preserves RBP but not RSP.  That's
-> >>> not the most terrible thing in the world.  But could the SDK live with
-> >>> something more like my suggestion where the vDSO supplies a normal
-> >>> function that takes a struct containing registers that are visible to
-> >>> the enclave?  This would make it extremely awkward for the enclave to
-> >>> use the untrusted stack per se, but it would make it quite easy (I
-> >>> think) for the untrusted part of the SDK to allocate some extra memory
-> >>> and just tell the enclave that *that* memory is the stack.
-> >>
-> >> I really think the enclave should keep its grubby mitts off the
-> >> untrusted stack.  There are lots of ways to get memory, even with
-> >> stack-like semantics, that don't involve mucking with the stack itself.
-> >>
-> >> I have not heard a good, hard argument for why there is an absolute
-> >> *need* to store things on the actual untrusted stack.
-> > 
-> > Convenience and performance are the only arguments I've heard, e.g. so
-> > that allocating memory doesn't require an extra EEXIT->EENTER round trip.
+On Thu, Nov 08, 2018 at 02:01:42PM -0800, Andy Lutomirski wrote:
+> > >
+> > > They both seem like bugs, perhaps.  As I understand it, __packed
+> > > removes padding, but it also forces the compiler to expect the fields
+> > > to be unaligned even if they are actually aligned.
+> >
+> > How is that? Andy, mind to point where you get that this
+> > attribute forces compiler to make such assumption?
 > 
-> Well, for the first access, it's going to cost a bunch asynchronous
-> exits to fault in all the stack pages.  Instead of that, if you had a
-> single area, or an explicit out-call to allocate and populate the area,
-> you could do it in a single EEXIT and zero asynchronous exits for demand
-> page faults.
+> It's from memory.  But gcc seems to agree with me I compiled this:
 > 
-> So, it might be convenient, but I'm rather suspicious of any performance
-> arguments.
 
-Ya, I meant versus doing an EEXIT on every allocation, i.e. a very
-naive allocation scheme.
+Indeed, thanks!
