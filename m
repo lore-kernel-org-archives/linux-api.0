@@ -1,55 +1,162 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: RFC: userspace exception fixups
-Date: Thu, 8 Nov 2018 17:11:56 +0200
-Message-ID: <20181108151156.GC14072@linux.intel.com>
-References: <1541518670.7839.31.camel@intel.com>
- <AF4A5C77-0A79-403F-A205-0F93B7CD6E26@amacapital.net>
- <1541524750.7839.51.camel@intel.com>
- <22596E35-F5D1-4935-86AB-B510DCA0FABE@amacapital.net>
- <c9659222-efc6-b73a-ce48-30be8bdc5397@intel.com>
- <CALCETrWBV=1JbAKYn2Jy2LxkGZQvKRtFRnrWUMoejrwQe73VHw@mail.gmail.com>
- <20181106231730.GR5150@brightrain.aerifal.cx>
- <20181106232616.GA11101@linux.intel.com>
- <20181107212758.GU5150@brightrain.aerifal.cx>
- <20181107214058.GG27170@linux.intel.com>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
+ shadow stack
+Date: Thu, 8 Nov 2018 19:40:38 +0100
+Message-ID: <20181108184038.GJ7543@zn.tnic>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-5-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181107214058.GG27170@linux.intel.com>
+In-Reply-To: <20181011151523.27101-5-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sean Christopherson <sean.j.christopherson@intel.com>
-Cc: Rich Felker <dalias@libc.org>, Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 07, 2018 at 01:40:59PM -0800, Sean Christopherson wrote:
-> > In that case it seems like the only way to use SGX that's not a gaping
-> > security hole is to run the SGX enclave in its own fully-seccomp (or
-> > equivalent) process, with no host application in the same address
-> > space. Since the host application can't see the contents of the
-> > enclave to make any determination of whether it's safe to run, running
-> > it in the same address space only makes sense if the cpu provides
-> > protection against unwanted accesses to the host's memory from the
-> > enclave -- and according to you, it doesn't.
+On Thu, Oct 11, 2018 at 08:15:00AM -0700, Yu-cheng Yu wrote:
+> Intel Control-flow Enforcement Technology (CET) introduces the
+> following MSRs into the XSAVES system states.
 > 
-> The enclave's code (and any initial data) isn't encrypted until the
-> pages are loaded into the Enclave Page Cache (EPC), which can only
-> be done by the kernel (via ENCLS[EADD]).  In other words, both the
-> kernel and userspace can vet the code/data before running an enclave.
+>     IA32_U_CET (user-mode CET settings),
+>     IA32_PL3_SSP (user-mode shadow stack),
+>     IA32_PL0_SSP (kernel-mode shadow stack),
+>     IA32_PL1_SSP (ring-1 shadow stack),
+>     IA32_PL2_SSP (ring-2 shadow stack).
+
+And?
+
+That commit message got chopped off here, it seems.
+
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/asm/fpu/types.h            | 22 +++++++++++++++++++++
+>  arch/x86/include/asm/fpu/xstate.h           |  4 +++-
+>  arch/x86/include/uapi/asm/processor-flags.h |  2 ++
+>  arch/x86/kernel/fpu/xstate.c                | 10 ++++++++++
+>  4 files changed, 37 insertions(+), 1 deletion(-)
 > 
-> Practically speaking, an enclave will be coupled with an untrusted
-> userspace runtime, i.e. it's loader.  Enclaves are also measured
-> as part of their build process, and so the enclave loader needs to
-> know which pages to add to the measurement, and in what order.  I
-> guess technically speaking an enclave could have zero pages added
-> to its measurement, but that'd probably be a big red flag that said
-> enclave is up to something fishy.
+> diff --git a/arch/x86/include/asm/fpu/types.h b/arch/x86/include/asm/fpu/types.h
+> index 202c53918ecf..e55d51d172f1 100644
+> --- a/arch/x86/include/asm/fpu/types.h
+> +++ b/arch/x86/include/asm/fpu/types.h
+> @@ -114,6 +114,9 @@ enum xfeature {
+>  	XFEATURE_Hi16_ZMM,
+>  	XFEATURE_PT_UNIMPLEMENTED_SO_FAR,
+>  	XFEATURE_PKRU,
+> +	XFEATURE_RESERVED,
+> +	XFEATURE_SHSTK_USER,
+> +	XFEATURE_SHSTK_KERNEL,
+>  
+>  	XFEATURE_MAX,
+>  };
+> @@ -128,6 +131,8 @@ enum xfeature {
+>  #define XFEATURE_MASK_Hi16_ZMM		(1 << XFEATURE_Hi16_ZMM)
+>  #define XFEATURE_MASK_PT		(1 << XFEATURE_PT_UNIMPLEMENTED_SO_FAR)
+>  #define XFEATURE_MASK_PKRU		(1 << XFEATURE_PKRU)
+> +#define XFEATURE_MASK_SHSTK_USER	(1 << XFEATURE_SHSTK_USER)
+> +#define XFEATURE_MASK_SHSTK_KERNEL	(1 << XFEATURE_SHSTK_KERNEL)
+>  
+>  #define XFEATURE_MASK_FPSSE		(XFEATURE_MASK_FP | XFEATURE_MASK_SSE)
+>  #define XFEATURE_MASK_AVX512		(XFEATURE_MASK_OPMASK \
+> @@ -229,6 +234,23 @@ struct pkru_state {
+>  	u32				pad;
+>  } __packed;
+>  
+> +/*
+> + * State component 11 is Control flow Enforcement user states
 
-IMHO the whole idea adds too much policy into kernel even if it would
-be doable. You can easily spawn untrusted run-time and enclave to its
-own process.
+Why the Camel-cased naming?
 
-Seccomp limits the syscall space and enclaves cannot do syscalls in the
-first place. It is the URT that will do them behalf of the enclave.
+"Control" then "flow" then capitalized again "Enforcement".
 
-/Jarkko
+Fix all occurrences pls, especially the user-visible strings.
+
+> + */
+> +struct cet_user_state {
+> +	u64 u_cet;	/* user control flow settings */
+> +	u64 user_ssp;	/* user shadow stack pointer */
+
+Prefix both with "usr_" instead.
+
+> +} __packed;
+> +
+> +/*
+> + * State component 12 is Control flow Enforcement kernel states
+> + */
+> +struct cet_kernel_state {
+> +	u64 kernel_ssp;	/* kernel shadow stack */
+> +	u64 pl1_ssp;	/* ring-1 shadow stack */
+> +	u64 pl2_ssp;	/* ring-2 shadow stack */
+
+Just write "privilege level" everywhere - not "ring".
+
+Btw, do you see how the type and the name of all those other fields in
+that file are tabulated? Except yours...
+
+> +} __packed;
+> +
+>  struct xstate_header {
+>  	u64				xfeatures;
+>  	u64				xcomp_bv;
+> diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
+> index d8e2ec99f635..18b60748a34d 100644
+> --- a/arch/x86/include/asm/fpu/xstate.h
+> +++ b/arch/x86/include/asm/fpu/xstate.h
+> @@ -28,7 +28,9 @@
+>  				  XFEATURE_MASK_Hi16_ZMM | \
+>  				  XFEATURE_MASK_PKRU | \
+>  				  XFEATURE_MASK_BNDREGS | \
+> -				  XFEATURE_MASK_BNDCSR)
+> +				  XFEATURE_MASK_BNDCSR | \
+> +				  XFEATURE_MASK_SHSTK_USER | \
+> +				  XFEATURE_MASK_SHSTK_KERNEL)
+>  
+>  #ifdef CONFIG_X86_64
+>  #define REX_PREFIX	"0x48, "
+> diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+> index bcba3c643e63..25311ec4b731 100644
+> --- a/arch/x86/include/uapi/asm/processor-flags.h
+> +++ b/arch/x86/include/uapi/asm/processor-flags.h
+> @@ -130,6 +130,8 @@
+>  #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
+>  #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
+>  #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
+> +#define X86_CR4_CET_BIT		23 /* enable Control flow Enforcement */
+> +#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
+>  
+>  /*
+>   * x86-64 Task Priority Register, CR8
+> diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+> index 605ec6decf3e..ad36ea28bfd1 100644
+> --- a/arch/x86/kernel/fpu/xstate.c
+> +++ b/arch/x86/kernel/fpu/xstate.c
+> @@ -35,6 +35,9 @@ static const char *xfeature_names[] =
+>  	"Processor Trace (unused)"	,
+>  	"Protection Keys User registers",
+>  	"unknown xstate feature"	,
+> +	"Control flow User registers"	,
+> +	"Control flow Kernel registers"	,
+> +	"unknown xstate feature"	,
+
+So there are two "unknown xstate feature" array elems now...
+
+>  static short xsave_cpuid_features[] __initdata = {
+> @@ -48,6 +51,9 @@ static short xsave_cpuid_features[] __initdata = {
+>  	X86_FEATURE_AVX512F,
+>  	X86_FEATURE_INTEL_PT,
+>  	X86_FEATURE_PKU,
+> +	0,		   /* Unused */
+
+What's that for?
+
+> +	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_USER */
+> +	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_KERNEL */
+>  };
+
+-- 
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
