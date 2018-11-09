@@ -1,39 +1,116 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
- shadow stack
-Date: Fri, 9 Nov 2018 09:28:40 -0800
-Message-ID: <1851ca3a-6470-7a9c-1aeb-930527458e16@intel.com>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
- <20181011151523.27101-5-yu-cheng.yu@intel.com>
- <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
- <4295b8f786c10c469870a6d9725749ce75dcdaa2.camel@intel.com>
- <CALCETrUKzXYzRrWRdi8Z7AdAF0uZW5Gs7J4s=55dszoyzc29rw@mail.gmail.com>
- <043a17ef-dc9f-56d2-5fba-1a58b7b0fd4d@intel.com>
- <20181108220054.GP3074@bombadil.infradead.org>
- <ead230ab-a904-50d6-c4cf-46d5804f6151@intel.com>
- <20181109003225.GQ3074@bombadil.infradead.org>
- <6cd2ae51-2d2a-9c68-df7c-45b49e0a813f@intel.com>
- <20181109171740.GT3074@bombadil.infradead.org>
- <ded6f43a-11d1-89bf-e00c-66c281786cff@intel.com>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
+Date: Fri, 9 Nov 2018 10:09:47 -0800
+Message-ID: <20181109180947.GF5481@ram.oc3035372033.ibm.com>
+References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
+ <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
+ <87bm6zaa04.fsf@oldenburg.str.redhat.com>
+ <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
+ <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
+ <20181108201231.GE5481@ram.oc3035372033.ibm.com>
+ <87bm6z71yw.fsf@oldenburg.str.redhat.com>
+Reply-To: Ram Pai <linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ded6f43a-11d1-89bf-e00c-66c281786cff@intel.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <87bm6z71yw.fsf@oldenburg.str.redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, linuxppc-dev@lists.ozlabs.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/9/18 9:20 AM, Dave Hansen wrote:
-> On 11/9/18 9:17 AM, Matthew Wilcox wrote:
->>> But, later versions of the hardware have instructions that don't have
->>> static offsets for the state components (when the XSAVES/XSAVEC
->>> instructions are used).  So, for those, the structure embedding isn't
->>> used at *all* since some state might not be present.
->> But *when present*, this structure is always aligned on an 8-byte
->> boundary, right?
+On Thu, Nov 08, 2018 at 09:23:35PM +0100, Florian Weimer wrote:
+> * Ram Pai:
+> 
+> > Florian,
+> >
+> > 	I can. But I am struggling to understand the requirement. Why is
+> > 	this needed?  Are we proposing a enhancement to the sys_pkey_alloc(),
+> > 	to be able to allocate keys that are initialied to disable-read
+> > 	only?
+> 
+> Yes, I think that would be a natural consequence.
+> 
+> However, my immediate need comes from the fact that the AMR register can
+> contain a flag combination that is not possible to represent with the
+> existing PKEY_DISABLE_WRITE and PKEY_DISABLE_ACCESS flags.  User code
+> could write to AMR directly, so I cannot rule out that certain flag
+> combinations exist there.
+> 
+> So I came up with this:
+> 
+> int
+> pkey_get (int key)
+> {
+>   if (key < 0 || key > PKEY_MAX)
+>     {
+>       __set_errno (EINVAL);
+>       return -1;
+>     }
+>   unsigned int index = pkey_index (key);
+>   unsigned long int amr = pkey_read ();
+>   unsigned int bits = (amr >> index) & 3;
+> 
+>   /* Translate from AMR values.  PKEY_AMR_READ standing alone is not
+>      currently representable.  */
+>   if (bits & PKEY_AMR_READ)
 
-Practically, though, I think it ends up always being aligned on an
-8-byte boundary.
+this should be
+   if (bits & (PKEY_AMR_READ|PKEY_AMR_WRITE))
+
+
+>     return PKEY_DISABLE_ACCESS;
+
+
+>   else if (bits == PKEY_AMR_WRITE)
+>     return PKEY_DISABLE_WRITE;
+>   return 0;
+> }
+> 
+> And this is not ideal.  I would prefer something like this instead:
+> 
+>   switch (bits)
+>     {
+>       case PKEY_AMR_READ | PKEY_AMR_WRITE:
+>         return PKEY_DISABLE_ACCESS;
+>       case PKEY_AMR_READ:
+>         return PKEY_DISABLE_READ;
+>       case PKEY_AMR_WRITE:
+>         return PKEY_DISABLE_WRITE;
+>       case 0:
+>         return 0;
+>     }
+
+yes.
+ and on x86 it will be something like:
+   switch (bits)
+     {
+       case PKEY_PKRU_ACCESS :
+         return PKEY_DISABLE_ACCESS;
+       case PKEY_AMR_WRITE:
+         return PKEY_DISABLE_WRITE;
+       case 0:
+         return 0;
+     }
+
+But for this to work, why do you need to enhance the sys_pkey_alloc()
+interface?  Not that I am against it. Trying to understand if the
+enhancement is really needed.
+
+> 
+> By the way, is the AMR register 64-bit or 32-bit on 32-bit POWER?
+
+It is 64-bit.
+
+RP
