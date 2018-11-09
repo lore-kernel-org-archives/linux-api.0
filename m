@@ -1,32 +1,51 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: RFC: userspace exception fixups
-Date: Thu, 8 Nov 2018 23:12:59 -0800
-Message-ID: <20181109071259.GA14784@infradead.org>
-References: <1541524750.7839.51.camel@intel.com>
- <22596E35-F5D1-4935-86AB-B510DCA0FABE@amacapital.net>
- <c9659222-efc6-b73a-ce48-30be8bdc5397@intel.com>
- <CALCETrWBV=1JbAKYn2Jy2LxkGZQvKRtFRnrWUMoejrwQe73VHw@mail.gmail.com>
- <b9c53669-cd27-e3bc-3d62-f47c77029c43@intel.com>
- <1C426267-492F-4AE7-8BE8-C7FE278531F9@amacapital.net>
- <209cf4a5-eda9-2495-539f-fed22252cf02@intel.com>
- <9B76E95B-5745-412E-8007-7FAA7F83D6FB@amacapital.net>
- <20181108195420.GA14715@linux.intel.com>
- <CALCETrUCQbPMfBJVRRg=0apEU=2U2ps74UPTrN8bFqi1k0K4VA@mail.gmail.com>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [PATCH v5 04/27] x86/fpu/xstate: Add XSAVES system states for
+ shadow stack
+Date: Fri, 9 Nov 2018 09:13:32 -0800
+Message-ID: <6cd2ae51-2d2a-9c68-df7c-45b49e0a813f@intel.com>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-5-yu-cheng.yu@intel.com>
+ <CALCETrVAe8R=crVHoD5QmbN-gAW+V-Rwkwe4kQP7V7zQm9TM=Q@mail.gmail.com>
+ <4295b8f786c10c469870a6d9725749ce75dcdaa2.camel@intel.com>
+ <CALCETrUKzXYzRrWRdi8Z7AdAF0uZW5Gs7J4s=55dszoyzc29rw@mail.gmail.com>
+ <043a17ef-dc9f-56d2-5fba-1a58b7b0fd4d@intel.com>
+ <20181108220054.GP3074@bombadil.infradead.org>
+ <ead230ab-a904-50d6-c4cf-46d5804f6151@intel.com>
+ <20181109003225.GQ3074@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrUCQbPMfBJVRRg=0apEU=2U2ps74UPTrN8bFqi1k0K4VA@mail.gmail.com>
+In-Reply-To: <20181109003225.GQ3074@bombadil.infradead.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Dave Hansen <dave.hansen@intel.com>, Andrew Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Rich Felker <dalias@libc.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@lin>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 08, 2018 at 12:05:42PM -0800, Andy Lutomirski wrote:
-> This whole thing is a mess.  I'm starting to think that the cleanest
-> solution would be to provide a way to just tell the kernel that
-> certain RIP values have exception fixups.
+On 11/8/18 4:32 PM, Matthew Wilcox wrote:
+>> Now, looking at Yu-cheng's specific example, it doesn't matter.  We've
+>> got 64-bit types and natural 64-bit alignment.  Without __packed, we
+>> need to look out for natural alignment screwing us up.  With __packed,
+>> it just does what it *looks* like it does.
+> The question is whether Yu-cheng's struct is ever embedded in another
+> struct.  And if so, what does the hardware do?
 
-The bay far cleanest solution would be to say that SGX is sich a mess
-that we are not going to support it at all.  It's not like it is a must
-have a feature to start with.
+It's not really.
+
++struct cet_user_state {
++	u64 u_cet;	/* user control flow settings */
++	u64 user_ssp;	/* user shadow stack pointer */
++} __packed;
+
+This ends up embedded in 'struct fpu'.  The hardware tells us what the
+sum of all the sizes of all the state components are, and also tells us
+the offsets inside the larger buffer.
+
+We double-check that the structure sizes exactly match the sizes that
+the hardware tells us that the buffer pieces are via XCHECK_SZ().
+
+But, later versions of the hardware have instructions that don't have
+static offsets for the state components (when the XSAVES/XSAVEC
+instructions are used).  So, for those, the structure embedding isn't
+used at *all* since some state might not be present.
