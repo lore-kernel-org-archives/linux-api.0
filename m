@@ -1,116 +1,112 @@
-From: Ram Pai <linuxram@us.ibm.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Fri, 9 Nov 2018 10:09:47 -0800
-Message-ID: <20181109180947.GF5481@ram.oc3035372033.ibm.com>
-References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
- <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
- <87bm6zaa04.fsf@oldenburg.str.redhat.com>
- <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
-Reply-To: Ram Pai <linuxram@us.ibm.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v3 resend 1/2] mm: Add an F_SEAL_FUTURE_WRITE seal to memfd
+Date: Fri, 9 Nov 2018 22:06:31 +0100
+Message-ID: <CAG48ez1h=v-JYnDw81HaYJzOfrNhwYksxmc2r=cJvdQVgYM+NA@mail.gmail.com>
+References: <20181108041537.39694-1-joel@joelfernandes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <87bm6z71yw.fsf@oldenburg.str.redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Florian Weimer <fweimer@redhat.com>
-Cc: linux-mm@kvack.org, Dave Hansen <dave.hansen@intel.com>, linuxppc-dev@lists.ozlabs.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181108041537.39694-1-joel@joelfernandes.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: joel@joelfernandes.org
+Cc: kernel list <linux-kernel@vger.kernel.org>, jreck@google.com, John Stultz <john.stultz@linaro.org>, Todd Kjos <tkjos@google.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Daniel Colascione <dancol@google.com>, Bruce Fields <bfields@fieldses.org>, jlayton@kernel.org, Khalid Aziz <khalid.aziz@oracle.com>, Lei.Yang@windriver.com, linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Mike Kravetz <mike.kravetz@oracle.com>, minchan@kernel.org, shuah@kernel.org, valdis.kletnieks@vt.edu, Hugh Dickins <hughd@google.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 08, 2018 at 09:23:35PM +0100, Florian Weimer wrote:
-> * Ram Pai:
-> 
-> > Florian,
-> >
-> > 	I can. But I am struggling to understand the requirement. Why is
-> > 	this needed?  Are we proposing a enhancement to the sys_pkey_alloc(),
-> > 	to be able to allocate keys that are initialied to disable-read
-> > 	only?
-> 
-> Yes, I think that would be a natural consequence.
-> 
-> However, my immediate need comes from the fact that the AMR register can
-> contain a flag combination that is not possible to represent with the
-> existing PKEY_DISABLE_WRITE and PKEY_DISABLE_ACCESS flags.  User code
-> could write to AMR directly, so I cannot rule out that certain flag
-> combinations exist there.
-> 
-> So I came up with this:
-> 
-> int
-> pkey_get (int key)
-> {
->   if (key < 0 || key > PKEY_MAX)
->     {
->       __set_errno (EINVAL);
->       return -1;
->     }
->   unsigned int index = pkey_index (key);
->   unsigned long int amr = pkey_read ();
->   unsigned int bits = (amr >> index) & 3;
-> 
->   /* Translate from AMR values.  PKEY_AMR_READ standing alone is not
->      currently representable.  */
->   if (bits & PKEY_AMR_READ)
++linux-api for API addition
++hughd as FYI since this is somewhat related to mm/shmem
 
-this should be
-   if (bits & (PKEY_AMR_READ|PKEY_AMR_WRITE))
+On Fri, Nov 9, 2018 at 9:46 PM Joel Fernandes (Google)
+<joel@joelfernandes.org> wrote:
+> Android uses ashmem for sharing memory regions. We are looking forward
+> to migrating all usecases of ashmem to memfd so that we can possibly
+> remove the ashmem driver in the future from staging while also
+> benefiting from using memfd and contributing to it. Note staging drivers
+> are also not ABI and generally can be removed at anytime.
+>
+> One of the main usecases Android has is the ability to create a region
+> and mmap it as writeable, then add protection against making any
+> "future" writes while keeping the existing already mmap'ed
+> writeable-region active.  This allows us to implement a usecase where
+> receivers of the shared memory buffer can get a read-only view, while
+> the sender continues to write to the buffer.
+> See CursorWindow documentation in Android for more details:
+> https://developer.android.com/reference/android/database/CursorWindow
+>
+> This usecase cannot be implemented with the existing F_SEAL_WRITE seal.
+> To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
+> which prevents any future mmap and write syscalls from succeeding while
+> keeping the existing mmap active.
 
+Please CC linux-api@ on patches like this. If you had done that, I
+might have criticized your v1 patch instead of your v3 patch...
 
->     return PKEY_DISABLE_ACCESS;
+> The following program shows the seal
+> working in action:
+[...]
+> Cc: jreck@google.com
+> Cc: john.stultz@linaro.org
+> Cc: tkjos@google.com
+> Cc: gregkh@linuxfoundation.org
+> Cc: hch@infradead.org
+> Reviewed-by: John Stultz <john.stultz@linaro.org>
+> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+> ---
+[...]
+> diff --git a/mm/memfd.c b/mm/memfd.c
+> index 2bb5e257080e..5ba9804e9515 100644
+> --- a/mm/memfd.c
+> +++ b/mm/memfd.c
+[...]
+> @@ -219,6 +220,25 @@ static int memfd_add_seals(struct file *file, unsigned int seals)
+>                 }
+>         }
+>
+> +       if ((seals & F_SEAL_FUTURE_WRITE) &&
+> +           !(*file_seals & F_SEAL_FUTURE_WRITE)) {
+> +               /*
+> +                * The FUTURE_WRITE seal also prevents growing and shrinking
+> +                * so we need them to be already set, or requested now.
+> +                */
+> +               int test_seals = (seals | *file_seals) &
+> +                                (F_SEAL_GROW | F_SEAL_SHRINK);
+> +
+> +               if (test_seals != (F_SEAL_GROW | F_SEAL_SHRINK)) {
+> +                       error = -EINVAL;
+> +                       goto unlock;
+> +               }
+> +
+> +               spin_lock(&file->f_lock);
+> +               file->f_mode &= ~(FMODE_WRITE | FMODE_PWRITE);
+> +               spin_unlock(&file->f_lock);
+> +       }
 
+So you're fiddling around with the file, but not the inode? How are
+you preventing code like the following from re-opening the file as
+writable?
 
->   else if (bits == PKEY_AMR_WRITE)
->     return PKEY_DISABLE_WRITE;
->   return 0;
-> }
-> 
-> And this is not ideal.  I would prefer something like this instead:
-> 
->   switch (bits)
->     {
->       case PKEY_AMR_READ | PKEY_AMR_WRITE:
->         return PKEY_DISABLE_ACCESS;
->       case PKEY_AMR_READ:
->         return PKEY_DISABLE_READ;
->       case PKEY_AMR_WRITE:
->         return PKEY_DISABLE_WRITE;
->       case 0:
->         return 0;
->     }
+$ cat memfd.c
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <printf.h>
+#include <fcntl.h>
+#include <err.h>
+#include <stdio.h>
 
-yes.
- and on x86 it will be something like:
-   switch (bits)
-     {
-       case PKEY_PKRU_ACCESS :
-         return PKEY_DISABLE_ACCESS;
-       case PKEY_AMR_WRITE:
-         return PKEY_DISABLE_WRITE;
-       case 0:
-         return 0;
-     }
+int main(void) {
+  int fd = syscall(__NR_memfd_create, "testfd", 0);
+  if (fd == -1) err(1, "memfd");
+  char path[100];
+  sprintf(path, "/proc/self/fd/%d", fd);
+  int fd2 = open(path, O_RDWR);
+  if (fd2 == -1) err(1, "reopen");
+  printf("reopen successful: %d\n", fd2);
+}
+$ gcc -o memfd memfd.c
+$ ./memfd
+reopen successful: 4
+$
 
-But for this to work, why do you need to enhance the sys_pkey_alloc()
-interface?  Not that I am against it. Trying to understand if the
-enhancement is really needed.
-
-> 
-> By the way, is the AMR register 64-bit or 32-bit on 32-bit POWER?
-
-It is 64-bit.
-
-RP
+That aside: I wonder whether a better API would be something that
+allows you to create a new readonly file descriptor, instead of
+fiddling with the writability of an existing fd.
