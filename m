@@ -1,69 +1,217 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: Official Linux system wrapper library?
-Date: Sun, 11 Nov 2018 07:55:30 +0100
-Message-ID: <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
-References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v3 resend 1/2] mm: Add an F_SEAL_FUTURE_WRITE seal to
+ memfd
+Date: Sun, 11 Nov 2018 00:09:45 -0800
+Message-ID: <20181111080945.GA78191@google.com>
+References: <CAG48ez0kQ4d566bXTFOYANDgii-stL-Qj-oyaBzvfxdV=PU-7g@mail.gmail.com>
+ <20181110032005.GA22238@google.com>
+ <69CE06CC-E47C-4992-848A-66EB23EE6C74@amacapital.net>
+ <20181110182405.GB242356@google.com>
+ <CAKOZuesQXRtthJTEr86LByH3gPpAdT-PQM0d1jqr131=zZNRKw@mail.gmail.com>
+ <CAKOZueum8MtNvJ5P=W7_pRw62TdQdCgyjCwwbG1wezNboC1cxQ@mail.gmail.com>
+ <20181110220933.GB96924@google.com>
+ <907D942E-E321-4BD7-BED7-ACD1D96A3643@amacapital.net>
+ <20181111023808.GA174670@google.com>
+ <543A5181-3A16-438E-B372-97BEC48A74F8@amacapital.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <543A5181-3A16-438E-B372-97BEC48A74F8@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>
-Cc: mtk.manpages@gmail.com, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Florian Weimer <fweimer@redhat.com>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, kernel list <linux-kernel@vger.kernel.org>, John Reck <jreck@google.com>, John Stultz <john.stultz@linaro.org>, Todd Kjos <tkjos@google.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Christoph Hellwig <hch@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Bruce Fields <bfields@fieldses.org>, Jeff Layton <jlayton@kernel.org>, Khalid Aziz <khalid.aziz@oracle.com>, Lei.Yang@windriver.com, linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Mike Kravetz <mike.kravetz@oracle.com>, Minchan Kim <minchan@kernel.org>, Shuah Khan <shuah@kernel.org>, Valdis
 List-Id: linux-api@vger.kernel.org
 
-[adding in glibc folk for comment]
+On Sat, Nov 10, 2018 at 07:40:10PM -0800, Andy Lutomirski wrote:
+[...]
+> >>>>>>> I see two reasonable solutions:
+> >>>>>>> 
+> >>>>>>> 1. Don’t fiddle with the struct file at all. Instead make the inode flag
+> >>>>>>> work by itself.
+> >>>>>> 
+> >>>>>> Currently, the various VFS paths check only the struct file's f_mode to deny
+> >>>>>> writes of already opened files. This would mean more checking in all those
+> >>>>>> paths (and modification of all those paths).
+> >>>>>> 
+> >>>>>> Anyway going with that idea, we could
+> >>>>>> 1. call deny_write_access(file) from the memfd's seal path which decrements
+> >>>>>> the inode::i_writecount.
+> >>>>>> 2. call get_write_access(inode) in the various VFS paths in addition to
+> >>>>>> checking for FMODE_*WRITE and deny the write (incase i_writecount is negative)
+> >>>>>> 
+> >>>>>> That will prevent both reopens, and writes from succeeding. However I worry a
+> >>>>>> bit about 2 not being too familiar with VFS internals, about what the
+> >>>>>> consequences of doing that may be.
+> >>>>> 
+> >>>>> IMHO, modifying both the inode and the struct file separately is fine,
+> >>>>> since they mean different things. In regular filesystems, it's fine to
+> >>>>> have a read-write open file description for a file whose inode grants
+> >>>>> write permission to nobody. Speaking of which: is fchmod enough to
+> >>>>> prevent this attack?
+> >>>> 
+> >>>> Well, yes and no. fchmod does prevent reopening the file RW, but
+> >>>> anyone with permissions (owner, CAP_FOWNER) can just fchmod it back. A
+> >>>> seal is supposed to be irrevocable, so fchmod-as-inode-seal probably
+> >>>> isn't sufficient by itself. While it might be good enough for Android
+> >>>> (in the sense that it'll prevent RW-reopens from other security
+> >>>> contexts to which we send an open memfd file), it's still conceptually
+> >>>> ugly, IMHO. Let's go with the original approach of just tweaking the
+> >>>> inode so that open-for-write is permanently blocked.
+> >>> 
+> >>> Agreed with the idea of modifying both file and inode flags. I was thinking
+> >>> modifying i_mode may do the trick but as you pointed it probably could be
+> >>> reverted by chmod or some other attribute setting calls.
+> >>> 
+> >>> OTOH, I don't think deny_write_access(file) can be reverted from any
+> >>> user-facing path so we could do that from the seal to prevent the future
+> >>> opens in write mode. I'll double check and test that out tomorrow.
+> >>> 
+> >>> 
+> >> 
+> >> This seems considerably more complicated and more fragile than needed. Just
+> >> add a new F_SEAL_WRITE_FUTURE.  Grep for F_SEAL_WRITE and make the _FUTURE
+> >> variant work exactly like it with two exceptions:
+> >> 
+> >> - shmem_mmap and maybe its hugetlbfs equivalent should check for it and act
+> >> accordingly.
+> > 
+> > There's more to it than that, we also need to block future writes through
+> > write syscall, so we have to hook into the write path too once the seal is
+> > set, not just the mmap. That means we have to add code in mm/shmem.c to do
+> > that in all those handlers, to check for the seal (and hope we didn't miss a
+> > file_operations handler). Is that what you are proposing?
+> 
+> The existing code already does this. That’s why I suggested grepping :)
+> 
+> > 
+> > Also, it means we have to keep CONFIG_TMPFS enabled so that the
+> > shmem_file_operations write handlers like write_iter are hooked up. Currently
+> > memfd works even with !CONFIG_TMPFS.
+> 
+> If so, that sounds like it may already be a bug.
+> 
+> > 
+> >> - add_seals won’t need the wait_for_pins and mapping_deny_write logic.
+> >> 
+> >> That really should be all that’s needed.
+> > 
+> > It seems a fair idea what you're saying. But I don't see how its less
+> > complex.. IMO its far more simple to have VFS do the denial of the operations
+> > based on the flags of its datastructures.. and if it works (which I will test
+> > to be sure it will), then we should be good.
+> 
+> I agree it’s complicated, but the code is already written.  You should just
+> need to adjust some masks.
+> 
 
-On 11/10/18 7:52 PM, Daniel Colascione wrote:
-> Now that glibc is basically not adding any new system call wrappers,
-> how about publishing an "official" system call glue library as part of
-> the kernel distribution, along with the uapi headers? I don't think
-> it's reasonable to expect people to keep using syscall(__NR_XXX) for
-> all new functionality, especially as the system grows increasingly
-> sophisticated capabilities (like the new mount API, and hopefully the
-> new process API) outside the strictures of the POSIX process.
+Its actually not that bad and a great idea, I did something like the
+following and it works pretty well. I would say its cleaner than the old
+approach for sure (and I also added a /proc/pid/fd/N reopen test to the
+selftest and made sure that issue goes away).
 
-As a quick glance at the glibc NEWS file shows, the above is not
-quite true:
+Side note: One subtelty I discovered from the existing selftests is once the
+F_SEAL_WRITE are active, an mmap of PROT_READ and MAP_SHARED region is
+expected to fail. This is also evident from this code in mmap_region:
+		if (vm_flags & VM_SHARED) {
+			error = mapping_map_writable(file->f_mapping);
+			if (error)
+				goto allow_write_and_free_vma;
+		}
 
-[[
-Version 2.28
-* The renameat2 function has been added...
-* The statx function has been added...
+---8<-----------------------
 
-Version 2.27
-* Support for memory protection keys was added.  The <sys/mman.h> header now
-  declares the functions pkey_alloc, pkey_free, pkey_mprotect...
-* The copy_file_range function was added.
+From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Subject: [PATCH] mm/memfd: implement future write seal using shmem ops
 
-Version 2.26
-* New wrappers for the Linux-specific system calls preadv2 and pwritev2.
+Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+---
+ fs/hugetlbfs/inode.c |  2 +-
+ mm/memfd.c           | 19 -------------------
+ mm/shmem.c           | 13 ++++++++++---
+ 3 files changed, 11 insertions(+), 23 deletions(-)
 
-Version 2.25
-* The getrandom [function] have been added.
-]]
-
-I make that 11 system call wrappers added in the last 2 years.
-
-That said, of course, there are many system calls that lack wrappers [1],
-and the use of syscall() is undesirable.
-
-The glibc folk do have their reasons for being conservative around
-adding system calls (https://lwn.net/Articles/655028/). However, at
-this point, I think one of the limiting factors is developer time
-on the glibc project. Quite possibly, they just need some help to
-add more (properly designed) wrappers faster.
-
-Cheers,
-
-Michael
-
-[1] https://sourceware.org/bugzilla/show_bug.cgi?id=6399 is a
-    longstanding example.
-
+diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
+index 32920a10100e..1978581abfdf 100644
+--- a/fs/hugetlbfs/inode.c
++++ b/fs/hugetlbfs/inode.c
+@@ -530,7 +530,7 @@ static long hugetlbfs_punch_hole(struct inode *inode, loff_t offset, loff_t len)
+ 		inode_lock(inode);
+ 
+ 		/* protected by i_mutex */
+-		if (info->seals & F_SEAL_WRITE) {
++		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
+ 			inode_unlock(inode);
+ 			return -EPERM;
+ 		}
+diff --git a/mm/memfd.c b/mm/memfd.c
+index 5ba9804e9515..a9ece5fab439 100644
+--- a/mm/memfd.c
++++ b/mm/memfd.c
+@@ -220,25 +220,6 @@ static int memfd_add_seals(struct file *file, unsigned int seals)
+ 		}
+ 	}
+ 
+-	if ((seals & F_SEAL_FUTURE_WRITE) &&
+-	    !(*file_seals & F_SEAL_FUTURE_WRITE)) {
+-		/*
+-		 * The FUTURE_WRITE seal also prevents growing and shrinking
+-		 * so we need them to be already set, or requested now.
+-		 */
+-		int test_seals = (seals | *file_seals) &
+-				 (F_SEAL_GROW | F_SEAL_SHRINK);
+-
+-		if (test_seals != (F_SEAL_GROW | F_SEAL_SHRINK)) {
+-			error = -EINVAL;
+-			goto unlock;
+-		}
+-
+-		spin_lock(&file->f_lock);
+-		file->f_mode &= ~(FMODE_WRITE | FMODE_PWRITE);
+-		spin_unlock(&file->f_lock);
+-	}
+-
+ 	*file_seals |= seals;
+ 	error = 0;
+ 
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 446942677cd4..7dad7efd8b99 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -2163,6 +2163,12 @@ int shmem_lock(struct file *file, int lock, struct user_struct *user)
+ 
+ static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
+ {
++	struct shmem_inode_info *info = SHMEM_I(file_inode(file));
++
++	/* New shared mmaps are not allowed when "future write" seal active. */
++	if ((vma->vm_flags & VM_SHARED) && (info->seals & F_SEAL_FUTURE_WRITE))
++		return -EPERM;
++
+ 	file_accessed(file);
+ 	vma->vm_ops = &shmem_vm_ops;
+ 	if (IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE) &&
+@@ -2391,8 +2397,9 @@ shmem_write_begin(struct file *file, struct address_space *mapping,
+ 	pgoff_t index = pos >> PAGE_SHIFT;
+ 
+ 	/* i_mutex is held by caller */
+-	if (unlikely(info->seals & (F_SEAL_WRITE | F_SEAL_GROW))) {
+-		if (info->seals & F_SEAL_WRITE)
++	if (unlikely(info->seals & (F_SEAL_GROW |
++				   F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))) {
++		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))
+ 			return -EPERM;
+ 		if ((info->seals & F_SEAL_GROW) && pos + len > inode->i_size)
+ 			return -EPERM;
+@@ -2657,7 +2664,7 @@ static long shmem_fallocate(struct file *file, int mode, loff_t offset,
+ 		DECLARE_WAIT_QUEUE_HEAD_ONSTACK(shmem_falloc_waitq);
+ 
+ 		/* protected by i_mutex */
+-		if (info->seals & F_SEAL_WRITE) {
++		if (info->seals & F_SEAL_WRITE || info->seals & F_SEAL_FUTURE_WRITE) {
+ 			error = -EPERM;
+ 			goto out;
+ 		}
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+2.19.1.930.g4563a0d9d0-goog
