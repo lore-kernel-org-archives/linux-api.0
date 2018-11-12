@@ -1,93 +1,65 @@
-From: Florian Weimer <fweimer@redhat.com>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
 Subject: Re: Official Linux system wrapper library?
-Date: Mon, 12 Nov 2018 13:25:25 +0100
-Message-ID: <87d0raqy8a.fsf@oldenburg.str.redhat.com>
+Date: Mon, 12 Nov 2018 12:45:26 +0000
+Message-ID: <45cf58e0-909e-262c-5b9f-b91d62350a79@arm.com>
 References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
-        <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
-        <20181111081725.GA30248@1wt.eu>
-        <3664a508-ca74-4ff0-39a6-34543194a24e@gmail.com>
-        <20181111111143.GB4189@1wt.eu>
-        <87zhufvntw.fsf@oldenburg.str.redhat.com>
-        <20181111120910.GA4425@1wt.eu>
+ <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
+ <877ehjx447.fsf@oldenburg.str.redhat.com>
+ <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181111120910.GA4425@1wt.eu> (Willy Tarreau's message of "Sun,
-        11 Nov 2018 13:09:10 +0100")
+In-Reply-To: <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+Content-Language: en-US
+Content-ID: <1701A8B6BAE31F4EAB383EDAF3D5504B@eurprd08.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Willy Tarreau <w@1wt.eu>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Daniel Colascione <dancol@google.com>, Florian Weimer <fweimer@redhat.com>
+Cc: nd <nd@arm.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-* Willy Tarreau:
-
->> > What we'd really need would be to have the libc
->> > interface as part of the operating system itself. I'm perfectly fine
->> > with glibc providing all the "high-level" stuff like strcpy(), FILE*
->> > operations etc, and all this probably is mostly system-independent.
->> 
->> That's a bit messy, unfortunately.
->> 
->> The kernel does not know about TCB layout, so a lot of low-level
->> threading aspects are defined by userspace.
->> 
->> The kernel does not know about POSIX cancellation.  Directly calling
->> system calls breaks support for that.
->> 
->> A lot of multi-threaded applications assume that most high-level
->> functionality remains usable even after fork in a multi-threaded
->> process.  (This is increasingly a problem today with all those direct
->> calls to clone.)  Unfortunately, this introduces rather tricky
->> low-level/high-level cross-subsystem issues, too.
->
-> But don't you think that moving a bit of this into the kernel
-> repository could improve the situation ? The corner cases could then
-> be detected when the feature is developed and be addressed either by
-> adapting the kernel side of the syscall or even by changing the design
-> before it's committed. Maybe a few extra syscalls are missing to
-> retrieve some critial info that would make things more reliable or
-> easier between userland and kernel, and that would become more obvious
-> with all the relevant parts at the same place ?
->
->> > But the system interface could possibly be handled easier in the
->> > system itself, which would also provide a smoother adoption of new
->> > syscalls and API updates. It would also limit the hassle required to
->> > provide new syscalls, as if you start to have to contribute to two
->> > projects at once for a single syscall, it becomes really painful.
->> 
->> Sure, the duplication is unfortunate.
->> 
->> Several glibc contributors deeply care about standards compliance for
->> header files.
->
-> For having suffered a lot from the libc-4 to libc-5 then libc-5 to glibc,
-> I certainly can understand their concerns about standards compliance.
-
-This is getting way off-topic, but:
-
-The C standard does not care deeply about practical source code
-compatibility.  Behavior of valid syntax generally remains unchanged.
-However, each revision adds many macros to existing header files, so
-practical source code compatibility tends to be problematic.  For glibc,
-the current policy is to enable all optional features with _GNU_SOURCE,
-so most projects receive the full dose of macros.  (Unrelated to
-standards, even new system call wrappers are problematic for source code
-compatibility).)
-
-For ABI compatibility, there are only ad-hoc standards anyway, so it's
-mostly about us being careful when making changes.
-
->> The kernel developers care not, and the result is that we
->> copy definitions and declarations from the kernel header files, creating
->> additional problems.
->
-> Probably that these standard compatibility issues should be addressed at
-> their root in the kernel header definitions in fact. Working around issues
-> always leads to a stall at some point, and it encourages the process not
-> to change.
-
-In the past, we couldn't even get agreement about little things such as
-__u64, so I'm not hopeful. 8-(
-
-Thanks,
-Florian
+T24gMTEvMTEvMTggMTQ6MjIsIERhbmllbCBDb2xhc2Npb25lIHdyb3RlOg0KPiBPbiBTdW4sIE5v
+diAxMSwgMjAxOCBhdCAzOjA5IEFNLCBGbG9yaWFuIFdlaW1lciA8ZndlaW1lckByZWRoYXQuY29t
+PiB3cm90ZToNCj4+IFdlIGhhZCBhIHBhdGNoIGZvciB0aGUgbWVtYmFycmllciBzeXN0ZW0gY2Fs
+bCwgYnV0IHRoZSBrZXJuZWwgZGV2ZWxvcGVycw0KPj4gY291bGQgbm90IHRlbGwgdXMgd2hhdCB0
+aGUgc3lzdGVtIGNhbGwgZG9lcyBpbiB0aGVybXMgb2YgdGhlIEMvQysrDQo+PiBtZW1vcnkgbW9k
+ZWwNCj4gW3NuaXBdDQo+PiBBIGxvdCBvZiB0aGUgbmV3IHN5c3RlbSBjYWxscyBsYWNrIGNsZWFy
+IHNwZWNpZmljYXRpb25zIG9yIGFyZSBqdXN0DQo+PiBzb21ld2hhdCBtaXNkZXNpZ25lZC4gIEZv
+ciBleGFtcGxlLCBwa2V5X2FsbG9jDQo+IFtzbmlwXQ0KPj4gZ2V0cmFuZG9tIHN0aWxsIGNhdXNl
+cyBib290IGRlbGF5cw0KPiBbc25pcF0NCj4+IEZvciBjb3B5X2ZpbGVfcmFuZ2UsIHdlIHN0aWxs
+IGhhdmUgZGViYXRlcyB3aGV0aGVyIHRoZSBzeXN0ZW0gY2FsbCAoYW5kDQo+PiB0aGUgZ2xpYmMg
+ZW11bGF0aW9uKSBzaG91bGQgcHJlc2VydmUgaG9sZXMgb3Igbm90LA0KPiBbc25pcF0NCj4gDQo+
+IFRoZXNlIG9iamVjdGlvbnMgaWxsdXN0cmF0ZSBteSBwb2ludC4gZ2xpYmMgZGV2ZWxvcG1lbnQg
+aXMgbm90IHRoZQ0KPiBwcm9wZXIgZm9ydW0gZm9yIHJhaXNpbmcgcG9zdC1ob2Mgb2JqZWN0aW9u
+cyB0byBzeXN0ZW0gY2FsbCBkZXNpZ24uDQo+IFdpdGhob2xkaW5nIHdyYXBwZXJzIHdpbGwgbm90
+IHVuLXNoaXAgdGhlc2Ugc3lzdGVtIGNhbGxzLiBBcHBsaWNhdGlvbnMNCj4gYXJlIGFscmVhZHkg
+dXNpbmcgdGhlbSwgdmlhIHN5c2NhbGwoMikuIERldmVsb3BlcnMgYW5kIHVzZXJzIHdvdWxkIGJl
+DQo+IGJldHRlciBzZXJ2ZWQgYnkgcHJvdmlkaW5nIGFjY2VzcyB0byB0aGUgc3lzdGVtIGFzIGl0
+IGlzLCB3aXRoDQo+IGFwcHJvcHJpYXRlIGRvY3VtZW50YXRpb24gY2F2ZWF0cywgdGhhbiBieSBo
+b2xkaW5nIG91dCBmb3Igc29tZQ0KPiBhbHRlcm5hdGUgYW5kIG1vcmUgaWRlYWwgc2V0IG9mIHN5
+c3RlbSBjYWxscyB0aGF0IG1heSBvciBtYXkgbm90DQo+IGFwcGVhciBpbiB0aGUgZnV0dXJlLiBU
+aGlzIHJlc2lzdGFuY2UgdG8gZXhwb3NpbmcgdGhlIGNhcGFiaWxpdGllcyBvZg0KPiB0aGUgc3lz
+dGVtIGFzIHRoZXkgYXJlLCBldmVuIGluIGZsYXdlZCBhbmQgd2FydHkgZm9ybSwgaXMgd2hhdCBJ
+IG1lYW50DQo+IGJ5ICJtaXNwbGFjZWQgaWRlYWxpc20iIGluIG15IHByZXZpb3VzIG1lc3NhZ2Uu
+IElmIHRoZSBrZXJuZWwgcHJvdmlkZXMNCj4gYSBzeXN0ZW0gY2FsbCwgbGliYyBzaG91bGQgcHJv
+dmlkZSBhIEMgd3JhcHBlciBmb3IgaXQsIGV2ZW4gaWYgaW4gdGhlDQo+IG9waW5pb24gb2YgdGhl
+IGxpYmMgbWFpbnRhaW5lcnMsIHRoYXQgc3lzdGVtIGNhbGwgaXMgZmxhd2VkLg0KDQpmbGF3cyBj
+YW4gYmUgd29ya2VkIGFyb3VuZC4NCg0KaXQncyBqdXN0IG1vcmUgd29yayB0byBkbyB0aGF0LCBo
+ZW5jZSB3cmFwcGVycyBhcmUgZGVsYXllZC4NCg0KKHdoaWxlIG5ldyBmbGF3ZWQgc3lzY2FsbHMg
+Z2V0IGFkZGVkLCB0aGVyZSBhcmUgbWlzc2luZw0Kc3lzY2FsbHMgZm9yIGltcGxlbWVudGluZyBw
+b3NpeCBzZW1hbnRpY3Mgb3IgZm9yIGJldHRlciBsaWJjDQpxdWFsaXR5LCBzbyBhcmUgdGhlIHBy
+aW9yaXRpZXMgb2YgbGludXggcmlnaHQ/KQ0KDQo+IEkgYWdyZWUgd2l0aCB0aGUgcHJvcG9zYWxz
+IG1lbnRpb25lZCBhYm92ZSB0byBzcGxpdCBzeXN0ZW0gaW50ZXJmYWNlDQo+IHJlc3BvbnNpYmls
+aXR5LCBoYXZpbmcgZ2xpYmMgaGFuZGxlIGhpZ2hlci1sZXZlbCBjb25jZXJucyBsaWtlIHN0ZGlv
+DQo+IHdoaWxlIHB1bnRpbmcgc3lzdGVtIGNhbGwgd3JhcHBlcnMgYW5kIG90aGVyIGxvdy1sZXZl
+bCBmYWNpbGl0aWVzIHRvIGENCj4ga2VybmVsLXByb3ZpZGVkIHVzZXJzcGFjZSBsaWJyYXJ5IHRo
+YXQgY2FuIG1vdmUgZmFzdGVyIGFuZCBtb3JlDQo+IGV4cGxpY2l0bHkgY29uZm9ybSB0byB0aGUg
+TGludXgga2VybmVsJ3MgdXNlcnNwYWNlIEFCSS4NCg0KY29uc3VtaW5nIGxpbnV4IHVhcGkgaGVh
+ZGVycyBpcyBhIGh1Z2UgcHJvYmxlbSAobm90IGp1c3QgZm9yDQpnbGliYyk6IHRoZSBsaWJjIGhh
+cyB0byByZXBlYXQgdWFwaSBkZWZpbml0aW9ucyB1bmRlciBhcHByb3ByaWF0ZQ0KZmVhdHVyZSBt
+YWNyb3MgdXNpbmcgcHJvcGVyIGxpYmMgdHlwZXMgZXRjLCB0aGlzIHVzdWFsbHkgY3JlYXRlcw0K
+Y29uZmxpY3QgYmV0d2VlbiBsaW51eCBhbmQgbGliYyBoZWFkZXJzIGFuZCBhIGxvdCBvZiBkdXBs
+aWNhdGVkDQp3b3JrIGF0IGV2ZXJ5IGxpbnV4IHJlbGVhc2UuIHRoZSBzaXR1YXRpb24gd291bGQg
+YmUgd29yc2UgaWYgYWxsDQpuZXcgdHlwZXMgd2VyZSBleHBvc2VkIGZvciBuZXcgc3lzY2FsbHMg
+d2hlbiB0aGV5IGFwcGVhcmVkLg0KDQp0aGUgcHJvcG9zYWwgbWVudGlvbmVkIGFib3ZlIGRvZXMg
+bm90IHNvbHZlIHRoaXMgaW4gYW55IHdheS4NCg==
