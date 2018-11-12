@@ -1,74 +1,131 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: Official Linux system wrapper library?
-Date: Mon, 12 Nov 2018 05:19:14 -0800
-Message-ID: <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
-References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
- <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com> <877ehjx447.fsf@oldenburg.str.redhat.com>
- <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com> <875zx2vhpd.fsf@oldenburg.str.redhat.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: [PATCH v4 0/4] namei: O_* flags to restrict path resolution
+Date: Tue, 13 Nov 2018 01:26:50 +1100
+Message-ID: <20181112142654.341-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <875zx2vhpd.fsf@oldenburg.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 12, 2018 at 12:11 AM, Florian Weimer <fweimer@redhat.com> wrote:
-> * Daniel Colascione:
->
->> If the kernel provides a system call, libc should provide a C wrapper
->> for it, even if in the opinion of the libc maintainers, that system
->> call is flawed.
->
-> It's not that simple, I think.  What about bdflush?  socketcall?
-> getxpid?  osf_gettimeofday?  set_robust_list?
+Sorry for not sending a series earlier, I've been busy with assignments.
 
-What about them? Mentioning that these system calls exist is not in
-itself an argument.
+Patch changelog:
+  v4:
+    * Remove AT_* flag reservations, as they require more discussion.
+    * Switch to path_is_under() over __d_path() for breakout checking.
+    * Make O_XDEV no longer block openat("/tmp", "/", O_XDEV) -- dirfd
+      is now ignored for absolute paths to match other flags.
+    * Improve the dirfd_path_init() refactor and move it to a separate
+      commit.
+    * Remove reference to Linux-capsicum.
+    * Switch "proclink" name to "magic link".
+  v3: [resend]
+  v2:
+    * Made ".." resolution with AT_THIS_ROOT and AT_BENEATH safe(r) with
+      some semi-aggressive __d_path checking (see patch 3).
+    * Disallowed "proclinks" with AT_THIS_ROOT and AT_BENEATH, in the
+      hopes they can be re-enabled once safe.
+    * Removed the selftests as they will be reimplemented as xfstests.
+    * Removed stat(2) support, since you can already get it through
+      O_PATH and fstatat(2).
 
-> There are quite a few
-> irregularities
+The need for some sort of control over VFS's path resolution (to avoid
+malicious paths resulting in inadvertent breakouts) has been a very
+long-standing desire of many userspace applications. This patchset is a
+revival of Al Viro's old AT_NO_JUMPS[1,2] patchset (which was a variant
+of David Drysdale's O_BENEATH patchset[3] which was a spin-off of the
+Capsicum project[4]) with a few additions and changes made based on the
+previous discussion within [5] as well as others I felt were useful.
 
-So?
+In line with the conclusions of the original discussion of AT_NO_JUMPS,
+the flag has been split up into separate flags:
 
-> and some editorial discretion appears to be unavoidable.
+  * O_XDEV blocks all mountpoint crossings (upwards, downwards, or
+    through absolute links). Absolute pathnames alone in openat(2) do
+    not trigger this.
 
-That's an assertion, not an argument, and I strongly disagree. *Why*
-do you think "editorial discretion" is unavoidable? What privileges
-glibc's judgement here? What would go wrong if socketcall and
-set_robust_list and so on had wrappers? If applications chose to use
-these lower-level wrappers instead of higher-level facilities, they
-take on responsibility for using the APIs properly.
+  * O_NOMAGICLINKS blocks resolution through /proc/$pid/fd-style links.
+    This is done by blocking the usage of nd_jump_link() during
+    resolution in a filesystem. The term "magic links" is used to match
+    with the only reference to these links in Documentation/, but I'm
+    happy to change the name.
 
-> Even if we were to provide perfectly consistent system call wrappers
-> under separate names, we'd still expose different calling conventions
-> for things like off_t to applications, which would make using some of
-> the system calls quite difficult and surprisingly non-portable.
+    It should be noted that this is different to the scope of O_NOFOLLOW
+    in that it applies to all path components. However, you can do
+    open(O_NOFOLLOW|O_NOMAGICLINKS|O_PATH) on a "magic link" and it will
+    *not* fail (assuming that no parent component was a "magic link"),
+    and you will have an fd for the "magic link".
 
-We can learn something from how Windows does things. On that system,
-what we think of as "libc" is actually two parts. (More, actually, but
-I'm simplifying.) At the lowest level, you have the semi-documented
-ntdll.dll, which contains raw system call wrappers and arcane
-kernel-userland glue. On top of ntdll live the "real" libc
-(msvcrt.dll, kernel32.dll, etc.) that provide conventional
-application-level glue. The tight integration between ntdll.dll and
-the kernel allows Windows to do very impressive things. (For example,
-on x86_64, Windows has no 32-bit ABI as far as the kernel is
-concerned! You can still run 32-bit programs though, and that works
-via ntdll.dll essentially shimming every system call and switching the
-processor between long and compatibility mode as needed.) Normally,
-you'd use the higher-level capabilities, but if you need something in
-ntdll (e.g., if you're Cygwin) nothing stops your calling into the
-lower-level system facilities directly. ntdll is tightly bound to the
-kernel; the higher-level libc, not so.
+  * O_BENEATH disallows escapes to outside the starting dirfd's tree,
+    using techniques such as ".." or absolute links. Absolute paths in
+    openat(2) are also disallowed. Conceptually this flag is to ensure
+    you "stay below" a certain point in the filesystem tree -- but this
+    requires some additional to protect against various races that would
+    allow escape using ".." (see patch 4 for more detail).
 
-We should adopt a similar approach. Shipping a lower-level
-"liblinux.so" tightly bound to the kernel would not only let the
-kernel bypass glibc's "editorial discretion" in exposing new
-facilities to userspace, but would also allow for tighter user-kernel
-integration that one can achieve with a simplistic syscall(2)-style
-escape hatch. (For example, for a long time now, I've wanted to go
-beyond POSIX and improve the system's signal handling API, and this
-improvement requires userspace cooperation.) The vdso is probably too
-small and simplistic to serve in this role; I'd want a real library.
+    Currently O_BENEATH implies O_NOMAGICLINKS, because it can trivially
+    beam you around the filesystem (breaking the protection). In future,
+    there might be similar safety checks as in patch 4, but that
+    requires more discussion.
+
+In addition, two new flags were added that expand on the above ideas:
+
+  * O_NOSYMLINKS does what it says on the tin. No symlink resolution is
+    allowed at all, including "magic links". Just as with O_NOMAGICLINKS
+    this can still be used with (O_PATH|O_NOFOLLOW) to open an fd for
+    the symlink as long as no parent path had a symlink component.
+
+  * O_THISROOT is an extension of O_BENEATH that, rather than blocking
+    attempts to move past the root, forces all such movements to be
+    scoped to the starting point. This provides chroot(2)-like
+    protection but without the cost of a chroot(2) for each filesystem
+    operation, as well as being safe against race attacks that chroot(2)
+    is not.
+
+    If a race is detected (as with O_BENEATH) then an error is
+    generated, and similar to O_BENEATH it is not permitted to cross
+    "magic links" with O_THISROOT.
+
+    The primary need for this is from container runtimes, which
+    currently need to do symlink scoping in userspace[6] when opening
+    paths in a potentially malicious container. There is a long list of
+    CVEs that could have bene mitigated by having O_THISROOT (such as
+    CVE-2017-1002101, CVE-2017-1002102, CVE-2018-15664, to name a few).
+
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Eric Biederman <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Christian Brauner <christian@brauner.io>
+Cc: David Drysdale <drysdale@google.com>
+Cc: <containers@lists.linux-foundation.org>
+Cc: <linux-fsdevel@vger.kernel.org>
+Cc: <linux-api@vger.kernel.org>
+
+[1]: https://lwn.net/Articles/721443/
+[2]: https://lore.kernel.org/patchwork/patch/784221/
+[3]: https://lwn.net/Articles/619151/
+[4]: https://lwn.net/Articles/603929/
+[5]: https://lwn.net/Articles/723057/
+[6]: https://github.com/cyphar/filepath-securejoin
+
+Aleksa Sarai (4):
+  namei: split out nd->dfd handling to dirfd_path_init
+  namei: O_BENEATH-style path resolution flags
+  namei: O_THISROOT: chroot-like path resolution
+  namei: aggressively check for nd->root escape on ".." resolution
+
+ fs/fcntl.c                       |   2 +-
+ fs/namei.c                       | 205 ++++++++++++++++++++++---------
+ fs/open.c                        |  13 +-
+ include/linux/fcntl.h            |   3 +-
+ include/linux/namei.h            |   8 ++
+ include/uapi/asm-generic/fcntl.h |  20 +++
+ 6 files changed, 189 insertions(+), 62 deletions(-)
+
+-- 
+2.19.1
