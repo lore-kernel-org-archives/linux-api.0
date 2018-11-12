@@ -1,35 +1,57 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: Official Linux system wrapper library?
-Date: Mon, 12 Nov 2018 09:11:10 +0100
-Message-ID: <875zx2vhpd.fsf@oldenburg.str.redhat.com>
-References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
-        <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
-        <877ehjx447.fsf@oldenburg.str.redhat.com>
-        <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
+Date: Mon, 12 Nov 2018 11:29:17 +0100
+Message-ID: <87bm6utwqq.fsf@oldenburg.str.redhat.com>
+References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
+ <20181108192226.GC5481@ram.oc3035372033.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
-        (Daniel Colascione's message of "Sun, 11 Nov 2018 06:22:59 -0800")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <20181108192226.GC5481@ram.oc3035372033.ibm.com> (Ram Pai's
+ message of "Thu, 8 Nov 2018 11:22:26 -0800")
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Ram Pai <linuxram@us.ibm.com>
+Cc: linux-api@vger.kernel.org, dave.hansen@intel.com, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-* Daniel Colascione:
+* Ram Pai:
 
-> If the kernel provides a system call, libc should provide a C wrapper
-> for it, even if in the opinion of the libc maintainers, that system
-> call is flawed.
+> On Thu, Nov 08, 2018 at 01:05:09PM +0100, Florian Weimer wrote:
+>> Would it be possible to reserve a bit for PKEY_DISABLE_READ?
+>> 
+>> I think the POWER implementation can disable read access at the hardware
+>> level, but not write access, and that cannot be expressed with the
+>> current PKEY_DISABLE_ACCESS and PKEY_DISABLE_WRITE bits.
+>
+> POWER hardware can disable-read and can **also disable-write**
+> at the hardware level. It can disable-execute aswell at the
+> hardware level.   For example if the key bits for a given key in the AMR
+> register is  
+> 	0b01  it is read-disable
+> 	0b10  it is write-disable
+>
+> To support access-disable, we make the key value 0b11.
+>
+> So in case if you want to know if the key is read-disable 'bitwise-and' it
+> against 0x1.  i.e  (x & 0x1)
 
-It's not that simple, I think.  What about bdflush?  socketcall?
-getxpid?  osf_gettimeofday?  set_robust_list?  There are quite a few
-irregularities, and some editorial discretion appears to be unavoidable.
+Not sure if we covered that alreay, but my problem is that I cannot
+translate a 0b01 mask to a PKEY_DISABLE_* flag combination with the
+current flags.  0b10 and 0b11 are fine.
 
-Even if we were to provide perfectly consistent system call wrappers
-under separate names, we'd still expose different calling conventions
-for things like off_t to applications, which would make using some of
-the system calls quite difficult and surprisingly non-portable.
+POWER also loses the distinction between PKEY_DISABLE_ACCESS and
+PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE, but that's fine.  This breaks
+the current glibc test case, but I have a patch for that.  Arguably, the
+test is wrong or at least overly strict in what it accepts.
 
 Thanks,
 Florian
