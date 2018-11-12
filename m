@@ -1,67 +1,35 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Florian Weimer <fweimer@redhat.com>
 Subject: Re: Official Linux system wrapper library?
-Date: Sun, 11 Nov 2018 21:46:13 -0800
-Message-ID: <CALCETrWuW3f=c5V0W2CaLGD63MbbsYAeDwz04B+n7iRyQn7vQw@mail.gmail.com>
+Date: Mon, 12 Nov 2018 09:11:10 +0100
+Message-ID: <875zx2vhpd.fsf@oldenburg.str.redhat.com>
 References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
- <20181110192027.GA29892@kroah.com> <cd4717c4-4950-7513-726d-2e1873aeceb5@redhat.com>
+        <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
+        <877ehjx447.fsf@oldenburg.str.redhat.com>
+        <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cd4717c4-4950-7513-726d-2e1873aeceb5@redhat.com>
+In-Reply-To: <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+        (Daniel Colascione's message of "Sun, 11 Nov 2018 06:22:59 -0800")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Greg KH <gregkh@linuxfoundation.org>, Daniel Colascione <dancol@google.com>, LKML <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 11, 2018 at 6:24 PM Carlos O'Donell <carlos@redhat.com> wrote:
->
-> On 11/10/18 2:20 PM, Greg KH wrote:
-> > Also, what about the basic work of making sure our uapi header files can
-> > actually be used untouched by a libc?  That isn't the case these days as
-> > the bionic maintainers like to keep reminding me.  That might be a good
-> > thing to do _before_ trying to add new things like syscall wrappers.
-> I agree completely. There are many steps in the checklist to writing
-> a new syscall, heck we should probably have a checklist!
->
-> Socially the issue is difficult because the various communities only
-> marginally share the same network of developers, care about different
-> features, or the same features with different priorities.
->
-> That doesn't mean we shouldn't try to integrate better. As was pointed
-> out, various people from the userspace and toolchain communities are
-> going to LPC to do just this.
->
+* Daniel Colascione:
 
-if you all want my two cents, I think that we should approach this all
-quite differently than trying to get glibc to add a wrapper for each
-syscall.  I think the kernel should contain a list or list of syscalls
-along with parameter names, types, and numbers, and this should get
-processed during the kernel build to produce a few different
-artifacts:
+> If the kernel provides a system call, libc should provide a C wrapper
+> for it, even if in the opinion of the libc maintainers, that system
+> call is flawed.
 
- - A machine-readable version of the same data in a stable format.
-Tools like strace should be able to consume it.
+It's not that simple, I think.  What about bdflush?  socketcall?
+getxpid?  osf_gettimeofday?  set_robust_list?  There are quite a few
+irregularities, and some editorial discretion appears to be unavoidable.
 
- - A library called, perhaps, libinux, or maybe a header-only library.
-It should have a wrapper for *every* syscall, and they should be
-namespaced.  Instead of renameat2(), it should expose
-linux_renameat2().  Ideally it would use the UAPI header types, but
-void * wouldn't be so bad for pointers.
+Even if we were to provide perfectly consistent system call wrappers
+under separate names, we'd still expose different calling conventions
+for things like off_t to applications, which would make using some of
+the system calls quite difficult and surprisingly non-portable.
 
-P.S. Does gcc even *have* the correct asm constraints to express
-typeless syscalls?  Ideally we'd want syscalls to have exactly the
-same pointer escaping semantics as ordinary functions, so, if I do:
-
-struct timeval tv;
-/* typed expansion of linux_gettimeofday(&tv, NULL); */
-asm volatile ("whatever" : "+m" (tv) : "D" (&tv));
-
-it works.  But if I want to use a generic wrapper that doesn't know
-that the argument is a pointer, I do:
-
-asm volatile ("whatever" :: "D" (&tv));
-
-then gcc seems to not actually understand that the value pointed to by
-&tv is modified by the syscall.  glibc's syscall() function works
-AFAICT because it's an external function, and gcc considers &tv to
-have escaped and can't see the body of the syscall() function.
+Thanks,
+Florian
