@@ -1,14 +1,20 @@
 From: Florian Weimer <fweimer@redhat.com>
 Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Mon, 12 Nov 2018 11:29:17 +0100
-Message-ID: <87bm6utwqq.fsf@oldenburg.str.redhat.com>
+Date: Mon, 12 Nov 2018 13:00:19 +0100
+Message-ID: <87efbqqze4.fsf@oldenburg.str.redhat.com>
 References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
- <20181108192226.GC5481@ram.oc3035372033.ibm.com>
+ <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
+ <87bm6zaa04.fsf@oldenburg.str.redhat.com>
+ <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
+ <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
+ <20181108201231.GE5481@ram.oc3035372033.ibm.com>
+ <87bm6z71yw.fsf@oldenburg.str.redhat.com>
+ <20181109180947.GF5481@ram.oc3035372033.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20181108192226.GC5481@ram.oc3035372033.ibm.com> (Ram Pai's
- message of "Thu, 8 Nov 2018 11:22:26 -0800")
+In-Reply-To: <20181109180947.GF5481@ram.oc3035372033.ibm.com> (Ram Pai's
+ message of "Fri, 9 Nov 2018 10:09:47 -0800")
 List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
  <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
 List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
@@ -20,38 +26,99 @@ Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozla
 Sender: "Linuxppc-dev"
  <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 To: Ram Pai <linuxram@us.ibm.com>
-Cc: linux-api@vger.kernel.org, dave.hansen@intel.com, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
+Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Dave Hansen <dave.hansen@intel.com>
 List-Id: linux-api@vger.kernel.org
 
 * Ram Pai:
 
-> On Thu, Nov 08, 2018 at 01:05:09PM +0100, Florian Weimer wrote:
->> Would it be possible to reserve a bit for PKEY_DISABLE_READ?
+> On Thu, Nov 08, 2018 at 09:23:35PM +0100, Florian Weimer wrote:
+>> * Ram Pai:
 >> 
->> I think the POWER implementation can disable read access at the hardware
->> level, but not write access, and that cannot be expressed with the
->> current PKEY_DISABLE_ACCESS and PKEY_DISABLE_WRITE bits.
+>> > Florian,
+>> >
+>> > 	I can. But I am struggling to understand the requirement. Why is
+>> > 	this needed?  Are we proposing a enhancement to the sys_pkey_alloc(),
+>> > 	to be able to allocate keys that are initialied to disable-read
+>> > 	only?
+>> 
+>> Yes, I think that would be a natural consequence.
+>> 
+>> However, my immediate need comes from the fact that the AMR register can
+>> contain a flag combination that is not possible to represent with the
+>> existing PKEY_DISABLE_WRITE and PKEY_DISABLE_ACCESS flags.  User code
+>> could write to AMR directly, so I cannot rule out that certain flag
+>> combinations exist there.
+>> 
+>> So I came up with this:
+>> 
+>> int
+>> pkey_get (int key)
+>> {
+>>   if (key < 0 || key > PKEY_MAX)
+>>     {
+>>       __set_errno (EINVAL);
+>>       return -1;
+>>     }
+>>   unsigned int index = pkey_index (key);
+>>   unsigned long int amr = pkey_read ();
+>>   unsigned int bits = (amr >> index) & 3;
+>> 
+>>   /* Translate from AMR values.  PKEY_AMR_READ standing alone is not
+>>      currently representable.  */
+>>   if (bits & PKEY_AMR_READ)
 >
-> POWER hardware can disable-read and can **also disable-write**
-> at the hardware level. It can disable-execute aswell at the
-> hardware level.   For example if the key bits for a given key in the AMR
-> register is  
-> 	0b01  it is read-disable
-> 	0b10  it is write-disable
->
-> To support access-disable, we make the key value 0b11.
->
-> So in case if you want to know if the key is read-disable 'bitwise-and' it
-> against 0x1.  i.e  (x & 0x1)
+> this should be
+>    if (bits & (PKEY_AMR_READ|PKEY_AMR_WRITE))
 
-Not sure if we covered that alreay, but my problem is that I cannot
-translate a 0b01 mask to a PKEY_DISABLE_* flag combination with the
-current flags.  0b10 and 0b11 are fine.
+This would return zero for PKEY_AMR_READ alone.
 
-POWER also loses the distinction between PKEY_DISABLE_ACCESS and
-PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE, but that's fine.  This breaks
-the current glibc test case, but I have a patch for that.  Arguably, the
-test is wrong or at least overly strict in what it accepts.
+>>     return PKEY_DISABLE_ACCESS;
+>
+>
+>>   else if (bits == PKEY_AMR_WRITE)
+>>     return PKEY_DISABLE_WRITE;
+>>   return 0;
+>> }
+
+It's hard to tell whether PKEY_DISABLE_ACCESS is better in this case.
+Which is why I want PKEY_DISABLE_READ.
+
+>> And this is not ideal.  I would prefer something like this instead:
+>> 
+>>   switch (bits)
+>>     {
+>>       case PKEY_AMR_READ | PKEY_AMR_WRITE:
+>>         return PKEY_DISABLE_ACCESS;
+>>       case PKEY_AMR_READ:
+>>         return PKEY_DISABLE_READ;
+>>       case PKEY_AMR_WRITE:
+>>         return PKEY_DISABLE_WRITE;
+>>       case 0:
+>>         return 0;
+>>     }
+>
+> yes.
+>  and on x86 it will be something like:
+>    switch (bits)
+>      {
+>        case PKEY_PKRU_ACCESS :
+>          return PKEY_DISABLE_ACCESS;
+>        case PKEY_AMR_WRITE:
+>          return PKEY_DISABLE_WRITE;
+>        case 0:
+>          return 0;
+>      }
+
+x86 returns the PKRU bits directly, including the nonsensical case
+(PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE).
+
+> But for this to work, why do you need to enhance the sys_pkey_alloc()
+> interface?  Not that I am against it. Trying to understand if the
+> enhancement is really needed.
+
+sys_pkey_alloc performs an implicit pkey_set for the newly allocated key
+(that is, it updates the PKRU/AMR register).  It makes sense to match
+the behavior of the userspace implementation.
 
 Thanks,
 Florian
