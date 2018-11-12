@@ -1,124 +1,93 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Mon, 12 Nov 2018 13:00:19 +0100
-Message-ID: <87efbqqze4.fsf@oldenburg.str.redhat.com>
-References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
- <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
- <87bm6zaa04.fsf@oldenburg.str.redhat.com>
- <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
- <20181109180947.GF5481@ram.oc3035372033.ibm.com>
+Subject: Re: Official Linux system wrapper library?
+Date: Mon, 12 Nov 2018 13:25:25 +0100
+Message-ID: <87d0raqy8a.fsf@oldenburg.str.redhat.com>
+References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
+        <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
+        <20181111081725.GA30248@1wt.eu>
+        <3664a508-ca74-4ff0-39a6-34543194a24e@gmail.com>
+        <20181111111143.GB4189@1wt.eu>
+        <87zhufvntw.fsf@oldenburg.str.redhat.com>
+        <20181111120910.GA4425@1wt.eu>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20181109180947.GF5481@ram.oc3035372033.ibm.com> (Ram Pai's
- message of "Fri, 9 Nov 2018 10:09:47 -0800")
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Ram Pai <linuxram@us.ibm.com>
-Cc: linux-mm@kvack.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Dave Hansen <dave.hansen@intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181111120910.GA4425@1wt.eu> (Willy Tarreau's message of "Sun,
+        11 Nov 2018 13:09:10 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Willy Tarreau <w@1wt.eu>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-* Ram Pai:
+* Willy Tarreau:
 
-> On Thu, Nov 08, 2018 at 09:23:35PM +0100, Florian Weimer wrote:
->> * Ram Pai:
+>> > What we'd really need would be to have the libc
+>> > interface as part of the operating system itself. I'm perfectly fine
+>> > with glibc providing all the "high-level" stuff like strcpy(), FILE*
+>> > operations etc, and all this probably is mostly system-independent.
 >> 
->> > Florian,
->> >
->> > 	I can. But I am struggling to understand the requirement. Why is
->> > 	this needed?  Are we proposing a enhancement to the sys_pkey_alloc(),
->> > 	to be able to allocate keys that are initialied to disable-read
->> > 	only?
+>> That's a bit messy, unfortunately.
 >> 
->> Yes, I think that would be a natural consequence.
+>> The kernel does not know about TCB layout, so a lot of low-level
+>> threading aspects are defined by userspace.
 >> 
->> However, my immediate need comes from the fact that the AMR register can
->> contain a flag combination that is not possible to represent with the
->> existing PKEY_DISABLE_WRITE and PKEY_DISABLE_ACCESS flags.  User code
->> could write to AMR directly, so I cannot rule out that certain flag
->> combinations exist there.
+>> The kernel does not know about POSIX cancellation.  Directly calling
+>> system calls breaks support for that.
 >> 
->> So I came up with this:
->> 
->> int
->> pkey_get (int key)
->> {
->>   if (key < 0 || key > PKEY_MAX)
->>     {
->>       __set_errno (EINVAL);
->>       return -1;
->>     }
->>   unsigned int index = pkey_index (key);
->>   unsigned long int amr = pkey_read ();
->>   unsigned int bits = (amr >> index) & 3;
->> 
->>   /* Translate from AMR values.  PKEY_AMR_READ standing alone is not
->>      currently representable.  */
->>   if (bits & PKEY_AMR_READ)
+>> A lot of multi-threaded applications assume that most high-level
+>> functionality remains usable even after fork in a multi-threaded
+>> process.  (This is increasingly a problem today with all those direct
+>> calls to clone.)  Unfortunately, this introduces rather tricky
+>> low-level/high-level cross-subsystem issues, too.
 >
-> this should be
->    if (bits & (PKEY_AMR_READ|PKEY_AMR_WRITE))
-
-This would return zero for PKEY_AMR_READ alone.
-
->>     return PKEY_DISABLE_ACCESS;
+> But don't you think that moving a bit of this into the kernel
+> repository could improve the situation ? The corner cases could then
+> be detected when the feature is developed and be addressed either by
+> adapting the kernel side of the syscall or even by changing the design
+> before it's committed. Maybe a few extra syscalls are missing to
+> retrieve some critial info that would make things more reliable or
+> easier between userland and kernel, and that would become more obvious
+> with all the relevant parts at the same place ?
 >
->
->>   else if (bits == PKEY_AMR_WRITE)
->>     return PKEY_DISABLE_WRITE;
->>   return 0;
->> }
-
-It's hard to tell whether PKEY_DISABLE_ACCESS is better in this case.
-Which is why I want PKEY_DISABLE_READ.
-
->> And this is not ideal.  I would prefer something like this instead:
+>> > But the system interface could possibly be handled easier in the
+>> > system itself, which would also provide a smoother adoption of new
+>> > syscalls and API updates. It would also limit the hassle required to
+>> > provide new syscalls, as if you start to have to contribute to two
+>> > projects at once for a single syscall, it becomes really painful.
 >> 
->>   switch (bits)
->>     {
->>       case PKEY_AMR_READ | PKEY_AMR_WRITE:
->>         return PKEY_DISABLE_ACCESS;
->>       case PKEY_AMR_READ:
->>         return PKEY_DISABLE_READ;
->>       case PKEY_AMR_WRITE:
->>         return PKEY_DISABLE_WRITE;
->>       case 0:
->>         return 0;
->>     }
+>> Sure, the duplication is unfortunate.
+>> 
+>> Several glibc contributors deeply care about standards compliance for
+>> header files.
 >
-> yes.
->  and on x86 it will be something like:
->    switch (bits)
->      {
->        case PKEY_PKRU_ACCESS :
->          return PKEY_DISABLE_ACCESS;
->        case PKEY_AMR_WRITE:
->          return PKEY_DISABLE_WRITE;
->        case 0:
->          return 0;
->      }
+> For having suffered a lot from the libc-4 to libc-5 then libc-5 to glibc,
+> I certainly can understand their concerns about standards compliance.
 
-x86 returns the PKRU bits directly, including the nonsensical case
-(PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE).
+This is getting way off-topic, but:
 
-> But for this to work, why do you need to enhance the sys_pkey_alloc()
-> interface?  Not that I am against it. Trying to understand if the
-> enhancement is really needed.
+The C standard does not care deeply about practical source code
+compatibility.  Behavior of valid syntax generally remains unchanged.
+However, each revision adds many macros to existing header files, so
+practical source code compatibility tends to be problematic.  For glibc,
+the current policy is to enable all optional features with _GNU_SOURCE,
+so most projects receive the full dose of macros.  (Unrelated to
+standards, even new system call wrappers are problematic for source code
+compatibility).)
 
-sys_pkey_alloc performs an implicit pkey_set for the newly allocated key
-(that is, it updates the PKRU/AMR register).  It makes sense to match
-the behavior of the userspace implementation.
+For ABI compatibility, there are only ad-hoc standards anyway, so it's
+mostly about us being careful when making changes.
+
+>> The kernel developers care not, and the result is that we
+>> copy definitions and declarations from the kernel header files, creating
+>> additional problems.
+>
+> Probably that these standard compatibility issues should be addressed at
+> their root in the kernel header definitions in fact. Working around issues
+> always leads to a stall at some point, and it encourages the process not
+> to change.
+
+In the past, we couldn't even get agreement about little things such as
+__u64, so I'm not hopeful. 8-(
 
 Thanks,
 Florian
