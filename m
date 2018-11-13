@@ -1,76 +1,30 @@
-From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: [PATCH RESEND] UAPI: move RENAME_* definitions to separated file
-Date: Tue, 13 Nov 2018 08:51:12 +0000
-Message-ID: <20181113085102.3079-1-ynorov@caviumnetworks.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH RESEND] UAPI: move RENAME_* definitions to separated file
+Date: Tue, 13 Nov 2018 12:09:40 +0100
+Message-ID: <878t1xkzd7.fsf@oldenburg.str.redhat.com>
+References: <20181113085102.3079-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Language: en-US
+In-Reply-To: <20181113085102.3079-1-ynorov@caviumnetworks.com> (Yury Norov's
+        message of "Tue, 13 Nov 2018 08:51:12 +0000")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Florian Weimer <fweimer@redhat.com>
-Cc: "Norov, Yuri" <Yuri.Norov@cavium.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, "Norov, Yuri" <Yuri.Norov@cavium.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Discussion:
-https://lore.kernel.org/lkml/20180702084622.GA15274@yury-thinkpad/
+* Yury Norov:
 
-Although RENAME_* macros are exposed in kernel headers, they are not
-used by glibc. That's because linux/fs.h which hosts RENAME_* is
-considered unsuitable by glibc developers:
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index 53a22e8e0408..dbf58bbf5bad 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
 
-As Florian Weimer wrote:
+Could you move it to a dedicated <linux/rename-flags.h> header?  Or add
+a comment that the header is only for rename flags?
 
-> <linux/fs.h> undefines and defines macros not mentioned in the standards
-> (and it even contains a few unrelated structs), so we cannot include it
-> without _GNU_SOURCE.
->
-> It might be possible to include it only for _GNU_SOURCE, but there are a
-> lot of things in <linux/fs.h>, so that does not seem to be particularly
-> advisable.
+Then we can change glibc to include it if it is present and when
+compiling under _GNU_SOURCE.
 
-In this patch RENAME_* is removed to separated header file that
-conforms standards and therefore is suitable for inclusion by glibc.
-
-Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
----
- include/uapi/linux/fs.h     |  4 +---
- include/uapi/linux/rename.h | 12 ++++++++++++
- 2 files changed, 13 insertions(+), 3 deletions(-)
- create mode 100644 include/uapi/linux/rename.h
-
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 53a22e8e0408..dbf58bbf5bad 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -44,9 +44,7 @@
- #define SEEK_HOLE	4	/* seek to the next hole */
- #define SEEK_MAX	SEEK_HOLE
-=20
--#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
--#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
--#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
-+#include <linux/rename.h>
-=20
- struct file_clone_range {
- 	__s64 src_fd;
-diff --git a/include/uapi/linux/rename.h b/include/uapi/linux/rename.h
-new file mode 100644
-index 000000000000..7178f0565657
---- /dev/null
-+++ b/include/uapi/linux/rename.h
-@@ -0,0 +1,12 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef _UAPI_LINUX_RENAME_H
-+#define _UAPI_LINUX_RENAME_H
-+
-+/*
-+ * Definitions for rename syscall family.
-+ */
-+#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
-+#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
-+#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
-+
-+#endif /* _UAPI_LINUX_RENAME_H */
---=20
-2.17.1
+Thanks,
+Florian
