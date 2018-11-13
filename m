@@ -1,88 +1,161 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: Official Linux system wrapper library?
-Date: Tue, 13 Nov 2018 12:58:39 -0800
-Message-ID: <69B07026-5E8B-47FC-9313-E51E899FAFB0@amacapital.net>
-References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com> <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com> <877ehjx447.fsf@oldenburg.str.redhat.com> <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com> <875zx2vhpd.fsf@oldenburg.str.redhat.com> <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com> <20181113193859.GJ3505@e103592.cambridge.arm.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v5 05/27] Documentation/x86: Add CET description
+Date: Tue, 13 Nov 2018 13:02:24 -0800
+Message-ID: <43979cffef0a4b5ea90b3fc41b6f9edd2a4324db.camel@intel.com>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+         <20181011151523.27101-6-yu-cheng.yu@intel.com>
+         <20181113184337.GM10502@zn.tnic>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181113193859.GJ3505@e103592.cambridge.arm.com>
+In-Reply-To: <20181113184337.GM10502@zn.tnic>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Martin <Dave.Martin@arm.com>
-Cc: Daniel Colascione <dancol@google.com>, Florian Weimer <fweimer@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Borislav Petkov <bp@alien8.de>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
+On Tue, 2018-11-13 at 19:43 +0100, Borislav Petkov wrote:
+> On Thu, Oct 11, 2018 at 08:15:01AM -0700, Yu-cheng Yu wrote:
+> > Explain how CET works and the no_cet_shstk/no_cet_ibt kernel
+> > parameters.
+> > 
+> > Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> > ---
+> >  .../admin-guide/kernel-parameters.txt         |   6 +
+> >  Documentation/index.rst                       |   1 +
+> >  Documentation/x86/index.rst                   |  11 +
+> >  Documentation/x86/intel_cet.rst               | 266 ++++++++++++++++++
+> >  4 files changed, 284 insertions(+)
+> >  create mode 100644 Documentation/x86/index.rst
+> >  create mode 100644 Documentation/x86/intel_cet.rst
+> 
+> So this patch should probably come first in the series so that a reader
+> can know what to expect...
+> 
+> > diff --git a/Documentation/admin-guide/kernel-parameters.txt
+> > b/Documentation/admin-guide/kernel-parameters.txt
+> > index 92eb1f42240d..3854423f7c86 100644
+> > --- a/Documentation/admin-guide/kernel-parameters.txt
+> > +++ b/Documentation/admin-guide/kernel-parameters.txt
+> > @@ -2764,6 +2764,12 @@
+> >  			noexec=on: enable non-executable mappings (default)
+> >  			noexec=off: disable non-executable mappings
+> >  
+> > +	no_cet_ibt	[X86-64] Disable indirect branch tracking for
+> > user-mode
+> > +			applications
+> > +
+> > +	no_cet_shstk	[X86-64] Disable shadow stack support for user-
+> > mode
+> > +			applications
+> > +
+> >  	nosmap		[X86]
+> >  			Disable SMAP (Supervisor Mode Access Prevention)
+> >  			even if it is supported by processor.
+> > diff --git a/Documentation/index.rst b/Documentation/index.rst
+> > index 5db7e87c7cb1..1cdc139adb40 100644
+> > --- a/Documentation/index.rst
+> > +++ b/Documentation/index.rst
+> 
+> Please integrate scripts/checkpatch.pl into your patch creation
+> workflow. Some of the warnings/errors *actually* make sense:
+> 
+> WARNING: Missing or malformed SPDX-License-Identifier tag in line 1
+> #76: FILE: Documentation/x86/index.rst:1:
+> +=======================
+> 
+> WARNING: Missing or malformed SPDX-License-Identifier tag in line 1
+> #93: FILE: Documentation/x86/intel_cet.rst:1:
+> +=========================================
+> 
+> > @@ -104,6 +104,7 @@ implementation.
+> >     :maxdepth: 2
+> >  
+> >     sh/index
+> > +   x86/index
+> >  
+> >  Filesystem Documentation
+> >  ------------------------
+> > diff --git a/Documentation/x86/index.rst b/Documentation/x86/index.rst
+> > new file mode 100644
+> > index 000000000000..9c34d8cbc8f0
+> > --- /dev/null
+> > +++ b/Documentation/x86/index.rst
+> > @@ -0,0 +1,11 @@
+> > +=======================
+> > +X86 Documentation
+> > +=======================
+> > +
+> > +Control Flow Enforcement
+> > +========================
+> > +
+> > +.. toctree::
+> > +   :maxdepth: 1
+> > +
+> > +   intel_cet
+> > diff --git a/Documentation/x86/intel_cet.rst
+> > b/Documentation/x86/intel_cet.rst
+> > new file mode 100644
+> > index 000000000000..946f4802a51f
+> > --- /dev/null
+> > +++ b/Documentation/x86/intel_cet.rst
+> > @@ -0,0 +1,266 @@
+> > +=========================================
+> > +Control Flow Enforcement Technology (CET)
+> > +=========================================
+> > +
+> > +[1] Overview
+> > +============
+> > +
+> > +Control Flow Enforcement Technology (CET) provides protection against
+> > +return/jump-oriented programming (ROP) attacks.  It can be implemented
+> > +to protect both the kernel and applications.  In the first phase,
+> > +only the user-mode protection is implemented on the 64-bit kernel.
+> 
+> s/the//			         is implemented in 64-bit mode.
+> 
+> > +However, 32-bit applications are supported under the compatibility
+> > +mode.
+> 
+> Drop "However":
+> 
+> "32-bit applications are, of course, supported in compatibility mode."
+> 
+> > +
+> > +CET includes shadow stack (SHSTK) and indirect branch tracking (IBT).
+> 
+> "CET introduces two a shadow stack and an indirect branch tracking mechanism."
+> 
+> > +The SHSTK is a secondary stack allocated from memory.  The processor
+> 
+> s/The//
+> 
+> > +automatically pushes/pops a secure copy to the SHSTK every return
+> > +address and,
+> 
+> that reads funny - pls reorganize. Also, what is a "secure copy"?
+> 
+> You mean a copy of every return address which software cannot access?
+> 
+> > by comparing the secure copy to the program stack copy,
+> > +verifies function returns are as intended. 
+> 
+> 			 ... have not been corrupted/modified."
+> 
+> > The IBT verifies all
+> > +indirect CALL/JMP targets are intended and marked by the compiler with
+> > +'ENDBR' op codes.
+> 
+> "opcode" - one word. And before you use "ENDBR" you need to explain it
+> above what it is.
+> 
+> /me reads further... encounters ENDBR's definition...
+> 
+> ah, ok, so you should say something like
+> 
+> "... and marked by the compiler with the ENDBR opcode (see below)."
 
-> On Nov 13, 2018, at 11:39 AM, Dave Martin <Dave.Martin@arm.com> wrote:
->=20
-> On Mon, Nov 12, 2018 at 05:19:14AM -0800, Daniel Colascione wrote:
->=20
-> [...]
->=20
->> We can learn something from how Windows does things. On that system,
->> what we think of as "libc" is actually two parts. (More, actually, but
->> I'm simplifying.) At the lowest level, you have the semi-documented
->> ntdll.dll, which contains raw system call wrappers and arcane
->> kernel-userland glue. On top of ntdll live the "real" libc
->> (msvcrt.dll, kernel32.dll, etc.) that provide conventional
->> application-level glue. The tight integration between ntdll.dll and
->> the kernel allows Windows to do very impressive things. (For example,
->> on x86_64, Windows has no 32-bit ABI as far as the kernel is
->> concerned! You can still run 32-bit programs though, and that works
->> via ntdll.dll essentially shimming every system call and switching the
->> processor between long and compatibility mode as needed.) Normally,
->> you'd use the higher-level capabilities, but if you need something in
->> ntdll (e.g., if you're Cygwin) nothing stops your calling into the
->> lower-level system facilities directly. ntdll is tightly bound to the
->> kernel; the higher-level libc, not so.
->>=20
->> We should adopt a similar approach. Shipping a lower-level
->> "liblinux.so" tightly bound to the kernel would not only let the
->> kernel bypass glibc's "editorial discretion" in exposing new
->> facilities to userspace, but would also allow for tighter user-kernel
->> integration that one can achieve with a simplistic syscall(2)-style
->> escape hatch. (For example, for a long time now, I've wanted to go
->> beyond POSIX and improve the system's signal handling API, and this
->> improvement requires userspace cooperation.) The vdso is probably too
->> small and simplistic to serve in this role; I'd want a real library.
->=20
-> Can you expand on your reasoning here?
->=20
-> Playing devil's advocate:
->=20
-> If the library is just exposing the syscall interface, I don't see
-> why it _couldn't_ fit into the vdso (or something vdso-like).
->=20
-> If a separate library, I'd be concerned that it would accumulate
-> value-add bloat over time, and the kernel ABI may start to creep since
-> most software wouldn't invoke the kernel directly any more.  Even if
-> it's maintained in the kernel tree, its existence as an apparently
-> standalone component may encourage forking, leading to a potential
-> compatibility mess.
->=20
-> The vdso approach would mean we can guarantee that the library is
-> available and up to date at runtime, and may make it easier to keep
-> what's in it down to sane essentials.
+I will work on it.  Thanks!
 
-Hmm. Putting on my vDSO hat:
-
-The vDSO could provide all kinds of nifty things. Better exception handling c=
-omes to mind. But it has two major limitations that severely restrict what i=
-t can do:
-
-- It can=E2=80=99t allocate memory. We probably want to keep it that way.
-
- - It can=E2=80=99t use TLS.  Solving this without genuinely awful ABI issue=
-s may be extremely hard. We *could* require callers to pass a thread pointer=
- in, I suppose.
-
-Also, if we make the vDSO stateful, CRIU is going to have a blast.  We might=
- need to expose explicit save and restore abilities.
-
-As a straw man use case, it would be neat if DSOs (or the loader, maybe) cou=
-ld register a list of exception fixups per DSO.  The kernel could consult th=
-ese lists before delivering a signal.  ISTM it wouldn=E2=80=99t be so crazy i=
-f the vDSO handled registration, although it could uses syscalls as well. If=
- the vDSO did it, it would need somewhere to put the lists.=
+Yu-cheng
