@@ -1,36 +1,44 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: [PATCH v5 06/27] x86/cet: Control protection exception handler
-Date: Wed, 14 Nov 2018 21:28:02 +0100
-Message-ID: <20181114202802.GN13926@zn.tnic>
-References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
- <20181011151523.27101-7-yu-cheng.yu@intel.com>
- <20181114184436.GK13926@zn.tnic>
- <307b6162b0270871e664ca88a96b4ea0d1b3f65b.camel@intel.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Wed, 14 Nov 2018 13:41:12 -0800 (PST)
+Message-ID: <alpine.DEB.2.21.1811141336010.200345@chino.kir.corp.google.com>
+References: <20181004094637.GG22173@dhcp22.suse.cz> <alpine.DEB.2.21.1810041130380.12951@chino.kir.corp.google.com> <20181009083326.GG8528@dhcp22.suse.cz> <20181015150325.GN18839@dhcp22.suse.cz> <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
+ <20181016104855.GQ18839@dhcp22.suse.cz> <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com> <20181017070531.GC18839@dhcp22.suse.cz> <alpine.DEB.2.21.1810171256330.60837@chino.kir.corp.google.com> <20181018070031.GW18839@dhcp22.suse.cz>
+ <20181114132306.GX23419@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <307b6162b0270871e664ca88a96b4ea0d1b3f65b.camel@intel.com>
+In-Reply-To: <20181114132306.GX23419@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 14, 2018 at 12:19:42PM -0800, Yu-cheng Yu wrote:
-> Yes, I was not sure if the addition should follow the existing style (which does
-> not have identifier names).  What do you think is right?
+On Wed, 14 Nov 2018, Michal Hocko wrote:
 
-Yeah, we've converted them all now to named params:
+> > > > Do you know of any other userspace except your usecase? Is there
+> > > > anything fundamental that would prevent a proper API adoption for you?
+> > > > 
+> > > 
+> > > Yes, it would require us to go back in time and build patched binaries. 
+> > 
+> > I read that as there is a fundamental problem to update existing
+> > binaries. If that is the case then there surely is no way around it
+> > and another sad page in the screwed up APIs book we provide.
+> > 
+> > But I was under impression that the SW stack which actually does the
+> > monitoring is under your controll. Moreover I was under impression that
+> > you do not use the current vanilla kernel so there is no need for an
+> > immediate change on your end. It is trivial to come up with a backward
+> > compatible way to check for the new flag (if it is not present then
+> > fallback to vma flags).
+> > 
 
-https://git.kernel.org/tip/8e1599fcac2efda8b7d433ef69d2492f0b351e3f
-
-It probably would be easier if you redo your patchset ontop of current
-tip/master.
-
-Thx.
-
--- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+The userspace had a single way to determine if thp had been disabled for a 
+specific vma and that was broken with your commit.  We have since fixed 
+it.  Modifying our software stack to start looking for some field 
+somewhere else will not help anybody else that this has affected or will 
+affect.  I'm interested in not breaking userspace, not trying a wait and 
+see approach to see if anybody else complains once we start looking for 
+some other field.  The risk outweighs the reward, it already broke us, and 
+I'd prefer not to even open the possibility of breaking anybody else.
