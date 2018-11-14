@@ -1,16 +1,36 @@
 From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: [PATCH v2] UAPI: move RENAME_* definitions to separated file
-Date: Wed, 14 Nov 2018 07:13:55 +0000
-Message-ID: <20181114071346.31210-1-ynorov@caviumnetworks.com>
+Subject: Re: [PATCH v2] UAPI: move RENAME_* definitions to separated file
+Date: Wed, 14 Nov 2018 07:26:07 +0000
+Message-ID: <20181114072559.GA16695@yury-thinkpad>
+References: <20181114071346.31210-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181114071346.31210-1-ynorov@caviumnetworks.com>
 Content-Language: en-US
+Content-ID: <3D1644F668FEBB4682C6DE6611F7C69B@namprd07.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Florian Weimer <fweimer@redhat.com>
 Cc: "Norov, Yuri" <Yuri.Norov@cavium.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
+
+Hi all,=20
+
+It seems that I forgot to rename guards in v2. This is the correct
+version. My apologize for noise.
+
+Yury
+
+>From 61215b1cb559e69fb57f2a82864e72e3a1ef4b12 Mon Sep 17 00:00:00 2001
+From: Yury Norov <ynorov@caviumnetworks.com>
+Date: Wed, 14 Nov 2018 09:51:49 +0300
+To: Andrew Morton <akpm@linux-foundation.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Florian Weimer <fweimer@redhat.com>
+CC: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	linux-api@vger.kernel.org, libc-alpha@sourceware.org
+Subject: [PATCH v2] UAPI: move RENAME_* definitions to separated file
 
 Discussion:
 https://lore.kernel.org/lkml/20180702084622.GA15274@yury-thinkpad/
@@ -65,8 +85,8 @@ index 000000000000..7178f0565657
 +++ b/include/uapi/linux/rename-flags.h
 @@ -0,0 +1,12 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef _UAPI_LINUX_RENAME_H
-+#define _UAPI_LINUX_RENAME_H
++#ifndef _UAPI_LINUX_RENAME_FLAGS_H
++#define _UAPI_LINUX_RENAME_FLAGS_H
 +
 +/*
 + * Definitions for rename syscall family.
@@ -75,6 +95,6 @@ index 000000000000..7178f0565657
 +#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
 +#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
 +
-+#endif /* _UAPI_LINUX_RENAME_H */
++#endif /* _UAPI_LINUX_RENAME_FLAGS_H */
 --=20
 2.17.1
