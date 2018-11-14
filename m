@@ -1,42 +1,119 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: Official Linux system wrapper library?
-Date: Wed, 14 Nov 2018 10:35:42 -0800
-Message-ID: <CAKOZuetCGCfNdJ2QM0phu3_3Q29f5Yeh=NHiM_A9MhHsCjK48A@mail.gmail.com>
-References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
- <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com> <877ehjx447.fsf@oldenburg.str.redhat.com>
- <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
- <875zx2vhpd.fsf@oldenburg.str.redhat.com> <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
- <20181113193859.GJ3505@e103592.cambridge.arm.com> <5853c297-9d84-86e5-dede-aa2957562c6b@arm.com>
- <CAKOZuesta_V=doXsVLc2E6WCQvywdur3F+u2pFKaPN+CEQd+ZQ@mail.gmail.com> <alpine.DEB.2.21.1811141741000.16571@digraph.polyomino.org.uk>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v5 06/27] x86/cet: Control protection exception handler
+Date: Wed, 14 Nov 2018 19:44:36 +0100
+Message-ID: <20181114184436.GK13926@zn.tnic>
+References: <20181011151523.27101-1-yu-cheng.yu@intel.com>
+ <20181011151523.27101-7-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1811141741000.16571@digraph.polyomino.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20181011151523.27101-7-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joseph Myers <joseph@codesourcery.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Dave P Martin <Dave.Martin@arm.com>, nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 14, 2018 at 10:15 AM, Joseph Myers <joseph@codesourcery.com> wrote:
-> Any
-> feature (e.g. syscall library) with a design coming solely from the kernel
-> rather than a cooperative process is also likely to have an unsuitable
-> design meaning it doesn't get used.
+That subject needs a verb:
 
-Is that so? membarrier came directly from the kernel. It gets used and
-appears to have a suitable design. That something isn't used by libc
-doesn't mean that it doesn't get used in general.
+Subject: [PATCH v5 06/27] x86/cet: Add control protection exception handler
 
->  Once we have sufficient communication
-> to design suitable interfaces *together*, "avoiding the need to
-> communicate" becomes irrelevant as a design criterion anyway.
+On Thu, Oct 11, 2018 at 08:15:02AM -0700, Yu-cheng Yu wrote:
+> A control protection exception is triggered when a control flow transfer
+> attempt violated shadow stack or indirect branch tracking constraints.
+> For example, the return address for a RET instruction differs from the
+> safe copy on the shadow stack; or a JMP instruction arrives at a non-
+> ENDBR instruction.
+> 
+> The control protection exception handler works in a similar way as the
+> general protection fault handler.
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/entry/entry_64.S          |  2 +-
+>  arch/x86/include/asm/traps.h       |  3 ++
+>  arch/x86/kernel/idt.c              |  4 ++
+>  arch/x86/kernel/signal_compat.c    |  2 +-
+>  arch/x86/kernel/traps.c            | 64 ++++++++++++++++++++++++++++++
+>  include/uapi/asm-generic/siginfo.h |  3 +-
+>  6 files changed, 75 insertions(+), 3 deletions(-)
 
-If that approach is going to go work, the libc maintainership needs to
-be more pragmatic, less idealistic, and less likely to block work on
-purity grounds, e.g., we shouldn't do X because the dynamic linker
-really should be out-of-process, we can't do Y because nobody should
-be using signals, and we can't do Z because the kernel uses IDs that
-have such-and-such ugly properties.
+A *lot* of style problems here. Please use checkpatch and then common
+sense to check your patches before sending. All those below are valid,
+AFAICT:
 
-A good demonstration of a new commitment to pragmatism would be
-merging the trivial wrappers for gettid(2).
+WARNING: function definition argument 'struct pt_regs *' should also have an identifier name
+#76: FILE: arch/x86/include/asm/traps.h:81:
++dotraplinkage void do_control_protection(struct pt_regs *, long);
+
+WARNING: function definition argument 'long' should also have an identifier name
+#76: FILE: arch/x86/include/asm/traps.h:81:
++dotraplinkage void do_control_protection(struct pt_regs *, long);
+
+WARNING: static const char * array should probably be static const char * const
+#124: FILE: arch/x86/kernel/traps.c:581:
++static const char *control_protection_err[] =
+
+ERROR: that open brace { should be on the previous line
+#125: FILE: arch/x86/kernel/traps.c:582:
++static const char *control_protection_err[] =
++{
+
+WARNING: quoted string split across lines
+#158: FILE: arch/x86/kernel/traps.c:615:
++		WARN_ONCE(1, "CET is disabled but got control "
++			  "protection fault\n");
+
+WARNING: Prefer printk_ratelimited or pr_<level>_ratelimited to printk_ratelimit
+#165: FILE: arch/x86/kernel/traps.c:622:
++	    printk_ratelimit()) {
+
+WARNING: Avoid logging continuation uses where feasible
+#176: FILE: arch/x86/kernel/traps.c:633:
++		pr_cont("\n");
+
+ERROR: "(foo*)" should be "(foo *)"
+#183: FILE: arch/x86/kernel/traps.c:640:
++	info.si_addr	= (void __user*)uprobe_get_trap_addr(regs);
+
+
+And now that patch doesn't even build anymore because of the siginfo
+changes which came in during the merge window. I guess I'll wait for
+your v6 patchset.
+
+---
+arch/x86/kernel/traps.c: In function ‘do_control_protection’:
+arch/x86/kernel/traps.c:627:16: error: passing argument 1 of ‘clear_siginfo’ from incompatible pointer type [-Werror=incompatible-pointer-types]
+  clear_siginfo(&info);
+                ^~~~~
+In file included from ./include/linux/sched/signal.h:6,
+                 from ./include/linux/ptrace.h:7,
+                 from ./include/linux/ftrace.h:14,
+                 from ./include/linux/kprobes.h:42,
+                 from arch/x86/kernel/traps.c:19:
+./include/linux/signal.h:20:52: note: expected ‘kernel_siginfo_t *’ {aka ‘struct kernel_siginfo *’} but argument is of type ‘siginfo_t *’ {aka ‘struct siginfo *’}
+ static inline void clear_siginfo(kernel_siginfo_t *info)
+                                  ~~~~~~~~~~~~~~~~~~^~~~
+arch/x86/kernel/traps.c:632:26: error: passing argument 2 of ‘force_sig_info’ from incompatible pointer type [-Werror=incompatible-pointer-types]
+  force_sig_info(SIGSEGV, &info, tsk);
+                          ^~~~~
+In file included from ./include/linux/ptrace.h:7,
+                 from ./include/linux/ftrace.h:14,
+                 from ./include/linux/kprobes.h:42,
+                 from arch/x86/kernel/traps.c:19:
+./include/linux/sched/signal.h:327:32: note: expected ‘struct kernel_siginfo *’ but argument is of type ‘siginfo_t *’ {aka ‘struct siginfo *’}
+ extern int force_sig_info(int, struct kernel_siginfo *, struct task_struct *);
+                                ^~~~~~~~~~~~~~~~~~~~~~~
+cc1: some warnings being treated as errors
+make[2]: *** [scripts/Makefile.build:291: arch/x86/kernel/traps.o] Error 1
+make[1]: *** [scripts/Makefile.build:516: arch/x86/kernel] Error 2
+make[1]: *** Waiting for unfinished jobs....
+make: *** [Makefile:1060: arch/x86] Error 2
+make: *** Waiting for unfinished jobs....
+
+-- 
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
