@@ -1,100 +1,112 @@
-From: Yury Norov <ynorov@caviumnetworks.com>
-Subject: Re: [PATCH v2] UAPI: move RENAME_* definitions to separated file
-Date: Wed, 14 Nov 2018 07:26:07 +0000
-Message-ID: <20181114072559.GA16695@yury-thinkpad>
-References: <20181114071346.31210-1-ynorov@caviumnetworks.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: Official Linux system wrapper library?
+Date: Wed, 14 Nov 2018 10:54:51 +0000
+Message-ID: <20181114105449.GK3505@e103592.cambridge.arm.com>
+References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
+ <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
+ <877ehjx447.fsf@oldenburg.str.redhat.com>
+ <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+ <875zx2vhpd.fsf@oldenburg.str.redhat.com>
+ <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
+ <20181113193859.GJ3505@e103592.cambridge.arm.com>
+ <69B07026-5E8B-47FC-9313-E51E899FAFB0@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181114071346.31210-1-ynorov@caviumnetworks.com>
-Content-Language: en-US
-Content-ID: <3D1644F668FEBB4682C6DE6611F7C69B@namprd07.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <69B07026-5E8B-47FC-9313-E51E899FAFB0@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Florian Weimer <fweimer@redhat.com>
-Cc: "Norov, Yuri" <Yuri.Norov@cavium.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Daniel Colascione <dancol@google.com>, Florian Weimer <fweimer@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi all,=20
+On Tue, Nov 13, 2018 at 12:58:39PM -0800, Andy Lutomirski wrote:
+> 
+> > On Nov 13, 2018, at 11:39 AM, Dave Martin <Dave.Martin@arm.com> wrote:
+> > 
+> > On Mon, Nov 12, 2018 at 05:19:14AM -0800, Daniel Colascione wrote:
+> > 
+> > [...]
+> > 
+> >> We can learn something from how Windows does things. On that system,
+> >> what we think of as "libc" is actually two parts. (More, actually, but
+> >> I'm simplifying.) At the lowest level, you have the semi-documented
+> >> ntdll.dll, which contains raw system call wrappers and arcane
+> >> kernel-userland glue. On top of ntdll live the "real" libc
+> >> (msvcrt.dll, kernel32.dll, etc.) that provide conventional
+> >> application-level glue. The tight integration between ntdll.dll and
+> >> the kernel allows Windows to do very impressive things. (For example,
+> >> on x86_64, Windows has no 32-bit ABI as far as the kernel is
+> >> concerned! You can still run 32-bit programs though, and that works
+> >> via ntdll.dll essentially shimming every system call and switching the
+> >> processor between long and compatibility mode as needed.) Normally,
+> >> you'd use the higher-level capabilities, but if you need something in
+> >> ntdll (e.g., if you're Cygwin) nothing stops your calling into the
+> >> lower-level system facilities directly. ntdll is tightly bound to the
+> >> kernel; the higher-level libc, not so.
+> >> 
+> >> We should adopt a similar approach. Shipping a lower-level
+> >> "liblinux.so" tightly bound to the kernel would not only let the
+> >> kernel bypass glibc's "editorial discretion" in exposing new
+> >> facilities to userspace, but would also allow for tighter user-kernel
+> >> integration that one can achieve with a simplistic syscall(2)-style
+> >> escape hatch. (For example, for a long time now, I've wanted to go
+> >> beyond POSIX and improve the system's signal handling API, and this
+> >> improvement requires userspace cooperation.) The vdso is probably too
+> >> small and simplistic to serve in this role; I'd want a real library.
+> > 
+> > Can you expand on your reasoning here?
+> > 
+> > Playing devil's advocate:
+> > 
+> > If the library is just exposing the syscall interface, I don't see
+> > why it _couldn't_ fit into the vdso (or something vdso-like).
+> > 
+> > If a separate library, I'd be concerned that it would accumulate
+> > value-add bloat over time, and the kernel ABI may start to creep since
+> > most software wouldn't invoke the kernel directly any more.  Even if
+> > it's maintained in the kernel tree, its existence as an apparently
+> > standalone component may encourage forking, leading to a potential
+> > compatibility mess.
+> > 
+> > The vdso approach would mean we can guarantee that the library is
+> > available and up to date at runtime, and may make it easier to keep
+> > what's in it down to sane essentials.
+> 
+> Hmm. Putting on my vDSO hat:
+> 
+> The vDSO could provide all kinds of nifty things. Better exception
+> handling comes to mind. But it has two major limitations that severely
+> restrict what it can do:
+> 
+> - It can’t allocate memory. We probably want to keep it that way.
+> 
+> - It can’t use TLS.  Solving this without genuinely awful ABI issues
+> may be extremely hard. We *could* require callers to pass a thread
+> pointer in, I suppose.
+> 
+> Also, if we make the vDSO stateful, CRIU is going to have a blast.  We
+> might need to expose explicit save and restore abilities.
+> 
+> As a straw man use case, it would be neat if DSOs (or the loader,
+> maybe) could register a list of exception fixups per DSO.  The kernel
+> could consult these lists before delivering a signal.  ISTM it wouldn’t
+> be so crazy if the vDSO handled registration, although it could uses
+> syscalls as well. If the vDSO did it, it would need somewhere to put
+> the lists.
 
-It seems that I forgot to rename guards in v2. This is the correct
-version. My apologize for noise.
+Fair points, though this is rather what I meant by "sane essentials".
+Because there are strict limits on what can be done in the vDSO, it may
+be more bloat-resistant and more conservatively maintained.
 
-Yury
+This might provide a way to push some dumb compatibility kludge code
+that receives little ongoing maintenance outside the privilege wall,
+whereas it has to sit in the kernel proper today.
 
->From 61215b1cb559e69fb57f2a82864e72e3a1ef4b12 Mon Sep 17 00:00:00 2001
-From: Yury Norov <ynorov@caviumnetworks.com>
-Date: Wed, 14 Nov 2018 09:51:49 +0300
-To: Andrew Morton <akpm@linux-foundation.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Florian Weimer <fweimer@redhat.com>
-CC: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org, libc-alpha@sourceware.org
-Subject: [PATCH v2] UAPI: move RENAME_* definitions to separated file
+In theory we could opt to advertise new syscalls only via vDSO entry
+points, and not maintain __NR_xxx values for them (which may or may
+not upset ptrace users.)  Anyway, I digress...
 
-Discussion:
-https://lore.kernel.org/lkml/20180702084622.GA15274@yury-thinkpad/
-
-Although RENAME_* macros are exposed in kernel headers, they are not
-used by glibc. That's because linux/fs.h which hosts RENAME_* is
-considered unsuitable by glibc developers:
-
-As Florian Weimer wrote:
-
-> <linux/fs.h> undefines and defines macros not mentioned in the standards
-> (and it even contains a few unrelated structs), so we cannot include it
-> without _GNU_SOURCE.
->
-> It might be possible to include it only for _GNU_SOURCE, but there are a
-> lot of things in <linux/fs.h>, so that does not seem to be particularly
-> advisable.
-
-In this patch RENAME_* is removed to a separated header file that
-conforms the standards and therefore is suitable for inclusion by glibc.
-
-v2:
- - rename dedicated file to 'rename-flags.h', as requested by Florian.
-
-Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
----
- include/uapi/linux/fs.h           |  4 +---
- include/uapi/linux/rename-flags.h | 12 ++++++++++++
- 2 files changed, 13 insertions(+), 3 deletions(-)
- create mode 100644 include/uapi/linux/rename-flags.h
-
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 73e01918f996..34c308203746 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -39,9 +39,7 @@
- #define SEEK_HOLE	4	/* seek to the next hole */
- #define SEEK_MAX	SEEK_HOLE
-=20
--#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
--#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
--#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
-+#include <linux/rename-flags.h>
-=20
- struct file_clone_range {
- 	__s64 src_fd;
-diff --git a/include/uapi/linux/rename-flags.h b/include/uapi/linux/rename-=
-flags.h
-new file mode 100644
-index 000000000000..7178f0565657
---- /dev/null
-+++ b/include/uapi/linux/rename-flags.h
-@@ -0,0 +1,12 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef _UAPI_LINUX_RENAME_FLAGS_H
-+#define _UAPI_LINUX_RENAME_FLAGS_H
-+
-+/*
-+ * Definitions for rename syscall family.
-+ */
-+#define RENAME_NOREPLACE	(1 << 0)	/* Don't overwrite target */
-+#define RENAME_EXCHANGE		(1 << 1)	/* Exchange source and dest */
-+#define RENAME_WHITEOUT		(1 << 2)	/* Whiteout source */
-+
-+#endif /* _UAPI_LINUX_RENAME_FLAGS_H */
---=20
-2.17.1
+Cheers
+---Dave
