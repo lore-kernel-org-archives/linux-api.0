@@ -1,50 +1,53 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: Official Linux system wrapper library?
-Date: Wed, 14 Nov 2018 13:10:16 +0100
-Message-ID: <87va4zc11z.fsf@oldenburg.str.redhat.com>
-References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
-        <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
-        <20181111081725.GA30248@1wt.eu>
-        <3664a508-ca74-4ff0-39a6-34543194a24e@gmail.com>
-        <20181111111143.GB4189@1wt.eu>
-        <87zhufvntw.fsf@oldenburg.str.redhat.com>
-        <20181114120348.or5id3hzrmltkyvb@angband.pl>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Wed, 14 Nov 2018 14:23:06 +0100
+Message-ID: <20181114132306.GX23419@dhcp22.suse.cz>
+References: <20181004094637.GG22173@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810041130380.12951@chino.kir.corp.google.com>
+ <20181009083326.GG8528@dhcp22.suse.cz>
+ <20181015150325.GN18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
+ <20181016104855.GQ18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
+ <20181017070531.GC18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810171256330.60837@chino.kir.corp.google.com>
+ <20181018070031.GW18839@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181114120348.or5id3hzrmltkyvb@angband.pl> (Adam Borowski's
-        message of "Wed, 14 Nov 2018 13:03:48 +0100")
+Content-Disposition: inline
+In-Reply-To: <20181018070031.GW18839@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Adam Borowski <kilobyte@angband.pl>
-Cc: Willy Tarreau <w@1wt.eu>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: David Rientjes <rientjes@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Adam Borowski:
+On Thu 18-10-18 09:00:31, Michal Hocko wrote:
+> On Wed 17-10-18 12:59:18, David Rientjes wrote:
+> > On Wed, 17 Oct 2018, Michal Hocko wrote:
+> > 
+> > > Do you know of any other userspace except your usecase? Is there
+> > > anything fundamental that would prevent a proper API adoption for you?
+> > > 
+> > 
+> > Yes, it would require us to go back in time and build patched binaries. 
+> 
+> I read that as there is a fundamental problem to update existing
+> binaries. If that is the case then there surely is no way around it
+> and another sad page in the screwed up APIs book we provide.
+> 
+> But I was under impression that the SW stack which actually does the
+> monitoring is under your controll. Moreover I was under impression that
+> you do not use the current vanilla kernel so there is no need for an
+> immediate change on your end. It is trivial to come up with a backward
+> compatible way to check for the new flag (if it is not present then
+> fallback to vma flags).
+> 
+> I am sorry for pushing here but if this is just a matter of a _single_
+> user which _can_ be fixed with a reasonable effort then I would love to
+> see the future api unscrewed.
 
-> On Sun, Nov 11, 2018 at 12:46:35PM +0100, Florian Weimer wrote:
->> A lot of multi-threaded applications assume that most high-level
->> functionality remains usable even after fork in a multi-threaded
->> process.
->
-> How would this be even possible?  Currently fork kills all threads
-> (save for the caller).
-
-glibc's fork acquires several locks around fork.  Other mallocs install
-fork handlers, too.
-
-> Glibc's manpage also warns:
->
-> # After a fork() in a multithreaded program, the child can safely call only
-> # async-signal-safe functions (see signal-safety(7)) until such time as it
-> # calls execve(2).
->
-> Which makes sense as its malloc uses a mutex, and you can't take a breath
-> without a library call using malloc somewhere (or in C++, the language
-> itself).
-
-Right, but applications require a working malloc after fork,
-unfortunately.  opendir is often used to enumerate file descriptors
-which need closing, for example.
-
-Thanks,
-Florian
+ping
+-- 
+Michal Hocko
+SUSE Labs
