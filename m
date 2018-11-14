@@ -1,63 +1,49 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+From: Adam Borowski <kilobyte@angband.pl>
 Subject: Re: Official Linux system wrapper library?
-Date: Wed, 14 Nov 2018 11:58:08 +0000
-Message-ID: <5853c297-9d84-86e5-dede-aa2957562c6b@arm.com>
+Date: Wed, 14 Nov 2018 13:03:48 +0100
+Message-ID: <20181114120348.or5id3hzrmltkyvb@angband.pl>
 References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
  <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
- <877ehjx447.fsf@oldenburg.str.redhat.com>
- <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
- <875zx2vhpd.fsf@oldenburg.str.redhat.com>
- <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
- <20181113193859.GJ3505@e103592.cambridge.arm.com>
+ <20181111081725.GA30248@1wt.eu>
+ <3664a508-ca74-4ff0-39a6-34543194a24e@gmail.com>
+ <20181111111143.GB4189@1wt.eu>
+ <87zhufvntw.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181113193859.GJ3505@e103592.cambridge.arm.com>
-Content-Language: en-US
-Content-ID: <8F542CCBF9FA874C817CD69279E84127@eurprd08.prod.outlook.com>
+Content-Disposition: inline
+In-Reply-To: <87zhufvntw.fsf@oldenburg.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave P Martin <Dave.Martin@arm.com>, Daniel Colascione <dancol@google.com>
-Cc: nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Willy Tarreau <w@1wt.eu>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTMvMTEvMTggMTk6MzksIERhdmUgTWFydGluIHdyb3RlOg0KPiBPbiBNb24sIE5vdiAxMiwg
-MjAxOCBhdCAwNToxOToxNEFNIC0wODAwLCBEYW5pZWwgQ29sYXNjaW9uZSB3cm90ZToNCj4+IFdl
-IHNob3VsZCBhZG9wdCBhIHNpbWlsYXIgYXBwcm9hY2guIFNoaXBwaW5nIGEgbG93ZXItbGV2ZWwN
-Cj4+ICJsaWJsaW51eC5zbyIgdGlnaHRseSBib3VuZCB0byB0aGUga2VybmVsIHdvdWxkIG5vdCBv
-bmx5IGxldCB0aGUNCj4+IGtlcm5lbCBieXBhc3MgZ2xpYmMncyAiZWRpdG9yaWFsIGRpc2NyZXRp
-b24iIGluIGV4cG9zaW5nIG5ldw0KPj4gZmFjaWxpdGllcyB0byB1c2Vyc3BhY2UsIGJ1dCB3b3Vs
-ZCBhbHNvIGFsbG93IGZvciB0aWdodGVyIHVzZXIta2VybmVsDQo+PiBpbnRlZ3JhdGlvbiB0aGF0
-IG9uZSBjYW4gYWNoaWV2ZSB3aXRoIGEgc2ltcGxpc3RpYyBzeXNjYWxsKDIpLXN0eWxlDQo+PiBl
-c2NhcGUgaGF0Y2guIChGb3IgZXhhbXBsZSwgZm9yIGEgbG9uZyB0aW1lIG5vdywgSSd2ZSB3YW50
-ZWQgdG8gZ28NCj4+IGJleW9uZCBQT1NJWCBhbmQgaW1wcm92ZSB0aGUgc3lzdGVtJ3Mgc2lnbmFs
-IGhhbmRsaW5nIEFQSSwgYW5kIHRoaXMNCj4+IGltcHJvdmVtZW50IHJlcXVpcmVzIHVzZXJzcGFj
-ZSBjb29wZXJhdGlvbi4pIFRoZSB2ZHNvIGlzIHByb2JhYmx5IHRvbw0KPj4gc21hbGwgYW5kIHNp
-bXBsaXN0aWMgdG8gc2VydmUgaW4gdGhpcyByb2xlOyBJJ2Qgd2FudCBhIHJlYWwgbGlicmFyeS4N
-Cj4gDQo+IENhbiB5b3UgZXhwYW5kIG9uIHlvdXIgcmVhc29uaW5nIGhlcmU/DQoNCnN1Y2ggbGli
-IGNyZWF0ZXMgYSB1c2VsZXNzIGFiaSthcGkgbGF5ZXIgdGhhdA0Kc29tZWJvZHkgaGFzIHRvIG1h
-aW50YWluIGFuZCBkb2N1bWVudCAod2l0aCBvcg0Kd2l0aG91dCB2ZHNvKS4NCg0KaXQgb2J2aW91
-c2x5IGNhbm5vdCB3b3JrIHRvZ2V0aGVyIHdpdGggYSBwb3NpeA0KY29uZm9ybSBsaWJjIGltcGxl
-bWVudGF0aW9uIGZvciB3aGljaCBpdCB3b3VsZA0KcmVxdWlyZSBrbm93bGVkZ2UgYWJvdXQNCg0K
-dGhyZWFkIGNhbmNlbGxhdGlvbiBpbnRlcm5hbHMsIHBvdGVudGlhbGx5IFRMUw0KZm9yIGVycm5v
-LCBrbm93IGxpYmMgdHlwZXMgZXZlbiBvbmVzIHRoYXQgYXJlDQpiYXNlZCBvbiBjb21waWxlIHRp
-bWUgZmVhdHVyZSBtYWNyb3MgKGFuZCBleHBvc2UNCnRoZW0gaW4gaGVhZGVycyBpbiBhIHdheSB0
-aGF0IGRvZXMgbm90IGNvbGxpZGUNCndpdGggbGliYyBoZWFkZXJzKSwgYWJpIHZhcmlhbnRzIHRo
-ZSBsaWJjIHN1cHBvcnRzDQooZS5nLiBzb2Z0ZnAsIHNlY3VyaXR5IGhhcmRlbmVkIGFiaSksIGxp
-YmMNCmludGVybmFsIHNpZ25hbHMgKGZvciBhbnl0aGluZyB0aGF0J3MgY2hhbmdpbmcNCnNpZ25h
-bCBtYXNrcyksIHRocmVhZCBpbnRlcm5hbHMgZm9yIHN5c2NhbGxzIHRoYXQNCnJlcXVpcmUgY29v
-cmRpbmF0aW9uIGJldHdlZW4gYWxsIHVzZXIgY3JlYXRlZA0KdGhyZWFkcyAoc2V0eGlkKSwgbGli
-YyBpbnRlcm5hbCBzdGF0ZSBmb3Igc3lzY2FsbHMNCnRoYXQgY3JlYXRlL2Rlc3Ryb3kgdGhyZWFk
-cy4NCg0KYW5kIHRodXMgc3VjaCBsaWIgZG9lcyBub3Qgc29sdmUgdGhlIHByb2JsZW1zDQpvZiB1
-c2VycyB3aG8gYWN0dWFsbHkgcmVxdWVzdGVkIHdyYXBwZXJzIGZvcg0KbmV3IHN5c2NhbGxzIChz
-aW5jZSB0aGV5IHdhbnQgdG8gY2FsbCBpbnRvIGxpYmMNCmFuZCBjcmVhdGUgdGhyZWFkcykuDQoN
-CnRoZXJlIGlzIGEgbG90IG9mIGJpa2VzaGVkaW5nIGhlcmUgYnkgcGVvcGxlIHdobw0KZG9uJ3Qg
-dW5kZXJzdGFuZCB0aGUgY29uc3RyYWludHMgbm9yIHRoZSB1c2UtY2FzZXMuDQoNCmFuIGFjdHVh
-bCBwcm9wb3NhbCBpbiB0aGUgdGhyZWFkIHRoYXQgaSB0aGluayBpcw0Kd29ydGggY29uc2lkZXJp
-bmcgaXMgdG8gbWFrZSB0aGUgbGludXggc3lzY2FsbA0KZGVzaWduIHByb2Nlc3MgaW52b2x2ZSBs
-aWJjIGRldnMgc28gdGhlIGMgYXBpIGlzDQpkZXNpZ25lZCB0b2dldGhlciB3aXRoIHRoZSBzeXNj
-YWxsIGFiaS4NCg0KdW5mb3J0dW5hdGVseSBpIHN0aWxsIGhhdmVuJ3Qgc2VlbiBhIHNvbHV0aW9u
-IHRoYXQNCm1ha2VzIHVzaW5nIGxpbnV4IHVhcGkgaGVhZGVycyB0b2dldGhlciB3aXRoIGxpYmMN
-CmhlYWRlcnMgcmVsaWFibGUsIGNvbnRpbnVvdXNseSB0ZXN0aW5nIHRoZW0gaW4NCmlzb2xhdGlv
-biBpcyB1c2VmdWwsIGJ1dCB0aGF0IGRvZXMgbm90IHNvbHZlIHRoZQ0KcG90ZW50aWFsIGNvbmZs
-aWN0cyB3aXRoIGxpYmMgZGVmaW5pdGlvbnMuDQo=
+On Sun, Nov 11, 2018 at 12:46:35PM +0100, Florian Weimer wrote:
+> A lot of multi-threaded applications assume that most high-level
+> functionality remains usable even after fork in a multi-threaded
+> process.
+
+How would this be even possible?  Currently fork kills all threads
+(save for the caller).
+
+Glibc's manpage also warns:
+
+# After a fork() in a multithreaded program, the child can safely call only
+# async-signal-safe functions (see signal-safety(7)) until such time as it
+# calls execve(2).
+
+Which makes sense as its malloc uses a mutex, and you can't take a breath
+without a library call using malloc somewhere (or in C++, the language
+itself).
+
+So any functionality remaining usable after fork is pretty strictly
+limited...
+
+
+Meow!
+-- 
+⢀⣴⠾⠻⢶⣦⠀ I've read an article about how lively happy music boosts
+⣾⠁⢰⠒⠀⣿⡁ productivity. You can read it, too, you just need the
+⢿⡄⠘⠷⠚⠋⠀ right music while doing so. I recommend Skepticism
+⠈⠳⣄⠀⠀⠀⠀ (funeral doom metal).
