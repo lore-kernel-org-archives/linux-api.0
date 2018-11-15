@@ -1,81 +1,58 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Thu, 15 Nov 2018 10:22:54 +0100
-Message-ID: <20181115092254.GJ23831@dhcp22.suse.cz>
-References: <20181015150325.GN18839@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
- <20181016104855.GQ18839@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
- <20181017070531.GC18839@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810171256330.60837@chino.kir.corp.google.com>
- <20181018070031.GW18839@dhcp22.suse.cz>
- <20181114132306.GX23419@dhcp22.suse.cz>
- <alpine.DEB.2.21.1811141336010.200345@chino.kir.corp.google.com>
- <20181115090242.GH23831@dhcp22.suse.cz>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: Official Linux system wrapper library?
+Date: Thu, 15 Nov 2018 10:33:57 +0000
+Message-ID: <20181115103357.GM3505@e103592.cambridge.arm.com>
+References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
+ <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
+ <877ehjx447.fsf@oldenburg.str.redhat.com>
+ <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+ <875zx2vhpd.fsf@oldenburg.str.redhat.com>
+ <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
+ <20181113193859.GJ3505@e103592.cambridge.arm.com>
+ <69B07026-5E8B-47FC-9313-E51E899FAFB0@amacapital.net>
+ <20181114105449.GK3505@e103592.cambridge.arm.com>
+ <877ehfdgzn.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181115090242.GH23831@dhcp22.suse.cz>
+In-Reply-To: <877ehfdgzn.fsf@oldenburg.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Daniel Colascione <dancol@google.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 15-11-18 10:02:42, Michal Hocko wrote:
-> On Wed 14-11-18 13:41:12, David Rientjes wrote:
-> > On Wed, 14 Nov 2018, Michal Hocko wrote:
-> > 
-> > > > > > Do you know of any other userspace except your usecase? Is there
-> > > > > > anything fundamental that would prevent a proper API adoption for you?
-> > > > > > 
-> > > > > 
-> > > > > Yes, it would require us to go back in time and build patched binaries. 
-> > > > 
-> > > > I read that as there is a fundamental problem to update existing
-> > > > binaries. If that is the case then there surely is no way around it
-> > > > and another sad page in the screwed up APIs book we provide.
-> > > > 
-> > > > But I was under impression that the SW stack which actually does the
-> > > > monitoring is under your controll. Moreover I was under impression that
-> > > > you do not use the current vanilla kernel so there is no need for an
-> > > > immediate change on your end. It is trivial to come up with a backward
-> > > > compatible way to check for the new flag (if it is not present then
-> > > > fallback to vma flags).
-> > > > 
-> > 
-> > The userspace had a single way to determine if thp had been disabled for a 
-> > specific vma and that was broken with your commit.  We have since fixed 
-> > it.  Modifying our software stack to start looking for some field 
-> > somewhere else will not help anybody else that this has affected or will 
-> > affect.  I'm interested in not breaking userspace, not trying a wait and 
-> > see approach to see if anybody else complains once we start looking for 
-> > some other field.  The risk outweighs the reward, it already broke us, and 
-> > I'd prefer not to even open the possibility of breaking anybody else.
+On Wed, Nov 14, 2018 at 12:40:44PM +0100, Florian Weimer wrote:
+> * Dave Martin:
 > 
-> I very much agree on "do not break userspace" part but this is kind of
-> gray area. VMA flags are a deep internal implementation detail and
-> nobody should really depend on it for anything important. The original
-> motivation for introducing it was CRIU where it is kind of
-> understandable. I would argue they should find a different way but it is
-> just too late for them.
+> > Fair points, though this is rather what I meant by "sane essentials".
+> > Because there are strict limits on what can be done in the vDSO, it may
+> > be more bloat-resistant and more conservatively maintained.
+> >
+> > This might provide a way to push some dumb compatibility kludge code
+> > that receives little ongoing maintenance outside the privilege wall,
+> > whereas it has to sit in the kernel proper today.
+> >
+> > In theory we could opt to advertise new syscalls only via vDSO entry
+> > points, and not maintain __NR_xxx values for them (which may or may
+> > not upset ptrace users.)  Anyway, I digress...
 > 
-> For this particular case there was no other bug report except for yours
-> and if it is possible to fix it on your end then I would really love to
-> make the a sensible user interface to query the status. If we are going
-> to change the semantic of the exported flag again then we risk yet
-> another breakage.
-> 
-> Therefore I am asking whether changing your particular usecase to a new
-> interface is possible because that would allow to have a longerm
-> sensible user interface rather than another kludge which still doesn't
-> cover all the usecases (e.g. there is no way to reliably query the
-> madvise status after your patch).
+> Is the vDSO available across all architectures?  (I don't think we use
+> it on all architectures in glibc.)
 
-Btw. this is essentially the same kind of problem as
-http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
-where the conclusion was to come up with a saner interface rather than
-mimic the previous one.
--- 
-Michal Hocko
-SUSE Labs
+It's probably not available on all arches.
+
+> If not, a vDSO-based approach would merely lead to even more variance
+> between architectures, which can't be a good thing.
+
+That's a fair concern.
+
+Channeling syscalls through the vDSO could allow for a uniform syscall
+interface at the ELF linkage level, but only those arches that have a
+vDSO.  There may be other issues too.
+
+Also, I don't say that we should definitely do this, just that it's
+a possibility.
+
+Cheers
+---Dave
