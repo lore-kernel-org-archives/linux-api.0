@@ -1,7 +1,7 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v3 4/4] tools: add selftest for BPF_F_ZERO_SEED
-Date: Fri, 16 Nov 2018 11:41:11 +0000
-Message-ID: <20181116114111.31177-5-lmb@cloudflare.com>
+Subject: [PATCH v3 3/4] tools: sync linux/bpf.h
+Date: Fri, 16 Nov 2018 11:41:10 +0000
+Message-ID: <20181116114111.31177-4-lmb@cloudflare.com>
 References: <20181001104509.24211-1-lmb@cloudflare.com>
  <20181116114111.31177-1-lmb@cloudflare.com>
 Return-path: <netdev-owner@vger.kernel.org>
@@ -11,112 +11,59 @@ To: ast@kernel.org, daniel@iogearbox.net
 Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, songliubraving@fb.com, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-Check that iterating two separate hash maps produces the same
-order of keys if BPF_F_ZERO_SEED is used.
+Synchronize changes to linux/bpf.h from
+* "bpf: allow zero-initializing hash map seed"
+* "bpf: move BPF_F_QUERY_EFFECTIVE after map flags"
 
 Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
 ---
- tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
- 1 file changed, 57 insertions(+), 11 deletions(-)
+ tools/include/uapi/linux/bpf.h | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/tools/testing/selftests/bpf/test_maps.c b/tools/testing/selftests/bpf/test_maps.c
-index 4db2116e52be..9f0a5b16a246 100644
---- a/tools/testing/selftests/bpf/test_maps.c
-+++ b/tools/testing/selftests/bpf/test_maps.c
-@@ -258,23 +258,35 @@ static void test_hashmap_percpu(int task, void *data)
- 	close(fd);
- }
+diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
+index 852dc17ab47a..05d95290b848 100644
+--- a/tools/include/uapi/linux/bpf.h
++++ b/tools/include/uapi/linux/bpf.h
+@@ -257,9 +257,6 @@ enum bpf_attach_type {
+ /* Specify numa node during map creation */
+ #define BPF_F_NUMA_NODE		(1U << 2)
  
-+static int helper_fill_hashmap(int max_entries)
-+{
-+	int i, fd, ret;
-+	long long key, value;
-+
-+	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
-+			    max_entries, map_flags);
-+	CHECK(fd < 0,
-+	      "failed to create hashmap",
-+	      "err: %s, flags: 0x%x\n", strerror(errno), map_flags);
-+
-+	for (i = 0; i < max_entries; i++) {
-+		key = i; value = key;
-+		ret = bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST);
-+		CHECK(ret != 0,
-+		      "can't update hashmap",
-+		      "err: %s\n", strerror(ret));
-+	}
-+
-+	return fd;
-+}
-+
- static void test_hashmap_walk(int task, void *data)
- {
- 	int fd, i, max_entries = 1000;
- 	long long key, value, next_key;
- 	bool next_key_valid = true;
- 
--	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
--			    max_entries, map_flags);
--	if (fd < 0) {
--		printf("Failed to create hashmap '%s'!\n", strerror(errno));
--		exit(1);
--	}
+-/* flags for BPF_PROG_QUERY */
+-#define BPF_F_QUERY_EFFECTIVE	(1U << 0)
 -
--	for (i = 0; i < max_entries; i++) {
--		key = i; value = key;
--		assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
--	}
-+	fd = helper_fill_hashmap(max_entries);
+ #define BPF_OBJ_NAME_LEN 16U
  
- 	for (i = 0; bpf_map_get_next_key(fd, !i ? NULL : &key,
- 					 &next_key) == 0; i++) {
-@@ -306,6 +318,39 @@ static void test_hashmap_walk(int task, void *data)
- 	close(fd);
- }
+ /* Flags for accessing BPF object */
+@@ -269,6 +266,12 @@ enum bpf_attach_type {
+ /* Flag for stack_map, store build_id+offset instead of pointer */
+ #define BPF_F_STACK_BUILD_ID	(1U << 5)
  
-+static void test_hashmap_zero_seed(void)
-+{
-+	int i, first, second, old_flags;
-+	long long key, next_first, next_second;
++/* Zero-initialize hash function seed. This should only be used for testing. */
++#define BPF_F_ZERO_SEED		(1U << 6)
 +
-+	old_flags = map_flags;
-+	map_flags |= BPF_F_ZERO_SEED;
++/* flags for BPF_PROG_QUERY */
++#define BPF_F_QUERY_EFFECTIVE	(1U << 0)
 +
-+	first = helper_fill_hashmap(3);
-+	second = helper_fill_hashmap(3);
-+
-+	for (i = 0; ; i++) {
-+		void *key_ptr = !i ? NULL : &key;
-+
-+		if (bpf_map_get_next_key(first, key_ptr, &next_first) != 0)
-+			break;
-+
-+		CHECK(bpf_map_get_next_key(second, key_ptr, &next_second) != 0,
-+		      "next_key for second map must succeed",
-+		      "key_ptr: %p", key_ptr);
-+		CHECK(next_first != next_second,
-+		      "keys must match",
-+		      "i: %d first: %lld second: %lld\n", i,
-+		      next_first, next_second);
-+
-+		key = next_first;
-+	}
-+
-+	map_flags = old_flags;
-+	close(first);
-+	close(second);
-+}
-+
- static void test_arraymap(int task, void *data)
- {
- 	int key, next_key, fd;
-@@ -1534,6 +1579,7 @@ static void run_all_tests(void)
- 	test_hashmap(0, NULL);
- 	test_hashmap_percpu(0, NULL);
- 	test_hashmap_walk(0, NULL);
-+	test_hashmap_zero_seed();
- 
- 	test_arraymap(0, NULL);
- 	test_arraymap_percpu(0, NULL);
+ enum bpf_stack_build_id_status {
+ 	/* user space need an empty entry to identify end of a trace */
+ 	BPF_STACK_BUILD_ID_EMPTY = 0,
+@@ -2201,6 +2204,8 @@ union bpf_attr {
+  *		**CONFIG_NET** configuration option.
+  *	Return
+  *		Pointer to *struct bpf_sock*, or NULL in case of failure.
++ *		For sockets with reuseport option, *struct bpf_sock*
++ *		return is from reuse->socks[] using hash of the packet.
+  *
+  * struct bpf_sock *bpf_sk_lookup_udp(void *ctx, struct bpf_sock_tuple *tuple, u32 tuple_size, u32 netns, u64 flags)
+  *	Description
+@@ -2233,6 +2238,8 @@ union bpf_attr {
+  *		**CONFIG_NET** configuration option.
+  *	Return
+  *		Pointer to *struct bpf_sock*, or NULL in case of failure.
++ *		For sockets with reuseport option, *struct bpf_sock*
++ *		return is from reuse->socks[] using hash of the packet.
+  *
+  * int bpf_sk_release(struct bpf_sock *sk)
+  *	Description
 -- 
 2.17.1
