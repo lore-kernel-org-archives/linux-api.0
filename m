@@ -1,75 +1,37 @@
-From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH 3/3] selftests: add a test for bpf_prog_test_run output size
-Date: Fri, 16 Nov 2018 12:53:29 +0000
-Message-ID: <20181116125329.3974-4-lmb@cloudflare.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181116125329.3974-1-lmb@cloudflare.com>
-Sender: netdev-owner@vger.kernel.org
-To: ast@kernel.org, daniel@iogearbox.net
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, Lorenz Bauer <lmb@cloudflare.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: extending wait4(2) or waitid(2) linux syscall
+Date: Fri, 16 Nov 2018 14:40:49 +0100
+Message-ID: <874lchrvha.fsf@oldenburg.str.redhat.com>
+References: <20170420152051.568f2050.albert.aribaud@3adev.fr>
+	<20181115140441.GA2171@altlinux.org>
+	<CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com>
+	<20181115153008.GC2171@altlinux.org>
+	<20181116124238.GT3505@e103592.cambridge.arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Return-path: <libc-alpha-return-97313-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <20181116124238.GT3505@e103592.cambridge.arm.com> (Dave Martin's
+	message of "Fri, 16 Nov 2018 12:42:40 +0000")
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: "Dmitry V. Levin" <ldv@altlinux.org>, Arnd Bergmann <arnd@arndb.de>, Albert ARIBAUD <albert.aribaud@3adev.fr>, "H. Peter Anvin" <hpa@zytor.com>, GNU C Library <libc-alpha@sourceware.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Make sure that bpf_prog_test_run returns the correct length
-in the size_out argument and that the kernel respects the
-output size hint.
+* Dave Martin:
 
-Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
----
- tools/testing/selftests/bpf/test_progs.c | 34 ++++++++++++++++++++++++
- 1 file changed, 34 insertions(+)
+> The traditional way would be install a handler for SIGCHLD and
+> do a sigsuspend()/pselect()/ppoll().  Then when the suspend() returns,
+> you pump the status of any children with wait*(..., WNOHANG).
+>
+> Does that not work for you for some reason?
 
-diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-index 560d7527b86b..6ab98e10e86f 100644
---- a/tools/testing/selftests/bpf/test_progs.c
-+++ b/tools/testing/selftests/bpf/test_progs.c
-@@ -124,6 +124,39 @@ static void test_pkt_access(void)
- 	bpf_object__close(obj);
- }
- 
-+static void test_output_size_hint(void)
-+{
-+	const char *file = "./test_pkt_access.o";
-+	struct bpf_object *obj;
-+	__u32 retval, size, duration;
-+	int err, prog_fd;
-+	char buf[10];
-+
-+	err = bpf_prog_load(file, BPF_PROG_TYPE_SCHED_CLS, &obj, &prog_fd);
-+	if (err) {
-+		error_cnt++;
-+		return;
-+	}
-+
-+	memset(buf, 0, sizeof(buf));
-+
-+	size = 5;
-+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
-+				buf, &size, &retval, &duration);
-+	CHECK(err || retval, "run",
-+	      "err %d errno %d retval %d\n",
-+	      err, errno, retval);
-+
-+	CHECK(size != sizeof(pkt_v4), "out_size",
-+	      "incorrect output size, want %lu have %u\n",
-+	      sizeof(pkt_v4), size);
-+
-+	CHECK(buf[5] != 0, "overflow",
-+	      "prog_test_run ignored size hint\n");
-+
-+	bpf_object__close(obj);
-+}
-+
- static void test_xdp(void)
- {
- 	struct vip key4 = {.protocol = 6, .family = AF_INET};
-@@ -1847,6 +1880,7 @@ int main(void)
- 	jit_enabled = is_jit_enabled();
- 
- 	test_pkt_access();
-+	test_output_size_hint();
- 	test_xdp();
- 	test_xdp_adjust_tail();
- 	test_l4lb_all();
--- 
-2.17.1
+Changing signal handlers is not what a library should do because they
+are process-global (not even thread-specific).
+
+Thanks,
+Florian
