@@ -1,7 +1,7 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v3 1/4] bpf: allow zero-initializing hash map seed
-Date: Fri, 16 Nov 2018 11:41:08 +0000
-Message-ID: <20181116114111.31177-2-lmb@cloudflare.com>
+Subject: [PATCH v3 4/4] tools: add selftest for BPF_F_ZERO_SEED
+Date: Fri, 16 Nov 2018 11:41:11 +0000
+Message-ID: <20181116114111.31177-5-lmb@cloudflare.com>
 References: <20181001104509.24211-1-lmb@cloudflare.com>
  <20181116114111.31177-1-lmb@cloudflare.com>
 Return-path: <netdev-owner@vger.kernel.org>
@@ -11,75 +11,112 @@ To: ast@kernel.org, daniel@iogearbox.net
 Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, songliubraving@fb.com, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-Add a new flag BPF_F_ZERO_SEED, which forces a hash map
-to initialize the seed to zero. This is useful when doing
-performance analysis both on individual BPF programs, as
-well as the kernel's hash table implementation.
+Check that iterating two separate hash maps produces the same
+order of keys if BPF_F_ZERO_SEED is used.
 
 Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
 ---
- include/uapi/linux/bpf.h |  3 +++
- kernel/bpf/hashtab.c     | 13 +++++++++++--
- 2 files changed, 14 insertions(+), 2 deletions(-)
+ tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
+ 1 file changed, 57 insertions(+), 11 deletions(-)
 
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-index 47d606d744cc..8c01b89a4cb4 100644
---- a/include/uapi/linux/bpf.h
-+++ b/include/uapi/linux/bpf.h
-@@ -269,6 +269,9 @@ enum bpf_attach_type {
- /* Flag for stack_map, store build_id+offset instead of pointer */
- #define BPF_F_STACK_BUILD_ID	(1U << 5)
+diff --git a/tools/testing/selftests/bpf/test_maps.c b/tools/testing/selftests/bpf/test_maps.c
+index 4db2116e52be..9f0a5b16a246 100644
+--- a/tools/testing/selftests/bpf/test_maps.c
++++ b/tools/testing/selftests/bpf/test_maps.c
+@@ -258,23 +258,35 @@ static void test_hashmap_percpu(int task, void *data)
+ 	close(fd);
+ }
  
-+/* Zero-initialize hash function seed. This should only be used for testing. */
-+#define BPF_F_ZERO_SEED		(1U << 6)
++static int helper_fill_hashmap(int max_entries)
++{
++	int i, fd, ret;
++	long long key, value;
 +
- enum bpf_stack_build_id_status {
- 	/* user space need an empty entry to identify end of a trace */
- 	BPF_STACK_BUILD_ID_EMPTY = 0,
-diff --git a/kernel/bpf/hashtab.c b/kernel/bpf/hashtab.c
-index 2c1790288138..4b7c76765d9d 100644
---- a/kernel/bpf/hashtab.c
-+++ b/kernel/bpf/hashtab.c
-@@ -23,7 +23,7 @@
- 
- #define HTAB_CREATE_FLAG_MASK						\
- 	(BPF_F_NO_PREALLOC | BPF_F_NO_COMMON_LRU | BPF_F_NUMA_NODE |	\
--	 BPF_F_RDONLY | BPF_F_WRONLY)
-+	 BPF_F_RDONLY | BPF_F_WRONLY | BPF_F_ZERO_SEED)
- 
- struct bucket {
- 	struct hlist_nulls_head head;
-@@ -244,6 +244,7 @@ static int htab_map_alloc_check(union bpf_attr *attr)
- 	 */
- 	bool percpu_lru = (attr->map_flags & BPF_F_NO_COMMON_LRU);
- 	bool prealloc = !(attr->map_flags & BPF_F_NO_PREALLOC);
-+	bool zero_seed = (attr->map_flags & BPF_F_ZERO_SEED);
- 	int numa_node = bpf_map_attr_numa_node(attr);
- 
- 	BUILD_BUG_ON(offsetof(struct htab_elem, htab) !=
-@@ -257,6 +258,10 @@ static int htab_map_alloc_check(union bpf_attr *attr)
- 		 */
- 		return -EPERM;
- 
-+	if (zero_seed && !capable(CAP_SYS_ADMIN))
-+		/* Guard against local DoS, and discourage production use. */
-+		return -EPERM;
++	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
++			    max_entries, map_flags);
++	CHECK(fd < 0,
++	      "failed to create hashmap",
++	      "err: %s, flags: 0x%x\n", strerror(errno), map_flags);
 +
- 	if (attr->map_flags & ~HTAB_CREATE_FLAG_MASK)
- 		/* reserved bits should not be used */
- 		return -EINVAL;
-@@ -373,7 +378,11 @@ static struct bpf_map *htab_map_alloc(union bpf_attr *attr)
- 	if (!htab->buckets)
- 		goto free_htab;
- 
--	htab->hashrnd = get_random_int();
-+	if (htab->map.map_flags & BPF_F_ZERO_SEED)
-+		htab->hashrnd = 0;
-+	else
-+		htab->hashrnd = get_random_int();
++	for (i = 0; i < max_entries; i++) {
++		key = i; value = key;
++		ret = bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST);
++		CHECK(ret != 0,
++		      "can't update hashmap",
++		      "err: %s\n", strerror(ret));
++	}
 +
- 	for (i = 0; i < htab->n_buckets; i++) {
- 		INIT_HLIST_NULLS_HEAD(&htab->buckets[i].head, i);
- 		raw_spin_lock_init(&htab->buckets[i].lock);
++	return fd;
++}
++
+ static void test_hashmap_walk(int task, void *data)
+ {
+ 	int fd, i, max_entries = 1000;
+ 	long long key, value, next_key;
+ 	bool next_key_valid = true;
+ 
+-	fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(key), sizeof(value),
+-			    max_entries, map_flags);
+-	if (fd < 0) {
+-		printf("Failed to create hashmap '%s'!\n", strerror(errno));
+-		exit(1);
+-	}
+-
+-	for (i = 0; i < max_entries; i++) {
+-		key = i; value = key;
+-		assert(bpf_map_update_elem(fd, &key, &value, BPF_NOEXIST) == 0);
+-	}
++	fd = helper_fill_hashmap(max_entries);
+ 
+ 	for (i = 0; bpf_map_get_next_key(fd, !i ? NULL : &key,
+ 					 &next_key) == 0; i++) {
+@@ -306,6 +318,39 @@ static void test_hashmap_walk(int task, void *data)
+ 	close(fd);
+ }
+ 
++static void test_hashmap_zero_seed(void)
++{
++	int i, first, second, old_flags;
++	long long key, next_first, next_second;
++
++	old_flags = map_flags;
++	map_flags |= BPF_F_ZERO_SEED;
++
++	first = helper_fill_hashmap(3);
++	second = helper_fill_hashmap(3);
++
++	for (i = 0; ; i++) {
++		void *key_ptr = !i ? NULL : &key;
++
++		if (bpf_map_get_next_key(first, key_ptr, &next_first) != 0)
++			break;
++
++		CHECK(bpf_map_get_next_key(second, key_ptr, &next_second) != 0,
++		      "next_key for second map must succeed",
++		      "key_ptr: %p", key_ptr);
++		CHECK(next_first != next_second,
++		      "keys must match",
++		      "i: %d first: %lld second: %lld\n", i,
++		      next_first, next_second);
++
++		key = next_first;
++	}
++
++	map_flags = old_flags;
++	close(first);
++	close(second);
++}
++
+ static void test_arraymap(int task, void *data)
+ {
+ 	int key, next_key, fd;
+@@ -1534,6 +1579,7 @@ static void run_all_tests(void)
+ 	test_hashmap(0, NULL);
+ 	test_hashmap_percpu(0, NULL);
+ 	test_hashmap_walk(0, NULL);
++	test_hashmap_zero_seed();
+ 
+ 	test_arraymap(0, NULL);
+ 	test_arraymap_percpu(0, NULL);
 -- 
 2.17.1
