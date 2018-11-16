@@ -1,7 +1,7 @@
 From: Song Liu <songliubraving@fb.com>
 Subject: Re: [PATCH v3 0/4] bpf: allow zero-initialising hash map seed
-Date: Fri, 16 Nov 2018 17:33:15 +0000
-Message-ID: <F7F625D2-5417-468E-BF34-83B64853F501@fb.com>
+Date: Fri, 16 Nov 2018 17:34:08 +0000
+Message-ID: <5AA8DB5F-A852-451A-881F-56EB0030B709@fb.com>
 References: <20181001104509.24211-1-lmb@cloudflare.com>
  <20181116114111.31177-1-lmb@cloudflare.com>
 Mime-Version: 1.0
@@ -10,10 +10,10 @@ Content-Transfer-Encoding: quoted-printable
 Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20181116114111.31177-1-lmb@cloudflare.com>
 Content-Language: en-US
-Content-ID: <4242E1CD9BB64F42A51C12017BE2232E@namprd15.prod.outlook.com>
+Content-ID: <20129410AB4DD94299301546CAC3CA6C@namprd15.prod.outlook.com>
 Sender: netdev-owner@vger.kernel.org
 To: Lorenz Bauer <lmb@cloudflare.com>
-Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Cc: "ast@kernel.org" <ast@kernel.org>, "daniel@iogearbox.net" <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 
@@ -45,3 +45,7 @@ List-Id: linux-api@vger.kernel.org
 > --=20
 > 2.17.1
 >=20
+
+For the series:
+
+Acked-by: Song Liu <songliubraving@fb.com>
