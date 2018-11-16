@@ -1,52 +1,36 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: extending wait4(2) or waitid(2) linux syscall
-Date: Fri, 16 Nov 2018 11:26:50 +0100
-Message-ID: <87sh01uxlh.fsf@oldenburg.str.redhat.com>
-References: <20170420152051.568f2050.albert.aribaud@3adev.fr>
-	<20181115140441.GA2171@altlinux.org>
-	<CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com>
-	<20181115153008.GC2171@altlinux.org>
-	<68E78315-66C9-4CEE-B6A0-61485AFB314A@zytor.com>
-	<CAK8P3a2bGYt1Z50eQsBv2pu_zd649SB1MjX-iWcZ-YnJ+Bhj1Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-97302-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <CAK8P3a2bGYt1Z50eQsBv2pu_zd649SB1MjX-iWcZ-YnJ+Bhj1Q@mail.gmail.com>
-	(Arnd Bergmann's message of "Thu, 15 Nov 2018 23:14:21 -0800")
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: "H. Peter Anvin" <hpa@zytor.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, GNU C Library <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>
+From: Lorenz Bauer <lmb@cloudflare.com>
+Subject: [PATCH v3 0/4] bpf: allow zero-initialising hash map seed
+Date: Fri, 16 Nov 2018 11:41:07 +0000
+Message-ID: <20181116114111.31177-1-lmb@cloudflare.com>
+References: <20181001104509.24211-1-lmb@cloudflare.com>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20181001104509.24211-1-lmb@cloudflare.com>
+Sender: netdev-owner@vger.kernel.org
+To: ast@kernel.org, daniel@iogearbox.net
+Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, songliubraving@fb.com, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-* Arnd Bergmann:
+Allow forcing the seed of a hash table to zero, for deterministic
+execution during benchmarking and testing.
 
-> On Thu, Nov 15, 2018 at 7:38 AM <hpa@zytor.com> wrote:
->> On November 15, 2018 7:30:11 AM PST, "Dmitry V. Levin" <ldv@altlinux.org> wrote:
->> >On Thu, Nov 15, 2018 at 06:39:03AM -0800, Arnd Bergmann wrote:
->> >> On Thu, Nov 15, 2018 at 6:05 AM Dmitry V. Levin wrote:
->> >> > On Thu, Apr 20, 2017 at 03:20:51PM +0200, Albert ARIBAUD wrote:
->
->> >2. The time precision provided by struct rusage returned by wait4(2)
->> >and waitid(2) is too low for syscall time counting (strace -c) nowadays,
->> >this can be observing by running in a row a simple command like "strace -c
->> >pwd".
->> >
->> >The fix is to return a more appropriate structure than struct rusage
->> >by the new pwait6(2)/pwaitid(2) syscall mentioned above, where
->> >struct timeval is replaced with struct timespec or even struct
->> >timespec64.
->>
->> Arnd: w.r.t. our previous discussion, this would seem to justify going to timespec(64) for these kind of cases.
->
-> Ok, and I assume we want the same layout for getrusage(2) then, right?
+Changes from v2:
+* Change ordering of BPF_F_ZERO_SEED in linux/bpf.h
 
-Or introduce something that covers FreeBSD's wait6 functionality as well
-(resource usage by subprocesses of the subprocess).
+Comments adressed from v1:
+* Add comment to discourage production use to linux/bpf.h
+* Require CAP_SYS_ADMIN
 
-Thanks,
-Florian
+Lorenz Bauer (4):
+  bpf: allow zero-initializing hash map seed
+  bpf: move BPF_F_QUERY_EFFECTIVE after map flags
+  tools: sync linux/bpf.h
+  tools: add selftest for BPF_F_ZERO_SEED
+
+ include/uapi/linux/bpf.h                |  9 ++--
+ kernel/bpf/hashtab.c                    | 13 ++++-
+ tools/include/uapi/linux/bpf.h          | 13 +++--
+ tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
+ 4 files changed, 84 insertions(+), 19 deletions(-)
+
+-- 
+2.17.1
