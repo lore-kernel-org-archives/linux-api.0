@@ -1,39 +1,47 @@
-From: Paul Eggert <eggert@cs.ucla.edu>
-Subject: Re: extending wait4(2) or waitid(2) linux syscall
-Date: Fri, 16 Nov 2018 08:03:45 -0800
-Message-ID: <5a64c828-b62a-acb4-ca0f-7b343cda3e1a@cs.ucla.edu>
-References: <20170420152051.568f2050.albert.aribaud@3adev.fr>
- <20181115140441.GA2171@altlinux.org>
- <CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com>
- <20181115153008.GC2171@altlinux.org>
- <68E78315-66C9-4CEE-B6A0-61485AFB314A@zytor.com>
- <CAK8P3a2bGYt1Z50eQsBv2pu_zd649SB1MjX-iWcZ-YnJ+Bhj1Q@mail.gmail.com>
- <87sh01uxlh.fsf@oldenburg.str.redhat.com>
- <CAK8P3a2kDbzzdHdPNaU9LBdLbdFejLYzx+Ntt4s5F=7u+scHsg@mail.gmail.com>
+From: Song Liu <songliubraving@fb.com>
+Subject: Re: [PATCH v3 0/4] bpf: allow zero-initialising hash map seed
+Date: Fri, 16 Nov 2018 17:33:15 +0000
+Message-ID: <F7F625D2-5417-468E-BF34-83B64853F501@fb.com>
+References: <20181001104509.24211-1-lmb@cloudflare.com>
+ <20181116114111.31177-1-lmb@cloudflare.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <libc-alpha-return-97317-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <CAK8P3a2kDbzzdHdPNaU9LBdLbdFejLYzx+Ntt4s5F=7u+scHsg@mail.gmail.com>
-To: Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fweimer@redhat.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, GNU C Library <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20181116114111.31177-1-lmb@cloudflare.com>
+Content-Language: en-US
+Content-ID: <4242E1CD9BB64F42A51C12017BE2232E@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Lorenz Bauer <lmb@cloudflare.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/16/18 7:17 AM, Arnd Bergmann wrote:
-> we'd want something like
->
-> int wait9(...)
 
-We're getting uncomfortably close to the Perlis limit.
 
-"If you have a procedure with 10 parameters, you probably missed some."
-
-Perlis AJ. Epigrams on programming. SIGPLAN Notices. 1982:17(9):7-13. 
-https://dx.doi.org/10.1145/947955.1083808 
-http://pu.inf.uni-tuebingen.de/users/klaeren/epigrams.html
+> On Nov 16, 2018, at 3:41 AM, Lorenz Bauer <lmb@cloudflare.com> wrote:
+>=20
+> Allow forcing the seed of a hash table to zero, for deterministic
+> execution during benchmarking and testing.
+>=20
+> Changes from v2:
+> * Change ordering of BPF_F_ZERO_SEED in linux/bpf.h
+>=20
+> Comments adressed from v1:
+> * Add comment to discourage production use to linux/bpf.h
+> * Require CAP_SYS_ADMIN
+>=20
+> Lorenz Bauer (4):
+>  bpf: allow zero-initializing hash map seed
+>  bpf: move BPF_F_QUERY_EFFECTIVE after map flags
+>  tools: sync linux/bpf.h
+>  tools: add selftest for BPF_F_ZERO_SEED
+>=20
+> include/uapi/linux/bpf.h                |  9 ++--
+> kernel/bpf/hashtab.c                    | 13 ++++-
+> tools/include/uapi/linux/bpf.h          | 13 +++--
+> tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
+> 4 files changed, 84 insertions(+), 19 deletions(-)
+>=20
+> --=20
+> 2.17.1
+>=20
