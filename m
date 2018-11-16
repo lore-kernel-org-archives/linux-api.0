@@ -1,51 +1,52 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v3 0/4] bpf: allow zero-initialising hash map seed
-Date: Fri, 16 Nov 2018 17:34:08 +0000
-Message-ID: <5AA8DB5F-A852-451A-881F-56EB0030B709@fb.com>
-References: <20181001104509.24211-1-lmb@cloudflare.com>
- <20181116114111.31177-1-lmb@cloudflare.com>
+From: hpa@zytor.com
+Subject: Re: extending wait4(2) or waitid(2) linux syscall
+Date: Fri, 16 Nov 2018 10:46:12 -0800
+Message-ID: <5800BA52-AE19-4114-8FCF-832DA3184D7E@zytor.com>
+References: <20170420152051.568f2050.albert.aribaud@3adev.fr> <20181115140441.GA2171@altlinux.org> <CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com> <20181115153008.GC2171@altlinux.org> <68E78315-66C9-4CEE-B6A0-61485AFB314A@zytor.com> <CAK8P3a2bGYt1Z50eQsBv2pu_zd649SB1MjX-iWcZ-YnJ+Bhj1Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain;
+ charset=utf-8
 Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181116114111.31177-1-lmb@cloudflare.com>
-Content-Language: en-US
-Content-ID: <20129410AB4DD94299301546CAC3CA6C@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>
-Cc: "ast@kernel.org" <ast@kernel.org>, "daniel@iogearbox.net" <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Return-path: <libc-alpha-return-97323-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <CAK8P3a2bGYt1Z50eQsBv2pu_zd649SB1MjX-iWcZ-YnJ+Bhj1Q@mail.gmail.com>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: "Dmitry V. Levin" <ldv@altlinux.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, GNU C Library <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On November 15, 2018 11:14:21 PM PST, Arnd Bergmann <arnd@arndb=2Ede> wrote=
+:
+>On Thu, Nov 15, 2018 at 7:38 AM <hpa@zytor=2Ecom> wrote:
+>> On November 15, 2018 7:30:11 AM PST, "Dmitry V=2E Levin"
+><ldv@altlinux=2Eorg> wrote:
+>> >On Thu, Nov 15, 2018 at 06:39:03AM -0800, Arnd Bergmann wrote:
+>> >> On Thu, Nov 15, 2018 at 6:05 AM Dmitry V=2E Levin wrote:
+>> >> > On Thu, Apr 20, 2017 at 03:20:51PM +0200, Albert ARIBAUD wrote:
+>
+>> >2=2E The time precision provided by struct rusage returned by wait4(2)
+>> >and waitid(2) is too low for syscall time counting (strace -c)
+>nowadays,
+>> >this can be observing by running in a row a simple command like
+>"strace -c
+>> >pwd"=2E
+>> >
+>> >The fix is to return a more appropriate structure than struct rusage
+>> >by the new pwait6(2)/pwaitid(2) syscall mentioned above, where
+>> >struct timeval is replaced with struct timespec or even struct
+>> >timespec64=2E
+>>
+>> Arnd: w=2Er=2Et=2E our previous discussion, this would seem to justify
+>going to timespec(64) for these kind of cases=2E
+>
+>Ok, and I assume we want the same layout for getrusage(2) then, right?
+>
+>        Arnd
 
-
-> On Nov 16, 2018, at 3:41 AM, Lorenz Bauer <lmb@cloudflare.com> wrote:
->=20
-> Allow forcing the seed of a hash table to zero, for deterministic
-> execution during benchmarking and testing.
->=20
-> Changes from v2:
-> * Change ordering of BPF_F_ZERO_SEED in linux/bpf.h
->=20
-> Comments adressed from v1:
-> * Add comment to discourage production use to linux/bpf.h
-> * Require CAP_SYS_ADMIN
->=20
-> Lorenz Bauer (4):
->  bpf: allow zero-initializing hash map seed
->  bpf: move BPF_F_QUERY_EFFECTIVE after map flags
->  tools: sync linux/bpf.h
->  tools: add selftest for BPF_F_ZERO_SEED
->=20
-> include/uapi/linux/bpf.h                |  9 ++--
-> kernel/bpf/hashtab.c                    | 13 ++++-
-> tools/include/uapi/linux/bpf.h          | 13 +++--
-> tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
-> 4 files changed, 84 insertions(+), 19 deletions(-)
->=20
-> --=20
-> 2.17.1
->=20
-
-For the series:
-
-Acked-by: Song Liu <songliubraving@fb.com>
+Right=20
+--=20
+Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
