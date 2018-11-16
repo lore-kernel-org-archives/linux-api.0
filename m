@@ -1,13 +1,13 @@
 From: hpa@zytor.com
 Subject: Re: extending wait4(2) or waitid(2) linux syscall
-Date: Fri, 16 Nov 2018 10:46:12 -0800
-Message-ID: <5800BA52-AE19-4114-8FCF-832DA3184D7E@zytor.com>
+Date: Fri, 16 Nov 2018 10:48:01 -0800
+Message-ID: <9D0F6AB6-3F09-449D-912A-87A6F2214E30@zytor.com>
 References: <20170420152051.568f2050.albert.aribaud@3adev.fr> <20181115140441.GA2171@altlinux.org> <CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com> <20181115153008.GC2171@altlinux.org> <68E78315-66C9-4CEE-B6A0-61485AFB314A@zytor.com> <CAK8P3a2bGYt1Z50eQsBv2pu_zd649SB1MjX-iWcZ-YnJ+Bhj1Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
  charset=utf-8
 Content-Transfer-Encoding: quoted-printable
-Return-path: <libc-alpha-return-97323-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-97324-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -47,6 +47,8 @@ On November 15, 2018 11:14:21 PM PST, Arnd Bergmann <arnd@arndb=2Ede> wrote=
 >
 >        Arnd
 
-Right=20
+Note that now we have to add one system calls for 64-but platforms=2E Thus=
+, the right way to do that is to add those new system calls (e=2Eg=2E waiti=
+dns()), and *only* provide those for 32-bit Y2038=2E
 --=20
 Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
