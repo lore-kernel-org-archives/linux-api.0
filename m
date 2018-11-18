@@ -1,63 +1,69 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: RFC: userspace exception fixups
-Date: Sun, 18 Nov 2018 15:02:03 +0200
-Message-ID: <20181118130203.GA18934@linux.intel.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <20181118071548.GA4795@linux.intel.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [PATCH] proc: allow killing processes via file descriptors
+Date: Sun, 18 Nov 2018 05:59:25 -0800
+Message-ID: <CAKOZuet3s0WxxPgrtrNkq8YiOWhYAiK6yEio6PKVV9J_H4_TSA@mail.gmail.com>
+References: <20181118111751.6142-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181118071548.GA4795@linux.intel.com>
+In-Reply-To: <20181118111751.6142-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
+To: Christian Brauner <christian@brauner.io>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, linux-kernel <linux-kernel@vger.kernel.org>, serge@hallyn.com, Jann Horn <jannh@google.com>, luto@kernel.org, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 18, 2018 at 09:15:48AM +0200, Jarkko Sakkinen wrote:
-> On Thu, Nov 01, 2018 at 10:53:40AM -0700, Andy Lutomirski wrote:
-> > Hi all-
-> > 
-> > The people working on SGX enablement are grappling with a somewhat
-> > annoying issue: the x86 EENTER instruction is used from user code and
-> > can, as part of its normal-ish operation, raise an exception.  It is
-> > also highly likely to be used from a library, and signal handling in
-> > libraries is unpleasant at best.
-> > 
-> > There's been some discussion of adding a vDSO entry point to wrap
-> > EENTER and do something sensible with the exceptions, but I'm
-> > wondering if a more general mechanism would be helpful.
-> 
-> I haven't really followed all of this discussion because I've been busy
-> working on the patch set but for me all of these approaches look awfully
-> complicated.
-> 
-> I'll throw my own suggestion and apologize if this has been already
-> suggested and discarded: return-to-AEP.
-> 
-> My idea is to do just a small extension to SGX AEX handling. At the
-> moment hardware will RAX, RBX and RCX with ERESUME parameters. We can
-> fill extend this by filling other three spare registers with exception
-> information.
-> 
-> AEP handler can then do whatever it wants to do with this information
-> or just do ERESUME.
+I had been led to believe that the proposal would be a comprehensive
+process API, not an ioctl basically equivalent to my previous patch.
+If you had a more comprehensive proposal, please just share it on LKML
+instead of limiting the discussion to those able to attend these
+various conferences. If there's some determined opposition to a
+general new process API, this opposition needs a fair and full airing,
+as not everyone can attend these conferences.
 
-A correction here. In practice this will add a requirement to have a bit
-more complicated AEP code (check the regs for exceptions) than before
-and not just bytes for ENCLU.
+On Sun, Nov 18, 2018 at 3:17 AM, Christian Brauner <christian@brauner.io> wrote:
+> With this patch an open() call on /proc/<pid> will give userspace a handle
+> to struct pid of the process associated with /proc/<pid>. This allows to
+> maintain a stable handle on a process.
+> I have been discussing various approaches extensively during technical
+> conferences this year culminating in a long argument with Eric at Linux
+> Plumbers. The general consensus was that having a handle on a process
+> will be something that is very simple and easy to maintain
 
-e.g. AEP handler should be along the lines
+ioctls are the opposite of "easy to maintain". Their
+file-descriptor-specific behavior makes it difficult to use the things
+safely. If you want to take this approach, please make a new system
+call. An ioctl is just a system call with a very strange spelling and
+unfortunate collision semantics.
 
-1. #PF (or #UD or) happens. Kernel fills the registers when it cannot
-   handle the exception and returns back to user space i.e. to the
-   AEP handler.
-2. Check the registers containing exception information. If they have
-   been filled, take whatever actions user space wants to take.
-3. Otherwise, just ERESUME.
+> with the
+> option of being extensible via a more advanced api if the need arises.
 
->From my point of view this is making the AEP parameter useful. Its
-standard use is just weird (always point to a place just containing
-ENCLU bytes, why the heck it even exists).
+The need *has* arisen; see my exithand patch.
 
-/Jarkko
+> I
+> believe that this patch is the most simple, dumb, and therefore
+> maintainable solution.
+>
+> The need for this has arisen in order to reliably kill a process without
+> running into issues of the pid being recycled as has been described in the
+> rejected patch [1].
+
+That patch was not "rejected". It was tabled pending the more
+comprehensive process API proposal that was supposed to have emerged.
+This patch is just another variant of the sort of approach we
+discussed on that patch's thread here. As I mentioned on that thread,
+the right approach option is a new system call, not an ioctl.
+
+ To fulfill the need described in that patchset a new
+> ioctl() PROC_FD_SIGNAL is added. It can be used to send signals to a
+> process via a file descriptor:
+>
+> int fd = open("/proc/1234", O_DIRECTORY | O_CLOEXEC);
+> ioctl(fd, PROC_FD_SIGNAL, SIGKILL);
+> close(fd);
+>
+> Note, the stable handle will allow us to carefully extend this feature in
+> the future.
+
+We still need the ability to synchronously wait on a process's death,
+as in my patch set. I will be refreshing that patch set.
