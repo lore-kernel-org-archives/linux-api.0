@@ -1,67 +1,51 @@
-From: Y Song <ys114321@gmail.com>
-Subject: Re: [PATCH 0/3] Fix unsafe BPF_PROG_TEST_RUN interface
-Date: Sun, 18 Nov 2018 06:13:04 +0000
-Message-ID: <CAH3MdRW1=iUm0qQdNrv9r5Orn3rZ2XBDn-qym5i_cpi7wo6PxA@mail.gmail.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Sun, 18 Nov 2018 09:15:48 +0200
+Message-ID: <20181118071548.GA4795@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181116125329.3974-1-lmb@cloudflare.com>
-Sender: netdev-owner@vger.kernel.org
-To: lmb@cloudflare.com
-Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, netdev <netdev@vger.kernel.org>, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 16, 2018 at 12:54 PM Lorenz Bauer <lmb@cloudflare.com> wrote:
->
-> Right now, there is no safe way to use BPF_PROG_TEST_RUN with data_out.
-> This is because bpf_test_finish copies the output buffer to user space
-> without checking its size. This can lead to the kernel overwriting
-> data in user space after the buffer if xdp_adjust_head and friends are
-> in play.
->
-> Fix this by using bpf_attr.test.data_size_out as a size hint. The old
-> behaviour is retained if size_hint is zero.
+On Thu, Nov 01, 2018 at 10:53:40AM -0700, Andy Lutomirski wrote:
+> Hi all-
+> 
+> The people working on SGX enablement are grappling with a somewhat
+> annoying issue: the x86 EENTER instruction is used from user code and
+> can, as part of its normal-ish operation, raise an exception.  It is
+> also highly likely to be used from a library, and signal handling in
+> libraries is unpleasant at best.
+> 
+> There's been some discussion of adding a vDSO entry point to wrap
+> EENTER and do something sensible with the exceptions, but I'm
+> wondering if a more general mechanism would be helpful.
 
-There is a slight change of user space behavior for this patch.
-Without this patch, the value bpf_attr.test.data_size_out is output only.
-For example,
-   output buffer : out_buf (user allocated size 10)
-   data_size_out is a random value (e.g., 1),
+I haven't really followed all of this discussion because I've been busy
+working on the patch set but for me all of these approaches look awfully
+complicated.
 
-The actual data to copy is 5.
+I'll throw my own suggestion and apologize if this has been already
+suggested and discarded: return-to-AEP.
 
-In today's implementation, the kernel will copy 5 and set data_size_out is 5.
+My idea is to do just a small extension to SGX AEX handling. At the
+moment hardware will RAX, RBX and RCX with ERESUME parameters. We can
+fill extend this by filling other three spare registers with exception
+information.
 
-With this patch, the kernel will copy 1 and set data_size_out is 5.
+AEP handler can then do whatever it wants to do with this information
+or just do ERESUME.
 
-I am not 100% sure at this time whether we CAN overload data_size_out
-since it MAY break existing applications.
+In some ways this dummied version of Sean's suggestion.
 
-Alternativley, we can append another field to bpf_attr.test
-  __u32 data_out_size;
-this will provide the data_out buffer size.
-Inside kernel, if the user input attr is smaller than kernel and does not
-have data_out_size, the current behavior should be used. Otherwise,
-data_out_size is data_out buffer size.
+I think whatever the solution is it should be lightweight and this is
+such solution. Why? Because exception handling could be then used to
+implement other stuff than just error hadling like syscall wrapper
+for the enclaves in nice and lean way.
 
-Daniel and Alexei, which option do you think is reasonable?
-
->
-> Interestingly, do_test_single() in test_verifier.c already assumes
-> that this is the intended use of data_size_out, and sets it to the
-> output buffer size.
->
-> Lorenz Bauer (3):
->   bpf: respect size hint to BPF_PROG_TEST_RUN if present
->   libbpf: require size hint in bpf_prog_test_run
->   selftests: add a test for bpf_prog_test_run output size
->
->  net/bpf/test_run.c                       |  9 ++++-
->  tools/lib/bpf/bpf.c                      |  4 ++-
->  tools/testing/selftests/bpf/test_progs.c | 44 ++++++++++++++++++++++++
->  3 files changed, 55 insertions(+), 2 deletions(-)
->
-> --
-> 2.17.1
->
+/Jarkko
