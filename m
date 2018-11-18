@@ -1,81 +1,75 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: [PATCH] proc: allow killing processes via file descriptors
-Date: Sun, 18 Nov 2018 09:42:35 -0800
-Message-ID: <CALCETrUeNZPfrSYa9vH5Ukrk1Y+Kb9GkZOh6LkqG6Z9NpK5P0w@mail.gmail.com>
-References: <20181118111751.6142-1-christian@brauner.io> <CAKOZuet3s0WxxPgrtrNkq8YiOWhYAiK6yEio6PKVV9J_H4_TSA@mail.gmail.com>
- <CALCETrUd2Y2MmO8Qx8aUvQDOTNiyj35Y7bctPBZe0p2i1EUiLw@mail.gmail.com>
- <CAKOZuev1JUGFWuwsKqS6rXcFMqpCHT1VAG2kwB4O=FHo6DAFiQ@mail.gmail.com>
- <CALCETrVLP_mudJTW6EQpRr5GZ7kfuGci+QCT1uPrOVDTWcod-A@mail.gmail.com>
- <a7f50692-667c-4efe-a2d0-fa324eebb90b@infradead.org> <CAKOZueutLc8d0Fe+7dNWiZKnALhTSST8+kCnOrL+OmB6coUmtA@mail.gmail.com>
- <CALCETrVg71XBv-gMOtL-m0Dd0HNz8_oXOUDSWin5LeViAL0UYA@mail.gmail.com> <CAKOZuesCKo4GH9fdum2EUFLrtTWam3aizcDQUn3-vCYg4T1P8w@mail.gmail.com>
+Date: Sun, 18 Nov 2018 11:43:14 -0600
+Message-ID: <875zwu46z1.fsf@xmission.com>
+References: <20181118111751.6142-1-christian@brauner.io>
+        <CAKOZuet3s0WxxPgrtrNkq8YiOWhYAiK6yEio6PKVV9J_H4_TSA@mail.gmail.com>
+        <CALCETrUd2Y2MmO8Qx8aUvQDOTNiyj35Y7bctPBZe0p2i1EUiLw@mail.gmail.com>
+        <CAKOZuev1JUGFWuwsKqS6rXcFMqpCHT1VAG2kwB4O=FHo6DAFiQ@mail.gmail.com>
+        <CALCETrVLP_mudJTW6EQpRr5GZ7kfuGci+QCT1uPrOVDTWcod-A@mail.gmail.com>
+        <CAKOZuetuuxW+yFnyaqS5kW6gkVMstLa8D-7SgYtrLBUQB+sgDg@mail.gmail.com>
+        <CALCETrXNBNcASRtxTL_aO-KSj4ahPRpXKLUdHaWG3sPjsWx3CQ@mail.gmail.com>
+        <CAKOZues3_uh1mnQr=VPCxoWiY0wfiUq0oFXcVuiHF7rPmUXsuw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuesCKo4GH9fdum2EUFLrtTWam3aizcDQUn3-vCYg4T1P8w@mail.gmail.com>
+In-Reply-To: <CAKOZues3_uh1mnQr=VPCxoWiY0wfiUq0oFXcVuiHF7rPmUXsuw@mail.gmail.com>
+        (Daniel Colascione's message of "Sun, 18 Nov 2018 09:17:31 -0800")
 Sender: linux-kernel-owner@vger.kernel.org
 To: Daniel Colascione <dancol@google.com>
-Cc: Andrew Lutomirski <luto@kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>, Jan Engelhardt <jengelh@inai.de>
+Cc: Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 18, 2018 at 9:24 AM Daniel Colascione <dancol@google.com> wrote:
-> Assuming we don't broaden exit status readability (which would make a
-> lot of things simpler), the exit notification mechanism must work like
-> this: if you can see a process in /proc, you should be able to wait on
-> it. If you learn that process's exit status through some other means
-> --- e.g., you're the process's parent, you can ptrace the process, you
-> have CAP_WHATEVER_IT_IS_ --- then you should be able to learn the fate
-> of the process. Otherwise you just be able to learn that the process
-> exited.
+Daniel Colascione <dancol@google.com> writes:
 
-Sounds reasonable to me.  Except for the obvious turd that, if you
-open /proc/PID/whatever, and the process calls execve(), then the
-resulting semantics are awkward at best.
-
+> On Sun, Nov 18, 2018 at 9:13 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>> On Sun, Nov 18, 2018 at 8:29 AM Daniel Colascione <dancol@google.com> wrote:
+>>>
+>>> On Sun, Nov 18, 2018 at 8:17 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>>> > On Sun, Nov 18, 2018 at 7:53 AM Daniel Colascione <dancol@google.com> wrote:
+>>> >>
+>>> >> On Sun, Nov 18, 2018 at 7:38 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>>> >> > I fully agree that a more comprehensive, less expensive API for
+>>> >> > managing processes would be nice.  But I also think that this patch
+>>> >> > (using the directory fd and ioctl) is better from a security
+>>> >> > perspective than using a new file in /proc.
+>>> >>
+>>> >> That's an assertion, not an argument. And I'm not opposed to an
+>>> >> operation on the directory FD, now that it's clear Linus has banned
+>>> >> "write(2)-as-a-command" APIs. I just insist that we implement the API
+>>> >> with a system call instead of a less-reliable ioctl due to the
+>>> >> inherent namespace collision issues in ioctl command names.
+>>> >
+>>> > Linus banned it because of bugs iike the ones in the patch.
+>>>
+>>> Maybe: he didn't provide a reason. What's your point?
+>>
+>> My point is that an API that involves a file like /proc/PID/kill is
+>> very tricky to get right.  Here are some considerations:
 >
-> >  Windows has an easy time of it because
+> Moot. write(2) for this interface is off the table anyway. The right
+> approach here is a system call that accepts a /proc/pid directory file
+> descriptor, a signal number, and a signal information field (as in
+> sigqueue(2)).
+
+If we did not have the permission check challenges and could perform
+the permission checks in open, write(2) would be on the table.
+Performing write(2) would only be concrend about data.
+
+Unfortunately we have setresuid and exec which make that infeasible
+for the kill operations.
+
+>> Now if we had an ioctlat() API, maybe it would make sense.  But we
+>> don't, and I think it would be a bit crazy to add one.
 >
-> Windows has an easier time of it because it doesn't use an ad-hoc
-> ambient authority permission model. In Windows, if you can open a
-> handle to do something, that handle lets you do the thing. Period.
-> There's none of this "well, I opened this process FD, but since I
-> opened it, the process called setuid, so now I can't get its exit
-> status" nonsense. Privilege elevation is always accomplished via a
-> separate call to CreateProcessWithToken, which creates a *new* process
-> with the elevated privileges. An existing process can't suddenly and
-> magically become this special thing that you can't inspect, but that
-> has the same PID and identity as this other process that you used to
-> be able to inspect. The model is just better, because permission is
-> baked into the HANDLE. Now, that ship has sailed. We're stuck with
-> setreuid and exec. But let's be clear about what's causing the
-> complexity.
+> A process is not a driver. Why won't this idea of using an ioctl for
+> the kill-process-by-dfd thing just won't die? An ioctl has *zero*
+> advantage in this context.
 
-I'm not entirely sure that ship has sailed.  In the kernel, we already
-have a bit of a distinction between a pid (and tid, etc -- I'm
-referring to struct pid) and a task.  If we make a new
-process-management API, we could put a distinction like this into the
-API.  As a straw-man proposal (highly incomplete and probably wrong,
-but maybe it gets the idea across):
+An ioctl has an advantage in implementation complexity.  An ioctl is
+very much easier to wire up that a system call.
 
-Have a way to get an fd that refers to a "running program".  (I'm
-calling it that to distinguish it from "task" and "pid", both of which
-already mean something.)  You'd be able to open such an fd given a
-pid, and your permissions would be checked at that time.  R access
-means you can read the running program's memory and otherwise
-introspect it.  W means you can modify it's memory and otherwise mess
-with it.  X means you can send it signals.  We might need more bits to
-really do this right.
+I don't know if that outweighs ioctls disadvantages in long term
+maintainability.
 
-Now here's the kicker: if the "running program" calls execve(), it
-goes away.  The fd gets some sort of notification that this happened
-and there's an API to get a handle to the new running program *if the
-caller has the appropriate permissions*.  setresuid() has no effect
-here -- if you have W access to the process and the process calls
-setresuid(), you still have W access.
-
-To make this fully useful, we'd probably want to elaborate it with a
-race-free way to track all descendents and, if needed, kill them all,
-subject to permissions.
-
-This API ought to be extensible to replace ptrace() eventually.
-
-Does this seem like a reasonable direction to go in?
+Eric
