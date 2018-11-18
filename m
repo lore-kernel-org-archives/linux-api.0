@@ -1,135 +1,63 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH] proc: allow killing processes via file descriptors
-Date: Sun, 18 Nov 2018 12:17:51 +0100
-Message-ID: <20181118111751.6142-1-christian@brauner.io>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Sun, 18 Nov 2018 15:02:03 +0200
+Message-ID: <20181118130203.GA18934@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+ <20181118071548.GA4795@linux.intel.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181118071548.GA4795@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: ebiederm@xmission.com, linux-kernel@vger.kernel.org
-Cc: serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
 List-Id: linux-api@vger.kernel.org
 
-With this patch an open() call on /proc/<pid> will give userspace a handle
-to struct pid of the process associated with /proc/<pid>. This allows to
-maintain a stable handle on a process.
-I have been discussing various approaches extensively during technical
-conferences this year culminating in a long argument with Eric at Linux
-Plumbers. The general consensus was that having a handle on a process
-will be something that is very simple and easy to maintain with the
-option of being extensible via a more advanced api if the need arises. I
-believe that this patch is the most simple, dumb, and therefore
-maintainable solution.
+On Sun, Nov 18, 2018 at 09:15:48AM +0200, Jarkko Sakkinen wrote:
+> On Thu, Nov 01, 2018 at 10:53:40AM -0700, Andy Lutomirski wrote:
+> > Hi all-
+> > 
+> > The people working on SGX enablement are grappling with a somewhat
+> > annoying issue: the x86 EENTER instruction is used from user code and
+> > can, as part of its normal-ish operation, raise an exception.  It is
+> > also highly likely to be used from a library, and signal handling in
+> > libraries is unpleasant at best.
+> > 
+> > There's been some discussion of adding a vDSO entry point to wrap
+> > EENTER and do something sensible with the exceptions, but I'm
+> > wondering if a more general mechanism would be helpful.
+> 
+> I haven't really followed all of this discussion because I've been busy
+> working on the patch set but for me all of these approaches look awfully
+> complicated.
+> 
+> I'll throw my own suggestion and apologize if this has been already
+> suggested and discarded: return-to-AEP.
+> 
+> My idea is to do just a small extension to SGX AEX handling. At the
+> moment hardware will RAX, RBX and RCX with ERESUME parameters. We can
+> fill extend this by filling other three spare registers with exception
+> information.
+> 
+> AEP handler can then do whatever it wants to do with this information
+> or just do ERESUME.
 
-The need for this has arisen in order to reliably kill a process without
-running into issues of the pid being recycled as has been described in the
-rejected patch [1]. To fulfill the need described in that patchset a new
-ioctl() PROC_FD_SIGNAL is added. It can be used to send signals to a
-process via a file descriptor:
+A correction here. In practice this will add a requirement to have a bit
+more complicated AEP code (check the regs for exceptions) than before
+and not just bytes for ENCLU.
 
-int fd = open("/proc/1234", O_DIRECTORY | O_CLOEXEC);
-ioctl(fd, PROC_FD_SIGNAL, SIGKILL);
-close(fd);
+e.g. AEP handler should be along the lines
 
-Note, the stable handle will allow us to carefully extend this feature in
-the future.
+1. #PF (or #UD or) happens. Kernel fills the registers when it cannot
+   handle the exception and returns back to user space i.e. to the
+   AEP handler.
+2. Check the registers containing exception information. If they have
+   been filled, take whatever actions user space wants to take.
+3. Otherwise, just ERESUME.
 
-[1]: https://lkml.org/lkml/2018/10/30/118
+>From my point of view this is making the AEP parameter useful. Its
+standard use is just weird (always point to a place just containing
+ENCLU bytes, why the heck it even exists).
 
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Serge Hallyn <serge@hallyn.com>
-Cc: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Signed-off-by: Christian Brauner <christian@brauner.io>
----
- fs/proc/base.c              | 33 +++++++++++++++++++++++++++++++++
- include/uapi/linux/procfd.h | 11 +++++++++++
- 2 files changed, 44 insertions(+)
- create mode 100644 include/uapi/linux/procfd.h
-
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index ce3465479447..dfde564a21eb 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -88,6 +88,7 @@
- #include <linux/fs_struct.h>
- #include <linux/slab.h>
- #include <linux/sched/autogroup.h>
-+#include <linux/sched/signal.h>
- #include <linux/sched/mm.h>
- #include <linux/sched/coredump.h>
- #include <linux/sched/debug.h>
-@@ -95,6 +96,7 @@
- #include <linux/flex_array.h>
- #include <linux/posix-timers.h>
- #include <trace/events/oom.h>
-+#include <uapi/linux/procfd.h>
- #include "internal.h"
- #include "fd.h"
- 
-@@ -3032,10 +3034,41 @@ static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
- 				   tgid_base_stuff, ARRAY_SIZE(tgid_base_stuff));
- }
- 
-+static int proc_tgid_open(struct inode *inode, struct file *file)
-+{
-+	/* grab reference to struct pid */
-+	file->private_data = get_pid(proc_pid(inode));
-+	return 0;
-+}
-+
-+static int proc_tgid_release(struct inode *inode, struct file *file)
-+{
-+	struct pid *pid = file->private_data;
-+	/* drop reference to struct pid */
-+	put_pid(pid);
-+	return 0;
-+}
-+
-+static long proc_tgid_ioctl(struct file *file, unsigned int cmd,
-+			    unsigned long arg)
-+{
-+	struct pid *pid = file->private_data;
-+
-+	switch (cmd) {
-+	case PROC_FD_SIGNAL:
-+		return kill_pid(pid, arg, 1);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
- static const struct file_operations proc_tgid_base_operations = {
-+	.open		= proc_tgid_open,
- 	.read		= generic_read_dir,
- 	.iterate_shared	= proc_tgid_base_readdir,
- 	.llseek		= generic_file_llseek,
-+	.release	= proc_tgid_release,
-+	.unlocked_ioctl	= proc_tgid_ioctl,
- };
- 
- static struct dentry *proc_tgid_base_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
-diff --git a/include/uapi/linux/procfd.h b/include/uapi/linux/procfd.h
-new file mode 100644
-index 000000000000..8e4c07a9f3a3
---- /dev/null
-+++ b/include/uapi/linux/procfd.h
-@@ -0,0 +1,11 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef __LINUX_PROCFD_H
-+#define __LINUX_PROCFD_H
-+
-+#include <linux/ioctl.h>
-+
-+/* Returns a file descriptor that refers to a struct pid */
-+#define PROC_FD_SIGNAL		_IOW('p', 1, __s32)
-+
-+#endif /* __LINUX_PROCFD_H */
-+
--- 
-2.19.1
+/Jarkko
