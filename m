@@ -1,152 +1,167 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
+From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH] proc: allow killing processes via file descriptors
-Date: Mon, 19 Nov 2018 06:05:04 +1100
-Message-ID: <20181118190504.ixglsqbn6mxkcdzu@yavin>
-References: <CAKOZuev1JUGFWuwsKqS6rXcFMqpCHT1VAG2kwB4O=FHo6DAFiQ@mail.gmail.com>
- <CALCETrVLP_mudJTW6EQpRr5GZ7kfuGci+QCT1uPrOVDTWcod-A@mail.gmail.com>
- <a7f50692-667c-4efe-a2d0-fa324eebb90b@infradead.org>
- <CAKOZueutLc8d0Fe+7dNWiZKnALhTSST8+kCnOrL+OmB6coUmtA@mail.gmail.com>
- <CALCETrVg71XBv-gMOtL-m0Dd0HNz8_oXOUDSWin5LeViAL0UYA@mail.gmail.com>
- <CAKOZuesCKo4GH9fdum2EUFLrtTWam3aizcDQUn3-vCYg4T1P8w@mail.gmail.com>
- <CALCETrUeNZPfrSYa9vH5Ukrk1Y+Kb9GkZOh6LkqG6Z9NpK5P0w@mail.gmail.com>
- <CAKOZuevVk_aH_2TuiNcmxgMa+gHXMBXz6Uu5a6TDjoxjhaE36g@mail.gmail.com>
- <CALCETrVscRwQG55-j1SKc2TmSb1-=5861804ojUuviNzdyDOrA@mail.gmail.com>
- <CAKOZuevRq-igh06zS_nsGG400zXrKFCtajpEG9-xgU2+Rtb2Pw@mail.gmail.com>
+Date: Sun, 18 Nov 2018 20:24:45 +0100
+Message-ID: <20181118192443.7ylyl24svrn6jvjd@brauner.io>
+References: <20181118111751.6142-1-christian@brauner.io>
+ <CAKOZuet3s0WxxPgrtrNkq8YiOWhYAiK6yEio6PKVV9J_H4_TSA@mail.gmail.com>
+ <CALCETrUd2Y2MmO8Qx8aUvQDOTNiyj35Y7bctPBZe0p2i1EUiLw@mail.gmail.com>
+ <20181118174148.nvkc4ox2uorfatbm@brauner.io>
+ <CAKOZueto1CmUSWFKjOkazcDcZH6CiXXCr4U=ghewLh8GjE2-=A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="n33er6mvlsotrfdd"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKOZuevRq-igh06zS_nsGG400zXrKFCtajpEG9-xgU2+Rtb2Pw@mail.gmail.com>
+In-Reply-To: <CAKOZueto1CmUSWFKjOkazcDcZH6CiXXCr4U=ghewLh8GjE2-=A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Daniel Colascione <dancol@google.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>, Jan Engelhardt <jengelh@inai.de>
+Cc: Andy Lutomirski <luto@kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>, David Howells <dhowells@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-
---n33er6mvlsotrfdd
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On 2018-11-18, Daniel Colascione <dancol@google.com> wrote:
-> > Here's my point: if we're really going to make a new API to manipulate
-> > processes by their fd, I think we should have at least a decent idea
-> > of how that API will get extended in the future.  Right now, we have
-> > an extremely awkward situation where opening an fd in /proc requires
-> > certain capabilities or uids, and using those fds often also checks
-> > current's capabilities, and the target process may have changed its
-> > own security context, including gaining privilege via SUID, SGID, or
-> > LSM transition rules in the mean time.  This has been a huge source of
-> > security bugs.  It would be nice to have a model for future APIs that
-> > avoids these problems.
+On Sun, Nov 18, 2018 at 10:07:31AM -0800, Daniel Colascione wrote:
+> On Sun, Nov 18, 2018 at 9:41 AM, Christian Brauner <christian@brauner.io> wrote:
+> > On Sun, Nov 18, 2018 at 07:38:09AM -0800, Andy Lutomirski wrote:
+> >> On Sun, Nov 18, 2018 at 5:59 AM Daniel Colascione <dancol@google.com> wrote:
+> >> >
+> >> > I had been led to believe that the proposal would be a comprehensive
+> >> > process API, not an ioctl basically equivalent to my previous patch.
+> >> > If you had a more comprehensive proposal, please just share it on LKML
+> >> > instead of limiting the discussion to those able to attend these
+> >> > various conferences. If there's some determined opposition to a
+> >> > general new process API, this opposition needs a fair and full airing,
+> >> > as not everyone can attend these conferences.
+> >> >
+> >> > On Sun, Nov 18, 2018 at 3:17 AM, Christian Brauner <christian@brauner.io> wrote:
+> >> > > With this patch an open() call on /proc/<pid> will give userspace a handle
+> >> > > to struct pid of the process associated with /proc/<pid>. This allows to
+> >> > > maintain a stable handle on a process.
+> >> > > I have been discussing various approaches extensively during technical
+> >> > > conferences this year culminating in a long argument with Eric at Linux
+> >> > > Plumbers. The general consensus was that having a handle on a process
+> >> > > will be something that is very simple and easy to maintain
+> >> >
+> >> > ioctls are the opposite of "easy to maintain". Their
+> >> > file-descriptor-specific behavior makes it difficult to use the things
+> >> > safely. If you want to take this approach, please make a new system
+> >> > call. An ioctl is just a system call with a very strange spelling and
+> >> > unfortunate collision semantics.
+> >> >
+> >> > > with the
+> >> > > option of being extensible via a more advanced api if the need arises.
+> >> >
+> >> > The need *has* arisen; see my exithand patch.
+> >> >
+> >> > > I
+> >> > > believe that this patch is the most simple, dumb, and therefore
+> >> > > maintainable solution.
+> >> > >
+> >> > > The need for this has arisen in order to reliably kill a process without
+> >> > > running into issues of the pid being recycled as has been described in the
+> >> > > rejected patch [1].
+> >> >
+> >> > That patch was not "rejected". It was tabled pending the more
+> >> > comprehensive process API proposal that was supposed to have emerged.
+> >> > This patch is just another variant of the sort of approach we
+> >> > discussed on that patch's thread here. As I mentioned on that thread,
+> >> > the right approach option is a new system call, not an ioctl.
+> >> >
+> >> >  To fulfill the need described in that patchset a new
+> >> > > ioctl() PROC_FD_SIGNAL is added. It can be used to send signals to a
+> >> > > process via a file descriptor:
+> >> > >
+> >> > > int fd = open("/proc/1234", O_DIRECTORY | O_CLOEXEC);
+> >> > > ioctl(fd, PROC_FD_SIGNAL, SIGKILL);
+> >> > > close(fd);
+> >> > >
+> >> > > Note, the stable handle will allow us to carefully extend this feature in
+> >> > > the future.
+> >> >
+> >> > We still need the ability to synchronously wait on a process's death,
+> >> > as in my patch set. I will be refreshing that patch set.
+> >>
+> >> I fully agree that a more comprehensive, less expensive API for
+> >> managing processes would be nice.  But I also think that this patch
+> >> (using the directory fd and ioctl) is better from a security
+> >> perspective than using a new file in /proc.
+> >>
+> >> I have an old patch to make proc directory fds pollable:
+> >>
+> >> https://lore.kernel.org/patchwork/patch/345098/
+> >>
+> >> That patch plus the one in this thread might make a nice addition to
+> >> the kernel even if we expect something much better to come along
+> >> later.
 > >
-> > And I didn't say in my proposal that a process's identity should
-> > fundamentally change when it calls execve().  I'm suggesting that
-> > certain operations that could cause a process to gain privilege or
-> > otherwise require greater permission to introspect (mainly execve)
-> > could be handled by invalidating the new process management fds.
-> > Sure, if init re-execs itself, it's still PID 1, but that doesn't
-> > necessarily mean that:
+> > I agree. Eric's point was to make the first implementation of this as
+> > simple as possible that's why this patch is intentionally almost
+> > trivial. And I like it for its simplicity.
 > >
-> > fd =3D process_open_management_fd(1);
-> > [init reexecs]
-> > process_do_something(fd);
+> > I had a more comprehensive API proposal of which open(/proc/<pid>) was a
+> > part. I didn't send out alongside this patch as Eric clearly prefered to
+> > only have the /proc/<pid> part. Here is the full proposal as I intended
+> > to originally send it out:
+> 
+> Thanks.
+> 
+> > The gist is to have file descriptors for processes which is obviously not a new
+> > idea. This has been done before in other OSes and it has been tried before in
+> > Linux [2], [3] (Thanks to Kees for pointing out these patches.). So I want to
+> > make it very clear that I'm not laying claim to this being my or even a novel
+> > idea in any way. However, I want to diverge from previous approaches with my
+> > suggestion. (Though I can't be sure that there's not something similar in other
+> > OSes already.)
+> 
+> Windows works basically as you describe. You can create a process is
+> suspended state, configure it however you want, then let it run.
+> CreateProcess (and even moreso, NtCreateProcess) also provide a rich
+> (and *extensible*) interface for pre-creation process configuration.
+> 
+> >> One of the main motivations for having procfds is to have a race-free way of
+> > configuring, starting, polling, and killing a process. Basically, a process
+> > lifecycle api if you want to think about it that way. The api should also be
+> > easily extendable in the future to avoid running into the limitations we
+> > currently see with the clone*() syscall(s) again.
 > >
-> > needs to work.
->=20
-> PID 1 is a bad example here, because it doesn't get recycled. Other
-> PIDs do. The snippet you gave *does* need to work, in general, because
-> if exec invalidates the handle, and you need to reopen by PID to
-> re-establish your right to do something with the process, that process
-> may in fact have died between the invalidation and your reopen, and
-> your reopened FD may refer to some other random process.
+> > One of the crucial points of the api is to *separate the configuration
+> > of a process through a procfd from actually creating the process*.
+> > This is a crucial property expressed in the open*() system calls. First, get a
+> > stable handle on an object then allow for ways to configure it. As such the
+> > procfd api shares the same insight with Al's and David's new mount api.
+> > (Fwiw, Andy also pointed out similarities with posix_spawn().)
+> > What I envisioned was to have the following syscalls (multiple name suggestions):
+> >
+> > 1. int process_open / proc_open / procopen
+> > 2. int process_config / proc_config / procconfig or ioctl()-based
+> > 3. int process_info / proc_info / procinfo or ioctl()-based
+> > 4. int process_manage / proc_manage / procmanage or ioctl()-based
+> 
+> The API you've proposed seems fine to me, although I'd either 1)
+> consolidate operations further into one system call, or 2) separate
+> the different management operations into more and different system
+> calls that can be audited independently. The grouping you've proposed
+> seems to have the worst aspects of API splitting and API multiplexing.
+> But I have no objection to it in spirit.
+> 
+> That said, while I do want to fix process configuration and startup
+> generally, I want to fix specific holes in the existing API surface
+> first. The two patches I've already sent do that, and this work
+> shouldn't wait on an ideal larger process-API overhaul that may or may
+> not arrive. Based on previous history, I suspect that an API of the
+> scope you're proposing would take years to overcome all LKML
+> objections and land. I don't want to wait that long when we can make
+> smaller fixes that would not conflict with the general architecture.
+> 
+> The original patch on this thread is half of the right fix. While I
+> think we should use a system call instead of an ioctl, and while I
+> have some specific implementation critiques (which I described in a
+> different message), it's the right general sort of thing. We should
+> merge it.
 
-I imagine the error would be -EPERM rather than -ESRCH in this case,
-which would be incredibly trivial for userspace to differentiate
-between. If you wish to re-open the path that is also trivial by
-re-opening through /proc/self/fd/$fd -- which will re-do any permission
-checks and will guarantee that you are re-opening the same 'struct file'
-and thus the same 'struct pid'.
+Thanks. I agree. Note, I don't care if it's an ioctl() or not. I'm happy
+to instead add a syscall process_signal() alongside this patchset. What
+do people prefer?
 
-> The only way around this problem is to have two separate FDs --- one
-> to represent process identity, which *must* be continuous across
-> execve, and the other to represent some specific capability, some
-> ability to do something to that process. It's reasonable to invalidate
-> capability after execve, but it's not reasonable to invalidate
-> identity. In concrete terms, I don't see a big advantage to this
-> separation, and I think a single identity FD combined with
-> per-operation capability checks is sufficient. And much simpler.
-
-I think that the error separation above would trivially allow user-space
-to know whether the identity or capability of a process being monitored
-has changed.
-
-Currently, all operations on a '/proc/$pid' which you've previously
-opened and has died will give you -ESRCH. So the above separation I
-mentioned is entirely consistent with how users are using '/proc/$pid'
-to check for PID death today.
-
-> > I think you're overstating your case.  To a pretty good approximation,
-> > setresuid() allows the caller to remove elements from the set {ruid,
-> > suid, euid}, unless the caller has CAP_SETUID.  If you could ptrace a
-> > process before it calls setresuid(), you might as well be able to
-> > ptrace() it after, since you could have just ptraced it and made it
-> > call setresuid() while still ptracing it.
->=20
-> What about a child that execs a setuid binary?
-
-Yeah, for this reason I think that using -EPERM on operations that we
-think are not reasonable to allow possibly-less-privileged processes to
-do -- probably the most reasonable choice would be ptrace_may_access().
-
-> > Similarly, it seems like
-> > it's probably safe to be able to open an fd that lets you watch the
-> > exit status of a process, have the process call setresuid(), and still
-> > see the exit status.
->=20
-> Is it? That's an open question.
-
-Well, if we consider wait4(2) it seems that this is already the case.
-If you fork+exec a setuid binary you can definitely see its exit code.
-
-> > My POLLERR hack, aside from being ugly,
-> > avoids this particular issue because it merely lets you wait for
-> > something you already could have observed using readdir().
->=20
-> Yes. I mentioned this same issue-punting as the motivation behind
-> exithand, initially, just reading EOF on exit.
-
-One question I have about EOF-on-exit is that if we wish to extend it to
-allow providing the exit status (which is something we discussed in the
-original thread), how will multiple-readers be handled in such a
-scenario? Would we be storing the exit status or siginfo in the
-equivalent of a locked memfd?
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---n33er6mvlsotrfdd
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlvxt90ACgkQSnvnv3De
-m5907w/+Izk6UkNPV6dusUBlHUV56jUtHKpSc4dYRGSGmZu5WY6oiWap0GD5baVg
-3nRrnRnAQh+8eJtzi5X/k5QJPpGAzigcg/b20JBPvsCUgfG/ZbvnDRKqObYREWRL
-R3RrgiKprp9pUUWOrn5DzET/bqbN96jsEQd9KCn44+XeZXwaEy0c5fk82+0Oz4OW
-FG2g8K5Y4kayg8yw8WjXoGssAcUWGsxUxcmkmiOoEx+rDiAXhKlCbQnnOtKKDdF3
-HRpVCcJPvnGfVxDbuWcrXqmWmZFsMWs1ohnVKd6AeTSsvNS/qHfci66xi/8aG+iQ
-T3NZI0pqNveQLqCQ5D4yCoxavPcZ0K2M8p0cgTV87q7IKqc2HLwc7AhP4x5b34r4
-CWqwQ7k4Rj57qq+Hpd1SjgrlmW2nq7FyoETDX6oYOo9wXyE4vN2SKMwzF9wgCENB
-K9x/yoe0EB4LPb5Ue0mbY5yUxQBoj1NY0y+ruKn+emNsUkd0+HmCcRCVe0J+TveR
-B9xhnVKS2t7NlmzsKZ+ZS7UikAf0Vdj0vEtzpD2mtXSTxkgx02AQHI6+EG3svAQD
-osbX/Ne3f0jBGX1+Nw2V34lFHsD2a6cLVb5WzDFswzU+fZk5T3lBl7RXsVSw4Rkm
-7C5BhJAuUJriF5+1yHax30j+DCCpf7oszI8Wp0x7R3Yj5QxtcRQ=
-=rhny
------END PGP SIGNATURE-----
-
---n33er6mvlsotrfdd--
+> 
+> Next, I want to merge my exithand proposal, or something like it. It's
+> likewise a simple change that, in a minimal way, addresses a
+> longstanding API deficiency. I'm very strongly against the
+> POLLERR-on-directory variant of the idea.
