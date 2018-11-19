@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 16/26] mm: Handle THP/HugeTLB shadow stack page fault
-Date: Mon, 19 Nov 2018 13:47:59 -0800
-Message-ID: <20181119214809.6086-17-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 13/26] x86/mm: Modify ptep_set_wrprotect and pmdp_set_wrprotect for _PAGE_DIRTY_SW
+Date: Mon, 19 Nov 2018 13:47:56 -0800
+Message-ID: <20181119214809.6086-14-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,90 +10,108 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch implements THP shadow stack (SHSTK) copying in the same
-way as in the previous patch for regular PTE.
+When Shadow Stack is enabled, the [R/O + PAGE_DIRTY_HW] setting is
+reserved only for the Shadow Stack.  Non-Shadow Stack R/O PTEs use
+[R/O + PAGE_DIRTY_SW].
 
-In copy_huge_pmd(), clear the dirty bit from the PMD to cause a page
-fault upon the next SHSTK access to the PMD.  At that time, fix the
-PMD and copy/re-use the page.
+When a PTE goes from [R/W + PAGE_DIRTY_HW] to [R/O + PAGE_DIRTY_SW],
+it could become a transient Shadow Stack PTE in two cases.
+
+The first case is that some processors can start a write but end up
+seeing a read-only PTE by the time they get to the Dirty bit,
+creating a transient Shadow Stack PTE.  However, this will not occur
+on processors supporting Shadow Stack therefore we don't need a TLB
+flush here.
+
+The second case is that when the software, without atomic, tests &
+replaces PAGE_DIRTY_HW with PAGE_DIRTY_SW, a transient Shadow Stack
+PTE can exist.  This is prevented with cmpxchg.
+
+Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided
+many insights to the issue.  Jann Horn provided the cmpxchg solution.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/mm/pgtable.c         | 8 ++++++++
- include/asm-generic/pgtable.h | 2 ++
- mm/huge_memory.c              | 4 ++++
- 3 files changed, 14 insertions(+)
+ arch/x86/include/asm/pgtable.h | 58 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 58 insertions(+)
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index 75dddc3d8451..4275c80f5832 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -897,6 +897,14 @@ inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
- 		return pte;
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index db4b9d22d2f7..cf0c50ef53d8 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1202,7 +1202,36 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
+ static inline void ptep_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pte_t *ptep)
+ {
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++	pte_t new_pte, pte = READ_ONCE(*ptep);
++
++	/*
++	 * Some processors can start a write, but end up
++	 * seeing a read-only PTE by the time they get
++	 * to the Dirty bit.  In this case, they will
++	 * set the Dirty bit, leaving a read-only, Dirty
++	 * PTE which looks like a Shadow Stack PTE.
++	 *
++	 * However, this behavior has been improved and
++	 * will not occur on processors supporting
++	 * Shadow Stacks.  Without this guarantee, a
++	 * transition to a non-present PTE and flush the
++	 * TLB would be needed.
++	 *
++	 * When changing a writable PTE to read-only and
++	 * if the PTE has _PAGE_DIRTY_HW set, we move
++	 * that bit to _PAGE_DIRTY_SW so that the PTE is
++	 * not a valid Shadow Stack PTE.
++	 */
++	do {
++		new_pte = pte_wrprotect(pte);
++		new_pte.pte |= (new_pte.pte & _PAGE_DIRTY_HW) >>
++				_PAGE_BIT_DIRTY_HW << _PAGE_BIT_DIRTY_SW;
++		new_pte.pte &= ~_PAGE_DIRTY_HW;
++	} while (!try_cmpxchg(ptep, &pte, new_pte));
++#else
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
++#endif
  }
  
-+inline pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma)
-+{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pmd_mkdirty_shstk(pmd);
-+	else
-+		return pmd;
-+}
-+
- inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
+ #define flush_tlb_fix_spurious_fault(vma, address) do { } while (0)
+@@ -1265,7 +1294,36 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
+ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 				      unsigned long addr, pmd_t *pmdp)
  {
- 	return (vm_flags & VM_SHSTK);
-diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
-index 30ac390fb2d4..b0b375d8bb34 100644
---- a/include/asm-generic/pgtable.h
-+++ b/include/asm-generic/pgtable.h
-@@ -1145,9 +1145,11 @@ static inline bool arch_has_pfn_modify_check(void)
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++	pmd_t new_pmd, pmd = READ_ONCE(*pmdp);
++
++	/*
++	 * Some processors can start a write, but end up
++	 * seeing a read-only PMD by the time they get
++	 * to the Dirty bit.  In this case, they will
++	 * set the Dirty bit, leaving a read-only, Dirty
++	 * PMD which looks like a Shadow Stack PMD.
++	 *
++	 * However, this behavior has been improved and
++	 * will not occur on processors supporting
++	 * Shadow Stacks.  Without this guarantee, a
++	 * transition to a non-present PMD and flush the
++	 * TLB would be needed.
++	 *
++	 * When changing a writable PMD to read-only and
++	 * if the PMD has _PAGE_DIRTY_HW set, we move
++	 * that bit to _PAGE_DIRTY_SW so that the PMD is
++	 * not a valid Shadow Stack PMD.
++	 */
++	do {
++		new_pmd = pmd_wrprotect(pmd);
++		new_pmd.pmd |= (new_pmd.pmd & _PAGE_DIRTY_HW) >>
++				_PAGE_BIT_DIRTY_HW << _PAGE_BIT_DIRTY_SW;
++		new_pmd.pmd &= ~_PAGE_DIRTY_HW;
++	} while (!try_cmpxchg(pmdp, &pmd, new_pmd));
++#else
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
++#endif
+ }
  
- #ifndef CONFIG_ARCH_HAS_SHSTK
- #define pte_set_vma_features(pte, vma) pte
-+#define pmd_set_vma_features(pmd, vma) pmd
- #define arch_copy_pte_mapping(vma_flags) false
- #else
- pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
-+pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
- bool arch_copy_pte_mapping(vm_flags_t vm_flags);
- #endif
- 
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 55478ab3c83b..12148a5b60e0 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -597,6 +597,7 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf,
- 
- 		entry = mk_huge_pmd(page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		page_add_new_anon_rmap(page, vma, haddr, true);
- 		mem_cgroup_commit_charge(page, memcg, false, true);
- 		lru_cache_add_active_or_unevictable(page, vma);
-@@ -1209,6 +1210,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
- 		pte_t entry;
- 		entry = mk_pte(pages[i], vma->vm_page_prot);
- 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
-+		entry = pte_set_vma_features(entry, vma);
- 		memcg = (void *)page_private(pages[i]);
- 		set_page_private(pages[i], 0);
- 		page_add_new_anon_rmap(pages[i], vmf->vma, haddr, false);
-@@ -1293,6 +1295,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = pmd_mkyoung(orig_pmd);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		if (pmdp_set_access_flags(vma, haddr, vmf->pmd, entry,  1))
- 			update_mmu_cache_pmd(vma, vmf->address, vmf->pmd);
- 		ret |= VM_FAULT_WRITE;
-@@ -1365,6 +1368,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
- 		pmd_t entry;
- 		entry = mk_huge_pmd(new_page, vma->vm_page_prot);
- 		entry = maybe_pmd_mkwrite(pmd_mkdirty(entry), vma);
-+		entry = pmd_set_vma_features(entry, vma);
- 		pmdp_huge_clear_flush_notify(vma, haddr, vmf->pmd);
- 		page_add_new_anon_rmap(new_page, vma, haddr, true);
- 		mem_cgroup_commit_charge(new_page, memcg, false, true);
+ #define pud_write pud_write
 -- 
 2.17.1
