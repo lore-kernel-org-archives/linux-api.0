@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 07/11] x86/cet/ibt: Add ENDBR to op-code-map
-Date: Mon, 19 Nov 2018 13:49:30 -0800
-Message-ID: <20181119214934.6174-8-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 11/11] x86/cet: Add PTRACE interface for CET
+Date: Mon, 19 Nov 2018 13:49:34 -0800
+Message-ID: <20181119214934.6174-12-yu-cheng.yu@intel.com>
 References: <20181119214934.6174-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214934.6174-1-yu-cheng.yu@intel.com>
@@ -10,78 +10,144 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add control transfer terminating instructions:
+Add REGSET_CET64/REGSET_CET32 to get/set CET MSRs:
 
-ENDBR64/ENDBR32:
-    Mark a valid 64/32-bit control transfer endpoint.
+    IA32_U_CET (user-mode CET settings) and
+    IA32_PL3_SSP (user-mode shadow stack)
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/lib/x86-opcode-map.txt               | 13 +++++++++++--
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++++++++++--
- 2 files changed, 22 insertions(+), 4 deletions(-)
+ arch/x86/include/asm/fpu/regset.h |  7 +++---
+ arch/x86/kernel/fpu/regset.c      | 41 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/ptrace.c          | 16 ++++++++++++
+ include/uapi/linux/elf.h          |  1 +
+ 4 files changed, 62 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
-index c5e825d44766..fbc53481bc59 100644
---- a/arch/x86/lib/x86-opcode-map.txt
-+++ b/arch/x86/lib/x86-opcode-map.txt
-@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
- # Skip 0xeb-0xff
- EndTable
+diff --git a/arch/x86/include/asm/fpu/regset.h b/arch/x86/include/asm/fpu/regset.h
+index d5bdffb9d27f..edad0d889084 100644
+--- a/arch/x86/include/asm/fpu/regset.h
++++ b/arch/x86/include/asm/fpu/regset.h
+@@ -7,11 +7,12 @@
  
--Table: 3-byte opcode 2 (0x0f 0x38)
-+Table: 3-byte opcode 2 (0x0f 0x1e)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xf9
-+fa: ENDBR64 (f3)
-+fb: ENDBR32 (f3)
-+#skip 0xfc-0xff
-+EndTable
+ #include <linux/regset.h>
+ 
+-extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active;
++extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active,
++				cetregs_active;
+ extern user_regset_get_fn fpregs_get, xfpregs_get, fpregs_soft_get,
+-				xstateregs_get;
++				xstateregs_get, cetregs_get;
+ extern user_regset_set_fn fpregs_set, xfpregs_set, fpregs_soft_set,
+-				 xstateregs_set;
++				 xstateregs_set, cetregs_set;
+ 
+ /*
+  * xstateregs_active == regset_fpregs_active. Please refer to the comment
+diff --git a/arch/x86/kernel/fpu/regset.c b/arch/x86/kernel/fpu/regset.c
+index bc02f5144b95..7008eb084d36 100644
+--- a/arch/x86/kernel/fpu/regset.c
++++ b/arch/x86/kernel/fpu/regset.c
+@@ -160,6 +160,47 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
+ 	return ret;
+ }
+ 
++int cetregs_active(struct task_struct *target, const struct user_regset *regset)
++{
++#ifdef CONFIG_X86_INTEL_CET
++	if (target->thread.cet.shstk_enabled || target->thread.cet.ibt_enabled)
++		return regset->n;
++#endif
++	return 0;
++}
 +
-+Table: 3-byte opcode 3 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
- 
--Table: 3-byte opcode 3 (0x0f 0x3a)
-+Table: 3-byte opcode 4 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
-diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-index c5e825d44766..fbc53481bc59 100644
---- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-+++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
- # Skip 0xeb-0xff
- EndTable
- 
--Table: 3-byte opcode 2 (0x0f 0x38)
-+Table: 3-byte opcode 2 (0x0f 0x1e)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xf9
-+fa: ENDBR64 (f3)
-+fb: ENDBR32 (f3)
-+#skip 0xfc-0xff
-+EndTable
++int cetregs_get(struct task_struct *target, const struct user_regset *regset,
++		unsigned int pos, unsigned int count,
++		void *kbuf, void __user *ubuf)
++{
++	struct fpu *fpu = &target->thread.fpu;
++	struct cet_user_state *cetregs;
 +
-+Table: 3-byte opcode 3 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return -ENODEV;
++
++	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_MASK_SHSTK_USER);
++
++	fpu__prepare_read(fpu);
++	return user_regset_copyout(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
++}
++
++int cetregs_set(struct task_struct *target, const struct user_regset *regset,
++		  unsigned int pos, unsigned int count,
++		  const void *kbuf, const void __user *ubuf)
++{
++	struct fpu *fpu = &target->thread.fpu;
++	struct cet_user_state *cetregs;
++
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return -ENODEV;
++
++	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_MASK_SHSTK_USER);
++
++	fpu__prepare_write(fpu);
++	return user_regset_copyin(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
++}
++
+ #if defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
  
--Table: 3-byte opcode 3 (0x0f 0x3a)
-+Table: 3-byte opcode 4 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
+ /*
+diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
+index ffae9b9740fd..780b350577bc 100644
+--- a/arch/x86/kernel/ptrace.c
++++ b/arch/x86/kernel/ptrace.c
+@@ -50,7 +50,9 @@ enum x86_regset {
+ 	REGSET_IOPERM64 = REGSET_XFP,
+ 	REGSET_XSTATE,
+ 	REGSET_TLS,
++	REGSET_CET64 = REGSET_TLS,
+ 	REGSET_IOPERM32,
++	REGSET_CET32,
+ };
+ 
+ struct pt_regs_offset {
+@@ -1266,6 +1268,13 @@ static struct user_regset x86_64_regsets[] __ro_after_init = {
+ 		.size = sizeof(long), .align = sizeof(long),
+ 		.active = ioperm_active, .get = ioperm_get
+ 	},
++	[REGSET_CET64] = {
++		.core_note_type = NT_X86_CET,
++		.n = sizeof(struct cet_user_state) / sizeof(u64),
++		.size = sizeof(u64), .align = sizeof(u64),
++		.active = cetregs_active, .get = cetregs_get,
++		.set = cetregs_set
++	},
+ };
+ 
+ static const struct user_regset_view user_x86_64_view = {
+@@ -1321,6 +1330,13 @@ static struct user_regset x86_32_regsets[] __ro_after_init = {
+ 		.size = sizeof(u32), .align = sizeof(u32),
+ 		.active = ioperm_active, .get = ioperm_get
+ 	},
++	[REGSET_CET32] = {
++		.core_note_type = NT_X86_CET,
++		.n = sizeof(struct cet_user_state) / sizeof(u64),
++		.size = sizeof(u64), .align = sizeof(u64),
++		.active = cetregs_active, .get = cetregs_get,
++		.set = cetregs_set
++	},
+ };
+ 
+ static const struct user_regset_view user_x86_32_view = {
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 5ef25a565e88..f4cdfdc59c0a 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -401,6 +401,7 @@ typedef struct elf64_shdr {
+ #define NT_386_TLS	0x200		/* i386 TLS slots (struct user_desc) */
+ #define NT_386_IOPERM	0x201		/* x86 io permission bitmap (1=deny) */
+ #define NT_X86_XSTATE	0x202		/* x86 extended state using xsave */
++#define NT_X86_CET	0x203		/* x86 cet state */
+ #define NT_S390_HIGH_GPRS	0x300	/* s390 upper register halves */
+ #define NT_S390_TIMER	0x301		/* s390 timer register */
+ #define NT_S390_TODCMP	0x302		/* s390 TOD clock comparator register */
 -- 
 2.17.1
