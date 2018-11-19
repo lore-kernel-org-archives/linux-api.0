@@ -1,40 +1,47 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH] proc: allow killing processes via file descriptors
-Date: Mon, 19 Nov 2018 14:15:31 +0000
-Message-ID: <9a269517770e4881b92756d47f17a5fd@AcuMS.aculab.com>
-References: <20181118111751.6142-1-christian@brauner.io>
+From: Lorenz Bauer <lmb@cloudflare.com>
+Subject: Re: [PATCH 0/3] Fix unsafe BPF_PROG_TEST_RUN interface
+Date: Mon, 19 Nov 2018 14:30:04 +0000
+Message-ID: <CACAyw98fu_=WufBrv_7CwO4iJj3jhOu1n6b3Pr0aZxqSk8++Gw@mail.gmail.com>
+References: <20181116125329.3974-1-lmb@cloudflare.com> <CAH3MdRW1=iUm0qQdNrv9r5Orn3rZ2XBDn-qym5i_cpi7wo6PxA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181118111751.6142-1-christian@brauner.io>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: 'Christian Brauner' <christian@brauner.io>, "ebiederm@xmission.com" <ebiederm@xmission.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: "serge@hallyn.com" <serge@hallyn.com>, "jannh@google.com" <jannh@google.com>, "luto@kernel.org" <luto@kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "oleg@redhat.com" <oleg@redhat.com>, "cyphar@cyphar.com" <cyphar@cyphar.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "dancol@google.com" <dancol@google.com>, "timmurray@google.com" <timmurray@google.com>, Kees Cook <keescook@chromium.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CAH3MdRW1=iUm0qQdNrv9r5Orn3rZ2XBDn-qym5i_cpi7wo6PxA@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: ys114321@gmail.com
+Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: > Christian Brauner
-> Sent: 18 November 2018 11:18
-> 
-> With this patch an open() call on /proc/<pid> will give userspace a handle
-> to struct pid of the process associated with /proc/<pid>. This allows to
-> maintain a stable handle on a process.
+On Sun, 18 Nov 2018 at 06:13, Y Song <ys114321@gmail.com> wrote:
+>
+> There is a slight change of user space behavior for this patch.
+> Without this patch, the value bpf_attr.test.data_size_out is output only.
+> For example,
+>    output buffer : out_buf (user allocated size 10)
+>    data_size_out is a random value (e.g., 1),
+>
+> The actual data to copy is 5.
+>
+> In today's implementation, the kernel will copy 5 and set data_size_out is 5.
+>
+> With this patch, the kernel will copy 1 and set data_size_out is 5.
+>
+> I am not 100% sure at this time whether we CAN overload data_size_out
+> since it MAY break existing applications.
 
-My 3c...
+Yes, that's correct. I think that the likelihood of this is low. It would
+affect code that uses bpf_attr without zeroing it first. I had a look around,
+and I could only find code that would keep working:
 
-You need to add a version of fork() that returns an open fd to
-/proc/pid to the parent.
+* kernel libbpf and descendants (e.g katran)
+* github.com/iovisor/gobpf
+* github.com/newtools/ebpf
 
-Is it possible to overload fcntl() rather than ioctl() ?
+That doesn't really guarantee anything of course.
 
-More interestingly what about a 'unique pid' (eg the pid extended to
-(say) 128 bits with a use count) that can be safely put into a /var/run/pid
-file for a daemon and used later in a 'kill' that will only ever
-reference the correct process.
 
-	David
+-- 
+Lorenz Bauer  |  Systems Engineer
+25 Lavington St., London SE1 0NZ
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+www.cloudflare.com
