@@ -1,49 +1,31 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Mon, 19 Nov 2018 15:39:54 -0700
-Message-ID: <20181119223954.GA4992@cisco>
-References: <20181119103241.5229-1-christian@brauner.io>
- <20181119103241.5229-3-christian@brauner.io>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v6 09/11] x86/vsyscall/32: Add ENDBR32 to vsyscall
+ entry point
+Date: Mon, 19 Nov 2018 14:40:00 -0800
+Message-ID: <6bb299d4a59540727cd27bf015b2b2ff5014aab4.camel@intel.com>
+References: <20181119214934.6174-1-yu-cheng.yu@intel.com>
+         <20181119214934.6174-10-yu-cheng.yu@intel.com>
+         <CALCETrUkXMHcwX8u+mGDD9Vj+iQE7CRMHL7jQnfAT6WXV8SBEQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181119103241.5229-3-christian@brauner.io>
+In-Reply-To: <CALCETrUkXMHcwX8u+mGDD9Vj+iQE7CRMHL7jQnfAT6WXV8SBEQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.am>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 19, 2018 at 11:32:39AM +0100, Christian Brauner wrote:
->
-> +/**
-> + *  sys_procfd_signal - send a signal to a process through a process file
-> + *                      descriptor
-> + *  @fd: the file descriptor of the process
-> + *  @sig: signal to be sent
-> + *  @info: the signal info
-> + *  @flags: future flags to be passed
-> + */
-> +SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user *, info,
-> +		int, flags)
-> +{
+On Mon, 2018-11-19 at 14:23 -0800, Andy Lutomirski wrote:
+> On Mon, Nov 19, 2018 at 1:55 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > 
+> > From: "H.J. Lu" <hjl.tools@gmail.com>
+> > 
+> > Add ENDBR32 to vsyscall entry point.
+> 
+> $SUBJECT should be "x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry
+> point".
 
-Can I just register an objection here that I think using a syscall
-just for this is silly?
+I will fix it.
 
-My understanding is that the concern is that some code might do:
-
-unknown_fd = recv_fd();
-ioctl(unknown_fd, SOME_IOCTL, NULL); // where SOME_IOCTL == PROC_FD_KILL
-// whoops, unknown_fd was a procfd and we killed a task!
-
-In my experience when writing fd sending/receiving code, the sender and
-receiver are fairly tightly coupled. Has anyone ever actually fixed a
-bug where they had an fd that they lost track of what "type" it was
-and screwed up like this? It seems completely theoretical to me.
-
-The ioctl() approach has the benefit of being extensible. Adding a
-syscall means that everyone has to do all the boilerplate for each new
-pid op in the kernel, arches, libc, strace, etc.
-
-Tycho
+Yu-cheng
