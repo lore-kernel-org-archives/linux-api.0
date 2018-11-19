@@ -1,57 +1,79 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Mon, 19 Nov 2018 11:39:53 -0800
-Message-ID: <CAKOZuethLLUEf-ZFVpm7u1msyYUJ1ArP2vemMUzrct7K0sv_WA@mail.gmail.com>
-References: <20181119103241.5229-1-christian@brauner.io> <20181119103241.5229-3-christian@brauner.io>
- <CAKOZueshQ2DAwUYp+dLpmfYG6FtvCqeRQxH41SjNS+WqY3e0Fw@mail.gmail.com>
- <20181119182902.fadw6qiu3eepndm3@brauner.io> <87o9ak28nl.fsf@xmission.com> <20181119193128.hv7z4j52ajrue2jr@brauner.io>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH] proc: allow killing processes via file descriptors
+Date: Tue, 20 Nov 2018 07:21:47 +1100
+Message-ID: <20181119202147.ciihjtjwvuqsjkl5@yavin>
+References: <CALCETrVLP_mudJTW6EQpRr5GZ7kfuGci+QCT1uPrOVDTWcod-A@mail.gmail.com>
+ <a7f50692-667c-4efe-a2d0-fa324eebb90b@infradead.org>
+ <CAKOZueutLc8d0Fe+7dNWiZKnALhTSST8+kCnOrL+OmB6coUmtA@mail.gmail.com>
+ <CALCETrVg71XBv-gMOtL-m0Dd0HNz8_oXOUDSWin5LeViAL0UYA@mail.gmail.com>
+ <CAKOZuesCKo4GH9fdum2EUFLrtTWam3aizcDQUn3-vCYg4T1P8w@mail.gmail.com>
+ <CALCETrUeNZPfrSYa9vH5Ukrk1Y+Kb9GkZOh6LkqG6Z9NpK5P0w@mail.gmail.com>
+ <CAKOZuevVk_aH_2TuiNcmxgMa+gHXMBXz6Uu5a6TDjoxjhaE36g@mail.gmail.com>
+ <CALCETrVscRwQG55-j1SKc2TmSb1-=5861804ojUuviNzdyDOrA@mail.gmail.com>
+ <CAJwJo6aXQUtciO7kPSENoajV6JUqUGJxCh_0yPf5D8GfbLegzA@mail.gmail.com>
+ <CAKOZueu78Urbc-Vt--ZntGAG_i-LrNsPjGmRi7F8zuTUQ=iHug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="w4qs7hshq6b2wwkx"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181119193128.hv7z4j52ajrue2jr@brauner.io>
+Content-Disposition: inline
+In-Reply-To: <CAKOZueu78Urbc-Vt--ZntGAG_i-LrNsPjGmRi7F8zuTUQ=iHug@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, linux-kernel <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andy Lutomirski <luto@kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, open list <linux-kernel@vger.kernel.org>, Serge Hallyn <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>, Jan Engelhardt <jengelh@inai.de>, Andrei Vagin <avagin@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Yep. That's also what I was talking about, FWIW.
 
-On Mon, Nov 19, 2018 at 11:31 AM, Christian Brauner
-<christian@brauner.io> wrote:
-> On Mon, Nov 19, 2018 at 01:02:06PM -0600, Eric W. Biederman wrote:
->> Christian Brauner <christian@brauner.io> writes:
->>
->> > On Mon, Nov 19, 2018 at 07:59:24AM -0800, Daniel Colascione wrote:
->> >> You never addressed my comment on the previous patch about your use of
->> >
->> > Sorry, that thread exploded so quickly that I might have missed it.
->> >
->> >> private_data here. Why can't you use the struct pid reference that's
->> >> already in the inode?
->> >
->> > If that's what people prefer we can probably use that. There was
->> > precedent for stashing away such data in fs/proc/base.c already for
->> > various other things including user namespaces and struct mm so I
->> > followed this model. A prior version of my patch (I didn't send out) did
->> > retrive the inode via proc_pid() in .open() took an additional reference
->> > via get_pid() and dropped it in .release(). Do we prefer that?
->>
->> If you are using proc/<pid>/ directories as your file descriptors, you
->> don't need to add an open or a release method at all.  The existing file
->> descriptors hold a reference to the inode which holds a reference the
->> the struct pid.
->>
->> The only time you need to get a reference is when you need a task
->> and kill_pid_info already performs that work for you.
->
-> Oh, I see what you and Andy are saying now. Sweet, that means we can
-> trim down the patch even more. Less code, less headache.
->
-> Thanks!
->
->>
->> So using proc_pid is all you need to do to get the pid from the existing
->> file descriptors.
->>
->> Eric
->>
+--w4qs7hshq6b2wwkx
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On 2018-11-19, Daniel Colascione <dancol@google.com> wrote:
+> > I wonder how fast it would be holding a pid with another open()ed fd.
+> > And then you need to read comm (or how you filter whom to kill).
+> > It seems to me that procfs will be even slower with this safe-way.
+> > But I might misunderstand the idea, excuses.
+> >
+> > So, I just wanted to gently remind about procfs with netlink socket[1].
+>=20
+> We discussed netlink was extensively on the thread about
+> /proc/pid/kill. For numerous reasons, it's not suitable for
+> fundamental process management. We really need an FD-based interface
+> to processes, just like we have FD-based interfaces to other resource
+> types. We need something consistent and reliable, not an abuse of a
+> monitoring interface.
+
+Another significant problem with using netlink for something like this
+is that (as its name suggest) it's tied to network namespaces and not
+pid namespaces so you wouldn't reasonably be able to use the API inside
+a container. Using an fd side-steps the problem somewhat (though this
+just gave me an idea -- I will add it to the other thread).
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--w4qs7hshq6b2wwkx
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlvzG1sACgkQSnvnv3De
+m5/o3w//QtToPt6YGjGxEwBs6Xy/JH/aPOJuTGxlgjIqAPfQlv58hS027yma2liy
+MsHd/8Ifp2BvwzqeFdE8E9u96/TxeC95kmF9InaIG8mNfUa3rPYQrm1rBIMJ4JGn
+X2JXntY8s+YGiO3FwJ/r0CDEIzNNWevaNBN3z8oWKYlJ0FsYQhF6i523MgSuiMqP
+fVDyroRdWoFWKc0XenbWh2OKwM2rxjVfNg6QYabm/b7YNBfOqZI9SskYDCu7xRkD
+ZE1kfO/nHORskwhJ+06ArwboyhnLThAcgGEdJ3dw7ujio10s0xuJvZ+wHYktsA2a
+fEcnIFzshktG6Tpjqh0mYopLFskQceSXuJLjkZsOSOamzH3LI312EPfCQGOO/xBx
+83KhHHXbZg1K0gxQGfImGlR9G0H0M12S9JPZ/lThQ2NLUgmYRgN2PLFi8vfxqSFO
+0FerWJrVJbGfuHb/qA9GWytrbfoMfgL2lyAGtnZWOWQXysT34zVHPWsxcgF0pmTc
+wbGYKmjxt3YEg74hoUgFJldpl56zDvflwFtZcJusimMA/ELIPKi3QBcVuW2mtYkr
+1YC6DCsdSYzLZmLDViU+xP5SamPd/pAJH/l26p4yXwkW47Drd+gGTt+mRLLqxVxQ
+ZZAnUMSetE/S+Yk4Wv0YxdXnEKIEfKd4HRvMfQ1gkYcXMXc0NZo=
+=y5gr
+-----END PGP SIGNATURE-----
+
+--w4qs7hshq6b2wwkx--
