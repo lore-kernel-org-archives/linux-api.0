@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 21/26] x86/cet/shstk: Signal handling for shadow stack
-Date: Mon, 19 Nov 2018 13:48:04 -0800
-Message-ID: <20181119214809.6086-22-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 23/26] x86/cet/shstk: Handle thread shadow stack
+Date: Mon, 19 Nov 2018 13:48:06 -0800
+Message-ID: <20181119214809.6086-24-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,446 +10,161 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-When setting up a signal, the kernel creates a shadow stack restore
-token at the current SHSTK address and then stores the token's
-address in the signal frame, right after the FPU state.  Before
-restoring a signal, the kernel verifies and then uses the restore
-token to set the SHSTK pointer.
+The shadow stack for clone/fork is handled as the following:
+
+(1) If ((clone_flags & (CLONE_VFORK | CLONE_VM)) == CLONE_VM),
+    the kernel allocates (and frees on thread exit) a new SHSTK
+    for the child.
+
+    It is possible for the kernel to complete the clone syscall
+    and set the child's SHSTK pointer to NULL and let the child
+    thread allocate a SHSTK for itself.  There are two issues
+    in this approach: It is not compatible with existing code
+    that does inline syscall and it cannot handle signals before
+    the child can successfully allocate a SHSTK.
+
+(2) For (clone_flags & CLONE_VFORK), the child uses the existing
+    SHSTK.
+
+(3) For all other cases, the SHSTK is copied/reused whenever the
+    parent or the child does a call/ret.
+
+This patch handles cases (1) & (2).  Case (3) is handled in the
+SHSTK page fault patches.
+
+A 64-bit SHSTK has a fixed size of RLIMIT_STACK. A compat-mode
+thread SHSTK has a fixed size of 1/4 RLIMIT_STACK.  This allows
+more threads to share a 32-bit address space.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/ia32/ia32_signal.c            |  21 +++++
- arch/x86/include/asm/cet.h             |   5 +
- arch/x86/include/asm/sighandling.h     |   5 +
- arch/x86/include/uapi/asm/sigcontext.h |  15 +++
- arch/x86/kernel/cet.c                  | 126 +++++++++++++++++++++++++
- arch/x86/kernel/signal.c               |  97 +++++++++++++++++++
- 6 files changed, 269 insertions(+)
+ arch/x86/include/asm/cet.h         |  2 ++
+ arch/x86/include/asm/mmu_context.h |  3 +++
+ arch/x86/kernel/cet.c              | 40 ++++++++++++++++++++++++++++++
+ arch/x86/kernel/process.c          |  1 +
+ arch/x86/kernel/process_64.c       |  7 ++++++
+ 5 files changed, 53 insertions(+)
 
-diff --git a/arch/x86/ia32/ia32_signal.c b/arch/x86/ia32/ia32_signal.c
-index 86b1341cba9a..fd4d18ab82f9 100644
---- a/arch/x86/ia32/ia32_signal.c
-+++ b/arch/x86/ia32/ia32_signal.c
-@@ -34,6 +34,7 @@
- #include <asm/sigframe.h>
- #include <asm/sighandling.h>
- #include <asm/smap.h>
-+#include <asm/cet.h>
- 
- /*
-  * Do a signal return; undo the signal stack.
-@@ -108,6 +109,9 @@ static int ia32_restore_sigcontext(struct pt_regs *regs,
- 
- 	err |= fpu__restore_sig(buf, 1);
- 
-+	if (!err)
-+		err = restore_sigcontext_ext(buf);
-+
- 	force_iret();
- 
- 	return err;
-@@ -209,6 +213,17 @@ static int ia32_setup_sigcontext(struct sigcontext_32 __user *sc,
- 	return err;
- }
- 
-+static unsigned long alloc_sigcontext_ext(unsigned long sp)
-+{
-+	/*
-+	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
-+	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
-+		sp -= (sizeof(struct sc_ext) + 8);
-+	return sp;
-+}
-+
- /*
-  * Determine which stack to use..
-  */
-@@ -234,6 +249,7 @@ static void __user *get_sigframe(struct ksignal *ksig, struct pt_regs *regs,
- 	if (fpu->initialized) {
- 		unsigned long fx_aligned, math_size;
- 
-+		sp = alloc_sigcontext_ext(sp);
- 		sp = fpu__alloc_mathframe(sp, 1, &fx_aligned, &math_size);
- 		*fpstate = (struct _fpstate_32 __user *) sp;
- 		if (copy_fpstate_to_sigframe(*fpstate, (void __user *)fx_aligned,
-@@ -277,6 +293,8 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
- 
- 	if (ia32_setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
- 		return -EFAULT;
-+	if (setup_sigcontext_ext(ksig, fpstate))
-+		return -EFAULT;
- 
- 	if (_COMPAT_NSIG_WORDS > 1) {
- 		if (__copy_to_user(frame->extramask, &set->sig[1],
-@@ -384,6 +402,9 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
- 				     regs, set->sig[0]);
- 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
- 
-+	if (!err)
-+		err = setup_sigcontext_ext(ksig, fpstate);
-+
- 	if (err)
- 		return -EFAULT;
- 
 diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index c952a2ec65fe..3af544aed800 100644
+index 3af544aed800..5957e7257d83 100644
 --- a/arch/x86/include/asm/cet.h
 +++ b/arch/x86/include/asm/cet.h
-@@ -19,10 +19,15 @@ struct cet_status {
+@@ -17,12 +17,14 @@ struct cet_status {
+ 
+ #ifdef CONFIG_X86_INTEL_CET
  int cet_setup_shstk(void);
++int cet_setup_thread_shstk(struct task_struct *p);
  void cet_disable_shstk(void);
  void cet_disable_free_shstk(struct task_struct *p);
-+int cet_restore_signal(unsigned long ssp);
-+int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
+ int cet_restore_signal(unsigned long ssp);
+ int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
  #else
  static inline int cet_setup_shstk(void) { return -EINVAL; }
++static inline int cet_setup_thread_shstk(struct task_struct *p) { return 0; }
  static inline void cet_disable_shstk(void) {}
  static inline void cet_disable_free_shstk(struct task_struct *p) {}
-+static inline int cet_restore_signal(unsigned long ssp) { return -EINVAL; }
-+static inline int cet_setup_signal(bool ia32, unsigned long rstor,
-+				   unsigned long *new_ssp) { return -EINVAL; }
- #endif
- 
- #define cpu_x86_cet_enabled() \
-diff --git a/arch/x86/include/asm/sighandling.h b/arch/x86/include/asm/sighandling.h
-index bd26834724e5..23014b4082de 100644
---- a/arch/x86/include/asm/sighandling.h
-+++ b/arch/x86/include/asm/sighandling.h
-@@ -17,4 +17,9 @@ void signal_fault(struct pt_regs *regs, void __user *frame, char *where);
- int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
- 		     struct pt_regs *regs, unsigned long mask);
- 
-+#ifdef CONFIG_X86_64
-+int setup_sigcontext_ext(struct ksignal *ksig, void __user *fpu);
-+int restore_sigcontext_ext(void __user *fpu);
-+#endif
-+
- #endif /* _ASM_X86_SIGHANDLING_H */
-diff --git a/arch/x86/include/uapi/asm/sigcontext.h b/arch/x86/include/uapi/asm/sigcontext.h
-index 844d60eb1882..e3b08d1c0d3b 100644
---- a/arch/x86/include/uapi/asm/sigcontext.h
-+++ b/arch/x86/include/uapi/asm/sigcontext.h
-@@ -196,6 +196,21 @@ struct _xstate {
- 	/* New processor state extensions go here: */
- };
- 
-+/*
-+ * Sigcontext extension (struct sc_ext) is located after
-+ * sigcontext->fpstate.  Because currently only the shadow
-+ * stack pointer is saved there and the shadow stack depends
-+ * on XSAVES, we can find sc_ext from sigcontext->fpstate.
-+ *
-+ * The 64-bit fpstate has a size of fpu_user_xstate_size, plus
-+ * FP_XSTATE_MAGIC2_SIZE when XSAVE* is used.  The struct sc_ext
-+ * is located at the end of sigcontext->fpstate, aligned to 8.
-+ */
-+struct sc_ext {
-+	unsigned long total_size;
-+	unsigned long ssp;
-+};
-+
- /*
-  * The 32-bit signal frame:
-  */
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index e6726e78e6cd..44904c90d347 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -18,6 +18,7 @@
- #include <asm/fpu/xstate.h>
- #include <asm/fpu/types.h>
- #include <asm/cet.h>
-+#include <asm/special_insns.h>
- 
- static int set_shstk_ptr(unsigned long addr)
- {
-@@ -46,6 +47,80 @@ static unsigned long get_shstk_addr(void)
- 	return ptr;
- }
- 
-+#define TOKEN_MODE_MASK	3UL
-+#define TOKEN_MODE_64	1UL
-+#define IS_TOKEN_64(token) ((token & TOKEN_MODE_MASK) == TOKEN_MODE_64)
-+#define IS_TOKEN_32(token) ((token & TOKEN_MODE_MASK) == 0)
-+
-+/*
-+ * Verify the restore token at the address of 'ssp' is
-+ * valid and then set shadow stack pointer according to the
-+ * token.
-+ */
-+static int verify_rstor_token(bool ia32, unsigned long ssp,
-+			      unsigned long *new_ssp)
-+{
-+	unsigned long token;
-+
-+	*new_ssp = 0;
-+
-+	if (!IS_ALIGNED(ssp, 8))
-+		return -EINVAL;
-+
-+	if (get_user(token, (unsigned long __user *)ssp))
-+		return -EFAULT;
-+
-+	/* Is 64-bit mode flag correct? */
-+	if (ia32 && !IS_TOKEN_32(token))
-+		return -EINVAL;
-+	else if (!IS_TOKEN_64(token))
-+		return -EINVAL;
-+
-+	token &= ~TOKEN_MODE_MASK;
-+
-+	/*
-+	 * Restore address properly aligned?
-+	 */
-+	if ((!ia32 && !IS_ALIGNED(token, 8)) || !IS_ALIGNED(token, 4))
-+		return -EINVAL;
-+
-+	/*
-+	 * Token was placed properly?
-+	 */
-+	if ((ALIGN_DOWN(token, 8) - 8) != ssp)
-+		return -EINVAL;
-+
-+	*new_ssp = token;
-+	return 0;
-+}
-+
-+/*
-+ * Create a restore token on the shadow stack.
-+ * A token is always 8-byte and aligned to 8.
-+ */
-+static int create_rstor_token(bool ia32, unsigned long ssp,
-+			      unsigned long *new_ssp)
-+{
-+	unsigned long addr;
-+
-+	*new_ssp = 0;
-+
-+	if ((!ia32 && !IS_ALIGNED(ssp, 8)) || !IS_ALIGNED(ssp, 4))
-+		return -EINVAL;
-+
-+	addr = ALIGN_DOWN(ssp, 8) - 8;
-+
-+	/* Is the token for 64-bit? */
-+	if (!ia32)
-+		ssp |= TOKEN_MODE_64;
-+
-+	if (write_user_shstk_64(addr, ssp))
-+		return -EFAULT;
-+
-+	*new_ssp = addr;
-+	return 0;
-+}
-+
- int cet_setup_shstk(void)
- {
- 	unsigned long addr, size;
-@@ -107,3 +182,54 @@ void cet_disable_free_shstk(struct task_struct *tsk)
- 
- 	tsk->thread.cet.shstk_enabled = 0;
- }
-+
-+int cet_restore_signal(unsigned long ssp)
-+{
-+	unsigned long new_ssp;
-+	int err;
-+
-+	if (!current->thread.cet.shstk_enabled)
-+		return 0;
-+
-+	err = verify_rstor_token(in_ia32_syscall(), ssp, &new_ssp);
-+
-+	if (err)
-+		return err;
-+
-+	return set_shstk_ptr(new_ssp);
-+}
-+
-+/*
-+ * Setup the shadow stack for the signal handler: first,
-+ * create a restore token to keep track of the current ssp,
-+ * and then the return address of the signal handler.
-+ */
-+int cet_setup_signal(bool ia32, unsigned long rstor_addr,
-+		     unsigned long *new_ssp)
-+{
-+	unsigned long ssp;
-+	int err;
-+
-+	if (!current->thread.cet.shstk_enabled)
-+		return 0;
-+
-+	ssp = get_shstk_addr();
-+	err = create_rstor_token(ia32, ssp, new_ssp);
-+
-+	if (err)
-+		return err;
-+
-+	if (ia32) {
-+		ssp = *new_ssp - sizeof(u32);
-+		err = write_user_shstk_32(ssp, (unsigned int)rstor_addr);
-+	} else {
-+		ssp = *new_ssp - sizeof(u64);
-+		err = write_user_shstk_64(ssp, rstor_addr);
-+	}
-+
-+	if (err)
-+		return err;
-+
-+	set_shstk_ptr(ssp);
-+	return 0;
-+}
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index 92a3b312a53c..72b70b0c1c49 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -46,6 +46,7 @@
- 
- #include <asm/sigframe.h>
- #include <asm/signal.h>
+ static inline int cet_restore_signal(unsigned long ssp) { return -EINVAL; }
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 0ca50611e8ce..57c1f6c42bef 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -13,6 +13,7 @@
+ #include <asm/tlbflush.h>
+ #include <asm/paravirt.h>
+ #include <asm/mpx.h>
 +#include <asm/cet.h>
  
- #define COPY(x)			do {			\
- 	get_user_ex(regs->x, &sc->x);			\
-@@ -152,6 +153,10 @@ static int restore_sigcontext(struct pt_regs *regs,
+ extern atomic64_t last_mm_ctx_id;
  
- 	err |= fpu__restore_sig(buf, IS_ENABLED(CONFIG_X86_32));
- 
-+#ifdef CONFIG_X86_64
-+	err |= restore_sigcontext_ext(buf);
-+#endif
-+
- 	force_iret();
- 
- 	return err;
-@@ -237,6 +242,17 @@ static unsigned long align_sigframe(unsigned long sp)
- 	return sp;
+@@ -223,6 +224,8 @@ do {						\
+ #else
+ #define deactivate_mm(tsk, mm)			\
+ do {						\
++	if (!tsk->vfork_done)			\
++		cet_disable_free_shstk(tsk);	\
+ 	load_gs_index(0);			\
+ 	loadsegment(fs, 0);			\
+ } while (0)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+index 44904c90d347..0e3e7a2c6f80 100644
+--- a/arch/x86/kernel/cet.c
++++ b/arch/x86/kernel/cet.c
+@@ -145,6 +145,46 @@ int cet_setup_shstk(void)
+ 	return 0;
  }
  
-+static unsigned long alloc_sigcontext_ext(unsigned long sp)
++int cet_setup_thread_shstk(struct task_struct *tsk)
 +{
++	unsigned long addr, size;
++	struct cet_user_state *state;
++
++	if (!current->thread.cet.shstk_enabled)
++		return 0;
++
++	state = get_xsave_addr(&tsk->thread.fpu.state.xsave,
++			       XFEATURE_MASK_SHSTK_USER);
++
++	if (!state)
++		return -EINVAL;
++
++	size = rlimit(RLIMIT_STACK);
++
 +	/*
-+	 * sigcontext_ext is at: fpu + fpu_user_xstate_size +
-+	 * FP_XSTATE_MAGIC2_SIZE, then aligned to 8.
++	 * Compat-mode pthreads share a limited address space.
++	 * If each function call takes an average of four slots
++	 * stack space, we need 1/4 of stack size for shadow stack.
 +	 */
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK))
-+		sp -= (sizeof(struct sc_ext) + 8);
-+	return sp;
++	if (in_compat_syscall())
++		size /= 4;
++
++	addr = do_mmap_locked(0, size, PROT_READ,
++			      MAP_ANONYMOUS | MAP_PRIVATE, VM_SHSTK);
++
++	if (addr >= TASK_SIZE_MAX) {
++		tsk->thread.cet.shstk_base = 0;
++		tsk->thread.cet.shstk_size = 0;
++		tsk->thread.cet.shstk_enabled = 0;
++		return -ENOMEM;
++	}
++
++	state->user_ssp = (u64)(addr + size - sizeof(u64));
++	tsk->thread.cet.shstk_base = addr;
++	tsk->thread.cet.shstk_size = size;
++	return 0;
 +}
 +
- static void __user *
- get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	     void __user **fpstate)
-@@ -266,6 +282,7 @@ get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
- 	}
+ void cet_disable_shstk(void)
+ {
+ 	u64 r;
+diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
+index 4a776da4c28c..440f012ef925 100644
+--- a/arch/x86/kernel/process.c
++++ b/arch/x86/kernel/process.c
+@@ -125,6 +125,7 @@ void exit_thread(struct task_struct *tsk)
  
- 	if (fpu->initialized) {
-+		sp = alloc_sigcontext_ext(sp);
- 		sp = fpu__alloc_mathframe(sp, IS_ENABLED(CONFIG_X86_32),
- 					  &buf_fx, &math_size);
- 		*fpstate = (void __user *)sp;
-@@ -493,6 +510,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
- 	err |= setup_sigcontext(&frame->uc.uc_mcontext, fp, regs, set->sig[0]);
- 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
+ 	free_vm86(t);
  
-+	if (!err)
-+		err = setup_sigcontext_ext(ksig, fp);
-+
- 	if (err)
- 		return -EFAULT;
- 
-@@ -576,6 +596,9 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
- 				regs, set->sig[0]);
- 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
- 
-+	if (!err)
-+		err = setup_sigcontext_ext(ksig, fpstate);
-+
- 	if (err)
- 		return -EFAULT;
- 
-@@ -707,6 +730,80 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- 	}
++	cet_disable_free_shstk(tsk);
+ 	fpu__drop(fpu);
  }
  
-+#ifdef CONFIG_X86_64
-+static int copy_ext_from_user(struct sc_ext *ext, void __user *fpu)
-+{
-+	void __user *p;
-+
-+	if (!fpu)
-+		return -EINVAL;
-+
-+	p = fpu + fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
-+	p = (void __user *)ALIGN((unsigned long)p, 8);
-+
-+	if (copy_from_user(ext, p, sizeof(*ext)))
-+		return -EFAULT;
-+
-+	if (ext->total_size != sizeof(*ext))
-+		return -EINVAL;
-+	return 0;
-+}
-+
-+static int copy_ext_to_user(void __user *fpu, struct sc_ext *ext)
-+{
-+	void __user *p;
-+
-+	if (!fpu)
-+		return -EINVAL;
-+
-+	if (ext->total_size != sizeof(*ext))
-+		return -EINVAL;
-+
-+	p = fpu + fpu_user_xstate_size + FP_XSTATE_MAGIC2_SIZE;
-+	p = (void __user *)ALIGN((unsigned long)p, 8);
-+
-+	if (copy_to_user(p, ext, sizeof(*ext)))
-+		return -EFAULT;
-+
-+	return 0;
-+}
-+
-+int restore_sigcontext_ext(void __user *fp)
-+{
-+	int err = 0;
-+
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && fp) {
-+		struct sc_ext ext = {0, 0};
-+
-+		err = copy_ext_from_user(&ext, fp);
-+
-+		if (!err)
-+			err = cet_restore_signal(ext.ssp);
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index 0e0b4288a4b2..3b371a57426e 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -456,6 +456,13 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
+ 	if (sp)
+ 		childregs->sp = sp;
+ 
++	/* Allocate a new shadow stack for pthread */
++	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) == CLONE_VM) {
++		err = cet_setup_thread_shstk(p);
++		if (err)
++			goto out;
 +	}
 +
-+	return err;
-+}
-+
-+int setup_sigcontext_ext(struct ksignal *ksig, void __user *fp)
-+{
-+	int err = 0;
-+
-+	if (cpu_feature_enabled(X86_FEATURE_SHSTK) && fp) {
-+		struct sc_ext ext = {0, 0};
-+		unsigned long rstor;
-+
-+		rstor = (unsigned long)ksig->ka.sa.sa_restorer;
-+		err = cet_setup_signal(is_ia32_frame(ksig), rstor, &ext.ssp);
-+		if (!err) {
-+			ext.total_size = sizeof(ext);
-+			err = copy_ext_to_user(fp, &ext);
-+		}
-+	}
-+
-+	return err;
-+}
-+#endif
-+
- static void
- handle_signal(struct ksignal *ksig, struct pt_regs *regs)
- {
+ 	err = -ENOMEM;
+ 	if (unlikely(test_tsk_thread_flag(me, TIF_IO_BITMAP))) {
+ 		p->thread.io_bitmap_ptr = kmemdup(me->thread.io_bitmap_ptr,
 -- 
 2.17.1
