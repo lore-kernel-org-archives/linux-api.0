@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 17/26] mm: Update can_follow_write_pte/pmd for shadow stack
-Date: Mon, 19 Nov 2018 13:48:00 -0800
-Message-ID: <20181119214809.6086-18-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 22/26] x86/cet/shstk: ELF header parsing of Shadow Stack
+Date: Mon, 19 Nov 2018 13:48:05 -0800
+Message-ID: <20181119214809.6086-23-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,128 +10,494 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-can_follow_write_pte/pmd look for the (RO & DIRTY) PTE/PMD to
-verify an exclusive RO page still exists after a broken COW.
+Look in .note.gnu.property of an ELF file and check if Shadow Stack needs
+to be enabled for the task.
 
-A shadow stack PTE is RO & PAGE_DIRTY_SW when it is shared,
-otherwise RO & PAGE_DIRTY_HW.
-
-Introduce pte_exclusive() and pmd_exclusive() to also verify a
-shadow stack PTE is exclusive.
-
-Also rename can_follow_write_pte/pmd() to can_follow_write() to
-make their meaning clear; i.e. "Can we write to the page?", not
-"Is the PTE writable?"
-
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/mm/pgtable.c         | 18 ++++++++++++++++++
- include/asm-generic/pgtable.h |  4 ++++
- mm/gup.c                      |  8 +++++---
- mm/huge_memory.c              |  8 +++++---
- 4 files changed, 32 insertions(+), 6 deletions(-)
+ arch/x86/Kconfig                         |   4 +
+ arch/x86/include/asm/elf.h               |   5 +
+ arch/x86/include/uapi/asm/elf_property.h |  15 +
+ arch/x86/kernel/Makefile                 |   2 +
+ arch/x86/kernel/elf.c                    | 358 +++++++++++++++++++++++
+ fs/binfmt_elf.c                          |  15 +
+ include/uapi/linux/elf.h                 |   1 +
+ 7 files changed, 400 insertions(+)
+ create mode 100644 arch/x86/include/uapi/asm/elf_property.h
+ create mode 100644 arch/x86/kernel/elf.c
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index 4275c80f5832..7629156d30b0 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -909,4 +909,22 @@ inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
- {
- 	return (vm_flags & VM_SHSTK);
- }
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 86fb68f496a6..73dfb94cde71 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1925,6 +1925,9 @@ config X86_INTEL_CET
+ config ARCH_HAS_SHSTK
+ 	def_bool n
+ 
++config ARCH_HAS_PROGRAM_PROPERTIES
++	def_bool n
 +
-+inline bool pte_exclusive(pte_t pte, struct vm_area_struct *vma)
+ config X86_INTEL_SHADOW_STACK_USER
+ 	prompt "Intel Shadow Stack for user-mode"
+ 	def_bool n
+@@ -1932,6 +1935,7 @@ config X86_INTEL_SHADOW_STACK_USER
+ 	select ARCH_USES_HIGH_VMA_FLAGS
+ 	select X86_INTEL_CET
+ 	select ARCH_HAS_SHSTK
++	select ARCH_HAS_PROGRAM_PROPERTIES
+ 	---help---
+ 	  Shadow stack provides hardware protection against program stack
+ 	  corruption.  Only when all the following are true will an application
+diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+index 69c0f892e310..557ed0ba71c7 100644
+--- a/arch/x86/include/asm/elf.h
++++ b/arch/x86/include/asm/elf.h
+@@ -381,4 +381,9 @@ struct va_alignment {
+ 
+ extern struct va_alignment va_align;
+ extern unsigned long align_vdso_addr(unsigned long);
++
++#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
++extern int arch_setup_features(void *ehdr, void *phdr, struct file *file,
++			       bool interp);
++#endif
+ #endif /* _ASM_X86_ELF_H */
+diff --git a/arch/x86/include/uapi/asm/elf_property.h b/arch/x86/include/uapi/asm/elf_property.h
+new file mode 100644
+index 000000000000..af361207718c
+--- /dev/null
++++ b/arch/x86/include/uapi/asm/elf_property.h
+@@ -0,0 +1,15 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _UAPI_ASM_X86_ELF_PROPERTY_H
++#define _UAPI_ASM_X86_ELF_PROPERTY_H
++
++/*
++ * pr_type
++ */
++#define GNU_PROPERTY_X86_FEATURE_1_AND (0xc0000002)
++
++/*
++ * Bits for GNU_PROPERTY_X86_FEATURE_1_AND
++ */
++#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	(0x00000002)
++
++#endif /* _UAPI_ASM_X86_ELF_PROPERTY_H */
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index fbb2d91fb756..36b14ef410c8 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -141,6 +141,8 @@ obj-$(CONFIG_UNWINDER_GUESS)		+= unwind_guess.o
+ 
+ obj-$(CONFIG_X86_INTEL_CET)		+= cet.o
+ 
++obj-$(CONFIG_ARCH_HAS_PROGRAM_PROPERTIES) += elf.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/elf.c b/arch/x86/kernel/elf.c
+new file mode 100644
+index 000000000000..60e396e2abe9
+--- /dev/null
++++ b/arch/x86/kernel/elf.c
+@@ -0,0 +1,358 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Look at an ELF file's .note.gnu.property and determine if the file
++ * supports shadow stack and/or indirect branch tracking.
++ * The path from the ELF header to the note section is the following:
++ * elfhdr->elf_phdr->elf_note->property[].
++ */
++
++#include <asm/cet.h>
++#include <asm/elf_property.h>
++#include <asm/prctl.h>
++#include <asm/processor.h>
++#include <uapi/linux/elf-em.h>
++#include <uapi/linux/prctl.h>
++#include <linux/binfmts.h>
++#include <linux/elf.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/uaccess.h>
++#include <linux/string.h>
++#include <linux/compat.h>
++
++/*
++ * The .note.gnu.property layout:
++ *
++ *	struct elf_note {
++ *		u32 n_namesz; --> sizeof(n_name[]); always (4)
++ *		u32 n_ndescsz;--> sizeof(property[])
++ *		u32 n_type;   --> always NT_GNU_PROPERTY_TYPE_0
++ *	};
++ *	char n_name[4]; --> always 'GNU\0'
++ *
++ *	struct {
++ *		struct property_x86 {
++ *			u32 pr_type;
++ *			u32 pr_datasz;
++ *		};
++ *		u8 pr_data[pr_datasz];
++ *	}[];
++ */
++
++#define BUF_SIZE (PAGE_SIZE / 4)
++
++struct property_x86 {
++	u32 pr_type;
++	u32 pr_datasz;
++};
++
++typedef bool (test_item_fn)(void *buf, u32 *arg);
++typedef void *(next_item_fn)(void *buf, u32 *arg);
++
++static inline bool test_note_type_0(void *buf, u32 *align)
 +{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pte_dirty_hw(pte);
-+	else
-+		return pte_dirty(pte);
++	struct elf_note *n = buf;
++
++	return ((n->n_type == NT_GNU_PROPERTY_TYPE_0) && (n->n_namesz == 4) &&
++		(memcmp(n + 1, "GNU", 4) == 0));
 +}
 +
-+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-+inline bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma)
++static inline void *next_note(void *buf, u32 *align)
 +{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pmd_dirty_hw(pmd);
++	struct elf_note *n = buf;
++	u64 size;
++
++	if (check_add_overflow((u64)sizeof(*n), (u64)n->n_namesz, &size))
++		return NULL;
++
++	size = round_up(size, *align);
++
++	if (check_add_overflow(size, (u64)n->n_descsz, &size))
++		return NULL;
++
++	size = round_up(size, *align);
++
++	if (buf + size < buf)
++		return NULL;
 +	else
-+		return pmd_dirty(pmd);
++		return (buf + size);
 +}
-+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
- #endif /* CONFIG_X86_INTEL_SHADOW_STACK_USER */
-diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
-index b0b375d8bb34..c8685df71521 100644
---- a/include/asm-generic/pgtable.h
-+++ b/include/asm-generic/pgtable.h
-@@ -1147,10 +1147,14 @@ static inline bool arch_has_pfn_modify_check(void)
- #define pte_set_vma_features(pte, vma) pte
- #define pmd_set_vma_features(pmd, vma) pmd
- #define arch_copy_pte_mapping(vma_flags) false
-+#define pte_exclusive(pte, vma) pte_dirty(pte)
-+#define pmd_exclusive(pmd, vma) pmd_dirty(pmd)
- #else
- pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
- pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
- bool arch_copy_pte_mapping(vm_flags_t vm_flags);
-+bool pte_exclusive(pte_t pte, struct vm_area_struct *vma);
-+bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma);
- #endif
- 
- #endif /* _ASM_GENERIC_PGTABLE_H */
-diff --git a/mm/gup.c b/mm/gup.c
-index aa43620a3270..abc200ed1e4a 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -69,10 +69,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE can write to even unwritable pte's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write(pte_t pte, unsigned int flags,
-+				    struct vm_area_struct *vma)
- {
- 	return pte_write(pte) ||
--		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-+		((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
-+		 pte_exclusive(pte, vma));
- }
- 
- static struct page *follow_page_pte(struct vm_area_struct *vma,
-@@ -110,7 +112,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
++
++static inline bool test_property_x86(void *buf, u32 *max_type)
++{
++	struct property_x86 *pr = buf;
++
++	/*
++	 * Property types must be in ascending order.
++	 * Keep track of the max when testing each.
++	 */
++	if (pr->pr_type > *max_type)
++		*max_type = pr->pr_type;
++
++	return (pr->pr_type == GNU_PROPERTY_X86_FEATURE_1_AND);
++}
++
++static inline void *next_property(void *buf, u32 *max_type)
++{
++	struct property_x86 *pr = buf;
++
++	if ((buf + sizeof(*pr) +  pr->pr_datasz < buf) ||
++	    (pr->pr_type > GNU_PROPERTY_X86_FEATURE_1_AND) ||
++	    (pr->pr_type > *max_type))
++		return NULL;
++	else
++		return (buf + sizeof(*pr) + pr->pr_datasz);
++}
++
++/*
++ * Scan 'buf' for a pattern; return true if found.
++ * *pos is the distance from the beginning of buf to where
++ * the searched item or the next item is located.
++ */
++static int scan(u8 *buf, u32 buf_size, int item_size, test_item_fn test_item,
++		next_item_fn next_item, u32 *arg, u32 *pos)
++{
++	int found = 0;
++	u8 *p, *max;
++
++	max = buf + buf_size;
++	if (max < buf)
++		return 0;
++
++	p = buf;
++
++	while ((p + item_size < max) && (p + item_size > buf)) {
++		if (test_item(p, arg)) {
++			found = 1;
++			break;
++		}
++
++		p = next_item(p, arg);
++	}
++
++	*pos = (p + item_size <= buf) ? 0 : (u32)(p - buf);
++	return found;
++}
++
++/*
++ * Search a NT_GNU_PROPERTY_TYPE_0 for GNU_PROPERTY_X86_FEATURE_1_AND.
++ */
++static int find_feature_x86(struct file *file, unsigned long desc_size,
++			    loff_t file_offset, u8 *buf, u32 *feature)
++{
++	u32 buf_pos;
++	unsigned long read_size;
++	unsigned long done;
++	int found = 0;
++	int ret = 0;
++	u32 last_pr = 0;
++
++	*feature = 0;
++	buf_pos = 0;
++
++	for (done = 0; done < desc_size; done += buf_pos) {
++		read_size = desc_size - done;
++		if (read_size > BUF_SIZE)
++			read_size = BUF_SIZE;
++
++		ret = kernel_read(file, buf, read_size, &file_offset);
++
++		if (ret != read_size)
++			return (ret < 0) ? ret : -EIO;
++
++		ret = 0;
++		found = scan(buf, read_size, sizeof(struct property_x86),
++			     test_property_x86, next_property,
++			     &last_pr, &buf_pos);
++
++		if ((!buf_pos) || found)
++			break;
++
++		file_offset += buf_pos - read_size;
++	}
++
++	if (found) {
++		struct property_x86 *pr =
++			(struct property_x86 *)(buf + buf_pos);
++
++		if (pr->pr_datasz == 4) {
++			u32 *max =  (u32 *)(buf + read_size);
++			u32 *data = (u32 *)((u8 *)pr + sizeof(*pr));
++
++			if (data + 1 <= max) {
++				*feature = *data;
++			} else {
++				file_offset += buf_pos - read_size;
++				file_offset += sizeof(*pr);
++				ret = kernel_read(file, feature, 4,
++						  &file_offset);
++			}
++		}
++	}
++
++	return ret;
++}
++
++/*
++ * Search a PT_NOTE segment for NT_GNU_PROPERTY_TYPE_0.
++ */
++static int find_note_type_0(struct file *file, unsigned long note_size,
++			    loff_t file_offset, u32 align, u32 *feature)
++{
++	u8 *buf;
++	u32 buf_pos;
++	unsigned long read_size;
++	unsigned long done;
++	int found = 0;
++	int ret = 0;
++
++	buf = kmalloc(BUF_SIZE, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	*feature = 0;
++	buf_pos = 0;
++
++	for (done = 0; done < note_size; done += buf_pos) {
++		read_size = note_size - done;
++		if (read_size > BUF_SIZE)
++			read_size = BUF_SIZE;
++
++		ret = kernel_read(file, buf, read_size, &file_offset);
++
++		if (ret != read_size) {
++			ret = (ret < 0) ? ret : -EIO;
++			kfree(buf);
++			return ret;
++		}
++
++		/*
++		 * item_size = sizeof(struct elf_note) + elf_note.n_namesz.
++		 * n_namesz is 4 for the note type we look for.
++		 */
++		ret = scan(buf, read_size, sizeof(struct elf_note) + 4,
++			      test_note_type_0, next_note,
++			      &align, &buf_pos);
++
++		file_offset += buf_pos - read_size;
++
++		if (ret && !found) {
++			struct elf_note *n =
++				(struct elf_note *)(buf + buf_pos);
++			u64 start = round_up(sizeof(*n) + n->n_namesz, align);
++			u64 total = 0;
++
++			if (check_add_overflow(start, (u64)n->n_descsz, &total)) {
++				ret = -EINVAL;
++				break;
++			}
++			total = round_up(total, align);
++
++			ret = find_feature_x86(file, n->n_descsz,
++					       file_offset + start,
++					       buf, feature);
++			found++;
++			file_offset += total;
++			buf_pos += total;
++		} else if (!buf_pos || ret) {
++			ret = 0;
++			*feature = 0;
++			break;
++		}
++	}
++
++	kfree(buf);
++	return ret;
++}
++
++#ifdef CONFIG_COMPAT
++static int check_notes_32(struct file *file, struct elf32_phdr *phdr,
++			  int phnum, u32 *feature)
++{
++	int i;
++	int err = 0;
++
++	for (i = 0; i < phnum; i++, phdr++) {
++		if ((phdr->p_type != PT_NOTE) || (phdr->p_align != 4))
++			continue;
++
++		err = find_note_type_0(file, phdr->p_filesz, phdr->p_offset,
++				       phdr->p_align, feature);
++		if (err)
++			return err;
++	}
++
++	return 0;
++}
++#endif
++
++#ifdef CONFIG_X86_64
++static int check_notes_64(struct file *file, struct elf64_phdr *phdr,
++			  int phnum, u32 *feature)
++{
++	int i;
++	int err = 0;
++
++	for (i = 0; i < phnum; i++, phdr++) {
++		if ((phdr->p_type != PT_NOTE) || (phdr->p_align != 8))
++			continue;
++
++		err = find_note_type_0(file, phdr->p_filesz, phdr->p_offset,
++				       phdr->p_align, feature);
++		if (err)
++			return err;
++	}
++
++	return 0;
++}
++#endif
++
++int arch_setup_features(void *ehdr_p, void *phdr_p,
++			struct file *file, bool interp)
++{
++	int err = 0;
++	u32 feature = 0;
++
++	struct elf64_hdr *ehdr64 = ehdr_p;
++
++	if (!cpu_x86_cet_enabled())
++		return 0;
++
++	if (ehdr64->e_ident[EI_CLASS] == ELFCLASS64) {
++		struct elf64_phdr *phdr64 = phdr_p;
++
++		err = check_notes_64(file, phdr64, ehdr64->e_phnum,
++				     &feature);
++		if (err < 0)
++			goto out;
++	} else {
++#ifdef CONFIG_COMPAT
++		struct elf32_hdr *ehdr32 = ehdr_p;
++
++		if (ehdr32->e_ident[EI_CLASS] == ELFCLASS32) {
++			struct elf32_phdr *phdr32 = phdr_p;
++
++			err = check_notes_32(file, phdr32, ehdr32->e_phnum,
++					     &feature);
++			if (err < 0)
++				goto out;
++		}
++#else
++	WARN_ONCE(1, "Exec of 32-bit app, but CONFIG_COMPAT is not enabled.\n");
++	return -ENOTSUPP;
++#endif
++	}
++
++	memset(&current->thread.cet, 0, sizeof(struct cet_status));
++
++	if (cpu_feature_enabled(X86_FEATURE_SHSTK)) {
++		if (feature & GNU_PROPERTY_X86_FEATURE_1_SHSTK) {
++			err = cet_setup_shstk();
++			if (err < 0)
++				goto out;
++		}
++	}
++
++out:
++	return err;
++}
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 54207327f98f..007ff0fbae84 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -1081,6 +1081,21 @@ static int load_elf_binary(struct linux_binprm *bprm)
+ 		goto out_free_dentry;
  	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 12148a5b60e0..f7476eeed83a 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1403,10 +1403,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE can write to even unwritable pmd's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write(pmd_t pmd, unsigned int flags,
-+				    struct vm_area_struct *vma)
- {
- 	return pmd_write(pmd) ||
--	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
-+	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
-+		pmd_exclusive(pmd, vma));
- }
  
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1419,7 +1421,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
++#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
++	if (interpreter) {
++		retval = arch_setup_features(&loc->interp_elf_ex,
++					     interp_elf_phdata,
++					     interpreter, true);
++	} else {
++		retval = arch_setup_features(&loc->elf_ex,
++					     elf_phdata,
++					     bprm->file, false);
++	}
++
++	if (retval < 0)
++		goto out_free_dentry;
++#endif
++
+ 	if (elf_interpreter) {
+ 		unsigned long interp_map_addr = 0;
  
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
- 
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write(*pmd, flags, vma))
- 		goto out;
- 
- 	/* Avoid dumping huge zero page */
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index c5358e0ae7c5..5ef25a565e88 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -372,6 +372,7 @@ typedef struct elf64_shdr {
+ #define NT_PRFPREG	2
+ #define NT_PRPSINFO	3
+ #define NT_TASKSTRUCT	4
++#define NT_GNU_PROPERTY_TYPE_0 5
+ #define NT_AUXV		6
+ /*
+  * Note to userspace developers: size of NT_SIGINFO note may increase
 -- 
 2.17.1
