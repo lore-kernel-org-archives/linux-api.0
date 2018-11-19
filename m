@@ -1,55 +1,45 @@
-From: David Rientjes <rientjes@google.com>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Mon, 19 Nov 2018 14:05:34 -0800 (PST)
-Message-ID: <alpine.DEB.2.21.1811191404030.150313@chino.kir.corp.google.com>
-References: <20181009083326.GG8528@dhcp22.suse.cz> <20181015150325.GN18839@dhcp22.suse.cz> <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com> <20181016104855.GQ18839@dhcp22.suse.cz> <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
- <20181017070531.GC18839@dhcp22.suse.cz> <alpine.DEB.2.21.1810171256330.60837@chino.kir.corp.google.com> <20181018070031.GW18839@dhcp22.suse.cz> <20181114132306.GX23419@dhcp22.suse.cz> <alpine.DEB.2.21.1811141336010.200345@chino.kir.corp.google.com>
- <20181115090242.GH23831@dhcp22.suse.cz>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [RFC PATCH v6 08/11] x86: Insert endbr32/endbr64 to vDSO
+Date: Mon, 19 Nov 2018 14:17:48 -0800
+Message-ID: <CALCETrW9ABDotyM020V147+kuizpTRJUAANn-6kUt6-h0Qn0og@mail.gmail.com>
+References: <20181119214934.6174-1-yu-cheng.yu@intel.com> <20181119214934.6174-9-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181115090242.GH23831@dhcp22.suse.cz>
+In-Reply-To: <20181119214934.6174-9-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H. J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.am>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 15 Nov 2018, Michal Hocko wrote:
+On Mon, Nov 19, 2018 at 1:55 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>
+> From: "H.J. Lu" <hjl.tools@gmail.com>
+>
+> When Intel indirect branch tracking is enabled, functions in vDSO which
+> may be called indirectly must have endbr32 or endbr64 as the first
+> instruction.  Compiler must support -fcf-protection=branch so that it
+> can be used to compile vDSO.
+>
+> Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
+> ---
+>  arch/x86/entry/vdso/.gitignore        |  4 ++++
+>  arch/x86/entry/vdso/Makefile          | 12 +++++++++++-
+>  arch/x86/entry/vdso/vdso-layout.lds.S |  1 +
+>  3 files changed, 16 insertions(+), 1 deletion(-)
+>
+> diff --git a/arch/x86/entry/vdso/.gitignore b/arch/x86/entry/vdso/.gitignore
+> index aae8ffdd5880..552941fdfae0 100644
+> --- a/arch/x86/entry/vdso/.gitignore
+> +++ b/arch/x86/entry/vdso/.gitignore
+> @@ -5,3 +5,7 @@ vdso32-sysenter-syms.lds
+>  vdso32-int80-syms.lds
+>  vdso-image-*.c
+>  vdso2c
+> +vclock_gettime.S
+> +vgetcpu.S
+> +vclock_gettime.asm
+> +vgetcpu.asm
 
-> > The userspace had a single way to determine if thp had been disabled for a 
-> > specific vma and that was broken with your commit.  We have since fixed 
-> > it.  Modifying our software stack to start looking for some field 
-> > somewhere else will not help anybody else that this has affected or will 
-> > affect.  I'm interested in not breaking userspace, not trying a wait and 
-> > see approach to see if anybody else complains once we start looking for 
-> > some other field.  The risk outweighs the reward, it already broke us, and 
-> > I'd prefer not to even open the possibility of breaking anybody else.
-> 
-> I very much agree on "do not break userspace" part but this is kind of
-> gray area. VMA flags are a deep internal implementation detail and
-> nobody should really depend on it for anything important. The original
-> motivation for introducing it was CRIU where it is kind of
-> understandable. I would argue they should find a different way but it is
-> just too late for them.
-> 
-> For this particular case there was no other bug report except for yours
-> and if it is possible to fix it on your end then I would really love to
-> make the a sensible user interface to query the status. If we are going
-> to change the semantic of the exported flag again then we risk yet
-> another breakage.
-> 
-> Therefore I am asking whether changing your particular usecase to a new
-> interface is possible because that would allow to have a longerm
-> sensible user interface rather than another kludge which still doesn't
-> cover all the usecases (e.g. there is no way to reliably query the
-> madvise status after your patch).
-> 
 
-Providing another interface is great, I have no objection other than 
-emitting another line for every vma on the system for smaps is probably 
-overkill for something as rare as PR_SET_THP_DISABLE.
-
-That said, I think the current handling of the "nh" flag being emitted in 
-smaps is logical and ensures no further userspace breakage.  If that is to 
-be removed, I consider it an unnecessary risk.  That would raised in code 
-review.
+What's this hunk about?
