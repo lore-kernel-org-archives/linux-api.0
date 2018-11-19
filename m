@@ -1,86 +1,80 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v1 0/2] proc: allow signaling processes via file descriptors
-Date: Mon, 19 Nov 2018 11:32:37 +0100
-Message-ID: <20181119103241.5229-1-christian@brauner.io>
+Subject: [PATCH v1 1/2] proc: get process file descriptor from /proc/<pid>
+Date: Mon, 19 Nov 2018 11:32:38 +0100
+Message-ID: <20181119103241.5229-2-christian@brauner.io>
+References: <20181119103241.5229-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181119103241.5229-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
 To: ebiederm@xmission.com, linux-kernel@vger.kernel.org
-Cc: serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Christian Brauner <christian@brauner.io>
+Cc: serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-Hey,
+With this patch an open() call on /proc/<pid> will give userspace a handle
+to struct pid of the process associated with /proc/<pid>. This allows to
+maintain a stable handle on a process.
+I have been discussing various approaches extensively during technical
+conferences this year culminating in a long argument with Eric at Linux
+Plumbers. The general consensus was that having a handle on a process
+should be something that is very simple and easy to maintain with the
+option of being extensible via a more advanced api if the need arises. I
+believe that this patch is the most simple, dumb, and therefore
+maintainable solution.
 
-This little series introduces the ability to signal processes via file
-descriptors to eliminate race-conditions caused by pid recycling.
-With this patch an open() call on /proc/<pid> will give userspace a
-handle to struct pid of the process associated with /proc/<pid>. This
-allows to maintain a stable handle on a process.
-Discussion has shown that a dedicated syscall is prefered over an ioctl().
-Thus, the  new syscall procfd_signal() is introduced to solve this
-problem. It operates on a process file descriptor. More details are
-found in the individual commit messages.
+[1]: https://lkml.org/lkml/2018/10/30/118
 
-With this series a process can be killed via:
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Serge Hallyn <serge@hallyn.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Christian Brauner <christian@brauner.io>
+---
+Changelog:
+v1:
+- remove ioctl() to signal processes and replace with a dedicated syscall
+  in the next patch
+---
+ fs/proc/base.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
- #define _GNU_SOURCE
- #include <errno.h>
- #include <fcntl.h>
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
- #include <signal.h>
- #include <sys/stat.h>
- #include <sys/syscall.h>
- #include <sys/types.h>
- #include <unistd.h>
-
- int main(int argc, char *argv[])
- {
-         int ret;
-         char buf[1000];
-
-         if (argc < 2)
-                 exit(EXIT_FAILURE);
-
-         ret = snprintf(buf, sizeof(buf), "/proc/%s", argv[1]);
-         if (ret < 0)
-                 exit(EXIT_FAILURE);
-
-         int fd = open(buf, O_DIRECTORY | O_CLOEXEC);
-         if (fd < 0) {
-                 printf("%s - Failed to open \"%s\"\n", strerror(errno), buf);
-                 exit(EXIT_FAILURE);
-         }
-
-         ret = syscall(__NR_procfd_signal, fd, SIGKILL, NULL, 0);
-         if (ret < 0) {
-                 printf("Failed to send SIGKILL \"%s\"\n", strerror(errno));
-                 close(fd);
-                 exit(EXIT_FAILURE);
-         }
-
-         close(fd);
-
-         exit(EXIT_SUCCESS);
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index ce3465479447..6365a4fea314 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -3032,10 +3032,27 @@ static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
+ 				   tgid_base_stuff, ARRAY_SIZE(tgid_base_stuff));
  }
-
-Thanks!
-Christian
-
-Christian Brauner (2):
-  proc: get process file descriptor from /proc/<pid>
-  signal: add procfd_signal() syscall
-  procfd_signal.2: document procfd_signal syscall
-
- arch/x86/entry/syscalls/syscall_32.tbl |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl |  1 +
- fs/proc/base.c                         | 23 ++++++++
- include/linux/proc_fs.h                |  1 +
- include/linux/syscalls.h               |  2 +
- kernel/signal.c                        | 76 ++++++++++++++++++++++++--
- 6 files changed, 98 insertions(+), 6 deletions(-)
-
+ 
++static int proc_tgid_open(struct inode *inode, struct file *file)
++{
++	/* grab reference to struct pid and stash the pointer away */
++	file->private_data = get_pid(proc_pid(inode));
++	return 0;
++}
++
++static int proc_tgid_release(struct inode *inode, struct file *file)
++{
++	struct pid *pid = file->private_data;
++	/* drop reference to struct pid */
++	put_pid(pid);
++	return 0;
++}
++
+ static const struct file_operations proc_tgid_base_operations = {
++	.open		= proc_tgid_open,
+ 	.read		= generic_read_dir,
+ 	.iterate_shared	= proc_tgid_base_readdir,
+ 	.llseek		= generic_file_llseek,
++	.release	= proc_tgid_release,
+ };
+ 
+ static struct dentry *proc_tgid_base_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 -- 
 2.19.1
