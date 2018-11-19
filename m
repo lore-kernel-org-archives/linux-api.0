@@ -1,54 +1,54 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH] proc: allow killing processes via file descriptors
-Date: Tue, 20 Nov 2018 07:21:47 +1100
-Message-ID: <20181119202147.ciihjtjwvuqsjkl5@yavin>
-References: <CALCETrVLP_mudJTW6EQpRr5GZ7kfuGci+QCT1uPrOVDTWcod-A@mail.gmail.com>
- <a7f50692-667c-4efe-a2d0-fa324eebb90b@infradead.org>
- <CAKOZueutLc8d0Fe+7dNWiZKnALhTSST8+kCnOrL+OmB6coUmtA@mail.gmail.com>
- <CALCETrVg71XBv-gMOtL-m0Dd0HNz8_oXOUDSWin5LeViAL0UYA@mail.gmail.com>
- <CAKOZuesCKo4GH9fdum2EUFLrtTWam3aizcDQUn3-vCYg4T1P8w@mail.gmail.com>
- <CALCETrUeNZPfrSYa9vH5Ukrk1Y+Kb9GkZOh6LkqG6Z9NpK5P0w@mail.gmail.com>
- <CAKOZuevVk_aH_2TuiNcmxgMa+gHXMBXz6Uu5a6TDjoxjhaE36g@mail.gmail.com>
- <CALCETrVscRwQG55-j1SKc2TmSb1-=5861804ojUuviNzdyDOrA@mail.gmail.com>
- <CAJwJo6aXQUtciO7kPSENoajV6JUqUGJxCh_0yPf5D8GfbLegzA@mail.gmail.com>
- <CAKOZueu78Urbc-Vt--ZntGAG_i-LrNsPjGmRi7F8zuTUQ=iHug@mail.gmail.com>
+Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
+Date: Tue, 20 Nov 2018 07:28:57 +1100
+Message-ID: <20181119202857.k5zw742xjfrw677j@yavin>
+References: <20181119103241.5229-1-christian@brauner.io>
+ <20181119103241.5229-3-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="w4qs7hshq6b2wwkx"
+        protocol="application/pgp-signature"; boundary="gtgc45ynebhhjwty"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKOZueu78Urbc-Vt--ZntGAG_i-LrNsPjGmRi7F8zuTUQ=iHug@mail.gmail.com>
+In-Reply-To: <20181119103241.5229-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andy Lutomirski <luto@kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, open list <linux-kernel@vger.kernel.org>, Serge Hallyn <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>, Jan Engelhardt <jengelh@inai.de>, Andrei Vagin <avagin@gmail.com>
+To: Christian Brauner <christian@brauner.io>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
 
---w4qs7hshq6b2wwkx
+--gtgc45ynebhhjwty
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On 2018-11-19, Daniel Colascione <dancol@google.com> wrote:
-> > I wonder how fast it would be holding a pid with another open()ed fd.
-> > And then you need to read comm (or how you filter whom to kill).
-> > It seems to me that procfs will be even slower with this safe-way.
-> > But I might misunderstand the idea, excuses.
-> >
-> > So, I just wanted to gently remind about procfs with netlink socket[1].
->=20
-> We discussed netlink was extensively on the thread about
-> /proc/pid/kill. For numerous reasons, it's not suitable for
-> fundamental process management. We really need an FD-based interface
-> to processes, just like we have FD-based interfaces to other resource
-> types. We need something consistent and reliable, not an abuse of a
-> monitoring interface.
+On 2018-11-19, Christian Brauner <christian@brauner.io> wrote:
+> +	if (info) {
+> +		ret =3D __copy_siginfo_from_user(sig, &kinfo, info);
+> +		if (unlikely(ret))
+> +			goto err;
+> +		/*
+> +		 * Not even root can pretend to send signals from the kernel.
+> +		 * Nor can they impersonate a kill()/tgkill(), which adds
+> +		 * source info.
+> +		 */
+> +		ret =3D -EPERM;
+> +		if ((kinfo.si_code >=3D 0 || kinfo.si_code =3D=3D SI_TKILL) &&
+> +		    (task_pid(current) !=3D pid))
+> +			goto err;
+> +	} else {
+> +		prepare_kill_siginfo(sig, &kinfo);
+> +	}
 
-Another significant problem with using netlink for something like this
-is that (as its name suggest) it's tied to network namespaces and not
-pid namespaces so you wouldn't reasonably be able to use the API inside
-a container. Using an fd side-steps the problem somewhat (though this
-just gave me an idea -- I will add it to the other thread).
+I wonder whether we should also have a pidns restriction here, since
+currently it isn't possible for a container process using a pidns to
+signal processes outside its pidns. AFAICS, this isn't done through an
+explicit check -- it's a side-effect of processes in a pidns not being
+able to address non-descendant-pidns processes.
+
+But maybe it's reasonable to allow sending a procfd to a different pidns
+and the same operations working on it? If we extend the procfd API to
+allow process creation this would allow a container to create a process
+outside its pidns.
 
 --=20
 Aleksa Sarai
@@ -56,24 +56,24 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---w4qs7hshq6b2wwkx
+--gtgc45ynebhhjwty
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlvzG1sACgkQSnvnv3De
-m5/o3w//QtToPt6YGjGxEwBs6Xy/JH/aPOJuTGxlgjIqAPfQlv58hS027yma2liy
-MsHd/8Ifp2BvwzqeFdE8E9u96/TxeC95kmF9InaIG8mNfUa3rPYQrm1rBIMJ4JGn
-X2JXntY8s+YGiO3FwJ/r0CDEIzNNWevaNBN3z8oWKYlJ0FsYQhF6i523MgSuiMqP
-fVDyroRdWoFWKc0XenbWh2OKwM2rxjVfNg6QYabm/b7YNBfOqZI9SskYDCu7xRkD
-ZE1kfO/nHORskwhJ+06ArwboyhnLThAcgGEdJ3dw7ujio10s0xuJvZ+wHYktsA2a
-fEcnIFzshktG6Tpjqh0mYopLFskQceSXuJLjkZsOSOamzH3LI312EPfCQGOO/xBx
-83KhHHXbZg1K0gxQGfImGlR9G0H0M12S9JPZ/lThQ2NLUgmYRgN2PLFi8vfxqSFO
-0FerWJrVJbGfuHb/qA9GWytrbfoMfgL2lyAGtnZWOWQXysT34zVHPWsxcgF0pmTc
-wbGYKmjxt3YEg74hoUgFJldpl56zDvflwFtZcJusimMA/ELIPKi3QBcVuW2mtYkr
-1YC6DCsdSYzLZmLDViU+xP5SamPd/pAJH/l26p4yXwkW47Drd+gGTt+mRLLqxVxQ
-ZZAnUMSetE/S+Yk4Wv0YxdXnEKIEfKd4HRvMfQ1gkYcXMXc0NZo=
-=y5gr
+iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlvzHQkACgkQSnvnv3De
+m58IwBAAgHKh2abQgnpam0GUxYiHi88rnCgkNIbQ9UCsmfE565c+gUSS9jmJxDmJ
+pbd3pdWcS1zZdRWC3mD75W6bYbnu0OEyKcJbjXXwR2+aK4Z98UJNtWtFPtFpny2T
+U38WVhtyJafQ8GgAQB7WN5SAloUIv8vbMoIlZw5FJzehmks8528fJq4L6zDdc+Cv
+xaB8Cn6MeWAyry5HM5534QTW4uAEdw0MQ8Q+n8H0tjbXPoJ9kLS7JsIbAm+VFTZJ
+Lc4jfnm5VUHkHfCnpurJHBYJTtl6EsumWDAeQPG6hcQ3aBDFRGoWQ3GbrmfRwtqi
+KQgy8SyVZ3RCxK9xJtW2keGMnLPxMaPNL1QWV9rlSPNhSzhbUupyYUKXnnjX9SD8
+KG7V1bNv7CScO34o8gTCIv2wX1PVHRczZdbHTmx5aU78EFKFJmml+DdTR7QYUNb/
+4GvnRCMRSrsewabQKfOroLVkg0lmicPh6SMvGujsfd2QDEenzRWHU9QxHzecXfYl
+qH2Q/+LMa32WRLgG3/sVZLf4Pjy/UHHm/W4I9EkqWLrXjo/87wrMfWjxWCRdLDry
+ongYz/FLqY56phw1ZkCPICh2UF9sCdQ3fOowyGfTDmOlphSsMIuZWfeITOproXS1
+OBL5DWnAtBVP/ZIye1ctHRFF98bak0hIAgvx0YphLHrX9lt5w9g=
+=Euc9
 -----END PGP SIGNATURE-----
 
---w4qs7hshq6b2wwkx--
+--gtgc45ynebhhjwty--
