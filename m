@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Mon, 19 Nov 2018 22:20:29 +0100
-Message-ID: <20181119212027.vtkp7r7srf5ocnr4@brauner.io>
+Date: Mon, 19 Nov 2018 22:21:28 +0100
+Message-ID: <20181119212126.u2nkijmula6wcfqi@brauner.io>
 References: <20181119103241.5229-1-christian@brauner.io>
  <20181119103241.5229-3-christian@brauner.io>
  <20181119202857.k5zw742xjfrw677j@yavin>
@@ -56,9 +56,6 @@ On Tue, Nov 20, 2018 at 08:18:10AM +1100, Aleksa Sarai wrote:
 > 
 > This isn't quite sufficient. The key thing is that you have to be in an
 > *ancestor* (or same) pidns, not the *same* pidns. Ideally you can re-use
-
-See my next mail.
-
 > the check already in pidns_get_parent, and expose it. It would be
 > something as trivial as:
 > 
@@ -74,6 +71,10 @@ See my next mail.
 >     }
 >     return true;
 > }
+
+That can be done without a loop by comparing the level counter for the
+two pid namespaces.
+
 > 
 > And you can rewrite pidns_get_parent to use it. So you would instead be
 > doing:
