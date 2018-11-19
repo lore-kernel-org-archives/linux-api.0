@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 14/26] x86/mm: Shadow stack page fault error checking
-Date: Mon, 19 Nov 2018 13:47:57 -0800
-Message-ID: <20181119214809.6086-15-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 15/26] mm: Handle shadow stack page fault
+Date: Mon, 19 Nov 2018 13:47:58 -0800
+Message-ID: <20181119214809.6086-16-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,76 +10,107 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-If a page fault is triggered by a shadow stack access (e.g. call/ret)
-or shadow stack management instructions (e.g. wrussq), then bit[6] of
-the page fault error code is set.
+When a task does fork(), its shadow stack (SHSTK) must be duplicated
+for the child.  This patch implements a flow similar to copy-on-write
+of an anonymous page, but for SHSTK.
 
-In access_error(), verify a shadow stack page fault is within a
-shadow stack memory area.  It is always an error otherwise.
-
-For a valid shadow stack access, set FAULT_FLAG_WRITE to effect
-copy-on-write.
+A SHSTK PTE must be RO and dirty.  This dirty bit requirement is used
+to effect the copying.  In copy_one_pte(), clear the dirty bit from a
+SHSTK PTE to cause a page fault upon the next SHSTK access.  At that
+time, fix the PTE and copy/re-use the page.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/traps.h |  2 ++
- arch/x86/mm/fault.c          | 18 ++++++++++++++++++
- 2 files changed, 20 insertions(+)
+ arch/x86/mm/pgtable.c         | 15 +++++++++++++++
+ include/asm-generic/pgtable.h |  8 ++++++++
+ mm/memory.c                   |  7 ++++++-
+ 3 files changed, 29 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 20841d301e93..50e8a670624a 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -157,6 +157,7 @@ enum {
-  *   bit 3 ==				1: use of reserved bit detected
-  *   bit 4 ==				1: fault was an instruction fetch
-  *   bit 5 ==				1: protection keys block access
-+ *   bit 6 ==				1: shadow stack access fault
-  */
- enum x86_pf_error_code {
- 	X86_PF_PROT	=		1 << 0,
-@@ -165,5 +166,6 @@ enum x86_pf_error_code {
- 	X86_PF_RSVD	=		1 << 3,
- 	X86_PF_INSTR	=		1 << 4,
- 	X86_PF_PK	=		1 << 5,
-+	X86_PF_SHSTK	=		1 << 6,
- };
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index 71d4b9d4d43f..c3368fed706c 100644
---- a/arch/x86/mm/fault.c
-+++ b/arch/x86/mm/fault.c
-@@ -1117,6 +1117,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
- 				       (error_code & X86_PF_INSTR), foreign))
- 		return 1;
+diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
+index 59274e2c1ac4..75dddc3d8451 100644
+--- a/arch/x86/mm/pgtable.c
++++ b/arch/x86/mm/pgtable.c
+@@ -887,3 +887,18 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
  
-+	/*
-+	 * Verify X86_PF_SHSTK is within a shadow stack VMA.
-+	 * It is always an error if there is a shadow stack
-+	 * fault outside a shadow stack VMA.
-+	 */
-+	if (error_code & X86_PF_SHSTK) {
-+		if (!(vma->vm_flags & VM_SHSTK))
-+			return 1;
-+		return 0;
-+	}
+ #endif /* CONFIG_X86_64 */
+ #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
 +
- 	if (error_code & X86_PF_WRITE) {
- 		/* write, present and write, not present: */
- 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -1313,6 +1324,13 @@ void do_user_addr_fault(struct pt_regs *regs,
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++inline pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma)
++{
++	if (vma->vm_flags & VM_SHSTK)
++		return pte_mkdirty_shstk(pte);
++	else
++		return pte;
++}
++
++inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
++{
++	return (vm_flags & VM_SHSTK);
++}
++#endif /* CONFIG_X86_INTEL_SHADOW_STACK_USER */
+diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
+index 359fb935ded6..30ac390fb2d4 100644
+--- a/include/asm-generic/pgtable.h
++++ b/include/asm-generic/pgtable.h
+@@ -1143,4 +1143,12 @@ static inline bool arch_has_pfn_modify_check(void)
+ #define mm_pmd_folded(mm)	__is_defined(__PAGETABLE_PMD_FOLDED)
+ #endif
  
- 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
++#ifndef CONFIG_ARCH_HAS_SHSTK
++#define pte_set_vma_features(pte, vma) pte
++#define arch_copy_pte_mapping(vma_flags) false
++#else
++pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
++bool arch_copy_pte_mapping(vm_flags_t vm_flags);
++#endif
++
+ #endif /* _ASM_GENERIC_PGTABLE_H */
+diff --git a/mm/memory.c b/mm/memory.c
+index 4ad2d293ddc2..f6b2e1ece4ab 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -775,7 +775,8 @@ copy_one_pte(struct mm_struct *dst_mm, struct mm_struct *src_mm,
+ 	 * If it's a COW mapping, write protect it both
+ 	 * in the parent and the child
+ 	 */
+-	if (is_cow_mapping(vm_flags) && pte_write(pte)) {
++	if ((is_cow_mapping(vm_flags) && pte_write(pte)) ||
++	    arch_copy_pte_mapping(vm_flags)) {
+ 		ptep_set_wrprotect(src_mm, addr, src_pte);
+ 		pte = pte_wrprotect(pte);
+ 	}
+@@ -2218,6 +2219,7 @@ static inline void wp_page_reuse(struct vm_fault *vmf)
+ 	flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+ 	entry = pte_mkyoung(vmf->orig_pte);
+ 	entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++	entry = pte_set_vma_features(entry, vma);
+ 	if (ptep_set_access_flags(vma, vmf->address, vmf->pte, entry, 1))
+ 		update_mmu_cache(vma, vmf->address, vmf->pte);
+ 	pte_unmap_unlock(vmf->pte, vmf->ptl);
+@@ -2291,6 +2293,7 @@ static vm_fault_t wp_page_copy(struct vm_fault *vmf)
+ 		flush_cache_page(vma, vmf->address, pte_pfn(vmf->orig_pte));
+ 		entry = mk_pte(new_page, vma->vm_page_prot);
+ 		entry = maybe_mkwrite(pte_mkdirty(entry), vma);
++		entry = pte_set_vma_features(entry, vma);
+ 		/*
+ 		 * Clear the pte entry and flush it first, before updating the
+ 		 * pte with the new entry. This will avoid a race condition
+@@ -2801,6 +2804,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
+ 	pte = mk_pte(page, vma->vm_page_prot);
+ 	if ((vmf->flags & FAULT_FLAG_WRITE) && reuse_swap_page(page, NULL)) {
+ 		pte = maybe_mkwrite(pte_mkdirty(pte), vma);
++		pte = pte_set_vma_features(pte, vma);
+ 		vmf->flags &= ~FAULT_FLAG_WRITE;
+ 		ret |= VM_FAULT_WRITE;
+ 		exclusive = RMAP_EXCLUSIVE;
+@@ -2943,6 +2947,7 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
+ 	entry = mk_pte(page, vma->vm_page_prot);
+ 	if (vma->vm_flags & VM_WRITE)
+ 		entry = pte_mkwrite(pte_mkdirty(entry));
++	entry = pte_set_vma_features(entry, vma);
  
-+	/*
-+	 * If the fault is caused by a shadow stack access,
-+	 * i.e. CALL/RET/SAVEPREVSSP/RSTORSSP, then set
-+	 * FAULT_FLAG_WRITE to effect copy-on-write.
-+	 */
-+	if (sw_error_code & X86_PF_SHSTK)
-+		flags |= FAULT_FLAG_WRITE;
- 	if (sw_error_code & X86_PF_WRITE)
- 		flags |= FAULT_FLAG_WRITE;
- 	if (sw_error_code & X86_PF_INSTR)
+ 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
+ 			&vmf->ptl);
 -- 
 2.17.1
