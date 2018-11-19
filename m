@@ -1,52 +1,28 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: RFC: userspace exception fixups
-Date: Mon, 19 Nov 2018 07:29:36 -0800
-Message-ID: <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <20181118071548.GA4795@linux.intel.com>
+Subject: Re: [PATCH v1 1/2] proc: get process file descriptor from /proc/<pid>
+Date: Mon, 19 Nov 2018 07:32:33 -0800
+Message-ID: <CALCETrVvHu2dSJs1dpA-2ozGhZGxbGrnYbUuh98rkCdsz42rfg@mail.gmail.com>
+References: <20181119103241.5229-1-christian@brauner.io> <20181119103241.5229-2-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181118071548.GA4795@linux.intel.com>
+In-Reply-To: <20181119103241.5229-2-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: Andrew Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.c>
+To: Christian Brauner <christian@brauner.io>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Daniel Colascione <dancol@google.com>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 17, 2018 at 11:16 PM Jarkko Sakkinen
-<jarkko.sakkinen@linux.intel.com> wrote:
+On Mon, Nov 19, 2018 at 2:33 AM Christian Brauner <christian@brauner.io> wrote:
 >
-> On Thu, Nov 01, 2018 at 10:53:40AM -0700, Andy Lutomirski wrote:
-> > Hi all-
-> >
-> > The people working on SGX enablement are grappling with a somewhat
-> > annoying issue: the x86 EENTER instruction is used from user code and
-> > can, as part of its normal-ish operation, raise an exception.  It is
-> > also highly likely to be used from a library, and signal handling in
-> > libraries is unpleasant at best.
-> >
-> > There's been some discussion of adding a vDSO entry point to wrap
-> > EENTER and do something sensible with the exceptions, but I'm
-> > wondering if a more general mechanism would be helpful.
->
-> I haven't really followed all of this discussion because I've been busy
-> working on the patch set but for me all of these approaches look awfully
-> complicated.
->
-> I'll throw my own suggestion and apologize if this has been already
-> suggested and discarded: return-to-AEP.
->
-> My idea is to do just a small extension to SGX AEX handling. At the
-> moment hardware will RAX, RBX and RCX with ERESUME parameters. We can
-> fill extend this by filling other three spare registers with exception
-> information.
+> With this patch an open() call on /proc/<pid> will give userspace a handle
+> to struct pid of the process associated with /proc/<pid>. This allows to
+> maintain a stable handle on a process.
+> I have been discussing various approaches extensively during technical
+> conferences this year culminating in a long argument with Eric at Linux
+> Plumbers. The general consensus was that having a handle on a process
+> should be something that is very simple and easy to maintain with the
+> option of being extensible via a more advanced api if the need arises. I
+> believe that this patch is the most simple, dumb, and therefore
+> maintainable solution.
 
-I have two issues with this approach:
-
-1. The kernel needs some way to know *when* to apply this fixup.
-Decoding the instruction stream and doing it to all exceptions that
-hit an ENCLU instruction seems like a poor design.
-
-2. It starts exposing what looks like a more generic exception
-handling mechanism to userspace, except that it's nonsensical for
-anything other than ENCLU.
+How does the mechanism you're adding here differ from proc_pid()?
