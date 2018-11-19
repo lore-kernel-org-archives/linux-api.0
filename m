@@ -1,42 +1,32 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [PATCH] proc: allow killing processes via file descriptors
-Date: Mon, 19 Nov 2018 08:27:57 -0800
-Message-ID: <CAKOZueu78Urbc-Vt--ZntGAG_i-LrNsPjGmRi7F8zuTUQ=iHug@mail.gmail.com>
-References: <20181118111751.6142-1-christian@brauner.io> <CAKOZuet3s0WxxPgrtrNkq8YiOWhYAiK6yEio6PKVV9J_H4_TSA@mail.gmail.com>
- <CALCETrUd2Y2MmO8Qx8aUvQDOTNiyj35Y7bctPBZe0p2i1EUiLw@mail.gmail.com>
- <CAKOZuev1JUGFWuwsKqS6rXcFMqpCHT1VAG2kwB4O=FHo6DAFiQ@mail.gmail.com>
- <CALCETrVLP_mudJTW6EQpRr5GZ7kfuGci+QCT1uPrOVDTWcod-A@mail.gmail.com>
- <a7f50692-667c-4efe-a2d0-fa324eebb90b@infradead.org> <CAKOZueutLc8d0Fe+7dNWiZKnALhTSST8+kCnOrL+OmB6coUmtA@mail.gmail.com>
- <CALCETrVg71XBv-gMOtL-m0Dd0HNz8_oXOUDSWin5LeViAL0UYA@mail.gmail.com>
- <CAKOZuesCKo4GH9fdum2EUFLrtTWam3aizcDQUn3-vCYg4T1P8w@mail.gmail.com>
- <CALCETrUeNZPfrSYa9vH5Ukrk1Y+Kb9GkZOh6LkqG6Z9NpK5P0w@mail.gmail.com>
- <CAKOZuevVk_aH_2TuiNcmxgMa+gHXMBXz6Uu5a6TDjoxjhaE36g@mail.gmail.com>
- <CALCETrVscRwQG55-j1SKc2TmSb1-=5861804ojUuviNzdyDOrA@mail.gmail.com> <CAJwJo6aXQUtciO7kPSENoajV6JUqUGJxCh_0yPf5D8GfbLegzA@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: RFC: userspace exception fixups
+Date: Mon, 19 Nov 2018 09:00:08 -0800
+Message-ID: <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+ <20181118071548.GA4795@linux.intel.com> <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
+ <20181119160204.GD13298@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJwJo6aXQUtciO7kPSENoajV6JUqUGJxCh_0yPf5D8GfbLegzA@mail.gmail.com>
+In-Reply-To: <20181119160204.GD13298@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Safonov <0x7f454c46@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Randy Dunlap <rdunlap@infradead.org>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, open list <linux-kernel@vger.kernel.org>, Serge Hallyn <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Kees Cook <keescook@chromium.org>, Jan Engelhardt <jengelh@inai.de>, Andrei Vagin <avagin@gmail.com>
+To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Cc: Andrew Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.c>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 19, 2018 at 8:13 AM, Dmitry Safonov <0x7f454c46@gmail.com> wrote:
-> I wonder how fast it would be holding a pid with another open()ed fd.
-> And then you need to read comm (or how you filter whom to kill).
-> It seems to me that procfs will be even slower with this safe-way.
-> But I might misunderstand the idea, excuses.
+On Mon, Nov 19, 2018 at 8:02 AM Jarkko Sakkinen
+<jarkko.sakkinen@linux.intel.com> wrote:
 >
-> So, I just wanted to gently remind about procfs with netlink socket[1].
+> On Mon, Nov 19, 2018 at 07:29:36AM -0800, Andy Lutomirski wrote:
+> > 1. The kernel needs some way to know *when* to apply this fixup.
+> > Decoding the instruction stream and doing it to all exceptions that
+> > hit an ENCLU instruction seems like a poor design.
+>
+> I'm not sure why you would ever need to do any type of fixup as the idea
+> is to just return to AEP i.e. from chosen exceptions (EPCM, #UD) the AEP
+> would work the same way as for exceptions that the kernel can deal with
+> except filling the exception information to registers.
 
-We discussed netlink was extensively on the thread about
-/proc/pid/kill. For numerous reasons, it's not suitable for
-fundamental process management. We really need an FD-based interface
-to processes, just like we have FD-based interfaces to other resource
-types. We need something consistent and reliable, not an abuse of a
-monitoring interface.
-
-> Probably, if it's time to add a new API for procfs, netlink may be more
-> desirable.
-
-Definitely not.
+Sure, but how does the kernel know when to do that and when to send a
+signal?  I don't really like decoding the instruction stream to figure
+it out.
