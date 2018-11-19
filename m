@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 02/26] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
-Date: Mon, 19 Nov 2018 13:47:45 -0800
-Message-ID: <20181119214809.6086-3-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 09/26] mm/mmap: Prevent Shadow Stack VMA merges
+Date: Mon, 19 Nov 2018 13:47:52 -0800
+Message-ID: <20181119214809.6086-10-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,36 +10,30 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add CPU feature flags for Control-flow Enforcement Technology (CET).
-
-CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
-CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect branch tracking
+To prevent function call/return spills into the next shadow stack
+area, do not merge shadow stack areas.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Borislav Petkov <bp@suse.de>
 ---
- arch/x86/include/asm/cpufeatures.h | 2 ++
- 1 file changed, 2 insertions(+)
+ mm/mmap.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 28c4a502b419..f06f55de7488 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -321,6 +321,7 @@
- #define X86_FEATURE_PKU			(16*32+ 3) /* Protection Keys for Userspace */
- #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
- #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
-+#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
- #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
- #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
- #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
-@@ -343,6 +344,7 @@
- #define X86_FEATURE_AVX512_4VNNIW	(18*32+ 2) /* AVX-512 Neural Network Instructions */
- #define X86_FEATURE_AVX512_4FMAPS	(18*32+ 3) /* AVX-512 Multiply Accumulation Single precision */
- #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
-+#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
- #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
- #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
- #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 6c04292e16a7..30836512ca79 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1147,6 +1147,12 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 	if (vm_flags & VM_SPECIAL)
+ 		return NULL;
+ 
++	/*
++	 * Do not merge shadow stack areas.
++	 */
++	if (vm_flags & VM_SHSTK)
++		return NULL;
++
+ 	if (prev)
+ 		next = prev->vm_next;
+ 	else
 -- 
 2.17.1
