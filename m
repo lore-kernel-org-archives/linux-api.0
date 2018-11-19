@@ -1,134 +1,81 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH] proc: allow killing processes via file descriptors
-Date: Mon, 19 Nov 2018 18:56:13 +0800
-Message-ID: <201811191808.oI38LhHr%fengguang.wu@intel.com>
-References: <20181118111751.6142-1-christian@brauner.io>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Mon, 19 Nov 2018 16:05:43 +0200
+Message-ID: <20181119140543.GF8755@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+ <20181118071548.GA4795@linux.intel.com>
+ <20181118130203.GA18934@linux.intel.com>
+ <ce304dba-0b02-02e2-4de8-212cd3bd1876@fortanix.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="SLDf9lqlvOQaIe6s"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181118111751.6142-1-christian@brauner.io>
+In-Reply-To: <ce304dba-0b02-02e2-4de8-212cd3bd1876@fortanix.com>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: kbuild-all@01.org, ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>
+To: Jethro Beekman <jethro@fortanix.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, "nhorman@redhat.com" <nhorman@redhat.com>, "npmccallum@redhat.com" <npmccallum@redhat.com>, "Ayoun, Serge" <serge.ayoun@intel.com>, "shay.katz-zamir@intel.com" <shay.katz-zamir@intel.com>, "linux-sgx@vger.kernel.org" <linux-sgx@vger.kernel.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.co>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Nov 19, 2018 at 05:17:26AM +0000, Jethro Beekman wrote:
+> On 2018-11-18 18:32, Jarkko Sakkinen wrote:
+> > On Sun, Nov 18, 2018 at 09:15:48AM +0200, Jarkko Sakkinen wrote:
+> > > On Thu, Nov 01, 2018 at 10:53:40AM -0700, Andy Lutomirski wrote:
+> > > > Hi all-
+> > > > 
+> > > > The people working on SGX enablement are grappling with a somewhat
+> > > > annoying issue: the x86 EENTER instruction is used from user code and
+> > > > can, as part of its normal-ish operation, raise an exception.  It is
+> > > > also highly likely to be used from a library, and signal handling in
+> > > > libraries is unpleasant at best.
+> > > > 
+> > > > There's been some discussion of adding a vDSO entry point to wrap
+> > > > EENTER and do something sensible with the exceptions, but I'm
+> > > > wondering if a more general mechanism would be helpful.
+> > > 
+> > > I haven't really followed all of this discussion because I've been busy
+> > > working on the patch set but for me all of these approaches look awfully
+> > > complicated.
+> > > 
+> > > I'll throw my own suggestion and apologize if this has been already
+> > > suggested and discarded: return-to-AEP.
+> > > 
+> > > My idea is to do just a small extension to SGX AEX handling. At the
+> > > moment hardware will RAX, RBX and RCX with ERESUME parameters. We can
+> > > fill extend this by filling other three spare registers with exception
+> > > information.
+> > > 
+> > > AEP handler can then do whatever it wants to do with this information
+> > > or just do ERESUME.
+> > 
+> > A correction here. In practice this will add a requirement to have a bit
+> > more complicated AEP code (check the regs for exceptions) than before
+> > and not just bytes for ENCLU.
+> > 
+> > e.g. AEP handler should be along the lines
+> > 
+> > 1. #PF (or #UD or) happens. Kernel fills the registers when it cannot
+> >     handle the exception and returns back to user space i.e. to the
+> >     AEP handler.
+> > 2. Check the registers containing exception information. If they have
+> >     been filled, take whatever actions user space wants to take.
+> > 3. Otherwise, just ERESUME.
+> > 
+> >  From my point of view this is making the AEP parameter useful. Its
+> > standard use is just weird (always point to a place just containing
+> > ENCLU bytes, why the heck it even exists).
+> 
+> I like this solution. Keeps things simple. One question: when an exception
+> occurs, how does the kernel know whether to set special registers or send a
+> signal?
 
---SLDf9lqlvOQaIe6s
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Yes, and AFAIK people do in many cases people want to do something else
+than just direct ERESUME in AEP handler so would neither be a major
+bummer for user space. If I remember correctly you have such?
 
-Hi Christian,
+You can check the cases that we have for SIGSEGV (namely EPCM conflict)
+from Sean's patch 08/23.
 
-Thank you for the patch! Perhaps something to improve:
+I'm open for expanding the scope. It is the easy part after there is
+consensus for the handling mechanism :-)
 
-[auto build test WARNING on linus/master]
-[also build test WARNING on v4.20-rc3 next-20181116]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
-
-url:    https://github.com/0day-ci/linux/commits/Christian-Brauner/proc-allow-killing-processes-via-file-descriptors/20181119-170316
-config: riscv-tinyconfig (attached as .config)
-compiler: riscv64-linux-gcc (GCC) 8.1.0
-reproduce:
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # save the attached .config to linux build tree
-        GCC_VERSION=8.1.0 make.cross ARCH=riscv 
-
-All warnings (new ones prefixed by >>):
-
-   ./usr/include/linux/v4l2-controls.h:1105: found __[us]{8,16,32,64} type without #include <linux/types.h>
->> ./usr/include/linux/procfd.h:8: found __[us]{8,16,32,64} type without #include <linux/types.h>
-
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
-
---SLDf9lqlvOQaIe6s
-Content-Type: application/gzip
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
-
-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
-
---SLDf9lqlvOQaIe6s--
+/Jarkko
