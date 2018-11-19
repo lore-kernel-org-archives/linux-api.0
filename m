@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 07/26] x86/cet/shstk: Add Kconfig option for user-mode shadow stack
-Date: Mon, 19 Nov 2018 13:47:50 -0800
-Message-ID: <20181119214809.6086-8-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 05/26] x86/fpu/xstate: Add XSAVES system states for shadow stack
+Date: Mon, 19 Nov 2018 13:47:48 -0800
+Message-ID: <20181119214809.6086-6-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,85 +10,141 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Introduce Kconfig option X86_INTEL_SHADOW_STACK_USER.
+Intel Control-flow Enforcement Technology (CET) introduces the
+following MSRs.
 
-An application has shadow stack protection when all the following are
-true:
+    MSR_IA32_U_CET (user-mode CET settings),
+    MSR_IA32_PL3_SSP (user-mode shadow stack),
+    MSR_IA32_PL0_SSP (kernel-mode shadow stack),
+    MSR_IA32_PL1_SSP (Privilege Level 1 shadow stack),
+    MSR_IA32_PL2_SSP (Privilege Level 2 shadow stack).
 
-  (1) The kernel has X86_INTEL_SHADOW_STACK_USER enabled,
-  (2) The running processor supports the shadow stack,
-  (3) The application is built with shadow stack enabled tools & libs
-      and, and at runtime, all dependent shared libs can support
-      shadow stack.
-
-If this kernel config option is enabled, but (2) or (3) above is not
-true, the application runs without the shadow stack protection.
-Existing legacy applications will continue to work without the shadow
-stack protection.
-
-The user-mode shadow stack protection is only implemented for the
-64-bit kernel.  Thirty-two bit applications are supported under the
-compatibility mode.
+Introduce them into XSAVES system states.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/Kconfig  | 25 +++++++++++++++++++++++++
- arch/x86/Makefile |  7 +++++++
- 2 files changed, 32 insertions(+)
+ arch/x86/include/asm/fpu/types.h            | 22 +++++++++++++++++++++
+ arch/x86/include/asm/fpu/xstate.h           |  4 +++-
+ arch/x86/include/uapi/asm/processor-flags.h |  2 ++
+ arch/x86/kernel/fpu/xstate.c                | 10 ++++++++++
+ 4 files changed, 37 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 9d734f3c8234..86fb68f496a6 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -1919,6 +1919,31 @@ config X86_INTEL_MEMORY_PROTECTION_KEYS
+diff --git a/arch/x86/include/asm/fpu/types.h b/arch/x86/include/asm/fpu/types.h
+index 202c53918ecf..792e4ea466ce 100644
+--- a/arch/x86/include/asm/fpu/types.h
++++ b/arch/x86/include/asm/fpu/types.h
+@@ -114,6 +114,9 @@ enum xfeature {
+ 	XFEATURE_Hi16_ZMM,
+ 	XFEATURE_PT_UNIMPLEMENTED_SO_FAR,
+ 	XFEATURE_PKRU,
++	XFEATURE_RESERVED,
++	XFEATURE_SHSTK_USER,
++	XFEATURE_SHSTK_KERNEL,
  
- 	  If unsure, say y.
+ 	XFEATURE_MAX,
+ };
+@@ -128,6 +131,8 @@ enum xfeature {
+ #define XFEATURE_MASK_Hi16_ZMM		(1 << XFEATURE_Hi16_ZMM)
+ #define XFEATURE_MASK_PT		(1 << XFEATURE_PT_UNIMPLEMENTED_SO_FAR)
+ #define XFEATURE_MASK_PKRU		(1 << XFEATURE_PKRU)
++#define XFEATURE_MASK_SHSTK_USER	(1 << XFEATURE_SHSTK_USER)
++#define XFEATURE_MASK_SHSTK_KERNEL	(1 << XFEATURE_SHSTK_KERNEL)
  
-+config X86_INTEL_CET
-+	def_bool n
-+
-+config ARCH_HAS_SHSTK
-+	def_bool n
-+
-+config X86_INTEL_SHADOW_STACK_USER
-+	prompt "Intel Shadow Stack for user-mode"
-+	def_bool n
-+	depends on CPU_SUP_INTEL && X86_64
-+	select ARCH_USES_HIGH_VMA_FLAGS
-+	select X86_INTEL_CET
-+	select ARCH_HAS_SHSTK
-+	---help---
-+	  Shadow stack provides hardware protection against program stack
-+	  corruption.  Only when all the following are true will an application
-+	  have the shadow stack protection: the kernel supports it (i.e. this
-+	  feature is enabled), the application is compiled and linked with
-+	  shadow stack enabled, and the processor supports this feature.
-+	  When the kernel has this configuration enabled, existing non shadow
-+	  stack applications will continue to work, but without shadow stack
-+	  protection.
-+
-+	  If unsure, say y.
-+
- config EFI
- 	bool "EFI runtime service support"
- 	depends on ACPI
-diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 88398fdf8129..0e4746814452 100644
---- a/arch/x86/Makefile
-+++ b/arch/x86/Makefile
-@@ -152,6 +152,13 @@ ifdef CONFIG_X86_X32
- endif
- export CONFIG_X86_X32_ABI
+ #define XFEATURE_MASK_FPSSE		(XFEATURE_MASK_FP | XFEATURE_MASK_SSE)
+ #define XFEATURE_MASK_AVX512		(XFEATURE_MASK_OPMASK \
+@@ -229,6 +234,23 @@ struct pkru_state {
+ 	u32				pad;
+ } __packed;
  
-+# Check assembler shadow stack suppot
-+ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-+  ifeq ($(call as-instr, saveprevssp, y),)
-+      $(error CONFIG_X86_INTEL_SHADOW_STACK_USER not supported by the assembler)
-+  endif
-+endif
++/*
++ * State component 11 is Control-flow Enforcement user states
++ */
++struct cet_user_state {
++	u64 user_cet;			/* user control-flow settings */
++	u64 user_ssp;			/* user shadow stack pointer */
++};
 +
- #
- # If the function graph tracer is used with mcount instead of fentry,
- # '-maccumulate-outgoing-args' is needed to prevent a GCC bug
++/*
++ * State component 12 is Control-flow Enforcement kernel states
++ */
++struct cet_kernel_state {
++	u64 kernel_ssp;			/* kernel shadow stack */
++	u64 pl1_ssp;			/* privilege level 1 shadow stack */
++	u64 pl2_ssp;			/* privilege level 2 shadow stack */
++};
++
+ struct xstate_header {
+ 	u64				xfeatures;
+ 	u64				xcomp_bv;
+diff --git a/arch/x86/include/asm/fpu/xstate.h b/arch/x86/include/asm/fpu/xstate.h
+index d8e2ec99f635..18b60748a34d 100644
+--- a/arch/x86/include/asm/fpu/xstate.h
++++ b/arch/x86/include/asm/fpu/xstate.h
+@@ -28,7 +28,9 @@
+ 				  XFEATURE_MASK_Hi16_ZMM | \
+ 				  XFEATURE_MASK_PKRU | \
+ 				  XFEATURE_MASK_BNDREGS | \
+-				  XFEATURE_MASK_BNDCSR)
++				  XFEATURE_MASK_BNDCSR | \
++				  XFEATURE_MASK_SHSTK_USER | \
++				  XFEATURE_MASK_SHSTK_KERNEL)
+ 
+ #ifdef CONFIG_X86_64
+ #define REX_PREFIX	"0x48, "
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index bcba3c643e63..a8df907e8017 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -130,6 +130,8 @@
+ #define X86_CR4_SMAP		_BITUL(X86_CR4_SMAP_BIT)
+ #define X86_CR4_PKE_BIT		22 /* enable Protection Keys support */
+ #define X86_CR4_PKE		_BITUL(X86_CR4_PKE_BIT)
++#define X86_CR4_CET_BIT		23 /* enable Control-flow Enforcement */
++#define X86_CR4_CET		_BITUL(X86_CR4_CET_BIT)
+ 
+ /*
+  * x86-64 Task Priority Register, CR8
+diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+index f6d2e2e53463..8c2dff13eac6 100644
+--- a/arch/x86/kernel/fpu/xstate.c
++++ b/arch/x86/kernel/fpu/xstate.c
+@@ -35,6 +35,9 @@ static const char *xfeature_names[] =
+ 	"Processor Trace (unused)"	,
+ 	"Protection Keys User registers",
+ 	"unknown xstate feature"	,
++	"Control-flow User registers"	,
++	"Control-flow Kernel registers"	,
++	"unknown xstate feature"	,
+ };
+ 
+ static short xsave_cpuid_features[] __initdata = {
+@@ -48,6 +51,9 @@ static short xsave_cpuid_features[] __initdata = {
+ 	X86_FEATURE_AVX512F,
+ 	X86_FEATURE_INTEL_PT,
+ 	X86_FEATURE_PKU,
++	0,		   /* Unused */
++	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_USER */
++	X86_FEATURE_SHSTK, /* XFEATURE_SHSTK_KERNEL */
+ };
+ 
+ /*
+@@ -319,6 +325,8 @@ static void __init print_xstate_features(void)
+ 	print_xstate_feature(XFEATURE_MASK_ZMM_Hi256);
+ 	print_xstate_feature(XFEATURE_MASK_Hi16_ZMM);
+ 	print_xstate_feature(XFEATURE_MASK_PKRU);
++	print_xstate_feature(XFEATURE_MASK_SHSTK_USER);
++	print_xstate_feature(XFEATURE_MASK_SHSTK_KERNEL);
+ }
+ 
+ /*
+@@ -565,6 +573,8 @@ static void check_xstate_against_struct(int nr)
+ 	XCHECK_SZ(sz, nr, XFEATURE_ZMM_Hi256, struct avx_512_zmm_uppers_state);
+ 	XCHECK_SZ(sz, nr, XFEATURE_Hi16_ZMM,  struct avx_512_hi16_state);
+ 	XCHECK_SZ(sz, nr, XFEATURE_PKRU,      struct pkru_state);
++	XCHECK_SZ(sz, nr, XFEATURE_SHSTK_USER,   struct cet_user_state);
++	XCHECK_SZ(sz, nr, XFEATURE_SHSTK_KERNEL, struct cet_kernel_state);
+ 
+ 	/*
+ 	 * Make *SURE* to add any feature numbers in below if
 -- 
 2.17.1
