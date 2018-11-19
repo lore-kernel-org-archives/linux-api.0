@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 03/11] x86/cet/ibt: Add IBT legacy code bitmap setup function
-Date: Mon, 19 Nov 2018 13:49:26 -0800
-Message-ID: <20181119214934.6174-4-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 04/11] mm/mmap: Add IBT bitmap size to address space limit check
+Date: Mon, 19 Nov 2018 13:49:27 -0800
+Message-ID: <20181119214934.6174-5-yu-cheng.yu@intel.com>
 References: <20181119214934.6174-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214934.6174-1-yu-cheng.yu@intel.com>
@@ -10,68 +10,71 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Indirect Branch Tracking (IBT) provides an optional legacy code bitmap
-that allows execution of legacy, non-IBT compatible library by an
-IBT-enabled application.  When set, each bit in the bitmap indicates
-one page of legacy code.
-
-The bitmap is allocated and setup from the application.
+The indirect branch tracking legacy bitmap takes a large address
+space.  This causes may_expand_vm() failure on the address limit
+check.  For a IBT-enabled task, add the bitmap size to the
+address limit.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/cet.h |  1 +
- arch/x86/kernel/cet.c      | 23 +++++++++++++++++++++++
- 2 files changed, 24 insertions(+)
+ arch/x86/include/asm/mmu_context.h | 10 ++++++++++
+ mm/mmap.c                          | 19 ++++++++++++++++++-
+ 2 files changed, 28 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 810d3e386fdb..db40fc54a905 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -29,6 +29,7 @@ void cet_disable_free_shstk(struct task_struct *p);
- int cet_restore_signal(unsigned long ssp);
- int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
- int cet_setup_ibt(void);
-+int cet_setup_ibt_bitmap(unsigned long bitmap, unsigned long size);
- void cet_disable_ibt(void);
- #else
- static inline int prctl_cet(int option, unsigned long arg2) { return -EINVAL; }
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index fd157a6208c3..18a92a92c50f 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -21,6 +21,7 @@
- #include <asm/fpu/types.h>
- #include <asm/cet.h>
- #include <asm/special_insns.h>
-+#include <asm/elf.h>
- 
- static int set_shstk_ptr(unsigned long addr)
- {
-@@ -333,3 +334,25 @@ void cet_disable_ibt(void)
- 	wrmsrl(MSR_IA32_U_CET, r);
- 	current->thread.cet.ibt_enabled = 0;
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 57c1f6c42bef..97a101267dd5 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -341,4 +341,14 @@ static inline unsigned long __get_current_cr3_fast(void)
+ 	return cr3;
  }
-+
-+int cet_setup_ibt_bitmap(unsigned long bitmap, unsigned long size)
+ 
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++static inline unsigned long arch_as_limit(void)
 +{
-+	u64 r;
++	if (current->thread.cet.ibt_enabled)
++		return current->thread.cet.ibt_bitmap_size;
++	else
++		return 0;
++}
++#endif
 +
-+	if (!current->thread.cet.ibt_enabled)
-+		return -EINVAL;
-+
-+	if (!PAGE_ALIGNED(bitmap) || (size > TASK_SIZE_MAX))
-+		return -EINVAL;
-+
-+	current->thread.cet.ibt_bitmap_addr = bitmap;
-+	current->thread.cet.ibt_bitmap_size = size;
-+
-+	/*
-+	 * Turn on IBT legacy bitmap.
-+	 */
-+	rdmsrl(MSR_IA32_U_CET, r);
-+	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
-+	wrmsrl(MSR_IA32_U_CET, r);
+ #endif /* _ASM_X86_MMU_CONTEXT_H */
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 9560d69fa08c..3de023f3e565 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -3283,13 +3283,30 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+ 	return NULL;
+ }
+ 
++#ifndef CONFIG_ARCH_HAS_AS_LIMIT
++static inline unsigned long arch_as_limit(void)
++{
 +	return 0;
 +}
++#endif
++
+ /*
+  * Return true if the calling process may expand its vm space by the passed
+  * number of pages
+  */
+ bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
+ {
+-	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
++	unsigned long as_limit = rlimit(RLIMIT_AS);
++	unsigned long as_limit_plus = as_limit + arch_as_limit();
++
++	/* as_limit_plus overflowed */
++	if (as_limit_plus < as_limit)
++		as_limit_plus = RLIM_INFINITY;
++
++	if (as_limit_plus > as_limit)
++		as_limit = as_limit_plus;
++
++	if (mm->total_vm + npages > as_limit >> PAGE_SHIFT)
+ 		return false;
+ 
+ 	if (is_data_mapping(flags) &&
 -- 
 2.17.1
