@@ -1,60 +1,68 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Mon, 19 Nov 2018 21:55:20 +0100
-Message-ID: <20181119205518.btew3vxwgva4w3zh@brauner.io>
+Date: Mon, 19 Nov 2018 22:13:43 +0100
+Message-ID: <20181119211335.tmoycnu4r2ob6cda@brauner.io>
 References: <20181119103241.5229-1-christian@brauner.io>
  <20181119103241.5229-3-christian@brauner.io>
  <20181119202857.k5zw742xjfrw677j@yavin>
+ <20181119205518.btew3vxwgva4w3zh@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181119202857.k5zw742xjfrw677j@yavin>
+In-Reply-To: <20181119205518.btew3vxwgva4w3zh@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Aleksa Sarai <cyphar@cyphar.com>
 Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 07:28:57AM +1100, Aleksa Sarai wrote:
-> On 2018-11-19, Christian Brauner <christian@brauner.io> wrote:
-> > +	if (info) {
-> > +		ret = __copy_siginfo_from_user(sig, &kinfo, info);
-> > +		if (unlikely(ret))
-> > +			goto err;
-> > +		/*
-> > +		 * Not even root can pretend to send signals from the kernel.
-> > +		 * Nor can they impersonate a kill()/tgkill(), which adds
-> > +		 * source info.
-> > +		 */
-> > +		ret = -EPERM;
-> > +		if ((kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL) &&
-> > +		    (task_pid(current) != pid))
-> > +			goto err;
-> > +	} else {
-> > +		prepare_kill_siginfo(sig, &kinfo);
-> > +	}
+On Mon, Nov 19, 2018 at 09:55:18PM +0100, Christian Brauner wrote:
+> On Tue, Nov 20, 2018 at 07:28:57AM +1100, Aleksa Sarai wrote:
+> > On 2018-11-19, Christian Brauner <christian@brauner.io> wrote:
+> > > +	if (info) {
+> > > +		ret = __copy_siginfo_from_user(sig, &kinfo, info);
+> > > +		if (unlikely(ret))
+> > > +			goto err;
+> > > +		/*
+> > > +		 * Not even root can pretend to send signals from the kernel.
+> > > +		 * Nor can they impersonate a kill()/tgkill(), which adds
+> > > +		 * source info.
+> > > +		 */
+> > > +		ret = -EPERM;
+> > > +		if ((kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL) &&
+> > > +		    (task_pid(current) != pid))
+> > > +			goto err;
+> > > +	} else {
+> > > +		prepare_kill_siginfo(sig, &kinfo);
+> > > +	}
+> > 
+> > I wonder whether we should also have a pidns restriction here, since
+> > currently it isn't possible for a container process using a pidns to
+> > signal processes outside its pidns. AFAICS, this isn't done through an
+> > explicit check -- it's a side-effect of processes in a pidns not being
+> > able to address non-descendant-pidns processes.
+> > 
+> > But maybe it's reasonable to allow sending a procfd to a different pidns
+> > and the same operations working on it? If we extend the procfd API to
 > 
-> I wonder whether we should also have a pidns restriction here, since
-> currently it isn't possible for a container process using a pidns to
-> signal processes outside its pidns. AFAICS, this isn't done through an
-> explicit check -- it's a side-effect of processes in a pidns not being
-> able to address non-descendant-pidns processes.
+> No, I don't think so. I really don't want any fancy semantics in here.
+> Fancy doesn't get merged and fancy is hard to maintain. So we should do
+> something like:
 > 
-> But maybe it's reasonable to allow sending a procfd to a different pidns
-> and the same operations working on it? If we extend the procfd API to
+> if (proc_pid_ns() != current_pid_ns)
+> 	return EINVAL
 
-No, I don't think so. I really don't want any fancy semantics in here.
-Fancy doesn't get merged and fancy is hard to maintain. So we should do
-something like:
+To be more precise, we need to detect if fd refers to an ancestor pidns
+and if so return EINVAL.
 
-if (proc_pid_ns() != current_pid_ns)
-	return EINVAL
-
-> allow process creation this would allow a container to create a process
-> outside its pidns.
 > 
-> -- 
-> Aleksa Sarai
-> Senior Software Engineer (Containers)
-> SUSE Linux GmbH
-> <https://www.cyphar.com/>
+> > allow process creation this would allow a container to create a process
+> > outside its pidns.
+> > 
+> > -- 
+> > Aleksa Sarai
+> > Senior Software Engineer (Containers)
+> > SUSE Linux GmbH
+> > <https://www.cyphar.com/>
+> 
+> 
