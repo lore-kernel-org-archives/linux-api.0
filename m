@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 04/11] mm/mmap: Add IBT bitmap size to address space limit check
-Date: Mon, 19 Nov 2018 13:49:27 -0800
-Message-ID: <20181119214934.6174-5-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 06/11] x86/cet/ibt: Add arch_prctl functions for IBT
+Date: Mon, 19 Nov 2018 13:49:29 -0800
+Message-ID: <20181119214934.6174-7-yu-cheng.yu@intel.com>
 References: <20181119214934.6174-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214934.6174-1-yu-cheng.yu@intel.com>
@@ -10,71 +10,90 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The indirect branch tracking legacy bitmap takes a large address
-space.  This causes may_expand_vm() failure on the address limit
-check.  For a IBT-enabled task, add the bitmap size to the
-address limit.
+Update ARCH_X86_CET_STATUS and ARCH_X86_CET_DISABLE to include
+Indirect Branch Tracking features.
 
+Introduce:
+
+arch_prctl(ARCH_X86_CET_SET_LEGACY_BITMAP, unsigned long *addr)
+    Enable the Indirect Branch Tracking legacy code bitmap.
+
+    The parameter 'addr' is a pointer to a user buffer that has:
+
+    *addr = IBT bitmap base address
+    *(addr + 1) = IBT bitmap size
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/mmu_context.h | 10 ++++++++++
- mm/mmap.c                          | 19 ++++++++++++++++++-
- 2 files changed, 28 insertions(+), 1 deletion(-)
+ arch/x86/include/uapi/asm/prctl.h |  2 ++
+ arch/x86/kernel/cet_prctl.c       | 21 +++++++++++++++++++++
+ 2 files changed, 23 insertions(+)
 
-diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 57c1f6c42bef..97a101267dd5 100644
---- a/arch/x86/include/asm/mmu_context.h
-+++ b/arch/x86/include/asm/mmu_context.h
-@@ -341,4 +341,14 @@ static inline unsigned long __get_current_cr3_fast(void)
- 	return cr3;
- }
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index d962f0ec9ccf..5eb9aeb5c662 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -18,5 +18,7 @@
+ #define ARCH_X86_CET_DISABLE		0x3002
+ #define ARCH_X86_CET_LOCK		0x3003
+ #define ARCH_X86_CET_ALLOC_SHSTK	0x3004
++#define ARCH_X86_CET_GET_LEGACY_BITMAP	0x3005 /* deprecated */
++#define ARCH_X86_CET_SET_LEGACY_BITMAP	0x3006
  
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+static inline unsigned long arch_as_limit(void)
-+{
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/cet_prctl.c b/arch/x86/kernel/cet_prctl.c
+index 320dbb620d61..a752d73cb1f4 100644
+--- a/arch/x86/kernel/cet_prctl.c
++++ b/arch/x86/kernel/cet_prctl.c
+@@ -21,6 +21,8 @@ static int handle_get_status(unsigned long arg2)
+ 
+ 	if (current->thread.cet.shstk_enabled)
+ 		features |= GNU_PROPERTY_X86_FEATURE_1_SHSTK;
 +	if (current->thread.cet.ibt_enabled)
-+		return current->thread.cet.ibt_bitmap_size;
-+	else
-+		return 0;
-+}
-+#endif
-+
- #endif /* _ASM_X86_MMU_CONTEXT_H */
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 9560d69fa08c..3de023f3e565 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -3283,13 +3283,30 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
- 	return NULL;
++		features |= GNU_PROPERTY_X86_FEATURE_1_IBT;
+ 
+ 	shstk_base = current->thread.cet.shstk_base;
+ 	shstk_size = current->thread.cet.shstk_size;
+@@ -56,6 +58,17 @@ static int handle_alloc_shstk(unsigned long arg2)
+ 	return 0;
  }
  
-+#ifndef CONFIG_ARCH_HAS_AS_LIMIT
-+static inline unsigned long arch_as_limit(void)
++static int handle_bitmap(unsigned long arg2)
 +{
-+	return 0;
++	unsigned long addr, size;
++
++	if (get_user(addr, (unsigned long __user *)arg2) ||
++	    get_user(size, (unsigned long __user *)arg2 + 1))
++		return -EFAULT;
++
++	return cet_setup_ibt_bitmap(addr, size);
 +}
-+#endif
 +
- /*
-  * Return true if the calling process may expand its vm space by the passed
-  * number of pages
-  */
- bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
+ int prctl_cet(int option, unsigned long arg2)
  {
--	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
-+	unsigned long as_limit = rlimit(RLIMIT_AS);
-+	unsigned long as_limit_plus = as_limit + arch_as_limit();
-+
-+	/* as_limit_plus overflowed */
-+	if (as_limit_plus < as_limit)
-+		as_limit_plus = RLIM_INFINITY;
-+
-+	if (as_limit_plus > as_limit)
-+		as_limit = as_limit_plus;
-+
-+	if (mm->total_vm + npages > as_limit >> PAGE_SHIFT)
- 		return false;
+ 	if (!cpu_x86_cet_enabled())
+@@ -70,6 +83,8 @@ int prctl_cet(int option, unsigned long arg2)
+ 			return -EPERM;
+ 		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_SHSTK)
+ 			cet_disable_free_shstk(current);
++		if (arg2 & GNU_PROPERTY_X86_FEATURE_1_IBT)
++			cet_disable_ibt();
  
- 	if (is_data_mapping(flags) &&
+ 		return 0;
+ 
+@@ -80,6 +95,12 @@ int prctl_cet(int option, unsigned long arg2)
+ 	case ARCH_X86_CET_ALLOC_SHSTK:
+ 		return handle_alloc_shstk(arg2);
+ 
++	/*
++	 * Allocate legacy bitmap and return address & size to user.
++	 */
++	case ARCH_X86_CET_SET_LEGACY_BITMAP:
++		return handle_bitmap(arg2);
++
+ 	default:
+ 		return -EINVAL;
+ 	}
 -- 
 2.17.1
