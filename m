@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [RFC PATCH v6 23/26] x86/cet/shstk: Handle thread shadow stack
-Date: Mon, 19 Nov 2018 13:48:06 -0800
-Message-ID: <20181119214809.6086-24-yu-cheng.yu@intel.com>
+Subject: [RFC PATCH v6 20/26] x86/cet/shstk: Introduce WRUSS instruction
+Date: Mon, 19 Nov 2018 13:48:03 -0800
+Message-ID: <20181119214809.6086-21-yu-cheng.yu@intel.com>
 References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181119214809.6086-1-yu-cheng.yu@intel.com>
@@ -10,161 +10,81 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The shadow stack for clone/fork is handled as the following:
+WRUSS is a new kernel-mode instruction but writes directly to user
+shadow stack memory.  This is used to construct a return address on
+the shadow stack for the signal handler.
 
-(1) If ((clone_flags & (CLONE_VFORK | CLONE_VM)) == CLONE_VM),
-    the kernel allocates (and frees on thread exit) a new SHSTK
-    for the child.
-
-    It is possible for the kernel to complete the clone syscall
-    and set the child's SHSTK pointer to NULL and let the child
-    thread allocate a SHSTK for itself.  There are two issues
-    in this approach: It is not compatible with existing code
-    that does inline syscall and it cannot handle signals before
-    the child can successfully allocate a SHSTK.
-
-(2) For (clone_flags & CLONE_VFORK), the child uses the existing
-    SHSTK.
-
-(3) For all other cases, the SHSTK is copied/reused whenever the
-    parent or the child does a call/ret.
-
-This patch handles cases (1) & (2).  Case (3) is handled in the
-SHSTK page fault patches.
-
-A 64-bit SHSTK has a fixed size of RLIMIT_STACK. A compat-mode
-thread SHSTK has a fixed size of 1/4 RLIMIT_STACK.  This allows
-more threads to share a 32-bit address space.
+This instruction can fault if the user shadow stack is invalid shadow
+stack memory.  In that case, the kernel does a fixup.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/cet.h         |  2 ++
- arch/x86/include/asm/mmu_context.h |  3 +++
- arch/x86/kernel/cet.c              | 40 ++++++++++++++++++++++++++++++
- arch/x86/kernel/process.c          |  1 +
- arch/x86/kernel/process_64.c       |  7 ++++++
- 5 files changed, 53 insertions(+)
+ arch/x86/include/asm/special_insns.h | 32 ++++++++++++++++++++++++++++
+ arch/x86/mm/fault.c                  |  9 ++++++++
+ 2 files changed, 41 insertions(+)
 
-diff --git a/arch/x86/include/asm/cet.h b/arch/x86/include/asm/cet.h
-index 3af544aed800..5957e7257d83 100644
---- a/arch/x86/include/asm/cet.h
-+++ b/arch/x86/include/asm/cet.h
-@@ -17,12 +17,14 @@ struct cet_status {
- 
- #ifdef CONFIG_X86_INTEL_CET
- int cet_setup_shstk(void);
-+int cet_setup_thread_shstk(struct task_struct *p);
- void cet_disable_shstk(void);
- void cet_disable_free_shstk(struct task_struct *p);
- int cet_restore_signal(unsigned long ssp);
- int cet_setup_signal(bool ia32, unsigned long rstor, unsigned long *new_ssp);
- #else
- static inline int cet_setup_shstk(void) { return -EINVAL; }
-+static inline int cet_setup_thread_shstk(struct task_struct *p) { return 0; }
- static inline void cet_disable_shstk(void) {}
- static inline void cet_disable_free_shstk(struct task_struct *p) {}
- static inline int cet_restore_signal(unsigned long ssp) { return -EINVAL; }
-diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 0ca50611e8ce..57c1f6c42bef 100644
---- a/arch/x86/include/asm/mmu_context.h
-+++ b/arch/x86/include/asm/mmu_context.h
-@@ -13,6 +13,7 @@
- #include <asm/tlbflush.h>
- #include <asm/paravirt.h>
- #include <asm/mpx.h>
-+#include <asm/cet.h>
- 
- extern atomic64_t last_mm_ctx_id;
- 
-@@ -223,6 +224,8 @@ do {						\
- #else
- #define deactivate_mm(tsk, mm)			\
- do {						\
-+	if (!tsk->vfork_done)			\
-+		cet_disable_free_shstk(tsk);	\
- 	load_gs_index(0);			\
- 	loadsegment(fs, 0);			\
- } while (0)
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 44904c90d347..0e3e7a2c6f80 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -145,6 +145,46 @@ int cet_setup_shstk(void)
- 	return 0;
+diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
+index 43c029cdc3fe..43957f197a9a 100644
+--- a/arch/x86/include/asm/special_insns.h
++++ b/arch/x86/include/asm/special_insns.h
+@@ -237,6 +237,38 @@ static inline void clwb(volatile void *__p)
+ 		: [pax] "a" (p));
  }
  
-+int cet_setup_thread_shstk(struct task_struct *tsk)
++#ifdef CONFIG_X86_INTEL_CET
++#if defined(CONFIG_IA32_EMULATION) || defined(CONFIG_X86_X32)
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
 +{
-+	unsigned long addr, size;
-+	struct cet_user_state *state;
-+
-+	if (!current->thread.cet.shstk_enabled)
-+		return 0;
-+
-+	state = get_xsave_addr(&tsk->thread.fpu.state.xsave,
-+			       XFEATURE_MASK_SHSTK_USER);
-+
-+	if (!state)
-+		return -EINVAL;
-+
-+	size = rlimit(RLIMIT_STACK);
-+
-+	/*
-+	 * Compat-mode pthreads share a limited address space.
-+	 * If each function call takes an average of four slots
-+	 * stack space, we need 1/4 of stack size for shadow stack.
-+	 */
-+	if (in_compat_syscall())
-+		size /= 4;
-+
-+	addr = do_mmap_locked(0, size, PROT_READ,
-+			      MAP_ANONYMOUS | MAP_PRIVATE, VM_SHSTK);
-+
-+	if (addr >= TASK_SIZE_MAX) {
-+		tsk->thread.cet.shstk_base = 0;
-+		tsk->thread.cet.shstk_size = 0;
-+		tsk->thread.cet.shstk_enabled = 0;
-+		return -ENOMEM;
-+	}
-+
-+	state->user_ssp = (u64)(addr + size - sizeof(u64));
-+	tsk->thread.cet.shstk_base = addr;
-+	tsk->thread.cet.shstk_size = size;
++	asm_volatile_goto("1: wrussd %1, (%0)\n"
++			  _ASM_EXTABLE(1b, %l[fail])
++			  :: "r" (addr), "r" (val)
++			  :: fail);
 +	return 0;
++fail:
++	return -EPERM;
 +}
++#else
++static inline int write_user_shstk_32(unsigned long addr, unsigned int val)
++{
++	WARN_ONCE(1, "%s used but not supported.\n", __func__);
++	return -EFAULT;
++}
++#endif
 +
- void cet_disable_shstk(void)
- {
- 	u64 r;
-diff --git a/arch/x86/kernel/process.c b/arch/x86/kernel/process.c
-index 4a776da4c28c..440f012ef925 100644
---- a/arch/x86/kernel/process.c
-+++ b/arch/x86/kernel/process.c
-@@ -125,6 +125,7 @@ void exit_thread(struct task_struct *tsk)
- 
- 	free_vm86(t);
- 
-+	cet_disable_free_shstk(tsk);
- 	fpu__drop(fpu);
- }
- 
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 0e0b4288a4b2..3b371a57426e 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -456,6 +456,13 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
- 	if (sp)
- 		childregs->sp = sp;
- 
-+	/* Allocate a new shadow stack for pthread */
-+	if ((clone_flags & (CLONE_VFORK | CLONE_VM)) == CLONE_VM) {
-+		err = cet_setup_thread_shstk(p);
-+		if (err)
-+			goto out;
-+	}
++static inline int write_user_shstk_64(unsigned long addr, unsigned long val)
++{
++	asm_volatile_goto("1: wrussq %1, (%0)\n"
++			  _ASM_EXTABLE(1b, %l[fail])
++			  :: "r" (addr), "r" (val)
++			  :: fail);
++	return 0;
++fail:
++	return -EPERM;
++}
++#endif /* CONFIG_X86_INTEL_CET */
 +
- 	err = -ENOMEM;
- 	if (unlikely(test_tsk_thread_flag(me, TIF_IO_BITMAP))) {
- 		p->thread.io_bitmap_ptr = kmemdup(me->thread.io_bitmap_ptr,
+ #define nop() asm volatile ("nop")
+ 
+ 
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index c3368fed706c..7b5de629748e 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -1318,6 +1318,15 @@ void do_user_addr_fault(struct pt_regs *regs,
+ 		}
+ 		flags |= FAULT_FLAG_USER;
+ 	} else {
++		/*
++		 * WRUSS is a kernel instruction and but writes
++		 * to user shadow stack.  When a fault occurs,
++		 * both X86_PF_USER and X86_PF_SHSTK are set.
++		 * Clear X86_PF_USER from sw_error_code.
++		 */
++		if ((hw_error_code & (X86_PF_USER | X86_PF_SHSTK)) ==
++		    (X86_PF_USER | X86_PF_SHSTK))
++			sw_error_code &= ~X86_PF_USER;
+ 		if (regs->flags & X86_EFLAGS_IF)
+ 			local_irq_enable();
+ 	}
 -- 
 2.17.1
