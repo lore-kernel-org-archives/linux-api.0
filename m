@@ -1,10 +1,10 @@
 From: kbuild test robot <lkp@intel.com>
 Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Tue, 20 Nov 2018 07:37:58 +0800
-Message-ID: <201811200755.avfmktKQ%fengguang.wu@intel.com>
+Date: Tue, 20 Nov 2018 07:35:15 +0800
+Message-ID: <201811200726.wJpi3qJO%fengguang.wu@intel.com>
 References: <20181119103241.5229-3-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="9jxsPFA5p3P2qPhR"
+Content-Type: multipart/mixed; boundary="J2SCkAp4GZ/dPZZf"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20181119103241.5229-3-christian@brauner.io>
@@ -13,16 +13,16 @@ Cc: kbuild-all@01.org, ebiederm@xmission.com, linux-kernel@vger.kernel.org, serg
 List-Id: linux-api@vger.kernel.org
 
 
---9jxsPFA5p3P2qPhR
+--J2SCkAp4GZ/dPZZf
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
 Hi Christian,
 
-Thank you for the patch! Yet something to improve:
+Thank you for the patch! Perhaps something to improve:
 
-[auto build test ERROR on linus/master]
-[also build test ERROR on v4.20-rc3]
+[auto build test WARNING on linus/master]
+[also build test WARNING on v4.20-rc3]
 [cannot apply to next-20181119]
 [if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
@@ -35,86 +35,20 @@ reproduce:
         # save the attached .config to linux build tree
         GCC_VERSION=8.1.0 make.cross ARCH=riscv 
 
-All errors (new ones prefixed by >>):
+All warnings (new ones prefixed by >>):
 
-   kernel/signal.c: In function '__do_sys_procfd_signal':
->> kernel/signal.c:3341:7: error: implicit declaration of function 'proc_is_procfd'; did you mean 'clockid_to_fd'? [-Werror=implicit-function-declaration]
-     if (!proc_is_procfd(f.file))
-          ^~~~~~~~~~~~~~
-          clockid_to_fd
-   cc1: some warnings being treated as errors
-
-vim +3341 kernel/signal.c
-
-  3314	
-  3315	/**
-  3316	 *  sys_procfd_signal - send a signal to a process through a process file
-  3317	 *                      descriptor
-  3318	 *  @fd: the file descriptor of the process
-  3319	 *  @sig: signal to be sent
-  3320	 *  @info: the signal info
-  3321	 *  @flags: future flags to be passed
-  3322	 */
-  3323	SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user *, info,
-  3324			int, flags)
-  3325	{
-  3326		int ret;
-  3327		struct pid *pid;
-  3328		kernel_siginfo_t kinfo;
-  3329		struct fd f;
-  3330	
-  3331		/* Enforce flags be set to 0 until we add an extension. */
-  3332		if (flags)
-  3333			return -EINVAL;
-  3334	
-  3335		f = fdget_raw(fd);
-  3336		if (!f.file)
-  3337			return -EBADF;
-  3338	
-  3339		ret = -EINVAL;
-  3340		/* Is this a process file descriptor? */
-> 3341		if (!proc_is_procfd(f.file))
-  3342			goto err;
-  3343	
-  3344		pid = f.file->private_data;
-  3345		if (!pid)
-  3346			goto err;
-  3347	
-  3348		if (info) {
-  3349			ret = __copy_siginfo_from_user(sig, &kinfo, info);
-  3350			if (unlikely(ret))
-  3351				goto err;
-  3352			/*
-  3353			 * Not even root can pretend to send signals from the kernel.
-  3354			 * Nor can they impersonate a kill()/tgkill(), which adds
-  3355			 * source info.
-  3356			 */
-  3357			ret = -EPERM;
-  3358			if ((kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL) &&
-  3359			    (task_pid(current) != pid))
-  3360				goto err;
-  3361		} else {
-  3362			prepare_kill_siginfo(sig, &kinfo);
-  3363		}
-  3364	
-  3365		ret = kill_pid_info(sig, &kinfo, pid);
-  3366	
-  3367	err:
-  3368		fdput(f);
-  3369		return ret;
-  3370	}
-  3371	
+>> <stdin>:1338:2: warning: #warning syscall procfd_signal not implemented [-Wcpp]
 
 ---
 0-DAY kernel test infrastructure                Open Source Technology Center
 https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
---9jxsPFA5p3P2qPhR
+--J2SCkAp4GZ/dPZZf
 Content-Type: application/gzip
 Content-Disposition: attachment; filename=".config.gz"
 Content-Transfer-Encoding: base64
 
-H4sICMxI81sAAy5jb25maWcAhTvbcts4su/zFayZqlNJ7cbj2B5vZk/5AQJBCSuCoAFQsvPC
+H4sICE1I81sAAy5jb25maWcAhTvbcts4su/zFayZqlNJ7cbj2B5vZk/5AQJBCSuCoAFQsvPC
 UiTGUcWWfHSZSf7+dIO68NLwTu1OMuhGE2j0vVu//fJbxPa79ctst5zPnp9/Rk/VqtrMdtUi
 +rp8rv43inWUaReJWLoLQE6Xq/2P3zfL7fyv6Obi6vLi8sNmfh2Nq82qeo74evV1+bSH/cv1
 6pfffoH//QaLL69AavPvyG+7vfnwjEQ+PM3n0bsh5++jTxcfLy4Bl+sskcOS81LaEiB3P49L
@@ -197,4 +131,4 @@ w76l4z5nk6HKao3DDdwlc5IRGQX++oQ0VvhbEz8QHmQmYvzXd/FIQYb7H7Tc2/qcb9wAFLO2
 ciod/sBp2B1SPYBVPdwJcR4Ece1hch9znboy51uGOe8DTpC9MOcNTp+q+mmRfrc83ywmBp/f
 u6EM0j+HgasxRbh4YZnKQ5OkxQA8CPFI9QxT/bsWuPj/A9wl1kVSOQAA
 
---9jxsPFA5p3P2qPhR--
+--J2SCkAp4GZ/dPZZf--
