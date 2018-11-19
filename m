@@ -1,32 +1,38 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: RFC: userspace exception fixups
-Date: Mon, 19 Nov 2018 09:00:08 -0800
-Message-ID: <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <20181118071548.GA4795@linux.intel.com> <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
- <20181119160204.GD13298@linux.intel.com>
+From: Eugene Syromiatnikov <esyr@redhat.com>
+Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
+Date: Mon, 19 Nov 2018 18:10:53 +0100
+Message-ID: <20181119171053.GA28067@asgard.redhat.com>
+References: <20181119103241.5229-1-christian@brauner.io>
+ <20181119103241.5229-3-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181119160204.GD13298@linux.intel.com>
+Content-Disposition: inline
+In-Reply-To: <20181119103241.5229-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: Andrew Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.c>
+To: Christian Brauner <christian@brauner.io>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 19, 2018 at 8:02 AM Jarkko Sakkinen
-<jarkko.sakkinen@linux.intel.com> wrote:
->
-> On Mon, Nov 19, 2018 at 07:29:36AM -0800, Andy Lutomirski wrote:
-> > 1. The kernel needs some way to know *when* to apply this fixup.
-> > Decoding the instruction stream and doing it to all exceptions that
-> > hit an ENCLU instruction seems like a poor design.
->
-> I'm not sure why you would ever need to do any type of fixup as the idea
-> is to just return to AEP i.e. from chosen exceptions (EPCM, #UD) the AEP
-> would work the same way as for exceptions that the kernel can deal with
-> except filling the exception information to registers.
+On Mon, Nov 19, 2018 at 11:32:39AM +0100, Christian Brauner wrote:
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index 3cf7b533b3d1..e637eab883e9 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -398,3 +398,4 @@
+>  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+>  385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+>  386	i386	rseq			sys_rseq			__ia32_sys_rseq
+> +387	i386	procfd_signal		sys_procfd_signal		__ia32_sys_procfd_signal
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index f0b1709a5ffb..e95f6741ab42 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -343,6 +343,7 @@
+>  332	common	statx			__x64_sys_statx
+>  333	common	io_pgetevents		__x64_sys_io_pgetevents
+>  334	common	rseq			__x64_sys_rseq
+> +335	common	procfd_signal		__x64_sys_procfd_signal
 
-Sure, but how does the kernel know when to do that and when to send a
-signal?  I don't really like decoding the instruction stream to figure
-it out.
+You have wired up the syscall on x86 but have not added the syscall number
+to the generic syscall header (include/uapi/asm-generic/unistd.h), why?
