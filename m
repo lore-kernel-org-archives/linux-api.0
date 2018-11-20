@@ -1,10 +1,12 @@
 From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Subject: [PATCH -manpage 1/2] fcntl.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
-Date: Mon, 19 Nov 2018 21:25:44 -0800
-Message-ID: <20181120052545.76560-1-joel@joelfernandes.org>
+Subject: [PATCH -manpage 2/2] memfd_create.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
+Date: Mon, 19 Nov 2018 21:25:45 -0800
+Message-ID: <20181120052545.76560-2-joel@joelfernandes.org>
+References: <20181120052545.76560-1-joel@joelfernandes.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181120052545.76560-1-joel@joelfernandes.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-man@vger.kernel.org
 Cc: "Joel Fernandes (Google)" <joel@joelfernandes.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, John Stultz <john.stultz@linaro.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mm@kvack.org, =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>
@@ -15,34 +17,55 @@ https://lore.kernel.org/lkml/20181120052137.74317-1-joel@joelfernandes.org/T/#t
 
 Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
 ---
- man2/fcntl.2 | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+ man2/memfd_create.2 | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
 
-diff --git a/man2/fcntl.2 b/man2/fcntl.2
-index 03533d65b49d..54772f94964c 100644
---- a/man2/fcntl.2
-+++ b/man2/fcntl.2
-@@ -1525,6 +1525,21 @@ Furthermore, if there are any asynchronous I/O operations
- .RB ( io_submit (2))
- pending on the file,
- all outstanding writes will be discarded.
-+.TP
+diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
+index 3cd392d1b4d9..fce2bf8d0fff 100644
+--- a/man2/memfd_create.2
++++ b/man2/memfd_create.2
+@@ -280,7 +280,15 @@ in order to restrict further modifications on the file.
+ (If placing the seal
+ .BR F_SEAL_WRITE ,
+ then it will be necessary to first unmap the shared writable mapping
+-created in the previous step.)
++created in the previous step. Otherwise, behavior similar to
++.BR F_SEAL_WRITE
++can be achieved, by using
 +.BR F_SEAL_FUTURE_WRITE
-+If this seal is set, the contents of the file can be modified only from
-+existing writeable mappings that were created prior to the seal being set.
-+Any attempt to create a new writeable mapping on the memfd via
++which will prevent future writes via
 +.BR mmap (2)
-+will fail with
-+.BR EPERM.
-+Also any attempts to write to the memfd via
++and
 +.BR write (2)
-+will fail with
-+.BR EPERM.
-+This is useful in situations where existing writable mapped regions need to be
-+kept intact while preventing any future writes. For example, to share a
-+read-only memory buffer to other processes that only the sender can write to.
- .\"
- .SS File read/write hints
- Write lifetime hints can be used to inform the kernel about the relative
++from succeeding, while keeping existing shared writable mappings).
+ .IP 4.
+ A second process obtains a file descriptor for the
+ .BR tmpfs (5)
+@@ -425,6 +433,7 @@ main(int argc, char *argv[])
+         fprintf(stderr, "\\t\\tg \- F_SEAL_GROW\\n");
+         fprintf(stderr, "\\t\\ts \- F_SEAL_SHRINK\\n");
+         fprintf(stderr, "\\t\\tw \- F_SEAL_WRITE\\n");
++        fprintf(stderr, "\\t\\tW \- F_SEAL_FUTURE_WRITE\\n");
+         fprintf(stderr, "\\t\\tS \- F_SEAL_SEAL\\n");
+         exit(EXIT_FAILURE);
+     }
+@@ -463,6 +472,8 @@ main(int argc, char *argv[])
+             seals |= F_SEAL_SHRINK;
+         if (strchr(seals_arg, \(aqw\(aq) != NULL)
+             seals |= F_SEAL_WRITE;
++        if (strchr(seals_arg, \(aqW\(aq) != NULL)
++            seals |= F_SEAL_FUTURE_WRITE;
+         if (strchr(seals_arg, \(aqS\(aq) != NULL)
+             seals |= F_SEAL_SEAL;
+ 
+@@ -518,6 +529,8 @@ main(int argc, char *argv[])
+         printf(" GROW");
+     if (seals & F_SEAL_WRITE)
+         printf(" WRITE");
++    if (seals & F_SEAL_FUTURE_WRITE)
++        printf(" FUTURE_WRITE");
+     if (seals & F_SEAL_SHRINK)
+         printf(" SHRINK");
+     printf("\\n");
 -- 
 2.19.1.1215.g8438c0b245-goog
