@@ -1,87 +1,65 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH -next 1/2] mm/memfd: make F_SEAL_FUTURE_WRITE seal more
- robust
-Date: Tue, 20 Nov 2018 13:13:35 -0800
-Message-ID: <20181120211335.GC22801@google.com>
-References: <20181120052137.74317-1-joel@joelfernandes.org>
- <CALCETrXgBENat=5=7EuU-ttQ-YSXT+ifjLGc=hpJ=unRgSsndw@mail.gmail.com>
- <20181120183926.GA124387@google.com>
- <20181121070658.011d576d@canb.auug.org.au>
- <469B80CB-D982-4802-A81D-95AC493D7E87@amacapital.net>
- <20181120204710.GB22801@google.com>
- <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Wed, 21 Nov 2018 00:46:40 +0200
+Message-ID: <20181120224640.GC8391@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+ <20181118071548.GA4795@linux.intel.com>
+ <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
+ <20181119160204.GD13298@linux.intel.com>
+ <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
+ <20181120101133.GA7319@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net>
+In-Reply-To: <20181120101133.GA7319@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Stephen Rothwell <sfr@canb.auug.org.au>, Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, Linux API <linux-api@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 02:02:49PM -0700, Andy Lutomirski wrote:
-> 
-> > On Nov 20, 2018, at 1:47 PM, Joel Fernandes <joel@joelfernandes.org> wrote:
+On Tue, Nov 20, 2018 at 12:11:33PM +0200, Jarkko Sakkinen wrote:
+> On Mon, Nov 19, 2018 at 09:00:08AM -0800, Andy Lutomirski wrote:
+> > On Mon, Nov 19, 2018 at 8:02 AM Jarkko Sakkinen
+> > <jarkko.sakkinen@linux.intel.com> wrote:
+> > >
+> > > On Mon, Nov 19, 2018 at 07:29:36AM -0800, Andy Lutomirski wrote:
+> > > > 1. The kernel needs some way to know *when* to apply this fixup.
+> > > > Decoding the instruction stream and doing it to all exceptions that
+> > > > hit an ENCLU instruction seems like a poor design.
+> > >
+> > > I'm not sure why you would ever need to do any type of fixup as the idea
+> > > is to just return to AEP i.e. from chosen exceptions (EPCM, #UD) the AEP
+> > > would work the same way as for exceptions that the kernel can deal with
+> > > except filling the exception information to registers.
 > > 
-> >> On Tue, Nov 20, 2018 at 01:33:18PM -0700, Andy Lutomirski wrote:
-> >> 
-> >>> On Nov 20, 2018, at 1:07 PM, Stephen Rothwell <sfr@canb.auug.org.au> wrote:
-> >>> 
-> >>> Hi Joel,
-> >>> 
-> >>>>> On Tue, 20 Nov 2018 10:39:26 -0800 Joel Fernandes <joel@joelfernandes.org> wrote:
-> >>>>> 
-> >>>>> On Tue, Nov 20, 2018 at 07:13:17AM -0800, Andy Lutomirski wrote:
-> >>>>> On Mon, Nov 19, 2018 at 9:21 PM Joel Fernandes (Google)
-> >>>>> <joel@joelfernandes.org> wrote:  
-> >>>>>> 
-> >>>>>> A better way to do F_SEAL_FUTURE_WRITE seal was discussed [1] last week
-> >>>>>> where we don't need to modify core VFS structures to get the same
-> >>>>>> behavior of the seal. This solves several side-effects pointed out by
-> >>>>>> Andy [2].
-> >>>>>> 
-> >>>>>> [1] https://lore.kernel.org/lkml/20181111173650.GA256781@google.com/
-> >>>>>> [2] https://lore.kernel.org/lkml/69CE06CC-E47C-4992-848A-66EB23EE6C74@amacapital.net/
-> >>>>>> 
-> >>>>>> Suggested-by: Andy Lutomirski <luto@kernel.org>
-> >>>>>> Fixes: 5e653c2923fd ("mm: Add an F_SEAL_FUTURE_WRITE seal to memfd")  
-> >>>>> 
-> >>>>> What tree is that commit in?  Can we not just fold this in?  
-> >>>> 
-> >>>> It is in linux-next. Could we keep both commits so we have the history?
-> >>> 
-> >>> Well, its in Andrew's mmotm, so its up to him.
-> >>> 
-> >>> 
-> >> 
-> >> Unless mmotm is more magical than I think, the commit hash in your fixed
-> >> tag is already nonsense. mmotm gets rebased all the time, and is only
-> >> barely a git tree.
-> > 
-> > I wouldn't go so far to call it nonsense. It was a working patch, it just did
-> > things differently. Your help with improving the patch is much appreciated.
+> > Sure, but how does the kernel know when to do that and when to send a
+> > signal?  I don't really like decoding the instruction stream to figure
+> > it out.
 > 
-> I’m not saying the patch is nonsense — I’m saying the *hash* may be
-> nonsense. akpm uses a bunch of .patch files and all kinds of crazy scripts,
-> and the mmotm.git tree is not stable at all.
+> Hmm... why you have to decode instruction stream to find that out? Would
+> just depend on exception type (#GP with EPCM, #UD). Or are you saying
+> that kernel should need to SIGSEGV if there is in fact ENCLU so that
+> there is no infinite trap loop? Sorry, I'm a bit lost here that where
+> does this decoding requirement comes from in the first place. I
+> understand how it is used in Sean's proposal...
 > 
-
-Oh, ok. Sorry for misunderstanding and thanks for clarification. :-)
-
-> > I am Ok with whatever Andrew wants to do, if it is better to squash it with
-> > the original, then I can do that and send another patch.
-> > 
-> > 
+> Anyway, this option can be probably discarded without further
+> consideration because apparently single stepping can cause #DB SS fault
+> if AEP handler is anything else than a single instruction.
 > 
-> From experience, Andrew will food in fixups on request :)
+> For me it seems that by ruling out options, vDSO option is what is
+> left. I don't like it but at least it works...
 
-Andrew, could you squash this patch into the one titled ("mm: Add an
-F_SEAL_FUTURE_WRITE seal to memfd")? That one was already picked up by -next
-but I imagine you might have a crazy script as Andy pointed out for exactly
-these situations. ;-)
+The section relevant in the SDM is 43.2.6 but I started to think that
+why in dumbed down return-to-AEP that would even be a problem? If you
+are single step debugging isn't that what you want? Continue single
+stepping in the AEP handler...
 
-thanks,
+I still don't understand the part where the need for decoding
+instruction stream comes in this dumbed down approach. There's
+not RIP manipulation or anything involved at all.
 
- - Joel
+With this reconsideration I would keep this as one option at least.
+
+/Jarkko
