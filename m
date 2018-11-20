@@ -1,71 +1,77 @@
-From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Subject: [PATCH -manpage 2/2] memfd_create.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
-Date: Mon, 19 Nov 2018 21:25:45 -0800
-Message-ID: <20181120052545.76560-2-joel@joelfernandes.org>
-References: <20181120052545.76560-1-joel@joelfernandes.org>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Tue, 20 Nov 2018 08:48:00 +0100
+Message-ID: <20181120074759.GB22247@dhcp22.suse.cz>
+References: <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
+ <20181016104855.GQ18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
+ <20181017070531.GC18839@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1810171256330.60837@chino.kir.corp.google.com>
+ <20181018070031.GW18839@dhcp22.suse.cz>
+ <20181114132306.GX23419@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1811141336010.200345@chino.kir.corp.google.com>
+ <20181115090242.GH23831@dhcp22.suse.cz>
+ <alpine.DEB.2.21.1811191404030.150313@chino.kir.corp.google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181120052545.76560-1-joel@joelfernandes.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1811191404030.150313@chino.kir.corp.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-man@vger.kernel.org
-Cc: "Joel Fernandes (Google)" <joel@joelfernandes.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, John Stultz <john.stultz@linaro.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mm@kvack.org, =?UTF-8?q?Marc-Andr=C3=A9=20Lureau?= <marcandre.lureau@redhat.com>, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>
+To: David Rientjes <rientjes@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-More details of the seal can be found in the LKML patch:
-https://lore.kernel.org/lkml/20181120052137.74317-1-joel@joelfernandes.org/T/#t
+On Mon 19-11-18 14:05:34, David Rientjes wrote:
+> On Thu, 15 Nov 2018, Michal Hocko wrote:
+> 
+> > > The userspace had a single way to determine if thp had been disabled for a 
+> > > specific vma and that was broken with your commit.  We have since fixed 
+> > > it.  Modifying our software stack to start looking for some field 
+> > > somewhere else will not help anybody else that this has affected or will 
+> > > affect.  I'm interested in not breaking userspace, not trying a wait and 
+> > > see approach to see if anybody else complains once we start looking for 
+> > > some other field.  The risk outweighs the reward, it already broke us, and 
+> > > I'd prefer not to even open the possibility of breaking anybody else.
+> > 
+> > I very much agree on "do not break userspace" part but this is kind of
+> > gray area. VMA flags are a deep internal implementation detail and
+> > nobody should really depend on it for anything important. The original
+> > motivation for introducing it was CRIU where it is kind of
+> > understandable. I would argue they should find a different way but it is
+> > just too late for them.
+> > 
+> > For this particular case there was no other bug report except for yours
+> > and if it is possible to fix it on your end then I would really love to
+> > make the a sensible user interface to query the status. If we are going
+> > to change the semantic of the exported flag again then we risk yet
+> > another breakage.
+> > 
+> > Therefore I am asking whether changing your particular usecase to a new
+> > interface is possible because that would allow to have a longerm
+> > sensible user interface rather than another kludge which still doesn't
+> > cover all the usecases (e.g. there is no way to reliably query the
+> > madvise status after your patch).
+> > 
+> 
+> Providing another interface is great, I have no objection other than 
+> emitting another line for every vma on the system for smaps is probably 
+> overkill for something as rare as PR_SET_THP_DISABLE.
 
-Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
----
- man2/memfd_create.2 | 15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+Let me think about a full patch and see how it looks like.
 
-diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-index 3cd392d1b4d9..fce2bf8d0fff 100644
---- a/man2/memfd_create.2
-+++ b/man2/memfd_create.2
-@@ -280,7 +280,15 @@ in order to restrict further modifications on the file.
- (If placing the seal
- .BR F_SEAL_WRITE ,
- then it will be necessary to first unmap the shared writable mapping
--created in the previous step.)
-+created in the previous step. Otherwise, behavior similar to
-+.BR F_SEAL_WRITE
-+can be achieved, by using
-+.BR F_SEAL_FUTURE_WRITE
-+which will prevent future writes via
-+.BR mmap (2)
-+and
-+.BR write (2)
-+from succeeding, while keeping existing shared writable mappings).
- .IP 4.
- A second process obtains a file descriptor for the
- .BR tmpfs (5)
-@@ -425,6 +433,7 @@ main(int argc, char *argv[])
-         fprintf(stderr, "\\t\\tg \- F_SEAL_GROW\\n");
-         fprintf(stderr, "\\t\\ts \- F_SEAL_SHRINK\\n");
-         fprintf(stderr, "\\t\\tw \- F_SEAL_WRITE\\n");
-+        fprintf(stderr, "\\t\\tW \- F_SEAL_FUTURE_WRITE\\n");
-         fprintf(stderr, "\\t\\tS \- F_SEAL_SEAL\\n");
-         exit(EXIT_FAILURE);
-     }
-@@ -463,6 +472,8 @@ main(int argc, char *argv[])
-             seals |= F_SEAL_SHRINK;
-         if (strchr(seals_arg, \(aqw\(aq) != NULL)
-             seals |= F_SEAL_WRITE;
-+        if (strchr(seals_arg, \(aqW\(aq) != NULL)
-+            seals |= F_SEAL_FUTURE_WRITE;
-         if (strchr(seals_arg, \(aqS\(aq) != NULL)
-             seals |= F_SEAL_SEAL;
- 
-@@ -518,6 +529,8 @@ main(int argc, char *argv[])
-         printf(" GROW");
-     if (seals & F_SEAL_WRITE)
-         printf(" WRITE");
-+    if (seals & F_SEAL_FUTURE_WRITE)
-+        printf(" FUTURE_WRITE");
-     if (seals & F_SEAL_SHRINK)
-         printf(" SHRINK");
-     printf("\\n");
+> 
+> That said, I think the current handling of the "nh" flag being emitted in 
+> smaps is logical and ensures no further userspace breakage.
+
+I have already expressed a concern that there is no way to query for
+MADV_NOHUGEPAGE if we overload the flag. So this is not a riskfree
+option.
+
+> If that is to 
+> be removed, I consider it an unnecessary risk.  That would raised in code 
+> review.
+
 -- 
-2.19.1.1215.g8438c0b245-goog
+Michal Hocko
+SUSE Labs
