@@ -1,76 +1,69 @@
-From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v2 4/4] selftests: add a test for bpf_prog_test_run output size
-Date: Tue, 20 Nov 2018 15:43:06 +0000
-Message-ID: <20181120154306.16657-5-lmb@cloudflare.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
- <20181120154306.16657-1-lmb@cloudflare.com>
+From: Y Song <ys114321@gmail.com>
+Subject: Re: [PATCH 3/3] selftests: add a test for bpf_prog_test_run output size
+Date: Tue, 20 Nov 2018 08:58:01 -0800
+Message-ID: <CAH3MdRXyXxq5Y9W05bm+03hHn9fc7jyJFdzRvKtLM8bR9TqL3A@mail.gmail.com>
+References: <20181116125329.3974-1-lmb@cloudflare.com> <20181116125329.3974-4-lmb@cloudflare.com>
+ <CAH3MdRVd=ipYg+b9sGRR-FFUuOMjZ4OGZzkmJuFEShrYVXvwWA@mail.gmail.com> <CACAyw99F8L7BoB_TVAS6fvY9yb7cu9sCGXhjYPQ82sFZR=xKYQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181120154306.16657-1-lmb@cloudflare.com>
+In-Reply-To: <CACAyw99F8L7BoB_TVAS6fvY9yb7cu9sCGXhjYPQ82sFZR=xKYQ@mail.gmail.com>
 Sender: netdev-owner@vger.kernel.org
-To: ast@kernel.org, daniel@iogearbox.net
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com, Lorenz Bauer <lmb@cloudflare.com>
+To: lmb@cloudflare.com
+Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, netdev <netdev@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Make sure that bpf_prog_test_run returns the correct length
-in the size_out argument and that the kernel respects the
-output size hint. Also check that errno indicates ENOSPC.
+On Tue, Nov 20, 2018 at 3:35 AM Lorenz Bauer <lmb@cloudflare.com> wrote:
+>
+> On Sun, 18 Nov 2018 at 05:59, Y Song <ys114321@gmail.com> wrote:
+> >
+> > On Fri, Nov 16, 2018 at 12:55 PM Lorenz Bauer <lmb@cloudflare.com> wrote:
+> > >
+> > > Make sure that bpf_prog_test_run returns the correct length
+> > > in the size_out argument and that the kernel respects the
+> > > output size hint.
+> > >
+> > > Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
+> > > ---
+> > >  tools/testing/selftests/bpf/test_progs.c | 34 ++++++++++++++++++++++++
+> > >  1 file changed, 34 insertions(+)
+> > >
+> > > diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
+> > > index 560d7527b86b..6ab98e10e86f 100644
+> > > --- a/tools/testing/selftests/bpf/test_progs.c
+> > > +++ b/tools/testing/selftests/bpf/test_progs.c
+> > > @@ -124,6 +124,39 @@ static void test_pkt_access(void)
+> > >         bpf_object__close(obj);
+> > >  }
+> > >
+> > > +static void test_output_size_hint(void)
+> > > +{
+> > > +       const char *file = "./test_pkt_access.o";
+> > > +       struct bpf_object *obj;
+> > > +       __u32 retval, size, duration;
+> > > +       int err, prog_fd;
+> > > +       char buf[10];
+> > > +
+> > > +       err = bpf_prog_load(file, BPF_PROG_TYPE_SCHED_CLS, &obj, &prog_fd);
+> > > +       if (err) {
+> > > +               error_cnt++;
+> > > +               return;
+> > > +       }
+> > CHECK can also be used here.
+> > if (CHECK(...)) {
+> >    goto done;
+> > }
+> > where label "done" is right before bpf_object__close.
+>
+> I just copied this part from test_pkt_access, happy to change it though.
+> However, I think "goto done" would lead to freeing an unallocated
+> object in this case?
 
-Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
----
- tools/testing/selftests/bpf/test_progs.c | 34 ++++++++++++++++++++++++
- 1 file changed, 34 insertions(+)
+Right, you can just return here.
 
-diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-index 299938603cb6..92e48c2ba2c6 100644
---- a/tools/testing/selftests/bpf/test_progs.c
-+++ b/tools/testing/selftests/bpf/test_progs.c
-@@ -124,6 +124,39 @@ static void test_pkt_access(void)
- 	bpf_object__close(obj);
- }
- 
-+static void test_output_size_hint(void)
-+{
-+	const char *file = "./test_pkt_access.o";
-+	struct bpf_object *obj;
-+	__u32 retval, size, duration;
-+	int err, prog_fd;
-+	char buf[10];
-+
-+	err = bpf_prog_load(file, BPF_PROG_TYPE_SCHED_CLS, &obj, &prog_fd);
-+	if (CHECK(err, "load", "err %d errno %d\n", err, errno))
-+		return;
-+
-+	memset(buf, 0, sizeof(buf));
-+
-+	size = 5;
-+	err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
-+				buf, &size, &retval, &duration);
-+	CHECK(err != -1 || errno != ENOSPC || retval, "run",
-+	      "err %d errno %d retval %d\n",
-+	      err, errno, retval);
-+
-+	duration = 0;
-+
-+	CHECK(size != sizeof(pkt_v4), "out_size",
-+	      "incorrect output size, want %lu have %u\n",
-+	      sizeof(pkt_v4), size);
-+
-+	CHECK(buf[5] != 0, "overflow",
-+	      "prog_test_run ignored size hint\n");
-+
-+	bpf_object__close(obj);
-+}
-+
- static void test_xdp(void)
- {
- 	struct vip key4 = {.protocol = 6, .family = AF_INET};
-@@ -1847,6 +1880,7 @@ int main(void)
- 	jit_enabled = is_jit_enabled();
- 
- 	test_pkt_access();
-+	test_output_size_hint();
- 	test_xdp();
- 	test_xdp_adjust_tail();
- 	test_l4lb_all();
--- 
-2.17.1
+>
+> --
+> Lorenz Bauer  |  Systems Engineer
+> 25 Lavington St., London SE1 0NZ
+>
+> www.cloudflare.com
