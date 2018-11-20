@@ -1,128 +1,42 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v2 3/4] libbpf: require size hint in bpf_prog_test_run
-Date: Tue, 20 Nov 2018 14:51:33 -0800
-Message-ID: <20181120225131.ywfnf6r6a57dyhn2@ast-mbp.dhcp.thefacebook.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
- <20181120154306.16657-1-lmb@cloudflare.com>
- <20181120154306.16657-4-lmb@cloudflare.com>
- <20181120191808.gewk7ny5tshe56cm@ast-mbp.dhcp.thefacebook.com>
- <CACAyw993bwvo5obLgvWXbG_S6xRHXKZ9M1vX5=y1RB-R24LYdQ@mail.gmail.com>
+From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+Subject: Re: RFC: userspace exception fixups
+Date: Wed, 21 Nov 2018 00:55:18 +0200
+Message-ID: <20181120225518.GE8391@linux.intel.com>
+References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
+ <20181118071548.GA4795@linux.intel.com>
+ <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
+ <20181119160204.GD13298@linux.intel.com>
+ <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
+ <20181120101133.GA7319@linux.intel.com>
+ <CALCETrU2dy7Oh+AHDGZ2omq9p7pNbjFd8ruv5CkfJXCp5nTYBQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CACAyw993bwvo5obLgvWXbG_S6xRHXKZ9M1vX5=y1RB-R24LYdQ@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>
-Cc: Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, netdev@vger.kernel.org, linux-api@vger.kernel.org, Y Song <ys114321@gmail.com>
+In-Reply-To: <CALCETrU2dy7Oh+AHDGZ2omq9p7pNbjFd8ruv5CkfJXCp5nTYBQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 07:43:57PM +0000, Lorenz Bauer wrote:
-> On Tue, 20 Nov 2018 at 19:18, Alexei Starovoitov
-> <alexei.starovoitov@gmail.com> wrote:
-> >
-> > On Tue, Nov 20, 2018 at 03:43:05PM +0000, Lorenz Bauer wrote:
-> > > Require size_out to be non-NULL if data_out is given. This prevents
-> > > accidental overwriting of process memory after the output buffer.
-> > >
-> > > Adjust callers of bpf_prog_test_run to this behaviour.
-> > >
-> > > Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
-> > > ---
-> > >  tools/lib/bpf/bpf.c                      |  7 ++++++-
-> > >  tools/testing/selftests/bpf/test_progs.c | 10 ++++++++++
-> > >  2 files changed, 16 insertions(+), 1 deletion(-)
-> > >
-> > > diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
-> > > index 961e1b9fc592..1a835ff27486 100644
-> > > --- a/tools/lib/bpf/bpf.c
-> > > +++ b/tools/lib/bpf/bpf.c
-> > > @@ -407,15 +407,20 @@ int bpf_prog_test_run(int prog_fd, int repeat, void *data, __u32 size,
-> > >       union bpf_attr attr;
-> > >       int ret;
-> > >
-> > > +     if (data_out && !size_out)
-> > > +             return -EINVAL;
-> > > +
-> > >       bzero(&attr, sizeof(attr));
-> > >       attr.test.prog_fd = prog_fd;
-> > >       attr.test.data_in = ptr_to_u64(data);
-> > >       attr.test.data_out = ptr_to_u64(data_out);
-> > >       attr.test.data_size_in = size;
-> > > +     if (data_out)
-> > > +             attr.test.data_size_out = *size_out;
-> > >       attr.test.repeat = repeat;
-> > >
-> > >       ret = sys_bpf(BPF_PROG_TEST_RUN, &attr, sizeof(attr));
-> > > -     if (size_out)
-> > > +     if (data_out)
-> > >               *size_out = attr.test.data_size_out;
-> > >       if (retval)
-> > >               *retval = attr.test.retval;
-> > > diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-> > > index c1e688f61061..299938603cb6 100644
-> > > --- a/tools/testing/selftests/bpf/test_progs.c
-> > > +++ b/tools/testing/selftests/bpf/test_progs.c
-> > > @@ -150,6 +150,7 @@ static void test_xdp(void)
-> > >       bpf_map_update_elem(map_fd, &key4, &value4, 0);
-> > >       bpf_map_update_elem(map_fd, &key6, &value6, 0);
-> > >
-> > > +     size = sizeof(buf);
-> > >       err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
-> > >                               buf, &size, &retval, &duration);
-> > >
-> > > @@ -158,6 +159,7 @@ static void test_xdp(void)
-> > >             "err %d errno %d retval %d size %d\n",
-> > >             err, errno, retval, size);
-> > >
-> > > +     size = sizeof(buf);
-> > >       err = bpf_prog_test_run(prog_fd, 1, &pkt_v6, sizeof(pkt_v6),
-> > >                               buf, &size, &retval, &duration);
-> >
-> > This will surely break existing bpf_prog_test_run users.
-> > Like it will break our testing framework.
-> > we can fix out stuff and libbpf is a user space library, but I don't
-> > think that this is the case to invoke such pain.
-> > libbpf's bpf_prog_test_run() should be a simple wrapper on top of syscall.
-> > I don't think it should be making such restrictions on api.
-> >
-> > btw patch 1 looks good to me.
-> >
-> 
-> What if I add bpf_prog_test_run_safe or similar, with the behaviour
-> proposed in the patch?
-> Makes sense that you don't want to break existing users of libbpf
-> outside the kernel, OTOH
-> user space really should specify the output buffer length (or be given
-> the choice).
+On Tue, Nov 20, 2018 at 07:19:37AM -0800, Andy Lutomirski wrote:
+> What is "#GP with EPCM"?  We certainly don't want to react to #UD in
 
-+     if (data_out && !size_out)
-+             return -EINVAL;
-+
-+     if (data_out)
-+             attr.test.data_size_out = *size_out;
+A typo. Meant #PF with PF_SGX set i.e. EPCM conflict.
 
-this is actually worse than I thought, since it will cause sporadic
-failures in the test frameworks that don't init size_out.
-Like test_progs.c will be randomly passing/failing depending
-on the state of uninit bytes in the stack.
+> general by mucking with some regs and retrying -- that will infinite
+> loop and confuse everyone.  I'm not even 100% convinced that decoding
+> the insn stream is useful -- AEP can point to something that isn't
+> ENCLU.
 
-Also consider that during bpf uconf folks have requested to extend
-prog_test_run with __sk_buff in/out argument, so no only packet data,
-but skb related fields can be tested as well.
-I think that was a valid request and prog_test_run should be extended.
-So soon such libbpf's bpf_prog_test_run_safe() will not be enough.
-I think it's the best to use _xattr approach we did for map_create
-and prog_load.
-This new bpf_prog_test_run_xattr() will be able to do the check
-you're proposing:
-+     if (data_out && !size_out)
-+             return -EINVAL;
-+
-+     if (data_out)
-+             attr.test.data_size_out = *size_out;
-it can also check that both size and size_out are sane
-with similar check to kernel:
-if (size < ETH_HLEN || size > PAGE_SIZE - headroom - tailroom);
+In my return-to-AEP approach to whole point was not to do any decoding
+but instead have something else always in the AEP handler than just
+ENCLU.
 
-and will be extendable in the near future with __sk_buff in/out.
+No instruction decoding. No RIP manipulation.
+
+> IOW the kernel needs to know *when* to apply this special behavior.
+> Sadly there is no bit in the exception frame that says "came from
+> SGX".
+
+/Jarkko
