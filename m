@@ -1,54 +1,51 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH 0/3] Fix unsafe BPF_PROG_TEST_RUN interface
-Date: Tue, 20 Nov 2018 01:34:05 +0100
-Message-ID: <040aedc7-0883-86c6-3707-b54a6a9e01c2@iogearbox.net>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
- <CAH3MdRW1=iUm0qQdNrv9r5Orn3rZ2XBDn-qym5i_cpi7wo6PxA@mail.gmail.com>
- <CACAyw98fu_=WufBrv_7CwO4iJj3jhOu1n6b3Pr0aZxqSk8++Gw@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
+Date: Mon, 19 Nov 2018 16:34:00 -0800
+Message-ID: <CALCETrU+_MkDR4AYkbTB72vDRteOY3TDhQkARL0PyXzc3KUgfQ@mail.gmail.com>
+References: <20181119103241.5229-1-christian@brauner.io> <20181119103241.5229-3-christian@brauner.io>
+ <20181119223954.GA4992@cisco> <CAKOZuetQDziWeRLydHbDNv1abGM3LyF=WohLFvbzmtdT_+nBdg@mail.gmail.com>
+ <20181119230709.GB4992@cisco> <CALCETrWyuQvTtksN1J1XbCFPka_rLOaFqa5W==EvGQvoaf9f3Q@mail.gmail.com>
+ <20181120003247.a776bej54baxqoxv@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CACAyw98fu_=WufBrv_7CwO4iJj3jhOu1n6b3Pr0aZxqSk8++Gw@mail.gmail.com>
-Content-Language: en-US
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>, ys114321@gmail.com
-Cc: Alexei Starovoitov <ast@kernel.org>, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181120003247.a776bej54baxqoxv@brauner.io>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: Andrew Lutomirski <luto@kernel.org>, Tycho Andersen <tycho@tycho.ws>, Daniel Colascione <dancol@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/19/2018 03:30 PM, Lorenz Bauer wrote:
-> On Sun, 18 Nov 2018 at 06:13, Y Song <ys114321@gmail.com> wrote:
->>
->> There is a slight change of user space behavior for this patch.
->> Without this patch, the value bpf_attr.test.data_size_out is output only.
->> For example,
->>    output buffer : out_buf (user allocated size 10)
->>    data_size_out is a random value (e.g., 1),
->>
->> The actual data to copy is 5.
->>
->> In today's implementation, the kernel will copy 5 and set data_size_out is 5.
->>
->> With this patch, the kernel will copy 1 and set data_size_out is 5.
->>
->> I am not 100% sure at this time whether we CAN overload data_size_out
->> since it MAY break existing applications.
-> 
-> Yes, that's correct. I think that the likelihood of this is low. It would
-> affect code that uses bpf_attr without zeroing it first. I had a look around,
-> and I could only find code that would keep working:
+On Mon, Nov 19, 2018 at 4:33 PM Christian Brauner <christian@brauner.io> wrote:
+>
+> On Mon, Nov 19, 2018 at 04:27:49PM -0800, Andy Lutomirski wrote:
+> > On Mon, Nov 19, 2018 at 3:07 PM Tycho Andersen <tycho@tycho.ws> wrote:
+> > > > These tools also care about ioctls. Adding a system call is a pain,
+> > > > but the solution is to make adding system calls less of a pain, not to
+> > > > permanently make the Linux ABI worse.
+> > >
+> > > For user-defined values of "worse" :)
+> > >
+> >
+> > I tend to agree with Tycho here.  But I'm wondering if it might be
+> > worth considering a better ioctl.
+> >
+> > /me dons flame-proof hat
+> >
+> > We could do:
+> >
+> > long better_ioctl(int fd, u32 nr, const void *inbuf, size_t inlen,
+> > const void *outbuf, size_t outlen);
+>
+> I'm the writer of this patch so take this with a grain of salt.
+> I think it is a bad idea to stop this patch and force us to introduce a
+> new type of ioctl().
 
-Agree, it seems like this would be rather unlikely to break the old behavior
-and only if some test app forgot to zero it (given data_size_out is also in
-the middle and not at the end). I'd rather prefer this approach here and then
-push the patch via stable than adding yet another data_size_out-like member.
+I agree completely.
 
-I think it also makes sense to return a -ENOSPC as Yonghong suggested in order
-to indicate to user space that the buffer is not sufficient. Right now this
-would have no such indication to the user so it would not be possible to
-distinguish whether truncation or not happened. Was thinking whether it makes
-sense to indicate through a new flag member that buffer truncation happened,
-but I do like -ENOSPC better.
+> An ioctl() is also not easy to use for this task because we want to add
+> a siginfo_t argument which I actually think provides value and makes
+> this interface more useful.
+>
 
-Thanks,
-Daniel
+You could always have a struct procfd_kill and pass a pointer to
+*that*.  But sure, it's ugly.
