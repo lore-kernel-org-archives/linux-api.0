@@ -1,77 +1,82 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Tue, 20 Nov 2018 08:48:00 +0100
-Message-ID: <20181120074759.GB22247@dhcp22.suse.cz>
-References: <alpine.DEB.2.21.1810151519250.247641@chino.kir.corp.google.com>
- <20181016104855.GQ18839@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810161416540.83080@chino.kir.corp.google.com>
- <20181017070531.GC18839@dhcp22.suse.cz>
- <alpine.DEB.2.21.1810171256330.60837@chino.kir.corp.google.com>
- <20181018070031.GW18839@dhcp22.suse.cz>
- <20181114132306.GX23419@dhcp22.suse.cz>
- <alpine.DEB.2.21.1811141336010.200345@chino.kir.corp.google.com>
- <20181115090242.GH23831@dhcp22.suse.cz>
- <alpine.DEB.2.21.1811191404030.150313@chino.kir.corp.google.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC PATCH v6 01/26] Documentation/x86: Add CET description
+Date: Tue, 20 Nov 2018 10:52:53 +0100
+Message-ID: <20181120095253.GA119911@gmail.com>
+References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
+ <20181119214809.6086-2-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.21.1811191404030.150313@chino.kir.corp.google.com>
+In-Reply-To: <20181119214809.6086-2-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Rientjes <rientjes@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Alexey Dobriyan <adobriyan@gmail.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Mon 19-11-18 14:05:34, David Rientjes wrote:
-> On Thu, 15 Nov 2018, Michal Hocko wrote:
-> 
-> > > The userspace had a single way to determine if thp had been disabled for a 
-> > > specific vma and that was broken with your commit.  We have since fixed 
-> > > it.  Modifying our software stack to start looking for some field 
-> > > somewhere else will not help anybody else that this has affected or will 
-> > > affect.  I'm interested in not breaking userspace, not trying a wait and 
-> > > see approach to see if anybody else complains once we start looking for 
-> > > some other field.  The risk outweighs the reward, it already broke us, and 
-> > > I'd prefer not to even open the possibility of breaking anybody else.
-> > 
-> > I very much agree on "do not break userspace" part but this is kind of
-> > gray area. VMA flags are a deep internal implementation detail and
-> > nobody should really depend on it for anything important. The original
-> > motivation for introducing it was CRIU where it is kind of
-> > understandable. I would argue they should find a different way but it is
-> > just too late for them.
-> > 
-> > For this particular case there was no other bug report except for yours
-> > and if it is possible to fix it on your end then I would really love to
-> > make the a sensible user interface to query the status. If we are going
-> > to change the semantic of the exported flag again then we risk yet
-> > another breakage.
-> > 
-> > Therefore I am asking whether changing your particular usecase to a new
-> > interface is possible because that would allow to have a longerm
-> > sensible user interface rather than another kludge which still doesn't
-> > cover all the usecases (e.g. there is no way to reliably query the
-> > madvise status after your patch).
-> > 
-> 
-> Providing another interface is great, I have no objection other than 
-> emitting another line for every vma on the system for smaps is probably 
-> overkill for something as rare as PR_SET_THP_DISABLE.
 
-Let me think about a full patch and see how it looks like.
+* Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
 
-> 
-> That said, I think the current handling of the "nh" flag being emitted in 
-> smaps is logical and ensures no further userspace breakage.
+> +X86 Documentation
+> +=======================
+> +
+> +Control-flow Enforcement
+> +========================
+> +
+> +.. toctree::
+> +   :maxdepth: 1
+> +
+> +   intel_cet
+> diff --git a/Documentation/x86/intel_cet.rst b/Documentation/x86/intel_cet.rst
+> new file mode 100644
+> index 000000000000..dac83bbf8a24
+> --- /dev/null
+> +++ b/Documentation/x86/intel_cet.rst
+> @@ -0,0 +1,268 @@
+> +.. SPDX-License-Identifier: GPL-2.0
+> +
+> +=========================================
+> +Control-flow Enforcement Technology (CET)
+> +=========================================
+> +
+> +[1] Overview
+> +============
+> +
+> +Control-flow Enforcement Technology (CET) provides protection against
+> +return/jump-oriented programming (ROP) attacks.  It can be setup to
+> +protect both the kernel and applications.  In the first phase,
+> +only the user-mode protection is implemented in 64-bit mode; 32-bit
+> +applications are supported in compatibility mode.
+> +
+> +CET introduces shadow stack (SHSTK) and indirect branch tracking
+> +(IBT).  SHSTK is a secondary stack allocated from memory and cannot
+> +be directly modified by applications.  When executing a CALL, the
+> +processor pushes a copy of the return address to SHSTK.  Upon
+> +function return, the processor pops the SHSTK copy and compares it
+> +to the one from the program stack.  If the two copies differ, the
+> +processor raises a control-protection exception.  IBT verifies all
+> +indirect CALL/JMP targets are intended as marked by the compiler
+> +with 'ENDBR' opcodes (see CET instructions below).
+> +
+> +There are two kernel configuration options:
+> +
+> +    INTEL_X86_SHADOW_STACK_USER, and
+> +    INTEL_X86_BRANCH_TRACKING_USER.
+> +
+> +To build a CET-enabled kernel, Binutils v2.31 and GCC v8.1 or later
+> +are required.  To build a CET-enabled application, GLIBC v2.28 or
+> +later is also required.
+> +
+> +There are two command-line options for disabling CET features:
+> +
+> +    no_cet_shstk - disables SHSTK, and
+> +    no_cet_ibt - disables IBT.
+> +
+> +At run time, /proc/cpuinfo shows the availability of SHSTK and IBT.
 
-I have already expressed a concern that there is no way to query for
-MADV_NOHUGEPAGE if we overload the flag. So this is not a riskfree
-option.
+What is the rough expected performance impact of CET on average function 
+call frequency user applications and the kernel itself?
 
-> If that is to 
-> be removed, I consider it an unnecessary risk.  That would raised in code 
-> review.
+Thanks,
 
--- 
-Michal Hocko
-SUSE Labs
+	Ingo
