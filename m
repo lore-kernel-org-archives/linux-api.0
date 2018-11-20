@@ -1,65 +1,84 @@
-From: Sean Christopherson <sean.j.christopherson@intel.com>
-Subject: Re: RFC: userspace exception fixups
-Date: Tue, 20 Nov 2018 10:09:44 -0800
-Message-ID: <20181120180944.GD31109@linux.intel.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <20181118071548.GA4795@linux.intel.com>
- <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
- <20181119160204.GD13298@linux.intel.com>
- <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
- <20181120101133.GA7319@linux.intel.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [RFC PATCH 1/3] mm, proc: be more verbose about unstable VMA
+ flags in /proc/<pid>/smaps
+Date: Tue, 20 Nov 2018 10:32:07 -0800
+Message-ID: <CAPcyv4j7=Mh9dt3Fv+cEhtYEXXKNDxErv0N9Zt+h+r9QxX_GAw@mail.gmail.com>
+References: <20181120103515.25280-1-mhocko@kernel.org> <20181120103515.25280-2-mhocko@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181120101133.GA7319@linux.intel.com>
+In-Reply-To: <20181120103515.25280-2-mhocko@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, adobriyan@gmail.com, Linux MM <linux-mm@kvack.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Jan Kara <jack@suse.cz>, David Rientjes <rientjes@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 12:11:33PM +0200, Jarkko Sakkinen wrote:
-> On Mon, Nov 19, 2018 at 09:00:08AM -0800, Andy Lutomirski wrote:
-> > On Mon, Nov 19, 2018 at 8:02 AM Jarkko Sakkinen
-> > <jarkko.sakkinen@linux.intel.com> wrote:
-> > >
-> > > On Mon, Nov 19, 2018 at 07:29:36AM -0800, Andy Lutomirski wrote:
-> > > > 1. The kernel needs some way to know *when* to apply this fixup.
-> > > > Decoding the instruction stream and doing it to all exceptions that
-> > > > hit an ENCLU instruction seems like a poor design.
-> > >
-> > > I'm not sure why you would ever need to do any type of fixup as the idea
-> > > is to just return to AEP i.e. from chosen exceptions (EPCM, #UD) the AEP
-> > > would work the same way as for exceptions that the kernel can deal with
-> > > except filling the exception information to registers.
-> > 
-> > Sure, but how does the kernel know when to do that and when to send a
-> > signal?  I don't really like decoding the instruction stream to figure
-> > it out.
-> 
-> Hmm... why you have to decode instruction stream to find that out? Would
-> just depend on exception type (#GP with EPCM, #UD).
+On Tue, Nov 20, 2018 at 2:35 AM Michal Hocko <mhocko@kernel.org> wrote:
+>
+> From: Michal Hocko <mhocko@suse.com>
+>
+> Even though vma flags exported via /proc/<pid>/smaps are explicitly
+> documented to be not guaranteed for future compatibility the warning
+> doesn't go far enough because it doesn't mention semantic changes to
+> those flags. And they are important as well because these flags are
+> a deep implementation internal to the MM code and the semantic might
+> change at any time.
+>
+> Let's consider two recent examples:
+> http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
+> : commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
+> : removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
+> : mean time certain customer of ours started poking into /proc/<pid>/smaps
+> : and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
+> : flags, the application just fails to start complaining that DAX support is
+> : missing in the kernel.
+>
+> http://lkml.kernel.org/r/alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com
+> : Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+> : introduced a regression in that userspace cannot always determine the set
+> : of vmas where thp is ineligible.
+> : Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
+> : to determine if a vma is eligible to be backed by hugepages.
+> : Previous to this commit, prctl(PR_SET_THP_DISABLE, 1) would cause thp to
+> : be disabled and emit "nh" as a flag for the corresponding vmas as part of
+> : /proc/pid/smaps.  After the commit, thp is disabled by means of an mm
+> : flag and "nh" is not emitted.
+> : This causes smaps parsing libraries to assume a vma is eligible for thp
+> : and ends up puzzling the user on why its memory is not backed by thp.
+>
+> In both cases userspace was relying on a semantic of a specific VMA
+> flag. The primary reason why that happened is a lack of a proper
+> internface. While this has been worked on and it will be fixed properly,
+> it seems that our wording could see some refinement and be more vocal
+> about semantic aspect of these flags as well.
+>
+> Cc: Jan Kara <jack@suse.cz>
+> Cc: Dan Williams <dan.j.williams@intel.com>
+> Cc: David Rientjes <rientjes@google.com>
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
+>  Documentation/filesystems/proc.txt | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+>
+> diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+> index 12a5e6e693b6..b1fda309f067 100644
+> --- a/Documentation/filesystems/proc.txt
+> +++ b/Documentation/filesystems/proc.txt
+> @@ -496,7 +496,9 @@ flags associated with the particular virtual memory area in two letter encoded
+>
+>  Note that there is no guarantee that every flag and associated mnemonic will
+>  be present in all further kernel releases. Things get changed, the flags may
+> -be vanished or the reverse -- new added.
+> +be vanished or the reverse -- new added. Interpretatation of their meaning
+> +might change in future as well. So each consumnent of these flags have to
+> +follow each specific kernel version for the exact semantic.
 
-#PF w/ PFEC_SGX is the only exception that indicates a fault is related
-to SGX.  Theoretically we could avoid decoding by using a magic value
-for the AEP itself and doing even more magic fixup, but that wouldn't
-help for faults that occur on EENTER, which can be generic #GPs due to
-loss of EPC on SGX1 systems. 
+Can we start to claw some of this back? Perhaps with a config option
+to hide the flags to put applications on notice? I recall that when I
+introduced CONFIG_IO_STRICT_DEVMEM it caused enough regressions that
+distros did not enable it, but now a few years out I'm finding that it
+is enabled in more places.
 
-> Or are you saying
-> that kernel should need to SIGSEGV if there is in fact ENCLU so that
-> there is no infinite trap loop? Sorry, I'm a bit lost here that where
-> does this decoding requirement comes from in the first place. I
-> understand how it is used in Sean's proposal...
-> 
-> Anyway, this option can be probably discarded without further
-> consideration because apparently single stepping can cause #DB SS fault
-> if AEP handler is anything else than a single instruction.
+In any event,
 
-Not that it matters, but we could satisfy the "one instruction"
-requirement if the fixup changed RIP to point at an ENCLU for #DBs.
-
-> For me it seems that by ruling out options, vDSO option is what is
-> left. I don't like it but at least it works...
-> 
-> /Jarkko
+Acked-by: Dan Williams <dan.j.williams@intel.com>
