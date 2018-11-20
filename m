@@ -1,42 +1,42 @@
-From: Daniel Borkmann <daniel@iogearbox.net>
-Subject: Re: [PATCH v3 0/4] bpf: allow zero-initialising hash map seed
-Date: Tue, 20 Nov 2018 00:56:09 +0100
-Message-ID: <58167241-3a94-f905-e463-1d21a1268655@iogearbox.net>
-References: <20181001104509.24211-1-lmb@cloudflare.com>
- <20181116114111.31177-1-lmb@cloudflare.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
+Date: Mon, 19 Nov 2018 16:27:49 -0800
+Message-ID: <CALCETrWyuQvTtksN1J1XbCFPka_rLOaFqa5W==EvGQvoaf9f3Q@mail.gmail.com>
+References: <20181119103241.5229-1-christian@brauner.io> <20181119103241.5229-3-christian@brauner.io>
+ <20181119223954.GA4992@cisco> <CAKOZuetQDziWeRLydHbDNv1abGM3LyF=WohLFvbzmtdT_+nBdg@mail.gmail.com>
+ <20181119230709.GB4992@cisco>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181116114111.31177-1-lmb@cloudflare.com>
-Content-Language: en-US
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>, ast@kernel.org
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, songliubraving@fb.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181119230709.GB4992@cisco>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Daniel Colascione <dancol@google.com>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/16/2018 12:41 PM, Lorenz Bauer wrote:
-> Allow forcing the seed of a hash table to zero, for deterministic
-> execution during benchmarking and testing.
-> 
-> Changes from v2:
-> * Change ordering of BPF_F_ZERO_SEED in linux/bpf.h
-> 
-> Comments adressed from v1:
-> * Add comment to discourage production use to linux/bpf.h
-> * Require CAP_SYS_ADMIN
-> 
-> Lorenz Bauer (4):
->   bpf: allow zero-initializing hash map seed
->   bpf: move BPF_F_QUERY_EFFECTIVE after map flags
->   tools: sync linux/bpf.h
->   tools: add selftest for BPF_F_ZERO_SEED
-> 
->  include/uapi/linux/bpf.h                |  9 ++--
->  kernel/bpf/hashtab.c                    | 13 ++++-
->  tools/include/uapi/linux/bpf.h          | 13 +++--
->  tools/testing/selftests/bpf/test_maps.c | 68 +++++++++++++++++++++----
->  4 files changed, 84 insertions(+), 19 deletions(-)
-> 
+On Mon, Nov 19, 2018 at 3:07 PM Tycho Andersen <tycho@tycho.ws> wrote:
+> > These tools also care about ioctls. Adding a system call is a pain,
+> > but the solution is to make adding system calls less of a pain, not to
+> > permanently make the Linux ABI worse.
+>
+> For user-defined values of "worse" :)
+>
 
-Applied to bpf-next, thanks!
+I tend to agree with Tycho here.  But I'm wondering if it might be
+worth considering a better ioctl.
+
+/me dons flame-proof hat
+
+We could do:
+
+long better_ioctl(int fd, u32 nr, const void *inbuf, size_t inlen,
+const void *outbuf, size_t outlen);
+
+and have a central table in the kernel listing all possible nr values
+along with which driver they belong to.  We could have a sane
+signature and get rid of the nr collision problem.
+
+The major problem I see is that u32 isn't really enough to have a sane
+way to allow out-of-tree drivers to use this, and that we can't
+readily use anything bigger than u32 without indirection because we're
+out of syscall argument space.
