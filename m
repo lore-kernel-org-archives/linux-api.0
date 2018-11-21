@@ -1,134 +1,125 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Wed, 21 Nov 2018 15:39:46 -0600
-Message-ID: <20181121213946.GA10795@mail.hallyn.com>
-References: <20181119103241.5229-3-christian@brauner.io>
- <20181119202857.k5zw742xjfrw677j@yavin>
- <20181119205518.btew3vxwgva4w3zh@brauner.io>
- <20181119211810.73ptfhnwdmkngfi4@yavin>
- <20181119212126.u2nkijmula6wcfqi@brauner.io>
- <CAKOZuevEx6CbcxrR8eVZrUXDcN5y1GPsXdSoHfQteSQKypx0qw@mail.gmail.com>
- <20181119213722.z54huio5g4kuldxk@brauner.io>
- <CAKOZueup5L9Fd=tTK5g1415x0muLP_cPkxf4o26-kCPtH_caqw@mail.gmail.com>
- <87muq4xs2n.fsf@xmission.com>
- <20181120103111.etlqp7zop34v6nv4@brauner.io>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v2] Add /proc/pid_gen
+Date: Wed, 21 Nov 2018 14:12:20 -0800
+Message-ID: <20181121141220.0e533c1dcb4792480efbf3ff@linux-foundation.org>
+References: <20181121201452.77173-1-dancol@google.com>
+        <20181121205428.165205-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181120103111.etlqp7zop34v6nv4@brauner.io>
+In-Reply-To: <20181121205428.165205-1-dancol@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Colascione <dancol@google.com>, Aleksa Sarai <cyphar@cyphar.com>, linux-kernel <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, timmurray@google.com, primiano@google.com, joelaf@google.com, Jonathan Corbet <corbet@lwn.net>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Vlastimil Babka <vbabka@suse.cz>, Roman Gushchin <guro@fb.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Steven Rostedt (VMware)" <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Josh Poimboeuf <jpoimboe@redhat.com>, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Michal Hocko <mhocko@suse.com>, Stephen Rothwell <sfr@canb.auug.org.au>, KJ Tsanaktsidis <ktsanaktsidis@zendesk.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 11:31:13AM +0100, Christian Brauner wrote:
-> On Mon, Nov 19, 2018 at 10:59:12PM -0600, Eric W. Biederman wrote:
-> > Daniel Colascione <dancol@google.com> writes:
-> > 
-> > > On Mon, Nov 19, 2018 at 1:37 PM Christian Brauner <christian@brauner.io> wrote:
-> > >>
-> > >> On Mon, Nov 19, 2018 at 01:26:22PM -0800, Daniel Colascione wrote:
-> > >> > On Mon, Nov 19, 2018 at 1:21 PM, Christian Brauner <christian@brauner.io> wrote:
-> > >> > > That can be done without a loop by comparing the level counter for the
-> > >> > > two pid namespaces.
-> > >> > >
-> > >> > >>
-> > >> > >> And you can rewrite pidns_get_parent to use it. So you would instead be
-> > >> > >> doing:
-> > >> > >>
-> > >> > >>     if (pidns_is_descendant(proc_pid_ns, task_active_pid_ns(current)))
-> > >> > >>         return -EPERM;
-> > >> > >>
-> > >> > >> (Or you can just copy the 5-line loop into procfd_signal -- though I
-> > >> > >> imagine we'll need this for all of the procfd_* APIs.)
-> > >> >
-> > >> > Why is any of this even necessary? Why does the child namespace we're
-> > >> > considering even have a file descriptor to its ancestor's procfs? If
-> > >>
-> > >> Because you can send file descriptors between processes and container
-> > >> runtimes tend to do that.
-> > >
-> > > Right. But why *would* a container runtime send one of these procfs
-> > > FDs to a container?
-> > >
-> > >> > it has one of these FDs, it can already *read* all sorts of
-> > >> > information it really shouldn't be able to acquire, so the additional
-> > >> > ability to send a signal (subject to the usual permission checks)
-> > >> > feels like sticking a finger in a dike that's already well-perforated.
-> > >> > IMHO, we shouldn't bother with this check. The patch would be simpler
-> > >> > without it.
-> > >>
-> > >> We will definitely not allow signaling processes in an ancestor pid
-> > >> namespace! That is a security issue! I can imagine container runtimes
-> > >> killing their monitoring process etc. pp. Not happening, unless someone
-> > >> with deep expertise in signals can convince me otherwise.
-> > >
-> > > If parent namespace procfs FDs or mounts really can leak into child
-> > > namespaces as easily as Aleksa says, then I don't mind adding the
-> > > check. I was under the impression that if you find yourself in this
-> > > situation, you already have a big problem.
-> > 
-> > There is one big reason to have the check, and I have not seen it
-> > mentioned yet in this thread.
-> > 
-> > When SI_USER is set we report the pid of the sender of the signal in
-> > si_pid.  When the signal comes from the kernel si_pid == 0.  When signal
-> > is sent from an ancestor pid namespace si_pid also equals 0 (which is
-> > reasonable).
-> > 
-> > A signal out to a process in a parent pid namespace such as SIGCHLD is
-> > reasonable as we can map the pid.  I really don't see the point of
-> > forbidding that.  From the perspective of the process in the parent pid
-> > namespace it is just another process in it's pid namespace.  So it
-> > should pose no problem from the perspective of the receiving process.
-> > 
-> > A signal to a process in a pid namespace that is neither a parent nor a
-> > descendent pid namespace would be a problem, as there is no well defined
-> > notion of what si_pid should be set to.  So for that case perhaps we
-> > should have something like a noprocess pid that we can set.  Perhaps we
-> > could set si_pid to 0xffffffff.  That would take a small extension to
-> > pid_nr_ns.
-> > 
-> > File descriptors are not namespaced.  It is completely legitimate to use
-> > file descriptors to get around limitations of namespaces.
-> 
-> Frankly, I don't see a good argument for why we would allow that even if
-> safe. I have not heard a legitimate use-case or need for this.
-> At this point I care about very simple semantics. Being able to signal
-> into ancestor pid namespaces and cousin namespaces is interesting but
-> makes the syscall more brittle and harder to understand.
+On Wed, 21 Nov 2018 12:54:20 -0800 Daniel Colascione <dancol@google.com> wrote:
 
-Yeah, I'm with you on that.  We can always open that door later if a good
-use case comes up, but I prefer simple at first.
+> Trace analysis code needs a coherent picture of the set of processes
+> and threads running on a system. While it's possible to enumerate all
+> tasks via /proc, this enumeration is not atomic. If PID numbering
+> rolls over during snapshot collection, the resulting snapshot of the
+> process and thread state of the system may be incoherent, confusing
+> trace analysis tools. The fundamental problem is that if a PID is
+> reused during a userspace scan of /proc, it's impossible to tell, in
+> post-processing, whether a fact that the userspace /proc scanner
+> reports regarding a given PID refers to the old or new task named by
+> that PID, as the scan of that PID may or may not have occurred before
+> the PID reuse, and there's no way to "stamp" a fact read from the
+> kernel with a trace timestamp.
+> 
+> This change adds a per-pid-namespace 64-bit generation number,
+> incremented on PID rollover, and exposes it via a new proc file
+> /proc/pid_gen. By examining this file before and after /proc
+> enumeration, user code can detect the potential reuse of a PID and
+> restart the task enumeration process, repeating until it gets a
+> coherent snapshot.
+> 
+> PID rollover ought to be rare, so in practice, scan repetitions will
+> be rare.
 
-> Changing pid_nr_ns() might be the solution but this function is called
-> all over the place in the kernel and I'm not going to risk breaking
-> something by changing it for a feature that no one so far has ever
-> asked for.
-> If you are ok with this then we should hold off on this. We can always
-> add this feature later by removing the check when someone has a use-case
-> for it.
-> I'll send a v2 of the patch that keeps the restriction for now. If you
-> insist on it being removed we can make the change in a follow-up
-> iteration.
-> 
-> Christian
-> 
-> > 
-> > Adding limitations to a file descriptor based api because someone else
-> > can't set up their processes in such a way as to get the restrictions
-> > they are looking for seems very sad.
-> > 
-> > Frankly I think it is one of the better features of namespaces that we
-> > have to carefully handle and define these cases so that when the
-> > inevitable leaks happen you are not immediately in a world of hurt.  All
-> > of the other permission checks etc continue to do their job.  Plus you
-> > are prepared for the case when someone wants their containers to have an
-> > interesting communication primitive.
-> > 
-> > Eric
-> > 
-> > 
-> > 
-> > 
+In general, tracing is a rather specialized thing.  Why is this very
+occasional confusion a sufficiently serious problem to warrant addition
+of this code?
+
+Which userspace tools will be using pid_gen?  Are the developers of
+those tools signed up to use pid_gen?
+
+> --- a/include/linux/pid.h
+> +++ b/include/linux/pid.h
+> @@ -112,6 +112,7 @@ extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
+>  int next_pidmap(struct pid_namespace *pid_ns, unsigned int last);
+>  
+>  extern struct pid *alloc_pid(struct pid_namespace *ns);
+> +extern u64 read_pid_generation(struct pid_namespace *ns);
+
+pig_generation_read() would be a better (and more idiomatic) name.
+
+>  extern void free_pid(struct pid *pid);
+>  extern void disable_pid_allocation(struct pid_namespace *ns);
+>
+> ...
+>
+> +u64 read_pid_generation(struct pid_namespace *ns)
+> +{
+> +	u64 generation;
+> +
+> +
+> +	spin_lock_irq(&pidmap_lock);
+> +	generation = ns->generation;
+> +	spin_unlock_irq(&pidmap_lock);
+> +	return generation;
+> +}
+
+What is the spinlocking in here for?  afaict the only purpose it serves
+is to make the 64-bit read atomic, so it isn't needed on 32-bit?
+
+>  void disable_pid_allocation(struct pid_namespace *ns)
+>  {
+>  	spin_lock_irq(&pidmap_lock);
+> @@ -449,6 +463,17 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
+>  	return idr_get_next(&ns->idr, &nr);
+>  }
+>  
+> +#ifdef CONFIG_PROC_FS
+> +static int pid_generation_show(struct seq_file *m, void *v)
+> +{
+> +	u64 generation =
+> +		read_pid_generation(proc_pid_ns(file_inode(m->file)));
+
+	u64 generation;
+
+	generation = read_pid_generation(proc_pid_ns(file_inode(m->file)));
+
+is a nicer way of avoiding column wrap.
+
+> +	seq_printf(m, "%llu\n", generation);
+> +	return 0;
+> +
+> +};
+> +#endif
+> +
+>  void __init pid_idr_init(void)
+>  {
+>  	/* Verify no one has done anything silly: */
+> @@ -465,4 +490,13 @@ void __init pid_idr_init(void)
+>  
+>  	init_pid_ns.pid_cachep = KMEM_CACHE(pid,
+>  			SLAB_HWCACHE_ALIGN | SLAB_PANIC | SLAB_ACCOUNT);
+> +
+> +}
+> +
+> +void __init pid_proc_init(void)
+> +{
+> +	/* pid_idr_init is too early, so get a separate init function. */
+
+s/get a/use a/
+
+> +#ifdef CONFIG_PROC_FS
+> +	WARN_ON(!proc_create_single("pid_gen", 0, NULL, pid_generation_show));
+> +#endif
+>  }
+
+This whole function could vanish if !CONFIG_PROC_FS.  Doesn't matter
+much with __init code though.
