@@ -1,126 +1,132 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2] Add /proc/pid_gen
-Date: Wed, 21 Nov 2018 16:35:34 -0700
-Message-ID: <37255927-1A93-4B8B-A916-B5A3983D56B6@amacapital.net>
-References: <20181121201452.77173-1-dancol@google.com> <20181121205428.165205-1-dancol@google.com> <20181121141220.0e533c1dcb4792480efbf3ff@linux-foundation.org> <CAKOZuetW6WMNFdL5_2=UbrEf8mjxYTdz1+4BiRLSgdoKh8FsqQ@mail.gmail.com> <20181121145043.fa029f4f91afddc2a10bb81e@linux-foundation.org> <CAKOZuesF5zi9mpEE6No7oq0hDnM8KFhQFU=NM7qUF635s0r3-A@mail.gmail.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuesF5zi9mpEE6No7oq0hDnM8KFhQFU=NM7qUF635s0r3-A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Primiano Tucci <primiano@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Vlastimil Babka <vbabka@suse.cz>, Roman Gushchin <guro@fb.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, rostedt@goodmis.org, tglx@linutronix.de, mingo@kernel.org, linux@dominikbrodowski.net, jpoimboe@redhat.com, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Michal Hocko <mhocko@suse.com>, Stephen Rothwell <sfr@canb.auug.org.au>, ktsanaktsidis@zendesk.com, Davi
+From: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Subject: Re: [RFC PATCH v2] ptrace: add PTRACE_GET_SYSCALL_INFO request
+Date: Thu, 22 Nov 2018 02:56:34 +0300
+Message-ID: <20181121235634.GA14146@altlinux.org>
+References: <20181121165806.07da7c98@akathisia>
+ <CALCETrV3TPCkYyhoLLcikXVeF-RdZUuLTCvKReK3Qb9LSS9Csw@mail.gmail.com>
+Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0604242701946963456=="
+Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+In-Reply-To: <CALCETrV3TPCkYyhoLLcikXVeF-RdZUuLTCvKReK3Qb9LSS9Csw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
+ <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
+List-Post: <mailto:strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+List-Help: <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
+ <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Sasha Levin <sasha.levin-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
+--===============0604242701946963456==
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="Kj7319i9nmIyA2yE"
+Content-Disposition: inline
 
-> On Nov 21, 2018, at 4:21 PM, Daniel Colascione <dancol@google.com> wrote:
->=20
->> On Wed, Nov 21, 2018 at 2:50 PM Andrew Morton <akpm@linux-foundation.org>=
- wrote:
->>=20
->>> On Wed, 21 Nov 2018 14:40:28 -0800 Daniel Colascione <dancol@google.com>=
- wrote:
->>>=20
->>>> On Wed, Nov 21, 2018 at 2:12 PM Andrew Morton <akpm@linux-foundation.or=
-g> wrote:
->>>>=20
->>>>> On Wed, 21 Nov 2018 12:54:20 -0800 Daniel Colascione <dancol@google.co=
-m> wrote:
->>>>>=20
->>>>> Trace analysis code needs a coherent picture of the set of processes
->>>>> and threads running on a system. While it's possible to enumerate all
->>>>> tasks via /proc, this enumeration is not atomic. If PID numbering
->>>>> rolls over during snapshot collection, the resulting snapshot of the
->>>>> process and thread state of the system may be incoherent, confusing
->>>>> trace analysis tools. The fundamental problem is that if a PID is
->>>>> reused during a userspace scan of /proc, it's impossible to tell, in
->>>>> post-processing, whether a fact that the userspace /proc scanner
->>>>> reports regarding a given PID refers to the old or new task named by
->>>>> that PID, as the scan of that PID may or may not have occurred before
->>>>> the PID reuse, and there's no way to "stamp" a fact read from the
->>>>> kernel with a trace timestamp.
->>>>>=20
->>>>> This change adds a per-pid-namespace 64-bit generation number,
->>>>> incremented on PID rollover, and exposes it via a new proc file
->>>>> /proc/pid_gen. By examining this file before and after /proc
->>>>> enumeration, user code can detect the potential reuse of a PID and
->>>>> restart the task enumeration process, repeating until it gets a
->>>>> coherent snapshot.
->>>>>=20
->>>>> PID rollover ought to be rare, so in practice, scan repetitions will
->>>>> be rare.
->>>>=20
->>>> In general, tracing is a rather specialized thing.  Why is this very
->>>> occasional confusion a sufficiently serious problem to warrant addition=
 
->>>> of this code?
->>>=20
->>> I wouldn't call tracing a specialized thing: it's important enough to
->>> justify its own summit and a whole ecosystem of trace collection and
->>> analysis tools. We use it in every day in Android. It's tremendously
->>> helpful for understanding system behavior, especially in cases where
->>> multiple components interact in ways that we can't readily predict or
->>> replicate. Reliability and precision in this area are essential:
->>> retrospective analysis of difficult-to-reproduce problems involves
->>> puzzling over trace files and testing hypothesis, and when the trace
->>> system itself is occasionally unreliable, the set of hypothesis to
->>> consider grows. I've tried to keep the amount of kernel infrastructure
->>> needed to support this precision and reliability to a minimum, pushing
->>> most of the complexity to userspace. But we do need, from the kernel,
->>> reliable process disambiguation.
->>>=20
->>> Besides: things like checkpoint and restart are also non-core
->>> features, but the kernel has plenty of infrastructure to support them.
->>> We're talking about a very lightweight feature in this thread.
->>=20
->> I'm still not understanding the seriousness of the problem.  Presumably
->> you've hit problems in real-life which were serious and frequent enough
->> to justify getting down and writing the code.  Please share some sob stor=
-ies
->> with us!
->=20
-> The problem here is the possibility of confusion, even if it's rare.
-> Does the naive approach of just walking /proc and ignoring the
-> possibility of PID reuse races work most of the time? Sure. But "most
-> of the time" isn't good enough. It's not that there are tons of sob
-> stories: it's that without completely robust reporting, we can't rule
-> out of the possibility that weirdness we observe in a given trace is
-> actually just an artifact from a kinda-sort-working best-effort trace
-> collection system instead of a real anomaly in behavior. Tracing,
-> essentially, gives us deltas for system state, and without an accurate
-> baseline, collected via some kind of scan on trace startup, it's
-> impossible to use these deltas to robustly reconstruct total system
-> state at a given time. And this matters, because errors in
-> reconstruction (e.g., assigning a thread to the wrong process because
-> the IDs happen to be reused) can affect processing of the whole trace.
-> If it's 3am and I'm analyzing the lone trace from a dogfooder
-> demonstrating a particularly nasty problem, I don't want to find out
-> that the trace I'm analyzing ended up being useless because the
-> kernel's trace system is merely best effort. It's very cheap to be
-> 100% reliable here, so let's be reliable and rule out sources of
-> error.
->=20
->>>> Which userspace tools will be using pid_gen?  Are the developers of
->>>> those tools signed up to use pid_gen?
->>>=20
->>> I'll be changing Android tracing tools to capture process snapshots
->>> using pid_gen, using the algorithm in the commit message.
->>=20
->> Which other tools could use this and what was the feedback from their
->> developers?
->=20
-> I'm going to have Android's systrace and Perfetto use this approach.
-> Exactly how many tools signed up to use this feature do you need?
->=20
->> Those people are the intended audience and the
->> best-positioned reviewers so let's hear from them?
->=20
-> I'm writing plenty of trace analysis tools myself, so I'm part of this
-> intended audience. Other tracing tool authors have told me about
-> out-of-tree hacks for process atomic snapshots via ftrace events. This
-> approach avoids the necessity of these more-invasive hacks.
+--Kj7319i9nmIyA2yE
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Would a tracepoint for pid reuse solve your problem?=
+On Wed, Nov 21, 2018 at 02:56:57PM -0800, Andy Lutomirski wrote:
+> Please cc linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org for future versions.
+>=20
+> On Wed, Nov 21, 2018 at 7:58 AM Elvira Khabirova wrote:
+> >
+> > struct ptrace_syscall_info {
+> >         __u8 op; /* 0 for entry, 1 for exit */
+>=20
+> Can you add proper defines, like:
+>=20
+> #define PTRACE_SYSCALL_ENTRY 0
+> #define PTRACE_SYSCALL_EXIT 1
+> #define PTRACE_SYSCALL_SECCOMP 2
+>=20
+> and make seccomp work from the start?  I'd rather we don't merge an
+> implementation that doesn't work for seccomp and then have to rework
+> it later.
+
+What's the difference between PTRACE_EVENT_SECCOMP and syscall-entry-stop
+with regards to PTRACE_GET_SYSCALL_INFO request?  At least they have the
+same entry_info to return.
+
+As long as implementation (ab)uses ptrace_message to tell one kind of stop
+=66rom another, it can distinguish syscall-entry-stop and syscall-exit-stop
+=66rom each other and from many other kinds of stops, but it cannot
+distinguish PTRACE_EVENT_SECCOMP from e.g. PTRACE_EVENT_EXIT.
+
+> >         __u8 __pad0[7];
+> >         union {
+> >                 struct {
+> >                         __s32 nr;
+>=20
+> __u64 please.  Syscall numbers are, as a practical matter, 64 bits.
+> Admittedly, the actual effects of setting the high bits are unclear,
+> and seccomp has issues with it, but let's not perpetuate the problem.
+
+I agree.  Although the implementation uses syscall_get_nr()
+which returns int, this could potentially be fixed in the future.
+
+> >                         __u32 arch;
+> >                         __u64 instruction_pointer;
+> >                         __u64 args[6];
+> >                 } entry_info;
+> >                 struct {
+> >                         __s64 rval;
+> >                         __u8 is_error;
+> >                         __u8 __pad1[7];
+> >                 } exit_info;
+> >         };
+> > };
+>=20
+> Should seccomp events use entry_info or should they just literally
+> supply seccomp_data?
+
+It certainly can use entry_info.
+I'd prefer to avoid using in uapi/linux/ptrace.h those types
+that are defined in uapi/linux/seccomp.h.
+
+
+--=20
+ldv
+
+--Kj7319i9nmIyA2yE
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJb9fCyAAoJEAVFT+BVnCUIR/MQAJiLtswHGxTJiT5szLMr+w0i
+xrJIC9YutOPbqmk6AJYwu9qnuZnQrrIxbR11pFBBoObd2FXDyio51mgZSG9X1jzl
+gumMCzMp0dr5yLyXOtKQGXzu6V35Qii3Nm+WGcfKaoTrFG+TgKj9tv38c14WWKlP
+BaU9m6tqzJP8ocSzyi4rsRHpSfz3VlQlhtEYq+CMwFh7eRwQCgrkWn4tsIkk74yM
+WFZwOALee1MbkgYpfAd6vy/PbNKgzN2K0RZTb4QCMXEQDLl25Xe+jJxiYiC9Ds+R
+ODKLyL+mC+dQRiX1zxW5FORefZo8aRes900ENC5uZNDvEpzKzJ6Vo0udzqvYb12D
+9bz3MyaL9CYd/El+WyTT6Sg160G5OPCIz5c+NKYA3tpp1BKz0CNyoX8X3JcG4ppn
+FOZDFFlzl7M8uftC8eGj7hlczo9SZzSaHyQXXy7E/StlVw1LJ5higIkCTvF5U88e
+wPW1+gQqP/LvEh4JlcI6O0gtDQAgHrPMxN5oipvcYQecwsFnzeH7z8DNvhr+v6+3
+XW0Wr16hGrhbEdmyKkobhYeXeMrgTymSo4zeub39eW3SIBE5sBPFlgUVteRifsky
+qinwVKlsrfdCIVuftnQpjjU3VSPtAwooZZnRhgVJR99A9idK+R8KEHvM7S7XcpMu
+G9ExcYaNb7MbUET5Q+a/
+=c4dx
+-----END PGP SIGNATURE-----
+
+--Kj7319i9nmIyA2yE--
+
+--===============0604242701946963456==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+-- 
+Strace-devel mailing list
+Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+https://lists.strace.io/mailman/listinfo/strace-devel
+
+--===============0604242701946963456==--
