@@ -1,42 +1,75 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: RFC: userspace exception fixups
-Date: Wed, 21 Nov 2018 00:55:18 +0200
-Message-ID: <20181120225518.GE8391@linux.intel.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <20181118071548.GA4795@linux.intel.com>
- <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
- <20181119160204.GD13298@linux.intel.com>
- <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
- <20181120101133.GA7319@linux.intel.com>
- <CALCETrU2dy7Oh+AHDGZ2omq9p7pNbjFd8ruv5CkfJXCp5nTYBQ@mail.gmail.com>
+From: David Rientjes <rientjes@google.com>
+Subject: Re: [RFC PATCH 1/3] mm, proc: be more verbose about unstable VMA
+ flags in /proc/<pid>/smaps
+Date: Tue, 20 Nov 2018 16:01:47 -0800 (PST)
+Message-ID: <alpine.DEB.2.21.1811201558060.89573@chino.kir.corp.google.com>
+References: <20181120103515.25280-1-mhocko@kernel.org> <20181120103515.25280-2-mhocko@kernel.org> <20181120105135.GF8842@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrU2dy7Oh+AHDGZ2omq9p7pNbjFd8ruv5CkfJXCp5nTYBQ@mail.gmail.com>
+In-Reply-To: <20181120105135.GF8842@quack2.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Jethro Beekman <jethro@fortanix.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, nhorman@redhat.com, npmccallum@redhat.com, "Ayoun, Serge" <serge.ayoun@intel.com>, shay.katz-zamir@intel.com, linux-sgx@vger.kernel.org, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>
+To: Jan Kara <jack@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 07:19:37AM -0800, Andy Lutomirski wrote:
-> What is "#GP with EPCM"?  We certainly don't want to react to #UD in
+On Tue, 20 Nov 2018, Jan Kara wrote:
 
-A typo. Meant #PF with PF_SGX set i.e. EPCM conflict.
+> > Even though vma flags exported via /proc/<pid>/smaps are explicitly
+> > documented to be not guaranteed for future compatibility the warning
+> > doesn't go far enough because it doesn't mention semantic changes to
+> > those flags. And they are important as well because these flags are
+> > a deep implementation internal to the MM code and the semantic might
+> > change at any time.
+> > 
+> > Let's consider two recent examples:
+> > http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
+> > : commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
+> > : removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
+> > : mean time certain customer of ours started poking into /proc/<pid>/smaps
+> > : and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
+> > : flags, the application just fails to start complaining that DAX support is
+> > : missing in the kernel.
+> > 
+> > http://lkml.kernel.org/r/alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com
+> > : Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+> > : introduced a regression in that userspace cannot always determine the set
+> > : of vmas where thp is ineligible.
+> > : Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
+> > : to determine if a vma is eligible to be backed by hugepages.
+> > : Previous to this commit, prctl(PR_SET_THP_DISABLE, 1) would cause thp to
+> > : be disabled and emit "nh" as a flag for the corresponding vmas as part of
+> > : /proc/pid/smaps.  After the commit, thp is disabled by means of an mm
+> > : flag and "nh" is not emitted.
+> > : This causes smaps parsing libraries to assume a vma is eligible for thp
+> > : and ends up puzzling the user on why its memory is not backed by thp.
+> > 
+> > In both cases userspace was relying on a semantic of a specific VMA
+> > flag. The primary reason why that happened is a lack of a proper
+> > internface. While this has been worked on and it will be fixed properly,
+> > it seems that our wording could see some refinement and be more vocal
+> > about semantic aspect of these flags as well.
+> > 
+> > Cc: Jan Kara <jack@suse.cz>
+> > Cc: Dan Williams <dan.j.williams@intel.com>
+> > Cc: David Rientjes <rientjes@google.com>
+> > Signed-off-by: Michal Hocko <mhocko@suse.com>
+> 
+> Honestly, it just shows that no amount of documentation is going to stop
+> userspace from abusing API that's exposing too much if there's no better
+> alternative. But this is a good clarification regardless. So feel free to
+> add:
+> 
+> Acked-by: Jan Kara <jack@suse.cz>
+> 
 
-> general by mucking with some regs and retrying -- that will infinite
-> loop and confuse everyone.  I'm not even 100% convinced that decoding
-> the insn stream is useful -- AEP can point to something that isn't
-> ENCLU.
+I'm not sure what is expected of a userspace developer who finds they have 
+a single way to determine if something is enabled/disabled.  Should they 
+refer to the documentation and see that the flag may be unstable so they 
+write a kernel patch and have it merged upstream before using it?  What to 
+do when they don't control the kernel version they are running on?
 
-In my return-to-AEP approach to whole point was not to do any decoding
-but instead have something else always in the AEP handler than just
-ENCLU.
+Anyway, mentioning that the vm flags here only have meaning depending on 
+the kernel version seems like a worthwhile addition:
 
-No instruction decoding. No RIP manipulation.
-
-> IOW the kernel needs to know *when* to apply this special behavior.
-> Sadly there is no bit in the exception frame that says "came from
-> SGX".
-
-/Jarkko
+Acked-by: David Rientjes <rientjes@google.com>
