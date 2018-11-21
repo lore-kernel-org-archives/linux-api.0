@@ -1,49 +1,88 @@
-From: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
-Subject: Re: RFC: userspace exception fixups
-Date: Wed, 21 Nov 2018 17:17:34 +0200
-Message-ID: <20181121151734.GA16564@linux.intel.com>
-References: <CALCETrWdpoDkbZjkucKL91GWpDPG9p=VqYrULade2pFDR7S=GQ@mail.gmail.com>
- <20181118071548.GA4795@linux.intel.com>
- <CALCETrXSpn7QGzPgO1BjMRQ75r2i0kmACrbUM+8PyT+xi3f3Hw@mail.gmail.com>
- <20181119160204.GD13298@linux.intel.com>
- <CALCETrWRVgPjnDd-CknskrXfNbke=rSnr_jezszNNWJUM_YJKQ@mail.gmail.com>
- <20181120101133.GA7319@linux.intel.com>
- <CALCETrU2dy7Oh+AHDGZ2omq9p7pNbjFd8ruv5CkfJXCp5nTYBQ@mail.gmail.com>
- <20181120225518.GE8391@linux.intel.com>
- <0a78772e-4f42-254b-d91a-f0f80a24ff90@fortanix.com>
+From: Mike Rapoport <rppt@linux.ibm.com>
+Subject: Re: [RFC PATCH 1/3] mm, proc: be more verbose about unstable VMA
+ flags in /proc/<pid>/smaps
+Date: Wed, 21 Nov 2018 18:54:28 +0100
+Message-ID: <20181121175427.GB5704@rapoport-lnx>
+References: <20181120103515.25280-1-mhocko@kernel.org>
+ <20181120103515.25280-2-mhocko@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <0a78772e-4f42-254b-d91a-f0f80a24ff90@fortanix.com>
+In-Reply-To: <20181120103515.25280-2-mhocko@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jethro Beekman <jethro@fortanix.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Dave Hansen <dave.hansen@linux.intel.com>, "Christopherson, Sean J" <sean.j.christopherson@intel.com>, Florian Weimer <fweimer@redhat.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Rich Felker <dalias@libc.org>, "nhorman@redhat.com" <nhorman@redhat.com>, "npmccallum@redhat.com" <npmccallum@redhat.com>, "Ayoun, Serge" <serge.ayoun@intel.com>, "shay.katz-zamir@intel.com" <shay.katz-zamir@intel.com>, "linux-sgx@vger.kernel.org" <linux-sgx@vger.kernel.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.co>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Jan Kara <jack@suse.cz>, Dan Williams <dan.j.williams@intel.com>, David Rientjes <rientjes@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 21, 2018 at 05:17:32AM +0000, Jethro Beekman wrote:
-> Jarkko, can you please explain you solution in detail? The CPU receives an
-> exception. This will be handled by the kernel exception handler. What
-> information does the kernel exception handler use to determine whether to
-> deliver the exception as a regular signal to the process, or whether to set
-> the special registers values for userspace and just continue executing the
-> process manually?
+On Tue, Nov 20, 2018 at 11:35:13AM +0100, Michal Hocko wrote:
+> From: Michal Hocko <mhocko@suse.com>
+> 
+> Even though vma flags exported via /proc/<pid>/smaps are explicitly
+> documented to be not guaranteed for future compatibility the warning
+> doesn't go far enough because it doesn't mention semantic changes to
+> those flags. And they are important as well because these flags are
+> a deep implementation internal to the MM code and the semantic might
+> change at any time.
+> 
+> Let's consider two recent examples:
+> http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
+> : commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
+> : removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
+> : mean time certain customer of ours started poking into /proc/<pid>/smaps
+> : and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
+> : flags, the application just fails to start complaining that DAX support is
+> : missing in the kernel.
+> 
+> http://lkml.kernel.org/r/alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com
+> : Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+> : introduced a regression in that userspace cannot always determine the set
+> : of vmas where thp is ineligible.
+> : Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
+> : to determine if a vma is eligible to be backed by hugepages.
+> : Previous to this commit, prctl(PR_SET_THP_DISABLE, 1) would cause thp to
+> : be disabled and emit "nh" as a flag for the corresponding vmas as part of
+> : /proc/pid/smaps.  After the commit, thp is disabled by means of an mm
+> : flag and "nh" is not emitted.
+> : This causes smaps parsing libraries to assume a vma is eligible for thp
+> : and ends up puzzling the user on why its memory is not backed by thp.
+> 
+> In both cases userspace was relying on a semantic of a specific VMA
+> flag. The primary reason why that happened is a lack of a proper
+> internface. While this has been worked on and it will be fixed properly,
+> it seems that our wording could see some refinement and be more vocal
+> about semantic aspect of these flags as well.
+> 
+> Cc: Jan Kara <jack@suse.cz>
+> Cc: Dan Williams <dan.j.williams@intel.com>
+> Cc: David Rientjes <rientjes@google.com>
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+> ---
+>  Documentation/filesystems/proc.txt | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+> index 12a5e6e693b6..b1fda309f067 100644
+> --- a/Documentation/filesystems/proc.txt
+> +++ b/Documentation/filesystems/proc.txt
+> @@ -496,7 +496,9 @@ flags associated with the particular virtual memory area in two letter encoded
+> 
+>  Note that there is no guarantee that every flag and associated mnemonic will
+>  be present in all further kernel releases. Things get changed, the flags may
+> -be vanished or the reverse -- new added.
+> +be vanished or the reverse -- new added. Interpretatation of their meaning
+> +might change in future as well. So each consumnent of these flags have to
 
-Now we throw SIGSEGV when PF_SGX set, right? In my solution that would
-be turned just doing iret to AEP with the extra that three registers get
-exception data (type, reason, addr). No decoding or RIP adjusting
-involved.
+                                           consumer?                 has
 
-That would mean that you would actually have to implement AEP handler
-than just have enclu there.
+> +follow each specific kernel version for the exact semantic.
+> 
+>  This file is only present if the CONFIG_MMU kernel configuration option is
+>  enabled.
+> -- 
+> 2.19.1
+> 
 
-I've also proposed that perhaps for SGX also #UD should be propagated
-this way because for some instructions you need outside help to emulate
-"non-enclave" environment.
-
-That is all I have drafted together so far. I'll try to finish v18 this
-week with other stuff and refine further next week (unless someone gives
-obvious reason why this doesn't work, which might well be because I
-haven't went too deep with my analysis yet because of lack of time).
-
-/Jarkko
+-- 
+Sincerely yours,
+Mike.
