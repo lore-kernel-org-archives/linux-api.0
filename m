@@ -1,103 +1,42 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC PATCH 1/3] mm, proc: be more verbose about unstable VMA
- flags in /proc/<pid>/smaps
-Date: Wed, 21 Nov 2018 08:05:00 +0100
-Message-ID: <20181121070500.GB12932@dhcp22.suse.cz>
-References: <20181120103515.25280-1-mhocko@kernel.org>
- <20181120103515.25280-2-mhocko@kernel.org>
- <CAPcyv4j7=Mh9dt3Fv+cEhtYEXXKNDxErv0N9Zt+h+r9QxX_GAw@mail.gmail.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC PATCH v6 01/26] Documentation/x86: Add CET description
+Date: Wed, 21 Nov 2018 08:24:33 +0100
+Message-ID: <20181121072433.GA56599@gmail.com>
+References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
+ <20181119214809.6086-2-yu-cheng.yu@intel.com>
+ <20181120095253.GA119911@gmail.com>
+ <16a0261fbe4b31e2f42b552d6a991a1116d398c2.camel@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4j7=Mh9dt3Fv+cEhtYEXXKNDxErv0N9Zt+h+r9QxX_GAw@mail.gmail.com>
+In-Reply-To: <16a0261fbe4b31e2f42b552d6a991a1116d398c2.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, adobriyan@gmail.com, Linux MM <linux-mm@kvack.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Jan Kara <jack@suse.cz>, David Rientjes <rientjes@google.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Tue 20-11-18 10:32:07, Dan Williams wrote:
-> On Tue, Nov 20, 2018 at 2:35 AM Michal Hocko <mhocko@kernel.org> wrote:
-> >
-> > From: Michal Hocko <mhocko@suse.com>
-> >
-> > Even though vma flags exported via /proc/<pid>/smaps are explicitly
-> > documented to be not guaranteed for future compatibility the warning
-> > doesn't go far enough because it doesn't mention semantic changes to
-> > those flags. And they are important as well because these flags are
-> > a deep implementation internal to the MM code and the semantic might
-> > change at any time.
-> >
-> > Let's consider two recent examples:
-> > http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
-> > : commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
-> > : removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
-> > : mean time certain customer of ours started poking into /proc/<pid>/smaps
-> > : and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
-> > : flags, the application just fails to start complaining that DAX support is
-> > : missing in the kernel.
-> >
-> > http://lkml.kernel.org/r/alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com
-> > : Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
-> > : introduced a regression in that userspace cannot always determine the set
-> > : of vmas where thp is ineligible.
-> > : Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
-> > : to determine if a vma is eligible to be backed by hugepages.
-> > : Previous to this commit, prctl(PR_SET_THP_DISABLE, 1) would cause thp to
-> > : be disabled and emit "nh" as a flag for the corresponding vmas as part of
-> > : /proc/pid/smaps.  After the commit, thp is disabled by means of an mm
-> > : flag and "nh" is not emitted.
-> > : This causes smaps parsing libraries to assume a vma is eligible for thp
-> > : and ends up puzzling the user on why its memory is not backed by thp.
-> >
-> > In both cases userspace was relying on a semantic of a specific VMA
-> > flag. The primary reason why that happened is a lack of a proper
-> > internface. While this has been worked on and it will be fixed properly,
-> > it seems that our wording could see some refinement and be more vocal
-> > about semantic aspect of these flags as well.
-> >
-> > Cc: Jan Kara <jack@suse.cz>
-> > Cc: Dan Williams <dan.j.williams@intel.com>
-> > Cc: David Rientjes <rientjes@google.com>
-> > Signed-off-by: Michal Hocko <mhocko@suse.com>
-> > ---
-> >  Documentation/filesystems/proc.txt | 4 +++-
-> >  1 file changed, 3 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-> > index 12a5e6e693b6..b1fda309f067 100644
-> > --- a/Documentation/filesystems/proc.txt
-> > +++ b/Documentation/filesystems/proc.txt
-> > @@ -496,7 +496,9 @@ flags associated with the particular virtual memory area in two letter encoded
-> >
-> >  Note that there is no guarantee that every flag and associated mnemonic will
-> >  be present in all further kernel releases. Things get changed, the flags may
-> > -be vanished or the reverse -- new added.
-> > +be vanished or the reverse -- new added. Interpretatation of their meaning
-> > +might change in future as well. So each consumnent of these flags have to
-> > +follow each specific kernel version for the exact semantic.
+
+* Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+
+> On Tue, 2018-11-20 at 10:52 +0100, Ingo Molnar wrote:
+> > * Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > 
+> > > +X86 Documentation
+> > > [...]
+> > > +
+> > > +At run time, /proc/cpuinfo shows the availability of SHSTK and IBT.
+> > 
+> > What is the rough expected performance impact of CET on average function 
+> > call frequency user applications and the kernel itself?
 > 
-> Can we start to claw some of this back? Perhaps with a config option
-> to hide the flags to put applications on notice?
+> I don't have any conclusive numbers yet; but since currently only user-mode
+> protection is implemented, I suspect any impact would be most likely to the
+> application.  The kernel would spend some small amount of time on the setup of
+> CET.
 
-I would love to. My knowledge of CRIU is very minimal, but my
-understanding is that this is the primary consumer of those flags. And
-checkpointing is so close to the specific kernel version that I assume
-that this abuse is somehow justified. We can hide it behind
-CONFIG_CHECKPOINT_RESTORE but does it going to help? I presume that many
-distro kernels will have the config enabled.
+This is horribly vague.
 
-> I recall that when I
-> introduced CONFIG_IO_STRICT_DEVMEM it caused enough regressions that
-> distros did not enable it, but now a few years out I'm finding that it
-> is enabled in more places.
-> 
-> In any event,
-> 
-> Acked-by: Dan Williams <dan.j.williams@intel.com>
+Thanks,
 
-Thanks!
-
--- 
-Michal Hocko
-SUSE Labs
+	Ingo
