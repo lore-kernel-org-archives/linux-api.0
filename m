@@ -1,264 +1,97 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH -next 1/2] mm/memfd: make F_SEAL_FUTURE_WRITE seal more
- robust
-Date: Wed, 21 Nov 2018 18:27:01 -0800
-Message-ID: <20181121182701.0d8a775fda6af1f8d2be8f25@linux-foundation.org>
-References: <20181120052137.74317-1-joel@joelfernandes.org>
-        <CALCETrXgBENat=5=7EuU-ttQ-YSXT+ifjLGc=hpJ=unRgSsndw@mail.gmail.com>
-        <20181120183926.GA124387@google.com>
-        <20181121070658.011d576d@canb.auug.org.au>
-        <469B80CB-D982-4802-A81D-95AC493D7E87@amacapital.net>
-        <20181120204710.GB22801@google.com>
-        <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net>
-        <20181120211335.GC22801@google.com>
+From: Tim Murray <timmurray@google.com>
+Subject: Re: [PATCH v2] Add /proc/pid_gen
+Date: Wed, 21 Nov 2018 18:35:48 -0800
+Message-ID: <CAEe=SxmNVHR_1ge6hM5636CNi4BZhLvyxoKW_28L9-XDV7x6aQ@mail.gmail.com>
+References: <20181121201452.77173-1-dancol@google.com> <20181121205428.165205-1-dancol@google.com>
+ <20181121141220.0e533c1dcb4792480efbf3ff@linux-foundation.org>
+ <CAKOZuetW6WMNFdL5_2=UbrEf8mjxYTdz1+4BiRLSgdoKh8FsqQ@mail.gmail.com>
+ <20181121145043.fa029f4f91afddc2a10bb81e@linux-foundation.org>
+ <CAKOZuesF5zi9mpEE6No7oq0hDnM8KFhQFU=NM7qUF635s0r3-A@mail.gmail.com>
+ <20181121162247.467fcab6c0aca0819a822286@linux-foundation.org>
+ <CAKOZuet7ipw8zoXCDQUB5PKs3kdSye-zesBbEv7jVDSByhXgkw@mail.gmail.com>
+ <20181121165741.ef089df784482632c4a66370@linux-foundation.org>
+ <CAKOZuessQgmPuiReEO0caNqkss=r44o-XXnem12TOXSn=y6xkw@mail.gmail.com> <20181121172919.1b6585e17770d0be7dd8c4d9@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181120211335.GC22801@google.com>
+In-Reply-To: <20181121172919.1b6585e17770d0be7dd8c4d9@linux-foundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joel Fernandes <joel@joelfernandes.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Stephen Rothwell <sfr@canb.auug.org.au>, Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, Linux API <linux-api@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Daniel Colascione <dancol@google.com>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Primiano Tucci <primiano@google.com>, Joel Fernandes <joelaf@google.com>, corbet@lwn.net, rppt@linux.vnet.ibm.com, vbabka@suse.cz, guro@fb.com, pdhamdhe@redhat.com, dennisszhou@gmail.com, ebiederm@xmission.com, rostedt@goodmis.org, tglx@linutronix.de, mingo@kernel.org, linux@dominikbrodowski.net, jpoimboe@redhat.com, ard.biesheuvel@linaro.org, mhocko@suse.com, sfr@canb.auug.org.au, ktsanaktsidis@zendesk.com, dhowells@redhat.com, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 20 Nov 2018 13:13:35 -0800 Joel Fernandes <joel@joelfernandes.org> wrote:
+On Wed, Nov 21, 2018 at 5:29 PM Andrew Morton <akpm@linux-foundation.org> wrote:
+>
+> On Wed, 21 Nov 2018 17:08:08 -0800 Daniel Colascione <dancol@google.com> wrote:
+>
+> > Have you done much
+> > retrospective long trace analysis?
+>
+> No.  Have you?
+>
+> Of course you have, which is why I and others are dependent upon you to
+> explain why this change is worth adding to Linux.  If this thing solves
+> a problem which we expect will not occur for anyone between now and the
+> heat death of the universe then this impacts our decisions.
 
-> > > I am Ok with whatever Andrew wants to do, if it is better to squash it with
-> > > the original, then I can do that and send another patch.
-> > > 
-> > > 
-> > 
-> > From experience, Andrew will food in fixups on request :)
-> 
-> Andrew, could you squash this patch into the one titled ("mm: Add an
-> F_SEAL_FUTURE_WRITE seal to memfd")? 
+I use ftrace the most on Android, so let me take a shot.
 
-Sure.
+In addition to the normal "debug a slow thing" use cases for ftrace,
+Android has started exploring two other ways of using ftrace:
 
-I could of course queue them separately but I rarely do so - I don't
-think that the intermediate development states are useful in the
-infinite-term, and I make them available via additional Link: tags in
-the changelog footers anyway.
+1. "Flight recorder" mode: trigger ftrace for some amount of time when
+a particular anomaly is detected to make debugging those cases easier.
 
-I think that the magnitude of these patches is such that John Stultz's
-Reviewed-by is invalidated, so this series is now in the "unreviewed"
-state.
+2. Long traces: let a trace stream to disk for hours or days, then
+postprocess it to get some deeper insights about system behavior.
+We've used this very successfully to debug and optimize power
+consumption.
 
-So can we have a re-review please?  For convenience, here's the
-folded-together [1/1] patch, as it will go to Linus.
+Knowing the initial state of the system is a pain for both of these
+cases. For example, one of the things I'd like to know in some of my
+current use cases for long traces is the current oom_score_adj of
+every process in the system, but similar to PID reuse, that can change
+very quickly due to userspace behavior. There's also a race between
+reading that value in userspace and writing it to trace_marker:
 
+1. Userspace daemon X reads oom_score_adj for a process Y.
+2. Process Y gets a new oom_score_adj value, triggering the
+oom/oom_score_adj_update tracepoint.
+3. Daemon X writes the old oom_score_adj value to trace_marker.
 
-From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Subject: mm: Add an F_SEAL_FUTURE_WRITE seal to memfd
+As I was writing this, though, I realized that the race doesn't matter
+so long as our tools follow the same basic practice (for PID reuse,
+oom_score_adj, or anything else we need):
 
-Android uses ashmem for sharing memory regions.  We are looking forward to
-migrating all usecases of ashmem to memfd so that we can possibly remove
-the ashmem driver in the future from staging while also benefiting from
-using memfd and contributing to it.  Note staging drivers are also not ABI
-and generally can be removed at anytime.
+1. Daemon enables all requested tracepoints and resets the trace clock.
+2. Daemon enables tracing.
+3. Daemon dumps initial state for any tracepoint we care about.
+4. When postprocessing, a tool must consider the initial state of a
+value (eg, oom_score_adj of pid X) to be either the initial state as
+reported by the daemon or the first ftrace event reporting that value.
+If there is an ftrace event in the trace before the report from the
+daemon, the report from the daemon should be ignored.
 
-One of the main usecases Android has is the ability to create a region and
-mmap it as writeable, then add protection against making any "future"
-writes while keeping the existing already mmap'ed writeable-region active.
-This allows us to implement a usecase where receivers of the shared
-memory buffer can get a read-only view, while the sender continues to
-write to the buffer.  See CursorWindow documentation in Android for more
-details:
-https://developer.android.com/reference/android/database/CursorWindow
+The key here is that initial state as reported by userspace needs to
+provable from ftrace events. For example, if we stream ps -AT to
+trace_marker from userspace, we should be able to prove that pid 5000
+in that ps -AT is actually the same process that shows up as pid 5000
+later on in the trace and that it has not been replaced by some other
+pid 5000. That requires that any event that could break that
+assumption be available from the trace itself. Accordingly, I think a
+PID reuse tracepoint would work better than an atomic dump of all PIDs
+because I'd rather have tracepoints for anything where the initial
+state of the system matters than relying on different atomic dumps to
+be sure of the initial state. (in this case, we'd have to combine a
+PID reuse tracepoint with sched_process_fork and task_rename or
+something like that to know what's actually running, but that's a
+tractable problem)
 
-This usecase cannot be implemented with the existing F_SEAL_WRITE seal. 
-To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
-which prevents any future mmap and write syscalls from succeeding while
-keeping the existing mmap active.  The following program shows the seal
-working in action:
-
- #include <stdio.h>
- #include <errno.h>
- #include <sys/mman.h>
- #include <linux/memfd.h>
- #include <linux/fcntl.h>
- #include <asm/unistd.h>
- #include <unistd.h>
- #define F_SEAL_FUTURE_WRITE 0x0010
- #define REGION_SIZE (5 * 1024 * 1024)
-
-int memfd_create_region(const char *name, size_t size)
-{
-    int ret;
-    int fd = syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING);
-    if (fd < 0) return fd;
-    ret = ftruncate(fd, size);
-    if (ret < 0) { close(fd); return ret; }
-    return fd;
-}
-
-int main() {
-    int ret, fd;
-    void *addr, *addr2, *addr3, *addr1;
-    ret = memfd_create_region("test_region", REGION_SIZE);
-    printf("ret=%d\n", ret);
-    fd = ret;
-
-    // Create map
-    addr = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if (addr == MAP_FAILED)
-	    printf("map 0 failed\n");
-    else
-	    printf("map 0 passed\n");
-
-    if ((ret = write(fd, "test", 4)) != 4)
-	    printf("write failed even though no future-write seal "
-		   "(ret=%d errno =%d)\n", ret, errno);
-    else
-	    printf("write passed\n");
-
-    addr1 = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if (addr1 == MAP_FAILED)
-	    perror("map 1 prot-write failed even though no seal\n");
-    else
-	    printf("map 1 prot-write passed as expected\n");
-
-    ret = fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE |
-				 F_SEAL_GROW |
-				 F_SEAL_SHRINK);
-    if (ret == -1)
-	    printf("fcntl failed, errno: %d\n", errno);
-    else
-	    printf("future-write seal now active\n");
-
-    if ((ret = write(fd, "test", 4)) != 4)
-	    printf("write failed as expected due to future-write seal\n");
-    else
-	    printf("write passed (unexpected)\n");
-
-    addr2 = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if (addr2 == MAP_FAILED)
-	    perror("map 2 prot-write failed as expected due to seal\n");
-    else
-	    printf("map 2 passed\n");
-
-    addr3 = mmap(0, REGION_SIZE, PROT_READ, MAP_SHARED, fd, 0);
-    if (addr3 == MAP_FAILED)
-	    perror("map 3 failed\n");
-    else
-	    printf("map 3 prot-read passed as expected\n");
-}
-
-The output of running this program is as follows:
-ret=3
-map 0 passed
-write passed
-map 1 prot-write passed as expected
-future-write seal now active
-write failed as expected due to future-write seal
-map 2 prot-write failed as expected due to seal
-: Permission denied
-map 3 prot-read passed as expected
-
-[joel@joelfernandes.org: make F_SEAL_FUTURE_WRITE seal more robust]
-  Link: http://lkml.kernel.org/r/20181120052137.74317-1-joel@joelfernandes.org
-Link: http://lkml.kernel.org/r/20181108041537.39694-1-joel@joelfernandes.org
-Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
-Cc: John Stultz <john.stultz@linaro.org>
-Cc: John Reck <jreck@google.com>
-Cc: Todd Kjos <tkjos@google.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Daniel Colascione <dancol@google.com>
-Cc: J. Bruce Fields <bfields@fieldses.org>
-Cc: Jeff Layton <jlayton@kernel.org>
-Cc: Khalid Aziz <khalid.aziz@oracle.com>
-Cc: Lei Yang <Lei.Yang@windriver.com>
-Cc: Marc-Andr Lureau <marcandre.lureau@redhat.com>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: Minchan Kim <minchan@kernel.org>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Valdis Kletnieks <valdis.kletnieks@vt.edu>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Jann Horn <jannh@google.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
-
-
---- a/include/uapi/linux/fcntl.h~mm-add-an-f_seal_future_write-seal-to-memfd
-+++ a/include/uapi/linux/fcntl.h
-@@ -41,6 +41,7 @@
- #define F_SEAL_SHRINK	0x0002	/* prevent file from shrinking */
- #define F_SEAL_GROW	0x0004	/* prevent file from growing */
- #define F_SEAL_WRITE	0x0008	/* prevent writes */
-+#define F_SEAL_FUTURE_WRITE	0x0010  /* prevent future writes while mapped */
- /* (1U << 31) is reserved for signed error codes */
- 
- /*
---- a/mm/memfd.c~mm-add-an-f_seal_future_write-seal-to-memfd
-+++ a/mm/memfd.c
-@@ -131,7 +131,8 @@ static unsigned int *memfd_file_seals_pt
- #define F_ALL_SEALS (F_SEAL_SEAL | \
- 		     F_SEAL_SHRINK | \
- 		     F_SEAL_GROW | \
--		     F_SEAL_WRITE)
-+		     F_SEAL_WRITE | \
-+		     F_SEAL_FUTURE_WRITE)
- 
- static int memfd_add_seals(struct file *file, unsigned int seals)
- {
---- a/fs/hugetlbfs/inode.c~mm-add-an-f_seal_future_write-seal-to-memfd
-+++ a/fs/hugetlbfs/inode.c
-@@ -530,7 +530,7 @@ static long hugetlbfs_punch_hole(struct
- 		inode_lock(inode);
- 
- 		/* protected by i_mutex */
--		if (info->seals & F_SEAL_WRITE) {
-+		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
- 			inode_unlock(inode);
- 			return -EPERM;
- 		}
---- a/mm/shmem.c~mm-add-an-f_seal_future_write-seal-to-memfd
-+++ a/mm/shmem.c
-@@ -2119,6 +2119,23 @@ out_nomem:
- 
- static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
- {
-+	struct shmem_inode_info *info = SHMEM_I(file_inode(file));
-+
-+	/*
-+	 * New PROT_READ and MAP_SHARED mmaps are not allowed when "future
-+	 * write" seal active.
-+	 */
-+	if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE) &&
-+	    (info->seals & F_SEAL_FUTURE_WRITE))
-+		return -EPERM;
-+
-+	/*
-+	 * Since the F_SEAL_FUTURE_WRITE seals allow for a MAP_SHARED read-only
-+	 * mapping, take care to not allow mprotect to revert protections.
-+	 */
-+	if (info->seals & F_SEAL_FUTURE_WRITE)
-+		vma->vm_flags &= ~(VM_MAYWRITE);
-+
- 	file_accessed(file);
- 	vma->vm_ops = &shmem_vm_ops;
- 	if (IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE) &&
-@@ -2344,8 +2361,9 @@ shmem_write_begin(struct file *file, str
- 	pgoff_t index = pos >> PAGE_SHIFT;
- 
- 	/* i_mutex is held by caller */
--	if (unlikely(info->seals & (F_SEAL_WRITE | F_SEAL_GROW))) {
--		if (info->seals & F_SEAL_WRITE)
-+	if (unlikely(info->seals & (F_SEAL_GROW |
-+				   F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))) {
-+		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))
- 			return -EPERM;
- 		if ((info->seals & F_SEAL_GROW) && pos + len > inode->i_size)
- 			return -EPERM;
-@@ -2608,7 +2626,7 @@ static long shmem_fallocate(struct file
- 		DECLARE_WAIT_QUEUE_HEAD_ONSTACK(shmem_falloc_waitq);
- 
- 		/* protected by i_mutex */
--		if (info->seals & F_SEAL_WRITE) {
-+		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
- 			error = -EPERM;
- 			goto out;
- 		}
-_
+The PID reuse tracepoint requires more intelligence in postprocessing
+and it still has a race where the state of these values can be
+indeterminate at the beginning of a trace if those values change
+quickly, but I don't think we can get to a point where we can generate
+a full snapshot of every tracepoint we care about in the system at the
+start of a trace. For Android's use cases, that short race at the
+beginning of a trace isn't a big deal (or at least I can't think of a
+case where it would be).
