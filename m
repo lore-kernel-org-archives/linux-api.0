@@ -1,87 +1,31 @@
-From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v3 3/4] libbpf: add bpf_prog_test_run_xattr
-Date: Thu, 22 Nov 2018 14:09:09 +0000
-Message-ID: <20181122140910.1079-4-lmb@cloudflare.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
- <20181122140910.1079-1-lmb@cloudflare.com>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181122140910.1079-1-lmb@cloudflare.com>
-Sender: netdev-owner@vger.kernel.org
-To: ast@kernel.org, daniel@iogearbox.net
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com, Lorenz Bauer <lmb@cloudflare.com>
+From: Rich Felker <dalias@libc.org>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Thu, 22 Nov 2018 09:36:03 -0500
+Message-ID: <20181122143603.GD23599@brightrain.aerifal.cx>
+References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-97459-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+In-Reply-To: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
+Sender: Rich Felker <dalias@aerifal.cx>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Carlos O'Donell <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add a new function, which encourages safe usage of the test interface.
-bpf_prog_test_run continues to work as before, but should be considered
-unsafe.
+On Wed, Nov 21, 2018 at 01:39:32PM -0500, Mathieu Desnoyers wrote:
+> Register rseq(2) TLS for each thread (including main), and unregister
+> for each thread (excluding main). "rseq" stands for Restartable
+> Sequences.
 
-Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
----
- tools/lib/bpf/bpf.c | 27 +++++++++++++++++++++++++++
- tools/lib/bpf/bpf.h | 13 +++++++++++++
- 2 files changed, 40 insertions(+)
+Maybe I'm missing something obvious, but "unregister" does not seem to
+be a meaningful operation. Can you clarify what it's for?
 
-diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
-index 961e1b9fc592..f8518bef6886 100644
---- a/tools/lib/bpf/bpf.c
-+++ b/tools/lib/bpf/bpf.c
-@@ -424,6 +424,33 @@ int bpf_prog_test_run(int prog_fd, int repeat, void *data, __u32 size,
- 	return ret;
- }
- 
-+int bpf_prog_test_run_xattr(const struct bpf_prog_test_run_attr *test_attr,
-+			    __u32 *size_out, __u32 *retval, __u32 *duration)
-+{
-+	union bpf_attr attr;
-+	int ret;
-+
-+	if (!test_attr->data_out && test_attr->size_out > 0)
-+		return -EINVAL;
-+
-+	bzero(&attr, sizeof(attr));
-+	attr.test.prog_fd = test_attr->prog_fd;
-+	attr.test.data_in = ptr_to_u64(test_attr->data);
-+	attr.test.data_out = ptr_to_u64(test_attr->data_out);
-+	attr.test.data_size_in = test_attr->size;
-+	attr.test.data_size_out = test_attr->size_out;
-+	attr.test.repeat = test_attr->repeat;
-+
-+	ret = sys_bpf(BPF_PROG_TEST_RUN, &attr, sizeof(attr));
-+	if (size_out)
-+		*size_out = attr.test.data_size_out;
-+	if (retval)
-+		*retval = attr.test.retval;
-+	if (duration)
-+		*duration = attr.test.duration;
-+	return ret;
-+}
-+
- int bpf_prog_get_next_id(__u32 start_id, __u32 *next_id)
- {
- 	union bpf_attr attr;
-diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
-index 26a51538213c..570f19f77f42 100644
---- a/tools/lib/bpf/bpf.h
-+++ b/tools/lib/bpf/bpf.h
-@@ -110,6 +110,19 @@ LIBBPF_API int bpf_prog_attach(int prog_fd, int attachable_fd,
- LIBBPF_API int bpf_prog_detach(int attachable_fd, enum bpf_attach_type type);
- LIBBPF_API int bpf_prog_detach2(int prog_fd, int attachable_fd,
- 				enum bpf_attach_type type);
-+
-+struct bpf_prog_test_run_attr {
-+	int prog_fd;
-+	int repeat;
-+	const void *data;
-+	__u32 size;
-+	void *data_out; /* optional */
-+	__u32 size_out;
-+};
-+
-+LIBBPF_API int bpf_prog_test_run_xattr(const struct bpf_prog_test_run_attr *test_attr,
-+				       __u32 *size_out, __u32 *retval,
-+				       __u32 *duration);
- LIBBPF_API int bpf_prog_test_run(int prog_fd, int repeat, void *data,
- 				 __u32 size, void *data_out, __u32 *size_out,
- 				 __u32 *retval, __u32 *duration);
--- 
-2.17.1
+Rich
