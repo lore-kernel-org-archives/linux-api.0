@@ -1,90 +1,47 @@
 From: "Serge E. Hallyn" <serge@hallyn.com>
 Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
-Date: Thu, 22 Nov 2018 01:41:14 -0600
-Message-ID: <20181122074114.GA15484@mail.hallyn.com>
+Date: Thu, 22 Nov 2018 01:48:07 -0600
+Message-ID: <20181122074807.GB15484@mail.hallyn.com>
 References: <20181119103241.5229-1-christian@brauner.io>
  <20181119103241.5229-3-christian@brauner.io>
- <20181119202857.k5zw742xjfrw677j@yavin>
- <20181119205518.btew3vxwgva4w3zh@brauner.io>
- <20181119211810.73ptfhnwdmkngfi4@yavin>
- <20181119212343.yikfoxob7f4hio7h@yavin>
+ <20181119223954.GA4992@cisco>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181119212343.yikfoxob7f4hio7h@yavin>
+In-Reply-To: <20181119223954.GA4992@cisco>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Christian Brauner <christian@brauner.io>, ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Christian Brauner <christian@brauner.io>, ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 20, 2018 at 08:23:43AM +1100, Aleksa Sarai wrote:
-> On 2018-11-20, Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > On 2018-11-19, Christian Brauner <christian@brauner.io> wrote:
-> > > On Tue, Nov 20, 2018 at 07:28:57AM +1100, Aleksa Sarai wrote:
-> > > > On 2018-11-19, Christian Brauner <christian@brauner.io> wrote:
-> > > > > +	if (info) {
-> > > > > +		ret = __copy_siginfo_from_user(sig, &kinfo, info);
-> > > > > +		if (unlikely(ret))
-> > > > > +			goto err;
-> > > > > +		/*
-> > > > > +		 * Not even root can pretend to send signals from the kernel.
-> > > > > +		 * Nor can they impersonate a kill()/tgkill(), which adds
-> > > > > +		 * source info.
-> > > > > +		 */
-> > > > > +		ret = -EPERM;
-> > > > > +		if ((kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL) &&
-> > > > > +		    (task_pid(current) != pid))
-> > > > > +			goto err;
-> > > > > +	} else {
-> > > > > +		prepare_kill_siginfo(sig, &kinfo);
-> > > > > +	}
-> > > > 
-> > > > I wonder whether we should also have a pidns restriction here, since
-> > > > currently it isn't possible for a container process using a pidns to
-> > > > signal processes outside its pidns. AFAICS, this isn't done through an
-> > > > explicit check -- it's a side-effect of processes in a pidns not being
-> > > > able to address non-descendant-pidns processes.
-> > > > 
-> > > > But maybe it's reasonable to allow sending a procfd to a different pidns
-> > > > and the same operations working on it? If we extend the procfd API to
-> > > 
-> > > No, I don't think so. I really don't want any fancy semantics in here.
-> > > Fancy doesn't get merged and fancy is hard to maintain. So we should do
-> > > something like:
-> > > 
-> > > if (proc_pid_ns() != current_pid_ns)
-> > > 	return EINVAL
-> > 
-> > This isn't quite sufficient. The key thing is that you have to be in an
-> > *ancestor* (or same) pidns, not the *same* pidns. Ideally you can re-use
-> > the check already in pidns_get_parent, and expose it. It would be
-> > something as trivial as:
-> > 
-> > bool pidns_is_descendant(struct pid_namespace *ns,
-> >                          struct pid_namespace *ancestor)
-> > {
-> >     for (;;) {
-> >         if (!ns)
-> >             return false;
-> >         if (ns == ancestor)
-> >             break;
-> >         ns = ns->parent;
-> >     }
-> >     return true;
-> > }
-> > 
-> > And you can rewrite pidns_get_parent to use it. So you would instead be
-> > doing:
-> > 
-> >     if (pidns_is_descendant(proc_pid_ns, task_active_pid_ns(current)))
-> >         return -EPERM;
+On Mon, Nov 19, 2018 at 03:39:54PM -0700, Tycho Andersen wrote:
+> On Mon, Nov 19, 2018 at 11:32:39AM +0100, Christian Brauner wrote:
+> >
+> > +/**
+> > + *  sys_procfd_signal - send a signal to a process through a process file
+> > + *                      descriptor
+> > + *  @fd: the file descriptor of the process
+> > + *  @sig: signal to be sent
+> > + *  @info: the signal info
+> > + *  @flags: future flags to be passed
+> > + */
+> > +SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user *, info,
+> > +		int, flags)
+> > +{
 > 
-> Scratch the last bit, -EPERM is wrong here. I would argue that -EINVAL
-> is *somewhat* wrong because arguable the more semantically consistent
-> error (with kill(2)) would be -ESRCH -- but then you're mixing the "pid
-> is dead" and "pid is not visible to you" cases. I'm not sure what the
-> right errno would be here (I'm sure some of the LKML greybeards will
-> have a better clue.) :P
+> Can I just register an objection here that I think using a syscall
+> just for this is silly?
+> 
+> My understanding is that the concern is that some code might do:
+> 
+> unknown_fd = recv_fd();
+> ioctl(unknown_fd, SOME_IOCTL, NULL); // where SOME_IOCTL == PROC_FD_KILL
+> // whoops, unknown_fd was a procfd and we killed a task!
 
-Actually I like EXDEV for this.  ERMOTE also works.
+This could just be my own mental model, but for something like "kill a
+task", an ioctl just seems wrong.  Syscall seems more natural.
+
+I'd ack either method.
+
+-serge
