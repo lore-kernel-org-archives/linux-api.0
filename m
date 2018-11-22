@@ -1,275 +1,159 @@
 From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH -next 1/2] mm/memfd: make F_SEAL_FUTURE_WRITE seal more
- robust
-Date: Thu, 22 Nov 2018 15:09:06 -0800
-Message-ID: <20181122230906.GA198127@google.com>
+Subject: Re: [PATCH -next 2/2] selftests/memfd: modify tests for
+ F_SEAL_FUTURE_WRITE seal
+Date: Thu, 22 Nov 2018 15:21:52 -0800
+Message-ID: <20181122232152.GA17060@google.com>
 References: <20181120052137.74317-1-joel@joelfernandes.org>
- <CALCETrXgBENat=5=7EuU-ttQ-YSXT+ifjLGc=hpJ=unRgSsndw@mail.gmail.com>
- <20181120183926.GA124387@google.com>
- <20181121070658.011d576d@canb.auug.org.au>
- <469B80CB-D982-4802-A81D-95AC493D7E87@amacapital.net>
- <20181120204710.GB22801@google.com>
- <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net>
- <20181120211335.GC22801@google.com>
- <20181121182701.0d8a775fda6af1f8d2be8f25@linux-foundation.org>
- <CALCETrUGyhqi+M3cTdqJNNOPfTWn-R-ekM_R5heq2mbdVqPUAw@mail.gmail.com>
+ <20181120052137.74317-2-joel@joelfernandes.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrUGyhqi+M3cTdqJNNOPfTWn-R-ekM_R5heq2mbdVqPUAw@mail.gmail.com>
+In-Reply-To: <20181120052137.74317-2-joel@joelfernandes.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Stephen Rothwell <sfr@canb.auug.org.au>, LKML <linux-kernel@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, Linux API <linux-api@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>
+To: linux-kernel@vger.kernel.org
+Cc: Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Hugh Dickins <hughd@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mm@kvack.org, =?iso-8859-1?Q?Marc-Andr=E9?= Lureau <marcandre.lureau@redhat.com>, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 21, 2018 at 07:25:26PM -0800, Andy Lutomirski wrote:
-> On Wed, Nov 21, 2018 at 6:27 PM Andrew Morton <akpm@linux-foundation.org> wrote:
-> >
-> > On Tue, 20 Nov 2018 13:13:35 -0800 Joel Fernandes <joel@joelfernandes.org> wrote:
-> >
-> > > > > I am Ok with whatever Andrew wants to do, if it is better to squash it with
-> > > > > the original, then I can do that and send another patch.
-> > > > >
-> > > > >
-> > > >
-> > > > From experience, Andrew will food in fixups on request :)
-> > >
-> > > Andrew, could you squash this patch into the one titled ("mm: Add an
-> > > F_SEAL_FUTURE_WRITE seal to memfd")?
-> >
-> > Sure.
-> >
-> > I could of course queue them separately but I rarely do so - I don't
-> > think that the intermediate development states are useful in the
-> > infinite-term, and I make them available via additional Link: tags in
-> > the changelog footers anyway.
-> >
-> > I think that the magnitude of these patches is such that John Stultz's
-> > Reviewed-by is invalidated, so this series is now in the "unreviewed"
-> > state.
-> >
-> > So can we have a re-review please?  For convenience, here's the
-> > folded-together [1/1] patch, as it will go to Linus.
-
-Sure, I removed the old tags and also provide an updated patch below inline.
-
-> > From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-> > Subject: mm: Add an F_SEAL_FUTURE_WRITE seal to memfd
-> >
-> > Android uses ashmem for sharing memory regions.  We are looking forward to
-> > migrating all usecases of ashmem to memfd so that we can possibly remove
-> > the ashmem driver in the future from staging while also benefiting from
-> > using memfd and contributing to it.  Note staging drivers are also not ABI
-> > and generally can be removed at anytime.
-[...]
-> > --- a/include/uapi/linux/fcntl.h~mm-add-an-f_seal_future_write-seal-to-memfd
-> > +++ a/include/uapi/linux/fcntl.h
-> > @@ -41,6 +41,7 @@
-> >  #define F_SEAL_SHRINK  0x0002  /* prevent file from shrinking */
-> >  #define F_SEAL_GROW    0x0004  /* prevent file from growing */
-> >  #define F_SEAL_WRITE   0x0008  /* prevent writes */
-> > +#define F_SEAL_FUTURE_WRITE    0x0010  /* prevent future writes while mapped */
-> >  /* (1U << 31) is reserved for signed error codes */
-> >
-> >  /*
-> > --- a/mm/memfd.c~mm-add-an-f_seal_future_write-seal-to-memfd
-> > +++ a/mm/memfd.c
-> > @@ -131,7 +131,8 @@ static unsigned int *memfd_file_seals_pt
-> >  #define F_ALL_SEALS (F_SEAL_SEAL | \
-> >                      F_SEAL_SHRINK | \
-> >                      F_SEAL_GROW | \
-> > -                    F_SEAL_WRITE)
-> > +                    F_SEAL_WRITE | \
-> > +                    F_SEAL_FUTURE_WRITE)
-> >
-> >  static int memfd_add_seals(struct file *file, unsigned int seals)
-> >  {
-> > --- a/fs/hugetlbfs/inode.c~mm-add-an-f_seal_future_write-seal-to-memfd
-> > +++ a/fs/hugetlbfs/inode.c
-> > @@ -530,7 +530,7 @@ static long hugetlbfs_punch_hole(struct
-> >                 inode_lock(inode);
-> >
-> >                 /* protected by i_mutex */
-> > -               if (info->seals & F_SEAL_WRITE) {
-> > +               if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
-> >                         inode_unlock(inode);
-> >                         return -EPERM;
-> >                 }
-> > --- a/mm/shmem.c~mm-add-an-f_seal_future_write-seal-to-memfd
-> > +++ a/mm/shmem.c
-> > @@ -2119,6 +2119,23 @@ out_nomem:
-> >
-> >  static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
-> >  {
-> > +       struct shmem_inode_info *info = SHMEM_I(file_inode(file));
-> > +
-> > +       /*
-> > +        * New PROT_READ and MAP_SHARED mmaps are not allowed when "future
+On Mon, Nov 19, 2018 at 09:21:37PM -0800, Joel Fernandes (Google) wrote:
+> Modify the tests for F_SEAL_FUTURE_WRITE based on the changes
+> introduced in previous patch.
 > 
-> PROT_WRITE, perhaps?
-
-Yes, fixed.
-
-> > +        * write" seal active.
-> > +        */
-> > +       if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE) &&
-> > +           (info->seals & F_SEAL_FUTURE_WRITE))
-> > +               return -EPERM;
-> > +
-> > +       /*
-> > +        * Since the F_SEAL_FUTURE_WRITE seals allow for a MAP_SHARED read-only
-> > +        * mapping, take care to not allow mprotect to revert protections.
-> > +        */
-> > +       if (info->seals & F_SEAL_FUTURE_WRITE)
-> > +               vma->vm_flags &= ~(VM_MAYWRITE);
-> > +
+> Also add a test to make sure the reopen issue pointed by Jann Horn [1]
+> is fixed.
 > 
-> This might all be clearer as:
+> [1] https://lore.kernel.org/lkml/CAG48ez1h=v-JYnDw81HaYJzOfrNhwYksxmc2r=cJvdQVgYM+NA@mail.gmail.com/
 > 
-> if (info->seals & F_SEAL_FUTURE_WRITE) {
->   if (vma->vm_flags ...)
->     return -EPERM;
->   vma->vm_flags &= ~VM_MAYWRITE;
-> }
-> 
-> with appropriate comments inserted.
+> Cc: Jann Horn <jannh@google.com>
+> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+> ---
+>  tools/testing/selftests/memfd/memfd_test.c | 88 +++++++++++-----------
+>  1 file changed, 44 insertions(+), 44 deletions(-)
 
-Agreed, its simpler. Updated patch is below. I squashed it with all the
-earlier ones. Andy, could you provide Acks and/or Reviewed-by tag as well?
+Since we squashed [1] the mm/memfd patch modifications suggested by Andy into
+the original patch, I also squashed the selftests modifications and appended
+the patch inline below if you want to take this instead:
+
+[1] https://lore.kernel.org/lkml/20181122230906.GA198127@google.com/T/#m8ba68f67f3ec24913a977b62bcaeafc4b194b8c8
 
 ---8<-----------------------
 
->From b5a4960e755af67e9f6f9e65db5113e712cf338e Mon Sep 17 00:00:00 2001
 From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Date: Sat, 10 Nov 2018 22:21:31 -0800
-Subject: [PATCH v4] mm/memfd: Add an F_SEAL_FUTURE_WRITE seal to memfd
+Subject: [PATCH v4] selftests/memfd: add tests for F_SEAL_FUTURE_WRITE seal
 
-Android uses ashmem for sharing memory regions.  We are looking forward to
-migrating all usecases of ashmem to memfd so that we can possibly remove
-the ashmem driver in the future from staging while also benefiting from
-using memfd and contributing to it.  Note staging drivers are also not ABI
-and generally can be removed at anytime.
+Add tests to verify sealing memfds with the F_SEAL_FUTURE_WRITE works as
+expected.
 
-One of the main usecases Android has is the ability to create a region and
-mmap it as writeable, then add protection against making any "future"
-writes while keeping the existing already mmap'ed writeable-region active.
-This allows us to implement a usecase where receivers of the shared
-memory buffer can get a read-only view, while the sender continues to
-write to the buffer.  See CursorWindow documentation in Android for more
-details:
-https://developer.android.com/reference/android/database/CursorWindow
-
-This usecase cannot be implemented with the existing F_SEAL_WRITE seal.
-To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
-which prevents any future mmap and write syscalls from succeeding while
-keeping the existing mmap active.
-
-A better way to do F_SEAL_FUTURE_WRITE seal was discussed [1] last week
-where we don't need to modify core VFS structures to get the same
-behavior of the seal. This solves several side-effects pointed by Andy.
-self-tests are provided in later patch to verify the expected semantics.
-
-[1] https://lore.kernel.org/lkml/20181111173650.GA256781@google.com/
-
-Suggested-by: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
 ---
- fs/hugetlbfs/inode.c       |  2 +-
- include/uapi/linux/fcntl.h |  1 +
- mm/memfd.c                 |  3 ++-
- mm/shmem.c                 | 26 +++++++++++++++++++++++---
- 4 files changed, 27 insertions(+), 5 deletions(-)
+ tools/testing/selftests/memfd/memfd_test.c | 74 ++++++++++++++++++++++
+ 1 file changed, 74 insertions(+)
 
-diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
-index 762028994f47..5b54bf893a67 100644
---- a/fs/hugetlbfs/inode.c
-+++ b/fs/hugetlbfs/inode.c
-@@ -558,7 +558,7 @@ static long hugetlbfs_punch_hole(struct inode *inode, loff_t offset, loff_t len)
- 		inode_lock(inode);
+diff --git a/tools/testing/selftests/memfd/memfd_test.c b/tools/testing/selftests/memfd/memfd_test.c
+index 10baa1652fc2..c67d32eeb668 100644
+--- a/tools/testing/selftests/memfd/memfd_test.c
++++ b/tools/testing/selftests/memfd/memfd_test.c
+@@ -54,6 +54,22 @@ static int mfd_assert_new(const char *name, loff_t sz, unsigned int flags)
+ 	return fd;
+ }
  
- 		/* protected by i_mutex */
--		if (info->seals & F_SEAL_WRITE) {
-+		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
- 			inode_unlock(inode);
- 			return -EPERM;
- 		}
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index 594b85f7cb86..1d338357df8a 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -41,6 +41,7 @@
- #define F_SEAL_SHRINK	0x0002	/* prevent file from shrinking */
- #define F_SEAL_GROW	0x0004	/* prevent file from growing */
- #define F_SEAL_WRITE	0x0008	/* prevent writes */
-+#define F_SEAL_FUTURE_WRITE	0x0010  /* prevent future writes while mapped */
- /* (1U << 31) is reserved for signed error codes */
- 
- /*
-diff --git a/mm/memfd.c b/mm/memfd.c
-index 97264c79d2cd..650e65a46b9c 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -131,7 +131,8 @@ static unsigned int *memfd_file_seals_ptr(struct file *file)
- #define F_ALL_SEALS (F_SEAL_SEAL | \
- 		     F_SEAL_SHRINK | \
- 		     F_SEAL_GROW | \
--		     F_SEAL_WRITE)
-+		     F_SEAL_WRITE | \
-+		     F_SEAL_FUTURE_WRITE)
- 
- static int memfd_add_seals(struct file *file, unsigned int seals)
- {
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 32eb29bd72c6..f5069e8225cc 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -2121,6 +2121,25 @@ int shmem_lock(struct file *file, int lock, struct user_struct *user)
- 
- static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
- {
-+	struct shmem_inode_info *info = SHMEM_I(file_inode(file));
++static int mfd_assert_reopen_fd(int fd_in)
++{
++	int r, fd;
++	char path[100];
 +
++	sprintf(path, "/proc/self/fd/%d", fd_in);
 +
-+	if (info->seals & F_SEAL_FUTURE_WRITE) {
-+		/*
-+		 * New PROT_WRITE and MAP_SHARED mmaps are not allowed when
-+		 * "future write" seal active.
-+		 */
-+		if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE))
-+			return -EPERM;
-+
-+		/*
-+		 * Since the F_SEAL_FUTURE_WRITE seals allow for a MAP_SHARED
-+		 * read-only mapping, take care to not allow mprotect to revert
-+		 * protections.
-+		 */
-+		vma->vm_flags &= ~(VM_MAYWRITE);
++	fd = open(path, O_RDWR);
++	if (fd < 0) {
++		printf("re-open of existing fd %d failed\n", fd_in);
++		abort();
 +	}
 +
- 	file_accessed(file);
- 	vma->vm_ops = &shmem_vm_ops;
- 	if (IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE) &&
-@@ -2346,8 +2365,9 @@ shmem_write_begin(struct file *file, struct address_space *mapping,
- 	pgoff_t index = pos >> PAGE_SHIFT;
++	return fd;
++}
++
+ static void mfd_fail_new(const char *name, unsigned int flags)
+ {
+ 	int r;
+@@ -255,6 +271,25 @@ static void mfd_assert_read(int fd)
+ 	munmap(p, mfd_def_size);
+ }
  
- 	/* i_mutex is held by caller */
--	if (unlikely(info->seals & (F_SEAL_WRITE | F_SEAL_GROW))) {
--		if (info->seals & F_SEAL_WRITE)
-+	if (unlikely(info->seals & (F_SEAL_GROW |
-+				   F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))) {
-+		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))
- 			return -EPERM;
- 		if ((info->seals & F_SEAL_GROW) && pos + len > inode->i_size)
- 			return -EPERM;
-@@ -2610,7 +2630,7 @@ static long shmem_fallocate(struct file *file, int mode, loff_t offset,
- 		DECLARE_WAIT_QUEUE_HEAD_ONSTACK(shmem_falloc_waitq);
++/* Test that PROT_READ + MAP_SHARED mappings work. */
++static void mfd_assert_read_shared(int fd)
++{
++	void *p;
++
++	/* verify PROT_READ and MAP_SHARED *is* allowed */
++	p = mmap(NULL,
++		 mfd_def_size,
++		 PROT_READ,
++		 MAP_SHARED,
++		 fd,
++		 0);
++	if (p == MAP_FAILED) {
++		printf("mmap() failed: %m\n");
++		abort();
++	}
++	munmap(p, mfd_def_size);
++}
++
+ static void mfd_assert_write(int fd)
+ {
+ 	ssize_t l;
+@@ -692,6 +727,44 @@ static void test_seal_write(void)
+ 	close(fd);
+ }
  
- 		/* protected by i_mutex */
--		if (info->seals & F_SEAL_WRITE) {
-+		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
- 			error = -EPERM;
- 			goto out;
- 		}
++/*
++ * Test SEAL_FUTURE_WRITE
++ * Test whether SEAL_FUTURE_WRITE actually prevents modifications.
++ */
++static void test_seal_future_write(void)
++{
++	int fd, fd2;
++	void *p;
++
++	printf("%s SEAL-FUTURE-WRITE\n", memfd_str);
++
++	fd = mfd_assert_new("kern_memfd_seal_future_write",
++			    mfd_def_size,
++			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
++
++	p = mfd_assert_mmap_shared(fd);
++
++	mfd_assert_has_seals(fd, 0);
++
++	mfd_assert_add_seals(fd, F_SEAL_FUTURE_WRITE);
++	mfd_assert_has_seals(fd, F_SEAL_FUTURE_WRITE);
++
++	/* read should pass, writes should fail */
++	mfd_assert_read(fd);
++	mfd_assert_read_shared(fd);
++	mfd_fail_write(fd);
++
++	fd2 = mfd_assert_reopen_fd(fd);
++	/* read should pass, writes should still fail */
++	mfd_assert_read(fd2);
++	mfd_assert_read_shared(fd2);
++	mfd_fail_write(fd2);
++
++	munmap(p, mfd_def_size);
++	close(fd2);
++	close(fd);
++}
++
+ /*
+  * Test SEAL_SHRINK
+  * Test whether SEAL_SHRINK actually prevents shrinking
+@@ -945,6 +1018,7 @@ int main(int argc, char **argv)
+ 	test_basic();
+ 
+ 	test_seal_write();
++	test_seal_future_write();
+ 	test_seal_shrink();
+ 	test_seal_grow();
+ 	test_seal_resize();
 -- 
 2.19.1.1215.g8438c0b245-goog
