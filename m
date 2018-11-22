@@ -1,46 +1,264 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH] Add /proc/pid_generation
-Date: Wed, 21 Nov 2018 18:06:33 -0800
-Message-ID: <20181122020633.GN3065@bombadil.infradead.org>
-References: <20181121201452.77173-1-dancol@google.com>
- <20181121203150.GK3065@bombadil.infradead.org>
- <CAKOZueuCYOsaHZzoz5nNPr8Jb-fEiHTR4MektaJx8vuUXcrKCQ@mail.gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH -next 1/2] mm/memfd: make F_SEAL_FUTURE_WRITE seal more
+ robust
+Date: Wed, 21 Nov 2018 18:27:01 -0800
+Message-ID: <20181121182701.0d8a775fda6af1f8d2be8f25@linux-foundation.org>
+References: <20181120052137.74317-1-joel@joelfernandes.org>
+        <CALCETrXgBENat=5=7EuU-ttQ-YSXT+ifjLGc=hpJ=unRgSsndw@mail.gmail.com>
+        <20181120183926.GA124387@google.com>
+        <20181121070658.011d576d@canb.auug.org.au>
+        <469B80CB-D982-4802-A81D-95AC493D7E87@amacapital.net>
+        <20181120204710.GB22801@google.com>
+        <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net>
+        <20181120211335.GC22801@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKOZueuCYOsaHZzoz5nNPr8Jb-fEiHTR4MektaJx8vuUXcrKCQ@mail.gmail.com>
+In-Reply-To: <20181120211335.GC22801@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Primiano Tucci <primiano@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, rostedt@goodmis.org, tglx@linutronix.de, mingo@kernel.org, linux@dominikbrodowski.net, pasha.tatashin@oracle.com, jpoimboe@redhat.com, ard.biesheuvel@linaro.org, Michal Hocko <mhocko@suse.com>, David Howells <dhowells@redhat.com>, ktsanaktsidis@zendesk.com
+To: Joel Fernandes <joel@joelfernandes.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Stephen Rothwell <sfr@canb.auug.org.au>, Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, Linux API <linux-api@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 21, 2018 at 12:38:20PM -0800, Daniel Colascione wrote:
-> On Wed, Nov 21, 2018 at 12:31 PM Matthew Wilcox <willy@infradead.org> wrote:
-> >
-> > On Wed, Nov 21, 2018 at 12:14:44PM -0800, Daniel Colascione wrote:
-> > > This change adds a per-pid-namespace 64-bit generation number,
-> > > incremented on PID rollover, and exposes it via a new proc file
-> > > /proc/pid_generation. By examining this file before and after /proc
-> > > enumeration, user code can detect the potential reuse of a PID and
-> > > restart the task enumeration process, repeating until it gets a
-> > > coherent snapshot.
-> > >
-> > > PID rollover ought to be rare, so in practice, scan repetitions will
-> > > be rare.
-> >
-> > Then why does it need to be 64-bit?
-> 
-> [Resending because of accidental HTML. I really need to switch to a
-> better email client.]
-> 
-> Because 64 bits is enough for anyone. :-) A u64 is big enough that
-> we'll never observe an overflow on a running system, and PID
-> namespaces are rare enough that we won't miss the four extra bytes we
-> use by upgrading from a u32.  And after reading about some security
-> problems caused by too-clever handling of 32-bit rollover, I'd rather
-> the code be obviously correct than save a trivial amount of space.
+On Tue, 20 Nov 2018 13:13:35 -0800 Joel Fernandes <joel@joelfernandes.org> wrote:
 
-I don't think you understand how big 4 billion is.  If it happens once a
-second, it will take 136 years for a 2^32 count to roll over.  How often
-does a PID roll over happen?
+> > > I am Ok with whatever Andrew wants to do, if it is better to squash it with
+> > > the original, then I can do that and send another patch.
+> > > 
+> > > 
+> > 
+> > From experience, Andrew will food in fixups on request :)
+> 
+> Andrew, could you squash this patch into the one titled ("mm: Add an
+> F_SEAL_FUTURE_WRITE seal to memfd")? 
+
+Sure.
+
+I could of course queue them separately but I rarely do so - I don't
+think that the intermediate development states are useful in the
+infinite-term, and I make them available via additional Link: tags in
+the changelog footers anyway.
+
+I think that the magnitude of these patches is such that John Stultz's
+Reviewed-by is invalidated, so this series is now in the "unreviewed"
+state.
+
+So can we have a re-review please?  For convenience, here's the
+folded-together [1/1] patch, as it will go to Linus.
+
+
+From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Subject: mm: Add an F_SEAL_FUTURE_WRITE seal to memfd
+
+Android uses ashmem for sharing memory regions.  We are looking forward to
+migrating all usecases of ashmem to memfd so that we can possibly remove
+the ashmem driver in the future from staging while also benefiting from
+using memfd and contributing to it.  Note staging drivers are also not ABI
+and generally can be removed at anytime.
+
+One of the main usecases Android has is the ability to create a region and
+mmap it as writeable, then add protection against making any "future"
+writes while keeping the existing already mmap'ed writeable-region active.
+This allows us to implement a usecase where receivers of the shared
+memory buffer can get a read-only view, while the sender continues to
+write to the buffer.  See CursorWindow documentation in Android for more
+details:
+https://developer.android.com/reference/android/database/CursorWindow
+
+This usecase cannot be implemented with the existing F_SEAL_WRITE seal. 
+To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
+which prevents any future mmap and write syscalls from succeeding while
+keeping the existing mmap active.  The following program shows the seal
+working in action:
+
+ #include <stdio.h>
+ #include <errno.h>
+ #include <sys/mman.h>
+ #include <linux/memfd.h>
+ #include <linux/fcntl.h>
+ #include <asm/unistd.h>
+ #include <unistd.h>
+ #define F_SEAL_FUTURE_WRITE 0x0010
+ #define REGION_SIZE (5 * 1024 * 1024)
+
+int memfd_create_region(const char *name, size_t size)
+{
+    int ret;
+    int fd = syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING);
+    if (fd < 0) return fd;
+    ret = ftruncate(fd, size);
+    if (ret < 0) { close(fd); return ret; }
+    return fd;
+}
+
+int main() {
+    int ret, fd;
+    void *addr, *addr2, *addr3, *addr1;
+    ret = memfd_create_region("test_region", REGION_SIZE);
+    printf("ret=%d\n", ret);
+    fd = ret;
+
+    // Create map
+    addr = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    if (addr == MAP_FAILED)
+	    printf("map 0 failed\n");
+    else
+	    printf("map 0 passed\n");
+
+    if ((ret = write(fd, "test", 4)) != 4)
+	    printf("write failed even though no future-write seal "
+		   "(ret=%d errno =%d)\n", ret, errno);
+    else
+	    printf("write passed\n");
+
+    addr1 = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    if (addr1 == MAP_FAILED)
+	    perror("map 1 prot-write failed even though no seal\n");
+    else
+	    printf("map 1 prot-write passed as expected\n");
+
+    ret = fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE |
+				 F_SEAL_GROW |
+				 F_SEAL_SHRINK);
+    if (ret == -1)
+	    printf("fcntl failed, errno: %d\n", errno);
+    else
+	    printf("future-write seal now active\n");
+
+    if ((ret = write(fd, "test", 4)) != 4)
+	    printf("write failed as expected due to future-write seal\n");
+    else
+	    printf("write passed (unexpected)\n");
+
+    addr2 = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    if (addr2 == MAP_FAILED)
+	    perror("map 2 prot-write failed as expected due to seal\n");
+    else
+	    printf("map 2 passed\n");
+
+    addr3 = mmap(0, REGION_SIZE, PROT_READ, MAP_SHARED, fd, 0);
+    if (addr3 == MAP_FAILED)
+	    perror("map 3 failed\n");
+    else
+	    printf("map 3 prot-read passed as expected\n");
+}
+
+The output of running this program is as follows:
+ret=3
+map 0 passed
+write passed
+map 1 prot-write passed as expected
+future-write seal now active
+write failed as expected due to future-write seal
+map 2 prot-write failed as expected due to seal
+: Permission denied
+map 3 prot-read passed as expected
+
+[joel@joelfernandes.org: make F_SEAL_FUTURE_WRITE seal more robust]
+  Link: http://lkml.kernel.org/r/20181120052137.74317-1-joel@joelfernandes.org
+Link: http://lkml.kernel.org/r/20181108041537.39694-1-joel@joelfernandes.org
+Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+Cc: John Stultz <john.stultz@linaro.org>
+Cc: John Reck <jreck@google.com>
+Cc: Todd Kjos <tkjos@google.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Christoph Hellwig <hch@infradead.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Daniel Colascione <dancol@google.com>
+Cc: J. Bruce Fields <bfields@fieldses.org>
+Cc: Jeff Layton <jlayton@kernel.org>
+Cc: Khalid Aziz <khalid.aziz@oracle.com>
+Cc: Lei Yang <Lei.Yang@windriver.com>
+Cc: Marc-Andr Lureau <marcandre.lureau@redhat.com>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: Minchan Kim <minchan@kernel.org>
+Cc: Shuah Khan <shuah@kernel.org>
+Cc: Valdis Kletnieks <valdis.kletnieks@vt.edu>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Jann Horn <jannh@google.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+
+
+--- a/include/uapi/linux/fcntl.h~mm-add-an-f_seal_future_write-seal-to-memfd
++++ a/include/uapi/linux/fcntl.h
+@@ -41,6 +41,7 @@
+ #define F_SEAL_SHRINK	0x0002	/* prevent file from shrinking */
+ #define F_SEAL_GROW	0x0004	/* prevent file from growing */
+ #define F_SEAL_WRITE	0x0008	/* prevent writes */
++#define F_SEAL_FUTURE_WRITE	0x0010  /* prevent future writes while mapped */
+ /* (1U << 31) is reserved for signed error codes */
+ 
+ /*
+--- a/mm/memfd.c~mm-add-an-f_seal_future_write-seal-to-memfd
++++ a/mm/memfd.c
+@@ -131,7 +131,8 @@ static unsigned int *memfd_file_seals_pt
+ #define F_ALL_SEALS (F_SEAL_SEAL | \
+ 		     F_SEAL_SHRINK | \
+ 		     F_SEAL_GROW | \
+-		     F_SEAL_WRITE)
++		     F_SEAL_WRITE | \
++		     F_SEAL_FUTURE_WRITE)
+ 
+ static int memfd_add_seals(struct file *file, unsigned int seals)
+ {
+--- a/fs/hugetlbfs/inode.c~mm-add-an-f_seal_future_write-seal-to-memfd
++++ a/fs/hugetlbfs/inode.c
+@@ -530,7 +530,7 @@ static long hugetlbfs_punch_hole(struct
+ 		inode_lock(inode);
+ 
+ 		/* protected by i_mutex */
+-		if (info->seals & F_SEAL_WRITE) {
++		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
+ 			inode_unlock(inode);
+ 			return -EPERM;
+ 		}
+--- a/mm/shmem.c~mm-add-an-f_seal_future_write-seal-to-memfd
++++ a/mm/shmem.c
+@@ -2119,6 +2119,23 @@ out_nomem:
+ 
+ static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
+ {
++	struct shmem_inode_info *info = SHMEM_I(file_inode(file));
++
++	/*
++	 * New PROT_READ and MAP_SHARED mmaps are not allowed when "future
++	 * write" seal active.
++	 */
++	if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE) &&
++	    (info->seals & F_SEAL_FUTURE_WRITE))
++		return -EPERM;
++
++	/*
++	 * Since the F_SEAL_FUTURE_WRITE seals allow for a MAP_SHARED read-only
++	 * mapping, take care to not allow mprotect to revert protections.
++	 */
++	if (info->seals & F_SEAL_FUTURE_WRITE)
++		vma->vm_flags &= ~(VM_MAYWRITE);
++
+ 	file_accessed(file);
+ 	vma->vm_ops = &shmem_vm_ops;
+ 	if (IS_ENABLED(CONFIG_TRANSPARENT_HUGE_PAGECACHE) &&
+@@ -2344,8 +2361,9 @@ shmem_write_begin(struct file *file, str
+ 	pgoff_t index = pos >> PAGE_SHIFT;
+ 
+ 	/* i_mutex is held by caller */
+-	if (unlikely(info->seals & (F_SEAL_WRITE | F_SEAL_GROW))) {
+-		if (info->seals & F_SEAL_WRITE)
++	if (unlikely(info->seals & (F_SEAL_GROW |
++				   F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))) {
++		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE))
+ 			return -EPERM;
+ 		if ((info->seals & F_SEAL_GROW) && pos + len > inode->i_size)
+ 			return -EPERM;
+@@ -2608,7 +2626,7 @@ static long shmem_fallocate(struct file
+ 		DECLARE_WAIT_QUEUE_HEAD_ONSTACK(shmem_falloc_waitq);
+ 
+ 		/* protected by i_mutex */
+-		if (info->seals & F_SEAL_WRITE) {
++		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
+ 			error = -EPERM;
+ 			goto out;
+ 		}
+_
