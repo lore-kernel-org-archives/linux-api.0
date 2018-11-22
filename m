@@ -1,250 +1,182 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH -next 1/2] mm/memfd: make F_SEAL_FUTURE_WRITE seal more robust
-Date: Wed, 21 Nov 2018 19:25:26 -0800
-Message-ID: <CALCETrUGyhqi+M3cTdqJNNOPfTWn-R-ekM_R5heq2mbdVqPUAw@mail.gmail.com>
-References: <20181120052137.74317-1-joel@joelfernandes.org>
- <CALCETrXgBENat=5=7EuU-ttQ-YSXT+ifjLGc=hpJ=unRgSsndw@mail.gmail.com>
- <20181120183926.GA124387@google.com> <20181121070658.011d576d@canb.auug.org.au>
- <469B80CB-D982-4802-A81D-95AC493D7E87@amacapital.net> <20181120204710.GB22801@google.com>
- <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net> <20181120211335.GC22801@google.com>
- <20181121182701.0d8a775fda6af1f8d2be8f25@linux-foundation.org>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [PATCH v2] Add /proc/pid_gen
+Date: Wed, 21 Nov 2018 21:30:20 -0800
+Message-ID: <CAKOZues6ZwrJ3Y-iLGC5HVgg6snLsMeHuPjDsK9=pooUmQswhQ@mail.gmail.com>
+References: <20181121201452.77173-1-dancol@google.com> <20181121205428.165205-1-dancol@google.com>
+ <20181121141220.0e533c1dcb4792480efbf3ff@linux-foundation.org>
+ <CAKOZuetW6WMNFdL5_2=UbrEf8mjxYTdz1+4BiRLSgdoKh8FsqQ@mail.gmail.com>
+ <20181121145043.fa029f4f91afddc2a10bb81e@linux-foundation.org>
+ <CAKOZuesF5zi9mpEE6No7oq0hDnM8KFhQFU=NM7qUF635s0r3-A@mail.gmail.com>
+ <20181121162247.467fcab6c0aca0819a822286@linux-foundation.org>
+ <CAKOZuet7ipw8zoXCDQUB5PKs3kdSye-zesBbEv7jVDSByhXgkw@mail.gmail.com>
+ <20181121165741.ef089df784482632c4a66370@linux-foundation.org>
+ <CAKOZuessQgmPuiReEO0caNqkss=r44o-XXnem12TOXSn=y6xkw@mail.gmail.com>
+ <20181121172919.1b6585e17770d0be7dd8c4d9@linux-foundation.org> <CAEe=SxmNVHR_1ge6hM5636CNi4BZhLvyxoKW_28L9-XDV7x6aQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181121182701.0d8a775fda6af1f8d2be8f25@linux-foundation.org>
+In-Reply-To: <CAEe=SxmNVHR_1ge6hM5636CNi4BZhLvyxoKW_28L9-XDV7x6aQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Joel Fernandes <joel@joelfernandes.org>, Stephen Rothwell <sfr@canb.auug.org.au>, Andrew Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, Linux API <linux-api@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>
+To: Tim Murray <timmurray@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Primiano Tucci <primiano@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Vlastimil Babka <vbabka@suse.cz>, Roman Gushchin <guro@fb.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, rostedt@goodmis.org, tglx@linutronix.de, mingo@kernel.org, linux@dominikbrodowski.net, jpoimboe@redhat.com, Ard Biesheuvel <ard.biesheuvel@linaro.org>, Michal Hocko <mhocko@suse.com>, Stephen Rothwell <sfr@canb.auug.org.au>, ktsanaktsidis@zendesk.com, David Howells <dhowells@redhat.com>o
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 21, 2018 at 6:27 PM Andrew Morton <akpm@linux-foundation.org> wrote:
+On Wed, Nov 21, 2018 at 6:36 PM Tim Murray <timmurray@google.com> wrote:
 >
-> On Tue, 20 Nov 2018 13:13:35 -0800 Joel Fernandes <joel@joelfernandes.org> wrote:
->
-> > > > I am Ok with whatever Andrew wants to do, if it is better to squash it with
-> > > > the original, then I can do that and send another patch.
-> > > >
-> > > >
-> > >
-> > > From experience, Andrew will food in fixups on request :)
+> On Wed, Nov 21, 2018 at 5:29 PM Andrew Morton <akpm@linux-foundation.org> wrote:
 > >
-> > Andrew, could you squash this patch into the one titled ("mm: Add an
-> > F_SEAL_FUTURE_WRITE seal to memfd")?
+> > On Wed, 21 Nov 2018 17:08:08 -0800 Daniel Colascione <dancol@google.com> wrote:
+> >
+> > > Have you done much
+> > > retrospective long trace analysis?
+> >
+> > No.  Have you?
+> >
+> > Of course you have, which is why I and others are dependent upon you to
+> > explain why this change is worth adding to Linux.  If this thing solves
+> > a problem which we expect will not occur for anyone between now and the
+> > heat death of the universe then this impacts our decisions.
 >
-> Sure.
+> I use ftrace the most on Android, so let me take a shot.
 >
-> I could of course queue them separately but I rarely do so - I don't
-> think that the intermediate development states are useful in the
-> infinite-term, and I make them available via additional Link: tags in
-> the changelog footers anyway.
+> In addition to the normal "debug a slow thing" use cases for ftrace,
+> Android has started exploring two other ways of using ftrace:
 >
-> I think that the magnitude of these patches is such that John Stultz's
-> Reviewed-by is invalidated, so this series is now in the "unreviewed"
-> state.
+> 1. "Flight recorder" mode: trigger ftrace for some amount of time when
+> a particular anomaly is detected to make debugging those cases easier.
 >
-> So can we have a re-review please?  For convenience, here's the
-> folded-together [1/1] patch, as it will go to Linus.
+> 2. Long traces: let a trace stream to disk for hours or days, then
+> postprocess it to get some deeper insights about system behavior.
+> We've used this very successfully to debug and optimize power
+> consumption.
 >
+> Knowing the initial state of the system is a pain for both of these
+> cases. For example, one of the things I'd like to know in some of my
+> current use cases for long traces is the current oom_score_adj of
+> every process in the system, but similar to PID reuse, that can change
+> very quickly due to userspace behavior. There's also a race between
+> reading that value in userspace and writing it to trace_marker:
 >
-> From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-> Subject: mm: Add an F_SEAL_FUTURE_WRITE seal to memfd
+> 1. Userspace daemon X reads oom_score_adj for a process Y.
+> 2. Process Y gets a new oom_score_adj value, triggering the
+> oom/oom_score_adj_update tracepoint.
+> 3. Daemon X writes the old oom_score_adj value to trace_marker.
 >
-> Android uses ashmem for sharing memory regions.  We are looking forward to
-> migrating all usecases of ashmem to memfd so that we can possibly remove
-> the ashmem driver in the future from staging while also benefiting from
-> using memfd and contributing to it.  Note staging drivers are also not ABI
-> and generally can be removed at anytime.
+> As I was writing this, though, I realized that the race doesn't matter
+> so long as our tools follow the same basic practice (for PID reuse,
+> oom_score_adj, or anything else we need):
 >
-> One of the main usecases Android has is the ability to create a region and
-> mmap it as writeable, then add protection against making any "future"
-> writes while keeping the existing already mmap'ed writeable-region active.
-> This allows us to implement a usecase where receivers of the shared
-> memory buffer can get a read-only view, while the sender continues to
-> write to the buffer.  See CursorWindow documentation in Android for more
-> details:
-> https://developer.android.com/reference/android/database/CursorWindow
->
-> This usecase cannot be implemented with the existing F_SEAL_WRITE seal.
-> To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
-> which prevents any future mmap and write syscalls from succeeding while
-> keeping the existing mmap active.  The following program shows the seal
-> working in action:
->
->  #include <stdio.h>
->  #include <errno.h>
->  #include <sys/mman.h>
->  #include <linux/memfd.h>
->  #include <linux/fcntl.h>
->  #include <asm/unistd.h>
->  #include <unistd.h>
->  #define F_SEAL_FUTURE_WRITE 0x0010
->  #define REGION_SIZE (5 * 1024 * 1024)
->
-> int memfd_create_region(const char *name, size_t size)
-> {
->     int ret;
->     int fd = syscall(__NR_memfd_create, name, MFD_ALLOW_SEALING);
->     if (fd < 0) return fd;
->     ret = ftruncate(fd, size);
->     if (ret < 0) { close(fd); return ret; }
->     return fd;
-> }
->
-> int main() {
->     int ret, fd;
->     void *addr, *addr2, *addr3, *addr1;
->     ret = memfd_create_region("test_region", REGION_SIZE);
->     printf("ret=%d\n", ret);
->     fd = ret;
->
->     // Create map
->     addr = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
->     if (addr == MAP_FAILED)
->             printf("map 0 failed\n");
->     else
->             printf("map 0 passed\n");
->
->     if ((ret = write(fd, "test", 4)) != 4)
->             printf("write failed even though no future-write seal "
->                    "(ret=%d errno =%d)\n", ret, errno);
->     else
->             printf("write passed\n");
->
->     addr1 = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
->     if (addr1 == MAP_FAILED)
->             perror("map 1 prot-write failed even though no seal\n");
->     else
->             printf("map 1 prot-write passed as expected\n");
->
->     ret = fcntl(fd, F_ADD_SEALS, F_SEAL_FUTURE_WRITE |
->                                  F_SEAL_GROW |
->                                  F_SEAL_SHRINK);
->     if (ret == -1)
->             printf("fcntl failed, errno: %d\n", errno);
->     else
->             printf("future-write seal now active\n");
->
->     if ((ret = write(fd, "test", 4)) != 4)
->             printf("write failed as expected due to future-write seal\n");
->     else
->             printf("write passed (unexpected)\n");
->
->     addr2 = mmap(0, REGION_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
->     if (addr2 == MAP_FAILED)
->             perror("map 2 prot-write failed as expected due to seal\n");
->     else
->             printf("map 2 passed\n");
->
->     addr3 = mmap(0, REGION_SIZE, PROT_READ, MAP_SHARED, fd, 0);
->     if (addr3 == MAP_FAILED)
->             perror("map 3 failed\n");
->     else
->             printf("map 3 prot-read passed as expected\n");
-> }
->
-> The output of running this program is as follows:
-> ret=3
-> map 0 passed
-> write passed
-> map 1 prot-write passed as expected
-> future-write seal now active
-> write failed as expected due to future-write seal
-> map 2 prot-write failed as expected due to seal
-> : Permission denied
-> map 3 prot-read passed as expected
->
-> [joel@joelfernandes.org: make F_SEAL_FUTURE_WRITE seal more robust]
->   Link: http://lkml.kernel.org/r/20181120052137.74317-1-joel@joelfernandes.org
-> Link: http://lkml.kernel.org/r/20181108041537.39694-1-joel@joelfernandes.org
-> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
-> Cc: John Stultz <john.stultz@linaro.org>
-> Cc: John Reck <jreck@google.com>
-> Cc: Todd Kjos <tkjos@google.com>
-> Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> Cc: Christoph Hellwig <hch@infradead.org>
-> Cc: Al Viro <viro@zeniv.linux.org.uk>
-> Cc: Daniel Colascione <dancol@google.com>
-> Cc: J. Bruce Fields <bfields@fieldses.org>
-> Cc: Jeff Layton <jlayton@kernel.org>
-> Cc: Khalid Aziz <khalid.aziz@oracle.com>
-> Cc: Lei Yang <Lei.Yang@windriver.com>
-> Cc: Marc-Andr Lureau <marcandre.lureau@redhat.com>
-> Cc: Mike Kravetz <mike.kravetz@oracle.com>
-> Cc: Minchan Kim <minchan@kernel.org>
-> Cc: Shuah Khan <shuah@kernel.org>
-> Cc: Valdis Kletnieks <valdis.kletnieks@vt.edu>
-> Cc: Andy Lutomirski <luto@kernel.org>
-> Cc: Jann Horn <jannh@google.com>
-> Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-> ---
->
->
-> --- a/include/uapi/linux/fcntl.h~mm-add-an-f_seal_future_write-seal-to-memfd
-> +++ a/include/uapi/linux/fcntl.h
-> @@ -41,6 +41,7 @@
->  #define F_SEAL_SHRINK  0x0002  /* prevent file from shrinking */
->  #define F_SEAL_GROW    0x0004  /* prevent file from growing */
->  #define F_SEAL_WRITE   0x0008  /* prevent writes */
-> +#define F_SEAL_FUTURE_WRITE    0x0010  /* prevent future writes while mapped */
->  /* (1U << 31) is reserved for signed error codes */
->
->  /*
-> --- a/mm/memfd.c~mm-add-an-f_seal_future_write-seal-to-memfd
-> +++ a/mm/memfd.c
-> @@ -131,7 +131,8 @@ static unsigned int *memfd_file_seals_pt
->  #define F_ALL_SEALS (F_SEAL_SEAL | \
->                      F_SEAL_SHRINK | \
->                      F_SEAL_GROW | \
-> -                    F_SEAL_WRITE)
-> +                    F_SEAL_WRITE | \
-> +                    F_SEAL_FUTURE_WRITE)
->
->  static int memfd_add_seals(struct file *file, unsigned int seals)
->  {
-> --- a/fs/hugetlbfs/inode.c~mm-add-an-f_seal_future_write-seal-to-memfd
-> +++ a/fs/hugetlbfs/inode.c
-> @@ -530,7 +530,7 @@ static long hugetlbfs_punch_hole(struct
->                 inode_lock(inode);
->
->                 /* protected by i_mutex */
-> -               if (info->seals & F_SEAL_WRITE) {
-> +               if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
->                         inode_unlock(inode);
->                         return -EPERM;
->                 }
-> --- a/mm/shmem.c~mm-add-an-f_seal_future_write-seal-to-memfd
-> +++ a/mm/shmem.c
-> @@ -2119,6 +2119,23 @@ out_nomem:
->
->  static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
->  {
-> +       struct shmem_inode_info *info = SHMEM_I(file_inode(file));
-> +
-> +       /*
-> +        * New PROT_READ and MAP_SHARED mmaps are not allowed when "future
+> 1. Daemon enables all requested tracepoints and resets the trace clock.
+> 2. Daemon enables tracing
+> 3. Daemon dumps initial state for any tracepoint we care about.
+> 4. When postprocessing, a tool must consider the initial state of a
+> value (eg, oom_score_adj of pid X) to be either the initial state as
+> reported by the daemon or the first ftrace event reporting that value.
+> If there is an ftrace event in the trace before the report from the
+> daemon, the report from the daemon should be ignored.
 
-PROT_WRITE, perhaps?
+I was imagining periodic scans being the moral equivalent of I-frames
+in an MPEG stream: known-good synchronization points that bound the
+propagation of errors. To prevent loss of events in the *middle* of
+one of these samples affecting the validity of the sample, I wanted
+each one to be atomic and self-contained. I was initially imagining a
+single proc file containing a mapping from thread ID list and a TGID
+mapping for each one (as well as assorted other information),
+generated atomically under task_list_lock and stamped with the trace
+timestamp. The /proc/pid_gen thing was an effort to do most of that in
+userspace. But maybe that's not really that important.
 
-> +        * write" seal active.
-> +        */
-> +       if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_WRITE) &&
-> +           (info->seals & F_SEAL_FUTURE_WRITE))
-> +               return -EPERM;
-> +
-> +       /*
-> +        * Since the F_SEAL_FUTURE_WRITE seals allow for a MAP_SHARED read-only
-> +        * mapping, take care to not allow mprotect to revert protections.
-> +        */
-> +       if (info->seals & F_SEAL_FUTURE_WRITE)
-> +               vma->vm_flags &= ~(VM_MAYWRITE);
-> +
+Another thing to consider: there are some properties which we can
+enumerate *only* through /proc and that we can't yet receive in a
+streaming, event-driven fashion. We read those by periodic sampling,
+but the sampling isn't atomic. And as Tim notes, even properties that
+we ordinarily receive in streaming form via trace event must be
+sampled at trace start. But trace start isn't the only case where it
+matters.
 
-This might all be clearer as:
+Suppose at T+50 we have a TID 601 (which we'll call TID 601_1) with
+steady-state resource-consumption $COUNTER 100MB. Now suppose we start
+sampling at T+50. At T+55, TID 601_1 dies. At T+60, due to unlikely be
+possible TID reuse, we see a new task with TID 601, which we'll call
+TID 601_2. At T+65, the sample reads TID 601_2's $COUNTER as 1GB. At
+T+70, we finish the sample. From the perspective of trace analysis,
+all the sample tells us is "at some point between T+50 and T+70, TID
+601's $COUNTER was 1GB". We also know when TID 601_1 died and when TID
+601_2 started. We don't know whether the sample's "TID 601" refers to
+TID 601_1 or TID 601_2. So what do we do?
 
-if (info->seals & F_SEAL_FUTURE_WRITE) {
-  if (vma->vm_flags ...)
-    return -EPERM;
-  vma->vm_flags &= ~VM_MAYWRITE;
-}
+1) We could attribute the 1GB value of $COUNTER to TID 601_1, which is
+what would happen by default if we deemed the sample to be a virtual
+event with timestamp T+50, the time we started the sampling process.
+But that would be incorrect here. In analysis, we'd see this
+attribution as a mysterious spike in TID 601_1's resource consumption
+immediately before its death. (The spike would be to a level
+suspiciously similar to TID 601_2's next sample.) Imagine spending
+hours trying to track down a mystery death-rattle resource spike
+(something that could plausibly happen in the real world) that ended
+up being a tracing artifact.
 
-with appropriate comments inserted.
+2) We could attribute the 1GB read of $COUNTER to TID 601_2. In the
+timeline I gave above, this attribution would be correct. But what if
+TID 601_1's $COUNTER really _had_ spiked to 1GB immediately before its
+death? (What if its death had been caused by that spike?) Then, under
+the "tag last" approach, we'd falsely tag TID 601_2 with TID 601_1's
+excessive resource use, and this false attribution would last until
+the next sample of TID 601_2, which might be quite far in the future.
+And we might find ourselves wondering why TID 601_1 died, since (if we
+blame 601_2 for the new $COUNTER value) TID 601_1 would have done
+nothing wrong. And in the meantime, we'd see 1GB of $COUNTER
+consumption that would appear to come out of nowhere.
+
+3) We could discard the ambiguous sample. But in this case, we'd leave
+TID 601_2's $COUNTER value completely unknown until the next sample,
+which could be quite far in the future. And, if TID 601_2's $COUNTER
+value really were 1GB, we might leave significant resource consumption
+unaccounted-for until that next sample.
+
+With my pid_gen patch, we could have used strategy #3 without having
+to wait for the system to get around to sampling TID 601_2 again on
+its own, because we'd have been able to detect the ambiguity and
+collect a new, hopefully-unambiguous sample on the spot. Yes, we do
+wait a sampling period between samples anyway, and it's possible for a
+process to start, run, and die without having ever been sampled with
+or without pid_gen, but at least we wouldn't have missed a perfectly
+good sampling opportunity due to PID ambiguity.
+
+You might say, "dancol@, you sound excessively fussy here. That's
+never going to really matter under any realistic workload." And maybe
+that'd be right. But like I said above, I think it's important to be
+able to have deterministic bounds on uncertainty even in the case of
+pathological behavior, and I'd rather guarantee correctness
+structurally than wonder whether unlikely events are one-in-a-trace
+unlikely or heat-death-of-the-universe unlikely.
+
+To improve on the sampling model, we could have the kernel stamp
+$COUNTER reads with the current trace timestamp. Then, the sample
+would tell us, instead of "TID 601's $COUNTER was 1GB between T+50 and
+T+70", it'd tell us "TID 601's $COUNTER was 1GB at exactly T+65". (The
+sampling program itself might get around to logging this bit of
+information at T+70 or T+700, but the embedded timestamp would be
+accurate.) We could then look up the inferred process table at T+65
+and attribute that 1GB to TID 601_2.
+
+Ideally, we wouldn't bother with this sort of sampling at all, instead
+relying on streaming $COUNTER updates as events. But we're not quite
+there yet. I have a larger proposal in the works for that one. Under
+that proposal, we wouldn't log every change to $COUNTER, but we would
+log $COUNTER at process death (as well as at other times ---
+basically, after large changes and after a maximum time after any
+change), so trace analysis would still be able to correctly determine
+TID 601_1's time-of-death resource use.
+
+In another approach, the trace system *itself* would generate the
+"I-frames" by automatically generating synthetic trace events at trace
+startup in order to reflect pre-trace system state. (For example, if
+you enabled sched_switch and started tracing, the ftrace ring buffer
+would begin life with one synthetic sched_switch per CPU describing
+each CPU's running task at the instant of trace startup, maybe
+collected with on_all_cpus.)
+
+But anyway, I didn't expect the pid_gen change to be controversial.
+Given that we can eventually do something different altogether and
+that it probably *is* excessively fussy, consider the patch withdrawn.
