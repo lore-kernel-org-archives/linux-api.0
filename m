@@ -1,43 +1,77 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v3 0/4] Fix unsafe BPF_PROG_TEST_RUN interface
-Date: Thu, 22 Nov 2018 14:09:06 +0000
-Message-ID: <20181122140910.1079-1-lmb@cloudflare.com>
+Subject: [PATCH v3 1/4] bpf: respect size hint to BPF_PROG_TEST_RUN if present
+Date: Thu, 22 Nov 2018 14:09:07 +0000
+Message-ID: <20181122140910.1079-2-lmb@cloudflare.com>
 References: <20181116125329.3974-1-lmb@cloudflare.com>
+ <20181122140910.1079-1-lmb@cloudflare.com>
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20181116125329.3974-1-lmb@cloudflare.com>
+In-Reply-To: <20181122140910.1079-1-lmb@cloudflare.com>
 Sender: netdev-owner@vger.kernel.org
 To: ast@kernel.org, daniel@iogearbox.net
 Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-Right now, there is no safe way to use BPF_PROG_TEST_RUN with data_out.
-This is because bpf_test_finish copies the output buffer to user space
-without checking its size. This can lead to the kernel overwriting
-data in user space after the buffer if xdp_adjust_head and friends are
-in play.
+Use data_size_out as a size hint when copying test output to user space.
+ENOSPC is returned if the output buffer is too small.
+Callers which so far did not set data_size_out are not affected.
 
-Changes in v3:
-* Introduce bpf_prog_test_run_xattr instead of modifying the existing
-  function
+Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
+---
+ include/uapi/linux/bpf.h |  7 +++++--
+ net/bpf/test_run.c       | 15 +++++++++++++--
+ 2 files changed, 18 insertions(+), 4 deletions(-)
 
-Changes in v2:
-* Make the syscall return ENOSPC if data_size_out is too small
-* Make bpf_prog_test_run return EINVAL if size_out is missing
-* Document the new behaviour of data_size_out
-
-Lorenz Bauer (4):
-  bpf: respect size hint to BPF_PROG_TEST_RUN if present
-  tools: sync uapi/linux/bpf.h
-  libbpf: add bpf_prog_test_run_xattr
-  selftests: add a test for bpf_prog_test_run_xattr
-
- include/uapi/linux/bpf.h                 |  7 +++-
- net/bpf/test_run.c                       | 15 +++++++-
- tools/include/uapi/linux/bpf.h           |  7 +++-
- tools/lib/bpf/bpf.c                      | 27 +++++++++++++
- tools/lib/bpf/bpf.h                      | 13 +++++++
- tools/testing/selftests/bpf/test_progs.c | 49 ++++++++++++++++++++++++
- 6 files changed, 112 insertions(+), 6 deletions(-)
-
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index 05d95290b848..7f5a7d032cd1 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -356,8 +356,11 @@ union bpf_attr {
+ 	struct { /* anonymous struct used by BPF_PROG_TEST_RUN command */
+ 		__u32		prog_fd;
+ 		__u32		retval;
+-		__u32		data_size_in;
+-		__u32		data_size_out;
++		__u32		data_size_in;	/* input: len of data_in */
++		__u32		data_size_out;	/* input/output: len of data_out
++						 *   returns ENOSPC if data_out
++						 *   is too small.
++						 */
+ 		__aligned_u64	data_in;
+ 		__aligned_u64	data_out;
+ 		__u32		repeat;
+diff --git a/net/bpf/test_run.c b/net/bpf/test_run.c
+index c89c22c49015..7663e6a57280 100644
+--- a/net/bpf/test_run.c
++++ b/net/bpf/test_run.c
+@@ -74,8 +74,18 @@ static int bpf_test_finish(const union bpf_attr *kattr,
+ {
+ 	void __user *data_out = u64_to_user_ptr(kattr->test.data_out);
+ 	int err = -EFAULT;
++	u32 copy_size = size;
+ 
+-	if (data_out && copy_to_user(data_out, data, size))
++	/* Clamp copy if the user has provided a size hint, but copy the full
++	 * buffer if not to retain old behaviour.
++	 */
++	if (kattr->test.data_size_out &&
++	    copy_size > kattr->test.data_size_out) {
++		copy_size = kattr->test.data_size_out;
++		err = -ENOSPC;
++	}
++
++	if (data_out && copy_to_user(data_out, data, copy_size))
+ 		goto out;
+ 	if (copy_to_user(&uattr->test.data_size_out, &size, sizeof(size)))
+ 		goto out;
+@@ -83,7 +93,8 @@ static int bpf_test_finish(const union bpf_attr *kattr,
+ 		goto out;
+ 	if (copy_to_user(&uattr->test.duration, &duration, sizeof(duration)))
+ 		goto out;
+-	err = 0;
++	if (err != -ENOSPC)
++		err = 0;
+ out:
+ 	return err;
+ }
 -- 
 2.17.1
