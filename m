@@ -1,89 +1,97 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [RFC PATCH v2] ptrace: add PTRACE_GET_SYSCALL_INFO request
-Date: Thu, 22 Nov 2018 06:55:29 -0800
-Message-ID: <CALCETrXea_uRAqw_srW5CWgOzeM=RubaDbjnxZ=cUMy5Zv1TsA@mail.gmail.com>
-References: <20181121165806.07da7c98@akathisia> <CALCETrV3TPCkYyhoLLcikXVeF-RdZUuLTCvKReK3Qb9LSS9Csw@mail.gmail.com>
- <20181121235634.GA14146@altlinux.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Thu, 22 Nov 2018 10:04:16 -0500 (EST)
+Message-ID: <782067422.9852.1542899056778.JavaMail.zimbra@efficios.com>
+References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com> <20181122143603.GD23599@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181121235634.GA14146@altlinux.org>
+In-Reply-To: <20181122143603.GD23599@brightrain.aerifal.cx>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Andrew Lutomirski <luto@kernel.org>, Elvira Khabirova <lineprinter@altlinux.org>, Kees Cook <keescook@chromium.org>, Sasha Levin <sasha.levin@oracle.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Eugene Syromiatnikov <esyr@redhat.com>, strace-devel@lists.strace.io
+To: Rich Felker <dalias@libc.org>
+Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 21, 2018 at 3:56 PM Dmitry V. Levin <ldv@altlinux.org> wrote:
->
-> On Wed, Nov 21, 2018 at 02:56:57PM -0800, Andy Lutomirski wrote:
-> > Please cc linux-api@vger.kernel.org for future versions.
-> >
-> > On Wed, Nov 21, 2018 at 7:58 AM Elvira Khabirova wrote:
-> > >
-> > > struct ptrace_syscall_info {
-> > >         __u8 op; /* 0 for entry, 1 for exit */
-> >
-> > Can you add proper defines, like:
-> >
-> > #define PTRACE_SYSCALL_ENTRY 0
-> > #define PTRACE_SYSCALL_EXIT 1
-> > #define PTRACE_SYSCALL_SECCOMP 2
-> >
-> > and make seccomp work from the start?  I'd rather we don't merge an
-> > implementation that doesn't work for seccomp and then have to rework
-> > it later.
->
-> What's the difference between PTRACE_EVENT_SECCOMP and syscall-entry-stop
-> with regards to PTRACE_GET_SYSCALL_INFO request?  At least they have the
-> same entry_info to return.
+----- On Nov 22, 2018, at 9:36 AM, Rich Felker dalias@libc.org wrote:
 
-I'm not sure there's any material difference.
+> On Wed, Nov 21, 2018 at 01:39:32PM -0500, Mathieu Desnoyers wrote:
+>> Register rseq(2) TLS for each thread (including main), and unregister
+>> for each thread (excluding main). "rseq" stands for Restartable
+>> Sequences.
+> 
+> Maybe I'm missing something obvious, but "unregister" does not seem to
+> be a meaningful operation. Can you clarify what it's for?
 
->
-> As long as implementation (ab)uses ptrace_message to tell one kind of stop
-> from another, it can distinguish syscall-entry-stop and syscall-exit-stop
-> from each other and from many other kinds of stops, but it cannot
-> distinguish PTRACE_EVENT_SECCOMP from e.g. PTRACE_EVENT_EXIT.
+There are really two ways rseq TLS can end up being unregistered: either
+through an explicit call to the rseq "unregister", or when the OS frees the
+thread's task struct.
 
-Hmm.  PTRACE_GET_SYSCALL_INFO should fail for PTRACE_EVENT_EXIT, I think.
+You bring an interesting point here: do we need to explicitly unregister
+rseq at thread exit, or can we leave that to the OS ?
 
->
-> > >         __u8 __pad0[7];
-> > >         union {
-> > >                 struct {
-> > >                         __s32 nr;
-> >
-> > __u64 please.  Syscall numbers are, as a practical matter, 64 bits.
-> > Admittedly, the actual effects of setting the high bits are unclear,
-> > and seccomp has issues with it, but let's not perpetuate the problem.
->
-> I agree.  Although the implementation uses syscall_get_nr()
-> which returns int, this could potentially be fixed in the future.
+The key thing to look for here is whether it's valid to access the
+TLS area of the thread from preemption or signal delivery happening
+at the very end of START_THREAD_DEFN. If it's OK to access it until
+the very end of the thread lifetime, then we could do without an
+explicit unregistration. However, if at any given point of the late
+thread lifetime we end up in a situation where reading or writing to
+that TLS area can cause corruption, then we need to carefully
+unregister it before that memory is reclaimed/reused.
 
-Agreed.  Although if we ever start using those high bits, things will
-get confusing.
+What we have below the current location for the __rseq_unregister_current_thread ()
+call is as follows. I'm not all that convinced that it's valid to access the TLS
+area up until __exit_thread () at the very end, especially after setting
+setxid_futex back to 0.
 
->
-> > >                         __u32 arch;
-> > >                         __u64 instruction_pointer;
-> > >                         __u64 args[6];
-> > >                 } entry_info;
-> > >                 struct {
-> > >                         __s64 rval;
-> > >                         __u8 is_error;
-> > >                         __u8 __pad1[7];
-> > >                 } exit_info;
-> > >         };
-> > > };
-> >
-> > Should seccomp events use entry_info or should they just literally
-> > supply seccomp_data?
->
-> It certainly can use entry_info.
-> I'd prefer to avoid using in uapi/linux/ptrace.h those types
-> that are defined in uapi/linux/seccomp.h.
+Thoughts ?
 
-Makes sense to me.  Also, it's possible in principle to extend
-seccomp_data with other fields that are only generated if they're
-read, so passing struct seccomp_data to userspace as a struct may be
-the wrong thing to do.
+  /* Unregister rseq TLS from kernel. */
+  if (has_rseq && __rseq_unregister_current_thread ())
+    abort();
+
+  advise_stack_range (pd->stackblock, pd->stackblock_size, (uintptr_t) pd,
+                      pd->guardsize);
+
+  /* If the thread is detached free the TCB.  */
+  if (IS_DETACHED (pd))
+    /* Free the TCB.  */
+    __free_tcb (pd);
+  else if (__glibc_unlikely (pd->cancelhandling & SETXID_BITMASK))
+    {
+      /* Some other thread might call any of the setXid functions and expect
+         us to reply.  In this case wait until we did that.  */
+      do
+        /* XXX This differs from the typical futex_wait_simple pattern in that
+           the futex_wait condition (setxid_futex) is different from the
+           condition used in the surrounding loop (cancelhandling).  We need
+           to check and document why this is correct.  */
+        futex_wait_simple (&pd->setxid_futex, 0, FUTEX_PRIVATE);
+      while (pd->cancelhandling & SETXID_BITMASK);
+
+      /* Reset the value so that the stack can be reused.  */
+      pd->setxid_futex = 0;
+    }
+
+  /* We cannot call '_exit' here.  '_exit' will terminate the process.
+
+     The 'exit' implementation in the kernel will signal when the
+     process is really dead since 'clone' got passed the CLONE_CHILD_CLEARTID
+     flag.  The 'tid' field in the TCB will be set to zero.
+
+     The exit code is zero since in case all threads exit by calling
+     'pthread_exit' the exit status must be 0 (zero).  */
+  __exit_thread ();
+
+  /* NOTREACHED */
+
+Thanks,
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
