@@ -1,98 +1,70 @@
-From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: [PATCH v4 2/4] namei: O_BENEATH-style path resolution flags
-Date: Sat, 24 Nov 2018 03:58:43 +1100
-Message-ID: <20181123165843.xtkh3jpfz7k6xa5b@mikami>
-References: <20181112142654.341-1-cyphar@cyphar.com>
- <20181112142654.341-3-cyphar@cyphar.com>
- <1ce83cdf6e3168350b69f98f08aaa202bbaa682d.camel@bitron.ch>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Fri, 23 Nov 2018 12:05:20 -0500 (EST)
+Message-ID: <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com>
+References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com> <686626451.10113.1542901620250.JavaMail.zimbra@efficios.com> <87wop5xeit.fsf@oldenburg.str.redhat.com> <1045257294.10291.1542905262086.JavaMail.zimbra@efficios.com> <87k1l5xd33.fsf@oldenburg.str.redhat.com> <20181122171010.GH23599@brightrain.aerifal.cx> <871s7cvt1l.fsf@oldenburg.str.redhat.com> <20181123142843.GJ23599@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="7r4daumaby7eak7j"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1ce83cdf6e3168350b69f98f08aaa202bbaa682d.camel@bitron.ch>
+In-Reply-To: <20181123142843.GJ23599@brightrain.aerifal.cx>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?utf-8?B?SsO8cmc=?= Billeter <j@bitron.ch>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, David Drysdale <drysdale@google.com>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
+To: Rich Felker <dalias@libc.org>
+Cc: Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+----- On Nov 23, 2018, at 9:28 AM, Rich Felker dalias@libc.org wrote:
+[...]
+> 
+> Absolutely. As long as it's in libc, implicit destruction will happen.
+> Actually I think the glibc code shound unconditionally unregister the
+> rseq address at exit (after blocking signals, so no application code
+> can run) in case a third-party rseq library was linked and failed to
+> do so before thread exit (e.g. due to mismatched ref counts) rather
+> than respecting the reference count, since it knows it's the last
+> user. This would make potentially-buggy code safer.
 
---7r4daumaby7eak7j
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+OK, let me go ahead with a few ideas/questions along that path.
 
-On 2018-11-23, J=FCrg Billeter <j@bitron.ch> wrote:
-> On Tue, 2018-11-13 at 01:26 +1100, Aleksa Sarai wrote:
-> > * O_BENEATH: Disallow "escapes" from the starting point of the
-> >   filesystem tree during resolution (you must stay "beneath" the
-> >   starting point at all times). Currently this is done by disallowing
-> >   ".." and absolute paths (either in the given path or found during
-> >   symlink resolution) entirely, as well as all "magic link" jumping.
->=20
-> With open_tree(2) and OPEN_TREE_CLONE, will O_BENEATH still be
-> necessary? As I understand it, O_BENEATH could be replaced by a much
-> simpler flag that only disallows absolute paths (incl. absolute
-> symlinks). And it would have the benefit that you can actually pass the
-> tree/directory fd to another process and escaping would not be possible
-> even if that other process doesn't use O_BENEATH (after calling
-> mount_setattr(2) to make sure it's locked down).
->=20
-> This approach would also make it easy to restrict writes via a cloned
-> tree/directory fd by marking it read-only via mount_setattr(2) (and
-> locking down the read-only flag). This would again be especially useful
-> when passing tree/directory fds across processes, or for voluntary
-> self-lockdown within a process for robustness against security bugs.
->=20
-> This wouldn't affect any of the other flags in this patch. And for full
-> equivalence to O_BENEATH you'd have to use O_NOMAGICLINKS in addition
-> to O_NOABSOLUTE, or whatever that new flag would be called.
->=20
-> Or is OPEN_TREE_CLONE too expensive for this use case? Or is there
-> anything else I'm missing?
+Let's say our stated goal is to let the "exit" system call from the
+glibc thread exit path perform rseq unregistration (without explicit
+unregistration beforehand). Let's look at what we need.
 
-OPEN_TREE_CLONE currently requires CAP_SYS_ADMIN in mnt_ns->user_ns,
-which requires a fork and unshare -- or at least a vfork and some other
-magic -- at which point we're back to just doing a pivot_root(2) for
-most operations.
+First, we need the TLS area to be valid until the exit system call
+is invoked by the thread. If glibc defines __rseq_abi as a weak symbol,
+I'm not entirely sure we can guarantee the IE model if another library
+gets its own global-dynamic weak symbol elected at execution time. Would
+it be better to switch to a "strong" symbol for the glibc __rseq_abi
+rather than weak ?
 
-I think open_tree(2) -- which I really should sit down and play around
-with -- would be an interesting way of doing O_BENEATH, but I think
-you'd still need to have the same race protections we have in the
-current O_BENEATH proposal to handle "..".
+If we rely on implicit unregistration by the exit system call, then we
+need to be really sure that the __rseq_abi TLS area can be accessed
+(load and store) from kernel preemption up to the point where exit
+is invoked. If we have that guarantee with the IE model, then we should
+be fine. This means the memory area with the __rseq_abi sits can only
+be re-used after the tid field in the TLB is set to 0 by the exit system
+call. Looking at allocatestack.c, it looks like the FREE_P () macro
+does exactly that.
 
-So really you'd be using open_tree(OPEN_TREE_CLONE) just so that you can
-use the "path.mnt" setting code, which I'm not sure is the best way of
-doing it (plus the other interesting ideas which you get with the other
-mount API changes).
+With all the above respected, we could rely on implicit rseq unregistration
+by thread exit rather than do an explicit unregister. We could still need
+to increment the __rseq_refcount upon thread start however, so we can
+ensure early adopter libraries won't unregister rseq while glibc is using
+it. No need to bring the refcount back to 0 in glibc though.
 
-But I am quite hopeful for what cool things we'll be able to make using
-the new mount API.
+There has been presumptions about signals being blocked when the thread
+exits throughout this email thread. Out of curiosity, what code is
+responsible for disabling signals in this situation ? Related to this,
+is it valid to access a IE model TLS variable from a signal handler at
+_any_ point where the signal handler nests over thread's execution ?
+This includes early start and just before invoking the exit system call.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+Thanks,
 
---7r4daumaby7eak7j
-Content-Type: application/pgp-signature; name="signature.asc"
+Mathieu
 
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAlv4McMACgkQnhiqJn3b
-jbShVA//eL066b61N+4EViLKYRHvgNZYsP88NJzUgT8MksvPPJ3iuOtM6TTI2B2E
-LY/fVfxNOTuRrw7Vx4I0YfNKUU3dyoDhtxL46GUEJ2h0btgiKmXWMCV8VgdPHIRR
-/XLkkiJddJBtZJ6KJogz8PfOY9cewtL2Ir/byZbgYlTBDTLzcCsY/iFi8fuenDRK
-l7mNsKKQge8rsMnOQoZSNV/Ln+7dNwuuuo5wqfaI6vLIud87gbWiwR50DLG465EZ
-3Hz4/4/PzqW00VsG62w0wlWJrugyOfxegwW1HeH7UuaH3NWn5TPnGVA89vtIuO11
-LaX03GVW4MIi+FXdWbYB8W6+9K8m/2/VvA4ArYGBTVNSKoA0ONUclMZdNv+fbElW
-lcOKpORXfeocIq3WUOgtWnWmBfNLV5hCA7qImd1/nPurpA7OMJ8SL153GQAZpukF
-6Q6Gr5Wc/F5uz/m+348+60REslSxTt971m8PRjC1Q0wtUcNKEpVrsv90EW1tHBnq
-k3J0uQ1Vwm6fVl2SWpQkz1MDO2NMk2LDITxJguTIi9oMDjrQpCUMEjEeRtxvdNPm
-5PI2j7jOJ9G5Q9E0SWO823JWsEVSVv1TRB403CNOxoum7PKXHHYYO7AYvR7gfFs0
-H3wWSdKxDavXxm0k+uUuJvWj2UXmFIXLxxcPua97TKZytcq8Tgk=
-=ETTZ
------END PGP SIGNATURE-----
-
---7r4daumaby7eak7j--
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
