@@ -1,62 +1,47 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC PATCH 2/3] mm, thp, proc: report THP eligibility for each
- vma
-Date: Fri, 23 Nov 2018 16:24:57 +0100
-Message-ID: <a5b54792-7ad8-6502-a588-892f63df01cd@suse.cz>
+Subject: Re: [RFC PATCH 3/3] mm, proc: report PR_SET_THP_DISABLE in proc
+Date: Fri, 23 Nov 2018 16:49:04 +0100
+Message-ID: <d07d9742-e7dc-0fe7-c4be-3bd9a60fde98@suse.cz>
 References: <20181120103515.25280-1-mhocko@kernel.org>
- <20181120103515.25280-3-mhocko@kernel.org>
- <73b55240-d36c-cf97-d7fd-85e2ae1e9309@suse.cz>
- <20181123152136.GA5827@dhcp22.suse.cz>
+ <20181120103515.25280-4-mhocko@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181123152136.GA5827@dhcp22.suse.cz>
+In-Reply-To: <20181120103515.25280-4-mhocko@kernel.org>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>
+To: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
+Cc: Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
 List-Id: linux-api@vger.kernel.org
 
-On 11/23/18 4:21 PM, Michal Hocko wrote:
-> On Fri 23-11-18 16:07:06, Vlastimil Babka wrote:
->> On 11/20/18 11:35 AM, Michal Hocko wrote:
->>> From: Michal Hocko <mhocko@suse.com>
->>>
->>> Userspace falls short when trying to find out whether a specific memory
->>> range is eligible for THP. There are usecases that would like to know
->>> that
->>> http://lkml.kernel.org/r/alpine.DEB.2.21.1809251248450.50347@chino.kir.corp.google.com
->>> : This is used to identify heap mappings that should be able to fault thp
->>> : but do not, and they normally point to a low-on-memory or fragmentation
->>> : issue.
->>>
->>> The only way to deduce this now is to query for hg resp. nh flags and
->>> confronting the state with the global setting. Except that there is
->>> also PR_SET_THP_DISABLE that might change the picture. So the final
->>> logic is not trivial. Moreover the eligibility of the vma depends on
->>> the type of VMA as well. In the past we have supported only anononymous
->>> memory VMAs but things have changed and shmem based vmas are supported
->>> as well these days and the query logic gets even more complicated
->>> because the eligibility depends on the mount option and another global
->>> configuration knob.
->>>
->>> Simplify the current state and report the THP eligibility in
->>> /proc/<pid>/smaps for each existing vma. Reuse transparent_hugepage_enabled
->>> for this purpose. The original implementation of this function assumes
->>> that the caller knows that the vma itself is supported for THP so make
->>> the core checks into __transparent_hugepage_enabled and use it for
->>> existing callers. __show_smap just use the new transparent_hugepage_enabled
->>> which also checks the vma support status (please note that this one has
->>> to be out of line due to include dependency issues).
->>>
->>> Signed-off-by: Michal Hocko <mhocko@suse.com>
->>
->> Not thrilled by this,
+On 11/20/18 11:35 AM, Michal Hocko wrote:
+> From: Michal Hocko <mhocko@suse.com>
 > 
-> Any specific concern?
+> David Rientjes has reported that 1860033237d4 ("mm: make
+> PR_SET_THP_DISABLE immediately active") has changed the way how
+> we report THPable VMAs to the userspace. Their monitoring tool is
+> triggering false alarms on PR_SET_THP_DISABLE tasks because it considers
+> an insufficient THP usage as a memory fragmentation resp. memory
+> pressure issue.
+> 
+> Before the said commit each newly created VMA inherited VM_NOHUGEPAGE
+> flag and that got exposed to the userspace via /proc/<pid>/smaps file.
+> This implementation had its downsides as explained in the commit message
+> but it is true that the userspace doesn't have any means to query for
+> the process wide THP enabled/disabled status.
+> 
+> PR_SET_THP_DISABLE is a process wide flag so it makes a lot of sense
+> to export in the process wide context rather than per-vma. Introduce
 
-The kitchen sink that smaps slowly becomes, with associated overhead
-(i.e. one of reasons there's now smaps_rollup). Would be much nicer if
-userspace had some way to say which fields it's interested in. But I
-have no good ideas for that right now :/
+Agreed.
+
+> a new field to /proc/<pid>/status which export this status.  If
+> PR_SET_THP_DISABLE is used then it reports false same as when the THP is
+> not compiled in. It doesn't consider the global THP status because we
+> already export that information via sysfs
+> 
+> Fixes: 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+> Signed-off-by: Michal Hocko <mhocko@suse.com>
+
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
