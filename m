@@ -1,53 +1,84 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl init and thread creation
-Date: Fri, 23 Nov 2018 14:29:18 +0100
-Message-ID: <87sgzrvs5t.fsf@oldenburg.str.redhat.com>
-References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
-        <20181122143603.GD23599@brightrain.aerifal.cx>
-        <782067422.9852.1542899056778.JavaMail.zimbra@efficios.com>
-        <20181122151444.GE23599@brightrain.aerifal.cx>
-        <686626451.10113.1542901620250.JavaMail.zimbra@efficios.com>
-        <87wop5xeit.fsf@oldenburg.str.redhat.com>
-        <1045257294.10291.1542905262086.JavaMail.zimbra@efficios.com>
-        <87k1l5xd33.fsf@oldenburg.str.redhat.com>
-        <644835950.10383.1542907783295.JavaMail.zimbra@efficios.com>
+Subject: Re: Official Linux system wrapper library?
+Date: Fri, 23 Nov 2018 14:34:26 +0100
+Message-ID: <87efbbvrx9.fsf@oldenburg.str.redhat.com>
+References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
+        <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com>
+        <877ehjx447.fsf@oldenburg.str.redhat.com>
+        <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+        <875zx2vhpd.fsf@oldenburg.str.redhat.com>
+        <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <644835950.10383.1542907783295.JavaMail.zimbra@efficios.com>
-        (Mathieu Desnoyers's message of "Thu, 22 Nov 2018 12:29:43 -0500
-        (EST)")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Rich Felker <dalias@libc.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-* Mathieu Desnoyers:
+* Daniel Colascione:
 
->>>> I don't think you need unregistering if the memory is initial-exec TLS
->>>> memory.  Initial-exec TLS memory is tied directly to the TCB and cannot
->>>> be freed while the thread is running, so it should be safe to put the
->>>> rseq area there even if glibc knows nothing about it.
->>>
->>> Is it true for user-supplied stacks as well ?
->> 
->> I'm not entirely sure because the glibc terminology is confusing, but I
->> think it places intial-exec TLS into the static TLS area (so that it has
->> a fixed offset from the TCB).  The static TLS area is placed on the
->> user-supplied stack.
+> On Mon, Nov 12, 2018 at 12:11 AM, Florian Weimer <fweimer@redhat.com> wrote:
+>> * Daniel Colascione:
+>>
+>>> If the kernel provides a system call, libc should provide a C wrapper
+>>> for it, even if in the opinion of the libc maintainers, that system
+>>> call is flawed.
+>>
+>> It's not that simple, I think.  What about bdflush?  socketcall?
+>> getxpid?  osf_gettimeofday?  set_robust_list?
 >
-> You said earlier in the email thread that user-supplied stack can be
-> reclaimed by __free_tcb () while the thread still runs, am I correct ?
-> If so, then we really want to unregister the rseq TLS before that.
+> What about them? Mentioning that these system calls exist is not in
+> itself an argument.
 
-No, dynamic TLS can be reclaimed.  Static TLS (which I assume includes
-initial-exec TLS) is not deallocated.
+But socketcall does not exist on all architectures.  Neither does
+getpid, it's called getxpid on some architectures.
 
-> I notice that __free_tcb () calls __deallocate_stack (), which invokes
-> _dl_deallocate_tls (). Accessing the TLS from the kernel upon preemption
-> would appear fragile after this call.
+>> There are quite a few irregularities
+>
+> So?
 
-_dl_deallocate_tls only covers dynamic TLS.
+I think it would be a poor approach to expose application developers to
+these portability issues.  We need to abstract over these differences at
+a certain layer, and applications are too late.
+
+>> and some editorial discretion appears to be unavoidable.
+>
+> That's an assertion, not an argument, and I strongly disagree. *Why*
+> do you think "editorial discretion" is unavoidable?
+
+We do not want application authors to write code which uses socketcall,
+however it is the right system call for the BSD sockets API if you need
+compatibility back to Linux 2.6.32 and before.  If we application
+authors seitched to socketall, applications would not be portable (at
+the source level) to new architectures which do not have socketcall.
+
+We do not want to force application authors to call osf_gettimeofday
+instead of gettimeofday on Alpha.
+
+We do not want to encourage library authors to call set_robust_list
+because doing so would break robust mutex support in any libc.
+
+>> Even if we were to provide perfectly consistent system call wrappers
+>> under separate names, we'd still expose different calling conventions
+>> for things like off_t to applications, which would make using some of
+>> the system calls quite difficult and surprisingly non-portable.
+>
+> We can learn something from how Windows does things. On that system,
+> what we think of as "libc" is actually two parts. (More, actually, but
+> I'm simplifying.) At the lowest level, you have the semi-documented
+> ntdll.dll, which contains raw system call wrappers and arcane
+> kernel-userland glue. On top of ntdll live the "real" libc
+> (msvcrt.dll, kernel32.dll, etc.) that provide conventional
+> application-level glue. The tight integration between ntdll.dll and
+> the kernel allows Windows to do very impressive things.
+
+> We should adopt a similar approach.
+
+Most kernel developers claim that a stable userspace ABI is desirable.
+With your proposal, we need to maintain three stable ABI layers instead
+of two, without actually adding any functionality.  That doesn't seem to
+be a good way of using developer resources.
 
 Thanks,
 Florian
