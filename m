@@ -1,138 +1,88 @@
-From: Rich Felker <dalias@libc.org>
-Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
- init and thread creation
-Date: Fri, 23 Nov 2018 13:35:58 -0500
-Message-ID: <20181123183558.GM23599@brightrain.aerifal.cx>
-References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
- <1045257294.10291.1542905262086.JavaMail.zimbra@efficios.com>
- <87k1l5xd33.fsf@oldenburg.str.redhat.com>
- <20181122171010.GH23599@brightrain.aerifal.cx>
- <871s7cvt1l.fsf@oldenburg.str.redhat.com>
- <20181123142843.GJ23599@brightrain.aerifal.cx>
- <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com>
- <20181123173019.GK23599@brightrain.aerifal.cx>
- <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: Official Linux system wrapper library?
+Date: Fri, 23 Nov 2018 12:15:39 -0800
+Message-ID: <CAKOZuesFZqstO-9K2tLQ1sOOmYsN73QdTHNG0De0a=eq5BT99w@mail.gmail.com>
+References: <CAKOZuesB4R=dCz4merWQN0FSCGrXmOgUUr4ienSbStBJguNv8g@mail.gmail.com>
+ <bbc12da5-830e-99a7-95e3-d9da42947dc9@gmail.com> <877ehjx447.fsf@oldenburg.str.redhat.com>
+ <CAKOZues5SEESpJU=6MDTrPXTA1KTZFGNQE4Lw4t0fO-WBTU62w@mail.gmail.com>
+ <875zx2vhpd.fsf@oldenburg.str.redhat.com> <CAKOZuetdgk1QYhx1538-98rFpogMin=8DkPnCtU9_=ip23Vk7w@mail.gmail.com>
+ <87efbbvrx9.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-97513-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com>
-Sender: Rich Felker <dalias@aerifal.cx>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87efbbvrx9.fsf@oldenburg.str.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, Joel Fernandes <joelaf@google.com>, Linux API <linux-api@vger.kernel.org>, Willy Tarreau <w@1wt.eu>, Vlastimil Babka <vbabka@suse.cz>, Carlos O'Donell <carlos@redhat.com>, GNU C Library <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 23, 2018 at 12:52:21PM -0500, Mathieu Desnoyers wrote:
-> ----- On Nov 23, 2018, at 12:30 PM, Rich Felker dalias@libc.org wrote:
-> 
-> > On Fri, Nov 23, 2018 at 12:05:20PM -0500, Mathieu Desnoyers wrote:
-> >> ----- On Nov 23, 2018, at 9:28 AM, Rich Felker dalias@libc.org wrote:
-> >> [...]
-> >> > 
-> >> > Absolutely. As long as it's in libc, implicit destruction will happen.
-> >> > Actually I think the glibc code shound unconditionally unregister the
-> >> > rseq address at exit (after blocking signals, so no application code
-> >> > can run) in case a third-party rseq library was linked and failed to
-> >> > do so before thread exit (e.g. due to mismatched ref counts) rather
-> >> > than respecting the reference count, since it knows it's the last
-> >> > user. This would make potentially-buggy code safer.
-> >> 
-> >> OK, let me go ahead with a few ideas/questions along that path.
-> >                                                 ^^^^^^^^^^^^^^^
-> >> 
-> >> Let's say our stated goal is to let the "exit" system call from the
-> >> glibc thread exit path perform rseq unregistration (without explicit
-> >> unregistration beforehand). Let's look at what we need.
-> > 
-> > This is not "along that path". The above-quoted text is not about
-> > assuming it's safe to make SYS_exit without unregistering the rseq
-> > object, but rather about glibc being able to perform the
-> > rseq-unregister syscall without caring about reference counts, since
-> > it knows no other code that might depend on rseq can run after it.
-> 
-> When saying "along that path", what I mean is: if we go in that direction,
-> then we should look into going all the way there, and rely on thread
-> exit to implicitly unregister the TLS area.
-> 
-> Do you see any reason for doing an explicit unregistration at thread
-> exit rather than simply rely on the exit system call ?
+On Fri, Nov 23, 2018 at 5:34 AM Florian Weimer <fweimer@redhat.com> wrote:
+>
+> * Daniel Colascione:
+>
+> > On Mon, Nov 12, 2018 at 12:11 AM, Florian Weimer <fweimer@redhat.com> wrote:
+> >> * Daniel Colascione:
+> >>
+> >>> If the kernel provides a system call, libc should provide a C wrapper
+> >>> for it, even if in the opinion of the libc maintainers, that system
+> >>> call is flawed.
+> >>
+> >> It's not that simple, I think.  What about bdflush?  socketcall?
+> >> getxpid?  osf_gettimeofday?  set_robust_list?
+> >
+> > What about them? Mentioning that these system calls exist is not in
+> > itself an argument.
+>
+> But socketcall does not exist on all architectures.  Neither does
+> getpid, it's called getxpid on some architectures.
 
-Whether this is needed is an implementation detail of glibc that
-should be permitted to vary between versions. Unless glibc wants to
-promise that it would become a public guarantee, it's not part of the
-discussion around the API/ABI. Only part of the discussion around
-implementation internals of the glibc rseq stuff.
+So what? On systems on which a given system call does not exist,
+attempts to link against that system call should fail, or attempts to
+make that system call should fail at runtime with ENOSYS. That's
+completely expected and unsurprising behavior, not some unavoidable
+source of catastrophic confusion.
 
-Of course I may be biased thinking application code should not assume
-this since it's not true on musl -- for detached threads, the thread
-frees its own stack before exiting (and thus has to unregister
-set_tid_address and set_robustlist before exiting).
+> >> There are quite a few irregularities
+> >
+> > So?
+>
+> I think it would be a poor approach to expose application developers to
+> these portability issues.  We need to abstract over these differences at
+> a certain layer, and applications are too late.
 
-> >> First, we need the TLS area to be valid until the exit system call
-> >> is invoked by the thread. If glibc defines __rseq_abi as a weak symbol,
-> >> I'm not entirely sure we can guarantee the IE model if another library
-> >> gets its own global-dynamic weak symbol elected at execution time. Would
-> >> it be better to switch to a "strong" symbol for the glibc __rseq_abi
-> >> rather than weak ?
-> > 
-> > This doesn't help; still whichever comes first in link order would
-> > override. Either way __rseq_abi would be in static TLS, though,
-> > because any dynamically-loaded library is necessarily loaded after
-> > libc, which is loaded at initial exec time.
-> 
-> OK, AFAIU so you argue for leaving the __rseq_abi symbol "weak". Just making
-> sure I correctly understand your position.
+And glibc is too early. The purpose of the lowest-level user library
+is not to provide an OS-agnostic portability layer. There are other
+projects much better-suited to providing portability, including the
+excellent GLib, Gnulib, and Qt. The purpose of the lowest-level user
+library is to expose the interfaces of the underlying system, whatever
+they are. That's a basic tenet of layered interface design.
 
-I don't think it matters, and I don't think making it weak is
-meaningful or useful (weak in a shared library is largely meaningless)
-but maybe I'm missing something here.
+Due to historical accident, the same library (on most Linux systems)
+serves as both the lowest-level user library and an implementation of
+some antiquated portability constructs from ANSI C and POSIX. That
+this library provides these old portability interfaces is not a reason
+for that library to neglect its responsibility as the lowest-level
+system interface library. If people find that every attempt to expose
+even trivial new kernel interfaces turns into an endless trek through
+a swamp of specious objection (see the gettid debacle), then it
+becomes perfectly reasonable to find an alternate route over firmer
+ground.
 
-> Something can be technically correct based on the current implementation,
-> but fragile with respect to future changes. We need to carefully distinguish
-> between the two when exposing ABIs.
+Other glibc developers (e.g., Joseph Myers) have expressed support for
+adding long-missing system call wrappers, like gettid, as long as the
+functions are adequately documented. Would you make a sustained
+objection to these additions?
 
-Yes.
+> >> and some editorial discretion appears to be unavoidable.
+> >
+> > That's an assertion, not an argument, and I strongly disagree. *Why*
+> > do you think "editorial discretion" is unavoidable?
+>
+> We do not want application authors to write code which uses socketcall,
 
-> >> There has been presumptions about signals being blocked when the thread
-> >> exits throughout this email thread. Out of curiosity, what code is
-> >> responsible for disabling signals in this situation ?
-> 
-> This question is still open.
-
-I can't find it -- maybe it's not done in glibc. It is in musl, and I
-assumed glibc would also do it, because otherwise it's possible to see
-some inconsistent states from signal handlers. Maybe these are all
-undefined due to AS-unsafety of pthread_exit, but I think you can
-construct examples where something could be observably wrong without
-breaking any rules.
-
-> > Related to this,
-> >> is it valid to access a IE model TLS variable from a signal handler at
-> >> _any_ point where the signal handler nests over thread's execution ?
-> >> This includes early start and just before invoking the exit system call.
-> > 
-> > It should be valid to access *any* TLS object like this, but the
-> > standards don't cover it well. Right now access to dynamic TLS from
-> > signal handlers is unsafe in glibc, but static is safe.
-> 
-> Which is a shame for the lttng-ust tracer, which needs global-dynamic
-> TLS variables so it can be dlopen'd, but aims at allowing tracing from
-> signal handlers. It looks like due to limitations of global-dynamic
-> TLS, tracing from instrumented signal handlers with lttng-ust tracepoints
-> could crash the process if the signal handler nests early at thread start
-> or late before thread exit. One way out of this would be to ensure signals
-> are blocked at thread start/exit, but I can't find the code responsible for
-> doing this within glibc.
-
-Just blocking at start/exit won't solve the problem because
-global-dynamic TLS in glibc involves dynamic allocation, which is hard
-to make AS-safe and of course can fail, leaving no way to make forward
-progress.
-
-Rich
+That's an opinion on portability, not an argument for the necessity of
+"editorial discretion". That you think an application calling
+socketcall would somehow be a bad idea is not a justification for not
+providing this interface. Low-level libraries must focus on mechanism,
+not policy, if a system is to be flexible enough to accommodate
+unanticipated needs.
