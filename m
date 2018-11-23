@@ -1,47 +1,46 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC PATCH 3/3] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Fri, 23 Nov 2018 16:49:04 +0100
-Message-ID: <d07d9742-e7dc-0fe7-c4be-3bd9a60fde98@suse.cz>
-References: <20181120103515.25280-1-mhocko@kernel.org>
- <20181120103515.25280-4-mhocko@kernel.org>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v4 2/4] namei: O_BENEATH-style path resolution flags
+Date: Fri, 23 Nov 2018 08:07:03 -0800
+Message-ID: <CALCETrURCXjNMBR6DjujVc6HHHS=CbET81kHS+odur+Bm-z7Tg@mail.gmail.com>
+References: <20181112142654.341-1-cyphar@cyphar.com> <20181112142654.341-3-cyphar@cyphar.com>
+ <1ce83cdf6e3168350b69f98f08aaa202bbaa682d.camel@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181120103515.25280-4-mhocko@kernel.org>
-Content-Language: en-US
+In-Reply-To: <1ce83cdf6e3168350b69f98f08aaa202bbaa682d.camel@bitron.ch>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, linux-api@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Alexey Dobriyan <adobriyan@gmail.com>, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>
+To: j@bitron.ch
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Linux API <linux-api@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, David Drysdale <drysdale@google.com>, Aleksa Sarai <asarai@suse.de>, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/20/18 11:35 AM, Michal Hocko wrote:
-> From: Michal Hocko <mhocko@suse.com>
-> 
-> David Rientjes has reported that 1860033237d4 ("mm: make
-> PR_SET_THP_DISABLE immediately active") has changed the way how
-> we report THPable VMAs to the userspace. Their monitoring tool is
-> triggering false alarms on PR_SET_THP_DISABLE tasks because it considers
-> an insufficient THP usage as a memory fragmentation resp. memory
-> pressure issue.
-> 
-> Before the said commit each newly created VMA inherited VM_NOHUGEPAGE
-> flag and that got exposed to the userspace via /proc/<pid>/smaps file.
-> This implementation had its downsides as explained in the commit message
-> but it is true that the userspace doesn't have any means to query for
-> the process wide THP enabled/disabled status.
-> 
-> PR_SET_THP_DISABLE is a process wide flag so it makes a lot of sense
-> to export in the process wide context rather than per-vma. Introduce
+> On Nov 23, 2018, at 5:10 AM, J=C3=BCrg Billeter <j@bitron.ch> wrote:
+>
+> Hi Aleksa,
+>
+>> On Tue, 2018-11-13 at 01:26 +1100, Aleksa Sarai wrote:
+>> * O_BENEATH: Disallow "escapes" from the starting point of the
+>>  filesystem tree during resolution (you must stay "beneath" the
+>>  starting point at all times). Currently this is done by disallowing
+>>  ".." and absolute paths (either in the given path or found during
+>>  symlink resolution) entirely, as well as all "magic link" jumping.
+>
+> With open_tree(2) and OPEN_TREE_CLONE, will O_BENEATH still be
+> necessary?
 
-Agreed.
+This discussion reminds me of something I=E2=80=99m uncomfortable with in t=
+he
+current patches: currently, most of the O_ flags determine some
+property of the returned opened file.  The new O_ flags you're adding
+don't -- instead, they affect the lookup of the file.  So O_BENEATH
+doesn't return a descriptor that can only be used to loop up files
+beneath it -- it just controls whether open(2) succeeds or fails.  It
+might be nice for the naming of the flags to reflect this.  I also
+don't love that we have some magic AT_ flags that work with some
+syscalls and some magic O_ flags that work with others.
 
-> a new field to /proc/<pid>/status which export this status.  If
-> PR_SET_THP_DISABLE is used then it reports false same as when the THP is
-> not compiled in. It doesn't consider the global THP status because we
-> already export that information via sysfs
-> 
-> Fixes: 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
-> Signed-off-by: Michal Hocko <mhocko@suse.com>
+In this regard, I liked the AT_ naming better.  Although I don't love
+adding AT_ flags because the restrict our ability to usefully use the
+high bits of the fd in the future.
 
-Acked-by: Vlastimil Babka <vbabka@suse.cz>
+--Andy
