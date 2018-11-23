@@ -1,44 +1,47 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH] Add /proc/pid_generation
-Date: Fri, 23 Nov 2018 11:14:17 +0000
-Message-ID: <f00df51af0a4491fa7d86f9dc0c07bf6@AcuMS.aculab.com>
-References: <20181121201452.77173-1-dancol@google.com>
- <20181122111930.GA7164@ip-172-31-15-78>
+From: =?ISO-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>
+Subject: Re: [PATCH v4 2/4] namei: O_BENEATH-style path resolution flags
+Date: Fri, 23 Nov 2018 13:10:17 +0100
+Message-ID: <1ce83cdf6e3168350b69f98f08aaa202bbaa682d.camel@bitron.ch>
+References: <20181112142654.341-1-cyphar@cyphar.com>
+         <20181112142654.341-3-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181122111930.GA7164@ip-172-31-15-78>
-Content-Language: en-US
+In-Reply-To: <20181112142654.341-3-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: 'Kevin Easton' <kevin@guarana.org>, Daniel Colascione <dancol@google.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "timmurray@google.com" <timmurray@google.com>, "primiano@google.com" <primiano@google.com>, "joelaf@google.com" <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Steven Rostedt (VMware)" <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, Pavel
+To: Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
+Cc: Eric Biederman <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, linux-api@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, David Drysdale <drysdale@google.com>, Aleksa Sarai <asarai@suse.de>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Kevin Easton
-> Sent: 22 November 2018 11:20
-> 
-> On Wed, Nov 21, 2018 at 12:14:44PM -0800, Daniel Colascione wrote:
-> > This change adds a per-pid-namespace 64-bit generation number,
-> > incremented on PID rollover, and exposes it via a new proc file
-> > /proc/pid_generation. By examining this file before and after /proc
-> > enumeration, user code can detect the potential reuse of a PID and
-> > restart the task enumeration process, repeating until it gets a
-> > coherent snapshot.
-> 
-> I see downthread this patch has been withdrawn, but nonetheless I'm
-> still curious - does this actually solve the problem?
-> 
-> It seems to me that a PID could be reused within a scan even if the
-> generation number remains the same at the beginning and end of a scan:
+Hi Aleksa,
 
-Why not allocate a 48bit generation number to each 16bit pid?
-Then you have a 64bit 'extended-pid' that can be assumed to never be reused.
-Provided enough interfaces are enhanced to support 'extended-pid' values
-you'll never get reused values.
+On Tue, 2018-11-13 at 01:26 +1100, Aleksa Sarai wrote:
+> * O_BENEATH: Disallow "escapes" from the starting point of the
+>   filesystem tree during resolution (you must stay "beneath" the
+>   starting point at all times). Currently this is done by disallowing
+>   ".." and absolute paths (either in the given path or found during
+>   symlink resolution) entirely, as well as all "magic link" jumping.
 
-	David
+With open_tree(2) and OPEN_TREE_CLONE, will O_BENEATH still be
+necessary? As I understand it, O_BENEATH could be replaced by a much
+simpler flag that only disallows absolute paths (incl. absolute
+symlinks). And it would have the benefit that you can actually pass the
+tree/directory fd to another process and escaping would not be possible
+even if that other process doesn't use O_BENEATH (after calling
+mount_setattr(2) to make sure it's locked down).
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+This approach would also make it easy to restrict writes via a cloned
+tree/directory fd by marking it read-only via mount_setattr(2) (and
+locking down the read-only flag). This would again be especially useful
+when passing tree/directory fds across processes, or for voluntary
+self-lockdown within a process for robustness against security bugs.
+
+This wouldn't affect any of the other flags in this patch. And for full
+equivalence to O_BENEATH you'd have to use O_NOMAGICLINKS in addition
+to O_NOABSOLUTE, or whatever that new flag would be called.
+
+Or is OPEN_TREE_CLONE too expensive for this use case? Or is there
+anything else I'm missing?
+
+Jürg
