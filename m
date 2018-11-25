@@ -1,125 +1,57 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v3 3/4] libbpf: add bpf_prog_test_run_xattr
-Date: Sat, 24 Nov 2018 14:20:13 -0800
-Message-ID: <20181124222012.lcc6hn6vr6xbw7zr@ast-mbp.dhcp.thefacebook.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com>
- <20181122140910.1079-1-lmb@cloudflare.com>
- <20181122140910.1079-4-lmb@cloudflare.com>
- <b4308b6f-5a1d-f015-4e7f-abca1b3902be@iogearbox.net>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH -next 1/2] mm/memfd: make F_SEAL_FUTURE_WRITE seal more
+ robust
+Date: Sat, 24 Nov 2018 16:42:29 -0800
+Message-ID: <20181124164229.89c670b6e7a3530ef7b0a40c@linux-foundation.org>
+References: <20181120052137.74317-1-joel@joelfernandes.org>
+        <CALCETrXgBENat=5=7EuU-ttQ-YSXT+ifjLGc=hpJ=unRgSsndw@mail.gmail.com>
+        <20181120183926.GA124387@google.com>
+        <20181121070658.011d576d@canb.auug.org.au>
+        <469B80CB-D982-4802-A81D-95AC493D7E87@amacapital.net>
+        <20181120204710.GB22801@google.com>
+        <F8E28229-C99E-4711-982B-5B5DE0F70F16@amacapital.net>
+        <20181120211335.GC22801@google.com>
+        <20181121182701.0d8a775fda6af1f8d2be8f25@linux-foundation.org>
+        <CALCETrUGyhqi+M3cTdqJNNOPfTWn-R-ekM_R5heq2mbdVqPUAw@mail.gmail.com>
+        <20181122230906.GA198127@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <b4308b6f-5a1d-f015-4e7f-abca1b3902be@iogearbox.net>
-Sender: netdev-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>
-Cc: Lorenz Bauer <lmb@cloudflare.com>, ast@kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181122230906.GA198127@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joel Fernandes <joel@joelfernandes.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>, LKML <linux-kernel@vger.kernel.org>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, Khalid Aziz <khalid.aziz@oracle.com>, Linux API <linux-api@vger.kernel.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 23, 2018 at 11:25:11PM +0100, Daniel Borkmann wrote:
-> On 11/22/2018 03:09 PM, Lorenz Bauer wrote:
-> > Add a new function, which encourages safe usage of the test interface.
-> > bpf_prog_test_run continues to work as before, but should be considered
-> > unsafe.
-> > 
-> > Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
-> 
-> Set looks good to me, thanks! Three small things below:
-> 
-> > ---
-> >  tools/lib/bpf/bpf.c | 27 +++++++++++++++++++++++++++
-> >  tools/lib/bpf/bpf.h | 13 +++++++++++++
-> >  2 files changed, 40 insertions(+)
-> > 
-> > diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
-> > index 961e1b9fc592..f8518bef6886 100644
-> > --- a/tools/lib/bpf/bpf.c
-> > +++ b/tools/lib/bpf/bpf.c
-> > @@ -424,6 +424,33 @@ int bpf_prog_test_run(int prog_fd, int repeat, void *data, __u32 size,
-> >  	return ret;
-> >  }
-> >  
-> > +int bpf_prog_test_run_xattr(const struct bpf_prog_test_run_attr *test_attr,
-> > +			    __u32 *size_out, __u32 *retval, __u32 *duration)
-> > +{
-> > +	union bpf_attr attr;
-> > +	int ret;
-> > +
-> > +	if (!test_attr->data_out && test_attr->size_out > 0)
-> > +		return -EINVAL;
-> > +
-> > +	bzero(&attr, sizeof(attr));
-> > +	attr.test.prog_fd = test_attr->prog_fd;
-> > +	attr.test.data_in = ptr_to_u64(test_attr->data);
-> > +	attr.test.data_out = ptr_to_u64(test_attr->data_out);
-> > +	attr.test.data_size_in = test_attr->size;
-> > +	attr.test.data_size_out = test_attr->size_out;
-> > +	attr.test.repeat = test_attr->repeat;
-> > +
-> > +	ret = sys_bpf(BPF_PROG_TEST_RUN, &attr, sizeof(attr));
-> > +	if (size_out)
-> > +		*size_out = attr.test.data_size_out;
-> > +	if (retval)
-> > +		*retval = attr.test.retval;
-> > +	if (duration)
-> > +		*duration = attr.test.duration;
-> > +	return ret;
-> > +}
-> > +
-> >  int bpf_prog_get_next_id(__u32 start_id, __u32 *next_id)
-> >  {
-> >  	union bpf_attr attr;
-> > diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
-> > index 26a51538213c..570f19f77f42 100644
-> > --- a/tools/lib/bpf/bpf.h
-> > +++ b/tools/lib/bpf/bpf.h
-> > @@ -110,6 +110,19 @@ LIBBPF_API int bpf_prog_attach(int prog_fd, int attachable_fd,
-> >  LIBBPF_API int bpf_prog_detach(int attachable_fd, enum bpf_attach_type type);
-> >  LIBBPF_API int bpf_prog_detach2(int prog_fd, int attachable_fd,
-> >  				enum bpf_attach_type type);
-> > +
-> > +struct bpf_prog_test_run_attr {
-> > +	int prog_fd;
-> > +	int repeat;
-> > +	const void *data;
-> > +	__u32 size;
-> > +	void *data_out; /* optional */
-> > +	__u32 size_out;
-> 
-> Small nit: could we name these data_{in,out} and data_size_{in,out} as
-> well, so it's analog to the ones from the bpf_attr?
-> 
-> > +};
-> > +
-> > +LIBBPF_API int bpf_prog_test_run_xattr(const struct bpf_prog_test_run_attr *test_attr,
-> > +				       __u32 *size_out, __u32 *retval,
-> > +				       __u32 *duration);
+On Thu, 22 Nov 2018 15:09:06 -0800 Joel Fernandes <joel@joelfernandes.org> wrote:
 
-can we keep return values in struct bpf_prog_test_run_attr ?
-I think the interface will be easier to use and faster. Less pointers
-to pass around.
-
-> >  LIBBPF_API int bpf_prog_test_run(int prog_fd, int repeat, void *data,
-> >  				 __u32 size, void *data_out, __u32 *size_out,
-> >  				 __u32 *retval, __u32 *duration);
+> Android uses ashmem for sharing memory regions.  We are looking forward to
+> migrating all usecases of ashmem to memfd so that we can possibly remove
+> the ashmem driver in the future from staging while also benefiting from
+> using memfd and contributing to it.  Note staging drivers are also not ABI
+> and generally can be removed at anytime.
 > 
-> Could we add a comment into the header here stating that we discourage
-> bpf_prog_test_run()'s use?
+> One of the main usecases Android has is the ability to create a region and
+> mmap it as writeable, then add protection against making any "future"
+> writes while keeping the existing already mmap'ed writeable-region active.
+> This allows us to implement a usecase where receivers of the shared
+> memory buffer can get a read-only view, while the sender continues to
+> write to the buffer.  See CursorWindow documentation in Android for more
+> details:
+> https://developer.android.com/reference/android/database/CursorWindow
 > 
-> It would probably also make sense since we go that route that we would
-> convert the 10 bpf_prog_test_run() instances under test_progs.c at the
-> same time so that people extending or looking at BPF kselftests don't
-> copy discouraged bpf_prog_test_run() api as examples from this point
-> onwards anymore.
+> This usecase cannot be implemented with the existing F_SEAL_WRITE seal.
+> To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
+> which prevents any future mmap and write syscalls from succeeding while
+> keeping the existing mmap active.
+> 
+> A better way to do F_SEAL_FUTURE_WRITE seal was discussed [1] last week
+> where we don't need to modify core VFS structures to get the same
+> behavior of the seal. This solves several side-effects pointed by Andy.
+> self-tests are provided in later patch to verify the expected semantics.
+> 
+> [1] https://lore.kernel.org/lkml/20181111173650.GA256781@google.com/
 
-I would keep bpf_prog_test_run() and test_progs.c as-is.
-I think the prog_test_run in the current form is actually fine.
-I don't find it 'unsafe'.
-When it's called on a given bpf prog the user knows what prog
-suppose to do. If prog is increasing the packet size the test writer
-knows that and should size the output buffer accordingly.
-Also there are plenty of tests where progs don't change the packet size
-and any test with 'repeat > 1' should have the packet size
-return to initial value. Like if the test is doing ipip encap
-at the end of the run the bpf prog should remove that encap.
-Otherwise 'repeat > 1' will produce wrong results.
+This changelog doesn't have the nifty test case code which was in
+earlier versions?
