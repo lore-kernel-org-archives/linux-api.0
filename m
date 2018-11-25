@@ -1,19 +1,17 @@
-From: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC PATCH v2] ptrace: add PTRACE_GET_SYSCALL_INFO request
-Date: Sun, 25 Nov 2018 07:10:03 +0300
-Message-ID: <20181125041003.GA3258@altlinux.org>
-References: <20181121165806.07da7c98@akathisia>
- <CALCETrV3TPCkYyhoLLcikXVeF-RdZUuLTCvKReK3Qb9LSS9Csw@mail.gmail.com>
- <20181121235634.GA14146@altlinux.org>
- <CALCETrXea_uRAqw_srW5CWgOzeM=RubaDbjnxZ=cUMy5Zv1TsA@mail.gmail.com>
- <20181122191504.GB27204@altlinux.org>
- <CALCETrXvXzRzoEqwEY_VZ7Vpt-sLwaF+rZPg+y_eG2xyzubXtw@mail.gmail.com>
- <20181123040139.GB2572@altlinux.org>
+From: Joey Pabalinas <joeypabalinas-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: Re: [PATCH RESEND v3 1/3] ptrace: pass type of a syscall-stop in
+ ptrace_message
+Date: Sat, 24 Nov 2018 20:17:26 -1000
+Message-ID: <20181125061726.jtalb5t4tgigzzue@gmail.com>
+References: <20181125022150.46258a20@akathisia>
+ <20181125022227.55e8caf7@akathisia>
+ <20181125015402.glcaw3kghcu4pr22@gmail.com>
+ <20181125021059.GA1190@altlinux.org>
 Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============7638334450864937931=="
+Content-Type: multipart/mixed; boundary="===============1708076510611580316=="
 Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-In-Reply-To: <20181123040139.GB2572-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+In-Reply-To: <20181125021059.GA1190-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
  <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
 List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
@@ -23,128 +21,60 @@ List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
  <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
 Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
 Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-To: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Cc: Eugene Syromiatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Cc: Joey Pabalinas <joeypabalinas-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Eugene Syromyatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
 
---===============7638334450864937931==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="rwEMma7ioTxnRzrJ"
+--===============1708076510611580316==
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="4ktpenoxjmibnb6h"
 Content-Disposition: inline
 
 
---rwEMma7ioTxnRzrJ
-Content-Type: text/plain; charset=us-ascii
+--4ktpenoxjmibnb6h
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Nov 23, 2018 at 07:01:39AM +0300, Dmitry V. Levin wrote:
-> On Thu, Nov 22, 2018 at 04:19:10PM -0800, Andy Lutomirski wrote:
-> > On Thu, Nov 22, 2018 at 11:15 AM Dmitry V. Levin wrote:
-> > > On Thu, Nov 22, 2018 at 06:55:29AM -0800, Andy Lutomirski wrote:
-> > > > On Wed, Nov 21, 2018 at 3:56 PM Dmitry V. Levin wrote:
-> > > > > On Wed, Nov 21, 2018 at 02:56:57PM -0800, Andy Lutomirski wrote:
-> > > > > > Please cc linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org for future versions.
-> > > > > >
-> > > > > > On Wed, Nov 21, 2018 at 7:58 AM Elvira Khabirova wrote:
-> > > > > > >
-> > > > > > > struct ptrace_syscall_info {
-> > > > > > >         __u8 op; /* 0 for entry, 1 for exit */
-> > > > > >
-> > > > > > Can you add proper defines, like:
-> > > > > >
-> > > > > > #define PTRACE_SYSCALL_ENTRY 0
-> > > > > > #define PTRACE_SYSCALL_EXIT 1
-> > > > > > #define PTRACE_SYSCALL_SECCOMP 2
-> > > > > >
-> > > > > > and make seccomp work from the start?  I'd rather we don't merg=
-e an
-> > > > > > implementation that doesn't work for seccomp and then have to r=
-ework
-> > > > > > it later.
-> > > > >
-> > > > > What's the difference between PTRACE_EVENT_SECCOMP and syscall-en=
-try-stop
-> > > > > with regards to PTRACE_GET_SYSCALL_INFO request?  At least they h=
-ave the
-> > > > > same entry_info to return.
-> > > >
-> > > > I'm not sure there's any material difference.
-> > >
-> > > In that case we don't really need PTRACE_SYSCALL_SECCOMP: op field
-> > > describes the structure inside the union to use, not the ptrace stop.
-> >=20
-> > Unless we think the structures might diverge in the future.
->=20
-> If these structures ever diverge, then a seccomp structure will be added
-> to the union, and a portable userspace code will likely look this way:
->=20
-> #include <linux/ptrace.h>
-> ...
-> struct ptrace_syscall_info info;
-> long rc =3D ptrace(PTRACE_GET_SYSCALL_INFO, pid, (void *) sizeof(info), &=
-info);
-> ...
-> switch (info.op) {
-> 	case PTRACE_SYSCALL_INFO_ENTRY:
-> 		/* handle info.entry */
-> 	case PTRACE_SYSCALL_INFO_EXIT:
-> 		/* handle info.exit */
-> #ifdef PTRACE_SYSCALL_INFO_SECCOMP
-> 	case PTRACE_SYSCALL_INFO_SECCOMP:
-> 		/* handle info.seccomp */
-> #endif
-> 	default:
-> 		/* handle unknown info.op */
-> }
->=20
-> In other words, it would be better if PTRACE_SYSCALL_INFO_* selector
-> constants were introduced along with corresponding structures in the
-> union.
+On Sun, Nov 25, 2018 at 05:10:59AM +0300, Dmitry V. Levin wrote:
+> Given that without this patch the value returned by PTRACE_GETEVENTMSG
+> during syscall stop is undefined, we need two different ptrace_message
+> values that cannot be set by other ptrace events to enable reliable
+> identification of syscall-enter-stop and syscall-exit-stop in userspace:
+> if we make PTRACE_GETEVENTMSG return 0 or any other value routinely set by
+> other ptrace events, it would be hard for userspace to find out whether
+> the kernel implements new semantics or not.
 
-However, the approach I suggested doesn't provide forward compatibility:
-if userspace is compiled with kernel headers that don't define
-PTRACE_SYSCALL_INFO_SECCOMP, it will break when the kernel
-starts to use PTRACE_SYSCALL_INFO_SECCOMP instead of
-PTRACE_SYSCALL_INFO_ENTRY for PTRACE_EVENT_SECCOMP support
-in PTRACE_GET_SYSCALL_INFO.
-
-The solution is to introduce PTRACE_SYSCALL_INFO_SECCOMP and struct
-ptrace_syscall_info.seccomp along with PTRACE_EVENT_SECCOMP support
-in PTRACE_GET_SYSCALL_INFO.  The initial revision of the seccomp
-structure could be made the same as the entry structure, or it can
-diverge from the beginning, e.g., by adding ret_data field containing
-SECCOMP_RET_DATA return value stored in ptrace_message, this would save
-ptracers an extra PTRACE_GETEVENTMSG call currently required to obtain it.
-
+Ah, I see, I agree that definitely makes sense.
 
 --=20
-ldv
+Cheers,
+Joey Pabalinas
 
---rwEMma7ioTxnRzrJ
+--4ktpenoxjmibnb6h
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIcBAEBCAAGBQJb+iCbAAoJEAVFT+BVnCUIS3MQAKeeh/Bd9DjwDYgYnBn54D86
-QBdDnegpvIpajluY994tUaCT3vgNamR+SmwRmi8ED7IXsLD6oImZR6ctmN42HSaM
-t7SJc82r6p0yQJ7H/7c78jmlMIQFSGmnCM4H69AUkxYdoDQ3ehSRXPN2w0g5+y1u
-r6F2XAUGgNi9jnwJmz57kkD4qVw32rVfNSWhCl7XxT5aJznozUJk8JRDVk2dbmMw
-vg/WHD47HFcBKkkEPUH9edzFqzHdZcbwqIYQBaAbJpbkxexGIEVF5o26g/kC1Mts
-UL4mmy0LfAsf8GGjomuLsRsGKEEs58oiRdmKWqGmeKi0l0EPCBo+1e1Rb9UbDs9p
-Mepp7tvbh3T/BjS7rBmNgEK7mXUEV4prJq6Os6TJs4mTptaisYRZX+MNYNEahLRg
-+c/RGFO5gnsulYoWv+HrTkGjv44MoiespBAwkHIPh873inpcGM4SnMO8nZW0PsDE
-mL7Wei96TDkv1db8Q8dAIz3fb+c9S4uEli+Q2vtGIAc/2bjK1+VL7ZXra0uJCAdT
-Xz3aiQPVZ5Ie65f2rVoLTwr/QlujImY6k64vfRxQrwM9BQei7859QStHr7PtAi8V
-4Gt23TfCWgxg9Lw/Zk8TRY3g9UUc2TsuWQQJ2CikQFkh+sKVpKb2hbe7t12+nWOJ
-fV3T2OM5XZn6FHDXmA8i
-=y+u9
+iQIzBAEBCgAdFiEENpTlWU2hUK/KMvHp2rGdfm9DtVIFAlv6PnUACgkQ2rGdfm9D
+tVLTKBAAwZqcHYLXU10sq1ZI/dIsYmjVmsCSC7bhuxjAi3cVnkw89BqlbTBfl8s5
+bJcVhmPayYWCWE2paglX31lp1DKKtvWiFkbLE2jF601rAYekH69ty5Qvx8DMcrQV
+Ar2rnb8KECJE7pf9Fdexpx+FyhaM6wkj04YkysMOSEBbBA5ue4pSA5yIkO142jqw
+WRlqYBwYqGkNXWW74Ea8ZNEFPZxMrvBtI2olwqEs99erNGpTcafuchTAhdrKuDKZ
+62zQEnD229IDXeLZV5+rbbyT7UiWb2xuw/xcOreCRhd8EArxgvFc5VcuywHTI6DM
+nPhWsvw7+XUXHpq406m5mLMq1TJMUwrCw+wQjfmaLvehOm+p16z9F3nsjAvUU/ez
+bGbTpgv/315EVtm8nqWl1s6pbBgK9cxnIl1DFmKptWbIl96FlSTCo1cOS4fRUNUC
+1pgAUh2sVTxuTdARAmTkfKOmj1WoVnVJ+qke+0j/Knye9poolvZngb0PgaKdEwps
+i3Wq3OSv7OUGjwIPlYy3oAblfZpC4mhDe9uV+ytzGWfqJoY4hcyXAVOL6rXHx9ih
+XxnxIMd/vpKyc882gzKZ3wc6JOMl2QdJ2nPwb9OeK6qls3csaCHWa9ty4+tnUitk
+nbN53QvbmBiGDHJjTa6Tj9Lu40Buguhoipqu38ynV18XuUrKKQQ=
+=yO6t
 -----END PGP SIGNATURE-----
 
---rwEMma7ioTxnRzrJ--
+--4ktpenoxjmibnb6h--
 
---===============7638334450864937931==
+--===============1708076510611580316==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -155,4 +85,4 @@ Strace-devel mailing list
 Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
 https://lists.strace.io/mailman/listinfo/strace-devel
 
---===============7638334450864937931==--
+--===============1708076510611580316==--
