@@ -1,80 +1,69 @@
 From: Pavel Machek <pavel@ucw.cz>
 Subject: Re: [PATCH] Add /proc/pid_generation
-Date: Sun, 25 Nov 2018 23:55:33 +0100
-Message-ID: <20181125225533.GB30242@amd>
+Date: Mon, 26 Nov 2018 00:00:07 +0100
+Message-ID: <20181125230007.GC30242@amd>
 References: <20181121201452.77173-1-dancol@google.com>
- <20181121203150.GK3065@bombadil.infradead.org>
- <CAKOZueuCYOsaHZzoz5nNPr8Jb-fEiHTR4MektaJx8vuUXcrKCQ@mail.gmail.com>
- <20181122020633.GN3065@bombadil.infradead.org>
+ <20181122111930.GA7164@ip-172-31-15-78>
+ <f00df51af0a4491fa7d86f9dc0c07bf6@AcuMS.aculab.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="TRYliJ5NKNqkz5bu"
+        protocol="application/pgp-signature"; boundary="LwW0XdcUbUexiWVK"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181122020633.GN3065@bombadil.infradead.org>
+In-Reply-To: <f00df51af0a4491fa7d86f9dc0c07bf6@AcuMS.aculab.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Primiano Tucci <primiano@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, rostedt@goodmis.org, tglx@linutronix.de, mingo@kernel.org, linux@dominikbrodowski.net, pasha.tatashin@oracle.com, jpoimboe@redhat.com, ard.biesheuvel@linaro.org, Michal Hocko <mhocko@suse.com>, David Howells <dhowells>
+To: David Laight <David.Laight@ACULAB.COM>
+Cc: 'Kevin Easton' <kevin@guarana.org>, Daniel Colascione <dancol@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "timmurray@google.com" <timmurray@google.com>, "primiano@google.com" <primiano@google.com>, "joelaf@google.com" <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Steven Rostedt (VMware)" <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 
---TRYliJ5NKNqkz5bu
+--LwW0XdcUbUexiWVK
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Wed 2018-11-21 18:06:33, Matthew Wilcox wrote:
-> On Wed, Nov 21, 2018 at 12:38:20PM -0800, Daniel Colascione wrote:
-> > On Wed, Nov 21, 2018 at 12:31 PM Matthew Wilcox <willy@infradead.org> w=
-rote:
-> > >
-> > > On Wed, Nov 21, 2018 at 12:14:44PM -0800, Daniel Colascione wrote:
-> > > > This change adds a per-pid-namespace 64-bit generation number,
-> > > > incremented on PID rollover, and exposes it via a new proc file
-> > > > /proc/pid_generation. By examining this file before and after /proc
-> > > > enumeration, user code can detect the potential reuse of a PID and
-> > > > restart the task enumeration process, repeating until it gets a
-> > > > coherent snapshot.
-> > > >
-> > > > PID rollover ought to be rare, so in practice, scan repetitions will
-> > > > be rare.
-> > >
-> > > Then why does it need to be 64-bit?
+On Fri 2018-11-23 11:14:17, David Laight wrote:
+> From: Kevin Easton
+> > Sent: 22 November 2018 11:20
 > >=20
-> > [Resending because of accidental HTML. I really need to switch to a
-> > better email client.]
+> > On Wed, Nov 21, 2018 at 12:14:44PM -0800, Daniel Colascione wrote:
+> > > This change adds a per-pid-namespace 64-bit generation number,
+> > > incremented on PID rollover, and exposes it via a new proc file
+> > > /proc/pid_generation. By examining this file before and after /proc
+> > > enumeration, user code can detect the potential reuse of a PID and
+> > > restart the task enumeration process, repeating until it gets a
+> > > coherent snapshot.
 > >=20
-> > Because 64 bits is enough for anyone. :-) A u64 is big enough that
-> > we'll never observe an overflow on a running system, and PID
-> > namespaces are rare enough that we won't miss the four extra bytes we
-> > use by upgrading from a u32.  And after reading about some security
-> > problems caused by too-clever handling of 32-bit rollover, I'd rather
-> > the code be obviously correct than save a trivial amount of space.
+> > I see downthread this patch has been withdrawn, but nonetheless I'm
+> > still curious - does this actually solve the problem?
+> >=20
+> > It seems to me that a PID could be reused within a scan even if the
+> > generation number remains the same at the beginning and end of a scan:
 >=20
-> I don't think you understand how big 4 billion is.  If it happens once a
-> second, it will take 136 years for a 2^32 count to roll over.  How often
-> does a PID roll over happen?
+> Why not allocate a 48bit generation number to each 16bit pid?
+> Then you have a 64bit 'extended-pid' that can be assumed to never be reus=
+ed.
+> Provided enough interfaces are enhanced to support 'extended-pid' values
+> you'll never get reused values.
 
-Well, the cost of 64-bit vs. 32-bit is really small here... I'd go
-with 64bits. If you have 1000 CPUs, rollovers may be faster..
+For the record, I really like this proposal.
 
-Best regards,
 									Pavel
 --=20
 (english) http://www.livejournal.com/~pavelmachek
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
 g.html
 
---TRYliJ5NKNqkz5bu
+--LwW0XdcUbUexiWVK
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iEYEARECAAYFAlv7KGUACgkQMOfwapXb+vKUpACguxRTw5+EBG5s9D4iEpat3sen
-udYAnRn+k2NI+lNteoHed7ikYIohN7P4
-=pK2+
+iEYEARECAAYFAlv7KXcACgkQMOfwapXb+vK6RACgmLicuJiRUJEhrPkeYFDTX9Xl
+KvgAn3/bVsytzLaQKjZ0CMUlekDSLmbP
+=Xat+
 -----END PGP SIGNATURE-----
 
---TRYliJ5NKNqkz5bu--
+--LwW0XdcUbUexiWVK--
