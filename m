@@ -1,105 +1,59 @@
-From: Elvira Khabirova <lineprinter-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Subject: [RFC PATCH RESEND v3 3/3] ptrace: add PTRACE_EVENT_SECCOMP support
- to PTRACE_GET_SYSCALL_INFO
-Date: Sun, 25 Nov 2018 02:23:40 +0100
-Message-ID: <20181125022340.5703400f@akathisia>
+From: Joey Pabalinas <joeypabalinas@gmail.com>
+Subject: Re: [PATCH RESEND v3 1/3] ptrace: pass type of a syscall-stop in
+ ptrace_message
+Date: Sat, 24 Nov 2018 15:54:02 -1000
+Message-ID: <20181125015402.glcaw3kghcu4pr22@gmail.com>
 References: <20181125022150.46258a20@akathisia>
-Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+ <20181125022227.55e8caf7@akathisia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-In-Reply-To: <20181125022150.46258a20@akathisia>
-List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
- <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
-List-Post: <mailto:strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-List-Help: <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
- <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
-Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
-Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-To: oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha512;
+        protocol="application/pgp-signature"; boundary="vdbkloxosvqpo44e"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181125022227.55e8caf7@akathisia>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Elvira Khabirova <lineprinter@altlinux.org>
+Cc: oleg@redhat.com, rostedt@goodmis.org, mingo@redhat.com, linux-api@vger.kernel.org, esyr@redhat.com, linux-kernel@vger.kernel.org, luto@kernel.org, ldv@altlinux.org, strace-devel@lists.strace.io, Joey Pabalinas <joeypabalinas@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Extend PTRACE_GET_SYSCALL_INFO to support PTRACE_EVENT_SECCOMP stops.
-The information returned is the same as for syscall-enter-stops.
 
-Signed-off-by: Elvira Khabirova <lineprinter-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Signed-off-by: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
----
- include/linux/ptrace.h    | 1 +
- include/linux/sched.h     | 1 +
- include/linux/tracehook.h | 1 +
- kernel/ptrace.c           | 7 +++++--
- 4 files changed, 8 insertions(+), 2 deletions(-)
+--vdbkloxosvqpo44e
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-diff --git a/include/linux/ptrace.h b/include/linux/ptrace.h
-index 6c2ffed907f5..a993d0fde865 100644
---- a/include/linux/ptrace.h
-+++ b/include/linux/ptrace.h
-@@ -166,6 +166,7 @@ static inline void ptrace_event(int event, unsigned long message)
- {
- 	if (unlikely(ptrace_event_enabled(current, event))) {
- 		current->ptrace_message = message;
-+		current->ptrace_event = event;
- 		ptrace_notify((event << 8) | SIGTRAP);
- 	} else if (event == PTRACE_EVENT_EXEC) {
- 		/* legacy EXEC report via SIGTRAP */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index a51c13c2b1a0..86215fb654d6 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -964,6 +964,7 @@ struct task_struct {
- 
- 	/* Ptrace state: */
- 	unsigned long			ptrace_message;
-+	int				ptrace_event;
- 	kernel_siginfo_t		*last_siginfo;
- 
- 	struct task_io_accounting	ioac;
-diff --git a/include/linux/tracehook.h b/include/linux/tracehook.h
-index 633a83fe7051..5d2e5aa07a5c 100644
---- a/include/linux/tracehook.h
-+++ b/include/linux/tracehook.h
-@@ -66,6 +66,7 @@ static inline int ptrace_report_syscall(struct pt_regs *regs,
- 		return 0;
- 
- 	current->ptrace_message = message;
-+	current->ptrace_event = 0;
- 	ptrace_notify(SIGTRAP | ((ptrace & PT_TRACESYSGOOD) ? 0x80 : 0));
- 
- 	/*
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 92c47cd5ad84..74a37e74c7f1 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -904,7 +904,9 @@ static int ptrace_get_syscall(struct task_struct *child,
- 	unsigned long actual_size;
- 	unsigned long write_size;
- 
--	if (child->ptrace_message == PTRACE_EVENTMSG_SYSCALL_ENTRY) {
-+	if ((child->ptrace_event == 0 &&
-+	     child->ptrace_message == PTRACE_EVENTMSG_SYSCALL_ENTRY) ||
-+	    child->ptrace_event == PTRACE_EVENT_SECCOMP) {
- 		int i;
- 
- 		info.op = PTRACE_SYSCALL_INFO_ENTRY;
-@@ -917,7 +919,8 @@ static int ptrace_get_syscall(struct task_struct *child,
- 		for (i = 0; i < ARRAY_SIZE(args); i++)
- 			info.entry.args[i] = args[i];
- 		actual_size = offsetofend(struct ptrace_syscall_info, entry);
--	} else if (child->ptrace_message == PTRACE_EVENTMSG_SYSCALL_EXIT) {
-+	} else if (child->ptrace_event == 0 &&
-+		   child->ptrace_message == PTRACE_EVENTMSG_SYSCALL_EXIT) {
- 		info.op = PTRACE_SYSCALL_INFO_EXIT;
- 		info.arch = syscall_get_arch(child);
- 		info.exit.rval = syscall_get_error(child, regs);
--- 
-2.19.1
+On Sun, Nov 25, 2018 at 02:22:27AM +0100, Elvira Khabirova wrote:
+> Define two constants, PTRACE_EVENTMSG_SYSCALL_ENTRY and
+> PTRACE_EVENTMSG_SYSCALL_EXIT, and place them in ptrace_message
+> for the duration of syscall-stops.
+> This way ptracers can distinguish syscall-enter-stops
+> from syscall-exit-stops using PTRACE_GETEVENTMSG request.
 
--- 
-Strace-devel mailing list
-Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
-https://lists.strace.io/mailman/listinfo/strace-devel
+Is there an advantage to using two constants instead of a single
+sys_exit bit (set/unset for syscall-exit-stop/syscall-enter-stop)?
+
+--=20
+Cheers,
+Joey Pabalinas
+
+--vdbkloxosvqpo44e
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEENpTlWU2hUK/KMvHp2rGdfm9DtVIFAlv6ALkACgkQ2rGdfm9D
+tVLi0Q//UPIcLhCeeQC2SfdW8U7Ul0C9+7Ox/YhYslXMK95uwdUZAjdfomhPHKr2
+Q6mraLrDgIaHygDKqX3FWkuFlOPWw+LHIV6xnpPotbQAT16JHWXnu/EqcRF5GQ43
+Hz/0GUcgBAGiPeiINvgl56E74hUyikVKPf3ppKV5PhQvoD0lDR0Ko2HYepJaG4KH
+aglOle74Cf0hBy9zHGRFs36fWrFSepaBGYIlYAm598IsaUEqA/yFbZQiSgGfVjr/
+XhZpj1G22Vk8xXjPHWFWk7wCblGoIleRXVT0EShu2ZUt79BUT0xUxrYyqpmT5SVZ
+PiCgiYKmeEmpS18AVDVCbQXzYkJ3lqzbrSqaCcY0h0OrVZ8YShXBO7L2lrlLQAkk
+0P3o08duYbRfdTJzmcLA7gpJpI8yFuQKb55sgBLZT1OBisWkDoQSqtpzzoKlPw7f
+mD0WyexCFkrUxAEk2W7ZZ6FzrNKth7VHWDy/X3hQs56bTNCOEJITFY01GMODfI4E
+V6jDwElAauUUNMeuYIG4LKmbD9LMBEEutxnQ2BhzYXPGI6q/LIA3KKuI5/Ktqg0A
+DiEVTYMdsHFpjmZNXRGlP5lPjN4zxUo5F+MoiOefpUT4oPxOcMEbWiMzeChjK9xT
+iD8fU8oxLYS9wiaBvUM0Bx0Ia5d0K8f++zHpuhLdF6WIiS6A4Dk=
+=KbCj
+-----END PGP SIGNATURE-----
+
+--vdbkloxosvqpo44e--
