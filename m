@@ -1,88 +1,80 @@
-From: Joey Pabalinas <joeypabalinas-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: Re: Re: [PATCH RESEND v3 1/3] ptrace: pass type of a syscall-stop in
- ptrace_message
-Date: Sat, 24 Nov 2018 20:17:26 -1000
-Message-ID: <20181125061726.jtalb5t4tgigzzue@gmail.com>
-References: <20181125022150.46258a20@akathisia>
- <20181125022227.55e8caf7@akathisia>
- <20181125015402.glcaw3kghcu4pr22@gmail.com>
- <20181125021059.GA1190@altlinux.org>
-Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH] Add /proc/pid_generation
+Date: Sun, 25 Nov 2018 23:55:33 +0100
+Message-ID: <20181125225533.GB30242@amd>
+References: <20181121201452.77173-1-dancol@google.com>
+ <20181121203150.GK3065@bombadil.infradead.org>
+ <CAKOZueuCYOsaHZzoz5nNPr8Jb-fEiHTR4MektaJx8vuUXcrKCQ@mail.gmail.com>
+ <20181122020633.GN3065@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1708076510611580316=="
-Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-In-Reply-To: <20181125021059.GA1190-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
- <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
-List-Post: <mailto:strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-List-Help: <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
- <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
-Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
-Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Cc: Joey Pabalinas <joeypabalinas-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Eugene Syromyatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="TRYliJ5NKNqkz5bu"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181122020633.GN3065@bombadil.infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Daniel Colascione <dancol@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tim Murray <timmurray@google.com>, Primiano Tucci <primiano@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Andrew Morton <akpm@linux-foundation.org>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, "Dennis Zhou (Facebook)" <dennisszhou@gmail.com>, Prashant Dhamdhere <pdhamdhe@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, rostedt@goodmis.org, tglx@linutronix.de, mingo@kernel.org, linux@dominikbrodowski.net, pasha.tatashin@oracle.com, jpoimboe@redhat.com, ard.biesheuvel@linaro.org, Michal Hocko <mhocko@suse.com>, David Howells <dhowells>
 List-Id: linux-api@vger.kernel.org
 
 
---===============1708076510611580316==
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="4ktpenoxjmibnb6h"
-Content-Disposition: inline
-
-
---4ktpenoxjmibnb6h
-Content-Type: text/plain; charset=utf-8
+--TRYliJ5NKNqkz5bu
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Sun, Nov 25, 2018 at 05:10:59AM +0300, Dmitry V. Levin wrote:
-> Given that without this patch the value returned by PTRACE_GETEVENTMSG
-> during syscall stop is undefined, we need two different ptrace_message
-> values that cannot be set by other ptrace events to enable reliable
-> identification of syscall-enter-stop and syscall-exit-stop in userspace:
-> if we make PTRACE_GETEVENTMSG return 0 or any other value routinely set by
-> other ptrace events, it would be hard for userspace to find out whether
-> the kernel implements new semantics or not.
+On Wed 2018-11-21 18:06:33, Matthew Wilcox wrote:
+> On Wed, Nov 21, 2018 at 12:38:20PM -0800, Daniel Colascione wrote:
+> > On Wed, Nov 21, 2018 at 12:31 PM Matthew Wilcox <willy@infradead.org> w=
+rote:
+> > >
+> > > On Wed, Nov 21, 2018 at 12:14:44PM -0800, Daniel Colascione wrote:
+> > > > This change adds a per-pid-namespace 64-bit generation number,
+> > > > incremented on PID rollover, and exposes it via a new proc file
+> > > > /proc/pid_generation. By examining this file before and after /proc
+> > > > enumeration, user code can detect the potential reuse of a PID and
+> > > > restart the task enumeration process, repeating until it gets a
+> > > > coherent snapshot.
+> > > >
+> > > > PID rollover ought to be rare, so in practice, scan repetitions will
+> > > > be rare.
+> > >
+> > > Then why does it need to be 64-bit?
+> >=20
+> > [Resending because of accidental HTML. I really need to switch to a
+> > better email client.]
+> >=20
+> > Because 64 bits is enough for anyone. :-) A u64 is big enough that
+> > we'll never observe an overflow on a running system, and PID
+> > namespaces are rare enough that we won't miss the four extra bytes we
+> > use by upgrading from a u32.  And after reading about some security
+> > problems caused by too-clever handling of 32-bit rollover, I'd rather
+> > the code be obviously correct than save a trivial amount of space.
+>=20
+> I don't think you understand how big 4 billion is.  If it happens once a
+> second, it will take 136 years for a 2^32 count to roll over.  How often
+> does a PID roll over happen?
 
-Ah, I see, I agree that definitely makes sense.
+Well, the cost of 64-bit vs. 32-bit is really small here... I'd go
+with 64bits. If you have 1000 CPUs, rollovers may be faster..
 
+Best regards,
+									Pavel
 --=20
-Cheers,
-Joey Pabalinas
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
 
---4ktpenoxjmibnb6h
+--TRYliJ5NKNqkz5bu
 Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
 
-iQIzBAEBCgAdFiEENpTlWU2hUK/KMvHp2rGdfm9DtVIFAlv6PnUACgkQ2rGdfm9D
-tVLTKBAAwZqcHYLXU10sq1ZI/dIsYmjVmsCSC7bhuxjAi3cVnkw89BqlbTBfl8s5
-bJcVhmPayYWCWE2paglX31lp1DKKtvWiFkbLE2jF601rAYekH69ty5Qvx8DMcrQV
-Ar2rnb8KECJE7pf9Fdexpx+FyhaM6wkj04YkysMOSEBbBA5ue4pSA5yIkO142jqw
-WRlqYBwYqGkNXWW74Ea8ZNEFPZxMrvBtI2olwqEs99erNGpTcafuchTAhdrKuDKZ
-62zQEnD229IDXeLZV5+rbbyT7UiWb2xuw/xcOreCRhd8EArxgvFc5VcuywHTI6DM
-nPhWsvw7+XUXHpq406m5mLMq1TJMUwrCw+wQjfmaLvehOm+p16z9F3nsjAvUU/ez
-bGbTpgv/315EVtm8nqWl1s6pbBgK9cxnIl1DFmKptWbIl96FlSTCo1cOS4fRUNUC
-1pgAUh2sVTxuTdARAmTkfKOmj1WoVnVJ+qke+0j/Knye9poolvZngb0PgaKdEwps
-i3Wq3OSv7OUGjwIPlYy3oAblfZpC4mhDe9uV+ytzGWfqJoY4hcyXAVOL6rXHx9ih
-XxnxIMd/vpKyc882gzKZ3wc6JOMl2QdJ2nPwb9OeK6qls3csaCHWa9ty4+tnUitk
-nbN53QvbmBiGDHJjTa6Tj9Lu40Buguhoipqu38ynV18XuUrKKQQ=
-=yO6t
+iEYEARECAAYFAlv7KGUACgkQMOfwapXb+vKUpACguxRTw5+EBG5s9D4iEpat3sen
+udYAnRn+k2NI+lNteoHed7ikYIohN7P4
+=pK2+
 -----END PGP SIGNATURE-----
 
---4ktpenoxjmibnb6h--
-
---===============1708076510611580316==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
--- 
-Strace-devel mailing list
-Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
-https://lists.strace.io/mailman/listinfo/strace-devel
-
---===============1708076510611580316==--
+--TRYliJ5NKNqkz5bu--
