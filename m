@@ -1,53 +1,58 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: extending wait4(2) or waitid(2) linux syscall
-Date: Mon, 26 Nov 2018 16:18:40 +0100
-Message-ID: <87d0qrooj3.fsf@oldenburg.str.redhat.com>
-References: <20170420152051.568f2050.albert.aribaud@3adev.fr>
-	<20181115140441.GA2171@altlinux.org>
-	<CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com>
-	<20181115153008.GC2171@altlinux.org>
-	<CAK8P3a38zcMikOiaHXrKbc3URL6-6kETk=1F-Bx7LywPyRh=yg@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Mon, 26 Nov 2018 10:51:09 -0500 (EST)
+Message-ID: <688718071.12798.1543247469553.JavaMail.zimbra@efficios.com>
+References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com> <20181123142843.GJ23599@brightrain.aerifal.cx> <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com> <20181123173019.GK23599@brightrain.aerifal.cx> <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com> <20181123183558.GM23599@brightrain.aerifal.cx> <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com> <87bm6cqm31.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-97541-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <CAK8P3a38zcMikOiaHXrKbc3URL6-6kETk=1F-Bx7LywPyRh=yg@mail.gmail.com>
-	(Arnd Bergmann's message of "Fri, 16 Nov 2018 17:50:14 -0800")
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: "Dmitry V. Levin" <ldv@altlinux.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, "H. Peter Anvin" <hpa@zytor.com>, GNU C Library <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87bm6cqm31.fsf@oldenburg.str.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Rich Felker <dalias@libc.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-* Arnd Bergmann:
+----- On Nov 26, 2018, at 3:28 AM, Florian Weimer fweimer@redhat.com wrote:
 
-> On Thu, Nov 15, 2018 at 7:30 AM Dmitry V. Levin <ldv@altlinux.org> wrote:
->> On Thu, Nov 15, 2018 at 06:39:03AM -0800, Arnd Bergmann wrote:
->> > On Thu, Nov 15, 2018 at 6:05 AM Dmitry V. Levin wrote:
->> > > On Thu, Apr 20, 2017 at 03:20:51PM +0200, Albert ARIBAUD wrote:
->>
->> 1. strace needs a race-free invocation of wait4(2) or waitid(2)
->> with a different signal mask, this cannot be achieved without
->> an extended version of syscall, similar to pselect6(2) extension
->> over select(2) and ppoll(2) extension over poll(2).
->>
->> Signal mask specification in linux requires two parameters:
->> "const sigset_t *sigmask" and "size_t sigsetsize".
->> Creating pwait6(2) as an extension of wait4(2) with two arguments
->> is straightforward.
->> Creating pwaitid(2) as an extension of waitid(2) that already has 5
->> arguments would require an indirection similar to pselect6(2).
->
-> Getting back to this point: you could also do the same thing with
-> the CLONE_FD approach from Josh Triplett[1] or Casey Dahlin's
-> older waitfd() syscall, correct?
+> * Mathieu Desnoyers:
+> 
+>> Using a "weak" symbol in early adopter libraries is important, so they
+>> can be loaded together into the same process without causing loader
+>> errors due to many definitions of the same strong symbol.
+> 
+> This is not how ELF dynamic linking works.  If the symbol name is the
+> same, one definition interposes the others.
+> 
+> You need to ensure that the symbol has the same size everywhere, though.
+> There are some tricky interactions with symbol versions, too.  (The
+> interposing libraries must not use symbol versioning.)
 
-A descriptor-based solution would not be useful to glibc because
-applications assume that glibc does not (persistently) open any file
-descriptors behind t heir back.
+I was under the impression that loading the same strong symbol into an
+application multiple times would cause some kind of warning if non-weak. I did
+some testing to figure out which case I remembered would cause this.
+
+When compiling with "-fno-common", dynamic and static linking work fine, but
+trying to add multiple instances of a given symbol into a single object fails
+with:
+
+/tmp/ccSakXZV.o:(.bss+0x0): multiple definition of `a'
+/tmp/ccQBJBOo.o:(.bss+0x0): first defined here
+
+Even if the symbol has the same size.
+
+So considering that we don't care about compiling into a single object here,
+and only care about static and dynamic linking of libraries, indeed the "weak"
+symbol is not useful.
+
+So let's make __rseq_abi and __rseq_refcount strong symbols then ?
 
 Thanks,
-Florian
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
