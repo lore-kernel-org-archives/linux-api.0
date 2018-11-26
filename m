@@ -1,9 +1,10 @@
 From: Rich Felker <dalias@libc.org>
 Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
  init and thread creation
-Date: Mon, 26 Nov 2018 12:07:58 -0500
-Message-ID: <20181126170758.GP23599@brightrain.aerifal.cx>
+Date: Mon, 26 Nov 2018 12:10:45 -0500
+Message-ID: <20181126171045.GQ23599@brightrain.aerifal.cx>
 References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
+ <20181123142843.GJ23599@brightrain.aerifal.cx>
  <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com>
  <20181123173019.GK23599@brightrain.aerifal.cx>
  <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com>
@@ -11,10 +12,10 @@ References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
  <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com>
  <87bm6cqm31.fsf@oldenburg.str.redhat.com>
  <688718071.12798.1543247469553.JavaMail.zimbra@efficios.com>
- <1284855405.12857.1543249851299.JavaMail.zimbra@efficios.com>
+ <874lc3omh5.fsf@oldenburg.str.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-97552-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-97553-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -22,62 +23,28 @@ List-Post: <mailto:libc-alpha@sourceware.org>
 List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
 Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <1284855405.12857.1543249851299.JavaMail.zimbra@efficios.com>
+In-Reply-To: <874lc3omh5.fsf@oldenburg.str.redhat.com>
 Sender: Rich Felker <dalias@aerifal.cx>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 26, 2018 at 11:30:51AM -0500, Mathieu Desnoyers wrote:
-> ----- On Nov 26, 2018, at 10:51 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Mon, Nov 26, 2018 at 05:03:02PM +0100, Florian Weimer wrote:
+> * Mathieu Desnoyers:
 > 
-> > ----- On Nov 26, 2018, at 3:28 AM, Florian Weimer fweimer@redhat.com wrote:
-> > 
-> >> * Mathieu Desnoyers:
-> >> 
-> >>> Using a "weak" symbol in early adopter libraries is important, so they
-> >>> can be loaded together into the same process without causing loader
-> >>> errors due to many definitions of the same strong symbol.
-> >> 
-> >> This is not how ELF dynamic linking works.  If the symbol name is the
-> >> same, one definition interposes the others.
-> >> 
-> >> You need to ensure that the symbol has the same size everywhere, though.
-> >> There are some tricky interactions with symbol versions, too.  (The
-> >> interposing libraries must not use symbol versioning.)
-> > 
-> > I was under the impression that loading the same strong symbol into an
-> > application multiple times would cause some kind of warning if non-weak. I did
-> > some testing to figure out which case I remembered would cause this.
-> > 
-> > When compiling with "-fno-common", dynamic and static linking work fine, but
-> > trying to add multiple instances of a given symbol into a single object fails
-> > with:
-> > 
-> > /tmp/ccSakXZV.o:(.bss+0x0): multiple definition of `a'
-> > /tmp/ccQBJBOo.o:(.bss+0x0): first defined here
-> > 
-> > Even if the symbol has the same size.
-> > 
-> > So considering that we don't care about compiling into a single object here,
-> > and only care about static and dynamic linking of libraries, indeed the "weak"
-> > symbol is not useful.
-> > 
 > > So let's make __rseq_abi and __rseq_refcount strong symbols then ?
 > 
-> Actually, looking into ld(1) --warn-common, it looks like "weak" would be cleaner
-> after all, especially for __rseq_abi which we needs to be initialized to a specific
-> value, which is therefore not a common symbol.
-> 
-> "      --warn-common
->            Warn when a common symbol is combined with another common symbol or with a symbol definition.  Unix
->            linkers allow this somewhat sloppy practice, but linkers on some other operating systems do not.
->            This option allows you to find potential problems from combining global symbols.  Unfortunately,
->            some C libraries use this practice, so you may get some warnings about symbols in the libraries as
->            well as in your programs."
-> 
-> Thoughts ?
+> Yes, please.  (But I'm still not sure we need the reference counter.)
 
-AFAIK this has nothing to do with dynamic linking.
+The reference counter is needed for out-of-libc implementations
+interacting and using the dtor hack. An in-libc implementation doesn't
+need to inspect/honor the reference counter, but it does seem to need
+to indicate that it has a reference, if you want it to be compatible
+with out-of-libc implementations, so that the out-of-libc one will not
+unregister the rseq before libc is done with it.
+
+Alternatively another protocol could be chosen for this purpose, but
+if has to be something stable and agreed upon, since things would
+break badly if libc and the library providing rseq disagreed.
 
 Rich
