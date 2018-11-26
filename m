@@ -1,39 +1,126 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl init and thread creation
-Date: Mon, 26 Nov 2018 09:28:34 +0100
-Message-ID: <87bm6cqm31.fsf@oldenburg.str.redhat.com>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Mon, 26 Nov 2018 11:56:36 +0000
+Message-ID: <00967681-1fcf-6b22-cbd2-4a09840b8ab9@arm.com>
 References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
-        <20181122171010.GH23599@brightrain.aerifal.cx>
-        <871s7cvt1l.fsf@oldenburg.str.redhat.com>
-        <20181123142843.GJ23599@brightrain.aerifal.cx>
-        <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com>
-        <20181123173019.GK23599@brightrain.aerifal.cx>
-        <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com>
-        <20181123183558.GM23599@brightrain.aerifal.cx>
-        <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com>
+ <20181122171010.GH23599@brightrain.aerifal.cx>
+ <871s7cvt1l.fsf@oldenburg.str.redhat.com>
+ <20181123142843.GJ23599@brightrain.aerifal.cx>
+ <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com>
+ <20181123173019.GK23599@brightrain.aerifal.cx>
+ <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com>
+ <20181123183558.GM23599@brightrain.aerifal.cx>
+ <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <libc-alpha-return-97532-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com>
-        (Mathieu Desnoyers's message of "Fri, 23 Nov 2018 16:09:07 -0500
-        (EST)")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Rich Felker <dalias@libc.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+Content-ID: <8401165586C1614F817C35E872CA2917@eurprd08.prod.outlook.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Rich Felker <dalias@libc.org>
+Cc: nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <Will.Deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-* Mathieu Desnoyers:
-
-> Using a "weak" symbol in early adopter libraries is important, so they
-> can be loaded together into the same process without causing loader
-> errors due to many definitions of the same strong symbol.
-
-This is not how ELF dynamic linking works.  If the symbol name is the
-same, one definition interposes the others.
-
-You need to ensure that the symbol has the same size everywhere, though.
-There are some tricky interactions with symbol versions, too.  (The
-interposing libraries must not use symbol versioning.)
-
-Thanks,
-Florian
+T24gMjMvMTEvMTggMjE6MDksIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPiAtLS0tLSBPbiBO
+b3YgMjMsIDIwMTgsIGF0IDE6MzUgUE0sIFJpY2ggRmVsa2VyIGRhbGlhc0BsaWJjLm9yZyB3cm90
+ZToNCj4gDQo+PiBPbiBGcmksIE5vdiAyMywgMjAxOCBhdCAxMjo1MjoyMVBNIC0wNTAwLCBNYXRo
+aWV1IERlc25veWVycyB3cm90ZToNCj4+PiAtLS0tLSBPbiBOb3YgMjMsIDIwMTgsIGF0IDEyOjMw
+IFBNLCBSaWNoIEZlbGtlciBkYWxpYXNAbGliYy5vcmcgd3JvdGU6DQo+Pj4NCj4+Pj4gT24gRnJp
+LCBOb3YgMjMsIDIwMTggYXQgMTI6MDU6MjBQTSAtMDUwMCwgTWF0aGlldSBEZXNub3llcnMgd3Jv
+dGU6DQo+Pj4+PiAtLS0tLSBPbiBOb3YgMjMsIDIwMTgsIGF0IDk6MjggQU0sIFJpY2ggRmVsa2Vy
+IGRhbGlhc0BsaWJjLm9yZyB3cm90ZToNCj4+Pj4+IFsuLi5dDQo+Pj4+Pj4NCj4+Pj4+PiBBYnNv
+bHV0ZWx5LiBBcyBsb25nIGFzIGl0J3MgaW4gbGliYywgaW1wbGljaXQgZGVzdHJ1Y3Rpb24gd2ls
+bCBoYXBwZW4uDQo+Pj4+Pj4gQWN0dWFsbHkgSSB0aGluayB0aGUgZ2xpYmMgY29kZSBzaG91bmQg
+dW5jb25kaXRpb25hbGx5IHVucmVnaXN0ZXIgdGhlDQo+Pj4+Pj4gcnNlcSBhZGRyZXNzIGF0IGV4
+aXQgKGFmdGVyIGJsb2NraW5nIHNpZ25hbHMsIHNvIG5vIGFwcGxpY2F0aW9uIGNvZGUNCj4+Pj4+
+PiBjYW4gcnVuKSBpbiBjYXNlIGEgdGhpcmQtcGFydHkgcnNlcSBsaWJyYXJ5IHdhcyBsaW5rZWQg
+YW5kIGZhaWxlZCB0bw0KPj4+Pj4+IGRvIHNvIGJlZm9yZSB0aHJlYWQgZXhpdCAoZS5nLiBkdWUg
+dG8gbWlzbWF0Y2hlZCByZWYgY291bnRzKSByYXRoZXINCj4+Pj4+PiB0aGFuIHJlc3BlY3Rpbmcg
+dGhlIHJlZmVyZW5jZSBjb3VudCwgc2luY2UgaXQga25vd3MgaXQncyB0aGUgbGFzdA0KPj4+Pj4+
+IHVzZXIuIFRoaXMgd291bGQgbWFrZSBwb3RlbnRpYWxseS1idWdneSBjb2RlIHNhZmVyLg0KPj4+
+Pj4NCj4+Pj4+IE9LLCBsZXQgbWUgZ28gYWhlYWQgd2l0aCBhIGZldyBpZGVhcy9xdWVzdGlvbnMg
+YWxvbmcgdGhhdCBwYXRoLg0KPj4+PiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICBeXl5eXl5eXl5eXl5eXl4NCj4+Pj4+DQo+Pj4+PiBMZXQncyBzYXkgb3Vy
+IHN0YXRlZCBnb2FsIGlzIHRvIGxldCB0aGUgImV4aXQiIHN5c3RlbSBjYWxsIGZyb20gdGhlDQo+
+Pj4+PiBnbGliYyB0aHJlYWQgZXhpdCBwYXRoIHBlcmZvcm0gcnNlcSB1bnJlZ2lzdHJhdGlvbiAo
+d2l0aG91dCBleHBsaWNpdA0KPj4+Pj4gdW5yZWdpc3RyYXRpb24gYmVmb3JlaGFuZCkuIExldCdz
+IGxvb2sgYXQgd2hhdCB3ZSBuZWVkLg0KPj4+Pg0KPj4+PiBUaGlzIGlzIG5vdCAiYWxvbmcgdGhh
+dCBwYXRoIi4gVGhlIGFib3ZlLXF1b3RlZCB0ZXh0IGlzIG5vdCBhYm91dA0KPj4+PiBhc3N1bWlu
+ZyBpdCdzIHNhZmUgdG8gbWFrZSBTWVNfZXhpdCB3aXRob3V0IHVucmVnaXN0ZXJpbmcgdGhlIHJz
+ZXENCj4+Pj4gb2JqZWN0LCBidXQgcmF0aGVyIGFib3V0IGdsaWJjIGJlaW5nIGFibGUgdG8gcGVy
+Zm9ybSB0aGUNCj4+Pj4gcnNlcS11bnJlZ2lzdGVyIHN5c2NhbGwgd2l0aG91dCBjYXJpbmcgYWJv
+dXQgcmVmZXJlbmNlIGNvdW50cywgc2luY2UNCj4+Pj4gaXQga25vd3Mgbm8gb3RoZXIgY29kZSB0
+aGF0IG1pZ2h0IGRlcGVuZCBvbiByc2VxIGNhbiBydW4gYWZ0ZXIgaXQuDQo+Pj4NCj4+PiBXaGVu
+IHNheWluZyAiYWxvbmcgdGhhdCBwYXRoIiwgd2hhdCBJIG1lYW4gaXM6IGlmIHdlIGdvIGluIHRo
+YXQgZGlyZWN0aW9uLA0KPj4+IHRoZW4gd2Ugc2hvdWxkIGxvb2sgaW50byBnb2luZyBhbGwgdGhl
+IHdheSB0aGVyZSwgYW5kIHJlbHkgb24gdGhyZWFkDQo+Pj4gZXhpdCB0byBpbXBsaWNpdGx5IHVu
+cmVnaXN0ZXIgdGhlIFRMUyBhcmVhLg0KPj4+DQo+Pj4gRG8geW91IHNlZSBhbnkgcmVhc29uIGZv
+ciBkb2luZyBhbiBleHBsaWNpdCB1bnJlZ2lzdHJhdGlvbiBhdCB0aHJlYWQNCj4+PiBleGl0IHJh
+dGhlciB0aGFuIHNpbXBseSByZWx5IG9uIHRoZSBleGl0IHN5c3RlbSBjYWxsID8NCj4+DQo+PiBX
+aGV0aGVyIHRoaXMgaXMgbmVlZGVkIGlzIGFuIGltcGxlbWVudGF0aW9uIGRldGFpbCBvZiBnbGli
+YyB0aGF0DQo+PiBzaG91bGQgYmUgcGVybWl0dGVkIHRvIHZhcnkgYmV0d2VlbiB2ZXJzaW9ucy4g
+VW5sZXNzIGdsaWJjIHdhbnRzIHRvDQo+PiBwcm9taXNlIHRoYXQgaXQgd291bGQgYmVjb21lIGEg
+cHVibGljIGd1YXJhbnRlZSwgaXQncyBub3QgcGFydCBvZiB0aGUNCj4+IGRpc2N1c3Npb24gYXJv
+dW5kIHRoZSBBUEkvQUJJLiBPbmx5IHBhcnQgb2YgdGhlIGRpc2N1c3Npb24gYXJvdW5kDQo+PiBp
+bXBsZW1lbnRhdGlvbiBpbnRlcm5hbHMgb2YgdGhlIGdsaWJjIHJzZXEgc3R1ZmYuDQo+Pg0KPj4g
+T2YgY291cnNlIEkgbWF5IGJlIGJpYXNlZCB0aGlua2luZyBhcHBsaWNhdGlvbiBjb2RlIHNob3Vs
+ZCBub3QgYXNzdW1lDQo+PiB0aGlzIHNpbmNlIGl0J3Mgbm90IHRydWUgb24gbXVzbCAtLSBmb3Ig
+ZGV0YWNoZWQgdGhyZWFkcywgdGhlIHRocmVhZA0KPj4gZnJlZXMgaXRzIG93biBzdGFjayBiZWZv
+cmUgZXhpdGluZyAoYW5kIHRodXMgaGFzIHRvIHVucmVnaXN0ZXINCj4+IHNldF90aWRfYWRkcmVz
+cyBhbmQgc2V0X3JvYnVzdGxpc3QgYmVmb3JlIGV4aXRpbmcpLg0KPiANCj4gT0ssIHNvIG9uIGds
+aWJjLCB0aGUgaW1wbGVtZW50YXRpb24gY291bGQgcmVseSBvbiBleGl0IHNpZGUtZWZmZWN0IHRv
+DQo+IGltcGxpY2l0bHkgdW5yZWdpc3RlciByc2VxLiBPbiBtdXNsLCBiYXNlZCBvbiB0aGUgc2Nl
+bmFyaW8geW91IGRlc2NyaWJlLA0KPiB0aGUgbGlicmFyeSBzaG91bGQgdW5yZWdpc3RlciByc2Vx
+IGV4cGxpY2l0bHkgYmVmb3JlIHN0YWNrIHJlY2xhaW0uDQo+IA0KPiBBbSBJIHVuZGVyc3RhbmRp
+bmcgdGhlIHNpdHVhdGlvbiBjb3JyZWN0bHkgPw0KDQppIHRoaW5rIHRoZSBwb2ludCBpcyB0aGF0
+IHlvdSBkb24ndCBuZWVkIHRvIGtub3cgdGhlc2UNCmRldGFpbHMgaW4gb3JkZXIgdG8gY29tZSB1
+cCB3aXRoIGEgZGVzaWduIHRoYXQgYWxsb3dzDQpib3RoIGltcGxlbWVudGF0aW9ucy4gKHRoZW4g
+dGhlIGxpYmMgY2FuIGNoYW5nZSBsYXRlcikNCg0Kc28NCi0gaXMgdGhlcmUgYSBuZWVkIGZvciBw
+dWJsaWMgdW5yZWdpc3RlciBhcGkgKGRvZXMgdGhlDQp1c2VyIGRvIGl0IG9yIHRoZSByc2VxIGxp
+YnJhcnkgaW1wbGljaXRseSB1bnJlZ2lzdGVycyk/DQotIGlzIHRoZXJlIGEgbmVlZCBmb3IgcmVm
+IGNvdW50aW5nIChvciB0aGUgcnNlcSBsaWINCnVuY29uZGl0aW9uYWxseSB1bnJlZ2lzdGVycyBh
+dCB0aGUgZW5kIG9mIGEgdGhyZWFkLA0KdGhlIGxpYmMgY2FuIGNlcnRhaW5seSBkbyB0aGlzKT8N
+Cg0KPj4+IE9LLCBBRkFJVSBzbyB5b3UgYXJndWUgZm9yIGxlYXZpbmcgdGhlIF9fcnNlcV9hYmkg
+c3ltYm9sICJ3ZWFrIi4gSnVzdCBtYWtpbmcNCj4+PiBzdXJlIEkgY29ycmVjdGx5IHVuZGVyc3Rh
+bmQgeW91ciBwb3NpdGlvbi4NCj4+DQo+PiBJIGRvbid0IHRoaW5rIGl0IG1hdHRlcnMsIGFuZCBJ
+IGRvbid0IHRoaW5rIG1ha2luZyBpdCB3ZWFrIGlzDQo+PiBtZWFuaW5nZnVsIG9yIHVzZWZ1bCAo
+d2VhayBpbiBhIHNoYXJlZCBsaWJyYXJ5IGlzIGxhcmdlbHkgbWVhbmluZ2xlc3MpDQo+PiBidXQg
+bWF5YmUgSSdtIG1pc3Npbmcgc29tZXRoaW5nIGhlcmUuDQo+IA0KPiBVc2luZyBhICJ3ZWFrIiBz
+eW1ib2wgaW4gZWFybHkgYWRvcHRlciBsaWJyYXJpZXMgaXMgaW1wb3J0YW50LCBzbyB0aGV5DQo+
+IGNhbiBiZSBsb2FkZWQgdG9nZXRoZXIgaW50byB0aGUgc2FtZSBwcm9jZXNzIHdpdGhvdXQgY2F1
+c2luZyBsb2FkZXINCj4gZXJyb3JzIGR1ZSB0byBtYW55IGRlZmluaXRpb25zIG9mIHRoZSBzYW1l
+IHN0cm9uZyBzeW1ib2wuDQo+IA0KPiBVc2luZyAid2VhayIgaW4gYSBDIGxpYnJhcnkgaXMgc29t
+ZXRoaW5nIEknbSBub3Qgc3VyZSBpcyBhIGNoYXJhY3RlcmlzdGljDQo+IHdlIHdhbnQgb3IgbmVl
+ZCwgYmVjYXVzZSBJIGRvdWJ0IHdlIHdvdWxkIGV2ZXIgd2FudCB0byBsb2FkIHR3byBsaWJjIGF0
+IHRoZQ0KPiBzYW1lIHRpbWUgaW4gYSBnaXZlbiBwcm9jZXNzLg0KPiANCj4gVGhlIG9ubHkgcmVh
+c29uIEkgc2VlIGZvciB1c2luZyAid2VhayIgZm9yIHRoZSBfX3JzZXFfYWJpIHN5bWJvbCBpbiB0
+aGUNCj4gbGliYyBpcyBpZiB3ZSB3YW50IHRvIGFsbG93IGVhcmx5IGFkb3B0ZXIgYXBwbGljYXRp
+b25zIHRvIGRlZmluZQ0KPiBfX3JzZXFfYWJpIGFzIGEgc3Ryb25nIHN5bWJvbCwgd2hpY2ggd291
+bGQgbWFrZSBzb21lIHNlbnNlLg0KDQp3ZWFrIHJlYWxseSBkb2VzIG5vdCBtYXR0ZXIgaW4gZHlu
+YW1pYyBsaW5raW5nDQoodW5sZXNzIHlvdSBzZXQgdGhlIExEX0RZTkFNSUNfV0VBSyBlbnYgdmFy
+IGZvcg0KYmFja3dhcmQgY29tcGF0IHdpdGggdmVyeSBvbGQgZ2xpYmMsIG9yIGlmIGl0J3MNCmFu
+IHVuZGVmaW5lZCB3ZWFrIHJlZmVyZW5jZSkNCg0KPj4gSnVzdCBibG9ja2luZyBhdCBzdGFydC9l
+eGl0IHdvbid0IHNvbHZlIHRoZSBwcm9ibGVtIGJlY2F1c2UNCj4+IGdsb2JhbC1keW5hbWljIFRM
+UyBpbiBnbGliYyBpbnZvbHZlcyBkeW5hbWljIGFsbG9jYXRpb24sIHdoaWNoIGlzIGhhcmQNCj4+
+IHRvIG1ha2UgQVMtc2FmZSBhbmQgb2YgY291cnNlIGNhbiBmYWlsLCBsZWF2aW5nIG5vIHdheSB0
+byBtYWtlIGZvcndhcmQNCj4+IHByb2dyZXNzLg0KPiANCj4gSG93IGhhcmQgd291bGQgaXQgYmUg
+dG8gY3JlYXRlIGEgYXN5bmMtc2lnbmFsLXNhZmUgbWVtb3J5IHBvb2wsIHdoaWNoIHdvdWxkDQo+
+IGJlIGFsd2F5cyBhY2Nlc3NlZCB3aXRoIHNpZ25hbHMgYmxvY2tlZCwgc28gd2UgY291bGQgZml4
+IHRob3NlIGNvcm5lci1jYXNlcw0KPiBmb3IgZ29vZCA/DQoNCnRoYXQgaXMgaGFyZC4NCg0KaW4g
+bXVzbCB0bHMgYWNjZXNzIGlzIGFzLXNhZmUsIGJ1dCBpdCB1c2VzIGEgZGlmZmVyZW50DQphcHBy
+b2FjaDogaXQgZG9lcyBhbGwgYWxsb2NhdGlvbnMgYXQgdGhyZWFkIGNyZWF0aW9uIG9yDQpkbG9w
+ZW4gdGltZS4NCg0KZ2xpYmMgaGFzIGZ1cnRoZXIgaXNzdWVzIGJlY2F1c2UgaXQgc3VwcG9ydHMg
+ZGxjbG9zZQ0Kd2l0aCBtb2R1bGUgdW5sb2FkaW5nIGFuZCB0aGVuIGR5bmFtaWMgdGxzIHJlbGF0
+ZWQNCmludGVybmFsIHN0cnVjdHVyZXMgYXJlIGhhcmQgdG8gZnJlZSAoaXQgaXMgdmFsaWQgdG8N
+CmltcGxlbWVudCBkbGNsb3NlIGFzIGEgbm9vcCwgd2hpY2ggaXMgd2hhdCBtdXNsIGRvZXMuDQp0
+bHMgYWNjZXNzIG5lZWRzIHRvIHN5bmNocm9uaXplIHdpdGggZGxvcGVuIGFuZCBkbGNsb3NlDQp3
+aGVuIGFjY2Vzc2luZyBpbnRlcm5hbCBzdHJ1Y3R1cmVzLCBidXQgeW91IG5lZWQgYQ0KbG9jay1m
+cmVlIG1lY2hhbmlzbSBpZiB0aGUgYWNjZXNzIGhhcyB0byBiZSBhcy1zYWZlLA0KYW5kIGRsY2xv
+c2UgaXMgaGFyZGVyIHRvIGRvIHRoYXQgd2F5IHRoYW4gZGxvcGVuKQ0K
