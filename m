@@ -1,126 +1,161 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
- init and thread creation
-Date: Mon, 26 Nov 2018 11:56:36 +0000
-Message-ID: <00967681-1fcf-6b22-cbd2-4a09840b8ab9@arm.com>
-References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com>
- <20181122171010.GH23599@brightrain.aerifal.cx>
- <871s7cvt1l.fsf@oldenburg.str.redhat.com>
- <20181123142843.GJ23599@brightrain.aerifal.cx>
- <1150466925.11664.1542992720871.JavaMail.zimbra@efficios.com>
- <20181123173019.GK23599@brightrain.aerifal.cx>
- <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com>
- <20181123183558.GM23599@brightrain.aerifal.cx>
- <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com>
+From: Lorenz Bauer <lmb@cloudflare.com>
+Subject: Re: [PATCH v3 3/4] libbpf: add bpf_prog_test_run_xattr
+Date: Mon, 26 Nov 2018 12:45:24 +0000
+Message-ID: <CACAyw98oSS6qbeNCaqukM81V6vWXdrU2HCp2-b++7E=Xnx7e=w@mail.gmail.com>
+References: <20181116125329.3974-1-lmb@cloudflare.com> <20181122140910.1079-1-lmb@cloudflare.com>
+ <20181122140910.1079-4-lmb@cloudflare.com> <b4308b6f-5a1d-f015-4e7f-abca1b3902be@iogearbox.net>
+ <20181124222012.lcc6hn6vr6xbw7zr@ast-mbp.dhcp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <libc-alpha-return-97532-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com>
-Content-ID: <8401165586C1614F817C35E872CA2917@eurprd08.prod.outlook.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Rich Felker <dalias@libc.org>
-Cc: nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <Will.Deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20181124222012.lcc6hn6vr6xbw7zr@ast-mbp.dhcp.thefacebook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Daniel Borkmann <daniel@iogearbox.net>, Alexei Starovoitov <ast@kernel.org>, netdev@vger.kernel.org, linux-api@vger.kernel.org, Y Song <ys114321@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gMjMvMTEvMTggMjE6MDksIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPiAtLS0tLSBPbiBO
-b3YgMjMsIDIwMTgsIGF0IDE6MzUgUE0sIFJpY2ggRmVsa2VyIGRhbGlhc0BsaWJjLm9yZyB3cm90
-ZToNCj4gDQo+PiBPbiBGcmksIE5vdiAyMywgMjAxOCBhdCAxMjo1MjoyMVBNIC0wNTAwLCBNYXRo
-aWV1IERlc25veWVycyB3cm90ZToNCj4+PiAtLS0tLSBPbiBOb3YgMjMsIDIwMTgsIGF0IDEyOjMw
-IFBNLCBSaWNoIEZlbGtlciBkYWxpYXNAbGliYy5vcmcgd3JvdGU6DQo+Pj4NCj4+Pj4gT24gRnJp
-LCBOb3YgMjMsIDIwMTggYXQgMTI6MDU6MjBQTSAtMDUwMCwgTWF0aGlldSBEZXNub3llcnMgd3Jv
-dGU6DQo+Pj4+PiAtLS0tLSBPbiBOb3YgMjMsIDIwMTgsIGF0IDk6MjggQU0sIFJpY2ggRmVsa2Vy
-IGRhbGlhc0BsaWJjLm9yZyB3cm90ZToNCj4+Pj4+IFsuLi5dDQo+Pj4+Pj4NCj4+Pj4+PiBBYnNv
-bHV0ZWx5LiBBcyBsb25nIGFzIGl0J3MgaW4gbGliYywgaW1wbGljaXQgZGVzdHJ1Y3Rpb24gd2ls
-bCBoYXBwZW4uDQo+Pj4+Pj4gQWN0dWFsbHkgSSB0aGluayB0aGUgZ2xpYmMgY29kZSBzaG91bmQg
-dW5jb25kaXRpb25hbGx5IHVucmVnaXN0ZXIgdGhlDQo+Pj4+Pj4gcnNlcSBhZGRyZXNzIGF0IGV4
-aXQgKGFmdGVyIGJsb2NraW5nIHNpZ25hbHMsIHNvIG5vIGFwcGxpY2F0aW9uIGNvZGUNCj4+Pj4+
-PiBjYW4gcnVuKSBpbiBjYXNlIGEgdGhpcmQtcGFydHkgcnNlcSBsaWJyYXJ5IHdhcyBsaW5rZWQg
-YW5kIGZhaWxlZCB0bw0KPj4+Pj4+IGRvIHNvIGJlZm9yZSB0aHJlYWQgZXhpdCAoZS5nLiBkdWUg
-dG8gbWlzbWF0Y2hlZCByZWYgY291bnRzKSByYXRoZXINCj4+Pj4+PiB0aGFuIHJlc3BlY3Rpbmcg
-dGhlIHJlZmVyZW5jZSBjb3VudCwgc2luY2UgaXQga25vd3MgaXQncyB0aGUgbGFzdA0KPj4+Pj4+
-IHVzZXIuIFRoaXMgd291bGQgbWFrZSBwb3RlbnRpYWxseS1idWdneSBjb2RlIHNhZmVyLg0KPj4+
-Pj4NCj4+Pj4+IE9LLCBsZXQgbWUgZ28gYWhlYWQgd2l0aCBhIGZldyBpZGVhcy9xdWVzdGlvbnMg
-YWxvbmcgdGhhdCBwYXRoLg0KPj4+PiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICBeXl5eXl5eXl5eXl5eXl4NCj4+Pj4+DQo+Pj4+PiBMZXQncyBzYXkgb3Vy
-IHN0YXRlZCBnb2FsIGlzIHRvIGxldCB0aGUgImV4aXQiIHN5c3RlbSBjYWxsIGZyb20gdGhlDQo+
-Pj4+PiBnbGliYyB0aHJlYWQgZXhpdCBwYXRoIHBlcmZvcm0gcnNlcSB1bnJlZ2lzdHJhdGlvbiAo
-d2l0aG91dCBleHBsaWNpdA0KPj4+Pj4gdW5yZWdpc3RyYXRpb24gYmVmb3JlaGFuZCkuIExldCdz
-IGxvb2sgYXQgd2hhdCB3ZSBuZWVkLg0KPj4+Pg0KPj4+PiBUaGlzIGlzIG5vdCAiYWxvbmcgdGhh
-dCBwYXRoIi4gVGhlIGFib3ZlLXF1b3RlZCB0ZXh0IGlzIG5vdCBhYm91dA0KPj4+PiBhc3N1bWlu
-ZyBpdCdzIHNhZmUgdG8gbWFrZSBTWVNfZXhpdCB3aXRob3V0IHVucmVnaXN0ZXJpbmcgdGhlIHJz
-ZXENCj4+Pj4gb2JqZWN0LCBidXQgcmF0aGVyIGFib3V0IGdsaWJjIGJlaW5nIGFibGUgdG8gcGVy
-Zm9ybSB0aGUNCj4+Pj4gcnNlcS11bnJlZ2lzdGVyIHN5c2NhbGwgd2l0aG91dCBjYXJpbmcgYWJv
-dXQgcmVmZXJlbmNlIGNvdW50cywgc2luY2UNCj4+Pj4gaXQga25vd3Mgbm8gb3RoZXIgY29kZSB0
-aGF0IG1pZ2h0IGRlcGVuZCBvbiByc2VxIGNhbiBydW4gYWZ0ZXIgaXQuDQo+Pj4NCj4+PiBXaGVu
-IHNheWluZyAiYWxvbmcgdGhhdCBwYXRoIiwgd2hhdCBJIG1lYW4gaXM6IGlmIHdlIGdvIGluIHRo
-YXQgZGlyZWN0aW9uLA0KPj4+IHRoZW4gd2Ugc2hvdWxkIGxvb2sgaW50byBnb2luZyBhbGwgdGhl
-IHdheSB0aGVyZSwgYW5kIHJlbHkgb24gdGhyZWFkDQo+Pj4gZXhpdCB0byBpbXBsaWNpdGx5IHVu
-cmVnaXN0ZXIgdGhlIFRMUyBhcmVhLg0KPj4+DQo+Pj4gRG8geW91IHNlZSBhbnkgcmVhc29uIGZv
-ciBkb2luZyBhbiBleHBsaWNpdCB1bnJlZ2lzdHJhdGlvbiBhdCB0aHJlYWQNCj4+PiBleGl0IHJh
-dGhlciB0aGFuIHNpbXBseSByZWx5IG9uIHRoZSBleGl0IHN5c3RlbSBjYWxsID8NCj4+DQo+PiBX
-aGV0aGVyIHRoaXMgaXMgbmVlZGVkIGlzIGFuIGltcGxlbWVudGF0aW9uIGRldGFpbCBvZiBnbGli
-YyB0aGF0DQo+PiBzaG91bGQgYmUgcGVybWl0dGVkIHRvIHZhcnkgYmV0d2VlbiB2ZXJzaW9ucy4g
-VW5sZXNzIGdsaWJjIHdhbnRzIHRvDQo+PiBwcm9taXNlIHRoYXQgaXQgd291bGQgYmVjb21lIGEg
-cHVibGljIGd1YXJhbnRlZSwgaXQncyBub3QgcGFydCBvZiB0aGUNCj4+IGRpc2N1c3Npb24gYXJv
-dW5kIHRoZSBBUEkvQUJJLiBPbmx5IHBhcnQgb2YgdGhlIGRpc2N1c3Npb24gYXJvdW5kDQo+PiBp
-bXBsZW1lbnRhdGlvbiBpbnRlcm5hbHMgb2YgdGhlIGdsaWJjIHJzZXEgc3R1ZmYuDQo+Pg0KPj4g
-T2YgY291cnNlIEkgbWF5IGJlIGJpYXNlZCB0aGlua2luZyBhcHBsaWNhdGlvbiBjb2RlIHNob3Vs
-ZCBub3QgYXNzdW1lDQo+PiB0aGlzIHNpbmNlIGl0J3Mgbm90IHRydWUgb24gbXVzbCAtLSBmb3Ig
-ZGV0YWNoZWQgdGhyZWFkcywgdGhlIHRocmVhZA0KPj4gZnJlZXMgaXRzIG93biBzdGFjayBiZWZv
-cmUgZXhpdGluZyAoYW5kIHRodXMgaGFzIHRvIHVucmVnaXN0ZXINCj4+IHNldF90aWRfYWRkcmVz
-cyBhbmQgc2V0X3JvYnVzdGxpc3QgYmVmb3JlIGV4aXRpbmcpLg0KPiANCj4gT0ssIHNvIG9uIGds
-aWJjLCB0aGUgaW1wbGVtZW50YXRpb24gY291bGQgcmVseSBvbiBleGl0IHNpZGUtZWZmZWN0IHRv
-DQo+IGltcGxpY2l0bHkgdW5yZWdpc3RlciByc2VxLiBPbiBtdXNsLCBiYXNlZCBvbiB0aGUgc2Nl
-bmFyaW8geW91IGRlc2NyaWJlLA0KPiB0aGUgbGlicmFyeSBzaG91bGQgdW5yZWdpc3RlciByc2Vx
-IGV4cGxpY2l0bHkgYmVmb3JlIHN0YWNrIHJlY2xhaW0uDQo+IA0KPiBBbSBJIHVuZGVyc3RhbmRp
-bmcgdGhlIHNpdHVhdGlvbiBjb3JyZWN0bHkgPw0KDQppIHRoaW5rIHRoZSBwb2ludCBpcyB0aGF0
-IHlvdSBkb24ndCBuZWVkIHRvIGtub3cgdGhlc2UNCmRldGFpbHMgaW4gb3JkZXIgdG8gY29tZSB1
-cCB3aXRoIGEgZGVzaWduIHRoYXQgYWxsb3dzDQpib3RoIGltcGxlbWVudGF0aW9ucy4gKHRoZW4g
-dGhlIGxpYmMgY2FuIGNoYW5nZSBsYXRlcikNCg0Kc28NCi0gaXMgdGhlcmUgYSBuZWVkIGZvciBw
-dWJsaWMgdW5yZWdpc3RlciBhcGkgKGRvZXMgdGhlDQp1c2VyIGRvIGl0IG9yIHRoZSByc2VxIGxp
-YnJhcnkgaW1wbGljaXRseSB1bnJlZ2lzdGVycyk/DQotIGlzIHRoZXJlIGEgbmVlZCBmb3IgcmVm
-IGNvdW50aW5nIChvciB0aGUgcnNlcSBsaWINCnVuY29uZGl0aW9uYWxseSB1bnJlZ2lzdGVycyBh
-dCB0aGUgZW5kIG9mIGEgdGhyZWFkLA0KdGhlIGxpYmMgY2FuIGNlcnRhaW5seSBkbyB0aGlzKT8N
-Cg0KPj4+IE9LLCBBRkFJVSBzbyB5b3UgYXJndWUgZm9yIGxlYXZpbmcgdGhlIF9fcnNlcV9hYmkg
-c3ltYm9sICJ3ZWFrIi4gSnVzdCBtYWtpbmcNCj4+PiBzdXJlIEkgY29ycmVjdGx5IHVuZGVyc3Rh
-bmQgeW91ciBwb3NpdGlvbi4NCj4+DQo+PiBJIGRvbid0IHRoaW5rIGl0IG1hdHRlcnMsIGFuZCBJ
-IGRvbid0IHRoaW5rIG1ha2luZyBpdCB3ZWFrIGlzDQo+PiBtZWFuaW5nZnVsIG9yIHVzZWZ1bCAo
-d2VhayBpbiBhIHNoYXJlZCBsaWJyYXJ5IGlzIGxhcmdlbHkgbWVhbmluZ2xlc3MpDQo+PiBidXQg
-bWF5YmUgSSdtIG1pc3Npbmcgc29tZXRoaW5nIGhlcmUuDQo+IA0KPiBVc2luZyBhICJ3ZWFrIiBz
-eW1ib2wgaW4gZWFybHkgYWRvcHRlciBsaWJyYXJpZXMgaXMgaW1wb3J0YW50LCBzbyB0aGV5DQo+
-IGNhbiBiZSBsb2FkZWQgdG9nZXRoZXIgaW50byB0aGUgc2FtZSBwcm9jZXNzIHdpdGhvdXQgY2F1
-c2luZyBsb2FkZXINCj4gZXJyb3JzIGR1ZSB0byBtYW55IGRlZmluaXRpb25zIG9mIHRoZSBzYW1l
-IHN0cm9uZyBzeW1ib2wuDQo+IA0KPiBVc2luZyAid2VhayIgaW4gYSBDIGxpYnJhcnkgaXMgc29t
-ZXRoaW5nIEknbSBub3Qgc3VyZSBpcyBhIGNoYXJhY3RlcmlzdGljDQo+IHdlIHdhbnQgb3IgbmVl
-ZCwgYmVjYXVzZSBJIGRvdWJ0IHdlIHdvdWxkIGV2ZXIgd2FudCB0byBsb2FkIHR3byBsaWJjIGF0
-IHRoZQ0KPiBzYW1lIHRpbWUgaW4gYSBnaXZlbiBwcm9jZXNzLg0KPiANCj4gVGhlIG9ubHkgcmVh
-c29uIEkgc2VlIGZvciB1c2luZyAid2VhayIgZm9yIHRoZSBfX3JzZXFfYWJpIHN5bWJvbCBpbiB0
-aGUNCj4gbGliYyBpcyBpZiB3ZSB3YW50IHRvIGFsbG93IGVhcmx5IGFkb3B0ZXIgYXBwbGljYXRp
-b25zIHRvIGRlZmluZQ0KPiBfX3JzZXFfYWJpIGFzIGEgc3Ryb25nIHN5bWJvbCwgd2hpY2ggd291
-bGQgbWFrZSBzb21lIHNlbnNlLg0KDQp3ZWFrIHJlYWxseSBkb2VzIG5vdCBtYXR0ZXIgaW4gZHlu
-YW1pYyBsaW5raW5nDQoodW5sZXNzIHlvdSBzZXQgdGhlIExEX0RZTkFNSUNfV0VBSyBlbnYgdmFy
-IGZvcg0KYmFja3dhcmQgY29tcGF0IHdpdGggdmVyeSBvbGQgZ2xpYmMsIG9yIGlmIGl0J3MNCmFu
-IHVuZGVmaW5lZCB3ZWFrIHJlZmVyZW5jZSkNCg0KPj4gSnVzdCBibG9ja2luZyBhdCBzdGFydC9l
-eGl0IHdvbid0IHNvbHZlIHRoZSBwcm9ibGVtIGJlY2F1c2UNCj4+IGdsb2JhbC1keW5hbWljIFRM
-UyBpbiBnbGliYyBpbnZvbHZlcyBkeW5hbWljIGFsbG9jYXRpb24sIHdoaWNoIGlzIGhhcmQNCj4+
-IHRvIG1ha2UgQVMtc2FmZSBhbmQgb2YgY291cnNlIGNhbiBmYWlsLCBsZWF2aW5nIG5vIHdheSB0
-byBtYWtlIGZvcndhcmQNCj4+IHByb2dyZXNzLg0KPiANCj4gSG93IGhhcmQgd291bGQgaXQgYmUg
-dG8gY3JlYXRlIGEgYXN5bmMtc2lnbmFsLXNhZmUgbWVtb3J5IHBvb2wsIHdoaWNoIHdvdWxkDQo+
-IGJlIGFsd2F5cyBhY2Nlc3NlZCB3aXRoIHNpZ25hbHMgYmxvY2tlZCwgc28gd2UgY291bGQgZml4
-IHRob3NlIGNvcm5lci1jYXNlcw0KPiBmb3IgZ29vZCA/DQoNCnRoYXQgaXMgaGFyZC4NCg0KaW4g
-bXVzbCB0bHMgYWNjZXNzIGlzIGFzLXNhZmUsIGJ1dCBpdCB1c2VzIGEgZGlmZmVyZW50DQphcHBy
-b2FjaDogaXQgZG9lcyBhbGwgYWxsb2NhdGlvbnMgYXQgdGhyZWFkIGNyZWF0aW9uIG9yDQpkbG9w
-ZW4gdGltZS4NCg0KZ2xpYmMgaGFzIGZ1cnRoZXIgaXNzdWVzIGJlY2F1c2UgaXQgc3VwcG9ydHMg
-ZGxjbG9zZQ0Kd2l0aCBtb2R1bGUgdW5sb2FkaW5nIGFuZCB0aGVuIGR5bmFtaWMgdGxzIHJlbGF0
-ZWQNCmludGVybmFsIHN0cnVjdHVyZXMgYXJlIGhhcmQgdG8gZnJlZSAoaXQgaXMgdmFsaWQgdG8N
-CmltcGxlbWVudCBkbGNsb3NlIGFzIGEgbm9vcCwgd2hpY2ggaXMgd2hhdCBtdXNsIGRvZXMuDQp0
-bHMgYWNjZXNzIG5lZWRzIHRvIHN5bmNocm9uaXplIHdpdGggZGxvcGVuIGFuZCBkbGNsb3NlDQp3
-aGVuIGFjY2Vzc2luZyBpbnRlcm5hbCBzdHJ1Y3R1cmVzLCBidXQgeW91IG5lZWQgYQ0KbG9jay1m
-cmVlIG1lY2hhbmlzbSBpZiB0aGUgYWNjZXNzIGhhcyB0byBiZSBhcy1zYWZlLA0KYW5kIGRsY2xv
-c2UgaXMgaGFyZGVyIHRvIGRvIHRoYXQgd2F5IHRoYW4gZGxvcGVuKQ0K
+On Sat, 24 Nov 2018 at 22:20, Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
+>
+> On Fri, Nov 23, 2018 at 11:25:11PM +0100, Daniel Borkmann wrote:
+> > On 11/22/2018 03:09 PM, Lorenz Bauer wrote:
+> > > Add a new function, which encourages safe usage of the test interface.
+> > > bpf_prog_test_run continues to work as before, but should be considered
+> > > unsafe.
+> > >
+> > > Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
+> >
+> > Set looks good to me, thanks! Three small things below:
+> >
+> > > ---
+> > >  tools/lib/bpf/bpf.c | 27 +++++++++++++++++++++++++++
+> > >  tools/lib/bpf/bpf.h | 13 +++++++++++++
+> > >  2 files changed, 40 insertions(+)
+> > >
+> > > diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
+> > > index 961e1b9fc592..f8518bef6886 100644
+> > > --- a/tools/lib/bpf/bpf.c
+> > > +++ b/tools/lib/bpf/bpf.c
+> > > @@ -424,6 +424,33 @@ int bpf_prog_test_run(int prog_fd, int repeat, void *data, __u32 size,
+> > >     return ret;
+> > >  }
+> > >
+> > > +int bpf_prog_test_run_xattr(const struct bpf_prog_test_run_attr *test_attr,
+> > > +                       __u32 *size_out, __u32 *retval, __u32 *duration)
+> > > +{
+> > > +   union bpf_attr attr;
+> > > +   int ret;
+> > > +
+> > > +   if (!test_attr->data_out && test_attr->size_out > 0)
+> > > +           return -EINVAL;
+> > > +
+> > > +   bzero(&attr, sizeof(attr));
+> > > +   attr.test.prog_fd = test_attr->prog_fd;
+> > > +   attr.test.data_in = ptr_to_u64(test_attr->data);
+> > > +   attr.test.data_out = ptr_to_u64(test_attr->data_out);
+> > > +   attr.test.data_size_in = test_attr->size;
+> > > +   attr.test.data_size_out = test_attr->size_out;
+> > > +   attr.test.repeat = test_attr->repeat;
+> > > +
+> > > +   ret = sys_bpf(BPF_PROG_TEST_RUN, &attr, sizeof(attr));
+> > > +   if (size_out)
+> > > +           *size_out = attr.test.data_size_out;
+> > > +   if (retval)
+> > > +           *retval = attr.test.retval;
+> > > +   if (duration)
+> > > +           *duration = attr.test.duration;
+> > > +   return ret;
+> > > +}
+> > > +
+> > >  int bpf_prog_get_next_id(__u32 start_id, __u32 *next_id)
+> > >  {
+> > >     union bpf_attr attr;
+> > > diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
+> > > index 26a51538213c..570f19f77f42 100644
+> > > --- a/tools/lib/bpf/bpf.h
+> > > +++ b/tools/lib/bpf/bpf.h
+> > > @@ -110,6 +110,19 @@ LIBBPF_API int bpf_prog_attach(int prog_fd, int attachable_fd,
+> > >  LIBBPF_API int bpf_prog_detach(int attachable_fd, enum bpf_attach_type type);
+> > >  LIBBPF_API int bpf_prog_detach2(int prog_fd, int attachable_fd,
+> > >                             enum bpf_attach_type type);
+> > > +
+> > > +struct bpf_prog_test_run_attr {
+> > > +   int prog_fd;
+> > > +   int repeat;
+> > > +   const void *data;
+> > > +   __u32 size;
+> > > +   void *data_out; /* optional */
+> > > +   __u32 size_out;
+> >
+> > Small nit: could we name these data_{in,out} and data_size_{in,out} as
+> > well, so it's analog to the ones from the bpf_attr?
+> >
+> > > +};
+> > > +
+> > > +LIBBPF_API int bpf_prog_test_run_xattr(const struct bpf_prog_test_run_attr *test_attr,
+> > > +                                  __u32 *size_out, __u32 *retval,
+> > > +                                  __u32 *duration);
+>
+> can we keep return values in struct bpf_prog_test_run_attr ?
+> I think the interface will be easier to use and faster. Less pointers
+> to pass around.
+
+That's what I had initially, but that makes re-using test_attr really
+awkward. Either
+you need to reset data_out_size before every call because it is used
+to return the
+buffer size, or we need another member in test_attr specifically for this. Then
+naming becomes really awkward (data_size_out_out anyone?). It also means
+we can't take a const struct attr, which is contrary to the other
+xattr functions which
+already exist.
+
+I think actually inspecting the required size of the output buffer
+will be a rare
+occurrence, so making the user jump through the hoop of a pointer doesn't seem
+too onerous.
+
+>
+> > >  LIBBPF_API int bpf_prog_test_run(int prog_fd, int repeat, void *data,
+> > >                              __u32 size, void *data_out, __u32 *size_out,
+> > >                              __u32 *retval, __u32 *duration);
+> >
+> > Could we add a comment into the header here stating that we discourage
+> > bpf_prog_test_run()'s use?
+> >
+> > It would probably also make sense since we go that route that we would
+> > convert the 10 bpf_prog_test_run() instances under test_progs.c at the
+> > same time so that people extending or looking at BPF kselftests don't
+> > copy discouraged bpf_prog_test_run() api as examples from this point
+> > onwards anymore.
+>
+> I would keep bpf_prog_test_run() and test_progs.c as-is.
+> I think the prog_test_run in the current form is actually fine.
+> I don't find it 'unsafe'.
+> When it's called on a given bpf prog the user knows what prog
+> suppose to do. If prog is increasing the packet size the test writer
+> knows that and should size the output buffer accordingly.
+
+I guess this is a matter of perspective. I prefer an interface that
+gives me back
+an error message, rather than corrupt my stack / heap, when the assumptions
+change. It's also nicer to use from "managed" languages like Go where users
+aren't as accustomed to issues like these.
+
+Do you object to me adding the disclaimer to the header as Daniel suggested?
+
+> Also there are plenty of tests where progs don't change the packet size
+> and any test with 'repeat > 1' should have the packet size
+> return to initial value. Like if the test is doing ipip encap
+> at the end of the run the bpf prog should remove that encap.
+> Otherwise 'repeat > 1' will produce wrong results.
+>
+
+Yup. Another thorny part of the test interface, which I'd like to improve! :)
+Don't know how to do it yet though.
+
+-- 
+Lorenz Bauer  |  Systems Engineer
+25 Lavington St., London SE1 0NZ
+
+www.cloudflare.com
