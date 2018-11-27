@@ -1,95 +1,89 @@
-From: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
-Subject: Re: [RFC PATCH RESEND v3 3/3] ptrace: add PTRACE_EVENT_SECCOMP
- support to PTRACE_GET_SYSCALL_INFO
-Date: Tue, 27 Nov 2018 06:21:09 +0300
-Message-ID: <20181127032108.GA4154@altlinux.org>
-References: <20181127040732.1c9f7965@akathisia>
-Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: Re: [PATCH RESEND v3 1/3] ptrace: pass type of a syscall-stop in
+ ptrace_message
+Date: Tue, 27 Nov 2018 06:48:49 +0300
+Message-ID: <20181127034849.GA4319@altlinux.org>
+References: <20181125022150.46258a20@akathisia>
+ <20181125022227.55e8caf7@akathisia>
+ <20181126145643.GD1660@redhat.com>
+ <20181127035357.0b381323@akathisia>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0399909169279958558=="
-Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-In-Reply-To: <20181127040732.1c9f7965@akathisia>
-List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
- <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
-List-Post: <mailto:strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-List-Help: <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
- <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
-Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
-Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
-To: Elvira Khabirova <lineprinter-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Steven Rostedt <rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org>, Eugene Syromyatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="sm4nu43k4a2Rpi4c"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181127035357.0b381323@akathisia>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Elvira Khabirova <lineprinter@altlinux.org>, Oleg Nesterov <oleg@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Andy Lutomirski <luto@kernel.org>, Eugene Syromyatnikov <esyr@redhat.com>, linux-kernel@vger.kernel.org, strace-devel@lists.strace.io, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
---===============0399909169279958558==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="VbJkn9YxBvnuCH5J"
-Content-Disposition: inline
-
-
---VbJkn9YxBvnuCH5J
+--sm4nu43k4a2Rpi4c
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Nov 27, 2018 at 04:07:32AM +0100, Elvira Khabirova wrote:
-> On Mon, 26 Nov 2018 15:35:24 +0100, Oleg Nesterov wrote:
+On Tue, Nov 27, 2018 at 03:53:57AM +0100, Elvira Khabirova wrote:
+> On Mon, 26 Nov 2018 15:56:43 +0100, Oleg Nesterov wrote:
 > > On 11/25, Elvira Khabirova wrote:
 > > >
-> > > Extend PTRACE_GET_SYSCALL_INFO to support PTRACE_EVENT_SECCOMP stops.
-> > > The information returned is the same as for syscall-enter-stops. =20
+> > > + * These values are stored in task->ptrace_message by tracehook_repo=
+rt_syscall_*
+> > > + * to describe current syscall-stop.
+> > > + *
+> > > + * Values for these constants are chosen so that they do not appear
+> > > + * in task->ptrace_message by other means.
+> > > + */
+> > > +#define PTRACE_EVENTMSG_SYSCALL_ENTRY	0x80000000U
+> > > +#define PTRACE_EVENTMSG_SYSCALL_EXIT	0x90000000U =20
 > >=20
-> > Oh, this is not nice ;) there must be a better option, I hope... Plus
+> > Stupid question, why not
 > >=20
-> > Can't ptrace_get_syscall() check
+> > 	#define PTRACE_EVENT_SYSCALL_ENTRY	8
+> > 	#define PTRACE_EVENT_SYSCALL_EXIT	9
 > >=20
-> > 	child->exit_code =3D=3D (PTRACE_EVENT_SECCOMP << 8) | SIGTRAP;
-> >=20
-> > to detect the PTRACE_EVENT_SECCOMP case?
+> > right after other PTRACE_EVENT_* constants?
 >=20
-> Nope; looks like exit_code is zeroed after wait().
+> I thought about adding new events for syscall {entry,exit}.
+> For tracers, using new events means setting new options and checking
+> for new values after waitpid(). They will also have to switch from using
+> PTRACE_SYSCALL to PTRACE_CONT.
+> Right now (with this version of the patch) tracers can use
+> PTRACE_GETEVENTMSG without doing any additional configuration.
+> More importantly, adding these events would require much more complex
+> modifications of kernel code than this patch does.
 
-It's explicitly reset to zero in wait_task_stopped() unless WNOWAIT wait
-option is set.  When strace requests PTRACE_GET_SYSCALL_INFO after
-wait4(), child->exit_code is already set to zero.
+To be honest, we don't see any way of introducing PTRACE_EVENT_* support
+in PTRACE_GET_SYSCALL_INFO without adding new fields to struct task_struct.
+
+> The only benefit I see from adding these events instead of letting
+> syscall-stops put a value in ptrace_message is an ability to subscribe
+> to syscall entries, but not to exits, and vice-versa, and I don't think
+> it is worth it.
 
 
 --=20
 ldv
 
---VbJkn9YxBvnuCH5J
+--sm4nu43k4a2Rpi4c
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIcBAEBCAAGBQJb/LgkAAoJEAVFT+BVnCUIKhoP/i5BX4tsokC30O4I3zGET2SV
-7GDu6jbhCAYRFoXe7xNoRPQvSh8gfAziWHb6IExqHxdrqf7kj8jjrQS/bNGN/X/h
-FBRNUJrRcXVKgQagnSIU1jJ30W8WtdDz5C21O7IF9MOSouqqLNvmsKxpPmLap472
-1xp7cYszGVKw0KBc8MVCazWc+YjdTP1ws9Gfc2MfOmlZ3RVq4eEkBTylmKc5fo+X
-UbZCp04VdN2QrdlpPNQZlyjz/Fyz1gC70Sr+hsQKh2P4ZQhBq4/p511J115l52+y
-+/5bzT17NdTKRrt5R9UhXSyKiPT+24Sar5SyvCRXAdFbtcZHZk0AzbC9kExa1P+a
-I0kN2YPdOlUckpKV5LX63dgQfDtSGWit46dSqHJcG9dSI2lF3kTnbpDOS13tdlsd
-a+LobSdZUuVnAujQ+uouYF5+i6xtoj4AANEzhUk0w5xTwMG3gDzItiiVdjGukf4z
-UHcLgaRAK8TOpm5fXpB3zzqzaza12f10EHFCK+YZQNBUlzS2x6QcDnsbc/Mfhzbz
-/ph9RgedCKK2q1r1Ctz4Mr5lln5J4bQWIpf2tejraiPe/Nk3Vz6jEYUGpsTBcSWd
-CndSGYHcXxXwmR8Bi39mT6isn6NSWYUOkM6oTI4KN4n9cSbGWY3tLVtxkL/yUQcP
-hRzqjz5vbmXEbhytAi1V
-=dIFr
+iQIcBAEBCAAGBQJb/L6hAAoJEAVFT+BVnCUIsHYQAO5hqEnDe+1q5233vA7ju+mg
+Om/u/FfJyARRNmujrPZU8B8RR3nYUj7SdVgdq/AJd22eyL8Vs9RRTw8QjxNDrVGF
+zCnPL+z63PokV+YK6ohoE/MdR0SWgfQZnP70tY9CdqQIYQh3OxQ0cu9e8ERe9KYS
+R+AifBUolcTQgftUatw085lCG6hv1+wlas2hAT4JE+Tgq/2wTPPsFChPhYn8SJ30
+S+KGWaVVDzLy5l3OJfgoWcV2DYaHEZmtSW18Xv2qeSZHlLzoAPWCUEiUfOhEFieE
+s+Fmn/ZTvwmnYyxsrPYKFb0YfSTNPrvpdTecyOok/kqo0l4uMqxJ/7RzByIbHWSv
+qBSBACnLozEUHupAK8XcrbGtoBjNl4Ae6uQ+1NRafUy1R06Bx7nqRhfMqkrrKae/
+5sQTL0P5lCNXiEGP3Hu/SJoUJS5ZgKth8J7XcAuM/YeBC9SMTuNU9ShWgXWetqXT
+55GYy/VKV4tM0a8sDFSGYN3As6Uuuj1ztGmElmkycCb1+/GiViarrc/ReTuxDT3H
+JOocZNybF2kdg0GyuIYFf5/B/Zhn0W/dW2ShFRIoBKC0Anmnz2lY4WbT6ktDweRl
+hSKSSVh5XEmTnJIlKrNHPZOyiBZRy8HPnGq9+VBEj8i7XT2Ee4sNcJ5S71MNzKUs
+hmM8TRMvLedvYoEwHSZ9
+=oNrp
 -----END PGP SIGNATURE-----
 
---VbJkn9YxBvnuCH5J--
-
---===============0399909169279958558==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
--- 
-Strace-devel mailing list
-Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
-https://lists.strace.io/mailman/listinfo/strace-devel
-
---===============0399909169279958558==--
+--sm4nu43k4a2Rpi4c--
