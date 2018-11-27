@@ -1,79 +1,68 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Tue, 27 Nov 2018 12:57:15 +0100
-Message-ID: <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
-References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
- <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
- <87bm6zaa04.fsf@oldenburg.str.redhat.com>
- <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
- <20181109180947.GF5481@ram.oc3035372033.ibm.com>
- <87efbqqze4.fsf@oldenburg.str.redhat.com>
- <20181127102350.GA5795@ram.oc3035372033.ibm.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [RFC PATCH RESEND v3 3/3] ptrace: add PTRACE_EVENT_SECCOMP
+ support to PTRACE_GET_SYSCALL_INFO
+Date: Tue, 27 Nov 2018 13:31:17 +0100
+Message-ID: <20181127123116.GA13284@redhat.com>
+References: <20181125022150.46258a20@akathisia>
+ <20181125022340.5703400f@akathisia>
+ <20181126143524.GB1660@redhat.com>
+ <20181127040732.1c9f7965@akathisia>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20181127102350.GA5795@ram.oc3035372033.ibm.com> (Ram Pai's
- message of "Tue, 27 Nov 2018 02:23:50 -0800")
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Ram Pai <linuxram@us.ibm.com>
-Cc: Dave Hansen <dave.hansen@intel.com>, linux-mm@kvack.org, linuxppc-dev@lists.ozlabs.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181127040732.1c9f7965@akathisia>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Elvira Khabirova <lineprinter@altlinux.org>
+Cc: rostedt@goodmis.org, mingo@redhat.com, linux-kernel@vger.kernel.org, ldv@altlinux.org, esyr@redhat.com, luto@kernel.org, strace-devel@lists.strace.io, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Ram Pai:
+On 11/27, Elvira Khabirova wrote:
+>
+> On Mon, 26 Nov 2018 15:35:24 +0100
+> Oleg Nesterov <oleg@redhat.com> wrote:
+>
+> > On 11/25, Elvira Khabirova wrote:
+> > >
+> > > Extend PTRACE_GET_SYSCALL_INFO to support PTRACE_EVENT_SECCOMP stops.
+> > > The information returned is the same as for syscall-enter-stops.
+> >
+> > Oh, this is not nice ;) there must be a better option, I hope... Plus
+> >
+> >
+> > Can't ptrace_get_syscall() check
+> >
+> > 	child->exit_code == (PTRACE_EVENT_SECCOMP << 8) | SIGTRAP;
+> >
+> > to detect the PTRACE_EVENT_SECCOMP case?
+>
+> Nope; looks like exit_code is zeroed after wait().
 
-> diff --git a/arch/x86/include/uapi/asm/mman.h b/arch/x86/include/uapi/asm/mman.h
-> index d4a8d04..e9b121b 100644
-> --- a/arch/x86/include/uapi/asm/mman.h
-> +++ b/arch/x86/include/uapi/asm/mman.h
-> @@ -24,6 +24,11 @@
->  		((key) & 0x2 ? VM_PKEY_BIT1 : 0) |      \
->  		((key) & 0x4 ? VM_PKEY_BIT2 : 0) |      \
->  		((key) & 0x8 ? VM_PKEY_BIT3 : 0))
-> +
-> +/* Override any generic PKEY permission defines */
-> +#undef PKEY_ACCESS_MASK
-> +#define PKEY_ACCESS_MASK       (PKEY_DISABLE_ACCESS |\
-> +				PKEY_DISABLE_WRITE)
->  #endif
+Yes, thanks for correcting me,
 
-I would have expected something that translates PKEY_DISABLE_WRITE |
-PKEY_DISABLE_READ into PKEY_DISABLE_ACCESS, and also accepts
-PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ, for consistency with POWER.
+but we can use child->last_siginfo->si_code. Just like ptrace_request(PTRACE_LISTEN)
+does but you can do this lockless (no need to lock_task_sighand()).
 
-(My understanding is that PKEY_DISABLE_ACCESS does not disable all
-access, but produces execute-only memory.)
+And if we require that the user of ptrace_get_syscall() should also use TRACESYSGOOD
+then ptrace_get_syscall() can probably do something like
 
-> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-> index e7ee328..61168e4 100644
-> --- a/include/uapi/asm-generic/mman-common.h
-> +++ b/include/uapi/asm-generic/mman-common.h
-> @@ -71,7 +71,8 @@
->  
->  #define PKEY_DISABLE_ACCESS	0x1
->  #define PKEY_DISABLE_WRITE	0x2
-> -#define PKEY_ACCESS_MASK	(PKEY_DISABLE_ACCESS |\
-> -				 PKEY_DISABLE_WRITE)
-> -
-> +#define PKEY_DISABLE_EXECUTE	0x4
-> +#define PKEY_DISABLE_READ	0x8
-> +#define PKEY_ACCESS_MASK	0x0	/* arch can override and define its own
-> +					   mask bits */
->  #endif /* __ASM_GENERIC_MMAN_COMMON_H */
+	int entry;
 
-I think Dave requested a value for PKEY_DISABLE_READ which is further
-away from the existing bits.
+	if (!child->last_siginfo)
+		return -EINVAL;
+	else if (child->last_siginfo->si_code == (PTRACE_EVENT_SECCOMP << 8) | SIGTRAP)
+		entry = 1;
+	else if (child->last_siginfo->si_code == SIGTRAP | 0x80)
+		entry = child->ptrace_message == PTRACE_EVENTMSG_SYSCALL_ENTRY;
+	else
+		return -EINVAL;
 
-Thanks,
-Florian
+and this way PTRACE_EVENTMSG_SYSCALL_ENTRY/EXIT can't confict with seccomp or
+anything else.
+
+No?
+
+Of course, debugger can do PTRACE_SETSIGINFO and confuse itself but probably we
+do not care?
+
+Oleg.
