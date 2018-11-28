@@ -1,60 +1,47 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: Re: [PATCH v3 3/4] libbpf: add bpf_prog_test_run_xattr
-Date: Wed, 28 Nov 2018 16:52:30 +0000
-Message-ID: <CACAyw99uw8z-bQzOtTDMo0t2UhjCSUmTDqWhyfxPsS5_6LiOsw@mail.gmail.com>
-References: <20181116125329.3974-1-lmb@cloudflare.com> <20181122140910.1079-1-lmb@cloudflare.com>
- <20181122140910.1079-4-lmb@cloudflare.com> <b4308b6f-5a1d-f015-4e7f-abca1b3902be@iogearbox.net>
- <20181124222012.lcc6hn6vr6xbw7zr@ast-mbp.dhcp.thefacebook.com>
- <CACAyw98oSS6qbeNCaqukM81V6vWXdrU2HCp2-b++7E=Xnx7e=w@mail.gmail.com> <CAADnVQ+CJsUUG2otaLJjvnNQ55tRx6ANsFUrTWkb-k=Ztw1MRg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Subject: [PATCH v4 0/4] Fix unsafe BPF_PROG_TEST_RUN interface
+Date: Wed, 28 Nov 2018 16:53:08 +0000
+Message-ID: <20181128165312.19500-1-lmb@cloudflare.com>
+References: <20181116125329.3974-1-lmb@cloudflare.com>
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAADnVQ+CJsUUG2otaLJjvnNQ55tRx6ANsFUrTWkb-k=Ztw1MRg@mail.gmail.com>
+In-Reply-To: <20181116125329.3974-1-lmb@cloudflare.com>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Daniel Borkmann <daniel@iogearbox.net>, Alexei Starovoitov <ast@kernel.org>, netdev@vger.kernel.org, linux-api@vger.kernel.org, Y Song <ys114321@gmail.com>
+To: ast@kernel.org, daniel@iogearbox.net
+Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 28 Nov 2018 at 05:05, Alexei Starovoitov
-<alexei.starovoitov@gmail.com> wrote:
->
-> On Mon, Nov 26, 2018 at 4:45 AM Lorenz Bauer <lmb@cloudflare.com> wrote:
-> >
-> > That's what I had initially, but that makes re-using test_attr really
-> > awkward. Either
-> > you need to reset data_out_size before every call because it is used
-> > to return the
-> > buffer size,
->
-> I think that is exactly what the user of the interface would want to do.
-> Why would anyone keep reusing the same test_attr on multiple calls
-> into the kernel without changing the fields?
+Right now, there is no safe way to use BPF_PROG_TEST_RUN with data_out.
+This is because bpf_test_finish copies the output buffer to user space
+without checking its size. This can lead to the kernel overwriting
+data in user space after the buffer if xdp_adjust_head and friends are
+in play.
 
-Basically, you can only change the input part without having to reset
-data_size_out to sizeof(buffer). Not a big deal, I'll change it.
+Changes in v4:
+* Document bpf_prog_test_run and bpf_prog_test_run_xattr
+* Use struct bpf_prog_test_run_attr for return values
 
->
-> > It also means
-> > we can't take a const struct attr, which is contrary to the other
-> > xattr functions which
-> > already exist.
->
-> I don't see an issue with that.
->
-> > I think actually inspecting the required size of the output buffer
-> > will be a rare
-> > occurrence, so making the user jump through the hoop of a pointer doesn't seem
-> > too onerous.
->
-> I think the opposite is the case.
-> If the output buffer is provided the test will be comparing it
-> to expected value.
+Changes in v3:
+* Introduce bpf_prog_test_run_xattr instead of modifying the existing
+  function
 
-Yeah, I wasn't thinking too hard on this one, sorry. User space needs to check
-where the end of the buffer is.
+Changes in v2:
+* Make the syscall return ENOSPC if data_size_out is too small
+* Make bpf_prog_test_run return EINVAL if size_out is missing
+* Document the new behaviour of data_size_out
+
+Lorenz Bauer (4):
+  bpf: respect size hint to BPF_PROG_TEST_RUN if present
+  tools: sync uapi/linux/bpf.h
+  libbpf: add bpf_prog_test_run_xattr
+  selftests: add a test for bpf_prog_test_run_xattr
+
+ include/uapi/linux/bpf.h                 |  7 ++-
+ net/bpf/test_run.c                       | 15 ++++++-
+ tools/include/uapi/linux/bpf.h           |  7 ++-
+ tools/lib/bpf/bpf.c                      | 23 ++++++++++
+ tools/lib/bpf/bpf.h                      | 19 ++++++++
+ tools/testing/selftests/bpf/test_progs.c | 55 +++++++++++++++++++++++-
+ 6 files changed, 119 insertions(+), 7 deletions(-)
 
 -- 
-Lorenz Bauer  |  Systems Engineer
-25 Lavington St., London SE1 0NZ
-
-www.cloudflare.com
+2.17.1
