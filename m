@@ -1,41 +1,60 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH] prctl: add PR_{GET,SET}_KILL_DESCENDANTS_ON_EXIT
-Date: Wed, 28 Nov 2018 09:23:39 -0600
-Message-ID: <87r2f5gr9g.fsf@xmission.com>
-References: <20181127225408.7553-1-j@bitron.ch>
-        <20181127225408.7553-2-j@bitron.ch>
-        <20181128144230.GG30395@redhat.com>
+From: Lorenz Bauer <lmb@cloudflare.com>
+Subject: Re: [PATCH v3 3/4] libbpf: add bpf_prog_test_run_xattr
+Date: Wed, 28 Nov 2018 16:52:30 +0000
+Message-ID: <CACAyw99uw8z-bQzOtTDMo0t2UhjCSUmTDqWhyfxPsS5_6LiOsw@mail.gmail.com>
+References: <20181116125329.3974-1-lmb@cloudflare.com> <20181122140910.1079-1-lmb@cloudflare.com>
+ <20181122140910.1079-4-lmb@cloudflare.com> <b4308b6f-5a1d-f015-4e7f-abca1b3902be@iogearbox.net>
+ <20181124222012.lcc6hn6vr6xbw7zr@ast-mbp.dhcp.thefacebook.com>
+ <CACAyw98oSS6qbeNCaqukM81V6vWXdrU2HCp2-b++7E=Xnx7e=w@mail.gmail.com> <CAADnVQ+CJsUUG2otaLJjvnNQ55tRx6ANsFUrTWkb-k=Ztw1MRg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181128144230.GG30395@redhat.com> (Oleg Nesterov's message of
-        "Wed, 28 Nov 2018 15:42:31 +0100")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: =?utf-8?Q?J=C3=BCrg?= Billeter <j@bitron.ch>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CAADnVQ+CJsUUG2otaLJjvnNQ55tRx6ANsFUrTWkb-k=Ztw1MRg@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Daniel Borkmann <daniel@iogearbox.net>, Alexei Starovoitov <ast@kernel.org>, netdev@vger.kernel.org, linux-api@vger.kernel.org, Y Song <ys114321@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Oleg Nesterov <oleg@redhat.com> writes:
-
-> On 11/27, Jürg Billeter wrote:
->>
->> @@ -704,6 +713,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
->>  	struct task_struct *p, *n;
->>  	LIST_HEAD(dead);
->>  
->> +	if (group_dead && tsk->signal->kill_descendants_on_exit)
->> +		walk_process_tree(tsk, kill_descendant_visitor, NULL);
+On Wed, 28 Nov 2018 at 05:05, Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
 >
-> Well, this is not exactly right, at least this is suboptimal in that
-> other sub-threads can too call walk_process_tree(kill_descendant_visitor)
-> later for no reason.
+> On Mon, Nov 26, 2018 at 4:45 AM Lorenz Bauer <lmb@cloudflare.com> wrote:
+> >
+> > That's what I had initially, but that makes re-using test_attr really
+> > awkward. Either
+> > you need to reset data_out_size before every call because it is used
+> > to return the
+> > buffer size,
+>
+> I think that is exactly what the user of the interface would want to do.
+> Why would anyone keep reusing the same test_attr on multiple calls
+> into the kernel without changing the fields?
 
-Oleg I think I am missing something.
+Basically, you can only change the input part without having to reset
+data_size_out to sizeof(buffer). Not a big deal, I'll change it.
 
-Reading kernel/exit.c I see "group_dead = atomic_dec_and_test(&tsk->signal->live)".
-Which seems like enough to ensure exactly one task/thread calls walk_process_tree.
+>
+> > It also means
+> > we can't take a const struct attr, which is contrary to the other
+> > xattr functions which
+> > already exist.
+>
+> I don't see an issue with that.
+>
+> > I think actually inspecting the required size of the output buffer
+> > will be a rare
+> > occurrence, so making the user jump through the hoop of a pointer doesn't seem
+> > too onerous.
+>
+> I think the opposite is the case.
+> If the output buffer is provided the test will be comparing it
+> to expected value.
 
-Can you explain what I am missing?
+Yeah, I wasn't thinking too hard on this one, sorry. User space needs to check
+where the end of the buffer is.
 
-Eric
+-- 
+Lorenz Bauer  |  Systems Engineer
+25 Lavington St., London SE1 0NZ
+
+www.cloudflare.com
