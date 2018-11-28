@@ -1,44 +1,47 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: extending wait4(2) or waitid(2) linux syscall
-Date: Wed, 28 Nov 2018 10:41:00 +0100
-Message-ID: <87efb5h74j.fsf@oldenburg.str.redhat.com>
-References: <20170420152051.568f2050.albert.aribaud@3adev.fr>
-	<20181115140441.GA2171@altlinux.org>
-	<CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com>
-	<20181115153008.GC2171@altlinux.org>
-	<CAK8P3a38zcMikOiaHXrKbc3URL6-6kETk=1F-Bx7LywPyRh=yg@mail.gmail.com>
-	<87d0qrooj3.fsf@oldenburg.str.redhat.com>
-	<CAK8P3a3pVS3_70PQ+SeiSZtqXFcb5HON0QGRypWfu=cfLPgN=w@mail.gmail.com>
-	<87r2f5h7kk.fsf@oldenburg.str.redhat.com>
-	<67B157B9-80B0-4862-87F4-F03DECBD58CC@brauner.io>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [RFC PATCH RESEND v3 3/3] ptrace: add PTRACE_EVENT_SECCOMP
+ support to PTRACE_GET_SYSCALL_INFO
+Date: Wed, 28 Nov 2018 13:35:46 +0100
+Message-ID: <20181128123545.GA30395@redhat.com>
+References: <20181125022150.46258a20@akathisia>
+ <20181125022340.5703400f@akathisia>
+ <20181126143524.GB1660@redhat.com>
+ <20181127040732.1c9f7965@akathisia>
+ <20181127123116.GA13284@redhat.com>
+ <20181127232753.GA18755@altlinux.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-97621-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <67B157B9-80B0-4862-87F4-F03DECBD58CC@brauner.io> (Christian
-	Brauner's message of "Wed, 28 Nov 2018 22:36:49 +1300")
-To: Christian Brauner <christian@brauner.io>
-Cc: libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, "Dmitry V. Levin" <ldv@altlinux.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181127232753.GA18755@altlinux.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Dmitry V. Levin" <ldv@altlinux.org>
+Cc: Elvira Khabirova <lineprinter@altlinux.org>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@redhat.com>, Eugene Syromyatnikov <esyr@redhat.com>, Andy Lutomirski <luto@kernel.org>, strace-devel@lists.strace.io, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Christian Brauner:
+On 11/28, Dmitry V. Levin wrote:
+>
+> > Just like ptrace_request(PTRACE_LISTEN)
+> > does but you can do this lockless (no need to lock_task_sighand()).
+>
+> Why this can be done lockless?  All other places in that file do
+> the locking,
 
-> The intention has always been to start a
-> file descriptor process API off of that.
-> If we land my procfd_signal() patchset we are in good shape for
-> procfd_wait(), imho.
+PTRACE_LISTEN too doesn't need lock_task_sighand() to access ->last_siginfo,
+this code predates ptrace_freeze_traced() which ensures that the tracee can't
+go away and clear ->last_siginfo.
 
-How does this interact with SIGCHLD and the wait system call (or any
-wait function without an explicitly specified PID)?
+However, unlike ptrace_get_syscall(), PTRACE_LISTEN needs spin_lock_irq(siglock),
+it modifies ->jobctl and calls signal_wake_up().
 
-I understand that I have somewhat conflicting requirements, but in terms
-of relative priorities, launching a process without spurious signals and
-wait notifications would probably offer the larger benefit.
+> > Of course, debugger can do PTRACE_SETSIGINFO and confuse itself but probably we
+> > do not care?
+>
+> The only potential issue I could think of is whether PTRACE_SETSIGINFO
+> could be used this way to cause an information leak by making
+> PTRACE_GET_SYSCALL_INFO access some unrelated data.
 
-Thanks,
-Florian
+Well, afaics ptrace_get_syscall() does nothing "special", debugger can use other
+PTRACE_ requests to get the same info?
+
+Oleg.
