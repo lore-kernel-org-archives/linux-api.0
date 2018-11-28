@@ -1,73 +1,64 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH] procfd_signal.2: document procfd_signal syscall
-Date: Thu, 29 Nov 2018 10:12:05 +1300
-Message-ID: <E81EDAAC-F9E3-4D3A-AEE8-09E266D7FEDB@brauner.io>
-References: <20181119103241.5229-1-christian@brauner.io> <20181119103241.5229-4-christian@brauner.io> <87in0g7waf.fsf@oldenburg.str.redhat.com>
+From: Joey Pabalinas <joeypabalinas@gmail.com>
+Subject: Re: [PATCH v1 2/2] signal: add procfd_signal() syscall
+Date: Wed, 28 Nov 2018 11:45:34 -1000
+Message-ID: <20181128214534.xxqoyy7mi5dw54kj@gmail.com>
+References: <20181119103241.5229-1-christian@brauner.io>
+ <20181119103241.5229-3-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/signed; micalg=pgp-sha512;
+        protocol="application/pgp-signature"; boundary="z6lftnd4otlm67ut"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87in0g7waf.fsf@oldenburg.str.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20181119103241.5229-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>, Joey Pabalinas <joeypabalinas@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On November 29, 2018 9:59:52 AM GMT+13:00, Florian Weimer <fweimer@redhat=
-=2Ecom> wrote:
->* Christian Brauner:
->
->> +=2E\" Copyright (C) 2018 Christian Brauner <christian@brauner=2Eio>
->
->The text seems to be largely derived from rt_sigqueueinfo, so I'm not
->sure if this appropriate here=2E
->
->> +the null signal (0) can be used to check if a process with a given
->> +PID exists=2E
->
->What does this mean if hte process is identified by file descriptor?
->
->> +=2EPP
->> +The optional
->> +=2EI info
->> +argument specifies the data to accompany the signal=2E
->> +This argument is a pointer to a structure of type
->> +=2EIR siginfo_t ,
->> +described in
->> +=2EBR sigaction (2)
->> +(and defined by including
->> +=2EIR <sigaction=2Eh> )=2E
->> +The caller should set the following fields in this structure:
->> +=2ETP
->> +=2EI si_code
->> +This must be one of the
->> +=2EB SI_*
->> +codes in the Linux kernel source file
->> +=2EIR include/asm-generic/siginfo=2Eh ,
->> +with the restriction that the code must be negative
->> +(i=2Ee=2E, cannot be
->> +=2EBR SI_USER ,
->> +which is used by the kernel to indicate a signal sent by
->> +=2EBR kill (2))
->> +and cannot (since Linux 2=2E6=2E39) be
->
->Obsolete reference in this context=2E
->
->> +=2ETP
->> +=2EB ESRCH
->> +The process or process group does not exist=2E
->> +Note that an existing process might be a zombie,
->> +a process that has terminated execution, but
->> +has not yet been
->> +=2EBR wait (2)ed
->> +for=2E
->
->Again: What does this mean if the process identified by a descriptor?
->Does a process in zombie state exist in this sense or not?
->
->Thanks,
->Florian
 
-Updating the document is on my Todo=2E
-Florian, can you take a look at the actual patch too, please?
+--z6lftnd4otlm67ut
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Mon, Nov 19, 2018 at 11:32:39AM +0100, Christian Brauner wrote:
+> +	if (info) {
+> +		ret =3D __copy_siginfo_from_user(sig, &kinfo, info);
+> +		if (unlikely(ret))
+> +			goto err;
+
+What's the reason you don't propagate up the errors from __copy_siginfo_fro=
+m_user()?
+Granted, I admit that -E2BIG is kind of weird to return, but -EFAULT seems =
+like a
+fairly sane error.
+
+Or is there some reason it's more useful to just return -EINVAL for all of =
+the
+failure cases here?
+
+--=20
+Cheers,
+Joey Pabalinas
+
+--z6lftnd4otlm67ut
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEENpTlWU2hUK/KMvHp2rGdfm9DtVIFAlv/DH0ACgkQ2rGdfm9D
+tVJCLRAAx/hb15R5NTBk/RrIx/ZB+Ftn5+bixm6/+Ihy7Q3aJGoxmWlwS0nBkWaB
+lHMsrBtxihHOo4za4ttgCawNnrdL1pooh04owHU+3YEVIJOZ5tdQLVvSVGtIPi4Z
+Hclg6orB1w5f/RGCYLKARyrMnNpNstNb8zvdLswfKu8g4Wl44uBj603IaO3h47Or
+rbsTWfBpuF2s8iS7KlFMKMjboYkOI8Gv9wsv79CcvFhGmTR+hTnT4xqvUk/hULbI
+shCz/jfsNf0mu3FoAW/ac9tl/xswoT+Yr1L26KOeQGyB7D3Pme0f89JXwgBELAVD
+LXnzvBzDxzm0Ly2Va57SVcqfn7lCxifLpG2FwHWohedG7CIbba0A+bUk/ZvN6AAI
+3r7aVxUSEsRBRKXSKvv0uCI59GaetcZK3Cc4cmc+bbQNdKMBLSHxuAzKFhsjo5HV
+2hXFnKZDEBApNRFcHZZdiZzczgd4VNabY5AA73iHqgiai43wHew8VfjiqyHKRwoa
+6q7LEiA/MbxLMH84p4V5QbmjvFh/TxVX813YoHr0ZKmm+iRHSswPkYnRUF/KPalc
+DW8JtP8gm0dX3GiIpKthB9VzTa/opcQEjVeUFWu8o2tD4yT/bMB8Xfqg/Rbt9ioJ
+zfdX/lhZxVXFqM81qWlBeYAGMZKO3+ui+1jFjal5OLwHWnUwNAM=
+=1lIC
+-----END PGP SIGNATURE-----
+
+--z6lftnd4otlm67ut--
