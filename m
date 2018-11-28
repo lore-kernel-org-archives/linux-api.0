@@ -1,7 +1,7 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v4 2/4] tools: sync uapi/linux/bpf.h
-Date: Wed, 28 Nov 2018 16:53:10 +0000
-Message-ID: <20181128165312.19500-3-lmb@cloudflare.com>
+Subject: [PATCH v4 4/4] selftests: add a test for bpf_prog_test_run_xattr
+Date: Wed, 28 Nov 2018 16:53:12 +0000
+Message-ID: <20181128165312.19500-5-lmb@cloudflare.com>
 References: <20181116125329.3974-1-lmb@cloudflare.com>
  <20181128165312.19500-1-lmb@cloudflare.com>
 Return-path: <netdev-owner@vger.kernel.org>
@@ -11,30 +11,101 @@ To: ast@kernel.org, daniel@iogearbox.net
 Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-Pull changes from "bpf: respect size hint to BPF_PROG_TEST_RUN if present".
+Make sure that bpf_prog_test_run_xattr returns the correct length
+and that the kernel respects the output size hint. Also check
+that errno indicates ENOSPC if there is a short output buffer given.
 
 Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
 ---
- tools/include/uapi/linux/bpf.h | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ tools/testing/selftests/bpf/test_progs.c | 55 +++++++++++++++++++++++-
+ 1 file changed, 54 insertions(+), 1 deletion(-)
 
-diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
-index 23e2031a43d4..01b0e5f485c4 100644
---- a/tools/include/uapi/linux/bpf.h
-+++ b/tools/include/uapi/linux/bpf.h
-@@ -360,8 +360,11 @@ union bpf_attr {
- 	struct { /* anonymous struct used by BPF_PROG_TEST_RUN command */
- 		__u32		prog_fd;
- 		__u32		retval;
--		__u32		data_size_in;
--		__u32		data_size_out;
-+		__u32		data_size_in;	/* input: len of data_in */
-+		__u32		data_size_out;	/* input/output: len of data_out
-+						 *   returns ENOSPC if data_out
-+						 *   is too small.
-+						 */
- 		__aligned_u64	data_in;
- 		__aligned_u64	data_out;
- 		__u32		repeat;
+diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
+index c1e688f61061..ee827deb948a 100644
+--- a/tools/testing/selftests/bpf/test_progs.c
++++ b/tools/testing/selftests/bpf/test_progs.c
+@@ -70,7 +70,7 @@ static struct {
+ 	.tcp.urg_ptr = 123,
+ };
+ 
+-#define CHECK(condition, tag, format...) ({				\
++#define _CHECK(condition, tag, duration, format...) ({			\
+ 	int __ret = !!(condition);					\
+ 	if (__ret) {							\
+ 		error_cnt++;						\
+@@ -83,6 +83,11 @@ static struct {
+ 	__ret;								\
+ })
+ 
++#define CHECK(condition, tag, format...) \
++	_CHECK(condition, tag, duration, format)
++#define CHECK_ATTR(condition, tag, format...) \
++	_CHECK(condition, tag, tattr.duration, format)
++
+ static int bpf_find_map(const char *test, struct bpf_object *obj,
+ 			const char *name)
+ {
+@@ -124,6 +129,53 @@ static void test_pkt_access(void)
+ 	bpf_object__close(obj);
+ }
+ 
++static void test_prog_run_xattr(void)
++{
++	const char *file = "./test_pkt_access.o";
++	struct bpf_object *obj;
++	char buf[10];
++	int err;
++	struct bpf_prog_test_run_attr tattr = {
++		.repeat = 1,
++		.data_in = &pkt_v4,
++		.data_size_in = sizeof(pkt_v4),
++		.data_out = buf,
++		.data_size_out = 5,
++	};
++
++	err = bpf_prog_load(file, BPF_PROG_TYPE_SCHED_CLS, &obj,
++			    &tattr.prog_fd);
++	if (CHECK_ATTR(err, "load", "err %d errno %d\n", err, errno))
++		return;
++
++	memset(buf, 0, sizeof(buf));
++
++	err = bpf_prog_test_run_xattr(&tattr);
++	CHECK_ATTR(err != -1 || errno != ENOSPC || tattr.retval, "run",
++	      "err %d errno %d retval %d\n", err, errno, tattr.retval);
++
++	CHECK_ATTR(tattr.data_size_out != sizeof(pkt_v4), "data_size_out",
++	      "incorrect output size, want %lu have %u\n",
++	      sizeof(pkt_v4), tattr.data_size_out);
++
++	CHECK_ATTR(buf[5] != 0, "overflow",
++	      "BPF_PROG_TEST_RUN ignored size hint\n");
++
++	tattr.data_out = NULL;
++	tattr.data_size_out = 0;
++	errno = 0;
++
++	err = bpf_prog_test_run_xattr(&tattr);
++	CHECK_ATTR(err || errno || tattr.retval, "run_no_output",
++	      "err %d errno %d retval %d\n", err, errno, tattr.retval);
++
++	tattr.data_size_out = 1;
++	err = bpf_prog_test_run_xattr(&tattr);
++	CHECK_ATTR(err != -EINVAL, "run_wrong_size_out", "err %d\n", err);
++
++	bpf_object__close(obj);
++}
++
+ static void test_xdp(void)
+ {
+ 	struct vip key4 = {.protocol = 6, .family = AF_INET};
+@@ -1837,6 +1889,7 @@ int main(void)
+ 	jit_enabled = is_jit_enabled();
+ 
+ 	test_pkt_access();
++	test_prog_run_xattr();
+ 	test_xdp();
+ 	test_xdp_adjust_tail();
+ 	test_l4lb_all();
 -- 
 2.17.1
