@@ -1,54 +1,68 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: extending wait4(2) or waitid(2) linux syscall
-Date: Wed, 28 Nov 2018 10:50:44 -0800
-Message-ID: <CAKOZueuvs88BusE-MT4Eyc8xJjm5d3YZ=PUMJnKndfHmOeLpRg@mail.gmail.com>
-References: <20170420152051.568f2050.albert.aribaud@3adev.fr>
- <20181115140441.GA2171@altlinux.org> <CAK8P3a0Gsqa8WTbALOUchRyEA7E2f3P1f=XQ8nD2xQaemfPpcQ@mail.gmail.com>
- <20181115153008.GC2171@altlinux.org> <CAK8P3a38zcMikOiaHXrKbc3URL6-6kETk=1F-Bx7LywPyRh=yg@mail.gmail.com>
- <87d0qrooj3.fsf@oldenburg.str.redhat.com> <CAK8P3a3pVS3_70PQ+SeiSZtqXFcb5HON0QGRypWfu=cfLPgN=w@mail.gmail.com>
- <87r2f5h7kk.fsf@oldenburg.str.redhat.com> <67B157B9-80B0-4862-87F4-F03DECBD58CC@brauner.io>
- <87efb5h74j.fsf@oldenburg.str.redhat.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] procfd_signal.2: document procfd_signal syscall
+Date: Wed, 28 Nov 2018 21:59:52 +0100
+Message-ID: <87in0g7waf.fsf@oldenburg.str.redhat.com>
+References: <20181119103241.5229-1-christian@brauner.io>
+        <20181119103241.5229-4-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <libc-alpha-return-97650-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <87efb5h74j.fsf@oldenburg.str.redhat.com>
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Christian Brauner <christian@brauner.io>, GNU C Library <libc-alpha@sourceware.org>, Arnd Bergmann <arnd@arndb.de>, "Dmitry V. Levin" <ldv@altlinux.org>, Albert ARIBAUD <albert.aribaud@3adev.fr>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181119103241.5229-4-christian@brauner.io> (Christian Brauner's
+        message of "Mon, 19 Nov 2018 11:32:40 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 28, 2018 at 1:41 AM, Florian Weimer <fweimer@redhat.com> wrote:
-> * Christian Brauner:
->
->> The intention has always been to start a
->> file descriptor process API off of that.
->> If we land my procfd_signal() patchset we are in good shape for
->> procfd_wait(), imho.
->
-> How does this interact with SIGCHLD and the wait system call (or any
-> wait function without an explicitly specified PID)?
+* Christian Brauner:
 
-It doesn't, but let's take one step at a time. procfd_signal() is a
-good first step. Once procfd_signal() and procfd_wait() exist, and
-managing processes with FDs in general no longer seems odd, we can add
-a clone() option that 1) avoid wiring a new subprocess up to the
-legacy PID-based process-management API, and 2) returns one of these
-fancy new FDs that works with procfd_signal and procfd_wait. (How we
-do that without /proc mounted is an open question, but solvable in a
-few options.)
+> +.\" Copyright (C) 2018 Christian Brauner <christian@brauner.io>
 
-> I understand that I have somewhat conflicting requirements, but in terms
-> of relative priorities, launching a process without spurious signals and
-> wait notifications would probably offer the larger benefit.
+The text seems to be largely derived from rt_sigqueueinfo, so I'm not
+sure if this appropriate here.
 
-I also want a non-process-wide subprocess API. A clean FD-based API is
-how you get it--- it's not an either-or situation. Considering that we
-want to use FDs for general-purpose process management in the future,
-it'd be not only a waste of time, but actually counterproductive, to
-design a non-FD-based API for this non-process-wide sub-process use
-case.
+> +the null signal (0) can be used to check if a process with a given
+> +PID exists.
+
+What does this mean if hte process is identified by file descriptor?
+
+> +.PP
+> +The optional
+> +.I info
+> +argument specifies the data to accompany the signal.
+> +This argument is a pointer to a structure of type
+> +.IR siginfo_t ,
+> +described in
+> +.BR sigaction (2)
+> +(and defined by including
+> +.IR <sigaction.h> ).
+> +The caller should set the following fields in this structure:
+> +.TP
+> +.I si_code
+> +This must be one of the
+> +.B SI_*
+> +codes in the Linux kernel source file
+> +.IR include/asm-generic/siginfo.h ,
+> +with the restriction that the code must be negative
+> +(i.e., cannot be
+> +.BR SI_USER ,
+> +which is used by the kernel to indicate a signal sent by
+> +.BR kill (2))
+> +and cannot (since Linux 2.6.39) be
+
+Obsolete reference in this context.
+
+> +.TP
+> +.B ESRCH
+> +The process or process group does not exist.
+> +Note that an existing process might be a zombie,
+> +a process that has terminated execution, but
+> +has not yet been
+> +.BR wait (2)ed
+> +for.
+
+Again: What does this mean if the process identified by a descriptor?
+Does a process in zombie state exist in this sense or not?
+
+Thanks,
+Florian
