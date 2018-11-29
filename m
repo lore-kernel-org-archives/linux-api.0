@@ -1,139 +1,97 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Thu, 29 Nov 2018 12:37:15 +0100
-Message-ID: <87va4g5d3o.fsf@oldenburg.str.redhat.com>
-References: <877ehnbwqy.fsf@oldenburg.str.redhat.com>
- <2d62c9e2-375b-2791-32ce-fdaa7e7664fd@intel.com>
- <87bm6zaa04.fsf@oldenburg.str.redhat.com>
- <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
- <20181109180947.GF5481@ram.oc3035372033.ibm.com>
- <87efbqqze4.fsf@oldenburg.str.redhat.com>
- <20181127102350.GA5795@ram.oc3035372033.ibm.com>
- <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
- <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
+Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
+Date: Thu, 29 Nov 2018 13:28:15 +0100
+Message-ID: <87in0g5aqo.fsf@oldenburg.str.redhat.com>
+References: <20181120105124.14733-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com> (Dave Hansen's
- message of "Tue, 27 Nov 2018 07:31:38 -0800")
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: linux-mm@kvack.org, Ram Pai <linuxram@us.ibm.com>, linuxppc-dev@lists.ozlabs.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181120105124.14733-1-christian@brauner.io> (Christian
+        Brauner's message of "Tue, 20 Nov 2018 11:51:23 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-* Dave Hansen:
+Disclaimer: I'm looking at this patch because Christian requested it.
+I'm not a kernel developer.
 
-> On 11/27/18 3:57 AM, Florian Weimer wrote:
->> I would have expected something that translates PKEY_DISABLE_WRITE |
->> PKEY_DISABLE_READ into PKEY_DISABLE_ACCESS, and also accepts
->> PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ, for consistency with POWER.
->> 
->> (My understanding is that PKEY_DISABLE_ACCESS does not disable all
->> access, but produces execute-only memory.)
->
-> Correct, it disables all data access, but not execution.
+* Christian Brauner:
 
-So I would expect something like this (completely untested, I did not
-even compile this):
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index 3cf7b533b3d1..3f27ffd8ae87 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -398,3 +398,4 @@
+>  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+>  385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+>  386	i386	rseq			sys_rseq			__ia32_sys_rseq
+> +387	i386	procfd_signal		sys_procfd_signal		__ia32_compat_sys_procfd_signal
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index f0b1709a5ffb..8a30cde82450 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -343,6 +343,7 @@
+>  332	common	statx			__x64_sys_statx
+>  333	common	io_pgetevents		__x64_sys_io_pgetevents
+>  334	common	rseq			__x64_sys_rseq
+> +335	64	procfd_signal		__x64_sys_procfd_signal
+>  
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> @@ -386,3 +387,4 @@
+>  545	x32	execveat		__x32_compat_sys_execveat/ptregs
+>  546	x32	preadv2			__x32_compat_sys_preadv64v2
+>  547	x32	pwritev2		__x32_compat_sys_pwritev64v2
+> +548	x32	procfd_signal		__x32_compat_sys_procfd_signal
 
-diff --git a/arch/powerpc/include/asm/pkeys.h b/arch/powerpc/include/asm/pkeys.h
-index 20ebf153c871..bed23f9e8336 100644
---- a/arch/powerpc/include/asm/pkeys.h
-+++ b/arch/powerpc/include/asm/pkeys.h
-@@ -199,6 +199,11 @@ static inline bool arch_pkeys_enabled(void)
- 	return !static_branch_likely(&pkey_disabled);
- }
- 
-+static inline bool arch_pkey_access_rights_valid(unsigned long rights)
-+{
-+	return (rights & ~(unsigned long)PKEY_ACCESS_MASK) == 0;
-+}
-+
- extern void pkey_mm_init(struct mm_struct *mm);
- extern bool arch_supports_pkeys(int cap);
- extern unsigned int arch_usable_pkeys(void);
-diff --git a/arch/x86/include/asm/pkeys.h b/arch/x86/include/asm/pkeys.h
-index 19b137f1b3be..e3e1d5a316e8 100644
---- a/arch/x86/include/asm/pkeys.h
-+++ b/arch/x86/include/asm/pkeys.h
-@@ -14,6 +14,17 @@ static inline bool arch_pkeys_enabled(void)
- 	return boot_cpu_has(X86_FEATURE_OSPKE);
- }
- 
-+static inline bool arch_pkey_access_rights_valid(unsigned long rights)
-+{
-+	if (rights & ~(unsigned long)PKEY_ACCESS_MASK)
-+		return false;
-+	if (rights & PKEY_DISABLE_READ) {
-+		/* x86 can only disable read access along with write access. */
-+		return rights & (PKEY_DISABLE_WRITE | PKEY_DISABLE_ACCESS);
-+	}
-+	return true;
-+}
-+
- /*
-  * Try to dedicate one of the protection keys to be used as an
-  * execute-only protection key.
-diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-index 87a57b7642d3..b9b78145017f 100644
---- a/arch/x86/kernel/fpu/xstate.c
-+++ b/arch/x86/kernel/fpu/xstate.c
-@@ -928,7 +928,13 @@ int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
- 		return -EINVAL;
- 
- 	/* Set the bits we need in PKRU:  */
--	if (init_val & PKEY_DISABLE_ACCESS)
-+	if (init_val & (PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ))
-+		/*
-+		 * arch_pkey_access_rights_valid checked that
-+		 * PKEY_DISABLE_READ is actually representable on x86
-+		 * (that is, it comes with PKEY_DISABLE_ACCESS or
-+		 * PKEY_DISABLE_WRITE).
-+		 */
- 		new_pkru_bits |= PKRU_AD_BIT;
- 	if (init_val & PKEY_DISABLE_WRITE)
- 		new_pkru_bits |= PKRU_WD_BIT;
-diff --git a/include/linux/pkeys.h b/include/linux/pkeys.h
-index 2955ba976048..2c330fabbe55 100644
---- a/include/linux/pkeys.h
-+++ b/include/linux/pkeys.h
-@@ -48,6 +48,11 @@ static inline void copy_init_pkru_to_fpregs(void)
- {
- }
- 
-+static inline bool arch_pkey_access_rights_valid(unsigned long rights)
-+{
-+	return false;
-+}
-+
- #endif /* ! CONFIG_ARCH_HAS_PKEYS */
- 
- #endif /* _LINUX_PKEYS_H */
-diff --git a/mm/mprotect.c b/mm/mprotect.c
-index 6d331620b9e5..f4cefc3540df 100644
---- a/mm/mprotect.c
-+++ b/mm/mprotect.c
-@@ -597,7 +597,7 @@ SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
- 	if (flags)
- 		return -EINVAL;
- 	/* check for unsupported init values */
--	if (init_val & ~PKEY_ACCESS_MASK)
-+	if (!arch_pkey_access_rights_valid(init_val))
- 		return -EINVAL;
- 
- 	down_write(&current->mm->mmap_sem);
+Is there a reason why these numbers have to be different?
+
+(See the recent discussion with Andy Lutomirski.)
+
+> +static int do_procfd_signal(int fd, int sig, kernel_siginfo_t *kinfo, int flags,
+> +			    bool had_siginfo)
+> +{
+> +	int ret;
+> +	struct fd f;
+> +	struct pid *pid;
+> +
+> +	/* Enforce flags be set to 0 until we add an extension. */
+> +	if (flags)
+> +		return -EINVAL;
+> +
+> +	f = fdget_raw(fd);
+> +	if (!f.file)
+> +		return -EBADF;
+> +
+> +	/* Is this a process file descriptor? */
+> +	ret = -EINVAL;
+> +	if (!proc_is_tgid_procfd(f.file))
+> +		goto err;
+[…]
+> +	ret = kill_pid_info(sig, kinfo, pid);
+
+I would like to see some comment here what happens to zombie processes.
+
+> +/**
+> + *  sys_procfd_signal - send a signal to a process through a process file
+> + *                      descriptor
+> + *  @fd: the file descriptor of the process
+> + *  @sig: signal to be sent
+> + *  @info: the signal info
+> + *  @flags: future flags to be passed
+> + */
+> +SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user *, info,
+> +		int, flags)
+
+Sorry, I'm quite unhappy with the name.  “signal” is for signal handler
+management.  procfd_sendsignal, procfd_sigqueueinfo or something like
+that would be fine.  Even procfd_kill would be better IMHO.
+
+Looking at the rt_tgsigqueueinfo interface, is there a way to implement
+the “tg” part with the current procfd_signal interface?  Would you use
+openat to retrieve the Tgid: line from "status"?
 
 Thanks,
 Florian
