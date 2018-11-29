@@ -1,63 +1,250 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Thu, 29 Nov 2018 22:40:49 +0100
-Message-ID: <CAK8P3a1_if7+Ak2eefU6JeZT9KW827gkLHaObX-QOsHrB5ZwfA@mail.gmail.com>
-References: <20181120105124.14733-1-christian@brauner.io> <87in0g5aqo.fsf@oldenburg.str.redhat.com>
- <36323361-90BD-41AF-AB5B-EE0D7BA02C21@amacapital.net> <993B98AC-51DF-4131-AF7F-7DA2A7F485F1@brauner.io>
- <CALCETrWnQNMQcCmFZrftVVYgAMW6DT3gyxvVb_v9_enUCUkHiw@mail.gmail.com>
- <20181129195551.woe2bl3z3yaysqb6@brauner.io> <6E21165F-2C76-4877-ABD9-0C86D55FD6AA@amacapital.net>
- <CAK8P3a2i9DFaS9-3A9V_pKwFfwVR0bDqgLosmivge3Cx2VyiuQ@mail.gmail.com> <20181129213458.4h44dpg6ltqow4k4@brauner.io>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
+Date: Thu, 29 Nov 2018 16:08:26 -0700
+Message-ID: <20181129230826.GB4676@cisco>
+References: <20181029224031.29809-1-tycho@tycho.ws>
+ <20181029224031.29809-2-tycho@tycho.ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181129213458.4h44dpg6ltqow4k4@brauner.io>
+Content-Disposition: inline
+In-Reply-To: <20181029224031.29809-2-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
-To: christian@brauner.io
-Cc: Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, cyphar@cyphar.com, Al Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Daniel Colascione <dancol@google.com>, Tim Murray <timmurray@google.com>, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>
+Cc: Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 29, 2018 at 10:35 PM Christian Brauner <christian@brauner.io> wrote:
-> On Thu, Nov 29, 2018 at 10:02:13PM +0100, Arnd Bergmann wrote:
-> > On Thu, Nov 29, 2018 at 9:14 PM Andy Lutomirski <luto@amacapital.net> wrote:
-> >
-> > Is the current procfd_signal() proposal (under whichever name) sufficient
-> > to correctly implement both sys_rt_sigqueueinfo() and sys_rt_tgsigqueueinfo()?
->
-> Yes, I see no reason why not. My idea is to extend it - after we have a
-> basic version in - to also work with:
-> /proc/<pid>/task/<tid>
-> If I'm not mistaken this should be sufficient to get rt_tgsigqueueinfo.
-> The thread will be uniquely identified by the tid descriptor and no
-> combination of /proc/<pid> and /proc/<pid>/task/<tid> is needed. Does
-> that sound reasonable?
+On Mon, Oct 29, 2018 at 04:40:30PM -0600, Tycho Andersen wrote:
+> +	resp.id = req.id;
+> +	resp.error = -512; /* -ERESTARTSYS */
+> +	resp.val = 0;
+> +
+> +	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), 0);
 
-Yes. So it would currently replace rt_gsigqueueinfo() but
-not rt_tgsigqueueinfo(), and could be extended to do both
-afterwards, without making the interface ugly in any form?
+So, it turns out this *doesn't* work, and the reason this test was
+passing is because of poor hygiene on my part.
 
-I suppose we can always add more flags if needed, and you
-already ensure that flags is zero for the moment.
+Per the documentation in include/linux/errno.h,
 
-> > Can we implement sys_rt_sigtimedwait() based on signalfd()?
-> >
-> > If yes, that would leave waitid(), which already needs a replacement
-> > for y2038, and that should then also return a signalfd_siginfo.
-> > My current preference for waitid() would be to do a version that
-> > closely resembles the current interface, but takes a signalfd_siginfo
-> > and a __kernel_timespec based rusage replacement (possibly
-> > two of them to let us map wait6), but does not operate on procfd or
-> > take a signal mask. That would require yet another syscall, but I
-> > don't think I can do that before we want to have the set of y2038
-> > safe syscalls.
->
-> All sounds reasonable to me but that's not a blocker for the current
-> syscall though, is it?
+/*
+ * These should never be seen by user programs.  To return one of ERESTART*
+ * codes, signal_pending() MUST be set.  Note that ptrace can observe these
+ * at syscall exit tracing, but they will never be left for the debugged user
+ * process to see.
+ */
+#define ERESTARTSYS     512
 
-I'd like to at least understand about sys_rt_sigtimedwait() before
-we go on, so we all know what's coming, and document the
-plans in the changelog.
+So basically, if you respond with -ERESTARTSYS with no signal pending, you'll
+leak it to userspace. It turns out this is already possible with
+SECCOMP_RET_TRAP (and probably ptrace alone, although I didn't try it out),
+see the program below.
 
-waitid() probably remains on my plate anyway, and I hope understand
-where we're at with it.
+The question is: do we care? If so, it seems like we may need to handle the
+-ERESTARTSYS-style cases even when there is no signal pending. If we don't,
+there's precedent for us to just do the same thing as what happens for
+SECCOMP_RET_TRACE, but we should probably at least fix the docs.
 
-     Arnd
+Tycho
+
+
+#include <stdio.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <sys/ioctl.h>
+#include <inttypes.h>
+#include <linux/filter.h>
+#include <linux/seccomp.h>
+#include <linux/ptrace.h>
+#include <linux/elf.h>
+#include <pthread.h>
+
+
+static int filter_syscall(int syscall_nr)
+{
+	struct sock_filter filter[] = {
+		BPF_STMT(BPF_LD+BPF_W+BPF_ABS, offsetof(struct seccomp_data, nr)),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, syscall_nr, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_TRACE),
+		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+	};
+
+	struct sock_fprog bpf_prog = {
+		.len = (unsigned short)(sizeof(filter)/sizeof(filter[0])),
+		.filter = filter,
+	};
+
+	int ret;
+
+	ret = syscall(__NR_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_prog);
+	if (ret < 0) {
+		perror("prctl failed");
+		return -1;
+	}
+
+	return ret;
+}
+
+typedef struct {
+        uint64_t        r15;
+        uint64_t        r14;
+        uint64_t        r13;
+        uint64_t        r12;
+        uint64_t        bp;
+        uint64_t        bx;
+        uint64_t        r11;
+        uint64_t        r10;
+        uint64_t        r9;
+        uint64_t        r8;
+        uint64_t        ax;
+        uint64_t        cx;
+        uint64_t        dx;
+        uint64_t        si;
+        uint64_t        di;
+        uint64_t        orig_ax;
+        uint64_t        ip;
+        uint64_t        cs;
+        uint64_t        flags;
+        uint64_t        sp;
+        uint64_t        ss;
+        uint64_t        fs_base;
+        uint64_t        gs_base;
+        uint64_t        ds;
+        uint64_t        es;
+        uint64_t        fs;
+        uint64_t        gs;
+} user_regs_struct64;
+
+int main(int argc, char **argv)
+{
+	pid_t pid;
+	user_regs_struct64 regs;
+	struct iovec iov = {.iov_base = &regs, .iov_len = sizeof(regs)};
+	int status;
+
+	pid = fork();
+
+	if (pid == 0) {
+		if (signal(SIGUSR1, signal_handler) == SIG_ERR) {
+			perror("signal");
+			exit(1);
+		}
+
+		if (filter_syscall(__NR_getpid) < 0)
+			exit(1);
+
+		/* i'm lazy, so sue me :) */
+		sleep(1);
+
+		errno = 0;
+		pid = syscall(__NR_getpid);
+
+		/*
+		 * we get:
+		 *   getpid(): -1, errno: 512
+		 * probably should get
+		 *   getpid(): <pid> errno: 0
+		 */
+		printf("getpid(): %d, errno: %d\n", pid, errno);
+		exit(errno);
+	}
+
+	if (ptrace(PTRACE_ATTACH, pid, NULL, 0) < 0) {
+		perror("ptrace attach");
+		goto out;
+	}
+
+	if (waitpid(pid, NULL, 0) != pid) {
+		perror("waitpid");
+		goto out;
+	}
+
+	if (ptrace(PTRACE_SETOPTIONS, pid, NULL, PTRACE_O_TRACESECCOMP) < 0) {
+		perror("ptrace setoptions");
+		goto out;
+	}
+
+	if (ptrace(PTRACE_CONT, pid, NULL, 0) != 0) {
+		perror("ptrace cont");
+		goto out;
+	}
+
+	if (waitpid(pid, &status, 0) != pid) {
+		perror("wait for trace");
+		goto out;
+	}
+
+	if (status >> 8 != (SIGTRAP | (PTRACE_EVENT_SECCOMP<<8))) {
+		printf("got bad trap event?\n");
+		goto out;
+	}
+
+	if (ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov) < 0) {
+		perror("getregset");
+		goto out;
+	}
+
+	/*
+	 * Tell the syscall to restart. Per include/linux/errno.h this should
+	 * only be set when signal_pending() is set. But we just won't send
+	 * any signals to the process, and we'll see this in userspace.
+	 */
+	regs.ax = -512; /* -ERESTARTSYS */
+
+	/*
+	 * This makes the this_syscall < 0 check in __seccomp_filter()
+	 * trigger, so we skip the syscall and return whatever is in ax
+	 */
+	regs.orig_ax = -512; /* -ERESTARTSYS */
+
+	if (ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov) < 0) {
+		perror("setregset");
+		goto out;
+	}
+
+	if (ptrace(PTRACE_CONT, pid, NULL, 0) < 0) {
+		perror("cont after setregset");
+		goto out;
+	}
+
+	while (1) {
+		if (waitpid(pid, &status, 0) != pid) {
+			perror("wait for death");
+			goto out;
+		}
+
+		if (!WIFSTOPPED(status)) {
+			break;
+		}
+
+		if (ptrace(PTRACE_CONT, pid, NULL, 0) < 0) {
+			perror("cont after setregset");
+			goto out;
+		}
+
+	}
+
+	if (WIFSIGNALED(status)) {
+		printf("didn't exit: %d\n", WTERMSIG(status));
+		return 1;
+	}
+
+	if (WEXITSTATUS(status)) {
+		printf("exited: %d\n", WEXITSTATUS(status));
+		return 1;
+	}
+
+	return 0;
+out:
+	kill(pid, SIGKILL);
+	return 1;
+}
