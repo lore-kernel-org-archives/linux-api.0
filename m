@@ -1,97 +1,54 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Thu, 29 Nov 2018 13:28:15 +0100
-Message-ID: <87in0g5aqo.fsf@oldenburg.str.redhat.com>
-References: <20181120105124.14733-1-christian@brauner.io>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH] prctl: add PR_{GET,SET}_KILL_DESCENDANTS_ON_EXIT
+Date: Thu, 29 Nov 2018 13:34:09 +0100
+Message-ID: <20181129123409.GA10645@redhat.com>
+References: <20181127225408.7553-1-j@bitron.ch>
+ <20181127225408.7553-2-j@bitron.ch>
+ <20181128144230.GG30395@redhat.com>
+ <87r2f5gr9g.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181120105124.14733-1-christian@brauner.io> (Christian
-        Brauner's message of "Tue, 20 Nov 2018 11:51:23 +0100")
+Content-Disposition: inline
+In-Reply-To: <87r2f5gr9g.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: =?iso-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Disclaimer: I'm looking at this patch because Christian requested it.
-I'm not a kernel developer.
+On 11/28, Eric W. Biederman wrote:
+>
+> Oleg Nesterov <oleg@redhat.com> writes:
+>
+> > On 11/27, J�rg Billeter wrote:
+> >>
+> >> @@ -704,6 +713,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
+> >>  	struct task_struct *p, *n;
+> >>  	LIST_HEAD(dead);
+> >>
+> >> +	if (group_dead && tsk->signal->kill_descendants_on_exit)
+> >> +		walk_process_tree(tsk, kill_descendant_visitor, NULL);
+> >
+> > Well, this is not exactly right, at least this is suboptimal in that
+> > other sub-threads can too call walk_process_tree(kill_descendant_visitor)
+> > later for no reason.
+>
+> Oleg I think I am missing something.
 
-* Christian Brauner:
+No, it is stupid me who can't read,
 
-> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-> index 3cf7b533b3d1..3f27ffd8ae87 100644
-> --- a/arch/x86/entry/syscalls/syscall_32.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-> @@ -398,3 +398,4 @@
->  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
->  385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
->  386	i386	rseq			sys_rseq			__ia32_sys_rseq
-> +387	i386	procfd_signal		sys_procfd_signal		__ia32_compat_sys_procfd_signal
-> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-> index f0b1709a5ffb..8a30cde82450 100644
-> --- a/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -343,6 +343,7 @@
->  332	common	statx			__x64_sys_statx
->  333	common	io_pgetevents		__x64_sys_io_pgetevents
->  334	common	rseq			__x64_sys_rseq
-> +335	64	procfd_signal		__x64_sys_procfd_signal
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> @@ -386,3 +387,4 @@
->  545	x32	execveat		__x32_compat_sys_execveat/ptregs
->  546	x32	preadv2			__x32_compat_sys_preadv64v2
->  547	x32	pwritev2		__x32_compat_sys_pwritev64v2
-> +548	x32	procfd_signal		__x32_compat_sys_procfd_signal
+> Reading kernel/exit.c I see "group_dead = atomic_dec_and_test(&tsk->signal->live)".
+> Which seems like enough to ensure exactly one task/thread calls walk_process_tree.
 
-Is there a reason why these numbers have to be different?
+Of course you right, sorry for confusion.
 
-(See the recent discussion with Andy Lutomirski.)
+To me it would be more clean to call walk_process_tree(kill_descendant_visitor)
+unconditionally in find_new_reaper() right before "if (has_child_subreaper)", but
+then we will need to shift read_lock(tasklist) from walk_process_tree().
 
-> +static int do_procfd_signal(int fd, int sig, kernel_siginfo_t *kinfo, int flags,
-> +			    bool had_siginfo)
-> +{
-> +	int ret;
-> +	struct fd f;
-> +	struct pid *pid;
-> +
-> +	/* Enforce flags be set to 0 until we add an extension. */
-> +	if (flags)
-> +		return -EINVAL;
-> +
-> +	f = fdget_raw(fd);
-> +	if (!f.file)
-> +		return -EBADF;
-> +
-> +	/* Is this a process file descriptor? */
-> +	ret = -EINVAL;
-> +	if (!proc_is_tgid_procfd(f.file))
-> +		goto err;
-[…]
-> +	ret = kill_pid_info(sig, kinfo, pid);
+So I think the patch is mostly fine, the only problem I can see is that
+PR_SET_KILL_DESCENDANTS_ON_EXIT can race with PR_SET_CHILD_SUBREAPER, they both
+need to update the bits in the same word.
 
-I would like to see some comment here what happens to zombie processes.
-
-> +/**
-> + *  sys_procfd_signal - send a signal to a process through a process file
-> + *                      descriptor
-> + *  @fd: the file descriptor of the process
-> + *  @sig: signal to be sent
-> + *  @info: the signal info
-> + *  @flags: future flags to be passed
-> + */
-> +SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user *, info,
-> +		int, flags)
-
-Sorry, I'm quite unhappy with the name.  “signal” is for signal handler
-management.  procfd_sendsignal, procfd_sigqueueinfo or something like
-that would be fine.  Even procfd_kill would be better IMHO.
-
-Looking at the rt_tgsigqueueinfo interface, is there a way to implement
-the “tg” part with the current procfd_signal interface?  Would you use
-openat to retrieve the Tgid: line from "status"?
-
-Thanks,
-Florian
+Oleg.
