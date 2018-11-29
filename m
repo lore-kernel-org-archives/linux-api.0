@@ -1,54 +1,69 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH] prctl: add PR_{GET,SET}_KILL_DESCENDANTS_ON_EXIT
-Date: Thu, 29 Nov 2018 13:34:09 +0100
-Message-ID: <20181129123409.GA10645@redhat.com>
-References: <20181127225408.7553-1-j@bitron.ch>
- <20181127225408.7553-2-j@bitron.ch>
- <20181128144230.GG30395@redhat.com>
- <87r2f5gr9g.fsf@xmission.com>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
+Date: Thu, 29 Nov 2018 14:05:31 +0100
+Message-ID: <36933e07-d7b3-49be-4ad9-2028fa1977f7@vivier.eu>
+References: <20181010161430.11633-1-laurent@vivier.eu>
+ <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
+ <1541041159.4632.6.camel@HansenPartnership.com>
+ <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
+ <fcebfa0c-b389-5c4d-19b8-2f08b487ec25@vivier.eu>
+ <87zhusq3x7.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87r2f5gr9g.fsf@xmission.com>
+In-Reply-To: <87zhusq3x7.fsf@xmission.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: =?iso-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 11/28, Eric W. Biederman wrote:
->
-> Oleg Nesterov <oleg@redhat.com> writes:
->
-> > On 11/27, J�rg Billeter wrote:
-> >>
-> >> @@ -704,6 +713,9 @@ static void exit_notify(struct task_struct *tsk, int group_dead)
-> >>  	struct task_struct *p, *n;
-> >>  	LIST_HEAD(dead);
-> >>
-> >> +	if (group_dead && tsk->signal->kill_descendants_on_exit)
-> >> +		walk_process_tree(tsk, kill_descendant_visitor, NULL);
-> >
-> > Well, this is not exactly right, at least this is suboptimal in that
-> > other sub-threads can too call walk_process_tree(kill_descendant_visitor)
-> > later for no reason.
->
-> Oleg I think I am missing something.
+Le 01/11/2018 à 15:16, Eric W. Biederman a écrit :
+> Laurent Vivier <laurent@vivier.eu> writes:
+> 
+>> On 01/11/2018 04:51, Jann Horn wrote:
+>>> On Thu, Nov 1, 2018 at 3:59 AM James Bottomley
+>>> <James.Bottomley@hansenpartnership.com> wrote:
+>>>>
+>>>> On Tue, 2018-10-16 at 11:52 +0200, Laurent Vivier wrote:
+>>>>> Hi,
+>>>>>
+>>>>> Any comment on this last version?
+>>>>>
+>>>>> Any chance to be merged?
+>>>>
+>>>> I've got a use case for this:  I went to one of the Graphene talks in
+>>>> Edinburgh and it struck me that we seem to keep reinventing the type of
+>>>> sandboxing that qemu-user already does.  However if you want to do an
+>>>> x86 on x86 sandbox, you can't currently use the binfmt_misc mechanism
+>>>> because that has you running *every* binary on the system emulated.
+>>>> Doing it per user namespace fixes this problem and allows us to at
+>>>> least cut down on all the pointless duplication.
+>>>
+>>> Waaaaaait. What? qemu-user does not do "sandboxing". qemu-user makes
+>>> your code slower and *LESS* secure. As far as I know, qemu-user is
+>>> only intended for purposes like development and testing.
+>>>
+>>
+>> I think the idea here is not to run qemu, but to use an interpreter
+>> (something like gVisor) into a container to control the binaries
+>> execution inside the container without using this interpreter on the
+>> host itself (container and host shares the same binfmt_misc
+>> magic/mask).
+> 
+> Please remind me of this patchset after the merge window is over, and if
+> there are no issues I will take it via my user namespace branch.
+> 
+> Last I looked I had a concern that some of the permission check issues
+> were being papered over by using override cred instead of fixing the
+> deaper code.  Sometimes they are necessary but seeing work-arounds
+> instead of fixes for problems tends to be a maintenance issue, possibly
+> with security consequences.  Best is if the everyone agrees on how all
+> of the interfaces work so their are no surprises.
 
-No, it is stupid me who can't read,
+I don't know where we are in the merge window, but is there something I
+can do to have this merged?
 
-> Reading kernel/exit.c I see "group_dead = atomic_dec_and_test(&tsk->signal->live)".
-> Which seems like enough to ensure exactly one task/thread calls walk_process_tree.
-
-Of course you right, sorry for confusion.
-
-To me it would be more clean to call walk_process_tree(kill_descendant_visitor)
-unconditionally in find_new_reaper() right before "if (has_child_subreaper)", but
-then we will need to shift read_lock(tasklist) from walk_process_tree().
-
-So I think the patch is mostly fine, the only problem I can see is that
-PR_SET_KILL_DESCENDANTS_ON_EXIT can race with PR_SET_CHILD_SUBREAPER, they both
-need to update the bits in the same word.
-
-Oleg.
+Thanks,
+Laurent
