@@ -1,50 +1,34 @@
-From: Stephen Smalley <sds-+05T5uksL2qpZYMLLGbcSA@public.gmane.org>
-Subject: Re: Security modules and sending signals within the same
-	process
-Date: Fri, 30 Nov 2018 11:02:15 -0500
-Message-ID: <e754fa24-899b-f77e-f226-0f070ebad132@tycho.nsa.gov>
-References: <87lg5asilo.fsf@oldenburg.str.redhat.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH v4 3/4] libbpf: add bpf_prog_test_run_xattr
+Date: Fri, 30 Nov 2018 13:21:47 -0800
+Message-ID: <20181130212144.x6ffe2ytr3f3ucrm@ast-mbp.dhcp.thefacebook.com>
+References: <20181116125329.3974-1-lmb@cloudflare.com>
+ <20181128165312.19500-1-lmb@cloudflare.com>
+ <20181128165312.19500-4-lmb@cloudflare.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-In-Reply-To: <87lg5asilo.fsf-fjB847h8rq0pB0kWxzfTigCJwEvxM/w9@public.gmane.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.ubuntu.com/mailman/options/apparmor>,
- <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://lists.ubuntu.com/archives/apparmor>
-List-Post: <mailto:apparmor-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-List-Help: <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.ubuntu.com/mailman/listinfo/apparmor>,
- <mailto:apparmor-request-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org?subject=subscribe>
-Errors-To: apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org
-Sender: "AppArmor" <apparmor-bounces-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org>
-To: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, apparmor-nLRlyDuq1AZFpShjVBNYrg@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, selinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181128165312.19500-4-lmb@cloudflare.com>
+Sender: netdev-owner@vger.kernel.org
+To: Lorenz Bauer <lmb@cloudflare.com>
+Cc: ast@kernel.org, daniel@iogearbox.net, netdev@vger.kernel.org, linux-api@vger.kernel.org, ys114321@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-T24gMTEvMzAvMTggMTA6MTQgQU0sIEZsb3JpYW4gV2VpbWVyIHdyb3RlOgo+IElzIGl0IGd1YXJh
-bnRlZWQgdGhhdCB0YXNrcyBpbiB0aGUgc2FtZSB0aHJlYWQgZ3JvdXAgY2FuIGFsd2F5cyBzZW5k
-Cj4gc2lnbmFscyB0byBlYWNoIG90aGVyLCBpcnJlc3BlY3RpdmUgb2YgdGhlaXIgcmVzcGVjdGl2
-ZSBjcmVkZW50aWFscwo+IHN0cnVjdHM/Cj4gCj4gSXQncyBub3QgY2xlYXIgdG8gbWUgd2hldGhl
-ciB0aGlzIGlzIGFsd2F5cyBwb3NzaWJsZSBiYXNlZCBvbiB0aGUKPiBzZWN1cml0eV90YXNrX2tp
-bGwgaW1wbGVtZW50YXRpb25zIEkndmUgZXhhbWluZWQuCj4gCj4gSSB3YW50IHRvIHN1cHBvcnQg
-cGVyLXRocmVhZCBzZXRyZXN1aWQvc2V0cmVzZ2lkLCBidXQgd2UgYWxzbyB1c2UKPiBzaWduYWxz
-IGZvciBpbnRlci10aHJlYWQgY29tbXVuaWNhdGlvbi4gIFRoaXMgaXMgbWFpbmx5IGZvciB0aHJl
-YWQKPiBjYW5jZWxsYXRpb247IHRoZSBzZXR4Z2lkIHN0dWZmIGlzbid0IG5lZWRlZCBmb3IgdGhy
-ZWFkcyB3aXRoIHByaXZhdGUKPiBjcmVkZW50aWFscy4gIEkgd29uZGVyIGlmIEkgbmVlZCB0byBk
-aXNhYmxlIGNhbmNlbGxhdGlvbiBmb3IgdGhyZWFkcwo+IHdpdGggc3VjaCBjcmVkZW50aWFscy4K
-CihmaXhlZCBzZWxpbnV4IGxpc3QgYWRkcmVzcywgd2hpY2ggbW92ZWQgdG8gdmdlcikKCkxvb2tz
-IGxpa2UgY29tbWl0IDA2NWFkZDM5NDFiZCAoInNpZ25hbHM6IGNoZWNrX2tpbGxfcGVybWlzc2lv
-bigpOiBkb24ndCAKY2hlY2sgY3JlZHMgaWYgc2FtZV90aHJlYWRfZ3JvdXAoKSIpIHNraXBwZWQg
-dGhlIHVpZC1iYXNlZCBjaGVja3MgaWYgdGhlIApzZW5kZXIgYW5kIHRhcmdldCB3ZXJlIGluIHRo
-ZSBzYW1lIHRocmVhZCBncm91cCwgYnV0IG5vdCB0aGUgc2VjdXJpdHkgCmhvb2sgY2FsbC4gIE9u
-ZSBjb3VsZCBhcmd1ZSB0aGF0IHRoZSBzZWN1cml0eSBob29rIGNhbGwgb3VnaHQgdG8gYmUgCnNr
-aXBwZWQgaW4gdGhhdCBjYXNlIGFzIHdlbGwgdXNpbmcgdGhlIHNhbWUgcmF0aW9uYWxlIGdpdmVu
-IGluIHRoYXQgCmNvbW1pdC4gIE5vdGhpbmcgYXBwZWFycyB0byBndWFyYW50ZWUgdGhlIHByb3Bl
-cnR5IHlvdSBzdGF0ZSBhYm92ZSBmb3IgCnNlY3VyaXR5X3Rhc2tfa2lsbCBpbXBsZW1lbnRhdGlv
-bnMsIGFsdGhvdWdoIG5vbmUgb2YgdGhlIGluLXRyZWUgdXNlcnMgCmFyZSBiYXNlZCBvbiB1aWRz
-IG9yIGdpZHMgc28gc2V0cmVzdWlkL3NldHJlc2dpZCBzaG91bGRuJ3QgYWZmZWN0IHRoZW0uCgot
-LSAKQXBwQXJtb3IgbWFpbGluZyBsaXN0CkFwcEFybW9yQGxpc3RzLnVidW50dS5jb20KTW9kaWZ5
-IHNldHRpbmdzIG9yIHVuc3Vic2NyaWJlIGF0OiBodHRwczovL2xpc3RzLnVidW50dS5jb20vbWFp
-bG1hbi9saXN0aW5mby9hcHBhcm1vcgo=
+On Wed, Nov 28, 2018 at 04:53:11PM +0000, Lorenz Bauer wrote:
+> Add a new function, which encourages safe usage of the test interface.
+> bpf_prog_test_run continues to work as before, but should be considered
+> unsafe.
+> 
+> Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
+..
+> +
+> +LIBBPF_API int bpf_prog_test_run_xattr(struct bpf_prog_test_run_attr *test_attr);
+
+it fails to be build due to:
+  LINK     tools/testing/selftests/bpf/test_libbpf
+(117) does NOT match with num of versioned symbols in testing/selftests/bpf/libbpf.so (116).
+Please make sure all LIBBPF_API symbols are versioned in libbpf.map.
+
+Please fixup and respin.
+The rest looks good.
