@@ -1,144 +1,107 @@
-From: Christian Brauner <christian@brauner.io>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Sat, 01 Dec 2018 12:52:24 +1300
-Message-ID: <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io>
+Date: Fri, 30 Nov 2018 15:53:43 -0800
+Message-ID: <CALCETrWcJCjNGEqgq57Bm8O3qWkfEwau2SiXAv+SNYvNmXnBCA@mail.gmail.com>
 References: <20181120105124.14733-1-christian@brauner.io> <87in0g5aqo.fsf@oldenburg.str.redhat.com>
+ <36323361-90BD-41AF-AB5B-EE0D7BA02C21@amacapital.net> <993B98AC-51DF-4131-AF7F-7DA2A7F485F1@brauner.io>
+ <CALCETrWnQNMQcCmFZrftVVYgAMW6DT3gyxvVb_v9_enUCUkHiw@mail.gmail.com>
+ <20181129195551.woe2bl3z3yaysqb6@brauner.io> <6E21165F-2C76-4877-ABD9-0C86D55FD6AA@amacapital.net>
+ <CAK8P3a2i9DFaS9-3A9V_pKwFfwVR0bDqgLosmivge3Cx2VyiuQ@mail.gmail.com>
+ <87y39b2lm2.fsf@xmission.com> <20181130065606.kmilbbq46oeycjp5@brauner.io>
+ <CAK8P3a0kqPii5TwFAo_JHLX=o_FDMFVKXxgzzbDjLFZ7OQ5QCQ@mail.gmail.com>
+ <CALCETrW2aphWwEY4=hUwo_JBCvkQyMjxzxGd9FCW017kMLaMOQ@mail.gmail.com> <CAK8P3a1isSRCd-OLJK15C+gSJdpeR=zEXghc8+AMM5QYYw3Tyg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87in0g5aqo.fsf@oldenburg.str.redhat.com>
+In-Reply-To: <CAK8P3a1isSRCd-OLJK15C+gSJdpeR=zEXghc8+AMM5QYYw3Tyg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Andrew Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, Florian Weimer <fweimer@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Daniel Colascione <dancol@google.com>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On November 30, 2018 1:28:15 AM GMT+13:00, Florian Weimer <fweimer@redhat=
-=2Ecom> wrote:
->Disclaimer: I'm looking at this patch because Christian requested it=2E
->I'm not a kernel developer=2E
+On Fri, Nov 30, 2018 at 2:10 PM Arnd Bergmann <arnd@arndb.de> wrote:
+>
+> On Fri, Nov 30, 2018 at 5:36 PM Andy Lutomirski <luto@kernel.org> wrote:
+> >
+> > On Fri, Nov 30, 2018 at 3:41 AM Arnd Bergmann <arnd@arndb.de> wrote:
+> > > siginfo_t as it is now still has a number of other downsides, and Andy in
+> > > particular didn't like the idea of having three new variants on x86
+> > > (depending on how you count). His alternative suggestion of having
+> > > a single syscall entry point that takes a 'signfo_t __user *' but interprets
+> > > it as compat_siginfo depending on in_compat_syscall()/in_x32_syscall()
+> > > should work correctly, but feels wrong to me, or at least inconsistent
+> > > with how we do this elsewhere.
+> >
+> > If everyone else is okay with it, I can get on board with three
+> > variants on x86.  What I can't get on board with is *five* variants on
+> > x86, which would be:
+> >
+> > procfd_signal via int80 / the 32-bit vDSO: the ia32 structure
+> >
+> > syscall64 with nr == 335 (presumably): 64-bit
+>
+> These seem unavoidable
 
-Given all your expertise this really doesn't matter=2E :)
-You're the one having to deal with this
-in glibc after all=2E
-Thanks for doing this and sorry for the late reply=2E
-I missed that mail=2E
-
->
->* Christian Brauner:
->
->> diff --git a/arch/x86/entry/syscalls/syscall_32=2Etbl
->b/arch/x86/entry/syscalls/syscall_32=2Etbl
->> index 3cf7b533b3d1=2E=2E3f27ffd8ae87 100644
->> --- a/arch/x86/entry/syscalls/syscall_32=2Etbl
->> +++ b/arch/x86/entry/syscalls/syscall_32=2Etbl
->> @@ -398,3 +398,4 @@
->>  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
->>=20
->385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevent=
-s
->>  386	i386	rseq			sys_rseq			__ia32_sys_rseq
->>
->+387	i386	procfd_signal		sys_procfd_signal		__ia32_compat_sys_procfd_sign=
-al
->> diff --git a/arch/x86/entry/syscalls/syscall_64=2Etbl
->b/arch/x86/entry/syscalls/syscall_64=2Etbl
->> index f0b1709a5ffb=2E=2E8a30cde82450 100644
->> --- a/arch/x86/entry/syscalls/syscall_64=2Etbl
->> +++ b/arch/x86/entry/syscalls/syscall_64=2Etbl
->> @@ -343,6 +343,7 @@
->>  332	common	statx			__x64_sys_statx
->>  333	common	io_pgetevents		__x64_sys_io_pgetevents
->>  334	common	rseq			__x64_sys_rseq
->> +335	64	procfd_signal		__x64_sys_procfd_signal
->> =20
->>  #
->>  # x32-specific system call numbers start at 512 to avoid cache
->impact
->> @@ -386,3 +387,4 @@
->>  545	x32	execveat		__x32_compat_sys_execveat/ptregs
->>  546	x32	preadv2			__x32_compat_sys_preadv64v2
->>  547	x32	pwritev2		__x32_compat_sys_pwritev64v2
->> +548	x32	procfd_signal		__x32_compat_sys_procfd_signal
->
->Is there a reason why these numbers have to be different?
->
->(See the recent discussion with Andy Lutomirski=2E)
->
->> +static int do_procfd_signal(int fd, int sig, kernel_siginfo_t
->*kinfo, int flags,
->> +			    bool had_siginfo)
->> +{
->> +	int ret;
->> +	struct fd f;
->> +	struct pid *pid;
->> +
->> +	/* Enforce flags be set to 0 until we add an extension=2E */
->> +	if (flags)
->> +		return -EINVAL;
->> +
->> +	f =3D fdget_raw(fd);
->> +	if (!f=2Efile)
->> +		return -EBADF;
->> +
->> +	/* Is this a process file descriptor? */
->> +	ret =3D -EINVAL;
->> +	if (!proc_is_tgid_procfd(f=2Efile))
->> +		goto err;
->[=E2=80=A6]
->> +	ret =3D kill_pid_info(sig, kinfo, pid);
->
->I would like to see some comment here what happens to zombie processes=2E
-
-You'd get ESRCH=2E
-I'm not sure if that has always been the case=2E
-Eric recently did some excellent refactoring of the signal code=2E
-Iirc, part of that involved not delivering signals to zombies=2E
-That's at least how I remember it=2E
-I don't have access to source code though atm=2E
+Indeed, although, in hindsight, they should have had the same numbers.
 
 >
->> +/**
->> + *  sys_procfd_signal - send a signal to a process through a process
->file
->> + *                      descriptor
->> + *  @fd: the file descriptor of the process
->> + *  @sig: signal to be sent
->> + *  @info: the signal info
->> + *  @flags: future flags to be passed
->> + */
->> +SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user
->*, info,
->> +		int, flags)
+> > syscall64 with nr == 548 | 0x40000000: x32
+> >
+> > syscall64 with nr == 548: 64-bit entry but in_compat_syscall() ==
+> > true, behavior is arbitrary
+> >
+> > syscall64 with nr == 335 | 0x40000000: x32 entry, but
+> > in_compat_syscall() == false, behavior is arbitrary
 >
->Sorry, I'm quite unhappy with the name=2E  =E2=80=9Csignal=E2=80=9D is fo=
-r signal handler
->management=2E  procfd_sendsignal, procfd_sigqueueinfo or something like
->that would be fine=2E  Even procfd_kill would be better IMHO=2E
-
-Ok=2E I only have strong opinions to procfd_kill()=2E
-Mainly because the new syscall takes
-the job of multiple other syscalls
-so kill gives the wrong impression=2E
-I'll come up with a better name in the next iteration=2E
-
+> Am I misreading the code? The way I understand it, setting the
+> 0x40000000 bit means that both in_compat_syscall() and
+> in_x32_syscall become() true, based on
 >
->Looking at the rt_tgsigqueueinfo interface, is there a way to implement
->the =E2=80=9Ctg=E2=80=9D part with the current procfd_signal interface?  =
-Would you use
->openat to retrieve the Tgid: line from "status"?
+> static inline bool in_x32_syscall(void)
+> {
+> #ifdef CONFIG_X86_X32_ABI
+>         if (task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT)
+>                 return true;
+> #endif
+>         return false;
+> }
 
-Yes, the tg part can be implemented=2E
-As I pointed out in another mail my
-I is to make this work by using file
-descriptors for /proc/<pid>/task/<tid>=2E
-I don't want this in the initial patchset though=2E
-I prefer to slowly add those features
-once we have gotten the basic functionality
-in=2E
-
+Yes.
 
 >
->Thanks,
->Florian
+> The '548 | 0x40000000' part seems to be the only sensible
+> way to handle x32 here. What exactly would you propose to
+> avoid defining the other entry points?
+
+I would propose that it should be 335 | 0x40000000.  I can't see any
+reasonable way to teach the kernel to reject 335 | 0x40000000 that
+wouldn't work just as well to accept it and make it do the right
+thing.  Currently we accept it and do the *wrong* thing, which is no
+good.
+
+>
+> > This mess isn't really Christian's fault -- it's been there for a
+> > while, but it's awful and I don't think we want to perpetuate it.
+>
+> I'm not convinced that not assigning an x32 syscall number
+> improves the situation, it just means that we now have one
+> syscall that behaves completely differently from all others,
+> in that the x32 version requires being called through a
+> SYSCALL_DEFINE() entry point rather than a
+> COMPAT_SYSCALL_DEFINE() one,
+
+There's nothing particularly novel about this.  seccomp(), for
+example, already works like this.
+
+> and we have to
+> add more complexity to the copy_siginfo_from_user()
+> implementation to duplicate the hack that exists in
+> copy_siginfo_from_user32().
+
+What hack are you referring to here?
+
+>
+> Of course, the nicest option would be to completely remove
+> x32 so we can stop worrying about it.
+
+True :)
