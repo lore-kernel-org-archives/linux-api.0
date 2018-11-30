@@ -1,42 +1,50 @@
 From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v8 1/2] seccomp: add a return code to trap to userspace
-Date: Fri, 30 Nov 2018 11:17:51 +0100
-Message-ID: <20181130101751.GA23670@redhat.com>
-References: <20181029224031.29809-1-tycho@tycho.ws>
- <20181029224031.29809-2-tycho@tycho.ws>
- <20181129230826.GB4676@cisco>
+Subject: Re: [PATCH] prctl: add PR_{GET,SET}_KILL_DESCENDANTS_ON_EXIT
+Date: Fri, 30 Nov 2018 11:33:30 +0100
+Message-ID: <20181130103329.GB23670@redhat.com>
+References: <20181127225408.7553-1-j@bitron.ch>
+ <20181127225408.7553-2-j@bitron.ch>
+ <20181128144230.GG30395@redhat.com>
+ <87r2f5gr9g.fsf@xmission.com>
+ <20181129123409.GA10645@redhat.com>
+ <f55261dbc41544363b4348820f67fb01c6d7aaec.camel@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181129230826.GB4676@cisco>
+In-Reply-To: <f55261dbc41544363b4348820f67fb01c6d7aaec.camel@bitron.ch>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
+To: =?iso-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/29, Tycho Andersen wrote:
+On 11/29, Jürg Billeter wrote:
 >
-> /*
->  * These should never be seen by user programs.  To return one of ERESTART*
->  * codes, signal_pending() MUST be set.  Note that ptrace can observe these
->  * at syscall exit tracing, but they will never be left for the debugged user
->  * process to see.
->  */
-> #define ERESTARTSYS     512
+> On Thu, 2018-11-29 at 13:34 +0100, Oleg Nesterov wrote:
+> > To me it would be more clean to call walk_process_tree(kill_descendant_visitor)
+> > unconditionally in find_new_reaper() right before "if (has_child_subreaper)", but
+> > then we will need to shift read_lock(tasklist) from walk_process_tree().
 >
-> So basically, if you respond with -ERESTARTSYS with no signal pending, you'll
-> leak it to userspace.
+> Yes, that's the reason why I added the call before the tasklist lock.
+> Let me know if you want me to move the read lock from
+> walk_process_tree() to PR_SET_CHILD_SUBREAPER (the only caller)
+> instead.
 
-Yes,
+I am fine either way. We can do this later, lets keep your patch simple.
 
-> It turns out this is already possible with
-> SECCOMP_RET_TRAP (and probably ptrace alone,
+> > So I think the patch is mostly fine, the only problem I can see is that
+> > PR_SET_KILL_DESCENDANTS_ON_EXIT can race with PR_SET_CHILD_SUBREAPER, they both
+> > need to update the bits in the same word.
+>
+> Good point. I'll make it a regular bool instead of a bitfield for v2,
 
-Yes,
+Agreed,
 
-> The question is: do we care?
+> unless you have another approach in mind to fix this.
 
-I think we do not care, debugger can do anything with the tracee.
+Well, I think that is_child_subreaper/has_child_subreaper and the new
+kill_descendants_on_exit should live in signal->flags, but we need some
+cleanups to make this possible, so I agree with the boolean.
 
 Oleg.
