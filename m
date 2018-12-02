@@ -1,85 +1,151 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Sun, 2 Dec 2018 09:52:29 +0100
-Message-ID: <20181202085227.6krrxtxermxd7pcq@brauner.io>
-References: <993B98AC-51DF-4131-AF7F-7DA2A7F485F1@brauner.io>
- <CALCETrWnQNMQcCmFZrftVVYgAMW6DT3gyxvVb_v9_enUCUkHiw@mail.gmail.com>
- <20181129195551.woe2bl3z3yaysqb6@brauner.io>
- <6E21165F-2C76-4877-ABD9-0C86D55FD6AA@amacapital.net>
- <CAK8P3a2i9DFaS9-3A9V_pKwFfwVR0bDqgLosmivge3Cx2VyiuQ@mail.gmail.com>
- <87y39b2lm2.fsf@xmission.com>
- <20181130065606.kmilbbq46oeycjp5@brauner.io>
- <CAK8P3a0kqPii5TwFAo_JHLX=o_FDMFVKXxgzzbDjLFZ7OQ5QCQ@mail.gmail.com>
- <87y399s3sc.fsf@xmission.com>
- <87tvjxp8pc.fsf@xmission.com>
+Date: Sun, 2 Dec 2018 11:03:06 +0100
+Message-ID: <20181202100304.labt63mzrlr5utdl@brauner.io>
+References: <20181120105124.14733-1-christian@brauner.io>
+ <87in0g5aqo.fsf@oldenburg.str.redhat.com>
+ <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87tvjxp8pc.fsf@xmission.com>
+In-Reply-To: <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, cyphar@cyphar.com, Al Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Daniel Colascione <dancol@google.com>, Tim Murray <timmurray@google.com>, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Dec 01, 2018 at 09:28:47AM -0600, Eric W. Biederman wrote:
+On Sat, Dec 01, 2018 at 12:52:24PM +1300, Christian Brauner wrote:
+> On November 30, 2018 1:28:15 AM GMT+13:00, Florian Weimer <fweimer@redhat.com> wrote:
+> >Disclaimer: I'm looking at this patch because Christian requested it.
+> >I'm not a kernel developer.
 > 
-> It just occurs to me that the simple way to implement
-> procfd_sigqueueinfo info is like:
+> Given all your expertise this really doesn't matter. :)
+> You're the one having to deal with this
+> in glibc after all.
+> Thanks for doing this and sorry for the late reply.
+> I missed that mail.
 > 
-> int copy_siginfo_from_user_any(kernel_siginfo_t *info, siginfo_t *uinfo)
-> {
-> #ifdef CONFIG_COMPAT
-> 	if (in_compat_syscall)
-> 		return copy_siginfo_from_user32(info, uinfo);
+> >
+> >* Christian Brauner:
+> >
+> >> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl
+> >b/arch/x86/entry/syscalls/syscall_32.tbl
+> >> index 3cf7b533b3d1..3f27ffd8ae87 100644
+> >> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> >> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> >> @@ -398,3 +398,4 @@
+> >>  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+> >> 
+> >385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+> >>  386	i386	rseq			sys_rseq			__ia32_sys_rseq
+> >>
+> >+387	i386	procfd_signal		sys_procfd_signal		__ia32_compat_sys_procfd_signal
+> >> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl
+> >b/arch/x86/entry/syscalls/syscall_64.tbl
+> >> index f0b1709a5ffb..8a30cde82450 100644
+> >> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> >> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> >> @@ -343,6 +343,7 @@
+> >>  332	common	statx			__x64_sys_statx
+> >>  333	common	io_pgetevents		__x64_sys_io_pgetevents
+> >>  334	common	rseq			__x64_sys_rseq
+> >> +335	64	procfd_signal		__x64_sys_procfd_signal
+> >>  
+> >>  #
+> >>  # x32-specific system call numbers start at 512 to avoid cache
+> >impact
+> >> @@ -386,3 +387,4 @@
+> >>  545	x32	execveat		__x32_compat_sys_execveat/ptregs
+> >>  546	x32	preadv2			__x32_compat_sys_preadv64v2
+> >>  547	x32	pwritev2		__x32_compat_sys_pwritev64v2
+> >> +548	x32	procfd_signal		__x32_compat_sys_procfd_signal
+> >
+> >Is there a reason why these numbers have to be different?
+> >
+> >(See the recent discussion with Andy Lutomirski.)
+> >
+> >> +static int do_procfd_signal(int fd, int sig, kernel_siginfo_t
+> >*kinfo, int flags,
+> >> +			    bool had_siginfo)
+> >> +{
+> >> +	int ret;
+> >> +	struct fd f;
+> >> +	struct pid *pid;
+> >> +
+> >> +	/* Enforce flags be set to 0 until we add an extension. */
+> >> +	if (flags)
+> >> +		return -EINVAL;
+> >> +
+> >> +	f = fdget_raw(fd);
+> >> +	if (!f.file)
+> >> +		return -EBADF;
+> >> +
+> >> +	/* Is this a process file descriptor? */
+> >> +	ret = -EINVAL;
+> >> +	if (!proc_is_tgid_procfd(f.file))
+> >> +		goto err;
+> >[…]
+> >> +	ret = kill_pid_info(sig, kinfo, pid);
+> >
+> >I would like to see some comment here what happens to zombie processes.
+> 
+> You'd get ESRCH.
+> I'm not sure if that has always been the case.
+> Eric recently did some excellent refactoring of the signal code.
+> Iirc, part of that involved not delivering signals to zombies.
+> That's at least how I remember it.
+> I don't have access to source code though atm.
 
-Right, though that would require a cast afaict.
+Ok, I finally have access to source code again. Scratch what I said above!
+I looked at the code and tested it. If the process has exited but not
+yet waited upon aka is a zombie procfd_send_signal() will return 0. This
+is identical to kill(2) behavior. It should've been sort-of obvious
+since when a process is in zombie state /proc/<pid> will still be around
+which means that struct pid must still be around.
 
-static int __copy_siginfo_from_user_generic(int signo, kernel_siginfo_t *kinfo,
-                                           siginfo_t *info)
-{
-#ifdef CONFIG_COMPAT
-       if (in_compat_syscall())
-               return __copy_siginfo_from_user32(
-                       signo, kinfo, (struct compat_siginfo __user *)info);
-#endif
-       return __copy_siginfo_from_user(signo, kinfo, info);
-}
-
-It seems that a cast to (compat_siginfo __user *) should be safe in this
-context? I've at least seen similar things done for __sys_sendmsg().
-
-> #endif
-> 	return copy_siginfo_from_user(info, uinfo);                        
-> }
 > 
-> long procfd_sigqueueinfo(int fd, siginfo_t *uinfo)
-
-**bikeshedding**
-Not a fan of that name. I'm going to go with procfd_send_signal().
-sigqueue gives non-native speakers a lot of room for spelling errors and
-it always seemed opaque to me what this function is doing without
-consulting the manpage. :)
-
-> {
-> 	kernel_siginfo info;
+> >
+> >> +/**
+> >> + *  sys_procfd_signal - send a signal to a process through a process
+> >file
+> >> + *                      descriptor
+> >> + *  @fd: the file descriptor of the process
+> >> + *  @sig: signal to be sent
+> >> + *  @info: the signal info
+> >> + *  @flags: future flags to be passed
+> >> + */
+> >> +SYSCALL_DEFINE4(procfd_signal, int, fd, int, sig, siginfo_t __user
+> >*, info,
+> >> +		int, flags)
+> >
+> >Sorry, I'm quite unhappy with the name.  “signal” is for signal handler
+> >management.  procfd_sendsignal, procfd_sigqueueinfo or something like
+> >that would be fine.  Even procfd_kill would be better IMHO.
 > 
->         if (copy_siginfo_from_user_any(&info, uinfo))
->         	return -EFAULT;
-> 	...;                
-> }
+> Ok. I only have strong opinions to procfd_kill().
+> Mainly because the new syscall takes
+> the job of multiple other syscalls
+> so kill gives the wrong impression.
+> I'll come up with a better name in the next iteration.
 > 
-> It looks like there is already a place in ptrace.c that already
-> hand rolls copy_siginfo_from_user_any.
+> >
+> >Looking at the rt_tgsigqueueinfo interface, is there a way to implement
+> >the “tg” part with the current procfd_signal interface?  Would you use
+> >openat to retrieve the Tgid: line from "status"?
 > 
-> So while I would love to figure out the subset of siginfo_t tha we can
-> just pass through, as I think that would make a better more forward
-> compatible copy_siginfo_from_user32.  I think for this use case we just
-> add the in_compat_syscall test and then we just need to ensure this new
-> system call is placed in the proper places in the syscall table.
+> Yes, the tg part can be implemented.
+> As I pointed out in another mail my
+> I is to make this work by using file
+> descriptors for /proc/<pid>/task/<tid>.
+> I don't want this in the initial patchset though.
+> I prefer to slowly add those features
+> once we have gotten the basic functionality
+> in.
 > 
-> Because we will need 3 call sights: x86_64, x32 and ia32.  As the layout
-> changes between those three subarchitecuters.
 > 
-> Eric
+> >
+> >Thanks,
+> >Florian
 > 
