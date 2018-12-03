@@ -1,100 +1,111 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Mon, 3 Dec 2018 19:02:29 +0100
-Message-ID: <20181203180224.fkvw4kajtbvru2ku@brauner.io>
-References: <20181120105124.14733-1-christian@brauner.io>
- <87in0g5aqo.fsf@oldenburg.str.redhat.com>
- <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io>
- <20181202100304.labt63mzrlr5utdl@brauner.io>
- <8736rebl9s.fsf@oldenburg.str.redhat.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Mon, 3 Dec 2018 16:30:16 -0500 (EST)
+Message-ID: <785966510.18633.1543872616041.JavaMail.zimbra@efficios.com>
+References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com> <20181123183558.GM23599@brightrain.aerifal.cx> <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com> <87bm6cqm31.fsf@oldenburg.str.redhat.com> <688718071.12798.1543247469553.JavaMail.zimbra@efficios.com> <874lc3omh5.fsf@oldenburg.str.redhat.com> <20181126171045.GQ23599@brightrain.aerifal.cx> <2125113706.12987.1543260125953.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <8736rebl9s.fsf@oldenburg.str.redhat.com>
+In-Reply-To: <2125113706.12987.1543260125953.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+To: Rich Felker <dalias@libc.org>
+Cc: Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 03, 2018 at 05:57:51PM +0100, Florian Weimer wrote:
-> * Christian Brauner:
+----- On Nov 26, 2018, at 2:22 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+
+> ----- On Nov 26, 2018, at 12:10 PM, Rich Felker dalias@libc.org wrote:
 > 
-> > Ok, I finally have access to source code again. Scratch what I said above!
-> > I looked at the code and tested it. If the process has exited but not
-> > yet waited upon aka is a zombie procfd_send_signal() will return 0. This
-> > is identical to kill(2) behavior. It should've been sort-of obvious
-> > since when a process is in zombie state /proc/<pid> will still be around
-> > which means that struct pid must still be around.
+>> On Mon, Nov 26, 2018 at 05:03:02PM +0100, Florian Weimer wrote:
+>>> * Mathieu Desnoyers:
+>>> 
+>>> > So let's make __rseq_abi and __rseq_refcount strong symbols then ?
+>>> 
+>>> Yes, please.  (But I'm still not sure we need the reference counter.)
+>> 
+>> The reference counter is needed for out-of-libc implementations
+>> interacting and using the dtor hack. An in-libc implementation doesn't
+>> need to inspect/honor the reference counter, but it does seem to need
+>> to indicate that it has a reference, if you want it to be compatible
+>> with out-of-libc implementations, so that the out-of-libc one will not
+>> unregister the rseq before libc is done with it.
 > 
-> Should we make this state more accessible, by providing a different
-> error code?
-
-No, I don't think we want that. Imho, It's not really helpful. Signals
-are still delivered to zombies. If zombie state were to always mean that
-no-one is going to wait on this thread anymore then it would make sense
-to me. But given that zombie can also mean that someone put a
-sleep(1000) right before their wait() call in the parent it seems odd to
-report back that it is a zombie.
-
+> Let's consider two use-cases here: one (simpler) is use of rseq TLS
+> from thread context by out-of-libc implementations. The other is use of
+> rseq TLS from signal handler by out-of-libc implementations.
 > 
-> Will the system call ever return ESRCH, given that you have a handle for
-> the process?
-
-Yes, whenever you signal a process that has already been waited upon:
-- get procfd handle referring to <proc>
-- <proc> exits and is waited upon
-- procfd_send_signal(procfd, ...) returns -1 with errno == ESRCH
-
+> If we only care about users of rseq from thread context, then libc
+> could simply set the refcount value to 1 on thread start,
+> and should not care about the value on thread exit. The libc can
+> either directly call rseq unregister, or rely on thread calling exit
+> to implicitly unregister rseq, which depends on its own TLS life-time
+> guarantees. For instance, if the IE-model TLS is valid up until call
+> to exit, just calling the exit system call is fine. However, if a libc
+> has a window at thread exit during which the kernel can preempt the
+> thread with the IE-model TLS area being already reclaimed, then it
+> needs to explicitly call rseq unregister before freeing the TLS.
 > 
-> >> >Looking at the rt_tgsigqueueinfo interface, is there a way to implement
-> >> >the “tg” part with the current procfd_signal interface?  Would you use
-> >> >openat to retrieve the Tgid: line from "status"?
-> > 
-> > Yes, the tg part can be implemented.
+> The second use-case is out-of-libc implementations using rseq from
+> signal handler. This one is trickier. First, pthread_key setspecific
+> is unfortunately not async-signal-safe. I can't find a good way to
+> seamlessly integrate rseq into out-of-libc signal handlers while
+> performing lazy registration without races on thread exit. If we
+> figure out a way to do this though, we should increment the refcount
+> at thread start in libc (rather than just set it to 1) in case a
+> signal handler gets nested immediately over the start of the thread
+> and registers rseq as well.
 > 
-> I meant on top of the existing interface.
-
-See below.
-
+> It looks like it's not the only issue I have with calling lttng-ust
+> instrumentation from signal handlers, here is the list I have so
+> far:
 > 
-> > As I pointed out in another mail my I is to make this work by using
-> > file descriptors for /proc/<pid>/task/<tid>.  I don't want this in the
-> > initial patchset though.  I prefer to slowly add those features once
-> > we have gotten the basic functionality in.
+> * glibc global-dynamic TLS variables are not async-signal-safe,
+>  and lttng-ust cannot use IE-model TLS because it is meant to be
+>  dlopen'd,
+> * pthread_setspecific is not async-signal-safe,
 > 
-> Do you want to land all this in one kernel release?  I wonder how
-> applications are supposed to discover kernel support if functionality is
-> split across several kernel releases.  If you get EINVAL or EBADF, it
-> may not be obvious what is going on.
+> There should be ways to eventually solve those issues, but it would
+> be nice if for now the way rseq is implemented in libc does not add
+> yet another limitation for signal handlers.
 
-Sigh, I get that but I really don't want to have to land this in one big
-chunk. I want this syscall to go in in a as soon as we can to fulfill
-the most basic need: having a way that guarantees us that we signal the
-process that we intended to signal.
+So, after thinking about a bit further, considering that current glibc
+do not offer the async-signal-safe APIs required to proceed to touch
+global-dynamic TLS variables from signal handlers nor register pthread key
+destructors from signal handlers, I will end up needing glibc improvements
+to eventually make lttng-ust instrumentation signal-safe.
 
-The thread case is easy to implement on top of it. But I suspect we will
-quibble about the exact semantics for a long time. Even now we have been
-on multiple - justified - detrous. That's all pefectly fine and
-expected. But if we have the basic functionality in we have time to do
-all of that. We might even land it in the same kernel release still. I
-really don't want to come of as tea-party-kernel-conservative here but I
-have time-and-time again seen that making something fancy and cover ever
-interesting feature in one patchset takes a very very long time.
+This means that my main use-case for supporting out-of-libc rseq registration
+from signal handlers does not exist today, and will require new glibc APIs
+anyway. Therefore, it would make sense to require use of rseq from signal
+handlers to depend on rseq registration by glibc at thread start, and limit
+the use-case of out-of-libc rseq registration to those that do not nest
+within signal handlers.
 
-If you care about userspace being able to detect that case I can return
-EOPNOTSUPP when a tid descriptor is passed.
+If we _never_ even want to allow signal handlers to register rseq, we could
+set the __rseq_refcount to 1 at thread start in nptl and nptl init. However,
+if we want to eventually allow rseq registration from signal handlers in the
+future, we may want to consider keeping the __rseq_refcount relaxed atomic
+increment at thread start, as long as it does not represent a too big
+performance overhead.
 
-> 
-> What happens if you use the new interface with an O_PATH descriptor?
+For thread exit, we don't care about the __rseq_refcount value at thread exit
+and we can unregister rseq unconditionally.
 
-You get EINVAL. When an O_PATH file descriptor is created the kernel
-will set file->f_op = &empty_fops at which point the check I added 
-        if (!proc_is_tgid_procfd(f.file))
-                goto err;
-will fail. Imho this is correct behavior since technically signaling a
-struct pid is the equivalent of writing to a file and hence doesn't
-purely operate on the file descriptor level.
+As long as it is not too costly to increment the __rseq_refcount at thread start,
+I would be inclined to keep it as an increment rather than setting it to 1, so
+we can have more flexibility with respect to future registration of rseq from
+signal handlers, even though it is not possible today.
 
-Christian
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
