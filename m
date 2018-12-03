@@ -1,190 +1,90 @@
-From: Ram Pai <linuxram@us.ibm.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Sun, 2 Dec 2018 20:02:49 -0800
-Message-ID: <20181203040249.GA11930@ram.oc3035372033.ibm.com>
-References: <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
- <20181109180947.GF5481@ram.oc3035372033.ibm.com>
- <87efbqqze4.fsf@oldenburg.str.redhat.com>
- <20181127102350.GA5795@ram.oc3035372033.ibm.com>
- <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
- <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
- <87va4g5d3o.fsf@oldenburg.str.redhat.com>
-Reply-To: Ram Pai <linuxram@us.ibm.com>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH v9 1/4] seccomp: hoist struct seccomp_data recalculation
+ higher
+Date: Sun, 2 Dec 2018 22:53:29 -0600
+Message-ID: <20181203045329.GA31406@mail.hallyn.com>
+References: <20181203032827.27978-1-tycho@tycho.ws>
+ <20181203032827.27978-2-tycho@tycho.ws>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <87va4g5d3o.fsf@oldenburg.str.redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
+In-Reply-To: <20181203032827.27978-2-tycho@tycho.ws>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 29, 2018 at 12:37:15PM +0100, Florian Weimer wrote:
-> * Dave Hansen:
+On Sun, Dec 02, 2018 at 08:28:24PM -0700, Tycho Andersen wrote:
+> In the next patch, we're going to use the sd pointer passed to
+> __seccomp_filter() as the data to pass to userspace. Except that in some
+> cases (__seccomp_filter(SECCOMP_RET_TRACE), emulate_vsyscall(), every time
+> seccomp is inovked on power, etc.) the sd pointer will be NULL in order to
+> force seccomp to recompute the register data. Previously this recomputation
+> happened one level lower, in seccomp_run_filters(); this patch just moves
+> it up a level higher to __seccomp_filter().
 > 
-> > On 11/27/18 3:57 AM, Florian Weimer wrote:
-> >> I would have expected something that translates PKEY_DISABLE_WRITE |
-> >> PKEY_DISABLE_READ into PKEY_DISABLE_ACCESS, and also accepts
-> >> PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ, for consistency with POWER.
-> >> 
-> >> (My understanding is that PKEY_DISABLE_ACCESS does not disable all
-> >> access, but produces execute-only memory.)
-> >
-> > Correct, it disables all data access, but not execution.
+> Thanks Oleg for spotting this.
 > 
-> So I would expect something like this (completely untested, I did not
-> even compile this):
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> CC: Kees Cook <keescook@chromium.org>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Oleg Nesterov <oleg@redhat.com>
+> CC: Eric W. Biederman <ebiederm@xmission.com>
+> CC: "Serge E. Hallyn" <serge@hallyn.com>
 
+Acked-by: Serge Hallyn <serge@hallyn.com>
 
-Ok. I re-read through the entire email thread to understand the problem and
-the proposed solution. Let me summarize it below. Lets see if we are on the same
-plate.
-
-So the problem is as follows:
-
-Currently the kernel supports  'disable-write'  and 'disable-access'.
-
-On x86, cpu supports 'disable-write' and 'disable-access'. This
-matches with what the kernel supports. All good.
-
-However on power, cpu supports 'disable-read' too. Since userspace can
-program the cpu directly, userspace has the ability to set
-'disable-read' too.  This can lead to inconsistency between the kernel
-and the userspace.
-
-We want the kernel to match userspace on all architectures.
-
-Proposed Solution:
-
-Enhance the kernel to understand 'disable-read', and facilitate architectures
-that understand 'disable-read' to allow it.
-
-Also explicitly define the semantics of disable-access  as 
-'disable-read and disable-write'
-
-Did I get this right?  Assuming I did, the implementation has to do
-the following --
-  
-	On power, sys_pkey_alloc() should succeed if the init_val
-	is PKEY_DISABLE_READ, PKEY_DISABLE_WRITE, PKEY_DISABLE_ACCESS
-	or any combination of the three.
-
-	On x86, sys_pkey_alloc() should succeed if the init_val is
-	PKEY_DISABLE_WRITE or PKEY_DISABLE_ACCESS or PKEY_DISABLE_READ
-	or any combination of the three, except  PKEY_DISABLE_READ
-      	specified all by itself.
-
-	On all other arches, none of the flags are supported.
-
-
-Are we on the same plate?
-RP
-
-
+> CC: Christian Brauner <christian@brauner.io>
+> CC: Tyler Hicks <tyhicks@canonical.com>
+> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+> ---
+>  kernel/seccomp.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
 > 
-> diff --git a/arch/powerpc/include/asm/pkeys.h b/arch/powerpc/include/asm/pkeys.h
-> index 20ebf153c871..bed23f9e8336 100644
-> --- a/arch/powerpc/include/asm/pkeys.h
-> +++ b/arch/powerpc/include/asm/pkeys.h
-> @@ -199,6 +199,11 @@ static inline bool arch_pkeys_enabled(void)
->  	return !static_branch_likely(&pkey_disabled);
->  }
-> 
-> +static inline bool arch_pkey_access_rights_valid(unsigned long rights)
-> +{
-> +	return (rights & ~(unsigned long)PKEY_ACCESS_MASK) == 0;
-> +}
-> +
->  extern void pkey_mm_init(struct mm_struct *mm);
->  extern bool arch_supports_pkeys(int cap);
->  extern unsigned int arch_usable_pkeys(void);
-> diff --git a/arch/x86/include/asm/pkeys.h b/arch/x86/include/asm/pkeys.h
-> index 19b137f1b3be..e3e1d5a316e8 100644
-> --- a/arch/x86/include/asm/pkeys.h
-> +++ b/arch/x86/include/asm/pkeys.h
-> @@ -14,6 +14,17 @@ static inline bool arch_pkeys_enabled(void)
->  	return boot_cpu_has(X86_FEATURE_OSPKE);
->  }
-> 
-> +static inline bool arch_pkey_access_rights_valid(unsigned long rights)
-> +{
-> +	if (rights & ~(unsigned long)PKEY_ACCESS_MASK)
-> +		return false;
-> +	if (rights & PKEY_DISABLE_READ) {
-> +		/* x86 can only disable read access along with write access. */
-> +		return rights & (PKEY_DISABLE_WRITE | PKEY_DISABLE_ACCESS);
-> +	}
-> +	return true;
-> +}
-> +
->  /*
->   * Try to dedicate one of the protection keys to be used as an
->   * execute-only protection key.
-> diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-> index 87a57b7642d3..b9b78145017f 100644
-> --- a/arch/x86/kernel/fpu/xstate.c
-> +++ b/arch/x86/kernel/fpu/xstate.c
-> @@ -928,7 +928,13 @@ int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
->  		return -EINVAL;
-> 
->  	/* Set the bits we need in PKRU:  */
-> -	if (init_val & PKEY_DISABLE_ACCESS)
-> +	if (init_val & (PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ))
-> +		/*
-> +		 * arch_pkey_access_rights_valid checked that
-> +		 * PKEY_DISABLE_READ is actually representable on x86
-> +		 * (that is, it comes with PKEY_DISABLE_ACCESS or
-> +		 * PKEY_DISABLE_WRITE).
-> +		 */
->  		new_pkru_bits |= PKRU_AD_BIT;
->  	if (init_val & PKEY_DISABLE_WRITE)
->  		new_pkru_bits |= PKRU_WD_BIT;
-> diff --git a/include/linux/pkeys.h b/include/linux/pkeys.h
-> index 2955ba976048..2c330fabbe55 100644
-> --- a/include/linux/pkeys.h
-> +++ b/include/linux/pkeys.h
-> @@ -48,6 +48,11 @@ static inline void copy_init_pkru_to_fpregs(void)
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index f2ae2324c232..96afc32e041d 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -188,7 +188,6 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
+>  static u32 seccomp_run_filters(const struct seccomp_data *sd,
+>  			       struct seccomp_filter **match)
 >  {
->  }
-> 
-> +static inline bool arch_pkey_access_rights_valid(unsigned long rights)
-> +{
-> +	return false;
-> +}
+> -	struct seccomp_data sd_local;
+>  	u32 ret = SECCOMP_RET_ALLOW;
+>  	/* Make sure cross-thread synced filter points somewhere sane. */
+>  	struct seccomp_filter *f =
+> @@ -198,11 +197,6 @@ static u32 seccomp_run_filters(const struct seccomp_data *sd,
+>  	if (WARN_ON(f == NULL))
+>  		return SECCOMP_RET_KILL_PROCESS;
+>  
+> -	if (!sd) {
+> -		populate_seccomp_data(&sd_local);
+> -		sd = &sd_local;
+> -	}
+> -
+>  	/*
+>  	 * All filters in the list are evaluated and the lowest BPF return
+>  	 * value always takes priority (ignoring the DATA).
+> @@ -658,6 +652,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+>  	u32 filter_ret, action;
+>  	struct seccomp_filter *match = NULL;
+>  	int data;
+> +	struct seccomp_data sd_local;
+>  
+>  	/*
+>  	 * Make sure that any changes to mode from another thread have
+> @@ -665,6 +660,11 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+>  	 */
+>  	rmb();
+>  
+> +	if (!sd) {
+> +		populate_seccomp_data(&sd_local);
+> +		sd = &sd_local;
+> +	}
 > +
->  #endif /* ! CONFIG_ARCH_HAS_PKEYS */
-> 
->  #endif /* _LINUX_PKEYS_H */
-> diff --git a/mm/mprotect.c b/mm/mprotect.c
-> index 6d331620b9e5..f4cefc3540df 100644
-> --- a/mm/mprotect.c
-> +++ b/mm/mprotect.c
-> @@ -597,7 +597,7 @@ SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
->  	if (flags)
->  		return -EINVAL;
->  	/* check for unsupported init values */
-> -	if (init_val & ~PKEY_ACCESS_MASK)
-> +	if (!arch_pkey_access_rights_valid(init_val))
->  		return -EINVAL;
-> 
->  	down_write(&current->mm->mmap_sem);
-> 
-> Thanks,
-> Florian
-
--- 
-Ram Pai
+>  	filter_ret = seccomp_run_filters(sd, &match);
+>  	data = filter_ret & SECCOMP_RET_DATA;
+>  	action = filter_ret & SECCOMP_RET_ACTION_FULL;
+> -- 
+> 2.19.1
