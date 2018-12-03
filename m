@@ -1,60 +1,84 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v9 3/4] seccomp: add a return code to trap to userspace
-Date: Mon, 3 Dec 2018 08:52:11 -0700
-Message-ID: <20181203155211.GB3504@cisco>
-References: <20181203032827.27978-1-tycho@tycho.ws>
- <20181203032827.27978-4-tycho@tycho.ws>
- <20181203052650.GC31406@mail.hallyn.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
+Date: Mon, 03 Dec 2018 16:52:02 +0100
+Message-ID: <87pnuibobh.fsf@oldenburg.str.redhat.com>
+References: <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
+ <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
+ <20181108201231.GE5481@ram.oc3035372033.ibm.com>
+ <87bm6z71yw.fsf@oldenburg.str.redhat.com>
+ <20181109180947.GF5481@ram.oc3035372033.ibm.com>
+ <87efbqqze4.fsf@oldenburg.str.redhat.com>
+ <20181127102350.GA5795@ram.oc3035372033.ibm.com>
+ <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
+ <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
+ <87va4g5d3o.fsf@oldenburg.str.redhat.com>
+ <20181203040249.GA11930@ram.oc3035372033.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181203052650.GC31406@mail.hallyn.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <20181203040249.GA11930@ram.oc3035372033.ibm.com> (Ram Pai's
+ message of "Sun, 2 Dec 2018 20:02:49 -0800")
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Ram Pai <linuxram@us.ibm.com>
+Cc: Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Dec 02, 2018 at 11:26:50PM -0600, Serge E. Hallyn wrote:
-> On Sun, Dec 02, 2018 at 08:28:26PM -0700, Tycho Andersen wrote:
-> > +struct seccomp_knotif {
-> > +	/* The struct pid of the task whose filter triggered the notification */
-> > +	struct task_struct *task;
-> > +
-> > +	/* The "cookie" for this request; this is unique for this filter. */
-> > +	u64 id;
-> > +
-> > +	/*
-> > +	 * The seccomp data. This pointer is valid the entire time this
-> > +	 * notification is active, since it comes from __seccomp_filter which
-> 
-> define 'active' - is a notification in state REPLIED still active?
+* Ram Pai:
 
-Yes,
+> So the problem is as follows:
+>
+> Currently the kernel supports  'disable-write'  and 'disable-access'.
+>
+> On x86, cpu supports 'disable-write' and 'disable-access'. This
+> matches with what the kernel supports. All good.
+>
+> However on power, cpu supports 'disable-read' too. Since userspace can
+> program the cpu directly, userspace has the ability to set
+> 'disable-read' too.  This can lead to inconsistency between the kernel
+> and the userspace.
+>
+> We want the kernel to match userspace on all architectures.
 
-> Actually while looking at that, I came to wondering - when are knotifs
-> freed?  Seems like only during seccomp_notify_release(), i.e. when the
-> tracing task stops polling for events?  Is that going to be a problem?
-> Or am I misreading this?
+Correct.
 
-they're stack allocated in do_user_notification(). So "active" in this
-sense really means "somewhere in do_user_notification()".
+> Proposed Solution:
+>
+> Enhance the kernel to understand 'disable-read', and facilitate architectures
+> that understand 'disable-read' to allow it.
+>
+> Also explicitly define the semantics of disable-access  as 
+> 'disable-read and disable-write'
+>
+> Did I get this right?  Assuming I did, the implementation has to do
+> the following --
+>   
+> 	On power, sys_pkey_alloc() should succeed if the init_val
+> 	is PKEY_DISABLE_READ, PKEY_DISABLE_WRITE, PKEY_DISABLE_ACCESS
+> 	or any combination of the three.
 
-> > +	if (ret == 0 && copy_to_user(buf, &unotif, sizeof(unotif))) {
-> > +		ret = -EFAULT;
-> > +
-> > +		/*
-> > +		 * Userspace screwed up. To make sure that we keep this
-> > +		 * notification alive, let's reset it back to INIT. It
-> 
-> Is keeping the notification alive the right thing to do?
-> 
-> If userspace has messed up in something this touchy, it seems unlikely
-> that it'll to better if we give it a do-over...  I'm not sure whether
-> killing the whole thing (victim and tracer) is the right thing or not.
+Agreed.
 
-I suppose we could do that too. I just didn't want to get into a
-situation where the notification is lost and the task is stuck because
-userspace screwed up here.
+> 	On x86, sys_pkey_alloc() should succeed if the init_val is
+> 	PKEY_DISABLE_WRITE or PKEY_DISABLE_ACCESS or PKEY_DISABLE_READ
+> 	or any combination of the three, except  PKEY_DISABLE_READ
+>       	specified all by itself.
 
-Tycho
+Again agreed.  That's a clever way of phrasing it actually.
+
+> 	On all other arches, none of the flags are supported.
+>
+>
+> Are we on the same plate?
+
+I think so, thanks.
+
+Florian
