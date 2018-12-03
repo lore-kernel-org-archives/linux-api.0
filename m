@@ -1,7 +1,7 @@
 From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: [PATCH v5 4/4] selftests: add a test for bpf_prog_test_run_xattr
-Date: Mon,  3 Dec 2018 11:31:26 +0000
-Message-ID: <20181203113126.2591-5-lmb@cloudflare.com>
+Subject: [PATCH v5 3/4] libbpf: add bpf_prog_test_run_xattr
+Date: Mon,  3 Dec 2018 11:31:25 +0000
+Message-ID: <20181203113126.2591-4-lmb@cloudflare.com>
 References: <20181116125329.3974-1-lmb@cloudflare.com>
  <20181203113126.2591-1-lmb@cloudflare.com>
 Mime-Version: 1.0
@@ -13,101 +13,92 @@ To: ast@kernel.org, daniel@iogearbox.net
 Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org, Lorenz Bauer <lmb@cloudflare.com>
 List-Id: linux-api@vger.kernel.org
 
-Make sure that bpf_prog_test_run_xattr returns the correct length
-and that the kernel respects the output size hint. Also check
-that errno indicates ENOSPC if there is a short output buffer given.
+Add a new function, which encourages safe usage of the test interface.
+bpf_prog_test_run continues to work as before, but should be considered
+unsafe.
 
 Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
 ---
- tools/testing/selftests/bpf/test_progs.c | 55 +++++++++++++++++++++++-
- 1 file changed, 54 insertions(+), 1 deletion(-)
+ tools/lib/bpf/bpf.c      | 23 +++++++++++++++++++++++
+ tools/lib/bpf/bpf.h      | 19 +++++++++++++++++++
+ tools/lib/bpf/libbpf.map |  1 +
+ 3 files changed, 43 insertions(+)
 
-diff --git a/tools/testing/selftests/bpf/test_progs.c b/tools/testing/selftests/bpf/test_progs.c
-index c1e688f61061..ee827deb948a 100644
---- a/tools/testing/selftests/bpf/test_progs.c
-+++ b/tools/testing/selftests/bpf/test_progs.c
-@@ -70,7 +70,7 @@ static struct {
- 	.tcp.urg_ptr = 123,
- };
- 
--#define CHECK(condition, tag, format...) ({				\
-+#define _CHECK(condition, tag, duration, format...) ({			\
- 	int __ret = !!(condition);					\
- 	if (__ret) {							\
- 		error_cnt++;						\
-@@ -83,6 +83,11 @@ static struct {
- 	__ret;								\
- })
- 
-+#define CHECK(condition, tag, format...) \
-+	_CHECK(condition, tag, duration, format)
-+#define CHECK_ATTR(condition, tag, format...) \
-+	_CHECK(condition, tag, tattr.duration, format)
-+
- static int bpf_find_map(const char *test, struct bpf_object *obj,
- 			const char *name)
- {
-@@ -124,6 +129,53 @@ static void test_pkt_access(void)
- 	bpf_object__close(obj);
+diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
+index ce1822194590..6e06484a7a99 100644
+--- a/tools/lib/bpf/bpf.c
++++ b/tools/lib/bpf/bpf.c
+@@ -463,6 +463,29 @@ int bpf_prog_test_run(int prog_fd, int repeat, void *data, __u32 size,
+ 	return ret;
  }
  
-+static void test_prog_run_xattr(void)
++int bpf_prog_test_run_xattr(struct bpf_prog_test_run_attr *test_attr)
 +{
-+	const char *file = "./test_pkt_access.o";
-+	struct bpf_object *obj;
-+	char buf[10];
-+	int err;
-+	struct bpf_prog_test_run_attr tattr = {
-+		.repeat = 1,
-+		.data_in = &pkt_v4,
-+		.data_size_in = sizeof(pkt_v4),
-+		.data_out = buf,
-+		.data_size_out = 5,
-+	};
++	union bpf_attr attr;
++	int ret;
 +
-+	err = bpf_prog_load(file, BPF_PROG_TYPE_SCHED_CLS, &obj,
-+			    &tattr.prog_fd);
-+	if (CHECK_ATTR(err, "load", "err %d errno %d\n", err, errno))
-+		return;
++	if (!test_attr->data_out && test_attr->data_size_out > 0)
++		return -EINVAL;
 +
-+	memset(buf, 0, sizeof(buf));
++	bzero(&attr, sizeof(attr));
++	attr.test.prog_fd = test_attr->prog_fd;
++	attr.test.data_in = ptr_to_u64(test_attr->data_in);
++	attr.test.data_out = ptr_to_u64(test_attr->data_out);
++	attr.test.data_size_in = test_attr->data_size_in;
++	attr.test.data_size_out = test_attr->data_size_out;
++	attr.test.repeat = test_attr->repeat;
 +
-+	err = bpf_prog_test_run_xattr(&tattr);
-+	CHECK_ATTR(err != -1 || errno != ENOSPC || tattr.retval, "run",
-+	      "err %d errno %d retval %d\n", err, errno, tattr.retval);
-+
-+	CHECK_ATTR(tattr.data_size_out != sizeof(pkt_v4), "data_size_out",
-+	      "incorrect output size, want %lu have %u\n",
-+	      sizeof(pkt_v4), tattr.data_size_out);
-+
-+	CHECK_ATTR(buf[5] != 0, "overflow",
-+	      "BPF_PROG_TEST_RUN ignored size hint\n");
-+
-+	tattr.data_out = NULL;
-+	tattr.data_size_out = 0;
-+	errno = 0;
-+
-+	err = bpf_prog_test_run_xattr(&tattr);
-+	CHECK_ATTR(err || errno || tattr.retval, "run_no_output",
-+	      "err %d errno %d retval %d\n", err, errno, tattr.retval);
-+
-+	tattr.data_size_out = 1;
-+	err = bpf_prog_test_run_xattr(&tattr);
-+	CHECK_ATTR(err != -EINVAL, "run_wrong_size_out", "err %d\n", err);
-+
-+	bpf_object__close(obj);
++	ret = sys_bpf(BPF_PROG_TEST_RUN, &attr, sizeof(attr));
++	test_attr->data_size_out = attr.test.data_size_out;
++	test_attr->retval = attr.test.retval;
++	test_attr->duration = attr.test.duration;
++	return ret;
 +}
 +
- static void test_xdp(void)
+ int bpf_prog_get_next_id(__u32 start_id, __u32 *next_id)
  {
- 	struct vip key4 = {.protocol = 6, .family = AF_INET};
-@@ -1837,6 +1889,7 @@ int main(void)
- 	jit_enabled = is_jit_enabled();
- 
- 	test_pkt_access();
-+	test_prog_run_xattr();
- 	test_xdp();
- 	test_xdp_adjust_tail();
- 	test_l4lb_all();
+ 	union bpf_attr attr;
+diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
+index 09e8bbe111d4..ce6f07399d41 100644
+--- a/tools/lib/bpf/bpf.h
++++ b/tools/lib/bpf/bpf.h
+@@ -118,6 +118,25 @@ LIBBPF_API int bpf_prog_attach(int prog_fd, int attachable_fd,
+ LIBBPF_API int bpf_prog_detach(int attachable_fd, enum bpf_attach_type type);
+ LIBBPF_API int bpf_prog_detach2(int prog_fd, int attachable_fd,
+ 				enum bpf_attach_type type);
++
++struct bpf_prog_test_run_attr {
++	int prog_fd;
++	int repeat;
++	const void *data_in;
++	__u32 data_size_in;
++	void *data_out;      /* optional */
++	__u32 data_size_out; /* in: max length of data_out
++			      * out: length of data_out */
++	__u32 retval;        /* out: return code of the BPF program */
++	__u32 duration;      /* out: average per repetition in ns */
++};
++
++LIBBPF_API int bpf_prog_test_run_xattr(struct bpf_prog_test_run_attr *test_attr);
++
++/*
++ * bpf_prog_test_run does not check that data_out is large enough. Consider
++ * using bpf_prog_test_run_xattr instead.
++ */
+ LIBBPF_API int bpf_prog_test_run(int prog_fd, int repeat, void *data,
+ 				 __u32 size, void *data_out, __u32 *size_out,
+ 				 __u32 *retval, __u32 *duration);
+diff --git a/tools/lib/bpf/libbpf.map b/tools/lib/bpf/libbpf.map
+index 4fb29f6d7a80..8deff22d61bb 100644
+--- a/tools/lib/bpf/libbpf.map
++++ b/tools/lib/bpf/libbpf.map
+@@ -65,6 +65,7 @@ LIBBPF_0.0.1 {
+ 		bpf_prog_load_xattr;
+ 		bpf_prog_query;
+ 		bpf_prog_test_run;
++		bpf_prog_test_run_xattr;
+ 		bpf_program__fd;
+ 		bpf_program__is_kprobe;
+ 		bpf_program__is_perf_event;
 -- 
 2.19.1
