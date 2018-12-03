@@ -1,84 +1,56 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Mon, 03 Dec 2018 16:52:02 +0100
-Message-ID: <87pnuibobh.fsf@oldenburg.str.redhat.com>
-References: <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
- <20181109180947.GF5481@ram.oc3035372033.ibm.com>
- <87efbqqze4.fsf@oldenburg.str.redhat.com>
- <20181127102350.GA5795@ram.oc3035372033.ibm.com>
- <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
- <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
- <87va4g5d3o.fsf@oldenburg.str.redhat.com>
- <20181203040249.GA11930@ram.oc3035372033.ibm.com>
+Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
+Date: Mon, 03 Dec 2018 17:57:51 +0100
+Message-ID: <8736rebl9s.fsf@oldenburg.str.redhat.com>
+References: <20181120105124.14733-1-christian@brauner.io>
+        <87in0g5aqo.fsf@oldenburg.str.redhat.com>
+        <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io>
+        <20181202100304.labt63mzrlr5utdl@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20181203040249.GA11930@ram.oc3035372033.ibm.com> (Ram Pai's
- message of "Sun, 2 Dec 2018 20:02:49 -0800")
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Ram Pai <linuxram@us.ibm.com>
-Cc: Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181202100304.labt63mzrlr5utdl@brauner.io> (Christian Brauner's
+        message of "Sun, 2 Dec 2018 11:03:06 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-* Ram Pai:
+* Christian Brauner:
 
-> So the problem is as follows:
->
-> Currently the kernel supports  'disable-write'  and 'disable-access'.
->
-> On x86, cpu supports 'disable-write' and 'disable-access'. This
-> matches with what the kernel supports. All good.
->
-> However on power, cpu supports 'disable-read' too. Since userspace can
-> program the cpu directly, userspace has the ability to set
-> 'disable-read' too.  This can lead to inconsistency between the kernel
-> and the userspace.
->
-> We want the kernel to match userspace on all architectures.
+> Ok, I finally have access to source code again. Scratch what I said above!
+> I looked at the code and tested it. If the process has exited but not
+> yet waited upon aka is a zombie procfd_send_signal() will return 0. This
+> is identical to kill(2) behavior. It should've been sort-of obvious
+> since when a process is in zombie state /proc/<pid> will still be around
+> which means that struct pid must still be around.
 
-Correct.
+Should we make this state more accessible, by providing a different
+error code?
 
-> Proposed Solution:
->
-> Enhance the kernel to understand 'disable-read', and facilitate architectures
-> that understand 'disable-read' to allow it.
->
-> Also explicitly define the semantics of disable-access  as 
-> 'disable-read and disable-write'
->
-> Did I get this right?  Assuming I did, the implementation has to do
-> the following --
->   
-> 	On power, sys_pkey_alloc() should succeed if the init_val
-> 	is PKEY_DISABLE_READ, PKEY_DISABLE_WRITE, PKEY_DISABLE_ACCESS
-> 	or any combination of the three.
+Will the system call ever return ESRCH, given that you have a handle for
+the process?
 
-Agreed.
+>> >Looking at the rt_tgsigqueueinfo interface, is there a way to implement
+>> >the “tg” part with the current procfd_signal interface?  Would you use
+>> >openat to retrieve the Tgid: line from "status"?
+> 
+> Yes, the tg part can be implemented.
 
-> 	On x86, sys_pkey_alloc() should succeed if the init_val is
-> 	PKEY_DISABLE_WRITE or PKEY_DISABLE_ACCESS or PKEY_DISABLE_READ
-> 	or any combination of the three, except  PKEY_DISABLE_READ
->       	specified all by itself.
+I meant on top of the existing interface.
 
-Again agreed.  That's a clever way of phrasing it actually.
+> As I pointed out in another mail my I is to make this work by using
+> file descriptors for /proc/<pid>/task/<tid>.  I don't want this in the
+> initial patchset though.  I prefer to slowly add those features once
+> we have gotten the basic functionality in.
 
-> 	On all other arches, none of the flags are supported.
->
->
-> Are we on the same plate?
+Do you want to land all this in one kernel release?  I wonder how
+applications are supposed to discover kernel support if functionality is
+split across several kernel releases.  If you get EINVAL or EBADF, it
+may not be obvious what is going on.
 
-I think so, thanks.
+What happens if you use the new interface with an O_PATH descriptor?
 
+Thanks,
 Florian
