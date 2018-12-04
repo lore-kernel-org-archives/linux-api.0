@@ -1,32 +1,85 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: [RFC PATCH v6 04/26] x86/fpu/xstate: Introduce XSAVES system
- states
-Date: Tue, 4 Dec 2018 19:16:41 +0100
-Message-ID: <20181204181641.GA16705@zn.tnic>
-References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
- <20181119214809.6086-5-yu-cheng.yu@intel.com>
- <20181204160144.GG11803@zn.tnic>
- <752c38422a6536d8df99b619214f935e4bc882ad.camel@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH glibc 2/4] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux
+Date: Tue,  4 Dec 2018 14:21:39 -0500
+Message-ID: <20181204192141.4684-2-mathieu.desnoyers@efficios.com>
+References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <752c38422a6536d8df99b619214f935e4bc882ad.camel@intel.com>
+In-Reply-To: <20181204192141.4684-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 04, 2018 at 09:08:11AM -0800, Yu-cheng Yu wrote:
-> Then we will do this very often.  Why don't we create all three in the
-> beginning: xfeatures_mask_all, xfeatures_mask_user, and xfeatures_mask_system?
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-Because the _all thing is the OR-ed product of the two and then you
-don't have to update it when the _user and the _system ones change
-because you'll be creating it on the fly each time.
+Benchmarks:
 
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
+
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 25 +++++++++++++++++++++++--
+ 1 file changed, 23 insertions(+), 2 deletions(-)
+
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index b69eeda15c..37fda59d36 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -24,8 +24,8 @@
+ #endif
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++static int
++vsyscall_sched_getcpu (void)
+ {
+ #ifdef __NR_getcpu
+   unsigned int cpu;
+@@ -37,3 +37,24 @@ sched_getcpu (void)
+   return -1;
+ #endif
+ }
++
++#ifdef __NR_rseq
++#include <linux/rseq.h>
++
++extern __attribute__ ((tls_model ("initial-exec")))
++__thread volatile struct rseq __rseq_abi;
++
++int
++sched_getcpu (void)
++{
++  int cpu_id = __rseq_abi.cpu_id;
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
 -- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+2.17.1
