@@ -1,99 +1,285 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Tue, 4 Dec 2018 17:03:54 +1100
-Message-ID: <20181204060354.bozjmjn24sw3axav@yavin>
-References: <20181120105124.14733-1-christian@brauner.io>
- <87in0g5aqo.fsf@oldenburg.str.redhat.com>
- <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io>
- <20181202100304.labt63mzrlr5utdl@brauner.io>
- <8736rebl9s.fsf@oldenburg.str.redhat.com>
- <20181203180224.fkvw4kajtbvru2ku@brauner.io>
+From: Ram Pai <linuxram@us.ibm.com>
+Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
+Date: Mon, 3 Dec 2018 22:23:18 -0800
+Message-ID: <20181204062318.GC11930@ram.oc3035372033.ibm.com>
+References: <20181108201231.GE5481@ram.oc3035372033.ibm.com>
+ <87bm6z71yw.fsf@oldenburg.str.redhat.com>
+ <20181109180947.GF5481@ram.oc3035372033.ibm.com>
+ <87efbqqze4.fsf@oldenburg.str.redhat.com>
+ <20181127102350.GA5795@ram.oc3035372033.ibm.com>
+ <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
+ <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
+ <87va4g5d3o.fsf@oldenburg.str.redhat.com>
+ <20181203040249.GA11930@ram.oc3035372033.ibm.com>
+ <87pnuibobh.fsf@oldenburg.str.redhat.com>
+Reply-To: Ram Pai <linuxram@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="n32bdtqrrttj3wgr"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <87pnuibobh.fsf@oldenburg.str.redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20181203180224.fkvw4kajtbvru2ku@brauner.io>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Florian Weimer <fweimer@redhat.com>, ebiederm@xmission.com, linux-kernel@vger.kernel.org, serge@hallyn.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, oleg@redhat.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Dave Hansen <dave.hansen@intel.com>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Dec 03, 2018 at 04:52:02PM +0100, Florian Weimer wrote:
+> * Ram Pai:
+> 
+> > So the problem is as follows:
+> >
+> > Currently the kernel supports  'disable-write'  and 'disable-access'.
+> >
+> > On x86, cpu supports 'disable-write' and 'disable-access'. This
+> > matches with what the kernel supports. All good.
+> >
+> > However on power, cpu supports 'disable-read' too. Since userspace can
+> > program the cpu directly, userspace has the ability to set
+> > 'disable-read' too.  This can lead to inconsistency between the kernel
+> > and the userspace.
+> >
+> > We want the kernel to match userspace on all architectures.
+> 
+> Correct.
+> 
+> > Proposed Solution:
+> >
+> > Enhance the kernel to understand 'disable-read', and facilitate architectures
+> > that understand 'disable-read' to allow it.
+> >
+> > Also explicitly define the semantics of disable-access  as 
+> > 'disable-read and disable-write'
+> >
+> > Did I get this right?  Assuming I did, the implementation has to do
+> > the following --
+> >   
+> > 	On power, sys_pkey_alloc() should succeed if the init_val
+> > 	is PKEY_DISABLE_READ, PKEY_DISABLE_WRITE, PKEY_DISABLE_ACCESS
+> > 	or any combination of the three.
+> 
+> Agreed.
+> 
+> > 	On x86, sys_pkey_alloc() should succeed if the init_val is
+> > 	PKEY_DISABLE_WRITE or PKEY_DISABLE_ACCESS or PKEY_DISABLE_READ
+> > 	or any combination of the three, except  PKEY_DISABLE_READ
+> >       	specified all by itself.
+> 
+> Again agreed.  That's a clever way of phrasing it actually.
+> 
+> > 	On all other arches, none of the flags are supported.
+> >
+> >
+> > Are we on the same plate?
+> 
+> I think so, thanks.
+> 
+> Florian
 
---n32bdtqrrttj3wgr
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Ok. here is a patch, compiled but not tested. See if this meets the
+specifications.
 
-On 2018-12-03, Christian Brauner <christian@brauner.io> wrote:
-> > > As I pointed out in another mail my I is to make this work by using
-> > > file descriptors for /proc/<pid>/task/<tid>.  I don't want this in the
-> > > initial patchset though.  I prefer to slowly add those features once
-> > > we have gotten the basic functionality in.
-> >=20
-> > Do you want to land all this in one kernel release?  I wonder how
-> > applications are supposed to discover kernel support if functionality is
-> > split across several kernel releases.  If you get EINVAL or EBADF, it
-> > may not be obvious what is going on.
->=20
-> Sigh, I get that but I really don't want to have to land this in one big
-> chunk. I want this syscall to go in in a as soon as we can to fulfill
-> the most basic need: having a way that guarantees us that we signal the
-> process that we intended to signal.
->=20
-> The thread case is easy to implement on top of it. But I suspect we will
-> quibble about the exact semantics for a long time. Even now we have been
-> on multiple - justified - detrous. That's all pefectly fine and
-> expected. But if we have the basic functionality in we have time to do
-> all of that. We might even land it in the same kernel release still. I
-> really don't want to come of as tea-party-kernel-conservative here but I
-> have time-and-time again seen that making something fancy and cover ever
-> interesting feature in one patchset takes a very very long time.
->=20
-> If you care about userspace being able to detect that case I can return
-> EOPNOTSUPP when a tid descriptor is passed.
+-----------------------------------------------------------------------------------
 
-Personally, I'm +1 on -EOPNOTSUPP so we can get an MVP merged, and add
-new features in later patches.
+commit 3dc06e73f3795921265d5d1d935e428deab01616
+Author: Ram Pai <linuxram@us.ibm.com>
+Date:   Tue Dec 4 00:04:11 2018 -0500
 
-> > What happens if you use the new interface with an O_PATH descriptor?
->=20
-> You get EINVAL. When an O_PATH file descriptor is created the kernel
-> will set file->f_op =3D &empty_fops at which point the check I added=20
->         if (!proc_is_tgid_procfd(f.file))
->                 goto err;
-> will fail. Imho this is correct behavior since technically signaling a
-> struct pid is the equivalent of writing to a file and hence doesn't
-> purely operate on the file descriptor level.
+    pkeys: add support of PKEY_DISABLE_READ
+    
+    Kernel supports  'disable-write'  and 'disable-access'.
+    
+    x86 cpu supports 'disable-write' and 'disable-access'. This
+    matches with the kernel support.
+    
+    However POWER cpu supports 'disable-read' too. Since userspace can
+    program the cpu directly, userspace has the ability to set
+    'disable-read' too.  This can lead to inconsistency between the kernel
+    and the userspace.
+    
+    Make kernel match userspace on all architectures.
+    
+    Enhance the kernel to understand 'disable-read', and facilitate architectures
+    that understand 'disable-read' to allow it.
+    
+    Define the semantics of disable-access  as 'disable-read and disable-write'
+    
+    Signed-off-by: Ram Pai <linuxram@us.ibm.com>
 
-Not to mention that O_PATH file descriptors are a whole kettle of fish
-when it comes to permission checking semantics.
+diff --git a/arch/powerpc/include/asm/pkeys.h b/arch/powerpc/include/asm/pkeys.h
+index 20ebf15..4bd09d0 100644
+--- a/arch/powerpc/include/asm/pkeys.h
++++ b/arch/powerpc/include/asm/pkeys.h
+@@ -19,11 +19,7 @@
+ #define ARCH_VM_PKEY_FLAGS (VM_PKEY_BIT0 | VM_PKEY_BIT1 | VM_PKEY_BIT2 | \
+ 			    VM_PKEY_BIT3 | VM_PKEY_BIT4)
+ 
+-/* Override any generic PKEY permission defines */
+ #define PKEY_DISABLE_EXECUTE   0x4
+-#define PKEY_ACCESS_MASK       (PKEY_DISABLE_ACCESS | \
+-				PKEY_DISABLE_WRITE  | \
+-				PKEY_DISABLE_EXECUTE)
+ 
+ static inline u64 pkey_to_vmflag_bits(u16 pkey)
+ {
+@@ -199,6 +195,16 @@ static inline bool arch_pkeys_enabled(void)
+ 	return !static_branch_likely(&pkey_disabled);
+ }
+ 
++extern bool __arch_pkey_access_rights_valid(unsigned long rights);
++
++static inline bool arch_pkey_access_rights_valid(unsigned long rights)
++{
++	if (static_branch_likely(&pkey_disabled))
++		return false;
++
++	return __arch_pkey_access_rights_valid(rights);
++}
++
+ extern void pkey_mm_init(struct mm_struct *mm);
+ extern bool arch_supports_pkeys(int cap);
+ extern unsigned int arch_usable_pkeys(void);
+diff --git a/arch/powerpc/include/uapi/asm/mman.h b/arch/powerpc/include/uapi/asm/mman.h
+index 65065ce..e63bc37 100644
+--- a/arch/powerpc/include/uapi/asm/mman.h
++++ b/arch/powerpc/include/uapi/asm/mman.h
+@@ -30,10 +30,4 @@
+ #define MAP_STACK	0x20000		/* give out an address that is best suited for process/thread stacks */
+ #define MAP_HUGETLB	0x40000		/* create a huge page mapping */
+ 
+-/* Override any generic PKEY permission defines */
+-#define PKEY_DISABLE_EXECUTE   0x4
+-#undef PKEY_ACCESS_MASK
+-#define PKEY_ACCESS_MASK       (PKEY_DISABLE_ACCESS |\
+-				PKEY_DISABLE_WRITE  |\
+-				PKEY_DISABLE_EXECUTE)
+ #endif /* _UAPI_ASM_POWERPC_MMAN_H */
+diff --git a/arch/powerpc/mm/pkeys.c b/arch/powerpc/mm/pkeys.c
+index 5d65c47..a4f288b 100644
+--- a/arch/powerpc/mm/pkeys.c
++++ b/arch/powerpc/mm/pkeys.c
+@@ -67,7 +67,7 @@ int pkey_initialize(void)
+ 	 * Ensure that the bits a distinct.
+ 	 */
+ 	BUILD_BUG_ON(PKEY_DISABLE_EXECUTE &
+-		     (PKEY_DISABLE_ACCESS | PKEY_DISABLE_WRITE));
++		(PKEY_DISABLE_READ | PKEY_DISABLE_WRITE | PKEY_DISABLE_ACCESS));
+ 
+ 	/*
+ 	 * pkey_to_vmflag_bits() assumes that the pkey bits are contiguous
+@@ -259,11 +259,20 @@ int __arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
+ 		new_amr_bits |= AMR_RD_BIT | AMR_WR_BIT;
+ 	else if (init_val & PKEY_DISABLE_WRITE)
+ 		new_amr_bits |= AMR_WR_BIT;
++	else if (init_val & PKEY_DISABLE_READ)
++		new_amr_bits |= AMR_RD_BIT;
+ 
+ 	init_amr(pkey, new_amr_bits);
+ 	return 0;
+ }
+ 
++bool __arch_pkey_access_rights_valid(unsigned long rights)
++{
++	unsigned long mask = PKEY_DISABLE_READ | PKEY_DISABLE_WRITE |\
++			     PKEY_DISABLE_ACCESS;
++	return (rights & mask);
++}
++
+ void thread_pkey_regs_save(struct thread_struct *thread)
+ {
+ 	if (static_branch_likely(&pkey_disabled))
+diff --git a/arch/x86/include/asm/pkeys.h b/arch/x86/include/asm/pkeys.h
+index 19b137f..4f36a7e 100644
+--- a/arch/x86/include/asm/pkeys.h
++++ b/arch/x86/include/asm/pkeys.h
+@@ -14,6 +14,15 @@ static inline bool arch_pkeys_enabled(void)
+ 	return boot_cpu_has(X86_FEATURE_OSPKE);
+ }
+ 
++extern bool __arch_pkey_access_rights_valid(unsigned long rights);
++static inline bool arch_pkey_access_rights_valid(unsigned long rights)
++{
++	if (!boot_cpu_has(X86_FEATURE_OSPKE))
++		return false;
++
++	return __arch_pkey_access_rights_valid(rights);
++}
++
+ /*
+  * Try to dedicate one of the protection keys to be used as an
+  * execute-only protection key.
+diff --git a/arch/x86/mm/pkeys.c b/arch/x86/mm/pkeys.c
+index 6e98e0a..fcfe1b2 100644
+--- a/arch/x86/mm/pkeys.c
++++ b/arch/x86/mm/pkeys.c
+@@ -72,6 +72,17 @@ int __execute_only_pkey(struct mm_struct *mm)
+ 	return execute_only_pkey;
+ }
+ 
++bool __arch_pkey_access_rights_valid(unsigned long rights)
++{
++	unsigned long mask = PKEY_DISABLE_READ | PKEY_DISABLE_WRITE |\
++				PKEY_DISABLE_ACCESS;
++	if (!(rights & mask))
++		return false;
++
++	/* return failure if only PKEY_DISABLE_READ is specified */
++	return ((rights & mask) != PKEY_DISABLE_READ);
++}
++
+ static inline bool vma_is_pkey_exec_only(struct vm_area_struct *vma)
+ {
+ 	/* Do this check first since the vm_flags should be hot */
+diff --git a/include/linux/pkeys.h b/include/linux/pkeys.h
+index 2955ba97..2c330fa 100644
+--- a/include/linux/pkeys.h
++++ b/include/linux/pkeys.h
+@@ -48,6 +48,11 @@ static inline void copy_init_pkru_to_fpregs(void)
+ {
+ }
+ 
++static inline bool arch_pkey_access_rights_valid(unsigned long rights)
++{
++	return false;
++}
++
+ #endif /* ! CONFIG_ARCH_HAS_PKEYS */
+ 
+ #endif /* _LINUX_PKEYS_H */
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index e7ee328..d2e1a5e 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -71,7 +71,5 @@
+ 
+ #define PKEY_DISABLE_ACCESS	0x1
+ #define PKEY_DISABLE_WRITE	0x2
+-#define PKEY_ACCESS_MASK	(PKEY_DISABLE_ACCESS |\
+-				 PKEY_DISABLE_WRITE)
+-
++#define PKEY_DISABLE_READ	0x10
+ #endif /* __ASM_GENERIC_MMAN_COMMON_H */
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index 6d33162..f4cefc3 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -597,7 +597,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
+ 	if (flags)
+ 		return -EINVAL;
+ 	/* check for unsupported init values */
+-	if (init_val & ~PKEY_ACCESS_MASK)
++	if (!arch_pkey_access_rights_valid(init_val))
+ 		return -EINVAL;
+ 
+ 	down_write(&current->mm->mmap_sem);
 
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---n32bdtqrrttj3wgr
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlwGGMoACgkQSnvnv3De
-m5+lDBAAxrkdEEDjq6ASZyzYu++elzkZwOs9q49a1PFaNr0i4W08Kz2ZEPOvXMiP
-xz+s4dL78GZo4sSL1e6rs35+3N0dZHFUlfASXeDU8XlKdoM1MQ55/DFHMJ1WcwBH
-C3xPOGW4zOBCF1hEp7mayrmc6qIcPGj5jCvamoYAC1P/1RdJ4qbqLJ6FiYynYaJr
-McAWlFBjCI60Bzhxkg8cuOOkpF4PE922kCWsdqKEkwLuVztrHwXu/80NYPzuRVXI
-g0QxtSz1Gu+6ZMOmdyxluy3RvricEMt4dNsIo8PuLALrGkeoklivfWJKWFT9n00Y
-2uI3qYkQdLgfy5OQZ4ceY5PkeI1DX6BXTV2TkIN4Zh+gDmAGhOjO+wzwhIgeNqrq
-MX+Luujx6iyKDnNrDJuFJJ12u5sQN4pW9+ilYAXcMos6hyejeG/xtIS+t7wwEcny
-PMQQaLuEr8Kz+/z9FBdYr3HZAMe29Z4mB1UOag5/6Iv1NYprukY2OJOot6x3mq4w
-YWtt2o2W/QOithsPfCxRZ5HpxiyZXATUe5ZVIWqxSFk+VCOIn9eIzlQ4KVzFZpjx
-ngh7OqsfEWaHRquUMLNEEdrNeBs29ewdj8GbWb8yTrXJzmEz9JBVQtVJy8+sd4Bd
-X8D7nD9eUq+XxZwLWXgPwIKLJbeo6WUme80euvu3PSWwUqCrlOg=
-=mApV
------END PGP SIGNATURE-----
-
---n32bdtqrrttj3wgr--
+-----------------------------------------------------------------------------
