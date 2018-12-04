@@ -1,111 +1,126 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
- init and thread creation
-Date: Mon, 3 Dec 2018 16:30:16 -0500 (EST)
-Message-ID: <785966510.18633.1543872616041.JavaMail.zimbra@efficios.com>
-References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com> <20181123183558.GM23599@brightrain.aerifal.cx> <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com> <87bm6cqm31.fsf@oldenburg.str.redhat.com> <688718071.12798.1543247469553.JavaMail.zimbra@efficios.com> <874lc3omh5.fsf@oldenburg.str.redhat.com> <20181126171045.GQ23599@brightrain.aerifal.cx> <2125113706.12987.1543260125953.JavaMail.zimbra@efficios.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH v9 2/4] seccomp: switch system call argument type to void *
+Date: Mon, 3 Dec 2018 19:03:05 -0500
+Message-ID: <CAHC9VhRsgv0bceoqCZt00qMc-KvuOkKsF1xaoYdmxUt93kPWmw@mail.gmail.com>
+References: <20181203032827.27978-1-tycho@tycho.ws> <20181203032827.27978-3-tycho@tycho.ws>
+ <20181203050108.GB31406@mail.hallyn.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2125113706.12987.1543260125953.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20181203050108.GB31406@mail.hallyn.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Rich Felker <dalias@libc.org>
-Cc: Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Serge Hallyn <serge@hallyn.com>
+Cc: Tycho Andersen <tycho@tycho.ws>, mtk.manpages@gmail.com, keescook@chromium.org, luto@amacapital.net, oleg@redhat.com, ebiederm@xmission.com, christian@brauner.io, tyhicks@canonical.com, suda.akihiro@lab.ntt.co.jp, asarai@suse.de, jannh@google.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Nov 26, 2018, at 2:22 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Mon, Dec 3, 2018 at 12:01 AM Serge E. Hallyn <serge@hallyn.com> wrote:
+> On Sun, Dec 02, 2018 at 08:28:25PM -0700, Tycho Andersen wrote:
+> > The const qualifier causes problems for any code that wants to write to the
+> > third argument of the seccomp syscall, as we will do in a future patch in
+> > this series.
+> >
+> > The third argument to the seccomp syscall is documented as void *, so
+> > rather than just dropping the const, let's switch everything to use void *
+> > as well.
+> >
+> > I believe this is safe because of 1. the documentation above, 2. there's no
+> > real type information exported about syscalls anywhere besides the man
+> > pages.
+> >
+> > Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> > CC: Kees Cook <keescook@chromium.org>
+> > CC: Andy Lutomirski <luto@amacapital.net>
+> > CC: Oleg Nesterov <oleg@redhat.com>
+> > CC: Eric W. Biederman <ebiederm@xmission.com>
+> > CC: "Serge E. Hallyn" <serge@hallyn.com>
+>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+>
+> Though I'm not entirely convinced there will be no ill effects of changing
+> the argument type.  I'll feel comfortable when Michael and Paul say it's
+> fine :)
 
-> ----- On Nov 26, 2018, at 12:10 PM, Rich Felker dalias@libc.org wrote:
-> 
->> On Mon, Nov 26, 2018 at 05:03:02PM +0100, Florian Weimer wrote:
->>> * Mathieu Desnoyers:
->>> 
->>> > So let's make __rseq_abi and __rseq_refcount strong symbols then ?
->>> 
->>> Yes, please.  (But I'm still not sure we need the reference counter.)
->> 
->> The reference counter is needed for out-of-libc implementations
->> interacting and using the dtor hack. An in-libc implementation doesn't
->> need to inspect/honor the reference counter, but it does seem to need
->> to indicate that it has a reference, if you want it to be compatible
->> with out-of-libc implementations, so that the out-of-libc one will not
->> unregister the rseq before libc is done with it.
-> 
-> Let's consider two use-cases here: one (simpler) is use of rseq TLS
-> from thread context by out-of-libc implementations. The other is use of
-> rseq TLS from signal handler by out-of-libc implementations.
-> 
-> If we only care about users of rseq from thread context, then libc
-> could simply set the refcount value to 1 on thread start,
-> and should not care about the value on thread exit. The libc can
-> either directly call rseq unregister, or rely on thread calling exit
-> to implicitly unregister rseq, which depends on its own TLS life-time
-> guarantees. For instance, if the IE-model TLS is valid up until call
-> to exit, just calling the exit system call is fine. However, if a libc
-> has a window at thread exit during which the kernel can preempt the
-> thread with the IE-model TLS area being already reclaimed, then it
-> needs to explicitly call rseq unregister before freeing the TLS.
-> 
-> The second use-case is out-of-libc implementations using rseq from
-> signal handler. This one is trickier. First, pthread_key setspecific
-> is unfortunately not async-signal-safe. I can't find a good way to
-> seamlessly integrate rseq into out-of-libc signal handlers while
-> performing lazy registration without races on thread exit. If we
-> figure out a way to do this though, we should increment the refcount
-> at thread start in libc (rather than just set it to 1) in case a
-> signal handler gets nested immediately over the start of the thread
-> and registers rseq as well.
-> 
-> It looks like it's not the only issue I have with calling lttng-ust
-> instrumentation from signal handlers, here is the list I have so
-> far:
-> 
-> * glibc global-dynamic TLS variables are not async-signal-safe,
->  and lttng-ust cannot use IE-model TLS because it is meant to be
->  dlopen'd,
-> * pthread_setspecific is not async-signal-safe,
-> 
-> There should be ways to eventually solve those issues, but it would
-> be nice if for now the way rseq is implemented in libc does not add
-> yet another limitation for signal handlers.
+Well, looking at the seccomp(2) manpage on my system (dated
+2018-02-02) the third argument is already shown as a "void *args":
 
-So, after thinking about a bit further, considering that current glibc
-do not offer the async-signal-safe APIs required to proceed to touch
-global-dynamic TLS variables from signal handlers nor register pthread key
-destructors from signal handlers, I will end up needing glibc improvements
-to eventually make lttng-ust instrumentation signal-safe.
+ SYNOPSIS
+      #include <linux/seccomp.h>
+      #include <linux/filter.h>
+      #include <linux/audit.h>
+      #include <linux/signal.h>
+      #include <sys/ptrace.h>
 
-This means that my main use-case for supporting out-of-libc rseq registration
-from signal handlers does not exist today, and will require new glibc APIs
-anyway. Therefore, it would make sense to require use of rseq from signal
-handlers to depend on rseq registration by glibc at thread start, and limit
-the use-case of out-of-libc rseq registration to those that do not nest
-within signal handlers.
+      int seccomp(unsigned int operation, unsigned int flags, void *args);
 
-If we _never_ even want to allow signal handlers to register rseq, we could
-set the __rseq_refcount to 1 at thread start in nptl and nptl init. However,
-if we want to eventually allow rseq registration from signal handlers in the
-future, we may want to consider keeping the __rseq_refcount relaxed atomic
-increment at thread start, as long as it does not represent a too big
-performance overhead.
+... so I think we're safe :)
 
-For thread exit, we don't care about the __rseq_refcount value at thread exit
-and we can unregister rseq unconditionally.
+>From a libseccomp perspective, we always call seccomp(2) via
+syscall(2) so it is unlikely we would ever run into problems, not too
+mention that we are just talking about the pointer type used in the
+kernel; from a syscall ABI perspective it is still a pointer value and
+that is the important part.
 
-As long as it is not too costly to increment the __rseq_refcount at thread start,
-I would be inclined to keep it as an increment rather than setting it to 1, so
-we can have more flexibility with respect to future registration of rseq from
-signal handlers, even though it is not possible today.
+> > CC: Christian Brauner <christian@brauner.io>
+> > CC: Tyler Hicks <tyhicks@canonical.com>
+> > CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+> > ---
+> >  include/linux/seccomp.h | 2 +-
+> >  kernel/seccomp.c        | 8 ++++----
+> >  2 files changed, 5 insertions(+), 5 deletions(-)
+> >
+> > diff --git a/include/linux/seccomp.h b/include/linux/seccomp.h
+> > index e5320f6c8654..b5103c019cf4 100644
+> > --- a/include/linux/seccomp.h
+> > +++ b/include/linux/seccomp.h
+> > @@ -43,7 +43,7 @@ extern void secure_computing_strict(int this_syscall);
+> >  #endif
+> >
+> >  extern long prctl_get_seccomp(void);
+> > -extern long prctl_set_seccomp(unsigned long, char __user *);
+> > +extern long prctl_set_seccomp(unsigned long, void __user *);
+> >
+> >  static inline int seccomp_mode(struct seccomp *s)
+> >  {
+> > diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> > index 96afc32e041d..393e029f778a 100644
+> > --- a/kernel/seccomp.c
+> > +++ b/kernel/seccomp.c
+> > @@ -924,7 +924,7 @@ static long seccomp_get_action_avail(const char __user *uaction)
+> >
+> >  /* Common entry point for both prctl and syscall. */
+> >  static long do_seccomp(unsigned int op, unsigned int flags,
+> > -                    const char __user *uargs)
+> > +                    void __user *uargs)
+> >  {
+> >       switch (op) {
+> >       case SECCOMP_SET_MODE_STRICT:
+> > @@ -944,7 +944,7 @@ static long do_seccomp(unsigned int op, unsigned int flags,
+> >  }
+> >
+> >  SYSCALL_DEFINE3(seccomp, unsigned int, op, unsigned int, flags,
+> > -                      const char __user *, uargs)
+> > +                      void __user *, uargs)
+> >  {
+> >       return do_seccomp(op, flags, uargs);
+> >  }
+> > @@ -956,10 +956,10 @@ SYSCALL_DEFINE3(seccomp, unsigned int, op, unsigned int, flags,
+> >   *
+> >   * Returns 0 on success or -EINVAL on failure.
+> >   */
+> > -long prctl_set_seccomp(unsigned long seccomp_mode, char __user *filter)
+> > +long prctl_set_seccomp(unsigned long seccomp_mode, void __user *filter)
+> >  {
+> >       unsigned int op;
+> > -     char __user *uargs;
+> > +     void __user *uargs;
+> >
+> >       switch (seccomp_mode) {
+> >       case SECCOMP_MODE_STRICT:
+> > --
+> > 2.19.1
 
-Thoughts ?
-
-Thanks,
-
-Mathieu
 
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+paul moore
+www.paul-moore.com
