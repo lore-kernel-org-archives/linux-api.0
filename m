@@ -1,363 +1,544 @@
-From: kbuild test robot <lkp@intel.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: [PATCH v3] signal: add procfd_send_signal() syscall
-Date: Thu, 6 Dec 2018 01:29:25 +0800
-Message-ID: <201812060139.QG6LoFxK%fengguang.wu@intel.com>
+Date: Wed, 05 Dec 2018 12:10:55 -0600
+Message-ID: <87bm5zondc.fsf@xmission.com>
 References: <20181205092203.14105-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="W/nzBZO5zC0uMSeA"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181205092203.14105-1-christian@brauner.io>
+In-Reply-To: <20181205092203.14105-1-christian@brauner.io> (Christian
+        Brauner's message of "Wed, 5 Dec 2018 10:22:03 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: kbuild-all@01.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, serge@hallyn.com, jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, keescook@chromium.org, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, Christian Brauner <christian@brauner.io>
+To: Christian Brauner <christian@brauner.io>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, keescook@chromium.org, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Christian Brauner <christian@brauner.io> writes:
 
---W/nzBZO5zC0uMSeA
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> The kill() syscall operates on process identifiers (pid). After a process
+> has exited its pid can be reused by another process. If a caller sends a
+> signal to a reused pid it will end up signaling the wrong process. This
+> issue has often surfaced and there has been a push [1] to address this
+> problem.
+>
+> This patch uses file descriptors (fd) from proc/<pid> as stable handles on
+> struct pid. Even if a pid is recycled the handle will not change. The fd
+> can be used to send signals to the process it refers to.
+> Thus, the new syscall procfd_send_signal() is introduced to solve this
+> problem. Instead of pids it operates on process fds (procfd).
+>
+> /* prototype and argument /*
+> long procfd_send_signal(int fd, int sig, siginfo_t *info, unsigned int flags);
+>
+> In addition to the procfd and signal argument it takes an additional
+> siginfo_t and flags argument. If the siginfo_t argument is NULL then
+> procfd_send_signal() behaves like kill(). If it is not NULL
+> procfd_send_signal() behaves like rt_sigqueueinfo().
+> The flags argument is added to allow for future extensions of this syscall.
+> It currently needs to be passed as 0. Failing to do so will cause EINVAL.
+>
+> /* procfd_send_signal() replaces multiple pid-based syscalls */
+> The procfd_send_signal() syscall currently takes on the job of the
+> following syscalls that operate on pids:
+> - kill(2)
+> - rt_sigqueueinfo(2)
+> The syscall is defined in such a way that it can also operate on thread fds
+> instead of process fds. In a future patchset I will extend it to operate on
+> procfds from /proc/<pid>/task/<tid> at which point it will additionally
+> take on the job of:
+> - tgkill(2)
+> - rt_tgsigqueueinfo(2)
+> Right now this is intentionally left out to keep this patchset as simple as
+> possible (cf. [4]). If a procfd of /proc/<pid>/task/<tid> is passed
+> EOPNOTSUPP will be returned to give userspace a way to detect when I add
+> support for such procfds {cf. [10]).
+>
+> /* naming */
+> The name procfd_send_signal() was chosen to reflect the fact that it takes
+> on the job of multiple syscalls. It is intentional that the name is not
+> reminiscent of neither kill(2) nor rt_sigqueueinfo(2). Not the fomer
+> because it might imply that procfd_send_signal() is only a replacement for
+> kill(2) and not the latter because it is a hazzle to remember the correct
+> spelling (especially for non-native speakers) and because it is not
+> descriptive enough of what the syscall actually does. The name
+> "procfd_send_signal" makes it very clear that its job is to send signals.
+>
+> /* O_PATH file descriptors */
+> procfds opened as O_PATH fds cannot be used to send signals to a process
+> (cf. [2]). Signaling processes through procfds is the equivalent of writing
+> to a file. Thus, this is not an operation that operates "purely at the
+> file descriptor level" as required by the open(2) manpage.
+>
+> /* zombies */
+> Zombies can be signaled just as any other process. No special error will be
+> reported since a zombie state is an unreliable state (cf. [3]).
+>
+> /* cross-namespace signals */
+> The patch currently enforces that the signaler and signalee either are in
+> the same pid namespace or that the signaler's pid namespace is an ancestor
+> of the signalee's pid namespace. This is done for the sake of simplicity
+> and because it is unclear to what values certain members of struct
+> siginfo_t would need to be set to (cf. [5], [6]).
+>
+> /* compat syscalls */
+> It became clear that we would like to avoid adding compat syscalls (cf.
+> [7]). The compat syscall handling is now done in kernel/signal.c itself by
+> adding __copy_siginfo_from_user_generic() which lets us avoid compat
+> syscalls (cf. [8]).
+> With upcoming rework for syscall handling things might improve even further
+> (cf. [11]).
+> This patch was tested on x64 and x86.
+>
+> /* userspace usage */
+> An asciinema recording for the basic functionality can be found under [9].
+> With this patch a process can be killed via:
+>
+>  #define _GNU_SOURCE
+>  #include <errno.h>
+>  #include <fcntl.h>
+>  #include <signal.h>
+>  #include <stdio.h>
+>  #include <stdlib.h>
+>  #include <string.h>
+>  #include <sys/stat.h>
+>  #include <sys/syscall.h>
+>  #include <sys/types.h>
+>  #include <unistd.h>
+>
+>  static inline int do_procfd_send_signal(int procfd, int sig, siginfo_t *info,
+>                                          unsigned int flags)
+>  {
+>  #ifdef __NR_procfd_send_signal
+>          return syscall(__NR_procfd_send_signal, procfd, sig, info, flags);
+>  #else
+>          return -ENOSYS;
+>  #endif
+>  }
+>
+>  int main(int argc, char *argv[])
+>  {
+>          int fd, ret, saved_errno, sig;
+>
+>          if (argc < 3)
+>                  exit(EXIT_FAILURE);
+>
+>          fd = open(argv[1], O_DIRECTORY | O_CLOEXEC);
+>          if (fd < 0) {
+>                  printf("%s - Failed to open \"%s\"\n", strerror(errno), argv[1]);
+>                  exit(EXIT_FAILURE);
+>          }
+>
+>          sig = atoi(argv[2]);
+>
+>          printf("Sending signal %d to process %s\n", sig, argv[1]);
+>          ret = do_procfd_send_signal(fd, sig, NULL, 0);
+>
+>          saved_errno = errno;
+>          close(fd);
+>          errno = saved_errno;
+>
+>          if (ret < 0) {
+>                  printf("%s - Failed to send signal %d to process %s\n",
+>                         strerror(errno), sig, argv[1]);
+>                  exit(EXIT_FAILURE);
+>          }
+>
+>          exit(EXIT_SUCCESS);
+>  }
+>
+> [1]:  https://lkml.org/lkml/2018/11/18/130
+> [2]:  https://lore.kernel.org/lkml/874lbtjvtd.fsf@oldenburg2.str.redhat.com/
+> [3]:  https://lore.kernel.org/lkml/20181204132604.aspfupwjgjx6fhva@brauner.io/
+> [4]:  https://lore.kernel.org/lkml/20181203180224.fkvw4kajtbvru2ku@brauner.io/
+> [5]:  https://lore.kernel.org/lkml/20181121213946.GA10795@mail.hallyn.com/
+> [6]:  https://lore.kernel.org/lkml/20181120103111.etlqp7zop34v6nv4@brauner.io/
+> [7]:  https://lore.kernel.org/lkml/36323361-90BD-41AF-AB5B-EE0D7BA02C21@amacapital.net/
+> [8]:  https://lore.kernel.org/lkml/87tvjxp8pc.fsf@xmission.com/
+> [9]:  https://asciinema.org/a/X1J8eGhe3vCfBE2b9TXtTaSJ7
+> [10]: https://lore.kernel.org/lkml/20181203180224.fkvw4kajtbvru2ku@brauner.io/
+> [11]: https://lore.kernel.org/lkml/F53D6D38-3521-4C20-9034-5AF447DF62FF@amacapital.net/
+>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Serge Hallyn <serge@hallyn.com>
+> Cc: Jann Horn <jannh@google.com>
+> Cc: Andy Lutomirsky <luto@kernel.org>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Oleg Nesterov <oleg@redhat.com>
+> Cc: Aleksa Sarai <cyphar@cyphar.com>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> Cc: Florian Weimer <fweimer@redhat.com>
+> Signed-off-by: Christian Brauner <christian@brauner.io>
+> ---
+> Changelog:
+> v3:
+> - add __copy_siginfo_from_user_generic() to avoid adding compat syscalls
+> - s/procfd_signal/procfd_send_signal/g
+> - change type of flags argument from int to unsigned int
+> - add comment about what happens to zombies
+> - add proc_is_tid_procfd()
+> - return EOPNOTSUPP when /proc/<pid>/task/<tid> fd is passed so userspace
+>   has a way of knowing that tidfds are not supported currently.
+> v2:
+> - define __NR_procfd_signal in unistd.h
+> - wire up compat syscall
+> - s/proc_is_procfd/proc_is_tgid_procfd/g
+> - provide stubs when CONFIG_PROC_FS=n
+> - move proc_pid() to linux/proc_fs.h header
+> - use proc_pid() to grab struct pid from /proc/<pid> fd
+> v1:
+> - patch introduced
+> ---
+>  arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+>  arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+>  fs/proc/base.c                         |  17 +++-
+>  fs/proc/internal.h                     |   5 -
+>  include/linux/proc_fs.h                |  18 ++++
+>  include/linux/syscalls.h               |   3 +
+>  include/uapi/asm-generic/unistd.h      |   4 +-
+>  kernel/signal.c                        | 127 +++++++++++++++++++++++--
+>  8 files changed, 163 insertions(+), 13 deletions(-)
+>
+> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> index 3cf7b533b3d1..9ab0477d6dc3 100644
+> --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> @@ -398,3 +398,4 @@
+>  384	i386	arch_prctl		sys_arch_prctl			__ia32_compat_sys_arch_prctl
+>  385	i386	io_pgetevents		sys_io_pgetevents		__ia32_compat_sys_io_pgetevents
+>  386	i386	rseq			sys_rseq			__ia32_sys_rseq
+> +387	i386	procfd_send_signal	sys_procfd_send_signal		__ia32_sys_procfd_send_signal
+> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> index f0b1709a5ffb..6d22b1130ed0 100644
+> --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> @@ -343,6 +343,7 @@
+>  332	common	statx			__x64_sys_statx
+>  333	common	io_pgetevents		__x64_sys_io_pgetevents
+>  334	common	rseq			__x64_sys_rseq
+> +335	common	procfd_send_signal	__x64_sys_procfd_send_signal
+>  
+>  #
+>  # x32-specific system call numbers start at 512 to avoid cache impact
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index ce3465479447..906647d51f6d 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -716,7 +716,10 @@ static int proc_pid_permission(struct inode *inode, int mask)
+>  	return generic_permission(inode, mask);
+>  }
+>  
+> -
+> +struct pid *proc_pid(const struct inode *inode)
+> +{
+> +	return PROC_I(inode)->pid;
+> +}
+>  
+>  static const struct inode_operations proc_def_inode_operations = {
+>  	.setattr	= proc_setattr,
+> @@ -3038,6 +3041,12 @@ static const struct file_operations proc_tgid_base_operations = {
+>  	.llseek		= generic_file_llseek,
+>  };
+>  
+> +bool proc_is_tgid_procfd(const struct file *file)
+> +{
+> +	return d_is_dir(file->f_path.dentry) &&
+> +	       (file->f_op == &proc_tgid_base_operations);
+> +}
+> +
+>  static struct dentry *proc_tgid_base_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
+>  {
+>  	return proc_pident_lookup(dir, dentry,
+> @@ -3422,6 +3431,12 @@ static const struct file_operations proc_tid_base_operations = {
+>  	.llseek		= generic_file_llseek,
+>  };
+>  
+> +bool proc_is_tid_procfd(const struct file *file)
+> +{
+> +	return d_is_dir(file->f_path.dentry) &&
+> +	       (file->f_op == &proc_tid_base_operations);
+> +}
+> +
+>  static const struct inode_operations proc_tid_base_inode_operations = {
+>  	.lookup		= proc_tid_base_lookup,
+>  	.getattr	= pid_getattr,
+> diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+> index 5185d7f6a51e..eb69afba83f3 100644
+> --- a/fs/proc/internal.h
+> +++ b/fs/proc/internal.h
+> @@ -113,11 +113,6 @@ static inline void *__PDE_DATA(const struct inode *inode)
+>  	return PDE(inode)->data;
+>  }
+>  
+> -static inline struct pid *proc_pid(const struct inode *inode)
+> -{
+> -	return PROC_I(inode)->pid;
+> -}
+> -
+>  static inline struct task_struct *get_proc_task(const struct inode *inode)
+>  {
+>  	return get_pid_task(proc_pid(inode), PIDTYPE_PID);
+> diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+> index d0e1f1522a78..ebc0e0ca5256 100644
+> --- a/include/linux/proc_fs.h
+> +++ b/include/linux/proc_fs.h
+> @@ -73,6 +73,9 @@ struct proc_dir_entry *proc_create_net_single_write(const char *name, umode_t mo
+>  						    int (*show)(struct seq_file *, void *),
+>  						    proc_write_t write,
+>  						    void *data);
+> +extern bool proc_is_tgid_procfd(const struct file *file);
+> +extern bool proc_is_tid_procfd(const struct file *file);
+> +extern struct pid *proc_pid(const struct inode *inode);
+>  
+>  #else /* CONFIG_PROC_FS */
+>  
+> @@ -114,6 +117,21 @@ static inline int remove_proc_subtree(const char *name, struct proc_dir_entry *p
+>  #define proc_create_net(name, mode, parent, state_size, ops) ({NULL;})
+>  #define proc_create_net_single(name, mode, parent, show, data) ({NULL;})
+>  
+> +static inline bool proc_is_tgid_procfd(const struct file *file)
+> +{
+> +	return false;
+> +}
+> +
+> +static inline bool proc_is_tid_procfd(const struct file *file)
+> +{
+> +	return false;
+> +}
+> +
+> +static inline struct pid *proc_pid(const struct inode *inode)
+> +{
+> +	return NULL;
+> +}
+> +
+>  #endif /* CONFIG_PROC_FS */
+>  
+>  struct net;
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 2ac3d13a915b..b3a02c6780d0 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -907,6 +907,9 @@ asmlinkage long sys_statx(int dfd, const char __user *path, unsigned flags,
+>  			  unsigned mask, struct statx __user *buffer);
+>  asmlinkage long sys_rseq(struct rseq __user *rseq, uint32_t rseq_len,
+>  			 int flags, uint32_t sig);
+> +asmlinkage long sys_procfd_send_signal(int procfd, int sig,
+> +				       siginfo_t __user *info,
+> +				       unsigned int flags);
+>  
+>  /*
+>   * Architecture-specific system calls
+> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> index 538546edbfbd..b409ee26f8e9 100644
+> --- a/include/uapi/asm-generic/unistd.h
+> +++ b/include/uapi/asm-generic/unistd.h
+> @@ -738,9 +738,11 @@ __SYSCALL(__NR_statx,     sys_statx)
+>  __SC_COMP(__NR_io_pgetevents, sys_io_pgetevents, compat_sys_io_pgetevents)
+>  #define __NR_rseq 293
+>  __SYSCALL(__NR_rseq, sys_rseq)
+> +#define __NR_procfd_send_signal 294
+> +__SYSCALL(__NR_procfd_send_signal, sys_procfd_send_signal)
+>  
+>  #undef __NR_syscalls
+> -#define __NR_syscalls 294
+> +#define __NR_syscalls 295
+>  
+>  /*
+>   * 32 bit systems traditionally used different
+> diff --git a/kernel/signal.c b/kernel/signal.c
+> index 9a32bc2088c9..79a7e0396b0f 100644
+> --- a/kernel/signal.c
+> +++ b/kernel/signal.c
+> @@ -19,7 +19,9 @@
+>  #include <linux/sched/task.h>
+>  #include <linux/sched/task_stack.h>
+>  #include <linux/sched/cputime.h>
+> +#include <linux/file.h>
+>  #include <linux/fs.h>
+> +#include <linux/proc_fs.h>
+>  #include <linux/tty.h>
+>  #include <linux/binfmts.h>
+>  #include <linux/coredump.h>
+> @@ -3286,6 +3288,16 @@ COMPAT_SYSCALL_DEFINE4(rt_sigtimedwait, compat_sigset_t __user *, uthese,
+>  }
+>  #endif
+>  
+> +static inline void prepare_kill_siginfo(int sig, struct kernel_siginfo *info)
+> +{
+> +	clear_siginfo(info);
+> +	info->si_signo = sig;
+> +	info->si_errno = 0;
+> +	info->si_code = SI_USER;
+> +	info->si_pid = task_tgid_vnr(current);
+> +	info->si_uid = from_kuid_munged(current_user_ns(), current_uid());
+> +}
+> +
+>  /**
+>   *  sys_kill - send a signal to a process
+>   *  @pid: the PID of the process
+> @@ -3295,16 +3307,119 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+>  {
+>  	struct kernel_siginfo info;
+>  
+> -	clear_siginfo(&info);
+> -	info.si_signo = sig;
+> -	info.si_errno = 0;
+> -	info.si_code = SI_USER;
+> -	info.si_pid = task_tgid_vnr(current);
+> -	info.si_uid = from_kuid_munged(current_user_ns(), current_uid());
+> +	prepare_kill_siginfo(sig, &info);
+>  
+>  	return kill_something_info(sig, &info, pid);
+>  }
+>  
+> +/*
+> + * Verify that the signaler and signalee either are in the same pid namespace
+> + * or that the signaler's pid namespace is an ancestor of the signalee's pid
+> + * namespace.
+> + */
+> +static bool may_signal_procfd(struct pid *pid)
+> +{
+> +	struct pid_namespace *active = task_active_pid_ns(current);
+> +	struct pid_namespace *p = ns_of_pid(pid);
+> +
+> +	for (;;) {
+> +		if (!p)
+> +			return false;
+> +		if (p == active)
+> +			break;
+> +		p = p->parent;
+> +	}
+> +
+> +	return true;
+> +}
+> +
+> +static int __copy_siginfo_from_user_generic(int signo, kernel_siginfo_t *kinfo,
+> +					    siginfo_t *info)
+Ugh.  _generic is a poor fit here.  In the kernel _generic tends to be
+for the default helper function for a set of operations.
 
-Hi Christian,
+A suffix like _any or anything that implemies you can be a compat or not
+a compat syscall would be better.
 
-Thank you for the patch! Perhaps something to improve:
+> +{
+> +#ifdef CONFIG_COMPAT
+> +	/*
+> +	 * Avoid hooking up compat syscalls and instead handle necessary
+> +	 * conversions here.
+> +	 */
+> +	if (in_compat_syscall())
+> +		return __copy_siginfo_from_user32(
+> +			signo, kinfo, (struct compat_siginfo __user *)info);
+> +#endif
+> +	return __copy_siginfo_from_user(signo, kinfo, info);
+> +}
 
-[auto build test WARNING on linus/master]
-[also build test WARNING on v4.20-rc5]
-[cannot apply to next-20181205]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
+Let me be very clear.  __copy_siginfo_from_user exists because of a bug
+in the original implementation of rt_sigqueueinfo.  It should not gain
+any new callers.  It only exists because there is userspace that is
+confirmed to care.
 
-url:    https://github.com/0day-ci/linux/commits/Christian-Brauner/signal-add-procfd_send_signal-syscall/20181205-174512
-config: sh-titan_defconfig (attached as .config)
-compiler: sh4-linux-gnu-gcc (Debian 7.2.0-11) 7.2.0
-reproduce:
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # save the attached .config to linux build tree
-        GCC_VERSION=7.2.0 make.cross ARCH=sh 
+If you must take a separate signal parameter please verify
+"signo == si_signo" and fail if they do not match.
 
-All warnings (new ones prefixed by >>):
+> +/**
+> + *  sys_procfd_send_signal - send a signal to a process through a process file
+> + *                           descriptor
+> + *  @procfd: the file descriptor of the process
 
-   <stdin>:1317:2: warning: #warning syscall pkey_mprotect not implemented [-Wcpp]
-   <stdin>:1320:2: warning: #warning syscall pkey_alloc not implemented [-Wcpp]
-   <stdin>:1323:2: warning: #warning syscall pkey_free not implemented [-Wcpp]
-   <stdin>:1326:2: warning: #warning syscall statx not implemented [-Wcpp]
-   <stdin>:1332:2: warning: #warning syscall io_pgetevents not implemented [-Wcpp]
-   <stdin>:1335:2: warning: #warning syscall rseq not implemented [-Wcpp]
->> <stdin>:1338:2: warning: #warning syscall procfd_send_signal not implemented [-Wcpp]
+There is a subtle naming and semantic issue here that needs to be
+addressed.
+- Are you only going to support processes?
+  If so procfd is fine, otherwise another name needs to be chosen.
 
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+- Do you want to embed what will get signaled into the file descriptor?
 
---W/nzBZO5zC0uMSeA
-Content-Type: application/gzip
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
+- Are you about pids?  In which case a pid type needs to be added to the
+  parameters so you can send to sessions, pgrps, processes, and threads.
 
-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
-h1s0Q/xC4eS53s3akP8HBIu2BFILAQA=
+This is important to get right so that people can know how to use this
+system call.
 
---W/nzBZO5zC0uMSeA--
+
+> + *  @sig:    signal to be sent
+> + *  @info:   the signal info
+> + *  @flags:  future flags to be passed
+> + *
+> + *  Return: 0 on success, negative errno on failure
+> + */
+> +SYSCALL_DEFINE4(procfd_send_signal, int, procfd, int, sig,
+> +		siginfo_t __user *, info, unsigned int, flags)
+> +{
+> +	int ret;
+> +	struct fd f;
+> +	struct pid *pid;
+> +	kernel_siginfo_t kinfo;
+> +
+> +	/* Enforce flags be set to 0 until we add an extension. */
+> +	if (flags)
+> +		return -EINVAL;
+> +
+> +	f = fdget_raw(procfd);
+> +	if (!f.file)
+> +		return -EBADF;
+> +
+> +	/*
+> +	 * Give userspace a way to detect whether /proc/<pid>/task/<tid> fds
+> +	 * are supported.
+> +	 */
+> +	ret = -EOPNOTSUPP;
+> +	if (proc_is_tid_procfd(f.file))
+> +		goto err;
+
+	-EBADF is the proper error code.
+
+> +	/* Is this a procfd? */
+> +	ret = -EINVAL;
+> +	if (!proc_is_tgid_procfd(f.file))
+> +		goto err;
+
+	-EBADF is the proper error code.
+
+> +	/* Without CONFIG_PROC_FS proc_pid() returns NULL. */
+> +	pid = proc_pid(file_inode(f.file));
+> +	if (!pid)
+> +		goto err;
+
+Perhaps you want to fold the proc_pid into the proc_is_tgid_procfd call.
+
+> +	if (!may_signal_procfd(pid))
+> +		goto err;
+> +
+> +	if (info) {
+> +		ret = __copy_siginfo_from_user_generic(sig, &kinfo, info);
+> +		if (unlikely(ret))
+> +			goto err;
+> +
+> +		/*
+> +		 * Not even root can pretend to send signals from the kernel.
+> +		 * Nor can they impersonate a kill()/tgkill(), which adds
+> +		 * source info.
+> +		 */
+> +		ret = -EPERM;
+> +		if ((kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL) &&
+> +		    (task_pid(current) != pid))
+> +			goto err;
+> +	} else {
+> +		prepare_kill_siginfo(sig, &kinfo);
+> +	}
+
+I think I would just make the section above say:
+
+	ret = copy_siginfo_from_user_any(
+> +
+> +	ret = kill_pid_info(sig, &kinfo, pid);
+> +
+> +err:
+> +	fdput(f);
+> +	return ret;
+> +}
+> +
+>  static int
+>  do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
+>  {
