@@ -1,54 +1,100 @@
-From: Joseph Myers <joseph@codesourcery.com>
-Subject: Re: [PATCH] Y2038: provide kernel support indication
-Date: Wed, 5 Dec 2018 15:26:49 +0000
-Message-ID: <alpine.DEB.2.21.1812051519390.25136@digraph.polyomino.org.uk>
-References: <20180919071303.26636-1-albert.aribaud@3adev.fr> <alpine.DEB.2.21.1809191300420.14910@digraph.polyomino.org.uk> <20180924235639.716a4cb4@athena> <alpine.DEB.2.21.1809251656190.14070@digraph.polyomino.org.uk> <20180925213635.70084f61@athena>
- <CAK8P3a17ZpOKx=p1Y2FgruM3GMcdOtiwaQqPvmg5xZQpFP2fCQ@mail.gmail.com> <20181205124926.7d433994@athena> <CAK8P3a0vZhfW_o3OhYBhwRmKCXA0jAAuODxmzHt+rwJkKO45ZA@mail.gmail.com> <alpine.DEB.2.21.1812051337210.13925@digraph.polyomino.org.uk>
- <CAK8P3a25W8NXY9e=DMzL-jd4+69ecZMyrWGxYDPP4MuH-Ng-9Q@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
+Date: Wed, 5 Dec 2018 08:21:02 -0800
+Message-ID: <CALCETrXeSQ8T9nvK7WpgPpkraLfg70FoDWvPZeLS3KiDaqXwtw@mail.gmail.com>
+References: <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
+ <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
+ <20181108201231.GE5481@ram.oc3035372033.ibm.com>
+ <87bm6z71yw.fsf@oldenburg.str.redhat.com>
+ <20181109180947.GF5481@ram.oc3035372033.ibm.com>
+ <87efbqqze4.fsf@oldenburg.str.redhat.com>
+ <20181127102350.GA5795@ram.oc3035372033.ibm.com>
+ <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
+ <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
+ <87va4g5d3o.fsf@oldenburg.str.redhat.com>
+ <20181203040249.GA11930@ram.oc3035372033.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Return-path: <libc-alpha-return-97979-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <CAK8P3a25W8NXY9e=DMzL-jd4+69ecZMyrWGxYDPP4MuH-Ng-9Q@mail.gmail.com>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Albert ARIBAUD <albert.aribaud@3adev.fr>, GNU C Library <libc-alpha@sourceware.org>, Firoz Khan <firoz.khan@linaro.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <20181203040249.GA11930@ram.oc3035372033.ibm.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: linuxram@us.ibm.com
+Cc: Florian Weimer <fweimer@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Linux API <linux-api@vger.kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Linux-MM <linux-mm@kvack.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 5 Dec 2018, Arnd Bergmann wrote:
+> On Dec 2, 2018, at 8:02 PM, Ram Pai <linuxram@us.ibm.com> wrote:
+>
+>> On Thu, Nov 29, 2018 at 12:37:15PM +0100, Florian Weimer wrote:
+>> * Dave Hansen:
+>>
+>>>> On 11/27/18 3:57 AM, Florian Weimer wrote:
+>>>> I would have expected something that translates PKEY_DISABLE_WRITE |
+>>>> PKEY_DISABLE_READ into PKEY_DISABLE_ACCESS, and also accepts
+>>>> PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ, for consistency with POWER.
+>>>>
+>>>> (My understanding is that PKEY_DISABLE_ACCESS does not disable all
+>>>> access, but produces execute-only memory.)
+>>>
+>>> Correct, it disables all data access, but not execution.
+>>
+>> So I would expect something like this (completely untested, I did not
+>> even compile this):
+>
+>
+> Ok. I re-read through the entire email thread to understand the problem a=
+nd
+> the proposed solution. Let me summarize it below. Lets see if we are on t=
+he same
+> plate.
+>
+> So the problem is as follows:
+>
+> Currently the kernel supports  'disable-write'  and 'disable-access'.
+>
+> On x86, cpu supports 'disable-write' and 'disable-access'. This
+> matches with what the kernel supports. All good.
+>
+> However on power, cpu supports 'disable-read' too. Since userspace can
+> program the cpu directly, userspace has the ability to set
+> 'disable-read' too.  This can lead to inconsistency between the kernel
+> and the userspace.
+>
+> We want the kernel to match userspace on all architectures.
+>
+> Proposed Solution:
+>
+> Enhance the kernel to understand 'disable-read', and facilitate architect=
+ures
+> that understand 'disable-read' to allow it.
+>
+> Also explicitly define the semantics of disable-access  as
+> 'disable-read and disable-write'
+>
+> Did I get this right?  Assuming I did, the implementation has to do
+> the following --
+>
+>    On power, sys_pkey_alloc() should succeed if the init_val
+>    is PKEY_DISABLE_READ, PKEY_DISABLE_WRITE, PKEY_DISABLE_ACCESS
+>    or any combination of the three.
+>
+>    On x86, sys_pkey_alloc() should succeed if the init_val is
+>    PKEY_DISABLE_WRITE or PKEY_DISABLE_ACCESS or PKEY_DISABLE_READ
+>    or any combination of the three, except  PKEY_DISABLE_READ
+>          specified all by itself.
+>
+>    On all other arches, none of the flags are supported.
 
-> That would make it very hard to deploy a glibc based system
-> with strict y2038 requirements. If we can no longer guarantee the
-> basic assumption that old applications keep using the old system
-> calls, then I think we instead need a way to build glibc itself without
-> support for the 32-bit time_t interfaces, e.g. using a --disable-time32
-> configuration switch to force a link-time error for any application
-> or library that has not been built against the 64-bit time_t interfaces.
+I don=E2=80=99t really love having a situation where you can use different
+flag combinations to refer to the same mode.
 
-(There's never been a guarantee of keeping using the same system calls.  
-Cf. people trying to restrict the system calls some code can use and 
-running into issues with moves to use e.g. *at syscalls unconditionally on 
-all architectures to implement the non-*at functions.)
-
-The set of interfaces that involve 32-bit time_t or other structures 
-including it is well-defined; an external checker can examine the dynamic 
-symbol table of any dynamically linked 32-bit application or shared 
-library to see if it has references to any of the symbols in question, 
-without needing to run the code at all (and so detect issues in code that 
-might not be frequently executed, not just in whatever code runs when 
-you're testing for 32-bit time uses).  (Or if you control the build of the 
-whole system, do a local change to make a glibc header use #error if 
-_TIME_BITS is not defined to 64.)
-
-I'd expect it to be a long time before we might consider making 32-bit 
-time_t (and thus 32-bit off_t) subject to something like 
---enable-obsolete-rpc / --enable-obsolete-nsl being needed to make the 
-32-bit interfaces available at (static) link time at all.
-
--- 
-Joseph S. Myers
-joseph@codesourcery.com
+Also, we should document the effect these flags have on execute permission.
