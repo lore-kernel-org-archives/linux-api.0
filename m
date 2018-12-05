@@ -1,7 +1,7 @@
 From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: [PATCH v3] signal: add procfd_send_signal() syscall
-Date: Wed, 05 Dec 2018 12:10:55 -0600
-Message-ID: <87bm5zondc.fsf@xmission.com>
+Date: Wed, 05 Dec 2018 12:20:43 -0600
+Message-ID: <87zhtjn8ck.fsf@xmission.com>
 References: <20181205092203.14105-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -418,7 +418,7 @@ Christian Brauner <christian@brauner.io> writes:
 Ugh.  _generic is a poor fit here.  In the kernel _generic tends to be
 for the default helper function for a set of operations.
 
-A suffix like _any or anything that implemies you can be a compat or not
+A suffix like _any or anything that implies you can be a compat or not
 a compat syscall would be better.
 
 > +{
@@ -505,7 +505,8 @@ system call.
 > +	if (!pid)
 > +		goto err;
 
-Perhaps you want to fold the proc_pid into the proc_is_tgid_procfd call.
+Perhaps you want to fold the proc_pid into the proc_is_tgid_procfd
+call.  That way proc_pid can stay private to proc.
 
 > +	if (!may_signal_procfd(pid))
 > +		goto err;
@@ -530,7 +531,21 @@ Perhaps you want to fold the proc_pid into the proc_is_tgid_procfd call.
 
 I think I would just make the section above say:
 
-	ret = copy_siginfo_from_user_any(
+	ret = copy_siginfo_from_user_any(&kinfo, info);
+        if (ret)
+        	goto err;
+
+	/* Only allow sending arbitrary signals to yourself */
+	if ((task_pid(current) != pid) &&
+           ((kinfo.si_code >= 0) || (kinfo.si_code == SI_TKILL))  {
+        	if (kinfo.si_code == SI_USER) {
+			/* Make this a regular kill signal */
+			prepare_kill_siginfo(kinfo.si_signo, &kinfo);
+		} else {
+			ret = -EPERM;
+                	goto err;
+ 		}
+	}
 > +
 > +	ret = kill_pid_info(sig, &kinfo, pid);
 > +
