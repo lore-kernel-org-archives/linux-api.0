@@ -1,100 +1,95 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: pkeys: Reserve PKEY_DISABLE_READ
-Date: Wed, 5 Dec 2018 08:21:02 -0800
-Message-ID: <CALCETrXeSQ8T9nvK7WpgPpkraLfg70FoDWvPZeLS3KiDaqXwtw@mail.gmail.com>
-References: <6f9c65fb-ea7e-8217-a4cc-f93e766ed9bb@intel.com>
- <87k1ln8o7u.fsf@oldenburg.str.redhat.com>
- <20181108201231.GE5481@ram.oc3035372033.ibm.com>
- <87bm6z71yw.fsf@oldenburg.str.redhat.com>
- <20181109180947.GF5481@ram.oc3035372033.ibm.com>
- <87efbqqze4.fsf@oldenburg.str.redhat.com>
- <20181127102350.GA5795@ram.oc3035372033.ibm.com>
- <87zhtuhgx0.fsf@oldenburg.str.redhat.com>
- <58e263a6-9a93-46d6-c5f9-59973064d55e@intel.com>
- <87va4g5d3o.fsf@oldenburg.str.redhat.com>
- <20181203040249.GA11930@ram.oc3035372033.ibm.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH v4 1/5] glibc: Perform rseq(2) registration at nptl
+ init and thread creation
+Date: Wed, 5 Dec 2018 12:24:40 -0500 (EST)
+Message-ID: <210288020.19588.1544030680384.JavaMail.zimbra@efficios.com>
+References: <20181121183936.8176-1-mathieu.desnoyers@efficios.com> <865273158.11687.1542995541389.JavaMail.zimbra@efficios.com> <20181123183558.GM23599@brightrain.aerifal.cx> <1758017676.12041.1543007347347.JavaMail.zimbra@efficios.com> <87bm6cqm31.fsf@oldenburg.str.redhat.com> <688718071.12798.1543247469553.JavaMail.zimbra@efficios.com> <1284855405.12857.1543249851299.JavaMail.zimbra@efficios.com> <20181126170758.GP23599@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <20181203040249.GA11930@ram.oc3035372033.ibm.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: linuxram@us.ibm.com
-Cc: Florian Weimer <fweimer@redhat.com>, Dave Hansen <dave.hansen@intel.com>, Linux API <linux-api@vger.kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Linux-MM <linux-mm@kvack.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181126170758.GP23599@brightrain.aerifal.cx>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rich Felker <dalias@libc.org>
+Cc: Florian Weimer <fweimer@redhat.com>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-> On Dec 2, 2018, at 8:02 PM, Ram Pai <linuxram@us.ibm.com> wrote:
->
->> On Thu, Nov 29, 2018 at 12:37:15PM +0100, Florian Weimer wrote:
->> * Dave Hansen:
->>
->>>> On 11/27/18 3:57 AM, Florian Weimer wrote:
->>>> I would have expected something that translates PKEY_DISABLE_WRITE |
->>>> PKEY_DISABLE_READ into PKEY_DISABLE_ACCESS, and also accepts
->>>> PKEY_DISABLE_ACCESS | PKEY_DISABLE_READ, for consistency with POWER.
->>>>
->>>> (My understanding is that PKEY_DISABLE_ACCESS does not disable all
->>>> access, but produces execute-only memory.)
->>>
->>> Correct, it disables all data access, but not execution.
->>
->> So I would expect something like this (completely untested, I did not
->> even compile this):
->
->
-> Ok. I re-read through the entire email thread to understand the problem a=
-nd
-> the proposed solution. Let me summarize it below. Lets see if we are on t=
-he same
-> plate.
->
-> So the problem is as follows:
->
-> Currently the kernel supports  'disable-write'  and 'disable-access'.
->
-> On x86, cpu supports 'disable-write' and 'disable-access'. This
-> matches with what the kernel supports. All good.
->
-> However on power, cpu supports 'disable-read' too. Since userspace can
-> program the cpu directly, userspace has the ability to set
-> 'disable-read' too.  This can lead to inconsistency between the kernel
-> and the userspace.
->
-> We want the kernel to match userspace on all architectures.
->
-> Proposed Solution:
->
-> Enhance the kernel to understand 'disable-read', and facilitate architect=
-ures
-> that understand 'disable-read' to allow it.
->
-> Also explicitly define the semantics of disable-access  as
-> 'disable-read and disable-write'
->
-> Did I get this right?  Assuming I did, the implementation has to do
-> the following --
->
->    On power, sys_pkey_alloc() should succeed if the init_val
->    is PKEY_DISABLE_READ, PKEY_DISABLE_WRITE, PKEY_DISABLE_ACCESS
->    or any combination of the three.
->
->    On x86, sys_pkey_alloc() should succeed if the init_val is
->    PKEY_DISABLE_WRITE or PKEY_DISABLE_ACCESS or PKEY_DISABLE_READ
->    or any combination of the three, except  PKEY_DISABLE_READ
->          specified all by itself.
->
->    On all other arches, none of the flags are supported.
 
-I don=E2=80=99t really love having a situation where you can use different
-flag combinations to refer to the same mode.
 
-Also, we should document the effect these flags have on execute permission.
+----- On Nov 26, 2018, at 12:07 PM, Rich Felker dalias@libc.org wrote:
+
+> On Mon, Nov 26, 2018 at 11:30:51AM -0500, Mathieu Desnoyers wrote:
+>> ----- On Nov 26, 2018, at 10:51 AM, Mathieu Desnoyers
+>> mathieu.desnoyers@efficios.com wrote:
+>> 
+>> > ----- On Nov 26, 2018, at 3:28 AM, Florian Weimer fweimer@redhat.com wrote:
+>> > 
+>> >> * Mathieu Desnoyers:
+>> >> 
+>> >>> Using a "weak" symbol in early adopter libraries is important, so they
+>> >>> can be loaded together into the same process without causing loader
+>> >>> errors due to many definitions of the same strong symbol.
+>> >> 
+>> >> This is not how ELF dynamic linking works.  If the symbol name is the
+>> >> same, one definition interposes the others.
+>> >> 
+>> >> You need to ensure that the symbol has the same size everywhere, though.
+>> >> There are some tricky interactions with symbol versions, too.  (The
+>> >> interposing libraries must not use symbol versioning.)
+>> > 
+>> > I was under the impression that loading the same strong symbol into an
+>> > application multiple times would cause some kind of warning if non-weak. I did
+>> > some testing to figure out which case I remembered would cause this.
+>> > 
+>> > When compiling with "-fno-common", dynamic and static linking work fine, but
+>> > trying to add multiple instances of a given symbol into a single object fails
+>> > with:
+>> > 
+>> > /tmp/ccSakXZV.o:(.bss+0x0): multiple definition of `a'
+>> > /tmp/ccQBJBOo.o:(.bss+0x0): first defined here
+>> > 
+>> > Even if the symbol has the same size.
+>> > 
+>> > So considering that we don't care about compiling into a single object here,
+>> > and only care about static and dynamic linking of libraries, indeed the "weak"
+>> > symbol is not useful.
+>> > 
+>> > So let's make __rseq_abi and __rseq_refcount strong symbols then ?
+>> 
+>> Actually, looking into ld(1) --warn-common, it looks like "weak" would be
+>> cleaner
+>> after all, especially for __rseq_abi which we needs to be initialized to a
+>> specific
+>> value, which is therefore not a common symbol.
+>> 
+>> "      --warn-common
+>>            Warn when a common symbol is combined with another common symbol or with a
+>>            symbol definition.  Unix
+>>            linkers allow this somewhat sloppy practice, but linkers on some other operating
+>>            systems do not.
+>>            This option allows you to find potential problems from combining global symbols.
+>>            Unfortunately,
+>>            some C libraries use this practice, so you may get some warnings about symbols
+>>            in the libraries as
+>>            well as in your programs."
+>> 
+>> Thoughts ?
+> 
+> AFAIK this has nothing to do with dynamic linking.
+
+Reading through the ELF specification, it seems to imply that "weak" only affects the link
+editor behavior when combining relocatable objects, not the behavior of the dynamic linker.
+Is that what you refer to when you say "weak" has nothing to do with dynamic linking ?
+
+If that interpretation is correct, then indeed I should remove the "weak" from the __rseq_abi
+and __rseq_refcount.
+
+Thanks,
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
