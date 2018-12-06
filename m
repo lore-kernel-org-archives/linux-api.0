@@ -1,43 +1,82 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
+From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v4] signal: add taskfd_send_signal() syscall
-Date: Thu, 6 Dec 2018 16:27:46 -0600
-Message-ID: <20181206222746.GB9224@mail.hallyn.com>
+Date: Thu, 6 Dec 2018 23:39:51 +0100
+Message-ID: <20181206223948.gyfdtkgbhtozmpsp@brauner.io>
 References: <20181206121858.12215-1-christian@brauner.io>
  <87sgzahf7k.fsf@xmission.com>
- <CAKOZuet4ayDu-54u2tO9tRDCgxa9JQ4avAiYS8xEtReN4MMhAA@mail.gmail.com>
- <878t12efg3.fsf@xmission.com>
- <20181206174129.taakmwekysbkaosu@brauner.io>
- <CAGXu5jL8PciZAXvOvCeCU3wKUEB_dU-O3q0tDw4uB_ojMvDEew@mail.gmail.com>
+ <D372C766-572C-4897-8F02-2FD0E72CCFAC@brauner.io>
+ <875zw6bh2z.fsf@xmission.com>
+ <20181206193017.wpxls5p3zgjd6rv2@brauner.io>
+ <871s6u9z6u.fsf@xmission.com>
+ <20181206213152.gvci7ijr3dokew7w@brauner.io>
+ <87o99y72gi.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jL8PciZAXvOvCeCU3wKUEB_dU-O3q0tDw4uB_ojMvDEew@mail.gmail.com>
+In-Reply-To: <87o99y72gi.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Colascione <dancol@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, X86 ML <x86@kernel.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, keescook@chromium.org, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 06, 2018 at 10:30:40AM -0800, Kees Cook wrote:
-> On Thu, Dec 6, 2018 at 9:41 AM Christian Brauner <christian@brauner.io> wrote:
-> > I feel changing the name around by a single persons preferences is not
-> > really a nice thing to do community-wise. So I'd like to hear other
-> > people chime in first before I make that change.
+On Thu, Dec 06, 2018 at 03:46:53PM -0600, Eric W. Biederman wrote:
+> Christian Brauner <christian@brauner.io> writes:
 > 
-> I don't think the name is hugely critical (but it's always the hardest
-> to settle on). My preference order would be:
+> >> Your intention is to add the thread case to support pthreads once the
+> >> process case is sorted out.  So this is something that needs to be made
+> >> clear.  Did I miss how you plan to handle threads?
+> >
+> > Yeah, maybe you missed it in the commit message [2] which is based on a
+> > discussion with Andy [3] and Arnd [4]:
 > 
-> taskfd_send_signal()
-> pidfd_send_signal()
-> procfd_send_signal()
-> fd_send_signal()
+> Looking at your references I haven't missed it.  You are not deciding
+> anything as of yet to keep it simple.  Except you are returning
+> EOPNOTSUPP.  You are very much intending to do something.
 
-imo, either procfd_send_signal() or taskfd_send_signal()
+That was clear all along and was pointed at every occassion in the
+threads. I even went through the hazzle to give you all of the
+references when there's lore.kernel.org.
 
-It seems to me that using flags later to specify sending to pgrp vs thread
-is fine:  it's specifying how to interpret the 'fd' in 'procfd_send_signal()'.
-
-> But, agreed, I think fdkill() should not be used.
 > 
-> -- 
-> Kees Cook
+> Decide.  Do you use the flags parameter or is the width of the
+> target depending on the flags.
+
+I'm sorry I don't understand what you a) mean with this sentence "width
+of the target" and b) what you *exactly* want from us to get this accepted.
+
+> 
+> That is fundamental to how the system call and it's extensions work.
+> That is fundamental to my review.
+> 
+> Until that is decided.
+> Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> 
+> There are a lot of fundamental maintenance issues and you can very easily
+> get them wrong if you are not clear on the job of the file descriptor
+> and the job of the flags argument.
+> 
+> I want don't want new crap that we have to abandon that has a nasty set
+> of bugs because no one wanted to think through the system call all of
+> the way and understand the corner cases.
+
+That's why this system call is exactly kept as simple as it is. Which I
+had to fight for! You kept consistenly asking for features such as:
+- add a pid parameter maybe
+- allow to signal into ancestor and cousin pid namespaces
+I fought all of those off for the sake of keeping this patch as simple
+as possible so that we can get it in.
+We don't even need to decide whether we go for flags or another type of
+fd right now. The point was that we can postpone this to a later
+discussion. Which also has been discussed in multiple threads. That's
+literally what I wrote in prior mails and nearly everyone agreed that
+this is a good strategy.
+
+I honestly have no idea what to make of your review given that it
+started from a naming issue and suddenly the whole api is crap.
+If you want this to be named fd_send_signal() to get in. Then seriously,
+I'm happy to rename it. I honestly don't care even though I think taskfd
+is a better name.
+
+> 
+> Eric
