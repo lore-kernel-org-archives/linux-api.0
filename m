@@ -1,52 +1,82 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2] signal: add procfd_signal() syscall
-Date: Fri, 07 Dec 2018 08:03:45 +1300
-Message-ID: <C5E71146-DE79-4145-B54B-E161E7372D95@brauner.io>
-References: <20181120105124.14733-1-christian@brauner.io> <87in0g5aqo.fsf@oldenburg.str.redhat.com> <746B7C49-CC7B-4040-A7EF-82491796D360@brauner.io> <20181202100304.labt63mzrlr5utdl@brauner.io> <8736rebl9s.fsf@oldenburg.str.redhat.com> <20181203180224.fkvw4kajtbvru2ku@brauner.io> <874lbtjvtd.fsf@oldenburg2.str.redhat.com> <CALCETrViXJ0gD34yVd8QpB-CSeKZzzncvkPHReycTiQin4r4WQ@mail.gmail.com> <87y392h4b7.fsf@oldenburg2.str.redhat.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH v4] signal: add taskfd_send_signal() syscall
+Date: Thu, 06 Dec 2018 13:17:24 -0600
+Message-ID: <875zw6bh2z.fsf@xmission.com>
+References: <20181206121858.12215-1-christian@brauner.io>
+        <87sgzahf7k.fsf@xmission.com>
+        <D372C766-572C-4897-8F02-2FD0E72CCFAC@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87y392h4b7.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <D372C766-572C-4897-8F02-2FD0E72CCFAC@brauner.io> (Christian
+        Brauner's message of "Fri, 07 Dec 2018 06:14:34 +1300")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>, Andy Lutomirski <luto@kernel.org>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Daniel Colascione <dancol@google.com>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, keescook@chromium.org, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On December 7, 2018 7:56:44 AM GMT+13:00, Florian Weimer <fweimer@redhat=2E=
-com> wrote:
->* Andy Lutomirski:
->
->>> I suppose that's fine=2E  Or alternatively, when thread group support
->is
->>> added, introduce a flag that applications have to use to enable it,
->so
->>> that they can probe for support by checking support for the flag=2E
->>>
->>> I wouldn't be opposed to a new system call like this either:
->>>
->>>  int procfd_open (pid_t thread_group, pid_t thread_id, unsigned
->flags);
->>>
->>> But I think this is frowned upon on the kernel side=2E
+Christian Brauner <christian@brauner.io> writes:
+
+> On December 7, 2018 4:01:19 AM GMT+13:00, ebiederm@xmission.com wrote:
+>>Christian Brauner <christian@brauner.io> writes:
 >>
->> I have no problem with it, except that I think it shouldn=E2=80=99t ret=
-urn an
->> fd that can be used for proc filesystem access=2E
+>>> The kill() syscall operates on process identifiers (pid). After a
+>>process
+>>> has exited its pid can be reused by another process. If a caller
+>>sends a
+>>> signal to a reused pid it will end up signaling the wrong process.
+>>This
+>>> issue has often surfaced and there has been a push [1] to address
+>>this
+>>> problem.
+>>>
+>>> This patch uses file descriptors (fd) from proc/<pid> as stable
+>>handles on
+>>> struct pid. Even if a pid is recycled the handle will not change. The
+>>fd
+>>> can be used to send signals to the process it refers to.
+>>> Thus, the new syscall taskfd_send_signal() is introduced to solve
+>>this
+>>> problem. Instead of pids it operates on process fds (taskfd).
+>>
+>>I am not yet thrilled with the taskfd naming.
 >
->Oh no, my intention was that it would just be used with  *_send_signal
->and related functions=2E
+> Userspace cares about what does this thing operate on?
+> It operates on processes and threads.
+> The most common term people use is "task".
+> I literally "polled" ten non-kernel people for that purpose and asked:
+> "What term would you use to refer to a process and a thread?"
+> Turns out it is task. So if find this pretty apt.
+> Additionally, the proc manpage uses task in the exact same way (also see the commit message).
+> If you can get behind that name even if feeling it's not optimal it would be great.
 
-Let's postpone that discussion a little=2E
-I think we don't need a syscall to base this off of pids=2E
-As I said I rather send my revived version of CLONE_NEWFD that would serve=
- the same task=2E
-The same way we could also just add a new open() flag that blocks fs acces=
-s completely=2E
-I just pitched that idea to Serge a few days back: O_NOCHDIR or similar=2E
-That could even be part of Aleksa's path resolution patchset=2E
+Once I understand why threads and not process groups.  I don't see that
+logic yet.
 
+>>Is there any plan to support sesssions and process groups?
 >
->Thanks,
->Florian
+> I don't see the necessity.
+> As I said in previous mails:
+> we can emulate all interesting signal syscalls with this one.
+
+I don't know what you mean by all of the interesting signal system
+calls.  I do know you can not replicate kill(2).
+
+Sending signals to a process group the "kill(-pgrp)" case with kill
+sends the signals to an atomic snapshot of processes.  If the signal
+is SIGKILL then it is guaranteed that then entire process group is
+killed with no survivors.
+
+> We succeeded in doing that.
+
+I am not certain you have.
+
+> No need to get more fancy.
+> There's currently no obvious need for more features.
+> Features should be implemented when someone actually needs them.
+
+That is fair.  I don't understand what you are doing with sending
+signals to a thread.  That seems like one of the least useful
+corner cases of sending signals.
+
+Eric
