@@ -1,82 +1,112 @@
-From: Christian Brauner <christian@brauner.io>
+From: Daniel Colascione <dancol@google.com>
 Subject: Re: [PATCH v4] signal: add taskfd_send_signal() syscall
-Date: Thu, 6 Dec 2018 23:39:51 +0100
-Message-ID: <20181206223948.gyfdtkgbhtozmpsp@brauner.io>
-References: <20181206121858.12215-1-christian@brauner.io>
- <87sgzahf7k.fsf@xmission.com>
- <D372C766-572C-4897-8F02-2FD0E72CCFAC@brauner.io>
- <875zw6bh2z.fsf@xmission.com>
- <20181206193017.wpxls5p3zgjd6rv2@brauner.io>
- <871s6u9z6u.fsf@xmission.com>
- <20181206213152.gvci7ijr3dokew7w@brauner.io>
- <87o99y72gi.fsf@xmission.com>
+Date: Thu, 6 Dec 2018 14:43:27 -0800
+Message-ID: <CAKOZuevqbmww0Ep+3gM73bm6H=1kUp1od8--QctuardSCaJxvw@mail.gmail.com>
+References: <20181206121858.12215-1-christian@brauner.io> <87sgzahf7k.fsf@xmission.com>
+ <D372C766-572C-4897-8F02-2FD0E72CCFAC@brauner.io> <875zw6bh2z.fsf@xmission.com>
+ <20181206193017.wpxls5p3zgjd6rv2@brauner.io> <871s6u9z6u.fsf@xmission.com>
+ <CAKOZuevgPv1CbAZF-ha0njdq6rd6QkU7T8qmmERJLsL45CeVzg@mail.gmail.com> <87in0647og.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87o99y72gi.fsf@xmission.com>
+In-Reply-To: <87in0647og.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, linux-man@vger.kernel.org, keescook@chromium.org, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org
+Cc: Christian Brauner <christian@brauner.io>, linux-kernel <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Serge E. Hallyn" <serge@hallyn.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tim Murray <timmurray@google.com>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, tglx@linutronix.de, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 06, 2018 at 03:46:53PM -0600, Eric W. Biederman wrote:
-> Christian Brauner <christian@brauner.io> writes:
-> 
+On Thu, Dec 6, 2018 at 2:22 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
+>
+> Daniel Colascione <dancol@google.com> writes:
+>
+> > On Thu, Dec 6, 2018 at 12:29 PM Eric W. Biederman <ebiederm@xmission.com> wrote:
+> >> Christian Brauner <christian@brauner.io> writes:
+> >>
+> >> > [1]: You cannot replicate certain aspects of kill *yet*. We have
+> >> > established this before. If we want process group support later we do
+> >> > have the flags argument to extend the sycall.
+> >>
+> >> Then you have horrible contradiction in the API.
+> >>
+> >> Either the grouping is a property of your file descriptor or the
+> >> grouping comes from the flags argument.
+> >>
+> >> If the grouping is specified in the flags argument then pidfd is the
+> >> proper name for your file descriptors, and the appropriate prefix
+> >> for your system call.
+> >
+> > Yes and no. "taskfd" is fine, since even if we do add a
+> > kill-process-group capability, the general facility under discussion
+> > is still *about* tasks in general, so "taskfd" still tells you in a
+> > general sense what the thing does. "pidfd" would be wrong, and for the
+> > same reason that the kernel's "struct pid" is badly-named: the object
+> > being named is a *task*, and signaling a particular task instead of
+> > whatever task happens to be labeled with a particular numeric PID at
+> > the time of all is the whole point of this change.
+>
+> No.  The object being named by struct pid is an identifier.
+>
+> The same identifier can label processes, the same identifier can
+> label threads, the same identifier can label process groups the
+> same identifier can label sessions.
+>
+> That is fundamental to how that identifier works.
+>
+> Now the new file descriptor can either be a handle to the struct pid
+> the general purpose identifier, or the file descriptor can be a handle
+> to a process.  Other file descriptor types would be handles to different
+> kinds of processes.
+
+If you open /proc/pid, you get a file descriptor of type A. If you
+pass that file descriptor to taskfd_signal, you signal the process. If
+you open a file descriptor to /proc/pid/task/tid, you get a file
+descriptor of type B, and if you pass that file descriptor to
+taskfd_signal, you signal the thread. A and B are *already* distinct.
+The only reason you'd want to require a flag for case B is to reduce
+the probability of error. The flag wouldn't let you open /proc/pid,
+yielding an A, and then pass it to taskfd_signal with a flag saying
+"interpret as B".
+
+I understand that it'd be inconsistent to later add a flag saying
+"interpret this A as a reference to its whole process group", because
+with respect to the difference between threads and processes, it's the
+file descriptor type that controls the operation invoked, not the
+flags. We can solve that by introducing a new FD type for a process
+group or by just allowing the "casting" via flag, but we're not at the
+point of having to decide that just yet, and I don't think the API is
+particularly bad either way.
+
+If you don't want to require a flag value when passing a B, then fine.
+It'll work either with or without the flag. If, instead, you want the
+flag to allow "casting" an A to a B or vice versa, that's fine too.
+
+> When people tell me the new interface can handle process groups or
+> sessions by just adding a flag.  I hear they want to have an handle
+> to struct pid then general purpose identifier.  Because it doesn't make
+> any sense at all to add a flag to when you need to add a new file
+> descriptor type to keep the API consistent.
+>
+> Later when I hear people say that they want an identifier for a process
+> and not have a handle to a general purpose identifier I think they need
+> to think about differnt types of file descriptors for the different
+> purposes.  The flags argument does not help at all there.
+>
+> >> If the grouping is a property of your file descriptor it does not make
+> >> sense to talk about using the flags argument later.
+> >>
 > >> Your intention is to add the thread case to support pthreads once the
 > >> process case is sorted out.  So this is something that needs to be made
 > >> clear.  Did I miss how you plan to handle threads?
+> >>
+> >> And this fundamentally and definitely gets into all of my concerns about
+> >> proper handling of pid_task and PIDTYPE_TGID etc.
 > >
-> > Yeah, maybe you missed it in the commit message [2] which is based on a
-> > discussion with Andy [3] and Arnd [4]:
-> 
-> Looking at your references I haven't missed it.  You are not deciding
-> anything as of yet to keep it simple.  Except you are returning
-> EOPNOTSUPP.  You are very much intending to do something.
+> > To the extent that it's possible, this system call should mimic the
+> > behavior of a signal-send to a positive numeric PID (i.e., a specific
+> > task), so if we change one, we should change both.
+>
+> There is a special case in kill(2) where we treat an identifier that
+> only identifies a thread as an identifier of a process.  We should
+> not copy that.
 
-That was clear all along and was pointed at every occassion in the
-threads. I even went through the hazzle to give you all of the
-references when there's lore.kernel.org.
-
-> 
-> Decide.  Do you use the flags parameter or is the width of the
-> target depending on the flags.
-
-I'm sorry I don't understand what you a) mean with this sentence "width
-of the target" and b) what you *exactly* want from us to get this accepted.
-
-> 
-> That is fundamental to how the system call and it's extensions work.
-> That is fundamental to my review.
-> 
-> Until that is decided.
-> Nacked-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> 
-> There are a lot of fundamental maintenance issues and you can very easily
-> get them wrong if you are not clear on the job of the file descriptor
-> and the job of the flags argument.
-> 
-> I want don't want new crap that we have to abandon that has a nasty set
-> of bugs because no one wanted to think through the system call all of
-> the way and understand the corner cases.
-
-That's why this system call is exactly kept as simple as it is. Which I
-had to fight for! You kept consistenly asking for features such as:
-- add a pid parameter maybe
-- allow to signal into ancestor and cousin pid namespaces
-I fought all of those off for the sake of keeping this patch as simple
-as possible so that we can get it in.
-We don't even need to decide whether we go for flags or another type of
-fd right now. The point was that we can postpone this to a later
-discussion. Which also has been discussed in multiple threads. That's
-literally what I wrote in prior mails and nearly everyone agreed that
-this is a good strategy.
-
-I honestly have no idea what to make of your review given that it
-started from a naming issue and suddenly the whole api is crap.
-If you want this to be named fd_send_signal() to get in. Then seriously,
-I'm happy to rename it. I honestly don't care even though I think taskfd
-is a better name.
-
-> 
-> Eric
+Sure.
