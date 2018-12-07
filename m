@@ -1,7 +1,7 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 3/5] y2038: socket: Add compat_sys_recvmmsg_time64
-Date: Fri,  7 Dec 2018 22:18:06 +0100
-Message-ID: <20181207211808.328719-4-arnd@arndb.de>
+Subject: [PATCH 1/5] y2038: futex: Move compat implementation into futex.c
+Date: Fri,  7 Dec 2018 22:18:04 +0100
+Message-ID: <20181207211808.328719-2-arnd@arndb.de>
 References: <20181207211808.328719-1-arnd@arndb.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181207211808.328719-1-arnd@arndb.de>
@@ -10,286 +10,505 @@ To: y2038@lists.linaro.org
 Cc: linux-kernel@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-recvmmsg() takes two arguments to pointers of structures that differ
-between 32-bit and 64-bit architectures: mmsghdr and timespec.
+We are going to share the compat_sys_futex() handler between 64-bit
+architectures and 32-bit architectures that need to deal with both 32-bit
+and 64-bit time_t, and this is easier if both entry points are in the
+same file.
 
-For y2038 compatbility, we are changing the native system call from
-timespec to __kernel_timespec with a 64-bit time_t (in another patch),
-and use the existing compat system call on both 32-bit and 64-bit
-architectures for compatibility with traditional 32-bit user space.
+In fact, most other system call handlers do the same thing these days, so
+let's follow the trend here and merge all of futex_compat.c into futex.c.
 
-As we now have two variants of recvmmsg() for 32-bit tasks that are both
-different from the variant that we use on 64-bit tasks, this means we
-also require two compat system calls!
+In the process, a few minor changes have to be done to make sure everything
+still makes sense: handle_futex_death() and futex_cmpxchg_enabled() become
+local symbol, and the compat version of the fetch_robust_entry() function
+gets renamed to compat_fetch_robust_entry() to avoid a symbol clash.
 
-The solution I picked is to flip things around: The existing
-compat_sys_recvmmsg() call gets moved from net/compat.c into net/socket.c
-and now handles the case for old user space on all architectures that
-have set CONFIG_COMPAT_32BIT_TIME.  A new compat_sys_recvmmsg_time64()
-call gets added in the old place for 64-bit architectures only, this
-one handles the case of a compat mmsghdr structure combined with
-__kernel_timespec.
-
-In the indirect sys_socketcall(), we now need to call either
-do_sys_recvmmsg() or __compat_sys_recvmmsg(), depending on what kind of
-architecture we are on. For compat_sys_socketcall(), no such change is
-needed, we always call __compat_sys_recvmmsg().
-
-I decided to not add a new SYS_RECVMMSG_TIME64 socketcall: Any libc
-implementation for 64-bit time_t will need significant changes including
-an updated asm/unistd.h, and it seems better to consistently use the
-separate syscalls that configuration, leaving the socketcall only for
-backward compatibility with 32-bit time_t based libc.
-
-The naming is asymmetric for the moment, so both existing syscalls
-entry points keep their names, while the new ones are recvmmsg_time32
-and compat_recvmmsg_time64 respectively. I expect that we will rename
-the compat syscalls later as we start using generated syscall tables
-everywhere and add these entry points.
+This is intended as a purely cosmetic patch, no behavior should
+change.
 
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/linux/compat.h   |  5 +++-
- include/linux/socket.h   |  9 ++++--
- include/linux/syscalls.h |  3 ++
- kernel/sys_ni.c          |  2 ++
- net/compat.c             | 34 ++++++++--------------
- net/socket.c             | 62 +++++++++++++++++++++++++++++-----------
- 6 files changed, 73 insertions(+), 42 deletions(-)
+ include/linux/futex.h |   8 --
+ kernel/Makefile       |   3 -
+ kernel/futex.c        | 195 +++++++++++++++++++++++++++++++++++++++-
+ kernel/futex_compat.c | 202 ------------------------------------------
+ 4 files changed, 192 insertions(+), 216 deletions(-)
+ delete mode 100644 kernel/futex_compat.c
 
-diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 8be8daa38c9a..72969d303434 100644
---- a/include/linux/compat.h
-+++ b/include/linux/compat.h
-@@ -893,7 +893,10 @@ asmlinkage long compat_sys_move_pages(pid_t pid, compat_ulong_t nr_pages,
- asmlinkage long compat_sys_rt_tgsigqueueinfo(compat_pid_t tgid,
- 					compat_pid_t pid, int sig,
- 					struct compat_siginfo __user *uinfo);
--asmlinkage long compat_sys_recvmmsg(int fd, struct compat_mmsghdr __user *mmsg,
-+asmlinkage long compat_sys_recvmmsg_time64(int fd, struct compat_mmsghdr __user *mmsg,
-+				    unsigned vlen, unsigned int flags,
-+				    struct __kernel_timespec __user *timeout);
-+asmlinkage long compat_sys_recvmmsg(int fd, struct mmsghdr __user *mmsg,
- 				    unsigned vlen, unsigned int flags,
- 				    struct old_timespec32 __user *timeout);
- asmlinkage long compat_sys_wait4(compat_pid_t pid,
-diff --git a/include/linux/socket.h b/include/linux/socket.h
-index 8b571e9b9f76..333b5df8a1b2 100644
---- a/include/linux/socket.h
-+++ b/include/linux/socket.h
-@@ -348,7 +348,8 @@ struct ucred {
- extern int move_addr_to_kernel(void __user *uaddr, int ulen, struct sockaddr_storage *kaddr);
- extern int put_cmsg(struct msghdr*, int level, int type, int len, void *data);
+diff --git a/include/linux/futex.h b/include/linux/futex.h
+index 821ae502d3d8..ccaef0097785 100644
+--- a/include/linux/futex.h
++++ b/include/linux/futex.h
+@@ -9,9 +9,6 @@ struct inode;
+ struct mm_struct;
+ struct task_struct;
  
--struct timespec64;
-+struct __kernel_timespec;
-+struct old_timespec32;
- 
- /* The __sys_...msg variants allow MSG_CMSG_COMPAT iff
-  * forbid_cmsg_compat==false
-@@ -357,8 +358,10 @@ extern long __sys_recvmsg(int fd, struct user_msghdr __user *msg,
- 			  unsigned int flags, bool forbid_cmsg_compat);
- extern long __sys_sendmsg(int fd, struct user_msghdr __user *msg,
- 			  unsigned int flags, bool forbid_cmsg_compat);
--extern int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
--			  unsigned int flags, struct timespec64 *timeout);
-+extern int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg,
-+			  unsigned int vlen, unsigned int flags,
-+			  struct __kernel_timespec __user *timeout,
-+			  struct old_timespec32 __user *timeout32);
- extern int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg,
- 			  unsigned int vlen, unsigned int flags,
- 			  bool forbid_cmsg_compat);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 247ad9eca955..03cda6793be3 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -843,6 +843,9 @@ asmlinkage long sys_accept4(int, struct sockaddr __user *, int __user *, int);
- asmlinkage long sys_recvmmsg(int fd, struct mmsghdr __user *msg,
- 			     unsigned int vlen, unsigned flags,
- 			     struct __kernel_timespec __user *timeout);
-+asmlinkage long sys_recvmmsg_time32(int fd, struct mmsghdr __user *msg,
-+			     unsigned int vlen, unsigned flags,
-+			     struct old_timespec32 __user *timeout);
- 
- asmlinkage long sys_wait4(pid_t pid, int __user *stat_addr,
- 				int options, struct rusage __user *ru);
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index df556175be50..ab9d0e3c6d50 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -284,7 +284,9 @@ COND_SYSCALL_COMPAT(move_pages);
- COND_SYSCALL(perf_event_open);
- COND_SYSCALL(accept4);
- COND_SYSCALL(recvmmsg);
-+COND_SYSCALL(recvmmsg_time32);
- COND_SYSCALL_COMPAT(recvmmsg);
-+COND_SYSCALL_COMPAT(recvmmsg_time64);
- 
+-extern int
+-handle_futex_death(u32 __user *uaddr, struct task_struct *curr, int pi);
+-
  /*
-  * Architecture specific syscalls: see further below
-diff --git a/net/compat.c b/net/compat.c
-index 47a614b370cd..f7084780a8f8 100644
---- a/net/compat.c
-+++ b/net/compat.c
-@@ -810,34 +810,23 @@ COMPAT_SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, buf, compat_size_t, len
- 	return __compat_sys_recvfrom(fd, buf, len, flags, addr, addrlen);
- }
+  * Futexes are matched on equal values of this key.
+  * The key type depends on whether it's a shared or private mapping.
+@@ -55,11 +52,6 @@ extern void exit_robust_list(struct task_struct *curr);
  
--static int __compat_sys_recvmmsg(int fd, struct compat_mmsghdr __user *mmsg,
--				 unsigned int vlen, unsigned int flags,
--				 struct old_timespec32 __user *timeout)
-+COMPAT_SYSCALL_DEFINE5(recvmmsg_time64, int, fd, struct compat_mmsghdr __user *, mmsg,
-+		       unsigned int, vlen, unsigned int, flags,
-+		       struct __kernel_timespec __user *, timeout)
+ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
+ 	      u32 __user *uaddr2, u32 val2, u32 val3);
+-#ifdef CONFIG_HAVE_FUTEX_CMPXCHG
+-#define futex_cmpxchg_enabled 1
+-#else
+-extern int futex_cmpxchg_enabled;
+-#endif
+ #else
+ static inline void exit_robust_list(struct task_struct *curr)
  {
--	int datagrams;
--	struct timespec64 ktspec;
--
--	if (timeout == NULL)
--		return __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
--				      flags | MSG_CMSG_COMPAT, NULL);
--
--	if (compat_get_timespec64(&ktspec, timeout))
--		return -EFAULT;
--
--	datagrams = __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
--				   flags | MSG_CMSG_COMPAT, &ktspec);
--	if (datagrams > 0 && compat_put_timespec64(&ktspec, timeout))
--		datagrams = -EFAULT;
--
--	return datagrams;
-+	return __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
-+			      flags | MSG_CMSG_COMPAT, timeout, NULL);
- }
- 
-+#ifdef CONFIG_COMPAT_32BIT_TIME
- COMPAT_SYSCALL_DEFINE5(recvmmsg, int, fd, struct compat_mmsghdr __user *, mmsg,
- 		       unsigned int, vlen, unsigned int, flags,
- 		       struct old_timespec32 __user *, timeout)
- {
--	return __compat_sys_recvmmsg(fd, mmsg, vlen, flags, timeout);
-+	return __sys_recvmmsg(fd, (struct mmsghdr __user *)mmsg, vlen,
-+			      flags | MSG_CMSG_COMPAT, NULL, timeout);
- }
-+#endif
- 
- COMPAT_SYSCALL_DEFINE2(socketcall, int, call, u32 __user *, args)
- {
-@@ -925,8 +914,9 @@ COMPAT_SYSCALL_DEFINE2(socketcall, int, call, u32 __user *, args)
- 		ret = __compat_sys_recvmsg(a0, compat_ptr(a1), a[2]);
- 		break;
- 	case SYS_RECVMMSG:
--		ret = __compat_sys_recvmmsg(a0, compat_ptr(a1), a[2], a[3],
--					    compat_ptr(a[4]));
-+		ret = __sys_recvmmsg(a0, compat_ptr(a1), a[2],
-+				     a[3] | MSG_CMSG_COMPAT, NULL,
-+				     compat_ptr(a[4]));
- 		break;
- 	case SYS_ACCEPT4:
- 		ret = __sys_accept4(a0, compat_ptr(a1), compat_ptr(a[2]), a[3]);
-diff --git a/net/socket.c b/net/socket.c
-index 593826e11a53..f6a2d3a7b611 100644
---- a/net/socket.c
-+++ b/net/socket.c
-@@ -2341,8 +2341,9 @@ SYSCALL_DEFINE3(recvmsg, int, fd, struct user_msghdr __user *, msg,
-  *     Linux recvmmsg interface
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 7343b3a9bff0..8e40a6742d23 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -49,9 +49,6 @@ obj-$(CONFIG_PROFILING) += profile.o
+ obj-$(CONFIG_STACKTRACE) += stacktrace.o
+ obj-y += time/
+ obj-$(CONFIG_FUTEX) += futex.o
+-ifeq ($(CONFIG_COMPAT),y)
+-obj-$(CONFIG_FUTEX) += futex_compat.o
+-endif
+ obj-$(CONFIG_GENERIC_ISA_DMA) += dma.o
+ obj-$(CONFIG_SMP) += smp.o
+ ifneq ($(CONFIG_SMP),y)
+diff --git a/kernel/futex.c b/kernel/futex.c
+index f423f9b6577e..5cc7c3b098e9 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -44,6 +44,7 @@
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
++#include <linux/compat.h>
+ #include <linux/slab.h>
+ #include <linux/poll.h>
+ #include <linux/fs.h>
+@@ -173,8 +174,10 @@
+  * double_lock_hb() and double_unlock_hb(), respectively.
   */
  
--int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
--		   unsigned int flags, struct timespec64 *timeout)
-+static int do_recvmmsg(int fd, struct mmsghdr __user *mmsg,
-+			  unsigned int vlen, unsigned int flags,
-+			  struct timespec64 *timeout)
+-#ifndef CONFIG_HAVE_FUTEX_CMPXCHG
+-int __read_mostly futex_cmpxchg_enabled;
++#ifdef CONFIG_HAVE_FUTEX_CMPXCHG
++#define futex_cmpxchg_enabled 1
++#else
++static int  __read_mostly futex_cmpxchg_enabled;
+ #endif
+ 
+ /*
+@@ -3360,7 +3363,7 @@ SYSCALL_DEFINE3(get_robust_list, int, pid,
+  * Process a futex-list entry, check whether it's owned by the
+  * dying task, and do notification if so:
+  */
+-int handle_futex_death(u32 __user *uaddr, struct task_struct *curr, int pi)
++static int handle_futex_death(u32 __user *uaddr, struct task_struct *curr, int pi)
  {
- 	int fput_needed, err, datagrams;
- 	struct socket *sock;
-@@ -2451,25 +2452,32 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
- 	return datagrams;
+ 	u32 uval, uninitialized_var(nval), mval;
+ 
+@@ -3589,6 +3592,192 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+ 	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
  }
  
--static int do_sys_recvmmsg(int fd, struct mmsghdr __user *mmsg,
--			   unsigned int vlen, unsigned int flags,
--			   struct __kernel_timespec __user *timeout)
-+int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg,
-+		   unsigned int vlen, unsigned int flags,
-+		   struct __kernel_timespec __user *timeout,
-+		   struct old_timespec32 __user *timeout32)
- {
- 	int datagrams;
- 	struct timespec64 timeout_sys;
- 
--	if (flags & MSG_CMSG_COMPAT)
--		return -EINVAL;
--
--	if (!timeout)
--		return __sys_recvmmsg(fd, mmsg, vlen, flags, NULL);
-+	if (timeout && get_timespec64(&timeout_sys, timeout))
++#ifdef CONFIG_COMPAT
++/*
++ * Fetch a robust-list pointer. Bit 0 signals PI futexes:
++ */
++static inline int
++compat_fetch_robust_entry(compat_uptr_t *uentry, struct robust_list __user **entry,
++		   compat_uptr_t __user *head, unsigned int *pi)
++{
++	if (get_user(*uentry, head))
 +		return -EFAULT;
- 
--	if (get_timespec64(&timeout_sys, timeout))
-+	if (timeout32 && get_old_timespec32(&timeout_sys, timeout32))
- 		return -EFAULT;
- 
--	datagrams = __sys_recvmmsg(fd, mmsg, vlen, flags, &timeout_sys);
-+	if (!timeout && !timeout32)
-+		do_recvmmsg(fd, mmsg, vlen, flags, NULL);
 +
-+	datagrams = do_recvmmsg(fd, mmsg, vlen, flags, &timeout_sys);
- 
--	if (datagrams > 0 && put_timespec64(&timeout_sys, timeout))
-+	if (!datagrams)
-+		return 0;
++	*entry = compat_ptr((*uentry) & ~1);
++	*pi = (unsigned int)(*uentry) & 1;
 +
-+	if (timeout && put_timespec64(&timeout_sys, timeout))
-+		datagrams = -EFAULT;
-+
-+	if (timeout32 && put_old_timespec32(&timeout_sys, timeout32))
- 		datagrams = -EFAULT;
- 
- 	return datagrams;
-@@ -2479,8 +2487,23 @@ SYSCALL_DEFINE5(recvmmsg, int, fd, struct mmsghdr __user *, mmsg,
- 		unsigned int, vlen, unsigned int, flags,
- 		struct __kernel_timespec __user *, timeout)
- {
--	return do_sys_recvmmsg(fd, mmsg, vlen, flags, timeout);
-+	if (flags & MSG_CMSG_COMPAT)
-+		return -EINVAL;
-+
-+	return __sys_recvmmsg(fd, mmsg, vlen, flags, timeout, NULL);
++	return 0;
 +}
 +
-+#ifdef CONFIG_COMPAT_32BIT_TIME
-+SYSCALL_DEFINE5(recvmmsg_time32, int, fd, struct mmsghdr __user *, mmsg,
-+		unsigned int, vlen, unsigned int, flags,
-+		struct old_timespec32 __user *, timeout)
++static void __user *futex_uaddr(struct robust_list __user *entry,
++				compat_long_t futex_offset)
 +{
-+	if (flags & MSG_CMSG_COMPAT)
++	compat_uptr_t base = ptr_to_compat(entry);
++	void __user *uaddr = compat_ptr(base + futex_offset);
++
++	return uaddr;
++}
++
++/*
++ * Walk curr->robust_list (very carefully, it's a userspace list!)
++ * and mark any locks found there dead, and notify any waiters.
++ *
++ * We silently return on any sign of list-walking problem.
++ */
++void compat_exit_robust_list(struct task_struct *curr)
++{
++	struct compat_robust_list_head __user *head = curr->compat_robust_list;
++	struct robust_list __user *entry, *next_entry, *pending;
++	unsigned int limit = ROBUST_LIST_LIMIT, pi, pip;
++	unsigned int uninitialized_var(next_pi);
++	compat_uptr_t uentry, next_uentry, upending;
++	compat_long_t futex_offset;
++	int rc;
++
++	if (!futex_cmpxchg_enabled)
++		return;
++
++	/*
++	 * Fetch the list head (which was registered earlier, via
++	 * sys_set_robust_list()):
++	 */
++	if (compat_fetch_robust_entry(&uentry, &entry, &head->list.next, &pi))
++		return;
++	/*
++	 * Fetch the relative futex offset:
++	 */
++	if (get_user(futex_offset, &head->futex_offset))
++		return;
++	/*
++	 * Fetch any possibly pending lock-add first, and handle it
++	 * if it exists:
++	 */
++	if (compat_fetch_robust_entry(&upending, &pending,
++			       &head->list_op_pending, &pip))
++		return;
++
++	next_entry = NULL;	/* avoid warning with gcc */
++	while (entry != (struct robust_list __user *) &head->list) {
++		/*
++		 * Fetch the next entry in the list before calling
++		 * handle_futex_death:
++		 */
++		rc = compat_fetch_robust_entry(&next_uentry, &next_entry,
++			(compat_uptr_t __user *)&entry->next, &next_pi);
++		/*
++		 * A pending lock might already be on the list, so
++		 * dont process it twice:
++		 */
++		if (entry != pending) {
++			void __user *uaddr = futex_uaddr(entry, futex_offset);
++
++			if (handle_futex_death(uaddr, curr, pi))
++				return;
++		}
++		if (rc)
++			return;
++		uentry = next_uentry;
++		entry = next_entry;
++		pi = next_pi;
++		/*
++		 * Avoid excessively long or circular lists:
++		 */
++		if (!--limit)
++			break;
++
++		cond_resched();
++	}
++	if (pending) {
++		void __user *uaddr = futex_uaddr(pending, futex_offset);
++
++		handle_futex_death(uaddr, curr, pip);
++	}
++}
++
++COMPAT_SYSCALL_DEFINE2(set_robust_list,
++		struct compat_robust_list_head __user *, head,
++		compat_size_t, len)
++{
++	if (!futex_cmpxchg_enabled)
++		return -ENOSYS;
++
++	if (unlikely(len != sizeof(*head)))
 +		return -EINVAL;
 +
-+	return __sys_recvmmsg(fd, mmsg, vlen, flags, NULL, timeout);
- }
-+#endif
- 
- #ifdef __ARCH_WANT_SYS_SOCKETCALL
- /* Argument list sizes for sys_socketcall */
-@@ -2600,8 +2623,15 @@ SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
- 				    a[2], true);
- 		break;
- 	case SYS_RECVMMSG:
--		err = do_sys_recvmmsg(a0, (struct mmsghdr __user *)a1, a[2],
--				      a[3], (struct __kernel_timespec __user *)a[4]);
-+		if (IS_ENABLED(CONFIG_64BIT) || !IS_ENABLED(CONFIG_64BIT_TIME))
-+			err = __sys_recvmmsg(a0, (struct mmsghdr __user *)a1,
-+					     a[2], a[3],
-+					     (struct __kernel_timespec __user *)a[4],
-+					     NULL);
-+		else
-+			err = __sys_recvmmsg(a0, (struct mmsghdr __user *)a1,
-+					     a[2], a[3], NULL,
-+					     (struct old_timespec32 __user *)a[4]);
- 		break;
- 	case SYS_ACCEPT4:
- 		err = __sys_accept4(a0, (struct sockaddr __user *)a1,
++	current->compat_robust_list = head;
++
++	return 0;
++}
++
++COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
++			compat_uptr_t __user *, head_ptr,
++			compat_size_t __user *, len_ptr)
++{
++	struct compat_robust_list_head __user *head;
++	unsigned long ret;
++	struct task_struct *p;
++
++	if (!futex_cmpxchg_enabled)
++		return -ENOSYS;
++
++	rcu_read_lock();
++
++	ret = -ESRCH;
++	if (!pid)
++		p = current;
++	else {
++		p = find_task_by_vpid(pid);
++		if (!p)
++			goto err_unlock;
++	}
++
++	ret = -EPERM;
++	if (!ptrace_may_access(p, PTRACE_MODE_READ_REALCREDS))
++		goto err_unlock;
++
++	head = p->compat_robust_list;
++	rcu_read_unlock();
++
++	if (put_user(sizeof(*head), len_ptr))
++		return -EFAULT;
++	return put_user(ptr_to_compat(head), head_ptr);
++
++err_unlock:
++	rcu_read_unlock();
++
++	return ret;
++}
++
++COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
++		struct old_timespec32 __user *, utime, u32 __user *, uaddr2,
++		u32, val3)
++{
++	struct timespec ts;
++	ktime_t t, *tp = NULL;
++	int val2 = 0;
++	int cmd = op & FUTEX_CMD_MASK;
++
++	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
++		      cmd == FUTEX_WAIT_BITSET ||
++		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
++		if (compat_get_timespec(&ts, utime))
++			return -EFAULT;
++		if (!timespec_valid(&ts))
++			return -EINVAL;
++
++		t = timespec_to_ktime(ts);
++		if (cmd == FUTEX_WAIT)
++			t = ktime_add_safe(ktime_get(), t);
++		tp = &t;
++	}
++	if (cmd == FUTEX_REQUEUE || cmd == FUTEX_CMP_REQUEUE ||
++	    cmd == FUTEX_CMP_REQUEUE_PI || cmd == FUTEX_WAKE_OP)
++		val2 = (int) (unsigned long) utime;
++
++	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
++}
++#endif /* CONFIG_COMPAT */
++
+ static void __init futex_detect_cmpxchg(void)
+ {
+ #ifndef CONFIG_HAVE_FUTEX_CMPXCHG
+diff --git a/kernel/futex_compat.c b/kernel/futex_compat.c
+deleted file mode 100644
+index 410a77a8f6e2..000000000000
+--- a/kernel/futex_compat.c
++++ /dev/null
+@@ -1,202 +0,0 @@
+-// SPDX-License-Identifier: GPL-2.0
+-/*
+- * linux/kernel/futex_compat.c
+- *
+- * Futex compatibililty routines.
+- *
+- * Copyright 2006, Red Hat, Inc., Ingo Molnar
+- */
+-
+-#include <linux/linkage.h>
+-#include <linux/compat.h>
+-#include <linux/nsproxy.h>
+-#include <linux/futex.h>
+-#include <linux/ptrace.h>
+-#include <linux/syscalls.h>
+-
+-#include <linux/uaccess.h>
+-
+-
+-/*
+- * Fetch a robust-list pointer. Bit 0 signals PI futexes:
+- */
+-static inline int
+-fetch_robust_entry(compat_uptr_t *uentry, struct robust_list __user **entry,
+-		   compat_uptr_t __user *head, unsigned int *pi)
+-{
+-	if (get_user(*uentry, head))
+-		return -EFAULT;
+-
+-	*entry = compat_ptr((*uentry) & ~1);
+-	*pi = (unsigned int)(*uentry) & 1;
+-
+-	return 0;
+-}
+-
+-static void __user *futex_uaddr(struct robust_list __user *entry,
+-				compat_long_t futex_offset)
+-{
+-	compat_uptr_t base = ptr_to_compat(entry);
+-	void __user *uaddr = compat_ptr(base + futex_offset);
+-
+-	return uaddr;
+-}
+-
+-/*
+- * Walk curr->robust_list (very carefully, it's a userspace list!)
+- * and mark any locks found there dead, and notify any waiters.
+- *
+- * We silently return on any sign of list-walking problem.
+- */
+-void compat_exit_robust_list(struct task_struct *curr)
+-{
+-	struct compat_robust_list_head __user *head = curr->compat_robust_list;
+-	struct robust_list __user *entry, *next_entry, *pending;
+-	unsigned int limit = ROBUST_LIST_LIMIT, pi, pip;
+-	unsigned int uninitialized_var(next_pi);
+-	compat_uptr_t uentry, next_uentry, upending;
+-	compat_long_t futex_offset;
+-	int rc;
+-
+-	if (!futex_cmpxchg_enabled)
+-		return;
+-
+-	/*
+-	 * Fetch the list head (which was registered earlier, via
+-	 * sys_set_robust_list()):
+-	 */
+-	if (fetch_robust_entry(&uentry, &entry, &head->list.next, &pi))
+-		return;
+-	/*
+-	 * Fetch the relative futex offset:
+-	 */
+-	if (get_user(futex_offset, &head->futex_offset))
+-		return;
+-	/*
+-	 * Fetch any possibly pending lock-add first, and handle it
+-	 * if it exists:
+-	 */
+-	if (fetch_robust_entry(&upending, &pending,
+-			       &head->list_op_pending, &pip))
+-		return;
+-
+-	next_entry = NULL;	/* avoid warning with gcc */
+-	while (entry != (struct robust_list __user *) &head->list) {
+-		/*
+-		 * Fetch the next entry in the list before calling
+-		 * handle_futex_death:
+-		 */
+-		rc = fetch_robust_entry(&next_uentry, &next_entry,
+-			(compat_uptr_t __user *)&entry->next, &next_pi);
+-		/*
+-		 * A pending lock might already be on the list, so
+-		 * dont process it twice:
+-		 */
+-		if (entry != pending) {
+-			void __user *uaddr = futex_uaddr(entry, futex_offset);
+-
+-			if (handle_futex_death(uaddr, curr, pi))
+-				return;
+-		}
+-		if (rc)
+-			return;
+-		uentry = next_uentry;
+-		entry = next_entry;
+-		pi = next_pi;
+-		/*
+-		 * Avoid excessively long or circular lists:
+-		 */
+-		if (!--limit)
+-			break;
+-
+-		cond_resched();
+-	}
+-	if (pending) {
+-		void __user *uaddr = futex_uaddr(pending, futex_offset);
+-
+-		handle_futex_death(uaddr, curr, pip);
+-	}
+-}
+-
+-COMPAT_SYSCALL_DEFINE2(set_robust_list,
+-		struct compat_robust_list_head __user *, head,
+-		compat_size_t, len)
+-{
+-	if (!futex_cmpxchg_enabled)
+-		return -ENOSYS;
+-
+-	if (unlikely(len != sizeof(*head)))
+-		return -EINVAL;
+-
+-	current->compat_robust_list = head;
+-
+-	return 0;
+-}
+-
+-COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
+-			compat_uptr_t __user *, head_ptr,
+-			compat_size_t __user *, len_ptr)
+-{
+-	struct compat_robust_list_head __user *head;
+-	unsigned long ret;
+-	struct task_struct *p;
+-
+-	if (!futex_cmpxchg_enabled)
+-		return -ENOSYS;
+-
+-	rcu_read_lock();
+-
+-	ret = -ESRCH;
+-	if (!pid)
+-		p = current;
+-	else {
+-		p = find_task_by_vpid(pid);
+-		if (!p)
+-			goto err_unlock;
+-	}
+-
+-	ret = -EPERM;
+-	if (!ptrace_may_access(p, PTRACE_MODE_READ_REALCREDS))
+-		goto err_unlock;
+-
+-	head = p->compat_robust_list;
+-	rcu_read_unlock();
+-
+-	if (put_user(sizeof(*head), len_ptr))
+-		return -EFAULT;
+-	return put_user(ptr_to_compat(head), head_ptr);
+-
+-err_unlock:
+-	rcu_read_unlock();
+-
+-	return ret;
+-}
+-
+-COMPAT_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+-		struct old_timespec32 __user *, utime, u32 __user *, uaddr2,
+-		u32, val3)
+-{
+-	struct timespec ts;
+-	ktime_t t, *tp = NULL;
+-	int val2 = 0;
+-	int cmd = op & FUTEX_CMD_MASK;
+-
+-	if (utime && (cmd == FUTEX_WAIT || cmd == FUTEX_LOCK_PI ||
+-		      cmd == FUTEX_WAIT_BITSET ||
+-		      cmd == FUTEX_WAIT_REQUEUE_PI)) {
+-		if (compat_get_timespec(&ts, utime))
+-			return -EFAULT;
+-		if (!timespec_valid(&ts))
+-			return -EINVAL;
+-
+-		t = timespec_to_ktime(ts);
+-		if (cmd == FUTEX_WAIT)
+-			t = ktime_add_safe(ktime_get(), t);
+-		tp = &t;
+-	}
+-	if (cmd == FUTEX_REQUEUE || cmd == FUTEX_CMP_REQUEUE ||
+-	    cmd == FUTEX_CMP_REQUEUE_PI || cmd == FUTEX_WAKE_OP)
+-		val2 = (int) (unsigned long) utime;
+-
+-	return do_futex(uaddr, op, val, tp, uaddr2, val2, val3);
+-}
 -- 
 2.18.0
