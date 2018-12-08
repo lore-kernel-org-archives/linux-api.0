@@ -1,87 +1,51 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 4/5] y2038: signal: Add sys_rt_sigtimedwait_time32
-Date: Fri,  7 Dec 2018 22:18:07 +0100
-Message-ID: <20181207211808.328719-5-arnd@arndb.de>
-References: <20181207211808.328719-1-arnd@arndb.de>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH v5 0/1] signaling processes through pidfds
+Date: Sat,  8 Dec 2018 06:40:58 +0100
+Message-ID: <20181208054059.19813-1-christian@brauner.io>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181207211808.328719-1-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: y2038@lists.linaro.org
-Cc: linux-kernel@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, serge@hallyn.com, keescook@chromium.org
+Cc: jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-Once sys_rt_sigtimedwait() gets changed to a 64-bit time_t, we have
-to provide compatibility support for existing binaries.
+Hey everyone,
 
-An earlier version of this patch reused the compat_sys_rt_sigtimedwait
-entry point to avoid code duplication, but this newer approach
-duplicates the existing native entry point instead, which seems
-a bit cleaner.
+This is v5 of this patchset.
+v5 does not introduce any functional changes since none were requested
+or required in the thread. Instead, it focusses on updated documentation
+making it very clear what the intentions are how to extend this syscall.
 
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- include/linux/syscalls.h |  4 ++++
- kernel/signal.c          | 33 +++++++++++++++++++++++++++++++++
- 2 files changed, 37 insertions(+)
+Eric, I dragged Serge into this and we went through the mails and tried
+to very thoroughly address your concerns about whether the width of the
+target should depend on flags or file descriptor types. As far as we
+understand from the threads this was your ultimate worry and also the
+reason why you withheld your agreement to the name of the syscall.
+We have outlined how the syscall is intended to be extended and decided
+that flags (e.g. PIDFD_TYPE_TID, PIDFD_TYPE_PGID) are the way to go. In
+line with this we decided to accept "pidfd_" as prefix for the new
+syscall.
+All concerns we could identify and understand we tried to address. I
+hope this will be sufficient for you to get behind the patch.
+The relevant section in the commit message is titled:
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 03cda6793be3..251979d2e709 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -649,6 +649,10 @@ asmlinkage long sys_rt_sigtimedwait(const sigset_t __user *uthese,
- 				siginfo_t __user *uinfo,
- 				const struct __kernel_timespec __user *uts,
- 				size_t sigsetsize);
-+asmlinkage long sys_rt_sigtimedwait_time32(const sigset_t __user *uthese,
-+				siginfo_t __user *uinfo,
-+				const struct old_timespec32 __user *uts,
-+				size_t sigsetsize);
- asmlinkage long sys_rt_sigqueueinfo(pid_t pid, int sig, siginfo_t __user *uinfo);
- 
- /* kernel/sys.c */
-diff --git a/kernel/signal.c b/kernel/signal.c
-index 3c8ea7a328e0..be6744cd0a11 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -3332,6 +3332,39 @@ SYSCALL_DEFINE4(rt_sigtimedwait, const sigset_t __user *, uthese,
- 	return ret;
- }
- 
-+#ifdef CONFIG_COMPAT_32BIT_TIME
-+SYSCALL_DEFINE4(rt_sigtimedwait_time32, const sigset_t __user *, uthese,
-+		siginfo_t __user *, uinfo,
-+		const struct old_timespec32 __user *, uts,
-+		size_t, sigsetsize)
-+{
-+	sigset_t these;
-+	struct timespec64 ts;
-+	kernel_siginfo_t info;
-+	int ret;
-+
-+	if (sigsetsize != sizeof(sigset_t))
-+		return -EINVAL;
-+
-+	if (copy_from_user(&these, uthese, sizeof(these)))
-+		return -EFAULT;
-+
-+	if (uts) {
-+		if (get_old_timespec32(&ts, uts))
-+			return -EFAULT;
-+	}
-+
-+	ret = do_sigtimedwait(&these, &info, uts ? &ts : NULL);
-+
-+	if (ret > 0 && uinfo) {
-+		if (copy_siginfo_to_user(uinfo, &info))
-+			ret = -EFAULT;
-+	}
-+
-+	return ret;
-+}
-+#endif
-+
- #ifdef CONFIG_COMPAT
- COMPAT_SYSCALL_DEFINE4(rt_sigtimedwait, compat_sigset_t __user *, uthese,
- 		struct compat_siginfo __user *, uinfo,
+/* sending signals to threads (tid) and process groups (pgid) */
+
+Thanks!
+Christian
+
+Christian Brauner (1):
+  signal: add pidfd_send_signal() syscall
+
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/proc/base.c                         |  20 +++-
+ include/linux/proc_fs.h                |  12 +++
+ include/linux/syscalls.h               |   3 +
+ include/uapi/asm-generic/unistd.h      |   4 +-
+ kernel/signal.c                        | 141 +++++++++++++++++++++++--
+ 7 files changed, 173 insertions(+), 9 deletions(-)
+
 -- 
-2.18.0
+2.19.1
