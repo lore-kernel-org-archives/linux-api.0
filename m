@@ -1,165 +1,52 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH v5 1/1] signal: add pidfd_send_signal() syscall
-Date: Sun, 9 Dec 2018 16:39:36 +0800
-Message-ID: <201812091643.IK1nkf7J%fengguang.wu@intel.com>
-References: <20181208054059.19813-2-christian@brauner.io>
+From: Christian Brauner <christian.brauner@canonical.com>
+Subject: Re: [PATCH v3 0/2] sysctl: handle overflow for file-max
+Date: Sun, 9 Dec 2018 17:40:09 +0100
+Message-ID: <CAPP7u0U72jSkT3km-E2imQdOvk-WRaDCH4t--N07mh8my7PvOQ@mail.gmail.com>
+References: <20181016223322.16844-1-christian@brauner.io> <20181029145818.4bqmy25itjnqhodg@brauner.io>
+ <CAGXu5jJwSRQ3dOgNW_X0Fk+8gT+ACiBZPJ79g-aCfqiWsm=ewg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="CE+1k2dSO48ffgeK"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181208054059.19813-2-christian@brauner.io>
+In-Reply-To: <CAGXu5jJwSRQ3dOgNW_X0Fk+8gT+ACiBZPJ79g-aCfqiWsm=ewg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: kbuild-all@01.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, serge@hallyn.com, keescook@chromium.org, jannh@google.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, Christian Brauner <christian@brauner.io>
+To: Kees Cook <keescook@chromium.org>
+Cc: Christian Brauner <christian@brauner.io>, Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, mcgrof@kernel.org, joe.lawrence@redhat.com, Waiman Long <longman@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Al Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Oct 29, 2018 at 10:44 PM Kees Cook <keescook@chromium.org> wrote:
+>
+> On Mon, Oct 29, 2018 at 7:58 AM, Christian Brauner <christian@brauner.io> wrote:
+> > On Wed, Oct 17, 2018 at 12:33:20AM +0200, Christian Brauner wrote:
+> >> Hey,
+> >>
+> >> Here is v3 of this patchset. Changelogs are in the individual commits.
+> >>
+> >> Currently, when writing
+> >>
+> >> echo 18446744073709551616 > /proc/sys/fs/file-max
+> >>
+> >> /proc/sys/fs/file-max will overflow and be set to 0. That quickly
+> >> crashes the system.
+> >>
+> >> The first version of this patch intended to detect the overflow and cap
+> >> at ULONG_MAX. However, we should not do this and rather return EINVAL on
+> >> overflow. The reasons are:
+> >> - this aligns with other sysctl handlers that simply reject overflows
+> >>   (cf. [1], [2], and a bunch of others)
+> >> - we already do a partial fail on overflow right now
+> >>   Namely, when the TMPBUFLEN is exceeded. So we already reject values
+> >>   such as 184467440737095516160 (21 chars) but accept values such as
+> >>   18446744073709551616 (20 chars) but both are overflows. So we should
+> >>   just always reject 64bit overflows and not special-case this based on
+> >>   the number of chars.
+> >>
+> >> (This patchset is in reference to https://lkml.org/lkml/2018/10/11/585.)
+> >
+> > Just so that we don't forget, can we make sure that this gets picked
+> > into linux-next? :)
+>
+> I was hoping akpm would take this? Andrew, does the v3 look okay to you?
 
---CE+1k2dSO48ffgeK
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+gentle ping again :)
 
-Hi Christian,
-
-Thank you for the patch! Perhaps something to improve:
-
-[auto build test WARNING on linus/master]
-[also build test WARNING on v4.20-rc5]
-[cannot apply to next-20181207]
-[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
-
-url:    https://github.com/0day-ci/linux/commits/Christian-Brauner/signaling-processes-through-pidfds/20181209-142857
-config: ia64-allnoconfig (attached as .config)
-compiler: ia64-linux-gcc (GCC) 8.1.0
-reproduce:
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # save the attached .config to linux build tree
-        GCC_VERSION=8.1.0 make.cross ARCH=ia64 
-
-All warnings (new ones prefixed by >>):
-
-   <stdin>:1185:2: warning: #warning syscall perf_event_open not implemented [-Wcpp]
-   <stdin>:1239:2: warning: #warning syscall seccomp not implemented [-Wcpp]
-   <stdin>:1317:2: warning: #warning syscall pkey_mprotect not implemented [-Wcpp]
-   <stdin>:1320:2: warning: #warning syscall pkey_alloc not implemented [-Wcpp]
-   <stdin>:1323:2: warning: #warning syscall pkey_free not implemented [-Wcpp]
-   <stdin>:1326:2: warning: #warning syscall statx not implemented [-Wcpp]
-   <stdin>:1332:2: warning: #warning syscall io_pgetevents not implemented [-Wcpp]
-   <stdin>:1335:2: warning: #warning syscall rseq not implemented [-Wcpp]
->> <stdin>:1338:2: warning: #warning syscall pidfd_send_signal not implemented [-Wcpp]
-
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
-
---CE+1k2dSO48ffgeK
-Content-Type: application/gzip
-Content-Disposition: attachment; filename=".config.gz"
-Content-Transfer-Encoding: base64
-
-H4sICH/TDFwAAy5jb25maWcAjFxrbxs5r/6+v2KwCxy0wNtubk2Tc5APska2tZ5bJY3t9MvA
-60xTo4md15fd9t8fUhrbc6GcAFtsPKQ0EiWSDylq/vjtj4Dttqvn2XYxnz09/Qoey2W5nm3L
-h+Db4qn8vyBMgyQ1gQil+QjM0WK5+/nnYnZ9FVx9vDj7ePZhPf8UjMr1snwK+Gr5bfG4g+aL
-1fK3P36D//6Ah88v0NP6fwNs9eEJO/jwOJ8H7wacvw9uPp5/PANGniZ9OSg4L6QugHL3a/8I
-fhRjobRMk7ubs/OzswNvxJLBgXTmXjew438KNuV293Lst6fSkUiKNCl0nB37lok0hUjGBVOD
-IpKxNHeXFzjo6g1pnMlIFEZoEyw2wXK1xY73raOUs2j//t9/P7arEwqWm5Ro3MtlFBaaRQab
-Vg9D0Wd5ZIphqk3CYnH3+7vlalm+r/Wt7/VYZrze43G8KtW6iEWcqvuCGcP4kOTLtYhkjxjU
-kI0FyIIPYdSw4vAumEgE8rKylepLsNn9vfm12ZbPR9kORCKUhIVTX4pIDBi/ry1ejZaptCdo
-kh6mky4l1hKpR4IdGQfpjnSaKy6KkBnWbWdkLIrxcfAVOVNCxJkpkjTBYRyksX8+TqM8MUzd
-kzKruOo0t7+z/E8z2/wItovnMpgtH4LNdrbdBLP5fLVbbhfLx6OkjOSjAhoUjPMU3iWTQX0g
-Y6lMi1wkzMixoEekZWc0iueB7i4RdHVfAK3+NvhZiGkmlCF7lyP3h2+X5Ik2rAfKoflQhG5V
-6t3zgUrzTNP7dCj4KEtlYgoFqpUqeoKuZ9Qf2xfJo0TE6AXrRSPQp7HVcRUS0wC7kmawV+RX
-UfRTVYAo4H8xS3hje7TZNPxB9IbbzURui+YJi+QggZ1WTJhKjlvQybveewzqLkEfFS2BgTAx
-06Oi2sw0073u65Mc/SFLwsizi1Itp1ZlFL1YmYJ1GtEizgf0c6ZBVrlvNLkRU5IistQ3RxAn
-i/ohSbSD99DEWCTGQ9NDMJUkhcmUfh6OJUytkjUtL+izx5SSniUdYcP7mG7by/onFxI3ivUQ
-fWpDw4tFGIqwYdz4+dlVx0xUDjsr199W6+fZcl4G4p9yCWaLgQHjaLjK9cbZt8o2xU6UhbVM
-vr2CDpMZ8Lb0ftERo7yOjvJefcw6Snve9iBfNRB7T+ln64O9jqQGCwN7P6WXuck4ZCoED0Lv
-FXBefRmBRSbGnw2cJYxAQpG+u3QyztarebnZrNbB9teL8wzfytl2ty43R8Ms2fXV0TxcX/Wk
-Of78Co6qCGN2eXF89iUHH4LDPT6K4/z4A4wyHxnFwDnqPMtSVWNUEy3iYsqHAxaCXY0GqZJm
-GHcdKOw/2VPMoJjBvB4ZrOXXwuQZWkvnq5SoueAwljVr16/9cMY8BYgFEgdoU1j7L1TNuyPk
-sAa0BtBAPvth1beIfR5K2vzsicXY0ItpGYZZ8XV6/hq90BOZmojej5ZPD2Shk4vTDPn45Iu0
-jIl9JQ1LZB433AUfySQStMezvWUMtAN9VHE1OjHqI9vNiNLJFtP59ahX2wZf7y4+nR17HH4t
-AJdTSOFrAYz1CcCTyyZrqxeqGzuYnorAwuWtvRGdw26FrQXGXPbN3XVrmvwegElC+WuZapbJ
-WpwBvh2UJmZTq3cp2AJ1d35eMxZxRnRj/b1IrP5XwHuYmizKBy3Y2uFR8NdYtLgAmAtu9lxx
-CvrX4gilhp9GDoCn6rTF0Y+Y8RJ1xhRYAR+50XtlY48sSR7XdD2B0elK7ue13YAwNmcRTgLE
-SQntGGZgHwjiARkZkdhA6tA/ODu0Mmhk8MWWt5Bhyxo5UUUCAh87oI6ViDkDlMhB1h5kX211
-MO592utX3RRCKUCTf8ECUU7MmoHO20UTpHc0n8VRkfQnHQ+tkyAs/1nMy4YXxpfIlF/SyEJM
-Be901F+sn/+drcsgXC/+aTn1vlQxAFQrxNZKHQFUXwKICGkimHtJIRF4DgafJbD+fCjBi0HM
-ZXvqA7LpsWakMEjTAWjGfjCdGUC74J34uS2Xm8XfT+VxRhJRyrfZvHwPMc/Ly2q9rU8OXzdm
-HqCCRM4ynaPbTlnoAWvI1g7+7TtM+bieBd/2I3mwst2nPLLVv+U6AFg1eyyfAVVZ3894JoPV
-C6ZGGmuQUZbfqarz37rApjU9bf5CzlgOhqbSKqAWWcib/AgqDahjlk7AbQNGMKi5B3xwxLfI
-GwrA9QOPRFxvGVeFxTx+HsFdR316AdybIGakZm/noFIOSg0BF7fj7QzzwODroWmt7COeQ7QJ
-hk2HgEIkWL961uY4ef+I0Tgy2NAnhDP0IEhLVCLMOeAgxJpW89Ik8uQbYomBpxIDMIonBwR/
-N4Vst1dvt9lvt+BdxuV/gozHXLL3R/AJT2vZEY7rEcPkdPPhMY9SCyqkwK3TyzUhfGwUa9lq
-gMhVjTwhJj8leDsIk9NgBokypdEV0iB69dOYJq0X0iAyEIfEFzwI5qvldr16egLNfjhYUqfI
-s4cSIyjgKmtsm2BzMEqWLyw3i8flBO0FdshX8IdusuBzsXx4WS2WDVuGIxJJaCFzZ6Wx0ebf
-xXb+nR5kU5ATRLSGD42gc4gZ56yZLrFdDLNAL553T7PtiuzbgVgITyWjQ9dYZ4R32qdrZ+v5
-98W2nGN49OGhfCmXD2g4j/ay7vJTF4yJFhKw0VNhMy+YNuJoHVosI5uD7DxVwpAEa1xtMDVM
-01E3TgJICIAEE8RDiILCllU2NnFjVA6ADhPPxvk9HwvoWMqZSVWbx/btmnuZ7HAT9LqsLwoe
-ZxjlHXk4Bw7t+oCZwtpDF/tEaH3GRArydQ6URxuVpeEebwou+3WcDSTwutrCOxH1bQav1VpM
-YSEPMq3l+vr2lZ3UkttKAPE+/D3blA/BD5feeFmvvi2eGhlYBOYysfl1zmuJd5ux0jHauRrk
-r4bqSS/SzgvCMwQ8OoPX5AkyNXPYFd2uqaOfopFtJxC2C1/jOrFq7VDUz3K+284QQOHJTmAT
-P9uGDvcAAccGF4WesSNrrmRGJ14qjhiCCE96CP1fM46yA4jL59X6VxAfIVNH8+nI6Ahlq6An
-ZknetEB7SFqPbBxXI+d0iIve1EMtbIQXu9CkindqAZIAO2QTvFkkDtFJ54Vjh747Adk+vLE7
-rXpFvftDwAb2+sBXf0EEWpQZ2xoUVt9dtRJ13PigBQBKxdrUvQoN7wGShiEgwHbCKlEuPwU6
-VIsFC5MWgBTq0h5pCvXuT7+sNGLQH3zL3dXZ7XVDovvM06iRGeGRYIlNBdBbL2bk869ZmtIO
-62svp4HcV2snUo/7dAErQlbabgzyrOiJhA9j5smSJqLr410sWIvhjt5zMa8eB2k3ushd0nYo
-osyDWUMxNnHmQekwjSRk7QxK/UzMdn+II+2hpj8EfVoBVFo3ItDJqfALxTyxhziU5ahNAaBj
-ESo59s7RMoix8hhzx4CRXtVN4bIzJKp+6Mblg0R7DgM8Gci0T+z/diyXcYCoqh2jVY8ozUyy
-BmOSVROLAQmxgegGCdl6tV3NV081OwutqgjTciRgndooNV5s5pQUYIHie/Q59GYZssT4EvEu
-r3FFEo3sx3YD0CF6wqNU5wrz0mosuWeFAZ/KiE7vaMXoUdVRdycNcLQsF+3lcP5WANCKazHA
-ccSWUtxe8uk13WPv8/lZZ8ZV3uHnbBPI5Wa73j3bA5vNd9Csh2C7ni03+KYAAE8ZPMASLV7w
-z/2isactIO2gnw1YLW+x+neJShk8rx52AArercv/7hbrEl5xwd/vm2Ke5SmAeDT4n2BdPtnq
-kFZsc2RBDQkb6RANAJB4PE4z4umxo+Fqs/US+Wz9QL3Gy796ORzH6C3MoI413vFUx+/bxhXH
-d+juqOkimXzx7EQ+pDcY4qFCGT3FHeVLh8pQ7HVOcy0r/arJeb9bgYjwpwF+ct3y1W76Qojg
-/PL2KngHJricwL/31IYE8y0m0qNfeyIAEH3ffcXyZbftjvWY5kyyvKsbQ1g9l8H7Mw2wSTPJ
-CbEVVTFDmEfL2sglsliQ6shBTWbzLQbGB8O1ty/mvlGFQat5nsjp7Q3gqXvawLjKFz/dhcYY
-czmnqmjHkKRf05hOWVSnejKhYQO4N99xNpBGPprLW3sAOxIBBvJpR54agAfE7UQmoJrozcWn
-s06rZLX8YAkb19waLGLbVH3kTBkAsZ7qEMeDQ8RDIJBr6slHVpx/aY8Eqo44T6Y0wKg4WGSE
-YsVfhg1wZG9gfZVNeeTuyCqjjxUrcl9HRZS99g6ET61E3XFLmftT9R0yi2XhakdoYDWcnDpe
-x+y5MvQM1eXtNe3uWQaBC/d0OcwEPVkY5cCWFblqEHq2HP5lXhVp240DbSqj6L4lQmf9Ljhp
-9C48q5rRiq0zj8YPPYdHWUZAOZMF86fV/EfbNYulDfohbMOaPzyKgABjkqoRRnJWWmCQ4gxL
-G7Yr6K8Mtt/LYPbwsMBoApTU9rr52MgkyoQbRcdNg0ymrerCA21Cn7e7Ywk29mSHLRWgu2fp
-q0ONHPYNnUofTmJPnGuGQsWehOWEGT4MU6rgQ+se1k1p6eL140Jq6ii9B7Enyd5rBaUOXO+e
-totvu+Ucpb/3rISZjfthwczteZFrnwFAlhiDKzr0HRpuU+Ce48QI/Kv0FJAiTXto+Na/WPIV
-Qu409NRRIc9IxFlEO0E7cHN9efvZS1Yhv7w4p8vIkK7jT2f0ZmO96aezLrxutr7HVI+XbGTB
-4svLT9PCaM5CWtuRcTy9+fSJtn9ikEeYyKXbilCy/QFdN9O5nr18X8w3lO1hA9qFjQcMvA2t
-laHy2EQVF2FWcCJvDyFi8I7tHhYrgNaHSqf3dAk4i8MgWvy9nq1/BevVbgtRyQFl99ez5zL4
-e/ftG0Az4sS7Tw8Zz5AjCwUjHlKCOupkmifUIU8OOpwO8aRHGhMJDPQka1Qf9LoVVPiwyrfr
-YsgbIDwnlR9buHM2OytksqCndYaEz7PvvzZYhR9Es1/0AU6SZrbDKReSPvJC6oCFA4+pNPeZ
-59gHG+ZRJr1QIZ/QKxHHnu0vYo31zp4U1wQAc+g7GsaTG9mTsDK0QQdQgdX/npxLiDavkwlw
-abSY9fI+dQyv7xNuj4TpIeXTUOrMV2qce8yczX66hBI9VGSQKcgqybuOYDFfrzarb9tg+Oul
-XH8YB4+7ckPDZUCkrdLEmvPDo4j2YcVxmZiMeiltR2Uax7nXCqnyebUtMaymtirmzwwmOrq2
-Q708bx7JNlms9zLx63I7UnXhCLznnbZV70G6hGhv8QKh7ks5X3w75EcPysaen1aP8FiveFsP
-e+vV7GG+eqZoEB382V+X5QZ0tAy+rNbyC8W2+BhPqedfdrMn6LnddW1yeHOhM7MpnmD99DWa
-Yk3qtBjznBRYhkVc474SdEpOTI3XzdlzFnpbeFYnMbSFgLDUa1WySdyZMSYQ57CA3dwHA4c0
-wIshbFokqn5SJzM8HfW9xWJHW7uh0sgXy/Tj7lYFhNy4TlFPA9kTYGQg/ROPi1GaMLSrF14u
-BODZlBUXN0mMYN9zpFDnwv78KJh7irhiTi+NYl0byZYP69XioQEqklClksZqIaONR9LORrjM
-zwQzlfPF8pG2YzQQwULhCMA6vW6Y0SSthfTYNR3JmArn+ngu6ta6oWRiigawr92Zb5F6brWg
-98CrXyOfKYYeRMLVfeY9dwuT1Mi+R+0crfBeFumzE62/5KmhxYT3a/r6qvAValmyj9rHU3wP
-DSsuwWMWRHESn82/t3Ce7pzdOQ3clLuHlT2yJlYG/Yvv9ZbGhzIKlaClbS/O0E4zBwQV9TxU
-9z+/UERfjpnyUW02GPeKq8mjKqiSqHZQDD8Olbi/Lzarm5tPtx/Oa3VryMDTUNhq7atLOmZq
-MH1+E9NnOnJpMN18omu5W0y0yWoxvel1bxj4zfVbxnRNR4ctprcM/JqOn1tMdLKrxfQWEVzT
-h0YtptvXmW4v39DT7VsW+PbyDXK6vXrDmG4+++UkdYp7v7h5vZvzi7cMG7j8m4BpLunsW30s
-/vZ7Dr9k9hz+7bPneF0m/o2z5/Cv9Z7Dr1p7Dv8CHuTx+mTOX5/NuX86o1TeFLT/O5BpLIzk
-mPFCpTGj/cGeg4vIeLDYkQUgSa48QHjPpFJm5Gsvu1cyil553YCJV1mUEJ5gu+KAiDhiiefY
-ac+T5JJOHTTE99qkTK5GUtN4DXly029ocXWkNN+tF9tfVHg+Et5jNZ4rae4h6hfaIn0DuNx3
-IOJ4+5TPtUeK+yuAFmTxNLtvFFwe4UGbjX6dgdXnlgfL1bo1OHvQV5U9HafCauWSbWqjZN2C
-ybQjSSLZ1o5bbNl0o5zscB8/7VaZIcqrikotwlWi36i9UrCPuTSeAgnFzz2FDtDOnJ+Fki44
-RLI0eeHt1uN2gOJxt0DxEmjzF8mefZHvgwuc9kbuVOzyAssW+97SkelXWF5ObkaN61CvM3SP
-MBBpVgHi87BxLQtr5LRNgxWRSAZm2KIhASvs9tcq6guNNLq2DymhVFiDCQFQrczQ3Y9sbIdU
-hR5rBV3TwQ1+H6J1+bsi5VxfYI10oxT5kITV+DUBJhsXrxwzKfrfarefv8/mP1xxsH36sl4s
-tz/sAdnDc7l57JagcnfGDBowsFd9D7D8s5fjSy6Fubs61D67QqxuD1eNj6V8sN+SgBBp/mNj
-BzSvPqJCmUZX4uW9vLa/d5hr4767QIjYXci1nyq4OLu6aUoyAygUF94r61isbN/APMfreQLW
-A49U4l7quTJv0Vg68V2rcTOkrbbA8y3tZlbfA64NGE2MtTHmivE4z+cWGkxWEP6LOdVo7G3R
-iWCjfT0qHewxzFdBpNcsimt0NRIqOd41qUqhw/Lv3eOj255NOR1uSp4YHTKeqFHFbrIU0Fbi
-S1W4btIeXnY8VTI59p2mu7JDW6uNH+AgJr+/k8ASno6r4paME2s4bFUUVgWxIJ8gWs1/7F6c
-jgxny8dWQrVvi59zLIN0Vx48g0UixPxgM/BCBsk0+UIeCNdkmuB9Ldg3rfQQRS/GLMrF3VmT
-iEfxaW7ualdp3aV5d/VDJGFXgVuywi5GQmStZXWgAGsDDtsqeLd5WSztyf5/gufdtvxZwh/l
-dv7x48f3XfNy8gyhWm38rMfJ+lqAUXipTUcwwhNsVQqtYHjTsLLhnporTMfBshos//R62cnE
-je20Lz5+OIHuBG0CqBR+9wacKKzKicKXSq+d+pyaqfQMptJi+RqHPqW9NhsofUdPjocrmEsC
-QUrUTdLht4RIM4RfDsKP5fhFjhyvrotl8grcfp7oiz5xL9DNABTT2WLlt8J7SeAN7nR/h9tn
-QR3cJnnqoUI/T5zbsFNQd81rG31nz2J3Xwmvn6vGYbHFWSevmyq8WxU78aE2tM8Ijy5GxP8/
-nEEMLsT9wMdkgVplQaG4h56DHX0DcO11CnUKdsQWEJDTOYAZAbSN2tDMF6UVCNlWD1pcBgyS
-KGCPCUc69AwGNx/CPHBsKoKc5gFJrZAuCCFlaPUFAHMgR+PlTgAA
-
---CE+1k2dSO48ffgeK--
+Christian
