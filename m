@@ -1,52 +1,45 @@
-From: Christian Brauner <christian.brauner@canonical.com>
-Subject: Re: [PATCH v3 0/2] sysctl: handle overflow for file-max
-Date: Sun, 9 Dec 2018 17:40:09 +0100
-Message-ID: <CAPP7u0U72jSkT3km-E2imQdOvk-WRaDCH4t--N07mh8my7PvOQ@mail.gmail.com>
-References: <20181016223322.16844-1-christian@brauner.io> <20181029145818.4bqmy25itjnqhodg@brauner.io>
- <CAGXu5jJwSRQ3dOgNW_X0Fk+8gT+ACiBZPJ79g-aCfqiWsm=ewg@mail.gmail.com>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: [PATCH v10 0/4] seccomp trap to userspace
+Date: Sun,  9 Dec 2018 11:24:10 -0700
+Message-ID: <20181209182414.30862-1-tycho@tycho.ws>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGXu5jJwSRQ3dOgNW_X0Fk+8gT+ACiBZPJ79g-aCfqiWsm=ewg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Kees Cook <keescook@chromium.org>
-Cc: Christian Brauner <christian@brauner.io>, Andrew Morton <akpm@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, mcgrof@kernel.org, joe.lawrence@redhat.com, Waiman Long <longman@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Al Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Linux API <linux-api@vger.kernel.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 29, 2018 at 10:44 PM Kees Cook <keescook@chromium.org> wrote:
->
-> On Mon, Oct 29, 2018 at 7:58 AM, Christian Brauner <christian@brauner.io> wrote:
-> > On Wed, Oct 17, 2018 at 12:33:20AM +0200, Christian Brauner wrote:
-> >> Hey,
-> >>
-> >> Here is v3 of this patchset. Changelogs are in the individual commits.
-> >>
-> >> Currently, when writing
-> >>
-> >> echo 18446744073709551616 > /proc/sys/fs/file-max
-> >>
-> >> /proc/sys/fs/file-max will overflow and be set to 0. That quickly
-> >> crashes the system.
-> >>
-> >> The first version of this patch intended to detect the overflow and cap
-> >> at ULONG_MAX. However, we should not do this and rather return EINVAL on
-> >> overflow. The reasons are:
-> >> - this aligns with other sysctl handlers that simply reject overflows
-> >>   (cf. [1], [2], and a bunch of others)
-> >> - we already do a partial fail on overflow right now
-> >>   Namely, when the TMPBUFLEN is exceeded. So we already reject values
-> >>   such as 184467440737095516160 (21 chars) but accept values such as
-> >>   18446744073709551616 (20 chars) but both are overflows. So we should
-> >>   just always reject 64bit overflows and not special-case this based on
-> >>   the number of chars.
-> >>
-> >> (This patchset is in reference to https://lkml.org/lkml/2018/10/11/585.)
-> >
-> > Just so that we don't forget, can we make sure that this gets picked
-> > into linux-next? :)
->
-> I was hoping akpm would take this? Andrew, does the v3 look okay to you?
+Hi all,
 
-gentle ping again :)
+Here's v10 of the seccomp trap to userspace series. The only changes
+since v9 was to fix up a compilation error in the
+!CONFIG_ARCH_HAS_SYSCALL_WRAPPER case, and to add Serge's acks.
 
-Christian
+Link to v9: https://lore.kernel.org/lkml/20181203032827.27978-1-tycho@tycho.ws/T/#u
+
+Cheers,
+
+Tycho
+
+Tycho Andersen (4):
+  seccomp: hoist struct seccomp_data recalculation higher
+  seccomp: switch system call argument type to void *
+  seccomp: add a return code to trap to userspace
+  samples: add an example of seccomp user trap
+
+ Documentation/ioctl/ioctl-number.txt          |   1 +
+ .../userspace-api/seccomp_filter.rst          |  84 ++++
+ include/linux/seccomp.h                       |   9 +-
+ include/linux/syscalls.h                      |   2 +-
+ include/uapi/linux/seccomp.h                  |  40 +-
+ kernel/seccomp.c                              | 468 +++++++++++++++++-
+ samples/seccomp/.gitignore                    |   1 +
+ samples/seccomp/Makefile                      |   7 +-
+ samples/seccomp/user-trap.c                   | 375 ++++++++++++++
+ tools/testing/selftests/seccomp/seccomp_bpf.c | 447 ++++++++++++++++-
+ 10 files changed, 1411 insertions(+), 23 deletions(-)
+ create mode 100644 samples/seccomp/user-trap.c
+
+-- 
+2.19.1
