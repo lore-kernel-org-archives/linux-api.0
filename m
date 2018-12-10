@@ -1,80 +1,94 @@
-From: Palmer Dabbelt <palmer@sifive.com>
-Subject: Re: [PATCH v5 24/25] ptrace: add PTRACE_GET_SYSCALL_INFO request
-Date: Mon, 10 Dec 2018 13:04:25 -0800 (PST)
-Message-ID: <mhng-6b6b1220-80dc-4acf-8a4b-649ef2c38919@palmer-si-x1c4>
-References: <20181210180421.wq3ruldbpvu2jpfm@pburton-laptop>
-Mime-Version: 1.0 (MHng)
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+From: Waiman Long <longman@redhat.com>
+Subject: [PATCH v5 0/5] cgroup: Introducing bypass mode
+Date: Mon, 10 Dec 2018 16:40:53 -0500
+Message-ID: <1544478058-24252-1-git-send-email-longman@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181210180421.wq3ruldbpvu2jpfm@pburton-laptop>
 Sender: linux-kernel-owner@vger.kernel.org
-To: paul.burton@mips.com
-Cc: ldv@altlinux.org, ralf@linux-mips.org, jhogan@kernel.org, oleg@redhat.com, luto@kernel.org, lineprinter@altlinux.org, esyr@redhat.com, keescook@chromium.org, jannh@google.com, linux-api@vger.kernel.org, strace-devel@lists.strace.io, linux-kernel@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>, Li Zefan <lizefan@huawei.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Johannes Weiner <hannes@cmpxchg.org>
+Cc: cgroups@vger.kernel.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-api@vger.kernel.org, Roman Gushchin <guro@fb.com>, Jens Axboe <axboe@kernel.dk>, Andrew Morton <akpm@linux-foundation.org>, Dennis Zhou <dennis@kernel.org>, Shakeel Butt <shakeelb@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Waiman Long <longman@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 10 Dec 2018 10:04:22 PST (-0800), paul.burton@mips.com wrote:
-> Hi Dmitry,
->
-> On Mon, Dec 10, 2018 at 07:09:40PM +0300, Dmitry V. Levin wrote:
->> We decided to add .frame_pointer to struct ptrace_syscall_info just for
->> consistency with .instruction_pointer and .stack_pointer; I must have been
->> misled by comments in asm-generic/ptrace.h into thinking that
->> frame_pointer() is universally available across architectures.
->
-> Is it correct to say that you're using frame_pointer() purely on user
-> register state, not kernel?
->
-> If so then one option would be to define it for MIPS as something like:
->
->     static inline unsigned long frame_pointer(struct pt_regs *regs)
->     {
->     	return regs->regs[30];
->     }
->
-> My concern with that though would be that providing frame_pointer()
-> unconditionally might mislead people into thinking that the kernel
-> always has frame pointers, when in reality current MIPS kernels never
-> do. In fact a comment in MIPS' asm/ptrace.h seems to suggest the lack of
-> frame_pointer() is intentional for exactly that reason:
->
->> Don't use asm-generic/ptrace.h it defines FP accessors that don't make
->> sense on MIPS.  We rather want an error if they get invoked.
->
-> Looking across architectures though MIPS isn't going to be the only one
-> missing frame_pointer(). With a little grepping it appears that these
-> architectures provide frame_pointer():
->
->   arm
->   arm64
->   hexagon
->   nds32
->   powerpc
->   riscv
->   sparc
->   um
->   x86
->
-> That leaves a whole bunch of other architectures (16) which don't have
-> frame_pointer(), or at least not in a way that I could see at a glance.
+ v5:
+  - Fix a bug in css_create() reported by Dan Carpenter.
 
-We (RISC-V) default to compiling without frame pointers.  I'm not sure if it 
-even makes sense have frame_pointer() on RISC-V, as it'll usually return 
-garbage.
+ v4:
+  - Rebased to the latest for-4.21 branch of cgroup tree.
+  - Make each controller explicitly opt in to become bypassable by
+    setting the bypassable cgroup_subsys flag. Currently, only cpu
+    controller is made bypassable.
+  - Break out the cgroup_v2.rst documentation update as separate patch.
 
->> Unlike .instruction_pointer and .stack_pointer that are actually needed
->> in strace, .frame_pointer is not used, so from strace PoV we don't really
->> need it.
->> 
->> So the question is, does anybody need a
->> struct ptrace_syscall_info.frame_pointer?
->> 
->> If yes, how can frame_pointer() be defined on MIPS?
->> Or should we just forget about making sense of frame_pointer() and remove
->> struct ptrace_syscall_info.frame_pointer from the proposed API?
->
-> So, along these lines my suggestion would be to avoid it if you don't
-> really need it anyway.
->
-> Thanks,
->     Paul
+ v3:
+  - Remove invalid cgroup subdirectory creation patch.
+  - Add use cases for the bypass mode and removing statements about
+    control files ownership in cgroup-v2.txt.
+  - Restrict bypass mode to non-domain (threaded) controllers only.
+
+ v3 patch - https://lkml.org/lkml/2017/8/9/604
+ v4 patch - https://lkml.org/lkml/2018/11/20/1361
+
+This patchset introduces a new bypass mode to the cgroup v2 core to
+give more freedom and flexibility to controllers which choose to become
+bypassable the freedom to shape their own unique views of the virtual
+cgroup hierarchies that can best suit thier own use cases.
+
+Because of the inherent performance overhead in enabling cpu controller,
+it is made bypassable so that the controller only needs to be enabled
+at those cgroups that really need it instead of in every cgroups at a
+given layer if at least one of them needs it.
+
+The cpu controller performance problem is one of the major issues
+in migrating from cgroup v1 to v2.
+
+For example,
+
+  R - A(+) - B(#) - C(+)
+                  \ D(#)
+
+where "+" means the controller is enabled and "#" means the controller
+is bypassed. For this controller's perspective, the cgroups are
+equivalent to:
+
+  R - A|B|D - C
+
+Underneath the root R, cgoups A, B and D are controlled by one set of
+knobs and cgroup C is controlled by another set of knobs as a child of
+cgroups A|B|C.
+
+This patchset is layered on top of the "for-4.21" branch of Tejun's
+cgroup git tree.
+
+Patch 1 introduces a new bypass mode that allows a bypassable
+controller to be disabled in a cgroup, but to be re-enabled again in its
+children. This is enabled by writing the controller name prefixed with
+'#' to the "cgroup.subtree_control" file. Then all its children will
+have this controller in bypass mode.
+
+Patch 2 extends the bypass mode mechanism to allow those child cgroups
+that are put into the bypass mode for a particular bypassable controller
+by their parent to be re-enabled again by writing the controller name
+with the '+' prefix to the "cgroup.controllers" file.
+
+Patch 3 extends the debug controller to expose additional controller
+masks introduced by this patchset.
+
+Patch 4 makes the cpu controller bypassable.
+
+Patch 5 documents the new bypass mode in cgroup-v2.rst file.
+
+Waiman Long (5):
+  cgroup: subtree_control bypass mode for bypassable controllers
+  cgroup: Allow reenabling of controller in bypass mode
+  cgroup: Make debug controller report new controller masks
+  sched/core: Make cpu cgroup controller bypassable
+  cgroup: Document bypass mode
+
+ Documentation/admin-guide/cgroup-v2.rst |  66 +++++---
+ include/linux/cgroup-defs.h             |  26 +++-
+ kernel/cgroup/cgroup.c                  | 258 +++++++++++++++++++++++++-------
+ kernel/cgroup/debug.c                   |   2 +
+ kernel/sched/core.c                     |   1 +
+ 5 files changed, 279 insertions(+), 74 deletions(-)
+
+-- 
+1.8.3.1
