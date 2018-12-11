@@ -1,7 +1,7 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: [PATCH 3/3] mm, proc: report PR_SET_THP_DISABLE in proc
-Date: Tue, 11 Dec 2018 15:36:41 +0100
-Message-ID: <20181211143641.3503-4-mhocko@kernel.org>
+Subject: [PATCH 1/3] mm, proc: be more verbose about unstable VMA flags in /proc/<pid>/smaps
+Date: Tue, 11 Dec 2018 15:36:39 +0100
+Message-ID: <20181211143641.3503-2-mhocko@kernel.org>
 References: <20181211143641.3503-1-mhocko@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,87 +9,72 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181211143641.3503-1-mhocko@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-api@vger.kernel.org, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Vlastimil Babka <vbabka@suse.cz>
+Cc: linux-api@vger.kernel.org, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Dan Williams <dan.j.williams@intel.com>, David Rientjes <rientjes@google.com>, Jan Kara <jack@suse.cz>, Mike Rapoport <rppt@linux.ibm.com>, Vlastimil Babka <vbabka@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
 From: Michal Hocko <mhocko@suse.com>
 
-David Rientjes has reported that 1860033237d4 ("mm: make
-PR_SET_THP_DISABLE immediately active") has changed the way how
-we report THPable VMAs to the userspace. Their monitoring tool is
-triggering false alarms on PR_SET_THP_DISABLE tasks because it considers
-an insufficient THP usage as a memory fragmentation resp. memory
-pressure issue.
+Even though vma flags exported via /proc/<pid>/smaps are explicitly
+documented to be not guaranteed for future compatibility the warning
+doesn't go far enough because it doesn't mention semantic changes to
+those flags. And they are important as well because these flags are
+a deep implementation internal to the MM code and the semantic might
+change at any time.
 
-Before the said commit each newly created VMA inherited VM_NOHUGEPAGE
-flag and that got exposed to the userspace via /proc/<pid>/smaps file.
-This implementation had its downsides as explained in the commit message
-but it is true that the userspace doesn't have any means to query for
-the process wide THP enabled/disabled status.
+Let's consider two recent examples:
+http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
+: commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
+: removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
+: mean time certain customer of ours started poking into /proc/<pid>/smaps
+: and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
+: flags, the application just fails to start complaining that DAX support is
+: missing in the kernel.
 
-PR_SET_THP_DISABLE is a process wide flag so it makes a lot of sense
-to export in the process wide context rather than per-vma. Introduce
-a new field to /proc/<pid>/status which export this status.  If
-PR_SET_THP_DISABLE is used then it reports false same as when the THP is
-not compiled in. It doesn't consider the global THP status because we
-already export that information via sysfs
+http://lkml.kernel.org/r/alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com
+: Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+: introduced a regression in that userspace cannot always determine the set
+: of vmas where thp is ineligible.
+: Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
+: to determine if a vma is eligible to be backed by hugepages.
+: Previous to this commit, prctl(PR_SET_THP_DISABLE, 1) would cause thp to
+: be disabled and emit "nh" as a flag for the corresponding vmas as part of
+: /proc/pid/smaps.  After the commit, thp is disabled by means of an mm
+: flag and "nh" is not emitted.
+: This causes smaps parsing libraries to assume a vma is eligible for thp
+: and ends up puzzling the user on why its memory is not backed by thp.
 
-Fixes: 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
+In both cases userspace was relying on a semantic of a specific VMA
+flag. The primary reason why that happened is a lack of a proper
+internface. While this has been worked on and it will be fixed properly,
+it seems that our wording could see some refinement and be more vocal
+about semantic aspect of these flags as well.
+
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: David Rientjes <rientjes@google.com>
+Acked-by: Jan Kara <jack@suse.cz>
+Acked-by: Dan Williams <dan.j.williams@intel.com>
+Acked-by: David Rientjes <rientjes@google.com>
+Acked-by: Mike Rapoport <rppt@linux.ibm.com>
 Acked-by: Vlastimil Babka <vbabka@suse.cz>
 Signed-off-by: Michal Hocko <mhocko@suse.com>
 ---
- Documentation/filesystems/proc.txt |  3 +++
- fs/proc/array.c                    | 10 ++++++++++
- 2 files changed, 13 insertions(+)
+ Documentation/filesystems/proc.txt | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index cd465304bec4..b24fd9bccc99 100644
+index 12a5e6e693b6..2a4e63f5122c 100644
 --- a/Documentation/filesystems/proc.txt
 +++ b/Documentation/filesystems/proc.txt
-@@ -182,6 +182,7 @@ For example, to get the status information of a process, all you have to do is
-   VmSwap:        0 kB
-   HugetlbPages:          0 kB
-   CoreDumping:    0
-+  THP_enabled:	  1
-   Threads:        1
-   SigQ:   0/28578
-   SigPnd: 0000000000000000
-@@ -256,6 +257,8 @@ Table 1-2: Contents of the status files (as of 4.8)
-  HugetlbPages                size of hugetlb memory portions
-  CoreDumping                 process's memory is currently being dumped
-                              (killing the process may lead to a corrupted core)
-+ THP_enabled		     process is allowed to use THP (returns 0 when
-+			     PR_SET_THP_DISABLE is set on the process
-  Threads                     number of threads
-  SigQ                        number of signals queued/max. number for queue
-  SigPnd                      bitmap of pending signals for the thread
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index 0ceb3b6b37e7..9d428d5a0ac8 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -392,6 +392,15 @@ static inline void task_core_dumping(struct seq_file *m, struct mm_struct *mm)
- 	seq_putc(m, '\n');
- }
+@@ -496,7 +496,9 @@ flags associated with the particular virtual memory area in two letter encoded
  
-+static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
-+{
-+	bool thp_enabled = IS_ENABLED(CONFIG_TRANSPARENT_HUGEPAGE);
-+
-+	if (thp_enabled)
-+		thp_enabled = !test_bit(MMF_DISABLE_THP, &mm->flags);
-+	seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
-+}
-+
- int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 			struct pid *pid, struct task_struct *task)
- {
-@@ -406,6 +415,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 	if (mm) {
- 		task_mem(m, mm);
- 		task_core_dumping(m, mm);
-+		task_thp_status(m, mm);
- 		mmput(mm);
- 	}
- 	task_sig(m, task);
+ Note that there is no guarantee that every flag and associated mnemonic will
+ be present in all further kernel releases. Things get changed, the flags may
+-be vanished or the reverse -- new added.
++be vanished or the reverse -- new added. Interpretation of their meaning
++might change in future as well. So each consumer of these flags has to
++follow each specific kernel version for the exact semantic.
+ 
+ This file is only present if the CONFIG_MMU kernel configuration option is
+ enabled.
 -- 
 2.19.2
