@@ -1,39 +1,70 @@
-From: hpa@zytor.com
+From: "H.J. Lu" <hjl.tools@gmail.com>
 Subject: Re: Can we drop upstream Linux x32 support?
-Date: Mon, 10 Dec 2018 18:22:56 -0800
-Message-ID: <DC97ED04-0FAB-4A4E-BD24-456B5A0978DF@zytor.com>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com> <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
+Date: Mon, 10 Dec 2018 19:14:41 -0800
+Message-ID: <CAMe9rOp0m5sn59AsD2F2i2Ad2tb7ufPU1mMg-vUOfh+TnGMeaw@mail.gmail.com>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
+In-Reply-To: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>
-Cc: the arch/x86 maintainers <x86@kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, bp@alien8.de, fweimer@redhat.com, vapier@gentoo.org, hjl.tools@gmail.com, dalias@libc.org, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: the arch/x86 maintainers <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On December 10, 2018 5:40:33 PM PST, Linus Torvalds <torvalds@linux-foundation.org> wrote:
->On Mon, Dec 10, 2018 at 5:23 PM Andy Lutomirski <luto@kernel.org>
->wrote:
->>
->> I'm seriously considering sending a patch to remove x32 support from
->> upstream Linux.  Here are some problems with it:
+On Mon, Dec 10, 2018 at 5:23 PM Andy Lutomirski <luto@kernel.org> wrote:
 >
->I talked to Arnd (I think - we were talking about all the crazy ABI's,
->but maybe it was with somebody else) about exactly this in Edinburgh.
+> Hi all-
 >
->Apparently the main real use case is for extreme benchmarking. It's
->the only use-case where the complexity of maintaining a whole
->development environment and distro is worth it, it seems. Apparently a
->number of Spec submissions have been done with the x32 model.
+> I'm seriously considering sending a patch to remove x32 support from
+> upstream Linux.  Here are some problems with it:
 >
->I'm not opposed to trying to sunset the support, but let's see who
->complains..
->
->              Linus
+> 1. It's not entirely clear that it has users.  As far as I know, it's
+> supported on Gentoo and Debian, and the Debian popcon graph for x32
+> has been falling off dramatically.  I don't think that any enterprise
+> distro has ever supported x32.
 
-The use case aside, I need to address the technical issues in this post; some of the behaviors that Andy is pointing out area quite intentional, even if they are perhaps somewhat confusing at first glance. That being said, some were due to tradeoffs that might have been wrong.
+I have been posting x32 GCC results for years:
+
+https://gcc.gnu.org/ml/gcc-testresults/2018-12/msg01358.html
+
+> 2. The way that system calls work is very strange.  Most syscalls on
+> x32 enter through their *native* (i.e. not COMPAT_SYSCALL_DEFINE)
+> entry point, and this is intentional.  For example, adjtimex() uses
+> the native entry, not the compat entry, because x32's struct timex
+> matches the x86_64 layout.  But a handful of syscalls have separate
+
+This becomes less an issue with 64-bit time_t.
+
+> entry points -- these are the syscalls starting at 512.  These enter
+> throuh the COMPAT_SYSCALL_DEFINE entry points.
+>
+> The x32 syscalls that are *not* in the 512 range violate all semblance
+> of kernel syscall convention.  In the syscall handlers,
+> in_compat_syscall() returns true, but the COMPAT_SYSCALL_DEFINE entry
+> is not invoked.   This is nutty and risks breaking things when people
+> refactor their syscall implementations.  And no one tests these
+> things.  Similarly, if someone calls any of the syscalls below 512 but
+> sets bit 31 in RAX, then the native entry will be called with
+> in_compat_set().
+>
+> Conversely, if you call a syscall in the 512 range with bit 31
+> *clear*, then the compat entry is set with in_compat_syscall()
+> *clear*.  This is also nutty.
+
+This is to share syscalls between LP64 and ILP32 (x32) in x86-64 kernel.
+
+> Finally, the kernel has a weird distinction between CONFIG_X86_X32_ABI
+> and and CONFIG_X86_X32, which I suspect results in incorrect builds if
+> the host doesn't have an x32 toolchain installed.
+
+X86-64 binutils and GCC can be used to build x86-64 kernel with x32 support.
+
+> I propose that we make CONFIG_X86_X32 depend on BROKEN for a release
+> or two and then remove all the code if no one complains.  If anyone
+> wants to re-add it, IMO they're welcome to do so, but they need to do
+> it in a way that is maintainable.
+
+
 -- 
-Sent from my Android device with K-9 Mail. Please excuse my brevity.
+H.J.
