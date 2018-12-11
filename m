@@ -1,80 +1,66 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: [PATCH 1/3] mm, proc: be more verbose about unstable VMA flags in /proc/<pid>/smaps
-Date: Tue, 11 Dec 2018 15:36:39 +0100
-Message-ID: <20181211143641.3503-2-mhocko@kernel.org>
-References: <20181211143641.3503-1-mhocko@kernel.org>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v5 24/25] ptrace: add PTRACE_GET_SYSCALL_INFO request
+Date: Tue, 11 Dec 2018 16:29:54 +0100
+Message-ID: <20181211152953.GA8504@redhat.com>
+References: <20181210042352.GA6092@altlinux.org>
+ <20181210043126.GX6131@altlinux.org>
+ <20181210141107.GB4177@redhat.com>
+ <20181210162131.GG14149@altlinux.org>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181211143641.3503-1-mhocko@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20181210162131.GG14149@altlinux.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-api@vger.kernel.org, linux-mm@kvack.org, LKML <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Dan Williams <dan.j.williams@intel.com>, David Rientjes <rientjes@google.com>, Jan Kara <jack@suse.cz>, Mike Rapoport <rppt@linux.ibm.com>, Vlastimil Babka <vbabka@suse.cz>
+To: "Dmitry V. Levin" <ldv@altlinux.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, strace-devel@lists.strace.io, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Michal Hocko <mhocko@suse.com>
+On 12/10, Dmitry V. Levin wrote:
+>
+> On Mon, Dec 10, 2018 at 03:11:07PM +0100, Oleg Nesterov wrote:
+> > On 12/10, Dmitry V. Levin wrote:
+> > >
+> > > +struct ptrace_syscall_info {
+> > > +	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
+> > > +	__u8 __pad0[3];
+> > > +	__u32 arch;
+> > > +	__u64 instruction_pointer;
+> > > +	__u64 stack_pointer;
+> > > +	__u64 frame_pointer;
+> > > +	union {
+> > > +		struct {
+> > > +			__u64 nr;
+> > > +			__u64 args[6];
+> > > +		} entry;
+> > > +		struct {
+> > > +			__s64 rval;
+> > > +			__u8 is_error;
+> > > +			__u8 __pad1[7];
+> > > +		} exit;
+> > > +		struct {
+> > > +			__u64 nr;
+> > > +			__u64 args[6];
+> > > +			__u32 ret_data;
+> > > +			__u8 __pad2[4];
+> > > +		} seccomp;
+> > > +	};
+> > > +};
+> >
+> > Could you explain why ptrace_syscall_info needs __pad{0,1,2} ? I simply can't
+> > understand why...
+>
+> I suppose the idea behind the use of these pads was to make the structure
+> arch-independent.
 
-Even though vma flags exported via /proc/<pid>/smaps are explicitly
-documented to be not guaranteed for future compatibility the warning
-doesn't go far enough because it doesn't mention semantic changes to
-those flags. And they are important as well because these flags are
-a deep implementation internal to the MM code and the semantic might
-change at any time.
+Still can't understand... are you saying that without (say) __pad2[4]
+sizeof(ptrace_syscall_info) or offsetofend(ptrace_syscall_info, seccomp)
+will depend on arch? Or what? I am just curious.
 
-Let's consider two recent examples:
-http://lkml.kernel.org/r/20181002100531.GC4135@quack2.suse.cz
-: commit e1fb4a086495 "dax: remove VM_MIXEDMAP for fsdax and device dax" has
-: removed VM_MIXEDMAP flag from DAX VMAs. Now our testing shows that in the
-: mean time certain customer of ours started poking into /proc/<pid>/smaps
-: and looks at VMA flags there and if VM_MIXEDMAP is missing among the VMA
-: flags, the application just fails to start complaining that DAX support is
-: missing in the kernel.
+> I don't think we really need to keep it exactly the same on all
+> architectures - the only practical requirement is to avoid any compat
+> issues, but I don't mind keeping the structure arch-independent.
 
-http://lkml.kernel.org/r/alpine.DEB.2.21.1809241054050.224429@chino.kir.corp.google.com
-: Commit 1860033237d4 ("mm: make PR_SET_THP_DISABLE immediately active")
-: introduced a regression in that userspace cannot always determine the set
-: of vmas where thp is ineligible.
-: Userspace relies on the "nh" flag being emitted as part of /proc/pid/smaps
-: to determine if a vma is eligible to be backed by hugepages.
-: Previous to this commit, prctl(PR_SET_THP_DISABLE, 1) would cause thp to
-: be disabled and emit "nh" as a flag for the corresponding vmas as part of
-: /proc/pid/smaps.  After the commit, thp is disabled by means of an mm
-: flag and "nh" is not emitted.
-: This causes smaps parsing libraries to assume a vma is eligible for thp
-: and ends up puzzling the user on why its memory is not backed by thp.
+OK, but may be you can add a short comment to explain these pads.
 
-In both cases userspace was relying on a semantic of a specific VMA
-flag. The primary reason why that happened is a lack of a proper
-internface. While this has been worked on and it will be fixed properly,
-it seems that our wording could see some refinement and be more vocal
-about semantic aspect of these flags as well.
-
-Cc: Dan Williams <dan.j.williams@intel.com>
-Cc: David Rientjes <rientjes@google.com>
-Acked-by: Jan Kara <jack@suse.cz>
-Acked-by: Dan Williams <dan.j.williams@intel.com>
-Acked-by: David Rientjes <rientjes@google.com>
-Acked-by: Mike Rapoport <rppt@linux.ibm.com>
-Acked-by: Vlastimil Babka <vbabka@suse.cz>
-Signed-off-by: Michal Hocko <mhocko@suse.com>
----
- Documentation/filesystems/proc.txt | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
-
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 12a5e6e693b6..2a4e63f5122c 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -496,7 +496,9 @@ flags associated with the particular virtual memory area in two letter encoded
- 
- Note that there is no guarantee that every flag and associated mnemonic will
- be present in all further kernel releases. Things get changed, the flags may
--be vanished or the reverse -- new added.
-+be vanished or the reverse -- new added. Interpretation of their meaning
-+might change in future as well. So each consumer of these flags has to
-+follow each specific kernel version for the exact semantic.
- 
- This file is only present if the CONFIG_MMU kernel configuration option is
- enabled.
--- 
-2.19.2
+Oleg.
