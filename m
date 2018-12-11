@@ -1,131 +1,53 @@
-From: "Dmitry V. Levin" <ldv@altlinux.org>
-Subject: Re: [PATCH v5 24/25] ptrace: add PTRACE_GET_SYSCALL_INFO request
-Date: Tue, 11 Dec 2018 23:27:09 +0300
-Message-ID: <20181211202709.GA3839@altlinux.org>
-References: <20181210042352.GA6092@altlinux.org>
- <20181210043126.GX6131@altlinux.org>
- <20181210141107.GB4177@redhat.com>
- <20181210162131.GG14149@altlinux.org>
- <20181211152953.GA8504@redhat.com>
- <20181211162305.GA480@altlinux.org>
+From: Thorsten Glaser <tg@mirbsd.de>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Tue, 11 Dec 2018 21:53:51 +0000 (UTC)
+Message-ID: <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+ <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="lrZ03NoBR/3+SXJZ"
+Content-Type: TEXT/PLAIN; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20181211162305.GA480@altlinux.org>
+In-Reply-To: <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
+Content-Language: de-DE-1901, en-GB
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, strace-devel@lists.strace.io, linux-kernel@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andrew Lutomirski <luto@kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Peter Anvin <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, bp@alien8.de, fweimer@redhat.com, vapier@gentoo.org, hjl.tools@gmail.com, dalias@libc.org, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
+Note: please keep me in Cc because I am not subscribed.
 
---lrZ03NoBR/3+SXJZ
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Linus Torvalds dixit:
 
-On Tue, Dec 11, 2018 at 07:23:05PM +0300, Dmitry V. Levin wrote:
-> On Tue, Dec 11, 2018 at 04:29:54PM +0100, Oleg Nesterov wrote:
-> > On 12/10, Dmitry V. Levin wrote:
-> > > On Mon, Dec 10, 2018 at 03:11:07PM +0100, Oleg Nesterov wrote:
-> > > > On 12/10, Dmitry V. Levin wrote:
-> > > > >
-> > > > > +struct ptrace_syscall_info {
-> > > > > +	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
-> > > > > +	__u8 __pad0[3];
-> > > > > +	__u32 arch;
-> > > > > +	__u64 instruction_pointer;
-> > > > > +	__u64 stack_pointer;
-> > > > > +	__u64 frame_pointer;
-> > > > > +	union {
-> > > > > +		struct {
-> > > > > +			__u64 nr;
-> > > > > +			__u64 args[6];
-> > > > > +		} entry;
-> > > > > +		struct {
-> > > > > +			__s64 rval;
-> > > > > +			__u8 is_error;
-> > > > > +			__u8 __pad1[7];
-> > > > > +		} exit;
-> > > > > +		struct {
-> > > > > +			__u64 nr;
-> > > > > +			__u64 args[6];
-> > > > > +			__u32 ret_data;
-> > > > > +			__u8 __pad2[4];
-> > > > > +		} seccomp;
-> > > > > +	};
-> > > > > +};
-> > > >
-> > > > Could you explain why ptrace_syscall_info needs __pad{0,1,2} ? I si=
-mply can't
-> > > > understand why...
-> > >
-> > > I suppose the idea behind the use of these pads was to make the struc=
-ture
-> > > arch-independent.
-> >=20
-> > Still can't understand... are you saying that without (say) __pad2[4]
-> > sizeof(ptrace_syscall_info) or offsetofend(ptrace_syscall_info, seccomp)
-> > will depend on arch? Or what? I am just curious.
->=20
-> Yes, without padding these sizes will depend on architecture:
->=20
-> $ cat t.c
-> #include <linux/types.h>
-> int main() {
-> 	struct s {
-> 		__u64 nr;
-> 		__u64 args[6];
-> 		__u32 ret_data;
-> 	};
-> 	return sizeof(struct s);
-> }
->=20
-> $ gcc -m64 -Wall -O2 t.c && ./a.out; echo $?
-> 64
-> $ gcc -m32 -Wall -O2 t.c && ./a.out; echo $?
-> 60
->=20
-> This happens because __u64 has 32-bit alignment on some 32-bit
-> architectures like x86.
->=20
-> There is also m68k where __u32 has 16-bit alignment.
+>I'm not opposed to trying to sunset the support, but let's see who complains..
 
-Said that, I think it would be better if PTRACE_GET_SYSCALL_INFO
-did not take these trailing pads into account, e.g.
+I will hereby complain.
 
--       return offsetofend(struct ptrace_syscall_info, seccomp);
-+       return offsetofend(struct ptrace_syscall_info, seccomp.ret_data);
-=2E..
--       return offsetofend(struct ptrace_syscall_info, exit);
-+       return offsetofend(struct ptrace_syscall_info, exit.is_error);
+I’m using Debian/x32 on my main desktop at work, and do
+occasionally help out with porting issues. It’s a good
+way to make more out of 64-bit machines without going
+all 64 bit; it’s also helped me find bugs in software.
+It’s a nice architectural idea, and a way forward for
+things that are constricted to 32 bits while opening
+up stuff like 64-bit time_t without taking up half the
+available CPU registers (while more than doubling the
+number of the available CPU registers, too).
 
-The reason is that it would allow to fill these trailing pads with
-something useful in the future.
+I was also considering investing a nontrivial amount of
+work into porting klibc to x32, since hpa does not wish
+to do it himself. Thankfully I have only done a bit yet.
 
+Furthermore, x32 was the first of the many *64ilp32
+architectures; I know I’ve seen amd64ilp32 and at least
+one other I don’t recall. It will have prototyped many
+of the problems users of these will run in, and I’d prefer
+to keep it (completely selfish because I don’t wish to
+have to crossgrade a whole system yet again).
 
---=20
-ldv
-
---lrZ03NoBR/3+SXJZ
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCAAGBQJcEB2dAAoJEAVFT+BVnCUIJ84QAOfJ5fXfvifiGBZCU6BShuZt
-byv2O2D/UqiXyLRPJ9xHxXzaI/3mMOe+M6zjrTmZuac4o/AIp6AecW+kKU7/9Q8h
-3x/CS5TXCEn1np+Dg1a7hK3h1GRta+N4sOtl3T67t/NnCaAcUSjx+liRLmQMbc/k
-9yNjcGNPGbnqE01zQYxMrrr9e+YSZapyFJTpKFPDokwrKoPbRWp3bqDgOgU4dHAs
-tNHlwT1oT/ZFZCZqpyRagtB1RQbCUuwMgxsCAOr4FgmgFJTN/6+INbeg38EW7Wk2
-SX8yddqbAmPuUxDfnCrcfrU/oQrAS9JZNITxQmEFgzIkCm7pazXJE+rUTFzrXeW7
-cCbjsALXEQcVpP28K2muEhHuGky3qRQ12k/bc9bUOvvfUmfYm+S0vGG+ahFoKhcV
-hpumhBRXnwnOgMOKr90DyCWxnABSciUfaJdOuzcO+zWwztdvP/ZwbxovkkDbF68C
-b6Y1NBaBkEzwpDMrO9giCrcRvz2popcsye4zzHAPebmShzri2C+iJrlbUo0osGz+
-+r7n5wO5qOtsM2kEOwn/Eopwiv4kZ3HrkMleLSn3Fit6dZXQEuWvUcRodM5Kr6Pw
-xR1ZeY2TiDiLh1+Hjyiy2hXGu/EAOYzC9057fKhJUE8Kk5NtSBsjZjFbWy8a0+T/
-ufWPiKdmiEeuYxn4Vfs5
-=yQae
------END PGP SIGNATURE-----
-
---lrZ03NoBR/3+SXJZ--
+Thanks for your consideration,
+//mirabilos
+--  
+When he found out that the m68k port was in a pretty bad shape, he did
+not, like many before him, shrug and move on; instead, he took it upon
+himself to start compiling things, just so he could compile his shell.
+How's that for dedication. -- Wouter, about my Debian/m68k revival
