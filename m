@@ -1,57 +1,276 @@
-From: Thorsten Glaser <tg@mirbsd.de>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Tue, 11 Dec 2018 21:59:48 +0000 (UTC)
-Message-ID: <Pine.BSM.4.64L.1812112155170.21176@herc.mirbsd.org>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
+From: "Serge E. Hallyn" <serge@hallyn.com>
+Subject: Re: [PATCH v10 4/4] samples: add an example of seccomp user trap
+Date: Tue, 11 Dec 2018 16:24:49 -0600
+Message-ID: <20181211222449.GA937@mail.hallyn.com>
+References: <20181209182414.30862-1-tycho@tycho.ws>
+ <20181209182414.30862-5-tycho@tycho.ws>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
-Content-Language: de-DE-1901, en-GB
+Content-Disposition: inline
+In-Reply-To: <20181209182414.30862-5-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
-To: John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>
-Cc: Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Serge E . Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-John Paul Adrian Glaubitz dixit:
+On Sun, Dec 09, 2018 at 11:24:14AM -0700, Tycho Andersen wrote:
+> The idea here is just to give a demonstration of how one could safely use
+> the SECCOMP_RET_USER_NOTIF feature to do mount policies. This particular
+> policy is (as noted in the comment) not very interesting, but it serves to
+> illustrate how one might apply a policy dodging the various TOCTOU issues.
+> 
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> CC: Kees Cook <keescook@chromium.org>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Oleg Nesterov <oleg@redhat.com>
+> CC: Eric W. Biederman <ebiederm@xmission.com>
+> CC: "Serge E. Hallyn" <serge@hallyn.com>
+> CC: Christian Brauner <christian@brauner.io>
+> CC: Tyler Hicks <tyhicks@canonical.com>
+> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+> ---
+> v5: new in v5
+> v7: updates for v7 API changes
+> v8: * add some more comments about what's happening in main() (Kees)
+>     * move from ptrace API to SECCOMP_FILTER_FLAG_NEW_LISTENER
+> v9: * s/mknod/mount in error message
+>     * switch to the SECCOMP_GET_NOTIF_SIZES API
+>     * add a note about getting ENOENT from SECCOMP_IOCTL_NOTIF_SEND
+> ---
+>  samples/seccomp/.gitignore  |   1 +
+>  samples/seccomp/Makefile    |   7 +-
+>  samples/seccomp/user-trap.c | 375 ++++++++++++++++++++++++++++++++++++
+>  3 files changed, 382 insertions(+), 1 deletion(-)
+> 
+> diff --git a/samples/seccomp/.gitignore b/samples/seccomp/.gitignore
+> index 78fb78184291..d1e2e817d556 100644
+> --- a/samples/seccomp/.gitignore
+> +++ b/samples/seccomp/.gitignore
+> @@ -1,3 +1,4 @@
+>  bpf-direct
+>  bpf-fancy
+>  dropper
+> +user-trap
+> diff --git a/samples/seccomp/Makefile b/samples/seccomp/Makefile
+> index cf34ff6b4065..4920903c8009 100644
+> --- a/samples/seccomp/Makefile
+> +++ b/samples/seccomp/Makefile
+> @@ -1,6 +1,6 @@
+>  # SPDX-License-Identifier: GPL-2.0
+>  ifndef CROSS_COMPILE
+> -hostprogs-$(CONFIG_SAMPLE_SECCOMP) := bpf-fancy dropper bpf-direct
+> +hostprogs-$(CONFIG_SAMPLE_SECCOMP) := bpf-fancy dropper bpf-direct user-trap
+>  
+>  HOSTCFLAGS_bpf-fancy.o += -I$(objtree)/usr/include
+>  HOSTCFLAGS_bpf-fancy.o += -idirafter $(objtree)/include
+> @@ -16,6 +16,10 @@ HOSTCFLAGS_bpf-direct.o += -I$(objtree)/usr/include
+>  HOSTCFLAGS_bpf-direct.o += -idirafter $(objtree)/include
+>  bpf-direct-objs := bpf-direct.o
+>  
+> +HOSTCFLAGS_user-trap.o += -I$(objtree)/usr/include
+> +HOSTCFLAGS_user-trap.o += -idirafter $(objtree)/include
+> +user-trap-objs := user-trap.o
+> +
+>  # Try to match the kernel target.
+>  ifndef CONFIG_64BIT
+>  
+> @@ -33,6 +37,7 @@ HOSTCFLAGS_bpf-fancy.o += $(MFLAG)
+>  HOSTLDLIBS_bpf-direct += $(MFLAG)
+>  HOSTLDLIBS_bpf-fancy += $(MFLAG)
+>  HOSTLDLIBS_dropper += $(MFLAG)
+> +HOSTLDLIBS_user-trap += $(MFLAG)
+>  endif
+>  always := $(hostprogs-m)
+>  endif
+> diff --git a/samples/seccomp/user-trap.c b/samples/seccomp/user-trap.c
+> new file mode 100644
+> index 000000000000..61267cb59c8e
+> --- /dev/null
+> +++ b/samples/seccomp/user-trap.c
+> @@ -0,0 +1,375 @@
+> +#include <signal.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <unistd.h>
+> +#include <errno.h>
+> +#include <fcntl.h>
+> +#include <string.h>
+> +#include <stddef.h>
+> +#include <sys/sysmacros.h>
+> +#include <sys/types.h>
+> +#include <sys/wait.h>
+> +#include <sys/socket.h>
+> +#include <sys/stat.h>
+> +#include <sys/mman.h>
+> +#include <sys/syscall.h>
+> +#include <sys/user.h>
+> +#include <sys/ioctl.h>
+> +#include <sys/ptrace.h>
+> +#include <sys/mount.h>
+> +#include <linux/limits.h>
+> +#include <linux/filter.h>
+> +#include <linux/seccomp.h>
+> +
+> +#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
+> +
+> +static int seccomp(unsigned int op, unsigned int flags, void *args)
+> +{
+> +	errno = 0;
+> +	return syscall(__NR_seccomp, op, flags, args);
+> +}
+> +
+> +static int send_fd(int sock, int fd)
+> +{
+> +	struct msghdr msg = {};
+> +	struct cmsghdr *cmsg;
+> +	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
+> +	struct iovec io = {
+> +		.iov_base = &c,
+> +		.iov_len = 1,
+> +	};
+> +
+> +	msg.msg_iov = &io;
+> +	msg.msg_iovlen = 1;
+> +	msg.msg_control = buf;
+> +	msg.msg_controllen = sizeof(buf);
+> +	cmsg = CMSG_FIRSTHDR(&msg);
+> +	cmsg->cmsg_level = SOL_SOCKET;
+> +	cmsg->cmsg_type = SCM_RIGHTS;
+> +	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+> +	*((int *)CMSG_DATA(cmsg)) = fd;
+> +	msg.msg_controllen = cmsg->cmsg_len;
+> +
+> +	if (sendmsg(sock, &msg, 0) < 0) {
+> +		perror("sendmsg");
+> +		return -1;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +static int recv_fd(int sock)
+> +{
+> +	struct msghdr msg = {};
+> +	struct cmsghdr *cmsg;
+> +	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
+> +	struct iovec io = {
+> +		.iov_base = &c,
+> +		.iov_len = 1,
+> +	};
+> +
+> +	msg.msg_iov = &io;
+> +	msg.msg_iovlen = 1;
+> +	msg.msg_control = buf;
+> +	msg.msg_controllen = sizeof(buf);
+> +
+> +	if (recvmsg(sock, &msg, 0) < 0) {
+> +		perror("recvmsg");
+> +		return -1;
+> +	}
+> +
+> +	cmsg = CMSG_FIRSTHDR(&msg);
+> +
+> +	return *((int *)CMSG_DATA(cmsg));
+> +}
+> +
+> +static int user_trap_syscall(int nr, unsigned int flags)
+> +{
+> +	struct sock_filter filter[] = {
+> +		BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
+> +			offsetof(struct seccomp_data, nr)),
+> +		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, nr, 0, 1),
+> +		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_USER_NOTIF),
+> +		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+> +	};
+> +
+> +	struct sock_fprog prog = {
+> +		.len = (unsigned short)ARRAY_SIZE(filter),
+> +		.filter = filter,
+> +	};
+> +
+> +	return seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
+> +}
+> +
+> +static int handle_req(struct seccomp_notif *req,
+> +		      struct seccomp_notif_resp *resp, int listener)
+> +{
+> +	char path[PATH_MAX], source[PATH_MAX], target[PATH_MAX];
+> +	int ret = -1, mem;
+> +
+> +	resp->id = req->id;
+> +	resp->error = -EPERM;
+> +	resp->val = 0;
+> +
+> +	if (req->data.nr != __NR_mount) {
+> +		fprintf(stderr, "huh? trapped something besides mount? %d\n", req->data.nr);
+> +		return -1;
+> +	}
+> +
+> +	/* Only allow bind mounts. */
+> +	if (!(req->data.args[3] & MS_BIND))
+> +		return 0;
+> +
+> +	/*
+> +	 * Ok, let's read the task's memory to see where they wanted their
+> +	 * mount to go.
+> +	 */
+> +	snprintf(path, sizeof(path), "/proc/%d/mem", req->pid);
+> +	mem = open(path, O_RDONLY);
+> +	if (mem < 0) {
+> +		perror("open mem");
+> +		return -1;
+> +	}
+> +
+> +	/*
+> +	 * Now we avoid a TOCTOU: we referred to a pid by its pid, but since
+> +	 * the pid that made the syscall may have died, we need to confirm that
+> +	 * the pid is still valid after we open its /proc/pid/mem file. We can
+> +	 * ask the listener fd this as follows.
+> +	 *
+> +	 * Note that this check should occur *after* any task-specific
+> +	 * resources are opened, to make sure that the task has not died and
+> +	 * we're not wrongly reading someone else's state in order to make
+> +	 * decisions.
+> +	 */
+> +	if (ioctl(listener, SECCOMP_IOCTL_NOTIF_ID_VALID, &req->id) < 0) {
+> +		fprintf(stderr, "task died before we could map its memory\n");
+> +		goto out;
+> +	}
+> +
+> +	/*
+> +	 * Phew, we've got the right /proc/pid/mem. Now we can read it. Note
+> +	 * that to avoid another TOCTOU, we should read all of the pointer args
+> +	 * before we decide to allow the syscall.
+> +	 */
+> +	if (lseek(mem, req->data.args[0], SEEK_SET) < 0) {
+> +		perror("seek");
+> +		goto out;
+> +	}
+> +
+> +	ret = read(mem, source, sizeof(source));
+> +	if (ret < 0) {
+> +		perror("read");
+> +		goto out;
+> +	}
+> +
+> +	if (lseek(mem, req->data.args[1], SEEK_SET) < 0) {
+> +		perror("seek");
+> +		goto out;
+> +	}
+> +
+> +	ret = read(mem, target, sizeof(target));
+> +	if (ret < 0) {
+> +		perror("read");
+> +		goto out;
+> +	}
+> +
+> +	/*
+> +	 * Our policy is to only allow bind mounts inside /tmp. This isn't very
+> +	 * interesting, because we could do unprivlieged bind mounts with user
+> +	 * namespaces already, but you get the idea.
+> +	 */
+> +	if (!strncmp(source, "/tmp", 4) && !strncmp(target, "/tmp", 4)) {
 
->I can't say anything about the syscall interface. However, what I do know
->is that the weird combination of a 32-bit userland with a 64-bit kernel
->interface is sometimes causing issues. For example, application code usually
-
-Yes, but more and more ${foo}64ilp32 architectures are popping up.
-
->Additionally, x32 support in many applications is either rudimentary
-
-If a signal is sent that this kind of architectures will stay, some
-people might be convinced to fix that.
-
->It's also that the performance benefits of x32 are often eaten up by
->the fact that none of the scripted languages that I know of provide
-
-Non-JITted languages like yours truly’s shell do benefit from it,
-though. (mksh works just fine on LP64 but its internal structures
-pack massively better on ILP32, for example.)
-
->If x32 is eventually to be removed, we should also take care of removing
->x32 support from userland code. From the top of my head, this would at least
-
-I don’t think so. The patches also contain
-– stuff to support 64-bit time_t on 32-bit architectures, e.g:
-- bugfixes like printf("%lld", (long long)timet_value) instead
-  of assuming time_t fits into a long (also important for other
-  operating systems…)
-- generally switching from generic types like long to specific
-  types like size_t, ptrdiff_t, etc.
-- there was one more but after having written two eMails I forgot it
-- oh and, of course, they lay the base for e.g. amd64ilp32 support
-
-bye,
-//mirabilos
--- 
-FWIW, I'm quite impressed with mksh interactively. I thought it was much
-*much* more bare bones. But it turns out it beats the living hell out of
-ksh93 in that respect. I'd even consider it for my daily use if I hadn't
-wasted half my life on my zsh setup. :-) -- Frank Terbeck in #!/bin/mksh
+Of course the host could have a /tmproot or somesuch, so you might want to
+check the first 5 characters :)
