@@ -1,45 +1,94 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Tue, 11 Dec 2018 11:37:58 +0100
-Message-ID: <87in00z6ux.fsf@oldenburg2.str.redhat.com>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
-        <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
+Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at nptl init and thread creation (v4)
+Date: Tue, 11 Dec 2018 11:40:22 +0100
+Message-ID: <87h8fkz6qx.fsf@oldenburg2.str.redhat.com>
+References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de> (John
-        Paul Adrian Glaubitz's message of "Tue, 11 Dec 2018 11:29:14 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>
-Cc: Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Carlos O'Donell <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* John Paul Adrian Glaubitz:
+* Mathieu Desnoyers:
 
-> As for the enterprise support, this seems to be correct. I don't know
-> of any enterprise distribution with x32 support either.
+> I want to keep the __rseq_refcount symbol so out-of-libc users can
+> register rseq if they are linked against a pre-2.29 libc.
 
-Me neither.  I would expect a pure userspace port, with limitations in
-what ioctls you can use, and perhaps support from GCC to share more APIs
-with the kernel.
+Sorry, I was confused.
 
-(I do not know of any plans to work on this.)
+> diff --git a/csu/Makefile b/csu/Makefile
+> index 88fc77662e..81d471587f 100644
+> --- a/csu/Makefile
+> +++ b/csu/Makefile
+> @@ -28,7 +28,7 @@ include ../Makeconfig
+>  
+>  routines = init-first libc-start $(libc-init) sysdep version check_fds \
+>  	   libc-tls elf-init dso_handle
+> -aux	 = errno
+> +aux	 = errno rseq
+>  elide-routines.os = libc-tls
+>  static-only-routines = elf-init
+>  csu-dummies = $(filter-out $(start-installed-name),crt1.o Mcrt1.o)
 
-> I'm not terribly opposed to this change. I'm usually for keeping support
-> for things that people are using, but the maintenance is a huge burden
-> to upstream projects, I'm fine with letting it go.
+Do we plan to add Hurd support for this?
 
-Thank you for sharing your perspective.
+> diff --git a/sysdeps/unix/sysv/linux/rseq-internal.h b/sysdeps/unix/sysv/linux/rseq-internal.h
+> new file mode 100644
+> index 0000000000..2367926def
+> --- /dev/null
+> +++ b/sysdeps/unix/sysv/linux/rseq-internal.h
 
-> If x32 is eventually to be removed, we should also take care of removing
-> x32 support from userland code. From the top of my head, this would at least
-> concern:
->
->  * OpenJDK
+> +#define RSEQ_SIG 0x53053053
 
-Note that OpenJDK (well, Hotspot) has its own 32-bit pointer support for
-the Java heap (compressed oops), so only the native code parts (and JNI)
-benefit from x32 anyway.
+What's this?  This needs a comment.
+
+> +extern __thread volatile struct rseq __rseq_abi
+> +__attribute__ ((tls_model ("initial-exec")));
+> +
+> +extern __thread volatile uint32_t __rseq_refcount
+> +__attribute__ ((tls_model ("initial-exec")));
+
+The volatile qualifier needs justification in a comment.  (Usually,
+volatile is wrong. and it is difficult to get rid of it.)
+
+We need to document these public symbols somewhere.  There should be an
+installed header file.
+
+> diff --git a/nptl/Versions b/nptl/Versions
+> index e7f691da7a..f7890f73fc 100644
+> --- a/nptl/Versions
+> +++ b/nptl/Versions
+> @@ -277,6 +277,10 @@ libpthread {
+>      cnd_timedwait; cnd_wait; tss_create; tss_delete; tss_get; tss_set;
+>    }
+>  
+> +  GLIBC_2.29 {
+> +    __rseq_refcount;
+> +  }
+
+Why put this into libpthread, and __rseq_abi into libc?
+
+What, exactly, is the benefit of having __rseq_refcount defined by
+glibc?  Have you actually got this working?  If an rseq library is
+linked against glibc 2.29, it will reference the GLIBC_2.29 symbol
+version, so it cannot be loaded by older glibcs.  In this case,
+__rseq_refcount is not needed.
+
+If you build against pre-2.29, then the __rseq_refcount symbol will be
+unversioned.  But then you don't need it glibc, either.
+
+So it seems to me that the addition to glibc is useless in both
+scenarios.  Am I missing something?
+
+By the way, you could avoid the need for unregistration if you allocated
+the rseq areas persistently, index by TID.  They are quite small, so
+with the typical PID range, maybe the wasted memory due to changing TIDs
+would be acceptable?
+
+I guess things would be so much easier if the kernel simply provided a
+means to obtain the address of a previously registered rseq area.
 
 Thanks,
 Florian
