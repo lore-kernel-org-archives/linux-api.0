@@ -1,35 +1,49 @@
-From: John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>
+From: Catalin Marinas <catalin.marinas@arm.com>
 Subject: Re: Can we drop upstream Linux x32 support?
-Date: Tue, 11 Dec 2018 11:44:32 +0100
-Message-ID: <873573ba-4d15-07c8-3fcf-ccf36eee14f1@physik.fu-berlin.de>
+Date: Tue, 11 Dec 2018 11:32:31 +0000
+Message-ID: <20181211113230.GB35824@arrakis.emea.arm.com>
 References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
- <87in00z6ux.fsf@oldenburg2.str.redhat.com>
+ <CAMe9rOp0m5sn59AsD2F2i2Ad2tb7ufPU1mMg-vUOfh+TnGMeaw@mail.gmail.com>
+ <CALCETrU5xw61=me1YcTO3VPzjNEZahMPpi-20-oiSGs+CHcj4g@mail.gmail.com>
+ <CAK8P3a0adxnXr9JLfpR5MBeEJXSCK2Rt4w7NFLUUwO6s6LBVPQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87in00z6ux.fsf@oldenburg2.str.redhat.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a0adxnXr9JLfpR5MBeEJXSCK2Rt4w7NFLUUwO6s6LBVPQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Andy Lutomirski <luto@kernel.org>, "H.J. Lu" <hjl.tools@gmail.com>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, vapier@gentoo.org, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Will Deacon <will.deacon@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 12/11/18 11:37 AM, Florian Weimer wrote:
-> Note that OpenJDK (well, Hotspot) has its own 32-bit pointer support for
-> the Java heap (compressed oops), so only the native code parts (and JNI)
-> benefit from x32 anyway.
+On Tue, Dec 11, 2018 at 10:02:45AM +0100, Arnd Bergmann wrote:
+> On Tue, Dec 11, 2018 at 6:35 AM Andy Lutomirski <luto@kernel.org> wrote:
+> > I tried to understand what's going on.  As far as I can tell, most of
+> > the magic is the fact that __kernel_long_t and __kernel_ulong_t are
+> > 64-bit as seen by x32 user code.  This means that a decent number of
+> > uapi structures are the same on x32 and x86_64.  Syscalls that only
+> > use structures like this should route to the x86_64 entry points.  But
+> > the implementation is still highly dubious -- in_compat_syscall() will
+> > be *true* in such system calls,
+> 
+> I think the fundamental issue was that the intention had always been
+> to use only the 64-bit entry points for system calls, but the most
+> complex one we have -- ioctl() -- has to use the compat entry point
+> because device drivers define their own data structures using 'long'
+> and pointer members and they need translation, as well as
+> matching in_compat_syscall() checks. This in turn breaks down
+> again whenever a driver defines an ioctl command that takes
+> a __kernel_long_t or a derived type like timespec as its argument.
 
-Yeah, I was actually only talking about this single commit by me to add
-Zero build support for x86_64-linux-gnux32:
+With arm64 ILP32 we tried to avoid the ioctl() problem by having
+__kernel_long_t 32-bit, IOW mimicking the arm32 ABI (compat). The
+biggest pain point is signals where the state is completely different
+from arm32 (more, wider registers) and can't be dealt with by the compat
+layer.
 
-> http://hg.openjdk.java.net/jdk/jdk/rev/9ce4a0d718c7
-
-Adrian
+Fortunately, we haven't merge it yet as we have the same dilemma about
+real users and who's going to regularly test the ABI in the long run. In
+the meantime, watching this thread with interest ;).
 
 -- 
- .''`.  John Paul Adrian Glaubitz
-: :' :  Debian Developer - glaubitz@debian.org
-`. `'   Freie Universitaet Berlin - glaubitz@physik.fu-berlin.de
-  `-    GPG: 62FF 8A75 84E0 2956 9546  0006 7426 3B37 F5B5 F913
+Catalin
