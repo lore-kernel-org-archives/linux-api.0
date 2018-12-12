@@ -1,78 +1,96 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Wed, 12 Dec 2018 00:55:20 +0100
-Message-ID: <CAK8P3a1aue66QS32OkZv-j1r3wX4a_iqox=uyHFN=RGoUx_SMg@mail.gmail.com>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
- <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org> <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
- <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v10 1/4] seccomp: hoist struct seccomp_data recalculation higher
+Date: Tue, 11 Dec 2018 16:30:52 -0800
+Message-ID: <CAGXu5jK_PCh8np-473yG2A5oTBcPpeAefOQnSc3x_mTp5T4c6w@mail.gmail.com>
+References: <20181209182414.30862-1-tycho@tycho.ws> <20181209182414.30862-2-tycho@tycho.ws>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
+In-Reply-To: <20181209182414.30862-2-tycho@tycho.ws>
 Sender: linux-kernel-owner@vger.kernel.org
-To: tg@mirbsd.de
-Cc: Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, the arch/x86 maintainers <x86@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, vapier@gentoo.org, "H.J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 12, 2018 at 12:38 AM Thorsten Glaser <tg@mirbsd.de> wrote:
+On Sun, Dec 9, 2018 at 10:24 AM Tycho Andersen <tycho@tycho.ws> wrote:
 >
-> Andy Lutomirski dixit:
+> In the next patch, we're going to use the sd pointer passed to
+> __seccomp_filter() as the data to pass to userspace. Except that in some
+> cases (__seccomp_filter(SECCOMP_RET_TRACE), emulate_vsyscall(), every time
+> seccomp is inovked on power, etc.) the sd pointer will be NULL in order to
+> force seccomp to recompute the register data. Previously this recomputation
+> happened one level lower, in seccomp_run_filters(); this patch just moves
+> it up a level higher to __seccomp_filter().
 >
-> >What happens if someone adds a struct like:
-> >
-> >struct nasty_on_x32 {
-> >  __kernel_long_t a;
-> >  void * __user b;
-> >};
-> >
-> >On x86_64, that's two 8-byte fields.  On x86_32, it's two four-byte
-> >fields.  On x32, it's an 8-byte field and a 4-byte field.  Now what?
+> Thanks Oleg for spotting this.
 >
-> Yes, that’s indeed ugly. I understand. But don’t we already have
-> this problem with architectures which support multiple ABIs at the
-> same time? An amd64 kernel with i386 userspace comes to mind, or
-> the multiple MIPS ABIs.
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
 
-The main trouble that I see with x32 is in how it's different
-from all the other compat architectures. We have a number
-of drivers that support not only two ABIs (native and compat)
-but also a third one specifically for x32, and more drivers
-that fail on x32 because they never implemented the third
-case.
+This is fine. :) Applied for -next.
 
-Note that this is not a problem for MIPS n32 and aarch64ilp32,
-which generally stick to the regular compat ABI (each compat
-architecture has some minor quirks somewhere, much less so
-than x32 does).
+-Kees
 
-> >actually do this work.  Instead we get ad hoc fixes for each syscall,
-> >along the lines of preadv64v2(), which get done when somebody notices
+> CC: Kees Cook <keescook@chromium.org>
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Oleg Nesterov <oleg@redhat.com>
+> CC: Eric W. Biederman <ebiederm@xmission.com>
+> CC: "Serge E. Hallyn" <serge@hallyn.com>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+> CC: Christian Brauner <christian@brauner.io>
+> CC: Tyler Hicks <tyhicks@canonical.com>
+> CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
+> ---
+>  kernel/seccomp.c | 12 ++++++------
+>  1 file changed, 6 insertions(+), 6 deletions(-)
 >
-> Yes, that’s absolutely ugly and ridiculous and all kinds of bad.
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index f2ae2324c232..96afc32e041d 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -188,7 +188,6 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
+>  static u32 seccomp_run_filters(const struct seccomp_data *sd,
+>                                struct seccomp_filter **match)
+>  {
+> -       struct seccomp_data sd_local;
+>         u32 ret = SECCOMP_RET_ALLOW;
+>         /* Make sure cross-thread synced filter points somewhere sane. */
+>         struct seccomp_filter *f =
+> @@ -198,11 +197,6 @@ static u32 seccomp_run_filters(const struct seccomp_data *sd,
+>         if (WARN_ON(f == NULL))
+>                 return SECCOMP_RET_KILL_PROCESS;
 >
-> On the other hand, from my current experience, someone (Arnd?) noticed
-> all the currently existing baddies for x32 already and fixed them.
+> -       if (!sd) {
+> -               populate_seccomp_data(&sd_local);
+> -               sd = &sd_local;
+> -       }
+> -
+>         /*
+>          * All filters in the list are evaluated and the lowest BPF return
+>          * value always takes priority (ignoring the DATA).
+> @@ -658,6 +652,7 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+>         u32 filter_ret, action;
+>         struct seccomp_filter *match = NULL;
+>         int data;
+> +       struct seccomp_data sd_local;
+>
+>         /*
+>          * Make sure that any changes to mode from another thread have
+> @@ -665,6 +660,11 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
+>          */
+>         rmb();
+>
+> +       if (!sd) {
+> +               populate_seccomp_data(&sd_local);
+> +               sd = &sd_local;
+> +       }
+> +
+>         filter_ret = seccomp_run_filters(sd, &match);
+>         data = filter_ret & SECCOMP_RET_DATA;
+>         action = filter_ret & SECCOMP_RET_ACTION_FULL;
+> --
+> 2.19.1
+>
 
-I did some, and others did more, but it's hard to ever do a complete
-job, and even harder to prevent new bugs from creeping in.
 
-> New syscalls are indeed an issue, but perhaps something generating
-> copyinout stubs could help. This might allow other architectures
-> that could do with a new ABI but have until now feared the overhead
-> as well. (IIRC, m68k could do with a new ABI that reserves a register
-> for TLS, but Geert would know. At the same time, time_t and off_t could
-> be bumped to 64 bit. Something like that. If changing sizes of types
-> shared between kernel and user spaces is not something feared…)
-
-Creating a completely new ABI for an existing architecutre is generally
-something you want to avoid, as this means all existing user space
-has to be recompiled.
-
-All architectures support 64-bit off_t already, and soon will support
-64-bit time_t as well, at this point (as of this week's linux-next)
-we mostly just need to assign a couple of syscall numbers for each
-32-bit architectures.
-
-        Arnd
+-- 
+Kees Cook
