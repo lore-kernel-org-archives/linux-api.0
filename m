@@ -1,86 +1,108 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
-Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on
- sys_open()
-Date: Wed, 12 Dec 2018 18:09:23 +0100
-Message-ID: <ac3ae274-6a71-2f8c-9ad6-8392eed3d13b@ssi.gouv.fr>
-References: <20181212081712.32347-1-mic@digikod.net>
- <20181212081712.32347-2-mic@digikod.net>
- <20181212144306.GA19945@quack2.suse.cz>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH v1 3/5] Yama: Enforces noexec mounts or file
+ executability through O_MAYEXEC
+Date: Wed, 12 Dec 2018 18:09:35 +0100
+Message-ID: <CAG48ez3SAW8EyaJ9T1U3qPoRhYwe4CCyL9bAxuc3GxjrXipi-A@mail.gmail.com>
+References: <20181212081712.32347-1-mic@digikod.net> <20181212081712.32347-4-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181212144306.GA19945@quack2.suse.cz>
-Content-Language: en-US
+In-Reply-To: <20181212081712.32347-4-mic@digikod.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jan Kara <jack@suse.cz>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Cc: linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, sgrubb@redhat.com, Matthew Bobrowski <mbobrowski@mbobrowski.org>
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, mickael.salaun@ssi.gouv.fr, zohar@linux.ibm.com, philippe.trebuchet@ssi.gouv.fr, shuah@kernel.org, thibaut.sautereau@ssi.gouv.fr, vincent.strubel@ssi.gouv.fr, yves-alexis.perez@ssi.gouv.fr, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Dec 12, 2018 at 9:18 AM Micka=C3=ABl Sala=C3=BCn <mic@digikod.net> =
+wrote:
+> Enable to either propagate the mount options from the underlying VFS
+> mount to prevent execution, or to propagate the file execute permission.
+> This may allow a script interpreter to check execution permissions
+> before reading commands from a file.
+>
+> The main goal is to be able to protect the kernel by restricting
+> arbitrary syscalls that an attacker could perform with a crafted binary
+> or certain script languages.  It also improves multilevel isolation
+> by reducing the ability of an attacker to use side channels with
+> specific code.  These restrictions can natively be enforced for ELF
+> binaries (with the noexec mount option) but require this kernel
+> extension to properly handle scripts (e.g., Python, Perl).
+>
+> Add a new sysctl kernel.yama.open_mayexec_enforce to control this
+> behavior.  A following patch adds documentation.
+>
+> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
+> Reviewed-by: Philippe Tr=C3=A9buchet <philippe.trebuchet@ssi.gouv.fr>
+> Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Micka=C3=ABl Sala=C3=BCn <mickael.salaun@ssi.gouv.fr>
+> ---
+[...]
+> +/**
+> + * yama_inode_permission - check O_MAYEXEC permission before accessing a=
+n inode
+> + * @inode: inode structure to check
+> + * @mask: permission mask
+> + *
+> + * Return 0 if access is permitted, -EACCES otherwise.
+> + */
+> +int yama_inode_permission(struct inode *inode, int mask)
 
-Le 12/12/2018 à 15:43, Jan Kara a écrit :
-> On Wed 12-12-18 09:17:08, Mickaël Salaün wrote:
->> When the O_MAYEXEC flag is passed, sys_open() may be subject to
->> additional restrictions depending on a security policy implemented by an
->> LSM through the inode_permission hook.
->>
->> The underlying idea is to be able to restrict scripts interpretation
->> according to a policy defined by the system administrator.  For this to
->> be possible, script interpreters must use the O_MAYEXEC flag
->> appropriately.  To be fully effective, these interpreters also need to
->> handle the other ways to execute code (for which the kernel can't help):
->> command line parameters (e.g., option -e for Perl), module loading
->> (e.g., option -m for Python), stdin, file sourcing, environment
->> variables, configuration files...  According to the threat model, it may
->> be acceptable to allow some script interpreters (e.g. Bash) to interpret
->> commands from stdin, may it be a TTY or a pipe, because it may not be
->> enough to (directly) perform syscalls.
->>
->> A simple security policy implementation is available in a following
->> patch for Yama.
->>
->> This is an updated subset of the patch initially written by Vincent
->> Strubel for CLIP OS:
->> https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
->> This patch has been used for more than 10 years with customized script
->> interpreters.  Some examples can be found here:
->> https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
->>
->> Signed-off-by: Mickaël Salaün <mic@digikod.net>
->> Signed-off-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
->> Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
->> Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
->> Cc: Al Viro <viro@zeniv.linux.org.uk>
->> Cc: Kees Cook <keescook@chromium.org>
->> Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
-> 
-> ...
-> 
->> diff --git a/fs/open.c b/fs/open.c
->> index 0285ce7dbd51..75479b79a58f 100644
->> --- a/fs/open.c
->> +++ b/fs/open.c
->> @@ -974,6 +974,10 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
->>  	if (flags & O_APPEND)
->>  		acc_mode |= MAY_APPEND;
->>  
->> +	/* Check execution permissions on open. */
->> +	if (flags & O_MAYEXEC)
->> +		acc_mode |= MAY_OPENEXEC;
->> +
->>  	op->acc_mode = acc_mode;
->>  
->>  	op->intent = flags & O_PATH ? 0 : LOOKUP_OPEN;
-> 
-> I don't feel experienced enough in security to tell whether we want this
-> functionality or not. But if we do this, shouldn't we also set FMODE_EXEC
-> on the resulting struct file? That way also security_file_open() can be
-> used to arbitrate such executable opens and in particular
-> fanotify permission event FAN_OPEN_EXEC will get properly generated which I
-> guess is desirable (support for it is sitting in my tree waiting for the
-> merge window) - adding some audit people involved in FAN_OPEN_EXEC to
-> CC. Just an idea...
+This should be static, no?
 
-Indeed, it may be useful for other LSM.
+> +{
+> +       if (!(mask & MAY_OPENEXEC))
+> +               return 0;
+> +       /*
+> +        * Match regular files and directories to make it easier to
+> +        * modify script interpreters.
+> +        */
+> +       if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
+> +               return 0;
 
- Mickaël
+So files are subject to checks, but loading code from things like
+sockets is always fine?
+
+> +       if ((open_mayexec_enforce & YAMA_OMAYEXEC_ENFORCE_MOUNT) &&
+> +                       !(mask & MAY_EXECMOUNT))
+> +               return -EACCES;
+> +
+> +       /*
+> +        * May prefer acl_permission_check() instead of generic_permissio=
+n(),
+> +        * to not be bypassable with CAP_DAC_READ_SEARCH.
+> +        */
+> +       if (open_mayexec_enforce & YAMA_OMAYEXEC_ENFORCE_FILE)
+> +               return generic_permission(inode, MAY_EXEC);
+> +
+> +       return 0;
+> +}
+> +
+>  static struct security_hook_list yama_hooks[] __lsm_ro_after_init =3D {
+> +       LSM_HOOK_INIT(inode_permission, yama_inode_permission),
+>         LSM_HOOK_INIT(ptrace_access_check, yama_ptrace_access_check),
+>         LSM_HOOK_INIT(ptrace_traceme, yama_ptrace_traceme),
+>         LSM_HOOK_INIT(task_prctl, yama_task_prctl),
+> @@ -447,6 +489,37 @@ static int yama_dointvec_minmax(struct ctl_table *ta=
+ble, int write,
+>         return proc_dointvec_minmax(&table_copy, write, buffer, lenp, ppo=
+s);
+>  }
+>
+> +static int yama_dointvec_bitmask_macadmin(struct ctl_table *table, int w=
+rite,
+> +                                         void __user *buffer, size_t *le=
+np,
+> +                                         loff_t *ppos)
+> +{
+> +       int error;
+> +
+> +       if (write) {
+> +               struct ctl_table table_copy;
+> +               int tmp_mayexec_enforce;
+> +
+> +               if (!capable(CAP_MAC_ADMIN))
+> +                       return -EPERM;
+
+Don't put capable() checks in sysctls, it doesn't work.
