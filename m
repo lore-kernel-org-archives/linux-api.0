@@ -1,63 +1,86 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
-Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
-Date: Wed, 12 Dec 2018 18:01:04 +0100
-Message-ID: <7c498761-7d74-956c-01df-1c8f39c10519@ssi.gouv.fr>
+Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on
+ sys_open()
+Date: Wed, 12 Dec 2018 18:09:23 +0100
+Message-ID: <ac3ae274-6a71-2f8c-9ad6-8392eed3d13b@ssi.gouv.fr>
 References: <20181212081712.32347-1-mic@digikod.net>
- <ML-sxPRwNNExkZHkXghYN7e3VrhuZXYLjFv-aniX8qbjcde2GfHMBaI4B3A7IoUEfycQcWCPuxATkYHOz--FqMjH1KRwxMxBCb6Q-1IsKTM=@protonmail.ch>
+ <20181212081712.32347-2-mic@digikod.net>
+ <20181212144306.GA19945@quack2.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ML-sxPRwNNExkZHkXghYN7e3VrhuZXYLjFv-aniX8qbjcde2GfHMBaI4B3A7IoUEfycQcWCPuxATkYHOz--FqMjH1KRwxMxBCb6Q-1IsKTM=@protonmail.ch>
+In-Reply-To: <20181212144306.GA19945@quack2.suse.cz>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jordan Glover <Golden_Miller83@protonmail.ch>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-security-module@vger.kernel.org" <linux-security-modu>
+To: Jan Kara <jack@suse.cz>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, sgrubb@redhat.com, Matthew Bobrowski <mbobrowski@mbobrowski.org>
 List-Id: linux-api@vger.kernel.org
 
 
-Le 12/12/2018 à 17:29, Jordan Glover a écrit :
-> On Wednesday, December 12, 2018 9:17 AM, Mickaël Salaün <mic@digikod.net> wrote:
+Le 12/12/2018 à 15:43, Jan Kara a écrit :
+> On Wed 12-12-18 09:17:08, Mickaël Salaün wrote:
+>> When the O_MAYEXEC flag is passed, sys_open() may be subject to
+>> additional restrictions depending on a security policy implemented by an
+>> LSM through the inode_permission hook.
+>>
+>> The underlying idea is to be able to restrict scripts interpretation
+>> according to a policy defined by the system administrator.  For this to
+>> be possible, script interpreters must use the O_MAYEXEC flag
+>> appropriately.  To be fully effective, these interpreters also need to
+>> handle the other ways to execute code (for which the kernel can't help):
+>> command line parameters (e.g., option -e for Perl), module loading
+>> (e.g., option -m for Python), stdin, file sourcing, environment
+>> variables, configuration files...  According to the threat model, it may
+>> be acceptable to allow some script interpreters (e.g. Bash) to interpret
+>> commands from stdin, may it be a TTY or a pipe, because it may not be
+>> enough to (directly) perform syscalls.
+>>
+>> A simple security policy implementation is available in a following
+>> patch for Yama.
+>>
+>> This is an updated subset of the patch initially written by Vincent
+>> Strubel for CLIP OS:
+>> https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
+>> This patch has been used for more than 10 years with customized script
+>> interpreters.  Some examples can be found here:
+>> https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
+>>
+>> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+>> Signed-off-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+>> Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
+>> Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
+>> Cc: Al Viro <viro@zeniv.linux.org.uk>
+>> Cc: Kees Cook <keescook@chromium.org>
+>> Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
 > 
->> Hi,
->>
->> The goal of this patch series is to control script interpretation. A
->> new O_MAYEXEC flag used by sys_open() is added to enable userland script
->> interpreter to delegate to the kernel (and thus the system security
->> policy) the permission to interpret scripts or other files containing
->> what can be seen as commands.
->>
->> The security policy is the responsibility of an LSM. A basic
->> system-wide policy is implemented with Yama and configurable through a
->> sysctl.
->>
->> The initial idea come from CLIP OS and the original implementation has
->> been used for more than 10 years:
->> https://github.com/clipos-archive/clipos4_doc
->>
->> An introduction to O_MAYEXEC was given at the Linux Security Summit
->> Europe 2018 - Linux Kernel Security Contributions by ANSSI:
->> https://www.youtube.com/watch?v=chNjCRtPKQY&t=17m15s
->> The "write xor execute" principle was explained at Kernel Recipes 2018 -
->> CLIP OS: a defense-in-depth OS:
->> https://www.youtube.com/watch?v=PjRE0uBtkHU&t=11m14s
->>
->> This patch series can be applied on top of v4.20-rc6. This can be
->> tested with CONFIG_SECURITY_YAMA. I would really appreciate
->> constructive comments on this RFC.
->>
->> Regards,
->>
+> ...
 > 
-> Are various interpreters upstreams interested in adding support
-> for O_MAYEXEC if it land in kernel? Did you contacted them about this?
+>> diff --git a/fs/open.c b/fs/open.c
+>> index 0285ce7dbd51..75479b79a58f 100644
+>> --- a/fs/open.c
+>> +++ b/fs/open.c
+>> @@ -974,6 +974,10 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
+>>  	if (flags & O_APPEND)
+>>  		acc_mode |= MAY_APPEND;
+>>  
+>> +	/* Check execution permissions on open. */
+>> +	if (flags & O_MAYEXEC)
+>> +		acc_mode |= MAY_OPENEXEC;
+>> +
+>>  	op->acc_mode = acc_mode;
+>>  
+>>  	op->intent = flags & O_PATH ? 0 : LOOKUP_OPEN;
+> 
+> I don't feel experienced enough in security to tell whether we want this
+> functionality or not. But if we do this, shouldn't we also set FMODE_EXEC
+> on the resulting struct file? That way also security_file_open() can be
+> used to arbitrate such executable opens and in particular
+> fanotify permission event FAN_OPEN_EXEC will get properly generated which I
+> guess is desirable (support for it is sitting in my tree waiting for the
+> merge window) - adding some audit people involved in FAN_OPEN_EXEC to
+> CC. Just an idea...
 
-I think the first step is to be OK on the kernel side. We will then be
-able to help upstream interpreters implement this feature. It should be
-OK because the behavior doesn't change by default, i.e. if the sysadmin
-doesn't configure (and test) the whole system. Some examples of modified
-interpreters can be found at
-https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
-.
+Indeed, it may be useful for other LSM.
 
  Mickaël
