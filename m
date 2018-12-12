@@ -1,41 +1,49 @@
-From: Ivan Ivanov <qmastery16@gmail.com>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Wed, 12 Dec 2018 22:18:18 +0300
-Message-ID: <CAAaskFD3R1ha0TvrxZydW3NWAbg01rMAMmd400if4=nHVRhYkw@mail.gmail.com>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
- <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org> <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
- <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org> <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
- <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org> <CAK8P3a3yurujkdic98H02j0YfctSBf9NeXQreLZVhTzsttoc9g@mail.gmail.com>
- <alpine.DEB.2.21.1812121811080.21643@digraph.polyomino.org.uk>
- <CAAaskFA5cssU+fGAOUJO4u5XYBP6XYtSeWRhaSAr3BqOBTYjmw@mail.gmail.com> <CALCETrUzyEENFc8rgDnbx9U-tALR4sjKsORjAwTY5ko1zzAVsQ@mail.gmail.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
+Date: Thu, 13 Dec 2018 06:51:53 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.21.1812130642250.29507@namei.org>
+References: <20181212081712.32347-1-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; BOUNDARY="1665246916-1625860249-1544644091=:29507"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUzyEENFc8rgDnbx9U-tALR4sjKsORjAwTY5ko1zzAVsQ@mail.gmail.com>
+In-Reply-To: <20181212081712.32347-1-mic@digikod.net>
+Content-ID: <alpine.LRH.2.21.1812130649470.29507@namei.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: luto@kernel.org
-Cc: joseph@codesourcery.com, arnd@arndb.de, tg@mirbsd.de, Linus Torvalds <torvalds@linux-foundation.org>, x86@kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, hpa@zytor.com, peterz@infradead.org, bp@alien8.de, fweimer@redhat.com, vapier@gentoo.org, hjl.tools@gmail.com, dalias@libc.org, x32@buildd.debian.org, will.deacon@arm.com, catalin.marinas@arm.com
+To: =?ISO-8859-15?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?ISO-8859-15?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?ISO-8859-15?Q?Philippe_Tr=E9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-My main reason on staying at Pentium 4 is that it does not contain
-Intel ME backdoor (it came starting with Core 2 Duo)
-=D1=81=D1=80, 12 =D0=B4=D0=B5=D0=BA. 2018 =D0=B3. =D0=B2 22:12, Andy Lutomi=
-rski <luto@kernel.org>:
->
-> On Wed, Dec 12, 2018 at 10:50 AM Ivan Ivanov <qmastery16@gmail.com> wrote=
-:
-> >
-> > Please don't drop x86 support from the Linux kernel ! You may not
-> > realize it, but there are plenty of people who care about x86 systems.
-> > I have a good old Pentium 4 based computer which is 32-bit, using it
-> > for some weird Linux experiments + retro gaming, and if I can't run
-> > new Linux kernels there - it would be SAD
->
-> Just to clarify: no one is proposing to drop 32-bit hardware support
-> or normal x86 compatibility support from new kernels.
->
-> That being said, you should seriously consider replacing that P4.
-> Unless you live somewhere with *very* cheap power or you barely use
-> it, replacing it will pay for itself quite quickly.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+--1665246916-1625860249-1544644091=:29507
+Content-Type: text/plain; CHARSET=ISO-8859-15
+Content-Transfer-Encoding: 8BIT
+Content-ID: <alpine.LRH.2.21.1812130649471.29507@namei.org>
+
+On Wed, 12 Dec 2018, Mickaël Salaün wrote:
+
+> Hi,
+> 
+> The goal of this patch series is to control script interpretation.  A
+> new O_MAYEXEC flag used by sys_open() is added to enable userland script
+> interpreter to delegate to the kernel (and thus the system security
+> policy) the permission to interpret scripts or other files containing
+> what can be seen as commands.
+> 
+> The security policy is the responsibility of an LSM.  A basic
+> system-wide policy is implemented with Yama and configurable through a
+> sysctl.
+
+If you're depending on the script interpreter to flag that the user may 
+execute code, this seems to be equivalent in security terms to depending 
+on the user.  e.g. what if the user uses ptrace and clears O_MAYEXEC?
+
+ 
+
+
+
+-- 
+James Morris
+<jmorris@namei.org>
+--1665246916-1625860249-1544644091=:29507--
