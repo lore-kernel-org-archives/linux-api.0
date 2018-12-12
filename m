@@ -1,284 +1,91 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v10 4/4] samples: add an example of seccomp user trap
-Date: Tue, 11 Dec 2018 16:46:52 -0800
-Message-ID: <CAGXu5jKLGXcY_koB+ZijKDVJ1=+iGMj5h8qBQOfpVk0n10e3DQ@mail.gmail.com>
-References: <20181209182414.30862-1-tycho@tycho.ws> <20181209182414.30862-5-tycho@tycho.ws>
- <20181211222449.GA937@mail.hallyn.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Tue, 11 Dec 2018 18:24:59 -0800
+Message-ID: <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+ <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
+ <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org> <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
+ <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181211222449.GA937@mail.hallyn.com>
+In-Reply-To: <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Tycho Andersen <tycho@tycho.ws>, Andy Lutomirski <luto@amacapital.net>, Oleg Nesterov <oleg@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>, Aleksa Sarai <asarai@suse.de>, Jann Horn <jannh@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>
+To: tg@mirbsd.de
+Cc: Andrew Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 11, 2018 at 2:24 PM Serge E. Hallyn <serge@hallyn.com> wrote:
+> On Dec 11, 2018, at 3:35 PM, Thorsten Glaser <tg@mirbsd.de> wrote:
 >
-> On Sun, Dec 09, 2018 at 11:24:14AM -0700, Tycho Andersen wrote:
-> > The idea here is just to give a demonstration of how one could safely use
-> > the SECCOMP_RET_USER_NOTIF feature to do mount policies. This particular
-> > policy is (as noted in the comment) not very interesting, but it serves to
-> > illustrate how one might apply a policy dodging the various TOCTOU issues.
-> >
-> > Signed-off-by: Tycho Andersen <tycho@tycho.ws>
-> > CC: Kees Cook <keescook@chromium.org>
-> > CC: Andy Lutomirski <luto@amacapital.net>
-> > CC: Oleg Nesterov <oleg@redhat.com>
-> > CC: Eric W. Biederman <ebiederm@xmission.com>
-> > CC: "Serge E. Hallyn" <serge@hallyn.com>
-> > CC: Christian Brauner <christian@brauner.io>
-> > CC: Tyler Hicks <tyhicks@canonical.com>
-> > CC: Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
-> > ---
-> > v5: new in v5
-> > v7: updates for v7 API changes
-> > v8: * add some more comments about what's happening in main() (Kees)
-> >     * move from ptrace API to SECCOMP_FILTER_FLAG_NEW_LISTENER
-> > v9: * s/mknod/mount in error message
-> >     * switch to the SECCOMP_GET_NOTIF_SIZES API
-> >     * add a note about getting ENOENT from SECCOMP_IOCTL_NOTIF_SEND
-> > ---
-> >  samples/seccomp/.gitignore  |   1 +
-> >  samples/seccomp/Makefile    |   7 +-
-> >  samples/seccomp/user-trap.c | 375 ++++++++++++++++++++++++++++++++++++
-> >  3 files changed, 382 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/samples/seccomp/.gitignore b/samples/seccomp/.gitignore
-> > index 78fb78184291..d1e2e817d556 100644
-> > --- a/samples/seccomp/.gitignore
-> > +++ b/samples/seccomp/.gitignore
-> > @@ -1,3 +1,4 @@
-> >  bpf-direct
-> >  bpf-fancy
-> >  dropper
-> > +user-trap
-> > diff --git a/samples/seccomp/Makefile b/samples/seccomp/Makefile
-> > index cf34ff6b4065..4920903c8009 100644
-> > --- a/samples/seccomp/Makefile
-> > +++ b/samples/seccomp/Makefile
-> > @@ -1,6 +1,6 @@
-> >  # SPDX-License-Identifier: GPL-2.0
-> >  ifndef CROSS_COMPILE
-> > -hostprogs-$(CONFIG_SAMPLE_SECCOMP) := bpf-fancy dropper bpf-direct
-> > +hostprogs-$(CONFIG_SAMPLE_SECCOMP) := bpf-fancy dropper bpf-direct user-trap
-> >
-> >  HOSTCFLAGS_bpf-fancy.o += -I$(objtree)/usr/include
-> >  HOSTCFLAGS_bpf-fancy.o += -idirafter $(objtree)/include
-> > @@ -16,6 +16,10 @@ HOSTCFLAGS_bpf-direct.o += -I$(objtree)/usr/include
-> >  HOSTCFLAGS_bpf-direct.o += -idirafter $(objtree)/include
-> >  bpf-direct-objs := bpf-direct.o
-> >
-> > +HOSTCFLAGS_user-trap.o += -I$(objtree)/usr/include
-> > +HOSTCFLAGS_user-trap.o += -idirafter $(objtree)/include
-> > +user-trap-objs := user-trap.o
-> > +
-> >  # Try to match the kernel target.
-> >  ifndef CONFIG_64BIT
-> >
-> > @@ -33,6 +37,7 @@ HOSTCFLAGS_bpf-fancy.o += $(MFLAG)
-> >  HOSTLDLIBS_bpf-direct += $(MFLAG)
-> >  HOSTLDLIBS_bpf-fancy += $(MFLAG)
-> >  HOSTLDLIBS_dropper += $(MFLAG)
-> > +HOSTLDLIBS_user-trap += $(MFLAG)
-> >  endif
-> >  always := $(hostprogs-m)
-> >  endif
-> > diff --git a/samples/seccomp/user-trap.c b/samples/seccomp/user-trap.c
-> > new file mode 100644
-> > index 000000000000..61267cb59c8e
-> > --- /dev/null
-> > +++ b/samples/seccomp/user-trap.c
-> > @@ -0,0 +1,375 @@
-> > +#include <signal.h>
-> > +#include <stdio.h>
-> > +#include <stdlib.h>
-> > +#include <unistd.h>
-> > +#include <errno.h>
-> > +#include <fcntl.h>
-> > +#include <string.h>
-> > +#include <stddef.h>
-> > +#include <sys/sysmacros.h>
-> > +#include <sys/types.h>
-> > +#include <sys/wait.h>
-> > +#include <sys/socket.h>
-> > +#include <sys/stat.h>
-> > +#include <sys/mman.h>
-> > +#include <sys/syscall.h>
-> > +#include <sys/user.h>
-> > +#include <sys/ioctl.h>
-> > +#include <sys/ptrace.h>
-> > +#include <sys/mount.h>
-> > +#include <linux/limits.h>
-> > +#include <linux/filter.h>
-> > +#include <linux/seccomp.h>
-> > +
-> > +#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
-> > +
-> > +static int seccomp(unsigned int op, unsigned int flags, void *args)
-> > +{
-> > +     errno = 0;
-> > +     return syscall(__NR_seccomp, op, flags, args);
-> > +}
-> > +
-> > +static int send_fd(int sock, int fd)
-> > +{
-> > +     struct msghdr msg = {};
-> > +     struct cmsghdr *cmsg;
-> > +     char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
-> > +     struct iovec io = {
-> > +             .iov_base = &c,
-> > +             .iov_len = 1,
-> > +     };
-> > +
-> > +     msg.msg_iov = &io;
-> > +     msg.msg_iovlen = 1;
-> > +     msg.msg_control = buf;
-> > +     msg.msg_controllen = sizeof(buf);
-> > +     cmsg = CMSG_FIRSTHDR(&msg);
-> > +     cmsg->cmsg_level = SOL_SOCKET;
-> > +     cmsg->cmsg_type = SCM_RIGHTS;
-> > +     cmsg->cmsg_len = CMSG_LEN(sizeof(int));
-> > +     *((int *)CMSG_DATA(cmsg)) = fd;
-> > +     msg.msg_controllen = cmsg->cmsg_len;
-> > +
-> > +     if (sendmsg(sock, &msg, 0) < 0) {
-> > +             perror("sendmsg");
-> > +             return -1;
-> > +     }
-> > +
-> > +     return 0;
-> > +}
-> > +
-> > +static int recv_fd(int sock)
-> > +{
-> > +     struct msghdr msg = {};
-> > +     struct cmsghdr *cmsg;
-> > +     char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
-> > +     struct iovec io = {
-> > +             .iov_base = &c,
-> > +             .iov_len = 1,
-> > +     };
-> > +
-> > +     msg.msg_iov = &io;
-> > +     msg.msg_iovlen = 1;
-> > +     msg.msg_control = buf;
-> > +     msg.msg_controllen = sizeof(buf);
-> > +
-> > +     if (recvmsg(sock, &msg, 0) < 0) {
-> > +             perror("recvmsg");
-> > +             return -1;
-> > +     }
-> > +
-> > +     cmsg = CMSG_FIRSTHDR(&msg);
-> > +
-> > +     return *((int *)CMSG_DATA(cmsg));
-> > +}
-> > +
-> > +static int user_trap_syscall(int nr, unsigned int flags)
-> > +{
-> > +     struct sock_filter filter[] = {
-> > +             BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
-> > +                     offsetof(struct seccomp_data, nr)),
-> > +             BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, nr, 0, 1),
-> > +             BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_USER_NOTIF),
-> > +             BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
-> > +     };
-> > +
-> > +     struct sock_fprog prog = {
-> > +             .len = (unsigned short)ARRAY_SIZE(filter),
-> > +             .filter = filter,
-> > +     };
-> > +
-> > +     return seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
-> > +}
-> > +
-> > +static int handle_req(struct seccomp_notif *req,
-> > +                   struct seccomp_notif_resp *resp, int listener)
-> > +{
-> > +     char path[PATH_MAX], source[PATH_MAX], target[PATH_MAX];
-> > +     int ret = -1, mem;
-> > +
-> > +     resp->id = req->id;
-> > +     resp->error = -EPERM;
-> > +     resp->val = 0;
-> > +
-> > +     if (req->data.nr != __NR_mount) {
-> > +             fprintf(stderr, "huh? trapped something besides mount? %d\n", req->data.nr);
-> > +             return -1;
-> > +     }
-> > +
-> > +     /* Only allow bind mounts. */
-> > +     if (!(req->data.args[3] & MS_BIND))
-> > +             return 0;
-> > +
-> > +     /*
-> > +      * Ok, let's read the task's memory to see where they wanted their
-> > +      * mount to go.
-> > +      */
-> > +     snprintf(path, sizeof(path), "/proc/%d/mem", req->pid);
-> > +     mem = open(path, O_RDONLY);
-> > +     if (mem < 0) {
-> > +             perror("open mem");
-> > +             return -1;
-> > +     }
-> > +
-> > +     /*
-> > +      * Now we avoid a TOCTOU: we referred to a pid by its pid, but since
-> > +      * the pid that made the syscall may have died, we need to confirm that
-> > +      * the pid is still valid after we open its /proc/pid/mem file. We can
-> > +      * ask the listener fd this as follows.
-> > +      *
-> > +      * Note that this check should occur *after* any task-specific
-> > +      * resources are opened, to make sure that the task has not died and
-> > +      * we're not wrongly reading someone else's state in order to make
-> > +      * decisions.
-> > +      */
-> > +     if (ioctl(listener, SECCOMP_IOCTL_NOTIF_ID_VALID, &req->id) < 0) {
-> > +             fprintf(stderr, "task died before we could map its memory\n");
-> > +             goto out;
-> > +     }
-> > +
-> > +     /*
-> > +      * Phew, we've got the right /proc/pid/mem. Now we can read it. Note
-> > +      * that to avoid another TOCTOU, we should read all of the pointer args
-> > +      * before we decide to allow the syscall.
-> > +      */
-> > +     if (lseek(mem, req->data.args[0], SEEK_SET) < 0) {
-> > +             perror("seek");
-> > +             goto out;
-> > +     }
-> > +
-> > +     ret = read(mem, source, sizeof(source));
-> > +     if (ret < 0) {
-> > +             perror("read");
-> > +             goto out;
-> > +     }
-> > +
-> > +     if (lseek(mem, req->data.args[1], SEEK_SET) < 0) {
-> > +             perror("seek");
-> > +             goto out;
-> > +     }
-> > +
-> > +     ret = read(mem, target, sizeof(target));
-> > +     if (ret < 0) {
-> > +             perror("read");
-> > +             goto out;
-> > +     }
-> > +
-> > +     /*
-> > +      * Our policy is to only allow bind mounts inside /tmp. This isn't very
-> > +      * interesting, because we could do unprivlieged bind mounts with user
-> > +      * namespaces already, but you get the idea.
-> > +      */
-> > +     if (!strncmp(source, "/tmp", 4) && !strncmp(target, "/tmp", 4)) {
+> Andy Lutomirski dixit:
 >
-> Of course the host could have a /tmproot or somesuch, so you might want to
-> check the first 5 characters :)
+>> What happens if someone adds a struct like:
+>>
+>> struct nasty_on_x32 {
+>> __kernel_long_t a;
+>> void * __user b;
+>> };
+>>
+>> On x86_64, that's two 8-byte fields.  On x86_32, it's two four-byte
+>> fields.  On x32, it's an 8-byte field and a 4-byte field.  Now what?
+>
+> Yes, that=E2=80=99s indeed ugly. I understand. But don=E2=80=99t we alrea=
+dy have
+> this problem with architectures which support multiple ABIs at the
+> same time? An amd64 kernel with i386 userspace comes to mind, or
+> the multiple MIPS ABIs.
 
-I manually bumped this to "/tmp/", 5 in both tests and applied it for -next
+That=E2=80=99s the thing, though: the whole generic kernel compat
+infrastructure assumes there are at most two ABIs: native and, if
+enabled and relevant, compat. x32 breaks this entirely.
 
--Kees
+>
+>> I'm sure we could have some magic gcc plugin or other nifty tool that
+>> gives us:
+>>
+>> copy_from_user(struct struct_name, kernel_ptr, user_ptr);
+>
+> Something like that might be useful. Generate call stubs, which
+> then call the syscall implementation with the actual user-space
+> struct contents as arguments. Hm, that might be too generic to
+> be useful. Generate macros that can read from or write specific
+> structures to userspace?
+>
+> I think something like this could solve other more general problems
+> as well, so it might be =E2=80=9Cnice to have anyway=E2=80=9D. Of course =
+it=E2=80=99s work,
+> and I=E2=80=99m not involved enough in Linux kernel programming to be abl=
+e
+> to usefully help with it (doing too much elsewhere already).
+>
+>> actually do this work.  Instead we get ad hoc fixes for each syscall,
+>> along the lines of preadv64v2(), which get done when somebody notices
+>
+> Yes, that=E2=80=99s absolutely ugly and ridiculous and all kinds of bad.
+>
+> On the other hand, from my current experience, someone (Arnd?) noticed
+> all the currently existing baddies for x32 already and fixed them.
+>
+> New syscalls are indeed an issue, but perhaps something generating
+> copyinout stubs could help. This might allow other architectures
+> that could do with a new ABI but have until now feared the overhead
+> as well. (IIRC, m68k could do with a new ABI that reserves a register
+> for TLS, but Geert would know. At the same time, time_t and off_t could
+> be bumped to 64 bit. Something like that. If changing sizes of types
+> shared between kernel and user spaces is not something feared=E2=80=A6)
 
--- 
-Kees Cook
+Magic autogenerated stubs would be great.  Difficult, too, given
+unions, multiplexers, cmsg, etc.
+
+I suppose I will see how bad it would be to split out the x32 syscall
+table and at least isolate the mess to some extent.
+
+IMO the real right solution would be to push the whole problem to
+userspace: get an ILP32 system working with almost or entirely LP64
+syscalls.  POSIX support might have to be a bit flexible, but still.
+How hard would it be to have __attribute__((ilp64)), with an optional
+warning if any embedded structs are not ilp64?  This plus a wrapper to
+make sure that mmap puts everything below 4GB ought to do the trick.
+Or something like what arm64 is proposing where the kernel ABI has
+32-bit long doesn=E2=80=99t seem too horrible.
