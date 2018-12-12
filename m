@@ -1,91 +1,55 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Thorsten Glaser <tg@mirbsd.de>
 Subject: Re: Can we drop upstream Linux x32 support?
-Date: Tue, 11 Dec 2018 18:24:59 -0800
-Message-ID: <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
+Date: Wed, 12 Dec 2018 02:33:56 +0000 (UTC)
+Message-ID: <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>
 References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
  <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
- <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org> <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
+ <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org>
+ <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
  <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
+ <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
+In-Reply-To: <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
+Content-Language: de-DE-1901, en-GB
 Sender: linux-kernel-owner@vger.kernel.org
-To: tg@mirbsd.de
-Cc: Andrew Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-> On Dec 11, 2018, at 3:35 PM, Thorsten Glaser <tg@mirbsd.de> wrote:
->
-> Andy Lutomirski dixit:
->
->> What happens if someone adds a struct like:
->>
->> struct nasty_on_x32 {
->> __kernel_long_t a;
->> void * __user b;
->> };
->>
->> On x86_64, that's two 8-byte fields.  On x86_32, it's two four-byte
->> fields.  On x32, it's an 8-byte field and a 4-byte field.  Now what?
->
-> Yes, that=E2=80=99s indeed ugly. I understand. But don=E2=80=99t we alrea=
-dy have
-> this problem with architectures which support multiple ABIs at the
-> same time? An amd64 kernel with i386 userspace comes to mind, or
-> the multiple MIPS ABIs.
+Andy Lutomirski dixit:
 
-That=E2=80=99s the thing, though: the whole generic kernel compat
-infrastructure assumes there are at most two ABIs: native and, if
-enabled and relevant, compat. x32 breaks this entirely.
+>That’s the thing, though: the whole generic kernel compat
+>infrastructure assumes there are at most two ABIs: native and, if
+>enabled and relevant, compat. x32 breaks this entirely.
 
->
->> I'm sure we could have some magic gcc plugin or other nifty tool that
->> gives us:
->>
->> copy_from_user(struct struct_name, kernel_ptr, user_ptr);
->
-> Something like that might be useful. Generate call stubs, which
-> then call the syscall implementation with the actual user-space
-> struct contents as arguments. Hm, that might be too generic to
-> be useful. Generate macros that can read from or write specific
-> structures to userspace?
->
-> I think something like this could solve other more general problems
-> as well, so it might be =E2=80=9Cnice to have anyway=E2=80=9D. Of course =
-it=E2=80=99s work,
-> and I=E2=80=99m not involved enough in Linux kernel programming to be abl=
-e
-> to usefully help with it (doing too much elsewhere already).
->
->> actually do this work.  Instead we get ad hoc fixes for each syscall,
->> along the lines of preadv64v2(), which get done when somebody notices
->
-> Yes, that=E2=80=99s absolutely ugly and ridiculous and all kinds of bad.
->
-> On the other hand, from my current experience, someone (Arnd?) noticed
-> all the currently existing baddies for x32 already and fixed them.
->
-> New syscalls are indeed an issue, but perhaps something generating
-> copyinout stubs could help. This might allow other architectures
-> that could do with a new ABI but have until now feared the overhead
-> as well. (IIRC, m68k could do with a new ABI that reserves a register
-> for TLS, but Geert would know. At the same time, time_t and off_t could
-> be bumped to 64 bit. Something like that. If changing sizes of types
-> shared between kernel and user spaces is not something feared=E2=80=A6)
+MIPS had o32, n32, n64 since like forever.
 
-Magic autogenerated stubs would be great.  Difficult, too, given
-unions, multiplexers, cmsg, etc.
+ARM has old ABI, EABI and now 64-bit.
 
-I suppose I will see how bad it would be to split out the x32 syscall
-table and at least isolate the mess to some extent.
+Other architectures are yet to come.
 
-IMO the real right solution would be to push the whole problem to
-userspace: get an ILP32 system working with almost or entirely LP64
-syscalls.  POSIX support might have to be a bit flexible, but still.
-How hard would it be to have __attribute__((ilp64)), with an optional
-warning if any embedded structs are not ilp64?  This plus a wrapper to
-make sure that mmap puts everything below 4GB ought to do the trick.
-Or something like what arm64 is proposing where the kernel ABI has
-32-bit long doesn=E2=80=99t seem too horrible.
+>IMO the real right solution would be to push the whole problem to
+>userspace: get an ILP32 system working with almost or entirely LP64
+
+Is this a reflex of Linux kernel developers? ;-)
+
+I doubt that userspace is the right place for this, remember
+the recent glibc vs. syscalls debate. It would also need to
+multiply across various libcs.
+
+>How hard would it be to have __attribute__((ilp64)), with an optional
+>warning if any embedded structs are not ilp64?  This plus a wrapper to
+
+You mean LP64. Impossible, because LP64 vs. ILP32 is not the only
+difference between amd64 and x32.
+
+bye,
+//mirabilos
+-- 
+I believe no one can invent an algorithm. One just happens to hit upon it
+when God enlightens him. Or only God invents algorithms, we merely copy them.
+If you don't believe in God, just consider God as Nature if you won't deny
+existence.		-- Coywolf Qi Hunt
