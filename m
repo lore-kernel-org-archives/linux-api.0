@@ -1,53 +1,93 @@
-From: Jordan Glover <Golden_Miller83@protonmail.ch>
-Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
-Date: Wed, 12 Dec 2018 16:29:47 +0000
-Message-ID: <ML-sxPRwNNExkZHkXghYN7e3VrhuZXYLjFv-aniX8qbjcde2GfHMBaI4B3A7IoUEfycQcWCPuxATkYHOz--FqMjH1KRwxMxBCb6Q-1IsKTM=@protonmail.ch>
-References: <20181212081712.32347-1-mic@digikod.net>
-Reply-To: Jordan Glover <Golden_Miller83@protonmail.ch>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Wed, 12 Dec 2018 08:39:53 -0800
+Message-ID: <CALCETrUYn=S=hmJ0tKdm2LoSgkWchY2_65sH7hJZp7wfS30giw@mail.gmail.com>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+ <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
+ <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org> <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
+ <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org> <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
+ <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181212081712.32347-1-mic@digikod.net>
+In-Reply-To: <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, "kernel-hardening@lists.openwall.com" <kernel-hardening@lists.openwall.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+To: tg@mirbsd.de
+Cc: Andrew Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday, December 12, 2018 9:17 AM, Micka=C3=ABl Sala=C3=BCn <mic@digi=
-kod.net> wrote:
-
-> Hi,
+> On Dec 11, 2018, at 6:33 PM, Thorsten Glaser <tg@mirbsd.de> wrote:
 >
-> The goal of this patch series is to control script interpretation. A
-> new O_MAYEXEC flag used by sys_open() is added to enable userland script
-> interpreter to delegate to the kernel (and thus the system security
-> policy) the permission to interpret scripts or other files containing
-> what can be seen as commands.
->
-> The security policy is the responsibility of an LSM. A basic
-> system-wide policy is implemented with Yama and configurable through a
-> sysctl.
->
-> The initial idea come from CLIP OS and the original implementation has
-> been used for more than 10 years:
-> https://github.com/clipos-archive/clipos4_doc
->
-> An introduction to O_MAYEXEC was given at the Linux Security Summit
-> Europe 2018 - Linux Kernel Security Contributions by ANSSI:
-> https://www.youtube.com/watch?v=3DchNjCRtPKQY&t=3D17m15s
-> The "write xor execute" principle was explained at Kernel Recipes 2018 -
-> CLIP OS: a defense-in-depth OS:
-> https://www.youtube.com/watch?v=3DPjRE0uBtkHU&t=3D11m14s
->
-> This patch series can be applied on top of v4.20-rc6. This can be
-> tested with CONFIG_SECURITY_YAMA. I would really appreciate
-> constructive comments on this RFC.
->
-> Regards,
+> Andy Lutomirski dixit:
 >
 
-Are various interpreters upstreams interested in adding support
-for O_MAYEXEC if it land in kernel? Did you contacted them about this?
+>
+>> IMO the real right solution would be to push the whole problem to
+>> userspace: get an ILP32 system working with almost or entirely LP64
+>
+> Is this a reflex of Linux kernel developers? ;-)
+>
+> I doubt that userspace is the right place for this, remember
+> the recent glibc vs. syscalls debate. It would also need to
+> multiply across various libcs.
+>
+>> How hard would it be to have __attribute__((ilp64)), with an optional
+>> warning if any embedded structs are not ilp64?  This plus a wrapper to
+>
+> You mean LP64. Impossible, because LP64 vs. ILP32 is not the only
+> difference between amd64 and x32.
 
-Jordan
+I mean LP64.  And I'm not suggesting that ILP32 is the only difference
+between x32 and x86_64, nor am I suggesting that a technique like this
+would implement x32 -- I'm suggesting it would implement something
+better than x32.
+
+The kernel, as a practical matter, supports two ABIs on 64-bit builds:
+LP64 and ILP32.  ILP32 is what the kernel calls "compat".  ("compat"
+comes with other baggage -- it generally has a 32-bit signal frame,
+syscall arguments are mostly limited to 32 bits, etc.)  Allowing a
+user program that runs in 64-bit mode to issue compat syscalls is not
+really a big deal.  x86_64 has allowed this forever using int $0x80 --
+it's just slow.  Adding a faster mechanism would be straightforward.
+As I understand it, the arm64 ilp32 proposal involves using a genuine
+ILP32 model for user code, so the syscalls will all (except for signal
+handling) go through the compat path.
+
+x32 is not this at all.  The kernel ABI part of x32 isn't ILP32.  It's
+IP32, 32-bit size_t, and *64-bit* long.  The core kernel doesn't
+really support this.  The only good things I can think of about it are
+that (a) it proves that somewhat odd ABIs are possible, at least in
+principle, and (b) three users have come out of the woodwork to say
+that they use it.
+
+I'm proposing another alternative.  Given that x32 already proves that
+the user bitness model doesn't have to match the kernel model (in x32,
+user "long" is 32-bit but the kernel ABI "long" is 64-bit), I'm
+proposing extending this to just make the kernel ABI be LP64.  So
+__kernel_size_t would be 64-bit and pointers in kernel data structures
+would be 64-bit.  In other words, most or all of the kernel ABI would
+just match x86_64.
+
+As far as I can tell, the only thing that really needs unusual
+toolchain features here is that C doesn't have an extra-wide pointer
+type.  The kernel headers would need a way to say "this pointer is
+still logically a pointer, and user code may assume that it's 32 bits,
+but it has 8-byte alignment."
+
+So I guess I'm proposing that people who really like x32 and are
+willing to invest effort it in instead invest some effort into getting
+something similar to work using the normal x86_64 syscalls.  And I'm
+hinting to the ARM folks on the thread that they consider this
+approach for arm64.
+
+There's an added benefit to my proposal over x32.  With my proposal,
+an ILP32 program could plausibly call into a true 64-bit C library
+using a straightforward FFI translation.
+>
+> bye,
+> //mirabilos
+> --
+> I believe no one can invent an algorithm. One just happens to hit upon it
+> when God enlightens him. Or only God invents algorithms, we merely copy them.
+> If you don't believe in God, just consider God as Nature if you won't deny
+> existence.        -- Coywolf Qi Hunt
