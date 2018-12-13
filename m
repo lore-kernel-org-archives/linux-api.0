@@ -1,49 +1,43 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
 Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
-Date: Thu, 13 Dec 2018 15:57:15 +0100
-Message-ID: <21824ed9-0fe4-85dd-bdd2-d4426e97233d@ssi.gouv.fr>
+Date: Thu, 13 Dec 2018 16:17:29 +0100
+Message-ID: <374ea88c-edc5-f1a6-3637-748635e1e7df@ssi.gouv.fr>
 References: <20181212081712.32347-1-mic@digikod.net>
- <alpine.LRH.2.21.1812130642250.29507@namei.org>
- <87lg4upkpv.fsf@oldenburg2.str.redhat.com>
- <alpine.LRH.2.21.1812131039400.7600@namei.org>
- <87ftv2ovp8.fsf@oldenburg2.str.redhat.com>
+ <20181213030228.GM6830@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87ftv2ovp8.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <20181213030228.GM6830@bombadil.infradead.org>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>
-Cc: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
-On 13/12/2018 06:13, Florian Weimer wrote:
-> * James Morris:
+On 13/12/2018 04:02, Matthew Wilcox wrote:
+> On Wed, Dec 12, 2018 at 09:17:07AM +0100, Mickaël Salaün wrote:
+>> The goal of this patch series is to control script interpretation.  A
+>> new O_MAYEXEC flag used by sys_open() is added to enable userland script
+>> interpreter to delegate to the kernel (and thus the system security
+>> policy) the permission to interpret scripts or other files containing
+>> what can be seen as commands.
 > 
->> On Wed, 12 Dec 2018, Florian Weimer wrote:
->>
->>> * James Morris:
->>>
->>>> If you're depending on the script interpreter to flag that the user may 
->>>> execute code, this seems to be equivalent in security terms to depending 
->>>> on the user.  e.g. what if the user uses ptrace and clears O_MAYEXEC?
-
-This security mechanism makes sense in an hardened system where the user
-is not allowed to import and execute new file (write xor execute
-policy). This can be enforced with appropriate mount points a more
-advanced access control policy.
-
->>>
->>> The argument I've heard is this: Using ptrace (and adding the +x
->>> attribute) are auditable events.
->>
->> I guess you could also preload a modified libc which strips the flag.
+> I don't have a problem with the concept, but we're running low on O_ bits.
+> Does this have to be done before the process gets a file descriptor,
+> or could we have a new syscall?  Since we're going to be changing the
+> interpreters anyway, it doesn't seem like too much of an imposition to
+> ask them to use:
 > 
-> My understanding is that this new libc would have to come somewhere, and
-> making it executable would be an auditable even as well.
+> 	int verify_for_exec(int fd)
+> 
+> instead of adding an O_MAYEXEC.
+> 
 
-Auditing is a possible use case as well, but the W^X idea is to deny use
-of libraries which are not in an executable mount point, i.e. only
-execute trusted code.
+Adding a new syscall for this simple use case seems excessive. I think
+that the open/openat syscall familly are the right place to do an atomic
+open and permission check, the same way the kernel does for other file
+access. Moreover, it will be easier to patch upstream interpreters
+without the burden of handling a (new) syscall that may not exist on the
+running system, whereas unknown open flags are ignored.
