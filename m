@@ -1,28 +1,38 @@
-From: Kevin Easton <kevin@guarana.org>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Thu, 13 Dec 2018 05:03:13 +0000
-Message-ID: <20181213050313.GA21201@ip-172-31-15-78>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
+Date: Thu, 13 Dec 2018 06:13:39 +0100
+Message-ID: <87ftv2ovp8.fsf@oldenburg2.str.redhat.com>
+References: <20181212081712.32347-1-mic@digikod.net>
+        <alpine.LRH.2.21.1812130642250.29507@namei.org>
+        <87lg4upkpv.fsf@oldenburg2.str.redhat.com>
+        <alpine.LRH.2.21.1812131039400.7600@namei.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
+In-Reply-To: <alpine.LRH.2.21.1812131039400.7600@namei.org> (James Morris's
+        message of "Thu, 13 Dec 2018 10:40:32 +1100 (AEDT)")
 Sender: linux-kernel-owner@vger.kernel.org
-To: John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>
-Cc: Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
+To: James Morris <jmorris@namei.org>
+Cc: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Dec 11, 2018 at 11:29:14AM +0100, John Paul Adrian Glaubitz wrote:
-...
-> I can't say anything about the syscall interface. However, what I do know
-> is that the weird combination of a 32-bit userland with a 64-bit kernel
-> interface is sometimes causing issues. For example, application code usually
-> expects things like time_t to be 32-bit on a 32-bit system. However, this
-> isn't the case for x32 which is why code fails to build.
+* James Morris:
 
-OpenBSD and NetBSD both have 64-bit time_t on 32-bit systems and have
-had for four or five years at this point.
+> On Wed, 12 Dec 2018, Florian Weimer wrote:
+>
+>> * James Morris:
+>> 
+>> > If you're depending on the script interpreter to flag that the user may 
+>> > execute code, this seems to be equivalent in security terms to depending 
+>> > on the user.  e.g. what if the user uses ptrace and clears O_MAYEXEC?
+>> 
+>> The argument I've heard is this: Using ptrace (and adding the +x
+>> attribute) are auditable events.
+>
+> I guess you could also preload a modified libc which strips the flag.
 
-    - Kevin
+My understanding is that this new libc would have to come somewhere, and
+making it executable would be an auditable even as well.
+
+Thanks,
+Florian
