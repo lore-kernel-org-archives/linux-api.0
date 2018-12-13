@@ -1,49 +1,53 @@
-From: Rich Felker <dalias@libc.org>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Thu, 13 Dec 2018 11:28:28 -0500
-Message-ID: <20181213162828.GW23599@brightrain.aerifal.cx>
-References: <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
- <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
- <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
- <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>
- <CALCETrUYn=S=hmJ0tKdm2LoSgkWchY2_65sH7hJZp7wfS30giw@mail.gmail.com>
- <20181212165237.GT23599@brightrain.aerifal.cx>
- <CALCETrV6+YAazq7vY_aR=4kXc4ykXb1Se7hgvHeEVJtbZ91=Qg@mail.gmail.com>
- <20181213124025.bczxzj6ez34joo6v@localhost>
- <20181213155744.GU23599@brightrain.aerifal.cx>
- <87o99pl8es.fsf@oldenburg2.str.redhat.com>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
+Date: Thu, 13 Dec 2018 09:13:10 -0800
+Message-ID: <20181213171310.GR6830@bombadil.infradead.org>
+References: <20181212081712.32347-1-mic@digikod.net>
+ <20181213030228.GM6830@bombadil.infradead.org>
+ <374ea88c-edc5-f1a6-3637-748635e1e7df@ssi.gouv.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87o99pl8es.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <374ea88c-edc5-f1a6-3637-748635e1e7df@ssi.gouv.fr>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@kernel.org>, tg@mirbsd.de, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>
+Cc: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?iso-8859-1?Q?Tr=E9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 13, 2018 at 05:04:59PM +0100, Florian Weimer wrote:
-> * Rich Felker:
+On Thu, Dec 13, 2018 at 04:17:29PM +0100, Mickaël Salaün wrote:
+> On 13/12/2018 04:02, Matthew Wilcox wrote:
+> > On Wed, Dec 12, 2018 at 09:17:07AM +0100, Mickaël Salaün wrote:
+> >> The goal of this patch series is to control script interpretation.  A
+> >> new O_MAYEXEC flag used by sys_open() is added to enable userland script
+> >> interpreter to delegate to the kernel (and thus the system security
+> >> policy) the permission to interpret scripts or other files containing
+> >> what can be seen as commands.
+> > 
+> > I don't have a problem with the concept, but we're running low on O_ bits.
+> > Does this have to be done before the process gets a file descriptor,
+> > or could we have a new syscall?  Since we're going to be changing the
+> > interpreters anyway, it doesn't seem like too much of an imposition to
+> > ask them to use:
+> > 
+> > 	int verify_for_exec(int fd)
+> > 
+> > instead of adding an O_MAYEXEC.
 > 
-> >> If the compiler can handle the zeroing, that would be great, though not
-> >> sure how (some __attribute__((zero)) which generates a type constructor
-> >> for such structure; it kind of departs from what the C language offers).
-> >
-> > The compiler fundamentally can't. At the very least it would require
-> > effective type tracking, which requires shadow memory and is even more
-> > controversial than -fstrict-aliasing (because in a sense it's a
-> > stronger version thereof).
-> 
-> It's possible to do it with the right types.  See _Bool on 32-bit Darwin
-> PowerPC for an example, which is four bytes instead of the usual one.
-> 
-> Similarly, we could have integer types with trap representations.
-> Whether it is a good idea is a different matter, but the amount of
-> compiler magic required is actually limited.
+> Adding a new syscall for this simple use case seems excessive. I think
 
-If you do this you just have LP64 with value range restricted to
-32-bit. This does not accomplish anything useful since it uses just as
-much memory as normal LP64 but you don't get anything beneficial out
-of it.
+We have somewhat less than 400 syscalls today.  We have 20 O_ bits defined.
+Obviously there's a lower practical limit on syscalls, but in principle
+we could have up to 2^32 syscalls, and there are only 12 O_ bits remaining.
 
-Rich
+> that the open/openat syscall familly are the right place to do an atomic
+> open and permission check, the same way the kernel does for other file
+> access. Moreover, it will be easier to patch upstream interpreters
+> without the burden of handling a (new) syscall that may not exist on the
+> running system, whereas unknown open flags are ignored.
+
+Ah, but that's the problem.  The interpreter can see an -ENOSYS response
+and handle it appropriately.  If the flag is silently ignored, the
+interpreter has no idea whether it can do a racy check or whether to
+skip even trying to do the check.
