@@ -1,45 +1,47 @@
-From: Florian Weimer <fweimer@redhat.com>
+From: Richard Purdie <richard.purdie@linuxfoundation.org>
 Subject: Re: Can we drop upstream Linux x32 support?
-Date: Thu, 13 Dec 2018 17:04:59 +0100
-Message-ID: <87o99pl8es.fsf@oldenburg2.str.redhat.com>
-References: <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
-        <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org>
-        <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>
-        <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
-        <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
-        <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>
-        <CALCETrUYn=S=hmJ0tKdm2LoSgkWchY2_65sH7hJZp7wfS30giw@mail.gmail.com>
-        <20181212165237.GT23599@brightrain.aerifal.cx>
-        <CALCETrV6+YAazq7vY_aR=4kXc4ykXb1Se7hgvHeEVJtbZ91=Qg@mail.gmail.com>
-        <20181213124025.bczxzj6ez34joo6v@localhost>
-        <20181213155744.GU23599@brightrain.aerifal.cx>
+Date: Thu, 13 Dec 2018 16:11:39 +0000
+Message-ID: <1bcacee85afc8e4864be6c9a4a7fcc52511b41bd.camel@linuxfoundation.org>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+         <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181213155744.GU23599@brightrain.aerifal.cx> (Rich Felker's
-        message of "Thu, 13 Dec 2018 10:57:44 -0500")
+In-Reply-To: <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Rich Felker <dalias@libc.org>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@kernel.org>, tg@mirbsd.de, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>
+Cc: the arch/x86 maintainers <x86@kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Peter Anvin <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, bp@alien8.de, fweimer@redhat.com, vapier@gentoo.org, hjl.tools@gmail.com, dalias@libc.org, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-* Rich Felker:
+On Mon, 2018-12-10 at 17:40 -0800, Linus Torvalds wrote:
+> On Mon, Dec 10, 2018 at 5:23 PM Andy Lutomirski <luto@kernel.org>
+> wrote:
+> > I'm seriously considering sending a patch to remove x32 support
+> > from
+> > upstream Linux.  Here are some problems with it:
+> 
+> I talked to Arnd (I think - we were talking about all the crazy
+> ABI's,
+> but maybe it was with somebody else) about exactly this in Edinburgh.
+> 
+> Apparently the main real use case is for extreme benchmarking. It's
+> the only use-case where the complexity of maintaining a whole
+> development environment and distro is worth it, it seems. Apparently
+> a
+> number of Spec submissions have been done with the x32 model.
+> 
+> I'm not opposed to trying to sunset the support, but let's see who
+> complains..
 
->> If the compiler can handle the zeroing, that would be great, though not
->> sure how (some __attribute__((zero)) which generates a type constructor
->> for such structure; it kind of departs from what the C language offers).
->
-> The compiler fundamentally can't. At the very least it would require
-> effective type tracking, which requires shadow memory and is even more
-> controversial than -fstrict-aliasing (because in a sense it's a
-> stronger version thereof).
+FWIW, the Yocto Project has working x32 support which it regularly
+builds, tests and has as a supported configuration. We did help
+identify and fix many of the places userspace didn't support it.
 
-It's possible to do it with the right types.  See _Bool on 32-bit Darwin
-PowerPC for an example, which is four bytes instead of the usual one.
+As with open source in general, its hard to know how many people are
+actually using it. I don't think there are huge numbers but we do
+occasionally get bug reports.
 
-Similarly, we could have integer types with trap representations.
-Whether it is a good idea is a different matter, but the amount of
-compiler magic required is actually limited.
+Cheers,
 
-Thanks,
-Florian
+Richard
