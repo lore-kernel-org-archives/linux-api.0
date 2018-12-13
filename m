@@ -1,32 +1,28 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
-Date: Wed, 12 Dec 2018 19:02:28 -0800
-Message-ID: <20181213030228.GM6830@bombadil.infradead.org>
-References: <20181212081712.32347-1-mic@digikod.net>
+From: Kevin Easton <kevin@guarana.org>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Thu, 13 Dec 2018 05:03:13 +0000
+Message-ID: <20181213050313.GA21201@ip-172-31-15-78>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+ <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181212081712.32347-1-mic@digikod.net>
+In-Reply-To: <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
-Cc: linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?iso-8859-1?Q?Tr=E9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>
+Cc: Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 12, 2018 at 09:17:07AM +0100, Mickaël Salaün wrote:
-> The goal of this patch series is to control script interpretation.  A
-> new O_MAYEXEC flag used by sys_open() is added to enable userland script
-> interpreter to delegate to the kernel (and thus the system security
-> policy) the permission to interpret scripts or other files containing
-> what can be seen as commands.
+On Tue, Dec 11, 2018 at 11:29:14AM +0100, John Paul Adrian Glaubitz wrote:
+...
+> I can't say anything about the syscall interface. However, what I do know
+> is that the weird combination of a 32-bit userland with a 64-bit kernel
+> interface is sometimes causing issues. For example, application code usually
+> expects things like time_t to be 32-bit on a 32-bit system. However, this
+> isn't the case for x32 which is why code fails to build.
 
-I don't have a problem with the concept, but we're running low on O_ bits.
-Does this have to be done before the process gets a file descriptor,
-or could we have a new syscall?  Since we're going to be changing the
-interpreters anyway, it doesn't seem like too much of an imposition to
-ask them to use:
+OpenBSD and NetBSD both have 64-bit time_t on 32-bit systems and have
+had for four or five years at this point.
 
-	int verify_for_exec(int fd)
-
-instead of adding an O_MAYEXEC.
+    - Kevin
