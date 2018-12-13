@@ -1,29 +1,38 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
-Date: Thu, 13 Dec 2018 12:26:56 +0100
-Message-ID: <874lbhoef3.fsf@oldenburg2.str.redhat.com>
-References: <20181212081712.32347-1-mic@digikod.net>
-        <20181213030228.GM6830@bombadil.infradead.org>
-        <1544699060.6703.11.camel@linux.ibm.com>
+From: Kevin Easton <kevin@guarana.org>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Thu, 13 Dec 2018 12:12:13 +0000
+Message-ID: <20181213121213.GA28833@ip-172-31-15-78>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+ <70bb54b2-8ed3-b5ee-c02d-6ef66c4f27eb@physik.fu-berlin.de>
+ <20181213050313.GA21201@ip-172-31-15-78>
+ <CAFLxGvy2sMW1nyMpxGN7xHPdUea713g89MdE3EcUNHJDCvZ3jA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1544699060.6703.11.camel@linux.ibm.com> (Mimi Zohar's message of
-        "Thu, 13 Dec 2018 06:04:20 -0500")
+Content-Disposition: inline
+In-Reply-To: <CAFLxGvy2sMW1nyMpxGN7xHPdUea713g89MdE3EcUNHJDCvZ3jA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>
-Cc: Matthew Wilcox <willy@infradead.org>, =?utf-8?Q?Micka=C3=ABl_Sala?= =?utf-8?Q?=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kerne
+To: Richard Weinberger <richard.weinberger@gmail.com>
+Cc: glaubitz@physik.fu-berlin.de, Andy Lutomirski <luto@kernel.org>, x86@kernel.org, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, fweimer@redhat.com, Mike Frysinger <vapier@gentoo.org>, "H.J. Lu" <hjl.tools@gmail.com>, dalias@libc.org, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-* Mimi Zohar:
+On Thu, Dec 13, 2018 at 10:05:14AM +0100, Richard Weinberger wrote:
+> On Thu, Dec 13, 2018 at 6:03 AM Kevin Easton <kevin@guarana.org> wrote:
+> >
+> > On Tue, Dec 11, 2018 at 11:29:14AM +0100, John Paul Adrian Glaubitz wrote:
+> > ...
+> > > I can't say anything about the syscall interface. However, what I do know
+> > > is that the weird combination of a 32-bit userland with a 64-bit kernel
+> > > interface is sometimes causing issues. For example, application code usually
+> > > expects things like time_t to be 32-bit on a 32-bit system. However, this
+> > > isn't the case for x32 which is why code fails to build.
+> >
+> > OpenBSD and NetBSD both have 64-bit time_t on 32-bit systems and have
+> > had for four or five years at this point.
+> 
+> They can also do flag-day changes and break existing applications, Linux not.
 
-> The indication needs to be set during file open, before the open
-> returns to the caller.  This is the point where ima_file_check()
-> verifies the file's signature.  On failure, access to the file is
-> denied.
+Sure, but the point is that most widely-used software has probably by
+now come in to contact with systems where time_t is bigger than long.
 
-Does this verification happen for open with O_PATH?
-
-Thanks,
-Florian
+    - Kevin
