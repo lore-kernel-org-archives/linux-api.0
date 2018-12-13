@@ -1,98 +1,51 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
-Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on
- sys_open()
-Date: Thu, 13 Dec 2018 15:23:05 +0100
-Message-ID: <22489759-076e-206a-e367-c13202f05eea@ssi.gouv.fr>
-References: <20181212081712.32347-1-mic@digikod.net>
- <20181212081712.32347-2-mic@digikod.net>
- <20181212144306.GA19945@quack2.suse.cz>
- <20181213094658.GA996@lithium.mbobrowski.org>
+From: Olof Johansson <olof@lixom.net>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Thu, 13 Dec 2018 22:38:52 +0800
+Message-ID: <CAOesGMgu1i3p7XMZuCEtj63T-ST_jh+BfaHy-K6LhgqNriKHAA@mail.gmail.com>
+References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
+ <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181213094658.GA996@lithium.mbobrowski.org>
-Content-Language: en-US
+In-Reply-To: <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Bobrowski <mbobrowski@mbobrowski.org>, Jan Kara <jack@suse.cz>
-Cc: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, sgrubb@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: luto@kernel.org, x86@kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, fweimer@redhat.com, Mike Frysinger <vapier@gentoo.org>, hjl.tools@gmail.com, dalias@libc.org, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Dec 11, 2018 at 9:40 AM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+>
+> On Mon, Dec 10, 2018 at 5:23 PM Andy Lutomirski <luto@kernel.org> wrote:
+> >
+> > I'm seriously considering sending a patch to remove x32 support from
+> > upstream Linux.  Here are some problems with it:
+>
+> I talked to Arnd (I think - we were talking about all the crazy ABI's,
+> but maybe it was with somebody else) about exactly this in Edinburgh.
+>
+> Apparently the main real use case is for extreme benchmarking. It's
+> the only use-case where the complexity of maintaining a whole
+> development environment and distro is worth it, it seems. Apparently a
+> number of Spec submissions have been done with the x32 model.
+>
+> I'm not opposed to trying to sunset the support, but let's see who complains..
 
-On 13/12/2018 10:47, Matthew Bobrowski wrote:
-> On Wed, Dec 12, 2018 at 03:43:06PM +0100, Jan Kara wrote:
->>> When the O_MAYEXEC flag is passed, sys_open() may be subject to
->>> additional restrictions depending on a security policy implemented by an
->>> LSM through the inode_permission hook.
->>>
->>> The underlying idea is to be able to restrict scripts interpretation
->>> according to a policy defined by the system administrator.  For this to
->>> be possible, script interpreters must use the O_MAYEXEC flag
->>> appropriately.  To be fully effective, these interpreters also need to
->>> handle the other ways to execute code (for which the kernel can't help):
->>> command line parameters (e.g., option -e for Perl), module loading
->>> (e.g., option -m for Python), stdin, file sourcing, environment
->>> variables, configuration files...  According to the threat model, it may
->>> be acceptable to allow some script interpreters (e.g. Bash) to interpret
->>> commands from stdin, may it be a TTY or a pipe, because it may not be
->>> enough to (directly) perform syscalls.
->>>
->>> A simple security policy implementation is available in a following
->>> patch for Yama.
->>>
->>> This is an updated subset of the patch initially written by Vincent
->>> Strubel for CLIP OS:
->>> https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
->>> This patch has been used for more than 10 years with customized script
->>> interpreters.  Some examples can be found here:
->>> https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
->>>
->>> Signed-off-by: Mickaël Salaün <mic@digikod.net>
->>> Signed-off-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
->>> Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
->>> Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
->>> Cc: Al Viro <viro@zeniv.linux.org.uk>
->>> Cc: Kees Cook <keescook@chromium.org>
->>> Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
->>
->> ...
->>
->>> diff --git a/fs/open.c b/fs/open.c
->>> index 0285ce7dbd51..75479b79a58f 100644
->>> --- a/fs/open.c
->>> +++ b/fs/open.c
->>> @@ -974,6 +974,10 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
->>>  	if (flags & O_APPEND)
->>>  		acc_mode |= MAY_APPEND;
->>>  
->>> +	/* Check execution permissions on open. */
->>> +	if (flags & O_MAYEXEC)
->>> +		acc_mode |= MAY_OPENEXEC;
->>> +
->>>  	op->acc_mode = acc_mode;
->>>  
->>>  	op->intent = flags & O_PATH ? 0 : LOOKUP_OPEN;
->>
->> I don't feel experienced enough in security to tell whether we want this
->> functionality or not. But if we do this, shouldn't we also set FMODE_EXEC
->> on the resulting struct file? That way also security_file_open() can be
->> used to arbitrate such executable opens and in particular
->> fanotify permission event FAN_OPEN_EXEC will get properly generated which I
->> guess is desirable (support for it is sitting in my tree waiting for the
->> merge window) - adding some audit people involved in FAN_OPEN_EXEC to
->> CC. Just an idea...
-> 
-> If I'm understanding this patch series correctly, without an enforced LSM
-> policy there's realistically no added benefit from a security perspective,
-> right?
+I'm just a single user. I do rely on it though, FWIW.
 
-That's correct. The kernel knows the semantic but the enforcement is
-delegated to an LSM and its policy.
+I hadn't finished my benchmarking in Edinburgh, but for my new machine
+that does kernel builds 24/7, I ended up going with x32 userspace (in
+a container).
 
-> Also, I'm in agreement with what Jan has mentioned in regards to setting
-> the __FMODE_EXEC flag when O_MAYEXEC has been specified. This is something that
-> would work quite nicely in conjunction with some of the new file access
-> notification events.
+Main reason is that it's a free ~10% improvement in runtime over
+64-bit. I.e. GCC-as-a-workload is quite a bit faster as x32,
+supposedly mostly due to smaller D cache footprints (I ran out of
+cycles to tinker with back and forth perf data collection and settled
+down on just running it).
 
-OK, I will add it in the next patch series (for the new FAN_OPEN_EXEC
-support).
+Running classic 32-bit (i386? i686? whatever it's called) is about
+half as good. I.e. even then I get a ~5% performance win. Less than
+x32, but still better than 64-bit userspace.
+
+
+-Olof
