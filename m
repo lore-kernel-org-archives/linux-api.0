@@ -1,53 +1,27 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [RFC PATCH v1 0/5] Add support for O_MAYEXEC
-Date: Thu, 13 Dec 2018 09:44:08 -0800
-Message-ID: <20181213174408.GS6830@bombadil.infradead.org>
-References: <20181212081712.32347-1-mic@digikod.net>
- <20181213030228.GM6830@bombadil.infradead.org>
- <374ea88c-edc5-f1a6-3637-748635e1e7df@ssi.gouv.fr>
- <20181213171310.GR6830@bombadil.infradead.org>
- <ba523381-1b98-a8bf-ee5b-94a71caee48c@ssi.gouv.fr>
+From: Joseph Myers <joseph@codesourcery.com>
+Subject: Re: Can we drop upstream Linux x32 support?
+Date: Thu, 13 Dec 2018 18:42:45 +0000
+Message-ID: <alpine.DEB.2.21.1812131833430.2735@digraph.polyomino.org.uk>
+References: <CAHk-=wi_Kp=3XmGDdzmadzFSPFvuL+aAJ6ZPAR=o4z=KwYT2vw@mail.gmail.com>        <Pine.BSM.4.64L.1812112150480.21176@herc.mirbsd.org>        <CALCETrWgpAX7FV23zHmid83SsgnwFMKD4a_-xSEgB6v0kJR5sA@mail.gmail.com>        <Pine.BSM.4.64L.1812112327500.21176@herc.mirbsd.org>
+        <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>        <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>        <CALCETrUYn=S=hmJ0tKdm2LoSgkWchY2_65sH7hJZp7wfS30giw@mail.gmail.com>        <20181212165237.GT23599@brightrain.aerifal.cx>
+        <CALCETrV6+YAazq7vY_aR=4kXc4ykXb1Se7hgvHeEVJtbZ91=Qg@mail.gmail.com>        <20181213124025.bczxzj6ez34joo6v@localhost>        <20181213155744.GU23599@brightrain.aerifal.cx> <87o99pl8es.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="US-ASCII"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <ba523381-1b98-a8bf-ee5b-94a71caee48c@ssi.gouv.fr>
+In-Reply-To: <87o99pl8es.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>
-Cc: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?iso-8859-1?Q?Tr=E9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Rich Felker <dalias@libc.org>, Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@kernel.org>, tg@mirbsd.de, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 13, 2018 at 06:36:15PM +0100, Mickaël Salaün wrote:
-> On 13/12/2018 18:13, Matthew Wilcox wrote:
-> > On Thu, Dec 13, 2018 at 04:17:29PM +0100, Mickaël Salaün wrote:
-> >> Adding a new syscall for this simple use case seems excessive. I think
-> > 
-> > We have somewhat less than 400 syscalls today.  We have 20 O_ bits defined.
-> > Obviously there's a lower practical limit on syscalls, but in principle
-> > we could have up to 2^32 syscalls, and there are only 12 O_ bits remaining.
-> > 
-> >> that the open/openat syscall familly are the right place to do an atomic
-> >> open and permission check, the same way the kernel does for other file
-> >> access. Moreover, it will be easier to patch upstream interpreters
-> >> without the burden of handling a (new) syscall that may not exist on the
-> >> running system, whereas unknown open flags are ignored.
-> > 
-> > Ah, but that's the problem.  The interpreter can see an -ENOSYS response
-> > and handle it appropriately.  If the flag is silently ignored, the
-> > interpreter has no idea whether it can do a racy check or whether to
-> > skip even trying to do the check.
-> 
-> Right, but the interpreter should interpret the script if the open with
-> O_MAYEXEC succeed (but not otherwise): it may be because the flag is
-> known by the kernel and the system policy allow this call, or because
-> the (old) kernel doesn't known about this flag (which is fine and needed
-> for backward compatibility). The script interpretation must not failed
-> if the kernel doesn't support O_MAYEXEC, it is then useless for the
-> interpreter to do any additional check.
+On Thu, 13 Dec 2018, Florian Weimer wrote:
 
-If that's the way interpreters want to work, then that's fine.  They
-can just call the verify() syscall and ignore the -ENOSYS.  Done.
+> Similarly, we could have integer types with trap representations.
 
-Or somebody who cares very, very deeply can change the interpreter to
-decline to run any scripts if the kernel returns -ENOSYS.
+C++2a will require two's complement representation for integer types, with 
+no trap representations (other than for bool, where only 0 and 1 are valid 
+representations).  It seems very plausible that C will follow.
+
+-- 
+Joseph S. Myers
+joseph@codesourcery.com
