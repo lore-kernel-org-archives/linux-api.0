@@ -1,58 +1,65 @@
-From: Richard Weinberger <richard@nod.at>
+From: Rich Felker <dalias@libc.org>
 Subject: Re: Can we drop upstream Linux x32 support?
-Date: Fri, 14 Dec 2018 16:17:59 +0100
-Message-ID: <3143388.E8mgBzaflP@blindfold>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com> <CAFLxGvy2sMW1nyMpxGN7xHPdUea713g89MdE3EcUNHJDCvZ3jA@mail.gmail.com> <d54d7ea7c558474583dfed0d26f05ccd@AcuMS.aculab.com>
+Date: Fri, 14 Dec 2018 11:13:19 -0500
+Message-ID: <20181214161319.GX23599@brightrain.aerifal.cx>
+References: <CALCETrXf0rmadycxmpGxd41qP9X+PAjyGHTwbGhKyp6oMKMRrA@mail.gmail.com>
+ <Pine.BSM.4.64L.1812120231410.21176@herc.mirbsd.org>
+ <CALCETrUYn=S=hmJ0tKdm2LoSgkWchY2_65sH7hJZp7wfS30giw@mail.gmail.com>
+ <20181212165237.GT23599@brightrain.aerifal.cx>
+ <CALCETrV6+YAazq7vY_aR=4kXc4ykXb1Se7hgvHeEVJtbZ91=Qg@mail.gmail.com>
+ <20181213124025.bczxzj6ez34joo6v@localhost>
+ <20181213155744.GU23599@brightrain.aerifal.cx>
+ <87o99pl8es.fsf@oldenburg2.str.redhat.com>
+ <20181213162828.GW23599@brightrain.aerifal.cx>
+ <875zvwibbp.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d54d7ea7c558474583dfed0d26f05ccd@AcuMS.aculab.com>
+Content-Disposition: inline
+In-Reply-To: <875zvwibbp.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Laight <David.Laight@aculab.com>
-Cc: 'Richard Weinberger' <richard.weinberger@gmail.com>, "kevin@guarana.org" <kevin@guarana.org>, "glaubitz@physik.fu-berlin.de" <glaubitz@physik.fu-berlin.de>, Andy Lutomirski <luto@kernel.org>, "x86@kernel.org" <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ABI/API" <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, "fweimer@redhat.com" <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H.J. Lu" <hjl.tools@gmail.com>, "dalias@libc.org" <dalias@libc.org>, "x32@buildd.debian.org" <x32@buildd.debian.org>, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@li>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Andy Lutomirski <luto@kernel.org>, tg@mirbsd.de, Linus Torvalds <torvalds@linux-foundation.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-Am Freitag, 14. Dezember 2018, 15:38:53 CET schrieb David Laight:
-> From: Richard Weinberger
-> > Sent: 13 December 2018 09:05
-> > On Thu, Dec 13, 2018 at 6:03 AM Kevin Easton <kevin@guarana.org> wrote:
-> > >
-> > > On Tue, Dec 11, 2018 at 11:29:14AM +0100, John Paul Adrian Glaubitz wrote:
-> > > ...
-> > > > I can't say anything about the syscall interface. However, what I do know
-> > > > is that the weird combination of a 32-bit userland with a 64-bit kernel
-> > > > interface is sometimes causing issues. For example, application code usually
-> > > > expects things like time_t to be 32-bit on a 32-bit system. However, this
-> > > > isn't the case for x32 which is why code fails to build.
-> > >
-> > > OpenBSD and NetBSD both have 64-bit time_t on 32-bit systems and have
-> > > had for four or five years at this point.
-> > 
-> > They can also do flag-day changes and break existing applications, Linux not.
+On Fri, Dec 14, 2018 at 12:42:34PM +0100, Florian Weimer wrote:
+> * Rich Felker:
 > 
-> Not true at all.
-> The binary compatibility in NetBSD is probably better than that in Linux
-> and goes back a long way.
+> > On Thu, Dec 13, 2018 at 05:04:59PM +0100, Florian Weimer wrote:
+> >> * Rich Felker:
+> >> 
+> >> >> If the compiler can handle the zeroing, that would be great, though not
+> >> >> sure how (some __attribute__((zero)) which generates a type constructor
+> >> >> for such structure; it kind of departs from what the C language offers).
+> >> >
+> >> > The compiler fundamentally can't. At the very least it would require
+> >> > effective type tracking, which requires shadow memory and is even more
+> >> > controversial than -fstrict-aliasing (because in a sense it's a
+> >> > stronger version thereof).
+> >> 
+> >> It's possible to do it with the right types.  See _Bool on 32-bit Darwin
+> >> PowerPC for an example, which is four bytes instead of the usual one.
+> >> 
+> >> Similarly, we could have integer types with trap representations.
+> >> Whether it is a good idea is a different matter, but the amount of
+> >> compiler magic required is actually limited.
+> >
+> > If you do this you just have LP64 with value range restricted to
+> > 32-bit.
 > 
-> For the time_t changes new system calls numbers were assigned where needed.
-> The system headers and libc were updated so that recompiled code would
-> use the new system calls.
-> 
-> The only real advantage that NetBSD has is that its libc (and standard
-> utilities) are released with the kernel making it much easier to get
-> applications to use the new features.
-> 
-> This was also done a very long time ago when file offsets were extended
-> to 64 bits.
-> 
-> Some of the system calls have quite a few 'compatibility' versions.
-> As well as the ones for emulations of other operating systems.
-> It has been possible to run copies of firefox compiled for Linux
-> under NetBSD.
+> You have to a type different from long int for the relevant struct
+> fields.  This type would have zero padding.
 
-I stand corrected, I was under the impression that NetBSD went the same
-path as OpenBSD did. Thanks for pointing this out.
+Just upthread (Message-ID: <20181212165237.GT23599@brightrain.aerifal.cx>)
+I explained why this does not work:
 
-Thanks,
-//richard
+>>> If on the other hand you tried to make just some pointers "wide
+>>> pointers", you'd also be completely breaking the specified API
+>>> contracts of standard interfaces. For example in struct iovec's
+>>> iov_base, &foo->iov_base is no longer a valid pointer to an object of
+>>> type void* that you can pass to interfaces expecting void**. Sloppy
+>>> misunderstandings like what you're making now are exactly why x32 is
+>>> already broken and buggy (&foo->tv_nsec already has wrong type for
+>>> struct timespec foo).
+
+Rich
