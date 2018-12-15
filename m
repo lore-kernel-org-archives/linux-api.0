@@ -1,29 +1,62 @@
 From: Martin Hostettler <textshell@uchuujin.de>
-Subject: vt: Improve CSI parsing
-Date: Sat, 15 Dec 2018 15:34:19 +0100
-Message-ID: <20181215143423.4556-1-textshell@uchuujin.de>
+Subject: [PATCH 3/4] vt: ignore csi sequences with intermediate characters.
+Date: Sat, 15 Dec 2018 15:34:22 +0100
+Message-ID: <20181215143423.4556-4-textshell@uchuujin.de>
+References: <20181215143423.4556-1-textshell@uchuujin.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20181215143423.4556-1-textshell@uchuujin.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.com>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Nicolas Pitre <nicolas.pitre@linaro.org>, Adam Borowski <kilobyte@angband.pl>, Egmont Koblinger <egmont@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Nicolas Pitre <nicolas.pitre@linaro.org>, Adam Borowski <kilobyte@angband.pl>, Egmont Koblinger <egmont@gmail.com>, Martin Hostettler <textshell@uchuujin.de>
 List-Id: linux-api@vger.kernel.org
 
-This patch series improves parsing of csi sequences to be more compliant
-with current practice.
+Various csi sequences contain intermediate characters between the
+parameters and the final character. Introduce a additional state that
+cleanly ignores these sequences.
 
-ECMA-64 defines the format of CSI sequences which allow more characters
-than what the vt parser currently accepts. More importantly many of
-these characters are used in sequences that more capable terminal
-terminal implementations use.
+This allows the vt to ignore these sequences used by more capable
+terminal implementations such as "request mode", etc.
 
-Adjust the parsing of CSI sequences to match xterm* by ignoring all
-unknown sequences of the form
-   (ESC [)|CSI [\x20-\x3f]*[\x40-\x7e]
+Signed-off-by: Martin Hostettler <textshell@uchuujin.de>
+---
+ drivers/tty/vt/vt.c | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
 
-This avoids printing unwanted characters when application send valid
-sequences not supported by linux either while querying the terminal for
-it's identity or when applications print sequences without knowing what
-terminal implementation they are connected to (e.g. when connected over
-serial lines, android's adb, simple tcp connects, etc)
-
-* and other common terminals
+diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
+index 448b4f6be7d1..24cd0e9c037b 100644
+--- a/drivers/tty/vt/vt.c
++++ b/drivers/tty/vt/vt.c
+@@ -2023,7 +2023,7 @@ static void restore_cur(struct vc_data *vc)
+ }
+ 
+ enum { ESnormal, ESesc, ESsquare, ESgetpars, ESfunckey,
+-	EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
++	EShash, ESsetG0, ESsetG1, ESpercent, EScsiignore, ESnonstd,
+ 	ESpalette, ESosc };
+ 
+ /* console_lock is held (except via vc_init()) */
+@@ -2259,6 +2259,10 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
+ 			vc->vc_par[vc->vc_npar] += c - '0';
+ 			return;
+ 		}
++		if (c >= 0x20 && c <= 0x2f) {
++			vc->vc_state = EScsiignore;
++			return;
++		}
+ 		vc->vc_state = ESnormal;
+ 		switch(c) {
+ 		case 'h':
+@@ -2421,6 +2425,11 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
+ 			return;
+ 		}
+ 		return;
++	case EScsiignore:
++		if (c >= 20 && c <= 0x3f)
++			return;
++		vc->vc_state = ESnormal;
++		return;
+ 	case ESpercent:
+ 		vc->vc_state = ESnormal;
+ 		switch (c) {
+-- 
+2.11.0
