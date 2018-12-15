@@ -1,7 +1,7 @@
 From: Martin Hostettler <textshell@uchuujin.de>
-Subject: [PATCH 2/4] vt: Implement parsing for >, =, < private sequences.
-Date: Sat, 15 Dec 2018 15:34:21 +0100
-Message-ID: <20181215143423.4556-3-textshell@uchuujin.de>
+Subject: [PATCH 4/4] vt: ignore sequences that contain ':' in parameters.
+Date: Sat, 15 Dec 2018 15:34:23 +0100
+Message-ID: <20181215143423.4556-5-textshell@uchuujin.de>
 References: <20181215143423.4556-1-textshell@uchuujin.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20181215143423.4556-1-textshell@uchuujin.de>
@@ -10,62 +10,44 @@ To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.com
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Nicolas Pitre <nicolas.pitre@linaro.org>, Adam Borowski <kilobyte@angband.pl>, Egmont Koblinger <egmont@gmail.com>, Martin Hostettler <textshell@uchuujin.de>
 List-Id: linux-api@vger.kernel.org
 
-Private sequences can start with '>', '=' and (in theory) '<'.
-Implement correct parsing for these. The newly parsable sequences are
-cleanly ignored as it is customary with terminal emulators.
+csi sequences can contain subparameters delimited by ':' characters. For
+now just ignore the whole sequence in this case. Such sequences are used by
+more capable terminal implementations with T.416 high color modes or
+extended underline rendition attributes.
 
-This allows the vt to ignore various sequences used by more capable
-terminal implementations such as "Secondary Device Attributes",
-"Tertiary Device Attributes" and various advanced configuration commands
-that don't have dedicated terminfo entries.
+Also ignore sequences with private use characters '?', '>', '='
+and '>' that are not at the initial position.
 
 Signed-off-by: Martin Hostettler <textshell@uchuujin.de>
 ---
- drivers/tty/vt/vt.c | 22 ++++++++++++++++++----
- 1 file changed, 18 insertions(+), 4 deletions(-)
+ drivers/tty/vt/vt.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
-index 75826a97b0c3..448b4f6be7d1 100644
+index 24cd0e9c037b..0aaa15c723fa 100644
 --- a/drivers/tty/vt/vt.c
 +++ b/drivers/tty/vt/vt.c
-@@ -2235,9 +2235,21 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
- 			vc->vc_state=ESfunckey;
+@@ -1629,9 +1629,9 @@ static void rgb_background(struct vc_data *vc, const struct rgb *c)
+ 
+ /*
+  * ITU T.416 Higher colour modes. They break the usual properties of SGR codes
+- * and thus need to be detected and ignored by hand. Strictly speaking, that
+- * standard also wants : rather than ; as separators, contrary to ECMA-48, but
+- * no one produces such codes and almost no one accepts them.
++ * and thus need to be detected and ignored by hand. That standard also
++ * wants : rather than ; as separators but sequences containing : are currently
++ * completely ignored by the parser.
+  *
+  * Subcommands 3 (CMY) and 4 (CMYK) are so insane there's no point in
+  * supporting them.
+@@ -2259,7 +2259,7 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
+ 			vc->vc_par[vc->vc_npar] += c - '0';
  			return;
  		}
--		vc->vc_priv = (c == '?') ? EPdec : EPecma;
--		if (vc->vc_priv != EPecma)
-+		switch (c) {
-+		case '?':
-+			vc->vc_priv = EPdec;
-+			return;
-+		case '>':
-+			vc->vc_priv = EPgt;
-+			return;
-+		case '=':
-+			vc->vc_priv = EPeq;
+-		if (c >= 0x20 && c <= 0x2f) {
++		if (c >= 0x20 && c <= 0x3f) { /* 0x2x, 0x3a and 0x3c - 0x3f */
+ 			vc->vc_state = EScsiignore;
  			return;
-+		case '<':
-+			vc->vc_priv = EPlt;
-+			return;
-+		}
-+		vc->vc_priv = EPecma;
- 	case ESgetpars:
- 		if (c == ';' && vc->vc_npar < NPAR - 1) {
- 			vc->vc_npar++;
-@@ -2250,10 +2262,12 @@ static void do_con_trol(struct tty_struct *tty, struct vc_data *vc, int c)
- 		vc->vc_state = ESnormal;
- 		switch(c) {
- 		case 'h':
--			set_mode(vc, 1);
-+			if (vc->vc_priv <= EPdec)
-+				set_mode(vc, 1);
- 			return;
- 		case 'l':
--			set_mode(vc, 0);
-+			if (vc->vc_priv <= EPdec)
-+				set_mode(vc, 0);
- 			return;
- 		case 'c':
- 			if (vc->vc_priv == EPdec) {
+ 		}
 -- 
 2.11.0
