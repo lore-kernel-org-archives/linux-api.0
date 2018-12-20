@@ -1,136 +1,74 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [GIT PULL] y2038: more syscalls and cleanups
-Date: Fri, 21 Dec 2018 00:09:43 +0100
-Message-ID: <CAK8P3a1t0RiYcHtpwk3jwma0SvsS3NE5PAvTbb2zR4n+wkh69A@mail.gmail.com>
+Subject: [GIT PULL] asm-generic: syscall table script for arch/sh
+Date: Fri, 21 Dec 2018 00:28:51 +0100
+Message-ID: <CAK8P3a3iAF3J8X2yj7JaCaTM_BcZ--2LZj32kkDf55mBn_cQ5g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, y2038 Mailman List <y2038@lists.linaro.org>, Deepa Dinamani <deepa.kernel@gmail.com>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Rich Felker <dalias@libc.org>, Firoz Khan <firoz.khan@linaro.org>, Linux API <linux-api@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>, Yoshinori Sato <ysato@users.sourceforge.jp>
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus and Thomas,
+The following changes since commit 2e6e902d185027f8e3cb8b7305238f7e35d6a436:
 
-I realized that the merge window is now imminent, but I had not sent a
-pull request to Thomas for the current y2038 stuff. These patches have
-been around for a while though, and were in linux-next through my tree.
-
-I got one bug report on Monday and incorporated a simple fix, which
-changed the commit date for the second half of the series, in case you
-are wondering.
-
-Thomas, is it ok for you to just provide an Ack for this branch and
-have Linus merge it directly?
-
-      Arnd
-
-The following changes since commit 651022382c7f8da46cb4872a545ee1da6d097d2a:
-
-  Linux 4.20-rc1 (2018-11-04 15:37:52 -0800)
+  Linux 4.20-rc4 (2018-11-25 14:19:31 -0800)
 
 are available in the Git repository at:
 
-  https://git.kernel.org:/pub/scm/linux/kernel/git/arnd/playground.git
-tags/y2038-for-4.21
+  git://git.kernel.org/pub/scm/linux/kernel/git/arnd/asm-generic.git
+tags/asm-generic-4.21
 
-for you to fetch changes up to e4b92b108c6cd6b311e4b6e85d6a87a34599a6e3:
+for you to fetch changes up to 2b3c5a99d5f314960e00950c1782eac9361de30f:
 
-  timekeeping: remove obsolete time accessors (2018-12-18 16:13:05 +0100)
-
-----------------------------------------------------------------
-y2038: more syscalls and cleanups
-
-This concludes the main part of the system call rework for 64-bit time_t,
-which has spread over most of year 2018, the last six system calls being
-
- - ppoll
- - pselect6
- - io_pgetevents
- - recvmmsg
- - futex
- - rt_sigtimedwait
-
-As before, nothing changes for 64-bit architectures, while 32-bit
-architectures gain another entry point that differs only in the layout
-of the timespec structure. Hopefully in the next release we can wire up
-all 22 of those system calls on all 32-bit architectures, which gives
-us a baseline version for glibc to start using them.
-
-This does not include the clock_adjtime, getrusage/waitid, and
-getitimer/setitimer system calls. I still plan to have new versions
-of those as well, but they are not required for correct operation of
-the C library since they can be emulated using the old 32-bit time_t
-based system calls.
-
-Aside from the system calls, there are also a few cleanups here,
-removing old kernel internal interfaces that have become unused after
-all references got removed. The arch/sh cleanups are part of this,
-there were posted several times over the past year without a reaction
-from the maintainers, while the corresponding changes made it into all
-other architectures.
+  sh: generate uapi header and syscall table header files (2018-12-19
+17:54:40 +0100)
 
 ----------------------------------------------------------------
-Arnd Bergmann (13):
-      y2038: futex: Move compat implementation into futex.c
-      y2038: futex: Add support for __kernel_timespec
-      y2038: socket: Add compat_sys_recvmmsg_time64
-      y2038: signal: Add sys_rt_sigtimedwait_time32
-      y2038: signal: Add compat_sys_rt_sigtimedwait_time64
-      sh: dreamcast: rtc: push down rtc class ops into driver
-      sh: sh03: rtc: push down rtc class ops into driver
-      sh: remove unused rtc_sh_get/set_time infrastructure
-      sh: remove board_time_init() callback
-      timekeeping: remove unused {read,update}_persistent_clock
-      timekeeping: remove timespec_add/timespec_del
-      vfs: replace current_kernel_time64 with ktime equivalent
-      timekeeping: remove obsolete time accessors
+asm-generic: syscall table script for arch/sh
 
-Deepa Dinamani (5):
-      signal: Add set_user_sigmask()
-      signal: Add restore_user_sigmask()
-      ppoll: use __kernel_timespec
-      pselect6: use __kernel_timespec
-      io_pgetevents: use __kernel_timespec
+I worked with Firoz Khan to change all architectures to have their system
+call tables (syscall.S and asm/unistd.h) generated by a script from a more
+readable input file the same way that we already had on x86, s390 and arm.
 
- Documentation/sh/new-machine.txt              |   8 --
- arch/sh/boards/mach-dreamcast/Makefile        |   4 +-
- arch/sh/boards/mach-dreamcast/rtc.c           |  45 +++++++---
- arch/sh/boards/mach-dreamcast/setup.c         |   1 -
- arch/sh/boards/mach-sh03/Makefile             |   3 +-
- arch/sh/boards/mach-sh03/rtc.c                |  51 ++++++-----
- arch/sh/boards/mach-sh03/setup.c              |   9 --
- arch/sh/boards/of-generic.c                   |   8 --
- arch/sh/configs/dreamcast_defconfig           |   2 +
- arch/sh/configs/sh03_defconfig                |   2 +
- arch/sh/include/asm/rtc.h                     |   3 -
- arch/sh/include/mach-dreamcast/mach/sysasic.h |   1 -
- arch/sh/kernel/time.c                         |  74 +---------------
- fs/aio.c                                      | 134
-++++++++++++++++++++---------
- fs/eventpoll.c                                |  52 ++----------
- fs/inode.c                                    |   4 +-
- fs/select.c                                   | 360
-+++++++++++++++++++++++++++++++++++++++++++++---------------------------------
- include/linux/compat.h                        |  26 ++++++
- include/linux/futex.h                         |   8 --
- include/linux/signal.h                        |   4 +
- include/linux/socket.h                        |   9 +-
- include/linux/syscalls.h                      |  29 +++++--
- include/linux/time32.h                        |  25 ------
- include/linux/timekeeping.h                   |  14 ---
- include/linux/timekeeping32.h                 |  15 ----
- kernel/Makefile                               |   3 -
- kernel/futex.c                                | 207
-+++++++++++++++++++++++++++++++++++++++++++--
- kernel/futex_compat.c                         | 202
---------------------------------------------
- kernel/signal.c                               | 143
-+++++++++++++++++++++++++++++++
- kernel/sys_ni.c                               |   2 +
- kernel/time/ntp.c                             |  10 +--
- kernel/time/time.c                            |  36 --------
- kernel/time/timekeeping.c                     |  12 +--
- net/compat.c                                  |  34 +++-----
- net/socket.c                                  |  62 ++++++++++----
- 35 files changed, 847 insertions(+), 755 deletions(-)
- delete mode 100644 kernel/futex_compat.c
+I offered to take those conversions through the asm-generic tree that
+did not get picked up by the architecture maintainers, and fortunately
+all but one have now been accepted into arch maintainer trees, so this
+branch only contains the conversion for arch/sh/, with permission from
+Rich.
+
+The conversion does not include the old 64-bit sh5 architecture, which
+has never shipped and not even compiled in a long time. The table
+in include/uapi/asm/unistd.h is also not included here, as Firoz is
+still working on that one. It will have to wait for the next following
+merge window, hopefully together with the addition of the 64-bit
+time_t system calls for the y2038 work that led to the system call
+table rework.
+
+Acked-by: Rich Felker <dalias@libc.org>
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+
+----------------------------------------------------------------
+Firoz Khan (3):
+      sh: add __NR_syscalls along with NR_syscalls
+      sh: add system call table generation support
+      sh: generate uapi header and syscall table header files
+
+ arch/sh/Makefile                      |   3 +
+ arch/sh/include/asm/Kbuild            |   1 +
+ arch/sh/include/asm/unistd.h          |   2 +
+ arch/sh/include/uapi/asm/Kbuild       |   1 +
+ arch/sh/include/uapi/asm/unistd_32.h  |   4 +-
+ arch/sh/include/uapi/asm/unistd_64.h  |   4 +-
+ arch/sh/kernel/syscalls/Makefile      |  38 +++++++++
+ arch/sh/kernel/syscalls/syscall.tbl   | 392
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ arch/sh/kernel/syscalls/syscallhdr.sh |  36 ++++++++
+ arch/sh/kernel/syscalls/syscalltbl.sh |  32 +++++++
+ arch/sh/kernel/syscalls_32.S          | 387
++-----------------------------------------------------------------------------------
+ 11 files changed, 514 insertions(+), 386 deletions(-)
+ create mode 100644 arch/sh/kernel/syscalls/Makefile
+ create mode 100644 arch/sh/kernel/syscalls/syscall.tbl
+ create mode 100644 arch/sh/kernel/syscalls/syscallhdr.sh
+ create mode 100644 arch/sh/kernel/syscalls/syscalltbl.sh
