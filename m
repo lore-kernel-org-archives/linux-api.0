@@ -1,46 +1,79 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: d_off field in struct dirent and 32-on-64 emulation
-Date: Fri, 28 Dec 2018 08:38:17 +0100
-Message-ID: <87bm56w17a.fsf@mid.deneb.enyo.de>
-References: <87bm56vqg4.fsf@mid.deneb.enyo.de>
-        <20181228022338.GA27992@altlinux.org>
+From: Peter Maydell <peter.maydell@linaro.org>
+Subject: Re: [Qemu-devel] d_off field in struct dirent and 32-on-64 emulation
+Date: Fri, 28 Dec 2018 11:18:18 +0000
+Message-ID: <CAFEAcA9W+JK7_TrtTnL1P2ES1knNPJX9wcUvhfLwxLq9augq1w@mail.gmail.com>
+References: <87bm56vqg4.fsf@mid.deneb.enyo.de> <CAFEAcA92m4vhzjJ+B=mP_o6Wfhx1XSKo3uWxah3osh=u5UXFuw@mail.gmail.com>
+ <9C6A7D45-CF53-4C61-B5DD-12CA0D419972@dilger.ca>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181228022338.GA27992@altlinux.org> (Dmitry V. Levin's message
-        of "Fri, 28 Dec 2018 05:23:39 +0300")
+In-Reply-To: <9C6A7D45-CF53-4C61-B5DD-12CA0D419972@dilger.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, v9fs-developer@lists.sourceforge.net, libc-alpha@sourceware.org, qemu-devel@nongnu.org, ericvh@gmail.com, rminnich@sandia.gov, lucho@ionkov.net, hpa@zytor.com, arnd@arndb.de
+To: Andreas Dilger <adilger@dilger.ca>
+Cc: Florian Weimer <fw@deneb.enyo.de>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, lucho@ionkov.net, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, ericvh@gmail.com, hpa@zytor.com, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, QEMU Developers <qemu-devel@nongnu.org>, rminnich@sandia.gov, v9fs-developer@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-* Dmitry V. Levin:
-
-> On Thu, Dec 27, 2018 at 06:18:19PM +0100, Florian Weimer wrote:
->> We have a bit of an interesting problem with respect to the d_off
->> field in struct dirent.
->> 
->> When running a 64-bit kernel on certain file systems, notably ext4,
->> this field uses the full 63 bits even for small directories (strace -v
->> output, wrapped here for readability):
->> 
->> getdents(3, [
->>   {d_ino=1494304, d_off=3901177228673045825, d_reclen=40,
->> d_name="authorized_keys", d_type=DT_REG},
->>   {d_ino=1494277, d_off=7491915799041650922, d_reclen=24,
->> d_name=".", d_type=DT_DIR},
->>   {d_ino=1314655, d_off=9223372036854775807, d_reclen=24,
->> d_name="..", d_type=DT_DIR}
->> ], 32768) = 88
->> 
->> When running in 32-bit compat mode, this value is somehow truncated to
->> 31 bits, for both the getdents and the getdents64 (!) system call (at
->> least on i386).
+On Fri, 28 Dec 2018 at 00:23, Andreas Dilger <adilger@dilger.ca> wrote:
+> On Dec 27, 2018, at 10:41 AM, Peter Maydell <peter.maydell@linaro.org> wrote:
+> > As you note, this causes breakage for userspace programs which
+> > need to implement an API/ABI with 32-bit offset but which only
+> > have access to the kernel's 64-bit offset API/ABI.
 >
-> Why getdents64 system call is affected by this truncation,
-> isn't it a kernel bug that has to be fixed in the kernel instead?
+> This is (IMHO) a bit of an oxymoron, isn't it?  Applications using
+> the 64-bit API, but storing the value in a 32-bit field?
 
-It's required because POSIX specifies that telldir and seekdir use
-long int (and not off_t) as the seek offset.  If the kernel does not
-truncate while keeping a useful value, these functions would turn
-unusable.
+I didn't say "which choose to store the value in a 32-bit field",
+I said "which have to implement an API/ABI which has 32-bit fields".
+In QEMU's case, we use the host kernel's ABI, which has 64-bit
+offset fields. We implement a syscall ABI for the guest binary
+we are running under emulation, which may have 32-bit offset fields
+(for instance if we are running a 32-bit Arm binary.) Both of
+these ABIs are fixed -- QEMU doesn't have a choice here, it
+just has to make the best effort it can with what the host kernel
+provides it, to provide the semantics the guest binary needs.
+My suggestion in this thread is that the host kernel provides
+a wider range of facilities so that QEMU can do the job it's
+trying to do.
+
+>  The same
+> problem would exist for filesystems with 64-bit inodes or 64-bit
+> file offsets trying to store these values in 32-bit variables.
+> It might work most of the time, but it can also break randomly.
+
+In general inodes and offsets start from 0 and work up --
+so almost all of the time they don't actually overflow.
+The problem with ext4 directory hash "offsets" is that they
+overflow all the time and immediately, so instead of "works
+unless you have a weird edge case" like all the other filesystems,
+it's "never works".
+
+> > I think the best fix for this would be for the kernel to either
+> > (a) consistently use a 32-bit hash or (b) to provide an API
+> > so that userspace can use the FMODE_32BITHASH flag the way
+> > that kernel-internal users already can.
+>
+> It would be relatively straight forward to add a "32bitapi" mount
+> option to return a 32-bit directory hash to userspace for operations
+> on that mountpoint (ext4 doesn't have 64-bit inode numbers yet).
+> However, I can't think of an easy way to do this on a per-process
+> basis without just having it call the 32-bit API directly.
+
+The problem is that there is no 32-bit API in some cases
+(unless I have misunderstood the kernel code) -- not all
+host architectures implement compat syscalls or allow them
+to be called from 64-bit processes or implement all the older
+syscall variants that had smaller offets. If there was a guaranteed
+"this syscall always exists and always gives me 32-bit offsets"
+we could use it.
+
+> For ext4 at least, you could just shift the high 32-bit part of
+> the 64-bit hash down into a 32-bit value in telldir(), and
+> shift it back up when seekdir() is called.
+
+Yes, that has been suggested, but it seemed a bit dubious
+to bake in knowledge of ext4's internal implementation details.
+Can we rely on this as an ABI promise that will always work
+for all versions of all file systems going forwards?
+
+thanks
+-- PMM
