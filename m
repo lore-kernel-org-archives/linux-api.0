@@ -1,60 +1,58 @@
-From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: d_off field in struct dirent and 32-on-64 emulation
-Date: Fri, 28 Dec 2018 10:21:03 -0200
-Message-ID: <4ee7419d-6537-8683-bf40-175cbdc6b484@linaro.org>
+Date: Fri, 28 Dec 2018 07:26:00 -0800
+Message-ID: <CALCETrUBfVK1yUtuVn-pGzgrq8GQ7_E0sjPBXPaSiPU+Q-C_aA@mail.gmail.com>
 References: <87bm56vqg4.fsf@mid.deneb.enyo.de>
- <957967d7-5717-8ada-fb30-dfdf19898b6b@linaro.org>
- <87pntmu9iw.fsf@mid.deneb.enyo.de>
- <ae0530c9-5c46-5560-9734-1eacaf173b8d@linaro.org>
- <87k1jtvp8u.fsf@mid.deneb.enyo.de> <87ftuhvp08.fsf@mid.deneb.enyo.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87ftuhvp08.fsf@mid.deneb.enyo.de>
-Content-Language: en-GB
+In-Reply-To: <87bm56vqg4.fsf@mid.deneb.enyo.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Florian Weimer <fw@deneb.enyo.de>
-Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, v9fs-developer@lists.sourceforge.net, libc-alpha@sourceware.org, qemu-devel@nongnu.org, ericvh@gmail.com, lucho@ionkov.net, hpa@zytor.com, arnd@arndb.de
+Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-ext4@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, V9FS Developers <v9fs-developer@lists.sourceforge.net>, libc-alpha <libc-alpha@sourceware.org>, "qemu-devel@nongnu.org Developers" <qemu-devel@nongnu.org>, Eric Van Hensbergen <ericvh@gmail.com>, Ron Minnich <rminnich@sandia.gov>, Latchesar Ionkov <lucho@ionkov.net>, "H. Peter Anvin" <hpa@zytor.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
+[sending again, slightly edited, due to email client issues]
+
+On Thu, Dec 27, 2018 at 9:25 AM Florian Weimer <fw@deneb.enyo.de> wrote:
+>
+> We have a bit of an interesting problem with respect to the d_off
+> field in struct dirent.
+>
+> When running a 64-bit kernel on certain file systems, notably ext4,
+> this field uses the full 63 bits even for small directories (strace -v
+> output, wrapped here for readability):
+>
+> getdents(3, [
+>   {d_ino=3D1494304, d_off=3D3901177228673045825, d_reclen=3D40, d_name=3D=
+"authorized_keys", d_type=3DDT_REG},
+>   {d_ino=3D1494277, d_off=3D7491915799041650922, d_reclen=3D24, d_name=3D=
+".", d_type=3DDT_DIR},
+>   {d_ino=3D1314655, d_off=3D9223372036854775807, d_reclen=3D24, d_name=3D=
+"..", d_type=3DDT_DIR}
+> ], 32768) =3D 88
+>
+> When running in 32-bit compat mode, this value is somehow truncated to
+> 31 bits, for both the getdents and the getdents64 (!) system call (at
+> least on i386).
+>
+
+...
+
+>
+> However, both qemu-user and the 9p file system can run in such a way
+> that the kernel is entered from a 64-bit process, but the actual usage
+> is from a 32-bit process:
 
 
-On 28/12/2018 10:01, Florian Weimer wrote:
-> * Florian Weimer:
-> 
->> * Adhemerval Zanella:
->>
->>> On 27/12/2018 16:09, Florian Weimer wrote:
->>>> * Adhemerval Zanella:
->>>>
->>>>> Also for glibc standpoint, although reverting it back to use getdents 
->>>>> syscall for non-LFS mode might fix this issue for architectures that
->>>>> provides non-LFS getdents syscall it won't be a fix for architectures 
->>>>> that still provides off_t different than off64_t *and* only provides 
->>>>> getdents64 syscall.
->>>>>
->>>>> Currently we only have nios2 and csky (unfortunately).  But since generic 
->>>>> definition for off_t and off64_t still assumes non-LFS support, all new
->>>>> 32-bits ports potentially might carry the issue.
->>>>
->>>> For csky, we could still change the type of the non-standard d_off
->>>> field to long long int.  This way, only telldir would have to fail
->>>> when truncation is necessary, as mentioned below:
->>>
->>> I think it makes no sense to continue making non-LFS as default for
->>> newer 32 bits ports, the support will be emulated with LFS syscalls.
->>
->> Sorry, I don't see how this matters.  seekdir and telldir are NOT
->> affected by LFS.
-> 
-> Ah, right.  If struct dirent is 64-bit only, then the d_off member
-> will be 64 bits as well.  But it is unclear whether you can use that
-> with lseek (probably yes, in its 64-bit variant), and it's unlikely
-> it's going to work with seekdir because of the POSIX-required long int
-> type.
-> 
+I imagine that at least some of the problems you're seeing are due to this =
+bug:
 
-I was referring to all other API that uses off_t as well (pread for
-instance), where new ports will have non-LFS variants that will call
-only LFS variants.
+https://lkml.org/lkml/2018/10/18/859
+
+Presumably the right fix involves modifying the relevant VFS file
+operations to indicate the relevant ABI to the implementations.  I
+would guess that 9p is triggering the =E2=80=9Cnot really in the syscall yo=
+u
+think you=E2=80=99re in=E2=80=9D issue.
