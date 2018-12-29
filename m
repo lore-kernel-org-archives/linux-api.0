@@ -1,77 +1,56 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
-Date: Sat, 29 Dec 2018 16:41:27 +0100
-Message-ID: <a1003659-3c16-5921-b221-befd078dfa42@vivier.eu>
-References: <20181010161430.11633-1-laurent@vivier.eu>
- <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
- <1541041159.4632.6.camel@HansenPartnership.com>
- <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
- <fcebfa0c-b389-5c4d-19b8-2f08b487ec25@vivier.eu>
- <87zhusq3x7.fsf@xmission.com>
- <36933e07-d7b3-49be-4ad9-2028fa1977f7@vivier.eu>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [Qemu-devel] d_off field in struct dirent and 32-on-64 emulation
+Date: Sat, 29 Dec 2018 08:49:19 -0800
+Message-ID: <CALCETrUJn4cV+o3scP1EzYS=JA--5KUXvjuxZDbsnhXra1vrwA@mail.gmail.com>
+References: <87bm56vqg4.fsf@mid.deneb.enyo.de> <CAFEAcA92m4vhzjJ+B=mP_o6Wfhx1XSKo3uWxah3osh=u5UXFuw@mail.gmail.com>
+ <9C6A7D45-CF53-4C61-B5DD-12CA0D419972@dilger.ca> <CAFEAcA9W+JK7_TrtTnL1P2ES1knNPJX9wcUvhfLwxLq9augq1w@mail.gmail.com>
+ <1EF1B31A-83D8-4642-BEBF-F56E45485223@dilger.ca> <CAFEAcA8Yq=CEyAUer1TcaSzuzcdNi3OUi4c67B6e+OkhmcKvbg@mail.gmail.com>
+ <20181229015453.GA6310@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <36933e07-d7b3-49be-4ad9-2028fa1977f7@vivier.eu>
-Content-Language: en-US
+In-Reply-To: <20181229015453.GA6310@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Peter Maydell <peter.maydell@linaro.org>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Latchesar Ionkov <lucho@ionkov.net>, libc-alpha <libc-alpha@sourceware.org>, Arnd Bergmann <arnd@arndb.de>, Eric Van Hensbergen <ericvh@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, QEMU Developers <qemu-devel@nongnu.org>, Ron Minnich <rminnich@sandia.gov>, V9FS Developers <v9fs-developer@lists.sourceforge.net>
 List-Id: linux-api@vger.kernel.org
 
-Ping
-
-Thanks,
-Laurent
-
-Le 29/11/2018 à 14:05, Laurent Vivier a écrit :
-> Le 01/11/2018 à 15:16, Eric W. Biederman a écrit :
->> Laurent Vivier <laurent@vivier.eu> writes:
->>
->>> On 01/11/2018 04:51, Jann Horn wrote:
->>>> On Thu, Nov 1, 2018 at 3:59 AM James Bottomley
->>>> <James.Bottomley@hansenpartnership.com> wrote:
->>>>>
->>>>> On Tue, 2018-10-16 at 11:52 +0200, Laurent Vivier wrote:
->>>>>> Hi,
->>>>>>
->>>>>> Any comment on this last version?
->>>>>>
->>>>>> Any chance to be merged?
->>>>>
->>>>> I've got a use case for this:  I went to one of the Graphene talks in
->>>>> Edinburgh and it struck me that we seem to keep reinventing the type of
->>>>> sandboxing that qemu-user already does.  However if you want to do an
->>>>> x86 on x86 sandbox, you can't currently use the binfmt_misc mechanism
->>>>> because that has you running *every* binary on the system emulated.
->>>>> Doing it per user namespace fixes this problem and allows us to at
->>>>> least cut down on all the pointless duplication.
->>>>
->>>> Waaaaaait. What? qemu-user does not do "sandboxing". qemu-user makes
->>>> your code slower and *LESS* secure. As far as I know, qemu-user is
->>>> only intended for purposes like development and testing.
->>>>
+> On Dec 28, 2018, at 6:54 PM, Matthew Wilcox <willy@infradead.org> wrote:
+>
+>> On Sat, Dec 29, 2018 at 12:12:27AM +0000, Peter Maydell wrote:
+>> On Fri, 28 Dec 2018 at 23:16, Andreas Dilger <adilger@dilger.ca> wrot
+>>> On Dec 28, 2018, at 4:18 AM, Peter Maydell <peter.maydell@linaro.org> w=
+rote:
+>>>> The problem is that there is no 32-bit API in some cases
+>>>> (unless I have misunderstood the kernel code) -- not all
+>>>> host architectures implement compat syscalls or allow them
+>>>> to be called from 64-bit processes or implement all the older
+>>>> syscall variants that had smaller offets. If there was a guaranteed
+>>>> "this syscall always exists and always gives me 32-bit offsets"
+>>>> we could use it.
 >>>
->>> I think the idea here is not to run qemu, but to use an interpreter
->>> (something like gVisor) into a container to control the binaries
->>> execution inside the container without using this interpreter on the
->>> host itself (container and host shares the same binfmt_misc
->>> magic/mask).
+>>> The "32bitapi" mount option would use 32-bit hash for seekdir
+>>> and telldir, regardless of what kernel API was used.  That would
+>>> just set the FMODE_32BITHASH flag in the file->f_mode for all files.
 >>
->> Please remind me of this patchset after the merge window is over, and if
->> there are no issues I will take it via my user namespace branch.
->>
->> Last I looked I had a concern that some of the permission check issues
->> were being papered over by using override cred instead of fixing the
->> deaper code.  Sometimes they are necessary but seeing work-arounds
->> instead of fixes for problems tends to be a maintenance issue, possibly
->> with security consequences.  Best is if the everyone agrees on how all
->> of the interfaces work so their are no surprises.
-> 
-> I don't know where we are in the merge window, but is there something I
-> can do to have this merged?
-> 
-> Thanks,
-> Laurent
-> 
+>> A mount option wouldn't be much use to QEMU -- we can't tell
+>> our users how to mount their filesystems, which they're
+>> often doing lots of other things with besides running QEMU.
+>> (Otherwise we could just tell them "don't use ext4", which
+>> would also solve the problem :-)) We need something we can
+>> use at the individual-syscall level.
+>
+> Could you use a prctl to set whether you were running in 32 or 64 bit
+> mode?  Or do you change which kind of task you're emulating too often
+> to make this a good idea?
+
+
+How would this work?  We already have the separate
+COMPAT_DEFINE_SYSCALL entries *and* in_compat_syscall(). Now we=E2=80=99d h=
+ave
+a third degree of freedom.
+
+Either the arches people care about should add reasonable ways to
+issue 32-bit syscalls from 64-bit mode or there should be an explicit
+way to ask for the 32-bit directory offsets.
