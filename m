@@ -1,31 +1,45 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [GIT PULL] y2038: more syscalls and cleanups
-Date: Sat, 29 Dec 2018 01:30:02 +0000
-Message-ID: <20181229013002.17208.82563.pr-tracker-bot@pdx-korg-gitolite-1.ci.codeaurora.org>
-References: <CAK8P3a1t0RiYcHtpwk3jwma0SvsS3NE5PAvTbb2zR4n+wkh69A@mail.gmail.com>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [Qemu-devel] d_off field in struct dirent and 32-on-64 emulation
+Date: Fri, 28 Dec 2018 17:54:54 -0800
+Message-ID: <20181229015453.GA6310@bombadil.infradead.org>
+References: <87bm56vqg4.fsf@mid.deneb.enyo.de>
+ <CAFEAcA92m4vhzjJ+B=mP_o6Wfhx1XSKo3uWxah3osh=u5UXFuw@mail.gmail.com>
+ <9C6A7D45-CF53-4C61-B5DD-12CA0D419972@dilger.ca>
+ <CAFEAcA9W+JK7_TrtTnL1P2ES1knNPJX9wcUvhfLwxLq9augq1w@mail.gmail.com>
+ <1EF1B31A-83D8-4642-BEBF-F56E45485223@dilger.ca>
+ <CAFEAcA8Yq=CEyAUer1TcaSzuzcdNi3OUi4c67B6e+OkhmcKvbg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <CAK8P3a1t0RiYcHtpwk3jwma0SvsS3NE5PAvTbb2zR4n+wkh69A@mail.gmail.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Linux-sh list <linux-sh@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Linus Torvalds <torvalds@linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAFEAcA8Yq=CEyAUer1TcaSzuzcdNi3OUi4c67B6e+OkhmcKvbg@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Maydell <peter.maydell@linaro.org>
+Cc: Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Latchesar Ionkov <lucho@ionkov.net>, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, Eric Van Hensbergen <ericvh@gmail.com>, hpa@zytor.com, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, QEMU Developers <qemu-devel@nongnu.org>, rminnich@sandia.gov, v9fs-developer@lists.sourceforge.net
 List-Id: linux-api@vger.kernel.org
 
-VGhlIHB1bGwgcmVxdWVzdCB5b3Ugc2VudCBvbiBGcmksIDIxIERlYyAyMDE4IDAwOjA5OjQzICsw
-MTAwOgoKPiAodW5hYmxlIHRvIHBhcnNlIHRoZSBnaXQgcmVtb3RlKQoKaGFzIGJlZW4gbWVyZ2Vk
-IGludG8gdG9ydmFsZHMvbGludXguZ2l0OgpodHRwczovL2dpdC5rZXJuZWwub3JnL3RvcnZhbGRz
-L2MvYjEyYTkxMjRlZWI3MWQ3NjZhM2UzZWI1OTRlYmJiM2ZlZmM2NjkwMgoKVGhhbmsgeW91IQoK
-LS0gCkRlZXQtZG9vdC1kb3QsIEkgYW0gYSBib3QuCmh0dHBzOi8va29yZy53aWtpLmtlcm5lbC5v
-cmcvdXNlcmRvYy9wcnRyYWNrZXIKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0
-cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8veTIwMzgK
+On Sat, Dec 29, 2018 at 12:12:27AM +0000, Peter Maydell wrote:
+> On Fri, 28 Dec 2018 at 23:16, Andreas Dilger <adilger@dilger.ca> wrot
+> > On Dec 28, 2018, at 4:18 AM, Peter Maydell <peter.maydell@linaro.org> wrote:
+> > > The problem is that there is no 32-bit API in some cases
+> > > (unless I have misunderstood the kernel code) -- not all
+> > > host architectures implement compat syscalls or allow them
+> > > to be called from 64-bit processes or implement all the older
+> > > syscall variants that had smaller offets. If there was a guaranteed
+> > > "this syscall always exists and always gives me 32-bit offsets"
+> > > we could use it.
+> >
+> > The "32bitapi" mount option would use 32-bit hash for seekdir
+> > and telldir, regardless of what kernel API was used.  That would
+> > just set the FMODE_32BITHASH flag in the file->f_mode for all files.
+> 
+> A mount option wouldn't be much use to QEMU -- we can't tell
+> our users how to mount their filesystems, which they're
+> often doing lots of other things with besides running QEMU.
+> (Otherwise we could just tell them "don't use ext4", which
+> would also solve the problem :-)) We need something we can
+> use at the individual-syscall level.
+
+Could you use a prctl to set whether you were running in 32 or 64 bit
+mode?  Or do you change which kind of task you're emulating too often
+to make this a good idea?
