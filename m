@@ -1,65 +1,77 @@
-From: Dominique Martinet <asmadeus@codewreck.org>
-Subject: Re: [V9fs-developer] [Qemu-devel] d_off field in struct dirent and
- 32-on-64 emulation
-Date: Sat, 29 Dec 2018 05:04:13 +0100
-Message-ID: <20181229040413.GA18900@nautica>
-References: <87bm56vqg4.fsf@mid.deneb.enyo.de>
- <CAFEAcA92m4vhzjJ+B=mP_o6Wfhx1XSKo3uWxah3osh=u5UXFuw@mail.gmail.com>
- <9C6A7D45-CF53-4C61-B5DD-12CA0D419972@dilger.ca>
- <CAFEAcA9W+JK7_TrtTnL1P2ES1knNPJX9wcUvhfLwxLq9augq1w@mail.gmail.com>
- <20181229021157.GG5864@mit.edu>
- <20181229023721.GA9291@nautica>
- <20181229031416.GH5864@mit.edu>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [PATCH v6 0/1] ns: introduce binfmt_misc namespace
+Date: Sat, 29 Dec 2018 16:41:27 +0100
+Message-ID: <a1003659-3c16-5921-b221-befd078dfa42@vivier.eu>
+References: <20181010161430.11633-1-laurent@vivier.eu>
+ <7ed6f823-547b-922d-59ff-aba9c4c3ab39@vivier.eu>
+ <1541041159.4632.6.camel@HansenPartnership.com>
+ <CAG48ez3HnkRM6bUZMNjuTy5DgujgamEKhZOEWDfCjqW7fTJSzQ@mail.gmail.com>
+ <fcebfa0c-b389-5c4d-19b8-2f08b487ec25@vivier.eu>
+ <87zhusq3x7.fsf@xmission.com>
+ <36933e07-d7b3-49be-4ad9-2028fa1977f7@vivier.eu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Return-path: <libc-alpha-return-98864-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <20181229031416.GH5864@mit.edu>
-To: "Theodore Y. Ts'o" <tytso@mit.edu>, Peter Maydell <peter.maydell@linaro.org>, Andreas Dilger <adilger@dilger.ca>, Florian Weimer <fw@deneb.enyo.de>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, lucho@ionkov.net, libc-alpha@sourceware.org, Arnd Bergmann <arnd@arndb.de>, ericvh@gmail.com, hpa@zytor.com, lkml - Kernel Mailing List <linux-kernel@vger.kernel.org>, QEMU Developers <qemu-devel@nongnu.org>, rminnich@sandia.gov, v9fs-developer@lists.sourceforge.net
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <36933e07-d7b3-49be-4ad9-2028fa1977f7@vivier.eu>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Jann Horn <jannh@google.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, containers@lists.linux-foundation.org, dima@arista.com, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-Theodore Y. Ts'o wrote on Fri, Dec 28, 2018:
-> On Sat, Dec 29, 2018 at 03:37:21AM +0100, Dominique Martinet wrote:
-> > > Are there going to be cases where a process or a thread will sometimes
-> > > want the 64-bit interface, and sometimes want the 32-bit interface?
-> > > Or is it always going to be one or the other?  I wonder if we could
-> > > simply add a new flag to the process personality(2) flags.
-> > 
-> > That would likely work for qemu user, but the qemu system+9p case is
-> > going to be more painful..
-> > More precisely, the 9p protocol does not plan for anything other than
-> > 64bit offset so if the vfs needs to hand out a 32bit offset we'll need
-> > to make a correspondance table between the 32bit offsets we hand off and
-> > the 64bit ones to use; unless some flag can be passed at lopen to tell
-> > the server to always hand out 32bit offsets for this directory... And if
-> > we do that then 9p servers will need a way to use both APIs in parallel
-> > for both types of directories.
+Ping
+
+Thanks,
+Laurent
+
+Le 29/11/2018 à 14:05, Laurent Vivier a écrit :
+> Le 01/11/2018 à 15:16, Eric W. Biederman a écrit :
+>> Laurent Vivier <laurent@vivier.eu> writes:
+>>
+>>> On 01/11/2018 04:51, Jann Horn wrote:
+>>>> On Thu, Nov 1, 2018 at 3:59 AM James Bottomley
+>>>> <James.Bottomley@hansenpartnership.com> wrote:
+>>>>>
+>>>>> On Tue, 2018-10-16 at 11:52 +0200, Laurent Vivier wrote:
+>>>>>> Hi,
+>>>>>>
+>>>>>> Any comment on this last version?
+>>>>>>
+>>>>>> Any chance to be merged?
+>>>>>
+>>>>> I've got a use case for this:  I went to one of the Graphene talks in
+>>>>> Edinburgh and it struck me that we seem to keep reinventing the type of
+>>>>> sandboxing that qemu-user already does.  However if you want to do an
+>>>>> x86 on x86 sandbox, you can't currently use the binfmt_misc mechanism
+>>>>> because that has you running *every* binary on the system emulated.
+>>>>> Doing it per user namespace fixes this problem and allows us to at
+>>>>> least cut down on all the pointless duplication.
+>>>>
+>>>> Waaaaaait. What? qemu-user does not do "sandboxing". qemu-user makes
+>>>> your code slower and *LESS* secure. As far as I know, qemu-user is
+>>>> only intended for purposes like development and testing.
+>>>>
+>>>
+>>> I think the idea here is not to run qemu, but to use an interpreter
+>>> (something like gVisor) into a container to control the binaries
+>>> execution inside the container without using this interpreter on the
+>>> host itself (container and host shares the same binfmt_misc
+>>> magic/mask).
+>>
+>> Please remind me of this patchset after the merge window is over, and if
+>> there are no issues I will take it via my user namespace branch.
+>>
+>> Last I looked I had a concern that some of the permission check issues
+>> were being papered over by using override cred instead of fixing the
+>> deaper code.  Sometimes they are necessary but seeing work-arounds
+>> instead of fixes for problems tends to be a maintenance issue, possibly
+>> with security consequences.  Best is if the everyone agrees on how all
+>> of the interfaces work so their are no surprises.
 > 
-> How about if we add a fcntl(2) mediated flag, which is tied to a
-> struct file?  Would that be more or less painful for 9p and qemu
-> system+9p?
-
-Hmm. 9P2000.L doesn't have anything akin to fcntl either, the only two
-obvious places where we could pass a flag is lopen (which already
-handles a bunch of linux-specific flags, e.g. passing O_LARGEFILE
-O_NOATIME etc will just forward these through for qemu/diod at least),
-or adding a new parameter to the 9p readdir.
-
-The former would let us get away without modifying the protocol as
-servers will just ignore flags they don't handle on implementations I
-checked, so it'd definitely be the least effort choice from what I can
-tell.
-
-
-On the other hand a fcntl would solve the server-side problem, it'd
-allow the server to request appropriately-sized offsets per fd, so it's
-a good start; we "just" need to figure how to translate that on the wire.
-
--- 
-Dominique Martinet | Asmadeus
+> I don't know where we are in the merge window, but is there something I
+> can do to have this merged?
+> 
+> Thanks,
+> Laurent
+> 
