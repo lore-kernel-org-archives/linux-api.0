@@ -1,66 +1,50 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH v6 2/2] selftests: add tests for pidfd_send_signal()
-Date: Tue, 1 Jan 2019 11:02:03 -0600
-Message-ID: <20190101170203.GA15661@mail.hallyn.com>
-References: <20181229222756.30027-1-christian@brauner.io>
- <20181229222756.30027-2-christian@brauner.io>
- <20181230210245.GA30252@mail.hallyn.com>
- <20181230232711.7aayb7vnhogbv4co@brauner.io>
- <20190101150743.ikrrfcogqec2oqeh@brauner.io>
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Subject: Re: d_off field in struct dirent and 32-on-64 emulation
+Date: Wed, 2 Jan 2019 11:16:37 -0200
+Message-ID: <a5092631-2ddf-1790-5f27-777646ef3d34@linaro.org>
+References: <87bm56vqg4.fsf@mid.deneb.enyo.de>
+ <957967d7-5717-8ada-fb30-dfdf19898b6b@linaro.org>
+ <87pntmu9iw.fsf@mid.deneb.enyo.de>
+ <ae0530c9-5c46-5560-9734-1eacaf173b8d@linaro.org>
+ <alpine.DEB.2.21.1812311657050.27287@digraph.polyomino.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190101150743.ikrrfcogqec2oqeh@brauner.io>
+In-Reply-To: <alpine.DEB.2.21.1812311657050.27287@digraph.polyomino.org.uk>
+Content-Language: en-GB
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, keescook@chromium.org, akpm@linux-foundation.org, jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com
+To: Joseph Myers <joseph@codesourcery.com>
+Cc: Florian Weimer <fw@deneb.enyo.de>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, v9fs-developer@lists.sourceforge.net, libc-alpha@sourceware.org, qemu-devel@nongnu.org, ericvh@gmail.com, rminnich@sandia.gov, lucho@ionkov.net, hpa@zytor.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 01, 2019 at 04:07:44PM +0100, Christian Brauner wrote:
-> On Mon, Dec 31, 2018 at 12:27:13AM +0100, Christian Brauner wrote:
-> > On Sun, Dec 30, 2018 at 03:02:45PM -0600, Serge Hallyn wrote:
-> > > On Sat, Dec 29, 2018 at 11:27:56PM +0100, Christian Brauner wrote:
-> > > > As suggested by Andrew Morton in [1] add selftests for the new
-> > > > sys_pidfd_send_signal() syscall.
-> > > > This tests whether we can send a signal to an existing process and whether
-> > > > sending a signal to a process that has already exited fails with ESRCH.
-> > > > 
-> > > > [1]: https://lore.kernel.org/lkml/20181228152012.dbf0508c2508138efc5f2bbe@linux-foundation.org/
-> > > > 
-> > > > Cc: Arnd Bergmann <arnd@arndb.de>
-> > > > Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-> > > > Cc: Kees Cook <keescook@chromium.org>
-> > > > Cc: Serge Hallyn <serge@hallyn.com>
-> > > 
-> > > Acked-by: Serge Hallyn <serge@hallyn.com>
-> > > 
-> > > Not saying you need to do this, but it would be neat if you could test
-> > > sending to a pid which has been recycled :)
-> > 
-> > Yeah, I thought about it but it's a little weird code. First of all, we
-> > can't set /proc/sys/kernel/pid_max to a very low value since this is a
-> > system wide setting. So we need to recycle a lot via fork(). Something
-> > along the lines of:
-> > - unshare pid namespace
-> > - fork to create pid 1 in new pid namespace
-> > - cycle with fork() until pid > 300 since pids lower than 300 are
-> >   reserved by the kernel.
-> >   (That means if we simply use the first fork() after we created pid 1 we
-> >   would never be able to recycle the pid since we skip over it. :))
-> > - get pidfd to the pid > 300 we just created
-> > - wait on the pid > 300
-> > - cycle via fork() until we have reached the same pid > 300 again
-> > - send SIGSTOP to that recycled process
-> > - test that we cannot send SIGCONT to this SIGSTOPed task via the pidfd we
-> >   received before
-> > - send SIGCONT to the SIGSTOPed recycled pid and exit
+
+
+On 31/12/2018 15:03, Joseph Myers wrote:
+> On Fri, 28 Dec 2018, Adhemerval Zanella wrote:
 > 
-> Ok, I have something like this in my tree now that tests for pid
-> recycling. I'm going to send it out tomorrow since I reckon Andrew and
-> others will be off today.
-> But fwiw it sits in https://github.com/brauner/linux/commits/2018-12-02/procfds
+>>>> Currently we only have nios2 and csky (unfortunately).  But since generic 
+>>>> definition for off_t and off64_t still assumes non-LFS support, all new
+>>>> 32-bits ports potentially might carry the issue.
+>>>
+>>> For csky, we could still change the type of the non-standard d_off
+>>> field to long long int.  This way, only telldir would have to fail
+>>> when truncation is necessary, as mentioned below:
+>>
+>> I think it makes no sense to continue making non-LFS as default for
+>> newer 32 bits ports, the support will be emulated with LFS syscalls.
+> 
+> Any new 32-bit port that uses 64-bit time_t will also use 64-bit offsets 
+> (because we don't have any glibc configurations that support the 
+> combination of 64-bit time with 32-bit offsets, and don't want to add 
+> them).  That should apply for RISC-V 32-bit at least.
+> 
+> I've filed <https://sourceware.org/bugzilla/show_bug.cgi?id=24050> for 
+> missing overflow checks in telldir when the default off_t is wider than 
+> long int (currently just applies to x32; not sure why we don't see glibc 
+> test failures on x32 resulting from the quiet truncation, as the issue is 
+> certainly there in the source code).
+> 
 
-Thanks, that shows off the advantages of the new syscall :)
-
--serge
+What about csky? Should we still make it use 32-bit offsets as default
+configuration even when kernel does not support it natively?
