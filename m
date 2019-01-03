@@ -1,478 +1,121 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v7 2/2] selftests: add tests for pidfd_send_signal()
-Date: Wed,  2 Jan 2019 17:16:54 +0100
-Message-ID: <20190102161654.9093-2-christian@brauner.io>
-References: <20190102161654.9093-1-christian@brauner.io>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH v1 3/5] Yama: Enforces noexec mounts or file
+ executability through O_MAYEXEC
+Date: Thu, 3 Jan 2019 12:17:18 +0100
+Message-ID: <CAG48ez00CpXOOJPLgpQd_e0gG2KgYb1p8bwssA8FDOugHTxRAA@mail.gmail.com>
+References: <20181212081712.32347-1-mic@digikod.net> <20181212081712.32347-4-mic@digikod.net>
+ <CAG48ez3SAW8EyaJ9T1U3qPoRhYwe4CCyL9bAxuc3GxjrXipi-A@mail.gmail.com> <f13bf750-f418-343c-baa6-9eee6e0f5e19@ssi.gouv.fr>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190102161654.9093-1-christian@brauner.io>
+In-Reply-To: <f13bf750-f418-343c-baa6-9eee6e0f5e19@ssi.gouv.fr>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, keescook@chromium.org, akpm@linux-foundation.org
-Cc: jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com, Christian Brauner <christian@brauner.io>
+To: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mickael.salaun@ssi.gouv.fr>
+Cc: =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, kernel list <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, zohar@linux.ibm.com, philippe.trebuchet@ssi.gouv.fr, shuah@kernel.org, thibaut.sautereau@ssi.gouv.fr, vincent.strubel@ssi.gouv.fr, yves-alexis.perez@ssi.gouv.fr, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, linux-security-module <linux-security-module@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-As suggested by Andrew Morton in [1] add selftests for the new
-sys_pidfd_send_signal() syscall:
+On Thu, Dec 13, 2018 at 3:49 PM Micka=C3=ABl Sala=C3=BCn
+<mickael.salaun@ssi.gouv.fr> wrote:
+> On 12/12/2018 18:09, Jann Horn wrote:
+> > On Wed, Dec 12, 2018 at 9:18 AM Micka=C3=ABl Sala=C3=BCn <mic@digikod.n=
+et> wrote:
+> >> Enable to either propagate the mount options from the underlying VFS
+> >> mount to prevent execution, or to propagate the file execute permissio=
+n.
+> >> This may allow a script interpreter to check execution permissions
+> >> before reading commands from a file.
+> >>
+> >> The main goal is to be able to protect the kernel by restricting
+> >> arbitrary syscalls that an attacker could perform with a crafted binar=
+y
+> >> or certain script languages.  It also improves multilevel isolation
+> >> by reducing the ability of an attacker to use side channels with
+> >> specific code.  These restrictions can natively be enforced for ELF
+> >> binaries (with the noexec mount option) but require this kernel
+> >> extension to properly handle scripts (e.g., Python, Perl).
+> >>
+> >> Add a new sysctl kernel.yama.open_mayexec_enforce to control this
+> >> behavior.  A following patch adds documentation.
+[...]
+> >> +{
+> >> +       if (!(mask & MAY_OPENEXEC))
+> >> +               return 0;
+> >> +       /*
+> >> +        * Match regular files and directories to make it easier to
+> >> +        * modify script interpreters.
+> >> +        */
+> >> +       if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
+> >> +               return 0;
+> >
+> > So files are subject to checks, but loading code from things like
+> > sockets is always fine?
+>
+> As I said in a previous email, these checks do not handle fifo either.
+> This is relevant in a threat model targeting persistent attacks (and
+> with additional protections/restrictions). We may want to only whitelist
+> fifo, but I don't get how a socket is relevant here. Can you please clari=
+fy?
 
-/* test_pidfd_send_signal_syscall_support */
-Test whether the pidfd_send_signal() syscall is supported and the tests can
-be run or need to be skipped.
+I don't think that there's a security problem here. I just think it's
+weird to have the extra check when it seems to me like it isn't really
+necessary - nobody is going to want to execute a socket or fifo
+anyway, right?
 
-/* test_pidfd_send_signal_simple_success */
-Test whether sending a signal via a pidfd works.
+> >
+> >> +       if ((open_mayexec_enforce & YAMA_OMAYEXEC_ENFORCE_MOUNT) &&
+> >> +                       !(mask & MAY_EXECMOUNT))
+> >> +               return -EACCES;
+> >> +
+> >> +       /*
+> >> +        * May prefer acl_permission_check() instead of generic_permis=
+sion(),
+> >> +        * to not be bypassable with CAP_DAC_READ_SEARCH.
+> >> +        */
+> >> +       if (open_mayexec_enforce & YAMA_OMAYEXEC_ENFORCE_FILE)
+> >> +               return generic_permission(inode, MAY_EXEC);
+> >> +
+> >> +       return 0;
+> >> +}
+> >> +
+> >>  static struct security_hook_list yama_hooks[] __lsm_ro_after_init =3D=
+ {
+> >> +       LSM_HOOK_INIT(inode_permission, yama_inode_permission),
+> >>         LSM_HOOK_INIT(ptrace_access_check, yama_ptrace_access_check),
+> >>         LSM_HOOK_INIT(ptrace_traceme, yama_ptrace_traceme),
+> >>         LSM_HOOK_INIT(task_prctl, yama_task_prctl),
+> >> @@ -447,6 +489,37 @@ static int yama_dointvec_minmax(struct ctl_table =
+*table, int write,
+> >>         return proc_dointvec_minmax(&table_copy, write, buffer, lenp, =
+ppos);
+> >>  }
+> >>
+> >> +static int yama_dointvec_bitmask_macadmin(struct ctl_table *table, in=
+t write,
+> >> +                                         void __user *buffer, size_t =
+*lenp,
+> >> +                                         loff_t *ppos)
+> >> +{
+> >> +       int error;
+> >> +
+> >> +       if (write) {
+> >> +               struct ctl_table table_copy;
+> >> +               int tmp_mayexec_enforce;
+> >> +
+> >> +               if (!capable(CAP_MAC_ADMIN))
+> >> +                       return -EPERM;
+> >
+> > Don't put capable() checks in sysctls, it doesn't work.
+> >
+>
+> I tested it and the root user can indeed open the file even if the
+> process doesn't have CAP_MAC_ADMIN, however writing in the sysctl file
+> is denied. Btw there is a similar check in the previous function
+> (yama_dointvec_minmax).
 
-/* test_pidfd_send_signal_exited_fail */
-Verify that sending a signal to an already exited process fails with ESRCH.
-
-/* test_pidfd_send_signal_recycled_pid_fail */
-Verify that a recycled pid cannot be signaled via a pidfd referring to an
-already exited process that had the same pid (cf. [2], [3]).
-
-[1]: https://lore.kernel.org/lkml/20181228152012.dbf0508c2508138efc5f2bbe@linux-foundation.org/
-[2]: https://lore.kernel.org/lkml/20181230210245.GA30252@mail.hallyn.com/
-[3]: https://lore.kernel.org/lkml/20181230232711.7aayb7vnhogbv4co@brauner.io/
-
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Jann Horn <jannh@google.com>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Florian Weimer <fweimer@redhat.com>
-Signed-off-by: Christian Brauner <christian@brauner.io>
-Acked-by: Serge Hallyn <serge@hallyn.com>
----
-/* Changelog */
-v7:
-- add test for pid recycling (cf. [2] and [3]) as suggested by Serge
-- add test for pidfd_send_signal() syscalls support so we can skip tests if
-  it isn't
-v6:
-- patch introduced
-v5..v0:
-- patch not present
----
- tools/testing/selftests/Makefile           |   1 +
- tools/testing/selftests/pidfd/Makefile     |   6 +
- tools/testing/selftests/pidfd/pidfd_test.c | 381 +++++++++++++++++++++
- 3 files changed, 388 insertions(+)
- create mode 100644 tools/testing/selftests/pidfd/Makefile
- create mode 100644 tools/testing/selftests/pidfd/pidfd_test.c
-
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index eb54df682d56..84dd78a684e4 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -29,6 +29,7 @@ TARGETS += net
- TARGETS += netfilter
- TARGETS += networking/timestamping
- TARGETS += nsfs
-+TARGETS += pidfd
- TARGETS += powerpc
- TARGETS += proc
- TARGETS += pstore
-diff --git a/tools/testing/selftests/pidfd/Makefile b/tools/testing/selftests/pidfd/Makefile
-new file mode 100644
-index 000000000000..deaf8073bc06
---- /dev/null
-+++ b/tools/testing/selftests/pidfd/Makefile
-@@ -0,0 +1,6 @@
-+CFLAGS += -g -I../../../../usr/include/
-+
-+TEST_GEN_PROGS := pidfd_test
-+
-+include ../lib.mk
-+
-diff --git a/tools/testing/selftests/pidfd/pidfd_test.c b/tools/testing/selftests/pidfd/pidfd_test.c
-new file mode 100644
-index 000000000000..d59378a93782
---- /dev/null
-+++ b/tools/testing/selftests/pidfd/pidfd_test.c
-@@ -0,0 +1,381 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <linux/types.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <syscall.h>
-+#include <sys/mount.h>
-+#include <sys/wait.h>
-+#include <unistd.h>
-+
-+#include "../kselftest.h"
-+
-+static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
-+					unsigned int flags)
-+{
-+	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
-+}
-+
-+static int signal_received;
-+
-+static void set_signal_received_on_sigusr1(int sig)
-+{
-+	if (sig == SIGUSR1)
-+		signal_received = 1;
-+}
-+
-+/*
-+ * Straightforward test to see whether pidfd_send_signal() works is to send
-+ * a signal to ourself.
-+ */
-+static int test_pidfd_send_signal_simple_success(void)
-+{
-+	int pidfd, ret;
-+	const char *test_name = "pidfd_send_signal send SIGUSR1";
-+
-+	pidfd = open("/proc/self", O_DIRECTORY | O_CLOEXEC);
-+	if (pidfd < 0)
-+		ksft_exit_fail_msg(
-+			"%s test: Failed to open process file descriptor\n",
-+			test_name);
-+
-+	signal(SIGUSR1, set_signal_received_on_sigusr1);
-+
-+	ret = sys_pidfd_send_signal(pidfd, SIGUSR1, NULL, 0);
-+	close(pidfd);
-+	if (ret < 0)
-+		ksft_exit_fail_msg("%s test: Failed to send signal\n",
-+				   test_name);
-+
-+	if (signal_received != 1)
-+		ksft_exit_fail_msg("%s test: Failed to receive signal\n",
-+				   test_name);
-+
-+	signal_received = 0;
-+	ksft_test_result_pass("%s test: Sent signal\n", test_name);
-+	return 0;
-+}
-+
-+static int wait_for_pid(pid_t pid)
-+{
-+	int status, ret;
-+
-+again:
-+	ret = waitpid(pid, &status, 0);
-+	if (ret == -1) {
-+		if (errno == EINTR)
-+			goto again;
-+
-+		return -1;
-+	}
-+
-+	if (ret != pid)
-+		goto again;
-+
-+	if (!WIFEXITED(status))
-+		return -1;
-+
-+	return WEXITSTATUS(status);
-+}
-+
-+static int test_pidfd_send_signal_exited_fail(void)
-+{
-+	int pidfd, ret, saved_errno;
-+	char buf[256];
-+	pid_t pid;
-+	const char *test_name = "pidfd_send_signal signal exited process";
-+
-+	pid = fork();
-+	if (pid < 0)
-+		ksft_exit_fail_msg("%s test: Failed to create new process\n",
-+				   test_name);
-+
-+	if (pid == 0)
-+		_exit(EXIT_SUCCESS);
-+
-+	snprintf(buf, sizeof(buf), "/proc/%d", pid);
-+
-+	pidfd = open(buf, O_DIRECTORY | O_CLOEXEC);
-+
-+	(void)wait_for_pid(pid);
-+
-+	if (pidfd < 0)
-+		ksft_exit_fail_msg(
-+			"%s test: Failed to open process file descriptor\n",
-+			test_name);
-+
-+	ret = sys_pidfd_send_signal(pidfd, 0, NULL, 0);
-+	saved_errno = errno;
-+	close(pidfd);
-+	if (ret == 0)
-+		ksft_exit_fail_msg(
-+			"%s test: Managed to send signal to process even though it should have failed\n",
-+			test_name);
-+
-+	if (saved_errno != ESRCH)
-+		ksft_exit_fail_msg(
-+			"%s test: Expected to receive ESRCH as errno value but received %d instead\n",
-+			test_name, saved_errno);
-+
-+	ksft_test_result_pass("%s test: Failed to send signal as expected\n",
-+			      test_name);
-+	return 0;
-+}
-+
-+/*
-+ * The kernel reserves 300 pids via RESERVED_PIDS in kernel/pid.c
-+ * That means, when it wraps around any pid < 300 will be skipped.
-+ * So we need to use a pid > 300 in order to test recycling.
-+ */
-+#define PID_RECYCLE 1000
-+
-+/*
-+ * Maximum number of cycles we allow. This is equivalent to PID_MAX_DEFAULT.
-+ * If users set a higher limit or we have cycled PIDFD_MAX_DEFAULT number of
-+ * times then we skip the test to not go into an infinite loop or block for a
-+ * long time.
-+ */
-+#define PIDFD_MAX_DEFAULT 0x8000
-+
-+/*
-+ * Define a few custom error codes for the child process to clearly indicate
-+ * what is happening. This way we can tell the difference between a system
-+ * error, a test error, etc.
-+ */
-+#define PIDFD_PASS 0
-+#define PIDFD_FAIL 1
-+#define PIDFD_ERROR 2
-+#define PIDFD_SKIP 3
-+#define PIDFD_XFAIL 4
-+
-+static int test_pidfd_send_signal_recycled_pid_fail(void)
-+{
-+	int i, ret;
-+	pid_t pid1;
-+	const char *test_name = "pidfd_send_signal signal recycled pid";
-+
-+	ret = unshare(CLONE_NEWPID);
-+	if (ret < 0)
-+		ksft_exit_fail_msg("%s test: Failed to unshare pid namespace\n",
-+				   test_name);
-+
-+	ret = unshare(CLONE_NEWNS);
-+	if (ret < 0)
-+		ksft_exit_fail_msg(
-+			"%s test: Failed to unshare mount namespace\n",
-+			test_name);
-+
-+	ret = mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, 0);
-+	if (ret < 0)
-+		ksft_exit_fail_msg("%s test: Failed to remount / private\n",
-+				   test_name);
-+
-+	/* pid 1 in new pid namespace */
-+	pid1 = fork();
-+	if (pid1 < 0)
-+		ksft_exit_fail_msg("%s test: Failed to create new process\n",
-+				   test_name);
-+
-+	if (pid1 == 0) {
-+		char buf[256];
-+		pid_t pid2;
-+		int pidfd = -1;
-+
-+		(void)umount2("/proc", MNT_DETACH);
-+		ret = mount("proc", "/proc", "proc", 0, NULL);
-+		if (ret < 0)
-+			_exit(PIDFD_ERROR);
-+
-+		/* grab pid PID_RECYCLE */
-+		for (i = 0; i <= PIDFD_MAX_DEFAULT; i++) {
-+			pid2 = fork();
-+			if (pid2 < 0)
-+				_exit(PIDFD_ERROR);
-+
-+			if (pid2 == 0)
-+				_exit(PIDFD_PASS);
-+
-+			if (pid2 == PID_RECYCLE) {
-+				snprintf(buf, sizeof(buf), "/proc/%d", pid2);
-+				ksft_print_msg("pid to recycle is %d\n", pid2);
-+				pidfd = open(buf, O_DIRECTORY | O_CLOEXEC);
-+			}
-+
-+			if (wait_for_pid(pid2))
-+				_exit(PIDFD_ERROR);
-+
-+			if (pid2 >= PID_RECYCLE)
-+				break;
-+		}
-+
-+		/*
-+		 * We want to be as predictable as we can so if we haven't been
-+		 * able to grab pid PID_RECYCLE skip the test.
-+		 */
-+		if (pid2 != PID_RECYCLE) {
-+			/* skip test */
-+			close(pidfd);
-+			_exit(PIDFD_SKIP);
-+		}
-+
-+		if (pidfd < 0)
-+			_exit(PIDFD_ERROR);
-+
-+		for (i = 0; i <= PIDFD_MAX_DEFAULT; i++) {
-+			char c;
-+			int pipe_fds[2];
-+			pid_t recycled_pid;
-+			int child_ret = PIDFD_PASS;
-+
-+			ret = pipe2(pipe_fds, O_CLOEXEC);
-+			if (ret < 0)
-+				_exit(PIDFD_ERROR);
-+
-+			recycled_pid = fork();
-+			if (recycled_pid < 0)
-+				_exit(PIDFD_ERROR);
-+
-+			if (recycled_pid == 0) {
-+				close(pipe_fds[1]);
-+				(void)read(pipe_fds[0], &c, 1);
-+				close(pipe_fds[0]);
-+
-+				_exit(PIDFD_PASS);
-+			}
-+
-+			/*
-+			 * Stop the child so we can inspect whether we have
-+			 * recycled pid PID_RECYCLE.
-+			 */
-+			close(pipe_fds[0]);
-+			ret = kill(recycled_pid, SIGSTOP);
-+			close(pipe_fds[1]);
-+			if (ret) {
-+				(void)wait_for_pid(recycled_pid);
-+				_exit(PIDFD_ERROR);
-+			}
-+
-+			/*
-+			 * We have recycled the pid. Try to signal it. This
-+			 * needs to fail since this is a different process than
-+			 * the one the pidfd refers to.
-+			 */
-+			if (recycled_pid == PID_RECYCLE) {
-+				ret = sys_pidfd_send_signal(pidfd, SIGCONT,
-+							    NULL, 0);
-+				if (ret && errno == ESRCH)
-+					child_ret = PIDFD_XFAIL;
-+				else
-+					child_ret = PIDFD_FAIL;
-+			}
-+
-+			/* let the process move on */
-+			ret = kill(recycled_pid, SIGCONT);
-+			if (ret)
-+				(void)kill(recycled_pid, SIGKILL);
-+
-+			if (wait_for_pid(recycled_pid))
-+				_exit(PIDFD_ERROR);
-+
-+			switch (child_ret) {
-+			case PIDFD_FAIL:
-+				/* fallthrough */
-+			case PIDFD_XFAIL:
-+				_exit(child_ret);
-+			case PIDFD_PASS:
-+				break;
-+			default:
-+				/* not reached */
-+				_exit(PIDFD_ERROR);
-+			}
-+
-+			/*
-+			 * If the user set a custom pid_max limit we could be
-+			 * in the millions.
-+			 * Skip the test in this case.
-+			 */
-+			if (recycled_pid > PIDFD_MAX_DEFAULT)
-+				_exit(PIDFD_SKIP);
-+		}
-+
-+		/* failed to recycle pid */
-+		_exit(PIDFD_SKIP);
-+	}
-+
-+	ret = wait_for_pid(pid1);
-+	switch (ret) {
-+	case PIDFD_FAIL:
-+		ksft_exit_fail_msg(
-+			"%s test: Managed to signal recycled pid %d\n",
-+			test_name, PID_RECYCLE);
-+	case PIDFD_PASS:
-+		ksft_exit_fail_msg("%s test: Failed to recycle pid %d\n",
-+				   test_name, PID_RECYCLE);
-+	case PIDFD_SKIP:
-+		ksft_print_msg("%s test: Skipping test\n", test_name);
-+		ret = 0;
-+		break;
-+	case PIDFD_XFAIL:
-+		ksft_test_result_pass(
-+			"%s test: Failed to signal recycled pid as expected\n",
-+			test_name);
-+		ret = 0;
-+		break;
-+	default /* PIDFD_ERROR */:
-+		ksft_exit_fail_msg("%s test: Error while running tests\n",
-+				   test_name);
-+	}
-+
-+	return ret;
-+}
-+
-+static int test_pidfd_send_signal_syscall_support(void)
-+{
-+	int pidfd, ret;
-+	const char *test_name = "pidfd_send_signal check for support";
-+
-+	pidfd = open("/proc/self", O_DIRECTORY | O_CLOEXEC);
-+	if (pidfd < 0)
-+		ksft_exit_fail_msg(
-+			"%s test: Failed to open process file descriptor\n",
-+			test_name);
-+
-+	ret = sys_pidfd_send_signal(pidfd, 0, NULL, 0);
-+	if (ret < 0) {
-+		/*
-+		 * pidfd_send_signal() will currently return ENOSYS when
-+		 * CONFIG_PROC_FS is not set.
-+		 */
-+		if (errno == ENOSYS)
-+			ksft_exit_skip(
-+				"%s test: pidfd_send_signal() syscall not supported (Ensure that CONFIG_PROC_FS=y is set)\n",
-+				test_name);
-+
-+		ksft_exit_fail_msg("%s test: Failed to send signal\n",
-+				   test_name);
-+	}
-+
-+	close(pidfd);
-+	ksft_test_result_pass(
-+		"%s test: pidfd_send_signal() syscall is supported. Tests can be executed\n",
-+		test_name);
-+	return 0;
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	ksft_print_header();
-+
-+	test_pidfd_send_signal_syscall_support();
-+	test_pidfd_send_signal_simple_success();
-+	test_pidfd_send_signal_exited_fail();
-+	test_pidfd_send_signal_recycled_pid_fail();
-+
-+	return ksft_exit_pass();
-+}
--- 
-2.19.1
+It's still wrong. If an attacker without CAP_MAC_ADMIN opens the
+sysctl file, then passes the file descriptor to a setcap binary that
+has CAP_MAC_ADMIN as stdout/stderr, and the setcap binary writes to
+it, then the capable() check is bypassed. (But of course, to open the
+sysctl file in the first place, you'd need to be root (uid 0), so the
+check doesn't really matter.)
