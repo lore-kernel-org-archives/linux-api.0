@@ -1,58 +1,42 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Sat, 5 Jan 2019 12:13:01 -0800
-Message-ID: <CAHk-=wif_9nvNHJiyxHzJ80_WUb0P7CXNBvXkjZz-r1u0ozp7g@mail.gmail.com>
-References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com>
+Date: Sat, 5 Jan 2019 12:17:12 -0800
+Message-ID: <CAHk-=whGmE4QVr6NbgHnrVGVENfM3s1y6GNbsfh8PcOg=6bpqw@mail.gmail.com>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com> <nycvar.YFH.7.76.1901052108390.16954@cbobk.fhfr.pm>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="0000000000006646d6057ebba023"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com>
+In-Reply-To: <nycvar.YFH.7.76.1901052108390.16954@cbobk.fhfr.pm>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jiri Kosina <jikos@kernel.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
---0000000000006646d6057ebba023
-Content-Type: text/plain; charset="UTF-8"
+[ Crossed emails ]
 
-On Sat, Jan 5, 2019 at 11:46 AM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
+On Sat, Jan 5, 2019 at 12:12 PM Jiri Kosina <jikos@kernel.org> wrote:
 >
-> Can we please just limit it to vma's that are either anonymous, or map
-> a file that the user actually owns?
+> I am still not completely sure what to return in such cases though; we can
+> either blatantly lie and always pretend that the pages are resident
 
-.. or slightly simpler: a file that the user opened for writing.
+That's what my untested patch did. Or maybe just claim they are all
+not present?
 
-IOW, some (TOTALLY UNTESTED!) patch like this?
+And again, that patch was entirely untested, so it may be garbage and
+have some fundamental problem. I also don't know exactly what rule
+might make most sense, but "you can write to the file" certainly to me
+implies that you also could know what parts of it are in-core.
 
-               Linus
+Who actually _uses_ mincore()? That's probably the best guide to what
+we should do. Maybe they open the file read-only even if they are the
+owner, and we really should look at file ownership instead.
 
---0000000000006646d6057ebba023
-Content-Type: text/x-patch; charset="US-ASCII"; name="patch.diff"
-Content-Disposition: attachment; filename="patch.diff"
-Content-Transfer-Encoding: base64
-Content-ID: <f_jqjwnxes0>
-X-Attachment-Id: f_jqjwnxes0
+I tried to make that "can_do_mincore()" function easy to understand
+and easy to just modify to some sane state.
 
-IG1tL21pbmNvcmUuYyB8IDE0ICsrKysrKysrKysrKystCiAxIGZpbGUgY2hhbmdlZCwgMTMgaW5z
-ZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQoKZGlmZiAtLWdpdCBhL21tL21pbmNvcmUuYyBiL21t
-L21pbmNvcmUuYwppbmRleCAyMTgwOTliNWVkMzEuLjYxZTM4ODk1ZmIwMiAxMDA2NDQKLS0tIGEv
-bW0vbWluY29yZS5jCisrKyBiL21tL21pbmNvcmUuYwpAQCAtMTY5LDYgKzE2OSwxMyBAQCBzdGF0
-aWMgaW50IG1pbmNvcmVfcHRlX3JhbmdlKHBtZF90ICpwbWQsIHVuc2lnbmVkIGxvbmcgYWRkciwg
-dW5zaWduZWQgbG9uZyBlbmQsCiAJcmV0dXJuIDA7CiB9CiAKK3N0YXRpYyBpbmxpbmUgYm9vbCBj
-YW5fZG9fbWluY29yZShzdHJ1Y3Qgdm1fYXJlYV9zdHJ1Y3QgKnZtYSkKK3sKKwlyZXR1cm4gdm1h
-X2lzX2Fub255bW91cyh2bWEpCisJCXx8ICh2bWEtPnZtX2ZpbGUgJiYgKHZtYS0+dm1fZmlsZS0+
-Zl9tb2RlICYgRk1PREVfV1JJVEUpKQorCQl8fCBjYXBhYmxlKENBUF9TWVNfQURNSU4pOworfQor
-CiAvKgogICogRG8gYSBjaHVuayBvZiAic3lzX21pbmNvcmUoKSIuIFdlJ3ZlIGFscmVhZHkgY2hl
-Y2tlZAogICogYWxsIHRoZSBhcmd1bWVudHMsIHdlIGhvbGQgdGhlIG1tYXAgc2VtYXBob3JlOiB3
-ZSBzaG91bGQKQEAgLTE4OSw4ICsxOTYsMTMgQEAgc3RhdGljIGxvbmcgZG9fbWluY29yZSh1bnNp
-Z25lZCBsb25nIGFkZHIsIHVuc2lnbmVkIGxvbmcgcGFnZXMsIHVuc2lnbmVkIGNoYXIgKnYKIAl2
-bWEgPSBmaW5kX3ZtYShjdXJyZW50LT5tbSwgYWRkcik7CiAJaWYgKCF2bWEgfHwgYWRkciA8IHZt
-YS0+dm1fc3RhcnQpCiAJCXJldHVybiAtRU5PTUVNOwotCW1pbmNvcmVfd2Fsay5tbSA9IHZtYS0+
-dm1fbW07CiAJZW5kID0gbWluKHZtYS0+dm1fZW5kLCBhZGRyICsgKHBhZ2VzIDw8IFBBR0VfU0hJ
-RlQpKTsKKwlpZiAoIWNhbl9kb19taW5jb3JlKHZtYSkpIHsKKwkJdW5zaWduZWQgbG9uZyBwYWdl
-cyA9IChlbmQgLSBhZGRyKSA+PiBQQUdFX1NISUZUOworCQltZW1zZXQodmVjLCAxLCBwYWdlcyk7
-CisJCXJldHVybiBwYWdlczsKKwl9CisJbWluY29yZV93YWxrLm1tID0gdm1hLT52bV9tbTsKIAll
-cnIgPSB3YWxrX3BhZ2VfcmFuZ2UoYWRkciwgZW5kLCAmbWluY29yZV93YWxrKTsKIAlpZiAoZXJy
-IDwgMCkKIAkJcmV0dXJuIGVycjsK
---0000000000006646d6057ebba023--
+Again, my patch is meant as a "perhaps something like this?" rather
+than some "this is _exactly_ how it must be done". Take the patch as a
+quick suggestion, not some final answer.
+
+              Linus
