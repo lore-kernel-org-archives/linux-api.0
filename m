@@ -1,60 +1,66 @@
-From: Jiri Kosina <jikos@kernel.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Sat, 5 Jan 2019 21:43:02 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1901052131480.16954@cbobk.fhfr.pm>
-References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com> <nycvar.YFH.7.76.1901052108390.16954@cbobk.fhfr.pm> <CAHk-=whGmE4QVr6NbgHnrVGVENfM3s1y6GNbsfh8PcOg=6bpqw@mail.gmail.com>
+Date: Sat, 5 Jan 2019 13:54:03 -0800
+Message-ID: <CAHk-=wgrSKyN23yp-npq6+J-4pGqbzxb3mJ183PryjHw7PWDyA@mail.gmail.com>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com>
+ <nycvar.YFH.7.76.1901052108390.16954@cbobk.fhfr.pm> <CAHk-=whGmE4QVr6NbgHnrVGVENfM3s1y6GNbsfh8PcOg=6bpqw@mail.gmail.com>
+ <nycvar.YFH.7.76.1901052131480.16954@cbobk.fhfr.pm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=whGmE4QVr6NbgHnrVGVENfM3s1y6GNbsfh8PcOg=6bpqw@mail.gmail.com>
+In-Reply-To: <nycvar.YFH.7.76.1901052131480.16954@cbobk.fhfr.pm>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
+To: Jiri Kosina <jikos@kernel.org>, Masatake YAMATO <yamato@redhat.com>
 Cc: Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 5 Jan 2019, Linus Torvalds wrote:
+On Sat, Jan 5, 2019 at 12:43 PM Jiri Kosina <jikos@kernel.org> wrote:
+>
+> > Who actually _uses_ mincore()? That's probably the best guide to what
+> > we should do. Maybe they open the file read-only even if they are the
+> > owner, and we really should look at file ownership instead.
+>
+> Yeah, well
+>
+>         https://codesearch.debian.net/search?q=mincore
+>
+> is a bit too much mess to get some idea quickly I am afraid.
 
-> > I am still not completely sure what to return in such cases though; we can
-> > either blatantly lie and always pretend that the pages are resident
-> 
-> That's what my untested patch did. Or maybe just claim they are all
-> not present?
+Yeah, heh.
 
-Thinking about it a little bit more, I believe Vlastimil has a good point 
-with 'non present' potentially causing more bogus activity in userspace in 
-response (in an effort to actually make them present, and failing 
-indefinitely).
+And the first hit is 'fincore', which probably nobody cares about
+anyway, but it does
 
-IOW, I think it's a reasonable expectation that the common scenario is 
-"check if it's present, and if not, try to fault it in" instead of "check 
-if it's present, and if it is, try to evict it".
+    fd = open (name, O_RDONLY)
+    ..
+    mmap(window, len, PROT_NONE, MAP_PRIVATE, ..
 
-> And again, that patch was entirely untested, so it may be garbage and 
-> have some fundamental problem. 
+so if we want to keep that working, we'd really need to actually check
+file ownership rather than just looking at f_mode.
 
-I will be travelling for next ~24 hours, but I have just asked our QA guys 
-to run it through some basic battery of testing (which will probably 
-happen on monday anyway).
+But I don't know if anybody *uses* and cares about fincore, and it's
+particularly questionable for non-root users.
 
-> I also don't know exactly what rule might make most sense, but "you can 
-> write to the file" certainly to me implies that you also could know what 
-> parts of it are in-core.
+And the Android go runtime code seems to oddly use mincore to figure
+out page size:
 
-I think it's reasonable; I can't really imagine any sidechannel to a 
-global state be possibly mounted on valid R/W mappings. I'd guess that 
-probably the most interesting here are the code segments of shared 
-libraries, allowing to trace victim's execution.
+  // try using mincore to detect the physical page size.
+  // mincore should return EINVAL when address is not a multiple of
+system page size.
 
-> Who actually _uses_ mincore()? That's probably the best guide to what
-> we should do. Maybe they open the file read-only even if they are the
-> owner, and we really should look at file ownership instead.
+which is all kinds of odd, but whatever.. Why mincore, rather than
+something sane and obvious like mmap? Don't ask me...
 
-Yeah, well
+Anyway, the Debian code search just results in mostly non-present
+stuff. It's sad that google code search is no more. It was great for
+exactly these kinds of questions.
 
-	https://codesearch.debian.net/search?q=mincore
+The mono runtime seems to have some mono_pages_not_faulted() function,
+but I don't know if people use it for file mappings, and I couldn't
+find any interesting users of it.
 
-is a bit too much mess to get some idea quickly I am afraid.
+I didn't find anything that seems to really care, but I gave up after
+a few pages of really boring stuff.
 
--- 
-Jiri Kosina
-SUSE Labs
+                    Linus
