@@ -1,7 +1,7 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Sat, 5 Jan 2019 15:28:19 -0800
-Message-ID: <CAHk-=wie+SA1WCQ5nTKgvWyBUdTGxHjAOaoms-=Xu7-wC4j=Ag@mail.gmail.com>
+Date: Sat, 5 Jan 2019 15:39:10 -0800
+Message-ID: <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com>
 References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
  <CAG48ez2jAp9xkPXQmVXm0PqNrFGscg9BufQRem2UD8FGX-YzPw@mail.gmail.com>
  <CAHk-=whL4sZiM=JcdQAYQvHm7h7xEtVUh+gYGYhoSk4vi38tXg@mail.gmail.com> <CAHk-=wg5Kk+r36=jcGBaLUj+gjopjgiW5eyvkdMqvn0jFkD_iQ@mail.gmail.com>
@@ -19,29 +19,13 @@ On Sat, Jan 5, 2019 at 3:16 PM Linus Torvalds
 >
 > It goes back to forever, it looks like. I can't find a reason.
 
-Our man-pages talk abouit the "without doing IO" part. That may be the
-result of our code, though, not the reason for it.
+mincore() was originally added in 2.3.52pre3, it looks like. Around
+2000 or so. But sadly before the BK history.
 
-The BSD man-page has other flags, but doesn't describe what "in core"
-really means:
+And that comment about
 
-     MINCORE_INCORE        Page is in core (resident).
+  "Later we can get more picky about what "in core" means precisely."
 
-     MINCORE_REFERENCED        Page has been referenced by us.
+that still exists above mincore_page() goes back to the original patch.
 
-     MINCORE_MODIFIED        Page has been modified by us.
-
-     MINCORE_REFERENCED_OTHER  Page has been referenced.
-
-     MINCORE_MODIFIED_OTHER    Page has been modified.
-
-     MINCORE_SUPER        Page is part of a large (``super'') page.
-
-but the fact that it has MINCORE_MODIFIED_OTHER does obviously imply
-that yes, historically it really did look up the pages elsewhere, not
-just in the page tables.
-
-Still, maybe we can get away with just making it be about our own page
-tables. That would be lovely.
-
-                 Linus
+           Linus
