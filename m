@@ -1,54 +1,112 @@
-From: Guenter Roeck <linux@roeck-us.net>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 01/10] audit: collect audit task
- parameters
-Date: Fri, 4 Jan 2019 14:04:37 -0800
-Message-ID: <20190104220437.GB19346@roeck-us.net>
-References: <cover.1533065887.git.rgb@redhat.com>
- <8e617ab568df28a66dfbe3284452de186b42fb0f.1533065887.git.rgb@redhat.com>
- <20190104025006.GA15567@roeck-us.net>
- <20190104145735.vlrw2fip5syn2exc@madcap2.tricolour.ca>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Sat, 5 Jan 2019 18:27:05 +0100 (CET)
+Message-ID: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190104145735.vlrw2fip5syn2exc@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, carlos@redhat.com, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
+To: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 04, 2019 at 09:57:35AM -0500, Richard Guy Briggs wrote:
-> On 2019-01-03 18:50, Guenter Roeck wrote:
-> > Hi Richard,
-> > 
-> > On Tue, Jul 31, 2018 at 04:07:36PM -0400, Richard Guy Briggs wrote:
-> > > The audit-related parameters in struct task_struct should ideally be
-> > > collected together and accessed through a standard audit API.
-> > > 
-> > > Collect the existing loginuid, sessionid and audit_context together in a
-> > > new struct audit_task_info called "audit" in struct task_struct.
-> > > 
-> > > Use kmem_cache to manage this pool of memory.
-> > > Un-inline audit_free() to be able to always recover that memory.
-> > > 
-> > > See: https://github.com/linux-audit/audit-kernel/issues/81
-> > > 
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > 
-> > Overall I am not sure if keeping task_struct a bit smaller is worth
-> > the added complexity, but I guess that is just me. 
-> 
-> The motivation was to consolidate all the audit bits into one pointer,
-> isolating them from the rest of the kernel, restricting access only to
-> helper functions to prevent abuse by other subsystems and trying to
-> reduce kABI issues in the future.  I agree it is a bit more complex.  It
-> was provoked by the need to add contid which seemed to make the most
-> sense as a peer to loginuid and sessionid, and adding it to task_struct
-> would have made it a bit too generic and available.
-> 
-> This is addressed at some length by Paul Moore here in v2:
-> 	https://lkml.org/lkml/2018/4/18/759
-> 
-That makes sense. Thanks a lot for the clarification.
+From: Jiri Kosina <jkosina@suse.cz>
 
-Guenter
+There are possibilities [1] how mincore() could be used as a converyor of 
+a sidechannel information about pagecache metadata.
+
+Provide vm.mincore_privileged sysctl, which makes it possible to mincore() 
+start returning -EPERM in case it's invoked by a process lacking 
+CAP_SYS_ADMIN.
+
+The default behavior stays "mincore() can be used by anybody" in order to 
+be conservative with respect to userspace behavior.
+
+[1] https://www.theregister.co.uk/2019/01/05/boffins_beat_page_cache/
+
+Signed-off-by: Jiri Kosina <jkosina@suse.cz>
+---
+ Documentation/sysctl/vm.txt | 9 +++++++++
+ kernel/sysctl.c             | 8 ++++++++
+ mm/mincore.c                | 5 +++++
+ 3 files changed, 22 insertions(+)
+
+diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+index 187ce4f599a2..afb8635e925e 100644
+--- a/Documentation/sysctl/vm.txt
++++ b/Documentation/sysctl/vm.txt
+@@ -41,6 +41,7 @@ Currently, these files are in /proc/sys/vm:
+ - min_free_kbytes
+ - min_slab_ratio
+ - min_unmapped_ratio
++- mincore_privileged
+ - mmap_min_addr
+ - mmap_rnd_bits
+ - mmap_rnd_compat_bits
+@@ -485,6 +486,14 @@ files and similar are considered.
+ The default is 1 percent.
+ 
+ ==============================================================
++mincore_privileged:
++
++mincore() could be potentially used to mount a side-channel attack against
++pagecache metadata. This sysctl provides system administrators means to
++make it available only to processess that own CAP_SYS_ADMIN capability.
++
++The default is 0, which means mincore() can be used without restrictions.
++==============================================================
+ 
+ mmap_min_addr
+ 
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 1825f712e73b..f03cb07c8dd4 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -114,6 +114,7 @@ extern unsigned int sysctl_nr_open_min, sysctl_nr_open_max;
+ #ifndef CONFIG_MMU
+ extern int sysctl_nr_trim_pages;
+ #endif
++extern int sysctl_mincore_privileged;
+ 
+ /* Constants used for minimum and  maximum */
+ #ifdef CONFIG_LOCKUP_DETECTOR
+@@ -1684,6 +1685,13 @@ static struct ctl_table vm_table[] = {
+ 		.extra2		= (void *)&mmap_rnd_compat_bits_max,
+ 	},
+ #endif
++	{
++		.procname	= "mincore_privileged",
++		.data		= &sysctl_mincore_privileged,
++		.maxlen		= sizeof(sysctl_mincore_privileged),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec,
++	},
+ 	{ }
+ };
+ 
+diff --git a/mm/mincore.c b/mm/mincore.c
+index 218099b5ed31..77d4928cdfaa 100644
+--- a/mm/mincore.c
++++ b/mm/mincore.c
+@@ -21,6 +21,8 @@
+ #include <linux/uaccess.h>
+ #include <asm/pgtable.h>
+ 
++int sysctl_mincore_privileged;
++
+ static int mincore_hugetlb(pte_t *pte, unsigned long hmask, unsigned long addr,
+ 			unsigned long end, struct mm_walk *walk)
+ {
+@@ -228,6 +230,9 @@ SYSCALL_DEFINE3(mincore, unsigned long, start, size_t, len,
+ 	unsigned long pages;
+ 	unsigned char *tmp;
+ 
++	if (sysctl_mincore_privileged && !capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
+ 	/* Check the start address: needs to be page-aligned.. */
+ 	if (start & ~PAGE_MASK)
+ 		return -EINVAL;
+-- 
+Jiri Kosina
+SUSE Labs
