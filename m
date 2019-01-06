@@ -1,47 +1,48 @@
-From: Matthew Wilcox <willy@infradead.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Sat, 5 Jan 2019 16:11:38 -0800
-Message-ID: <20190106001138.GW6310@bombadil.infradead.org>
+Date: Sat, 5 Jan 2019 16:22:47 -0800
+Message-ID: <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com>
 References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
  <CAG48ez2jAp9xkPXQmVXm0PqNrFGscg9BufQRem2UD8FGX-YzPw@mail.gmail.com>
  <CAHk-=whL4sZiM=JcdQAYQvHm7h7xEtVUh+gYGYhoSk4vi38tXg@mail.gmail.com>
  <CAHk-=wg5Kk+r36=jcGBaLUj+gjopjgiW5eyvkdMqvn0jFkD_iQ@mail.gmail.com>
- <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com>
+ <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com> <20190106001138.GW6310@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com>
+In-Reply-To: <20190106001138.GW6310@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
+To: Matthew Wilcox <willy@infradead.org>
 Cc: Jann Horn <jannh@google.com>, Jiri Kosina <jikos@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jan 05, 2019 at 03:39:10PM -0800, Linus Torvalds wrote:
-> On Sat, Jan 5, 2019 at 3:16 PM Linus Torvalds
-> <torvalds@linux-foundation.org> wrote:
-> >
-> > It goes back to forever, it looks like. I can't find a reason.
-> 
-> mincore() was originally added in 2.3.52pre3, it looks like. Around
-> 2000 or so. But sadly before the BK history.
-> 
-> And that comment about
-> 
->   "Later we can get more picky about what "in core" means precisely."
-> 
-> that still exists above mincore_page() goes back to the original patch.
+On Sat, Jan 5, 2019 at 4:11 PM Matthew Wilcox <willy@infradead.org> wrote:
+>
+> FreeBSD claims to have a manpage from SunOS 4.1.3 with mincore (!)
+>
+> https://www.freebsd.org/cgi/man.cgi?query=mincore&apropos=0&sektion=0&manpath=SunOS+4.1.3&arch=default&format=html
+>
+> DESCRIPTION
+>        mincore()  returns  the primary memory residency status of pages in the
+>        address space covered by mappings in the range [addr, addr + len).
 
-FreeBSD claims to have a manpage from SunOS 4.1.3 with mincore (!)
+It's still not clear that "primary memory residency status" actually means.
 
-https://www.freebsd.org/cgi/man.cgi?query=mincore&apropos=0&sektion=0&manpath=SunOS+4.1.3&arch=default&format=html
+Does it mean "mapped", or does it mean "exists in caches and doesn't need IO".
 
-DESCRIPTION
-       mincore()  returns  the primary memory residency	status of pages	in the
-       address space covered by	mappings in the	range [addr, addr + len).  The
-       status is returned as a char-per-page in	the character array referenced
-       by *vec (which the system assumes to be large enough to	encompass  all
-       the  pages  in  the  address range).  The least significant bit of each
-       character is set	to 1 to	indicate that the referenced page is  in  pri-
-       mary  memory, 0 if it is	not.  The settings of other bits in each char-
-       acter is	undefined and may contain other	information in the future.
+I don't even know what kind of caches SunOS 4.1.3 had. The Linux
+implementation depends on the page cache, and wouldn't work (at least
+not very well) in a system that has a traditional disk buffer cache.
+
+Anyway, I guess it's mostly moot. From a "does this cause regressions"
+standpoint, the only thing that matters is really whatever Linux
+programs that have used this since it was introduced 18+ years ago.
+
+But I think my patch to just rip out all that page lookup, and just
+base it on the page table state has the fundamental advantage that it
+gets rid of code. Maybe I should jst commit it, and see if anything
+breaks? We do have options in case things break, and then we'd at
+least know who cares (and perhaps a lot more information of _why_ they
+care).
+
+                     Linus
