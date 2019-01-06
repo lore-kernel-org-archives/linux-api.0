@@ -1,58 +1,35 @@
-From: Kevin Easton <kevin@guarana.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Sun, 6 Jan 2019 11:33:36 +0000
-Message-ID: <20190106113336.GA31214@ip-172-31-15-78>
+Date: Sun, 6 Jan 2019 13:46:37 -0800
+Message-ID: <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com>
 References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
- <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com>
- <nycvar.YFH.7.76.1901052108390.16954@cbobk.fhfr.pm>
- <CAHk-=whGmE4QVr6NbgHnrVGVENfM3s1y6GNbsfh8PcOg=6bpqw@mail.gmail.com>
- <nycvar.YFH.7.76.1901052131480.16954@cbobk.fhfr.pm>
- <CAHk-=wgrSKyN23yp-npq6+J-4pGqbzxb3mJ183PryjHw7PWDyA@mail.gmail.com>
+ <CAG48ez2jAp9xkPXQmVXm0PqNrFGscg9BufQRem2UD8FGX-YzPw@mail.gmail.com>
+ <CAHk-=whL4sZiM=JcdQAYQvHm7h7xEtVUh+gYGYhoSk4vi38tXg@mail.gmail.com>
+ <CAHk-=wg5Kk+r36=jcGBaLUj+gjopjgiW5eyvkdMqvn0jFkD_iQ@mail.gmail.com>
+ <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com>
+ <20190106001138.GW6310@bombadil.infradead.org> <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com>
+ <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wgrSKyN23yp-npq6+J-4pGqbzxb3mJ183PryjHw7PWDyA@mail.gmail.com>
+In-Reply-To: <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jiri Kosina <jikos@kernel.org>, Masatake YAMATO <yamato@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Jann Horn <jannh@google.com>, Jiri Kosina <jikos@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jan 05, 2019 at 01:54:03PM -0800, Linus Torvalds wrote:
-> On Sat, Jan 5, 2019 at 12:43 PM Jiri Kosina <jikos@kernel.org> wrote:
-> >
-> > > Who actually _uses_ mincore()? That's probably the best guide to what
-> > > we should do. Maybe they open the file read-only even if they are the
-> > > owner, and we really should look at file ownership instead.
-> >
-> > Yeah, well
-> >
-> >         https://codesearch.debian.net/search?q=mincore
-> >
-> > is a bit too much mess to get some idea quickly I am afraid.
+On Sat, Jan 5, 2019 at 5:50 PM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+>
+> Slightly updated patch in case somebody wants to try things out.
 
-> Anyway, the Debian code search just results in mostly non-present
-> stuff. It's sad that google code search is no more. It was great for
-> exactly these kinds of questions.
+I decided to just apply that patch. It is *not* marked for stable,
+very intentionally, because I expect that we will need to wait and see
+if there are issues with it, and whether we might have to do something
+entirely different (more like the traditional behavior with some extra
+"only for owner" logic).
 
-If you select the "Group search results by Debian source package"
-option on the search results page it makes it a lot easier to skim
-through.
+But doing a test patch during the merge window (which is about to
+close) sounds like the right thing to do.
 
-It looks to me like Firefox is expecting mincore() not to fail on
-libraries that it has mapped:
-
-https://sources.debian.org/src/firefox-esr/60.4.0esr-1/mozglue/linker/BaseElf.cpp/?hl=98#L98
-
-    - Kevin
-> 
-> The mono runtime seems to have some mono_pages_not_faulted() function,
-> but I don't know if people use it for file mappings, and I couldn't
-> find any interesting users of it.
-> 
-> I didn't find anything that seems to really care, but I gave up after
-> a few pages of really boring stuff.
-> 
->                     Linus
-> 
-> 
+                 Linus
