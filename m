@@ -1,7 +1,7 @@
-From: Vlastimil Babka <vbabka@suse.cz>
+From: Daniel Gruss <daniel@gruss.cc>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Mon, 7 Jan 2019 12:59:19 +0100
-Message-ID: <43f734de-2b1c-aa9f-d373-b95663e913dd@suse.cz>
+Date: Mon, 7 Jan 2019 14:29:03 +0100
+Message-ID: <3b6525a6-4d8b-b5f4-67cd-0e230eb2691e@gruss.cc>
 References: <20190107043227.GA3325@nautica>
  <151b4ac8-5cfc-ed30-db30-e4d67a324c4b@suse.cz>
  <20190107110827.GA15249@nautica>
@@ -12,71 +12,28 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190107110827.GA15249@nautica>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dominique Martinet <asmadeus@codewreck.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jikos@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, daniel@gruss.cc
+To: Dominique Martinet <asmadeus@codewreck.org>, Vlastimil Babka <vbabka@suse.cz>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jikos@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 On 1/7/19 12:08 PM, Dominique Martinet wrote:
->
-> With the current mincore change, it will think everything was "in core"
-> and not flush anything unless my option to just fadvise dontneed
-> everything is passed though ; so even if we can make it work it is a
-> change of behaviour that is breaking an existing application, and it has
-> no way of telling it didn't work.
-
-IIUC the current change is commit 574823bfab82 ("Change mincore() to count
-"mapped" pages rather than "cached" pages") which will not pretend
-everything
-is "in core", but only pages that the calling process has populated page
-table mapping for (which implies in core, but the opposite doesn't
-hold). "nocache" most certainly doesn't populate the mappings before
-calling mincore(), as that would bring pages to page cache and defeat
-the purpose of determining if they were already there prior the nocache
-execution. Instead it will think that nothing was "in core", and thus
-later call fadvise dontneed or everything, but as I've said earlier that
-shouldn't matter much.
-
-> Honestly though, as I said, mincore() is much more useful for debugging
-> for me ; the application can be changed if required. I just pointed it
-> out as it'll need changing, and it has no obvious way of testing at
-> runtime if the syscall works (except dumb kernel version check, but that
-> won't work with stable backports); so it's not that obvious.
-
-Agree.
-
->>> FWIW I personally don't care much about "only for owner" or depending on
->>> mmap options; I don't understand much of the security implications
->>> honestly so I'm not sure how these limitations actually help.
->>> On the other hand, a simple CAP_SYS_ADMIN check making the call take
->>> either behaviour should be safe and would cover what I described above.
->>
->> So without CAP_SYS_ADMIN, mincore() would return mapping status, and
->> with CAP_SYS_ADMIN, it would return cache residency status? Very clumsy
->> :( Maybe if we introduced mincore2() with flags similar to BSD mentioned
->> earlier in the thread, and the cache residency flag would require
->> CAP_SYS_ADMIN or something similar.
+>> That's my bigger concern here. In [1] there's described a remote attack
+>> (on webserver) using the page fault timing differences for present/not
+>> present page cache pages. Noisy but works, and I expect locally it to be
+>> much less noisy. Yet the countermeasures section only mentions
+>> restricting mincore() as if it was sufficient (and also how to make
+>> evictions harder, but that's secondary IMHO).
 > 
-> I agree, that's rather clumsy... Or rather might lead to some unexpected
-> behaviours. I'm open to other ideas.
-> I'm not sure how the BSD flags help though?
+> I'd suggest making clock rougher for non-root users but javascript tried
+> that and it wasn't enough... :)
+> Honestly won't be of much help there, good luck?
 
-Definitely it would be a long-term solution, introducing new API,
-waiting for userspace to use it... and meanwhile we would have to keep
-the status quo or some kind of the clumsy/subtle approach.
+Restricting mincore() is sufficient to fix the hardware-agnostic part.
+If the attack is not hardware-agnostic anymore, an attacker could also
+just use a hardware cache attack, which has a higher temporal and
+spatial resolution, so there's no reason why the attacker would use page
+cache attacks instead then.
 
->>> (by the way, while we are discussing permissions, a regular user can use
->>> fadvise dontneed on files it doesn't own as well as long as it can open
->>> them for reading; I'm not sure if that would need restricting as well in
->>> the context of the security issue.
->>
->> Probably not, as I've mentioned it won't evict what's mapped by somebody
->> else. And eviction is also possible via controlling LRU, which is what
->> the paper [1] does anyway (and also mentions that DONTNEED doesn't
->> work). Being able to evict somebody's page is AFAIU not sufficient for
->> attack, the side channel is about knowing that somebody brought that
->> page back to RAM by touching it.
-> 
-> Thanks for the link to the paper, I hadn't taken the time to extract it
-> from the news article but it's much more interesting indeed.
 
-It went public only this morning, the article was older :)
+Cheers,
+Daniel
