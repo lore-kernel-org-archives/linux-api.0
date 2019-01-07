@@ -1,78 +1,273 @@
-From: Dominique Martinet <asmadeus@codewreck.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Mon, 7 Jan 2019 05:32:27 +0100
-Message-ID: <20190107043227.GA3325@nautica>
-References: <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com>
+From: kbuild test robot <lkp-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v7 21/22] ptrace: add PTRACE_GET_SYSCALL_INFO request
+Date: Mon, 7 Jan 2019 14:21:39 +0800
+Message-ID: <201901071430.4jk67u0s%fengguang.wu@intel.com>
+References: <20190107025455.GU1207@altlinux.org>
+Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/mixed; boundary="liOOAslEiF7prFVr"
+Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jikos@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20190107025455.GU1207-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
+ <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
+List-Post: <mailto:strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+List-Help: <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
+ <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+To: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Jann Horn <jannh-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eugene Syromyatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, kbuild-all-JC7UmRfGjtg@public.gmane.org, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds wrote on Sat, Jan 05, 2019:
-> But I think my patch to just rip out all that page lookup, and just
-> base it on the page table state has the fundamental advantage that it
-> gets rid of code. Maybe I should jst commit it, and see if anything
-> breaks? We do have options in case things break, and then we'd at
-> least know who cares (and perhaps a lot more information of _why_ they
-> care).
 
-There actually are many tools like fincore which depend on mincore to
-try to tell whether a file is "loaded in cache" or not (I personally use
-vmtouch[1], but I know of at least nocache[2] uses it as well to only
-try to evict used pages)
+--liOOAslEiF7prFVr
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-[1] https://hoytech.com/vmtouch/
-[2] https://github.com/Feh/nocache
+Hi Elvira,
 
+Thank you for the patch! Yet something to improve:
 
-I mostly use these to either fadvise(POSIX_FADV_DONTNEED) or
-prefetch/lock whole files so my "production" use-cases don't actually
-rely on the mincore part of them; but when playing with these actions
-it's actually fairly useful to be able to visualize which part of a file
-ended in cache or monitor how a file's content evolve in cache...
+[auto build test ERROR on linus/master]
+[cannot apply to v4.20 next-20190103]
+[if your patch is applied to the wrong git tree, please drop us a note to help improve the system]
 
-There are various non-obvious behaviours where being able to poke around
-is enlightening (e.g. fadvise dontneed is actually a hint, so even if
-nothing uses the file linux sometimes keep the data around if it thinks
-that would be useful and nocache has a mode to call fadvise multiple
-times and things like that...)
+url:    https://github.com/0day-ci/linux/commits/Dmitry-V-Levin/asm-generic-syscall-h-prepare-for-inclusion-by-other-files/20190107-115241
+config: nds32-defconfig (attached as .config)
+compiler: nds32le-linux-gcc (GCC) 6.4.0
+reproduce:
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # save the attached .config to linux build tree
+        GCC_VERSION=6.4.0 make.cross ARCH=nds32 
 
+All errors (new ones prefixed by >>):
 
-Anyway, I agree the use of mincore for this is rather ugly, and
-frankly some "cache management API" might be better in the long run if
-only for performance reason (don't try these tools on a hundred TB
-sparse file...), but until that pipe dream comes true I think mincore as
-it was is useful for system admins.
+   lib/syscall.o: In function `syscall_get_nr':
+>> syscall.c:(.text+0x0): multiple definition of `syscall_get_nr'
+   kernel/ptrace.o:ptrace.c:(.text+0x38c): first defined here
+   lib/syscall.o: In function `syscall_rollback':
+>> syscall.c:(.text+0x18): multiple definition of `syscall_rollback'
+   kernel/ptrace.o:ptrace.c:(.text+0x3a4): first defined here
+   lib/syscall.o: In function `syscall_get_error':
+>> syscall.c:(.text+0x34): multiple definition of `syscall_get_error'
+   kernel/ptrace.o:ptrace.c:(.text+0x3c0): first defined here
+   lib/syscall.o: In function `syscall_get_return_value':
+>> syscall.c:(.text+0x54): multiple definition of `syscall_get_return_value'
+   kernel/ptrace.o:ptrace.c:(.text+0x3e0): first defined here
+   lib/syscall.o: In function `syscall_set_return_value':
+>> syscall.c:(.text+0x6c): multiple definition of `syscall_set_return_value'
+   kernel/ptrace.o:ptrace.c:(.text+0x3f8): first defined here
+   lib/syscall.o: In function `syscall_get_arguments':
+>> syscall.c:(.text+0x88): multiple definition of `syscall_get_arguments'
+   kernel/ptrace.o:ptrace.c:(.text+0x414): first defined here
+   lib/syscall.o: In function `syscall_set_arguments':
+>> syscall.c:(.text+0x1e0): multiple definition of `syscall_set_arguments'
+   kernel/ptrace.o:ptrace.c:(.text+0x63c): first defined here
 
+---
+0-DAY kernel test infrastructure                Open Source Technology Center
+https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
 
+--liOOAslEiF7prFVr
+Content-Type: application/gzip
+Content-Disposition: attachment; filename=".config.gz"
+Content-Transfer-Encoding: base64
 
-Linus Torvalds wrote on Sun, Jan 06, 2019:
-> I decided to just apply that patch. It is *not* marked for stable,
-> very intentionally, because I expect that we will need to wait and see
-> if there are issues with it, and whether we might have to do something
-> entirely different (more like the traditional behavior with some extra
-> "only for owner" logic).
+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
+AA==
 
-FWIW I personally don't care much about "only for owner" or depending on
-mmap options; I don't understand much of the security implications
-honestly so I'm not sure how these limitations actually help.
-On the other hand, a simple CAP_SYS_ADMIN check making the call take
-either behaviour should be safe and would cover what I described above.
+--liOOAslEiF7prFVr
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-
-(by the way, while we are discussing permissions, a regular user can use
-fadvise dontneed on files it doesn't own as well as long as it can open
-them for reading; I'm not sure if that would need restricting as well in
-the context of the security issue. Frankly even with mincore someone
-could likely tell the difference through timing, if they just do it a
-few times. Do magic, probe, flush out, repeat until satisfied.)
-
-
-Thanks,
 -- 
-Dominique Martinet | Asmadeus
+Strace-devel mailing list
+Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+https://lists.strace.io/mailman/listinfo/strace-devel
+
+--liOOAslEiF7prFVr--
