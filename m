@@ -1,111 +1,52 @@
-From: Yuri Norov <ynorov@marvell.com>
-Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Mon, 7 Jan 2019 20:43:46 +0000
-Message-ID: <20190107204336.GB25178@yury-thinkpad>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20190107155028.GA25178@yury-thinkpad>
- <DC9A951E-B638-4820-8499-02D5322E7DF7@amacapital.net>
+From: Christian Brauner <christian@brauner.io>
+Subject: [RESEND PATCH v3 0/2] sysctl: handle overflow for file-max
+Date: Mon,  7 Jan 2019 23:26:58 +0100
+Message-ID: <20190107222700.15954-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <DC9A951E-B638-4820-8499-02D5322E7DF7@amacapital.net>
-Content-Language: en-US
-Content-ID: <3E1DBAF8345D5D438A0F2FFD218A7497@namprd18.prod.outlook.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, "yury.norov@gmail.com" <yury.norov@gmail.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Andreas Schwab <schwab@suse.de>, Alexander Graf <agraf@suse.de>, Geert Uytterhoeven <geert@linux-m68k.org>, Bamvor Zhangjian <bamv2005@gmail.com>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.com>, James Hogan <james.hogan@imgtec.com>, Chris Metcalf <cmetcalf@mellanox.com>, Arnd Bergmann <arnd@arndb.de>, Andrew Pinski <pinskia@gmai>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org, keescook@chromium.org, linux-kernel@vger.kernel.org
+Cc: ebiederm@xmission.com, mcgrof@kernel.org, joe.lawrence@redhat.com, longman@redhat.com, linux@dominikbrodowski.net, viro@zeniv.linux.org.uk, adobriyan@gmail.com, linux-api@vger.kernel.org, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-T24gTW9uLCBKYW4gMDcsIDIwMTkgYXQgMDk6NDg6NDRBTSAtMDgwMCwgQW5keSBMdXRvbWlyc2tp
-IHdyb3RlOg0KPiANCj4gDQo+ID4gT24gSmFuIDcsIDIwMTksIGF0IDc6NTAgQU0sIFl1cmkgTm9y
-b3YgPHlub3JvdkBtYXJ2ZWxsLmNvbT4gd3JvdGU6DQo+ID4gDQo+ID4gSGkgYWxsLA0KPiA+IA0K
-PiA+PiBPbiBXZWQsIE1heSAxNiwgMjAxOCBhdCAxMToxODo0NUFNICswMzAwLCBZdXJ5IE5vcm92
-IHdyb3RlOg0KPiA+PiBUaGlzIHNlcmllcyBlbmFibGVzIEFBUkNINjQgd2l0aCBJTFAzMiBtb2Rl
-Lg0KPiA+PiANCj4gPj4gQXMgc3VwcG9ydGluZyB3b3JrLCBpdCBpbnRyb2R1Y2VzIEFSQ0hfMzJC
-SVRfT0ZGX1QgY29uZmlndXJhdGlvbg0KPiA+PiBvcHRpb24gdGhhdCBpcyBlbmFibGVkIGZvciBl
-eGlzdGluZyAzMi1iaXQgYXJjaGl0ZWN0dXJlcyBidXQgZGlzYWJsZWQNCj4gPj4gZm9yIG5ldyBh
-cmNoZXMgKHNvIDY0LWJpdCBvZmZfdCB1c2Vyc3BhY2UgdHlwZSBpcyB1c2VkIGJ5IG5ldyB1c2Vy
-c3BhY2UpLg0KPiA+PiBBbHNvIGl0IGRlcHJlY2F0ZXMgZ2V0cmxpbWl0IGFuZCBzZXRybGltaXQg
-c3lzY2FsbHMgcHJpb3IgdG8gcHJsaW1pdDY0Lg0KPiA+PiANCj4gPj4gQmFzZWQgb24ga2VybmVs
-IHY0LjE2LiBUZXN0ZWQgd2l0aCBMVFAsIGdsaWJjIHRlc3RzdWl0ZSwgdHJpbml0eSwgbG1iZW5j
-aCwNCj4gPj4gQ1BVU3BlYy4NCj4gPj4gDQo+ID4+IFRoaXMgc2VyaWVzIG9uIGdpdGh1YjogDQo+
-ID4+IGh0dHBzOi8vZ2l0aHViLmNvbS9ub3Jvdi9saW51eC90cmVlL2lscDMyLTQuMTYNCj4gPj4g
-TGluYXJvIHRvb2xjaGFpbjoNCj4gPj4gaHR0cDovL3NuYXBzaG90cy5saW5hcm8ub3JnL2NvbXBv
-bmVudHMvdG9vbGNoYWluL2JpbmFyaWVzLzcuMy0yMDE4LjA0LXJjMS9hYXJjaDY0LWxpbnV4LWdu
-dV9pbHAzMi8NCj4gPj4gRGViaWFuIHJlcG86DQo+ID4+IGh0dHA6Ly9wZW9wbGUubGluYXJvLm9y
-Zy9+d29va2V5L2lscDMyLw0KPiA+PiBPcGVuU1VTRSByZXBvOg0KPiA+PiBodHRwczovL2J1aWxk
-Lm9wZW5zdXNlLm9yZy9wcm9qZWN0L3Nob3cvZGV2ZWw6QVJNOkZhY3Rvcnk6Q29udHJpYjpJTFAz
-Mg0KPiA+PiANCj4gPj4gQ2hhbmdlczoNCj4gPj4gdjM6IGh0dHBzOi8vbGttbC5vcmcvbGttbC8y
-MDE0LzkvMy83MDQNCj4gPj4gdjQ6IGh0dHBzOi8vbGttbC5vcmcvbGttbC8yMDE1LzQvMTMvNjkx
-DQo+ID4+IHY1OiBodHRwczovL2xrbWwub3JnL2xrbWwvMjAxNS85LzI5LzkxMQ0KPiA+PiB2Njog
-aHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTYvNS8yMy82NjENCj4gPj4gdjc6IGh0dHBzOi8vbGtt
-bC5vcmcvbGttbC8yMDE3LzEvOS8yMTMNCj4gPj4gdjg6IGh0dHBzOi8vbGttbC5vcmcvbGttbC8y
-MDE3LzYvMTkvNjI0DQo+ID4+IHY5OiAtIHJlYmFzZWQgb24gdG9wIG9mIHY0LjE2Ow0KPiA+PiAg
-ICAtIHNpZ25hbCBzdWJzeXN0ZW0gcmV3b3JrZWQgdG8gYXZvaWQgY29kZSBkdXBsaWNhdGlvbiwg
-YXMgcmVxdWVzdGVkDQo+ID4+ICAgICAgYnkgRGF2ZSBNYXJ0aW4gKHBhdGNoZXMgMTggYW5kIDIw
-KTsNCj4gPj4gICAgLSBuZXcgZmlsZXMgaW50cm9kdWNlZCBpbiBzZXJpZXMgdXNlIFNQRFggbm90
-YXRpb24gZm9yIGxpY2Vuc2U7DQo+ID4+ICAgIC0gbGludXgtYXBpIGFuZCBsaW51eC1hcmNoIEND
-ZWQgYXMgdGhlIHNlcmllcyBjaGFuZ2VzIGtlcm5lbCBBQkk7DQo+ID4+ICAgIC0gY2hlY2twYXRj
-aCBhbmQgb3RoZXIgbWlub3IgZml4ZXMuDQo+ID4+ICAgIC0gWmhvdSBDaGVuZ21pbmcncyByZXBv
-cnRlZC1ieSBmb3IgcGF0Y2ggMiBhbmQgc2lnbmVkLW9mZi1ieSBmb3INCj4gPj4gICAgICBwYXRj
-aCAyMSByZW1vdmVkIGJlY2F1c2UgaGlzIGVtYWlsIGJlY2FtZSBpbnZhbGlkLiBaaG91LCBwbGVh
-c2UNCj4gPj4gICAgICBzaGFyZSB5b3VyIG5ldyBlbWFpbC4NCj4gPiANCj4gPiBUaGlzIGlzIDQu
-MjAtYmFzZWQgdmVyc2lvbi4NCj4gPiBodHRwczovL2dpdGh1Yi5jb20vbm9yb3YvbGludXgvdHJl
-ZS9pbHAzMi00LjIwDQo+ID4gDQo+ID4gVGhlcmUncyBubyBpbXBvcnRhbnQgY2hhbmdlcyBjb21w
-YXJpbmcgdG8gNC4xOSwgYnV0IEkgd291bGQgbGlrZSB0byByZW1pbmQNCj4gPiB0aGF0IHRoaXMg
-c2VyaWVzIGNvbnRhaW5zIHNvbWUgZ2VuZXJpYyBhcmNoIHBhdGNoZXMgdGhhdCBBQ0tlZCwgYnV0
-IHN0aWxsDQo+ID4gbm90IHVwc3RyZWFtZWQ6DQo+ID4gWXVyeSBOb3JvdiAgICAgIGFzbS1nZW5l
-cmljOiBEcm9wIGdldHJsaW1pdCBhbmQgc2V0cmxpbWl0IHN5c2NhbGxzIGZyb20gZGVmYXVsdCBs
-aXN0DQo+ID4gWXVyeSBOb3JvdiAgICAgIDMyLWJpdCB1c2Vyc3BhY2UgQUJJOiBpbnRyb2R1Y2Ug
-QVJDSF8zMkJJVF9PRkZfVCBjb25maWcgb3B0aW9uDQo+ID4gWXVyeSBOb3JvdiAgICAgIGNvbXBh
-dCBBQkk6IHVzZSBub24tY29tcGF0IG9wZW5hdCBhbmQgb3Blbl9ieV9oYW5kbGVfYXQgdmFyaWFu
-dHMNCj4gPiBKYW1lcyBNb3JzZSAgICAgcHRyYWNlOiBBZGQgY29tcGF0IFBUUkFDRV97RyxTfUVU
-U0lHTUFTSyBoYW5kbGVycw0KPiA+IERhdmUgTWFydGluICAgICBhcm02NDogc2lnbmFsOiBNYWtl
-IHBhcnNlX3VzZXJfc2lnZnJhbWUoKSBpbmRlcGVuZGVudCBvZiBydF9zaWdmcmFtZSBsYXlvdXQN
-Cj4gPiANCj4gPiBQbGVhc2UgYWxzbyBub3RpY2UgdGhhdCBteSBlbWFpbCBhZGRyZXNzIGlzIGNo
-YW5nZWQsIGZyb20gbm93IGl0J3MNCj4gPiB5bm9yb3ZAbWFydmVsbC5jb20NCj4gPiANCj4gDQo+
-IEhhdmluZyBzcGVudCBzb21lIHRpbWUgaGF0aW5nIHgzMiBsYXRlbHksIGhlcmUgaXMgYSBjdXJz
-b3J5IHJldmlldzoNCg0KSSBmb2xsb3dlZCB0aGUgcmVjZW50IGRpc2N1c3Npb24gb24geDMyIGRy
-b3AsIGJ1dCBJIGRvbid0IHRyYWNrIHRoZSBzdG9yeQ0KZnJvbSB0aGUgYmVnaW5uaW5nLiBDYW4g
-eW91IHN1bW1hcml6ZSB5b3VyIGNvbXBsYWlucyBoZXJlIChvciBtYXliZSBpbg0KcGF0Y2ggZm9y
-IERvY3VtZW50YXRpb24pPyBJdCB3aWxsIGJlIGdvb2QgZm9yIGlscDMyIGJlY2F1c2Ugd2Ugd2ls
-bCBjaGVjaw0KdGhlIHNlcmllcyBhZ2FpbnN0IGFsbCBwb3NzaWJsZSBwcm9ibGVtcywgYW5kIGl0
-IHdpbGwgYmUgZ29vZCBmb3IgaGlzdG9yeQ0KYmVjYXVzZSBmdXR1cmUgY29tcGF0IGFyY2hpdGVj
-dHVyZXMgZGV2ZWxvcGVycyB3aWxsIGJlIGF3YXJlLg0KDQpPbiB5b3VyIGZvbGxvd2luZyBxdWVz
-dGlvbnMsIEknbGwgdHJ5IGFuc3dlciBhY2NvcmRpbmcgdG8gbXkgdW5kZXJzdGFuZGluZy4NCklm
-IGl0J3Mgd3Jvbmcgb3IgaW5jb21wbGV0ZSwgSSBraW5kbHkgYXNrIG90aGVycyBmaXggbWUuDQoN
-Cj4gWW91IHNheSDigJxJTFAzMiBoYXMgY29udGV4dC1yZWxhdGVkIHN0cnVjdHVyZXMgZGlmZmVy
-ZW50IGZyb20gYm90aCBhYXJjaDMyIGFuZA0KPiBhYXJjaDY0L2xwNjQu4oCdICBXaHk/ICBXaHkg
-bm90IGp1c3QgdXNlIHRoZSBscDY0IGNvbnRleHQgc3RydWN0dXJlPw0KDQpCZWNhdXNlIHRoZSBh
-bHRlcm5hdGl2ZSBpcyBub3RoaW5nIGJldHRlciB0aGFuIGhvdyB3ZSBkbyBub3cuIFdlIGNhbiBt
-YWtlDQpydF9zaWdmcmFtZSBmb3IgaWxwMzIgbG9vayBleGFjdGx5IGxpa2UgbHA2NC4gQnV0IG9u
-IHVzZXIgc2lkZSB3ZSB3aWxsDQpoYXZlIHRvIGFkZCBwYWRzIHRoZXJlZm9yZS4gT24gdGhlIGtl
-cm5lbCBzaWRlLCBiZWZvcmUgcGFzc2luZyBydF9zaWdmcmFtZQ0KdG8ga2VybmVsLCB3ZSB3aWxs
-IGhhdmUgdG8gbWFrZSBzdXJlIHRoYXQgcGFkcyBhcmUgemVyb2VkLCBqdXN0IGxpa2Ugd2UgZG8N
-CndpdGggeDAteDcgaW4gZGVsb3VzZV9wdF9yZWdzKCkgYmVmb3JlIHBhc3Npbmcgc3lzY2FsbCBh
-cmd1bWVudHMgdG8gaGFuZGxlcnMuDQpTbyB3ZSBjYW5ub3QgZ2V0IHJpZCBvZiBnZXQvc2V0X3Np
-Z2ZyYW1lKCkgY29udmVydGVycyBpbiB0aGlzIGNhc2UuDQoNCkN1cnJlbnQgYXBwcm9hY2ggbGV0
-cyB1cyBrZWVwIHVzZXIgcGFydCBsb29raW5nIG1vcmUgbmF0dXJhbCwgYW5kIG9uDQprZXJuZWwg
-c2lkZSB3ZSBkb24ndCBhZGQgY29tcGxleGl0eSBiZWNhdXNlIHdlIHJldXNlIGV4aXN0aW5nIGFh
-cmNoMzINCm9yIGV4aXN0aW5nIGxwNjQgaGFuZGxlcnMsIGFuZCBkb24ndCBpbnZlbnQgc29tZXRo
-aW5nIG5ldy4NCg0KPiBEbyB5b3UgaGF2ZSBzb21lIG9iamVjdGlvbiB0byBsZXR0aW5nIGdyZWdf
-dCBiZSBhIHU2NCBvbiBpbHAzMj8NCg0KSW4gYmluZm10X2lscDMyLmMgd2UNCiAgICAgICAgI2Rl
-ZmluZSBjb21wYXRfZWxmX2dyZWdzZXRfdCAgICBlbGZfZ3JlZ3NldF90DQpTbyBpbiBmYWN0IHdl
-IHVzZSA2NC1iaXQgZ3JlZ3NldC4gT3IgSSBtaXN1bmRlcnN0b29kIHlvdT8NCg0KPiBTaW5jZSB5
-b3UgY2Fu4oCZdCB0ZWxsIExQNjQgYW5kIElMUDMyIHN5c2NhbGxzIGFwYXJ0IGJ5IG51bWJlciwg
-eW91IG5lZWQgdG8gYWRkDQo+IGFuZCB3aXJlIHVwIGEgbmV3IEFVRElUX0FSQ0ggdmFsdWUgZm9y
-IElMUDMyLiBzeXNjYWxsX2dldF9hcmNoKCkgbmVlZHMgdG8gd29yayBjb3JyZWN0bHkuDQoNClRo
-YW5rcyBmb3IgcG9pbnRpbmcgdG8gdGhpcy4gSSdsbCBhcHBlbmQgQVVESVRfQVJDSCBwYXRjaCB0
-byB0aGlzIHNlcmllcy4NCg0KWXVyeQ0KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX18KbGludXgtYXJtLWtlcm5lbCBtYWlsaW5nIGxpc3QKbGludXgtYXJtLWtl
-cm5lbEBsaXN0cy5pbmZyYWRlYWQub3JnCmh0dHA6Ly9saXN0cy5pbmZyYWRlYWQub3JnL21haWxt
-YW4vbGlzdGluZm8vbGludXgtYXJtLWtlcm5lbAo=
+Hey,
+
+Here is v3 of this patchset. Changelogs are in the individual commits.
+
+Currently, when writing
+
+echo 18446744073709551616 > /proc/sys/fs/file-max
+
+/proc/sys/fs/file-max will overflow and be set to 0. That quickly
+crashes the system.
+
+The first version of this patch intended to detect the overflow and cap
+at ULONG_MAX. However, we should not do this and rather return EINVAL on
+overflow. The reasons are:
+- this aligns with other sysctl handlers that simply reject overflows
+  (cf. [1], [2], and a bunch of others)
+- we already do a partial fail on overflow right now
+  Namely, when the TMPBUFLEN is exceeded. So we already reject values
+  such as 184467440737095516160 (21 chars) but accept values such as
+  18446744073709551616 (20 chars) but both are overflows. So we should
+  just always reject 64bit overflows and not special-case this based on
+  the number of chars.
+
+(This patchset is in reference to https://lkml.org/lkml/2018/10/11/585.)
+
+Thanks!
+Christian
+
+[1]: fb910c42cceb ("sysctl: check for UINT_MAX before unsigned int min/max")
+[2]: 196851bed522 ("s390/topology: correct topology mode proc handler")
+
+Christian Brauner (2):
+  sysctl: handle overflow in proc_get_long
+  sysctl: handle overflow for file-max
+
+ kernel/sysctl.c | 47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 46 insertions(+), 1 deletion(-)
+
+-- 
+2.19.1
