@@ -1,7 +1,7 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
+From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v7 2/2] selftests: add tests for pidfd_send_signal()
-Date: Tue, 8 Jan 2019 12:21:49 -0600
-Message-ID: <20190108182149.GA22762@mail.hallyn.com>
+Date: Tue, 8 Jan 2019 19:24:46 +0100
+Message-ID: <20190108182444.e6kq2gqftde23jou@brauner.io>
 References: <20190102161654.9093-1-christian@brauner.io>
  <20190102161654.9093-2-christian@brauner.io>
  <20190108175306.GF29009@cisco>
@@ -10,13 +10,13 @@ References: <20190102161654.9093-1-christian@brauner.io>
  <20190108181742.GA22614@mail.hallyn.com>
  <20190108182023.GA28330@cisco>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20190108182023.GA28330@cisco>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tycho Andersen <tycho@tycho.ws>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, keescook@chromium.org, akpm@linux-foundation.org, jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, keescook@chromium.org, akpm@linux-foundation.org, jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Jan 08, 2019 at 11:20:23AM -0700, Tycho Andersen wrote:
@@ -63,6 +63,9 @@ On Tue, Jan 08, 2019 at 11:20:23AM -0700, Tycho Andersen wrote:
 > get the same pid again? So can't we just fork(), kill(), then set
 > ns_last_pid to pid-1, and fork() again to re-use?
 
-Oh yeah that would work :)
-
-I was stuck on the idea of just limiting the range of pids.
+Maybe. It's just a selftest that works reliably as it is so unless
+there's a technical issue with the patch I'm not going to do another
+version just because of that unless people feel super strongly about
+this.
+Another advantage is that the code we have right now works even when
+CONFIG_CHECKPOINT_RESTORE is not selected.
