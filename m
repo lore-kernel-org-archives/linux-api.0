@@ -1,46 +1,33 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Tue, 8 Jan 2019 17:08:44 +0300
-Message-ID: <20190108140844.tgabxo325enuvu6y@kshutemo-mobl1>
-References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
- <d4846cb2-2a4b-b8b3-daac-e5f51751bbf1@suse.cz>
- <nycvar.YFH.7.76.1901052016250.16954@cbobk.fhfr.pm>
- <fb0414ea-953b-0252-b1d1-12028b190949@suse.cz>
- <047f0582-a4d3-490d-7284-48dfdf9e9471@petrovitsch.priv.at>
- <nycvar.YFH.7.76.1901081235380.16954@cbobk.fhfr.pm>
- <8c9feac8-fecb-a56a-afaf-c1352a666991@petrovitsch.priv.at>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH v7 2/2] selftests: add tests for pidfd_send_signal()
+Date: Tue, 8 Jan 2019 10:53:06 -0700
+Message-ID: <20190108175306.GF29009@cisco>
+References: <20190102161654.9093-1-christian@brauner.io>
+ <20190102161654.9093-2-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <8c9feac8-fecb-a56a-afaf-c1352a666991@petrovitsch.priv.at>
+In-Reply-To: <20190102161654.9093-2-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Bernd Petrovitsch <bernd@petrovitsch.priv.at>
-Cc: Jiri Kosina <jikos@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, keescook@chromium.org, akpm@linux-foundation.org, jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 08, 2019 at 02:53:00PM +0100, Bernd Petrovitsch wrote:
-> On 08/01/2019 12:37, Jiri Kosina wrote:
-> > On Tue, 8 Jan 2019, Bernd Petrovitsch wrote:
-> > 
-> >> Shouldn't the application use e.g. mlock()/.... to guarantee no page 
-> >> faults in the first place?
-> > 
-> > Calling mincore() on pages you've just mlock()ed is sort of pointless 
-> > though.
-> 
-> Obviously;-)
-> 
-> Sorry for being unclear above: If I want my application to
-> avoid suffering from page faults, I use simply mlock()
-> (and/or friends) to nail the relevant pages into physical
-> RAM and not "look if they are out, if yes, get them in" which
-> has also the risk that these important pages are too soon
-> evicted again.
+On Wed, Jan 02, 2019 at 05:16:54PM +0100, Christian Brauner wrote:
+> +			/*
+> +			 * Stop the child so we can inspect whether we have
+> +			 * recycled pid PID_RECYCLE.
+> +			 */
+> +			close(pipe_fds[0]);
+> +			ret = kill(recycled_pid, SIGSTOP);
+> +			close(pipe_fds[1]);
+> +			if (ret) {
+> +				(void)wait_for_pid(recycled_pid);
+> +				_exit(PIDFD_ERROR);
+> +			}
 
-Note, that mlock() doesn't prevent minor page faults. Mlocked memory is
-still subject to mechanisms that makes the page temporary unmapped. For
-instance migration (including NUMA balancing), compaction, khugepaged...
+Sorry for being late to the party, but I wonder if this whole thing
+couldn't be simplified with /proc/sys/kenrel/ns_last_pid?
 
--- 
- Kirill A. Shutemov
+Tycho
