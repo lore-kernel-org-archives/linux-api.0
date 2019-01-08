@@ -1,35 +1,47 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: [PATCH v7 2/2] selftests: add tests for pidfd_send_signal()
-Date: Tue, 8 Jan 2019 11:54:15 -0600
-Message-ID: <20190108175415.GA22353@mail.hallyn.com>
-References: <20190102161654.9093-1-christian@brauner.io>
- <20190102161654.9093-2-christian@brauner.io>
- <20190108175306.GF29009@cisco>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Tue, 8 Jan 2019 09:57:49 -0800
+Message-ID: <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <CAG48ez2jAp9xkPXQmVXm0PqNrFGscg9BufQRem2UD8FGX-YzPw@mail.gmail.com>
+ <CAHk-=whL4sZiM=JcdQAYQvHm7h7xEtVUh+gYGYhoSk4vi38tXg@mail.gmail.com>
+ <CAHk-=wg5Kk+r36=jcGBaLUj+gjopjgiW5eyvkdMqvn0jFkD_iQ@mail.gmail.com>
+ <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com>
+ <20190106001138.GW6310@bombadil.infradead.org> <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com>
+ <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com>
+ <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com> <20190108044336.GB27534@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190108175306.GF29009@cisco>
+In-Reply-To: <20190108044336.GB27534@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Tycho Andersen <tycho@tycho.ws>
-Cc: Christian Brauner <christian@brauner.io>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, serge@hallyn.com, keescook@chromium.org, akpm@linux-foundation.org, jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com
+To: Dave Chinner <david@fromorbit.com>
+Cc: Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jikos@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 08, 2019 at 10:53:06AM -0700, Tycho Andersen wrote:
-> On Wed, Jan 02, 2019 at 05:16:54PM +0100, Christian Brauner wrote:
-> > +			/*
-> > +			 * Stop the child so we can inspect whether we have
-> > +			 * recycled pid PID_RECYCLE.
-> > +			 */
-> > +			close(pipe_fds[0]);
-> > +			ret = kill(recycled_pid, SIGSTOP);
-> > +			close(pipe_fds[1]);
-> > +			if (ret) {
-> > +				(void)wait_for_pid(recycled_pid);
-> > +				_exit(PIDFD_ERROR);
-> > +			}
-> 
-> Sorry for being late to the party, but I wonder if this whole thing
-> couldn't be simplified with /proc/sys/kenrel/ns_last_pid?
+On Mon, Jan 7, 2019 at 8:43 PM Dave Chinner <david@fromorbit.com> wrote:
+>
+> So, I read the paper and before I was half way through it I figured
+> there are a bunch of other similar page cache invalidation attacks
+> we can perform without needing mincore. i.e. Focussing on mmap() and
+> mincore() misses the wider issues we have with global shared caches.
 
-no, bc it's not namespaced :)
+Oh, agreed, and that was discussed in the original report too.
+
+The thing is, you can also depend on our pre-faulting of pages in the
+page fault handler, and use that to get the cached status of nearby
+pages. So do something like "fault one page, then do mincore() to see
+how many pages near it were mapped". See our "do_fault_around()"
+logic.
+
+But mincore is certainly the easiest interface, and the one that
+doesn't require much effort or setup. It's also the one where our old
+behavior was actually arguably simply stupid and actively wrong (ie
+"in caches" isn't even strictly speaking a valid question, since the
+caches in question may be invalid). So let's try to see if giving
+mincore() slightly more well-defined semantics actually causes any
+pain.
+
+I do think that the RWF_NOWAIT case might also be interesting to look at.
+
+                 Linus
