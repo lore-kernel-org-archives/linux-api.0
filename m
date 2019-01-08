@@ -1,79 +1,66 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v7 2/2] selftests: add tests for pidfd_send_signal()
-Date: Tue, 8 Jan 2019 11:25:54 -0700
-Message-ID: <20190108182554.GB28330@cisco>
-References: <20190102161654.9093-1-christian@brauner.io>
- <20190102161654.9093-2-christian@brauner.io>
- <20190108175306.GF29009@cisco>
- <20190108175415.GA22353@mail.hallyn.com>
- <20190108175843.GA26016@cisco>
- <20190108181742.GA22614@mail.hallyn.com>
- <20190108182023.GA28330@cisco>
- <20190108182444.e6kq2gqftde23jou@brauner.io>
+From: Yuri Norov <ynorov@marvell.com>
+Subject: [PATCH] arm64: introduce AUDIT_ARCH_AARCH64ILP32 for ilp32
+Date: Tue, 8 Jan 2019 21:18:56 +0000
+Message-ID: <20190108211840.GA13838@yury-thinkpad>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20190107155028.GA25178@yury-thinkpad>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190108182444.e6kq2gqftde23jou@brauner.io>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, luto@kernel.org, arnd@arndb.de, keescook@chromium.org, akpm@linux-foundation.org, jannh@google.com, oleg@redhat.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, dancol@google.com, timmurray@google.com, fweimer@redhat.com, tglx@linutronix.de, x86@kernel.org, ebiederm@xmission.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190107155028.GA25178@yury-thinkpad>
+Content-Language: en-US
+Content-ID: <ECFB331D797AC1488D832907AB4C052F@namprd18.prod.outlook.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, "linux-arm-kernel@lists.infradead.org" <linux-arm-kernel@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph
+ Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian
+ Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Cars
+Cc: Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 08, 2019 at 07:24:46PM +0100, Christian Brauner wrote:
-> On Tue, Jan 08, 2019 at 11:20:23AM -0700, Tycho Andersen wrote:
-> > On Tue, Jan 08, 2019 at 12:17:42PM -0600, Serge E. Hallyn wrote:
-> > > On Tue, Jan 08, 2019 at 10:58:43AM -0700, Tycho Andersen wrote:
-> > > > On Tue, Jan 08, 2019 at 11:54:15AM -0600, Serge E. Hallyn wrote:
-> > > > > On Tue, Jan 08, 2019 at 10:53:06AM -0700, Tycho Andersen wrote:
-> > > > > > On Wed, Jan 02, 2019 at 05:16:54PM +0100, Christian Brauner wrote:
-> > > > > > > +			/*
-> > > > > > > +			 * Stop the child so we can inspect whether we have
-> > > > > > > +			 * recycled pid PID_RECYCLE.
-> > > > > > > +			 */
-> > > > > > > +			close(pipe_fds[0]);
-> > > > > > > +			ret = kill(recycled_pid, SIGSTOP);
-> > > > > > > +			close(pipe_fds[1]);
-> > > > > > > +			if (ret) {
-> > > > > > > +				(void)wait_for_pid(recycled_pid);
-> > > > > > > +				_exit(PIDFD_ERROR);
-> > > > > > > +			}
-> > > > > > 
-> > > > > > Sorry for being late to the party, but I wonder if this whole thing
-> > > > > > couldn't be simplified with /proc/sys/kenrel/ns_last_pid?
-> > > > > 
-> > > > > no, bc it's not namespaced :)
-> > > > 
-> > > > Huh? It looks like it is...
-> > > > 
-> > > > static int pid_ns_ctl_handler(struct ctl_table *table, int write,
-> > > >                 void __user *buffer, size_t *lenp, loff_t *ppos)
-> > > > {
-> > > >         struct pid_namespace *pid_ns = task_active_pid_ns(current);
-> > > >         struct ctl_table tmp = *table;
-> > > >         int ret, next;
-> > > > 
-> > > >         if (write && !ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
-> > > >                 return -EPERM;
-> > > > 
-> > > >         ...
-> > > 
-> > > Oh - hah, but that's ns_last_pid.  You'd want pid_max.  And that one
-> > > is not namespaced.
-> > 
-> > Perhaps I'm misunderstanding, but isn't the point of all this code to
-> > get the same pid again? So can't we just fork(), kill(), then set
-> > ns_last_pid to pid-1, and fork() again to re-use?
-> 
-> Maybe. It's just a selftest that works reliably as it is so unless
-> there's a technical issue with the patch I'm not going to do another
-> version just because of that unless people feel super strongly about
-> this.
-> Another advantage is that the code we have right now works even when
-> CONFIG_CHECKPOINT_RESTORE is not selected.
+Make syscall_get_arch() distinguish arm64 and arm64/ilp32 by adding
+AUDIT_ARCH_AARCH64ILP32.
 
-No, it's fine as is. Just a lot less code if we do it the other way.
+Sugested-by: Andy Lutomirski <luto@amacapital.net>
+Signed-off-by: Yury Norov <ynorov@marvell.com>
+---
+ arch/arm64/include/asm/syscall.h | 3 +++
+ include/uapi/linux/audit.h       | 1 +
+ 2 files changed, 4 insertions(+)
 
-Cheers,
-
-Tycho
+diff --git a/arch/arm64/include/asm/syscall.h b/arch/arm64/include/asm/syscall.h
+index 73fbe08763b0..77578d703cb1 100644
+--- a/arch/arm64/include/asm/syscall.h
++++ b/arch/arm64/include/asm/syscall.h
+@@ -126,6 +126,9 @@ static inline int syscall_get_arch(void)
+ 	if (is_a32_compat_task())
+ 		return AUDIT_ARCH_ARM;
+ 
++	if (is_ilp32_compat_task())
++		return AUDIT_ARCH_AARCH64ILP32;
++
+ 	return AUDIT_ARCH_AARCH64;
+ }
+ 
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 818ae690ab79..624127147404 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -374,6 +374,7 @@ enum {
+ #define __AUDIT_ARCH_LE	   0x40000000
+ 
+ #define AUDIT_ARCH_AARCH64	(EM_AARCH64|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
++#define AUDIT_ARCH_AARCH64ILP32	(EM_AARCH64|__AUDIT_ARCH_LE)
+ #define AUDIT_ARCH_ALPHA	(EM_ALPHA|__AUDIT_ARCH_64BIT|__AUDIT_ARCH_LE)
+ #define AUDIT_ARCH_ARM		(EM_ARM|__AUDIT_ARCH_LE)
+ #define AUDIT_ARCH_ARMEB	(EM_ARM)
+-- 
+2.17.1
