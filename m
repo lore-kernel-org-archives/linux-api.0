@@ -1,79 +1,51 @@
-From: Rich Felker <dalias@libc.org>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Wed, 9 Jan 2019 11:02:10 -0500
-Message-ID: <20190109160210.GB23599@brightrain.aerifal.cx>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <6577ac4f-524c-37f4-a4d0-6eb94ec7d9a5@schoebel-theuer.de>
- <871s5muhp1.fsf@oldenburg2.str.redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Wed, 9 Jan 2019 10:25:43 -0800
+Message-ID: <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
+References: <CAHk-=wg5Kk+r36=jcGBaLUj+gjopjgiW5eyvkdMqvn0jFkD_iQ@mail.gmail.com>
+ <CAHk-=wiMQeCEKESWTmm15x79NjEjNwFvjZ=9XenxY7yH8zqa7A@mail.gmail.com>
+ <20190106001138.GW6310@bombadil.infradead.org> <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com>
+ <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com>
+ <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com>
+ <20190108044336.GB27534@dastard> <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
+ <20190109022430.GE27534@dastard> <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
+ <20190109043906.GF27534@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <871s5muhp1.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <20190109043906.GF27534@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Thomas =?utf-8?Q?Sch=C3=B6bel-Theuer?= <thomas@schoebel-theuer.de>, Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Dave Chinner <david@fromorbit.com>
+Cc: Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 09, 2019 at 01:41:14PM +0100, Florian Weimer wrote:
-> * Thomas Schöbel-Theuer:
-> 
-> > 2) please _announce_ _now_ that after the _next_ LTS kernel (whichever
-> > you want to declare as such), you will _afterwards_ drop the legacy
-> > 32bit support for 64 kernels (I am deliberately using "management
-> > speak" here).
-> >
-> > => result: the industry should have to fair chance to deal with such a
-> > roadmap. Yes, it will hurt some people, but they will have enough time
-> > for their migration projects.
-> >
-> > Example: I know that out of several millions of customers of
-> > webhosting, a very low number of them have some very old legacy 32bit
-> > software installed in their webspace. This cannot be supported
-> > forever. But the number of such cases is very small, and there just
-> > needs to be enough time for finding a solution for those few
-> > customers.
-> >
-> > 3) the next development kernel _after_ that LTS release can then
-> > immediately drop the 32bit support. Enterprise users should have
-> > enough time for planning, and for lots of internal projects
-> > modernizing their infrastructure. Usually, they will need to do this
-> > anyway in the long term.
-> 
-> We've already phased out support for all 32-bit architectures except
-> i386 in our products, and i386 is obviously next.  (We never supported
-> x32 in the first place.)
-> 
-> It becomes increasingly difficult to build a 32-bit userspace that meets
-> backwards-compatibility needs.  We want to use SSE2 (to avoid excess
-> precision for double) and avoid relying on stack realignment (for
-> compatibility with applications that use the old i386 ABI which did not
-> require stack realignment).  We also have to build the distribution with
-> a full complement of hardening flags.  This results in a combination of
-> flags that is poorly tested in upstream GCC.  The i386 register file
-> isn't large enough to support all these features at the same time and
-> combine them with function arguments passed in registers (which some
-> programs enable manually via function attributes).
-> 
-> So even if we keep the kernel interface, in the forseeable future, I
-> expect that it will be difficult to build a full, contemporary 32-bit
-> userspace on i386.
+On Tue, Jan 8, 2019 at 8:39 PM Dave Chinner <david@fromorbit.com> wrote:
+>
+> FWIW, I just realised that the easiest, most reliable way to
+> invalidate the page cache over a file range is simply to do a
+> O_DIRECT read on it.
 
-I guess that's informative of how one company's distro process works,
-but it's not representative. Your customers are enterprise and
-big-server (probably mostly the former) oriented which is exactly the
-domain where 32-bit is of course irrelevant except for running legacy
-applications. Where it matters are embedded and other systems striving
-for resource efficiency.
+If that's the case, that's actually an O_DIRECT bug.
 
-For what it's worth, 32-bit archs including i386 and many others are
-well-supported in Debian with no forseeable EOL I'm aware of, and most
-if not all of the musl-libc-based distros I'm familiar with support
-32-bit archs including i386.
+It should only invalidate the caches on write.
 
-I don't think waning relevance of 32-bit is a reasonable argument
-against x32 since x32's relevance is in exactly the places where
-32-bit is already relevant and preferred for important reasons.
+On reads, it wants to either _flush_ any direct caches before the
+read, or just take the data from the caches. At no point is
+"invalidate" a valid model.
 
-Rich
+Of course, I'm not in the least bit shocked if O_DIRECT is buggy like
+this. But looking at least at the ext4 routine, the read just does
+
+        ret = filemap_write_and_wait_range(mapping, iocb->ki_pos,
+
+and I don't see any invalidation.
+
+Having read access to a file absolutely should *not* mean that you can
+flush caches on it. That's a write op.
+
+Any filesystem that invalidates the caches on read is utterly buggy.
+
+Can you actually point to such a thing? Let's get that fixed, because
+it's completely wrong regardless of this whole mincore issue.
+
+               Linus
